@@ -1,0 +1,222 @@
+services:
+  # CSDL PostgreSQL
+  postgres-db:
+    image: postgres:16
+    container_name: avengers_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-123}
+      POSTGRES_DB: ${POSTGRES_DB:-avengers_coffee}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - avengers_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-avengers_coffee}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - avengers-network
+
+  # Bộ nhớ đệm Redis
+  redis-cache:
+    image: redis:7-alpine
+    container_name: avengers_redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - avengers-network
+
+  # Message Broker RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: avengers_mq
+    restart: unless-stopped
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - avengers-network
+
+  identity-service:
+    build:
+      context: ./avengers-coffee-system/services/identity-service
+    container_name: avengers_identity_service
+    restart: unless-stopped
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: ${IDENTITY_PORT:-3001}
+      DB_HOST: ${DB_HOST:-postgres-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-admin}
+      DB_PASSWORD: ${DB_PASSWORD:-123}
+      DB_NAME: ${DB_NAME:-avengers_coffee}
+      DB_SCHEMA: ${IDENTITY_DB_SCHEMA:-identity}
+    expose:
+      - "${IDENTITY_PORT:-3001}"
+    networks:
+      - avengers-network
+
+  menu-service:
+    build:
+      context: ./avengers-coffee-system/services/menu-service
+    container_name: avengers_menu_service
+    restart: unless-stopped
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: ${MENU_PORT:-3003}
+      DB_HOST: ${DB_HOST:-postgres-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-admin}
+      DB_PASSWORD: ${DB_PASSWORD:-123}
+      DB_NAME: ${DB_NAME:-avengers_coffee}
+      DB_SCHEMA: ${MENU_DB_SCHEMA:-menu}
+    expose:
+      - "${MENU_PORT:-3003}"
+    networks:
+      - avengers-network
+
+  inventory-service:
+    build:
+      context: ./avengers-coffee-system/services/inventory-service
+    container_name: avengers_inventory_service
+    restart: unless-stopped
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: ${INVENTORY_PORT:-3004}
+      DB_HOST: ${DB_HOST:-postgres-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-admin}
+      DB_PASSWORD: ${DB_PASSWORD:-123}
+      DB_NAME: ${DB_NAME:-avengers_coffee}
+      DB_SCHEMA: ${INVENTORY_DB_SCHEMA:-inventory}
+    expose:
+      - "${INVENTORY_PORT:-3004}"
+    networks:
+      - avengers-network
+
+  order-service:
+    build:
+      context: ./avengers-coffee-system/services/order-service
+    container_name: avengers_order_service
+    restart: unless-stopped
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: ${ORDER_PORT:-3005}
+      DB_HOST: ${DB_HOST:-postgres-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-admin}
+      DB_PASSWORD: ${DB_PASSWORD:-123}
+      DB_NAME: ${DB_NAME:-avengers_coffee}
+      DB_SCHEMA: ${ORDER_DB_SCHEMA:-orders}
+      PAYMENT_RETURN_BASE_URL: ${PAYMENT_RETURN_BASE_URL:-http://localhost:3000}
+      WEB_CUSTOMER_BASE_URL: ${WEB_CUSTOMER_BASE_URL:-http://localhost:5173}
+      VNPAY_URL: ${VNPAY_URL:-https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+      VNPAY_TMN_CODE: ${VNPAY_TMN_CODE:-MEBLXEDU}
+      VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:-T718SPDGIGQSKGM98VCSNAF70M9X93MC}
+      SEPAY_WEBHOOK_SECRET: ${SEPAY_WEBHOOK_SECRET:-changeme-sepay-secret}
+      SEPAY_BANK_CODE: ${SEPAY_BANK_CODE:-MBBank}
+      SEPAY_ACCOUNT_NO: ${SEPAY_ACCOUNT_NO:-025452790502}
+      IDENTITY_SERVICE_URL: http://identity-service:${IDENTITY_PORT:-3001}
+      REDIS_HOST: ${REDIS_HOST:-redis-cache}
+      REDIS_PORT: ${REDIS_INTERNAL_PORT:-6379}
+      RABBITMQ_URL: ${RABBITMQ_URL:-amqp://rabbitmq:5672}
+    expose:
+      - "${ORDER_PORT:-3005}"
+    ports:
+      - "${ORDER_PORT:-3005}:${ORDER_PORT:-3005}"
+    networks:
+      - avengers-network
+
+  api-gateway:
+    build:
+      context: ./avengers-coffee-system/api-gateway/gateway-root
+    container_name: avengers_api_gateway
+    restart: unless-stopped
+    depends_on:
+      identity-service:
+        condition: service_started
+      menu-service:
+        condition: service_started
+      inventory-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      PORT: ${GATEWAY_PORT:-3000}
+      IDENTITY_SERVICE_URL: http://identity-service:${IDENTITY_PORT:-3001}
+      MENU_SERVICE_URL: http://menu-service:${MENU_PORT:-3003}
+      INVENTORY_SERVICE_URL: http://inventory-service:${INVENTORY_PORT:-3004}
+      ORDER_SERVICE_URL: http://order-service:${ORDER_PORT:-3005}
+    ports:
+      - "${GATEWAY_PORT:-3000}:3000"
+    networks:
+      - avengers-network
+
+  web-customer:
+    build:
+      context: ./avengers-coffee-system/apps/web-customer
+      args:
+        VITE_API_URL: ${WEB_CUSTOMER_API_URL:-http://localhost:3000}
+        VITE_SOCKET_URL: ${WEB_CUSTOMER_SOCKET_URL:-http://localhost:3005}
+    container_name: avengers_web_customer
+    restart: unless-stopped
+    depends_on:
+      api-gateway:
+        condition: service_started
+    ports:
+      - "${WEB_CUSTOMER_PORT:-5173}:80"
+    networks:
+      - avengers-network
+
+  web-admin:
+    build:
+      context: ./avengers-coffee-system/apps/web-admin
+      args:
+        VITE_API_URL: ${WEB_ADMIN_API_URL:-http://localhost:3000}
+    container_name: avengers_web_admin
+    restart: unless-stopped
+    depends_on:
+      api-gateway:
+        condition: service_started
+    ports:
+      - "${WEB_ADMIN_PORT:-5174}:80"
+    networks:
+      - avengers-network
+
+volumes:
+  avengers_pgdata:
+
+networks:
+  avengers-network:
+    driver: bridge

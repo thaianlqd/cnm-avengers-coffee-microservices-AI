@@ -1,0 +1,17 @@
+export const queryKeys = {
+  menuProducts: ['menu', 'san-pham'],
+  menuCategories: ['menu', 'danh-muc'],
+  cartByUser: (userId) => ['cart', userId],
+  userProfile: (userId) => ['users', 'profile', userId],
+  userAddresses: (userId) => ['users', 'addresses', userId],
+  loyaltyByUser: (userId) => ['users', 'loyalty', userId],
+  orderHistoryRoot: ['orders', 'history'],
+  orderHistory: (userId, filters) => ['orders', 'history', userId, filters],
+  orderStatus: (userId, orderId) => ['orders', 'status', userId, orderId],
+  notificationsRoot: ['notifications'],
+  notificationsByUser: (userId) => ['notifications', userId],
+  productReviews: (productId) => ['products', 'reviews', productId],
+  userProductReview: (productId, userId) => ['products', 'reviews', productId, 'user', userId],
+  userReviews: (userId) => ['reviews', 'user', userId],
+  voucherList: ['vouchers', 'list'],
+};
