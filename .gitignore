@@ -40,8 +40,4 @@ pnpm-debug.log*
 *.temp
 
 # Local database backups / dumps
-scripts/backups/
-*.sql
-
-# Keep docs SQL if needed in future by whitelist pattern example:
-# !scripts/backups/example.sql
+# SQL files are kept in repo so teammates can restore and run the project quickly.
