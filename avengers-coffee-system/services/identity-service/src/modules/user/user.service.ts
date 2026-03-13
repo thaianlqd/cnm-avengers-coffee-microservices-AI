@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, OnModuleInit, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DeliveryAddress } from './delivery-address.entity';
@@ -7,13 +7,17 @@ import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 
 @Injectable()
-export class UserService {
+export class UserService implements OnModuleInit {
   constructor(
     @InjectRepository(User)
     private userRepo: Repository<User>,
     @InjectRepository(DeliveryAddress)
     private deliveryAddressRepo: Repository<DeliveryAddress>,
   ) {}
+
+  async onModuleInit() {
+    await this.seedDefaultStoreStaffAccount();
+  }
 
   async register(data: any) {
     const { email, password, hoTen } = data;
@@ -37,13 +41,21 @@ export class UserService {
   }
 
   async login(data: any) {
-    const { email, password } = data;
-    const user = await this.userRepo.findOne({ where: { email } });
+    const identifier = String(data?.email || data?.tai_khoan || data?.tenDangNhap || '').trim();
+    const password = String(data?.password || data?.mat_khau || '');
 
-    if (!user) throw new UnauthorizedException('Email không tồn tại bác ạ!');
+    if (!identifier || !password) {
+      throw new BadRequestException('Vui lòng nhập tài khoản và mật khẩu');
+    }
+
+    const user = await this.userRepo.findOne({
+      where: [{ email: identifier }, { ten_dang_nhap: identifier }],
+    });
+
+    if (!user) throw new UnauthorizedException('Tài khoản không tồn tại');
 
     const isMatch = await bcrypt.compare(password, user.mat_khau_hash);
-    if (!isMatch) throw new UnauthorizedException('Sai mật khẩu rồi!');
+    if (!isMatch) throw new UnauthorizedException('Sai mật khẩu');
 
     // Trả về đúng format để Frontend AuthModal.jsx của bác đọc được
     return {
@@ -51,9 +63,38 @@ export class UserService {
       user: {
         ma_nguoi_dung: user.ma_nguoi_dung,
         hoTen: user.ho_ten,
+        tenDangNhap: user.ten_dang_nhap,
         email: user.email
       }
     };
+  }
+
+  private async seedDefaultStoreStaffAccount() {
+    const defaultUsername = process.env.STORE_ADMIN_USERNAME || 'thaian_admin';
+    const defaultPassword = process.env.STORE_ADMIN_PASSWORD || '123456';
+    const defaultName = process.env.STORE_ADMIN_NAME || 'Thái An (Nhân viên cửa hàng)';
+
+    const existed = await this.userRepo.findOne({
+      where: [{ ten_dang_nhap: defaultUsername }, { email: defaultUsername }],
+    });
+
+    if (existed) {
+      return;
+    }
+
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(defaultPassword, salt);
+
+    const seededUser = this.userRepo.create({
+      ma_nguoi_dung: randomUUID(),
+      ten_dang_nhap: defaultUsername,
+      email: defaultUsername,
+      mat_khau_hash: hashedPassword,
+      ho_ten: defaultName,
+      trang_thai: 'ACTIVE',
+    });
+
+    await this.userRepo.save(seededUser);
   }
 
   async layThongTinCaNhan(maNguoiDung: string) {

@@ -31,6 +31,18 @@ export class DonHang {
   @Column({ type: 'text', nullable: true })
   ghi_chu: string | null;
 
+  @Column({ type: 'varchar', nullable: true })
+  loai_don_hang: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  ma_ban: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  ten_khach_hang: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  ten_thu_ngan: string | null;
+
   @Column({ type: 'varchar' })
   phuong_thuc_thanh_toan: string;
 

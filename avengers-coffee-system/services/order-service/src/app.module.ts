@@ -11,6 +11,7 @@ import { ThongBao } from './modules/notification/entities/thong-bao.entity';
 import { DonHang } from './modules/thanh-toan/entities/don-hang.entity';
 import { ChiTietDonHang } from './modules/thanh-toan/entities/chi-tiet-don-hang.entity';
 import { GiaoDichThanhToan } from './modules/thanh-toan/entities/giao-dich-thanh-toan.entity';
+import { CaDoiSoat } from './modules/thanh-toan/entities/ca-doi-soat.entity';
 import { Review } from './entities/review.entity';
 import { ReviewService } from './services/review.service';
 import { ReviewController } from './controllers/review.controller';
@@ -49,7 +50,7 @@ const orderSchema = process.env.DB_SCHEMA || 'orders';
           password,
           database,
           schema: orderSchema,
-          entities: [CartItem, DonHang, ChiTietDonHang, GiaoDichThanhToan, ThongBao, Review, Voucher],
+          entities: [CartItem, DonHang, ChiTietDonHang, GiaoDichThanhToan, CaDoiSoat, ThongBao, Review, Voucher],
           synchronize: true,
         };
       },

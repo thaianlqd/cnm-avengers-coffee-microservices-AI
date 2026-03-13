@@ -29,7 +29,7 @@ async function bootstrap() {
     createProxyMiddleware({
       target: process.env.ORDER_SERVICE_URL || 'http://localhost:3005',
       changeOrigin: true,
-      pathFilter: ['/cart', '/customers', '/products', '/reviews', '/vouchers'],
+      pathFilter: ['/cart', '/customers', '/staff', '/products', '/reviews', '/vouchers'],
     }),
   );
 

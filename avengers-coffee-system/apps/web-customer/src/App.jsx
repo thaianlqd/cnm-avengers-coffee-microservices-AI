@@ -393,7 +393,7 @@ function AppContent() {
     let list = [...products];
 
     if (selectedCatId !== 'all') {
-      list = list.filter((p) => p.danhMuc?.ma_danh_muc === selectedCatId);
+      list = list.filter((p) => String(p.danhMuc?.ma_danh_muc) === selectedCatId);
     }
 
     if (searchKeyword.trim()) {
@@ -1578,15 +1578,15 @@ function AppContent() {
                 {categories.map((cat) => (
                   <button
                     key={cat.ma_danh_muc}
-                    onClick={() => setSelectedCatId(cat.ma_danh_muc)}
+                    onClick={() => setSelectedCatId(String(cat.ma_danh_muc))}
                     className="group flex flex-col items-center min-w-[90px] transition-all"
                   >
                     <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center text-2xl mb-3 transition-all ${
-                      selectedCatId === cat.ma_danh_muc ? 'bg-tch-orange shadow-lg border-none' : 'bg-white border border-gray-100 shadow-sm'
+                      selectedCatId === String(cat.ma_danh_muc) ? 'bg-tch-orange shadow-lg border-none' : 'bg-white border border-gray-100 shadow-sm'
                     }`}>
                       {ICON_MAP[cat.ten_danh_muc] || ICON_MAP.default}
                     </div>
-                    <span className={`text-[11px] font-black uppercase tracking-widest ${selectedCatId === cat.ma_danh_muc ? 'text-tch-orange' : 'text-gray-400'}`}>
+                    <span className={`text-[11px] font-black uppercase tracking-widest ${selectedCatId === String(cat.ma_danh_muc) ? 'text-tch-orange' : 'text-gray-400'}`}>
                       {cat.ten_danh_muc}
                     </span>
                   </button>
@@ -1607,7 +1607,7 @@ function AppContent() {
                     </li>
                     {categories.map((cat) => (
                       <li key={cat.ma_danh_muc}>
-                        <button onClick={() => setSelectedCatId(cat.ma_danh_muc)} className={`text-[14px] font-black uppercase text-left transition-colors ${selectedCatId === cat.ma_danh_muc ? 'text-tch-orange' : 'text-gray-500'}`}>
+                        <button onClick={() => setSelectedCatId(String(cat.ma_danh_muc))} className={`text-[14px] font-black uppercase text-left transition-colors ${selectedCatId === String(cat.ma_danh_muc) ? 'text-tch-orange' : 'text-gray-500'}`}>
                           {cat.ten_danh_muc}
                         </button>
                       </li>
@@ -1618,7 +1618,7 @@ function AppContent() {
 
               <div className="flex-1">
                 <h2 className="text-3xl font-black text-gray-800 uppercase mb-10 tracking-tighter">
-                  {selectedCatId === 'all' ? 'Tất cả sản phẩm' : categories.find((c) => c.ma_danh_muc === selectedCatId)?.ten_danh_muc}
+                  {selectedCatId === 'all' ? 'Tất cả sản phẩm' : categories.find((c) => String(c.ma_danh_muc) === selectedCatId)?.ten_danh_muc}
                 </h2>
 
                 {loading ? (
