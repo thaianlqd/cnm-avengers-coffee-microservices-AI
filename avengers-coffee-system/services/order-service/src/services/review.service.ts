@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Review } from '../entities/review.entity';
@@ -25,11 +25,19 @@ export class ReviewService {
       return reviews;
     }
 
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const validUuidUserIds = userIds.filter((id) => uuidRegex.test(id));
+
+    if (!validUuidUserIds.length) {
+      return reviews;
+    }
+
     const users = await this.reviewRepo.manager.query(
       `SELECT ma_nguoi_dung, ho_ten, email
        FROM "${identitySchema}"."nguoi_dung"
        WHERE ma_nguoi_dung = ANY($1::uuid[])`,
-      [userIds],
+      [validUuidUserIds],
     );
 
     const userMap = new Map(
@@ -54,6 +62,10 @@ export class ReviewService {
     maDonHang?: string;
   }) {
     const { maSanPham, maNguoiDung, soSao, binhLuan, maDonHang } = payload;
+
+    if (soSao < 1 || soSao > 5) {
+      throw new BadRequestException('soSao phai trong khoang 1 den 5');
+    }
 
     // Kiểm tra xem user đã review sản phẩm này chưa
     const existing = await this.reviewRepo.findOne({
@@ -158,7 +170,7 @@ export class ReviewService {
     });
 
     if (!review) {
-      throw new Error('Review khong ton tai');
+      throw new NotFoundException('Review khong ton tai');
     }
 
     if (payload.soSao !== undefined) {
@@ -179,7 +191,7 @@ export class ReviewService {
     });
 
     if (!review) {
-      throw new Error('Review khong ton tai');
+      throw new NotFoundException('Review khong ton tai');
     }
 
     await this.reviewRepo.remove(review);

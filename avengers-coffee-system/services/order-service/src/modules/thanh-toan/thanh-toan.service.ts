@@ -98,8 +98,11 @@ export class ThanhToanService {
       ? 'CHO_THANH_TOAN_KHI_NHAN_HANG'
       : 'CHO_XU_LY';
 
+    const maDonHang = crypto.randomUUID();
+
     // 1. Tạo đơn hàng
     const donHang = await this.donHangRepo.save(this.donHangRepo.create({
+      ma_don_hang: maDonHang,
       ma_nguoi_dung: maNguoiDung,
       tong_tien: tongTien,
       ma_voucher: maVoucherApDung,
