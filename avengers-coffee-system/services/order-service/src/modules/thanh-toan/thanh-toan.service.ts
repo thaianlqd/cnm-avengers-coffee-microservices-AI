@@ -213,6 +213,26 @@ export class ThanhToanService {
     };
   }
 
+
+  async suaCaLamViec(maCa: string, input: { cash_open?: number; cash_close?: number; note?: string; staff_name?: string }) {
+    const ca = await this.caDoiSoatRepo.findOne({ where: { ma_ca: maCa } });
+    if (!ca) throw new NotFoundException('Khong tim thay ca lam viec');
+    if (input.cash_open !== undefined) ca.tien_dau_ca = Number(input.cash_open);
+    if (input.cash_close !== undefined) ca.tien_cuoi_ca = Number(input.cash_close);
+    if (input.note !== undefined) ca.ghi_chu = input.note?.trim() || null;
+    if (input.staff_name !== undefined) ca.ten_nhan_vien = input.staff_name?.trim() || null;
+    ca.tien_mat_ky_vong = Number(ca.tien_dau_ca) + Number(ca.tien_mat_he_thong);
+    ca.chenh_lech = Number(ca.tien_cuoi_ca) - Number(ca.tien_mat_ky_vong);
+    const updated = await this.caDoiSoatRepo.save(ca);
+    return { message: 'Cap nhat ca thanh cong', ma_ca: updated.ma_ca };
+  }
+
+  async xoaCaLamViec(maCa: string) {
+    const ca = await this.caDoiSoatRepo.findOne({ where: { ma_ca: maCa } });
+    if (!ca) throw new NotFoundException('Khong tim thay ca lam viec');
+    await this.caDoiSoatRepo.remove(ca);
+    return { message: 'Xoa ca thanh cong', ma_ca: maCa };
+  }
   async khoiTaoThanhToan(maNguoiDung: string, dto: KhoiTaoThanhToanDto, ipAddr = '127.0.0.1') {
     if (!dto.dia_chi_giao_hang?.trim()) {
       throw new BadRequestException('dia_chi_giao_hang la bat buoc');

@@ -6,6 +6,7 @@ import { LoginScreen } from './features/admin-dashboard/components/LoginScreen'
 import { OverviewPanel } from './features/admin-dashboard/components/OverviewPanel'
 import { OrdersPanel } from './features/admin-dashboard/components/OrdersPanel'
 import { MenuPanel } from './features/admin-dashboard/components/MenuPanel'
+import { ShiftPanel } from './features/admin-dashboard/components/ShiftPanel'
 
 function App() {
   const {
@@ -54,6 +55,8 @@ function App() {
     capNhatTonKho,
     capNhatTrangThaiBanMon,
     chotCaTienMat,
+    suaCaLamViec,
+    xoaCaLamViec,
     addPosItem,
     updatePosItem,
     removePosItem,
@@ -130,94 +133,25 @@ function App() {
         {activeTab === 'menu' && (
           <MenuPanel
             inventoryState={inventoryState}
-            stockDrafts={stockDrafts}
-            setStockDrafts={setStockDrafts}
-            savingStockId={savingStockId}
             savingMenuStatusId={savingMenuStatusId}
-            onSaveStock={capNhatTonKho}
             onToggleSelling={capNhatTrangThaiBanMon}
           />
         )}
 
         {activeTab === 'shift' && (
-          <section className="panel split">
-            <div>
-              <div className="panel-head">
-                <h2>Đối soát tiền mặt cuối ca</h2>
-                <span>Hỗ trợ chốt ca hằng ngày</span>
-              </div>
-              <label htmlFor="shift-from">Bắt đầu ca</label>
-              <input
-                id="shift-from"
-                type="datetime-local"
-                value={shiftRange.from ? shiftRange.from.slice(0, 16) : ''}
-                onChange={(e) =>
-                  setShiftRange((prev) => ({
-                    ...prev,
-                    from: e.target.value ? new Date(e.target.value).toISOString() : prev.from,
-                  }))
-                }
-              />
-              <label htmlFor="shift-to">Kết thúc ca</label>
-              <input
-                id="shift-to"
-                type="datetime-local"
-                value={shiftRange.to ? shiftRange.to.slice(0, 16) : ''}
-                onChange={(e) =>
-                  setShiftRange((prev) => ({
-                    ...prev,
-                    to: e.target.value ? new Date(e.target.value).toISOString() : prev.to,
-                  }))
-                }
-              />
-              <label htmlFor="cash-open">Tiền đầu ca</label>
-              <input
-                id="cash-open"
-                type="number"
-                value={shiftInput.cashOpen}
-                onChange={(e) => setShiftInput((prev) => ({ ...prev, cashOpen: Number(e.target.value) || 0 }))}
-              />
-              <label htmlFor="cash-close">Tiền cuối ca</label>
-              <input
-                id="cash-close"
-                type="number"
-                value={shiftInput.cashClose}
-                onChange={(e) => setShiftInput((prev) => ({ ...prev, cashClose: Number(e.target.value) || 0 }))}
-              />
-              <label htmlFor="shift-note">Ghi chú ca làm</label>
-              <textarea
-                id="shift-note"
-                value={shiftInput.note}
-                onChange={(e) => setShiftInput((prev) => ({ ...prev, note: e.target.value }))}
-                placeholder="Sự cố hoặc ghi chú bàn giao cho ca sau"
-              />
-              {shiftStatus.error ? <p className="error-text">{shiftStatus.error}</p> : null}
-              {shiftStatus.success ? <p>{shiftStatus.success}</p> : null}
-            </div>
-            <div className="shift-result">
-              <h3>Chênh lệch tiền mặt</h3>
-              <p>{fmtMoney(shiftPreview?.reconciliation?.difference ?? shiftInput.cashClose - shiftInput.cashOpen)}</p>
-              <small>Tổng đơn trong ca: {shiftPreview?.system?.total_orders ?? 0}</small>
-              <small>Doanh thu hệ thống: {fmtMoney(shiftPreview?.system?.total_revenue ?? 0)}</small>
-              <small>Thu tiền mặt theo hệ thống: {fmtMoney(shiftPreview?.system?.cash_revenue ?? 0)}</small>
-              <small>Tiền mặt kỳ vọng cuối ca: {fmtMoney(shiftPreview?.reconciliation?.expected_cash_close ?? 0)}</small>
-              <small>Thanh toán online cần tách báo cáo riêng trước khi xác nhận chốt ca.</small>
-              <button type="button" onClick={chotCaTienMat} disabled={closingShift || shiftStatus.loading}>
-                {closingShift ? 'Đang chốt ca...' : 'Xác nhận chốt ca'}
-              </button>
-
-              {shiftHistory.length ? (
-                <div className="pos-created-box">
-                  <h3>Lịch sử chốt ca gần đây</h3>
-                  {shiftHistory.map((item) => (
-                    <p key={item.ma_ca}>
-                      {new Date(item.created_at).toLocaleString('vi-VN')} - Chênh lệch {fmtMoney(item.difference)}
-                    </p>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          </section>
+          <ShiftPanel
+            shiftRange={shiftRange}
+            setShiftRange={setShiftRange}
+            shiftInput={shiftInput}
+            setShiftInput={setShiftInput}
+            shiftPreview={shiftPreview}
+            shiftHistory={shiftHistory}
+            shiftStatus={shiftStatus}
+            closingShift={closingShift}
+            chotCaTienMat={chotCaTienMat}
+            suaCaLamViec={suaCaLamViec}
+            xoaCaLamViec={xoaCaLamViec}
+          />
         )}
 
         {activeTab === 'pos' && (

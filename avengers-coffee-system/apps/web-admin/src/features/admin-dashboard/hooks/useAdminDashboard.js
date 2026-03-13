@@ -130,7 +130,7 @@ export function useAdminDashboard() {
 
   const taiLichSuChotCa = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/staff/shifts/history?limit=8`)
+      const response = await fetch(`${API_BASE_URL}/staff/shifts/history?limit=50`)
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) {
         throw new Error(payload?.message || 'Khong tai duoc lich su chot ca')
@@ -163,6 +163,37 @@ export function useAdminDashboard() {
     } catch (error) {
       setShiftPreview(null)
       setShiftStatus((prev) => ({ ...prev, loading: false, error: error.message || 'Khong xem truoc doi soat duoc' }))
+    }
+  }
+
+  const xoaCaLamViec = async (maCa) => {
+    if (!window.confirm('Xác nhận xóa ca này? Không thể hoàn tác.')) return
+    try {
+      const response = await fetch(`${API_BASE_URL}/staff/shifts/${maCa}`, { method: 'DELETE' })
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}))
+        throw new Error(payload?.message || 'Xóa ca thất bại')
+      }
+      await taiLichSuChotCa()
+    } catch (error) {
+      setShiftStatus((prev) => ({ ...prev, error: error.message }))
+    }
+  }
+
+  const suaCaLamViec = async (maCa, fields) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/staff/shifts/${maCa}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fields),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Cập nhật ca thất bại')
+      await taiLichSuChotCa()
+      return true
+    } catch (error) {
+      setShiftStatus((prev) => ({ ...prev, error: error.message }))
+      return false
     }
   }
 
@@ -793,6 +824,8 @@ export function useAdminDashboard() {
     capNhatTonKho,
     capNhatTrangThaiBanMon,
     chotCaTienMat,
+      suaCaLamViec,
+      xoaCaLamViec,
     addPosItem,
     updatePosItem,
     removePosItem,

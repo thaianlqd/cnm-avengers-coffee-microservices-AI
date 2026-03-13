@@ -8,6 +8,24 @@ import {
 import { fmtMoney, normalizeViText, paymentTag } from '../utils'
 
 export function OverviewPanel({ totals, overviewData, overviewRange, setOverviewRange }) {
+  const donutRows = overviewData.paymentRows.slice(0, 4)
+  const donutTotal = Math.max(
+    1,
+    donutRows.reduce((sum, row) => sum + Number(row.count || 0), 0),
+  )
+  let donutStart = 0
+  const donutStops = donutRows.map((row) => {
+    const percent = (Number(row.count || 0) / donutTotal) * 100
+    const end = donutStart + percent
+    const stop = `${PAYMENT_COLOR[row.code] || '#d65a12'} ${donutStart}% ${end}%`
+    donutStart = end
+    return stop
+  })
+  if (donutStart < 100) {
+    donutStops.push(`#efe3d8 ${donutStart}% 100%`)
+  }
+  const donutBackground = `conic-gradient(${donutStops.join(', ')})`
+
   return (
     <>
       <section className="stats-grid">
@@ -165,6 +183,34 @@ export function OverviewPanel({ totals, overviewData, overviewRange, setOverview
             <span>Đang bán: {overviewData.stockSummary.available}</span>
             <span>Sắp hết: {overviewData.stockSummary.lowStock}</span>
             <span>Tạm hết: {overviewData.stockSummary.outOfStock}</span>
+          </div>
+        </article>
+
+        <article className="chart-card chart-card-glow">
+          <div className="panel-head">
+            <h2>Biểu đồ tròn thanh toán</h2>
+            <span>Tỷ trọng theo số lượng đơn</span>
+          </div>
+          <div className="donut-wrap">
+            <div className="donut-chart" style={{ background: donutBackground }}>
+              <div className="donut-hole">
+                <strong>{overviewData.paymentTotal || 0}</strong>
+                <small>đơn</small>
+              </div>
+            </div>
+            <div className="donut-legend">
+              {donutRows.length === 0 ? <p>Chưa có dữ liệu.</p> : null}
+              {donutRows.map((row) => {
+                const percent = Math.round((Number(row.count || 0) / donutTotal) * 100)
+                return (
+                  <div key={row.code} className="donut-legend-row">
+                    <span className="donut-dot" style={{ background: PAYMENT_COLOR[row.code] || '#d65a12' }} />
+                    <strong>{PAYMENT_METHOD_LABEL[row.code] || row.code}</strong>
+                    <span>{percent}%</span>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </article>
 

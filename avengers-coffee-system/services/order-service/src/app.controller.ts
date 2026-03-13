@@ -211,6 +211,19 @@ export class AppController {
 
   @Get('staff/shifts/history')
   getShiftHistory(@Query('limit') limit?: string) {
-    return this.thanhToanService.layLichSuChotCa(Number(limit || 10));
+    return this.thanhToanService.layLichSuChotCa(Number(limit || 20));
+  }
+
+  @Patch('staff/shifts/:id')
+  updateShift(
+    @Param('id') id: string,
+    @Body() payload: { cash_open?: number; cash_close?: number; note?: string; staff_name?: string },
+  ) {
+    return this.thanhToanService.suaCaLamViec(id, payload);
+  }
+
+  @Delete('staff/shifts/:id')
+  deleteShift(@Param('id') id: string) {
+    return this.thanhToanService.xoaCaLamViec(id);
   }
 }
