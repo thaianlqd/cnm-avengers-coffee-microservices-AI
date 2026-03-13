@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { DeliveryAddress } from './delivery-address.entity';
 import { User } from './user.entity';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class UserService {
@@ -24,6 +25,7 @@ export class UserService {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const newUser = this.userRepo.create({
+      ma_nguoi_dung: randomUUID(),
       email,
       ten_dang_nhap: email, 
       mat_khau_hash: hashedPassword,
