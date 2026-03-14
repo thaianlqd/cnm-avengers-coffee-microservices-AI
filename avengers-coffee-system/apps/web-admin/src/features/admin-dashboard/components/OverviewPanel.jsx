@@ -8,6 +8,9 @@ import {
 import { fmtMoney, normalizeViText, paymentTag } from '../utils'
 
 export function OverviewPanel({ totals, overviewData, overviewRange, setOverviewRange }) {
+  const miniSeries = (overviewData.hourly || []).slice(-6)
+  const miniMax = Math.max(1, ...miniSeries.map((item) => Number(item.value || 0)))
+
   const donutRows = overviewData.paymentRows.slice(0, 4)
   const donutTotal = Math.max(
     1,
@@ -66,6 +69,25 @@ export function OverviewPanel({ totals, overviewData, overviewRange, setOverview
             ))}
           </div>
           <small>Dữ liệu biểu đồ và KPI sẽ cập nhật theo khoảng thời gian đã chọn.</small>
+
+          <div className="filter-mini-chart" role="img" aria-label="Biểu đồ đơn theo 6 mốc giờ gần nhất">
+            {miniSeries.length === 0 ? (
+              <p>Chưa có dữ liệu theo giờ.</p>
+            ) : (
+              miniSeries.map((point) => {
+                const height = Math.max(12, Math.round((Number(point.value || 0) / miniMax) * 68))
+                return (
+                  <div key={point.key} className="filter-mini-bar-col">
+                    <span className="filter-mini-value">{point.value}</span>
+                    <div className="filter-mini-track">
+                      <div className="filter-mini-fill" style={{ height: `${height}%` }} />
+                    </div>
+                    <small>{point.label}</small>
+                  </div>
+                )
+              })
+            )}
+          </div>
         </article>
 
         <article className="chart-card chart-card-glow chart-span-2">

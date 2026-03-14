@@ -3,7 +3,7 @@ import { API_BASE_URL, ORDER_STATUSES, OVERVIEW_TIME_RANGES, PAYMENT_METHOD_LABE
 import { cutTimeByRange, normalizeViText, toDateKey, toDateLabel } from '../utils'
 
 export function useAdminDashboard() {
-  const [loginForm, setLoginForm] = useState({ identifier: 'thaian_admin', password: '123456' })
+  const [loginForm, setLoginForm] = useState({ identifier: 'thaian_staff', password: '123456' })
   const [loginStatus, setLoginStatus] = useState({ loading: false, error: '' })
   const [session, setSession] = useState(() => {
     const raw = window.localStorage.getItem('adminSession')
@@ -35,6 +35,7 @@ export function useAdminDashboard() {
   const [shiftHistory, setShiftHistory] = useState([])
   const [shiftStatus, setShiftStatus] = useState({ loading: false, error: '', success: '' })
   const [closingShift, setClosingShift] = useState(false)
+  const [approvingShiftId, setApprovingShiftId] = useState('')
   const [posForm, setPosForm] = useState({
     loai_don_hang: 'TAI_CHO',
     phuong_thuc_thanh_toan: 'THANH_TOAN_KHI_NHAN_HANG',
@@ -47,6 +48,22 @@ export function useAdminDashboard() {
   const [creatingPosOrder, setCreatingPosOrder] = useState(false)
   const [posStatus, setPosStatus] = useState({ error: '', success: '' })
   const [lastPosOrder, setLastPosOrder] = useState(null)
+  const [workShiftForm, setWorkShiftForm] = useState(() => ({
+    staff_username: 'thaian_staff',
+    staff_name: '',
+    shift_date: new Date().toISOString().slice(0, 10),
+    shift_template: '2_CA',
+    shift_code: 'SANG',
+    note: '',
+  }))
+  const [workShiftState, setWorkShiftState] = useState({ loading: false, error: '', items: [] })
+  const [myWorkShiftState, setMyWorkShiftState] = useState({ loading: false, error: '', items: [] })
+  const [workforceUsersState, setWorkforceUsersState] = useState({ loading: false, error: '', items: [] })
+  const [creatingWorkShift, setCreatingWorkShift] = useState(false)
+  const [updatingWorkShiftId, setUpdatingWorkShiftId] = useState('')
+
+  const sessionUsername = session?.user?.tenDangNhap || session?.user?.email || ''
+  const sessionRole = session?.user?.vaiTro || session?.user?.vai_tro || 'STAFF'
 
   const refreshOrders = async () => {
     setOrdersState((prev) => ({ ...prev, loading: true, error: '' }))
@@ -128,6 +145,54 @@ export function useAdminDashboard() {
     return () => window.clearInterval(timer)
   }, [session])
 
+  const taiLichLamViecManager = async () => {
+    setWorkShiftState((prev) => ({ ...prev, loading: true, error: '' }))
+    try {
+      const response = await fetch(`${API_BASE_URL}/manager/work-shifts`)
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc lich lam viec')
+      setWorkShiftState({ loading: false, error: '', items: payload?.items || [] })
+    } catch (error) {
+      setWorkShiftState({ loading: false, error: error.message || 'Khong tai duoc lich lam viec', items: [] })
+    }
+  }
+
+  const taiDanhSachNhanSu = async () => {
+    setWorkforceUsersState((prev) => ({ ...prev, loading: true, error: '' }))
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/workforce?role=STAFF`)
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc danh sach nhan vien')
+      setWorkforceUsersState({ loading: false, error: '', items: payload?.items || [] })
+    } catch (error) {
+      setWorkforceUsersState({ loading: false, error: error.message || 'Khong tai duoc danh sach nhan vien', items: [] })
+    }
+  }
+
+  const taiLichLamViecCuaToi = async () => {
+    if (!sessionUsername) return
+    setMyWorkShiftState((prev) => ({ ...prev, loading: true, error: '' }))
+    try {
+      const params = new URLSearchParams({ staff_username: sessionUsername })
+      const response = await fetch(`${API_BASE_URL}/staff/work-shifts?${params.toString()}`)
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc lich ca cua ban')
+      setMyWorkShiftState({ loading: false, error: '', items: payload?.items || [] })
+    } catch (error) {
+      setMyWorkShiftState({ loading: false, error: error.message || 'Khong tai duoc lich ca cua ban', items: [] })
+    }
+  }
+
+  useEffect(() => {
+    if (!session) return
+
+    taiLichLamViecCuaToi()
+    if (sessionRole === 'MANAGER') {
+      taiLichLamViecManager()
+      taiDanhSachNhanSu()
+    }
+  }, [session])
+
   const taiLichSuChotCa = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/staff/shifts/history?limit=50`)
@@ -194,6 +259,34 @@ export function useAdminDashboard() {
     } catch (error) {
       setShiftStatus((prev) => ({ ...prev, error: error.message }))
       return false
+    }
+  }
+
+  const pheDuyetCaLamViec = async (maCa, payload) => {
+    setApprovingShiftId(maCa)
+    setShiftStatus((prev) => ({ ...prev, error: '', success: '' }))
+    try {
+      const response = await fetch(`${API_BASE_URL}/manager/shifts/${maCa}/approval`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...payload,
+          manager_name: sessionUsername || 'manager',
+        }),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result?.message || 'Khong phe duyet doi soat duoc')
+      setShiftStatus((prev) => ({
+        ...prev,
+        success: payload.status === 'APPROVED' ? 'Da phe duyet bien ban doi soat.' : 'Da tu choi bien ban doi soat.',
+      }))
+      await taiLichSuChotCa()
+      return true
+    } catch (error) {
+      setShiftStatus((prev) => ({ ...prev, error: error.message || 'Khong phe duyet doi soat duoc' }))
+      return false
+    } finally {
+      setApprovingShiftId('')
     }
   }
 
@@ -717,6 +810,68 @@ export function useAdminDashboard() {
     }
   }
 
+  const taoLichLamViec = async (event) => {
+    event.preventDefault()
+    setCreatingWorkShift(true)
+    setWorkShiftState((prev) => ({ ...prev, error: '' }))
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/manager/work-shifts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...workShiftForm,
+          manager_username: sessionUsername || 'manager',
+        }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Khong tao duoc lich lam viec')
+      setWorkShiftForm((prev) => ({ ...prev, note: '' }))
+      await Promise.all([taiLichLamViecManager(), taiLichLamViecCuaToi()])
+    } catch (error) {
+      setWorkShiftState((prev) => ({ ...prev, error: error.message || 'Khong tao duoc lich lam viec' }))
+    } finally {
+      setCreatingWorkShift(false)
+    }
+  }
+
+  const capNhatChamCong = async (workShiftId, fields) => {
+    setUpdatingWorkShiftId(workShiftId)
+    setWorkShiftState((prev) => ({ ...prev, error: '' }))
+    try {
+      const response = await fetch(`${API_BASE_URL}/manager/work-shifts/${workShiftId}/attendance`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fields),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Khong cap nhat cham cong duoc')
+      await Promise.all([taiLichLamViecManager(), taiLichLamViecCuaToi()])
+    } catch (error) {
+      setWorkShiftState((prev) => ({ ...prev, error: error.message || 'Khong cap nhat cham cong duoc' }))
+    } finally {
+      setUpdatingWorkShiftId('')
+    }
+  }
+
+  const xoaLichLamViec = async (workShiftId) => {
+    if (!window.confirm('Xoa lich lam viec nay?')) return
+    setUpdatingWorkShiftId(workShiftId)
+    setWorkShiftState((prev) => ({ ...prev, error: '' }))
+    try {
+      const response = await fetch(`${API_BASE_URL}/manager/work-shifts/${workShiftId}`, {
+        method: 'DELETE',
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Khong xoa duoc lich lam viec')
+      await Promise.all([taiLichLamViecManager(), taiLichLamViecCuaToi()])
+    } catch (error) {
+      setWorkShiftState((prev) => ({ ...prev, error: error.message || 'Khong xoa duoc lich lam viec' }))
+    } finally {
+      setUpdatingWorkShiftId('')
+    }
+  }
+
   const inHoaDonPos = () => {
     if (!lastPosOrder?.order) return
 
@@ -802,6 +957,7 @@ export function useAdminDashboard() {
     shiftHistory,
     shiftStatus,
     closingShift,
+    approvingShiftId,
     posForm,
     setPosForm,
     posItems,
@@ -816,6 +972,13 @@ export function useAdminDashboard() {
     creatingPosOrder,
     posStatus,
     lastPosOrder,
+    workShiftForm,
+    setWorkShiftForm,
+    workShiftState,
+    myWorkShiftState,
+    workforceUsersState,
+    creatingWorkShift,
+    updatingWorkShiftId,
     totals,
     overviewData,
     login,
@@ -826,10 +989,14 @@ export function useAdminDashboard() {
     chotCaTienMat,
       suaCaLamViec,
       xoaCaLamViec,
+    pheDuyetCaLamViec,
     addPosItem,
     updatePosItem,
     removePosItem,
     taoDonTaiQuay,
     inHoaDonPos,
+    taoLichLamViec,
+    capNhatChamCong,
+    xoaLichLamViec,
   }
 }

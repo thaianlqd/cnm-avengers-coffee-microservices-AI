@@ -12,11 +12,15 @@ import { DonHang } from './modules/thanh-toan/entities/don-hang.entity';
 import { ChiTietDonHang } from './modules/thanh-toan/entities/chi-tiet-don-hang.entity';
 import { GiaoDichThanhToan } from './modules/thanh-toan/entities/giao-dich-thanh-toan.entity';
 import { CaDoiSoat } from './modules/thanh-toan/entities/ca-doi-soat.entity';
+import { CaLamViecNhanVien } from './modules/thanh-toan/entities/ca-lam-viec-nhan-vien.entity';
 import { Review } from './entities/review.entity';
 import { ReviewService } from './services/review.service';
 import { ReviewController } from './controllers/review.controller';
 import { Voucher } from './modules/voucher/voucher.entity';
 import { VoucherModule } from './modules/voucher/voucher.module';
+import { ChatConversation } from './modules/chat/entities/chat-conversation.entity';
+import { ChatMessage } from './modules/chat/entities/chat-message.entity';
+import { ChatModule } from './modules/chat/chat.module';
 
 const orderSchema = process.env.DB_SCHEMA || 'orders';
 
@@ -50,7 +54,19 @@ const orderSchema = process.env.DB_SCHEMA || 'orders';
           password,
           database,
           schema: orderSchema,
-          entities: [CartItem, DonHang, ChiTietDonHang, GiaoDichThanhToan, CaDoiSoat, ThongBao, Review, Voucher],
+          entities: [
+            CartItem,
+            DonHang,
+            ChiTietDonHang,
+            GiaoDichThanhToan,
+            CaDoiSoat,
+            CaLamViecNhanVien,
+            ThongBao,
+            Review,
+            Voucher,
+            ChatConversation,
+            ChatMessage,
+          ],
           synchronize: true,
         };
       },
@@ -60,6 +76,7 @@ const orderSchema = process.env.DB_SCHEMA || 'orders';
     NotificationModule,
     ThanhToanModule,
     VoucherModule,
+    ChatModule,
   ],
   controllers: [AppController, ReviewController],
   providers: [AppService, ReviewService],

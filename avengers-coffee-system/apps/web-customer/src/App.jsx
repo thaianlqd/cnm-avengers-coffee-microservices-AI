@@ -8,6 +8,7 @@ import AuthModal from './components/AuthModal';
 import ProductDetailModal from './components/ProductDetailModal';
 import CartDrawer from './components/CartDrawer'; // File mới bước 2
 import OrderHistoryModal from './components/OrderHistoryModal';
+import ChatWidget from './components/ChatWidget';
 import { CartProvider, useCart } from './context/CartContext'; // File mới bước 2
 import { apiClient } from './lib/apiClient';
 import { queryKeys } from './lib/queryKeys';
@@ -1662,6 +1663,7 @@ function AppContent() {
       />
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} onLoginSuccess={handleLoginSuccess} />
       <Footer />
+  <ChatWidget user={user} socketUrl={socketUrl} />
 
       {notificationToast ? (
         <div className="fixed bottom-6 right-6 z-[150] w-[92vw] max-w-sm rounded-2xl border border-orange-100 bg-white/95 p-4 shadow-2xl shadow-orange-100 backdrop-blur">

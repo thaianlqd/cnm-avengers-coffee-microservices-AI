@@ -8,6 +8,12 @@ export const NAV_TABS = [
   { id: 'pos', label: 'POS tạo đơn nhanh' },
 ]
 
+export const WORKFORCE_TAB = { id: 'workforce', label: 'Lịch làm nhân sự' }
+export const DASHBOARD_ROLES = {
+  MANAGER: 'MANAGER',
+  STAFF: 'STAFF',
+}
+
 export const ORDER_STATUSES = ['MOI_TAO', 'DA_XAC_NHAN', 'DANG_CHUAN_BI', 'DANG_GIAO', 'HOAN_THANH', 'DA_HUY']
 
 export const ORDER_STATUS_LABEL = {

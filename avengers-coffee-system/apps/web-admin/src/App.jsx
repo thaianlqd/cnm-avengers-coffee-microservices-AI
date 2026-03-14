@@ -1,5 +1,5 @@
 import './App.css'
-import { NAV_TABS, ORDER_STATUS_LABEL, POS_ORDER_TYPE_OPTIONS, POS_PAYMENT_OPTIONS } from './features/admin-dashboard/constants'
+import { DASHBOARD_ROLES, NAV_TABS, ORDER_STATUS_LABEL, POS_ORDER_TYPE_OPTIONS, POS_PAYMENT_OPTIONS, WORKFORCE_TAB } from './features/admin-dashboard/constants'
 import { useAdminDashboard } from './features/admin-dashboard/hooks/useAdminDashboard'
 import { fmtMoney, normalizeViText } from './features/admin-dashboard/utils'
 import { LoginScreen } from './features/admin-dashboard/components/LoginScreen'
@@ -7,6 +7,9 @@ import { OverviewPanel } from './features/admin-dashboard/components/OverviewPan
 import { OrdersPanel } from './features/admin-dashboard/components/OrdersPanel'
 import { MenuPanel } from './features/admin-dashboard/components/MenuPanel'
 import { ShiftPanel } from './features/admin-dashboard/components/ShiftPanel'
+import { ManagerWorkforcePanel } from './features/manager-dashboard/components/ManagerWorkforcePanel'
+import { StaffWorkShiftsPanel } from './features/staff-dashboard/components/StaffWorkShiftsPanel'
+import { AdminChatWidget } from './features/admin-dashboard/components/AdminChatWidget'
 
 function App() {
   const {
@@ -33,6 +36,7 @@ function App() {
     shiftHistory,
     shiftStatus,
     closingShift,
+    approvingShiftId,
     posForm,
     setPosForm,
     posItems,
@@ -47,6 +51,13 @@ function App() {
     creatingPosOrder,
     posStatus,
     lastPosOrder,
+    workShiftForm,
+    setWorkShiftForm,
+    workShiftState,
+    myWorkShiftState,
+    workforceUsersState,
+    creatingWorkShift,
+    updatingWorkShiftId,
     totals,
     overviewData,
     login,
@@ -57,12 +68,20 @@ function App() {
     chotCaTienMat,
     suaCaLamViec,
     xoaCaLamViec,
+    pheDuyetCaLamViec,
     addPosItem,
     updatePosItem,
     removePosItem,
     taoDonTaiQuay,
     inHoaDonPos,
+    taoLichLamViec,
+    capNhatChamCong,
+    xoaLichLamViec,
   } = useAdminDashboard()
+
+  const userRole = session?.user?.vaiTro || session?.user?.vai_tro || DASHBOARD_ROLES.STAFF
+  const isManager = userRole === DASHBOARD_ROLES.MANAGER
+  const navTabs = [...NAV_TABS, WORKFORCE_TAB]
 
   const statusTone = (status) => {
     const map = {
@@ -89,9 +108,11 @@ function App() {
     <div className="admin-app-shell">
       <aside className="left-nav">
         <h2>Avengers Admin</h2>
-        <p className="staff-tag">Đang đăng nhập: {session.user?.tenDangNhap || session.user?.email || 'nhân viên'}</p>
+        <p className="staff-tag">
+          Đang đăng nhập: {session.user?.tenDangNhap || session.user?.email || 'nhan vien'} ({isManager ? 'Manager' : 'Staff'})
+        </p>
         <nav>
-          {NAV_TABS.map((tab) => (
+          {navTabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
@@ -110,7 +131,7 @@ function App() {
       <main className="content-area">
         <header className="content-header">
           <h1>Trung tâm vận hành cửa hàng</h1>
-          <p>Theo dõi ca làm việc theo thời gian thực cho admin và staff.</p>
+          <p>Theo doi don hang, doi soat va nhan su theo role manager/staff.</p>
         </header>
 
         {activeTab === 'overview' ? (
@@ -140,6 +161,8 @@ function App() {
 
         {activeTab === 'shift' && (
           <ShiftPanel
+            isManager={isManager}
+            currentUserName={session.user?.tenDangNhap || session.user?.email || 'staff'}
             shiftRange={shiftRange}
             setShiftRange={setShiftRange}
             shiftInput={shiftInput}
@@ -148,9 +171,11 @@ function App() {
             shiftHistory={shiftHistory}
             shiftStatus={shiftStatus}
             closingShift={closingShift}
+            approvingShiftId={approvingShiftId}
             chotCaTienMat={chotCaTienMat}
             suaCaLamViec={suaCaLamViec}
             xoaCaLamViec={xoaCaLamViec}
+            pheDuyetCaLamViec={pheDuyetCaLamViec}
           />
         )}
 
@@ -345,7 +370,28 @@ function App() {
             </div>
           </section>
         )}
+
+        {activeTab === 'workforce' &&
+          (isManager ? (
+            <ManagerWorkforcePanel
+              workShiftState={workShiftState}
+              workforceUsersState={workforceUsersState}
+              workShiftForm={workShiftForm}
+              setWorkShiftForm={setWorkShiftForm}
+              creatingWorkShift={creatingWorkShift}
+              onCreateWorkShift={taoLichLamViec}
+              onUpdateAttendance={capNhatChamCong}
+              onDeleteWorkShift={xoaLichLamViec}
+              updatingWorkShiftId={updatingWorkShiftId}
+            />
+          ) : (
+            <StaffWorkShiftsPanel
+              myWorkShiftState={myWorkShiftState}
+              staffUsername={session.user?.tenDangNhap || session.user?.email || 'staff'}
+            />
+          ))}
       </main>
+        <AdminChatWidget session={session} />
     </div>
   )
 }

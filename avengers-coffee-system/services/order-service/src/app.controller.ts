@@ -226,4 +226,69 @@ export class AppController {
   deleteShift(@Param('id') id: string) {
     return this.thanhToanService.xoaCaLamViec(id);
   }
+
+  @Patch('manager/shifts/:id/approval')
+  approveShiftReconciliation(
+    @Param('id') id: string,
+    @Body() payload: { status: 'APPROVED' | 'REJECTED'; manager_name?: string; approval_note?: string },
+  ) {
+    return this.thanhToanService.pheDuyetDoiSoatCaLamViec(id, payload);
+  }
+
+  @Post('manager/work-shifts')
+  createWorkShift(
+    @Body()
+    payload: {
+      staff_username: string;
+      staff_name?: string;
+      shift_date: string;
+      shift_template: '2_CA' | '3_CA';
+      shift_code: 'SANG' | 'CHIEU' | 'TOI';
+      note?: string;
+      manager_username?: string;
+    },
+  ) {
+    return this.thanhToanService.taoLichLamViecChoManager(payload);
+  }
+
+  @Get('manager/work-shifts')
+  getWorkShiftsForManager(
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('staff_username') staff_username?: string,
+  ) {
+    return this.thanhToanService.layDanhSachLichLamViecChoManager({
+      from,
+      to,
+      staff_username,
+    });
+  }
+
+  @Patch('manager/work-shifts/:id/attendance')
+  updateWorkShiftAttendance(
+    @Param('id') id: string,
+    @Body()
+    payload: {
+      attendance_status?: 'ASSIGNED' | 'PRESENT' | 'ABSENT';
+      check_in_at?: string | null;
+      check_out_at?: string | null;
+      note?: string;
+    },
+  ) {
+    return this.thanhToanService.capNhatChamCongCaLamViecChoManager(id, payload);
+  }
+
+  @Delete('manager/work-shifts/:id')
+  deleteWorkShift(@Param('id') id: string) {
+    return this.thanhToanService.xoaLichLamViecChoManager(id);
+  }
+
+  @Get('staff/work-shifts')
+  getWorkShiftsForStaff(
+    @Query('staff_username') staffUsername?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.thanhToanService.layLichLamViecChoStaff(staffUsername || '', from, to);
+  }
 }

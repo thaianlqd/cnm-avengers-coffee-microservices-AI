@@ -43,6 +43,18 @@ export class CaDoiSoat {
   @Column({ type: 'varchar', nullable: true })
   ten_nhan_vien: string | null;
 
+  @Column({ type: 'varchar', default: 'PENDING' })
+  trang_thai_phe_duyet: 'PENDING' | 'APPROVED' | 'REJECTED';
+
+  @Column({ type: 'varchar', nullable: true })
+  manager_duyet: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  ghi_chu_phe_duyet: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  thoi_gian_phe_duyet: Date | null;
+
   @Column({ type: 'jsonb', default: () => "'{}'::jsonb" })
   du_lieu_tom_tat: {
     non_cash_revenue?: number;
