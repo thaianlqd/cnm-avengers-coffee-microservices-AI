@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, OnModuleInit, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DeliveryAddress } from './delivery-address.entity';
@@ -7,13 +7,17 @@ import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 
 @Injectable()
-export class UserService {
+export class UserService implements OnModuleInit {
   constructor(
     @InjectRepository(User)
     private userRepo: Repository<User>,
     @InjectRepository(DeliveryAddress)
     private deliveryAddressRepo: Repository<DeliveryAddress>,
   ) {}
+
+  async onModuleInit() {
+    await this.seedStoreWorkforceAccounts();
+  }
 
   async register(data: any) {
     const { email, password, hoTen } = data;
@@ -30,6 +34,7 @@ export class UserService {
       ten_dang_nhap: email, 
       mat_khau_hash: hashedPassword,
       ho_ten: hoTen,
+      vai_tro: 'CUSTOMER',
     });
 
     const savedUser = await this.userRepo.save(newUser);
@@ -37,13 +42,21 @@ export class UserService {
   }
 
   async login(data: any) {
-    const { email, password } = data;
-    const user = await this.userRepo.findOne({ where: { email } });
+    const identifier = String(data?.email || data?.tai_khoan || data?.tenDangNhap || '').trim();
+    const password = String(data?.password || data?.mat_khau || '');
 
-    if (!user) throw new UnauthorizedException('Email không tồn tại bác ạ!');
+    if (!identifier || !password) {
+      throw new BadRequestException('Vui lòng nhập tài khoản và mật khẩu');
+    }
+
+    const user = await this.userRepo.findOne({
+      where: [{ email: identifier }, { ten_dang_nhap: identifier }],
+    });
+
+    if (!user) throw new UnauthorizedException('Tài khoản không tồn tại');
 
     const isMatch = await bcrypt.compare(password, user.mat_khau_hash);
-    if (!isMatch) throw new UnauthorizedException('Sai mật khẩu rồi!');
+    if (!isMatch) throw new UnauthorizedException('Sai mật khẩu');
 
     // Trả về đúng format để Frontend AuthModal.jsx của bác đọc được
     return {
@@ -51,9 +64,121 @@ export class UserService {
       user: {
         ma_nguoi_dung: user.ma_nguoi_dung,
         hoTen: user.ho_ten,
-        email: user.email
+        tenDangNhap: user.ten_dang_nhap,
+        email: user.email,
+        vaiTro: user.vai_tro || 'STAFF',
       }
     };
+  }
+
+  async layDanhSachNhanSu(role?: string) {
+    const query = this.userRepo
+      .createQueryBuilder('user')
+      .where('user.vai_tro IN (:...roles)', { roles: ['STAFF', 'MANAGER'] })
+      .andWhere('user.trang_thai = :status', { status: 'ACTIVE' })
+
+    if (role?.trim()) {
+      query.andWhere('user.vai_tro = :role', { role: role.trim().toUpperCase() })
+    }
+
+    const rows = await query
+      .orderBy('user.vai_tro', 'ASC')
+      .addOrderBy('user.ho_ten', 'ASC')
+      .addOrderBy('user.ten_dang_nhap', 'ASC')
+      .getMany()
+
+    return {
+      total: rows.length,
+      items: rows.map((user) => ({
+        ma_nguoi_dung: user.ma_nguoi_dung,
+        ten_dang_nhap: user.ten_dang_nhap,
+        ho_ten: user.ho_ten,
+        email: user.email,
+        vai_tro: user.vai_tro,
+      })),
+    }
+  }
+
+  private async seedStoreWorkforceAccounts() {
+    const staffUsername = process.env.STORE_STAFF_USERNAME || 'thaian_staff';
+    const managerUsername = process.env.STORE_MANAGER_USERNAME || 'thaian_manager';
+    const sharedPassword = process.env.STORE_DEFAULT_PASSWORD || '123456';
+
+    const staffName = process.env.STORE_STAFF_NAME || 'Thái An (Nhân viên cửa hàng)';
+    const managerName = process.env.STORE_MANAGER_NAME || 'Thái An (Quản lý cửa hàng)';
+
+    const legacyAdmin = await this.userRepo.findOne({
+      where: [{ ten_dang_nhap: 'thaian_admin' }, { email: 'thaian_admin' }],
+    });
+
+    if (legacyAdmin) {
+      legacyAdmin.ten_dang_nhap = staffUsername;
+      legacyAdmin.email = staffUsername;
+      legacyAdmin.ho_ten = staffName;
+      legacyAdmin.vai_tro = 'STAFF';
+      legacyAdmin.trang_thai = 'ACTIVE';
+      await this.userRepo.save(legacyAdmin);
+    }
+
+    await this.upsertWorkforceUser({
+      username: staffUsername,
+      password: sharedPassword,
+      fullName: staffName,
+      role: 'STAFF',
+    });
+
+    await this.upsertWorkforceUser({
+      username: managerUsername,
+      password: sharedPassword,
+      fullName: managerName,
+      role: 'MANAGER',
+    });
+  }
+
+  private async upsertWorkforceUser(input: {
+    username: string;
+    password: string;
+    fullName: string;
+    role: 'STAFF' | 'MANAGER';
+  }) {
+    const existed = await this.userRepo.findOne({
+      where: [{ ten_dang_nhap: input.username }, { email: input.username }],
+    });
+
+    if (existed) {
+      let shouldSave = false;
+      if (existed.vai_tro !== input.role) {
+        existed.vai_tro = input.role;
+        shouldSave = true;
+      }
+      if (existed.trang_thai !== 'ACTIVE') {
+        existed.trang_thai = 'ACTIVE';
+        shouldSave = true;
+      }
+      if (!existed.email) {
+        existed.email = input.username;
+        shouldSave = true;
+      }
+      if (shouldSave) {
+        await this.userRepo.save(existed);
+      }
+      return;
+    }
+
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(input.password, salt);
+
+    const seededUser = this.userRepo.create({
+      ma_nguoi_dung: randomUUID(),
+      ten_dang_nhap: input.username,
+      email: input.username,
+      mat_khau_hash: hashedPassword,
+      ho_ten: input.fullName,
+      trang_thai: 'ACTIVE',
+      vai_tro: input.role,
+    });
+
+    await this.userRepo.save(seededUser);
   }
 
   async layThongTinCaNhan(maNguoiDung: string) {
@@ -70,6 +195,7 @@ export class UserService {
       avatar_url: user.avatar_url,
       ten_dang_nhap: user.ten_dang_nhap,
       trang_thai: user.trang_thai,
+      vai_tro: user.vai_tro,
       ngay_tao: user.ngay_tao,
     };
   }

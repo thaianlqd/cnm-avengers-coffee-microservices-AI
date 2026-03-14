@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req } from '@nestjs/common';
+import type { Request } from 'express';
 import { AppService } from './app.service';
 import { NotificationService } from './modules/notification/notification.service';
 import { ThanhToanService } from './modules/thanh-toan/thanh-toan.service';
@@ -130,5 +131,164 @@ export class AppController {
     @Body() payload: { status: string },
   ) {
     return this.thanhToanService.capNhatTrangThaiDonHang(customerId, orderId, payload.status);
+  }
+
+  @Get('staff/orders')
+  getStaffOrders(
+    @Query('status') status?: string,
+    @Query('payment_status') paymentStatus?: string,
+    @Query('payment_method') paymentMethod?: string,
+    @Query('q') keyword?: string,
+  ) {
+    return this.thanhToanService.layDanhSachDonHangChoStaff({
+      status,
+      paymentStatus,
+      paymentMethod,
+      keyword,
+    });
+  }
+
+  @Patch('staff/orders/:orderId/status')
+  updateStaffOrderStatus(
+    @Param('orderId') orderId: string,
+    @Body() payload: { status: string },
+  ) {
+    return this.thanhToanService.capNhatTrangThaiDonHangChoStaff(orderId, payload.status);
+  }
+
+  @Post('staff/orders')
+  createStaffOrder(
+    @Req() req: Request,
+    @Body()
+    payload: {
+      ma_nguoi_dung?: string;
+      ten_khach_hang?: string;
+      ten_thu_ngan?: string;
+      loai_don_hang: 'TAI_CHO' | 'MANG_DI';
+      ma_ban?: string;
+      ghi_chu?: string;
+      phuong_thuc_thanh_toan: 'THANH_TOAN_KHI_NHAN_HANG' | 'NGAN_HANG_QR' | 'VNPAY';
+      items: Array<{
+        ma_san_pham: number;
+        ten_san_pham: string;
+        so_luong: number;
+        gia_ban: number;
+      }>;
+    },
+  ) {
+    return this.thanhToanService.taoDonTaiQuayChoStaff(payload, req.ip || '127.0.0.1');
+  }
+
+  @Get('staff/shifts/preview')
+  previewShift(
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('cash_open') cashOpen?: string,
+    @Query('cash_close') cashClose?: string,
+  ) {
+    return this.thanhToanService.xemTruocDoiSoatCa({
+      from,
+      to,
+      cashOpen,
+      cashClose,
+    });
+  }
+
+  @Post('staff/shifts/close')
+  closeShift(
+    @Body()
+    payload: {
+      from: string;
+      to: string;
+      cash_open: number;
+      cash_close: number;
+      note?: string;
+      staff_name?: string;
+    },
+  ) {
+    return this.thanhToanService.chotCaLamViec(payload);
+  }
+
+  @Get('staff/shifts/history')
+  getShiftHistory(@Query('limit') limit?: string) {
+    return this.thanhToanService.layLichSuChotCa(Number(limit || 20));
+  }
+
+  @Patch('staff/shifts/:id')
+  updateShift(
+    @Param('id') id: string,
+    @Body() payload: { cash_open?: number; cash_close?: number; note?: string; staff_name?: string },
+  ) {
+    return this.thanhToanService.suaCaLamViec(id, payload);
+  }
+
+  @Delete('staff/shifts/:id')
+  deleteShift(@Param('id') id: string) {
+    return this.thanhToanService.xoaCaLamViec(id);
+  }
+
+  @Patch('manager/shifts/:id/approval')
+  approveShiftReconciliation(
+    @Param('id') id: string,
+    @Body() payload: { status: 'APPROVED' | 'REJECTED'; manager_name?: string; approval_note?: string },
+  ) {
+    return this.thanhToanService.pheDuyetDoiSoatCaLamViec(id, payload);
+  }
+
+  @Post('manager/work-shifts')
+  createWorkShift(
+    @Body()
+    payload: {
+      staff_username: string;
+      staff_name?: string;
+      shift_date: string;
+      shift_template: '2_CA' | '3_CA';
+      shift_code: 'SANG' | 'CHIEU' | 'TOI';
+      note?: string;
+      manager_username?: string;
+    },
+  ) {
+    return this.thanhToanService.taoLichLamViecChoManager(payload);
+  }
+
+  @Get('manager/work-shifts')
+  getWorkShiftsForManager(
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('staff_username') staff_username?: string,
+  ) {
+    return this.thanhToanService.layDanhSachLichLamViecChoManager({
+      from,
+      to,
+      staff_username,
+    });
+  }
+
+  @Patch('manager/work-shifts/:id/attendance')
+  updateWorkShiftAttendance(
+    @Param('id') id: string,
+    @Body()
+    payload: {
+      attendance_status?: 'ASSIGNED' | 'PRESENT' | 'ABSENT';
+      check_in_at?: string | null;
+      check_out_at?: string | null;
+      note?: string;
+    },
+  ) {
+    return this.thanhToanService.capNhatChamCongCaLamViecChoManager(id, payload);
+  }
+
+  @Delete('manager/work-shifts/:id')
+  deleteWorkShift(@Param('id') id: string) {
+    return this.thanhToanService.xoaLichLamViecChoManager(id);
+  }
+
+  @Get('staff/work-shifts')
+  getWorkShiftsForStaff(
+    @Query('staff_username') staffUsername?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.thanhToanService.layLichLamViecChoStaff(staffUsername || '', from, to);
   }
 }

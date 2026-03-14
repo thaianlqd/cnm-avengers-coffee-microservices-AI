@@ -31,6 +31,9 @@ export class User {
   @Column({ default: 'ACTIVE' })
   trang_thai: string;
 
+  @Column({ type: 'varchar', default: 'CUSTOMER' })
+  vai_tro: string;
+
   @Column({ type: 'int', default: 0 })
   diem_loyalty: number;
 

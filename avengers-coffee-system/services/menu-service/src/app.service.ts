@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
 import { SanPham } from './modules/menu/san-pham.entity';
@@ -55,6 +55,7 @@ export class AppService {
         category: item.danhMuc?.ten_danh_muc,
         price: Number(item.gia_ban),
         image: item.hinh_anh_url,
+        dang_ban: Boolean(item.trang_thai),
         status: item.trang_thai ? 'available' : 'sold_out'
       })),
     };
@@ -66,6 +67,25 @@ export class AppService {
     return {
       userId,
       suggestions: items
+    };
+  }
+
+  async updateMenuItemStatus(itemId: number, dangBan: boolean) {
+    const item = await this.spRepo.findOne({ where: { ma_san_pham: itemId } });
+    if (!item) {
+      throw new NotFoundException('Khong tim thay mon trong menu');
+    }
+
+    item.trang_thai = dangBan;
+    const saved = await this.spRepo.save(item);
+
+    return {
+      message: dangBan ? 'Mo ban lai mon thanh cong' : 'Tam ngung ban mon thanh cong',
+      item: {
+        id: saved.ma_san_pham.toString(),
+        dang_ban: Boolean(saved.trang_thai),
+        status: saved.trang_thai ? 'available' : 'sold_out',
+      },
     };
   }
 }
