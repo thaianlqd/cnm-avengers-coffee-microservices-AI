@@ -5,6 +5,8 @@ import { Brackets, Repository } from 'typeorm';
 import { CartItem } from '../cart/cart.entity';
 import { NotificationService } from '../notification/notification.service';
 import { VoucherService } from '../voucher/voucher.service';
+import { CaLamViecNhanVien } from './entities/ca-lam-viec-nhan-vien.entity';
+import { CaDoiSoat } from './entities/ca-doi-soat.entity';
 import { ChiTietDonHang } from './entities/chi-tiet-don-hang.entity';
 import { DonHang } from './entities/don-hang.entity';
 import { GiaoDichThanhToan } from './entities/giao-dich-thanh-toan.entity';
@@ -15,6 +17,22 @@ type KhoiTaoThanhToanDto = {
   khung_gio_giao?: string;
   ghi_chu?: string;
   ma_voucher?: string;
+};
+
+type TaoDonTaiQuayDto = {
+  ma_nguoi_dung?: string;
+  ten_khach_hang?: string;
+  ten_thu_ngan?: string;
+  loai_don_hang: 'TAI_CHO' | 'MANG_DI';
+  ma_ban?: string;
+  ghi_chu?: string;
+  phuong_thuc_thanh_toan: 'VNPAY' | 'NGAN_HANG_QR' | 'THANH_TOAN_KHI_NHAN_HANG';
+  items: Array<{
+    ma_san_pham: number;
+    ten_san_pham: string;
+    so_luong: number;
+    gia_ban: number;
+  }>;
 };
 
 type CapNhatDonHangDto = {
@@ -48,6 +66,51 @@ type LichSuTrangThai = {
   ghi_chu?: string;
 };
 
+type DoiSoatPreviewInput = {
+  from?: string;
+  to?: string;
+  cashOpen?: string;
+  cashClose?: string;
+};
+
+type ChotCaInput = {
+  from: string;
+  to: string;
+  cash_open: number;
+  cash_close: number;
+  note?: string;
+  staff_name?: string;
+};
+
+type TaoLichLamViecInput = {
+  staff_username: string;
+  staff_name?: string;
+  shift_date: string;
+  shift_template: '2_CA' | '3_CA';
+  shift_code: 'SANG' | 'CHIEU' | 'TOI';
+  note?: string;
+  manager_username?: string;
+};
+
+type BoLocLichLamViec = {
+  from?: string;
+  to?: string;
+  staff_username?: string;
+};
+
+type CapNhatChamCongInput = {
+  attendance_status?: 'ASSIGNED' | 'PRESENT' | 'ABSENT';
+  check_in_at?: string | null;
+  check_out_at?: string | null;
+  note?: string;
+};
+
+type PheDuyetDoiSoatInput = {
+  status: 'APPROVED' | 'REJECTED';
+  manager_name?: string;
+  approval_note?: string;
+};
+
 @Injectable()
 export class ThanhToanService {
   // VNPAY sandbox defaults; env names aligned with docker-compose.
@@ -68,9 +131,280 @@ export class ThanhToanService {
     private readonly chiTietRepo: Repository<ChiTietDonHang>,
     @InjectRepository(GiaoDichThanhToan)
     private readonly giaoDichRepo: Repository<GiaoDichThanhToan>,
+    @InjectRepository(CaDoiSoat)
+    private readonly caDoiSoatRepo: Repository<CaDoiSoat>,
+    @InjectRepository(CaLamViecNhanVien)
+    private readonly caLamViecNhanVienRepo: Repository<CaLamViecNhanVien>,
     private readonly notificationService: NotificationService,
     private readonly voucherService: VoucherService,
   ) {}
+
+  async xemTruocDoiSoatCa(input: DoiSoatPreviewInput) {
+    const khoang = this.chuanHoaKhoangThoiGian(input.from, input.to);
+    const tongHop = await this.tinhTongHopDoiSoat(khoang.from, khoang.to);
+    const tienDauCa = this.chuanHoaSoTien(input.cashOpen, 0);
+    const tienCuoiCa = input.cashClose === undefined ? null : this.chuanHoaSoTien(input.cashClose, 0);
+    const tienMatKyVong = tienDauCa + tongHop.tienMatHeThong;
+    const chenhLech = tienCuoiCa === null ? null : tienCuoiCa - tienMatKyVong;
+
+    return {
+      range: {
+        from: khoang.from.toISOString(),
+        to: khoang.to.toISOString(),
+      },
+      system: {
+        total_orders: tongHop.tongDon,
+        total_revenue: tongHop.doanhThuHeThong,
+        cash_orders: tongHop.tongDonTienMat,
+        cash_revenue: tongHop.tienMatHeThong,
+        non_cash_revenue: tongHop.doanhThuHeThong - tongHop.tienMatHeThong,
+      },
+      reconciliation: {
+        cash_open: tienDauCa,
+        expected_cash_close: tienMatKyVong,
+        cash_close: tienCuoiCa,
+        difference: chenhLech,
+      },
+    };
+  }
+
+  async chotCaLamViec(input: ChotCaInput) {
+    const khoang = this.chuanHoaKhoangThoiGian(input.from, input.to);
+    const tongHop = await this.tinhTongHopDoiSoat(khoang.from, khoang.to);
+    const tienDauCa = this.chuanHoaSoTien(input.cash_open, 0);
+    const tienCuoiCa = this.chuanHoaSoTien(input.cash_close, 0);
+    const tienMatKyVong = tienDauCa + tongHop.tienMatHeThong;
+    const chenhLech = tienCuoiCa - tienMatKyVong;
+
+    const ca = await this.caDoiSoatRepo.save(
+      this.caDoiSoatRepo.create({
+        thoi_gian_bat_dau: khoang.from,
+        thoi_gian_ket_thuc: khoang.to,
+        tien_dau_ca: tienDauCa,
+        tien_cuoi_ca: tienCuoiCa,
+        tien_mat_he_thong: tongHop.tienMatHeThong,
+        doanh_thu_he_thong: tongHop.doanhThuHeThong,
+        tien_mat_ky_vong: tienMatKyVong,
+        chenh_lech: chenhLech,
+        tong_don: tongHop.tongDon,
+        tong_don_tien_mat: tongHop.tongDonTienMat,
+        ghi_chu: input.note?.trim() || null,
+        ten_nhan_vien: input.staff_name?.trim() || null,
+        trang_thai_phe_duyet: 'PENDING',
+        manager_duyet: null,
+        ghi_chu_phe_duyet: null,
+        thoi_gian_phe_duyet: null,
+        du_lieu_tom_tat: {
+          non_cash_revenue: tongHop.doanhThuHeThong - tongHop.tienMatHeThong,
+        },
+      }),
+    );
+
+    return {
+      message: 'Chot ca thanh cong',
+      shift: this.dinhDangCaDoiSoat(ca),
+    };
+  }
+
+  async layLichSuChotCa(limit = 10) {
+    const safeLimit = Math.min(Math.max(Number(limit) || 10, 1), 50);
+    const rows = await this.caDoiSoatRepo.find({
+      order: { ngay_tao: 'DESC' },
+      take: safeLimit,
+    });
+
+    return {
+      total: rows.length,
+      items: rows.map((row) => this.dinhDangCaDoiSoat(row)),
+    };
+  }
+
+
+  async suaCaLamViec(maCa: string, input: { cash_open?: number; cash_close?: number; note?: string; staff_name?: string }) {
+    const ca = await this.caDoiSoatRepo.findOne({ where: { ma_ca: maCa } });
+    if (!ca) throw new NotFoundException('Khong tim thay ca lam viec');
+    if (input.cash_open !== undefined) ca.tien_dau_ca = Number(input.cash_open);
+    if (input.cash_close !== undefined) ca.tien_cuoi_ca = Number(input.cash_close);
+    if (input.note !== undefined) ca.ghi_chu = input.note?.trim() || null;
+    if (input.staff_name !== undefined) ca.ten_nhan_vien = input.staff_name?.trim() || null;
+    ca.tien_mat_ky_vong = Number(ca.tien_dau_ca) + Number(ca.tien_mat_he_thong);
+    ca.chenh_lech = Number(ca.tien_cuoi_ca) - Number(ca.tien_mat_ky_vong);
+    ca.trang_thai_phe_duyet = 'PENDING';
+    ca.manager_duyet = null;
+    ca.ghi_chu_phe_duyet = null;
+    ca.thoi_gian_phe_duyet = null;
+    const updated = await this.caDoiSoatRepo.save(ca);
+    return { message: 'Cap nhat ca thanh cong', ma_ca: updated.ma_ca };
+  }
+
+  async xoaCaLamViec(maCa: string) {
+    const ca = await this.caDoiSoatRepo.findOne({ where: { ma_ca: maCa } });
+    if (!ca) throw new NotFoundException('Khong tim thay ca lam viec');
+    await this.caDoiSoatRepo.remove(ca);
+    return { message: 'Xoa ca thanh cong', ma_ca: maCa };
+  }
+
+  async pheDuyetDoiSoatCaLamViec(maCa: string, input: PheDuyetDoiSoatInput) {
+    const ca = await this.caDoiSoatRepo.findOne({ where: { ma_ca: maCa } });
+    if (!ca) throw new NotFoundException('Khong tim thay ca doi soat');
+    if (!['APPROVED', 'REJECTED'].includes(input.status)) {
+      throw new BadRequestException('Trang thai phe duyet khong hop le');
+    }
+
+    ca.trang_thai_phe_duyet = input.status;
+    ca.manager_duyet = input.manager_name?.trim() || null;
+    ca.ghi_chu_phe_duyet = input.approval_note?.trim() || null;
+    ca.thoi_gian_phe_duyet = new Date();
+
+    const updated = await this.caDoiSoatRepo.save(ca);
+    return {
+      message: input.status === 'APPROVED' ? 'Phe duyet doi soat thanh cong' : 'Da tu choi doi soat',
+      shift: this.dinhDangCaDoiSoat(updated),
+    };
+  }
+
+  async taoLichLamViecChoManager(input: TaoLichLamViecInput) {
+    const staffUsername = String(input.staff_username || '').trim();
+    if (!staffUsername) {
+      throw new BadRequestException('staff_username la bat buoc');
+    }
+
+    const shiftDate = String(input.shift_date || '').trim();
+    if (!shiftDate) {
+      throw new BadRequestException('shift_date la bat buoc');
+    }
+
+    const template = input.shift_template;
+    const shiftCode = input.shift_code;
+    const shiftSlot = this.layKhungCaLamViec(template, shiftCode);
+    if (!shiftSlot) {
+      throw new BadRequestException('Khung ca khong hop le voi shift_template');
+    }
+
+    const existed = await this.caLamViecNhanVienRepo.findOne({
+      where: {
+        staff_username: staffUsername,
+        ngay_lam_viec: shiftDate,
+        ma_khung_ca: shiftCode,
+      },
+    });
+    if (existed) {
+      throw new BadRequestException('Nhan vien da duoc xep lich o khung ca nay');
+    }
+
+    const entity = this.caLamViecNhanVienRepo.create({
+      staff_username: staffUsername,
+      staff_name: input.staff_name?.trim() || staffUsername,
+      ngay_lam_viec: shiftDate,
+      ma_khung_ca: shiftCode,
+      ten_ca: shiftSlot.ten_ca,
+      gio_bat_dau: shiftSlot.gio_bat_dau,
+      gio_ket_thuc: shiftSlot.gio_ket_thuc,
+      note: input.note?.trim() || null,
+      manager_username: input.manager_username?.trim() || null,
+      trang_thai_cham_cong: 'ASSIGNED',
+      check_in_at: null,
+      check_out_at: null,
+    });
+
+    const saved = await this.caLamViecNhanVienRepo.save(entity);
+    return {
+      message: 'Tao lich lam viec thanh cong',
+      item: this.dinhDangCaLamViec(saved),
+    };
+  }
+
+  async layDanhSachLichLamViecChoManager(boLoc: BoLocLichLamViec = {}) {
+    const query = this.caLamViecNhanVienRepo.createQueryBuilder('ca');
+
+    if (boLoc.from) {
+      query.andWhere('ca.ngay_lam_viec >= :from', { from: boLoc.from });
+    }
+    if (boLoc.to) {
+      query.andWhere('ca.ngay_lam_viec <= :to', { to: boLoc.to });
+    }
+    if (boLoc.staff_username?.trim()) {
+      query.andWhere('ca.staff_username ILIKE :staff', { staff: `%${boLoc.staff_username.trim()}%` });
+    }
+
+    const rows = await query
+      .orderBy('ca.ngay_lam_viec', 'DESC')
+      .addOrderBy('ca.gio_bat_dau', 'ASC')
+      .addOrderBy('ca.ngay_tao', 'DESC')
+      .getMany();
+
+    return {
+      total: rows.length,
+      items: rows.map((row) => this.dinhDangCaLamViec(row)),
+    };
+  }
+
+  async capNhatChamCongCaLamViecChoManager(maCaLamViec: string, input: CapNhatChamCongInput) {
+    const ca = await this.caLamViecNhanVienRepo.findOne({ where: { ma_ca_lam_viec: maCaLamViec } });
+    if (!ca) {
+      throw new NotFoundException('Khong tim thay ca lam viec');
+    }
+
+    if (input.attendance_status !== undefined) {
+      ca.trang_thai_cham_cong = input.attendance_status;
+    }
+    if (input.note !== undefined) {
+      ca.note = input.note?.trim() || null;
+    }
+    if (input.check_in_at !== undefined) {
+      ca.check_in_at = input.check_in_at ? new Date(input.check_in_at) : null;
+    }
+    if (input.check_out_at !== undefined) {
+      ca.check_out_at = input.check_out_at ? new Date(input.check_out_at) : null;
+    }
+
+    const updated = await this.caLamViecNhanVienRepo.save(ca);
+    return {
+      message: 'Cap nhat cham cong thanh cong',
+      item: this.dinhDangCaLamViec(updated),
+    };
+  }
+
+  async xoaLichLamViecChoManager(maCaLamViec: string) {
+    const ca = await this.caLamViecNhanVienRepo.findOne({ where: { ma_ca_lam_viec: maCaLamViec } });
+    if (!ca) {
+      throw new NotFoundException('Khong tim thay ca lam viec');
+    }
+
+    await this.caLamViecNhanVienRepo.remove(ca);
+    return {
+      message: 'Xoa lich lam viec thanh cong',
+      ma_ca_lam_viec: maCaLamViec,
+    };
+  }
+
+  async layLichLamViecChoStaff(staffUsername: string, from?: string, to?: string) {
+    const normalizedUsername = String(staffUsername || '').trim();
+    if (!normalizedUsername) {
+      throw new BadRequestException('staff_username la bat buoc');
+    }
+
+    const query = this.caLamViecNhanVienRepo
+      .createQueryBuilder('ca')
+      .where('ca.staff_username = :staffUsername', { staffUsername: normalizedUsername });
+
+    if (from) {
+      query.andWhere('ca.ngay_lam_viec >= :from', { from });
+    }
+    if (to) {
+      query.andWhere('ca.ngay_lam_viec <= :to', { to });
+    }
+
+    const rows = await query
+      .orderBy('ca.ngay_lam_viec', 'ASC')
+      .addOrderBy('ca.gio_bat_dau', 'ASC')
+      .getMany();
+
+    return {
+      total: rows.length,
+      items: rows.map((row) => this.dinhDangCaLamViec(row)),
+    };
+  }
 
   async khoiTaoThanhToan(maNguoiDung: string, dto: KhoiTaoThanhToanDto, ipAddr = '127.0.0.1') {
     if (!dto.dia_chi_giao_hang?.trim()) {
@@ -406,6 +740,188 @@ export class ThanhToanService {
     return { success: true };
   }
 
+  async taoDonTaiQuayChoStaff(dto: TaoDonTaiQuayDto, ipAddr = '127.0.0.1') {
+    const loaiDon = dto.loai_don_hang;
+    if (!['TAI_CHO', 'MANG_DI'].includes(loaiDon)) {
+      throw new BadRequestException('loai_don_hang khong hop le');
+    }
+
+    const phuongThuc = dto.phuong_thuc_thanh_toan;
+    if (!['THANH_TOAN_KHI_NHAN_HANG', 'NGAN_HANG_QR', 'VNPAY'].includes(phuongThuc)) {
+      throw new BadRequestException('phuong_thuc_thanh_toan khong hop le');
+    }
+
+    const items = Array.isArray(dto.items) ? dto.items : [];
+    if (!items.length) {
+      throw new BadRequestException('Don tai quay phai co it nhat 1 mon');
+    }
+
+    const normalizedItems = items.map((item) => ({
+      ma_san_pham: Number(item.ma_san_pham),
+      ten_san_pham: String(item.ten_san_pham || '').trim(),
+      so_luong: Number(item.so_luong),
+      gia_ban: Number(item.gia_ban),
+    }));
+
+    const isInvalidItem = normalizedItems.some(
+      (item) =>
+        Number.isNaN(item.ma_san_pham) ||
+        !item.ten_san_pham ||
+        Number.isNaN(item.so_luong) ||
+        item.so_luong <= 0 ||
+        Number.isNaN(item.gia_ban) ||
+        item.gia_ban < 0,
+    );
+
+    if (isInvalidItem) {
+      throw new BadRequestException('Du lieu mon trong don khong hop le');
+    }
+
+    const tongTien = normalizedItems.reduce((sum, item) => sum + item.gia_ban * item.so_luong, 0);
+    const isCash = phuongThuc === 'THANH_TOAN_KHI_NHAN_HANG';
+    const maNguoiDung = dto.ma_nguoi_dung?.trim() || `guest-pos-${Date.now()}`;
+    const maDonHang = crypto.randomUUID();
+
+    const trangThaiDon = 'MOI_TAO';
+    const trangThaiThanhToan = isCash ? 'CHO_THANH_TOAN_KHI_NHAN_HANG' : 'CHO_XU_LY';
+    const diaChi = loaiDon === 'TAI_CHO' ? `Tai quay${dto.ma_ban?.trim() ? ` - Ban ${dto.ma_ban.trim()}` : ''}` : 'Mang di tai quay';
+
+    const donHang = await this.donHangRepo.save(
+      this.donHangRepo.create({
+        ma_don_hang: maDonHang,
+        ma_nguoi_dung: maNguoiDung,
+        tong_tien: tongTien,
+        ma_voucher: null,
+        so_tien_giam: 0,
+        dia_chi_giao_hang: diaChi,
+        khung_gio_giao: null,
+        ghi_chu: dto.ghi_chu?.trim() ? dto.ghi_chu.trim() : null,
+        loai_don_hang: loaiDon,
+        ma_ban: dto.ma_ban?.trim() ? dto.ma_ban.trim() : null,
+        ten_khach_hang: dto.ten_khach_hang?.trim() ? dto.ten_khach_hang.trim() : null,
+        ten_thu_ngan: dto.ten_thu_ngan?.trim() ? dto.ten_thu_ngan.trim() : null,
+        phuong_thuc_thanh_toan: phuongThuc,
+        trang_thai_thanh_toan: trangThaiThanhToan,
+        trang_thai_don_hang: trangThaiDon,
+        lich_su_trang_thai: [
+          {
+            loai: 'ORDER',
+            trang_thai: trangThaiDon,
+            thoi_gian: new Date().toISOString(),
+            ghi_chu: 'Tao don tai quay',
+          },
+          {
+            loai: 'PAYMENT',
+            trang_thai: trangThaiThanhToan,
+            thoi_gian: new Date().toISOString(),
+            ghi_chu: 'Khoi tao thanh toan POS',
+          },
+        ],
+      }),
+    );
+
+    const chiTiet = normalizedItems.map((item) =>
+      this.chiTietRepo.create({
+        ma_don_hang: donHang.ma_don_hang,
+        ma_san_pham: item.ma_san_pham,
+        ten_san_pham: item.ten_san_pham,
+        gia_ban: item.gia_ban,
+        so_luong: item.so_luong,
+        kich_co: null,
+        hinh_anh_url: null,
+      }),
+    );
+    await this.chiTietRepo.save(chiTiet);
+
+    const maThamChieu = phuongThuc === 'VNPAY'
+      ? `${donHang.ma_don_hang}_${Date.now()}`
+      : this.taoMaThamChieu(phuongThuc, donHang.ma_don_hang);
+
+    const giaoDich = await this.giaoDichRepo.save(
+      this.giaoDichRepo.create({
+        ma_don_hang: donHang.ma_don_hang,
+        cong_thanh_toan: phuongThuc,
+        ma_tham_chieu: maThamChieu,
+        so_tien: tongTien,
+        trang_thai: isCash ? 'THANH_CONG' : 'CHO_THANH_TOAN',
+      }),
+    );
+
+    const orderData = {
+      ma_don_hang: donHang.ma_don_hang,
+      ma_nguoi_dung: donHang.ma_nguoi_dung,
+      tong_tien: Number(donHang.tong_tien),
+      ma_voucher: donHang.ma_voucher || null,
+      so_tien_giam: Number(donHang.so_tien_giam || 0),
+      dia_chi_giao_hang: donHang.dia_chi_giao_hang,
+      khung_gio_giao: donHang.khung_gio_giao,
+      ghi_chu: donHang.ghi_chu,
+      loai_don_hang: donHang.loai_don_hang,
+      ma_ban: donHang.ma_ban,
+      ten_khach_hang: donHang.ten_khach_hang,
+      ten_thu_ngan: donHang.ten_thu_ngan,
+      phuong_thuc_thanh_toan: donHang.phuong_thuc_thanh_toan,
+      trang_thai_thanh_toan: donHang.trang_thai_thanh_toan,
+      trang_thai_don_hang: donHang.trang_thai_don_hang,
+      lich_su_trang_thai: this.taoLichSuTrangThaiHienThi(donHang),
+      ngay_tao: donHang.ngay_tao,
+      ngay_cap_nhat: donHang.ngay_cap_nhat,
+      chi_tiet: chiTiet.map((ct) => ({
+        id: ct.id,
+        ma_san_pham: ct.ma_san_pham,
+        ten_san_pham: ct.ten_san_pham,
+        gia_ban: Number(ct.gia_ban),
+        so_luong: ct.so_luong,
+        hinh_anh_url: ct.hinh_anh_url,
+      })),
+      giao_dich: {
+        ma_giao_dich: giaoDich.ma_giao_dich,
+        cong_thanh_toan: giaoDich.cong_thanh_toan,
+        ma_tham_chieu: giaoDich.ma_tham_chieu,
+        ma_giao_dich_cong: giaoDich.ma_giao_dich_cong,
+        so_tien: Number(giaoDich.so_tien),
+        trang_thai: giaoDich.trang_thai,
+        ngay_tao: giaoDich.ngay_tao,
+      },
+    };
+
+    const paymentDetails = {
+      ma_don_hang: donHang.ma_don_hang,
+      so_tien: tongTien,
+      ma_tham_chieu: maThamChieu,
+      qr_img_url: this.taoQrNganHang(tongTien, maThamChieu),
+    };
+
+    if (phuongThuc === 'NGAN_HANG_QR') {
+      return {
+        message: 'Da tao don tai quay va khoi tao QR',
+        order: orderData,
+        payment_details: paymentDetails,
+      };
+    }
+
+    if (phuongThuc === 'VNPAY') {
+      return {
+        message: 'Da tao don tai quay va khoi tao VNPAY',
+        order: orderData,
+        payment_details: paymentDetails,
+        redirect_url: this.taoUrlVnpayThat(
+          maNguoiDung,
+          donHang.ma_don_hang,
+          tongTien,
+          maThamChieu,
+          this.chuanHoaIpVnpay(ipAddr),
+        ),
+      };
+    }
+
+    return {
+      message: 'Da tao don tai quay thanh cong',
+      order: orderData,
+      payment_details: paymentDetails,
+    };
+  }
+
   async layLichSuDonHang(maNguoiDung: string, boLoc: BoLocLichSuDonHang = {}) {
     const query = this.donHangRepo
       .createQueryBuilder('don_hang')
@@ -456,6 +972,10 @@ export class ThanhToanService {
         dia_chi_giao_hang: don.dia_chi_giao_hang,
         khung_gio_giao: don.khung_gio_giao,
         ghi_chu: don.ghi_chu,
+        loai_don_hang: don.loai_don_hang,
+        ma_ban: don.ma_ban,
+        ten_khach_hang: don.ten_khach_hang,
+        ten_thu_ngan: don.ten_thu_ngan,
         phuong_thuc_thanh_toan: don.phuong_thuc_thanh_toan,
         trang_thai_thanh_toan: don.trang_thai_thanh_toan,
         trang_thai_don_hang: don.trang_thai_don_hang,
@@ -485,6 +1005,162 @@ export class ThanhToanService {
     });
 
     return { total: orders.length, orders };
+  }
+
+  async layDanhSachDonHangChoStaff(boLoc: BoLocLichSuDonHang = {}) {
+    const query = this.donHangRepo
+      .createQueryBuilder('don_hang')
+      .leftJoinAndSelect('don_hang.chi_tiet', 'chi_tiet')
+      .leftJoinAndSelect('don_hang.giao_dich_thanh_toan', 'giao_dich');
+
+    if (boLoc.status) {
+      query.andWhere('don_hang.trang_thai_don_hang = :status', { status: boLoc.status });
+    }
+    if (boLoc.paymentStatus) {
+      query.andWhere('don_hang.trang_thai_thanh_toan = :paymentStatus', { paymentStatus: boLoc.paymentStatus });
+    }
+    if (boLoc.paymentMethod) {
+      query.andWhere('don_hang.phuong_thuc_thanh_toan = :paymentMethod', { paymentMethod: boLoc.paymentMethod });
+    }
+    if (boLoc.keyword?.trim()) {
+      const keywordLike = `%${boLoc.keyword.trim()}%`;
+      query.andWhere(
+        new Brackets((qb) => {
+          qb.where('CAST(don_hang.ma_don_hang AS text) ILIKE :keyword', { keyword: keywordLike })
+            .orWhere('CAST(don_hang.ma_nguoi_dung AS text) ILIKE :keyword', { keyword: keywordLike })
+            .orWhere('don_hang.dia_chi_giao_hang ILIKE :keyword', { keyword: keywordLike })
+            .orWhere('don_hang.ghi_chu ILIKE :keyword', { keyword: keywordLike })
+            .orWhere('CAST(chi_tiet.ma_san_pham AS text) ILIKE :keyword', { keyword: keywordLike })
+            .orWhere('chi_tiet.ten_san_pham ILIKE :keyword', { keyword: keywordLike })
+            .orWhere('giao_dich.ma_tham_chieu ILIKE :keyword', { keyword: keywordLike })
+            .orWhere('giao_dich.ma_giao_dich_cong ILIKE :keyword', { keyword: keywordLike });
+        }),
+      );
+    }
+
+    const danhSach = await query
+      .orderBy('don_hang.ngay_tao', 'DESC')
+      .addOrderBy('giao_dich.ngay_tao', 'DESC')
+      .getMany();
+
+    const orders = danhSach.map((don) => {
+      const giaoDichSorted = [...(don.giao_dich_thanh_toan || [])].sort(
+        (a, b) => new Date(b.ngay_tao).getTime() - new Date(a.ngay_tao).getTime(),
+      );
+      const giaoDichGanNhat = giaoDichSorted[0] || null;
+
+      return {
+        ma_don_hang: don.ma_don_hang,
+        ma_nguoi_dung: don.ma_nguoi_dung,
+        tong_tien: Number(don.tong_tien),
+        ma_voucher: don.ma_voucher || null,
+        so_tien_giam: Number(don.so_tien_giam || 0),
+        dia_chi_giao_hang: don.dia_chi_giao_hang,
+        khung_gio_giao: don.khung_gio_giao,
+        ghi_chu: don.ghi_chu,
+        loai_don_hang: don.loai_don_hang,
+        ma_ban: don.ma_ban,
+        ten_khach_hang: don.ten_khach_hang,
+        ten_thu_ngan: don.ten_thu_ngan,
+        phuong_thuc_thanh_toan: don.phuong_thuc_thanh_toan,
+        trang_thai_thanh_toan: don.trang_thai_thanh_toan,
+        trang_thai_don_hang: don.trang_thai_don_hang,
+        lich_su_trang_thai: this.taoLichSuTrangThaiHienThi(don),
+        ngay_tao: don.ngay_tao,
+        ngay_cap_nhat: don.ngay_cap_nhat,
+        chi_tiet: (don.chi_tiet || []).map((ct) => ({
+          id: ct.id,
+          ma_san_pham: ct.ma_san_pham,
+          ten_san_pham: ct.ten_san_pham,
+          gia_ban: Number(ct.gia_ban),
+          so_luong: ct.so_luong,
+          hinh_anh_url: ct.hinh_anh_url,
+        })),
+        giao_dich: giaoDichGanNhat
+          ? {
+              ma_giao_dich: giaoDichGanNhat.ma_giao_dich,
+              cong_thanh_toan: giaoDichGanNhat.cong_thanh_toan,
+              ma_tham_chieu: giaoDichGanNhat.ma_tham_chieu,
+              ma_giao_dich_cong: giaoDichGanNhat.ma_giao_dich_cong,
+              so_tien: Number(giaoDichGanNhat.so_tien),
+              trang_thai: giaoDichGanNhat.trang_thai,
+              ngay_tao: giaoDichGanNhat.ngay_tao,
+            }
+          : null,
+      };
+    });
+
+    return { total: orders.length, orders };
+  }
+
+  private layKhungCaLamViec(template: TaoLichLamViecInput['shift_template'], code: TaoLichLamViecInput['shift_code']) {
+    const templates: Record<TaoLichLamViecInput['shift_template'], Record<string, { ten_ca: string; gio_bat_dau: string; gio_ket_thuc: string }>> = {
+      '2_CA': {
+        SANG: { ten_ca: 'Ca sang', gio_bat_dau: '07:00', gio_ket_thuc: '14:00' },
+        CHIEU: { ten_ca: 'Ca chieu', gio_bat_dau: '14:00', gio_ket_thuc: '22:00' },
+      },
+      '3_CA': {
+        SANG: { ten_ca: 'Ca sang', gio_bat_dau: '07:00', gio_ket_thuc: '12:00' },
+        CHIEU: { ten_ca: 'Ca chieu', gio_bat_dau: '12:00', gio_ket_thuc: '17:00' },
+        TOI: { ten_ca: 'Ca toi', gio_bat_dau: '17:00', gio_ket_thuc: '22:00' },
+      },
+    };
+
+    return templates[template]?.[code] || null;
+  }
+
+  private dinhDangCaLamViec(ca: CaLamViecNhanVien) {
+    return {
+      ma_ca_lam_viec: ca.ma_ca_lam_viec,
+      staff_username: ca.staff_username,
+      staff_name: ca.staff_name,
+      ngay_lam_viec: ca.ngay_lam_viec,
+      ma_khung_ca: ca.ma_khung_ca,
+      ten_ca: ca.ten_ca,
+      gio_bat_dau: ca.gio_bat_dau,
+      gio_ket_thuc: ca.gio_ket_thuc,
+      so_gio_ca: this.tinhSoGioCa(ca.gio_bat_dau, ca.gio_ket_thuc),
+      trang_thai_cham_cong: ca.trang_thai_cham_cong,
+      check_in_at: ca.check_in_at,
+      check_out_at: ca.check_out_at,
+      note: ca.note,
+      manager_username: ca.manager_username,
+      ngay_tao: ca.ngay_tao,
+      ngay_cap_nhat: ca.ngay_cap_nhat,
+    };
+  }
+
+  private dinhDangCaDoiSoat(ca: CaDoiSoat) {
+    return {
+      ma_ca: ca.ma_ca,
+      from: ca.thoi_gian_bat_dau,
+      to: ca.thoi_gian_ket_thuc,
+      cash_open: Number(ca.tien_dau_ca),
+      cash_close: Number(ca.tien_cuoi_ca),
+      expected_cash_close: Number(ca.tien_mat_ky_vong),
+      cash_revenue: Number(ca.tien_mat_he_thong),
+      total_revenue: Number(ca.doanh_thu_he_thong),
+      difference: Number(ca.chenh_lech),
+      total_orders: ca.tong_don,
+      cash_orders: ca.tong_don_tien_mat,
+      note: ca.ghi_chu,
+      staff_name: ca.ten_nhan_vien,
+      approval_status: ca.trang_thai_phe_duyet || 'PENDING',
+      approved_by: ca.manager_duyet,
+      approval_note: ca.ghi_chu_phe_duyet,
+      approved_at: ca.thoi_gian_phe_duyet,
+      created_at: ca.ngay_tao,
+    };
+  }
+
+  private tinhSoGioCa(gioBatDau: string, gioKetThuc: string) {
+    const parseMinute = (value: string) => {
+      const [h, m] = String(value || '').split(':').map((part) => Number(part));
+      return (Number.isNaN(h) ? 0 : h) * 60 + (Number.isNaN(m) ? 0 : m);
+    };
+
+    const diff = parseMinute(gioKetThuc) - parseMinute(gioBatDau);
+    return Number((Math.max(diff, 0) / 60).toFixed(2));
   }
 
   // --- HELPERS ---
@@ -678,6 +1354,33 @@ export class ThanhToanService {
     return { message: 'Cap nhat trang thai thanh cong', order: updated };
   }
 
+  async capNhatTrangThaiDonHangChoStaff(maDonHang: string, trangThai: string) {
+    const donHang = await this.donHangRepo.findOne({ where: { ma_don_hang: maDonHang } });
+    if (!donHang) {
+      throw new NotFoundException('Khong tim thay don hang');
+    }
+
+    const allowed = ['MOI_TAO', 'DA_XAC_NHAN', 'DANG_CHUAN_BI', 'DANG_GIAO', 'HOAN_THANH', 'DA_HUY'];
+    if (!allowed.includes(trangThai)) {
+      throw new BadRequestException('Trang thai don hang khong hop le');
+    }
+
+    const updated = await this.capNhatTrangThaiDonHangHeThong(maDonHang, {
+      trang_thai_don_hang: trangThai,
+      ghi_chu: 'Nhan vien cua hang cap nhat trang thai',
+    });
+
+    await this.notificationService.taoThongBao({
+      ma_nguoi_dung: donHang.ma_nguoi_dung,
+      tieu_de: 'Cap nhat trang thai don hang',
+      noi_dung: `Don #${maDonHang} da chuyen sang trang thai ${trangThai}.`,
+      loai: 'ORDER',
+      du_lieu: { ma_don_hang: maDonHang, trang_thai_don_hang: trangThai },
+    });
+
+    return { message: 'Cap nhat trang thai thanh cong', order: updated };
+  }
+
   // Tích điểm loyalty cho user (fire-and-forget — không làm hỏng luồng thanh toán)
   private async tichDiemLoyalty(maNguoiDung: string, tongTienGoc: number): Promise<void> {
     if (!maNguoiDung || maNguoiDung.startsWith('guest-')) return;
@@ -717,6 +1420,87 @@ export class ThanhToanService {
         ghi_chu: 'Du lieu cu duoc dong bo tu trang thai hien tai',
       },
     ];
+  }
+
+  private chuanHoaKhoangThoiGian(from?: string, to?: string) {
+    const now = new Date();
+    const macDinhBatDau = new Date(now);
+    macDinhBatDau.setHours(0, 0, 0, 0);
+
+    const parsedFrom = from ? new Date(from) : macDinhBatDau;
+    const parsedTo = to ? new Date(to) : now;
+
+    if (Number.isNaN(parsedFrom.getTime()) || Number.isNaN(parsedTo.getTime())) {
+      throw new BadRequestException('Khoang thoi gian khong hop le');
+    }
+
+    if (parsedFrom >= parsedTo) {
+      throw new BadRequestException('thoi_gian_bat_dau phai nho hon thoi_gian_ket_thuc');
+    }
+
+    return {
+      from: parsedFrom,
+      to: parsedTo,
+    };
+  }
+
+  private chuanHoaSoTien(raw: string | number | undefined, fallback: number) {
+    const value = Number(raw);
+    if (Number.isNaN(value)) return fallback;
+    if (value < 0) {
+      throw new BadRequestException('So tien phai >= 0');
+    }
+    return Math.round(value);
+  }
+
+  private async tinhTongHopDoiSoat(from: Date, to: Date) {
+    const danhSach = await this.donHangRepo
+      .createQueryBuilder('don_hang')
+      .leftJoinAndSelect('don_hang.giao_dich_thanh_toan', 'giao_dich')
+      .where('don_hang.ngay_tao >= :from', { from: from.toISOString() })
+      .andWhere('don_hang.ngay_tao <= :to', { to: to.toISOString() })
+      .orderBy('don_hang.ngay_tao', 'ASC')
+      .addOrderBy('giao_dich.ngay_tao', 'DESC')
+      .getMany();
+
+    let doanhThuHeThong = 0;
+    let tienMatHeThong = 0;
+    let tongDonTienMat = 0;
+
+    danhSach.forEach((order) => {
+      if (order.trang_thai_don_hang === 'DA_HUY') {
+        return;
+      }
+
+      const tongTien = Number(order.tong_tien || 0);
+      doanhThuHeThong += tongTien;
+
+      if (order.phuong_thuc_thanh_toan !== 'THANH_TOAN_KHI_NHAN_HANG') {
+        return;
+      }
+
+      const giaoDich = [...(order.giao_dich_thanh_toan || [])].sort(
+        (a, b) => new Date(b.ngay_tao).getTime() - new Date(a.ngay_tao).getTime(),
+      )[0];
+      const daThuTien =
+        giaoDich?.trang_thai === 'THANH_CONG' ||
+        order.trang_thai_thanh_toan === 'DA_THANH_TOAN' ||
+        order.trang_thai_thanh_toan === 'CHO_THANH_TOAN_KHI_NHAN_HANG';
+
+      if (!daThuTien) {
+        return;
+      }
+
+      tongDonTienMat += 1;
+      tienMatHeThong += tongTien;
+    });
+
+    return {
+      tongDon: danhSach.length,
+      tongDonTienMat,
+      doanhThuHeThong: Math.round(doanhThuHeThong),
+      tienMatHeThong: Math.round(tienMatHeThong),
+    };
   }
 
   private async capNhatTrangThaiDonHangHeThong(

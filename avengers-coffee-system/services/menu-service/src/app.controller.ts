@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
 import { AppService } from './app.service';
 
 @Controller()
@@ -27,5 +27,13 @@ export class AppController {
   @Get('menu/suggestions/:userId')
   getSuggestions(@Param('userId') userId: string) {
     return this.appService.getSuggestions(userId);
+  }
+
+  @Patch('menu/items/:itemId/status')
+  updateMenuItemStatus(
+    @Param('itemId') itemId: string,
+    @Body() payload: { dang_ban: boolean },
+  ) {
+    return this.appService.updateMenuItemStatus(Number(itemId), Boolean(payload?.dang_ban));
   }
 }

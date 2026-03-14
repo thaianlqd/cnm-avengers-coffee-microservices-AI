@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 
 @Controller()
@@ -13,6 +13,11 @@ export class UserController {
   @Post('auth/login')
   async login(@Body() body: any) {
     return this.userService.login(body);
+  }
+
+  @Get('users/workforce')
+  async layDanhSachNhanSu(@Query('role') role?: string) {
+    return this.userService.layDanhSachNhanSu(role);
   }
 
   @Get('users/:userId/profile')

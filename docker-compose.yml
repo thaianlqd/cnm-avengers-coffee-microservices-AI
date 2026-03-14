@@ -204,6 +204,7 @@ services:
       context: ./avengers-coffee-system/apps/web-admin
       args:
         VITE_API_URL: ${WEB_ADMIN_API_URL:-http://localhost:3000}
+        VITE_SOCKET_URL: ${WEB_ADMIN_SOCKET_URL:-http://localhost:3005}
     container_name: avengers_web_admin
     restart: unless-stopped
     depends_on:

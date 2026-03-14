@@ -15,7 +15,7 @@ export default function ProductCard({ product, onView, onQuickAdd }) {
         />
         {!trang_thai && (
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-            <span className="bg-white/90 text-gray-800 px-4 py-1 rounded-full text-xs font-bold uppercase">Hết món</span>
+            <span className="bg-white/90 text-gray-800 px-4 py-1 rounded-full text-xs font-bold uppercase">Tạm hết</span>
           </div>
         )}
       </div>
