@@ -90,6 +90,8 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-123}
       DB_NAME: ${DB_NAME:-avengers_coffee}
       DB_SCHEMA: ${MENU_DB_SCHEMA:-menu}
+    volumes:
+      - ./avengers-coffee-system/apps/web-customer/public/images/products:/app/uploads/products
     expose:
       - "${MENU_PORT:-3003}"
     networks:
@@ -194,6 +196,8 @@ services:
     depends_on:
       api-gateway:
         condition: service_started
+    volumes:
+      - ./avengers-coffee-system/apps/web-customer/public/images/products:/usr/share/nginx/html/images/products
     ports:
       - "${WEB_CUSTOMER_PORT:-5173}:80"
     networks:
@@ -210,6 +214,8 @@ services:
     depends_on:
       api-gateway:
         condition: service_started
+    volumes:
+      - ./avengers-coffee-system/apps/web-customer/public/images/products:/usr/share/nginx/html/images/products
     ports:
       - "${WEB_ADMIN_PORT:-5174}:80"
     networks:

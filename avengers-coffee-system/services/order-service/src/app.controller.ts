@@ -139,21 +139,55 @@ export class AppController {
     @Query('payment_status') paymentStatus?: string,
     @Query('payment_method') paymentMethod?: string,
     @Query('q') keyword?: string,
+    @Query('branch_code') branchCode?: string,
   ) {
     return this.thanhToanService.layDanhSachDonHangChoStaff({
       status,
       paymentStatus,
       paymentMethod,
       keyword,
+      branchCode,
     });
   }
 
   @Patch('staff/orders/:orderId/status')
   updateStaffOrderStatus(
     @Param('orderId') orderId: string,
-    @Body() payload: { status: string },
+    @Body() payload: { status: string; branch_code?: string },
   ) {
-    return this.thanhToanService.capNhatTrangThaiDonHangChoStaff(orderId, payload.status);
+    return this.thanhToanService.capNhatTrangThaiDonHangChoStaff(orderId, payload.status, payload.branch_code);
+  }
+
+  @Patch('staff/orders/:orderId')
+  updateStaffOrder(
+    @Param('orderId') orderId: string,
+    @Body()
+    payload: {
+      dia_chi_giao_hang?: string;
+      khung_gio_giao?: string;
+      ghi_chu?: string;
+      ten_khach_hang?: string;
+      ma_ban?: string;
+      tien_khach_dua?: number;
+      branch_code?: string;
+      items?: Array<{
+        ma_san_pham: number;
+        ten_san_pham: string;
+        so_luong: number;
+        gia_ban: number;
+      }>;
+    },
+  ) {
+    return this.thanhToanService.capNhatThongTinDonHangChoStaff(orderId, payload.branch_code, payload);
+  }
+
+  @Delete('staff/orders/:orderId')
+  deleteStaffOrder(
+    @Param('orderId') orderId: string,
+    @Query('branch_code') branchCode?: string,
+    @Query('reason') reason?: string,
+  ) {
+    return this.thanhToanService.xoaDonHangChoStaff(orderId, branchCode, reason);
   }
 
   @Post('staff/orders')
@@ -167,7 +201,9 @@ export class AppController {
       loai_don_hang: 'TAI_CHO' | 'MANG_DI';
       ma_ban?: string;
       ghi_chu?: string;
+      tien_khach_dua?: number;
       phuong_thuc_thanh_toan: 'THANH_TOAN_KHI_NHAN_HANG' | 'NGAN_HANG_QR' | 'VNPAY';
+      branch_code?: string;
       items: Array<{
         ma_san_pham: number;
         ten_san_pham: string;
@@ -181,16 +217,20 @@ export class AppController {
 
   @Get('staff/shifts/preview')
   previewShift(
+    @Query('shift_date') shiftDate?: string,
     @Query('from') from?: string,
     @Query('to') to?: string,
     @Query('cash_open') cashOpen?: string,
     @Query('cash_close') cashClose?: string,
+    @Query('branch_code') branchCode?: string,
   ) {
     return this.thanhToanService.xemTruocDoiSoatCa({
+      shiftDate,
       from,
       to,
       cashOpen,
       cashClose,
+      branchCode,
     });
   }
 
@@ -198,39 +238,41 @@ export class AppController {
   closeShift(
     @Body()
     payload: {
+      shift_date?: string;
       from: string;
       to: string;
       cash_open: number;
       cash_close: number;
       note?: string;
       staff_name?: string;
+      branch_code?: string;
     },
   ) {
     return this.thanhToanService.chotCaLamViec(payload);
   }
 
   @Get('staff/shifts/history')
-  getShiftHistory(@Query('limit') limit?: string) {
-    return this.thanhToanService.layLichSuChotCa(Number(limit || 20));
+  getShiftHistory(@Query('limit') limit?: string, @Query('branch_code') branchCode?: string) {
+    return this.thanhToanService.layLichSuChotCa(Number(limit || 20), branchCode);
   }
 
   @Patch('staff/shifts/:id')
   updateShift(
     @Param('id') id: string,
-    @Body() payload: { cash_open?: number; cash_close?: number; note?: string; staff_name?: string },
+    @Body() payload: { cash_open?: number; cash_close?: number; note?: string; staff_name?: string; branch_code?: string },
   ) {
     return this.thanhToanService.suaCaLamViec(id, payload);
   }
 
   @Delete('staff/shifts/:id')
-  deleteShift(@Param('id') id: string) {
-    return this.thanhToanService.xoaCaLamViec(id);
+  deleteShift(@Param('id') id: string, @Query('branch_code') branchCode?: string) {
+    return this.thanhToanService.xoaCaLamViec(id, branchCode);
   }
 
   @Patch('manager/shifts/:id/approval')
   approveShiftReconciliation(
     @Param('id') id: string,
-    @Body() payload: { status: 'APPROVED' | 'REJECTED'; manager_name?: string; approval_note?: string },
+    @Body() payload: { status: 'APPROVED' | 'REJECTED'; manager_name?: string; approval_note?: string; branch_code?: string },
   ) {
     return this.thanhToanService.pheDuyetDoiSoatCaLamViec(id, payload);
   }
@@ -242,10 +284,12 @@ export class AppController {
       staff_username: string;
       staff_name?: string;
       shift_date: string;
-      shift_template: '2_CA' | '3_CA';
+      shift_template?: '2_CA' | '3_CA';
       shift_code: 'SANG' | 'CHIEU' | 'TOI';
+      shift_codes?: Array<'SANG' | 'CHIEU' | 'TOI'>;
       note?: string;
       manager_username?: string;
+      branch_code?: string;
     },
   ) {
     return this.thanhToanService.taoLichLamViecChoManager(payload);
@@ -256,11 +300,13 @@ export class AppController {
     @Query('from') from?: string,
     @Query('to') to?: string,
     @Query('staff_username') staff_username?: string,
+    @Query('branch_code') branchCode?: string,
   ) {
     return this.thanhToanService.layDanhSachLichLamViecChoManager({
       from,
       to,
       staff_username,
+      branchCode,
     });
   }
 
@@ -273,14 +319,15 @@ export class AppController {
       check_in_at?: string | null;
       check_out_at?: string | null;
       note?: string;
+      branch_code?: string;
     },
   ) {
     return this.thanhToanService.capNhatChamCongCaLamViecChoManager(id, payload);
   }
 
   @Delete('manager/work-shifts/:id')
-  deleteWorkShift(@Param('id') id: string) {
-    return this.thanhToanService.xoaLichLamViecChoManager(id);
+  deleteWorkShift(@Param('id') id: string, @Query('branch_code') branchCode?: string) {
+    return this.thanhToanService.xoaLichLamViecChoManager(id, branchCode);
   }
 
   @Get('staff/work-shifts')
@@ -288,7 +335,8 @@ export class AppController {
     @Query('staff_username') staffUsername?: string,
     @Query('from') from?: string,
     @Query('to') to?: string,
+    @Query('branch_code') branchCode?: string,
   ) {
-    return this.thanhToanService.layLichLamViecChoStaff(staffUsername || '', from, to);
+    return this.thanhToanService.layLichLamViecChoStaff(staffUsername || '', from, to, branchCode);
   }
 }

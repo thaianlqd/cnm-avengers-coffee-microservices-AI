@@ -16,6 +16,7 @@ export class ThanhToanController {
       dia_chi_giao_hang: string;
       khung_gio_giao?: string;
       ghi_chu?: string;
+      branch_code?: string;
     },
   ) {
     return this.thanhToanService.khoiTaoThanhToan(customerId, payload, req.ip || '127.0.0.1');

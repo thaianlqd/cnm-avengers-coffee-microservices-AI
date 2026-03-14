@@ -117,6 +117,58 @@ const CONTACT_INFO = {
   storeImage: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1400&q=80',
 };
 
+const BRANCH_NAME_MAP = {
+  MAC_DINH_CHI: 'Mạc Đĩnh Chi',
+  THE_GRACE_TOWER: 'The Grace Tower',
+};
+
+const ADDRESS_OPTIONS = {
+  'Thành phố Hồ Chí Minh': {
+    'Quận 1': ['Phường Sài Gòn'],
+    'Quận 7': ['Tân Phú'],
+  },
+};
+
+const DEFAULT_ADDRESS_FORM = {
+  tenDiaChi: '',
+  city: 'Thành phố Hồ Chí Minh',
+  district: 'Quận 1',
+  ward: 'Phường Sài Gòn',
+  street: '',
+  ghiChu: '',
+};
+
+function taoDiaChiDayDu(addressForm) {
+  const parts = [addressForm.street, addressForm.ward, addressForm.district, addressForm.city]
+    .map((item) => String(item || '').trim())
+    .filter(Boolean);
+  return parts.join(', ');
+}
+
+function tachDiaChiDayDu(rawAddress) {
+  const raw = String(rawAddress || '').trim();
+  if (!raw) {
+    return {
+      city: 'Thành phố Hồ Chí Minh',
+      district: 'Quận 1',
+      ward: 'Phường Sài Gòn',
+      street: '',
+    };
+  }
+
+  const parts = raw
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const city = parts[parts.length - 1] || 'Thành phố Hồ Chí Minh';
+  const district = parts[parts.length - 2] || 'Quận 1';
+  const ward = parts[parts.length - 3] || 'Phường Sài Gòn';
+  const street = parts.slice(0, Math.max(parts.length - 3, 0)).join(', ');
+
+  return { city, district, ward, street: street || raw };
+}
+
 const STORE_LOCATIONS = [
   {
     id: 1,
@@ -234,6 +286,33 @@ function AppContent() {
   const userId = user?.ma_nguoi_dung || user?.maNguoiDung || null;
   const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3005';
 
+  const mapBranchName = (branchCode) => {
+    if (!branchCode) return '';
+    return BRANCH_NAME_MAP[String(branchCode).toUpperCase()] || String(branchCode);
+  };
+
+  const resolveBranchNameFromNotification = async (notification) => {
+    const payload = notification?.du_lieu || {};
+    const branchFromPayload = payload.co_so_ma || payload.branch_code || payload.coSoMa;
+    if (branchFromPayload) {
+      return mapBranchName(branchFromPayload);
+    }
+
+    const orderId = payload.ma_don_hang;
+    if (!orderId || !userId) {
+      return '';
+    }
+
+    try {
+      const response = await apiClient.get(`/customers/${userId}/orders?q=${encodeURIComponent(orderId)}`);
+      const orders = response?.data?.orders || [];
+      const matchedOrder = orders.find((order) => order?.ma_don_hang === orderId) || orders[0];
+      return mapBranchName(matchedOrder?.co_so_ma);
+    } catch {
+      return '';
+    }
+  };
+
   const {
     data: products = [],
     isLoading: isProductsLoading,
@@ -346,7 +425,7 @@ function AppContent() {
 
     socket.emit('notifications:subscribe', { userId });
 
-    socket.on('notification:new', (notification) => {
+    socket.on('notification:new', async (notification) => {
       if (!notification?.id) {
         return;
       }
@@ -363,7 +442,12 @@ function AppContent() {
         };
       });
 
-      setNotificationToast({ title: notification.tieu_de, message: notification.noi_dung });
+      const branchName = await resolveBranchNameFromNotification(notification);
+      setNotificationToast({
+        title: notification.tieu_de,
+        message: notification.noi_dung,
+        branchName,
+      });
     });
 
     socket.on('connect', () => {
@@ -476,7 +560,7 @@ function AppContent() {
       newPassword: '',
       confirmPassword: '',
     });
-    const [addressForm, setAddressForm] = useState({ tenDiaChi: '', diaChiDayDu: '', ghiChu: '' });
+    const [addressForm, setAddressForm] = useState(DEFAULT_ADDRESS_FORM);
     const [profileError, setProfileError] = useState('');
     const [passwordError, setPasswordError] = useState('');
     const [addressError, setAddressError] = useState('');
@@ -542,6 +626,12 @@ function AppContent() {
     const savedAddresses = addressPayload?.items || [];
     const myReviews = reviewHistoryPayload?.items || [];
     const diemLoyalty = loyaltyData?.diem || 0;
+    const districtOptions = useMemo(() => Object.keys(ADDRESS_OPTIONS[addressForm.city] || {}), [addressForm.city]);
+    const wardOptions = useMemo(
+      () => (ADDRESS_OPTIONS[addressForm.city]?.[addressForm.district] || []),
+      [addressForm.city, addressForm.district],
+    );
+    const diaChiDayDu = useMemo(() => taoDiaChiDayDu(addressForm), [addressForm]);
 
     useEffect(() => {
       if (profile) {
@@ -552,6 +642,30 @@ function AppContent() {
         });
       }
     }, [profile]);
+
+    useEffect(() => {
+      if (!districtOptions.length) {
+        return;
+      }
+
+      if (!districtOptions.includes(addressForm.district)) {
+        setAddressForm((prev) => ({
+          ...prev,
+          district: districtOptions[0],
+          ward: (ADDRESS_OPTIONS[prev.city]?.[districtOptions[0]] || [])[0] || '',
+        }));
+      }
+    }, [addressForm.city, addressForm.district, districtOptions]);
+
+    useEffect(() => {
+      if (!wardOptions.length) {
+        return;
+      }
+
+      if (!wardOptions.includes(addressForm.ward)) {
+        setAddressForm((prev) => ({ ...prev, ward: wardOptions[0] }));
+      }
+    }, [addressForm.ward, wardOptions]);
 
     const updateProfileMutation = useMutation({
       mutationFn: async (payload) => {
@@ -603,7 +717,7 @@ function AppContent() {
       onSuccess: () => {
         setAddressError('');
         setEditingAddressId(null);
-        setAddressForm({ tenDiaChi: '', diaChiDayDu: '', ghiChu: '' });
+        setAddressForm(DEFAULT_ADDRESS_FORM);
         queryClient.invalidateQueries({ queryKey: queryKeys.userAddresses(userId) });
       },
       onError: (err) => {
@@ -619,7 +733,7 @@ function AppContent() {
         setAddressError('');
         if (editingAddressId) {
           setEditingAddressId(null);
-          setAddressForm({ tenDiaChi: '', diaChiDayDu: '', ghiChu: '' });
+          setAddressForm(DEFAULT_ADDRESS_FORM);
         }
         queryClient.invalidateQueries({ queryKey: queryKeys.userAddresses(userId) });
       },
@@ -674,9 +788,15 @@ function AppContent() {
     const handleSaveAddress = (e) => {
       e.preventDefault();
       setAddressError('');
+
+      if (!addressForm.street.trim()) {
+        setAddressError('Vui lòng nhập số nhà, tên đường cho địa chỉ giao hàng.');
+        return;
+      }
+
       saveAddressMutation.mutate({
         tenDiaChi: addressForm.tenDiaChi,
-        diaChiDayDu: addressForm.diaChiDayDu,
+        diaChiDayDu: diaChiDayDu,
         ghiChu: addressForm.ghiChu,
       });
     };
@@ -684,9 +804,21 @@ function AppContent() {
     const handleEditAddress = (address) => {
       setAddressError('');
       setEditingAddressId(address.id);
+      const parsed = tachDiaChiDayDu(address.dia_chi_day_du);
+      const normalizedCity = ADDRESS_OPTIONS[parsed.city] ? parsed.city : 'Thành phố Hồ Chí Minh';
+      const normalizedDistrict = ADDRESS_OPTIONS[normalizedCity]?.[parsed.district]
+        ? parsed.district
+        : Object.keys(ADDRESS_OPTIONS[normalizedCity] || {})[0] || 'Quận 1';
+      const normalizedWard = (ADDRESS_OPTIONS[normalizedCity]?.[normalizedDistrict] || []).includes(parsed.ward)
+        ? parsed.ward
+        : (ADDRESS_OPTIONS[normalizedCity]?.[normalizedDistrict] || [])[0] || 'Phường Sài Gòn';
+
       setAddressForm({
         tenDiaChi: address.ten_dia_chi || '',
-        diaChiDayDu: address.dia_chi_day_du || '',
+        city: normalizedCity,
+        district: normalizedDistrict,
+        ward: normalizedWard,
+        street: parsed.street,
         ghiChu: address.ghi_chu || '',
       });
       setActiveTab('addresses');
@@ -695,7 +827,7 @@ function AppContent() {
     const resetAddressEditor = () => {
       setEditingAddressId(null);
       setAddressError('');
-      setAddressForm({ tenDiaChi: '', diaChiDayDu: '', ghiChu: '' });
+      setAddressForm(DEFAULT_ADDRESS_FORM);
     };
 
     return (
@@ -973,15 +1105,63 @@ function AppContent() {
                   </div>
 
                   <div>
-                    <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Địa chỉ đầy đủ</p>
-                    <textarea
+                    <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Thành phố</p>
+                    <select
+                      value={addressForm.city}
+                      onChange={(e) => {
+                        const nextCity = e.target.value;
+                        const nextDistrict = Object.keys(ADDRESS_OPTIONS[nextCity] || {})[0] || '';
+                        const nextWard = (ADDRESS_OPTIONS[nextCity]?.[nextDistrict] || [])[0] || '';
+                        setAddressForm((prev) => ({ ...prev, city: nextCity, district: nextDistrict, ward: nextWard }));
+                      }}
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                    >
+                      {Object.keys(ADDRESS_OPTIONS).map((city) => (
+                        <option key={city} value={city}>{city}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Quận</p>
+                    <select
+                      value={addressForm.district}
+                      onChange={(e) => {
+                        const nextDistrict = e.target.value;
+                        const nextWard = (ADDRESS_OPTIONS[addressForm.city]?.[nextDistrict] || [])[0] || '';
+                        setAddressForm((prev) => ({ ...prev, district: nextDistrict, ward: nextWard }));
+                      }}
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                    >
+                      {districtOptions.map((district) => (
+                        <option key={district} value={district}>{district}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Phường</p>
+                    <select
+                      value={addressForm.ward}
+                      onChange={(e) => setAddressForm((prev) => ({ ...prev, ward: e.target.value }))}
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                    >
+                      {wardOptions.map((ward) => (
+                        <option key={ward} value={ward}>{ward}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Số nhà, tên đường</p>
+                    <input
                       required
-                      value={addressForm.diaChiDayDu}
-                      onChange={(e) => setAddressForm((prev) => ({ ...prev, diaChiDayDu: e.target.value }))}
-                      rows={4}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange resize-none"
-                      placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"
+                      value={addressForm.street}
+                      onChange={(e) => setAddressForm((prev) => ({ ...prev, street: e.target.value }))}
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                      placeholder="Ví dụ: 28 Ter B Mạc Đĩnh Chi"
                     />
+                    <p className="mt-2 text-xs font-semibold text-gray-500">Địa chỉ đầy đủ: {diaChiDayDu || '---'}</p>
                   </div>
 
                   <div>
@@ -1670,6 +1850,9 @@ function AppContent() {
           <p className="text-[11px] font-black uppercase tracking-widest text-tch-orange">Thong bao moi</p>
           <p className="mt-1 text-sm font-black text-gray-800">{notificationToast.title}</p>
           <p className="mt-1 text-xs font-semibold text-gray-500">{notificationToast.message}</p>
+          {notificationToast.branchName ? (
+            <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-gray-600">Co so xu ly: {notificationToast.branchName}</p>
+          ) : null}
         </div>
       ) : null}
     </div>

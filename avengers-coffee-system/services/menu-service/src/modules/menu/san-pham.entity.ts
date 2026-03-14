@@ -15,10 +15,10 @@ export class SanPham {
   gia_ban: number;
 
   @Column({ type: 'text', nullable: true })
-  mo_ta: string;
+  mo_ta: string | null;
 
-  @Column({ nullable: true })
-  hinh_anh_url: string;
+  @Column({ type: 'varchar', nullable: true })
+  hinh_anh_url: string | null;
 
   @Column({ default: true })
   trang_thai: boolean;

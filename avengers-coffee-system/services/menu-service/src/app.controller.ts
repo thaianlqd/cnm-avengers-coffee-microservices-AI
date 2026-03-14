@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AppService } from './app.service';
 
 @Controller()
@@ -35,5 +36,50 @@ export class AppController {
     @Body() payload: { dang_ban: boolean },
   ) {
     return this.appService.updateMenuItemStatus(Number(itemId), Boolean(payload?.dang_ban));
+  }
+
+  @Post('menu/items')
+  createMenuItem(
+    @Body()
+    payload: {
+      name?: string;
+      category_code?: string | number;
+      price?: number;
+      image?: string;
+      description?: string;
+      dang_ban?: boolean;
+    },
+  ) {
+    return this.appService.createMenuItem(payload);
+  }
+
+  @Post('menu/upload-image')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadMenuImage(
+    @UploadedFile() file: any,
+    @Body('productName') productName?: string,
+  ) {
+    return this.appService.uploadProductImage(file, productName);
+  }
+
+  @Patch('menu/items/:itemId')
+  updateMenuItem(
+    @Param('itemId') itemId: string,
+    @Body()
+    payload: {
+      name?: string;
+      category_code?: string | number;
+      price?: number;
+      image?: string;
+      description?: string;
+      dang_ban?: boolean;
+    },
+  ) {
+    return this.appService.updateMenuItem(Number(itemId), payload);
+  }
+
+  @Delete('menu/items/:itemId')
+  deleteMenuItem(@Param('itemId') itemId: string) {
+    return this.appService.deleteMenuItem(Number(itemId));
   }
 }

@@ -34,6 +34,12 @@ export class User {
   @Column({ type: 'varchar', default: 'CUSTOMER' })
   vai_tro: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  co_so_ma: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  co_so_ten: string | null;
+
   @Column({ type: 'int', default: 0 })
   diem_loyalty: number;
 

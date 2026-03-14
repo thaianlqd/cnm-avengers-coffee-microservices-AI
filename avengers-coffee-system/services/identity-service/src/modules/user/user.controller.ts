@@ -16,8 +16,59 @@ export class UserController {
   }
 
   @Get('users/workforce')
-  async layDanhSachNhanSu(@Query('role') role?: string) {
-    return this.userService.layDanhSachNhanSu(role);
+  async layDanhSachNhanSu(@Query('role') role?: string, @Query('branch_code') branchCode?: string) {
+    return this.userService.layDanhSachNhanSu(role, branchCode);
+  }
+
+  @Get('users/admin/accounts')
+  async layDanhSachTaiKhoanAdmin(
+    @Query('role') role?: string,
+    @Query('branch_code') branchCode?: string,
+    @Query('q') keyword?: string,
+  ) {
+    return this.userService.layDanhSachTaiKhoanHeThong({ role, branchCode, keyword });
+  }
+
+  @Post('users/admin/accounts')
+  async taoTaiKhoanAdmin(
+    @Body()
+    body: {
+      ten_dang_nhap?: string;
+      mat_khau?: string;
+      ho_ten?: string;
+      vai_tro?: 'STAFF' | 'MANAGER';
+      co_so_ma?: string;
+      email?: string;
+    },
+  ) {
+    return this.userService.taoTaiKhoanHeThong(body);
+  }
+
+  @Patch('users/admin/accounts/:userId')
+  async capNhatTaiKhoanAdmin(
+    @Param('userId') userId: string,
+    @Body()
+    body: {
+      ten_dang_nhap?: string;
+      mat_khau?: string;
+      ho_ten?: string;
+      vai_tro?: 'STAFF' | 'MANAGER';
+      co_so_ma?: string;
+      trang_thai?: 'ACTIVE' | 'INACTIVE';
+      email?: string;
+    },
+  ) {
+    return this.userService.capNhatTaiKhoanHeThong(userId, body);
+  }
+
+  @Delete('users/admin/accounts/:userId')
+  async xoaTaiKhoanAdmin(@Param('userId') userId: string) {
+    return this.userService.xoaTaiKhoanHeThong(userId);
+  }
+
+  @Get('users/admin/stats')
+  async layThongKeAdmin() {
+    return this.userService.layThongKeHeThong();
   }
 
   @Get('users/:userId/profile')

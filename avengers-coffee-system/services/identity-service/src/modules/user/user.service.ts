@@ -6,6 +6,17 @@ import { User } from './user.entity';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 
+const BRANCHES = {
+  MAC_DINH_CHI: {
+    code: 'MAC_DINH_CHI',
+    name: 'Mạc Đĩnh Chi',
+  },
+  THE_GRACE_TOWER: {
+    code: 'THE_GRACE_TOWER',
+    name: 'The Grace Tower',
+  },
+} as const;
+
 @Injectable()
 export class UserService implements OnModuleInit {
   constructor(
@@ -16,7 +27,20 @@ export class UserService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
+    await this.seedSystemAdminAccount();
     await this.seedStoreWorkforceAccounts();
+  }
+
+  private normalizeBranchCode(branchCode?: string) {
+    const code = String(branchCode || '').trim().toUpperCase();
+    if (!code) return null;
+    return BRANCHES[code as keyof typeof BRANCHES]?.code || null;
+  }
+
+  private mapBranchName(branchCode?: string | null) {
+    const code = String(branchCode || '').trim().toUpperCase();
+    if (!code) return null;
+    return BRANCHES[code as keyof typeof BRANCHES]?.name || null;
   }
 
   async register(data: any) {
@@ -35,6 +59,8 @@ export class UserService implements OnModuleInit {
       mat_khau_hash: hashedPassword,
       ho_ten: hoTen,
       vai_tro: 'CUSTOMER',
+      co_so_ma: null,
+      co_so_ten: null,
     });
 
     const savedUser = await this.userRepo.save(newUser);
@@ -67,11 +93,15 @@ export class UserService implements OnModuleInit {
         tenDangNhap: user.ten_dang_nhap,
         email: user.email,
         vaiTro: user.vai_tro || 'STAFF',
+        coSoMa: user.co_so_ma,
+        coSoTen: user.co_so_ten,
+        co_so_ma: user.co_so_ma,
+        co_so_ten: user.co_so_ten,
       }
     };
   }
 
-  async layDanhSachNhanSu(role?: string) {
+  async layDanhSachNhanSu(role?: string, branchCode?: string) {
     const query = this.userRepo
       .createQueryBuilder('user')
       .where('user.vai_tro IN (:...roles)', { roles: ['STAFF', 'MANAGER'] })
@@ -79,6 +109,10 @@ export class UserService implements OnModuleInit {
 
     if (role?.trim()) {
       query.andWhere('user.vai_tro = :role', { role: role.trim().toUpperCase() })
+    }
+
+    if (branchCode?.trim()) {
+      query.andWhere('user.co_so_ma = :branchCode', { branchCode: branchCode.trim().toUpperCase() })
     }
 
     const rows = await query
@@ -95,43 +129,286 @@ export class UserService implements OnModuleInit {
         ho_ten: user.ho_ten,
         email: user.email,
         vai_tro: user.vai_tro,
+        co_so_ma: user.co_so_ma,
+        co_so_ten: user.co_so_ten,
       })),
     }
   }
 
-  private async seedStoreWorkforceAccounts() {
-    const staffUsername = process.env.STORE_STAFF_USERNAME || 'thaian_staff';
-    const managerUsername = process.env.STORE_MANAGER_USERNAME || 'thaian_manager';
-    const sharedPassword = process.env.STORE_DEFAULT_PASSWORD || '123456';
+  async layDanhSachTaiKhoanHeThong(input: { role?: string; branchCode?: string; keyword?: string }) {
+    const query = this.userRepo.createQueryBuilder('user');
 
-    const staffName = process.env.STORE_STAFF_NAME || 'Thái An (Nhân viên cửa hàng)';
-    const managerName = process.env.STORE_MANAGER_NAME || 'Thái An (Quản lý cửa hàng)';
-
-    const legacyAdmin = await this.userRepo.findOne({
-      where: [{ ten_dang_nhap: 'thaian_admin' }, { email: 'thaian_admin' }],
-    });
-
-    if (legacyAdmin) {
-      legacyAdmin.ten_dang_nhap = staffUsername;
-      legacyAdmin.email = staffUsername;
-      legacyAdmin.ho_ten = staffName;
-      legacyAdmin.vai_tro = 'STAFF';
-      legacyAdmin.trang_thai = 'ACTIVE';
-      await this.userRepo.save(legacyAdmin);
+    if (input.role?.trim()) {
+      query.andWhere('user.vai_tro = :role', { role: input.role.trim().toUpperCase() });
     }
 
+    if (input.branchCode?.trim()) {
+      query.andWhere('user.co_so_ma = :branchCode', { branchCode: input.branchCode.trim().toUpperCase() });
+    }
+
+    if (input.keyword?.trim()) {
+      const q = `%${input.keyword.trim()}%`;
+      query.andWhere('(user.ten_dang_nhap ILIKE :q OR user.ho_ten ILIKE :q OR user.email ILIKE :q)', { q });
+    }
+
+    const rows = await query
+      .orderBy('user.ngay_tao', 'DESC')
+      .getMany();
+
+    return {
+      total: rows.length,
+      items: rows.map((user) => ({
+        ma_nguoi_dung: user.ma_nguoi_dung,
+        ten_dang_nhap: user.ten_dang_nhap,
+        ho_ten: user.ho_ten,
+        email: user.email,
+        vai_tro: user.vai_tro,
+        trang_thai: user.trang_thai,
+        co_so_ma: user.co_so_ma,
+        co_so_ten: user.co_so_ten,
+        ngay_tao: user.ngay_tao,
+      })),
+    };
+  }
+
+  async taoTaiKhoanHeThong(payload: {
+    ten_dang_nhap?: string;
+    mat_khau?: string;
+    ho_ten?: string;
+    vai_tro?: 'STAFF' | 'MANAGER';
+    co_so_ma?: string;
+    email?: string;
+  }) {
+    const username = String(payload.ten_dang_nhap || '').trim();
+    const password = String(payload.mat_khau || '');
+    const fullName = String(payload.ho_ten || '').trim();
+    const role = String(payload.vai_tro || '').trim().toUpperCase();
+    const branchCode = this.normalizeBranchCode(payload.co_so_ma);
+
+    if (!username || !password || !fullName || !['STAFF', 'MANAGER'].includes(role)) {
+      throw new BadRequestException('Du lieu tao tai khoan khong hop le');
+    }
+    if (password.length < 6) {
+      throw new BadRequestException('Mat khau phai tu 6 ky tu tro len');
+    }
+    if (!branchCode) {
+      throw new BadRequestException('Vui long chon chi nhanh hop le');
+    }
+
+    const existed = await this.userRepo.findOne({ where: [{ ten_dang_nhap: username }, { email: username }, { email: payload.email || '' }] });
+    if (existed) {
+      throw new BadRequestException('Ten dang nhap hoac email da ton tai');
+    }
+
+    const salt = await bcrypt.genSalt();
+    const mat_khau_hash = await bcrypt.hash(password, salt);
+
+    const created = this.userRepo.create({
+      ma_nguoi_dung: randomUUID(),
+      ten_dang_nhap: username,
+      email: payload.email?.trim() || username,
+      mat_khau_hash,
+      ho_ten: fullName,
+      vai_tro: role,
+      trang_thai: 'ACTIVE',
+      co_so_ma: branchCode,
+      co_so_ten: this.mapBranchName(branchCode),
+    });
+
+    const saved = await this.userRepo.save(created);
+    return {
+      message: 'Tao tai khoan thanh cong',
+      item: {
+        ma_nguoi_dung: saved.ma_nguoi_dung,
+        ten_dang_nhap: saved.ten_dang_nhap,
+        ho_ten: saved.ho_ten,
+        email: saved.email,
+        vai_tro: saved.vai_tro,
+        trang_thai: saved.trang_thai,
+        co_so_ma: saved.co_so_ma,
+        co_so_ten: saved.co_so_ten,
+      },
+    };
+  }
+
+  async capNhatTaiKhoanHeThong(
+    userId: string,
+    payload: {
+      ten_dang_nhap?: string;
+      mat_khau?: string;
+      ho_ten?: string;
+      vai_tro?: 'STAFF' | 'MANAGER';
+      co_so_ma?: string;
+      trang_thai?: 'ACTIVE' | 'INACTIVE';
+      email?: string;
+    },
+  ) {
+    const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: userId } });
+    if (!user) {
+      throw new NotFoundException('Khong tim thay tai khoan');
+    }
+
+    if (user.vai_tro === 'ADMIN' && (payload.vai_tro || payload.trang_thai === 'INACTIVE')) {
+      throw new BadRequestException('Khong the doi role hoac vo hieu hoa tai khoan ADMIN');
+    }
+
+    if (payload.ten_dang_nhap !== undefined) {
+      const username = payload.ten_dang_nhap.trim();
+      if (!username) throw new BadRequestException('ten_dang_nhap khong hop le');
+      const existed = await this.userRepo.findOne({ where: { ten_dang_nhap: username } });
+      if (existed && existed.ma_nguoi_dung !== userId) throw new BadRequestException('Ten dang nhap da ton tai');
+      user.ten_dang_nhap = username;
+    }
+
+    if (payload.email !== undefined) {
+      const email = payload.email?.trim() || null;
+      if (email) {
+        const existed = await this.userRepo.findOne({ where: { email } });
+        if (existed && existed.ma_nguoi_dung !== userId) throw new BadRequestException('Email da ton tai');
+      }
+      user.email = email;
+    }
+
+    if (payload.ho_ten !== undefined) {
+      const fullName = payload.ho_ten.trim();
+      if (!fullName) throw new BadRequestException('ho_ten khong hop le');
+      user.ho_ten = fullName;
+    }
+
+    if (payload.vai_tro !== undefined) {
+      const role = String(payload.vai_tro).toUpperCase();
+      if (!['STAFF', 'MANAGER'].includes(role)) {
+        throw new BadRequestException('Chi cho phep role STAFF hoac MANAGER');
+      }
+      user.vai_tro = role;
+    }
+
+    if (payload.trang_thai !== undefined) {
+      if (!['ACTIVE', 'INACTIVE'].includes(payload.trang_thai)) {
+        throw new BadRequestException('trang_thai khong hop le');
+      }
+      user.trang_thai = payload.trang_thai;
+    }
+
+    if (payload.co_so_ma !== undefined) {
+      const branchCode = this.normalizeBranchCode(payload.co_so_ma);
+      if (!branchCode) {
+        throw new BadRequestException('co_so_ma khong hop le');
+      }
+      user.co_so_ma = branchCode;
+      user.co_so_ten = this.mapBranchName(branchCode);
+    }
+
+    if (payload.mat_khau !== undefined) {
+      const password = String(payload.mat_khau || '');
+      if (password.length < 6) throw new BadRequestException('Mat khau phai tu 6 ky tu tro len');
+      const salt = await bcrypt.genSalt();
+      user.mat_khau_hash = await bcrypt.hash(password, salt);
+    }
+
+    const saved = await this.userRepo.save(user);
+    return {
+      message: 'Cap nhat tai khoan thanh cong',
+      item: {
+        ma_nguoi_dung: saved.ma_nguoi_dung,
+        ten_dang_nhap: saved.ten_dang_nhap,
+        ho_ten: saved.ho_ten,
+        email: saved.email,
+        vai_tro: saved.vai_tro,
+        trang_thai: saved.trang_thai,
+        co_so_ma: saved.co_so_ma,
+        co_so_ten: saved.co_so_ten,
+      },
+    };
+  }
+
+  async xoaTaiKhoanHeThong(userId: string) {
+    const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: userId } });
+    if (!user) {
+      throw new NotFoundException('Khong tim thay tai khoan');
+    }
+    if (user.vai_tro === 'ADMIN') {
+      throw new BadRequestException('Khong the xoa tai khoan ADMIN he thong');
+    }
+
+    await this.userRepo.remove(user);
+    return { message: 'Xoa tai khoan thanh cong' };
+  }
+
+  async layThongKeHeThong() {
+    const rows = await this.userRepo.find();
+
+    const byRole: Record<string, number> = { ADMIN: 0, MANAGER: 0, STAFF: 0, CUSTOMER: 0 };
+    const byBranch: Record<string, number> = {};
+    let activeUsers = 0;
+
+    rows.forEach((user) => {
+      const role = String(user.vai_tro || 'CUSTOMER').toUpperCase();
+      byRole[role] = (byRole[role] || 0) + 1;
+      if (user.trang_thai === 'ACTIVE') activeUsers += 1;
+
+      if (user.co_so_ma) {
+        byBranch[user.co_so_ma] = (byBranch[user.co_so_ma] || 0) + 1;
+      }
+    });
+
+    return {
+      total_users: rows.length,
+      active_users: activeUsers,
+      inactive_users: Math.max(rows.length - activeUsers, 0),
+      by_role: byRole,
+      by_branch: byBranch,
+    };
+  }
+
+  private async seedStoreWorkforceAccounts() {
+    const sharedPassword = process.env.STORE_DEFAULT_PASSWORD || '123456';
+
     await this.upsertWorkforceUser({
-      username: staffUsername,
+      username: 'thaian_staff_macdinhchi',
       password: sharedPassword,
-      fullName: staffName,
+      fullName: 'Thái An - Nhân viên cơ sở Mạc Đĩnh Chi',
       role: 'STAFF',
+      branchCode: BRANCHES.MAC_DINH_CHI.code,
+      branchName: BRANCHES.MAC_DINH_CHI.name,
     });
 
     await this.upsertWorkforceUser({
-      username: managerUsername,
+      username: 'thaian_manager_macdinhchi',
       password: sharedPassword,
-      fullName: managerName,
+      fullName: 'Thái An - Quản lý cơ sở Mạc Đĩnh Chi',
       role: 'MANAGER',
+      branchCode: BRANCHES.MAC_DINH_CHI.code,
+      branchName: BRANCHES.MAC_DINH_CHI.name,
+    });
+
+    await this.upsertWorkforceUser({
+      username: 'thaian_staff_thegracetower',
+      password: sharedPassword,
+      fullName: 'Thái An - Nhân viên cơ sở The Grace Tower',
+      role: 'STAFF',
+      branchCode: BRANCHES.THE_GRACE_TOWER.code,
+      branchName: BRANCHES.THE_GRACE_TOWER.name,
+    });
+
+    await this.upsertWorkforceUser({
+      username: 'thaian_manager_thegracetower',
+      password: sharedPassword,
+      fullName: 'Thái An - Quản lý cơ sở The Grace Tower',
+      role: 'MANAGER',
+      branchCode: BRANCHES.THE_GRACE_TOWER.code,
+      branchName: BRANCHES.THE_GRACE_TOWER.name,
+    });
+  }
+
+  private async seedSystemAdminAccount() {
+    await this.upsertGenericUser({
+      username: 'thaian_admin',
+      password: process.env.SYSTEM_ADMIN_PASSWORD || '123456',
+      fullName: 'Thái An - Quản trị viên hệ thống',
+      role: 'ADMIN',
+      branchCode: null,
+      branchName: null,
     });
   }
 
@@ -140,6 +417,8 @@ export class UserService implements OnModuleInit {
     password: string;
     fullName: string;
     role: 'STAFF' | 'MANAGER';
+    branchCode: string;
+    branchName: string;
   }) {
     const existed = await this.userRepo.findOne({
       where: [{ ten_dang_nhap: input.username }, { email: input.username }],
@@ -159,6 +438,14 @@ export class UserService implements OnModuleInit {
         existed.email = input.username;
         shouldSave = true;
       }
+      if (existed.co_so_ma !== input.branchCode) {
+        existed.co_so_ma = input.branchCode;
+        shouldSave = true;
+      }
+      if (existed.co_so_ten !== input.branchName) {
+        existed.co_so_ten = input.branchName;
+        shouldSave = true;
+      }
       if (shouldSave) {
         await this.userRepo.save(existed);
       }
@@ -176,6 +463,70 @@ export class UserService implements OnModuleInit {
       ho_ten: input.fullName,
       trang_thai: 'ACTIVE',
       vai_tro: input.role,
+      co_so_ma: input.branchCode,
+      co_so_ten: input.branchName,
+    });
+
+    await this.userRepo.save(seededUser);
+  }
+
+  private async upsertGenericUser(input: {
+    username: string;
+    password: string;
+    fullName: string;
+    role: 'ADMIN' | 'STAFF' | 'MANAGER';
+    branchCode: string | null;
+    branchName: string | null;
+  }) {
+    const existed = await this.userRepo.findOne({
+      where: [{ ten_dang_nhap: input.username }, { email: input.username }],
+    });
+
+    if (existed) {
+      let shouldSave = false;
+      if (existed.vai_tro !== input.role) {
+        existed.vai_tro = input.role;
+        shouldSave = true;
+      }
+      if (existed.ho_ten !== input.fullName) {
+        existed.ho_ten = input.fullName;
+        shouldSave = true;
+      }
+      if (existed.trang_thai !== 'ACTIVE') {
+        existed.trang_thai = 'ACTIVE';
+        shouldSave = true;
+      }
+      if (!existed.email) {
+        existed.email = input.username;
+        shouldSave = true;
+      }
+      if (existed.co_so_ma !== input.branchCode) {
+        existed.co_so_ma = input.branchCode;
+        shouldSave = true;
+      }
+      if (existed.co_so_ten !== input.branchName) {
+        existed.co_so_ten = input.branchName;
+        shouldSave = true;
+      }
+      if (shouldSave) {
+        await this.userRepo.save(existed);
+      }
+      return;
+    }
+
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(input.password, salt);
+
+    const seededUser = this.userRepo.create({
+      ma_nguoi_dung: randomUUID(),
+      ten_dang_nhap: input.username,
+      email: input.username,
+      mat_khau_hash: hashedPassword,
+      ho_ten: input.fullName,
+      trang_thai: 'ACTIVE',
+      vai_tro: input.role,
+      co_so_ma: input.branchCode,
+      co_so_ten: input.branchName,
     });
 
     await this.userRepo.save(seededUser);
@@ -196,6 +547,8 @@ export class UserService implements OnModuleInit {
       ten_dang_nhap: user.ten_dang_nhap,
       trang_thai: user.trang_thai,
       vai_tro: user.vai_tro,
+      co_so_ma: user.co_so_ma,
+      co_so_ten: user.co_so_ten,
       ngay_tao: user.ngay_tao,
     };
   }

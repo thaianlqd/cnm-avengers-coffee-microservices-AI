@@ -1,6 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
+import { extname, join } from 'path';
+import { promises as fs } from 'fs';
 import { SanPham } from './modules/menu/san-pham.entity';
 import { DanhMuc } from './modules/menu/danh-muc.entity';
 
@@ -22,6 +24,78 @@ export class AppService {
       code: cat.ma_danh_muc.toString(),
       label: cat.ten_danh_muc
     }));
+  }
+
+  private formatMenuItem(item: SanPham) {
+    return {
+      id: item.ma_san_pham.toString(),
+      name: item.ten_san_pham,
+      category: item.danhMuc?.ten_danh_muc,
+      category_code: item.danhMuc?.ma_danh_muc,
+      price: Number(item.gia_ban),
+      image: item.hinh_anh_url,
+      description: item.mo_ta,
+      dang_ban: Boolean(item.trang_thai),
+      status: item.trang_thai ? 'available' : 'sold_out',
+    };
+  }
+
+  private slugifyProductName(value: string) {
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .toLowerCase();
+  }
+
+  private getProductUploadDirectory() {
+    return join(process.cwd(), 'uploads', 'products');
+  }
+
+  private normalizeProductImagePath(raw: string) {
+    const value = String(raw || '').trim();
+    if (!value) return null;
+
+    if (/^https?:\/\//i.test(value)) {
+      return value;
+    }
+
+    if (value.startsWith('/images/products/')) {
+      return value;
+    }
+
+    const filename = value.split('/').pop() || value;
+    if (!filename) return null;
+    return `/images/products/${filename}`;
+  }
+
+  async uploadProductImage(file?: any, productName?: string) {
+    if (!file) {
+      throw new BadRequestException('Vui long chon file anh');
+    }
+
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      throw new BadRequestException('Chi ho tro file JPG, PNG hoac WEBP');
+    }
+
+    const uploadDir = this.getProductUploadDirectory();
+    await fs.mkdir(uploadDir, { recursive: true });
+
+    const extension = extname(file.originalname || '').toLowerCase() || '.jpg';
+    const safeBaseName = this.slugifyProductName(productName || file.originalname.replace(/\.[^.]+$/, '')) || 'san-pham';
+    const filename = `${safeBaseName}-${Date.now()}${extension}`;
+    const absolutePath = join(uploadDir, filename);
+
+    await fs.writeFile(absolutePath, file.buffer);
+
+    return {
+      message: 'Tai anh thanh cong',
+      file_name: filename,
+      file_url: `/images/products/${filename}`,
+      stored_path: absolutePath,
+    };
   }
 
   // Lấy sản phẩm thật từ DB kèm logic lọc (search, category, sort)
@@ -49,15 +123,7 @@ export class AppService {
 
     return {
       total,
-      items: items.map(item => ({
-        id: item.ma_san_pham.toString(),
-        name: item.ten_san_pham,
-        category: item.danhMuc?.ten_danh_muc,
-        price: Number(item.gia_ban),
-        image: item.hinh_anh_url,
-        dang_ban: Boolean(item.trang_thai),
-        status: item.trang_thai ? 'available' : 'sold_out'
-      })),
+      items: items.map((item) => this.formatMenuItem(item)),
     };
   }
 
@@ -87,5 +153,109 @@ export class AppService {
         status: saved.trang_thai ? 'available' : 'sold_out',
       },
     };
+  }
+
+  async createMenuItem(payload: {
+    name?: string;
+    category_code?: string | number;
+    price?: number;
+    image?: string;
+    description?: string;
+    dang_ban?: boolean;
+  }) {
+    const name = String(payload.name || '').trim();
+    const categoryCode = Number(payload.category_code);
+    const price = Number(payload.price);
+
+    if (!name || Number.isNaN(categoryCode) || Number.isNaN(price) || price < 0) {
+      throw new BadRequestException('Du lieu mon moi khong hop le');
+    }
+
+    const category = await this.dmRepo.findOne({ where: { ma_danh_muc: categoryCode } });
+    if (!category) {
+      throw new NotFoundException('Khong tim thay danh muc');
+    }
+
+    const created = new SanPham();
+    created.ten_san_pham = name;
+    created.gia_ban = price;
+    created.mo_ta = payload.description?.trim() || null;
+    created.hinh_anh_url = this.normalizeProductImagePath(payload.image || '');
+    created.trang_thai = payload.dang_ban !== undefined ? Boolean(payload.dang_ban) : true;
+    created.danhMuc = category;
+
+    const saved = await this.spRepo.save(created);
+    const item = await this.spRepo.findOne({ where: { ma_san_pham: saved.ma_san_pham }, relations: ['danhMuc'] });
+    return {
+      message: 'Them mon moi thanh cong',
+      item: item ? this.formatMenuItem(item) : null,
+    };
+  }
+
+  async updateMenuItem(
+    itemId: number,
+    payload: {
+      name?: string;
+      category_code?: string | number;
+      price?: number;
+      image?: string;
+      description?: string;
+      dang_ban?: boolean;
+    },
+  ) {
+    const item = await this.spRepo.findOne({ where: { ma_san_pham: itemId }, relations: ['danhMuc'] });
+    if (!item) {
+      throw new NotFoundException('Khong tim thay mon trong menu');
+    }
+
+    if (payload.name !== undefined) {
+      const name = String(payload.name || '').trim();
+      if (!name) throw new BadRequestException('Ten mon khong hop le');
+      item.ten_san_pham = name;
+    }
+
+    if (payload.price !== undefined) {
+      const price = Number(payload.price);
+      if (Number.isNaN(price) || price < 0) throw new BadRequestException('Gia ban khong hop le');
+      item.gia_ban = price;
+    }
+
+    if (payload.description !== undefined) {
+      item.mo_ta = payload.description?.trim() || null;
+    }
+
+    if (payload.image !== undefined) {
+      item.hinh_anh_url = this.normalizeProductImagePath(payload.image || '');
+    }
+
+    if (payload.dang_ban !== undefined) {
+      item.trang_thai = Boolean(payload.dang_ban);
+    }
+
+    if (payload.category_code !== undefined) {
+      const categoryCode = Number(payload.category_code);
+      if (Number.isNaN(categoryCode)) throw new BadRequestException('Danh muc khong hop le');
+      const category = await this.dmRepo.findOne({ where: { ma_danh_muc: categoryCode } });
+      if (!category) throw new NotFoundException('Khong tim thay danh muc');
+      item.danhMuc = category;
+    }
+
+    await this.spRepo.save(item);
+    const saved = await this.spRepo.findOne({ where: { ma_san_pham: itemId }, relations: ['danhMuc'] });
+
+    return {
+      message: 'Cap nhat mon thanh cong',
+      item: saved ? this.formatMenuItem(saved) : null,
+    };
+  }
+
+  async deleteMenuItem(itemId: number) {
+    const item = await this.spRepo.findOne({ where: { ma_san_pham: itemId } });
+    if (!item) {
+      throw new NotFoundException('Khong tim thay mon trong menu');
+    }
+
+    await this.spRepo.remove(item);
+    return { message: 'Xoa mon thanh cong', id: itemId };
   }
 }
