@@ -144,13 +144,13 @@ async def ai_chat(request: Request):
     gemini_api_key = data.get("test_key") or os.getenv("GEMINI_API_KEY")
     if gemini_api_key:
         try:
-            url = f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={gemini_api_key}"
+            url = f"https://api.gemini.googleapis.com/v1beta/models/gemini-pro:generateContent?key={gemini_api_key}"
             payload = {
                 "contents": [
-                    {"parts": [{"text": content}]}
-                ]
+                    {"parts": [{"text": content}]},
+                ],
             }
-            resp = requests.post(url, json=payload, timeout=10)
+            resp = requests.post(url, json=payload, timeout=10, verify=False)
             resp.raise_for_status()
             reply = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
             return {"reply": reply, "used_key": gemini_api_key}
