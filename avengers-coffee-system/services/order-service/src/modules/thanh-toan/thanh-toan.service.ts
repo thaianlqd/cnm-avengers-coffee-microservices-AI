@@ -2,6 +2,8 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import * as crypto from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, EntityManager, Repository } from 'typeorm';
+import { RedisCacheService } from '../../infrastructure/cache/redis-cache.service';
+import { RabbitMqService } from '../../infrastructure/messaging/rabbitmq.service';
 import { CartItem } from '../cart/cart.entity';
 import { NotificationService } from '../notification/notification.service';
 import { VoucherService } from '../voucher/voucher.service';
@@ -147,6 +149,7 @@ export class ThanhToanService {
   private readonly SEPAY_BANK_CODE = process.env.SEPAY_BANK_CODE || 'MBBank';
   private readonly SEPAY_ACCOUNT_NO = process.env.SEPAY_ACCOUNT_NO || '025452790502';
   private readonly IDENTITY_SERVICE_URL = process.env.IDENTITY_SERVICE_URL || 'http://identity-service:3001';
+  private readonly INTERNAL_SERVICE_TOKEN = process.env.INTERNAL_SERVICE_TOKEN || 'avengers-internal-token';
 
   constructor(
     @InjectRepository(CartItem)
@@ -163,6 +166,8 @@ export class ThanhToanService {
     private readonly caLamViecNhanVienRepo: Repository<CaLamViecNhanVien>,
     private readonly notificationService: NotificationService,
     private readonly voucherService: VoucherService,
+    private readonly redisCacheService: RedisCacheService,
+    private readonly rabbitMqService: RabbitMqService,
   ) {}
 
   private normalizeBranchCode(branchCode?: string) {
@@ -238,7 +243,11 @@ export class ThanhToanService {
     const endpoint = `${this.IDENTITY_SERVICE_URL}/users/workforce?role=STAFF&branch_code=${encodeURIComponent(branchCode)}`;
 
     try {
-      const response = await fetch(endpoint);
+      const response = await fetch(endpoint, {
+        headers: {
+          'x-internal-token': this.INTERNAL_SERVICE_TOKEN,
+        },
+      });
       const payload: any = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new Error(payload?.message || 'Khong tai duoc danh sach nhan vien theo chi nhanh');
@@ -285,6 +294,36 @@ export class ThanhToanService {
     }
 
     return 'MAC_DINH_CHI';
+  }
+
+  private buildCustomerOrdersCacheKey(maNguoiDung: string, boLoc: BoLocLichSuDonHang) {
+    return `orders:customer:${maNguoiDung}:${JSON.stringify(boLoc || {})}`;
+  }
+
+  private buildStaffOrdersCacheKey(branchCode: string, boLoc: BoLocLichSuDonHang) {
+    return `orders:staff:${branchCode}:${JSON.stringify(boLoc || {})}`;
+  }
+
+  private async invalidateOrderCaches(maNguoiDung?: string | null, branchCode?: string | null) {
+    if (maNguoiDung) {
+      await this.redisCacheService.deleteByPrefix(`orders:customer:${maNguoiDung}:`);
+      await this.redisCacheService.deleteByPrefix(`notifications:${maNguoiDung}:`);
+    }
+
+    if (branchCode) {
+      await this.redisCacheService.deleteByPrefix(`orders:staff:${branchCode}:`);
+    }
+  }
+
+  private async publishOrderCreatedEvent(order: DonHang) {
+    await this.rabbitMqService.publish('order.created', {
+      orderId: order.ma_don_hang,
+      userId: order.ma_nguoi_dung,
+      branchCode: order.co_so_ma,
+      totalAmount: Number(order.tong_tien || 0),
+      paymentMethod: order.phuong_thuc_thanh_toan,
+      status: order.trang_thai_don_hang,
+    });
   }
 
   async xemTruocDoiSoatCa(input: DoiSoatPreviewInput) {
@@ -786,6 +825,8 @@ export class ThanhToanService {
     });
 
     await this.cartRepo.delete({ ma_nguoi_dung: maNguoiDung });
+    await this.invalidateOrderCaches(maNguoiDung, branchCode);
+    await this.publishOrderCreatedEvent(donHang);
 
     // 4. Xử lý logic từng phương thức
     if (dto.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG') {
@@ -1145,6 +1186,8 @@ export class ThanhToanService {
     });
 
     const { donHang, chiTiet, giaoDich, maThamChieu } = taoDonResult;
+  await this.invalidateOrderCaches(maNguoiDung, branchCode);
+  await this.publishOrderCreatedEvent(donHang);
 
     const orderData = {
       ma_don_hang: donHang.ma_don_hang,
@@ -1225,6 +1268,12 @@ export class ThanhToanService {
   }
 
   async layLichSuDonHang(maNguoiDung: string, boLoc: BoLocLichSuDonHang = {}) {
+    const cacheKey = this.buildCustomerOrdersCacheKey(maNguoiDung, boLoc);
+    const cached = await this.redisCacheService.getJson<{ total: number; orders: any[] }>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const query = this.donHangRepo
       .createQueryBuilder('don_hang')
       .leftJoinAndSelect('don_hang.chi_tiet', 'chi_tiet')
@@ -1309,11 +1358,19 @@ export class ThanhToanService {
       };
     });
 
-    return { total: orders.length, orders };
+    const result = { total: orders.length, orders };
+    await this.redisCacheService.setJson(cacheKey, result, 45);
+    return result;
   }
 
   async layDanhSachDonHangChoStaff(boLoc: BoLocLichSuDonHang = {}) {
     const branchCode = this.normalizeBranchCode(boLoc.branchCode);
+    const cacheKey = this.buildStaffOrdersCacheKey(branchCode, boLoc);
+    const cached = await this.redisCacheService.getJson<{ total: number; orders: any[] }>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const query = this.donHangRepo
       .createQueryBuilder('don_hang')
       .leftJoinAndSelect('don_hang.chi_tiet', 'chi_tiet')
@@ -1400,7 +1457,9 @@ export class ThanhToanService {
       };
     });
 
-    return { total: orders.length, orders };
+    const result = { total: orders.length, orders };
+    await this.redisCacheService.setJson(cacheKey, result, 30);
+    return result;
   }
 
   private layKhungCaLamViec(code: TaoLichLamViecInput['shift_code']) {
@@ -1609,6 +1668,7 @@ export class ThanhToanService {
       loai: 'ORDER',
       du_lieu: { ma_don_hang: maDonHang, trang_thai_don_hang: 'MOI_TAO' },
     });
+    await this.invalidateOrderCaches(maNguoiDung, donHang.co_so_ma);
 
     return {
       message: 'Cap nhat don hang thanh cong',
@@ -1776,6 +1836,8 @@ export class ThanhToanService {
       });
     });
 
+    await this.invalidateOrderCaches(donHang.ma_nguoi_dung, donHang.co_so_ma);
+
     return {
       message: 'Cap nhat don hang thanh cong',
       order: ketQua,
@@ -1808,6 +1870,7 @@ export class ThanhToanService {
       }
       await donHangRepo.remove(orderToDelete);
     });
+    await this.invalidateOrderCaches(donHang.ma_nguoi_dung, donHang.co_so_ma);
 
     return {
       message: lyDo?.trim() ? `Xoa don thanh cong: ${lyDo.trim()}` : 'Xoa don thanh cong',
@@ -1950,7 +2013,10 @@ export class ThanhToanService {
       const url = `${this.IDENTITY_SERVICE_URL}/users/${maNguoiDung}/loyalty/cong-diem`;
       await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-token': this.INTERNAL_SERVICE_TOKEN,
+        },
         body: JSON.stringify({ diem }),
         signal: AbortSignal.timeout(5000),
       });
@@ -2152,19 +2218,49 @@ export class ThanhToanService {
 
     const lichSu: LichSuTrangThai[] = Array.isArray(donHang.lich_su_trang_thai) ? [...donHang.lich_su_trang_thai] : [];
     const now = new Date().toISOString();
+    let orderStatusChanged = false;
+    let paymentStatusChanged = false;
 
     if (payload.trang_thai_don_hang && payload.trang_thai_don_hang !== donHang.trang_thai_don_hang) {
       donHang.trang_thai_don_hang = payload.trang_thai_don_hang;
       lichSu.push({ loai: 'ORDER', trang_thai: payload.trang_thai_don_hang, thoi_gian: now, ghi_chu: payload.ghi_chu });
+      orderStatusChanged = true;
     }
 
     if (payload.trang_thai_thanh_toan && payload.trang_thai_thanh_toan !== donHang.trang_thai_thanh_toan) {
       donHang.trang_thai_thanh_toan = payload.trang_thai_thanh_toan;
       lichSu.push({ loai: 'PAYMENT', trang_thai: payload.trang_thai_thanh_toan, thoi_gian: now, ghi_chu: payload.ghi_chu });
+      paymentStatusChanged = true;
     }
 
     donHang.lich_su_trang_thai = lichSu;
-    return donHangRepo.save(donHang);
+    const saved = await donHangRepo.save(donHang);
+
+    if (!entityManager) {
+      await this.invalidateOrderCaches(saved.ma_nguoi_dung, saved.co_so_ma);
+
+      if (orderStatusChanged) {
+        await this.rabbitMqService.publish('order.status.changed', {
+          orderId: saved.ma_don_hang,
+          userId: saved.ma_nguoi_dung,
+          branchCode: saved.co_so_ma,
+          totalAmount: Number(saved.tong_tien || 0),
+          status: saved.trang_thai_don_hang,
+        });
+      }
+
+      if (paymentStatusChanged && saved.trang_thai_thanh_toan === 'DA_THANH_TOAN') {
+        await this.rabbitMqService.publish('payment.succeeded', {
+          orderId: saved.ma_don_hang,
+          userId: saved.ma_nguoi_dung,
+          branchCode: saved.co_so_ma,
+          totalAmount: Number(saved.tong_tien || 0),
+          status: saved.trang_thai_thanh_toan,
+        });
+      }
+    }
+
+    return saved;
   }
 
   taoUrlRedirectFrontEnd(maNguoiDung: string, maDonHang: string, thanhCong: boolean) {

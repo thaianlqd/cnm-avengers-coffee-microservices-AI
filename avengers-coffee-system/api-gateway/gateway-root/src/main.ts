@@ -41,6 +41,15 @@ async function bootstrap() {
     }),
   );
 
+  httpAdapter.use(
+    createProxyMiddleware({
+      target: process.env.AI_SERVICE_URL || 'http://localhost:8000',
+      changeOrigin: true,
+      pathFilter: ['/ai'],
+      pathRewrite: { '^/ai': '' },
+    }),
+  );
+
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port);
   console.log(`API Gateway dang chay tai: http://localhost:${port}`);

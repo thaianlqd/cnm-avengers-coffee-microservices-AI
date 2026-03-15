@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { API_BASE_URL, ORDER_STATUSES, OVERVIEW_TIME_RANGES, PAYMENT_METHOD_LABEL } from '../constants'
 import { cutTimeByRange, normalizeViText, toDateKey, toDateLabel } from '../utils'
 
@@ -708,11 +708,11 @@ export function useAdminDashboard() {
     }
   }
 
-  const logout = () => {
+  const logout = useCallback(() => {
     window.localStorage.removeItem('adminSession')
     setSession(null)
     setActiveTab('overview')
-  }
+  }, [])
 
   const capNhatTrangThaiDon = async (orderId, nextStatus) => {
     setUpdatingOrderId(orderId)

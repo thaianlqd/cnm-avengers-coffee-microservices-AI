@@ -19,6 +19,7 @@ type VoucherValidationResult = {
 @Injectable()
 export class VoucherService {
   private readonly IDENTITY_SERVICE_URL = process.env.IDENTITY_SERVICE_URL || 'http://identity-service:3001';
+  private readonly INTERNAL_SERVICE_TOKEN = process.env.INTERNAL_SERVICE_TOKEN || 'avengers-internal-token';
 
   constructor(
     @InjectRepository(Voucher)
@@ -70,7 +71,10 @@ export class VoucherService {
 
     const identityResponse = await fetch(`${this.IDENTITY_SERVICE_URL}/promotions/kiem-tra`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-token': this.INTERNAL_SERVICE_TOKEN,
+      },
       body: JSON.stringify({
         ma_khuyen_mai: code,
         user_id: userId || '',
@@ -107,7 +111,10 @@ export class VoucherService {
 
     const identityResponse = await fetch(`${this.IDENTITY_SERVICE_URL}/promotions/xac-nhan-su-dung`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-token': this.INTERNAL_SERVICE_TOKEN,
+      },
       body: JSON.stringify({
         ma_khuyen_mai: code,
         user_id: userId || '',

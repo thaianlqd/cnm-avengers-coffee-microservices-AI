@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { RedisCacheService } from '../../infrastructure/cache/redis-cache.service';
+import { RabbitMqService } from '../../infrastructure/messaging/rabbitmq.service';
 import { NotificationType, ThongBao } from './entities/thong-bao.entity';
 import { NotificationGateway } from './notification.gateway';
 
@@ -10,6 +12,8 @@ export class NotificationService {
     @InjectRepository(ThongBao)
     private readonly thongBaoRepo: Repository<ThongBao>,
     private readonly notificationGateway: NotificationGateway,
+    private readonly redisCacheService: RedisCacheService,
+    private readonly rabbitMqService: RabbitMqService,
   ) {}
 
   async taoThongBao(payload: {
@@ -28,12 +32,24 @@ export class NotificationService {
       da_doc: false,
     });
     const saved = await this.thongBaoRepo.save(thongBao);
+    await this.redisCacheService.deleteByPrefix(`notifications:${saved.ma_nguoi_dung}:`);
     this.notificationGateway.guiThongBaoTheoNguoiDung(saved.ma_nguoi_dung, saved);
+    await this.rabbitMqService.publish('notification.created', {
+      notificationId: saved.id,
+      userId: saved.ma_nguoi_dung,
+      type: saved.loai,
+    });
     return saved;
   }
 
   async layDanhSachThongBao(maNguoiDung: string, options?: { chiLayChuaDoc?: boolean; limit?: number }) {
     const limit = Math.min(Math.max(Number(options?.limit || 20), 1), 100);
+    const cacheKey = `notifications:${maNguoiDung}:${options?.chiLayChuaDoc ? 'unread' : 'all'}:${limit}`;
+    const cached = await this.redisCacheService.getJson<{ items: ThongBao[]; unreadCount: number }>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const where = options?.chiLayChuaDoc ? { ma_nguoi_dung: maNguoiDung, da_doc: false } : { ma_nguoi_dung: maNguoiDung };
 
     const [items, unreadCount] = await Promise.all([
@@ -41,7 +57,9 @@ export class NotificationService {
       this.thongBaoRepo.count({ where: { ma_nguoi_dung: maNguoiDung, da_doc: false } }),
     ]);
 
-    return { items, unreadCount };
+    const result = { items, unreadCount };
+    await this.redisCacheService.setJson(cacheKey, result, 45);
+    return result;
   }
 
   async danhDauDaDoc(maNguoiDung: string, notificationId: number) {
@@ -53,6 +71,7 @@ export class NotificationService {
     if (!thongBao.da_doc) {
       thongBao.da_doc = true;
       await this.thongBaoRepo.save(thongBao);
+      await this.redisCacheService.deleteByPrefix(`notifications:${maNguoiDung}:`);
     }
 
     return { success: true };
@@ -60,6 +79,7 @@ export class NotificationService {
 
   async danhDauTatCaDaDoc(maNguoiDung: string) {
     await this.thongBaoRepo.update({ ma_nguoi_dung: maNguoiDung, da_doc: false }, { da_doc: true });
+    await this.redisCacheService.deleteByPrefix(`notifications:${maNguoiDung}:`);
     return { success: true };
   }
 }

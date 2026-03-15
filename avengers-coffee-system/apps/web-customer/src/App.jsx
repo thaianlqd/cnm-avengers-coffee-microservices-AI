@@ -336,6 +336,21 @@ function AppContent() {
   const userId = user?.ma_nguoi_dung || user?.maNguoiDung || null;
   const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3005';
 
+  // ── AI Recommendations ──────────────────────────────────────────────────────
+  const {
+    data: aiRecsData,
+    isLoading: isAiRecsLoading,
+  } = useQuery({
+    queryKey: ['ai', 'recommend', userId],
+    queryFn: async () => {
+      const res = await apiClient.get(`/ai/recommend/${encodeURIComponent(userId)}?limit=6`);
+      return res.data;
+    },
+    enabled: Boolean(userId),
+    staleTime: 5 * 60 * 1000,
+    retry: 0,
+  });
+
   const mapBranchName = (branchCode) => {
     if (!branchCode) return '';
     return BRANCH_NAME_MAP[String(branchCode).toUpperCase()] || String(branchCode);
@@ -594,6 +609,26 @@ function AppContent() {
 
     return list;
   }, [products, selectedCatId, searchKeyword, availabilityFilter, priceFilter, sortBy]);
+
+  const aiRecommendedProducts = useMemo(() => {
+    const items = aiRecsData?.items || [];
+    if (!items.length) return [];
+
+    return items.map((item) => {
+      const fromMenu = products.find((p) => String(p.ma_san_pham) === String(item.id));
+      if (fromMenu) return fromMenu;
+
+      return {
+        ma_san_pham: item.id,
+        ten_san_pham: item.name,
+        gia_ban: Number(item.price || 0),
+        hinh_anh_url: item.image || '',
+        trang_thai: true,
+        danhMuc: { ten_danh_muc: item.category || 'Goi y AI' },
+        mo_ta: item.reason || '',
+      };
+    });
+  }, [aiRecsData, products]);
 
   const xoaBoLocTimKiem = () => {
     setSearchKeyword('');
@@ -2020,6 +2055,42 @@ function AppContent() {
               </aside>
 
               <div className="flex-1">
+                {Boolean(userId) && (
+                  <section className="mb-12 rounded-3xl border border-orange-100 bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 p-5 shadow-sm">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-500">Smart recommendation</p>
+                        <h3 className="text-xl font-black uppercase tracking-tight text-gray-800">Gợi ý dành cho bạn</h3>
+                        <p className="text-xs text-gray-600">
+                          {aiRecsData?.is_personalized ? 'Ca nhan hoa theo lich su mua hang va danh gia.' : 'Chua du lich su, hien thi cac mon pho bien.'}
+                        </p>
+                      </div>
+                      <span className="rounded-full border border-orange-200 bg-white px-3 py-1 text-[11px] font-black uppercase tracking-wider text-orange-600">
+                        {aiRecsData?.is_personalized ? 'AI Personal' : 'AI Popular'}
+                      </span>
+                    </div>
+
+                    {isAiRecsLoading ? (
+                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+                        {[1, 2, 3].map((k) => <div key={k} className="h-72 animate-pulse rounded-3xl bg-white/70" />)}
+                      </div>
+                    ) : aiRecommendedProducts.length > 0 ? (
+                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
+                        {aiRecommendedProducts.map((p) => (
+                          <ProductCard
+                            key={`ai-${p.ma_san_pham}`}
+                            product={p}
+                            onView={() => handleViewDetail(p)}
+                            onQuickAdd={() => handleQuickAdd(p)}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm font-semibold text-gray-500">Chua co de xuat AI luc nay.</p>
+                    )}
+                  </section>
+                )}
+
                 <h2 className="text-3xl font-black text-gray-800 uppercase mb-10 tracking-tighter">
                   {selectedCatId === 'all' ? 'Tất cả sản phẩm' : categories.find((c) => String(c.ma_danh_muc) === selectedCatId)?.ten_danh_muc}
                 </h2>

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import './App.css'
 import {
   DASHBOARD_ROLES,
@@ -22,6 +23,7 @@ import { ManagerEmployeePanel } from './features/manager-dashboard/components/Ma
 import { StaffWorkShiftsPanel } from './features/staff-dashboard/components/StaffWorkShiftsPanel'
 import { AdminSystemConsole } from './features/actor-admin/components/AdminSystemConsole'
 import { AdminChatWidget } from './features/admin-dashboard/components/AdminChatWidget'
+import { AUTH_INVALID_EVENT } from './lib/adminFetch'
 
 function App() {
   const {
@@ -126,6 +128,17 @@ function App() {
     const product = inventoryState.items.find((item) => item.ma_san_pham === Number(line.ma_san_pham))
     return product && !product.dang_ban
   })
+
+  useEffect(() => {
+    const handleInvalidSession = () => {
+      logout()
+    }
+
+    window.addEventListener(AUTH_INVALID_EVENT, handleInvalidSession)
+    return () => {
+      window.removeEventListener(AUTH_INVALID_EVENT, handleInvalidSession)
+    }
+  }, [logout])
 
   if (!session) {
     return <LoginScreen loginForm={loginForm} setLoginForm={setLoginForm} loginStatus={loginStatus} onLogin={login} />

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
 
 const DEFAULT_USER_FORM = {
@@ -213,6 +214,45 @@ const FALLBACK_BRANCH_OPTIONS = [
   { code: 'THE_GRACE_TOWER', name: 'The Grace Tower' },
 ]
 
+async function readJsonResponse(response, fallback) {
+  return response.json().catch(() => fallback)
+}
+
+async function fetchStats() {
+  const response = await fetch(`${API_BASE_URL}/users/admin/stats`)
+  const payload = await readJsonResponse(response, {})
+  if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc thong ke he thong')
+  return payload
+}
+
+async function fetchBranches() {
+  const response = await fetch(`${API_BASE_URL}/users/admin/branches`)
+  const payload = await readJsonResponse(response, {})
+  if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc danh sach chi nhanh')
+  return payload?.items || []
+}
+
+async function fetchCategories() {
+  const response = await fetch(`${API_BASE_URL}/menu/categories`)
+  const payload = await readJsonResponse(response, [])
+  if (!response.ok) throw new Error('Khong tai duoc danh muc menu')
+  return Array.isArray(payload) ? payload : []
+}
+
+async function fetchMenuItems() {
+  const response = await fetch(`${API_BASE_URL}/menu/items?sort=price_desc`)
+  const payload = await readJsonResponse(response, {})
+  if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc menu tong')
+  return payload?.items || []
+}
+
+async function fetchPromotions() {
+  const response = await fetch(`${API_BASE_URL}/promotions/admin`)
+  const payload = await readJsonResponse(response, {})
+  if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc danh sach khuyen mai')
+  return payload?.items || []
+}
+
 export function useSystemAdmin() {
   const [activeTab, setActiveTab] = useState('overview')
 
@@ -242,6 +282,85 @@ export function useSystemAdmin() {
   const [editingPromotionCode, setEditingPromotionCode] = useState('')
   const [promotionForm, setPromotionForm] = useState(DEFAULT_PROMOTION_FORM)
   const [promotionFilter, setPromotionFilter] = useState({ status: '', type: '', q: '' })
+
+  const statsQuery = useQuery({
+    queryKey: ['system-admin', 'stats'],
+    queryFn: fetchStats,
+  })
+
+  const branchesQuery = useQuery({
+    queryKey: ['system-admin', 'branches'],
+    queryFn: fetchBranches,
+  })
+
+  const categoriesQuery = useQuery({
+    queryKey: ['system-admin', 'categories'],
+    queryFn: fetchCategories,
+  })
+
+  const menuQuery = useQuery({
+    queryKey: ['system-admin', 'menu'],
+    queryFn: fetchMenuItems,
+  })
+
+  const promotionsQuery = useQuery({
+    queryKey: ['system-admin', 'promotions'],
+    queryFn: fetchPromotions,
+  })
+
+  useEffect(() => {
+    setStatsState({
+      loading: statsQuery.isLoading || statsQuery.isFetching,
+      error: statsQuery.error?.message || '',
+      data: statsQuery.data ?? null,
+    })
+  }, [statsQuery.data, statsQuery.error, statsQuery.isFetching, statsQuery.isLoading])
+
+  useEffect(() => {
+    const items = branchesQuery.data || []
+    setBranchesState({
+      loading: branchesQuery.isLoading || branchesQuery.isFetching,
+      error: branchesQuery.error?.message || '',
+      items,
+    })
+
+    const activeBranch = items.find((item) => item.trang_thai === 'ACTIVE')
+    if (activeBranch) {
+      setUserForm((prev) => ({
+        ...prev,
+        co_so_ma: prev.co_so_ma || activeBranch.ma_chi_nhanh,
+      }))
+    }
+  }, [branchesQuery.data, branchesQuery.error, branchesQuery.isFetching, branchesQuery.isLoading])
+
+  useEffect(() => {
+    const items = categoriesQuery.data || []
+    setCategoriesState({
+      loading: categoriesQuery.isLoading || categoriesQuery.isFetching,
+      error: categoriesQuery.error?.message || '',
+      items,
+    })
+
+    if (items.length) {
+      setMenuForm((prev) => ({ ...prev, category_code: prev.category_code || String(items[0].code) }))
+    }
+  }, [categoriesQuery.data, categoriesQuery.error, categoriesQuery.isFetching, categoriesQuery.isLoading])
+
+  useEffect(() => {
+    setMenuState({
+      loading: menuQuery.isLoading || menuQuery.isFetching,
+      error: menuQuery.error?.message || '',
+      items: menuQuery.data || [],
+    })
+  }, [menuQuery.data, menuQuery.error, menuQuery.isFetching, menuQuery.isLoading])
+
+  useEffect(() => {
+    setPromotionsState({
+      loading: promotionsQuery.isLoading || promotionsQuery.isFetching,
+      error: promotionsQuery.error?.message || '',
+      items: promotionsQuery.data || [],
+    })
+  }, [promotionsQuery.data, promotionsQuery.error, promotionsQuery.isFetching, promotionsQuery.isLoading])
 
   const cityOptions = useMemo(() => {
     const all = Object.entries(LOCATION_TREE).map(([code, city]) => ({ code, label: city.label }))
@@ -289,36 +408,11 @@ export function useSystemAdmin() {
   }, [branchesState.items])
 
   const loadBranches = async () => {
-    setBranchesState((prev) => ({ ...prev, loading: true, error: '' }))
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/admin/branches`)
-      const payload = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc danh sach chi nhanh')
-      const items = payload?.items || []
-      setBranchesState({ loading: false, error: '', items })
-
-      const activeBranch = items.find((item) => item.trang_thai === 'ACTIVE')
-      if (activeBranch) {
-        setUserForm((prev) => ({
-          ...prev,
-          co_so_ma: prev.co_so_ma || activeBranch.ma_chi_nhanh,
-        }))
-      }
-    } catch (error) {
-      setBranchesState({ loading: false, error: error.message || 'Khong tai duoc danh sach chi nhanh', items: [] })
-    }
+    await branchesQuery.refetch()
   }
 
   const loadStats = async () => {
-    setStatsState((prev) => ({ ...prev, loading: true, error: '' }))
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/admin/stats`)
-      const payload = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc thong ke he thong')
-      setStatsState({ loading: false, error: '', data: payload })
-    } catch (error) {
-      setStatsState({ loading: false, error: error.message || 'Khong tai duoc thong ke he thong', data: null })
-    }
+    await statsQuery.refetch()
   }
 
   const loadUsers = async (filters = userFilters) => {
@@ -340,43 +434,15 @@ export function useSystemAdmin() {
   }
 
   const loadCategories = async () => {
-    setCategoriesState((prev) => ({ ...prev, loading: true, error: '' }))
-    try {
-      const response = await fetch(`${API_BASE_URL}/menu/categories`)
-      const payload = await response.json().catch(() => ([]))
-      if (!response.ok) throw new Error('Khong tai duoc danh muc menu')
-      const items = Array.isArray(payload) ? payload : []
-      setCategoriesState({ loading: false, error: '', items })
-      if (items.length) {
-        setMenuForm((prev) => ({ ...prev, category_code: prev.category_code || String(items[0].code) }))
-      }
-    } catch (error) {
-      setCategoriesState({ loading: false, error: error.message || 'Khong tai duoc danh muc menu', items: [] })
-    }
+    await categoriesQuery.refetch()
   }
 
   const loadMenu = async () => {
-    setMenuState((prev) => ({ ...prev, loading: true, error: '' }))
-    try {
-      const response = await fetch(`${API_BASE_URL}/menu/items?sort=price_desc`)
-      const payload = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc menu tong')
-      setMenuState({ loading: false, error: '', items: payload?.items || [] })
-    } catch (error) {
-      setMenuState({ loading: false, error: error.message || 'Khong tai duoc menu tong', items: [] })
-    }
+    await menuQuery.refetch()
   }
 
   const loadPromotions = async () => {
-    setPromotionsState((prev) => ({ ...prev, loading: true, error: '' }))
-    try {
-      const response = await fetch(`${API_BASE_URL}/promotions/admin`)
-      const payload = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc danh sach khuyen mai')
-      setPromotionsState({ loading: false, error: '', items: payload?.items || [] })
-    } catch (error) {
-      setPromotionsState({ loading: false, error: error.message || 'Khong tai duoc danh sach khuyen mai', items: [] })
-    }
+    await promotionsQuery.refetch()
   }
 
   const startEditPromotion = (item) => {
@@ -485,12 +551,7 @@ export function useSystemAdmin() {
   }, [promotionsState.items, promotionFilter])
 
   useEffect(() => {
-    loadStats()
     loadUsers()
-    loadBranches()
-    loadCategories()
-    loadMenu()
-    loadPromotions()
   }, [])
 
   const startEditUser = (item) => {

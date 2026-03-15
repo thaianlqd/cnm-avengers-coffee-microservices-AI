@@ -1,4 +1,5 @@
 import { Injectable, OnModuleInit, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Branch } from './branch.entity';
@@ -32,6 +33,7 @@ const DEFAULT_BRANCHES: Array<{
 @Injectable()
 export class UserService implements OnModuleInit {
   constructor(
+    private readonly jwtService: JwtService,
     @InjectRepository(User)
     private userRepo: Repository<User>,
     @InjectRepository(DeliveryAddress)
@@ -43,6 +45,17 @@ export class UserService implements OnModuleInit {
     @InjectRepository(PromotionUsage)
     private promotionUsageRepo: Repository<PromotionUsage>,
   ) {}
+
+  private taoAccessToken(user: User) {
+    return this.jwtService.signAsync({
+      sub: user.ma_nguoi_dung,
+      role: user.vai_tro || 'CUSTOMER',
+      username: user.ten_dang_nhap || null,
+      email: user.email || null,
+      branchCode: user.co_so_ma || null,
+      branchName: user.co_so_ten || null,
+    });
+  }
 
   async onModuleInit() {
     await this.seedDefaultBranches();
@@ -163,10 +176,12 @@ export class UserService implements OnModuleInit {
 
     const isMatch = await bcrypt.compare(password, user.mat_khau_hash);
     if (!isMatch) throw new UnauthorizedException('Sai mật khẩu');
+    if (user.trang_thai !== 'ACTIVE') throw new UnauthorizedException('Tai khoan da bi vo hieu hoa');
 
     // Trả về đúng format để Frontend AuthModal.jsx của bác đọc được
+    const accessToken = await this.taoAccessToken(user);
     return {
-      accessToken: 'jwt_avengers_' + Math.random().toString(36).substring(7),
+      accessToken,
       user: {
         ma_nguoi_dung: user.ma_nguoi_dung,
         hoTen: user.ho_ten,

@@ -1,4 +1,5 @@
 import { useSystemAdmin } from '../hooks/useSystemAdmin'
+import { AiAnalyticsPanel } from './AiAnalyticsPanel'
 
 function fmtNumber(value) {
   return Number(value || 0).toLocaleString('vi-VN')
@@ -100,6 +101,9 @@ export function AdminSystemConsole({ session, onLogout }) {
             <button type="button" className={activeTab === 'promotions' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('promotions')}>
               Khuyến mãi &amp; Voucher
             </button>
+              <button type="button" className={activeTab === 'ai-analytics' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('ai-analytics')}>
+                🤖 AI Analytics
+              </button>
         </div>
 
         <button type="button" className="logout-btn" onClick={onLogout}>Đăng xuất</button>
@@ -771,6 +775,12 @@ export function AdminSystemConsole({ session, onLogout }) {
                 </article>
               ))}
             </div>
+          </section>
+        )}
+
+        {activeTab === 'ai-analytics' && (
+          <section className="panel system-admin-panel" style={{ padding: '28px 32px' }}>
+            <AiAnalyticsPanel session={session} />
           </section>
         )}
 
