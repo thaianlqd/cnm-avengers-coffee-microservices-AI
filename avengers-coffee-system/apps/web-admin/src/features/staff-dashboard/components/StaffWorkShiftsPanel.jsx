@@ -13,6 +13,14 @@ function addWeeks(date, amount) {
   return next
 }
 
+function tinhGioLamThucTe(checkInAt, checkOutAt) {
+  if (!checkInAt || !checkOutAt) return 0
+  const inTs = new Date(checkInAt).getTime()
+  const outTs = new Date(checkOutAt).getTime()
+  if (Number.isNaN(inTs) || Number.isNaN(outTs) || outTs <= inTs) return 0
+  return Number(((outTs - inTs) / (1000 * 60 * 60)).toFixed(2))
+}
+
 export function StaffWorkShiftsPanel({ myWorkShiftState, staffUsername }) {
   const [weekStart, setWeekStart] = useState(getInitialWeekStart)
   const [selectedShift, setSelectedShift] = useState(null)
@@ -21,8 +29,13 @@ export function StaffWorkShiftsPanel({ myWorkShiftState, staffUsername }) {
     const total = myWorkShiftState.items.length
     const present = myWorkShiftState.items.filter((item) => item.trang_thai_cham_cong === 'PRESENT').length
     const assigned = myWorkShiftState.items.filter((item) => item.trang_thai_cham_cong === 'ASSIGNED').length
+    const absent = myWorkShiftState.items.filter((item) => item.trang_thai_cham_cong === 'ABSENT').length
     const totalHours = myWorkShiftState.items.reduce((sum, item) => sum + Number(item.so_gio_ca || 0), 0)
-    return { total, present, assigned, totalHours }
+    const workedHours = myWorkShiftState.items.reduce(
+      (sum, item) => sum + tinhGioLamThucTe(item.check_in_at, item.check_out_at),
+      0,
+    )
+    return { total, present, assigned, absent, totalHours, workedHours: Number(workedHours.toFixed(2)) }
   }, [myWorkShiftState.items])
 
   const selectedShiftDetails = selectedShift
@@ -52,6 +65,14 @@ export function StaffWorkShiftsPanel({ myWorkShiftState, staffUsername }) {
         <article>
           <strong>{summary.totalHours}</strong>
           <span>Tổng giờ đã lên lịch</span>
+        </article>
+        <article>
+          <strong>{summary.workedHours}</strong>
+          <span>Giờ làm thực tế</span>
+        </article>
+        <article>
+          <strong>{summary.absent}</strong>
+          <span>Ca vắng mặt</span>
         </article>
       </div>
 

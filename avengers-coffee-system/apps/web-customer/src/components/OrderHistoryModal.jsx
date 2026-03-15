@@ -29,20 +29,43 @@ const PAYMENT_METHOD_LABEL = {
   THANH_TOAN_KHI_NHAN_HANG: 'COD',
 };
 
+const BRANCH_LABEL = {
+  MAC_DINH_CHI: 'Mạc Đĩnh Chi',
+  THE_GRACE_TOWER: 'The Grace Tower',
+};
+
 const ORDER_FLOW = ['MOI_TAO', 'DA_XAC_NHAN', 'DANG_CHUAN_BI', 'DANG_GIAO', 'HOAN_THANH'];
 
 function getTimeline(order) {
   const history = Array.isArray(order?.lich_su_trang_thai) ? order.lich_su_trang_thai : [];
+  const orderHistory = history.filter((item) => item?.loai === 'ORDER' && item?.trang_thai);
+  const latestByStatus = new Map();
+
+  orderHistory.forEach((item) => {
+    const status = item.trang_thai;
+    const current = latestByStatus.get(status);
+    const nextTime = new Date(item?.thoi_gian || 0).getTime();
+    const currentTime = new Date(current?.thoi_gian || 0).getTime();
+
+    if (!current || nextTime >= currentTime) {
+      latestByStatus.set(status, item);
+    }
+  });
+
+  const currentIndex = ORDER_FLOW.indexOf(order?.trang_thai_don_hang);
 
   return ORDER_FLOW.map((status, index) => {
-    const matched = history.find((item) => item?.loai === 'ORDER' && item?.trang_thai === status);
-    const currentIndex = ORDER_FLOW.indexOf(order?.trang_thai_don_hang);
-    const reached = matched ? true : currentIndex >= index;
+    const matched = latestByStatus.get(status) || null;
+
+    // Khi don dang o mot trang thai trong flow, chi hien thi cac moc den trang thai hien tai.
+    // Neu don da huy (ngoai flow), giu lai nhung moc tung dat theo lich su.
+    const reached = currentIndex >= 0 ? index <= currentIndex : Boolean(matched);
+
     return {
       status,
       label: ORDER_STATUS_LABEL[status] || status,
       reached,
-      time: matched?.thoi_gian || null,
+      time: reached ? matched?.thoi_gian || null : null,
     };
   });
 }
@@ -54,6 +77,11 @@ function fmtDate(dateValue) {
 
 function fmtMoney(value) {
   return `${Number(value || 0).toLocaleString('vi-VN')}đ`;
+}
+
+function fmtBranch(branchCode) {
+  if (!branchCode) return 'Dang cap nhat';
+  return BRANCH_LABEL[branchCode] || branchCode;
 }
 
 function badgeClass(status) {
@@ -329,6 +357,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                         <div>
                           <p className="text-xs font-black uppercase tracking-widest text-gray-400">Ma don hang</p>
                           <p className="mt-1 text-sm font-black text-gray-800">{order.ma_don_hang}</p>
+                          <p className="mt-1 text-xs font-bold text-gray-500">Co so xu ly: {fmtBranch(order.co_so_ma)}</p>
                           <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-gray-500">
                             <ClockIcon className="h-4 w-4" />
                             {fmtDate(order.ngay_tao)}
@@ -477,6 +506,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                             {PAYMENT_METHOD_LABEL[order.phuong_thuc_thanh_toan] || order.phuong_thuc_thanh_toan}
                           </p>
                           <p className="text-xs font-semibold text-gray-500">Dia chi: {order.dia_chi_giao_hang || '---'}</p>
+                          <p className="text-xs font-semibold text-gray-500">Co so xu ly: {fmtBranch(order.co_so_ma)}</p>
                           <p className="text-xs font-semibold text-gray-500">Khung gio: {order.khung_gio_giao || '---'}</p>
                           <p className="text-xs font-semibold text-gray-500">Ghi chu: {order.ghi_chu || '---'}</p>
                           <p className="text-xs font-semibold text-gray-500">Trang thai GD: {order.giao_dich?.trang_thai || '---'}</p>

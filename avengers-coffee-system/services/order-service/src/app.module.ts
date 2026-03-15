@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+import type { StringValue } from 'ms';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Client } from 'pg';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { InfrastructureModule } from './infrastructure/infrastructure.module';
 import { CartModule } from './modules/cart/cart.module';
 import { CartItem } from './modules/cart/cart.entity';
 import { ThanhToanModule } from './modules/thanh-toan/thanh-toan.module';
@@ -23,9 +26,17 @@ import { ChatMessage } from './modules/chat/entities/chat-message.entity';
 import { ChatModule } from './modules/chat/chat.module';
 
 const orderSchema = process.env.DB_SCHEMA || 'orders';
+const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
 
 @Module({
   imports: [
+    JwtModule.register({
+      global: true,
+      secret: process.env.JWT_SECRET || 'avengers-jwt-secret',
+      signOptions: {
+        expiresIn: jwtExpiresIn,
+      },
+    }),
     TypeOrmModule.forRootAsync({
       useFactory: async () => {
         const host = process.env.DB_HOST || 'localhost';
@@ -72,6 +83,7 @@ const orderSchema = process.env.DB_SCHEMA || 'orders';
       },
     }),
     TypeOrmModule.forFeature([Review]),
+    InfrastructureModule,
     CartModule,
     NotificationModule,
     ThanhToanModule,

@@ -1,11 +1,20 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtModule } from '@nestjs/jwt';
+import type { StringValue } from 'ms';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Client } from 'pg';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { RolesGuard } from './auth/roles.guard';
+import { Branch } from './modules/user/branch.entity';
 import { DeliveryAddress } from './modules/user/delivery-address.entity';
+import { Promotion } from './modules/user/promotion.entity';
+import { PromotionUsage } from './modules/user/promotion-usage.entity';
 import { User } from './modules/user/user.entity';
 import { UserModule } from './modules/user/user.module';
 
 const identitySchema = process.env.DB_SCHEMA || 'identity';
+const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
 
 @Module({
   imports: [
@@ -37,12 +46,29 @@ const identitySchema = process.env.DB_SCHEMA || 'identity';
           password,
           database,
           schema: identitySchema,
-          entities: [User, DeliveryAddress],
+          entities: [User, DeliveryAddress, Branch, Promotion, PromotionUsage],
           synchronize: true,
         };
       },
     }),
+    JwtModule.register({
+      global: true,
+      secret: process.env.JWT_SECRET || 'avengers-jwt-secret',
+      signOptions: {
+        expiresIn: jwtExpiresIn,
+      },
+    }),
     UserModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
   ],
 })
 export class AppModule {}

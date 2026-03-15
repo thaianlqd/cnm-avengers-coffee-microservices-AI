@@ -29,7 +29,7 @@ function approvalTone(status) {
   return 'approval-pill approval-pill--pending'
 }
 
-function ShiftHistoryItem({ item, isManager, approvingShiftId, onDelete, onSaveEdit, onApprove }) {
+function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelete, onSaveEdit, onApprove }) {
   const [editing, setEditing] = useState(false)
   const [approvalNote, setApprovalNote] = useState(item.approval_note || '')
   const [draft, setDraft] = useState({
@@ -74,16 +74,16 @@ function ShiftHistoryItem({ item, isManager, approvingShiftId, onDelete, onSaveE
           <span className={approvalTone(item.approval_status)}>{APPROVAL_LABEL[item.approval_status] || item.approval_status}</span>
         </div>
         <div className="shc-actions">
-          {!isManager && !editing && (
+          {!editing && canEdit && (
             <button type="button" className="shc-btn shc-btn--edit" onClick={() => setEditing(true)} disabled={lockedForStaff}>
               ✏️ Sửa
             </button>
           )}
-          {!isManager && (
+          {canEdit ? (
             <button type="button" className="shc-btn shc-btn--del" onClick={() => onDelete(item.ma_ca)} disabled={lockedForStaff}>
               🗑 Xóa
             </button>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -131,7 +131,15 @@ function ShiftHistoryItem({ item, isManager, approvingShiftId, onDelete, onSaveE
               <strong>{fmtMoney(item.cash_close)}</strong>
             </div>
             <div className="shc-stat">
-              <span>Thu tiền mặt</span>
+              <span>Tiền mặt thu vào</span>
+              <strong>{fmtMoney(item.cash_in_gross ?? item.cash_revenue)}</strong>
+            </div>
+            <div className="shc-stat">
+              <span>Tiền thối</span>
+              <strong>{fmtMoney(item.cash_change_out ?? 0)}</strong>
+            </div>
+            <div className="shc-stat">
+              <span>Thu tiền mặt thực</span>
               <strong>{fmtMoney(item.cash_revenue)}</strong>
             </div>
             <div className="shc-stat">
@@ -155,7 +163,7 @@ function ShiftHistoryItem({ item, isManager, approvingShiftId, onDelete, onSaveE
               {item.approved_at ? ` • ${new Date(item.approved_at).toLocaleString('vi-VN')}` : ''}
             </p>
           ) : null}
-          {isManager ? (
+          {canApprove ? (
             <div className="shift-approval-box">
               <label htmlFor={`approval-${item.ma_ca}`}>Ghi chú phê duyệt</label>
               <textarea
@@ -193,7 +201,9 @@ function ShiftHistoryItem({ item, isManager, approvingShiftId, onDelete, onSaveE
 
 export function ShiftPanel({
   isManager,
+  mode = 'shift',
   currentUserName,
+  shiftDate, setShiftDate,
   shiftRange, setShiftRange,
   shiftInput, setShiftInput,
   shiftPreview, shiftHistory,
@@ -201,10 +211,15 @@ export function ShiftPanel({
   approvingShiftId,
   chotCaTienMat, suaCaLamViec, xoaCaLamViec, pheDuyetCaLamViec,
 }) {
+  const isApprovalMode = mode === 'approval'
+  const canApprove = isManager && isApprovalMode
+  const canEditHistory = !isApprovalMode
+
   const [historyFilter, setHistoryFilter] = useState('today')
   const [historyPage, setHistoryPage] = useState(1)
 
   const preview = shiftPreview
+  const existingShift = preview?.existing_shift || null
   const diff = preview?.reconciliation?.difference ?? (shiftInput.cashClose - shiftInput.cashOpen)
   const expectedClose = preview?.reconciliation?.expected_cash_close ?? 0
 
@@ -245,14 +260,14 @@ export function ShiftPanel({
   return (
     <div className="shift-shell">
       <section className="shift-form-card">
-        {isManager ? (
+        {isApprovalMode ? (
           <>
             <div className="shift-form-header">
-              <h2>🛡 Phê duyệt đối soát cuối ca</h2>
-              <p>Kiểm tra biên bản staff đã nộp và xác nhận trước khi chốt sổ.</p>
+              <h2>🛡 Kiểm tra biên bản chốt ca</h2>
+              <p>Manager duyệt hoặc từ chối biên bản staff đã nộp.</p>
             </div>
             <div className="shift-form-body shift-approval-summary">
-              <div className="shift-manager-badge">Manager đang duyệt: {currentUserName}</div>
+              <div className="shift-manager-badge">Manager: {currentUserName}</div>
               <div className="shift-preview-grid shift-preview-grid--manager">
                 <div className="spg-card">
                   <span>Tổng biên bản</span>
@@ -271,46 +286,42 @@ export function ShiftPanel({
                   <strong>{approvalSummary.rejected}</strong>
                 </div>
               </div>
-              <p className="shift-manager-help">
-                Mỗi biên bản đều lấy trực tiếp từ phần chốt ca của staff. Khi staff sửa biên bản, trạng thái duyệt sẽ tự quay về chờ duyệt để manager rà soát lại.
-              </p>
             </div>
           </>
         ) : (
           <>
             <div className="shift-form-header">
               <h2>🕐 Chốt ca làm việc</h2>
-              <p>Nhập thông tin ca và xác nhận để lưu biên bản đối soát.</p>
+              <p>{isManager ? 'Manager có thể chốt ca như staff để ghi nhận ca trực của mình.' : 'Nhập thông tin ca và xác nhận để lưu biên bản đối soát.'}</p>
             </div>
 
             <div className="shift-form-body">
               <div className="sff-row">
                 <div className="sff-field">
-                  <label htmlFor="shift-from">Bắt đầu ca</label>
+                  <label htmlFor="shift-date">Ngày chốt ca</label>
                   <input
-                    id="shift-from"
-                    type="datetime-local"
-                    value={shiftRange.from ? shiftRange.from.slice(0, 16) : ''}
-                    onChange={(e) =>
-                      setShiftRange((prev) => ({
-                        ...prev,
-                        from: e.target.value ? new Date(e.target.value).toISOString() : prev.from,
-                      }))
-                    }
+                    id="shift-date"
+                    type="date"
+                    value={shiftDate}
+                    onChange={(e) => setShiftDate(e.target.value)}
                   />
                 </div>
                 <div className="sff-field">
-                  <label htmlFor="shift-to">Kết thúc ca</label>
+                  <label htmlFor="shift-from">Bắt đầu ca (cố định)</label>
+                  <input
+                    id="shift-from"
+                    type="text"
+                    value="07:00"
+                    readOnly
+                  />
+                </div>
+                <div className="sff-field">
+                  <label htmlFor="shift-to">Kết thúc ca (cố định)</label>
                   <input
                     id="shift-to"
-                    type="datetime-local"
-                    value={shiftRange.to ? shiftRange.to.slice(0, 16) : ''}
-                    onChange={(e) =>
-                      setShiftRange((prev) => ({
-                        ...prev,
-                        to: e.target.value ? new Date(e.target.value).toISOString() : prev.to,
-                      }))
-                    }
+                    type="text"
+                    value="22:00"
+                    readOnly
                   />
                 </div>
               </div>
@@ -356,12 +367,32 @@ export function ShiftPanel({
                 <strong>{preview?.system?.total_orders ?? 0}</strong>
               </div>
               <div className="spg-card">
-                <span>Doanh thu</span>
+                <span>Doanh thu hoàn thành</span>
                 <strong>{fmtMoney(preview?.system?.total_revenue ?? 0)}</strong>
               </div>
               <div className="spg-card">
-                <span>Thu tiền mặt</span>
+                <span>Tiền mặt thu vào</span>
+                <strong>{fmtMoney(preview?.system?.cash_in_gross ?? 0)}</strong>
+              </div>
+              <div className="spg-card">
+                <span>Tiền thối khách</span>
+                <strong>{fmtMoney(preview?.system?.cash_change_out ?? 0)}</strong>
+              </div>
+              <div className="spg-card">
+                <span>Tiền mặt thực thu</span>
                 <strong>{fmtMoney(preview?.system?.cash_revenue ?? 0)}</strong>
+              </div>
+              <div className="spg-card">
+                <span>Doanh thu online</span>
+                <strong>{fmtMoney(preview?.system?.online_revenue ?? 0)}</strong>
+              </div>
+              <div className="spg-card">
+                <span>Doanh thu tại shop</span>
+                <strong>{fmtMoney(preview?.system?.in_store_revenue ?? 0)}</strong>
+              </div>
+              <div className="spg-card">
+                <span>Doanh thu không tiền mặt</span>
+                <strong>{fmtMoney(preview?.system?.non_cash_revenue ?? 0)}</strong>
               </div>
               <div className="spg-card">
                 <span>Kỳ vọng cuối ca</span>
@@ -375,6 +406,12 @@ export function ShiftPanel({
               </div>
             </div>
 
+            {existingShift ? (
+              <p className="shift-error" style={{ marginTop: '0.6rem' }}>
+                Ngày này đã có biên bản chốt ca #{existingShift.ma_ca.slice(0, 8).toUpperCase()}. Mỗi ngày chỉ chốt 1 lần, bạn hãy sửa hoặc xóa biên bản cũ nếu cần.
+              </p>
+            ) : null}
+
             {shiftStatus.error && <p className="shift-error">{shiftStatus.error}</p>}
             {shiftStatus.success && <p className="shift-success">{shiftStatus.success}</p>}
 
@@ -382,7 +419,7 @@ export function ShiftPanel({
               type="button"
               className="shift-submit-btn"
               onClick={chotCaTienMat}
-              disabled={closingShift || shiftStatus.loading}
+              disabled={closingShift || shiftStatus.loading || Boolean(existingShift)}
             >
               {closingShift ? (
                 <><span className="ofb-spinner" style={{ width: 16, height: 16, borderWidth: 2 }} /> Đang chốt ca...</>
@@ -396,7 +433,7 @@ export function ShiftPanel({
 
       <section className="shift-history-panel">
         <div className="shift-history-header">
-          <h2>{isManager ? '📋 Biên bản chờ manager kiểm tra' : '📋 Lịch sử ca đã chốt'}</h2>
+          <h2>{isApprovalMode ? '📋 Biên bản chờ manager kiểm tra' : '📋 Lịch sử ca đã chốt'}</h2>
           <span>{filteredHistory.length} ca</span>
         </div>
 
@@ -413,8 +450,8 @@ export function ShiftPanel({
           ))}
         </div>
 
-        {shiftStatus.error && isManager ? <p className="shift-error shift-error--inline">{shiftStatus.error}</p> : null}
-        {shiftStatus.success && isManager ? <p className="shift-success shift-success--inline">{shiftStatus.success}</p> : null}
+        {shiftStatus.error && isApprovalMode ? <p className="shift-error shift-error--inline">{shiftStatus.error}</p> : null}
+        {shiftStatus.success && isApprovalMode ? <p className="shift-success shift-success--inline">{shiftStatus.success}</p> : null}
 
         {!pagedHistory.length ? (
           <div className="shift-history-empty">
@@ -427,7 +464,8 @@ export function ShiftPanel({
               <ShiftHistoryItem
                 key={item.ma_ca}
                 item={item}
-                isManager={isManager}
+                canApprove={canApprove}
+                canEdit={canEditHistory}
                 approvingShiftId={approvingShiftId}
                 onDelete={xoaCaLamViec}
                 onSaveEdit={suaCaLamViec}

@@ -1,11 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { WorkforceCalendar, getInitialWeekStart } from '../../staff-dashboard/components/WorkforceCalendar'
 
-const SHIFT_TEMPLATES = [
-  { id: '2_CA', label: '2 ca/ngày' },
-  { id: '3_CA', label: '3 ca/ngày' },
-]
-
 const SHIFT_CODES = [
   { id: 'SANG', label: 'Ca sáng' },
   { id: 'CHIEU', label: 'Ca chiều' },
@@ -18,6 +13,14 @@ const ATTENDANCE_LABEL = {
   ABSENT: 'Vắng mặt',
 }
 
+const TASK_TEMPLATES = [
+  'Pha chế đồ uống theo giờ cao điểm',
+  'Thu ngân + hỗ trợ đóng gói đơn mang đi',
+  'Chuẩn bị topping, nguyên liệu trước ca',
+  'Kiểm kê quầy bar cuối ca',
+  'Dọn vệ sinh khu vực khách ngồi',
+]
+
 function addWeeks(date, amount) {
   const next = new Date(date)
   next.setDate(next.getDate() + amount * 7)
@@ -29,6 +32,42 @@ function toDateOnly(date) {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
+}
+
+function resolveUsername(user) {
+  return String(user?.ten_dang_nhap || user?.tenDangNhap || user?.username || user?.email || '').trim()
+}
+
+function normalizeUsernameKey(value) {
+  return String(value || '').trim().toLowerCase()
+}
+
+function toDateTimeLocalInput(value) {
+  if (!value) return ''
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return ''
+
+  const year = parsed.getFullYear()
+  const month = String(parsed.getMonth() + 1).padStart(2, '0')
+  const day = String(parsed.getDate()).padStart(2, '0')
+  const hour = String(parsed.getHours()).padStart(2, '0')
+  const minute = String(parsed.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hour}:${minute}`
+}
+
+function toIsoDateTimeOrNull(value) {
+  if (!value) return null
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return null
+  return parsed.toISOString()
+}
+
+function calcWorkedHours(checkIn, checkOut) {
+  if (!checkIn || !checkOut) return 0
+  const inTs = new Date(checkIn).getTime()
+  const outTs = new Date(checkOut).getTime()
+  if (Number.isNaN(inTs) || Number.isNaN(outTs) || outTs <= inTs) return 0
+  return Number(((outTs - inTs) / (1000 * 60 * 60)).toFixed(2))
 }
 
 export function ManagerWorkforcePanel({
@@ -45,6 +84,13 @@ export function ManagerWorkforcePanel({
   const [weekStart, setWeekStart] = useState(getInitialWeekStart)
   const [selectedStaffFilter, setSelectedStaffFilter] = useState('ALL')
   const [selectedShift, setSelectedShift] = useState(null)
+  const [taskDraft, setTaskDraft] = useState('')
+  const [attendanceDraft, setAttendanceDraft] = useState({
+    status: 'ASSIGNED',
+    checkInAt: '',
+    checkOutAt: '',
+    note: '',
+  })
 
   const staffOptions = useMemo(
     () => workforceUsersState.items.filter((item) => item.vai_tro === 'STAFF'),
@@ -54,25 +100,124 @@ export function ManagerWorkforcePanel({
   useEffect(() => {
     if (workShiftForm.staff_username || !staffOptions.length) return
     const first = staffOptions[0]
+    const firstUsername = resolveUsername(first)
     setWorkShiftForm((prev) => ({
       ...prev,
-      staff_username: first.ten_dang_nhap,
-      staff_name: first.ho_ten || first.ten_dang_nhap,
+      staff_username: firstUsername,
+      staff_name: first.ho_ten || firstUsername,
     }))
   }, [staffOptions, workShiftForm.staff_username, setWorkShiftForm])
 
   const calendarItems = useMemo(() => {
     return workShiftState.items.filter((item) => {
       if (selectedStaffFilter === 'ALL') return true
-      return item.staff_username === selectedStaffFilter
+      return normalizeUsernameKey(item.staff_username) === normalizeUsernameKey(selectedStaffFilter)
     })
   }, [workShiftState.items, selectedStaffFilter])
 
   const selectedShiftDetails = selectedShift
     ? workShiftState.items.find((item) => item.ma_ca_lam_viec === selectedShift.ma_ca_lam_viec) || selectedShift
     : null
+  const selectedShiftCodes = useMemo(() => {
+    const current = Array.isArray(workShiftForm.shift_codes) && workShiftForm.shift_codes.length
+      ? workShiftForm.shift_codes
+      : [workShiftForm.shift_code || 'SANG']
+    return Array.from(new Set(current))
+  }, [workShiftForm.shift_code, workShiftForm.shift_codes])
 
-  const canSelectNightShift = workShiftForm.shift_template === '3_CA'
+  useEffect(() => {
+    if (!selectedShift) return
+    const visibleShiftIds = new Set(calendarItems.map((item) => item.ma_ca_lam_viec))
+    if (!visibleShiftIds.has(selectedShift.ma_ca_lam_viec)) {
+      setSelectedShift(null)
+    }
+  }, [calendarItems, selectedShift])
+
+  useEffect(() => {
+    if (!selectedShiftDetails) {
+      setAttendanceDraft({
+        status: 'ASSIGNED',
+        checkInAt: '',
+        checkOutAt: '',
+        note: '',
+      })
+      return
+    }
+
+    setAttendanceDraft({
+      status: selectedShiftDetails.trang_thai_cham_cong || 'ASSIGNED',
+      checkInAt: toDateTimeLocalInput(selectedShiftDetails.check_in_at),
+      checkOutAt: toDateTimeLocalInput(selectedShiftDetails.check_out_at),
+      note: selectedShiftDetails.note || '',
+    })
+  }, [selectedShiftDetails])
+
+  const workedHours = useMemo(
+    () => calcWorkedHours(selectedShiftDetails?.check_in_at, selectedShiftDetails?.check_out_at),
+    [selectedShiftDetails?.check_in_at, selectedShiftDetails?.check_out_at],
+  )
+
+  const toggleShiftCode = (code) => {
+    setWorkShiftForm((prev) => {
+      const current = Array.isArray(prev.shift_codes) && prev.shift_codes.length
+        ? [...new Set(prev.shift_codes)]
+        : [prev.shift_code || 'SANG']
+      const hasCode = current.includes(code)
+
+      let nextCodes = current
+      if (hasCode) {
+        if (current.length === 1) return prev
+        nextCodes = current.filter((item) => item !== code)
+      } else {
+        const maxSelectable = 3
+        if (current.length >= maxSelectable) {
+          window.alert('Moi ngay toi da 3 ca.')
+          return prev
+        }
+        nextCodes = [...current, code]
+      }
+
+      return {
+        ...prev,
+        shift_codes: nextCodes,
+        shift_code: nextCodes[0] || 'SANG',
+      }
+    })
+  }
+
+  const luuChamCongChiTiet = () => {
+    if (!selectedShiftDetails) return
+
+    const checkInIso = toIsoDateTimeOrNull(attendanceDraft.checkInAt)
+    const checkOutIso = toIsoDateTimeOrNull(attendanceDraft.checkOutAt)
+    if (checkInIso && checkOutIso && new Date(checkOutIso).getTime() < new Date(checkInIso).getTime()) {
+      window.alert('Check-out khong duoc nho hon check-in.')
+      return
+    }
+
+    onUpdateAttendance(selectedShiftDetails.ma_ca_lam_viec, {
+      attendance_status: attendanceDraft.status,
+      check_in_at: checkInIso,
+      check_out_at: checkOutIso,
+      note: attendanceDraft.note,
+    })
+  }
+
+  const taoCheckInNhanh = () => {
+    if (!selectedShiftDetails) return
+    onUpdateAttendance(selectedShiftDetails.ma_ca_lam_viec, {
+      attendance_status: 'PRESENT',
+      check_in_at: new Date().toISOString(),
+    })
+  }
+
+  const taoCheckOutNhanh = () => {
+    if (!selectedShiftDetails) return
+    onUpdateAttendance(selectedShiftDetails.ma_ca_lam_viec, {
+      attendance_status: 'PRESENT',
+      check_out_at: new Date().toISOString(),
+    })
+  }
 
   return (
     <section className="panel workforce-panel workforce-panel--manager">
@@ -88,7 +233,7 @@ export function ManagerWorkforcePanel({
             <select
               value={workShiftForm.staff_username}
               onChange={(e) => {
-                const nextUser = staffOptions.find((item) => item.ten_dang_nhap === e.target.value)
+                const nextUser = staffOptions.find((item) => resolveUsername(item) === e.target.value)
                 setWorkShiftForm((prev) => ({
                   ...prev,
                   staff_username: e.target.value,
@@ -99,8 +244,8 @@ export function ManagerWorkforcePanel({
             >
               {!staffOptions.length ? <option value="">Chưa có nhân viên</option> : null}
               {staffOptions.map((item) => (
-                <option key={item.ma_nguoi_dung} value={item.ten_dang_nhap}>
-                  {item.ho_ten || item.ten_dang_nhap}
+                <option key={item.ma_nguoi_dung} value={resolveUsername(item)}>
+                  {item.ho_ten || resolveUsername(item)}
                 </option>
               ))}
             </select>
@@ -116,41 +261,23 @@ export function ManagerWorkforcePanel({
             />
           </label>
 
-          <label>
-            Mẫu chia ca
-            <select
-              value={workShiftForm.shift_template}
-              onChange={(e) =>
-                setWorkShiftForm((prev) => ({
-                  ...prev,
-                  shift_template: e.target.value,
-                  shift_code: e.target.value === '2_CA' && prev.shift_code === 'TOI' ? 'CHIEU' : prev.shift_code,
-                }))
-              }
-            >
-              {SHIFT_TEMPLATES.map((tpl) => (
-                <option key={tpl.id} value={tpl.id}>
-                  {tpl.label}
-                </option>
+          <label className="workforce-shift-selector-wrap">
+            Khung ca (chon nhieu)
+            <div className="workforce-shift-selector">
+              {SHIFT_CODES.map((item) => (
+                <label key={item.id} className={selectedShiftCodes.includes(item.id) ? 'workforce-shift-check active' : 'workforce-shift-check'}>
+                  <input
+                    type="checkbox"
+                    checked={selectedShiftCodes.includes(item.id)}
+                    onChange={() => toggleShiftCode(item.id)}
+                  />
+                  <span>{item.label}</span>
+                </label>
               ))}
-            </select>
-          </label>
-
-          <label>
-            Khung ca
-            <select
-              value={workShiftForm.shift_code}
-              onChange={(e) => setWorkShiftForm((prev) => ({ ...prev, shift_code: e.target.value }))}
-            >
-              {SHIFT_CODES.map((item) => {
-                if (item.id === 'TOI' && !canSelectNightShift) return null
-                return (
-                  <option key={item.id} value={item.id}>
-                    {item.label}
-                  </option>
-                )
-              })}
-            </select>
+            </div>
+            <small>
+              Tick bao nhieu checkbox la so ca trong ngay. Toi da 3 ca/ngay.
+            </small>
           </label>
         </div>
 
@@ -163,7 +290,7 @@ export function ManagerWorkforcePanel({
               placeholder="Ví dụ: hỗ trợ quầy mang đi"
             />
           </label>
-          <button type="submit" disabled={creatingWorkShift || !workShiftForm.staff_username}>
+          <button type="submit" disabled={creatingWorkShift || !workShiftForm.staff_username || !selectedShiftCodes.length}>
             {creatingWorkShift ? 'Đang tạo lịch...' : 'Thêm lịch làm'}
           </button>
         </div>
@@ -175,8 +302,8 @@ export function ManagerWorkforcePanel({
           <select value={selectedStaffFilter} onChange={(e) => setSelectedStaffFilter(e.target.value)}>
             <option value="ALL">Tất cả nhân viên</option>
             {staffOptions.map((item) => (
-              <option key={item.ma_nguoi_dung} value={item.ten_dang_nhap}>
-                {item.ho_ten || item.ten_dang_nhap}
+              <option key={item.ma_nguoi_dung} value={resolveUsername(item)}>
+                {item.ho_ten || resolveUsername(item)}
               </option>
             ))}
           </select>
@@ -217,12 +344,8 @@ export function ManagerWorkforcePanel({
               <label>
                 Chấm công
                 <select
-                  value={selectedShiftDetails.trang_thai_cham_cong}
-                  onChange={(e) =>
-                    onUpdateAttendance(selectedShiftDetails.ma_ca_lam_viec, {
-                      attendance_status: e.target.value,
-                    })
-                  }
+                  value={attendanceDraft.status}
+                  onChange={(e) => setAttendanceDraft((prev) => ({ ...prev, status: e.target.value }))}
                   disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
                 >
                   <option value="ASSIGNED">Đã xếp lịch</option>
@@ -230,6 +353,61 @@ export function ManagerWorkforcePanel({
                   <option value="ABSENT">Vắng mặt</option>
                 </select>
               </label>
+
+              <label>
+                Check-in
+                <input
+                  type="datetime-local"
+                  value={attendanceDraft.checkInAt}
+                  onChange={(e) => setAttendanceDraft((prev) => ({ ...prev, checkInAt: e.target.value }))}
+                  disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
+                />
+              </label>
+
+              <label>
+                Check-out
+                <input
+                  type="datetime-local"
+                  value={attendanceDraft.checkOutAt}
+                  onChange={(e) => setAttendanceDraft((prev) => ({ ...prev, checkOutAt: e.target.value }))}
+                  disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
+                />
+              </label>
+
+              <label className="workforce-note-field">
+                Ghi chú ca
+                <input
+                  value={attendanceDraft.note}
+                  onChange={(e) => setAttendanceDraft((prev) => ({ ...prev, note: e.target.value }))}
+                  disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
+                />
+              </label>
+            </div>
+
+            <div className="workforce-detail-actions">
+              <button
+                type="button"
+                onClick={luuChamCongChiTiet}
+                disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
+              >
+                Luu cham cong
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                onClick={taoCheckInNhanh}
+                disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
+              >
+                Check-in nhanh
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                onClick={taoCheckOutNhanh}
+                disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
+              >
+                Check-out nhanh
+              </button>
 
               <button
                 type="button"
@@ -243,6 +421,7 @@ export function ManagerWorkforcePanel({
 
             <div className="workforce-detail-meta">
               <span>Số giờ ca: {selectedShiftDetails.so_gio_ca}</span>
+              <span>Giờ làm thực tế: {workedHours}</span>
               <span>Quản lý tạo: {selectedShiftDetails.manager_username || 'N/A'}</span>
               <span>Check-in: {selectedShiftDetails.check_in_at ? new Date(selectedShiftDetails.check_in_at).toLocaleString('vi-VN') : 'Chưa có'}</span>
               <span>Check-out: {selectedShiftDetails.check_out_at ? new Date(selectedShiftDetails.check_out_at).toLocaleString('vi-VN') : 'Chưa có'}</span>
@@ -251,6 +430,56 @@ export function ManagerWorkforcePanel({
             {selectedShiftDetails.note ? <p className="workforce-detail-note">Ghi chú: {selectedShiftDetails.note}</p> : null}
           </>
         )}
+      </div>
+
+      <div className="workforce-assignment-card">
+        <div className="workforce-detail-head">
+          <div>
+            <h3>Phân công việc làm</h3>
+            <p>Soạn nhanh checklist công việc và gán vào ghi chú khi tạo lịch mới.</p>
+          </div>
+        </div>
+
+        <div className="workforce-assignment-templates">
+          {TASK_TEMPLATES.map((item) => (
+            <button
+              key={item}
+              type="button"
+              className="secondary"
+              onClick={() => setTaskDraft((prev) => (prev ? `${prev}\n- ${item}` : `- ${item}`))}
+            >
+              + {item}
+            </button>
+          ))}
+        </div>
+
+        <label className="workforce-note-field">
+          Checklist ca làm
+          <textarea
+            rows={4}
+            value={taskDraft}
+            onChange={(e) => setTaskDraft(e.target.value)}
+            placeholder="Ví dụ:\n- Setup quầy trước 7h\n- Hỗ trợ đơn mang đi khung 11h-13h"
+          />
+        </label>
+
+        <div className="workforce-detail-actions">
+          <button
+            type="button"
+            onClick={() => {
+              if (!taskDraft.trim()) return
+              setWorkShiftForm((prev) => ({
+                ...prev,
+                note: [prev.note?.trim(), taskDraft.trim()].filter(Boolean).join(' | '),
+              }))
+            }}
+          >
+            Gắn vào ghi chú lịch đang tạo
+          </button>
+          <button type="button" className="secondary" onClick={() => setTaskDraft('')}>
+            Xóa checklist
+          </button>
+        </div>
       </div>
     </section>
   )

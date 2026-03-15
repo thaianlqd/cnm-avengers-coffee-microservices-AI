@@ -24,7 +24,7 @@ export function LoginScreen({ loginForm, setLoginForm, loginStatus, onLogin }) {
             id="identifier"
             value={loginForm.identifier}
             onChange={(e) => setLoginForm((prev) => ({ ...prev, identifier: e.target.value }))}
-            placeholder="thaian_staff"
+            placeholder="thaian_staff_macdinhchi"
             autoComplete="username"
             required
           />
@@ -47,8 +47,11 @@ export function LoginScreen({ loginForm, setLoginForm, loginStatus, onLogin }) {
           </button>
         </form>
         <div className="hint-box">
-          <p>Tài khoản staff: thaian_staff</p>
-          <p>Tài khoản manager: thaian_manager</p>
+          <p>System Admin: thaian_admin</p>
+          <p>Staff Mạc Đĩnh Chi: thaian_staff_macdinhchi</p>
+          <p>Manager Mạc Đĩnh Chi: thaian_manager_macdinhchi</p>
+          <p>Staff The Grace Tower: thaian_staff_thegracetower</p>
+          <p>Manager The Grace Tower: thaian_manager_thegracetower</p>
           <p>Mật khẩu mặc định: 123456</p>
         </div>
       </section>

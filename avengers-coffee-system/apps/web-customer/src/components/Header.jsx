@@ -69,54 +69,61 @@ export default function Header({
 
   return (
     <header className="sticky top-0 z-50 border-b border-gray-200/80 bg-white/95 backdrop-blur-sm">
-      <div className="mx-auto flex h-[84px] w-full max-w-[1240px] items-center gap-4 px-4 md:px-6">
+      <div className="mx-auto flex h-[84px] w-full max-w-[1380px] items-center gap-3 px-4 md:px-6">
         
         {/* Block trái: Logo */}
-        <div className="min-w-[280px] text-[22px] font-black tracking-tighter uppercase cursor-pointer">
+        <div className="min-w-[300px] text-[22px] font-black tracking-tighter uppercase cursor-pointer">
           THE <span className="text-tch-orange">AVENGERS</span> HOUSE
         </div>
 
         {/* Block giữa: Menu điều hướng */}
-        <nav className="hidden flex-1 items-center justify-center gap-9 lg:flex">
+        <nav className="hidden flex-1 items-center justify-center gap-7 lg:flex">
           <button
             type="button"
             onClick={() => onTabChange?.('home')}
-            className={`relative text-[13px] font-black uppercase tracking-wide transition-colors hover:text-tch-orange ${activeTab === 'home' ? 'text-tch-orange after:absolute after:-bottom-[31px] after:left-0 after:h-[2px] after:w-full after:bg-tch-orange' : 'text-gray-700'}`}
+            className={`relative whitespace-nowrap text-[13px] font-black uppercase tracking-wide transition-colors hover:text-tch-orange ${activeTab === 'home' ? 'text-tch-orange after:absolute after:-bottom-[31px] after:left-0 after:h-[2px] after:w-full after:bg-tch-orange' : 'text-gray-700'}`}
           >
             Trang chủ
           </button>
           <button
             type="button"
             onClick={() => onTabChange?.('order')}
-            className={`relative text-[13px] font-black uppercase tracking-wide transition-colors hover:text-tch-orange ${activeTab === 'order' ? 'text-tch-orange after:absolute after:-bottom-[31px] after:left-0 after:h-[2px] after:w-full after:bg-tch-orange' : 'text-gray-700'}`}
+            className={`relative whitespace-nowrap text-[13px] font-black uppercase tracking-wide transition-colors hover:text-tch-orange ${activeTab === 'order' ? 'text-tch-orange after:absolute after:-bottom-[31px] after:left-0 after:h-[2px] after:w-full after:bg-tch-orange' : 'text-gray-700'}`}
           >
             Đặt hàng
           </button>
           <button
             type="button"
             onClick={() => onTabChange?.('news')}
-            className={`relative text-[13px] font-black uppercase tracking-wide transition-colors hover:text-tch-orange ${activeTab === 'news' ? 'text-tch-orange after:absolute after:-bottom-[31px] after:left-0 after:h-[2px] after:w-full after:bg-tch-orange' : 'text-gray-700'}`}
+            className={`relative whitespace-nowrap text-[13px] font-black uppercase tracking-wide transition-colors hover:text-tch-orange ${activeTab === 'news' ? 'text-tch-orange after:absolute after:-bottom-[31px] after:left-0 after:h-[2px] after:w-full after:bg-tch-orange' : 'text-gray-700'}`}
           >
             Tin tức
           </button>
           <button
             type="button"
             onClick={() => onTabChange?.('stores')}
-            className={`relative text-[13px] font-black uppercase tracking-wide transition-colors hover:text-tch-orange ${activeTab === 'stores' ? 'text-tch-orange after:absolute after:-bottom-[31px] after:left-0 after:h-[2px] after:w-full after:bg-tch-orange' : 'text-gray-700'}`}
+            className={`relative whitespace-nowrap text-[13px] font-black uppercase tracking-wide transition-colors hover:text-tch-orange ${activeTab === 'stores' ? 'text-tch-orange after:absolute after:-bottom-[31px] after:left-0 after:h-[2px] after:w-full after:bg-tch-orange' : 'text-gray-700'}`}
           >
             Cửa hàng
           </button>
           <button
             type="button"
             onClick={() => onTabChange?.('contact')}
-            className={`relative text-[13px] font-black uppercase tracking-wide transition-colors hover:text-tch-orange ${activeTab === 'contact' ? 'text-tch-orange after:absolute after:-bottom-[31px] after:left-0 after:h-[2px] after:w-full after:bg-tch-orange' : 'text-gray-700'}`}
+            className={`relative whitespace-nowrap text-[13px] font-black uppercase tracking-wide transition-colors hover:text-tch-orange ${activeTab === 'contact' ? 'text-tch-orange after:absolute after:-bottom-[31px] after:left-0 after:h-[2px] after:w-full after:bg-tch-orange' : 'text-gray-700'}`}
           >
             Liên hệ
+          </button>
+          <button
+            type="button"
+            onClick={() => onTabChange?.('vouchers')}
+            className={`relative whitespace-nowrap text-[13px] font-black uppercase tracking-wide transition-colors hover:text-tch-orange ${activeTab === 'vouchers' ? 'text-tch-orange after:absolute after:-bottom-[31px] after:left-0 after:h-[2px] after:w-full after:bg-tch-orange' : 'text-gray-700'}`}
+          >
+            Khuyến mãi
           </button>
         </nav>
 
         {/* Block phải: Các chức năng */}
-        <div className="flex min-w-[280px] items-center justify-end space-x-3">
+        <div className="flex min-w-[330px] items-center justify-end space-x-3">
           {isOrderTab && (
             <div className="relative">
               <button
