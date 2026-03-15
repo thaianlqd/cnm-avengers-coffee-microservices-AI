@@ -46,7 +46,6 @@ async function bootstrap() {
       target: process.env.AI_SERVICE_URL || 'http://localhost:8000',
       changeOrigin: true,
       pathFilter: ['/ai'],
-      pathRewrite: { '^/ai': '' },
     }),
   );
 

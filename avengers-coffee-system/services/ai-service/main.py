@@ -127,6 +127,37 @@ class ModelStatsResponse(BaseModel):
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
+# ─── AI Chat ────────────────────────────────────────────────────────────────
+
+from fastapi import Request
+import os
+import requests
+
+
+@app.post("/ai/chat")
+async def ai_chat(request: Request):
+    data = await request.json()
+    user_id = data.get("user_id")
+    user_name = data.get("user_name")
+    content = data.get("content")
+    # Test with provided Gemini API key
+    gemini_api_key = data.get("test_key") or os.getenv("GEMINI_API_KEY")
+    if gemini_api_key:
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={gemini_api_key}"
+            payload = {
+                "contents": [
+                    {"parts": [{"text": content}]}
+                ]
+            }
+            resp = requests.post(url, json=payload, timeout=10)
+            resp.raise_for_status()
+            reply = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+            return {"reply": reply, "used_key": gemini_api_key}
+        except Exception as exc:
+            return {"reply": f"Xin lỗi, AI Gemini đang bận. ({exc})", "used_key": gemini_api_key}
+    return {"reply": f"AI (mock): Bạn vừa nói '{content}'.", "used_key": gemini_api_key}
+
 @app.get("/health")
 def health_check():
     return {

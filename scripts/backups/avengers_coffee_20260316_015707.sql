@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict UH9fUz6huQhHMM0FmP2EW0T4vVhSCOrzldkJ35XZ64VOwSd7btlbKsRvLUvlkSr
+\restrict bZL64lsirScGJZD30R2e4hJa7rQbEgbffARzW5k4HwbbouAtKpDfm5nKrOhrcQX
 
 -- Dumped from database version 16.13 (Debian 16.13-1.pgdg13+1)
 -- Dumped by pg_dump version 16.13 (Debian 16.13-1.pgdg13+1)
@@ -867,10 +867,10 @@ INSERT INTO identity.nguoi_dung (ma_nguoi_dung, ten_dang_nhap, mat_khau_hash, ho
 INSERT INTO identity.nguoi_dung (ma_nguoi_dung, ten_dang_nhap, mat_khau_hash, ho_ten, email, so_dien_thoai, avatar_url, trang_thai, diem_loyalty, ngay_tao, vai_tro, co_so_ma, co_so_ten) VALUES ('714fcc38-8692-49f9-9d1c-2f0fbf4f509e', 'thaian_manager', '$2b$10$7O4U5vqFp6C5m2zcBUPbM.HbwoFd5OMBavD0hMC.ZAyfte23tuSn.', 'Thái An (Quản lý cửa hàng)', 'thaian_manager', NULL, NULL, 'ACTIVE', 0, '2026-03-14 00:59:59.699192', 'MANAGER', NULL, NULL);
 INSERT INTO identity.nguoi_dung (ma_nguoi_dung, ten_dang_nhap, mat_khau_hash, ho_ten, email, so_dien_thoai, avatar_url, trang_thai, diem_loyalty, ngay_tao, vai_tro, co_so_ma, co_so_ten) VALUES ('702cbcb9-9722-4d40-884d-51fff33ece8f', 'thaian_staff_thegracetower', '$2b$10$IRPMapvrOSF587JvwasXD.mntANygqnixcp6zIp9ITEzawzLgQFuK', 'Thái An - Nhân viên cơ sở The Grace Tower', 'thaian_staff_thegracetower', NULL, NULL, 'ACTIVE', 0, '2026-03-14 14:56:39.742949', 'STAFF', 'THE_GRACE_TOWER', 'The Grace Tower');
 INSERT INTO identity.nguoi_dung (ma_nguoi_dung, ten_dang_nhap, mat_khau_hash, ho_ten, email, so_dien_thoai, avatar_url, trang_thai, diem_loyalty, ngay_tao, vai_tro, co_so_ma, co_so_ten) VALUES ('be7731a3-e0f0-4b0d-a419-2f8f1195054d', 'thaian_manager_thegracetower', '$2b$10$VoaMM8IDrT0AJBAVKm9jfufIBNZCB1oRYCes6L6cbfocV2MOL/s9G', 'Thái An - Quản lý cơ sở The Grace Tower', 'thaian_manager_thegracetower', NULL, NULL, 'ACTIVE', 0, '2026-03-14 14:56:39.884026', 'MANAGER', 'THE_GRACE_TOWER', 'The Grace Tower');
-INSERT INTO identity.nguoi_dung (ma_nguoi_dung, ten_dang_nhap, mat_khau_hash, ho_ten, email, so_dien_thoai, avatar_url, trang_thai, diem_loyalty, ngay_tao, vai_tro, co_so_ma, co_so_ten) VALUES ('b81d9738-535e-4475-884d-aeb3b7324f01', 'ankudo1234@gmail.com', '$2b$10$D2RXiJOwq08r6FKoDehAxep1L5ZpQlqxHFWh4hSHS0CamMP0LKLv2', 'thái an hi', 'ankudo1234@gmail.com', '0914835112', NULL, 'ACTIVE', 326, '2026-03-11 01:04:42.084098', 'CUSTOMER', NULL, NULL);
 INSERT INTO identity.nguoi_dung (ma_nguoi_dung, ten_dang_nhap, mat_khau_hash, ho_ten, email, so_dien_thoai, avatar_url, trang_thai, diem_loyalty, ngay_tao, vai_tro, co_so_ma, co_so_ten) VALUES ('af7da2da-eaa7-4349-8ce3-7eaa2f3213ad', 'thaian_admin', '$2b$10$Nu550XT6eiGep910e3r1wuIWV96HuU65/JPAhbwUCGBUpSS1GH5R.', 'Thái An - Quản trị viên hệ thống', 'thaian_admin', NULL, NULL, 'ACTIVE', 0, '2026-03-14 20:12:03.584089', 'ADMIN', NULL, NULL);
 INSERT INTO identity.nguoi_dung (ma_nguoi_dung, ten_dang_nhap, mat_khau_hash, ho_ten, email, so_dien_thoai, avatar_url, trang_thai, diem_loyalty, ngay_tao, vai_tro, co_so_ma, co_so_ten) VALUES ('60e6dc26-351f-47a5-abe3-0d892272c1ab', 'thaian_staff_macdinhchi', '$2b$10$UMD15vtmONQcIwNg7X3G..KEOkDMMwpkqDl5RnAy50q6yb84w0M2.', 'Thái An - Nhân viên cơ sở Mạc Đĩnh Chi', 'thaian_staff_macdinhchi', NULL, NULL, 'ACTIVE', 0, '2026-03-14 14:56:39.448884', 'STAFF', 'MAC_DINH_CHI', 'Mạc Đĩnh Chi');
 INSERT INTO identity.nguoi_dung (ma_nguoi_dung, ten_dang_nhap, mat_khau_hash, ho_ten, email, so_dien_thoai, avatar_url, trang_thai, diem_loyalty, ngay_tao, vai_tro, co_so_ma, co_so_ten) VALUES ('03f1a264-f077-44b4-96da-9de76cc75989', 'thaian_manager_macdinhchi', '$2b$10$hGnAI/xVJKOk2BRP6jwW1ebET1ewzmztcBc9jc8ETNCoVrhJ53G9K', 'Thái An - Quản lý cơ sở Mạc Đĩnh Chi', 'thaian_manager_macdinhchi', NULL, NULL, 'ACTIVE', 0, '2026-03-14 14:56:39.604262', 'MANAGER', 'MAC_DINH_CHI', 'Mạc Đĩnh Chi');
+INSERT INTO identity.nguoi_dung (ma_nguoi_dung, ten_dang_nhap, mat_khau_hash, ho_ten, email, so_dien_thoai, avatar_url, trang_thai, diem_loyalty, ngay_tao, vai_tro, co_so_ma, co_so_ten) VALUES ('b81d9738-535e-4475-884d-aeb3b7324f01', 'ankudo1234@gmail.com', '$2b$10$D2RXiJOwq08r6FKoDehAxep1L5ZpQlqxHFWh4hSHS0CamMP0LKLv2', 'thái an hi', 'ankudo1234@gmail.com', '0914835112', NULL, 'ACTIVE', 355, '2026-03-11 01:04:42.084098', 'CUSTOMER', NULL, NULL);
 
 
 --
@@ -929,7 +929,7 @@ INSERT INTO orders.ca_lam_viec_nhan_vien (ma_ca_lam_viec, staff_username, staff_
 -- Data for Name: chat_conversation; Type: TABLE DATA; Schema: orders; Owner: admin
 --
 
-INSERT INTO orders.chat_conversation (ma_hoi_thoai, ma_khach_hang, ten_khach_hang, ma_nhan_su_phu_trach, ten_nhan_su_phu_trach, vai_tro_nhan_su_phu_trach, trang_thai, tin_nhan_cuoi, vai_tro_nguoi_gui_cuoi, so_tin_nhan_chua_doc_khach, so_tin_nhan_chua_doc_nhan_su, ngay_tao, ngay_cap_nhat) VALUES ('1c7e31b5-bda7-4435-be7c-dcb95b60fbb8', 'b81d9738-535e-4475-884d-aeb3b7324f01', 'thái an hi', 'a945ca5d-2055-4f49-bebb-e706c267d9bb', 'thaian_staff', 'STAFF', 'OPEN', 'chào bạn nhé', 'STAFF', 1, 0, '2026-03-14 02:30:55.460023', '2026-03-14 02:31:08.537387');
+INSERT INTO orders.chat_conversation (ma_hoi_thoai, ma_khach_hang, ten_khach_hang, ma_nhan_su_phu_trach, ten_nhan_su_phu_trach, vai_tro_nhan_su_phu_trach, trang_thai, tin_nhan_cuoi, vai_tro_nguoi_gui_cuoi, so_tin_nhan_chua_doc_khach, so_tin_nhan_chua_doc_nhan_su, ngay_tao, ngay_cap_nhat) VALUES ('1c7e31b5-bda7-4435-be7c-dcb95b60fbb8', 'b81d9738-535e-4475-884d-aeb3b7324f01', 'thái an hi', 'a945ca5d-2055-4f49-bebb-e706c267d9bb', 'thaian_staff', 'STAFF', 'OPEN', 'hu', 'CUSTOMER', 0, 0, '2026-03-14 02:30:55.460023', '2026-03-15 18:56:31.623612');
 
 
 --
@@ -938,6 +938,9 @@ INSERT INTO orders.chat_conversation (ma_hoi_thoai, ma_khach_hang, ten_khach_han
 
 INSERT INTO orders.chat_message (id, ma_hoi_thoai, ma_nguoi_gui, ten_nguoi_gui, vai_tro_nguoi_gui, noi_dung, ngay_tao) VALUES (1, '1c7e31b5-bda7-4435-be7c-dcb95b60fbb8', 'b81d9738-535e-4475-884d-aeb3b7324f01', 'thái an hi', 'CUSTOMER', 'xin chào', '2026-03-14 02:30:58.443712');
 INSERT INTO orders.chat_message (id, ma_hoi_thoai, ma_nguoi_gui, ten_nguoi_gui, vai_tro_nguoi_gui, noi_dung, ngay_tao) VALUES (2, '1c7e31b5-bda7-4435-be7c-dcb95b60fbb8', 'a945ca5d-2055-4f49-bebb-e706c267d9bb', 'thaian_staff', 'STAFF', 'chào bạn nhé', '2026-03-14 02:31:08.545334');
+INSERT INTO orders.chat_message (id, ma_hoi_thoai, ma_nguoi_gui, ten_nguoi_gui, vai_tro_nguoi_gui, noi_dung, ngay_tao) VALUES (3, '1c7e31b5-bda7-4435-be7c-dcb95b60fbb8', 'b81d9738-535e-4475-884d-aeb3b7324f01', 'thái an hi', 'CUSTOMER', 'hi chao', '2026-03-15 17:29:27.44882');
+INSERT INTO orders.chat_message (id, ma_hoi_thoai, ma_nguoi_gui, ten_nguoi_gui, vai_tro_nguoi_gui, noi_dung, ngay_tao) VALUES (4, '1c7e31b5-bda7-4435-be7c-dcb95b60fbb8', 'b81d9738-535e-4475-884d-aeb3b7324f01', 'thái an hi', 'CUSTOMER', 'hi', '2026-03-15 17:38:42.311254');
+INSERT INTO orders.chat_message (id, ma_hoi_thoai, ma_nguoi_gui, ten_nguoi_gui, vai_tro_nguoi_gui, noi_dung, ngay_tao) VALUES (5, '1c7e31b5-bda7-4435-be7c-dcb95b60fbb8', 'b81d9738-535e-4475-884d-aeb3b7324f01', 'thái an hi', 'CUSTOMER', 'hu', '2026-03-15 18:56:22.408748');
 
 
 --
@@ -958,6 +961,7 @@ INSERT INTO orders.chi_tiet_don_hang (id, ma_don_hang, ma_san_pham, ten_san_pham
 INSERT INTO orders.chi_tiet_don_hang (id, ma_don_hang, ma_san_pham, ten_san_pham, gia_ban, so_luong, kich_co, hinh_anh_url) VALUES (56, '64cf42ee-0ff8-485c-bacc-681c4f9b314a', 2, 'Trà Đào Cam Sả', 45000.00, 1, NULL, NULL);
 INSERT INTO orders.chi_tiet_don_hang (id, ma_don_hang, ma_san_pham, ten_san_pham, gia_ban, so_luong, kich_co, hinh_anh_url) VALUES (57, 'ba1d6a75-6409-4bee-a355-24a6b6973f66', 2, 'Trà Đào Cam Sả', 45000.00, 1, NULL, NULL);
 INSERT INTO orders.chi_tiet_don_hang (id, ma_don_hang, ma_san_pham, ten_san_pham, gia_ban, so_luong, kich_co, hinh_anh_url) VALUES (62, '4f8fa1f0-261a-4388-bbce-956ae00ea049', 2, 'Trà Đào Cam Sả', 45000.00, 1, NULL, NULL);
+INSERT INTO orders.chi_tiet_don_hang (id, ma_don_hang, ma_san_pham, ten_san_pham, gia_ban, so_luong, kich_co, hinh_anh_url) VALUES (63, '9159cb4b-974d-4578-bf0d-a0d036f5e4bb', 1, 'Cà Phê Sữa Đá', 29000.00, 1, 'Nhỏ', '/images/products/ca-phe-sua-da.jpg');
 
 
 --
@@ -986,6 +990,7 @@ INSERT INTO orders.don_hang (ma_don_hang, ma_nguoi_dung, tong_tien, dia_chi_giao
 INSERT INTO orders.don_hang (ma_don_hang, ma_nguoi_dung, tong_tien, dia_chi_giao_hang, khung_gio_giao, ghi_chu, phuong_thuc_thanh_toan, trang_thai_thanh_toan, trang_thai_don_hang, ma_voucher, so_tien_giam, lich_su_trang_thai, ngay_tao, ngay_cap_nhat, loai_don_hang, ma_ban, ten_khach_hang, ten_thu_ngan, co_so_ma, tien_khach_dua, tien_thoi) VALUES ('687d5d6b-850e-4bef-8644-3428a3c579a1', 'b81d9738-535e-4475-884d-aeb3b7324f01', 45000.00, '71 hoàng văn thái, Tân Phú, Quận 7, Thành phố Hồ Chí Minh', '18:00 - 19:00', 'Dat tu web-customer', 'THANH_TOAN_KHI_NHAN_HANG', 'CHO_THANH_TOAN_KHI_NHAN_HANG', 'DA_XAC_NHAN', NULL, 0.00, '[{"loai": "ORDER", "ghi_chu": "Don hang vua duoc tao", "thoi_gian": "2026-03-14T15:44:14.530Z", "trang_thai": "MOI_TAO"}, {"loai": "PAYMENT", "ghi_chu": "Khoi tao thanh toan", "thoi_gian": "2026-03-14T15:44:14.530Z", "trang_thai": "CHO_THANH_TOAN_KHI_NHAN_HANG"}, {"loai": "ORDER", "ghi_chu": "Nhan vien cua hang cap nhat trang thai", "thoi_gian": "2026-03-14T16:02:14.141Z", "trang_thai": "HOAN_THANH"}, {"loai": "ORDER", "ghi_chu": "Nhan vien cua hang cap nhat trang thai", "thoi_gian": "2026-03-14T16:02:33.209Z", "trang_thai": "DANG_GIAO"}, {"loai": "ORDER", "ghi_chu": "Nhan vien cua hang cap nhat trang thai", "thoi_gian": "2026-03-14T16:05:41.134Z", "trang_thai": "DA_XAC_NHAN"}]', '2026-03-14 15:44:14.532803', '2026-03-14 16:05:41.137419', NULL, NULL, NULL, NULL, 'THE_GRACE_TOWER', NULL, 0.00);
 INSERT INTO orders.don_hang (ma_don_hang, ma_nguoi_dung, tong_tien, dia_chi_giao_hang, khung_gio_giao, ghi_chu, phuong_thuc_thanh_toan, trang_thai_thanh_toan, trang_thai_don_hang, ma_voucher, so_tien_giam, lich_su_trang_thai, ngay_tao, ngay_cap_nhat, loai_don_hang, ma_ban, ten_khach_hang, ten_thu_ngan, co_so_ma, tien_khach_dua, tien_thoi) VALUES ('ba1d6a75-6409-4bee-a355-24a6b6973f66', 'guest-pos-1773512912410', 45000.00, 'Tai quay', NULL, NULL, 'THANH_TOAN_KHI_NHAN_HANG', 'CHO_THANH_TOAN_KHI_NHAN_HANG', 'DA_XAC_NHAN', NULL, 0.00, '[{"loai": "ORDER", "ghi_chu": "Tao don tai quay", "thoi_gian": "2026-03-14T18:28:32.412Z", "trang_thai": "MOI_TAO"}, {"loai": "PAYMENT", "ghi_chu": "Khoi tao thanh toan POS", "thoi_gian": "2026-03-14T18:28:32.412Z", "trang_thai": "CHO_THANH_TOAN_KHI_NHAN_HANG"}, {"loai": "ORDER", "ghi_chu": "Nhan vien cua hang cap nhat trang thai", "thoi_gian": "2026-03-14T18:28:35.108Z", "trang_thai": "DA_XAC_NHAN"}]', '2026-03-14 18:28:32.411292', '2026-03-14 18:28:35.106933', 'TAI_CHO', NULL, NULL, 'thaian_staff_thegracetower', 'THE_GRACE_TOWER', NULL, 0.00);
 INSERT INTO orders.don_hang (ma_don_hang, ma_nguoi_dung, tong_tien, dia_chi_giao_hang, khung_gio_giao, ghi_chu, phuong_thuc_thanh_toan, trang_thai_thanh_toan, trang_thai_don_hang, ma_voucher, so_tien_giam, lich_su_trang_thai, ngay_tao, ngay_cap_nhat, loai_don_hang, ma_ban, ten_khach_hang, ten_thu_ngan, co_so_ma, tien_khach_dua, tien_thoi) VALUES ('4f8fa1f0-261a-4388-bbce-956ae00ea049', 'guest-pos-1773517684312', 45000.00, 'Tai quay', NULL, NULL, 'THANH_TOAN_KHI_NHAN_HANG', 'DA_THANH_TOAN', 'HOAN_THANH', NULL, 0.00, '[{"loai": "ORDER", "ghi_chu": "Tao don tai quay", "thoi_gian": "2026-03-14T19:48:04.315Z", "trang_thai": "MOI_TAO"}, {"loai": "PAYMENT", "ghi_chu": "Khoi tao thanh toan POS", "thoi_gian": "2026-03-14T19:48:04.315Z", "trang_thai": "CHO_THANH_TOAN_KHI_NHAN_HANG"}, {"loai": "ORDER", "ghi_chu": "Nhan vien cua hang cap nhat trang thai", "thoi_gian": "2026-03-14T19:48:07.454Z", "trang_thai": "DA_XAC_NHAN"}, {"loai": "ORDER", "ghi_chu": "Nhan vien cua hang cap nhat trang thai", "thoi_gian": "2026-03-14T19:48:07.504Z", "trang_thai": "DANG_CHUAN_BI"}, {"loai": "ORDER", "ghi_chu": "Nhan vien cua hang cap nhat trang thai", "thoi_gian": "2026-03-14T19:48:07.546Z", "trang_thai": "DANG_GIAO"}, {"loai": "ORDER", "ghi_chu": "Nhan vien cua hang cap nhat trang thai", "thoi_gian": "2026-03-14T19:48:07.584Z", "trang_thai": "HOAN_THANH"}, {"loai": "PAYMENT", "ghi_chu": "Nhan vien cua hang cap nhat trang thai", "thoi_gian": "2026-03-14T19:48:07.584Z", "trang_thai": "DA_THANH_TOAN"}]', '2026-03-14 19:48:04.314508', '2026-03-14 19:48:07.583381', 'TAI_CHO', NULL, NULL, 'thaian_staff_thegracetower', 'THE_GRACE_TOWER', 500000.00, 455000.00);
+INSERT INTO orders.don_hang (ma_don_hang, ma_nguoi_dung, tong_tien, dia_chi_giao_hang, khung_gio_giao, ghi_chu, phuong_thuc_thanh_toan, trang_thai_thanh_toan, trang_thai_don_hang, ma_voucher, so_tien_giam, lich_su_trang_thai, ngay_tao, ngay_cap_nhat, loai_don_hang, ma_ban, ten_khach_hang, ten_thu_ngan, co_so_ma, tien_khach_dua, tien_thoi) VALUES ('9159cb4b-974d-4578-bf0d-a0d036f5e4bb', 'b81d9738-535e-4475-884d-aeb3b7324f01', 29000.00, '28 Ter B Mạc Đĩnh Chi, Phường Sài Gòn, Quận 1, Thành phố Hồ Chí Minh', '18:00 - 19:00', 'Dat tu web-customer', 'THANH_TOAN_KHI_NHAN_HANG', 'CHO_THANH_TOAN_KHI_NHAN_HANG', 'MOI_TAO', NULL, 0.00, '[{"loai": "ORDER", "ghi_chu": "Don hang vua duoc tao", "thoi_gian": "2026-03-15T16:40:06.603Z", "trang_thai": "MOI_TAO"}, {"loai": "PAYMENT", "ghi_chu": "Khoi tao thanh toan", "thoi_gian": "2026-03-15T16:40:06.603Z", "trang_thai": "CHO_THANH_TOAN_KHI_NHAN_HANG"}]', '2026-03-15 16:40:06.61515', '2026-03-15 16:40:06.61515', NULL, NULL, NULL, NULL, 'MAC_DINH_CHI', NULL, 0.00);
 
 
 --
@@ -1005,6 +1010,7 @@ INSERT INTO orders.giao_dich_thanh_toan (ma_giao_dich, ma_don_hang, cong_thanh_t
 INSERT INTO orders.giao_dich_thanh_toan (ma_giao_dich, ma_don_hang, cong_thanh_toan, ma_tham_chieu, ma_giao_dich_cong, so_tien, trang_thai, du_lieu_tho, ngay_tao) VALUES (53, '64cf42ee-0ff8-485c-bacc-681c4f9b314a', 'THANH_TOAN_KHI_NHAN_HANG', 'COD-64cf42ee-655278', NULL, 45000.00, 'THANH_CONG', NULL, '2026-03-14 18:24:15.228354');
 INSERT INTO orders.giao_dich_thanh_toan (ma_giao_dich, ma_don_hang, cong_thanh_toan, ma_tham_chieu, ma_giao_dich_cong, so_tien, trang_thai, du_lieu_tho, ngay_tao) VALUES (54, 'ba1d6a75-6409-4bee-a355-24a6b6973f66', 'THANH_TOAN_KHI_NHAN_HANG', 'COD-ba1d6a75-912445', NULL, 45000.00, 'CHO_THANH_TOAN', NULL, '2026-03-14 18:28:32.411292');
 INSERT INTO orders.giao_dich_thanh_toan (ma_giao_dich, ma_don_hang, cong_thanh_toan, ma_tham_chieu, ma_giao_dich_cong, so_tien, trang_thai, du_lieu_tho, ngay_tao) VALUES (57, '4f8fa1f0-261a-4388-bbce-956ae00ea049', 'THANH_TOAN_KHI_NHAN_HANG', 'COD-4f8fa1f0-684378', NULL, 45000.00, 'THANH_CONG', NULL, '2026-03-14 19:48:04.314508');
+INSERT INTO orders.giao_dich_thanh_toan (ma_giao_dich, ma_don_hang, cong_thanh_toan, ma_tham_chieu, ma_giao_dich_cong, so_tien, trang_thai, du_lieu_tho, ngay_tao) VALUES (58, '9159cb4b-974d-4578-bf0d-a0d036f5e4bb', 'THANH_TOAN_KHI_NHAN_HANG', 'COD-9159cb4b-806653', NULL, 29000.00, 'CHO_THU_TIEN', NULL, '2026-03-15 16:40:06.658124');
 
 
 --
@@ -1059,6 +1065,8 @@ INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc
 INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (40, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #687d5d6b-850e-4bef-8644-3428a3c579a1 da chuyen sang trang thai HOAN_THANH.', 'ORDER', true, '{"ma_don_hang": "687d5d6b-850e-4bef-8644-3428a3c579a1", "trang_thai_don_hang": "HOAN_THANH"}', '2026-03-14 16:02:14.181669+00');
 INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (41, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #687d5d6b-850e-4bef-8644-3428a3c579a1 da chuyen sang trang thai DANG_GIAO.', 'ORDER', true, '{"ma_don_hang": "687d5d6b-850e-4bef-8644-3428a3c579a1", "trang_thai_don_hang": "DANG_GIAO"}', '2026-03-14 16:02:33.215889+00');
 INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (42, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #687d5d6b-850e-4bef-8644-3428a3c579a1 da chuyen sang trang thai DA_XAC_NHAN.', 'ORDER', true, '{"ma_don_hang": "687d5d6b-850e-4bef-8644-3428a3c579a1", "trang_thai_don_hang": "DA_XAC_NHAN"}', '2026-03-14 16:05:41.144172+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (57, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don hang da duoc tao', 'Don #9159cb4b-974d-4578-bf0d-a0d036f5e4bb da duoc tao thanh cong.', 'ORDER', false, '{"ma_don_hang": "9159cb4b-974d-4578-bf0d-a0d036f5e4bb", "trang_thai_don_hang": "MOI_TAO"}', '2026-03-15 16:40:06.670011+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (58, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don COD cho thu tien', 'Don #9159cb4b-974d-4578-bf0d-a0d036f5e4bb se duoc thu tien khi giao hang.', 'PAYMENT', false, '{"ma_don_hang": "9159cb4b-974d-4578-bf0d-a0d036f5e4bb", "phuong_thuc_thanh_toan": "THANH_TOAN_KHI_NHAN_HANG"}', '2026-03-15 16:40:06.857028+00');
 
 
 --
@@ -1109,14 +1117,14 @@ SELECT pg_catalog.setval('menu.san_pham_ma_san_pham_seq', 4, true);
 -- Name: chat_message_id_seq; Type: SEQUENCE SET; Schema: orders; Owner: admin
 --
 
-SELECT pg_catalog.setval('orders.chat_message_id_seq', 2, true);
+SELECT pg_catalog.setval('orders.chat_message_id_seq', 5, true);
 
 
 --
 -- Name: chi_tiet_don_hang_id_seq; Type: SEQUENCE SET; Schema: orders; Owner: admin
 --
 
-SELECT pg_catalog.setval('orders.chi_tiet_don_hang_id_seq', 62, true);
+SELECT pg_catalog.setval('orders.chi_tiet_don_hang_id_seq', 63, true);
 
 
 --
@@ -1130,21 +1138,21 @@ SELECT pg_catalog.setval('orders.danh_gia_san_pham_id_seq', 3, true);
 -- Name: giao_dich_thanh_toan_ma_giao_dich_seq; Type: SEQUENCE SET; Schema: orders; Owner: admin
 --
 
-SELECT pg_catalog.setval('orders.giao_dich_thanh_toan_ma_giao_dich_seq', 57, true);
+SELECT pg_catalog.setval('orders.giao_dich_thanh_toan_ma_giao_dich_seq', 58, true);
 
 
 --
 -- Name: gio_hang_id_seq; Type: SEQUENCE SET; Schema: orders; Owner: admin
 --
 
-SELECT pg_catalog.setval('orders.gio_hang_id_seq', 98, true);
+SELECT pg_catalog.setval('orders.gio_hang_id_seq', 99, true);
 
 
 --
 -- Name: thong_bao_id_seq; Type: SEQUENCE SET; Schema: orders; Owner: admin
 --
 
-SELECT pg_catalog.setval('orders.thong_bao_id_seq', 56, true);
+SELECT pg_catalog.setval('orders.thong_bao_id_seq', 58, true);
 
 
 --
@@ -1404,5 +1412,5 @@ REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict UH9fUz6huQhHMM0FmP2EW0T4vVhSCOrzldkJ35XZ64VOwSd7btlbKsRvLUvlkSr
+\unrestrict bZL64lsirScGJZD30R2e4hJa7rQbEgbffARzW5k4HwbbouAtKpDfm5nKrOhrcQX
 

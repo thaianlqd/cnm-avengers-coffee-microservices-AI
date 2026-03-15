@@ -208,7 +208,11 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-123}
       DB_NAME: ${DB_NAME:-avengers_coffee}
       AI_PORT: ${AI_PORT:-8000}
+      GEMINI_API_KEY: AIzaSyBZ-4V5VF9vVmEpSo9wU73StBoZ03BCeFw
     expose:
+      - "${AI_PORT:-8000}"
+    ports:
+      - "${AI_PORT:-8000}:8000"
       - "${AI_PORT:-8000}"
     networks:
       - avengers-network

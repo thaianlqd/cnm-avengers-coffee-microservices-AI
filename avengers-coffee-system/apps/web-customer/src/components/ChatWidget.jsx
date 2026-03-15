@@ -10,6 +10,7 @@ export default function ChatWidget({ user, socketUrl }) {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [chatMode, setChatMode] = useState('STAFF'); // 'STAFF' | 'AI'
   const socketRef = useRef(null);
   const bottomRef = useRef(null);
 
@@ -97,20 +98,43 @@ export default function ChatWidget({ user, socketUrl }) {
 
   const sendMessage = async () => {
     const content = inputText.trim();
-    if (!content || !conversation || sending) return;
+    if (!content || sending) return;
     setSending(true);
     setInputText('');
-    try {
-      await apiClient.post(`/chat/conversations/${conversation.ma_hoi_thoai}/messages`, {
-        sender_user_id: userId,
-        sender_name: userName,
-        sender_role: 'CUSTOMER',
-        content,
-      });
-    } catch {
-      setInputText(content);
-    } finally {
-      setSending(false);
+    if (chatMode === 'AI') {
+      try {
+        // Gửi tới endpoint AI (ví dụ /ai/chat)
+        const res = await apiClient.post('/ai/chat', {
+          user_id: userId,
+          user_name: userName,
+          content,
+        });
+        const aiMsg = {
+          id: `ai-${Date.now()}`,
+          vai_tro_nguoi_gui: 'AI',
+          ten_nguoi_gui: 'AI',
+          noi_dung: res.data.reply || 'Xin lỗi, tôi chưa hiểu.',
+        };
+        setMessages((prev) => [...prev, { id: `user-${Date.now()}`, vai_tro_nguoi_gui: 'CUSTOMER', ten_nguoi_gui: userName, noi_dung: content }, aiMsg]);
+      } catch {
+        setInputText(content);
+      } finally {
+        setSending(false);
+      }
+    } else {
+      if (!conversation) return setSending(false);
+      try {
+        await apiClient.post(`/chat/conversations/${conversation.ma_hoi_thoai}/messages`, {
+          sender_user_id: userId,
+          sender_name: userName,
+          sender_role: 'CUSTOMER',
+          content,
+        });
+      } catch {
+        setInputText(content);
+      } finally {
+        setSending(false);
+      }
     }
   };
 
@@ -149,6 +173,34 @@ export default function ChatWidget({ user, socketUrl }) {
             minHeight: '540px',
           }}
         >
+          {/* Chọn kênh chat */}
+          <div style={{ display: 'flex', gap: 8, padding: '8px 16px', background: '#fff5ec', borderBottom: '1px solid #fde0be', alignItems: 'center' }}>
+            <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#ea8025' }}>Chọn kênh chat:</span>
+            <button
+              style={{
+                background: chatMode === 'STAFF' ? '#ea8025' : '#fde0be',
+                color: chatMode === 'STAFF' ? '#fff' : '#ea8025',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '4px 12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+              onClick={() => setChatMode('STAFF')}
+            >Nhân viên</button>
+            <button
+              style={{
+                background: chatMode === 'AI' ? '#ea8025' : '#fde0be',
+                color: chatMode === 'AI' ? '#fff' : '#ea8025',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '4px 12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+              onClick={() => setChatMode('AI')}
+            >AI</button>
+          </div>
           {/* Header */}
           <div
             style={{
