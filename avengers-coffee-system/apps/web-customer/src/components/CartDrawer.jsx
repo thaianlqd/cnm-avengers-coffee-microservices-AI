@@ -7,12 +7,55 @@ import { queryKeys } from '../lib/queryKeys';
 
 const AVAILABLE_SIZES = ['Nhỏ', 'Vừa'];
 
+const ADDRESS_OPTIONS = {
+  'Thành phố Hồ Chí Minh': {
+    'Quận 1': ['Phường Sài Gòn'],
+    'Quận 7': ['Tân Phú'],
+  },
+};
+
+function taoDiaChiDayDu(addressForm) {
+  const parts = [addressForm.street, addressForm.ward, addressForm.district, addressForm.city]
+    .map((item) => String(item || '').trim())
+    .filter(Boolean);
+  return parts.join(', ');
+}
+
+function tachDiaChiDayDu(rawAddress) {
+  const raw = String(rawAddress || '').trim();
+  if (!raw) {
+    return {
+      city: 'Thành phố Hồ Chí Minh',
+      district: 'Quận 1',
+      ward: 'Phường Sài Gòn',
+      street: '',
+    };
+  }
+
+  const parts = raw
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const city = parts[parts.length - 1] || 'Thành phố Hồ Chí Minh';
+  const district = parts[parts.length - 2] || 'Quận 1';
+  const ward = parts[parts.length - 3] || 'Phường Sài Gòn';
+  const street = parts.slice(0, Math.max(parts.length - 3, 0)).join(', ');
+
+  return { city, district, ward, street: street || raw };
+}
+
 export default function CartDrawer({ isOpen, onClose }) {
   const { cart, removeFromCart, updateCartQuantity, changeCartItemSize, activeUserId, refreshCart } = useCart();
   const queryClient = useQueryClient();
   const total = cart.reduce((sum, i) => sum + i.gia_ban * i.so_luong, 0);
   const [phuongThuc, setPhuongThuc] = useState('VNPAY');
-  const [diaChi, setDiaChi] = useState('KTX Khu A, Dai hoc Cong nghe Moi');
+  const [addressForm, setAddressForm] = useState({
+    city: 'Thành phố Hồ Chí Minh',
+    district: 'Quận 1',
+    ward: 'Phường Sài Gòn',
+    street: '',
+  });
   const [khungGio, setKhungGio] = useState('18:00 - 19:00');
   const [ghiChu, setGhiChu] = useState('');
   const [thongBao, setThongBao] = useState('');
@@ -28,6 +71,12 @@ export default function CartDrawer({ isOpen, onClose }) {
 
   const maNguoiDung = useMemo(() => activeUserId || 'guest', [activeUserId]);
   const isLoggedInUser = useMemo(() => Boolean(maNguoiDung && !String(maNguoiDung).startsWith('guest-')), [maNguoiDung]);
+  const districtOptions = useMemo(() => Object.keys(ADDRESS_OPTIONS[addressForm.city] || {}), [addressForm.city]);
+  const wardOptions = useMemo(
+    () => (ADDRESS_OPTIONS[addressForm.city]?.[addressForm.district] || []),
+    [addressForm.city, addressForm.district],
+  );
+  const diaChiDayDu = useMemo(() => taoDiaChiDayDu(addressForm), [addressForm]);
 
   const { data: addressPayload } = useQuery({
     queryKey: queryKeys.userAddresses(maNguoiDung),
@@ -64,6 +113,7 @@ export default function CartDrawer({ isOpen, onClose }) {
       const response = await apiClient.post('/vouchers/kiem-tra', {
         ma_voucher: code,
         tong_tien: total,
+        user_id: isLoggedInUser ? maNguoiDung : '',
       });
       setVoucherResult(response.data);
     } catch (err) {
@@ -87,23 +137,61 @@ export default function CartDrawer({ isOpen, onClose }) {
       return;
     }
 
-    setDiaChi((current) => {
-      const value = current?.trim();
-      if (!value || value === 'KTX Khu A, Dai hoc Cong nghe Moi') {
-        return defaultAddress.dia_chi_day_du;
+    setAddressForm((current) => {
+      if (current.street?.trim()) {
+        return current;
       }
-      return current;
+
+      const parsed = tachDiaChiDayDu(defaultAddress.dia_chi_day_du);
+      const normalizedCity = ADDRESS_OPTIONS[parsed.city] ? parsed.city : 'Thành phố Hồ Chí Minh';
+      const normalizedDistrict = ADDRESS_OPTIONS[normalizedCity]?.[parsed.district]
+        ? parsed.district
+        : Object.keys(ADDRESS_OPTIONS[normalizedCity] || {})[0] || 'Quận 1';
+      const normalizedWard = (ADDRESS_OPTIONS[normalizedCity]?.[normalizedDistrict] || []).includes(parsed.ward)
+        ? parsed.ward
+        : (ADDRESS_OPTIONS[normalizedCity]?.[normalizedDistrict] || [])[0] || 'Phường Sài Gòn';
+
+      return {
+        city: normalizedCity,
+        district: normalizedDistrict,
+        ward: normalizedWard,
+        street: parsed.street,
+      };
     });
   }, [defaultAddress, isOpen]);
+
+  useEffect(() => {
+    if (!districtOptions.length) {
+      return;
+    }
+
+    if (!districtOptions.includes(addressForm.district)) {
+      setAddressForm((prev) => ({
+        ...prev,
+        district: districtOptions[0],
+        ward: (ADDRESS_OPTIONS[prev.city]?.[districtOptions[0]] || [])[0] || '',
+      }));
+    }
+  }, [addressForm.city, addressForm.district, districtOptions]);
+
+  useEffect(() => {
+    if (!wardOptions.length) {
+      return;
+    }
+
+    if (!wardOptions.includes(addressForm.ward)) {
+      setAddressForm((prev) => ({ ...prev, ward: wardOptions[0] }));
+    }
+  }, [addressForm.ward, wardOptions]);
 
   const khoiTaoThanhToanMutation = useMutation({
     mutationFn: async () => {
       const response = await apiClient.post(`/customers/${maNguoiDung}/thanh-toan/khoi-tao`, {
         phuong_thuc_thanh_toan: phuongThuc,
-        dia_chi_giao_hang: diaChi,
+        dia_chi_giao_hang: diaChiDayDu,
         khung_gio_giao: khungGio,
         ghi_chu: ghiChu.trim() || 'Dat tu web-customer',
-        ma_voucher: voucherResult?.ma_voucher || undefined,
+        ma_voucher: voucherResult?.ma_voucher || voucherResult?.ma_khuyen_mai || undefined,
       });
       return response.data;
     },
@@ -139,8 +227,13 @@ export default function CartDrawer({ isOpen, onClose }) {
       return;
     }
 
-    if (!diaChi.trim() || diaChi.trim().length < 10) {
-      setThongBao('Vui long nhap dia chi giao hang day du hon truoc khi thanh toan.');
+    if (!addressForm.city || !addressForm.district || !addressForm.ward || !addressForm.street?.trim()) {
+      setThongBao('Vui long chon thanh pho, quan, phuong va nhap so nha/duong day du.');
+      return;
+    }
+
+    if (diaChiDayDu.length < 16) {
+      setThongBao('Dia chi giao hang chua du chi tiet. Vui long bo sung so nha, ten duong.');
       return;
     }
 
@@ -183,13 +276,14 @@ export default function CartDrawer({ isOpen, onClose }) {
   return (
     <div className="fixed inset-0 z-[110] flex justify-end">
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col p-6 animate-in slide-in-from-right duration-300">
+      <div className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col p-6 animate-in slide-in-from-right duration-300 overflow-hidden">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-black uppercase">Giỏ hàng</h2>
           <button onClick={onClose}><XMarkIcon className="h-8 w-8 text-gray-400" /></button>
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-6">
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+          <div className="space-y-6 pb-6">
           {cart.length === 0 ? <p className="text-center text-gray-400 font-bold py-10">Giỏ hàng trống bác ơi! 🥤</p> : 
             cart.map((item) => (
               <div key={`${item.ma_san_pham}-${item.size}`} className="flex gap-4 items-center">
@@ -253,9 +347,9 @@ export default function CartDrawer({ isOpen, onClose }) {
               </div>
             ))
           }
-        </div>
+          </div>
 
-        <div className="pt-6 border-t mt-6">
+          <div className="pt-6 border-t">
           <div className="flex justify-between mb-6">
             <span className="font-bold text-gray-400 uppercase text-xs">Tổng tiền</span>
             <span className="text-lg font-black text-gray-600">{total.toLocaleString()}đ</span>
@@ -267,8 +361,8 @@ export default function CartDrawer({ isOpen, onClose }) {
             {voucherResult ? (
               <div className="flex items-center justify-between gap-2">
                 <div>
-                  <p className="text-sm font-black text-emerald-700">{voucherResult.ma_voucher}</p>
-                  <p className="text-xs font-semibold text-emerald-600">{voucherResult.mo_ta || 'Ap dung thanh cong'} — Giảm {discountAmount.toLocaleString('vi-VN')}đ</p>
+                  <p className="text-sm font-black text-emerald-700">{voucherResult.ma_voucher || voucherResult.ma_khuyen_mai}</p>
+                  <p className="text-xs font-semibold text-emerald-600">{voucherResult.mo_ta || voucherResult.ten_khuyen_mai || 'Ap dung thanh cong'} — Giảm {discountAmount.toLocaleString('vi-VN')}đ</p>
                 </div>
                 <button type="button" onClick={xoaVoucher} className="rounded-lg bg-white px-3 py-1 text-xs font-black text-red-500 border border-red-100">
                   Xóa
@@ -311,13 +405,27 @@ export default function CartDrawer({ isOpen, onClose }) {
               <>
                 <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Dia chi da luu</label>
                 <select
-                  value={savedAddresses.some((item) => item.dia_chi_day_du === diaChi) ? diaChi : ''}
+                  value={savedAddresses.some((item) => item.dia_chi_day_du === diaChiDayDu) ? diaChiDayDu : ''}
                   onChange={(e) => {
                     const selected = savedAddresses.find((item) => item.dia_chi_day_du === e.target.value);
                     if (!selected) {
                       return;
                     }
-                    setDiaChi(selected.dia_chi_day_du);
+                    const parsed = tachDiaChiDayDu(selected.dia_chi_day_du);
+                    const normalizedCity = ADDRESS_OPTIONS[parsed.city] ? parsed.city : 'Thành phố Hồ Chí Minh';
+                    const normalizedDistrict = ADDRESS_OPTIONS[normalizedCity]?.[parsed.district]
+                      ? parsed.district
+                      : Object.keys(ADDRESS_OPTIONS[normalizedCity] || {})[0] || 'Quận 1';
+                    const normalizedWard = (ADDRESS_OPTIONS[normalizedCity]?.[normalizedDistrict] || []).includes(parsed.ward)
+                      ? parsed.ward
+                      : (ADDRESS_OPTIONS[normalizedCity]?.[normalizedDistrict] || [])[0] || 'Phường Sài Gòn';
+
+                    setAddressForm({
+                      city: normalizedCity,
+                      district: normalizedDistrict,
+                      ward: normalizedWard,
+                      street: parsed.street,
+                    });
                     if (selected.ghi_chu && !ghiChu.trim()) {
                       setGhiChu(selected.ghi_chu);
                     }
@@ -334,16 +442,64 @@ export default function CartDrawer({ isOpen, onClose }) {
               </>
             ) : null}
 
-            <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Dia chi giao hang</label>
-            <input
-              value={diaChi}
+            <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Thanh pho</label>
+            <select
+              value={addressForm.city}
               onChange={(e) => {
-                setDiaChi(e.target.value);
+                const nextCity = e.target.value;
+                const nextDistrict = Object.keys(ADDRESS_OPTIONS[nextCity] || {})[0] || '';
+                const nextWard = (ADDRESS_OPTIONS[nextCity]?.[nextDistrict] || [])[0] || '';
+                setAddressForm((prev) => ({ ...prev, city: nextCity, district: nextDistrict, ward: nextWard }));
                 if (thongBao) setThongBao('');
               }}
               className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
-              placeholder="Nhap dia chi giao hang"
+            >
+              {Object.keys(ADDRESS_OPTIONS).map((city) => (
+                <option key={city} value={city}>{city}</option>
+              ))}
+            </select>
+
+            <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Quan</label>
+            <select
+              value={addressForm.district}
+              onChange={(e) => {
+                const nextDistrict = e.target.value;
+                const nextWard = (ADDRESS_OPTIONS[addressForm.city]?.[nextDistrict] || [])[0] || '';
+                setAddressForm((prev) => ({ ...prev, district: nextDistrict, ward: nextWard }));
+                if (thongBao) setThongBao('');
+              }}
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+            >
+              {districtOptions.map((district) => (
+                <option key={district} value={district}>{district}</option>
+              ))}
+            </select>
+
+            <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Phuong</label>
+            <select
+              value={addressForm.ward}
+              onChange={(e) => {
+                setAddressForm((prev) => ({ ...prev, ward: e.target.value }));
+                if (thongBao) setThongBao('');
+              }}
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+            >
+              {wardOptions.map((ward) => (
+                <option key={ward} value={ward}>{ward}</option>
+              ))}
+            </select>
+
+            <label className="text-xs font-bold uppercase tracking-wide text-gray-500">So nha, ten duong</label>
+            <input
+              value={addressForm.street}
+              onChange={(e) => {
+                setAddressForm((prev) => ({ ...prev, street: e.target.value }));
+                if (thongBao) setThongBao('');
+              }}
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+              placeholder="Vi du: 28 Ter B Mạc Đĩnh Chi"
             />
+            <p className="-mt-1 text-[11px] font-semibold text-gray-500">Dia chi day du: {diaChiDayDu || '---'}</p>
             <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Khung gio giao</label>
             <input
               value={khungGio}
@@ -393,6 +549,7 @@ export default function CartDrawer({ isOpen, onClose }) {
               <p className="mt-3 text-xs text-gray-500">Khong can bam xac nhan. Sau khi tien vao tai khoan, webhook Sepay se cap nhat tu dong.</p>
             </div>
           ) : null}
+          </div>
         </div>
       </div>
     </div>

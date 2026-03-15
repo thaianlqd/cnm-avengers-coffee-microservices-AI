@@ -1,13 +1,17 @@
-import { Column, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm';
 
 const inventorySchema = process.env.DB_SCHEMA || 'inventory';
 
 @Entity({ name: 'ton_kho_san_pham', schema: inventorySchema })
+@Unique('uq_ton_kho_san_pham_branch_product', ['co_so_ma', 'ma_san_pham'])
 export class InventoryItem {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'int', unique: true })
+  @Column({ type: 'varchar', default: 'MAC_DINH_CHI' })
+  co_so_ma: string;
+
+  @Column({ type: 'int' })
   ma_san_pham: number;
 
   @Column({ type: 'int', default: 0 })

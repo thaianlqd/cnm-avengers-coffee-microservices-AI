@@ -19,6 +19,9 @@ export class DonHang {
   @Column({ type: 'varchar' })
   ma_nguoi_dung: string;
 
+  @Column({ type: 'varchar', default: 'MAC_DINH_CHI' })
+  co_so_ma: string;
+
   @Column({ type: 'decimal', precision: 12, scale: 2 })
   tong_tien: number;
 
@@ -57,6 +60,12 @@ export class DonHang {
 
   @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true, default: 0 })
   so_tien_giam: number | null;
+
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
+  tien_khach_dua: number | null;
+
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true, default: 0 })
+  tien_thoi: number | null;
 
   @Column({ type: 'jsonb', default: () => "'[]'::jsonb" })
   lich_su_trang_thai: Array<{

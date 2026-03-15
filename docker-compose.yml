@@ -62,6 +62,9 @@ services:
     environment:
       NODE_ENV: production
       PORT: ${IDENTITY_PORT:-3001}
+      JWT_SECRET: ${JWT_SECRET:-avengers-jwt-secret}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-avengers-internal-token}
       DB_HOST: ${DB_HOST:-postgres-db}
       DB_PORT: ${DB_PORT:-5432}
       DB_USER: ${DB_USER:-admin}
@@ -90,6 +93,8 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-123}
       DB_NAME: ${DB_NAME:-avengers_coffee}
       DB_SCHEMA: ${MENU_DB_SCHEMA:-menu}
+    volumes:
+      - ./avengers-coffee-system/apps/web-customer/public/images/products:/app/uploads/products
     expose:
       - "${MENU_PORT:-3003}"
     networks:
@@ -132,6 +137,8 @@ services:
     environment:
       NODE_ENV: production
       PORT: ${ORDER_PORT:-3005}
+      JWT_SECRET: ${JWT_SECRET:-avengers-jwt-secret}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-avengers-internal-token}
       DB_HOST: ${DB_HOST:-postgres-db}
       DB_PORT: ${DB_PORT:-5432}
       DB_USER: ${DB_USER:-admin}
@@ -171,6 +178,8 @@ services:
         condition: service_started
       order-service:
         condition: service_started
+      ai-service:
+        condition: service_started
     environment:
       NODE_ENV: production
       PORT: ${GATEWAY_PORT:-3000}
@@ -178,8 +187,33 @@ services:
       MENU_SERVICE_URL: http://menu-service:${MENU_PORT:-3003}
       INVENTORY_SERVICE_URL: http://inventory-service:${INVENTORY_PORT:-3004}
       ORDER_SERVICE_URL: http://order-service:${ORDER_PORT:-3005}
+      AI_SERVICE_URL: http://ai-service:${AI_PORT:-8000}
     ports:
       - "${GATEWAY_PORT:-3000}:3000"
+    networks:
+      - avengers-network
+
+  ai-service:
+    build:
+      context: ./avengers-coffee-system/services/ai-service
+    container_name: avengers_ai_service
+    restart: unless-stopped
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    environment:
+      DB_HOST: ${DB_HOST:-postgres-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-admin}
+      DB_PASSWORD: ${DB_PASSWORD:-123}
+      DB_NAME: ${DB_NAME:-avengers_coffee}
+      AI_PORT: ${AI_PORT:-8000}
+      GEMINI_API_KEY: AIzaSyBZ-4V5VF9vVmEpSo9wU73StBoZ03BCeFw
+    expose:
+      - "${AI_PORT:-8000}"
+    ports:
+      - "${AI_PORT:-8000}:8000"
+      - "${AI_PORT:-8000}"
     networks:
       - avengers-network
 
@@ -194,6 +228,8 @@ services:
     depends_on:
       api-gateway:
         condition: service_started
+    volumes:
+      - ./avengers-coffee-system/apps/web-customer/public/images/products:/usr/share/nginx/html/images/products
     ports:
       - "${WEB_CUSTOMER_PORT:-5173}:80"
     networks:
@@ -210,6 +246,8 @@ services:
     depends_on:
       api-gateway:
         condition: service_started
+    volumes:
+      - ./avengers-coffee-system/apps/web-customer/public/images/products:/usr/share/nginx/html/images/products
     ports:
       - "${WEB_ADMIN_PORT:-5174}:80"
     networks:

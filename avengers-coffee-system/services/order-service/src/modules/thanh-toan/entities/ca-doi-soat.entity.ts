@@ -7,6 +7,9 @@ export class CaDoiSoat {
   @PrimaryGeneratedColumn('uuid')
   ma_ca: string;
 
+  @Column({ type: 'varchar', default: 'MAC_DINH_CHI' })
+  co_so_ma: string;
+
   @Column({ type: 'timestamptz' })
   thoi_gian_bat_dau: Date;
 
@@ -57,7 +60,13 @@ export class CaDoiSoat {
 
   @Column({ type: 'jsonb', default: () => "'{}'::jsonb" })
   du_lieu_tom_tat: {
+    shift_date?: string;
     non_cash_revenue?: number;
+    cash_in_gross?: number;
+    cash_change_out?: number;
+    cash_net?: number;
+    online_revenue?: number;
+    in_store_revenue?: number;
   };
 
   @CreateDateColumn()

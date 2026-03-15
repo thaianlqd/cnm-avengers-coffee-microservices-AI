@@ -7,6 +7,9 @@ export class CaLamViecNhanVien {
   @PrimaryGeneratedColumn('uuid')
   ma_ca_lam_viec: string;
 
+  @Column({ type: 'varchar', default: 'MAC_DINH_CHI' })
+  co_so_ma: string;
+
   @Column({ type: 'varchar' })
   staff_username: string;
 
