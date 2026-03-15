@@ -13,7 +13,7 @@ async function bootstrap() {
     createProxyMiddleware({
       target: process.env.IDENTITY_SERVICE_URL || 'http://localhost:3001',
       changeOrigin: true,
-      pathFilter: ['/auth', '/users'],
+      pathFilter: ['/auth', '/users', '/promotions'],
     }),
   );
 

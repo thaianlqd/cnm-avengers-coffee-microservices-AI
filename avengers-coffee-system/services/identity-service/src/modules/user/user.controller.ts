@@ -71,6 +71,44 @@ export class UserController {
     return this.userService.layThongKeHeThong();
   }
 
+  @Get('users/admin/branches')
+  async layDanhSachChiNhanhAdmin() {
+    return this.userService.layDanhSachChiNhanhAdmin();
+  }
+
+  @Post('users/admin/branches')
+  async taoChiNhanhAdmin(
+    @Body()
+    body: {
+      ma_chi_nhanh?: string;
+      ten_chi_nhanh?: string;
+      dia_chi?: string;
+      so_dien_thoai?: string;
+      trang_thai?: 'ACTIVE' | 'INACTIVE';
+    },
+  ) {
+    return this.userService.taoChiNhanhAdmin(body);
+  }
+
+  @Patch('users/admin/branches/:branchCode')
+  async capNhatChiNhanhAdmin(
+    @Param('branchCode') branchCode: string,
+    @Body()
+    body: {
+      ten_chi_nhanh?: string;
+      dia_chi?: string;
+      so_dien_thoai?: string;
+      trang_thai?: 'ACTIVE' | 'INACTIVE';
+    },
+  ) {
+    return this.userService.capNhatChiNhanhAdmin(branchCode, body);
+  }
+
+  @Delete('users/admin/branches/:branchCode')
+  async xoaChiNhanhAdmin(@Param('branchCode') branchCode: string) {
+    return this.userService.xoaChiNhanhAdmin(branchCode);
+  }
+
   @Get('users/:userId/profile')
   async layThongTinCaNhan(@Param('userId') userId: string) {
     return this.userService.layThongTinCaNhan(userId);
@@ -141,5 +179,60 @@ export class UserController {
     @Body() body: { diem?: number },
   ) {
     return this.userService.congDiemLoyalty(userId, Number(body.diem || 0));
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  PROMOTION / VOUCHER ROUTES
+  // ═══════════════════════════════════════════════════════
+
+  @Get('promotions/admin')
+  async layDanhSachKhuyenMaiAdmin() {
+    return this.userService.layDanhSachKhuyenMaiAdmin();
+  }
+
+  @Post('promotions/admin')
+  async taoKhuyenMaiAdmin(@Body() body: any) {
+    return this.userService.taoKhuyenMaiAdmin(body);
+  }
+
+  @Patch('promotions/admin/:code')
+  async capNhatKhuyenMaiAdmin(@Param('code') code: string, @Body() body: any) {
+    return this.userService.capNhatKhuyenMaiAdmin(code, body);
+  }
+
+  @Delete('promotions/admin/:code')
+  async xoaKhuyenMaiAdmin(@Param('code') code: string) {
+    return this.userService.xoaKhuyenMaiAdmin(code);
+  }
+
+  /** Customer: lấy danh sách voucher đang hiệu lực (truyền ?user_id=xxx để lọc đã dùng) */
+  @Get('promotions/vouchers')
+  async layVoucherChoKhach(@Query('user_id') userId?: string) {
+    return this.userService.layVoucherChoKhach(userId);
+  }
+
+  /** Customer: kiểm tra / tính toán mã giảm giá trước khi đặt hàng */
+  @Post('promotions/kiem-tra')
+  async kiemTraMaKhuyenMai(
+    @Body() body: { ma_khuyen_mai?: string; user_id?: string; gia_tri_don?: number },
+  ) {
+    return this.userService.kiemTraMaKhuyenMai(
+      body.ma_khuyen_mai || '',
+      body.user_id || '',
+      Number(body.gia_tri_don || 0),
+    );
+  }
+
+  /** Internal: xác nhận đã dùng mã sau khi tạo đơn hàng thành công */
+  @Post('promotions/xac-nhan-su-dung')
+  async xacNhanSuDungKhuyenMai(
+    @Body() body: { ma_khuyen_mai?: string; user_id?: string; ma_don_hang?: string; so_tien_giam?: number },
+  ) {
+    return this.userService.xacNhanSuDungKhuyenMai({
+      ma_khuyen_mai: body.ma_khuyen_mai || '',
+      user_id: body.user_id || '',
+      ma_don_hang: body.ma_don_hang || null,
+      so_tien_giam: Number(body.so_tien_giam || 0),
+    });
   }
 }

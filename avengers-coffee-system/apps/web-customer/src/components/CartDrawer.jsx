@@ -113,6 +113,7 @@ export default function CartDrawer({ isOpen, onClose }) {
       const response = await apiClient.post('/vouchers/kiem-tra', {
         ma_voucher: code,
         tong_tien: total,
+        user_id: isLoggedInUser ? maNguoiDung : '',
       });
       setVoucherResult(response.data);
     } catch (err) {
@@ -190,7 +191,7 @@ export default function CartDrawer({ isOpen, onClose }) {
         dia_chi_giao_hang: diaChiDayDu,
         khung_gio_giao: khungGio,
         ghi_chu: ghiChu.trim() || 'Dat tu web-customer',
-        ma_voucher: voucherResult?.ma_voucher || undefined,
+        ma_voucher: voucherResult?.ma_voucher || voucherResult?.ma_khuyen_mai || undefined,
       });
       return response.data;
     },
@@ -360,8 +361,8 @@ export default function CartDrawer({ isOpen, onClose }) {
             {voucherResult ? (
               <div className="flex items-center justify-between gap-2">
                 <div>
-                  <p className="text-sm font-black text-emerald-700">{voucherResult.ma_voucher}</p>
-                  <p className="text-xs font-semibold text-emerald-600">{voucherResult.mo_ta || 'Ap dung thanh cong'} — Giảm {discountAmount.toLocaleString('vi-VN')}đ</p>
+                  <p className="text-sm font-black text-emerald-700">{voucherResult.ma_voucher || voucherResult.ma_khuyen_mai}</p>
+                  <p className="text-xs font-semibold text-emerald-600">{voucherResult.mo_ta || voucherResult.ten_khuyen_mai || 'Ap dung thanh cong'} — Giảm {discountAmount.toLocaleString('vi-VN')}đ</p>
                 </div>
                 <button type="button" onClick={xoaVoucher} className="rounded-lg bg-white px-3 py-1 text-xs font-black text-red-500 border border-red-100">
                   Xóa

@@ -41,16 +41,72 @@ export class AppService {
   }
 
   private slugifyProductName(value: string) {
-    return String(value || '')
+    const normalized = String(value || '')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-zA-Z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
       .toLowerCase();
+
+    return normalized || 'san-pham';
   }
 
   private getProductUploadDirectory() {
     return join(process.cwd(), 'uploads', 'products');
+  }
+
+  private async generateUniqueImageFilename(baseSlug: string, extension: string) {
+    const uploadDir = this.getProductUploadDirectory();
+    let attempt = 1;
+
+    while (attempt < 5000) {
+      const suffix = attempt === 1 ? '' : `-${attempt}`;
+      const candidate = `${baseSlug}${suffix}${extension}`;
+      const absolutePath = join(uploadDir, candidate);
+
+      try {
+        await fs.access(absolutePath);
+        attempt += 1;
+      } catch {
+        return candidate;
+      }
+    }
+
+    throw new BadRequestException('Khong the tao ten file anh hop le');
+  }
+
+  private toManagedImageFilename(imageUrl?: string | null) {
+    const value = String(imageUrl || '').trim();
+    if (!value.startsWith('/images/products/')) {
+      return null;
+    }
+
+    const filename = value.replace('/images/products/', '').trim();
+    if (!filename || filename.includes('..') || filename.includes('/')) {
+      return null;
+    }
+
+    return filename;
+  }
+
+  private async removeImageIfUnused(imageUrl?: string | null, ignoreProductId?: number) {
+    const filename = this.toManagedImageFilename(imageUrl);
+    if (!filename) return;
+
+    const query = this.spRepo.createQueryBuilder('sp').where('sp.hinh_anh_url = :imageUrl', { imageUrl });
+    if (ignoreProductId) {
+      query.andWhere('sp.ma_san_pham != :ignoreProductId', { ignoreProductId });
+    }
+
+    const stillUsedCount = await query.getCount();
+    if (stillUsedCount > 0) return;
+
+    const absolutePath = join(this.getProductUploadDirectory(), filename);
+    try {
+      await fs.unlink(absolutePath);
+    } catch {
+      // Ignore remove errors so CRUD flow is not blocked by missing file.
+    }
   }
 
   private normalizeProductImagePath(raw: string) {
@@ -84,8 +140,8 @@ export class AppService {
     await fs.mkdir(uploadDir, { recursive: true });
 
     const extension = extname(file.originalname || '').toLowerCase() || '.jpg';
-    const safeBaseName = this.slugifyProductName(productName || file.originalname.replace(/\.[^.]+$/, '')) || 'san-pham';
-    const filename = `${safeBaseName}-${Date.now()}${extension}`;
+    const safeBaseName = this.slugifyProductName(productName || file.originalname.replace(/\.[^.]+$/, ''));
+    const filename = await this.generateUniqueImageFilename(safeBaseName, extension);
     const absolutePath = join(uploadDir, filename);
 
     await fs.writeFile(absolutePath, file.buffer);
@@ -225,7 +281,13 @@ export class AppService {
     }
 
     if (payload.image !== undefined) {
-      item.hinh_anh_url = this.normalizeProductImagePath(payload.image || '');
+      const nextImage = this.normalizeProductImagePath(payload.image || '');
+      const previousImage = item.hinh_anh_url;
+      item.hinh_anh_url = nextImage;
+
+      if (previousImage && previousImage !== nextImage) {
+        await this.removeImageIfUnused(previousImage, itemId);
+      }
     }
 
     if (payload.dang_ban !== undefined) {
@@ -255,7 +317,9 @@ export class AppService {
       throw new NotFoundException('Khong tim thay mon trong menu');
     }
 
+    const deletedImage = item.hinh_anh_url;
     await this.spRepo.remove(item);
+    await this.removeImageIfUnused(deletedImage, itemId);
     return { message: 'Xoa mon thanh cong', id: itemId };
   }
 }

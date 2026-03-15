@@ -1310,6 +1310,293 @@
   align-items: start;
 }
 
+.system-admin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 0.95rem;
+}
+
+.system-admin-kpi-card {
+  border: 1px solid #edd8c7;
+  border-radius: 16px;
+  padding: 0.85rem 0.9rem;
+  background: linear-gradient(180deg, #fffefc 0%, #fff4e8 100%);
+  box-shadow: 0 10px 22px rgba(100, 55, 24, 0.06);
+}
+
+.system-admin-kpi-card p,
+.system-admin-kpi-card h3,
+.system-admin-kpi-card small {
+  margin: 0;
+}
+
+.system-admin-kpi-card p {
+  color: #8b6b56;
+  font-size: 0.8rem;
+}
+
+.system-admin-kpi-card h3 {
+  margin-top: 0.26rem;
+  color: #2f1e14;
+  font-size: 1.45rem;
+}
+
+.system-admin-kpi-card small {
+  display: block;
+  margin-top: 0.22rem;
+  color: #956f55;
+  font-size: 0.76rem;
+}
+
+.system-admin-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.system-admin-donut-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.system-admin-donut-card {
+  border: 1px solid #ead8c9;
+  border-radius: 16px;
+  background: #fffcf8;
+  padding: 0.8rem;
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+}
+
+.system-admin-donut-card p {
+  margin: 0;
+  color: #7f5f49;
+  font-size: 0.8rem;
+}
+
+.system-admin-donut {
+  --percent: 0%;
+  width: 146px;
+  height: 146px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at center, #fff9f1 0%, #fff9f1 56%, transparent 57%),
+    conic-gradient(#f28035 0 var(--percent), #f2dfcf var(--percent) 100%);
+  display: grid;
+  place-items: center;
+}
+
+.system-admin-donut > div {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #ead7c8;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.system-admin-donut strong {
+  font-size: 1.1rem;
+  color: #2f1e14;
+}
+
+.system-admin-donut small {
+  font-size: 0.74rem;
+  color: #8c6c57;
+}
+
+.system-admin-bars-wrap {
+  display: grid;
+  gap: 0.62rem;
+}
+
+.system-admin-bar-item {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.system-admin-bar-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.system-admin-bar-row strong {
+  color: #4b3020;
+  font-size: 0.85rem;
+}
+
+.system-admin-bar-row span {
+  color: #8a6a55;
+  font-size: 0.8rem;
+}
+
+.system-admin-bar-track {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: #f0dfd1;
+}
+
+.system-admin-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f97316, #d65a12);
+}
+
+.system-admin-bar-fill--branch {
+  background: linear-gradient(90deg, #0ea5e9, #2563eb);
+}
+
+.system-admin-role-pill-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.system-admin-role-pill-grid div {
+  border-radius: 12px;
+  border: 1px solid #ead8c9;
+  background: #fffaf3;
+  padding: 0.68rem;
+  display: grid;
+  gap: 0.18rem;
+}
+
+.system-admin-role-pill-grid span {
+  color: #8c6b56;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+}
+
+.system-admin-role-pill-grid strong {
+  color: #2f1e14;
+  font-size: 1.05rem;
+}
+
+.system-admin-filter-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) 180px 220px 100px;
+  gap: 0.55rem;
+}
+
+.system-admin-form-grid--user {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.system-admin-form-grid--branch {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.system-admin-branch-address-field {
+  grid-column: 1 / span 2;
+}
+
+.system-admin-branch-city-field,
+.system-admin-branch-district-field,
+.system-admin-branch-ward-field {
+  grid-column: span 1;
+}
+
+.system-admin-select-search {
+  min-height: 38px;
+  border-radius: 10px;
+  border: 1px solid #e8d3c2;
+  background: #fffefc;
+}
+
+.system-admin-branch-address-preview {
+  grid-column: 1 / -1;
+  border: 1px solid #eddacb;
+  border-radius: 12px;
+  background: #fffaf4;
+  padding: 0.55rem 0.7rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.system-admin-branch-address-preview strong {
+  color: #5f3f2a;
+  font-size: 0.8rem;
+}
+
+.system-admin-branch-address-preview span {
+  color: #7a5a45;
+  font-size: 0.86rem;
+  word-break: break-word;
+}
+
+.system-admin-branch-address-field input {
+  min-height: 42px;
+}
+
+.system-admin-branch-address-field {
+  grid-column: 1 / -1;
+}
+
+.system-admin-users-grid {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.system-admin-user-card {
+  border: 1px solid #ebd8ca;
+  border-radius: 14px;
+  background: #fffdfb;
+  padding: 0.8rem 0.9rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) 200px 180px;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.system-admin-user-card h3,
+.system-admin-user-card p,
+.system-admin-user-card strong {
+  margin: 0;
+}
+
+.system-admin-user-card p {
+  color: #7f5f49;
+}
+
+.system-admin-user-actions {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.system-admin-branch-grid {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.system-admin-branch-card {
+  border: 1px solid #ebd8ca;
+  border-radius: 14px;
+  background: #fffdfb;
+  padding: 0.85rem 0.95rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) 220px 160px;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.system-admin-branch-card h3,
+.system-admin-branch-card p,
+.system-admin-branch-card strong {
+  margin: 0;
+}
+
+.system-admin-branch-card p {
+  color: #7f5f49;
+}
+
 .system-admin-menu-layout {
   display: grid;
   grid-template-columns: minmax(360px, 0.95fr) minmax(0, 1.05fr);
@@ -1551,7 +1838,15 @@
     grid-template-columns: 1fr;
   }
 
-  .system-admin-form-grid {
+  .system-admin-form-grid,
+  .system-admin-form-grid--user,
+  .system-admin-form-grid--branch,
+  .system-admin-kpi-grid,
+  .system-admin-charts-grid,
+  .system-admin-donut-grid,
+  .system-admin-filter-grid,
+  .system-admin-user-card,
+  .system-admin-branch-card {
     grid-template-columns: 1fr;
   }
 }
@@ -3074,6 +3369,251 @@
   font-size: 1.35rem;
   color: var(--coffee);
 }
+
+  /* ═══ Promotion / Voucher Admin ════════════════════════════════ */
+
+  .system-admin-form-grid--promotion {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .system-admin-promo-name-field {
+    grid-column: span 1;
+  }
+
+  .system-admin-promo-desc-field {
+    grid-column: span 2;
+  }
+
+  .system-admin-promo-filter-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) 180px 180px;
+    gap: 0.55rem;
+  }
+
+  /* List */
+  .system-admin-promo-list {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  /* Card */
+  .system-admin-promo-card {
+    border: 1px solid #ebd8ca;
+    border-radius: 18px;
+    background: #fffdfb;
+    padding: 1rem 1.1rem;
+    display: grid;
+    gap: 0.6rem;
+    box-shadow: 0 4px 14px rgba(92, 49, 20, 0.04);
+    transition: box-shadow 0.15s;
+  }
+
+  .system-admin-promo-card:hover {
+    box-shadow: 0 8px 24px rgba(92, 49, 20, 0.1);
+  }
+
+  .system-admin-promo-card--inactive {
+    border-color: #ead7cf;
+    background: #fdfbf9;
+    opacity: 0.82;
+  }
+
+  .system-admin-promo-card--expired {
+    border-color: #e1d0cf;
+    background: #fdf8f7;
+    opacity: 0.65;
+  }
+
+  /* Card header */
+  .system-admin-promo-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .system-admin-promo-code-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .system-admin-promo-code {
+    font-family: 'Courier New', monospace;
+    font-weight: 800;
+    font-size: 1rem;
+    color: #2f1e14;
+    background: #fff0e0;
+    border: 1.5px dashed #d96a20;
+    border-radius: 8px;
+    padding: 0.25rem 0.65rem;
+    letter-spacing: 0.08em;
+  }
+
+  .system-admin-promo-type-badge {
+    border-radius: 999px;
+    padding: 0.2rem 0.65rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+  }
+
+  .system-admin-promo-type--percent {
+    background: #e8f5e9;
+    color: #1b5e20;
+    border: 1px solid #a5d6a7;
+  }
+
+  .system-admin-promo-type--fixed {
+    background: #e3f2fd;
+    color: #0d47a1;
+    border: 1px solid #90caf9;
+  }
+
+  .system-admin-promo-type--free_item {
+    background: #fce4ec;
+    color: #880e4f;
+    border: 1px solid #f48fb1;
+  }
+
+  .system-admin-promo-status-badge {
+    border-radius: 999px;
+    padding: 0.22rem 0.75rem;
+    font-size: 0.76rem;
+    font-weight: 800;
+  }
+
+  .system-admin-promo-status--active {
+    background: rgba(233, 249, 239, 0.95);
+    color: #1f7a4f;
+    border: 1px solid #b8e2c8;
+  }
+
+  .system-admin-promo-status--inactive {
+    background: #fff3e0;
+    color: #e65100;
+    border: 1px solid #ffcc80;
+  }
+
+  .system-admin-promo-status--expired {
+    background: rgba(255, 240, 238, 0.96);
+    color: #b42318;
+    border: 1px solid #efc0b9;
+  }
+
+  /* Card body */
+  .system-admin-promo-card-body {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.85rem;
+    align-items: start;
+  }
+
+  .system-admin-promo-card-body .system-admin-promo-info {
+    grid-column: 1;
+  }
+
+  .system-admin-promo-thumb {
+    width: 90px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid #ead2bf;
+    display: block;
+  }
+
+  .system-admin-promo-info {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .system-admin-promo-info h3 {
+    margin: 0;
+    color: #2f1e14;
+    font-size: 1rem;
+  }
+
+  .system-admin-promo-desc {
+    margin: 0;
+    color: #8c6b56;
+    font-size: 0.84rem;
+    line-height: 1.45;
+  }
+
+  /* Meta grid inside card */
+  .system-admin-promo-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.4rem 0.6rem;
+    margin-top: 0.3rem;
+  }
+
+  .system-admin-promo-meta-grid > div {
+    display: grid;
+    gap: 0.1rem;
+  }
+
+  .system-admin-promo-meta-grid span {
+    font-size: 0.74rem;
+    color: #9d7d6a;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .system-admin-promo-meta-grid strong {
+    font-size: 0.9rem;
+    color: #2f1e14;
+  }
+
+  .system-admin-promo-visible-badge,
+  .system-admin-promo-hidden-badge {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 0.18rem 0.6rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+    margin-top: 0.25rem;
+  }
+
+  .system-admin-promo-visible-badge {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+  }
+
+  .system-admin-promo-hidden-badge {
+    background: #f5f5f5;
+    color: #757575;
+    border: 1px solid #e0e0e0;
+  }
+
+  /* Card actions */
+  .system-admin-promo-card-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    padding-top: 0.3rem;
+    border-top: 1px solid #f5e8dc;
+  }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .system-admin-form-grid--promotion,
+    .system-admin-promo-meta-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .system-admin-promo-filter-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .system-admin-promo-card-body {
+      grid-template-columns: 1fr;
+    }
+  }
 
 .workforce-summary-grid span {
   color: #896651;

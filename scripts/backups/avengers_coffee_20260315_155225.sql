@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict AlT9XjSHcfHQqDSz4wrgQlGVuCbLmdhZhN3vpjXTfp6kI4pTBywgdh57cMvBG8p
+\restrict woUe4PjmaJB1bVyFWPuaZMaHCZ16UUHhE2Z32ciRgPH86WgOqPxK226z9bAVcfj
 
 -- Dumped from database version 16.13 (Debian 16.13-1.pgdg13+1)
 -- Dumped by pg_dump version 16.13 (Debian 16.13-1.pgdg13+1)
@@ -89,6 +89,23 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: chi_nhanh; Type: TABLE; Schema: identity; Owner: admin
+--
+
+CREATE TABLE identity.chi_nhanh (
+    ma_chi_nhanh character varying NOT NULL,
+    ten_chi_nhanh character varying NOT NULL,
+    dia_chi text,
+    so_dien_thoai character varying,
+    trang_thai character varying DEFAULT 'ACTIVE'::character varying NOT NULL,
+    ngay_tao timestamp without time zone DEFAULT now() NOT NULL,
+    ngay_cap_nhat timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE identity.chi_nhanh OWNER TO admin;
+
+--
 -- Name: dia_chi_giao_hang; Type: TABLE; Schema: identity; Owner: admin
 --
 
@@ -126,6 +143,72 @@ ALTER SEQUENCE identity.dia_chi_giao_hang_id_seq OWNER TO admin;
 --
 
 ALTER SEQUENCE identity.dia_chi_giao_hang_id_seq OWNED BY identity.dia_chi_giao_hang.id;
+
+
+--
+-- Name: khuyen_mai; Type: TABLE; Schema: identity; Owner: admin
+--
+
+CREATE TABLE identity.khuyen_mai (
+    ma_khuyen_mai character varying(50) NOT NULL,
+    ten_khuyen_mai character varying(200) NOT NULL,
+    mo_ta text,
+    loai_khuyen_mai character varying(20) NOT NULL,
+    gia_tri numeric(15,2) DEFAULT '0'::numeric NOT NULL,
+    gia_tri_don_toi_thieu numeric(15,2) DEFAULT '0'::numeric NOT NULL,
+    giam_toi_da numeric(15,2),
+    so_luong_toi_da integer DEFAULT 0 NOT NULL,
+    so_luong_da_dung integer DEFAULT 0 NOT NULL,
+    gioi_han_moi_nguoi integer DEFAULT 1 NOT NULL,
+    ngay_bat_dau timestamp with time zone,
+    ngay_ket_thuc timestamp with time zone,
+    trang_thai character varying DEFAULT 'ACTIVE'::character varying NOT NULL,
+    hien_thi_cho_khach boolean DEFAULT true NOT NULL,
+    ten_san_pham_tang character varying,
+    hinh_anh character varying,
+    ngay_tao timestamp without time zone DEFAULT now() NOT NULL,
+    ngay_cap_nhat timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE identity.khuyen_mai OWNER TO admin;
+
+--
+-- Name: khuyen_mai_su_dung; Type: TABLE; Schema: identity; Owner: admin
+--
+
+CREATE TABLE identity.khuyen_mai_su_dung (
+    id integer NOT NULL,
+    ma_khuyen_mai character varying(50) NOT NULL,
+    ma_nguoi_dung character varying NOT NULL,
+    ma_don_hang character varying,
+    so_tien_giam numeric(15,2) DEFAULT '0'::numeric NOT NULL,
+    ngay_su_dung timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE identity.khuyen_mai_su_dung OWNER TO admin;
+
+--
+-- Name: khuyen_mai_su_dung_id_seq; Type: SEQUENCE; Schema: identity; Owner: admin
+--
+
+CREATE SEQUENCE identity.khuyen_mai_su_dung_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE identity.khuyen_mai_su_dung_id_seq OWNER TO admin;
+
+--
+-- Name: khuyen_mai_su_dung_id_seq; Type: SEQUENCE OWNED BY; Schema: identity; Owner: admin
+--
+
+ALTER SEQUENCE identity.khuyen_mai_su_dung_id_seq OWNED BY identity.khuyen_mai_su_dung.id;
 
 
 --
@@ -667,6 +750,13 @@ ALTER TABLE ONLY identity.dia_chi_giao_hang ALTER COLUMN id SET DEFAULT nextval(
 
 
 --
+-- Name: khuyen_mai_su_dung id; Type: DEFAULT; Schema: identity; Owner: admin
+--
+
+ALTER TABLE ONLY identity.khuyen_mai_su_dung ALTER COLUMN id SET DEFAULT nextval('identity.khuyen_mai_su_dung_id_seq'::regclass);
+
+
+--
 -- Name: ton_kho_san_pham id; Type: DEFAULT; Schema: inventory; Owner: admin
 --
 
@@ -737,11 +827,33 @@ ALTER TABLE ONLY orders.voucher ALTER COLUMN id SET DEFAULT nextval('orders.vouc
 
 
 --
+-- Data for Name: chi_nhanh; Type: TABLE DATA; Schema: identity; Owner: admin
+--
+
+INSERT INTO identity.chi_nhanh (ma_chi_nhanh, ten_chi_nhanh, dia_chi, so_dien_thoai, trang_thai, ngay_tao, ngay_cap_nhat) VALUES ('THE_GRACE_TOWER', 'The Grace Tower', 'The Grace Tower, TP.HCM', NULL, 'ACTIVE', '2026-03-15 07:32:26.5506', '2026-03-15 07:32:26.5506');
+INSERT INTO identity.chi_nhanh (ma_chi_nhanh, ten_chi_nhanh, dia_chi, so_dien_thoai, trang_thai, ngay_tao, ngay_cap_nhat) VALUES ('MAC_DINH_CHI', 'Mạc Đĩnh Chi', 'Cơ sở Mạc Đĩnh Chi, TP.HCM', NULL, 'ACTIVE', '2026-03-15 07:32:26.536298', '2026-03-15 07:35:55.533353');
+INSERT INTO identity.chi_nhanh (ma_chi_nhanh, ten_chi_nhanh, dia_chi, so_dien_thoai, trang_thai, ngay_tao, ngay_cap_nhat) VALUES ('THAIAN', 'thai an', 'Cong Vi, Quan Ba Dinh, Ha Noi', NULL, 'ACTIVE', '2026-03-15 07:48:30.640145', '2026-03-15 07:48:40.364632');
+
+
+--
 -- Data for Name: dia_chi_giao_hang; Type: TABLE DATA; Schema: identity; Owner: admin
 --
 
 INSERT INTO identity.dia_chi_giao_hang (id, ma_nguoi_dung, ten_dia_chi, dia_chi_day_du, ghi_chu, mac_dinh, ngay_tao, ngay_cap_nhat) VALUES (1, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'KTX', 'KTX Khu A, Dai hoc Cong nghe Moi aaaa', 'Cong A', false, '2026-03-12 15:21:22.350935', '2026-03-14 15:43:22.192614');
 INSERT INTO identity.dia_chi_giao_hang (id, ma_nguoi_dung, ten_dia_chi, dia_chi_day_du, ghi_chu, mac_dinh, ngay_tao, ngay_cap_nhat) VALUES (2, 'b81d9738-535e-4475-884d-aeb3b7324f01', '28 Ter B Mạc Đĩnh Chi', '28 Ter B Mạc Đĩnh Chi, Phường Sài Gòn, Quận 1, Thành phố Hồ Chí Minh', NULL, true, '2026-03-14 15:43:19.300439', '2026-03-14 15:43:22.204028');
+
+
+--
+-- Data for Name: khuyen_mai; Type: TABLE DATA; Schema: identity; Owner: admin
+--
+
+INSERT INTO identity.khuyen_mai (ma_khuyen_mai, ten_khuyen_mai, mo_ta, loai_khuyen_mai, gia_tri, gia_tri_don_toi_thieu, giam_toi_da, so_luong_toi_da, so_luong_da_dung, gioi_han_moi_nguoi, ngay_bat_dau, ngay_ket_thuc, trang_thai, hien_thi_cho_khach, ten_san_pham_tang, hinh_anh, ngay_tao, ngay_cap_nhat) VALUES ('SUMMER2026', 'GIẢM 10% MÙA HÈ', 'là khách hàng', 'PERCENT', 10.00, 15000.00, 50000.00, 0, 0, 1, NULL, NULL, 'ACTIVE', true, NULL, NULL, '2026-03-15 08:35:27.017107', '2026-03-15 08:35:27.017107');
+
+
+--
+-- Data for Name: khuyen_mai_su_dung; Type: TABLE DATA; Schema: identity; Owner: admin
+--
+
 
 
 --
@@ -753,12 +865,12 @@ INSERT INTO identity.nguoi_dung (ma_nguoi_dung, ten_dang_nhap, mat_khau_hash, ho
 INSERT INTO identity.nguoi_dung (ma_nguoi_dung, ten_dang_nhap, mat_khau_hash, ho_ten, email, so_dien_thoai, avatar_url, trang_thai, diem_loyalty, ngay_tao, vai_tro, co_so_ma, co_so_ten) VALUES ('c3ed7560-01a5-42be-a661-45c0cfefbb5d', 'thaian@gmail.com', '$2b$10$0rCvF.10cj0zGz.mXJIQV.GwdXxPsZvXoYPaDO2m3/6iOWaj1AtSm', 'thaian1', 'thaian@gmail.com', NULL, NULL, 'ACTIVE', 0, '2026-03-13 14:12:06.043199', 'CUSTOMER', NULL, NULL);
 INSERT INTO identity.nguoi_dung (ma_nguoi_dung, ten_dang_nhap, mat_khau_hash, ho_ten, email, so_dien_thoai, avatar_url, trang_thai, diem_loyalty, ngay_tao, vai_tro, co_so_ma, co_so_ten) VALUES ('a945ca5d-2055-4f49-bebb-e706c267d9bb', 'thaian_staff', '$2b$10$4cO4d6W7LoBEPEsLo68pMeXOyhB1j8q2PTFL6eMim82N5Hy8PcHti', 'Thái An (Nhân viên cửa hàng)', 'thaian_staff', NULL, NULL, 'ACTIVE', 0, '2026-03-13 14:35:08.665625', 'STAFF', NULL, NULL);
 INSERT INTO identity.nguoi_dung (ma_nguoi_dung, ten_dang_nhap, mat_khau_hash, ho_ten, email, so_dien_thoai, avatar_url, trang_thai, diem_loyalty, ngay_tao, vai_tro, co_so_ma, co_so_ten) VALUES ('714fcc38-8692-49f9-9d1c-2f0fbf4f509e', 'thaian_manager', '$2b$10$7O4U5vqFp6C5m2zcBUPbM.HbwoFd5OMBavD0hMC.ZAyfte23tuSn.', 'Thái An (Quản lý cửa hàng)', 'thaian_manager', NULL, NULL, 'ACTIVE', 0, '2026-03-14 00:59:59.699192', 'MANAGER', NULL, NULL);
-INSERT INTO identity.nguoi_dung (ma_nguoi_dung, ten_dang_nhap, mat_khau_hash, ho_ten, email, so_dien_thoai, avatar_url, trang_thai, diem_loyalty, ngay_tao, vai_tro, co_so_ma, co_so_ten) VALUES ('60e6dc26-351f-47a5-abe3-0d892272c1ab', 'thaian_staff_macdinhchi', '$2b$10$UMD15vtmONQcIwNg7X3G..KEOkDMMwpkqDl5RnAy50q6yb84w0M2.', 'Thái An - Nhân viên cơ sở Mạc Đĩnh Chi', 'thaian_staff_macdinhchi', NULL, NULL, 'ACTIVE', 0, '2026-03-14 14:56:39.448884', 'STAFF', 'MAC_DINH_CHI', 'Mạc Đĩnh Chi');
-INSERT INTO identity.nguoi_dung (ma_nguoi_dung, ten_dang_nhap, mat_khau_hash, ho_ten, email, so_dien_thoai, avatar_url, trang_thai, diem_loyalty, ngay_tao, vai_tro, co_so_ma, co_so_ten) VALUES ('03f1a264-f077-44b4-96da-9de76cc75989', 'thaian_manager_macdinhchi', '$2b$10$hGnAI/xVJKOk2BRP6jwW1ebET1ewzmztcBc9jc8ETNCoVrhJ53G9K', 'Thái An - Quản lý cơ sở Mạc Đĩnh Chi', 'thaian_manager_macdinhchi', NULL, NULL, 'ACTIVE', 0, '2026-03-14 14:56:39.604262', 'MANAGER', 'MAC_DINH_CHI', 'Mạc Đĩnh Chi');
 INSERT INTO identity.nguoi_dung (ma_nguoi_dung, ten_dang_nhap, mat_khau_hash, ho_ten, email, so_dien_thoai, avatar_url, trang_thai, diem_loyalty, ngay_tao, vai_tro, co_so_ma, co_so_ten) VALUES ('702cbcb9-9722-4d40-884d-51fff33ece8f', 'thaian_staff_thegracetower', '$2b$10$IRPMapvrOSF587JvwasXD.mntANygqnixcp6zIp9ITEzawzLgQFuK', 'Thái An - Nhân viên cơ sở The Grace Tower', 'thaian_staff_thegracetower', NULL, NULL, 'ACTIVE', 0, '2026-03-14 14:56:39.742949', 'STAFF', 'THE_GRACE_TOWER', 'The Grace Tower');
 INSERT INTO identity.nguoi_dung (ma_nguoi_dung, ten_dang_nhap, mat_khau_hash, ho_ten, email, so_dien_thoai, avatar_url, trang_thai, diem_loyalty, ngay_tao, vai_tro, co_so_ma, co_so_ten) VALUES ('be7731a3-e0f0-4b0d-a419-2f8f1195054d', 'thaian_manager_thegracetower', '$2b$10$VoaMM8IDrT0AJBAVKm9jfufIBNZCB1oRYCes6L6cbfocV2MOL/s9G', 'Thái An - Quản lý cơ sở The Grace Tower', 'thaian_manager_thegracetower', NULL, NULL, 'ACTIVE', 0, '2026-03-14 14:56:39.884026', 'MANAGER', 'THE_GRACE_TOWER', 'The Grace Tower');
 INSERT INTO identity.nguoi_dung (ma_nguoi_dung, ten_dang_nhap, mat_khau_hash, ho_ten, email, so_dien_thoai, avatar_url, trang_thai, diem_loyalty, ngay_tao, vai_tro, co_so_ma, co_so_ten) VALUES ('b81d9738-535e-4475-884d-aeb3b7324f01', 'ankudo1234@gmail.com', '$2b$10$D2RXiJOwq08r6FKoDehAxep1L5ZpQlqxHFWh4hSHS0CamMP0LKLv2', 'thái an hi', 'ankudo1234@gmail.com', '0914835112', NULL, 'ACTIVE', 326, '2026-03-11 01:04:42.084098', 'CUSTOMER', NULL, NULL);
 INSERT INTO identity.nguoi_dung (ma_nguoi_dung, ten_dang_nhap, mat_khau_hash, ho_ten, email, so_dien_thoai, avatar_url, trang_thai, diem_loyalty, ngay_tao, vai_tro, co_so_ma, co_so_ten) VALUES ('af7da2da-eaa7-4349-8ce3-7eaa2f3213ad', 'thaian_admin', '$2b$10$Nu550XT6eiGep910e3r1wuIWV96HuU65/JPAhbwUCGBUpSS1GH5R.', 'Thái An - Quản trị viên hệ thống', 'thaian_admin', NULL, NULL, 'ACTIVE', 0, '2026-03-14 20:12:03.584089', 'ADMIN', NULL, NULL);
+INSERT INTO identity.nguoi_dung (ma_nguoi_dung, ten_dang_nhap, mat_khau_hash, ho_ten, email, so_dien_thoai, avatar_url, trang_thai, diem_loyalty, ngay_tao, vai_tro, co_so_ma, co_so_ten) VALUES ('60e6dc26-351f-47a5-abe3-0d892272c1ab', 'thaian_staff_macdinhchi', '$2b$10$UMD15vtmONQcIwNg7X3G..KEOkDMMwpkqDl5RnAy50q6yb84w0M2.', 'Thái An - Nhân viên cơ sở Mạc Đĩnh Chi', 'thaian_staff_macdinhchi', NULL, NULL, 'ACTIVE', 0, '2026-03-14 14:56:39.448884', 'STAFF', 'MAC_DINH_CHI', 'Mạc Đĩnh Chi');
+INSERT INTO identity.nguoi_dung (ma_nguoi_dung, ten_dang_nhap, mat_khau_hash, ho_ten, email, so_dien_thoai, avatar_url, trang_thai, diem_loyalty, ngay_tao, vai_tro, co_so_ma, co_so_ten) VALUES ('03f1a264-f077-44b4-96da-9de76cc75989', 'thaian_manager_macdinhchi', '$2b$10$hGnAI/xVJKOk2BRP6jwW1ebET1ewzmztcBc9jc8ETNCoVrhJ53G9K', 'Thái An - Quản lý cơ sở Mạc Đĩnh Chi', 'thaian_manager_macdinhchi', NULL, NULL, 'ACTIVE', 0, '2026-03-14 14:56:39.604262', 'MANAGER', 'MAC_DINH_CHI', 'Mạc Đĩnh Chi');
 
 
 --
@@ -785,7 +897,8 @@ INSERT INTO menu.danh_muc (ma_danh_muc, ten_danh_muc, hinh_anh_icon) VALUES (3, 
 
 INSERT INTO menu.san_pham (ma_san_pham, ten_san_pham, gia_ban, mo_ta, hinh_anh_url, trang_thai, ma_danh_muc) VALUES (2, 'Trà Đào Cam Sả', 45000.00, 'Trà đào thơm mát, tươi mới', '/images/products/tra-dao-cam-sa.jpg', true, 2);
 INSERT INTO menu.san_pham (ma_san_pham, ten_san_pham, gia_ban, mo_ta, hinh_anh_url, trang_thai, ma_danh_muc) VALUES (1, 'Cà Phê Sữa Đá', 29000.00, 'Cà phê sữa lạnh thơm ngon', '/images/products/ca-phe-sua-da.jpg', true, 1);
-INSERT INTO menu.san_pham (ma_san_pham, ten_san_pham, gia_ban, mo_ta, hinh_anh_url, trang_thai, ma_danh_muc) VALUES (3, 'Pizza 5 Cheese', 39000.00, 'Pizza 5 loại phô mai thơm ngon', '/images/products/pizza-5-cheese.jpg', false, 3);
+INSERT INTO menu.san_pham (ma_san_pham, ten_san_pham, gia_ban, mo_ta, hinh_anh_url, trang_thai, ma_danh_muc) VALUES (4, 'Espresso Đá', 49000.00, 'Một tách Espresso nguyên bản được bắt đầu bởi những hạt Arabica chất lượng, phối trộn với tỉ lệ cân đối hạt Robusta, cho ra vị ngọt caramel, vị chua dịu và sánh đặc.', '/images/products/espresso-a.png', true, 1);
+INSERT INTO menu.san_pham (ma_san_pham, ten_san_pham, gia_ban, mo_ta, hinh_anh_url, trang_thai, ma_danh_muc) VALUES (3, 'Pizza 5 Cheese', 39000.00, 'Pizza 5 loại phô mai thơm ngon', '/images/products/pizza-5-cheese.jpg', true, 3);
 
 
 --
@@ -906,32 +1019,9 @@ INSERT INTO orders.gio_hang (id, ma_nguoi_dung, ma_san_pham, ten_san_pham, gia_b
 -- Data for Name: thong_bao; Type: TABLE DATA; Schema: orders; Owner: admin
 --
 
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (17, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don hang da duoc tao', 'Don #2ff31732-491d-46ad-af06-5948e1a51387 da duoc tao thanh cong.', 'ORDER', false, '{"ma_don_hang": "2ff31732-491d-46ad-af06-5948e1a51387", "trang_thai_don_hang": "MOI_TAO"}', '2026-03-13 11:59:57.353985+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (18, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don COD cho thu tien', 'Don #2ff31732-491d-46ad-af06-5948e1a51387 se duoc thu tien khi giao hang.', 'PAYMENT', false, '{"ma_don_hang": "2ff31732-491d-46ad-af06-5948e1a51387", "phuong_thuc_thanh_toan": "THANH_TOAN_KHI_NHAN_HANG"}', '2026-03-13 11:59:57.382031+00');
 INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (19, '27fbca00-a226-4d07-b331-e3c34cd0f63c', 'Don hang da duoc tao', 'Don #0be27c43-8933-45bc-8ef9-b4d6856098cc da duoc tao thanh cong.', 'ORDER', false, '{"ma_don_hang": "0be27c43-8933-45bc-8ef9-b4d6856098cc", "trang_thai_don_hang": "MOI_TAO"}', '2026-03-13 12:06:06.679425+00');
 INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (20, '27fbca00-a226-4d07-b331-e3c34cd0f63c', 'Don COD cho thu tien', 'Don #0be27c43-8933-45bc-8ef9-b4d6856098cc se duoc thu tien khi giao hang.', 'PAYMENT', false, '{"ma_don_hang": "0be27c43-8933-45bc-8ef9-b4d6856098cc", "phuong_thuc_thanh_toan": "THANH_TOAN_KHI_NHAN_HANG"}', '2026-03-13 12:06:06.697622+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (21, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don hang da duoc tao', 'Don #6dcb1d79-4a3c-42b4-94b2-eee97df7de78 da duoc tao thanh cong.', 'ORDER', false, '{"ma_don_hang": "6dcb1d79-4a3c-42b4-94b2-eee97df7de78", "trang_thai_don_hang": "MOI_TAO"}', '2026-03-13 14:13:54.793364+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (22, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don COD cho thu tien', 'Don #6dcb1d79-4a3c-42b4-94b2-eee97df7de78 se duoc thu tien khi giao hang.', 'PAYMENT', false, '{"ma_don_hang": "6dcb1d79-4a3c-42b4-94b2-eee97df7de78", "phuong_thuc_thanh_toan": "THANH_TOAN_KHI_NHAN_HANG"}', '2026-03-13 14:13:54.859536+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (23, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #6dcb1d79-4a3c-42b4-94b2-eee97df7de78 da chuyen sang trang thai DA_XAC_NHAN.', 'ORDER', false, '{"ma_don_hang": "6dcb1d79-4a3c-42b4-94b2-eee97df7de78", "trang_thai_don_hang": "DA_XAC_NHAN"}', '2026-03-13 15:13:47.069826+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (24, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #6dcb1d79-4a3c-42b4-94b2-eee97df7de78 da chuyen sang trang thai DANG_CHUAN_BI.', 'ORDER', false, '{"ma_don_hang": "6dcb1d79-4a3c-42b4-94b2-eee97df7de78", "trang_thai_don_hang": "DANG_CHUAN_BI"}', '2026-03-13 15:13:48.348517+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (25, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #6dcb1d79-4a3c-42b4-94b2-eee97df7de78 da chuyen sang trang thai DANG_GIAO.', 'ORDER', false, '{"ma_don_hang": "6dcb1d79-4a3c-42b4-94b2-eee97df7de78", "trang_thai_don_hang": "DANG_GIAO"}', '2026-03-13 15:13:51.811325+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (26, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #6dcb1d79-4a3c-42b4-94b2-eee97df7de78 da chuyen sang trang thai HOAN_THANH.', 'ORDER', false, '{"ma_don_hang": "6dcb1d79-4a3c-42b4-94b2-eee97df7de78", "trang_thai_don_hang": "HOAN_THANH"}', '2026-03-13 15:13:54.213891+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (27, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #6dcb1d79-4a3c-42b4-94b2-eee97df7de78 da chuyen sang trang thai DANG_GIAO.', 'ORDER', false, '{"ma_don_hang": "6dcb1d79-4a3c-42b4-94b2-eee97df7de78", "trang_thai_don_hang": "DANG_GIAO"}', '2026-03-13 15:14:07.663746+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (28, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #6dcb1d79-4a3c-42b4-94b2-eee97df7de78 da chuyen sang trang thai DANG_CHUAN_BI.', 'ORDER', false, '{"ma_don_hang": "6dcb1d79-4a3c-42b4-94b2-eee97df7de78", "trang_thai_don_hang": "DANG_CHUAN_BI"}', '2026-03-13 15:14:25.801583+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (29, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #6dcb1d79-4a3c-42b4-94b2-eee97df7de78 da chuyen sang trang thai DA_XAC_NHAN.', 'ORDER', false, '{"ma_don_hang": "6dcb1d79-4a3c-42b4-94b2-eee97df7de78", "trang_thai_don_hang": "DA_XAC_NHAN"}', '2026-03-13 15:29:23.736514+00');
 INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (30, 'guest-pos-1773417714726', 'Cap nhat trang thai don hang', 'Don #327d9e95-d364-4e6e-96b1-9b80d5c337fe da chuyen sang trang thai HOAN_THANH.', 'ORDER', false, '{"ma_don_hang": "327d9e95-d364-4e6e-96b1-9b80d5c337fe", "trang_thai_don_hang": "HOAN_THANH"}', '2026-03-13 16:02:05.499807+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (31, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don hang da duoc tao', 'Don #f230b7e1-cb59-4760-92a9-8bdc79b8e4e9 da duoc tao thanh cong.', 'ORDER', false, '{"ma_don_hang": "f230b7e1-cb59-4760-92a9-8bdc79b8e4e9", "trang_thai_don_hang": "MOI_TAO"}', '2026-03-14 15:19:21.406577+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (32, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don COD cho thu tien', 'Don #f230b7e1-cb59-4760-92a9-8bdc79b8e4e9 se duoc thu tien khi giao hang.', 'PAYMENT', false, '{"ma_don_hang": "f230b7e1-cb59-4760-92a9-8bdc79b8e4e9", "phuong_thuc_thanh_toan": "THANH_TOAN_KHI_NHAN_HANG"}', '2026-03-14 15:19:21.49952+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (33, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #f230b7e1-cb59-4760-92a9-8bdc79b8e4e9 da chuyen sang trang thai HOAN_THANH.', 'ORDER', false, '{"ma_don_hang": "f230b7e1-cb59-4760-92a9-8bdc79b8e4e9", "trang_thai_don_hang": "HOAN_THANH"}', '2026-03-14 15:19:47.503732+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (34, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #f230b7e1-cb59-4760-92a9-8bdc79b8e4e9 da chuyen sang trang thai DANG_CHUAN_BI.', 'ORDER', false, '{"ma_don_hang": "f230b7e1-cb59-4760-92a9-8bdc79b8e4e9", "trang_thai_don_hang": "DANG_CHUAN_BI"}', '2026-03-14 15:19:57.149555+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (35, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #f230b7e1-cb59-4760-92a9-8bdc79b8e4e9 da chuyen sang trang thai MOI_TAO.', 'ORDER', false, '{"ma_don_hang": "f230b7e1-cb59-4760-92a9-8bdc79b8e4e9", "trang_thai_don_hang": "MOI_TAO"}', '2026-03-14 15:21:31.267496+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (36, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don hang da duoc tao', 'Don #421e3fac-b771-463a-800a-ddc5856e9679 da duoc tao thanh cong.', 'ORDER', false, '{"ma_don_hang": "421e3fac-b771-463a-800a-ddc5856e9679", "trang_thai_don_hang": "MOI_TAO"}', '2026-03-14 15:43:44.337281+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (37, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don COD cho thu tien', 'Don #421e3fac-b771-463a-800a-ddc5856e9679 se duoc thu tien khi giao hang.', 'PAYMENT', false, '{"ma_don_hang": "421e3fac-b771-463a-800a-ddc5856e9679", "phuong_thuc_thanh_toan": "THANH_TOAN_KHI_NHAN_HANG"}', '2026-03-14 15:43:44.443266+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (38, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don hang da duoc tao', 'Don #687d5d6b-850e-4bef-8644-3428a3c579a1 da duoc tao thanh cong.', 'ORDER', false, '{"ma_don_hang": "687d5d6b-850e-4bef-8644-3428a3c579a1", "trang_thai_don_hang": "MOI_TAO"}', '2026-03-14 15:44:14.548501+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (39, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don COD cho thu tien', 'Don #687d5d6b-850e-4bef-8644-3428a3c579a1 se duoc thu tien khi giao hang.', 'PAYMENT', false, '{"ma_don_hang": "687d5d6b-850e-4bef-8644-3428a3c579a1", "phuong_thuc_thanh_toan": "THANH_TOAN_KHI_NHAN_HANG"}', '2026-03-14 15:44:14.556365+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (40, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #687d5d6b-850e-4bef-8644-3428a3c579a1 da chuyen sang trang thai HOAN_THANH.', 'ORDER', false, '{"ma_don_hang": "687d5d6b-850e-4bef-8644-3428a3c579a1", "trang_thai_don_hang": "HOAN_THANH"}', '2026-03-14 16:02:14.181669+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (41, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #687d5d6b-850e-4bef-8644-3428a3c579a1 da chuyen sang trang thai DANG_GIAO.', 'ORDER', false, '{"ma_don_hang": "687d5d6b-850e-4bef-8644-3428a3c579a1", "trang_thai_don_hang": "DANG_GIAO"}', '2026-03-14 16:02:33.215889+00');
-INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (42, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #687d5d6b-850e-4bef-8644-3428a3c579a1 da chuyen sang trang thai DA_XAC_NHAN.', 'ORDER', false, '{"ma_don_hang": "687d5d6b-850e-4bef-8644-3428a3c579a1", "trang_thai_don_hang": "DA_XAC_NHAN"}', '2026-03-14 16:05:41.144172+00');
 INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (43, 'guest-pos-1773511429181', 'Cap nhat trang thai don hang', 'Don #578b04ff-1b70-457b-8909-778f2c44fd79 da chuyen sang trang thai DA_XAC_NHAN.', 'ORDER', false, '{"ma_don_hang": "578b04ff-1b70-457b-8909-778f2c44fd79", "trang_thai_don_hang": "DA_XAC_NHAN"}', '2026-03-14 18:08:53.506473+00');
 INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (44, 'guest-pos-1773511429181', 'Cap nhat trang thai don hang', 'Don #578b04ff-1b70-457b-8909-778f2c44fd79 da chuyen sang trang thai DANG_CHUAN_BI.', 'ORDER', false, '{"ma_don_hang": "578b04ff-1b70-457b-8909-778f2c44fd79", "trang_thai_don_hang": "DANG_CHUAN_BI"}', '2026-03-14 18:08:56.841481+00');
 INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (45, 'guest-pos-1773511429181', 'Cap nhat trang thai don hang', 'Don #578b04ff-1b70-457b-8909-778f2c44fd79 da chuyen sang trang thai DANG_GIAO.', 'ORDER', false, '{"ma_don_hang": "578b04ff-1b70-457b-8909-778f2c44fd79", "trang_thai_don_hang": "DANG_GIAO"}', '2026-03-14 18:08:56.869834+00');
@@ -946,6 +1036,29 @@ INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc
 INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (54, 'guest-pos-1773517684312', 'Cap nhat trang thai don hang', 'Don #4f8fa1f0-261a-4388-bbce-956ae00ea049 da chuyen sang trang thai DANG_CHUAN_BI.', 'ORDER', false, '{"ma_don_hang": "4f8fa1f0-261a-4388-bbce-956ae00ea049", "trang_thai_don_hang": "DANG_CHUAN_BI"}', '2026-03-14 19:48:07.517397+00');
 INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (55, 'guest-pos-1773517684312', 'Cap nhat trang thai don hang', 'Don #4f8fa1f0-261a-4388-bbce-956ae00ea049 da chuyen sang trang thai DANG_GIAO.', 'ORDER', false, '{"ma_don_hang": "4f8fa1f0-261a-4388-bbce-956ae00ea049", "trang_thai_don_hang": "DANG_GIAO"}', '2026-03-14 19:48:07.557721+00');
 INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (56, 'guest-pos-1773517684312', 'Cap nhat trang thai don hang', 'Don #4f8fa1f0-261a-4388-bbce-956ae00ea049 da chuyen sang trang thai HOAN_THANH.', 'ORDER', false, '{"ma_don_hang": "4f8fa1f0-261a-4388-bbce-956ae00ea049", "trang_thai_don_hang": "HOAN_THANH"}', '2026-03-14 19:48:07.59924+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (17, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don hang da duoc tao', 'Don #2ff31732-491d-46ad-af06-5948e1a51387 da duoc tao thanh cong.', 'ORDER', true, '{"ma_don_hang": "2ff31732-491d-46ad-af06-5948e1a51387", "trang_thai_don_hang": "MOI_TAO"}', '2026-03-13 11:59:57.353985+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (18, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don COD cho thu tien', 'Don #2ff31732-491d-46ad-af06-5948e1a51387 se duoc thu tien khi giao hang.', 'PAYMENT', true, '{"ma_don_hang": "2ff31732-491d-46ad-af06-5948e1a51387", "phuong_thuc_thanh_toan": "THANH_TOAN_KHI_NHAN_HANG"}', '2026-03-13 11:59:57.382031+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (21, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don hang da duoc tao', 'Don #6dcb1d79-4a3c-42b4-94b2-eee97df7de78 da duoc tao thanh cong.', 'ORDER', true, '{"ma_don_hang": "6dcb1d79-4a3c-42b4-94b2-eee97df7de78", "trang_thai_don_hang": "MOI_TAO"}', '2026-03-13 14:13:54.793364+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (22, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don COD cho thu tien', 'Don #6dcb1d79-4a3c-42b4-94b2-eee97df7de78 se duoc thu tien khi giao hang.', 'PAYMENT', true, '{"ma_don_hang": "6dcb1d79-4a3c-42b4-94b2-eee97df7de78", "phuong_thuc_thanh_toan": "THANH_TOAN_KHI_NHAN_HANG"}', '2026-03-13 14:13:54.859536+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (23, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #6dcb1d79-4a3c-42b4-94b2-eee97df7de78 da chuyen sang trang thai DA_XAC_NHAN.', 'ORDER', true, '{"ma_don_hang": "6dcb1d79-4a3c-42b4-94b2-eee97df7de78", "trang_thai_don_hang": "DA_XAC_NHAN"}', '2026-03-13 15:13:47.069826+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (24, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #6dcb1d79-4a3c-42b4-94b2-eee97df7de78 da chuyen sang trang thai DANG_CHUAN_BI.', 'ORDER', true, '{"ma_don_hang": "6dcb1d79-4a3c-42b4-94b2-eee97df7de78", "trang_thai_don_hang": "DANG_CHUAN_BI"}', '2026-03-13 15:13:48.348517+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (25, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #6dcb1d79-4a3c-42b4-94b2-eee97df7de78 da chuyen sang trang thai DANG_GIAO.', 'ORDER', true, '{"ma_don_hang": "6dcb1d79-4a3c-42b4-94b2-eee97df7de78", "trang_thai_don_hang": "DANG_GIAO"}', '2026-03-13 15:13:51.811325+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (26, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #6dcb1d79-4a3c-42b4-94b2-eee97df7de78 da chuyen sang trang thai HOAN_THANH.', 'ORDER', true, '{"ma_don_hang": "6dcb1d79-4a3c-42b4-94b2-eee97df7de78", "trang_thai_don_hang": "HOAN_THANH"}', '2026-03-13 15:13:54.213891+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (27, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #6dcb1d79-4a3c-42b4-94b2-eee97df7de78 da chuyen sang trang thai DANG_GIAO.', 'ORDER', true, '{"ma_don_hang": "6dcb1d79-4a3c-42b4-94b2-eee97df7de78", "trang_thai_don_hang": "DANG_GIAO"}', '2026-03-13 15:14:07.663746+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (28, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #6dcb1d79-4a3c-42b4-94b2-eee97df7de78 da chuyen sang trang thai DANG_CHUAN_BI.', 'ORDER', true, '{"ma_don_hang": "6dcb1d79-4a3c-42b4-94b2-eee97df7de78", "trang_thai_don_hang": "DANG_CHUAN_BI"}', '2026-03-13 15:14:25.801583+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (29, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #6dcb1d79-4a3c-42b4-94b2-eee97df7de78 da chuyen sang trang thai DA_XAC_NHAN.', 'ORDER', true, '{"ma_don_hang": "6dcb1d79-4a3c-42b4-94b2-eee97df7de78", "trang_thai_don_hang": "DA_XAC_NHAN"}', '2026-03-13 15:29:23.736514+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (31, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don hang da duoc tao', 'Don #f230b7e1-cb59-4760-92a9-8bdc79b8e4e9 da duoc tao thanh cong.', 'ORDER', true, '{"ma_don_hang": "f230b7e1-cb59-4760-92a9-8bdc79b8e4e9", "trang_thai_don_hang": "MOI_TAO"}', '2026-03-14 15:19:21.406577+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (32, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don COD cho thu tien', 'Don #f230b7e1-cb59-4760-92a9-8bdc79b8e4e9 se duoc thu tien khi giao hang.', 'PAYMENT', true, '{"ma_don_hang": "f230b7e1-cb59-4760-92a9-8bdc79b8e4e9", "phuong_thuc_thanh_toan": "THANH_TOAN_KHI_NHAN_HANG"}', '2026-03-14 15:19:21.49952+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (33, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #f230b7e1-cb59-4760-92a9-8bdc79b8e4e9 da chuyen sang trang thai HOAN_THANH.', 'ORDER', true, '{"ma_don_hang": "f230b7e1-cb59-4760-92a9-8bdc79b8e4e9", "trang_thai_don_hang": "HOAN_THANH"}', '2026-03-14 15:19:47.503732+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (34, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #f230b7e1-cb59-4760-92a9-8bdc79b8e4e9 da chuyen sang trang thai DANG_CHUAN_BI.', 'ORDER', true, '{"ma_don_hang": "f230b7e1-cb59-4760-92a9-8bdc79b8e4e9", "trang_thai_don_hang": "DANG_CHUAN_BI"}', '2026-03-14 15:19:57.149555+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (35, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #f230b7e1-cb59-4760-92a9-8bdc79b8e4e9 da chuyen sang trang thai MOI_TAO.', 'ORDER', true, '{"ma_don_hang": "f230b7e1-cb59-4760-92a9-8bdc79b8e4e9", "trang_thai_don_hang": "MOI_TAO"}', '2026-03-14 15:21:31.267496+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (36, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don hang da duoc tao', 'Don #421e3fac-b771-463a-800a-ddc5856e9679 da duoc tao thanh cong.', 'ORDER', true, '{"ma_don_hang": "421e3fac-b771-463a-800a-ddc5856e9679", "trang_thai_don_hang": "MOI_TAO"}', '2026-03-14 15:43:44.337281+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (37, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don COD cho thu tien', 'Don #421e3fac-b771-463a-800a-ddc5856e9679 se duoc thu tien khi giao hang.', 'PAYMENT', true, '{"ma_don_hang": "421e3fac-b771-463a-800a-ddc5856e9679", "phuong_thuc_thanh_toan": "THANH_TOAN_KHI_NHAN_HANG"}', '2026-03-14 15:43:44.443266+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (38, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don hang da duoc tao', 'Don #687d5d6b-850e-4bef-8644-3428a3c579a1 da duoc tao thanh cong.', 'ORDER', true, '{"ma_don_hang": "687d5d6b-850e-4bef-8644-3428a3c579a1", "trang_thai_don_hang": "MOI_TAO"}', '2026-03-14 15:44:14.548501+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (39, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Don COD cho thu tien', 'Don #687d5d6b-850e-4bef-8644-3428a3c579a1 se duoc thu tien khi giao hang.', 'PAYMENT', true, '{"ma_don_hang": "687d5d6b-850e-4bef-8644-3428a3c579a1", "phuong_thuc_thanh_toan": "THANH_TOAN_KHI_NHAN_HANG"}', '2026-03-14 15:44:14.556365+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (40, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #687d5d6b-850e-4bef-8644-3428a3c579a1 da chuyen sang trang thai HOAN_THANH.', 'ORDER', true, '{"ma_don_hang": "687d5d6b-850e-4bef-8644-3428a3c579a1", "trang_thai_don_hang": "HOAN_THANH"}', '2026-03-14 16:02:14.181669+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (41, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #687d5d6b-850e-4bef-8644-3428a3c579a1 da chuyen sang trang thai DANG_GIAO.', 'ORDER', true, '{"ma_don_hang": "687d5d6b-850e-4bef-8644-3428a3c579a1", "trang_thai_don_hang": "DANG_GIAO"}', '2026-03-14 16:02:33.215889+00');
+INSERT INTO orders.thong_bao (id, ma_nguoi_dung, tieu_de, noi_dung, loai, da_doc, du_lieu, ngay_tao) VALUES (42, 'b81d9738-535e-4475-884d-aeb3b7324f01', 'Cap nhat trang thai don hang', 'Don #687d5d6b-850e-4bef-8644-3428a3c579a1 da chuyen sang trang thai DA_XAC_NHAN.', 'ORDER', true, '{"ma_don_hang": "687d5d6b-850e-4bef-8644-3428a3c579a1", "trang_thai_don_hang": "DA_XAC_NHAN"}', '2026-03-14 16:05:41.144172+00');
 
 
 --
@@ -962,6 +1075,13 @@ INSERT INTO orders.voucher (id, ma_voucher, mo_ta, loai, gia_tri, giam_toi_da, d
 --
 
 SELECT pg_catalog.setval('identity.dia_chi_giao_hang_id_seq', 2, true);
+
+
+--
+-- Name: khuyen_mai_su_dung_id_seq; Type: SEQUENCE SET; Schema: identity; Owner: admin
+--
+
+SELECT pg_catalog.setval('identity.khuyen_mai_su_dung_id_seq', 1, false);
 
 
 --
@@ -982,7 +1102,7 @@ SELECT pg_catalog.setval('menu.danh_muc_ma_danh_muc_seq', 3, true);
 -- Name: san_pham_ma_san_pham_seq; Type: SEQUENCE SET; Schema: menu; Owner: admin
 --
 
-SELECT pg_catalog.setval('menu.san_pham_ma_san_pham_seq', 3, true);
+SELECT pg_catalog.setval('menu.san_pham_ma_san_pham_seq', 4, true);
 
 
 --
@@ -1017,7 +1137,7 @@ SELECT pg_catalog.setval('orders.giao_dich_thanh_toan_ma_giao_dich_seq', 57, tru
 -- Name: gio_hang_id_seq; Type: SEQUENCE SET; Schema: orders; Owner: admin
 --
 
-SELECT pg_catalog.setval('orders.gio_hang_id_seq', 97, true);
+SELECT pg_catalog.setval('orders.gio_hang_id_seq', 98, true);
 
 
 --
@@ -1043,11 +1163,35 @@ ALTER TABLE ONLY identity.dia_chi_giao_hang
 
 
 --
+-- Name: khuyen_mai PK_41b39161335099ba97f897da482; Type: CONSTRAINT; Schema: identity; Owner: admin
+--
+
+ALTER TABLE ONLY identity.khuyen_mai
+    ADD CONSTRAINT "PK_41b39161335099ba97f897da482" PRIMARY KEY (ma_khuyen_mai);
+
+
+--
+-- Name: khuyen_mai_su_dung PK_709a2cbc73933aab4ab86624135; Type: CONSTRAINT; Schema: identity; Owner: admin
+--
+
+ALTER TABLE ONLY identity.khuyen_mai_su_dung
+    ADD CONSTRAINT "PK_709a2cbc73933aab4ab86624135" PRIMARY KEY (id);
+
+
+--
 -- Name: nguoi_dung PK_dc056ebc44f20f41b5e7aded3f1; Type: CONSTRAINT; Schema: identity; Owner: admin
 --
 
 ALTER TABLE ONLY identity.nguoi_dung
     ADD CONSTRAINT "PK_dc056ebc44f20f41b5e7aded3f1" PRIMARY KEY (ma_nguoi_dung);
+
+
+--
+-- Name: chi_nhanh PK_fe39e450fa646ce1f89b1e2af7d; Type: CONSTRAINT; Schema: identity; Owner: admin
+--
+
+ALTER TABLE ONLY identity.chi_nhanh
+    ADD CONSTRAINT "PK_fe39e450fa646ce1f89b1e2af7d" PRIMARY KEY (ma_chi_nhanh);
 
 
 --
@@ -1072,6 +1216,14 @@ ALTER TABLE ONLY identity.nguoi_dung
 
 ALTER TABLE ONLY identity.nguoi_dung
     ADD CONSTRAINT "UQ_7de638388c030187907e065fe6d" UNIQUE (ten_dang_nhap);
+
+
+--
+-- Name: chi_nhanh UQ_92c71d2bf8018e62b16682673eb; Type: CONSTRAINT; Schema: identity; Owner: admin
+--
+
+ALTER TABLE ONLY identity.chi_nhanh
+    ADD CONSTRAINT "UQ_92c71d2bf8018e62b16682673eb" UNIQUE (ten_chi_nhanh);
 
 
 --
@@ -1211,6 +1363,13 @@ ALTER TABLE ONLY orders.giao_dich_thanh_toan
 
 
 --
+-- Name: IDX_1b94b4f95399086a3b5362084e; Type: INDEX; Schema: identity; Owner: admin
+--
+
+CREATE INDEX "IDX_1b94b4f95399086a3b5362084e" ON identity.khuyen_mai_su_dung USING btree (ma_khuyen_mai, ma_nguoi_dung);
+
+
+--
 -- Name: san_pham FK_ab26c1b5e6d62d0527e72b20def; Type: FK CONSTRAINT; Schema: menu; Owner: admin
 --
 
@@ -1245,5 +1404,5 @@ REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict AlT9XjSHcfHQqDSz4wrgQlGVuCbLmdhZhN3vpjXTfp6kI4pTBywgdh57cMvBG8p
+\unrestrict woUe4PjmaJB1bVyFWPuaZMaHCZ16UUHhE2Z32ciRgPH86WgOqPxK226z9bAVcfj
 

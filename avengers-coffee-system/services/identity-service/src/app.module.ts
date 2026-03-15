@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Client } from 'pg';
+import { Branch } from './modules/user/branch.entity';
 import { DeliveryAddress } from './modules/user/delivery-address.entity';
+import { Promotion } from './modules/user/promotion.entity';
+import { PromotionUsage } from './modules/user/promotion-usage.entity';
 import { User } from './modules/user/user.entity';
 import { UserModule } from './modules/user/user.module';
 
@@ -37,7 +40,7 @@ const identitySchema = process.env.DB_SCHEMA || 'identity';
           password,
           database,
           schema: identitySchema,
-          entities: [User, DeliveryAddress],
+          entities: [User, DeliveryAddress, Branch, Promotion, PromotionUsage],
           synchronize: true,
         };
       },
