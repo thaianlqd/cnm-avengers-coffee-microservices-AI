@@ -17,17 +17,23 @@ logger = logging.getLogger(__name__)
 
 
 class CollaborativeFilterModel:
+    def get_popular_items(self, limit: int = 6) -> list:
+        """
+        Return the top N popular items for fallback recommendations.
+        """
+        return self.popular_items[:limit]
+
     def __init__(self):
         self.is_trained = False
-        self.user_item_matrix: Optional[np.ndarray] = None
-        self.item_similarity: Optional[np.ndarray] = None
-        self.item_ids: list = []
-        self.user_ids: list = []
-        self.popular_items: list = []
-        self.item_details: dict = {}
-        self.trained_at: Optional[datetime] = None
-        self.total_interactions: int = 0
-        self.total_users: int = 0
+        self.user_item_matrix = None
+        self.item_similarity = None
+        self.item_ids = []
+        self.user_ids = []
+        self.popular_items = []
+        self.item_details = {}
+        self.trained_at = None
+        self.total_interactions = 0
+        self.total_users = 0
 
     # ------------------------------------------------------------------
     # Training

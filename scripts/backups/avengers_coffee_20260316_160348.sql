@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict bZL64lsirScGJZD30R2e4hJa7rQbEgbffARzW5k4HwbbouAtKpDfm5nKrOhrcQX
+\restrict ZJzEwHS3YMOSqFm9I7K9l911thfHP8g8M9eqADupHfNBBBTUBIbPR2JxT5w6BDQ
 
 -- Dumped from database version 16.13 (Debian 16.13-1.pgdg13+1)
 -- Dumped by pg_dump version 16.13 (Debian 16.13-1.pgdg13+1)
@@ -929,7 +929,7 @@ INSERT INTO orders.ca_lam_viec_nhan_vien (ma_ca_lam_viec, staff_username, staff_
 -- Data for Name: chat_conversation; Type: TABLE DATA; Schema: orders; Owner: admin
 --
 
-INSERT INTO orders.chat_conversation (ma_hoi_thoai, ma_khach_hang, ten_khach_hang, ma_nhan_su_phu_trach, ten_nhan_su_phu_trach, vai_tro_nhan_su_phu_trach, trang_thai, tin_nhan_cuoi, vai_tro_nguoi_gui_cuoi, so_tin_nhan_chua_doc_khach, so_tin_nhan_chua_doc_nhan_su, ngay_tao, ngay_cap_nhat) VALUES ('1c7e31b5-bda7-4435-be7c-dcb95b60fbb8', 'b81d9738-535e-4475-884d-aeb3b7324f01', 'thái an hi', 'a945ca5d-2055-4f49-bebb-e706c267d9bb', 'thaian_staff', 'STAFF', 'OPEN', 'hu', 'CUSTOMER', 0, 0, '2026-03-14 02:30:55.460023', '2026-03-15 18:56:31.623612');
+INSERT INTO orders.chat_conversation (ma_hoi_thoai, ma_khach_hang, ten_khach_hang, ma_nhan_su_phu_trach, ten_nhan_su_phu_trach, vai_tro_nhan_su_phu_trach, trang_thai, tin_nhan_cuoi, vai_tro_nguoi_gui_cuoi, so_tin_nhan_chua_doc_khach, so_tin_nhan_chua_doc_nhan_su, ngay_tao, ngay_cap_nhat) VALUES ('1c7e31b5-bda7-4435-be7c-dcb95b60fbb8', 'b81d9738-535e-4475-884d-aeb3b7324f01', 'thái an hi', 'a945ca5d-2055-4f49-bebb-e706c267d9bb', 'thaian_staff', 'STAFF', 'OPEN', 'hi', 'CUSTOMER', 0, 2, '2026-03-14 02:30:55.460023', '2026-03-16 08:43:07.203673');
 
 
 --
@@ -941,6 +941,8 @@ INSERT INTO orders.chat_message (id, ma_hoi_thoai, ma_nguoi_gui, ten_nguoi_gui, 
 INSERT INTO orders.chat_message (id, ma_hoi_thoai, ma_nguoi_gui, ten_nguoi_gui, vai_tro_nguoi_gui, noi_dung, ngay_tao) VALUES (3, '1c7e31b5-bda7-4435-be7c-dcb95b60fbb8', 'b81d9738-535e-4475-884d-aeb3b7324f01', 'thái an hi', 'CUSTOMER', 'hi chao', '2026-03-15 17:29:27.44882');
 INSERT INTO orders.chat_message (id, ma_hoi_thoai, ma_nguoi_gui, ten_nguoi_gui, vai_tro_nguoi_gui, noi_dung, ngay_tao) VALUES (4, '1c7e31b5-bda7-4435-be7c-dcb95b60fbb8', 'b81d9738-535e-4475-884d-aeb3b7324f01', 'thái an hi', 'CUSTOMER', 'hi', '2026-03-15 17:38:42.311254');
 INSERT INTO orders.chat_message (id, ma_hoi_thoai, ma_nguoi_gui, ten_nguoi_gui, vai_tro_nguoi_gui, noi_dung, ngay_tao) VALUES (5, '1c7e31b5-bda7-4435-be7c-dcb95b60fbb8', 'b81d9738-535e-4475-884d-aeb3b7324f01', 'thái an hi', 'CUSTOMER', 'hu', '2026-03-15 18:56:22.408748');
+INSERT INTO orders.chat_message (id, ma_hoi_thoai, ma_nguoi_gui, ten_nguoi_gui, vai_tro_nguoi_gui, noi_dung, ngay_tao) VALUES (6, '1c7e31b5-bda7-4435-be7c-dcb95b60fbb8', 'b81d9738-535e-4475-884d-aeb3b7324f01', 'thái an hi', 'CUSTOMER', 'h', '2026-03-15 19:45:50.83372');
+INSERT INTO orders.chat_message (id, ma_hoi_thoai, ma_nguoi_gui, ten_nguoi_gui, vai_tro_nguoi_gui, noi_dung, ngay_tao) VALUES (7, '1c7e31b5-bda7-4435-be7c-dcb95b60fbb8', 'b81d9738-535e-4475-884d-aeb3b7324f01', 'thái an hi', 'CUSTOMER', 'hi', '2026-03-16 08:43:07.254467');
 
 
 --
@@ -1117,7 +1119,7 @@ SELECT pg_catalog.setval('menu.san_pham_ma_san_pham_seq', 4, true);
 -- Name: chat_message_id_seq; Type: SEQUENCE SET; Schema: orders; Owner: admin
 --
 
-SELECT pg_catalog.setval('orders.chat_message_id_seq', 5, true);
+SELECT pg_catalog.setval('orders.chat_message_id_seq', 7, true);
 
 
 --
@@ -1412,5 +1414,5 @@ REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict bZL64lsirScGJZD30R2e4hJa7rQbEgbffARzW5k4HwbbouAtKpDfm5nKrOhrcQX
+\unrestrict ZJzEwHS3YMOSqFm9I7K9l911thfHP8g8M9eqADupHfNBBBTUBIbPR2JxT5w6BDQ
 
