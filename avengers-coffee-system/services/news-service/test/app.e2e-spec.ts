@@ -8,14 +8,11 @@ process.env.DB_PORT = process.env.DB_PORT || '5432';
 process.env.DB_USER = process.env.DB_USER || 'admin';
 process.env.DB_PASSWORD = process.env.DB_PASSWORD || '123';
 process.env.DB_NAME = process.env.DB_NAME || 'avengers_coffee';
-process.env.DB_SCHEMA = process.env.DB_SCHEMA || `identity_ci_${Date.now()}`;
 
 const { AppModule } = require('./../src/app.module');
 
-describe('Identity API (e2e)', () => {
+describe('News API (e2e)', () => {
   let app: INestApplication<App>;
-  const email = `ci_${Date.now()}@example.com`;
-  const password = '12345678';
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -32,37 +29,29 @@ describe('Identity API (e2e)', () => {
     }
   });
 
-  it('POST /auth/register should create customer account', async () => {
+  it('GET /news should return list format', async () => {
     const response = await request(app.getHttpServer())
-      .post('/auth/register')
-      .send({
-        email,
-        password,
-        hoTen: 'CI User',
-      })
-      .expect(201);
+      .get('/news')
+      .expect(200);
 
-    expect(response.body?.message).toBeDefined();
-    expect(response.body?.userId).toBeDefined();
+    expect(Array.isArray(response.body?.items)).toBe(true);
+    expect(typeof response.body?.total).toBe('number');
   });
 
-  it('POST /auth/login should return access token', async () => {
+  it('GET /news/featured/list should return array', async () => {
     const response = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send({
-        email,
-        password,
-      })
-      .expect(201);
+      .get('/news/featured/list')
+      .expect(200);
 
-    expect(response.body?.accessToken).toBeDefined();
-    expect(response.body?.user?.email).toBe(email);
+    expect(Array.isArray(response.body)).toBe(true);
   });
 
-  it('POST /auth/login should reject wrong password', async () => {
-    return request(app.getHttpServer())
-      .post('/auth/login')
-      .send({ email, password: 'sai-mat-khau' })
-      .expect(401);
+  it('GET /news/category/khuyen-mai should return list format', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/news/category/khuyen-mai')
+      .expect(200);
+
+    expect(Array.isArray(response.body?.items)).toBe(true);
+    expect(typeof response.body?.total).toBe('number');
   });
 });
