@@ -46,6 +46,24 @@ export class CaLamViecNhanVien {
   @Column({ type: 'varchar', nullable: true })
   manager_username: string | null;
 
+  @Column({ type: 'varchar', default: 'MANAGER_ASSIGNMENT' })
+  nguon_tao: 'MANAGER_ASSIGNMENT' | 'STAFF_REQUEST';
+
+  @Column({ type: 'varchar', default: 'APPROVED' })
+  trang_thai_yeu_cau: 'PENDING' | 'APPROVED' | 'REJECTED';
+
+  @Column({ type: 'timestamptz', nullable: true })
+  thoi_gian_gui_yeu_cau: Date | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  nguoi_duyet_yeu_cau: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  ghi_chu_duyet: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  thoi_gian_duyet: Date | null;
+
   @CreateDateColumn()
   ngay_tao: Date;
 

@@ -32,6 +32,7 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
     },
     enabled: Boolean(isOpen && userId),
     staleTime: 30 * 1000,
+    refetchInterval: 20 * 1000,
   });
 
   useEffect(() => {
@@ -68,10 +69,10 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
 
       onUserUpdated?.(updatedUser);
       queryClient.invalidateQueries({ queryKey: queryKeys.userProfile(userId) });
-      alert('Cap nhat thong tin thanh cong!');
+      alert('Cập nhật thông tin thành công!');
     },
     onError: (err) => {
-      setProfileError(err?.response?.data?.message || 'Khong the cap nhat thong tin.');
+      setProfileError(err?.response?.data?.message || 'Không thể cập nhật thông tin.');
     },
   });
 
@@ -83,10 +84,10 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
     onSuccess: () => {
       setPasswordError('');
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      alert('Doi mat khau thanh cong!');
+      alert('Đổi mật khẩu thành công!');
     },
     onError: (err) => {
-      setPasswordError(err?.response?.data?.message || 'Khong the doi mat khau.');
+      setPasswordError(err?.response?.data?.message || 'Không thể đổi mật khẩu.');
     },
   });
 
@@ -108,12 +109,12 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
     setPasswordError('');
 
     if (passwordForm.newPassword.length < 6) {
-      setPasswordError('Mat khau moi phai co it nhat 6 ky tu.');
+      setPasswordError('Mật khẩu mới phải có ít nhất 6 ký tự.');
       return;
     }
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setPasswordError('Xac nhan mat khau khong khop.');
+      setPasswordError('Xác nhận mật khẩu không khớp.');
       return;
     }
 
@@ -130,8 +131,8 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
       <div className="relative z-10 h-[88vh] w-full max-w-3xl overflow-hidden rounded-[28px] border border-orange-100 bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-orange-50 bg-gradient-to-r from-orange-50 to-amber-50 px-6 py-5">
           <div>
-            <h2 className="text-2xl font-black uppercase tracking-tight text-gray-800">Trang ca nhan</h2>
-            <p className="mt-1 text-sm font-semibold text-gray-500">Quan ly thong tin va bao mat tai khoan cua ban</p>
+            <h2 className="text-2xl font-black uppercase tracking-tight text-gray-800">Trang cá nhân</h2>
+            <p className="mt-1 text-sm font-semibold text-gray-500">Quản lý thông tin và bảo mật tài khoản của bạn</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-xl p-2 text-gray-500 hover:bg-white">
             <XMarkIcon className="h-7 w-7" />
@@ -139,7 +140,7 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
         </div>
 
         {!userId ? (
-          <div className="p-8 text-center text-lg font-bold text-gray-700">Ban can dang nhap de xem trang ca nhan.</div>
+          <div className="p-8 text-center text-lg font-bold text-gray-700">Bạn cần đăng nhập để xem trang cá nhân.</div>
         ) : (
           <div className="h-[calc(88vh-86px)] overflow-y-auto bg-[#fffdf9] p-6">
             <div className="mb-6 flex gap-3">
@@ -152,7 +153,7 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
               >
                 <span className="inline-flex items-center gap-2">
                   <UserCircleIcon className="h-5 w-5" />
-                  Ho so
+                  Hồ sơ
                 </span>
               </button>
               <button
@@ -164,7 +165,7 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
               >
                 <span className="inline-flex items-center gap-2">
                   <KeyIcon className="h-5 w-5" />
-                  Doi mat khau
+                  Đổi mật khẩu
                 </span>
               </button>
             </div>
@@ -179,12 +180,12 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
                   </div>
                 ) : isError ? (
                   <div className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-red-700">
-                    {error?.response?.data?.message || 'Khong the tai thong tin ca nhan.'}
+                    {error?.response?.data?.message || 'Không thể tải thông tin cá nhân.'}
                   </div>
                 ) : (
                   <form onSubmit={handleUpdateProfile} className="space-y-4">
                     <div>
-                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Ho ten</p>
+                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Họ tên</p>
                       <input
                         type="text"
                         required
@@ -205,13 +206,13 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
                     </div>
 
                     <div>
-                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">So dien thoai</p>
+                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Số điện thoại</p>
                       <input
                         type="text"
                         value={profileForm.soDienThoai}
                         onChange={(e) => setProfileForm((prev) => ({ ...prev, soDienThoai: e.target.value }))}
                         className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
-                        placeholder="Nhap so dien thoai"
+                        placeholder="Nhập số điện thoại"
                       />
                     </div>
 
@@ -233,7 +234,7 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
                       disabled={updateProfileMutation.isPending}
                       className="rounded-xl bg-tch-orange px-5 py-3 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-orange-200 disabled:bg-gray-300"
                     >
-                      {updateProfileMutation.isPending ? 'Dang cap nhat...' : 'Luu thay doi'}
+                      {updateProfileMutation.isPending ? 'Đang cập nhật...' : 'Lưu thay đổi'}
                     </button>
                   </form>
                 )}
@@ -242,7 +243,7 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
               <div className="rounded-2xl border border-orange-100 bg-white p-5">
                 <form onSubmit={handleChangePassword} className="space-y-4">
                   <div>
-                    <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Mat khau hien tai</p>
+                    <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Mật khẩu hiện tại</p>
                     <input
                       type="password"
                       required
@@ -253,7 +254,7 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
                   </div>
 
                   <div>
-                    <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Mat khau moi</p>
+                    <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Mật khẩu mới</p>
                     <input
                       type="password"
                       required
@@ -264,7 +265,7 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
                   </div>
 
                   <div>
-                    <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Xac nhan mat khau moi</p>
+                    <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Xác nhận mật khẩu mới</p>
                     <input
                       type="password"
                       required
@@ -281,7 +282,7 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
                     disabled={changePasswordMutation.isPending}
                     className="rounded-xl bg-tch-orange px-5 py-3 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-orange-200 disabled:bg-gray-300"
                   >
-                    {changePasswordMutation.isPending ? 'Dang xu ly...' : 'Doi mat khau'}
+                    {changePasswordMutation.isPending ? 'Đang xử lý...' : 'Đổi mật khẩu'}
                   </button>
                 </form>
               </div>

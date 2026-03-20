@@ -74,7 +74,7 @@ export default function ReviewForm({
       queryClient.invalidateQueries({
         queryKey: queryKeys.userProductReview(productId, userId),
       });
-      onDeleted('Da xoa danh gia thanh cong.');
+      onDeleted('Đã xóa đánh giá thành công.');
       onClose();
     },
     onError: (err) => {

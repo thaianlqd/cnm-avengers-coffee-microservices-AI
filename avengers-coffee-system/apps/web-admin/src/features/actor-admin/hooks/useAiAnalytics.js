@@ -26,6 +26,8 @@ export function useAiAnalytics() {
     queryKey: ['ai', 'model-stats'],
     queryFn: () => aiFetch('/model/stats'),
     staleTime: 60_000,
+    refetchInterval: 15_000,
+    refetchOnWindowFocus: true,
     retry: 1,
   })
 
@@ -37,6 +39,8 @@ export function useAiAnalytics() {
         `/forecast/combined?branch_code=${branchCode}&metric=${metric}&history_days=${historyDays}&forecast_days=${forecastDays}`,
       ),
     staleTime: 120_000,
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
     retry: 1,
     enabled: true,
   })
@@ -47,6 +51,8 @@ export function useAiAnalytics() {
     queryKey: ['ai', 'recommend', activeTestUserId],
     queryFn: () => aiFetch(`/recommend/${encodeURIComponent(activeTestUserId)}?limit=6`),
     staleTime: 30_000,
+    refetchInterval: 15_000,
+    refetchOnWindowFocus: true,
     retry: 1,
     enabled: Boolean(activeTestUserId),
   })

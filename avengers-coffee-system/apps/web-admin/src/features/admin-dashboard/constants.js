@@ -4,14 +4,18 @@ export const NAV_TABS = [
   { id: 'overview', label: 'Tổng quan' },
   { id: 'orders', label: 'Luồng đơn hàng' },
   { id: 'menu', label: 'Quản lý thực đơn' },
+  { id: 'news', label: 'Quản lý tin tức' },
   { id: 'shift', label: 'Chốt ca' },
   { id: 'pos', label: 'POS tạo đơn nhanh' },
 ]
+
+export const ACCOUNT_TAB = { id: 'account', label: 'Hồ sơ & Bảo mật' }
 
 export const WORKFORCE_TAB = { id: 'workforce', label: 'Lịch làm nhân sự' }
 export const MANAGER_SHIFT_APPROVAL_TAB = { id: 'shift-approval', label: 'Kiểm tra chốt ca' }
 export const MANAGER_EMPLOYEE_MANAGEMENT_TAB = { id: 'employee-manage', label: 'Quản lý nhân viên' }
 export const MANAGER_WORKFORCE_MANAGEMENT_TAB = { id: 'workforce-manage', label: 'Quản lý lịch làm nhân viên' }
+export const MANAGER_CUSTOMER_CARE_TAB = { id: 'customer-care', label: 'CSKH phản hồi đánh giá' }
 export const DASHBOARD_ROLES = {
   ADMIN: 'ADMIN',
   MANAGER: 'MANAGER',

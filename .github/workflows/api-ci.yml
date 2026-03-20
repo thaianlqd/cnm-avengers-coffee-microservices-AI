@@ -1,0 +1,55 @@
+name: API CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+
+jobs:
+  menu-service-api-tests:
+    name: Menu Service API Tests (5 smoke cases)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: '123'
+          POSTGRES_DB: avengers_coffee
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U admin -d avengers_coffee"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    defaults:
+      run:
+        working-directory: avengers-coffee-system/services/menu-service
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: avengers-coffee-system/services/menu-service/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run API e2e smoke tests
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: admin
+          DB_PASSWORD: '123'
+          DB_NAME: avengers_coffee
+          DB_SCHEMA: menu_ci_github
+        run: npm run test:e2e -- --runInBand

@@ -1,5 +1,8 @@
+import { useMemo, useState } from 'react'
 import { useSystemAdmin } from '../hooks/useSystemAdmin'
 import { AiAnalyticsPanel } from './AiAnalyticsPanel'
+import { AccountCenterPanel } from '../../shared/components/AccountCenterPanel'
+import { AdminNotificationBell } from '../../shared/components/AdminNotificationBell'
 
 function fmtNumber(value) {
   return Number(value || 0).toLocaleString('vi-VN')
@@ -12,8 +15,47 @@ function fmtDateShort(value) {
 
 const PROMOTION_TYPE_LABELS = { PERCENT: 'Giảm %', FIXED: 'Giảm tiền', FREE_ITEM: 'Tặng kèm' }
 const PROMOTION_STATUS_LABELS = { ACTIVE: 'Hiệu lực', INACTIVE: 'Tạm dừng', EXPIRED: 'Hết hạn' }
+const PAGE_SIZE = 8
+
+function buildPage(items = [], page = 1, pageSize = PAGE_SIZE) {
+  const total = items.length
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const safePage = Math.min(Math.max(Number(page || 1), 1), totalPages)
+  const start = (safePage - 1) * pageSize
+  const end = start + pageSize
+  return {
+    rows: items.slice(start, end),
+    total,
+    totalPages,
+    page: safePage,
+    from: total === 0 ? 0 : start + 1,
+    to: Math.min(end, total),
+  }
+}
+
+function Pagination({ pageData, onPageChange }) {
+  if (!pageData || pageData.total <= PAGE_SIZE) return null
+  return (
+    <div className="system-admin-pagination">
+      <span>Hiển thị {pageData.from}-{pageData.to} / {pageData.total}</span>
+      <div>
+        <button type="button" className="secondary" onClick={() => onPageChange(1)} disabled={pageData.page <= 1}>Đầu</button>
+        <button type="button" className="secondary" onClick={() => onPageChange(pageData.page - 1)} disabled={pageData.page <= 1}>Trước</button>
+        <strong>Trang {pageData.page}/{pageData.totalPages}</strong>
+        <button type="button" className="secondary" onClick={() => onPageChange(pageData.page + 1)} disabled={pageData.page >= pageData.totalPages}>Sau</button>
+        <button type="button" className="secondary" onClick={() => onPageChange(pageData.totalPages)} disabled={pageData.page >= pageData.totalPages}>Cuối</button>
+      </div>
+    </div>
+  )
+}
 
 export function AdminSystemConsole({ session, onLogout }) {
+  const [usersPage, setUsersPage] = useState(1)
+  const [branchesPage, setBranchesPage] = useState(1)
+  const [categoriesPage, setCategoriesPage] = useState(1)
+  const [menuPage, setMenuPage] = useState(1)
+  const [promotionsPage, setPromotionsPage] = useState(1)
+
   const {
     activeTab,
     setActiveTab,
@@ -50,6 +92,14 @@ export function AdminSystemConsole({ session, onLogout }) {
     deleteUser,
     savingUser,
     categoriesState,
+    categoryForm,
+    setCategoryForm,
+    editingCategoryId,
+    startEditCategory,
+    cancelEditCategory,
+    saveCategory,
+    deleteCategory,
+    savingCategory,
     menuState,
     menuForm,
     setMenuForm,
@@ -77,6 +127,12 @@ export function AdminSystemConsole({ session, onLogout }) {
     savingPromotion,
   } = useSystemAdmin()
 
+  const usersPageData = useMemo(() => buildPage(usersState.items, usersPage), [usersState.items, usersPage])
+  const branchesPageData = useMemo(() => buildPage(branchesState.items, branchesPage), [branchesState.items, branchesPage])
+  const categoriesPageData = useMemo(() => buildPage(categoriesState.items, categoriesPage), [categoriesState.items, categoriesPage])
+  const menuPageData = useMemo(() => buildPage(menuState.items, menuPage), [menuState.items, menuPage])
+  const promotionsPageData = useMemo(() => buildPage(promotionFilteredItems, promotionsPage), [promotionFilteredItems, promotionsPage])
+
   return (
     <div className="system-admin-shell">
       <aside className="system-admin-sidebar">
@@ -95,14 +151,20 @@ export function AdminSystemConsole({ session, onLogout }) {
           <button type="button" className={activeTab === 'branches' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('branches')}>
             Quản lý chi nhánh
           </button>
+          <button type="button" className={activeTab === 'categories' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('categories')}>
+            Quản lý danh mục
+          </button>
           <button type="button" className={activeTab === 'menu' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('menu')}>
             Quản lý menu tổng
+          </button>
+          <button type="button" className={activeTab === 'account' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('account')}>
+            Hồ sơ &amp; Bảo mật
           </button>
             <button type="button" className={activeTab === 'promotions' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('promotions')}>
               Khuyến mãi &amp; Voucher
             </button>
               <button type="button" className={activeTab === 'ai-analytics' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('ai-analytics')}>
-                🤖 AI Analytics
+                AI Analytics
               </button>
         </div>
 
@@ -114,13 +176,18 @@ export function AdminSystemConsole({ session, onLogout }) {
           <div>
             <p className="system-admin-kicker">System-wide Control</p>
             <h1>Bảng điều khiển Quản trị viên hệ thống</h1>
-            <p>Tách biệt hoàn toàn với giao diện Manager/Staff và chỉ giữ đúng 3 nhóm chức năng bạn yêu cầu.</p>
+            <p>Tách biệt hoàn toàn với giao diện Manager/Staff để tập trung vận hành và quản trị dữ liệu hệ thống.</p>
           </div>
-          <div className="system-admin-hero-badge">
-            <strong>{session?.user?.tenDangNhap || 'thaian_admin'}</strong>
-            <span>Toàn hệ thống cửa hàng</span>
+          <div className="system-admin-hero-tools">
+            <AdminNotificationBell session={session} />
+            <div className="system-admin-hero-badge">
+              <strong>{session?.user?.tenDangNhap || 'thaian_admin'}</strong>
+              <span>Toàn hệ thống cửa hàng</span>
+            </div>
           </div>
         </section>
+
+        {activeTab === 'account' ? <AccountCenterPanel session={session} /> : null}
 
         {activeTab === 'overview' && (
           <section className="panel system-admin-panel">
@@ -428,84 +495,68 @@ export function AdminSystemConsole({ session, onLogout }) {
             {promotionsState.loading ? <p>Đang tải khuyến mãi...</p> : null}
             {promotionsState.error ? <p className="error-text">{promotionsState.error}</p> : null}
 
-            <div className="system-admin-promo-list">
-              {promotionFilteredItems.map((item) => (
-                <article key={item.ma_khuyen_mai} className={`system-admin-promo-card system-admin-promo-card--${(item.trang_thai || 'inactive').toLowerCase()}`}>
-                  <div className="system-admin-promo-card-header">
-                    <div className="system-admin-promo-code-badge">
-                      <span className="system-admin-promo-code">{item.ma_khuyen_mai}</span>
-                      <span className={`system-admin-promo-type-badge system-admin-promo-type--${(item.loai_khuyen_mai || '').toLowerCase()}`}>
-                        {PROMOTION_TYPE_LABELS[item.loai_khuyen_mai] || item.loai_khuyen_mai}
-                      </span>
-                    </div>
-                    <span className={`system-admin-promo-status-badge system-admin-promo-status--${(item.trang_thai || 'inactive').toLowerCase()}`}>
-                      {PROMOTION_STATUS_LABELS[item.trang_thai] || item.trang_thai}
-                    </span>
-                  </div>
-
-                  <div className="system-admin-promo-card-body">
-                    {item.hinh_anh ? (
-                      <img src={item.hinh_anh} alt={item.ten_khuyen_mai} className="system-admin-promo-thumb" />
-                    ) : null}
-                    <div className="system-admin-promo-info">
-                      <h3>{item.ten_khuyen_mai}</h3>
-                      {item.mo_ta ? <p className="system-admin-promo-desc">{item.mo_ta}</p> : null}
-                      <div className="system-admin-promo-meta-grid">
-                        <div>
-                          <span>Giá trị giảm</span>
-                          <strong>
-                            {item.loai_khuyen_mai === 'PERCENT'
-                              ? `${item.gia_tri}%${item.giam_toi_da ? ` (tối đa ${fmtNumber(item.giam_toi_da)}đ)` : ''}`
-                              : item.loai_khuyen_mai === 'FIXED'
-                              ? `${fmtNumber(item.gia_tri)}đ`
-                              : item.ten_san_pham_tang || 'Xem mô tả'}
-                          </strong>
+            <div className="system-admin-table-wrap">
+              <table className="system-admin-table">
+                <thead>
+                  <tr>
+                    <th>Mã / Tên</th>
+                    <th>Loại</th>
+                    <th>Giá trị</th>
+                    <th>Điều kiện</th>
+                    <th>Hiệu lực</th>
+                    <th>Lượt dùng</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {promotionsPageData.rows.map((item) => (
+                    <tr key={item.ma_khuyen_mai}>
+                      <td>
+                        <strong>{item.ma_khuyen_mai}</strong>
+                        <p>{item.ten_khuyen_mai}</p>
+                      </td>
+                      <td>{PROMOTION_TYPE_LABELS[item.loai_khuyen_mai] || item.loai_khuyen_mai}</td>
+                      <td>
+                        {item.loai_khuyen_mai === 'PERCENT'
+                          ? `${item.gia_tri}%${item.giam_toi_da ? ` (tối đa ${fmtNumber(item.giam_toi_da)}đ)` : ''}`
+                          : item.loai_khuyen_mai === 'FIXED'
+                          ? `${fmtNumber(item.gia_tri)}đ`
+                          : item.ten_san_pham_tang || 'Xem mô tả'}
+                      </td>
+                      <td>
+                        <p>Đơn tối thiểu: {item.gia_tri_don_toi_thieu > 0 ? `${fmtNumber(item.gia_tri_don_toi_thieu)}đ` : 'Không yêu cầu'}</p>
+                        <p>Giới hạn/người: {item.gioi_han_moi_nguoi}</p>
+                      </td>
+                      <td>
+                        <p>Từ: {fmtDateShort(item.ngay_bat_dau)}</p>
+                        <p>Đến: {fmtDateShort(item.ngay_ket_thuc)}</p>
+                      </td>
+                      <td>{item.so_luong_da_dung}{item.so_luong_toi_da > 0 ? ` / ${fmtNumber(item.so_luong_toi_da)}` : ' / Vô hạn'}</td>
+                      <td>{PROMOTION_STATUS_LABELS[item.trang_thai] || item.trang_thai}</td>
+                      <td>
+                        <div className="system-admin-table-actions">
+                          <button type="button" className="secondary" onClick={() => startEditPromotion(item)}>Sửa</button>
+                          <button
+                            type="button"
+                            className="secondary"
+                            onClick={() => deletePromotion(item.ma_khuyen_mai)}
+                            disabled={Number(item.so_luong_da_dung || 0) > 0}
+                            title={Number(item.so_luong_da_dung || 0) > 0 ? 'Không thể xóa vì đã có người dùng. Hãy chuyển sang INACTIVE.' : ''}
+                          >
+                            Xóa
+                          </button>
                         </div>
-                        <div>
-                          <span>Đơn tối thiểu</span>
-                          <strong>{item.gia_tri_don_toi_thieu > 0 ? `${fmtNumber(item.gia_tri_don_toi_thieu)}đ` : 'Không yêu cầu'}</strong>
-                        </div>
-                        <div>
-                          <span>Lượt dùng</span>
-                          <strong>{item.so_luong_da_dung}{item.so_luong_toi_da > 0 ? ` / ${fmtNumber(item.so_luong_toi_da)}` : ' / Vô hạn'}</strong>
-                        </div>
-                        <div>
-                          <span>Giới hạn/người</span>
-                          <strong>{item.gioi_han_moi_nguoi} lần</strong>
-                        </div>
-                        <div>
-                          <span>Hiệu lực từ</span>
-                          <strong>{fmtDateShort(item.ngay_bat_dau)}</strong>
-                        </div>
-                        <div>
-                          <span>Hết hạn</span>
-                          <strong>{fmtDateShort(item.ngay_ket_thuc)}</strong>
-                        </div>
-                      </div>
-                      {item.hien_thi_cho_khach
-                        ? <span className="system-admin-promo-visible-badge">👀 Hiển thị cho khách</span>
-                        : <span className="system-admin-promo-hidden-badge">🕶️ Ẩn khỏi trang khách</span>}
-                    </div>
-                  </div>
-
-                  <div className="system-admin-promo-card-actions">
-                    <button type="button" className="secondary" onClick={() => startEditPromotion(item)}>Sửa</button>
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={() => deletePromotion(item.ma_khuyen_mai)}
-                      disabled={Number(item.so_luong_da_dung || 0) > 0}
-                      title={Number(item.so_luong_da_dung || 0) > 0 ? 'Không thể xóa vì đã có người dùng. Hãy chuyển sang INACTIVE.' : ''}
-                    >
-                      Xóa
-                    </button>
-                  </div>
-                </article>
-              ))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <Pagination pageData={promotionsPageData} onPageChange={setPromotionsPage} />
+            </div>
               {!promotionsState.loading && promotionFilteredItems.length === 0 ? (
                 <p style={{ color: '#8c6b56' }}>Chưa có chương trình nào. Hãy tạo chương trình đầu tiên ở trên!</p>
               ) : null}
-            </div>
           </section>
         )}
 
@@ -592,26 +643,42 @@ export function AdminSystemConsole({ session, onLogout }) {
 
             {usersState.loading ? <p>Đang tải users...</p> : null}
             {usersState.error ? <p className="error-text">{usersState.error}</p> : null}
-            <div className="system-admin-users-grid">
-              {usersState.items.map((item) => (
-                <article key={item.ma_nguoi_dung} className="system-admin-user-card">
-                  <div>
-                    <h3>{item.ho_ten}</h3>
-                    <p>@{item.ten_dang_nhap}</p>
-                    <p>{item.email || '---'}</p>
-                    <p>{item.co_so_ten || 'Không gán chi nhánh'}</p>
-                  </div>
-                  <div>
-                    <p className="order-payment-pill">{item.vai_tro}</p>
-                    <strong>{item.trang_thai}</strong>
-                    <p>{new Date(item.ngay_tao).toLocaleString('vi-VN')}</p>
-                  </div>
-                  <div className="system-admin-user-actions">
-                    <button type="button" className="secondary" onClick={() => startEditUser(item)}>Sửa</button>
-                    <button type="button" className="secondary" onClick={() => deleteUser(item.ma_nguoi_dung)} disabled={item.vai_tro === 'ADMIN'}>Xóa</button>
-                  </div>
-                </article>
-              ))}
+            <div className="system-admin-table-wrap">
+              <table className="system-admin-table">
+                <thead>
+                  <tr>
+                    <th>Họ tên / Username</th>
+                    <th>Email</th>
+                    <th>Vai trò</th>
+                    <th>Trạng thái</th>
+                    <th>Chi nhánh</th>
+                    <th>Ngày tạo</th>
+                    <th>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {usersPageData.rows.map((item) => (
+                    <tr key={item.ma_nguoi_dung}>
+                      <td>
+                        <strong>{item.ho_ten}</strong>
+                        <p>@{item.ten_dang_nhap}</p>
+                      </td>
+                      <td>{item.email || '---'}</td>
+                      <td>{item.vai_tro}</td>
+                      <td>{item.trang_thai}</td>
+                      <td>{item.co_so_ten || 'Không gán chi nhánh'}</td>
+                      <td>{new Date(item.ngay_tao).toLocaleString('vi-VN')}</td>
+                      <td>
+                        <div className="system-admin-table-actions">
+                          <button type="button" className="secondary" onClick={() => startEditUser(item)}>Sửa</button>
+                          <button type="button" className="secondary" onClick={() => deleteUser(item.ma_nguoi_dung)} disabled={item.vai_tro === 'ADMIN'}>Xóa</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <Pagination pageData={usersPageData} onPageChange={setUsersPage} />
             </div>
           </section>
         )}
@@ -746,34 +813,49 @@ export function AdminSystemConsole({ session, onLogout }) {
             {branchesState.loading ? <p>Đang tải chi nhánh...</p> : null}
             {branchesState.error ? <p className="error-text">{branchesState.error}</p> : null}
 
-            <div className="system-admin-branch-grid">
-              {branchesState.items.map((branch) => (
-                <article key={branch.ma_chi_nhanh} className="system-admin-branch-card">
-                  <div>
-                    <h3>{branch.ten_chi_nhanh}</h3>
-                    <p>Mã: {branch.ma_chi_nhanh}</p>
-                    <p>Địa chỉ: {branch.dia_chi || '---'}</p>
-                    <p>SĐT: {branch.so_dien_thoai || '---'}</p>
-                  </div>
-                  <div>
-                    <p className="order-payment-pill">{branch.trang_thai}</p>
-                    <strong>{fmtNumber(branch.account_count)} tài khoản</strong>
-                    <p>{new Date(branch.ngay_cap_nhat || branch.ngay_tao).toLocaleString('vi-VN')}</p>
-                  </div>
-                  <div className="system-admin-user-actions">
-                    <button type="button" className="secondary" onClick={() => startEditBranch(branch)}>Sửa</button>
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={() => deleteBranch(branch.ma_chi_nhanh)}
-                      disabled={Number(branch.account_count || 0) > 0}
-                      title={Number(branch.account_count || 0) > 0 ? 'Không thể xóa vì đang có tài khoản gán vào' : ''}
-                    >
-                      Xóa
-                    </button>
-                  </div>
-                </article>
-              ))}
+            <div className="system-admin-table-wrap">
+              <table className="system-admin-table">
+                <thead>
+                  <tr>
+                    <th>Tên chi nhánh</th>
+                    <th>Mã</th>
+                    <th>Địa chỉ</th>
+                    <th>SĐT</th>
+                    <th>Tài khoản</th>
+                    <th>Trạng thái</th>
+                    <th>Cập nhật</th>
+                    <th>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {branchesPageData.rows.map((branch) => (
+                    <tr key={branch.ma_chi_nhanh}>
+                      <td><strong>{branch.ten_chi_nhanh}</strong></td>
+                      <td>{branch.ma_chi_nhanh}</td>
+                      <td>{branch.dia_chi || '---'}</td>
+                      <td>{branch.so_dien_thoai || '---'}</td>
+                      <td>{fmtNumber(branch.account_count)}</td>
+                      <td>{branch.trang_thai}</td>
+                      <td>{new Date(branch.ngay_cap_nhat || branch.ngay_tao).toLocaleString('vi-VN')}</td>
+                      <td>
+                        <div className="system-admin-table-actions">
+                          <button type="button" className="secondary" onClick={() => startEditBranch(branch)}>Sửa</button>
+                          <button
+                            type="button"
+                            className="secondary"
+                            onClick={() => deleteBranch(branch.ma_chi_nhanh)}
+                            disabled={Number(branch.account_count || 0) > 0}
+                            title={Number(branch.account_count || 0) > 0 ? 'Không thể xóa vì đang có tài khoản gán vào' : ''}
+                          >
+                            Xóa
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <Pagination pageData={branchesPageData} onPageChange={setBranchesPage} />
             </div>
           </section>
         )}
@@ -781,6 +863,92 @@ export function AdminSystemConsole({ session, onLogout }) {
         {activeTab === 'ai-analytics' && (
           <section className="panel system-admin-panel" style={{ padding: '28px 32px' }}>
             <AiAnalyticsPanel session={session} />
+          </section>
+        )}
+
+        {activeTab === 'categories' && (
+          <section className="panel system-admin-panel">
+            <div className="panel-head system-admin-panel-head">
+              <h2>Quản lý danh mục (CRUD)</h2>
+              <span>Thiết lập danh mục để phân loại món trong menu tổng</span>
+            </div>
+
+            <section className="system-admin-card">
+              <div className="panel-head">
+                <h2>{editingCategoryId ? `Cập nhật danh mục #${editingCategoryId}` : 'Thông tin danh mục'}</h2>
+                <span>{categoriesState.items.length} danh mục</span>
+              </div>
+
+              <div className="system-admin-form-grid" style={{ marginBottom: '0.7rem' }}>
+                <label>
+                  <span>Tên danh mục</span>
+                  <input
+                    value={categoryForm.label}
+                    onChange={(e) => setCategoryForm((p) => ({ ...p, label: e.target.value }))}
+                    placeholder="Ví dụ: Cà phê"
+                  />
+                </label>
+                <label>
+                  <span>Icon URL (tùy chọn)</span>
+                  <input
+                    value={categoryForm.icon}
+                    onChange={(e) => setCategoryForm((p) => ({ ...p, icon: e.target.value }))}
+                    placeholder="https://..."
+                  />
+                </label>
+              </div>
+
+              <div className="system-admin-form-actions" style={{ marginBottom: '0.8rem' }}>
+                <button type="button" onClick={saveCategory} disabled={savingCategory}>
+                  {savingCategory ? 'Đang lưu...' : editingCategoryId ? 'Cập nhật danh mục' : 'Thêm danh mục'}
+                </button>
+                {editingCategoryId ? (
+                  <button type="button" className="secondary" onClick={cancelEditCategory}>Hủy sửa</button>
+                ) : null}
+              </div>
+
+              {categoriesState.loading ? <p>Đang tải danh mục...</p> : null}
+              {categoriesState.error ? <p className="error-text">{categoriesState.error}</p> : null}
+
+              {!categoriesState.loading && !categoriesState.error ? (
+                <div className="system-admin-table-wrap">
+                  <table className="system-admin-table">
+                    <thead>
+                      <tr>
+                        <th>Tên danh mục</th>
+                        <th>Mã danh mục</th>
+                        <th>Số món đang dùng</th>
+                        <th>Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {categoriesPageData.rows.map((cat) => (
+                        <tr key={cat.code}>
+                          <td><strong>{cat.label}</strong></td>
+                          <td>{cat.code}</td>
+                          <td>{fmtNumber(cat.product_count || 0)}</td>
+                          <td>
+                            <div className="system-admin-table-actions">
+                              <button type="button" className="secondary" onClick={() => startEditCategory(cat)}>Sửa</button>
+                              <button
+                                type="button"
+                                className="secondary"
+                                onClick={() => deleteCategory(cat.id || cat.code, cat.label)}
+                                disabled={Number(cat.product_count || 0) > 0}
+                                title={Number(cat.product_count || 0) > 0 ? 'Không thể xóa vì danh mục đang có sản phẩm' : ''}
+                              >
+                                Xóa
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <Pagination pageData={categoriesPageData} onPageChange={setCategoriesPage} />
+                </div>
+              ) : null}
+            </section>
           </section>
         )}
 
@@ -814,6 +982,10 @@ export function AdminSystemConsole({ session, onLogout }) {
                     <input type="number" min="0" value={menuForm.price} onChange={(e) => setMenuForm((p) => ({ ...p, price: Number(e.target.value) || 0 }))} />
                   </label>
                   <label>
+                    <span>Giá niêm yết</span>
+                    <input type="number" min="0" value={menuForm.original_price} onChange={(e) => setMenuForm((p) => ({ ...p, original_price: Number(e.target.value) || 0 }))} />
+                  </label>
+                  <label>
                     <span>Mô tả</span>
                     <input value={menuForm.description} onChange={(e) => setMenuForm((p) => ({ ...p, description: e.target.value }))} placeholder="Mô tả ngắn gọn cho món" />
                   </label>
@@ -822,6 +994,25 @@ export function AdminSystemConsole({ session, onLogout }) {
                     <select value={menuForm.dang_ban ? '1' : '0'} onChange={(e) => setMenuForm((p) => ({ ...p, dang_ban: e.target.value === '1' }))}>
                       <option value="1">Đang bán</option>
                       <option value="0">Tạm ngưng</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Gắn nhãn</span>
+                    <select
+                      value={`${menuForm.la_hot ? 'H' : ''}${menuForm.la_moi ? 'N' : ''}` || 'NONE'}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setMenuForm((p) => ({
+                          ...p,
+                          la_hot: val === 'H' || val === 'HN',
+                          la_moi: val === 'N' || val === 'HN',
+                        }));
+                      }}
+                    >
+                      <option value="NONE">Bình thường</option>
+                      <option value="H">Hot</option>
+                      <option value="N">Mới</option>
+                      <option value="HN">Hot + Mới</option>
                     </select>
                   </label>
                   <label>
@@ -867,27 +1058,53 @@ export function AdminSystemConsole({ session, onLogout }) {
                 {menuState.loading ? <p>Đang tải menu...</p> : null}
                 {menuState.error ? <p className="error-text">{menuState.error}</p> : null}
 
-                <div className="system-admin-menu-grid">
-                  {menuState.items.map((item) => (
-                    <article key={item.id} className="system-admin-menu-item">
-                      <div className="system-admin-menu-thumb-wrap">
-                        {item.image ? <img src={item.image} alt={item.name} className="system-admin-menu-thumb" /> : <div className="system-admin-menu-thumb system-admin-menu-thumb--empty">No image</div>}
-                        <span className={item.dang_ban ? 'system-admin-status system-admin-status--active' : 'system-admin-status system-admin-status--inactive'}>
-                          {item.dang_ban ? 'Đang bán' : 'Tạm ngưng'}
-                        </span>
-                      </div>
-                      <div className="system-admin-menu-body">
-                        <h3>{item.name}</h3>
-                        <p className="system-admin-menu-category">{item.category || 'Chưa có danh mục'}</p>
-                        <strong>{fmtNumber(item.price)} đ</strong>
-                        <p className="system-admin-menu-description">{item.description || 'Chưa có mô tả cho món này.'}</p>
-                        <div className="system-admin-menu-actions">
-                          <button type="button" className="secondary" onClick={() => startEditMenu(item)}>Sửa</button>
-                          <button type="button" className="secondary" onClick={() => deleteMenu(item.id)}>Xóa</button>
-                        </div>
-                      </div>
-                    </article>
-                  ))}
+                <div className="system-admin-table-wrap">
+                  <table className="system-admin-table">
+                    <thead>
+                      <tr>
+                        <th>Món</th>
+                        <th>Danh mục</th>
+                        <th>Giá bán</th>
+                        <th>Giá niêm yết</th>
+                        <th>Trạng thái</th>
+                        <th>Nhãn</th>
+                        <th>Mô tả</th>
+                        <th>Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {menuPageData.rows.map((item) => (
+                        <tr key={item.id}>
+                          <td>
+                            <div className="system-admin-table-product">
+                              {item.image ? <img src={item.image} alt={item.name} className="system-admin-table-product-thumb" /> : <div className="system-admin-table-product-thumb system-admin-table-product-thumb--empty">No image</div>}
+                              <strong>{item.name}</strong>
+                            </div>
+                          </td>
+                          <td>{item.category || 'Chưa có danh mục'}</td>
+                          <td>{fmtNumber(item.price)} đ</td>
+                          <td>{Number(item.original_price || 0) > 0 ? `${fmtNumber(item.original_price)} đ` : '---'}</td>
+                          <td>{item.dang_ban ? 'Đang bán' : 'Tạm ngưng'}</td>
+                          <td>
+                            <div className="system-admin-table-tags">
+                              {item.la_hot ? <span>Hot</span> : null}
+                              {item.la_moi ? <span>Mới</span> : null}
+                              {item.is_discounted ? <span>Giảm giá</span> : null}
+                              {!item.la_hot && !item.la_moi && !item.is_discounted ? <span>Bình thường</span> : null}
+                            </div>
+                          </td>
+                          <td>{item.description || 'Chưa có mô tả'}</td>
+                          <td>
+                            <div className="system-admin-table-actions">
+                              <button type="button" className="secondary" onClick={() => startEditMenu(item)}>Sửa</button>
+                              <button type="button" className="secondary" onClick={() => deleteMenu(item.id)}>Xóa</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <Pagination pageData={menuPageData} onPageChange={setMenuPage} />
                 </div>
               </section>
             </div>

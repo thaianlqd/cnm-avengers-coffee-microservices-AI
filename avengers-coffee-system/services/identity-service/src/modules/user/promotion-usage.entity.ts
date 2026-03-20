@@ -1,4 +1,13 @@
-import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Promotion } from './promotion.entity';
 
 const userSchema = process.env.DB_SCHEMA || 'identity';
 
@@ -11,6 +20,10 @@ export class PromotionUsage {
 
   @Column({ type: 'varchar', length: 50 })
   ma_khuyen_mai: string;
+
+  @ManyToOne(() => Promotion, (promotion) => promotion.lich_su_su_dung, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'ma_khuyen_mai', referencedColumnName: 'ma_khuyen_mai' })
+  khuyen_mai: Promotion;
 
   @Column({ type: 'varchar' })
   ma_nguoi_dung: string;

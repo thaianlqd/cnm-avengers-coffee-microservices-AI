@@ -196,6 +196,46 @@ export function AiAnalyticsPanel() {
   const fc = forecastQuery.data
   const recs = recommendQuery.data
 
+  const behaviorSummary = useMemo(() => {
+    const totalUsers = Number(stats?.collaborative_filtering?.total_users || 0)
+    const totalItems = Number(stats?.collaborative_filtering?.total_items || 0)
+    const totalInteractions = Number(stats?.collaborative_filtering?.total_interactions || 0)
+    const avgInteraction = totalUsers > 0 ? totalInteractions / totalUsers : 0
+
+    return [
+      {
+        label: 'Khách đã có lịch sử mua',
+        value: fmtNum(totalUsers),
+        note: totalUsers > 0 ? 'AI có đủ dữ liệu để gợi ý cá nhân hóa' : 'Chưa có tệp khách đủ lớn cho gợi ý sâu',
+      },
+      {
+        label: 'Sản phẩm trong mô hình gợi ý',
+        value: fmtNum(totalItems),
+        note: totalItems > 0 ? 'Danh mục đã được AI học' : 'Nên kiểm tra dữ liệu menu đầu vào',
+      },
+      {
+        label: 'Tổng lượt tương tác mua hàng',
+        value: fmtNum(totalInteractions),
+        note: totalInteractions > 0 ? 'Hệ thống đã ghi nhận hành vi đặt món' : 'Cần thêm dữ liệu đơn hàng để tăng độ chính xác',
+      },
+      {
+        label: 'Tần suất mua trung bình / khách',
+        value: `${fmtNum(avgInteraction, 2)} lượt`,
+        note: avgInteraction >= 2 ? 'Khách quay lại tốt, phù hợp chiến lược bán chéo' : 'Nên chạy ưu đãi kéo tần suất quay lại',
+      },
+    ]
+  }, [stats])
+
+  const forecastRows = useMemo(() => {
+    const rows = (fc?.forecast || []).slice(0, 7)
+    return rows.map((item) => ({
+      ds: item.ds,
+      yhat: Number(item.yhat || 0),
+      lo: Number(item.yhat_lower ?? item.yhat ?? 0),
+      hi: Number(item.yhat_upper ?? item.yhat ?? 0),
+    }))
+  }, [fc])
+
   const branchOptions = useMemo(() => {
     const base = [{ value: 'ALL', label: 'Tất cả chi nhánh' }]
     const branches = stats?.demand_forecasting?.branches || []
@@ -216,14 +256,14 @@ export function AiAnalyticsPanel() {
       }}>
         <div>
           <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: 2, opacity: 0.7, textTransform: 'uppercase' }}>
-            AI / Machine Learning
+            Trung tâm phân tích AI
           </p>
           <h2 style={{ margin: '6px 0 8px', fontSize: 22, fontWeight: 900 }}>
-            Recommendation &amp; Demand Forecasting
+            Gợi ý sản phẩm và Dự báo nhu cầu
           </h2>
           <p style={{ margin: 0, fontSize: 13, opacity: 0.8, maxWidth: 500 }}>
-            Collaborative Filtering (item-based cosine similarity) cho gợi ý sản phẩm.
-            Holt-Winters / Prophet cho dự báo nhu cầu theo chuỗi thời gian.
+            Hệ thống tổng hợp hành vi mua hàng để gợi ý sản phẩm phù hợp,
+            đồng thời dự báo số đơn hoặc doanh thu trong các ngày tiếp theo để hỗ trợ vận hành.
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
@@ -237,7 +277,7 @@ export function AiAnalyticsPanel() {
               fontSize: 12, fontWeight: 700, backdropFilter: 'blur(4px)',
             }}
           >
-            {retrainCfMutation.isPending ? '⏳ Đang train CF...' : '🔄 Retrain CF'}
+            {retrainCfMutation.isPending ? 'Đang cập nhật mô hình gợi ý...' : 'Cập nhật mô hình gợi ý'}
           </button>
           <button
             type="button"
@@ -249,7 +289,7 @@ export function AiAnalyticsPanel() {
               fontSize: 12, fontWeight: 700, backdropFilter: 'blur(4px)',
             }}
           >
-            {retrainForecastMutation.isPending ? '⏳ Đang train...' : '🔄 Retrain Forecast'}
+            {retrainForecastMutation.isPending ? 'Đang cập nhật mô hình dự báo...' : 'Cập nhật mô hình dự báo'}
           </button>
         </div>
       </div>
@@ -275,28 +315,28 @@ export function AiAnalyticsPanel() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(190px,1fr))', gap: 16, marginBottom: 28 }}>
           {[
             {
-              label: 'CF Model', value: stats.collaborative_filtering?.is_trained ? 'Trained ✓' : 'Not trained',
-              sub: `${fmtNum(stats.collaborative_filtering?.total_users)} users`, ok: stats.collaborative_filtering?.is_trained,
+              label: 'Mô hình gợi ý', value: stats.collaborative_filtering?.is_trained ? 'Sẵn sàng' : 'Chưa sẵn sàng',
+              sub: `${fmtNum(stats.collaborative_filtering?.total_users)} khách có lịch sử`, ok: stats.collaborative_filtering?.is_trained,
             },
             {
-              label: 'Items trong CF', value: fmtNum(stats.collaborative_filtering?.total_items),
-              sub: `${fmtNum(stats.collaborative_filtering?.total_interactions)} interactions`, ok: true,
+              label: 'Phạm vi học gợi ý', value: fmtNum(stats.collaborative_filtering?.total_items),
+              sub: `${fmtNum(stats.collaborative_filtering?.total_interactions)} lượt tương tác`, ok: true,
             },
             {
-              label: 'Forecast Model', value: stats.demand_forecasting?.is_trained ? 'Trained ✓' : 'Not trained',
+              label: 'Mô hình dự báo', value: stats.demand_forecasting?.is_trained ? 'Sẵn sàng' : 'Chưa sẵn sàng',
               sub: stats.demand_forecasting?.engine || 'N/A', ok: stats.demand_forecasting?.is_trained,
             },
             {
-              label: 'Forecast Records', value: fmtNum(stats.demand_forecasting?.total_records),
+              label: 'Du lieu du bao', value: fmtNum(stats.demand_forecasting?.total_records),
               sub: `${stats.demand_forecasting?.branches?.length || 0} chi nhánh`, ok: true,
             },
             {
-              label: 'CF Trained At', value: fmtDate(stats.collaborative_filtering?.trained_at)?.split(',')[0] || '---',
+              label: 'Lần cập nhật gợi ý', value: fmtDate(stats.collaborative_filtering?.trained_at)?.split(',')[0] || '---',
               sub: fmtDate(stats.collaborative_filtering?.trained_at)?.split(',')[1] || '', ok: true,
             },
             {
-              label: 'Service', value: stats.service || 'ai-v1',
-              sub: stats.uptime_ok ? 'Online' : 'Offline', ok: stats.uptime_ok,
+              label: 'Trạng thái dịch vụ', value: stats.service || 'ai-v1',
+              sub: stats.uptime_ok ? 'Đang hoạt động' : 'Tạm dừng', ok: stats.uptime_ok,
             },
           ].map((card, i) => (
             <div key={i} style={{
@@ -316,6 +356,40 @@ export function AiAnalyticsPanel() {
         </div>
       )}
 
+      {stats && (
+        <div style={{
+          background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16,
+          padding: '20px 24px', marginBottom: 28, boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+        }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#111827' }}>
+            Bảng diễn giải hành vi mua hàng
+          </h3>
+          <p style={{ margin: '6px 0 14px', fontSize: 12, color: '#6b7280' }}>
+            Bảng này giúp quản trị đọc nhanh AI đang nhìn thấy gì từ dữ liệu mua hàng để ra quyết định bán hàng.
+          </p>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', color: '#374151' }}>
+                  <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #e5e7eb' }}>Chi so</th>
+                  <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #e5e7eb' }}>Giá trị</th>
+                  <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #e5e7eb' }}>Diễn giải cho quản trị</th>
+                </tr>
+              </thead>
+              <tbody>
+                {behaviorSummary.map((row, idx) => (
+                  <tr key={idx}>
+                    <td style={{ padding: '10px 12px', borderBottom: '1px solid #f1f5f9', fontWeight: 700 }}>{row.label}</td>
+                    <td style={{ padding: '10px 12px', borderBottom: '1px solid #f1f5f9', color: '#0f172a' }}>{row.value}</td>
+                    <td style={{ padding: '10px 12px', borderBottom: '1px solid #f1f5f9', color: '#64748b' }}>{row.note}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* ── Forecast Chart ───────────────────────────────────────────────── */}
       <div style={{
         background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16,
@@ -324,10 +398,10 @@ export function AiAnalyticsPanel() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
           <div>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#111827' }}>
-              📈 Dự báo nhu cầu
+              Du bao nhu cau mua hang
             </h3>
             <p style={{ margin: '4px 0 0', fontSize: 12, color: '#6b7280' }}>
-              {fc ? `Engine: ${fc.model_engine} · Trained: ${fmtDate(fc.trained_at)}` : 'Đang tải...'}
+              {fc ? `Cong cu: ${fc.model_engine} · Cap nhat: ${fmtDate(fc.trained_at)}` : 'Đang tải...'}
             </p>
           </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -385,6 +459,35 @@ export function AiAnalyticsPanel() {
                 </div>
               ))}
             </div>
+
+            <div style={{ marginTop: 18, overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: '#f8fafc', color: '#374151' }}>
+                    <th style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid #e5e7eb' }}>Ngay du bao</th>
+                    <th style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid #e5e7eb' }}>Du kien trung binh</th>
+                    <th style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid #e5e7eb' }}>Muc dao dong thap</th>
+                    <th style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid #e5e7eb' }}>Muc dao dong cao</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {forecastRows.map((row) => (
+                    <tr key={row.ds}>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #f1f5f9', fontWeight: 700 }}>{row.ds}</td>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #f1f5f9' }}>
+                        {metric === 'revenue' ? fmtMoney(row.yhat) : fmtNum(row.yhat, 1)}
+                      </td>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #f1f5f9', color: '#64748b' }}>
+                        {metric === 'revenue' ? fmtMoney(row.lo) : fmtNum(row.lo, 1)}
+                      </td>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #f1f5f9', color: '#64748b' }}>
+                        {metric === 'revenue' ? fmtMoney(row.hi) : fmtNum(row.hi, 1)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </>
         )}
       </div>
@@ -395,10 +498,10 @@ export function AiAnalyticsPanel() {
         padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
       }}>
         <h3 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 800, color: '#111827' }}>
-          🧪 Test Recommendation Engine
+          Thử nghiệm gợi ý theo hành vi khách
         </h3>
         <p style={{ margin: '0 0 16px', fontSize: 12, color: '#6b7280' }}>
-          Nhập UUID người dùng để xem AI gợi ý sản phẩm nào cho họ. Nếu là guest/user mới sẽ trả về sản phẩm phổ biến nhất.
+          Nhập mã người dùng để xem danh sách món AI đề xuất dựa trên lịch sử mua. Nếu là tài khoản mới, hệ thống trả về món phổ biến.
         </p>
 
         <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>

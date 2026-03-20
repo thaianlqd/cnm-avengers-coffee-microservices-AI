@@ -8,6 +8,7 @@ import { RealtimeAnalyticsService } from './infrastructure/analytics/realtime-an
 import { AppService } from './app.service';
 import { NotificationService } from './modules/notification/notification.service';
 import { ThanhToanService } from './modules/thanh-toan/thanh-toan.service';
+import { FavoriteService } from './modules/favorite/favorite.service';
 
 @Controller()
 export class AppController {
@@ -16,6 +17,7 @@ export class AppController {
     private readonly thanhToanService: ThanhToanService,
     private readonly notificationService: NotificationService,
     private readonly realtimeAnalyticsService: RealtimeAnalyticsService,
+    private readonly favoriteService: FavoriteService,
   ) {}
 
   private ensureSelfOrAdmin(currentUser: AuthUser | null, userId: string) {
@@ -91,6 +93,33 @@ export class AppController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CUSTOMER', 'ADMIN')
+  @Get('customers/:customerId/favorites')
+  getFavorites(@Param('customerId') customerId: string, @CurrentUser() currentUser: AuthUser | null) {
+    this.ensureSelfOrAdmin(currentUser, customerId);
+    return this.favoriteService.layDanhSachYeuThich(customerId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('CUSTOMER', 'ADMIN')
+  @Post('customers/:customerId/favorites/toggle')
+  toggleFavorite(
+    @Param('customerId') customerId: string,
+    @CurrentUser() currentUser: AuthUser | null,
+    @Body()
+    payload: {
+      ma_san_pham?: string | number;
+      ten_san_pham?: string;
+      gia_ban?: number;
+      hinh_anh_url?: string;
+      danh_muc?: string;
+    },
+  ) {
+    this.ensureSelfOrAdmin(currentUser, customerId);
+    return this.favoriteService.chuyenTrangThaiYeuThich(customerId, payload);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('CUSTOMER', 'ADMIN')
   @Get('customers/:customerId/orders')
   getOrders(
     @Param('customerId') customerId: string,
@@ -121,7 +150,15 @@ export class AppController {
       dia_chi_giao_hang?: string;
       khung_gio_giao?: string;
       ghi_chu?: string;
-      items?: Array<{ id: number; so_luong: number }>;
+      items?: Array<{
+        id?: number;
+        ma_san_pham?: number;
+        ten_san_pham?: string;
+        so_luong: number;
+        gia_ban?: number;
+        kich_co?: string;
+        hinh_anh_url?: string;
+      }>;
     },
   ) {
     this.ensureSelfOrAdmin(currentUser, customerId);
@@ -129,7 +166,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('CUSTOMER', 'ADMIN')
+  @Roles('CUSTOMER', 'ADMIN', 'MANAGER', 'STAFF')
   @Get('customers/:customerId/notifications')
   getNotifications(
     @Param('customerId') customerId: string,
@@ -145,7 +182,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('CUSTOMER', 'ADMIN')
+  @Roles('CUSTOMER', 'ADMIN', 'MANAGER', 'STAFF')
   @Patch('customers/:customerId/notifications/:notificationId/read')
   markNotificationRead(
     @Param('customerId') customerId: string,
@@ -157,7 +194,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('CUSTOMER', 'ADMIN')
+  @Roles('CUSTOMER', 'ADMIN', 'MANAGER', 'STAFF')
   @Patch('customers/:customerId/notifications/read-all')
   markAllNotificationsRead(@Param('customerId') customerId: string, @CurrentUser() currentUser: AuthUser | null) {
     this.ensureSelfOrAdmin(currentUser, customerId);
@@ -430,6 +467,84 @@ export class AppController {
     const resolvedStaffUsername = staffUsername || currentUser?.username || '';
     this.ensureStaffSelfOrElevated(currentUser, resolvedStaffUsername);
     return this.thanhToanService.layLichLamViecChoStaff(resolvedStaffUsername, from, to, branchCode);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STAFF', 'MANAGER', 'ADMIN')
+  @Post('staff/work-shifts/requests')
+  requestWorkShift(
+    @CurrentUser() currentUser: AuthUser | null,
+    @Body()
+    payload: {
+      staff_username?: string;
+      staff_name?: string;
+      shift_date: string;
+      shift_code: 'SANG' | 'CHIEU' | 'TOI';
+      note?: string;
+      branch_code?: string;
+    },
+  ) {
+    const role = String(currentUser?.role || '').toUpperCase();
+    const resolvedStaffUsername =
+      role === 'STAFF'
+        ? currentUser?.username || payload.staff_username || ''
+        : payload.staff_username || currentUser?.username || '';
+
+    this.ensureStaffSelfOrElevated(currentUser, resolvedStaffUsername);
+    return this.thanhToanService.taoYeuCauDangKyCaChoStaff({
+      ...payload,
+      staff_username: resolvedStaffUsername,
+      staff_name: payload.staff_name || currentUser?.username || resolvedStaffUsername,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('MANAGER', 'ADMIN')
+  @Get('manager/work-shifts/requests')
+  getWorkShiftRequestsForManager(
+    @Query('status') status?: 'PENDING' | 'APPROVED' | 'REJECTED',
+    @Query('branch_code') branchCode?: string,
+  ) {
+    return this.thanhToanService.layYeuCauDangKyCaChoManager({
+      status,
+      branchCode,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('MANAGER', 'ADMIN')
+  @Patch('manager/work-shifts/requests/:id')
+  handleWorkShiftRequestByManager(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: AuthUser | null,
+    @Body()
+    payload: {
+      status: 'APPROVED' | 'REJECTED';
+      review_note?: string;
+      adjusted_shift_date?: string;
+      adjusted_shift_code?: 'SANG' | 'CHIEU' | 'TOI';
+      adjusted_note?: string;
+      branch_code?: string;
+    },
+  ) {
+    return this.thanhToanService.xuLyYeuCauDangKyCaChoManager(id, {
+      ...payload,
+      manager_username: currentUser?.username || 'manager',
+    });
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STAFF', 'MANAGER', 'ADMIN')
+  @Delete('staff/work-shifts/requests/:id')
+  deleteShiftRequest(@Param('id') id: string, @Query('branch_code') branchCode?: string) {
+    return this.thanhToanService.xoaYeuCauDangKyCa(id, branchCode);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('MANAGER', 'ADMIN')
+  @Delete('manager/work-shifts/requests/:id')
+  deleteWorkShiftRequest(@Param('id') id: string, @Query('branch_code') branchCode?: string) {
+    return this.thanhToanService.xoaYeuCauDangKyCa(id, branchCode);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

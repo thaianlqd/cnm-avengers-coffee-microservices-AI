@@ -64,6 +64,15 @@ services:
       PORT: ${IDENTITY_PORT:-3001}
       JWT_SECRET: ${JWT_SECRET:-avengers-jwt-secret}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      APP_NAME: ${APP_NAME:-The Avengers House}
+      RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-}
+      FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
+      FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-avengers-internal-token}
       DB_HOST: ${DB_HOST:-postgres-db}
       DB_PORT: ${DB_PORT:-5432}
@@ -164,6 +173,33 @@ services:
     networks:
       - avengers-network
 
+  news-service:
+    build:
+      context: ./avengers-coffee-system/services/news-service
+    container_name: avengers_news_service
+    restart: unless-stopped
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: ${NEWS_PORT:-3006}
+      JWT_SECRET: ${JWT_SECRET:-avengers-jwt-secret}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      DB_HOST: ${DB_HOST:-postgres-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-admin}
+      DB_PASSWORD: ${DB_PASSWORD:-123}
+      DB_NAME: ${DB_NAME:-avengers_coffee}
+      DB_SCHEMA: ${NEWS_DB_SCHEMA:-news}
+      UPLOAD_ROOT_DIR: /app/uploads
+    volumes:
+      - ./avengers-coffee-system/shared/uploads:/app/uploads
+    expose:
+      - "${NEWS_PORT:-3006}"
+    networks:
+      - avengers-network
+
   api-gateway:
     build:
       context: ./avengers-coffee-system/api-gateway/gateway-root
@@ -178,6 +214,8 @@ services:
         condition: service_started
       order-service:
         condition: service_started
+      news-service:
+        condition: service_started
       ai-service:
         condition: service_started
     environment:
@@ -187,6 +225,7 @@ services:
       MENU_SERVICE_URL: http://menu-service:${MENU_PORT:-3003}
       INVENTORY_SERVICE_URL: http://inventory-service:${INVENTORY_PORT:-3004}
       ORDER_SERVICE_URL: http://order-service:${ORDER_PORT:-3005}
+      NEWS_SERVICE_URL: http://news-service:${NEWS_PORT:-3006}
       AI_SERVICE_URL: http://ai-service:${AI_PORT:-8000}
     ports:
       - "${GATEWAY_PORT:-3000}:3000"
@@ -223,6 +262,9 @@ services:
       args:
         VITE_API_URL: ${WEB_CUSTOMER_API_URL:-http://localhost:3000}
         VITE_SOCKET_URL: ${WEB_CUSTOMER_SOCKET_URL:-http://localhost:3005}
+        VITE_GOOGLE_CLIENT_ID: ${WEB_CUSTOMER_GOOGLE_CLIENT_ID:-}
+        VITE_RECAPTCHA_SITE_KEY: ${WEB_CUSTOMER_RECAPTCHA_SITE_KEY:-}
+        VITE_FACEBOOK_APP_ID: ${WEB_CUSTOMER_FACEBOOK_APP_ID:-}
     container_name: avengers_web_customer
     restart: unless-stopped
     depends_on:

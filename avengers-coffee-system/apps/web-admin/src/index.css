@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&display=swap');
+
 * {
   box-sizing: border-box;
 }
@@ -11,10 +13,18 @@ body,
 }
 
 body {
-  font-family: 'Segoe UI', 'Noto Sans', 'Helvetica Neue', Arial, sans-serif;
-  background: #fff8ed;
-  color: #2f2119;
+  font-family: 'Montserrat', 'Segoe UI', 'Noto Sans', 'Helvetica Neue', Arial, sans-serif;
+  background: #f4f7fb;
+  color: #1f2937;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+.system-admin-sidebar h2 {
+  font-family: 'Cormorant Garamond', 'Montserrat', serif;
+  letter-spacing: 0.02em;
 }

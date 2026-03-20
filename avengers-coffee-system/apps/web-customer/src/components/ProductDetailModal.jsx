@@ -27,7 +27,7 @@ export default function ProductDetailModal({ product, isOpen, onClose, user }) {
   const diemTrungBinh = Number(reviewPayload?.diemTrungBinh || 0);
   const tongReview = Number(reviewPayload?.tongReview || 0);
 
-  const hienThiReviews = useMemo(() => reviews.slice(0, 5), [reviews]);
+  const hienThiReviews = useMemo(() => reviews, [reviews]);
 
   if (!isOpen || !product) return null;
 
@@ -36,13 +36,13 @@ export default function ProductDetailModal({ product, isOpen, onClose, user }) {
 
   const handlePurchase = () => {
     if (!selectedSize) {
-      alert('Bác chọn size trước khi mua nhé!');
+      alert('Vui lòng chọn size trước khi mua.');
       return;
     }
 
     // BƯỚC 4: Gọi logic thêm vào giỏ hàng
     addToCart(user, product, 1, selectedSize);
-    alert(`Đã thêm ${product.ten_san_pham} size ${selectedSize} vào giỏ hàng bác nhé! 🥤`);
+    alert(`Đã thêm ${product.ten_san_pham} size ${selectedSize} vào giỏ hàng! 🥤`);
     setSelectedSize('');
     onClose();
   };
@@ -111,7 +111,7 @@ export default function ProductDetailModal({ product, isOpen, onClose, user }) {
 
           <div className="mt-8 rounded-2xl border border-orange-100 bg-white p-4">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-xs font-black uppercase tracking-widest text-gray-500">Danh gia nguoi dung</p>
+              <p className="text-xs font-black uppercase tracking-widest text-gray-500">Đánh giá người dùng</p>
               <p className="text-xs font-semibold text-gray-500">{tongReview} review</p>
             </div>
 
@@ -128,16 +128,16 @@ export default function ProductDetailModal({ product, isOpen, onClose, user }) {
             </div>
 
             {isReviewsLoading ? (
-              <p className="mt-3 text-xs font-semibold text-gray-400">Dang tai danh gia...</p>
+              <p className="mt-3 text-xs font-semibold text-gray-400">Đang tải đánh giá...</p>
             ) : hienThiReviews.length === 0 ? (
-              <p className="mt-3 text-xs font-semibold text-gray-400">Chua co danh gia nao cho san pham nay.</p>
+              <p className="mt-3 text-xs font-semibold text-gray-400">Chưa có đánh giá nào cho sản phẩm này.</p>
             ) : (
-              <div className="mt-3 max-h-44 space-y-2 overflow-y-auto pr-1">
+              <div className="mt-3 max-h-72 space-y-2 overflow-y-auto pr-1">
                 {hienThiReviews.map((review) => {
                   const reviewerId = String(review.ma_nguoi_dung || '');
                   const reviewer = reviewerId === currentUserId
-                    ? 'Ban'
-                    : review.ten_nguoi_dung || `Khach ${reviewerId.slice(0, 8)}`;
+                    ? 'Bạn'
+                    : review.ten_nguoi_dung || `Khách ${reviewerId.slice(0, 8)}`;
 
                   return (
                     <div key={review.id} className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2">
@@ -152,7 +152,15 @@ export default function ProductDetailModal({ product, isOpen, onClose, user }) {
                           ))}
                         </div>
                       </div>
-                      <p className="mt-1 text-xs font-semibold text-gray-600">{review.binh_luan || 'Khong co binh luan.'}</p>
+                      <p className="mt-1 text-xs font-semibold text-gray-600">{review.binh_luan || 'Không có bình luận.'}</p>
+                      {review.phan_hoi_quan_ly ? (
+                        <div className="mt-2 rounded-lg border border-orange-100 bg-orange-50 px-2 py-1">
+                          <p className="text-[11px] font-black uppercase tracking-wide text-orange-600">
+                            Phản hồi từ quản lý{review.nguoi_phan_hoi ? ` (${review.nguoi_phan_hoi})` : ''}
+                          </p>
+                          <p className="text-xs font-semibold text-orange-700">{review.phan_hoi_quan_ly}</p>
+                        </div>
+                      ) : null}
                     </div>
                   );
                 })}

@@ -11,8 +11,8 @@ export class DanhMuc {
   @Column()
   ten_danh_muc: string;
 
-  @Column({ nullable: true })
-  hinh_anh_icon: string;
+  @Column({ type: 'varchar', nullable: true })
+  hinh_anh_icon: string | null;
 
   @OneToMany(() => SanPham, (sp) => sp.danhMuc)
   danhSachsSanPham: SanPham[];

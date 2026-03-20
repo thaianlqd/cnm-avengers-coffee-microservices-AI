@@ -1,5 +1,9 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { ReviewService } from '../services/review.service';
+import { CurrentUser, Roles } from '../auth/auth.decorators';
+import type { AuthUser } from '../auth/auth.types';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
 
 @Controller()
 export class ReviewController {
@@ -58,5 +62,32 @@ export class ReviewController {
   @Delete('reviews/:reviewId')
   async xoaReview(@Param('reviewId') reviewId: string) {
     return this.reviewService.xoaReview(Number(reviewId));
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('MANAGER', 'ADMIN')
+  @Get('manager/reviews')
+  async layReviewChoManager(
+    @Query('q') keyword?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.reviewService.layDanhSachReviewChoManager({
+      keyword,
+      limit: Number(limit || 100),
+    });
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('MANAGER', 'ADMIN')
+  @Patch('manager/reviews/:reviewId/reply')
+  async phanHoiReview(
+    @Param('reviewId') reviewId: string,
+    @CurrentUser() currentUser: AuthUser | null,
+    @Body() body: { phan_hoi: string },
+  ) {
+    return this.reviewService.phanHoiReview(Number(reviewId), {
+      phanHoi: body.phan_hoi,
+      nguoiPhanHoi: currentUser?.username || currentUser?.email || 'manager',
+    });
   }
 }
