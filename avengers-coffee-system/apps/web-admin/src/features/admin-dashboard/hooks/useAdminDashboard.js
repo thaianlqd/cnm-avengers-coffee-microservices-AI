@@ -87,6 +87,7 @@ export function useAdminDashboard() {
   const [managerShiftRequestState, setManagerShiftRequestState] = useState({ loading: false, error: '', items: [] })
   const [creatingShiftRequest, setCreatingShiftRequest] = useState(false)
   const [handlingShiftRequestId, setHandlingShiftRequestId] = useState('')
+  const [checkingAttendanceShiftId, setCheckingAttendanceShiftId] = useState('')
   const [reviewsState, setReviewsState] = useState({ loading: false, error: '', items: [] })
   const [replyingReviewId, setReplyingReviewId] = useState('')
   const knownOrderIdsRef = useRef(new Set())
@@ -283,7 +284,7 @@ export function useAdminDashboard() {
     const timer = window.setInterval(() => {
       refreshOrders()
       refreshMenuAndInventory()
-    }, 30000)
+    }, 90000)
 
     return () => window.clearInterval(timer)
   }, [session])
@@ -306,7 +307,7 @@ export function useAdminDashboard() {
   const taiDanhSachNhanSu = async () => {
     setWorkforceUsersState((prev) => ({ ...prev, loading: true, error: '' }))
     try {
-      const response = await fetch(`${API_BASE_URL}/users/workforce?role=STAFF&branch_code=${encodeURIComponent(sessionBranchCode)}`)
+      const response = await fetch(`${API_BASE_URL}/users/workforce?branch_code=${encodeURIComponent(sessionBranchCode)}`)
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc danh sach nhan vien')
       setWorkforceUsersState({ loading: false, error: '', items: payload?.items || [] })
@@ -347,7 +348,10 @@ export function useAdminDashboard() {
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc yeu cau dang ky ca')
 
-      const rows = (payload?.items || []).filter((item) => item?.nguon_tao === 'STAFF_REQUEST')
+      const rows = (payload?.items || []).filter((item) => {
+        if (forManager) return item?.nguon_tao === 'STAFF_REQUEST'
+        return item?.nguon_tao === 'STAFF_REQUEST'
+      })
       setTargetState({ loading: false, error: '', items: rows })
     } catch (error) {
       setTargetState({ loading: false, error: error.message || 'Khong tai duoc yeu cau dang ky ca', items: [] })
@@ -370,7 +374,9 @@ export function useAdminDashboard() {
     if (!session) return
 
     taiLichLamViecCuaToi()
-    taiYeuCauDangKyCa(false)
+    if (sessionRole !== 'MANAGER') {
+      taiYeuCauDangKyCa(false)
+    }
     if (sessionRole === 'MANAGER') {
       Promise.all([
         taiLichLamViecManager(),
@@ -393,7 +399,9 @@ export function useAdminDashboard() {
 
     const syncWorkforceData = () => {
       taiLichLamViecCuaToi({ silent: true })
-      taiYeuCauDangKyCa(false, { silent: true })
+      if (sessionRole !== 'MANAGER') {
+        taiYeuCauDangKyCa(false, { silent: true })
+      }
       if (sessionRole === 'MANAGER') {
         taiLichLamViecManager({ silent: true })
         taiYeuCauDangKyCa(true, { silent: true })
@@ -401,7 +409,33 @@ export function useAdminDashboard() {
     }
 
     socket.on('connect', () => {
+      socket.emit('notifications:subscribe', {
+        userId: session?.user?.maNguoiDung || session?.user?.ma_nguoi_dung || sessionUsername,
+      })
       socket.emit('workforce:subscribe', { branchCode: sessionBranchCode })
+
+      refreshOrders()
+      refreshMenuAndInventory()
+      syncWorkforceData()
+    })
+
+    socket.on('notification:new', (notification) => {
+      const type = String(notification?.loai || '').toUpperCase()
+      const hasOrderData = Boolean(notification?.du_lieu?.ma_don_hang)
+      const domain = String(notification?.du_lieu?.domain || '').toUpperCase()
+
+      if (type === 'ORDER' || type === 'PAYMENT' || hasOrderData) {
+        refreshOrders()
+        refreshMenuAndInventory()
+      }
+
+      if (type === 'SYSTEM' || domain === 'WORKFORCE') {
+        syncWorkforceData()
+      }
+
+      if (sessionRole === 'MANAGER' && (type === 'SYSTEM' || type === 'ORDER')) {
+        taiReviewCSKH()
+      }
     })
 
     socket.on('workforce:event', (event) => {
@@ -410,7 +444,7 @@ export function useAdminDashboard() {
     })
 
     // Fallback polling in case websocket disconnects or proxy blocks ws.
-    const timer = window.setInterval(syncWorkforceData, 20000)
+    const timer = window.setInterval(syncWorkforceData, 90000)
 
     return () => {
       window.clearInterval(timer)
@@ -1338,29 +1372,71 @@ export function useAdminDashboard() {
     setCreatingShiftRequest(true)
     setStaffShiftRequestState((prev) => ({ ...prev, error: '' }))
     try {
-      const response = await fetch(`${API_BASE_URL}/staff/work-shifts/requests`, {
+      const requestPayload = {
+        shift_date,
+        shift_code,
+        note,
+        branch_code: sessionBranchCode,
+        staff_username: sessionUsername,
+        staff_name: session?.user?.tenDangNhap || sessionUsername,
+      }
+
+      const endpoint = '/staff/work-shifts/requests'
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestPayload),
+      })
+
+      const payload = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        const errorMsg = payload?.message || payload?.error || `HTTP ${response.status}: ${response.statusText}`
+        throw new Error(errorMsg)
+      }
+      
+      await Promise.all([
+        taiLichLamViecCuaToi(),
+        taiYeuCauDangKyCa(false),
+      ])
+      pushAdminNotification(
+        'Đã gửi yêu cầu đăng ký ca',
+        `Yêu cầu ca ${shift_code} ngày ${shift_date} đã gửi tới manager.`,
+      )
+      return { ok: true, message: payload?.message || 'Đã gửi yêu cầu thành công' }
+    } catch (error) {
+      setStaffShiftRequestState((prev) => ({ ...prev, error: error.message || 'Khong gui duoc yeu cau dang ky ca' }))
+      return { ok: false, message: error.message || 'Khong gui duoc yeu cau dang ky ca' }
+    } finally {
+      setCreatingShiftRequest(false)
+    }
+  }
+
+  const suaYeuCauDangKyCa = async (requestId, { shift_date, shift_code, note }) => {
+    setCreatingShiftRequest(true)
+    setStaffShiftRequestState((prev) => ({ ...prev, error: '' }))
+    try {
+      const response = await fetch(`${API_BASE_URL}/staff/work-shifts/requests/${requestId}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           shift_date,
           shift_code,
           note,
           branch_code: sessionBranchCode,
-          staff_username: sessionUsername,
-          staff_name: session?.user?.tenDangNhap || sessionUsername,
         }),
       })
       const payload = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(payload?.message || 'Khong gui duoc yeu cau dang ky ca')
+      if (!response.ok) throw new Error(payload?.message || 'Khong cap nhat duoc yeu cau dang ky ca')
       await Promise.all([
         taiLichLamViecCuaToi(),
         taiYeuCauDangKyCa(false),
       ])
-      pushAdminNotification('Đã gửi yêu cầu đăng ký ca', `Yêu cầu ca ${shift_code} ngày ${shift_date} đã gửi tới manager.`)
-      return { ok: true, message: payload?.message || 'Đã gửi yêu cầu thành công' }
+      pushAdminNotification('Đã cập nhật yêu cầu đăng ký ca', `Yêu cầu ca ${shift_code} ngày ${shift_date} đã được cập nhật.`)
+      return { ok: true, message: payload?.message || 'Đã cập nhật yêu cầu thành công' }
     } catch (error) {
-      setStaffShiftRequestState((prev) => ({ ...prev, error: error.message || 'Khong gui duoc yeu cau dang ky ca' }))
-      return { ok: false, message: error.message || 'Khong gui duoc yeu cau dang ky ca' }
+      setStaffShiftRequestState((prev) => ({ ...prev, error: error.message || 'Khong cap nhat duoc yeu cau dang ky ca' }))
+      return { ok: false, message: error.message || 'Khong cap nhat duoc yeu cau dang ky ca' }
     } finally {
       setCreatingShiftRequest(false)
     }
@@ -1423,6 +1499,50 @@ export function useAdminDashboard() {
     }
   }
 
+  const suaPhanHoiReview = async (reviewId, phanHoi) => {
+    setReplyingReviewId(String(reviewId))
+    setReviewsState((prev) => ({ ...prev, error: '' }))
+    try {
+      const response = await fetch(`${API_BASE_URL}/manager/reviews/${reviewId}/reply`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phan_hoi: String(phanHoi || '').trim(),
+        }),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result?.message || 'Khong cap nhat duoc phan hoi')
+      await taiReviewCSKH()
+      pushAdminNotification('Đã cập nhật phản hồi', `Phản hồi review #${reviewId} đã được chỉnh sửa.`)
+      return { ok: true, message: result?.message || 'Cap nhat thanh cong' }
+    } catch (error) {
+      setReviewsState((prev) => ({ ...prev, error: error.message || 'Khong cap nhat duoc phan hoi' }))
+      return { ok: false, message: error.message || 'Khong cap nhat duoc phan hoi' }
+    } finally {
+      setReplyingReviewId('')
+    }
+  }
+
+  const xoaPhanHoiReview = async (reviewId) => {
+    setReplyingReviewId(String(reviewId))
+    setReviewsState((prev) => ({ ...prev, error: '' }))
+    try {
+      const response = await fetch(`${API_BASE_URL}/manager/reviews/${reviewId}/reply`, {
+        method: 'DELETE',
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result?.message || 'Khong xoa duoc phan hoi')
+      await taiReviewCSKH()
+      pushAdminNotification('Đã xóa phản hồi', `Phản hồi review #${reviewId} đã được xóa.`)
+      return { ok: true, message: result?.message || 'Xoa thanh cong' }
+    } catch (error) {
+      setReviewsState((prev) => ({ ...prev, error: error.message || 'Khong xoa duoc phan hoi' }))
+      return { ok: false, message: error.message || 'Khong xoa duoc phan hoi' }
+    } finally {
+      setReplyingReviewId('')
+    }
+  }
+
   const xoaYeuCauDangKyCa = async (requestId) => {
     setHandlingShiftRequestId(String(requestId))
     setStaffShiftRequestState((prev) => ({ ...prev, error: '' }))
@@ -1474,6 +1594,41 @@ export function useAdminDashboard() {
       return false
     } finally {
       setHandlingShiftRequestId('')
+    }
+  }
+
+  const chamCongCaLamViecCaNhan = async (workShiftId, action) => {
+    setCheckingAttendanceShiftId(String(workShiftId))
+    setMyWorkShiftState((prev) => ({ ...prev, error: '' }))
+    try {
+      const response = await fetch(`${API_BASE_URL}/staff/work-shifts/self/attendance`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shift_id: workShiftId,
+          action,
+          branch_code: sessionBranchCode,
+        }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Khong cham cong duoc')
+
+      await Promise.all([
+        taiLichLamViecCuaToi(),
+        sessionRole === 'MANAGER' ? taiLichLamViecManager() : Promise.resolve(),
+      ])
+
+      pushAdminNotification(
+        action === 'CHECK_IN' ? 'Đã check-in ca làm việc' : 'Đã check-out ca làm việc',
+        `Ca #${String(workShiftId).slice(0, 8).toUpperCase()} đã được ghi nhận thành công.`,
+      )
+
+      return { ok: true, message: payload?.message || 'Cham cong thanh cong' }
+    } catch (error) {
+      setMyWorkShiftState((prev) => ({ ...prev, error: error.message || 'Khong cham cong duoc' }))
+      return { ok: false, message: error.message || 'Khong cham cong duoc' }
+    } finally {
+      setCheckingAttendanceShiftId('')
     }
   }
 
@@ -1529,6 +1684,7 @@ export function useAdminDashboard() {
     managerShiftRequestState,
     creatingShiftRequest,
     handlingShiftRequestId,
+    checkingAttendanceShiftId,
     reviewsState,
     replyingReviewId,
     totals,
@@ -1553,9 +1709,13 @@ export function useAdminDashboard() {
     capNhatChamCong,
     xoaLichLamViec,
     taoYeuCauDangKyCa,
+    suaYeuCauDangKyCa,
     xuLyYeuCauDangKyCa,
     xoaYeuCauDangKyCa,
     xoaYeuCauDangKyCaChoManager,
+    chamCongCaLamViecCaNhan,
     phanHoiReview,
+    suaPhanHoiReview,
+    xoaPhanHoiReview,
   }
 }

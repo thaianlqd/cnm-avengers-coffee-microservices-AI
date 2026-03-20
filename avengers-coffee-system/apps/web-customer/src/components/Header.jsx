@@ -73,62 +73,64 @@ export default function Header({
   const isOrderTab = activeTab === 'order';
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#d9ccbc] bg-[#fbf7f1]/95 backdrop-blur-sm">
-      <div className="mx-auto flex h-[84px] w-full max-w-[1380px] items-center gap-2 px-4 md:px-6">
+    <header className="sticky top-0 z-50 border-b border-[#ece6de] bg-white backdrop-blur-sm">
+      <div className="mx-auto flex h-[92px] w-full max-w-[1380px] items-center gap-2 px-4 md:px-6">
         
         {/* Block trái: Logo */}
-        <div className="brand-serif w-[220px] shrink-0 cursor-pointer text-[22px] font-bold tracking-tight text-[#2a2119] xl:w-[250px]">
-          THE <span className="text-tch-orange">AVENGERS</span> HOUSE
+        <div className="brand-serif inline-flex w-auto shrink-0 cursor-pointer items-center gap-1 pr-4 text-[24px] font-black tracking-tight text-[#17120d] md:text-[26px] xl:text-[28px]" style={{ whiteSpace: 'nowrap' }}>
+          <span>THE</span>
+          <span className="text-tch-orange">AVENGERS</span>
+          <span>HOUSE</span>
         </div>
 
         {/* Block giữa: Menu điều hướng */}
-        <nav className="hidden flex-1 items-center justify-center gap-5 lg:flex xl:gap-6">
+        <nav className="hidden flex-1 items-center justify-center gap-6 lg:flex xl:gap-8">
           <button
             type="button"
             onClick={() => onTabChange?.('home')}
-            className={`relative whitespace-nowrap text-[13px] font-semibold tracking-[0.03em] transition-colors hover:text-tch-orange ${activeTab === 'home' ? 'text-tch-orange after:absolute after:-bottom-[31px] after:left-0 after:h-[2px] after:w-full after:bg-tch-orange' : 'text-[#5b5148]'}`}
+            className={`relative whitespace-nowrap text-[17px] font-black tracking-[0.02em] transition-colors hover:text-tch-orange ${activeTab === 'home' ? 'text-tch-orange after:absolute after:-bottom-[35px] after:left-0 after:h-[3px] after:w-full after:bg-tch-orange' : 'text-[#1c1713]'}`}
           >
             Trang chủ
           </button>
           <button
             type="button"
             onClick={() => onTabChange?.('order')}
-            className={`relative whitespace-nowrap text-[13px] font-semibold tracking-[0.03em] transition-colors hover:text-tch-orange ${activeTab === 'order' ? 'text-tch-orange after:absolute after:-bottom-[31px] after:left-0 after:h-[2px] after:w-full after:bg-tch-orange' : 'text-[#5b5148]'}`}
+            className={`relative whitespace-nowrap text-[17px] font-black tracking-[0.02em] transition-colors hover:text-tch-orange ${activeTab === 'order' ? 'text-tch-orange after:absolute after:-bottom-[35px] after:left-0 after:h-[3px] after:w-full after:bg-tch-orange' : 'text-[#1c1713]'}`}
           >
             Đặt hàng
           </button>
           <button
             type="button"
             onClick={() => onTabChange?.('news')}
-            className={`relative whitespace-nowrap text-[13px] font-semibold tracking-[0.03em] transition-colors hover:text-tch-orange ${activeTab === 'news' ? 'text-tch-orange after:absolute after:-bottom-[31px] after:left-0 after:h-[2px] after:w-full after:bg-tch-orange' : 'text-[#5b5148]'}`}
+            className={`relative whitespace-nowrap text-[17px] font-black tracking-[0.02em] transition-colors hover:text-tch-orange ${activeTab === 'news' ? 'text-tch-orange after:absolute after:-bottom-[35px] after:left-0 after:h-[3px] after:w-full after:bg-tch-orange' : 'text-[#1c1713]'}`}
           >
             Tin tức
           </button>
           <button
             type="button"
             onClick={() => onTabChange?.('stores')}
-            className={`relative whitespace-nowrap text-[13px] font-semibold tracking-[0.03em] transition-colors hover:text-tch-orange ${activeTab === 'stores' ? 'text-tch-orange after:absolute after:-bottom-[31px] after:left-0 after:h-[2px] after:w-full after:bg-tch-orange' : 'text-[#5b5148]'}`}
+            className={`relative whitespace-nowrap text-[17px] font-black tracking-[0.02em] transition-colors hover:text-tch-orange ${activeTab === 'stores' ? 'text-tch-orange after:absolute after:-bottom-[35px] after:left-0 after:h-[3px] after:w-full after:bg-tch-orange' : 'text-[#1c1713]'}`}
           >
             Cửa hàng
           </button>
           <button
             type="button"
             onClick={() => onTabChange?.('contact')}
-            className={`relative whitespace-nowrap text-[13px] font-semibold tracking-[0.03em] transition-colors hover:text-tch-orange ${activeTab === 'contact' ? 'text-tch-orange after:absolute after:-bottom-[31px] after:left-0 after:h-[2px] after:w-full after:bg-tch-orange' : 'text-[#5b5148]'}`}
+            className={`relative whitespace-nowrap text-[17px] font-black tracking-[0.02em] transition-colors hover:text-tch-orange ${activeTab === 'contact' ? 'text-tch-orange after:absolute after:-bottom-[35px] after:left-0 after:h-[3px] after:w-full after:bg-tch-orange' : 'text-[#1c1713]'}`}
           >
             Liên hệ
           </button>
           <button
             type="button"
             onClick={() => onTabChange?.('vouchers')}
-            className={`relative whitespace-nowrap text-[13px] font-semibold tracking-[0.03em] transition-colors hover:text-tch-orange ${activeTab === 'vouchers' ? 'text-tch-orange after:absolute after:-bottom-[31px] after:left-0 after:h-[2px] after:w-full after:bg-tch-orange' : 'text-[#5b5148]'}`}
+            className={`relative whitespace-nowrap text-[17px] font-black tracking-[0.02em] transition-colors hover:text-tch-orange ${activeTab === 'vouchers' ? 'text-tch-orange after:absolute after:-bottom-[35px] after:left-0 after:h-[3px] after:w-full after:bg-tch-orange' : 'text-[#1c1713]'}`}
           >
             Khuyến mãi
           </button>
           <button
             type="button"
             onClick={() => onTabChange?.('privacy')}
-            className={`relative whitespace-nowrap text-[13px] font-semibold tracking-[0.03em] transition-colors hover:text-tch-orange ${activeTab === 'privacy' ? 'text-tch-orange after:absolute after:-bottom-[31px] after:left-0 after:h-[2px] after:w-full after:bg-tch-orange' : 'text-[#5b5148]'}`}
+            className={`relative whitespace-nowrap text-[17px] font-black tracking-[0.02em] transition-colors hover:text-tch-orange ${activeTab === 'privacy' ? 'text-tch-orange after:absolute after:-bottom-[35px] after:left-0 after:h-[3px] after:w-full after:bg-tch-orange' : 'text-[#1c1713]'}`}
           >
             Chuyện nhà
           </button>
@@ -141,9 +143,9 @@ export default function Header({
               <button
                 type="button"
                 onClick={() => setShowSearchPopover((prev) => !prev)}
-                className="rounded-full border border-transparent p-2 text-[#6d6257] transition-colors hover:border-[#dacbb9] hover:bg-white hover:text-[#3f3328]"
+                className="rounded-full border border-transparent p-1.5 text-[#6d6257] transition-colors hover:border-[#dacbb9] hover:bg-white hover:text-[#3f3328]"
               >
-                <MagnifyingGlassIcon className="h-6 w-6" />
+                <MagnifyingGlassIcon className="h-5 w-5" />
               </button>
 
               {showSearchPopover && (
@@ -239,12 +241,12 @@ export default function Header({
               <button
                 type="button"
                 onClick={() => setShowNotificationPopover((prev) => !prev)}
-                className="relative rounded-full border border-[#decfbe] bg-[#fffaf3] p-2.5 text-tch-orange transition-all hover:bg-[#f9efdf] active:scale-95"
+                className="relative rounded-full border border-[#decfbe] bg-[#fffaf3] p-1.5 text-tch-orange transition-all hover:bg-[#f9efdf] active:scale-95"
                 title="Thông báo"
               >
-                <BellAlertIcon className="h-5 w-5" />
+                <BellAlertIcon className="h-4 w-4" />
                 {unreadNotificationCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[10px] font-black text-white">
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[9px] font-black text-white">
                     {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
                   </span>
                 )}
@@ -304,10 +306,10 @@ export default function Header({
             <button
               type="button"
               onClick={() => isLoggedIn ? setShowDropdown(!showDropdown) : onOpenAccount()}
-              className="flex items-center space-x-2 rounded-full border border-[#decfbe] bg-[#fffaf3] px-4 py-2 transition-all hover:bg-[#f9efdf] active:scale-95"
+              className="flex items-center space-x-2 rounded-full border border-[#decfbe] bg-[#fffaf3] px-3 py-1.5 transition-all hover:bg-[#f9efdf] active:scale-95"
             >
-               <UserIcon className="h-5 w-5 text-tch-orange" />
-               <span className="text-[13px] font-bold text-gray-700 truncate max-w-[100px]">
+               <UserIcon className="h-4 w-4 text-tch-orange" />
+               <span className="text-[12px] font-bold text-gray-700 truncate max-w-[80px]">
                  {userName}
                </span>
             </button>
@@ -368,22 +370,22 @@ export default function Header({
             <button
               type="button"
               onClick={() => onOpenProfile?.()}
-              className="rounded-full border border-orange-100 bg-orange-50 p-2.5 text-tch-orange transition-all hover:bg-orange-100 active:scale-95"
+              className="rounded-full border border-orange-100 bg-orange-50 p-1.5 text-tch-orange transition-all hover:bg-orange-100 active:scale-95"
               title="Trang cá nhân"
             >
-              <UserCircleIcon className="h-5 w-5" />
+              <UserCircleIcon className="h-4 w-4" />
             </button>
           )}
 
           <button
             type="button"
             onClick={onOpenFavorites}
-            className="relative rounded-full border border-rose-100 bg-rose-50 p-2.5 text-rose-500 transition-all hover:bg-rose-100 active:scale-95"
+            className="relative rounded-full border border-rose-100 bg-rose-50 p-1.5 text-rose-500 transition-all hover:bg-rose-100 active:scale-95"
             title="San pham yeu thich"
           >
-            <HeartIcon className="h-5 w-5" />
+            <HeartIcon className="h-4 w-4" />
             {favoriteCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-rose-500 px-1 text-[10px] font-black text-white">
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-rose-500 px-1 text-[9px] font-black text-white">
                 {favoriteCount > 9 ? '9+' : favoriteCount}
               </span>
             )}
@@ -393,11 +395,11 @@ export default function Header({
           <button
             type="button"
             onClick={onOpenCart}
-            className="relative rounded-full bg-tch-orange p-2.5 text-white shadow-lg shadow-orange-200 transition-transform hover:scale-105 active:scale-95"
+            className="relative rounded-full bg-tch-orange p-1.5 text-white shadow-lg shadow-orange-200 transition-transform hover:scale-105 active:scale-95"
           >
-            <ShoppingCartIcon className="h-5 w-5 text-white" />
+            <ShoppingCartIcon className="h-4 w-4 text-white" />
             {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-white text-tch-orange text-[10px] font-black rounded-full h-5 w-5 flex items-center justify-center border-2 border-tch-orange">
+              <span className="absolute -top-1 -right-1 bg-white text-tch-orange text-[9px] font-black rounded-full h-4 w-4 flex items-center justify-center border-2 border-tch-orange">
                 {cartCount}
               </span>
             )}

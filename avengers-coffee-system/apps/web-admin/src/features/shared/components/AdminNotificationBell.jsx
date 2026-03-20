@@ -84,7 +84,7 @@ export function AdminNotificationBell({ session }) {
     if (!userId) return
 
     loadNotifications()
-    const timer = window.setInterval(loadNotifications, 20000)
+    const timer = window.setInterval(loadNotifications, 90000)
     return () => window.clearInterval(timer)
   }, [userId])
 
@@ -98,6 +98,7 @@ export function AdminNotificationBell({ session }) {
 
     socket.on('connect', () => {
       socket.emit('notifications:subscribe', { userId })
+      loadNotifications()
     })
 
     socket.on('notification:new', (notification) => {

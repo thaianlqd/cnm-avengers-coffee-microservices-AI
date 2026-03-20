@@ -1831,6 +1831,22 @@
   box-shadow: 0 10px 26px rgba(102, 57, 25, 0.06);
 }
 
+.system-admin-card--flat {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+.system-admin-category-toolbar {
+  margin-bottom: 0.7rem;
+}
+
+.system-admin-category-toolbar input {
+  width: min(380px, 100%);
+}
+
 .system-admin-form-card {
   display: grid;
   gap: 0.9rem;
@@ -5198,6 +5214,981 @@
 
   .left-nav .staff-tag {
     color: #93c5fd;
+/* ═══ Staff Attendance Panel (Chấm Công) ════════════════════════════════════ */+.staff-attendance-panel {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+}
+
+.staff-attendance-header {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.staff-attendance-header h2 {
+  margin: 0;
+  color: var(--coffee);
+  font-size: 1.4rem;
+}
+
+.staff-attendance-header p {
+  margin: 0;
+  color: #8a6a55;
+  font-size: 0.95rem;
+}
+
+.staff-attendance-empty {
+  justify-items: center;
+  padding: 4rem 1rem;
+}
+
+.staff-attendance-loading,
+.staff-attendance-message-error,
+.staff-attendance-message-success {
+  padding: 1.2rem 1rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.staff-attendance-loading {
+  background: #f0f0f0;
+  color: #666;
+}
+
+.staff-attendance-message-error {
+  background: #fff0ee;
+  color: #b42318;
+  border: 1px solid #f4b8b0;
+}
+
+.staff-attendance-message-success {
+  background: #eaf8ef;
+  color: #1f7a4f;
+  border: 1px solid #b4e2c4;
+}
+
+.staff-attendance-card {
+  background: linear-gradient(135deg, #fffcf9 0%, #fff5eb 100%);
+  border: 1px solid #ead7c6;
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: grid;
+  gap: 1.2rem;
+  box-shadow: 0 10px 28px rgba(92, 49, 20, 0.08);
+}
+
+.staff-attendance-shift-info {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.shift-info-item {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.9rem 1rem;
+  background: #fff;
+  border: 1.5px solid #e0c8b3;
+  border-radius: 12px;
+}
+
+.shift-info-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #9a7a65;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: block;
+}
+
+.shift-info-value {
+  font-size: 1.05rem;
+  color: #2f2119;
+  display: block;
+}
+
+.staff-attendance-status {
+  display: flex;
+  justify-content: center;
+}
+
+.status-badge {
+  border-radius: 999px;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-badge.status-assigned {
+  background: #fff4e6;
+  color: #c05a14;
+  border: 1px solid #f4cf9f;
+}
+
+.status-badge.status-present {
+  background: #eaf8ef;
+  color: #1f7a4f;
+  border: 1px solid #b4e2c4;
+}
+
+.status-badge.status-late {
+  background: #fff1df;
+  color: #b87208;
+  border: 1px solid #f0cf9f;
+}
+
+.status-badge.status-absent {
+  background: #fff0ee;
+  color: #b42318;
+  border: 1px solid #f4b8b0;
+}
+
+.staff-attendance-times {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #fff;
+  border: 1px dashed #e0c8b3;
+  border-radius: 12px;
+}
+
+.time-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.time-label {
+  font-weight: 700;
+  color: #6f5138;
+  font-size: 0.9rem;
+}
+
+.time-value {
+  font-size: 1.1rem;
+  color: var(--burnt);
+  font-family: monospace;
+  font-weight: 700;
+}
+
+.staff-attendance-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.btn-attendance {
+  padding: 1rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-checkin {
+  background: linear-gradient(120deg, #2d8f5c 0%, #1f6a4f 100%);
+  color: #fff;
+}
+
+.btn-checkin:hover:not(:disabled) {
+  box-shadow: 0 8px 20px rgba(45, 143, 92, 0.3);
+  transform: translateY(-2px);
+}
+
+.btn-checkin:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-checkout {
+  background: linear-gradient(120deg, var(--burnt), #b53e0c);
+  color: #fff;
+}
+
+.btn-checkout:hover:not(:disabled) {
+  box-shadow: 0 8px 20px rgba(214, 90, 18, 0.3);
+  transform: translateY(-2px);
+}
+
+.btn-checkout:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.staff-attendance-note {
+  background: #fef7f1;
+  border-left: 4px solid var(--burnt);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.staff-attendance-note strong {
+  color: var(--burnt);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.staff-attendance-note ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #6f5138;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.staff-attendance-note li {
+  margin: 0.3rem 0;
+}
+
+@media (max-width: 768px) {
+  .staff-attendance-shift-info {
+    grid-template-columns: 1fr;
+  }
+  
+  .staff-attendance-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ═══ End Staff Attendance ════════════════════════════════════════════════════ */
+/* ═══ Manager Attendance Verification Panel ═════════════════════════════════ */
+
+.manager-attendance-panel {
+  display: grid;
+  gap: 1.2rem;
+  align-content: start;
+}
+
+.manager-attendance-header {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.manager-attendance-header h2 {
+  margin: 0;
+  color: var(--coffee);
+  font-size: 1.3rem;
+}
+
+.manager-attendance-header p {
+  margin: 0;
+  color: #8a6a55;
+  font-size: 0.92rem;
+}
+
+.manager-attendance-loading,
+.manager-attendance-empty {
+  padding: 3rem 1rem;
+  background: linear-gradient(135deg, #f5f5f5 0%, #f1f1f1 100%);
+  border-radius: 14px;
+  text-align: center;
+  color: #666;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.manager-attendance-message {
+  color: var(--burnt);
+}
+
+.manager-attendance-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.summary-card {
+  background: #fff;
+  border: 1px solid #ead7c6;
+  border-radius: 12px;
+  padding: 1rem;
+  display: grid;
+  gap: 0.3rem;
+  align-content: center;
+}
+
+.summary-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9a7a65;
+  display: block;
+}
+
+.summary-value {
+  font-size: 2rem;
+  font-weight: 800;
+  display: block;
+}
+
+.summary-total .summary-value {
+  color: #2f2119;
+}
+
+.summary-verified .summary-value {
+  color: #1f7a4f;
+}
+
+.summary-pending .summary-value {
+  color: var(--burnt);
+}
+
+.manager-attendance-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.manager-attendance-card {
+  background: #fff;
+  border: 1.5px solid #ead7c6;
+  border-radius: 14px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.manager-attendance-card.verified {
+  border-left: 4px solid #1f7a4f;
+  opacity: 0.9;
+}
+
+.manager-attendance-card.pending {
+  border-left: 4px solid var(--burnt);
+  box-shadow: 0 8px 20px rgba(214, 90, 18, 0.1);
+}
+
+.manager-attendance-card-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: start;
+  padding: 1rem;
+  background: linear-gradient(135deg, #fffdf9 0%, #fff7f0 100%);
+  border-bottom: 1px solid #f5e8dc;
+}
+
+.card-info-left {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.staff-name-badge {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.staff-name-badge strong {
+  color: #2f2119;
+  font-size: 1.05rem;
+  display: block;
+}
+
+.staff-code {
+  color: #9a7a65;
+  font-size: 0.82rem;
+  font-family: monospace;
+}
+
+.shift-brief {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.shift-time-badge {
+  display: inline-block;
+  background: #e8f5e9;
+  color: #1f7a4f;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.shift-slot {
+  color: #6f5138;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.card-status-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  font-weight: 700;
+  text-align: center;
+  min-width: 60px;
+}
+
+.status-icon {
+  font-size: 1.3rem;
+}
+
+.status-label {
+  font-size: 0.8rem;
+  display: block;
+}
+
+.manager-attendance-times {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  background: #f9f7f5;
+}
+
+.time-cell {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.time-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9a7a65;
+}
+
+.time-value {
+  font-size: 0.95rem;
+  font-family: monospace;
+  color: #2f2119;
+  font-weight: 700;
+}
+
+.manager-attendance-expand-btn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: #f5ebe2;
+  border-bottom: 1px solid #e8e0d8;
+  color: #6f5138;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.manager-attendance-expand-btn:hover {
+  background: #ecdac8;
+}
+
+.manager-attendance-verification-form {
+  padding: 1rem;
+  display: grid;
+  gap: 1rem;
+  background: #fff;
+  border-top: 1px dashed #e0c8b3;
+}
+
+.verify-options {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.verify-option {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 0.8rem;
+  border: 1.5px solid #e0c8b3;
+  border-radius: 10px;
+  background: #fffaf4;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.verify-option:hover {
+  border-color: var(--burnt);
+  background: #fff5eb;
+}
+
+.verify-option input {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.verify-label {
+  font-weight: 700;
+  color: #6f5138;
+  font-size: 0.95rem;
+}
+
+.verify-note-input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 80px;
+  border: 1.5px solid #e0c8b3;
+  border-radius: 10px;
+  padding: 0.7rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: #2f2119;
+  background: #fffaf4;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.15s ease;
+}
+
+.verify-note-input:focus {
+  border-color: var(--burnt);
+  background: #fff;
+}
+
+.verify-note-input::placeholder {
+  color: #bba08a;
+}
+
+.verify-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.btn-verify-submit {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(120deg, var(--burnt), #b53e0c);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.btn-verify-submit:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-verify-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-verify-cancel {
+  flex: 0.5;
+  padding: 0.7rem 1rem;
+  border: 1.5px solid #e0c8b3;
+  border-radius: 10px;
+  background: #fff;
+  color: #6f5138;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-verify-cancel:hover:not(:disabled) {
+  border-color: #d8c5b8;
+  background: #f5ebe2;
+}
+
+.btn-verify-cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.manager-attendance-verified-badge {
+  padding: 0.7rem 1rem;
+  background: #eaf8f0;
+  color: #1f7a4f;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border-top: 1px dashed #b4e2c4;
+  text-align: center;
+}
+
+.manager-attendance-note {
+  background: #fef7f1;
+  border-left: 4px solid var(--burnt);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.manager-attendance-note strong {
+  color: var(--burnt);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.manager-attendance-note ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #6f5138;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .manager-attendance-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .manager-attendance-times {
+    grid-template-columns: 1fr;
+  }
+
+  .manager-attendance-card-header {
+    grid-template-columns: 1fr;
+  }
+
+  .card-status-badge {
+    min-width: auto;
+  }
+}
+
+/* ═══ End Manager Attendance Verification ═══════════════════════════════════ */
+
+
+
+/* ═══ Customer Care Cards Grid - Beautiful UI ════════════════════════════════ */
+
+.customer-care-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1rem;
+  padding: 0;
+}
+
+.customer-care-card {
+  background: #fff;
+  border: 1px solid #ead7c6;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(92, 49, 20, 0.08);
+  display: grid;
+  grid-template-rows: auto auto auto 1fr auto;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.customer-care-card:hover {
+  box-shadow: 0 12px 32px rgba(92, 49, 20, 0.12);
+  border-color: #dfc6b3;
+}
+
+/* ── Card header with product info ── */
+.customer-care-card-header {
+  position: relative;
+  display: grid;
+  grid-template-columns: 72px 1fr auto;
+  gap: 0.85rem;
+  align-items: start;
+  padding: 0.9rem;
+  border-bottom: 1px solid #f5e8dc;
+  background: linear-gradient(135deg, #fffdf9 0%, #fff7f0 100%);
+}
+
+.customer-care-product-thumb {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid #e6cdb8;
+  background: #fff4e7;
+  display: block;
+}
+
+.customer-care-product-info {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+  min-width: 0;
+}
+
+.customer-care-product-info h3,
+.customer-care-product-info p {
+  margin: 0;
+}
+
+.customer-care-product-name {
+  color: #2f2119;
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.customer-care-product-code {
+  color: #9a7a65;
+  font-size: 0.78rem;
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.customer-care-status-badge {
+  border-radius: 999px;
+  padding: 0.28rem 0.72rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: fit-content;
+}
+
+.customer-care-status-badge.badge-success {
+  background: #eaf8ef;
+  color: #1f7a4f;
+  border: 1px solid #b4e2c4;
+}
+
+.customer-care-status-badge.badge-warning {
+  background: #fff4e6;
+  color: #c05a14;
+  border: 1px solid #f4cf9f;
+}
+
+/* ── Card metadata grid ── */
+.customer-care-card-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem 0.6rem;
+  padding: 0.7rem 0.9rem;
+  background: #fffaf4;
+  border-bottom: 1px solid #f5e8dc;
+}
+
+.customer-care-meta-item {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.customer-care-meta-label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9a7a65;
+}
+
+.customer-care-meta-value {
+  font-size: 0.96rem;
+  color: #2f2119;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.customer-care-meta-rating {
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+}
+
+/* ── Customer comment section ── */
+.customer-care-comment {
+  padding: 0.75rem 0.9rem;
+  background: #fff;
+  border-bottom: 1px solid #f5e8dc;
+}
+
+.customer-care-comment-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9a7a65;
+  margin: 0 0 0.38rem;
+  display: block;
+}
+
+.customer-care-comment-text {
+  font-size: 0.9rem;
+  color: #5f4330;
+  line-height: 1.55;
+  margin: 0;
+  word-break: break-word;
+}
+
+.customer-care-comment-empty {
+  color: #bba08a;
+  font-style: italic;
+}
+
+/* ── Collapsible reply editor ── */
+.customer-care-reply-section {
+  display: grid;
+  gap: 0;
+}
+
+.reply-toggle-btn {
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.9rem;
+  background: #fffaf4;
+  border: none;
+  border-bottom: 1px solid #f5e8dc;
+  color: #6f5138;
+  font-weight: 700;
+  font-size: 0.88rem;
+  transition: background 0.15s ease;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.reply-toggle-btn:hover {
+  background: #fff5ec;
+}
+
+.reply-toggle-btn span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 0.7rem;
+  transition: transform 0.2s ease;
+}
+
+.reply-editor {
+  padding: 0.8rem 0.9rem;
+  background: #fff;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.customer-care-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 88px;
+  border: 1.5px solid #e0c8b3;
+  border-radius: 12px;
+  padding: 0.65rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: #2f2119;
+  background: #fffaf4;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.customer-care-textarea:focus {
+  border-color: var(--burnt);
+  box-shadow: 0 0 0 3px rgba(214, 90, 18, 0.12);
+  background: #fff;
+}
+
+.customer-care-textarea::placeholder {
+  color: #bba08a;
+}
+
+.reply-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+}
+
+.reply-actions .btn-primary {
+  flex: 1;
+  padding: 0.55rem 0.9rem;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(120deg, var(--burnt), #b53e0c);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.reply-actions .btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.reply-actions .btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Reply preview (already replied) ── */
+.reply-preview-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #1f7a4f;
+  margin: 0 0 0.3rem;
+  display: block;
+}
+
+.customer-care-reply-preview {
+  padding: 0.7rem 0.8rem;
+  background: #eaf8f0;
+  border-left: 3px solid #1f7a4f;
+  border-radius: 8px;
+  color: #2d5a40;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  word-break: break-word;
+  margin: 0;
+}
+
+/* ── Responsive grid ── */
+@media (max-width: 1200px) {
+  .customer-care-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .customer-care-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-care-card-header {
+    grid-template-columns: 64px 1fr;
+    gap: 0.6rem;
+  }
+
+  .customer-care-status-badge {
+    grid-column: 1 / -1;
+    justify-self: flex-start;
+  }
+
+  .customer-care-product-thumb {
+    width: 64px;
+    height: 64px;
+  }
+
+  .customer-care-card-meta {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ═══ End Customer Care Cards ════════════════════════════════════════════════ */
   }
 
   .left-nav .nav-group-title {
@@ -5505,3 +6496,14 @@
       radial-gradient(circle at center, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 58%, transparent 59%),
       conic-gradient(#60a5fa 0 var(--score), rgba(255, 255, 255, 0.12) var(--score) 100%);
   }
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

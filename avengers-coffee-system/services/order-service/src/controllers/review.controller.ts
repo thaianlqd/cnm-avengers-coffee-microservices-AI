@@ -90,4 +90,11 @@ export class ReviewController {
       nguoiPhanHoi: currentUser?.username || currentUser?.email || 'manager',
     });
   }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('MANAGER', 'ADMIN')
+  @Delete('manager/reviews/:reviewId/reply')
+  async xoaPhanHoiReview(@Param('reviewId') reviewId: string) {
+    return this.reviewService.xoaPhanHoiReview(Number(reviewId));
+  }
 }

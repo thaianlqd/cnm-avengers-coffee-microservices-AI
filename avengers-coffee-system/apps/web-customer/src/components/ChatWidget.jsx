@@ -16,7 +16,7 @@ export default function ChatWidget({ user, socketUrl }) {
   const [isOpen, setIsOpen] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [conversation, setConversation] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [messagesByMode, setMessagesByMode] = useState({ STAFF: [], AI: [] });
   const [inputText, setInputText] = useState('');
   const [replyTarget, setReplyTarget] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -26,6 +26,7 @@ export default function ChatWidget({ user, socketUrl }) {
   const socketRef = useRef(null);
   const bottomRef = useRef(null);
   const isOpenRef = useRef(false);
+  const chatModeRef = useRef('STAFF');
   const textareaRef = useRef(null);
 
   const userId = user?.ma_nguoi_dung || user?.maNguoiDung || null;
@@ -38,6 +39,18 @@ export default function ChatWidget({ user, socketUrl }) {
 
   const aiUserId = userId || guestChatIdRef.current;
   const staffChatUserId = userId || guestChatIdRef.current;
+  const messages = messagesByMode[chatMode] || [];
+
+  const setMessagesForMode = (mode, updater) => {
+    setMessagesByMode((prev) => {
+      const current = prev[mode] || [];
+      const nextModeMessages = typeof updater === 'function' ? updater(current) : updater;
+      return {
+        ...prev,
+        [mode]: nextModeMessages,
+      };
+    });
+  };
 
   const encodeReplyMeta = (reply) => {
     if (!reply) return null;
@@ -118,30 +131,34 @@ export default function ChatWidget({ user, socketUrl }) {
   }, [isOpen]);
 
   useEffect(() => {
+    chatModeRef.current = chatMode;
+  }, [chatMode]);
+
+  useEffect(() => {
     growTextarea();
   }, [inputText]);
 
   useEffect(() => {
-    if (!userId) return undefined;
+    if (!staffChatUserId) return undefined;
 
     const socket = io(`${socketUrl}/chat`, {
       transports: ['websocket'],
-      auth: { userId, role: 'CUSTOMER' },
+      auth: { userId: staffChatUserId, role: 'CUSTOMER' },
     });
 
-    socket.emit('chat:subscribe', { userId, role: 'CUSTOMER' });
+    socket.emit('chat:subscribe', { userId: staffChatUserId, role: 'CUSTOMER' });
 
     socket.on('chat:message:new', (msg) => {
       const normalized = normalizeMessage(msg);
-      setMessages((prev) => (prev.some((m) => String(m.id) === String(normalized.id)) ? prev : [...prev, normalized]));
-      if (normalized.vai_tro_nguoi_gui !== 'CUSTOMER' && !isOpenRef.current) {
+      setMessagesForMode('STAFF', (prev) => (prev.some((m) => String(m.id) === String(normalized.id)) ? prev : [...prev, normalized]));
+      if (normalized.vai_tro_nguoi_gui !== 'CUSTOMER' && (!isOpenRef.current || chatModeRef.current !== 'STAFF')) {
         setUnread((n) => n + 1);
       }
       scrollToBottom();
     });
 
     socket.on('chat:conversation:update', (conv) => {
-      if (conv.ma_khach_hang === userId) {
+      if (conv.ma_khach_hang === staffChatUserId) {
         setConversation(conv);
       }
     });
@@ -151,7 +168,23 @@ export default function ChatWidget({ user, socketUrl }) {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [userId, socketUrl]);
+  }, [socketUrl, staffChatUserId]);
+
+  useEffect(() => {
+    setConversation(null);
+    setUnread(0);
+    setMessagesByMode((prev) => ({
+      ...prev,
+      STAFF: [],
+    }));
+  }, [staffChatUserId]);
+
+  useEffect(() => {
+    setMessagesByMode((prev) => ({
+      ...prev,
+      AI: [],
+    }));
+  }, [aiUserId]);
 
   useEffect(() => {
     if (conversation?.ma_hoi_thoai && socketRef.current) {
@@ -175,7 +208,7 @@ export default function ChatWidget({ user, socketUrl }) {
         const msgsRes = await apiClient.get(
           `/chat/conversations/${conv.ma_hoi_thoai}/messages?user_id=${staffChatUserId}&role=CUSTOMER`,
         );
-        setMessages((msgsRes.data.items || []).map((item) => normalizeMessage(item)));
+        setMessagesForMode('STAFF', (msgsRes.data.items || []).map((item) => normalizeMessage(item)));
         scrollToBottom();
       } catch {
         // ignore errors silently
@@ -216,7 +249,7 @@ export default function ChatWidget({ user, socketUrl }) {
         reply_to: replyPayload,
         ngay_tao: new Date().toISOString(),
       });
-      setMessages((prev) => [...prev, customerMessage]);
+      setMessagesForMode('AI', (prev) => [...prev, customerMessage]);
       scrollToBottom();
       try {
         const res = await apiClient.post('/ai/chat', {
@@ -232,11 +265,11 @@ export default function ChatWidget({ user, socketUrl }) {
           noi_dung: res.data.reply || 'Xin lỗi, tôi chưa hiểu.',
           ngay_tao: new Date().toISOString(),
         });
-        setMessages((prev) => [...prev, aiMsg]);
+        setMessagesForMode('AI', (prev) => [...prev, aiMsg]);
         scrollToBottom();
       } catch {
         setInputText(content);
-        setMessages((prev) => prev.filter((item) => item.id !== customerMessage.id));
+        setMessagesForMode('AI', (prev) => prev.filter((item) => item.id !== customerMessage.id));
       } finally {
         setSending(false);
       }
@@ -258,7 +291,7 @@ export default function ChatWidget({ user, socketUrl }) {
 
         if (res?.data?.message) {
           const normalized = normalizeMessage(res.data.message);
-          setMessages((prev) => (prev.some((m) => String(m.id) === String(normalized.id)) ? prev : [...prev, normalized]));
+          setMessagesForMode('STAFF', (prev) => (prev.some((m) => String(m.id) === String(normalized.id)) ? prev : [...prev, normalized]));
           scrollToBottom();
         }
       } catch {
@@ -282,6 +315,14 @@ export default function ChatWidget({ user, socketUrl }) {
     setReplyTarget(toReplyPayload(msg));
     setTimeout(() => textareaRef.current?.focus(), 0);
   };
+
+  useEffect(() => {
+    if (!isOpen || chatMode !== 'STAFF') return;
+    if (unread > 0) {
+      setUnread(0);
+    }
+    scrollToBottom();
+  }, [isOpen, chatMode, unread, messages.length]);
 
   const handleBubbleClick = () => {
     if (isOpen) {

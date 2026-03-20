@@ -32,7 +32,7 @@ export class CaLamViecNhanVien {
   gio_ket_thuc: string;
 
   @Column({ type: 'varchar', default: 'ASSIGNED' })
-  trang_thai_cham_cong: 'ASSIGNED' | 'PRESENT' | 'ABSENT';
+  trang_thai_cham_cong: 'ASSIGNED' | 'PRESENT' | 'LATE' | 'ABSENT';
 
   @Column({ type: 'timestamptz', nullable: true })
   check_in_at: Date | null;
@@ -47,7 +47,7 @@ export class CaLamViecNhanVien {
   manager_username: string | null;
 
   @Column({ type: 'varchar', default: 'MANAGER_ASSIGNMENT' })
-  nguon_tao: 'MANAGER_ASSIGNMENT' | 'STAFF_REQUEST';
+  nguon_tao: 'MANAGER_ASSIGNMENT' | 'STAFF_REQUEST' | 'MANAGER_REQUEST';
 
   @Column({ type: 'varchar', default: 'APPROVED' })
   trang_thai_yeu_cau: 'PENDING' | 'APPROVED' | 'REJECTED';

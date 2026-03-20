@@ -11,6 +11,14 @@ const DEFAULT_USER_FORM = {
   co_so_ma: 'MAC_DINH_CHI',
 }
 
+const DEFAULT_CUSTOMER_FORM = {
+  ten_dang_nhap: '',
+  mat_khau: '',
+  ho_ten: '',
+  email: '',
+  trang_thai: 'ACTIVE',
+}
+
 const DEFAULT_BRANCH_FORM = {
   ma_chi_nhanh: '',
   ten_chi_nhanh: '',
@@ -19,6 +27,10 @@ const DEFAULT_BRANCH_FORM = {
   quan_huyen: '',
   phuong_xa: '',
   so_dien_thoai: '',
+  hinh_anh_url: '',
+  gio_mo_cua: '07:00',
+  gio_dong_cua: '22:00',
+  map_url: '',
   trang_thai: 'ACTIVE',
 }
 
@@ -176,6 +188,22 @@ function composeBranchAddress(form) {
   return parts.join(', ')
 }
 
+function resolveCityLabel(cityCodeOrLabel) {
+  if (!cityCodeOrLabel) return ''
+  if (LOCATION_TREE[cityCodeOrLabel]) {
+    return LOCATION_TREE[cityCodeOrLabel].label
+  }
+  return String(cityCodeOrLabel).trim()
+}
+
+function resolveDistrictLabel(cityCodeOrLabel, districtCodeOrLabel) {
+  if (!districtCodeOrLabel) return ''
+  if (LOCATION_TREE[cityCodeOrLabel]?.districts?.[districtCodeOrLabel]) {
+    return LOCATION_TREE[cityCodeOrLabel].districts[districtCodeOrLabel].label
+  }
+  return String(districtCodeOrLabel).trim()
+}
+
 const DEFAULT_MENU_FORM = {
   name: '',
   category_code: '',
@@ -246,14 +274,16 @@ async function fetchCategories() {
   const response = await fetch(`${API_BASE_URL}/menu/categories`)
   const payload = await readJsonResponse(response, [])
   if (!response.ok) throw new Error('Khong tai duoc danh muc menu')
-  return Array.isArray(payload) ? payload : []
+  const items = Array.isArray(payload) ? payload : []
+  return [...items].sort((a, b) => Number(b?.id || b?.code || 0) - Number(a?.id || a?.code || 0))
 }
 
 async function fetchMenuItems() {
   const response = await fetch(`${API_BASE_URL}/menu/items?sort=price_desc`)
   const payload = await readJsonResponse(response, {})
   if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc menu tong')
-  return payload?.items || []
+  const items = payload?.items || []
+  return [...items].sort((a, b) => Number(b?.id || 0) - Number(a?.id || 0))
 }
 
 async function fetchPromotions() {
@@ -273,6 +303,11 @@ export function useSystemAdmin() {
   const [savingUser, setSavingUser] = useState(false)
   const [editingUserId, setEditingUserId] = useState('')
   const [userForm, setUserForm] = useState(DEFAULT_USER_FORM)
+  const [customerFilters, setCustomerFilters] = useState({ q: '', status: '' })
+  const [customersState, setCustomersState] = useState({ loading: true, error: '', items: [] })
+  const [savingCustomer, setSavingCustomer] = useState(false)
+  const [editingCustomerId, setEditingCustomerId] = useState('')
+  const [customerForm, setCustomerForm] = useState(DEFAULT_CUSTOMER_FORM)
 
   const [categoriesState, setCategoriesState] = useState({ loading: true, error: '', items: [] })
   const [savingCategory, setSavingCategory] = useState(false)
@@ -455,6 +490,26 @@ export function useSystemAdmin() {
     }
   }
 
+  const loadCustomers = async (filters = customerFilters) => {
+    setCustomersState((prev) => ({ ...prev, loading: true, error: '' }))
+    try {
+      const params = new URLSearchParams()
+      params.set('role', 'CUSTOMER')
+      if (filters.q) params.set('q', filters.q)
+
+      const response = await fetch(`${API_BASE_URL}/users/admin/accounts?${params.toString()}`)
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc danh sach khach hang')
+
+      const items = payload?.items || []
+      const status = String(filters.status || '').trim().toUpperCase()
+      const filteredItems = status ? items.filter((item) => String(item.trang_thai || '').toUpperCase() === status) : items
+      setCustomersState({ loading: false, error: '', items: filteredItems })
+    } catch (error) {
+      setCustomersState({ loading: false, error: error.message || 'Khong tai duoc danh sach khach hang', items: [] })
+    }
+  }
+
   const loadCategories = async () => {
     await categoriesQuery.refetch()
   }
@@ -576,6 +631,7 @@ export function useSystemAdmin() {
 
   useEffect(() => {
     loadUsers()
+    loadCustomers()
   }, [])
 
   const startEditUser = (item) => {
@@ -599,15 +655,43 @@ export function useSystemAdmin() {
     })
   }
 
+  const startEditCustomer = (item) => {
+    setEditingCustomerId(item.ma_nguoi_dung)
+    setCustomerForm({
+      ten_dang_nhap: item.ten_dang_nhap || '',
+      mat_khau: '',
+      ho_ten: item.ho_ten || '',
+      email: item.email || '',
+      trang_thai: item.trang_thai || 'ACTIVE',
+    })
+  }
+
+  const cancelEditCustomer = () => {
+    setEditingCustomerId('')
+    setCustomerForm(DEFAULT_CUSTOMER_FORM)
+  }
+
   const startEditBranch = (item) => {
     const parsedAddress = parseBranchAddress(item.dia_chi)
+    const cityKeyByLabel = Object.keys(LOCATION_TREE).find((code) => normalizeText(LOCATION_TREE[code].label) === normalizeText(item.thanh_pho || ''))
+    const districtKeyByLabel = cityKeyByLabel
+      ? Object.keys(LOCATION_TREE[cityKeyByLabel].districts || {}).find(
+          (code) => normalizeText(LOCATION_TREE[cityKeyByLabel].districts[code].label) === normalizeText(item.quan_huyen || ''),
+        )
+      : ''
     setEditingBranchCode(item.ma_chi_nhanh)
     setLocationSearch({ city: '', district: '', ward: '' })
     setBranchForm({
       ...parsedAddress,
+      thanh_pho: cityKeyByLabel || parsedAddress.thanh_pho,
+      quan_huyen: districtKeyByLabel || parsedAddress.quan_huyen,
       ma_chi_nhanh: item.ma_chi_nhanh,
       ten_chi_nhanh: item.ten_chi_nhanh || '',
       so_dien_thoai: item.so_dien_thoai || '',
+      hinh_anh_url: item.hinh_anh_url || '',
+      gio_mo_cua: item.gio_mo_cua || '07:00',
+      gio_dong_cua: item.gio_dong_cua || '22:00',
+      map_url: item.map_url || '',
       trang_thai: item.trang_thai || 'ACTIVE',
     })
   }
@@ -626,7 +710,13 @@ export function useSystemAdmin() {
         ma_chi_nhanh: branchForm.ma_chi_nhanh,
         ten_chi_nhanh: branchForm.ten_chi_nhanh,
         dia_chi: fullAddress || undefined,
+        thanh_pho: resolveCityLabel(branchForm.thanh_pho) || undefined,
+        quan_huyen: resolveDistrictLabel(branchForm.thanh_pho, branchForm.quan_huyen) || undefined,
         so_dien_thoai: branchForm.so_dien_thoai || undefined,
+        hinh_anh_url: branchForm.hinh_anh_url || undefined,
+        gio_mo_cua: branchForm.gio_mo_cua || undefined,
+        gio_dong_cua: branchForm.gio_dong_cua || undefined,
+        map_url: branchForm.map_url || undefined,
         trang_thai: branchForm.trang_thai,
       }
 
@@ -639,7 +729,13 @@ export function useSystemAdmin() {
         ? {
             ten_chi_nhanh: payload.ten_chi_nhanh,
             dia_chi: payload.dia_chi,
+            thanh_pho: payload.thanh_pho,
+            quan_huyen: payload.quan_huyen,
             so_dien_thoai: payload.so_dien_thoai,
+            hinh_anh_url: payload.hinh_anh_url,
+            gio_mo_cua: payload.gio_mo_cua,
+            gio_dong_cua: payload.gio_dong_cua,
+            map_url: payload.map_url,
             trang_thai: payload.trang_thai,
           }
         : payload
@@ -728,6 +824,59 @@ export function useSystemAdmin() {
       pushAdminNotification('Xóa tài khoản', 'Đã xóa tài khoản người dùng thành công.')
     } catch (error) {
       window.alert(error.message || 'Khong xoa duoc tai khoan')
+    }
+  }
+
+  const saveCustomer = async () => {
+    setSavingCustomer(true)
+    try {
+      if (!editingCustomerId && !customerForm.mat_khau) {
+        throw new Error('Vui long nhap mat khau cho tai khoan moi')
+      }
+
+      const payload = {
+        ten_dang_nhap: customerForm.ten_dang_nhap,
+        mat_khau: customerForm.mat_khau || undefined,
+        ho_ten: customerForm.ho_ten,
+        email: customerForm.email || undefined,
+        vai_tro: 'CUSTOMER',
+        trang_thai: customerForm.trang_thai || 'ACTIVE',
+      }
+
+      const method = editingCustomerId ? 'PATCH' : 'POST'
+      const endpoint = editingCustomerId
+        ? `${API_BASE_URL}/users/admin/accounts/${editingCustomerId}`
+        : `${API_BASE_URL}/users/admin/accounts`
+
+      const response = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result?.message || 'Khong luu duoc khach hang')
+
+      cancelEditCustomer()
+      await Promise.all([loadCustomers(), loadUsers(), loadStats()])
+      pushAdminNotification('Cập nhật khách hàng', 'Đã lưu thay đổi tài khoản khách hàng.')
+    } catch (error) {
+      window.alert(error.message || 'Khong luu duoc khach hang')
+    } finally {
+      setSavingCustomer(false)
+    }
+  }
+
+  const deleteCustomer = async (userId) => {
+    if (!window.confirm('Xoa tai khoan khach hang nay? Hanh dong nay khong the hoan tac.')) return
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/admin/accounts/${userId}`, { method: 'DELETE' })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result?.message || 'Khong xoa duoc khach hang')
+      if (editingCustomerId === userId) cancelEditCustomer()
+      await Promise.all([loadCustomers(), loadUsers(), loadStats()])
+      pushAdminNotification('Xóa khách hàng', 'Đã xóa tài khoản khách hàng thành công.')
+    } catch (error) {
+      window.alert(error.message || 'Khong xoa duoc khach hang')
     }
   }
 
@@ -981,6 +1130,8 @@ export function useSystemAdmin() {
     loadStats,
     userFilters,
     setUserFilters,
+    customerFilters,
+    setCustomerFilters,
     branchesState,
     branchOptions,
     cityOptions,
@@ -991,9 +1142,13 @@ export function useSystemAdmin() {
     branchAddressPreview,
     usersState,
     loadUsers,
+    customersState,
+    loadCustomers,
     loadBranches,
     userForm,
     setUserForm,
+    customerForm,
+    setCustomerForm,
     branchForm,
     setBranchForm,
     editingBranchCode,
@@ -1008,6 +1163,12 @@ export function useSystemAdmin() {
     saveUser,
     deleteUser,
     savingUser,
+    editingCustomerId,
+    startEditCustomer,
+    cancelEditCustomer,
+    saveCustomer,
+    deleteCustomer,
+    savingCustomer,
     categoriesState,
     loadCategories,
     categoryForm,

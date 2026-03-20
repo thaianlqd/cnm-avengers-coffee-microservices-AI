@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
+import { io } from 'socket.io-client'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
+
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3005'
 
 function getSessionUserId(session) {
   return session?.user?.ma_nguoi_dung || session?.user?.maNguoiDung || ''
@@ -82,11 +85,38 @@ export function AccountCenterPanel({ session }) {
     loadProfile()
     loadNotifications()
 
+    const socket = io(`${SOCKET_URL}/notifications`, {
+      transports: ['websocket'],
+      auth: { userId },
+    })
+
+    socket.on('connect', () => {
+      socket.emit('notifications:subscribe', { userId })
+      loadNotifications()
+    })
+
+    socket.on('notification:new', (notification) => {
+      if (!notification?.id) return
+      setNotificationsState((prev) => {
+        const items = Array.isArray(prev.items) ? prev.items : []
+        if (items.some((item) => item.id === notification.id)) {
+          return prev
+        }
+        return {
+          ...prev,
+          items: [notification, ...items].slice(0, 30),
+        }
+      })
+    })
+
     const timer = window.setInterval(() => {
       loadNotifications()
-    }, 20000)
+    }, 90000)
 
-    return () => window.clearInterval(timer)
+    return () => {
+      window.clearInterval(timer)
+      socket.disconnect()
+    }
   }, [userId])
 
   const saveProfile = async (event) => {

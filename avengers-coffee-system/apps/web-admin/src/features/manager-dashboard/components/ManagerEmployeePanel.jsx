@@ -42,8 +42,6 @@ function toShiftLabel(shift) {
 export function ManagerEmployeePanel({
   workShiftState,
   workforceUsersState,
-  onUpdateAttendance,
-  updatingWorkShiftId,
 }) {
   const [keyword, setKeyword] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
@@ -248,33 +246,6 @@ export function ManagerEmployeePanel({
               </div>
             ) : null}
 
-            {row.primaryShift ? (
-              <div className="employee-quick-actions">
-                <button
-                  type="button"
-                  onClick={() => onUpdateAttendance(row.primaryShift.ma_ca_lam_viec, { attendance_status: 'PRESENT', check_in_at: new Date().toISOString() })}
-                  disabled={updatingWorkShiftId === row.primaryShift.ma_ca_lam_viec}
-                >
-                  Check-in ngay
-                </button>
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() => onUpdateAttendance(row.primaryShift.ma_ca_lam_viec, { attendance_status: 'PRESENT', check_out_at: new Date().toISOString() })}
-                  disabled={updatingWorkShiftId === row.primaryShift.ma_ca_lam_viec}
-                >
-                  Check-out ngay
-                </button>
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() => onUpdateAttendance(row.primaryShift.ma_ca_lam_viec, { attendance_status: 'ABSENT' })}
-                  disabled={updatingWorkShiftId === row.primaryShift.ma_ca_lam_viec}
-                >
-                  Danh dau vang
-                </button>
-              </div>
-            ) : null}
           </article>
         ))}
       </div>

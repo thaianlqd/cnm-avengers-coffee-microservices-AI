@@ -8,6 +8,14 @@ function addWeeks(date, amount) {
   return next
 }
 
+function toDateOnlyLocal(dateInput = new Date()) {
+  const date = new Date(dateInput)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 const TABS = {
   REQUEST: 'request',
   HISTORY: 'history',
@@ -21,16 +29,22 @@ export function StaffWorkShiftsPanel({
   creatingShiftRequest,
   onRequestShift,
   onDeleteShiftRequest,
+  onEditShiftRequest,
   handlingShiftRequestId,
+  onSelfAttendance,
+  checkingAttendanceShiftId,
+  enableRequestTabs = true,
 }) {
   const [weekStart, setWeekStart] = useState(getInitialWeekStart)
   const [selectedShift, setSelectedShift] = useState(null)
-  const [activeTab, setActiveTab] = useState(TABS.REQUEST)
+  const [activeTab, setActiveTab] = useState(enableRequestTabs ? TABS.REQUEST : TABS.SCHEDULE)
   const [requestForm, setRequestForm] = useState(() => ({
     shift_date: new Date().toISOString().slice(0, 10),
     shift_code: 'SANG',
     note: '',
   }))
+  const [attendanceMessage, setAttendanceMessage] = useState('')
+  const [attendanceError, setAttendanceError] = useState('')
 
   const summary = useMemo(() => {
     return getAttendanceMetrics(myWorkShiftState.items)
@@ -40,6 +54,24 @@ export function StaffWorkShiftsPanel({
     ? myWorkShiftState.items.find((item) => item.ma_ca_lam_viec === selectedShift.ma_ca_lam_viec) || selectedShift
     : null
   const selectedInsight = selectedShiftDetails ? getAttendanceInsight(selectedShiftDetails) : null
+  const todayDate = toDateOnlyLocal()
+  const isFutureShift = selectedShiftDetails ? selectedShiftDetails.ngay_lam_viec > todayDate : false
+  const hasCheckedIn = Boolean(selectedShiftDetails?.check_in_at)
+  const hasCheckedOut = Boolean(selectedShiftDetails?.check_out_at)
+
+  const handleSelfAttendance = async (action) => {
+    if (!selectedShiftDetails || typeof onSelfAttendance !== 'function') return
+    setAttendanceMessage('')
+    setAttendanceError('')
+
+    const result = await onSelfAttendance(selectedShiftDetails.ma_ca_lam_viec, action)
+    if (result?.ok) {
+      setAttendanceMessage(action === 'CHECK_IN' ? 'Đã check-in thành công.' : 'Đã check-out thành công.')
+      return
+    }
+
+    setAttendanceError(result?.message || 'Khong cham cong duoc')
+  }
 
   const pendingRequests = useMemo(() => {
     return (shiftRequestState?.items || []).filter(item => item.trang_thai_yeu_cau === 'PENDING')
@@ -115,40 +147,46 @@ export function StaffWorkShiftsPanel({
       </div>
 
       {/* Tab Navigation */}
-      <div className="workforce-tabs">
-        <button
-          type="button"
-          className={`workforce-tab ${activeTab === TABS.REQUEST ? 'active' : ''}`}
-          onClick={() => setActiveTab(TABS.REQUEST)}
-        >
-          Yêu cầu mới
-        </button>
-        <button
-          type="button"
-          className={`workforce-tab ${activeTab === TABS.HISTORY ? 'active' : ''}`}
-          onClick={() => setActiveTab(TABS.HISTORY)}
-        >
-          Lịch sử yêu cầu
-        </button>
-        <button
-          type="button"
-          className={`workforce-tab ${activeTab === TABS.SCHEDULE ? 'active' : ''}`}
-          onClick={() => setActiveTab(TABS.SCHEDULE)}
-        >
-          Lịch làm việc
-        </button>
-      </div>
+      {enableRequestTabs ? (
+        <div className="workforce-tabs">
+          <button
+            type="button"
+            className={`workforce-tab ${activeTab === TABS.REQUEST ? 'active' : ''}`}
+            onClick={() => setActiveTab(TABS.REQUEST)}
+          >
+            Yêu cầu mới
+          </button>
+          <button
+            type="button"
+            className={`workforce-tab ${activeTab === TABS.HISTORY ? 'active' : ''}`}
+            onClick={() => setActiveTab(TABS.HISTORY)}
+          >
+            Lịch sử yêu cầu
+          </button>
+          <button
+            type="button"
+            className={`workforce-tab ${activeTab === TABS.SCHEDULE ? 'active' : ''}`}
+            onClick={() => setActiveTab(TABS.SCHEDULE)}
+          >
+            Lịch làm việc
+          </button>
+        </div>
+      ) : null}
 
       {/* Tab: Yêu cầu mới */}
-      {activeTab === TABS.REQUEST && (
+      {enableRequestTabs && activeTab === TABS.REQUEST && (
         <form
           className="workforce-form"
           onSubmit={async (event) => {
             event.preventDefault()
             if (typeof onRequestShift !== 'function') return
+            if (requestForm.shift_date < todayDate) {
+              window.alert('Không thể đăng ký ca cho ngày đã qua.')
+              return
+            }
             const result = await onRequestShift(requestForm)
             if (result?.ok) {
-              setRequestForm((prev) => ({ ...prev, note: '' }))
+              setRequestForm({ shift_date: new Date().toISOString().slice(0, 10), shift_code: 'SANG', note: '' })
             }
           }}
         >
@@ -159,6 +197,7 @@ export function StaffWorkShiftsPanel({
                 type="date"
                 value={requestForm.shift_date}
                 onChange={(e) => setRequestForm((prev) => ({ ...prev, shift_date: e.target.value }))}
+                min={todayDate}
                 required
               />
             </label>
@@ -194,7 +233,7 @@ export function StaffWorkShiftsPanel({
       )}
 
       {/* Tab: Lịch sử yêu cầu */}
-      {activeTab === TABS.HISTORY && (
+      {enableRequestTabs && activeTab === TABS.HISTORY && (
         <div className="workforce-assignment-card">
           <div className="workforce-detail-head">
             <div>
@@ -226,10 +265,13 @@ export function StaffWorkShiftsPanel({
                       <button
                         type="button"
                         className="secondary"
-                        onClick={() => handleDeleteRequest(item.ma_ca_lam_viec)}
-                        disabled={handlingShiftRequestId === String(item.ma_ca_lam_viec)}
+                        onClick={() => {
+                          console.log('Delete clicked for:', item.ma_ca_lam_viec)
+                          handleDeleteRequest(item.ma_ca_lam_viec)
+                        }}
+                        disabled={!!(handlingShiftRequestId && String(item.ma_ca_lam_viec) === handlingShiftRequestId)}
                       >
-                        {handlingShiftRequestId === String(item.ma_ca_lam_viec) ? 'Đang hủy...' : 'Hủy yêu cầu'}
+                        {handlingShiftRequestId && String(item.ma_ca_lam_viec) === handlingShiftRequestId ? 'Đang hủy...' : 'Hủy yêu cầu'}
                       </button>
                     </div>
                   </article>
@@ -325,6 +367,53 @@ export function StaffWorkShiftsPanel({
                     <span key={flag} className="workforce-flag-pill workforce-flag-pill--warning">{flag}</span>
                   )) : <span className="workforce-flag-pill workforce-flag-pill--good">Chấm công đầy đủ và đúng giờ</span>}
                 </div>
+                <div className="workforce-detail-actions">
+                  <button
+                    type="button"
+                    onClick={() => handleSelfAttendance('CHECK_IN')}
+                    disabled={
+                      !selectedShiftDetails ||
+                      isFutureShift ||
+                      hasCheckedIn ||
+                      checkingAttendanceShiftId === String(selectedShiftDetails.ma_ca_lam_viec)
+                    }
+                    title={
+                      isFutureShift
+                        ? 'Ca tương lai chưa thể chấm công'
+                        : hasCheckedIn
+                          ? 'Bạn đã check-in ca này'
+                          : 'Check-in ca đang chọn'
+                    }
+                  >
+                    {checkingAttendanceShiftId === String(selectedShiftDetails.ma_ca_lam_viec) ? 'Đang xử lý...' : 'Check-in ca này'}
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => handleSelfAttendance('CHECK_OUT')}
+                    disabled={
+                      !selectedShiftDetails ||
+                      isFutureShift ||
+                      !hasCheckedIn ||
+                      hasCheckedOut ||
+                      checkingAttendanceShiftId === String(selectedShiftDetails.ma_ca_lam_viec)
+                    }
+                    title={
+                      isFutureShift
+                        ? 'Ca tương lai chưa thể chấm công'
+                        : !hasCheckedIn
+                          ? 'Bạn cần check-in trước khi check-out'
+                          : hasCheckedOut
+                            ? 'Bạn đã check-out ca này'
+                            : 'Check-out ca đang chọn'
+                    }
+                  >
+                    {checkingAttendanceShiftId === String(selectedShiftDetails.ma_ca_lam_viec) ? 'Đang xử lý...' : 'Check-out ca này'}
+                  </button>
+                </div>
+                {isFutureShift ? <p className="workforce-detail-note">Ca ở tương lai: chưa đến ngày nên không thể check-in/check-out.</p> : null}
+                {attendanceMessage ? <p>{attendanceMessage}</p> : null}
+                {attendanceError ? <p className="error-text">{attendanceError}</p> : null}
                 {selectedInsight.isLate ? <p className="workforce-detail-note">Bạn check-in muộn {formatMinutesLabel(selectedInsight.lateMinutes)} so với giờ bắt đầu ca.</p> : null}
                 {selectedInsight.leftEarly ? <p className="workforce-detail-note">Bạn check-out sớm {formatMinutesLabel(selectedInsight.earlyLeaveMinutes)} so với giờ kết thúc ca.</p> : null}
                 {selectedShiftDetails.note ? <p className="workforce-detail-note">Ghi chú: {selectedShiftDetails.note}</p> : null}

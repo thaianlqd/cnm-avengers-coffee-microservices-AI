@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 const FILTERS = [
   { id: 'ALL', label: 'Tất cả' },
   { id: 'UNREPLIED', label: 'Chưa phản hồi' },
+  { id: 'REPLIED', label: 'Đã phản hồi' },
   { id: 'LOW_RATING', label: '1-3 sao' },
 ]
 
@@ -16,11 +17,23 @@ function normalizeText(value) {
     .trim()
 }
 
-export function ManagerCustomerCarePanel({ reviewsState, replyingReviewId, onReplyReview }) {
+function starLabel(rating) {
+  const value = Math.min(5, Math.max(1, Number(rating || 0)))
+  return `${'★'.repeat(value)}${'☆'.repeat(5 - value)} (${value}/5)`
+}
+
+export function ManagerCustomerCarePanel({
+  reviewsState,
+  replyingReviewId,
+  onReplyReview,
+  onUpdateReply,
+  onDeleteReply,
+}) {
   const [keyword, setKeyword] = useState('')
   const [activeFilter, setActiveFilter] = useState('ALL')
   const [draftReplies, setDraftReplies] = useState({})
   const [page, setPage] = useState(1)
+  const [expandedReplyId, setExpandedReplyId] = useState(null)
 
   const resolveImage = (value) => {
     const raw = String(value || '').trim()
@@ -29,10 +42,13 @@ export function ManagerCustomerCarePanel({ reviewsState, replyingReviewId, onRep
     return `/images/products/${raw.split('/').pop()}`
   }
 
+  const hasReply = (review) => !!String(review.phan_hoi_quan_ly || '').trim()
+
   const filteredItems = useMemo(() => {
     const key = normalizeText(keyword)
     const rows = (reviewsState.items || []).filter((item) => {
-      if (activeFilter === 'UNREPLIED' && String(item.phan_hoi_quan_ly || '').trim()) return false
+      if (activeFilter === 'UNREPLIED' && hasReply(item)) return false
+      if (activeFilter === 'REPLIED' && !hasReply(item)) return false
       if (activeFilter === 'LOW_RATING' && Number(item.so_sao || 0) > 3) return false
       return true
     })
@@ -57,6 +73,22 @@ export function ManagerCustomerCarePanel({ reviewsState, replyingReviewId, onRep
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE))
   const safePage = Math.min(Math.max(page, 1), totalPages)
   const pageRows = filteredItems.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+
+  const handleSaveReplyEdit = async (review) => {
+    if (typeof onUpdateReply !== 'function') return
+    const draft = String(draftReplies[review.id] ?? review.phan_hoi_quan_ly ?? '').trim()
+    if (!draft) return
+    const result = await onUpdateReply(review.id, draft)
+    if (result?.ok) {
+      setExpandedReplyId(null)
+    }
+  }
+
+  const handleDeleteReply = async (reviewId) => {
+    if (typeof onDeleteReply !== 'function') return
+    if (!window.confirm('Xác nhận xóa phản hồi của manager?')) return
+    await onDeleteReply(reviewId)
+  }
 
   return (
     <section className="panel customer-care-panel">
@@ -100,67 +132,87 @@ export function ManagerCustomerCarePanel({ reviewsState, replyingReviewId, onRep
         ) : null}
 
         {!reviewsState.loading && filteredItems.length ? (
-          <table className="ops-table">
-            <thead>
-              <tr>
-                <th>Sản phẩm</th>
-                <th>Khách hàng</th>
-                <th>Đánh giá</th>
-                <th>Bình luận</th>
-                <th>Phản hồi manager</th>
-                <th>Cập nhật</th>
-                <th>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pageRows.map((review) => {
-                const draft = draftReplies[review.id] ?? review.phan_hoi_quan_ly ?? ''
-                const productImage = resolveImage(review.hinh_anh_san_pham)
-                const productName = review.ten_san_pham || `Sản phẩm #${review.ma_san_pham}`
-                return (
-                  <tr key={review.id}>
-                    <td>
-                      <div className="manager-care-product-head">
-                        <div className="manager-care-thumb-wrap">
-                          {productImage ? <img src={productImage} alt={productName} className="manager-care-thumb" /> : <div className="manager-care-thumb-placeholder">No image</div>}
-                        </div>
-                        <div>
-                          <strong>{productName}</strong>
-                          <p>Mã SP: {review.ma_san_pham}</p>
-                        </div>
+          <div className="employee-list">
+            {pageRows.map((review) => {
+              const draft = draftReplies[review.id] ?? review.phan_hoi_quan_ly ?? ''
+              const productImage = resolveImage(review.hinh_anh_san_pham)
+              const productName = review.ten_san_pham || `Sản phẩm #${review.ma_san_pham}`
+              const isExpanded = expandedReplyId === review.id
+              const hasManagerReply = hasReply(review)
+
+              return (
+                <article key={review.id} className="employee-card">
+                  <div className="employee-card-head">
+                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                      <div style={{ width: '44px', height: '44px', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e6d4c7', flexShrink: 0 }}>
+                        {productImage ? <img src={productImage} alt={productName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', background: '#f9f0e8' }} />}
                       </div>
-                    </td>
-                    <td>
-                      <strong>{review.ten_nguoi_dung || `Khách ${String(review.ma_nguoi_dung || '').slice(0, 8)}`}</strong>
-                    </td>
-                    <td>{Number(review.so_sao || 0)} sao</td>
-                    <td>{review.binh_luan || 'Khách hàng chưa để lại bình luận chữ.'}</td>
-                    <td>
-                      <textarea
-                        className="ops-inline-input"
-                        rows={3}
-                        value={draft}
-                        onChange={(e) => setDraftReplies((prev) => ({ ...prev, [review.id]: e.target.value }))}
-                        placeholder="Nhập phản hồi chăm sóc khách hàng..."
-                      />
-                    </td>
-                    <td>{review.ngay_cap_nhat ? new Date(review.ngay_cap_nhat).toLocaleString('vi-VN') : '---'}</td>
-                    <td>
-                      <div className="ops-table-actions">
+                      <div>
+                        <h3>{productName}</h3>
+                        <p>Mã SP: {review.ma_san_pham} • Khách: {review.ten_nguoi_dung || String(review.ma_nguoi_dung || '').slice(0, 8)}</p>
+                      </div>
+                    </div>
+                    <span className={hasManagerReply ? 'employee-status-pill employee-status-pill--approved' : 'employee-status-pill employee-status-pill--pending'}>
+                      {hasManagerReply ? 'ĐÃ PHẢN HỒI' : 'CHỜ PHẢN HỒI'}
+                    </span>
+                  </div>
+
+                  <div className="workforce-detail-meta">
+                    <span>Đánh giá: {starLabel(review.so_sao)}</span>
+                    <span>Cập nhật: {review.ngay_cap_nhat ? new Date(review.ngay_cap_nhat).toLocaleString('vi-VN') : '---'}</span>
+                  </div>
+
+                  {review.binh_luan ? <p className="workforce-detail-note">Bình luận: {review.binh_luan}</p> : <p className="workforce-detail-note">Khách chưa để lại bình luận.</p>}
+                  {hasManagerReply ? <p className="workforce-detail-note">Phản hồi hiện tại: {review.phan_hoi_quan_ly}</p> : null}
+
+                  <div className="workforce-detail-actions">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExpandedReplyId(isExpanded ? null : review.id)
+                        if (!isExpanded && draftReplies[review.id] === undefined) {
+                          setDraftReplies((prev) => ({ ...prev, [review.id]: review.phan_hoi_quan_ly || '' }))
+                        }
+                      }}
+                    >
+                      {isExpanded ? 'Ẩn phản hồi' : (hasManagerReply ? 'Sửa phản hồi' : 'Phản hồi')}
+                    </button>
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => handleDeleteReply(review.id)}
+                      disabled={!hasManagerReply || replyingReviewId === String(review.id)}
+                    >
+                      Xóa phản hồi
+                    </button>
+                  </div>
+
+                  {isExpanded ? (
+                    <div>
+                      <label className="workforce-note-field">
+                        Nội dung phản hồi manager
+                        <textarea
+                          rows={3}
+                          value={draft}
+                          onChange={(e) => setDraftReplies((prev) => ({ ...prev, [review.id]: e.target.value }))}
+                          placeholder="Nhập phản hồi cho khách hàng"
+                        />
+                      </label>
+                      <div className="workforce-detail-actions">
                         <button
                           type="button"
-                          onClick={() => onReplyReview(review.id, draft)}
+                          onClick={() => (hasManagerReply ? handleSaveReplyEdit(review) : onReplyReview(review.id, draft))}
                           disabled={replyingReviewId === String(review.id) || !draft.trim()}
                         >
-                          {replyingReviewId === String(review.id) ? 'Đang gửi...' : 'Gửi phản hồi'}
+                          {replyingReviewId === String(review.id) ? 'Đang gửi...' : (hasManagerReply ? 'Lưu phản hồi' : 'Gửi phản hồi')}
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                    </div>
+                  ) : null}
+                </article>
+              )
+            })}
+          </div>
         ) : null}
 
         {filteredItems.length > PAGE_SIZE ? (

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import {
   ACCOUNT_TAB,
@@ -32,6 +32,12 @@ import { AdminNotificationBell } from './features/shared/components/AdminNotific
 import { NewsPanel } from './features/shared/components/NewsPanel'
 
 function App() {
+  const [adminToast, setAdminToast] = useState(null)
+
+  const showAdminToast = (title, message) => {
+    setAdminToast({ title, message })
+  }
+
   const {
     loginForm,
     setLoginForm,
@@ -84,6 +90,7 @@ function App() {
     managerShiftRequestState,
     creatingShiftRequest,
     handlingShiftRequestId,
+    checkingAttendanceShiftId,
     reviewsState,
     replyingReviewId,
     totals,
@@ -108,10 +115,14 @@ function App() {
     capNhatChamCong,
     xoaLichLamViec,
     taoYeuCauDangKyCa,
+    suaYeuCauDangKyCa,
     xuLyYeuCauDangKyCa,
     xoaYeuCauDangKyCa,
     xoaYeuCauDangKyCaChoManager,
+    chamCongCaLamViecCaNhan,
     phanHoiReview,
+    suaPhanHoiReview,
+    xoaPhanHoiReview,
   } = useAdminDashboard()
 
   const userRole = session?.user?.vaiTro || session?.user?.vai_tro || DASHBOARD_ROLES.STAFF
@@ -157,6 +168,23 @@ function App() {
       window.removeEventListener(AUTH_INVALID_EVENT, handleInvalidSession)
     }
   }, [logout])
+
+  useEffect(() => {
+    if (!adminToast) return
+    const timeout = setTimeout(() => setAdminToast(null), 4500)
+    return () => clearTimeout(timeout)
+  }, [adminToast])
+
+  useEffect(() => {
+    const ADMIN_LOCAL_NOTIFY_EVENT = 'avengers-admin-local-notify'
+    const handleLocalNotify = (event) => {
+      const detail = event?.detail || {}
+      showAdminToast(detail.tieu_de || 'Thông báo', detail.noi_dung || '')
+    }
+
+    window.addEventListener(ADMIN_LOCAL_NOTIFY_EVENT, handleLocalNotify)
+    return () => window.removeEventListener(ADMIN_LOCAL_NOTIFY_EVENT, handleLocalNotify)
+  }, [])
 
   if (!session) {
     return <LoginScreen loginForm={loginForm} setLoginForm={setLoginForm} loginStatus={loginStatus} onLogin={login} />
@@ -490,8 +518,12 @@ function App() {
             shiftRequestState={staffShiftRequestState}
             creatingShiftRequest={creatingShiftRequest}
             onRequestShift={taoYeuCauDangKyCa}
+            onEditShiftRequest={suaYeuCauDangKyCa}
             onDeleteShiftRequest={xoaYeuCauDangKyCa}
             handlingShiftRequestId={handlingShiftRequestId}
+            onSelfAttendance={chamCongCaLamViecCaNhan}
+            checkingAttendanceShiftId={checkingAttendanceShiftId}
+            enableRequestTabs={!isManager}
           />
         )}
 
@@ -527,12 +559,35 @@ function App() {
             reviewsState={reviewsState}
             replyingReviewId={replyingReviewId}
             onReplyReview={phanHoiReview}
+            onUpdateReply={suaPhanHoiReview}
+            onDeleteReply={xoaPhanHoiReview}
           />
         )}
 
         {activeTab === 'account' ? <AccountCenterPanel session={session} /> : null}
       </main>
         <AdminChatWidget session={session} />
+
+        {adminToast ? (
+          <div
+            style={{
+              position: 'fixed',
+              bottom: '20px',
+              right: '20px',
+              background: '#fff',
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              padding: '16px 20px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              zIndex: 9999,
+              maxWidth: '320px',
+              animation: 'slideInRight 0.3s ease-out',
+            }}
+          >
+            <p style={{ margin: '0 0 8px 0', fontWeight: '700', color: '#333', fontSize: '14px' }}>{adminToast.title}</p>
+            <p style={{ margin: 0, color: '#666', fontSize: '13px' }}>{adminToast.message}</p>
+          </div>
+        ) : null}
     </div>
   )
 }

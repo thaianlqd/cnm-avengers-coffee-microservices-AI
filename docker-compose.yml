@@ -74,8 +74,8 @@ services:
       FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
       FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-avengers-internal-token}
-      DB_HOST: ${DB_HOST:-postgres-db}
-      DB_PORT: ${DB_PORT:-5432}
+      DB_HOST: postgres-db
+      DB_PORT: 5432
       DB_USER: ${DB_USER:-admin}
       DB_PASSWORD: ${DB_PASSWORD:-123}
       DB_NAME: ${DB_NAME:-avengers_coffee}
@@ -96,8 +96,8 @@ services:
     environment:
       NODE_ENV: production
       PORT: ${MENU_PORT:-3003}
-      DB_HOST: ${DB_HOST:-postgres-db}
-      DB_PORT: ${DB_PORT:-5432}
+      DB_HOST: postgres-db
+      DB_PORT: 5432
       DB_USER: ${DB_USER:-admin}
       DB_PASSWORD: ${DB_PASSWORD:-123}
       DB_NAME: ${DB_NAME:-avengers_coffee}
@@ -120,8 +120,8 @@ services:
     environment:
       NODE_ENV: production
       PORT: ${INVENTORY_PORT:-3004}
-      DB_HOST: ${DB_HOST:-postgres-db}
-      DB_PORT: ${DB_PORT:-5432}
+      DB_HOST: postgres-db
+      DB_PORT: 5432
       DB_USER: ${DB_USER:-admin}
       DB_PASSWORD: ${DB_PASSWORD:-123}
       DB_NAME: ${DB_NAME:-avengers_coffee}
@@ -148,8 +148,8 @@ services:
       PORT: ${ORDER_PORT:-3005}
       JWT_SECRET: ${JWT_SECRET:-avengers-jwt-secret}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-avengers-internal-token}
-      DB_HOST: ${DB_HOST:-postgres-db}
-      DB_PORT: ${DB_PORT:-5432}
+      DB_HOST: postgres-db
+      DB_PORT: 5432
       DB_USER: ${DB_USER:-admin}
       DB_PASSWORD: ${DB_PASSWORD:-123}
       DB_NAME: ${DB_NAME:-avengers_coffee}
@@ -186,8 +186,8 @@ services:
       PORT: ${NEWS_PORT:-3006}
       JWT_SECRET: ${JWT_SECRET:-avengers-jwt-secret}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
-      DB_HOST: ${DB_HOST:-postgres-db}
-      DB_PORT: ${DB_PORT:-5432}
+      DB_HOST: postgres-db
+      DB_PORT: 5432
       DB_USER: ${DB_USER:-admin}
       DB_PASSWORD: ${DB_PASSWORD:-123}
       DB_NAME: ${DB_NAME:-avengers_coffee}
@@ -241,8 +241,8 @@ services:
       postgres-db:
         condition: service_healthy
     environment:
-      DB_HOST: ${DB_HOST:-postgres-db}
-      DB_PORT: ${DB_PORT:-5432}
+      DB_HOST: postgres-db
+      DB_PORT: 5432
       DB_USER: ${DB_USER:-admin}
       DB_PASSWORD: ${DB_PASSWORD:-123}
       DB_NAME: ${DB_NAME:-avengers_coffee}

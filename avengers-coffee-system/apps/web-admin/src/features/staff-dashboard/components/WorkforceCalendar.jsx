@@ -8,6 +8,18 @@ const SLOT_LABEL = {
   CHIEU: 'Chiều',
   TOI: 'Tối',
 }
+
+function sourceLabel(item) {
+  const source = String(item?.nguon_tao || '').toUpperCase()
+  if (source === 'MANAGER_ASSIGNMENT') return 'Manager phân công'
+  if (source === 'STAFF_REQUEST') return 'Staff đăng ký'
+  if (source === 'MANAGER_REQUEST') return 'Manager tự đăng ký'
+  return source || 'N/A'
+}
+
+function roleLabel(item) {
+  return String(item?.vai_tro || '').toUpperCase() || 'STAFF'
+}
 function addDays(date, amount) {
   const next = new Date(date)
   next.setDate(next.getDate() + amount)
@@ -77,6 +89,7 @@ export function WorkforceCalendar({
 
               return (
                 <div key={`${slot}-${dayKey}`} className="workforce-grid-cell">
+                  {cellItems.length > 0 ? <span className="workforce-empty-slot">{cellItems.length} người trong ca</span> : null}
                   {cellItems.length === 0 ? <span className="workforce-empty-slot">Trống</span> : null}
                   {cellItems.map((item) => {
                     const insight = getAttendanceInsight(item)
@@ -92,9 +105,10 @@ export function WorkforceCalendar({
                         onClick={() => onSelectItem?.(item)}
                       >
                         <strong>{mode === 'manager' ? item.staff_name || item.staff_username : item.ten_ca}</strong>
+                        {mode === 'manager' ? <span>{item.staff_username} • {roleLabel(item)}</span> : null}
                         <span>{item.gio_bat_dau} - {item.gio_ket_thuc}</span>
                         <small>{insight.shortLabel}</small>
-                        {insight.flags.length ? <em>{insight.flags[0]}</em> : null}
+                        {insight.flags.length ? <em>{insight.flags[0]}</em> : <em>{sourceLabel(item)}</em>}
                       </button>
                     )
                   })}

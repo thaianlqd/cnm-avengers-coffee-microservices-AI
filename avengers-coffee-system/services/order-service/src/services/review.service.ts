@@ -337,6 +337,23 @@ export class ReviewService {
     return { message: 'Phan hoi danh gia thanh cong', item: updated };
   }
 
+  async xoaPhanHoiReview(reviewId: number) {
+    const review = await this.reviewRepo.findOne({
+      where: { id: reviewId },
+    });
+
+    if (!review) {
+      throw new NotFoundException('Review khong ton tai');
+    }
+
+    review.phan_hoi_quan_ly = null;
+    review.nguoi_phan_hoi = null;
+    review.thoi_gian_phan_hoi = null;
+
+    const updated = await this.reviewRepo.save(review);
+    return { message: 'Xoa phan hoi thanh cong', item: updated };
+  }
+
   // Xóa review
   async xoaReview(reviewId: number) {
     const review = await this.reviewRepo.findOne({

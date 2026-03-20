@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useSystemAdmin } from '../hooks/useSystemAdmin'
 import { AiAnalyticsPanel } from './AiAnalyticsPanel'
+import { SystemOpsPanel } from './SystemOpsPanel'
 import { AccountCenterPanel } from '../../shared/components/AccountCenterPanel'
 import { AdminNotificationBell } from '../../shared/components/AdminNotificationBell'
 
@@ -11,6 +12,14 @@ function fmtNumber(value) {
 function fmtDateShort(value) {
   if (!value) return '---'
   try { return new Date(value).toLocaleDateString('vi-VN') } catch { return String(value) }
+}
+
+function normalizeText(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
 }
 
 const PROMOTION_TYPE_LABELS = { PERCENT: 'Giảm %', FIXED: 'Giảm tiền', FREE_ITEM: 'Tặng kèm' }
@@ -51,9 +60,12 @@ function Pagination({ pageData, onPageChange }) {
 
 export function AdminSystemConsole({ session, onLogout }) {
   const [usersPage, setUsersPage] = useState(1)
+  const [customersPage, setCustomersPage] = useState(1)
   const [branchesPage, setBranchesPage] = useState(1)
   const [categoriesPage, setCategoriesPage] = useState(1)
+  const [categoryKeyword, setCategoryKeyword] = useState('')
   const [menuPage, setMenuPage] = useState(1)
+  const [menuKeyword, setMenuKeyword] = useState('')
   const [promotionsPage, setPromotionsPage] = useState(1)
 
   const {
@@ -65,6 +77,8 @@ export function AdminSystemConsole({ session, onLogout }) {
     dashboardSummary,
     userFilters,
     setUserFilters,
+    customerFilters,
+    setCustomerFilters,
     branchesState,
     branchOptions,
     cityOptions,
@@ -75,6 +89,8 @@ export function AdminSystemConsole({ session, onLogout }) {
     branchAddressPreview,
     usersState,
     loadUsers,
+    customersState,
+    loadCustomers,
     branchForm,
     setBranchForm,
     editingBranchCode,
@@ -91,6 +107,14 @@ export function AdminSystemConsole({ session, onLogout }) {
     saveUser,
     deleteUser,
     savingUser,
+    customerForm,
+    setCustomerForm,
+    editingCustomerId,
+    startEditCustomer,
+    cancelEditCustomer,
+    saveCustomer,
+    deleteCustomer,
+    savingCustomer,
     categoriesState,
     categoryForm,
     setCategoryForm,
@@ -128,9 +152,29 @@ export function AdminSystemConsole({ session, onLogout }) {
   } = useSystemAdmin()
 
   const usersPageData = useMemo(() => buildPage(usersState.items, usersPage), [usersState.items, usersPage])
+  const customersPageData = useMemo(() => buildPage(customersState.items, customersPage), [customersState.items, customersPage])
   const branchesPageData = useMemo(() => buildPage(branchesState.items, branchesPage), [branchesState.items, branchesPage])
-  const categoriesPageData = useMemo(() => buildPage(categoriesState.items, categoriesPage), [categoriesState.items, categoriesPage])
-  const menuPageData = useMemo(() => buildPage(menuState.items, menuPage), [menuState.items, menuPage])
+  const filteredCategories = useMemo(() => {
+    const keyword = normalizeText(categoryKeyword)
+    if (!keyword) return categoriesState.items
+    return (categoriesState.items || []).filter((cat) => normalizeText(cat.label).includes(keyword))
+  }, [categoriesState.items, categoryKeyword])
+
+  const categoriesPageData = useMemo(() => buildPage(filteredCategories, categoriesPage), [filteredCategories, categoriesPage])
+  const filteredMenuItems = useMemo(() => {
+    const keyword = normalizeText(menuKeyword)
+    if (!keyword) return menuState.items
+    return (menuState.items || []).filter((item) => {
+      const haystack = normalizeText([
+        item.name,
+        item.category,
+        item.description,
+      ].join(' '))
+      return haystack.includes(keyword)
+    })
+  }, [menuState.items, menuKeyword])
+
+  const menuPageData = useMemo(() => buildPage(filteredMenuItems, menuPage), [filteredMenuItems, menuPage])
   const promotionsPageData = useMemo(() => buildPage(promotionFilteredItems, promotionsPage), [promotionFilteredItems, promotionsPage])
 
   return (
@@ -148,6 +192,9 @@ export function AdminSystemConsole({ session, onLogout }) {
           <button type="button" className={activeTab === 'users' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('users')}>
             Quản lý người dùng
           </button>
+          <button type="button" className={activeTab === 'customers' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('customers')}>
+            Quản lý khách hàng
+          </button>
           <button type="button" className={activeTab === 'branches' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('branches')}>
             Quản lý chi nhánh
           </button>
@@ -164,7 +211,10 @@ export function AdminSystemConsole({ session, onLogout }) {
               Khuyến mãi &amp; Voucher
             </button>
               <button type="button" className={activeTab === 'ai-analytics' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('ai-analytics')}>
-                AI Analytics
+                Phân tích mua sắm
+              </button>
+              <button type="button" className={activeTab === 'system-ops' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('system-ops')}>
+                Giám sát hệ thống
               </button>
         </div>
 
@@ -683,6 +733,100 @@ export function AdminSystemConsole({ session, onLogout }) {
           </section>
         )}
 
+        {activeTab === 'customers' && (
+          <section className="panel system-admin-panel">
+            <div className="panel-head system-admin-panel-head">
+              <h2>Quản lý khách hàng</h2>
+              <span>CRUD tài khoản CUSTOMER, trạng thái và thông tin liên hệ</span>
+            </div>
+
+            <div className="orders-filter-bar" style={{ marginBottom: '0.8rem' }}>
+              <div className="system-admin-filter-grid">
+                <input
+                  value={customerFilters.q}
+                  onChange={(e) => setCustomerFilters((prev) => ({ ...prev, q: e.target.value }))}
+                  placeholder="Tìm username, họ tên, email khách hàng"
+                />
+                <select value={customerFilters.status} onChange={(e) => setCustomerFilters((prev) => ({ ...prev, status: e.target.value }))}>
+                  <option value="">Tất cả trạng thái</option>
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="INACTIVE">INACTIVE</option>
+                </select>
+                <button type="button" onClick={() => loadCustomers()}>Lọc</button>
+              </div>
+            </div>
+
+            <div className="system-admin-card" style={{ marginBottom: '0.8rem' }}>
+              <div className="panel-head"><h2>{editingCustomerId ? 'Cập nhật khách hàng' : 'Tạo khách hàng mới'}</h2></div>
+              <div className="system-admin-form-grid system-admin-form-grid--user">
+                <label>
+                  <span>Username</span>
+                  <input value={customerForm.ten_dang_nhap} onChange={(e) => setCustomerForm((p) => ({ ...p, ten_dang_nhap: e.target.value }))} />
+                </label>
+                <label>
+                  <span>Họ tên</span>
+                  <input value={customerForm.ho_ten} onChange={(e) => setCustomerForm((p) => ({ ...p, ho_ten: e.target.value }))} />
+                </label>
+                <label>
+                  <span>Email</span>
+                  <input value={customerForm.email || ''} onChange={(e) => setCustomerForm((p) => ({ ...p, email: e.target.value }))} />
+                </label>
+                <label>
+                  <span>Mật khẩu {editingCustomerId ? '(để trống nếu giữ nguyên)' : ''}</span>
+                  <input type="password" value={customerForm.mat_khau || ''} onChange={(e) => setCustomerForm((p) => ({ ...p, mat_khau: e.target.value }))} />
+                </label>
+                <label>
+                  <span>Trạng thái</span>
+                  <select value={customerForm.trang_thai || 'ACTIVE'} onChange={(e) => setCustomerForm((p) => ({ ...p, trang_thai: e.target.value }))}>
+                    <option value="ACTIVE">ACTIVE</option>
+                    <option value="INACTIVE">INACTIVE</option>
+                  </select>
+                </label>
+              </div>
+              <div className="system-admin-form-actions">
+                <button type="button" onClick={saveCustomer} disabled={savingCustomer}>{savingCustomer ? 'Đang lưu...' : 'Lưu khách hàng'}</button>
+                {editingCustomerId ? <button type="button" className="secondary" onClick={cancelEditCustomer}>Hủy sửa</button> : null}
+              </div>
+            </div>
+
+            {customersState.loading ? <p>Đang tải khách hàng...</p> : null}
+            {customersState.error ? <p className="error-text">{customersState.error}</p> : null}
+            <div className="system-admin-table-wrap">
+              <table className="system-admin-table">
+                <thead>
+                  <tr>
+                    <th>Họ tên / Username</th>
+                    <th>Email</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày tạo</th>
+                    <th>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {customersPageData.rows.map((item) => (
+                    <tr key={item.ma_nguoi_dung}>
+                      <td>
+                        <strong>{item.ho_ten}</strong>
+                        <p>@{item.ten_dang_nhap}</p>
+                      </td>
+                      <td>{item.email || '---'}</td>
+                      <td>{item.trang_thai}</td>
+                      <td>{new Date(item.ngay_tao).toLocaleString('vi-VN')}</td>
+                      <td>
+                        <div className="system-admin-table-actions">
+                          <button type="button" className="secondary" onClick={() => startEditCustomer(item)}>Sửa</button>
+                          <button type="button" className="secondary" onClick={() => deleteCustomer(item.ma_nguoi_dung)}>Xóa</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <Pagination pageData={customersPageData} onPageChange={setCustomersPage} />
+            </div>
+          </section>
+        )}
+
         {activeTab === 'branches' && (
           <section className="panel system-admin-panel">
             <div className="panel-head system-admin-panel-head">
@@ -783,6 +927,14 @@ export function AdminSystemConsole({ session, onLogout }) {
                   <input value={branchForm.so_dien_thoai || ''} onChange={(e) => setBranchForm((p) => ({ ...p, so_dien_thoai: e.target.value }))} />
                 </label>
                 <label>
+                  <span>Giờ mở cửa (HH:MM)</span>
+                  <input value={branchForm.gio_mo_cua || ''} onChange={(e) => setBranchForm((p) => ({ ...p, gio_mo_cua: e.target.value }))} placeholder="07:00" />
+                </label>
+                <label>
+                  <span>Giờ đóng cửa (HH:MM)</span>
+                  <input value={branchForm.gio_dong_cua || ''} onChange={(e) => setBranchForm((p) => ({ ...p, gio_dong_cua: e.target.value }))} placeholder="22:00" />
+                </label>
+                <label>
                   <span>Trạng thái</span>
                   <select value={branchForm.trang_thai} onChange={(e) => setBranchForm((p) => ({ ...p, trang_thai: e.target.value }))}>
                     <option value="ACTIVE">ACTIVE</option>
@@ -795,6 +947,22 @@ export function AdminSystemConsole({ session, onLogout }) {
                     value={branchForm.dia_chi_chi_tiet || ''}
                     onChange={(e) => setBranchForm((p) => ({ ...p, dia_chi_chi_tiet: e.target.value }))}
                     placeholder="VD: 123 Nguyen Dinh Chieu"
+                  />
+                </label>
+                <label className="system-admin-branch-address-field">
+                  <span>URL ảnh chi nhánh</span>
+                  <input
+                    value={branchForm.hinh_anh_url || ''}
+                    onChange={(e) => setBranchForm((p) => ({ ...p, hinh_anh_url: e.target.value }))}
+                    placeholder="https://..."
+                  />
+                </label>
+                <label className="system-admin-branch-address-field">
+                  <span>Link Google Maps</span>
+                  <input
+                    value={branchForm.map_url || ''}
+                    onChange={(e) => setBranchForm((p) => ({ ...p, map_url: e.target.value }))}
+                    placeholder="https://www.google.com/maps/search/?api=1&query=..."
                   />
                 </label>
 
@@ -866,6 +1034,8 @@ export function AdminSystemConsole({ session, onLogout }) {
           </section>
         )}
 
+        {activeTab === 'system-ops' && <SystemOpsPanel session={session} />}
+
         {activeTab === 'categories' && (
           <section className="panel system-admin-panel">
             <div className="panel-head system-admin-panel-head">
@@ -873,10 +1043,21 @@ export function AdminSystemConsole({ session, onLogout }) {
               <span>Thiết lập danh mục để phân loại món trong menu tổng</span>
             </div>
 
-            <section className="system-admin-card">
+            <section className="system-admin-card system-admin-card--flat">
               <div className="panel-head">
                 <h2>{editingCategoryId ? `Cập nhật danh mục #${editingCategoryId}` : 'Thông tin danh mục'}</h2>
-                <span>{categoriesState.items.length} danh mục</span>
+                <span>{filteredCategories.length} danh mục</span>
+              </div>
+
+              <div className="system-admin-category-toolbar">
+                <input
+                  value={categoryKeyword}
+                  onChange={(e) => {
+                    setCategoryKeyword(e.target.value)
+                    setCategoriesPage(1)
+                  }}
+                  placeholder="Tìm theo tên danh mục"
+                />
               </div>
 
               <div className="system-admin-form-grid" style={{ marginBottom: '0.7rem' }}>
@@ -1054,7 +1235,17 @@ export function AdminSystemConsole({ session, onLogout }) {
               </section>
 
               <section className="system-admin-card system-admin-menu-list-card">
-                <div className="panel-head"><h2>Danh sách menu tổng</h2><span>{menuState.items.length} món</span></div>
+                <div className="panel-head"><h2>Danh sách menu tổng</h2><span>{filteredMenuItems.length} món</span></div>
+                <div className="system-admin-category-toolbar">
+                  <input
+                    value={menuKeyword}
+                    onChange={(e) => {
+                      setMenuKeyword(e.target.value)
+                      setMenuPage(1)
+                    }}
+                    placeholder="Tìm theo tên món, danh mục hoặc mô tả"
+                  />
+                </div>
                 {menuState.loading ? <p>Đang tải menu...</p> : null}
                 {menuState.error ? <p className="error-text">{menuState.error}</p> : null}
 

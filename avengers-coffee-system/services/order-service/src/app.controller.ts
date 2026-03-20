@@ -548,6 +548,64 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('MANAGER', 'ADMIN')
+  @Post('manager/self/work-shifts/requests')
+  managerSelfRequestWorkShift(
+    @CurrentUser() currentUser: AuthUser | null,
+    @Body()
+    payload: {
+      shift_date: string;
+      shift_code: 'SANG' | 'CHIEU' | 'TOI';
+      note?: string;
+      branch_code?: string;
+    },
+  ) {
+    return this.thanhToanService.taoYeuCauDangKyCaChoQuanLy({
+      ...payload,
+      manager_username: currentUser?.username || '',
+      manager_name: currentUser?.username || '',
+    });
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STAFF', 'MANAGER', 'ADMIN')
+  @Patch('staff/work-shifts/self/attendance')
+  staffCheckInOut(
+    @CurrentUser() currentUser: AuthUser | null,
+    @Body()
+    payload: {
+      shift_id: string;
+      action: 'CHECK_IN' | 'CHECK_OUT';
+      branch_code?: string;
+    },
+  ) {
+    return this.thanhToanService.thoiGianVaoCaLamViec({
+      ...payload,
+      staff_username: currentUser?.username || '',
+    });
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('MANAGER', 'ADMIN')
+  @Post('manager/attendance/verify/:shiftId')
+  managerVerifyAttendance(
+    @Param('shiftId') shiftId: string,
+    @CurrentUser() currentUser: AuthUser | null,
+    @Body()
+    payload: {
+      verify_status: 'PRESENT' | 'LATE' | 'ABSENT';
+      verify_note?: string;
+      branch_code?: string;
+    },
+  ) {
+    return this.thanhToanService.duyetXacNhanChamCongNhanVien(shiftId, {
+      ...payload,
+      manager_username: currentUser?.username || 'manager',
+      verified_at: new Date(),
+    });
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('STAFF', 'MANAGER', 'ADMIN')
   @Get('staff/analytics/realtime')
   getRealtimeAnalytics(@Query('branch_code') branchCode?: string) {

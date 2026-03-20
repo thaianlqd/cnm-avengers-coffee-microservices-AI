@@ -91,21 +91,32 @@ export function ManagerWorkforcePanel({
   })
   const [requestDrafts, setRequestDrafts] = useState({})
 
-  const staffOptions = useMemo(
-    () => workforceUsersState.items.filter((item) => item.vai_tro === 'STAFF'),
+  const assignableStaffOptions = useMemo(
+    () => workforceUsersState.items.filter((item) => {
+      const role = String(item.vai_tro || '').toUpperCase()
+      return role === 'STAFF' || role === 'MANAGER'
+    }),
+    [workforceUsersState.items],
+  )
+
+  const scheduleFilterOptions = useMemo(
+    () => workforceUsersState.items.filter((item) => {
+      const role = String(item.vai_tro || '').toUpperCase()
+      return role === 'STAFF' || role === 'MANAGER'
+    }),
     [workforceUsersState.items],
   )
 
   useEffect(() => {
-    if (workShiftForm.staff_username || !staffOptions.length) return
-    const first = staffOptions[0]
+    if (workShiftForm.staff_username || !assignableStaffOptions.length) return
+    const first = assignableStaffOptions[0]
     const firstUsername = resolveUsername(first)
     setWorkShiftForm((prev) => ({
       ...prev,
       staff_username: firstUsername,
       staff_name: first.ho_ten || firstUsername,
     }))
-  }, [staffOptions, workShiftForm.staff_username, setWorkShiftForm])
+  }, [assignableStaffOptions, workShiftForm.staff_username, setWorkShiftForm])
 
   const calendarItems = useMemo(() => {
     return workShiftState.items.filter((item) => {
@@ -276,19 +287,19 @@ export function ManagerWorkforcePanel({
                 <select
                   value={workShiftForm.staff_username}
                   onChange={(e) => {
-                    const nextUser = staffOptions.find((item) => resolveUsername(item) === e.target.value)
+                    const nextUser = assignableStaffOptions.find((item) => resolveUsername(item) === e.target.value)
                     setWorkShiftForm((prev) => ({
                       ...prev,
                       staff_username: e.target.value,
                       staff_name: nextUser?.ho_ten || e.target.value,
                     }))
                   }}
-                  disabled={!staffOptions.length}
+                  disabled={!assignableStaffOptions.length}
                 >
-                  {!staffOptions.length ? <option value="">Chưa có nhân viên</option> : null}
-                  {staffOptions.map((item) => (
+                  {!assignableStaffOptions.length ? <option value="">Chưa có nhân viên</option> : null}
+                  {assignableStaffOptions.map((item) => (
                     <option key={item.ma_nguoi_dung} value={resolveUsername(item)}>
-                      {item.ho_ten || resolveUsername(item)}
+                      {(item.ho_ten || resolveUsername(item))} ({String(item.vai_tro || '').toUpperCase() || 'STAFF'})
                     </option>
                   ))}
                 </select>
@@ -518,10 +529,10 @@ export function ManagerWorkforcePanel({
             <label>
               Xem lịch theo nhân viên
               <select value={selectedStaffFilter} onChange={(e) => setSelectedStaffFilter(e.target.value)}>
-                <option value="ALL">Tất cả nhân viên</option>
-                {staffOptions.map((item) => (
+                <option value="ALL">Tất cả nhân sự</option>
+                {scheduleFilterOptions.map((item) => (
                   <option key={item.ma_nguoi_dung} value={resolveUsername(item)}>
-                    {item.ho_ten || resolveUsername(item)}
+                    {(item.ho_ten || resolveUsername(item))} ({String(item.vai_tro || '').toUpperCase() || 'STAFF'})
                   </option>
                 ))}
               </select>
@@ -601,6 +612,7 @@ export function ManagerWorkforcePanel({
                     >
                       <option value="ASSIGNED">Đã xếp lịch</option>
                       <option value="PRESENT">Có mặt</option>
+                      <option value="LATE">Đi muộn</option>
                       <option value="ABSENT">Vắng mặt</option>
                     </select>
                   </label>
@@ -649,7 +661,7 @@ export function ManagerWorkforcePanel({
                     onClick={taoCheckInNhanh}
                     disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
                   >
-                    Check-in nhanh
+                    Ghi nhận vào làm
                   </button>
                   <button
                     type="button"
@@ -657,7 +669,7 @@ export function ManagerWorkforcePanel({
                     onClick={taoCheckOutNhanh}
                     disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
                   >
-                    Check-out nhanh
+                    Ghi nhận kết thúc ca
                   </button>
 
                   <button

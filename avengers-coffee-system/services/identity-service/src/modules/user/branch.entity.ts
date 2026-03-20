@@ -14,7 +14,25 @@ export class Branch {
   dia_chi: string | null;
 
   @Column({ type: 'varchar', nullable: true })
+  thanh_pho: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  quan_huyen: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
   so_dien_thoai: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  hinh_anh_url: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  gio_mo_cua: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  gio_dong_cua: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  map_url: string | null;
 
   @Column({ type: 'varchar', default: 'ACTIVE' })
   trang_thai: string;

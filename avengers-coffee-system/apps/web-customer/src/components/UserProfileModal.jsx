@@ -32,7 +32,7 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
     },
     enabled: Boolean(isOpen && userId),
     staleTime: 30 * 1000,
-    refetchInterval: 20 * 1000,
+    refetchInterval: 120 * 1000,
   });
 
   useEffect(() => {

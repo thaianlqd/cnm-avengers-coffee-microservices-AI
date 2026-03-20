@@ -14,20 +14,122 @@ import nodemailer, { type Transporter } from 'nodemailer';
 const DEFAULT_BRANCHES: Array<{
   code: string;
   name: string;
+  city: string;
+  district: string;
   address: string | null;
   phone: string | null;
+  imageUrl: string | null;
+  openTime: string | null;
+  closeTime: string | null;
+  mapUrl: string | null;
 }> = [
   {
     code: 'MAC_DINH_CHI',
-    name: 'Mạc Đĩnh Chi',
-    address: 'Cơ sở Mạc Đĩnh Chi, TP.HCM',
+    name: 'HCM Mạc Đĩnh Chi',
+    city: 'Hồ Chí Minh',
+    district: 'Phường Sài Gòn',
+    address: '28 Ter B Mạc Đĩnh Chi, Phường Sài Gòn, Thành phố Hồ Chí Minh',
     phone: null,
+    imageUrl: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1200&q=80',
+    openTime: '07:00',
+    closeTime: '22:00',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=28+Ter+B+Mac+Dinh+Chi+Phuong+Sai+Gon+Thanh+pho+Ho+Chi+Minh',
   },
   {
     code: 'THE_GRACE_TOWER',
-    name: 'The Grace Tower',
-    address: 'The Grace Tower, TP.HCM',
+    name: 'HCM The Grace Tower',
+    city: 'Hồ Chí Minh',
+    district: 'Tân Phú',
+    address: '71 Hoàng Văn Thái, Tân Phú, Quận 7, Thành phố Hồ Chí Minh',
     phone: null,
+    imageUrl: 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?auto=format&fit=crop&w=1200&q=80',
+    openTime: '07:00',
+    closeTime: '22:00',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=71+Hoang+Van+Thai+Tan+Phu+Quan+7+Thanh+pho+Ho+Chi+Minh',
+  },
+  {
+    code: 'SIGNATURE_CRESCENT_MALL',
+    name: 'HCM Signature by The Avengers House',
+    city: 'Hồ Chí Minh',
+    district: 'Tân Phú',
+    address: 'TTTM Crescent Mall, 101 Tôn Dật Tiên, Phường Tân Phú, Quận 7, Thành phố Hồ Chí Minh',
+    phone: null,
+    imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
+    openTime: '07:00',
+    closeTime: '22:00',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=Crescent+Mall+101+Ton+Dat+Tien+Quan+7+Thanh+pho+Ho+Chi+Minh',
+  },
+  {
+    code: 'HOANG_VIET',
+    name: 'HCM Hoàng Việt',
+    city: 'Hồ Chí Minh',
+    district: 'Tân Bình',
+    address: '17 Út Tịch, Quận Tân Bình, Hồ Chí Minh',
+    phone: null,
+    imageUrl: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1200&q=80',
+    openTime: '07:00',
+    closeTime: '22:00',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=17+Ut+Tich+Quan+Tan+Binh+Ho+Chi+Minh',
+  },
+  {
+    code: 'LU_GIA',
+    name: 'HCM Lữ Gia',
+    city: 'Hồ Chí Minh',
+    district: 'Quận 11',
+    address: '64A Lữ Gia, Phường 15, Quận 11, Hồ Chí Minh',
+    phone: null,
+    imageUrl: 'https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1200&q=80',
+    openTime: '07:00',
+    closeTime: '22:00',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=64A+Lu+Gia+Phuong+15+Quan+11+Ho+Chi+Minh',
+  },
+  {
+    code: 'AP_BAC',
+    name: 'HCM Ấp Bắc',
+    city: 'Hồ Chí Minh',
+    district: 'Tân Bình',
+    address: '4 - 6 Ấp Bắc, Quận Tân Bình, Hồ Chí Minh',
+    phone: null,
+    imageUrl: 'https://images.unsplash.com/photo-1521017432531-fbd92d768814?auto=format&fit=crop&w=1200&q=80',
+    openTime: '07:00',
+    closeTime: '21:30',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=4-6+Ap+Bac+Quan+Tan+Binh+Ho+Chi+Minh',
+  },
+  {
+    code: 'BINH_PHU',
+    name: 'HCM Bình Phú',
+    city: 'Hồ Chí Minh',
+    district: 'Quận 6',
+    address: '111-113-115 Bình Phú, Quận 6, Hồ Chí Minh',
+    phone: null,
+    imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80',
+    openTime: '07:00',
+    closeTime: '22:00',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=111-113-115+Binh+Phu+Quan+6+Ho+Chi+Minh',
+  },
+  {
+    code: 'PHAN_VAN_TRI_3',
+    name: 'HCM Phan Văn Trị 3',
+    city: 'Hồ Chí Minh',
+    district: 'Bình Thạnh',
+    address: '190 Phan Văn Trị, Phường 11, Bình Thạnh, Thành phố Hồ Chí Minh',
+    phone: null,
+    imageUrl: 'https://images.unsplash.com/photo-1445116572660-236099ec97a0?auto=format&fit=crop&w=1200&q=80',
+    openTime: '07:00',
+    closeTime: '22:00',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=190+Phan+Van+Tri+Phuong+11+Binh+Thanh+Thanh+pho+Ho+Chi+Minh',
+  },
+  {
+    code: 'HOMYLAND_Q2',
+    name: 'HCM Homyland Q2',
+    city: 'Hồ Chí Minh',
+    district: 'Quận 2',
+    address: 'SH2, Tầng 1 Dự Án Chung cư cao cấp Homyland Riverside, Quận 2, Hồ Chí Minh',
+    phone: null,
+    imageUrl: 'https://images.unsplash.com/photo-1517705008128-361805f42e86?auto=format&fit=crop&w=1200&q=80',
+    openTime: '07:00',
+    closeTime: '22:00',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=Homyland+Riverside+Quan+2+Ho+Chi+Minh',
   },
 ];
 
@@ -169,11 +271,26 @@ export class UserService implements OnModuleInit {
       ma_chi_nhanh: branch.ma_chi_nhanh,
       ten_chi_nhanh: branch.ten_chi_nhanh,
       dia_chi: branch.dia_chi,
+      thanh_pho: branch.thanh_pho,
+      quan_huyen: branch.quan_huyen,
       so_dien_thoai: branch.so_dien_thoai,
+      hinh_anh_url: branch.hinh_anh_url,
+      gio_mo_cua: branch.gio_mo_cua,
+      gio_dong_cua: branch.gio_dong_cua,
+      map_url: branch.map_url,
       trang_thai: branch.trang_thai,
       ngay_tao: branch.ngay_tao,
       ngay_cap_nhat: branch.ngay_cap_nhat,
     };
+  }
+
+  private normalizeTimeValue(value?: string | null) {
+    const normalized = String(value || '').trim();
+    if (!normalized) return null;
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(normalized)) {
+      throw new BadRequestException('Dinh dang gio khong hop le, can HH:MM');
+    }
+    return normalized;
   }
 
   private async seedDefaultBranches() {
@@ -197,6 +314,30 @@ export class UserService implements OnModuleInit {
           existed.so_dien_thoai = seed.phone;
           shouldSave = true;
         }
+        if (!existed.thanh_pho && seed.city) {
+          existed.thanh_pho = seed.city;
+          shouldSave = true;
+        }
+        if (!existed.quan_huyen && seed.district) {
+          existed.quan_huyen = seed.district;
+          shouldSave = true;
+        }
+        if (!existed.hinh_anh_url && seed.imageUrl) {
+          existed.hinh_anh_url = seed.imageUrl;
+          shouldSave = true;
+        }
+        if (!existed.gio_mo_cua && seed.openTime) {
+          existed.gio_mo_cua = seed.openTime;
+          shouldSave = true;
+        }
+        if (!existed.gio_dong_cua && seed.closeTime) {
+          existed.gio_dong_cua = seed.closeTime;
+          shouldSave = true;
+        }
+        if (!existed.map_url && seed.mapUrl) {
+          existed.map_url = seed.mapUrl;
+          shouldSave = true;
+        }
         if (shouldSave) {
           await this.branchRepo.save(existed);
         }
@@ -207,7 +348,13 @@ export class UserService implements OnModuleInit {
         ma_chi_nhanh: seed.code,
         ten_chi_nhanh: seed.name,
         dia_chi: seed.address,
+        thanh_pho: seed.city,
+        quan_huyen: seed.district,
         so_dien_thoai: seed.phone,
+        hinh_anh_url: seed.imageUrl,
+        gio_mo_cua: seed.openTime,
+        gio_dong_cua: seed.closeTime,
+        map_url: seed.mapUrl,
         trang_thai: 'ACTIVE',
       });
       await this.branchRepo.save(created);
@@ -458,7 +605,7 @@ export class UserService implements OnModuleInit {
     ten_dang_nhap?: string;
     mat_khau?: string;
     ho_ten?: string;
-    vai_tro?: 'STAFF' | 'MANAGER';
+    vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER';
     co_so_ma?: string;
     email?: string;
   }) {
@@ -466,15 +613,19 @@ export class UserService implements OnModuleInit {
     const password = String(payload.mat_khau || '');
     const fullName = String(payload.ho_ten || '').trim();
     const role = String(payload.vai_tro || '').trim().toUpperCase();
-    const branchInfo = await this.resolveBranchInfo(payload.co_so_ma);
+    const branchCode = String(payload.co_so_ma || '').trim();
+    const branchInfo = branchCode ? await this.resolveBranchInfo(branchCode) : null;
 
-    if (!username || !password || !fullName || !['STAFF', 'MANAGER'].includes(role)) {
+    if (!username || !password || !fullName || !['STAFF', 'MANAGER', 'CUSTOMER'].includes(role)) {
       throw new BadRequestException('Du lieu tao tai khoan khong hop le');
     }
     if (password.length < 6) {
       throw new BadRequestException('Mat khau phai tu 6 ky tu tro len');
     }
-    if (!branchInfo) {
+    if (branchCode && !branchInfo) {
+      throw new BadRequestException('co_so_ma khong hop le');
+    }
+    if (role !== 'CUSTOMER' && !branchInfo) {
       throw new BadRequestException('Vui long chon chi nhanh hop le');
     }
 
@@ -494,8 +645,8 @@ export class UserService implements OnModuleInit {
       ho_ten: fullName,
       vai_tro: role,
       trang_thai: 'ACTIVE',
-      co_so_ma: branchInfo.code,
-      co_so_ten: branchInfo.name,
+      co_so_ma: branchInfo?.code || null,
+      co_so_ten: branchInfo?.name || null,
     });
 
     const saved = await this.userRepo.save(created);
@@ -520,7 +671,7 @@ export class UserService implements OnModuleInit {
       ten_dang_nhap?: string;
       mat_khau?: string;
       ho_ten?: string;
-      vai_tro?: 'STAFF' | 'MANAGER';
+      vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER';
       co_so_ma?: string;
       trang_thai?: 'ACTIVE' | 'INACTIVE';
       email?: string;
@@ -560,8 +711,8 @@ export class UserService implements OnModuleInit {
 
     if (payload.vai_tro !== undefined) {
       const role = String(payload.vai_tro).toUpperCase();
-      if (!['STAFF', 'MANAGER'].includes(role)) {
-        throw new BadRequestException('Chi cho phep role STAFF hoac MANAGER');
+      if (!['STAFF', 'MANAGER', 'CUSTOMER'].includes(role)) {
+        throw new BadRequestException('Chi cho phep role STAFF, MANAGER hoac CUSTOMER');
       }
       user.vai_tro = role;
     }
@@ -574,12 +725,22 @@ export class UserService implements OnModuleInit {
     }
 
     if (payload.co_so_ma !== undefined) {
-      const branchInfo = await this.resolveBranchInfo(payload.co_so_ma);
-      if (!branchInfo) {
-        throw new BadRequestException('co_so_ma khong hop le');
+      const branchCode = String(payload.co_so_ma || '').trim();
+      if (!branchCode) {
+        if (String(user.vai_tro || '').toUpperCase() === 'CUSTOMER') {
+          user.co_so_ma = null;
+          user.co_so_ten = null;
+        } else {
+          throw new BadRequestException('co_so_ma khong hop le');
+        }
+      } else {
+        const branchInfo = await this.resolveBranchInfo(branchCode);
+        if (!branchInfo) {
+          throw new BadRequestException('co_so_ma khong hop le');
+        }
+        user.co_so_ma = branchInfo.code;
+        user.co_so_ten = branchInfo.name;
       }
-      user.co_so_ma = branchInfo.code;
-      user.co_so_ten = branchInfo.name;
     }
 
     if (payload.mat_khau !== undefined) {
@@ -671,17 +832,41 @@ export class UserService implements OnModuleInit {
     };
   }
 
+  async layDanhSachChiNhanhCongKhai() {
+    const rows = await this.branchRepo.find({
+      where: { trang_thai: 'ACTIVE' },
+      order: { ngay_tao: 'ASC', ma_chi_nhanh: 'ASC' },
+    });
+
+    return {
+      total: rows.length,
+      items: rows.map((branch) => this.mapBranchItem(branch)),
+    };
+  }
+
   async taoChiNhanhAdmin(payload: {
     ma_chi_nhanh?: string;
     ten_chi_nhanh?: string;
     dia_chi?: string;
+    thanh_pho?: string;
+    quan_huyen?: string;
     so_dien_thoai?: string;
+    hinh_anh_url?: string;
+    gio_mo_cua?: string;
+    gio_dong_cua?: string;
+    map_url?: string;
     trang_thai?: 'ACTIVE' | 'INACTIVE';
   }) {
     const branchCode = this.normalizeBranchCode(payload.ma_chi_nhanh);
     const branchName = String(payload.ten_chi_nhanh || '').trim();
     const phone = payload.so_dien_thoai?.trim() || null;
     const address = payload.dia_chi?.trim() || null;
+    const city = payload.thanh_pho?.trim() || null;
+    const district = payload.quan_huyen?.trim() || null;
+    const imageUrl = payload.hinh_anh_url?.trim() || null;
+    const openTime = this.normalizeTimeValue(payload.gio_mo_cua);
+    const closeTime = this.normalizeTimeValue(payload.gio_dong_cua);
+    const mapUrl = payload.map_url?.trim() || null;
     const status = String(payload.trang_thai || 'ACTIVE').toUpperCase();
 
     if (!branchCode) {
@@ -708,7 +893,13 @@ export class UserService implements OnModuleInit {
       ma_chi_nhanh: branchCode,
       ten_chi_nhanh: branchName,
       dia_chi: address,
+      thanh_pho: city,
+      quan_huyen: district,
       so_dien_thoai: phone,
+      hinh_anh_url: imageUrl,
+      gio_mo_cua: openTime,
+      gio_dong_cua: closeTime,
+      map_url: mapUrl,
       trang_thai: status,
     });
 
@@ -724,7 +915,13 @@ export class UserService implements OnModuleInit {
     payload: {
       ten_chi_nhanh?: string;
       dia_chi?: string;
+      thanh_pho?: string;
+      quan_huyen?: string;
       so_dien_thoai?: string;
+      hinh_anh_url?: string;
+      gio_mo_cua?: string;
+      gio_dong_cua?: string;
+      map_url?: string;
       trang_thai?: 'ACTIVE' | 'INACTIVE';
     },
   ) {
@@ -758,6 +955,30 @@ export class UserService implements OnModuleInit {
 
     if (payload.so_dien_thoai !== undefined) {
       branch.so_dien_thoai = payload.so_dien_thoai?.trim() || null;
+    }
+
+    if (payload.thanh_pho !== undefined) {
+      branch.thanh_pho = payload.thanh_pho?.trim() || null;
+    }
+
+    if (payload.quan_huyen !== undefined) {
+      branch.quan_huyen = payload.quan_huyen?.trim() || null;
+    }
+
+    if (payload.hinh_anh_url !== undefined) {
+      branch.hinh_anh_url = payload.hinh_anh_url?.trim() || null;
+    }
+
+    if (payload.gio_mo_cua !== undefined) {
+      branch.gio_mo_cua = this.normalizeTimeValue(payload.gio_mo_cua);
+    }
+
+    if (payload.gio_dong_cua !== undefined) {
+      branch.gio_dong_cua = this.normalizeTimeValue(payload.gio_dong_cua);
+    }
+
+    if (payload.map_url !== undefined) {
+      branch.map_url = payload.map_url?.trim() || null;
     }
 
     if (payload.trang_thai !== undefined) {
@@ -805,48 +1026,33 @@ export class UserService implements OnModuleInit {
 
   private async seedStoreWorkforceAccounts() {
     const sharedPassword = process.env.STORE_DEFAULT_PASSWORD || '123456';
-    const macDinhChi = await this.resolveBranchInfo('MAC_DINH_CHI');
-    const theGraceTower = await this.resolveBranchInfo('THE_GRACE_TOWER');
+    for (const seed of DEFAULT_BRANCHES) {
+      const branch = await this.resolveBranchInfo(seed.code);
+      if (!branch) {
+        continue;
+      }
 
-    if (!macDinhChi || !theGraceTower) {
-      throw new Error('Khong the seed workforce do thieu chi nhanh mac dinh');
+      const suffix = seed.code.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const cleanBranchName = String(seed.name || '').replace(/^HCM\s+/i, '').trim();
+
+      await this.upsertWorkforceUser({
+        username: `thaian_staff_${suffix}`,
+        password: sharedPassword,
+        fullName: `Thái An - Nhân viên cơ sở ${cleanBranchName}`,
+        role: 'STAFF',
+        branchCode: branch.code,
+        branchName: branch.name,
+      });
+
+      await this.upsertWorkforceUser({
+        username: `thaian_manager_${suffix}`,
+        password: sharedPassword,
+        fullName: `Thái An - Quản lý cơ sở ${cleanBranchName}`,
+        role: 'MANAGER',
+        branchCode: branch.code,
+        branchName: branch.name,
+      });
     }
-
-    await this.upsertWorkforceUser({
-      username: 'thaian_staff_macdinhchi',
-      password: sharedPassword,
-      fullName: 'Thái An - Nhân viên cơ sở Mạc Đĩnh Chi',
-      role: 'STAFF',
-      branchCode: macDinhChi.code,
-      branchName: macDinhChi.name,
-    });
-
-    await this.upsertWorkforceUser({
-      username: 'thaian_manager_macdinhchi',
-      password: sharedPassword,
-      fullName: 'Thái An - Quản lý cơ sở Mạc Đĩnh Chi',
-      role: 'MANAGER',
-      branchCode: macDinhChi.code,
-      branchName: macDinhChi.name,
-    });
-
-    await this.upsertWorkforceUser({
-      username: 'thaian_staff_thegracetower',
-      password: sharedPassword,
-      fullName: 'Thái An - Nhân viên cơ sở The Grace Tower',
-      role: 'STAFF',
-      branchCode: theGraceTower.code,
-      branchName: theGraceTower.name,
-    });
-
-    await this.upsertWorkforceUser({
-      username: 'thaian_manager_thegracetower',
-      password: sharedPassword,
-      fullName: 'Thái An - Quản lý cơ sở The Grace Tower',
-      role: 'MANAGER',
-      branchCode: theGraceTower.code,
-      branchName: theGraceTower.name,
-    });
   }
 
   private async seedSystemAdminAccount() {

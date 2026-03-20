@@ -6,10 +6,10 @@ export default function ProductCard({ product, onView, onQuickAdd, onToggleFavor
   const hasDiscount = Number(gia_niem_yet || 0) > Number(gia_ban || 0);
 
   return (
-    <div className="group glass-surface rounded-2xl p-3 transition-all duration-300 hover:-translate-y-0.5 flex h-full flex-col border border-[#e2d5c7]">
+    <div className="group flex h-full flex-col border-0 bg-transparent p-0 transition-all duration-300 hover:-translate-y-0.5">
       {/* Container Ảnh */}
       <div 
-        className="relative w-full aspect-square overflow-hidden rounded-2xl mb-4 bg-tch-gray cursor-pointer"
+        className="relative mb-4 aspect-square w-full cursor-pointer overflow-hidden rounded-[20px] bg-[#f6f6f4]"
         onClick={onView}
       >
         <img 
@@ -47,12 +47,12 @@ export default function ProductCard({ product, onView, onQuickAdd, onToggleFavor
       </div>
 
       {/* Nội dung */}
-      <div className="flex flex-col flex-grow px-2">
+      <div className="flex flex-grow flex-col px-1">
         <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#6f5e4d]">
           {danhMuc?.ten_danh_muc || 'Sản phẩm'}
         </p>
         
-        <h3 className="mb-2 h-12 cursor-pointer line-clamp-2 text-[22px] font-extrabold leading-tight text-[#1d1510] transition-colors hover:text-tch-orange">
+        <h3 className="mb-2 min-h-[3rem] cursor-pointer line-clamp-2 text-[24px] font-black leading-tight text-[#191410] transition-colors hover:text-tch-orange">
           {ten_san_pham}
         </h3>
         
@@ -63,14 +63,14 @@ export default function ProductCard({ product, onView, onQuickAdd, onToggleFavor
                 {Number(gia_niem_yet).toLocaleString('vi-VN')} đ
               </p>
             ) : null}
-            <p className="text-[28px] font-extrabold text-[#1a120b]">
+            <p className="text-[30px] font-black text-[#16110d]">
               {Number(gia_ban).toLocaleString('vi-VN')} đ
             </p>
           </div>
           
           <div className="flex gap-2">
             <button
-              className="flex-1 rounded-xl border border-tch-orange py-2.5 text-[11px] font-semibold uppercase tracking-wide text-tch-orange transition-colors hover:bg-orange-50"
+              className="flex-1 rounded-xl border border-[#cb6f36] py-2.5 text-[11px] font-semibold uppercase tracking-wide text-[#cb6f36] transition-colors hover:bg-orange-50"
               type="button"
               onClick={onView}
             >

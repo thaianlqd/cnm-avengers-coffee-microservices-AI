@@ -80,9 +80,34 @@ function AuthModalInner({
     setError('');
 
     try {
+      const submittedForm = new FormData(e.currentTarget);
       const endpoint = isLoginView ? '/auth/login' : '/auth/register';
+      const identifier = String(submittedForm.get('email') || formData.email || '').trim();
+      const password = String(submittedForm.get('password') || formData.password || '');
+      const fullName = String(submittedForm.get('hoTen') || formData.hoTen || '').trim();
+      const phone = String(formData.soDienThoai || '').trim();
+
+      const payload = isLoginView
+        ? {
+            email: identifier,
+            password,
+            tai_khoan: identifier,
+            mat_khau: password,
+            tenDangNhap: identifier,
+          }
+        : {
+            email: identifier,
+            password,
+            hoTen: fullName,
+            soDienThoai: phone || undefined,
+            ten_dang_nhap: identifier,
+            mat_khau: password,
+            ho_ten: fullName,
+            so_dien_thoai: phone || undefined,
+          };
+
       authMutation.mutate(
-        { endpoint, payload: formData },
+        { endpoint, payload },
         {
           onSuccess: (data) => {
             if (isLoginView) {
@@ -103,6 +128,13 @@ function AuthModalInner({
           },
         },
       );
+
+      setFormData((prev) => ({
+        ...prev,
+        email: identifier,
+        password,
+        hoTen: fullName,
+      }));
     } catch (err) {
       setError('Đăng nhập thất bại, vui lòng thử lại');
       console.error('login error:', err);
@@ -543,6 +575,7 @@ function AuthModalInner({
             {!isLoginView && (
               <input
                 type="text"
+                name="hoTen"
                 placeholder="Họ và tên"
                 required
                 className="w-full rounded-2xl border-none bg-gray-50 px-5 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-tch-orange"
@@ -551,6 +584,7 @@ function AuthModalInner({
             )}
             <input
               type="email"
+              name="email"
               placeholder="Email của bạn"
               required
               className="w-full rounded-2xl border-none bg-gray-50 px-5 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-tch-orange"
@@ -558,6 +592,7 @@ function AuthModalInner({
             />
             <input
               type="password"
+              name="password"
               placeholder="Mật khẩu"
               required
               className="w-full rounded-2xl border-none bg-gray-50 px-5 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-tch-orange"

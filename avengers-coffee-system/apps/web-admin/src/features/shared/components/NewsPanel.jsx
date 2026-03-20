@@ -339,14 +339,20 @@ export function NewsPanel() {
                 accept="image/*"
                 onChange={(e) => setImageFile(e.target.files?.[0] || null)}
               />
-              {imagePreview ? (
+              {activeArticleId && !imageFile && (
+                <small style={{ color: '#666' }}>Bỏ trống để giữ ảnh cũ, chọn ảnh mới để thay thế</small>
+              )}
+              {imageFile && (
+                <small style={{ color: '#15803d' }}>✓ Ảnh mới được chọn: {imageFile.name}</small>
+              )}
+              {imagePreview && (
                 <img
                   src={imagePreview}
                   alt="preview"
                   className="admin-news-cover"
                   style={{ maxWidth: 320 }}
                 />
-              ) : null}
+              )}
             </div>
 
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700 }}>

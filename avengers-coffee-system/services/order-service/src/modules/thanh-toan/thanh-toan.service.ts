@@ -132,7 +132,7 @@ type BoLocLichLamViec = {
 };
 
 type CapNhatChamCongInput = {
-  attendance_status?: 'ASSIGNED' | 'PRESENT' | 'ABSENT';
+  attendance_status?: 'ASSIGNED' | 'PRESENT' | 'LATE' | 'ABSENT';
   check_in_at?: string | null;
   check_out_at?: string | null;
   note?: string;
@@ -159,6 +159,30 @@ type XuLyYeuCauDangKyCaInput = {
   adjusted_shift_date?: string;
   adjusted_shift_code?: 'SANG' | 'CHIEU' | 'TOI';
   adjusted_note?: string;
+  branch_code?: string;
+};
+
+type TaoYeuCauDangKyCaChoQuanLyInput = {
+  manager_username: string;
+  manager_name?: string;
+  shift_date: string;
+  shift_code: 'SANG' | 'CHIEU' | 'TOI';
+  note?: string;
+  branch_code?: string;
+};
+
+type ChamCongCaLamViecInput = {
+  shift_id: string;
+  staff_username: string;
+  action: 'CHECK_IN' | 'CHECK_OUT';
+  branch_code?: string;
+};
+
+type DuyetChamCongNhanVienInput = {
+  verify_status: 'PRESENT' | 'LATE' | 'ABSENT';
+  verify_note?: string;
+  manager_username?: string;
+  verified_at?: Date;
   branch_code?: string;
 };
 
@@ -290,21 +314,27 @@ export class ThanhToanService {
     return null;
   }
 
-  private async layTapUsernameNhanVienTheoChiNhanh(branchCode: string) {
-    const endpoint = `${this.IDENTITY_SERVICE_URL}/users/workforce?role=STAFF&branch_code=${encodeURIComponent(branchCode)}`;
+  private async layTapUsernameNhanVienTheoChiNhanh(branchCode: string, roles: Array<'STAFF' | 'MANAGER'> = ['STAFF']) {
 
     try {
-      const response = await fetch(endpoint, {
-        headers: {
-          'x-internal-token': this.INTERNAL_SERVICE_TOKEN,
-        },
-      });
-      const payload: any = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(payload?.message || 'Khong tai duoc danh sach nhan vien theo chi nhanh');
-      }
+      const responses = await Promise.all(
+        roles.map(async (role) => {
+          const endpoint = `${this.IDENTITY_SERVICE_URL}/users/workforce?role=${role}&branch_code=${encodeURIComponent(branchCode)}`;
+          const response = await fetch(endpoint, {
+            headers: {
+              'x-internal-token': this.INTERNAL_SERVICE_TOKEN,
+            },
+          });
+          const payload: any = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(payload?.message || `Khong tai duoc danh sach ${role} theo chi nhanh`);
+          }
+          return Array.isArray(payload?.items) ? payload.items : [];
+        }),
+      );
 
-      const usernames = (Array.isArray(payload?.items) ? payload.items : [])
+      const usernames = responses
+        .flat()
         .map((item: any) => String(item?.ten_dang_nhap || item?.tenDangNhap || item?.username || '').trim().toLowerCase())
         .filter(Boolean);
 
@@ -670,7 +700,7 @@ export class ThanhToanService {
     }
 
     const branchCode = this.normalizeBranchCode(input.branch_code);
-    const validStaffByBranch = await this.layTapUsernameNhanVienTheoChiNhanh(branchCode);
+    const validStaffByBranch = await this.layTapUsernameNhanVienTheoChiNhanh(branchCode, ['STAFF', 'MANAGER']);
     if (!validStaffByBranch.has(staffUsername.toLowerCase())) {
       throw new BadRequestException('Nhan vien khong thuoc chi nhanh dang thao tac');
     }
@@ -735,7 +765,7 @@ export class ThanhToanService {
 
   async layDanhSachLichLamViecChoManager(boLoc: BoLocLichLamViec = {}) {
     const branchCode = this.normalizeBranchCode(boLoc.branchCode);
-    const validStaffByBranch = await this.layTapUsernameNhanVienTheoChiNhanh(branchCode);
+    const validStaffByBranch = await this.layTapUsernameNhanVienTheoChiNhanh(branchCode, ['STAFF', 'MANAGER']);
     const query = this.caLamViecNhanVienRepo
       .createQueryBuilder('ca')
       .where('ca.co_so_ma = :branchCode', { branchCode });
@@ -783,7 +813,7 @@ export class ThanhToanService {
       return parsed;
     };
 
-    const allowedStatus = ['ASSIGNED', 'PRESENT', 'ABSENT'];
+    const allowedStatus = ['ASSIGNED', 'PRESENT', 'LATE', 'ABSENT'];
     if (input.attendance_status !== undefined && !allowedStatus.includes(input.attendance_status)) {
       throw new BadRequestException('attendance_status khong hop le');
     }
@@ -855,7 +885,7 @@ export class ThanhToanService {
   async layLichLamViecChoStaff(staffUsername: string, from?: string, to?: string, branchCodeRaw?: string) {
     const normalizedUsername = String(staffUsername || '').trim();
     const branchCode = this.normalizeBranchCode(branchCodeRaw);
-    const validStaffByBranch = await this.layTapUsernameNhanVienTheoChiNhanh(branchCode);
+    const validStaffByBranch = await this.layTapUsernameNhanVienTheoChiNhanh(branchCode, ['STAFF', 'MANAGER']);
     if (!normalizedUsername) {
       throw new BadRequestException('staff_username la bat buoc');
     }
@@ -1097,6 +1127,188 @@ export class ThanhToanService {
     return {
       message: 'Da xoa yeu cau dang ky ca',
       ma_ca_lam_viec: maCaLamViec,
+    };
+  }
+
+  async taoYeuCauDangKyCaChoQuanLy(input: TaoYeuCauDangKyCaChoQuanLyInput) {
+    const managerUsername = String(input.manager_username || '').trim();
+    const shiftDate = String(input.shift_date || '').trim();
+    const shiftCode = String(input.shift_code || '').trim().toUpperCase() as 'SANG' | 'CHIEU' | 'TOI';
+
+    if (!managerUsername) {
+      throw new BadRequestException('manager_username la bat buoc');
+    }
+    if (!shiftDate) {
+      throw new BadRequestException('shift_date la bat buoc');
+    }
+
+    const shiftSlot = this.layKhungCaLamViec(shiftCode);
+    if (!shiftSlot) {
+      throw new BadRequestException('shift_code khong hop le');
+    }
+
+    const branchCode = this.normalizeBranchCode(input.branch_code);
+    await this.kiemTraTrungCaLamViec(branchCode, managerUsername, shiftDate, shiftCode);
+
+    const now = new Date();
+    const created = await this.caLamViecNhanVienRepo.save(
+      this.caLamViecNhanVienRepo.create({
+        co_so_ma: branchCode,
+        staff_username: managerUsername,
+        staff_name: input.manager_name?.trim() || managerUsername,
+        ngay_lam_viec: shiftDate,
+        ma_khung_ca: shiftCode,
+        ten_ca: shiftSlot.ten_ca,
+        gio_bat_dau: shiftSlot.gio_bat_dau,
+        gio_ket_thuc: shiftSlot.gio_ket_thuc,
+        note: input.note?.trim() || null,
+        manager_username: managerUsername,
+        trang_thai_cham_cong: 'ASSIGNED',
+        check_in_at: null,
+        check_out_at: null,
+        nguon_tao: 'MANAGER_REQUEST',
+        trang_thai_yeu_cau: 'APPROVED',
+        thoi_gian_gui_yeu_cau: now,
+        nguoi_duyet_yeu_cau: managerUsername,
+        ghi_chu_duyet: 'Manager tu dang ky ca lam viec',
+        thoi_gian_duyet: now,
+      }),
+    );
+
+    this.guiSuKienDongBoNhanSu(branchCode, 'SHIFT_REQUEST_CREATED', {
+      requestId: created.ma_ca_lam_viec,
+      staffUsername: created.staff_username,
+      shiftDate: created.ngay_lam_viec,
+      shiftCode: created.ma_khung_ca,
+      requestStatus: created.trang_thai_yeu_cau,
+      source: created.nguon_tao,
+    });
+
+    return {
+      message: 'Da dang ky ca lam viec cho quan ly',
+      item: this.dinhDangCaLamViec(created),
+    };
+  }
+
+  async thoiGianVaoCaLamViec(input: ChamCongCaLamViecInput) {
+    const shiftId = String(input.shift_id || '').trim();
+    const staffUsername = String(input.staff_username || '').trim();
+    const action = String(input.action || '').trim().toUpperCase() as 'CHECK_IN' | 'CHECK_OUT';
+
+    if (!shiftId) {
+      throw new BadRequestException('shift_id la bat buoc');
+    }
+    if (!staffUsername) {
+      throw new BadRequestException('staff_username la bat buoc');
+    }
+    if (!['CHECK_IN', 'CHECK_OUT'].includes(action)) {
+      throw new BadRequestException('action khong hop le');
+    }
+
+    const branchCode = this.normalizeBranchCode(input.branch_code);
+    const shift = await this.caLamViecNhanVienRepo.findOne({
+      where: {
+        ma_ca_lam_viec: shiftId,
+        co_so_ma: branchCode,
+        staff_username: staffUsername,
+      },
+    });
+
+    if (!shift) {
+      throw new NotFoundException('Khong tim thay ca lam viec');
+    }
+    if (shift.trang_thai_yeu_cau !== 'APPROVED') {
+      throw new BadRequestException('Chi duoc cham cong cho ca da duoc phe duyet');
+    }
+
+    const now = new Date();
+    const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    if (shift.ngay_lam_viec > todayLocal) {
+      throw new BadRequestException('Ca lam viec chua den ngay, khong the check-in/check-out');
+    }
+
+    if (action === 'CHECK_IN') {
+      if (shift.check_in_at) {
+        throw new BadRequestException('Ca nay da check-in');
+      }
+
+      const shiftStart = new Date(`${shift.ngay_lam_viec}T${shift.gio_bat_dau}:00`);
+      if (Number.isNaN(shiftStart.getTime())) {
+        throw new BadRequestException('Khong xac dinh duoc gio bat dau ca lam viec');
+      }
+      const allowedEarlyCheckIn = new Date(shiftStart.getTime() - 30 * 60 * 1000);
+      if (now.getTime() < allowedEarlyCheckIn.getTime()) {
+        throw new BadRequestException('Chi duoc check-in truoc toi da 30 phut');
+      }
+
+      shift.check_in_at = now;
+      shift.trang_thai_cham_cong = 'PRESENT';
+    }
+
+    if (action === 'CHECK_OUT') {
+      if (!shift.check_in_at) {
+        throw new BadRequestException('Can check-in truoc khi check-out');
+      }
+      if (shift.check_out_at) {
+        throw new BadRequestException('Ca nay da check-out');
+      }
+
+      shift.check_out_at = now;
+      if (shift.trang_thai_cham_cong === 'ASSIGNED') {
+        shift.trang_thai_cham_cong = 'PRESENT';
+      }
+    }
+
+    const updated = await this.caLamViecNhanVienRepo.save(shift);
+    this.guiSuKienDongBoNhanSu(branchCode, 'WORK_SHIFT_UPDATED', {
+      shiftId: updated.ma_ca_lam_viec,
+      staffUsername: updated.staff_username,
+      shiftDate: updated.ngay_lam_viec,
+      attendanceAction: action,
+    });
+
+    return {
+      message: action === 'CHECK_IN' ? 'Check-in thanh cong' : 'Check-out thanh cong',
+      item: this.dinhDangCaLamViec(updated),
+    };
+  }
+
+  async duyetXacNhanChamCongNhanVien(maCaLamViec: string, input: DuyetChamCongNhanVienInput) {
+    const branchCode = this.normalizeBranchCode(input.branch_code);
+    const shift = await this.caLamViecNhanVienRepo.findOne({
+      where: { ma_ca_lam_viec: maCaLamViec, co_so_ma: branchCode },
+    });
+
+    if (!shift) {
+      throw new NotFoundException('Khong tim thay ca lam viec');
+    }
+
+    const allowedStatuses = ['PRESENT', 'LATE', 'ABSENT'];
+    if (!allowedStatuses.includes(input.verify_status)) {
+      throw new BadRequestException('verify_status khong hop le');
+    }
+
+    shift.trang_thai_cham_cong = input.verify_status;
+    shift.nguoi_duyet_yeu_cau = input.manager_username?.trim() || shift.nguoi_duyet_yeu_cau;
+    shift.ghi_chu_duyet = input.verify_note?.trim() || shift.ghi_chu_duyet;
+    shift.thoi_gian_duyet = input.verified_at || new Date();
+
+    if (input.verify_status === 'ABSENT') {
+      shift.check_in_at = null;
+      shift.check_out_at = null;
+    }
+
+    const updated = await this.caLamViecNhanVienRepo.save(shift);
+    this.guiSuKienDongBoNhanSu(branchCode, 'WORK_SHIFT_UPDATED', {
+      shiftId: updated.ma_ca_lam_viec,
+      staffUsername: updated.staff_username,
+      shiftDate: updated.ngay_lam_viec,
+      attendanceStatus: updated.trang_thai_cham_cong,
+    });
+
+    return {
+      message: 'Da duyet cham cong nhan vien',
+      item: this.dinhDangCaLamViec(updated),
     };
   }
 

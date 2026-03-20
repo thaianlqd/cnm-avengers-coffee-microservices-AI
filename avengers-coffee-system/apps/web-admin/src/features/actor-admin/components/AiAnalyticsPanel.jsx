@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useAiAnalytics } from '../hooks/useAiAnalytics'
+import { API_BASE_URL } from '../../admin-dashboard/constants'
 
 // ─── tiny helpers ─────────────────────────────────────────────────────────────
 
@@ -22,6 +24,19 @@ function StatusDot({ ok }) {
       display: 'inline-block', width: 10, height: 10, borderRadius: '50%',
       background: ok ? '#22c55e' : '#ef4444', marginRight: 6, verticalAlign: 'middle',
     }} />
+  )
+}
+
+function HorizontalBar({ label, value, max, note }) {
+  const width = max > 0 ? Math.max(6, Math.round((value / max) * 100)) : 0
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 3fr auto', gap: 10, alignItems: 'center' }}>
+      <span style={{ fontSize: 12, color: '#334155', fontWeight: 600 }}>{label}</span>
+      <div style={{ width: '100%', height: 10, borderRadius: 99, background: '#e2e8f0', overflow: 'hidden' }}>
+        <div style={{ width: `${width}%`, height: '100%', background: 'linear-gradient(90deg,#2563eb,#38bdf8)' }} />
+      </div>
+      <span style={{ fontSize: 12, color: '#0f172a', fontWeight: 700 }}>{note || fmtNum(value)}</span>
+    </div>
   )
 }
 
@@ -175,7 +190,12 @@ function RecommendCard({ item }) {
 
 // ─── Main Panel ───────────────────────────────────────────────────────────────
 
-export function AiAnalyticsPanel() {
+function buildAuthHeaders(session) {
+  const token = session?.token || session?.accessToken || session?.access_token || ''
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
+export function AiAnalyticsPanel({ session }) {
   const {
     branchCode, setBranchCode,
     metric, setMetric,
@@ -195,6 +215,23 @@ export function AiAnalyticsPanel() {
   const stats = modelStatsQuery.data
   const fc = forecastQuery.data
   const recs = recommendQuery.data
+  const behaviorQuery = useQuery({
+    queryKey: ['admin-behavior-orders', branchCode],
+    queryFn: async () => {
+      const query = branchCode === 'ALL' ? '' : `?branch_code=${encodeURIComponent(branchCode)}`
+      const response = await fetch(`${API_BASE_URL}/staff/orders${query}`, {
+        headers: buildAuthHeaders(session),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc du lieu hanh vi mua hang')
+      return payload?.orders || []
+    },
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
+    retry: 1,
+    enabled: Boolean(session?.token || session?.accessToken || session?.access_token),
+  })
 
   const behaviorSummary = useMemo(() => {
     const totalUsers = Number(stats?.collaborative_filtering?.total_users || 0)
@@ -242,6 +279,57 @@ export function AiAnalyticsPanel() {
     branches.forEach(b => base.push({ value: b, label: b.replace(/_/g, ' ') }))
     return base
   }, [stats])
+
+  const behaviorInsights = useMemo(() => {
+    const orders = Array.isArray(behaviorQuery.data) ? behaviorQuery.data : []
+    const productMap = new Map()
+    const paymentMap = new Map()
+    const hourGroups = [
+      { key: 'SANG', label: 'Sang (06h-11h)', from: 6, to: 11, count: 0 },
+      { key: 'TRUA', label: 'Trua (11h-14h)', from: 11, to: 14, count: 0 },
+      { key: 'CHIEU', label: 'Chieu (14h-18h)', from: 14, to: 18, count: 0 },
+      { key: 'TOI', label: 'Toi (18h-23h)', from: 18, to: 23, count: 0 },
+    ]
+
+    orders.forEach((order) => {
+      const paymentKey = String(order?.phuong_thuc_thanh_toan || 'Khac')
+      paymentMap.set(paymentKey, Number(paymentMap.get(paymentKey) || 0) + 1)
+
+      const created = new Date(order?.ngay_tao)
+      if (!Number.isNaN(created.getTime())) {
+        const hour = created.getHours()
+        const bucket = hourGroups.find((item) => hour >= item.from && hour < item.to)
+        if (bucket) bucket.count += 1
+      }
+
+      const details = Array.isArray(order?.chi_tiet) ? order.chi_tiet : []
+      details.forEach((item) => {
+        const key = String(item?.ma_san_pham || item?.ten_san_pham || 'unknown')
+        const current = productMap.get(key) || {
+          name: String(item?.ten_san_pham || 'San pham'),
+          qty: 0,
+          revenue: 0,
+          orderCount: 0,
+        }
+        current.qty += Number(item?.so_luong || 0)
+        current.revenue += Number(item?.gia_ban || 0) * Number(item?.so_luong || 0)
+        current.orderCount += 1
+        productMap.set(key, current)
+      })
+    })
+
+    const topProducts = [...productMap.values()]
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 6)
+    const paymentMix = [...paymentMap.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count)
+
+    return {
+      totalOrders: orders.length,
+      topProducts,
+      paymentMix,
+      hourGroups,
+    }
+  }, [behaviorQuery.data])
 
   const isAiDown = modelStatsQuery.isError
 
@@ -389,6 +477,75 @@ export function AiAnalyticsPanel() {
           </div>
         </div>
       )}
+
+      <div style={{
+        background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16,
+        padding: '24px', marginBottom: 28, boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#111827' }}>
+              Bieu do hanh vi mua sam khach hang
+            </h3>
+            <p style={{ margin: '6px 0 0', fontSize: 12, color: '#64748b' }}>
+              Tong hop tu lich su don hang de nhin ro mon ban chay, khung gio mua manh va phuong thuc thanh toan pho bien.
+            </p>
+          </div>
+          <strong style={{ fontSize: 13, color: '#1e40af' }}>Tong don da phan tich: {fmtNum(behaviorInsights.totalOrders)}</strong>
+        </div>
+
+        {behaviorQuery.isLoading ? <p style={{ color: '#9ca3af', marginTop: 12 }}>Dang tai du lieu hanh vi...</p> : null}
+        {behaviorQuery.isError ? <p style={{ color: '#ef4444', marginTop: 12 }}>Khong tai duoc du lieu hanh vi mua sam.</p> : null}
+
+        {!behaviorQuery.isLoading && !behaviorQuery.isError ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16, marginTop: 14 }}>
+            <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, background: '#f8fafc' }}>
+              <h4 style={{ margin: '0 0 10px', fontSize: 13, color: '#0f172a' }}>Top san pham duoc mua nhieu</h4>
+              <div style={{ display: 'grid', gap: 8 }}>
+                {behaviorInsights.topProducts.map((item) => (
+                  <HorizontalBar
+                    key={item.name}
+                    label={item.name}
+                    value={item.qty}
+                    max={behaviorInsights.topProducts[0]?.qty || 1}
+                    note={`${fmtNum(item.qty)} luot`}
+                  />
+                ))}
+              </div>
+            </section>
+
+            <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, background: '#f8fafc' }}>
+              <h4 style={{ margin: '0 0 10px', fontSize: 13, color: '#0f172a' }}>Ty le phuong thuc thanh toan</h4>
+              <div style={{ display: 'grid', gap: 8 }}>
+                {behaviorInsights.paymentMix.map((item) => (
+                  <HorizontalBar
+                    key={item.name}
+                    label={item.name}
+                    value={item.count}
+                    max={behaviorInsights.paymentMix[0]?.count || 1}
+                    note={`${fmtNum(item.count)} don`}
+                  />
+                ))}
+              </div>
+            </section>
+
+            <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, background: '#f8fafc' }}>
+              <h4 style={{ margin: '0 0 10px', fontSize: 13, color: '#0f172a' }}>Khung gio mua sam noi bat</h4>
+              <div style={{ display: 'grid', gap: 8 }}>
+                {behaviorInsights.hourGroups.map((item) => (
+                  <HorizontalBar
+                    key={item.key}
+                    label={item.label}
+                    value={item.count}
+                    max={Math.max(...behaviorInsights.hourGroups.map((x) => x.count), 1)}
+                    note={`${fmtNum(item.count)} don`}
+                  />
+                ))}
+              </div>
+            </section>
+          </div>
+        ) : null}
+      </div>
 
       {/* ── Forecast Chart ───────────────────────────────────────────────── */}
       <div style={{
