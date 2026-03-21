@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Zc2kXef4hWlxRPeCt9UPHc2MxAYQsksC1A6To7SJ9djtoRQTHvdGj3fKx4mlCLv
+\restrict TPKwPS5ReEUJyLx9Cf91xzZyCPhZptYInPRuT4E3Ncx37dYtfXJ0HaUxPri7hDn
 
 -- Dumped from database version 16.13 (Debian 16.13-1.pgdg13+1)
 -- Dumped by pg_dump version 16.13 (Debian 16.13-1.pgdg13+1)
@@ -53,6 +53,15 @@ CREATE SCHEMA menu;
 
 
 ALTER SCHEMA menu OWNER TO admin;
+
+--
+-- Name: menu_ci_1774113918067; Type: SCHEMA; Schema: -; Owner: admin
+--
+
+CREATE SCHEMA menu_ci_1774113918067;
+
+
+ALTER SCHEMA menu_ci_1774113918067 OWNER TO admin;
 
 --
 -- Name: menu_ci_local; Type: SCHEMA; Schema: -; Owner: admin
@@ -574,6 +583,83 @@ ALTER SEQUENCE menu.san_pham_ma_san_pham_seq OWNER TO admin;
 --
 
 ALTER SEQUENCE menu.san_pham_ma_san_pham_seq OWNED BY menu.san_pham.ma_san_pham;
+
+
+--
+-- Name: danh_muc; Type: TABLE; Schema: menu_ci_1774113918067; Owner: admin
+--
+
+CREATE TABLE menu_ci_1774113918067.danh_muc (
+    ma_danh_muc integer NOT NULL,
+    ten_danh_muc character varying NOT NULL,
+    hinh_anh_icon character varying
+);
+
+
+ALTER TABLE menu_ci_1774113918067.danh_muc OWNER TO admin;
+
+--
+-- Name: danh_muc_ma_danh_muc_seq; Type: SEQUENCE; Schema: menu_ci_1774113918067; Owner: admin
+--
+
+CREATE SEQUENCE menu_ci_1774113918067.danh_muc_ma_danh_muc_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE menu_ci_1774113918067.danh_muc_ma_danh_muc_seq OWNER TO admin;
+
+--
+-- Name: danh_muc_ma_danh_muc_seq; Type: SEQUENCE OWNED BY; Schema: menu_ci_1774113918067; Owner: admin
+--
+
+ALTER SEQUENCE menu_ci_1774113918067.danh_muc_ma_danh_muc_seq OWNED BY menu_ci_1774113918067.danh_muc.ma_danh_muc;
+
+
+--
+-- Name: san_pham; Type: TABLE; Schema: menu_ci_1774113918067; Owner: admin
+--
+
+CREATE TABLE menu_ci_1774113918067.san_pham (
+    ma_san_pham integer NOT NULL,
+    ten_san_pham character varying NOT NULL,
+    gia_ban numeric(10,2) NOT NULL,
+    gia_niem_yet numeric(10,2),
+    mo_ta text,
+    hinh_anh_url character varying,
+    trang_thai boolean DEFAULT true NOT NULL,
+    la_hot boolean DEFAULT false NOT NULL,
+    la_moi boolean DEFAULT false NOT NULL,
+    ma_danh_muc integer
+);
+
+
+ALTER TABLE menu_ci_1774113918067.san_pham OWNER TO admin;
+
+--
+-- Name: san_pham_ma_san_pham_seq; Type: SEQUENCE; Schema: menu_ci_1774113918067; Owner: admin
+--
+
+CREATE SEQUENCE menu_ci_1774113918067.san_pham_ma_san_pham_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE menu_ci_1774113918067.san_pham_ma_san_pham_seq OWNER TO admin;
+
+--
+-- Name: san_pham_ma_san_pham_seq; Type: SEQUENCE OWNED BY; Schema: menu_ci_1774113918067; Owner: admin
+--
+
+ALTER SEQUENCE menu_ci_1774113918067.san_pham_ma_san_pham_seq OWNED BY menu_ci_1774113918067.san_pham.ma_san_pham;
 
 
 --
@@ -2515,6 +2601,20 @@ ALTER TABLE ONLY menu.san_pham ALTER COLUMN ma_san_pham SET DEFAULT nextval('men
 
 
 --
+-- Name: danh_muc ma_danh_muc; Type: DEFAULT; Schema: menu_ci_1774113918067; Owner: admin
+--
+
+ALTER TABLE ONLY menu_ci_1774113918067.danh_muc ALTER COLUMN ma_danh_muc SET DEFAULT nextval('menu_ci_1774113918067.danh_muc_ma_danh_muc_seq'::regclass);
+
+
+--
+-- Name: san_pham ma_san_pham; Type: DEFAULT; Schema: menu_ci_1774113918067; Owner: admin
+--
+
+ALTER TABLE ONLY menu_ci_1774113918067.san_pham ALTER COLUMN ma_san_pham SET DEFAULT nextval('menu_ci_1774113918067.san_pham_ma_san_pham_seq'::regclass);
+
+
+--
 -- Name: danh_muc ma_danh_muc; Type: DEFAULT; Schema: menu_ci_local; Owner: admin
 --
 
@@ -3829,6 +3929,20 @@ INSERT INTO menu.san_pham (ma_san_pham, ten_san_pham, gia_ban, mo_ta, hinh_anh_u
 INSERT INTO menu.san_pham (ma_san_pham, ten_san_pham, gia_ban, mo_ta, hinh_anh_url, trang_thai, ma_danh_muc, gia_niem_yet, la_hot, la_moi) VALUES (37, 'Matcha Latte Tây Bắc (Nóng)', 49000.00, NULL, 'https://cdn.hstatic.net/products/1000075078/matcha_latte_tay_bac_nong_d591c8251dc64fb987118a408e861b09_grande.png', true, 6, NULL, false, false);
 INSERT INTO menu.san_pham (ma_san_pham, ten_san_pham, gia_ban, mo_ta, hinh_anh_url, trang_thai, ma_danh_muc, gia_niem_yet, la_hot, la_moi) VALUES (42, 'Trà Phúc Kiến Sen (Nóng)', 59000.00, NULL, 'https://cdn.hstatic.net/products/1000075078/oolong_tu_quy_sen_nong_eb6f855cb05a423cbce31805f4a09dab_grande.png', true, 8, NULL, false, false);
 INSERT INTO menu.san_pham (ma_san_pham, ten_san_pham, gia_ban, mo_ta, hinh_anh_url, trang_thai, ma_danh_muc, gia_niem_yet, la_hot, la_moi) VALUES (44, 'Trà Sữa Oolong Tứ Quý Sương Sáo', 55000.00, NULL, 'https://cdn.hstatic.net/products/1000075078/1751601456_tra-sua-oolong-tu-quy-suong-sao_c22c1bf76ba04c469c8d7f529c7d60f5_grande.png', true, 9, NULL, false, false);
+
+
+--
+-- Data for Name: danh_muc; Type: TABLE DATA; Schema: menu_ci_1774113918067; Owner: admin
+--
+
+INSERT INTO menu_ci_1774113918067.danh_muc (ma_danh_muc, ten_danh_muc, hinh_anh_icon) VALUES (1, 'CI Test Category', 'test-icon');
+
+
+--
+-- Data for Name: san_pham; Type: TABLE DATA; Schema: menu_ci_1774113918067; Owner: admin
+--
+
+INSERT INTO menu_ci_1774113918067.san_pham (ma_san_pham, ten_san_pham, gia_ban, gia_niem_yet, mo_ta, hinh_anh_url, trang_thai, la_hot, la_moi, ma_danh_muc) VALUES (1, 'CI Americano', 55000.00, 65000.00, 'Created by CI test', 'https://example.com/ci-americano.png', false, true, false, 1);
 
 
 --
@@ -6253,6 +6367,20 @@ SELECT pg_catalog.setval('menu.san_pham_ma_san_pham_seq', 67, true);
 
 
 --
+-- Name: danh_muc_ma_danh_muc_seq; Type: SEQUENCE SET; Schema: menu_ci_1774113918067; Owner: admin
+--
+
+SELECT pg_catalog.setval('menu_ci_1774113918067.danh_muc_ma_danh_muc_seq', 1, true);
+
+
+--
+-- Name: san_pham_ma_san_pham_seq; Type: SEQUENCE SET; Schema: menu_ci_1774113918067; Owner: admin
+--
+
+SELECT pg_catalog.setval('menu_ci_1774113918067.san_pham_ma_san_pham_seq', 1, true);
+
+
+--
 -- Name: danh_muc_ma_danh_muc_seq; Type: SEQUENCE SET; Schema: menu_ci_local; Owner: admin
 --
 
@@ -6639,6 +6767,22 @@ ALTER TABLE ONLY menu.san_pham
 --
 
 ALTER TABLE ONLY menu.danh_muc
+    ADD CONSTRAINT "PK_e6a452a9f1b206531f8a59158e9" PRIMARY KEY (ma_danh_muc);
+
+
+--
+-- Name: san_pham PK_12500fa438f405e740de57e0f8e; Type: CONSTRAINT; Schema: menu_ci_1774113918067; Owner: admin
+--
+
+ALTER TABLE ONLY menu_ci_1774113918067.san_pham
+    ADD CONSTRAINT "PK_12500fa438f405e740de57e0f8e" PRIMARY KEY (ma_san_pham);
+
+
+--
+-- Name: danh_muc PK_e6a452a9f1b206531f8a59158e9; Type: CONSTRAINT; Schema: menu_ci_1774113918067; Owner: admin
+--
+
+ALTER TABLE ONLY menu_ci_1774113918067.danh_muc
     ADD CONSTRAINT "PK_e6a452a9f1b206531f8a59158e9" PRIMARY KEY (ma_danh_muc);
 
 
@@ -7178,6 +7322,14 @@ ALTER TABLE ONLY menu.san_pham
 
 
 --
+-- Name: san_pham FK_ab26c1b5e6d62d0527e72b20def; Type: FK CONSTRAINT; Schema: menu_ci_1774113918067; Owner: admin
+--
+
+ALTER TABLE ONLY menu_ci_1774113918067.san_pham
+    ADD CONSTRAINT "FK_ab26c1b5e6d62d0527e72b20def" FOREIGN KEY (ma_danh_muc) REFERENCES menu_ci_1774113918067.danh_muc(ma_danh_muc);
+
+
+--
 -- Name: san_pham FK_ab26c1b5e6d62d0527e72b20def; Type: FK CONSTRAINT; Schema: menu_ci_local; Owner: admin
 --
 
@@ -7292,5 +7444,5 @@ REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Zc2kXef4hWlxRPeCt9UPHc2MxAYQsksC1A6To7SJ9djtoRQTHvdGj3fKx4mlCLv
+\unrestrict TPKwPS5ReEUJyLx9Cf91xzZyCPhZptYInPRuT4E3Ncx37dYtfXJ0HaUxPri7hDn
 
