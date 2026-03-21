@@ -20,6 +20,12 @@ export class NotificationGateway implements OnGatewayConnection {
   @WebSocketServer()
   server: Server;
 
+  private buildWorkforceRoom(branchCode?: string) {
+    const normalizedBranch = String(branchCode || '').trim().toUpperCase();
+    if (!normalizedBranch) return null;
+    return `workforce:${normalizedBranch}`;
+  }
+
   handleConnection(client: Socket) {
     const userId = this.extractUserId(client);
     if (userId) {
@@ -38,8 +44,33 @@ export class NotificationGateway implements OnGatewayConnection {
     return { success: true };
   }
 
+  @SubscribeMessage('workforce:subscribe')
+  subscribeWorkforce(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { branchCode?: string },
+  ) {
+    const room = this.buildWorkforceRoom(payload?.branchCode);
+    if (!room) {
+      return { success: false };
+    }
+
+    client.join(room);
+    return { success: true, room };
+  }
+
   guiThongBaoTheoNguoiDung(maNguoiDung: string, thongBao: ThongBao) {
     this.server.to(maNguoiDung).emit('notification:new', thongBao);
+  }
+
+  guiSuKienNhanSuTheoChiNhanh(branchCode: string, payload: Record<string, any>) {
+    const room = this.buildWorkforceRoom(branchCode);
+    if (!room) return;
+
+    this.server.to(room).emit('workforce:event', {
+      ...payload,
+      branchCode: String(branchCode || '').trim().toUpperCase(),
+      sentAt: new Date().toISOString(),
+    });
   }
 
   private extractUserId(client: Socket) {

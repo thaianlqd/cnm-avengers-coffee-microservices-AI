@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Facebook Login Callback</title>
+  </head>
+  <body>
+    <script>
+      (function () {
+        try {
+          const hash = new URLSearchParams(window.location.hash.slice(1));
+          const accessToken = hash.get('access_token');
+          const errorReason = hash.get('error_reason') || hash.get('error_description');
+
+          if (window.opener) {
+            window.opener.postMessage(
+              {
+                type: 'FACEBOOK_OAUTH_RESULT',
+                accessToken,
+                error: errorReason || null,
+              },
+              window.location.origin,
+            );
+          }
+        } catch (err) {
+          if (window.opener) {
+            window.opener.postMessage(
+              {
+                type: 'FACEBOOK_OAUTH_RESULT',
+                accessToken: null,
+                error: 'Khong the xu ly callback Facebook',
+              },
+              window.location.origin,
+            );
+          }
+        }
+
+        window.close();
+      })();
+    </script>
+  </body>
+</html>

@@ -1,4 +1,5 @@
-import { Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, OneToMany, PrimaryColumn, UpdateDateColumn } from 'typeorm';
+import { PromotionUsage } from './promotion-usage.entity';
 
 const userSchema = process.env.DB_SCHEMA || 'identity';
 
@@ -63,4 +64,7 @@ export class Promotion {
 
   @UpdateDateColumn()
   ngay_cap_nhat: Date;
+
+  @OneToMany(() => PromotionUsage, (usage) => usage.khuyen_mai)
+  lich_su_su_dung: PromotionUsage[];
 }

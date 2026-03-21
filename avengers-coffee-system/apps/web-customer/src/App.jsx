@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
 import Header from './components/Header';
@@ -7,12 +7,16 @@ import ProductCard from './components/ProductCard';
 import AuthModal from './components/AuthModal';
 import ProductDetailModal from './components/ProductDetailModal';
 import CartDrawer from './components/CartDrawer'; // File mới bước 2
+import FavoriteDrawer from './components/FavoriteDrawer';
 import OrderHistoryModal from './components/OrderHistoryModal';
 import ChatWidget from './components/ChatWidget';
+import NewsDetailPage from './pages/NewsDetailPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import { CartProvider, useCart } from './context/CartContext'; // File mới bước 2
 import { apiClient } from './lib/apiClient';
 import { queryKeys } from './lib/queryKeys';
-import { UserCircleIcon, KeyIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import { normalizeNewsArticle } from './lib/news';
+import { UserCircleIcon, KeyIcon, MapPinIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 const FALLBACK_BANNER_URL = 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1600&q=80';
 
@@ -25,89 +29,27 @@ const ICON_MAP = {
   default: '🥤',
 };
 
-const NEWS_CATEGORY_OPTIONS = [
-  { id: 'COFFEEHOLIC', label: 'Coffeeholic' },
-  { id: 'TEAHOLIC', label: 'Teaholic' },
-  { id: 'BLOG', label: 'Blog' },
-];
+const SUBCATEGORY_ORDER = {
+  coffee: ['Espresso', 'Americano', 'Latte', 'Frappe - Frappe', '"Phin" Việt Nam', 'Cold Brew', 'Cà phê khác'],
+  tea: ['Matcha Tây Bắc', 'Matcha Kyoto', 'Trà trái cây', 'Trà sữa', 'Chocolate', 'Trà khác'],
+  food: ['Bánh ngọt', 'Bánh mặn', 'Pasta', 'Pizza', 'Salad', 'Món ăn khác'],
+  other: ['Merchandise', 'Sản phẩm khác'],
+};
 
-const NEWS_ARTICLES = [
-  {
-    id: 1,
-    category: 'COFFEEHOLIC',
-    title: 'Bắt gặp Sài Gòn xưa trong món uống hiện đại của giới trẻ',
-    excerpt: 'Dấu ấn Sài Gòn xưa được kể lại qua ly cà phê sữa đá, không gian phố cũ và những thói quen rất riêng của người trẻ hôm nay.',
-    date: '01.11.2023',
-    image: 'https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=1200&q=80',
-    featured: true,
-  },
-  {
-    id: 2,
-    category: 'COFFEEHOLIC',
-    title: 'Uống gì khi tới Signature by The Avengers House?',
-    excerpt: 'Một danh sách gợi ý những món uống đậm vị, phù hợp để bắt đầu trải nghiệm tại không gian signature mới.',
-    date: '09.02.2023',
-    image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1000&q=80',
-  },
-  {
-    id: 3,
-    category: 'COFFEEHOLIC',
-    title: 'Cà phê sữa Espresso và cách bật lon bật vị mỗi ngày',
-    excerpt: 'Một lựa chọn tiện lợi nhưng vẫn đủ đậm đà cho những ngày bận rộn và cần thêm chút năng lượng tích cực.',
-    date: '09.02.2023',
-    image: 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&w=1000&q=80',
-  },
-  {
-    id: 4,
-    category: 'COFFEEHOLIC',
-    title: 'Cách nhận biết hương vị cà phê Robusta nguyên chất dễ dàng nhất',
-    excerpt: 'Từ hậu vị, độ đậm đến hương rang, bài viết giúp bạn phân biệt Robusta nguyên chất theo cách dễ hiểu và gần gũi.',
-    date: '20.09.2022',
-    image: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=1000&q=80',
-  },
-  {
-    id: 5,
-    category: 'COFFEEHOLIC',
-    title: 'Bật mí nhiệt độ lý tưởng để pha cà phê ngon, đậm đà hương vị',
-    excerpt: 'Nhiệt độ nước ảnh hưởng trực tiếp đến độ cân bằng của ly cà phê. Đây là các mốc nhiệt bạn nên nhớ.',
-    date: '07.03.2022',
-    image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1000&q=80',
-  },
-  {
-    id: 6,
-    category: 'TEAHOLIC',
-    title: 'Trà trái cây và câu chuyện của những buổi chiều nhẹ tênh',
-    excerpt: 'Vị trà thanh, lớp trái cây mọng và chút đá lạnh tạo nên một nhịp nghỉ vừa đủ trong ngày dài bận rộn.',
-    date: '14.06.2023',
-    image: 'https://images.unsplash.com/photo-1464306076886-da185f6a9d05?auto=format&fit=crop&w=1000&q=80',
-    featured: true,
-  },
-  {
-    id: 7,
-    category: 'TEAHOLIC',
-    title: 'Vì sao trà ô long luôn giữ được hậu vị sạch và thơm?',
-    excerpt: 'Từ kỹ thuật sấy đến cách ủ, mỗi công đoạn đều góp phần tạo nên một ly trà có chiều sâu và hậu ngọt rõ rệt.',
-    date: '19.04.2023',
-    image: 'https://images.unsplash.com/photo-1523920290228-4f321a939b4c?auto=format&fit=crop&w=1000&q=80',
-  },
-  {
-    id: 8,
-    category: 'BLOG',
-    title: 'Một ngày ở nhà rang xay: hành trình từ hạt tới ly',
-    excerpt: 'Khám phá nhịp làm việc phía sau quầy bar, nơi từng mẻ rang và từng công thức được chỉnh sửa kỹ lưỡng mỗi ngày.',
-    date: '25.08.2023',
-    image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1000&q=80',
-    featured: true,
-  },
-  {
-    id: 9,
-    category: 'BLOG',
-    title: 'Không gian quán và cách một mùi hương có thể giữ chân khách hàng',
-    excerpt: 'Ánh sáng, mùi bánh nướng và tiếng máy pha tạo nên cảm xúc đặc biệt khiến một quán cà phê đáng nhớ hơn.',
-    date: '11.05.2023',
-    image: 'https://images.unsplash.com/photo-1521017432531-fbd92d768814?auto=format&fit=crop&w=1000&q=80',
-  },
-];
+function formatNewsCategoryLabel(category) {
+  const normalized = String(category || '').trim().toUpperCase();
+  if (!normalized) return 'Blog';
+  if (normalized === 'COFFEEHOLIC') return 'Coffeeholic';
+  if (normalized === 'TEAHOLIC') return 'Teaholic';
+  if (normalized === 'BLOG') return 'Blog';
+  return normalized
+    .toLowerCase()
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((chunk) => chunk.charAt(0).toUpperCase() + chunk.slice(1))
+    .join(' ');
+}
+
 
 const CONTACT_INFO = {
   office: 'Tầng 6, Tòa nhà Toyota, Số 315 Trường Chinh, P. Khương Mai, Q. Thanh Xuân, TP Hà Nội, Việt Nam',
@@ -124,8 +66,50 @@ const BRANCH_NAME_MAP = {
 
 const ADDRESS_OPTIONS = {
   'Thành phố Hồ Chí Minh': {
-    'Quận 1': ['Phường Sài Gòn'],
-    'Quận 7': ['Tân Phú'],
+    'Quận 1': ['Phường Bến Nghé', 'Phường Bến Thành'],
+    'Quận 3': ['Phường Võ Thị Sáu', 'Phường 9'],
+    'Quận 7': ['Phường Tân Phú', 'Phường Tân Hưng'],
+    'Thành phố Thủ Đức': ['Phường An Phú', 'Phường Hiệp Bình Chánh'],
+  },
+  'Thành phố Hà Nội': {
+    'Quận Ba Đình': ['Phường Kim Mã', 'Phường Ngọc Hà'],
+    'Quận Cầu Giấy': ['Phường Dịch Vọng', 'Phường Nghĩa Đô'],
+    'Quận Đống Đa': ['Phường Láng Thượng', 'Phường Cát Linh'],
+  },
+  'Thành phố Đà Nẵng': {
+    'Quận Hải Châu': ['Phường Hải Châu I', 'Phường Hòa Cường Bắc'],
+    'Quận Thanh Khê': ['Phường Tam Thuận', 'Phường Thanh Khê Đông'],
+    'Quận Sơn Trà': ['Phường An Hải Bắc', 'Phường Phước Mỹ'],
+  },
+  'Thành phố Cần Thơ': {
+    'Quận Ninh Kiều': ['Phường An Khánh', 'Phường Xuân Khánh'],
+    'Quận Cái Răng': ['Phường Hưng Phú', 'Phường Lê Bình'],
+    'Quận Bình Thủy': ['Phường An Thới', 'Phường Long Hòa'],
+  },
+  'Thành phố Hải Phòng': {
+    'Quận Lê Chân': ['Phường An Biên', 'Phường Dư Hàng Kênh'],
+    'Quận Ngô Quyền': ['Phường Máy Chai', 'Phường Lạc Viên'],
+    'Quận Hải An': ['Phường Đằng Lâm', 'Phường Đằng Hải'],
+  },
+  'Tỉnh Bình Dương': {
+    'Thành phố Thủ Dầu Một': ['Phường Phú Cường', 'Phường Hiệp Thành'],
+    'Thành phố Dĩ An': ['Phường Dĩ An', 'Phường Tân Đông Hiệp'],
+    'Thành phố Thuận An': ['Phường Lái Thiêu', 'Phường An Phú'],
+  },
+  'Tỉnh Đồng Nai': {
+    'Thành phố Biên Hòa': ['Phường Trảng Dài', 'Phường Tân Hiệp'],
+    'Thành phố Long Khánh': ['Phường Xuân An', 'Phường Xuân Bình'],
+    'Huyện Nhơn Trạch': ['Xã Phú Hội', 'Xã Phú Đông'],
+  },
+  'Tỉnh Khánh Hòa': {
+    'Thành phố Nha Trang': ['Phường Vĩnh Hải', 'Phường Phước Hải'],
+    'Thành phố Cam Ranh': ['Phường Cam Lộc', 'Phường Cam Linh'],
+    'Thị xã Ninh Hòa': ['Phường Ninh Hiệp', 'Phường Ninh Thủy'],
+  },
+  'Tỉnh Quảng Ninh': {
+    'Thành phố Hạ Long': ['Phường Hồng Gai', 'Phường Bãi Cháy'],
+    'Thành phố Cẩm Phả': ['Phường Cẩm Đông', 'Phường Cẩm Tây'],
+    'Thành phố Uông Bí': ['Phường Quang Trung', 'Phường Trưng Vương'],
   },
 };
 
@@ -133,7 +117,7 @@ const DEFAULT_ADDRESS_FORM = {
   tenDiaChi: '',
   city: 'Thành phố Hồ Chí Minh',
   district: 'Quận 1',
-  ward: 'Phường Sài Gòn',
+  ward: 'Phường Bến Nghé',
   street: '',
   ghiChu: '',
 };
@@ -146,7 +130,7 @@ function taoDiaChiDayDu(addressForm) {
 }
 
 function formatVoucherDate(value) {
-  if (!value) return 'Khong gioi han';
+  if (!value) return 'Không giới hạn';
   return new Date(value).toLocaleString('vi-VN', {
     hour: '2-digit',
     minute: '2-digit',
@@ -199,7 +183,7 @@ function tachDiaChiDayDu(rawAddress) {
     return {
       city: 'Thành phố Hồ Chí Minh',
       district: 'Quận 1',
-      ward: 'Phường Sài Gòn',
+      ward: 'Phường Bến Nghé',
       street: '',
     };
   }
@@ -211,95 +195,103 @@ function tachDiaChiDayDu(rawAddress) {
 
   const city = parts[parts.length - 1] || 'Thành phố Hồ Chí Minh';
   const district = parts[parts.length - 2] || 'Quận 1';
-  const ward = parts[parts.length - 3] || 'Phường Sài Gòn';
+  const ward = parts[parts.length - 3] || 'Phường Bến Nghé';
   const street = parts.slice(0, Math.max(parts.length - 3, 0)).join(', ');
 
   return { city, district, ward, street: street || raw };
 }
 
-const STORE_LOCATIONS = [
-  {
-    id: 1,
-    city: 'Hồ Chí Minh',
-    district: 'Phường Sài Gòn',
-    name: 'HCM Mạc Đĩnh Chi',
-    address: '28 Ter B Mạc Đĩnh Chi, Phường Sài Gòn, Thành phố Hồ Chí Minh',
-    hours: '07:00 - 22:00',
-    image: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 2,
-    city: 'Hồ Chí Minh',
-    district: 'Tân Phú',
-    name: 'HCM The Grace Tower',
-    address: '71 Hoàng Văn Thái, Tân Phú, Quận 7, Thành phố Hồ Chí Minh',
-    hours: '07:00 - 22:00',
-    image: 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 3,
-    city: 'Hồ Chí Minh',
-    district: 'Tân Phú',
-    name: 'HCM Signature by The Avengers House',
-    address: 'TTTM Crescent Mall, 101 Tôn Dật Tiên, Phường Tân Phú, Quận 7, Thành phố Hồ Chí Minh',
-    hours: '07:00 - 22:00',
-    image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 4,
-    city: 'Hồ Chí Minh',
-    district: 'Tân Bình',
-    name: 'HCM Hoàng Việt',
-    address: '17 Út Tịch, Quận Tân Bình, Hồ Chí Minh',
-    hours: '07:00 - 22:00',
-    image: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 5,
-    city: 'Hồ Chí Minh',
-    district: 'Quận 11',
-    name: 'HCM Lữ Gia',
-    address: '64A Lữ Gia, Phường 15, Quận 11, Hồ Chí Minh',
-    hours: '07:00 - 22:00',
-    image: 'https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 6,
-    city: 'Hồ Chí Minh',
-    district: 'Tân Bình',
-    name: 'HCM Ấp Bắc',
-    address: '4 - 6 Ấp Bắc, Quận Tân Bình, Hồ Chí Minh',
-    hours: '07:00 - 21:30',
-    image: 'https://images.unsplash.com/photo-1521017432531-fbd92d768814?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 7,
-    city: 'Hồ Chí Minh',
-    district: 'Quận 6',
-    name: 'HCM Bình Phú',
-    address: '111-113-115 Bình Phú, Quận 6, Hồ Chí Minh',
-    hours: '07:00 - 22:00',
-    image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 8,
-    city: 'Hồ Chí Minh',
-    district: 'Bình Thạnh',
-    name: 'HCM Phan Văn Trị 3',
-    address: '190 Phan Văn Trị, Phường 11, Bình Thạnh, Thành phố Hồ Chí Minh',
-    hours: '07:00 - 22:00',
-    image: 'https://images.unsplash.com/photo-1445116572660-236099ec97a0?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 9,
-    city: 'Hồ Chí Minh',
-    district: 'Quận 2',
-    name: 'HCM Homyland Q2',
-    address: 'SH2, Tầng 1 Dự Án Chung cư cao cấp Homyland Riverside, Quận 2, Hồ Chí Minh',
-    hours: '07:00 - 22:00',
-    image: 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?auto=format&fit=crop&w=1200&q=80',
-  },
-];
+function normalizeBranchStore(branch, index) {
+  const openTime = String(branch?.gio_mo_cua || '').trim();
+  const closeTime = String(branch?.gio_dong_cua || '').trim();
+  const fallbackHours = openTime || closeTime ? `${openTime || '--:--'} - ${closeTime || '--:--'}` : '07:00 - 22:00';
+
+  return {
+    id: String(branch?.ma_chi_nhanh || `branch-${index + 1}`),
+    code: String(branch?.ma_chi_nhanh || `branch-${index + 1}`),
+    city: String(branch?.thanh_pho || '').trim() || 'Hồ Chí Minh',
+    district: String(branch?.quan_huyen || '').trim() || 'Chưa phân loại',
+    name: String(branch?.ten_chi_nhanh || '').trim() || `Chi nhánh ${index + 1}`,
+    address: String(branch?.dia_chi || '').trim() || 'Đang cập nhật địa chỉ',
+    hours: fallbackHours,
+    image: String(branch?.hinh_anh_url || '').trim() || FALLBACK_BANNER_URL,
+    mapUrl: String(branch?.map_url || '').trim() || '',
+  };
+}
+
+function buildMapSearchUrl(address) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(String(address || ''))}`;
+}
+
+function buildMapEmbedUrl(address) {
+  return `https://www.google.com/maps?q=${encodeURIComponent(String(address || ''))}&output=embed`;
+}
+
+function getCarouselItemsPerPage() {
+  if (typeof window === 'undefined') return 3;
+  if (window.innerWidth <= 520) return 1;
+  if (window.innerWidth <= 768) return 2;
+  return 3;
+}
+
+function normalizeMenuText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+function matchSubCategoryByRules(name, rules, fallbackLabel) {
+  for (const rule of rules) {
+    if (rule.patterns.some((pattern) => pattern.test(name))) {
+      return rule.label;
+    }
+  }
+  return fallbackLabel;
+}
+
+function inferSubCategoryLabel(categoryLabel, productName) {
+  const category = normalizeMenuText(categoryLabel);
+  const name = normalizeMenuText(productName);
+
+  if (category.includes('ca phe') || category.includes('coffee')) {
+    return matchSubCategoryByRules(name, [
+      { label: 'Espresso', patterns: [/espresso/] },
+      { label: 'Americano', patterns: [/americano/, /a-me/, /\bame\b/] },
+      { label: 'Latte', patterns: [/latte/, /macchiato/, /cappuccino/] },
+      { label: 'Frappe - Frappe', patterns: [/frappe/, /freeze/] },
+      { label: '"Phin" Việt Nam', patterns: [/bac xiu/, /ca phe sua/, /ca phe den/, /phin/] },
+      { label: 'Cold Brew', patterns: [/cold brew/] },
+    ], 'Cà phê khác');
+  }
+
+  if (category.includes('tra') || category.includes('tea')) {
+    return matchSubCategoryByRules(name, [
+      { label: 'Matcha Kyoto', patterns: [/matcha kyoto/] },
+      { label: 'Matcha Tây Bắc', patterns: [/matcha/, /sen vang/] },
+      { label: 'Trà trái cây', patterns: [/tra dao/, /tra vai/, /tra oi/, /tra trai cay/, /hitea/, /tra phuc kien/] },
+      { label: 'Trà sữa', patterns: [/tra sua/, /oolong/, /milk tea/, /macchiato/] },
+      { label: 'Chocolate', patterns: [/chocolate/, /cacao/] },
+    ], 'Trà khác');
+  }
+
+  if (category.includes('do an') || category.includes('banh') || category.includes('food')) {
+    return matchSubCategoryByRules(name, [
+      { label: 'Bánh ngọt', patterns: [/mochi/, /cake/, /banh ngot/] },
+      { label: 'Bánh mặn', patterns: [/croissant/, /banh man/] },
+      { label: 'Pasta', patterns: [/pasta/, /spaghetti/] },
+      { label: 'Pizza', patterns: [/pizza/] },
+      { label: 'Salad', patterns: [/salad/] },
+    ], 'Món ăn khác');
+  }
+
+  if (category.includes('khac') || category.includes('other')) {
+    return 'Merchandise';
+  }
+
+  return 'Sản phẩm khác';
+}
 
 export default function App() {
   return (
@@ -309,12 +301,105 @@ export default function App() {
   );
 }
 
+function HorizontalProductCarousel({
+  items,
+  onSelect,
+  cardClassName,
+  imageClassName,
+  compact = false,
+}) {
+  const [itemsPerPage, setItemsPerPage] = useState(getCarouselItemsPerPage());
+  const [pageIndex, setPageIndex] = useState(0);
+
+  useEffect(() => {
+    const onResize = () => setItemsPerPage(getCarouselItemsPerPage());
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  const totalPages = Math.max(1, Math.ceil(items.length / itemsPerPage));
+
+  useEffect(() => {
+    setPageIndex((prev) => Math.min(prev, totalPages - 1));
+  }, [totalPages]);
+
+  const visibleItems = useMemo(() => {
+    const start = pageIndex * itemsPerPage;
+    return items.slice(start, start + itemsPerPage);
+  }, [items, itemsPerPage, pageIndex]);
+
+  const canGoPrev = pageIndex > 0;
+  const canGoNext = pageIndex < totalPages - 1;
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setPageIndex((prev) => Math.max(0, prev - 1))}
+        className="tch-hscroll-arrow left-2"
+        aria-label="Xem sản phẩm trước"
+        disabled={!canGoPrev}
+      >
+        <ChevronLeftIcon className="h-5 w-5" />
+      </button>
+      <div className="rounded-2xl bg-white/70 p-3">
+        <div
+          className="tch-hscroll-track"
+          style={{ '--carousel-columns': itemsPerPage }}
+        >
+          {visibleItems.map((p) => (
+            <div key={`carousel-${pageIndex}-${p.ma_san_pham}`} className="tch-hscroll-item">
+              <button
+                type="button"
+                onClick={() => onSelect(p)}
+                className={`${cardClassName} w-full`}
+              >
+                <img src={p.hinh_anh_url} alt={p.ten_san_pham} className={imageClassName} />
+                <div className="min-w-0 text-left">
+                  <p className={`truncate font-black text-gray-900 ${compact ? 'text-sm' : 'mt-4 text-lg'}`}>{p.ten_san_pham}</p>
+                  <p className={`font-black text-[#df6f37] ${compact ? 'mt-1 text-xs' : 'mt-2 text-xl'}`}>
+                    {Number(p.gia_ban).toLocaleString('vi-VN')} đ
+                  </p>
+                </div>
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={() => setPageIndex((prev) => Math.min(totalPages - 1, prev + 1))}
+        className="tch-hscroll-arrow right-2"
+        aria-label="Xem sản phẩm tiếp theo"
+        disabled={!canGoNext}
+      >
+        <ChevronRightIcon className="h-5 w-5" />
+      </button>
+      <div className="mt-3 flex justify-center gap-2">
+        {Array.from({ length: totalPages }).map((_, idx) => (
+          <button
+            key={`dot-${idx}`}
+            type="button"
+            onClick={() => setPageIndex(idx)}
+            className={`h-2.5 w-2.5 rounded-full ${idx === pageIndex ? 'bg-[#d67b3c]' : 'bg-[#e7d6c2]'}`}
+            aria-label={`Trang ${idx + 1}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function AppContent() {
   const [activeTab, setActiveTab] = useState('home');
   const [selectedCatId, setSelectedCatId] = useState('all');
-  const [newsCategory, setNewsCategory] = useState('COFFEEHOLIC');
+  const [activeMainSectionId, setActiveMainSectionId] = useState('must-try');
+  const [activeSubSectionId, setActiveSubSectionId] = useState('');
+  const [newsCategory, setNewsCategory] = useState('ALL');
+  const [selectedNewsArticleId, setSelectedNewsArticleId] = useState(null);
   const [storeCity, setStoreCity] = useState('Hồ Chí Minh');
   const [storeDistrict, setStoreDistrict] = useState('ALL');
+  const [selectedStoreId, setSelectedStoreId] = useState(null);
   const [contactForm, setContactForm] = useState({ name: '', email: '', phone: '', message: '' });
 
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -323,17 +408,26 @@ function AppContent() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false); // Quản lý đóng mở Giỏ hàng
+  const [isFavoriteOpen, setIsFavoriteOpen] = useState(false);
   const [isOrderHistoryOpen, setIsOrderHistoryOpen] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [availabilityFilter, setAvailabilityFilter] = useState('ALL');
   const [priceFilter, setPriceFilter] = useState('ALL');
+  const [criteriaFilter, setCriteriaFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState('DEFAULT');
   const [notificationToast, setNotificationToast] = useState(null);
   const [voucherTypeFilter, setVoucherTypeFilter] = useState('ALL');
   const [copiedVoucherCode, setCopiedVoucherCode] = useState('');
+  const categorySectionRefs = useRef({});
+  const subSectionRefs = useRef({});
+  const topTabsScrollRef = useRef(null);
+  const topTabsTrackRef = useRef(null);
+  const topTabRefs = useRef({});
+  const [activeTabUnderlineStyle, setActiveTabUnderlineStyle] = useState({ left: 0, width: 0, opacity: 0 });
   const queryClient = useQueryClient();
   const { addToCart, cartCount, syncCartWithUser } = useCart();
   const userId = user?.ma_nguoi_dung || user?.maNguoiDung || null;
+  const aiTargetUserId = userId || 'guest-popular';
   const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3005';
 
   // ── AI Recommendations ──────────────────────────────────────────────────────
@@ -341,14 +435,56 @@ function AppContent() {
     data: aiRecsData,
     isLoading: isAiRecsLoading,
   } = useQuery({
-    queryKey: ['ai', 'recommend', userId],
+    queryKey: ['ai', 'recommend', aiTargetUserId],
     queryFn: async () => {
-      const res = await apiClient.get(`/ai/recommend/${encodeURIComponent(userId)}?limit=6`);
+      const res = await apiClient.get(`/ai/recommend/${encodeURIComponent(aiTargetUserId)}?limit=3`);
       return res.data;
     },
-    enabled: Boolean(userId),
+    enabled: true,
     staleTime: 5 * 60 * 1000,
+    refetchInterval: 120 * 1000,
     retry: 0,
+  });
+
+  const {
+    data: favoritePayload,
+  } = useQuery({
+    queryKey: ['customer-favorites', userId],
+    queryFn: async () => {
+      const response = await apiClient.get(`/customers/${userId}/favorites`);
+      return response.data;
+    },
+    enabled: Boolean(userId),
+    staleTime: 20 * 1000,
+    refetchInterval: 120 * 1000,
+  });
+
+  const favoriteItems = favoritePayload?.items || [];
+  const favoriteProductSet = useMemo(
+    () => new Set(favoriteItems.map((item) => String(item.ma_san_pham))),
+    [favoriteItems],
+  );
+
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: async (product) => {
+      if (!userId) {
+        throw new Error('NOT_AUTHENTICATED');
+      }
+      const payload = {
+        ma_san_pham: product.ma_san_pham,
+        ten_san_pham: product.ten_san_pham,
+        gia_ban: product.gia_ban,
+        hinh_anh_url: product.hinh_anh_url,
+        danh_muc: product?.danhMuc?.ten_danh_muc || 'Khac',
+      };
+      const response = await apiClient.post(`/customers/${userId}/favorites/toggle`, payload);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customer-favorites', userId] });
+      queryClient.invalidateQueries({ queryKey: ['ai', 'recommend', aiTargetUserId] });
+      apiClient.post('/ai/recommend/train').catch(() => undefined);
+    },
   });
 
   const mapBranchName = (branchCode) => {
@@ -386,9 +522,23 @@ function AppContent() {
     queryKey: queryKeys.menuProducts,
     queryFn: async () => {
       const response = await apiClient.get('/menu/san-pham');
-      return response.data || [];
+      const rows = response.data || [];
+      return rows.map((item) => {
+        const basePrice = Number(item?.gia_ban || 0);
+        const listedPrice = Number(item?.gia_niem_yet || 0);
+        const hasDiscount = listedPrice > basePrice;
+        return {
+          ...item,
+          gia_ban: basePrice,
+          gia_niem_yet: hasDiscount ? listedPrice : null,
+          dang_giam_gia: hasDiscount,
+          la_hot: Boolean(item?.la_hot),
+          la_moi: Boolean(item?.la_moi),
+        };
+      });
     },
     staleTime: 60 * 1000,
+    refetchInterval: 90 * 1000,
   });
 
   const {
@@ -402,6 +552,7 @@ function AppContent() {
       return response.data || [];
     },
     staleTime: 5 * 60 * 1000,
+    refetchInterval: 120 * 1000,
   });
 
   const loading = isProductsLoading || isCategoriesLoading;
@@ -417,6 +568,7 @@ function AppContent() {
     },
     enabled: Boolean(userId),
     staleTime: 30 * 1000,
+    refetchInterval: 60 * 1000,
   });
 
   const notifications = notificationPayload?.items || [];
@@ -435,9 +587,61 @@ function AppContent() {
       return response.data;
     },
     staleTime: 60 * 1000,
+    refetchInterval: 60 * 1000,
   });
 
   const voucherItems = voucherPayload?.items || [];
+
+  const {
+    data: publicBranchPayload,
+    isLoading: isStoresLoading,
+    isError: isStoresError,
+    error: storesError,
+  } = useQuery({
+    queryKey: ['public-branches'],
+    queryFn: async () => {
+      const response = await apiClient.get('/users/branches/public');
+      return response.data;
+    },
+    staleTime: 60 * 1000,
+    refetchInterval: 120 * 1000,
+  });
+
+  const storeLocations = useMemo(
+    () => (publicBranchPayload?.items || []).map((branch, index) => normalizeBranchStore(branch, index)),
+    [publicBranchPayload],
+  );
+
+  const { data: newsPayload, isLoading: isNewsLoading } = useQuery({
+    queryKey: ['news', 'all'],
+    queryFn: async () => {
+      const response = await apiClient.get('/news?limit=100');
+      return response.data;
+    },
+    staleTime: 60 * 1000,
+    refetchInterval: 90 * 1000,
+  });
+
+  const newsArticles = useMemo(
+    () => (newsPayload?.items || []).map((item) => normalizeNewsArticle(item)).filter(Boolean),
+    [newsPayload],
+  );
+  const newsCategoryOptions = useMemo(() => {
+    const categorySet = new Set(
+      newsArticles
+        .map((article) => String(article?.category || '').trim().toUpperCase())
+        .filter(Boolean),
+    );
+
+    const dynamicOptions = Array.from(categorySet)
+      .sort((a, b) => a.localeCompare(b, 'vi'))
+      .map((id) => ({ id, label: formatNewsCategoryLabel(id) }));
+
+    return [{ id: 'ALL', label: 'Tat ca' }, ...dynamicOptions];
+  }, [newsArticles]);
+  const selectedNewsCategoryLabel =
+    newsCategoryOptions.find((option) => option.id === newsCategory)?.label ||
+    formatNewsCategoryLabel(newsCategory);
   const filteredVoucherItems = useMemo(() => {
     if (voucherTypeFilter === 'ALL') return voucherItems;
     return voucherItems.filter((item) => String(item.loai_khuyen_mai || '').toUpperCase() === voucherTypeFilter);
@@ -446,7 +650,11 @@ function AppContent() {
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch {
+        localStorage.removeItem('user');
+      }
     }
 
     const params = new URLSearchParams(window.location.search);
@@ -454,26 +662,58 @@ function AppContent() {
     const paymentStatus = params.get('payment_status');
     if (paymentProvider === 'VNPAY' && paymentStatus) {
       if (paymentStatus === 'success') {
-        alert('Thanh toan VNPAY thanh cong. Don hang da duoc cap nhat!');
+        alert('Thanh toán VNPAY thành công. Đơn hàng đã được cập nhật!');
       } else {
-        alert('Thanh toan VNPAY that bai hoac bi huy.');
+        alert('Thanh toán VNPAY thất bại hoặc bị hủy.');
       }
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
 
+  const showCartSuccessToast = (message) => {
+    setNotificationToast({
+      title: 'Giỏ hàng',
+      message,
+      branchName: '',
+    });
+  };
+
   const handleLoginSuccess = async (userData) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-    await syncCartWithUser(userData);
+    const nextUser = {
+      ...userData,
+      avatar_url: userData?.avatar_url || null,
+      avatarUrl: userData?.avatarUrl || userData?.avatar_url || null,
+    };
+
+    const previousUserId = user?.ma_nguoi_dung || user?.maNguoiDung || null;
+    const nextUserId = nextUser?.ma_nguoi_dung || nextUser?.maNguoiDung || null;
+
+    if (previousUserId && previousUserId !== nextUserId) {
+      queryClient.removeQueries({ queryKey: queryKeys.userProfile(previousUserId) });
+      queryClient.removeQueries({ queryKey: queryKeys.userAddresses(previousUserId) });
+      queryClient.removeQueries({ queryKey: queryKeys.loyaltyByUser(previousUserId) });
+      queryClient.removeQueries({ queryKey: queryKeys.notificationsByUser(previousUserId) });
+      queryClient.removeQueries({ queryKey: ['customer-favorites', previousUserId] });
+    }
+
+    setUser(nextUser);
+    localStorage.setItem('user', JSON.stringify(nextUser));
+    await syncCartWithUser(nextUser);
   };
 
   const handleLogout = async () => {
+    if (userId) {
+      queryClient.removeQueries({ queryKey: queryKeys.userProfile(userId) });
+      queryClient.removeQueries({ queryKey: queryKeys.userAddresses(userId) });
+      queryClient.removeQueries({ queryKey: queryKeys.loyaltyByUser(userId) });
+      queryClient.removeQueries({ queryKey: queryKeys.notificationsByUser(userId) });
+      queryClient.removeQueries({ queryKey: ['customer-favorites', userId] });
+    }
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
     await syncCartWithUser(null);
-    alert('Hẹn gặp lại bác tại Avengers House nhé! ☕');
+    alert('Hẹn gặp lại bạn tại Avengers House! ☕');
   };
 
   const handleUserUpdated = (updatedUser) => {
@@ -514,6 +754,29 @@ function AppContent() {
     socket.on('notification:new', async (notification) => {
       if (!notification?.id) {
         return;
+      }
+
+      const orderId = notification?.du_lieu?.ma_don_hang;
+      const notificationType = String(notification?.loai || '').toUpperCase();
+
+      if (notificationType === 'ORDER' || notificationType === 'PAYMENT' || orderId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
+        if (orderId) {
+          queryClient.invalidateQueries({ queryKey: queryKeys.orderStatus(userId, orderId) });
+        }
+        queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(userId) });
+      }
+
+      if (notificationType === 'PAYMENT') {
+        queryClient.invalidateQueries({ queryKey: queryKeys.loyaltyByUser(userId) });
+        queryClient.invalidateQueries({ queryKey: [...queryKeys.voucherList, userId || 'guest'] });
+      }
+
+      if (notificationType === 'SYSTEM') {
+        queryClient.invalidateQueries({ queryKey: queryKeys.menuProducts });
+        queryClient.invalidateQueries({ queryKey: queryKeys.menuCategories });
+        queryClient.invalidateQueries({ queryKey: ['news', 'all'] });
+        queryClient.invalidateQueries({ queryKey: [...queryKeys.voucherList, userId || 'guest'] });
       }
 
       queryClient.setQueryData(queryKeys.notificationsByUser(userId), (current) => {
@@ -579,7 +842,11 @@ function AppContent() {
         const tenSanPham = String(p.ten_san_pham || '').toLowerCase();
         const tenDanhMuc = String(p.danhMuc?.ten_danh_muc || '').toLowerCase();
         const moTaSanPham = String(p.mo_ta || '').toLowerCase();
-        return tenSanPham.includes(keyword) || tenDanhMuc.includes(keyword) || moTaSanPham.includes(keyword);
+        const isPromo = Number(p.gia_niem_yet || 0) > Number(p.gia_ban || 0);
+        const promoHit = isPromo && /khuyen mai|khuyến mãi|giam gia|giảm giá|sale/.test(keyword);
+        const hotHit = Boolean(p.la_hot) && /hot|ban chay|bán chạy/.test(keyword);
+        const newHit = Boolean(p.la_moi) && /moi|mới|new/.test(keyword);
+        return tenSanPham.includes(keyword) || tenDanhMuc.includes(keyword) || moTaSanPham.includes(keyword) || promoHit || hotHit || newHit;
       });
     }
 
@@ -597,6 +864,14 @@ function AppContent() {
       list = list.filter((p) => Number(p.gia_ban || 0) > 50000);
     }
 
+    if (criteriaFilter === 'PROMO') {
+      list = list.filter((p) => Number(p.gia_niem_yet || 0) > Number(p.gia_ban || 0));
+    } else if (criteriaFilter === 'HOT') {
+      list = list.filter((p) => Boolean(p.la_hot));
+    } else if (criteriaFilter === 'NEW') {
+      list = list.filter((p) => Boolean(p.la_moi));
+    }
+
     if (sortBy === 'NAME_ASC') {
       list.sort((a, b) => String(a.ten_san_pham || '').localeCompare(String(b.ten_san_pham || ''), 'vi'));
     } else if (sortBy === 'NAME_DESC') {
@@ -608,7 +883,102 @@ function AppContent() {
     }
 
     return list;
-  }, [products, selectedCatId, searchKeyword, availabilityFilter, priceFilter, sortBy]);
+  }, [products, selectedCatId, searchKeyword, availabilityFilter, priceFilter, criteriaFilter, sortBy]);
+
+  const menuSections = useMemo(() => {
+    const hasAdvancedFilters =
+      availabilityFilter !== 'ALL' ||
+      priceFilter !== 'ALL' ||
+      criteriaFilter !== 'ALL' ||
+      Boolean(searchKeyword.trim());
+
+    const mustTryProducts = filteredProducts
+      .filter((p) => Boolean(p.la_hot) || Boolean(p.la_moi) || Number(p.gia_niem_yet || 0) > Number(p.gia_ban || 0))
+      .slice(0, 8);
+
+    const sections = [];
+    if (!hasAdvancedFilters && mustTryProducts.length > 0) {
+      sections.push({
+        id: 'must-try',
+        label: 'Must Try',
+        icon: '🔥',
+        subSections: [
+          {
+            id: 'must-try__today-special',
+            label: 'Today Special',
+            items: mustTryProducts,
+          },
+        ],
+      });
+    }
+
+    const groupedByCategory = categories
+      .map((cat) => {
+        const categoryProducts = filteredProducts.filter(
+          (p) => String(p.danhMuc?.ma_danh_muc || '') === String(cat.ma_danh_muc),
+        );
+
+        if (!categoryProducts.length) {
+          return null;
+        }
+
+        const subMap = new Map();
+        categoryProducts.forEach((item) => {
+          const label = inferSubCategoryLabel(cat.ten_danh_muc, item.ten_san_pham);
+          if (!subMap.has(label)) {
+            subMap.set(label, []);
+          }
+          subMap.get(label).push(item);
+        });
+
+        const subSections = Array.from(subMap.entries()).map(([label, items]) => ({
+          id: `${cat.ma_danh_muc}__${normalizeMenuText(label).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'section'}`,
+          label,
+          items,
+        }));
+
+        const categoryKey = normalizeMenuText(cat.ten_danh_muc).includes('tra')
+          ? 'tea'
+          : normalizeMenuText(cat.ten_danh_muc).includes('ca phe')
+            ? 'coffee'
+            : normalizeMenuText(cat.ten_danh_muc).includes('do an') || normalizeMenuText(cat.ten_danh_muc).includes('banh')
+              ? 'food'
+              : 'other';
+
+        const orderedLabels = SUBCATEGORY_ORDER[categoryKey] || [];
+        const orderedSubSections = [...subSections].sort((a, b) => {
+          const aIdx = orderedLabels.indexOf(a.label);
+          const bIdx = orderedLabels.indexOf(b.label);
+          if (aIdx === -1 && bIdx === -1) {
+            return a.label.localeCompare(b.label, 'vi');
+          }
+          if (aIdx === -1) return 1;
+          if (bIdx === -1) return -1;
+          return aIdx - bIdx;
+        });
+
+        return {
+          id: String(cat.ma_danh_muc),
+          label: cat.ten_danh_muc,
+          icon: ICON_MAP[cat.ten_danh_muc] || ICON_MAP.default,
+          subSections: orderedSubSections,
+        };
+      })
+      .filter(Boolean);
+
+    return [...sections, ...groupedByCategory];
+  }, [
+    availabilityFilter,
+    categories,
+    criteriaFilter,
+    filteredProducts,
+    priceFilter,
+    searchKeyword,
+  ]);
+
+  const activeMainSection = useMemo(() => {
+    return menuSections.find((section) => section.id === activeMainSectionId) || menuSections[0] || null;
+  }, [activeMainSectionId, menuSections]);
 
   const aiRecommendedProducts = useMemo(() => {
     const items = aiRecsData?.items || [];
@@ -627,16 +997,175 @@ function AppContent() {
         danhMuc: { ten_danh_muc: item.category || 'Goi y AI' },
         mo_ta: item.reason || '',
       };
-    });
+    }).slice(0, 3);
   }, [aiRecsData, products]);
+
+  const isFavoriteProduct = (product) => favoriteProductSet.has(String(product?.ma_san_pham || ''));
+
+  const handleToggleFavorite = (product) => {
+    if (!userId) {
+      setIsAuthOpen(true);
+      return;
+    }
+    toggleFavoriteMutation.mutate(product);
+  };
+
+  const handleOpenFavorites = () => {
+    if (!user) {
+      setIsAuthOpen(true);
+      return;
+    }
+    setIsFavoriteOpen(true);
+  };
+
+  const handleAddFavoriteToCart = async (item) => {
+    try {
+      await addToCart(user, item, 1, 'Nhỏ');
+      setIsFavoriteOpen(false);
+      setIsCartOpen(true);
+      showCartSuccessToast(`Đã thêm ${item?.ten_san_pham || 'sản phẩm'} vào giỏ hàng.`);
+    } catch {
+      showCartSuccessToast('Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.');
+    }
+  };
+
+  const handleAddAllFavoritesToCart = async () => {
+    if (!favoriteItems.length) return;
+    try {
+      await Promise.all(favoriteItems.map((item) => addToCart(user, item, 1, 'Nhỏ')));
+      setIsFavoriteOpen(false);
+      setIsCartOpen(true);
+      showCartSuccessToast(`Đã thêm ${favoriteItems.length} sản phẩm yêu thích vào giỏ hàng.`);
+    } catch {
+      showCartSuccessToast('Đã có lỗi khi thêm tất cả sản phẩm vào giỏ hàng.');
+    }
+  };
 
   const xoaBoLocTimKiem = () => {
     setSearchKeyword('');
     setAvailabilityFilter('ALL');
     setPriceFilter('ALL');
+    setCriteriaFilter('ALL');
     setSortBy('DEFAULT');
     setSelectedCatId('all');
   };
+
+  const scrollToSection = (sectionId) => {
+    const target = categorySectionRefs.current[sectionId];
+    if (!target) return;
+    const top = target.getBoundingClientRect().top + window.scrollY - 120;
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+  };
+
+  const scrollToSubSection = (subSectionId) => {
+    const target = subSectionRefs.current[subSectionId];
+    if (!target) return;
+    const top = target.getBoundingClientRect().top + window.scrollY - 120;
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    if (!menuSections.length) return;
+
+    const hasActiveMain = menuSections.some((section) => section.id === activeMainSectionId);
+    const fallbackMain = selectedCatId !== 'all' ? String(selectedCatId) : menuSections[0].id;
+    const resolvedMain = hasActiveMain ? activeMainSectionId : fallbackMain;
+
+    if (!hasActiveMain) {
+      setActiveMainSectionId(resolvedMain);
+    }
+
+    const currentMain = menuSections.find((section) => section.id === resolvedMain) || menuSections[0];
+    if (!currentMain) return;
+
+    const hasActiveSub = currentMain.subSections.some((sub) => sub.id === activeSubSectionId);
+    if (!hasActiveSub && currentMain.subSections[0]) {
+      setActiveSubSectionId(currentMain.subSections[0].id);
+    }
+  }, [activeMainSectionId, activeSubSectionId, menuSections, selectedCatId]);
+
+  useEffect(() => {
+    if (activeTab !== 'order' || !menuSections.length) return;
+
+    const updateScrollSpy = () => {
+      const anchorLine = 180;
+      let currentMainId = menuSections[0].id;
+
+      menuSections.forEach((section) => {
+        const element = categorySectionRefs.current[section.id];
+        if (!element) return;
+        const top = element.getBoundingClientRect().top;
+        if (top - anchorLine <= 0) {
+          currentMainId = section.id;
+        }
+      });
+
+      const currentMain = menuSections.find((section) => section.id === currentMainId) || menuSections[0];
+      let currentSubId = currentMain?.subSections?.[0]?.id || '';
+
+      (currentMain?.subSections || []).forEach((subSection) => {
+        const subElement = subSectionRefs.current[subSection.id];
+        if (!subElement) return;
+        const top = subElement.getBoundingClientRect().top;
+        if (top - anchorLine <= 0) {
+          currentSubId = subSection.id;
+        }
+      });
+
+      if (currentMainId !== activeMainSectionId) {
+        setActiveMainSectionId(currentMainId);
+      }
+
+      if (currentSubId && currentSubId !== activeSubSectionId) {
+        setActiveSubSectionId(currentSubId);
+      }
+    };
+
+    updateScrollSpy();
+    window.addEventListener('scroll', updateScrollSpy, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', updateScrollSpy);
+    };
+  }, [activeMainSectionId, activeSubSectionId, activeTab, menuSections]);
+
+  useEffect(() => {
+    const trackElement = topTabsTrackRef.current;
+    const activeTabElement = topTabRefs.current[activeMainSectionId];
+    if (!trackElement || !activeTabElement) {
+      setActiveTabUnderlineStyle((prev) => ({ ...prev, opacity: 0 }));
+      return;
+    }
+
+    const left = activeTabElement.offsetLeft;
+    const width = activeTabElement.offsetWidth;
+    setActiveTabUnderlineStyle({ left, width, opacity: 1 });
+
+    const scrollContainer = topTabsScrollRef.current;
+    if (scrollContainer) {
+      const targetScrollLeft = left + width / 2 - scrollContainer.clientWidth / 2;
+      scrollContainer.scrollTo({
+        left: Math.max(0, targetScrollLeft),
+        behavior: 'smooth',
+      });
+    }
+  }, [activeMainSectionId, menuSections]);
+
+  useEffect(() => {
+    const onResize = () => {
+      const trackElement = topTabsTrackRef.current;
+      const activeTabElement = topTabRefs.current[activeMainSectionId];
+      if (!trackElement || !activeTabElement) return;
+      setActiveTabUnderlineStyle({
+        left: activeTabElement.offsetLeft,
+        width: activeTabElement.offsetWidth,
+        opacity: 1,
+      });
+    };
+
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [activeMainSectionId]);
 
   const handleSubmitContact = (e) => {
     e.preventDefault();
@@ -651,29 +1180,63 @@ function AppContent() {
       setCopiedVoucherCode(String(code));
     } catch {
       setCopiedVoucherCode('');
-      alert('Khong the sao chep ma, vui long thu lai.');
+      alert('Không thể sao chép mã, vui lòng thử lại.');
     }
   };
 
-  const filteredNewsArticles = useMemo(
-    () => NEWS_ARTICLES.filter((article) => article.category === newsCategory),
-    [newsCategory],
-  );
+  const filteredNewsArticles = useMemo(() => {
+    if (!newsArticles.length) return [];
+    if (newsCategory === 'ALL') return newsArticles;
+    return newsArticles.filter((article) => String(article.category || '').toUpperCase() === newsCategory);
+  }, [newsArticles, newsCategory]);
 
   const featuredNewsArticle = filteredNewsArticles.find((article) => article.featured) || filteredNewsArticles[0] || null;
   const secondaryNewsArticles = featuredNewsArticle
     ? filteredNewsArticles.filter((article) => article.id !== featuredNewsArticle.id)
     : filteredNewsArticles;
+  const homeNewsPreview = newsArticles[0] || null;
 
-  const storeCities = useMemo(() => [...new Set(STORE_LOCATIONS.map((store) => store.city))], []);
+  useEffect(() => {
+    const hasCurrentOption = newsCategoryOptions.some((option) => option.id === newsCategory);
+    if (!hasCurrentOption) {
+      setNewsCategory(newsCategoryOptions[0]?.id || 'ALL');
+    }
+  }, [newsCategory, newsCategoryOptions]);
+
+  const storeCities = useMemo(() => [...new Set(storeLocations.map((store) => store.city))], [storeLocations]);
+
+  useEffect(() => {
+    if (!storeCities.length) return;
+    if (!storeCities.includes(storeCity)) {
+      setStoreCity(storeCities[0]);
+      setStoreDistrict('ALL');
+    }
+  }, [storeCities, storeCity]);
+
   const storeDistricts = useMemo(() => {
-    const list = STORE_LOCATIONS.filter((store) => store.city === storeCity).map((store) => store.district);
+    const list = storeLocations.filter((store) => store.city === storeCity).map((store) => store.district);
     return [...new Set(list)];
-  }, [storeCity]);
+  }, [storeCity, storeLocations]);
+
   const filteredStores = useMemo(
-    () => STORE_LOCATIONS.filter((store) => store.city === storeCity && (storeDistrict === 'ALL' || store.district === storeDistrict)),
-    [storeCity, storeDistrict],
+    () => storeLocations.filter((store) => store.city === storeCity && (storeDistrict === 'ALL' || store.district === storeDistrict)),
+    [storeCity, storeDistrict, storeLocations],
   );
+  const selectedStore = filteredStores.find((store) => store.id === selectedStoreId) || filteredStores[0] || null;
+
+  useEffect(() => {
+    if (!filteredStores.length) {
+      if (selectedStoreId !== null) {
+        setSelectedStoreId(null);
+      }
+      return;
+    }
+
+    const stillVisible = filteredStores.some((store) => store.id === selectedStoreId);
+    if (!stillVisible) {
+      setSelectedStoreId(filteredStores[0].id);
+    }
+  }, [filteredStores, selectedStoreId]);
 
   function ProfilePageContent({ user: profileUser, onUserUpdated: onProfileUpdated }) {
     const [activeTab, setActiveTab] = useState('profile');
@@ -757,6 +1320,16 @@ function AppContent() {
     const diaChiDayDu = useMemo(() => taoDiaChiDayDu(addressForm), [addressForm]);
 
     useEffect(() => {
+      setProfileForm({ hoTen: '', soDienThoai: '', avatarUrl: '' });
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setAddressForm(DEFAULT_ADDRESS_FORM);
+      setProfileError('');
+      setPasswordError('');
+      setAddressError('');
+      setEditingAddressId(null);
+    }, [userId]);
+
+    useEffect(() => {
       if (profile) {
         setProfileForm({
           hoTen: profile.ho_ten || '',
@@ -802,6 +1375,8 @@ function AppContent() {
           ho_ten: data?.user?.ho_ten,
           hoTen: data?.user?.ho_ten,
           email: data?.user?.email,
+          avatar_url: data?.user?.avatar_url || null,
+          avatarUrl: data?.user?.avatar_url || null,
         };
         onProfileUpdated(updatedUser);
         queryClient.invalidateQueries({ queryKey: queryKeys.userProfile(userId) });
@@ -934,7 +1509,7 @@ function AppContent() {
         : Object.keys(ADDRESS_OPTIONS[normalizedCity] || {})[0] || 'Quận 1';
       const normalizedWard = (ADDRESS_OPTIONS[normalizedCity]?.[normalizedDistrict] || []).includes(parsed.ward)
         ? parsed.ward
-        : (ADDRESS_OPTIONS[normalizedCity]?.[normalizedDistrict] || [])[0] || 'Phường Sài Gòn';
+        : (ADDRESS_OPTIONS[normalizedCity]?.[normalizedDistrict] || [])[0] || 'Phường Bến Nghé';
 
       setAddressForm({
         tenDiaChi: address.ten_dia_chi || '',
@@ -1418,9 +1993,11 @@ function AppContent() {
     );
   }
 
-  const featuredProducts = useMemo(() => products.slice(0, 4), [products]);
+  const featuredCarouselItems = useMemo(() => products.slice(0, 12), [products]);
+  const orderCarouselItems = useMemo(() => filteredProducts.slice(0, 18), [filteredProducts]);
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#fffcf5]">
+    <div className="min-h-screen flex flex-col bg-white">
       <Header
         userName={user ? user.ho_ten || user.hoTen || 'Đăng nhập' : 'Đăng nhập'}
         activeTab={activeTab}
@@ -1434,6 +2011,8 @@ function AppContent() {
         onAvailabilityFilterChange={setAvailabilityFilter}
         priceFilter={priceFilter}
         onPriceFilterChange={setPriceFilter}
+        criteriaFilter={criteriaFilter}
+        onCriteriaFilterChange={setCriteriaFilter}
         sortBy={sortBy}
         onSortByChange={setSortBy}
         filteredCount={filteredProducts.length}
@@ -1441,7 +2020,12 @@ function AppContent() {
         onOpenAccount={() => setIsAuthOpen(true)}
         onLogout={handleLogout}
         cartCount={cartCount}
-        onOpenCart={() => setIsCartOpen(true)} // BƯỚC 3: Mở Drawer Giỏ hàng
+        onOpenCart={() => {
+          setIsFavoriteOpen(false);
+          setIsCartOpen(true);
+        }} // BƯỚC 3: Mở Drawer Giỏ hàng
+        onOpenFavorites={handleOpenFavorites}
+        favoriteCount={favoriteItems.length}
         onOpenOrderHistory={() => {
           if (!user) {
             setIsAuthOpen(true);
@@ -1502,39 +2086,36 @@ function AppContent() {
             <section className="mx-auto mt-16 w-full max-w-[1240px] px-4 md:px-6">
               <div className="rounded-[32px] bg-[#f3f0e5] px-6 py-10 md:px-10">
                 <h3 className="text-center text-5xl font-black uppercase tracking-tight text-[#df6f37]">Sản phẩm nổi bật</h3>
-                <div className="mt-10 grid grid-cols-2 gap-6 md:grid-cols-4">
-                  {featuredProducts.map((p) => (
-                    <button
-                      key={p.ma_san_pham}
-                      onClick={() => {
-                        setActiveTab('order');
-                        handleViewDetail(p);
-                      }}
-                      className="text-left"
-                    >
-                      <div className="rounded-[26px] bg-white p-4 shadow-sm">
-                        <img src={p.hinh_anh_url} alt={p.ten_san_pham} className="h-44 w-full rounded-2xl object-cover" />
-                        <p className="mt-4 text-lg font-black text-gray-900">{p.ten_san_pham}</p>
-                        <p className="mt-2 text-xl font-black text-[#df6f37]">{Number(p.gia_ban).toLocaleString('vi-VN')} đ</p>
-                      </div>
-                    </button>
-                  ))}
+                <div className="mt-10 rounded-3xl bg-[#ede8db] p-4">
+                  <HorizontalProductCarousel
+                    items={featuredCarouselItems}
+                    onSelect={(p) => {
+                      setActiveTab('order');
+                      handleViewDetail(p);
+                    }}
+                    cardClassName="tch-carousel-card text-left"
+                    imageClassName="h-44 w-full rounded-2xl object-cover"
+                  />
                 </div>
               </div>
             </section>
 
-            <section className="mx-auto mt-16 grid w-full max-w-[1240px] grid-cols-1 overflow-hidden rounded-[32px] bg-[#88a56a] md:grid-cols-2">
-              <img
-                src="https://images.unsplash.com/photo-1594631661960-7e4f8b4d2d14?auto=format&fit=crop&w=1200&q=80"
-                className="h-[440px] w-full object-cover"
-                alt="Nguon nguyen lieu"
-              />
-              <div className="p-10 text-white md:p-14">
-                <h3 className="text-6xl font-black uppercase leading-tight">Chất lượng khởi nguồn từ vùng nguyên liệu tuyển chọn</h3>
-                <p className="mt-6 text-lg font-semibold leading-relaxed text-white/95">
-                  Từng búp trà, từng hạt cà phê được chọn lọc kỹ lưỡng để giữ lại hương vị nguyên bản và trải nghiệm trọn vẹn cho mỗi ly đồ uống.
-                </p>
-                <button className="mt-8 text-xl font-black uppercase underline underline-offset-4">Xem thêm</button>
+            <section className="mt-16 w-full overflow-hidden bg-[#88a56a]">
+              <div className="mx-auto grid w-full max-w-[1400px] grid-cols-1 md:grid-cols-2">
+                <img
+                  src="https://cdn.hstatic.net/files/1000075078/file/rectangle_45.jpg"
+                  className="h-[520px] w-full object-cover"
+                  alt="Nguon nguyen lieu"
+                />
+                <div className="flex items-center p-8 text-white md:p-14 lg:p-16">
+                  <div>
+                    <h3 className="text-3xl font-black uppercase leading-tight md:text-4xl">Chất lượng khởi nguồn từ vùng nguyên liệu tuyển chọn</h3>
+                    <p className="mt-6 max-w-[620px] text-lg font-semibold leading-relaxed text-white/95 md:text-xl">
+                      Từng búp trà, từng hạt cà phê được chọn lọc kỹ lưỡng để giữ lại hương vị nguyên bản và trải nghiệm trọn vẹn cho mỗi ly đồ uống.
+                    </p>
+                    <button className="mt-8 text-lg font-black uppercase underline underline-offset-4">Xem thêm</button>
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -1591,31 +2172,43 @@ function AppContent() {
                     className="block w-full rounded-[28px] bg-white p-4 text-left shadow-sm"
                   >
                     <img
-                      src="https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=1000&q=80"
+                      src={homeNewsPreview?.image || 'https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=1000&q=80'}
                       className="h-80 w-full rounded-2xl object-cover"
                       alt="News"
                     />
-                    <p className="mt-4 text-sm font-black uppercase text-[#df6f37]">Coffeeholic</p>
-                    <p className="mt-2 text-2xl font-black text-gray-900">Bắt gặp Sài Gòn xưa trong món uống hiện đại của giới trẻ</p>
+                    <p className="mt-4 text-sm font-black uppercase text-[#df6f37]">
+                      {homeNewsPreview?.category || 'Coffeeholic'}
+                    </p>
+                    <p className="mt-2 text-2xl font-black text-gray-900">
+                      {homeNewsPreview?.title || 'Khám phá các bài viết mới nhất từ The Avengers House'}
+                    </p>
                   </button>
                 </div>
               </div>
             </section>
           </>
-        ) : activeTab === 'news' ? (
+        ) : activeTab === 'news' ? selectedNewsArticleId ? (
+          <NewsDetailPage
+            selectedArticleId={selectedNewsArticleId}
+            onBack={() => {
+              setSelectedNewsArticleId(null);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        ) : (
           <>
             <section className="border-b border-[#ece3cc] bg-gradient-to-b from-[#f3e8bb] to-[#fbf7ea]">
               <div className="mx-auto max-w-[1240px] px-4 py-16 text-center md:px-6 md:py-20">
                 <p className="text-[12px] font-black uppercase tracking-[0.4em] text-[#d67b3c]">Editorial</p>
                 <h1 className="mt-5 text-[52px] font-black tracking-tight text-[#161616] md:text-[78px]" style={{ fontFamily: 'Georgia, serif' }}>
-                  Coffeeholic
+                  {selectedNewsCategoryLabel}
                 </h1>
                 <p className="mx-auto mt-6 max-w-[760px] text-lg font-semibold leading-relaxed text-[#3d362f] md:text-[21px]">
                   Nơi những câu chuyện xoay quanh hạt cà phê, ly trà và nhịp sống thường ngày được kể lại theo cách gần gũi, giàu cảm xúc và rất The Avengers House.
                 </p>
 
                 <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-                  {NEWS_CATEGORY_OPTIONS.map((option) => {
+                  {newsCategoryOptions.map((option) => {
                     const active = newsCategory === option.id;
                     return (
                       <button
@@ -1637,9 +2230,20 @@ function AppContent() {
             </section>
 
             <section className="mx-auto max-w-[1240px] px-4 py-10 md:px-6 md:py-14">
-              {featuredNewsArticle ? (
+              {isNewsLoading ? (
+                <div className="rounded-[28px] border border-[#ecd4bc] bg-white p-8 text-center text-lg font-semibold text-[#6f6258]">
+                  Đang tải danh sách tin tức...
+                </div>
+              ) : featuredNewsArticle ? (
                 <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-                  <article className="overflow-hidden rounded-[30px] bg-[#f7f0df] shadow-sm shadow-orange-100">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedNewsArticleId(featuredNewsArticle.id);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="overflow-hidden rounded-[30px] bg-[#f7f0df] text-left shadow-sm shadow-orange-100"
+                  >
                     <img
                       src={featuredNewsArticle.image}
                       alt={featuredNewsArticle.title}
@@ -1657,11 +2261,19 @@ function AppContent() {
                         {featuredNewsArticle.excerpt}
                       </p>
                     </div>
-                  </article>
+                  </button>
 
                   <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1">
                     {secondaryNewsArticles.slice(0, 2).map((article) => (
-                      <article key={article.id} className="overflow-hidden rounded-[28px] bg-[#f7f0df] shadow-sm shadow-orange-100">
+                      <button
+                        key={article.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedNewsArticleId(article.id);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="overflow-hidden rounded-[28px] bg-[#f7f0df] text-left shadow-sm shadow-orange-100"
+                      >
                         <img src={article.image} alt={article.title} className="h-[220px] w-full object-cover" />
                         <div className="p-5">
                           <div className="flex items-center justify-between gap-3 text-[11px] font-black uppercase tracking-[0.18em] text-[#d67b3c]">
@@ -1671,15 +2283,27 @@ function AppContent() {
                           <h3 className="mt-4 text-2xl font-black uppercase leading-tight text-[#171717]">{article.title}</h3>
                           <p className="mt-3 text-base font-semibold leading-relaxed text-[#433d38]">{article.excerpt}</p>
                         </div>
-                      </article>
+                      </button>
                     ))}
                   </div>
                 </div>
-              ) : null}
+              ) : (
+                <div className="rounded-[28px] border border-[#ecd4bc] bg-white p-8 text-center text-lg font-semibold text-[#6f6258]">
+                  Chưa có bài viết nào trong danh mục này.
+                </div>
+              )}
 
               <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {secondaryNewsArticles.slice(2).map((article) => (
-                  <article key={article.id} className="overflow-hidden rounded-[28px] bg-[#f7f0df] shadow-sm shadow-orange-100 transition-transform hover:-translate-y-1">
+                  <button
+                    key={article.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedNewsArticleId(article.id);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="overflow-hidden rounded-[28px] bg-[#f7f0df] text-left shadow-sm shadow-orange-100 transition-transform hover:-translate-y-1"
+                  >
                     <img src={article.image} alt={article.title} className="h-[250px] w-full object-cover" />
                     <div className="p-5">
                       <div className="flex items-center justify-between gap-3 text-[11px] font-black uppercase tracking-[0.18em] text-[#d67b3c]">
@@ -1689,7 +2313,7 @@ function AppContent() {
                       <h3 className="mt-4 text-[28px] font-black uppercase leading-tight text-[#171717]">{article.title}</h3>
                       <p className="mt-3 text-base font-semibold leading-relaxed text-[#433d38]">{article.excerpt}</p>
                     </div>
-                  </article>
+                  </button>
                 ))}
               </div>
             </section>
@@ -1701,6 +2325,8 @@ function AppContent() {
                 <h1 className="mx-auto max-w-[18ch] text-4xl font-black uppercase leading-tight text-[#161616] md:text-6xl">
                   Khám phá {filteredStores.length} cửa hàng của chúng tôi ở {storeCity}
                 </h1>
+                {isStoresLoading ? <p className="mt-5 text-base font-semibold text-[#6f6258]">Đang tải danh sách chi nhánh...</p> : null}
+                {isStoresError ? <p className="mt-5 text-base font-semibold text-[#b45309]">{storesError?.response?.data?.message || storesError?.message || 'Không tải được danh sách chi nhánh.'}</p> : null}
 
                 <div className="mx-auto mt-10 grid max-w-[760px] gap-4 md:grid-cols-2">
                   <select
@@ -1732,9 +2358,38 @@ function AppContent() {
 
             <section className="bg-[#f5f5f3] py-10 md:py-14">
               <div className="mx-auto max-w-[1240px] px-4 md:px-6">
+                {selectedStore ? (
+                  <section className="mb-10 grid gap-6 rounded-[28px] border border-[#e9d2bd] bg-white p-5 md:grid-cols-2 md:p-6">
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#d67b3c]">Chi nhánh đang chọn</p>
+                      <h3 className="mt-3 text-3xl font-black tracking-tight text-black">{selectedStore.name}</h3>
+                      <p className="mt-4 text-base font-semibold leading-relaxed text-[#2f2f2f]">{selectedStore.address}</p>
+                      <p className="mt-2 text-sm font-black uppercase tracking-wide text-[#e67a3a]">Giờ mở cửa: {selectedStore.hours}</p>
+                      <a
+                        href={selectedStore.mapUrl || buildMapSearchUrl(selectedStore.address)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-6 inline-flex rounded-full bg-[#e67a3a] px-6 py-3 text-sm font-black uppercase tracking-wide text-white"
+                      >
+                        Mở trên Google Maps
+                      </a>
+                    </div>
+                    <iframe
+                      title={`Bản đồ ${selectedStore.name}`}
+                      src={buildMapEmbedUrl(selectedStore.address)}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      className="h-[320px] w-full rounded-2xl border border-[#eed8c3]"
+                    />
+                  </section>
+                ) : null}
+
                 <div className="grid gap-x-10 gap-y-12 md:grid-cols-2 xl:grid-cols-3">
                   {filteredStores.map((store) => (
-                    <article key={store.id} className="group">
+                    <article
+                      key={store.id}
+                      className={`group rounded-[24px] p-3 transition-colors ${selectedStore?.id === store.id ? 'bg-[#fff2e8]' : 'bg-transparent'}`}
+                    >
                       <img
                         src={store.image}
                         alt={store.name}
@@ -1751,6 +2406,10 @@ function AppContent() {
                       </div>
                       <button
                         type="button"
+                        onClick={() => {
+                          setSelectedStoreId(store.id);
+                          window.open(store.mapUrl || buildMapSearchUrl(store.address), '_blank', 'noopener,noreferrer');
+                        }}
                         className="mt-6 rounded-full bg-black px-7 py-3 text-lg font-black text-white transition-transform hover:scale-[1.02]"
                       >
                         Xem bản đồ
@@ -1851,18 +2510,18 @@ function AppContent() {
               <div className="mx-auto max-w-[1240px] px-4 py-14 md:px-6 md:py-16">
                 <p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#d67b3c]">Voucher Center</p>
                 <h1 className="mt-4 text-4xl font-black uppercase tracking-tight text-[#1f1f1f] md:text-6xl">
-                  Khuyen mai danh cho ban
+                  Khuyến mãi dành cho bạn
                 </h1>
                 <p className="mt-4 max-w-[780px] text-base font-semibold leading-relaxed text-[#4d433c] md:text-lg">
-                  Cap nhat danh sach ma uu dai dang hoat dong. Nhan vao ma de sao chep nhanh va ap dung khi dat hang.
+                  Cập nhật danh sách mã ưu đãi đang hoạt động. Nhấn vào mã để sao chép nhanh và áp dụng khi đặt hàng.
                 </p>
 
                 <div className="mt-8 flex flex-wrap items-center gap-3">
                   {[
-                    { code: 'ALL', label: 'Tat ca' },
-                    { code: 'PERCENT', label: 'Giam %' },
-                    { code: 'FIXED', label: 'Giam tien' },
-                    { code: 'FREE_ITEM', label: 'Tang kem' },
+                    { code: 'ALL', label: 'Tất cả' },
+                    { code: 'PERCENT', label: 'Giảm %' },
+                    { code: 'FIXED', label: 'Giảm tiền' },
+                    { code: 'FREE_ITEM', label: 'Tặng kèm' },
                   ].map((item) => {
                     const active = voucherTypeFilter === item.code;
                     return (
@@ -1893,12 +2552,12 @@ function AppContent() {
                 </div>
               ) : isVoucherError ? (
                 <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-semibold text-red-700">
-                  {voucherError?.response?.data?.message || 'Khong the tai danh sach voucher luc nay.'}
+                  {voucherError?.response?.data?.message || 'Không thể tải danh sách voucher lúc này.'}
                 </div>
               ) : filteredVoucherItems.length === 0 ? (
                 <div className="rounded-[28px] border border-dashed border-[#efc9a8] bg-[#fff7ef] px-6 py-12 text-center">
-                  <p className="text-sm font-black uppercase tracking-[0.2em] text-[#d67b3c]">Chua co voucher phu hop</p>
-                  <p className="mt-2 text-sm font-semibold text-[#6e6259]">Thu doi bo loc hoac quay lai sau de cap nhat uu dai moi nhat.</p>
+                  <p className="text-sm font-black uppercase tracking-[0.2em] text-[#d67b3c]">Chưa có voucher phù hợp</p>
+                  <p className="mt-2 text-sm font-semibold text-[#6e6259]">Thử đổi bộ lọc hoặc quay lại sau để cập nhật ưu đãi mới nhất.</p>
                 </div>
               ) : (
                 <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -1916,7 +2575,7 @@ function AppContent() {
                               type="button"
                               onClick={() => handleCopyVoucherCode(voucher.ma_khuyen_mai)}
                               className="rounded-xl border border-[#e79a67] bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.2em] text-[#cd6a2a]"
-                              title="Sao chep ma"
+                              title="Sao chép mã"
                             >
                               {voucher.ma_khuyen_mai}
                             </button>
@@ -1925,37 +2584,37 @@ function AppContent() {
                             </span>
                           </div>
                           {copiedVoucherCode === voucher.ma_khuyen_mai ? (
-                            <p className="mt-2 text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700">Da sao chep ma</p>
+                            <p className="mt-2 text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700">Đã sao chép mã</p>
                           ) : null}
                         </div>
 
                         <div className="p-5">
-                          <h3 className="text-xl font-black uppercase leading-tight text-[#1f1f1f]">{voucher.ten_khuyen_mai || 'Voucher uu dai'}</h3>
+                          <h3 className="text-xl font-black uppercase leading-tight text-[#1f1f1f]">{voucher.ten_khuyen_mai || 'Voucher ưu đãi'}</h3>
                           <p className="mt-2 text-base font-black text-[#d0672a]">{formatVoucherValue(voucher)}</p>
                           <p className="mt-2 min-h-[44px] text-sm font-semibold leading-relaxed text-[#5b524b]">
-                            {voucher.mo_ta || 'Ap dung cho don hang hop le theo dieu kien cua chuong trinh.'}
+                            {voucher.mo_ta || 'Áp dụng cho đơn hàng hợp lệ theo điều kiện của chương trình.'}
                           </p>
 
                           <div className="mt-4 grid grid-cols-2 gap-3 text-xs font-semibold text-[#5d544d]">
                             <div className="rounded-xl bg-[#fff5eb] p-3">
-                              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#c98754]">Don toi thieu</p>
+                              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#c98754]">Đơn tối thiểu</p>
                               <p className="mt-1 text-sm font-black text-[#3f3731]">{Number(voucher.gia_tri_don_toi_thieu || 0).toLocaleString('vi-VN')}d</p>
                             </div>
                             <div className="rounded-xl bg-[#fff5eb] p-3">
-                              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#c98754]">Con lai</p>
-                              <p className="mt-1 text-sm font-black text-[#3f3731]">{hasLimit ? `${Number(remaining || 0).toLocaleString('vi-VN')} luot` : 'Vo han'}</p>
+                              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#c98754]">Còn lại</p>
+                              <p className="mt-1 text-sm font-black text-[#3f3731]">{hasLimit ? `${Number(remaining || 0).toLocaleString('vi-VN')} lượt` : 'Vô hạn'}</p>
                             </div>
                           </div>
 
                           <div className="mt-4 space-y-1.5 text-[12px] font-semibold text-[#5f5650]">
-                            <p>Bat dau: {formatVoucherDate(voucher.ngay_bat_dau)}</p>
-                            <p>Ket thuc: {formatVoucherDate(voucher.ngay_ket_thuc)}</p>
-                            {userId ? <p>Da dung: {Number(voucher.da_dung_boi_ban || 0)} lan</p> : null}
+                            <p>Bắt đầu: {formatVoucherDate(voucher.ngay_bat_dau)}</p>
+                            <p>Kết thúc: {formatVoucherDate(voucher.ngay_ket_thuc)}</p>
+                            {userId ? <p>Đã dùng: {Number(voucher.da_dung_boi_ban || 0)} lần</p> : null}
                           </div>
 
                           <div className="mt-4 flex flex-wrap gap-2">
                             <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${isOut ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'}`}>
-                              {isOut ? 'Het luot' : 'Con hieu luc'}
+                              {isOut ? 'Hết lượt' : 'Còn hiệu lực'}
                             </span>
                             {userId ? (
                               <span
@@ -1963,11 +2622,11 @@ function AppContent() {
                                   canUse ? 'bg-[#eef7ff] text-[#1f6fb2]' : 'bg-amber-50 text-amber-700'
                                 }`}
                               >
-                                {canUse ? 'Ban co the dung' : 'Ban da dat gioi han'}
+                                {canUse ? 'Bạn có thể dùng' : 'Bạn đã đạt giới hạn'}
                               </span>
                             ) : (
                               <span className="rounded-full bg-[#eef7ff] px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#1f6fb2]">
-                                Dang nhap de theo doi luot dung
+                                Đăng nhập để theo dõi lượt dùng
                               </span>
                             )}
                           </div>
@@ -1979,18 +2638,25 @@ function AppContent() {
               )}
             </section>
           </>
+        ) : activeTab === 'privacy' ? (
+          <PrivacyPolicyPage
+            onBack={() => {
+              setActiveTab('home');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
         ) : (
           <>
             {/* Banner */}
-            <div className="mx-auto mt-6 w-full max-w-[1240px] px-4 md:px-6">
-              <div className="rounded-[40px] overflow-hidden shadow-2xl shadow-orange-100 border-4 border-white">
+            <div className="mx-auto mt-6 w-full max-w-[1280px] px-4 md:px-6">
+              <div className="overflow-hidden rounded-[30px] border border-[#efe9e0] shadow-sm">
                 <img
                   src="https://minio.thecoffeehouse.com/content/pwa/static/img/home-banner.png"
                   onError={(e) => {
                     e.currentTarget.onerror = null;
                     e.currentTarget.src = FALLBACK_BANNER_URL;
                   }}
-                  className="w-full h-[400px] object-cover"
+                  className="h-[420px] w-full object-cover"
                   alt="Banner"
                 />
               </div>
@@ -1998,55 +2664,76 @@ function AppContent() {
 
             {/* Categories */}
             <div className="mx-auto mt-12 w-full max-w-[1240px] px-4 md:px-6">
-              <div className="flex justify-center space-x-8 overflow-x-auto pb-4 no-scrollbar">
-                <button
-                  onClick={() => setSelectedCatId('all')}
-                  className="group flex flex-col items-center min-w-[90px]"
-                >
-                  <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center text-2xl mb-3 transition-all ${
-                    selectedCatId === 'all' ? 'bg-tch-orange shadow-lg shadow-orange-200' : 'bg-white border border-gray-100'
-                  }`}>
-                    ✨
-                  </div>
-                  <span className={`text-[11px] font-black uppercase tracking-widest ${selectedCatId === 'all' ? 'text-tch-orange' : 'text-gray-400'}`}>
-                    Tất cả
-                  </span>
-                </button>
+              <div ref={topTabsScrollRef} className="relative overflow-x-auto no-scrollbar pb-5">
+                <div ref={topTabsTrackRef} className="relative mx-auto flex w-max min-w-full justify-center gap-8 px-2">
+                  {menuSections.map((section) => (
+                    <button
+                      key={section.id}
+                      ref={(element) => {
+                        if (element) {
+                          topTabRefs.current[section.id] = element;
+                        }
+                      }}
+                      type="button"
+                      onClick={() => {
+                        if (section.id === 'must-try') {
+                          setSelectedCatId('all');
+                        } else {
+                          setSelectedCatId(section.id);
+                        }
+                        setActiveMainSectionId(section.id);
+                        if (section.subSections[0]) {
+                          setActiveSubSectionId(section.subSections[0].id);
+                        }
+                        scrollToSection(section.id);
+                      }}
+                      className="group relative flex min-w-[96px] flex-col items-center pb-2 transition-all"
+                    >
+                      <div className={`mb-3 flex h-16 w-16 items-center justify-center rounded-[24px] text-2xl transition-all ${
+                        activeMainSectionId === section.id ? 'bg-tch-orange shadow-lg border-none' : 'bg-white border border-gray-200 shadow-sm'
+                      }`}>
+                        {section.icon || ICON_MAP.default}
+                      </div>
+                      <span className={`text-[13px] font-extrabold uppercase tracking-[0.08em] ${activeMainSectionId === section.id ? 'text-[#111111]' : 'text-gray-500'}`}>
+                        {section.label}
+                      </span>
+                    </button>
+                  ))}
 
-                {categories.map((cat) => (
-                  <button
-                    key={cat.ma_danh_muc}
-                    onClick={() => setSelectedCatId(String(cat.ma_danh_muc))}
-                    className="group flex flex-col items-center min-w-[90px] transition-all"
-                  >
-                    <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center text-2xl mb-3 transition-all ${
-                      selectedCatId === String(cat.ma_danh_muc) ? 'bg-tch-orange shadow-lg border-none' : 'bg-white border border-gray-100 shadow-sm'
-                    }`}>
-                      {ICON_MAP[cat.ten_danh_muc] || ICON_MAP.default}
-                    </div>
-                    <span className={`text-[11px] font-black uppercase tracking-widest ${selectedCatId === String(cat.ma_danh_muc) ? 'text-tch-orange' : 'text-gray-400'}`}>
-                      {cat.ten_danh_muc}
-                    </span>
-                  </button>
-                ))}
+                  <span
+                    className="pointer-events-none absolute bottom-0 h-[3px] rounded-full bg-tch-orange transition-all duration-300"
+                    style={{
+                      width: `${activeTabUnderlineStyle.width}px`,
+                      transform: `translateX(${activeTabUnderlineStyle.left}px)`,
+                      opacity: activeTabUnderlineStyle.opacity,
+                    }}
+                  />
+                </div>
               </div>
             </div>
 
             {/* Layout chính */}
-            <div className="mx-auto mt-16 flex w-full max-w-[1240px] flex-col gap-12 px-4 pb-20 md:flex-row md:px-6">
+            <div className="mx-auto mt-16 flex w-full max-w-[1280px] flex-col gap-12 px-4 pb-20 md:flex-row md:px-6">
               <aside className="w-full md:w-64 flex-shrink-0">
                 <div className="sticky top-28">
-                  <h2 className="text-tch-orange font-black text-2xl uppercase italic mb-8 border-l-8 border-tch-orange pl-4">Thực đơn</h2>
+                  <h2 className="text-tch-orange font-black text-2xl uppercase italic mb-8 border-l-8 border-tch-orange pl-4">
+                    {activeMainSection?.label || 'Thực đơn'}
+                  </h2>
                   <ul className="space-y-5">
-                    <li>
-                      <button onClick={() => setSelectedCatId('all')} className={`text-[14px] font-black uppercase transition-colors ${selectedCatId === 'all' ? 'text-tch-orange' : 'text-gray-500'}`}>
-                        Tất cả sản phẩm
-                      </button>
-                    </li>
-                    {categories.map((cat) => (
-                      <li key={cat.ma_danh_muc}>
-                        <button onClick={() => setSelectedCatId(String(cat.ma_danh_muc))} className={`text-[14px] font-black uppercase text-left transition-colors ${selectedCatId === String(cat.ma_danh_muc) ? 'text-tch-orange' : 'text-gray-500'}`}>
-                          {cat.ten_danh_muc}
+                    {(activeMainSection?.subSections || []).map((subSection) => (
+                      <li key={subSection.id}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveSubSectionId(subSection.id);
+                            scrollToSubSection(subSection.id);
+                          }}
+                          className={`w-full text-left text-[16px] font-extrabold uppercase transition-colors ${
+                            activeSubSectionId === subSection.id ? 'text-tch-orange' : 'text-gray-700'
+                          }`}
+                        >
+                          {subSection.label}
+                          <span className="ml-2 text-[11px] font-black text-gray-400">{subSection.items.length}</span>
                         </button>
                       </li>
                     ))}
@@ -2055,14 +2742,35 @@ function AppContent() {
               </aside>
 
               <div className="flex-1">
-                {Boolean(userId) && (
-                  <section className="mb-12 rounded-3xl border border-orange-100 bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 p-5 shadow-sm">
+                {orderCarouselItems.length > 0 ? (
+                  <section className="mb-10 border-b border-[#eee7df] pb-8">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#d67b3c]">House selection</p>
+                      <span className="rounded-full border border-[#eddcc8] bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#cb6b2f]">Thanh kéo trái/phải</span>
+                    </div>
+                    <HorizontalProductCarousel
+                      items={orderCarouselItems}
+                      onSelect={(p) => handleViewDetail(p)}
+                      cardClassName="tch-carousel-mini-card"
+                      imageClassName="h-20 w-20 rounded-xl object-cover"
+                      compact
+                    />
+                  </section>
+                ) : null}
+
+                <section className="mb-12 border-y border-[#efe8df] bg-white py-7">
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-500">Smart recommendation</p>
-                        <h3 className="text-xl font-black uppercase tracking-tight text-gray-800">Gợi ý dành cho bạn</h3>
+                        <h3 className="text-xl font-black uppercase tracking-tight text-gray-800">
+                          {userId ? 'Top 3 món hợp gu của bạn' : 'Top 3 món phổ biến'}
+                        </h3>
                         <p className="text-xs text-gray-600">
-                          {aiRecsData?.is_personalized ? 'Ca nhan hoa theo lich su mua hang va danh gia.' : 'Chua du lich su, hien thi cac mon pho bien.'}
+                          {aiRecsData?.is_personalized
+                            ? 'Cá nhân hóa theo lịch sử mua hàng, đánh giá, yêu thích và xu hướng dùng ưu đãi.'
+                            : userId
+                              ? 'Chưa đủ lịch sử, hiển thị các món phổ biến.'
+                              : 'Đang xem gợi ý cho khách vãng lai, dựa trên độ phổ biến toàn hệ thống.'}
                         </p>
                       </div>
                       <span className="rounded-full border border-orange-200 bg-white px-3 py-1 text-[11px] font-black uppercase tracking-wider text-orange-600">
@@ -2082,18 +2790,15 @@ function AppContent() {
                             product={p}
                             onView={() => handleViewDetail(p)}
                             onQuickAdd={() => handleQuickAdd(p)}
+                            isFavorite={isFavoriteProduct(p)}
+                            onToggleFavorite={() => handleToggleFavorite(p)}
                           />
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm font-semibold text-gray-500">Chua co de xuat AI luc nay.</p>
+                      <p className="text-sm font-semibold text-gray-500">Chưa có đề xuất AI lúc này.</p>
                     )}
                   </section>
-                )}
-
-                <h2 className="text-3xl font-black text-gray-800 uppercase mb-10 tracking-tighter">
-                  {selectedCatId === 'all' ? 'Tất cả sản phẩm' : categories.find((c) => String(c.ma_danh_muc) === selectedCatId)?.ten_danh_muc}
-                </h2>
 
                 {loading ? (
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-8">
@@ -2101,19 +2806,57 @@ function AppContent() {
                   </div>
                 ) : hasMenuError ? (
                   <div className="rounded-2xl border border-red-100 bg-red-50 p-5 text-sm font-bold text-red-600">
-                    Khong the tai menu luc nay. Vui long thu lai sau.
+                    Không thể tải menu lúc này. Vui lòng thử lại sau.
                   </div>
                 ) : (
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
-                  {filteredProducts.map((p) => (
-                    <ProductCard
-                      key={p.ma_san_pham}
-                      product={p}
-                      onView={() => handleViewDetail(p)}
-                      onQuickAdd={() => handleQuickAdd(p)}
-                    />
-                  ))}
-                </div>
+                  <div className="space-y-14">
+                    {menuSections.map((section) => (
+                      <section
+                        key={section.id}
+                        ref={(element) => {
+                          if (element) {
+                            categorySectionRefs.current[section.id] = element;
+                          }
+                        }}
+                        className="scroll-mt-32"
+                      >
+                        <h2 className="mb-7 text-[36px] font-black uppercase tracking-tight text-[#111111]">
+                          {section.label}
+                        </h2>
+
+                        <div className="space-y-12">
+                          {section.subSections.map((subSection) => (
+                            <div
+                              key={subSection.id}
+                              ref={(element) => {
+                                if (element) {
+                                  subSectionRefs.current[subSection.id] = element;
+                                }
+                              }}
+                              className="scroll-mt-32"
+                            >
+                              <h3 className="mb-6 text-[28px] font-black uppercase tracking-tight text-[#111111]">
+                                {subSection.label}
+                              </h3>
+
+                              <div className="grid grid-cols-2 gap-x-8 gap-y-12 lg:grid-cols-3">
+                                {subSection.items.map((p) => (
+                                  <ProductCard
+                                    key={`${subSection.id}-${p.ma_san_pham}`}
+                                    product={p}
+                                    onView={() => handleViewDetail(p)}
+                                    onQuickAdd={() => handleQuickAdd(p)}
+                                    isFavorite={isFavoriteProduct(p)}
+                                    onToggleFavorite={() => handleToggleFavorite(p)}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
@@ -2129,6 +2872,15 @@ function AppContent() {
       />
 
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <FavoriteDrawer
+        isOpen={isFavoriteOpen}
+        onClose={() => setIsFavoriteOpen(false)}
+        items={favoriteItems}
+        onAddToCart={handleAddFavoriteToCart}
+        onAddAllToCart={handleAddAllFavoritesToCart}
+        onRemoveFavorite={handleToggleFavorite}
+        isWorking={toggleFavoriteMutation.isPending}
+      />
       <OrderHistoryModal
         isOpen={isOrderHistoryOpen}
         onClose={() => setIsOrderHistoryOpen(false)}
@@ -2140,11 +2892,11 @@ function AppContent() {
 
       {notificationToast ? (
         <div className="fixed bottom-6 right-6 z-[150] w-[92vw] max-w-sm rounded-2xl border border-orange-100 bg-white/95 p-4 shadow-2xl shadow-orange-100 backdrop-blur">
-          <p className="text-[11px] font-black uppercase tracking-widest text-tch-orange">Thong bao moi</p>
+          <p className="text-[11px] font-black uppercase tracking-widest text-tch-orange">Thông báo mới</p>
           <p className="mt-1 text-sm font-black text-gray-800">{notificationToast.title}</p>
           <p className="mt-1 text-xs font-semibold text-gray-500">{notificationToast.message}</p>
           {notificationToast.branchName ? (
-            <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-gray-600">Co so xu ly: {notificationToast.branchName}</p>
+            <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-gray-600">Cơ sở xử lý: {notificationToast.branchName}</p>
           ) : null}
         </div>
       ) : null}
