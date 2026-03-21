@@ -28,6 +28,7 @@ const TABS = {
   APPROVE: 'approve',
   SCHEDULE: 'schedule',
 }
+const PAGE_SIZE = 8
 
 function addWeeks(date, amount) {
   const next = new Date(date)
@@ -90,6 +91,8 @@ export function ManagerWorkforcePanel({
     note: '',
   })
   const [requestDrafts, setRequestDrafts] = useState({})
+  const [pendingPage, setPendingPage] = useState(1)
+  const [rejectedPage, setRejectedPage] = useState(1)
 
   const assignableStaffOptions = useMemo(
     () => workforceUsersState.items.filter((item) => {
@@ -238,6 +241,28 @@ export function ManagerWorkforcePanel({
   const rejectedRequests = useMemo(() => {
     return (shiftRequestState?.items || []).filter(item => item.trang_thai_yeu_cau === 'REJECTED')
   }, [shiftRequestState?.items])
+
+  const pendingTotalPages = useMemo(() => Math.max(1, Math.ceil(pendingRequests.length / PAGE_SIZE)), [pendingRequests.length])
+  const pendingSafePage = useMemo(() => Math.min(Math.max(pendingPage, 1), pendingTotalPages), [pendingPage, pendingTotalPages])
+  const pendingPageRows = useMemo(
+    () => pendingRequests.slice((pendingSafePage - 1) * PAGE_SIZE, pendingSafePage * PAGE_SIZE),
+    [pendingRequests, pendingSafePage],
+  )
+
+  const rejectedTotalPages = useMemo(() => Math.max(1, Math.ceil(rejectedRequests.length / PAGE_SIZE)), [rejectedRequests.length])
+  const rejectedSafePage = useMemo(() => Math.min(Math.max(rejectedPage, 1), rejectedTotalPages), [rejectedPage, rejectedTotalPages])
+  const rejectedPageRows = useMemo(
+    () => rejectedRequests.slice((rejectedSafePage - 1) * PAGE_SIZE, rejectedSafePage * PAGE_SIZE),
+    [rejectedRequests, rejectedSafePage],
+  )
+
+  useEffect(() => {
+    if (pendingPage > pendingTotalPages) setPendingPage(pendingTotalPages)
+  }, [pendingPage, pendingTotalPages])
+
+  useEffect(() => {
+    if (rejectedPage > rejectedTotalPages) setRejectedPage(rejectedTotalPages)
+  }, [rejectedPage, rejectedTotalPages])
 
   const handleDeleteRequest = (requestId) => {
     if (confirm('Xác nhận xóa yêu cầu đăng ký ca này?')) {
@@ -420,7 +445,7 @@ export function ManagerWorkforcePanel({
             <div className="workforce-request-section">
               <h4>Yêu cầu đang chờ duyệt ({pendingRequests.length})</h4>
               <div className="employee-list">
-                {pendingRequests.map((item) => {
+                {pendingPageRows.map((item) => {
                   const draft = requestDrafts[item.ma_ca_lam_viec] || {
                     review_note: item.ghi_chu_duyet || '',
                     adjusted_note: item.note || '',
@@ -479,6 +504,18 @@ export function ManagerWorkforcePanel({
                   )
                 })}
               </div>
+              {pendingRequests.length > PAGE_SIZE ? (
+                <div className="ops-pagination" style={{ marginTop: '0.6rem' }}>
+                  <span>{(pendingSafePage - 1) * PAGE_SIZE + 1}-{Math.min(pendingSafePage * PAGE_SIZE, pendingRequests.length)} / {pendingRequests.length}</span>
+                  <div>
+                    <button type="button" className="secondary" onClick={() => setPendingPage(1)} disabled={pendingSafePage <= 1}>Đầu</button>
+                    <button type="button" className="secondary" onClick={() => setPendingPage((p) => Math.max(1, p - 1))} disabled={pendingSafePage <= 1}>Trước</button>
+                    <strong>Trang {pendingSafePage}/{pendingTotalPages}</strong>
+                    <button type="button" className="secondary" onClick={() => setPendingPage((p) => Math.min(pendingTotalPages, p + 1))} disabled={pendingSafePage >= pendingTotalPages}>Sau</button>
+                    <button type="button" className="secondary" onClick={() => setPendingPage(pendingTotalPages)} disabled={pendingSafePage >= pendingTotalPages}>Cuối</button>
+                  </div>
+                </div>
+              ) : null}
             </div>
           )}
 
@@ -487,7 +524,7 @@ export function ManagerWorkforcePanel({
             <div className="workforce-request-section">
               <h4>Yêu cầu bị từ chối ({rejectedRequests.length})</h4>
               <div className="employee-list">
-                {rejectedRequests.map((item) => (
+                {rejectedPageRows.map((item) => (
                   <article key={item.ma_ca_lam_viec} className="employee-card">
                     <div className="employee-card-head">
                       <div>
@@ -513,6 +550,18 @@ export function ManagerWorkforcePanel({
                   </article>
                 ))}
               </div>
+              {rejectedRequests.length > PAGE_SIZE ? (
+                <div className="ops-pagination" style={{ marginTop: '0.6rem' }}>
+                  <span>{(rejectedSafePage - 1) * PAGE_SIZE + 1}-{Math.min(rejectedSafePage * PAGE_SIZE, rejectedRequests.length)} / {rejectedRequests.length}</span>
+                  <div>
+                    <button type="button" className="secondary" onClick={() => setRejectedPage(1)} disabled={rejectedSafePage <= 1}>Đầu</button>
+                    <button type="button" className="secondary" onClick={() => setRejectedPage((p) => Math.max(1, p - 1))} disabled={rejectedSafePage <= 1}>Trước</button>
+                    <strong>Trang {rejectedSafePage}/{rejectedTotalPages}</strong>
+                    <button type="button" className="secondary" onClick={() => setRejectedPage((p) => Math.min(rejectedTotalPages, p + 1))} disabled={rejectedSafePage >= rejectedTotalPages}>Sau</button>
+                    <button type="button" className="secondary" onClick={() => setRejectedPage(rejectedTotalPages)} disabled={rejectedSafePage >= rejectedTotalPages}>Cuối</button>
+                  </div>
+                </div>
+              ) : null}
             </div>
           )}
 

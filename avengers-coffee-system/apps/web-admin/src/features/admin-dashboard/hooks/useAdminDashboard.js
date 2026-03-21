@@ -29,7 +29,7 @@ function shouldDisplayShiftInCalendar(item) {
 const ADMIN_LOCAL_NOTIFY_EVENT = 'avengers-admin-local-notify'
 
 export function useAdminDashboard() {
-  const [loginForm, setLoginForm] = useState({ identifier: 'thaian_staff_macdinhchi', password: '123456' })
+  const [loginForm, setLoginForm] = useState({ identifier: '', password: '' })
   const [loginStatus, setLoginStatus] = useState({ loading: false, error: '' })
   const [session, setSession] = useState(() => {
     const raw = window.localStorage.getItem('adminSession')
@@ -91,6 +91,7 @@ export function useAdminDashboard() {
   const [reviewsState, setReviewsState] = useState({ loading: false, error: '', items: [] })
   const [replyingReviewId, setReplyingReviewId] = useState('')
   const knownOrderIdsRef = useRef(new Set())
+  const knownOrderPaymentStatusRef = useRef(new Map())
 
   const sessionUsername = session?.user?.tenDangNhap || session?.user?.email || ''
   const sessionRole = session?.user?.vaiTro || session?.user?.vai_tro || 'STAFF'
@@ -98,6 +99,7 @@ export function useAdminDashboard() {
 
   useEffect(() => {
     knownOrderIdsRef.current = new Set()
+    knownOrderPaymentStatusRef.current = new Map()
   }, [session?.user?.maNguoiDung, session?.user?.ma_nguoi_dung, sessionBranchCode])
 
   const pushAdminNotification = (tieuDe, noiDung) => {
@@ -187,6 +189,7 @@ export function useAdminDashboard() {
       }
 
       const nextOrders = payload?.orders || []
+      const previousPaymentMap = knownOrderPaymentStatusRef.current
 
       const nextKnown = new Set(nextOrders.map((item) => item.ma_don_hang).filter(Boolean))
       if (knownOrderIdsRef.current.size > 0) {
@@ -199,7 +202,32 @@ export function useAdminDashboard() {
           )
         }
       }
+
+      const nextPaymentMap = new Map()
+      nextOrders.forEach((order) => {
+        const orderId = String(order?.ma_don_hang || '')
+        if (!orderId) return
+
+        const paymentStatus = String(order?.trang_thai_thanh_toan || '').toUpperCase()
+        nextPaymentMap.set(orderId, paymentStatus)
+
+        const previousStatus = String(previousPaymentMap.get(orderId) || '').toUpperCase()
+        const paymentMethod = String(order?.phuong_thuc_thanh_toan || '').toUpperCase()
+        const paidNow = paymentStatus === 'DA_THANH_TOAN'
+        const wasUnpaid = previousStatus && previousStatus !== 'DA_THANH_TOAN'
+        const isQrOrOnlinePayment = paymentMethod && paymentMethod !== 'THANH_TOAN_KHI_NHAN_HANG'
+
+        if (paidNow && wasUnpaid && isQrOrOnlinePayment) {
+          const shortId = orderId.slice(0, 8).toUpperCase()
+          pushAdminNotification(
+            'Thanh toán thành công',
+            `Khách đã thanh toán thành công đơn #${shortId} bằng ${paymentMethod}.`,
+          )
+        }
+      })
+
       knownOrderIdsRef.current = nextKnown
+      knownOrderPaymentStatusRef.current = nextPaymentMap
 
       setOrdersState({ loading: false, error: '', items: nextOrders })
 
@@ -281,12 +309,13 @@ export function useAdminDashboard() {
     refreshOrders()
     refreshMenuAndInventory()
 
-    const timer = window.setInterval(() => {
-      refreshOrders()
-      refreshMenuAndInventory()
-    }, 90000)
+    const ordersTimer = window.setInterval(refreshOrders, 15000)
+    const inventoryTimer = window.setInterval(refreshMenuAndInventory, 90000)
 
-    return () => window.clearInterval(timer)
+    return () => {
+      window.clearInterval(ordersTimer)
+      window.clearInterval(inventoryTimer)
+    }
   }, [session])
 
   const taiLichLamViecManager = async ({ silent = false } = {}) => {
@@ -1064,6 +1093,10 @@ export function useAdminDashboard() {
           row.ma_san_pham === productId ? { ...row, so_luong_ton: soLuongMoi } : row,
         ),
       }))
+      pushAdminNotification(
+        'Cập nhật tồn kho',
+        `Đã cập nhật tồn kho sản phẩm #${productId} thành ${soLuongMoi}.`,
+      )
     } catch (error) {
       window.alert(error.message || 'Cập nhật tồn kho thất bại')
     } finally {
@@ -1103,6 +1136,10 @@ export function useAdminDashboard() {
           row.ma_san_pham === productId ? { ...row, dang_ban: Boolean(dangBan) } : row,
         ),
       }))
+      pushAdminNotification(
+        'Cập nhật trạng thái bán',
+        `Sản phẩm #${productId} đã chuyển sang ${dangBan ? 'Đang bán' : 'Tạm ngưng bán'}.`,
+      )
     } catch (error) {
       window.alert(error.message || 'Cập nhật trạng thái bán thất bại')
     } finally {

@@ -8,6 +8,6 @@ import { MenuController } from './menu.controller';
 @Module({
   imports: [TypeOrmModule.forFeature([SanPham, DanhMuc])],
   controllers: [MenuController],
-  providers: [MenuService], // Đã xóa MenuSeeder ở đây
+  providers: [MenuService],
 })
 export class MenuModule {}

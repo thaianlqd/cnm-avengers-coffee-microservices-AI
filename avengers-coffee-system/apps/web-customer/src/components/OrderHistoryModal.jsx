@@ -161,7 +161,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
     },
     enabled: Boolean(maNguoiDung && isOpen),
     staleTime: 30 * 1000,
-    refetchInterval: 90 * 1000,
+    refetchInterval: 10 * 1000,
   });
 
   const { data: menuProducts = [] } = useQuery({

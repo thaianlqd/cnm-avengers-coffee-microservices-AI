@@ -1,60 +1,12 @@
 import { XMarkIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useCart } from '../context/CartContext';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../lib/apiClient';
 import { queryKeys } from '../lib/queryKeys';
+import { buildAddressOptionsFromBranches, getAddressSelectionDefaults, normalizeAddressSelection } from '../lib/addressOptions';
 
 const AVAILABLE_SIZES = ['Nhỏ', 'Vừa'];
-
-const ADDRESS_OPTIONS = {
-  'Thành phố Hồ Chí Minh': {
-    'Quận 1': ['Phường Bến Nghé', 'Phường Bến Thành'],
-    'Quận 3': ['Phường Võ Thị Sáu', 'Phường 9'],
-    'Quận 7': ['Phường Tân Phú', 'Phường Tân Hưng'],
-    'Thành phố Thủ Đức': ['Phường An Phú', 'Phường Hiệp Bình Chánh'],
-  },
-  'Thành phố Hà Nội': {
-    'Quận Ba Đình': ['Phường Kim Mã', 'Phường Ngọc Hà'],
-    'Quận Cầu Giấy': ['Phường Dịch Vọng', 'Phường Nghĩa Đô'],
-    'Quận Đống Đa': ['Phường Láng Thượng', 'Phường Cát Linh'],
-  },
-  'Thành phố Đà Nẵng': {
-    'Quận Hải Châu': ['Phường Hải Châu I', 'Phường Hòa Cường Bắc'],
-    'Quận Thanh Khê': ['Phường Tam Thuận', 'Phường Thanh Khê Đông'],
-    'Quận Sơn Trà': ['Phường An Hải Bắc', 'Phường Phước Mỹ'],
-  },
-  'Thành phố Cần Thơ': {
-    'Quận Ninh Kiều': ['Phường An Khánh', 'Phường Xuân Khánh'],
-    'Quận Cái Răng': ['Phường Hưng Phú', 'Phường Lê Bình'],
-    'Quận Bình Thủy': ['Phường An Thới', 'Phường Long Hòa'],
-  },
-  'Thành phố Hải Phòng': {
-    'Quận Lê Chân': ['Phường An Biên', 'Phường Dư Hàng Kênh'],
-    'Quận Ngô Quyền': ['Phường Máy Chai', 'Phường Lạc Viên'],
-    'Quận Hải An': ['Phường Đằng Lâm', 'Phường Đằng Hải'],
-  },
-  'Tỉnh Bình Dương': {
-    'Thành phố Thủ Dầu Một': ['Phường Phú Cường', 'Phường Hiệp Thành'],
-    'Thành phố Dĩ An': ['Phường Dĩ An', 'Phường Tân Đông Hiệp'],
-    'Thành phố Thuận An': ['Phường Lái Thiêu', 'Phường An Phú'],
-  },
-  'Tỉnh Đồng Nai': {
-    'Thành phố Biên Hòa': ['Phường Trảng Dài', 'Phường Tân Hiệp'],
-    'Thành phố Long Khánh': ['Phường Xuân An', 'Phường Xuân Bình'],
-    'Huyện Nhơn Trạch': ['Xã Phú Hội', 'Xã Phú Đông'],
-  },
-  'Tỉnh Khánh Hòa': {
-    'Thành phố Nha Trang': ['Phường Vĩnh Hải', 'Phường Phước Hải'],
-    'Thành phố Cam Ranh': ['Phường Cam Lộc', 'Phường Cam Linh'],
-    'Thị xã Ninh Hòa': ['Phường Ninh Hiệp', 'Phường Ninh Thủy'],
-  },
-  'Tỉnh Quảng Ninh': {
-    'Thành phố Hạ Long': ['Phường Hồng Gai', 'Phường Bãi Cháy'],
-    'Thành phố Cẩm Phả': ['Phường Cẩm Đông', 'Phường Cẩm Tây'],
-    'Thành phố Uông Bí': ['Phường Quang Trung', 'Phường Trưng Vương'],
-  },
-};
 
 function taoDiaChiDayDu(addressForm) {
   const parts = [addressForm.street, addressForm.ward, addressForm.district, addressForm.city]
@@ -67,9 +19,9 @@ function tachDiaChiDayDu(rawAddress) {
   const raw = String(rawAddress || '').trim();
   if (!raw) {
     return {
-      city: 'Thành phố Hồ Chí Minh',
-      district: 'Quận 1',
-      ward: 'Phường Bến Nghé',  
+      city: '',
+      district: '',
+      ward: '',
       street: '',
     };
   }
@@ -79,9 +31,9 @@ function tachDiaChiDayDu(rawAddress) {
     .map((part) => part.trim())
     .filter(Boolean);
 
-  const city = parts[parts.length - 1] || 'Thành phố Hồ Chí Minh';
-  const district = parts[parts.length - 2] || 'Quận 1';
-  const ward = parts[parts.length - 3] || 'Phường Bến Nghé';
+  const city = parts[parts.length - 1] || '';
+  const district = parts[parts.length - 2] || '';
+  const ward = parts[parts.length - 3] || '';
   const street = parts.slice(0, Math.max(parts.length - 3, 0)).join(', ');
 
   return { city, district, ward, street: street || raw };
@@ -91,13 +43,29 @@ export default function CartDrawer({ isOpen, onClose }) {
   const { cart, removeFromCart, updateCartQuantity, changeCartItemSize, activeUserId, refreshCart } = useCart();
   const queryClient = useQueryClient();
   const total = cart.reduce((sum, i) => sum + i.gia_ban * i.so_luong, 0);
-  const [phuongThuc, setPhuongThuc] = useState('VNPAY');
-  const [addressForm, setAddressForm] = useState({
-    city: 'Thành phố Hồ Chí Minh',
-    district: 'Quận 1',
-    ward: 'Phường Bến Nghé',
-    street: '',
+
+  const { data: publicBranchPayload } = useQuery({
+    queryKey: ['public-branches'],
+    queryFn: async () => {
+      const response = await apiClient.get('/users/branches/public');
+      return response.data;
+    },
+    enabled: Boolean(isOpen),
+    staleTime: 60 * 1000,
+    refetchInterval: 120 * 1000,
   });
+
+  const addressOptions = useMemo(
+    () => buildAddressOptionsFromBranches(publicBranchPayload?.items || []),
+    [publicBranchPayload],
+  );
+  const defaultAddressSelection = useMemo(
+    () => getAddressSelectionDefaults(addressOptions),
+    [addressOptions],
+  );
+
+  const [phuongThuc, setPhuongThuc] = useState('VNPAY');
+  const [addressForm, setAddressForm] = useState(() => ({ ...defaultAddressSelection, street: '' }));
   const [khungGio, setKhungGio] = useState('18:00 - 19:00');
   const [ghiChu, setGhiChu] = useState('');
   const [thongBao, setThongBao] = useState('');
@@ -112,14 +80,23 @@ export default function CartDrawer({ isOpen, onClose }) {
   const discountAmount = voucherResult?.so_tien_giam || 0;
   const tongTienSauGiam = Math.max(0, total - discountAmount);
 
-  const maNguoiDung = useMemo(() => activeUserId || 'guest', [activeUserId]);
-  const isLoggedInUser = useMemo(() => Boolean(maNguoiDung && !String(maNguoiDung).startsWith('guest-')), [maNguoiDung]);
-  const districtOptions = useMemo(() => Object.keys(ADDRESS_OPTIONS[addressForm.city] || {}), [addressForm.city]);
+  const maNguoiDung = useMemo(() => activeUserId || 'anonymous', [activeUserId]);
+  const isLoggedInUser = useMemo(() => {
+    const value = String(maNguoiDung || '');
+    return Boolean(value && !value.startsWith('anon-') && value !== 'anonymous');
+  }, [maNguoiDung]);
+  const districtOptions = useMemo(() => Object.keys(addressOptions[addressForm.city] || {}), [addressForm.city, addressOptions]);
   const wardOptions = useMemo(
-    () => (ADDRESS_OPTIONS[addressForm.city]?.[addressForm.district] || []),
-    [addressForm.city, addressForm.district],
+    () => (addressOptions[addressForm.city]?.[addressForm.district] || []),
+    [addressForm.city, addressForm.district, addressOptions],
   );
   const diaChiDayDu = useMemo(() => taoDiaChiDayDu(addressForm), [addressForm]);
+
+  const triggerAiRecommendationRefresh = useCallback(() => {
+    if (!isLoggedInUser) return;
+    queryClient.invalidateQueries({ queryKey: ['ai', 'recommend', maNguoiDung] });
+    apiClient.post('/ai/recommend/train').catch(() => undefined);
+  }, [isLoggedInUser, maNguoiDung, queryClient]);
 
   const { data: addressPayload } = useQuery({
     queryKey: queryKeys.userAddresses(maNguoiDung),
@@ -133,6 +110,12 @@ export default function CartDrawer({ isOpen, onClose }) {
 
   const savedAddresses = addressPayload?.items || [];
   const defaultAddress = savedAddresses.find((item) => item.mac_dinh) || null;
+
+  useEffect(() => {
+    if (!addressForm.city && defaultAddressSelection.city) {
+      setAddressForm((prev) => ({ ...prev, ...defaultAddressSelection }));
+    }
+  }, [addressForm.city, defaultAddressSelection]);
 
   useEffect(() => {
     // Khi tổng tiền thay đổi (thêm/xóa sản phẩm), reset voucher đã áp dụng
@@ -186,22 +169,16 @@ export default function CartDrawer({ isOpen, onClose }) {
       }
 
       const parsed = tachDiaChiDayDu(defaultAddress.dia_chi_day_du);
-      const normalizedCity = ADDRESS_OPTIONS[parsed.city] ? parsed.city : 'Thành phố Hồ Chí Minh';
-      const normalizedDistrict = ADDRESS_OPTIONS[normalizedCity]?.[parsed.district]
-        ? parsed.district
-        : Object.keys(ADDRESS_OPTIONS[normalizedCity] || {})[0] || 'Quận 1';
-      const normalizedWard = (ADDRESS_OPTIONS[normalizedCity]?.[normalizedDistrict] || []).includes(parsed.ward)
-        ? parsed.ward
-        : (ADDRESS_OPTIONS[normalizedCity]?.[normalizedDistrict] || [])[0] || 'Phường Bến Nghé';
+      const normalizedAddress = normalizeAddressSelection(parsed, addressOptions);
 
       return {
-        city: normalizedCity,
-        district: normalizedDistrict,
-        ward: normalizedWard,
-        street: parsed.street,
+        city: normalizedAddress.city,
+        district: normalizedAddress.district,
+        ward: normalizedAddress.ward,
+        street: normalizedAddress.street,
       };
     });
-  }, [defaultAddress, isOpen]);
+  }, [defaultAddress, isOpen, addressOptions]);
 
   useEffect(() => {
     if (!districtOptions.length) {
@@ -212,10 +189,10 @@ export default function CartDrawer({ isOpen, onClose }) {
       setAddressForm((prev) => ({
         ...prev,
         district: districtOptions[0],
-        ward: (ADDRESS_OPTIONS[prev.city]?.[districtOptions[0]] || [])[0] || '',
+        ward: (addressOptions[prev.city]?.[districtOptions[0]] || [])[0] || '',
       }));
     }
-  }, [addressForm.city, addressForm.district, districtOptions]);
+  }, [addressForm.city, addressForm.district, districtOptions, addressOptions]);
 
   useEffect(() => {
     if (!wardOptions.length) {
@@ -260,9 +237,10 @@ export default function CartDrawer({ isOpen, onClose }) {
     if (qrOrderStatus?.trang_thai_thanh_toan === 'DA_THANH_TOAN') {
       setThongBao('Thanh toán QR thành công. Đơn hàng đã được xác nhận.');
       queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
+      triggerAiRecommendationRefresh();
       refreshCart();
     }
-  }, [qrOrderStatus, queryClient, refreshCart]);
+  }, [qrOrderStatus, queryClient, refreshCart, triggerAiRecommendationRefresh]);
 
   const khoiTaoThanhToan = async () => {
     if (!cart.length) {
@@ -308,6 +286,7 @@ export default function CartDrawer({ isOpen, onClose }) {
 
       setThongBao('Tạo đơn hàng COD thành công. Đơn sẽ được thu tiền khi nhận hàng.');
       queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
+      triggerAiRecommendationRefresh();
       refreshCart();
       setGhiChu('');
       xoaVoucher();
@@ -457,19 +436,13 @@ export default function CartDrawer({ isOpen, onClose }) {
                       return;
                     }
                     const parsed = tachDiaChiDayDu(selected.dia_chi_day_du);
-                    const normalizedCity = ADDRESS_OPTIONS[parsed.city] ? parsed.city : 'Thành phố Hồ Chí Minh';
-                    const normalizedDistrict = ADDRESS_OPTIONS[normalizedCity]?.[parsed.district]
-                      ? parsed.district
-                      : Object.keys(ADDRESS_OPTIONS[normalizedCity] || {})[0] || 'Quận 1';
-                    const normalizedWard = (ADDRESS_OPTIONS[normalizedCity]?.[normalizedDistrict] || []).includes(parsed.ward)
-                      ? parsed.ward
-                      : (ADDRESS_OPTIONS[normalizedCity]?.[normalizedDistrict] || [])[0] || 'Phường Bến Nghé';
+                    const normalizedAddress = normalizeAddressSelection(parsed, addressOptions);
 
                     setAddressForm({
-                      city: normalizedCity,
-                      district: normalizedDistrict,
-                      ward: normalizedWard,
-                      street: parsed.street,
+                      city: normalizedAddress.city,
+                      district: normalizedAddress.district,
+                      ward: normalizedAddress.ward,
+                      street: normalizedAddress.street,
                     });
                     if (selected.ghi_chu && !ghiChu.trim()) {
                       setGhiChu(selected.ghi_chu);
@@ -492,14 +465,14 @@ export default function CartDrawer({ isOpen, onClose }) {
               value={addressForm.city}
               onChange={(e) => {
                 const nextCity = e.target.value;
-                const nextDistrict = Object.keys(ADDRESS_OPTIONS[nextCity] || {})[0] || '';
-                const nextWard = (ADDRESS_OPTIONS[nextCity]?.[nextDistrict] || [])[0] || '';
+                const nextDistrict = Object.keys(addressOptions[nextCity] || {})[0] || '';
+                const nextWard = (addressOptions[nextCity]?.[nextDistrict] || [])[0] || '';
                 setAddressForm((prev) => ({ ...prev, city: nextCity, district: nextDistrict, ward: nextWard }));
                 if (thongBao) setThongBao('');
               }}
               className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
             >
-              {Object.keys(ADDRESS_OPTIONS).map((city) => (
+              {Object.keys(addressOptions).map((city) => (
                 <option key={city} value={city}>{city}</option>
               ))}
             </select>
@@ -509,7 +482,7 @@ export default function CartDrawer({ isOpen, onClose }) {
               value={addressForm.district}
               onChange={(e) => {
                 const nextDistrict = e.target.value;
-                const nextWard = (ADDRESS_OPTIONS[addressForm.city]?.[nextDistrict] || [])[0] || '';
+                const nextWard = (addressOptions[addressForm.city]?.[nextDistrict] || [])[0] || '';
                 setAddressForm((prev) => ({ ...prev, district: nextDistrict, ward: nextWard }));
                 if (thongBao) setThongBao('');
               }}
@@ -569,7 +542,7 @@ export default function CartDrawer({ isOpen, onClose }) {
               onChange={(e) => setPhuongThuc(e.target.value)}
               className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
             >
-              <option value="VNPAY">VNPAY (demo thẻ/ngân hàng)</option>
+              <option value="VNPAY">VNPAY (thẻ/ngân hàng)</option>
               <option value="NGAN_HANG_QR">Ngân hàng QR</option>
               <option value="THANH_TOAN_KHI_NHAN_HANG">Thanh toán khi nhận hàng</option>
             </select>
