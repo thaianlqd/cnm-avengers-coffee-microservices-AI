@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -11,134 +11,12 @@ import * as bcrypt from 'bcrypt';
 import { createHash, randomInt, randomUUID } from 'crypto';
 import nodemailer, { type Transporter } from 'nodemailer';
 
-const DEFAULT_BRANCHES: Array<{
-  code: string;
-  name: string;
-  city: string;
-  district: string;
-  address: string | null;
-  phone: string | null;
-  imageUrl: string | null;
-  openTime: string | null;
-  closeTime: string | null;
-  mapUrl: string | null;
-}> = [
-  {
-    code: 'MAC_DINH_CHI',
-    name: 'HCM Mạc Đĩnh Chi',
-    city: 'Hồ Chí Minh',
-    district: 'Phường Sài Gòn',
-    address: '28 Ter B Mạc Đĩnh Chi, Phường Sài Gòn, Thành phố Hồ Chí Minh',
-    phone: null,
-    imageUrl: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1200&q=80',
-    openTime: '07:00',
-    closeTime: '22:00',
-    mapUrl: 'https://www.google.com/maps/search/?api=1&query=28+Ter+B+Mac+Dinh+Chi+Phuong+Sai+Gon+Thanh+pho+Ho+Chi+Minh',
-  },
-  {
-    code: 'THE_GRACE_TOWER',
-    name: 'HCM The Grace Tower',
-    city: 'Hồ Chí Minh',
-    district: 'Tân Phú',
-    address: '71 Hoàng Văn Thái, Tân Phú, Quận 7, Thành phố Hồ Chí Minh',
-    phone: null,
-    imageUrl: 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?auto=format&fit=crop&w=1200&q=80',
-    openTime: '07:00',
-    closeTime: '22:00',
-    mapUrl: 'https://www.google.com/maps/search/?api=1&query=71+Hoang+Van+Thai+Tan+Phu+Quan+7+Thanh+pho+Ho+Chi+Minh',
-  },
-  {
-    code: 'SIGNATURE_CRESCENT_MALL',
-    name: 'HCM Signature by The Avengers House',
-    city: 'Hồ Chí Minh',
-    district: 'Tân Phú',
-    address: 'TTTM Crescent Mall, 101 Tôn Dật Tiên, Phường Tân Phú, Quận 7, Thành phố Hồ Chí Minh',
-    phone: null,
-    imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
-    openTime: '07:00',
-    closeTime: '22:00',
-    mapUrl: 'https://www.google.com/maps/search/?api=1&query=Crescent+Mall+101+Ton+Dat+Tien+Quan+7+Thanh+pho+Ho+Chi+Minh',
-  },
-  {
-    code: 'HOANG_VIET',
-    name: 'HCM Hoàng Việt',
-    city: 'Hồ Chí Minh',
-    district: 'Tân Bình',
-    address: '17 Út Tịch, Quận Tân Bình, Hồ Chí Minh',
-    phone: null,
-    imageUrl: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1200&q=80',
-    openTime: '07:00',
-    closeTime: '22:00',
-    mapUrl: 'https://www.google.com/maps/search/?api=1&query=17+Ut+Tich+Quan+Tan+Binh+Ho+Chi+Minh',
-  },
-  {
-    code: 'LU_GIA',
-    name: 'HCM Lữ Gia',
-    city: 'Hồ Chí Minh',
-    district: 'Quận 11',
-    address: '64A Lữ Gia, Phường 15, Quận 11, Hồ Chí Minh',
-    phone: null,
-    imageUrl: 'https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1200&q=80',
-    openTime: '07:00',
-    closeTime: '22:00',
-    mapUrl: 'https://www.google.com/maps/search/?api=1&query=64A+Lu+Gia+Phuong+15+Quan+11+Ho+Chi+Minh',
-  },
-  {
-    code: 'AP_BAC',
-    name: 'HCM Ấp Bắc',
-    city: 'Hồ Chí Minh',
-    district: 'Tân Bình',
-    address: '4 - 6 Ấp Bắc, Quận Tân Bình, Hồ Chí Minh',
-    phone: null,
-    imageUrl: 'https://images.unsplash.com/photo-1521017432531-fbd92d768814?auto=format&fit=crop&w=1200&q=80',
-    openTime: '07:00',
-    closeTime: '21:30',
-    mapUrl: 'https://www.google.com/maps/search/?api=1&query=4-6+Ap+Bac+Quan+Tan+Binh+Ho+Chi+Minh',
-  },
-  {
-    code: 'BINH_PHU',
-    name: 'HCM Bình Phú',
-    city: 'Hồ Chí Minh',
-    district: 'Quận 6',
-    address: '111-113-115 Bình Phú, Quận 6, Hồ Chí Minh',
-    phone: null,
-    imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80',
-    openTime: '07:00',
-    closeTime: '22:00',
-    mapUrl: 'https://www.google.com/maps/search/?api=1&query=111-113-115+Binh+Phu+Quan+6+Ho+Chi+Minh',
-  },
-  {
-    code: 'PHAN_VAN_TRI_3',
-    name: 'HCM Phan Văn Trị 3',
-    city: 'Hồ Chí Minh',
-    district: 'Bình Thạnh',
-    address: '190 Phan Văn Trị, Phường 11, Bình Thạnh, Thành phố Hồ Chí Minh',
-    phone: null,
-    imageUrl: 'https://images.unsplash.com/photo-1445116572660-236099ec97a0?auto=format&fit=crop&w=1200&q=80',
-    openTime: '07:00',
-    closeTime: '22:00',
-    mapUrl: 'https://www.google.com/maps/search/?api=1&query=190+Phan+Van+Tri+Phuong+11+Binh+Thanh+Thanh+pho+Ho+Chi+Minh',
-  },
-  {
-    code: 'HOMYLAND_Q2',
-    name: 'HCM Homyland Q2',
-    city: 'Hồ Chí Minh',
-    district: 'Quận 2',
-    address: 'SH2, Tầng 1 Dự Án Chung cư cao cấp Homyland Riverside, Quận 2, Hồ Chí Minh',
-    phone: null,
-    imageUrl: 'https://images.unsplash.com/photo-1517705008128-361805f42e86?auto=format&fit=crop&w=1200&q=80',
-    openTime: '07:00',
-    closeTime: '22:00',
-    mapUrl: 'https://www.google.com/maps/search/?api=1&query=Homyland+Riverside+Quan+2+Ho+Chi+Minh',
-  },
-];
-
 const RESET_CODE_EXPIRE_MINUTES = 10;
 const RESET_CODE_COOLDOWN_SECONDS = 60;
 const RESET_CODE_MAX_ATTEMPTS = 5;
 
 @Injectable()
-export class UserService implements OnModuleInit {
+export class UserService {
   private mailTransporter: Transporter | null = null;
 
   constructor(
@@ -237,12 +115,6 @@ export class UserService implements OnModuleInit {
     });
   }
 
-  async onModuleInit() {
-    await this.seedDefaultBranches();
-    await this.seedSystemAdminAccount();
-    await this.seedStoreWorkforceAccounts();
-  }
-
   private normalizeBranchCode(branchCode?: string) {
     const code = String(branchCode || '').trim().toUpperCase();
     if (!code) return null;
@@ -291,74 +163,6 @@ export class UserService implements OnModuleInit {
       throw new BadRequestException('Dinh dang gio khong hop le, can HH:MM');
     }
     return normalized;
-  }
-
-  private async seedDefaultBranches() {
-    for (const seed of DEFAULT_BRANCHES) {
-      const existed = await this.branchRepo.findOne({ where: { ma_chi_nhanh: seed.code } });
-      if (existed) {
-        let shouldSave = false;
-        if (existed.ten_chi_nhanh !== seed.name) {
-          existed.ten_chi_nhanh = seed.name;
-          shouldSave = true;
-        }
-        if (existed.trang_thai !== 'ACTIVE') {
-          existed.trang_thai = 'ACTIVE';
-          shouldSave = true;
-        }
-        if (!existed.dia_chi && seed.address) {
-          existed.dia_chi = seed.address;
-          shouldSave = true;
-        }
-        if (!existed.so_dien_thoai && seed.phone) {
-          existed.so_dien_thoai = seed.phone;
-          shouldSave = true;
-        }
-        if (!existed.thanh_pho && seed.city) {
-          existed.thanh_pho = seed.city;
-          shouldSave = true;
-        }
-        if (!existed.quan_huyen && seed.district) {
-          existed.quan_huyen = seed.district;
-          shouldSave = true;
-        }
-        if (!existed.hinh_anh_url && seed.imageUrl) {
-          existed.hinh_anh_url = seed.imageUrl;
-          shouldSave = true;
-        }
-        if (!existed.gio_mo_cua && seed.openTime) {
-          existed.gio_mo_cua = seed.openTime;
-          shouldSave = true;
-        }
-        if (!existed.gio_dong_cua && seed.closeTime) {
-          existed.gio_dong_cua = seed.closeTime;
-          shouldSave = true;
-        }
-        if (!existed.map_url && seed.mapUrl) {
-          existed.map_url = seed.mapUrl;
-          shouldSave = true;
-        }
-        if (shouldSave) {
-          await this.branchRepo.save(existed);
-        }
-        continue;
-      }
-
-      const created = this.branchRepo.create({
-        ma_chi_nhanh: seed.code,
-        ten_chi_nhanh: seed.name,
-        dia_chi: seed.address,
-        thanh_pho: seed.city,
-        quan_huyen: seed.district,
-        so_dien_thoai: seed.phone,
-        hinh_anh_url: seed.imageUrl,
-        gio_mo_cua: seed.openTime,
-        gio_dong_cua: seed.closeTime,
-        map_url: seed.mapUrl,
-        trang_thai: 'ACTIVE',
-      });
-      await this.branchRepo.save(created);
-    }
   }
 
   async register(data: any) {
@@ -806,7 +610,7 @@ export class UserService implements OnModuleInit {
   }
 
   async layDanhSachChiNhanhAdmin() {
-    const rows = await this.branchRepo.find({ order: { ngay_tao: 'ASC', ma_chi_nhanh: 'ASC' } });
+    const rows = await this.branchRepo.find({ order: { ngay_tao: 'DESC', ma_chi_nhanh: 'DESC' } });
 
     const usageRows = await this.userRepo
       .createQueryBuilder('user')
@@ -1022,168 +826,6 @@ export class UserService implements OnModuleInit {
 
     await this.branchRepo.remove(branch);
     return { message: 'Xoa chi nhanh thanh cong' };
-  }
-
-  private async seedStoreWorkforceAccounts() {
-    const sharedPassword = process.env.STORE_DEFAULT_PASSWORD || '123456';
-    for (const seed of DEFAULT_BRANCHES) {
-      const branch = await this.resolveBranchInfo(seed.code);
-      if (!branch) {
-        continue;
-      }
-
-      const suffix = seed.code.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const cleanBranchName = String(seed.name || '').replace(/^HCM\s+/i, '').trim();
-
-      await this.upsertWorkforceUser({
-        username: `thaian_staff_${suffix}`,
-        password: sharedPassword,
-        fullName: `Thái An - Nhân viên cơ sở ${cleanBranchName}`,
-        role: 'STAFF',
-        branchCode: branch.code,
-        branchName: branch.name,
-      });
-
-      await this.upsertWorkforceUser({
-        username: `thaian_manager_${suffix}`,
-        password: sharedPassword,
-        fullName: `Thái An - Quản lý cơ sở ${cleanBranchName}`,
-        role: 'MANAGER',
-        branchCode: branch.code,
-        branchName: branch.name,
-      });
-    }
-  }
-
-  private async seedSystemAdminAccount() {
-    await this.upsertGenericUser({
-      username: 'thaian_admin',
-      password: process.env.SYSTEM_ADMIN_PASSWORD || '123456',
-      fullName: 'Thái An - Quản trị viên hệ thống',
-      role: 'ADMIN',
-      branchCode: null,
-      branchName: null,
-    });
-  }
-
-  private async upsertWorkforceUser(input: {
-    username: string;
-    password: string;
-    fullName: string;
-    role: 'STAFF' | 'MANAGER';
-    branchCode: string;
-    branchName: string;
-  }) {
-    const existed = await this.userRepo.findOne({
-      where: [{ ten_dang_nhap: input.username }, { email: input.username }],
-    });
-
-    if (existed) {
-      let shouldSave = false;
-      if (existed.vai_tro !== input.role) {
-        existed.vai_tro = input.role;
-        shouldSave = true;
-      }
-      if (existed.trang_thai !== 'ACTIVE') {
-        existed.trang_thai = 'ACTIVE';
-        shouldSave = true;
-      }
-      if (!existed.email) {
-        existed.email = input.username;
-        shouldSave = true;
-      }
-      if (existed.co_so_ma !== input.branchCode) {
-        existed.co_so_ma = input.branchCode;
-        shouldSave = true;
-      }
-      if (existed.co_so_ten !== input.branchName) {
-        existed.co_so_ten = input.branchName;
-        shouldSave = true;
-      }
-      if (shouldSave) {
-        await this.userRepo.save(existed);
-      }
-      return;
-    }
-
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(input.password, salt);
-
-    const seededUser = this.userRepo.create({
-      ma_nguoi_dung: randomUUID(),
-      ten_dang_nhap: input.username,
-      email: input.username,
-      mat_khau_hash: hashedPassword,
-      ho_ten: input.fullName,
-      trang_thai: 'ACTIVE',
-      vai_tro: input.role,
-      co_so_ma: input.branchCode,
-      co_so_ten: input.branchName,
-    });
-
-    await this.userRepo.save(seededUser);
-  }
-
-  private async upsertGenericUser(input: {
-    username: string;
-    password: string;
-    fullName: string;
-    role: 'ADMIN' | 'STAFF' | 'MANAGER';
-    branchCode: string | null;
-    branchName: string | null;
-  }) {
-    const existed = await this.userRepo.findOne({
-      where: [{ ten_dang_nhap: input.username }, { email: input.username }],
-    });
-
-    if (existed) {
-      let shouldSave = false;
-      if (existed.vai_tro !== input.role) {
-        existed.vai_tro = input.role;
-        shouldSave = true;
-      }
-      if (existed.ho_ten !== input.fullName) {
-        existed.ho_ten = input.fullName;
-        shouldSave = true;
-      }
-      if (existed.trang_thai !== 'ACTIVE') {
-        existed.trang_thai = 'ACTIVE';
-        shouldSave = true;
-      }
-      if (!existed.email) {
-        existed.email = input.username;
-        shouldSave = true;
-      }
-      if (existed.co_so_ma !== input.branchCode) {
-        existed.co_so_ma = input.branchCode;
-        shouldSave = true;
-      }
-      if (existed.co_so_ten !== input.branchName) {
-        existed.co_so_ten = input.branchName;
-        shouldSave = true;
-      }
-      if (shouldSave) {
-        await this.userRepo.save(existed);
-      }
-      return;
-    }
-
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(input.password, salt);
-
-    const seededUser = this.userRepo.create({
-      ma_nguoi_dung: randomUUID(),
-      ten_dang_nhap: input.username,
-      email: input.username,
-      mat_khau_hash: hashedPassword,
-      ho_ten: input.fullName,
-      trang_thai: 'ACTIVE',
-      vai_tro: input.role,
-      co_so_ma: input.branchCode,
-      co_so_ten: input.branchName,
-    });
-
-    await this.userRepo.save(seededUser);
   }
 
   async layThongTinCaNhan(maNguoiDung: string) {
@@ -1638,11 +1280,9 @@ export class UserService implements OnModuleInit {
   async xoaKhuyenMaiAdmin(maKhuyenMai: string) {
     const p = await this.promotionRepo.findOne({ where: { ma_khuyen_mai: maKhuyenMai.toUpperCase() } });
     if (!p) throw new NotFoundException('Khong tim thay khuyen mai');
-    if (p.so_luong_da_dung > 0) {
-      throw new BadRequestException('Khong the xoa khuyen mai da duoc su dung. Hay chuyen sang trang thai INACTIVE.');
-    }
+    await this.promotionUsageRepo.delete({ ma_khuyen_mai: p.ma_khuyen_mai });
     await this.promotionRepo.remove(p);
-    return { message: 'Xoa khuyen mai thanh cong' };
+    return { message: 'Xoa khuyen mai thanh cong', soft_deleted: false };
   }
 
   /** Customer: lấy danh sách voucher hiển thị được */
@@ -1688,7 +1328,7 @@ export class UserService implements OnModuleInit {
     };
   }
 
-  /** Customer: kiểm tra & áp dụng mã (mock – gọi từ order service sau) */
+  /** Customer: kiểm tra và áp dụng mã, gọi từ order service */
   async kiemTraMaKhuyenMai(maKhuyenMai: string, userId: string, giaTriDon: number) {
     const code = String(maKhuyenMai || '').trim().toUpperCase();
     if (!code) throw new BadRequestException('Vui long nhap ma khuyen mai');

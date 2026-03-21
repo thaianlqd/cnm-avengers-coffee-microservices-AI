@@ -73,4 +73,7 @@ Data được lưu trong Docker volume `avengers_pgdata` — **`docker compose d
 
 # Restore
 .\scripts\db-restore.ps1 -InputFile .\scripts\backups\avengers_coffee_YYYYMMDD_HHMMSS.sql
+
+# Seed them du lieu hanh vi de test AI/analytics (tu dong bo qua neu du lieu da du)
+.\scripts\seed-behavior-data.ps1 -Days 30 -MinOrders 180 -TargetOrders 260
 ```

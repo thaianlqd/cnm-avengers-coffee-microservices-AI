@@ -43,6 +43,10 @@ _AI_END_TOKEN = "[END_AVENGERS_REPLY]"
 cf_model = CollaborativeFilterModel()
 fc_model = DemandForecastModel()
 
+CF_AUTO_RETRAIN_MINUTES = max(10, int(os.getenv("CF_AUTO_RETRAIN_MINUTES", "60")))
+CF_RETRAIN_QUEUE_COOLDOWN_SECONDS = max(30, int(os.getenv("CF_RETRAIN_QUEUE_COOLDOWN_SECONDS", "120")))
+_last_cf_retrain_queued_at: Optional[datetime] = None
+
 
 def _sync_ai_model_registry(engine) -> None:
     ensure_ai_storage(engine, AI_SCHEMA)
@@ -164,6 +168,37 @@ def _train_cf_sync() -> None:
         logger.warning("Loi cap nhat model registry sau khi train CF: %s", exc)
 
 
+def _should_queue_cf_retrain() -> bool:
+    global _last_cf_retrain_queued_at
+    now = datetime.utcnow()
+
+    if not cf_model.is_trained:
+        return True
+
+    if cf_model.trained_at is None:
+        return True
+
+    minutes_since_train = (now - cf_model.trained_at).total_seconds() / 60
+    if minutes_since_train < CF_AUTO_RETRAIN_MINUTES:
+        return False
+
+    if _last_cf_retrain_queued_at is None:
+        return True
+
+    cooldown = (now - _last_cf_retrain_queued_at).total_seconds()
+    return cooldown >= CF_RETRAIN_QUEUE_COOLDOWN_SECONDS
+
+
+def _queue_cf_retrain_if_needed(background_tasks: Optional[BackgroundTasks]) -> None:
+    global _last_cf_retrain_queued_at
+    if background_tasks is None:
+        return
+    if not _should_queue_cf_retrain():
+        return
+    _last_cf_retrain_queued_at = datetime.utcnow()
+    background_tasks.add_task(_train_cf_sync)
+
+
 def _train_forecast_sync() -> None:
     engine = get_db_engine()
     fc_model.train(engine)
@@ -202,6 +237,13 @@ def _fetch_rows(sql: str, params: Optional[Dict[str, Any]] = None) -> List[Dict[
     with engine.connect() as conn:
         rows = conn.execute(text(sql), params or {}).mappings().all()
         return [dict(row) for row in rows]
+
+
+def _normalize_branch_filter(branch_code: Optional[str]) -> Optional[str]:
+    normalized = str(branch_code or "").strip().upper()
+    if not normalized or normalized == "ALL":
+        return None
+    return normalized
 
 
 def _to_price(value: Any) -> str:
@@ -536,8 +578,12 @@ def forecast_combined(
 
     history = fc_model.get_historical(branch_code=branch_code, days=history_days, metric=metric)
     forecast = fc_model.predict(branch_code=branch_code, periods=forecast_days, metric=metric)
+    fc_stats = fc_model.get_stats()
+    is_insufficient = bool(fc_stats.get("insufficient_data"))
+    response_status = "insufficient_data" if is_insufficient else "ok"
 
     response = {
+        "status": response_status,
         "branch_code": branch_code,
         "metric": metric,
         "history_days": history_days,
@@ -545,13 +591,14 @@ def forecast_combined(
         "history": history,
         "forecast": forecast,
         "summary": _to_summary(forecast),
-        "model_engine": fc_model.get_stats().get("engine"),
-        "trained_at": fc_model.get_stats().get("trained_at"),
+        "model_engine": fc_stats.get("engine"),
+        "trained_at": fc_stats.get("trained_at"),
+        "insufficient_data_reason": fc_stats.get("insufficient_data_reason") if is_insufficient else None,
     }
     _safe_log_inference(
         endpoint="/ai/forecast/combined",
         user_id=None,
-        status="success",
+        status=response_status,
         started_at=started_at,
         request_payload={
             "branch_code": branch_code,
@@ -584,6 +631,266 @@ def retrain_forecast(background_tasks: BackgroundTasks):
         "status": "accepted",
         "message": "Da nhan yeu cau train lai model du bao.",
     }
+
+
+@app.get("/ai/behavior/insights")
+def get_behavior_insights(branch_code: str = "ALL", limit: int = 6, days: int = Query(30, ge=1, le=180)):
+    started_at = perf_counter()
+    safe_limit = max(3, min(int(limit or 6), 20))
+    branch_filter = _normalize_branch_filter(branch_code)
+
+    where_orders = "WHERE dh.ngay_tao >= :since_ts"
+    if branch_filter:
+        where_orders += " AND dh.co_so_ma = :branch_code"
+
+    where_voucher = (
+        "WHERE dh.ngay_tao >= :since_ts AND dh.co_so_ma = :branch_code AND COALESCE(dh.ma_voucher, '') <> ''"
+        if branch_filter
+        else "WHERE dh.ngay_tao >= :since_ts AND COALESCE(dh.ma_voucher, '') <> ''"
+    )
+    params = {
+        "limit": safe_limit,
+        "since_ts": datetime.utcnow() - timedelta(days=max(1, int(days or 30))),
+    }
+    if branch_filter:
+        params["branch_code"] = branch_filter
+
+    try:
+        top_products = _fetch_rows(
+            f"""
+            SELECT
+                ct.ma_san_pham::text AS product_id,
+                COALESCE(MAX(sp.ten_san_pham), MAX(ct.ten_san_pham), ct.ma_san_pham::text) AS product_name,
+                SUM(ct.so_luong)::int AS total_qty,
+                SUM(ct.so_luong * ct.gia_ban)::float AS total_revenue,
+                COUNT(DISTINCT dh.ma_don_hang)::int AS order_count
+            FROM {ORDER_SCHEMA}.don_hang dh
+            JOIN {ORDER_SCHEMA}.chi_tiet_don_hang ct ON ct.ma_don_hang = dh.ma_don_hang
+            LEFT JOIN {MENU_SCHEMA}.san_pham sp ON sp.ma_san_pham = ct.ma_san_pham
+            {where_orders}
+            GROUP BY ct.ma_san_pham
+            ORDER BY total_qty DESC, total_revenue DESC
+            LIMIT :limit
+            """,
+            params,
+        )
+
+        payment_mix = _fetch_rows(
+            f"""
+            SELECT
+                COALESCE(dh.phuong_thuc_thanh_toan, 'KHAC') AS payment_method,
+                COUNT(*)::int AS total_orders
+            FROM {ORDER_SCHEMA}.don_hang dh
+            {where_orders}
+            GROUP BY COALESCE(dh.phuong_thuc_thanh_toan, 'KHAC')
+            ORDER BY total_orders DESC
+            """,
+            params,
+        )
+
+        hour_groups = _fetch_rows(
+            f"""
+            SELECT bucket, COUNT(*)::int AS total_orders
+            FROM (
+                SELECT
+                    CASE
+                        WHEN EXTRACT(HOUR FROM dh.ngay_tao) >= 6 AND EXTRACT(HOUR FROM dh.ngay_tao) < 11 THEN 'SANG'
+                        WHEN EXTRACT(HOUR FROM dh.ngay_tao) >= 11 AND EXTRACT(HOUR FROM dh.ngay_tao) < 14 THEN 'TRUA'
+                        WHEN EXTRACT(HOUR FROM dh.ngay_tao) >= 14 AND EXTRACT(HOUR FROM dh.ngay_tao) < 18 THEN 'CHIEU'
+                        WHEN EXTRACT(HOUR FROM dh.ngay_tao) >= 18 AND EXTRACT(HOUR FROM dh.ngay_tao) < 23 THEN 'TOI'
+                        ELSE 'KHAC'
+                    END AS bucket
+                FROM {ORDER_SCHEMA}.don_hang dh
+                {where_orders}
+            ) t
+            GROUP BY bucket
+            """,
+            params,
+        )
+
+        top_rated = _fetch_rows(
+            f"""
+            SELECT
+                dg.ma_san_pham::text AS product_id,
+                COALESCE(MAX(sp.ten_san_pham), dg.ma_san_pham::text) AS product_name,
+                ROUND(AVG(dg.so_sao)::numeric, 2)::float AS avg_rating,
+                COUNT(*)::int AS total_reviews
+            FROM {ORDER_SCHEMA}.danh_gia_san_pham dg
+            LEFT JOIN {MENU_SCHEMA}.san_pham sp ON sp.ma_san_pham::text = dg.ma_san_pham::text
+            WHERE dg.ngay_tao >= :since_ts
+            GROUP BY dg.ma_san_pham
+            ORDER BY total_reviews DESC, avg_rating DESC
+            LIMIT :limit
+            """,
+            params,
+        )
+
+        top_favorites = _fetch_rows(
+            f"""
+            SELECT
+                yt.ma_san_pham::text AS product_id,
+                COALESCE(MAX(sp.ten_san_pham), MAX(yt.ten_san_pham), yt.ma_san_pham::text) AS product_name,
+                COUNT(*)::int AS favorite_count
+            FROM {ORDER_SCHEMA}.yeu_thich_san_pham yt
+            LEFT JOIN {MENU_SCHEMA}.san_pham sp ON sp.ma_san_pham::text = yt.ma_san_pham::text
+            WHERE yt.ngay_tao >= :since_ts
+            GROUP BY yt.ma_san_pham
+            ORDER BY favorite_count DESC
+            LIMIT :limit
+            """,
+            params,
+        )
+
+        top_voucher_products = _fetch_rows(
+            f"""
+            SELECT
+                ct.ma_san_pham::text AS product_id,
+                COALESCE(MAX(sp.ten_san_pham), MAX(ct.ten_san_pham), ct.ma_san_pham::text) AS product_name,
+                SUM(ct.so_luong)::int AS voucher_qty,
+                COUNT(DISTINCT dh.ma_don_hang)::int AS voucher_orders
+            FROM {ORDER_SCHEMA}.don_hang dh
+            JOIN {ORDER_SCHEMA}.chi_tiet_don_hang ct ON ct.ma_don_hang = dh.ma_don_hang
+            LEFT JOIN {MENU_SCHEMA}.san_pham sp ON sp.ma_san_pham = ct.ma_san_pham
+            {where_voucher}
+            GROUP BY ct.ma_san_pham
+            ORDER BY voucher_qty DESC, voucher_orders DESC
+            LIMIT :limit
+            """,
+            params,
+        )
+
+        customer_sync_top_products = _fetch_rows(
+            f"""
+            WITH purchase AS (
+                SELECT
+                    ct.ma_san_pham::text AS product_id,
+                    COALESCE(MAX(sp.ten_san_pham), MAX(ct.ten_san_pham), ct.ma_san_pham::text) AS product_name,
+                    SUM(ct.so_luong)::float AS total_qty,
+                    COUNT(DISTINCT dh.ma_don_hang)::float AS order_count
+                FROM {ORDER_SCHEMA}.don_hang dh
+                JOIN {ORDER_SCHEMA}.chi_tiet_don_hang ct ON ct.ma_don_hang = dh.ma_don_hang
+                LEFT JOIN {MENU_SCHEMA}.san_pham sp ON sp.ma_san_pham = ct.ma_san_pham
+                {where_orders}
+                GROUP BY ct.ma_san_pham
+            ),
+            rating AS (
+                SELECT
+                    dg.ma_san_pham::text AS product_id,
+                    ROUND(AVG(dg.so_sao)::numeric, 2)::float AS avg_rating,
+                    COUNT(*)::float AS total_reviews
+                FROM {ORDER_SCHEMA}.danh_gia_san_pham dg
+                WHERE dg.ngay_tao >= :since_ts
+                GROUP BY dg.ma_san_pham
+            ),
+            favorite AS (
+                SELECT
+                    yt.ma_san_pham::text AS product_id,
+                    COUNT(*)::float AS favorite_count
+                FROM {ORDER_SCHEMA}.yeu_thich_san_pham yt
+                WHERE yt.ngay_tao >= :since_ts
+                GROUP BY yt.ma_san_pham
+            ),
+            voucher AS (
+                SELECT
+                    ct.ma_san_pham::text AS product_id,
+                    SUM(ct.so_luong)::float AS voucher_qty
+                FROM {ORDER_SCHEMA}.don_hang dh
+                JOIN {ORDER_SCHEMA}.chi_tiet_don_hang ct ON ct.ma_don_hang = dh.ma_don_hang
+                {where_voucher}
+                GROUP BY ct.ma_san_pham
+            ),
+            all_products AS (
+                SELECT product_id FROM purchase
+                UNION
+                SELECT product_id FROM rating
+                UNION
+                SELECT product_id FROM favorite
+                UNION
+                SELECT product_id FROM voucher
+            )
+            SELECT
+                ap.product_id,
+                COALESCE(MAX(sp.ten_san_pham), MAX(pu.product_name), ap.product_id) AS product_name,
+                COALESCE(MAX(pu.total_qty), 0)::float AS total_qty,
+                COALESCE(MAX(pu.order_count), 0)::float AS order_count,
+                COALESCE(MAX(rt.avg_rating), 0)::float AS avg_rating,
+                COALESCE(MAX(rt.total_reviews), 0)::float AS total_reviews,
+                COALESCE(MAX(fv.favorite_count), 0)::float AS favorite_count,
+                COALESCE(MAX(vc.voucher_qty), 0)::float AS voucher_qty,
+                ROUND(
+                    (
+                        COALESCE(MAX(pu.total_qty), 0) * 1.0
+                        + COALESCE(MAX(pu.order_count), 0) * 0.7
+                        + COALESCE(MAX(rt.avg_rating), 0) * 2.0
+                        + COALESCE(MAX(rt.total_reviews), 0) * 0.5
+                        + COALESCE(MAX(fv.favorite_count), 0) * 2.5
+                        + COALESCE(MAX(vc.voucher_qty), 0) * 0.8
+                    )::numeric,
+                    2
+                )::float AS sync_score
+            FROM all_products ap
+            LEFT JOIN purchase pu ON pu.product_id = ap.product_id
+            LEFT JOIN rating rt ON rt.product_id = ap.product_id
+            LEFT JOIN favorite fv ON fv.product_id = ap.product_id
+            LEFT JOIN voucher vc ON vc.product_id = ap.product_id
+            LEFT JOIN {MENU_SCHEMA}.san_pham sp ON sp.ma_san_pham::text = ap.product_id
+            GROUP BY ap.product_id
+            ORDER BY sync_score DESC, total_qty DESC
+            LIMIT :limit
+            """,
+            params,
+        )
+
+        total_orders_row = _fetch_rows(
+            f"""
+            SELECT COUNT(*)::int AS total_orders
+            FROM {ORDER_SCHEMA}.don_hang dh
+            {where_orders}
+            """,
+            params,
+        )
+        total_orders = int((total_orders_row[0] or {}).get("total_orders", 0)) if total_orders_row else 0
+
+        response = {
+            "branch_code": branch_filter or "ALL",
+            "days": max(1, int(days or 30)),
+            "generated_at": datetime.utcnow().isoformat(),
+            "total_orders": total_orders,
+            "top_products": top_products,
+            "customer_sync_top_products": customer_sync_top_products,
+            "payment_mix": payment_mix,
+            "hour_groups": hour_groups,
+            "top_rated_products": top_rated,
+            "top_favorite_products": top_favorites,
+            "top_voucher_products": top_voucher_products,
+        }
+
+        _safe_log_inference(
+            endpoint="/ai/behavior/insights",
+            user_id=None,
+            status="success",
+            started_at=started_at,
+            request_payload={"branch_code": branch_filter or "ALL", "limit": safe_limit, "days": max(1, int(days or 30))},
+            response_payload={
+                "total_orders": total_orders,
+                "top_products": len(top_products),
+                "sync_top_products": len(customer_sync_top_products),
+                "top_rated": len(top_rated),
+                "top_favorites": len(top_favorites),
+                "top_voucher": len(top_voucher_products),
+            },
+        )
+        return response
+    except Exception as exc:
+        _safe_log_inference(
+            endpoint="/ai/behavior/insights",
+            user_id=None,
+            status="error",
+            started_at=started_at,
+            request_payload={"branch_code": branch_filter or "ALL", "limit": safe_limit, "days": max(1, int(days or 30))},
+            error_message=str(exc),
+        )
+        raise HTTPException(status_code=500, detail=f"Khong the tai du lieu hanh vi mua sam: {exc}") from exc
 
 @app.post("/ai/chat")
 async def ai_chat(request: Request):
@@ -711,10 +1018,11 @@ async def ai_chat(request: Request):
         return {"reply": f"Loi AI: {str(e)}", "status": "error"}
 
 @app.get("/ai/recommend/{user_id}", response_model=RecommendationResponse)
-def get_recommendations(user_id: str, limit: int = 3):
+def get_recommendations(user_id: str, limit: int = 3, background_tasks: BackgroundTasks = None):
     started_at = perf_counter()
     try:
         safe_limit = max(1, min(int(limit or 3), 6))
+        _queue_cf_retrain_if_needed(background_tasks)
         items = cf_model.recommend(user_id, limit=safe_limit)
         response = {
             "user_id": user_id,

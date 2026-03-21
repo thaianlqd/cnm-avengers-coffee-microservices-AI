@@ -16,6 +16,7 @@ import { CartProvider, useCart } from './context/CartContext'; // File mới bư
 import { apiClient } from './lib/apiClient';
 import { queryKeys } from './lib/queryKeys';
 import { normalizeNewsArticle } from './lib/news';
+import { buildAddressOptionsFromBranches, getAddressSelectionDefaults, normalizeAddressSelection } from './lib/addressOptions';
 import { UserCircleIcon, KeyIcon, MapPinIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 const FALLBACK_BANNER_URL = 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1600&q=80';
@@ -59,65 +60,11 @@ const CONTACT_INFO = {
   storeImage: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1400&q=80',
 };
 
-const BRANCH_NAME_MAP = {
-  MAC_DINH_CHI: 'Mạc Đĩnh Chi',
-  THE_GRACE_TOWER: 'The Grace Tower',
-};
-
-const ADDRESS_OPTIONS = {
-  'Thành phố Hồ Chí Minh': {
-    'Quận 1': ['Phường Bến Nghé', 'Phường Bến Thành'],
-    'Quận 3': ['Phường Võ Thị Sáu', 'Phường 9'],
-    'Quận 7': ['Phường Tân Phú', 'Phường Tân Hưng'],
-    'Thành phố Thủ Đức': ['Phường An Phú', 'Phường Hiệp Bình Chánh'],
-  },
-  'Thành phố Hà Nội': {
-    'Quận Ba Đình': ['Phường Kim Mã', 'Phường Ngọc Hà'],
-    'Quận Cầu Giấy': ['Phường Dịch Vọng', 'Phường Nghĩa Đô'],
-    'Quận Đống Đa': ['Phường Láng Thượng', 'Phường Cát Linh'],
-  },
-  'Thành phố Đà Nẵng': {
-    'Quận Hải Châu': ['Phường Hải Châu I', 'Phường Hòa Cường Bắc'],
-    'Quận Thanh Khê': ['Phường Tam Thuận', 'Phường Thanh Khê Đông'],
-    'Quận Sơn Trà': ['Phường An Hải Bắc', 'Phường Phước Mỹ'],
-  },
-  'Thành phố Cần Thơ': {
-    'Quận Ninh Kiều': ['Phường An Khánh', 'Phường Xuân Khánh'],
-    'Quận Cái Răng': ['Phường Hưng Phú', 'Phường Lê Bình'],
-    'Quận Bình Thủy': ['Phường An Thới', 'Phường Long Hòa'],
-  },
-  'Thành phố Hải Phòng': {
-    'Quận Lê Chân': ['Phường An Biên', 'Phường Dư Hàng Kênh'],
-    'Quận Ngô Quyền': ['Phường Máy Chai', 'Phường Lạc Viên'],
-    'Quận Hải An': ['Phường Đằng Lâm', 'Phường Đằng Hải'],
-  },
-  'Tỉnh Bình Dương': {
-    'Thành phố Thủ Dầu Một': ['Phường Phú Cường', 'Phường Hiệp Thành'],
-    'Thành phố Dĩ An': ['Phường Dĩ An', 'Phường Tân Đông Hiệp'],
-    'Thành phố Thuận An': ['Phường Lái Thiêu', 'Phường An Phú'],
-  },
-  'Tỉnh Đồng Nai': {
-    'Thành phố Biên Hòa': ['Phường Trảng Dài', 'Phường Tân Hiệp'],
-    'Thành phố Long Khánh': ['Phường Xuân An', 'Phường Xuân Bình'],
-    'Huyện Nhơn Trạch': ['Xã Phú Hội', 'Xã Phú Đông'],
-  },
-  'Tỉnh Khánh Hòa': {
-    'Thành phố Nha Trang': ['Phường Vĩnh Hải', 'Phường Phước Hải'],
-    'Thành phố Cam Ranh': ['Phường Cam Lộc', 'Phường Cam Linh'],
-    'Thị xã Ninh Hòa': ['Phường Ninh Hiệp', 'Phường Ninh Thủy'],
-  },
-  'Tỉnh Quảng Ninh': {
-    'Thành phố Hạ Long': ['Phường Hồng Gai', 'Phường Bãi Cháy'],
-    'Thành phố Cẩm Phả': ['Phường Cẩm Đông', 'Phường Cẩm Tây'],
-    'Thành phố Uông Bí': ['Phường Quang Trung', 'Phường Trưng Vương'],
-  },
-};
-
 const DEFAULT_ADDRESS_FORM = {
   tenDiaChi: '',
-  city: 'Thành phố Hồ Chí Minh',
-  district: 'Quận 1',
-  ward: 'Phường Bến Nghé',
+  city: '',
+  district: '',
+  ward: '',
   street: '',
   ghiChu: '',
 };
@@ -181,9 +128,9 @@ function tachDiaChiDayDu(rawAddress) {
   const raw = String(rawAddress || '').trim();
   if (!raw) {
     return {
-      city: 'Thành phố Hồ Chí Minh',
-      district: 'Quận 1',
-      ward: 'Phường Bến Nghé',
+      city: '',
+      district: '',
+      ward: '',
       street: '',
     };
   }
@@ -193,23 +140,59 @@ function tachDiaChiDayDu(rawAddress) {
     .map((part) => part.trim())
     .filter(Boolean);
 
-  const city = parts[parts.length - 1] || 'Thành phố Hồ Chí Minh';
-  const district = parts[parts.length - 2] || 'Quận 1';
-  const ward = parts[parts.length - 3] || 'Phường Bến Nghé';
+  const city = parts[parts.length - 1] || '';
+  const district = parts[parts.length - 2] || '';
+  const ward = parts[parts.length - 3] || '';
   const street = parts.slice(0, Math.max(parts.length - 3, 0)).join(', ');
 
   return { city, district, ward, street: street || raw };
+}
+
+function normalizeLocationText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[.,]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function normalizeCityName(value) {
+  const original = String(value || '').trim();
+  const normalized = normalizeLocationText(original);
+
+  if (!normalized) return 'Hồ Chí Minh';
+  if (normalized.includes('ho chi minh') || normalized.includes('tp hcm') || normalized === 'hcm') return 'Hồ Chí Minh';
+  if (normalized.includes('ha noi') || normalized === 'hn') return 'Hà Nội';
+  if (normalized.includes('da nang')) return 'Đà Nẵng';
+  if (normalized.includes('can tho')) return 'Cần Thơ';
+  if (normalized.includes('hai phong')) return 'Hải Phòng';
+
+  return original;
+}
+
+function inferCityFromAddress(address) {
+  const normalized = normalizeLocationText(address);
+  if (!normalized) return '';
+  if (normalized.includes('ho chi minh') || normalized.includes('tp hcm') || normalized.includes('tphcm')) return 'Hồ Chí Minh';
+  if (normalized.includes('ha noi')) return 'Hà Nội';
+  if (normalized.includes('da nang')) return 'Đà Nẵng';
+  if (normalized.includes('can tho')) return 'Cần Thơ';
+  if (normalized.includes('hai phong')) return 'Hải Phòng';
+  return '';
 }
 
 function normalizeBranchStore(branch, index) {
   const openTime = String(branch?.gio_mo_cua || '').trim();
   const closeTime = String(branch?.gio_dong_cua || '').trim();
   const fallbackHours = openTime || closeTime ? `${openTime || '--:--'} - ${closeTime || '--:--'}` : '07:00 - 22:00';
+  const city = normalizeCityName(branch?.thanh_pho || inferCityFromAddress(branch?.dia_chi));
 
   return {
     id: String(branch?.ma_chi_nhanh || `branch-${index + 1}`),
     code: String(branch?.ma_chi_nhanh || `branch-${index + 1}`),
-    city: String(branch?.thanh_pho || '').trim() || 'Hồ Chí Minh',
+    city,
     district: String(branch?.quan_huyen || '').trim() || 'Chưa phân loại',
     name: String(branch?.ten_chi_nhanh || '').trim() || `Chi nhánh ${index + 1}`,
     address: String(branch?.dia_chi || '').trim() || 'Đang cập nhật địa chỉ',
@@ -397,7 +380,7 @@ function AppContent() {
   const [activeSubSectionId, setActiveSubSectionId] = useState('');
   const [newsCategory, setNewsCategory] = useState('ALL');
   const [selectedNewsArticleId, setSelectedNewsArticleId] = useState(null);
-  const [storeCity, setStoreCity] = useState('Hồ Chí Minh');
+  const [storeCity, setStoreCity] = useState('ALL');
   const [storeDistrict, setStoreDistrict] = useState('ALL');
   const [selectedStoreId, setSelectedStoreId] = useState(null);
   const [contactForm, setContactForm] = useState({ name: '', email: '', phone: '', message: '' });
@@ -427,7 +410,7 @@ function AppContent() {
   const queryClient = useQueryClient();
   const { addToCart, cartCount, syncCartWithUser } = useCart();
   const userId = user?.ma_nguoi_dung || user?.maNguoiDung || null;
-  const aiTargetUserId = userId || 'guest-popular';
+  const aiTargetUserId = userId || 'anon-popular';
   const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3005';
 
   // ── AI Recommendations ──────────────────────────────────────────────────────
@@ -442,7 +425,20 @@ function AppContent() {
     },
     enabled: true,
     staleTime: 5 * 60 * 1000,
-    refetchInterval: 120 * 1000,
+    refetchInterval: 30 * 1000,
+    refetchOnWindowFocus: true,
+    retry: 0,
+  });
+
+  const { data: behaviorInsightsData } = useQuery({
+    queryKey: ['ai', 'behavior-insights', 'customer-sync', 30],
+    queryFn: async () => {
+      const res = await apiClient.get('/ai/behavior/insights?branch_code=ALL&limit=5&days=30');
+      return res.data;
+    },
+    staleTime: 3 * 60 * 1000,
+    refetchInterval: 45 * 1000,
+    refetchOnWindowFocus: true,
     retry: 0,
   });
 
@@ -489,7 +485,11 @@ function AppContent() {
 
   const mapBranchName = (branchCode) => {
     if (!branchCode) return '';
-    return BRANCH_NAME_MAP[String(branchCode).toUpperCase()] || String(branchCode);
+    const normalizedCode = String(branchCode).toUpperCase();
+    const matched = (publicBranchPayload?.items || []).find(
+      (branch) => String(branch?.ma_chi_nhanh || '').toUpperCase() === normalizedCode,
+    );
+    return matched?.ten_chi_nhanh || String(branchCode);
   };
 
   const resolveBranchNameFromNotification = async (notification) => {
@@ -580,7 +580,7 @@ function AppContent() {
     isError: isVoucherError,
     error: voucherError,
   } = useQuery({
-    queryKey: [...queryKeys.voucherList, userId || 'guest'],
+    queryKey: [...queryKeys.voucherList, userId || 'anonymous'],
     queryFn: async () => {
       const query = userId ? `?user_id=${encodeURIComponent(userId)}` : '';
       const response = await apiClient.get(`/promotions/vouchers${query}`);
@@ -610,6 +610,15 @@ function AppContent() {
   const storeLocations = useMemo(
     () => (publicBranchPayload?.items || []).map((branch, index) => normalizeBranchStore(branch, index)),
     [publicBranchPayload],
+  );
+
+  const addressOptions = useMemo(
+    () => buildAddressOptionsFromBranches(publicBranchPayload?.items || []),
+    [publicBranchPayload],
+  );
+  const defaultAddressSelection = useMemo(
+    () => getAddressSelectionDefaults(addressOptions),
+    [addressOptions],
   );
 
   const { data: newsPayload, isLoading: isNewsLoading } = useQuery({
@@ -769,14 +778,14 @@ function AppContent() {
 
       if (notificationType === 'PAYMENT') {
         queryClient.invalidateQueries({ queryKey: queryKeys.loyaltyByUser(userId) });
-        queryClient.invalidateQueries({ queryKey: [...queryKeys.voucherList, userId || 'guest'] });
+        queryClient.invalidateQueries({ queryKey: [...queryKeys.voucherList, userId || 'anonymous'] });
       }
 
       if (notificationType === 'SYSTEM') {
         queryClient.invalidateQueries({ queryKey: queryKeys.menuProducts });
         queryClient.invalidateQueries({ queryKey: queryKeys.menuCategories });
         queryClient.invalidateQueries({ queryKey: ['news', 'all'] });
-        queryClient.invalidateQueries({ queryKey: [...queryKeys.voucherList, userId || 'guest'] });
+        queryClient.invalidateQueries({ queryKey: [...queryKeys.voucherList, userId || 'anonymous'] });
       }
 
       queryClient.setQueryData(queryKeys.notificationsByUser(userId), (current) => {
@@ -1000,6 +1009,35 @@ function AppContent() {
     }).slice(0, 3);
   }, [aiRecsData, products]);
 
+  const syncedBehaviorTop3Products = useMemo(() => {
+    const behaviorTopSource = behaviorInsightsData?.customer_sync_top_products?.length
+      ? behaviorInsightsData.customer_sync_top_products
+      : behaviorInsightsData?.top_products || [];
+    const behaviorTop = behaviorTopSource.slice(0, 3);
+    if (!behaviorTop.length) return [];
+
+    return behaviorTop.map((item) => {
+      const productId = String(item?.product_id || '');
+      const fromMenu = products.find((p) => String(p.ma_san_pham) === productId);
+      if (fromMenu) return fromMenu;
+
+      return {
+        ma_san_pham: productId || String(item?.product_name || 'behavior-item'),
+        ten_san_pham: String(item?.product_name || 'San pham goi y'),
+        gia_ban: 0,
+        hinh_anh_url: '',
+        trang_thai: true,
+        danhMuc: { ten_danh_muc: 'Dong bo hanh vi' },
+        mo_ta: 'Dong bo tu diem hanh vi tong hop (mua, danh gia, yeu thich, voucher) 30 ngay gan nhat.',
+      };
+    });
+  }, [behaviorInsightsData, products]);
+
+  const displayTop3Products = useMemo(
+    () => (syncedBehaviorTop3Products.length ? syncedBehaviorTop3Products : aiRecommendedProducts),
+    [syncedBehaviorTop3Products, aiRecommendedProducts],
+  );
+
   const isFavoriteProduct = (product) => favoriteProductSet.has(String(product?.ma_san_pham || ''));
 
   const handleToggleFavorite = (product) => {
@@ -1203,7 +1241,7 @@ function AppContent() {
     }
   }, [newsCategory, newsCategoryOptions]);
 
-  const storeCities = useMemo(() => [...new Set(storeLocations.map((store) => store.city))], [storeLocations]);
+  const storeCities = useMemo(() => ['ALL', ...new Set(storeLocations.map((store) => store.city))], [storeLocations]);
 
   useEffect(() => {
     if (!storeCities.length) return;
@@ -1214,12 +1252,19 @@ function AppContent() {
   }, [storeCities, storeCity]);
 
   const storeDistricts = useMemo(() => {
-    const list = storeLocations.filter((store) => store.city === storeCity).map((store) => store.district);
+    const list = storeLocations
+      .filter((store) => storeCity === 'ALL' || store.city === storeCity)
+      .map((store) => store.district);
     return [...new Set(list)];
   }, [storeCity, storeLocations]);
 
   const filteredStores = useMemo(
-    () => storeLocations.filter((store) => store.city === storeCity && (storeDistrict === 'ALL' || store.district === storeDistrict)),
+    () =>
+      storeLocations.filter(
+        (store) =>
+          (storeCity === 'ALL' || store.city === storeCity) &&
+          (storeDistrict === 'ALL' || store.district === storeDistrict),
+      ),
     [storeCity, storeDistrict, storeLocations],
   );
   const selectedStore = filteredStores.find((store) => store.id === selectedStoreId) || filteredStores[0] || null;
@@ -1246,7 +1291,10 @@ function AppContent() {
       newPassword: '',
       confirmPassword: '',
     });
-    const [addressForm, setAddressForm] = useState(DEFAULT_ADDRESS_FORM);
+    const [addressForm, setAddressForm] = useState(() => ({
+      ...DEFAULT_ADDRESS_FORM,
+      ...defaultAddressSelection,
+    }));
     const [profileError, setProfileError] = useState('');
     const [passwordError, setPasswordError] = useState('');
     const [addressError, setAddressError] = useState('');
@@ -1312,22 +1360,28 @@ function AppContent() {
     const savedAddresses = addressPayload?.items || [];
     const myReviews = reviewHistoryPayload?.items || [];
     const diemLoyalty = loyaltyData?.diem || 0;
-    const districtOptions = useMemo(() => Object.keys(ADDRESS_OPTIONS[addressForm.city] || {}), [addressForm.city]);
+    const districtOptions = useMemo(() => Object.keys(addressOptions[addressForm.city] || {}), [addressForm.city, addressOptions]);
     const wardOptions = useMemo(
-      () => (ADDRESS_OPTIONS[addressForm.city]?.[addressForm.district] || []),
-      [addressForm.city, addressForm.district],
+      () => (addressOptions[addressForm.city]?.[addressForm.district] || []),
+      [addressForm.city, addressForm.district, addressOptions],
     );
     const diaChiDayDu = useMemo(() => taoDiaChiDayDu(addressForm), [addressForm]);
 
     useEffect(() => {
       setProfileForm({ hoTen: '', soDienThoai: '', avatarUrl: '' });
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      setAddressForm(DEFAULT_ADDRESS_FORM);
+      setAddressForm({ ...DEFAULT_ADDRESS_FORM, ...defaultAddressSelection });
       setProfileError('');
       setPasswordError('');
       setAddressError('');
       setEditingAddressId(null);
-    }, [userId]);
+    }, [defaultAddressSelection, userId]);
+
+    useEffect(() => {
+      if (!addressForm.city && defaultAddressSelection.city) {
+        setAddressForm((prev) => ({ ...prev, ...defaultAddressSelection }));
+      }
+    }, [addressForm.city, defaultAddressSelection]);
 
     useEffect(() => {
       if (profile) {
@@ -1348,10 +1402,10 @@ function AppContent() {
         setAddressForm((prev) => ({
           ...prev,
           district: districtOptions[0],
-          ward: (ADDRESS_OPTIONS[prev.city]?.[districtOptions[0]] || [])[0] || '',
+          ward: (addressOptions[prev.city]?.[districtOptions[0]] || [])[0] || '',
         }));
       }
-    }, [addressForm.city, addressForm.district, districtOptions]);
+    }, [addressForm.city, addressForm.district, districtOptions, addressOptions]);
 
     useEffect(() => {
       if (!wardOptions.length) {
@@ -1415,7 +1469,7 @@ function AppContent() {
       onSuccess: () => {
         setAddressError('');
         setEditingAddressId(null);
-        setAddressForm(DEFAULT_ADDRESS_FORM);
+        setAddressForm({ ...DEFAULT_ADDRESS_FORM, ...defaultAddressSelection });
         queryClient.invalidateQueries({ queryKey: queryKeys.userAddresses(userId) });
       },
       onError: (err) => {
@@ -1431,7 +1485,7 @@ function AppContent() {
         setAddressError('');
         if (editingAddressId) {
           setEditingAddressId(null);
-          setAddressForm(DEFAULT_ADDRESS_FORM);
+          setAddressForm({ ...DEFAULT_ADDRESS_FORM, ...defaultAddressSelection });
         }
         queryClient.invalidateQueries({ queryKey: queryKeys.userAddresses(userId) });
       },
@@ -1503,20 +1557,14 @@ function AppContent() {
       setAddressError('');
       setEditingAddressId(address.id);
       const parsed = tachDiaChiDayDu(address.dia_chi_day_du);
-      const normalizedCity = ADDRESS_OPTIONS[parsed.city] ? parsed.city : 'Thành phố Hồ Chí Minh';
-      const normalizedDistrict = ADDRESS_OPTIONS[normalizedCity]?.[parsed.district]
-        ? parsed.district
-        : Object.keys(ADDRESS_OPTIONS[normalizedCity] || {})[0] || 'Quận 1';
-      const normalizedWard = (ADDRESS_OPTIONS[normalizedCity]?.[normalizedDistrict] || []).includes(parsed.ward)
-        ? parsed.ward
-        : (ADDRESS_OPTIONS[normalizedCity]?.[normalizedDistrict] || [])[0] || 'Phường Bến Nghé';
+      const normalizedAddress = normalizeAddressSelection(parsed, addressOptions);
 
       setAddressForm({
         tenDiaChi: address.ten_dia_chi || '',
-        city: normalizedCity,
-        district: normalizedDistrict,
-        ward: normalizedWard,
-        street: parsed.street,
+        city: normalizedAddress.city,
+        district: normalizedAddress.district,
+        ward: normalizedAddress.ward,
+        street: normalizedAddress.street,
         ghiChu: address.ghi_chu || '',
       });
       setActiveTab('addresses');
@@ -1525,7 +1573,7 @@ function AppContent() {
     const resetAddressEditor = () => {
       setEditingAddressId(null);
       setAddressError('');
-      setAddressForm(DEFAULT_ADDRESS_FORM);
+      setAddressForm({ ...DEFAULT_ADDRESS_FORM, ...defaultAddressSelection });
     };
 
     return (
@@ -1808,13 +1856,13 @@ function AppContent() {
                       value={addressForm.city}
                       onChange={(e) => {
                         const nextCity = e.target.value;
-                        const nextDistrict = Object.keys(ADDRESS_OPTIONS[nextCity] || {})[0] || '';
-                        const nextWard = (ADDRESS_OPTIONS[nextCity]?.[nextDistrict] || [])[0] || '';
+                        const nextDistrict = Object.keys(addressOptions[nextCity] || {})[0] || '';
+                        const nextWard = (addressOptions[nextCity]?.[nextDistrict] || [])[0] || '';
                         setAddressForm((prev) => ({ ...prev, city: nextCity, district: nextDistrict, ward: nextWard }));
                       }}
                       className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
                     >
-                      {Object.keys(ADDRESS_OPTIONS).map((city) => (
+                      {Object.keys(addressOptions).map((city) => (
                         <option key={city} value={city}>{city}</option>
                       ))}
                     </select>
@@ -1826,7 +1874,7 @@ function AppContent() {
                       value={addressForm.district}
                       onChange={(e) => {
                         const nextDistrict = e.target.value;
-                        const nextWard = (ADDRESS_OPTIONS[addressForm.city]?.[nextDistrict] || [])[0] || '';
+                        const nextWard = (addressOptions[addressForm.city]?.[nextDistrict] || [])[0] || '';
                         setAddressForm((prev) => ({ ...prev, district: nextDistrict, ward: nextWard }));
                       }}
                       className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
@@ -2323,7 +2371,7 @@ function AppContent() {
             <section className="border-b border-[#ece3cc] bg-gradient-to-b from-[#f3e8bb] to-[#fbf7ea]">
               <div className="mx-auto max-w-[1240px] px-4 py-14 text-center md:px-6 md:py-16">
                 <h1 className="mx-auto max-w-[18ch] text-4xl font-black uppercase leading-tight text-[#161616] md:text-6xl">
-                  Khám phá {filteredStores.length} cửa hàng của chúng tôi ở {storeCity}
+                  Khám phá {filteredStores.length} / {storeLocations.length} cửa hàng của chúng tôi {storeCity === 'ALL' ? 'trên toàn hệ thống' : `ở ${storeCity}`}
                 </h1>
                 {isStoresLoading ? <p className="mt-5 text-base font-semibold text-[#6f6258]">Đang tải danh sách chi nhánh...</p> : null}
                 {isStoresError ? <p className="mt-5 text-base font-semibold text-[#b45309]">{storesError?.response?.data?.message || storesError?.message || 'Không tải được danh sách chi nhánh.'}</p> : null}
@@ -2338,7 +2386,7 @@ function AppContent() {
                     className="h-[56px] rounded-full border border-[#ef8e55] bg-white/70 px-6 text-lg font-semibold text-[#e67a3a] outline-none focus:border-[#d96c28]"
                   >
                     {storeCities.map((city) => (
-                      <option key={city} value={city}>{city}</option>
+                      <option key={city} value={city}>{city === 'ALL' ? 'Toàn quốc' : city}</option>
                     ))}
                   </select>
 
@@ -2772,6 +2820,7 @@ function AppContent() {
                               ? 'Chưa đủ lịch sử, hiển thị các món phổ biến.'
                               : 'Đang xem gợi ý cho khách vãng lai, dựa trên độ phổ biến toàn hệ thống.'}
                         </p>
+                        <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-sky-700">Dong bo customer voi top hanh vi 30 ngay</p>
                       </div>
                       <span className="rounded-full border border-orange-200 bg-white px-3 py-1 text-[11px] font-black uppercase tracking-wider text-orange-600">
                         {aiRecsData?.is_personalized ? 'AI Personal' : 'AI Popular'}
@@ -2782,9 +2831,9 @@ function AppContent() {
                       <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
                         {[1, 2, 3].map((k) => <div key={k} className="h-72 animate-pulse rounded-3xl bg-white/70" />)}
                       </div>
-                    ) : aiRecommendedProducts.length > 0 ? (
+                    ) : displayTop3Products.length > 0 ? (
                       <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
-                        {aiRecommendedProducts.map((p) => (
+                        {displayTop3Products.map((p) => (
                           <ProductCard
                             key={`ai-${p.ma_san_pham}`}
                             product={p}

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
 import { extname, join } from 'path';
@@ -6,79 +6,8 @@ import { promises as fs } from 'fs';
 import { SanPham } from './modules/menu/san-pham.entity';
 import { DanhMuc } from './modules/menu/danh-muc.entity';
 
-type SeedProduct = {
-  name: string;
-  category: string;
-  price: number;
-  image: string;
-};
-
-const REQUESTED_SEED_PRODUCTS: SeedProduct[] = [
-  { name: 'A-Mê Đào', category: 'Cà Phê', price: 49000, image: 'https://cdn.hstatic.net/products/1000075078/americano_dao_3ad44119ea024ca78d1d1f7710bef2e0_grande.png' },
-  { name: 'Ethiopia Americano Đá', category: 'Cà Phê', price: 34500, image: 'https://cdn.hstatic.net/products/1000075078/soe_da_dq_c1403e7a3a384e4786e71994737b0981_grande.png' },
-  { name: 'Ethiopia Americano Nóng', category: 'Cà Phê', price: 34500, image: 'https://cdn.hstatic.net/products/1000075078/soe_nong_dq_bb13f9167dbd428d8ed7bf51e73ba5e7_grande.png' },
-  { name: 'Espresso Nóng', category: 'Cà Phê', price: 45000, image: 'https://cdn.hstatic.net/products/1000075078/espresso_shot_ce837696dded42d4a3135d9302b68f31_grande.png' },
-  { name: 'Espresso Đá', category: 'Cà Phê', price: 49000, image: 'https://cdn.hstatic.net/products/1000075078/espresso_da_589e3a4d46e94f72b26752ee64b93e7b_grande.png' },
-  { name: 'Americano Nóng', category: 'Cà Phê', price: 45000, image: 'https://cdn.hstatic.net/products/1000075078/americano_nong_785ea48734b741858eaae04501a36fa5_grande.png' },
-  { name: 'Latte Nóng', category: 'Cà Phê', price: 59000, image: 'https://cdn.hstatic.net/products/1000075078/latte_nong_77d6c8dd1ce84d0f900f83d99f069557_grande.png' },
-  { name: 'Cappuccino Đá', category: 'Cà Phê', price: 55000, image: 'https://cdn.hstatic.net/products/1000075078/cappucino_da_691da3dddf5744d698974dd6596677bc_grande.png' },
-  { name: 'Cappuccino Nóng', category: 'Cà Phê', price: 55000, image: 'https://cdn.hstatic.net/products/1000075078/cappucino_nong_fa141e298bc843d8a934a720189bf3e2_grande.png' },
-  { name: 'Caramel Macchiato Đá', category: 'Cà Phê', price: 65000, image: 'https://cdn.hstatic.net/products/1000075078/caramel_macchiato_da_5549b94596d94133973b97ea2d04d735_grande.png' },
-  { name: 'Caramel Macchiato Nóng', category: 'Cà Phê', price: 69000, image: 'https://cdn.hstatic.net/products/1000075078/caramel_macchiato_nong_19dcb8fe095f44e58c844f96340db62a_grande.png' },
-  { name: 'A-Mê Classic', category: 'Cà Phê', price: 39000, image: 'https://cdn.hstatic.net/products/1000075078/a-me_classic_dfbdc3b2b0124ca7bb3b177fb12871c1_grande.png' },
-  { name: 'A-Mê Mơ', category: 'Cà Phê', price: 49000, image: 'https://cdn.hstatic.net/products/1000075078/americano_mo_5c282c669192440abd9853c4d261fe2f_grande.png' },
-  { name: 'A-Mê Yuzu', category: 'Cà Phê', price: 49000, image: 'https://cdn.hstatic.net/products/1000075078/americano_thanh_yen_35e4c9612d944fab83c2a386f8d72cab_grande.png' },
-  { name: 'Latte Hạnh Nhân', category: 'Latte', price: 59000, image: 'https://cdn.hstatic.net/products/1000075078/1746441513_almond-coffee_a88253af2af24009b4b937ba17128630_grande.png' },
-  { name: 'Latte Classic', category: 'Latte', price: 55000, image: 'https://cdn.hstatic.net/products/1000075078/1746439218_latte-classic_592dc04d7d7c4a9d8d3bc2d113c6e73b_grande.png' },
-  { name: 'Latte Bạc Xỉu', category: 'Latte', price: 49000, image: 'https://cdn.hstatic.net/products/1000075078/1767588144_latte-bac-xiu_01079019ce3d4c9fa385cb30ed33cd46_grande.png' },
-  { name: 'Latte Hazelnut', category: 'Latte', price: 59000, image: 'https://cdn.hstatic.net/products/1000075078/1746441372_halzenut-latte_faaa820831cc448980ab9d003390f33a_grande.png' },
-  { name: 'Frappe Matcha Tây Bắc', category: 'Frappe', price: 65000, image: 'https://cdn.hstatic.net/products/1000075078/1746441845_matcha-frappe_178c807d212f4a11ac21266f97468bfb_grande.png' },
-  { name: 'Frappe Almond', category: 'Frappe', price: 65000, image: 'https://cdn.hstatic.net/products/1000075078/1746443342_almond-frappe_1fb4c2599c284b7ab9bca67c581005d8_grande.png' },
-  { name: 'Frappe Hazelnut', category: 'Frappe', price: 65000, image: 'https://cdn.hstatic.net/products/1000075078/1746443470_halzenut-frappe_1482bc4321644c7cb3d23daf7f96cba6_grande.png' },
-  { name: 'Frappe Choco Chip', category: 'Frappe', price: 65000, image: 'https://cdn.hstatic.net/products/1000075078/1746460836_choco-chip-frappe_b7287bbb458c439eba0bc69597368173_grande.png' },
-  { name: 'Bạc Xỉu Foam Dừa', category: 'Cà Phê', price: 45000, image: 'https://cdn.hstatic.net/products/1000075078/bac_xiu_foam_dua_4d84183a347145be99edbdd844bf17f8_grande.png' },
-  { name: 'Bạc Xỉu Caramel Muối', category: 'Cà Phê', price: 45000, image: 'https://cdn.hstatic.net/products/1000075078/bac_xiu_caramel_muoi_4a995a0bfa5d420ab90dc28b714b5bf5_grande.png' },
-  { name: 'Bạc Xỉu', category: 'Cà Phê', price: 39000, image: 'https://cdn.hstatic.net/products/1000075078/bac_xiu_truyen_thong_2694ea6d85c047fa9a559c2a85f0e766_grande.png' },
-  { name: 'Bạc Xỉu Nóng', category: 'Cà Phê', price: 39000, image: 'https://cdn.hstatic.net/products/1000075078/bac_xiu_truyen_thong_nong_3cf582dc460a422b939c62f86e41ee4e_grande.png' },
-  { name: 'Cà Phê Đen Nóng', category: 'Cà Phê', price: 39000, image: 'https://cdn.hstatic.net/products/1000075078/ca_phe_phin_den_nong_841bd93375e64d0ba7f4067770fdbd44_grande.png' },
-  { name: 'Cà Phê Sữa Nóng', category: 'Cà Phê', price: 39000, image: 'https://cdn.hstatic.net/products/1000075078/ca_phe_phin_nau_nong_249262a0d36a4861932e17efb9706d13_grande.png' },
-  { name: 'Cà Phê Đen Đá', category: 'Cà Phê', price: 39000, image: 'https://cdn.hstatic.net/products/1000075078/ca_phe_phin_den_da_66c9be0094354e8693117543770b2661_grande.png' },
-  { name: 'Cà Phê Sữa Đá', category: 'Cà Phê', price: 39000, image: 'https://cdn.hstatic.net/products/1000075078/ca_phe_phin_nau_da_73fed306bafb4f87b4cb44573c900388_grande.png' },
-  { name: 'Cold Brew Truyền Thống', category: 'Cà Phê', price: 45000, image: 'https://cdn.hstatic.net/products/1000075078/cold_brew_truyen_thong_7d8799b543124cc7946a9701ba30b149_grande.png' },
-  { name: 'Cold Brew Kim Quất', category: 'Cà Phê', price: 49000, image: 'https://cdn.hstatic.net/products/1000075078/cold_brew_kim_quat_95ae6104aa86446aa7d2185c9f06e0bf_grande.png' },
-  { name: 'Matcha Latte Tây Bắc', category: 'Trà Xanh - Chocolate', price: 45000, image: 'https://cdn.hstatic.net/products/1000075078/matcha_latte_tay_bac_da_d5ba2ffade1e4917ab810e626805bc18_grande.png' },
-  { name: 'Matcha Latte Tây Bắc (Nóng)', category: 'Trà Xanh - Chocolate', price: 49000, image: 'https://cdn.hstatic.net/products/1000075078/matcha_latte_tay_bac_nong_d591c8251dc64fb987118a408e861b09_grande.png' },
-  { name: 'Matcha Latte Kyoto', category: 'Matcha', price: 55000, image: 'https://cdn.hstatic.net/products/1000075078/1745246722_matcha-latte_e183c01ed5844343882d089b37b6239f_grande.png' },
-  { name: 'Matcha Tây Bắc Trân Châu Hoàng Kim', category: 'Matcha', price: 49000, image: 'https://cdn.hstatic.net/products/1000075078/1745246677_matcha-dao-copy_f96bb5d6b4ad4cf9a7a8a2006f1ad8c1_grande.png' },
-  { name: 'Trà Đào Cam Sả - Nóng', category: 'Trà Trái Cây - HiTea', price: 59000, image: 'https://product.hstatic.net/1000075078/product/1737356382_oolong-tu-quy-sen-nong-copy_79b957510bcb4e6f8bb7d938f0448ab9_grande.png' },
-  { name: 'Trà Đào Cam Sả - Đá', category: 'Trà Trái Cây - HiTea', price: 49000, image: 'https://product.hstatic.net/1000075078/product/1737356280_tra-dao-cam-sa_9c46cceef5004e689b746e8ec0e47c34_grande.png' },
-  { name: 'Trà Phúc Kiến Sen (Nóng)', category: 'Trà Trái Cây - HiTea', price: 59000, image: 'https://cdn.hstatic.net/products/1000075078/oolong_tu_quy_sen_nong_eb6f855cb05a423cbce31805f4a09dab_grande.png' },
-  { name: 'Trà Phúc Kiến Sen', category: 'Trà Trái Cây - HiTea', price: 49000, image: 'https://cdn.hstatic.net/products/1000075078/oolong_tu_quy_sen_da_45f85b5cedf64902b2a85fb969372d82_grande.png' },
-  { name: 'Trà Sữa Oolong Tứ Quý Sương Sáo', category: 'Trà Sữa', price: 55000, image: 'https://cdn.hstatic.net/products/1000075078/1751601456_tra-sua-oolong-tu-quy-suong-sao_c22c1bf76ba04c469c8d7f529c7d60f5_grande.png' },
-  { name: 'Trà Đen Macchiato', category: 'Trà Sữa', price: 55000, image: 'https://cdn.hstatic.net/products/1000075078/1751597791_tra-den-macchiato_7dceaebbb66f4cba8c92d7f6d713fa33_grande.png' },
-  { name: 'Chocolate Đá', category: 'Trà Xanh - Chocolate', price: 55000, image: 'https://cdn.hstatic.net/products/1000075078/so_co_la_da_660ca0c6384b456b9eae735bfa9a9f2b_grande.png' },
-  { name: 'Chocolate Nóng', category: 'Trà Xanh - Chocolate', price: 55000, image: 'https://cdn.hstatic.net/products/1000075078/so_co_la_nong_45c13bb985534867a7c0c8634e2f3349_grande.png' },
-  { name: 'Mochi Kem Trà Sữa Trân Châu', category: 'Bánh Ngọt', price: 19000, image: 'https://cdn.hstatic.net/products/1000075078/1737355411_mochi-tra-sua_bd68fdd9fe844f24b6d0fb772486263e_grande.png' },
-  { name: 'Mochi Kem Phúc Bồn Tử', category: 'Bánh Ngọt', price: 19000, image: 'https://cdn.hstatic.net/products/1000075078/1737355355_mochi-phuc-bon-tu_3a394194635c45a88a3d28969f2024c2_grande.png' },
-  { name: 'Mochi Kem Việt Quất', category: 'Bánh Ngọt', price: 19000, image: 'https://cdn.hstatic.net/products/1000075078/1737355361_mochi-viet-quat_c1acf906f8b94ff78fb197deefdd683d_grande.png' },
-  { name: 'Mochi Kem Chocolate', category: 'Bánh Ngọt', price: 19000, image: 'https://cdn.hstatic.net/products/1000075078/1737355348_mochi-choco_4a95ec58b13f410f884bee942ad49b51_grande.png' },
-  { name: 'Wafu Pasta Bò Bằm Xốt Bolognese', category: 'Pizza & Pasta', price: 59000, image: 'https://cdn.hstatic.net/products/1000075078/1742826512_wafu-pasta-bo-bam-xot-bolognese_a0019977ac644600a1b62916178d439c_grande.png' },
-  { name: 'Wafu Pasta Bò Karubi Xốt Miso Butter', category: 'Pizza & Pasta', price: 79000, image: 'https://cdn.hstatic.net/products/1000075078/1742826184_ba-chi-bo-xot-miso-butter-app_0cf77e7943dd4216aaa2957184f7a28a_grande.png' },
-  { name: 'Wafu Pasta Cá Bào Trứng Onsen Xốt Mentaiko', category: 'Món Mới Phải Thử', price: 69000, image: 'https://cdn.hstatic.net/products/1000075078/1742826409_wafu-pasta-ca-bao-trung-onsen-xot-mentaiko_6bd1486b8ca043b6b76dc8b10893ea93_grande.png' },
-  { name: 'Wafu Pasta Heo Nướng Xốt Shoyu Butter', category: 'Pizza & Pasta', price: 59000, image: 'https://cdn.hstatic.net/products/1000075078/1742826471_wafu-pasta-heo-nuong-xot-shoyu-butter_0a61c997465949488437957e9ee610e5_grande.png' },
-  { name: 'Pizza Hawaiian', category: 'Món Mới Phải Thử', price: 49000, image: 'https://cdn.hstatic.net/products/1000075078/1760452011_new-pizza-ham-dua_83eef655e1334756bf028fe216dbd596_grande.png' },
-  { name: 'Pizza New York 5 Cheese', category: 'Pizza & Pasta', price: 49000, image: 'https://cdn.hstatic.net/products/1000075078/1739269754_pizza-5cheese_39213eb56f6d4a1192b2001f06c37a5b_grande.png' },
-  { name: 'Pizza New York Bò Bằm Phô Mai', category: 'Pizza & Pasta', price: 49000, image: 'https://cdn.hstatic.net/products/1000075078/1739269763_pizza-sotbobam_c0b95e91c6154a9098f58b9e781266f9_grande.png' },
-  { name: 'Pizza New York Pepperoni', category: 'Pizza & Pasta', price: 49000, image: 'https://cdn.hstatic.net/products/1000075078/1739269747_pizza-pepperoni_01dd33aa54b7493aaa42b1048c089fbf_grande.png' },
-  { name: 'Pizza Tomyum Hải Sản', category: 'Món Mới Phải Thử', price: 59000, image: 'https://cdn.hstatic.net/products/1000075078/1772184957_pizza-tomyum-hai-san_c2577d8b603e49bbb8d8e91c0cf91025_grande.png' },
-  { name: 'Soft Pizza Chà Bông Trứng Cút', category: 'Bánh Mặn', price: 39000, image: 'https://cdn.hstatic.net/products/1000075078/1768278535_soft-pizza-cha-bong-trung-cut_13a79fcc3cc0452ea00217864e4b3549_grande.png' },
-  { name: 'Salad Cải Xoăn Xốt Yuzu', category: 'Salad', price: 49000, image: 'https://cdn.hstatic.net/products/1000075078/salad_cai_xoan_xot_yuzu_cea0b33b62a841efbfe596069a89ae63_grande.png' },
-  { name: 'Salad Rau Rocket và Hạt', category: 'Salad', price: 49000, image: 'https://cdn.hstatic.net/products/1000075078/nut_salad_630e8fb2fe8f448b8306dd8ffd1926a5_grande.png' },
-  { name: 'Túi Matcha Tốt', category: 'Khác', price: 169000, image: 'https://cdn.hstatic.net/products/1000075078/mer_29aa13aee84048dcb525b2f39efbb4af_grande.png' },
-];
-
 @Injectable()
-export class AppService implements OnModuleInit {
+export class AppService {
   constructor(
     @InjectRepository(SanPham) private spRepo: Repository<SanPham>,
     @InjectRepository(DanhMuc) private dmRepo: Repository<DanhMuc>,
@@ -86,109 +15,6 @@ export class AppService implements OnModuleInit {
 
   getHello(): string {
     return 'Menu service is running';
-  }
-
-  async onModuleInit() {
-    await this.seedRequestedCatalog();
-  }
-
-  private normalizeLookupText(value: string) {
-    return String(value || '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .toLowerCase();
-  }
-
-  private dedupeSeedProducts(items: SeedProduct[]) {
-    const seen = new Set<string>();
-    const deduped: SeedProduct[] = [];
-
-    for (const item of items) {
-      const key = [
-        this.normalizeLookupText(item.name),
-        this.normalizeLookupText(item.category),
-        Number(item.price || 0),
-        String(item.image || '').trim(),
-      ].join('::');
-
-      if (seen.has(key)) continue;
-      seen.add(key);
-      deduped.push(item);
-    }
-
-    return deduped;
-  }
-
-  private async seedRequestedCatalog() {
-    const dedupedItems = this.dedupeSeedProducts(REQUESTED_SEED_PRODUCTS);
-    if (!dedupedItems.length) return;
-
-    const existingCategories = await this.dmRepo.find();
-    const categoryLookup = new Map<string, DanhMuc>();
-    for (const category of existingCategories) {
-      categoryLookup.set(this.normalizeLookupText(category.ten_danh_muc), category);
-    }
-
-    for (const item of dedupedItems) {
-      const normalizedCategory = this.normalizeLookupText(item.category);
-      if (!categoryLookup.has(normalizedCategory)) {
-        const newCategory = new DanhMuc();
-        newCategory.ten_danh_muc = item.category.trim();
-        newCategory.hinh_anh_icon = null;
-        const savedCategory = await this.dmRepo.save(newCategory);
-        categoryLookup.set(normalizedCategory, savedCategory);
-      }
-    }
-
-    const categories = await this.dmRepo.find();
-    const categoryIdToNormalized = new Map<number, string>();
-    for (const category of categories) {
-      categoryIdToNormalized.set(category.ma_danh_muc, this.normalizeLookupText(category.ten_danh_muc));
-    }
-
-    const existingProducts = await this.spRepo.find({ relations: ['danhMuc'] });
-    const productLookup = new Map<string, SanPham>();
-    for (const product of existingProducts) {
-      const normalizedName = this.normalizeLookupText(product.ten_san_pham);
-      const normalizedCategory = categoryIdToNormalized.get(product.danhMuc?.ma_danh_muc || 0) || '';
-      if (!normalizedName || !normalizedCategory) continue;
-      productLookup.set(`${normalizedName}::${normalizedCategory}`, product);
-    }
-
-    for (const item of dedupedItems) {
-      const normalizedName = this.normalizeLookupText(item.name);
-      const normalizedCategory = this.normalizeLookupText(item.category);
-      const key = `${normalizedName}::${normalizedCategory}`;
-      const targetCategory = categoryLookup.get(normalizedCategory);
-      if (!targetCategory) continue;
-
-      const existing = productLookup.get(key);
-      if (existing) {
-        existing.gia_ban = Number(item.price || 0);
-        existing.gia_niem_yet = null;
-        existing.hinh_anh_url = this.normalizeProductImagePath(item.image) || existing.hinh_anh_url;
-        existing.trang_thai = true;
-        existing.mo_ta = existing.mo_ta || null;
-        existing.danhMuc = targetCategory;
-        await this.spRepo.save(existing);
-        continue;
-      }
-
-      const created = new SanPham();
-      created.ten_san_pham = item.name.trim();
-      created.gia_ban = Number(item.price || 0);
-      created.gia_niem_yet = null;
-      created.mo_ta = null;
-      created.hinh_anh_url = this.normalizeProductImagePath(item.image);
-      created.trang_thai = true;
-      created.la_hot = false;
-      created.la_moi = false;
-      created.danhMuc = targetCategory;
-      const saved = await this.spRepo.save(created);
-      productLookup.set(key, saved);
-    }
   }
 
   private formatCategory(category: DanhMuc, productCount = 0) {

@@ -1823,6 +1823,84 @@
   gap: 1rem;
 }
 
+.system-ops-top-grid {
+  display: grid;
+  grid-template-columns: minmax(420px, 1.2fr) minmax(280px, 0.8fr);
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.system-ops-summary-grid {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.system-ops-summary-grid article {
+  border: 1px solid #e7d4c5;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fffdf9 0%, #fff4ea 100%);
+  padding: 0.72rem 0.78rem;
+}
+
+.system-ops-summary-grid p,
+.system-ops-summary-grid strong,
+.system-ops-summary-grid small {
+  margin: 0;
+}
+
+.system-ops-summary-grid p {
+  font-size: 0.78rem;
+  color: #7b5b45;
+}
+
+.system-ops-summary-grid strong {
+  display: block;
+  margin-top: 0.2rem;
+  color: #2f1e14;
+  font-size: 1.25rem;
+}
+
+.system-ops-summary-grid small {
+  display: block;
+  margin-top: 0.14rem;
+  color: #8f6f58;
+  font-size: 0.75rem;
+}
+
+.system-ops-kpi-grid {
+  margin-bottom: 0.9rem;
+}
+
+.system-ops-trend-grid {
+  margin-bottom: 0.9rem;
+}
+
+.system-ops-block {
+  margin-bottom: 0.9rem;
+}
+
+.system-ops-status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.system-ops-status-pill.ok {
+  color: #166534;
+  background: #ecfdf3;
+  border-color: #bbf7d0;
+}
+
+.system-ops-status-pill.down {
+  color: #b42318;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
 .system-admin-card {
   border: 1px solid #ecd8c8;
   border-radius: 22px;
@@ -2071,6 +2149,10 @@
   .system-admin-hero,
   .system-admin-menu-layout,
   .system-admin-image-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .system-ops-top-grid {
     grid-template-columns: 1fr;
   }
 

@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
 
-const ADMIN_LOCAL_NOTIFY_EVENT = 'avengers-admin-local-notify'
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3005'
+const PAGE_SIZE = 8
 
 function getSessionUserId(session) {
   const directUserId = session?.user?.ma_nguoi_dung || session?.user?.maNguoiDung || ''
@@ -44,14 +44,28 @@ export function AdminNotificationBell({ session }) {
   const [state, setState] = useState({ loading: false, error: '', items: [] })
   const [markingId, setMarkingId] = useState('')
   const [markingAll, setMarkingAll] = useState(false)
+  const [page, setPage] = useState(1)
   const wrapperRef = useRef(null)
 
   const unreadCount = useMemo(() => state.items.filter((item) => !item.da_doc).length, [state.items])
+  const totalPages = useMemo(() => Math.max(1, Math.ceil((state.items?.length || 0) / PAGE_SIZE)), [state.items])
+  const safePage = useMemo(() => Math.min(Math.max(page, 1), totalPages), [page, totalPages])
+  const pageItems = useMemo(
+    () => (state.items || []).slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [safePage, state.items],
+  )
+
+  useEffect(() => {
+    setPage(1)
+  }, [open])
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages)
+  }, [page, totalPages])
 
   const mergeServerWithLocal = (serverItems, currentItems) => {
-    const localItems = (currentItems || []).filter((item) => String(item.id || '').startsWith('local-'))
-    const merged = [...localItems]
-    const seen = new Set(localItems.map((item) => String(item.id)))
+    const merged = []
+    const seen = new Set()
 
     ;(serverItems || []).forEach((item) => {
       const key = String(item.id || '')
@@ -84,7 +98,7 @@ export function AdminNotificationBell({ session }) {
     if (!userId) return
 
     loadNotifications()
-    const timer = window.setInterval(loadNotifications, 90000)
+    const timer = window.setInterval(loadNotifications, 15000)
     return () => window.clearInterval(timer)
   }, [userId])
 
@@ -120,28 +134,6 @@ export function AdminNotificationBell({ session }) {
   }, [userId])
 
   useEffect(() => {
-    const onLocalNotify = (event) => {
-      const detail = event?.detail || {}
-      const timestamp = new Date().toISOString()
-      const synthetic = {
-        id: `local-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
-        tieu_de: detail.tieu_de || 'Thông báo vận hành',
-        noi_dung: detail.noi_dung || 'Có cập nhật mới từ thao tác hệ thống.',
-        ngay_tao: timestamp,
-        da_doc: false,
-      }
-
-      setState((prev) => ({
-        ...prev,
-        items: [synthetic, ...prev.items].slice(0, 30),
-      }))
-    }
-
-    window.addEventListener(ADMIN_LOCAL_NOTIFY_EVENT, onLocalNotify)
-    return () => window.removeEventListener(ADMIN_LOCAL_NOTIFY_EVENT, onLocalNotify)
-  }, [])
-
-  useEffect(() => {
     const onClickOutside = (event) => {
       if (!wrapperRef.current) return
       if (!wrapperRef.current.contains(event.target)) {
@@ -155,15 +147,6 @@ export function AdminNotificationBell({ session }) {
 
   const markOneRead = async (notificationId) => {
     if (!userId || !notificationId) return
-    const isLocalOnly = String(notificationId).startsWith('local-')
-
-    if (isLocalOnly) {
-      setState((prev) => ({
-        ...prev,
-        items: prev.items.map((item) => (String(item.id) === String(notificationId) ? { ...item, da_doc: true } : item)),
-      }))
-      return
-    }
 
     setMarkingId(String(notificationId))
     try {
@@ -234,7 +217,7 @@ export function AdminNotificationBell({ session }) {
             <p className="admin-notify-hint">Chưa có thông báo mới.</p>
           ) : (
             <div className="admin-notify-list">
-              {state.items.map((item) => (
+              {pageItems.map((item) => (
                 <article key={item.id} className={item.da_doc ? 'admin-notify-item' : 'admin-notify-item unread'}>
                   <h4>{item.tieu_de || 'Thông báo hệ thống'}</h4>
                   <p>{item.noi_dung || ''}</p>
@@ -253,6 +236,19 @@ export function AdminNotificationBell({ session }) {
               ))}
             </div>
           )}
+
+          {(state.items?.length || 0) > PAGE_SIZE ? (
+            <div className="ops-pagination" style={{ marginTop: '0.6rem' }}>
+              <span>{(safePage - 1) * PAGE_SIZE + 1}-{Math.min(safePage * PAGE_SIZE, state.items.length)} / {state.items.length}</span>
+              <div>
+                <button type="button" className="secondary" onClick={() => setPage(1)} disabled={safePage <= 1}>Đầu</button>
+                <button type="button" className="secondary" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage <= 1}>Trước</button>
+                <strong>Trang {safePage}/{totalPages}</strong>
+                <button type="button" className="secondary" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={safePage >= totalPages}>Sau</button>
+                <button type="button" className="secondary" onClick={() => setPage(totalPages)} disabled={safePage >= totalPages}>Cuối</button>
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

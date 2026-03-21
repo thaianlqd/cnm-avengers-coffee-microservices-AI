@@ -36,32 +36,32 @@ const DEFAULT_BRANCH_FORM = {
 
 const LOCATION_TREE = {
   HO_CHI_MINH: {
-    label: 'TP. Ho Chi Minh',
+    label: 'TP. Hồ Chí Minh',
     districts: {
       QUAN_1: {
-        label: 'Quan 1',
-        wards: ['Ben Nghe', 'Ben Thanh', 'Da Kao', 'Nguyen Thai Binh', 'Pham Ngu Lao', 'Tan Dinh'],
+        label: 'Quận 1',
+        wards: ['Bến Nghé', 'Bến Thành', 'Đa Kao', 'Nguyễn Thái Bình', 'Phạm Ngũ Lão', 'Tân Định'],
       },
       QUAN_3: {
-        label: 'Quan 3',
-        wards: ['Vo Thi Sau', 'Ward 1', 'Ward 2', 'Ward 3', 'Ward 4', 'Ward 5'],
+        label: 'Quận 3',
+        wards: ['Võ Thị Sáu', 'Phường 1', 'Phường 2', 'Phường 3', 'Phường 4', 'Phường 5'],
       },
       BINH_THANH: {
-        label: 'Quan Binh Thanh',
-        wards: ['Ward 1', 'Ward 2', 'Ward 3', 'Ward 11', 'Ward 13', 'Ward 14', 'Ward 15', 'Ward 24', 'Ward 25', 'Ward 26'],
+        label: 'Quận Bình Thạnh',
+        wards: ['Phường 1', 'Phường 2', 'Phường 3', 'Phường 11', 'Phường 13', 'Phường 14', 'Phường 15', 'Phường 24', 'Phường 25', 'Phường 26'],
       },
       PHU_NHUAN: {
-        label: 'Quan Phu Nhuan',
-        wards: ['Ward 1', 'Ward 2', 'Ward 3', 'Ward 4', 'Ward 5', 'Ward 7', 'Ward 8', 'Ward 9', 'Ward 10', 'Ward 11', 'Ward 13', 'Ward 15', 'Ward 17'],
+        label: 'Quận Phú Nhuận',
+        wards: ['Phường 1', 'Phường 2', 'Phường 3', 'Phường 4', 'Phường 5', 'Phường 7', 'Phường 8', 'Phường 9', 'Phường 10', 'Phường 11', 'Phường 13', 'Phường 15', 'Phường 17'],
       },
       THU_DUC: {
-        label: 'TP Thu Duc',
-        wards: ['An Khanh', 'An Loi Dong', 'An Phu', 'Hiep Binh Chanh', 'Hiep Binh Phuoc', 'Linh Chieu', 'Linh Dong', 'Linh Tay', 'Linh Trung', 'Thao Dien', 'Tam Binh', 'Tam Phu'],
+        label: 'TP Thủ Đức',
+        wards: ['An Khánh', 'An Lợi Đông', 'An Phú', 'Hiệp Bình Chánh', 'Hiệp Bình Phước', 'Linh Chiểu', 'Linh Đông', 'Linh Tây', 'Linh Trung', 'Thảo Điền', 'Tam Bình', 'Tam Phú'],
       },
     },
   },
   HA_NOI: {
-    label: 'Ha Noi',
+    label: 'Hà Nội',
     districts: {
       BA_DINH: {
         label: 'Quan Ba Dinh',
@@ -78,7 +78,7 @@ const LOCATION_TREE = {
     },
   },
   DA_NANG: {
-    label: 'Da Nang',
+    label: 'Đà Nẵng',
     districts: {
       HAI_CHAU: {
         label: 'Quan Hai Chau',
@@ -245,11 +245,6 @@ const DEFAULT_PROMOTION_FORM = {
   hinh_anh: '',
 }
 
-const FALLBACK_BRANCH_OPTIONS = [
-  { code: 'MAC_DINH_CHI', name: 'Mạc Đĩnh Chi' },
-  { code: 'THE_GRACE_TOWER', name: 'The Grace Tower' },
-]
-
 const ADMIN_LOCAL_NOTIFY_EVENT = 'avengers-admin-local-notify'
 
 async function readJsonResponse(response, fallback) {
@@ -374,7 +369,11 @@ export function useSystemAdmin() {
   }, [statsQuery.data, statsQuery.error, statsQuery.isFetching, statsQuery.isLoading])
 
   useEffect(() => {
-    const items = branchesQuery.data || []
+    const items = [...(branchesQuery.data || [])].sort((a, b) => {
+      const aTime = new Date(a?.ngay_tao || a?.ngay_cap_nhat || 0).getTime()
+      const bTime = new Date(b?.ngay_tao || b?.ngay_cap_nhat || 0).getTime()
+      return bTime - aTime
+    })
     setBranchesState({
       loading: branchesQuery.isLoading || branchesQuery.isFetching,
       error: branchesQuery.error?.message || '',
@@ -448,20 +447,14 @@ export function useSystemAdmin() {
 
   const branchOptions = useMemo(() => {
     const rows = (branchesState.items || []).filter((item) => item.trang_thai === 'ACTIVE')
-    const normalizedRows = rows.map((item) => ({ code: item.ma_chi_nhanh, name: item.ten_chi_nhanh }))
-    return normalizedRows.length ? normalizedRows : FALLBACK_BRANCH_OPTIONS
+    return rows.map((item) => ({ code: item.ma_chi_nhanh, name: item.ten_chi_nhanh }))
   }, [branchesState.items])
 
   const branchNameMap = useMemo(() => {
-    const dynamicMap = (branchesState.items || []).reduce((acc, item) => {
+    return (branchesState.items || []).reduce((acc, item) => {
       acc[item.ma_chi_nhanh] = item.ten_chi_nhanh
       return acc
     }, {})
-    return {
-      MAC_DINH_CHI: 'Mạc Đĩnh Chi',
-      THE_GRACE_TOWER: 'The Grace Tower',
-      ...dynamicMap,
-    }
   }, [branchesState.items])
 
   const loadBranches = async () => {
@@ -598,7 +591,8 @@ export function useSystemAdmin() {
   const deletePromotion = async (code) => {
     if (!window.confirm('Xoa khuyen mai nay? Hanh dong nay khong the hoan tac.')) return
     try {
-      const response = await fetch(`${API_BASE_URL}/promotions/admin/${code}`, { method: 'DELETE' })
+      const safeCode = encodeURIComponent(String(code || '').trim())
+      const response = await fetch(`${API_BASE_URL}/promotions/admin/${safeCode}`, { method: 'DELETE' })
       const result = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(result?.message || 'Khong xoa duoc khuyen mai')
       if (editingPromotionCode === code) cancelEditPromotion()

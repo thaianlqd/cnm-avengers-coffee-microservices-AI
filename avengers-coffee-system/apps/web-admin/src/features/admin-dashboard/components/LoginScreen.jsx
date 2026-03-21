@@ -17,14 +17,14 @@ export function LoginScreen({ loginForm, setLoginForm, loginStatus, onLogin }) {
 
       <section className="login-card">
         <h2>Đăng nhập nhân viên</h2>
-        <p>Tài khoản mặc định đã được seed sẵn cho dự án này.</p>
+        <p>Đăng nhập bằng tài khoản đã được tạo thực tế trong hệ thống.</p>
         <form onSubmit={onLogin} className="login-form">
           <label htmlFor="identifier">Tên đăng nhập hoặc Email</label>
           <input
             id="identifier"
             value={loginForm.identifier}
             onChange={(e) => setLoginForm((prev) => ({ ...prev, identifier: e.target.value }))}
-            placeholder="thaian_staff_macdinhchi"
+            placeholder="Nhập username hoặc email"
             autoComplete="username"
             required
           />
@@ -35,7 +35,7 @@ export function LoginScreen({ loginForm, setLoginForm, loginStatus, onLogin }) {
             type="password"
             value={loginForm.password}
             onChange={(e) => setLoginForm((prev) => ({ ...prev, password: e.target.value }))}
-            placeholder="123456"
+            placeholder="Nhập mật khẩu"
             autoComplete="current-password"
             required
           />
@@ -47,12 +47,9 @@ export function LoginScreen({ loginForm, setLoginForm, loginStatus, onLogin }) {
           </button>
         </form>
         <div className="hint-box">
-          <p>System Admin: thaian_admin</p>
-          <p>Staff Mạc Đĩnh Chi: thaian_staff_macdinhchi</p>
-          <p>Manager Mạc Đĩnh Chi: thaian_manager_macdinhchi</p>
-          <p>Staff The Grace Tower: thaian_staff_thegracetower</p>
-          <p>Manager The Grace Tower: thaian_manager_thegracetower</p>
-          <p>Mật khẩu mặc định: 123456</p>
+          <p>Ví dụ định dạng: username hoặc email</p>
+          <p>Ví dụ: manager.q7 hoặc manager.q7@avengerscoffee.vn</p>
+          <p>Mật khẩu: theo tài khoản đã cấp thực tế</p>
         </div>
       </section>
     </div>

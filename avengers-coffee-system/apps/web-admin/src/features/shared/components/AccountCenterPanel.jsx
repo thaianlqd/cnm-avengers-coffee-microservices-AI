@@ -3,6 +3,8 @@ import { io } from 'socket.io-client'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3005'
+const ADMIN_LOCAL_NOTIFY_EVENT = 'avengers-admin-local-notify'
+const PAGE_SIZE = 8
 
 function getSessionUserId(session) {
   return session?.user?.ma_nguoi_dung || session?.user?.maNguoiDung || ''
@@ -38,11 +40,36 @@ export function AccountCenterPanel({ session }) {
   const [notificationsState, setNotificationsState] = useState({ loading: false, error: '', items: [] })
   const [markingNotificationId, setMarkingNotificationId] = useState('')
   const [markingAll, setMarkingAll] = useState(false)
+  const [notificationPage, setNotificationPage] = useState(1)
 
   const unreadCount = useMemo(
     () => notificationsState.items.filter((item) => !item.da_doc).length,
     [notificationsState.items],
   )
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil((notificationsState.items?.length || 0) / PAGE_SIZE)),
+    [notificationsState.items],
+  )
+  const safePage = useMemo(() => Math.min(Math.max(notificationPage, 1), totalPages), [notificationPage, totalPages])
+  const pageNotificationItems = useMemo(
+    () => (notificationsState.items || []).slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [notificationsState.items, safePage],
+  )
+
+  const pushLocalNotification = (tieuDe, noiDung) => {
+    window.dispatchEvent(new CustomEvent(ADMIN_LOCAL_NOTIFY_EVENT, {
+      detail: {
+        tieu_de: tieuDe,
+        noi_dung: noiDung,
+      },
+    }))
+  }
+
+  useEffect(() => {
+    if (notificationPage > totalPages) {
+      setNotificationPage(totalPages)
+    }
+  }, [notificationPage, totalPages])
 
   const loadProfile = async () => {
     if (!userId) return
@@ -111,7 +138,7 @@ export function AccountCenterPanel({ session }) {
 
     const timer = window.setInterval(() => {
       loadNotifications()
-    }, 90000)
+    }, 15000)
 
     return () => {
       window.clearInterval(timer)
@@ -154,6 +181,7 @@ export function AccountCenterPanel({ session }) {
       }
 
       setProfileState((prev) => ({ ...prev, saving: false, success: 'Đã cập nhật thông tin cá nhân.' }))
+      pushLocalNotification('Cập nhật hồ sơ', 'Thông tin hồ sơ cá nhân đã được cập nhật thành công.')
       await loadProfile()
     } catch (error) {
       setProfileState((prev) => ({ ...prev, saving: false, error: error.message || 'Không thể cập nhật thông tin cá nhân' }))
@@ -190,6 +218,7 @@ export function AccountCenterPanel({ session }) {
       if (!response.ok) throw new Error(payload?.message || 'Không thể đổi mật khẩu')
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
       setPasswordState({ saving: false, error: '', success: 'Đổi mật khẩu thành công.' })
+      pushLocalNotification('Đổi mật khẩu', 'Bạn đã đổi mật khẩu tài khoản thành công.')
     } catch (error) {
       setPasswordState({ saving: false, error: error.message || 'Không thể đổi mật khẩu', success: '' })
     }
@@ -350,7 +379,7 @@ export function AccountCenterPanel({ session }) {
         ) : null}
 
         <div className="notification-list">
-          {notificationsState.items.map((item) => (
+          {pageNotificationItems.map((item) => (
             <article key={item.id} className={item.da_doc ? 'notification-card' : 'notification-card unread'}>
               <div>
                 <h4>{item.tieu_de || 'Thông báo hệ thống'}</h4>
@@ -372,6 +401,19 @@ export function AccountCenterPanel({ session }) {
             </article>
           ))}
         </div>
+
+        {notificationsState.items.length > PAGE_SIZE ? (
+          <div className="ops-pagination" style={{ marginTop: '0.6rem' }}>
+            <span>{(safePage - 1) * PAGE_SIZE + 1}-{Math.min(safePage * PAGE_SIZE, notificationsState.items.length)} / {notificationsState.items.length}</span>
+            <div>
+              <button type="button" className="secondary" onClick={() => setNotificationPage(1)} disabled={safePage <= 1}>Đầu</button>
+              <button type="button" className="secondary" onClick={() => setNotificationPage((p) => Math.max(1, p - 1))} disabled={safePage <= 1}>Trước</button>
+              <strong>Trang {safePage}/{totalPages}</strong>
+              <button type="button" className="secondary" onClick={() => setNotificationPage((p) => Math.min(totalPages, p + 1))} disabled={safePage >= totalPages}>Sau</button>
+              <button type="button" className="secondary" onClick={() => setNotificationPage(totalPages)} disabled={safePage >= totalPages}>Cuối</button>
+            </div>
+          </div>
+        ) : null}
       </section>
     </section>
   )
