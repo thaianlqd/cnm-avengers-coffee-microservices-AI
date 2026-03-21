@@ -82,4 +82,8 @@ export class NotificationService {
     await this.redisCacheService.deleteByPrefix(`notifications:${maNguoiDung}:`);
     return { success: true };
   }
+
+  guiSuKienNhanSuTheoChiNhanh(branchCode: string, payload: Record<string, any>) {
+    this.notificationGateway.guiSuKienNhanSuTheoChiNhanh(branchCode, payload);
+  }
 }

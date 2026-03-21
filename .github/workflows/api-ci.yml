@@ -1,0 +1,285 @@
+name: CI Kiem Thu API
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+
+jobs:
+  kiem-thu-api-menu:
+    name: Kiem thu API - Menu Service
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: '123'
+          POSTGRES_DB: avengers_coffee
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U admin -d avengers_coffee"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    defaults:
+      run:
+        working-directory: avengers-coffee-system/services/menu-service
+
+    steps:
+      - name: Lay ma nguon
+        uses: actions/checkout@v4
+
+      - name: Cai dat Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: avengers-coffee-system/services/menu-service/package-lock.json
+
+      - name: Cai thu vien
+        run: npm ci
+
+      - name: Chay e2e API menu
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: admin
+          DB_PASSWORD: '123'
+          DB_NAME: avengers_coffee
+          DB_SCHEMA: menu_ci_github
+        run: npm run test:e2e -- --runInBand
+
+  kiem-thu-api-identity:
+    name: Kiem thu API - Identity Service
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: '123'
+          POSTGRES_DB: avengers_coffee
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U admin -d avengers_coffee"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    defaults:
+      run:
+        working-directory: avengers-coffee-system/services/identity-service
+
+    steps:
+      - name: Lay ma nguon
+        uses: actions/checkout@v4
+
+      - name: Cai dat Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: avengers-coffee-system/services/identity-service/package-lock.json
+
+      - name: Cai thu vien
+        run: npm ci
+
+      - name: Chay e2e API identity
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: admin
+          DB_PASSWORD: '123'
+          DB_NAME: avengers_coffee
+          DB_SCHEMA: identity_ci_github
+        run: npm run test:e2e -- --runInBand
+
+  kiem-thu-api-inventory:
+    name: Kiem thu API - Inventory Service
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: '123'
+          POSTGRES_DB: avengers_coffee
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U admin -d avengers_coffee"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    defaults:
+      run:
+        working-directory: avengers-coffee-system/services/inventory-service
+
+    steps:
+      - name: Lay ma nguon
+        uses: actions/checkout@v4
+
+      - name: Cai dat Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: avengers-coffee-system/services/inventory-service/package-lock.json
+
+      - name: Cai thu vien
+        run: npm ci
+
+      - name: Chay e2e API inventory
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: admin
+          DB_PASSWORD: '123'
+          DB_NAME: avengers_coffee
+          DB_SCHEMA: inventory_ci_github
+        run: npm run test:e2e -- --runInBand
+
+  kiem-thu-api-order:
+    name: Kiem thu API - Order Service
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: '123'
+          POSTGRES_DB: avengers_coffee
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U admin -d avengers_coffee"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    defaults:
+      run:
+        working-directory: avengers-coffee-system/services/order-service
+
+    steps:
+      - name: Lay ma nguon
+        uses: actions/checkout@v4
+
+      - name: Cai dat Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: avengers-coffee-system/services/order-service/package-lock.json
+
+      - name: Cai thu vien
+        run: npm ci
+
+      - name: Chay e2e API order
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: admin
+          DB_PASSWORD: '123'
+          DB_NAME: avengers_coffee
+          DB_SCHEMA: order_ci_github
+        run: npm run test:e2e -- --runInBand
+
+  kiem-thu-api-news:
+    name: Kiem thu API - News Service
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: '123'
+          POSTGRES_DB: avengers_coffee
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U admin -d avengers_coffee"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    defaults:
+      run:
+        working-directory: avengers-coffee-system/services/news-service
+
+    steps:
+      - name: Lay ma nguon
+        uses: actions/checkout@v4
+
+      - name: Cai dat Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: avengers-coffee-system/services/news-service/package-lock.json
+
+      - name: Cai thu vien
+        run: npm ci
+
+      - name: Chay e2e API news
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: admin
+          DB_PASSWORD: '123'
+          DB_NAME: avengers_coffee
+        run: npm run test:e2e -- --runInBand
+
+  kiem-tra-suc-khoe-ai-service:
+    name: Kiem tra suc khoe - AI Service
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: avengers-coffee-system/services/ai-service
+
+    steps:
+      - name: Lay ma nguon
+        uses: actions/checkout@v4
+
+      - name: Cai dat Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cai thu vien Python
+        run: pip install -r requirements.txt
+
+      - name: Khoi dong AI service
+        run: |
+          uvicorn main:app --host 127.0.0.1 --port 8000 &
+          echo $! > ai.pid
+
+      - name: Kiem tra endpoint health
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:8000/ai/health; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "AI service health check failed"
+          exit 1
+
+      - name: Tat AI service
+        if: always()
+        run: |
+          if [ -f ai.pid ]; then
+            kill "$(cat ai.pid)" || true
+          fi

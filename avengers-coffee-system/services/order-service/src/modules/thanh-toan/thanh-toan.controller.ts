@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Param, Post, Query, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Headers, HttpCode, Param, Post, Query, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { ThanhToanService } from './thanh-toan.service';
 
@@ -53,6 +53,7 @@ export class ThanhToanHeThongController {
   }
 
   @Post('sepay/webhook')
+  @HttpCode(200)
   sepayWebhook(
     @Body() payload: Record<string, any>,
     @Headers() headers: Record<string, string | string[] | undefined>,
@@ -60,5 +61,45 @@ export class ThanhToanHeThongController {
   ) {
     const rawBody = JSON.stringify(payload || req.body || {});
     return this.thanhToanService.xuLyWebhookSepay(payload, headers, rawBody);
+  }
+}
+
+@Controller()
+export class ThanhToanLegacyWebhookController {
+  constructor(private readonly thanhToanService: ThanhToanService) {}
+
+  private xuLyWebhook(payload: Record<string, any>, headers: Record<string, string | string[] | undefined>, req: Request) {
+    const rawBody = JSON.stringify(payload || req.body || {});
+    return this.thanhToanService.xuLyWebhookSepay(payload, headers, rawBody);
+  }
+
+  @Post('sepay_webhook.php')
+  @HttpCode(200)
+  sepayWebhookRoot(
+    @Body() payload: Record<string, any>,
+    @Headers() headers: Record<string, string | string[] | undefined>,
+    @Req() req: Request,
+  ) {
+    return this.xuLyWebhook(payload, headers, req);
+  }
+
+  @Post('ANTHAI_TEST/sepay_webhook.php')
+  @HttpCode(200)
+  sepayWebhookAnthai(
+    @Body() payload: Record<string, any>,
+    @Headers() headers: Record<string, string | string[] | undefined>,
+    @Req() req: Request,
+  ) {
+    return this.xuLyWebhook(payload, headers, req);
+  }
+
+  @Post('GD_Full_ChucNang/public/sepay_webhook.php')
+  @HttpCode(200)
+  sepayWebhookLegacyPublic(
+    @Body() payload: Record<string, any>,
+    @Headers() headers: Record<string, string | string[] | undefined>,
+    @Req() req: Request,
+  ) {
+    return this.xuLyWebhook(payload, headers, req);
   }
 }

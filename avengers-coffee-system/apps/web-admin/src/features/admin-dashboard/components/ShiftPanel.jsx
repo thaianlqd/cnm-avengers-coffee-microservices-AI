@@ -213,7 +213,7 @@ export function ShiftPanel({
 }) {
   const isApprovalMode = mode === 'approval'
   const canApprove = isManager && isApprovalMode
-  const canEditHistory = !isApprovalMode
+  const canEditHistory = !isApprovalMode || isManager
 
   const [historyFilter, setHistoryFilter] = useState('today')
   const [historyPage, setHistoryPage] = useState(1)
@@ -405,6 +405,9 @@ export function ShiftPanel({
                 </strong>
               </div>
             </div>
+            <p className="shift-formula-note">
+              Kỳ vọng cuối ca = tiền đầu ca + tiền mặt thực thu. Tiền mặt thực thu đã trừ phần tiền thối khách.
+            </p>
 
             {existingShift ? (
               <p className="shift-error" style={{ marginTop: '0.6rem' }}>
@@ -431,7 +434,7 @@ export function ShiftPanel({
         )}
       </section>
 
-      <section className="shift-history-panel">
+      <section className={isApprovalMode ? 'shift-history-panel shift-history-panel--approval' : 'shift-history-panel'}>
         <div className="shift-history-header">
           <h2>{isApprovalMode ? '📋 Biên bản chờ manager kiểm tra' : '📋 Lịch sử ca đã chốt'}</h2>
           <span>{filteredHistory.length} ca</span>
@@ -459,7 +462,7 @@ export function ShiftPanel({
             <p>{shiftHistory.length ? 'Không có ca phù hợp bộ lọc.' : 'Chưa có ca nào được chốt.'}</p>
           </div>
         ) : (
-          <div className="shift-history-list">
+          <div className={isApprovalMode ? 'shift-history-list shift-history-list--approval' : 'shift-history-list'}>
             {pagedHistory.map((item) => (
               <ShiftHistoryItem
                 key={item.ma_ca}

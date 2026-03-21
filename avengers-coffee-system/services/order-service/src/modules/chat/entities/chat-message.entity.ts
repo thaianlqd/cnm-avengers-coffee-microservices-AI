@@ -1,4 +1,5 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { ChatConversation } from './chat-conversation.entity';
 
 const orderSchema = process.env.DB_SCHEMA || 'orders';
 
@@ -9,6 +10,10 @@ export class ChatMessage {
 
   @Column({ type: 'uuid' })
   ma_hoi_thoai: string;
+
+  @ManyToOne(() => ChatConversation, (conversation) => conversation.tin_nhan, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'ma_hoi_thoai', referencedColumnName: 'ma_hoi_thoai' })
+  hoi_thoai: ChatConversation;
 
   @Column({ type: 'varchar' })
   ma_nguoi_gui: string;

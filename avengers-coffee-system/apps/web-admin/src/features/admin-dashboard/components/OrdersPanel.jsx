@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { ORDER_STATUSES, ORDER_STATUS_LABEL } from '../constants'
-import { fmtMoney, normalizeViText, paymentTag } from '../utils'
+import { fmtMoney, normalizeOrderStatus, normalizeViText, paymentTag } from '../utils'
 
 const PAGE_SIZE = 8
 
@@ -72,15 +72,15 @@ function getOrderTypeLabel(loai) {
 }
 
 function coTheSuaDon(order) {
-  return order.trang_thai_don_hang === 'MOI_TAO' && order.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG'
+  return normalizeOrderStatus(order.trang_thai_don_hang) === 'MOI_TAO' && order.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG'
 }
 
 function coTheXoaDon(order) {
-  return ['MOI_TAO', 'DA_HUY'].includes(order.trang_thai_don_hang)
+  return ['MOI_TAO', 'DA_HUY'].includes(normalizeOrderStatus(order.trang_thai_don_hang))
 }
 
 function lyDoKhongSuaDon(order) {
-  if (order.trang_thai_don_hang !== 'MOI_TAO') {
+  if (normalizeOrderStatus(order.trang_thai_don_hang) !== 'MOI_TAO') {
     return 'Đơn không còn ở trạng thái Mới tạo'
   }
   if (order.phuong_thuc_thanh_toan !== 'THANH_TOAN_KHI_NHAN_HANG') {
@@ -90,8 +90,8 @@ function lyDoKhongSuaDon(order) {
 }
 
 function lyDoKhongXoaDon(order) {
-  if (!['MOI_TAO', 'DA_HUY'].includes(order.trang_thai_don_hang)) {
-    return 'Chi xoa duoc don Moi tao hoac Da huy'
+  if (!['MOI_TAO', 'DA_HUY'].includes(normalizeOrderStatus(order.trang_thai_don_hang))) {
+    return 'Chỉ xóa được đơn Mới tạo hoặc Đã hủy'
   }
   return ''
 }
@@ -279,7 +279,7 @@ export function OrdersPanel({
     if (!editDraft) return
 
     if (!editDraft.items.length) {
-      window.alert('Don hang phai co it nhat 1 mon.')
+      window.alert('Đơn hàng phải có ít nhất 1 món.')
       return
     }
 
@@ -293,12 +293,12 @@ export function OrdersPanel({
       .filter((item) => item.ma_san_pham > 0 && item.ten_san_pham && item.so_luong > 0 && item.gia_ban >= 0)
 
     if (!payloadItems.length) {
-      window.alert('Danh sach mon khong hop le.')
+      window.alert('Danh sách món không hợp lệ.')
       return
     }
 
     if (order.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG' && editCashInsufficient) {
-      window.alert('Tien khach dua chua du de cap nhat don.')
+      window.alert('Tiền khách đưa chưa đủ để cập nhật đơn.')
       return
     }
 
@@ -313,22 +313,22 @@ export function OrdersPanel({
       })
       huySuaDon()
     } catch (error) {
-      window.alert(error?.message || 'Khong cap nhat duoc don hang')
+      window.alert(error?.message || 'Không cập nhật được đơn hàng')
     }
   }
 
   const xuLyXoaDon = async (order) => {
-    if (!window.confirm(`Xoa don ${order.ma_don_hang.slice(0, 8).toUpperCase()}? Thao tac nay khong the hoan tac.`)) {
+    if (!window.confirm(`Xóa đơn ${order.ma_don_hang.slice(0, 8).toUpperCase()}? Thao tác này không thể hoàn tác.`)) {
       return
     }
 
     try {
-      await onDeleteOrder(order.ma_don_hang, 'Staff xoa don nhap sai')
+      await onDeleteOrder(order.ma_don_hang, 'Staff xóa đơn nhập sai')
       if (editingOrderId === order.ma_don_hang) {
         huySuaDon()
       }
     } catch (error) {
-      window.alert(error?.message || 'Khong xoa duoc don hang')
+      window.alert(error?.message || 'Không xóa được đơn hàng')
     }
   }
 
@@ -361,6 +361,9 @@ export function OrdersPanel({
           <strong>{fmtMoney(financeSummary.tienMatThucThu)}</strong>
         </div>
       </div>
+      <p style={{ margin: '0 0 0.9rem', fontSize: '0.82rem', color: '#8a6750' }}>
+        Tiền mặt thực thu = tiền khách đưa - tiền thối khách. Phần này đã được trừ trước khi tính đối soát cuối ca.
+      </p>
 
       {/* ── Filter bar ── */}
       <div className="orders-filter-bar">
@@ -502,7 +505,7 @@ export function OrdersPanel({
           </div>
         ) : null}
         {pageOrders.map((order) => (
-          <article key={order.ma_don_hang} className={`order-card ${STAGE_CLASS[order.trang_thai_don_hang] || ''}`}>
+          <article key={order.ma_don_hang} className={`order-card ${STAGE_CLASS[normalizeOrderStatus(order.trang_thai_don_hang)] || ''}`}>
             <div>
               <h3>{order.ma_don_hang.slice(0, 8).toUpperCase()}</h3>
               <p>Khách: {normalizeViText(order.ten_khach_hang) || order.ma_nguoi_dung}</p>
@@ -543,8 +546,8 @@ export function OrdersPanel({
               <p className="order-payment-pill">{paymentTag(order.phuong_thuc_thanh_toan)}</p>
               <strong className="order-amount">{fmtMoney(order.tong_tien)}</strong>
               <p>
-                <span className={`status-pill ${TONE_CLASS[order.trang_thai_don_hang] || 'tone-new'}`}>
-                  {ORDER_STATUS_LABEL[order.trang_thai_don_hang] || order.trang_thai_don_hang}
+                <span className={`status-pill ${TONE_CLASS[normalizeOrderStatus(order.trang_thai_don_hang)] || 'tone-new'}`}>
+                  {ORDER_STATUS_LABEL[normalizeOrderStatus(order.trang_thai_don_hang)] || order.trang_thai_don_hang}
                 </span>
               </p>
               <p className="order-cashier">Thu ngân: {normalizeViText(order.ten_thu_ngan) || 'N/A'}</p>
@@ -553,11 +556,11 @@ export function OrdersPanel({
               <label htmlFor={`status-${order.ma_don_hang}`}>Trạng thái đơn</label>
               <select
                 id={`status-${order.ma_don_hang}`}
-                value={order.trang_thai_don_hang}
+                value={normalizeOrderStatus(order.trang_thai_don_hang)}
                 onChange={(e) => onUpdateStatus(order.ma_don_hang, e.target.value)}
                 disabled={updatingOrderId === order.ma_don_hang}
               >
-                {layDanhSachTrangThaiCoTheChon(order.trang_thai_don_hang).map((status) => (
+                {layDanhSachTrangThaiCoTheChon(normalizeOrderStatus(order.trang_thai_don_hang)).map((status) => (
                   <option key={status} value={status}>
                     {ORDER_STATUS_LABEL[status]}
                   </option>
@@ -642,12 +645,12 @@ export function OrdersPanel({
 
                 <div style={{ marginTop: '0.75rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.65rem' }}>
                   <div className="cash-box" style={{ margin: 0 }}>
-                    <p style={{ margin: 0, fontSize: '0.78rem', color: '#866955' }}>Tam tinh theo mon</p>
+                    <p style={{ margin: 0, fontSize: '0.78rem', color: '#866955' }}>Tạm tính theo món</p>
                     <strong>{fmtMoney(editSubTotal)}</strong>
-                    <p style={{ margin: '0.3rem 0 0', fontSize: '0.74rem', color: '#9a7a65' }}>VAT 8% tham khao: {fmtMoney(editVat)}</p>
+                    <p style={{ margin: '0.3rem 0 0', fontSize: '0.74rem', color: '#9a7a65' }}>VAT 8% tham khảo: {fmtMoney(editVat)}</p>
                   </div>
                   <div className="cash-box" style={{ margin: 0 }}>
-                    <label htmlFor={`edit-cash-${order.ma_don_hang}`}>Tien khach dua</label>
+                    <label htmlFor={`edit-cash-${order.ma_don_hang}`}>Tiền khách đưa</label>
                     <input
                       id={`edit-cash-${order.ma_don_hang}`}
                       type="number"
@@ -656,7 +659,7 @@ export function OrdersPanel({
                       onChange={(e) => setEditCashInput(Number(e.target.value) || 0)}
                     />
                     <p className={editCashInsufficient ? 'cash-warning' : ''}>
-                      {editCashInsufficient ? 'Tien khach dua chua du' : `Tien thoi: ${fmtMoney(editChange)}`}
+                      {editCashInsufficient ? 'Tiền khách đưa chưa đủ' : `Tiền thối: ${fmtMoney(editChange)}`}
                     </p>
                   </div>
                 </div>

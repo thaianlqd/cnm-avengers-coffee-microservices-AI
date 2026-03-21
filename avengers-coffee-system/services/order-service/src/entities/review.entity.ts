@@ -28,6 +28,15 @@ export class Review {
   @Column({ type: 'uuid', nullable: true })
   ma_don_hang: string | null;
 
+  @Column({ type: 'text', nullable: true })
+  phan_hoi_quan_ly: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  nguoi_phan_hoi: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  thoi_gian_phan_hoi: Date | null;
+
   @CreateDateColumn()
   ngay_tao: Date;
 

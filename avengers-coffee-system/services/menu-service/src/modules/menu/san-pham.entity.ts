@@ -14,6 +14,9 @@ export class SanPham {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   gia_ban: number;
 
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  gia_niem_yet: number | null;
+
   @Column({ type: 'text', nullable: true })
   mo_ta: string | null;
 
@@ -22,6 +25,12 @@ export class SanPham {
 
   @Column({ default: true })
   trang_thai: boolean;
+
+  @Column({ default: false })
+  la_hot: boolean;
+
+  @Column({ default: false })
+  la_moi: boolean;
 
   @ManyToOne(() => DanhMuc, (dm) => dm.danhSachsSanPham)
   @JoinColumn({ name: 'ma_danh_muc' })

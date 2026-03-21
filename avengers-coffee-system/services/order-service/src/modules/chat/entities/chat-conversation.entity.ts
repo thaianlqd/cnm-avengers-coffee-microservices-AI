@@ -1,4 +1,5 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { ChatMessage } from './chat-message.entity';
 
 const orderSchema = process.env.DB_SCHEMA || 'orders';
 
@@ -42,4 +43,7 @@ export class ChatConversation {
 
   @UpdateDateColumn()
   ngay_cap_nhat: Date;
+
+  @OneToMany(() => ChatMessage, (message) => message.hoi_thoai)
+  tin_nhan: ChatMessage[];
 }

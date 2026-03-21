@@ -34,6 +34,39 @@ export class UserController {
     return this.userService.login(body);
   }
 
+  @Public()
+  @Post('auth/forgot-password/request')
+  async requestForgotPassword(@Body() body: { email?: string; tai_khoan?: string }) {
+    return this.userService.requestForgotPassword(body);
+  }
+
+  @Public()
+  @Post('auth/forgot-password/reset')
+  async resetPasswordByOtp(
+    @Body()
+    body: { email?: string; tai_khoan?: string; otp?: string; newPassword?: string },
+  ) {
+    return this.userService.resetPasswordByOtp(body);
+  }
+
+  @Public()
+  @Post('auth/google')
+  async loginWithGoogle(@Body() body: any) {
+    return this.userService.loginWithGoogle(body);
+  }
+
+  @Public()
+  @Post('auth/facebook')
+  async loginWithFacebook(@Body() body: any) {
+    return this.userService.loginWithFacebook(body);
+  }
+
+  @Public()
+  @Post('recaptcha/verify')
+  async verifyRecaptcha(@Body() body: any) {
+    return this.userService.verifyRecaptcha(body);
+  }
+
   @AllowInternal()
   @Roles('ADMIN', 'MANAGER')
   @Get('users/workforce')
@@ -59,7 +92,7 @@ export class UserController {
       ten_dang_nhap?: string;
       mat_khau?: string;
       ho_ten?: string;
-      vai_tro?: 'STAFF' | 'MANAGER';
+      vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER';
       co_so_ma?: string;
       email?: string;
     },
@@ -76,7 +109,7 @@ export class UserController {
       ten_dang_nhap?: string;
       mat_khau?: string;
       ho_ten?: string;
-      vai_tro?: 'STAFF' | 'MANAGER';
+      vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER';
       co_so_ma?: string;
       trang_thai?: 'ACTIVE' | 'INACTIVE';
       email?: string;
@@ -103,6 +136,12 @@ export class UserController {
     return this.userService.layDanhSachChiNhanhAdmin();
   }
 
+  @Public()
+  @Get(['branches/public', 'users/branches/public'])
+  async layDanhSachChiNhanhCongKhai() {
+    return this.userService.layDanhSachChiNhanhCongKhai();
+  }
+
   @Roles('ADMIN')
   @Post('users/admin/branches')
   async taoChiNhanhAdmin(
@@ -111,7 +150,13 @@ export class UserController {
       ma_chi_nhanh?: string;
       ten_chi_nhanh?: string;
       dia_chi?: string;
+      thanh_pho?: string;
+      quan_huyen?: string;
       so_dien_thoai?: string;
+      hinh_anh_url?: string;
+      gio_mo_cua?: string;
+      gio_dong_cua?: string;
+      map_url?: string;
       trang_thai?: 'ACTIVE' | 'INACTIVE';
     },
   ) {
@@ -126,7 +171,13 @@ export class UserController {
     body: {
       ten_chi_nhanh?: string;
       dia_chi?: string;
+      thanh_pho?: string;
+      quan_huyen?: string;
       so_dien_thoai?: string;
+      hinh_anh_url?: string;
+      gio_mo_cua?: string;
+      gio_dong_cua?: string;
+      map_url?: string;
       trang_thai?: 'ACTIVE' | 'INACTIVE';
     },
   ) {
@@ -151,7 +202,7 @@ export class UserController {
   async capNhatThongTinCaNhan(
     @Param('userId') userId: string,
     @CurrentUser() currentUser: AuthUser | null,
-    @Body() body: { hoTen?: string; soDienThoai?: string; avatarUrl?: string },
+    @Body() body: { hoTen?: string; soDienThoai?: string; avatarUrl?: string; email?: string },
   ) {
     this.ensureSelfOrAdmin(currentUser, userId);
     return this.userService.capNhatThongTinCaNhan(userId, body);

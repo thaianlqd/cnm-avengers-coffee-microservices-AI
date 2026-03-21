@@ -1,4 +1,13 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { User } from './user.entity';
 
 const userSchema = process.env.DB_SCHEMA || 'identity';
 
@@ -9,6 +18,10 @@ export class DeliveryAddress {
 
   @Column({ type: 'uuid' })
   ma_nguoi_dung: string;
+
+  @ManyToOne(() => User, (user) => user.danh_sach_dia_chi, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'ma_nguoi_dung', referencedColumnName: 'ma_nguoi_dung' })
+  nguoi_dung: User;
 
   @Column({ type: 'varchar' })
   ten_dia_chi: string;

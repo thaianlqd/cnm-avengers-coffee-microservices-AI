@@ -17,17 +17,23 @@ logger = logging.getLogger(__name__)
 
 
 class CollaborativeFilterModel:
+    def get_popular_items(self, limit: int = 6) -> list:
+        """
+        Return the top N popular items for fallback recommendations.
+        """
+        return self.popular_items[:limit]
+
     def __init__(self):
         self.is_trained = False
-        self.user_item_matrix: Optional[np.ndarray] = None
-        self.item_similarity: Optional[np.ndarray] = None
-        self.item_ids: list = []
-        self.user_ids: list = []
-        self.popular_items: list = []
-        self.item_details: dict = {}
-        self.trained_at: Optional[datetime] = None
-        self.total_interactions: int = 0
-        self.total_users: int = 0
+        self.user_item_matrix = None
+        self.item_similarity = None
+        self.item_ids = []
+        self.user_ids = []
+        self.popular_items = []
+        self.item_details = {}
+        self.trained_at = None
+        self.total_interactions = 0
+        self.total_users = 0
 
     # ------------------------------------------------------------------
     # Training
@@ -44,7 +50,8 @@ class CollaborativeFilterModel:
                             ct.ma_san_pham::text  AS ma_san_pham,
                             ct.ten_san_pham,
                             SUM(ct.so_luong)      AS total_quantity,
-                            COUNT(*)              AS order_count
+                                                        COUNT(*)              AS order_count,
+                                                        MAX(dh.ngay_tao)      AS last_order_at
                         FROM orders.don_hang dh
                         JOIN orders.chi_tiet_don_hang ct
                           ON dh.ma_don_hang = ct.ma_don_hang
@@ -52,7 +59,7 @@ class CollaborativeFilterModel:
                           AND dh.ma_nguoi_dung NOT LIKE 'guest-%'
                         GROUP BY dh.ma_nguoi_dung, ct.ma_san_pham, ct.ten_san_pham
                     """)).fetchall(),
-                    columns=["ma_nguoi_dung", "ma_san_pham", "ten_san_pham", "total_quantity", "order_count"],
+                    columns=["ma_nguoi_dung", "ma_san_pham", "ten_san_pham", "total_quantity", "order_count", "last_order_at"],
                 )
 
                 # ── ratings (bonus signal) ───────────────────────────
@@ -63,6 +70,40 @@ class CollaborativeFilterModel:
                         WHERE ma_nguoi_dung IS NOT NULL
                     """)).fetchall(),
                     columns=["ma_nguoi_dung", "ma_san_pham", "so_sao"],
+                )
+
+                # ── favorites (strong intent signal) ─────────────────
+                try:
+                    favorites_df = pd.DataFrame(
+                        conn.execute(text("""
+                            SELECT
+                                ma_nguoi_dung,
+                                ma_san_pham::text AS ma_san_pham,
+                                COUNT(*)::int AS favorite_count
+                            FROM orders.yeu_thich_san_pham
+                            WHERE ma_nguoi_dung IS NOT NULL
+                            GROUP BY ma_nguoi_dung, ma_san_pham
+                        """)).fetchall(),
+                        columns=["ma_nguoi_dung", "ma_san_pham", "favorite_count"],
+                    )
+                except Exception:
+                    favorites_df = pd.DataFrame(columns=["ma_nguoi_dung", "ma_san_pham", "favorite_count"])
+
+                # ── promotion usage by product (price sensitivity signal) ──
+                promo_df = pd.DataFrame(
+                    conn.execute(text("""
+                        SELECT
+                            dh.ma_nguoi_dung,
+                            ct.ma_san_pham::text AS ma_san_pham,
+                            COUNT(*)::int AS promo_order_count
+                        FROM orders.don_hang dh
+                        JOIN orders.chi_tiet_don_hang ct ON ct.ma_don_hang = dh.ma_don_hang
+                        WHERE dh.ma_nguoi_dung IS NOT NULL
+                          AND dh.ma_nguoi_dung NOT LIKE 'guest-%'
+                          AND COALESCE(dh.ma_voucher, '') <> ''
+                        GROUP BY dh.ma_nguoi_dung, ct.ma_san_pham
+                    """)).fetchall(),
+                    columns=["ma_nguoi_dung", "ma_san_pham", "promo_order_count"],
                 )
 
                 # ── menu items (for metadata + fallback) ────────────
@@ -126,12 +167,34 @@ class CollaborativeFilterModel:
                 return
 
             # Merge rating bonus
+            merged = interactions_df.copy()
+
+            # Base score from real purchases
+            merged["score"] = (
+                merged["total_quantity"].fillna(0).astype(float)
+                + (merged["order_count"].fillna(0).astype(float) * 0.5)
+            )
+
+            # Recency bonus: recently purchased items are weighted higher
+            now_ts = pd.Timestamp.now()
+            merged["last_order_at"] = pd.to_datetime(merged["last_order_at"], errors="coerce", utc=True).dt.tz_convert(None)
+            days_since = (now_ts - merged["last_order_at"]).dt.total_seconds().div(86400).fillna(60)
+            recency_bonus = (1.5 / (1 + (days_since / 30))).clip(lower=0, upper=1.5)
+            merged["score"] = merged["score"] + recency_bonus
+
             if not ratings_df.empty:
-                merged = interactions_df.merge(ratings_df, on=["ma_nguoi_dung", "ma_san_pham"], how="left")
-                merged["score"] = merged["total_quantity"] + merged["so_sao"].fillna(3).clip(1, 5)
-            else:
-                merged = interactions_df.copy()
-                merged["score"] = merged["total_quantity"]
+                merged = merged.merge(ratings_df, on=["ma_nguoi_dung", "ma_san_pham"], how="left")
+                merged["score"] = merged["score"] + merged["so_sao"].fillna(0).clip(0, 5)
+
+            if not favorites_df.empty:
+                merged = merged.merge(favorites_df, on=["ma_nguoi_dung", "ma_san_pham"], how="left")
+                merged["score"] = merged["score"] + merged["favorite_count"].fillna(0).astype(float) * 4.0
+
+            if not promo_df.empty:
+                merged = merged.merge(promo_df, on=["ma_nguoi_dung", "ma_san_pham"], how="left")
+                merged["score"] = merged["score"] + merged["promo_order_count"].fillna(0).astype(float) * 1.25
+
+            merged["score"] = merged["score"].fillna(0).clip(lower=0)
 
             # Build user-item pivot (implicit feedback)
             pivot = merged.pivot_table(

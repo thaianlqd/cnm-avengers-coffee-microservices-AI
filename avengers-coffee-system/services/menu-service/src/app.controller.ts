@@ -16,6 +16,34 @@ export class AppController {
     return this.appService.getCategories();
   }
 
+  @Post('menu/categories')
+  createCategory(
+    @Body()
+    payload: {
+      label?: string;
+      icon?: string;
+    },
+  ) {
+    return this.appService.createCategory(payload);
+  }
+
+  @Patch('menu/categories/:categoryId')
+  updateCategory(
+    @Param('categoryId') categoryId: string,
+    @Body()
+    payload: {
+      label?: string;
+      icon?: string;
+    },
+  ) {
+    return this.appService.updateCategory(Number(categoryId), payload);
+  }
+
+  @Delete('menu/categories/:categoryId')
+  deleteCategory(@Param('categoryId') categoryId: string) {
+    return this.appService.deleteCategory(Number(categoryId));
+  }
+
   @Get('menu/items')
   getMenuItems(
     @Query('search') search?: string,
@@ -45,9 +73,12 @@ export class AppController {
       name?: string;
       category_code?: string | number;
       price?: number;
+      original_price?: number;
       image?: string;
       description?: string;
       dang_ban?: boolean;
+      la_hot?: boolean;
+      la_moi?: boolean;
     },
   ) {
     return this.appService.createMenuItem(payload);
@@ -70,9 +101,12 @@ export class AppController {
       name?: string;
       category_code?: string | number;
       price?: number;
+      original_price?: number;
       image?: string;
       description?: string;
       dang_ban?: boolean;
+      la_hot?: boolean;
+      la_moi?: boolean;
     },
   ) {
     return this.appService.updateMenuItem(Number(itemId), payload);

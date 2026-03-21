@@ -24,6 +24,8 @@ import { VoucherModule } from './modules/voucher/voucher.module';
 import { ChatConversation } from './modules/chat/entities/chat-conversation.entity';
 import { ChatMessage } from './modules/chat/entities/chat-message.entity';
 import { ChatModule } from './modules/chat/chat.module';
+import { FavoriteModule } from './modules/favorite/favorite.module';
+import { FavoriteItem } from './modules/favorite/entities/favorite-item.entity';
 
 const orderSchema = process.env.DB_SCHEMA || 'orders';
 const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
@@ -77,6 +79,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
             Voucher,
             ChatConversation,
             ChatMessage,
+            FavoriteItem,
           ],
           synchronize: true,
         };
@@ -89,6 +92,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
     ThanhToanModule,
     VoucherModule,
     ChatModule,
+    FavoriteModule,
   ],
   controllers: [AppController, ReviewController],
   providers: [AppService, ReviewService],

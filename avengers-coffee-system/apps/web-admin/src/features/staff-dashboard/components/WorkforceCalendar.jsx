@@ -1,4 +1,5 @@
 import { Fragment } from 'react'
+import { getAttendanceInsight, getAttendanceToneClass, getMonday, toDateOnlyLocal } from '../../workforce/attendance'
 
 const DAY_LABELS = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật']
 const SLOT_ORDER = ['SANG', 'CHIEU', 'TOI']
@@ -7,28 +8,18 @@ const SLOT_LABEL = {
   CHIEU: 'Chiều',
   TOI: 'Tối',
 }
-const ATTENDANCE_LABEL = {
-  ASSIGNED: 'Đã xếp lịch',
-  PRESENT: 'Có mặt',
-  ABSENT: 'Vắng mặt',
+
+function sourceLabel(item) {
+  const source = String(item?.nguon_tao || '').toUpperCase()
+  if (source === 'MANAGER_ASSIGNMENT') return 'Manager phân công'
+  if (source === 'STAFF_REQUEST') return 'Staff đăng ký'
+  if (source === 'MANAGER_REQUEST') return 'Manager tự đăng ký'
+  return source || 'N/A'
 }
 
-function toDateOnly(date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+function roleLabel(item) {
+  return String(item?.vai_tro || '').toUpperCase() || 'STAFF'
 }
-
-function getMonday(date) {
-  const next = new Date(date)
-  const day = next.getDay()
-  const diff = day === 0 ? -6 : 1 - day
-  next.setDate(next.getDate() + diff)
-  next.setHours(0, 0, 0, 0)
-  return next
-}
-
 function addDays(date, amount) {
   const next = new Date(date)
   next.setDate(next.getDate() + amount)
@@ -80,7 +71,7 @@ export function WorkforceCalendar({
       <div className="workforce-calendar-grid">
         <div className="workforce-grid-corner">Ca làm</div>
         {days.map((day, index) => (
-          <div key={toDateOnly(day)} className="workforce-grid-day-head">
+          <div key={toDateOnlyLocal(day)} className="workforce-grid-day-head">
             <strong>{DAY_LABELS[index]}</strong>
             <span>{formatDayHeader(day)}</span>
           </div>
@@ -93,24 +84,34 @@ export function WorkforceCalendar({
               <span>{slot === 'SANG' ? '07:00 - 12:00/14:00' : slot === 'CHIEU' ? '12:00/14:00 - 17:00/22:00' : '17:00 - 22:00'}</span>
             </div>
             {days.map((day) => {
-              const dayKey = toDateOnly(day)
+              const dayKey = toDateOnlyLocal(day)
               const cellItems = items.filter((item) => item.ngay_lam_viec === dayKey && item.ma_khung_ca === slot)
 
               return (
                 <div key={`${slot}-${dayKey}`} className="workforce-grid-cell">
+                  {cellItems.length > 0 ? <span className="workforce-empty-slot">{cellItems.length} người trong ca</span> : null}
                   {cellItems.length === 0 ? <span className="workforce-empty-slot">Trống</span> : null}
-                  {cellItems.map((item) => (
-                    <button
-                      key={item.ma_ca_lam_viec}
-                      type="button"
-                      className={selectedItemId === item.ma_ca_lam_viec ? 'workforce-shift-chip active' : 'workforce-shift-chip'}
-                      onClick={() => onSelectItem?.(item)}
-                    >
-                      <strong>{mode === 'manager' ? item.staff_name || item.staff_username : item.ten_ca}</strong>
-                      <span>{item.gio_bat_dau} - {item.gio_ket_thuc}</span>
-                      <small>{ATTENDANCE_LABEL[item.trang_thai_cham_cong] || item.trang_thai_cham_cong}</small>
-                    </button>
-                  ))}
+                  {cellItems.map((item) => {
+                    const insight = getAttendanceInsight(item)
+                    return (
+                      <button
+                        key={item.ma_ca_lam_viec}
+                        type="button"
+                        className={[
+                          'workforce-shift-chip',
+                          getAttendanceToneClass(insight),
+                          selectedItemId === item.ma_ca_lam_viec ? 'active' : '',
+                        ].filter(Boolean).join(' ')}
+                        onClick={() => onSelectItem?.(item)}
+                      >
+                        <strong>{mode === 'manager' ? item.staff_name || item.staff_username : item.ten_ca}</strong>
+                        {mode === 'manager' ? <span>{item.staff_username} • {roleLabel(item)}</span> : null}
+                        <span>{item.gio_bat_dau} - {item.gio_ket_thuc}</span>
+                        <small>{insight.shortLabel}</small>
+                        {insight.flags.length ? <em>{insight.flags[0]}</em> : <em>{sourceLabel(item)}</em>}
+                      </button>
+                    )
+                  })}
                 </div>
               )
             })}

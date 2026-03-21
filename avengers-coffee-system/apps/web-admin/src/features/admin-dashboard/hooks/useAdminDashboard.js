@@ -1,6 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { io } from 'socket.io-client'
 import { API_BASE_URL, ORDER_STATUSES, OVERVIEW_TIME_RANGES, PAYMENT_METHOD_LABEL } from '../constants'
 import { cutTimeByRange, normalizeViText, toDateKey, toDateLabel } from '../utils'
+
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3005'
 
 function getVnDateKey(input) {
   const source = input ? new Date(input) : new Date()
@@ -17,6 +20,13 @@ function taoKhoangChotCaTheoNgay(shiftDate) {
   const to = new Date(`${dateKey}T22:00:00+07:00`).toISOString()
   return { from, to }
 }
+
+function shouldDisplayShiftInCalendar(item) {
+  if (String(item?.nguon_tao || '') !== 'STAFF_REQUEST') return true
+  return String(item?.trang_thai_yeu_cau || '').toUpperCase() === 'APPROVED'
+}
+
+const ADMIN_LOCAL_NOTIFY_EVENT = 'avengers-admin-local-notify'
 
 export function useAdminDashboard() {
   const [loginForm, setLoginForm] = useState({ identifier: 'thaian_staff_macdinhchi', password: '123456' })
@@ -73,10 +83,32 @@ export function useAdminDashboard() {
   const [workforceUsersState, setWorkforceUsersState] = useState({ loading: false, error: '', items: [] })
   const [creatingWorkShift, setCreatingWorkShift] = useState(false)
   const [updatingWorkShiftId, setUpdatingWorkShiftId] = useState('')
+  const [staffShiftRequestState, setStaffShiftRequestState] = useState({ loading: false, error: '', items: [] })
+  const [managerShiftRequestState, setManagerShiftRequestState] = useState({ loading: false, error: '', items: [] })
+  const [creatingShiftRequest, setCreatingShiftRequest] = useState(false)
+  const [handlingShiftRequestId, setHandlingShiftRequestId] = useState('')
+  const [checkingAttendanceShiftId, setCheckingAttendanceShiftId] = useState('')
+  const [reviewsState, setReviewsState] = useState({ loading: false, error: '', items: [] })
+  const [replyingReviewId, setReplyingReviewId] = useState('')
+  const knownOrderIdsRef = useRef(new Set())
 
   const sessionUsername = session?.user?.tenDangNhap || session?.user?.email || ''
   const sessionRole = session?.user?.vaiTro || session?.user?.vai_tro || 'STAFF'
   const sessionBranchCode = (session?.user?.coSoMa || session?.user?.co_so_ma || 'MAC_DINH_CHI').toUpperCase()
+
+  useEffect(() => {
+    knownOrderIdsRef.current = new Set()
+  }, [session?.user?.maNguoiDung, session?.user?.ma_nguoi_dung, sessionBranchCode])
+
+  const pushAdminNotification = (tieuDe, noiDung) => {
+    if (!tieuDe && !noiDung) return
+    window.dispatchEvent(new CustomEvent(ADMIN_LOCAL_NOTIFY_EVENT, {
+      detail: {
+        tieu_de: tieuDe,
+        noi_dung: noiDung,
+      },
+    }))
+  }
 
   const dongBoPaymentDetailsTheoDon = (prevPaymentDetails, order) => {
     if (!order) return prevPaymentDetails || null
@@ -155,6 +187,20 @@ export function useAdminDashboard() {
       }
 
       const nextOrders = payload?.orders || []
+
+      const nextKnown = new Set(nextOrders.map((item) => item.ma_don_hang).filter(Boolean))
+      if (knownOrderIdsRef.current.size > 0) {
+        const freshOrders = nextOrders.filter((item) => item?.ma_don_hang && !knownOrderIdsRef.current.has(item.ma_don_hang))
+        if (freshOrders.length) {
+          const newest = freshOrders[0]
+          pushAdminNotification(
+            'Có đơn hàng mới',
+            `Đơn #${String(newest.ma_don_hang || '').slice(0, 8).toUpperCase()} vừa được tạo.`,
+          )
+        }
+      }
+      knownOrderIdsRef.current = nextKnown
+
       setOrdersState({ loading: false, error: '', items: nextOrders })
 
       setLastPosOrder((prev) => {
@@ -238,18 +284,21 @@ export function useAdminDashboard() {
     const timer = window.setInterval(() => {
       refreshOrders()
       refreshMenuAndInventory()
-    }, 30000)
+    }, 90000)
 
     return () => window.clearInterval(timer)
   }, [session])
 
-  const taiLichLamViecManager = async () => {
-    setWorkShiftState((prev) => ({ ...prev, loading: true, error: '' }))
+  const taiLichLamViecManager = async ({ silent = false } = {}) => {
+    if (!silent) {
+      setWorkShiftState((prev) => ({ ...prev, loading: true, error: '' }))
+    }
     try {
       const response = await fetch(`${API_BASE_URL}/manager/work-shifts?branch_code=${encodeURIComponent(sessionBranchCode)}`)
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc lich lam viec')
-      setWorkShiftState({ loading: false, error: '', items: payload?.items || [] })
+      const visibleItems = (payload?.items || []).filter(shouldDisplayShiftInCalendar)
+      setWorkShiftState({ loading: false, error: '', items: visibleItems })
     } catch (error) {
       setWorkShiftState({ loading: false, error: error.message || 'Khong tai duoc lich lam viec', items: [] })
     }
@@ -258,7 +307,7 @@ export function useAdminDashboard() {
   const taiDanhSachNhanSu = async () => {
     setWorkforceUsersState((prev) => ({ ...prev, loading: true, error: '' }))
     try {
-      const response = await fetch(`${API_BASE_URL}/users/workforce?role=STAFF&branch_code=${encodeURIComponent(sessionBranchCode)}`)
+      const response = await fetch(`${API_BASE_URL}/users/workforce?branch_code=${encodeURIComponent(sessionBranchCode)}`)
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc danh sach nhan vien')
       setWorkforceUsersState({ loading: false, error: '', items: payload?.items || [] })
@@ -267,18 +316,57 @@ export function useAdminDashboard() {
     }
   }
 
-  const taiLichLamViecCuaToi = async () => {
+  const taiLichLamViecCuaToi = async ({ silent = false } = {}) => {
     if (!sessionUsername) return
-    setMyWorkShiftState((prev) => ({ ...prev, loading: true, error: '' }))
+    if (!silent) {
+      setMyWorkShiftState((prev) => ({ ...prev, loading: true, error: '' }))
+    }
     try {
       const params = new URLSearchParams({ staff_username: sessionUsername })
       params.set('branch_code', sessionBranchCode)
       const response = await fetch(`${API_BASE_URL}/staff/work-shifts?${params.toString()}`)
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc lich ca cua ban')
-      setMyWorkShiftState({ loading: false, error: '', items: payload?.items || [] })
+      const visibleItems = (payload?.items || []).filter(shouldDisplayShiftInCalendar)
+      setMyWorkShiftState({ loading: false, error: '', items: visibleItems })
     } catch (error) {
       setMyWorkShiftState({ loading: false, error: error.message || 'Khong tai duoc lich ca cua ban', items: [] })
+    }
+  }
+
+  const taiYeuCauDangKyCa = async (forManager = false, { silent = false } = {}) => {
+    const setTargetState = forManager ? setManagerShiftRequestState : setStaffShiftRequestState
+    if (!silent) {
+      setTargetState((prev) => ({ ...prev, loading: true, error: '' }))
+    }
+    try {
+      const endpoint = forManager
+        ? `${API_BASE_URL}/manager/work-shifts/requests?branch_code=${encodeURIComponent(sessionBranchCode)}`
+        : `${API_BASE_URL}/staff/work-shifts?staff_username=${encodeURIComponent(sessionUsername)}&branch_code=${encodeURIComponent(sessionBranchCode)}`
+
+      const response = await fetch(endpoint)
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc yeu cau dang ky ca')
+
+      const rows = (payload?.items || []).filter((item) => {
+        if (forManager) return item?.nguon_tao === 'STAFF_REQUEST'
+        return item?.nguon_tao === 'STAFF_REQUEST'
+      })
+      setTargetState({ loading: false, error: '', items: rows })
+    } catch (error) {
+      setTargetState({ loading: false, error: error.message || 'Khong tai duoc yeu cau dang ky ca', items: [] })
+    }
+  }
+
+  const taiReviewCSKH = async () => {
+    setReviewsState((prev) => ({ ...prev, loading: true, error: '' }))
+    try {
+      const response = await fetch(`${API_BASE_URL}/manager/reviews?limit=200`)
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc danh gia khach hang')
+      setReviewsState({ loading: false, error: '', items: payload?.items || [] })
+    } catch (error) {
+      setReviewsState({ loading: false, error: error.message || 'Khong tai duoc danh gia khach hang', items: [] })
     }
   }
 
@@ -286,11 +374,83 @@ export function useAdminDashboard() {
     if (!session) return
 
     taiLichLamViecCuaToi()
+    if (sessionRole !== 'MANAGER') {
+      taiYeuCauDangKyCa(false)
+    }
     if (sessionRole === 'MANAGER') {
-      taiLichLamViecManager()
-      taiDanhSachNhanSu()
+      Promise.all([
+        taiLichLamViecManager(),
+        taiDanhSachNhanSu(),
+        taiYeuCauDangKyCa(true),
+        taiReviewCSKH(),
+      ])
     }
   }, [session])
+
+  useEffect(() => {
+    if (!session) return undefined
+
+    const socket = io(`${SOCKET_URL}/notifications`, {
+      transports: ['websocket'],
+      auth: {
+        userId: session?.user?.maNguoiDung || session?.user?.ma_nguoi_dung || sessionUsername,
+      },
+    })
+
+    const syncWorkforceData = () => {
+      taiLichLamViecCuaToi({ silent: true })
+      if (sessionRole !== 'MANAGER') {
+        taiYeuCauDangKyCa(false, { silent: true })
+      }
+      if (sessionRole === 'MANAGER') {
+        taiLichLamViecManager({ silent: true })
+        taiYeuCauDangKyCa(true, { silent: true })
+      }
+    }
+
+    socket.on('connect', () => {
+      socket.emit('notifications:subscribe', {
+        userId: session?.user?.maNguoiDung || session?.user?.ma_nguoi_dung || sessionUsername,
+      })
+      socket.emit('workforce:subscribe', { branchCode: sessionBranchCode })
+
+      refreshOrders()
+      refreshMenuAndInventory()
+      syncWorkforceData()
+    })
+
+    socket.on('notification:new', (notification) => {
+      const type = String(notification?.loai || '').toUpperCase()
+      const hasOrderData = Boolean(notification?.du_lieu?.ma_don_hang)
+      const domain = String(notification?.du_lieu?.domain || '').toUpperCase()
+
+      if (type === 'ORDER' || type === 'PAYMENT' || hasOrderData) {
+        refreshOrders()
+        refreshMenuAndInventory()
+      }
+
+      if (type === 'SYSTEM' || domain === 'WORKFORCE') {
+        syncWorkforceData()
+      }
+
+      if (sessionRole === 'MANAGER' && (type === 'SYSTEM' || type === 'ORDER')) {
+        taiReviewCSKH()
+      }
+    })
+
+    socket.on('workforce:event', (event) => {
+      if (String(event?.branchCode || '').toUpperCase() !== sessionBranchCode) return
+      syncWorkforceData()
+    })
+
+    // Fallback polling in case websocket disconnects or proxy blocks ws.
+    const timer = window.setInterval(syncWorkforceData, 90000)
+
+    return () => {
+      window.clearInterval(timer)
+      socket.disconnect()
+    }
+  }, [session, sessionRole, sessionUsername, sessionBranchCode])
 
   const taiLichSuChotCa = async () => {
     try {
@@ -382,6 +542,10 @@ export function useAdminDashboard() {
         ...prev,
         success: payload.status === 'APPROVED' ? 'Da phe duyet bien ban doi soat.' : 'Da tu choi bien ban doi soat.',
       }))
+      pushAdminNotification(
+        payload.status === 'APPROVED' ? 'Đã phê duyệt chốt ca' : 'Đã từ chối chốt ca',
+        `Biên bản ca #${String(maCa).slice(0, 8).toUpperCase()} đã được cập nhật trạng thái ${payload.status}.`,
+      )
       await taiLichSuChotCa()
       return true
     } catch (error) {
@@ -777,6 +941,11 @@ export function useAdminDashboard() {
           paymentDetails: dongBoPaymentDetailsTheoDon(prev.paymentDetails, mergedOrder),
         }
       })
+
+      pushAdminNotification(
+        'Cập nhật trạng thái đơn thành công',
+        `Đơn #${orderId.slice(0, 8).toUpperCase()} đã chuyển sang ${appliedStatus}.`,
+      )
     } catch (error) {
       window.alert(error.message || 'Cập nhật trạng thái thất bại')
     } finally {
@@ -810,6 +979,11 @@ export function useAdminDashboard() {
         }
       })
 
+      pushAdminNotification(
+        'Cập nhật đơn hàng thành công',
+        `Đơn #${orderId.slice(0, 8).toUpperCase()} đã được chỉnh sửa.`,
+      )
+
       return result
     } finally {
       setUpdatingOrderId('')
@@ -830,6 +1004,7 @@ export function useAdminDashboard() {
 
       const result = await response.json().catch(() => ({}))
       if (!response.ok) {
+        await refreshOrders()
         throw new Error(result?.message || 'Xoa don that bai')
       }
 
@@ -840,7 +1015,15 @@ export function useAdminDashboard() {
         return null
       })
 
+      pushAdminNotification(
+        'Đã xóa đơn hàng',
+        `Đơn #${orderId.slice(0, 8).toUpperCase()} đã được xóa khỏi hệ thống vận hành.`,
+      )
+
       return result
+    } catch (error) {
+      await refreshOrders()
+      throw error
     } finally {
       setUpdatingOrderId('')
     }
@@ -1038,6 +1221,7 @@ export function useAdminDashboard() {
         cashSnapshot,
       })
       setPosStatus({ error: '', success: `Tạo đơn tại quầy thành công. Mã đơn: ${maDon}` })
+      pushAdminNotification('Tạo đơn tại quầy thành công', `Đã tạo đơn mới #${String(maDon).slice(0, 8).toUpperCase()}.`)
       if (isCashMethod) {
         setPosCashInput(0)
       }
@@ -1076,6 +1260,7 @@ export function useAdminDashboard() {
       if (!response.ok) throw new Error(payload?.message || 'Khong tao duoc lich lam viec')
       setWorkShiftForm((prev) => ({ ...prev, note: '' }))
       await Promise.all([taiLichLamViecManager(), taiLichLamViecCuaToi()])
+      pushAdminNotification('Đã tạo lịch làm việc', `Đã tạo lịch cho ${workShiftForm.staff_username} ngày ${workShiftForm.shift_date}.`)
     } catch (error) {
       setWorkShiftState((prev) => ({ ...prev, error: error.message || 'Khong tao duoc lich lam viec' }))
     } finally {
@@ -1095,6 +1280,7 @@ export function useAdminDashboard() {
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload?.message || 'Khong cap nhat cham cong duoc')
       await Promise.all([taiLichLamViecManager(), taiLichLamViecCuaToi()])
+      pushAdminNotification('Đã cập nhật chấm công', `Ca #${String(workShiftId).slice(0, 8).toUpperCase()} đã được cập nhật.`)
     } catch (error) {
       setWorkShiftState((prev) => ({ ...prev, error: error.message || 'Khong cap nhat cham cong duoc' }))
     } finally {
@@ -1113,6 +1299,7 @@ export function useAdminDashboard() {
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload?.message || 'Khong xoa duoc lich lam viec')
       await Promise.all([taiLichLamViecManager(), taiLichLamViecCuaToi()])
+      pushAdminNotification('Đã xóa lịch làm việc', `Ca #${String(workShiftId).slice(0, 8).toUpperCase()} đã bị xóa.`)
     } catch (error) {
       setWorkShiftState((prev) => ({ ...prev, error: error.message || 'Khong xoa duoc lich lam viec' }))
     } finally {
@@ -1181,6 +1368,270 @@ export function useAdminDashboard() {
     popup.print()
   }
 
+  const taoYeuCauDangKyCa = async ({ shift_date, shift_code, note }) => {
+    setCreatingShiftRequest(true)
+    setStaffShiftRequestState((prev) => ({ ...prev, error: '' }))
+    try {
+      const requestPayload = {
+        shift_date,
+        shift_code,
+        note,
+        branch_code: sessionBranchCode,
+        staff_username: sessionUsername,
+        staff_name: session?.user?.tenDangNhap || sessionUsername,
+      }
+
+      const endpoint = '/staff/work-shifts/requests'
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestPayload),
+      })
+
+      const payload = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        const errorMsg = payload?.message || payload?.error || `HTTP ${response.status}: ${response.statusText}`
+        throw new Error(errorMsg)
+      }
+      
+      await Promise.all([
+        taiLichLamViecCuaToi(),
+        taiYeuCauDangKyCa(false),
+      ])
+      pushAdminNotification(
+        'Đã gửi yêu cầu đăng ký ca',
+        `Yêu cầu ca ${shift_code} ngày ${shift_date} đã gửi tới manager.`,
+      )
+      return { ok: true, message: payload?.message || 'Đã gửi yêu cầu thành công' }
+    } catch (error) {
+      setStaffShiftRequestState((prev) => ({ ...prev, error: error.message || 'Khong gui duoc yeu cau dang ky ca' }))
+      return { ok: false, message: error.message || 'Khong gui duoc yeu cau dang ky ca' }
+    } finally {
+      setCreatingShiftRequest(false)
+    }
+  }
+
+  const suaYeuCauDangKyCa = async (requestId, { shift_date, shift_code, note }) => {
+    setCreatingShiftRequest(true)
+    setStaffShiftRequestState((prev) => ({ ...prev, error: '' }))
+    try {
+      const response = await fetch(`${API_BASE_URL}/staff/work-shifts/requests/${requestId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shift_date,
+          shift_code,
+          note,
+          branch_code: sessionBranchCode,
+        }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Khong cap nhat duoc yeu cau dang ky ca')
+      await Promise.all([
+        taiLichLamViecCuaToi(),
+        taiYeuCauDangKyCa(false),
+      ])
+      pushAdminNotification('Đã cập nhật yêu cầu đăng ký ca', `Yêu cầu ca ${shift_code} ngày ${shift_date} đã được cập nhật.`)
+      return { ok: true, message: payload?.message || 'Đã cập nhật yêu cầu thành công' }
+    } catch (error) {
+      setStaffShiftRequestState((prev) => ({ ...prev, error: error.message || 'Khong cap nhat duoc yeu cau dang ky ca' }))
+      return { ok: false, message: error.message || 'Khong cap nhat duoc yeu cau dang ky ca' }
+    } finally {
+      setCreatingShiftRequest(false)
+    }
+  }
+
+  const xuLyYeuCauDangKyCa = async (requestId, payload) => {
+    setHandlingShiftRequestId(String(requestId))
+    setManagerShiftRequestState((prev) => ({ ...prev, error: '' }))
+    try {
+      const response = await fetch(`${API_BASE_URL}/manager/work-shifts/requests/${requestId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...payload,
+          branch_code: sessionBranchCode,
+        }),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result?.message || 'Khong xu ly duoc yeu cau')
+
+      await Promise.all([
+        taiYeuCauDangKyCa(true),
+        taiLichLamViecManager(),
+        taiLichLamViecCuaToi(),
+      ])
+
+      pushAdminNotification(
+        payload.status === 'APPROVED' ? 'Đã duyệt yêu cầu đăng ký ca' : 'Đã từ chối yêu cầu đăng ký ca',
+        `Yêu cầu #${String(requestId).slice(0, 8).toUpperCase()} đã được xử lý ${payload.status}.`,
+      )
+
+      return true
+    } catch (error) {
+      setManagerShiftRequestState((prev) => ({ ...prev, error: error.message || 'Khong xu ly duoc yeu cau' }))
+      return false
+    } finally {
+      setHandlingShiftRequestId('')
+    }
+  }
+
+  const phanHoiReview = async (reviewId, phanHoi) => {
+    setReplyingReviewId(String(reviewId))
+    setReviewsState((prev) => ({ ...prev, error: '' }))
+    try {
+      const response = await fetch(`${API_BASE_URL}/manager/reviews/${reviewId}/reply`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phan_hoi: String(phanHoi || '').trim() }),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result?.message || 'Khong gui duoc phan hoi')
+      await taiReviewCSKH()
+      pushAdminNotification('Đã phản hồi đánh giá', `Đã phản hồi review #${reviewId}.`)
+      return true
+    } catch (error) {
+      setReviewsState((prev) => ({ ...prev, error: error.message || 'Khong gui duoc phan hoi' }))
+      return false
+    } finally {
+      setReplyingReviewId('')
+    }
+  }
+
+  const suaPhanHoiReview = async (reviewId, phanHoi) => {
+    setReplyingReviewId(String(reviewId))
+    setReviewsState((prev) => ({ ...prev, error: '' }))
+    try {
+      const response = await fetch(`${API_BASE_URL}/manager/reviews/${reviewId}/reply`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phan_hoi: String(phanHoi || '').trim(),
+        }),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result?.message || 'Khong cap nhat duoc phan hoi')
+      await taiReviewCSKH()
+      pushAdminNotification('Đã cập nhật phản hồi', `Phản hồi review #${reviewId} đã được chỉnh sửa.`)
+      return { ok: true, message: result?.message || 'Cap nhat thanh cong' }
+    } catch (error) {
+      setReviewsState((prev) => ({ ...prev, error: error.message || 'Khong cap nhat duoc phan hoi' }))
+      return { ok: false, message: error.message || 'Khong cap nhat duoc phan hoi' }
+    } finally {
+      setReplyingReviewId('')
+    }
+  }
+
+  const xoaPhanHoiReview = async (reviewId) => {
+    setReplyingReviewId(String(reviewId))
+    setReviewsState((prev) => ({ ...prev, error: '' }))
+    try {
+      const response = await fetch(`${API_BASE_URL}/manager/reviews/${reviewId}/reply`, {
+        method: 'DELETE',
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result?.message || 'Khong xoa duoc phan hoi')
+      await taiReviewCSKH()
+      pushAdminNotification('Đã xóa phản hồi', `Phản hồi review #${reviewId} đã được xóa.`)
+      return { ok: true, message: result?.message || 'Xoa thanh cong' }
+    } catch (error) {
+      setReviewsState((prev) => ({ ...prev, error: error.message || 'Khong xoa duoc phan hoi' }))
+      return { ok: false, message: error.message || 'Khong xoa duoc phan hoi' }
+    } finally {
+      setReplyingReviewId('')
+    }
+  }
+
+  const xoaYeuCauDangKyCa = async (requestId) => {
+    setHandlingShiftRequestId(String(requestId))
+    setStaffShiftRequestState((prev) => ({ ...prev, error: '' }))
+    try {
+      const response = await fetch(`${API_BASE_URL}/staff/work-shifts/requests/${requestId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ branch_code: sessionBranchCode }),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result?.message || 'Khong xoa duoc yeu cau dang ky ca')
+
+      await Promise.all([
+        taiYeuCauDangKyCa(false),
+        taiLichLamViecCuaToi(),
+      ])
+
+      pushAdminNotification('Đã hủy yêu cầu đăng ký ca', `Yêu cầu #${String(requestId).slice(0, 8).toUpperCase()} đã bị hủy.`)
+      return true
+    } catch (error) {
+      setStaffShiftRequestState((prev) => ({ ...prev, error: error.message || 'Khong xoa duoc yeu cau dang ky ca' }))
+      return false
+    } finally {
+      setHandlingShiftRequestId('')
+    }
+  }
+
+  const xoaYeuCauDangKyCaChoManager = async (requestId) => {
+    setHandlingShiftRequestId(String(requestId))
+    setManagerShiftRequestState((prev) => ({ ...prev, error: '' }))
+    try {
+      const response = await fetch(`${API_BASE_URL}/manager/work-shifts/requests/${requestId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ branch_code: sessionBranchCode }),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result?.message || 'Khong xoa duoc yeu cau dang ky ca')
+
+      await Promise.all([
+        taiYeuCauDangKyCa(true),
+        taiLichLamViecManager(),
+      ])
+
+      pushAdminNotification('Đã xóa yêu cầu đăng ký ca', `Yêu cầu #${String(requestId).slice(0, 8).toUpperCase()} đã bị xóa.`)
+      return true
+    } catch (error) {
+      setManagerShiftRequestState((prev) => ({ ...prev, error: error.message || 'Khong xoa duoc yeu cau dang ky ca' }))
+      return false
+    } finally {
+      setHandlingShiftRequestId('')
+    }
+  }
+
+  const chamCongCaLamViecCaNhan = async (workShiftId, action) => {
+    setCheckingAttendanceShiftId(String(workShiftId))
+    setMyWorkShiftState((prev) => ({ ...prev, error: '' }))
+    try {
+      const response = await fetch(`${API_BASE_URL}/staff/work-shifts/self/attendance`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shift_id: workShiftId,
+          action,
+          branch_code: sessionBranchCode,
+        }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Khong cham cong duoc')
+
+      await Promise.all([
+        taiLichLamViecCuaToi(),
+        sessionRole === 'MANAGER' ? taiLichLamViecManager() : Promise.resolve(),
+      ])
+
+      pushAdminNotification(
+        action === 'CHECK_IN' ? 'Đã check-in ca làm việc' : 'Đã check-out ca làm việc',
+        `Ca #${String(workShiftId).slice(0, 8).toUpperCase()} đã được ghi nhận thành công.`,
+      )
+
+      return { ok: true, message: payload?.message || 'Cham cong thanh cong' }
+    } catch (error) {
+      setMyWorkShiftState((prev) => ({ ...prev, error: error.message || 'Khong cham cong duoc' }))
+      return { ok: false, message: error.message || 'Khong cham cong duoc' }
+    } finally {
+      setCheckingAttendanceShiftId('')
+    }
+  }
+
   return {
     loginForm,
     setLoginForm,
@@ -1229,6 +1680,13 @@ export function useAdminDashboard() {
     workforceUsersState,
     creatingWorkShift,
     updatingWorkShiftId,
+    staffShiftRequestState,
+    managerShiftRequestState,
+    creatingShiftRequest,
+    handlingShiftRequestId,
+    checkingAttendanceShiftId,
+    reviewsState,
+    replyingReviewId,
     totals,
     overviewData,
     login,
@@ -1250,5 +1708,14 @@ export function useAdminDashboard() {
     taoLichLamViec,
     capNhatChamCong,
     xoaLichLamViec,
+    taoYeuCauDangKyCa,
+    suaYeuCauDangKyCa,
+    xuLyYeuCauDangKyCa,
+    xoaYeuCauDangKyCa,
+    xoaYeuCauDangKyCaChoManager,
+    chamCongCaLamViecCaNhan,
+    phanHoiReview,
+    suaPhanHoiReview,
+    xoaPhanHoiReview,
   }
 }

@@ -9,8 +9,50 @@ const AVAILABLE_SIZES = ['Nhỏ', 'Vừa'];
 
 const ADDRESS_OPTIONS = {
   'Thành phố Hồ Chí Minh': {
-    'Quận 1': ['Phường Sài Gòn'],
-    'Quận 7': ['Tân Phú'],
+    'Quận 1': ['Phường Bến Nghé', 'Phường Bến Thành'],
+    'Quận 3': ['Phường Võ Thị Sáu', 'Phường 9'],
+    'Quận 7': ['Phường Tân Phú', 'Phường Tân Hưng'],
+    'Thành phố Thủ Đức': ['Phường An Phú', 'Phường Hiệp Bình Chánh'],
+  },
+  'Thành phố Hà Nội': {
+    'Quận Ba Đình': ['Phường Kim Mã', 'Phường Ngọc Hà'],
+    'Quận Cầu Giấy': ['Phường Dịch Vọng', 'Phường Nghĩa Đô'],
+    'Quận Đống Đa': ['Phường Láng Thượng', 'Phường Cát Linh'],
+  },
+  'Thành phố Đà Nẵng': {
+    'Quận Hải Châu': ['Phường Hải Châu I', 'Phường Hòa Cường Bắc'],
+    'Quận Thanh Khê': ['Phường Tam Thuận', 'Phường Thanh Khê Đông'],
+    'Quận Sơn Trà': ['Phường An Hải Bắc', 'Phường Phước Mỹ'],
+  },
+  'Thành phố Cần Thơ': {
+    'Quận Ninh Kiều': ['Phường An Khánh', 'Phường Xuân Khánh'],
+    'Quận Cái Răng': ['Phường Hưng Phú', 'Phường Lê Bình'],
+    'Quận Bình Thủy': ['Phường An Thới', 'Phường Long Hòa'],
+  },
+  'Thành phố Hải Phòng': {
+    'Quận Lê Chân': ['Phường An Biên', 'Phường Dư Hàng Kênh'],
+    'Quận Ngô Quyền': ['Phường Máy Chai', 'Phường Lạc Viên'],
+    'Quận Hải An': ['Phường Đằng Lâm', 'Phường Đằng Hải'],
+  },
+  'Tỉnh Bình Dương': {
+    'Thành phố Thủ Dầu Một': ['Phường Phú Cường', 'Phường Hiệp Thành'],
+    'Thành phố Dĩ An': ['Phường Dĩ An', 'Phường Tân Đông Hiệp'],
+    'Thành phố Thuận An': ['Phường Lái Thiêu', 'Phường An Phú'],
+  },
+  'Tỉnh Đồng Nai': {
+    'Thành phố Biên Hòa': ['Phường Trảng Dài', 'Phường Tân Hiệp'],
+    'Thành phố Long Khánh': ['Phường Xuân An', 'Phường Xuân Bình'],
+    'Huyện Nhơn Trạch': ['Xã Phú Hội', 'Xã Phú Đông'],
+  },
+  'Tỉnh Khánh Hòa': {
+    'Thành phố Nha Trang': ['Phường Vĩnh Hải', 'Phường Phước Hải'],
+    'Thành phố Cam Ranh': ['Phường Cam Lộc', 'Phường Cam Linh'],
+    'Thị xã Ninh Hòa': ['Phường Ninh Hiệp', 'Phường Ninh Thủy'],
+  },
+  'Tỉnh Quảng Ninh': {
+    'Thành phố Hạ Long': ['Phường Hồng Gai', 'Phường Bãi Cháy'],
+    'Thành phố Cẩm Phả': ['Phường Cẩm Đông', 'Phường Cẩm Tây'],
+    'Thành phố Uông Bí': ['Phường Quang Trung', 'Phường Trưng Vương'],
   },
 };
 
@@ -27,7 +69,7 @@ function tachDiaChiDayDu(rawAddress) {
     return {
       city: 'Thành phố Hồ Chí Minh',
       district: 'Quận 1',
-      ward: 'Phường Sài Gòn',
+      ward: 'Phường Bến Nghé',  
       street: '',
     };
   }
@@ -39,7 +81,7 @@ function tachDiaChiDayDu(rawAddress) {
 
   const city = parts[parts.length - 1] || 'Thành phố Hồ Chí Minh';
   const district = parts[parts.length - 2] || 'Quận 1';
-  const ward = parts[parts.length - 3] || 'Phường Sài Gòn';
+  const ward = parts[parts.length - 3] || 'Phường Bến Nghé';
   const street = parts.slice(0, Math.max(parts.length - 3, 0)).join(', ');
 
   return { city, district, ward, street: street || raw };
@@ -53,13 +95,14 @@ export default function CartDrawer({ isOpen, onClose }) {
   const [addressForm, setAddressForm] = useState({
     city: 'Thành phố Hồ Chí Minh',
     district: 'Quận 1',
-    ward: 'Phường Sài Gòn',
+    ward: 'Phường Bến Nghé',
     street: '',
   });
   const [khungGio, setKhungGio] = useState('18:00 - 19:00');
   const [ghiChu, setGhiChu] = useState('');
   const [thongBao, setThongBao] = useState('');
   const [qrData, setQrData] = useState(null);
+  const [qrImageUrl, setQrImageUrl] = useState('');
   const [qrOrderId, setQrOrderId] = useState(null);
   const [voucherCode, setVoucherCode] = useState('');
   const [voucherResult, setVoucherResult] = useState(null);
@@ -100,11 +143,11 @@ export default function CartDrawer({ isOpen, onClose }) {
   const apDungVoucher = async () => {
     const code = voucherCode.trim();
     if (!code) {
-      setVoucherError('Vui long nhap ma voucher');
+      setVoucherError('Vui lòng nhập mã voucher');
       return;
     }
     if (!cart.length) {
-      setVoucherError('Gio hang trong, khong co gi de ap dung voucher');
+      setVoucherError('Giỏ hàng trống, chưa có sản phẩm để áp dụng voucher');
       return;
     }
     setIsCheckingVoucher(true);
@@ -118,7 +161,7 @@ export default function CartDrawer({ isOpen, onClose }) {
       setVoucherResult(response.data);
     } catch (err) {
       setVoucherResult(null);
-      setVoucherError(err?.response?.data?.message || 'Ma voucher khong hop le');
+      setVoucherError(err?.response?.data?.message || 'Mã voucher không hợp lệ');
     } finally {
       setIsCheckingVoucher(false);
     }
@@ -149,7 +192,7 @@ export default function CartDrawer({ isOpen, onClose }) {
         : Object.keys(ADDRESS_OPTIONS[normalizedCity] || {})[0] || 'Quận 1';
       const normalizedWard = (ADDRESS_OPTIONS[normalizedCity]?.[normalizedDistrict] || []).includes(parsed.ward)
         ? parsed.ward
-        : (ADDRESS_OPTIONS[normalizedCity]?.[normalizedDistrict] || [])[0] || 'Phường Sài Gòn';
+        : (ADDRESS_OPTIONS[normalizedCity]?.[normalizedDistrict] || [])[0] || 'Phường Bến Nghé';
 
       return {
         city: normalizedCity,
@@ -215,7 +258,7 @@ export default function CartDrawer({ isOpen, onClose }) {
 
   useEffect(() => {
     if (qrOrderStatus?.trang_thai_thanh_toan === 'DA_THANH_TOAN') {
-      setThongBao('Thanh toan QR thanh cong. Don hang da duoc xac nhan.');
+      setThongBao('Thanh toán QR thành công. Đơn hàng đã được xác nhận.');
       queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
       refreshCart();
     }
@@ -223,27 +266,28 @@ export default function CartDrawer({ isOpen, onClose }) {
 
   const khoiTaoThanhToan = async () => {
     if (!cart.length) {
-      setThongBao('Gio hang dang trong. Vui long them san pham truoc khi thanh toan.');
+      setThongBao('Giỏ hàng đang trống. Vui lòng thêm sản phẩm trước khi thanh toán.');
       return;
     }
 
     if (!addressForm.city || !addressForm.district || !addressForm.ward || !addressForm.street?.trim()) {
-      setThongBao('Vui long chon thanh pho, quan, phuong va nhap so nha/duong day du.');
+      setThongBao('Vui lòng chọn thành phố, quận, phường và nhập số nhà/đường đầy đủ.');
       return;
     }
 
     if (diaChiDayDu.length < 16) {
-      setThongBao('Dia chi giao hang chua du chi tiet. Vui long bo sung so nha, ten duong.');
+      setThongBao('Địa chỉ giao hàng chưa đủ chi tiết. Vui lòng bổ sung số nhà và tên đường.');
       return;
     }
 
     if (!khungGioHopLe(khungGio)) {
-      setThongBao('Khung gio giao phai dung dinh dang HH:MM - HH:MM.');
+      setThongBao('Khung giờ giao phải đúng định dạng HH:MM - HH:MM.');
       return;
     }
 
     setThongBao('');
     setQrData(null);
+    setQrImageUrl('');
     setQrOrderId(null);
 
     try {
@@ -256,18 +300,19 @@ export default function CartDrawer({ isOpen, onClose }) {
 
       if (phuongThuc === 'NGAN_HANG_QR' && data.payment_details) {
         setQrData(data.payment_details);
+        setQrImageUrl(data.payment_details.qr_img_url || data.payment_details.qr_fallback_url || '');
         setQrOrderId(data.payment_details.ma_don_hang);
-        setThongBao('Da tao ma QR ngan hang. He thong dang tu dong kiem tra webhook thanh toan...');
+        setThongBao('Đã tạo mã QR ngân hàng. Hệ thống đang tự động kiểm tra webhook thanh toán...');
         return;
       }
 
-      setThongBao('Tao don hang COD thanh cong. Don se duoc thu tien khi nhan hang.');
+      setThongBao('Tạo đơn hàng COD thành công. Đơn sẽ được thu tiền khi nhận hàng.');
       queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
       refreshCart();
       setGhiChu('');
       xoaVoucher();
     } catch (error) {
-      setThongBao(error?.response?.data?.message || error?.message || 'Co loi khi khoi tao thanh toan');
+      setThongBao(error?.response?.data?.message || error?.message || 'Có lỗi khi khởi tạo thanh toán');
     }
   };
 
@@ -284,7 +329,7 @@ export default function CartDrawer({ isOpen, onClose }) {
 
         <div className="flex-1 min-h-0 overflow-y-auto pr-1">
           <div className="space-y-6 pb-6">
-          {cart.length === 0 ? <p className="text-center text-gray-400 font-bold py-10">Giỏ hàng trống bác ơi! 🥤</p> : 
+          {cart.length === 0 ? <p className="text-center text-gray-400 font-bold py-10">Giỏ hàng trống. Hãy chọn món bạn thích! 🥤</p> : 
             cart.map((item) => (
               <div key={`${item.ma_san_pham}-${item.size}`} className="flex gap-4 items-center">
                 <img src={item.hinh_anh_url} className="w-20 h-20 object-cover rounded-2xl" alt={item.ten_san_pham} />
@@ -362,7 +407,7 @@ export default function CartDrawer({ isOpen, onClose }) {
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <p className="text-sm font-black text-emerald-700">{voucherResult.ma_voucher || voucherResult.ma_khuyen_mai}</p>
-                  <p className="text-xs font-semibold text-emerald-600">{voucherResult.mo_ta || voucherResult.ten_khuyen_mai || 'Ap dung thanh cong'} — Giảm {discountAmount.toLocaleString('vi-VN')}đ</p>
+                  <p className="text-xs font-semibold text-emerald-600">{voucherResult.mo_ta || voucherResult.ten_khuyen_mai || 'Áp dụng thành công'} — Giảm {discountAmount.toLocaleString('vi-VN')}đ</p>
                 </div>
                 <button type="button" onClick={xoaVoucher} className="rounded-lg bg-white px-3 py-1 text-xs font-black text-red-500 border border-red-100">
                   Xóa
@@ -375,7 +420,7 @@ export default function CartDrawer({ isOpen, onClose }) {
                   onChange={(e) => { setVoucherCode(e.target.value.toUpperCase()); setVoucherError(''); }}
                   onKeyDown={(e) => e.key === 'Enter' && apDungVoucher()}
                   className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-tch-orange uppercase"
-                  placeholder="Nhap ma voucher"
+                  placeholder="Nhập mã voucher"
                 />
                 <button
                   type="button"
@@ -403,7 +448,7 @@ export default function CartDrawer({ isOpen, onClose }) {
           <div className="space-y-3 mb-4">
             {isLoggedInUser && savedAddresses.length ? (
               <>
-                <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Dia chi da luu</label>
+                <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Địa chỉ đã lưu</label>
                 <select
                   value={savedAddresses.some((item) => item.dia_chi_day_du === diaChiDayDu) ? diaChiDayDu : ''}
                   onChange={(e) => {
@@ -418,7 +463,7 @@ export default function CartDrawer({ isOpen, onClose }) {
                       : Object.keys(ADDRESS_OPTIONS[normalizedCity] || {})[0] || 'Quận 1';
                     const normalizedWard = (ADDRESS_OPTIONS[normalizedCity]?.[normalizedDistrict] || []).includes(parsed.ward)
                       ? parsed.ward
-                      : (ADDRESS_OPTIONS[normalizedCity]?.[normalizedDistrict] || [])[0] || 'Phường Sài Gòn';
+                      : (ADDRESS_OPTIONS[normalizedCity]?.[normalizedDistrict] || [])[0] || 'Phường Bến Nghé';
 
                     setAddressForm({
                       city: normalizedCity,
@@ -432,17 +477,17 @@ export default function CartDrawer({ isOpen, onClose }) {
                   }}
                   className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
                 >
-                  <option value="">Chon dia chi da luu</option>
+                  <option value="">Chọn địa chỉ đã lưu</option>
                   {savedAddresses.map((item) => (
                     <option key={item.id} value={item.dia_chi_day_du}>
-                      {item.ten_dia_chi}{item.mac_dinh ? ' (mac dinh)' : ''}
+                      {item.ten_dia_chi}{item.mac_dinh ? ' (mặc định)' : ''}
                     </option>
                   ))}
                 </select>
               </>
             ) : null}
 
-            <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Thanh pho</label>
+            <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Thành phố</label>
             <select
               value={addressForm.city}
               onChange={(e) => {
@@ -459,7 +504,7 @@ export default function CartDrawer({ isOpen, onClose }) {
               ))}
             </select>
 
-            <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Quan</label>
+            <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Quận</label>
             <select
               value={addressForm.district}
               onChange={(e) => {
@@ -475,7 +520,7 @@ export default function CartDrawer({ isOpen, onClose }) {
               ))}
             </select>
 
-            <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Phuong</label>
+            <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Phường</label>
             <select
               value={addressForm.ward}
               onChange={(e) => {
@@ -489,7 +534,7 @@ export default function CartDrawer({ isOpen, onClose }) {
               ))}
             </select>
 
-            <label className="text-xs font-bold uppercase tracking-wide text-gray-500">So nha, ten duong</label>
+            <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Số nhà, tên đường</label>
             <input
               value={addressForm.street}
               onChange={(e) => {
@@ -499,8 +544,8 @@ export default function CartDrawer({ isOpen, onClose }) {
               className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
               placeholder="Vi du: 28 Ter B Mạc Đĩnh Chi"
             />
-            <p className="-mt-1 text-[11px] font-semibold text-gray-500">Dia chi day du: {diaChiDayDu || '---'}</p>
-            <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Khung gio giao</label>
+            <p className="-mt-1 text-[11px] font-semibold text-gray-500">Địa chỉ đầy đủ: {diaChiDayDu || '---'}</p>
+            <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Khung giờ giao</label>
             <input
               value={khungGio}
               onChange={(e) => {
@@ -508,25 +553,25 @@ export default function CartDrawer({ isOpen, onClose }) {
                 if (thongBao) setThongBao('');
               }}
               className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
-              placeholder="Vi du: 18:00 - 19:00"
+              placeholder="Ví dụ: 18:00 - 19:00"
             />
-            <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Ghi chu don hang</label>
+            <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Ghi chú đơn hàng</label>
             <textarea
               value={ghiChu}
               onChange={(e) => setGhiChu(e.target.value)}
               rows={3}
               className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange resize-none"
-              placeholder="Vi du: it da, giao truoc cong, goi dien truoc khi giao..."
+              placeholder="Ví dụ: ít đá, giao trước cổng, gọi điện trước khi giao..."
             />
-            <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Phuong thuc thanh toan</label>
+            <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Phương thức thanh toán</label>
             <select
               value={phuongThuc}
               onChange={(e) => setPhuongThuc(e.target.value)}
               className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
             >
-              <option value="VNPAY">VNPAY (demo the/ngan hang)</option>
-              <option value="NGAN_HANG_QR">Ngan hang QR</option>
-              <option value="THANH_TOAN_KHI_NHAN_HANG">Thanh toan khi nhan hang</option>
+              <option value="VNPAY">VNPAY (demo thẻ/ngân hàng)</option>
+              <option value="NGAN_HANG_QR">Ngân hàng QR</option>
+              <option value="THANH_TOAN_KHI_NHAN_HANG">Thanh toán khi nhận hàng</option>
             </select>
           </div>
 
@@ -535,18 +580,27 @@ export default function CartDrawer({ isOpen, onClose }) {
             disabled={khoiTaoThanhToanMutation.isPending}
             className="w-full py-5 bg-tch-orange text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-orange-200 disabled:opacity-70"
           >
-            {khoiTaoThanhToanMutation.isPending ? 'Dang xu ly...' : 'Thanh toan ngay'}
+            {khoiTaoThanhToanMutation.isPending ? 'Đang xử lý...' : 'Thanh toán ngay'}
           </button>
 
           {thongBao ? <p className="mt-3 text-sm font-semibold text-gray-600">{thongBao}</p> : null}
 
           {qrData ? (
             <div className="mt-4 rounded-2xl border border-gray-200 p-4 bg-gray-50">
-              <p className="text-sm font-black text-gray-700 mb-2">Quet QR de chuyen khoan</p>
-              <img src={qrData.qr_img_url} alt="QR ngan hang" className="w-48 h-48 mx-auto rounded-xl border border-gray-200 bg-white" />
-              <p className="mt-3 text-xs text-gray-600">Ma tham chieu: <span className="font-black">{qrData.ma_tham_chieu}</span></p>
-              <p className="text-xs text-gray-600">So tien: <span className="font-black">{Number(qrData.so_tien).toLocaleString('vi-VN')}đ</span></p>
-              <p className="mt-3 text-xs text-gray-500">Khong can bam xac nhan. Sau khi tien vao tai khoan, webhook Sepay se cap nhat tu dong.</p>
+              <p className="text-sm font-black text-gray-700 mb-2">Quét QR để chuyển khoản</p>
+              <img
+                src={qrImageUrl || qrData.qr_img_url}
+                alt="QR ngân hàng"
+                className="w-48 h-48 mx-auto rounded-xl border border-gray-200 bg-white"
+                onError={() => {
+                  if (qrData?.qr_fallback_url && qrImageUrl !== qrData.qr_fallback_url) {
+                    setQrImageUrl(qrData.qr_fallback_url);
+                  }
+                }}
+              />
+              <p className="mt-3 text-xs text-gray-600">Mã tham chiếu: <span className="font-black">{qrData.ma_tham_chieu}</span></p>
+              <p className="text-xs text-gray-600">Số tiền: <span className="font-black">{Number(qrData.so_tien).toLocaleString('vi-VN')}đ</span></p>
+              <p className="mt-3 text-xs text-gray-500">Không cần bấm xác nhận. Sau khi tiền vào tài khoản, webhook Sepay sẽ cập nhật tự động.</p>
             </div>
           ) : null}
           </div>

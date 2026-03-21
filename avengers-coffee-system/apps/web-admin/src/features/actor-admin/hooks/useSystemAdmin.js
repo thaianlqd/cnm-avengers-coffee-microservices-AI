@@ -11,6 +11,14 @@ const DEFAULT_USER_FORM = {
   co_so_ma: 'MAC_DINH_CHI',
 }
 
+const DEFAULT_CUSTOMER_FORM = {
+  ten_dang_nhap: '',
+  mat_khau: '',
+  ho_ten: '',
+  email: '',
+  trang_thai: 'ACTIVE',
+}
+
 const DEFAULT_BRANCH_FORM = {
   ma_chi_nhanh: '',
   ten_chi_nhanh: '',
@@ -19,6 +27,10 @@ const DEFAULT_BRANCH_FORM = {
   quan_huyen: '',
   phuong_xa: '',
   so_dien_thoai: '',
+  hinh_anh_url: '',
+  gio_mo_cua: '07:00',
+  gio_dong_cua: '22:00',
+  map_url: '',
   trang_thai: 'ACTIVE',
 }
 
@@ -176,13 +188,37 @@ function composeBranchAddress(form) {
   return parts.join(', ')
 }
 
+function resolveCityLabel(cityCodeOrLabel) {
+  if (!cityCodeOrLabel) return ''
+  if (LOCATION_TREE[cityCodeOrLabel]) {
+    return LOCATION_TREE[cityCodeOrLabel].label
+  }
+  return String(cityCodeOrLabel).trim()
+}
+
+function resolveDistrictLabel(cityCodeOrLabel, districtCodeOrLabel) {
+  if (!districtCodeOrLabel) return ''
+  if (LOCATION_TREE[cityCodeOrLabel]?.districts?.[districtCodeOrLabel]) {
+    return LOCATION_TREE[cityCodeOrLabel].districts[districtCodeOrLabel].label
+  }
+  return String(districtCodeOrLabel).trim()
+}
+
 const DEFAULT_MENU_FORM = {
   name: '',
   category_code: '',
   price: 0,
+  original_price: 0,
   image: '',
   description: '',
   dang_ban: true,
+  la_hot: false,
+  la_moi: false,
+}
+
+const DEFAULT_CATEGORY_FORM = {
+  label: '',
+  icon: '',
 }
 
 const PROMOTION_TYPES = [
@@ -214,6 +250,8 @@ const FALLBACK_BRANCH_OPTIONS = [
   { code: 'THE_GRACE_TOWER', name: 'The Grace Tower' },
 ]
 
+const ADMIN_LOCAL_NOTIFY_EVENT = 'avengers-admin-local-notify'
+
 async function readJsonResponse(response, fallback) {
   return response.json().catch(() => fallback)
 }
@@ -236,14 +274,16 @@ async function fetchCategories() {
   const response = await fetch(`${API_BASE_URL}/menu/categories`)
   const payload = await readJsonResponse(response, [])
   if (!response.ok) throw new Error('Khong tai duoc danh muc menu')
-  return Array.isArray(payload) ? payload : []
+  const items = Array.isArray(payload) ? payload : []
+  return [...items].sort((a, b) => Number(b?.id || b?.code || 0) - Number(a?.id || a?.code || 0))
 }
 
 async function fetchMenuItems() {
   const response = await fetch(`${API_BASE_URL}/menu/items?sort=price_desc`)
   const payload = await readJsonResponse(response, {})
   if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc menu tong')
-  return payload?.items || []
+  const items = payload?.items || []
+  return [...items].sort((a, b) => Number(b?.id || 0) - Number(a?.id || 0))
 }
 
 async function fetchPromotions() {
@@ -263,8 +303,16 @@ export function useSystemAdmin() {
   const [savingUser, setSavingUser] = useState(false)
   const [editingUserId, setEditingUserId] = useState('')
   const [userForm, setUserForm] = useState(DEFAULT_USER_FORM)
+  const [customerFilters, setCustomerFilters] = useState({ q: '', status: '' })
+  const [customersState, setCustomersState] = useState({ loading: true, error: '', items: [] })
+  const [savingCustomer, setSavingCustomer] = useState(false)
+  const [editingCustomerId, setEditingCustomerId] = useState('')
+  const [customerForm, setCustomerForm] = useState(DEFAULT_CUSTOMER_FORM)
 
   const [categoriesState, setCategoriesState] = useState({ loading: true, error: '', items: [] })
+  const [savingCategory, setSavingCategory] = useState(false)
+  const [editingCategoryId, setEditingCategoryId] = useState('')
+  const [categoryForm, setCategoryForm] = useState(DEFAULT_CATEGORY_FORM)
   const [menuState, setMenuState] = useState({ loading: true, error: '', items: [] })
   const [savingMenu, setSavingMenu] = useState(false)
   const [editingMenuId, setEditingMenuId] = useState('')
@@ -282,6 +330,15 @@ export function useSystemAdmin() {
   const [editingPromotionCode, setEditingPromotionCode] = useState('')
   const [promotionForm, setPromotionForm] = useState(DEFAULT_PROMOTION_FORM)
   const [promotionFilter, setPromotionFilter] = useState({ status: '', type: '', q: '' })
+
+  const pushAdminNotification = (tieuDe, noiDung) => {
+    window.dispatchEvent(new CustomEvent(ADMIN_LOCAL_NOTIFY_EVENT, {
+      detail: {
+        tieu_de: tieuDe,
+        noi_dung: noiDung,
+      },
+    }))
+  }
 
   const statsQuery = useQuery({
     queryKey: ['system-admin', 'stats'],
@@ -433,6 +490,26 @@ export function useSystemAdmin() {
     }
   }
 
+  const loadCustomers = async (filters = customerFilters) => {
+    setCustomersState((prev) => ({ ...prev, loading: true, error: '' }))
+    try {
+      const params = new URLSearchParams()
+      params.set('role', 'CUSTOMER')
+      if (filters.q) params.set('q', filters.q)
+
+      const response = await fetch(`${API_BASE_URL}/users/admin/accounts?${params.toString()}`)
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc danh sach khach hang')
+
+      const items = payload?.items || []
+      const status = String(filters.status || '').trim().toUpperCase()
+      const filteredItems = status ? items.filter((item) => String(item.trang_thai || '').toUpperCase() === status) : items
+      setCustomersState({ loading: false, error: '', items: filteredItems })
+    } catch (error) {
+      setCustomersState({ loading: false, error: error.message || 'Khong tai duoc danh sach khach hang', items: [] })
+    }
+  }
+
   const loadCategories = async () => {
     await categoriesQuery.refetch()
   }
@@ -510,6 +587,7 @@ export function useSystemAdmin() {
 
       cancelEditPromotion()
       await loadPromotions()
+      pushAdminNotification('Cập nhật khuyến mãi', 'Đã lưu thay đổi khuyến mãi/voucher thành công.')
     } catch (error) {
       window.alert(error.message || 'Khong luu duoc khuyen mai')
     } finally {
@@ -525,6 +603,7 @@ export function useSystemAdmin() {
       if (!response.ok) throw new Error(result?.message || 'Khong xoa duoc khuyen mai')
       if (editingPromotionCode === code) cancelEditPromotion()
       await loadPromotions()
+      pushAdminNotification('Xóa khuyến mãi', `Đã xóa chương trình ${code} thành công.`)
     } catch (error) {
       window.alert(error.message || 'Khong xoa duoc khuyen mai')
     }
@@ -552,6 +631,7 @@ export function useSystemAdmin() {
 
   useEffect(() => {
     loadUsers()
+    loadCustomers()
   }, [])
 
   const startEditUser = (item) => {
@@ -575,15 +655,43 @@ export function useSystemAdmin() {
     })
   }
 
+  const startEditCustomer = (item) => {
+    setEditingCustomerId(item.ma_nguoi_dung)
+    setCustomerForm({
+      ten_dang_nhap: item.ten_dang_nhap || '',
+      mat_khau: '',
+      ho_ten: item.ho_ten || '',
+      email: item.email || '',
+      trang_thai: item.trang_thai || 'ACTIVE',
+    })
+  }
+
+  const cancelEditCustomer = () => {
+    setEditingCustomerId('')
+    setCustomerForm(DEFAULT_CUSTOMER_FORM)
+  }
+
   const startEditBranch = (item) => {
     const parsedAddress = parseBranchAddress(item.dia_chi)
+    const cityKeyByLabel = Object.keys(LOCATION_TREE).find((code) => normalizeText(LOCATION_TREE[code].label) === normalizeText(item.thanh_pho || ''))
+    const districtKeyByLabel = cityKeyByLabel
+      ? Object.keys(LOCATION_TREE[cityKeyByLabel].districts || {}).find(
+          (code) => normalizeText(LOCATION_TREE[cityKeyByLabel].districts[code].label) === normalizeText(item.quan_huyen || ''),
+        )
+      : ''
     setEditingBranchCode(item.ma_chi_nhanh)
     setLocationSearch({ city: '', district: '', ward: '' })
     setBranchForm({
       ...parsedAddress,
+      thanh_pho: cityKeyByLabel || parsedAddress.thanh_pho,
+      quan_huyen: districtKeyByLabel || parsedAddress.quan_huyen,
       ma_chi_nhanh: item.ma_chi_nhanh,
       ten_chi_nhanh: item.ten_chi_nhanh || '',
       so_dien_thoai: item.so_dien_thoai || '',
+      hinh_anh_url: item.hinh_anh_url || '',
+      gio_mo_cua: item.gio_mo_cua || '07:00',
+      gio_dong_cua: item.gio_dong_cua || '22:00',
+      map_url: item.map_url || '',
       trang_thai: item.trang_thai || 'ACTIVE',
     })
   }
@@ -602,7 +710,13 @@ export function useSystemAdmin() {
         ma_chi_nhanh: branchForm.ma_chi_nhanh,
         ten_chi_nhanh: branchForm.ten_chi_nhanh,
         dia_chi: fullAddress || undefined,
+        thanh_pho: resolveCityLabel(branchForm.thanh_pho) || undefined,
+        quan_huyen: resolveDistrictLabel(branchForm.thanh_pho, branchForm.quan_huyen) || undefined,
         so_dien_thoai: branchForm.so_dien_thoai || undefined,
+        hinh_anh_url: branchForm.hinh_anh_url || undefined,
+        gio_mo_cua: branchForm.gio_mo_cua || undefined,
+        gio_dong_cua: branchForm.gio_dong_cua || undefined,
+        map_url: branchForm.map_url || undefined,
         trang_thai: branchForm.trang_thai,
       }
 
@@ -615,7 +729,13 @@ export function useSystemAdmin() {
         ? {
             ten_chi_nhanh: payload.ten_chi_nhanh,
             dia_chi: payload.dia_chi,
+            thanh_pho: payload.thanh_pho,
+            quan_huyen: payload.quan_huyen,
             so_dien_thoai: payload.so_dien_thoai,
+            hinh_anh_url: payload.hinh_anh_url,
+            gio_mo_cua: payload.gio_mo_cua,
+            gio_dong_cua: payload.gio_dong_cua,
+            map_url: payload.map_url,
             trang_thai: payload.trang_thai,
           }
         : payload
@@ -631,6 +751,7 @@ export function useSystemAdmin() {
 
       cancelEditBranch()
       await Promise.all([loadBranches(), loadUsers(), loadStats()])
+      pushAdminNotification('Cập nhật chi nhánh', 'Thông tin chi nhánh đã được lưu.')
     } catch (error) {
       window.alert(error.message || 'Khong luu duoc chi nhanh')
     } finally {
@@ -646,6 +767,7 @@ export function useSystemAdmin() {
       if (!response.ok) throw new Error(result?.message || 'Khong xoa duoc chi nhanh')
       if (editingBranchCode === branchCode) cancelEditBranch()
       await Promise.all([loadBranches(), loadUsers(), loadStats()])
+      pushAdminNotification('Xóa chi nhánh', `Đã xóa chi nhánh ${branchCode}.`)
     } catch (error) {
       window.alert(error.message || 'Khong xoa duoc chi nhanh')
     }
@@ -683,6 +805,7 @@ export function useSystemAdmin() {
 
       cancelEditUser()
       await Promise.all([loadUsers(), loadStats()])
+      pushAdminNotification('Cập nhật tài khoản', 'Đã lưu thay đổi tài khoản người dùng.')
     } catch (error) {
       window.alert(error.message || 'Khong luu duoc tai khoan')
     } finally {
@@ -698,8 +821,62 @@ export function useSystemAdmin() {
       if (!response.ok) throw new Error(result?.message || 'Khong xoa duoc tai khoan')
       if (editingUserId === userId) cancelEditUser()
       await Promise.all([loadUsers(), loadStats()])
+      pushAdminNotification('Xóa tài khoản', 'Đã xóa tài khoản người dùng thành công.')
     } catch (error) {
       window.alert(error.message || 'Khong xoa duoc tai khoan')
+    }
+  }
+
+  const saveCustomer = async () => {
+    setSavingCustomer(true)
+    try {
+      if (!editingCustomerId && !customerForm.mat_khau) {
+        throw new Error('Vui long nhap mat khau cho tai khoan moi')
+      }
+
+      const payload = {
+        ten_dang_nhap: customerForm.ten_dang_nhap,
+        mat_khau: customerForm.mat_khau || undefined,
+        ho_ten: customerForm.ho_ten,
+        email: customerForm.email || undefined,
+        vai_tro: 'CUSTOMER',
+        trang_thai: customerForm.trang_thai || 'ACTIVE',
+      }
+
+      const method = editingCustomerId ? 'PATCH' : 'POST'
+      const endpoint = editingCustomerId
+        ? `${API_BASE_URL}/users/admin/accounts/${editingCustomerId}`
+        : `${API_BASE_URL}/users/admin/accounts`
+
+      const response = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result?.message || 'Khong luu duoc khach hang')
+
+      cancelEditCustomer()
+      await Promise.all([loadCustomers(), loadUsers(), loadStats()])
+      pushAdminNotification('Cập nhật khách hàng', 'Đã lưu thay đổi tài khoản khách hàng.')
+    } catch (error) {
+      window.alert(error.message || 'Khong luu duoc khach hang')
+    } finally {
+      setSavingCustomer(false)
+    }
+  }
+
+  const deleteCustomer = async (userId) => {
+    if (!window.confirm('Xoa tai khoan khach hang nay? Hanh dong nay khong the hoan tac.')) return
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/admin/accounts/${userId}`, { method: 'DELETE' })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result?.message || 'Khong xoa duoc khach hang')
+      if (editingCustomerId === userId) cancelEditCustomer()
+      await Promise.all([loadCustomers(), loadUsers(), loadStats()])
+      pushAdminNotification('Xóa khách hàng', 'Đã xóa tài khoản khách hàng thành công.')
+    } catch (error) {
+      window.alert(error.message || 'Khong xoa duoc khach hang')
     }
   }
 
@@ -742,15 +919,76 @@ export function useSystemAdmin() {
     setUploadState({ loading: false, error: '', success: '' })
   }
 
+  const startEditCategory = (item) => {
+    setEditingCategoryId(String(item.id || item.code || ''))
+    setCategoryForm({
+      label: item.label || '',
+      icon: item.icon || '',
+    })
+  }
+
+  const cancelEditCategory = () => {
+    setEditingCategoryId('')
+    setCategoryForm(DEFAULT_CATEGORY_FORM)
+  }
+
+  const saveCategory = async () => {
+    setSavingCategory(true)
+    try {
+      const payload = {
+        label: categoryForm.label,
+        icon: categoryForm.icon || null,
+      }
+
+      const method = editingCategoryId ? 'PATCH' : 'POST'
+      const endpoint = editingCategoryId
+        ? `${API_BASE_URL}/menu/categories/${editingCategoryId}`
+        : `${API_BASE_URL}/menu/categories`
+
+      const response = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result?.message || 'Khong luu duoc danh muc')
+
+      cancelEditCategory()
+      await Promise.all([loadCategories(), loadMenu()])
+      pushAdminNotification('Cập nhật danh mục', 'Đã lưu thay đổi danh mục thành công.')
+    } catch (error) {
+      window.alert(error.message || 'Khong luu duoc danh muc')
+    } finally {
+      setSavingCategory(false)
+    }
+  }
+
+  const deleteCategory = async (categoryId, categoryLabel = '') => {
+    if (!window.confirm(`Xoa danh muc ${categoryLabel || `#${categoryId}`}?`)) return
+    try {
+      const response = await fetch(`${API_BASE_URL}/menu/categories/${categoryId}`, { method: 'DELETE' })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result?.message || 'Khong xoa duoc danh muc')
+      if (editingCategoryId === String(categoryId)) cancelEditCategory()
+      await Promise.all([loadCategories(), loadMenu()])
+      pushAdminNotification('Xóa danh mục', `Đã xóa danh mục ${categoryLabel || `#${categoryId}`}.`)
+    } catch (error) {
+      window.alert(error.message || 'Khong xoa duoc danh muc')
+    }
+  }
+
   const startEditMenu = (item) => {
     setEditingMenuId(item.id)
     setMenuForm({
       name: item.name || '',
       category_code: String(item.category_code || ''),
       price: Number(item.price || 0),
+      original_price: Number(item.original_price || 0),
       image: item.image || '',
       description: item.description || '',
       dang_ban: Boolean(item.dang_ban),
+      la_hot: Boolean(item.la_hot),
+      la_moi: Boolean(item.la_moi),
     })
   }
 
@@ -763,13 +1001,23 @@ export function useSystemAdmin() {
   const saveMenu = async () => {
     setSavingMenu(true)
     try {
+      const categoryExists = categoriesState.items.some(
+        (cat) => String(cat.code) === String(menuForm.category_code),
+      )
+      if (!categoryExists) {
+        throw new Error('Danh muc duoc chon khong ton tai, vui long chon lai danh muc hop le')
+      }
+
       const payload = {
         name: menuForm.name,
         category_code: menuForm.category_code,
         price: Number(menuForm.price || 0),
+        original_price: Number(menuForm.original_price || 0),
         image: normalizeImagePath(menuForm.image),
         description: menuForm.description,
         dang_ban: Boolean(menuForm.dang_ban),
+        la_hot: Boolean(menuForm.la_hot),
+        la_moi: Boolean(menuForm.la_moi),
       }
 
       const method = editingMenuId ? 'PATCH' : 'POST'
@@ -787,6 +1035,7 @@ export function useSystemAdmin() {
 
       cancelEditMenu()
       await loadMenu()
+      pushAdminNotification('Cập nhật sản phẩm', 'Đã lưu thay đổi sản phẩm/menu thành công.')
     } catch (error) {
       window.alert(error.message || 'Khong luu duoc mon')
     } finally {
@@ -802,6 +1051,7 @@ export function useSystemAdmin() {
       if (!response.ok) throw new Error(result?.message || 'Khong xoa duoc mon')
       if (editingMenuId === itemId) cancelEditMenu()
       await loadMenu()
+      pushAdminNotification('Xóa sản phẩm', `Đã xóa món #${itemId} khỏi menu.`)
     } catch (error) {
       window.alert(error.message || 'Khong xoa duoc mon')
     }
@@ -880,6 +1130,8 @@ export function useSystemAdmin() {
     loadStats,
     userFilters,
     setUserFilters,
+    customerFilters,
+    setCustomerFilters,
     branchesState,
     branchOptions,
     cityOptions,
@@ -890,9 +1142,13 @@ export function useSystemAdmin() {
     branchAddressPreview,
     usersState,
     loadUsers,
+    customersState,
+    loadCustomers,
     loadBranches,
     userForm,
     setUserForm,
+    customerForm,
+    setCustomerForm,
     branchForm,
     setBranchForm,
     editingBranchCode,
@@ -907,7 +1163,22 @@ export function useSystemAdmin() {
     saveUser,
     deleteUser,
     savingUser,
+    editingCustomerId,
+    startEditCustomer,
+    cancelEditCustomer,
+    saveCustomer,
+    deleteCustomer,
+    savingCustomer,
     categoriesState,
+    loadCategories,
+    categoryForm,
+    setCategoryForm,
+    editingCategoryId,
+    startEditCategory,
+    cancelEditCategory,
+    saveCategory,
+    deleteCategory,
+    savingCategory,
     menuState,
     loadMenu,
     menuForm,

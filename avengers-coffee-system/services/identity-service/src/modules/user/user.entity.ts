@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, OneToMany } from 'typeorm';
+import { DeliveryAddress } from './delivery-address.entity';
 
 const userSchema = process.env.DB_SCHEMA || 'identity';
 
@@ -43,6 +44,21 @@ export class User {
   @Column({ type: 'int', default: 0 })
   diem_loyalty: number;
 
+  @Column({ type: 'varchar', nullable: true })
+  reset_password_code_hash: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  reset_password_code_expires_at: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  reset_password_requested_at: Date | null;
+
+  @Column({ type: 'int', default: 0 })
+  reset_password_attempts: number;
+
   @CreateDateColumn()
   ngay_tao: Date;
+
+  @OneToMany(() => DeliveryAddress, (address) => address.nguoi_dung)
+  danh_sach_dia_chi: DeliveryAddress[];
 }

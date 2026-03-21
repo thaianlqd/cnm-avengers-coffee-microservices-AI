@@ -1,7 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import {
+  ACCOUNT_TAB,
   DASHBOARD_ROLES,
+  MANAGER_CUSTOMER_CARE_TAB,
   MANAGER_EMPLOYEE_MANAGEMENT_TAB,
   MANAGER_SHIFT_APPROVAL_TAB,
   MANAGER_WORKFORCE_MANAGEMENT_TAB,
@@ -20,12 +22,22 @@ import { MenuPanel } from './features/admin-dashboard/components/MenuPanel'
 import { ShiftPanel } from './features/admin-dashboard/components/ShiftPanel'
 import { ManagerWorkforcePanel } from './features/manager-dashboard/components/ManagerWorkforcePanel'
 import { ManagerEmployeePanel } from './features/manager-dashboard/components/ManagerEmployeePanel'
+import { ManagerCustomerCarePanel } from './features/manager-dashboard/components/ManagerCustomerCarePanel'
 import { StaffWorkShiftsPanel } from './features/staff-dashboard/components/StaffWorkShiftsPanel'
 import { AdminSystemConsole } from './features/actor-admin/components/AdminSystemConsole'
 import { AdminChatWidget } from './features/admin-dashboard/components/AdminChatWidget'
 import { AUTH_INVALID_EVENT } from './lib/adminFetch'
+import { AccountCenterPanel } from './features/shared/components/AccountCenterPanel'
+import { AdminNotificationBell } from './features/shared/components/AdminNotificationBell'
+import { NewsPanel } from './features/shared/components/NewsPanel'
 
 function App() {
+  const [adminToast, setAdminToast] = useState(null)
+
+  const showAdminToast = (title, message) => {
+    setAdminToast({ title, message })
+  }
+
   const {
     loginForm,
     setLoginForm,
@@ -74,6 +86,13 @@ function App() {
     workforceUsersState,
     creatingWorkShift,
     updatingWorkShiftId,
+    staffShiftRequestState,
+    managerShiftRequestState,
+    creatingShiftRequest,
+    handlingShiftRequestId,
+    checkingAttendanceShiftId,
+    reviewsState,
+    replyingReviewId,
     totals,
     overviewData,
     login,
@@ -95,6 +114,15 @@ function App() {
     taoLichLamViec,
     capNhatChamCong,
     xoaLichLamViec,
+    taoYeuCauDangKyCa,
+    suaYeuCauDangKyCa,
+    xuLyYeuCauDangKyCa,
+    xoaYeuCauDangKyCa,
+    xoaYeuCauDangKyCaChoManager,
+    chamCongCaLamViecCaNhan,
+    phanHoiReview,
+    suaPhanHoiReview,
+    xoaPhanHoiReview,
   } = useAdminDashboard()
 
   const userRole = session?.user?.vaiTro || session?.user?.vai_tro || DASHBOARD_ROLES.STAFF
@@ -102,13 +130,14 @@ function App() {
   const isSystemAdmin = userRole === DASHBOARD_ROLES.ADMIN
   const isManager = userRole === DASHBOARD_ROLES.MANAGER
   const staffNavTabs = isManager
-    ? [...NAV_TABS, { ...WORKFORCE_TAB, label: 'Lịch làm của tôi' }]
-    : [...NAV_TABS, WORKFORCE_TAB]
+    ? [...NAV_TABS, { ...WORKFORCE_TAB, label: 'Lịch làm của tôi' }, ACCOUNT_TAB]
+    : [...NAV_TABS, WORKFORCE_TAB, ACCOUNT_TAB]
   const managerNavTabs = isManager
     ? [
         MANAGER_SHIFT_APPROVAL_TAB,
         MANAGER_EMPLOYEE_MANAGEMENT_TAB,
         MANAGER_WORKFORCE_MANAGEMENT_TAB,
+        MANAGER_CUSTOMER_CARE_TAB,
       ]
     : []
 
@@ -139,6 +168,23 @@ function App() {
       window.removeEventListener(AUTH_INVALID_EVENT, handleInvalidSession)
     }
   }, [logout])
+
+  useEffect(() => {
+    if (!adminToast) return
+    const timeout = setTimeout(() => setAdminToast(null), 4500)
+    return () => clearTimeout(timeout)
+  }, [adminToast])
+
+  useEffect(() => {
+    const ADMIN_LOCAL_NOTIFY_EVENT = 'avengers-admin-local-notify'
+    const handleLocalNotify = (event) => {
+      const detail = event?.detail || {}
+      showAdminToast(detail.tieu_de || 'Thông báo', detail.noi_dung || '')
+    }
+
+    window.addEventListener(ADMIN_LOCAL_NOTIFY_EVENT, handleLocalNotify)
+    return () => window.removeEventListener(ADMIN_LOCAL_NOTIFY_EVENT, handleLocalNotify)
+  }, [])
 
   if (!session) {
     return <LoginScreen loginForm={loginForm} setLoginForm={setLoginForm} loginStatus={loginStatus} onLogin={login} />
@@ -187,8 +233,11 @@ function App() {
 
       <main className="content-area">
         <header className="content-header">
-          <h1>Trung tâm vận hành cửa hàng</h1>
-          <p>Xin chào {session.user?.tenDangNhap || session.user?.email || 'nhan vien'}, cơ sở {branchName}.</p>
+          <div>
+            <h1>Trung tâm vận hành cửa hàng</h1>
+            <p>Xin chào {session.user?.tenDangNhap || session.user?.email || 'nhan vien'}, cơ sở {branchName}.</p>
+          </div>
+          <AdminNotificationBell session={session} />
         </header>
 
         {activeTab === 'overview' ? (
@@ -219,6 +268,8 @@ function App() {
             onToggleSelling={capNhatTrangThaiBanMon}
           />
         )}
+
+        {activeTab === 'news' && <NewsPanel />}
 
         {activeTab === 'shift' && (
           <ShiftPanel
@@ -464,6 +515,15 @@ function App() {
           <StaffWorkShiftsPanel
             myWorkShiftState={myWorkShiftState}
             staffUsername={session.user?.tenDangNhap || session.user?.email || (isManager ? 'manager' : 'staff')}
+            shiftRequestState={staffShiftRequestState}
+            creatingShiftRequest={creatingShiftRequest}
+            onRequestShift={taoYeuCauDangKyCa}
+            onEditShiftRequest={suaYeuCauDangKyCa}
+            onDeleteShiftRequest={xoaYeuCauDangKyCa}
+            handlingShiftRequestId={handlingShiftRequestId}
+            onSelfAttendance={chamCongCaLamViecCaNhan}
+            checkingAttendanceShiftId={checkingAttendanceShiftId}
+            enableRequestTabs={!isManager}
           />
         )}
 
@@ -478,6 +538,10 @@ function App() {
             onUpdateAttendance={capNhatChamCong}
             onDeleteWorkShift={xoaLichLamViec}
             updatingWorkShiftId={updatingWorkShiftId}
+            shiftRequestState={managerShiftRequestState}
+            handlingShiftRequestId={handlingShiftRequestId}
+            onHandleShiftRequest={xuLyYeuCauDangKyCa}
+            onDeleteShiftRequest={xoaYeuCauDangKyCaChoManager}
           />
         )}
 
@@ -489,8 +553,41 @@ function App() {
             updatingWorkShiftId={updatingWorkShiftId}
           />
         )}
+
+        {activeTab === 'customer-care' && isManager && (
+          <ManagerCustomerCarePanel
+            reviewsState={reviewsState}
+            replyingReviewId={replyingReviewId}
+            onReplyReview={phanHoiReview}
+            onUpdateReply={suaPhanHoiReview}
+            onDeleteReply={xoaPhanHoiReview}
+          />
+        )}
+
+        {activeTab === 'account' ? <AccountCenterPanel session={session} /> : null}
       </main>
         <AdminChatWidget session={session} />
+
+        {adminToast ? (
+          <div
+            style={{
+              position: 'fixed',
+              bottom: '20px',
+              right: '20px',
+              background: '#fff',
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              padding: '16px 20px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              zIndex: 9999,
+              maxWidth: '320px',
+              animation: 'slideInRight 0.3s ease-out',
+            }}
+          >
+            <p style={{ margin: '0 0 8px 0', fontWeight: '700', color: '#333', fontSize: '14px' }}>{adminToast.title}</p>
+            <p style={{ margin: 0, color: '#666', fontSize: '13px' }}>{adminToast.message}</p>
+          </div>
+        ) : null}
     </div>
   )
 }

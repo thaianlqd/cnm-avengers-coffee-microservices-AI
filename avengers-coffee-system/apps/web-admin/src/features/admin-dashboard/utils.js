@@ -5,6 +5,10 @@ export const fmtMoney = (value) =>
 
 export const paymentTag = (value) => PAYMENT_METHOD_LABEL[value] || value || 'N/A'
 
+export const normalizeCode = (value) => String(value ?? '').trim().toUpperCase()
+
+export const normalizeOrderStatus = (value) => normalizeCode(value)
+
 export const normalizeViText = (value) => {
   const text = String(value ?? '')
   if (!text) return text

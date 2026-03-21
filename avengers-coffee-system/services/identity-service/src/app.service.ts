@@ -24,20 +24,20 @@ export class AppService {
     avatar_url?: string;
   }) {
     if (!payload.ten_dang_nhap || !payload.mat_khau || !payload.ho_ten) {
-      throw new BadRequestException('ten_dang_nhap, mat_khau, ho_ten la bat buoc');
+      throw new BadRequestException('ten_dang_nhap, mat_khau, ho_ten là bắt buộc');
     }
 
     const existedByUsername = await this.userRepository.findOne({
       where: { ten_dang_nhap: payload.ten_dang_nhap },
     });
     if (existedByUsername) {
-      throw new BadRequestException('Ten dang nhap da ton tai');
+      throw new BadRequestException('Tên đăng nhập đã tồn tại');
     }
 
     if (payload.email) {
       const existedByEmail = await this.userRepository.findOne({ where: { email: payload.email } });
       if (existedByEmail) {
-        throw new BadRequestException('Email da ton tai');
+        throw new BadRequestException('Email đã tồn tại');
       }
     }
 
@@ -46,7 +46,7 @@ export class AppService {
         where: { so_dien_thoai: payload.so_dien_thoai },
       });
       if (existedByPhone) {
-        throw new BadRequestException('So dien thoai da ton tai');
+        throw new BadRequestException('Số điện thoại đã tồn tại');
       }
     }
 
@@ -61,30 +61,30 @@ export class AppService {
 
     const savedUser = await this.userRepository.save(user);
     return {
-      message: 'Dang ky thanh cong',
+      message: 'Đăng ký thành công',
       user: this.toSafeUser(savedUser),
     };
   }
 
   async login(payload: { tai_khoan: string; mat_khau: string }) {
     if (!payload.tai_khoan || !payload.mat_khau) {
-      throw new BadRequestException('tai_khoan va mat_khau la bat buoc');
+      throw new BadRequestException('tai_khoan và mat_khau là bắt buộc');
     }
 
     const user = await this.userRepository.findOne({
       where: [{ ten_dang_nhap: payload.tai_khoan }, { email: payload.tai_khoan }],
     });
     if (!user) {
-      throw new UnauthorizedException('Sai thong tin dang nhap');
+      throw new UnauthorizedException('Sai thông tin đăng nhập');
     }
 
     const isValid = user.mat_khau_hash === this.hashPassword(payload.mat_khau);
     if (!isValid) {
-      throw new UnauthorizedException('Sai thong tin dang nhap');
+      throw new UnauthorizedException('Sai thông tin đăng nhập');
     }
 
     return {
-      message: 'Dang nhap thanh cong',
+      message: 'Đăng nhập thành công',
       user: this.toSafeUser(user),
     };
   }

@@ -8,30 +8,139 @@ import { Promotion } from './promotion.entity';
 import { PromotionUsage } from './promotion-usage.entity';
 import { User } from './user.entity';
 import * as bcrypt from 'bcrypt';
-import { randomUUID } from 'crypto';
+import { createHash, randomInt, randomUUID } from 'crypto';
+import nodemailer, { type Transporter } from 'nodemailer';
 
 const DEFAULT_BRANCHES: Array<{
   code: string;
   name: string;
+  city: string;
+  district: string;
   address: string | null;
   phone: string | null;
+  imageUrl: string | null;
+  openTime: string | null;
+  closeTime: string | null;
+  mapUrl: string | null;
 }> = [
   {
     code: 'MAC_DINH_CHI',
-    name: 'Mạc Đĩnh Chi',
-    address: 'Cơ sở Mạc Đĩnh Chi, TP.HCM',
+    name: 'HCM Mạc Đĩnh Chi',
+    city: 'Hồ Chí Minh',
+    district: 'Phường Sài Gòn',
+    address: '28 Ter B Mạc Đĩnh Chi, Phường Sài Gòn, Thành phố Hồ Chí Minh',
     phone: null,
+    imageUrl: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1200&q=80',
+    openTime: '07:00',
+    closeTime: '22:00',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=28+Ter+B+Mac+Dinh+Chi+Phuong+Sai+Gon+Thanh+pho+Ho+Chi+Minh',
   },
   {
     code: 'THE_GRACE_TOWER',
-    name: 'The Grace Tower',
-    address: 'The Grace Tower, TP.HCM',
+    name: 'HCM The Grace Tower',
+    city: 'Hồ Chí Minh',
+    district: 'Tân Phú',
+    address: '71 Hoàng Văn Thái, Tân Phú, Quận 7, Thành phố Hồ Chí Minh',
     phone: null,
+    imageUrl: 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?auto=format&fit=crop&w=1200&q=80',
+    openTime: '07:00',
+    closeTime: '22:00',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=71+Hoang+Van+Thai+Tan+Phu+Quan+7+Thanh+pho+Ho+Chi+Minh',
+  },
+  {
+    code: 'SIGNATURE_CRESCENT_MALL',
+    name: 'HCM Signature by The Avengers House',
+    city: 'Hồ Chí Minh',
+    district: 'Tân Phú',
+    address: 'TTTM Crescent Mall, 101 Tôn Dật Tiên, Phường Tân Phú, Quận 7, Thành phố Hồ Chí Minh',
+    phone: null,
+    imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
+    openTime: '07:00',
+    closeTime: '22:00',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=Crescent+Mall+101+Ton+Dat+Tien+Quan+7+Thanh+pho+Ho+Chi+Minh',
+  },
+  {
+    code: 'HOANG_VIET',
+    name: 'HCM Hoàng Việt',
+    city: 'Hồ Chí Minh',
+    district: 'Tân Bình',
+    address: '17 Út Tịch, Quận Tân Bình, Hồ Chí Minh',
+    phone: null,
+    imageUrl: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1200&q=80',
+    openTime: '07:00',
+    closeTime: '22:00',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=17+Ut+Tich+Quan+Tan+Binh+Ho+Chi+Minh',
+  },
+  {
+    code: 'LU_GIA',
+    name: 'HCM Lữ Gia',
+    city: 'Hồ Chí Minh',
+    district: 'Quận 11',
+    address: '64A Lữ Gia, Phường 15, Quận 11, Hồ Chí Minh',
+    phone: null,
+    imageUrl: 'https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1200&q=80',
+    openTime: '07:00',
+    closeTime: '22:00',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=64A+Lu+Gia+Phuong+15+Quan+11+Ho+Chi+Minh',
+  },
+  {
+    code: 'AP_BAC',
+    name: 'HCM Ấp Bắc',
+    city: 'Hồ Chí Minh',
+    district: 'Tân Bình',
+    address: '4 - 6 Ấp Bắc, Quận Tân Bình, Hồ Chí Minh',
+    phone: null,
+    imageUrl: 'https://images.unsplash.com/photo-1521017432531-fbd92d768814?auto=format&fit=crop&w=1200&q=80',
+    openTime: '07:00',
+    closeTime: '21:30',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=4-6+Ap+Bac+Quan+Tan+Binh+Ho+Chi+Minh',
+  },
+  {
+    code: 'BINH_PHU',
+    name: 'HCM Bình Phú',
+    city: 'Hồ Chí Minh',
+    district: 'Quận 6',
+    address: '111-113-115 Bình Phú, Quận 6, Hồ Chí Minh',
+    phone: null,
+    imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80',
+    openTime: '07:00',
+    closeTime: '22:00',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=111-113-115+Binh+Phu+Quan+6+Ho+Chi+Minh',
+  },
+  {
+    code: 'PHAN_VAN_TRI_3',
+    name: 'HCM Phan Văn Trị 3',
+    city: 'Hồ Chí Minh',
+    district: 'Bình Thạnh',
+    address: '190 Phan Văn Trị, Phường 11, Bình Thạnh, Thành phố Hồ Chí Minh',
+    phone: null,
+    imageUrl: 'https://images.unsplash.com/photo-1445116572660-236099ec97a0?auto=format&fit=crop&w=1200&q=80',
+    openTime: '07:00',
+    closeTime: '22:00',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=190+Phan+Van+Tri+Phuong+11+Binh+Thanh+Thanh+pho+Ho+Chi+Minh',
+  },
+  {
+    code: 'HOMYLAND_Q2',
+    name: 'HCM Homyland Q2',
+    city: 'Hồ Chí Minh',
+    district: 'Quận 2',
+    address: 'SH2, Tầng 1 Dự Án Chung cư cao cấp Homyland Riverside, Quận 2, Hồ Chí Minh',
+    phone: null,
+    imageUrl: 'https://images.unsplash.com/photo-1517705008128-361805f42e86?auto=format&fit=crop&w=1200&q=80',
+    openTime: '07:00',
+    closeTime: '22:00',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=Homyland+Riverside+Quan+2+Ho+Chi+Minh',
   },
 ];
 
+const RESET_CODE_EXPIRE_MINUTES = 10;
+const RESET_CODE_COOLDOWN_SECONDS = 60;
+const RESET_CODE_MAX_ATTEMPTS = 5;
+
 @Injectable()
 export class UserService implements OnModuleInit {
+  private mailTransporter: Transporter | null = null;
+
   constructor(
     private readonly jwtService: JwtService,
     @InjectRepository(User)
@@ -45,6 +154,77 @@ export class UserService implements OnModuleInit {
     @InjectRepository(PromotionUsage)
     private promotionUsageRepo: Repository<PromotionUsage>,
   ) {}
+
+  private getResetCodeExpireMs() {
+    return RESET_CODE_EXPIRE_MINUTES * 60 * 1000;
+  }
+
+  private getResetCodeCooldownMs() {
+    return RESET_CODE_COOLDOWN_SECONDS * 1000;
+  }
+
+  private hashResetCode(code: string) {
+    return createHash('sha256').update(String(code || '')).digest('hex');
+  }
+
+  private generateResetCode() {
+    return String(randomInt(0, 1_000_000)).padStart(6, '0');
+  }
+
+  private getOrCreateTransporter() {
+    if (this.mailTransporter) {
+      return this.mailTransporter;
+    }
+
+    const host = String(process.env.SMTP_HOST || '').trim();
+    const user = String(process.env.SMTP_USER || '').trim();
+    const pass = String(process.env.SMTP_PASS || '').trim();
+    if (!host || !user || !pass) {
+      return null;
+    }
+
+    const port = Number(process.env.SMTP_PORT || 587);
+    this.mailTransporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465,
+      auth: { user, pass },
+    });
+
+    return this.mailTransporter;
+  }
+
+  private async guiMailDatLaiMatKhau(email: string, fullName: string, code: string) {
+    const transporter = this.getOrCreateTransporter();
+    const appName = String(process.env.APP_NAME || 'The Avengers House').trim();
+    const fromEmail = String(process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@avengershouse.local').trim();
+
+    if (!transporter) {
+      console.warn(`[forgot-password][DEV] OTP for ${email}: ${code}`);
+      return;
+    }
+
+    const html = `
+      <div style="font-family:Arial,sans-serif;color:#222;line-height:1.6;max-width:560px;margin:0 auto;padding:20px;border:1px solid #eee;border-radius:16px;">
+        <h2 style="margin:0 0 12px;color:#d97706;">Đặt lại mật khẩu</h2>
+        <p style="margin:0 0 8px;">Xin chào ${fullName || 'bạn'},</p>
+        <p style="margin:0 0 16px;">Bạn vừa yêu cầu đặt lại mật khẩu cho tài khoản tại ${appName}.</p>
+        <div style="font-size:30px;font-weight:700;letter-spacing:8px;background:#fff7ed;color:#9a3412;border-radius:12px;padding:12px 16px;text-align:center;margin:0 0 16px;">
+          ${code}
+        </div>
+        <p style="margin:0 0 8px;">Mã có hiệu lực trong ${RESET_CODE_EXPIRE_MINUTES} phút.</p>
+        <p style="margin:0;color:#6b7280;">Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.</p>
+      </div>
+    `;
+
+    await transporter.sendMail({
+      from: `${appName} <${fromEmail}>`,
+      to: email,
+      subject: `[${appName}] Ma OTP dat lai mat khau`,
+      text: `Ma OTP dat lai mat khau cua ban la ${code}. Ma co hieu luc trong ${RESET_CODE_EXPIRE_MINUTES} phut.`,
+      html,
+    });
+  }
 
   private taoAccessToken(user: User) {
     return this.jwtService.signAsync({
@@ -91,11 +271,26 @@ export class UserService implements OnModuleInit {
       ma_chi_nhanh: branch.ma_chi_nhanh,
       ten_chi_nhanh: branch.ten_chi_nhanh,
       dia_chi: branch.dia_chi,
+      thanh_pho: branch.thanh_pho,
+      quan_huyen: branch.quan_huyen,
       so_dien_thoai: branch.so_dien_thoai,
+      hinh_anh_url: branch.hinh_anh_url,
+      gio_mo_cua: branch.gio_mo_cua,
+      gio_dong_cua: branch.gio_dong_cua,
+      map_url: branch.map_url,
       trang_thai: branch.trang_thai,
       ngay_tao: branch.ngay_tao,
       ngay_cap_nhat: branch.ngay_cap_nhat,
     };
+  }
+
+  private normalizeTimeValue(value?: string | null) {
+    const normalized = String(value || '').trim();
+    if (!normalized) return null;
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(normalized)) {
+      throw new BadRequestException('Dinh dang gio khong hop le, can HH:MM');
+    }
+    return normalized;
   }
 
   private async seedDefaultBranches() {
@@ -119,6 +314,30 @@ export class UserService implements OnModuleInit {
           existed.so_dien_thoai = seed.phone;
           shouldSave = true;
         }
+        if (!existed.thanh_pho && seed.city) {
+          existed.thanh_pho = seed.city;
+          shouldSave = true;
+        }
+        if (!existed.quan_huyen && seed.district) {
+          existed.quan_huyen = seed.district;
+          shouldSave = true;
+        }
+        if (!existed.hinh_anh_url && seed.imageUrl) {
+          existed.hinh_anh_url = seed.imageUrl;
+          shouldSave = true;
+        }
+        if (!existed.gio_mo_cua && seed.openTime) {
+          existed.gio_mo_cua = seed.openTime;
+          shouldSave = true;
+        }
+        if (!existed.gio_dong_cua && seed.closeTime) {
+          existed.gio_dong_cua = seed.closeTime;
+          shouldSave = true;
+        }
+        if (!existed.map_url && seed.mapUrl) {
+          existed.map_url = seed.mapUrl;
+          shouldSave = true;
+        }
         if (shouldSave) {
           await this.branchRepo.save(existed);
         }
@@ -129,7 +348,13 @@ export class UserService implements OnModuleInit {
         ma_chi_nhanh: seed.code,
         ten_chi_nhanh: seed.name,
         dia_chi: seed.address,
+        thanh_pho: seed.city,
+        quan_huyen: seed.district,
         so_dien_thoai: seed.phone,
+        hinh_anh_url: seed.imageUrl,
+        gio_mo_cua: seed.openTime,
+        gio_dong_cua: seed.closeTime,
+        map_url: seed.mapUrl,
         trang_thai: 'ACTIVE',
       });
       await this.branchRepo.save(created);
@@ -193,6 +418,116 @@ export class UserService implements OnModuleInit {
         co_so_ma: user.co_so_ma,
         co_so_ten: user.co_so_ten,
       }
+    };
+  }
+
+  async requestForgotPassword(payload: { email?: string; tai_khoan?: string }) {
+    const identifier = String(payload?.email || payload?.tai_khoan || '').trim();
+    if (!identifier) {
+      throw new BadRequestException('Vui lòng nhập email hoặc tài khoản');
+    }
+
+    const normalizedIdentifier = identifier.toLowerCase();
+    const user = await this.userRepo.findOne({
+      where: [{ email: normalizedIdentifier }, { ten_dang_nhap: identifier }, { ten_dang_nhap: normalizedIdentifier }],
+    });
+
+    if (!user || !user.email) {
+      return {
+        message: 'Nếu tài khoản tồn tại, mã xác thực đã được gửi về email của bạn.',
+      };
+    }
+
+    const now = Date.now();
+    if (user.reset_password_requested_at) {
+      const elapsed = now - new Date(user.reset_password_requested_at).getTime();
+      const cooldownMs = this.getResetCodeCooldownMs();
+      if (elapsed < cooldownMs) {
+        const secondsLeft = Math.max(1, Math.ceil((cooldownMs - elapsed) / 1000));
+        throw new BadRequestException(`Vui lòng chờ ${secondsLeft}s trước khi yêu cầu lại mã.`);
+      }
+    }
+
+    const code = this.generateResetCode();
+    user.reset_password_code_hash = this.hashResetCode(code);
+    user.reset_password_code_expires_at = new Date(now + this.getResetCodeExpireMs());
+    user.reset_password_requested_at = new Date(now);
+    user.reset_password_attempts = 0;
+    await this.userRepo.save(user);
+
+    await this.guiMailDatLaiMatKhau(user.email, user.ho_ten || user.ten_dang_nhap || 'bạn', code);
+
+    return {
+      message: 'Nếu tài khoản tồn tại, mã xác thực đã được gửi về email của bạn.',
+      expires_in_minutes: RESET_CODE_EXPIRE_MINUTES,
+    };
+  }
+
+  async resetPasswordByOtp(payload: {
+    email?: string;
+    tai_khoan?: string;
+    otp?: string;
+    newPassword?: string;
+  }) {
+    const identifier = String(payload?.email || payload?.tai_khoan || '').trim();
+    const otp = String(payload?.otp || '').trim();
+    const newPassword = String(payload?.newPassword || '').trim();
+
+    if (!identifier || !otp || !newPassword) {
+      throw new BadRequestException('Thiếu thông tin đặt lại mật khẩu');
+    }
+    if (!/^\d{6}$/.test(otp)) {
+      throw new BadRequestException('Mã OTP phải gồm 6 chữ số');
+    }
+    if (newPassword.length < 6) {
+      throw new BadRequestException('Mật khẩu mới phải từ 6 ký tự trở lên');
+    }
+
+    const normalizedIdentifier = identifier.toLowerCase();
+    const user = await this.userRepo.findOne({
+      where: [{ email: normalizedIdentifier }, { ten_dang_nhap: identifier }, { ten_dang_nhap: normalizedIdentifier }],
+    });
+
+    if (!user || !user.reset_password_code_hash || !user.reset_password_code_expires_at) {
+      throw new BadRequestException('Mã OTP không hợp lệ hoặc đã hết hạn');
+    }
+
+    const now = new Date();
+    if (new Date(user.reset_password_code_expires_at).getTime() < now.getTime()) {
+      user.reset_password_code_hash = null;
+      user.reset_password_code_expires_at = null;
+      user.reset_password_requested_at = null;
+      user.reset_password_attempts = 0;
+      await this.userRepo.save(user);
+      throw new BadRequestException('Mã OTP đã hết hạn, vui lòng yêu cầu mã mới');
+    }
+
+    if (user.reset_password_attempts >= RESET_CODE_MAX_ATTEMPTS) {
+      throw new BadRequestException('Bạn đã nhập sai OTP quá nhiều lần, vui lòng yêu cầu mã mới');
+    }
+
+    const otpHash = this.hashResetCode(otp);
+    if (otpHash !== user.reset_password_code_hash) {
+      user.reset_password_attempts += 1;
+      if (user.reset_password_attempts >= RESET_CODE_MAX_ATTEMPTS) {
+        user.reset_password_code_hash = null;
+        user.reset_password_code_expires_at = null;
+        user.reset_password_requested_at = null;
+      }
+      await this.userRepo.save(user);
+      throw new BadRequestException('Mã OTP không chính xác');
+    }
+
+    const salt = await bcrypt.genSalt();
+    user.mat_khau_hash = await bcrypt.hash(newPassword, salt);
+    user.reset_password_code_hash = null;
+    user.reset_password_code_expires_at = null;
+    user.reset_password_requested_at = null;
+    user.reset_password_attempts = 0;
+    await this.userRepo.save(user);
+
+    return {
+      message: 'Đặt lại mật khẩu thành công. Bạn có thể đăng nhập với mật khẩu mới.',
     };
   }
 
@@ -270,7 +605,7 @@ export class UserService implements OnModuleInit {
     ten_dang_nhap?: string;
     mat_khau?: string;
     ho_ten?: string;
-    vai_tro?: 'STAFF' | 'MANAGER';
+    vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER';
     co_so_ma?: string;
     email?: string;
   }) {
@@ -278,15 +613,19 @@ export class UserService implements OnModuleInit {
     const password = String(payload.mat_khau || '');
     const fullName = String(payload.ho_ten || '').trim();
     const role = String(payload.vai_tro || '').trim().toUpperCase();
-    const branchInfo = await this.resolveBranchInfo(payload.co_so_ma);
+    const branchCode = String(payload.co_so_ma || '').trim();
+    const branchInfo = branchCode ? await this.resolveBranchInfo(branchCode) : null;
 
-    if (!username || !password || !fullName || !['STAFF', 'MANAGER'].includes(role)) {
+    if (!username || !password || !fullName || !['STAFF', 'MANAGER', 'CUSTOMER'].includes(role)) {
       throw new BadRequestException('Du lieu tao tai khoan khong hop le');
     }
     if (password.length < 6) {
       throw new BadRequestException('Mat khau phai tu 6 ky tu tro len');
     }
-    if (!branchInfo) {
+    if (branchCode && !branchInfo) {
+      throw new BadRequestException('co_so_ma khong hop le');
+    }
+    if (role !== 'CUSTOMER' && !branchInfo) {
       throw new BadRequestException('Vui long chon chi nhanh hop le');
     }
 
@@ -306,8 +645,8 @@ export class UserService implements OnModuleInit {
       ho_ten: fullName,
       vai_tro: role,
       trang_thai: 'ACTIVE',
-      co_so_ma: branchInfo.code,
-      co_so_ten: branchInfo.name,
+      co_so_ma: branchInfo?.code || null,
+      co_so_ten: branchInfo?.name || null,
     });
 
     const saved = await this.userRepo.save(created);
@@ -332,7 +671,7 @@ export class UserService implements OnModuleInit {
       ten_dang_nhap?: string;
       mat_khau?: string;
       ho_ten?: string;
-      vai_tro?: 'STAFF' | 'MANAGER';
+      vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER';
       co_so_ma?: string;
       trang_thai?: 'ACTIVE' | 'INACTIVE';
       email?: string;
@@ -372,8 +711,8 @@ export class UserService implements OnModuleInit {
 
     if (payload.vai_tro !== undefined) {
       const role = String(payload.vai_tro).toUpperCase();
-      if (!['STAFF', 'MANAGER'].includes(role)) {
-        throw new BadRequestException('Chi cho phep role STAFF hoac MANAGER');
+      if (!['STAFF', 'MANAGER', 'CUSTOMER'].includes(role)) {
+        throw new BadRequestException('Chi cho phep role STAFF, MANAGER hoac CUSTOMER');
       }
       user.vai_tro = role;
     }
@@ -386,12 +725,22 @@ export class UserService implements OnModuleInit {
     }
 
     if (payload.co_so_ma !== undefined) {
-      const branchInfo = await this.resolveBranchInfo(payload.co_so_ma);
-      if (!branchInfo) {
-        throw new BadRequestException('co_so_ma khong hop le');
+      const branchCode = String(payload.co_so_ma || '').trim();
+      if (!branchCode) {
+        if (String(user.vai_tro || '').toUpperCase() === 'CUSTOMER') {
+          user.co_so_ma = null;
+          user.co_so_ten = null;
+        } else {
+          throw new BadRequestException('co_so_ma khong hop le');
+        }
+      } else {
+        const branchInfo = await this.resolveBranchInfo(branchCode);
+        if (!branchInfo) {
+          throw new BadRequestException('co_so_ma khong hop le');
+        }
+        user.co_so_ma = branchInfo.code;
+        user.co_so_ten = branchInfo.name;
       }
-      user.co_so_ma = branchInfo.code;
-      user.co_so_ten = branchInfo.name;
     }
 
     if (payload.mat_khau !== undefined) {
@@ -483,17 +832,41 @@ export class UserService implements OnModuleInit {
     };
   }
 
+  async layDanhSachChiNhanhCongKhai() {
+    const rows = await this.branchRepo.find({
+      where: { trang_thai: 'ACTIVE' },
+      order: { ngay_tao: 'ASC', ma_chi_nhanh: 'ASC' },
+    });
+
+    return {
+      total: rows.length,
+      items: rows.map((branch) => this.mapBranchItem(branch)),
+    };
+  }
+
   async taoChiNhanhAdmin(payload: {
     ma_chi_nhanh?: string;
     ten_chi_nhanh?: string;
     dia_chi?: string;
+    thanh_pho?: string;
+    quan_huyen?: string;
     so_dien_thoai?: string;
+    hinh_anh_url?: string;
+    gio_mo_cua?: string;
+    gio_dong_cua?: string;
+    map_url?: string;
     trang_thai?: 'ACTIVE' | 'INACTIVE';
   }) {
     const branchCode = this.normalizeBranchCode(payload.ma_chi_nhanh);
     const branchName = String(payload.ten_chi_nhanh || '').trim();
     const phone = payload.so_dien_thoai?.trim() || null;
     const address = payload.dia_chi?.trim() || null;
+    const city = payload.thanh_pho?.trim() || null;
+    const district = payload.quan_huyen?.trim() || null;
+    const imageUrl = payload.hinh_anh_url?.trim() || null;
+    const openTime = this.normalizeTimeValue(payload.gio_mo_cua);
+    const closeTime = this.normalizeTimeValue(payload.gio_dong_cua);
+    const mapUrl = payload.map_url?.trim() || null;
     const status = String(payload.trang_thai || 'ACTIVE').toUpperCase();
 
     if (!branchCode) {
@@ -520,7 +893,13 @@ export class UserService implements OnModuleInit {
       ma_chi_nhanh: branchCode,
       ten_chi_nhanh: branchName,
       dia_chi: address,
+      thanh_pho: city,
+      quan_huyen: district,
       so_dien_thoai: phone,
+      hinh_anh_url: imageUrl,
+      gio_mo_cua: openTime,
+      gio_dong_cua: closeTime,
+      map_url: mapUrl,
       trang_thai: status,
     });
 
@@ -536,7 +915,13 @@ export class UserService implements OnModuleInit {
     payload: {
       ten_chi_nhanh?: string;
       dia_chi?: string;
+      thanh_pho?: string;
+      quan_huyen?: string;
       so_dien_thoai?: string;
+      hinh_anh_url?: string;
+      gio_mo_cua?: string;
+      gio_dong_cua?: string;
+      map_url?: string;
       trang_thai?: 'ACTIVE' | 'INACTIVE';
     },
   ) {
@@ -570,6 +955,30 @@ export class UserService implements OnModuleInit {
 
     if (payload.so_dien_thoai !== undefined) {
       branch.so_dien_thoai = payload.so_dien_thoai?.trim() || null;
+    }
+
+    if (payload.thanh_pho !== undefined) {
+      branch.thanh_pho = payload.thanh_pho?.trim() || null;
+    }
+
+    if (payload.quan_huyen !== undefined) {
+      branch.quan_huyen = payload.quan_huyen?.trim() || null;
+    }
+
+    if (payload.hinh_anh_url !== undefined) {
+      branch.hinh_anh_url = payload.hinh_anh_url?.trim() || null;
+    }
+
+    if (payload.gio_mo_cua !== undefined) {
+      branch.gio_mo_cua = this.normalizeTimeValue(payload.gio_mo_cua);
+    }
+
+    if (payload.gio_dong_cua !== undefined) {
+      branch.gio_dong_cua = this.normalizeTimeValue(payload.gio_dong_cua);
+    }
+
+    if (payload.map_url !== undefined) {
+      branch.map_url = payload.map_url?.trim() || null;
     }
 
     if (payload.trang_thai !== undefined) {
@@ -617,48 +1026,33 @@ export class UserService implements OnModuleInit {
 
   private async seedStoreWorkforceAccounts() {
     const sharedPassword = process.env.STORE_DEFAULT_PASSWORD || '123456';
-    const macDinhChi = await this.resolveBranchInfo('MAC_DINH_CHI');
-    const theGraceTower = await this.resolveBranchInfo('THE_GRACE_TOWER');
+    for (const seed of DEFAULT_BRANCHES) {
+      const branch = await this.resolveBranchInfo(seed.code);
+      if (!branch) {
+        continue;
+      }
 
-    if (!macDinhChi || !theGraceTower) {
-      throw new Error('Khong the seed workforce do thieu chi nhanh mac dinh');
+      const suffix = seed.code.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const cleanBranchName = String(seed.name || '').replace(/^HCM\s+/i, '').trim();
+
+      await this.upsertWorkforceUser({
+        username: `thaian_staff_${suffix}`,
+        password: sharedPassword,
+        fullName: `Thái An - Nhân viên cơ sở ${cleanBranchName}`,
+        role: 'STAFF',
+        branchCode: branch.code,
+        branchName: branch.name,
+      });
+
+      await this.upsertWorkforceUser({
+        username: `thaian_manager_${suffix}`,
+        password: sharedPassword,
+        fullName: `Thái An - Quản lý cơ sở ${cleanBranchName}`,
+        role: 'MANAGER',
+        branchCode: branch.code,
+        branchName: branch.name,
+      });
     }
-
-    await this.upsertWorkforceUser({
-      username: 'thaian_staff_macdinhchi',
-      password: sharedPassword,
-      fullName: 'Thái An - Nhân viên cơ sở Mạc Đĩnh Chi',
-      role: 'STAFF',
-      branchCode: macDinhChi.code,
-      branchName: macDinhChi.name,
-    });
-
-    await this.upsertWorkforceUser({
-      username: 'thaian_manager_macdinhchi',
-      password: sharedPassword,
-      fullName: 'Thái An - Quản lý cơ sở Mạc Đĩnh Chi',
-      role: 'MANAGER',
-      branchCode: macDinhChi.code,
-      branchName: macDinhChi.name,
-    });
-
-    await this.upsertWorkforceUser({
-      username: 'thaian_staff_thegracetower',
-      password: sharedPassword,
-      fullName: 'Thái An - Nhân viên cơ sở The Grace Tower',
-      role: 'STAFF',
-      branchCode: theGraceTower.code,
-      branchName: theGraceTower.name,
-    });
-
-    await this.upsertWorkforceUser({
-      username: 'thaian_manager_thegracetower',
-      password: sharedPassword,
-      fullName: 'Thái An - Quản lý cơ sở The Grace Tower',
-      role: 'MANAGER',
-      branchCode: theGraceTower.code,
-      branchName: theGraceTower.name,
-    });
   }
 
   private async seedSystemAdminAccount() {
@@ -815,7 +1209,7 @@ export class UserService implements OnModuleInit {
 
   async capNhatThongTinCaNhan(
     maNguoiDung: string,
-    payload: { hoTen?: string; soDienThoai?: string; avatarUrl?: string },
+    payload: { hoTen?: string; soDienThoai?: string; avatarUrl?: string; email?: string },
   ) {
     const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: maNguoiDung } });
     if (!user) {
@@ -825,6 +1219,7 @@ export class UserService implements OnModuleInit {
     const hoTenMoi = payload.hoTen?.trim();
     const soDienThoaiMoi = payload.soDienThoai?.trim();
     const avatarUrlMoi = payload.avatarUrl?.trim();
+    const emailMoi = payload.email?.trim();
 
     if (hoTenMoi) {
       user.ho_ten = hoTenMoi;
@@ -844,6 +1239,18 @@ export class UserService implements OnModuleInit {
 
     if (payload.avatarUrl !== undefined) {
       user.avatar_url = avatarUrlMoi || null;
+    }
+
+    if (payload.email !== undefined) {
+      if (!emailMoi) {
+        user.email = null;
+      } else {
+        const existedEmail = await this.userRepo.findOne({ where: { email: emailMoi } });
+        if (existedEmail && existedEmail.ma_nguoi_dung !== maNguoiDung) {
+          throw new BadRequestException('Email da duoc su dung');
+        }
+        user.email = emailMoi;
+      }
     }
 
     const saved = await this.userRepo.save(user);
@@ -1367,4 +1774,251 @@ export class UserService implements OnModuleInit {
       so_luong_da_dung: p.so_luong_da_dung,
     };
   }
-}
+
+    async loginWithFacebook(payload: {
+      facebookAccessToken?: string;
+      accessToken?: string;
+    }) {
+      const facebookAccessToken = String(
+        payload.facebookAccessToken || payload.accessToken || '',
+      ).trim();
+
+      if (!facebookAccessToken) {
+        throw new BadRequestException('Facebook access token là bắt buộc');
+      }
+
+      const facebookAppId = String(process.env.FACEBOOK_APP_ID || '').trim();
+      const facebookAppSecret = String(process.env.FACEBOOK_APP_SECRET || '').trim();
+
+      if (facebookAppId && facebookAppSecret) {
+        const appToken = `${facebookAppId}|${facebookAppSecret}`;
+        const debugUrl =
+          `https://graph.facebook.com/debug_token?input_token=${encodeURIComponent(facebookAccessToken)}` +
+          `&access_token=${encodeURIComponent(appToken)}`;
+
+        const debugResponse = await fetch(debugUrl);
+        const debugJson = await debugResponse.json() as any;
+        const tokenInfo = debugJson?.data;
+
+        if (!debugResponse.ok || !tokenInfo?.is_valid) {
+          throw new UnauthorizedException('Facebook token không hợp lệ');
+        }
+
+        if (String(tokenInfo?.app_id || '') !== facebookAppId) {
+          throw new UnauthorizedException('Facebook token không đúng app');
+        }
+      }
+
+      const meUrl =
+        `https://graph.facebook.com/me?fields=id,name,email,picture.type(large)` +
+        `&access_token=${encodeURIComponent(facebookAccessToken)}`;
+      const meResponse = await fetch(meUrl);
+      const meJson = await meResponse.json() as any;
+
+      if (!meResponse.ok || !meJson?.id) {
+        throw new UnauthorizedException('Không lấy được thông tin từ Facebook');
+      }
+
+      const facebookId = String(meJson.id);
+      const normalizedEmail = meJson.email ? String(meJson.email).toLowerCase().trim() : null;
+      const fallbackUsername = `facebook_${facebookId}`;
+      const avatarUrl = meJson?.picture?.data?.url ? String(meJson.picture.data.url) : null;
+
+      let user = normalizedEmail
+        ? await this.userRepo.findOne({ where: { email: normalizedEmail } })
+        : null;
+
+      if (!user) {
+        user = await this.userRepo.findOne({ where: { ten_dang_nhap: fallbackUsername } });
+      }
+
+      if (!user) {
+        user = this.userRepo.create({
+          ma_nguoi_dung: randomUUID(),
+          email: normalizedEmail || `${fallbackUsername}@facebook.local`,
+          ten_dang_nhap: fallbackUsername,
+          mat_khau_hash: 'FACEBOOK_AUTH',
+          ho_ten: meJson.name || 'Facebook User',
+          avatar_url: avatarUrl,
+          vai_tro: 'CUSTOMER',
+          trang_thai: 'ACTIVE',
+          co_so_ma: null,
+          co_so_ten: null,
+        });
+        user = await this.userRepo.save(user);
+      } else {
+        let shouldSave = false;
+
+        if (normalizedEmail && user.email !== normalizedEmail) {
+          user.email = normalizedEmail;
+          shouldSave = true;
+        }
+        if (avatarUrl && user.avatar_url !== avatarUrl) {
+          user.avatar_url = avatarUrl;
+          shouldSave = true;
+        }
+        if (meJson.name && user.ho_ten !== meJson.name) {
+          user.ho_ten = meJson.name;
+          shouldSave = true;
+        }
+        if (user.trang_thai !== 'ACTIVE') {
+          user.trang_thai = 'ACTIVE';
+          shouldSave = true;
+        }
+
+        if (shouldSave) {
+          user = await this.userRepo.save(user);
+        }
+      }
+
+      const accessToken = await this.taoAccessToken(user);
+
+      return {
+        accessToken,
+        user: {
+          ma_nguoi_dung: user.ma_nguoi_dung,
+          hoTen: user.ho_ten,
+          tenDangNhap: user.ten_dang_nhap,
+          email: user.email,
+          avatar_url: user.avatar_url,
+          vaiTro: user.vai_tro || 'CUSTOMER',
+          coSoMa: user.co_so_ma,
+          coSoTen: user.co_so_ten,
+          co_so_ma: user.co_so_ma,
+          co_so_ten: user.co_so_ten,
+        },
+      };
+    }
+
+    /**
+     * Google OAuth: Verify Google ID Token và tạo/cập nhật user
+     * Frontend sẽ gửi token từ Google, backend verify signature
+     */
+    async loginWithGoogle(payload: {
+      googleToken: string;
+      googleTokenId?: string;
+      recaptchaToken?: string;
+    }) {
+      if (!payload.googleToken && !payload.googleTokenId) {
+        throw new BadRequestException('Google token là bắt buộc');
+      }
+
+      let googleData: any = {};
+      try {
+        const parts = (payload.googleToken || payload.googleTokenId || '').split('.');
+        if (parts.length === 3) {
+          const payload_decoded = JSON.parse(
+            Buffer.from(parts[1], 'base64').toString('utf8')
+          );
+          googleData = payload_decoded;
+        } else {
+          throw new Error('Invalid token format');
+        }
+      } catch (err) {
+        throw new UnauthorizedException('Token Google không hợp lệ');
+      }
+
+      const email = googleData.email || googleData.email_verified_by && googleData.email;
+      if (!email) {
+        throw new UnauthorizedException('Không tìm thấy email trong token Google');
+      }
+
+      let user = await this.userRepo.findOne({ where: { email } });
+
+      if (!user) {
+        user = this.userRepo.create({
+          ma_nguoi_dung: randomUUID(),
+          email: email,
+          ten_dang_nhap: email,
+          mat_khau_hash: 'GOOGLE_AUTH',
+          ho_ten: googleData.name || 'User',
+          avatar_url: googleData.picture || null,
+          vai_tro: 'CUSTOMER',
+          trang_thai: 'ACTIVE',
+          co_so_ma: null,
+          co_so_ten: null,
+        });
+        user = await this.userRepo.save(user);
+      } else {
+        let shouldSave = false;
+        if (!user.avatar_url && googleData.picture) {
+          user.avatar_url = googleData.picture;
+          shouldSave = true;
+        }
+        if (!user.ho_ten && googleData.name) {
+          user.ho_ten = googleData.name;
+          shouldSave = true;
+        }
+        if (user.trang_thai !== 'ACTIVE') {
+          user.trang_thai = 'ACTIVE';
+          shouldSave = true;
+        }
+        if (shouldSave) {
+          await this.userRepo.save(user);
+        }
+      }
+
+      const accessToken = await this.taoAccessToken(user);
+    
+      return {
+        accessToken,
+        user: {
+          ma_nguoi_dung: user.ma_nguoi_dung,
+          hoTen: user.ho_ten,
+          tenDangNhap: user.ten_dang_nhap,
+          email: user.email,
+          avatar_url: user.avatar_url,
+          vaiTro: user.vai_tro || 'CUSTOMER',
+          coSoMa: user.co_so_ma,
+          coSoTen: user.co_so_ten,
+          co_so_ma: user.co_so_ma,
+          co_so_ten: user.co_so_ten,
+        },
+      };
+    }
+
+    /**
+     * Verify reCAPTCHA token từ frontend
+     * Gọi API reCAPTCHA v3 để xác minh người dùng không phải robot
+     */
+    async verifyRecaptcha(payload: { recaptchaToken: string }) {
+      if (!payload.recaptchaToken) {
+        throw new BadRequestException('reCAPTCHA token là bắt buộc');
+      }
+
+      const secretKey = process.env.RECAPTCHA_SECRET_KEY || '';
+    
+      if (!secretKey) {
+        console.warn('RECAPTCHA_SECRET_KEY not configured');
+        return { success: true, score: 0.9, message: 'reCAPTCHA verification skipped (dev mode)' };
+      }
+
+      try {
+        const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `secret=${secretKey}&response=${payload.recaptchaToken}`,
+        });
+      
+        const result = await response.json() as any;
+
+        if (!result.success) {
+          throw new BadRequestException('Xác minh reCAPTCHA thất bại');
+        }
+
+        if (result.score && result.score < 0.5) {
+          throw new UnauthorizedException('Phát hiện hoạt động nghi ngờ, vui lòng thử lại');
+        }
+
+        return {
+          success: true,
+          score: result.score || 0,
+          action: result.action || 'LOGIN',
+          challenge_ts: result.challenge_ts,
+        };
+      } catch (err) {
+        console.error('reCAPTCHA verification error:', err);
+        throw new BadRequestException('Xác minh reCAPTCHA thất bại, vui lòng thử lại');
+      }
+    }
+  }

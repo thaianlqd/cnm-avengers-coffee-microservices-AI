@@ -20,7 +20,7 @@ export class ChatService {
   async moHoacTaoHoiThoaiKhach(payload: { customer_user_id: string; customer_name?: string }) {
     const customerId = String(payload.customer_user_id || '').trim();
     if (!customerId) {
-      throw new BadRequestException('customer_user_id la bat buoc');
+      throw new BadRequestException('customer_user_id là bắt buộc');
     }
 
     let conversation = await this.conversationRepo.findOne({
@@ -47,7 +47,7 @@ export class ChatService {
   async layDanhSachHoiThoai(userId: string, role: ChatRole) {
     const normalizedUserId = String(userId || '').trim();
     if (!normalizedUserId) {
-      throw new BadRequestException('user_id la bat buoc');
+      throw new BadRequestException('user_id là bắt buộc');
     }
 
     const where = role === 'CUSTOMER' ? { ma_khach_hang: normalizedUserId } : {};
@@ -89,7 +89,7 @@ export class ChatService {
     const senderUserId = String(payload.sender_user_id || '').trim();
     const content = String(payload.content || '').trim();
     if (!senderUserId || !content) {
-      throw new BadRequestException('sender_user_id va content la bat buoc');
+      throw new BadRequestException('sender_user_id và content là bắt buộc');
     }
 
     const conversation = await this.getConversationForUser(conversationId, senderUserId, payload.sender_role);

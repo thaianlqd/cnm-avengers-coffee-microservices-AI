@@ -30,13 +30,13 @@ export function OverviewPanel({ branchName, totals, overviewData, overviewRange,
     donutStops.push(`#efe3d8 ${donutStart}% 100%`)
   }
   const donutBackground = `conic-gradient(${donutStops.join(', ')})`
-  const primaryAlert = summary.alerts?.[0] || 'Dang doi them du lieu van hanh'
+  const primaryAlert = summary.alerts?.[0] || 'Đang đợi thêm dữ liệu vận hành'
 
   return (
     <>
       <section className="branch-report-hero">
         <div className="branch-report-copy">
-          <p className="branch-report-kicker">Bao cao hoat dong chi nhanh</p>
+          <p className="branch-report-kicker">Báo cáo hoạt động chi nhánh</p>
           <h2>Cơ sở {branchName}</h2>
           <p className="branch-report-description">
             Theo dõi doanh thu, sức khỏe vận hành, tỉ lệ hoàn thành và hiệu quả bán hàng theo phạm vi lọc {rangeMeta.label.toLowerCase()}.
@@ -53,21 +53,21 @@ export function OverviewPanel({ branchName, totals, overviewData, overviewRange,
           <div className="score-ring" style={{ '--score': `${summary.efficiencyScore || 0}%` }}>
             <div className="score-ring-inner">
               <strong>{summary.efficiencyScore || 0}</strong>
-              <small>Diem van hanh</small>
+              <small>Điểm vận hành</small>
             </div>
           </div>
 
           <div className="score-meta-list">
             <div>
-              <span>Ty le hoan thanh</span>
+              <span>Tỷ lệ hoàn thành</span>
               <strong>{summary.completionRate || 0}%</strong>
             </div>
             <div>
-              <span>Ty le huy</span>
+              <span>Tỷ lệ hủy</span>
               <strong>{summary.cancelRate || 0}%</strong>
             </div>
             <div>
-              <span>Gia tri trung binh / don</span>
+              <span>Giá trị trung bình / đơn</span>
               <strong>{fmtMoney(summary.averageOrderValue || 0)}</strong>
             </div>
           </div>
@@ -76,41 +76,41 @@ export function OverviewPanel({ branchName, totals, overviewData, overviewRange,
 
       <section className="stats-grid">
         <article className="kpi-card kpi-amber">
-          <p>Doanh thu da hoan thanh</p>
+          <p>Doanh thu đã hoàn thành</p>
           <h3>{fmtMoney(totals.revenue)}</h3>
         </article>
         <article className="kpi-card kpi-blue">
-          <p>Don dang xu ly</p>
+          <p>Đơn đang xử lý</p>
           <h3>{totals.inProgress} đơn</h3>
         </article>
         <article className="kpi-card kpi-green">
-          <p>Mon dang mo ban</p>
+          <p>Món đang mở bán</p>
           <h3>{totals.activeMenu} món</h3>
         </article>
         <article className="kpi-card kpi-brown">
-          <p>Tong gia tri don</p>
+          <p>Tổng giá trị đơn</p>
           <h3>{fmtMoney(totals.gross)}</h3>
         </article>
       </section>
 
       <section className="report-metric-strip">
         <article className="report-metric-card">
-          <p>San luong ban ra</p>
+          <p>Sản lượng bán ra</p>
           <strong>{summary.totalItemsSold || 0} món</strong>
           <small>{summary.averageItemsPerOrder || 0} món / đơn trung bình</small>
         </article>
         <article className="report-metric-card">
-          <p>Gio cao diem</p>
+          <p>Giờ cao điểm</p>
           <strong>{summary.peakHour?.label || '--:--'}</strong>
           <small>{summary.peakHour?.value || 0} đơn ở mốc cao nhất</small>
         </article>
         <article className="report-metric-card">
-          <p>Ngay doanh thu tot nhat</p>
-          <strong>{summary.bestRevenueDay?.label || 'Chua co'}</strong>
+          <p>Ngày doanh thu tốt nhất</p>
+          <strong>{summary.bestRevenueDay?.label || 'Chưa có'}</strong>
           <small>{summary.bestRevenueDay ? fmtMoney(summary.bestRevenueDay.amount) : '---'}</small>
         </article>
         <article className="report-metric-card">
-          <p>Phuong thuc thanh toan dan dau</p>
+          <p>Phương thức thanh toán dẫn đầu</p>
           <strong>{summary.topPaymentMethod ? (PAYMENT_METHOD_LABEL[summary.topPaymentMethod.code] || summary.topPaymentMethod.code) : '---'}</strong>
           <small>{summary.topPaymentMethod?.count || 0} đơn</small>
         </article>
@@ -119,8 +119,8 @@ export function OverviewPanel({ branchName, totals, overviewData, overviewRange,
       <section className="report-alert-grid">
         <article className="chart-card chart-card-glow report-alert-card">
           <div className="panel-head">
-            <h2>Tin hieu van hanh</h2>
-            <span>Cap nhat tu du lieu hien co</span>
+            <h2>Tín hiệu vận hành</h2>
+            <span>Cập nhật từ dữ liệu hiện có</span>
           </div>
           <div className="report-alert-list">
             {(summary.alerts || []).map((alert) => (
@@ -134,24 +134,24 @@ export function OverviewPanel({ branchName, totals, overviewData, overviewRange,
 
         <article className="chart-card chart-card-glow report-alert-card">
           <div className="panel-head">
-            <h2>Suc khoe chi nhanh</h2>
+            <h2>Sức khỏe chi nhánh</h2>
             <span>Nhìn nhanh để ra quyết định</span>
           </div>
           <div className="branch-health-grid">
             <div>
-              <span>Ty le hoan thanh</span>
+              <span>Tỷ lệ hoàn thành</span>
               <strong>{summary.completionRate || 0}%</strong>
             </div>
             <div>
-              <span>Ty le huy</span>
+              <span>Tỷ lệ hủy</span>
               <strong>{summary.cancelRate || 0}%</strong>
             </div>
             <div>
-              <span>Do phu ton kho san sang</span>
+              <span>Độ phủ tồn kho sẵn sàng</span>
               <strong>{summary.inventoryHealthRate || 0}%</strong>
             </div>
             <div>
-              <span>Don hoan thanh</span>
+              <span>Đơn hoàn thành</span>
               <strong>{summary.completedOrders || 0}</strong>
             </div>
           </div>

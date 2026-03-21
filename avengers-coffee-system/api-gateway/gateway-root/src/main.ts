@@ -29,7 +29,19 @@ async function bootstrap() {
     createProxyMiddleware({
       target: process.env.ORDER_SERVICE_URL || 'http://localhost:3005',
       changeOrigin: true,
-      pathFilter: ['/cart', '/chat', '/customers', '/staff', '/manager', '/products', '/reviews', '/vouchers'],
+      pathFilter: [
+        '/cart',
+        '/chat',
+        '/customers',
+        '/staff',
+        '/manager',
+        '/products',
+        '/reviews',
+        '/vouchers',
+        '/sepay_webhook.php',
+        '/ANTHAI_TEST',
+        '/GD_Full_ChucNang',
+      ],
     }),
   );
 
@@ -46,6 +58,14 @@ async function bootstrap() {
       target: process.env.AI_SERVICE_URL || 'http://localhost:8000',
       changeOrigin: true,
       pathFilter: ['/ai'],
+    }),
+  );
+
+  httpAdapter.use(
+    createProxyMiddleware({
+      target: process.env.NEWS_SERVICE_URL || 'http://localhost:3006',
+      changeOrigin: true,
+      pathFilter: ['/news', '/uploads/news'],
     }),
   );
 
