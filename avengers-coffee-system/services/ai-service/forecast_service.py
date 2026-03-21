@@ -80,29 +80,6 @@ def _holt_winters(series: np.ndarray, periods: int, season_len: int = 7):
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Synthetic data for demo when DB has no real orders yet
-# ──────────────────────────────────────────────────────────────────────────────
-
-def _synthetic_history() -> pd.DataFrame:
-    rng = np.random.default_rng(42)
-    start = datetime.now() - timedelta(days=90)
-    dates = pd.date_range(start=start, periods=90, freq="D")
-    rows = []
-    for branch in ["MAC_DINH_CHI", "THE_GRACE_TOWER"]:
-        for d in dates:
-            wkd = 1.4 if d.weekday() >= 5 else 1.0
-            base = 22 * wkd
-            revenue_base = base * 52_000
-            rows.append({
-                "ngay": d,
-                "branch_code": branch,
-                "so_don": max(1, int(base + rng.normal(0, 4))),
-                "doanh_thu": max(0.0, revenue_base + rng.normal(0, 40_000)),
-            })
-    return pd.DataFrame(rows)
-
-
-# ──────────────────────────────────────────────────────────────────────────────
 # Main model class
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -116,10 +93,27 @@ class DemandForecastModel:
         self.total_records: int = 0
         self.branches: List[str] = []
         self._using_prophet: bool = False
+        self.insufficient_data: bool = False
+        self.insufficient_data_reason: Optional[str] = None
+        self.data_source: str = "none"
+
+    def _mark_insufficient_data(self, reason: str) -> None:
+        self.insufficient_data = True
+        self.insufficient_data_reason = reason
+        self.data_source = "none"
+        self.prophet_models = {}
+        self.hw_params = {}
+        self.total_records = 0
+        self.branches = []
+        self.is_trained = True
+        self.trained_at = datetime.utcnow()
 
     # ------------------------------------------------------------------
     def train(self, engine: Engine) -> None:
         logger.info("[Forecast] Starting training...")
+        self.insufficient_data = False
+        self.insufficient_data_reason = None
+        self.data_source = "none"
         try:
             with engine.connect() as conn:
                 df = pd.DataFrame(
@@ -138,8 +132,12 @@ class DemandForecastModel:
                 )
 
             if df.empty:
-                logger.warning("[Forecast] No data found — using synthetic demo data")
-                df = _synthetic_history()
+                logger.warning("[Forecast] No real data found — returning insufficient_data")
+                self.history_df = pd.DataFrame(columns=["ngay", "branch_code", "so_don", "doanh_thu"])
+                self._mark_insufficient_data("NO_REAL_DATA")
+                return
+
+            self.data_source = "real"
 
             df["ngay"] = pd.to_datetime(df["ngay"])
             df["so_don"] = df["so_don"].astype(float)
@@ -172,12 +170,8 @@ class DemandForecastModel:
 
         except Exception as exc:
             logger.error(f"[Forecast] Training failed: {exc}", exc_info=True)
-            # Still mark as trained with fallback data
-            self.history_df = _synthetic_history()
-            self.history_df["ngay"] = pd.to_datetime(self.history_df["ngay"])
-            self.branches = ["MAC_DINH_CHI", "THE_GRACE_TOWER"]
-            self.is_trained = True
-            self.trained_at = datetime.utcnow()
+            self.history_df = pd.DataFrame(columns=["ngay", "branch_code", "so_don", "doanh_thu"])
+            self._mark_insufficient_data("TRAINING_ERROR")
 
     def _train_prophet(self, sets: dict) -> None:
         self._using_prophet = True
@@ -271,7 +265,7 @@ class DemandForecastModel:
     # ------------------------------------------------------------------
     def predict(self, branch_code: str = "ALL", periods: int = 14, metric: str = "orders") -> list:
         """Returns `periods` forecast points for the given branch + metric."""
-        if not self.is_trained:
+        if not self.is_trained or self.insufficient_data:
             return []
 
         y_col = "so_don" if metric == "orders" else "doanh_thu"
@@ -293,7 +287,7 @@ class DemandForecastModel:
 
     def get_historical(self, branch_code: str = "ALL", days: int = 30, metric: str = "orders") -> list:
         """Returns `days` of historical daily data for the chart."""
-        if self.history_df is None:
+        if self.history_df is None or self.insufficient_data:
             return []
 
         y_col = "so_don" if metric == "orders" else "doanh_thu"
@@ -324,4 +318,7 @@ class DemandForecastModel:
             "models_count": len(self.prophet_models) if PROPHET_AVAILABLE else len(self.hw_params),
             "engine": "Prophet" if (PROPHET_AVAILABLE and self.prophet_models) else "Holt-Winters (NumPy)",
             "trained_at": self.trained_at.isoformat() if self.trained_at else None,
+            "insufficient_data": self.insufficient_data,
+            "insufficient_data_reason": self.insufficient_data_reason,
+            "data_source": self.data_source,
         }

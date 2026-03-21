@@ -1700,7 +1700,7 @@ export class ThanhToanService {
       throw new BadRequestException('Tien khach dua khong du de tao don COD');
     }
     const tienThoi = isCash ? Math.max((tienKhachDua as number) - tongTien, 0) : 0;
-    const maNguoiDung = dto.ma_nguoi_dung?.trim() || `guest-pos-${Date.now()}`;
+    const maNguoiDung = dto.ma_nguoi_dung?.trim() || `anon-pos-${Date.now()}`;
     const maDonHang = crypto.randomUUID();
 
     const trangThaiDon = 'MOI_TAO';
@@ -2759,7 +2759,7 @@ export class ThanhToanService {
 
   // Tích điểm loyalty cho user (fire-and-forget — không làm hỏng luồng thanh toán)
   private async tichDiemLoyalty(maNguoiDung: string, tongTienGoc: number): Promise<void> {
-    if (!maNguoiDung || maNguoiDung.startsWith('guest-')) return;
+    if (!maNguoiDung || maNguoiDung.startsWith('anon-')) return;
     const diem = Math.floor(tongTienGoc / 1000);
     if (diem <= 0) return;
     try {

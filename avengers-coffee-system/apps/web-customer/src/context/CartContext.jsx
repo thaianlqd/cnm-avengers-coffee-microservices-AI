@@ -15,14 +15,15 @@ const getAdditionalPriceBySize = (size) => SIZE_PRICE_MAP[size || 'Nhỏ'] || 0;
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
   const queryClient = useQueryClient();
+  const ANON_PREFIX = 'anon-';
 
   const layMaNguoiDungKhach = () => {
-    const key = 'avengers_guest_user_id';
+    const key = 'avengers_anon_user_id';
     const existed = localStorage.getItem(key);
     if (existed) {
       return existed;
     }
-    const created = `guest-${Date.now()}`;
+    const created = `${ANON_PREFIX}${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
     localStorage.setItem(key, created);
     return created;
   };
@@ -36,7 +37,7 @@ export const CartProvider = ({ children }) => {
           return parsed.ma_nguoi_dung;
         }
       } catch {
-        // Fallback to guest id when localStorage user payload is invalid.
+        // Fallback to anonymous id when localStorage user payload is invalid.
       }
     }
     return layMaNguoiDungKhach();

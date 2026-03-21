@@ -138,8 +138,8 @@ export function OrdersPanel({
         const inId = order.ma_don_hang.toLowerCase().includes(q)
         const inCustomer = (order.ten_khach_hang || '').toLowerCase().includes(q)
         const inCashier = (order.ten_thu_ngan || '').toLowerCase().includes(q)
-        const inGuest = (order.ma_nguoi_dung || '').toLowerCase().includes(q)
-        if (!inId && !inCustomer && !inCashier && !inGuest) return false
+        const inUserId = (order.ma_nguoi_dung || '').toLowerCase().includes(q)
+        if (!inId && !inCustomer && !inCashier && !inUserId) return false
       }
       if (filterType) {
         if (filterType === 'ONLINE') {

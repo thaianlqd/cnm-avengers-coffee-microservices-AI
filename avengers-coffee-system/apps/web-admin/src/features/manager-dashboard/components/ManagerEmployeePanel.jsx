@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { formatMinutesLabel, getAttendanceInsight } from '../../workforce/attendance'
+
+const PAGE_SIZE = 8
 
 function toDateOnlyLocal(date) {
   const year = date.getFullYear()
@@ -45,6 +47,7 @@ export function ManagerEmployeePanel({
 }) {
   const [keyword, setKeyword] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
+  const [page, setPage] = useState(1)
 
   const todayKey = useMemo(() => toDateOnlyLocal(new Date()), [])
 
@@ -143,6 +146,17 @@ export function ManagerEmployeePanel({
     )
   }, [employeeRows])
 
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE)), [filteredRows.length])
+  const safePage = useMemo(() => Math.min(Math.max(page, 1), totalPages), [page, totalPages])
+  const pageRows = useMemo(
+    () => filteredRows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [filteredRows, safePage],
+  )
+
+  useEffect(() => {
+    setPage(1)
+  }, [keyword, statusFilter])
+
   return (
     <section className="panel employee-panel">
       <div className="panel-head">
@@ -204,7 +218,7 @@ export function ManagerEmployeePanel({
           <p className="employee-empty">Không có nhân viên nào phù hợp với bộ lọc.</p>
         ) : null}
 
-        {filteredRows.map((row) => (
+        {pageRows.map((row) => (
           <article key={row.user.ma_nguoi_dung || row.username} className="employee-card">
             <div className="employee-card-head">
               <div>
@@ -249,6 +263,19 @@ export function ManagerEmployeePanel({
           </article>
         ))}
       </div>
+
+      {filteredRows.length > PAGE_SIZE ? (
+        <div className="ops-pagination" style={{ marginTop: '0.6rem' }}>
+          <span>{(safePage - 1) * PAGE_SIZE + 1}-{Math.min(safePage * PAGE_SIZE, filteredRows.length)} / {filteredRows.length}</span>
+          <div>
+            <button type="button" className="secondary" onClick={() => setPage(1)} disabled={safePage <= 1}>Đầu</button>
+            <button type="button" className="secondary" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage <= 1}>Trước</button>
+            <strong>Trang {safePage}/{totalPages}</strong>
+            <button type="button" className="secondary" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={safePage >= totalPages}>Sau</button>
+            <button type="button" className="secondary" onClick={() => setPage(totalPages)} disabled={safePage >= totalPages}>Cuối</button>
+          </div>
+        </div>
+      ) : null}
     </section>
   )
 }

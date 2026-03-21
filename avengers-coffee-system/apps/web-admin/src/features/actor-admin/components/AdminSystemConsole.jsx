@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSystemAdmin } from '../hooks/useSystemAdmin'
 import { AiAnalyticsPanel } from './AiAnalyticsPanel'
 import { SystemOpsPanel } from './SystemOpsPanel'
@@ -25,6 +25,7 @@ function normalizeText(value) {
 const PROMOTION_TYPE_LABELS = { PERCENT: 'Giảm %', FIXED: 'Giảm tiền', FREE_ITEM: 'Tặng kèm' }
 const PROMOTION_STATUS_LABELS = { ACTIVE: 'Hiệu lực', INACTIVE: 'Tạm dừng', EXPIRED: 'Hết hạn' }
 const PAGE_SIZE = 8
+const ADMIN_LOCAL_NOTIFY_EVENT = 'avengers-admin-local-notify'
 
 function buildPage(items = [], page = 1, pageSize = PAGE_SIZE) {
   const total = items.length
@@ -59,6 +60,7 @@ function Pagination({ pageData, onPageChange }) {
 }
 
 export function AdminSystemConsole({ session, onLogout }) {
+  const [adminToast, setAdminToast] = useState(null)
   const [usersPage, setUsersPage] = useState(1)
   const [customersPage, setCustomersPage] = useState(1)
   const [branchesPage, setBranchesPage] = useState(1)
@@ -177,6 +179,25 @@ export function AdminSystemConsole({ session, onLogout }) {
   const menuPageData = useMemo(() => buildPage(filteredMenuItems, menuPage), [filteredMenuItems, menuPage])
   const promotionsPageData = useMemo(() => buildPage(promotionFilteredItems, promotionsPage), [promotionFilteredItems, promotionsPage])
 
+  useEffect(() => {
+    if (!adminToast) return
+    const timeout = window.setTimeout(() => setAdminToast(null), 4500)
+    return () => window.clearTimeout(timeout)
+  }, [adminToast])
+
+  useEffect(() => {
+    const handleLocalNotify = (event) => {
+      const detail = event?.detail || {}
+      setAdminToast({
+        title: detail.tieu_de || 'Thông báo',
+        message: detail.noi_dung || '',
+      })
+    }
+
+    window.addEventListener(ADMIN_LOCAL_NOTIFY_EVENT, handleLocalNotify)
+    return () => window.removeEventListener(ADMIN_LOCAL_NOTIFY_EVENT, handleLocalNotify)
+  }, [])
+
   return (
     <div className="system-admin-shell">
       <aside className="system-admin-sidebar">
@@ -231,7 +252,7 @@ export function AdminSystemConsole({ session, onLogout }) {
           <div className="system-admin-hero-tools">
             <AdminNotificationBell session={session} />
             <div className="system-admin-hero-badge">
-              <strong>{session?.user?.tenDangNhap || 'thaian_admin'}</strong>
+              <strong>{session?.user?.tenDangNhap || 'Quản trị viên'}</strong>
               <span>Toàn hệ thống cửa hàng</span>
             </div>
           </div>
@@ -591,8 +612,6 @@ export function AdminSystemConsole({ session, onLogout }) {
                             type="button"
                             className="secondary"
                             onClick={() => deletePromotion(item.ma_khuyen_mai)}
-                            disabled={Number(item.so_luong_da_dung || 0) > 0}
-                            title={Number(item.so_luong_da_dung || 0) > 0 ? 'Không thể xóa vì đã có người dùng. Hãy chuyển sang INACTIVE.' : ''}
                           >
                             Xóa
                           </button>
@@ -1301,6 +1320,26 @@ export function AdminSystemConsole({ session, onLogout }) {
             </div>
           </section>
         )}
+
+        {adminToast ? (
+          <div
+            style={{
+              position: 'fixed',
+              bottom: '20px',
+              right: '20px',
+              background: '#fff',
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              padding: '16px 20px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              zIndex: 9999,
+              maxWidth: '320px',
+            }}
+          >
+            <p style={{ margin: '0 0 8px 0', fontWeight: '700', color: '#333', fontSize: '14px' }}>{adminToast.title}</p>
+            <p style={{ margin: 0, color: '#666', fontSize: '13px' }}>{adminToast.message}</p>
+          </div>
+        ) : null}
       </main>
     </div>
   )

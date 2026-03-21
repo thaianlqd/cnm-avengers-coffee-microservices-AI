@@ -48,16 +48,18 @@ class CollaborativeFilterModel:
                         SELECT
                             dh.ma_nguoi_dung,
                             ct.ma_san_pham::text  AS ma_san_pham,
-                            ct.ten_san_pham,
+                            COALESCE(MAX(sp.ten_san_pham), MAX(ct.ten_san_pham), ct.ma_san_pham::text) AS ten_san_pham,
                             SUM(ct.so_luong)      AS total_quantity,
                                                         COUNT(*)              AS order_count,
                                                         MAX(dh.ngay_tao)      AS last_order_at
                         FROM orders.don_hang dh
                         JOIN orders.chi_tiet_don_hang ct
                           ON dh.ma_don_hang = ct.ma_don_hang
+                                                LEFT JOIN menu.san_pham sp
+                                                    ON sp.ma_san_pham = ct.ma_san_pham
                         WHERE dh.ma_nguoi_dung IS NOT NULL
                           AND dh.ma_nguoi_dung NOT LIKE 'guest-%'
-                        GROUP BY dh.ma_nguoi_dung, ct.ma_san_pham, ct.ten_san_pham
+                                                GROUP BY dh.ma_nguoi_dung, ct.ma_san_pham
                     """)).fetchall(),
                     columns=["ma_nguoi_dung", "ma_san_pham", "ten_san_pham", "total_quantity", "order_count", "last_order_at"],
                 )

@@ -1,7 +1,9 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAiAnalytics } from '../hooks/useAiAnalytics'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
+
+const ADMIN_LOCAL_NOTIFY_EVENT = 'avengers-admin-local-notify'
 
 // ─── tiny helpers ─────────────────────────────────────────────────────────────
 
@@ -38,6 +40,15 @@ function HorizontalBar({ label, value, max, note }) {
       <span style={{ fontSize: 12, color: '#0f172a', fontWeight: 700 }}>{note || fmtNum(value)}</span>
     </div>
   )
+}
+
+function pushAdminNotification(title, message) {
+  window.dispatchEvent(new CustomEvent(ADMIN_LOCAL_NOTIFY_EVENT, {
+    detail: {
+      tieu_de: title,
+      noi_dung: message,
+    },
+  }))
 }
 
 // ─── SVG Forecast Chart ───────────────────────────────────────────────────────
@@ -190,12 +201,8 @@ function RecommendCard({ item }) {
 
 // ─── Main Panel ───────────────────────────────────────────────────────────────
 
-function buildAuthHeaders(session) {
-  const token = session?.token || session?.accessToken || session?.access_token || ''
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
-
 export function AiAnalyticsPanel({ session }) {
+  const [behaviorDays, setBehaviorDays] = useState(30)
   const {
     branchCode, setBranchCode,
     metric, setMetric,
@@ -216,22 +223,41 @@ export function AiAnalyticsPanel({ session }) {
   const fc = forecastQuery.data
   const recs = recommendQuery.data
   const behaviorQuery = useQuery({
-    queryKey: ['admin-behavior-orders', branchCode],
-    queryFn: async () => {
-      const query = branchCode === 'ALL' ? '' : `?branch_code=${encodeURIComponent(branchCode)}`
-      const response = await fetch(`${API_BASE_URL}/staff/orders${query}`, {
-        headers: buildAuthHeaders(session),
+    queryKey: ['ai', 'behavior-insights', branchCode, behaviorDays],
+    queryFn: () => {
+      const query = `?branch_code=${encodeURIComponent(branchCode)}&limit=6&days=${encodeURIComponent(behaviorDays)}`
+      return fetch(`${API_BASE_URL}/ai/behavior/insights${query}`).then(async (res) => {
+        const payload = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(payload?.detail || payload?.message || 'Khong tai duoc du lieu hanh vi mua hang')
+        return payload
       })
-      const payload = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc du lieu hanh vi mua hang')
-      return payload?.orders || []
     },
-    staleTime: 60_000,
-    refetchInterval: 60_000,
+    staleTime: 15_000,
+    refetchInterval: 15_000,
     refetchOnWindowFocus: true,
     retry: 1,
-    enabled: Boolean(session?.token || session?.accessToken || session?.access_token),
+    enabled: true,
   })
+
+  const handleRetrainCf = async () => {
+    try {
+      pushAdminNotification('Mô hình gợi ý', 'Đang gửi yêu cầu cập nhật mô hình gợi ý...')
+      const result = await retrainCfMutation.mutateAsync()
+      pushAdminNotification('Mô hình gợi ý', result?.message || 'Yêu cầu cập nhật mô hình gợi ý đã được hệ thống tiếp nhận.')
+    } catch (error) {
+      pushAdminNotification('Mô hình gợi ý', error?.message || 'Không thể gửi yêu cầu cập nhật mô hình gợi ý.')
+    }
+  }
+
+  const handleRetrainForecast = async () => {
+    try {
+      pushAdminNotification('Mô hình dự báo', 'Đang gửi yêu cầu cập nhật mô hình dự báo...')
+      const result = await retrainForecastMutation.mutateAsync()
+      pushAdminNotification('Mô hình dự báo', result?.message || 'Yêu cầu cập nhật mô hình dự báo đã được hệ thống tiếp nhận.')
+    } catch (error) {
+      pushAdminNotification('Mô hình dự báo', error?.message || 'Không thể gửi yêu cầu cập nhật mô hình dự báo.')
+    }
+  }
 
   const behaviorSummary = useMemo(() => {
     const totalUsers = Number(stats?.collaborative_filtering?.total_users || 0)
@@ -281,57 +307,59 @@ export function AiAnalyticsPanel({ session }) {
   }, [stats])
 
   const behaviorInsights = useMemo(() => {
-    const orders = Array.isArray(behaviorQuery.data) ? behaviorQuery.data : []
-    const productMap = new Map()
-    const paymentMap = new Map()
-    const hourGroups = [
-      { key: 'SANG', label: 'Sang (06h-11h)', from: 6, to: 11, count: 0 },
-      { key: 'TRUA', label: 'Trua (11h-14h)', from: 11, to: 14, count: 0 },
-      { key: 'CHIEU', label: 'Chieu (14h-18h)', from: 14, to: 18, count: 0 },
-      { key: 'TOI', label: 'Toi (18h-23h)', from: 18, to: 23, count: 0 },
-    ]
-
-    orders.forEach((order) => {
-      const paymentKey = String(order?.phuong_thuc_thanh_toan || 'Khac')
-      paymentMap.set(paymentKey, Number(paymentMap.get(paymentKey) || 0) + 1)
-
-      const created = new Date(order?.ngay_tao)
-      if (!Number.isNaN(created.getTime())) {
-        const hour = created.getHours()
-        const bucket = hourGroups.find((item) => hour >= item.from && hour < item.to)
-        if (bucket) bucket.count += 1
-      }
-
-      const details = Array.isArray(order?.chi_tiet) ? order.chi_tiet : []
-      details.forEach((item) => {
-        const key = String(item?.ma_san_pham || item?.ten_san_pham || 'unknown')
-        const current = productMap.get(key) || {
-          name: String(item?.ten_san_pham || 'San pham'),
-          qty: 0,
-          revenue: 0,
-          orderCount: 0,
-        }
-        current.qty += Number(item?.so_luong || 0)
-        current.revenue += Number(item?.gia_ban || 0) * Number(item?.so_luong || 0)
-        current.orderCount += 1
-        productMap.set(key, current)
-      })
-    })
-
-    const topProducts = [...productMap.values()]
-      .sort((a, b) => b.qty - a.qty)
-      .slice(0, 6)
-    const paymentMix = [...paymentMap.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count)
+    const payload = behaviorQuery.data || {}
+    const hourMap = new Map((payload.hour_groups || []).map((item) => [String(item?.bucket || '').toUpperCase(), Number(item?.total_orders || 0)]))
 
     return {
-      totalOrders: orders.length,
-      topProducts,
-      paymentMix,
-      hourGroups,
+      totalOrders: Number(payload.total_orders || 0),
+      topProducts: (payload.top_products || []).map((item) => ({
+        name: String(item?.product_name || item?.product_id || 'San pham'),
+        qty: Number(item?.total_qty || 0),
+      })),
+      customerSyncTopProducts: (payload.customer_sync_top_products || []).map((item) => ({
+        name: String(item?.product_name || item?.product_id || 'San pham'),
+        qty: Number(item?.total_qty || 0),
+        score: Number(item?.sync_score || 0),
+      })),
+      paymentMix: (payload.payment_mix || []).map((item) => ({
+        name: String(item?.payment_method || 'Khac'),
+        count: Number(item?.total_orders || 0),
+      })),
+      hourGroups: [
+        { key: 'SANG', label: 'Sang (06h-11h)', count: Number(hourMap.get('SANG') || 0) },
+        { key: 'TRUA', label: 'Trua (11h-14h)', count: Number(hourMap.get('TRUA') || 0) },
+        { key: 'CHIEU', label: 'Chieu (14h-18h)', count: Number(hourMap.get('CHIEU') || 0) },
+        { key: 'TOI', label: 'Toi (18h-23h)', count: Number(hourMap.get('TOI') || 0) },
+      ],
+      topRated: (payload.top_rated_products || []).map((item) => ({
+        name: String(item?.product_name || item?.product_id || 'San pham'),
+        avgRating: Number(item?.avg_rating || 0),
+        reviews: Number(item?.total_reviews || 0),
+      })),
+      topFavorites: (payload.top_favorite_products || []).map((item) => ({
+        name: String(item?.product_name || item?.product_id || 'San pham'),
+        count: Number(item?.favorite_count || 0),
+      })),
+      topVoucherProducts: (payload.top_voucher_products || []).map((item) => ({
+        name: String(item?.product_name || item?.product_id || 'San pham'),
+        qty: Number(item?.voucher_qty || 0),
+        orders: Number(item?.voucher_orders || 0),
+      })),
     }
   }, [behaviorQuery.data])
 
+  const topProductsSummaryRows = useMemo(() => {
+    const syncRows = behaviorInsights.customerSyncTopProducts || []
+    if (syncRows.length) return syncRows.slice(0, 5)
+    return (behaviorInsights.topProducts || []).slice(0, 5).map((item) => ({
+      ...item,
+      score: Number(item?.qty || 0),
+    }))
+  }, [behaviorInsights.customerSyncTopProducts, behaviorInsights.topProducts])
+
   const isAiDown = modelStatsQuery.isError
+  const testUserInput = String(testUserId || '').trim()
+  const recommendTargetUserId = testUserInput
 
   return (
     <div style={{ padding: '0 0 40px' }}>
@@ -358,7 +386,7 @@ export function AiAnalyticsPanel({ session }) {
           <button
             type="button"
             disabled={retrainCfMutation.isPending}
-            onClick={() => retrainCfMutation.mutate()}
+            onClick={handleRetrainCf}
             style={{
               background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)',
               color: '#fff', borderRadius: 8, padding: '8px 16px', cursor: 'pointer',
@@ -370,7 +398,7 @@ export function AiAnalyticsPanel({ session }) {
           <button
             type="button"
             disabled={retrainForecastMutation.isPending}
-            onClick={() => retrainForecastMutation.mutate()}
+            onClick={handleRetrainForecast}
             style={{
               background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)',
               color: '#fff', borderRadius: 8, padding: '8px 16px', cursor: 'pointer',
@@ -488,17 +516,59 @@ export function AiAnalyticsPanel({ session }) {
               Bieu do hanh vi mua sam khach hang
             </h3>
             <p style={{ margin: '6px 0 0', fontSize: 12, color: '#64748b' }}>
-              Tong hop tu lich su don hang de nhin ro mon ban chay, khung gio mua manh va phuong thuc thanh toan pho bien.
+              Tong hop du lieu thuc tu don hang, danh gia, yeu thich va voucher de dong bo voi logic goi y cua customer.
             </p>
+            <span style={{ display: 'inline-block', marginTop: 8, padding: '3px 10px', borderRadius: 999, border: '1px solid #bfdbfe', background: '#eff6ff', color: '#1d4ed8', fontSize: 11, fontWeight: 700 }}>
+              Dong bo customer
+            </span>
           </div>
-          <strong style={{ fontSize: 13, color: '#1e40af' }}>Tong don da phan tich: {fmtNum(behaviorInsights.totalOrders)}</strong>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <strong style={{ fontSize: 13, color: '#1e40af' }}>Tong don da phan tich: {fmtNum(behaviorInsights.totalOrders)}</strong>
+            <select
+              value={behaviorDays}
+              onChange={(e) => setBehaviorDays(Number(e.target.value) || 30)}
+              style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, fontWeight: 700 }}
+            >
+              <option value={1}>Hom nay</option>
+              <option value={7}>7 ngay</option>
+              <option value={30}>30 ngay</option>
+              <option value={90}>90 ngay</option>
+            </select>
+          </div>
         </div>
 
         {behaviorQuery.isLoading ? <p style={{ color: '#9ca3af', marginTop: 12 }}>Dang tai du lieu hanh vi...</p> : null}
         {behaviorQuery.isError ? <p style={{ color: '#ef4444', marginTop: 12 }}>Khong tai duoc du lieu hanh vi mua sam.</p> : null}
 
         {!behaviorQuery.isLoading && !behaviorQuery.isError ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16, marginTop: 14 }}>
+          <>
+            <div style={{ marginTop: 14, border: '1px solid #e2e8f0', borderRadius: 12, background: '#f8fafc', overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: '#eff6ff' }}>
+                    <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #dbeafe' }}>#</th>
+                    <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #dbeafe' }}>Top 5 san pham dong bo customer</th>
+                    <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #dbeafe' }}>Diem da tin hieu</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topProductsSummaryRows.map((item, idx) => (
+                    <tr key={`${item.name}-${idx}`}>
+                      <td style={{ padding: '9px 12px', borderBottom: '1px solid #e2e8f0', fontWeight: 700 }}>{idx + 1}</td>
+                      <td style={{ padding: '9px 12px', borderBottom: '1px solid #e2e8f0', fontWeight: 700, color: '#0f172a' }}>{item.name}</td>
+                      <td style={{ padding: '9px 12px', borderBottom: '1px solid #e2e8f0', color: '#1d4ed8', fontWeight: 700 }}>{fmtNum(item.score, 2)}</td>
+                    </tr>
+                  ))}
+                  {topProductsSummaryRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} style={{ padding: '12px', color: '#64748b' }}>Chua co du lieu top san pham trong khoang thoi gian da chon.</td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16, marginTop: 14 }}>
             <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, background: '#f8fafc' }}>
               <h4 style={{ margin: '0 0 10px', fontSize: 13, color: '#0f172a' }}>Top san pham duoc mua nhieu</h4>
               <div style={{ display: 'grid', gap: 8 }}>
@@ -543,7 +613,53 @@ export function AiAnalyticsPanel({ session }) {
                 ))}
               </div>
             </section>
-          </div>
+
+            <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, background: '#f8fafc' }}>
+              <h4 style={{ margin: '0 0 10px', fontSize: 13, color: '#0f172a' }}>Top san pham duoc danh gia</h4>
+              <div style={{ display: 'grid', gap: 8 }}>
+                {(behaviorInsights.topRated || []).map((item) => (
+                  <HorizontalBar
+                    key={item.name}
+                    label={item.name}
+                    value={item.avgRating}
+                    max={5}
+                    note={`${fmtNum(item.avgRating, 2)} ★ (${fmtNum(item.reviews)} review)`}
+                  />
+                ))}
+              </div>
+            </section>
+
+            <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, background: '#f8fafc' }}>
+              <h4 style={{ margin: '0 0 10px', fontSize: 13, color: '#0f172a' }}>Top san pham duoc yeu thich</h4>
+              <div style={{ display: 'grid', gap: 8 }}>
+                {(behaviorInsights.topFavorites || []).map((item) => (
+                  <HorizontalBar
+                    key={item.name}
+                    label={item.name}
+                    value={item.count}
+                    max={behaviorInsights.topFavorites?.[0]?.count || 1}
+                    note={`${fmtNum(item.count)} luot thich`}
+                  />
+                ))}
+              </div>
+            </section>
+
+            <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, background: '#f8fafc' }}>
+              <h4 style={{ margin: '0 0 10px', fontSize: 13, color: '#0f172a' }}>Top san pham mua kem voucher</h4>
+              <div style={{ display: 'grid', gap: 8 }}>
+                {(behaviorInsights.topVoucherProducts || []).map((item) => (
+                  <HorizontalBar
+                    key={item.name}
+                    label={item.name}
+                    value={item.qty}
+                    max={behaviorInsights.topVoucherProducts?.[0]?.qty || 1}
+                    note={`${fmtNum(item.qty)} sl / ${fmtNum(item.orders)} don`}
+                  />
+                ))}
+              </div>
+            </section>
+            </div>
+          </>
         ) : null}
       </div>
 
@@ -658,30 +774,31 @@ export function AiAnalyticsPanel({ session }) {
           Thử nghiệm gợi ý theo hành vi khách
         </h3>
         <p style={{ margin: '0 0 16px', fontSize: 12, color: '#6b7280' }}>
-          Nhập mã người dùng để xem danh sách món AI đề xuất dựa trên lịch sử mua. Nếu là tài khoản mới, hệ thống trả về món phổ biến.
+          Nhập mã người dùng thật (UUID) để xem danh sách món AI đề xuất dựa trên lịch sử mua.
         </p>
 
         <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
           <input
             value={testUserId}
             onChange={e => setTestUserId(e.target.value)}
-            placeholder="Nhập User ID (UUID) hoặc để trống = popular items"
+            placeholder="Nhập User ID (UUID) thật"
             style={{
               flex: 1, padding: '10px 14px', border: '1px solid #e5e7eb',
               borderRadius: 8, fontSize: 13, outline: 'none',
             }}
-            onKeyDown={e => e.key === 'Enter' && runRecommendTest(testUserId)}
+            onKeyDown={e => e.key === 'Enter' && recommendTargetUserId && runRecommendTest(recommendTargetUserId)}
           />
           <button
             type="button"
-            onClick={() => runRecommendTest(testUserId || 'guest-test-user')}
+            onClick={() => recommendTargetUserId && runRecommendTest(recommendTargetUserId)}
+            disabled={!recommendTargetUserId}
             style={{
               background: '#1d4ed8', color: '#fff', border: 'none',
               borderRadius: 8, padding: '10px 20px', cursor: 'pointer',
-              fontSize: 13, fontWeight: 700,
+              fontSize: 13, fontWeight: 700, opacity: recommendTargetUserId ? 1 : 0.6,
             }}
           >
-            🔍 Gợi ý
+            🔍 Goi y
           </button>
         </div>
 

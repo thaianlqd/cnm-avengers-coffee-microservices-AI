@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { apiClient } from '../lib/apiClient';
 
-function getOrCreateGuestChatId() {
-  const storageKey = 'avengers_guest_chat_id';
+function getOrCreateAnonymousChatId() {
+  const storageKey = 'avengers_anon_chat_id';
   const existing = sessionStorage.getItem(storageKey);
   if (existing) return existing;
 
-  const created = `guest-chat-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+  const created = `anon-chat-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
   sessionStorage.setItem(storageKey, created);
   return created;
 }
@@ -31,15 +31,16 @@ export default function ChatWidget({ user, socketUrl }) {
 
   const userId = user?.ma_nguoi_dung || user?.maNguoiDung || null;
   const userName = user?.ho_ten || user?.hoTen || user?.tenDangNhap || user?.email || 'Khách';
-  const guestChatIdRef = useRef(null);
+  const anonymousChatIdRef = useRef(null);
 
-  if (!guestChatIdRef.current) {
-    guestChatIdRef.current = getOrCreateGuestChatId();
+  if (!anonymousChatIdRef.current) {
+    anonymousChatIdRef.current = getOrCreateAnonymousChatId();
   }
 
-  const aiUserId = userId || guestChatIdRef.current;
-  const staffChatUserId = userId || guestChatIdRef.current;
+  const aiUserId = userId || anonymousChatIdRef.current;
+  const staffChatUserId = userId || anonymousChatIdRef.current;
   const messages = messagesByMode[chatMode] || [];
+  const isAiMode = chatMode === 'AI';
 
   const setMessagesForMode = (mode, updater) => {
     setMessagesByMode((prev) => {
@@ -353,8 +354,8 @@ export default function ChatWidget({ user, socketUrl }) {
     <div
       style={{
         position: 'fixed',
-        bottom: '24px',
-        right: '24px',
+        bottom: '20px',
+        right: '20px',
         zIndex: 200,
         display: 'flex',
         flexDirection: 'column',
@@ -365,13 +366,13 @@ export default function ChatWidget({ user, socketUrl }) {
       {isOpen && (
         <div
           style={{
-            width: 'min(92vw, 360px)',
+            width: 'min(94vw, 390px)',
             display: 'flex',
             flexDirection: 'column',
-            borderRadius: '24px',
+            borderRadius: '20px',
             background: '#fff',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
-            border: '1px solid #fde0be',
+            boxShadow: '0 18px 50px rgba(19, 33, 68, 0.2)',
+            border: '1px solid #d8e2f2',
             overflow: 'hidden',
             height: 'min(76vh, 680px)',
             minHeight: '540px',
@@ -383,10 +384,10 @@ export default function ChatWidget({ user, socketUrl }) {
                display: 'flex',
                alignItems: 'center',
                justifyContent: 'space-between',
-               padding: '12px 16px',
-               background: chatMode === 'AI' 
-                 ? 'linear-gradient(120deg, #6366f1, #8b5cf6)' 
-                 : 'linear-gradient(120deg, #ea8025, #f5a54a)',
+               padding: '12px 14px',
+               background: isAiMode
+                 ? 'linear-gradient(120deg, #5b4bff 0%, #7a5cff 55%, #8d7bff 100%)'
+                 : 'linear-gradient(120deg, #0084ff 0%, #0b93f6 55%, #1aa3ff 100%)',
              }}
           >
             <div>
@@ -448,7 +449,7 @@ export default function ChatWidget({ user, socketUrl }) {
                   gap: '10px',
                   minHeight: '60px',
                   height: '100%',
-                  background: 'linear-gradient(180deg, #fff9f2 0%, #fff 40%)',
+                  background: '#f0f2f5',
                 }}
               >
                 {messages.length === 0 && (
@@ -482,17 +483,17 @@ export default function ChatWidget({ user, socketUrl }) {
                         padding: '10px 12px 8px',
                         fontSize: '0.875rem',
                          background: msg.vai_tro_nguoi_gui === 'CUSTOMER'
-                           ? (chatMode === 'AI' ? '#6366f1' : '#ea8025')
-                           : (chatMode === 'AI' ? '#f0f4ff' : '#fff5ec'),
+                           ? (isAiMode ? 'linear-gradient(135deg, #5b4bff, #7c6bff)' : 'linear-gradient(135deg, #0084ff, #1aa3ff)')
+                           : '#ffffff',
                          color: msg.vai_tro_nguoi_gui === 'CUSTOMER' ? '#fff' : '#333',
                          border: msg.vai_tro_nguoi_gui === 'CUSTOMER'
                            ? 'none'
-                           : (chatMode === 'AI' ? '1px solid #e0e7ff' : '1px solid #fde0be'),
+                           : '1px solid #e4e6eb',
                          boxShadow: msg.vai_tro_nguoi_gui === 'CUSTOMER'
-                           ? (chatMode === 'AI'
-                             ? '0 6px 16px rgba(99,102,241,0.26)'
-                             : '0 6px 16px rgba(234,128,37,0.26)')
-                           : '0 3px 12px rgba(0,0,0,0.06)',
+                           ? (isAiMode
+                             ? '0 8px 18px rgba(91,75,255,0.28)'
+                             : '0 8px 18px rgba(0,132,255,0.28)')
+                           : '0 2px 10px rgba(17, 24, 39, 0.08)',
                       }}
                     >
                       {msg.vai_tro_nguoi_gui !== 'CUSTOMER' && (
@@ -501,7 +502,7 @@ export default function ChatWidget({ user, socketUrl }) {
                              margin: '0 0 2px',
                              fontSize: '0.65rem',
                              fontWeight: 900,
-                             color: chatMode === 'AI' ? '#6366f1' : '#ea8025',
+                             color: isAiMode ? '#5b4bff' : '#0084ff',
                            }}
                         >
                           {msg.ten_nguoi_gui || (msg.vai_tro_nguoi_gui === 'AI' ? 'Trợ lý AI' : 'Nhân viên')}
@@ -510,8 +511,8 @@ export default function ChatWidget({ user, socketUrl }) {
                       {msg.reply_to && (
                         <div
                           style={{
-                            borderLeft: msg.vai_tro_nguoi_gui === 'CUSTOMER' ? '3px solid rgba(255,255,255,0.82)' : '3px solid #f0b16f',
-                            background: msg.vai_tro_nguoi_gui === 'CUSTOMER' ? 'rgba(255,255,255,0.17)' : '#fff0df',
+                            borderLeft: msg.vai_tro_nguoi_gui === 'CUSTOMER' ? '3px solid rgba(255,255,255,0.85)' : '3px solid #9ac6ff',
+                            background: msg.vai_tro_nguoi_gui === 'CUSTOMER' ? 'rgba(255,255,255,0.18)' : '#eff6ff',
                             borderRadius: 8,
                             padding: '6px 8px',
                             marginBottom: 6,
@@ -564,8 +565,9 @@ export default function ChatWidget({ user, socketUrl }) {
                             all: 'unset',
                             fontSize: '0.67rem',
                             cursor: 'pointer',
-                            opacity: 0.9,
+                            opacity: 0.95,
                             fontWeight: 700,
+                            color: msg.vai_tro_nguoi_gui === 'CUSTOMER' ? '#fff' : '#2563eb',
                           }}
                         >
                           Reply
@@ -580,7 +582,8 @@ export default function ChatWidget({ user, socketUrl }) {
               {/* Input */}
               <div
                 style={{
-                  borderTop: '1px solid #fde0be',
+                  borderTop: '1px solid #e4e6eb',
+                  background: '#fff',
                   padding: '8px 8px 10px',
                   display: 'flex',
                   flexDirection: 'column',
@@ -592,8 +595,8 @@ export default function ChatWidget({ user, socketUrl }) {
                     style={{
                       width: '100%',
                       borderRadius: 10,
-                      border: '1px solid #f6c78f',
-                      background: '#fff7ec',
+                      border: '1px solid #d6e6ff',
+                      background: '#f2f8ff',
                       padding: '6px 8px',
                       display: 'flex',
                       alignItems: 'flex-start',
@@ -609,7 +612,7 @@ export default function ChatWidget({ user, socketUrl }) {
                         style={{
                           margin: '2px 0 0',
                           fontSize: '0.72rem',
-                          color: '#7c2d12',
+                          color: '#1e3a8a',
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -624,7 +627,7 @@ export default function ChatWidget({ user, socketUrl }) {
                       style={{
                         all: 'unset',
                         cursor: 'pointer',
-                        color: '#b45309',
+                        color: '#2563eb',
                         fontWeight: 900,
                         fontSize: '0.78rem',
                         lineHeight: 1,
@@ -645,8 +648,9 @@ export default function ChatWidget({ user, socketUrl }) {
                     style={{
                       flex: 1,
                       resize: 'none',
-                      borderRadius: '14px',
-                      border: '1px solid #fde0be',
+                      borderRadius: '20px',
+                      border: '1px solid #d7dce3',
+                      background: '#f0f2f5',
                       padding: '9px 12px',
                       fontSize: '0.875rem',
                       fontWeight: 600,
@@ -662,9 +666,9 @@ export default function ChatWidget({ user, socketUrl }) {
                     style={{
                       all: 'unset',
                       cursor: !inputText.trim() || sending ? 'not-allowed' : 'pointer',
-                       background: chatMode === 'AI' ? '#6366f1' : '#ea8025',
+                       background: isAiMode ? '#5b4bff' : '#0084ff',
                       color: '#fff',
-                      borderRadius: '12px',
+                      borderRadius: '999px',
                       padding: '10px 14px',
                       fontWeight: 900,
                       fontFamily: 'inherit',
@@ -688,18 +692,18 @@ export default function ChatWidget({ user, socketUrl }) {
         <div
           style={{
             position: 'absolute',
-            bottom: '80px',
+            bottom: '78px',
             right: '0',
             display: 'flex',
             flexDirection: 'column',
-            gap: '8px',
+            gap: '10px',
             animation: 'fadeInUp 0.3s ease-out',
           }}
         >
           {[
-            { name: 'Trợ lý ảo AI', icon: '🤖', key: 'AI', color: '#6366f1' },
-            { name: 'Tư vấn viên', icon: '👤', key: 'STAFF', color: '#8b5cf6' },
-            { name: 'Chat Zalo', icon: '💬', key: 'ZALO', color: '#0084ff' },
+            { name: 'Trợ lý ảo AI', icon: '🤖', key: 'AI', color: '#5b4bff' },
+            { name: 'Tư vấn viên', icon: '👤', key: 'STAFF', color: '#0084ff' },
+            { name: 'Chat Zalo', icon: '💬', key: 'ZALO', color: '#0ea5e9' },
             { name: 'Gọi điện', icon: '☎️', key: 'CALL', color: '#ef4444' },
           ].map((item) => (
             <button
@@ -713,11 +717,12 @@ export default function ChatWidget({ user, socketUrl }) {
                 gap: '10px',
                 padding: '12px 16px',
                 borderRadius: '16px',
-                background: item.color,
-                color: '#fff',
+                background: '#ffffff',
+                color: '#0f172a',
                 fontSize: '0.9rem',
                 fontWeight: '700',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+                border: '1px solid #dbe4f0',
+                boxShadow: '0 8px 22px rgba(15, 23, 42, 0.14)',
                 transition: 'transform 0.2s, box-shadow 0.2s',
                 whiteSpace: 'nowrap',
               }}
@@ -727,10 +732,25 @@ export default function ChatWidget({ user, socketUrl }) {
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
+                e.currentTarget.style.boxShadow = '0 8px 22px rgba(15, 23, 42, 0.14)';
               }}
             >
-              <span style={{ fontSize: '1.2rem' }}>{item.icon}</span>
+              <span
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 999,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1rem',
+                  background: item.color,
+                  color: '#fff',
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.18)',
+                }}
+              >
+                {item.icon}
+              </span>
               <span>{item.name}</span>
             </button>
           ))}
@@ -743,16 +763,16 @@ export default function ChatWidget({ user, socketUrl }) {
         style={{
           all: 'unset',
           cursor: 'pointer',
-          width: '56px',
-          height: '56px',
+          width: '58px',
+          height: '58px',
           borderRadius: '50%',
-          background: 'linear-gradient(135deg, #ea8025, #f5a54a)',
+          background: 'linear-gradient(135deg, #0084ff, #1aa3ff)',
           color: '#fff',
           fontSize: '1.5rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 6px 24px rgba(234,128,37,0.4)',
+          boxShadow: '0 10px 26px rgba(0,132,255,0.4)',
           transition: 'transform 0.2s',
           position: 'relative',
         }}
