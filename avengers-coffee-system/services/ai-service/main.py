@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import requests
 from time import perf_counter
 from contextlib import asynccontextmanager
@@ -10,6 +11,8 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy import text
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 # Import tu cac file service
 from cf_service import CollaborativeFilterModel
@@ -38,6 +41,9 @@ AI_SCHEMA = safe_schema_name(os.getenv("AI_SCHEMA"), "ai")
 _base_context_cache: Dict[str, Any] = {"expires_at": datetime.min, "value": None}
 _BASE_CONTEXT_TTL_SECONDS = 90
 _AI_END_TOKEN = "[END_AVENGERS_REPLY]"
+_AI_CHAT_MAX_CONTINUATION_ROUNDS = max(0, int(os.getenv("AI_CHAT_MAX_CONTINUATION_ROUNDS", "0")))
+_GEMINI_BLOCK_MINUTES_ON_429 = max(1, int(os.getenv("GEMINI_BLOCK_MINUTES_ON_429", "10")))
+_gemini_block_until: datetime = datetime.min
 
 # Khoi tao model toan cuc
 cf_model = CollaborativeFilterModel()
@@ -501,11 +507,73 @@ def _merge_without_overlap(existing_text: str, continuation_text: str) -> str:
 def _should_continue_reply(current_text: str, finish_reason: str, has_end_token: bool, round_index: int) -> bool:
     if has_end_token:
         return False
-    if round_index >= 3:
+    if round_index >= _AI_CHAT_MAX_CONTINUATION_ROUNDS:
         return False
     if finish_reason in {"MAX_TOKENS", "RECITATION", "SAFETY"}:
         return True
     return _looks_incomplete_tail(current_text)
+
+
+def _sanitize_error_text(error_text: str) -> str:
+    if not error_text:
+        return ""
+    return re.sub(r"key=[^&\s]+", "key=***", error_text)
+
+
+def _extract_retry_delay_seconds(error_body: Dict[str, Any]) -> Optional[int]:
+    try:
+        details = (error_body.get("error") or {}).get("details") or []
+        for detail in details:
+            if str(detail.get("@type", "")).endswith("RetryInfo"):
+                retry_delay = str(detail.get("retryDelay") or "").strip().lower()
+                match = re.search(r"(\d+(?:\.\d+)?)s", retry_delay)
+                if match:
+                    return max(1, int(float(match.group(1))))
+    except Exception:
+        return None
+    return None
+
+
+def _set_gemini_block_until(seconds: Optional[int], is_daily_quota: bool) -> datetime:
+    global _gemini_block_until
+    base_seconds = (_GEMINI_BLOCK_MINUTES_ON_429 * 60) if is_daily_quota else 45
+    block_seconds = max(base_seconds, int(seconds or 0))
+    _gemini_block_until = datetime.utcnow() + timedelta(seconds=block_seconds)
+    return _gemini_block_until
+
+
+def _is_gemini_blocked() -> bool:
+    return datetime.utcnow() < _gemini_block_until
+
+
+def _build_local_chat_fallback(content: str, user_name: str, base_context: Dict[str, Any]) -> str:
+    content_lower = (content or "").strip().lower()
+
+    products = base_context.get("products") or []
+    promotions = base_context.get("promotions") or []
+    branches = base_context.get("branches") or []
+
+    top_products = [str(p.get("ten_san_pham") or "").strip() for p in products[:5] if p.get("ten_san_pham")]
+    top_promos = [str(k.get("ten_khuyen_mai") or "").strip() for k in promotions[:3] if k.get("ten_khuyen_mai")]
+    top_branches = [str(b.get("ten_chi_nhanh") or "").strip() for b in branches[:3] if b.get("ten_chi_nhanh")]
+
+    if any(word in content_lower for word in ["menu", "ban gi", "co gi", "san pham", "mon"]):
+        menu_text = ", ".join(top_products) if top_products else "Ca phe sua, bac xiu, tra sua"
+        return f"Chao {user_name}! Ben minh dang co cac mon noi bat: {menu_text}. Ban muon minh goi y theo gu ngot, dam vi hay it duong?"
+
+    if any(word in content_lower for word in ["khuyen mai", "voucher", "giam", "uu dai"]):
+        promo_text = ", ".join(top_promos) if top_promos else "Hien tai chua co khuyen mai cong khai"
+        return f"Khuyen mai hien co: {promo_text}. Ban cho minh chi nhanh hoac tong tien du kien de minh goi y uu dai phu hop nhe."
+
+    if any(word in content_lower for word in ["chi nhanh", "cua hang", "dia chi"]):
+        branch_text = ", ".join(top_branches) if top_branches else "He thong dang cap nhat chi nhanh"
+        return f"Mot so chi nhanh dang hoat dong: {branch_text}. Ban dang o khu vuc nao de minh goi y gan nhat?"
+
+    menu_text = ", ".join(top_products[:3]) if top_products else "ca phe sua, bac xiu, tra sua"
+    return (
+        f"Chao {user_name}! Minh dang ho tro bang du lieu noi bo. "
+        f"Hien co cac mon noi bat: {menu_text}. Ban can tu van menu, gia, khuyen mai hay chi nhanh?"
+    )
 
 
 def _call_gemini_chat(gemini_api_key: str, system_text: str, user_text: str, max_output_tokens: int = 650) -> Dict[str, Any]:
@@ -515,9 +583,34 @@ def _call_gemini_chat(gemini_api_key: str, system_text: str, user_text: str, max
         "contents": [{"role": "user", "parts": [{"text": user_text}]}],
         "generationConfig": {"temperature": 0.45, "maxOutputTokens": max_output_tokens},
     }
-    resp = requests.post(url, json=payload, timeout=20)
-    resp.raise_for_status()
-    return resp.json()
+
+    # Use a session with retries and exponential backoff to handle transient errors/timeouts
+    session = requests.Session()
+    retry_strategy = Retry(
+        total=2,
+        backoff_factor=1,
+        status_forcelist=[500, 502, 503, 504],
+        allowed_methods=["POST"],
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+
+    try:
+        # set a modest connect timeout and longer read timeout (connect, read)
+        resp = session.post(url, json=payload, timeout=(5, 60))
+        resp.raise_for_status()
+        return resp.json()
+    except requests.exceptions.RequestException as e:
+        resp_text = None
+        try:
+            if hasattr(e, "response") and e.response is not None:
+                resp_text = e.response.text
+        except Exception:
+            resp_text = None
+        logger.error("Loi khi goi Gemini: %s; response: %s", _sanitize_error_text(str(e)), resp_text)
+        raise
 
 
 # Routes bat buoc co /ai de khop voi gateway
@@ -921,7 +1014,7 @@ async def ai_chat(request: Request):
             )
             return {"reply": "Noi dung dang trong.", "status": "error"}
 
-        gemini_api_key = data.get("test_key") or os.getenv("GEMINI_API_KEY")
+        gemini_api_key = os.getenv("GEMINI_API_KEY")
         if not gemini_api_key:
             _safe_log_inference(
                 endpoint="/ai/chat",
@@ -936,6 +1029,18 @@ async def ai_chat(request: Request):
         base_context = _get_base_business_context()
         recent_orders = _get_user_recent_orders(user_id)
         context_text = _render_context_for_prompt(base_context, recent_orders)
+
+        if _is_gemini_blocked():
+            fallback_reply = _build_local_chat_fallback(content, user_name, base_context)
+            _safe_log_inference(
+                endpoint="/ai/chat",
+                user_id=user_id or None,
+                status="fallback",
+                started_at=started_at,
+                request_payload={"content_preview": content[:180], "reason": "gemini_blocked"},
+                response_payload={"reply_preview": fallback_reply[:220], "reply_length": len(fallback_reply)},
+            )
+            return {"reply": fallback_reply, "status": "success"}
 
         user_prompt = (
             f"Thong tin khach: ten={user_name}, user_id={user_id or 'unknown'}\n"
@@ -957,7 +1062,7 @@ async def ai_chat(request: Request):
             gemini_api_key=gemini_api_key,
             system_text=system_text,
             user_text=first_user_text,
-            max_output_tokens=650,
+            max_output_tokens=280,
         )
         first_reply, finish_reason = _extract_reply_and_finish_reason(first_body)
         full_reply, has_end_token = _strip_end_token(first_reply)
@@ -977,7 +1082,7 @@ async def ai_chat(request: Request):
                 gemini_api_key=gemini_api_key,
                 system_text=system_text,
                 user_text=continuation_prompt,
-                max_output_tokens=500,
+                max_output_tokens=220,
             )
             next_reply, finish_reason = _extract_reply_and_finish_reason(next_body)
             if not next_reply:
@@ -1005,17 +1110,66 @@ async def ai_chat(request: Request):
             },
         )
         return {"reply": reply, "status": "success"}
-    except Exception as e:
-        logger.error(f"Loi Chat: {e}")
+    except requests.exceptions.HTTPError as e:
+        error_message = _sanitize_error_text(str(e))
+        status_code = e.response.status_code if e.response is not None else None
+        reply_text = "Xin loi, he thong AI tam thoi ban. Vui long thu lai sau it phut."
+
+        if status_code == 429:
+            retry_in_seconds = None
+            is_daily_quota = False
+            try:
+                body = e.response.json() if e.response is not None else {}
+                retry_in_seconds = _extract_retry_delay_seconds(body)
+                quota_id_markers = []
+                for detail in (body.get("error", {}).get("details") or []):
+                    if str(detail.get("@type", "")).endswith("QuotaFailure"):
+                        for violation in (detail.get("violations") or []):
+                            quota_id_markers.append(str(violation.get("quotaId") or ""))
+                error_text = str((body.get("error") or {}).get("message") or "").lower()
+                is_daily_quota = (
+                    any("perday" in marker.lower() for marker in quota_id_markers)
+                    or "per day" in error_text
+                    or "current quota" in error_text
+                )
+            except Exception:
+                retry_in_seconds = None
+                is_daily_quota = False
+
+            blocked_until = _set_gemini_block_until(retry_in_seconds, is_daily_quota)
+            retry_hint = f"{max(1, int((blocked_until - datetime.utcnow()).total_seconds()))}s"
+            fallback_reply = _build_local_chat_fallback(content="", user_name="Khach", base_context=_get_base_business_context())
+            reply_text = (
+                f"{fallback_reply}\n\n"
+                f"(Gemini dang qua quota, he thong tam dung goi den {blocked_until.strftime('%H:%M:%S')} UTC.)"
+            )
+
+            logger.warning("Gemini bi 429, tam block trong %s", retry_hint)
+
+        logger.error("Loi Chat HTTP: %s", error_message)
         _safe_log_inference(
             endpoint="/ai/chat",
             user_id=user_id,
             status="error",
             started_at=started_at,
             request_payload=None,
-            error_message=str(e),
+            error_message=error_message,
         )
-        return {"reply": f"Loi AI: {str(e)}", "status": "error"}
+        if status_code == 429:
+            return {"reply": reply_text, "status": "success"}
+        return {"reply": reply_text, "status": "error"}
+    except Exception as e:
+        error_message = _sanitize_error_text(str(e))
+        logger.error("Loi Chat: %s", error_message)
+        _safe_log_inference(
+            endpoint="/ai/chat",
+            user_id=user_id,
+            status="error",
+            started_at=started_at,
+            request_payload=None,
+            error_message=error_message,
+        )
+        return {"reply": "Xin loi, he thong AI tam thoi gap su co. Vui long thu lai sau.", "status": "error"}
 
 @app.get("/ai/recommend/{user_id}", response_model=RecommendationResponse)
 def get_recommendations(user_id: str, limit: int = 3, background_tasks: BackgroundTasks = None):

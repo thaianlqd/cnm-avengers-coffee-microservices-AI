@@ -180,6 +180,22 @@
   font-size: 0.9rem;
 }
 
+.shipper-launcher-btn {
+  border: 1px solid rgba(255, 198, 148, 0.34);
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  background: linear-gradient(120deg, #f26b1d, #2563eb);
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(242, 107, 29, 0.28);
+}
+
+.shipper-launcher-btn:hover {
+  filter: brightness(1.04);
+}
+
 .left-nav nav {
   margin-top: 1rem;
   display: flex;

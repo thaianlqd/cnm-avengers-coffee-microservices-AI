@@ -37,6 +37,7 @@ async function bootstrap() {
         '/manager',
         '/products',
         '/reviews',
+        '/shippers',
         '/vouchers',
         '/sepay_webhook.php',
         '/ANTHAI_TEST',

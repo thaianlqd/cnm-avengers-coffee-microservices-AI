@@ -25,6 +25,8 @@ pnpm-debug.log*
 **/.cache/
 **/coverage/
 **/*.tsbuildinfo
+/package.json
+/package-lock.json
 
 # Python
 **/__pycache__/
