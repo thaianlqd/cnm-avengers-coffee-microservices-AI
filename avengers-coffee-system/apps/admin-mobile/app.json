@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Avengers Coffee - Admin",
+    "slug": "admin-mobile",
+    "version": "1.0.0",
+    "sdkVersion": "54.0.0",
+    "newArchEnabled": false,
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "com.avengers.coffee.admin"
+    },
+    "splash": {
+      "backgroundColor": "#2f2119"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Ứng dụng cần quyền camera để quét mã QR đơn hàng",
+          "microphonePermission": false
+        }
+      ]
+    ]
+  }
+}

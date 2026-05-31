@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Avengers Coffee - Customer",
+    "slug": "customer-mobile",
+    "version": "1.0.0",
+    "sdkVersion": "54.0.0",
+    "newArchEnabled": false,
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "com.avengers.coffee.customer"
+    },
+    "splash": {
+      "backgroundColor": "#f26b1d"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Ứng dụng cần quyền camera để quét mã QR thanh toán",
+          "microphonePermission": false
+        }
+      ]
+    ]
+  }
+}
