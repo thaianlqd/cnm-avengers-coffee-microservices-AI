@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Avengers Delivery",
+    "slug": "shipper-mobile",
+    "version": "1.0.0",
+    "sdkVersion": "54.0.0",
+    "newArchEnabled": false,
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "com.avengers.delivery.shipper"
+    },
+    "splash": {
+      "backgroundColor": "#f26b1d"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Ứng dụng cần quyền camera để quét mã QR giao hàng",
+          "microphonePermission": false
+        }
+      ]
+    ]
+  }
+}

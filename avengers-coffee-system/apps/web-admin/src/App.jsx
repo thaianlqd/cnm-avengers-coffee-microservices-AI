@@ -33,6 +33,9 @@ import { NewsPanel } from './features/shared/components/NewsPanel'
 
 function App() {
   const [adminToast, setAdminToast] = useState(null)
+  const openShipperLauncher = () => {
+    window.open('http://localhost:5176', '_blank', 'noopener,noreferrer')
+  }
 
   const showAdminToast = (title, message) => {
     setAdminToast({ title, message })
@@ -201,6 +204,9 @@ function App() {
         <p className="staff-tag">
           Đang đăng nhập: {session.user?.tenDangNhap || session.user?.email || 'nhan vien'} ({isManager ? 'Manager' : 'Staff'}) - Cơ sở {branchName}
         </p>
+        <button type="button" className="shipper-launcher-btn" onClick={openShipperLauncher}>
+          Mở Shipper Mobile
+        </button>
         <nav>
           <p className="nav-group-title">Chức năng cho staff</p>
           {staffNavTabs.map((tab) => (

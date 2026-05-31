@@ -1,0 +1,259 @@
+:root {
+  color-scheme: light;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(242, 107, 29, 0.18), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.14), transparent 24%),
+    #fff8ed;
+  color: #2f2119;
+}
+
+.page {
+  min-height: 100vh;
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #ecd9c6;
+  border-radius: 28px;
+  padding: 22px;
+  box-shadow: 0 18px 40px rgba(54, 29, 12, 0.08);
+}
+
+.hero {
+  background: linear-gradient(135deg, #2f2119 0%, #f26b1d 55%, #2563eb 100%);
+  color: #fff;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  opacity: 0.88;
+  font-weight: 800;
+}
+
+h1,
+h2,
+p,
+ol,
+ul {
+  margin-top: 0;
+}
+
+h1 {
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 1.08;
+  margin-bottom: 12px;
+}
+
+p,
+li {
+  line-height: 1.65;
+}
+
+code {
+  padding: 0.15rem 0.4rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.host-form {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.host-form label {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.host-form input {
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+}
+
+.host-form input::placeholder {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.host-hint {
+  margin: 0;
+  font-size: 0.84rem;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.warning {
+  margin: 10px 0 0;
+  background: rgba(255, 225, 200, 0.25);
+  border: 1px solid rgba(255, 238, 220, 0.48);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 600;
+}
+
+.primary,
+.ghost {
+  text-decoration: none;
+  font-weight: 800;
+  border-radius: 16px;
+  padding: 14px 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.full {
+  width: 100%;
+}
+
+.button-like {
+  appearance: none;
+}
+
+.primary {
+  color: #fff;
+  background: #f26b1d;
+}
+
+.ghost {
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.qr-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.demo-preview-card {
+  display: grid;
+  gap: 12px;
+}
+
+.preview-switches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.switch-btn {
+  appearance: none;
+  border: 1px solid #d8c0a8;
+  background: #fff;
+  color: #6a4a34;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.switch-btn.active {
+  border-color: #f26b1d;
+  color: #fff;
+  background: linear-gradient(120deg, #f26b1d, #ef4444);
+}
+
+.preview-hint {
+  margin: 0;
+  color: #5f4634;
+  font-weight: 600;
+}
+
+.phone-stage {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.phone-shell {
+  width: fit-content;
+  margin: 0 auto;
+  padding: 10px;
+  border-radius: 36px;
+  background: #161616;
+  box-shadow: 0 16px 42px rgba(17, 24, 39, 0.32);
+}
+
+.phone-notch {
+  width: 130px;
+  height: 20px;
+  margin: 4px auto 10px;
+  border-radius: 0 0 14px 14px;
+  background: #090909;
+}
+
+.preview-frame {
+  width: 100%;
+  min-height: 360px;
+  border: 1px solid #ecd9c6;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.preview-frame.in-phone {
+  display: block;
+  min-height: 0;
+  border: 0;
+  border-radius: 28px;
+}
+
+.qr-image {
+  width: min(280px, 100%);
+  border-radius: 18px;
+  border: 1px solid #ecd9c6;
+  background: #fff;
+  padding: 10px;
+}
+
+.qr-image.mini {
+  width: min(220px, 100%);
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
