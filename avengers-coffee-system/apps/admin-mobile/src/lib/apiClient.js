@@ -1,18 +1,21 @@
 import axios from 'axios'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-// API Gateway URL
-const API_BASE_URL = 'http://192.168.100.41:3000/api'
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://unentwined-johanne-biasedly.ngrok-free.dev'
+
+const defaultHeaders = {}
+if (String(API_BASE_URL).includes('ngrok')) {
+  defaultHeaders['ngrok-skip-browser-warning'] = 'true'
+}
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000,
+  timeout: 60000,
+  headers: defaultHeaders,
 })
 
-// Store auth token
 let authToken = null
 
-// Request interceptor: Attach token
 apiClient.interceptors.request.use(
   async (config) => {
     if (!authToken) {
@@ -33,12 +36,10 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error),
 )
 
-// Response interceptor: Handle errors
 apiClient.interceptors.response.use(
   (response) => response.data,
   (error) => {
     if (error.response?.status === 401) {
-      // Unauthorized - clear token
       authToken = null
       AsyncStorage.removeItem('auth_token')
     }

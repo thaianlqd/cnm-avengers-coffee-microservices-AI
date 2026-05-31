@@ -1,67 +1,33 @@
 import React from 'react'
-import { ActivityIndicator, View, Text, StyleSheet } from 'react-native'
+import {
+  ActivityIndicator,
+  View,
+  Text,
+  StyleSheet,
+} from 'react-native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
-import { Ionicons } from '@expo/vector-icons'
+import { LinearGradient } from 'expo-linear-gradient'
 import { useAdmin } from '../context/AdminContext'
-import { colors } from '../theme'
+
 import { LoginScreen } from '../screens/LoginScreen'
-import { DashboardScreen } from '../screens/DashboardScreen'
-import { OrdersScreen } from '../screens/OrdersScreen'
-import { InventoryScreen } from '../screens/InventoryScreen'
-import { ShiftsScreen } from '../screens/ShiftsScreen'
-import { ProfileScreen } from '../screens/ProfileScreen'
+import { MainShell } from '../components/MainShell'
 
 const Stack = createNativeStackNavigator()
-const Tabs = createBottomTabNavigator()
-
-function MainTabs() {
-  return (
-    <Tabs.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: '#8b7f78',
-        tabBarStyle: {
-          height: 70,
-          paddingBottom: 10,
-          paddingTop: 8,
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '700',
-        },
-        tabBarIcon: ({ color, size, focused }) => {
-          const iconMap = {
-            Dashboard: focused ? 'stats-chart' : 'stats-chart-outline',
-            Orders: focused ? 'receipt' : 'receipt-outline',
-            Inventory: focused ? 'cube' : 'cube-outline',
-            Shifts: focused ? 'calendar' : 'calendar-outline',
-            Profile: focused ? 'person-circle' : 'person-circle-outline',
-          }
-          return <Ionicons name={iconMap[route.name] || 'ellipse'} size={size} color={color} />
-        },
-      })}
-    >
-      <Tabs.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'Dashboard' }} />
-      <Tabs.Screen name="Orders" component={OrdersScreen} options={{ title: 'Đơn hàng' }} />
-      <Tabs.Screen name="Inventory" component={InventoryScreen} options={{ title: 'Tồn kho' }} />
-      <Tabs.Screen name="Shifts" component={ShiftsScreen} options={{ title: 'Ca làm' }} />
-      <Tabs.Screen name="Profile" component={ProfileScreen} options={{ title: 'Hồ sơ' }} />
-    </Tabs.Navigator>
-  )
-}
 
 export function AppNavigator() {
   const { admin, hydrated } = useAdmin()
 
   if (!hydrated) {
     return (
-      <View style={styles.loadingWrap}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Đang khởi động ứng dụng...</Text>
+      <View style={styles.loadingScreen}>
+        <LinearGradient colors={['#0d0a08', '#1a1410', '#2d1e0f']} style={styles.loadingGradient}>
+          <LinearGradient colors={['#f26b1d', '#d4560e']} style={styles.loadingLogo}>
+            <Text style={styles.loadingEmoji}>☕</Text>
+          </LinearGradient>
+          <ActivityIndicator size="large" color="#f26b1d" style={{ marginTop: 20 }} />
+          <Text style={styles.loadingBrand}>Avengers Admin</Text>
+          <Text style={styles.loadingText}>Đang khởi động...</Text>
+        </LinearGradient>
       </View>
     )
   }
@@ -71,23 +37,43 @@ export function AppNavigator() {
       {!admin ? (
         <Stack.Screen name="Login" component={LoginScreen} />
       ) : (
-        <Stack.Screen name="Tabs" component={MainTabs} />
+        <Stack.Screen name="Main" component={MainShell} />
       )}
     </Stack.Navigator>
   )
 }
 
 const styles = StyleSheet.create({
-  loadingWrap: {
+  loadingScreen: { flex: 1, backgroundColor: '#0d0a08' },
+  loadingGradient: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.bg,
+    gap: 12,
+  },
+  loadingLogo: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#f26b1d',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  loadingEmoji: { fontSize: 38 },
+  loadingBrand: {
+    fontSize: 26,
+    fontWeight: '900',
+    color: '#fff',
+    marginTop: 8,
+    letterSpacing: -0.5,
   },
   loadingText: {
-    marginTop: 12,
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '500',
   },
 })
