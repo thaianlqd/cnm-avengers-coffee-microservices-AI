@@ -28,6 +28,117 @@ import {
 } from '../lib/customerData'
 import { colors, spacing, shadows, radius } from '../theme'
 
+function InvoiceModal({ order, visible, onClose }) {
+  if (!order) return null
+  const paymentStyle = {
+    DA_THANH_TOAN: { color: '#22c55e', label: 'Đã thanh toán', icon: 'checkmark-circle' },
+    CHO_THANH_TOAN: { color: '#0ea5e9', label: 'Chờ thanh toán', icon: 'time-outline' },
+    CHO_THANH_TOAN_KHI_NHAN_HANG: { color: '#f97316', label: 'Thanh toán khi nhận', icon: 'cash-outline' },
+    CHO_XU_LY: { color: '#f59e0b', label: 'Chờ xử lý', icon: 'hourglass-outline' },
+    THAT_BAI: { color: '#ef4444', label: 'Thất bại', icon: 'close-circle-outline' },
+  }
+  const ps = paymentStyle[order.trang_thai_thanh_toan] || { color: colors.muted, label: order.trang_thai_thanh_toan, icon: 'help-circle-outline' }
+  const subTotal = order.chi_tiet.reduce((sum, i) => sum + Number(i.gia_ban || 0) * Number(i.so_luong || 0), 0)
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <View style={invoiceStyles.container}>
+        <View style={invoiceStyles.header}>
+          <Text style={invoiceStyles.headerTitle}>Hóa đơn</Text>
+          <Pressable onPress={onClose} style={invoiceStyles.closeBtn}>
+            <Ionicons name="close" size={22} color={colors.text} />
+          </Pressable>
+        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={invoiceStyles.body}>
+          {/* Store Info */}
+          <View style={invoiceStyles.storeSection}>
+            <Text style={invoiceStyles.storeName}>☕ AVENGERS COFFEE</Text>
+            <Text style={invoiceStyles.storeSlogan}>Hương vị ngọt ngào mỗi ngày</Text>
+          </View>
+
+          <View style={invoiceStyles.dashed} />
+
+          {/* Invoice Info */}
+          <View style={invoiceStyles.infoSection}>
+            <View style={invoiceStyles.infoRow}>
+              <Text style={invoiceStyles.infoLabel}>Mã đơn hàng</Text>
+              <Text style={invoiceStyles.infoValueBold}>{order.ma_don_hang}</Text>
+            </View>
+            <View style={invoiceStyles.infoRow}>
+              <Text style={invoiceStyles.infoLabel}>Ngày đặt</Text>
+              <Text style={invoiceStyles.infoValue}>{formatDateTime(order.ngay_tao)}</Text>
+            </View>
+            <View style={invoiceStyles.infoRow}>
+              <Text style={invoiceStyles.infoLabel}>Địa chỉ</Text>
+              <Text style={invoiceStyles.infoValue} numberOfLines={2}>{order.dia_chi_giao_hang || 'N/A'}</Text>
+            </View>
+            <View style={invoiceStyles.infoRow}>
+              <Text style={invoiceStyles.infoLabel}>Thanh toán</Text>
+              <View style={[invoiceStyles.payBadge, { backgroundColor: `${ps.color}15` }]}>
+                <Ionicons name={ps.icon} size={12} color={ps.color} />
+                <Text style={[invoiceStyles.payBadgeText, { color: ps.color }]}>{ps.label}</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={invoiceStyles.dashed} />
+
+          {/* Items Header */}
+          <View style={invoiceStyles.itemsHeader}>
+            <Text style={[invoiceStyles.colName, { flex: 3 }]}>Sản phẩm</Text>
+            <Text style={[invoiceStyles.colName, { flex: 1, textAlign: 'center' }]}>SL</Text>
+            <Text style={[invoiceStyles.colName, { flex: 2, textAlign: 'right' }]}>Thành tiền</Text>
+          </View>
+
+          {/* Items */}
+          {order.chi_tiet.map((item, index) => (
+            <View key={item.id || index} style={invoiceStyles.itemRow}>
+              <View style={{ flex: 3 }}>
+                <Text style={invoiceStyles.itemName} numberOfLines={2}>{item.ten_san_pham}</Text>
+                <Text style={invoiceStyles.itemPrice}>{formatCurrency(item.gia_ban)}</Text>
+              </View>
+              <Text style={[invoiceStyles.itemQty, { flex: 1 }]}>x{item.so_luong}</Text>
+              <Text style={[invoiceStyles.itemTotal, { flex: 2 }]}>
+                {formatCurrency(Number(item.gia_ban) * Number(item.so_luong))}
+              </Text>
+            </View>
+          ))}
+
+          <View style={invoiceStyles.dashed} />
+
+          {/* Totals */}
+          <View style={invoiceStyles.totalsSection}>
+            <View style={invoiceStyles.totalRow}>
+              <Text style={invoiceStyles.totalLabel}>Tạm tính ({order.chi_tiet.length} món)</Text>
+              <Text style={invoiceStyles.totalValue}>{formatCurrency(subTotal)}</Text>
+            </View>
+            {order.so_tien_giam > 0 ? (
+              <View style={invoiceStyles.totalRow}>
+                <Text style={[invoiceStyles.totalLabel, { color: colors.success }]}>Giảm giá</Text>
+                <Text style={[invoiceStyles.totalValue, { color: colors.success }]}>-{formatCurrency(order.so_tien_giam)}</Text>
+              </View>
+            ) : null}
+            <View style={invoiceStyles.dashed} />
+            <View style={invoiceStyles.totalRow}>
+              <Text style={invoiceStyles.grandTotalLabel}>TỔNG CỘNG</Text>
+              <Text style={invoiceStyles.grandTotalValue}>{formatCurrency(order.tong_tien)}</Text>
+            </View>
+          </View>
+
+          <View style={invoiceStyles.dashed} />
+
+          {/* Footer */}
+          <View style={invoiceStyles.footer}>
+            <Text style={invoiceStyles.footerText}>Cảm ơn quý khách đã sử dụng dịch vụ!</Text>
+            <Text style={invoiceStyles.footerText}>Avengers Coffee ♥</Text>
+          </View>
+        </ScrollView>
+      </View>
+    </Modal>
+  )
+}
+
 const STATUS_FILTERS = [
   { value: 'all', label: 'Tất cả' },
   { value: 'MOI_TAO', label: 'Vừa tạo' },
@@ -55,7 +166,7 @@ const PAYMENT_STATUS_STYLE = {
   THAT_BAI:                     { color: '#ef4444', label: 'Thất bại' },
 }
 
-function OrderDetailModal({ order, visible, onClose, onCancel }) {
+function OrderDetailModal({ order, visible, onClose, onCancel, onViewInvoice }) {
   if (!order) return null
   const statusStyle = STATUS_STYLE[order.trang_thai_don_hang] || { color: colors.muted, bg: colors.cream, icon: 'help-circle-outline' }
   const paymentStyle = PAYMENT_STATUS_STYLE[order.trang_thai_thanh_toan] || { color: colors.muted, label: order.trang_thai_thanh_toan }
@@ -176,6 +287,15 @@ function OrderDetailModal({ order, visible, onClose, onCancel }) {
                 <Text style={detailStyles.cancelBtnText}>Hủy đơn hàng</Text>
               </Pressable>
             ) : null}
+
+            {/* View Invoice */}
+            <Pressable
+              onPress={() => onViewInvoice?.(order)}
+              style={detailStyles.invoiceBtn}
+            >
+              <Ionicons name="document-text-outline" size={18} color={colors.primary} />
+              <Text style={detailStyles.invoiceBtnText}>Xem hóa đơn</Text>
+            </Pressable>
           </View>
         </ScrollView>
       </View>
@@ -190,6 +310,7 @@ export function OrdersScreen() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
+  const [invoiceOrder, setInvoiceOrder] = useState(null)
 
   const ordersQuery = useQuery({
     queryKey: ['customer', 'orders', userId, statusFilter],
@@ -385,6 +506,17 @@ export function OrdersScreen() {
           setSelectedOrder(null)
         }}
         onCancel={handleCancel}
+        onViewInvoice={(order) => {
+          setIsDetailOpen(false)
+          setInvoiceOrder(order)
+        }}
+      />
+
+      {/* Invoice Modal */}
+      <InvoiceModal
+        order={invoiceOrder}
+        visible={Boolean(invoiceOrder)}
+        onClose={() => setInvoiceOrder(null)}
       />
     </View>
   )

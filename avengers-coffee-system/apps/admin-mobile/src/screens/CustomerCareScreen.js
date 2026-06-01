@@ -341,7 +341,7 @@ export function CustomerCareScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#f8fafc' },
-  header: { paddingTop: 52, paddingHorizontal: 16, paddingBottom: 14, gap: 8 },
+  header: { paddingTop: 52, paddingLeft: 60, paddingRight: 16, paddingBottom: 14, gap: 8 },
   headerTitle: { fontSize: 22, fontWeight: '900', color: '#0f172a' },
   headerStats: { flexDirection: 'row', gap: 8 },
   statPill: { backgroundColor: TEAL + '15', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },

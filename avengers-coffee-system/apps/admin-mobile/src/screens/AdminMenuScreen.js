@@ -63,10 +63,16 @@ export function AdminMenuScreen() {
     setLoading(true)
     try {
       const [resItems, resCats] = await Promise.all([
-        apiClient.get('/menu/items?sort=price_desc'),
+        apiClient.get('/menu/items?sort=newest'),
         apiClient.get('/menu/categories')
       ])
-      setItems(safeArray(resItems?.items || resItems))
+      const rawItems = safeArray(resItems?.items || resItems)
+      rawItems.sort((a, b) => {
+        const idA = Number(a.id || a.product_id || 0)
+        const idB = Number(b.id || b.product_id || 0)
+        return idB - idA
+      })
+      setItems(rawItems)
       
       const cats = safeArray(resCats)
       setCategories(cats)

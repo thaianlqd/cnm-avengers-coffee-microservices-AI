@@ -28,7 +28,7 @@ export function UserProvider({ children }) {
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       const session = await loadUserSession()
       if (session.user && session.token) {
         const nextUser = normalizeUser(session.user)
