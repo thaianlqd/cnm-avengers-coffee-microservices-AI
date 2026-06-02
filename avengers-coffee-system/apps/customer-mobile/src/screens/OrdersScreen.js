@@ -954,3 +954,162 @@ const detailStyles = StyleSheet.create({
     color: colors.danger,
   },
 })
+
+// Invoice Modal Styles
+const invoiceStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.bg,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: colors.text,
+  },
+  closeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.cream,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  body: {
+    padding: spacing.lg,
+    gap: spacing.md,
+    backgroundColor: '#fff',
+    margin: spacing.md,
+    borderRadius: radius.xl,
+    ...shadows.sm,
+  },
+  storeSection: {
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: spacing.sm,
+  },
+  storeName: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: colors.text,
+    textTransform: 'uppercase',
+  },
+  storeSlogan: {
+    fontSize: 12,
+    color: colors.muted,
+  },
+  dashed: {
+    height: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+    borderStyle: 'dashed',
+    marginVertical: spacing.xs,
+  },
+  infoSection: {
+    gap: 8,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  infoLabel: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  infoValue: {
+    fontSize: 13,
+    color: colors.text,
+    fontWeight: '600',
+    maxWidth: '65%',
+    textAlign: 'right',
+  },
+  infoValueBold: {
+    fontSize: 14,
+    color: colors.text,
+    fontWeight: '900',
+  },
+  payBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radius.sm,
+  },
+  payBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  itemsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingBottom: 4,
+  },
+  colName: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+  },
+  itemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  itemName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  itemPrice: {
+    fontSize: 11,
+    color: colors.muted,
+    marginTop: 2,
+  },
+  itemQty: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.text,
+    textAlign: 'center',
+  },
+  itemTotal: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: colors.text,
+    textAlign: 'right',
+  },
+  totalsSection: {
+    gap: 6,
+  },
+  grandTotalLabel: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: colors.text,
+  },
+  grandTotalValue: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: colors.primary,
+  },
+  footer: {
+    alignItems: 'center',
+    gap: 4,
+    marginTop: spacing.md,
+  },
+  footerText: {
+    fontSize: 12,
+    color: colors.muted,
+    fontStyle: 'italic',
+  }
+})
