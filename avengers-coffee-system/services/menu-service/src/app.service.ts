@@ -261,6 +261,10 @@ export class AppService {
       queryBuilder.orderBy('san_pham.gia_ban', 'ASC');
     } else if (sort === 'price_desc') {
       queryBuilder.orderBy('san_pham.gia_ban', 'DESC');
+    } else if (sort === 'newest') {
+      queryBuilder.orderBy('san_pham.ma_san_pham', 'DESC');
+    } else {
+      queryBuilder.orderBy('san_pham.ma_san_pham', 'DESC');
     }
 
     const [items, total] = await queryBuilder.getManyAndCount();

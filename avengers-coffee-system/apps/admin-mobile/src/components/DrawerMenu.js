@@ -16,7 +16,7 @@ import { colors, radius, spacing } from '../theme'
 const { width } = Dimensions.get('window')
 const DRAWER_WIDTH = Math.min(width * 0.75, 300)
 
-export function DrawerMenu({ visible, onClose, activeTab, onNavigate, admin, sessionRole, branchCode }) {
+export function DrawerMenu({ visible, onClose, activeTab, onNavigate, admin, sessionRole, branchCode, onLogout }) {
   const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current
 
   useEffect(() => {
@@ -135,7 +135,7 @@ export function DrawerMenu({ visible, onClose, activeTab, onNavigate, admin, ses
               <View style={{ height: 40 }} />
             </Animated.ScrollView>
             <View style={styles.footer}>
-              <Pressable style={styles.logoutBtn} onPress={() => {}}>
+              <Pressable style={styles.logoutBtn} onPress={onLogout}>
                 <Text style={styles.logoutText}>Đăng xuất</Text>
               </Pressable>
             </View>

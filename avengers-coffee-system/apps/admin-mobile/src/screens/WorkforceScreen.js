@@ -7,7 +7,8 @@ import {
   ActivityIndicator,
   Pressable,
   TextInput,
-  Alert
+  Alert,
+  Modal
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import apiClient from '../lib/apiClient'
@@ -81,6 +82,8 @@ export function WorkforceScreen() {
   const [reqShift, setReqShift] = useState('SANG')
   const [reqNote, setReqNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [selectedShift, setSelectedShift] = useState(null)
+  const [attUpdating, setAttUpdating] = useState(false)
 
   const startOfWeek = getMonday(currentDate)
   const endOfWeek = addDays(startOfWeek, 6)
@@ -103,6 +106,7 @@ export function WorkforceScreen() {
       setError('')
     } catch (err) {
       setError('Không tải được dữ liệu lịch làm việc')
+      console.log('Workforce error:', err)
     } finally {
       setLoading(false)
     }
@@ -154,6 +158,24 @@ export function WorkforceScreen() {
     ])
   }
 
+  const handleStaffAttendance = async (shiftId, action) => {
+    setAttUpdating(true)
+    try {
+      await apiClient.patch('/staff/work-shifts/self/attendance', {
+        shift_id: String(shiftId),
+        action,
+        branch_code: sessionBranchCode
+      })
+      Alert.alert('Thành công', action === 'CHECK_IN' ? 'Đã điểm danh vào ca' : 'Đã điểm danh ra ca')
+      setSelectedShift(null)
+      loadData()
+    } catch (err) {
+      Alert.alert('Lỗi', err?.response?.data?.message || 'Điểm danh thất bại')
+    } finally {
+      setAttUpdating(false)
+    }
+  }
+
   const goPrevWeek = () => setCurrentDate(prev => addDays(prev, -7))
   const goNextWeek = () => setCurrentDate(prev => addDays(prev, 7))
   const goCurrentWeek = () => setCurrentDate(new Date())
@@ -161,13 +183,24 @@ export function WorkforceScreen() {
   const getShiftForSlot = (dateObj, shiftType) => {
     const dateStr = formatYYYYMMDD(dateObj)
     return shifts.find(
-      s => s.ngay_lam_viec.startsWith(dateStr) && s.ca_lam === shiftType && s.trang_thai !== 'Tu choi'
+      s => {
+        const d = s.ngay_lam_viec || s.shift_date || ''
+        const code = s.ca_lam || s.ma_khung_ca || s.shift_code || ''
+        const status = s.trang_thai || s.trang_thai_yeu_cau || ''
+        return d.startsWith(dateStr) && code === shiftType && String(status).toUpperCase() !== 'REJECTED'
+      }
     )
   }
 
   const scheduledCount = shifts.length
-  const completedCount = shifts.filter(s => s.trang_thai_diem_danh === 'Hoan thanh').length
-  const missingCount = shifts.filter(s => s.trang_thai_diem_danh === 'Vang mat').length
+  const completedCount = shifts.filter(s => {
+    const st = String(s.trang_thai_diem_danh || s.trang_thai_cham_cong || '').toUpperCase()
+    return st === 'HOAN THANH' || st === 'CHECKED_OUT'
+  }).length
+  const missingCount = shifts.filter(s => {
+    const st = String(s.trang_thai_diem_danh || s.trang_thai_cham_cong || '').toUpperCase()
+    return st === 'VANG MAT' || st === 'ABSENT'
+  }).length
 
   const pendingRequests = requests.filter(r => r.trang_thai_yeu_cau === 'PENDING')
   const approvedRequests = requests.filter(r => r.trang_thai_yeu_cau === 'APPROVED')
@@ -292,18 +325,18 @@ export function WorkforceScreen() {
                 <View style={styles.reqSection}>
                   <Text style={styles.reqSectionTitle}>Yêu cầu đang chờ duyệt ({pendingRequests.length})</Text>
                   {pendingRequests.map(r => (
-                    <View key={r.ma_ca_lam_viec} style={styles.reqCard}>
+                    <View key={r.ma_ca_lam_viec || r.id} style={styles.reqCard}>
                       <View style={styles.reqHead}>
                         <View>
-                          <Text style={styles.reqCa}>{r.ten_ca}</Text>
-                          <Text style={styles.reqDate}>{r.ngay_lam_viec} • {r.gio_bat_dau} - {r.gio_ket_thuc}</Text>
+                          <Text style={styles.reqCa}>{r.ten_ca || r.shift_code || r.ma_khung_ca}</Text>
+                          <Text style={styles.reqDate}>{r.ngay_lam_viec || r.shift_date} • {r.gio_bat_dau || ''} - {r.gio_ket_thuc || ''}</Text>
                         </View>
                         <View style={[styles.reqStatus, { backgroundColor: colors.warningBg }]}>
                           <Text style={[styles.reqStatusText, { color: colors.warning }]}>PENDING</Text>
                         </View>
                       </View>
                       {r.note ? <Text style={styles.reqNote}>Ghi chú: {r.note}</Text> : null}
-                      <Pressable style={styles.reqDeleteBtn} onPress={() => handleDeleteRequest(r.ma_ca_lam_viec)}>
+                      <Pressable style={styles.reqDeleteBtn} onPress={() => handleDeleteRequest(r.ma_ca_lam_viec || r.id)}>
                         <Text style={styles.reqDeleteText}>Hủy yêu cầu</Text>
                       </Pressable>
                     </View>
@@ -315,11 +348,11 @@ export function WorkforceScreen() {
                 <View style={styles.reqSection}>
                   <Text style={styles.reqSectionTitle}>Yêu cầu đã duyệt ({approvedRequests.length})</Text>
                   {approvedRequests.map(r => (
-                    <View key={r.ma_ca_lam_viec} style={styles.reqCard}>
+                    <View key={r.ma_ca_lam_viec || r.id} style={styles.reqCard}>
                       <View style={styles.reqHead}>
                         <View>
-                          <Text style={styles.reqCa}>{r.ten_ca}</Text>
-                          <Text style={styles.reqDate}>{r.ngay_lam_viec} • {r.gio_bat_dau} - {r.gio_ket_thuc}</Text>
+                          <Text style={styles.reqCa}>{r.ten_ca || r.shift_code || r.ma_khung_ca}</Text>
+                          <Text style={styles.reqDate}>{r.ngay_lam_viec || r.shift_date} • {r.gio_bat_dau || ''} - {r.gio_ket_thuc || ''}</Text>
                         </View>
                         <View style={[styles.reqStatus, { backgroundColor: colors.successBg }]}>
                           <Text style={[styles.reqStatusText, { color: colors.success }]}>APPROVED</Text>
@@ -336,11 +369,11 @@ export function WorkforceScreen() {
                 <View style={styles.reqSection}>
                   <Text style={styles.reqSectionTitle}>Yêu cầu bị từ chối ({rejectedRequests.length})</Text>
                   {rejectedRequests.map(r => (
-                    <View key={r.ma_ca_lam_viec} style={styles.reqCard}>
+                    <View key={r.ma_ca_lam_viec || r.id} style={styles.reqCard}>
                       <View style={styles.reqHead}>
                         <View>
-                          <Text style={styles.reqCa}>{r.ten_ca}</Text>
-                          <Text style={styles.reqDate}>{r.ngay_lam_viec} • {r.gio_bat_dau} - {r.gio_ket_thuc}</Text>
+                          <Text style={styles.reqCa}>{r.ten_ca || r.shift_code || r.ma_khung_ca}</Text>
+                          <Text style={styles.reqDate}>{r.ngay_lam_viec || r.shift_date} • {r.gio_bat_dau || ''} - {r.gio_ket_thuc || ''}</Text>
                         </View>
                         <View style={[styles.reqStatus, { backgroundColor: colors.dangerBg }]}>
                           <Text style={[styles.reqStatusText, { color: colors.danger }]}>REJECTED</Text>
@@ -399,14 +432,15 @@ export function WorkforceScreen() {
                   {daysInWeek.map((d, cIdx) => {
                     const s = getShiftForSlot(d, shift.id)
                     const isToday = isSameDay(d, new Date())
+                    const isApproved = s && String(s.trang_thai || s.trang_thai_yeu_cau || '').toUpperCase() === 'APPROVED'
                     return (
                       <View key={cIdx} style={[styles.gridCell, isToday && styles.todayCell]}>
                         {s ? (
-                          <View style={[styles.shiftBlock, s.trang_thai === 'Da duyet' ? styles.shiftApproved : styles.shiftPending]}>
-                            <Text style={[styles.shiftBlockText, s.trang_thai === 'Da duyet' ? { color: colors.success } : { color: colors.warning }]}>
-                              {s.trang_thai === 'Da duyet' ? 'Đã xếp' : 'Chờ duyệt'}
+                          <Pressable onPress={() => setSelectedShift(s)} style={[styles.shiftBlock, isApproved ? styles.shiftApproved : styles.shiftPending]}>
+                            <Text style={[styles.shiftBlockText, isApproved ? { color: colors.success } : { color: colors.warning }]} numberOfLines={2}>
+                              {s.trang_thai_cham_cong === 'CHECKED_IN' ? 'Đã vào ca' : (s.trang_thai_cham_cong === 'CHECKED_OUT' || s.trang_thai_cham_cong === 'PRESENT') ? 'Xong ca' : s.trang_thai_cham_cong === 'ABSENT' ? 'Vắng' : isApproved ? 'Đã xếp' : 'Chờ duyệt'}
                             </Text>
-                          </View>
+                          </Pressable>
                         ) : (
                           <Text style={styles.emptyCellText}>Trống</Text>
                         )}
@@ -419,9 +453,70 @@ export function WorkforceScreen() {
           </ScrollView>
         </View>
       )}
+
+      <StaffShiftDetailsModal
+        visible={!!selectedShift}
+        shift={selectedShift}
+        onClose={() => setSelectedShift(null)}
+        onAttendance={handleStaffAttendance}
+        updating={attUpdating}
+      />
     </ScrollView>
   )
 }
+
+const StaffShiftDetailsModal = ({ visible, shift, onClose, onAttendance, updating }) => {
+  if (!shift) return null
+  const attendance = String(shift.trang_thai_cham_cong || 'PENDING').toUpperCase()
+  const isPending = attendance === 'PENDING' || attendance === 'ASSIGNED'
+  const isCheckedIn = attendance === 'CHECKED_IN'
+  const isCheckedOut = attendance === 'CHECKED_OUT' || attendance === 'PRESENT'
+  const isAbsent = attendance === 'ABSENT' || attendance === 'LATE'
+  
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={modalStyles.overlay}>
+        <View style={modalStyles.container}>
+          <View style={modalStyles.header}>
+            <Text style={modalStyles.title}>Chi tiết ca làm</Text>
+            <Pressable onPress={onClose}><Ionicons name="close" size={24} color="#64748b" /></Pressable>
+          </View>
+          <View style={{ padding: 16, gap: 12 }}>
+            <View>
+              <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#0f172a' }}>{shift.ten_ca || shift.shift_code || shift.ma_khung_ca}</Text>
+              <Text style={{ fontSize: 13, color: '#0ea5e9', fontWeight: '600' }}>{shift.ngay_lam_viec || shift.shift_date} · {shift.gio_bat_dau} - {shift.gio_ket_thuc}</Text>
+            </View>
+            <View style={{ height: 1, backgroundColor: '#e2e8f0', marginVertical: 8 }} />
+            
+            {isPending && (
+              <Pressable disabled={updating} onPress={() => onAttendance(shift.ma_ca_lam_viec || shift.id, 'CHECK_IN')} style={[styles.submitBtn, updating && {opacity:0.6}]}>
+                {updating ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitBtnText}>Điểm danh VÀO ca</Text>}
+              </Pressable>
+            )}
+            {isCheckedIn && (
+              <Pressable disabled={updating} onPress={() => onAttendance(shift.ma_ca_lam_viec || shift.id, 'CHECK_OUT')} style={[styles.submitBtn, { backgroundColor: '#f59e0b' }, updating && {opacity:0.6}]}>
+                {updating ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitBtnText}>Điểm danh RA ca</Text>}
+              </Pressable>
+            )}
+            {isCheckedOut && (
+              <Text style={{ textAlign: 'center', color: '#10b981', fontWeight: 'bold' }}>Bạn đã hoàn thành ca làm này</Text>
+            )}
+            {isAbsent && (
+              <Text style={{ textAlign: 'center', color: '#ef4444', fontWeight: 'bold' }}>Bạn bị đánh dấu vắng mặt ca này</Text>
+            )}
+          </View>
+        </View>
+      </View>
+    </Modal>
+  )
+}
+
+const modalStyles = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(15,23,42,0.6)', justifyContent: 'flex-end' },
+  container: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 32, maxHeight: '80%' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+  title: { fontSize: 18, fontWeight: 'bold', color: '#0f172a' }
+})
 
 const styles = StyleSheet.create({
   loadingScreen: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bg },
