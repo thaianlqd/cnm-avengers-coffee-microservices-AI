@@ -18,19 +18,20 @@ import { ProfileScreen } from '../screens/ProfileScreen'
 import { VouchersScreen } from '../screens/VouchersScreen'
 import { StoresScreen } from '../screens/StoresScreen'
 import { NewsScreen } from '../screens/NewsScreen'
+import { ChatScreen } from '../screens/ChatScreen'
 
 const Stack = createNativeStackNavigator()
 const Tabs = createBottomTabNavigator()
 
 const TAB_ICONS = {
-  Home:     { focused: 'home',           unfocused: 'home-outline' },
-  Menu:     { focused: 'restaurant',     unfocused: 'restaurant-outline' },
-  Cart:     { focused: 'bag',            unfocused: 'bag-outline' },
-  Orders:   { focused: 'receipt',        unfocused: 'receipt-outline' },
-  Vouchers: { focused: 'ticket',         unfocused: 'ticket-outline' },
-  Stores:   { focused: 'storefront',     unfocused: 'storefront-outline' },
-  News:     { focused: 'newspaper',      unfocused: 'newspaper-outline' },
-  Profile:  { focused: 'person-circle',  unfocused: 'person-circle-outline' },
+  Home: { focused: 'home', unfocused: 'home-outline' },
+  Menu: { focused: 'restaurant', unfocused: 'restaurant-outline' },
+  Cart: { focused: 'bag', unfocused: 'bag-outline' },
+  Orders: { focused: 'receipt', unfocused: 'receipt-outline' },
+  Vouchers: { focused: 'ticket', unfocused: 'ticket-outline' },
+  Stores: { focused: 'storefront', unfocused: 'storefront-outline' },
+  News: { focused: 'newspaper', unfocused: 'newspaper-outline' },
+  Profile: { focused: 'person-circle', unfocused: 'person-circle-outline' },
 }
 
 function TabBarIcon({ routeName, color, size, focused }) {
@@ -161,7 +162,10 @@ export function AppNavigator() {
       {!user ? (
         <Stack.Screen name="Login" component={LoginScreen} />
       ) : (
-        <Stack.Screen name="Tabs" component={MainTabs} />
+        <>
+          <Stack.Screen name="Tabs" component={MainTabs} />
+          <Stack.Screen name="Chat" component={ChatScreen} />
+        </>
       )}
     </Stack.Navigator>
   )

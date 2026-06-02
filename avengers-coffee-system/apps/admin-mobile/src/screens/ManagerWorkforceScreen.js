@@ -45,15 +45,32 @@ const REQUEST_STATUS_COLOR = {
   REJECTED: '#ef4444',
 }
 
-function CreateShiftModal({ visible, onClose, onSubmit, loading, employees }) {
+function CreateShiftModal({ visible, onClose, onSubmit, loading, employees, initialData }) {
   const [staffUsername, setStaffUsername] = useState('')
   const [staffName, setStaffName] = useState('')
-  const [shiftDate, setShiftDate] = useState(() => {
-    const d = new Date()
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-  })
+  const [shiftDate, setShiftDate] = useState('')
   const [shiftCodes, setShiftCodes] = useState(['SANG'])
   const [note, setNote] = useState('')
+
+  useEffect(() => {
+    if (visible) {
+      if (initialData) {
+        setStaffUsername(initialData.staff_username || initialData.staff_name || '')
+        setStaffName(initialData.staff_name || '')
+        setShiftDate(initialData.shift_date || initialData.ngay_lam_viec || '')
+        const code = initialData.shift_code || initialData.ma_khung_ca || initialData.ca_lam || 'SANG'
+        setShiftCodes([code])
+        setNote(initialData.note || initialData.ghi_chu || '')
+      } else {
+        setStaffUsername('')
+        setStaffName('')
+        const d = new Date()
+        setShiftDate(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)
+        setShiftCodes(['SANG'])
+        setNote('')
+      }
+    }
+  }, [visible, initialData])
 
   const PRESET_CHECKLISTS = [
     'Pha chế đồ uống theo giờ cao điểm',
@@ -187,7 +204,7 @@ function CreateShiftModal({ visible, onClose, onSubmit, loading, employees }) {
           >
             <LinearGradient colors={[TEAL, '#0284c7']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={modalStyles.submitGrad}>
               {loading ? <ActivityIndicator size="small" color="#fff" /> : null}
-              <Text style={modalStyles.submitText}>Tạo lịch làm</Text>
+              <Text style={modalStyles.submitText}>{initialData ? 'Lưu thay đổi' : 'Tạo lịch làm'}</Text>
             </LinearGradient>
           </Pressable>
         </ScrollView>
@@ -206,14 +223,44 @@ export function ManagerWorkforceScreen() {
   const [handlingId, setHandlingId] = useState('')
   const [activeTab, setActiveTab] = useState('calendar')
   const [attendanceUpdatingId, setAttendanceUpdatingId] = useState('')
+  const [reqFilter, setReqFilter] = useState('PENDING')
+  const [selectedShift, setSelectedShift] = useState(null)
+  const [editingShiftData, setEditingShiftData] = useState(null)
 
   const branchCode = sessionBranchCode || 'MAC_DINH_CHI'
+
+  const [currentWeekOffset, setCurrentWeekOffset] = useState(0)
+
+  // Helper to get week dates based on offset
+  const getWeekDates = useCallback((offset) => {
+    const today = new Date()
+    const currentDay = today.getDay()
+    const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay
+    const monday = new Date(today)
+    monday.setDate(today.getDate() + diffToMonday + offset * 7)
+
+    const dates = []
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday)
+      d.setDate(monday.getDate() + i)
+      dates.push(d)
+    }
+    return dates
+  }, [])
+
+  const weekDates = React.useMemo(() => getWeekDates(currentWeekOffset), [getWeekDates, currentWeekOffset])
+  const weekStart = weekDates[0]
+  const weekEnd = weekDates[6]
+  const weekLabel = `${String(weekStart.getDate()).padStart(2, '0')}/${String(weekStart.getMonth() + 1).padStart(2, '0')} - ${String(weekEnd.getDate()).padStart(2, '0')}/${String(weekEnd.getMonth() + 1).padStart(2, '0')}`
+
+  const fromDateStr = `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, '0')}-${String(weekStart.getDate()).padStart(2, '0')}`
+  const toDateStr = `${weekEnd.getFullYear()}-${String(weekEnd.getMonth() + 1).padStart(2, '0')}-${String(weekEnd.getDate()).padStart(2, '0')}`
 
   // GET /manager/work-shifts?branch_code=X
   const loadAllShifts = useCallback(async () => {
     setLoading((p) => ({ ...p, shifts: true }))
     try {
-      const response = await apiClient.get(`/manager/work-shifts?branch_code=${encodeURIComponent(branchCode)}`)
+      const response = await apiClient.get(`/manager/work-shifts?branch_code=${encodeURIComponent(branchCode)}&from=${fromDateStr}&to=${toDateStr}`)
       const arr = response?.items || (Array.isArray(response) ? response : [])
       setAllShifts(arr.filter((i) => String(i?.trang_thai_yeu_cau || '').toUpperCase() !== 'PENDING' || String(i?.nguon_tao || '') !== 'STAFF_REQUEST'))
     } catch {
@@ -221,7 +268,7 @@ export function ManagerWorkforceScreen() {
     } finally {
       setLoading((p) => ({ ...p, shifts: false }))
     }
-  }, [branchCode])
+  }, [branchCode, fromDateStr, toDateStr])
 
   // GET /users/workforce?branch_code=X
   const loadEmployees = useCallback(async () => {
@@ -248,12 +295,17 @@ export function ManagerWorkforceScreen() {
     loadAllShifts()
     loadEmployees()
     loadRequests()
-  }, [loadAllShifts, loadEmployees, loadRequests])
+  }, [loadAllShifts, loadEmployees, loadRequests, currentWeekOffset])
 
   // POST /manager/work-shifts
   const handleCreateShift = async (form) => {
     setLoading((p) => ({ ...p, create: true }))
     try {
+      if (editingShiftData) {
+        const id = editingShiftData.id || editingShiftData.ma_ca_lam_viec
+        await apiClient.delete(`/manager/work-shifts/${id}?branch_code=${encodeURIComponent(branchCode)}`)
+      }
+
       await apiClient.post('/manager/work-shifts', {
         ...form,
         shift_codes: form.shift_codes,
@@ -261,7 +313,9 @@ export function ManagerWorkforceScreen() {
         branch_code: branchCode,
       })
       setShowCreate(false)
-      Alert.alert('Thành công', `Đã tạo lịch làm cho ${form.staff_username}`)
+      const isEdit = !!editingShiftData
+      setEditingShiftData(null)
+      Alert.alert('Thành công', isEdit ? 'Đã cập nhật ca làm' : `Đã tạo lịch làm cho ${form.staff_username}`)
       await loadAllShifts()
     } catch (err) {
       Alert.alert('Lỗi', err?.response?.data?.message || err?.message || 'Tạo lịch thất bại')
@@ -297,6 +351,8 @@ export function ManagerWorkforceScreen() {
         [field]: value,
         branch_code: branchCode,
       })
+      Alert.alert('Thành công', 'Đã cập nhật trạng thái điểm danh')
+      setSelectedShift(null)
       await loadAllShifts()
     } catch (err) {
       Alert.alert('Lỗi', err?.response?.data?.message || err?.message || 'Cập nhật thất bại')
@@ -352,87 +408,85 @@ export function ManagerWorkforceScreen() {
 
       {/* CALENDAR TAB */}
       {activeTab === 'calendar' ? (
-        <FlatList
-          data={allShifts}
-          keyExtractor={(item, idx) => String(item.id || item.ma_ca_lam || idx)}
-          renderItem={({ item }) => {
-            const attendance = String(item.trang_thai_cham_cong || 'PENDING').toUpperCase()
-            const attColor = ATTENDANCE_COLOR[attendance] || '#9ca3af'
-            const isUpdating = attendanceUpdatingId === String(item.id || item.ma_ca_lam)
-            return (
-              <View style={styles.shiftCard}>
-                <View style={styles.shiftTop}>
-                  <View>
-                    <Text style={styles.shiftName}>{item.staff_name || item.staff_username || '—'}</Text>
-                    <Text style={styles.shiftDate}>{item.shift_date || '—'} · {SHIFT_CODE_LABEL[item.shift_code] || item.shift_code}</Text>
-                  </View>
-                  <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-                    <View style={[styles.attBadge, { backgroundColor: attColor + '25' }]}>
-                      <Text style={[styles.attText, { color: attColor }]}>
-                        {attendance === 'CHECKED_IN' ? 'Đã vào' : attendance === 'CHECKED_OUT' ? 'Đã ra' : attendance === 'ABSENT' ? 'Vắng' : 'Chờ'}
-                      </Text>
-                    </View>
-                    <Pressable onPress={() => handleDeleteShift(item.id || item.ma_ca_lam)} style={styles.deleteBtn}>
-                      <Ionicons name="trash-outline" size={14} color="#ef4444" />
-                    </Pressable>
-                  </View>
-                </View>
-                {/* Manager chấm công */}
-                {attendance === 'PENDING' ? (
-                  <View style={styles.attActions}>
-                    <Pressable
-                      disabled={isUpdating}
-                      onPress={() => handleUpdateAttendance(item.id || item.ma_ca_lam, 'check_in_time', new Date().toISOString())}
-                      style={styles.checkInBtn}
-                    >
-                      {isUpdating ? <ActivityIndicator size="small" color="#fff" /> : null}
-                      <Text style={styles.checkBtnText}>Điểm danh vào</Text>
-                    </Pressable>
-                    <Pressable
-                      disabled={isUpdating}
-                      onPress={() => handleUpdateAttendance(item.id || item.ma_ca_lam, 'trang_thai_cham_cong', 'ABSENT')}
-                      style={styles.absentBtn}
-                    >
-                      <Text style={styles.absentBtnText}>Vắng</Text>
-                    </Pressable>
-                  </View>
-                ) : null}
-                {attendance === 'CHECKED_IN' ? (
-                  <Pressable
-                    disabled={isUpdating}
-                    onPress={() => handleUpdateAttendance(item.id || item.ma_ca_lam, 'check_out_time', new Date().toISOString())}
-                    style={styles.checkOutBtn}
-                  >
-                    {isUpdating ? <ActivityIndicator size="small" color="#fff" /> : null}
-                    <Text style={styles.checkBtnText}>Điểm danh ra</Text>
-                  </Pressable>
-                ) : null}
-              </View>
-            )
-          }}
-          contentContainerStyle={styles.listPad}
-          showsVerticalScrollIndicator={false}
-          ListHeaderComponent={
-            <Pressable onPress={() => setShowCreate(true)} style={styles.createBtn}>
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 }}>
+            <View>
+              <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#0f172a' }}>Lịch làm theo tuần</Text>
+              <Text style={{ fontSize: 12, color: TEAL, fontWeight: '700' }}>{weekLabel}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 6 }}>
+              <Pressable onPress={() => setCurrentWeekOffset(p => p - 1)} style={styles.weekBtn}><Text style={styles.weekBtnText}>Tuần trước</Text></Pressable>
+              <Pressable onPress={() => setCurrentWeekOffset(0)} style={[styles.weekBtn, { backgroundColor: '#f1f5f9' }]}><Text style={[styles.weekBtnText, { color: '#0f172a' }]}>Hiện tại</Text></Pressable>
+              <Pressable onPress={() => setCurrentWeekOffset(p => p + 1)} style={styles.weekBtn}><Text style={styles.weekBtnText}>Tuần sau</Text></Pressable>
+            </View>
+          </View>
+          <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+            <Pressable onPress={() => { setEditingShiftData(null); setShowCreate(true); }} style={styles.createBtn}>
               <LinearGradient colors={[TEAL, '#0284c7']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.createGrad}>
                 <Ionicons name="add-circle-outline" size={18} color="#fff" />
                 <Text style={styles.createText}>Phân công ca làm mới</Text>
               </LinearGradient>
             </Pressable>
-          }
-          ListEmptyComponent={
-            loading.shifts ? (
-              <View style={styles.loadingWrap}><ActivityIndicator color={ORANGE} size="large" /></View>
-            ) : (
-              <View style={styles.emptyWrap}>
-                <Ionicons name="calendar-outline" size={44} color="#2a2a2e" />
-                <Text style={styles.emptyText}>Chưa có lịch làm nào</Text>
+          </View>
+          
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'column' }}>
+              {/* Header Row */}
+              <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderColor: '#e2e8f0', backgroundColor: '#f8fafc' }}>
+                <View style={{ width: 60, borderRightWidth: 1, borderColor: '#e2e8f0', justifyContent: 'center', alignItems: 'center', paddingVertical: 12 }}>
+                  <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#64748b' }}>Ca làm</Text>
+                </View>
+                {weekDates.map((date, i) => {
+                  const dayName = i === 6 ? 'Chủ nhật' : `Thứ ${i + 2}`
+                  const dateStr = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`
+                  return (
+                    <View key={i} style={{ width: 140, borderRightWidth: 1, borderColor: '#e2e8f0', alignItems: 'center', paddingVertical: 8 }}>
+                      <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#0f172a' }}>{dayName}</Text>
+                      <Text style={{ fontSize: 11, color: '#f59e0b', fontWeight: '600' }}>{dateStr}</Text>
+                    </View>
+                  )
+                })}
               </View>
-            )
-          }
-          onRefresh={loadAllShifts}
-          refreshing={loading.shifts}
-        />
+
+              {/* Rows */}
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {['SANG', 'CHIEU', 'TOI'].map((shiftCode) => (
+                  <View key={shiftCode} style={{ flexDirection: 'row', borderBottomWidth: 1, borderColor: '#e2e8f0' }}>
+                    <View style={{ width: 60, borderRightWidth: 1, borderColor: '#e2e8f0', justifyContent: 'center', alignItems: 'center', backgroundColor: '#fffbf1' }}>
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#b45309' }}>{shiftCode === 'SANG' ? 'Sáng' : shiftCode === 'CHIEU' ? 'Chiều' : 'Tối'}</Text>
+                    </View>
+                    {weekDates.map((date, i) => {
+                      const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+                      const cellShifts = allShifts.filter(s => s.ngay_lam_viec === dateStr && s.ma_khung_ca === shiftCode)
+                      return (
+                        <View key={i} style={{ width: 140, borderRightWidth: 1, borderColor: '#e2e8f0', padding: 6, minHeight: 120, backgroundColor: '#ffffff' }}>
+                          <Text style={{ fontSize: 10, color: '#94a3b8', marginBottom: 4 }}>{cellShifts.length} người trong ca</Text>
+                          {cellShifts.map((shift) => {
+                            const isPending = shift.trang_thai_cham_cong === 'PENDING'
+                            const attColor = ATTENDANCE_COLOR[shift.trang_thai_cham_cong || 'PENDING'] || '#9ca3af'
+                            return (
+                              <Pressable key={shift.ma_ca_lam_viec || shift.id} onPress={() => setSelectedShift(shift)} style={{ backgroundColor: TEAL + '15', padding: 6, borderRadius: 6, marginBottom: 6, borderWidth: 1, borderColor: TEAL + '30' }}>
+                                <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#0f172a' }} numberOfLines={1}>{shift.staff_name || shift.staff_username}</Text>
+                                <Text style={{ fontSize: 9, color: TEAL, fontWeight: '700' }}>{shift.gio_bat_dau} - {shift.gio_ket_thuc}</Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                                  <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: attColor }} />
+                                  <Text style={{ fontSize: 9, color: attColor, fontWeight: '600' }}>
+                                    {isPending ? 'Chờ điểm danh' : shift.trang_thai_cham_cong === 'PRESENT' ? 'Đã có mặt' : shift.trang_thai_cham_cong === 'CHECKED_IN' ? 'Đã vào ca' : shift.trang_thai_cham_cong === 'CHECKED_OUT' ? 'Đã ra ca' : 'Vắng'}
+                                  </Text>
+                                </View>
+                              </Pressable>
+                            )
+                          })}
+                        </View>
+                      )
+                    })}
+                  </View>
+                ))}
+                <View style={{ height: 40 }} />
+              </ScrollView>
+            </View>
+          </ScrollView>
+        </View>
       ) : null}
 
 
@@ -440,20 +494,35 @@ export function ManagerWorkforceScreen() {
 
       {/* REQUESTS TAB */}
       {activeTab === 'requests' ? (
-        <FlatList
-          data={shiftRequests}
-          keyExtractor={(item, idx) => String(item.id || idx)}
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginTop: 12, marginBottom: 4, gap: 8 }}>
+            <Pressable onPress={() => setReqFilter('PENDING')} style={[styles.filterChip, reqFilter === 'PENDING' && styles.filterChipActive]}>
+              <Text style={[styles.filterChipText, reqFilter === 'PENDING' && styles.filterChipTextActive]}>Chờ duyệt</Text>
+            </Pressable>
+            <Pressable onPress={() => setReqFilter('APPROVED')} style={[styles.filterChip, reqFilter === 'APPROVED' && styles.filterChipActive]}>
+              <Text style={[styles.filterChipText, reqFilter === 'APPROVED' && styles.filterChipTextActive]}>Đã duyệt</Text>
+            </Pressable>
+            <Pressable onPress={() => setReqFilter('REJECTED')} style={[styles.filterChip, reqFilter === 'REJECTED' && styles.filterChipActive]}>
+              <Text style={[styles.filterChipText, reqFilter === 'REJECTED' && styles.filterChipTextActive]}>Từ chối</Text>
+            </Pressable>
+          </View>
+          <FlatList
+            data={shiftRequests.filter(req => {
+              const st = String(req.trang_thai_yeu_cau || 'PENDING').toUpperCase()
+              return st === reqFilter
+            })}
+          keyExtractor={(item, idx) => String(item.id || item.ma_ca_lam_viec || idx)}
           renderItem={({ item }) => {
             const reqStatus = String(item.trang_thai_yeu_cau || '').toUpperCase()
             const color = REQUEST_STATUS_COLOR[reqStatus] || '#9ca3af'
-            const isHandling = handlingId === String(item.id)
+            const isHandling = handlingId === String(item.id || item.ma_ca_lam_viec)
             const isPending = reqStatus === 'PENDING' || !reqStatus
             return (
               <View style={styles.requestCard}>
                 <View style={styles.shiftTop}>
                   <View>
                     <Text style={styles.shiftName}>{item.staff_name || item.staff_username || '—'}</Text>
-                    <Text style={styles.shiftDate}>{item.shift_date || '—'} · {SHIFT_CODE_LABEL[item.shift_code] || item.shift_code}</Text>
+                    <Text style={styles.shiftDate}>{item.shift_date || item.ngay_lam_viec || '—'} · {SHIFT_CODE_LABEL[item.shift_code || item.ma_khung_ca] || item.shift_code || item.ma_khung_ca}</Text>
                   </View>
                   <View style={[styles.attBadge, { backgroundColor: color + '25' }]}>
                     <Text style={[styles.attText, { color }]}>{REQUEST_STATUS_LABEL[reqStatus] || reqStatus}</Text>
@@ -465,7 +534,7 @@ export function ManagerWorkforceScreen() {
                   <View style={styles.reqActions}>
                     <Pressable
                       disabled={isHandling}
-                      onPress={() => handleRequest(item.id, false)}
+                      onPress={() => handleRequest(item.id || item.ma_ca_lam_viec, false)}
                       style={styles.rejectBtn}
                     >
                       {isHandling ? <ActivityIndicator size="small" color="#ef4444" /> : null}
@@ -473,7 +542,7 @@ export function ManagerWorkforceScreen() {
                     </Pressable>
                     <Pressable
                       disabled={isHandling}
-                      onPress={() => handleRequest(item.id, true)}
+                      onPress={() => handleRequest(item.id || item.ma_ca_lam_viec, true)}
                       style={styles.approveBtn}
                     >
                       {isHandling ? <ActivityIndicator size="small" color="#fff" /> : null}
@@ -495,22 +564,144 @@ export function ManagerWorkforceScreen() {
           onRefresh={loadRequests}
           refreshing={false}
         />
+        </View>
       ) : null}
 
       <CreateShiftModal
         visible={showCreate}
-        onClose={() => setShowCreate(false)}
+        onClose={() => { setShowCreate(false); setEditingShiftData(null); }}
         onSubmit={handleCreateShift}
         loading={loading.create}
         employees={employees}
+        initialData={editingShiftData}
+      />
+
+      <ShiftDetailsModal
+        visible={!!selectedShift}
+        shift={selectedShift}
+        onClose={() => setSelectedShift(null)}
+        onUpdateAttendance={handleUpdateAttendance}
+        onEdit={(s) => {
+          setEditingShiftData(s)
+          setShowCreate(true)
+        }}
+        onDelete={handleDeleteShift}
+        updatingId={attendanceUpdatingId}
       />
     </View>
   )
 }
 
+const ShiftDetailsModal = ({ visible, shift, onClose, onUpdateAttendance, onEdit, onDelete, updatingId }) => {
+  if (!shift) return null
+  const isUpdating = updatingId === String(shift.id || shift.ma_ca_lam_viec)
+  const attendance = String(shift.trang_thai_cham_cong || 'PENDING').toUpperCase()
+  const attColor = ATTENDANCE_COLOR[attendance] || '#9ca3af'
+  const isPending = attendance === 'PENDING' || attendance === 'ASSIGNED'
+  const isPresent = attendance === 'PRESENT' || attendance === 'CHECKED_IN' || attendance === 'CHECKED_OUT'
+  const isAbsent = attendance === 'ABSENT'
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={bottomSheetStyles.overlay}>
+        <View style={bottomSheetStyles.container}>
+          <View style={bottomSheetStyles.header}>
+            <Text style={bottomSheetStyles.title}>Chi tiết ca làm</Text>
+            <Pressable onPress={onClose}>
+              <Ionicons name="close" size={24} color="#64748b" />
+            </Pressable>
+          </View>
+
+          <View style={{ padding: 16, gap: 12 }}>
+            <View>
+              <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#0f172a' }}>{shift.staff_name || shift.staff_username}</Text>
+              <Text style={{ fontSize: 13, color: TEAL, fontWeight: '600' }}>{shift.ngay_lam_viec || shift.shift_date} · {shift.gio_bat_dau} - {shift.gio_ket_thuc}</Text>
+            </View>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={{ fontSize: 13, color: '#475569' }}>Trạng thái:</Text>
+              <View style={[styles.attBadge, { backgroundColor: attColor + '25' }]}>
+                <Text style={[styles.attText, { color: attColor }]}>
+                  {isPending ? 'Chờ điểm danh' : isPresent ? 'Đã có mặt' : isAbsent ? 'Vắng' : attendance}
+                </Text>
+              </View>
+            </View>
+
+            <View style={{ height: 1, backgroundColor: '#e2e8f0', marginVertical: 8 }} />
+
+            {isPending && (
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <Pressable
+                  disabled={isUpdating}
+                  onPress={() => onUpdateAttendance(shift.id || shift.ma_ca_lam_viec, 'check_in_at', new Date().toISOString())}
+                  style={styles.checkInBtn}
+                >
+                  {isUpdating ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="enter-outline" size={16} color="#fff" />}
+                  <Text style={styles.checkBtnText}>Điểm danh vào</Text>
+                </Pressable>
+                <Pressable
+                  disabled={isUpdating}
+                  onPress={() => onUpdateAttendance(shift.id || shift.ma_ca_lam_viec, 'attendance_status', 'ABSENT')}
+                  style={styles.absentBtn}
+                >
+                  <Text style={styles.absentBtnText}>Vắng</Text>
+                </Pressable>
+              </View>
+            )}
+
+            {isPresent && !shift.check_out_at && (
+              <Pressable
+                disabled={isUpdating}
+                onPress={() => onUpdateAttendance(shift.id || shift.ma_ca_lam_viec, 'check_out_at', new Date().toISOString())}
+                style={styles.checkOutBtn}
+              >
+                {isUpdating ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="exit-outline" size={16} color="#fff" />}
+                <Text style={styles.checkBtnText}>Điểm danh ra</Text>
+              </Pressable>
+            )}
+
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+              <Pressable
+                disabled={isUpdating}
+                onPress={() => {
+                  onClose()
+                  onEdit(shift)
+                }}
+                style={[styles.rejectBtn, { flex: 1, borderWidth: 1, borderColor: TEAL, backgroundColor: '#ffffff' }]}
+              >
+                <Ionicons name="pencil-outline" size={16} color={TEAL} />
+                <Text style={[styles.rejectBtnText, { color: TEAL }]}>Sửa ca</Text>
+              </Pressable>
+
+              <Pressable
+                disabled={isUpdating}
+                onPress={() => {
+                  onClose()
+                  onDelete(shift.id || shift.ma_ca_lam_viec)
+                }}
+                style={[styles.rejectBtn, { flex: 1, borderWidth: 0 }]}
+              >
+                <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                <Text style={styles.rejectBtnText}>Xóa ca</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  )
+}
+
+const bottomSheetStyles = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(15,23,42,0.6)', justifyContent: 'flex-end' },
+  container: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 32, maxHeight: '80%' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+  title: { fontSize: 18, fontWeight: 'bold', color: '#0f172a' }
+})
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#f8fafc' },
-  header: { paddingTop: 52, paddingHorizontal: 16, paddingBottom: 14, gap: 4 },
+  header: { paddingTop: 52, paddingLeft: 60, paddingRight: 16, paddingBottom: 14, gap: 4 },
   headerTitle: { fontSize: 22, fontWeight: '900', color: '#0f172a' },
   headerSub: { fontSize: 11, color: '#64748b', fontWeight: '500' },
   tabBar: {
@@ -655,6 +846,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#22c55e',
   },
   approveBtnText: { fontSize: 13, fontWeight: '800', color: '#fff' },
+  filterChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#ffffff', borderWidth: 1, borderColor: '#e2e8f0' },
+  filterChipActive: { backgroundColor: TEAL, borderColor: TEAL },
+  filterChipText: { fontSize: 12, fontWeight: '700', color: '#64748b' },
+  filterChipTextActive: { color: '#ffffff' },
+  weekBtn: { backgroundColor: TEAL, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
+  weekBtnText: { color: '#fff', fontSize: 11, fontWeight: 'bold' },
 })
 
 const modalStyles = StyleSheet.create({

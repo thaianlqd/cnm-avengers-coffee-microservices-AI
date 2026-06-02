@@ -186,6 +186,8 @@ export function MenuScreen({ navigation }) {
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [showFilterPanel, setShowFilterPanel] = useState(false)
 
+
+
   const categoriesQuery = useQuery({
     queryKey: ['customer', 'menu-categories'],
     queryFn: async () => {
@@ -1063,6 +1065,153 @@ const modalStyles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '900',
     color: '#fff',
+  },
+
+  // AI Recs
+  aiRecsContainer: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#efe8df',
+    paddingVertical: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  aiRecsHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: spacing.md,
+  },
+  aiRecsSubLabel: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#f97316', // orange-500
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  aiRecsTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#1f2937', // gray-800
+    marginBottom: 4,
+  },
+  aiRecsDesc: {
+    fontSize: 12,
+    color: '#4b5563', // gray-600
+    marginBottom: 6,
+  },
+  aiRecsSyncLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#0369a1', // sky-700
+    letterSpacing: 0.8,
+  },
+  aiRecsBadge: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#fed7aa', // orange-200
+    borderRadius: radius.full,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginLeft: 8,
+  },
+  aiRecsBadgeText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#ea580c', // orange-600
+  },
+  aiRecsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -spacing.sm,
+  },
+  aiRecsItemWrap: {
+    width: '50%',
+    padding: spacing.sm,
+  },
+  aiRecsCard: {
+    backgroundColor: '#fff',
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    ...shadows.sm,
+  },
+  aiRecsImageWrap: {
+    position: 'relative',
+  },
+  aiRecsImage: {
+    width: '100%',
+    height: 140,
+    backgroundColor: colors.cream,
+  },
+  aiRecsLikeBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.sm,
+  },
+  aiRecsInfo: {
+    padding: spacing.md,
+  },
+  aiRecsCategory: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: colors.muted,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  aiRecsName: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: colors.text,
+    marginBottom: 6,
+  },
+  aiRecsPrice: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#000',
+    marginBottom: 12,
+  },
+  aiRecsActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  aiRecsBtnOutline: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: radius.full,
+    paddingVertical: 6,
+    alignItems: 'center',
+  },
+  aiRecsBtnOutlineText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: colors.primary,
+  },
+  aiRecsBtnSolid: {
+    flex: 1,
+    backgroundColor: colors.primary,
+    borderRadius: radius.full,
+    paddingVertical: 6,
+    alignItems: 'center',
+  },
+  aiRecsBtnSolidText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  aiRecsDivider: {
+    height: 8,
+    backgroundColor: colors.bg,
+    marginHorizontal: -spacing.md,
+    marginTop: spacing.md,
   },
 })
 

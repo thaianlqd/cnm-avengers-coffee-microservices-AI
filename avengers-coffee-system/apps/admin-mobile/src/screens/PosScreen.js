@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Alert,
   TextInput,
+  Image,
+  Modal,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useAdmin } from '../context/AdminContext'
@@ -38,6 +40,7 @@ export function PosScreen() {
   const [lastOrder, setLastOrder] = useState(null)
   const [posStatus, setPosStatus] = useState({ error: null, success: null })
   const [creating, setCreating] = useState(false)
+  const [paymentStatus, setPaymentStatus] = useState(null)
   const [products, setProducts] = useState([])
   const [loadingProducts, setLoadingProducts] = useState(true)
 
@@ -76,6 +79,31 @@ export function PosScreen() {
   }, [branchCode])
 
   React.useEffect(() => { loadProducts() }, [loadProducts])
+
+  React.useEffect(() => {
+    let intervalId
+    if (lastOrder?.order && lastOrder.order.phuong_thuc_thanh_toan !== 'THANH_TOAN_KHI_NHAN_HANG') {
+      const orderId = lastOrder.order.ma_don_hang
+      intervalId = setInterval(async () => {
+        try {
+          const res = await apiClient.get(`/staff/orders?branch_code=${encodeURIComponent(branchCode)}`)
+          const orders = res?.orders || res
+          if (Array.isArray(orders)) {
+            const current = orders.find(o => o.ma_don_hang === orderId)
+            if (current && current.trang_thai_thanh_toan === 'DA_THANH_TOAN') {
+              setPaymentStatus('PAID')
+              clearInterval(intervalId)
+            }
+          }
+        } catch (e) {
+          // ignore
+        }
+      }, 3000)
+    }
+    return () => {
+      if (intervalId) clearInterval(intervalId)
+    }
+  }, [lastOrder, branchCode])
 
   const subtotal = useMemo(() => cartItems.reduce((s, i) => s + i.gia_ban * i.qty, 0), [cartItems])
   const vat = useMemo(() => Math.round(subtotal * 0.08), [subtotal])
@@ -130,18 +158,25 @@ export function PosScreen() {
       }
       const response = await apiClient.post('/staff/orders', payload)
       const data = response?.order || response
-      setLastOrder(data)
+      setLastOrder({ order: data, paymentDetails: response?.payment_details || null })
       setPosStatus({ success: `Tạo đơn #${String(data?.ma_don_hang || '').slice(0, 8)} thành công!`, error: null })
-      setCartItems([])
-      setCustomerName('')
-      setTableCode('')
-      setNote('')
-      setCashInput('')
+      // Don't clear cart immediately, wait for Modal to be closed
     } catch (err) {
       setPosStatus({ success: null, error: err?.response?.data?.message || err?.message || 'Lỗi tạo đơn hàng' })
     } finally {
       setCreating(false)
     }
+  }
+
+  const closeSuccessModal = () => {
+    setCartItems([])
+    setCustomerName('')
+    setTableCode('')
+    setNote('')
+    setCashInput('')
+    setLastOrder(null)
+    setPaymentStatus(null)
+    setPosStatus({ error: null, success: null })
   }
 
   const cartTotalQty = cartItems.reduce((acc, i) => acc + i.qty, 0)
@@ -315,6 +350,59 @@ export function PosScreen() {
           </ScrollView>
         )}
       </View>
+
+      {/* Success & QR Modal */}
+      <Modal visible={!!lastOrder && !!posStatus.success} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Ionicons name="checkmark-circle" size={40} color={colors.success} style={{ marginBottom: 8 }} />
+              <Text style={styles.modalTitle}>Tạo Đơn Thành Công!</Text>
+              <Text style={styles.modalSub}>
+                Mã đơn: #{String(lastOrder?.order?.ma_don_hang || '').slice(0, 8).toUpperCase()}
+              </Text>
+            </View>
+
+            {/* Show QR if non-cash and QR exists */}
+            {lastOrder?.order?.phuong_thuc_thanh_toan !== 'THANH_TOAN_KHI_NHAN_HANG' && lastOrder?.paymentDetails?.qr_img_url && (
+              <View style={{ alignItems: 'center', marginTop: 16 }}>
+                {paymentStatus === 'PAID' ? (
+                  <View style={{ alignItems: 'center', padding: 20 }}>
+                    <Ionicons name="shield-checkmark" size={60} color={colors.success} />
+                    <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.success, marginTop: 12 }}>Đã nhận thanh toán!</Text>
+                  </View>
+                ) : (
+                  <>
+                    <Text style={{ fontSize: 15, fontWeight: '700', marginBottom: 12, color: colors.text }}>
+                      {lastOrder?.order?.phuong_thuc_thanh_toan === 'VNPAY' ? 'Mã thanh toán VNPAY' : 'Mã QR Chuyển khoản'}
+                    </Text>
+                    <View style={{ padding: 12, backgroundColor: '#fff', borderRadius: radius.md, borderWidth: 1, borderColor: colors.borderLight, elevation: 2, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5 }}>
+                      <Image 
+                        source={{ uri: lastOrder.paymentDetails.qr_img_url }}
+                        style={{ width: 280, height: 280 }}
+                        resizeMode="contain"
+                      />
+                    </View>
+                    <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 16, textAlign: 'center', paddingHorizontal: 20 }}>
+                      Đưa thiết bị cho khách hàng quét mã để thanh toán. Đang chờ xác nhận...
+                    </Text>
+                    <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 8 }} />
+                  </>
+                )}
+              </View>
+            )}
+
+            <View style={{ flexDirection: 'row', gap: 12, width: '100%', marginTop: 24 }}>
+              <Pressable onPress={() => Alert.alert('Thông báo', 'Tính năng in hóa đơn qua máy in Bluetooth đang được phát triển.')} style={[styles.modalBtn, { flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.primary, marginTop: 0 }]}>
+                <Text style={[styles.modalBtnText, { color: colors.primary }]}>In Hóa Đơn</Text>
+              </Pressable>
+              <Pressable onPress={closeSuccessModal} style={[styles.modalBtn, { flex: 1, marginTop: 0 }]}>
+                <Text style={styles.modalBtnText}>Đóng & Làm mới</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -372,6 +460,11 @@ const styles = StyleSheet.create({
 
   cashSection: { flexDirection: 'row', marginBottom: 12, alignItems: 'flex-start' },
   changeAmount: { fontSize: 16, fontWeight: 'bold', color: colors.primary, paddingVertical: 10 },
+  
+  qrSection: { alignItems: 'center', backgroundColor: '#fff', padding: 16, borderRadius: radius.md, borderWidth: 1, borderColor: colors.borderLight, marginBottom: 12 },
+  qrLabel: { fontSize: 14, fontWeight: 'bold', color: colors.text, marginBottom: 12 },
+  qrBox: { padding: 8, backgroundColor: '#fff', borderRadius: radius.sm, borderWidth: 1, borderColor: '#f1f5f9' },
+  qrHint: { fontSize: 12, color: colors.textSecondary, marginTop: 12, textAlign: 'center' },
 
   header: {
     flexDirection: 'row',
@@ -394,4 +487,12 @@ const styles = StyleSheet.create({
   
   errorText: { color: colors.danger, fontSize: 13, marginBottom: 10, textAlign: 'center' },
   successText: { color: colors.success, fontSize: 13, marginBottom: 10, textAlign: 'center' },
+
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalContent: { backgroundColor: '#fff', borderRadius: radius.lg, padding: 24, width: '100%', maxWidth: 400, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, elevation: 10 },
+  modalHeader: { alignItems: 'center' },
+  modalTitle: { fontSize: 22, fontWeight: '900', color: colors.text },
+  modalSub: { fontSize: 14, color: colors.textSecondary, marginTop: 4 },
+  modalBtn: { marginTop: 24, paddingVertical: 14, paddingHorizontal: 30, backgroundColor: colors.primary, borderRadius: radius.md, width: '100%', alignItems: 'center' },
+  modalBtnText: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
 })

@@ -100,8 +100,14 @@ export function AdminSystemConsoleScreen() {
   const menuQuery = useQuery({
     queryKey: ['admin', 'system', 'menu'],
     queryFn: async () => {
-      const response = await apiClient.get('/menu/items?sort=price_desc')
-      return safeArray(response?.items || response)
+      const response = await apiClient.get('/menu/items?sort=newest')
+      const arr = safeArray(response?.items || response)
+      arr.sort((a, b) => {
+        const idA = Number(a.id || a.product_id || 0)
+        const idB = Number(b.id || b.product_id || 0)
+        return idB - idA
+      })
+      return arr
     },
     staleTime: 60 * 1000,
   })

@@ -3,6 +3,7 @@ import { View, StyleSheet, Pressable, Platform, SafeAreaView } from 'react-nativ
 import { Ionicons } from '@expo/vector-icons'
 import { useAdmin } from '../context/AdminContext'
 import { DrawerMenu } from './DrawerMenu'
+import { AdminChatWidget } from './AdminChatWidget'
 import { colors } from '../theme'
 
 // Screens
@@ -83,7 +84,10 @@ export function MainShell() {
         admin={admin}
         sessionRole={sessionRole}
         branchCode={sessionBranchCode}
+        onLogout={logout}
       />
+      
+      <AdminChatWidget admin={admin} sessionRole={sessionRole} />
     </View>
   )
 }

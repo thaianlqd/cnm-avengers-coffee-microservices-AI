@@ -41,7 +41,7 @@ AI_SCHEMA = safe_schema_name(os.getenv("AI_SCHEMA"), "ai")
 _base_context_cache: Dict[str, Any] = {"expires_at": datetime.min, "value": None}
 _BASE_CONTEXT_TTL_SECONDS = 90
 _AI_END_TOKEN = "[END_AVENGERS_REPLY]"
-_AI_CHAT_MAX_CONTINUATION_ROUNDS = max(0, int(os.getenv("AI_CHAT_MAX_CONTINUATION_ROUNDS", "0")))
+_AI_CHAT_MAX_CONTINUATION_ROUNDS = max(0, int(os.getenv("AI_CHAT_MAX_CONTINUATION_ROUNDS", "2")))
 _GEMINI_BLOCK_MINUTES_ON_429 = max(1, int(os.getenv("GEMINI_BLOCK_MINUTES_ON_429", "10")))
 _gemini_block_until: datetime = datetime.min
 
@@ -459,27 +459,8 @@ def _looks_incomplete_tail(text: str) -> bool:
     if trimmed.endswith((".", "!", "?", ":", ")", '"', "'")):
         return False
 
-    lowered = trimmed.lower()
-    dangling_suffixes = (
-        " va",
-        " hoac",
-        " voi",
-        " nhu",
-        " gom",
-        " la",
-        " de",
-        " nen",
-        " thu",
-        " tra",
-        " xin",
-        " ban co the",
-    )
-    if any(lowered.endswith(suffix) for suffix in dangling_suffixes):
-        return True
-
-    # Tu cuoi qua ngan thi de dang la dang bi cat giua tu.
-    last_word = trimmed.split()[-1] if trimmed.split() else ""
-    return len(last_word) <= 2
+    # Neu khong co dau cau ket thuc, kha nang cao la bi cat ngang
+    return True
 
 
 def _merge_without_overlap(existing_text: str, continuation_text: str) -> str:
@@ -1046,7 +1027,7 @@ async def ai_chat(request: Request):
             f"Thong tin khach: ten={user_name}, user_id={user_id or 'unknown'}\n"
             f"{reply_to_text}\n"
             f"Cau hoi cua khach: {content}\n"
-            "Hay tra loi ngan gon, de hieu, than thien va uu tien su dung du lieu thuc te ben duoi."
+            "Hay tra loi ngan gon, de hieu, than thien va uu tien su dung du lieu thuc te o tren."
         )
 
         system_text = (

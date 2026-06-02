@@ -28,10 +28,10 @@ import {
 import { colors, spacing, shadows, radius } from '../theme'
 
 const MEMBERSHIP_CONFIG = {
-  MEMBER:  { label: 'Thành viên', color: '#9ca3af', bg: '#f9fafb', icon: '🎖️', nextLabel: 'Silver' },
-  SILVER:  { label: 'Bạc',        color: '#64748b', bg: '#f8fafc', icon: '🥈', nextLabel: 'Gold' },
-  GOLD:    { label: 'Vàng',       color: '#d97706', bg: '#fffbeb', icon: '🥇', nextLabel: 'Diamond' },
-  DIAMOND: { label: 'Kim Cương',  color: '#0ea5e9', bg: '#f0f9ff', icon: '💎', nextLabel: null },
+  MEMBER: { label: 'Thành viên', color: '#9ca3af', bg: '#f9fafb', icon: '🎖️', nextLabel: 'Silver' },
+  SILVER: { label: 'Bạc', color: '#64748b', bg: '#f8fafc', icon: '🥈', nextLabel: 'Gold' },
+  GOLD: { label: 'Vàng', color: '#d97706', bg: '#fffbeb', icon: '🥇', nextLabel: 'Diamond' },
+  DIAMOND: { label: 'Kim Cương', color: '#0ea5e9', bg: '#f0f9ff', icon: '💎', nextLabel: null },
 }
 
 function HeroSection({ user, loyalty }) {
@@ -256,14 +256,46 @@ export function HomeScreen({ navigation }) {
     staleTime: 60 * 1000,
   })
 
+  const allProductsQuery = useQuery({
+    queryKey: ['customer', 'all-products-home'],
+    queryFn: async () => {
+      const response = await apiClient.get('/menu/san-pham')
+      return safeArray(response).map(normalizeProduct)
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+
   const aiRecsQuery = useQuery({
     queryKey: ['customer', 'ai-recs', userId || 'anon-popular'],
     queryFn: async () => {
       const targetId = userId || 'anon-popular'
-      const res = await apiClient.get(`/ai/recommend/${encodeURIComponent(targetId)}?limit=6`)
-      return safeArray(res?.items).slice(0, 6)
+      const res = await apiClient.get(`/ai/recommend/${encodeURIComponent(targetId)}?limit=3`)
+      return {
+        items: safeArray(res?.items).slice(0, 3).map(item => ({
+          ma_san_pham: item.id,
+          ten_san_pham: item.name || item.ten_san_pham || '',
+          gia_ban: Number(item.price || item.gia_ban || 0),
+          hinh_anh_url: item.image || item.hinh_anh_url || '',
+          la_hot: Boolean(item.la_hot),
+          la_moi: Boolean(item.la_moi),
+          gia_niem_yet: null,
+          danh_muc: item.category,
+        })),
+        is_personalized: Boolean(res?.is_personalized)
+      }
     },
     staleTime: 5 * 60 * 1000,
+    retry: 0,
+  })
+
+  // Same logic as web-customer for behavior insights
+  const behaviorInsightsQuery = useQuery({
+    queryKey: ['ai', 'behavior-insights', 'customer-sync', 30],
+    queryFn: async () => {
+      const res = await apiClient.get('/ai/behavior/insights?branch_code=ALL&limit=5&days=30')
+      return res
+    },
+    staleTime: 3 * 60 * 1000,
     retry: 0,
   })
 
@@ -297,16 +329,54 @@ export function HomeScreen({ navigation }) {
 
   const loyalty = loyaltyQuery.data || null
   const products = featuredProductsQuery.data || []
-  const aiRecs = aiRecsQuery.data || []
+  const aiRecsData = aiRecsQuery.data || { items: [], is_personalized: false }
+  const aiRecs = aiRecsData.items
   const branches = branchesQuery.data || []
   const news = newsQuery.data || []
   const vouchers = vouchersQuery.data || []
 
-  const isLoading = featuredProductsQuery.isLoading
+  const isLoading = featuredProductsQuery.isPending
 
   const handleProductPress = (item) => {
     navigation.navigate('Menu')
   }
+
+  const displayTop3Products = useMemo(() => {
+    const behaviorInsightsData = behaviorInsightsQuery.data
+    const behaviorTopSource = behaviorInsightsData?.customer_sync_top_products?.length
+      ? behaviorInsightsData.customer_sync_top_products
+      : behaviorInsightsData?.top_products || []
+
+    const behaviorTop = behaviorTopSource.slice(0, 3)
+    const allProducts = allProductsQuery.data || []
+
+    let syncedBehaviorTop3Products = []
+    if (behaviorTop.length > 0) {
+      syncedBehaviorTop3Products = behaviorTop.map(item => {
+        const productId = String(item?.product_id || '')
+        const fromMenu = allProducts.find(p => String(p.ma_san_pham) === productId)
+        if (fromMenu) return fromMenu
+        return {
+          ma_san_pham: productId || String(item?.product_name || 'behavior-item'),
+          ten_san_pham: String(item?.product_name || 'Sản phẩm gợi ý'),
+          gia_ban: 0,
+          hinh_anh_url: '',
+          trang_thai: true,
+          danh_muc: 'Đồng bộ hành vi',
+        }
+      })
+    }
+
+    let aiRecommendedProducts = []
+    if (aiRecs.length > 0) {
+      aiRecommendedProducts = aiRecs.map(item => {
+        const fromMenu = allProducts.find(p => String(p.ma_san_pham) === String(item.ma_san_pham))
+        return fromMenu || item
+      })
+    }
+
+    return syncedBehaviorTop3Products.length > 0 ? syncedBehaviorTop3Products : aiRecommendedProducts
+  }, [behaviorInsightsQuery.data, aiRecs, allProductsQuery.data])
 
   const handleNewsPress = (article) => {
     navigation.navigate('News', { article })
@@ -362,6 +432,16 @@ export function HomeScreen({ navigation }) {
           </LinearGradient>
           <Text style={styles.quickActionLabel}>Voucher</Text>
         </Pressable>
+
+        <Pressable
+          onPress={() => navigation.navigate('Chat')}
+          style={({ pressed }) => [styles.quickAction, pressed && { opacity: 0.85 }]}
+        >
+          <LinearGradient colors={['#ec4899', '#db2777']} style={styles.quickActionIcon}>
+            <Ionicons name="chatbubble-ellipses-outline" size={22} color="#fff" />
+          </LinearGradient>
+          <Text style={styles.quickActionLabel}>Hỗ trợ</Text>
+        </Pressable>
       </View>
 
       {/* Loading */}
@@ -372,28 +452,77 @@ export function HomeScreen({ navigation }) {
         </View>
       ) : null}
 
-      {/* AI Recommendations */}
-      {aiRecs.length > 0 ? (
-        <View style={styles.section}>
-          <SectionHeader title="Gợi ý cho bạn" icon="🤖" onSeeAll={() => navigation.navigate('Menu')} />
+      {/* AI Recommendations - Web Style */}
+      {displayTop3Products.length > 0 ? (
+        <View style={styles.aiRecsContainer}>
+          <View style={styles.aiRecsHeaderRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.aiRecsSubLabel}>SMART RECOMMENDATION</Text>
+              <Text style={styles.aiRecsTitle}>
+                {userId ? 'TOP 3 MÓN HỢP GU CỦA BẠN' : 'TOP 3 MÓN PHỔ BIẾN'}
+              </Text>
+              <Text style={styles.aiRecsDesc}>
+                {aiRecsData.is_personalized
+                  ? 'Cá nhân hóa theo lịch sử mua hàng, đánh giá, yêu thích và xu hướng dùng ưu đãi.'
+                  : userId
+                    ? 'Chưa đủ lịch sử, hiển thị các món phổ biến.'
+                    : 'Đang xem gợi ý cho khách vãng lai, dựa trên độ phổ biến toàn hệ thống.'}
+              </Text>
+              <Text style={styles.aiRecsSyncLabel}>DONG BO CUSTOMER VOI TOP HANH VI 30 NGAY</Text>
+            </View>
+            <View style={styles.aiRecsBadge}>
+              <Text style={styles.aiRecsBadgeText}>
+                {aiRecsData.is_personalized ? 'AI PERSONAL' : 'AI POPULAR'}
+              </Text>
+            </View>
+          </View>
+
           <FlatList
             horizontal
             showsHorizontalScrollIndicator={false}
-            data={aiRecs}
-            keyExtractor={(item, i) => String(item.id || i)}
-            contentContainerStyle={styles.horizontalList}
-            renderItem={({ item }) => {
-              const product = {
-                ma_san_pham: item.id,
-                ten_san_pham: item.name || item.ten_san_pham || '',
-                gia_ban: Number(item.price || item.gia_ban || 0),
-                hinh_anh_url: item.image || item.hinh_anh_url || '',
-                la_hot: Boolean(item.la_hot),
-                la_moi: Boolean(item.la_moi),
-                gia_niem_yet: null,
-              }
-              return <ProductCard item={product} onPress={handleProductPress} />
-            }}
+            data={displayTop3Products}
+            keyExtractor={(item) => String(item.ma_san_pham || item.id)}
+            contentContainerStyle={styles.aiRecsListContent}
+            renderItem={({ item }) => (
+              <Pressable
+                onPress={() => handleProductPress(item)}
+                style={({ pressed }) => [styles.aiRecsCard, pressed && { opacity: 0.92 }]}
+              >
+                <View style={styles.aiRecsImageWrap}>
+                  {item.hinh_anh_url || item.image ? (
+                    <Image source={{ uri: item.hinh_anh_url || item.image }} style={styles.aiRecsImage} resizeMode="cover" />
+                  ) : (
+                    <View style={[styles.aiRecsImage, styles.itemImagePlaceholder]}>
+                      <Ionicons name="cafe-outline" size={32} color={colors.muted} />
+                    </View>
+                  )}
+                  <Pressable style={styles.aiRecsLikeBtn}>
+                    <Ionicons name="heart" size={16} color="#ef4444" />
+                  </Pressable>
+                </View>
+
+                <View style={styles.aiRecsInfo}>
+                  <Text style={styles.aiRecsCategory} numberOfLines={1}>{item.danhMuc?.ten_danh_muc || item.danh_muc || item.category || 'Gợi ý AI'}</Text>
+                  <Text style={styles.aiRecsName} numberOfLines={1}>{item.ten_san_pham || item.name}</Text>
+                  <Text style={styles.aiRecsPrice}>{formatCurrency(Number(item.gia_ban || item.price || 0))}</Text>
+
+                  <View style={styles.aiRecsActions}>
+                    <Pressable
+                      style={styles.aiRecsBtnOutline}
+                      onPress={() => handleProductPress(item)}
+                    >
+                      <Text style={styles.aiRecsBtnOutlineText}>CHI TIẾT</Text>
+                    </Pressable>
+                    <Pressable
+                      style={styles.aiRecsBtnSolid}
+                      onPress={() => handleProductPress(item)}
+                    >
+                      <Text style={styles.aiRecsBtnSolidText}>THÊM</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </Pressable>
+            )}
           />
         </View>
       ) : null}
@@ -914,5 +1043,144 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.muted,
     fontWeight: '500',
+  },
+
+  // AI Recs
+  aiRecsContainer: {
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#efe8df',
+    paddingVertical: spacing.lg,
+    marginBottom: spacing.xl,
+  },
+  aiRecsHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  aiRecsSubLabel: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#f97316', // orange-500
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  aiRecsTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#1f2937', // gray-800
+    marginBottom: 4,
+  },
+  aiRecsDesc: {
+    fontSize: 12,
+    color: '#4b5563', // gray-600
+    marginBottom: 6,
+  },
+  aiRecsSyncLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#0369a1', // sky-700
+    letterSpacing: 0.8,
+  },
+  aiRecsBadge: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#fed7aa', // orange-200
+    borderRadius: radius.full,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginLeft: 8,
+  },
+  aiRecsBadgeText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#ea580c', // orange-600
+  },
+  aiRecsListContent: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.md,
+  },
+  aiRecsCard: {
+    width: 160,
+    backgroundColor: '#fff',
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    ...shadows.sm,
+  },
+  aiRecsImageWrap: {
+    position: 'relative',
+  },
+  aiRecsImage: {
+    width: '100%',
+    height: 120,
+    backgroundColor: colors.cream,
+  },
+  aiRecsLikeBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.sm,
+  },
+  aiRecsInfo: {
+    padding: spacing.md,
+  },
+  aiRecsCategory: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: colors.muted,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  aiRecsName: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: colors.text,
+    marginBottom: 6,
+  },
+  aiRecsPrice: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#ea580c',
+    marginBottom: 12,
+  },
+  aiRecsActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  aiRecsBtnOutline: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: radius.full,
+    paddingVertical: 6,
+    alignItems: 'center',
+  },
+  aiRecsBtnOutlineText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: colors.primary,
+  },
+  aiRecsBtnSolid: {
+    flex: 1,
+    backgroundColor: colors.primary,
+    borderRadius: radius.full,
+    paddingVertical: 6,
+    alignItems: 'center',
+  },
+  aiRecsBtnSolidText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#fff',
   },
 })

@@ -31,6 +31,130 @@ function taoKhoangTheoNgay(dateKey) {
   return { from, to }
 }
 
+function HistoryItem({ item, branchCode, onRefresh }) {
+  const [editing, setEditing] = useState(false)
+  const [draftOpen, setDraftOpen] = useState(String(item.cash_open || item.tien_dau_ca || 0))
+  const [draftClose, setDraftClose] = useState(String(item.cash_close || item.tien_cuoi_ca || 0))
+  const [draftNote, setDraftNote] = useState(item.note || item.ghi_chu || '')
+  const [saving, setSaving] = useState(false)
+
+  const isAppr = item.approval_status === 'APPROVED' || item.trang_thai_phe_duyet === 'APPROVED' || item.trang_thai === 'APPROVED'
+  const isRej = item.approval_status === 'REJECTED' || item.trang_thai_phe_duyet === 'REJECTED' || item.trang_thai === 'REJECTED'
+  const statusColor = isAppr ? colors.success : isRej ? colors.danger : colors.warning
+
+  const shiftId = item.ma_ca || item.id || item.ma_bien_ban
+  
+  const handleDelete = () => {
+    Alert.alert('Xác nhận', 'Xóa ca này? Không thể hoàn tác.', [
+      { text: 'Hủy', style: 'cancel' },
+      {
+        text: 'Xóa',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await apiClient.delete(`/staff/shifts/${shiftId}?branch_code=${encodeURIComponent(branchCode)}`)
+            onRefresh()
+          } catch (err) {
+            Alert.alert('Lỗi', err?.response?.data?.message || err?.message || 'Xóa ca thất bại')
+          }
+        }
+      }
+    ])
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await apiClient.patch(`/staff/shifts/${shiftId}`, {
+        cash_open: Number(draftOpen || 0),
+        cash_close: Number(draftClose || 0),
+        note: draftNote,
+        branch_code: branchCode
+      })
+      setEditing(false)
+      onRefresh()
+    } catch (err) {
+      Alert.alert('Lỗi', err?.response?.data?.message || err?.message || 'Sửa ca thất bại')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <View style={[styles.historyCard, shadows.sm]}>
+      <View style={styles.historyTop}>
+        <Text style={styles.historyId}>#{String(shiftId || '').slice(0, 8).toUpperCase()}</Text>
+        <View style={[styles.historyBadge, { backgroundColor: statusColor + '15' }]}>
+          <Text style={[styles.historyBadgeText, { color: statusColor }]}>
+            {isAppr ? 'Đã duyệt' : isRej ? 'Từ chối' : 'Chờ duyệt'}
+          </Text>
+        </View>
+      </View>
+      
+      {editing ? (
+        <View style={{ gap: 8, marginTop: 8 }}>
+          <View>
+            <Text style={styles.historyLabel}>Tiền đầu ca</Text>
+            <TextInput style={[styles.input, { height: 36, marginTop: 4 }]} keyboardType="numeric" value={draftOpen} onChangeText={setDraftOpen} />
+          </View>
+          <View>
+            <Text style={styles.historyLabel}>Tiền cuối ca</Text>
+            <TextInput style={[styles.input, { height: 36, marginTop: 4 }]} keyboardType="numeric" value={draftClose} onChangeText={setDraftClose} />
+          </View>
+          <View>
+            <Text style={styles.historyLabel}>Ghi chú</Text>
+            <TextInput style={[styles.input, { height: 60, textAlignVertical: 'top', marginTop: 4 }]} multiline value={draftNote} onChangeText={setDraftNote} />
+          </View>
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+            <Pressable style={[styles.rejectBtn, { flex: 1, height: 36, paddingVertical: 0 }]} onPress={() => setEditing(false)}>
+              <Text style={styles.rejectBtnText}>Hủy</Text>
+            </Pressable>
+            <Pressable style={[styles.approveBtn, { flex: 1, height: 36, paddingVertical: 0 }]} onPress={handleSave} disabled={saving}>
+              {saving ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.approveBtnText}>Lưu</Text>}
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <>
+          <View style={styles.historyRow}>
+            <Text style={styles.historyLabel}>Nhân viên</Text>
+            <Text style={styles.historyValue}>{item.staff_name || item.ten_nhan_vien || '—'}</Text>
+          </View>
+          <View style={styles.historyRow}>
+            <Text style={styles.historyLabel}>Ngày ca</Text>
+            <Text style={styles.historyValue}>{item.shift_date || item.ngay_chot_ca || '—'}</Text>
+          </View>
+          <View style={styles.historyRow}>
+            <Text style={styles.historyLabel}>Tiền cuối ca</Text>
+            <Text style={styles.historyValue}>{formatCurrency(item.cash_close || item.tien_cuoi_ca || 0)}</Text>
+          </View>
+          <View style={styles.historyRow}>
+            <Text style={styles.historyLabel}>Doanh thu</Text>
+            <Text style={[styles.historyValue, { color: colors.primary }]}>{formatCurrency(item.doanh_thu_thuc || item.tong_doanh_thu || 0)}</Text>
+          </View>
+          {item.note || item.ghi_chu ? (
+            <Text style={{ fontSize: 13, color: colors.textSecondary, fontStyle: 'italic', marginTop: 4 }}>📝 {item.note || item.ghi_chu}</Text>
+          ) : null}
+          <Text style={styles.historyDate}>{formatDateTime(item.ngay_tao || item.created_at)}</Text>
+          
+          {!isAppr ? (
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+              <Pressable style={styles.actionBtnOutline} onPress={() => setEditing(true)}>
+                <Ionicons name="pencil" size={14} color={colors.primary} />
+                <Text style={styles.actionBtnOutlineText}>Sửa</Text>
+              </Pressable>
+              <Pressable style={[styles.actionBtnOutline, { borderColor: colors.danger }]} onPress={handleDelete}>
+                <Ionicons name="trash" size={14} color={colors.danger} />
+                <Text style={[styles.actionBtnOutlineText, { color: colors.danger }]}>Xóa</Text>
+              </Pressable>
+            </View>
+          ) : null}
+        </>
+      )}
+    </View>
+  )
+}
+
 export function ShiftsScreen() {
   const { sessionBranchCode, sessionUsername, sessionRole } = useAdmin()
   const [shiftDate, setShiftDate] = useState(() => getVnDateKey())
@@ -237,12 +361,17 @@ export function ShiftsScreen() {
             <View style={[styles.previewCard, shadows.sm]}>
               <Text style={styles.previewTitle}>Kết quả đối soát ca</Text>
               {[
-                { label: 'Tổng đơn', value: `${preview.tong_don_hang || 0} đơn` },
-                { label: 'Doanh thu thực', value: formatCurrency(preview.doanh_thu_thuc || 0) },
-                { label: 'Tiền mặt thu', value: formatCurrency(preview.tien_mat_thu || 0) },
-                { label: 'Tiền thừa/thiếu', value: formatCurrency(Number(preview.tien_thoi_tien_mat || 0)), highlight: true },
-                { label: 'Đơn hoàn thành', value: `${preview.don_hoan_thanh || 0}` },
-                { label: 'Đơn hủy', value: `${preview.don_huy || 0}` },
+                { label: 'Tổng đơn', value: `${preview?.system?.total_orders || 0} đơn` },
+                { label: 'Doanh thu thực', value: formatCurrency(preview?.system?.total_revenue || 0) },
+                { label: 'Tiền mặt thu', value: formatCurrency(preview?.system?.cash_in_gross || 0) },
+                { label: 'Tiền thối khách', value: formatCurrency(preview?.system?.cash_change_out || 0) },
+                { label: 'Tiền mặt thực thu', value: formatCurrency(preview?.system?.cash_revenue || 0) },
+                { label: 'Kỳ vọng cuối ca', value: formatCurrency(preview?.reconciliation?.expected_cash_close || 0) },
+                { 
+                  label: 'Chênh lệch', 
+                  value: `${(preview?.reconciliation?.difference || 0) >= 0 ? '+' : ''}${formatCurrency(preview?.reconciliation?.difference || 0)}`, 
+                  highlight: true 
+                },
               ].map(({ label, value, highlight }) => (
                 <View key={label} style={styles.previewRow}>
                   <Text style={styles.previewLabel}>{label}</Text>
@@ -278,40 +407,9 @@ export function ShiftsScreen() {
         <FlatList
           data={history}
           keyExtractor={(item, idx) => String(item.ma_ca || item.id || item.ma_bien_ban || idx)}
-          renderItem={({ item }) => {
-            const isAppr = item.approval_status === 'APPROVED' || item.trang_thai_phe_duyet === 'APPROVED' || item.trang_thai === 'APPROVED'
-            const isRej = item.approval_status === 'REJECTED' || item.trang_thai_phe_duyet === 'REJECTED' || item.trang_thai === 'REJECTED'
-            const statusColor = isAppr ? colors.success : isRej ? colors.danger : colors.warning
-            return (
-              <View style={[styles.historyCard, shadows.sm]}>
-                <View style={styles.historyTop}>
-                  <Text style={styles.historyId}>#{String(item.ma_ca || item.id || item.ma_bien_ban || '').slice(0, 8).toUpperCase()}</Text>
-                  <View style={[styles.historyBadge, { backgroundColor: statusColor + '15' }]}>
-                    <Text style={[styles.historyBadgeText, { color: statusColor }]}>
-                      {isAppr ? 'Đã duyệt' : isRej ? 'Từ chối' : 'Chờ duyệt'}
-                    </Text>
-                  </View>
-                </View>
-                <View style={styles.historyRow}>
-                  <Text style={styles.historyLabel}>Nhân viên</Text>
-                  <Text style={styles.historyValue}>{item.staff_name || item.ten_nhan_vien || '—'}</Text>
-                </View>
-                <View style={styles.historyRow}>
-                  <Text style={styles.historyLabel}>Ngày ca</Text>
-                  <Text style={styles.historyValue}>{item.shift_date || item.ngay_chot_ca || '—'}</Text>
-                </View>
-                <View style={styles.historyRow}>
-                  <Text style={styles.historyLabel}>Tiền cuối ca</Text>
-                  <Text style={styles.historyValue}>{formatCurrency(item.cash_close || item.tien_cuoi_ca || 0)}</Text>
-                </View>
-                <View style={styles.historyRow}>
-                  <Text style={styles.historyLabel}>Doanh thu</Text>
-                  <Text style={[styles.historyValue, { color: colors.primary }]}>{formatCurrency(item.doanh_thu_thuc || item.tong_doanh_thu || 0)}</Text>
-                </View>
-                <Text style={styles.historyDate}>{formatDateTime(item.ngay_tao || item.created_at)}</Text>
-              </View>
-            )
-          }}
+          renderItem={({ item }) => (
+            <HistoryItem item={item} branchCode={branchCode} onRefresh={loadHistory} />
+          )}
           contentContainerStyle={styles.listPad}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
@@ -552,4 +650,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.success,
   },
   approveBtnText: { fontSize: 13, fontWeight: '800', color: '#fff' },
+  actionBtnOutline: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 6, paddingHorizontal: 12, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.primary },
+  actionBtnOutlineText: { fontSize: 12, fontWeight: '700', color: colors.primary },
 })

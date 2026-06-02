@@ -68,7 +68,7 @@ function OrderDetailModal({ order, visible, onClose, onUpdateStatus, updatingId 
             <Ionicons name="close" size={22} color={colors.text} />
           </Pressable>
         </View>
-        <ScrollView style={modalStyles.body} showsVerticalScrollIndicator={false}>
+        <ScrollView style={modalStyles.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <View style={[modalStyles.metaCard, shadows.sm]}>
             <View style={modalStyles.metaRow}>
               <Text style={modalStyles.metaLabel}>Mã đơn</Text>
@@ -190,11 +190,20 @@ export function OrdersScreen() {
     setUpdatingId(orderId)
     try {
       const branchCode = sessionBranchCode || 'MAC_DINH_CHI'
-      await apiClient.patch(`/staff/orders/${orderId}/status`, {
+      const response = await apiClient.patch(`/staff/orders/${orderId}/status`, {
         status: nextStatus,
         branch_code: branchCode,
       })
-      await loadOrders()
+      
+      const updatedOrder = response?.order || {}
+      
+      setOrders(prev => prev.map(o => {
+        if (o.ma_don_hang === orderId) {
+          return { ...o, ...updatedOrder, trang_thai_don_hang: updatedOrder.trang_thai_don_hang || nextStatus }
+        }
+        return o
+      }))
+      
       setSelectedOrder(null)
     } catch (err) {
       Alert.alert('Lỗi', err?.response?.data?.message || err?.message || 'Cập nhật thất bại')
@@ -244,6 +253,7 @@ export function OrdersScreen() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.filterList}
         >
           {FILTER_TABS.map((item) => {

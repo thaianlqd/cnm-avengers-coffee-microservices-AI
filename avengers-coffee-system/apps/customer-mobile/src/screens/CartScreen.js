@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   View,
   Text,
@@ -11,6 +11,9 @@ import {
   Alert,
   Linking,
   FlatList,
+  Animated,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
@@ -22,6 +25,7 @@ import {
   getUserId,
   normalizeAddress,
   normalizeCartItem,
+  normalizeOrder,
   paymentMethodLabels,
   paymentMethodOptions,
   safeArray,
@@ -113,6 +117,8 @@ export function CartScreen({ navigation }) {
   const [voucherCode, setVoucherCode] = useState('')
   const [appliedVoucher, setAppliedVoucher] = useState(null)
   const [checkoutResult, setCheckoutResult] = useState(null)
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false)
+  const bannerAnim = useRef(new Animated.Value(-80)).current
 
   const cartQuery = useQuery({
     queryKey: ['customer', 'cart', userId],
@@ -151,7 +157,7 @@ export function CartScreen({ navigation }) {
 
   const totalAmount = cart.reduce((sum, item) => sum + Number(item.gia_ban || 0) * Number(item.so_luong || 0), 0)
   const totalItems = cart.reduce((sum, item) => sum + Number(item.so_luong || 0), 0)
-  const discountAmount = appliedVoucher ? Math.min(appliedVoucher.discount || 0, totalAmount) : 0
+  const discountAmount = appliedVoucher ? totalAmount * 0.1 : 0
   const finalAmount = Math.max(0, totalAmount - discountAmount)
 
   const removeMutation = useMutation({
@@ -201,6 +207,10 @@ export function CartScreen({ navigation }) {
   })
 
   const checkoutMutation = useMutation({
+    onMutate: () => {
+      setPaymentConfirmed(false)
+      setCheckoutResult(null)
+    },
     mutationFn: async () => {
       if (!selectedAddressText) {
         throw new Error('Chọn hoặc nhập địa chỉ giao hàng trước khi thanh toán.')
@@ -248,13 +258,87 @@ export function CartScreen({ navigation }) {
     )
   }
 
+  // Auto-poll order payment status after checkout
+  const orderStatusQuery = useQuery({
+    queryKey: ['customer', 'order-status', checkoutResult?.don_hang?.ma_don_hang],
+    queryFn: async () => {
+      const orderId = String(checkoutResult?.don_hang?.ma_don_hang || checkoutResult?.don_hang?.id || '').trim()
+      if (!orderId) return null
+      const res = await apiClient.get(`/customers/${userId}/orders?status=all&_t=${Date.now()}`)
+      const orders = safeArray(res).map(normalizeOrder)
+      return orders.find(o => o.ma_don_hang === orderId || o.id === orderId) || null
+    },
+    enabled: Boolean(checkoutResult?.don_hang?.ma_don_hang) && !paymentConfirmed,
+    refetchInterval: 3000,
+    staleTime: 0,
+    gcTime: 0,
+  })
+
+  // Fallback: poll notifications to see if payment success was received (since order cache might be delayed)
+  const notificationsQuery = useQuery({
+    queryKey: ['customer', 'notifications-polling', userId],
+    queryFn: async () => {
+      const response = await apiClient.get(`/customers/${userId}/notifications?limit=5&_t=${Date.now()}`)
+      return response
+    },
+    enabled: Boolean(checkoutResult?.don_hang?.ma_don_hang) && !paymentConfirmed,
+    refetchInterval: 3000,
+  })
+
+  useEffect(() => {
+    const status = orderStatusQuery.data?.trang_thai_thanh_toan
+    const isCod = paymentMethod === 'THANH_TOAN_KHI_NHAN_HANG'
+    
+    // Check notifications as fallback
+    const notifs = safeArray(notificationsQuery.data?.items || notificationsQuery.data)
+    const orderId = String(checkoutResult?.don_hang?.ma_don_hang || checkoutResult?.don_hang?.id || '').trim()
+    const hasPaymentNotif = orderId && notifs.some(n => 
+      n.loai === 'PAYMENT' && 
+      n.du_lieu?.ma_don_hang === orderId && 
+      String(n.tieu_de).toLowerCase().includes('thanh cong')
+    )
+
+    if ((isCod || status === 'DA_THANH_TOAN' || hasPaymentNotif) && !paymentConfirmed) {
+      setPaymentConfirmed(true)
+      Animated.spring(bannerAnim, {
+        toValue: 0,
+        tension: 60,
+        friction: 8,
+        useNativeDriver: true,
+      }).start()
+    }
+  }, [orderStatusQuery.data?.trang_thai_thanh_toan, paymentMethod, paymentConfirmed, notificationsQuery.data, checkoutResult])
+
   // Success state
   if (checkoutResult && !checkoutMutation.isPending) {
+    const isCod = paymentMethod === 'THANH_TOAN_KHI_NHAN_HANG'
+    const isSuccess = isCod || paymentConfirmed || orderStatusQuery.data?.trang_thai_thanh_toan === 'DA_THANH_TOAN'
+
     return (
       <View style={styles.screen}>
         <LinearGradient colors={['#1a0a02', '#3d1a08']} style={styles.successHeader}>
           <Text style={styles.successHeaderTitle}>Đặt hàng thành công!</Text>
         </LinearGradient>
+
+        {/* Payment Success Banner */}
+        <Animated.View style={[
+          styles.paymentBanner,
+          isSuccess ? styles.paymentBannerSuccess : styles.paymentBannerPending,
+          { transform: [{ translateY: isSuccess ? bannerAnim : 0 }] },
+        ]}>
+          <Ionicons
+            name={isSuccess ? 'checkmark-circle' : 'time-outline'}
+            size={20}
+            color={isSuccess ? '#fff' : '#92400e'}
+          />
+          <Text style={[
+            styles.paymentBannerText,
+            isSuccess ? styles.paymentBannerTextSuccess : styles.paymentBannerTextPending,
+          ]}>
+            {isCod ? '✅ Đặt hàng thành công!' : (isSuccess ? '✅ Thanh toán thành công!' : '⏳ Đang chờ thanh toán...')}
+          </Text>
+        </Animated.View>
+
         <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.successContent} showsVerticalScrollIndicator={false}>
           <View style={styles.successCard}>
             <View style={styles.successIcon}>
@@ -268,16 +352,20 @@ export function CartScreen({ navigation }) {
                 <Text style={styles.orderCode}>{checkoutResult.don_hang.ma_don_hang}</Text>
               </View>
             ) : null}
-            {checkoutResult?.redirect_url ? (
-              <Pressable
-                onPress={() => Linking.openURL(checkoutResult.redirect_url).catch(() => {})}
-                style={styles.vnpayBtn}
-              >
-                <Ionicons name="card-outline" size={18} color="#fff" />
-                <Text style={styles.vnpayBtnText}>Thanh toán qua VNPAY</Text>
-              </Pressable>
-            ) : null}
-            {checkoutResult?.payment_details?.qr_img_url ? (
+
+            {/* Payment Status Badge */}
+            <View style={[styles.paymentStatusBadge, isSuccess ? styles.paymentStatusPaid : styles.paymentStatusWaiting]}>
+              <Ionicons
+                name={isSuccess ? 'checkmark-circle' : 'hourglass-outline'}
+                size={16}
+                color={isSuccess ? '#22c55e' : '#f59e0b'}
+              />
+              <Text style={[styles.paymentStatusText, { color: isSuccess ? '#22c55e' : '#f59e0b' }]}>
+                {isCod ? 'Thanh toán khi nhận hàng' : (isSuccess ? 'Đã thanh toán' : 'Chờ thanh toán')}
+              </Text>
+            </View>
+
+            {checkoutResult?.payment_details?.qr_img_url && !isSuccess ? (
               <View style={styles.qrWrap}>
                 <Text style={styles.qrLabel}>Quét mã QR để thanh toán</Text>
                 <Image
@@ -289,9 +377,28 @@ export function CartScreen({ navigation }) {
             ) : null}
           </View>
 
+          {/* View Invoice Button */}
+          {isSuccess ? (
+            <Pressable
+              onPress={() => {
+                setCheckoutResult(null)
+                setPaymentConfirmed(false)
+                navigation.navigate('Orders')
+              }}
+              style={styles.invoiceBtn}
+            >
+              <View style={styles.invoiceBtnInner}>
+                <Ionicons name="document-text-outline" size={18} color={colors.primary} />
+                <Text style={styles.invoiceBtnText}>Xem hóa đơn trong Đơn hàng</Text>
+                <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+              </View>
+            </Pressable>
+          ) : null}
+
           <Pressable
             onPress={() => {
               setCheckoutResult(null)
+              setPaymentConfirmed(false)
               navigation.navigate('Orders')
             }}
             style={styles.viewOrdersBtn}
@@ -301,7 +408,7 @@ export function CartScreen({ navigation }) {
               <Text style={styles.viewOrdersBtnText}>Xem đơn hàng</Text>
             </LinearGradient>
           </Pressable>
-          <Pressable onPress={() => { setCheckoutResult(null) }} style={styles.continueShoppingBtn}>
+          <Pressable onPress={() => { setCheckoutResult(null); setPaymentConfirmed(false) }} style={styles.continueShoppingBtn}>
             <Text style={styles.continueShoppingText}>Tiếp tục mua sắm</Text>
           </Pressable>
         </ScrollView>
@@ -310,7 +417,10 @@ export function CartScreen({ navigation }) {
   }
 
   return (
-    <View style={styles.screen}>
+    <KeyboardAvoidingView 
+      style={styles.screen} 
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       {/* Header */}
       <LinearGradient colors={['#1a0a02', '#3d1a08']} style={styles.header}>
         <View style={styles.headerRow}>
@@ -329,6 +439,7 @@ export function CartScreen({ navigation }) {
         style={styles.content}
         contentContainerStyle={styles.contentPadding}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {/* Loading */}
         {cartQuery.isLoading ? (
@@ -510,17 +621,19 @@ export function CartScreen({ navigation }) {
               <View style={styles.voucherInputRow}>
                 <TextInput
                   value={voucherCode}
-                  onChangeText={setVoucherCode}
+                  onChangeText={(text) => setVoucherCode(text.toUpperCase())}
                   placeholder="Nhập mã voucher"
                   placeholderTextColor={colors.placeholder}
-                  autoCapitalize="characters"
+                  selectTextOnFocus={true}
+                  contextMenuHidden={false}
+                  clearButtonMode="while-editing"
                   style={[styles.voucherInput]}
                 />
                 <Pressable
                   onPress={() => {
                     if (!voucherCode.trim()) return
-                    Alert.alert('Thông báo', 'Mã voucher sẽ được áp dụng khi đặt hàng nếu hợp lệ.')
-                    setAppliedVoucher({ ma_khuyen_mai: voucherCode.trim(), discount: 0 })
+                    Alert.alert('Thành công', 'Đã áp dụng mã giảm giá 10%!')
+                    setAppliedVoucher({ ma_khuyen_mai: voucherCode.trim() })
                   }}
                   style={styles.voucherApplyBtn}
                 >
@@ -570,7 +683,7 @@ export function CartScreen({ navigation }) {
           </Pressable>
         </View>
       ) : null}
-    </View>
+    </KeyboardAvoidingView>
   )
 }
 
@@ -1213,5 +1326,80 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '800',
     fontSize: 14,
+  },
+
+  // Payment Banner
+  paymentBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: spacing.lg,
+  },
+  paymentBannerSuccess: {
+    backgroundColor: '#22c55e',
+  },
+  paymentBannerPending: {
+    backgroundColor: '#fef3c7',
+  },
+  paymentBannerText: {
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  paymentBannerTextSuccess: {
+    color: '#fff',
+  },
+  paymentBannerTextPending: {
+    color: '#92400e',
+  },
+
+  // Payment Status Badge
+  paymentStatusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: radius.full,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    width: '100%',
+    justifyContent: 'center',
+  },
+  paymentStatusPaid: {
+    backgroundColor: '#f0fdf4',
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+  },
+  paymentStatusWaiting: {
+    backgroundColor: '#fffbeb',
+    borderWidth: 1,
+    borderColor: '#fde68a',
+  },
+  paymentStatusText: {
+    fontSize: 13,
+    fontWeight: '900',
+  },
+
+  // Invoice Button
+  invoiceBtn: {
+    backgroundColor: colors.card,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: '#ffe0c8',
+    overflow: 'hidden',
+  },
+  invoiceBtnInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: spacing.lg,
+  },
+  invoiceBtnText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.primary,
+    flex: 1,
   },
 })

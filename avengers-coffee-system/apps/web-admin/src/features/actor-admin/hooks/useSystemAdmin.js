@@ -274,7 +274,7 @@ async function fetchCategories() {
 }
 
 async function fetchMenuItems() {
-  const response = await fetch(`${API_BASE_URL}/menu/items?sort=price_desc`)
+  const response = await fetch(`${API_BASE_URL}/menu/items?sort=newest`)
   const payload = await readJsonResponse(response, {})
   if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc menu tong')
   const items = payload?.items || []

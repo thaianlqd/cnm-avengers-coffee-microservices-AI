@@ -362,7 +362,7 @@ export function ManagerEmployeesScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#f8fafc' },
-  header: { paddingTop: 52, paddingHorizontal: 16, paddingBottom: 14, gap: 4 },
+  header: { paddingTop: 52, paddingLeft: 60, paddingRight: 16, paddingBottom: 14, gap: 4 },
   headerTitle: { fontSize: 22, fontWeight: '900', color: '#0f172a' },
   headerSub: { fontSize: 12, color: '#64748b', fontWeight: '500' },
   kpiWrap: { backgroundColor: '#ffffff', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
