@@ -10,6 +10,31 @@ export class ShipperController {
     return this.shipperService.login(String(body?.username || ''), String(body?.password || ''));
   }
 
+  // ============ AVAILABLE ORDERS POOL ============
+
+  /**
+   * GET /shippers/available-orders?branch_code=MAC_DINH_CHI
+   * Lấy danh sách đơn DANG_GIAO chưa có shipper → Shipper nhìn thấy và tự nhận
+   */
+  @Get('available-orders')
+  async getAvailableOrders(@Query('branch_code') branchCode?: string) {
+    return this.shipperService.getAvailableOrders(branchCode);
+  }
+
+  // ============ MANAGER: Assign order manually ============
+
+  @Get('all')
+  async getAllShippers(@Query('branch_code') branchCode?: string) {
+    return this.shipperService.getAllShippers(branchCode);
+  }
+
+  @Post('assign-order')
+  async assignOrderToShipper(
+    @Body() body: { ma_don_hang: string; shipper_id: string; manager_id?: string },
+  ) {
+    return this.shipperService.assignOrderToShipper(body.ma_don_hang, body.shipper_id, body.manager_id || 'system');
+  }
+
   // ============ PROFILE ============
 
   @Get(':shipperId/profile')
@@ -51,6 +76,18 @@ export class ShipperController {
     return this.shipperService.getDeliveryDetail(deliveryId);
   }
 
+  /**
+   * POST /shippers/:shipperId/accept/:maDonHang
+   * Shipper tự nhận đơn từ pool công khai → tạo ShipperDelivery
+   */
+  @Post(':shipperId/accept/:maDonHang')
+  async acceptOrder(
+    @Param('shipperId') shipperId: string,
+    @Param('maDonHang') maDonHang: string,
+  ) {
+    return this.shipperService.acceptOrder(shipperId, maDonHang);
+  }
+
   @Post(':shipperId/deliveries/:deliveryId/confirm-pickup')
   async confirmPickup(
     @Param('shipperId') shipperId: string,
@@ -74,13 +111,7 @@ export class ShipperController {
     @Param('deliveryId') deliveryId: string,
     @Body() body: { latitude: number; longitude: number; proof_image_url?: string },
   ) {
-    return this.shipperService.completeDelivery(
-      deliveryId,
-      shipperId,
-      body.latitude,
-      body.longitude,
-      body.proof_image_url,
-    );
+    return this.shipperService.completeDelivery(deliveryId, shipperId, body.latitude, body.longitude, body.proof_image_url);
   }
 
   @Post(':shipperId/deliveries/:deliveryId/fail')
@@ -105,5 +136,43 @@ export class ShipperController {
     @Query('radius') radius: string = '5',
   ) {
     return this.shipperService.getNearbyDeliveries(shipperId, Number(radius));
+  }
+
+  // ============ WALLET, SCHEDULE, EXCEPTIONS, VEHICLE, NOTIFICATIONS ============
+
+  @Get(':shipperId/wallet')
+  async getWallet(@Param('shipperId') shipperId: string) {
+    return this.shipperService.getWallet(shipperId);
+  }
+
+  @Get(':shipperId/schedule')
+  async getSchedule(@Param('shipperId') shipperId: string) {
+    return this.shipperService.getSchedule(shipperId);
+  }
+
+  @Post(':shipperId/exceptions')
+  async reportException(
+    @Param('shipperId') shipperId: string,
+    @Body() body: { delivery_id: string; type: any; description: string; image_url?: string },
+  ) {
+    return this.shipperService.reportException(shipperId, body.delivery_id, body.type, body.description, body.image_url);
+  }
+
+  @Get(':shipperId/vehicle')
+  async getVehicle(@Param('shipperId') shipperId: string) {
+    return this.shipperService.getVehicle(shipperId);
+  }
+
+  @Patch(':shipperId/vehicle')
+  async updateVehicle(
+    @Param('shipperId') shipperId: string,
+    @Body() body: { vehicle_type: string; vehicle_plate: string },
+  ) {
+    return this.shipperService.updateVehicle(shipperId, body.vehicle_type, body.vehicle_plate);
+  }
+
+  @Get(':shipperId/notifications')
+  async getNotifications(@Param('shipperId') shipperId: string) {
+    return this.shipperService.getNotifications(shipperId);
   }
 }

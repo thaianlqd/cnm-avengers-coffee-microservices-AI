@@ -29,6 +29,9 @@ import { FavoriteItem } from './modules/favorite/entities/favorite-item.entity';
 import { ShipperModule } from './modules/shipper/shipper.module';
 import { Shipper } from './modules/shipper/entities/shipper.entity';
 import { ShipperDelivery } from './modules/shipper/entities/shipper-delivery.entity';
+import { ShipperWallet } from './modules/shipper/entities/shipper-wallet.entity';
+import { ShipperSchedule } from './modules/shipper/entities/shipper-schedule.entity';
+import { ShipperException } from './modules/shipper/entities/shipper-exception.entity';
 
 const orderSchema = process.env.DB_SCHEMA || 'orders';
 const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
@@ -85,6 +88,9 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
             FavoriteItem,
             Shipper,
             ShipperDelivery,
+            ShipperWallet,
+            ShipperSchedule,
+            ShipperException,
           ],
           synchronize: true,
         };

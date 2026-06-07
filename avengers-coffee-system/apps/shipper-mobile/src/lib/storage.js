@@ -1,30 +1,36 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-const SHIPPER_DATA_KEY = 'shipper_mobile_data'
-const SHIPPER_TOKEN_KEY = 'shipper_mobile_token'
+const SESSION_KEY = 'avengers_shipper_session'
+const TOKEN_KEY = 'shipper_auth_token'
 
-export async function loadShipperSession() {
-  const [dataJson, token] = await Promise.all([
-    AsyncStorage.getItem(SHIPPER_DATA_KEY),
-    AsyncStorage.getItem(SHIPPER_TOKEN_KEY),
-  ])
-
-  return {
-    shipper: dataJson ? JSON.parse(dataJson) : null,
-    token: token || null,
+export async function saveShipperSession(shipper, token) {
+  try {
+    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify({ shipper, timestamp: Date.now() }))
+    await AsyncStorage.setItem(TOKEN_KEY, token)
+  } catch (error) {
+    console.error('Failed to save session:', error)
   }
 }
 
-export async function saveShipperSession(shipper, token) {
-  await Promise.all([
-    AsyncStorage.setItem(SHIPPER_DATA_KEY, JSON.stringify(shipper)),
-    AsyncStorage.setItem(SHIPPER_TOKEN_KEY, token),
-  ])
+export async function loadShipperSession() {
+  try {
+    const sessionData = await AsyncStorage.getItem(SESSION_KEY)
+    const token = await AsyncStorage.getItem(TOKEN_KEY)
+    if (sessionData && token) {
+      const { shipper } = JSON.parse(sessionData)
+      return { shipper, token }
+    }
+  } catch (error) {
+    console.error('Failed to load session:', error)
+  }
+  return { shipper: null, token: null }
 }
 
 export async function clearShipperSession() {
-  await Promise.all([
-    AsyncStorage.removeItem(SHIPPER_DATA_KEY),
-    AsyncStorage.removeItem(SHIPPER_TOKEN_KEY),
-  ])
+  try {
+    await AsyncStorage.removeItem(SESSION_KEY)
+    await AsyncStorage.removeItem(TOKEN_KEY)
+  } catch (error) {
+    console.error('Failed to clear session:', error)
+  }
 }

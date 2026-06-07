@@ -25,6 +25,7 @@ import { ManagerEmployeePanel } from './features/manager-dashboard/components/Ma
 import { ManagerCustomerCarePanel } from './features/manager-dashboard/components/ManagerCustomerCarePanel'
 import { StaffWorkShiftsPanel } from './features/staff-dashboard/components/StaffWorkShiftsPanel'
 import { AdminSystemConsole } from './features/actor-admin/components/AdminSystemConsole'
+import { ManagerShipperPanel } from './features/manager-dashboard/components/ManagerShipperPanel'
 import { AdminChatWidget } from './features/admin-dashboard/components/AdminChatWidget'
 import { AUTH_INVALID_EVENT } from './lib/adminFetch'
 import { AccountCenterPanel } from './features/shared/components/AccountCenterPanel'
@@ -141,6 +142,7 @@ function App() {
         MANAGER_EMPLOYEE_MANAGEMENT_TAB,
         MANAGER_WORKFORCE_MANAGEMENT_TAB,
         MANAGER_CUSTOMER_CARE_TAB,
+        { id: 'shipper-manage', label: '🚴 Quản lý Shipper' },
       ]
     : []
 
@@ -568,6 +570,10 @@ function App() {
             onUpdateReply={suaPhanHoiReview}
             onDeleteReply={xoaPhanHoiReview}
           />
+        )}
+
+        {activeTab === 'shipper-manage' && isManager && (
+          <ManagerShipperPanel session={session} />
         )}
 
         {activeTab === 'account' ? <AccountCenterPanel session={session} /> : null}

@@ -1,30 +1,63 @@
 import axios from 'axios'
-import { Platform } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
-// For Android Emulator: 10.0.2.2 (special alias for host)
-// For iOS Simulator: localhost
-// For Physical Device: use PC LAN IP (192.168.100.41)
-const fallbackBaseURL = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://192.168.100.41:3000'
-export const baseURL = process.env.EXPO_PUBLIC_API_URL || fallbackBaseURL
+// Sử dụng ngrok URL giống như bên customer-mobile
+const API_BASE_URL = 'https://unentwined-johanne-biasedly.ngrok-free.dev'
+const TOKEN_KEY = 'shipper_auth_token'
+
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 60000,
+  headers: {
+    'ngrok-skip-browser-warning': 'true',
+  },
+})
+
 let authToken = null
 
-export function buildApiUrl(path) {
-  const cleanPath = String(path || '').startsWith('/') ? path : `/${path || ''}`
-  return `${baseURL}${cleanPath}`
-}
+apiClient.interceptors.request.use(
+  async (config) => {
+    if (!authToken) {
+      try {
+        authToken = await AsyncStorage.getItem(TOKEN_KEY)
+      } catch (error) {
+        console.error('Failed to load auth token:', error)
+      }
+    }
+    if (authToken) {
+      config.headers = config.headers || {}
+      config.headers.Authorization = `Bearer ${authToken}`
+    }
+    return config
+  },
+  (error) => Promise.reject(error),
+)
 
-export const apiClient = axios.create({
-  baseURL,
-  timeout: 30000,
-})
+apiClient.interceptors.response.use(
+  (response) => response.data,
+  async (error) => {
+    if (error.response?.status === 401) {
+      authToken = null
+      await AsyncStorage.removeItem(TOKEN_KEY)
+    }
+    return Promise.reject(error)
+  },
+)
 
-apiClient.interceptors.request.use((config) => {
-  if (authToken) {
-    config.headers.Authorization = `Bearer ${authToken}`
+export async function setAuthToken(token) {
+  authToken = token || null
+  if (token) {
+    await AsyncStorage.setItem(TOKEN_KEY, token)
   }
-  return config
-})
-
-export function setAuthToken(token) {
-  authToken = token
 }
+
+export async function clearAuthToken() {
+  authToken = null
+  await AsyncStorage.removeItem(TOKEN_KEY)
+}
+
+export function getAuthToken() {
+  return authToken
+}
+
+export default apiClient

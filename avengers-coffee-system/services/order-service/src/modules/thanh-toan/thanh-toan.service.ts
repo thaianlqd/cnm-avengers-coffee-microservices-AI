@@ -2926,8 +2926,8 @@ export class ThanhToanService {
     }
 
     const transitions: Record<string, string[]> = {
-      MOI_TAO: ['DA_XAC_NHAN', 'DA_HUY'],
-      DA_XAC_NHAN: ['DANG_CHUAN_BI', 'DA_HUY'],
+      MOI_TAO: ['DA_XAC_NHAN', 'DANG_CHUAN_BI', 'DANG_GIAO', 'DA_HUY'],
+      DA_XAC_NHAN: ['DANG_CHUAN_BI', 'DANG_GIAO', 'DA_HUY'],
       DANG_CHUAN_BI: ['DANG_GIAO', 'HOAN_THANH', 'DA_HUY'],
       DANG_GIAO: ['HOAN_THANH', 'DA_HUY'],
       HOAN_THANH: [],

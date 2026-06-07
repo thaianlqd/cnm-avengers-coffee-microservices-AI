@@ -1,21 +1,8 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { setAuthToken } from '../lib/apiClient'
+import apiClient, { clearAuthToken, setAuthToken } from '../lib/apiClient'
 import { clearShipperSession, loadShipperSession, saveShipperSession } from '../lib/storage'
 
 const ShipperContext = createContext(null)
-
-const demoShipper = {
-  id: 'f21b8e49-4fa5-4488-a225-27c363745e1c',
-  username: 'shipper_demo',
-  full_name: 'Phạm Văn A',
-  phone: '0901234567',
-  branch_code: 'HN001',
-  status: 'ACTIVE',
-  rating: 4.9,
-  total_deliveries: 128,
-  avatar_url: null,
-  vehicle_type: 'MOTORBIKE',
-}
 
 export function ShipperProvider({ children }) {
   const [shipper, setShipper] = useState(null)
@@ -23,47 +10,61 @@ export function ShipperProvider({ children }) {
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       const session = await loadShipperSession()
-      if (session.shipper) {
+      if (session.shipper && session.token) {
         setShipper(session.shipper)
         setToken(session.token)
-        setAuthToken(session.token)
+        await setAuthToken(session.token)
       } else {
-        // Auto-login demo mode for testing on physical device
-        const demoToken = `demo-token-${Date.now()}`
-        setShipper(demoShipper)
-        setToken(demoToken)
-        setAuthToken(demoToken)
-        await saveShipperSession(demoShipper, demoToken)
+        await clearShipperSession()
+        await clearAuthToken()
       }
       setHydrated(true)
     })()
   }, [])
 
-  const loginWithDemo = async () => {
-    const demoToken = `demo-token-${Date.now()}`
-    setShipper(demoShipper)
-    setToken(demoToken)
-    setAuthToken(demoToken)
-    await saveShipperSession(demoShipper, demoToken)
-    return demoShipper
+  const login = async ({ username, password }) => {
+    const response = await apiClient.post('/shippers/login', {
+      username: username.trim(),
+      password: password.trim(),
+    })
+
+    const nextToken = response?.accessToken || response?.access_token || ''
+    const nextShipper = response?.shipper
+
+    if (!nextToken || !nextShipper) {
+      throw new Error('Đăng nhập thất bại: Backend không trả về token hoặc thông tin shipper')
+    }
+
+    setShipper(nextShipper)
+    setToken(nextToken)
+    await setAuthToken(nextToken)
+    await saveShipperSession(nextShipper, nextToken)
+
+    return nextShipper
   }
 
-  const updateSession = async (nextShipper, nextToken = token) => {
-    setShipper(nextShipper)
-    if (nextToken) {
-      setToken(nextToken)
-      setAuthToken(nextToken)
-      await saveShipperSession(nextShipper, nextToken)
-      return
-    }
-    await saveShipperSession(nextShipper, token)
+  const updateStatus = async (status) => {
+    if (!shipper) return
+    await apiClient.patch(`/shippers/${shipper.id}/status`, { status })
+    const updatedShipper = { ...shipper, status }
+    setShipper(updatedShipper)
+    await saveShipperSession(updatedShipper, token)
+  }
+
+  const refreshProfile = async () => {
+    if (!shipper?.id) return null
+    const profile = await apiClient.get(`/shippers/${shipper.id}/profile`)
+    setShipper(profile)
+    await saveShipperSession(profile, token)
+    return profile
   }
 
   const logout = async () => {
     setShipper(null)
     setToken(null)
+    await clearAuthToken()
     await clearShipperSession()
   }
 
@@ -72,8 +73,9 @@ export function ShipperProvider({ children }) {
       shipper,
       token,
       hydrated,
-      loginWithDemo,
-      updateSession,
+      login,
+      updateStatus,
+      refreshProfile,
       logout,
     }),
     [hydrated, shipper, token],
