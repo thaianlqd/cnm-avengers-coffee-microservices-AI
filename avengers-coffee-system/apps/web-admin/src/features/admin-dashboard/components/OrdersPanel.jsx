@@ -534,6 +534,30 @@ export function OrdersPanel({
                 >
                   Xóa đơn
                 </button>
+                {/* Bàn giao cho Shipper */}
+                {['MOI_TAO', 'DA_XAC_NHAN', 'DANG_CHUAN_BI'].includes(normalizeOrderStatus(order.trang_thai_don_hang)) && (
+                  <button
+                    type="button"
+                    style={{
+                      background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '0.35rem 0.75rem',
+                      fontSize: '0.82rem',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                    }}
+                    disabled={updatingOrderId === order.ma_don_hang}
+                    onClick={() => onUpdateStatus(order.ma_don_hang, 'DANG_GIAO')}
+                    title="Xác nhận bàn giao đơn này cho Shipper"
+                  >
+                    🚴 Bàn giao Shipper
+                  </button>
+                )}
               </div>
               {!coTheSuaDon(order) || !coTheXoaDon(order) ? (
                 <p style={{ marginTop: '0.45rem', fontSize: '0.78rem', color: '#8d6f59' }}>

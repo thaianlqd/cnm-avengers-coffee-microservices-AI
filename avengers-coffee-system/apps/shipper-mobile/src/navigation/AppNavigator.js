@@ -5,14 +5,34 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { Ionicons } from '@expo/vector-icons'
 import { useShipper } from '../context/ShipperContext'
 import { colors } from '../theme'
+
 import { LoginScreen } from '../screens/LoginScreen'
 import { HomeScreen } from '../screens/HomeScreen'
-import { DeliveriesScreen } from '../screens/DeliveriesScreen'
-import { EarningsScreen } from '../screens/EarningsScreen'
+import { WalletScreen } from '../screens/WalletScreen'
+import { HistoryScreen } from '../screens/HistoryScreen'
 import { ProfileScreen } from '../screens/ProfileScreen'
+import { OrderDetailScreen } from '../screens/OrderDetailScreen'
+import { MapScreen } from '../screens/MapScreen'
+import { ReportScreen } from '../screens/ReportScreen'
+import { ScheduleScreen } from '../screens/ScheduleScreen'
+import { BatchOrderScreen } from '../screens/BatchOrderScreen'
+import { ExceptionScreen } from '../screens/ExceptionScreen'
+import { VehicleScreen } from '../screens/VehicleScreen'
+import { NotificationScreen } from '../screens/NotificationScreen'
 
 const Stack = createNativeStackNavigator()
 const Tabs = createBottomTabNavigator()
+
+function TabBarIcon({ routeName, color, size, focused }) {
+  const ICONS = {
+    Home: { focused: 'bicycle', unfocused: 'bicycle-outline' },
+    Wallet: { focused: 'wallet', unfocused: 'wallet-outline' },
+    History: { focused: 'time', unfocused: 'time-outline' },
+    Profile: { focused: 'person-circle', unfocused: 'person-circle-outline' },
+  }
+  const icons = ICONS[routeName] || { focused: 'ellipse', unfocused: 'ellipse-outline' }
+  return <Ionicons name={focused ? icons.focused : icons.unfocused} size={size} color={color} />
+}
 
 function MainTabs() {
   return (
@@ -20,33 +40,28 @@ function MainTabs() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: '#9b8a7c',
+        tabBarInactiveTintColor: colors.muted,
         tabBarStyle: {
-          height: 70,
-          paddingBottom: 10,
+          backgroundColor: colors.card,
+          borderTopColor: colors.borderLight,
+          borderTopWidth: 1,
+          height: 60,
+          paddingBottom: 8,
           paddingTop: 8,
-          backgroundColor: '#fffdf8',
-          borderTopColor: '#ead8c6',
         },
         tabBarLabelStyle: {
           fontSize: 12,
-          fontWeight: '700',
+          fontWeight: '600',
         },
-        tabBarIcon: ({ color, size, focused }) => {
-          const iconMap = {
-            Home: focused ? 'home' : 'home-outline',
-            'Đơn hàng': focused ? 'bicycle' : 'bicycle-outline',
-            'Thu nhập': focused ? 'wallet' : 'wallet-outline',
-            'Hồ sơ': focused ? 'person-circle' : 'person-circle-outline',
-          }
-          return <Ionicons name={iconMap[route.name] || 'ellipse'} size={size} color={color} />
-        },
+        tabBarIcon: ({ color, size, focused }) => (
+          <TabBarIcon routeName={route.name} color={color} size={size} focused={focused} />
+        ),
       })}
     >
-      <Tabs.Screen name="Home" component={HomeScreen} options={{ title: 'Trang chủ' }} />
-      <Tabs.Screen name="Đơn hàng" component={DeliveriesScreen} options={{ title: 'Đơn hàng' }} />
-      <Tabs.Screen name="Thu nhập" component={EarningsScreen} options={{ title: 'Thu nhập' }} />
-      <Tabs.Screen name="Hồ sơ" component={ProfileScreen} options={{ title: 'Hồ sơ' }} />
+      <Tabs.Screen name="Home" component={HomeScreen} options={{ title: 'Nhận Đơn' }} />
+      <Tabs.Screen name="Wallet" component={WalletScreen} options={{ title: 'Ví & COD' }} />
+      <Tabs.Screen name="History" component={HistoryScreen} options={{ title: 'Lịch Sử' }} />
+      <Tabs.Screen name="Profile" component={ProfileScreen} options={{ title: 'Hồ Sơ' }} />
     </Tabs.Navigator>
   )
 }
@@ -58,17 +73,27 @@ export function AppNavigator() {
     return (
       <View style={styles.loadingWrap}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Đang khởi động ứng dụng...</Text>
+        <Text style={styles.loadingText}>Đang khởi động Avengers Shipper...</Text>
       </View>
     )
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator key={shipper ? 'auth' : 'guest'} screenOptions={{ headerShown: false }}>
       {!shipper ? (
         <Stack.Screen name="Login" component={LoginScreen} />
       ) : (
-        <Stack.Screen name="Tabs" component={MainTabs} />
+        <>
+          <Stack.Screen name="Main" component={MainTabs} />
+          <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
+          <Stack.Screen name="Map" component={MapScreen} />
+          <Stack.Screen name="Report" component={ReportScreen} />
+          <Stack.Screen name="Schedule" component={ScheduleScreen} />
+          <Stack.Screen name="BatchOrder" component={BatchOrderScreen} />
+          <Stack.Screen name="Exception" component={ExceptionScreen} />
+          <Stack.Screen name="Vehicle" component={VehicleScreen} />
+          <Stack.Screen name="Notification" component={NotificationScreen} />
+        </>
       )}
     </Stack.Navigator>
   )
@@ -77,14 +102,14 @@ export function AppNavigator() {
 const styles = StyleSheet.create({
   loadingWrap: {
     flex: 1,
+    backgroundColor: colors.darkBg,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.bg,
-    gap: 12,
   },
   loadingText: {
-    color: colors.coffee,
-    fontSize: 15,
-    fontWeight: '700',
+    marginTop: 16,
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 })

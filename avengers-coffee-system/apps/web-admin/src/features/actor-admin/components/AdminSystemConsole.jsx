@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSystemAdmin } from '../hooks/useSystemAdmin'
 import { AiAnalyticsPanel } from './AiAnalyticsPanel'
 import { SystemOpsPanel } from './SystemOpsPanel'
+import { AdminShipperPanel } from './AdminShipperPanel'
 import { AccountCenterPanel } from '../../shared/components/AccountCenterPanel'
 import { AdminNotificationBell } from '../../shared/components/AdminNotificationBell'
 
@@ -236,6 +237,9 @@ export function AdminSystemConsole({ session, onLogout }) {
               </button>
               <button type="button" className={activeTab === 'system-ops' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('system-ops')}>
                 Giám sát hệ thống
+              </button>
+              <button type="button" className={activeTab === 'shippers' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('shippers')}>
+                🚴 Quản lý Shipper
               </button>
         </div>
 
@@ -1319,6 +1323,10 @@ export function AdminSystemConsole({ session, onLogout }) {
               </section>
             </div>
           </section>
+        )}
+
+        {activeTab === 'shippers' && (
+          <AdminShipperPanel branchOptions={branchOptions} />
         )}
 
         {adminToast ? (

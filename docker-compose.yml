@@ -296,34 +296,7 @@ services:
     networks:
       - avengers-network
 
-  web-shipper:
-    build:
-      context: ./avengers-coffee-system/apps/web-shipper
-      args:
-        VITE_API_URL: ${WEB_SHIPPER_API_URL:-http://localhost:3000}
-        VITE_SOCKET_URL: ${WEB_SHIPPER_SOCKET_URL:-http://localhost:3005}
-    container_name: avengers_web_shipper
-    restart: unless-stopped
-    depends_on:
-      api-gateway:
-        condition: service_started
-    ports:
-      - "${WEB_SHIPPER_PORT:-5175}:80"
-    networks:
-      - avengers-network
 
-  shipper-launcher:
-    build:
-      context: ./avengers-coffee-system/apps/shipper-launcher
-    container_name: avengers_shipper_launcher
-    restart: unless-stopped
-    depends_on:
-      api-gateway:
-        condition: service_started
-    ports:
-      - "${SHIPPER_LAUNCHER_PORT:-5176}:80"
-    networks:
-      - avengers-network
 
 volumes:
   avengers_pgdata:

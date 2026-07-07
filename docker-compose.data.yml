@@ -1,0 +1,238 @@
+services:
+  # =========================================
+  # EVENT STREAMING — Zookeeper + Kafka (Confluent, stable)
+  # =========================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: avengers_zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_LOG4J_ROOT_LOGLEVEL: WARN
+    volumes:
+      - avengers_zk_data:/var/lib/zookeeper/data
+      - avengers_zk_log:/var/lib/zookeeper/log
+    networks:
+      - data-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: avengers_kafka
+    restart: unless-stopped
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,EXTERNAL://0.0.0.0:9094
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_HEAP_OPTS: "-Xmx512m -Xms256m"
+      KAFKA_LOG4J_ROOT_LOGLEVEL: WARN
+    ports:
+      - "9092:9092"
+      - "9094:9094"
+    volumes:
+      - avengers_kafka_data:/var/lib/kafka/data
+    networks:
+      - data-network
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Kafka Web UI
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: avengers_kafka_ui
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_CLUSTERS_0_NAME: avengers-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      DYNAMIC_CONFIG_ENABLED: "true"
+    ports:
+      - "8082:8080"
+    networks:
+      - data-network
+
+  # =========================================
+  # DATA LAKE — MinIO (S3-compatible)
+  # =========================================
+  minio:
+    image: minio/minio:latest
+    container_name: avengers_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - avengers_minio_data:/data
+    networks:
+      - data-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # MinIO bucket initialization
+  minio-init:
+    image: minio/mc:latest
+    container_name: avengers_minio_init
+    restart: "no"
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin123;
+      /usr/bin/mc mb --ignore-existing myminio/avengers-bronze;
+      /usr/bin/mc mb --ignore-existing myminio/avengers-silver;
+      /usr/bin/mc mb --ignore-existing myminio/avengers-gold;
+      /usr/bin/mc mb --ignore-existing myminio/avengers-models;
+      echo '=== MinIO buckets created: Bronze / Silver / Gold / Models ===';
+      "
+    networks:
+      - data-network
+
+  # =========================================
+  # EVENT PRODUCER — reads PG, publishes to Kafka
+  # =========================================
+  kafka-producer:
+    build:
+      context: ./data-platform/kafka-producer
+    container_name: avengers_kafka_producer
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      DB_HOST: postgres-db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-admin}
+      DB_PASSWORD: ${DB_PASSWORD:-123}
+      DB_NAME: ${DB_NAME:-avengers_coffee}
+      POLL_INTERVAL_SECONDS: 30
+    networks:
+      - avengers-network
+      - data-network
+
+  # =========================================
+  # SPARK JOBS — Bronze → Silver → Gold (Python local mode)
+  # =========================================
+  spark-jobs:
+    build:
+      context: ./data-platform/spark-jobs
+    container_name: avengers_spark_jobs
+    restart: "no"
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      DB_HOST: postgres-db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-admin}
+      DB_PASSWORD: ${DB_PASSWORD:-123}
+      DB_NAME: ${DB_NAME:-avengers_coffee}
+    networks:
+      - avengers-network
+      - data-network
+
+  # =========================================
+  # ORCHESTRATION — Apache Airflow
+  # =========================================
+  airflow:
+    build:
+      context: ./data-platform/airflow
+    container_name: avengers_airflow
+    restart: unless-stopped
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/airflow.db
+      AIRFLOW__WEBSERVER__SECRET_KEY: avengers-airflow-secret-2025
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
+      AIRFLOW_ADMIN_USER: admin
+      AIRFLOW_ADMIN_PASSWORD: admin123
+      DB_HOST: postgres-db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-admin}
+      DB_PASSWORD: ${DB_PASSWORD:-123}
+      DB_NAME: ${DB_NAME:-avengers_coffee}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+    ports:
+      - "8083:8080"
+    volumes:
+      - ./data-platform/airflow/dags:/opt/airflow/dags
+      - avengers_airflow_data:/opt/airflow
+    networks:
+      - avengers-network
+      - data-network
+
+  # =========================================
+  # VISUALIZATION — Streamlit Analytics Dashboard
+  # =========================================
+  streamlit:
+    build:
+      context: ./data-platform/streamlit-app
+    container_name: avengers_streamlit
+    restart: unless-stopped
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres-db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-admin}
+      DB_PASSWORD: ${DB_PASSWORD:-123}
+      DB_NAME: ${DB_NAME:-avengers_coffee}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      STREAMLIT_SERVER_HEADLESS: "true"
+      STREAMLIT_SERVER_PORT: 8501
+    ports:
+      - "8501:8501"
+    networks:
+      - avengers-network
+      - data-network
+
+volumes:
+  avengers_zk_data:
+  avengers_zk_log:
+  avengers_kafka_data:
+  avengers_minio_data:
+  avengers_airflow_data:
+
+networks:
+  data-network:
+    driver: bridge
+  avengers-network:
+    external: true
+    name: cnm-avengers-coffee-microservices-ai_avengers-network
