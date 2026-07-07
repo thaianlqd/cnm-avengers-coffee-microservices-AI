@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Avengers Delivery",
+    "name": "Avengers Coffee - Shipper",
     "slug": "shipper-mobile",
     "version": "1.0.0",
     "sdkVersion": "54.0.0",
@@ -8,19 +8,41 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "android": {
-      "package": "com.avengers.delivery.shipper"
+      "package": "com.avengers.coffee.shipper",
+      "config": {
+        "googleMaps": {
+          "apiKey": ""
+        }
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "CAMERA"
+      ]
+    },
+    "ios": {
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Ứng dụng cần vị trí để điều hướng giao hàng",
+        "NSLocationAlwaysUsageDescription": "Cần vị trí để theo dõi hành trình giao hàng",
+        "NSCameraUsageDescription": "Chụp ảnh xác nhận giao hàng"
+      }
     },
     "splash": {
-      "backgroundColor": "#f26b1d"
+      "backgroundColor": "#0f172a"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Ứng dụng cần vị trí để theo dõi hành trình giao hàng"
+        }
+      ],
       [
         "expo-camera",
         {
-          "cameraPermission": "Ứng dụng cần quyền camera để quét mã QR giao hàng",
+          "cameraPermission": "Ứng dụng cần camera để chụp ảnh xác nhận giao hàng",
           "microphonePermission": false
         }
       ]

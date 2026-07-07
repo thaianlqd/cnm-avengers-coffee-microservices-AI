@@ -1,15 +1,19 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   Pressable,
+  TouchableOpacity,
+  TextInput,
   ActivityIndicator,
   Alert,
   Modal,
   ScrollView,
   Image,
+  Linking,
+  Animated,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
@@ -27,6 +31,446 @@ import {
   safeArray,
 } from '../lib/customerData'
 import { colors, spacing, shadows, radius } from '../theme'
+
+/* ────────────────────────────────────────────────────────────
+   LIVE TRACKING MODAL
+──────────────────────────────────────────────────────────── */
+const DELIVERY_STEP_LABELS = [
+  { key: 'MOI_TAO',       icon: 'receipt',           label: 'Đặt hàng thành công' },
+  { key: 'DA_XAC_NHAN',   icon: 'checkmark-circle',  label: 'Đã xác nhận' },
+  { key: 'DANG_CHUAN_BI', icon: 'cafe',               label: 'Đang chuẩn bị' },
+  { key: 'DANG_GIAO',     icon: 'bicycle',            label: 'Shipper đang giao' },
+  { key: 'HOAN_THANH',    icon: 'home',               label: 'Giao thành công' },
+]
+
+function LiveTrackingModal({ order, visible, onClose, onOpenRating }) {
+  const [delivery, setDelivery] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const pulseAnim = useRef(new Animated.Value(1)).current
+  const refreshRef = useRef(null)
+
+  const loadDelivery = useCallback(async () => {
+    if (!order?.ma_don_hang) return
+    try {
+      const res = await apiClient.get(`/customers/orders/${order.ma_don_hang}/delivery`)
+      setDelivery(res)
+    } catch {
+      setDelivery(null)
+    }
+  }, [order?.ma_don_hang])
+
+  useEffect(() => {
+    if (!visible) return
+    setLoading(true)
+    loadDelivery().finally(() => setLoading(false))
+    refreshRef.current = setInterval(loadDelivery, 15000)
+    return () => {
+      if (refreshRef.current) clearInterval(refreshRef.current)
+    }
+  }, [visible, loadDelivery])
+
+  useEffect(() => {
+    if (!visible || order?.trang_thai_don_hang !== 'DANG_GIAO') return
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1.3, duration: 900, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 900, useNativeDriver: true }),
+      ])
+    )
+    loop.start()
+    return () => loop.stop()
+  }, [visible, order?.trang_thai_don_hang, pulseAnim])
+
+  const openGoogleMaps = () => {
+    if (!delivery?.shipper_latitude || !delivery?.shipper_longitude) return
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${delivery.shipper_latitude},${delivery.shipper_longitude}`
+    Linking.openURL(url)
+  }
+
+  const callShipper = () => {
+    if (!delivery?.shipper_phone) return
+    Linking.openURL(`tel:${delivery.shipper_phone}`)
+  }
+
+  const currentStepIndex = DELIVERY_STEP_LABELS.findIndex(
+    s => s.key === order?.trang_thai_don_hang
+  )
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <View style={liveStyles.container}>
+        <LinearGradient colors={['#1a0a02', '#3d1a08']} style={liveStyles.header}>
+          <TouchableOpacity onPress={onClose} style={liveStyles.closeBtn}>
+            <Ionicons name="close" size={22} color="#fff" />
+          </TouchableOpacity>
+          <Text style={liveStyles.headerTitle}>📍 Theo dõi đơn hàng</Text>
+          <View style={{ width: 36 }} />
+        </LinearGradient>
+
+        <ScrollView contentContainerStyle={liveStyles.body} showsVerticalScrollIndicator={false}>
+          {/* Animated Shipper Icon */}
+          <View style={liveStyles.shipperSection}>
+            <Animated.View style={[liveStyles.shipperPulse, { transform: [{ scale: pulseAnim }] }]} />
+            <View style={liveStyles.shipperIconWrap}>
+              <Ionicons name="bicycle" size={36} color={colors.primary} />
+            </View>
+            <Text style={liveStyles.shipperName}>
+              {delivery?.shipper_name || 'Đang tìm Shipper...'}
+            </Text>
+            {delivery?.shipper_phone && (
+              <Text style={liveStyles.shipperPhone}>{delivery.shipper_phone}</Text>
+            )}
+            {delivery?.estimated_delivery && (
+              <View style={liveStyles.etaBadge}>
+                <Ionicons name="time-outline" size={14} color={colors.primary} />
+                <Text style={liveStyles.etaText}>Dự kiến: {delivery.estimated_delivery}</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Progress Steps */}
+          <View style={liveStyles.stepsSection}>
+            <Text style={liveStyles.stepsTitle}>Hành trình đơn hàng</Text>
+            {DELIVERY_STEP_LABELS.map((step, i) => {
+              const isDone = i < currentStepIndex
+              const isCurrent = i === currentStepIndex
+              const isFuture = i > currentStepIndex
+              return (
+                <View key={step.key} style={liveStyles.step}>
+                  <View style={liveStyles.stepLeft}>
+                    <View style={[
+                      liveStyles.stepDot,
+                      isDone && liveStyles.stepDotDone,
+                      isCurrent && liveStyles.stepDotCurrent,
+                    ]}>
+                      <Ionicons
+                        name={isDone ? 'checkmark' : step.icon}
+                        size={14}
+                        color={isDone || isCurrent ? '#fff' : colors.muted}
+                      />
+                    </View>
+                    {i < DELIVERY_STEP_LABELS.length - 1 && (
+                      <View style={[liveStyles.stepLine, isDone && liveStyles.stepLineDone]} />
+                    )}
+                  </View>
+                  <View style={liveStyles.stepRight}>
+                    <Text style={[
+                      liveStyles.stepLabel,
+                      isFuture && { color: colors.muted },
+                      isCurrent && { color: colors.primary, fontWeight: '800' },
+                      isDone && { color: colors.success },
+                    ]}>
+                      {step.label}
+                    </Text>
+                    {isCurrent && (
+                      <Text style={liveStyles.stepCurrent}>● Đang thực hiện</Text>
+                    )}
+                  </View>
+                </View>
+              )
+            })}
+          </View>
+
+          {/* Order Info */}
+          {order && (
+            <View style={liveStyles.orderInfo}>
+              <Text style={liveStyles.orderInfoTitle}>Thông tin đơn</Text>
+              <View style={liveStyles.orderInfoRow}>
+                <Text style={liveStyles.orderInfoLabel}>Mã đơn</Text>
+                <Text style={liveStyles.orderInfoValue}>{order.ma_don_hang?.slice(0, 12)}</Text>
+              </View>
+              <View style={liveStyles.orderInfoRow}>
+                <Text style={liveStyles.orderInfoLabel}>Địa chỉ giao</Text>
+                <Text style={liveStyles.orderInfoValue} numberOfLines={2}>{order.dia_chi_giao_hang || 'N/A'}</Text>
+              </View>
+              <View style={liveStyles.orderInfoRow}>
+                <Text style={liveStyles.orderInfoLabel}>Tổng tiền</Text>
+                <Text style={[liveStyles.orderInfoValue, { color: colors.primary }]}>{formatCurrency(order.tong_tien)}</Text>
+              </View>
+            </View>
+          )}
+
+          {/* Action Buttons */}
+          <View style={liveStyles.actions}>
+            {delivery?.shipper_phone && (
+              <TouchableOpacity style={liveStyles.actionBtn} onPress={callShipper}>
+                <Ionicons name="call" size={20} color="#fff" />
+                <Text style={liveStyles.actionBtnText}>Gọi Shipper</Text>
+              </TouchableOpacity>
+            )}
+            {delivery?.shipper_latitude && (
+              <TouchableOpacity style={[liveStyles.actionBtn, { backgroundColor: '#10B981' }]} onPress={openGoogleMaps}>
+                <Ionicons name="map" size={20} color="#fff" />
+                <Text style={liveStyles.actionBtnText}>Xem bản đồ</Text>
+              </TouchableOpacity>
+            )}
+            {order?.trang_thai_don_hang === 'HOAN_THANH' && (
+              <TouchableOpacity
+                style={[liveStyles.actionBtn, { backgroundColor: '#F59E0B' }]}
+                onPress={() => { onClose(); onOpenRating?.(order) }}
+              >
+                <Ionicons name="star" size={20} color="#fff" />
+                <Text style={liveStyles.actionBtnText}>Đánh giá Shipper</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {loading && <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />}
+        </ScrollView>
+      </View>
+    </Modal>
+  )
+}
+
+const liveStyles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20,
+  },
+  closeBtn: { padding: 8 },
+  headerTitle: { color: '#fff', fontSize: 18, fontWeight: '800' },
+  body: { padding: spacing.lg, paddingBottom: 60 },
+  shipperSection: { alignItems: 'center', marginBottom: spacing.xl, position: 'relative', paddingTop: 20 },
+  shipperPulse: {
+    position: 'absolute', top: 8, width: 90, height: 90, borderRadius: 45,
+    backgroundColor: colors.primary + '20',
+  },
+  shipperIconWrap: {
+    width: 72, height: 72, borderRadius: 36, backgroundColor: colors.infoBg,
+    alignItems: 'center', justifyContent: 'center', marginBottom: spacing.md,
+    borderWidth: 3, borderColor: colors.primary,
+  },
+  shipperName: { fontSize: 20, fontWeight: '800', color: colors.text },
+  shipperPhone: { fontSize: 14, color: colors.textSecondary, marginTop: 4 },
+  etaBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.infoBg,
+    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, marginTop: 10,
+  },
+  etaText: { color: colors.primary, fontWeight: '700', fontSize: 13 },
+  stepsSection: {
+    backgroundColor: colors.surface, borderRadius: 16, padding: spacing.lg, marginBottom: spacing.lg,
+  },
+  stepsTitle: { fontSize: 15, fontWeight: '700', color: colors.text, marginBottom: spacing.md },
+  step: { flexDirection: 'row', marginBottom: 0 },
+  stepLeft: { alignItems: 'center', width: 40 },
+  stepDot: {
+    width: 32, height: 32, borderRadius: 16, backgroundColor: colors.borderLight,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  stepDotDone: { backgroundColor: colors.success },
+  stepDotCurrent: { backgroundColor: colors.primary },
+  stepLine: { width: 2, flex: 1, backgroundColor: colors.borderLight, minHeight: 24, marginVertical: 4 },
+  stepLineDone: { backgroundColor: colors.success },
+  stepRight: { flex: 1, paddingLeft: spacing.sm, paddingBottom: 20, justifyContent: 'flex-start', paddingTop: 6 },
+  stepLabel: { fontSize: 14, fontWeight: '600', color: colors.text },
+  stepCurrent: { fontSize: 11, color: colors.primary, marginTop: 2, fontWeight: '600' },
+  orderInfo: {
+    backgroundColor: colors.surface, borderRadius: 12, padding: spacing.lg, marginBottom: spacing.lg,
+  },
+  orderInfoTitle: { fontSize: 15, fontWeight: '700', color: colors.text, marginBottom: spacing.sm },
+  orderInfoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
+  orderInfoLabel: { fontSize: 13, color: colors.textSecondary },
+  orderInfoValue: { fontSize: 13, fontWeight: '600', color: colors.text, flex: 1, textAlign: 'right' },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  actionBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.primary, paddingVertical: 12, borderRadius: 12, gap: 8, minWidth: '45%',
+  },
+  actionBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+})
+
+/* ────────────────────────────────────────────────────────────
+   SHIPPER RATING MODAL
+──────────────────────────────────────────────────────────── */
+function ShipperRatingModal({ order, visible, onClose, userId }) {
+  const [rating, setRating] = useState(5)
+  const [comment, setComment] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+
+  useEffect(() => {
+    if (visible) { setRating(5); setComment(''); setSubmitted(false) }
+  }, [visible])
+
+  const handleSubmit = async () => {
+    if (!order?.ma_don_hang) return
+    setSubmitting(true)
+    try {
+      await apiClient.post(`/customers/${userId}/orders/${order.ma_don_hang}/rate-shipper`, {
+        rating,
+        comment,
+      })
+      setSubmitted(true)
+      setTimeout(onClose, 2000)
+    } catch (e) {
+      Alert.alert('Lỗi', e?.message || 'Không thể gửi đánh giá lúc này')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const QUICK_TAGS = ['Nhanh chóng', 'Thân thiện', 'Cẩn thận', 'Đúng giờ', 'Chuyên nghiệp']
+  const [selectedTags, setSelectedTags] = useState([])
+  const toggleTag = (tag) => setSelectedTags(prev =>
+    prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+  )
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <View style={ratingStyles.container}>
+        <View style={ratingStyles.header}>
+          <TouchableOpacity onPress={onClose} style={ratingStyles.closeBtn}>
+            <Ionicons name="close" size={22} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={ratingStyles.headerTitle}>Đánh giá Shipper</Text>
+          <View style={{ width: 36 }} />
+        </View>
+
+        <ScrollView contentContainerStyle={ratingStyles.body} showsVerticalScrollIndicator={false}>
+          {submitted ? (
+            <View style={ratingStyles.successState}>
+              <View style={ratingStyles.successIcon}>
+                <Ionicons name="checkmark-circle" size={72} color={colors.success} />
+              </View>
+              <Text style={ratingStyles.successTitle}>Cảm ơn bạn! 🎉</Text>
+              <Text style={ratingStyles.successDesc}>Đánh giá của bạn giúp chúng tôi cải thiện chất lượng dịch vụ giao hàng.</Text>
+            </View>
+          ) : (
+            <>
+              {/* Shipper Icon */}
+              <View style={ratingStyles.shipperSection}>
+                <View style={ratingStyles.shipperIcon}>
+                  <Ionicons name="person" size={40} color={colors.primary} />
+                </View>
+                <Text style={ratingStyles.shipperLabel}>Đánh giá Shipper giao đơn hàng</Text>
+                <Text style={ratingStyles.orderRef}>{order?.ma_don_hang?.slice(0, 12)}</Text>
+              </View>
+
+              {/* Stars */}
+              <View style={ratingStyles.starsSection}>
+                <Text style={ratingStyles.starsTitle}>Mức độ hài lòng</Text>
+                <View style={ratingStyles.starsRow}>
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <TouchableOpacity key={star} onPress={() => setRating(star)} style={ratingStyles.starBtn}>
+                      <Ionicons
+                        name={star <= rating ? 'star' : 'star-outline'}
+                        size={44}
+                        color={star <= rating ? '#F59E0B' : colors.muted}
+                      />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <Text style={ratingStyles.starLabel}>
+                  {rating === 5 ? '🤩 Tuyệt vời!' : rating === 4 ? '😊 Tốt' : rating === 3 ? '😐 Bình thường' : rating === 2 ? '😕 Không tốt' : '😞 Rất tệ'}
+                </Text>
+              </View>
+
+              {/* Quick Tags */}
+              <View style={ratingStyles.tagsSection}>
+                <Text style={ratingStyles.starsTitle}>Nhận xét nhanh</Text>
+                <View style={ratingStyles.tagsRow}>
+                  {QUICK_TAGS.map(tag => (
+                    <TouchableOpacity
+                      key={tag}
+                      style={[ratingStyles.tag, selectedTags.includes(tag) && ratingStyles.tagActive]}
+                      onPress={() => toggleTag(tag)}
+                    >
+                      <Text style={[ratingStyles.tagText, selectedTags.includes(tag) && ratingStyles.tagTextActive]}>
+                        {selectedTags.includes(tag) ? '✓ ' : ''}{tag}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Comment */}
+              <View style={ratingStyles.commentSection}>
+                <Text style={ratingStyles.starsTitle}>Nhận xét chi tiết (không bắt buộc)</Text>
+                <CommentInput comment={comment} setComment={setComment} />
+              </View>
+
+              <TouchableOpacity
+                style={[ratingStyles.submitBtn, submitting && { opacity: 0.7 }]}
+                onPress={handleSubmit}
+                disabled={submitting}
+              >
+                {submitting
+                  ? <ActivityIndicator size="small" color="#fff" />
+                  : <Text style={ratingStyles.submitBtnText}>Gửi đánh giá ⭐</Text>
+                }
+              </TouchableOpacity>
+            </>
+          )}
+        </ScrollView>
+      </View>
+    </Modal>
+  )
+}
+
+// Comment input for rating modal
+function CommentInput({ comment, setComment }) {
+  return (
+    <TextInput
+      style={ratingStyles.commentInput}
+      value={comment}
+      onChangeText={setComment}
+      placeholder="Chia sẻ trải nghiệm của bạn với Shipper..."
+      placeholderTextColor={colors.muted}
+      multiline
+      numberOfLines={4}
+      textAlignVertical="top"
+    />
+  )
+}
+
+const ratingStyles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    padding: 16, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
+    paddingTop: 56,
+  },
+  closeBtn: { padding: 8 },
+  headerTitle: { fontSize: 18, fontWeight: '800', color: colors.text },
+  body: { padding: spacing.lg, paddingBottom: 60 },
+  shipperSection: { alignItems: 'center', marginBottom: spacing.xl },
+  shipperIcon: {
+    width: 80, height: 80, borderRadius: 40, backgroundColor: colors.infoBg,
+    alignItems: 'center', justifyContent: 'center', marginBottom: spacing.md,
+    borderWidth: 2, borderColor: colors.primary,
+  },
+  shipperLabel: { fontSize: 15, color: colors.textSecondary },
+  orderRef: { fontSize: 12, color: colors.muted, marginTop: 4 },
+  starsSection: { alignItems: 'center', marginBottom: spacing.lg },
+  starsTitle: { fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: spacing.md, alignSelf: 'flex-start' },
+  starsRow: { flexDirection: 'row', gap: 8, marginBottom: spacing.sm },
+  starBtn: { padding: 4 },
+  starLabel: { fontSize: 16, fontWeight: '700', color: colors.text },
+  tagsSection: { marginBottom: spacing.lg },
+  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  tag: {
+    paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20,
+    backgroundColor: colors.bg, borderWidth: 1.5, borderColor: colors.border,
+  },
+  tagActive: { backgroundColor: colors.infoBg, borderColor: colors.primary },
+  tagText: { fontSize: 13, color: colors.textSecondary, fontWeight: '600' },
+  tagTextActive: { color: colors.primary },
+  commentSection: { marginBottom: spacing.xl },
+  commentInput: {
+    borderWidth: 1.5, borderColor: colors.border, borderRadius: 12, padding: 12,
+    fontSize: 14, color: colors.text, minHeight: 100, backgroundColor: colors.surface,
+  },
+  submitBtn: {
+    backgroundColor: '#F59E0B', paddingVertical: 16, borderRadius: 12,
+    alignItems: 'center', ...shadows.card,
+  },
+  submitBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  successState: { alignItems: 'center', paddingVertical: 60 },
+  successIcon: { marginBottom: spacing.xl },
+  successTitle: { fontSize: 24, fontWeight: '900', color: colors.text, marginBottom: spacing.md },
+  successDesc: { fontSize: 15, color: colors.textSecondary, textAlign: 'center', paddingHorizontal: spacing.xl },
+})
 
 function InvoiceModal({ order, visible, onClose }) {
   if (!order) return null
@@ -311,6 +755,8 @@ export function OrdersScreen() {
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [invoiceOrder, setInvoiceOrder] = useState(null)
+  const [trackingOrder, setTrackingOrder] = useState(null)
+  const [ratingOrder, setRatingOrder] = useState(null)
 
   const ordersQuery = useQuery({
     queryKey: ['customer', 'orders', userId, statusFilter],
@@ -412,6 +858,26 @@ export function OrdersScreen() {
                 <Text style={styles.cancelBtnText}>Hủy đơn</Text>
               </Pressable>
             ) : null}
+            {/* Live Tracking Button */}
+            {['DANG_GIAO', 'DANG_CHUAN_BI', 'DA_XAC_NHAN'].includes(item.trang_thai_don_hang) && (
+              <Pressable
+                onPress={(e) => { e.stopPropagation?.(); setTrackingOrder(item) }}
+                style={[styles.detailBtn, { backgroundColor: colors.infoBg, borderColor: colors.primary, borderWidth: 1 }]}
+              >
+                <Ionicons name="navigate" size={13} color={colors.primary} />
+                <Text style={[styles.detailBtnText, { color: colors.primary }]}>Theo dõi</Text>
+              </Pressable>
+            )}
+            {/* Rating Button */}
+            {item.trang_thai_don_hang === 'HOAN_THANH' && (
+              <Pressable
+                onPress={(e) => { e.stopPropagation?.(); setRatingOrder(item) }}
+                style={[styles.detailBtn, { backgroundColor: '#FEF3C7', borderColor: '#F59E0B', borderWidth: 1 }]}
+              >
+                <Ionicons name="star" size={13} color="#F59E0B" />
+                <Text style={[styles.detailBtnText, { color: '#92400E' }]}>Đánh giá</Text>
+              </Pressable>
+            )}
             <Pressable
               onPress={() => {
                 setSelectedOrder(item)
@@ -517,6 +983,22 @@ export function OrdersScreen() {
         order={invoiceOrder}
         visible={Boolean(invoiceOrder)}
         onClose={() => setInvoiceOrder(null)}
+      />
+
+      {/* Live Tracking Modal */}
+      <LiveTrackingModal
+        order={trackingOrder}
+        visible={Boolean(trackingOrder)}
+        onClose={() => setTrackingOrder(null)}
+        onOpenRating={(order) => setRatingOrder(order)}
+      />
+
+      {/* Shipper Rating Modal */}
+      <ShipperRatingModal
+        order={ratingOrder}
+        visible={Boolean(ratingOrder)}
+        onClose={() => setRatingOrder(null)}
+        userId={userId}
       />
     </View>
   )

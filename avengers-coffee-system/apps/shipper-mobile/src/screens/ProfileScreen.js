@@ -1,168 +1,162 @@
 import React from 'react'
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Alert } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useShipper } from '../context/ShipperContext'
-import { BrandHeader } from '../components/BrandHeader'
-import { colors } from '../theme'
+import { colors, radius, spacing, shadows, typography } from '../theme'
 
-const actions = [
-  { title: 'Cập nhật vị trí', hint: 'Gửi GPS hiện tại', icon: '📍' },
-  { title: 'Đổi trạng thái', hint: 'Đang giao / nghỉ', icon: '🟢' },
-  { title: 'Lịch sử giao', hint: 'Xem các đơn gần đây', icon: '🧾' },
-  { title: 'Hỗ trợ', hint: 'Liên hệ điều phối', icon: '☎️' },
-]
-
-export function ProfileScreen() {
+export function ProfileScreen({ navigation }) {
   const { shipper, logout } = useShipper()
 
   const handleLogout = () => {
-    Alert.alert('Đăng xuất', 'Bạn muốn thoát khỏi ứng dụng shipper?', [
-      { text: 'Hủy', style: 'cancel' },
-      {
-        text: 'Đăng xuất',
-        style: 'destructive',
-        onPress: logout,
-      },
-    ])
+    Alert.alert(
+      'Đăng xuất',
+      'Bạn có chắc chắn muốn đăng xuất?',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        { text: 'Đăng xuất', style: 'destructive', onPress: logout },
+      ]
+    )
   }
 
+  const menuItems = [
+    { icon: 'notifications-outline', title: 'Thông báo', screen: 'Notification', badge: null },
+    { icon: 'calendar-outline', title: 'Lịch làm việc', screen: 'Schedule', badge: null },
+    { icon: 'bar-chart-outline', title: 'Đối soát thu nhập', screen: 'Report', badge: null },
+    { icon: 'copy-outline', title: 'Nhận đơn ghép tuyến', screen: 'BatchOrder', badge: null },
+    { icon: 'bicycle-outline', title: 'Phương tiện của tôi', screen: 'Vehicle', badge: null },
+    { icon: 'warning-outline', title: 'Báo cáo ngoại lệ', screen: 'Exception', badge: null },
+  ]
+
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <BrandHeader title="Hồ sơ" subtitle="Thông tin cá nhân và công cụ nhanh" />
-
-      <View style={styles.profileCard}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{shipper?.full_name?.split(' ').slice(-1)[0]?.[0] || 'S'}</Text>
-        </View>
-        <Text style={styles.name}>{shipper?.full_name}</Text>
-        <Text style={styles.meta}>{shipper?.username} • {shipper?.branch_code}</Text>
-        <Text style={styles.meta}>⭐ {shipper?.rating?.toFixed?.(1) || '4.9'} • 🚚 {shipper?.total_deliveries || 0} đơn</Text>
-      </View>
-
-      <View style={styles.quickGrid}>
-        {actions.map((item) => (
-          <View key={item.title} style={styles.quickCard}>
-            <Text style={styles.quickIcon}>{item.icon}</Text>
-            <Text style={styles.quickTitle}>{item.title}</Text>
-            <Text style={styles.quickHint}>{item.hint}</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.header}>
+          <View style={styles.avatarWrap}>
+            <Ionicons name="person" size={40} color={colors.primary} />
           </View>
-        ))}
-      </View>
+          <View style={styles.infoWrap}>
+            <Text style={styles.name}>{shipper?.full_name}</Text>
+            <Text style={styles.username}>@{shipper?.username}</Text>
+            <View style={styles.ratingWrap}>
+              <Ionicons name="star" size={14} color={colors.warning} />
+              <Text style={styles.ratingText}>{shipper?.rating || 5.0} Đánh giá</Text>
+            </View>
+          </View>
+        </View>
 
-      <View style={styles.infoCard}>
-        <Text style={styles.infoLabel}>Trạng thái hiện tại</Text>
-        <Text style={styles.infoValue}>{shipper?.status === 'ACTIVE' ? 'Đang hoạt động' : 'Tạm nghỉ'}</Text>
-        <Text style={styles.infoHint}>
-          Đây là app mobile nội bộ của shipper, nên ưu tiên tốc độ thao tác và độ rõ ràng của trạng thái hơn là hiệu ứng rườm rà.
-        </Text>
-      </View>
+        <View style={styles.menuSection}>
+          <Text style={styles.sectionTitle}>Quản lý tài khoản</Text>
+          <View style={styles.menuCard}>
+            {menuItems.map((item, index) => (
+              <React.Fragment key={item.title}>
+                <TouchableOpacity 
+                  style={styles.menuItem}
+                  onPress={() => navigation.navigate(item.screen)}
+                >
+                  <View style={styles.menuIconWrap}>
+                    <Ionicons name={item.icon} size={20} color={colors.primary} />
+                  </View>
+                  <Text style={styles.menuText}>{item.title}</Text>
+                  <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+                </TouchableOpacity>
+                {index < menuItems.length - 1 && <View style={styles.divider} />}
+              </React.Fragment>
+            ))}
+          </View>
+        </View>
 
-      <Pressable onPress={handleLogout} style={({ pressed }) => [styles.logoutBtn, pressed && { opacity: 0.92 }]}>
-        <Text style={styles.logoutText}>Đăng xuất</Text>
-      </Pressable>
-    </ScrollView>
+        <View style={styles.menuSection}>
+          <Text style={styles.sectionTitle}>Cài đặt</Text>
+          <View style={styles.menuCard}>
+            <TouchableOpacity style={styles.menuItem}>
+              <View style={[styles.menuIconWrap, { backgroundColor: colors.borderLight }]}>
+                <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} />
+              </View>
+              <Text style={styles.menuText}>Đổi mật khẩu</Text>
+              <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+            </TouchableOpacity>
+            <View style={styles.divider} />
+            <TouchableOpacity style={styles.menuItem}>
+              <View style={[styles.menuIconWrap, { backgroundColor: colors.borderLight }]}>
+                <Ionicons name="help-circle-outline" size={20} color={colors.textSecondary} />
+              </View>
+              <Text style={styles.menuText}>Trung tâm trợ giúp</Text>
+              <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+          <Ionicons name="log-out-outline" size={20} color={colors.danger} />
+          <Text style={styles.logoutText}>Đăng xuất</Text>
+        </TouchableOpacity>
+        
+        <Text style={styles.version}>Phiên bản 1.0.0</Text>
+      </ScrollView>
+    </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  content: {
-    padding: 16,
-    gap: 14,
-    paddingBottom: 28,
-  },
-  profileCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 28,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 20,
+  safeArea: { flex: 1, backgroundColor: colors.bg },
+  scrollContent: { padding: spacing.md, paddingBottom: spacing.xxl },
+  
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: colors.surface,
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+    marginBottom: spacing.lg,
+    ...shadows.sm,
   },
-  avatar: {
-    width: 84,
-    height: 84,
-    borderRadius: 28,
-    backgroundColor: '#fff4e8',
+  avatarWrap: {
+    width: 70, height: 70,
+    borderRadius: 35,
+    backgroundColor: colors.infoBg,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginRight: spacing.md,
   },
-  avatarText: {
-    color: colors.primary,
-    fontSize: 30,
-    fontWeight: '900',
-  },
-  name: {
-    color: colors.coffee,
-    fontSize: 22,
-    fontWeight: '900',
-  },
-  meta: {
-    color: colors.muted,
-    marginTop: 4,
-    fontWeight: '600',
-  },
-  quickGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  quickCard: {
-    width: '48%',
+  infoWrap: { flex: 1 },
+  name: { ...typography.h3, color: colors.text },
+  username: { ...typography.body, color: colors.textSecondary, marginBottom: spacing.xs },
+  ratingWrap: { flexDirection: 'row', alignItems: 'center' },
+  ratingText: { ...typography.caption, color: colors.warning, marginLeft: 4, fontWeight: 'bold' },
+
+  menuSection: { marginBottom: spacing.lg },
+  sectionTitle: { ...typography.label, color: colors.textSecondary, marginBottom: spacing.sm, marginLeft: spacing.xs },
+  menuCard: {
     backgroundColor: colors.surface,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 14,
+    borderRadius: radius.lg,
+    ...shadows.sm,
   },
-  quickIcon: {
-    fontSize: 20,
-  },
-  quickTitle: {
-    color: colors.coffee,
-    fontWeight: '900',
-    marginTop: 8,
-  },
-  quickHint: {
-    color: colors.muted,
-    fontSize: 12,
-    marginTop: 4,
-    lineHeight: 18,
-  },
-  infoCard: {
-    backgroundColor: '#2f2119',
-    borderRadius: 28,
-    padding: 18,
-  },
-  infoLabel: {
-    color: 'rgba(255,255,255,0.72)',
-    fontSize: 12,
-    textTransform: 'uppercase',
-    fontWeight: '800',
-  },
-  infoValue: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: '900',
-    marginTop: 6,
-  },
-  infoHint: {
-    color: 'rgba(255,255,255,0.84)',
-    lineHeight: 20,
-    marginTop: 8,
-  },
-  logoutBtn: {
-    backgroundColor: '#fee2e2',
-    borderRadius: 18,
-    paddingVertical: 15,
+  menuItem: {
+    flexDirection: 'row',
     alignItems: 'center',
+    padding: spacing.md,
   },
-  logoutText: {
-    color: colors.danger,
-    fontWeight: '900',
-    fontSize: 15,
+  menuIconWrap: {
+    width: 36, height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.infoBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
   },
+  menuText: { flex: 1, ...typography.bodyBold, color: colors.text },
+  divider: { height: 1, backgroundColor: colors.borderLight, marginLeft: 60 },
+
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.dangerBg,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    marginTop: spacing.md,
+    marginBottom: spacing.xl,
+  },
+  logoutText: { color: colors.danger, fontWeight: 'bold', fontSize: 16, marginLeft: spacing.sm },
+  version: { textAlign: 'center', color: colors.muted, fontSize: 12 },
 })
