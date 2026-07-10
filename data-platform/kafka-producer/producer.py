@@ -2,6 +2,11 @@
 Avengers Coffee - Kafka Event Producer
 Reads from PostgreSQL and publishes business events to Kafka topics.
 Polls every POLL_INTERVAL_SECONDS for new records.
+
+VERIFIED SCHEMA from entity files:
+  don_hang: ma_nguoi_dung (NOT khach_hang_id), loai_don_hang (NOT loai_don)
+  chi_tiet_don_hang: id (NOT ma_chi_tiet), gia_ban (NOT don_gia), ten_san_pham
+  shipper_delivery: NO cod_amount, NO fail_reason
 """
 import os
 import json
@@ -22,7 +27,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger("kafka-producer")
 
-# ─── Config ───────────────────────────────────────────────────────────────────
 KAFKA_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
 DB_HOST       = os.getenv("DB_HOST", "postgres-db")
 DB_PORT       = int(os.getenv("DB_PORT", 5432))
@@ -34,17 +38,13 @@ POLL_INTERVAL = int(os.getenv("POLL_INTERVAL_SECONDS", 30))
 TOPICS = [
     "orders-events",
     "order-items-events",
-    "customer-events",
     "shipper-events",
-    "product-events",
 ]
 
-# Track last-seen IDs/timestamps per topic
 _state: dict = {}
 
 
 def json_serial(obj):
-    """JSON serializer for objects not serializable by default json code."""
     if isinstance(obj, datetime):
         return obj.isoformat()
     if isinstance(obj, Decimal):
@@ -58,8 +58,7 @@ def create_producer() -> KafkaProducer:
         bootstrap_servers=KAFKA_SERVERS,
         value_serializer=lambda v: json.dumps(v, default=json_serial).encode("utf-8"),
         key_serializer=lambda k: k.encode("utf-8") if k else None,
-        retries=5,
-        acks="all",
+        retries=5, acks="all",
     )
 
 
@@ -88,25 +87,24 @@ def get_db_conn():
 
 
 def fetch_and_publish(producer: KafkaProducer, conn):
-    """Fetch new records since last poll and publish to Kafka."""
     cur = conn.cursor()
     published = 0
 
-    # ── 1. Orders ─────────────────────────────────────────────────────────────
+    # ── 1. Orders — CORRECT COLUMNS ─────────────────────────────────────────
     try:
         last_ts = _state.get("orders_last_ts", "2020-01-01 00:00:00")
         cur.execute("""
             SELECT
                 d.ma_don_hang,
+                d.ma_nguoi_dung,
                 d.trang_thai_don_hang,
                 d.phuong_thuc_thanh_toan,
                 d.tong_tien,
                 d.co_so_ma,
-                d.ngay_tao,
-                d.ngay_cap_nhat,
-                d.loai_don,
+                d.loai_don_hang,
                 d.ghi_chu,
-                d.khach_hang_id
+                d.ngay_tao,
+                d.ngay_cap_nhat
             FROM orders.don_hang d
             WHERE d.ngay_tao > %s
             ORDER BY d.ngay_tao ASC
@@ -128,17 +126,18 @@ def fetch_and_publish(producer: KafkaProducer, conn):
     except Exception as e:
         logger.warning(f"Orders fetch error: {e}")
 
-    # ── 2. Order Items ─────────────────────────────────────────────────────────
+    # ── 2. Order Items — uses id, gia_ban, ten_san_pham ─────────────────────
     try:
         last_ts = _state.get("items_last_ts", "2020-01-01 00:00:00")
         cur.execute("""
             SELECT
-                ct.ma_chi_tiet,
+                ct.id,
                 ct.ma_don_hang,
                 ct.ma_san_pham,
+                ct.ten_san_pham,
+                ct.gia_ban,
                 ct.so_luong,
-                ct.don_gia,
-                ct.ghi_chu,
+                ct.kich_co,
                 d.ngay_tao
             FROM orders.chi_tiet_don_hang ct
             JOIN orders.don_hang d ON ct.ma_don_hang = d.ma_don_hang
@@ -162,7 +161,7 @@ def fetch_and_publish(producer: KafkaProducer, conn):
     except Exception as e:
         logger.warning(f"Order items fetch error: {e}")
 
-    # ── 3. Shipper Deliveries ──────────────────────────────────────────────────
+    # ── 3. Shipper Deliveries — NO cod_amount, NO fail_reason ───────────────
     try:
         last_ts = _state.get("shipper_last_ts", "2020-01-01 00:00:00")
         cur.execute("""
@@ -171,12 +170,11 @@ def fetch_and_publish(producer: KafkaProducer, conn):
                 sd.ma_don_hang,
                 sd.shipper_id,
                 sd.status,
+                sd.delivery_address,
+                sd.delivery_fee,
                 sd.assigned_at,
                 sd.picked_up_at,
-                sd.delivered_at,
-                sd.delivery_fee,
-                sd.cod_amount,
-                sd.fail_reason
+                sd.delivered_at
             FROM orders.shipper_delivery sd
             WHERE sd.assigned_at > %s
             ORDER BY sd.assigned_at ASC
@@ -196,9 +194,8 @@ def fetch_and_publish(producer: KafkaProducer, conn):
         if rows:
             logger.info(f"Published {len(rows)} shipper events")
     except Exception as e:
-        logger.warning(f"Shipper deliveries fetch error (table may not exist): {e}")
+        logger.warning(f"Shipper deliveries fetch error: {e}")
 
-    # ── 4. Flush ───────────────────────────────────────────────────────────────
     producer.flush()
     return published
 
@@ -206,7 +203,6 @@ def fetch_and_publish(producer: KafkaProducer, conn):
 def main():
     logger.info("=== Avengers Coffee Kafka Producer Starting ===")
 
-    # Wait for Kafka
     for attempt in range(20):
         try:
             producer = create_producer()
@@ -220,7 +216,6 @@ def main():
         logger.error("Failed to connect to Kafka after 20 attempts. Exiting.")
         return
 
-    # Wait for PostgreSQL
     for attempt in range(20):
         try:
             conn = get_db_conn()
@@ -237,7 +232,7 @@ def main():
     while True:
         try:
             count = fetch_and_publish(producer, conn)
-            logger.info(f"Poll done. Total events published this cycle: {count}")
+            logger.info(f"Poll done. Events published: {count}")
         except psycopg2.OperationalError:
             logger.warning("DB connection lost. Reconnecting…")
             try:

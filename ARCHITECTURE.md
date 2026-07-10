@@ -628,6 +628,77 @@ Database: avengers_coffee
 
 ---
 
-**Last Updated**: May 29, 2026  
-**Version**: 1.0  
-**Status**: ✅ Production-Ready (with security fixes applied)
+## 11. Hướng Phát Triển Tương Lai: Enterprise Data Platform (Modern Data Stack 7 Lớp)
+
+Trong giai đoạn tiếp theo, hệ thống nâng cấp toàn diện tầng Data Platform chuyên biệt bên cạnh hệ thống vận hành hiện tại theo kiến trúc **Modern Data Stack gồm 7 lớp độc lập** (đạt chuẩn kiến trúc dữ liệu của các tập đoàn F&B & Tech hàng đầu như Grab, Shopee, The Coffee House).
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                       LAYER 1 — DATA SOURCES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Microservices (NestJS/PG)     Mobile App (React Native)     Shipper App (GPS)
+             │                              │                         │
+             └──────────────────────────────┼─────────────────────────┘
+                                            ▼
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                 LAYER 2 — INGESTION & REAL-TIME STREAMING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                       Apache Kafka (Event Streaming Hub)
+              + Debezium CDC (Change Data Capture từ PostgreSQL WAL)
+                                            │
+                                            ▼
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                          LAYER 3 — PROCESSING & AI
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      Apache Spark Streaming (Real-time < 5s)  |  Spark Batch (Nightly ETL)
+      Spark MLlib ALS (Recommendation Engine)  |  Feature Store (Feast)
+                                            │
+                                            ▼
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+              LAYER 4 — STORAGE (LAKEHOUSE - DELTA LAKE ON MINIO)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       🟤 BRONZE (Raw Parquet) → ⚪ SILVER (Cleaned/Joined) → 🟡 GOLD (Aggregated)
+                                            │
+                                            ▼
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                      LAYER 5 — HIGH-SPEED QUERY ENGINE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        Apache Trino (Distributed SQL Engine chạy trực tiếp trên Lakehouse)
+                                            │
+                                            ▼
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                      LAYER 6 — ORCHESTRATION & GOVERNANCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           Apache Airflow (DAGs)  |  Great Expectations (Data Quality)
+                            MLflow (Model Lifecycle)
+                                            │
+                                            ▼
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                     LAYER 7 — VISUALIZATION & AI SERVING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     Apache Superset (BI Executive)  |  Streamlit Analytics Dashboard (:8501)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+### Điểm Đột Phá Kỹ Thuật (Key Technical Innovations)
+
+1. **Debezium CDC (Zero Data Loss)**
+   - Đọc trực tiếp transaction log (WAL) của PostgreSQL thay vì query polling truyền thống.
+   - Mọi thao tác `INSERT` / `UPDATE` / `DELETE` tự động stream vào Kafka với độ trễ dưới 1 giây mà không cần thêm code ở tầng ứng dụng.
+
+2. **Apache Trino (Sub-second Lakehouse Querying)**
+   - Cho phép viết SQL thuần túy truy vấn trực tiếp trên file Parquet/Delta Lake với hàng trăm triệu dòng chỉ trong 1-2 giây mà không cần load vào database quan hệ.
+
+3. **AI Feature Store & MLflow**
+   - **Feature Store**: Tính toán đặc trưng khách hàng 1 lần và chia sẻ cho tất cả model (Recommendation, Churn Prediction, Demand Forecasting).
+   - **MLflow**: Quản lý version model, tự động phát hiện Data/Model Drift và rollback không zero-downtime.
+
+4. **Great Expectations (Automated Data Quality)**
+   - Kiểm thử tự động tính toàn vẹn dữ liệu tại mỗi bước chuyển tiếp Bronze → Silver → Gold, chặn đứng dữ liệu bẩn trước khi đưa vào huấn luyện AI.
+
+---
+
+**Last Updated**: July 2026  
+**Version**: 2.0 (Modern Data Stack Edition)  
+**Status**: ✅ Production-Ready & Scalable Data Platform
+
