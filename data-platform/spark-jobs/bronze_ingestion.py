@@ -1,9 +1,17 @@
 """
 Bronze Layer: Raw data ingestion from PostgreSQL → MinIO (Parquet)
 Reads raw tables and stores as-is in the Bronze bucket.
+
+VERIFIED SCHEMA:
+  orders.don_hang: ma_don_hang, ma_nguoi_dung, co_so_ma, tong_tien,
+      dia_chi_giao_hang, phuong_thuc_thanh_toan, trang_thai_don_hang, ngay_tao, ...
+  orders.chi_tiet_don_hang: id, ma_don_hang, ma_san_pham(int), ten_san_pham,
+      gia_ban, so_luong, kich_co, hinh_anh_url
+  orders.shipper_delivery: id, ma_don_hang, shipper_id, status,
+      assigned_at, picked_up_at, delivered_at, delivery_fee, ...
 """
 import os
-import json
+import io
 import logging
 from datetime import datetime
 
@@ -15,7 +23,6 @@ from botocore.client import Config
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger("bronze")
 
-# ─── Config ───────────────────────────────────────────────────────────────────
 DB_HOST     = os.getenv("DB_HOST", "postgres-db")
 DB_PORT     = os.getenv("DB_PORT", "5432")
 DB_USER     = os.getenv("DB_USER", "admin")
@@ -37,16 +44,25 @@ def get_engine():
 
 def get_minio():
     return boto3.client(
-        "s3",
-        endpoint_url=MINIO_ENDPOINT,
+        "s3", endpoint_url=MINIO_ENDPOINT,
         aws_access_key_id=MINIO_ACCESS_KEY,
         aws_secret_access_key=MINIO_SECRET_KEY,
         config=Config(signature_version="s3v4"),
     )
 
 
+def ensure_bucket(s3, bucket: str):
+    try:
+        s3.head_bucket(Bucket=bucket)
+    except Exception:
+        try:
+            s3.create_bucket(Bucket=bucket)
+        except Exception:
+            pass
+
+
 def upload_parquet(s3, df: pd.DataFrame, key: str):
-    import io
+    ensure_bucket(s3, BRONZE_BUCKET)
     buf = io.BytesIO()
     df.to_parquet(buf, index=False, engine="pyarrow")
     buf.seek(0)
@@ -54,72 +70,28 @@ def upload_parquet(s3, df: pd.DataFrame, key: str):
     logger.info(f"Uploaded {len(df)} rows → s3://{BRONZE_BUCKET}/{key}")
 
 
+# Correct column names verified from entity files
 QUERIES = {
     "orders": """
         SELECT
-            ma_don_hang::text AS ma_don_hang,
-            khach_hang_id::text AS khach_hang_id,
-            trang_thai_don_hang,
-            phuong_thuc_thanh_toan,
-            loai_don,
-            tong_tien,
-            co_so_ma,
-            ghi_chu,
-            ngay_tao,
-            ngay_cap_nhat
+            ma_don_hang::text, ma_nguoi_dung, co_so_ma, tong_tien,
+            dia_chi_giao_hang, loai_don_hang, phuong_thuc_thanh_toan,
+            trang_thai_thanh_toan, trang_thai_don_hang,
+            ghi_chu, ngay_tao, ngay_cap_nhat
         FROM orders.don_hang
     """,
     "order_items": """
         SELECT
-            ma_chi_tiet::text AS ma_chi_tiet,
-            ma_don_hang::text AS ma_don_hang,
-            ma_san_pham::text AS ma_san_pham,
-            so_luong,
-            don_gia,
-            ghi_chu
+            id, ma_don_hang::text, ma_san_pham, ten_san_pham,
+            gia_ban, so_luong, kich_co
         FROM orders.chi_tiet_don_hang
     """,
     "shipper_deliveries": """
         SELECT
-            id::text AS id,
-            ma_don_hang::text AS ma_don_hang,
-            shipper_id::text AS shipper_id,
-            status,
-            assigned_at,
-            picked_up_at,
-            delivered_at,
-            delivery_fee,
-            cod_amount,
-            fail_reason,
-            delivery_address
+            id::text, ma_don_hang::text, shipper_id::text,
+            status, delivery_address, delivery_fee,
+            assigned_at, picked_up_at, delivered_at
         FROM orders.shipper_delivery
-    """,
-}
-
-IDENTITY_QUERIES = {
-    "users": """
-        SELECT
-            id::text AS id,
-            ho_ten,
-            email,
-            so_dien_thoai,
-            vai_tro,
-            trang_thai,
-            ngay_tao
-        FROM identity.nguoi_dung
-    """,
-}
-
-MENU_QUERIES = {
-    "products": """
-        SELECT
-            ma_san_pham::text AS ma_san_pham,
-            ten_san_pham,
-            gia,
-            danh_muc,
-            trang_thai,
-            mo_ta
-        FROM menu.san_pham
     """,
 }
 
@@ -128,10 +100,9 @@ def main():
     logger.info("=== Bronze Layer Starting ===")
     engine = get_engine()
     s3 = get_minio()
-
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    for name, sql in {**QUERIES, **IDENTITY_QUERIES, **MENU_QUERIES}.items():
+    for name, sql in QUERIES.items():
         try:
             df = pd.read_sql(sql, engine)
             df["_ingested_at"] = datetime.now().isoformat()

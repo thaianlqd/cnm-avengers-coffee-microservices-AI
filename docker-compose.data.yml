@@ -169,7 +169,7 @@ services:
       minio:
         condition: service_healthy
     environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
       AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/airflow.db
@@ -189,6 +189,7 @@ services:
       - "8083:8080"
     volumes:
       - ./data-platform/airflow/dags:/opt/airflow/dags
+      - ./data-platform/spark-jobs:/opt/airflow/spark-jobs
       - avengers_airflow_data:/opt/airflow
     networks:
       - avengers-network
