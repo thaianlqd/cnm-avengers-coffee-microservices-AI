@@ -23,6 +23,13 @@ export default function ChatWidget({ user, socketUrl }) {
   const [sending, setSending] = useState(false);
   const [unread, setUnread] = useState(0);
   const [chatMode, setChatMode] = useState('STAFF'); // 'STAFF' | 'AI'
+
+  // Voice + Order state
+  const [isListening, setIsListening] = useState(false);
+  const [pendingOrder, setPendingOrder] = useState(null); // { items, total, message, transcript }
+  const [orderLoading, setOrderLoading] = useState(false);
+  const recognitionRef = useRef(null);
+
   const socketRef = useRef(null);
   const bottomRef = useRef(null);
   const isOpenRef = useRef(false);
@@ -234,6 +241,32 @@ export default function ChatWidget({ user, socketUrl }) {
     setReplyTarget(null);
   };
 
+  const ORDER_KEYWORDS = ['cho tôi', 'đặt', 'order', 'mua', 'lấy', 'muốn', 'cần', 'cho mình'];
+
+  const checkOrderIntent = async (text) => {
+    const looksLikeOrder = ORDER_KEYWORDS.some((kw) => text.toLowerCase().includes(kw));
+    if (!looksLikeOrder) return false;
+    try {
+      const res = await apiClient.post('/ai/chat/order-intent', {
+        text,
+        user_id: aiUserId,
+      });
+      const data = res.data;
+      if (data?.can_order && data?.items?.length > 0) {
+        setPendingOrder({
+          transcript: null,
+          items: data.items,
+          total: data.estimated_total,
+          message: data.message,
+        });
+        return true;
+      }
+    } catch {
+      // ignore — fall through to normal AI chat
+    }
+    return false;
+  };
+
   const sendMessage = async () => {
     const content = inputText.trim();
     if (!content || sending) return;
@@ -253,6 +286,12 @@ export default function ChatWidget({ user, socketUrl }) {
       setMessagesForMode('AI', (prev) => [...prev, customerMessage]);
       scrollToBottom();
       try {
+        // Check order intent first
+        const wasOrder = await checkOrderIntent(content);
+        if (wasOrder) {
+          setSending(false);
+          return;
+        }
         const res = await apiClient.post('/ai/chat', {
           user_id: aiUserId,
           user_name: userName,
@@ -301,6 +340,105 @@ export default function ChatWidget({ user, socketUrl }) {
       } finally {
         setSending(false);
       }
+    }
+  };
+
+  const startVoice = () => {
+    if (!isAiMode) return;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Trình duyệt không hỗ trợ voice. Dùng Chrome nhé!');
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'vi-VN';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => setIsListening(false);
+    recognition.onresult = async (event) => {
+      const transcript = event.results[0][0].transcript;
+      setIsListening(false);
+      // Show transcript in chat
+      const customerMessage = normalizeMessage({
+        id: `user-voice-${Date.now()}`,
+        vai_tro_nguoi_gui: 'CUSTOMER',
+        ten_nguoi_gui: userName,
+        noi_dung: `🎙️ "${transcript}"`,
+        ngay_tao: new Date().toISOString(),
+      });
+      setMessagesForMode('AI', (prev) => [...prev, customerMessage]);
+      scrollToBottom();
+      // Try parse as order intent
+      try {
+        const res = await apiClient.post('/ai/chat/order-intent', {
+          text: transcript,
+          user_id: aiUserId,
+        });
+        if (res.data?.can_order && res.data?.items?.length > 0) {
+          setPendingOrder({
+            transcript,
+            items: res.data.items,
+            total: res.data.estimated_total,
+            message: res.data.message,
+          });
+          return;
+        }
+      } catch { /* fall through */ }
+      // Not an order — send to normal AI chat
+      try {
+        const res = await apiClient.post('/ai/chat', { user_id: aiUserId, user_name: userName, content: transcript });
+        const aiMsg = normalizeMessage({
+          id: `ai-${Date.now()}`,
+          vai_tro_nguoi_gui: 'AI',
+          ten_nguoi_gui: 'AI',
+          noi_dung: res.data.reply || 'Xin lỗi, tôi chưa hiểu.',
+          ngay_tao: new Date().toISOString(),
+        });
+        setMessagesForMode('AI', (prev) => [...prev, aiMsg]);
+        scrollToBottom();
+      } catch { /* ignore */ }
+    };
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  const handleConfirmOrder = async () => {
+    if (!pendingOrder) return;
+    setOrderLoading(true);
+    try {
+      const items = pendingOrder.items
+        .filter((i) => i.matched)
+        .map((i) => ({
+          ma_san_pham: i.product_id,
+          ten_san_pham: i.product_name,
+          so_luong: i.quantity,
+          gia_ban: i.price,
+          ghi_chu: [i.size ? `Size ${i.size}` : '', i.note || ''].filter(Boolean).join(', '),
+        }));
+      await apiClient.post('/orders', {
+        ma_nguoi_dung: aiUserId,
+        phuong_thuc_thanh_toan: 'TIEN_MAT',
+        loai_don_hang: 'DELIVERY',
+        chi_tiet_don_hang: items,
+        ghi_chu: pendingOrder.transcript ? `Voice Order: ${pendingOrder.transcript}` : 'Chat Order',
+      });
+      const total = Number(pendingOrder.total || 0).toLocaleString('vi-VN');
+      const successMsg = normalizeMessage({
+        id: `ai-order-ok-${Date.now()}`,
+        vai_tro_nguoi_gui: 'AI',
+        ten_nguoi_gui: 'AI',
+        noi_dung: `✅ Đặt hàng thành công! Tổng: ${total}đ. Đơn hàng đang được xử lý nhé! ☕`,
+        ngay_tao: new Date().toISOString(),
+      });
+      setMessagesForMode('AI', (prev) => [...prev, successMsg]);
+      setPendingOrder(null);
+      scrollToBottom();
+    } catch {
+      alert('Không thể tạo đơn. Thử lại nhé!');
+    } finally {
+      setOrderLoading(false);
     }
   };
 
@@ -660,13 +798,44 @@ export default function ChatWidget({ user, socketUrl }) {
                       outline: 'none',
                     }}
                   />
+
+                  {/* Voice button — AI mode only, uses Web Speech API */}
+                  {isAiMode && (
+                    <button
+                      onClick={startVoice}
+                      disabled={isListening || sending}
+                      title="Đặt hàng bằng giọng nói (Chrome)"
+                      style={{
+                        all: 'unset',
+                        cursor: isListening ? 'not-allowed' : 'pointer',
+                        width: 36,
+                        height: 36,
+                        borderRadius: '50%',
+                        background: isListening
+                          ? 'linear-gradient(135deg,#ef4444,#dc2626)'
+                          : 'linear-gradient(135deg,#f26b1d,#d4560e)',
+                        color: '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1rem',
+                        flexShrink: 0,
+                        boxShadow: isListening ? '0 0 0 4px rgba(239,68,68,0.3)' : '0 2px 8px rgba(242,107,29,0.4)',
+                        animation: isListening ? 'micPulse 1s ease-in-out infinite' : 'none',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      {isListening ? '⏹' : '🎙️'}
+                    </button>
+                  )}
+
                   <button
                     onClick={sendMessage}
                     disabled={!inputText.trim() || sending}
                     style={{
                       all: 'unset',
                       cursor: !inputText.trim() || sending ? 'not-allowed' : 'pointer',
-                       background: isAiMode ? '#5b4bff' : '#0084ff',
+                      background: isAiMode ? '#5b4bff' : '#0084ff',
                       color: '#fff',
                       borderRadius: '999px',
                       padding: '10px 14px',
@@ -680,6 +849,61 @@ export default function ChatWidget({ user, socketUrl }) {
                   >
                     Gửi
                   </button>
+
+                  {/* Order Confirmation Card */}
+                  {pendingOrder && (
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '100%',
+                      left: 0,
+                      right: 0,
+                      margin: '0 8px 8px',
+                      background: '#fff',
+                      borderRadius: 16,
+                      border: '1.5px solid #f26b1d30',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                      overflow: 'hidden',
+                      zIndex: 10,
+                    }}>
+                      <div style={{ background: 'linear-gradient(90deg,#f26b1d,#d4560e)', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span>🎙️</span>
+                        <span style={{ color: '#fff', fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Đặt hàng bằng giọng nói</span>
+                      </div>
+                      {pendingOrder.transcript && (
+                        <div style={{ padding: '6px 14px', background: '#fdf6f0', fontSize: '0.75rem', color: '#888', fontStyle: 'italic' }}>
+                          🗣 "{pendingOrder.transcript}"
+                        </div>
+                      )}
+                      {pendingOrder.message && (
+                        <div style={{ padding: '6px 14px 2px', fontSize: '0.82rem', fontWeight: 700, color: '#333' }}>{pendingOrder.message}</div>
+                      )}
+                      <div style={{ padding: '6px 14px 8px' }}>
+                        {pendingOrder.items.filter(i => i.matched).map((item, idx) => (
+                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0', borderBottom: '1px solid #f5ede6' }}>
+                            <div>
+                              <span style={{ fontWeight: 800, fontSize: '0.82rem' }}>x{item.quantity} {item.product_name}</span>
+                              {item.note && <span style={{ fontSize: '0.72rem', color: '#888', marginLeft: 4 }}>({item.note})</span>}
+                            </div>
+                            <span style={{ fontWeight: 900, color: '#f26b1d', fontSize: '0.82rem' }}>{Number(item.subtotal||0).toLocaleString('vi-VN')}đ</span>
+                          </div>
+                        ))}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, paddingTop: 6, borderTop: '2px solid #f5ede6' }}>
+                          <span style={{ fontWeight: 900, fontSize: '0.85rem' }}>Tổng cộng</span>
+                          <span style={{ fontWeight: 900, color: '#f26b1d', fontSize: '0.9rem' }}>{Number(pendingOrder.total||0).toLocaleString('vi-VN')}đ</span>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, padding: '0 14px 12px', justifyContent: 'flex-end' }}>
+                        <button onClick={() => setPendingOrder(null)} style={{ all: 'unset', cursor: 'pointer', padding: '6px 14px', borderRadius: 999, background: '#f0f2f5', color: '#555', fontWeight: 700, fontSize: '0.78rem' }}>Bỏ qua</button>
+                        <button
+                          onClick={handleConfirmOrder}
+                          disabled={orderLoading}
+                          style={{ all: 'unset', cursor: orderLoading ? 'not-allowed' : 'pointer', padding: '6px 16px', borderRadius: 999, background: 'linear-gradient(90deg,#f26b1d,#d4560e)', color: '#fff', fontWeight: 900, fontSize: '0.78rem', opacity: orderLoading ? 0.7 : 1 }}
+                        >
+                          {orderLoading ? 'Đang đặt...' : '🛒 Đặt ngay'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </>
@@ -808,14 +1032,12 @@ export default function ChatWidget({ user, socketUrl }) {
           to { transform: rotate(360deg); }
         }
         @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes micPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+          50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
         }
       `}</style>
     </div>

@@ -8,7 +8,11 @@ import {
   UserCircleIcon,
   ClipboardDocumentListIcon,
   BellAlertIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  MapPinIcon,
+  PhoneIcon,
+  Bars3Icon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 
 function fmtNotificationTime(value) {
@@ -58,6 +62,7 @@ export default function Header({
   const [showDropdown, setShowDropdown] = useState(false);
   const [showSearchPopover, setShowSearchPopover] = useState(false);
   const [showNotificationPopover, setShowNotificationPopover] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const handleOpenProfile = () => {
     setShowDropdown(false);
@@ -72,78 +77,158 @@ export default function Header({
   const isLoggedIn = userName !== 'Đăng nhập';
   const isOrderTab = activeTab === 'order';
 
+  const leftNavItems = [
+    { id: 'order', label: 'THỰC ĐƠN' },
+    { id: 'about', label: 'VỀ HIGHLANDS' },
+    { id: 'news', label: 'NGHỀ NGHIỆP' },
+    { id: 'contact', label: 'HỖ TRỢ' },
+  ];
+
   return (
-    <header className="sticky top-0 z-50 border-b border-[#ece6de] bg-white backdrop-blur-sm">
-      <div className="mx-auto flex h-[92px] w-full max-w-[1380px] items-center gap-2 px-4 md:px-6">
+    <header className="sticky top-0 z-50 bg-[#b22830] shadow-lg">
+      {/* Top bar */}
+      <div className="mx-auto flex h-[84px] w-full max-w-[1380px] items-center justify-between px-4 md:px-6 relative">
         
-        {/* Block trái: Logo */}
-        <div className="brand-serif inline-flex w-auto shrink-0 cursor-pointer items-center gap-1 pr-4 text-[24px] font-black tracking-tight text-[#17120d] md:text-[26px] xl:text-[28px]" style={{ whiteSpace: 'nowrap' }}>
-          <span>THE</span>
-          <span className="text-tch-orange">AVENGERS</span>
-          <span>HOUSE</span>
+        {/* Left nav */}
+        <nav className="hidden flex-1 items-center justify-start gap-8 lg:flex">
+          {leftNavItems.map((item) => (
+            <div key={item.id} className="group relative flex h-full items-center">
+              <button
+                type="button"
+                onClick={() => {
+                  onTabChange?.(item.id);
+                  if (item.id === 'order') {
+                    onSelectedCatIdChange?.('all');
+                  }
+                }}
+                className={`relative py-7 text-[14px] font-black uppercase tracking-widest transition-all ${
+                  activeTab === item.id 
+                    ? 'text-white' 
+                    : 'text-white hover:text-white/80'
+                }`}
+              >
+                {item.label}
+              </button>
+
+              {item.id === 'order' && categories.length > 0 && (
+                <div className="fixed left-0 top-[84px] w-full bg-[#53382c] shadow-2xl invisible opacity-0 -translate-y-2 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 z-[60] border-t-2 border-[#b22830]">
+                  <div className="mx-auto max-w-[1380px] px-10 py-8 flex flex-row justify-between items-start">
+                    {/* Grouping Logic inline for UI */}
+                    {(() => {
+                      const coffeeCats = categories.filter(c => 
+                        c.ten_danh_muc.toLowerCase().includes('cà phê') || 
+                        c.ten_danh_muc.toLowerCase().includes('phindi') || 
+                        c.ten_danh_muc.toLowerCase().includes('espresso')
+                      );
+                      const teaCats = categories.filter(c => 
+                        c.ten_danh_muc.toLowerCase().includes('trà') && 
+                        !c.ten_danh_muc.toLowerCase().includes('cà phê')
+                      );
+                      const freezeCats = categories.filter(c => 
+                        c.ten_danh_muc.toLowerCase().includes('freeze')
+                      );
+                      const usedIds = new Set([
+                        ...coffeeCats.map(c => c.ma_danh_muc),
+                        ...teaCats.map(c => c.ma_danh_muc),
+                        ...freezeCats.map(c => c.ma_danh_muc)
+                      ]);
+                      const otherCats = categories.filter(c => !usedIds.has(c.ma_danh_muc));
+
+                      const cols = [
+                        { title: 'CÀ PHÊ', items: coffeeCats },
+                        { title: 'TRÀ', items: teaCats },
+                        { title: 'FREEZE', items: freezeCats },
+                        { title: 'KHÁC', items: otherCats }
+                      ];
+
+                      return cols.map((col, idx) => (
+                        <div key={idx} className="flex flex-col min-w-[200px]">
+                          <h4 className="text-[#c99551] font-bold text-[14px] uppercase mb-4 tracking-wide">
+                            {col.title}
+                          </h4>
+                          <ul className="flex flex-col gap-3">
+                            {col.items.map(cat => (
+                              <li key={cat.ma_danh_muc}>
+                                <button
+                                  type="button"
+                                  className="text-white text-[14px] hover:text-[#c99551] transition-colors text-left"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onTabChange?.('order');
+                                    onSelectedCatIdChange?.(cat.ma_danh_muc);
+                                    // Bỏ focus/hover để đóng dropdown nếu cần
+                                    document.activeElement?.blur();
+                                  }}
+                                >
+                                  {cat.ten_danh_muc}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </nav>
+
+        {/* Center logo */}
+        <div 
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex shrink-0 cursor-pointer items-center justify-center z-10"
+          onClick={() => onTabChange?.('home')}
+        >
+          <img src="/hc-assets/red_BG_logo800.png" alt="Logo" className="h-[60px] w-auto" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
         </div>
 
-        {/* Block giữa: Menu điều hướng */}
-        <nav className="hidden flex-1 items-center justify-center gap-6 lg:flex xl:gap-8">
-          <button
-            type="button"
-            onClick={() => onTabChange?.('home')}
-            className={`relative whitespace-nowrap text-[17px] font-black tracking-[0.02em] transition-colors hover:text-tch-orange ${activeTab === 'home' ? 'text-tch-orange after:absolute after:-bottom-[35px] after:left-0 after:h-[3px] after:w-full after:bg-tch-orange' : 'text-[#1c1713]'}`}
-          >
-            Trang chủ
-          </button>
+        {/* Right nav & tools */}
+        <div className="hidden flex-1 items-center justify-end gap-6 lg:flex">
+          
+          {/* Đặt hàng CTA */}
           <button
             type="button"
             onClick={() => onTabChange?.('order')}
-            className={`relative whitespace-nowrap text-[17px] font-black tracking-[0.02em] transition-colors hover:text-tch-orange ${activeTab === 'order' ? 'text-tch-orange after:absolute after:-bottom-[35px] after:left-0 after:h-[3px] after:w-full after:bg-tch-orange' : 'text-[#1c1713]'}`}
+            className={`rounded-full px-5 py-2 text-[13px] font-black tracking-widest transition-all uppercase ${
+              activeTab === 'order'
+                ? 'bg-transparent text-white'
+                : 'text-white hover:text-white/80'
+            }`}
           >
-            Đặt hàng
+            ĐẶT HÀNG
           </button>
-          <button
-            type="button"
-            onClick={() => onTabChange?.('news')}
-            className={`relative whitespace-nowrap text-[17px] font-black tracking-[0.02em] transition-colors hover:text-tch-orange ${activeTab === 'news' ? 'text-tch-orange after:absolute after:-bottom-[35px] after:left-0 after:h-[3px] after:w-full after:bg-tch-orange' : 'text-[#1c1713]'}`}
-          >
-            Tin tức
-          </button>
-          <button
-            type="button"
-            onClick={() => onTabChange?.('stores')}
-            className={`relative whitespace-nowrap text-[17px] font-black tracking-[0.02em] transition-colors hover:text-tch-orange ${activeTab === 'stores' ? 'text-tch-orange after:absolute after:-bottom-[35px] after:left-0 after:h-[3px] after:w-full after:bg-tch-orange' : 'text-[#1c1713]'}`}
-          >
-            Cửa hàng
-          </button>
-          <button
-            type="button"
-            onClick={() => onTabChange?.('contact')}
-            className={`relative whitespace-nowrap text-[17px] font-black tracking-[0.02em] transition-colors hover:text-tch-orange ${activeTab === 'contact' ? 'text-tch-orange after:absolute after:-bottom-[35px] after:left-0 after:h-[3px] after:w-full after:bg-tch-orange' : 'text-[#1c1713]'}`}
-          >
-            Liên hệ
-          </button>
-          <button
-            type="button"
-            onClick={() => onTabChange?.('vouchers')}
-            className={`relative whitespace-nowrap text-[17px] font-black tracking-[0.02em] transition-colors hover:text-tch-orange ${activeTab === 'vouchers' ? 'text-tch-orange after:absolute after:-bottom-[35px] after:left-0 after:h-[3px] after:w-full after:bg-tch-orange' : 'text-[#1c1713]'}`}
-          >
-            Khuyến mãi
-          </button>
-          <button
-            type="button"
-            onClick={() => onTabChange?.('privacy')}
-            className={`relative whitespace-nowrap text-[17px] font-black tracking-[0.02em] transition-colors hover:text-tch-orange ${activeTab === 'privacy' ? 'text-tch-orange after:absolute after:-bottom-[35px] after:left-0 after:h-[3px] after:w-full after:bg-tch-orange' : 'text-[#1c1713]'}`}
-          >
-            Chuyện nhà
-          </button>
-        </nav>
 
-        {/* Block phải: Các chức năng */}
-        <div className="ml-3 flex min-w-0 shrink-0 items-center justify-end gap-2 xl:ml-5 xl:gap-3">
-          {isOrderTab && (
+          <div className="flex items-center gap-3">
+            {/* Tìm kiếm cửa hàng */}
+            <button
+              type="button"
+              onClick={() => onTabChange?.('stores')}
+              className="flex items-center gap-1.5 text-[13px] font-medium text-white hover:text-white/80 transition-colors"
+            >
+              <MapPinIcon className="h-4 w-4" />
+              Tìm kiếm cửa hàng
+            </button>
+
+            <div className="mx-2 h-4 w-px bg-white/30"></div>
+
+            {/* Language Flags */}
+            <div className="flex items-center gap-2 mr-2">
+              <button type="button" className="transition-transform hover:scale-110">
+                <img src="https://flagcdn.com/w40/vn.png" alt="VN" className="h-[18px] rounded-[2px] shadow-sm w-auto" />
+              </button>
+              <button type="button" className="transition-transform hover:scale-110 opacity-60 hover:opacity-100">
+                <img src="https://flagcdn.com/w40/gb.png" alt="EN" className="h-[18px] rounded-[2px] shadow-sm w-auto" />
+              </button>
+            </div>
+
+            {/* Search */}
+            {isOrderTab && (
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setShowSearchPopover((prev) => !prev)}
-                className="rounded-full border border-transparent p-1.5 text-[#6d6257] transition-colors hover:border-[#dacbb9] hover:bg-white hover:text-[#3f3328]"
+                className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
               >
                 <MagnifyingGlassIcon className="h-5 w-5" />
               </button>
@@ -151,19 +236,19 @@ export default function Header({
               {showSearchPopover && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowSearchPopover(false)}></div>
-                  <div className="absolute right-0 top-full z-50 mt-3 w-[92vw] max-w-[940px] rounded-[22px] border border-orange-100 bg-white p-4 shadow-2xl shadow-orange-100/70">
+                  <div className="absolute right-0 top-full z-50 mt-3 w-[92vw] max-w-[940px] rounded-2xl border border-gray-100 bg-white p-4 shadow-2xl">
                     <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
                       <input
                         value={searchKeyword}
                         onChange={(e) => onSearchKeywordChange?.(e.target.value)}
-                        className="rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                        className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
                         placeholder="Tìm theo tên, mô tả, danh mục..."
                       />
 
                       <select
                         value={selectedCatId}
                         onChange={(e) => onSelectedCatIdChange?.(e.target.value)}
-                        className="rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                        className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
                       >
                         <option value="all">Tất cả loại</option>
                         {categories.map((cat) => (
@@ -176,7 +261,7 @@ export default function Header({
                       <select
                         value={availabilityFilter}
                         onChange={(e) => onAvailabilityFilterChange?.(e.target.value)}
-                        className="rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                        className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
                       >
                         <option value="ALL">Tất cả tình trạng</option>
                         <option value="AVAILABLE">Đang bán</option>
@@ -186,7 +271,7 @@ export default function Header({
                       <select
                         value={priceFilter}
                         onChange={(e) => onPriceFilterChange?.(e.target.value)}
-                        className="rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                        className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
                       >
                         <option value="ALL">Tất cả khoảng giá</option>
                         <option value="DUOI_30000">Dưới 30.000đ</option>
@@ -197,7 +282,7 @@ export default function Header({
                       <select
                         value={criteriaFilter}
                         onChange={(e) => onCriteriaFilterChange?.(e.target.value)}
-                        className="rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                        className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
                       >
                         <option value="ALL">Tất cả tiêu chí</option>
                         <option value="PROMO">Khuyến mãi / Giảm giá</option>
@@ -208,7 +293,7 @@ export default function Header({
                       <select
                         value={sortBy}
                         onChange={(e) => onSortByChange?.(e.target.value)}
-                        className="rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                        className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
                       >
                         <option value="DEFAULT">Sắp xếp mặc định</option>
                         <option value="NAME_ASC">Tên A-Z</option>
@@ -219,13 +304,13 @@ export default function Header({
                     </div>
 
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                      <p className="text-xs font-black uppercase tracking-wider text-gray-500">
+                      <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
                         Tìm thấy {filteredCount} sản phẩm
                       </p>
                       <button
                         type="button"
                         onClick={onResetSearchFilters}
-                        className="rounded-xl border border-gray-200 px-3 py-2 text-xs font-black uppercase tracking-wide text-gray-500 hover:border-tch-orange hover:text-tch-orange"
+                        className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-bold uppercase tracking-wide text-gray-500 hover:border-[#1a8b46] hover:text-[#1a8b46]"
                       >
                         Xóa bộ lọc
                       </button>
@@ -235,177 +320,49 @@ export default function Header({
               )}
             </div>
           )}
-
-          {isLoggedIn && (
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowNotificationPopover((prev) => !prev)}
-                className="relative rounded-full border border-[#decfbe] bg-[#fffaf3] p-1.5 text-tch-orange transition-all hover:bg-[#f9efdf] active:scale-95"
-                title="Thông báo"
-              >
-                <BellAlertIcon className="h-4 w-4" />
-                {unreadNotificationCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[9px] font-black text-white">
-                    {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
-                  </span>
-                )}
-              </button>
-
-              {showNotificationPopover && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowNotificationPopover(false)}></div>
-                  <div className="absolute right-0 top-full z-50 mt-3 w-[92vw] max-w-[420px] overflow-hidden rounded-[24px] border border-gray-100 bg-white shadow-2xl">
-                    <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-                      <div>
-                        <p className="text-[11px] font-black uppercase tracking-widest text-gray-400">Thông báo</p>
-                        <p className="text-sm font-bold text-gray-700">{unreadNotificationCount} chưa đọc</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => onReadAllNotifications?.()}
-                        className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-[11px] font-black uppercase tracking-wide text-gray-500 hover:border-tch-orange hover:text-tch-orange"
-                      >
-                        Đọc tất cả
-                      </button>
-                    </div>
-
-                    <div className="max-h-[420px] overflow-y-auto bg-[#fffdfa]">
-                      {notifications.length === 0 ? (
-                        <div className="p-6 text-center text-sm font-semibold text-gray-400">Chưa có thông báo nào.</div>
-                      ) : (
-                        notifications.map((item) => (
-                          <button
-                            key={item.id}
-                            type="button"
-                            onClick={() => onReadNotification?.(item.id)}
-                            className={`w-full border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-orange-50 ${
-                              item.da_doc ? 'bg-white' : 'bg-orange-50/50'
-                            }`}
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <p className="text-sm font-black text-gray-800">{item.tieu_de}</p>
-                                <p className="mt-1 text-xs font-semibold text-gray-500">{item.noi_dung}</p>
-                                <p className="mt-2 text-[11px] font-bold uppercase tracking-wide text-gray-400">{fmtNotificationTime(item.ngay_tao)}</p>
-                              </div>
-                              {item.da_doc ? null : <CheckCircleIcon className="h-5 w-5 shrink-0 text-tch-orange" />}
-                            </div>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Cụm Tài khoản & Dropdown Đăng xuất */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => isLoggedIn ? setShowDropdown(!showDropdown) : onOpenAccount()}
-              className="flex items-center space-x-2 rounded-full border border-[#decfbe] bg-[#fffaf3] px-3 py-1.5 transition-all hover:bg-[#f9efdf] active:scale-95"
-            >
-               <UserIcon className="h-4 w-4 text-tch-orange" />
-               <span className="text-[12px] font-bold text-gray-700 truncate max-w-[80px]">
-                 {userName}
-               </span>
-            </button>
-
-            {/* Dropdown Menu (Chỉ hiện khi đã đăng nhập và nhấn vào tên) */}
-            {isLoggedIn && showDropdown && (
-              <>
-                {/* Lớp phủ để đóng menu khi nhấn ra ngoài */}
-                <div className="fixed inset-0 z-[-1]" onClick={() => setShowDropdown(false)}></div>
-                
-                <div className="absolute right-0 mt-3 w-56 bg-white rounded-[24px] shadow-2xl border border-gray-100 overflow-hidden py-3 animate-in fade-in zoom-in duration-200">
-                  <div className="px-5 py-3 border-b border-gray-50 mb-2">
-                    <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Tài khoản của bạn</p>
-                    <p className="text-sm font-bold text-gray-800 truncate">{userName}</p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleOpenProfile}
-                    className="w-full flex items-center gap-3 px-5 py-3 text-[13px] font-bold text-gray-600 hover:bg-orange-50 hover:text-tch-orange transition-colors"
-                  >
-                    <UserCircleIcon className="h-5 w-5" />
-                    Trang cá nhân
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onOpenOrderHistory?.();
-                      setShowDropdown(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-5 py-3 text-[13px] font-bold text-gray-600 hover:bg-orange-50 hover:text-tch-orange transition-colors"
-                  >
-                    <ClipboardDocumentListIcon className="h-5 w-5" />
-                    Lịch sử đơn hàng
-                  </button>
-
-                  <div className="border-t border-gray-100 my-2 mx-5"></div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onLogout();
-                      setShowDropdown(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-5 py-3 text-[13px] font-black uppercase text-red-500 hover:bg-red-50 transition-colors"
-                  >
-                    <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                    Đăng xuất
-                  </button>
-                </div>
-              </>
-            )}
           </div>
 
-          {/* Hồ sơ (nếu đã đăng nhập) */}
-          {isLoggedIn && (
-            <button
-              type="button"
-              onClick={() => onOpenProfile?.()}
-              className="rounded-full border border-orange-100 bg-orange-50 p-1.5 text-tch-orange transition-all hover:bg-orange-100 active:scale-95"
-              title="Trang cá nhân"
-            >
-              <UserCircleIcon className="h-4 w-4" />
-            </button>
-          )}
+          {/* Temporarily hidden: Notifications, User Account, Favorites, Cart */}
+        </div>
 
+        {/* Mobile hamburger */}
+        <div className="flex flex-1 items-center justify-end gap-2 lg:hidden">
+          {/* Temporarily hidden: Mobile Cart */}
           <button
             type="button"
-            onClick={onOpenFavorites}
-            className="relative rounded-full border border-rose-100 bg-rose-50 p-1.5 text-rose-500 transition-all hover:bg-rose-100 active:scale-95"
-            title="San pham yeu thich"
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="rounded-full p-2 text-white"
           >
-            <HeartIcon className="h-4 w-4" />
-            {favoriteCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-rose-500 px-1 text-[9px] font-black text-white">
-                {favoriteCount > 9 ? '9+' : favoriteCount}
-              </span>
-            )}
-          </button>
-
-          {/* Giỏ hàng */}
-          <button
-            type="button"
-            onClick={onOpenCart}
-            className="relative rounded-full bg-tch-orange p-1.5 text-white shadow-lg shadow-orange-200 transition-transform hover:scale-105 active:scale-95"
-          >
-            <ShoppingCartIcon className="h-4 w-4 text-white" />
-            {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-white text-tch-orange text-[9px] font-black rounded-full h-4 w-4 flex items-center justify-center border-2 border-tch-orange">
-                {cartCount}
-              </span>
-            )}
+            {showMobileMenu ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
           </button>
         </div>
       </div>
+
+      {/* Mobile menu */}
+      {showMobileMenu && (
+        <div className="border-t border-white/10 bg-[#a80f28] lg:hidden">
+          <div className="mx-auto max-w-[1380px] px-4 py-4">
+            <div className="grid gap-1">
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    onTabChange?.(item.id);
+                    setShowMobileMenu(false);
+                  }}
+                  className={`rounded-lg px-4 py-3 text-left text-[13px] font-extrabold tracking-[0.1em] transition-colors ${
+                    activeTab === item.id ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+              {/* Temporarily hidden: Mobile Login & Favorites */}
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

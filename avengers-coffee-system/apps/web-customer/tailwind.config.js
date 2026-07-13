@@ -7,9 +7,14 @@ export default {
   theme: {
     extend: {
       colors: {
-        'tch-orange': '#ea8025',
+        'tch-orange': '#1a8b46',
+        'hc-green': '#1a8b46',
+        'hc-red': '#c41230',
+        'hc-brown': '#d4a574',
+        'hc-cream': '#fdf8f0',
+        'hc-dark': '#1a1a1a',
         'tch-gray': '#f5f5f5',
-        'tch-cream': '#fff7e6',
+        'tch-cream': '#fdf8f0',
       },
     },
   },
