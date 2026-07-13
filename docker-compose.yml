@@ -249,6 +249,7 @@ services:
       DB_NAME: ${DB_NAME:-avengers_coffee}
       AI_PORT: ${AI_PORT:-8000}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
     expose:
       - "${AI_PORT:-8000}"
     ports:

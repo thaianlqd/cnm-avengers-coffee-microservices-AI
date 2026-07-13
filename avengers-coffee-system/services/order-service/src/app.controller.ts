@@ -91,6 +91,17 @@ export class AppController {
     return this.appService.placeOrder(customerId, payload);
   }
 
+  @Post('orders')
+  placeAiOrderDirect(@Body() payload: any) {
+    return this.thanhToanService.taoDonHangTrucTiep(payload);
+  }
+
+  @Post('customers/:customerId/orders/ai-create')
+  placeAiOrderCustomer(@Param('customerId') customerId: string, @Body() payload: any) {
+    return this.thanhToanService.taoDonHangTrucTiep({ ...payload, ma_nguoi_dung: customerId });
+  }
+
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CUSTOMER', 'ADMIN')
   @Get('customers/:customerId/favorites')

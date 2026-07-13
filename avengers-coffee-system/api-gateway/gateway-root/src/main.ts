@@ -31,6 +31,7 @@ async function bootstrap() {
       changeOrigin: true,
       pathFilter: [
         '/cart',
+        '/orders',
         '/chat',
         '/customers',
         '/staff',

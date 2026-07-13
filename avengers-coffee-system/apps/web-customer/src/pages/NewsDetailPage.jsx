@@ -71,38 +71,43 @@ export default function NewsDetailPage({ selectedArticleId, onBack }) {
   }
 
   return (
-    <article className="min-h-screen overflow-hidden bg-white">
-      <div className="border-b border-[#ece3cc] bg-gradient-to-b from-[#f3e8bb] to-[#fbf7ea]">
-        <div className="mx-auto max-w-[960px] px-4 py-6 md:px-6 md:py-8">
-          <button
-            type="button"
-            onClick={onBack}
-            className="inline-flex items-center gap-2 rounded-full border border-[#e9b58f] px-5 py-2 text-sm font-black uppercase tracking-[0.16em] text-[#cc6a2d]"
-          >
-            <ChevronLeftIcon className="h-5 w-5" />
-            Quay lại danh sách tin
-          </button>
+    <article className="min-h-screen bg-white mt-[84px]">
+      <div className="w-full">
+        <div className="max-w-[1000px] mx-auto px-4 py-8 md:px-6 md:py-10">
+          <div className="mb-8">
+            <button
+              type="button"
+              onClick={onBack}
+              className="inline-flex items-center gap-2 text-[#5c3a21] hover:text-[#b22830] text-[13px] font-bold uppercase transition-colors"
+            >
+              <ChevronLeftIcon className="h-4 w-4" />
+              Quay lại danh sách tin tức
+            </button>
+          </div>
 
-          <div className="mt-8 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 text-[12px] font-black uppercase tracking-[0.2em]">
-              <span className="rounded-full bg-[#e67a3a] px-4 py-2 text-white shadow-md">{article.category}</span>
-              <span className="text-[#9d968f]">{article.date}</span>
-            </div>
-            <h1 className="text-4xl font-black uppercase leading-tight text-[#161616] md:text-6xl" style={{ fontFamily: 'Georgia, serif' }}>
+          <div className="mb-10 text-center">
+            <h1 className="text-[32px] md:text-[40px] font-bold uppercase text-[#333333] mb-4" style={{ fontFamily: 'Georgia, serif' }}>
               {article.title}
             </h1>
+            <div className="flex items-center justify-center gap-3 text-[#777777] text-[13px] font-medium">
+              <span className="text-[#b22830]">
+                <i className="fa fa-calendar-o"></i> 📅
+              </span>
+              {article.date}
+            </div>
+          </div>
+          
+          <div className="w-full mb-10">
+             <img src={article.image} alt={article.title} className="w-full h-auto rounded-sm" />
+          </div>
+
+          <div className="max-w-[800px] mx-auto">
             {article.excerpt ? (
-              <p className="max-w-[600px] text-lg font-semibold leading-relaxed text-[#3d362f] md:text-xl">
+              <p className="text-[16px] font-bold leading-relaxed text-[#333333] mb-8">
                 {article.excerpt}
               </p>
             ) : null}
           </div>
-        </div>
-      </div>
-
-      <div className="relative overflow-hidden bg-[#f7f0df]">
-        <div className="mx-auto max-w-[960px] px-0 md:px-6 md:py-4">
-          <img src={article.image} alt={article.title} className="h-[300px] w-full object-cover md:h-[500px] md:rounded-3xl" />
         </div>
       </div>
 

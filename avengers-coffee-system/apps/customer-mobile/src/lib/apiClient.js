@@ -60,3 +60,20 @@ export function getAuthToken() {
 }
 
 export default apiClient
+
+// ─── FormData upload helper (for voice audio) ─────────────────────────────────
+// Usage: await apiClient.postForm('/ai/voice-order', formData)
+apiClient.postForm = async function postForm(url, formData) {
+  const token = authToken || (await AsyncStorage.getItem(TOKEN_KEY).catch(() => null))
+  const headers = {
+    'Content-Type': 'multipart/form-data',
+    'ngrok-skip-browser-warning': 'true',
+  }
+  if (token) headers.Authorization = `Bearer ${token}`
+
+  const response = await axios.post(`${API_BASE_URL}${url}`, formData, {
+    headers,
+    timeout: 60000,
+  })
+  return response.data
+}

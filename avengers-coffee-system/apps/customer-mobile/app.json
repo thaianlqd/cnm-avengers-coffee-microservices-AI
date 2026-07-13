@@ -8,7 +8,15 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "android": {
-      "package": "com.avengers.coffee.customer"
+      "package": "com.avengers.coffee.customer",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "ios": {
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Ứng dụng cần quyền microphone để đặt hàng bằng giọng nói"
+      }
     },
     "splash": {
       "backgroundColor": "#f26b1d"
@@ -22,6 +30,12 @@
         {
           "cameraPermission": "Ứng dụng cần quyền camera để quét mã QR thanh toán",
           "microphonePermission": false
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Ứng dụng cần quyền microphone để đặt hàng bằng giọng nói"
         }
       ]
     ]

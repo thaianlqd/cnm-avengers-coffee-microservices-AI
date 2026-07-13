@@ -2,14 +2,14 @@
   max-width: 1180px;
   margin: 0 auto;
   padding: 24px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Nunito', system-ui, sans-serif;
 }
 
 .hero {
-  background: linear-gradient(120deg, #f26b1d, #ffb25a);
+  background: linear-gradient(135deg, #1a8b46, #22a855);
   border-radius: 16px;
   padding: 20px;
-  color: #1f1f1f;
+  color: #fff;
   margin-bottom: 16px;
 }
 
@@ -67,7 +67,7 @@
 }
 
 .tab-row button.active {
-  background: #f26b1d;
+  background: #1a8b46;
   color: #fff;
 }
 
@@ -160,8 +160,8 @@ button:disabled {
 .chips span {
   padding: 6px 10px;
   border-radius: 999px;
-  background: #fff4e8;
-  color: #c65a12;
+  background: #e8f5ee;
+  color: #1a8b46;
   font-size: 12px;
 }
 
@@ -284,25 +284,29 @@ button:disabled {
   top: 50%;
   z-index: 10;
   transform: translateY(-50%);
-  width: 38px;
-  height: 38px;
-  border: 1px solid #e5d6c0;
+  width: 42px;
+  height: 42px;
+  border: 2px solid #1a8b46;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.95);
-  color: #1f1f1f;
+  background: rgba(255, 255, 255, 0.96);
+  color: #1a8b46;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(26, 139, 70, 0.15);
+  transition: all 0.25s ease;
 }
 
 .tch-hscroll-arrow:hover {
-  background: #fff;
+  background: #1a8b46;
+  color: #fff;
 }
 
 .tch-hscroll-arrow:disabled {
-  opacity: 0.45;
+  opacity: 0.35;
   cursor: not-allowed;
+  border-color: #ccc;
+  color: #ccc;
 }
 
 .tch-marquee-track {
@@ -331,16 +335,17 @@ button:disabled {
 .tch-carousel-card {
   width: 100%;
   min-width: 0;
-  border: 1px solid #ebdfcf;
-  border-radius: 26px;
-  padding: 16px;
+  border: 1px solid #e8e8e8;
+  border-radius: 16px;
+  padding: 14px;
   background: #fff;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
-  transition: transform 0.25s ease;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .tch-carousel-card:hover {
   transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(26, 139, 70, 0.12);
 }
 
 .tch-carousel-mini-card {
@@ -349,15 +354,16 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 12px;
-  border: 1px solid #f1d0b2;
-  border-radius: 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
   padding: 10px;
   background: #fff;
-  transition: transform 0.25s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .tch-carousel-mini-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(26, 139, 70, 0.1);
 }
 
 @keyframes tch-marquee-left {
@@ -369,14 +375,88 @@ button:disabled {
   }
 }
 
+/* HC Banner Slider */
+.hc-banner-slider {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.hc-banner-slide {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.8s ease;
+}
+
+.hc-banner-dots {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 5;
+}
+
+.hc-banner-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.hc-banner-dot.active {
+  background: #fff;
+}
+
+/* HC Sidebar category */
+.hc-sidebar-cat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+
+.hc-sidebar-cat:hover {
+  background: #f0faf4;
+  color: #1a8b46;
+}
+
+.hc-sidebar-cat.active {
+  background: #e8f5ee;
+  color: #1a8b46;
+  font-weight: 800;
+  border-left: 3px solid #1a8b46;
+}
+
+.hc-sidebar-cat .cat-icon {
+  font-size: 18px;
+  width: 24px;
+  text-align: center;
+}
+
 @media (max-width: 768px) {
   .tch-hscroll-track {
     --carousel-gap: 12px;
   }
 
   .tch-hscroll-arrow {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
   }
 
   .tch-carousel-card {

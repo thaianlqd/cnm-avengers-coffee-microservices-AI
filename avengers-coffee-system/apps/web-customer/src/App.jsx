@@ -1,17 +1,28 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import OrderFooter from './components/OrderFooter';
 import ProductCard from './components/ProductCard';
-import AuthModal from './components/AuthModal';
+import LoginPage from './pages/Login';
 import ProductDetailModal from './components/ProductDetailModal';
 import CartDrawer from './components/CartDrawer'; // File mới bước 2
 import FavoriteDrawer from './components/FavoriteDrawer';
 import OrderHistoryModal from './components/OrderHistoryModal';
 import ChatWidget from './components/ChatWidget';
+import Home from './pages/Home';
+import About from './pages/About';
+import Support from './pages/Support';
+import StoresPage from './pages/Stores';
+import NewsPage from './pages/News';
 import NewsDetailPage from './pages/NewsDetailPage';
+import OrderPage from './pages/Order';
+import ProductDetailPage from './pages/ProductDetail';
+import ProfilePage from './pages/Profile';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import ChinhSachDatHangPage from './pages/ChinhSachDatHang';
+import LienHePage from './pages/LienHe';
 import { CartProvider, useCart } from './context/CartContext'; // File mới bước 2
 import { apiClient } from './lib/apiClient';
 import { queryKeys } from './lib/queryKeys';
@@ -19,7 +30,31 @@ import { normalizeNewsArticle } from './lib/news';
 import { buildAddressOptionsFromBranches, getAddressSelectionDefaults, normalizeAddressSelection } from './lib/addressOptions';
 import { UserCircleIcon, KeyIcon, MapPinIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
-const FALLBACK_BANNER_URL = 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1600&q=80';
+const FALLBACK_BANNER_URL = '/hc-assets/HCO_7825_AME__SUMMERDI_DC_BANNER_1920x926.jpg';
+
+// Exact same banners from Highlands Coffee HTML file
+const HC_BANNER_SLIDES = [
+  '/hc-assets/HCO_7825_SUMMERDI_GAME___DC_BANNER_1920x926.jpg',
+  '/hc-assets/HCO_7824_1000_STORE_DC_MWB.jpg',
+  '/hc-assets/HCO_7825_SUMMERDI_DC_BANNER_1920x926.jpg',
+  '/hc-assets/HCO_7825_AME__SUMMERDI_DC_BANNER_1920x926.jpg',
+  '/hc-assets/HCO_7801_MISMATCHES_DISCOUNT_FA_MWB_1920x926_1.png',
+  '/hc-assets/HCO_7820_MATCHA_LAUNCH_DC_MWB_1920X926.jpg',
+];
+
+// Highlands Coffee section images (from local _files folder)
+const HC_IMG = {
+  appPromo: '/hc-assets/Website_bannerr.png',
+  dongHanh1: '/hc-assets/WEB_Banner_2.png',
+  dongHanh2: '/hc-assets/505392773_1120548066764868_2724070916068790506_n.jpg',
+  dongHanh3: '/hc-assets/WEB_Banner_1.png',
+  nuocNgon: '/hc-assets/web_banner_2000x2000.jpg',
+  banhNgon: '/hc-assets/2.png',
+  cuaHang: '/hc-assets/1_1.jpg',
+  ftLogo: '/hc-assets/ftlogo.png',
+  logo: '/hc-assets/red_BG_logo800.png',
+  social: ['/hc-assets/isoc1.png', '/hc-assets/isoc2.png', '/hc-assets/isoc3.png', '/hc-assets/isoc4.png'],
+};
 
 const ICON_MAP = {
   'Cà phê': '☕',
@@ -53,9 +88,9 @@ function formatNewsCategoryLabel(category) {
 
 
 const CONTACT_INFO = {
-  office: 'Tầng 6, Tòa nhà Toyota, Số 315 Trường Chinh, P. Khương Mai, Q. Thanh Xuân, TP Hà Nội, Việt Nam',
+  office: 'Tầng 6, Tòa nhà Avengers, Số 315 Trường Chinh, P. Khương Mai, Q. Thanh Xuân, TP Hà Nội, Việt Nam',
   hotline: '1800 6936',
-  email: 'support.hn@ggg.com.vn',
+  email: 'support@avengerscoffee.vn',
   heroImage: 'https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=1800&q=80',
   storeImage: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1400&q=80',
 };
@@ -276,14 +311,6 @@ function inferSubCategoryLabel(categoryLabel, productName) {
   return 'Sản phẩm khác';
 }
 
-export default function App() {
-  return (
-    <CartProvider>
-      <AppContent />
-    </CartProvider>
-  );
-}
-
 function HorizontalProductCarousel({
   items,
   onSelect,
@@ -340,7 +367,7 @@ function HorizontalProductCarousel({
                 <img src={p.hinh_anh_url} alt={p.ten_san_pham} className={imageClassName} />
                 <div className="min-w-0 text-left">
                   <p className={`truncate font-black text-gray-900 ${compact ? 'text-sm' : 'mt-4 text-lg'}`}>{p.ten_san_pham}</p>
-                  <p className={`font-black text-[#df6f37] ${compact ? 'mt-1 text-xs' : 'mt-2 text-xl'}`}>
+                  <p className={`font-black text-[#1a8b46] ${compact ? 'mt-1 text-xs' : 'mt-2 text-xl'}`}>
                     {Number(p.gia_ban).toLocaleString('vi-VN')} đ
                   </p>
                 </div>
@@ -364,11 +391,61 @@ function HorizontalProductCarousel({
             key={`dot-${idx}`}
             type="button"
             onClick={() => setPageIndex(idx)}
-            className={`h-2.5 w-2.5 rounded-full ${idx === pageIndex ? 'bg-[#d67b3c]' : 'bg-[#e7d6c2]'}`}
+            className={`h-2.5 w-2.5 rounded-full ${idx === pageIndex ? 'bg-[#1a8b46]' : 'bg-gray-300'}`}
             aria-label={`Trang ${idx + 1}`}
           />
         ))}
       </div>
+    </div>
+  );
+}
+
+function HomeBannerSlider() {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const slides = HC_BANNER_SLIDES;
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [slides.length]);
+
+  return (
+    <div className="hc-banner-slider relative">
+      <img
+        src={slides[currentSlide]}
+        alt={`Banner ${currentSlide + 1}`}
+        className="h-[360px] w-full object-cover hc-fade-in md:h-[480px] lg:h-[560px]"
+        onError={(e) => {
+          e.currentTarget.src = FALLBACK_BANNER_URL;
+        }}
+      />
+      <div className="hc-banner-dots">
+        {slides.map((_, idx) => (
+          <button
+            key={idx}
+            type="button"
+            onClick={() => setCurrentSlide(idx)}
+            className={`hc-banner-dot ${idx === currentSlide ? 'active' : ''}`}
+            aria-label={`Slide ${idx + 1}`}
+          />
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)}
+        className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/80 p-2.5 text-gray-800 shadow-md transition-all hover:bg-white"
+      >
+        <ChevronLeftIcon className="h-5 w-5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => setCurrentSlide((prev) => (prev + 1) % slides.length)}
+        className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/80 p-2.5 text-gray-800 shadow-md transition-all hover:bg-white"
+      >
+        <ChevronRightIcon className="h-5 w-5" />
+      </button>
     </div>
   );
 }
@@ -385,14 +462,21 @@ function AppContent() {
   const [selectedStoreId, setSelectedStoreId] = useState(null);
   const [contactForm, setContactForm] = useState({ name: '', email: '', phone: '', message: '' });
 
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
+
   const [user, setUser] = useState(null);
 
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedProductForPage, setSelectedProductForPage] = useState(null);
+  const handleOpenProductPage = (product) => {
+    setSelectedProductForPage(product);
+    setActiveTab('product-detail');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false); // Quản lý đóng mở Giỏ hàng
   const [isFavoriteOpen, setIsFavoriteOpen] = useState(false);
   const [isOrderHistoryOpen, setIsOrderHistoryOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [availabilityFilter, setAvailabilityFilter] = useState('ALL');
   const [priceFilter, setPriceFilter] = useState('ALL');
@@ -412,6 +496,16 @@ function AppContent() {
   const userId = user?.ma_nguoi_dung || user?.maNguoiDung || null;
   const aiTargetUserId = userId || 'anon-popular';
   const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3005';
+
+  // ── Navigate from sub-pages via custom event ────────────────────────────────
+  useEffect(() => {
+    const handler = (e) => {
+      const tab = e?.detail?.tab;
+      if (tab) setActiveTab(tab);
+    };
+    window.addEventListener('navigate-tab', handler);
+    return () => window.removeEventListener('navigate-tab', handler);
+  }, []);
 
   // ── AI Recommendations ──────────────────────────────────────────────────────
   const {
@@ -635,36 +729,33 @@ function AppContent() {
     () => (newsPayload?.items || []).map((item) => normalizeNewsArticle(item)).filter(Boolean),
     [newsPayload],
   );
-  const newsCategoryOptions = useMemo(() => {
-    const categorySet = new Set(
-      newsArticles
-        .map((article) => String(article?.category || '').trim().toUpperCase())
-        .filter(Boolean),
-    );
-
-    const dynamicOptions = Array.from(categorySet)
-      .sort((a, b) => a.localeCompare(b, 'vi'))
-      .map((id) => ({ id, label: formatNewsCategoryLabel(id) }));
-
-    return [{ id: 'ALL', label: 'Tat ca' }, ...dynamicOptions];
-  }, [newsArticles]);
-  const selectedNewsCategoryLabel =
-    newsCategoryOptions.find((option) => option.id === newsCategory)?.label ||
-    formatNewsCategoryLabel(newsCategory);
   const filteredVoucherItems = useMemo(() => {
     if (voucherTypeFilter === 'ALL') return voucherItems;
     return voucherItems.filter((item) => String(item.loai_khuyen_mai || '').toUpperCase() === voucherTypeFilter);
   }, [voucherItems, voucherTypeFilter]);
 
   useEffect(() => {
+    const savedToken = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
-    if (savedUser) {
+
+    if (savedToken && savedUser) {
       try {
         setUser(JSON.parse(savedUser));
       } catch {
         localStorage.removeItem('user');
+        localStorage.removeItem('token');
       }
+    } else {
+      // Token hoặc user bị xoá (e.g. hết hạn session) → clear cả 2
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
     }
+
+    // Tự động logout khi token hết hạn (fired bởi apiClient 401 interceptor)
+    const handleAuthExpired = () => {
+      setUser(null);
+    };
+    window.addEventListener('auth:expired', handleAuthExpired);
 
     const params = new URLSearchParams(window.location.search);
     const paymentProvider = params.get('payment_provider');
@@ -677,7 +768,12 @@ function AppContent() {
       }
       window.history.replaceState({}, document.title, window.location.pathname);
     }
+
+    return () => {
+      window.removeEventListener('auth:expired', handleAuthExpired);
+    };
   }, []);
+
 
   const showCartSuccessToast = (message) => {
     setNotificationToast({
@@ -707,6 +803,7 @@ function AppContent() {
 
     setUser(nextUser);
     localStorage.setItem('user', JSON.stringify(nextUser));
+    // token đã được lưu trong AuthModal — chỉ cần đảm bảo user object được lưu song song
     await syncCartWithUser(nextUser);
   };
 
@@ -1202,7 +1299,6 @@ function AppContent() {
     };
 
     window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
   }, [activeMainSectionId]);
 
   const handleSubmitContact = (e) => {
@@ -1222,26 +1318,8 @@ function AppContent() {
     }
   };
 
-  const filteredNewsArticles = useMemo(() => {
-    if (!newsArticles.length) return [];
-    if (newsCategory === 'ALL') return newsArticles;
-    return newsArticles.filter((article) => String(article.category || '').toUpperCase() === newsCategory);
-  }, [newsArticles, newsCategory]);
-
-  const featuredNewsArticle = filteredNewsArticles.find((article) => article.featured) || filteredNewsArticles[0] || null;
-  const secondaryNewsArticles = featuredNewsArticle
-    ? filteredNewsArticles.filter((article) => article.id !== featuredNewsArticle.id)
-    : filteredNewsArticles;
-  const homeNewsPreview = newsArticles[0] || null;
-
-  useEffect(() => {
-    const hasCurrentOption = newsCategoryOptions.some((option) => option.id === newsCategory);
-    if (!hasCurrentOption) {
-      setNewsCategory(newsCategoryOptions[0]?.id || 'ALL');
-    }
-  }, [newsCategory, newsCategoryOptions]);
-
   const storeCities = useMemo(() => ['ALL', ...new Set(storeLocations.map((store) => store.city))], [storeLocations]);
+
 
   useEffect(() => {
     if (!storeCities.length) return;
@@ -1577,65 +1655,67 @@ function AppContent() {
     };
 
     return (
-      <div className="rounded-[28px] bg-white border border-orange-100 overflow-hidden shadow-lg">
-        <div className="bg-gradient-to-r from-orange-50 to-amber-50 px-6 py-5 border-b border-orange-50">
-          <h2 className="text-2xl font-black uppercase tracking-tight text-gray-800">Trang Cá Nhân</h2>
-          <p className="mt-1 text-sm font-semibold text-gray-500">Quản lý thông tin và bảo mật tài khoản của bạn</p>
-        </div>
+      <div className="flex flex-col w-full bg-white">
+        <div className="mx-auto w-full max-w-[1440px] px-4 md:px-6 py-8 md:py-12 flex flex-col md:flex-row gap-8 min-h-[500px]">
+          {/* Left Sidebar */}
+          <div className="w-full md:w-[280px] flex-shrink-0">
+            <h2 className="text-[18px] font-black uppercase text-gray-800 mb-2">Trang tài khoản</h2>
+            <p className="text-[14px] text-gray-600 mb-6 font-bold">
+              Xin chào, <span className="text-[#b22830]">{profileUser?.ho_ten || profileUser?.hoTen || profileUser?.username || 'Bạn'}</span> !
+            </p>
 
-        <div className="p-6">
-          <div className="mb-6 flex gap-3">
-            <button
-              type="button"
-              onClick={() => setActiveTab('profile')}
-              className={`rounded-xl px-4 py-2 text-sm font-black uppercase tracking-wide ${
-                activeTab === 'profile' ? 'bg-tch-orange text-white' : 'bg-white text-gray-500 border border-gray-200'
-              }`}
-            >
-              <span className="inline-flex items-center gap-2">
-                <UserCircleIcon className="h-5 w-5" />
-                Hồ sơ
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('password')}
-              className={`rounded-xl px-4 py-2 text-sm font-black uppercase tracking-wide ${
-                activeTab === 'password' ? 'bg-tch-orange text-white' : 'bg-white text-gray-500 border border-gray-200'
-              }`}
-            >
-              <span className="inline-flex items-center gap-2">
-                <KeyIcon className="h-5 w-5" />
-                Đổi mật khẩu
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('addresses')}
-              className={`rounded-xl px-4 py-2 text-sm font-black uppercase tracking-wide ${
-                activeTab === 'addresses' ? 'bg-tch-orange text-white' : 'bg-white text-gray-500 border border-gray-200'
-              }`}
-            >
-              <span className="inline-flex items-center gap-2">
-                <MapPinIcon className="h-5 w-5" />
-                Địa chỉ giao hàng
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('reviews')}
-              className={`rounded-xl px-4 py-2 text-sm font-black uppercase tracking-wide ${
-                activeTab === 'reviews' ? 'bg-tch-orange text-white' : 'bg-white text-gray-500 border border-gray-200'
-              }`}
-            >
-              <span className="inline-flex items-center gap-2">
-                ⭐
-                Đánh giá của tôi
-              </span>
-            </button>
+            <ul className="space-y-4">
+              <li>
+                <button 
+                  type="button" 
+                  onClick={() => setActiveTab('profile')}
+                  className={`text-[14px] font-bold transition-colors cursor-pointer bg-transparent border-none p-0 ${activeTab === 'profile' ? 'text-[#b22830]' : 'text-gray-600 hover:text-[#b22830]'}`}
+                >
+                  Thông tin tài khoản
+                </button>
+              </li>
+              <li>
+                <button 
+                  type="button" 
+                  onClick={() => setIsOrderHistoryOpen(true)} 
+                  className="text-[14px] font-semibold text-gray-600 hover:text-[#b22830] transition-colors bg-transparent border-none p-0 cursor-pointer"
+                >
+                  Đơn hàng của bạn
+                </button>
+              </li>
+              <li>
+                <button 
+                  type="button" 
+                  onClick={() => setActiveTab('password')}
+                  className={`text-[14px] font-bold transition-colors cursor-pointer bg-transparent border-none p-0 ${activeTab === 'password' ? 'text-[#b22830]' : 'text-gray-600 hover:text-[#b22830]'}`}
+                >
+                  Đổi mật khẩu
+                </button>
+              </li>
+              <li>
+                <button 
+                  type="button" 
+                  onClick={() => setActiveTab('addresses')}
+                  className={`text-[14px] font-bold transition-colors cursor-pointer bg-transparent border-none p-0 ${activeTab === 'addresses' ? 'text-[#b22830]' : 'text-gray-600 hover:text-[#b22830]'}`}
+                >
+                  Sổ địa chỉ ({savedAddresses?.length || 0})
+                </button>
+              </li>
+              <li>
+                <button 
+                  type="button" 
+                  onClick={() => setActiveTab('reviews')}
+                  className={`text-[14px] font-bold transition-colors cursor-pointer bg-transparent border-none p-0 ${activeTab === 'reviews' ? 'text-[#b22830]' : 'text-gray-600 hover:text-[#b22830]'}`}
+                >
+                  Đánh giá của tôi
+                </button>
+              </li>
+            </ul>
           </div>
 
-          {activeTab === 'profile' ? (
+          {/* Main Content */}
+          <div className="flex-1">
+            {activeTab === 'profile' ? (
             <div className="rounded-2xl border border-orange-100 bg-white p-5">
               {isLoading ? (
                 <div className="space-y-3">
@@ -1707,7 +1787,7 @@ function AppContent() {
                       required
                       value={profileForm.hoTen}
                       onChange={(e) => setProfileForm((prev) => ({ ...prev, hoTen: e.target.value }))}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
                     />
                   </div>
 
@@ -1727,7 +1807,7 @@ function AppContent() {
                       type="text"
                       value={profileForm.soDienThoai}
                       onChange={(e) => setProfileForm((prev) => ({ ...prev, soDienThoai: e.target.value }))}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
                       placeholder="Nhập số điện thoại"
                     />
                   </div>
@@ -1738,7 +1818,7 @@ function AppContent() {
                       type="text"
                       value={profileForm.avatarUrl}
                       onChange={(e) => setProfileForm((prev) => ({ ...prev, avatarUrl: e.target.value }))}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
                       placeholder="https://..."
                     />
                   </div>
@@ -1748,7 +1828,7 @@ function AppContent() {
                   <button
                     type="submit"
                     disabled={updateProfileMutation.isPending}
-                    className="rounded-xl bg-tch-orange px-5 py-3 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-orange-200 disabled:bg-gray-300"
+                    className="rounded-xl bg-[#1a8b46] px-5 py-3 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-green-200 disabled:bg-gray-300"
                   >
                     {updateProfileMutation.isPending ? 'Đang cập nhật...' : 'Lưu thay đổi'}
                   </button>
@@ -1757,7 +1837,7 @@ function AppContent() {
             </div>
           ) : activeTab === 'addresses' ? (
             <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-              <div className="rounded-2xl border border-orange-100 bg-white p-5">
+              <div className="rounded-2xl border border-gray-100 bg-white p-5">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
                     <h3 className="text-lg font-black uppercase text-gray-800">Sổ địa chỉ giao hàng</h3>
@@ -1768,7 +1848,7 @@ function AppContent() {
                 {isAddressLoading ? (
                   <div className="space-y-3">
                     {[1, 2].map((item) => (
-                      <div key={item} className="h-24 animate-pulse rounded-2xl bg-orange-100/70"></div>
+                      <div key={item} className="h-24 animate-pulse rounded-2xl bg-green-50"></div>
                     ))}
                   </div>
                 ) : isAddressError ? (
@@ -1811,7 +1891,7 @@ function AppContent() {
                             <button
                               type="button"
                               onClick={() => handleEditAddress(address)}
-                              className="rounded-xl border border-orange-200 bg-white px-3 py-2 text-[11px] font-black uppercase tracking-wide text-tch-orange"
+                              className="rounded-xl border border-green-200 bg-white px-3 py-2 text-[11px] font-black uppercase tracking-wide text-[#1a8b46]"
                             >
                               Sửa
                             </button>
@@ -1831,7 +1911,7 @@ function AppContent() {
                 )}
               </div>
 
-              <div className="rounded-2xl border border-orange-100 bg-white p-5">
+              <div className="rounded-2xl border border-gray-100 bg-white p-5">
                 <h3 className="text-lg font-black uppercase text-gray-800">
                   {editingAddressId ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ mới'}
                 </h3>
@@ -1845,7 +1925,7 @@ function AppContent() {
                       required
                       value={addressForm.tenDiaChi}
                       onChange={(e) => setAddressForm((prev) => ({ ...prev, tenDiaChi: e.target.value }))}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
                       placeholder="Ví dụ: Nhà riêng, KTX, Công ty"
                     />
                   </div>
@@ -1860,7 +1940,7 @@ function AppContent() {
                         const nextWard = (addressOptions[nextCity]?.[nextDistrict] || [])[0] || '';
                         setAddressForm((prev) => ({ ...prev, city: nextCity, district: nextDistrict, ward: nextWard }));
                       }}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
                     >
                       {Object.keys(addressOptions).map((city) => (
                         <option key={city} value={city}>{city}</option>
@@ -1877,7 +1957,7 @@ function AppContent() {
                         const nextWard = (addressOptions[addressForm.city]?.[nextDistrict] || [])[0] || '';
                         setAddressForm((prev) => ({ ...prev, district: nextDistrict, ward: nextWard }));
                       }}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
                     >
                       {districtOptions.map((district) => (
                         <option key={district} value={district}>{district}</option>
@@ -1890,7 +1970,7 @@ function AppContent() {
                     <select
                       value={addressForm.ward}
                       onChange={(e) => setAddressForm((prev) => ({ ...prev, ward: e.target.value }))}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
                     >
                       {wardOptions.map((ward) => (
                         <option key={ward} value={ward}>{ward}</option>
@@ -1927,7 +2007,7 @@ function AppContent() {
                     <button
                       type="submit"
                       disabled={saveAddressMutation.isPending}
-                      className="rounded-xl bg-tch-orange px-5 py-3 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-orange-200 disabled:bg-gray-300"
+                      className="rounded-xl bg-[#1a8b46] px-5 py-3 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-green-200 disabled:bg-gray-300"
                     >
                       {saveAddressMutation.isPending ? 'Đang lưu...' : editingAddressId ? 'Lưu cập nhật' : 'Thêm địa chỉ'}
                     </button>
@@ -1945,13 +2025,13 @@ function AppContent() {
               </div>
             </div>
           ) : activeTab === 'reviews' ? (
-            <div className="rounded-2xl border border-orange-100 bg-white p-5">
+            <div className="rounded-2xl border border-gray-100 bg-white p-5">
               <div className="mb-4 flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-black uppercase text-gray-800">Lịch sử đánh giá</h3>
                   <p className="mt-1 text-sm font-semibold text-gray-500">Xem lại các đánh giá bạn đã gửi cho sản phẩm.</p>
                 </div>
-                <div className="rounded-xl bg-orange-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-tch-orange">
+                <div className="rounded-xl bg-green-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-[#1a8b46]">
                   {myReviews.length} đánh giá
                 </div>
               </div>
@@ -1959,7 +2039,7 @@ function AppContent() {
               {isReviewsLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map((item) => (
-                    <div key={item} className="h-20 animate-pulse rounded-xl bg-orange-100/70"></div>
+                    <div key={item} className="h-20 animate-pulse rounded-xl bg-green-50"></div>
                   ))}
                 </div>
               ) : isReviewsError ? (
@@ -1989,7 +2069,7 @@ function AppContent() {
               )}
             </div>
           ) : (
-            <div className="rounded-2xl border border-orange-100 bg-white p-5">
+            <div className="rounded-2xl border border-gray-100 bg-white p-5">
               <form onSubmit={handleChangePassword} className="space-y-4">
                 <div>
                   <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Mật khẩu hiện tại</p>
@@ -1998,7 +2078,7 @@ function AppContent() {
                     required
                     value={passwordForm.currentPassword}
                     onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
                   />
                 </div>
 
@@ -2009,7 +2089,7 @@ function AppContent() {
                     required
                     value={passwordForm.newPassword}
                     onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
                   />
                 </div>
 
@@ -2020,7 +2100,7 @@ function AppContent() {
                     required
                     value={passwordForm.confirmPassword}
                     onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
                   />
                 </div>
 
@@ -2029,13 +2109,14 @@ function AppContent() {
                 <button
                   type="submit"
                   disabled={changePasswordMutation.isPending}
-                  className="rounded-xl bg-tch-orange px-5 py-3 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-orange-200 disabled:bg-gray-300"
+                  className="rounded-xl bg-[#1a8b46] px-5 py-3 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-green-200 disabled:bg-gray-300"
                 >
                   {changePasswordMutation.isPending ? 'Đang xử lý...' : 'Đổi mật khẩu'}
                 </button>
               </form>
             </div>
           )}
+          </div>
         </div>
       </div>
     );
@@ -2046,9 +2127,10 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <Header
-        userName={user ? user.ho_ten || user.hoTen || 'Đăng nhập' : 'Đăng nhập'}
-        activeTab={activeTab}
+      {!['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile'].includes(activeTab) && (
+        <Header
+          userName={user ? user.ho_ten || user.hoTen || 'Đăng nhập' : 'Đăng nhập'}
+          activeTab={activeTab}
         onTabChange={setActiveTab}
         searchKeyword={searchKeyword}
         onSearchKeywordChange={setSearchKeyword}
@@ -2065,7 +2147,7 @@ function AppContent() {
         onSortByChange={setSortBy}
         filteredCount={filteredProducts.length}
         onResetSearchFilters={xoaBoLocTimKiem}
-        onOpenAccount={() => setIsAuthOpen(true)}
+        onOpenAccount={() => setActiveTab('login')}
         onLogout={handleLogout}
         cartCount={cartCount}
         onOpenCart={() => {
@@ -2076,14 +2158,14 @@ function AppContent() {
         favoriteCount={favoriteItems.length}
         onOpenOrderHistory={() => {
           if (!user) {
-            setIsAuthOpen(true);
+            setActiveTab('login');
             return;
           }
           setIsOrderHistoryOpen(true);
         }}
         onOpenProfile={() => {
           if (!user) {
-            setIsAuthOpen(true);
+            setActiveTab('login');
             return;
           }
           setActiveTab('profile');
@@ -2099,142 +2181,19 @@ function AppContent() {
           markAllNotificationsReadMutation.mutate();
         }}
       />
+      )}
 
       <main className="flex-grow">
-        {activeTab === 'profile' ? (
-          <div className="mx-auto mt-6 w-full max-w-[1240px] px-4 md:px-6 pb-20">
-            <button
-              onClick={() => setActiveTab('home')}
-              className="mb-6 text-sm font-black uppercase text-tch-orange hover:underline"
-            >
-              ← Quay lại
-            </button>
-            <ProfilePageContent user={user} onUserUpdated={handleUserUpdated} />
-          </div>
-        ) : activeTab === 'home' ? (
-          <>
-            <section className="w-full bg-[#7a0909]">
-              <div className="mx-auto w-full max-w-[1360px] px-0">
-                <img
-                  src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1800&q=80"
-                  className="h-[480px] w-full object-cover"
-                  alt="Hero"
-                />
-              </div>
-            </section>
-
-            <section className="mx-auto mt-14 w-full max-w-[1200px] px-4 text-center md:px-6">
-              <h2 className="text-5xl font-black uppercase tracking-tight text-gray-900">Chuyện Nhà</h2>
-              <p className="mx-auto mt-6 max-w-[900px] text-2xl font-semibold leading-relaxed text-gray-800">
-                The Avengers House tin rằng nụ cười là hương vị ngọt ngào nhất trong ngày mới. Từ ly cà phê đậm đà đến từng lời chào thân quen, mỗi vị khách đều mang theo một niềm vui nhỏ.
-              </p>
-              <button className="mt-8 rounded-full bg-black px-8 py-3 text-sm font-black uppercase tracking-wider text-white">Tìm hiểu</button>
-            </section>
-
-            <section className="mx-auto mt-16 w-full max-w-[1240px] px-4 md:px-6">
-              <div className="rounded-[32px] bg-[#f3f0e5] px-6 py-10 md:px-10">
-                <h3 className="text-center text-5xl font-black uppercase tracking-tight text-[#df6f37]">Sản phẩm nổi bật</h3>
-                <div className="mt-10 rounded-3xl bg-[#ede8db] p-4">
-                  <HorizontalProductCarousel
-                    items={featuredCarouselItems}
-                    onSelect={(p) => {
-                      setActiveTab('order');
-                      handleViewDetail(p);
-                    }}
-                    cardClassName="tch-carousel-card text-left"
-                    imageClassName="h-44 w-full rounded-2xl object-cover"
-                  />
-                </div>
-              </div>
-            </section>
-
-            <section className="mt-16 w-full overflow-hidden bg-[#88a56a]">
-              <div className="mx-auto grid w-full max-w-[1400px] grid-cols-1 md:grid-cols-2">
-                <img
-                  src="https://cdn.hstatic.net/files/1000075078/file/rectangle_45.jpg"
-                  className="h-[520px] w-full object-cover"
-                  alt="Nguon nguyen lieu"
-                />
-                <div className="flex items-center p-8 text-white md:p-14 lg:p-16">
-                  <div>
-                    <h3 className="text-3xl font-black uppercase leading-tight md:text-4xl">Chất lượng khởi nguồn từ vùng nguyên liệu tuyển chọn</h3>
-                    <p className="mt-6 max-w-[620px] text-lg font-semibold leading-relaxed text-white/95 md:text-xl">
-                      Từng búp trà, từng hạt cà phê được chọn lọc kỹ lưỡng để giữ lại hương vị nguyên bản và trải nghiệm trọn vẹn cho mỗi ly đồ uống.
-                    </p>
-                    <button className="mt-8 text-lg font-black uppercase underline underline-offset-4">Xem thêm</button>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="mx-auto mt-16 w-full max-w-[1240px] rounded-[32px] bg-[#f3f0e5] px-6 py-12 text-center md:px-10">
-              <h3 className="text-6xl font-black tracking-tight">Tìm Nhà gần bạn</h3>
-              <p className="mx-auto mt-5 max-w-[700px] text-xl font-semibold text-gray-700">
-                Dù bạn ở đâu, Avengers House luôn ở gần. Chọn khu vực để xem cửa hàng thuận tiện nhất.
-              </p>
-              <div className="mx-auto mt-8 grid max-w-[700px] grid-cols-1 gap-3 md:grid-cols-2">
-                <select className="rounded-full border-2 border-[#ef7d40] bg-transparent px-5 py-3 text-base font-bold text-[#ef7d40]">
-                  <option>Chọn Thành phố</option>
-                </select>
-                <select className="rounded-full border-2 border-[#ef7d40] bg-transparent px-5 py-3 text-base font-bold text-[#ef7d40]">
-                  <option>Chọn Phường/Xã</option>
-                </select>
-              </div>
-            </section>
-
-            <section className="mx-auto mt-16 mb-12 w-full max-w-[1240px] px-4 md:px-6">
-              <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-                <div>
-                  <div className="mb-4 flex items-center justify-between">
-                    <h4 className="text-5xl font-black uppercase text-[#df6f37]">Instagram</h4>
-                    <button className="text-lg font-black uppercase underline">Follow ngay</button>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      'https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=500&q=80',
-                      'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=500&q=80',
-                      'https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=500&q=80',
-                      'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=500&q=80',
-                      'https://images.unsplash.com/photo-1464306076886-da185f6a9d05?auto=format&fit=crop&w=500&q=80',
-                      'https://images.unsplash.com/photo-1521017432531-fbd92d768814?auto=format&fit=crop&w=500&q=80',
-                    ].map((img, idx) => (
-                      <img key={idx} src={img} alt="social" className="h-40 w-full rounded-2xl object-cover" />
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="mb-4 flex items-center justify-between">
-                    <h4 className="text-5xl font-black uppercase text-[#df6f37]">News</h4>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('news')}
-                      className="text-lg font-black uppercase underline"
-                    >
-                      Xem thêm
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('news')}
-                    className="block w-full rounded-[28px] bg-white p-4 text-left shadow-sm"
-                  >
-                    <img
-                      src={homeNewsPreview?.image || 'https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=1000&q=80'}
-                      className="h-80 w-full rounded-2xl object-cover"
-                      alt="News"
-                    />
-                    <p className="mt-4 text-sm font-black uppercase text-[#df6f37]">
-                      {homeNewsPreview?.category || 'Coffeeholic'}
-                    </p>
-                    <p className="mt-2 text-2xl font-black text-gray-900">
-                      {homeNewsPreview?.title || 'Khám phá các bài viết mới nhất từ The Avengers House'}
-                    </p>
-                  </button>
-                </div>
-              </div>
-            </section>
-          </>
+        {activeTab === 'home' ? (
+          <Home 
+            setActiveTab={setActiveTab} 
+            HC_IMG={HC_IMG} 
+            HomeBannerSlider={HomeBannerSlider} 
+          />
+        ) : activeTab === 'about' ? (
+          <About />
+        ) : activeTab === 'contact' ? (
+          <Support />
         ) : activeTab === 'news' ? selectedNewsArticleId ? (
           <NewsDetailPage
             selectedArticleId={selectedNewsArticleId}
@@ -2244,320 +2203,23 @@ function AppContent() {
             }}
           />
         ) : (
-          <>
-            <section className="border-b border-[#ece3cc] bg-gradient-to-b from-[#f3e8bb] to-[#fbf7ea]">
-              <div className="mx-auto max-w-[1240px] px-4 py-16 text-center md:px-6 md:py-20">
-                <p className="text-[12px] font-black uppercase tracking-[0.4em] text-[#d67b3c]">Editorial</p>
-                <h1 className="mt-5 text-[52px] font-black tracking-tight text-[#161616] md:text-[78px]" style={{ fontFamily: 'Georgia, serif' }}>
-                  {selectedNewsCategoryLabel}
-                </h1>
-                <p className="mx-auto mt-6 max-w-[760px] text-lg font-semibold leading-relaxed text-[#3d362f] md:text-[21px]">
-                  Nơi những câu chuyện xoay quanh hạt cà phê, ly trà và nhịp sống thường ngày được kể lại theo cách gần gũi, giàu cảm xúc và rất The Avengers House.
-                </p>
-
-                <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-                  {newsCategoryOptions.map((option) => {
-                    const active = newsCategory === option.id;
-                    return (
-                      <button
-                        key={option.id}
-                        type="button"
-                        onClick={() => setNewsCategory(option.id)}
-                        className={`rounded-full border px-7 py-3 text-sm font-black uppercase tracking-[0.2em] transition-all ${
-                          active
-                            ? 'border-[#e67a3a] bg-[#e67a3a] text-white shadow-lg shadow-orange-200'
-                            : 'border-[#e7b48d] bg-white/70 text-[#d67b3c] hover:border-[#d67b3c]'
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </section>
-
-            <section className="mx-auto max-w-[1240px] px-4 py-10 md:px-6 md:py-14">
-              {isNewsLoading ? (
-                <div className="rounded-[28px] border border-[#ecd4bc] bg-white p-8 text-center text-lg font-semibold text-[#6f6258]">
-                  Đang tải danh sách tin tức...
-                </div>
-              ) : featuredNewsArticle ? (
-                <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedNewsArticleId(featuredNewsArticle.id);
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    className="overflow-hidden rounded-[30px] bg-[#f7f0df] text-left shadow-sm shadow-orange-100"
-                  >
-                    <img
-                      src={featuredNewsArticle.image}
-                      alt={featuredNewsArticle.title}
-                      className="h-[340px] w-full object-cover md:h-[470px]"
-                    />
-                    <div className="p-6 md:p-8">
-                      <div className="flex items-center justify-between gap-3 text-[11px] font-black uppercase tracking-[0.22em] text-[#d67b3c]">
-                        <span>{featuredNewsArticle.category}</span>
-                        <span className="text-[#9d968f]">{featuredNewsArticle.date}</span>
-                      </div>
-                      <h2 className="mt-5 max-w-[18ch] text-3xl font-black uppercase leading-tight text-[#171717] md:text-5xl">
-                        {featuredNewsArticle.title}
-                      </h2>
-                      <p className="mt-5 max-w-[52ch] text-lg font-semibold leading-relaxed text-[#433d38]">
-                        {featuredNewsArticle.excerpt}
-                      </p>
-                    </div>
-                  </button>
-
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1">
-                    {secondaryNewsArticles.slice(0, 2).map((article) => (
-                      <button
-                        key={article.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedNewsArticleId(article.id);
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                        className="overflow-hidden rounded-[28px] bg-[#f7f0df] text-left shadow-sm shadow-orange-100"
-                      >
-                        <img src={article.image} alt={article.title} className="h-[220px] w-full object-cover" />
-                        <div className="p-5">
-                          <div className="flex items-center justify-between gap-3 text-[11px] font-black uppercase tracking-[0.18em] text-[#d67b3c]">
-                            <span>{article.category}</span>
-                            <span className="text-[#9d968f]">{article.date}</span>
-                          </div>
-                          <h3 className="mt-4 text-2xl font-black uppercase leading-tight text-[#171717]">{article.title}</h3>
-                          <p className="mt-3 text-base font-semibold leading-relaxed text-[#433d38]">{article.excerpt}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-[28px] border border-[#ecd4bc] bg-white p-8 text-center text-lg font-semibold text-[#6f6258]">
-                  Chưa có bài viết nào trong danh mục này.
-                </div>
-              )}
-
-              <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {secondaryNewsArticles.slice(2).map((article) => (
-                  <button
-                    key={article.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedNewsArticleId(article.id);
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    className="overflow-hidden rounded-[28px] bg-[#f7f0df] text-left shadow-sm shadow-orange-100 transition-transform hover:-translate-y-1"
-                  >
-                    <img src={article.image} alt={article.title} className="h-[250px] w-full object-cover" />
-                    <div className="p-5">
-                      <div className="flex items-center justify-between gap-3 text-[11px] font-black uppercase tracking-[0.18em] text-[#d67b3c]">
-                        <span>{article.category}</span>
-                        <span className="text-[#9d968f]">{article.date}</span>
-                      </div>
-                      <h3 className="mt-4 text-[28px] font-black uppercase leading-tight text-[#171717]">{article.title}</h3>
-                      <p className="mt-3 text-base font-semibold leading-relaxed text-[#433d38]">{article.excerpt}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </section>
-          </>
+          <NewsPage onSelectArticle={setSelectedNewsArticleId} />
         ) : activeTab === 'stores' ? (
-          <>
-            <section className="border-b border-[#ece3cc] bg-gradient-to-b from-[#f3e8bb] to-[#fbf7ea]">
-              <div className="mx-auto max-w-[1240px] px-4 py-14 text-center md:px-6 md:py-16">
-                <h1 className="mx-auto max-w-[18ch] text-4xl font-black uppercase leading-tight text-[#161616] md:text-6xl">
-                  Khám phá {filteredStores.length} / {storeLocations.length} cửa hàng của chúng tôi {storeCity === 'ALL' ? 'trên toàn hệ thống' : `ở ${storeCity}`}
-                </h1>
-                {isStoresLoading ? <p className="mt-5 text-base font-semibold text-[#6f6258]">Đang tải danh sách chi nhánh...</p> : null}
-                {isStoresError ? <p className="mt-5 text-base font-semibold text-[#b45309]">{storesError?.response?.data?.message || storesError?.message || 'Không tải được danh sách chi nhánh.'}</p> : null}
-
-                <div className="mx-auto mt-10 grid max-w-[760px] gap-4 md:grid-cols-2">
-                  <select
-                    value={storeCity}
-                    onChange={(e) => {
-                      setStoreCity(e.target.value);
-                      setStoreDistrict('ALL');
-                    }}
-                    className="h-[56px] rounded-full border border-[#ef8e55] bg-white/70 px-6 text-lg font-semibold text-[#e67a3a] outline-none focus:border-[#d96c28]"
-                  >
-                    {storeCities.map((city) => (
-                      <option key={city} value={city}>{city === 'ALL' ? 'Toàn quốc' : city}</option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={storeDistrict}
-                    onChange={(e) => setStoreDistrict(e.target.value)}
-                    className="h-[56px] rounded-full border border-[#ef8e55] bg-white/70 px-6 text-lg font-semibold text-[#e67a3a] outline-none focus:border-[#d96c28]"
-                  >
-                    <option value="ALL">Chọn Phường/Xã (Sau sáp nhập)</option>
-                    {storeDistricts.map((district) => (
-                      <option key={district} value={district}>{district}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </section>
-
-            <section className="bg-[#f5f5f3] py-10 md:py-14">
-              <div className="mx-auto max-w-[1240px] px-4 md:px-6">
-                {selectedStore ? (
-                  <section className="mb-10 grid gap-6 rounded-[28px] border border-[#e9d2bd] bg-white p-5 md:grid-cols-2 md:p-6">
-                    <div>
-                      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#d67b3c]">Chi nhánh đang chọn</p>
-                      <h3 className="mt-3 text-3xl font-black tracking-tight text-black">{selectedStore.name}</h3>
-                      <p className="mt-4 text-base font-semibold leading-relaxed text-[#2f2f2f]">{selectedStore.address}</p>
-                      <p className="mt-2 text-sm font-black uppercase tracking-wide text-[#e67a3a]">Giờ mở cửa: {selectedStore.hours}</p>
-                      <a
-                        href={selectedStore.mapUrl || buildMapSearchUrl(selectedStore.address)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-6 inline-flex rounded-full bg-[#e67a3a] px-6 py-3 text-sm font-black uppercase tracking-wide text-white"
-                      >
-                        Mở trên Google Maps
-                      </a>
-                    </div>
-                    <iframe
-                      title={`Bản đồ ${selectedStore.name}`}
-                      src={buildMapEmbedUrl(selectedStore.address)}
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                      className="h-[320px] w-full rounded-2xl border border-[#eed8c3]"
-                    />
-                  </section>
-                ) : null}
-
-                <div className="grid gap-x-10 gap-y-12 md:grid-cols-2 xl:grid-cols-3">
-                  {filteredStores.map((store) => (
-                    <article
-                      key={store.id}
-                      className={`group rounded-[24px] p-3 transition-colors ${selectedStore?.id === store.id ? 'bg-[#fff2e8]' : 'bg-transparent'}`}
-                    >
-                      <img
-                        src={store.image}
-                        alt={store.name}
-                        className="h-[260px] w-full rounded-[24px] object-cover shadow-sm transition-transform duration-300 group-hover:-translate-y-1"
-                      />
-                      <h3 className="mt-6 text-[26px] font-black tracking-tight text-black">{store.name}</h3>
-                      <div className="mt-4 flex items-start gap-3 text-[15px] font-semibold leading-relaxed text-[#232323]">
-                        <span className="mt-1 text-[#ef7d40]">📍</span>
-                        <span>{store.address}</span>
-                      </div>
-                      <div className="mt-3 flex items-center gap-3 text-[15px] font-semibold text-[#232323]">
-                        <span className="text-[#ef7d40]">🕒</span>
-                        <span>{store.hours}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedStoreId(store.id);
-                          window.open(store.mapUrl || buildMapSearchUrl(store.address), '_blank', 'noopener,noreferrer');
-                        }}
-                        className="mt-6 rounded-full bg-black px-7 py-3 text-lg font-black text-white transition-transform hover:scale-[1.02]"
-                      >
-                        Xem bản đồ
-                      </button>
-                    </article>
-                  ))}
-                </div>
-              </div>
-            </section>
-          </>
-        ) : activeTab === 'contact' ? (
-          <>
-            <section className="relative overflow-hidden border-b border-[#ece3cc] bg-[#efe0a5]">
-              <img
-                src={CONTACT_INFO.heroImage}
-                alt="Liên hệ"
-                className="h-[260px] w-full object-cover opacity-45 md:h-[340px]"
-              />
-              <div className="absolute inset-0 bg-[#efe0a5]/65" />
-              <div className="absolute inset-x-0 top-1/2 mx-auto w-full max-w-[1240px] -translate-y-1/2 px-4 md:px-6">
-                <h1 className="text-5xl font-black uppercase tracking-tight text-black md:text-6xl">Liên hệ</h1>
-              </div>
-            </section>
-
-            <section className="bg-[#f5f5f3] py-12 md:py-16">
-              <div className="mx-auto grid max-w-[1240px] gap-8 px-4 md:px-6 lg:grid-cols-[1fr_1fr] lg:gap-10">
-                <div>
-                  <h2 className="text-4xl font-black uppercase tracking-tight text-black md:text-5xl">The Avengers House</h2>
-                  <div className="mt-10 space-y-8 text-lg font-semibold leading-relaxed text-[#262626]">
-                    <p>
-                      <span className="font-black text-[#e67a3a]">VPGD:</span> {CONTACT_INFO.office}
-                    </p>
-                    <p>
-                      <span className="font-black text-[#e67a3a]">Đặt hàng:</span> {CONTACT_INFO.hotline}
-                      <br />
-                      <span className="font-black text-[#e67a3a]">Email:</span> {CONTACT_INFO.email}
-                    </p>
-                  </div>
-
-                  <div className="mt-8 flex items-center justify-center lg:justify-start">
-                    <div className="rounded-full bg-[#d77457] px-5 py-4 text-center text-[11px] font-black uppercase tracking-[0.2em] text-white shadow-lg shadow-orange-200">
-                      Avengers House
-                    </div>
-                  </div>
-
-                  <img
-                    src={CONTACT_INFO.storeImage}
-                    alt="Storefront"
-                    className="mt-8 h-[420px] w-full rounded-[28px] object-cover shadow-sm shadow-gray-300"
-                  />
-                </div>
-
-                <form onSubmit={handleSubmitContact} className="space-y-4 lg:pt-6">
-                  <input
-                    type="text"
-                    required
-                    value={contactForm.name}
-                    onChange={(e) => setContactForm((prev) => ({ ...prev, name: e.target.value }))}
-                    placeholder="Tên của bạn"
-                    className="h-[64px] w-full rounded-full border border-[#bfbfbf] bg-transparent px-8 text-lg font-semibold text-[#404040] outline-none transition-colors placeholder:text-[#777] focus:border-[#e67a3a]"
-                  />
-                  <input
-                    type="email"
-                    required
-                    value={contactForm.email}
-                    onChange={(e) => setContactForm((prev) => ({ ...prev, email: e.target.value }))}
-                    placeholder="Email của bạn"
-                    className="h-[64px] w-full rounded-full border border-[#bfbfbf] bg-transparent px-8 text-lg font-semibold text-[#404040] outline-none transition-colors placeholder:text-[#777] focus:border-[#e67a3a]"
-                  />
-                  <input
-                    type="text"
-                    value={contactForm.phone}
-                    onChange={(e) => setContactForm((prev) => ({ ...prev, phone: e.target.value }))}
-                    placeholder="Số điện thoại của bạn"
-                    className="h-[64px] w-full rounded-full border border-[#bfbfbf] bg-transparent px-8 text-lg font-semibold text-[#404040] outline-none transition-colors placeholder:text-[#777] focus:border-[#e67a3a]"
-                  />
-                  <textarea
-                    required
-                    rows={8}
-                    value={contactForm.message}
-                    onChange={(e) => setContactForm((prev) => ({ ...prev, message: e.target.value }))}
-                    placeholder="Nội dung"
-                    className="w-full rounded-[32px] border border-[#bfbfbf] bg-transparent px-8 py-6 text-lg font-semibold text-[#404040] outline-none transition-colors placeholder:text-[#777] focus:border-[#e67a3a]"
-                  />
-                  <button
-                    type="submit"
-                    className="rounded-full bg-[#e67a3a] px-10 py-4 text-2xl font-black uppercase tracking-wide text-white shadow-lg shadow-orange-200 transition-transform hover:scale-[1.02]"
-                  >
-                    Gửi
-                  </button>
-                </form>
-              </div>
-            </section>
-          </>
+          <StoresPage />
+        ) : activeTab === 'product-detail' ? (
+          <ProductDetailPage
+            product={selectedProductForPage}
+            products={products}
+            onAddToCart={(prod, qty, size) => addToCart(user, prod, qty || 1, size || 'M')}
+            onBack={() => setActiveTab('order')}
+            onNavigate={setActiveTab}
+          />
         ) : activeTab === 'vouchers' ? (
           <>
-            <section className="border-b border-[#ece3cc] bg-gradient-to-b from-[#f7e4cf] via-[#fff8ee] to-[#fffcf5]">
+            <section className="border-b border-gray-100 bg-gradient-to-b from-[#e8f5ee] via-white to-[#f0faf4]">
               <div className="mx-auto max-w-[1240px] px-4 py-14 md:px-6 md:py-16">
-                <p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#d67b3c]">Voucher Center</p>
-                <h1 className="mt-4 text-4xl font-black uppercase tracking-tight text-[#1f1f1f] md:text-6xl">
+                <p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#1a8b46]">Voucher Center</p>
+                <h1 className="mt-4 text-4xl font-black uppercase tracking-tight text-[#1f1f1f] md:text-6xl" style={{ fontFamily: "'Playfair Display', serif" }}>
                   Khuyến mãi dành cho bạn
                 </h1>
                 <p className="mt-4 max-w-[780px] text-base font-semibold leading-relaxed text-[#4d433c] md:text-lg">
@@ -2579,8 +2241,8 @@ function AppContent() {
                         onClick={() => setVoucherTypeFilter(item.code)}
                         className={`rounded-full border px-5 py-2 text-xs font-black uppercase tracking-[0.2em] transition-all ${
                           active
-                            ? 'border-[#e67a3a] bg-[#e67a3a] text-white shadow-md shadow-orange-200'
-                            : 'border-[#efc8a9] bg-white text-[#d67b3c] hover:border-[#d67b3c]'
+                            ? 'border-[#1a8b46] bg-[#1a8b46] text-white shadow-md shadow-green-200'
+                            : 'border-gray-200 bg-white text-[#1a8b46] hover:border-[#1a8b46]'
                         }`}
                       >
                         {item.label}
@@ -2595,7 +2257,7 @@ function AppContent() {
               {isVoucherLoading ? (
                 <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                   {[1, 2, 3].map((item) => (
-                    <div key={item} className="h-56 animate-pulse rounded-[28px] bg-orange-100/70"></div>
+                    <div key={item} className="h-56 animate-pulse rounded-[28px] bg-green-50"></div>
                   ))}
                 </div>
               ) : isVoucherError ? (
@@ -2603,9 +2265,9 @@ function AppContent() {
                   {voucherError?.response?.data?.message || 'Không thể tải danh sách voucher lúc này.'}
                 </div>
               ) : filteredVoucherItems.length === 0 ? (
-                <div className="rounded-[28px] border border-dashed border-[#efc9a8] bg-[#fff7ef] px-6 py-12 text-center">
-                  <p className="text-sm font-black uppercase tracking-[0.2em] text-[#d67b3c]">Chưa có voucher phù hợp</p>
-                  <p className="mt-2 text-sm font-semibold text-[#6e6259]">Thử đổi bộ lọc hoặc quay lại sau để cập nhật ưu đãi mới nhất.</p>
+                <div className="rounded-[28px] border border-dashed border-gray-200 bg-gray-50 px-6 py-12 text-center">
+                  <p className="text-sm font-black uppercase tracking-[0.2em] text-[#1a8b46]">Chưa có voucher phù hợp</p>
+                  <p className="mt-2 text-sm font-semibold text-gray-500">Thử đổi bộ lọc hoặc quay lại sau để cập nhật ưu đãi mới nhất.</p>
                 </div>
               ) : (
                 <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -2616,13 +2278,13 @@ function AppContent() {
                     const isOut = hasLimit && remaining <= 0;
                     const canUse = voucher.co_the_dung !== false;
                     return (
-                      <article key={voucher.ma_khuyen_mai} className="overflow-hidden rounded-[28px] border border-orange-100 bg-white shadow-sm shadow-orange-100/70">
-                        <div className="bg-gradient-to-r from-[#f6dcc7] via-[#fff2e5] to-[#f6dcc7] p-4">
+                      <article key={voucher.ma_khuyen_mai} className="overflow-hidden rounded-[28px] border border-gray-100 bg-white shadow-sm shadow-green-100 hover:shadow-md transition-shadow">
+                        <div className="bg-gradient-to-r from-[#d4eddc] via-[#e8f5ee] to-[#d4eddc] p-4">
                           <div className="flex items-center justify-between gap-3">
                             <button
                               type="button"
                               onClick={() => handleCopyVoucherCode(voucher.ma_khuyen_mai)}
-                              className="rounded-xl border border-[#e79a67] bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.2em] text-[#cd6a2a]"
+                              className="rounded-xl border border-[#1a8b46] bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.2em] text-[#1a8b46]"
                               title="Sao chép mã"
                             >
                               {voucher.ma_khuyen_mai}
@@ -2638,18 +2300,18 @@ function AppContent() {
 
                         <div className="p-5">
                           <h3 className="text-xl font-black uppercase leading-tight text-[#1f1f1f]">{voucher.ten_khuyen_mai || 'Voucher ưu đãi'}</h3>
-                          <p className="mt-2 text-base font-black text-[#d0672a]">{formatVoucherValue(voucher)}</p>
+                          <p className="mt-2 text-base font-black text-[#c41230]">{formatVoucherValue(voucher)}</p>
                           <p className="mt-2 min-h-[44px] text-sm font-semibold leading-relaxed text-[#5b524b]">
                             {voucher.mo_ta || 'Áp dụng cho đơn hàng hợp lệ theo điều kiện của chương trình.'}
                           </p>
 
                           <div className="mt-4 grid grid-cols-2 gap-3 text-xs font-semibold text-[#5d544d]">
-                            <div className="rounded-xl bg-[#fff5eb] p-3">
-                              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#c98754]">Đơn tối thiểu</p>
+                            <div className="rounded-xl bg-[#f0faf4] p-3">
+                              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#1a8b46]">Đơn tối thiểu</p>
                               <p className="mt-1 text-sm font-black text-[#3f3731]">{Number(voucher.gia_tri_don_toi_thieu || 0).toLocaleString('vi-VN')}d</p>
                             </div>
-                            <div className="rounded-xl bg-[#fff5eb] p-3">
-                              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#c98754]">Còn lại</p>
+                            <div className="rounded-xl bg-[#f0faf4] p-3">
+                              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#1a8b46]">Còn lại</p>
                               <p className="mt-1 text-sm font-black text-[#3f3731]">{hasLimit ? `${Number(remaining || 0).toLocaleString('vi-VN')} lượt` : 'Vô hạn'}</p>
                             </div>
                           </div>
@@ -2693,224 +2355,46 @@ function AppContent() {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           />
-        ) : (
-          <>
-            {/* Banner */}
-            <div className="mx-auto mt-6 w-full max-w-[1280px] px-4 md:px-6">
-              <div className="overflow-hidden rounded-[30px] border border-[#efe9e0] shadow-sm">
-                <img
-                  src="https://minio.thecoffeehouse.com/content/pwa/static/img/home-banner.png"
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = FALLBACK_BANNER_URL;
-                  }}
-                  className="h-[420px] w-full object-cover"
-                  alt="Banner"
-                />
-              </div>
-            </div>
-
-            {/* Categories */}
-            <div className="mx-auto mt-12 w-full max-w-[1240px] px-4 md:px-6">
-              <div ref={topTabsScrollRef} className="relative overflow-x-auto no-scrollbar pb-5">
-                <div ref={topTabsTrackRef} className="relative mx-auto flex w-max min-w-full justify-center gap-8 px-2">
-                  {menuSections.map((section) => (
-                    <button
-                      key={section.id}
-                      ref={(element) => {
-                        if (element) {
-                          topTabRefs.current[section.id] = element;
-                        }
-                      }}
-                      type="button"
-                      onClick={() => {
-                        if (section.id === 'must-try') {
-                          setSelectedCatId('all');
-                        } else {
-                          setSelectedCatId(section.id);
-                        }
-                        setActiveMainSectionId(section.id);
-                        if (section.subSections[0]) {
-                          setActiveSubSectionId(section.subSections[0].id);
-                        }
-                        scrollToSection(section.id);
-                      }}
-                      className="group relative flex min-w-[96px] flex-col items-center pb-2 transition-all"
-                    >
-                      <div className={`mb-3 flex h-16 w-16 items-center justify-center rounded-[24px] text-2xl transition-all ${
-                        activeMainSectionId === section.id ? 'bg-tch-orange shadow-lg border-none' : 'bg-white border border-gray-200 shadow-sm'
-                      }`}>
-                        {section.icon || ICON_MAP.default}
-                      </div>
-                      <span className={`text-[13px] font-extrabold uppercase tracking-[0.08em] ${activeMainSectionId === section.id ? 'text-[#111111]' : 'text-gray-500'}`}>
-                        {section.label}
-                      </span>
-                    </button>
-                  ))}
-
-                  <span
-                    className="pointer-events-none absolute bottom-0 h-[3px] rounded-full bg-tch-orange transition-all duration-300"
-                    style={{
-                      width: `${activeTabUnderlineStyle.width}px`,
-                      transform: `translateX(${activeTabUnderlineStyle.left}px)`,
-                      opacity: activeTabUnderlineStyle.opacity,
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Layout chính */}
-            <div className="mx-auto mt-16 flex w-full max-w-[1280px] flex-col gap-12 px-4 pb-20 md:flex-row md:px-6">
-              <aside className="w-full md:w-64 flex-shrink-0">
-                <div className="sticky top-28">
-                  <h2 className="text-tch-orange font-black text-2xl uppercase italic mb-8 border-l-8 border-tch-orange pl-4">
-                    {activeMainSection?.label || 'Thực đơn'}
-                  </h2>
-                  <ul className="space-y-5">
-                    {(activeMainSection?.subSections || []).map((subSection) => (
-                      <li key={subSection.id}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveSubSectionId(subSection.id);
-                            scrollToSubSection(subSection.id);
-                          }}
-                          className={`w-full text-left text-[16px] font-extrabold uppercase transition-colors ${
-                            activeSubSectionId === subSection.id ? 'text-tch-orange' : 'text-gray-700'
-                          }`}
-                        >
-                          {subSection.label}
-                          <span className="ml-2 text-[11px] font-black text-gray-400">{subSection.items.length}</span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </aside>
-
-              <div className="flex-1">
-                {orderCarouselItems.length > 0 ? (
-                  <section className="mb-10 border-b border-[#eee7df] pb-8">
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#d67b3c]">House selection</p>
-                      <span className="rounded-full border border-[#eddcc8] bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#cb6b2f]">Thanh kéo trái/phải</span>
-                    </div>
-                    <HorizontalProductCarousel
-                      items={orderCarouselItems}
-                      onSelect={(p) => handleViewDetail(p)}
-                      cardClassName="tch-carousel-mini-card"
-                      imageClassName="h-20 w-20 rounded-xl object-cover"
-                      compact
-                    />
-                  </section>
-                ) : null}
-
-                <section className="mb-12 border-y border-[#efe8df] bg-white py-7">
-                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-500">Smart recommendation</p>
-                        <h3 className="text-xl font-black uppercase tracking-tight text-gray-800">
-                          {userId ? 'Top 3 món hợp gu của bạn' : 'Top 3 món phổ biến'}
-                        </h3>
-                        <p className="text-xs text-gray-600">
-                          {aiRecsData?.is_personalized
-                            ? 'Cá nhân hóa theo lịch sử mua hàng, đánh giá, yêu thích và xu hướng dùng ưu đãi.'
-                            : userId
-                              ? 'Chưa đủ lịch sử, hiển thị các món phổ biến.'
-                              : 'Đang xem gợi ý cho khách vãng lai, dựa trên độ phổ biến toàn hệ thống.'}
-                        </p>
-                        <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-sky-700">Dong bo customer voi top hanh vi 30 ngay</p>
-                      </div>
-                      <span className="rounded-full border border-orange-200 bg-white px-3 py-1 text-[11px] font-black uppercase tracking-wider text-orange-600">
-                        {aiRecsData?.is_personalized ? 'AI Personal' : 'AI Popular'}
-                      </span>
-                    </div>
-
-                    {isAiRecsLoading ? (
-                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
-                        {[1, 2, 3].map((k) => <div key={k} className="h-72 animate-pulse rounded-3xl bg-white/70" />)}
-                      </div>
-                    ) : displayTop3Products.length > 0 ? (
-                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
-                        {displayTop3Products.map((p) => (
-                          <ProductCard
-                            key={`ai-${p.ma_san_pham}`}
-                            product={p}
-                            onView={() => handleViewDetail(p)}
-                            onQuickAdd={() => handleQuickAdd(p)}
-                            isFavorite={isFavoriteProduct(p)}
-                            onToggleFavorite={() => handleToggleFavorite(p)}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm font-semibold text-gray-500">Chưa có đề xuất AI lúc này.</p>
-                    )}
-                  </section>
-
-                {loading ? (
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-8">
-                    {[1, 2, 3, 4, 5, 6].map((i) => <div key={i} className="bg-gray-200 h-80 rounded-3xl animate-pulse"></div>)}
-                  </div>
-                ) : hasMenuError ? (
-                  <div className="rounded-2xl border border-red-100 bg-red-50 p-5 text-sm font-bold text-red-600">
-                    Không thể tải menu lúc này. Vui lòng thử lại sau.
-                  </div>
-                ) : (
-                  <div className="space-y-14">
-                    {menuSections.map((section) => (
-                      <section
-                        key={section.id}
-                        ref={(element) => {
-                          if (element) {
-                            categorySectionRefs.current[section.id] = element;
-                          }
-                        }}
-                        className="scroll-mt-32"
-                      >
-                        <h2 className="mb-7 text-[36px] font-black uppercase tracking-tight text-[#111111]">
-                          {section.label}
-                        </h2>
-
-                        <div className="space-y-12">
-                          {section.subSections.map((subSection) => (
-                            <div
-                              key={subSection.id}
-                              ref={(element) => {
-                                if (element) {
-                                  subSectionRefs.current[subSection.id] = element;
-                                }
-                              }}
-                              className="scroll-mt-32"
-                            >
-                              <h3 className="mb-6 text-[28px] font-black uppercase tracking-tight text-[#111111]">
-                                {subSection.label}
-                              </h3>
-
-                              <div className="grid grid-cols-2 gap-x-8 gap-y-12 lg:grid-cols-3">
-                                {subSection.items.map((p) => (
-                                  <ProductCard
-                                    key={`${subSection.id}-${p.ma_san_pham}`}
-                                    product={p}
-                                    onView={() => handleViewDetail(p)}
-                                    onQuickAdd={() => handleQuickAdd(p)}
-                                    isFavorite={isFavoriteProduct(p)}
-                                    onToggleFavorite={() => handleToggleFavorite(p)}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </section>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </>
-        )}
+        ) : ['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile'].includes(activeTab) ? (
+          <OrderPage
+            menuSections={menuSections}
+            products={products}
+            categories={categories}
+            cartCount={cartCount}
+            onOpenCart={() => {
+              setIsFavoriteOpen(false);
+              setIsCartOpen(true);
+            }}
+            userName={user?.ho_ten || user?.hoTen || user?.full_name || user?.username || user?.ten_dang_nhap || user?.email}
+            onOpenAccount={() => setActiveTab('login')}
+            onViewDetail={handleViewDetail}
+            onQuickAdd={handleQuickAdd}
+            isFavoriteProduct={isFavoriteProduct}
+            onToggleFavorite={handleToggleFavorite}
+            searchKeyword={searchKeyword}
+            onSearchKeywordChange={setSearchKeyword}
+            voucherItems={voucherItems}
+            onLogout={handleLogout}
+            onOpenOrderHistory={() => setIsOrderHistoryOpen(true)}
+            onOpenProfile={() => setActiveTab('profile')}
+            onNavigate={setActiveTab}
+            aiRecommendedProducts={displayTop3Products}
+            onOpenProductPage={handleOpenProductPage}
+          >
+            {activeTab === 'login' ? (
+              <LoginPage onLoginSuccess={(user) => { handleLoginSuccess(user); setActiveTab('profile'); }} />
+            ) : activeTab === 'chinh-sach-dat-hang' ? (
+              <ChinhSachDatHangPage />
+            ) : activeTab === 'lien-he' ? (
+              <LienHePage />
+            ) : activeTab === 'profile' ? (
+              <ProfilePageContent 
+                user={user} 
+                onUserUpdated={handleUserUpdated}
+              />
+            ) : null}
+          </OrderPage>
+        ) : null}
       </main>
 
       <ProductDetailModal
@@ -2935,13 +2419,13 @@ function AppContent() {
         onClose={() => setIsOrderHistoryOpen(false)}
         user={user}
       />
-      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} onLoginSuccess={handleLoginSuccess} />
-      <Footer />
+
+      {['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile'].includes(activeTab) ? <OrderFooter onNavigate={setActiveTab} /> : <Footer />}
   <ChatWidget user={user} socketUrl={socketUrl} />
 
       {notificationToast ? (
-        <div className="fixed bottom-6 right-6 z-[150] w-[92vw] max-w-sm rounded-2xl border border-orange-100 bg-white/95 p-4 shadow-2xl shadow-orange-100 backdrop-blur">
-          <p className="text-[11px] font-black uppercase tracking-widest text-tch-orange">Thông báo mới</p>
+        <div className="fixed bottom-6 right-6 z-[150] w-[92vw] max-w-sm rounded-2xl border border-green-100 bg-white/95 p-4 shadow-2xl shadow-green-100 backdrop-blur">
+          <p className="text-[11px] font-black uppercase tracking-widest text-[#1a8b46]">Thông báo mới</p>
           <p className="mt-1 text-sm font-black text-gray-800">{notificationToast.title}</p>
           <p className="mt-1 text-xs font-semibold text-gray-500">{notificationToast.message}</p>
           {notificationToast.branchName ? (
@@ -2952,3 +2436,48 @@ function AppContent() {
     </div>
   );
 }
+
+class AppErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error("App Render Error:", error, errorInfo);
+    this.setState({ errorInfo });
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '40px', fontFamily: 'sans-serif', background: '#fff0f0', minHeight: '100vh', color: '#c00' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold' }}>⚠️ Lỗi hiển thị React (Runtime Error)</h1>
+          <p style={{ marginTop: '16px', fontSize: '18px', fontWeight: 'bold' }}>{String(this.state.error)}</p>
+          <pre style={{ marginTop: '16px', background: '#fff', padding: '16px', borderRadius: '8px', overflow: 'auto', border: '1px solid #fcc', fontSize: '13px', color: '#333' }}>
+            {this.state.error?.stack || this.state.errorInfo?.componentStack}
+          </pre>
+          <button
+            onClick={() => window.location.reload()}
+            style={{ marginTop: '20px', padding: '10px 20px', background: '#c00', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+          >
+            Tải lại trang
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export default function App() {
+  return (
+    <CartProvider>
+      <AppErrorBoundary>
+        <AppContent />
+      </AppErrorBoundary>
+    </CartProvider>
+  );
+}
+

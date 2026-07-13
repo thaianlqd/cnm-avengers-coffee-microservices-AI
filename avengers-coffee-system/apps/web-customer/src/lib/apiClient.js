@@ -12,3 +12,19 @@ apiClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Auto-logout khi token hết hạn (401)
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      // Xóa token + user đã lưu
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      // Dispatch event để App.jsx reset user state
+      window.dispatchEvent(new CustomEvent('auth:expired'));
+    }
+    return Promise.reject(error);
+  }
+);
+
