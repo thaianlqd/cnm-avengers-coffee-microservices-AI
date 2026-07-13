@@ -10,14 +10,17 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
+  Alert,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
+import { Audio } from 'expo-av'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useUser } from '../context/UserContext'
 import apiClient from '../lib/apiClient'
 import { getUserDisplayName, getUserId } from '../lib/customerData'
 import { colors, spacing, shadows, radius } from '../theme'
+import VoiceOrderCard from '../components/VoiceOrderCard'
 
 function formatTime(value) {
   if (!value) return ''
@@ -31,6 +34,10 @@ function formatDate(value) {
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return ''
   return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+function formatCurrency(amount) {
+  return Number(amount || 0).toLocaleString('vi-VN') + 'đ'
 }
 
 function MessageBubble({ message, isOwn }) {
@@ -66,15 +73,45 @@ function DateSeparator({ date }) {
   )
 }
 
+// ─── Recording pulse animation ────────────────────────────────────────────────
+function MicPulse() {
+  const scale = useRef(new Animated.Value(1)).current
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scale, { toValue: 1.3, duration: 500, useNativeDriver: true }),
+        Animated.timing(scale, { toValue: 1, duration: 500, useNativeDriver: true }),
+      ])
+    ).start()
+  }, [])
+  return (
+    <Animated.View style={[styles.micPulse, { transform: [{ scale }] }]}>
+      <LinearGradient colors={['#ef4444', '#dc2626']} style={styles.micPulseGrad}>
+        <Ionicons name="mic" size={20} color="#fff" />
+      </LinearGradient>
+    </Animated.View>
+  )
+}
+
 export function ChatScreen({ navigation }) {
   const { user } = useUser()
   const userId = getUserId(user)
   const userName = getUserDisplayName(user)
   const queryClient = useQueryClient()
   const flatListRef = useRef(null)
+
   const [messageText, setMessageText] = useState('')
   const [conversationId, setConversationId] = useState(null)
   const fadeAnim = useRef(new Animated.Value(0)).current
+
+  // Voice state
+  const [isRecording, setIsRecording] = useState(false)
+  const [voiceLoading, setVoiceLoading] = useState(false)
+  const recordingRef = useRef(null)
+
+  // Order intent card state
+  const [pendingOrder, setPendingOrder] = useState(null) // { transcript, items, total, message }
+  const [orderLoading, setOrderLoading] = useState(false)
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -84,7 +121,7 @@ export function ChatScreen({ navigation }) {
     }).start()
   }, [])
 
-  // Step 1: Open or create a conversation
+  // ─── Conversations ──────────────────────────────────────────────────────────
   const openConversationMutation = useMutation({
     mutationFn: async () => {
       return apiClient.post('/chat/conversations/open', {
@@ -105,7 +142,6 @@ export function ChatScreen({ navigation }) {
     }
   }, [userId])
 
-  // Step 2: Fetch messages with polling
   const messagesQuery = useQuery({
     queryKey: ['chat', 'messages', conversationId],
     queryFn: async () => {
@@ -122,7 +158,6 @@ export function ChatScreen({ navigation }) {
   const messages = messagesQuery.data?.items || []
   const conversation = messagesQuery.data?.conversation || null
 
-  // Mark as read when opening
   useEffect(() => {
     if (conversationId && conversation?.so_tin_nhan_chua_doc_khach > 0) {
       apiClient
@@ -134,7 +169,7 @@ export function ChatScreen({ navigation }) {
     }
   }, [conversationId, conversation?.so_tin_nhan_chua_doc_khach])
 
-  // Step 3: Send message
+  // ─── Send text message ──────────────────────────────────────────────────────
   const sendMutation = useMutation({
     mutationFn: async (content) => {
       return apiClient.post(`/chat/conversations/${conversationId}/messages`, {
@@ -149,14 +184,156 @@ export function ChatScreen({ navigation }) {
     },
   })
 
-  const handleSend = useCallback(() => {
+  const handleSend = useCallback(async () => {
     const text = messageText.trim()
     if (!text || !conversationId || sendMutation.isPending) return
     setMessageText('')
-    sendMutation.mutate(text)
-  }, [messageText, conversationId, sendMutation.isPending])
 
-  // Group messages by date for separators
+    // Check if text looks like an order intent before sending as normal message
+    const orderKeywords = ['cho tôi', 'đặt', 'order', 'mua', 'lấy', 'cần', 'muốn']
+    const looksLikeOrder = orderKeywords.some((kw) => text.toLowerCase().includes(kw))
+
+    if (looksLikeOrder) {
+      // Try to parse as order intent
+      setVoiceLoading(true)
+      try {
+        const result = await apiClient.post('/ai/chat/order-intent', {
+          text,
+          user_id: userId,
+        })
+        if (result?.can_order && result?.items?.length > 0) {
+          setPendingOrder({
+            transcript: null,
+            items: result.items,
+            total: result.estimated_total,
+            message: result.message,
+          })
+          // Also send as chat message so staff can see
+          sendMutation.mutate(text)
+          return
+        }
+      } catch {
+        // Ignore — just send as normal message
+      } finally {
+        setVoiceLoading(false)
+      }
+    }
+
+    sendMutation.mutate(text)
+  }, [messageText, conversationId, sendMutation.isPending, userId])
+
+  // ─── Voice recording ────────────────────────────────────────────────────────
+  const startRecording = async () => {
+    try {
+      const { status } = await Audio.requestPermissionsAsync()
+      if (status !== 'granted') {
+        Alert.alert(
+          'Cần quyền mic',
+          'Hãy cấp quyền microphone để sử dụng tính năng đặt hàng bằng giọng nói.',
+          [{ text: 'OK' }]
+        )
+        return
+      }
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      })
+      const { recording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      )
+      recordingRef.current = recording
+      setIsRecording(true)
+    } catch (err) {
+      console.error('startRecording error:', err)
+      Alert.alert('Lỗi', 'Không thể bật microphone. Thử lại nhé!')
+    }
+  }
+
+  const stopRecordingAndProcess = async () => {
+    if (!recordingRef.current) return
+    setIsRecording(false)
+    setVoiceLoading(true)
+
+    try {
+      await recordingRef.current.stopAndUnloadAsync()
+      const uri = recordingRef.current.getURI()
+      recordingRef.current = null
+
+      if (!uri) throw new Error('No recording URI')
+
+      // Build FormData to upload audio
+      const formData = new FormData()
+      formData.append('audio', {
+        uri,
+        name: 'audio.m4a',
+        type: 'audio/m4a',
+      })
+      formData.append('user_id', userId || '')
+      formData.append('language', 'vi')
+
+      const result = await apiClient.postForm('/ai/voice-order', formData)
+
+      if (result?.transcript) {
+        // Send transcript as chat message
+        sendMutation.mutate(`🎙️ "${result.transcript}"`)
+      }
+
+      if (result?.can_order && result?.items?.length > 0) {
+        setPendingOrder({
+          transcript: result.transcript,
+          items: result.items,
+          total: result.estimated_total,
+          message: result.message,
+        })
+      } else if (result?.transcript) {
+        // Intent is QUERY — send to AI chat for normal response
+        // (already sent as message above)
+      }
+    } catch (err) {
+      console.error('voice-order error:', err)
+      Alert.alert(
+        'Không nhận được giọng nói',
+        'Hãy nói rõ hơn hoặc thử lại. Ví dụ: "Cho tôi 1 ly latte ít đường"'
+      )
+    } finally {
+      setVoiceLoading(false)
+    }
+  }
+
+  // ─── Confirm order ──────────────────────────────────────────────────────────
+  const handleConfirmOrder = async () => {
+    if (!pendingOrder) return
+    setOrderLoading(true)
+    try {
+      const items = pendingOrder.items
+        .filter((i) => i.matched)
+        .map((i) => ({
+          ma_san_pham: i.product_id,
+          ten_san_pham: i.product_name,
+          so_luong: i.quantity,
+          gia_ban: i.price,
+          ghi_chu: [i.size ? `Size ${i.size}` : '', i.note || ''].filter(Boolean).join(', '),
+        }))
+
+      await apiClient.post('/orders', {
+        ma_nguoi_dung: userId,
+        phuong_thuc_thanh_toan: 'TIEN_MAT',
+        loai_don_hang: 'DELIVERY',
+        chi_tiet_don_hang: items,
+        ghi_chu: `Đặt qua AI Voice${pendingOrder.transcript ? ': ' + pendingOrder.transcript : ''}`,
+      })
+
+      sendMutation.mutate(`✅ Đã đặt hàng thành công! Tổng: ${formatCurrency(pendingOrder.total)}`)
+      setPendingOrder(null)
+      Alert.alert('🎉 Đặt hàng thành công!', 'Đơn hàng của bạn đang được xử lý.')
+    } catch (err) {
+      Alert.alert('Lỗi đặt hàng', 'Không thể tạo đơn. Thử lại nhé!')
+    } finally {
+      setOrderLoading(false)
+    }
+  }
+
+  // ─── Group messages by date ─────────────────────────────────────────────────
   const messagesWithDates = React.useMemo(() => {
     const result = []
     let lastDate = ''
@@ -172,7 +349,6 @@ export function ChatScreen({ navigation }) {
   }, [messages])
 
   const staffName = conversation?.ten_nhan_su_phu_trach || 'Tư vấn viên'
-
   const isLoading = openConversationMutation.isPending || (!conversationId && !openConversationMutation.isError)
 
   return (
@@ -191,8 +367,13 @@ export function ChatScreen({ navigation }) {
           </View>
           <View>
             <Text style={styles.headerTitle}>{staffName}</Text>
-            <Text style={styles.headerSubtitle}>Hỗ trợ khách hàng</Text>
+            <Text style={styles.headerSubtitle}>Hỗ trợ & Đặt hàng AI</Text>
           </View>
+        </View>
+        {/* Voice hint badge */}
+        <View style={styles.voiceHint}>
+          <Ionicons name="mic-outline" size={12} color="#f26b1d" />
+          <Text style={styles.voiceHintText}>Voice Order</Text>
         </View>
       </LinearGradient>
 
@@ -226,6 +407,19 @@ export function ChatScreen({ navigation }) {
             onContentSizeChange={() => {
               flatListRef.current?.scrollToEnd({ animated: true })
             }}
+            ListFooterComponent={
+              pendingOrder ? (
+                <VoiceOrderCard
+                  transcript={pendingOrder.transcript}
+                  items={pendingOrder.items}
+                  total={pendingOrder.total}
+                  message={pendingOrder.message}
+                  onConfirm={handleConfirmOrder}
+                  onDismiss={() => setPendingOrder(null)}
+                  loading={orderLoading}
+                />
+              ) : null
+            }
             ListEmptyComponent={
               <View style={styles.emptyChat}>
                 <View style={styles.emptyChatIcon}>
@@ -233,7 +427,8 @@ export function ChatScreen({ navigation }) {
                 </View>
                 <Text style={styles.emptyChatTitle}>Xin chào! 👋</Text>
                 <Text style={styles.emptyChatText}>
-                  Hãy gửi tin nhắn để nhân viên hỗ trợ có thể giúp bạn nhé!
+                  Chat hoặc nhấn 🎙️ để đặt hàng bằng giọng nói!{'\n'}
+                  Ví dụ: "Cho tôi 2 ly latte ít đường"
                 </Text>
               </View>
             }
@@ -250,13 +445,30 @@ export function ChatScreen({ navigation }) {
             }}
           />
 
+          {/* Recording overlay */}
+          {isRecording && (
+            <View style={styles.recordingOverlay}>
+              <MicPulse />
+              <Text style={styles.recordingText}>Đang nghe... Nhả để gửi</Text>
+              <Text style={styles.recordingHint}>Nói: "Cho tôi 2 ly latte ít đường"</Text>
+            </View>
+          )}
+
+          {/* Voice processing indicator */}
+          {voiceLoading && !isRecording && (
+            <View style={styles.voiceProcessing}>
+              <ActivityIndicator color={colors.primary} size="small" />
+              <Text style={styles.voiceProcessingText}>AI đang phân tích...</Text>
+            </View>
+          )}
+
           {/* Input Bar */}
           <View style={styles.inputBar}>
             <View style={styles.inputWrap}>
               <TextInput
                 value={messageText}
                 onChangeText={setMessageText}
-                placeholder="Nhập tin nhắn..."
+                placeholder='Nhập hoặc nói "Cho tôi 2 ly latte..."'
                 placeholderTextColor={colors.placeholder}
                 multiline
                 maxLength={500}
@@ -265,9 +477,34 @@ export function ChatScreen({ navigation }) {
                 blurOnSubmit={false}
               />
             </View>
+
+            {/* Mic button — hold to record */}
+            <Pressable
+              onPressIn={startRecording}
+              onPressOut={stopRecordingAndProcess}
+              disabled={voiceLoading}
+              style={({ pressed }) => [
+                styles.micBtn,
+                isRecording && styles.micBtnRecording,
+                pressed && { opacity: 0.85 },
+              ]}
+            >
+              <LinearGradient
+                colors={isRecording ? ['#ef4444', '#dc2626'] : ['#1a0a02', '#3d1a08']}
+                style={styles.micBtnGradient}
+              >
+                {voiceLoading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Ionicons name={isRecording ? 'stop' : 'mic'} size={18} color="#fff" />
+                )}
+              </LinearGradient>
+            </Pressable>
+
+            {/* Send button */}
             <Pressable
               onPress={handleSend}
-              disabled={!messageText.trim() || sendMutation.isPending}
+              disabled={!messageText.trim() || sendMutation.isPending || voiceLoading}
               style={({ pressed }) => [
                 styles.sendBtn,
                 (!messageText.trim() || sendMutation.isPending) && styles.sendBtnDisabled,
@@ -319,9 +556,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  headerAvatarWrap: {
-    position: 'relative',
-  },
+  headerAvatarWrap: { position: 'relative' },
   headerAvatar: {
     width: 40,
     height: 40,
@@ -340,16 +575,20 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#1a0a02',
   },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: '#fff',
+  headerTitle: { fontSize: 16, fontWeight: '900', color: '#fff' },
+  headerSubtitle: { fontSize: 11, color: 'rgba(255,255,255,0.6)', fontWeight: '500' },
+  voiceHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(242,107,29,0.2)',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(242,107,29,0.4)',
   },
-  headerSubtitle: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.6)',
-    fontWeight: '500',
-  },
+  voiceHintText: { fontSize: 10, color: '#f26b1d', fontWeight: '800' },
 
   // Loading
   loadingWrap: {
@@ -359,23 +598,14 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.xl,
   },
-  loadingText: {
-    color: colors.muted,
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
+  loadingText: { color: colors.muted, fontSize: 14, fontWeight: '600', textAlign: 'center' },
   retryBtn: {
     backgroundColor: colors.primary,
     borderRadius: radius.full,
     paddingHorizontal: spacing.xl,
     paddingVertical: 12,
   },
-  retryBtnText: {
-    color: '#fff',
-    fontWeight: '900',
-    fontSize: 14,
-  },
+  retryBtnText: { color: '#fff', fontWeight: '900', fontSize: 14 },
 
   // Messages
   messagesList: {
@@ -391,16 +621,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginVertical: spacing.md,
   },
-  dateLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.borderLight,
-  },
-  dateText: {
-    fontSize: 11,
-    color: colors.muted,
-    fontWeight: '700',
-  },
+  dateLine: { flex: 1, height: 1, backgroundColor: colors.borderLight },
+  dateText: { fontSize: 11, color: colors.muted, fontWeight: '700' },
 
   // Bubble
   bubbleRow: {
@@ -410,10 +632,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     maxWidth: '85%',
   },
-  bubbleRowOwn: {
-    alignSelf: 'flex-end',
-    flexDirection: 'row-reverse',
-  },
+  bubbleRowOwn: { alignSelf: 'flex-end', flexDirection: 'row-reverse' },
   avatarStaff: {
     width: 28,
     height: 28,
@@ -424,16 +643,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderLight,
   },
-  bubble: {
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    maxWidth: '100%',
-  },
-  bubbleOwn: {
-    backgroundColor: colors.primary,
-    borderBottomRightRadius: 4,
-  },
+  bubble: { borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10, maxWidth: '100%' },
+  bubbleOwn: { backgroundColor: colors.primary, borderBottomRightRadius: 4 },
   bubbleOther: {
     backgroundColor: '#fff',
     borderBottomLeftRadius: 4,
@@ -449,24 +660,10 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
-  bubbleText: {
-    fontSize: 14,
-    color: colors.text,
-    lineHeight: 20,
-  },
-  bubbleTextOwn: {
-    color: '#fff',
-  },
-  bubbleTime: {
-    fontSize: 10,
-    color: colors.muted,
-    marginTop: 4,
-    alignSelf: 'flex-end',
-    fontWeight: '500',
-  },
-  bubbleTimeOwn: {
-    color: 'rgba(255,255,255,0.7)',
-  },
+  bubbleText: { fontSize: 14, color: colors.text, lineHeight: 20 },
+  bubbleTextOwn: { color: '#fff' },
+  bubbleTime: { fontSize: 10, color: colors.muted, marginTop: 4, alignSelf: 'flex-end', fontWeight: '500' },
+  bubbleTimeOwn: { color: 'rgba(255,255,255,0.7)' },
 
   // Empty chat
   emptyChat: {
@@ -484,11 +681,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: spacing.sm,
   },
-  emptyChatTitle: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: colors.text,
-  },
+  emptyChatTitle: { fontSize: 20, fontWeight: '900', color: colors.text },
   emptyChatText: {
     fontSize: 14,
     color: colors.muted,
@@ -496,6 +689,44 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     paddingHorizontal: spacing.xl,
   },
+
+  // Recording overlay
+  recordingOverlay: {
+    position: 'absolute',
+    bottom: 80,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    gap: 8,
+  },
+  micPulse: { marginBottom: 4 },
+  micPulseGrad: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.lg,
+  },
+  recordingText: { fontSize: 15, fontWeight: '800', color: '#ef4444' },
+  recordingHint: { fontSize: 12, color: colors.muted, fontWeight: '500' },
+
+  // Voice processing
+  voiceProcessing: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    alignSelf: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    marginBottom: 4,
+    ...shadows.sm,
+  },
+  voiceProcessingText: { fontSize: 13, color: colors.primary, fontWeight: '700' },
 
   // Input bar
   inputBar: {
@@ -520,19 +751,18 @@ const styles = StyleSheet.create({
     paddingVertical: Platform.OS === 'ios' ? 10 : 6,
     maxHeight: 100,
   },
-  textInput: {
-    fontSize: 14,
-    color: colors.text,
-    lineHeight: 20,
-    fontWeight: '500',
+  textInput: { fontSize: 14, color: colors.text, lineHeight: 20, fontWeight: '500' },
+  micBtn: { borderRadius: radius.full, overflow: 'hidden' },
+  micBtnRecording: { transform: [{ scale: 1.1 }] },
+  micBtnGradient: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  sendBtn: {
-    borderRadius: radius.full,
-    overflow: 'hidden',
-  },
-  sendBtnDisabled: {
-    opacity: 0.6,
-  },
+  sendBtn: { borderRadius: radius.full, overflow: 'hidden' },
+  sendBtnDisabled: { opacity: 0.6 },
   sendBtnGradient: {
     width: 42,
     height: 42,

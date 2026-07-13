@@ -1,3 +1,4 @@
+import base64
 import logging
 import os
 import re
@@ -7,7 +8,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Request
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -19,6 +20,16 @@ from cf_service import CollaborativeFilterModel
 from db import get_db_engine
 from forecast_service import DemandForecastModel
 from ai_persistence import ensure_ai_storage, log_inference, safe_schema_name, upsert_model_registry
+
+# Groq: primary AI (chat + STT), Gemini: fallback
+from groq_service import (
+    groq_is_available,
+    groq_chat,
+    groq_transcribe_audio,
+    groq_extract_order_intent,
+    match_products_to_db,
+    GROQ_CHAT_MODEL,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -966,6 +977,38 @@ def get_behavior_insights(branch_code: str = "ALL", limit: int = 6, days: int = 
         )
         raise HTTPException(status_code=500, detail=f"Khong the tai du lieu hanh vi mua sam: {exc}") from exc
 
+# ─── Helper: Groq-primary chat reply ─────────────────────────────────────────
+
+def _groq_primary_chat_reply(
+    content: str,
+    user_name: str,
+    user_id: str,
+    base_context: Dict[str, Any],
+    recent_orders: List[Dict[str, Any]],
+    reply_to_text: str = "",
+) -> Optional[str]:
+    """Try Groq first for the AI chat reply. Returns text or None."""
+    if not groq_is_available():
+        return None
+
+    context_text = _render_context_for_prompt(base_context, recent_orders)
+
+    system_prompt = (
+        "Ban la nhan vien tu van Avengers Coffee, than thien va am tinh. "
+        "Su dung du lieu he thong (menu, khuyen mai, chi nhanh, don hang) de tu van chinh xac. "
+        "Neu khach co y dinh dat hang (noi 'cho toi', 'dat', 'order'...), "
+        "goi y ho bam nut 'Dat hang bang giong noi' hoac nhap mon muon dat. "
+        "Tra loi ngan gon, than thien, KHONG qua 3 cau tru khi can giai thich phuc tap."
+    )
+    user_prompt = (
+        f"DU LIEU HE THONG:\n{context_text}\n\n"
+        f"Thong tin khach: ten={user_name}, id={user_id or 'unknown'}\n"
+        f"{reply_to_text}\n"
+        f"Cau hoi: {content}"
+    )
+    return groq_chat(system_prompt=system_prompt, user_prompt=user_prompt, max_tokens=480)
+
+
 @app.post("/ai/chat")
 async def ai_chat(request: Request):
     started_at = perf_counter()
@@ -1010,6 +1053,27 @@ async def ai_chat(request: Request):
         base_context = _get_base_business_context()
         recent_orders = _get_user_recent_orders(user_id)
         context_text = _render_context_for_prompt(base_context, recent_orders)
+
+        # === Try Groq first (30 RPM free, fast) ===
+        groq_reply = _groq_primary_chat_reply(
+            content=content,
+            user_name=user_name,
+            user_id=user_id,
+            base_context=base_context,
+            recent_orders=recent_orders,
+            reply_to_text=reply_to_text,
+        )
+        if groq_reply:
+            _safe_log_inference(
+                endpoint="/ai/chat",
+                user_id=user_id or None,
+                status="success",
+                started_at=started_at,
+                request_payload={"content_preview": content[:180], "provider": "groq"},
+                response_payload={"reply_preview": groq_reply[:220], "provider": "groq"},
+            )
+            return {"reply": groq_reply, "status": "success", "provider": "groq"}
+        # === Groq unavailable → fall through to Gemini ===
 
         if _is_gemini_blocked():
             fallback_reply = _build_local_chat_fallback(content, user_name, base_context)
@@ -1090,7 +1154,7 @@ async def ai_chat(request: Request):
                 "reply_length": len(reply),
             },
         )
-        return {"reply": reply, "status": "success"}
+        return {"reply": reply, "status": "success", "provider": "gemini"}
     except requests.exceptions.HTTPError as e:
         error_message = _sanitize_error_text(str(e))
         status_code = e.response.status_code if e.response is not None else None
@@ -1190,6 +1254,184 @@ def get_recommendations(user_id: str, limit: int = 3, background_tasks: Backgrou
         )
         raise HTTPException(status_code=500, detail=str(exc))
 
+# ─────────────────────────────────────────────────────────────────────────────
+# /ai/chat/order-intent  — Text → Structured Order JSON
+# /ai/voice-order        — Audio file → STT → Order JSON
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _fetch_active_products() -> List[Dict[str, Any]]:
+    """Fetch all active products for fuzzy matching."""
+    sql = f"""
+        SELECT ma_san_pham, ten_san_pham, gia_ban, hinh_anh_url
+        FROM {MENU_SCHEMA}.san_pham
+        WHERE trang_thai = TRUE
+        ORDER BY la_hot DESC, la_moi DESC
+        LIMIT 80
+    """
+    try:
+        return _fetch_rows(sql)
+    except Exception as exc:
+        logger.warning("Cannot fetch products for order-intent: %s", exc)
+        return []
+
+
+class OrderIntentRequest(BaseModel):
+    text: str
+    user_id: Optional[str] = None
+    branch_code: Optional[str] = None
+
+
+@app.post("/ai/chat/order-intent")
+async def chat_order_intent(body: OrderIntentRequest):
+    """
+    Parse natural-language text into a structured order.
+    Input:  { text: "cho tôi 2 ly latte ít đường", user_id: "...", branch_code: "..." }
+    Output: { intent, items (matched to DB), estimated_total, can_order }
+    """
+    started_at = perf_counter()
+    text = (body.text or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="text is required")
+
+    if not groq_is_available():
+        raise HTTPException(
+            status_code=503,
+            detail="AI order-intent requires GROQ_API_KEY. Get free key at console.groq.com"
+        )
+
+    intent_data = groq_extract_order_intent(text)
+    if not intent_data:
+        return {
+            "intent": "OTHER",
+            "items": [],
+            "estimated_total": 0,
+            "can_order": False,
+            "message": "Mình chưa hiểu bạn muốn đặt gì, hãy thử nói rõ hơn nhé!",
+        }
+
+    intent = intent_data.get("intent", "OTHER")
+    raw_items = intent_data.get("items", []) or []
+
+    matched_items = []
+    estimated_total = 0.0
+    if intent == "ORDER" and raw_items:
+        db_products = _fetch_active_products()
+        matched_items = match_products_to_db(raw_items, db_products)
+        estimated_total = sum(i["subtotal"] for i in matched_items)
+
+    can_order = intent == "ORDER" and any(i["matched"] for i in matched_items)
+
+    _safe_log_inference(
+        endpoint="/ai/chat/order-intent",
+        user_id=body.user_id,
+        status="success",
+        started_at=started_at,
+        request_payload={"text_preview": text[:120]},
+        response_payload={"intent": intent, "items_count": len(matched_items), "total": estimated_total},
+    )
+    return {
+        "intent": intent,
+        "items": matched_items,
+        "estimated_total": estimated_total,
+        "can_order": can_order,
+        "delivery_type": intent_data.get("delivery_type"),
+        "branch_hint": intent_data.get("branch_hint") or body.branch_code,
+        "raw_text": text,
+        "message": (
+            "Mình đã hiểu đơn của bạn! Xác nhận để đặt hàng nhé."
+            if can_order
+            else ("Mình chưa tìm thấy sản phẩm phù hợp trong menu." if intent == "ORDER" else None)
+        ),
+    }
+
+
+@app.post("/ai/voice-order")
+async def voice_order(
+    audio: UploadFile = File(...),
+    user_id: str = Form(default=""),
+    branch_code: str = Form(default=""),
+    language: str = Form(default="vi"),
+):
+    """
+    Voice-to-Order: upload audio → Groq Whisper STT → order intent parsing.
+    Accepts: webm, m4a, mp4, wav, mp3 (from expo-av or MediaRecorder).
+    Returns same schema as /ai/chat/order-intent plus transcript.
+    """
+    started_at = perf_counter()
+
+    if not groq_is_available():
+        raise HTTPException(
+            status_code=503,
+            detail="Voice ordering requires GROQ_API_KEY. Get free key at console.groq.com"
+        )
+
+    # Read audio bytes
+    audio_bytes = await audio.read()
+    if not audio_bytes:
+        raise HTTPException(status_code=400, detail="Empty audio file")
+
+    filename = audio.filename or "audio.webm"
+
+    # Step 1: Whisper STT
+    transcript = groq_transcribe_audio(
+        audio_bytes=audio_bytes,
+        filename=filename,
+        language=language,
+    )
+    if not transcript:
+        _safe_log_inference(
+            endpoint="/ai/voice-order",
+            user_id=user_id or None,
+            status="error",
+            started_at=started_at,
+            error_message="STT failed",
+        )
+        raise HTTPException(status_code=422, detail="Không thể nhận dạng giọng nói. Hãy thử lại rõ hơn nhé!")
+
+    # Step 2: Extract order intent from transcript
+    intent_data = groq_extract_order_intent(transcript)
+    intent = (intent_data or {}).get("intent", "OTHER")
+    raw_items = (intent_data or {}).get("items", []) or []
+
+    matched_items = []
+    estimated_total = 0.0
+    if intent == "ORDER" and raw_items:
+        db_products = _fetch_active_products()
+        matched_items = match_products_to_db(raw_items, db_products)
+        estimated_total = sum(i["subtotal"] for i in matched_items)
+
+    can_order = intent == "ORDER" and any(i["matched"] for i in matched_items)
+
+    _safe_log_inference(
+        endpoint="/ai/voice-order",
+        user_id=user_id or None,
+        status="success",
+        started_at=started_at,
+        request_payload={"filename": filename, "size_bytes": len(audio_bytes), "language": language},
+        response_payload={"transcript": transcript[:120], "intent": intent, "items": len(matched_items)},
+    )
+    return {
+        "transcript": transcript,
+        "intent": intent,
+        "items": matched_items,
+        "estimated_total": estimated_total,
+        "can_order": can_order,
+        "delivery_type": (intent_data or {}).get("delivery_type"),
+        "branch_hint": (intent_data or {}).get("branch_hint") or branch_code or None,
+        "message": (
+            f'Mình đã nghe: "{transcript}". Đây là đơn của bạn, xác nhận nhé!'
+            if can_order
+            else f'Mình đã nghe: "{transcript}". Bạn muốn đặt gì từ menu Avengers Coffee?'
+        ),
+    }
+
+
 @app.get("/ai/health")
 def health():
-    return {"status": "ok", "cf_trained": cf_model.is_trained}
+    return {
+        "status": "ok",
+        "cf_trained": cf_model.is_trained,
+        "groq_available": groq_is_available(),
+        "groq_model": GROQ_CHAT_MODEL,
+        "stt_model": "whisper-large-v3-turbo",
+    }

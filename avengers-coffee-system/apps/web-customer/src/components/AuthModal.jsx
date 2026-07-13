@@ -1,9 +1,9 @@
 import React, { useRef, useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useMutation } from '@tanstack/react-query';
-import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import { GoogleOAuthProvider, GoogleLogin, useGoogleLogin } from '@react-oauth/google';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { apiClient } from '../lib/apiClient';
+import { postAuthRequest } from '../lib/authRequest';
 
 const BRAND_LOGO = 'A';
 
@@ -35,22 +35,19 @@ function AuthModalInner({
 
   const authMutation = useMutation({
     mutationFn: async ({ endpoint, payload }) => {
-      const response = await apiClient.post(endpoint, payload);
-      return response.data;
+      return postAuthRequest(endpoint, payload);
     },
   });
 
   const forgotRequestMutation = useMutation({
     mutationFn: async (payload) => {
-      const response = await apiClient.post('/auth/forgot-password/request', payload);
-      return response.data;
+      return postAuthRequest('/auth/forgot-password/request', payload);
     },
   });
 
   const forgotResetMutation = useMutation({
     mutationFn: async (payload) => {
-      const response = await apiClient.post('/auth/forgot-password/reset', payload);
-      return response.data;
+      return postAuthRequest('/auth/forgot-password/reset', payload);
     },
   });
 
@@ -64,13 +61,13 @@ function AuthModalInner({
   };
 
   const completeGoogleLogin = async (googleCredential, captchaToken) => {
-    const response = await apiClient.post('/auth/google', {
+    const response = await postAuthRequest('/auth/google', {
       googleToken: googleCredential,
       recaptchaToken: captchaToken,
     });
 
-    localStorage.setItem('token', response.data.accessToken);
-    onLoginSuccess(response.data.user);
+    localStorage.setItem('token', response.accessToken);
+    onLoginSuccess(response.user);
     resetSocialState();
     onClose();
   };
@@ -246,12 +243,12 @@ function AuthModalInner({
       }
 
       try {
-        const response = await apiClient.post('/auth/facebook', {
+        const response = await postAuthRequest('/auth/facebook', {
           facebookAccessToken: fbAccessToken,
         });
 
-        localStorage.setItem('token', response.data.accessToken);
-        onLoginSuccess(response.data.user);
+        localStorage.setItem('token', response.accessToken);
+        onLoginSuccess(response.user);
         done();
         resetSocialState();
         onClose();
@@ -449,9 +446,9 @@ function AuthModalInner({
           ) : (
             <>
 
-          {(canUseGoogle || canUseFacebook) && !showGooglePanel && (
+          {(canUseGoogle || canUseFacebook || !canUseGoogle) && !showGooglePanel && (
             <div className="mb-4 grid gap-3">
-              {canUseGoogle && (
+              {canUseGoogle ? (
                 <button
                   type="button"
                   onClick={() => {
@@ -459,6 +456,20 @@ function AuthModalInner({
                     setError('');
                   }}
                   className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#e4dfd7] bg-white px-4 py-3 text-sm font-black text-[#2e2a27] transition-all hover:border-[#d8c2b4] hover:bg-[#fffaf6]"
+                >
+                  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.6 3.9-5.5 3.9-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.2.8 3.9 1.4l2.6-2.5C16.8 3.3 14.6 2.4 12 2.4 6.7 2.4 2.4 6.7 2.4 12S6.7 21.6 12 21.6c6.9 0 9.6-4.8 9.6-7.3 0-.5-.1-.8-.1-1.2H12z"/>
+                    <path fill="#34A853" d="M2.4 7.6l3.2 2.3C6.5 7.9 9 6 12 6c1.9 0 3.2.8 3.9 1.4l2.6-2.5C16.8 3.3 14.6 2.4 12 2.4c-3.7 0-6.9 2.1-8.6 5.2z"/>
+                    <path fill="#4A90E2" d="M12 21.6c2.5 0 4.7-.8 6.2-2.2l-2.9-2.4c-.8.6-1.9 1-3.3 1-3.9 0-5.3-2.6-5.5-3.9l-3.2 2.5c1.7 3.2 5 5 8.7 5z"/>
+                    <path fill="#FBBC05" d="M2.4 16.4l3.2-2.5c-.2-.5-.3-1.1-.3-1.9s.1-1.4.3-2L2.4 7.6C1.7 9 1.2 10.5 1.2 12s.5 3 1.2 4.4z"/>
+                  </svg>
+                  <span>{isLoginView ? 'Đăng nhập với Google' : 'Đăng ký nhanh với Google'}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setError('Google chưa được cấu hình. Thêm VITE_GOOGLE_CLIENT_ID để bật nút này.')}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[#e4dfd7] bg-white px-4 py-3 text-sm font-black text-[#8e7f76]"
                 >
                   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
                     <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.6 3.9-5.5 3.9-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.2.8 3.9 1.4l2.6-2.5C16.8 3.3 14.6 2.4 12 2.4 6.7 2.4 2.4 6.7 2.4 12S6.7 21.6 12 21.6c6.9 0 9.6-4.8 9.6-7.3 0-.5-.1-.8-.1-1.2H12z"/>
@@ -541,6 +552,15 @@ function AuthModalInner({
                   locale="vi"
                   auto_select={false}
                   use_fedcm_for_prompt={false}
+                />
+              </div>
+
+              <div className="mt-3 flex justify-center">
+                <QuickGoogleButton
+                  onLoginSuccess={onLoginSuccess}
+                  resetSocialState={resetSocialState}
+                  onClose={onClose}
+                  setError={setError}
                 />
               </div>
 
@@ -647,6 +667,47 @@ function AuthModalInner({
         </div>
       </div>
     </div>
+  );
+}
+
+function QuickGoogleButton({ onLoginSuccess, resetSocialState, onClose, setError }) {
+  const GOOGLE_CLIENT_ID = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
+  const canUseGoogle = /\.apps\.googleusercontent\.com$/.test(GOOGLE_CLIENT_ID);
+
+  const handleQuickGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        const response = await postAuthRequest('/auth/google', {
+          googleToken: tokenResponse.access_token,
+          isAccessToken: true,
+        });
+
+        localStorage.setItem('token', response.accessToken);
+        onLoginSuccess(response.user);
+        resetSocialState();
+        onClose();
+      } catch (err) {
+        console.error('Google quick login error:', err);
+        setError(err?.response?.data?.message || 'Đăng nhập Google thất bại, vui lòng thử lại.');
+      }
+    },
+    onError: () => setError('Đăng nhập Google thất bại, vui lòng thử lại.'),
+  });
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        if (!canUseGoogle) {
+          setError('Google chưa được cấu hình. Thêm VITE_GOOGLE_CLIENT_ID để đăng nhập thật.');
+          return;
+        }
+        handleQuickGoogleLogin();
+      }}
+      className="rounded-full border border-[#eadfcd] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#8f6a50] hover:bg-[#fff7ef]"
+    >
+      Dùng Google fallback
+    </button>
   );
 }
 

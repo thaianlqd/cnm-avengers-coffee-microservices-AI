@@ -1476,6 +1476,96 @@ export class ThanhToanService {
     };
   }
 
+  async taoDonHangTrucTiep(payload: {
+    ma_nguoi_dung?: string;
+    phuong_thuc_thanh_toan?: string;
+    loai_don_hang?: string;
+    chi_tiet_don_hang?: Array<{
+      ma_san_pham?: string | number;
+      ten_san_pham?: string;
+      so_luong: number;
+      gia_ban?: number;
+      ghi_chu?: string;
+      kich_co?: string;
+      hinh_anh_url?: string;
+    }>;
+    ghi_chu?: string;
+    dia_chi_giao_hang?: string;
+  }) {
+    const maNguoiDung = payload.ma_nguoi_dung || 'GUEST';
+    const items = payload.chi_tiet_don_hang || [];
+    if (!items.length) {
+      throw new BadRequestException('Khong co san pham trong don hang');
+    }
+    const tongTien = items.reduce((sum, item) => sum + Number(item.gia_ban || 0) * Number(item.so_luong || 1), 0);
+    const maDonHang = crypto.randomUUID();
+    const branchCode = 'CN_Q1';
+
+    const donHang = await this.donHangRepo.save(
+      this.donHangRepo.create({
+        ma_don_hang: maDonHang,
+        ma_nguoi_dung: maNguoiDung,
+        co_so_ma: branchCode,
+        tong_tien: tongTien,
+        dia_chi_giao_hang: payload.dia_chi_giao_hang || 'Tại quán / Giao hàng AI',
+        ghi_chu: payload.ghi_chu || 'Đặt qua AI',
+        phuong_thuc_thanh_toan: (payload.phuong_thuc_thanh_toan as any) || 'THANH_TOAN_KHI_NHAN_HANG',
+        trang_thai_thanh_toan: 'CHO_THANH_TOAN_KHI_NHAN_HANG',
+        trang_thai_don_hang: 'MOI_TAO',
+        tien_thoi: 0,
+        lich_su_trang_thai: [
+          {
+            loai: 'ORDER',
+            trang_thai: 'MOI_TAO',
+            thoi_gian: new Date().toISOString(),
+            ghi_chu: 'Đơn hàng AI trực tiếp',
+          },
+        ],
+      }),
+    );
+
+    const chiTiet = items.map((item) =>
+      this.chiTietRepo.create({
+        ma_don_hang: donHang.ma_don_hang,
+        ma_san_pham: Number(item.ma_san_pham || 1),
+        ten_san_pham: item.ten_san_pham || 'Sản phẩm',
+        gia_ban: Number(item.gia_ban || 0),
+        so_luong: Number(item.so_luong || 1),
+        kich_co: item.kich_co || 'Nhỏ',
+        hinh_anh_url: item.hinh_anh_url || null,
+      }),
+    );
+    await this.chiTietRepo.save(chiTiet);
+
+    await this.giaoDichRepo.save(
+      this.giaoDichRepo.create({
+        ma_don_hang: donHang.ma_don_hang,
+        cong_thanh_toan: (payload.phuong_thuc_thanh_toan as any) || 'THANH_TOAN_KHI_NHAN_HANG',
+        ma_tham_chieu: `${donHang.ma_don_hang}_AI`,
+        so_tien: tongTien,
+        trang_thai: 'CHO_THU_TIEN',
+      }),
+    );
+
+    try {
+      await this.notificationService.taoThongBao({
+        ma_nguoi_dung: maNguoiDung,
+        tieu_de: 'Đơn hàng AI thành công',
+        noi_dung: `Đơn #${donHang.ma_don_hang} đã được tạo qua AI thành công. Tổng tiền: ${tongTien.toLocaleString('vi-VN')}đ`,
+        loai: 'ORDER',
+        du_lieu: { ma_don_hang: donHang.ma_don_hang, trang_thai_don_hang: donHang.trang_thai_don_hang },
+      });
+    } catch {}
+
+    return {
+      success: true,
+      message: 'Tạo đơn hàng thành công',
+      don_hang: donHang,
+      chi_tiet: chiTiet,
+    };
+  }
+
+
   // --- VNPAY LOGIC ---
   private taoUrlVnpayThat(maNguoiDung: string, maDonHang: string, tongTien: number, txnRef: string, ipAddr: string) {
     const returnBase = this.VNP_RETURN_BASE_URL.replace(/\/+$/, '');

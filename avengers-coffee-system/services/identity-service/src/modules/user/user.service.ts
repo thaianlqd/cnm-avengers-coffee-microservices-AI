@@ -1537,6 +1537,7 @@ export class UserService {
     async loginWithGoogle(payload: {
       googleToken: string;
       googleTokenId?: string;
+      isAccessToken?: boolean;
       recaptchaToken?: string;
     }) {
       if (!payload.googleToken && !payload.googleTokenId) {
@@ -1545,14 +1546,29 @@ export class UserService {
 
       let googleData: any = {};
       try {
-        const parts = (payload.googleToken || payload.googleTokenId || '').split('.');
-        if (parts.length === 3) {
+        const rawToken = String(payload.googleToken || payload.googleTokenId || '').trim();
+        const parts = rawToken.split('.');
+
+        if (payload.isAccessToken || parts.length !== 3) {
+          const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: {
+              Authorization: `Bearer ${rawToken}`,
+            },
+          });
+
+          const payloadText = await response.text();
+          const parsedPayload = payloadText ? JSON.parse(payloadText) : {};
+
+          if (!response.ok) {
+            throw new Error(parsedPayload?.error || 'Invalid Google access token');
+          }
+
+          googleData = parsedPayload;
+        } else {
           const payload_decoded = JSON.parse(
             Buffer.from(parts[1], 'base64').toString('utf8')
           );
           googleData = payload_decoded;
-        } else {
-          throw new Error('Invalid token format');
         }
       } catch (err) {
         throw new UnauthorizedException('Token Google không hợp lệ');
