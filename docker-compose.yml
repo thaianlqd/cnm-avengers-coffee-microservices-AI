@@ -1,24 +1,24 @@
 services:
-  # CSDL PostgreSQL
-  postgres-db:
-    image: postgres:16
-    container_name: avengers_db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-123}
-      POSTGRES_DB: ${POSTGRES_DB:-avengers_coffee}
-    ports:
-      - "${POSTGRES_PORT:-5433}:5432"
-    volumes:
-      - avengers_pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-avengers_coffee}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - avengers-network
+#  # CSDL PostgreSQL
+#  postgres-db:
+#    image: postgres:16
+#    container_name: avengers_db
+#    restart: unless-stopped
+#    environment:
+#      POSTGRES_USER: ${POSTGRES_USER:-admin}
+#      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-123}
+#      POSTGRES_DB: ${POSTGRES_DB:-avengers_coffee}
+#    ports:
+#      - "${POSTGRES_PORT:-5433}:5432"
+#    volumes:
+#      - avengers_pgdata:/var/lib/postgresql/data
+#    healthcheck:
+#      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-avengers_coffee}"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#    networks:
+#      - avengers-network
 
   # Bộ nhớ đệm Redis
   redis-cache:
@@ -57,9 +57,6 @@ services:
       context: ./avengers-coffee-system/services/identity-service
     container_name: avengers_identity_service
     restart: unless-stopped
-    depends_on:
-      postgres-db:
-        condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: ${IDENTITY_PORT:-3001}
@@ -75,11 +72,13 @@ services:
       FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
       FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-avengers-internal-token}
-      DB_HOST: postgres-db
-      DB_PORT: 5432
+      DB_HOST: ${DB_HOST:-postgres-db}
+      DB_PORT: ${DB_PORT:-5432}
       DB_USER: ${DB_USER:-admin}
       DB_PASSWORD: ${DB_PASSWORD:-123}
       DB_NAME: ${DB_NAME:-avengers_coffee}
+      PGSSLMODE: ${PGSSLMODE:-require}
+      NODE_TLS_REJECT_UNAUTHORIZED: ${NODE_TLS_REJECT_UNAUTHORIZED:-0}
       DB_SCHEMA: ${IDENTITY_DB_SCHEMA:-identity}
     expose:
       - "${IDENTITY_PORT:-3001}"
@@ -91,17 +90,16 @@ services:
       context: ./avengers-coffee-system/services/menu-service
     container_name: avengers_menu_service
     restart: unless-stopped
-    depends_on:
-      postgres-db:
-        condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: ${MENU_PORT:-3003}
-      DB_HOST: postgres-db
-      DB_PORT: 5432
+      DB_HOST: ${DB_HOST:-postgres-db}
+      DB_PORT: ${DB_PORT:-5432}
       DB_USER: ${DB_USER:-admin}
       DB_PASSWORD: ${DB_PASSWORD:-123}
       DB_NAME: ${DB_NAME:-avengers_coffee}
+      PGSSLMODE: ${PGSSLMODE:-require}
+      NODE_TLS_REJECT_UNAUTHORIZED: ${NODE_TLS_REJECT_UNAUTHORIZED:-0}
       DB_SCHEMA: ${MENU_DB_SCHEMA:-menu}
     volumes:
       - ./avengers-coffee-system/apps/web-customer/public/images/products:/app/uploads/products
@@ -115,17 +113,16 @@ services:
       context: ./avengers-coffee-system/services/inventory-service
     container_name: avengers_inventory_service
     restart: unless-stopped
-    depends_on:
-      postgres-db:
-        condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: ${INVENTORY_PORT:-3004}
-      DB_HOST: postgres-db
-      DB_PORT: 5432
+      DB_HOST: ${DB_HOST:-postgres-db}
+      DB_PORT: ${DB_PORT:-5432}
       DB_USER: ${DB_USER:-admin}
       DB_PASSWORD: ${DB_PASSWORD:-123}
       DB_NAME: ${DB_NAME:-avengers_coffee}
+      PGSSLMODE: ${PGSSLMODE:-require}
+      NODE_TLS_REJECT_UNAUTHORIZED: ${NODE_TLS_REJECT_UNAUTHORIZED:-0}
       DB_SCHEMA: ${INVENTORY_DB_SCHEMA:-inventory}
     expose:
       - "${INVENTORY_PORT:-3004}"
@@ -138,8 +135,6 @@ services:
     container_name: avengers_order_service
     restart: unless-stopped
     depends_on:
-      postgres-db:
-        condition: service_healthy
       redis-cache:
         condition: service_healthy
       rabbitmq:
@@ -149,11 +144,13 @@ services:
       PORT: ${ORDER_PORT:-3005}
       JWT_SECRET: ${JWT_SECRET:-avengers-jwt-secret}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-avengers-internal-token}
-      DB_HOST: postgres-db
-      DB_PORT: 5432
+      DB_HOST: ${DB_HOST:-postgres-db}
+      DB_PORT: ${DB_PORT:-5432}
       DB_USER: ${DB_USER:-admin}
       DB_PASSWORD: ${DB_PASSWORD:-123}
       DB_NAME: ${DB_NAME:-avengers_coffee}
+      PGSSLMODE: ${PGSSLMODE:-require}
+      NODE_TLS_REJECT_UNAUTHORIZED: ${NODE_TLS_REJECT_UNAUTHORIZED:-0}
       DB_SCHEMA: ${ORDER_DB_SCHEMA:-orders}
       PAYMENT_RETURN_BASE_URL: ${PAYMENT_RETURN_BASE_URL:-http://localhost:3000}
       WEB_CUSTOMER_BASE_URL: ${WEB_CUSTOMER_BASE_URL:-http://localhost:5173}
@@ -179,19 +176,18 @@ services:
       context: ./avengers-coffee-system/services/news-service
     container_name: avengers_news_service
     restart: unless-stopped
-    depends_on:
-      postgres-db:
-        condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: ${NEWS_PORT:-3006}
       JWT_SECRET: ${JWT_SECRET:-avengers-jwt-secret}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
-      DB_HOST: postgres-db
-      DB_PORT: 5432
+      DB_HOST: ${DB_HOST:-postgres-db}
+      DB_PORT: ${DB_PORT:-5432}
       DB_USER: ${DB_USER:-admin}
       DB_PASSWORD: ${DB_PASSWORD:-123}
       DB_NAME: ${DB_NAME:-avengers_coffee}
+      PGSSLMODE: ${PGSSLMODE:-require}
+      NODE_TLS_REJECT_UNAUTHORIZED: ${NODE_TLS_REJECT_UNAUTHORIZED:-0}
       DB_SCHEMA: ${NEWS_DB_SCHEMA:-news}
       UPLOAD_ROOT_DIR: /app/uploads
     volumes:
@@ -238,15 +234,13 @@ services:
       context: ./avengers-coffee-system/services/ai-service
     container_name: avengers_ai_service
     restart: unless-stopped
-    depends_on:
-      postgres-db:
-        condition: service_healthy
     environment:
-      DB_HOST: postgres-db
-      DB_PORT: 5432
+      DB_HOST: ${DB_HOST:-postgres-db}
+      DB_PORT: ${DB_PORT:-5432}
       DB_USER: ${DB_USER:-admin}
       DB_PASSWORD: ${DB_PASSWORD:-123}
       DB_NAME: ${DB_NAME:-avengers_coffee}
+      PGSSLMODE: ${PGSSLMODE:-require}
       AI_PORT: ${AI_PORT:-8000}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
@@ -299,8 +293,9 @@ services:
 
 
 
-volumes:
-  avengers_pgdata:
+# volumes:
+#   avengers_pgdata:
+
 
 networks:
   avengers-network:
