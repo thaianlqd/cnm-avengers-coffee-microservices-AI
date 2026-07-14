@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { 
-  ShoppingCartIcon, 
+import {
+  ShoppingCartIcon,
   HeartIcon,
-  UserIcon, 
-  MagnifyingGlassIcon, 
+  UserIcon,
+  MagnifyingGlassIcon,
   ArrowRightOnRectangleIcon,
   UserCircleIcon,
   ClipboardDocumentListIcon,
@@ -27,9 +27,9 @@ function fmtNotificationTime(value) {
   return new Date(value).toLocaleDateString('vi-VN');
 }
 
-export default function Header({ 
-  userName = 'Đăng nhập', 
-  cartCount = 0, 
+export default function Header({
+  userName = 'Đăng nhập',
+  cartCount = 0,
   activeTab = 'order',
   onTabChange,
   searchKeyword,
@@ -47,8 +47,8 @@ export default function Header({
   onSortByChange,
   filteredCount = 0,
   onResetSearchFilters,
-  onOpenAccount, 
-  onLogout, 
+  onOpenAccount,
+  onLogout,
   onOpenCart,
   onOpenOrderHistory,
   onOpenProfile,
@@ -88,7 +88,7 @@ export default function Header({
     <header className="sticky top-0 z-50 bg-[#b22830] shadow-lg">
       {/* Top bar */}
       <div className="mx-auto flex h-[84px] w-full max-w-[1380px] items-center justify-between px-4 md:px-6 relative">
-        
+
         {/* Left nav */}
         <nav className="hidden flex-1 items-center justify-start gap-8 lg:flex">
           {leftNavItems.map((item) => (
@@ -101,11 +101,10 @@ export default function Header({
                     onSelectedCatIdChange?.('all');
                   }
                 }}
-                className={`relative py-7 text-[14px] font-black uppercase tracking-widest transition-all ${
-                  activeTab === item.id 
-                    ? 'text-white' 
+                className={`relative py-7 text-[14px] font-black uppercase tracking-widest transition-all ${activeTab === item.id
+                    ? 'text-white'
                     : 'text-white hover:text-white/80'
-                }`}
+                  }`}
               >
                 {item.label}
               </button>
@@ -115,16 +114,16 @@ export default function Header({
                   <div className="mx-auto max-w-[1380px] px-10 py-8 flex flex-row justify-between items-start">
                     {/* Grouping Logic inline for UI */}
                     {(() => {
-                      const coffeeCats = categories.filter(c => 
-                        c.ten_danh_muc.toLowerCase().includes('cà phê') || 
-                        c.ten_danh_muc.toLowerCase().includes('phindi') || 
+                      const coffeeCats = categories.filter(c =>
+                        c.ten_danh_muc.toLowerCase().includes('cà phê') ||
+                        c.ten_danh_muc.toLowerCase().includes('phindi') ||
                         c.ten_danh_muc.toLowerCase().includes('espresso')
                       );
-                      const teaCats = categories.filter(c => 
-                        c.ten_danh_muc.toLowerCase().includes('trà') && 
+                      const teaCats = categories.filter(c =>
+                        c.ten_danh_muc.toLowerCase().includes('trà') &&
                         !c.ten_danh_muc.toLowerCase().includes('cà phê')
                       );
-                      const freezeCats = categories.filter(c => 
+                      const freezeCats = categories.filter(c =>
                         c.ten_danh_muc.toLowerCase().includes('freeze')
                       );
                       const usedIds = new Set([
@@ -143,9 +142,18 @@ export default function Header({
 
                       return cols.map((col, idx) => (
                         <div key={idx} className="flex flex-col min-w-[200px]">
-                          <h4 className="text-[#c99551] font-bold text-[14px] uppercase mb-4 tracking-wide">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onTabChange?.('menu-intro');
+                              onSelectedCatIdChange?.(`group-${col.title.toLowerCase()}`);
+                              document.activeElement?.blur();
+                            }}
+                            className="text-[#c99551] hover:text-white font-bold text-[14px] uppercase mb-4 tracking-wide text-left transition-colors cursor-pointer"
+                          >
                             {col.title}
-                          </h4>
+                          </button>
                           <ul className="flex flex-col gap-3">
                             {col.items.map(cat => (
                               <li key={cat.ma_danh_muc}>
@@ -154,7 +162,7 @@ export default function Header({
                                   className="text-white text-[14px] hover:text-[#c99551] transition-colors text-left"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    onTabChange?.('order');
+                                    onTabChange?.('menu-intro');
                                     onSelectedCatIdChange?.(cat.ma_danh_muc);
                                     // Bỏ focus/hover để đóng dropdown nếu cần
                                     document.activeElement?.blur();
@@ -176,7 +184,7 @@ export default function Header({
         </nav>
 
         {/* Center logo */}
-        <div 
+        <div
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex shrink-0 cursor-pointer items-center justify-center z-10"
           onClick={() => onTabChange?.('home')}
         >
@@ -185,16 +193,15 @@ export default function Header({
 
         {/* Right nav & tools */}
         <div className="hidden flex-1 items-center justify-end gap-6 lg:flex">
-          
+
           {/* Đặt hàng CTA */}
           <button
             type="button"
             onClick={() => onTabChange?.('order')}
-            className={`rounded-full px-5 py-2 text-[13px] font-black tracking-widest transition-all uppercase ${
-              activeTab === 'order'
+            className={`rounded-full px-5 py-2 text-[13px] font-black tracking-widest transition-all uppercase ${activeTab === 'order'
                 ? 'bg-transparent text-white'
                 : 'text-white hover:text-white/80'
-            }`}
+              }`}
           >
             ĐẶT HÀNG
           </button>
@@ -224,102 +231,102 @@ export default function Header({
 
             {/* Search */}
             {isOrderTab && (
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowSearchPopover((prev) => !prev)}
-                className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-              >
-                <MagnifyingGlassIcon className="h-5 w-5" />
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowSearchPopover((prev) => !prev)}
+                  className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                >
+                  <MagnifyingGlassIcon className="h-5 w-5" />
+                </button>
 
-              {showSearchPopover && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowSearchPopover(false)}></div>
-                  <div className="absolute right-0 top-full z-50 mt-3 w-[92vw] max-w-[940px] rounded-2xl border border-gray-100 bg-white p-4 shadow-2xl">
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
-                      <input
-                        value={searchKeyword}
-                        onChange={(e) => onSearchKeywordChange?.(e.target.value)}
-                        className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
-                        placeholder="Tìm theo tên, mô tả, danh mục..."
-                      />
+                {showSearchPopover && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowSearchPopover(false)}></div>
+                    <div className="absolute right-0 top-full z-50 mt-3 w-[92vw] max-w-[940px] rounded-2xl border border-gray-100 bg-white p-4 shadow-2xl">
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
+                        <input
+                          value={searchKeyword}
+                          onChange={(e) => onSearchKeywordChange?.(e.target.value)}
+                          className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
+                          placeholder="Tìm theo tên, mô tả, danh mục..."
+                        />
 
-                      <select
-                        value={selectedCatId}
-                        onChange={(e) => onSelectedCatIdChange?.(e.target.value)}
-                        className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
-                      >
-                        <option value="all">Tất cả loại</option>
-                        {categories.map((cat) => (
-                          <option key={cat.ma_danh_muc} value={cat.ma_danh_muc}>
-                            {cat.ten_danh_muc}
-                          </option>
-                        ))}
-                      </select>
+                        <select
+                          value={selectedCatId}
+                          onChange={(e) => onSelectedCatIdChange?.(e.target.value)}
+                          className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
+                        >
+                          <option value="all">Tất cả loại</option>
+                          {categories.map((cat) => (
+                            <option key={cat.ma_danh_muc} value={cat.ma_danh_muc}>
+                              {cat.ten_danh_muc}
+                            </option>
+                          ))}
+                        </select>
 
-                      <select
-                        value={availabilityFilter}
-                        onChange={(e) => onAvailabilityFilterChange?.(e.target.value)}
-                        className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
-                      >
-                        <option value="ALL">Tất cả tình trạng</option>
-                        <option value="AVAILABLE">Đang bán</option>
-                        <option value="OUT_OF_STOCK">Hết món</option>
-                      </select>
+                        <select
+                          value={availabilityFilter}
+                          onChange={(e) => onAvailabilityFilterChange?.(e.target.value)}
+                          className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
+                        >
+                          <option value="ALL">Tất cả tình trạng</option>
+                          <option value="AVAILABLE">Đang bán</option>
+                          <option value="OUT_OF_STOCK">Hết món</option>
+                        </select>
 
-                      <select
-                        value={priceFilter}
-                        onChange={(e) => onPriceFilterChange?.(e.target.value)}
-                        className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
-                      >
-                        <option value="ALL">Tất cả khoảng giá</option>
-                        <option value="DUOI_30000">Dưới 30.000đ</option>
-                        <option value="TU_30000_DEN_50000">30.000đ - 50.000đ</option>
-                        <option value="TREN_50000">Trên 50.000đ</option>
-                      </select>
+                        <select
+                          value={priceFilter}
+                          onChange={(e) => onPriceFilterChange?.(e.target.value)}
+                          className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
+                        >
+                          <option value="ALL">Tất cả khoảng giá</option>
+                          <option value="DUOI_30000">Dưới 30.000đ</option>
+                          <option value="TU_30000_DEN_50000">30.000đ - 50.000đ</option>
+                          <option value="TREN_50000">Trên 50.000đ</option>
+                        </select>
 
-                      <select
-                        value={criteriaFilter}
-                        onChange={(e) => onCriteriaFilterChange?.(e.target.value)}
-                        className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
-                      >
-                        <option value="ALL">Tất cả tiêu chí</option>
-                        <option value="PROMO">Khuyến mãi / Giảm giá</option>
-                        <option value="HOT">Món hot</option>
-                        <option value="NEW">Món mới</option>
-                      </select>
+                        <select
+                          value={criteriaFilter}
+                          onChange={(e) => onCriteriaFilterChange?.(e.target.value)}
+                          className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
+                        >
+                          <option value="ALL">Tất cả tiêu chí</option>
+                          <option value="PROMO">Khuyến mãi / Giảm giá</option>
+                          <option value="HOT">Món hot</option>
+                          <option value="NEW">Món mới</option>
+                        </select>
 
-                      <select
-                        value={sortBy}
-                        onChange={(e) => onSortByChange?.(e.target.value)}
-                        className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
-                      >
-                        <option value="DEFAULT">Sắp xếp mặc định</option>
-                        <option value="NAME_ASC">Tên A-Z</option>
-                        <option value="NAME_DESC">Tên Z-A</option>
-                        <option value="PRICE_ASC">Giá thấp đến cao</option>
-                        <option value="PRICE_DESC">Giá cao đến thấp</option>
-                      </select>
+                        <select
+                          value={sortBy}
+                          onChange={(e) => onSortByChange?.(e.target.value)}
+                          className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
+                        >
+                          <option value="DEFAULT">Sắp xếp mặc định</option>
+                          <option value="NAME_ASC">Tên A-Z</option>
+                          <option value="NAME_DESC">Tên Z-A</option>
+                          <option value="PRICE_ASC">Giá thấp đến cao</option>
+                          <option value="PRICE_DESC">Giá cao đến thấp</option>
+                        </select>
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                          Tìm thấy {filteredCount} sản phẩm
+                        </p>
+                        <button
+                          type="button"
+                          onClick={onResetSearchFilters}
+                          className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-bold uppercase tracking-wide text-gray-500 hover:border-[#1a8b46] hover:text-[#1a8b46]"
+                        >
+                          Xóa bộ lọc
+                        </button>
+                      </div>
                     </div>
-
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                      <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                        Tìm thấy {filteredCount} sản phẩm
-                      </p>
-                      <button
-                        type="button"
-                        onClick={onResetSearchFilters}
-                        className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-bold uppercase tracking-wide text-gray-500 hover:border-[#1a8b46] hover:text-[#1a8b46]"
-                      >
-                        Xóa bộ lọc
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Temporarily hidden: Notifications, User Account, Favorites, Cart */}
@@ -351,9 +358,8 @@ export default function Header({
                     onTabChange?.(item.id);
                     setShowMobileMenu(false);
                   }}
-                  className={`rounded-lg px-4 py-3 text-left text-[13px] font-extrabold tracking-[0.1em] transition-colors ${
-                    activeTab === item.id ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
-                  }`}
+                  className={`rounded-lg px-4 py-3 text-left text-[13px] font-extrabold tracking-[0.1em] transition-colors ${activeTab === item.id ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                    }`}
                 >
                   {item.label}
                 </button>
