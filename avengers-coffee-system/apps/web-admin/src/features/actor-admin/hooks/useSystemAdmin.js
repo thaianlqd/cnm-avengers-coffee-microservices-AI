@@ -214,6 +214,12 @@ const DEFAULT_MENU_FORM = {
   dang_ban: true,
   la_hot: false,
   la_moi: false,
+  slug: '',
+  sizes: '',
+  toppings: '',
+  luong_da: '',
+  do_ngot: '',
+  loai_sua: ''
 }
 
 const DEFAULT_CATEGORY_FORM = {
@@ -983,6 +989,12 @@ export function useSystemAdmin() {
       dang_ban: Boolean(item.dang_ban),
       la_hot: Boolean(item.la_hot),
       la_moi: Boolean(item.la_moi),
+      slug: item.slug || '',
+      sizes: item.sizes ? JSON.stringify(item.sizes) : '',
+      toppings: item.toppings ? JSON.stringify(item.toppings) : '',
+      luong_da: item.luong_da ? JSON.stringify(item.luong_da) : '',
+      do_ngot: item.do_ngot ? JSON.stringify(item.do_ngot) : '',
+      loai_sua: item.loai_sua ? JSON.stringify(item.loai_sua) : '',
     })
   }
 
@@ -1002,6 +1014,22 @@ export function useSystemAdmin() {
         throw new Error('Danh muc duoc chon khong ton tai, vui long chon lai danh muc hop le')
       }
 
+      let parsedSizes = null;
+      let parsedToppings = null;
+      let parsedLuongDa = null;
+      let parsedDoNgot = null;
+      let parsedLoaiSua = null;
+
+      try {
+        if (menuForm.sizes) parsedSizes = JSON.parse(menuForm.sizes);
+        if (menuForm.toppings) parsedToppings = JSON.parse(menuForm.toppings);
+        if (menuForm.luong_da) parsedLuongDa = JSON.parse(menuForm.luong_da);
+        if (menuForm.do_ngot) parsedDoNgot = JSON.parse(menuForm.do_ngot);
+        if (menuForm.loai_sua) parsedLoaiSua = JSON.parse(menuForm.loai_sua);
+      } catch (e) {
+        throw new Error('Định dạng JSON không hợp lệ ở các trường JSON. Vui lòng kiểm tra lại.');
+      }
+
       const payload = {
         name: menuForm.name,
         category_code: menuForm.category_code,
@@ -1012,6 +1040,12 @@ export function useSystemAdmin() {
         dang_ban: Boolean(menuForm.dang_ban),
         la_hot: Boolean(menuForm.la_hot),
         la_moi: Boolean(menuForm.la_moi),
+        slug: menuForm.slug || normalizeText(menuForm.name).replace(/\s+/g, '-'),
+        sizes: parsedSizes,
+        toppings: parsedToppings,
+        luong_da: parsedLuongDa,
+        do_ngot: parsedDoNgot,
+        loai_sua: parsedLoaiSua,
       }
 
       const method = editingMenuId ? 'PATCH' : 'POST'

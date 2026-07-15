@@ -17,10 +17,34 @@ export default function ProductDetailPage({
   onNavigate,
 }) {
   const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState('M'); // Mặc định size M hoặc 500g
+  const availableSizes = product?.sizes || {};
+  const sizeKeys = Object.keys(availableSizes);
+  const defaultSize = sizeKeys.length > 0 ? sizeKeys[0] : '';
+  const [selectedSize, setSelectedSize] = useState(defaultSize);
+
+  const availableToppings = product?.toppings || {};
+  const toppingKeys = Object.keys(availableToppings);
+  const [selectedToppings, setSelectedToppings] = useState([]);
+
+  const availableLuongDa = product?.luong_da || {};
+  const ldKeys = Object.keys(availableLuongDa);
+  const [selectedLuongDa, setSelectedLuongDa] = useState(ldKeys.length > 0 ? ldKeys[0] : '');
+
+  const availableDoNgot = product?.do_ngot || {};
+  const dnKeys = Object.keys(availableDoNgot);
+  const [selectedDoNgot, setSelectedDoNgot] = useState(dnKeys.length > 0 ? dnKeys[0] : '');
+
+  const availableLoaiSua = product?.loai_sua || {};
+  const lsKeys = Object.keys(availableLoaiSua);
+  const [selectedLoaiSua, setSelectedLoaiSua] = useState(lsKeys.length > 0 ? lsKeys[0] : '');
+
   const [modalProduct, setModalProduct] = useState(null); // Cho modal ảnh 5
   const [modalQuantity, setModalQuantity] = useState(1);
-  const [modalSize, setModalSize] = useState('200g');
+  const [modalSize, setModalSize] = useState('');
+  const [modalLuongDa, setModalLuongDa] = useState('');
+  const [modalDoNgot, setModalDoNgot] = useState('');
+  const [modalLoaiSua, setModalLoaiSua] = useState('');
+  const [modalToppings, setModalToppings] = useState([]);
   const [toastMessage, setToastMessage] = useState('');
 
   const showToast = (msg) => {
@@ -42,7 +66,15 @@ export default function ProductDetailPage({
     );
   }
 
-  const price = Number(product.gia_ban || product.price || 30000);
+  const basePrice = (selectedSize && availableSizes[selectedSize] !== undefined) 
+    ? Number(availableSizes[selectedSize]) 
+    : Number(product?.gia_ban || product?.price || 30000);
+
+  const toppingsPrice = selectedToppings.reduce((acc, t) => acc + Number(availableToppings[t] || 0), 0);
+  const loaiSuaPrice = (selectedLoaiSua && availableLoaiSua[selectedLoaiSua] !== undefined) ? Number(availableLoaiSua[selectedLoaiSua]) : 0;
+  
+  const price = basePrice + toppingsPrice + loaiSuaPrice;
+
   const sku = product.ma_san_pham ? `0CPG0${String(product.ma_san_pham).slice(-2)}` : '0CPG07';
   const categoryName = product.danhMuc?.ten_danh_muc || product.categoryName || 'Cà Phê Đóng Gói';
 
@@ -72,7 +104,12 @@ export default function ProductDetailPage({
   }, [products]);
 
   const handleMainAddToCart = (isBuyNow = false) => {
-    onAddToCart?.(product, quantity, selectedSize);
+    onAddToCart?.(product, quantity, selectedSize, {
+      toppings: selectedToppings,
+      luongDa: selectedLuongDa,
+      doNgot: selectedDoNgot,
+      loaiSua: selectedLoaiSua,
+    });
     showToast(`Đã thêm ${quantity} x ${product.ten_san_pham} vào giỏ hàng!`);
     if (isBuyNow) {
       setTimeout(() => onNavigate?.('cart'), 500);
@@ -81,8 +118,13 @@ export default function ProductDetailPage({
 
   const handleModalAddToCart = () => {
     if (!modalProduct) return;
-    onAddToCart?.(modalProduct, modalQuantity, modalSize);
-    showToast(`Đã thêm ${modalQuantity} x ${modalProduct.ten_san_pham} (${modalSize}) vào giỏ hàng!`);
+    onAddToCart?.(modalProduct, modalQuantity, modalSize, {
+      toppings: modalToppings,
+      luongDa: modalLuongDa,
+      doNgot: modalDoNgot,
+      loaiSua: modalLoaiSua,
+    });
+    showToast(`Đã thêm ${modalQuantity} x ${modalProduct.ten_san_pham} vào giỏ hàng!`);
     setModalProduct(null);
   };
 
@@ -154,25 +196,129 @@ export default function ProductDetailPage({
               </div>
 
               {/* Size options if applicable */}
-              <div className="mt-6">
-                <span className="block text-sm font-bold text-gray-700 mb-2">Kích thước:</span>
-                <div className="flex items-center gap-3">
-                  {['S', 'M', 'L'].map((sz) => (
-                    <button
-                      key={sz}
-                      type="button"
-                      onClick={() => setSelectedSize(sz)}
-                      className={`w-12 h-10 rounded-lg border font-bold text-sm transition-all ${
-                        selectedSize === sz
-                          ? 'border-[#b22830] bg-[#b22830] text-white shadow-sm'
-                          : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
-                      }`}
-                    >
-                      {sz}
-                    </button>
-                  ))}
+              {sizeKeys.length > 0 && (
+                <div className="mt-6">
+                  <span className="block text-sm font-bold text-gray-700 mb-2">Kích thước:</span>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {sizeKeys.map((sz) => (
+                      <button
+                        key={sz}
+                        type="button"
+                        onClick={() => setSelectedSize(sz)}
+                        className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all ${
+                          selectedSize === sz
+                            ? 'border-[#b22830] bg-[#b22830] text-white shadow-sm'
+                            : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
+                        }`}
+                      >
+                        {sz} {availableSizes[sz] > 0 ? `(+${availableSizes[sz].toLocaleString('vi-VN')}đ)` : ''}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Lượng đá */}
+              {ldKeys.length > 0 && (
+                <div className="mt-4">
+                  <span className="block text-sm font-bold text-gray-700 mb-2">Lượng đá:</span>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {ldKeys.map((ld) => (
+                      <button
+                        key={ld}
+                        type="button"
+                        onClick={() => setSelectedLuongDa(ld)}
+                        className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all ${
+                          selectedLuongDa === ld
+                            ? 'border-[#b22830] bg-[#b22830] text-white shadow-sm'
+                            : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
+                        }`}
+                      >
+                        {ld}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Độ ngọt */}
+              {dnKeys.length > 0 && (
+                <div className="mt-4">
+                  <span className="block text-sm font-bold text-gray-700 mb-2">Độ ngọt:</span>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {dnKeys.map((dn) => (
+                      <button
+                        key={dn}
+                        type="button"
+                        onClick={() => setSelectedDoNgot(dn)}
+                        className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all ${
+                          selectedDoNgot === dn
+                            ? 'border-[#b22830] bg-[#b22830] text-white shadow-sm'
+                            : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
+                        }`}
+                      >
+                        {dn}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Loại sữa */}
+              {lsKeys.length > 0 && (
+                <div className="mt-4">
+                  <span className="block text-sm font-bold text-gray-700 mb-2">Loại sữa:</span>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {lsKeys.map((ls) => (
+                      <button
+                        key={ls}
+                        type="button"
+                        onClick={() => setSelectedLoaiSua(ls)}
+                        className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all ${
+                          selectedLoaiSua === ls
+                            ? 'border-[#b22830] bg-[#b22830] text-white shadow-sm'
+                            : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
+                        }`}
+                      >
+                        {ls} {availableLoaiSua[ls] >= 0 ? `(+${Number(availableLoaiSua[ls]).toLocaleString('vi-VN')}đ)` : ''}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Toppings (Multi-select) */}
+              {toppingKeys.length > 0 && (
+                <div className="mt-4">
+                  <span className="block text-sm font-bold text-gray-700 mb-2">Thêm Topping:</span>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {toppingKeys.map((tp) => {
+                      const isSelected = selectedToppings.includes(tp);
+                      return (
+                        <button
+                          key={tp}
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedToppings(selectedToppings.filter(t => t !== tp));
+                            } else {
+                              setSelectedToppings([...selectedToppings, tp]);
+                            }
+                          }}
+                          className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all flex items-center gap-2 ${
+                            isSelected
+                              ? 'border-[#b22830] bg-[#b22830] text-white shadow-sm'
+                              : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
+                          }`}
+                        >
+                          {isSelected && <CheckIcon className="w-4 h-4" />}
+                          {tp} (+{Number(availableToppings[tp]).toLocaleString('vi-VN')}đ)
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Quantity Selector */}
               <div className="mt-6 flex items-center gap-4">
@@ -361,7 +507,15 @@ export default function ProductDetailPage({
                           e.stopPropagation();
                           setModalProduct(relProduct);
                           setModalQuantity(1);
-                          setModalSize('200g');
+                          const relSizeKeys = Object.keys(relProduct.sizes || {});
+                          setModalSize(relSizeKeys.length > 0 ? relSizeKeys[0] : '');
+                          const relLdKeys = Object.keys(relProduct.luong_da || {});
+                          setModalLuongDa(relLdKeys.length > 0 ? relLdKeys[0] : '');
+                          const relDnKeys = Object.keys(relProduct.do_ngot || {});
+                          setModalDoNgot(relDnKeys.length > 0 ? relDnKeys[0] : '');
+                          const relLsKeys = Object.keys(relProduct.loai_sua || {});
+                          setModalLoaiSua(relLsKeys.length > 0 ? relLsKeys[0] : '');
+                          setModalToppings([]);
                         }}
                         className="w-8 h-8 rounded-full bg-[#ff5a5f] text-white flex items-center justify-center hover:bg-[#d0021b] transition-colors shadow-sm"
                       >
@@ -434,28 +588,136 @@ export default function ProductDetailPage({
                   </span>
                 </div>
 
-                {/* Size options (Ảnh 5: 200g, 500g, 1kg) */}
+                {/* Size options */}
                 <div className="mt-6">
                   <span className="block text-xs font-bold text-gray-500 uppercase mb-2.5">
                     Kích thước:
                   </span>
-                  <div className="flex items-center gap-2.5">
-                    {['200g', '500g', '1kg'].map((sz) => (
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    {Object.keys(modalProduct.sizes || {}).length > 0 ? (
+                      Object.keys(modalProduct.sizes).map((sz) => (
+                        <button
+                          key={sz}
+                          type="button"
+                          onClick={() => setModalSize(sz)}
+                          className={`px-4 py-2 rounded-full border text-xs font-bold transition-all ${
+                            modalSize === sz
+                              ? 'border-[#b22830] text-[#b22830] bg-red-50/60'
+                              : 'border-gray-200 text-gray-600 hover:border-gray-400'
+                          }`}
+                        >
+                          {sz} {modalProduct.sizes[sz] > 0 ? `(+${Number(modalProduct.sizes[sz]).toLocaleString('vi-VN')}đ)` : ''}
+                        </button>
+                      ))
+                    ) : (
                       <button
-                        key={sz}
                         type="button"
-                        onClick={() => setModalSize(sz)}
-                        className={`px-4 py-2 rounded-full border text-xs font-bold transition-all ${
-                          modalSize === sz
-                            ? 'border-[#b22830] text-[#b22830] bg-red-50/60'
-                            : 'border-gray-200 text-gray-600 hover:border-gray-400'
-                        }`}
+                        className="px-4 py-2 rounded-full border border-[#b22830] text-[#b22830] bg-red-50/60 text-xs font-bold"
                       >
-                        {sz}
+                        Mặc định
                       </button>
-                    ))}
+                    )}
                   </div>
                 </div>
+
+                {/* Lượng đá */}
+                {Object.keys(modalProduct?.luong_da || {}).length > 0 && (
+                  <div className="mt-4">
+                    <span className="block text-xs font-bold text-gray-500 uppercase mb-2.5">Lượng đá:</span>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      {Object.keys(modalProduct.luong_da).map((ld) => (
+                        <button
+                          key={ld}
+                          type="button"
+                          onClick={() => setModalLuongDa(ld)}
+                          className={`px-4 py-2 rounded-full border text-xs font-bold transition-all ${
+                            modalLuongDa === ld
+                              ? 'border-[#b22830] text-[#b22830] bg-red-50/60'
+                              : 'border-gray-200 text-gray-600 hover:border-gray-400'
+                          }`}
+                        >
+                          {ld}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Độ ngọt */}
+                {Object.keys(modalProduct?.do_ngot || {}).length > 0 && (
+                  <div className="mt-4">
+                    <span className="block text-xs font-bold text-gray-500 uppercase mb-2.5">Độ ngọt:</span>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      {Object.keys(modalProduct.do_ngot).map((dn) => (
+                        <button
+                          key={dn}
+                          type="button"
+                          onClick={() => setModalDoNgot(dn)}
+                          className={`px-4 py-2 rounded-full border text-xs font-bold transition-all ${
+                            modalDoNgot === dn
+                              ? 'border-[#b22830] text-[#b22830] bg-red-50/60'
+                              : 'border-gray-200 text-gray-600 hover:border-gray-400'
+                          }`}
+                        >
+                          {dn}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Loại sữa */}
+                {Object.keys(modalProduct?.loai_sua || {}).length > 0 && (
+                  <div className="mt-4">
+                    <span className="block text-xs font-bold text-gray-500 uppercase mb-2.5">Loại sữa:</span>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      {Object.keys(modalProduct.loai_sua).map((ls) => (
+                        <button
+                          key={ls}
+                          type="button"
+                          onClick={() => setModalLoaiSua(ls)}
+                          className={`px-4 py-2 rounded-full border text-xs font-bold transition-all ${
+                            modalLoaiSua === ls
+                              ? 'border-[#b22830] text-[#b22830] bg-red-50/60'
+                              : 'border-gray-200 text-gray-600 hover:border-gray-400'
+                          }`}
+                        >
+                          {ls} {modalProduct.loai_sua[ls] >= 0 ? `(+${Number(modalProduct.loai_sua[ls]).toLocaleString('vi-VN')}đ)` : ''}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Toppings */}
+                {Object.keys(modalProduct?.toppings || {}).length > 0 && (
+                  <div className="mt-4">
+                    <span className="block text-xs font-bold text-gray-500 uppercase mb-2.5">Topping:</span>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      {Object.keys(modalProduct.toppings).map((tp) => {
+                        const isSelected = modalToppings.includes(tp);
+                        return (
+                          <button
+                            key={tp}
+                            type="button"
+                            onClick={() => {
+                              if (isSelected) setModalToppings(modalToppings.filter(t => t !== tp));
+                              else setModalToppings([...modalToppings, tp]);
+                            }}
+                            className={`px-4 py-2 rounded-full border text-xs font-bold transition-all flex items-center gap-1 ${
+                              isSelected
+                                ? 'border-[#b22830] text-[#b22830] bg-red-50/60'
+                                : 'border-gray-200 text-gray-600 hover:border-gray-400'
+                            }`}
+                          >
+                            {isSelected && <CheckIcon className="w-3 h-3" />}
+                            {tp} (+{Number(modalProduct.toppings[tp]).toLocaleString('vi-VN')}đ)
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {/* Quantity Selector */}
                 <div className="mt-6 flex items-center gap-4">
