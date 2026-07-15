@@ -3,12 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { createHash } from 'crypto';
 import { Repository } from 'typeorm';
 import { User } from './modules/user/user.entity';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AppService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly jwtService: JwtService,
   ) {}
 
   getHello(): string {
@@ -83,9 +85,18 @@ export class AppService {
       throw new UnauthorizedException('Sai thông tin đăng nhập');
     }
 
+    const safeUser = this.toSafeUser(user);
+    const token = this.jwtService.sign({
+      sub: user.ma_nguoi_dung,
+      tai_khoan: user.ten_dang_nhap,
+      role: user.vai_tro,
+    });
+
     return {
       message: 'Đăng nhập thành công',
-      user: this.toSafeUser(user),
+      user: safeUser,
+      token,
+      accessToken: token, // provide both for compatibility
     };
   }
 

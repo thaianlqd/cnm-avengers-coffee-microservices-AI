@@ -26,8 +26,9 @@ export function safeArray(value) {
   return []
 }
 
-export function getUserId(user) {
-  return String(user?.ma_nguoi_dung || user?.id || user?.sub || '').trim()
+export function getUserId(user, fallbackId = '') {
+  const id = String(user?.ma_nguoi_dung || user?.id || user?.sub || fallbackId || '').trim()
+  return id || 'guest-customer'
 }
 
 export function getUserDisplayName(user) {
@@ -103,8 +104,10 @@ export function normalizeCategory(item) {
     id: String(item?.id ?? item?.ma_danh_muc ?? item?.category_code ?? ''),
     code: String(item?.code ?? item?.ma_danh_muc ?? item?.category_code ?? ''),
     label: String(item?.label ?? item?.ten_danh_muc ?? item?.name ?? '').trim(),
-    icon: item?.icon || null,
+    icon: item?.icon || item?.hinh_anh_icon || null,
     product_count: Number(item?.product_count ?? 0),
+    cap_bac: Number(item?.cap_bac ?? 2),
+    ma_danh_muc_cha: item?.ma_danh_muc_cha != null ? String(item.ma_danh_muc_cha) : null,
   }
 }
 
@@ -135,6 +138,11 @@ export function normalizeOrder(item) {
 }
 
 export function normalizeCartItem(item) {
+  let toppings = item?.toppings || []
+  if (typeof toppings === 'string') {
+    try { toppings = JSON.parse(toppings) } catch (e) { toppings = [toppings] }
+  }
+  if (!Array.isArray(toppings)) toppings = []
   return {
     id: String(item?.id ?? item?.ma_san_pham ?? '').trim(),
     ma_nguoi_dung: String(item?.ma_nguoi_dung ?? '').trim(),
@@ -144,6 +152,10 @@ export function normalizeCartItem(item) {
     hinh_anh_url: String(item?.hinh_anh_url ?? item?.image_url ?? item?.image ?? '').trim(),
     size: String(item?.size ?? item?.kich_co ?? 'Nhỏ').trim(),
     so_luong: Number(item?.so_luong ?? item?.quantity ?? 1),
+    toppings: toppings.map(t => typeof t === 'object' && t ? (t.name || t.ten_topping || '') : String(t)).filter(Boolean),
+    luong_da: String(item?.luong_da ?? item?.luongDa ?? 'Bình thường').trim(),
+    do_ngot: String(item?.do_ngot ?? item?.doNgot ?? 'Bình thường').trim(),
+    ghi_chu: String(item?.ghi_chu ?? item?.ghiChu ?? item?.note ?? '').trim(),
   }
 }
 

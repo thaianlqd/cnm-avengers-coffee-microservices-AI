@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import apiClient, { clearAuthToken, setAuthToken } from '../lib/apiClient'
-import { clearUserSession, loadUserSession, saveUserSession } from '../lib/storage'
+import { clearUserSession, loadUserSession, saveUserSession, getGuestUserId } from '../lib/storage'
 import { getUserId } from '../lib/customerData'
 
 const UserContext = createContext(null)
@@ -25,10 +25,13 @@ function normalizeUser(user) {
 export function UserProvider({ children }) {
   const [user, setUser] = useState(null)
   const [token, setToken] = useState(null)
+  const [guestId, setGuestId] = useState('guest-customer')
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
     ; (async () => {
+      const anonId = await getGuestUserId()
+      setGuestId(anonId)
       const session = await loadUserSession()
       if (session.user && session.token) {
         const nextUser = normalizeUser(session.user)
@@ -117,17 +120,23 @@ export function UserProvider({ children }) {
     await clearUserSession()
   }
 
+  const activeUserId = useMemo(() => {
+    return user?.id || user?.ma_nguoi_dung || guestId || 'guest-customer'
+  }, [user, guestId])
+
   const value = useMemo(
     () => ({
       user,
       token,
+      guestId,
+      activeUserId,
       hydrated,
       login,
       updateSession,
       refreshProfile,
       logout,
     }),
-    [hydrated, user, token],
+    [hydrated, user, token, guestId, activeUserId],
   )
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>
