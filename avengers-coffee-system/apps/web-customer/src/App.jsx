@@ -416,7 +416,7 @@ function HomeBannerSlider() {
       <img
         src={slides[currentSlide]}
         alt={`Banner ${currentSlide + 1}`}
-        className="h-[360px] w-full object-cover hc-fade-in md:h-[480px] lg:h-[560px]"
+        className="h-[520px] w-full object-cover hc-fade-in md:h-[650px] lg:h-[800px]"
         onError={(e) => {
           e.currentTarget.src = FALLBACK_BANNER_URL;
         }}
@@ -939,7 +939,14 @@ function AppContent() {
     let list = [...products];
 
     if (selectedCatId !== 'all') {
-      list = list.filter((p) => String(p.danhMuc?.ma_danh_muc) === selectedCatId);
+      const parsedCatId = String(selectedCatId).replace('group-', '');
+      list = list.filter((p) => {
+        const catId = String(p.danhMuc?.ma_danh_muc || '');
+        if (catId === parsedCatId) return true;
+        const cat = categories.find(c => String(c.ma_danh_muc) === catId);
+        if (cat && String(cat.ma_danh_muc_cha) === parsedCatId) return true;
+        return false;
+      });
     }
 
     if (searchKeyword.trim()) {
@@ -989,7 +996,7 @@ function AppContent() {
     }
 
     return list;
-  }, [products, selectedCatId, searchKeyword, availabilityFilter, priceFilter, criteriaFilter, sortBy]);
+  }, [products, categories, selectedCatId, searchKeyword, availabilityFilter, priceFilter, criteriaFilter, sortBy]);
 
   const menuSections = useMemo(() => {
     const hasAdvancedFilters =
@@ -2127,7 +2134,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      {!['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile'].includes(activeTab) && (
+      {!['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail'].includes(activeTab) && (
         <Header
           userName={user ? user.ho_ten || user.hoTen || 'Đăng nhập' : 'Đăng nhập'}
           activeTab={activeTab}
@@ -2189,6 +2196,8 @@ function AppContent() {
             setActiveTab={setActiveTab}
             HC_IMG={HC_IMG}
             HomeBannerSlider={HomeBannerSlider}
+            categories={categories}
+            setSelectedCatId={setSelectedCatId}
           />
         ) : activeTab === 'about' ? (
           <About />
@@ -2206,14 +2215,6 @@ function AppContent() {
           <NewsPage onSelectArticle={setSelectedNewsArticleId} />
         ) : activeTab === 'stores' ? (
           <StoresPage />
-        ) : activeTab === 'product-detail' ? (
-          <ProductDetailPage
-            product={selectedProductForPage}
-            products={products}
-            onAddToCart={(prod, qty, size) => addToCart(user, prod, qty || 1, size || 'M')}
-            onBack={() => setActiveTab('order')}
-            onNavigate={setActiveTab}
-          />
         ) : activeTab === 'vouchers' ? (
           <>
             <section className="border-b border-gray-100 bg-gradient-to-b from-[#e8f5ee] via-white to-[#f0faf4]">
@@ -2353,11 +2354,13 @@ function AppContent() {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           />
-        ) : ['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart'].includes(activeTab) ? (
+        ) : ['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail'].includes(activeTab) ? (
           <OrderPage
             menuSections={menuSections}
             products={products}
             categories={categories}
+            selectedCatId={selectedCatId}
+            onSelectedCatIdChange={setSelectedCatId}
             cartCount={cartCount}
             onOpenCart={() => {
               setIsFavoriteOpen(false);
@@ -2391,7 +2394,15 @@ function AppContent() {
                 onUserUpdated={handleUserUpdated}
               />
             ) : activeTab === 'cart' ? (
-              <CartPage onBackToHome={() => setActiveTab('order')} />
+              <CartPage products={products} onBackToHome={() => setActiveTab('order')} />
+            ) : activeTab === 'product-detail' ? (
+              <ProductDetailPage
+                product={selectedProductForPage}
+                products={products}
+                onAddToCart={(prod, qty, size) => addToCart(user, prod, qty || 1, size || 'M')}
+                onBack={() => setActiveTab('order')}
+                onNavigate={setActiveTab}
+              />
             ) : null}
           </OrderPage>
         ) : null}
@@ -2419,7 +2430,7 @@ function AppContent() {
         user={user}
       />
 
-      {['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile'].includes(activeTab) ? <OrderFooter onNavigate={setActiveTab} /> : <Footer />}
+      {['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail'].includes(activeTab) ? <OrderFooter onNavigate={setActiveTab} /> : <Footer />}
       <ChatWidget user={user} socketUrl={socketUrl} />
 
       {notificationToast ? (

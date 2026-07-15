@@ -109,4 +109,4 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
   controllers: [AppController, ReviewController],
   providers: [AppService, ReviewService],
 })
-export class AppModule {}
+export class AppModule { }

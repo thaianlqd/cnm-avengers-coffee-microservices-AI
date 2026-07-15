@@ -23,7 +23,11 @@ export class AppService {
       code: category.ma_danh_muc.toString(),
       label: category.ten_danh_muc,
       icon: category.hinh_anh_icon || null,
+      cap_bac: category.cap_bac,
+      ma_danh_muc_cha: category.ma_danh_muc_cha,
       product_count: productCount,
+      ma_danh_muc: category.ma_danh_muc,
+      ten_danh_muc: category.ten_danh_muc,
     };
   }
 
@@ -125,6 +129,11 @@ export class AppService {
       description: item.mo_ta,
       dang_ban: Boolean(item.trang_thai),
       status: item.trang_thai ? 'available' : 'sold_out',
+      sizes: item.sizes,
+      luong_da: item.luong_da,
+      do_ngot: item.do_ngot,
+      loai_sua: item.loai_sua,
+      toppings: item.toppings,
     };
   }
 

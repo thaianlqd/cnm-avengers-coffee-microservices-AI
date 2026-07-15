@@ -48,4 +48,4 @@ const inventorySchema = process.env.DB_SCHEMA || 'inventory';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

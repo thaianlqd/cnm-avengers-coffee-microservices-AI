@@ -114,31 +114,15 @@ export default function Header({
                   <div className="mx-auto max-w-[1380px] px-10 py-8 flex flex-row justify-between items-start">
                     {/* Grouping Logic inline for UI */}
                     {(() => {
-                      const coffeeCats = categories.filter(c =>
-                        c.ten_danh_muc.toLowerCase().includes('cà phê') ||
-                        c.ten_danh_muc.toLowerCase().includes('phindi') ||
-                        c.ten_danh_muc.toLowerCase().includes('espresso')
-                      );
-                      const teaCats = categories.filter(c =>
-                        c.ten_danh_muc.toLowerCase().includes('trà') &&
-                        !c.ten_danh_muc.toLowerCase().includes('cà phê')
-                      );
-                      const freezeCats = categories.filter(c =>
-                        c.ten_danh_muc.toLowerCase().includes('freeze')
-                      );
-                      const usedIds = new Set([
-                        ...coffeeCats.map(c => c.ma_danh_muc),
-                        ...teaCats.map(c => c.ma_danh_muc),
-                        ...freezeCats.map(c => c.ma_danh_muc)
-                      ]);
-                      const otherCats = categories.filter(c => !usedIds.has(c.ma_danh_muc));
-
-                      const cols = [
-                        { title: 'CÀ PHÊ', items: coffeeCats },
-                        { title: 'TRÀ', items: teaCats },
-                        { title: 'FREEZE', items: freezeCats },
-                        { title: 'KHÁC', items: otherCats }
-                      ];
+                      const parentCats = categories.filter(c => c.cap_bac === 1 || !c.ma_danh_muc_cha);
+                      const cols = parentCats.map(parent => {
+                        const children = categories.filter(c => String(c.ma_danh_muc_cha) === String(parent.ma_danh_muc));
+                        return {
+                          id: `group-${parent.ma_danh_muc}`,
+                          title: parent.ten_danh_muc,
+                          items: children
+                        };
+                      });
 
                       return cols.map((col, idx) => (
                         <div key={idx} className="flex flex-col min-w-[200px]">
@@ -146,8 +130,8 @@ export default function Header({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              onTabChange?.('menu-intro');
-                              onSelectedCatIdChange?.(`group-${col.title.toLowerCase()}`);
+                              onTabChange?.('order');
+                              onSelectedCatIdChange?.(col.id);
                               document.activeElement?.blur();
                             }}
                             className="text-[#c99551] hover:text-white font-bold text-[14px] uppercase mb-4 tracking-wide text-left transition-colors cursor-pointer"
@@ -162,7 +146,7 @@ export default function Header({
                                   className="text-white text-[14px] hover:text-[#c99551] transition-colors text-left"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    onTabChange?.('menu-intro');
+                                    onTabChange?.('order');
                                     onSelectedCatIdChange?.(cat.ma_danh_muc);
                                     // Bỏ focus/hover để đóng dropdown nếu cần
                                     document.activeElement?.blur();

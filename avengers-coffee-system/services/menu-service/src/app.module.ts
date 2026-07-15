@@ -50,4 +50,4 @@ const menuSchema = process.env.DB_SCHEMA || 'menu';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
