@@ -56,7 +56,7 @@ function StarRating({ rating, onRate, size = 24 }) {
   )
 }
 
-export function ProfileScreen() {
+export function ProfileScreen({ navigation }) {
   const { user, logout, updateSession } = useUser()
   const userId = getUserId(user)
   const queryClient = useQueryClient()
@@ -373,14 +373,24 @@ export function ProfileScreen() {
               </View>
             ) : null}
 
-            {/* Logout */}
-            <Pressable
-              onPress={handleLogout}
-              style={({ pressed }) => [styles.logoutBtn, pressed && { opacity: 0.85 }]}
-            >
-              <Ionicons name="log-out-outline" size={18} color={colors.danger} />
-              <Text style={styles.logoutBtnText}>Đăng xuất</Text>
-            </Pressable>
+            {/* Login or Logout */}
+            {!user || getUserId(user) === 'guest-customer' ? (
+              <Pressable
+                onPress={() => navigation?.navigate('Login')}
+                style={({ pressed }) => [styles.logoutBtn, { borderColor: '#ea8025', backgroundColor: '#fff9f5' }, pressed && { opacity: 0.85 }]}
+              >
+                <Ionicons name="log-in-outline" size={20} color="#ea8025" />
+                <Text style={[styles.logoutBtnText, { color: '#ea8025', fontWeight: '800' }]}>Đăng nhập ngay</Text>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={handleLogout}
+                style={({ pressed }) => [styles.logoutBtn, pressed && { opacity: 0.85 }]}
+              >
+                <Ionicons name="log-out-outline" size={18} color={colors.danger} />
+                <Text style={styles.logoutBtnText}>Đăng xuất</Text>
+              </Pressable>
+            )}
           </View>
         )
 
@@ -655,7 +665,15 @@ export function ProfileScreen() {
           )}
           <View style={styles.headerInfo}>
             <Text style={styles.headerName}>{getUserDisplayName(user)}</Text>
-            <Text style={styles.headerEmail}>{profile?.email || user?.email || ''}</Text>
+            {!user || getUserId(user) === 'guest-customer' ? (
+              <Pressable onPress={() => navigation?.navigate('Login')} style={{ marginTop: 4 }}>
+                <Text style={{ color: '#fbbf24', fontWeight: '700', fontSize: 13, textDecorationLine: 'underline' }}>
+                  👉 Đăng nhập / Đăng ký ngay
+                </Text>
+              </Pressable>
+            ) : (
+              <Text style={styles.headerEmail}>{profile?.email || user?.email || ''}</Text>
+            )}
           </View>
           <View style={styles.tierBadge}>
             <Text style={styles.tierBadgeText}>{tierConfig.icon} {tierConfig.label}</Text>

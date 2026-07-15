@@ -42,7 +42,7 @@ export class AppService {
     );
   }
 
-  async createCategory(payload: { label?: string; icon?: string }) {
+  async createCategory(payload: { label?: string; icon?: string; cap_bac?: number; ma_danh_muc_cha?: number | null }) {
     const label = String(payload?.label || '').trim();
     if (!label) {
       throw new BadRequestException('Ten danh muc khong hop le');
@@ -52,6 +52,16 @@ export class AppService {
     created.ten_danh_muc = label;
     created.hinh_anh_icon = String(payload?.icon || '').trim() || null;
 
+    let cap_bac = Number(payload?.cap_bac);
+    if (Number.isNaN(cap_bac) || cap_bac < 1) cap_bac = 1;
+    created.cap_bac = cap_bac;
+
+    if (cap_bac === 2 && payload?.ma_danh_muc_cha) {
+      created.ma_danh_muc_cha = Number(payload.ma_danh_muc_cha);
+    } else {
+      created.ma_danh_muc_cha = null;
+    }
+
     const saved = await this.dmRepo.save(created);
     return {
       message: 'Them danh muc thanh cong',
@@ -59,7 +69,7 @@ export class AppService {
     };
   }
 
-  async updateCategory(categoryId: number, payload: { label?: string; icon?: string }) {
+  async updateCategory(categoryId: number, payload: { label?: string; icon?: string; cap_bac?: number; ma_danh_muc_cha?: number | null }) {
     if (Number.isNaN(categoryId) || categoryId <= 0) {
       throw new BadRequestException('Ma danh muc khong hop le');
     }
@@ -79,6 +89,23 @@ export class AppService {
 
     if (payload.icon !== undefined) {
       category.hinh_anh_icon = String(payload.icon || '').trim() || null;
+    }
+
+    if (payload.cap_bac !== undefined) {
+      const cap_bac = Number(payload.cap_bac);
+      if (!Number.isNaN(cap_bac) && cap_bac >= 1) {
+        category.cap_bac = cap_bac;
+      }
+    }
+
+    if (payload.ma_danh_muc_cha !== undefined) {
+      if (category.cap_bac === 2 && payload.ma_danh_muc_cha) {
+        category.ma_danh_muc_cha = Number(payload.ma_danh_muc_cha);
+      } else {
+        category.ma_danh_muc_cha = null;
+      }
+    } else if (category.cap_bac === 1) {
+      category.ma_danh_muc_cha = null;
     }
 
     const saved = await this.dmRepo.save(category);

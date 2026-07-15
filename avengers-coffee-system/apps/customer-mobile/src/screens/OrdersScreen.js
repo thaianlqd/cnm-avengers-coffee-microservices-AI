@@ -540,6 +540,12 @@ function InvoiceModal({ order, visible, onClose }) {
             <View key={item.id || index} style={invoiceStyles.itemRow}>
               <View style={{ flex: 3 }}>
                 <Text style={invoiceStyles.itemName} numberOfLines={2}>{item.ten_san_pham}</Text>
+                {item.kich_co || item.size ? (
+                  <Text style={[invoiceStyles.itemPrice, { fontSize: 11 }]}>
+                    Size {item.kich_co || item.size}
+                    {item.toppings && item.toppings.length ? ` + ${Array.isArray(item.toppings) ? item.toppings.join(', ') : item.toppings}` : ''}
+                  </Text>
+                ) : null}
                 <Text style={invoiceStyles.itemPrice}>{formatCurrency(item.gia_ban)}</Text>
               </View>
               <Text style={[invoiceStyles.itemQty, { flex: 1 }]}>x{item.so_luong}</Text>
@@ -685,7 +691,11 @@ function OrderDetailModal({ order, visible, onClose, onCancel, onViewInvoice }) 
                   )}
                   <View style={detailStyles.orderItemInfo}>
                     <Text style={detailStyles.orderItemName} numberOfLines={2}>{item.ten_san_pham}</Text>
-                    {item.kich_co ? <Text style={detailStyles.orderItemMeta}>Size: {item.kich_co}</Text> : null}
+                    {item.kich_co || item.size ? <Text style={detailStyles.orderItemMeta}>Size: {item.kich_co || item.size}</Text> : null}
+                    {item.toppings && item.toppings.length ? (
+                      <Text style={detailStyles.orderItemMeta}>Topping: {Array.isArray(item.toppings) ? item.toppings.join(', ') : item.toppings}</Text>
+                    ) : null}
+                    {item.ghi_chu ? <Text style={[detailStyles.orderItemMeta, { fontStyle: 'italic', color: '#ea8025' }]}>Ghi chú: {item.ghi_chu}</Text> : null}
                     <View style={detailStyles.orderItemPriceRow}>
                       <Text style={detailStyles.orderItemQty}>x{item.so_luong}</Text>
                       <Text style={detailStyles.orderItemPrice}>{formatCurrency(item.gia_ban)}</Text>
