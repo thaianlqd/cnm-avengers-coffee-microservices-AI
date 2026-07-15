@@ -32,6 +32,21 @@ export class SanPham {
   @Column({ default: false })
   la_moi: boolean;
 
+  @Column({ type: 'jsonb', nullable: true })
+  sizes: any;
+
+  @Column({ type: 'jsonb', nullable: true })
+  luong_da: any;
+
+  @Column({ type: 'jsonb', nullable: true })
+  do_ngot: any;
+
+  @Column({ type: 'jsonb', nullable: true })
+  loai_sua: any;
+
+  @Column({ type: 'jsonb', nullable: true })
+  toppings: any;
+
   @ManyToOne(() => DanhMuc, (dm) => dm.danhSachsSanPham)
   @JoinColumn({ name: 'ma_danh_muc' })
   danhMuc: DanhMuc;

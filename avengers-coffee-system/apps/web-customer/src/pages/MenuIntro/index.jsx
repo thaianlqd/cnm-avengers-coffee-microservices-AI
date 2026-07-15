@@ -61,36 +61,28 @@ export default function MenuIntroPage({
   onOrderProduct
 }) {
 
-  // Phân loại các category từ API vào 4 nhóm lớn trên frontend
-  const coffeeCategories = useMemo(() => {
-    return categories.filter(c => {
-      const name = String(c.ten_danh_muc).toLowerCase();
-      return name.includes('cà phê') || name.includes('phindi') || name.includes('espresso');
-    });
+  // Dựa vào DB schema: cap_bac = 1 hoặc không có ma_danh_muc_cha là parent
+  const parentCategories = useMemo(() => {
+    return categories.filter(c => c.cap_bac === 1 || !c.ma_danh_muc_cha);
   }, [categories]);
 
-  const teaCategories = useMemo(() => {
-    return categories.filter(c => {
-      const name = String(c.ten_danh_muc).toLowerCase();
-      return name.includes('trà') && !name.includes('cà phê');
+  // Các nhóm danh mục sẽ được map tự động từ DB parent
+  const dynamicBigGroups = useMemo(() => {
+    return parentCategories.map(parent => {
+      const name = String(parent.ten_danh_muc).toLowerCase();
+      let baseGroup = BIG_GROUPS.other;
+      if (name.includes('cà phê')) baseGroup = BIG_GROUPS.coffee;
+      else if (name.includes('trà')) baseGroup = BIG_GROUPS.tea;
+      else if (name.includes('đá xay') || name.includes('freeze')) baseGroup = BIG_GROUPS.freeze;
+      
+      return {
+        ...baseGroup,
+        id: `group-${parent.ma_danh_muc}`,
+        title: parent.ten_danh_muc,
+        parentCat: parent
+      };
     });
-  }, [categories]);
-
-  const freezeCategories = useMemo(() => {
-    return categories.filter(c => {
-      const name = String(c.ten_danh_muc).toLowerCase();
-      return name.includes('freeze');
-    });
-  }, [categories]);
-
-  const otherCategories = useMemo(() => {
-    const usedIds = new Set([
-      ...coffeeCategories.map(c => c.ma_danh_muc),
-      ...teaCategories.map(c => c.ma_danh_muc),
-      ...freezeCategories.map(c => c.ma_danh_muc)
-    ]);
-    return categories.filter(c => !usedIds.has(c.ma_danh_muc));
-  }, [categories, coffeeCategories, teaCategories, freezeCategories]);
+  }, [parentCategories]);
 
   // Phân tích trạng thái view hiện tại dựa trên activeCategoryId
   const viewState = useMemo(() => {
@@ -105,36 +97,23 @@ export default function MenuIntroPage({
     
     // Nếu ở Cấp 2
     if (viewState === 'category') {
-      const id = String(activeCategoryId);
-      if (id.includes('cà phê')) return BIG_GROUPS.coffee;
-      if (id.includes('trà')) return BIG_GROUPS.tea;
-      if (id.includes('freeze')) return BIG_GROUPS.freeze;
-      return BIG_GROUPS.other;
+      return dynamicBigGroups.find(g => g.id === String(activeCategoryId)) || dynamicBigGroups[0];
     }
 
     // Nếu ở Cấp 3 (danh mục con cụ thể)
     const subcat = categories.find(c => String(c.ma_danh_muc) === String(activeCategoryId));
-    if (!subcat) return BIG_GROUPS.coffee;
+    if (!subcat) return dynamicBigGroups[0];
     
-    const name = String(subcat.ten_danh_muc).toLowerCase();
-    if (name.includes('cà phê') || name.includes('phindi') || name.includes('espresso')) {
-      return BIG_GROUPS.coffee;
-    } else if (name.includes('trà')) {
-      return BIG_GROUPS.tea;
-    } else if (name.includes('freeze')) {
-      return BIG_GROUPS.freeze;
-    }
-    return BIG_GROUPS.other;
-  }, [viewState, activeCategoryId, categories]);
+    // Tìm parent của subcat này
+    const parentGroup = dynamicBigGroups.find(g => String(g.parentCat.ma_danh_muc) === String(subcat.ma_danh_muc_cha));
+    return parentGroup || dynamicBigGroups[0];
+  }, [viewState, activeCategoryId, categories, dynamicBigGroups]);
 
   // Các danh mục con thuộc Nhóm danh mục lớn hiện tại (cho Cấp 2)
   const currentSubcategories = useMemo(() => {
     if (!currentBigGroup) return [];
-    if (currentBigGroup.id.includes('cà phê')) return coffeeCategories;
-    if (currentBigGroup.id.includes('trà')) return teaCategories;
-    if (currentBigGroup.id.includes('freeze')) return freezeCategories;
-    return otherCategories;
-  }, [currentBigGroup, coffeeCategories, teaCategories, freezeCategories, otherCategories]);
+    return categories.filter(c => String(c.ma_danh_muc_cha) === String(currentBigGroup.parentCat.ma_danh_muc));
+  }, [currentBigGroup, categories]);
 
   // Lọc sản phẩm cho danh mục con hiện tại (cho Cấp 3)
   const subcategoryProducts = useMemo(() => {
@@ -168,14 +147,12 @@ export default function MenuIntroPage({
               </p>
             </div>
 
-            {/* Grid 4 banner giới thiệu 4 dòng sản phẩm chính */}
+            {/* Grid banner giới thiệu các dòng sản phẩm chính */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {[BIG_GROUPS.coffee, BIG_GROUPS.tea, BIG_GROUPS.freeze, BIG_GROUPS.other].map((group) => {
+              {dynamicBigGroups.map((group) => {
                 // Lấy một sản phẩm tiêu biểu của nhóm để hiển thị
                 const sampleProduct = products.find(p => {
-                  const subcats = group.id.includes('cà phê') ? coffeeCategories :
-                                  group.id.includes('trà') ? teaCategories :
-                                  group.id.includes('freeze') ? freezeCategories : otherCategories;
+                  const subcats = categories.filter(c => String(c.ma_danh_muc_cha) === String(group.parentCat.ma_danh_muc));
                   const subcatIds = new Set(subcats.map(s => String(s.ma_danh_muc)));
                   return subcatIds.has(String(p.ma_danh_muc));
                 });

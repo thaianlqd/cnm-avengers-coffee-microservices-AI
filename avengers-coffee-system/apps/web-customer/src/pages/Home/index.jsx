@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider }) {
+export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider, categories, setSelectedCatId }) {
   return (
     <>
       {/* ── 1. HERO BANNER SLIDER (exact HC banners) ── */}
@@ -76,7 +76,12 @@ export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider }) {
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             <button
               type="button"
-              onClick={() => setActiveTab('order')}
+              onClick={() => {
+                const cat = categories?.find(c => c.ten_danh_muc && c.ten_danh_muc.toLowerCase().includes('cà phê'));
+                if (cat && setSelectedCatId) setSelectedCatId(cat.ma_danh_muc);
+                setActiveTab('order');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               className="group flex flex-col overflow-hidden shadow-sm"
             >
               <div className="overflow-hidden rounded-t-[20px] w-full">
@@ -93,7 +98,12 @@ export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider }) {
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab('order')}
+              onClick={() => {
+                const cat = categories?.find(c => c.ten_danh_muc && c.ten_danh_muc.toLowerCase().includes('bánh'));
+                if (cat && setSelectedCatId) setSelectedCatId(cat.ma_danh_muc);
+                setActiveTab('order');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               className="group flex flex-col overflow-hidden shadow-sm"
             >
               <div className="overflow-hidden rounded-t-[20px] w-full">
