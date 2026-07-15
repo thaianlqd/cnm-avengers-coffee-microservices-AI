@@ -25,12 +25,8 @@ const Tabs = createBottomTabNavigator()
 
 const TAB_ICONS = {
   Home: { focused: 'home', unfocused: 'home-outline' },
-  Menu: { focused: 'restaurant', unfocused: 'restaurant-outline' },
-  Cart: { focused: 'bag', unfocused: 'bag-outline' },
-  Orders: { focused: 'receipt', unfocused: 'receipt-outline' },
-  Vouchers: { focused: 'ticket', unfocused: 'ticket-outline' },
-  Stores: { focused: 'storefront', unfocused: 'storefront-outline' },
-  News: { focused: 'newspaper', unfocused: 'newspaper-outline' },
+  Menu: { focused: 'cafe', unfocused: 'cafe-outline' },
+  Cart: { focused: 'receipt', unfocused: 'receipt-outline' },
   Profile: { focused: 'person-circle', unfocused: 'person-circle-outline' },
 }
 
@@ -59,14 +55,14 @@ function MainTabs() {
     <Tabs.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: '#9b8a7c',
+        tabBarActiveTintColor: '#ea8025',
+        tabBarInactiveTintColor: '#8f8f8f',
         tabBarStyle: {
           height: Platform.OS === 'ios' ? 82 : 70,
           paddingBottom: Platform.OS === 'ios' ? 22 : 10,
           paddingTop: 8,
-          backgroundColor: '#fffdf8',
-          borderTopColor: '#ead8c6',
+          backgroundColor: '#fff',
+          borderTopColor: '#f0f0f0',
           borderTopWidth: 1,
           elevation: 8,
           shadowColor: '#000',
@@ -76,7 +72,8 @@ function MainTabs() {
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '700',
+          fontWeight: '600',
+          marginTop: -5,
         },
         tabBarIcon: ({ color, size, focused }) => (
           <TabBarIcon routeName={route.name} color={color} size={size} focused={focused} />
@@ -97,7 +94,7 @@ function MainTabs() {
         name="Cart"
         component={CartScreen}
         options={{
-          title: 'Giỏ hàng',
+          title: 'Đơn hàng',
           tabBarBadge: cartCount > 0 ? cartCount : undefined,
           tabBarBadgeStyle: {
             backgroundColor: colors.primary,
@@ -109,29 +106,9 @@ function MainTabs() {
         }}
       />
       <Tabs.Screen
-        name="Orders"
-        component={OrdersScreen}
-        options={{ title: 'Đơn hàng' }}
-      />
-      <Tabs.Screen
-        name="Vouchers"
-        component={VouchersScreen}
-        options={{ title: 'Voucher' }}
-      />
-      <Tabs.Screen
-        name="Stores"
-        component={StoresScreen}
-        options={{ title: 'Cửa hàng' }}
-      />
-      <Tabs.Screen
-        name="News"
-        component={NewsScreen}
-        options={{ title: 'Tin tức' }}
-      />
-      <Tabs.Screen
         name="Profile"
         component={ProfileScreen}
-        options={{ title: 'Hồ sơ' }}
+        options={{ title: 'Tài khoản' }}
       />
     </Tabs.Navigator>
   )
@@ -158,15 +135,10 @@ export function AppNavigator() {
   }
 
   return (
-    <Stack.Navigator key={user ? 'authenticated' : 'guest'} screenOptions={{ headerShown: false }}>
-      {!user ? (
-        <Stack.Screen name="Login" component={LoginScreen} />
-      ) : (
-        <>
-          <Stack.Screen name="Tabs" component={MainTabs} />
-          <Stack.Screen name="Chat" component={ChatScreen} />
-        </>
-      )}
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Tabs" component={MainTabs} />
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Chat" component={ChatScreen} />
     </Stack.Navigator>
   )
 }

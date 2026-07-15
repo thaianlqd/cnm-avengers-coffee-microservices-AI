@@ -1100,6 +1100,24 @@ export function AdminSystemConsole({ session, onLogout }) {
                     placeholder="https://..."
                   />
                 </label>
+                <label>
+                  <span>Cấp bậc</span>
+                  <select value={categoryForm.cap_bac} onChange={(e) => setCategoryForm((p) => ({ ...p, cap_bac: Number(e.target.value) }))}>
+                    <option value={1}>Cấp 1 - Danh mục chính</option>
+                    <option value={2}>Cấp 2 - Danh mục phụ</option>
+                  </select>
+                </label>
+                {Number(categoryForm.cap_bac) === 2 && (
+                  <label>
+                    <span>Danh mục cha</span>
+                    <select value={categoryForm.ma_danh_muc_cha} onChange={(e) => setCategoryForm((p) => ({ ...p, ma_danh_muc_cha: e.target.value }))}>
+                      <option value="">-- Chọn danh mục cha --</option>
+                      {categoriesState.items.filter(c => c.cap_bac === 1).map(c => (
+                        <option key={c.code} value={c.code}>{c.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
               </div>
 
               <div className="system-admin-form-actions" style={{ marginBottom: '0.8rem' }}>
@@ -1121,6 +1139,8 @@ export function AdminSystemConsole({ session, onLogout }) {
                       <tr>
                         <th>Tên danh mục</th>
                         <th>Mã danh mục</th>
+                        <th>Cấp bậc</th>
+                        <th>Danh mục cha</th>
                         <th>Số món đang dùng</th>
                         <th>Thao tác</th>
                       </tr>
@@ -1130,6 +1150,8 @@ export function AdminSystemConsole({ session, onLogout }) {
                         <tr key={cat.code}>
                           <td><strong>{cat.label}</strong></td>
                           <td>{cat.code}</td>
+                          <td>{cat.cap_bac === 1 ? 'Cấp 1' : 'Cấp 2'}</td>
+                          <td>{cat.cap_bac === 2 ? (categoriesState.items.find(c => String(c.code) === String(cat.ma_danh_muc_cha))?.label || `#${cat.ma_danh_muc_cha}`) : '---'}</td>
                           <td>{fmtNumber(cat.product_count || 0)}</td>
                           <td>
                             <div className="system-admin-table-actions">
@@ -1180,9 +1202,20 @@ export function AdminSystemConsole({ session, onLogout }) {
                     <span>Danh mục</span>
                     <select value={menuForm.category_code} onChange={(e) => setMenuForm((p) => ({ ...p, category_code: e.target.value }))}>
                       <option value="">Chọn danh mục</option>
-                      {categoriesState.items.map((cat) => (
-                        <option key={cat.code} value={cat.code}>{cat.label}</option>
-                      ))}
+                      {categoriesState.items.filter(c => c.cap_bac === 1).map((parent) => {
+                        const children = categoriesState.items.filter(c => c.cap_bac === 2 && String(c.ma_danh_muc_cha) === String(parent.code));
+                        if (children.length === 0) return (
+                          <option key={parent.code} value={parent.code}>{parent.label}</option>
+                        );
+                        return (
+                          <optgroup key={parent.code} label={parent.label}>
+                            <option value={parent.code}>{parent.label} (Danh mục cha)</option>
+                            {children.map(child => (
+                              <option key={child.code} value={child.code}>{child.label}</option>
+                            ))}
+                          </optgroup>
+                        );
+                      })}
                     </select>
                   </label>
                   <label>

@@ -22,6 +22,8 @@ export class AppController {
     payload: {
       label?: string;
       icon?: string;
+      cap_bac?: number;
+      ma_danh_muc_cha?: number | null;
     },
   ) {
     return this.appService.createCategory(payload);
@@ -34,6 +36,8 @@ export class AppController {
     payload: {
       label?: string;
       icon?: string;
+      cap_bac?: number;
+      ma_danh_muc_cha?: number | null;
     },
   ) {
     return this.appService.updateCategory(Number(categoryId), payload);

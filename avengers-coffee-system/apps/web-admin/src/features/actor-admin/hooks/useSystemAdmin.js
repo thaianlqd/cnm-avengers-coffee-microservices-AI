@@ -225,6 +225,8 @@ const DEFAULT_MENU_FORM = {
 const DEFAULT_CATEGORY_FORM = {
   label: '',
   icon: '',
+  cap_bac: 1,
+  ma_danh_muc_cha: '',
 }
 
 const PROMOTION_TYPES = [
@@ -924,6 +926,8 @@ export function useSystemAdmin() {
     setCategoryForm({
       label: item.label || '',
       icon: item.icon || '',
+      cap_bac: item.cap_bac || 1,
+      ma_danh_muc_cha: item.ma_danh_muc_cha || '',
     })
   }
 
@@ -938,6 +942,8 @@ export function useSystemAdmin() {
       const payload = {
         label: categoryForm.label,
         icon: categoryForm.icon || null,
+        cap_bac: Number(categoryForm.cap_bac) || 1,
+        ma_danh_muc_cha: categoryForm.ma_danh_muc_cha ? Number(categoryForm.ma_danh_muc_cha) : null,
       }
 
       const method = editingCategoryId ? 'PATCH' : 'POST'

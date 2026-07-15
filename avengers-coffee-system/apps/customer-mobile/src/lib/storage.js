@@ -42,3 +42,18 @@ export async function getStoredToken() {
     return null
   }
 }
+
+export async function getGuestUserId() {
+  const GUEST_KEY = 'avengers_anon_guest_id'
+  try {
+    let anonId = await AsyncStorage.getItem(GUEST_KEY)
+    if (!anonId) {
+      anonId = `guest_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+      await AsyncStorage.setItem(GUEST_KEY, anonId)
+    }
+    return anonId
+  } catch {
+    return `guest_${Date.now()}`
+  }
+}
+
