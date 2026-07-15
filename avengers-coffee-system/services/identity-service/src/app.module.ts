@@ -71,4 +71,4 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

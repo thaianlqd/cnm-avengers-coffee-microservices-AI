@@ -38,14 +38,60 @@ export default function OrderPage({
   onOpenOrderHistory,
   onOpenProfile,
   onNavigate,
+  selectedCatId,
+  onSelectedCatIdChange,
 }) {
-  const [activeCategory, setActiveCategory] = useState('all');
+  const [activeCategory, setActiveCategory] = useState(selectedCatId || 'all');
+  
+  useEffect(() => {
+    if (selectedCatId) {
+      setActiveCategory(selectedCatId);
+    }
+  }, [selectedCatId]);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchViewMode, setSearchViewMode] = useState('list'); // 'list' | 'grid'
   const [isSearchBoxOpen, setIsSearchBoxOpen] = useState(false);
+  const [copiedVoucherCode, setCopiedVoucherCode] = useState(null);
+
+  const fullText = "Xin chào, bạn cần gì hôm nay?";
+  const [placeholderText, setPlaceholderText] = useState("");
+
+  useEffect(() => {
+    let i = 0;
+    let isDeleting = false;
+    let timeoutId;
+    
+    const typeWriter = () => {
+      setPlaceholderText(fullText.substring(0, i) + (isDeleting ? "" : "|"));
+      
+      let typeSpeed = 100;
+      
+      if (isDeleting) {
+        typeSpeed /= 2;
+        i--;
+      } else {
+        i++;
+      }
+      
+      if (!isDeleting && i === fullText.length) {
+        typeSpeed = 2000;
+        isDeleting = true;
+      } else if (isDeleting && i === 0) {
+        isDeleting = false;
+        typeSpeed = 500;
+      }
+      
+      timeoutId = setTimeout(typeWriter, typeSpeed);
+    };
+    
+    timeoutId = setTimeout(typeWriter, 500);
+    return () => clearTimeout(timeoutId);
+  }, []);
+
   const [sortByOrder, setSortByOrder] = useState('default'); // 'default' | 'price-asc' | 'price-desc' | 'name-asc'
+  const [expandedParents, setExpandedParents] = useState({});
   const mobileMenuRef = useRef(null);
   const dropdownRef = useRef(null);
 
@@ -118,14 +164,21 @@ export default function OrderPage({
 
   const handleCategorySelect = (id) => {
     setActiveCategory(id);
+    if (onSelectedCatIdChange) onSelectedCatIdChange(id);
     setIsDropdownOpen(false);
     setIsMobileMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const toggleParent = (parentId, e) => {
+    e.stopPropagation();
+    setExpandedParents(prev => ({ ...prev, [parentId]: !prev[parentId] }));
+  };
+
+  const parentCats = categories.filter(c => c.cap_bac === 1);
   const categoryMenuItems = (
     <>
-      <li>
+      <li className="border-b border-gray-100">
         <button
           type="button"
           onClick={() => handleCategorySelect('all')}
@@ -136,22 +189,24 @@ export default function OrderPage({
           <span className="text-[13px] font-medium w-full text-center uppercase">Xem tất cả danh mục</span>
         </button>
       </li>
-      {categories.map((cat, idx) => {
+      {parentCats.map((parent, idx) => {
         const iconUrl = MENU_ICONS[idx % MENU_ICONS.length];
-        const isActive = activeCategory === cat.ma_danh_muc;
+        const isActive = activeCategory === parent.ma_danh_muc;
         return (
-          <li key={cat.ma_danh_muc}>
+          <li key={parent.ma_danh_muc} className="flex flex-col border-b border-gray-100 last:border-b-0">
             <button
               type="button"
-              onClick={() => handleCategorySelect(cat.ma_danh_muc)}
-              className={`w-full flex items-center gap-4 px-6 py-3 text-left transition-colors hover:bg-gray-50 ${
-                isActive ? 'bg-[#fcf8f2]' : ''
+              onClick={() => handleCategorySelect(parent.ma_danh_muc)}
+              className={`w-full flex items-center justify-between px-6 py-3 text-left transition-colors hover:bg-gray-50 bg-[#f9f9f9] ${
+                isActive ? 'text-[#b22830] font-bold' : 'text-[#333333]'
               }`}
             >
-              <img src={iconUrl} alt={cat.ten_danh_muc} className="w-[18px] h-[18px] object-contain" />
-              <span className={`text-[13px] font-medium ${isActive ? 'text-[#b22830] font-bold' : 'text-[#333333]'}`}>
-                {cat.ten_danh_muc}
-              </span>
+              <div className="flex items-center gap-4">
+                <img src={iconUrl} alt={parent.ten_danh_muc} className="w-[18px] h-[18px] object-contain" />
+                <span className="text-[13px] font-bold uppercase">
+                  {parent.ten_danh_muc}
+                </span>
+              </div>
             </button>
           </li>
         );
@@ -188,7 +243,8 @@ export default function OrderPage({
               <div 
                 ref={isScrolled ? dropdownRef : null}
                 className="flex items-center gap-4 cursor-pointer w-full relative h-full"
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                onMouseEnter={() => setIsDropdownOpen(true)}
+                onMouseLeave={() => setIsDropdownOpen(false)}
               >
                 <div className="w-5 flex flex-col gap-[3px]">
                   <span className="w-full h-[2px] bg-gray-800 block"></span>
@@ -212,38 +268,8 @@ export default function OrderPage({
           {/* Mobile Dropdown Menu */}
           {isMobileMenuOpen && (
             <div className="absolute top-[84px] left-0 w-[260px] bg-white border border-gray-200 shadow-lg rounded-b-md z-[100] max-h-[calc(100vh-100px)] overflow-y-auto lg:hidden">
-              <ul className="py-2">
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => { setActiveCategory('all'); setIsMobileMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                    className={`w-full flex items-center gap-4 px-6 py-3 text-left transition-colors hover:bg-gray-50 ${
-                      activeCategory === 'all' ? 'bg-[#fcf8f2] text-[#b22830] font-bold' : 'text-[#333333]'
-                    }`}
-                  >
-                    <span className="text-[13px] font-medium w-full text-center">Xem tất cả danh mục</span>
-                  </button>
-                </li>
-                {categories.map((cat, idx) => {
-                  const iconUrl = MENU_ICONS[idx % MENU_ICONS.length];
-                  const isActive = activeCategory === cat.ma_danh_muc;
-                  return (
-                    <li key={cat.ma_danh_muc}>
-                      <button
-                        type="button"
-                        onClick={() => { setActiveCategory(cat.ma_danh_muc); setIsMobileMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                        className={`w-full flex items-center gap-4 px-6 py-3 text-left transition-colors hover:bg-gray-50 ${
-                          isActive ? 'bg-[#fcf8f2]' : ''
-                        }`}
-                      >
-                        <img src={iconUrl} alt={cat.ten_danh_muc} className="w-[18px] h-[18px] object-contain" />
-                        <span className={`text-[13px] font-medium ${isActive ? 'text-[#b22830] font-bold' : 'text-[#333333]'}`}>
-                          {cat.ten_danh_muc}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
+              <ul className="py-2 w-full">
+                {categoryMenuItems}
               </ul>
             </div>
           )}
@@ -252,7 +278,7 @@ export default function OrderPage({
           <div className="relative">
             <input
               type="text"
-              placeholder="Xin chào, bạn cần gì hôm nay?"
+              placeholder={placeholderText}
               className="w-full bg-[#f3f4f6] rounded-[20px] pl-6 pr-12 py-2.5 text-[14px] text-gray-700 outline-none focus:ring-1 focus:ring-gray-300 transition-all border border-gray-200"
               value={searchKeyword || ''}
               onFocus={() => { if (searchKeyword && String(searchKeyword).trim()) setIsSearchBoxOpen(true); }}
@@ -436,8 +462,11 @@ export default function OrderPage({
             <div 
               ref={!isScrolled ? dropdownRef : null}
               className="relative h-full w-[260px] flex shrink-0 items-center bg-white px-6 cursor-pointer select-none"
-              onClick={() => {
-                if (!isMenuAlwaysOpen) setIsDropdownOpen(!isDropdownOpen);
+              onMouseEnter={() => {
+                if (!isMenuAlwaysOpen) setIsDropdownOpen(true);
+              }}
+              onMouseLeave={() => {
+                if (!isMenuAlwaysOpen) setIsDropdownOpen(false);
               }}
             >
               <div className="w-5 flex flex-col gap-[3px] mr-3">
@@ -556,9 +585,9 @@ export default function OrderPage({
                        Hàng mới
                      </button>
                    </div>
-                   <div className="text-[14px] font-bold text-[#333333] uppercase">
-                     HIỂN THỊ: <span className="text-[#b22830] font-black text-[16px]">{activeCategory === 'all' ? 'TẤT CẢ DANH MỤC' : categories.find(c => String(c.ma_danh_muc) === String(activeCategory))?.ten_danh_muc || 'CÀ PHÊ'}</span>
-                   </div>
+                    <div className="text-[14px] font-bold text-[#333333] uppercase">
+                      HIỂN THỊ: <span className="text-[#b22830] font-black text-[16px]">{activeCategory === 'all' ? 'TẤT CẢ DANH MỤC' : categories.find(c => String(c.ma_danh_muc) === String(activeCategory).replace('group-', ''))?.ten_danh_muc || 'CÀ PHÊ'}</span>
+                    </div>
                  </div>
               </div>
             )}
@@ -664,35 +693,21 @@ export default function OrderPage({
               </div>
             )}
 
-            {/* SORTING BAR */}
-            <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-gray-500 uppercase">Hiển thị:</span>
-                <span className="text-lg font-black text-[#b22830] uppercase">
-                  {activeCategory === 'all'
-                    ? 'Tất cả danh mục'
-                    : categories.find((c) => String(c.ma_danh_muc) === String(activeCategory))?.ten_danh_muc || 'Sản phẩm'}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <label htmlFor="sort-order" className="text-xs font-bold text-gray-500 uppercase">Sắp xếp:</label>
-                <select
-                  id="sort-order"
-                  value={sortByOrder}
-                  onChange={(e) => setSortByOrder(e.target.value)}
-                  className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-bold text-gray-700 outline-none focus:border-[#b22830] cursor-pointer"
-                >
-                  <option value="default">Mặc định</option>
-                  <option value="price-asc">Giá tăng dần</option>
-                  <option value="price-desc">Giá giảm dần</option>
-                  <option value="name-asc">Tên A - Z</option>
-                </select>
-              </div>
-            </div>
 
             {menuSections
-              .filter((section) => activeCategory === 'all' || String(section.id) === String(activeCategory))
+              .filter((section) => {
+                if (activeCategory === 'all') return true;
+                const parsedActive = String(activeCategory).replace('group-', '');
+                if (String(section.id) === parsedActive) return true;
+                const sectionCat = categories.find(c => String(c.ma_danh_muc) === String(section.id));
+                if (sectionCat && String(sectionCat.ma_danh_muc_cha) === parsedActive) return true;
+                return false;
+              })
               .map((section, idx) => {
+                const parsedActive = String(activeCategory).replace('group-', '');
+                const isParentCategory = activeCategory === 'all' ? false : categories.find(c => String(c.ma_danh_muc) === parsedActive)?.cap_bac === 1;
+                const showSectionTitle = activeCategory === 'all' || isParentCategory;
+                
                 const allItems = section.subSections.flatMap(sub => sub.items);
                 const sortedItems = [...allItems].sort((a, b) => {
                   if (sortByOrder === 'price-asc') return Number(a.gia_ban || 0) - Number(b.gia_ban || 0);
@@ -706,7 +721,7 @@ export default function OrderPage({
 
                 return (
               <section key={section.id} id={`category-${section.id}`} className="scroll-mt-[100px]">
-                {activeCategory === 'all' && (
+                {showSectionTitle && (
                   <div className="flex items-center gap-3 mb-6">
                     {section.icon ? (
                       <span className="text-2xl">{section.icon}</span>

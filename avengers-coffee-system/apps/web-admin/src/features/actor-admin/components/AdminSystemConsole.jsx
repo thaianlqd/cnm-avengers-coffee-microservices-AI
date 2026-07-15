@@ -1173,6 +1173,10 @@ export function AdminSystemConsole({ session, onLogout }) {
                     <input value={menuForm.name} onChange={(e) => setMenuForm((p) => ({ ...p, name: e.target.value }))} placeholder="Ví dụ: Cà phê sữa đá" />
                   </label>
                   <label>
+                    <span>Đường dẫn (Slug)</span>
+                    <input value={menuForm.slug} onChange={(e) => setMenuForm((p) => ({ ...p, slug: e.target.value }))} placeholder="ca-phe-sua-da (tự tạo nếu để trống)" />
+                  </label>
+                  <label>
                     <span>Danh mục</span>
                     <select value={menuForm.category_code} onChange={(e) => setMenuForm((p) => ({ ...p, category_code: e.target.value }))}>
                       <option value="">Chọn danh mục</option>
@@ -1182,16 +1186,12 @@ export function AdminSystemConsole({ session, onLogout }) {
                     </select>
                   </label>
                   <label>
-                    <span>Giá bán</span>
+                    <span>Giá bán cơ bản</span>
                     <input type="number" min="0" value={menuForm.price} onChange={(e) => setMenuForm((p) => ({ ...p, price: Number(e.target.value) || 0 }))} />
                   </label>
                   <label>
                     <span>Giá niêm yết</span>
                     <input type="number" min="0" value={menuForm.original_price} onChange={(e) => setMenuForm((p) => ({ ...p, original_price: Number(e.target.value) || 0 }))} />
-                  </label>
-                  <label>
-                    <span>Mô tả</span>
-                    <input value={menuForm.description} onChange={(e) => setMenuForm((p) => ({ ...p, description: e.target.value }))} placeholder="Mô tả ngắn gọn cho món" />
                   </label>
                   <label>
                     <span>Trạng thái</span>
@@ -1222,6 +1222,32 @@ export function AdminSystemConsole({ session, onLogout }) {
                   <label>
                     <span>Đường dẫn ảnh</span>
                     <input value={menuForm.image} onChange={(e) => setMenuForm((p) => ({ ...p, image: e.target.value }))} placeholder="/images/products/ca-phe-sua-da.jpg" />
+                  </label>
+                  <label className="system-admin-branch-address-field">
+                    <span>Mô tả ngắn gọn</span>
+                    <input value={menuForm.description} onChange={(e) => setMenuForm((p) => ({ ...p, description: e.target.value }))} placeholder="Mô tả món..." />
+                  </label>
+                  
+                  {/* Advanced JSON Fields */}
+                  <label className="system-admin-branch-address-field">
+                    <span>Sizes (JSON) VD: {"{"}"S":30000, "M":40000{"}"}</span>
+                    <input value={menuForm.sizes} onChange={(e) => setMenuForm((p) => ({ ...p, sizes: e.target.value }))} placeholder='{"Vừa": 59000, "Lớn": 69000}' />
+                  </label>
+                  <label className="system-admin-branch-address-field">
+                    <span>Toppings (JSON) VD: {"{"}"Trân châu":10000{"}"}</span>
+                    <input value={menuForm.toppings} onChange={(e) => setMenuForm((p) => ({ ...p, toppings: e.target.value }))} placeholder='{"Trân châu trắng": 10000}' />
+                  </label>
+                  <label className="system-admin-branch-address-field">
+                    <span>Lượng Đá (JSON)</span>
+                    <input value={menuForm.luong_da} onChange={(e) => setMenuForm((p) => ({ ...p, luong_da: e.target.value }))} placeholder='{"Bình thường": 0, "Ít đá": 0}' />
+                  </label>
+                  <label className="system-admin-branch-address-field">
+                    <span>Độ Ngọt (JSON)</span>
+                    <input value={menuForm.do_ngot} onChange={(e) => setMenuForm((p) => ({ ...p, do_ngot: e.target.value }))} placeholder='{"Bình thường": 0, "Ít ngọt": 0}' />
+                  </label>
+                  <label className="system-admin-branch-address-field">
+                    <span>Loại Sữa (JSON)</span>
+                    <input value={menuForm.loai_sua} onChange={(e) => setMenuForm((p) => ({ ...p, loai_sua: e.target.value }))} placeholder='{"Sữa tươi": 0, "Sữa yến mạch": 10000}' />
                   </label>
                 </div>
 

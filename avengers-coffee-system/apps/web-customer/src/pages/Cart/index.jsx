@@ -5,6 +5,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/apiClient';
 import { queryKeys } from '../../lib/queryKeys';
 import { buildAddressOptionsFromBranches, getAddressSelectionDefaults, normalizeAddressSelection } from '../../lib/addressOptions';
+import CartEditModal from '../../components/CartEditModal';
+import { PencilIcon } from '@heroicons/react/24/solid';
 
 const AVAILABLE_SIZES = ['Nhỏ', 'Vừa'];
 
@@ -39,8 +41,9 @@ function tachDiaChiDayDu(rawAddress) {
   return { city, district, ward, street: street || raw };
 }
 
-export default function CartPage({ onBackToHome }) {
-  const { cart, removeFromCart, updateCartQuantity, changeCartItemSize, activeUserId, refreshCart } = useCart();
+export default function CartPage({ products = [], onBackToHome }) {
+  const { cart, removeFromCart, updateCartQuantity, activeUserId, refreshCart } = useCart();
+  const [editingItem, setEditingItem] = useState(null);
   const queryClient = useQueryClient();
   const total = cart.reduce((sum, i) => sum + i.gia_ban * i.so_luong, 0);
 
@@ -368,24 +371,30 @@ export default function CartPage({ onBackToHome }) {
                           <h4 className="font-extrabold text-[15px] sm:text-base text-[#1a1a1a] leading-tight truncate">
                             {item.ten_san_pham}
                           </h4>
-                          
-                          {/* Size Selector */}
-                          <div className="flex items-center gap-1.5 text-xs text-gray-500 font-semibold">
-                            <span>Size:</span>
-                            <select
-                              value={item.size || 'Nhỏ'}
-                              onChange={async (e) => {
-                                await changeCartItemSize(item.ma_san_pham, item.size || 'Nhỏ', e.target.value);
-                                if (thongBao) setThongBao('');
-                              }}
-                              className="rounded-md border border-gray-200 bg-white px-1.5 py-0.5 text-xs font-bold text-gray-700 outline-none transition-colors focus:border-[#c41230]"
+                          {/* Options */}
+                          <div className="flex flex-col gap-1 text-xs text-gray-500 font-semibold mt-1">
+                            {item.size && (
+                              <div><span className="text-gray-400">Size:</span> {item.size}</div>
+                            )}
+                            {item.loai_sua && (
+                              <div><span className="text-gray-400">Sữa:</span> {item.loai_sua}</div>
+                            )}
+                            {item.luong_da && (
+                              <div><span className="text-gray-400">Đá:</span> {item.luong_da}</div>
+                            )}
+                            {item.do_ngot && (
+                              <div><span className="text-gray-400">Ngọt:</span> {item.do_ngot}</div>
+                            )}
+                            {item.toppings && item.toppings.length > 0 && (
+                              <div><span className="text-gray-400">Topping:</span> {item.toppings.join(', ')}</div>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setEditingItem(item)}
+                              className="mt-1 flex items-center gap-1 text-[#b22830] font-bold text-xs hover:underline w-fit"
                             >
-                              {AVAILABLE_SIZES.map((sizeOption) => (
-                                <option key={sizeOption} value={sizeOption}>
-                                  {sizeOption}
-                                </option>
-                              ))}
-                            </select>
+                              <PencilIcon className="w-3 h-3" /> Chỉnh sửa
+                            </button>
                           </div>
                         </div>
 
@@ -772,6 +781,14 @@ export default function CartPage({ onBackToHome }) {
           </div>
         </div>
       </div>
+
+      {/* MODAL CHỈNH SỬA MÓN */}
+      <CartEditModal
+        cartItem={editingItem}
+        product={editingItem ? products.find((p) => p.ma_san_pham === editingItem.ma_san_pham) : null}
+        isOpen={Boolean(editingItem)}
+        onClose={() => setEditingItem(null)}
+      />
     </div>
   );
 }
