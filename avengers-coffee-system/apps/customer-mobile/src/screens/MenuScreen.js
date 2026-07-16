@@ -63,11 +63,94 @@ function iconForCategory(label) {
   return 'cafe-outline'
 }
 
+function ToppingModal({ visible, onClose, availableToppings = {}, selectedToppings = [], onApply }) {
+  const [tempSelected, setTempSelected] = useState([])
+
+  useEffect(() => {
+    if (visible) {
+      setTempSelected([...selectedToppings])
+    }
+  }, [visible, selectedToppings])
+
+  const toppingKeys = Object.keys(availableToppings)
+
+  const handleToggle = (tp) => {
+    if (tempSelected.includes(tp)) {
+      setTempSelected(tempSelected.filter(t => t !== tp))
+    } else {
+      if (tempSelected.length < 3) {
+        setTempSelected([...tempSelected, tp])
+      } else {
+        Alert.alert('Thông báo', 'Bạn chỉ được chọn tối đa 3 loại topping.')
+      }
+    }
+  }
+
+  return (
+    <Modal visible={visible} transparent={true} animationType="slide" onRequestClose={onClose}>
+      <View style={modalStyles.toppingOverlay}>
+        <View style={modalStyles.contentBox}>
+          {/* Header */}
+          <View style={modalStyles.header}>
+            <Pressable onPress={onClose} style={modalStyles.closeBtn}>
+              <Ionicons name="close" size={22} color="#1e293b" />
+            </Pressable>
+            <Text style={modalStyles.headerTitle}>Topping mua kèm món</Text>
+            <View style={{ width: 36 }} />
+          </View>
+
+          {/* Subtitle Bar */}
+          <View style={modalStyles.toppingModalSubBar}>
+            <Text style={modalStyles.toppingModalSubText}>Chọn tối đa 3 loại Topping</Text>
+          </View>
+
+          {/* Vertical Checkbox List */}
+          <ScrollView style={modalStyles.scrollArea} contentContainerStyle={{ paddingBottom: 20 }}>
+            {toppingKeys.map((tp) => {
+              const tpPrice = Number(availableToppings[tp] || 0)
+              const isChecked = tempSelected.includes(tp)
+              return (
+                <Pressable
+                  key={tp}
+                  onPress={() => handleToggle(tp)}
+                  style={({ pressed }) => [modalStyles.toppingRow, pressed && { backgroundColor: '#f8fafc' }]}
+                >
+                  <View style={modalStyles.toppingRowLeft}>
+                    <View style={[modalStyles.checkbox, isChecked && modalStyles.checkboxActive]}>
+                      {isChecked && <Ionicons name="checkmark" size={14} color="#ffffff" />}
+                    </View>
+                    <Text style={[modalStyles.toppingRowName, isChecked && { color: '#0f172a' }]}>{tp}</Text>
+                  </View>
+                  <Text style={modalStyles.toppingRowPrice}>+{formatCurrency(tpPrice)}</Text>
+                </Pressable>
+              )
+            })}
+          </ScrollView>
+
+          {/* Footer button */}
+          <View style={modalStyles.footer}>
+            <Pressable
+              onPress={() => onApply(tempSelected)}
+              style={({ pressed }) => [modalStyles.applyBtnFull, pressed && { opacity: 0.92 }]}
+            >
+              <Text style={modalStyles.applyBtnFullText}>
+                Áp dụng ({tempSelected.length}/3)
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  )
+}
+
 function ProductDetailModal({ product, visible, onClose, onAddToCart, userId, allProducts = [] }) {
   const [selectedSize, setSelectedSize] = useState('Nhỏ')
   const [selectedLuongDa, setSelectedLuongDa] = useState('Bình thường')
   const [selectedDoNgot, setSelectedDoNgot] = useState('Bình thường')
   const [selectedToppings, setSelectedToppings] = useState([])
+  const [showToppings, setShowToppings] = useState(true)
+  const [showToppingModal, setShowToppingModal] = useState(false)
   const [note, setNote] = useState('')
   const [quantity, setQuantity] = useState(1)
 
@@ -80,6 +163,8 @@ function ProductDetailModal({ product, visible, onClose, onAddToCart, userId, al
       const dnKeys = Object.keys(product.do_ngot || {})
       setSelectedDoNgot(dnKeys.length > 0 ? dnKeys[0] : 'Bình thường')
       setSelectedToppings(product.toppings ? [] : [])
+      setShowToppings(true)
+      setShowToppingModal(false)
       setNote('')
       setQuantity(1)
     }
@@ -108,10 +193,17 @@ function ProductDetailModal({ product, visible, onClose, onAddToCart, userId, al
   const dnKeys = Object.keys(availableDoNgot)
 
   const availableToppings = product.toppings && Object.keys(product.toppings).length > 0 ? product.toppings : {
+    'Kem Phô Mai Macchiato': 10000,
+    'Shot Espresso': 10000,
+    'Hạt Sen': 10000,
+    'Xốt Caramel': 10000,
+    'Đào Miếng': 10000,
+    'Trân Châu Hoàng Kim': 10000,
+    'Foam Dừa': 10000,
+    'Đài Hoa Hibiscus': 10000,
+    'Trân châu củ năng': 10000,
     'Trân châu trắng': 10000,
     'Thạch cà phê': 10000,
-    'Kem Phô Mai Macchiato': 15000,
-    'Shot Espresso': 10000,
   }
   const toppingKeys = Object.keys(availableToppings)
 
@@ -121,211 +213,242 @@ function ProductDetailModal({ product, visible, onClose, onAddToCart, userId, al
   const totalPrice = unitPrice * quantity
 
   return (
-    <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onClose}>
-      <View style={modalStyles.overlay}>
-        <View style={modalStyles.contentBox}>
-          {/* Top Header */}
-          <View style={modalStyles.header}>
-            <Pressable onPress={onClose} style={modalStyles.closeBtn}>
-              <Ionicons name="close" size={22} color="#1e293b" />
-            </Pressable>
-            <Text style={modalStyles.headerTitle}>Thêm vào giỏ</Text>
-            <View style={{ width: 36 }} />
-          </View>
-
-          <ScrollView style={modalStyles.scrollArea} contentContainerStyle={modalStyles.scrollContent} showsVerticalScrollIndicator={false}>
-            {/* Top Product Hero Section */}
-            <View style={modalStyles.productHeroSection}>
-              {product.hinh_anh_url ? (
-                <Image source={{ uri: product.hinh_anh_url }} style={modalStyles.productHeroImg} resizeMode="contain" />
-              ) : (
-                <View style={[modalStyles.productHeroImg, modalStyles.productHeroPlaceholder]}>
-                  <Ionicons name="cafe-outline" size={48} color="#94a3b8" />
-                </View>
-              )}
-              <Text style={modalStyles.productSummaryName}>{product.ten_san_pham}</Text>
-              <Text style={modalStyles.productSummaryPrice}>{formatCurrency(unitPrice)}</Text>
+    <>
+      <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onClose}>
+        <View style={modalStyles.overlay}>
+          <View style={modalStyles.contentBox}>
+            {/* Top Header */}
+            <View style={modalStyles.header}>
+              <Pressable onPress={onClose} style={modalStyles.closeBtn}>
+                <Ionicons name="close" size={22} color="#1e293b" />
+              </Pressable>
+              <Text style={modalStyles.headerTitle}>Thêm vào giỏ</Text>
+              <View style={{ width: 36 }} />
             </View>
 
-            {/* Section 1: Gợi ý dùng kèm */}
-            <View style={modalStyles.sectionContainer}>
-              <Text style={modalStyles.sectionLabel}>Gợi ý dùng kèm</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={modalStyles.sugList}>
-                {suggestions.map((sug, idx) => (
-                  <View key={sug.ma_san_pham || idx} style={modalStyles.sugCard}>
-                    <View style={modalStyles.sugCardTop}>
-                      <Image source={{ uri: sug.hinh_anh_url || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200' }} style={modalStyles.sugImg} />
-                      <View style={modalStyles.sugInfo}>
-                        <Text style={modalStyles.sugName} numberOfLines={2}>{sug.ten_san_pham}</Text>
-                        <Text style={modalStyles.sugPrice}>{formatCurrency(sug.gia_ban || 29000)}</Text>
+            <ScrollView style={modalStyles.scrollArea} showsVerticalScrollIndicator={false}>
+              {/* Top Product Hero Section */}
+              <View style={modalStyles.productHeroSection}>
+                {product.hinh_anh_url ? (
+                  <Image source={{ uri: product.hinh_anh_url }} style={modalStyles.productHeroImg} resizeMode="contain" />
+                ) : (
+                  <View style={[modalStyles.productHeroImg, modalStyles.productHeroPlaceholder]}>
+                    <Ionicons name="cafe-outline" size={48} color="#94a3b8" />
+                  </View>
+                )}
+                <View style={modalStyles.productSummaryInfo}>
+                  <Text style={modalStyles.productSummaryName}>{product.ten_san_pham}</Text>
+                  <Text style={modalStyles.productSummaryPrice}>{formatCurrency(unitPrice)}</Text>
+                </View>
+              </View>
+
+              {/* Section 1: Gợi ý dùng kèm */}
+              <View style={[modalStyles.sectionContainer, { paddingTop: 12 }]}>
+                <Text style={modalStyles.sectionLabel}>Gợi ý dùng kèm</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={modalStyles.sugList}>
+                  {suggestions.map((sug, idx) => (
+                    <View key={sug.ma_san_pham || idx} style={modalStyles.sugCard}>
+                      <View style={modalStyles.sugCardTop}>
+                        <Image source={{ uri: sug.hinh_anh_url || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200' }} style={modalStyles.sugImg} />
+                        <View style={modalStyles.sugInfo}>
+                          <Text style={modalStyles.sugName} numberOfLines={2}>{sug.ten_san_pham || sug.name}</Text>
+                          <Text style={modalStyles.sugPrice}>{formatCurrency(sug.gia_ban || sug.price)}</Text>
+                        </View>
                       </View>
+                      <Pressable
+                        style={modalStyles.sugAddBtn}
+                        onPress={() => onAddToCart(sug, 1, 'Nhỏ', { unitPrice: sug.gia_ban })}
+                      >
+                        <Text style={modalStyles.sugAddBtnText}>Thêm ›</Text>
+                      </Pressable>
                     </View>
-                    <Pressable
-                      onPress={() => {
-                        onAddToCart(sug, 1, 'Nhỏ')
-                      }}
-                      style={modalStyles.sugAddBtn}
-                    >
-                      <Text style={modalStyles.sugAddBtnText}>{formatCurrency(sug.gia_ban || 29000)}  Thêm ›</Text>
+                  ))}
+                </ScrollView>
+
+                {/* Hợp gu? Rating */}
+                <View style={modalStyles.hopGuRow}>
+                  <View style={modalStyles.hopGuLeft}>
+                    <Text style={{ fontSize: 16 }}>⭐</Text>
+                    <Text style={modalStyles.hopGuText}>Hợp gu?</Text>
+                  </View>
+                  <View style={modalStyles.hopGuActions}>
+                    <Pressable style={modalStyles.hopGuThumbBtn}>
+                      <Ionicons name="thumbs-up-outline" size={16} color="#64748b" />
+                    </Pressable>
+                    <Pressable style={modalStyles.hopGuThumbBtn}>
+                      <Ionicons name="thumbs-down-outline" size={16} color="#64748b" />
                     </Pressable>
                   </View>
-                ))}
-              </ScrollView>
-            </View>
-
-            {/* Section 2: Chọn 1 Loại Size */}
-            <View style={modalStyles.sectionContainer}>
-              <Text style={modalStyles.sectionLabel}>Chọn 1 Loại Size</Text>
-              <View style={modalStyles.pillGrid}>
-                {sizeKeys.map((sz) => {
-                  const szPrice = Number(availableSizes[sz] || 0)
-                  const isSel = selectedSize === sz
-                  return (
-                    <Pressable
-                      key={sz}
-                      onPress={() => setSelectedSize(sz)}
-                      style={[modalStyles.pill, isSel && modalStyles.pillActive]}
-                    >
-                      <Text style={[modalStyles.pillText, isSel && modalStyles.pillTextActive]}>
-                        {sz}: {formatCurrency(szPrice)}
-                      </Text>
-                    </Pressable>
-                  )
-                })}
-              </View>
-            </View>
-
-            {/* Section 3: Lượng Đá */}
-            <View style={modalStyles.sectionContainer}>
-              <Text style={modalStyles.sectionLabel}>Lượng Đá</Text>
-              <View style={modalStyles.pillGrid}>
-                {ldKeys.map((ld) => {
-                  const isSel = selectedLuongDa === ld
-                  return (
-                    <Pressable
-                      key={ld}
-                      onPress={() => setSelectedLuongDa(ld)}
-                      style={[modalStyles.pill, isSel && modalStyles.pillActive]}
-                    >
-                      <Text style={[modalStyles.pillText, isSel && modalStyles.pillTextActive]}>
-                        {ld}
-                      </Text>
-                    </Pressable>
-                  )
-                })}
-              </View>
-            </View>
-
-            {/* Section 4: Độ Ngọt */}
-            <View style={modalStyles.sectionContainer}>
-              <Text style={modalStyles.sectionLabel}>Độ Ngọt</Text>
-              <View style={modalStyles.pillGrid}>
-                {dnKeys.map((dn) => {
-                  const isSel = selectedDoNgot === dn
-                  return (
-                    <Pressable
-                      key={dn}
-                      onPress={() => setSelectedDoNgot(dn)}
-                      style={[modalStyles.pill, isSel && modalStyles.pillActive]}
-                    >
-                      <Text style={[modalStyles.pillText, isSel && modalStyles.pillTextActive]}>
-                        {dn}
-                      </Text>
-                    </Pressable>
-                  )
-                })}
-              </View>
-            </View>
-
-            {/* Section 5: Chọn Tối Đa 3 Loại Topping */}
-            <View style={modalStyles.sectionContainer}>
-              <Text style={modalStyles.sectionLabel}>Chọn Tối Đa 3 Loại Topping</Text>
-              <View style={modalStyles.toppingTeaser}>
-                <View style={modalStyles.teaserIconWrap}>
-                  <Ionicons name="cafe" size={18} color="#fff" />
-                </View>
-                <View style={modalStyles.teaserTextWrap}>
-                  <Text style={modalStyles.teaserTitle}>Thêm Lựa Chọn</Text>
-                  <Text style={modalStyles.teaserSub}>Tùy chọn thêm sữa, syrup hay topping yêu thích để Nhà pha đúng gu bạn nhất (Một số lựa chọn có phụ phí).</Text>
                 </View>
               </View>
-              <View style={[modalStyles.pillGrid, { marginTop: 12 }]}>
-                {toppingKeys.map((tp) => {
-                  const isSel = selectedToppings.includes(tp)
-                  const tpPrice = Number(availableToppings[tp] || 0)
-                  return (
-                    <Pressable
-                      key={tp}
-                      onPress={() => {
-                        if (isSel) {
-                          setSelectedToppings(selectedToppings.filter(t => t !== tp))
-                        } else if (selectedToppings.length < 3) {
-                          setSelectedToppings([...selectedToppings, tp])
-                        } else {
-                          Alert.alert('Thông báo', 'Bạn chỉ được chọn tối đa 3 loại topping.')
-                        }
-                      }}
-                      style={[modalStyles.pill, isSel && modalStyles.pillActive]}
-                    >
-                      {isSel && <Ionicons name="checkmark" size={14} color="#ea8025" style={{ marginRight: 4 }} />}
-                      <Text style={[modalStyles.pillText, isSel && modalStyles.pillTextActive]}>
-                        {tp} (+{formatCurrency(tpPrice)})
-                      </Text>
-                    </Pressable>
-                  )
-                })}
+
+              {/* Section 2: Chọn 1 Loại Size */}
+              <View style={modalStyles.sectionContainer}>
+                <Text style={modalStyles.sectionLabel}>Chọn 1 Loại Size</Text>
+                <View style={modalStyles.pillGrid}>
+                  {sizeKeys.map((sz) => {
+                    const szPrice = Number(availableSizes[sz] || 0)
+                    const isSel = selectedSize === sz
+                    return (
+                      <Pressable
+                        key={sz}
+                        onPress={() => setSelectedSize(sz)}
+                        style={[modalStyles.pill, isSel && modalStyles.pillActive]}
+                      >
+                        <Text style={[modalStyles.pillText, isSel && modalStyles.pillTextActive]}>
+                          {sz}: {formatCurrency(szPrice)}
+                        </Text>
+                      </Pressable>
+                    )
+                  })}
+                </View>
               </View>
-            </View>
 
-            {/* Section 6: Ghi Chú Cho Quán */}
-            <View style={modalStyles.sectionContainer}>
-              <Text style={modalStyles.sectionLabel}>Ghi Chú Cho Quán</Text>
-              <TextInput
-                style={modalStyles.noteInput}
-                placeholder="Nhập ghi chú (VD: Để riêng đá...)"
-                placeholderTextColor="#94a3b8"
-                value={note}
-                onChangeText={setNote}
-                multiline
-                textAlignVertical="top"
-              />
-            </View>
-          </ScrollView>
+              {/* Section 3: Lượng Đá */}
+              <View style={modalStyles.sectionContainer}>
+                <Text style={modalStyles.sectionLabel}>Lượng Đá</Text>
+                <View style={modalStyles.pillGrid}>
+                  {ldKeys.map((ld) => {
+                    const isSel = selectedLuongDa === ld
+                    return (
+                      <Pressable
+                        key={ld}
+                        onPress={() => setSelectedLuongDa(ld)}
+                        style={[modalStyles.pill, isSel && modalStyles.pillActive]}
+                      >
+                        <Text style={[modalStyles.pillText, isSel && modalStyles.pillTextActive]}>{ld}</Text>
+                      </Pressable>
+                    )
+                  })}
+                </View>
+              </View>
 
-          {/* Bottom Footer */}
-          <View style={modalStyles.footer}>
-            <View style={modalStyles.qtyBox}>
-              <Pressable onPress={() => setQuantity(Math.max(1, quantity - 1))} style={modalStyles.qtyBtnCircle}>
-                <Ionicons name="remove" size={16} color="#334155" />
+              {/* Section 4: Độ Ngọt */}
+              <View style={modalStyles.sectionContainer}>
+                <Text style={modalStyles.sectionLabel}>Độ Ngọt</Text>
+                <View style={modalStyles.pillGrid}>
+                  {dnKeys.map((dn) => {
+                    const isSel = selectedDoNgot === dn
+                    return (
+                      <Pressable
+                        key={dn}
+                        onPress={() => setSelectedDoNgot(dn)}
+                        style={[modalStyles.pill, isSel && modalStyles.pillActive]}
+                      >
+                        <Text style={[modalStyles.pillText, isSel && modalStyles.pillTextActive]}>{dn}</Text>
+                      </Pressable>
+                    )
+                  })}
+                </View>
+              </View>
+
+              {/* Section 5: Chọn Tối Đa 3 Loại Topping */}
+              <View style={modalStyles.sectionContainer}>
+                <Text style={modalStyles.sectionLabel}>Chọn Tối Đa 3 Loại Topping</Text>
+                <Pressable
+                  onPress={() => setShowToppingModal(true)}
+                  style={({ pressed }) => [modalStyles.toppingTeaser, pressed && { opacity: 0.92 }]}
+                >
+                  <View style={modalStyles.teaserIconWrap}>
+                    <Ionicons name="cafe" size={18} color="#fff" />
+                  </View>
+                  <View style={modalStyles.teaserTextWrap}>
+                    <Text style={modalStyles.teaserTitle}>Thêm Lựa Chọn</Text>
+                    <Text style={modalStyles.teaserSub}>
+                      {selectedToppings.length > 0
+                        ? `Đã chọn (${selectedToppings.length}/3): ${selectedToppings.join(', ')}`
+                        : 'Tùy chọn thêm sữa, syrup hay topping yêu thích để Nhà pha đúng gu bạn nhất (Một số lựa chọn có phụ phí).'}
+                    </Text>
+                  </View>
+                  <View style={[modalStyles.teaserIconWrap, { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ffd8b8' }]}>
+                    <Ionicons name="chevron-forward" size={18} color="#ea8025" />
+                  </View>
+                </Pressable>
+
+                {selectedToppings.length > 0 && (
+                  <View style={[modalStyles.pillGrid, { marginTop: 12 }]}>
+                    {selectedToppings.map((tp) => {
+                      const tpPrice = Number(availableToppings[tp] || 0)
+                      return (
+                        <Pressable
+                          key={tp}
+                          onPress={() => setShowToppingModal(true)}
+                          style={[modalStyles.pill, modalStyles.pillActive]}
+                        >
+                          <Ionicons name="checkmark" size={14} color="#ea8025" style={{ marginRight: 4 }} />
+                          <Text style={[modalStyles.pillText, modalStyles.pillTextActive]}>
+                            {tp} (+{formatCurrency(tpPrice)})
+                          </Text>
+                        </Pressable>
+                      )
+                    })}
+                  </View>
+                )}
+              </View>
+
+              {/* Section 6: Ghi Chú Cho Quán */}
+              <View style={modalStyles.sectionContainer}>
+                <Text style={modalStyles.sectionLabel}>Ghi Chú Cho Quán</Text>
+                <TextInput
+                  style={modalStyles.noteInput}
+                  placeholder="Nhập ghi chú (VD: Để riêng đá...)"
+                  placeholderTextColor="#94a3b8"
+                  value={note}
+                  onChangeText={setNote}
+                  multiline
+                  textAlignVertical="top"
+                />
+              </View>
+            </ScrollView>
+
+            {/* Bottom Footer - Tách 2 bên ra thành 2 hàng dọc: Bộ chọn số lượng ở trên, Nút thêm giỏ hàng tràn viền bên dưới */}
+            <View style={modalStyles.footer}>
+              <View style={modalStyles.qtyRow}>
+                <View style={modalStyles.qtyBox}>
+                  <Pressable onPress={() => setQuantity(Math.max(1, quantity - 1))} style={modalStyles.qtyBtnCircle}>
+                    <Ionicons name="remove" size={18} color="#0f172a" />
+                  </Pressable>
+                  <Text style={modalStyles.qtyTextValue}>{quantity}</Text>
+                  <Pressable onPress={() => setQuantity(quantity + 1)} style={modalStyles.qtyBtnCircle}>
+                    <Ionicons name="add" size={18} color="#0f172a" />
+                  </Pressable>
+                </View>
+              </View>
+
+              <Pressable
+                onPress={() => {
+                  onAddToCart(product, quantity, selectedSize, {
+                    toppings: selectedToppings,
+                    luongDa: selectedLuongDa,
+                    doNgot: selectedDoNgot,
+                    note: note.trim(),
+                    unitPrice,
+                  })
+                  onClose()
+                }}
+                style={({ pressed }) => [modalStyles.addCartActionBtn, pressed && { opacity: 0.92 }]}
+              >
+                <Ionicons name="add-circle-outline" size={20} color="#ffffff" />
+                <Text style={modalStyles.addCartActionText}>
+                  THÊM VÀO GIỎ - {formatCurrency(totalPrice)}
+                </Text>
               </Pressable>
-              <Text style={modalStyles.qtyTextValue}>{quantity}</Text>
-              <Pressable onPress={() => setQuantity(quantity + 1)} style={modalStyles.qtyBtnCircle}>
-                <Ionicons name="add" size={16} color="#334155" />
-              </Pressable>
             </View>
-
-            <Pressable
-              onPress={() => {
-                onAddToCart(product, quantity, selectedSize, {
-                  toppings: selectedToppings,
-                  luongDa: selectedLuongDa,
-                  doNgot: selectedDoNgot,
-                  note: note.trim(),
-                  unitPrice,
-                })
-                onClose()
-              }}
-              style={({ pressed }) => [modalStyles.addCartActionBtn, pressed && { backgroundColor: '#d97724' }]}
-            >
-              <Ionicons name="add-circle-outline" size={18} color="#ffffff" />
-              <Text style={modalStyles.addCartActionText}>
-                THÊM VÀO GIỎ - {formatCurrency(totalPrice)}
-              </Text>
-            </Pressable>
           </View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
+
+      <ToppingModal
+        visible={showToppingModal}
+        onClose={() => setShowToppingModal(false)}
+        availableToppings={availableToppings}
+        selectedToppings={selectedToppings}
+        onApply={(newSelected) => {
+          setSelectedToppings(newSelected)
+          setShowToppingModal(false)
+        }}
+      />
+    </>
   )
 }
 
@@ -602,7 +725,7 @@ export function MenuScreen({ navigation, route }) {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Pressable style={styles.modeSelectorClean} onPress={() => {}}>
+          <Pressable style={styles.modeSelectorClean} onPress={() => { }}>
             <Ionicons name="cafe-outline" size={20} color="#1e293b" />
             <Text style={styles.modeSelectorTextClean}>Uống tại quán</Text>
             <Ionicons name="chevron-down" size={16} color="#64748b" />
@@ -1244,17 +1367,24 @@ const modalStyles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.55)',
-    justifyContent: Platform.OS === 'web' ? 'center' : 'flex-end',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  toppingOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    justifyContent: 'flex-end',
     alignItems: 'center',
   },
   contentBox: {
-    width: Platform.OS === 'web' ? 480 : '100%',
+    width: Platform.OS === 'web' ? 500 : '100%',
     maxWidth: '100%',
-    maxHeight: Platform.OS === 'web' ? '90%' : '92%',
+    maxHeight: Platform.OS === 'web' ? '88%' : '90%',
     backgroundColor: '#fff',
-    borderRadius: Platform.OS === 'web' ? 20 : 0,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
@@ -1290,35 +1420,41 @@ const modalStyles = StyleSheet.create({
   },
   productHeroSection: {
     alignItems: 'center',
-    paddingTop: 20,
+    paddingTop: 16,
     paddingBottom: 16,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    paddingHorizontal: 20,
+    borderBottomWidth: 8,
+    borderBottomColor: '#f8fafc',
   },
   productHeroImg: {
-    width: 180,
-    height: 180,
+    width: 230,
+    height: 230,
     borderRadius: 16,
-    marginBottom: 14,
+    marginBottom: 16,
   },
   productHeroPlaceholder: {
     backgroundColor: '#f8fafc',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  productSummaryInfo: {
+    alignSelf: 'stretch',
+    alignItems: 'flex-start',
+    paddingTop: 4,
+  },
   productSummaryName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1e293b',
-    textAlign: 'center',
+    fontSize: 21,
+    fontWeight: '800',
+    color: '#0f172a',
+    textAlign: 'left',
+    letterSpacing: -0.4,
   },
   productSummaryPrice: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#d97724',
     marginTop: 4,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   sectionContainer: {
     paddingHorizontal: 16,
@@ -1326,8 +1462,8 @@ const modalStyles = StyleSheet.create({
     paddingBottom: 4,
   },
   sectionLabel: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 14.5,
+    fontWeight: '600',
     color: '#64748b',
     marginBottom: 10,
   },
@@ -1383,18 +1519,55 @@ const modalStyles = StyleSheet.create({
     fontWeight: '600',
     color: '#ffffff',
   },
+  hopGuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 18,
+    marginBottom: 6,
+    gap: 16,
+  },
+  hopGuLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  hopGuText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#64748b',
+  },
+  hopGuActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  hopGuThumbBtn: {
+    width: 44,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 1 },
+  },
   pillGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
   },
   pill: {
-    paddingHorizontal: 16,
-    paddingVertical: 9,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -1404,12 +1577,12 @@ const modalStyles = StyleSheet.create({
     borderWidth: 1,
   },
   pillText: {
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: '500',
     color: '#334155',
   },
   pillTextActive: {
-    color: '#d97724',
+    color: '#0f172a',
     fontWeight: '600',
   },
   toppingTeaser: {
@@ -1434,9 +1607,9 @@ const modalStyles = StyleSheet.create({
     flex: 1,
   },
   teaserTitle: {
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: '600',
-    color: '#d97724',
+    color: '#0f172a',
   },
   teaserSub: {
     fontSize: 11,
@@ -1455,50 +1628,135 @@ const modalStyles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   footer: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
+    flexDirection: 'column',
+    gap: 12,
+  },
+  qtyRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
   qtyBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 16,
+    backgroundColor: '#f8fafc',
+    paddingHorizontal: 18,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   qtyBtnCircle: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
     alignItems: 'center',
     justifyContent: 'center',
   },
   qtyTextValue: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1e293b',
-    minWidth: 28,
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0f172a',
+    minWidth: 32,
     textAlign: 'center',
   },
-  addCartActionBtn: {
+  toppingModalSubBar: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#f8fafc',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  toppingModalSubText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  toppingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+    backgroundColor: '#ffffff',
+  },
+  toppingRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
     flex: 1,
-    marginLeft: 16,
-    paddingVertical: 12,
-    borderRadius: 24,
-    backgroundColor: '#d97724',
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    borderColor: '#cbd5e1',
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxActive: {
+    backgroundColor: '#ea8025',
+    borderColor: '#ea8025',
+  },
+  toppingRowName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#334155',
+  },
+  toppingRowPrice: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#d97724',
+  },
+  applyBtnFull: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 999,
+    backgroundColor: '#ea8025',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#ea8025',
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  applyBtnFullText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  addCartActionBtn: {
+    width: '100%',
+    paddingVertical: 15,
+    borderRadius: 999,
+    backgroundColor: '#ea8025',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 8,
+    shadowColor: '#ea8025',
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 4 },
   },
   addCartActionText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     color: '#ffffff',
+    letterSpacing: 0.3,
   },
 })
 
