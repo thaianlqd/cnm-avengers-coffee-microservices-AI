@@ -23,6 +23,8 @@ import ProfilePage from './pages/Profile';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import ChinhSachDatHangPage from './pages/ChinhSachDatHang';
 import LienHePage from './pages/LienHe';
+import MenuIntroPage from './pages/MenuIntro';
+import CareersPage from './pages/Careers';
 import { CartProvider, useCart } from './context/CartContext'; // File mới bước 2
 import { apiClient } from './lib/apiClient';
 import { queryKeys } from './lib/queryKeys';
@@ -2200,7 +2202,9 @@ function AppContent() {
             setSelectedCatId={setSelectedCatId}
           />
         ) : activeTab === 'about' ? (
-          <About />
+          <About setActiveTab={setActiveTab} />
+        ) : activeTab === 'careers' ? (
+          <CareersPage />
         ) : activeTab === 'contact' ? (
           <Support />
         ) : activeTab === 'news' ? selectedNewsArticleId ? (
@@ -2354,6 +2358,18 @@ function AppContent() {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           />
+        ) : activeTab === 'menu-intro' ? (
+          <MenuIntroPage
+            categories={categories}
+            products={products}
+            activeCategoryId={selectedCatId}
+            onCategoryChange={(catId) => {
+              setSelectedCatId(catId);
+            }}
+            onOrderProduct={(product) => {
+              handleOpenProductPage(product);
+            }}
+          />
         ) : ['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail'].includes(activeTab) ? (
           <OrderPage
             menuSections={menuSections}
@@ -2430,7 +2446,7 @@ function AppContent() {
         user={user}
       />
 
-      {['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail'].includes(activeTab) ? <OrderFooter onNavigate={setActiveTab} /> : <Footer />}
+      {['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail'].includes(activeTab) ? <OrderFooter onNavigate={setActiveTab} /> : <Footer onTabChange={setActiveTab} />}
       <ChatWidget user={user} socketUrl={socketUrl} />
 
       {notificationToast ? (

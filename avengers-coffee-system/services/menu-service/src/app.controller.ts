@@ -16,6 +16,11 @@ export class AppController {
     return this.appService.getCategories();
   }
 
+  @Get('menu/attributes')
+  getAttributes() {
+    return this.appService.getAttributes();
+  }
+
   @Post('menu/categories')
   createCategory(
     @Body()
@@ -83,6 +88,11 @@ export class AppController {
       dang_ban?: boolean;
       la_hot?: boolean;
       la_moi?: boolean;
+      sizes?: any;
+      luong_da?: any;
+      do_ngot?: any;
+      loai_sua?: any;
+      toppings?: any;
     },
   ) {
     return this.appService.createMenuItem(payload);
@@ -111,6 +121,11 @@ export class AppController {
       dang_ban?: boolean;
       la_hot?: boolean;
       la_moi?: boolean;
+      sizes?: any;
+      luong_da?: any;
+      do_ngot?: any;
+      loai_sua?: any;
+      toppings?: any;
     },
   ) {
     return this.appService.updateMenuItem(Number(itemId), payload);

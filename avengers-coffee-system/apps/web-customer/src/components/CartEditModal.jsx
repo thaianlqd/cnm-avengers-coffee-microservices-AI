@@ -11,6 +11,10 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose }) {
   const [selectedLoaiSua, setSelectedLoaiSua] = useState('');
   const [selectedToppings, setSelectedToppings] = useState([]);
 
+  // Dynamic variants state
+  const hasDynamicVariants = product?.bien_the && typeof product.bien_the === 'object' && Object.keys(product.bien_the).length > 0;
+  const [dynamicSelections, setDynamicSelections] = useState({});
+
   useEffect(() => {
     if (cartItem) {
       setSelectedSize(cartItem.size || '');
@@ -18,8 +22,30 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose }) {
       setSelectedDoNgot(cartItem.do_ngot || '');
       setSelectedLoaiSua(cartItem.loai_sua || '');
       setSelectedToppings(cartItem.toppings || []);
+
+      const initial = {};
+      if (hasDynamicVariants) {
+        for (const [attrName, optionsObj] of Object.entries(product.bien_the)) {
+          if (!optionsObj || typeof optionsObj !== 'object') continue;
+          const savedVal = cartItem.custom_attributes?.[attrName];
+          if (savedVal !== undefined) {
+            initial[attrName] = savedVal;
+          } else {
+            const keys = Object.keys(optionsObj);
+            if (keys.length > 0) {
+              const isMulti = attrName.toLowerCase().includes('topping') || attrName.toLowerCase().includes('đồ kèm');
+              if (isMulti) {
+                initial[attrName] = [];
+              } else {
+                initial[attrName] = keys[0];
+              }
+            }
+          }
+        }
+      }
+      setDynamicSelections(initial);
     }
-  }, [cartItem]);
+  }, [cartItem, product?.bien_the, hasDynamicVariants]);
 
   if (!isOpen || !product || !cartItem) return null;
 
@@ -38,6 +64,23 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose }) {
   const availableLoaiSua = product?.loai_sua || {};
   const lsKeys = Object.keys(availableLoaiSua);
 
+  const dynamicPrice = React.useMemo(() => {
+    let extra = 0;
+    if (hasDynamicVariants) {
+      for (const [attrName, selection] of Object.entries(dynamicSelections)) {
+        const optionsObj = product.bien_the[attrName] || {};
+        if (Array.isArray(selection)) {
+          for (const val of selection) {
+            extra += Number(optionsObj[val]) || 0;
+          }
+        } else {
+          extra += Number(optionsObj[selection]) || 0;
+        }
+      }
+    }
+    return extra;
+  }, [hasDynamicVariants, product?.bien_the, dynamicSelections]);
+
   const basePrice = (selectedSize && availableSizes[selectedSize] !== undefined) 
     ? Number(availableSizes[selectedSize]) 
     : Number(product?.gia_ban || product?.price || 30000);
@@ -45,17 +88,37 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose }) {
   const toppingsPrice = selectedToppings.reduce((acc, t) => acc + Number(availableToppings[t] || 0), 0);
   const loaiSuaPrice = (selectedLoaiSua && availableLoaiSua[selectedLoaiSua] !== undefined) ? Number(availableLoaiSua[selectedLoaiSua]) : 0;
   
-  const finalPrice = basePrice + toppingsPrice + loaiSuaPrice;
+  const finalPrice = hasDynamicVariants
+    ? Number(product?.gia_ban || product?.price || 30000) + dynamicPrice
+    : basePrice + toppingsPrice + loaiSuaPrice;
 
   const handleUpdate = () => {
-    updateCartItemOptions(cartItem, {
-      size: selectedSize,
-      luongDa: selectedLuongDa,
-      doNgot: selectedDoNgot,
-      loaiSua: selectedLoaiSua,
-      toppings: selectedToppings,
-      gia_ban: finalPrice
-    });
+    if (hasDynamicVariants) {
+      const size = dynamicSelections['Kích thước'] || '';
+      const toppings = dynamicSelections['Topping'] || [];
+      const luongDa = dynamicSelections['Lượng đá'] || '';
+      const doNgot = dynamicSelections['Độ ngọt'] || '';
+      const loaiSua = dynamicSelections['Loại sữa'] || '';
+
+      updateCartItemOptions(cartItem, {
+        size,
+        luongDa,
+        doNgot,
+        loaiSua,
+        toppings,
+        custom_attributes: dynamicSelections,
+        gia_ban: finalPrice
+      });
+    } else {
+      updateCartItemOptions(cartItem, {
+        size: selectedSize,
+        luongDa: selectedLuongDa,
+        doNgot: selectedDoNgot,
+        loaiSua: selectedLoaiSua,
+        toppings: selectedToppings,
+        gia_ban: finalPrice
+      });
+    }
     onClose();
   };
 
@@ -84,129 +147,185 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose }) {
           </div>
 
           <div className="space-y-6">
-            {/* Kích thước */}
-            {sizeKeys.length > 0 && (
-              <div>
-                <span className="block text-sm font-bold text-gray-700 mb-2">Kích thước:</span>
-                <div className="flex flex-wrap gap-2">
-                  {sizeKeys.map((sz) => (
-                    <button
-                      key={sz}
-                      type="button"
-                      onClick={() => setSelectedSize(sz)}
-                      className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all ${
-                        selectedSize === sz
-                          ? 'border-[#b22830] bg-[#b22830] text-white'
-                          : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
-                      }`}
-                    >
-                      {sz} {availableSizes[sz] > 0 ? `(+${availableSizes[sz].toLocaleString('vi-VN')}đ)` : ''}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Dynamic options or static fallbacks */}
+            {hasDynamicVariants ? (
+              Object.entries(product.bien_the || {}).map(([attrName, optionsObj]) => {
+                const isMulti = attrName.toLowerCase().includes('topping') || attrName.toLowerCase().includes('đồ kèm');
+                const optionKeys = Object.keys(optionsObj || {});
+                if (optionKeys.length === 0) return null;
 
-            {/* Lượng đá */}
-            {ldKeys.length > 0 && (
-              <div>
-                <span className="block text-sm font-bold text-gray-700 mb-2">Lượng đá:</span>
-                <div className="flex flex-wrap gap-2">
-                  {ldKeys.map((ld) => (
-                    <button
-                      key={ld}
-                      type="button"
-                      onClick={() => setSelectedLuongDa(ld)}
-                      className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all ${
-                        selectedLuongDa === ld
-                          ? 'border-[#b22830] bg-[#b22830] text-white'
-                          : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
-                      }`}
-                    >
-                      {ld}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+                return (
+                  <div key={attrName}>
+                    <span className="block text-sm font-bold text-gray-700 mb-2">{attrName}:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {optionKeys.map((opt) => {
+                        const isSelected = isMulti 
+                          ? (dynamicSelections[attrName] || []).includes(opt)
+                          : dynamicSelections[attrName] === opt;
 
-            {/* Độ ngọt */}
-            {dnKeys.length > 0 && (
-              <div>
-                <span className="block text-sm font-bold text-gray-700 mb-2">Độ ngọt:</span>
-                <div className="flex flex-wrap gap-2">
-                  {dnKeys.map((dn) => (
-                    <button
-                      key={dn}
-                      type="button"
-                      onClick={() => setSelectedDoNgot(dn)}
-                      className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all ${
-                        selectedDoNgot === dn
-                          ? 'border-[#b22830] bg-[#b22830] text-white'
-                          : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
-                      }`}
-                    >
-                      {dn}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+                        return (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() => {
+                              if (isMulti) {
+                                const currentList = dynamicSelections[attrName] || [];
+                                const nextList = currentList.includes(opt)
+                                  ? currentList.filter(o => o !== opt)
+                                  : [...currentList, opt];
+                                setDynamicSelections({
+                                  ...dynamicSelections,
+                                  [attrName]: nextList
+                                });
+                              } else {
+                                setDynamicSelections({
+                                  ...dynamicSelections,
+                                  [attrName]: opt
+                                });
+                              }
+                            }}
+                            className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all flex items-center gap-2 ${
+                              isSelected
+                                ? 'border-[#b22830] bg-[#b22830] text-white shadow-sm'
+                                : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
+                            }`}
+                          >
+                            {isMulti && isSelected && <CheckIcon className="w-4 h-4" />}
+                            {opt} {optionsObj[opt] > 0 ? `(+${Number(optionsObj[opt]).toLocaleString('vi-VN')}đ)` : ''}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <>
+                {/* Kích thước */}
+                {sizeKeys.length > 0 && (
+                  <div>
+                    <span className="block text-sm font-bold text-gray-700 mb-2">Kích thước:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {sizeKeys.map((sz) => (
+                        <button
+                          key={sz}
+                          type="button"
+                          onClick={() => setSelectedSize(sz)}
+                          className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all ${
+                            selectedSize === sz
+                              ? 'border-[#b22830] bg-[#b22830] text-white'
+                              : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
+                          }`}
+                        >
+                          {sz} {availableSizes[sz] > 0 ? `(+${availableSizes[sz].toLocaleString('vi-VN')}đ)` : ''}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-            {/* Loại sữa */}
-            {lsKeys.length > 0 && (
-              <div>
-                <span className="block text-sm font-bold text-gray-700 mb-2">Loại sữa:</span>
-                <div className="flex flex-wrap gap-2">
-                  {lsKeys.map((ls) => (
-                    <button
-                      key={ls}
-                      type="button"
-                      onClick={() => setSelectedLoaiSua(ls)}
-                      className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all ${
-                        selectedLoaiSua === ls
-                          ? 'border-[#b22830] bg-[#b22830] text-white'
-                          : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
-                      }`}
-                    >
-                      {ls} {availableLoaiSua[ls] >= 0 ? `(+${Number(availableLoaiSua[ls]).toLocaleString('vi-VN')}đ)` : ''}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+                {/* Lượng đá */}
+                {ldKeys.length > 0 && (
+                  <div>
+                    <span className="block text-sm font-bold text-gray-700 mb-2">Lượng đá:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {ldKeys.map((ld) => (
+                        <button
+                          key={ld}
+                          type="button"
+                          onClick={() => setSelectedLuongDa(ld)}
+                          className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all ${
+                            selectedLuongDa === ld
+                              ? 'border-[#b22830] bg-[#b22830] text-white'
+                              : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
+                          }`}
+                        >
+                          {ld}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-            {/* Toppings */}
-            {toppingKeys.length > 0 && (
-              <div>
-                <span className="block text-sm font-bold text-gray-700 mb-2">Thêm Topping:</span>
-                <div className="flex flex-wrap gap-2">
-                  {toppingKeys.map((tp) => {
-                    const isSelected = selectedToppings.includes(tp);
-                    return (
-                      <button
-                        key={tp}
-                        type="button"
-                        onClick={() => {
-                          if (isSelected) {
-                            setSelectedToppings(selectedToppings.filter(t => t !== tp));
-                          } else {
-                            setSelectedToppings([...selectedToppings, tp]);
-                          }
-                        }}
-                        className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all flex items-center gap-2 ${
-                          isSelected
-                            ? 'border-[#b22830] bg-[#b22830] text-white'
-                            : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
-                        }`}
-                      >
-                        {isSelected && <CheckIcon className="w-4 h-4" />}
-                        {tp} (+{Number(availableToppings[tp]).toLocaleString('vi-VN')}đ)
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+                {/* Độ ngọt */}
+                {dnKeys.length > 0 && (
+                  <div>
+                    <span className="block text-sm font-bold text-gray-700 mb-2">Độ ngọt:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {dnKeys.map((dn) => (
+                        <button
+                          key={dn}
+                          type="button"
+                          onClick={() => setSelectedDoNgot(dn)}
+                          className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all ${
+                            selectedDoNgot === dn
+                              ? 'border-[#b22830] bg-[#b22830] text-white'
+                              : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
+                          }`}
+                        >
+                          {dn}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Loại sữa */}
+                {lsKeys.length > 0 && (
+                  <div>
+                    <span className="block text-sm font-bold text-gray-700 mb-2">Loại sữa:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {lsKeys.map((ls) => (
+                        <button
+                          key={ls}
+                          type="button"
+                          onClick={() => setSelectedLoaiSua(ls)}
+                          className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all ${
+                            selectedLoaiSua === ls
+                              ? 'border-[#b22830] bg-[#b22830] text-white'
+                              : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
+                          }`}
+                        >
+                          {ls} {availableLoaiSua[ls] >= 0 ? `(+${Number(availableLoaiSua[ls]).toLocaleString('vi-VN')}đ)` : ''}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Toppings */}
+                {toppingKeys.length > 0 && (
+                  <div>
+                    <span className="block text-sm font-bold text-gray-700 mb-2">Thêm Topping:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {toppingKeys.map((tp) => {
+                        const isSelected = selectedToppings.includes(tp);
+                        return (
+                          <button
+                            key={tp}
+                            type="button"
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedToppings(selectedToppings.filter(t => t !== tp));
+                              } else {
+                                setSelectedToppings([...selectedToppings, tp]);
+                              }
+                            }}
+                            className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all flex items-center gap-2 ${
+                              isSelected
+                                ? 'border-[#b22830] bg-[#b22830] text-white'
+                                : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
+                            }`}
+                          >
+                            {isSelected && <CheckIcon className="w-4 h-4" />}
+                            {tp} (+{Number(availableToppings[tp]).toLocaleString('vi-VN')}đ)
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
