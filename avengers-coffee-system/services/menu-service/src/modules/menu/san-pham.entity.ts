@@ -47,6 +47,9 @@ export class SanPham {
   @Column({ type: 'jsonb', nullable: true })
   toppings: any;
 
+  @Column({ type: 'jsonb', nullable: true })
+  bien_the: any;
+
   @ManyToOne(() => DanhMuc, (dm) => dm.danhSachsSanPham)
   @JoinColumn({ name: 'ma_danh_muc' })
   danhMuc: DanhMuc;

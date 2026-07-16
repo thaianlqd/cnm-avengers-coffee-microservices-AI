@@ -219,7 +219,8 @@ const DEFAULT_MENU_FORM = {
   toppings: '',
   luong_da: '',
   do_ngot: '',
-  loai_sua: ''
+  loai_sua: '',
+  bien_the: {}
 }
 
 const DEFAULT_CATEGORY_FORM = {
@@ -321,6 +322,7 @@ export function useSystemAdmin() {
   const [editingMenuId, setEditingMenuId] = useState('')
   const [menuForm, setMenuForm] = useState(DEFAULT_MENU_FORM)
   const [uploadState, setUploadState] = useState({ loading: false, error: '', success: '' })
+  const [attributesState, setAttributesState] = useState({ loading: false, error: '', items: [] })
 
   const [branchesState, setBranchesState] = useState({ loading: true, error: '', items: [] })
   const [savingBranch, setSavingBranch] = useState(false)
@@ -631,9 +633,21 @@ export function useSystemAdmin() {
     return list
   }, [promotionsState.items, promotionFilter])
 
+  const loadAttributes = async () => {
+    setAttributesState((p) => ({ ...p, loading: true, error: '' }));
+    try {
+      const response = await fetch(`${API_BASE_URL}/menu/attributes`);
+      const result = await response.json().catch(() => []);
+      setAttributesState({ loading: false, error: '', items: result || [] });
+    } catch (e) {
+      setAttributesState({ loading: false, error: e.message || 'Khong tai duoc thuoc tinh', items: [] });
+    }
+  };
+
   useEffect(() => {
     loadUsers()
     loadCustomers()
+    loadAttributes()
   }, [])
 
   const startEditUser = (item) => {
@@ -1001,6 +1015,7 @@ export function useSystemAdmin() {
       luong_da: item.luong_da ? JSON.stringify(item.luong_da) : '',
       do_ngot: item.do_ngot ? JSON.stringify(item.do_ngot) : '',
       loai_sua: item.loai_sua ? JSON.stringify(item.loai_sua) : '',
+      bien_the: item.bien_the || {},
     })
   }
 
@@ -1020,22 +1035,6 @@ export function useSystemAdmin() {
         throw new Error('Danh muc duoc chon khong ton tai, vui long chon lai danh muc hop le')
       }
 
-      let parsedSizes = null;
-      let parsedToppings = null;
-      let parsedLuongDa = null;
-      let parsedDoNgot = null;
-      let parsedLoaiSua = null;
-
-      try {
-        if (menuForm.sizes) parsedSizes = JSON.parse(menuForm.sizes);
-        if (menuForm.toppings) parsedToppings = JSON.parse(menuForm.toppings);
-        if (menuForm.luong_da) parsedLuongDa = JSON.parse(menuForm.luong_da);
-        if (menuForm.do_ngot) parsedDoNgot = JSON.parse(menuForm.do_ngot);
-        if (menuForm.loai_sua) parsedLoaiSua = JSON.parse(menuForm.loai_sua);
-      } catch (e) {
-        throw new Error('Định dạng JSON không hợp lệ ở các trường JSON. Vui lòng kiểm tra lại.');
-      }
-
       const payload = {
         name: menuForm.name,
         category_code: menuForm.category_code,
@@ -1047,11 +1046,7 @@ export function useSystemAdmin() {
         la_hot: Boolean(menuForm.la_hot),
         la_moi: Boolean(menuForm.la_moi),
         slug: menuForm.slug || normalizeText(menuForm.name).replace(/\s+/g, '-'),
-        sizes: parsedSizes,
-        toppings: parsedToppings,
-        luong_da: parsedLuongDa,
-        do_ngot: parsedDoNgot,
-        loai_sua: parsedLoaiSua,
+        bien_the: menuForm.bien_the || {},
       }
 
       const method = editingMenuId ? 'PATCH' : 'POST'
@@ -1069,6 +1064,7 @@ export function useSystemAdmin() {
 
       cancelEditMenu()
       await loadMenu()
+      await loadAttributes().catch(() => {}) // Refresh attributes list
       pushAdminNotification('Cập nhật sản phẩm', 'Đã lưu thay đổi sản phẩm/menu thành công.')
     } catch (error) {
       window.alert(error.message || 'Khong luu duoc mon')
@@ -1240,5 +1236,7 @@ export function useSystemAdmin() {
     savePromotion,
     deletePromotion,
     savingPromotion,
+    attributesState,
+    loadAttributes,
   }
 }

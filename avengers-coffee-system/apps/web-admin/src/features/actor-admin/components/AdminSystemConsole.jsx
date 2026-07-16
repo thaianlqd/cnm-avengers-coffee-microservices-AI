@@ -152,6 +152,8 @@ export function AdminSystemConsole({ session, onLogout }) {
     savePromotion,
     deletePromotion,
     savingPromotion,
+    attributesState,
+    loadAttributes,
   } = useSystemAdmin()
 
   const usersPageData = useMemo(() => buildPage(usersState.items, usersPage), [usersState.items, usersPage])
@@ -179,6 +181,91 @@ export function AdminSystemConsole({ session, onLogout }) {
 
   const menuPageData = useMemo(() => buildPage(filteredMenuItems, menuPage), [filteredMenuItems, menuPage])
   const promotionsPageData = useMemo(() => buildPage(promotionFilteredItems, promotionsPage), [promotionFilteredItems, promotionsPage])
+
+  const [selectedAttributeSelect, setSelectedAttributeSelect] = useState('')
+  const [customAttributeName, setCustomAttributeName] = useState('')
+  const [newOptionState, setNewOptionState] = useState({}) // { [attrName]: { name: '', price: '' } }
+
+  const addAttributeGroup = () => {
+    const name = (customAttributeName.trim() || selectedAttributeSelect.trim())
+    if (!name) {
+      window.alert('Vui lòng chọn hoặc nhập tên biến thể mới!')
+      return
+    }
+
+    const currentBienThe = menuForm.bien_the || {}
+    if (currentBienThe[name]) {
+      window.alert('Nhóm biến thể này đã tồn tại!')
+      return
+    }
+
+    const updated = { ...currentBienThe, [name]: {} }
+    setMenuForm((prev) => ({
+      ...prev,
+      bien_the: updated,
+    }))
+
+    setSelectedAttributeSelect('')
+    setCustomAttributeName('')
+  }
+
+  const removeAttributeGroup = (attrName) => {
+    if (!window.confirm(`Xóa toàn bộ nhóm biến thể "${attrName}"?`)) return
+    const currentBienThe = menuForm.bien_the || {}
+    const updated = { ...currentBienThe }
+    delete updated[attrName]
+    setMenuForm((prev) => ({
+      ...prev,
+      bien_the: updated,
+    }))
+  }
+
+  const handleOptionStateChange = (attrName, field, value) => {
+    setNewOptionState((prev) => ({
+      ...prev,
+      [attrName]: {
+        ...(prev[attrName] || { name: '', price: '' }),
+        [field]: value,
+      },
+    }))
+  }
+
+  const addOptionToGroup = (attrName) => {
+    const opt = newOptionState[attrName] || { name: '', price: '' }
+    const optionName = String(opt.name || '').trim()
+    if (!optionName) {
+      window.alert('Vui lòng nhập tên tùy chọn!')
+      return
+    }
+
+    const currentBienThe = menuForm.bien_the || {}
+    const currentOptions = currentBienThe[attrName] || {}
+    const updatedOptions = { ...currentOptions, [optionName]: Number(opt.price) || 0 }
+
+    const updatedBienThe = { ...currentBienThe, [attrName]: updatedOptions }
+    setMenuForm((prev) => ({
+      ...prev,
+      bien_the: updatedBienThe,
+    }))
+
+    setNewOptionState((prev) => ({
+      ...prev,
+      [attrName]: { name: '', price: '' },
+    }))
+  }
+
+  const removeOptionFromGroup = (attrName, optionName) => {
+    const currentBienThe = menuForm.bien_the || {}
+    const currentOptions = currentBienThe[attrName] || {}
+    const updatedOptions = { ...currentOptions }
+    delete updatedOptions[optionName]
+
+    const updatedBienThe = { ...currentBienThe, [attrName]: updatedOptions }
+    setMenuForm((prev) => ({
+      ...prev,
+      bien_the: updatedBienThe,
+    }))
+  }
 
   useEffect(() => {
     if (!adminToast) return
@@ -1185,11 +1272,11 @@ export function AdminSystemConsole({ session, onLogout }) {
               <span>Ảnh upload sẽ được lưu vào web-customer/public/images/products</span>
             </div>
 
-            <div className="system-admin-menu-layout">
+            <div className="system-admin-menu-stacked-layout">
               <section className="system-admin-card system-admin-form-card">
                 <div className="panel-head"><h2>{editingMenuId ? 'Cập nhật món' : 'Thêm món mới'}</h2></div>
 
-                <div className="system-admin-form-grid">
+                <div className="system-admin-form-grid system-admin-form-grid--menu">
                   <label>
                     <span>Tên món</span>
                     <input value={menuForm.name} onChange={(e) => setMenuForm((p) => ({ ...p, name: e.target.value }))} placeholder="Ví dụ: Cà phê sữa đá" />
@@ -1261,52 +1348,152 @@ export function AdminSystemConsole({ session, onLogout }) {
                     <input value={menuForm.description} onChange={(e) => setMenuForm((p) => ({ ...p, description: e.target.value }))} placeholder="Mô tả món..." />
                   </label>
                   
-                  {/* Advanced JSON Fields */}
-                  <label className="system-admin-branch-address-field">
-                    <span>Sizes (JSON) VD: {"{"}"S":30000, "M":40000{"}"}</span>
-                    <input value={menuForm.sizes} onChange={(e) => setMenuForm((p) => ({ ...p, sizes: e.target.value }))} placeholder='{"Vừa": 59000, "Lớn": 69000}' />
-                  </label>
-                  <label className="system-admin-branch-address-field">
-                    <span>Toppings (JSON) VD: {"{"}"Trân châu":10000{"}"}</span>
-                    <input value={menuForm.toppings} onChange={(e) => setMenuForm((p) => ({ ...p, toppings: e.target.value }))} placeholder='{"Trân châu trắng": 10000}' />
-                  </label>
-                  <label className="system-admin-branch-address-field">
-                    <span>Lượng Đá (JSON)</span>
-                    <input value={menuForm.luong_da} onChange={(e) => setMenuForm((p) => ({ ...p, luong_da: e.target.value }))} placeholder='{"Bình thường": 0, "Ít đá": 0}' />
-                  </label>
-                  <label className="system-admin-branch-address-field">
-                    <span>Độ Ngọt (JSON)</span>
-                    <input value={menuForm.do_ngot} onChange={(e) => setMenuForm((p) => ({ ...p, do_ngot: e.target.value }))} placeholder='{"Bình thường": 0, "Ít ngọt": 0}' />
-                  </label>
-                  <label className="system-admin-branch-address-field">
-                    <span>Loại Sữa (JSON)</span>
-                    <input value={menuForm.loai_sua} onChange={(e) => setMenuForm((p) => ({ ...p, loai_sua: e.target.value }))} placeholder='{"Sữa tươi": 0, "Sữa yến mạch": 10000}' />
-                  </label>
-                </div>
+                   {/* Dynamic Variant & Attribute Builder */}
+                  <div className="system-admin-branch-address-field variant-manager-wrapper">
+                    <div className="variant-manager">
+                      <div className="variant-manager-title">Quản lý biến thể &amp; Tùy chọn món</div>
+                      <div className="variant-manager-subtitle">Thiết lập các thuộc tính và phụ thu tương ứng cho sản phẩm (giống WooCommerce/Odoo)</div>
+                      
+                      {/* List of active attributes */}
+                      <div className="variant-groups-list">
+                        {Object.entries(menuForm.bien_the || {}).length === 0 ? (
+                          <div style={{ padding: '1rem', textAlign: 'center', color: '#8c6b56', fontSize: '0.86rem', fontStyle: 'italic' }}>
+                            Sản phẩm này hiện chưa được cấu hình biến thể nào. Sử dụng bộ công cụ bên dưới để thêm nhóm biến thể.
+                          </div>
+                        ) : (
+                          Object.entries(menuForm.bien_the || {}).map(([attrName, optionsObj]) => (
+                            <div key={attrName} className="variant-group-card">
+                              <div className="variant-group-header">
+                                <h3>{attrName}</h3>
+                                <button
+                                  type="button"
+                                  className="variant-group-delete-btn"
+                                  onClick={() => removeAttributeGroup(attrName)}
+                                  title={`Xóa toàn bộ nhóm "${attrName}"`}
+                                >
+                                  Xóa nhóm
+                                </button>
+                              </div>
+                              
+                              {/* List of values in this group */}
+                              <div className="variant-options-list">
+                                {Object.entries(optionsObj || {}).length === 0 ? (
+                                  <p style={{ fontSize: '0.8rem', color: '#8c6b56', fontStyle: 'italic', margin: '0.5rem 0' }}>
+                                    Chưa có lựa chọn nào trong nhóm này.
+                                  </p>
+                                ) : (
+                                  Object.entries(optionsObj || {}).map(([valName, price]) => (
+                                    <div key={valName} className="variant-option-item">
+                                      <div className="variant-option-info">
+                                        <span className="variant-option-name">{valName}</span>
+                                        <span className="variant-option-price">
+                                          {price > 0 ? `+${fmtNumber(price)} đ` : '0 đ'}
+                                        </span>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        className="variant-option-delete-btn"
+                                        onClick={() => removeOptionFromGroup(attrName, valName)}
+                                        title="Xóa lựa chọn này"
+                                      >
+                                        &times;
+                                      </button>
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                              
+                              {/* Add option to this group form */}
+                              <div className="variant-option-add-form-inline">
+                                <input
+                                  type="text"
+                                  placeholder="Tên lựa chọn (VD: Lớn, Mỏng)..."
+                                  value={newOptionState[attrName]?.name || ''}
+                                  onChange={(e) => handleOptionStateChange(attrName, 'name', e.target.value)}
+                                />
+                                <input
+                                  type="number"
+                                  min="0"
+                                  placeholder="Phụ thu (đ)..."
+                                  value={newOptionState[attrName]?.price || ''}
+                                  onChange={(e) => handleOptionStateChange(attrName, 'price', e.target.value)}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => addOptionToGroup(attrName)}
+                                >
+                                  + Thêm tùy chọn
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
 
-                <div className="system-admin-upload-box">
-                  <div>
-                    <strong>Tải ảnh sản phẩm</strong>
-                    <p>Chọn file, hệ thống sẽ tự đổi tên theo tên món và lưu vào thư mục ảnh sản phẩm.</p>
+                      {/* Section to add a new attribute group */}
+                      <div className="variant-add-group-form">
+                        <h4>Thêm nhóm biến thể mới</h4>
+                        <div className="variant-add-group-inputs">
+                          <select
+                            value={selectedAttributeSelect}
+                            onChange={(e) => setSelectedAttributeSelect(e.target.value)}
+                          >
+                            <option value="">-- Chọn biến thể có sẵn --</option>
+                            {['Kích thước', 'Topping', 'Lượng đá', 'Độ ngọt', 'Loại sữa'].map((attr) => (
+                              <option key={attr} value={attr}>{attr}</option>
+                            ))}
+                            {(attributesState.items || []).map((attr) => {
+                              const defaults = ['Kích thước', 'Topping', 'Lượng đá', 'Độ ngọt', 'Loại sữa']
+                              if (defaults.includes(attr.name)) return null;
+                              return <option key={attr.id} value={attr.name}>{attr.name}</option>
+                            })}
+                          </select>
+                          
+                          <span style={{ fontSize: '0.86rem', color: '#8c6b56', alignSelf: 'center' }}>hoặc</span>
+                          
+                          <input
+                            type="text"
+                            placeholder="Nhập biến thể mới..."
+                            value={customAttributeName}
+                            onChange={(e) => setCustomAttributeName(e.target.value)}
+                          />
+                          
+                          <button
+                            type="button"
+                            className="variant-add-btn"
+                            onClick={addAttributeGroup}
+                          >
+                            + Thêm nhóm
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <label className="system-admin-upload-drop">
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp"
-                      onChange={(e) => uploadMenuImage(e.target.files?.[0]).catch(() => {})}
-                    />
-                    <span>{uploadState.loading ? 'Đang tải ảnh...' : 'Chọn ảnh JPG, PNG, WEBP'}</span>
-                    <small>{menuForm.name ? `Tên file sẽ bám theo: ${menuForm.name}` : 'Nhập tên món trước để ra tên file đẹp hơn'}</small>
-                  </label>
-                  {uploadState.error ? <p className="error-text">{uploadState.error}</p> : null}
-                  {uploadState.success ? <p className="system-admin-success">{uploadState.success}</p> : null}
-                </div>
 
-                <div className="system-admin-image-preview">
-                  {menuForm.image ? <img src={menuForm.image} alt={menuForm.name || 'Preview'} /> : <div className="system-admin-image-placeholder">Chưa có ảnh xem trước</div>}
-                  <div className="system-admin-image-meta">
-                    <p>{menuForm.image || 'Chưa có đường dẫn ảnh'}</p>
-                    <button type="button" className="secondary" onClick={clearMenuImage} disabled={!menuForm.image}>Xóa ảnh</button>
+                  <div className="system-admin-upload-box">
+                    <div>
+                      <strong>Tải ảnh sản phẩm</strong>
+                      <p>Chọn file, hệ thống sẽ tự đổi tên theo tên món và lưu vào thư mục ảnh sản phẩm.</p>
+                    </div>
+                    <label className="system-admin-upload-drop">
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={(e) => uploadMenuImage(e.target.files?.[0]).catch(() => {})}
+                      />
+                      <span>{uploadState.loading ? 'Đang tải ảnh...' : 'Chọn ảnh JPG, PNG, WEBP'}</span>
+                      <small>{menuForm.name ? `Tên file sẽ bám theo: ${menuForm.name}` : 'Nhập tên món trước để ra tên file đẹp hơn'}</small>
+                    </label>
+                    {uploadState.error ? <p className="error-text">{uploadState.error}</p> : null}
+                    {uploadState.success ? <p className="system-admin-success">{uploadState.success}</p> : null}
+                  </div>
+
+                  <div className="system-admin-image-preview">
+                    {menuForm.image ? <img src={menuForm.image} alt={menuForm.name || 'Preview'} /> : <div className="system-admin-image-placeholder">Chưa có ảnh xem trước</div>}
+                    <div className="system-admin-image-meta">
+                      <p>{menuForm.image || 'Chưa có đường dẫn ảnh'}</p>
+                      <button type="button" className="secondary" onClick={clearMenuImage} disabled={!menuForm.image}>Xóa ảnh</button>
+                    </div>
                   </div>
                 </div>
 

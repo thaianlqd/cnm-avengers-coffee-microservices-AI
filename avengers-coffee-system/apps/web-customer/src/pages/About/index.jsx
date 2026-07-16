@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function About() {
+export default function About({ setActiveTab }) {
   return (
     <main className="flex-grow w-full bg-white">
       {/* ── 1. NGUỒN GỐC ── */}
@@ -80,7 +80,13 @@ export default function About() {
             <p className="mt-4 text-[16px] text-white/90 leading-relaxed font-medium">
               Là điểm hội tụ của cộng đồng, Highlands Coffee® luôn tìm kiếm những thành viên mới với mong muốn không ngừng hoàn thiện một không gian dành cho tất cả mọi người. Chúng mình luôn chào đón bạn trở thành một phần của Highlands Coffee® để cùng nhau siết chặt thêm những kết nối và sự gắn bó giữa người với người.
             </p>
-            <button className="mt-8 px-10 py-3 border border-white text-white font-medium tracking-widest uppercase hover:bg-white hover:text-[#6b4724] transition-all bg-transparent rounded-[4px]">
+            <button 
+              onClick={() => {
+                setActiveTab?.('careers');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="mt-8 px-10 py-3 border border-white text-white font-medium tracking-widest uppercase hover:bg-white hover:text-[#6b4724] transition-all bg-transparent rounded-[4px]"
+            >
               XEM CHI TIẾT
             </button>
           </div>
