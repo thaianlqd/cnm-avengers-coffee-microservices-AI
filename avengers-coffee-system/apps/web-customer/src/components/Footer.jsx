@@ -1,4 +1,4 @@
-export default function Footer() {
+export default function Footer({ onTabChange }) {
   return (
     <footer className="bg-[#b22830] py-12 text-white w-full">
       <div className="mx-auto max-w-[1200px] px-4 md:px-6">
@@ -11,17 +11,52 @@ export default function Footer() {
           <div className="flex flex-col gap-4">
             <h3 className="text-[16px] font-bold uppercase mb-2">Về Highlands</h3>
             <ul className="space-y-3 text-[14px]">
-              <li><a href="#" className="hover:text-red-200 transition-colors">Nguồn gốc</a></li>
-              <li><a href="#" className="hover:text-red-200 transition-colors">Dịch vụ</a></li>
-              <li><a href="#" className="hover:text-red-200 transition-colors">Nghề Nghiệp</a></li>
-              <li><a href="#" className="hover:text-red-200 transition-colors">Hỗ trợ</a></li>
+              <li>
+                <button 
+                  onClick={() => { onTabChange?.('about'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  className="hover:text-red-200 transition-colors text-left"
+                >
+                  Nguồn gốc
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => { onTabChange?.('about'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  className="hover:text-red-200 transition-colors text-left"
+                >
+                  Dịch vụ
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => { onTabChange?.('careers'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  className="hover:text-red-200 transition-colors text-left"
+                >
+                  Nghề Nghiệp
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => { onTabChange?.('contact'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  className="hover:text-red-200 transition-colors text-left"
+                >
+                  Hỗ trợ
+                </button>
+              </li>
             </ul>
           </div>
           
           <div className="flex flex-col gap-4">
             <h3 className="text-[16px] font-bold uppercase mb-2">Hệ thống cửa hàng</h3>
             <ul className="space-y-3 text-[14px]">
-              <li><a href="#" className="hover:text-red-200 transition-colors">Tìm cửa hàng gần nhất</a></li>
+              <li>
+                <button 
+                  onClick={() => { onTabChange?.('stores'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  className="hover:text-red-200 transition-colors text-left"
+                >
+                  Tìm cửa hàng gần nhất
+                </button>
+              </li>
             </ul>
           </div>
           

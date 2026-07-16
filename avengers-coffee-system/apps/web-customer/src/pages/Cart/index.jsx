@@ -388,6 +388,16 @@ export default function CartPage({ products = [], onBackToHome }) {
                             {item.toppings && item.toppings.length > 0 && (
                               <div><span className="text-gray-400">Topping:</span> {item.toppings.join(', ')}</div>
                             )}
+                            {item.custom_attributes && Object.entries(item.custom_attributes).map(([attrName, selection]) => {
+                              if (attrName === 'Kích thước' || attrName === 'Topping' || attrName === 'Loại sữa' || attrName === 'Lượng đá' || attrName === 'Độ ngọt') {
+                                return null;
+                              }
+                              const textVal = Array.isArray(selection) ? selection.join(', ') : selection;
+                              if (!textVal) return null;
+                              return (
+                                <div key={attrName}><span className="text-gray-400">{attrName}:</span> {textVal}</div>
+                              );
+                            })}
                             <button
                               type="button"
                               onClick={() => setEditingItem(item)}

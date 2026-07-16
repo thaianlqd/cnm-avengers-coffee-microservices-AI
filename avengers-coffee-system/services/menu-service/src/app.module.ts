@@ -5,6 +5,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SanPham } from './modules/menu/san-pham.entity';
 import { DanhMuc } from './modules/menu/danh-muc.entity';
+import { ThuocTinh } from './modules/menu/thuoc-tinh.entity';
+import { BienTheSanPham } from './modules/menu/bien-the-san-pham.entity';
 import { MenuModule } from './modules/menu/menu.module';
 
 const menuSchema = process.env.DB_SCHEMA || 'menu';
@@ -39,12 +41,12 @@ const menuSchema = process.env.DB_SCHEMA || 'menu';
           password,
           database,
           schema: menuSchema,
-          entities: [SanPham, DanhMuc],
+          entities: [SanPham, DanhMuc, ThuocTinh, BienTheSanPham],
           synchronize: true,
         };
       },
     }),
-    TypeOrmModule.forFeature([SanPham, DanhMuc]),
+    TypeOrmModule.forFeature([SanPham, DanhMuc, ThuocTinh, BienTheSanPham]),
     MenuModule,
   ],
   controllers: [AppController],
