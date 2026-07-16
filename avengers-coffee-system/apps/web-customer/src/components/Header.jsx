@@ -78,9 +78,9 @@ export default function Header({
   const isOrderTab = activeTab === 'order';
 
   const leftNavItems = [
-    { id: 'order', label: 'THỰC ĐƠN' },
+    { id: 'menu-intro', label: 'THỰC ĐƠN', dropdownTabId: 'order' },
     { id: 'about', label: 'VỀ HIGHLANDS' },
-    { id: 'news', label: 'NGHỀ NGHIỆP' },
+    { id: 'careers', label: 'NGHỀ NGHIỆP' },
     { id: 'contact', label: 'HỖ TRỢ' },
   ];
 
@@ -97,11 +97,11 @@ export default function Header({
                 type="button"
                 onClick={() => {
                   onTabChange?.(item.id);
-                  if (item.id === 'order') {
+                  if (item.id === 'menu-intro') {
                     onSelectedCatIdChange?.('all');
                   }
                 }}
-                className={`relative py-7 text-[14px] font-black uppercase tracking-widest transition-all ${activeTab === item.id
+                className={`relative py-7 text-[14px] font-black uppercase tracking-widest transition-all ${(activeTab === item.id || (item.id === 'menu-intro' && activeTab === 'order'))
                     ? 'text-white'
                     : 'text-white hover:text-white/80'
                   }`}
@@ -109,7 +109,7 @@ export default function Header({
                 {item.label}
               </button>
 
-              {item.id === 'order' && categories.length > 0 && (
+              {item.dropdownTabId === 'order' && categories.length > 0 && (
                 <div className="fixed left-0 top-[84px] w-full bg-[#53382c] shadow-2xl invisible opacity-0 -translate-y-2 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 z-[60] border-t-2 border-[#b22830]">
                   <div className="mx-auto max-w-[1380px] px-10 py-8 flex flex-row justify-between items-start">
                     {/* Grouping Logic inline for UI */}
@@ -130,7 +130,7 @@ export default function Header({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              onTabChange?.('order');
+                              onTabChange?.('menu-intro');
                               onSelectedCatIdChange?.(col.id);
                               document.activeElement?.blur();
                             }}
@@ -146,7 +146,7 @@ export default function Header({
                                   className="text-white text-[14px] hover:text-[#c99551] transition-colors text-left"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    onTabChange?.('order');
+                                    onTabChange?.('menu-intro');
                                     onSelectedCatIdChange?.(cat.ma_danh_muc);
                                     // Bỏ focus/hover để đóng dropdown nếu cần
                                     document.activeElement?.blur();
@@ -334,7 +334,7 @@ export default function Header({
         <div className="border-t border-white/10 bg-[#a80f28] lg:hidden">
           <div className="mx-auto max-w-[1380px] px-4 py-4">
             <div className="grid gap-1">
-              {navItems.map((item) => (
+              {leftNavItems.map((item) => (
                 <button
                   key={item.id}
                   type="button"

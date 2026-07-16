@@ -96,18 +96,35 @@ export const CartProvider = ({ children }) => {
     const defaultSize = sizeKeys.length > 0 ? sizeKeys[0] : (product.size || 'Nhỏ');
     const appliedSize = size || defaultSize;
 
-    // Tính toán giá dựa trên size
-    const basePrice = (appliedSize && availableSizes[appliedSize] !== undefined) 
-      ? Number(availableSizes[appliedSize]) 
-      : Number(product.gia_ban || product.price || 30000);
+    // Tính toán giá dựa trên size & biến thể động
+    let finalPrice = 0;
+    if (product.bien_the && typeof product.bien_the === 'object' && Object.keys(product.bien_the).length > 0) {
+      const base = Number(product.gia_ban || product.price || 30000);
+      let surcharge = 0;
+      const customAttrs = options.custom_attributes || {};
+      for (const [attrName, selection] of Object.entries(customAttrs)) {
+        const optionsObj = product.bien_the[attrName] || {};
+        if (Array.isArray(selection)) {
+          for (const val of selection) {
+            surcharge += Number(optionsObj[val]) || 0;
+          }
+        } else {
+          surcharge += Number(optionsObj[selection]) || 0;
+        }
+      }
+      finalPrice = base + surcharge;
+    } else {
+      const basePrice = (appliedSize && availableSizes[appliedSize] !== undefined) 
+        ? Number(availableSizes[appliedSize]) 
+        : Number(product.gia_ban || product.price || 30000);
 
-    const availableToppings = product.toppings || {};
-    const toppingsPrice = (options.toppings || []).reduce((acc, t) => acc + Number(availableToppings[t] || 0), 0);
+      const toppingsPrice = (options.toppings || []).reduce((acc, t) => acc + Number(availableToppings[t] || 0), 0);
 
-    const availableLoaiSua = product.loai_sua || {};
-    const loaiSuaPrice = (options.loaiSua && availableLoaiSua[options.loaiSua] !== undefined) ? Number(availableLoaiSua[options.loaiSua]) : 0;
+      const availableLoaiSua = product.loai_sua || {};
+      const loaiSuaPrice = (options.loaiSua && availableLoaiSua[options.loaiSua] !== undefined) ? Number(availableLoaiSua[options.loaiSua]) : 0;
 
-    const finalPrice = basePrice + toppingsPrice + loaiSuaPrice;
+      finalPrice = basePrice + toppingsPrice + loaiSuaPrice;
+    }
 
     const item = {
       ma_nguoi_dung: maNguoiDung,
@@ -120,7 +137,8 @@ export const CartProvider = ({ children }) => {
       toppings: options.toppings || [],
       luong_da: options.luongDa || '',
       do_ngot: options.doNgot || '',
-      loai_sua: options.loaiSua || ''
+      loai_sua: options.loaiSua || '',
+      custom_attributes: options.custom_attributes || {}
     };
 
     setCart((prev) => {
@@ -132,6 +150,22 @@ export const CartProvider = ({ children }) => {
         const aToppings = [...(a.toppings || [])].sort().join(',');
         const bToppings = [...(b.toppings || [])].sort().join(',');
         if (aToppings !== bToppings) return false;
+        
+        // Compare custom_attributes
+        const aAttrs = a.custom_attributes || {};
+        const bAttrs = b.custom_attributes || {};
+        const aKeys = Object.keys(aAttrs);
+        const bKeys = Object.keys(bAttrs);
+        if (aKeys.length !== bKeys.length) return false;
+        for (const key of aKeys) {
+          const valA = aAttrs[key];
+          const valB = bAttrs[key];
+          if (Array.isArray(valA) && Array.isArray(valB)) {
+            if ([...valA].sort().join(',') !== [...valB].sort().join(',')) return false;
+          } else if (valA !== valB) {
+            return false;
+          }
+        }
         return true;
       };
 
@@ -233,7 +267,8 @@ export const CartProvider = ({ children }) => {
       toppings: newOptions.toppings || [],
       luong_da: newOptions.luongDa || '',
       do_ngot: newOptions.doNgot || '',
-      loai_sua: newOptions.loaiSua || ''
+      loai_sua: newOptions.loaiSua || '',
+      custom_attributes: newOptions.custom_attributes || {}
     };
 
     if (oldItem.id) {

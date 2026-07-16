@@ -1,17 +1,101 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, OnApplicationBootstrap } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
 import { extname, join } from 'path';
 import { promises as fs } from 'fs';
 import { SanPham } from './modules/menu/san-pham.entity';
 import { DanhMuc } from './modules/menu/danh-muc.entity';
+import { ThuocTinh } from './modules/menu/thuoc-tinh.entity';
+import { BienTheSanPham } from './modules/menu/bien-the-san-pham.entity';
 
 @Injectable()
-export class AppService {
+export class AppService implements OnApplicationBootstrap {
   constructor(
     @InjectRepository(SanPham) private spRepo: Repository<SanPham>,
     @InjectRepository(DanhMuc) private dmRepo: Repository<DanhMuc>,
+    @InjectRepository(ThuocTinh) private ttRepo: Repository<ThuocTinh>,
+    @InjectRepository(BienTheSanPham) private btRepo: Repository<BienTheSanPham>,
   ) {}
+
+  async onApplicationBootstrap() {
+    console.log('Bootstrapping AppService: running variants migration...');
+    await this.migrateExistingVariants();
+  }
+
+  async migrateExistingVariants() {
+    try {
+      const products = await this.spRepo.find();
+      console.log(`Checking ${products.length} products for variants migration...`);
+
+      const fieldMap = {
+        sizes: 'Kích thước',
+        toppings: 'Topping',
+        luong_da: 'Lượng đá',
+        do_ngot: 'Độ ngọt',
+        loai_sua: 'Loại sữa',
+      };
+
+      for (const product of products) {
+        const existingCount = await this.btRepo.count({
+          where: { ma_san_pham: product.ma_san_pham },
+        });
+
+        if (existingCount > 0) {
+          continue;
+        }
+
+        const variantsToSave: { attributeName: string; value: string; surcharge: number }[] = [];
+
+        for (const [col, attrName] of Object.entries(fieldMap)) {
+          const jsonVal = product[col];
+          if (jsonVal && typeof jsonVal === 'object') {
+            for (const [valName, price] of Object.entries(jsonVal)) {
+              variantsToSave.push({
+                attributeName: attrName,
+                value: valName,
+                surcharge: Number(price) || 0,
+              });
+            }
+          }
+        }
+
+        if (variantsToSave.length > 0) {
+          console.log(`Migrating variants for product #${product.ma_san_pham} (${product.ten_san_pham})...`);
+          
+          const groupByName: Record<string, Record<string, number>> = {};
+          
+          for (const variant of variantsToSave) {
+            let thuocTinh = await this.ttRepo.findOne({
+              where: { ten_thuoc_tinh: variant.attributeName },
+            });
+            if (!thuocTinh) {
+              thuocTinh = new ThuocTinh();
+              thuocTinh.ten_thuoc_tinh = variant.attributeName;
+              thuocTinh = await this.ttRepo.save(thuocTinh);
+            }
+
+            const bienThe = new BienTheSanPham();
+            bienThe.ma_san_pham = product.ma_san_pham;
+            bienThe.ma_thuoc_tinh = thuocTinh.ma_thuoc_tinh;
+            bienThe.gia_tri = variant.value;
+            bienThe.phu_thu = variant.surcharge;
+            await this.btRepo.save(bienThe);
+
+            if (!groupByName[variant.attributeName]) {
+              groupByName[variant.attributeName] = {};
+            }
+            groupByName[variant.attributeName][variant.value] = variant.surcharge;
+          }
+
+          product.bien_the = groupByName;
+          await this.spRepo.save(product);
+        }
+      }
+      console.log('Variants migration completed!');
+    } catch (error) {
+      console.error('Error migrating variants:', error);
+    }
+  }
 
   getHello(): string {
     return 'Menu service is running';
@@ -40,6 +124,14 @@ export class AppService {
         return this.formatCategory(category, productCount);
       }),
     );
+  }
+
+  async getAttributes() {
+    const list = await this.ttRepo.find({ order: { ten_thuoc_tinh: 'ASC' } });
+    return list.map((a) => ({
+      id: a.ma_thuoc_tinh,
+      name: a.ten_thuoc_tinh,
+    }));
   }
 
   async createCategory(payload: { label?: string; icon?: string; cap_bac?: number; ma_danh_muc_cha?: number | null }) {
@@ -161,6 +253,7 @@ export class AppService {
       do_ngot: item.do_ngot,
       loai_sua: item.loai_sua,
       toppings: item.toppings,
+      bien_the: item.bien_the,
     };
   }
 
@@ -339,6 +432,81 @@ export class AppService {
     };
   }
 
+  private async saveProductVariants(productId: number, bienThePayload: any, oldFieldsPayload?: { sizes?: any; toppings?: any; luong_da?: any; do_ngot?: any; loai_sua?: any }) {
+    let finalBienThe = bienThePayload;
+    
+    // Fallback: If bien_the is not provided, but old fields are, reconstruct bien_the
+    if (!finalBienThe && oldFieldsPayload && (oldFieldsPayload.sizes || oldFieldsPayload.toppings || oldFieldsPayload.luong_da || oldFieldsPayload.do_ngot || oldFieldsPayload.loai_sua)) {
+      finalBienThe = {};
+      if (oldFieldsPayload.sizes) finalBienThe['Kích thước'] = oldFieldsPayload.sizes;
+      if (oldFieldsPayload.toppings) finalBienThe['Topping'] = oldFieldsPayload.toppings;
+      if (oldFieldsPayload.luong_da) finalBienThe['Lượng đá'] = oldFieldsPayload.luong_da;
+      if (oldFieldsPayload.do_ngot) finalBienThe['Độ ngọt'] = oldFieldsPayload.do_ngot;
+      if (oldFieldsPayload.loai_sua) finalBienThe['Loại sữa'] = oldFieldsPayload.loai_sua;
+    }
+
+    // Delete existing variants for this product
+    await this.btRepo.delete({ ma_san_pham: productId });
+
+    if (!finalBienThe || typeof finalBienThe !== 'object') {
+      return;
+    }
+
+    const fieldMap = {
+      'Kích thước': 'sizes',
+      'Topping': 'toppings',
+      'Lượng đá': 'luong_da',
+      'Độ ngọt': 'do_ngot',
+      'Loại sữa': 'loai_sua',
+    };
+
+    const syncedFields: Record<string, Record<string, number>> = {
+      sizes: {},
+      toppings: {},
+      luong_da: {},
+      do_ngot: {},
+      loai_sua: {},
+    };
+
+    for (const [attrName, optionsObj] of Object.entries(finalBienThe)) {
+      if (!optionsObj || typeof optionsObj !== 'object') continue;
+
+      // Find or create ThuocTinh
+      let thuocTinh = await this.ttRepo.findOne({ where: { ten_thuoc_tinh: attrName } });
+      if (!thuocTinh) {
+        thuocTinh = new ThuocTinh();
+        thuocTinh.ten_thuoc_tinh = attrName;
+        thuocTinh = await this.ttRepo.save(thuocTinh);
+      }
+
+      for (const [valName, price] of Object.entries(optionsObj)) {
+        const bienThe = new BienTheSanPham();
+        bienThe.ma_san_pham = productId;
+        bienThe.ma_thuoc_tinh = thuocTinh.ma_thuoc_tinh;
+        bienThe.gia_tri = valName;
+        bienThe.phu_thu = Number(price) || 0;
+        await this.btRepo.save(bienThe);
+
+        const legacyField = fieldMap[attrName];
+        if (legacyField) {
+          syncedFields[legacyField][valName] = Number(price) || 0;
+        }
+      }
+    }
+
+    // Save synced fields back to the product
+    const product = await this.spRepo.findOne({ where: { ma_san_pham: productId } });
+    if (product) {
+      product.bien_the = finalBienThe;
+      product.sizes = Object.keys(syncedFields.sizes).length > 0 ? syncedFields.sizes : null;
+      product.toppings = Object.keys(syncedFields.toppings).length > 0 ? syncedFields.toppings : null;
+      product.luong_da = Object.keys(syncedFields.luong_da).length > 0 ? syncedFields.luong_da : null;
+      product.do_ngot = Object.keys(syncedFields.do_ngot).length > 0 ? syncedFields.do_ngot : null;
+      product.loai_sua = Object.keys(syncedFields.loai_sua).length > 0 ? syncedFields.loai_sua : null;
+      await this.spRepo.save(product);
+    }
+  }
+
   async createMenuItem(payload: {
     name?: string;
     category_code?: string | number;
@@ -349,6 +517,12 @@ export class AppService {
     dang_ban?: boolean;
     la_hot?: boolean;
     la_moi?: boolean;
+    sizes?: any;
+    luong_da?: any;
+    do_ngot?: any;
+    loai_sua?: any;
+    toppings?: any;
+    bien_the?: any;
   }) {
     const name = String(payload.name || '').trim();
     const categoryCode = Number(payload.category_code);
@@ -384,6 +558,16 @@ export class AppService {
     created.danhMuc = category;
 
     const saved = await this.spRepo.save(created);
+
+    // Save variants and perform legacy field synchronization
+    await this.saveProductVariants(saved.ma_san_pham, payload.bien_the, {
+      sizes: payload.sizes,
+      toppings: payload.toppings,
+      luong_da: payload.luong_da,
+      do_ngot: payload.do_ngot,
+      loai_sua: payload.loai_sua,
+    });
+
     const item = await this.spRepo.findOne({ where: { ma_san_pham: saved.ma_san_pham }, relations: ['danhMuc'] });
     return {
       message: 'Them mon moi thanh cong',
@@ -403,6 +587,12 @@ export class AppService {
       dang_ban?: boolean;
       la_hot?: boolean;
       la_moi?: boolean;
+      sizes?: any;
+      luong_da?: any;
+      do_ngot?: any;
+      loai_sua?: any;
+      toppings?: any;
+      bien_the?: any;
     },
   ) {
     const item = await this.spRepo.findOne({ where: { ma_san_pham: itemId }, relations: ['danhMuc'] });
@@ -469,6 +659,18 @@ export class AppService {
     }
 
     await this.spRepo.save(item);
+
+    // Save/update variants
+    if (payload.bien_the !== undefined || payload.sizes !== undefined || payload.toppings !== undefined || payload.luong_da !== undefined || payload.do_ngot !== undefined || payload.loai_sua !== undefined) {
+      await this.saveProductVariants(itemId, payload.bien_the, {
+        sizes: payload.sizes,
+        toppings: payload.toppings,
+        luong_da: payload.luong_da,
+        do_ngot: payload.do_ngot,
+        loai_sua: payload.loai_sua,
+      });
+    }
+
     const saved = await this.spRepo.findOne({ where: { ma_san_pham: itemId }, relations: ['danhMuc'] });
 
     return {
