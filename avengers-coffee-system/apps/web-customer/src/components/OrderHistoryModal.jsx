@@ -4,6 +4,7 @@ import { XMarkIcon, ClockIcon, CreditCardIcon } from '@heroicons/react/24/outlin
 import { apiClient } from '../lib/apiClient';
 import { queryKeys } from '../lib/queryKeys';
 import ReviewForm from './ReviewForm';
+import OrderTrackingPage from '../pages/features_thaian/OrderTrackingPage';
 
 const ORDER_STATUS_LABEL = {
   MOI_TAO: 'Mới tạo',
@@ -30,7 +31,7 @@ const PAYMENT_METHOD_LABEL = {
 };
 
 const BRANCH_LABEL = {
-  MAC_DINH_CHI: 'Mạc Đĩnh Chi',
+  MAC_DINH_CHI: 'Chi nhánh hệ thống',
   THE_GRACE_TOWER: 'The Grace Tower',
 };
 
@@ -116,6 +117,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
   const [cancelReason, setCancelReason] = useState('');
   const [editOrderId, setEditOrderId] = useState(null);
   const [reviewingProduct, setReviewingProduct] = useState(null);
+  const [trackingOrderId, setTrackingOrderId] = useState(null);
   const [editForm, setEditForm] = useState({
     diaChi: '',
     khungGio: '',
@@ -219,6 +221,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
       setEditOrderId(null);
       setEditForm({ diaChi: '', khungGio: '', ghiChu: '', items: [] });
       setActionMessage('');
+      setTrackingOrderId(null);
     }
   }, [isOpen]);
 
@@ -364,6 +367,10 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
         {!maNguoiDung ? (
           <div className="p-8 text-center">
             <p className="text-lg font-bold text-gray-700">Bạn cần đăng nhập để xem lịch sử đơn hàng.</p>
+          </div>
+        ) : trackingOrderId ? (
+          <div className="flex h-[calc(88vh-86px)] flex-col bg-gray-50 overflow-y-auto">
+            <OrderTrackingPage id={trackingOrderId} onBack={() => setTrackingOrderId(null)} />
           </div>
         ) : (
           <div className="flex h-[calc(88vh-86px)] flex-col">
@@ -673,6 +680,16 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                                 <span className="ml-2 text-gray-600">(-{fmtMoney(order.so_tien_giam)})</span>
                               )}
                             </div>
+                          ) : null}
+
+                          {order.trang_thai_don_hang === 'DANG_GIAO' && order.loai_don_hang === 'GIAO_TAN_NOI' ? (
+                            <button
+                              type="button"
+                              onClick={() => setTrackingOrderId(order.ma_don_hang)}
+                              className="mb-2 w-full flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-indigo-600 hover:bg-indigo-100"
+                            >
+                              <span>📍</span> Theo dõi Shipper
+                            </button>
                           ) : null}
 
                           {coTheSuaDon(order) && editOrderId !== order.ma_don_hang ? (

@@ -9,6 +9,7 @@ import { AppService } from './app.service';
 import { NotificationService } from './modules/notification/notification.service';
 import { ThanhToanService } from './modules/thanh-toan/thanh-toan.service';
 import { FavoriteService } from './modules/favorite/favorite.service';
+import { ShipperService } from './modules/shipper/shipper.service';
 
 @Controller()
 export class AppController {
@@ -18,6 +19,7 @@ export class AppController {
     private readonly notificationService: NotificationService,
     private readonly realtimeAnalyticsService: RealtimeAnalyticsService,
     private readonly favoriteService: FavoriteService,
+    private readonly shipperService: ShipperService,
   ) {}
 
   private ensureSelfOrAdmin(currentUser: AuthUser | null, userId: string) {
@@ -621,5 +623,29 @@ export class AppController {
   @Get('staff/analytics/realtime')
   getRealtimeAnalytics(@Query('branch_code') branchCode?: string) {
     return this.realtimeAnalyticsService.getSnapshot(branchCode);
+  }
+
+  // ─────────────────────── CUSTOMER DELIVERY TRACKING ───────────────────────
+
+  /**
+   * GET /customers/orders/:orderId/delivery
+   * Khách hàng xem thông tin shipper đang giao, vị trí GPS, ETA
+   * Public - chỉ cần biết mã đơn hàng
+   */
+  @Get('customers/orders/:orderId/delivery')
+  async getCustomerDeliveryInfo(@Param('orderId') orderId: string) {
+    return this.shipperService.getCustomerDeliveryInfo(orderId);
+  }
+
+  /**
+   * POST /customers/:userId/orders/:orderId/rate-shipper
+   * Khách hàng đánh giá shipper sau khi giao hàng thành công
+   */
+  @Post('customers/:userId/orders/:orderId/rate-shipper')
+  async rateShipper(
+    @Param('orderId') orderId: string,
+    @Body() body: { rating: number; comment?: string },
+  ) {
+    return this.shipperService.rateShipper(orderId, body.rating, body.comment);
   }
 }

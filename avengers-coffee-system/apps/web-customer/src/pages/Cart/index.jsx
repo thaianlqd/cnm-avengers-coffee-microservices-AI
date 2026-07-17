@@ -7,6 +7,9 @@ import { queryKeys } from '../../lib/queryKeys';
 import { buildAddressOptionsFromBranches, getAddressSelectionDefaults, normalizeAddressSelection } from '../../lib/addressOptions';
 import CartEditModal from '../../components/CartEditModal';
 import { PencilIcon } from '@heroicons/react/24/solid';
+import DeliveryModeSelector from '../../components/features_thaian/DeliveryModeSelector';
+import DeliveryMethodPicker from '../../components/features_thaian/DeliveryMethodPicker';
+import BranchSelector from '../../components/features_thaian/BranchSelector';
 
 const AVAILABLE_SIZES = ['Nhỏ', 'Vừa'];
 
@@ -46,6 +49,11 @@ export default function CartPage({ products = [], onBackToHome }) {
   const [editingItem, setEditingItem] = useState(null);
   const queryClient = useQueryClient();
   const total = cart.reduce((sum, i) => sum + i.gia_ban * i.so_luong, 0);
+
+  const [deliveryMode, setDeliveryMode] = useState('GIAO_TAN_NOI');
+  const [deliveryMethod, setDeliveryMethod] = useState('INTERNAL');
+  const [selectedBranch, setSelectedBranch] = useState('');
+  const [tableNumber, setTableNumber] = useState('');
 
   // 1: Cart Items, 2: Checkout Info Form
   const [step, setStep] = useState(1);
@@ -208,14 +216,49 @@ export default function CartPage({ products = [], onBackToHome }) {
     }
   }, [addressForm.ward, wardOptions]);
 
+  useEffect(() => {
+    if (publicBranchPayload?.items?.length > 0) {
+      const allBranches = publicBranchPayload.items;
+      
+      // Lọc các chi nhánh cùng Thành phố với địa chỉ giao hàng
+      const cityMatches = allBranches.filter(b => {
+        const bCity = String(b.thanh_pho || b.dia_chi || '').toLowerCase();
+        const userCity = String(addressForm.city || '').toLowerCase();
+        return userCity && bCity.includes(userCity);
+      });
+      
+      // Nếu có chi nhánh cùng quận/huyện thì ưu tiên (nếu sau này có dữ liệu quận)
+      // Hiện tại lấy chi nhánh đầu tiên trong cùng thành phố
+      const targetBranch = cityMatches.length > 0 ? cityMatches[0] : allBranches[0];
+      const branchId = targetBranch.ma_chi_nhanh || targetBranch.co_so_ma || targetBranch.branch_code || '';
+
+      // Tự động chuyển chi nhánh nếu chi nhánh hiện tại không nằm trong cùng thành phố
+      if (!selectedBranch) {
+        setSelectedBranch(branchId);
+      } else {
+        const currentBranch = allBranches.find(b => (b.ma_chi_nhanh || b.co_so_ma || b.branch_code) === selectedBranch);
+        const currentBranchCity = String(currentBranch?.thanh_pho || currentBranch?.dia_chi || '').toLowerCase();
+        const userCity = String(addressForm.city || '').toLowerCase();
+        
+        if (userCity && !currentBranchCity.includes(userCity)) {
+          setSelectedBranch(branchId);
+        }
+      }
+    }
+  }, [publicBranchPayload, selectedBranch, addressForm.city]);
+
   const khoiTaoThanhToanMutation = useMutation({
     mutationFn: async () => {
       const response = await apiClient.post(`/customers/${maNguoiDung}/thanh-toan/khoi-tao`, {
         phuong_thuc_thanh_toan: phuongThuc,
-        dia_chi_giao_hang: diaChiDayDu,
+        dia_chi_giao_hang: deliveryMode === 'GIAO_TAN_NOI' ? diaChiDayDu : (deliveryMode === 'LAY_TAI_QUAN' ? 'Khách lấy tại quán' : 'Khách dùng tại chỗ'),
         khung_gio_giao: khungGio,
         ghi_chu: ghiChu.trim() || 'Dat tu web-customer',
         ma_voucher: voucherResult?.ma_voucher || voucherResult?.ma_khuyen_mai || undefined,
+        delivery_mode: deliveryMode,
+        delivery_method: deliveryMethod,
+        branch_code: selectedBranch,
+        table_number: deliveryMode === 'DUNG_TAI_CHO' ? tableNumber : undefined,
       });
       return response.data;
     },
@@ -252,14 +295,16 @@ export default function CartPage({ products = [], onBackToHome }) {
       return;
     }
 
-    if (!addressForm.city || !addressForm.district || !addressForm.ward || !addressForm.street?.trim()) {
-      setThongBao('Vui lòng chọn thành phố, quận, phường và nhập số nhà/đường đầy đủ.');
-      return;
-    }
+    if (deliveryMode === 'GIAO_TAN_NOI') {
+      if (!addressForm.city || !addressForm.district || !addressForm.ward || !addressForm.street?.trim()) {
+        setThongBao('Vui lòng chọn thành phố, quận, phường và nhập số nhà/đường đầy đủ.');
+        return;
+      }
 
-    if (diaChiDayDu.length < 16) {
-      setThongBao('Địa chỉ giao hàng chưa đủ chi tiết. Vui lòng bổ sung số nhà và tên đường.');
-      return;
+      if (diaChiDayDu.length < 16) {
+        setThongBao('Địa chỉ giao hàng chưa đủ chi tiết. Vui lòng bổ sung số nhà và tên đường.');
+        return;
+      }
     }
 
     if (!khungGioHopLe(khungGio)) {
@@ -467,11 +512,24 @@ export default function CartPage({ products = [], onBackToHome }) {
                 <h2 className="text-xl font-black text-[#1a1a1a] uppercase tracking-wide pb-4 border-b border-gray-100 font-serif">
                   Thông tin giao hàng &amp; Thanh toán
                 </h2>
+                
+                <div className="mb-6">
+                  <DeliveryModeSelector selectedMode={deliveryMode} onChange={setDeliveryMode} />
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Cột trái form: Địa chỉ */}
                   <div className="space-y-4">
-                    <h3 className="text-[11px] font-black uppercase text-[#c41230] tracking-widest">Địa chỉ giao hàng</h3>
+                    {deliveryMode === 'GIAO_TAN_NOI' && (
+                      <div className="mb-6">
+                        <DeliveryMethodPicker selectedMethod={deliveryMethod} onChange={setDeliveryMethod} lalamoveFee={25000} lalamoveLoading={false} />
+                      </div>
+                    )}
+                    
+                    {deliveryMode === 'GIAO_TAN_NOI' ? (
+                      <>
+                        <h3 className="text-[11px] font-black uppercase text-[#c41230] tracking-widest">Địa chỉ giao hàng</h3>
+
                     
                     {isLoggedInUser && savedAddresses.length ? (
                       <div className="flex flex-col gap-1.5">
@@ -572,10 +630,37 @@ export default function CartPage({ products = [], onBackToHome }) {
                           if (thongBao) setThongBao('');
                         }}
                         className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-[#c41230]"
-                        placeholder="Ví dụ: 28 Mạc Đĩnh Chi"
+                        placeholder="Ví dụ: 28 Nguyễn Văn Linh"
                       />
                     </div>
                     <p className="text-[11px] font-bold text-gray-400">Địa chỉ đầy đủ: {diaChiDayDu || '---'}</p>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className="text-[11px] font-black uppercase text-[#c41230] tracking-widest">Chọn cửa hàng</h3>
+                        <BranchSelector 
+                          branches={publicBranchPayload?.items} 
+                          selectedBranch={selectedBranch} 
+                          onChange={setSelectedBranch} 
+                        />
+                        {deliveryMode === 'DUNG_TAI_CHO' && (
+                          <div className="flex flex-col gap-1.5 mt-4">
+                            <label className="text-xs font-bold text-gray-500">Số bàn (không bắt buộc)</label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <span className="text-gray-400 font-black text-[13px]">#</span>
+                              </div>
+                              <input
+                                value={tableNumber}
+                                onChange={(e) => setTableNumber(e.target.value)}
+                                placeholder="VD: Bàn 12"
+                                className="w-full rounded-xl border border-gray-200 bg-white pl-9 pr-4 py-3 text-sm font-semibold outline-none focus:border-[#c41230] transition-colors"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
 
                   {/* Cột phải form: Thời gian & Ghi chú */}

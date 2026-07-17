@@ -24,6 +24,7 @@ import { ManagerWorkforcePanel } from './features/manager-dashboard/components/M
 import { ManagerEmployeePanel } from './features/manager-dashboard/components/ManagerEmployeePanel'
 import { ManagerCustomerCarePanel } from './features/manager-dashboard/components/ManagerCustomerCarePanel'
 import { StaffWorkShiftsPanel } from './features/staff-dashboard/components/StaffWorkShiftsPanel'
+import StaffDeliveryPanel from './features/staff-dashboard/features_thaian/StaffDeliveryPanel'
 import { AdminSystemConsole } from './features/actor-admin/components/AdminSystemConsole'
 import { ManagerShipperPanel } from './features/manager-dashboard/components/ManagerShipperPanel'
 import { AdminChatWidget } from './features/admin-dashboard/components/AdminChatWidget'
@@ -130,7 +131,7 @@ function App() {
   } = useAdminDashboard()
 
   const userRole = session?.user?.vaiTro || session?.user?.vai_tro || DASHBOARD_ROLES.STAFF
-  const branchName = session?.user?.coSoTen || session?.user?.co_so_ten || 'Mạc Đĩnh Chi'
+  const branchName = session?.user?.coSoTen || session?.user?.co_so_ten || 'Chi nhánh hệ thống'
   const isSystemAdmin = userRole === DASHBOARD_ROLES.ADMIN
   const isManager = userRole === DASHBOARD_ROLES.MANAGER
   const staffNavTabs = isManager
@@ -268,6 +269,8 @@ function App() {
             onDeleteOrder={xoaDonChoStaff}
           />
         )}
+
+        {activeTab === 'delivery' && <StaffDeliveryPanel />}
 
         {activeTab === 'menu' && (
           <MenuPanel
