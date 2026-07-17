@@ -56,6 +56,15 @@ export class User {
   @Column({ type: 'int', default: 0 })
   reset_password_attempts: number;
 
+  @Column({ type: 'int', default: 0 })
+  diem_kha_dung: number;
+
+  @Column({ type: 'numeric', precision: 15, scale: 2, default: 0 })
+  tong_chi_tieu: number;
+
+  @Column({ type: 'date', nullable: true })
+  ngay_sinh: Date | null;
+
   @CreateDateColumn()
   ngay_tao: Date;
 
