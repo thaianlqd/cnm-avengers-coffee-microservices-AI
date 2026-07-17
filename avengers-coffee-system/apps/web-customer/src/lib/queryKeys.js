@@ -5,6 +5,8 @@ export const queryKeys = {
   userProfile: (userId) => ['users', 'profile', userId],
   userAddresses: (userId) => ['users', 'addresses', userId],
   loyaltyByUser: (userId) => ['users', 'loyalty', userId],
+  membershipByUser: (userId) => ['users', 'membership', userId],
+  luckyWheelPrizes: ['lucky-wheel', 'prizes'],
   orderHistoryRoot: ['orders', 'history'],
   orderHistory: (userId, filters) => ['orders', 'history', userId, filters],
   orderStatus: (userId, orderId) => ['orders', 'status', userId, orderId],

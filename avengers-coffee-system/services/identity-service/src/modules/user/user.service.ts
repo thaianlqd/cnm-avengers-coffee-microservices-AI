@@ -845,6 +845,7 @@ export class UserService {
       vai_tro: user.vai_tro,
       co_so_ma: user.co_so_ma,
       co_so_ten: user.co_so_ten,
+      ngay_sinh: user.ngay_sinh,
       ngay_tao: user.ngay_tao,
     };
   }
@@ -1102,15 +1103,60 @@ export class UserService {
     return { hang: 'Thành viên', ma_hang: 'MEMBER', diem_hien_tai: diem, diem_can_len_hang: 1000, diem_bat_dau_hang: 0 };
   }
 
+  private layQuyenLoiTheoHang(maHang: string) {
+    const QUYEN_LOI: Record<string, any> = {
+      MEMBER: {
+        he_so_diem: 1,
+        voucher_sinh_nhat: 'Giảm 10% (tối đa 20K)',
+        freeship: null,
+        luot_quay_thang: 1,
+        voucher_exclusive: false,
+        mau_sac: '#9ca3af',
+        gradient: ['#9ca3af', '#6b7280'],
+      },
+      SILVER: {
+        he_so_diem: 1.2,
+        voucher_sinh_nhat: 'Giảm 15% (tối đa 40K)',
+        freeship: 'Giảm 30% phí ship',
+        luot_quay_thang: 2,
+        voucher_exclusive: false,
+        mau_sac: '#64748b',
+        gradient: ['#94a3b8', '#64748b'],
+      },
+      GOLD: {
+        he_so_diem: 1.5,
+        voucher_sinh_nhat: 'Giảm 25% (tối đa 80K) + 1 ly miễn phí size S',
+        freeship: 'Miễn phí ship đơn từ 100K',
+        luot_quay_thang: 3,
+        voucher_exclusive: true,
+        mau_sac: '#d97706',
+        gradient: ['#fbbf24', '#d97706'],
+      },
+      DIAMOND: {
+        he_so_diem: 2,
+        voucher_sinh_nhat: 'Giảm 40% (tối đa 150K) + 1 ly miễn phí size L',
+        freeship: 'Miễn phí ship mọi đơn',
+        luot_quay_thang: 5,
+        voucher_exclusive: true,
+        mau_sac: '#0ea5e9',
+        gradient: ['#38bdf8', '#0ea5e9'],
+      },
+    };
+    return QUYEN_LOI[maHang] || QUYEN_LOI.MEMBER;
+  }
+
   async layDiemLoyalty(maNguoiDung: string) {
     const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: maNguoiDung } });
     if (!user) throw new NotFoundException('Khong tim thay nguoi dung');
     const diem = user.diem_loyalty || 0;
     const hang = this.tinhHangThanhVien(diem);
+    const quyenLoi = this.layQuyenLoiTheoHang(hang.ma_hang);
     return {
       ma_nguoi_dung: maNguoiDung,
       diem,
+      diem_kha_dung: user.diem_kha_dung || 0,
       hang_thanh_vien: hang,
+      quyen_loi: quyenLoi,
       ghi_chu: 'Tich luy 1 diem cho moi 1.000d chi tieu',
     };
   }
@@ -1119,9 +1165,171 @@ export class UserService {
     if (!diem || diem <= 0) return { diem_moi: 0 };
     const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: maNguoiDung } });
     if (!user) return { diem_moi: 0 }; // Silently fail - called cross-service
-    user.diem_loyalty = (user.diem_loyalty || 0) + Math.floor(diem);
+
+    const hangTruoc = this.tinhHangThanhVien(user.diem_loyalty || 0);
+    const diemCong = Math.floor(diem);
+    user.diem_loyalty = (user.diem_loyalty || 0) + diemCong;
+    user.diem_kha_dung = (user.diem_kha_dung || 0) + diemCong;
+    user.tong_chi_tieu = Number(user.tong_chi_tieu || 0) + (diemCong * 1000);
     await this.userRepo.save(user);
-    return { diem_moi: user.diem_loyalty };
+
+    const hangSau = this.tinhHangThanhVien(user.diem_loyalty);
+    let len_hang = false;
+    if (hangSau.ma_hang !== hangTruoc.ma_hang) {
+      len_hang = true;
+      // Auto-create tier-up welcome voucher
+      await this.taoVoucherChaoMungLenHang(maNguoiDung, hangSau.ma_hang, hangSau.hang);
+      // Auto-create freeship voucher according to new tier
+      await this.taoVoucherFreeshipTheoHang(maNguoiDung, hangSau.ma_hang, hangSau.hang);
+    }
+
+    return { diem_moi: user.diem_loyalty, diem_kha_dung: user.diem_kha_dung, len_hang, hang_moi: hangSau.ma_hang };
+  }
+
+  private async taoVoucherChaoMungLenHang(userId: string, maHang: string, tenHang: string) {
+    const TIER_UP_VALUES: Record<string, number> = { SILVER: 15000, GOLD: 30000, DIAMOND: 50000 };
+    const giaTriGiam = TIER_UP_VALUES[maHang] || 10000;
+    const TIER_SHORT: Record<string, string> = { MEMBER: 'MB', SILVER: 'SV', GOLD: 'GD', DIAMOND: 'DM' };
+    const shortTier = TIER_SHORT[maHang] || maHang;
+    const code = `UP_${shortTier}_${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    try {
+      const p = new Promotion();
+      p.ma_khuyen_mai = code;
+      p.ten_khuyen_mai = `Chúc mừng lên hạng ${tenHang}!`;
+      p.mo_ta = `Voucher chào mừng bạn đã lên hạng ${tenHang}. Giảm ${giaTriGiam.toLocaleString('vi-VN')}đ cho đơn tiếp theo.`;
+      p.loai_khuyen_mai = 'FIXED';
+      p.gia_tri = giaTriGiam;
+      p.gia_tri_don_toi_thieu = 0;
+      p.giam_toi_da = null;
+      p.so_luong_toi_da = 1;
+      p.so_luong_da_dung = 0;
+      p.gioi_han_moi_nguoi = 1;
+      p.ngay_bat_dau = new Date();
+      p.ngay_ket_thuc = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+      p.trang_thai = 'ACTIVE';
+      p.hien_thi_cho_khach = true;
+      p.ma_nguoi_dung = userId;
+      p.loai_su_kien = 'TIER_UP';
+      p.hang_toi_thieu = null;
+      p.ten_san_pham_tang = null;
+      p.hinh_anh = null;
+      await this.promotionRepo.save(p);
+    } catch (err) {
+      console.error('[taoVoucherChaoMungLenHang] Error:', err);
+    }
+  }
+
+  private async taoVoucherFreeshipTheoHang(userId: string, maHang: string, tenHang: string) {
+    if (maHang === 'MEMBER') return;
+
+    let value = 15000;
+    let minOrder = 0;
+    if (maHang === 'GOLD') {
+      value = 25000;
+      minOrder = 100000;
+    } else if (maHang === 'DIAMOND') {
+      value = 30000;
+      minOrder = 0;
+    }
+
+    const TIER_SHORT: Record<string, string> = { MEMBER: 'MB', SILVER: 'SV', GOLD: 'GD', DIAMOND: 'DM' };
+    const shortTier = TIER_SHORT[maHang] || maHang;
+    const code = `FS_${shortTier}_${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    try {
+      const p = new Promotion();
+      p.ma_khuyen_mai = code;
+      p.ten_khuyen_mai = `Freeship ${tenHang}`;
+      p.mo_ta = `Ưu đãi giao hàng hạng ${tenHang}. Giảm tối đa ${value.toLocaleString('vi-VN')}đ phí vận chuyển${minOrder > 0 ? ` cho đơn hàng từ ${minOrder.toLocaleString('vi-VN')}đ` : ''}.`;
+      p.loai_khuyen_mai = 'FIXED';
+      p.gia_tri = value;
+      p.gia_tri_don_toi_thieu = minOrder;
+      p.giam_toi_da = null;
+      p.so_luong_toi_da = 1;
+      p.so_luong_da_dung = 0;
+      p.gioi_han_moi_nguoi = 1;
+      p.ngay_bat_dau = new Date();
+      p.ngay_ket_thuc = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+      p.trang_thai = 'ACTIVE';
+      p.hien_thi_cho_khach = true;
+      p.ma_nguoi_dung = userId;
+      p.loai_su_kien = 'FREESHIP';
+      p.hang_toi_thieu = null;
+      p.ten_san_pham_tang = null;
+      p.hinh_anh = null;
+      await this.promotionRepo.save(p);
+    } catch (err) {
+      console.error('[taoVoucherFreeshipTheoHang] Error:', err);
+    }
+  }
+
+  async taoVoucherSinhNhat(userId: string) {
+    const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: userId } });
+    if (!user || !user.ngay_sinh) return;
+
+    const hang = this.tinhHangThanhVien(user.diem_loyalty || 0);
+    const maHang = hang.ma_hang;
+
+    const yearShort = new Date().getFullYear().toString().slice(-2);
+    const code = `BD_${yearShort}_${userId.slice(0, 4).toUpperCase()}`;
+
+    const existed = await this.promotionRepo.findOne({ where: { ma_khuyen_mai: code } });
+    if (existed) return;
+
+    const BIRTHDAY_BENEFITS: Record<string, { value: number; cap: number }> = {
+      MEMBER: { value: 10, cap: 20000 },
+      SILVER: { value: 15, cap: 40000 },
+      GOLD: { value: 25, cap: 80000 },
+      DIAMOND: { value: 40, cap: 150000 },
+    };
+    const benefit = BIRTHDAY_BENEFITS[maHang] || BIRTHDAY_BENEFITS.MEMBER;
+
+    try {
+      const p = new Promotion();
+      p.ma_khuyen_mai = code;
+      p.ten_khuyen_mai = `Chúc mừng sinh nhật!`;
+      p.mo_ta = `Quà tặng sinh nhật dành riêng cho hạng ${hang.hang}. Giảm ${benefit.value}% (tối đa ${benefit.cap.toLocaleString('vi-VN')}đ) cho đơn hàng.`;
+      p.loai_khuyen_mai = 'PERCENT';
+      p.gia_tri = benefit.value;
+      p.gia_tri_don_toi_thieu = 0;
+      p.giam_toi_da = benefit.cap;
+      p.so_luong_toi_da = 1;
+      p.so_luong_da_dung = 0;
+      p.gioi_han_moi_nguoi = 1;
+      p.ngay_bat_dau = new Date();
+      p.ngay_ket_thuc = new Date(Date.now() + 45 * 24 * 60 * 60 * 1000); // 45 days
+      p.trang_thai = 'ACTIVE';
+      p.hien_thi_cho_khach = true;
+      p.ma_nguoi_dung = userId;
+      p.loai_su_kien = 'BIRTHDAY';
+      p.hang_toi_thieu = null;
+      p.ten_san_pham_tang = null;
+      p.hinh_anh = null;
+      await this.promotionRepo.save(p);
+    } catch (err) {
+      console.error('[taoVoucherSinhNhat] Error:', err);
+    }
+  }
+
+  async kiemTraVaSinhVoucherSinhNhat() {
+    const users = await this.userRepo.createQueryBuilder('u')
+      .where('u.ngay_sinh IS NOT NULL')
+      .getMany();
+
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1; // 1 to 12
+
+    let generatedCount = 0;
+    for (const u of users) {
+      if (!u.ngay_sinh) continue;
+      const birthDate = new Date(u.ngay_sinh);
+      const birthMonth = birthDate.getMonth() + 1;
+
+      if (birthMonth === currentMonth) {
+        await this.taoVoucherSinhNhat(u.ma_nguoi_dung);
+        generatedCount++;
+      }
+    }
+    return { message: 'Da trigger sinh voucher sinh nhat', currentMonth, scannedUsers: users.length, generated: generatedCount };
   }
 
   // ═══════════════════════════════════════════════════════
@@ -1293,10 +1501,24 @@ export class UserService {
       order: { ngay_tao: 'DESC' },
     });
 
+    const TIER_LEVELS: Record<string, number> = { MEMBER: 0, SILVER: 1, GOLD: 2, DIAMOND: 3 };
+    let userTier = 'MEMBER';
+    if (userId) {
+      const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: userId } });
+      if (user) {
+        userTier = this.tinhHangThanhVien(user.diem_loyalty || 0).ma_hang;
+      }
+    }
+    const userTierVal = TIER_LEVELS[userTier] ?? 0;
+
     const visibleRows = rows.filter((p) => {
       if (p.ngay_bat_dau && new Date(p.ngay_bat_dau) > now) return false;
       if (p.ngay_ket_thuc && new Date(p.ngay_ket_thuc) < now) return false;
       if (p.so_luong_toi_da > 0 && p.so_luong_da_dung >= p.so_luong_toi_da) return false;
+      
+      // Lọc theo voucher cá nhân
+      if (p.ma_nguoi_dung && p.ma_nguoi_dung !== userId) return false;
+
       return true;
     });
 
@@ -1319,10 +1541,17 @@ export class UserService {
       total: visibleRows.length,
       items: visibleRows.map((p) => {
         const usedByUser = usageMap[p.ma_khuyen_mai] || 0;
-        const canUse = usedByUser < p.gioi_han_moi_nguoi;
+        const canUseByLimit = usedByUser < p.gioi_han_moi_nguoi;
+        
+        // Kiểm tra điều kiện hạng tối thiểu
+        const reqTierVal = TIER_LEVELS[p.hang_toi_thieu || ''] ?? 0;
+        const meetsTier = userTierVal >= reqTierVal;
+        
         return {
           ...this.mapPromotionItem(p, usedByUser),
-          co_the_dung: canUse,
+          co_the_dung: canUseByLimit && meetsTier,
+          hang_toi_thieu: p.hang_toi_thieu,
+          chua_dat_hang: !meetsTier,
         };
       }),
     };
@@ -1347,6 +1576,27 @@ export class UserService {
     if (p.so_luong_toi_da > 0 && p.so_luong_da_dung >= p.so_luong_toi_da) {
       throw new BadRequestException('Ma khuyen mai da su dung het luot');
     }
+
+    // Kiểm tra voucher cá nhân
+    if (p.ma_nguoi_dung && p.ma_nguoi_dung !== userId) {
+      throw new BadRequestException('Voucher nay khong thuoc so huu cua ban');
+    }
+
+    // Kiểm tra điều kiện hạng tối thiểu
+    if (p.hang_toi_thieu) {
+      const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: userId } });
+      if (!user) throw new BadRequestException('Khong tim thay user de kiem tra hang');
+      
+      const TIER_LEVELS: Record<string, number> = { MEMBER: 0, SILVER: 1, GOLD: 2, DIAMOND: 3 };
+      const userTier = this.tinhHangThanhVien(user.diem_loyalty || 0).ma_hang;
+      const userTierVal = TIER_LEVELS[userTier] ?? 0;
+      const reqTierVal = TIER_LEVELS[p.hang_toi_thieu] ?? 0;
+
+      if (userTierVal < reqTierVal) {
+        throw new BadRequestException(`Yeu cau hang thanh vien tu ${p.hang_toi_thieu} tro len de ap dung ma nay`);
+      }
+    }
+
     if (Number(giaTriDon || 0) < Number(p.gia_tri_don_toi_thieu)) {
       throw new BadRequestException(
         `Don hang toi thieu ${Number(p.gia_tri_don_toi_thieu).toLocaleString('vi-VN')}d de ap dung ma nay`,
@@ -1632,6 +1882,179 @@ export class UserService {
         },
       };
     }
+
+  // ═══════════════════════════════════════════════════════
+  //  LUCKY WHEEL (Vòng quay may mắn)
+  // ═══════════════════════════════════════════════════════
+
+  private readonly LUCKY_WHEEL_COST = 100; // 100 điểm khả dụng / lượt
+
+  async layDanhSachGiaiThuongVongQuay() {
+    // Lấy danh sách sản phẩm từ menu (50K-70K) để random
+    let randomProduct: { ten: string; gia: number } | null = null;
+    try {
+      const menuUrl = String(process.env.MENU_SERVICE_URL || 'http://localhost:3002').replace(/\/+$/, '');
+      const res = await fetch(`${menuUrl}/menu/san-pham`, {
+        headers: { 'x-internal-token': String(process.env.INTERNAL_SERVICE_TOKEN || 'avengers-internal-2025') },
+        signal: AbortSignal.timeout(3000),
+      });
+      if (res.ok) {
+        const products = await res.json() as any[];
+        const eligible = (products || []).filter((p: any) => {
+          const price = Number(p?.gia_ban || 0);
+          return price >= 50000 && price <= 70000 && p?.trang_thai !== false;
+        });
+        if (eligible.length > 0) {
+          const picked = eligible[Math.floor(Math.random() * eligible.length)];
+          randomProduct = { ten: picked.ten_san_pham, gia: Number(picked.gia_ban) };
+        }
+      }
+    } catch { /* ignore */ }
+
+    const prizes = [
+      { id: 1, ten: '+50 điểm',     loai: 'POINTS', gia_tri: 50,    xac_suat: 25, mau: '#FF6B6B', icon: '🎯' },
+      { id: 2, ten: '+100 điểm',    loai: 'POINTS', gia_tri: 100,   xac_suat: 20, mau: '#4ECDC4', icon: '⭐' },
+      { id: 3, ten: 'Voucher 10K',  loai: 'VOUCHER', gia_tri: 10000, xac_suat: 18, mau: '#45B7D1', icon: '🎫' },
+      { id: 4, ten: '+200 điểm',    loai: 'POINTS', gia_tri: 200,   xac_suat: 12, mau: '#96CEB4', icon: '💎' },
+      { id: 5, ten: 'Voucher 20K',  loai: 'VOUCHER', gia_tri: 20000, xac_suat: 10, mau: '#FFEAA7', icon: '🏷️' },
+      { id: 6, ten: 'Free Topping', loai: 'FREE_ITEM', gia_tri: 0, ten_san_pham: 'Topping bất kỳ', xac_suat: 8, mau: '#DDA0DD', icon: '🧋' },
+      { id: 7, ten: randomProduct ? `Free ${randomProduct.ten}` : 'Voucher 30K', loai: randomProduct ? 'FREE_ITEM' : 'VOUCHER', gia_tri: randomProduct ? 0 : 30000, ten_san_pham: randomProduct?.ten || null, xac_suat: 5, mau: '#FF9FF3', icon: '🎁' },
+      { id: 8, ten: 'Voucher 50K',  loai: 'VOUCHER', gia_tri: 50000, xac_suat: 2, mau: '#F8B500', icon: '👑' },
+    ];
+
+    return { chi_phi_quay: this.LUCKY_WHEEL_COST, giai_thuong: prizes };
+  }
+
+  async quayMayMan(maNguoiDung: string) {
+    const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: maNguoiDung } });
+    if (!user) throw new NotFoundException('Khong tim thay nguoi dung');
+    if ((user.diem_kha_dung || 0) < this.LUCKY_WHEEL_COST) {
+      throw new BadRequestException(`Ban can it nhat ${this.LUCKY_WHEEL_COST} diem kha dung de quay. Hien tai: ${user.diem_kha_dung || 0} diem.`);
+    }
+
+    // Trừ điểm
+    user.diem_kha_dung = (user.diem_kha_dung || 0) - this.LUCKY_WHEEL_COST;
+    await this.userRepo.save(user);
+
+    // Lấy danh sách giải + random theo xác suất
+    const { giai_thuong: prizes } = await this.layDanhSachGiaiThuongVongQuay();
+    const totalWeight = prizes.reduce((sum, p) => sum + (p.xac_suat || 0), 0);
+    let random = Math.random() * totalWeight;
+    let winner = prizes[0];
+    for (const prize of prizes) {
+      random -= (prize.xac_suat || 0);
+      if (random <= 0) { winner = prize; break; }
+    }
+
+    // Phát thưởng
+    let voucherCode: string | null = null;
+    if (winner.loai === 'POINTS') {
+      user.diem_kha_dung = (user.diem_kha_dung || 0) + winner.gia_tri;
+      user.diem_loyalty = (user.diem_loyalty || 0) + winner.gia_tri;
+      await this.userRepo.save(user);
+    } else if (winner.loai === 'VOUCHER' || winner.loai === 'FREE_ITEM') {
+      voucherCode = `WHEEL_${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+      try {
+        const p = new Promotion();
+        p.ma_khuyen_mai = voucherCode;
+        p.ten_khuyen_mai = `Vòng quay: ${winner.ten}`;
+        p.mo_ta = winner.loai === 'FREE_ITEM'
+          ? `Bạn trúng thưởng: ${(winner as any).ten_san_pham || winner.ten}! Áp dụng khi đặt hàng.`
+          : `Bạn trúng voucher giảm ${winner.gia_tri.toLocaleString('vi-VN')}đ từ vòng quay may mắn!`;
+        p.loai_khuyen_mai = winner.loai === 'FREE_ITEM' ? 'FREE_ITEM' : 'FIXED';
+        p.gia_tri = winner.gia_tri;
+        p.gia_tri_don_toi_thieu = 0;
+        p.giam_toi_da = null;
+        p.so_luong_toi_da = 1;
+        p.so_luong_da_dung = 0;
+        p.gioi_han_moi_nguoi = 1;
+        p.ngay_bat_dau = new Date();
+        p.ngay_ket_thuc = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000); // 14 days
+        p.trang_thai = 'ACTIVE';
+        p.hien_thi_cho_khach = true;
+        p.ma_nguoi_dung = maNguoiDung;
+        p.loai_su_kien = 'LUCKY_WHEEL';
+        p.hang_toi_thieu = null;
+        p.ten_san_pham_tang = (winner as any).ten_san_pham || null;
+        p.hinh_anh = null;
+        await this.promotionRepo.save(p);
+      } catch (err) {
+        console.error('[quayMayMan] Error creating voucher:', err);
+      }
+    }
+
+    return {
+      giai_thuong: {
+        id: winner.id,
+        ten: winner.ten,
+        loai: winner.loai,
+        gia_tri: winner.gia_tri,
+        icon: winner.icon,
+        mau: winner.mau,
+        ten_san_pham: (winner as any).ten_san_pham || null,
+      },
+      voucher_code: voucherCode,
+      diem_kha_dung_con_lai: user.diem_kha_dung,
+      diem_loyalty: user.diem_loyalty,
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  MEMBERSHIP INFO
+  // ═══════════════════════════════════════════════════════
+
+  async layThongTinMembership(maNguoiDung: string) {
+    const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: maNguoiDung } });
+    if (!user) throw new NotFoundException('Khong tim thay nguoi dung');
+
+    const diem = user.diem_loyalty || 0;
+    const hang = this.tinhHangThanhVien(diem);
+    const quyenLoi = this.layQuyenLoiTheoHang(hang.ma_hang);
+
+    // Lấy personal vouchers (sinh nhật, lên hạng, vòng quay)
+    const personalVouchers = await this.promotionRepo.find({
+      where: { ma_nguoi_dung: maNguoiDung, trang_thai: 'ACTIVE' },
+      order: { ngay_tao: 'DESC' },
+    });
+
+    const now = new Date();
+    const activePersonalVouchers = personalVouchers
+      .filter(p => !p.ngay_ket_thuc || new Date(p.ngay_ket_thuc) > now)
+      .filter(p => p.so_luong_toi_da <= 0 || p.so_luong_da_dung < p.so_luong_toi_da)
+      .map(p => this.mapPromotionItem(p));
+
+    // Tất cả các hạng để so sánh
+    const tatCaHang = [
+      { ma: 'MEMBER', ten: 'Thành viên', diem: 0, icon: '🎖️', ...this.layQuyenLoiTheoHang('MEMBER') },
+      { ma: 'SILVER', ten: 'Bạc', diem: 1000, icon: '🥈', ...this.layQuyenLoiTheoHang('SILVER') },
+      { ma: 'GOLD', ten: 'Vàng', diem: 3000, icon: '🥇', ...this.layQuyenLoiTheoHang('GOLD') },
+      { ma: 'DIAMOND', ten: 'Kim Cương', diem: 5000, icon: '💎', ...this.layQuyenLoiTheoHang('DIAMOND') },
+    ];
+
+    return {
+      ma_nguoi_dung: maNguoiDung,
+      diem_loyalty: diem,
+      diem_kha_dung: user.diem_kha_dung || 0,
+      tong_chi_tieu: Number(user.tong_chi_tieu || 0),
+      hang_hien_tai: hang,
+      quyen_loi_hien_tai: quyenLoi,
+      tat_ca_hang: tatCaHang,
+      voucher_ca_nhan: activePersonalVouchers,
+      ngay_sinh: user.ngay_sinh,
+    };
+  }
+
+  async capNhatNgaySinh(maNguoiDung: string, ngaySinh: string) {
+    const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: maNguoiDung } });
+    if (!user) throw new NotFoundException('Khong tim thay nguoi dung');
+
+    const parsed = new Date(ngaySinh);
+    if (isNaN(parsed.getTime())) throw new BadRequestException('Ngay sinh khong hop le');
+
+    user.ngay_sinh = parsed;
+    await this.userRepo.save(user);
+    return { message: 'Cap nhat ngay sinh thanh cong', ngay_sinh: user.ngay_sinh };
+  }
 
     /**
      * Verify reCAPTCHA token từ frontend
