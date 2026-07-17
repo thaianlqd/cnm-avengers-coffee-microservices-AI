@@ -21,6 +21,15 @@ export class ShipperController {
     return this.shipperService.getAvailableOrders(branchCode);
   }
 
+  /**
+   * POST /shippers/orders/:orderId/mark-ready
+   * Staff bấm "Shipper Nội Bộ" → Chuyển đơn sang DANG_GIAO để Shipper pool thấy
+   */
+  @Post('orders/:orderId/mark-ready')
+  async markOrderReadyForDelivery(@Param('orderId') orderId: string) {
+    return this.shipperService.markOrderReadyForDelivery(orderId);
+  }
+
   // ============ MANAGER: Assign order manually ============
 
   @Get('all')

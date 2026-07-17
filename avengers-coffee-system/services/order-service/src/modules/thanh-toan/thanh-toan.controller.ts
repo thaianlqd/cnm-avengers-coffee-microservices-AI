@@ -17,6 +17,9 @@ export class ThanhToanController {
       khung_gio_giao?: string;
       ghi_chu?: string;
       branch_code?: string;
+      delivery_mode?: 'GIAO_TAN_NOI' | 'LAY_TAI_QUAN' | 'DUNG_TAI_CHO';
+      delivery_method?: 'INTERNAL' | 'LALAMOVE';
+      table_number?: string;
     },
   ) {
     return this.thanhToanService.khoiTaoThanhToan(customerId, payload, req.ip || '127.0.0.1');

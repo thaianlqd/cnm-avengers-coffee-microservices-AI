@@ -103,11 +103,11 @@ export function HomeScreen({ navigation }) {
 
   // Fetch available orders
   const { data: deliveries, isLoading, refetch } = useQuery({
-    queryKey: ['availableOrders', shipper?.branch_code],
+    queryKey: ['availableOrders', shipper?.id],
     queryFn: async () => {
       if (!shipper?.id) return []
       const [available, mine] = await Promise.all([
-        apiClient.get(`/shippers/available-orders${shipper.branch_code ? `?branch_code=${shipper.branch_code}` : ''}`),
+        apiClient.get(`/shippers/available-orders`),
         apiClient.get(`/shippers/${shipper.id}/deliveries?status=CONFIRMED`),
       ])
       const availList = Array.isArray(available) ? available : []
@@ -117,7 +117,7 @@ export function HomeScreen({ navigation }) {
       return [...mineList.map(d => ({ ...d, _already_accepted: true })), ...newAvail]
     },
     enabled: !!shipper?.id,
-    refetchInterval: isOnline ? 20000 : false, // auto-refresh 20s khi online
+    refetchInterval: 20000, // auto-refresh mỗi 20s
   })
 
   // Fetch stats summary
@@ -349,53 +349,45 @@ export function HomeScreen({ navigation }) {
           <View style={styles.listHeader}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text style={styles.sectionTitle}>
-                {isOnline ? 'Đơn hàng xung quanh' : 'Đơn hàng'}
+                {isOnline ? 'Đơn hàng đang chờ' : 'Đơn hàng'}
               </Text>
-              {isOnline && deliveries?.length > 0 && (
+              {deliveries?.length > 0 && (
                 <View style={styles.countBadge}>
                   <Text style={styles.countText}>{deliveries.length}</Text>
                 </View>
               )}
             </View>
-            {isOnline && (
-              <TouchableOpacity onPress={() => refetch()} style={styles.refreshBtn}>
-                <Ionicons name="refresh" size={18} color={colors.textSecondary} />
-                <Text style={styles.refreshText}>Làm mới</Text>
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity onPress={() => refetch()} style={styles.refreshBtn}>
+              <Ionicons name="refresh" size={18} color={colors.textSecondary} />
+              <Text style={styles.refreshText}>Làm mới</Text>
+            </TouchableOpacity>
           </View>
 
-          {!isOnline ? (
-            <View style={styles.emptyState}>
-              <View style={[styles.emptyIconBg, { backgroundColor: colors.bg }]}>
-                <Ionicons name="bicycle-outline" size={48} color={colors.muted} />
-              </View>
-              <Text style={styles.emptyTitle}>Chưa sẵn sàng nhận đơn</Text>
-              <Text style={styles.emptyDesc}>Hãy bật công tắc trực tuyến ở phía trên để bắt đầu nhận những đơn hàng mới nhất từ hệ thống.</Text>
-            </View>
-          ) : (
-            <FlatList
-              data={deliveries}
-              keyExtractor={(item) => item.id || item.ma_don_hang}
-              renderItem={renderDeliveryItem}
-              contentContainerStyle={styles.listContent}
-              showsVerticalScrollIndicator={false}
-              refreshControl={
-                <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor={colors.primary} />
-              }
-              ListEmptyComponent={
-                !isLoading && (
-                  <View style={styles.emptyState}>
-                    <View style={[styles.emptyIconBg, { backgroundColor: colors.primaryBg }]}>
-                      <Ionicons name="document-text-outline" size={48} color={colors.primaryLight} />
-                    </View>
-                    <Text style={styles.emptyTitle}>Khu vực chưa có đơn mới</Text>
-                    <Text style={styles.emptyDesc}>Hệ thống đang quét các đơn hàng xung quanh vị trí của bạn. Vui lòng giữ ứng dụng mở.</Text>
+          <FlatList
+            data={deliveries}
+            keyExtractor={(item) => item.id || item.ma_don_hang}
+            renderItem={renderDeliveryItem}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor={colors.primary} />
+            }
+            ListEmptyComponent={
+              !isLoading ? (
+                <View style={styles.emptyState}>
+                  <View style={[styles.emptyIconBg, { backgroundColor: colors.primaryBg }]}>
+                    <Ionicons name="document-text-outline" size={48} color={colors.primaryLight} />
                   </View>
-                )
-              }
-            />
-          )}
+                  <Text style={styles.emptyTitle}>Chưa có đơn hàng mới</Text>
+                  <Text style={styles.emptyDesc}>
+                    {isOnline
+                      ? 'Không có đơn hàng nào đang chờ. Hệ thống sẽ tự động cập nhật mỗi 20 giây.'
+                      : 'Bật công tắc "Nhận đơn" ở trên để bắt đầu nhận đơn hàng.'}
+                  </Text>
+                </View>
+              ) : null
+            }
+          />
         </View>
       </View>
     </View>

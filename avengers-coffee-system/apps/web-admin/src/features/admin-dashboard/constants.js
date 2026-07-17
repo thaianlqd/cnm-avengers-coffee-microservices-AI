@@ -3,6 +3,7 @@ export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:30
 export const NAV_TABS = [
   { id: 'overview', label: 'Tổng quan' },
   { id: 'orders', label: 'Luồng đơn hàng' },
+  { id: 'delivery', label: 'Quản lý Giao hàng' },
   { id: 'menu', label: 'Quản lý thực đơn' },
   { id: 'news', label: 'Quản lý tin tức' },
   { id: 'shift', label: 'Chốt ca' },
