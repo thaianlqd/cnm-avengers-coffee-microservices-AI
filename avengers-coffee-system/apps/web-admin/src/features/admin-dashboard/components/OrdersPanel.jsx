@@ -510,10 +510,24 @@ export function OrdersPanel({
               <h3>{order.ma_don_hang.slice(0, 8).toUpperCase()}</h3>
               <p>Khách: {normalizeViText(order.ten_khach_hang) || order.ma_nguoi_dung}</p>
               <p className="order-card-addr">{normalizeViText(order.dia_chi_giao_hang) || 'Tại quán'}</p>
-              <p>
+              <p style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
                 <span className="order-type-badge">
                   {getOrderTypeLabel(order.loai_don_hang)}
                 </span>
+                {order.loai_don_hang === 'GIAO_TAN_NOI' && (
+                  <span style={{ 
+                    fontSize: '0.75rem', 
+                    fontWeight: 'bold', 
+                    padding: '0.2rem 0.5rem', 
+                    borderRadius: '4px',
+                    border: '1px solid',
+                    color: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '#c2410c' : '#4338ca',
+                    backgroundColor: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '#fff7ed' : '#e0e7ff',
+                    borderColor: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '#ffedd5' : '#c7d2fe'
+                  }}>
+                    {order.phuong_thuc_giao_hang === 'LALAMOVE' ? '🚀 Lalamove' : '🛵 Shipper Nội Bộ'}
+                  </span>
+                )}
               </p>
               <div style={{ display: 'flex', gap: '0.45rem', marginTop: '0.45rem', flexWrap: 'wrap' }}>
                 <button

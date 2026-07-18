@@ -1,5 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, HttpException, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, HttpException, HttpStatus, Logger, Inject, forwardRef } from '@nestjs/common';
 import { LalamoveService } from './lalamove.service';
+import { DeliveryTrackingService } from './delivery-tracking.service';
 
 /**
  * Controller cho Lalamove integration.
@@ -7,7 +8,13 @@ import { LalamoveService } from './lalamove.service';
  */
 @Controller('shippers/delivery/lalamove')
 export class LalamoveController {
-  constructor(private readonly lalamoveService: LalamoveService) { }
+  private readonly logger = new Logger(LalamoveController.name);
+
+  constructor(
+    private readonly lalamoveService: LalamoveService,
+    @Inject(forwardRef(() => DeliveryTrackingService))
+    private readonly deliveryTrackingService: DeliveryTrackingService,
+  ) { }
 
   @Get('test-market')
   async testMarket() {
@@ -26,6 +33,31 @@ export class LalamoveController {
       const result = await this.lalamoveService.testQuotationHK();
       return { success: true, data: result };
     } catch (error: any) {
+      return { success: false, message: error.message };
+    }
+  }
+
+  /**
+   * GET /shippers/delivery/lalamove/webhook
+   * Endpoint để Lalamove Partner Portal ping kiểm tra URL (Ping Test)
+   */
+  @Get('webhook')
+  pingWebhook() {
+    return 'Lalamove Webhook is reachable!';
+  }
+
+  /**
+   * POST /shippers/delivery/lalamove/webhook
+   * Webhook nhận trạng thái từ Lalamove
+   */
+  @Post('webhook')
+  async handleWebhook(@Body() payload: any) {
+    this.logger.log(`Received Lalamove Webhook: ${JSON.stringify(payload)}`);
+    try {
+      await this.deliveryTrackingService.handleLalamoveWebhook(payload);
+      return { success: true };
+    } catch (error: any) {
+      this.logger.error(`Webhook error: ${error.message}`);
       return { success: false, message: error.message };
     }
   }
