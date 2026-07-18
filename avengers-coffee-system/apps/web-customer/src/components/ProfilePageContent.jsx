@@ -93,6 +93,7 @@ export default function ProfilePageContent({
   const [passwordError, setPasswordError] = useState('');
   const [addressError, setAddressError] = useState('');
   const [editingAddressId, setEditingAddressId] = useState(null);
+  const [isLocating, setIsLocating] = useState(false);
 
   const userId = profileUser?.ma_nguoi_dung || profileUser?.maNguoiDung || null;
   const queryClient = useQueryClient();
@@ -327,6 +328,96 @@ export default function ProfilePageContent({
       currentPassword: passwordForm.currentPassword,
       newPassword: passwordForm.newPassword,
     });
+  };
+
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      setAddressError('Trình duyệt của bạn không hỗ trợ định vị.');
+      return;
+    }
+
+    setIsLocating(true);
+    setAddressError('');
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          // Gọi API Nominatim (OpenStreetMap) với ngôn ngữ tiếng Việt
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&accept-language=vi`
+          );
+          
+          if (!res.ok) throw new Error('Không thể lấy địa chỉ từ tọa độ này.');
+          
+          const data = await res.json();
+          const addr = data.address;
+          
+          const rawCity = addr.city || addr.municipality || addr.province || addr.state || addr.region || addr.town || '';
+          const rawDistrict = addr.county || addr.district || addr.suburb || addr.town || addr.city_district || '';
+          const rawWard = addr.village || addr.ward || addr.suburb || addr.quarter || addr.hamlet || '';
+          const rawStreet = [addr.house_number, addr.road].filter(Boolean).join(' ') || data.display_name;
+          
+          const removeAccents = (str) => String(str || '').toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+            
+          const findBestMatch = (optionsArray, targetStr) => {
+            if (!targetStr) return null;
+            let target = removeAccents(targetStr).replace(/(thanh pho|tinh|quan|huyen|thi xa|phuong|xa|thi tran)\s+/gi, '').replace(/\s+city/gi, '').trim();
+            if (target.includes('ho chi minh') || target.includes('hcm')) target = 'ho chi minh';
+            
+            return optionsArray.find(opt => {
+                let optNorm = removeAccents(opt).replace(/(thanh pho|tinh|quan|huyen|thi xa|phuong|xa|thi tran)\s+/gi, '').replace(/\s+city/gi, '').trim();
+                if (optNorm.includes('ho chi minh')) optNorm = 'ho chi minh';
+                return optNorm === target || optNorm.includes(target) || target.includes(optNorm);
+            });
+          };
+
+          const cityOptions = Object.keys(addressOptions);
+          let matchedCity = findBestMatch(cityOptions, rawCity) || findBestMatch(cityOptions, data.display_name);
+          if (!matchedCity) matchedCity = cityOptions[0];
+
+          const districtOptions = Object.keys(addressOptions[matchedCity] || {});
+          let matchedDistrict = findBestMatch(districtOptions, rawDistrict) || findBestMatch(districtOptions, data.display_name);
+          if (!matchedDistrict) matchedDistrict = districtOptions[0] || '';
+
+          const wardOptions = addressOptions[matchedCity]?.[matchedDistrict] || [];
+          let matchedWard = findBestMatch(wardOptions, rawWard) || findBestMatch(wardOptions, data.display_name);
+          if (!matchedWard) matchedWard = wardOptions[0] || '';
+
+          setAddressForm((prev) => ({
+            ...prev,
+            city: matchedCity || prev.city,
+            district: matchedDistrict || prev.district,
+            ward: matchedWard || prev.ward,
+            street: rawStreet || prev.street,
+          }));
+          
+        } catch (err) {
+          setAddressError(err.message || 'Có lỗi xảy ra khi lấy vị trí.');
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      (error) => {
+        setIsLocating(false);
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            setAddressError('Vui lòng cấp quyền truy cập vị trí trong cài đặt trình duyệt.');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setAddressError('Thông tin vị trí hiện không khả dụng.');
+            break;
+          case error.TIMEOUT:
+            setAddressError('Quá thời gian yêu cầu lấy vị trí.');
+            break;
+          default:
+            setAddressError('Lỗi không xác định khi lấy vị trí.');
+            break;
+        }
+      },
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
+    );
   };
 
   const handleSaveAddress = (e) => {
@@ -781,11 +872,22 @@ export default function ProfilePageContent({
               {/* Address Form (Right Side) */}
               <div className="lg:col-span-5">
                 <div className="rounded-2xl border border-gray-200/60 bg-white p-6 shadow-md shadow-gray-100/50">
-                  <div className="flex items-center gap-2 border-b border-gray-100 pb-3 mb-4">
-                    <PencilSquareIcon className="w-5 h-5 text-[#b22830]" />
-                    <h3 className="text-base font-black uppercase text-gray-800 tracking-wide">
-                      {editingAddressId ? 'Sửa địa chỉ' : 'Thêm địa chỉ'}
-                    </h3>
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+                    <div className="flex items-center gap-2">
+                      <PencilSquareIcon className="w-5 h-5 text-[#b22830]" />
+                      <h3 className="text-base font-black uppercase text-gray-800 tracking-wide">
+                        {editingAddressId ? 'Sửa địa chỉ' : 'Thêm địa chỉ'}
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleGetLocation}
+                      disabled={isLocating}
+                      className="flex items-center gap-1.5 text-[11px] font-bold text-[#b22830] bg-[#fdf5f6] px-3 py-1.5 rounded-full hover:bg-[#fbdcde] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <MapPinIcon className="w-3.5 h-3.5" />
+                      {isLocating ? 'Đang định vị...' : 'Vị trí hiện tại'}
+                    </button>
                   </div>
 
                   <form onSubmit={handleSaveAddress} className="space-y-4">

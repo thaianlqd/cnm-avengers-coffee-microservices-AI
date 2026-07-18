@@ -44,7 +44,13 @@ function tachDiaChiDayDu(rawAddress) {
   return { city, district, ward, street: street || raw };
 }
 
-export default function CartPage({ products = [], onBackToHome }) {
+export default function CartPage({ 
+  products = [], 
+  onBackToHome, 
+  voucherItems = [], 
+  suggestedPastries = [], 
+  onAddToCart 
+}) {
   const { cart, removeFromCart, updateCartQuantity, activeUserId, refreshCart } = useCart();
   const [editingItem, setEditingItem] = useState(null);
   const queryClient = useQueryClient();
@@ -154,8 +160,8 @@ export default function CartPage({ products = [], onBackToHome }) {
     setVoucherError('');
   }, [total]);
 
-  const apDungVoucher = async () => {
-    const code = voucherCode.trim();
+  const apDungVoucher = async (overrideCode) => {
+    const code = (overrideCode || voucherCode).trim();
     if (!code) {
       setVoucherError('Vui lòng nhập mã voucher');
       return;
@@ -412,7 +418,8 @@ export default function CartPage({ products = [], onBackToHome }) {
           <div className="lg:col-span-7 xl:col-span-8">
             
             {step === 1 ? (
-              /* BƯỚC 1: DANH SÁCH GIỎ HÀNG (GIỐNG MOCKUP HÌNH ẢNH) */
+              <>
+              {/* BƯỚC 1: DANH SÁCH GIỎ HÀNG (GIỐNG MOCKUP HÌNH ẢNH) */}
               <div className="bg-white rounded-[24px] p-6 md:p-8 border border-[#e8e2da] shadow-sm space-y-6">
                 {cart.length === 0 ? (
                   <div className="py-20 text-center space-y-4">
@@ -540,6 +547,97 @@ export default function CartPage({ products = [], onBackToHome }) {
                   )})
                 )}
               </div>
+
+              {/* GỢI Ý DÙNG KÈM */}
+              {suggestedPastries && suggestedPastries.length > 0 && (
+                <div className="bg-white rounded-[24px] p-6 md:p-8 border border-[#e8e2da] shadow-sm mt-6">
+                  <h2 className="text-[18px] font-bold text-[#1a1a1a] tracking-wide mb-1">
+                    Gợi ý dùng kèm
+                  </h2>
+                  <p className="text-[14px] text-gray-500 mb-5">Thêm cùng giỏ hàng hiện tại - lựa chọn phổ biến</p>
+                  
+                  <div className="flex overflow-x-auto gap-4 pb-2 custom-scrollbar">
+                    {suggestedPastries.map((p) => (
+                      <div key={p.ma_san_pham || p.id} className="w-[280px] sm:w-[320px] flex-shrink-0 flex items-center p-4 rounded-[16px] border border-gray-200 hover:border-[#ed713b] transition-all gap-4 bg-white cursor-pointer" onClick={() => onAddToCart?.(p)}>
+                        {/* Ảnh */}
+                        <div className="w-[72px] h-[72px] rounded-full bg-[#fdf5f6] flex items-center justify-center p-1.5 flex-shrink-0 overflow-hidden border border-gray-100">
+                          <img src={p.hinh_anh_url || p.img} alt={p.ten_san_pham || p.name} className="w-full h-full object-contain mix-blend-multiply" />
+                        </div>
+                        
+                        {/* Thông tin */}
+                        <div className="flex flex-col justify-between h-full flex-1 min-w-0">
+                          <h3 className="text-[14px] font-bold text-[#282828] line-clamp-2 leading-tight mb-1">
+                            {p.ten_san_pham || p.name}
+                          </h3>
+                          <p className="text-[14px] font-medium text-gray-500 mb-3">
+                            {Number(p.gia_ban || p.price || 0).toLocaleString('vi-VN')}đ
+                          </p>
+                          
+                          <div className="flex bg-[#feeee3] rounded-[24px] overflow-hidden w-fit hover:brightness-95 transition-all">
+                            <div className="px-3 py-1 text-[13px] font-bold text-[#e15923] flex items-center">
+                              {Number(p.gia_ban || p.price || 0).toLocaleString('vi-VN')}đ
+                            </div>
+                            <div className="bg-[#e15923] text-white px-3 py-1 text-[13px] font-bold flex items-center gap-1 border-l border-[#e15923]">
+                              Thêm <span className="text-[10px]">❯</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* MÃ GIẢM GIÁ KHẢ DỤNG */}
+              {voucherItems && voucherItems.length > 0 && (
+                <div className="mt-8">
+                  <div className="flex justify-between items-center mb-4 px-1">
+                    <h2 className="text-[16px] font-bold text-[#282828]">
+                      Mã giảm giá
+                    </h2>
+                    <a href="#" className="text-[14px] text-[#e15923] hover:underline flex items-center">
+                      Tất cả mã <span className="ml-1 text-[10px]">❯</span>
+                    </a>
+                  </div>
+                  
+                  <div className="flex overflow-x-auto gap-4 pb-2 custom-scrollbar px-1">
+                    {voucherItems.slice(0, 4).map((v) => {
+                      const isPercent = v.loai_khuyen_mai === 'PERCENT';
+                      const valueText = isPercent ? `${v.gia_tri}%` : `${(v.gia_tri / 1000)}K`;
+                      return (
+                        <div key={v.ma_khuyen_mai} className="flex flex-shrink-0 w-[320px] sm:w-[350px] gap-2 items-center">
+                          {/* Khối bên trái: Icon + Text + Nút Dùng */}
+                          <div className="flex-1 h-[84px] bg-white border border-gray-200 rounded-[8px] flex items-center p-2 relative hover:border-[#e15923] transition-colors cursor-pointer" onClick={() => { setVoucherCode(v.ma_khuyen_mai); apDungVoucher(v.ma_khuyen_mai); }}>
+                            {/* Icon */}
+                            <div className="w-[60px] h-[60px] border border-gray-200 rounded-[4px] flex flex-col justify-center items-center mr-3 flex-shrink-0">
+                              <span className="text-[8px] font-black text-white bg-gray-400 px-1 rounded-sm mb-1 uppercase">Voucher</span>
+                              <span className="text-[10px] font-black text-[#e15923] text-center leading-none">MÃ<br/>GIẢM</span>
+                            </div>
+                            {/* Text */}
+                            <div className="flex-1 min-w-0 pr-8">
+                              <h4 className="text-[13px] font-bold text-[#282828] line-clamp-2 leading-tight mb-1">
+                                {v.mo_ta || `Giảm ${valueText} cho đơn hàng hợp lệ`}
+                              </h4>
+                              <p className="text-[11px] text-gray-400">
+                                {v.han_su_dung ? `Còn ${Math.max(1, Math.ceil((new Date(v.han_su_dung) - new Date()) / (1000 * 60 * 60 * 24)))} ngày` : 'Không giới hạn'}
+                              </p>
+                            </div>
+                            {/* Nút Dùng */}
+                            <span className="absolute right-3 bottom-2 text-[13px] text-[#e15923]">Dùng</span>
+                          </div>
+                          
+                          {/* Khối bên phải: Tag giảm giá (ticket nhỏ) */}
+                          <div className="w-[54px] h-[84px] bg-[#fef5f0] border border-[#fef5f0] rounded-[8px] flex flex-col justify-center items-center relative">
+                             <span className="text-[10px] font-bold text-[#e15923] uppercase">Giảm</span>
+                             <span className="text-[16px] font-black text-[#e15923] leading-none mt-0.5">{valueText}</span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+              </>
             ) : (
               /* BƯỚC 2: FORM THÔNG TIN THANH TOÁN (CHECKOUT FORM) */
               <div className="bg-white rounded-[24px] p-6 md:p-8 border border-[#e8e2da] shadow-sm space-y-6">
