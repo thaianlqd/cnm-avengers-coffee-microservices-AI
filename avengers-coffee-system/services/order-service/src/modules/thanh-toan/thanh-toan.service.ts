@@ -12,6 +12,7 @@ import { CaDoiSoat } from './entities/ca-doi-soat.entity';
 import { ChiTietDonHang } from './entities/chi-tiet-don-hang.entity';
 import { DonHang } from './entities/don-hang.entity';
 import { GiaoDichThanhToan } from './entities/giao-dich-thanh-toan.entity';
+import { DeliveryTrackingService } from '../shipper/features_thaian/delivery-tracking.service';
 
 type KhoiTaoThanhToanDto = {
   phuong_thuc_thanh_toan: 'VNPAY' | 'NGAN_HANG_QR' | 'THANH_TOAN_KHI_NHAN_HANG';
@@ -20,6 +21,9 @@ type KhoiTaoThanhToanDto = {
   ghi_chu?: string;
   ma_voucher?: string;
   branch_code?: string;
+  delivery_mode?: 'GIAO_TAN_NOI' | 'LAY_TAI_QUAN' | 'DUNG_TAI_CHO';
+  delivery_method?: 'INTERNAL' | 'LALAMOVE';
+  table_number?: string;
 };
 
 type TaoDonTaiQuayDto = {
@@ -221,6 +225,7 @@ export class ThanhToanService {
     private readonly voucherService: VoucherService,
     private readonly redisCacheService: RedisCacheService,
     private readonly rabbitMqService: RabbitMqService,
+    private readonly deliveryTrackingService: DeliveryTrackingService,
   ) {}
 
   private normalizeBranchCode(branchCode?: string) {
@@ -436,13 +441,6 @@ export class ThanhToanService {
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '');
 
-    const macDinhChiHints = [
-      'mac dinh chi',
-      'phuong sai gon',
-      'quan 1',
-      'q1',
-    ];
-
     const theGraceHints = [
       'the grace tower',
       'grace tower',
@@ -450,17 +448,23 @@ export class ThanhToanService {
       'tan phu',
       'quan 7',
       'q7',
+      'ho chi minh',
+      'hcm',
+      'quan 1',
+      'q1',
+      'quan 2',
+      'quan 3',
+      'quan 4',
+      'quan 5',
+      'quan 10',
+      'ben thanh'
     ];
 
     if (theGraceHints.some((keyword) => normalized.includes(keyword))) {
       return 'THE_GRACE_TOWER';
     }
 
-    if (macDinhChiHints.some((keyword) => normalized.includes(keyword))) {
-      return 'MAC_DINH_CHI';
-    }
-
-    return 'MAC_DINH_CHI';
+    return 'CHI_NHANH_HE_THONG';
   }
 
   private buildCustomerOrdersCacheKey(maNguoiDung: string, boLoc: BoLocLichSuDonHang) {
@@ -1354,6 +1358,7 @@ export class ThanhToanService {
       dia_chi_giao_hang: dto.dia_chi_giao_hang,
       khung_gio_giao: dto.khung_gio_giao ?? null,
       ghi_chu: dto.ghi_chu ?? null,
+      loai_don_hang: dto.delivery_mode ?? null,
       phuong_thuc_thanh_toan: dto.phuong_thuc_thanh_toan,
       trang_thai_thanh_toan: trangThaiThanhToanBanDau,
       trang_thai_don_hang: 'MOI_TAO',
@@ -1389,7 +1394,20 @@ export class ThanhToanService {
     );
     await this.chiTietRepo.save(chiTiet);
 
-    // 3. Tạo mã tham chiếu giao dịch
+    // 3. Tạo Tracking Giao Hàng nếu có chọn
+    if (dto.delivery_mode) {
+      await this.deliveryTrackingService.createTracking({
+        ma_don_hang: donHang.ma_don_hang,
+        delivery_mode: dto.delivery_mode,
+        delivery_method: dto.delivery_method,
+        branch_code: branchCode,
+        table_number: dto.table_number,
+        delivery_address: dto.dia_chi_giao_hang,
+        customer_phone: maNguoiDung,
+      });
+    }
+
+    // 4. Tạo mã tham chiếu giao dịch
     const maThamChieu = dto.phuong_thuc_thanh_toan === 'VNPAY'
         ? `${donHang.ma_don_hang}_${Date.now()}`
         : this.taoMaThamChieu(dto.phuong_thuc_thanh_toan, donHang.ma_don_hang);

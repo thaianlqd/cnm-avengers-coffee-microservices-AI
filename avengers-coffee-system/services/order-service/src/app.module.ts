@@ -32,6 +32,8 @@ import { ShipperDelivery } from './modules/shipper/entities/shipper-delivery.ent
 import { ShipperWallet } from './modules/shipper/entities/shipper-wallet.entity';
 import { ShipperSchedule } from './modules/shipper/entities/shipper-schedule.entity';
 import { ShipperException } from './modules/shipper/entities/shipper-exception.entity';
+import { FeaturesThaianModule } from './modules/shipper/features_thaian/features_thaian.module';
+import { DeliveryTracking } from './modules/shipper/features_thaian/delivery-tracking.entity';
 
 const orderSchema = process.env.DB_SCHEMA || 'orders';
 const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
@@ -53,12 +55,15 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
         const password = process.env.DB_PASSWORD || '123';
         const database = process.env.DB_NAME || 'avengers_coffee';
 
+        const sslConfig = process.env.PGSSLMODE === 'require' ? { rejectUnauthorized: false } : false;
+
         const client = new Client({
           host,
           port,
           user: username,
           password,
           database,
+          ssl: sslConfig,
         });
 
         await client.connect();
@@ -73,6 +78,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
           password,
           database,
           schema: orderSchema,
+          ssl: sslConfig,
           entities: [
             CartItem,
             DonHang,
@@ -91,6 +97,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
             ShipperWallet,
             ShipperSchedule,
             ShipperException,
+            DeliveryTracking,
           ],
           synchronize: true,
         };
@@ -105,6 +112,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
     ChatModule,
     FavoriteModule,
     ShipperModule,
+    FeaturesThaianModule,
   ],
   controllers: [AppController, ReviewController],
   providers: [AppService, ReviewService],
