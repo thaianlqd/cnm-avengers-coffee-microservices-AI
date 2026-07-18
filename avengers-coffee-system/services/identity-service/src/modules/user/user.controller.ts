@@ -349,4 +349,49 @@ export class UserController {
       so_tien_giam: Number(body.so_tien_giam || 0),
     });
   }
+
+  // ═══════════════════════════════════════════════════════
+  //  LUCKY WHEEL (Vòng quay may mắn)
+  // ═══════════════════════════════════════════════════════
+
+  @Public()
+  @Get('users/lucky-wheel/prizes')
+  async layGiaiThuongVongQuay() {
+    return this.userService.layDanhSachGiaiThuongVongQuay();
+  }
+
+  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER')
+  @Post('users/:userId/lucky-wheel/spin')
+  async quayMayMan(@Param('userId') userId: string, @CurrentUser() currentUser: AuthUser | null) {
+    this.ensureSelfOrAdmin(currentUser, userId);
+    return this.userService.quayMayMan(userId);
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  MEMBERSHIP & BIRTHDAY
+  // ═══════════════════════════════════════════════════════
+
+  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER')
+  @Get('users/:userId/membership')
+  async layThongTinMembership(@Param('userId') userId: string, @CurrentUser() currentUser: AuthUser | null) {
+    this.ensureSelfOrAdmin(currentUser, userId);
+    return this.userService.layThongTinMembership(userId);
+  }
+
+  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER')
+  @Patch('users/:userId/birthday')
+  async capNhatNgaySinh(
+    @Param('userId') userId: string,
+    @CurrentUser() currentUser: AuthUser | null,
+    @Body() body: { ngay_sinh?: string },
+  ) {
+    this.ensureSelfOrAdmin(currentUser, userId);
+    return this.userService.capNhatNgaySinh(userId, body.ngay_sinh || '');
+  }
+
+  @Roles('ADMIN')
+  @Post('admin/birthday-vouchers/trigger')
+  async triggerBirthdayVouchers() {
+    return this.userService.kiemTraVaSinhVoucherSinhNhat();
+  }
 }
