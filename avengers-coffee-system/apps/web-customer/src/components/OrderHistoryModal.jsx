@@ -5,6 +5,7 @@ import { apiClient } from '../lib/apiClient';
 import { queryKeys } from '../lib/queryKeys';
 import ReviewForm from './ReviewForm';
 import OrderTrackingPage from '../pages/features_thaian/OrderTrackingPage';
+import { useCart } from '../context/CartContext';
 
 const ORDER_STATUS_LABEL = {
   MOI_TAO: 'Mới tạo',
@@ -345,6 +346,42 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
         items: normalizedItems,
       },
     });
+  };
+
+  const { reorderItems, activeUserId, refreshCart } = useCart();
+
+  const reorderMutation = useMutation({
+    mutationFn: async (order) => {
+      // 1. Thêm lại món vào giỏ
+      await reorderItems(order.chi_tiet || []);
+      
+      // 2. Khởi tạo thanh toán ngay lập tức
+      const payload = {
+        phuong_thuc_thanh_toan: order.phuong_thuc_thanh_toan || 'THANH_TOAN_KHI_NHAN_HANG',
+        dia_chi_giao_hang: order.dia_chi_giao_hang || 'Khách lấy tại quán',
+        khung_gio_giao: order.khung_gio_giao || '',
+        ghi_chu: order.ghi_chu || 'Dat lai tu lich su don hang',
+        delivery_mode: order.loai_don_hang || 'GIAO_TAN_NOI',
+        delivery_method: order.phuong_thuc_giao_hang || 'NOI_BO',
+        branch_code: order.co_so_ma,
+      };
+      
+      const response = await apiClient.post(`/customers/${activeUserId}/thanh-toan/khoi-tao`, payload);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
+      refreshCart();
+      alert('Tạo đơn hàng mới thành công!');
+    },
+    onError: (err) => {
+      alert('Có lỗi khi tạo lại đơn hàng: ' + (err.response?.data?.message || err.message));
+      console.error(err);
+    }
+  });
+
+  const handleReorder = (order) => {
+    reorderMutation.mutate(order);
   };
 
   if (!isOpen) return null;
@@ -761,6 +798,22 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                               )}
                             </div>
                           ) : null}
+
+                          {/* Nút Đặt Lại Đơn Này */}
+                          <div className="pt-3 mt-1 border-t border-gray-200">
+                            <button
+                              type="button"
+                              onClick={() => handleReorder(order)}
+                              disabled={reorderMutation.isPending}
+                              className="w-full flex items-center justify-center gap-2 rounded-xl bg-orange-100 border border-orange-200 px-3 py-2 text-xs font-black uppercase tracking-wide text-orange-600 hover:bg-orange-200 disabled:opacity-50"
+                            >
+                              {reorderMutation.isPending && reorderMutation.variables?.ma_don_hang === order.ma_don_hang ? (
+                                'Đang xử lý...'
+                              ) : (
+                                <><span>🔄</span> Đặt lại đơn này</>
+                              )}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>

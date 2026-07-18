@@ -1444,8 +1444,10 @@ export class ThanhToanService {
       await Promise.all([
         this.notificationService.taoThongBao({
           ma_nguoi_dung: maNguoiDung,
-          tieu_de: 'Don COD cho thu tien',
-          noi_dung: `Don #${donHang.ma_don_hang} se duoc thu tien khi giao hang.`,
+          tieu_de: dto.delivery_mode === 'GIAO_TAN_NOI' ? 'Don COD cho thu tien' : 'Don cho thanh toan tai quay',
+          noi_dung: dto.delivery_mode === 'GIAO_TAN_NOI' 
+            ? `Don #${donHang.ma_don_hang} se duoc thu tien khi giao hang.` 
+            : `Don #${donHang.ma_don_hang} vui long thanh toan tai quay.`,
           loai: 'PAYMENT',
           du_lieu: { ma_don_hang: donHang.ma_don_hang, phuong_thuc_thanh_toan: 'THANH_TOAN_KHI_NHAN_HANG' },
         }),
