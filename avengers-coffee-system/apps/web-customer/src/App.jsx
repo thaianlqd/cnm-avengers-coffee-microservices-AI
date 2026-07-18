@@ -19,12 +19,14 @@ import NewsPage from './pages/News';
 import NewsDetailPage from './pages/NewsDetailPage';
 import OrderPage from './pages/Order';
 import ProductDetailPage from './pages/ProductDetail';
-import ProfilePage from './pages/Profile';
+import ProfilePageContent from './components/ProfilePageContent';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import ChinhSachDatHangPage from './pages/ChinhSachDatHang';
 import LienHePage from './pages/LienHe';
 import MenuIntroPage from './pages/MenuIntro';
 import CareersPage from './pages/Careers';
+import MembershipPage from './pages/Membership';
+import LuckyWheelPage from './pages/LuckyWheel';
 import { CartProvider, useCart } from './context/CartContext'; // File mới bước 2
 import { apiClient } from './lib/apiClient';
 import { queryKeys } from './lib/queryKeys';
@@ -453,7 +455,10 @@ function HomeBannerSlider() {
 }
 
 function AppContent() {
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('tab') || 'home';
+  });
   const [selectedCatId, setSelectedCatId] = useState('all');
   const [activeMainSectionId, setActiveMainSectionId] = useState('must-try');
   const [activeSubSectionId, setActiveSubSectionId] = useState('');
@@ -485,6 +490,7 @@ function AppContent() {
   const [criteriaFilter, setCriteriaFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState('DEFAULT');
   const [notificationToast, setNotificationToast] = useState(null);
+  const [showBirthdayVoucherModal, setShowBirthdayVoucherModal] = useState(false);
   const [voucherTypeFilter, setVoucherTypeFilter] = useState('ALL');
   const [copiedVoucherCode, setCopiedVoucherCode] = useState('');
   const categorySectionRefs = useRef({});
@@ -508,6 +514,8 @@ function AppContent() {
     window.addEventListener('navigate-tab', handler);
     return () => window.removeEventListener('navigate-tab', handler);
   }, []);
+
+
 
   // ── AI Recommendations ──────────────────────────────────────────────────────
   const {
@@ -636,6 +644,62 @@ function AppContent() {
     staleTime: 60 * 1000,
     refetchInterval: 90 * 1000,
   });
+
+  // ── Sync activeTab and selectedProductForPage to URL Query Params ──
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const currentTab = params.get('tab') || 'home';
+    const currentProdId = params.get('productId') || '';
+
+    const targetProdId = activeTab === 'product-detail' && selectedProductForPage
+      ? String(selectedProductForPage.ma_san_pham || selectedProductForPage.id || selectedProductForPage.maSanPham)
+      : '';
+
+    if (currentTab !== activeTab || currentProdId !== targetProdId) {
+      params.set('tab', activeTab);
+      if (targetProdId) {
+        params.set('productId', targetProdId);
+      } else {
+        params.delete('productId');
+      }
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      window.history.pushState({ tab: activeTab, productId: targetProdId }, '', newUrl);
+    }
+  }, [activeTab, selectedProductForPage]);
+
+  // ── Sync browser Back/Forward (popstate) to React State ──
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab') || 'home';
+      setActiveTab(tab);
+      const prodId = params.get('productId');
+      if (prodId && products && products.length > 0) {
+        const prod = products.find(p => String(p.ma_san_pham || p.id || p.maSanPham) === prodId);
+        if (prod) setSelectedProductForPage(prod);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [products]);
+
+  // ── Resolve product details on reload if page starts at product-detail tab ──
+  useEffect(() => {
+    if (activeTab === 'product-detail' && !selectedProductForPage && products.length > 0) {
+      const params = new URLSearchParams(window.location.search);
+      const prodId = params.get('productId');
+      if (prodId) {
+        const prod = products.find(p => String(p.ma_san_pham || p.id || p.maSanPham) === prodId);
+        if (prod) {
+          setSelectedProductForPage(prod);
+        } else {
+          setActiveTab('order');
+        }
+      } else {
+        setActiveTab('order');
+      }
+    }
+  }, [products, activeTab, selectedProductForPage]);
 
   const {
     data: categories = [],
@@ -807,6 +871,10 @@ function AppContent() {
     localStorage.setItem('user', JSON.stringify(nextUser));
     // token đã được lưu trong AuthModal — chỉ cần đảm bảo user object được lưu song song
     await syncCartWithUser(nextUser);
+
+    if (userData?.nhanVoucherSinhNhat) {
+      setShowBirthdayVoucherModal(true);
+    }
   };
 
   const handleLogout = async () => {
@@ -837,6 +905,14 @@ function AppContent() {
       queryClient.invalidateQueries({ queryKey: queryKeys.notificationsByUser(userId) });
     },
   });
+
+  useEffect(() => {
+    const handleBirthdayVoucher = () => {
+      setShowBirthdayVoucherModal(true);
+    };
+    window.addEventListener('birthday-voucher-received', handleBirthdayVoucher);
+    return () => window.removeEventListener('birthday-voucher-received', handleBirthdayVoucher);
+  }, []);
 
   const markAllNotificationsReadMutation = useMutation({
     mutationFn: async () => {
@@ -1369,767 +1445,7 @@ function AppContent() {
       setSelectedStoreId(filteredStores[0].id);
     }
   }, [filteredStores, selectedStoreId]);
-
-  function ProfilePageContent({ user: profileUser, onUserUpdated: onProfileUpdated }) {
-    const [activeTab, setActiveTab] = useState('profile');
-    const [profileForm, setProfileForm] = useState({ hoTen: '', soDienThoai: '', avatarUrl: '' });
-    const [passwordForm, setPasswordForm] = useState({
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
-    });
-    const [addressForm, setAddressForm] = useState(() => ({
-      ...DEFAULT_ADDRESS_FORM,
-      ...defaultAddressSelection,
-    }));
-    const [profileError, setProfileError] = useState('');
-    const [passwordError, setPasswordError] = useState('');
-    const [addressError, setAddressError] = useState('');
-    const [editingAddressId, setEditingAddressId] = useState(null);
-
-    const userId = profileUser?.ma_nguoi_dung || profileUser?.maNguoiDung || null;
-
-    const {
-      data: profile,
-      isLoading,
-      isError: profileIsError,
-      error: profileError2,
-    } = useQuery({
-      queryKey: queryKeys.userProfile(userId),
-      queryFn: async () => {
-        const response = await apiClient.get(`/users/${userId}/profile`);
-        return response.data;
-      },
-      enabled: Boolean(userId),
-      staleTime: 30 * 1000,
-    });
-
-    const {
-      data: addressPayload,
-      isLoading: isAddressLoading,
-      isError: isAddressError,
-      error: addressQueryError,
-    } = useQuery({
-      queryKey: queryKeys.userAddresses(userId),
-      queryFn: async () => {
-        const response = await apiClient.get(`/users/${userId}/addresses`);
-        return response.data;
-      },
-      enabled: Boolean(userId),
-      staleTime: 30 * 1000,
-    });
-
-    const {
-      data: reviewHistoryPayload,
-      isLoading: isReviewsLoading,
-      isError: isReviewsError,
-      error: reviewsError,
-    } = useQuery({
-      queryKey: queryKeys.userReviews(userId),
-      queryFn: async () => {
-        const response = await apiClient.get(`/customers/${userId}/reviews`);
-        return response.data;
-      },
-      enabled: Boolean(userId) && activeTab === 'reviews',
-      staleTime: 30 * 1000,
-    });
-
-    const { data: loyaltyData } = useQuery({
-      queryKey: queryKeys.loyaltyByUser(userId),
-      queryFn: async () => {
-        const response = await apiClient.get(`/users/${userId}/loyalty`);
-        return response.data;
-      },
-      enabled: Boolean(userId),
-      staleTime: 60 * 1000,
-    });
-
-    const savedAddresses = addressPayload?.items || [];
-    const myReviews = reviewHistoryPayload?.items || [];
-    const diemLoyalty = loyaltyData?.diem || 0;
-    const districtOptions = useMemo(() => Object.keys(addressOptions[addressForm.city] || {}), [addressForm.city, addressOptions]);
-    const wardOptions = useMemo(
-      () => (addressOptions[addressForm.city]?.[addressForm.district] || []),
-      [addressForm.city, addressForm.district, addressOptions],
-    );
-    const diaChiDayDu = useMemo(() => taoDiaChiDayDu(addressForm), [addressForm]);
-
-    useEffect(() => {
-      setProfileForm({ hoTen: '', soDienThoai: '', avatarUrl: '' });
-      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      setAddressForm({ ...DEFAULT_ADDRESS_FORM, ...defaultAddressSelection });
-      setProfileError('');
-      setPasswordError('');
-      setAddressError('');
-      setEditingAddressId(null);
-    }, [defaultAddressSelection, userId]);
-
-    useEffect(() => {
-      if (!addressForm.city && defaultAddressSelection.city) {
-        setAddressForm((prev) => ({ ...prev, ...defaultAddressSelection }));
-      }
-    }, [addressForm.city, defaultAddressSelection]);
-
-    useEffect(() => {
-      if (profile) {
-        setProfileForm({
-          hoTen: profile.ho_ten || '',
-          soDienThoai: profile.so_dien_thoai || '',
-          avatarUrl: profile.avatar_url || '',
-        });
-      }
-    }, [profile]);
-
-    useEffect(() => {
-      if (!districtOptions.length) {
-        return;
-      }
-
-      if (!districtOptions.includes(addressForm.district)) {
-        setAddressForm((prev) => ({
-          ...prev,
-          district: districtOptions[0],
-          ward: (addressOptions[prev.city]?.[districtOptions[0]] || [])[0] || '',
-        }));
-      }
-    }, [addressForm.city, addressForm.district, districtOptions, addressOptions]);
-
-    useEffect(() => {
-      if (!wardOptions.length) {
-        return;
-      }
-
-      if (!wardOptions.includes(addressForm.ward)) {
-        setAddressForm((prev) => ({ ...prev, ward: wardOptions[0] }));
-      }
-    }, [addressForm.ward, wardOptions]);
-
-    const updateProfileMutation = useMutation({
-      mutationFn: async (payload) => {
-        const response = await apiClient.patch(`/users/${userId}/profile`, payload);
-        return response.data;
-      },
-      onSuccess: (data) => {
-        setProfileError('');
-        const updatedUser = {
-          ...profileUser,
-          ho_ten: data?.user?.ho_ten,
-          hoTen: data?.user?.ho_ten,
-          email: data?.user?.email,
-          avatar_url: data?.user?.avatar_url || null,
-          avatarUrl: data?.user?.avatar_url || null,
-        };
-        onProfileUpdated(updatedUser);
-        queryClient.invalidateQueries({ queryKey: queryKeys.userProfile(userId) });
-        alert('Cập nhật thông tin thành công!');
-      },
-      onError: (err) => {
-        setProfileError(err?.response?.data?.message || 'Không thể cập nhật thông tin.');
-      },
-    });
-
-    const changePasswordMutation = useMutation({
-      mutationFn: async (payload) => {
-        const response = await apiClient.post(`/users/${userId}/change-password`, payload);
-        return response.data;
-      },
-      onSuccess: () => {
-        setPasswordError('');
-        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-        alert('Đổi mật khẩu thành công!');
-      },
-      onError: (err) => {
-        setPasswordError(err?.response?.data?.message || 'Không thể đổi mật khẩu.');
-      },
-    });
-
-    const saveAddressMutation = useMutation({
-      mutationFn: async (payload) => {
-        if (editingAddressId) {
-          const response = await apiClient.patch(`/users/${userId}/addresses/${editingAddressId}`, payload);
-          return response.data;
-        }
-
-        const response = await apiClient.post(`/users/${userId}/addresses`, payload);
-        return response.data;
-      },
-      onSuccess: () => {
-        setAddressError('');
-        setEditingAddressId(null);
-        setAddressForm({ ...DEFAULT_ADDRESS_FORM, ...defaultAddressSelection });
-        queryClient.invalidateQueries({ queryKey: queryKeys.userAddresses(userId) });
-      },
-      onError: (err) => {
-        setAddressError(err?.response?.data?.message || 'Không thể lưu địa chỉ.');
-      },
-    });
-
-    const deleteAddressMutation = useMutation({
-      mutationFn: async (addressId) => {
-        await apiClient.delete(`/users/${userId}/addresses/${addressId}`);
-      },
-      onSuccess: () => {
-        setAddressError('');
-        if (editingAddressId) {
-          setEditingAddressId(null);
-          setAddressForm({ ...DEFAULT_ADDRESS_FORM, ...defaultAddressSelection });
-        }
-        queryClient.invalidateQueries({ queryKey: queryKeys.userAddresses(userId) });
-      },
-      onError: (err) => {
-        setAddressError(err?.response?.data?.message || 'Không thể xóa địa chỉ.');
-      },
-    });
-
-    const setDefaultAddressMutation = useMutation({
-      mutationFn: async (addressId) => {
-        await apiClient.patch(`/users/${userId}/addresses/${addressId}/default`);
-      },
-      onSuccess: () => {
-        setAddressError('');
-        queryClient.invalidateQueries({ queryKey: queryKeys.userAddresses(userId) });
-      },
-      onError: (err) => {
-        setAddressError(err?.response?.data?.message || 'Không thể đặt địa chỉ mặc định.');
-      },
-    });
-
-    const handleUpdateProfile = (e) => {
-      e.preventDefault();
-      setProfileError('');
-      updateProfileMutation.mutate({
-        hoTen: profileForm.hoTen,
-        soDienThoai: profileForm.soDienThoai,
-        avatarUrl: profileForm.avatarUrl,
-      });
-    };
-
-    const handleChangePassword = (e) => {
-      e.preventDefault();
-      setPasswordError('');
-
-      if (passwordForm.newPassword.length < 6) {
-        setPasswordError('Mật khẩu mới phải có ít nhất 6 ký tự.');
-        return;
-      }
-
-      if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-        setPasswordError('Xác nhận mật khẩu không khớp.');
-        return;
-      }
-
-      changePasswordMutation.mutate({
-        currentPassword: passwordForm.currentPassword,
-        newPassword: passwordForm.newPassword,
-      });
-    };
-
-    const handleSaveAddress = (e) => {
-      e.preventDefault();
-      setAddressError('');
-
-      if (!addressForm.street.trim()) {
-        setAddressError('Vui lòng nhập số nhà, tên đường cho địa chỉ giao hàng.');
-        return;
-      }
-
-      saveAddressMutation.mutate({
-        tenDiaChi: addressForm.tenDiaChi,
-        diaChiDayDu: diaChiDayDu,
-        ghiChu: addressForm.ghiChu,
-      });
-    };
-
-    const handleEditAddress = (address) => {
-      setAddressError('');
-      setEditingAddressId(address.id);
-      const parsed = tachDiaChiDayDu(address.dia_chi_day_du);
-      const normalizedAddress = normalizeAddressSelection(parsed, addressOptions);
-
-      setAddressForm({
-        tenDiaChi: address.ten_dia_chi || '',
-        city: normalizedAddress.city,
-        district: normalizedAddress.district,
-        ward: normalizedAddress.ward,
-        street: normalizedAddress.street,
-        ghiChu: address.ghi_chu || '',
-      });
-      setActiveTab('addresses');
-    };
-
-    const resetAddressEditor = () => {
-      setEditingAddressId(null);
-      setAddressError('');
-      setAddressForm({ ...DEFAULT_ADDRESS_FORM, ...defaultAddressSelection });
-    };
-
-    return (
-      <div className="flex flex-col w-full bg-white">
-        <div className="mx-auto w-full max-w-[1440px] px-4 md:px-6 py-8 md:py-12 flex flex-col md:flex-row gap-8 min-h-[500px]">
-          {/* Left Sidebar */}
-          <div className="w-full md:w-[280px] flex-shrink-0">
-            <h2 className="text-[18px] font-black uppercase text-gray-800 mb-2">Trang tài khoản</h2>
-            <p className="text-[14px] text-gray-600 mb-6 font-bold">
-              Xin chào, <span className="text-[#b22830]">{profileUser?.ho_ten || profileUser?.hoTen || profileUser?.username || 'Bạn'}</span> !
-            </p>
-
-            <ul className="space-y-4">
-              <li>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('profile')}
-                  className={`text-[14px] font-bold transition-colors cursor-pointer bg-transparent border-none p-0 ${activeTab === 'profile' ? 'text-[#b22830]' : 'text-gray-600 hover:text-[#b22830]'}`}
-                >
-                  Thông tin tài khoản
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => setIsOrderHistoryOpen(true)}
-                  className="text-[14px] font-semibold text-gray-600 hover:text-[#b22830] transition-colors bg-transparent border-none p-0 cursor-pointer"
-                >
-                  Đơn hàng của bạn
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('password')}
-                  className={`text-[14px] font-bold transition-colors cursor-pointer bg-transparent border-none p-0 ${activeTab === 'password' ? 'text-[#b22830]' : 'text-gray-600 hover:text-[#b22830]'}`}
-                >
-                  Đổi mật khẩu
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('addresses')}
-                  className={`text-[14px] font-bold transition-colors cursor-pointer bg-transparent border-none p-0 ${activeTab === 'addresses' ? 'text-[#b22830]' : 'text-gray-600 hover:text-[#b22830]'}`}
-                >
-                  Sổ địa chỉ ({savedAddresses?.length || 0})
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('reviews')}
-                  className={`text-[14px] font-bold transition-colors cursor-pointer bg-transparent border-none p-0 ${activeTab === 'reviews' ? 'text-[#b22830]' : 'text-gray-600 hover:text-[#b22830]'}`}
-                >
-                  Đánh giá của tôi
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* Main Content */}
-          <div className="flex-1">
-            {activeTab === 'profile' ? (
-              <div className="rounded-2xl border border-orange-100 bg-white p-5">
-                {isLoading ? (
-                  <div className="space-y-3">
-                    <div className="h-12 animate-pulse rounded-xl bg-orange-100/70"></div>
-                    <div className="h-12 animate-pulse rounded-xl bg-orange-100/70"></div>
-                    <div className="h-12 animate-pulse rounded-xl bg-orange-100/70"></div>
-                  </div>
-                ) : profileIsError ? (
-                  <div className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-red-700">
-                    {profileError2?.response?.data?.message || 'Không thể tải thông tin cá nhân.'}
-                  </div>
-                ) : (
-                  <form onSubmit={handleUpdateProfile} className="space-y-4">
-                    {/* Loyalty Points Card */}
-                    {(() => {
-                      const hang = loyaltyData?.hang_thanh_vien;
-                      const maHang = hang?.ma_hang || 'MEMBER';
-                      const batDau = hang?.diem_bat_dau_hang ?? 0;
-                      const canLen = hang?.diem_can_len_hang ?? null;
-                      const phanTram = canLen != null
-                        ? Math.min(100, Math.round(((diemLoyalty - batDau) / (canLen - batDau)) * 100))
-                        : 100;
-                      const HANG_STYLE = {
-                        MEMBER: { bg: 'from-gray-50 to-gray-100', border: 'border-gray-200', text: 'text-gray-600', bar: 'bg-gray-400', icon: '🎖️' },
-                        SILVER: { bg: 'from-slate-50 to-slate-100', border: 'border-slate-300', text: 'text-slate-600', bar: 'bg-slate-400', icon: '🥈' },
-                        GOLD: { bg: 'from-yellow-50 to-amber-100', border: 'border-yellow-300', text: 'text-yellow-700', bar: 'bg-yellow-400', icon: '🥇' },
-                        DIAMOND: { bg: 'from-cyan-50 to-blue-100', border: 'border-cyan-300', text: 'text-cyan-700', bar: 'bg-cyan-400', icon: '💎' },
-                      };
-                      const s = HANG_STYLE[maHang] || HANG_STYLE.MEMBER;
-                      return (
-                        <div className={`rounded-xl border ${s.border} bg-gradient-to-r ${s.bg} px-4 py-3 space-y-2`}>
-                          <div className="flex items-center gap-3">
-                            <span className="text-2xl">{s.icon}</span>
-                            <div className="flex-1">
-                              <p className="text-xs font-black uppercase tracking-widest text-gray-400">Điểm tích lũy</p>
-                              <div className="flex items-baseline gap-2">
-                                <p className={`text-xl font-black ${s.text}`}>{diemLoyalty.toLocaleString('vi-VN')} điểm</p>
-                                <span className={`text-xs font-black uppercase px-2 py-0.5 rounded-full ${s.text} border ${s.border}`}>{hang?.hang || 'Thành viên'}</span>
-                              </div>
-                            </div>
-                            <div className="text-right text-xs text-gray-500 shrink-0">
-                              <p>1 điểm</p>
-                              <p className="font-bold text-gray-600">= 1.000đ</p>
-                            </div>
-                          </div>
-                          <div>
-                            <div className="mb-1 flex justify-between text-[11px] font-semibold text-gray-500">
-                              {canLen != null ? (
-                                <>
-                                  <span>{diemLoyalty.toLocaleString('vi-VN')} / {canLen.toLocaleString('vi-VN')} điểm</span>
-                                  <span>còn {(canLen - diemLoyalty).toLocaleString('vi-VN')} điểm lên hạng tiếp</span>
-                                </>
-                              ) : (
-                                <span className={`font-black ${s.text}`}>Hạng cao nhất ✨</span>
-                              )}
-                            </div>
-                            <div className="h-2 w-full rounded-full bg-white/60">
-                              <div className={`h-2 rounded-full ${s.bar} transition-all duration-500`} style={{ width: `${phanTram}%` }} />
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
-
-                    <div>
-                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Họ tên</p>
-                      <input
-                        type="text"
-                        required
-                        value={profileForm.hoTen}
-                        onChange={(e) => setProfileForm((prev) => ({ ...prev, hoTen: e.target.value }))}
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
-                      />
-                    </div>
-
-                    <div>
-                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Email</p>
-                      <input
-                        type="text"
-                        disabled
-                        value={profile?.email || ''}
-                        className="w-full rounded-xl border border-gray-100 bg-gray-100 px-4 py-3 text-sm font-semibold text-gray-500"
-                      />
-                    </div>
-
-                    <div>
-                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Số điện thoại</p>
-                      <input
-                        type="text"
-                        value={profileForm.soDienThoai}
-                        onChange={(e) => setProfileForm((prev) => ({ ...prev, soDienThoai: e.target.value }))}
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
-                        placeholder="Nhập số điện thoại"
-                      />
-                    </div>
-
-                    <div>
-                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Avatar URL</p>
-                      <input
-                        type="text"
-                        value={profileForm.avatarUrl}
-                        onChange={(e) => setProfileForm((prev) => ({ ...prev, avatarUrl: e.target.value }))}
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
-                        placeholder="https://..."
-                      />
-                    </div>
-
-                    {profileError ? <p className="text-sm font-semibold text-red-600">{profileError}</p> : null}
-
-                    <button
-                      type="submit"
-                      disabled={updateProfileMutation.isPending}
-                      className="rounded-xl bg-[#1a8b46] px-5 py-3 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-green-200 disabled:bg-gray-300"
-                    >
-                      {updateProfileMutation.isPending ? 'Đang cập nhật...' : 'Lưu thay đổi'}
-                    </button>
-                  </form>
-                )}
-              </div>
-            ) : activeTab === 'addresses' ? (
-              <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-                <div className="rounded-2xl border border-gray-100 bg-white p-5">
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <div>
-                      <h3 className="text-lg font-black uppercase text-gray-800">Sổ địa chỉ giao hàng</h3>
-                      <p className="mt-1 text-sm font-semibold text-gray-500">Thêm, sửa, xóa và đặt địa chỉ mặc định cho đơn giao hàng.</p>
-                    </div>
-                  </div>
-
-                  {isAddressLoading ? (
-                    <div className="space-y-3">
-                      {[1, 2].map((item) => (
-                        <div key={item} className="h-24 animate-pulse rounded-2xl bg-green-50"></div>
-                      ))}
-                    </div>
-                  ) : isAddressError ? (
-                    <div className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-red-700">
-                      {addressQueryError?.response?.data?.message || 'Không thể tải danh sách địa chỉ.'}
-                    </div>
-                  ) : savedAddresses.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center">
-                      <p className="text-sm font-black uppercase tracking-wide text-gray-600">Chưa có địa chỉ nào được lưu</p>
-                      <p className="mt-2 text-sm font-semibold text-gray-400">Thêm địa chỉ đầu tiên để dùng nhanh khi đặt hàng.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {savedAddresses.map((address) => (
-                        <div key={address.id} className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm font-black text-gray-800">{address.ten_dia_chi}</p>
-                                {address.mac_dinh ? (
-                                  <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-emerald-700">
-                                    Mặc định
-                                  </span>
-                                ) : null}
-                              </div>
-                              <p className="mt-2 text-sm font-semibold leading-relaxed text-gray-600">{address.dia_chi_day_du}</p>
-                              {address.ghi_chu ? <p className="mt-2 text-xs font-semibold text-gray-500">Ghi chú: {address.ghi_chu}</p> : null}
-                            </div>
-                            <div className="flex flex-col gap-2">
-                              {!address.mac_dinh ? (
-                                <button
-                                  type="button"
-                                  onClick={() => setDefaultAddressMutation.mutate(address.id)}
-                                  disabled={setDefaultAddressMutation.isPending}
-                                  className="rounded-xl border border-emerald-200 bg-white px-3 py-2 text-[11px] font-black uppercase tracking-wide text-emerald-700"
-                                >
-                                  Đặt mặc định
-                                </button>
-                              ) : null}
-                              <button
-                                type="button"
-                                onClick={() => handleEditAddress(address)}
-                                className="rounded-xl border border-green-200 bg-white px-3 py-2 text-[11px] font-black uppercase tracking-wide text-[#1a8b46]"
-                              >
-                                Sửa
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => deleteAddressMutation.mutate(address.id)}
-                                disabled={deleteAddressMutation.isPending}
-                                className="rounded-xl border border-red-200 bg-white px-3 py-2 text-[11px] font-black uppercase tracking-wide text-red-600"
-                              >
-                                Xóa
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="rounded-2xl border border-gray-100 bg-white p-5">
-                  <h3 className="text-lg font-black uppercase text-gray-800">
-                    {editingAddressId ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ mới'}
-                  </h3>
-                  <p className="mt-1 text-sm font-semibold text-gray-500">Lưu địa chỉ để chọn nhanh khi đặt đơn giao hàng.</p>
-
-                  <form onSubmit={handleSaveAddress} className="mt-4 space-y-4">
-                    <div>
-                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Tên địa chỉ</p>
-                      <input
-                        type="text"
-                        required
-                        value={addressForm.tenDiaChi}
-                        onChange={(e) => setAddressForm((prev) => ({ ...prev, tenDiaChi: e.target.value }))}
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
-                        placeholder="Ví dụ: Nhà riêng, KTX, Công ty"
-                      />
-                    </div>
-
-                    <div>
-                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Thành phố</p>
-                      <select
-                        value={addressForm.city}
-                        onChange={(e) => {
-                          const nextCity = e.target.value;
-                          const nextDistrict = Object.keys(addressOptions[nextCity] || {})[0] || '';
-                          const nextWard = (addressOptions[nextCity]?.[nextDistrict] || [])[0] || '';
-                          setAddressForm((prev) => ({ ...prev, city: nextCity, district: nextDistrict, ward: nextWard }));
-                        }}
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
-                      >
-                        {Object.keys(addressOptions).map((city) => (
-                          <option key={city} value={city}>{city}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Quận</p>
-                      <select
-                        value={addressForm.district}
-                        onChange={(e) => {
-                          const nextDistrict = e.target.value;
-                          const nextWard = (addressOptions[addressForm.city]?.[nextDistrict] || [])[0] || '';
-                          setAddressForm((prev) => ({ ...prev, district: nextDistrict, ward: nextWard }));
-                        }}
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
-                      >
-                        {districtOptions.map((district) => (
-                          <option key={district} value={district}>{district}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Phường</p>
-                      <select
-                        value={addressForm.ward}
-                        onChange={(e) => setAddressForm((prev) => ({ ...prev, ward: e.target.value }))}
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
-                      >
-                        {wardOptions.map((ward) => (
-                          <option key={ward} value={ward}>{ward}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Số nhà, tên đường</p>
-                      <input
-                        required
-                        value={addressForm.street}
-                        onChange={(e) => setAddressForm((prev) => ({ ...prev, street: e.target.value }))}
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
-                        placeholder="Ví dụ: 28 Ter B Mạc Đĩnh Chi"
-                      />
-                      <p className="mt-2 text-xs font-semibold text-gray-500">Địa chỉ đầy đủ: {diaChiDayDu || '---'}</p>
-                    </div>
-
-                    <div>
-                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Ghi chú</p>
-                      <input
-                        type="text"
-                        value={addressForm.ghiChu}
-                        onChange={(e) => setAddressForm((prev) => ({ ...prev, ghiChu: e.target.value }))}
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
-                        placeholder="Ví dụ: Giao giờ hành chính, gọi trước khi giao"
-                      />
-                    </div>
-
-                    {addressError ? <p className="text-sm font-semibold text-red-600">{addressError}</p> : null}
-
-                    <div className="flex gap-3">
-                      <button
-                        type="submit"
-                        disabled={saveAddressMutation.isPending}
-                        className="rounded-xl bg-[#1a8b46] px-5 py-3 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-green-200 disabled:bg-gray-300"
-                      >
-                        {saveAddressMutation.isPending ? 'Đang lưu...' : editingAddressId ? 'Lưu cập nhật' : 'Thêm địa chỉ'}
-                      </button>
-                      {editingAddressId ? (
-                        <button
-                          type="button"
-                          onClick={resetAddressEditor}
-                          className="rounded-xl border border-gray-200 px-5 py-3 text-sm font-black uppercase tracking-wide text-gray-600"
-                        >
-                          Hủy sửa
-                        </button>
-                      ) : null}
-                    </div>
-                  </form>
-                </div>
-              </div>
-            ) : activeTab === 'reviews' ? (
-              <div className="rounded-2xl border border-gray-100 bg-white p-5">
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-black uppercase text-gray-800">Lịch sử đánh giá</h3>
-                    <p className="mt-1 text-sm font-semibold text-gray-500">Xem lại các đánh giá bạn đã gửi cho sản phẩm.</p>
-                  </div>
-                  <div className="rounded-xl bg-green-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-[#1a8b46]">
-                    {myReviews.length} đánh giá
-                  </div>
-                </div>
-
-                {isReviewsLoading ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3].map((item) => (
-                      <div key={item} className="h-20 animate-pulse rounded-xl bg-green-50"></div>
-                    ))}
-                  </div>
-                ) : isReviewsError ? (
-                  <div className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-red-700">
-                    {reviewsError?.response?.data?.message || 'Không thể tải lịch sử đánh giá.'}
-                  </div>
-                ) : myReviews.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center">
-                    <p className="text-sm font-black uppercase tracking-wide text-gray-600">Bạn chưa có đánh giá nào</p>
-                    <p className="mt-2 text-sm font-semibold text-gray-400">Hãy đánh giá sản phẩm từ lịch sử đơn hàng để theo dõi tại đây.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {myReviews.map((review) => (
-                      <div key={review.id} className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm font-black text-gray-800">Sản phẩm #{review.ma_san_pham}</p>
-                          <p className="text-xs font-semibold text-gray-500">
-                            {new Date(review.ngay_cap_nhat || review.ngay_tao).toLocaleString('vi-VN')}
-                          </p>
-                        </div>
-                        <p className="mt-2 text-sm font-black text-amber-500">{'★'.repeat(Number(review.so_sao || 0))}{'☆'.repeat(5 - Number(review.so_sao || 0))}</p>
-                        <p className="mt-1 text-sm font-semibold text-gray-600">{review.binh_luan || 'Không có bình luận.'}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-gray-100 bg-white p-5">
-                <form onSubmit={handleChangePassword} className="space-y-4">
-                  <div>
-                    <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Mật khẩu hiện tại</p>
-                    <input
-                      type="password"
-                      required
-                      value={passwordForm.currentPassword}
-                      onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
-                    />
-                  </div>
-
-                  <div>
-                    <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Mật khẩu mới</p>
-                    <input
-                      type="password"
-                      required
-                      value={passwordForm.newPassword}
-                      onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
-                    />
-                  </div>
-
-                  <div>
-                    <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Xác nhận mật khẩu mới</p>
-                    <input
-                      type="password"
-                      required
-                      value={passwordForm.confirmPassword}
-                      onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#1a8b46]"
-                    />
-                  </div>
-
-                  {passwordError ? <p className="text-sm font-semibold text-red-600">{passwordError}</p> : null}
-
-                  <button
-                    type="submit"
-                    disabled={changePasswordMutation.isPending}
-                    className="rounded-xl bg-[#1a8b46] px-5 py-3 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-green-200 disabled:bg-gray-300"
-                  >
-                    {changePasswordMutation.isPending ? 'Đang xử lý...' : 'Đổi mật khẩu'}
-                  </button>
-                </form>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // ProfilePageContent has been moved to a separate file ./components/ProfilePageContent.jsx
 
   const featuredCarouselItems = useMemo(() => products.slice(0, 12), [products]);
   const orderCarouselItems = useMemo(() => filteredProducts.slice(0, 18), [filteredProducts]);
@@ -2280,24 +1596,43 @@ function AppContent() {
                     const hasLimit = voucher.con_lai !== null && voucher.con_lai !== undefined;
                     const remaining = hasLimit ? Number(voucher.con_lai || 0) : null;
                     const isOut = hasLimit && remaining <= 0;
-                    const canUse = voucher.co_the_dung !== false;
+                    const isLocked = voucher.chua_dat_hang === true;
+                    const canUse = voucher.co_the_dung !== false && !isLocked;
+
+                    const getTierBadgeStyle = (tier) => {
+                      switch (tier) {
+                        case 'SILVER': return 'bg-slate-100 text-slate-700 border-slate-300';
+                        case 'GOLD': return 'bg-amber-100 text-amber-800 border-amber-300';
+                        case 'DIAMOND': return 'bg-cyan-100 text-cyan-800 border-cyan-300';
+                        default: return 'bg-gray-100 text-gray-700 border-gray-300';
+                      }
+                    };
+
                     return (
-                      <article key={voucher.ma_khuyen_mai} className="overflow-hidden rounded-[28px] border border-gray-100 bg-white shadow-sm shadow-green-100 hover:shadow-md transition-shadow">
-                        <div className="bg-gradient-to-r from-[#d4eddc] via-[#e8f5ee] to-[#d4eddc] p-4">
+                      <article key={voucher.ma_khuyen_mai} className={`overflow-hidden rounded-[28px] border bg-white shadow-sm hover:shadow-md transition-all ${isLocked ? 'border-gray-200 opacity-80' : 'border-gray-100 shadow-green-100'}`}>
+                        <div className={`p-4 bg-gradient-to-r ${isLocked ? 'from-gray-200 via-gray-100 to-gray-200' : 'from-[#d4eddc] via-[#e8f5ee] to-[#d4eddc]'}`}>
                           <div className="flex items-center justify-between gap-3">
                             <button
                               type="button"
+                              disabled={isLocked}
                               onClick={() => handleCopyVoucherCode(voucher.ma_khuyen_mai)}
-                              className="rounded-xl border border-[#1a8b46] bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.2em] text-[#1a8b46]"
-                              title="Sao chép mã"
+                              className={`rounded-xl border px-3 py-2 text-xs font-black uppercase tracking-[0.2em] ${isLocked ? 'border-gray-400 bg-gray-100 text-gray-400 cursor-not-allowed' : 'border-[#1a8b46] bg-white text-[#1a8b46]'}`}
+                              title={isLocked ? 'Không thể dùng do chưa đủ hạng' : 'Sao chép mã'}
                             >
-                              {voucher.ma_khuyen_mai}
+                              {isLocked ? '🔒 Khóa' : voucher.ma_khuyen_mai}
                             </button>
-                            <span className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] ${typeMeta.className}`}>
-                              {typeMeta.label}
-                            </span>
+                            <div className="flex gap-1.5 items-center">
+                              {voucher.hang_toi_thieu && (
+                                <span className={`rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] ${getTierBadgeStyle(voucher.hang_toi_thieu)}`}>
+                                  Hạng {voucher.hang_toi_thieu}
+                                </span>
+                              )}
+                              <span className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] ${typeMeta.className}`}>
+                                {typeMeta.label}
+                              </span>
+                            </div>
                           </div>
-                          {copiedVoucherCode === voucher.ma_khuyen_mai ? (
+                          {!isLocked && copiedVoucherCode === voucher.ma_khuyen_mai ? (
                             <p className="mt-2 text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700">Đã sao chép mã</p>
                           ) : null}
                         </div>
@@ -2332,10 +1667,18 @@ function AppContent() {
                             </span>
                             {userId ? (
                               <span
-                                className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${canUse ? 'bg-[#eef7ff] text-[#1f6fb2]' : 'bg-amber-50 text-amber-700'
+                                className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${isLocked 
+                                  ? 'bg-amber-50 text-amber-700 border-amber-200 border' 
+                                  : canUse 
+                                    ? 'bg-[#eef7ff] text-[#1f6fb2]' 
+                                    : 'bg-amber-50 text-amber-700'
                                   }`}
                               >
-                                {canUse ? 'Bạn có thể dùng' : 'Bạn đã đạt giới hạn'}
+                                {isLocked 
+                                  ? `Yêu cầu hạng ${voucher.hang_toi_thieu} trở lên` 
+                                  : canUse 
+                                    ? 'Bạn có thể dùng' 
+                                    : 'Bạn đã đạt giới hạn'}
                               </span>
                             ) : (
                               <span className="rounded-full bg-[#eef7ff] px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#1f6fb2]">
@@ -2408,6 +1751,11 @@ function AppContent() {
               <ProfilePageContent
                 user={user}
                 onUserUpdated={handleUserUpdated}
+                addressOptions={addressOptions}
+                defaultAddressSelection={defaultAddressSelection}
+                isOrderHistoryOpen={isOrderHistoryOpen}
+                setIsOrderHistoryOpen={setIsOrderHistoryOpen}
+                onNavigate={setActiveTab}
               />
             ) : activeTab === 'cart' ? (
               <CartPage products={products} onBackToHome={() => setActiveTab('order')} />
@@ -2459,6 +1807,70 @@ function AppContent() {
           ) : null}
         </div>
       ) : null}
+
+      {showBirthdayVoucherModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <style>{`
+            @keyframes fadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+            @keyframes scaleUp {
+              from { transform: scale(0.95); opacity: 0; }
+              to { transform: scale(1); opacity: 1; }
+            }
+            .animate-fade-in {
+              animation: fadeIn 0.25s ease-out forwards;
+            }
+            .animate-scale-up {
+              animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            }
+          `}</style>
+          <div className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white text-center shadow-2xl animate-scale-up border border-amber-100 flex flex-col items-center p-8">
+            <div className="text-6xl mb-4 animate-bounce">
+              🎂🎈🎉
+            </div>
+            
+            <h3 className="text-2xl font-black uppercase text-[#8c252a] tracking-tight mb-2 font-sans">
+              Chúc Mừng Sinh Nhật!
+            </h3>
+            
+            <p className="text-[#c89a58] font-black text-sm uppercase tracking-widest mb-6">
+              Avengers House Special Gift
+            </p>
+            
+            <div className="bg-amber-50/70 border border-amber-100/50 rounded-2xl p-5 mb-6 w-full shadow-inner">
+              <p className="text-sm font-semibold text-gray-700 leading-relaxed">
+                Nhân dịp tháng sinh nhật của bạn, Avengers House xin gửi tặng bạn một món quà đặc biệt. Một **Voucher mừng sinh nhật** đã được gửi vào kho voucher cá nhân của bạn!
+              </p>
+              <div className="mt-4 py-2 px-4 bg-[#8c252a] text-white font-black text-sm rounded-xl tracking-wider uppercase inline-block shadow-md">
+                QUÀ TẶNG THÀNH VIÊN
+              </div>
+            </div>
+            
+            <div className="flex flex-col gap-3 w-full">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowBirthdayVoucherModal(false);
+                  setActiveTab('profile');
+                  setIsOrderHistoryOpen(false);
+                }}
+                className="w-full py-3.5 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm uppercase tracking-wider rounded-xl transition-all shadow-lg active:scale-98 transform cursor-pointer border-none"
+              >
+                Xem quà tặng của tôi
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowBirthdayVoucherModal(false)}
+                className="w-full py-3 hover:bg-gray-100 text-gray-500 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors cursor-pointer border-none bg-transparent"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

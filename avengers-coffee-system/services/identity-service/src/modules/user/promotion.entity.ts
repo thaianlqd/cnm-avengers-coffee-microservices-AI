@@ -56,6 +56,15 @@ export class Promotion {
   @Column({ type: 'varchar', nullable: true })
   ten_san_pham_tang: string | null; // dành cho FREE_ITEM
 
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  hang_toi_thieu: string | null;    // MEMBER | SILVER | GOLD | DIAMOND — voucher exclusive cho hạng nào trở lên
+
+  @Column({ type: 'varchar', nullable: true })
+  ma_nguoi_dung: string | null;     // voucher cá nhân (sinh nhật, lên hạng) gắn cho 1 user cụ thể
+
+  @Column({ type: 'varchar', length: 30, nullable: true })
+  loai_su_kien: string | null;      // BIRTHDAY | TIER_UP | FREESHIP | LUCKY_WHEEL — đánh dấu voucher tự sinh
+
   @Column({ type: 'varchar', nullable: true })
   hinh_anh: string | null;          // URL ảnh banner khuyến mãi
 
