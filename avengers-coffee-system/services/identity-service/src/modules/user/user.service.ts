@@ -208,6 +208,7 @@ export class UserService {
     if (user.trang_thai !== 'ACTIVE') throw new UnauthorizedException('Tai khoan da bi vo hieu hoa');
 
     // Trả về đúng format để Frontend AuthModal.jsx của bác đọc được
+    const receivedBirthdayVoucher = await this.kiemTraVaSinhVoucherSinhNhatChoUser(user.ma_nguoi_dung);
     const accessToken = await this.taoAccessToken(user);
     return {
       accessToken,
@@ -221,6 +222,7 @@ export class UserService {
         coSoTen: user.co_so_ten,
         co_so_ma: user.co_so_ma,
         co_so_ten: user.co_so_ten,
+        nhanVoucherSinhNhat: receivedBirthdayVoucher,
       }
     };
   }
@@ -1332,6 +1334,32 @@ export class UserService {
     return { message: 'Da trigger sinh voucher sinh nhat', currentMonth, scannedUsers: users.length, generated: generatedCount };
   }
 
+  async kiemTraVaSinhVoucherSinhNhatChoUser(userId: string): Promise<boolean> {
+    try {
+      const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: userId } });
+      if (!user || !user.ngay_sinh) return false;
+
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1; // 1 to 12
+      const birthDate = new Date(user.ngay_sinh);
+      const birthMonth = birthDate.getMonth() + 1;
+
+      if (birthMonth === currentMonth) {
+        const yearShort = now.getFullYear().toString().slice(-2);
+        const code = `BD_${yearShort}_${userId.slice(0, 4).toUpperCase()}`;
+
+        const existed = await this.promotionRepo.findOne({ where: { ma_khuyen_mai: code } });
+        if (!existed) {
+          await this.taoVoucherSinhNhat(userId);
+          return true;
+        }
+      }
+    } catch (err) {
+      console.error('[kiemTraVaSinhVoucherSinhNhatChoUser] Error:', err);
+    }
+    return false;
+  }
+
   // ═══════════════════════════════════════════════════════
   //  PROMOTION / VOUCHER MANAGEMENT
   // ═══════════════════════════════════════════════════════
@@ -1761,6 +1789,7 @@ export class UserService {
         }
       }
 
+      const receivedBirthdayVoucher = await this.kiemTraVaSinhVoucherSinhNhatChoUser(user.ma_nguoi_dung);
       const accessToken = await this.taoAccessToken(user);
 
       return {
@@ -1776,6 +1805,7 @@ export class UserService {
           coSoTen: user.co_so_ten,
           co_so_ma: user.co_so_ma,
           co_so_ten: user.co_so_ten,
+          nhanVoucherSinhNhat: receivedBirthdayVoucher,
         },
       };
     }
@@ -1864,6 +1894,7 @@ export class UserService {
         }
       }
 
+      const receivedBirthdayVoucher = await this.kiemTraVaSinhVoucherSinhNhatChoUser(user.ma_nguoi_dung);
       const accessToken = await this.taoAccessToken(user);
     
       return {
@@ -1879,6 +1910,7 @@ export class UserService {
           coSoTen: user.co_so_ten,
           co_so_ma: user.co_so_ma,
           co_so_ten: user.co_so_ten,
+          nhanVoucherSinhNhat: receivedBirthdayVoucher,
         },
       };
     }
@@ -2053,7 +2085,14 @@ export class UserService {
 
     user.ngay_sinh = parsed;
     await this.userRepo.save(user);
-    return { message: 'Cap nhat ngay sinh thanh cong', ngay_sinh: user.ngay_sinh };
+
+    const receivedBirthdayVoucher = await this.kiemTraVaSinhVoucherSinhNhatChoUser(maNguoiDung);
+
+    return { 
+      message: 'Cap nhat ngay sinh thanh cong', 
+      ngay_sinh: user.ngay_sinh,
+      nhanVoucherSinhNhat: receivedBirthdayVoucher,
+    };
   }
 
     /**

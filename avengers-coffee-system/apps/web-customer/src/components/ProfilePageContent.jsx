@@ -76,6 +76,7 @@ export default function ProfilePageContent({
   defaultAddressSelection,
   isOrderHistoryOpen,
   setIsOrderHistoryOpen,
+  onNavigate,
 }) {
   const [activeTab, setActiveTab] = useState('profile');
   const [profileForm, setProfileForm] = useState({ hoTen: '', soDienThoai: '', avatarUrl: '' });

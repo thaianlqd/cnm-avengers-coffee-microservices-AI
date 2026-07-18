@@ -455,7 +455,10 @@ function HomeBannerSlider() {
 }
 
 function AppContent() {
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('tab') || 'home';
+  });
   const [selectedCatId, setSelectedCatId] = useState('all');
   const [activeMainSectionId, setActiveMainSectionId] = useState('must-try');
   const [activeSubSectionId, setActiveSubSectionId] = useState('');
@@ -487,6 +490,7 @@ function AppContent() {
   const [criteriaFilter, setCriteriaFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState('DEFAULT');
   const [notificationToast, setNotificationToast] = useState(null);
+  const [showBirthdayVoucherModal, setShowBirthdayVoucherModal] = useState(false);
   const [voucherTypeFilter, setVoucherTypeFilter] = useState('ALL');
   const [copiedVoucherCode, setCopiedVoucherCode] = useState('');
   const categorySectionRefs = useRef({});
@@ -510,6 +514,8 @@ function AppContent() {
     window.addEventListener('navigate-tab', handler);
     return () => window.removeEventListener('navigate-tab', handler);
   }, []);
+
+
 
   // ── AI Recommendations ──────────────────────────────────────────────────────
   const {
@@ -638,6 +644,62 @@ function AppContent() {
     staleTime: 60 * 1000,
     refetchInterval: 90 * 1000,
   });
+
+  // ── Sync activeTab and selectedProductForPage to URL Query Params ──
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const currentTab = params.get('tab') || 'home';
+    const currentProdId = params.get('productId') || '';
+
+    const targetProdId = activeTab === 'product-detail' && selectedProductForPage
+      ? String(selectedProductForPage.ma_san_pham || selectedProductForPage.id || selectedProductForPage.maSanPham)
+      : '';
+
+    if (currentTab !== activeTab || currentProdId !== targetProdId) {
+      params.set('tab', activeTab);
+      if (targetProdId) {
+        params.set('productId', targetProdId);
+      } else {
+        params.delete('productId');
+      }
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      window.history.pushState({ tab: activeTab, productId: targetProdId }, '', newUrl);
+    }
+  }, [activeTab, selectedProductForPage]);
+
+  // ── Sync browser Back/Forward (popstate) to React State ──
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab') || 'home';
+      setActiveTab(tab);
+      const prodId = params.get('productId');
+      if (prodId && products && products.length > 0) {
+        const prod = products.find(p => String(p.ma_san_pham || p.id || p.maSanPham) === prodId);
+        if (prod) setSelectedProductForPage(prod);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [products]);
+
+  // ── Resolve product details on reload if page starts at product-detail tab ──
+  useEffect(() => {
+    if (activeTab === 'product-detail' && !selectedProductForPage && products.length > 0) {
+      const params = new URLSearchParams(window.location.search);
+      const prodId = params.get('productId');
+      if (prodId) {
+        const prod = products.find(p => String(p.ma_san_pham || p.id || p.maSanPham) === prodId);
+        if (prod) {
+          setSelectedProductForPage(prod);
+        } else {
+          setActiveTab('order');
+        }
+      } else {
+        setActiveTab('order');
+      }
+    }
+  }, [products, activeTab, selectedProductForPage]);
 
   const {
     data: categories = [],
@@ -809,6 +871,10 @@ function AppContent() {
     localStorage.setItem('user', JSON.stringify(nextUser));
     // token đã được lưu trong AuthModal — chỉ cần đảm bảo user object được lưu song song
     await syncCartWithUser(nextUser);
+
+    if (userData?.nhanVoucherSinhNhat) {
+      setShowBirthdayVoucherModal(true);
+    }
   };
 
   const handleLogout = async () => {
@@ -839,6 +905,14 @@ function AppContent() {
       queryClient.invalidateQueries({ queryKey: queryKeys.notificationsByUser(userId) });
     },
   });
+
+  useEffect(() => {
+    const handleBirthdayVoucher = () => {
+      setShowBirthdayVoucherModal(true);
+    };
+    window.addEventListener('birthday-voucher-received', handleBirthdayVoucher);
+    return () => window.removeEventListener('birthday-voucher-received', handleBirthdayVoucher);
+  }, []);
 
   const markAllNotificationsReadMutation = useMutation({
     mutationFn: async () => {
@@ -1681,6 +1755,7 @@ function AppContent() {
                 defaultAddressSelection={defaultAddressSelection}
                 isOrderHistoryOpen={isOrderHistoryOpen}
                 setIsOrderHistoryOpen={setIsOrderHistoryOpen}
+                onNavigate={setActiveTab}
               />
             ) : activeTab === 'cart' ? (
               <CartPage products={products} onBackToHome={() => setActiveTab('order')} />
@@ -1732,6 +1807,70 @@ function AppContent() {
           ) : null}
         </div>
       ) : null}
+
+      {showBirthdayVoucherModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <style>{`
+            @keyframes fadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+            @keyframes scaleUp {
+              from { transform: scale(0.95); opacity: 0; }
+              to { transform: scale(1); opacity: 1; }
+            }
+            .animate-fade-in {
+              animation: fadeIn 0.25s ease-out forwards;
+            }
+            .animate-scale-up {
+              animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            }
+          `}</style>
+          <div className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white text-center shadow-2xl animate-scale-up border border-amber-100 flex flex-col items-center p-8">
+            <div className="text-6xl mb-4 animate-bounce">
+              🎂🎈🎉
+            </div>
+            
+            <h3 className="text-2xl font-black uppercase text-[#8c252a] tracking-tight mb-2 font-sans">
+              Chúc Mừng Sinh Nhật!
+            </h3>
+            
+            <p className="text-[#c89a58] font-black text-sm uppercase tracking-widest mb-6">
+              Avengers House Special Gift
+            </p>
+            
+            <div className="bg-amber-50/70 border border-amber-100/50 rounded-2xl p-5 mb-6 w-full shadow-inner">
+              <p className="text-sm font-semibold text-gray-700 leading-relaxed">
+                Nhân dịp tháng sinh nhật của bạn, Avengers House xin gửi tặng bạn một món quà đặc biệt. Một **Voucher mừng sinh nhật** đã được gửi vào kho voucher cá nhân của bạn!
+              </p>
+              <div className="mt-4 py-2 px-4 bg-[#8c252a] text-white font-black text-sm rounded-xl tracking-wider uppercase inline-block shadow-md">
+                QUÀ TẶNG THÀNH VIÊN
+              </div>
+            </div>
+            
+            <div className="flex flex-col gap-3 w-full">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowBirthdayVoucherModal(false);
+                  setActiveTab('profile');
+                  setIsOrderHistoryOpen(false);
+                }}
+                className="w-full py-3.5 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm uppercase tracking-wider rounded-xl transition-all shadow-lg active:scale-98 transform cursor-pointer border-none"
+              >
+                Xem quà tặng của tôi
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowBirthdayVoucherModal(false)}
+                className="w-full py-3 hover:bg-gray-100 text-gray-500 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors cursor-pointer border-none bg-transparent"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

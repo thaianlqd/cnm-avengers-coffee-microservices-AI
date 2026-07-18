@@ -94,6 +94,7 @@ export default function OrderPage({
   const [expandedParents, setExpandedParents] = useState({});
   const mobileMenuRef = useRef(null);
   const dropdownRef = useRef(null);
+  const productsContainerRef = useRef(null);
 
   const matchingSearchProducts = useMemo(() => {
     if (!searchKeyword || !String(searchKeyword).trim()) return [];
@@ -101,7 +102,7 @@ export default function OrderPage({
     return products.filter((p) => String(p.ten_san_pham || p.name || '').toLowerCase().includes(kw));
   }, [products, searchKeyword]);
 
-  const isMenuAlwaysOpen = !children && !isScrolled;
+  const isMenuAlwaysOpen = false;
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -165,9 +166,25 @@ export default function OrderPage({
   const handleCategorySelect = (id) => {
     setActiveCategory(id);
     if (onSelectedCatIdChange) onSelectedCatIdChange(id);
+    if (onNavigate) onNavigate('order');
     setIsDropdownOpen(false);
     setIsMobileMenuOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Smooth scroll to products container if available
+    setTimeout(() => {
+      if (productsContainerRef.current) {
+        const headerOffset = 100; // Offset for sticky headers
+        const elementPosition = productsContainerRef.current.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 100);
   };
 
   const toggleParent = (parentId, e) => {
@@ -237,14 +254,22 @@ export default function OrderPage({
                 src="/hc-assets/logo.png" 
                 alt="Highlands Coffee" 
                 className="h-[60px] w-auto object-contain cursor-pointer" 
-                onClick={() => window.location.href = '/'} 
+                onClick={() => {
+                  if (onNavigate) {
+                    onNavigate('order');
+                  } else {
+                    window.location.href = '/?tab=order';
+                  }
+                }} 
               />
             ) : (
               <div 
                 ref={isScrolled ? dropdownRef : null}
-                className="flex items-center gap-4 cursor-pointer w-full relative h-full"
-                onMouseEnter={() => setIsDropdownOpen(true)}
-                onMouseLeave={() => setIsDropdownOpen(false)}
+                className="flex items-center gap-4 cursor-pointer w-full relative h-full select-none"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDropdownOpen(prev => !prev);
+                }}
               >
                 <div className="w-5 flex flex-col gap-[3px]">
                   <span className="w-full h-[2px] bg-gray-800 block"></span>
@@ -258,6 +283,7 @@ export default function OrderPage({
                   className={`absolute top-[84px] left-[-24px] w-[260px] bg-white shadow-xl border border-gray-100 transition-all duration-200 z-[100] ${
                     isDropdownOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible pointer-events-none translate-y-2'
                   }`}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   {categoryMenuItems}
                 </ul>
@@ -462,11 +488,9 @@ export default function OrderPage({
             <div 
               ref={!isScrolled ? dropdownRef : null}
               className="relative h-full w-[260px] flex shrink-0 items-center bg-white px-6 cursor-pointer select-none"
-              onMouseEnter={() => {
-                if (!isMenuAlwaysOpen) setIsDropdownOpen(true);
-              }}
-              onMouseLeave={() => {
-                if (!isMenuAlwaysOpen) setIsDropdownOpen(false);
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsDropdownOpen(prev => !prev);
               }}
             >
               <div className="w-5 flex flex-col gap-[3px] mr-3">
@@ -479,12 +503,24 @@ export default function OrderPage({
               {/* Dropdown List */}
               <ul 
                 className={`absolute top-[50px] left-0 w-[260px] bg-white shadow-xl border border-gray-100 transition-all duration-200 z-[100] ${
-                  (!isMenuAlwaysOpen && isDropdownOpen && !isScrolled) ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible pointer-events-none translate-y-2'
+                  (isDropdownOpen && !isScrolled) ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible pointer-events-none translate-y-2'
                 }`}
+                onClick={(e) => e.stopPropagation()}
               >
                 {categoryMenuItems}
               </ul>
             </div>
+
+            {children && (
+              <button
+                type="button"
+                onClick={() => onNavigate?.('order')}
+                className="flex items-center gap-1.5 text-white hover:text-gray-200 transition-colors bg-transparent border-none p-0 cursor-pointer font-black text-[13px] uppercase tracking-wider mr-auto"
+              >
+                <span>←</span>
+                <span>Quay lại Thực đơn</span>
+              </button>
+            )}
 
             <button type="button" onClick={() => onNavigate?.('chinh-sach-dat-hang')} className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity bg-transparent border-none p-0 cursor-pointer">
               <img src="/hc-assets/icon_chinhsach.png" alt="" className="w-5 h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
@@ -501,313 +537,404 @@ export default function OrderPage({
           </div>
 
           {/* Content Area */}
-          <div className="overflow-y-auto w-full bg-white pb-10">
+          <div className="w-full bg-white pb-10">
             {children ? (
               children
             ) : (
               <>
-            {/* Hero Banner Area (Only show when viewing all categories) */}
-            {activeCategory === 'all' && (
-              <div className="flex flex-col lg:flex-row w-full mb-10 gap-8 px-6 lg:px-8 relative">
-                 {/* Static Sidebar */}
-                 {isMenuAlwaysOpen && (
-                   <div className="hidden lg:block w-[260px] flex-shrink-0 relative z-10 self-start">
-                      <ul className="w-full bg-white shadow-md border-b border-l border-r border-gray-100 rounded-b-lg">
-                        {categoryMenuItems}
-                      </ul>
-                   </div>
-                 )}
-                 {/* Banner */}
-                 <div className="flex-1 min-w-0 relative group bg-[#42a853]">
-                   <img src="/hc-assets/slider_1.jpg" alt="Tươi Tỉnh Ngày Hè" className="w-full h-auto object-cover max-h-[600px]" />
-                 </div>
-              </div>
-            )}
-
-            {/* Separate Category View Header */}
-            {activeCategory !== 'all' && (
-              <div className="px-6 lg:px-8 mb-6 pt-4">
-                 <div className="text-[13px] text-[#999999] mb-8 font-medium">
-                   <span className="cursor-pointer hover:text-gray-800" onClick={() => handleCategorySelect('all')}>Trang chủ</span>
-                   <span className="mx-2">/</span>
-                   <span className="text-[#333333]">
-                     {menuSections.find(s => s.id === activeCategory)?.label || 'Danh mục'}
-                   </span>
-                 </div>
-                 
-                 {/* Vouchers horizontally scrollable */}
-                 {voucherItems && voucherItems.length > 0 && (
-                   <div className="flex overflow-x-auto gap-4 pb-4 mb-8 custom-scrollbar">
-                     {voucherItems.map(renderVoucher)}
-                   </div>
-                 )}
-
-                 {/* Category Title matching the image */}
-                 <div className="mb-8 border-b border-gray-100 pb-6">
-                   <h1 className="text-[36px] font-serif font-bold text-[#111111] mb-3">
-                     Danh mục
-                   </h1>
-                   <div className="flex flex-wrap items-center gap-4 text-[13px] text-[#333333] mb-4">
-                     <span className="font-bold">Sắp xếp:</span>
-                     <button
-                       type="button"
-                       onClick={() => setSortByOrder('name-asc')}
-                       className={`transition-colors font-medium ${sortByOrder === 'name-asc' ? 'text-[#b22830] font-black underline' : 'text-[#666666] hover:text-[#b22830]'}`}
-                     >
-                       Tên A → Z
-                     </button>
-                     <button
-                       type="button"
-                       onClick={() => setSortByOrder('name-desc')}
-                       className={`transition-colors font-medium ${sortByOrder === 'name-desc' ? 'text-[#b22830] font-black underline' : 'text-[#666666] hover:text-[#b22830]'}`}
-                     >
-                       Tên Z → A
-                     </button>
-                     <button
-                       type="button"
-                       onClick={() => setSortByOrder('price-asc')}
-                       className={`transition-colors font-medium ${sortByOrder === 'price-asc' ? 'text-[#b22830] font-black underline' : 'text-[#666666] hover:text-[#b22830]'}`}
-                     >
-                       Giá tăng dần
-                     </button>
-                     <button
-                       type="button"
-                       onClick={() => setSortByOrder('price-desc')}
-                       className={`transition-colors font-medium ${sortByOrder === 'price-desc' ? 'text-[#b22830] font-black underline' : 'text-[#666666] hover:text-[#b22830]'}`}
-                     >
-                       Giá giảm dần
-                     </button>
-                     <button
-                       type="button"
-                       onClick={() => setSortByOrder('newest')}
-                       className={`transition-colors font-medium ${sortByOrder === 'newest' ? 'text-[#b22830] font-black underline' : 'text-[#666666] hover:text-[#b22830]'}`}
-                     >
-                       Hàng mới
-                     </button>
-                   </div>
-                    <div className="text-[14px] font-bold text-[#333333] uppercase">
-                      HIỂN THỊ: <span className="text-[#b22830] font-black text-[16px]">{activeCategory === 'all' ? 'TẤT CẢ DANH MỤC' : categories.find(c => String(c.ma_danh_muc) === String(activeCategory).replace('group-', ''))?.ten_danh_muc || 'CÀ PHÊ'}</span>
+                {/* Hero Banner Area (Only show when viewing all categories) */}
+                {activeCategory === 'all' && (
+                  <div className="w-full mb-10 px-6 lg:px-8">
+                    {/* Banner */}
+                    <div className="w-full relative group bg-[#42a853] rounded-2xl overflow-hidden shadow-sm">
+                      <img src="/hc-assets/slider_1.jpg" alt="Tươi Tỉnh Ngày Hè" className="w-full h-auto object-cover max-h-[600px]" />
                     </div>
-                 </div>
-              </div>
-            )}
-
-            {/* Categories Products */}
-            <div className="space-y-16 px-6 lg:px-8">
-            {/* Show vouchers on main page too */}
-            {activeCategory === 'all' && voucherItems && voucherItems.length > 0 && (
-              <div className="mb-4">
-                 <div className="flex overflow-x-auto gap-4 pb-4 custom-scrollbar">
-                   {voucherItems.map(renderVoucher)}
-                 </div>
-              </div>
-            )}
-
-            {/* AI TOP 3 RECOMMENDED PRODUCTS UNDER VOUCHER */}
-            {activeCategory === 'all' && aiRecommendedProducts && aiRecommendedProducts.length > 0 && (
-              <div className="mb-12 bg-white rounded-2xl border border-orange-100 p-6 md:p-8 shadow-sm">
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b border-gray-100 pb-5 mb-6">
-                  <div>
-                    <span className="text-[11px] font-black uppercase tracking-[0.22em] text-[#d67b3c]">
-                      SMART RECOMMENDATION
-                    </span>
-                    <h2 className="mt-1 text-2xl md:text-3xl font-black uppercase tracking-tight text-[#113a5d]">
-                      TOP 3 MÓN HỢP GU CỦA BẠN
-                    </h2>
-                    <p className="mt-1 text-sm font-medium text-gray-600">
-                      Cá nhân hóa theo lịch sử mua hàng, đánh giá, yêu thích và xu hướng dùng ưu đãi.
-                    </p>
-                    <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-[#2c6e91]">
-                      DONG BO CUSTOMER VOI TOP HANH VI 30 NGAY
-                    </p>
                   </div>
+                )}
+
+                {/* Vouchers horizontally scrollable (Top-level if activeCategory is 'all') */}
+                {activeCategory === 'all' && voucherItems && voucherItems.length > 0 && (
+                  <div className="px-6 lg:px-8 mb-10">
+                    <div className="flex overflow-x-auto gap-4 pb-4 custom-scrollbar">
+                      {voucherItems.map(renderVoucher)}
+                    </div>
+                  </div>
+                )}
+
+                {/* AI TOP 3 RECOMMENDED PRODUCTS UNDER VOUCHER */}
+                {activeCategory === 'all' && aiRecommendedProducts && aiRecommendedProducts.length > 0 && (
+                  <div className="px-6 lg:px-8 mb-10">
+                    <div className="bg-white rounded-2xl border border-orange-100 p-6 md:p-8 shadow-sm">
+                      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b border-gray-100 pb-5 mb-6">
+                        <div>
+                          <span className="text-[11px] font-black uppercase tracking-[0.22em] text-[#d67b3c]">
+                            SMART RECOMMENDATION
+                          </span>
+                          <h2 className="mt-1 text-2xl md:text-3xl font-black uppercase tracking-tight text-[#113a5d]">
+                            TOP 3 MÓN HỢP GU CỦA BẠN
+                          </h2>
+                          <p className="mt-1 text-sm font-medium text-gray-600">
+                            Cá nhân hóa theo lịch sử mua hàng, đánh giá, yêu thích và xu hướng dùng ưu đãi.
+                          </p>
+                          <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-[#2c6e91]">
+                            DONG BO CUSTOMER VOI TOP HANH VI 30 NGAY
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          className="self-start inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-orange-300 bg-orange-50/50 text-xs font-bold text-[#d67b3c] uppercase tracking-wider"
+                        >
+                          AI PERSONAL
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {aiRecommendedProducts.slice(0, 3).map((product) => {
+                          const isFav = isFavoriteProduct ? isFavoriteProduct(product) : false;
+                          return (
+                            <div
+                              key={product.ma_san_pham || product.id}
+                              onClick={() => onViewDetail?.(product)}
+                              className="group relative flex flex-col justify-between rounded-[24px] bg-[#faf8f4] p-5 cursor-pointer transition-all hover:shadow-md"
+                            >
+                              <div>
+                                <div className="relative mb-4 flex h-[200px] items-center justify-center overflow-hidden rounded-2xl bg-white/60 p-3">
+                                  <img
+                                    src={product.hinh_anh_url || product.img || '/hc-assets/caphe-1.png'}
+                                    alt={product.ten_san_pham || product.name}
+                                    className="h-full w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onToggleFavorite?.(product);
+                                    }}
+                                    className={`absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-colors ${
+                                      isFav ? 'text-[#b22830]' : 'text-gray-400 hover:text-[#b22830]'
+                                    }`}
+                                  >
+                                    ♥
+                                  </button>
+                                </div>
+
+                                <p className="text-[11px] font-black uppercase tracking-wider text-gray-400">
+                                  {product?.danhMuc?.ten_danh_muc || 'CÀ PHÊ'}
+                                </p>
+                                <h3 className="mt-1 text-lg font-black uppercase text-[#222222] line-clamp-1">
+                                  {product.ten_san_pham || product.name}
+                                </h3>
+                                <p className="mt-2 text-xl font-black text-[#222222]">
+                                  {(Number(product.gia_ban) || 39000).toLocaleString('vi-VN')} đ
+                                </p>
+                              </div>
+
+                              <div className="mt-5 grid grid-cols-2 gap-3" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  type="button"
+                                  onClick={() => onViewDetail?.(product)}
+                                  className="w-full rounded-full border border-[#c8762d] bg-white py-2 text-center text-xs font-bold uppercase text-[#c8762d] transition-colors hover:bg-orange-50"
+                                >
+                                  CHI TIẾT
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => onQuickAdd?.(product)}
+                                  className="w-full rounded-full bg-[#b85d19] py-2 text-center text-xs font-bold uppercase text-white transition-colors hover:bg-[#a04e13]"
+                                >
+                                  THÊM
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Mobile Horizontal Scroll Category Tab Bar (Sticky top below main header) */}
+                <div className="lg:hidden sticky top-[84px] z-30 bg-white border-b border-gray-100 py-3 shadow-md overflow-x-auto no-scrollbar flex gap-2 px-6">
                   <button
                     type="button"
-                    className="self-start inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-orange-300 bg-orange-50/50 text-xs font-bold text-[#d67b3c] uppercase tracking-wider"
+                    onClick={() => handleCategorySelect('all')}
+                    className={`inline-flex items-center justify-center px-4 py-2 rounded-full text-xs font-bold uppercase transition-all flex-shrink-0 ${
+                      activeCategory === 'all'
+                        ? 'bg-[#b22830] text-white shadow-sm'
+                        : 'bg-[#f5f5f5] text-[#333333] hover:bg-gray-200'
+                    }`}
                   >
-                    AI PERSONAL
+                    Tất cả
                   </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {aiRecommendedProducts.slice(0, 3).map((product) => {
-                    const isFav = isFavoriteProduct ? isFavoriteProduct(product) : false;
+                  {parentCats.map((parent, idx) => {
+                    const iconUrl = MENU_ICONS[idx % MENU_ICONS.length];
+                    const isActive = activeCategory === parent.ma_danh_muc;
                     return (
-                      <div
-                        key={product.ma_san_pham || product.id}
-                        onClick={() => onViewDetail?.(product)}
-                        className="group relative flex flex-col justify-between rounded-[24px] bg-[#faf8f4] p-5 cursor-pointer transition-all hover:shadow-md"
+                      <button
+                        key={parent.ma_danh_muc}
+                        type="button"
+                        onClick={() => handleCategorySelect(parent.ma_danh_muc)}
+                        className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold uppercase transition-all flex-shrink-0 ${
+                          isActive
+                            ? 'bg-[#b22830] text-white shadow-sm'
+                            : 'bg-[#f5f5f5] text-[#333333] hover:bg-gray-200'
+                        }`}
                       >
-                        <div>
-                          <div className="relative mb-4 flex h-[200px] items-center justify-center overflow-hidden rounded-2xl bg-white/60 p-3">
-                            <img
-                              src={product.hinh_anh_url || product.img || '/hc-assets/caphe-1.png'}
-                              alt={product.ten_san_pham || product.name}
-                              className="h-full w-auto object-contain transition-transform duration-300 group-hover:scale-105"
-                            />
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onToggleFavorite?.(product);
-                              }}
-                              className={`absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-colors ${
-                                isFav ? 'text-[#b22830]' : 'text-gray-400 hover:text-[#b22830]'
-                              }`}
-                            >
-                              ♥
-                            </button>
-                          </div>
-
-                          <p className="text-[11px] font-black uppercase tracking-wider text-gray-400">
-                            {product?.danhMuc?.ten_danh_muc || 'CÀ PHÊ'}
-                          </p>
-                          <h3 className="mt-1 text-lg font-black uppercase text-[#222222] line-clamp-1">
-                            {product.ten_san_pham || product.name}
-                          </h3>
-                          <p className="mt-2 text-xl font-black text-[#222222]">
-                            {(Number(product.gia_ban) || 39000).toLocaleString('vi-VN')} đ
-                          </p>
-                        </div>
-
-                        <div className="mt-5 grid grid-cols-2 gap-3" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            type="button"
-                            onClick={() => onViewDetail?.(product)}
-                            className="w-full rounded-full border border-[#c8762d] bg-white py-2 text-center text-xs font-bold uppercase text-[#c8762d] transition-colors hover:bg-orange-50"
-                          >
-                            CHI TIẾT
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => onQuickAdd?.(product)}
-                            className="w-full rounded-full bg-[#b85d19] py-2 text-center text-xs font-bold uppercase text-white transition-colors hover:bg-[#a04e13]"
-                          >
-                            THÊM
-                          </button>
-                        </div>
-                      </div>
+                        <img 
+                          src={iconUrl} 
+                          alt="" 
+                          className={`w-3.5 h-3.5 object-contain ${isActive ? 'brightness-0 invert' : ''}`} 
+                        />
+                        {parent.ten_danh_muc}
+                      </button>
                     );
                   })}
                 </div>
-              </div>
-            )}
 
+                {/* Main Two-Column Layout for Products */}
+                <div ref={productsContainerRef} className="flex flex-col lg:flex-row gap-8 px-6 lg:px-8 mt-6">
+                  
+                  {/* Left Column: Sticky Sidebar Category Menu (Desktop only) */}
+                  <div className="hidden lg:block w-[260px] flex-shrink-0 sticky top-[100px] self-start z-10">
+                    <div className="bg-[#fdfaf6] rounded-2xl border border-[#ebdccb] p-5 shadow-sm">
+                      <h3 className="text-[13px] font-black text-[#b22830] uppercase mb-4 tracking-widest pb-2 border-b border-[#ebdccb]">
+                        Danh mục món ăn
+                      </h3>
+                      <ul className="space-y-1.5">
+                        <li>
+                          <button
+                            type="button"
+                            onClick={() => handleCategorySelect('all')}
+                            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-all ${
+                              activeCategory === 'all'
+                                ? 'bg-[#b22830] text-white font-bold shadow-md'
+                                : 'text-[#333333] hover:bg-gray-100 font-medium'
+                            }`}
+                          >
+                            <span className="text-[13px] uppercase tracking-wide">Xem tất cả</span>
+                          </button>
+                        </li>
+                        {parentCats.map((parent, idx) => {
+                          const iconUrl = MENU_ICONS[idx % MENU_ICONS.length];
+                          const isActive = activeCategory === parent.ma_danh_muc;
+                          return (
+                            <li key={parent.ma_danh_muc}>
+                              <button
+                                type="button"
+                                onClick={() => handleCategorySelect(parent.ma_danh_muc)}
+                                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-all ${
+                                  isActive
+                                    ? 'bg-[#b22830] text-white font-bold shadow-md'
+                                    : 'text-[#333333] hover:bg-gray-100 font-medium'
+                                }`}
+                              >
+                                <img 
+                                  src={iconUrl} 
+                                  alt="" 
+                                  className={`w-5 h-5 object-contain ${isActive ? 'brightness-0 invert' : ''}`} 
+                                />
+                                <span className="text-[13px] uppercase tracking-wide">{parent.ten_danh_muc}</span>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  </div>
 
-            {menuSections
-              .filter((section) => {
-                if (activeCategory === 'all') return true;
-                const parsedActive = String(activeCategory).replace('group-', '');
-                if (String(section.id) === parsedActive) return true;
-                const sectionCat = categories.find(c => String(c.ma_danh_muc) === String(section.id));
-                if (sectionCat && String(sectionCat.ma_danh_muc_cha) === parsedActive) return true;
-                return false;
-              })
-              .map((section, idx) => {
-                const parsedActive = String(activeCategory).replace('group-', '');
-                const isParentCategory = activeCategory === 'all' ? false : categories.find(c => String(c.ma_danh_muc) === parsedActive)?.cap_bac === 1;
-                const showSectionTitle = activeCategory === 'all' || isParentCategory;
-                
-                const allItems = section.subSections.flatMap(sub => sub.items);
-                const sortedItems = [...allItems].sort((a, b) => {
-                  if (sortByOrder === 'price-asc') return Number(a.gia_ban || 0) - Number(b.gia_ban || 0);
-                  if (sortByOrder === 'price-desc') return Number(b.gia_ban || 0) - Number(a.gia_ban || 0);
-                  if (sortByOrder === 'name-asc') return String(a.ten_san_pham || '').localeCompare(String(b.ten_san_pham || ''), 'vi');
-                  return 0;
-                });
-                const displayItems = activeCategory === 'all' ? sortedItems.slice(0, 10) : sortedItems;
-                const hasMore = activeCategory === 'all' && allItems.length > 10;
-                const iconUrl = MENU_ICONS[idx % MENU_ICONS.length];
+                  {/* Right Column: Products List & Category Details */}
+                  <div className="flex-1 min-w-0">
+                    
+                    {/* Separate Category View Header (Breadcrumbs, sorting, title) */}
+                    {activeCategory !== 'all' && (
+                      <div className="mb-6">
+                        <div className="text-[13px] text-[#999999] mb-4 font-medium">
+                          <span className="cursor-pointer hover:text-gray-800" onClick={() => handleCategorySelect('all')}>Trang chủ</span>
+                          <span className="mx-2">/</span>
+                          <span className="text-[#333333]">
+                            {menuSections.find(s => s.id === activeCategory)?.label || 'Danh mục'}
+                          </span>
+                        </div>
+                        
+                        {/* Vouchers horizontally scrollable */}
+                        {voucherItems && voucherItems.length > 0 && (
+                          <div className="flex overflow-x-auto gap-4 pb-4 mb-6 custom-scrollbar">
+                            {voucherItems.map(renderVoucher)}
+                          </div>
+                        )}
 
-                return (
-              <section key={section.id} id={`category-${section.id}`} className="scroll-mt-[100px]">
-                {showSectionTitle && (
-                  <div className="flex items-center gap-3 mb-6">
-                    {section.icon ? (
-                      <span className="text-2xl">{section.icon}</span>
-                    ) : (
-                      <img src={iconUrl} className="w-8 h-8 object-contain" alt="" />
+                        {/* Category Title */}
+                        <div className="mb-6 border-b border-gray-100 pb-4">
+                          <h1 className="text-[28px] font-serif font-bold text-[#111111] mb-2">
+                            Danh mục
+                          </h1>
+                          <div className="flex flex-wrap items-center gap-4 text-[13px] text-[#333333] mb-4">
+                            <span className="font-bold">Sắp xếp:</span>
+                            <button
+                              type="button"
+                              onClick={() => setSortByOrder('name-asc')}
+                              className={`transition-colors font-medium ${sortByOrder === 'name-asc' ? 'text-[#b22830] font-black underline' : 'text-[#666666] hover:text-[#b22830]'}`}
+                            >
+                              Tên A → Z
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSortByOrder('name-desc')}
+                              className={`transition-colors font-medium ${sortByOrder === 'name-desc' ? 'text-[#b22830] font-black underline' : 'text-[#666666] hover:text-[#b22830]'}`}
+                            >
+                              Tên Z → A
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSortByOrder('price-asc')}
+                              className={`transition-colors font-medium ${sortByOrder === 'price-asc' ? 'text-[#b22830] font-black underline' : 'text-[#666666] hover:text-[#b22830]'}`}
+                            >
+                              Giá tăng dần
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSortByOrder('price-desc')}
+                              className={`transition-colors font-medium ${sortByOrder === 'price-desc' ? 'text-[#b22830] font-black underline' : 'text-[#666666] hover:text-[#b22830]'}`}
+                            >
+                              Giá giảm dần
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSortByOrder('newest')}
+                              className={`transition-colors font-medium ${sortByOrder === 'newest' ? 'text-[#b22830] font-black underline' : 'text-[#666666] hover:text-[#b22830]'}`}
+                            >
+                              Hàng mới
+                            </button>
+                          </div>
+                          <div className="text-[13px] font-bold text-[#333333] uppercase">
+                            HIỂN THỊ: <span className="text-[#b22830] font-black text-[15px]">{activeCategory === 'all' ? 'TẤT CẢ DANH MỤC' : categories.find(c => String(c.ma_danh_muc) === String(activeCategory).replace('group-', ''))?.ten_danh_muc || 'CÀ PHÊ'}</span>
+                          </div>
+                        </div>
+                      </div>
                     )}
-                    <h3 className="text-[22px] font-black text-[#333333] uppercase">{section.label}</h3>
-                  </div>
-                )}
 
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
-                  {displayItems.map((p) => {
-                    // Custom Product Card styling for Order page
-                    return (
-                      <div key={p.ma_san_pham} className="bg-white rounded-lg border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow group relative flex flex-col">
-                        <div className="relative aspect-square overflow-hidden bg-[#f9f9f9] cursor-pointer" onClick={() => (onOpenProductPage ? onOpenProductPage(p) : onViewDetail?.(p))}>
-                          <img src={p.hinh_anh_url} alt={p.ten_san_pham} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    {/* Product Grids */}
+                    <div className="space-y-12">
+                      {menuSections
+                        .filter((section) => {
+                          if (activeCategory === 'all') return true;
+                          const parsedActive = String(activeCategory).replace('group-', '');
+                          if (String(section.id) === parsedActive) return true;
+                          const sectionCat = categories.find(c => String(c.ma_danh_muc) === String(section.id));
+                          if (sectionCat && String(sectionCat.ma_danh_muc_cha) === parsedActive) return true;
+                          return false;
+                        })
+                        .map((section, idx) => {
+                          const parsedActive = String(activeCategory).replace('group-', '');
+                          const isParentCategory = activeCategory === 'all' ? false : categories.find(c => String(c.ma_danh_muc) === parsedActive)?.cap_bac === 1;
+                          const showSectionTitle = activeCategory === 'all' || isParentCategory;
                           
-                          {/* Badges */}
-                          {p.la_hot && (
-                            <div className="absolute bottom-0 left-0 bg-[#f37021] text-white text-[14px] font-black uppercase px-3 py-2 z-10 w-[90px] text-center leading-tight">
-                              BÁN CHẠY!
-                            </div>
-                          )}
-                          {!p.la_hot && p.la_moi && (
-                            <div className="absolute bottom-0 left-0 bg-[#00a651] text-white text-[14px] font-black uppercase px-3 py-2 z-10 w-[90px] text-center leading-tight">
-                              THỬ NGAY!
-                            </div>
-                          )}
-                          {p.dang_giam_gia && (
-                            <div className="absolute top-2 left-2 w-10 h-10 rounded-full bg-[#b22830] text-white flex items-center justify-center text-[12px] font-bold z-10">
-                              -{Math.round((1 - p.gia_ban / p.gia_niem_yet) * 100)}%
-                            </div>
-                          )}
-                        </div>
+                          const allItems = section.subSections.flatMap(sub => sub.items);
+                          const sortedItems = [...allItems].sort((a, b) => {
+                            if (sortByOrder === 'price-asc') return Number(a.gia_ban || 0) - Number(b.gia_ban || 0);
+                            if (sortByOrder === 'price-desc') return Number(b.gia_ban || 0) - Number(a.gia_ban || 0);
+                            if (sortByOrder === 'name-asc') return String(a.ten_san_pham || '').localeCompare(String(b.ten_san_pham || ''), 'vi');
+                            return 0;
+                          });
+                          const displayItems = activeCategory === 'all' ? sortedItems.slice(0, 10) : sortedItems;
+                          const hasMore = activeCategory === 'all' && allItems.length > 10;
+                          const parentCatIndex = parentCats.findIndex(c => String(c.ma_danh_muc) === String(section.id));
+                          const sectionIconUrl = parentCatIndex !== -1 ? MENU_ICONS[parentCatIndex % MENU_ICONS.length] : MENU_ICONS[idx % MENU_ICONS.length];
 
-                        <div className="p-4 flex flex-col flex-1">
-                          <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Highlands Coffee</p>
-                          <h4 className="text-[14px] font-bold text-[#333333] mb-2 leading-tight cursor-pointer hover:text-[#b22830]" onClick={() => onViewDetail?.(p)}>
-                            {p.ten_san_pham}
-                          </h4>
-                          <div className="mt-auto flex items-end justify-between">
-                            <div className="flex flex-col">
-                              <span className="text-[15px] font-bold text-[#b22830]">
-                                {Number(p.gia_ban).toLocaleString('vi-VN')}đ
-                              </span>
-                              {p.dang_giam_gia && (
-                                <span className="text-[12px] text-gray-400 line-through">
-                                  {Number(p.gia_niem_yet).toLocaleString('vi-VN')}đ
-                                </span>
+                          return (
+                            <section key={section.id} id={`category-${section.id}`} className="scroll-mt-[120px]">
+                              {showSectionTitle && (
+                                <div className="flex items-center justify-between border-b border-[#ebdccb] pb-3 mb-8">
+                                  <div className="flex items-center gap-3">
+                                    <img src={sectionIconUrl} className="w-8 h-8 object-contain" alt="" />
+                                    <h3 className="text-lg md:text-xl font-black text-[#8c252a] tracking-wider uppercase font-sans">
+                                      {section.label}
+                                    </h3>
+                                  </div>
+                                  <div className="h-0.5 flex-1 bg-[#ebdccb] ml-4 hidden md:block opacity-40"></div>
+                                </div>
                               )}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onQuickAdd?.(p);
-                              }}
-                              className="w-8 h-8 rounded-full bg-white border border-[#b22830] text-[#b22830] flex items-center justify-center hover:bg-[#b22830] hover:text-white transition-colors"
-                            >
-                              <span className="text-xl font-bold leading-none -mt-1">+</span>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
 
-                {hasMore && (
-                  <div className="mt-8 flex justify-center">
-                    <button
-                      type="button"
-                      onClick={() => handleCategorySelect(section.id)}
-                      className="px-6 py-2 border border-[#b22830] text-[#b22830] text-[13px] font-bold rounded-full hover:bg-[#b22830] hover:text-white transition-colors"
-                    >
-                      Xem tất cả &gt;
-                    </button>
+                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
+                                {displayItems.map((p) => {
+                                  // Custom Product Card styling for Order page
+                                  return (
+                                    <div key={p.ma_san_pham} className="bg-white rounded-lg border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow group relative flex flex-col">
+                                      <div className="relative aspect-square overflow-hidden bg-[#f9f9f9] cursor-pointer" onClick={() => (onOpenProductPage ? onOpenProductPage(p) : onViewDetail?.(p))}>
+                                        <img src={p.hinh_anh_url} alt={p.ten_san_pham} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                                        
+                                        {/* Badges */}
+                                        {p.la_hot && (
+                                          <div className="absolute bottom-0 left-0 bg-[#f37021] text-white text-[14px] font-black uppercase px-3 py-2 z-10 w-[90px] text-center leading-tight">
+                                            BÁN CHẠY!
+                                          </div>
+                                        )}
+                                        {!p.la_hot && p.la_moi && (
+                                          <div className="absolute bottom-0 left-0 bg-[#00a651] text-white text-[14px] font-black uppercase px-3 py-2 z-10 w-[90px] text-center leading-tight">
+                                            THỬ NGAY!
+                                          </div>
+                                        )}
+                                        {p.dang_giam_gia && (
+                                          <div className="absolute top-2 left-2 w-10 h-10 rounded-full bg-[#b22830] text-white flex items-center justify-center text-[12px] font-bold z-10">
+                                            -{Math.round((1 - p.gia_ban / p.gia_niem_yet) * 100)}%
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      <div className="p-4 flex flex-col flex-1">
+                                        <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Highlands Coffee</p>
+                                        <h4 className="text-[14px] font-bold text-[#333333] mb-2 leading-tight cursor-pointer hover:text-[#b22830]" onClick={() => onViewDetail?.(p)}>
+                                          {p.ten_san_pham}
+                                        </h4>
+                                        <div className="mt-auto flex items-end justify-between">
+                                          <div className="flex flex-col">
+                                            <span className="text-[15px] font-bold text-[#b22830]">
+                                              {Number(p.gia_ban).toLocaleString('vi-VN')}đ
+                                            </span>
+                                            {p.dang_giam_gia && (
+                                              <span className="text-[12px] text-gray-400 line-through">
+                                                {Number(p.gia_niem_yet).toLocaleString('vi-VN')}đ
+                                              </span>
+                                            )}
+                                          </div>
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              onQuickAdd?.(p);
+                                            }}
+                                            className="w-8 h-8 rounded-full bg-white border border-[#b22830] text-[#b22830] flex items-center justify-center hover:bg-[#b22830] hover:text-white transition-colors"
+                                          >
+                                            <span className="text-xl font-bold leading-none -mt-1">+</span>
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {hasMore && (
+                                <div className="mt-8 flex justify-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCategorySelect(section.id)}
+                                    className="px-6 py-2 border border-[#b22830] text-[#b22830] text-[13px] font-bold rounded-full hover:bg-[#b22830] hover:text-white transition-colors"
+                                  >
+                                    Xem tất cả &gt;
+                                  </button>
+                                </div>
+                              )}
+                            </section>
+                          );
+                        })}
+                    </div>
+
                   </div>
-                )}
-              </section>
-            )})}
+                </div>
+              </>
+            )}
           </div>
-          </>
-        )}
-        </div>
       </main>
       </div>
 
