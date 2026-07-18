@@ -29,4 +29,8 @@ export class CartService {
   async xoaKhoiGiỏ(id: number) {
     return this.cartRepo.delete(id);
   }
+
+  async xoaToanBoGio(ma_nguoi_dung: string) {
+    return this.cartRepo.delete({ ma_nguoi_dung });
+  }
 }

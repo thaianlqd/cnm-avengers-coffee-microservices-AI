@@ -58,6 +58,25 @@ export default function CartPage({ products = [], onBackToHome }) {
   // 1: Cart Items, 2: Checkout Info Form
   const [step, setStep] = useState(1);
 
+  const { data: inventoryData } = useQuery({
+    queryKey: ['inventory', selectedBranch],
+    queryFn: async () => {
+      const response = await apiClient.get(`/inventory/items?branch_code=${selectedBranch}`);
+      return response.data;
+    },
+    enabled: Boolean(selectedBranch),
+    staleTime: 5 * 1000,
+  });
+
+  const isAnyItemOutOfStock = useMemo(() => {
+    if (!inventoryData) return false;
+    const arr = Array.isArray(inventoryData) ? inventoryData : (inventoryData.items || []);
+    return cart.some(item => {
+      const invItem = arr.find(i => String(i.ma_san_pham) === String(item.ma_san_pham));
+      return invItem && (invItem.dang_kinh_doanh === false || invItem.dang_kinh_doanh === 0 || invItem.dang_kinh_doanh === 'false');
+    });
+  }, [cart, inventoryData]);
+
   const { data: publicBranchPayload } = useQuery({
     queryKey: ['public-branches'],
     queryFn: async () => {
@@ -233,19 +252,27 @@ export default function CartPage({ products = [], onBackToHome }) {
       const branchId = targetBranch.ma_chi_nhanh || targetBranch.co_so_ma || targetBranch.branch_code || '';
 
       // Tự động chuyển chi nhánh nếu chi nhánh hiện tại không nằm trong cùng thành phố
-      if (!selectedBranch) {
-        setSelectedBranch(branchId);
-      } else {
-        const currentBranch = allBranches.find(b => (b.ma_chi_nhanh || b.co_so_ma || b.branch_code) === selectedBranch);
-        const currentBranchCity = String(currentBranch?.thanh_pho || currentBranch?.dia_chi || '').toLowerCase();
-        const userCity = String(addressForm.city || '').toLowerCase();
-        
-        if (userCity && !currentBranchCity.includes(userCity)) {
+      // CHỈ ÁP DỤNG KHI GIAO TẬN NƠI
+      if (deliveryMode === 'GIAO_TAN_NOI') {
+        if (!selectedBranch) {
           setSelectedBranch(branchId);
+        } else {
+          const currentBranch = allBranches.find(b => (b.ma_chi_nhanh || b.co_so_ma || b.branch_code) === selectedBranch);
+          const currentBranchCity = String(currentBranch?.thanh_pho || currentBranch?.dia_chi || '').toLowerCase();
+          const userCity = String(addressForm.city || '').toLowerCase();
+          
+          if (userCity && !currentBranchCity.includes(userCity)) {
+            setSelectedBranch(branchId);
+          }
+        }
+      } else {
+        // Lấy tại quán / Dùng tại chỗ: Chỉ set mặc định nếu chưa có
+        if (!selectedBranch) {
+          setSelectedBranch(allBranches[0]?.ma_chi_nhanh || allBranches[0]?.co_so_ma || allBranches[0]?.branch_code || '');
         }
       }
     }
-  }, [publicBranchPayload, selectedBranch, addressForm.city]);
+  }, [publicBranchPayload, selectedBranch, addressForm.city, deliveryMode]);
 
   const khoiTaoThanhToanMutation = useMutation({
     mutationFn: async () => {
@@ -333,12 +360,18 @@ export default function CartPage({ products = [], onBackToHome }) {
         return;
       }
 
-      setThongBao('Tạo đơn hàng COD thành công. Đơn sẽ được thu tiền khi nhận hàng.');
-      queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
-      triggerAiRecommendationRefresh();
-      refreshCart();
-      setGhiChu('');
-      xoaVoucher();
+      if (deliveryMode === 'GIAO_TAN_NOI') {
+        setThongBao('Tạo đơn hàng COD thành công. Đơn sẽ được thu tiền khi nhận hàng.');
+      } else {
+        setThongBao('Tạo đơn hàng thành công. Vui lòng thanh toán tại quầy.');
+      }
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
+        triggerAiRecommendationRefresh();
+        refreshCart();
+        setGhiChu('');
+        xoaVoucher();
+      }, 0);
     } catch (error) {
       setThongBao(error?.response?.data?.message || error?.message || 'Có lỗi khi khởi tạo thanh toán');
     }
@@ -394,7 +427,11 @@ export default function CartPage({ products = [], onBackToHome }) {
                     </button>
                   </div>
                 ) : (
-                  cart.map((item, idx) => (
+                  cart.map((item, idx) => {
+                    const inventoryItem = inventoryData?.find(i => String(i.ma_san_pham) === String(item.ma_san_pham));
+                    const isOutOfStock = inventoryData && inventoryItem && inventoryItem.dang_kinh_doanh === false;
+
+                    return (
                     <div 
                       key={`${item.ma_san_pham}-${item.size}`} 
                       className={`flex gap-5 items-start relative ${
@@ -454,9 +491,16 @@ export default function CartPage({ products = [], onBackToHome }) {
                         </div>
 
                         {/* Giá tiền */}
-                        <p className="text-[#1a1a1a] font-extrabold text-lg">
-                          {Number(item.gia_ban).toLocaleString('vi-VN')}đ
-                        </p>
+                        <div>
+                          <p className="text-[#1a1a1a] font-extrabold text-lg">
+                            {Number(item.gia_ban).toLocaleString('vi-VN')}đ
+                          </p>
+                          {isOutOfStock && (
+                            <div className="mt-1 text-[11px] font-bold text-red-600 bg-red-50 p-1.5 rounded-md border border-red-100 flex items-center gap-1 w-fit">
+                              <span className="text-[12px]">⚠️</span> Đã hết hàng
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       {/* Bộ tăng giảm và nút Xóa xếp đúng góc y hệt mockup */}
@@ -493,7 +537,7 @@ export default function CartPage({ products = [], onBackToHome }) {
                         </div>
                       </div>
                     </div>
-                  ))
+                  )})
                 )}
               </div>
             ) : (
@@ -700,7 +744,9 @@ export default function CartPage({ products = [], onBackToHome }) {
                       >
                         <option value="VNPAY">VNPAY (Thẻ / Mobile Banking)</option>
                         <option value="NGAN_HANG_QR">Ngân hàng QR</option>
-                        <option value="THANH_TOAN_KHI_NHAN_HANG">Thanh toán khi nhận hàng (COD)</option>
+                        <option value="THANH_TOAN_KHI_NHAN_HANG">
+                          {deliveryMode === 'GIAO_TAN_NOI' ? 'Thanh toán khi nhận hàng (COD)' : 'Thanh toán tại quầy'}
+                        </option>
                       </select>
                     </div>
                   </div>
@@ -810,19 +856,27 @@ export default function CartPage({ products = [], onBackToHome }) {
                 <button
                   type="button"
                   onClick={handleCheckoutClick}
-                  className="w-full mt-6 py-4 bg-black hover:bg-gray-800 text-white rounded-full font-black uppercase text-[13px] tracking-widest shadow-md flex items-center justify-center gap-2 transition-all"
+                  disabled={isAnyItemOutOfStock}
+                  className="w-full mt-6 py-4 bg-black hover:bg-gray-800 text-white rounded-full font-black uppercase text-[13px] tracking-widest shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span>Tiến hành thanh toán</span>
                   <ArrowLongRightIcon className="h-4 w-4" />
                 </button>
               ) : (
-                <button
-                  onClick={khoiTaoThanhToan}
-                  disabled={khoiTaoThanhToanMutation.isPending}
-                  className="w-full mt-6 py-4 bg-[#c41230] hover:bg-[#a30f28] text-white rounded-full font-black uppercase text-[13px] tracking-widest shadow-md transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  {khoiTaoThanhToanMutation.isPending ? 'Đang xử lý...' : 'Xác nhận & Đặt hàng'}
-                </button>
+                <>
+                  {isAnyItemOutOfStock && (
+                    <p className="mt-4 text-xs font-bold text-red-500 text-center">
+                      Có món trong giỏ đã hết hàng tại chi nhánh này. Vui lòng quay lại giỏ hàng để kiểm tra!
+                    </p>
+                  )}
+                  <button
+                    onClick={khoiTaoThanhToan}
+                    disabled={khoiTaoThanhToanMutation.isPending || isAnyItemOutOfStock}
+                    className="w-full mt-2 py-4 bg-[#c41230] hover:bg-[#a30f28] text-white rounded-full font-black uppercase text-[13px] tracking-widest shadow-md transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                  >
+                    {khoiTaoThanhToanMutation.isPending ? 'Đang xử lý...' : 'Xác nhận & Đặt hàng'}
+                  </button>
+                </>
               )}
 
               {/* Error messages */}
