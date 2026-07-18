@@ -24,10 +24,15 @@ export default function MembershipPage({ user, onNavigate }) {
       const response = await apiClient.patch(`/users/${userId}/birthday`, { ngay_sinh: ngaySinh });
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.membershipByUser(userId) });
       setIsEditingBirthday(false);
-      alert('Cập nhật ngày sinh thành công! 🎉');
+      if (data?.nhanVoucherSinhNhat) {
+        const event = new CustomEvent('birthday-voucher-received', { detail: { data } });
+        window.dispatchEvent(event);
+      } else {
+        alert('Cập nhật ngày sinh thành công! 🎉');
+      }
     },
     onError: (err) => {
       alert(err?.response?.data?.message || 'Không thể cập nhật ngày sinh.');
@@ -83,6 +88,27 @@ export default function MembershipPage({ user, onNavigate }) {
   } = memData || {};
 
   const tatCaHang = tat_ca_hang;
+
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+  const currentDay = now.getDate();
+
+  let birthMonth = null;
+  let birthDay = null;
+  let isTodayBirthday = false;
+  let isBirthMonth = false;
+
+  if (ngay_sinh) {
+    const bDate = new Date(ngay_sinh);
+    birthMonth = bDate.getMonth() + 1;
+    birthDay = bDate.getDate();
+    isTodayBirthday = (birthMonth === currentMonth && birthDay === currentDay);
+    isBirthMonth = (birthMonth === currentMonth);
+  }
+
+  const hasBirthdayVoucher = Array.isArray(voucher_ca_nhan) && voucher_ca_nhan.some(v => 
+    v.ma_khuyen_mai?.startsWith('BD_') || v.loai_su_kien === 'BIRTHDAY'
+  );
 
   const handleUpdateBirthday = (e) => {
     e.preventDefault();
@@ -260,9 +286,48 @@ export default function MembershipPage({ user, onNavigate }) {
             </div>
 
             {ngay_sinh ? (
-              <div className="bg-red-50/30 border border-red-100/50 rounded-xl p-4 text-[#b22830] text-xs">
-                <p className="font-black text-sm">Ngày sinh: {new Date(ngay_sinh).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
-                <p className="mt-1.5 text-gray-500 font-semibold leading-relaxed">Hệ thống sẽ tự động gửi voucher giảm giá lên đến {quyen_loi_hien_tai?.voucher_sinh_nhat || '40%'} vào tháng sinh nhật của bạn.</p>
+              <div className="space-y-3">
+                {isTodayBirthday ? (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-[#8c252a] text-xs">
+                    <p className="font-black text-sm flex items-center gap-1.5 animate-bounce">
+                      🎂 Happy Birthday! 🎉
+                    </p>
+                    <p className="mt-1.5 text-gray-700 font-bold leading-relaxed">
+                      Avengers House chúc bạn tuổi mới ngập tràn niềm vui, hạnh phúc và thành công! 🥳
+                    </p>
+                    {hasBirthdayVoucher ? (
+                      <p className="mt-2 text-emerald-700 font-extrabold flex items-center gap-1">
+                        🎁 Đã nhận voucher ưu đãi sinh nhật trong kho!
+                      </p>
+                    ) : (
+                      <p className="mt-2 text-gray-500 font-semibold leading-relaxed">
+                        Hệ thống đã chuẩn bị voucher đặc biệt cho bạn.
+                      </p>
+                    )}
+                  </div>
+                ) : isBirthMonth ? (
+                  <div className="bg-red-50/40 border border-red-100/50 rounded-xl p-4 text-[#b22830] text-xs">
+                    <p className="font-black text-sm">Tháng sinh nhật của bạn! 🎈</p>
+                    <p className="mt-1.5 text-gray-600 font-bold leading-relaxed">
+                      Ngày sinh: {new Date(ngay_sinh).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                    </p>
+                    {hasBirthdayVoucher ? (
+                      <div className="mt-2.5 p-2 bg-emerald-50 border border-emerald-100 rounded-lg text-emerald-800 font-bold flex items-center gap-1.5">
+                        <span className="text-base">✓</span>
+                        <span>Đã nhận voucher ưu đãi sinh nhật!</span>
+                      </div>
+                    ) : (
+                      <p className="mt-1.5 text-gray-500 font-semibold leading-relaxed">
+                        Hệ thống đang chuẩn bị voucher ưu đãi gửi tặng bạn.
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-red-50/30 border border-red-100/50 rounded-xl p-4 text-[#b22830] text-xs">
+                    <p className="font-black text-sm">Ngày sinh: {new Date(ngay_sinh).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
+                    <p className="mt-1.5 text-gray-500 font-semibold leading-relaxed">Hệ thống sẽ tự động gửi voucher giảm giá lên đến {quyen_loi_hien_tai?.voucher_sinh_nhat || '40%'} vào tháng sinh nhật của bạn.</p>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="space-y-3">
