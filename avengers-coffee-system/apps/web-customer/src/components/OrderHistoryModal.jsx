@@ -461,6 +461,13 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                             <ClockIcon className="h-4 w-4" />
                             {fmtDate(order.ngay_tao)}
                           </div>
+                          {order.loai_don_hang === 'GIAO_TAN_NOI' && (
+                            <div className="mt-2">
+                              <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold border ${order.phuong_thuc_giao_hang === 'LALAMOVE' ? 'bg-orange-50 text-orange-600 border-orange-200' : 'bg-indigo-50 text-indigo-600 border-indigo-200'}`}>
+                                {order.phuong_thuc_giao_hang === 'LALAMOVE' ? '🚀 Lalamove' : '🛵 Shipper Nội Bộ'}
+                              </span>
+                            </div>
+                          )}
                         </div>
 
                         <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2 md:gap-3">
@@ -682,7 +689,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                             </div>
                           ) : null}
 
-                          {order.trang_thai_don_hang === 'DANG_GIAO' && order.loai_don_hang === 'GIAO_TAN_NOI' ? (
+                          {['DANG_GIAO', 'PICKING_UP', 'ASSIGNING_DRIVER'].includes(order.trang_thai_don_hang) && order.loai_don_hang === 'GIAO_TAN_NOI' ? (
                             <button
                               type="button"
                               onClick={() => setTrackingOrderId(order.ma_don_hang)}

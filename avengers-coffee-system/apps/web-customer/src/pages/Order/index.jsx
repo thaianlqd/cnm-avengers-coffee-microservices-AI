@@ -484,14 +484,9 @@ export default function OrderPage({
           
           {/* Red Menu Bar */}
           <div className="w-full h-[50px] bg-[#b22830] relative z-20 flex items-center px-6 lg:px-8 gap-8">
-            {/* Categories Dropdown in Red Bar */}
+            {/* Categories Header in Red Bar (Static) */}
             <div 
-              ref={!isScrolled ? dropdownRef : null}
-              className="relative h-full w-[260px] flex shrink-0 items-center bg-white px-6 cursor-pointer select-none"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsDropdownOpen(prev => !prev);
-              }}
+              className="hidden lg:flex h-full w-[260px] shrink-0 items-center bg-white px-6 select-none"
             >
               <div className="w-5 flex flex-col gap-[3px] mr-3">
                 <span className="w-full h-[2px] bg-[#b22830] block"></span>
@@ -499,28 +494,9 @@ export default function OrderPage({
                 <span className="w-full h-[2px] bg-[#b22830] block"></span>
               </div>
               <span className="text-[14px] font-bold text-[#b22830] uppercase whitespace-nowrap">Danh mục sản phẩm</span>
-
-              {/* Dropdown List */}
-              <ul 
-                className={`absolute top-[50px] left-0 w-[260px] bg-white shadow-xl border border-gray-100 transition-all duration-200 z-[100] ${
-                  (isDropdownOpen && !isScrolled) ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible pointer-events-none translate-y-2'
-                }`}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {categoryMenuItems}
-              </ul>
             </div>
 
-            {children && (
-              <button
-                type="button"
-                onClick={() => onNavigate?.('order')}
-                className="flex items-center gap-1.5 text-white hover:text-gray-200 transition-colors bg-transparent border-none p-0 cursor-pointer font-black text-[13px] uppercase tracking-wider mr-auto"
-              >
-                <span>←</span>
-                <span>Quay lại Thực đơn</span>
-              </button>
-            )}
+
 
             <button type="button" onClick={() => onNavigate?.('chinh-sach-dat-hang')} className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity bg-transparent border-none p-0 cursor-pointer">
               <img src="/hc-assets/icon_chinhsach.png" alt="" className="w-5 h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
@@ -539,22 +515,34 @@ export default function OrderPage({
           {/* Content Area */}
           <div className="w-full bg-white pb-10">
             {children ? (
-              children
+              <div className="px-6 lg:px-8 w-full">
+                {children}
+              </div>
             ) : (
               <>
-                {/* Hero Banner Area (Only show when viewing all categories) */}
+                {/* Hero Banner & Category Menu Area (Desktop Only) */}
                 {activeCategory === 'all' && (
-                  <div className="w-full mb-10 px-6 lg:px-8">
-                    {/* Banner */}
-                    <div className="w-full relative group bg-[#42a853] rounded-2xl overflow-hidden shadow-sm">
-                      <img src="/hc-assets/slider_1.jpg" alt="Tươi Tỉnh Ngày Hè" className="w-full h-auto object-cover max-h-[600px]" />
+                  <div className="w-full mb-10 flex flex-col lg:flex-row px-6 lg:px-8 items-stretch gap-8">
+                    
+                    {/* LEFT SIDEBAR (Category Menu Desktop) */}
+                    <div className="hidden lg:flex flex-col w-[260px] flex-shrink-0 z-10 border border-gray-100 shadow-sm bg-white rounded-2xl overflow-hidden">
+                      <ul className="w-full flex flex-col flex-1 overflow-y-auto no-scrollbar">
+                        {categoryMenuItems}
+                      </ul>
+                    </div>
+
+                    {/* HERO BANNER */}
+                    <div className="flex-1 min-w-0 flex">
+                      <div className="w-full relative group bg-[#42a853] rounded-2xl overflow-hidden shadow-sm flex items-center justify-center">
+                        <img src="/hc-assets/slider_1.jpg" alt="Tươi Tỉnh Ngày Hè" className="w-full h-full object-cover max-h-[600px]" />
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {/* Vouchers horizontally scrollable (Top-level if activeCategory is 'all') */}
                 {activeCategory === 'all' && voucherItems && voucherItems.length > 0 && (
-                  <div className="px-6 lg:px-8 mb-10">
+                  <div className="px-6 lg:px-8 mb-10 w-full">
                     <div className="flex overflow-x-auto gap-4 pb-4 custom-scrollbar">
                       {voucherItems.map(renderVoucher)}
                     </div>
@@ -563,7 +551,7 @@ export default function OrderPage({
 
                 {/* AI TOP 3 RECOMMENDED PRODUCTS UNDER VOUCHER */}
                 {activeCategory === 'all' && aiRecommendedProducts && aiRecommendedProducts.length > 0 && (
-                  <div className="px-6 lg:px-8 mb-10">
+                  <div className="px-6 lg:px-8 mb-10 w-full">
                     <div className="bg-white rounded-2xl border border-orange-100 p-6 md:p-8 shadow-sm">
                       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b border-gray-100 pb-5 mb-6">
                         <div>
@@ -691,59 +679,9 @@ export default function OrderPage({
                   })}
                 </div>
 
-                {/* Main Two-Column Layout for Products */}
-                <div ref={productsContainerRef} className="flex flex-col lg:flex-row gap-8 px-6 lg:px-8 mt-6">
-                  
-                  {/* Left Column: Sticky Sidebar Category Menu (Desktop only) */}
-                  <div className="hidden lg:block w-[260px] flex-shrink-0 sticky top-[100px] self-start z-10">
-                    <div className="bg-[#fdfaf6] rounded-2xl border border-[#ebdccb] p-5 shadow-sm">
-                      <h3 className="text-[13px] font-black text-[#b22830] uppercase mb-4 tracking-widest pb-2 border-b border-[#ebdccb]">
-                        Danh mục món ăn
-                      </h3>
-                      <ul className="space-y-1.5">
-                        <li>
-                          <button
-                            type="button"
-                            onClick={() => handleCategorySelect('all')}
-                            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-all ${
-                              activeCategory === 'all'
-                                ? 'bg-[#b22830] text-white font-bold shadow-md'
-                                : 'text-[#333333] hover:bg-gray-100 font-medium'
-                            }`}
-                          >
-                            <span className="text-[13px] uppercase tracking-wide">Xem tất cả</span>
-                          </button>
-                        </li>
-                        {parentCats.map((parent, idx) => {
-                          const iconUrl = MENU_ICONS[idx % MENU_ICONS.length];
-                          const isActive = activeCategory === parent.ma_danh_muc;
-                          return (
-                            <li key={parent.ma_danh_muc}>
-                              <button
-                                type="button"
-                                onClick={() => handleCategorySelect(parent.ma_danh_muc)}
-                                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-all ${
-                                  isActive
-                                    ? 'bg-[#b22830] text-white font-bold shadow-md'
-                                    : 'text-[#333333] hover:bg-gray-100 font-medium'
-                                }`}
-                              >
-                                <img 
-                                  src={iconUrl} 
-                                  alt="" 
-                                  className={`w-5 h-5 object-contain ${isActive ? 'brightness-0 invert' : ''}`} 
-                                />
-                                <span className="text-[13px] uppercase tracking-wide">{parent.ten_danh_muc}</span>
-                              </button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  </div>
-
-                  {/* Right Column: Products List & Category Details */}
-                  <div className="flex-1 min-w-0">
+                {/* Main Product Layout */}
+                <div ref={productsContainerRef} className="flex flex-col mt-6 px-6 lg:px-8 w-full">
+                  <div className="w-full">
                     
                     {/* Separate Category View Header (Breadcrumbs, sorting, title) */}
                     {activeCategory !== 'all' && (
@@ -935,7 +873,7 @@ export default function OrderPage({
               </>
             )}
           </div>
-      </main>
+        </main>
       </div>
 
       {/* Scroll to Top Button */}
