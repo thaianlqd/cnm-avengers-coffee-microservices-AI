@@ -789,7 +789,8 @@ function QuickGoogleButton({ onLoginSuccess, resetSocialState, setError }) {
 // Export default — bọc GoogleOAuthProvider nếu có key
 // ============================================================
 export default function LoginPage({ onLoginSuccess }) {
-  const GOOGLE_CLIENT_ID = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
+  const rawGoogleId = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
+  const GOOGLE_CLIENT_ID = rawGoogleId.replace(/^["']|["']$/g, '');
   const RECAPTCHA_SITE_KEY = String(import.meta.env.VITE_RECAPTCHA_SITE_KEY || '').trim();
   const FACEBOOK_APP_ID = String(import.meta.env.VITE_FACEBOOK_APP_ID || '').trim();
 
