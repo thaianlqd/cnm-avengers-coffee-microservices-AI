@@ -16,6 +16,45 @@ const MENU_ICONS = [
   '/hc-assets/menu_icon_11.png',
 ];
 
+const BANNER_IMAGES = [
+  '/hc-assets/slider_1.jpg',
+  'https://bizweb.dktcdn.net/100/487/455/themes/917232/assets/slider_2.jpg?1784168867138',
+  'https://bizweb.dktcdn.net/100/487/455/themes/917232/assets/slider_3.jpg?1784168867138'
+];
+
+function BannerSlider() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % BANNER_IMAGES.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="w-full relative group bg-[#42a853] rounded-2xl overflow-hidden shadow-sm flex items-center justify-center aspect-[16/9]">
+      {BANNER_IMAGES.map((img, idx) => (
+        <img 
+          key={idx}
+          src={img} 
+          alt={`Banner ${idx + 1}`} 
+          className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000 ${idx === currentIndex ? 'opacity-100' : 'opacity-0'}`} 
+        />
+      ))}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+        {BANNER_IMAGES.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => setCurrentIndex(idx)}
+            className={`w-2.5 h-2.5 rounded-full transition-colors border-none p-0 cursor-pointer ${idx === currentIndex ? 'bg-white' : 'bg-white/50 hover:bg-white/80'}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function OrderPage({
   menuSections = [],
   products = [],
@@ -361,7 +400,11 @@ export default function OrderPage({
                           key={p.ma_san_pham || p.id}
                           onClick={() => {
                             setIsSearchBoxOpen(false);
-                            onViewDetail?.(p);
+                            if (onOpenProductPage) {
+                              onOpenProductPage(p);
+                            } else {
+                              onViewDetail?.(p);
+                            }
                           }}
                           className="flex items-center justify-between px-5 py-3 hover:bg-[#fcf8f2] cursor-pointer transition-colors"
                         >
@@ -388,7 +431,11 @@ export default function OrderPage({
                           key={p.ma_san_pham || p.id}
                           onClick={() => {
                             setIsSearchBoxOpen(false);
-                            onViewDetail?.(p);
+                            if (onOpenProductPage) {
+                              onOpenProductPage(p);
+                            } else {
+                              onViewDetail?.(p);
+                            }
                           }}
                           className="flex flex-col rounded-xl border border-gray-100 p-3 hover:shadow-md cursor-pointer transition-all bg-white"
                         >
@@ -533,9 +580,7 @@ export default function OrderPage({
 
                     {/* HERO BANNER */}
                     <div className="flex-1 min-w-0 flex">
-                      <div className="w-full relative group bg-[#42a853] rounded-2xl overflow-hidden shadow-sm flex items-center justify-center">
-                        <img src="/hc-assets/slider_1.jpg" alt="Tươi Tỉnh Ngày Hè" className="w-full h-full object-cover max-h-[600px]" />
-                      </div>
+                      <BannerSlider />
                     </div>
                   </div>
                 )}
