@@ -81,27 +81,28 @@ export class ShipperService {
   // ============ AVAILABLE ORDERS POOL (Đơn chờ Shipper nhận) ============
 
   /**
-   * Lấy danh sách đơn hàng trạng thái DANG_GIAO và chưa có shipper nào nhận.
+   * Lấy danh sách đơn hàng trạng thái DANG_GIAO và chưa có shipper nào đang giao.
    * Shipper nhìn thấy pool này và tự nhận (self-assign).
+   * Chỉ loại trừ đơn đang có delivery record active (CONFIRMED, PICKING_UP, IN_TRANSIT).
    */
   async getAvailableOrders(branchCode?: string) {
-    // Lấy các ma_don_hang đã được assign (có ShipperDelivery record chưa FAILED/CANCELLED)
-    const assignedDeliveries = await this.deliveryRepo
+    // Chỉ lấy delivery records ĐANG ACTIVE (chưa kết thúc)
+    const activeDeliveries = await this.deliveryRepo
       .createQueryBuilder('d')
-      .select('d.ma_don_hang')
-      .where('d.status NOT IN (:...cancelledStatuses)', { cancelledStatuses: ['FAILED', 'CANCELLED'] })
-      .getRawMany();
+      .select(['d.ma_don_hang'])
+      .where('d.status IN (:...activeStatuses)', { activeStatuses: ['CONFIRMED', 'PICKING_UP', 'IN_TRANSIT'] })
+      .getMany();
 
-    const assignedOrderIds = assignedDeliveries.map((d) => d.d_ma_don_hang);
+    const activeOrderIds = activeDeliveries.map((d) => d.ma_don_hang).filter((id) => !!id);
 
-    // Query đơn DANG_GIAO chưa được assign
+    // Query đơn DANG_GIAO chưa được assign (hoặc đơn đã có delivery nhưng bị huỷ/thất bại)
     let query = this.donHangRepo
       .createQueryBuilder('don')
       .leftJoinAndSelect('don.chi_tiet', 'chi_tiet')
-      .where('don.trang_thai_don_hang = :status', { status: 'DANG_GIAO' });
+      .where('don.trang_thai_don_hang IN (:...statuses)', { statuses: ['DANG_GIAO', 'DANG_CHUAN_BI'] });
 
-    if (assignedOrderIds.length > 0) {
-      query = query.andWhere('don.ma_don_hang NOT IN (:...assignedIds)', { assignedIds: assignedOrderIds });
+    if (activeOrderIds.length > 0) {
+      query = query.andWhere('don.ma_don_hang NOT IN (:...activeIds)', { activeIds: activeOrderIds });
     }
 
     if (branchCode) {
@@ -125,6 +126,7 @@ export class ShipperService {
       distance_km: null,
       phuong_thuc_thanh_toan: o.phuong_thuc_thanh_toan,
       branch_code: o.co_so_ma,
+      trang_thai: o.trang_thai_don_hang,
       items: (o.chi_tiet || []).map((item) => ({
         ten_san_pham: item.ten_san_pham,
         so_luong: item.so_luong,
@@ -137,26 +139,28 @@ export class ShipperService {
 
   /**
    * Shipper tự nhận đơn: Tạo ShipperDelivery record và link với đơn hàng.
-   * Nếu đơn đã được shipper khác nhận → throw error.
+   * Chấp nhận cả đơn DANG_GIAO và DANG_CHUAN_BI (tự động nâng cấp lên DANG_GIAO).
+   * Nếu đơn đã được shipper khác đang active nhận → throw error.
    */
   async acceptOrder(shipperId: string, maDonHang: string) {
-    // Kiểm tra đơn hàng tồn tại và đang ở trạng thái DANG_GIAO
     const donHang = await this.donHangRepo.findOne({
       where: { ma_don_hang: maDonHang },
       relations: ['chi_tiet'],
     });
 
     if (!donHang) throw new NotFoundException('Đơn hàng không tồn tại');
-    if (donHang.trang_thai_don_hang !== 'DANG_GIAO') {
-      throw new BadRequestException(`Đơn hàng không ở trạng thái DANG_GIAO (hiện tại: ${donHang.trang_thai_don_hang})`);
+
+    const acceptableStatuses = ['DANG_GIAO', 'DANG_CHUAN_BI', 'DA_XAC_NHAN'];
+    if (!acceptableStatuses.includes(donHang.trang_thai_don_hang)) {
+      throw new BadRequestException(`Đơn hàng không thể nhận ở trạng thái ${donHang.trang_thai_don_hang}`);
     }
 
-    // Kiểm tra xem đã có shipper khác nhận chưa
+    // Kiểm tra xem đã có shipper khác đang ACTIVE nhận chưa
     const existing = await this.deliveryRepo.findOne({
       where: { ma_don_hang: maDonHang },
     });
 
-    if (existing && !['FAILED', 'CANCELLED'].includes(existing.status)) {
+    if (existing && ['CONFIRMED', 'PICKING_UP', 'IN_TRANSIT'].includes(existing.status)) {
       if (existing.shipper_id === shipperId) {
         // Shipper này đã nhận rồi → trả về delivery hiện tại
         return { success: true, delivery: existing, message: 'Bạn đã nhận đơn này rồi' };
@@ -164,7 +168,12 @@ export class ShipperService {
       throw new BadRequestException('Đơn hàng này đã được Shipper khác nhận');
     }
 
-    // Tạo ShipperDelivery record
+    // Hủy delivery record cũ nếu có (FAILED/CANCELLED/DELIVERED)
+    if (existing) {
+      await this.deliveryRepo.update({ id: existing.id }, { status: 'CANCELLED' });
+    }
+
+    // Tạo ShipperDelivery record mới
     const delivery = this.deliveryRepo.create({
       ma_don_hang: maDonHang,
       shipper_id: shipperId,
@@ -174,6 +183,11 @@ export class ShipperService {
     });
 
     const saved = await this.deliveryRepo.save(delivery);
+
+    // Đảm bảo đơn hàng ở trạng thái DANG_GIAO
+    if (donHang.trang_thai_don_hang !== 'DANG_GIAO') {
+      await this.donHangRepo.update({ ma_don_hang: maDonHang }, { trang_thai_don_hang: 'DANG_GIAO' });
+    }
 
     // Tăng total_deliveries của shipper
     await this.shipperRepo.increment({ id: shipperId }, 'total_deliveries', 1);
@@ -197,25 +211,44 @@ export class ShipperService {
     }
 
     query.orderBy('delivery.assigned_at', 'DESC');
-    return query.getMany();
+    const deliveries = await query.getMany();
+    
+    if (deliveries.length === 0) return [];
+    
+    // Đính kèm cod_amount và order_value
+    const orderIds = deliveries.map(d => d.ma_don_hang);
+    
+    const orders2 = await this.donHangRepo.createQueryBuilder('don')
+      .where('don.ma_don_hang IN (:...orderIds)', { orderIds })
+      .getMany();
+
+    return deliveries.map(d => {
+      const o = orders2.find(x => x.ma_don_hang === d.ma_don_hang);
+      return {
+        ...d,
+        cod_amount: o?.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG' ? Number(o.tong_tien || 0) : 0,
+        order_value: Number(o?.tong_tien || 0)
+      };
+    });
   }
 
   async getDeliveryDetail(deliveryId: string) {
     // Support cả delivery ID lẫn ma_don_hang
     let delivery = await this.deliveryRepo.findOne({
       where: { id: deliveryId },
-      relations: ['shipper'],
     });
 
     if (!delivery) {
       // Thử tìm theo ma_don_hang
       delivery = await this.deliveryRepo.findOne({
         where: { ma_don_hang: deliveryId },
-        relations: ['shipper'],
       });
     }
 
     if (!delivery) throw new NotFoundException('Delivery not found');
+
+    const shipper = delivery.shipper_id ? await this.shipperRepo.findOne({ where: { id: delivery.shipper_id } }) : null;
+    delivery.shipper = shipper;
 
     // Đính kèm thông tin đơn hàng đầy đủ
     const donHang = await this.donHangRepo.findOne({
@@ -223,7 +256,10 @@ export class ShipperService {
       relations: ['chi_tiet'],
     });
 
-    return { ...delivery, order: donHang };
+    const cod_amount = donHang?.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG' ? Number(donHang.tong_tien || 0) : 0;
+    const order_value = Number(donHang?.tong_tien || 0);
+
+    return { ...delivery, order: donHang, cod_amount, order_value };
   }
 
   async confirmPickup(deliveryId: string, shipperId: string) {
@@ -264,12 +300,53 @@ export class ShipperService {
     );
 
     // Cập nhật đơn hàng → HOAN_THANH
+    let cod_amount = 0;
     if (delivery.ma_don_hang) {
-      await this.donHangRepo.update(
-        { ma_don_hang: delivery.ma_don_hang },
-        { trang_thai_don_hang: 'HOAN_THANH', trang_thai_thanh_toan: 'DA_THANH_TOAN' },
-      );
+      const donHang = await this.donHangRepo.findOne({ where: { ma_don_hang: delivery.ma_don_hang } });
+      if (donHang) {
+        if (donHang.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG') {
+          cod_amount = Number(donHang.tong_tien || 0);
+        }
+        
+        const lichSu = Array.isArray(donHang.lich_su_trang_thai) ? [...donHang.lich_su_trang_thai] : [];
+        lichSu.push({
+          loai: 'ORDER',
+          trang_thai: 'HOAN_THANH',
+          thoi_gian: new Date().toISOString(),
+        });
+        if (donHang.trang_thai_thanh_toan !== 'DA_THANH_TOAN') {
+          lichSu.push({
+            loai: 'PAYMENT',
+            trang_thai: 'DA_THANH_TOAN',
+            thoi_gian: new Date().toISOString(),
+          });
+        }
+        
+        await this.donHangRepo.update(
+          { ma_don_hang: delivery.ma_don_hang },
+          { 
+            trang_thai_don_hang: 'HOAN_THANH', 
+            trang_thai_thanh_toan: 'DA_THANH_TOAN',
+            lich_su_trang_thai: lichSu
+          },
+        );
+      }
     }
+
+    // Cập nhật Ví tài xế (ShipperWallet)
+    let wallet = await this.walletRepo.findOne({ where: { shipper_id: shipperId } });
+    if (!wallet) {
+      wallet = this.walletRepo.create({ shipper_id: shipperId, balance: 0, cod_holding: 0, pending_commission: 0 });
+    }
+    
+    // Hardcode phí giao hàng = 15,000 VND
+    const delivery_fee = 15000;
+    
+    wallet.balance = Number(wallet.balance) + delivery_fee;
+    if (cod_amount > 0) {
+      wallet.cod_holding = Number(wallet.cod_holding) + cod_amount;
+    }
+    await this.walletRepo.save(wallet);
 
     return { success: true, message: 'Delivery completed' };
   }
@@ -460,5 +537,110 @@ export class ShipperService {
     }
 
     return { success: true, delivery: saved, message: `Đã phân công đơn ${maDonHang} cho Shipper ${shipper.full_name}` };
+  }
+
+  // ============ STAFF: Chuyển đơn sang DANG_GIAO cho Shipper nội bộ nhận ============
+
+  /**
+   * Được gọi khi Staff bấm "Shipper Nội Bộ": 
+   * Chuyển đơn sang DANG_GIAO để xuất hiện trong pool của Shipper.
+   */
+  async markOrderReadyForDelivery(maDonHang: string) {
+    const donHang = await this.donHangRepo.findOne({ where: { ma_don_hang: maDonHang } });
+    if (!donHang) throw new NotFoundException('Đơn hàng không tồn tại');
+
+    const allowedStatuses = ['MOI_TAO', 'DA_XAC_NHAN', 'DANG_CHUAN_BI', 'DANG_GIAO'];
+    if (!allowedStatuses.includes(donHang.trang_thai_don_hang)) {
+      throw new BadRequestException(`Không thể chuyển đơn ở trạng thái ${donHang.trang_thai_don_hang} sang DANG_GIAO`);
+    }
+
+    // Hủy delivery record cũ bị stuck (không phải DELIVERED) để đơn xuất hiện lại trong pool
+    await this.deliveryRepo
+      .createQueryBuilder()
+      .update()
+      .set({ status: 'CANCELLED' })
+      .where('ma_don_hang = :maDonHang', { maDonHang })
+      .andWhere('status IN (:...cancelStatuses)', { cancelStatuses: ['CONFIRMED', 'PICKING_UP', 'IN_TRANSIT'] })
+      .execute();
+
+    // Chuyển đơn sang DANG_GIAO
+    if (donHang.trang_thai_don_hang !== 'DANG_GIAO') {
+      await this.donHangRepo.update({ ma_don_hang: maDonHang }, { trang_thai_don_hang: 'DANG_GIAO' });
+    }
+
+    return { success: true, message: `Đơn ${maDonHang} đã chuyển sang DANG_GIAO, Shipper có thể nhận ngay` };
+  }
+
+  // ============ CUSTOMER: Tracking + Rating ============
+
+  /**
+   * GET /customers/orders/:orderId/delivery
+   * Trả về thông tin shipper đang giao, vị trí GPS, ETA cho khách hàng.
+   */
+  async getCustomerDeliveryInfo(orderId: string) {
+    // Tìm delivery record active cho đơn này
+    const delivery = await this.deliveryRepo.findOne({
+      where: { ma_don_hang: orderId },
+    });
+
+    if (!delivery || ['FAILED', 'CANCELLED'].includes(delivery.status)) {
+      return { has_shipper: false, message: 'Chưa có shipper nhận đơn này' };
+    }
+
+    // Lấy thông tin shipper
+    const shipper = await this.shipperRepo.findOne({ where: { id: delivery.shipper_id } });
+
+    // Tính ETA đơn giản dựa trên trạng thái
+    let estimated_delivery: string | null = null;
+    if (delivery.status === 'IN_TRANSIT') {
+      const etaTime = new Date(Date.now() + 20 * 60 * 1000); // +20 phút
+      estimated_delivery = etaTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    } else if (delivery.status === 'PICKING_UP') {
+      const etaTime = new Date(Date.now() + 35 * 60 * 1000); // +35 phút
+      estimated_delivery = etaTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    return {
+      has_shipper: true,
+      delivery_id: delivery.id,
+      delivery_status: delivery.status,
+      shipper_name: shipper?.full_name || 'Shipper Avengers',
+      shipper_phone: shipper?.phone || null,
+      shipper_rating: shipper?.rating || 4.5,
+      shipper_vehicle: shipper?.vehicle_type || 'MOTORBIKE',
+      shipper_vehicle_plate: shipper?.vehicle_plate || null,
+      // Vị trí GPS của shipper (cập nhật real-time)
+      shipper_latitude: shipper?.current_latitude ? Number(shipper.current_latitude) : null,
+      shipper_longitude: shipper?.current_longitude ? Number(shipper.current_longitude) : null,
+      estimated_delivery,
+      picked_up_at: delivery.picked_up_at,
+      delivered_at: delivery.delivered_at,
+    };
+  }
+
+  /**
+   * POST /customers/:userId/orders/:orderId/rate-shipper
+   * Khách hàng đánh giá shipper sau khi giao hàng thành công.
+   */
+  async rateShipper(orderId: string, rating: number, comment?: string) {
+    // Tìm delivery của đơn này
+    const delivery = await this.deliveryRepo.findOne({ where: { ma_don_hang: orderId, status: 'DELIVERED' } });
+    if (!delivery) throw new BadRequestException('Không tìm thấy đơn đã giao hoặc đơn chưa được giao thành công');
+
+    const safeRating = Math.min(5, Math.max(1, Math.round(rating)));
+
+    // Cập nhật rating của shipper (trung bình luỹ tiến đơn giản)
+    const shipper = await this.shipperRepo.findOne({ where: { id: delivery.shipper_id } });
+    if (shipper) {
+      const newRating = Math.round(((Number(shipper.rating) * 0.8) + (safeRating * 0.2)) * 100) / 100;
+      await this.shipperRepo.update({ id: shipper.id }, { rating: Math.min(5, newRating) });
+    }
+
+    // Lưu comment vào delivery note (nếu có)
+    if (comment?.trim()) {
+      await this.deliveryRepo.update({ id: delivery.id }, { delivery_note: `[Đánh giá ${safeRating}⭐] ${comment.trim()}` });
+    }
+
+    return { success: true, message: 'Cảm ơn bạn đã đánh giá!', rating: safeRating };
   }
 }

@@ -45,7 +45,7 @@ export const CartProvider = ({ children }) => {
 
   const [activeUserId, setActiveUserId] = useState(() => layMaNguoiDungDangHoatDong());
 
-  const { data: serverCart = [] } = useQuery({
+  const { data: serverCartData } = useQuery({
     queryKey: queryKeys.cartByUser(activeUserId),
     queryFn: async () => {
       const response = await apiClient.get(`/cart/${activeUserId}`);
@@ -57,7 +57,7 @@ export const CartProvider = ({ children }) => {
 
   useEffect(() => {
     setCart((previousCart) => {
-      const mappedFromServer = (serverCart || []).map((item) => {
+      const mappedFromServer = (serverCartData || []).map((item) => {
         const existed = previousCart.find(
           (localItem) =>
             localItem.id === item.id ||
@@ -70,7 +70,7 @@ export const CartProvider = ({ children }) => {
       });
       return mappedFromServer;
     });
-  }, [serverCart]);
+  }, [serverCartData]);
 
   const themVaoGioMutation = useMutation({
     mutationFn: async (item) => {
