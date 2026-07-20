@@ -1444,8 +1444,10 @@ export class ThanhToanService {
       await Promise.all([
         this.notificationService.taoThongBao({
           ma_nguoi_dung: maNguoiDung,
-          tieu_de: 'Don COD cho thu tien',
-          noi_dung: `Don #${donHang.ma_don_hang} se duoc thu tien khi giao hang.`,
+          tieu_de: dto.delivery_mode === 'GIAO_TAN_NOI' ? 'Don COD cho thu tien' : 'Don cho thanh toan tai quay',
+          noi_dung: dto.delivery_mode === 'GIAO_TAN_NOI' 
+            ? `Don #${donHang.ma_don_hang} se duoc thu tien khi giao hang.` 
+            : `Don #${donHang.ma_don_hang} vui long thanh toan tai quay.`,
           loai: 'PAYMENT',
           du_lieu: { ma_don_hang: donHang.ma_don_hang, phuong_thuc_thanh_toan: 'THANH_TOAN_KHI_NHAN_HANG' },
         }),
@@ -2011,11 +2013,18 @@ export class ThanhToanService {
       .addOrderBy('giao_dich.ngay_tao', 'DESC')
       .getMany();
 
+    const maDonHangs = danhSach.map(d => d.ma_don_hang);
+    let trackings: any[] = [];
+    if (maDonHangs.length > 0) {
+      trackings = await this.deliveryTrackingService.getTrackingsByOrderIds(maDonHangs);
+    }
+
     const orders = danhSach.map((don) => {
       const giaoDichSorted = [...(don.giao_dich_thanh_toan || [])].sort(
         (a, b) => new Date(b.ngay_tao).getTime() - new Date(a.ngay_tao).getTime(),
       );
       const giaoDichGanNhat = giaoDichSorted[0] || null;
+      const tr = trackings.find(t => t.ma_don_hang === don.ma_don_hang);
 
       return {
         ma_don_hang: don.ma_don_hang,
@@ -2027,6 +2036,7 @@ export class ThanhToanService {
         khung_gio_giao: don.khung_gio_giao,
         ghi_chu: don.ghi_chu,
         loai_don_hang: don.loai_don_hang,
+        phuong_thuc_giao_hang: tr?.delivery_method || null,
         ma_ban: don.ma_ban,
         ten_khach_hang: don.ten_khach_hang,
         ten_thu_ngan: don.ten_thu_ngan,
@@ -2109,11 +2119,18 @@ export class ThanhToanService {
       .addOrderBy('giao_dich.ngay_tao', 'DESC')
       .getMany();
 
+    const maDonHangs = danhSach.map(d => d.ma_don_hang);
+    let trackings: any[] = [];
+    if (maDonHangs.length > 0) {
+      trackings = await this.deliveryTrackingService.getTrackingsByOrderIds(maDonHangs);
+    }
+
     const orders = danhSach.map((don) => {
       const giaoDichSorted = [...(don.giao_dich_thanh_toan || [])].sort(
         (a, b) => new Date(b.ngay_tao).getTime() - new Date(a.ngay_tao).getTime(),
       );
       const giaoDichGanNhat = giaoDichSorted[0] || null;
+      const tr = trackings.find(t => t.ma_don_hang === don.ma_don_hang);
 
       return {
         ma_don_hang: don.ma_don_hang,
@@ -2126,6 +2143,7 @@ export class ThanhToanService {
         khung_gio_giao: don.khung_gio_giao,
         ghi_chu: don.ghi_chu,
         loai_don_hang: don.loai_don_hang,
+        phuong_thuc_giao_hang: tr?.delivery_method || null,
         ma_ban: don.ma_ban,
         ten_khach_hang: don.ten_khach_hang,
         ten_thu_ngan: don.ten_thu_ngan,
