@@ -15,6 +15,11 @@ export class CartController {
     return this.cartService.themVaoGiỏ(dto);
   }
 
+  @Delete('clear/:userId')
+  async clearCart(@Param('userId') userId: string) {
+    return this.cartService.xoaToanBoGio(userId);
+  }
+
   @Delete(':id')
   async removeItem(@Param('id') id: number) {
     return this.cartService.xoaKhoiGiỏ(id);

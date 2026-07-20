@@ -47,8 +47,6 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose }) {
     }
   }, [cartItem, product?.bien_the, hasDynamicVariants]);
 
-  if (!isOpen || !product || !cartItem) return null;
-
   const availableSizes = product?.sizes || {};
   const sizeKeys = Object.keys(availableSizes);
 
@@ -121,6 +119,8 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose }) {
     }
     onClose();
   };
+
+  if (!isOpen || !product || !cartItem) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">

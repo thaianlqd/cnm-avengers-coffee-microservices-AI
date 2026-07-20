@@ -124,6 +124,11 @@ export default function OrderTrackingPage({ id, onBack }) {
             {tracking?.delivery_mode === 'LAY_TAI_QUAN' && tracking.pickup_time && (
               <p className="text-sm mt-1">Giờ lấy: {new Date(tracking.pickup_time).toLocaleString('vi-VN')}</p>
             )}
+            {tracking?.delivery_mode === 'GIAO_TAN_NOI' && tracking?.delivery_method && (
+              <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-white/20 rounded text-xs font-bold text-white border border-white/30">
+                {tracking.delivery_method === 'LALAMOVE' ? '🚀 Giao hỏa tốc Lalamove' : '🛵 Avengers Delivery'}
+              </div>
+            )}
           </div>
           <div className="text-4xl">{currentStep?.icon || '📦'}</div>
         </div>
@@ -215,10 +220,24 @@ export default function OrderTrackingPage({ id, onBack }) {
         {/* Lalamove specific info */}
         {lalamove?.share_link && (
           <div className="bg-orange-50 rounded-2xl shadow-sm border border-orange-200 p-4 flex flex-col items-center justify-center gap-2 text-center">
-            <p className="text-sm font-bold text-orange-800">Theo dõi trực tiếp trên app Lalamove</p>
-            <a href={lalamove.share_link} target="_blank" rel="noopener noreferrer" className="bg-[#F15A24] text-white px-6 py-2 rounded-xl font-bold hover:bg-orange-600 text-sm w-full">
-              Mở link Lalamove
-            </a>
+            {['ON_GOING', 'PICKED_UP', 'COMPLETED'].includes(lalamove.status) ? (
+              <>
+                <p className="text-sm font-bold text-orange-800">Theo dõi trực tiếp trên app Lalamove</p>
+                <a
+                  href={lalamove.share_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-[#F15A24] text-white px-6 py-2 rounded-xl font-bold hover:bg-orange-600 text-sm w-full"
+                >
+                  Mở link Lalamove
+                </a>
+              </>
+            ) : (
+              <div className="flex items-center gap-2 text-orange-700">
+                <div className="w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm font-bold">Đang tìm tài xế Lalamove, vui lòng chờ giây lát...</p>
+              </div>
+            )}
           </div>
         )}
 
