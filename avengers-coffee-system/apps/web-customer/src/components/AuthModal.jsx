@@ -711,8 +711,14 @@ function QuickGoogleButton({ onLoginSuccess, resetSocialState, onClose, setError
   );
 }
 
-export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
-  const GOOGLE_CLIENT_ID = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
+export default function AuthModal({
+  isOpen,
+  onClose,
+  initialMode = 'login',
+  onSuccess,
+}) {
+  const rawGoogleId = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
+  const GOOGLE_CLIENT_ID = rawGoogleId.replace(/^["']|["']$/g, '');
   const RECAPTCHA_SITE_KEY = String(import.meta.env.VITE_RECAPTCHA_SITE_KEY || '').trim();
   const FACEBOOK_APP_ID = String(import.meta.env.VITE_FACEBOOK_APP_ID || '').trim();
 

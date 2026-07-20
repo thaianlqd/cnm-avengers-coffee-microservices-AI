@@ -317,6 +317,9 @@ services:
     environment:
       - VITE_API_URL=${WEB_CUSTOMER_API_URL:-http://localhost:3000}
       - VITE_SOCKET_URL=${WEB_CUSTOMER_SOCKET_URL:-http://localhost:3005}
+      - VITE_GOOGLE_CLIENT_ID=${WEB_CUSTOMER_GOOGLE_CLIENT_ID}
+      - VITE_RECAPTCHA_SITE_KEY=${WEB_CUSTOMER_RECAPTCHA_SITE_KEY}
+      - VITE_FACEBOOK_APP_ID=${WEB_CUSTOMER_FACEBOOK_APP_ID}
     volumes:
       - ./avengers-coffee-system/apps/web-customer:/app
       - /app/node_modules
