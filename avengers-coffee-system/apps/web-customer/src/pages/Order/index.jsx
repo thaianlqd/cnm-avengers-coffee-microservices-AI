@@ -694,53 +694,6 @@ export default function OrderPage({
                 {/* Main Two-Column Layout for Products */}
                 <div ref={productsContainerRef} className="flex flex-col lg:flex-row gap-8 px-6 lg:px-8 mt-6">
                   
-                  {/* Left Column: Sticky Sidebar Category Menu (Desktop only) */}
-                  <div className="hidden lg:block w-[260px] flex-shrink-0 sticky top-[100px] self-start z-10">
-                    <div className="bg-[#fdfaf6] rounded-2xl border border-[#ebdccb] p-5 shadow-sm">
-                      <h3 className="text-[13px] font-black text-[#b22830] uppercase mb-4 tracking-widest pb-2 border-b border-[#ebdccb]">
-                        Danh mục món ăn
-                      </h3>
-                      <ul className="space-y-1.5">
-                        <li>
-                          <button
-                            type="button"
-                            onClick={() => handleCategorySelect('all')}
-                            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-all ${
-                              activeCategory === 'all'
-                                ? 'bg-[#b22830] text-white font-bold shadow-md'
-                                : 'text-[#333333] hover:bg-gray-100 font-medium'
-                            }`}
-                          >
-                            <span className="text-[13px] uppercase tracking-wide">Xem tất cả</span>
-                          </button>
-                        </li>
-                        {parentCats.map((parent, idx) => {
-                          const iconUrl = MENU_ICONS[idx % MENU_ICONS.length];
-                          const isActive = activeCategory === parent.ma_danh_muc;
-                          return (
-                            <li key={parent.ma_danh_muc}>
-                              <button
-                                type="button"
-                                onClick={() => handleCategorySelect(parent.ma_danh_muc)}
-                                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-all ${
-                                  isActive
-                                    ? 'bg-[#b22830] text-white font-bold shadow-md'
-                                    : 'text-[#333333] hover:bg-gray-100 font-medium'
-                                }`}
-                              >
-                                <img 
-                                  src={iconUrl} 
-                                  alt="" 
-                                  className={`w-5 h-5 object-contain ${isActive ? 'brightness-0 invert' : ''}`} 
-                                />
-                                <span className="text-[13px] uppercase tracking-wide">{parent.ten_danh_muc}</span>
-                              </button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  </div>
 
                   {/* Right Column: Products List & Category Details */}
                   <div className="flex-1 min-w-0">

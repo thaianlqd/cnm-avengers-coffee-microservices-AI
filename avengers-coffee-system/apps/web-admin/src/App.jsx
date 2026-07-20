@@ -7,6 +7,7 @@ import {
   MANAGER_EMPLOYEE_MANAGEMENT_TAB,
   MANAGER_SHIFT_APPROVAL_TAB,
   MANAGER_WORKFORCE_MANAGEMENT_TAB,
+  MANAGER_SURVEY_TAB,
   NAV_TABS,
   ORDER_STATUS_LABEL,
   POS_ORDER_TYPE_OPTIONS,
@@ -14,6 +15,7 @@ import {
   WORKFORCE_TAB,
 } from './features/admin-dashboard/constants'
 import { useAdminDashboard } from './features/admin-dashboard/hooks/useAdminDashboard'
+import { ManagerSurveyPanel } from './features/manager-dashboard/components/ManagerSurveyPanel'
 import { fmtMoney, normalizeViText } from './features/admin-dashboard/utils'
 import { LoginScreen } from './features/admin-dashboard/components/LoginScreen'
 import { OverviewPanel } from './features/admin-dashboard/components/OverviewPanel'
@@ -128,6 +130,14 @@ function App() {
     phanHoiReview,
     suaPhanHoiReview,
     xoaPhanHoiReview,
+    surveysState,
+    surveyResponsesState,
+    taoBieuMauKhaoSat,
+    suaBieuMauKhaoSat,
+    xoaBieuMauKhaoSat,
+    kichHoatBieuMauKhaoSat,
+    taiDanhSachBieuMau,
+    taiDanhSachPhanHoi,
   } = useAdminDashboard()
 
   const userRole = session?.user?.vaiTro || session?.user?.vai_tro || DASHBOARD_ROLES.STAFF
@@ -197,7 +207,20 @@ function App() {
   }
 
   if (isSystemAdmin) {
-    return <AdminSystemConsole session={session} onLogout={logout} />
+    return (
+      <AdminSystemConsole
+        session={session}
+        onLogout={logout}
+        surveysState={surveysState}
+        surveyResponsesState={surveyResponsesState}
+        onKichHoatForm={kichHoatBieuMauKhaoSat}
+        onTaoForm={taoBieuMauKhaoSat}
+        onSuaForm={suaBieuMauKhaoSat}
+        onXoaForm={xoaBieuMauKhaoSat}
+        onTaiForms={taiDanhSachBieuMau}
+        onTaiResponses={taiDanhSachPhanHoi}
+      />
+    )
   }
 
   return (

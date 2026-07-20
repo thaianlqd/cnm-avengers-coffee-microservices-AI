@@ -1693,6 +1693,53 @@ export class UserService {
     };
   }
 
+  /** Internal: phát hành voucher khảo sát 20% đơn từ 100k, hạn dùng 3 ngày */
+  async phatHanhVoucherKhaoSat(userId: string) {
+    const cleanUserId = String(userId || '').trim();
+    if (!cleanUserId) {
+      throw new BadRequestException('user_id la bat buoc de phat hanh voucher');
+    }
+
+    const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: cleanUserId } });
+    if (!user) {
+      throw new NotFoundException('Khong tim thay nguoi dung de phat hanh voucher');
+    }
+
+    // Sinh mã ngẫu nhiên dạng KS20_XXXXXX
+    const randomChars = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const code = `KS20_${randomChars}`;
+
+    const p = new Promotion();
+    p.ma_khuyen_mai = code;
+    p.ten_khuyen_mai = 'Voucher khảo sát 20%';
+    p.mo_ta = 'Mã ưu đãi giảm 20% cho đơn từ 100k (tối đa 3 ngày sử dụng), nhận được nhờ hoàn thành khảo sát.';
+    p.loai_khuyen_mai = 'PERCENT';
+    p.gia_tri = 20;
+    p.gia_tri_don_toi_thieu = 100000;
+    p.giam_toi_da = null;
+    p.so_luong_toi_da = 1;
+    p.so_luong_da_dung = 0;
+    p.gioi_han_moi_nguoi = 1;
+    p.ngay_bat_dau = new Date();
+    p.ngay_ket_thuc = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 ngày
+    p.trang_thai = 'ACTIVE';
+    p.hien_thi_cho_khach = true;
+    p.ten_san_pham_tang = null;
+    p.hinh_anh = null;
+    p.ma_nguoi_dung = cleanUserId; // gán riêng cho user này
+    p.loai_su_kien = 'SURVEY';
+
+    const saved = await this.promotionRepo.save(p);
+    return {
+      message: 'Phat hanh voucher khao sat thanh cong',
+      item: {
+        ma_khuyen_mai: saved.ma_khuyen_mai,
+        ten_khuyen_mai: saved.ten_khuyen_mai,
+        ngay_ket_thuc: saved.ngay_ket_thuc,
+      },
+    };
+  }
+
     async loginWithFacebook(payload: {
       facebookAccessToken?: string;
       accessToken?: string;

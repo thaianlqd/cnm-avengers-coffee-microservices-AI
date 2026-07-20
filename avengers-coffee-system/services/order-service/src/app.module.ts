@@ -19,6 +19,10 @@ import { CaLamViecNhanVien } from './modules/thanh-toan/entities/ca-lam-viec-nha
 import { Review } from './entities/review.entity';
 import { ReviewService } from './services/review.service';
 import { ReviewController } from './controllers/review.controller';
+import { SurveyForm } from './entities/survey-form.entity';
+import { SurveyResponse } from './entities/survey-response.entity';
+import { SurveyService } from './services/survey.service';
+import { SurveyController } from './controllers/survey.controller';
 import { Voucher } from './modules/voucher/voucher.entity';
 import { VoucherModule } from './modules/voucher/voucher.module';
 import { ChatConversation } from './modules/chat/entities/chat-conversation.entity';
@@ -98,12 +102,14 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
             ShipperSchedule,
             ShipperException,
             DeliveryTracking,
+            SurveyForm,
+            SurveyResponse,
           ],
           synchronize: true,
         };
       },
     }),
-    TypeOrmModule.forFeature([Review]),
+    TypeOrmModule.forFeature([Review, SurveyForm, SurveyResponse]),
     InfrastructureModule,
     CartModule,
     NotificationModule,
@@ -114,7 +120,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
     ShipperModule,
     FeaturesThaianModule,
   ],
-  controllers: [AppController, ReviewController],
-  providers: [AppService, ReviewService],
+  controllers: [AppController, ReviewController, SurveyController],
+  providers: [AppService, ReviewService, SurveyService],
 })
 export class AppModule { }

@@ -16,8 +16,17 @@ export class DonHang {
   @PrimaryGeneratedColumn('uuid')
   ma_don_hang: string;
 
-  @Column({ type: 'varchar' })
-  ma_nguoi_dung: string;
+  @Column({ type: 'varchar', nullable: true })
+  ma_nguoi_dung: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  guest_email: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  guest_phone: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  session_id: string | null;
 
   @Column({ type: 'varchar', default: 'MAC_DINH_CHI' })
   co_so_ma: string;
