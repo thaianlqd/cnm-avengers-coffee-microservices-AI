@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, EntityManager, Repository } from 'typeorm';
+import { Brackets, EntityManager, IsNull, Repository } from 'typeorm';
 import { RedisCacheService } from '../../infrastructure/cache/redis-cache.service';
 import { RabbitMqService } from '../../infrastructure/messaging/rabbitmq.service';
 import { CartItem } from '../cart/cart.entity';
@@ -24,6 +24,9 @@ type KhoiTaoThanhToanDto = {
   delivery_mode?: 'GIAO_TAN_NOI' | 'LAY_TAI_QUAN' | 'DUNG_TAI_CHO';
   delivery_method?: 'INTERNAL' | 'LALAMOVE';
   table_number?: string;
+  guest_email?: string;
+  guest_phone?: string;
+  session_id?: string;
 };
 
 type TaoDonTaiQuayDto = {
@@ -1321,6 +1324,13 @@ export class ThanhToanService {
       throw new BadRequestException('dia_chi_giao_hang la bat buoc');
     }
 
+    const isGuest = !maNguoiDung || maNguoiDung === 'anonymous' || maNguoiDung === 'guest' || maNguoiDung.startsWith('anon-');
+    if (isGuest) {
+      if (!dto.guest_email?.trim() && !dto.guest_phone?.trim()) {
+        throw new BadRequestException('Khách vãng lai cần nhập ít nhất Email hoặc Số điện thoại để định danh.');
+      }
+    }
+
     const gioHang = await this.cartRepo.find({ where: { ma_nguoi_dung: maNguoiDung } });
     if (!gioHang.length) {
       throw new BadRequestException('Gio hang trong, khong the thanh toan');
@@ -1350,7 +1360,10 @@ export class ThanhToanService {
     // 1. Tạo đơn hàng
     const donHang = await this.donHangRepo.save(this.donHangRepo.create({
       ma_don_hang: maDonHang,
-      ma_nguoi_dung: maNguoiDung,
+      ma_nguoi_dung: isGuest ? null : maNguoiDung,
+      guest_email: isGuest ? (dto.guest_email?.trim() || null) : null,
+      guest_phone: isGuest ? (dto.guest_phone?.trim() || null) : null,
+      session_id: dto.session_id?.trim() || null,
       co_so_ma: branchCode,
       tong_tien: tongTien,
       ma_voucher: maVoucherApDung,
@@ -1664,16 +1677,20 @@ export class ThanhToanService {
       });
       const donHang = await this.donHangRepo.findOne({ where: { ma_don_hang: giaoDich.ma_don_hang } });
       if (donHang) {
-        await Promise.all([
-          this.notificationService.taoThongBao({
-            ma_nguoi_dung: donHang.ma_nguoi_dung,
-            tieu_de: 'Thanh toan thanh cong',
-            noi_dung: `Don #${donHang.ma_don_hang} da thanh toan thanh cong va duoc xac nhan.`,
-            loai: 'PAYMENT',
-            du_lieu: { ma_don_hang: donHang.ma_don_hang, trang_thai_thanh_toan: 'DA_THANH_TOAN' },
-          }),
-          this.tichDiemLoyalty(donHang.ma_nguoi_dung, Number(donHang.tong_tien) + Number(donHang.so_tien_giam || 0)),
-        ]);
+        const promises: Promise<any>[] = [];
+        if (donHang.ma_nguoi_dung) {
+          promises.push(
+            this.notificationService.taoThongBao({
+              ma_nguoi_dung: donHang.ma_nguoi_dung,
+              tieu_de: 'Thanh toan thanh cong',
+              noi_dung: `Don #${donHang.ma_don_hang} da thanh toan thanh cong va duoc xac nhan.`,
+              loai: 'PAYMENT',
+              du_lieu: { ma_don_hang: donHang.ma_don_hang, trang_thai_thanh_toan: 'DA_THANH_TOAN' },
+            }),
+            this.tichDiemLoyalty(donHang.ma_nguoi_dung, Number(donHang.tong_tien) + Number(donHang.so_tien_giam || 0)),
+          );
+        }
+        await Promise.all(promises);
       }
     } else {
       giaoDich.trang_thai = 'THAT_BAI';
@@ -1682,7 +1699,7 @@ export class ThanhToanService {
         ghi_chu: 'Thanh toan VNPAY that bai',
       });
       const donHang = await this.donHangRepo.findOne({ where: { ma_don_hang: giaoDich.ma_don_hang } });
-      if (donHang) {
+      if (donHang && donHang.ma_nguoi_dung) {
         await this.notificationService.taoThongBao({
           ma_nguoi_dung: donHang.ma_nguoi_dung,
           tieu_de: 'Thanh toan that bai',
@@ -1750,16 +1767,20 @@ export class ThanhToanService {
       });
       const donHang = await this.donHangRepo.findOne({ where: { ma_don_hang: giaoDich.ma_don_hang } });
       if (donHang) {
-        await Promise.all([
-          this.notificationService.taoThongBao({
-            ma_nguoi_dung: donHang.ma_nguoi_dung,
-            tieu_de: 'Nhan tien QR thanh cong',
-            noi_dung: `Don #${donHang.ma_don_hang} da nhan thanh toan QR va duoc xac nhan.`,
-            loai: 'PAYMENT',
-            du_lieu: { ma_don_hang: donHang.ma_don_hang, trang_thai_thanh_toan: 'DA_THANH_TOAN' },
-          }),
-          this.tichDiemLoyalty(donHang.ma_nguoi_dung, Number(donHang.tong_tien) + Number(donHang.so_tien_giam || 0)),
-        ]);
+        const promises: Promise<any>[] = [];
+        if (donHang.ma_nguoi_dung) {
+          promises.push(
+            this.notificationService.taoThongBao({
+              ma_nguoi_dung: donHang.ma_nguoi_dung,
+              tieu_de: 'Nhan tien QR thanh cong',
+              noi_dung: `Don #${donHang.ma_don_hang} da nhan thanh toan QR va duoc xac nhan.`,
+              loai: 'PAYMENT',
+              du_lieu: { ma_don_hang: donHang.ma_don_hang, trang_thai_thanh_toan: 'DA_THANH_TOAN' },
+            }),
+            this.tichDiemLoyalty(donHang.ma_nguoi_dung, Number(donHang.tong_tien) + Number(donHang.so_tien_giam || 0)),
+          );
+        }
+        await Promise.all(promises);
       }
     }
     return { success: true };
@@ -2872,13 +2893,15 @@ export class ThanhToanService {
       throw new NotFoundException('Khong tim thay don hang');
     }
 
-    await this.notificationService.taoThongBao({
-      ma_nguoi_dung: donHang.ma_nguoi_dung,
-      tieu_de: 'Cap nhat trang thai don hang',
-      noi_dung: `Don #${maDonHang} da chuyen sang trang thai ${trangThai}.`,
-      loai: 'ORDER',
-      du_lieu: { ma_don_hang: maDonHang, trang_thai_don_hang: trangThai },
-    });
+    if (donHang.ma_nguoi_dung) {
+      await this.notificationService.taoThongBao({
+        ma_nguoi_dung: donHang.ma_nguoi_dung,
+        tieu_de: 'Cap nhat trang thai don hang',
+        noi_dung: `Don #${maDonHang} da chuyen sang trang thai ${trangThai}.`,
+        loai: 'ORDER',
+        du_lieu: { ma_don_hang: maDonHang, trang_thai_don_hang: trangThai },
+      });
+    }
 
     return { message: 'Cap nhat trang thai thanh cong', order: updated };
   }
@@ -3173,5 +3196,86 @@ export class ThanhToanService {
   taoUrlRedirectFrontEnd(maNguoiDung: string, maDonHang: string, thanhCong: boolean) {
     const webBase = process.env.WEB_CUSTOMER_BASE_URL || 'http://localhost:5173';
     return `${webBase}/?payment_status=${thanhCong ? 'success' : 'failed'}&ma_don_hang=${maDonHang}`;
+  }
+
+  async lienKetDonHangKhach(maNguoiDung: string, maDonHang: string) {
+    const order = await this.donHangRepo.findOne({ where: { ma_don_hang: maDonHang } });
+    if (!order) {
+      throw new NotFoundException('Khong tim thay don hang');
+    }
+
+    const currentMaNguoiDung = String(order.ma_nguoi_dung || '');
+    if (currentMaNguoiDung.startsWith('anon-') || currentMaNguoiDung === 'anonymous') {
+      order.ma_nguoi_dung = maNguoiDung;
+      await this.donHangRepo.save(order);
+      return { success: true, message: 'Lien ket don hang thanh cong' };
+    }
+
+    // If it's already linked to this user, return success too
+    if (currentMaNguoiDung === maNguoiDung) {
+      return { success: true, message: 'Don hang da duoc lien ket voi tai khoan nay' };
+    }
+
+    throw new BadRequestException('Don hang nay da thuoc ve mot tai khoan khac');
+  }
+
+  async lienKetDonHangGuest(
+    customerId: string,
+    payload: { guest_session_id?: string; email?: string; phone?: string; confirmLink?: boolean },
+  ) {
+    const cleanSession = payload.guest_session_id?.trim();
+    const cleanEmail = payload.email?.trim()?.toLowerCase();
+    const cleanPhone = payload.phone?.trim();
+
+    if (!cleanSession && !cleanEmail && !cleanPhone) {
+      return { success: true, linked: false, count: 0 };
+    }
+
+    // Tìm các đơn hàng chưa gán tài khoản khớp với session_id HOẶC email HOẶC số điện thoại
+    const query = this.donHangRepo.createQueryBuilder('don_hang')
+      .where('don_hang.ma_nguoi_dung IS NULL');
+
+    query.andWhere(
+      new Brackets((qb) => {
+        let hasCondition = false;
+        if (cleanSession) {
+          qb.where('don_hang.session_id = :session', { session: cleanSession });
+          hasCondition = true;
+        }
+        if (cleanEmail) {
+          if (hasCondition) {
+            qb.orWhere('LOWER(don_hang.guest_email) = :email', { email: cleanEmail });
+          } else {
+            qb.where('LOWER(don_hang.guest_email) = :email', { email: cleanEmail });
+            hasCondition = true;
+          }
+        }
+        if (cleanPhone) {
+          if (hasCondition) {
+            qb.orWhere('don_hang.guest_phone = :phone', { phone: cleanPhone });
+          } else {
+            qb.where('don_hang.guest_phone = :phone', { phone: cleanPhone });
+          }
+        }
+      }),
+    );
+
+    const matchedOrders = await query.getMany();
+
+    if (matchedOrders.length > 0) {
+      if (payload.confirmLink === true) {
+        // Thực hiện liên kết thực tế khi người dùng đã xác nhận
+        for (const order of matchedOrders) {
+          order.ma_nguoi_dung = customerId;
+        }
+        await this.donHangRepo.save(matchedOrders);
+        return { success: true, linked: true, count: matchedOrders.length };
+      } else {
+        // Trả về tín hiệu promptLink để Frontend hỏi ý kiến (luôn hiển thị popup hỏi xác nhận)
+        return { success: true, promptLink: true, count: matchedOrders.length };
+      }
+    }
+
+    return { success: true, linked: false, count: 0 };
   }
 }

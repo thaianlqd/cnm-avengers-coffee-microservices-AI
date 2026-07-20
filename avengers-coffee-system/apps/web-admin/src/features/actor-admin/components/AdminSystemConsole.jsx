@@ -5,6 +5,7 @@ import { SystemOpsPanel } from './SystemOpsPanel'
 import { AdminShipperPanel } from './AdminShipperPanel'
 import { AccountCenterPanel } from '../../shared/components/AccountCenterPanel'
 import { AdminNotificationBell } from '../../shared/components/AdminNotificationBell'
+import { ManagerSurveyPanel } from '../../manager-dashboard/components/ManagerSurveyPanel'
 
 function fmtNumber(value) {
   return Number(value || 0).toLocaleString('vi-VN')
@@ -60,7 +61,18 @@ function Pagination({ pageData, onPageChange }) {
   )
 }
 
-export function AdminSystemConsole({ session, onLogout }) {
+export function AdminSystemConsole({
+  session,
+  onLogout,
+  surveysState,
+  surveyResponsesState,
+  onKichHoatForm,
+  onTaoForm,
+  onSuaForm,
+  onXoaForm,
+  onTaiForms,
+  onTaiResponses,
+}) {
   const [adminToast, setAdminToast] = useState(null)
   const [usersPage, setUsersPage] = useState(1)
   const [customersPage, setCustomersPage] = useState(1)
@@ -286,6 +298,13 @@ export function AdminSystemConsole({ session, onLogout }) {
     return () => window.removeEventListener(ADMIN_LOCAL_NOTIFY_EVENT, handleLocalNotify)
   }, [])
 
+  useEffect(() => {
+    if (activeTab === 'survey-manage') {
+      onTaiForms();
+      onTaiResponses();
+    }
+  }, [activeTab]);
+
   return (
     <div className="system-admin-shell">
       <aside className="system-admin-sidebar">
@@ -318,6 +337,9 @@ export function AdminSystemConsole({ session, onLogout }) {
           </button>
             <button type="button" className={activeTab === 'promotions' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('promotions')}>
               Khuyến mãi &amp; Voucher
+            </button>
+            <button type="button" className={activeTab === 'survey-manage' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('survey-manage')}>
+              📊 Quản lý Khảo sát
             </button>
               <button type="button" className={activeTab === 'ai-analytics' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('ai-analytics')}>
                 Phân tích mua sắm
@@ -718,6 +740,19 @@ export function AdminSystemConsole({ session, onLogout }) {
                 <p style={{ color: '#8c6b56' }}>Chưa có chương trình nào. Hãy tạo chương trình đầu tiên ở trên!</p>
               ) : null}
           </section>
+        )}
+
+        {activeTab === 'survey-manage' && (
+          <ManagerSurveyPanel
+            surveysState={surveysState}
+            surveyResponsesState={surveyResponsesState}
+            onKichHoatForm={onKichHoatForm}
+            onTaoForm={onTaoForm}
+            onSuaForm={onSuaForm}
+            onXoaForm={onXoaForm}
+            onTaiForms={onTaiForms}
+            onTaiResponses={onTaiResponses}
+          />
         )}
 
         {activeTab === 'users' && (

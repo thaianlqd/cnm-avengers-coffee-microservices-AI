@@ -350,6 +350,15 @@ export class UserController {
     });
   }
 
+  /** Internal: phát hành voucher giảm giá 20% khi hoàn thành khảo sát */
+  @AllowInternal()
+  @Post('promotions/internal/phat-hanh')
+  async phatHanhVoucherKhaoSat(
+    @Body() body: { user_id: string },
+  ) {
+    return this.userService.phatHanhVoucherKhaoSat(body.user_id);
+  }
+
   // ═══════════════════════════════════════════════════════
   //  LUCKY WHEEL (Vòng quay may mắn)
   // ═══════════════════════════════════════════════════════

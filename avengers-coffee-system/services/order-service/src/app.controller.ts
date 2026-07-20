@@ -179,6 +179,30 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('CUSTOMER', 'ADMIN')
+  @Patch('customers/:customerId/orders/:orderId/link')
+  linkGuestOrder(
+    @Param('customerId') customerId: string,
+    @Param('orderId') orderId: string,
+    @CurrentUser() currentUser: AuthUser | null,
+  ) {
+    this.ensureSelfOrAdmin(currentUser, customerId);
+    return this.thanhToanService.lienKetDonHangKhach(customerId, orderId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('CUSTOMER', 'ADMIN')
+  @Post('customers/:customerId/orders/link-guest-orders')
+  linkGuestOrders(
+    @Param('customerId') customerId: string,
+    @Body() payload: { guest_session_id?: string; email?: string; phone?: string; confirmLink?: boolean },
+    @CurrentUser() currentUser: AuthUser | null,
+  ) {
+    this.ensureSelfOrAdmin(currentUser, customerId);
+    return this.thanhToanService.lienKetDonHangGuest(customerId, payload);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CUSTOMER', 'ADMIN', 'MANAGER', 'STAFF')
   @Get('customers/:customerId/notifications')
   getNotifications(
