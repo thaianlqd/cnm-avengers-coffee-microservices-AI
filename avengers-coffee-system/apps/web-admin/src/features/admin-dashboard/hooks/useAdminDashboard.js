@@ -90,6 +90,8 @@ export function useAdminDashboard() {
   const [checkingAttendanceShiftId, setCheckingAttendanceShiftId] = useState('')
   const [reviewsState, setReviewsState] = useState({ loading: false, error: '', items: [] })
   const [replyingReviewId, setReplyingReviewId] = useState('')
+  const [surveysState, setSurveysState] = useState({ loading: false, error: '', items: [] })
+  const [surveyResponsesState, setSurveyResponsesState] = useState({ loading: false, error: '', items: [] })
   const knownOrderIdsRef = useRef(new Set())
   const knownOrderPaymentStatusRef = useRef(new Map())
 
@@ -399,6 +401,121 @@ export function useAdminDashboard() {
     }
   }
 
+  const taiDanhSachBieuMau = async () => {
+    setSurveysState((prev) => ({ ...prev, loading: true, error: '' }))
+    try {
+      const token = session?.token || session?.accessToken
+      const response = await fetch(`${API_BASE_URL}/surveys/forms`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Không tải được danh sách biểu mẫu khảo sát')
+      setSurveysState({ loading: false, error: '', items: payload?.items || [] })
+    } catch (error) {
+      setSurveysState({ loading: false, error: error.message || 'Không tải được danh sách biểu mẫu khảo sát', items: [] })
+    }
+  }
+
+  const taiDanhSachPhanHoi = async () => {
+    setSurveyResponsesState((prev) => ({ ...prev, loading: true, error: '' }))
+    try {
+      const token = session?.token || session?.accessToken
+      const response = await fetch(`${API_BASE_URL}/surveys/responses`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Không tải được danh sách phản hồi')
+      setSurveyResponsesState({ loading: false, error: '', items: payload?.items || [] })
+    } catch (error) {
+      setSurveyResponsesState({ loading: false, error: error.message || 'Không tải được danh sách phản hồi', items: [] })
+    }
+  }
+
+  const taoBieuMauKhaoSat = async (formPayload) => {
+    try {
+      const token = session?.token || session?.accessToken
+      const response = await fetch(`${API_BASE_URL}/surveys/forms`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(formPayload)
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Không tạo được biểu mẫu khảo sát')
+      await taiDanhSachBieuMau()
+      return { ok: true }
+    } catch (error) {
+      alert(error.message)
+      return { ok: false, error: error.message }
+    }
+  }
+
+  const suaBieuMauKhaoSat = async (id, formPayload) => {
+    try {
+      const token = session?.token || session?.accessToken
+      const response = await fetch(`${API_BASE_URL}/surveys/forms/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(formPayload)
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Không sửa được biểu mẫu khảo sát')
+      await taiDanhSachBieuMau()
+      return { ok: true }
+    } catch (error) {
+      alert(error.message)
+      return { ok: false, error: error.message }
+    }
+  }
+
+  const xoaBieuMauKhaoSat = async (id) => {
+    if (!window.confirm('Xác nhận xóa biểu mẫu khảo sát này?')) return { ok: false }
+    try {
+      const token = session?.token || session?.accessToken
+      const response = await fetch(`${API_BASE_URL}/surveys/forms/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Không xóa được biểu mẫu khảo sát')
+      await taiDanhSachBieuMau()
+      return { ok: true }
+    } catch (error) {
+      alert(error.message)
+      return { ok: false, error: error.message }
+    }
+  }
+
+  const kichHoatBieuMauKhaoSat = async (id) => {
+    try {
+      const token = session?.token || session?.accessToken
+      const response = await fetch(`${API_BASE_URL}/surveys/forms/${id}/activate`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Không kích hoạt được biểu mẫu khảo sát')
+      await taiDanhSachBieuMau()
+      return { ok: true }
+    } catch (error) {
+      alert(error.message)
+      return { ok: false, error: error.message }
+    }
+  }
+
   useEffect(() => {
     if (!session) return
 
@@ -412,6 +529,8 @@ export function useAdminDashboard() {
         taiDanhSachNhanSu(),
         taiYeuCauDangKyCa(true),
         taiReviewCSKH(),
+        taiDanhSachBieuMau(),
+        taiDanhSachPhanHoi(),
       ])
     }
   }, [session])
@@ -1754,5 +1873,13 @@ export function useAdminDashboard() {
     phanHoiReview,
     suaPhanHoiReview,
     xoaPhanHoiReview,
+    surveysState,
+    surveyResponsesState,
+    taoBieuMauKhaoSat,
+    suaBieuMauKhaoSat,
+    xoaBieuMauKhaoSat,
+    kichHoatBieuMauKhaoSat,
+    taiDanhSachBieuMau,
+    taiDanhSachPhanHoi,
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/apiClient';
 import { queryKeys } from '../../lib/queryKeys';
@@ -7,8 +7,17 @@ import { GiftIcon, StarIcon, CheckBadgeIcon, CalendarIcon, ArrowRightIcon } from
 export default function MembershipPage({ user, onNavigate }) {
   const userId = user?.ma_nguoi_dung || user?.maNguoiDung || null;
   const queryClient = useQueryClient();
-  const [ngaySinhInput, setNgaySinhInput] = useState('');
+  const [birthDaySelect, setBirthDaySelect] = useState('01');
+  const [birthMonthSelect, setBirthMonthSelect] = useState('01');
+  const [birthYearSelect, setBirthYearSelect] = useState('2000');
   const [isEditingBirthday, setIsEditingBirthday] = useState(false);
+
+  const daysInMonth = new Date(Number(birthYearSelect), Number(birthMonthSelect), 0).getDate();
+  useEffect(() => {
+    if (Number(birthDaySelect) > daysInMonth) {
+      setBirthDaySelect(String(daysInMonth).padStart(2, '0'));
+    }
+  }, [birthMonthSelect, birthYearSelect, birthDaySelect, daysInMonth]);
 
   const { data: memData, isLoading, isError } = useQuery({
     queryKey: queryKeys.membershipByUser(userId),
@@ -112,8 +121,8 @@ export default function MembershipPage({ user, onNavigate }) {
 
   const handleUpdateBirthday = (e) => {
     e.preventDefault();
-    if (!ngaySinhInput) return;
-    updateBirthdayMutation.mutate(ngaySinhInput);
+    const formattedDate = `${birthYearSelect}-${birthMonthSelect}-${birthDaySelect}`;
+    updateBirthdayMutation.mutate(formattedDate);
   };
 
   const getTierGradient = (maHang) => {
@@ -334,14 +343,48 @@ export default function MembershipPage({ user, onNavigate }) {
                 <p className="text-xs text-gray-500 font-semibold leading-relaxed">Thiết lập ngày sinh nhật để nhận voucher ưu đãi bất ngờ từ Highlands Coffee Loyalty Program.</p>
                 {isEditingBirthday ? (
                   <form onSubmit={handleUpdateBirthday} className="space-y-3">
-                    <input 
-                      type="date" 
-                      required
-                      value={ngaySinhInput}
-                      onChange={(e) => setNgaySinhInput(e.target.value)}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-[#b22830]/10 transition-all duration-200 bg-white"
-                    />
-                    <div className="flex gap-2">
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <p className="mb-1 text-[10px] font-bold text-gray-400 uppercase">Ngày</p>
+                        <select
+                          value={birthDaySelect}
+                          onChange={(e) => setBirthDaySelect(e.target.value)}
+                          className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-[#b22830]/10 bg-white cursor-pointer"
+                        >
+                          {Array.from({ length: daysInMonth }, (_, i) => {
+                            const d = String(i + 1).padStart(2, '0');
+                            return <option key={d} value={d}>{d}</option>;
+                          })}
+                        </select>
+                      </div>
+                      <div>
+                        <p className="mb-1 text-[10px] font-bold text-gray-400 uppercase">Tháng</p>
+                        <select
+                          value={birthMonthSelect}
+                          onChange={(e) => setBirthMonthSelect(e.target.value)}
+                          className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-[#b22830]/10 bg-white cursor-pointer"
+                        >
+                          {Array.from({ length: 12 }, (_, i) => {
+                            const m = String(i + 1).padStart(2, '0');
+                            return <option key={m} value={m}>{m}</option>;
+                          })}
+                        </select>
+                      </div>
+                      <div>
+                        <p className="mb-1 text-[10px] font-bold text-gray-400 uppercase">Năm</p>
+                        <select
+                          value={birthYearSelect}
+                          onChange={(e) => setBirthYearSelect(e.target.value)}
+                          className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-[#b22830]/10 bg-white cursor-pointer"
+                        >
+                          {Array.from({ length: 100 }, (_, i) => {
+                            const y = String(new Date().getFullYear() - i);
+                            return <option key={y} value={y}>{y}</option>;
+                          })}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 pt-1">
                       <button 
                         type="submit"
                         disabled={updateBirthdayMutation.isPending}
