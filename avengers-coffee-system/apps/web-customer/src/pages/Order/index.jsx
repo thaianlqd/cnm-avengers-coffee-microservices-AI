@@ -724,9 +724,10 @@ export default function OrderPage({
                   })}
                 </div>
 
-                {/* Main Product Layout */}
-                <div ref={productsContainerRef} className="flex flex-col mt-6 px-6 lg:px-8 w-full">
-                  <div className="w-full">
+{/* Main Two-Column Layout for Products */}
+            <div ref={productsContainerRef} className="flex flex-col lg:flex-row gap-8 px-6 lg:px-8 mt-6">
+            {/* Right Column: Products List & Category Details */}
+            <div className="flex-1 min-w-0">
                     
                     {/* Separate Category View Header (Breadcrumbs, sorting, title) */}
                     {activeCategory !== 'all' && (

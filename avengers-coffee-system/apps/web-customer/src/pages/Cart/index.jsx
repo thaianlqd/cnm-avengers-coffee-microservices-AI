@@ -114,6 +114,18 @@ export default function CartPage({
   const [voucherResult, setVoucherResult] = useState(null);
   const [voucherError, setVoucherError] = useState('');
   const [isCheckingVoucher, setIsCheckingVoucher] = useState(false);
+  const [guestEmail, setGuestEmail] = useState('');
+  const [guestPhone, setGuestPhone] = useState('');
+  const [guestSessionId, setGuestSessionId] = useState('');
+
+  useEffect(() => {
+    let gsid = localStorage.getItem('avengers_guest_session_id');
+    if (!gsid) {
+      gsid = `gsid_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
+      localStorage.setItem('avengers_guest_session_id', gsid);
+    }
+    setGuestSessionId(gsid);
+  }, []);
 
   const discountAmount = voucherResult?.so_tien_giam || 0;
   const tongTienSauGiam = Math.max(0, total - discountAmount);
@@ -292,6 +304,9 @@ export default function CartPage({
         delivery_method: deliveryMethod,
         branch_code: selectedBranch,
         table_number: deliveryMode === 'DUNG_TAI_CHO' ? tableNumber : undefined,
+        guest_email: isLoggedInUser ? undefined : guestEmail.trim(),
+        guest_phone: isLoggedInUser ? undefined : guestPhone.trim(),
+        session_id: guestSessionId,
       });
       return response.data;
     },
@@ -319,13 +334,21 @@ export default function CartPage({
       queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
       triggerAiRecommendationRefresh();
       refreshCart();
+      window.dispatchEvent(new CustomEvent('checkout-success', { detail: { orderId: qrOrderId } }));
     }
-  }, [qrOrderStatus, queryClient, refreshCart, triggerAiRecommendationRefresh]);
+  }, [qrOrderStatus, queryClient, refreshCart, triggerAiRecommendationRefresh, qrOrderId]);
 
   const khoiTaoThanhToan = async () => {
     if (!cart.length) {
       setThongBao('Giỏ hàng đang trống. Vui lòng thêm sản phẩm trước khi thanh toán.');
       return;
+    }
+
+    if (!isLoggedInUser) {
+      if (!guestEmail.trim() && !guestPhone.trim()) {
+        setThongBao('Vui lòng nhập ít nhất Email hoặc Số điện thoại để tiến hành đặt hàng.');
+        return;
+      }
     }
 
     if (deliveryMode === 'GIAO_TAN_NOI') {
@@ -366,18 +389,20 @@ export default function CartPage({
         return;
       }
 
-      if (deliveryMode === 'GIAO_TAN_NOI') {
-        setThongBao('Tạo đơn hàng COD thành công. Đơn sẽ được thu tiền khi nhận hàng.');
-      } else {
-        setThongBao('Tạo đơn hàng thành công. Vui lòng thanh toán tại quầy.');
-      }
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
-        triggerAiRecommendationRefresh();
-        refreshCart();
-        setGhiChu('');
-        xoaVoucher();
-      }, 0);
+if (deliveryMode === 'GIAO_TAN_NOI') {
+              setThongBao('Tạo đơn hàng COD thành công. Đơn sẽ được thu tiền khi nhận hàng.');
+            } else {
+              setThongBao('Tạo đơn hàng thành công. Vui lòng thanh toán tại quầy.');
+            }
+            setTimeout(() => {
+              queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
+              triggerAiRecommendationRefresh();
+              refreshCart();
+              const orderId = data?.order?.ma_don_hang || data?.payment_details?.ma_don_hang || '';
+              window.dispatchEvent(new CustomEvent('checkout-success', { detail: { orderId } }));
+              setGhiChu('');
+              xoaVoucher();
+            }, 0);
     } catch (error) {
       setThongBao(error?.response?.data?.message || error?.message || 'Có lỗi khi khởi tạo thanh toán');
     }
@@ -667,7 +692,9 @@ export default function CartPage({
                         <DeliveryMethodPicker selectedMethod={deliveryMethod} onChange={setDeliveryMethod} lalamoveFee={25000} lalamoveLoading={false} />
                       </div>
                     )}
-                    
+
+
+
                     {deliveryMode === 'GIAO_TAN_NOI' ? (
                       <>
                         <h3 className="text-[11px] font-black uppercase text-[#c41230] tracking-widest">Địa chỉ giao hàng</h3>
@@ -807,6 +834,39 @@ export default function CartPage({
 
                   {/* Cột phải form: Thời gian & Ghi chú */}
                   <div className="space-y-4">
+                    {!isLoggedInUser && (
+                      <div className="bg-[#faf7f4] border border-[#e8e2da] rounded-[20px] p-5 space-y-4 mb-2">
+                        <h3 className="text-[11px] font-black uppercase text-[#c41230] tracking-widest">
+                          Thông tin liên hệ (Khách vãng lai)
+                        </h3>
+                        <div className="flex flex-col gap-4">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-bold text-gray-500">Email nhận đơn</label>
+                            <input
+                              type="email"
+                              value={guestEmail}
+                              onChange={(e) => setGuestEmail(e.target.value)}
+                              placeholder="VD: nguyenvan@gmail.com"
+                              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-[#c41230] transition-colors"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-bold text-gray-500">Số điện thoại</label>
+                            <input
+                              type="tel"
+                              value={guestPhone}
+                              onChange={(e) => setGuestPhone(e.target.value)}
+                              placeholder="VD: 0987654321"
+                              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-[#c41230] transition-colors"
+                            />
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-gray-400 font-bold leading-relaxed">
+                          * Nhập ít nhất Email hoặc Số điện thoại để hệ thống cập nhật trạng thái đơn và đồng bộ lịch sử vào tài khoản sau khi đăng nhập.
+                        </p>
+                      </div>
+                    )}
+
                     <h3 className="text-[11px] font-black uppercase text-[#c41230] tracking-widest">Thời gian &amp; Thanh toán</h3>
 
                     <div className="flex flex-col gap-1.5">

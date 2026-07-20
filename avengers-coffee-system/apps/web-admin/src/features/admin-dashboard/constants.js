@@ -17,6 +17,7 @@ export const MANAGER_SHIFT_APPROVAL_TAB = { id: 'shift-approval', label: 'Kiểm
 export const MANAGER_EMPLOYEE_MANAGEMENT_TAB = { id: 'employee-manage', label: 'Quản lý nhân viên' }
 export const MANAGER_WORKFORCE_MANAGEMENT_TAB = { id: 'workforce-manage', label: 'Quản lý lịch làm nhân viên' }
 export const MANAGER_CUSTOMER_CARE_TAB = { id: 'customer-care', label: 'CSKH phản hồi đánh giá' }
+export const MANAGER_SURVEY_TAB = { id: 'survey-manage', label: '📊 Quản lý Khảo sát' }
 
 export const DASHBOARD_ROLES = {
   ADMIN: 'ADMIN',

@@ -30,6 +30,8 @@ import LuckyWheelPage from './pages/LuckyWheel';
 import { CartProvider, useCart } from './context/CartContext'; // File mới bước 2
 import { apiClient } from './lib/apiClient';
 import { queryKeys } from './lib/queryKeys';
+import SurveyPopup from './components/SurveyPopup';
+import SurveyPage from './pages/Survey';
 import { normalizeNewsArticle } from './lib/news';
 import { buildAddressOptionsFromBranches, getAddressSelectionDefaults, normalizeAddressSelection } from './lib/addressOptions';
 import { UserCircleIcon, KeyIcon, MapPinIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
@@ -484,6 +486,8 @@ function AppContent() {
   const [isFavoriteOpen, setIsFavoriteOpen] = useState(false);
   const [isOrderHistoryOpen, setIsOrderHistoryOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isSurveyOpen, setIsSurveyOpen] = useState(false);
+  const [surveyOrderId, setSurveyOrderId] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [availabilityFilter, setAvailabilityFilter] = useState('ALL');
   const [priceFilter, setPriceFilter] = useState('ALL');
@@ -491,6 +495,10 @@ function AppContent() {
   const [sortBy, setSortBy] = useState('DEFAULT');
   const [notificationToast, setNotificationToast] = useState(null);
   const [showBirthdayVoucherModal, setShowBirthdayVoucherModal] = useState(false);
+  const [showLinkOrderPrompt, setShowLinkOrderPrompt] = useState(false);
+  const [linkOrderCount, setLinkOrderCount] = useState(0);
+  const [linkOrderPayload, setLinkOrderPayload] = useState(null);
+  const [isLinkingOrders, setIsLinkingOrders] = useState(false);
   const [voucherTypeFilter, setVoucherTypeFilter] = useState('ALL');
   const [copiedVoucherCode, setCopiedVoucherCode] = useState('');
   const categorySectionRefs = useRef({});
@@ -502,6 +510,7 @@ function AppContent() {
   const queryClient = useQueryClient();
   const { addToCart, cartCount, syncCartWithUser } = useCart();
   const userId = user?.ma_nguoi_dung || user?.maNguoiDung || null;
+  const isLoggedIn = !!userId;
   const aiTargetUserId = userId || 'anon-popular';
   const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3005';
 
@@ -819,6 +828,35 @@ function AppContent() {
     if (voucherTypeFilter === 'ALL') return voucherItems;
     return voucherItems.filter((item) => String(item.loai_khuyen_mai || '').toUpperCase() === voucherTypeFilter);
   }, [voucherItems, voucherTypeFilter]);
+  // Clear user-specific React Query cache when logged out or session expires
+  useEffect(() => {
+    if (!user) {
+      queryClient.removeQueries({ queryKey: ['users'] });
+      queryClient.removeQueries({ queryKey: ['customer-favorites'] });
+      queryClient.removeQueries({ queryKey: ['notifications'] });
+      queryClient.removeQueries({ queryKey: ['orders'] });
+      queryClient.removeQueries({ queryKey: ['vouchers'] });
+      queryClient.removeQueries({ queryKey: ['cart'] });
+      queryClient.removeQueries({ queryKey: ['reviews'] });
+    }
+  }, [user, queryClient]);
+
+  const triggerSurveyCheck = async (orderId) => {
+    try {
+      if (userId) {
+        const response = await apiClient.get(`/surveys/check-status?userId=${userId}`);
+        if (response.data && !response.data.completed) {
+          setSurveyOrderId(orderId);
+          setIsSurveyOpen(true);
+        }
+      } else {
+        setSurveyOrderId(orderId);
+        setIsSurveyOpen(true);
+      }
+    } catch (err) {
+      console.error('Error checking survey status:', err);
+    }
+  };
 
   useEffect(() => {
     const savedToken = localStorage.getItem('token');
@@ -832,33 +870,38 @@ function AppContent() {
         localStorage.removeItem('token');
       }
     } else {
-      // Token hoặc user bị xoá (e.g. hết hạn session) → clear cả 2
       localStorage.removeItem('user');
       localStorage.removeItem('token');
     }
 
-    // Tự động logout khi token hết hạn (fired bởi apiClient 401 interceptor)
     const handleAuthExpired = () => {
       setUser(null);
     };
     window.addEventListener('auth:expired', handleAuthExpired);
 
+    const handleCheckoutSuccess = (e) => {
+      const orderId = e?.detail?.orderId || '';
+      triggerSurveyCheck(orderId);
+    };
+    window.addEventListener('checkout-success', handleCheckoutSuccess);
+
     const params = new URLSearchParams(window.location.search);
-    const paymentProvider = params.get('payment_provider');
     const paymentStatus = params.get('payment_status');
-    if (paymentProvider === 'VNPAY' && paymentStatus) {
-      if (paymentStatus === 'success') {
-        alert('Thanh toán VNPAY thành công. Đơn hàng đã được cập nhật!');
-      } else {
-        alert('Thanh toán VNPAY thất bại hoặc bị hủy.');
-      }
+    const callbackOrderId = params.get('ma_don_hang') || '';
+    if (paymentStatus === 'success') {
+      alert('Thanh toán đơn hàng thành công. Cảm ơn bạn!');
+      triggerSurveyCheck(callbackOrderId);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (paymentStatus === 'failed') {
+      alert('Thanh toán đơn hàng thất bại hoặc bị hủy.');
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
     return () => {
       window.removeEventListener('auth:expired', handleAuthExpired);
+      window.removeEventListener('checkout-success', handleCheckoutSuccess);
     };
-  }, []);
+  }, [userId]);
 
 
   const showCartSuccessToast = (message) => {
@@ -895,6 +938,35 @@ function AppContent() {
     if (userData?.nhanVoucherSinhNhat) {
       setShowBirthdayVoucherModal(true);
     }
+
+    // Tự động / Chủ động liên kết đơn hàng khách vãng lai
+    const gsid = localStorage.getItem('avengers_guest_session_id') || '';
+    const userEmail = nextUser?.email || nextUser?.emailAddress || '';
+    const userPhone = nextUser?.so_dien_thoai || nextUser?.phone || '';
+    if (nextUserId && (gsid || userEmail || userPhone)) {
+      apiClient.post(`/customers/${nextUserId}/orders/link-guest-orders`, {
+        guest_session_id: gsid,
+        email: userEmail,
+        phone: userPhone,
+      }).then((res) => {
+        if (res.data?.autoLinked) {
+          alert(`Đã tự động đồng bộ ${res.data.count} đơn hàng vãng lai gần đây của bạn vào tài khoản!`);
+          localStorage.removeItem('avengers_guest_session_id');
+          queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
+        } else if (res.data?.promptLink) {
+          setLinkOrderCount(res.data.count);
+          setLinkOrderPayload({
+            userId: nextUserId,
+            email: userEmail,
+            phone: userPhone,
+            guest_session_id: gsid,
+          });
+          setShowLinkOrderPrompt(true);
+        }
+      }).catch((err) => {
+        console.error('Lỗi khi liên kết đơn hàng guest:', err);
+      });
+    }
   };
 
   const handleLogout = async () => {
@@ -904,11 +976,16 @@ function AppContent() {
       queryClient.removeQueries({ queryKey: queryKeys.loyaltyByUser(userId) });
       queryClient.removeQueries({ queryKey: queryKeys.notificationsByUser(userId) });
       queryClient.removeQueries({ queryKey: ['customer-favorites', userId] });
+      queryClient.removeQueries({ queryKey: queryKeys.membershipByUser(userId) });
     }
+    // Xóa toàn bộ cache voucher (cả cá nhân lẫn anonymous) để buộc re-fetch
+    queryClient.removeQueries({ queryKey: queryKeys.voucherList });
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
     await syncCartWithUser(null);
+    // Sau khi user = null, query voucher sẽ re-fetch với anonymous (không có user_id)
+    queryClient.invalidateQueries({ queryKey: queryKeys.voucherList });
     alert('Hẹn gặp lại bạn tại Avengers House! ☕');
   };
 
@@ -1562,6 +1639,8 @@ function AppContent() {
           <NewsPage onSelectArticle={setSelectedNewsArticleId} />
         ) : activeTab === 'stores' ? (
           <StoresPage />
+        ) : activeTab === 'survey' ? (
+          <SurveyPage onBackToHome={() => { setActiveTab('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
         ) : activeTab === 'vouchers' ? (
           <>
             <section className="border-b border-gray-100 bg-gradient-to-b from-[#e8f5ee] via-white to-[#f0faf4]">
@@ -1769,7 +1848,34 @@ function AppContent() {
             onOpenProductPage={handleOpenProductPage}
           >
             {activeTab === 'login' ? (
-              <LoginPage onLoginSuccess={(user) => { handleLoginSuccess(user); setActiveTab('profile'); }} />
+              <LoginPage
+                onLoginSuccess={(user) => {
+                  handleLoginSuccess(user);
+                  const redirectTab = sessionStorage.getItem('post_login_redirect');
+                  if (redirectTab === 'survey') {
+                    const orderId = sessionStorage.getItem('post_login_order_id') || '';
+                    sessionStorage.removeItem('post_login_redirect');
+                    sessionStorage.removeItem('post_login_order_id');
+                    
+                    const uId = user.ma_nguoi_dung || user.maNguoiDung || user.id;
+                    if (orderId && uId) {
+                      apiClient.patch(`/customers/${uId}/orders/${orderId}/link`)
+                        .then(() => {
+                          queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
+                        })
+                        .catch((err) => console.error('Error linking order:', err));
+                    }
+
+                    setActiveTab('survey');
+                    const params = new URLSearchParams();
+                    params.set('tab', 'survey');
+                    if (orderId) params.set('orderId', orderId);
+                    window.history.pushState({ tab: 'survey', orderId }, '', `${window.location.pathname}?${params.toString()}`);
+                  } else {
+                    setActiveTab('profile');
+                  }
+                }}
+              />
             ) : activeTab === 'chinh-sach-dat-hang' ? (
               <ChinhSachDatHangPage />
             ) : activeTab === 'lien-he' ? (
@@ -1825,6 +1931,47 @@ function AppContent() {
         isOpen={isOrderHistoryOpen}
         onClose={() => setIsOrderHistoryOpen(false)}
         user={user}
+      />
+
+      <SurveyPopup
+        isOpen={isSurveyOpen}
+        onClose={() => setIsSurveyOpen(false)}
+        isLoggedIn={isLoggedIn}
+        onAgree={() => {
+          setIsSurveyOpen(false);
+          if (isLoggedIn) {
+            setActiveTab('survey');
+            const params = new URLSearchParams();
+            params.set('tab', 'survey');
+            if (surveyOrderId) {
+              params.set('orderId', surveyOrderId);
+            }
+            window.history.pushState({ tab: 'survey', orderId: surveyOrderId }, '', `${window.location.pathname}?${params.toString()}`);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } else {
+            const wantsLogin = window.confirm(
+              'Để nhận được Voucher giảm giá 20%, bạn cần đăng nhập tài khoản trước khi thực hiện khảo sát.\n\nBạn có muốn đăng nhập ngay bây giờ không?\n(Nếu chọn không, bạn vẫn có thể thực hiện khảo sát với tư cách Khách vãng lai nhưng sẽ không nhận được voucher)'
+            );
+            if (wantsLogin) {
+              sessionStorage.setItem('post_login_redirect', 'survey');
+              sessionStorage.setItem('post_login_order_id', surveyOrderId);
+              setActiveTab('login');
+              const params = new URLSearchParams();
+              params.set('tab', 'login');
+              window.history.pushState({ tab: 'login' }, '', `${window.location.pathname}?${params.toString()}`);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+              setActiveTab('survey');
+              const params = new URLSearchParams();
+              params.set('tab', 'survey');
+              if (surveyOrderId) {
+                params.set('orderId', surveyOrderId);
+              }
+              window.history.pushState({ tab: 'survey', orderId: surveyOrderId }, '', `${window.location.pathname}?${params.toString()}`);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+          }
+        }}
       />
 
       {['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail'].includes(activeTab) ? <OrderFooter onNavigate={setActiveTab} /> : <Footer onTabChange={setActiveTab} />}
@@ -1899,6 +2046,71 @@ function AppContent() {
                 className="w-full py-3 hover:bg-gray-100 text-gray-500 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors cursor-pointer border-none bg-transparent"
               >
                 Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal liên kết đơn hàng khách vãng lai */}
+      {showLinkOrderPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md transition-all duration-300 p-4 font-sans">
+          <div className="relative max-w-md w-full bg-white border border-[#e8e2da] shadow-2xl rounded-[32px] p-8 flex flex-col items-center text-center transform scale-100 transition-all duration-300 animate-in fade-in zoom-in-95">
+            <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-6 text-[#c41230] animate-bounce">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+            </div>
+            
+            <h3 className="text-2xl font-black text-[#1a1a1a] uppercase tracking-wide mb-3 font-serif">
+              Đồng bộ đơn hàng
+            </h3>
+            
+            <p className="text-[#c89a58] font-black text-sm uppercase tracking-widest mb-6">
+              Avengers Coffee Member Sync
+            </p>
+            
+            <div className="bg-[#faf7f4] border border-[#e8e2da] rounded-2xl p-5 mb-6 w-full text-left">
+              <p className="text-sm font-semibold text-gray-700 leading-relaxed">
+                Chào mừng bạn gia nhập! Chúng tôi tìm thấy <strong>{linkOrderCount} đơn hàng</strong> chưa gán tài khoản khớp với Email hoặc Số điện thoại của bạn.
+              </p>
+              <p className="text-xs text-gray-500 mt-2 font-medium">
+                Bạn có muốn liên kết các đơn hàng này vào tài khoản để theo dõi lịch sử đơn và tích lũy điểm thành viên không?
+              </p>
+            </div>
+            
+            <div className="flex flex-col gap-3 w-full font-sans">
+              <button
+                type="button"
+                disabled={isLinkingOrders}
+                onClick={() => {
+                  setIsLinkingOrders(true);
+                  apiClient.post(`/customers/${linkOrderPayload.userId}/orders/link-guest-orders`, {
+                    ...linkOrderPayload,
+                    confirmLink: true
+                  }).then(() => {
+                    alert('Liên kết đơn hàng thành công!');
+                    localStorage.removeItem('avengers_guest_session_id');
+                    queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
+                    setShowLinkOrderPrompt(false);
+                  }).catch((err) => {
+                    console.error('Lỗi khi xác nhận liên kết đơn hàng:', err);
+                    alert('Có lỗi xảy ra khi liên kết đơn hàng.');
+                  }).finally(() => {
+                    setIsLinkingOrders(false);
+                  });
+                }}
+                className="w-full py-3.5 bg-[#8c252a] hover:bg-[#731c20] disabled:bg-gray-400 text-white font-black text-sm uppercase tracking-wider rounded-xl transition-all shadow-lg active:scale-98 transform cursor-pointer border-none"
+              >
+                {isLinkingOrders ? 'Đang liên kết...' : 'Liên kết ngay'}
+              </button>
+              <button
+                type="button"
+                disabled={isLinkingOrders}
+                onClick={() => setShowLinkOrderPrompt(false)}
+                className="w-full py-3 hover:bg-gray-100 text-gray-500 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors cursor-pointer border-none bg-transparent"
+              >
+                Để sau / Bỏ qua
               </button>
             </div>
           </div>
