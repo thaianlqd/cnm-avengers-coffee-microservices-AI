@@ -66,8 +66,9 @@ function layDanhSachTrangThaiCoTheChon(currentStatus) {
 }
 
 function getOrderTypeLabel(loai) {
-  if (loai === 'TAI_CHO') return 'Tại quầy'
-  if (loai === 'MANG_DI') return 'Mang đi'
+  if (loai === 'TAI_CHO' || loai === 'DUNG_TAI_CHO') return 'Tại quầy / Dùng tại chỗ'
+  if (loai === 'MANG_DI' || loai === 'LAY_TAI_QUAN') return 'Lấy tại quán / Mang đi'
+  if (loai === 'GIAO_TAN_NOI') return 'Giao tận nơi'
   return 'Online'
 }
 
@@ -142,11 +143,17 @@ export function OrdersPanel({
         if (!inId && !inCustomer && !inCashier && !inUserId) return false
       }
       if (filterType) {
+        const loai = order.loai_don_hang
         if (filterType === 'ONLINE') {
-          if (order.loai_don_hang === 'TAI_CHO' || order.loai_don_hang === 'MANG_DI') return false
-        } else {
-          if (order.loai_don_hang !== filterType) return false
+          return !['TAI_CHO', 'MANG_DI', 'LAY_TAI_QUAN', 'DUNG_TAI_CHO'].includes(loai)
         }
+        if (filterType === 'TAI_CHO') {
+          return ['TAI_CHO', 'DUNG_TAI_CHO'].includes(loai)
+        }
+        if (filterType === 'MANG_DI') {
+          return ['MANG_DI', 'LAY_TAI_QUAN'].includes(loai)
+        }
+        return loai === filterType;
       }
       if (filterStatus && order.trang_thai_don_hang !== filterStatus) return false
       if (filterPayment && order.phuong_thuc_thanh_toan !== filterPayment) return false
@@ -510,10 +517,24 @@ export function OrdersPanel({
               <h3>{order.ma_don_hang.slice(0, 8).toUpperCase()}</h3>
               <p>Khách: {normalizeViText(order.ten_khach_hang) || order.ma_nguoi_dung}</p>
               <p className="order-card-addr">{normalizeViText(order.dia_chi_giao_hang) || 'Tại quán'}</p>
-              <p>
+              <p style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
                 <span className="order-type-badge">
                   {getOrderTypeLabel(order.loai_don_hang)}
                 </span>
+                {order.loai_don_hang === 'GIAO_TAN_NOI' && (
+                  <span style={{ 
+                    fontSize: '0.75rem', 
+                    fontWeight: 'bold', 
+                    padding: '0.2rem 0.5rem', 
+                    borderRadius: '4px',
+                    border: '1px solid',
+                    color: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '#c2410c' : '#4338ca',
+                    backgroundColor: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '#fff7ed' : '#e0e7ff',
+                    borderColor: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '#ffedd5' : '#c7d2fe'
+                  }}>
+                    {order.phuong_thuc_giao_hang === 'LALAMOVE' ? '🚀 Lalamove' : '🛵 Shipper Nội Bộ'}
+                  </span>
+                )}
               </p>
               <div style={{ display: 'flex', gap: '0.45rem', marginTop: '0.45rem', flexWrap: 'wrap' }}>
                 <button

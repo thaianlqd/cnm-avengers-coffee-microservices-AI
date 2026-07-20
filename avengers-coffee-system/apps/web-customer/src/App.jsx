@@ -772,10 +772,30 @@ function AppContent() {
     [publicBranchPayload],
   );
 
-  const addressOptions = useMemo(
-    () => buildAddressOptionsFromBranches(publicBranchPayload?.items || []),
-    [publicBranchPayload],
-  );
+  const { data: vietnamProvinces } = useQuery({
+    queryKey: ['vietnam-provinces'],
+    queryFn: async () => {
+      const res = await fetch('https://provinces.open-api.vn/api/?depth=3');
+      return res.json();
+    },
+    staleTime: Infinity,
+  });
+
+  const addressOptions = useMemo(() => {
+    if (vietnamProvinces && Array.isArray(vietnamProvinces) && vietnamProvinces.length > 0) {
+      const options = {};
+      vietnamProvinces.forEach(p => {
+        options[p.name] = {};
+        if (p.districts) {
+          p.districts.forEach(d => {
+            options[p.name][d.name] = d.wards ? d.wards.map(w => w.name) : [];
+          });
+        }
+      });
+      return options;
+    }
+    return buildAddressOptionsFromBranches(publicBranchPayload?.items || []);
+  }, [vietnamProvinces, publicBranchPayload]);
   const defaultAddressSelection = useMemo(
     () => getAddressSelectionDefaults(addressOptions),
     [addressOptions],
@@ -1219,6 +1239,13 @@ function AppContent() {
     () => (syncedBehaviorTop3Products.length ? syncedBehaviorTop3Products : aiRecommendedProducts),
     [syncedBehaviorTop3Products, aiRecommendedProducts],
   );
+
+  const suggestedPastries = useMemo(() => {
+    return products.filter((p) => {
+      const catName = String(p.danhMuc?.ten_danh_muc || '').toLowerCase();
+      return catName.includes('bánh') || catName.includes('đồ ăn') || catName.includes('food');
+    }).slice(0, 6); // Lấy tối đa 6 món bánh/đồ ăn
+  }, [products]);
 
   const isFavoriteProduct = (product) => favoriteProductSet.has(String(product?.ma_san_pham || ''));
 
@@ -1758,7 +1785,13 @@ function AppContent() {
                 onNavigate={setActiveTab}
               />
             ) : activeTab === 'cart' ? (
-              <CartPage products={products} onBackToHome={() => setActiveTab('order')} />
+              <CartPage 
+                products={products} 
+                onBackToHome={() => setActiveTab('order')} 
+                voucherItems={voucherItems}
+                suggestedPastries={suggestedPastries}
+                onAddToCart={(prod) => addToCart(user, prod, 1, 'Nhỏ')}
+              />
             ) : activeTab === 'product-detail' ? (
               <ProductDetailPage
                 product={selectedProductForPage}

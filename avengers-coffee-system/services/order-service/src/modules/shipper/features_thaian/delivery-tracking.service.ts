@@ -75,6 +75,14 @@ export class DeliveryTrackingService {
     return saved;
   }
 
+  async getTrackingsByOrderIds(maDonHangs: string[]): Promise<DeliveryTracking[]> {
+    if (!maDonHangs || maDonHangs.length === 0) return [];
+    return this.trackingRepo
+      .createQueryBuilder('t')
+      .where('t.ma_don_hang IN (:...maDonHangs)', { maDonHangs })
+      .getMany();
+  }
+
   // ─────────────── Cập nhật Lalamove info ───────────────
 
   async updateLalamoveInfo(
@@ -185,12 +193,42 @@ export class DeliveryTrackingService {
     if (tracking?.delivery_method === 'LALAMOVE' && tracking.lalamove_order_id) {
       try {
         const llOrder = await this.lalamoveService.getOrderDetail(tracking.lalamove_order_id);
+        const latestStatus = llOrder?.data?.status;
+
         lalamoveInfo = {
           order_id: tracking.lalamove_order_id,
-          status: llOrder?.data?.status || tracking.lalamove_status,
+          status: latestStatus || tracking.lalamove_status,
           share_link: tracking.lalamove_share_link,
           driver: llOrder?.data?.driver || null,
         };
+
+        // --- HACK WEBHOOK BẰNG CÁCH POLLING ---
+        if (latestStatus && latestStatus !== tracking.lalamove_status) {
+          tracking.lalamove_status = latestStatus;
+          await this.trackingRepo.save(tracking);
+          
+          let newDonHangStatus = donHang.trang_thai_don_hang;
+          if (latestStatus === 'ON_GOING') newDonHangStatus = 'PICKING_UP';
+          else if (latestStatus === 'PICKED_UP') newDonHangStatus = 'DANG_GIAO';
+          else if (latestStatus === 'COMPLETED') newDonHangStatus = 'HOAN_THANH';
+          else if (['REJECTED', 'CANCELED'].includes(latestStatus)) newDonHangStatus = 'DA_HUY';
+
+          if (newDonHangStatus !== donHang.trang_thai_don_hang) {
+            donHang.trang_thai_don_hang = newDonHangStatus;
+            
+            const history = Array.isArray(donHang.lich_su_trang_thai) ? [...donHang.lich_su_trang_thai] : [];
+            history.push({
+              loai: 'ORDER',
+              trang_thai: newDonHangStatus,
+              thoi_gian: new Date().toISOString(),
+              ghi_chu: `Lalamove status changed to ${latestStatus}`,
+            });
+            donHang.lich_su_trang_thai = history;
+
+            await this.donHangRepo.save(donHang);
+          }
+        }
+        // ----------------------------------------
 
         // Thử lấy vị trí driver
         if (llOrder?.data?.driver?.driverId) {
@@ -212,6 +250,16 @@ export class DeliveryTrackingService {
               rating: null,
             };
           }
+        } else if (['ON_GOING', 'PICKED_UP'].includes(latestStatus)) {
+          // FIX CHO SANDBOX: Lalamove Sandbox không trả về driverId. Tự động mock tài xế Lalamove để không bị đè bởi Tài xế Avengers.
+          shipperInfo = {
+            full_name: 'Nguyễn Văn Lalamove (Sandbox)',
+            phone: '0901234567',
+            vehicle_plate: '59-S1 999.99',
+            vehicle_type: 'MOTORBIKE',
+            avatar_url: 'https://cdn-icons-png.flaticon.com/512/1048/1048313.png',
+            rating: 5.0,
+          };
         }
       } catch (err) {
         this.logger.warn(`Lalamove tracking error: ${err.message}`);
@@ -471,5 +519,64 @@ export class DeliveryTrackingService {
     }
 
     return steps;
+  }
+  
+  /**
+   * Xử lý webhook từ Lalamove (qua ngrok)
+   */
+  async handleLalamoveWebhook(payload: any) {
+    this.logger.log(`Handling Lalamove Webhook: ${JSON.stringify(payload)}`);
+    
+    // Lalamove v3 webhook payload format: payload.data.order.orderId
+    const orderData = payload?.data?.order || payload?.order || payload;
+    const lalamoveOrderId = orderData?.orderId;
+    const latestStatus = orderData?.status;
+
+    if (!lalamoveOrderId || !latestStatus) {
+      this.logger.warn('Webhook payload missing orderId or status');
+      return;
+    }
+
+    const tracking = await this.trackingRepo.findOne({
+      where: { lalamove_order_id: lalamoveOrderId },
+    });
+
+    if (!tracking) {
+      this.logger.warn(`No tracking found for Lalamove Order ID: ${lalamoveOrderId}`);
+      return;
+    }
+
+    const donHang = await this.donHangRepo.findOne({
+      where: { ma_don_hang: tracking.ma_don_hang },
+    });
+
+    if (!donHang) return;
+
+    if (latestStatus !== tracking.lalamove_status) {
+      tracking.lalamove_status = latestStatus;
+      await this.trackingRepo.save(tracking);
+      
+      let newDonHangStatus = donHang.trang_thai_don_hang;
+      if (latestStatus === 'ON_GOING') newDonHangStatus = 'PICKING_UP';
+      else if (latestStatus === 'PICKED_UP') newDonHangStatus = 'DANG_GIAO';
+      else if (latestStatus === 'COMPLETED') newDonHangStatus = 'HOAN_THANH';
+      else if (['REJECTED', 'CANCELED'].includes(latestStatus)) newDonHangStatus = 'DA_HUY';
+
+      if (newDonHangStatus !== donHang.trang_thai_don_hang) {
+        donHang.trang_thai_don_hang = newDonHangStatus;
+        
+        const history = Array.isArray(donHang.lich_su_trang_thai) ? [...donHang.lich_su_trang_thai] : [];
+        history.push({
+          loai: 'ORDER',
+          trang_thai: newDonHangStatus,
+          thoi_gian: new Date().toISOString(),
+          ghi_chu: `Lalamove Webhook: status changed to ${latestStatus}`,
+        });
+        donHang.lich_su_trang_thai = history;
+
+        await this.donHangRepo.save(donHang);
+        this.logger.log(`Webhook updated order ${donHang.ma_don_hang} to ${newDonHangStatus}`);
+      }
+    }
   }
 }
