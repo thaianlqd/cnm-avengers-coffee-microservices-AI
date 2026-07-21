@@ -1650,6 +1650,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.xxl,
     padding: spacing.xl,
     gap: spacing.md,
+    maxWidth: 480, width: '100%', alignSelf: 'center',
   },
   avatarModalTitle: {
     fontSize: 18,

@@ -102,9 +102,10 @@ export default function CartPage({
     [addressOptions],
   );
 
+  const computedKhungGio = 'Giao ngay (15-30 phút)';
+
   const [phuongThuc, setPhuongThuc] = useState('VNPAY');
   const [addressForm, setAddressForm] = useState(() => ({ ...defaultAddressSelection, street: '' }));
-  const [khungGio, setKhungGio] = useState('18:00 - 19:00');
   const [ghiChu, setGhiChu] = useState('');
   const [thongBao, setThongBao] = useState('');
   const [qrData, setQrData] = useState(null);
@@ -215,7 +216,6 @@ export default function CartPage({
     setVoucherError('');
   };
 
-  const khungGioHopLe = (value) => /^\s*\d{2}:\d{2}\s*-\s*\d{2}:\d{2}\s*$/.test(value || '');
 
   useEffect(() => {
     if (!defaultAddress) {
@@ -305,9 +305,10 @@ export default function CartPage({
   const khoiTaoThanhToanMutation = useMutation({
     mutationFn: async () => {
       const response = await apiClient.post(`/customers/${maNguoiDung}/thanh-toan/khoi-tao`, {
-        phuong_thuc_thanh_toan: phuongThuc,
+        phuong_thuc_giao: deliveryMode,
+        khung_gio_giao: computedKhungGio,
+        phi_giao_hang: (deliveryMode === 'GIAO_TAN_NOI' && freeShip) ? 0 : shippingFee,
         dia_chi_giao_hang: deliveryMode === 'GIAO_TAN_NOI' ? diaChiDayDu : (deliveryMode === 'LAY_TAI_QUAN' ? 'Khách lấy tại quán' : 'Khách dùng tại chỗ'),
-        khung_gio_giao: khungGio,
         ghi_chu: ghiChu.trim() || 'Dat tu web-customer',
         ma_voucher: voucherResult?.ma_voucher || voucherResult?.ma_khuyen_mai || undefined,
         delivery_mode: deliveryMode,
@@ -373,10 +374,6 @@ export default function CartPage({
       }
     }
 
-    if (!khungGioHopLe(khungGio)) {
-      setThongBao('Khung giờ giao phải đúng định dạng HH:MM - HH:MM.');
-      return;
-    }
 
     setThongBao('');
     setQrData(null);
@@ -878,20 +875,7 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                       </div>
                     )}
 
-                    <h3 className="text-[11px] font-black uppercase text-[#c41230] tracking-widest">Thời gian &amp; Thanh toán</h3>
-
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-bold text-gray-500">Khung giờ giao hàng</label>
-                      <input
-                        value={khungGio}
-                        onChange={(e) => {
-                          setKhungGio(e.target.value);
-                          if (thongBao) setThongBao('');
-                        }}
-                        className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-[#c41230]"
-                        placeholder="Ví dụ: 18:00 - 19:00"
-                      />
-                    </div>
+                    <h3 className="text-[11px] font-black uppercase text-[#c41230] tracking-widest">Thanh toán & Ghi chú</h3>
 
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-bold text-gray-500">Ghi chú đơn hàng</label>

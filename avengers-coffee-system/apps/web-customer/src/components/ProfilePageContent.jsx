@@ -24,9 +24,11 @@ import {
   LockClosedIcon,
   CameraIcon,
   BookmarkIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  HeartIcon
 } from '@heroicons/react/24/outline';
-import { StarIcon as StarSolidIcon, CheckBadgeIcon } from '@heroicons/react/24/solid';
+import { StarIcon as StarSolidIcon, CheckBadgeIcon, HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
+import { useCart } from '../context/CartContext';
 
 
 const DEFAULT_ADDRESS_FORM = {
@@ -97,6 +99,7 @@ export default function ProfilePageContent({
 
   const userId = profileUser?.ma_nguoi_dung || profileUser?.maNguoiDung || null;
   const queryClient = useQueryClient();
+  const { addToCart, setIsCartOpen } = useCart();
 
   const {
     data: profile,
@@ -160,6 +163,76 @@ export default function ProfilePageContent({
     enabled: Boolean(userId) && activeTab === 'wallet',
     staleTime: 30 * 1000,
   });
+
+  const { data: allOrdersData, isLoading: isAllOrdersLoading } = useQuery({
+    queryKey: ['allUserOrders', userId],
+    queryFn: async () => {
+      const response = await apiClient.get(`/customers/${userId}/orders?limit=1000`);
+      return response.data?.orders || [];
+    },
+    enabled: Boolean(userId) && activeTab === 'favourite-orders',
+    staleTime: 60 * 1000,
+  });
+
+  const favouriteOrders = useMemo(() => {
+    if (!allOrdersData || allOrdersData.length === 0) return [];
+    
+    const combinationCounts = new Map();
+    
+    allOrdersData.forEach(order => {
+      if (!order.chi_tiet || order.chi_tiet.length === 0) return;
+      
+      const items = [...order.chi_tiet].sort((a, b) => String(a.ma_san_pham).localeCompare(String(b.ma_san_pham)));
+      
+      const hash = JSON.stringify(items.map(item => ({
+        id: item.ma_san_pham,
+        size: item.size,
+        qty: item.so_luong,
+        // Normalize tuy_chon to ignore order of options when hashing
+        opts: Array.isArray(item.tuy_chon) ? [...item.tuy_chon].sort().join('|') : String(item.tuy_chon || '')
+      })));
+      
+      if (!combinationCounts.has(hash)) {
+        combinationCounts.set(hash, {
+          hash,
+          count: 0,
+          items: order.chi_tiet,
+          total: order.tong_tien_hang || 0,
+          lastOrderedAt: order.ngay_tao,
+          sampleOrderId: order.ma_don_hang
+        });
+      }
+      
+      const record = combinationCounts.get(hash);
+      record.count += 1;
+      if (new Date(order.ngay_tao) > new Date(record.lastOrderedAt)) {
+        record.lastOrderedAt = order.ngay_tao;
+        // Keep the latest items just in case prices/names changed
+        record.items = order.chi_tiet;
+        record.total = order.tong_tien_hang || 0;
+      }
+    });
+    
+    return Array.from(combinationCounts.values())
+      .filter(record => record.count >= 5) // NGƯỠNG 5 LẦN
+      .sort((a, b) => b.count - a.count);
+  }, [allOrdersData]);
+
+  const handleReorderFavourite = (items) => {
+    items.forEach(item => {
+      addToCart({
+        ma_san_pham: item.ma_san_pham,
+        ten_san_pham: item.ten_san_pham,
+        gia_ban: item.don_gia,
+        hinh_anh_url: item.hinh_anh_url,
+        size: item.size,
+        so_luong: item.so_luong,
+        tuy_chon: item.tuy_chon
+      });
+    });
+    alert('Đã thêm các món trong đơn hàng yêu thích vào giỏ!');
+    setIsCartOpen(true);
+  };
 
   const topUpMutation = useMutation({
     mutationFn: async (amount) => {
@@ -494,6 +567,7 @@ export default function ProfilePageContent({
   const TAB_ICONS = {
     profile: <UserIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
     orders: <ShoppingBagIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
+    'favourite-orders': <HeartIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
     membership: <IdentificationIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
     'lucky-wheel': <GiftIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
     addresses: <MapPinIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
@@ -532,6 +606,7 @@ export default function ProfilePageContent({
             {[
               { id: 'profile', label: 'Thông tin', iconId: 'profile' },
               { id: 'orders', label: 'Đơn hàng', iconId: 'orders' },
+              { id: 'favourite-orders', label: 'Đơn yêu thích', iconId: 'favourite-orders', count: favouriteOrders.length || undefined },
               { id: 'membership', label: 'Hạng thành viên', iconId: 'membership' },
               { id: 'lucky-wheel', label: 'Vòng quay', iconId: 'lucky-wheel' },
               { id: 'wallet', label: 'Ví điện tử', iconId: 'wallet' },
@@ -1078,6 +1153,79 @@ export default function ProfilePageContent({
                   </form>
                 </div>
               </div>
+            </div>
+          ) : activeTab === 'favourite-orders' ? (
+            <div className="rounded-2xl border border-gray-200/60 bg-white p-6 shadow-md shadow-gray-100/50">
+              <div className="flex items-center gap-3 border-b border-gray-100 pb-4 mb-6">
+                <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
+                  <HeartSolidIcon className="w-5 h-5 text-[#b22830]" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black uppercase text-[#2b2b2b] tracking-tight">Đơn đặt hàng yêu thích của tôi</h3>
+                  <p className="text-xs font-semibold text-gray-500">Các tổ hợp món ăn bạn đã đặt từ 5 lần trở lên</p>
+                </div>
+              </div>
+
+              {isAllOrdersLoading ? (
+                <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div></div>
+              ) : favouriteOrders.length === 0 ? (
+                <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                    <ShoppingBagIcon className="w-8 h-8 text-gray-300" />
+                  </div>
+                  <h4 className="text-gray-900 font-bold mb-2">Chưa có đơn hàng yêu thích nào</h4>
+                  <p className="text-sm text-gray-500 max-w-sm mx-auto">Khi bạn đặt cùng một danh sách các món ăn từ 5 lần trở lên, đơn hàng đó sẽ tự động xuất hiện ở đây để bạn dễ dàng đặt lại!</p>
+                  <button onClick={() => window.location.href = '/order'} className="mt-6 px-6 py-2.5 bg-[#b22830] text-white rounded-full font-bold text-sm hover:bg-[#8a1f25] transition-colors shadow-md shadow-red-900/20">
+                    Bắt đầu đặt món ngay
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {favouriteOrders.map((fav, index) => (
+                    <div key={fav.hash} className="border border-gray-200 rounded-xl p-4 flex flex-col justify-between hover:border-red-300 hover:shadow-md transition-all group bg-white">
+                      <div>
+                        <div className="flex justify-between items-start mb-3">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 text-[#b22830] text-xs font-bold border border-red-100">
+                            <HeartSolidIcon className="w-3.5 h-3.5" /> Đã đặt {fav.count} lần
+                          </span>
+                          <span className="text-xs text-gray-400 font-medium">Lần cuối: {new Date(fav.lastOrderedAt).toLocaleDateString('vi-VN')}</span>
+                        </div>
+                        
+                        <div className="space-y-2 mb-4">
+                          {fav.items.map((item, i) => (
+                            <div key={i} className="flex gap-3">
+                              <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-200">
+                                {item.hinh_anh_url ? (
+                                  <img src={item.hinh_anh_url} alt={item.ten_san_pham} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">No img</div>
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm font-bold text-gray-800 leading-tight mb-0.5">{item.so_luong}x {item.ten_san_pham}</p>
+                                <p className="text-xs text-gray-500">Size: {item.size}{item.tuy_chon ? ` | ${item.tuy_chon}` : ''}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+                        <div>
+                          <p className="text-xs text-gray-500 mb-0.5 font-medium">Tổng tiền ước tính</p>
+                          <p className="text-base font-black text-[#b22830]">{Number(fav.total).toLocaleString('vi-VN')}đ</p>
+                        </div>
+                        <button
+                          onClick={() => handleReorderFavourite(fav.items)}
+                          className="px-4 py-2 bg-gray-900 text-white text-xs font-bold rounded-full hover:bg-gray-800 transition-colors shadow-sm active:scale-95"
+                        >
+                          Đặt lại đơn này
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ) : activeTab === 'wallet' ? (
             <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-md shadow-gray-100/50">
