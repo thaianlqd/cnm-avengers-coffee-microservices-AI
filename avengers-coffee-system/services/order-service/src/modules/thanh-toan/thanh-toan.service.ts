@@ -7,6 +7,7 @@ import { RabbitMqService } from '../../infrastructure/messaging/rabbitmq.service
 import { CartItem } from '../cart/cart.entity';
 import { NotificationService } from '../notification/notification.service';
 import { VoucherService } from '../voucher/voucher.service';
+import { CustomerWalletService } from '../customer-wallet/customer-wallet.service';
 import { CaLamViecNhanVien } from './entities/ca-lam-viec-nhan-vien.entity';
 import { CaDoiSoat } from './entities/ca-doi-soat.entity';
 import { ChiTietDonHang } from './entities/chi-tiet-don-hang.entity';
@@ -15,7 +16,7 @@ import { GiaoDichThanhToan } from './entities/giao-dich-thanh-toan.entity';
 import { DeliveryTrackingService } from '../shipper/features_thaian/delivery-tracking.service';
 
 type KhoiTaoThanhToanDto = {
-  phuong_thuc_thanh_toan: 'VNPAY' | 'NGAN_HANG_QR' | 'THANH_TOAN_KHI_NHAN_HANG';
+  phuong_thuc_thanh_toan: 'VNPAY' | 'NGAN_HANG_QR' | 'THANH_TOAN_KHI_NHAN_HANG' | 'VI_DIEN_TU';
   dia_chi_giao_hang: string;
   khung_gio_giao?: string;
   ghi_chu?: string;
@@ -38,7 +39,7 @@ type TaoDonTaiQuayDto = {
   ghi_chu?: string;
   tien_khach_dua?: number;
   branch_code?: string;
-  phuong_thuc_thanh_toan: 'VNPAY' | 'NGAN_HANG_QR' | 'THANH_TOAN_KHI_NHAN_HANG';
+  phuong_thuc_thanh_toan: 'VNPAY' | 'NGAN_HANG_QR' | 'THANH_TOAN_KHI_NHAN_HANG' | 'VI_DIEN_TU';
   items: Array<{
     ma_san_pham: number;
     ten_san_pham: string;
@@ -229,6 +230,7 @@ export class ThanhToanService {
     private readonly redisCacheService: RedisCacheService,
     private readonly rabbitMqService: RabbitMqService,
     private readonly deliveryTrackingService: DeliveryTrackingService,
+    private readonly customerWalletService: CustomerWalletService,
   ) {}
 
   private normalizeBranchCode(branchCode?: string) {
@@ -1457,6 +1459,30 @@ export class ThanhToanService {
     await this.publishOrderCreatedEvent(donHang);
 
     // 4. Xử lý logic từng phương thức
+    if (dto.phuong_thuc_thanh_toan === 'VI_DIEN_TU') {
+      await this.customerWalletService.deductBalance(maNguoiDung, tongTien, maThamChieu);
+      
+      donHang.trang_thai_thanh_toan = 'DA_THANH_TOAN';
+      donHang.trang_thai_don_hang = 'DA_XAC_NHAN';
+      await this.donHangRepo.save(donHang);
+      
+      giaoDich.trang_thai = 'DA_THANH_TOAN';
+      await this.giaoDichRepo.save(giaoDich);
+
+      await Promise.all([
+        this.notificationService.taoThongBao({
+          ma_nguoi_dung: maNguoiDung,
+          tieu_de: 'Thanh toan vi dien tu thanh cong',
+          noi_dung: `Don #${donHang.ma_don_hang} da duoc thanh toan bang vi dien tu.`,
+          loai: 'PAYMENT',
+          du_lieu: { ma_don_hang: donHang.ma_don_hang, phuong_thuc_thanh_toan: 'VI_DIEN_TU' },
+        }),
+        this.tichDiemLoyalty(maNguoiDung, tongTienGoc),
+      ]);
+
+      return { message: 'Thanh toan vi dien tu thanh cong', don_hang: donHang, giao_dich: giaoDich };
+    }
+
     if (dto.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG') {
       await Promise.all([
         this.notificationService.taoThongBao({
@@ -1671,6 +1697,14 @@ export class ThanhToanService {
     const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
 
     if (signed !== vnp_SecureHash) return { RspCode: '97', Message: 'Invalid signature' };
+
+    if (query.vnp_TxnRef && query.vnp_TxnRef.startsWith('WT_')) {
+      if (query.vnp_ResponseCode === '00') {
+        const success = await this.customerWalletService.processTopUpSuccess(query.vnp_TxnRef);
+        return { RspCode: success ? '00' : '99', Message: success ? 'Confirm Success' : 'Error processing' };
+      }
+      return { RspCode: '00', Message: 'Confirm Success' };
+    }
 
     const giaoDich = await this.giaoDichRepo.findOne({ where: { ma_tham_chieu: query.vnp_TxnRef } });
     if (!giaoDich) return { RspCode: '01', Message: 'Order not found' };

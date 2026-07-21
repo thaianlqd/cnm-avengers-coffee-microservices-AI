@@ -445,6 +445,12 @@ export function ProfileScreen({ navigation }) {
                 {!isLoggedIn ? <Ionicons name="lock-closed" size={16} color="#cbd5e1" /> : <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />}
               </Pressable>
               <View style={styles.listDivider} />
+              <Pressable style={styles.listItem} onPress={() => isLoggedIn ? navigation?.navigate('Wallet') : navigation?.navigate('Login')}>
+                <Ionicons name="wallet-outline" size={20} color="#64748b" />
+                <Text style={[styles.listItemText, !isLoggedIn && { color: '#94a3b8' }]}>Ví điện tử</Text>
+                {!isLoggedIn ? <Ionicons name="lock-closed" size={16} color="#cbd5e1" /> : <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />}
+              </Pressable>
+              <View style={styles.listDivider} />
               <Pressable style={styles.listItem}>
                 <Ionicons name="information-circle-outline" size={20} color="#64748b" />
                 <Text style={styles.listItemText}>Về chúng tôi</Text>

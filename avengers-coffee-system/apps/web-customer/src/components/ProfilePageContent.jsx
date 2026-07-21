@@ -147,8 +147,40 @@ export default function ProfilePageContent({
       return response.data;
     },
     enabled: Boolean(userId),
+    enabled: Boolean(userId),
     staleTime: 60 * 1000,
   });
+
+  const { data: walletData, isLoading: isWalletLoading, refetch: refetchWallet } = useQuery({
+    queryKey: ['userWallet', userId],
+    queryFn: async () => {
+      const response = await apiClient.get(`/customers/${userId}/wallet`);
+      return response.data;
+    },
+    enabled: Boolean(userId) && activeTab === 'wallet',
+    staleTime: 30 * 1000,
+  });
+
+  const topUpMutation = useMutation({
+    mutationFn: async (amount) => {
+      const response = await apiClient.post(`/customers/${userId}/wallet/topup`, { amount });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (data.redirect_url) {
+        window.location.href = data.redirect_url;
+      } else {
+        alert(data.message || 'Nạp tiền thành công!');
+        queryClient.invalidateQueries({ queryKey: ['userWallet', userId] });
+        setTopUpAmount('');
+      }
+    },
+    onError: (err) => {
+      alert(err?.response?.data?.message || 'Không thể nạp tiền lúc này.');
+    },
+  });
+
+  const [topUpAmount, setTopUpAmount] = useState('');
 
   const savedAddresses = addressPayload?.items || [];
   const myReviews = reviewHistoryPayload?.items || [];
@@ -467,6 +499,7 @@ export default function ProfilePageContent({
     addresses: <MapPinIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
     reviews: <StarOutlineIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
     password: <KeyIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
+    wallet: <BookmarkIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
   };
 
   return (
@@ -501,6 +534,7 @@ export default function ProfilePageContent({
               { id: 'orders', label: 'Đơn hàng', iconId: 'orders' },
               { id: 'membership', label: 'Hạng thành viên', iconId: 'membership' },
               { id: 'lucky-wheel', label: 'Vòng quay', iconId: 'lucky-wheel' },
+              { id: 'wallet', label: 'Ví điện tử', iconId: 'wallet' },
               { id: 'addresses', label: 'Địa chỉ', iconId: 'addresses', count: savedAddresses.length },
               { id: 'reviews', label: 'Đánh giá', iconId: 'reviews' },
               { id: 'password', label: 'Đổi mật khẩu', iconId: 'password' },
@@ -1044,6 +1078,135 @@ export default function ProfilePageContent({
                   </form>
                 </div>
               </div>
+            </div>
+          ) : activeTab === 'wallet' ? (
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-md shadow-gray-100/50">
+              <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4">
+                <div className="flex items-center gap-2">
+                  <BookmarkIcon className="w-5 h-5 text-[#b22830]" />
+                  <h3 className="text-base font-black uppercase text-gray-800 tracking-wide">Ví điện tử</h3>
+                </div>
+              </div>
+
+              {isWalletLoading ? (
+                <div className="space-y-4">
+                  <div className="h-24 animate-pulse rounded-2xl bg-gray-100"></div>
+                  <div className="h-12 animate-pulse rounded-2xl bg-gray-100"></div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Balance Card */}
+                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#b22830] to-[#8f1d24] p-6 shadow-lg shadow-red-900/20">
+                    <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-semibold text-white/80 uppercase tracking-widest mb-1">Số dư khả dụng</p>
+                        <p className="text-3xl font-black text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                          {Number(walletData?.wallet?.balance || 0).toLocaleString('vi-VN')} đ
+                        </p>
+                      </div>
+                    </div>
+                    {/* Background Pattern */}
+                    <div className="absolute top-0 right-0 -mt-10 -mr-10 opacity-10">
+                      <svg className="w-48 h-48" viewBox="0 0 100 100" fill="currentColor">
+                        <circle cx="50" cy="50" r="50" fill="white" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Top-up Form */}
+                  <div className="rounded-xl border border-gray-100 bg-gray-50 p-5">
+                    <h4 className="text-sm font-black uppercase tracking-wide text-gray-800 mb-3">Nạp tiền vào ví</h4>
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        const amount = Number(topUpAmount);
+                        if (amount >= 10000 && amount <= 5000000) {
+                          topUpMutation.mutate(amount);
+                        } else {
+                          alert('Số tiền nạp phải từ 10,000đ đến 5,000,000đ');
+                        }
+                      }}
+                      className="flex flex-col md:flex-row gap-3"
+                    >
+                      <div className="flex-1 relative">
+                        <input
+                          type="number"
+                          placeholder="Nhập số tiền cần nạp..."
+                          value={topUpAmount}
+                          onChange={(e) => setTopUpAmount(e.target.value)}
+                          className="w-full rounded-xl border border-gray-200 pl-4 pr-10 py-3 text-sm font-bold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-[#b22830]/10 transition-all bg-white"
+                          min="10000"
+                          max="5000000"
+                          step="1000"
+                          required
+                        />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">đ</span>
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={topUpMutation.isPending}
+                        className="rounded-xl bg-[#b22830] hover:bg-[#8f1d24] px-6 py-3 text-sm font-black uppercase tracking-wide text-white shadow-md transition-all cursor-pointer whitespace-nowrap"
+                      >
+                        {topUpMutation.isPending ? 'Đang xử lý...' : 'Nạp qua VNPAY'}
+                      </button>
+                    </form>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {[50000, 100000, 200000, 500000].map(amount => (
+                        <button
+                          key={amount}
+                          type="button"
+                          onClick={() => setTopUpAmount(amount.toString())}
+                          className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-bold text-gray-600 hover:border-[#b22830] hover:text-[#b22830] transition-colors cursor-pointer"
+                        >
+                          {amount.toLocaleString('vi-VN')} đ
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Transactions History */}
+                  <div>
+                    <h4 className="text-sm font-black uppercase tracking-wide text-gray-800 mb-4">Lịch sử giao dịch</h4>
+                    <div className="space-y-3">
+                      {walletData?.transactions?.length > 0 ? (
+                        walletData.transactions.map((tx) => (
+                          <div key={tx.id} className="flex items-center justify-between p-4 rounded-xl border border-gray-100 bg-white hover:border-gray-200 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${tx.type === 'TOP_UP' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                                {tx.type === 'TOP_UP' ? (
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                                ) : (
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4" /></svg>
+                                )}
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold text-gray-800">
+                                  {tx.type === 'TOP_UP' ? 'Nạp tiền vào ví' : 'Thanh toán đơn hàng'}
+                                </p>
+                                <p className="text-xs font-medium text-gray-500 mt-0.5">
+                                  {new Date(tx.created_at).toLocaleString('vi-VN')}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className={`text-sm font-black ${tx.type === 'TOP_UP' ? 'text-green-600' : 'text-gray-800'}`}>
+                                {tx.type === 'TOP_UP' ? '+' : '-'}{Number(tx.amount).toLocaleString('vi-VN')} đ
+                              </p>
+                              <span className={`inline-block mt-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                                tx.status === 'SUCCESS' ? 'bg-green-50 text-green-700' : tx.status === 'PENDING' ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'
+                              }`}>
+                                {tx.status === 'SUCCESS' ? 'Thành công' : tx.status === 'PENDING' ? 'Đang chờ' : 'Thất bại'}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500 text-center py-6">Chưa có giao dịch nào.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : activeTab === 'reviews' ? (
             <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-md shadow-gray-100/50">
