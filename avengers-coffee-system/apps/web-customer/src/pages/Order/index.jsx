@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MagnifyingGlassIcon, UserCircleIcon, ShoppingCartIcon, PhoneIcon, ClipboardDocumentListIcon, ArrowRightOnRectangleIcon, UserIcon, ListBulletIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
 import ProductCard from '../../components/ProductCard';
 
@@ -80,6 +81,9 @@ export default function OrderPage({
   selectedCatId,
   onSelectedCatIdChange,
 }) {
+  const { t, i18n } = useTranslation();
+  const currentLng = i18n.language || 'vi';
+
   const [activeCategory, setActiveCategory] = useState(selectedCatId || 'all');
   
   useEffect(() => {
@@ -94,7 +98,7 @@ export default function OrderPage({
   const [isSearchBoxOpen, setIsSearchBoxOpen] = useState(false);
   const [copiedVoucherCode, setCopiedVoucherCode] = useState(null);
 
-  const fullText = "Xin chào, bạn cần gì hôm nay?";
+  const fullText = t('home.searchPlaceholder');
   const [placeholderText, setPlaceholderText] = useState("");
 
   useEffect(() => {
@@ -242,7 +246,7 @@ export default function OrderPage({
             activeCategory === 'all' ? 'bg-[#fcf8f2] text-[#b22830] font-bold' : 'text-[#333333]'
           }`}
         >
-          <span className="text-[13px] font-medium w-full text-center uppercase">Xem tất cả danh mục</span>
+          <span className="text-[13px] font-medium w-full text-center uppercase">{t('header.menu')}</span>
         </button>
       </li>
       {parentCats.map((parent, idx) => {
@@ -315,7 +319,7 @@ export default function OrderPage({
                   <span className="w-full h-[2px] bg-gray-800 block"></span>
                   <span className="w-full h-[2px] bg-gray-800 block"></span>
                 </div>
-                <span className="text-[14px] font-bold text-gray-800 uppercase whitespace-nowrap">Danh mục sản phẩm</span>
+                <span className="text-[14px] font-bold text-gray-800 uppercase whitespace-nowrap">{t('home.products')}</span>
 
                 {/* Dropdown List in Top Header */}
                 <ul 
@@ -361,7 +365,7 @@ export default function OrderPage({
               <div className="absolute top-full left-0 right-0 mt-2.5 z-50 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
                 <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50/80">
                   <span className="text-[14px] font-bold text-gray-700">
-                    Kết quả tìm kiếm cho <span className="text-[#b22830] font-black">{searchKeyword}</span>
+                    {t('home.searchResult')} <span className="text-[#b22830] font-black">{searchKeyword}</span>
                   </span>
                   <div className="flex items-center gap-1.5">
                     <button
@@ -384,14 +388,14 @@ export default function OrderPage({
                 </div>
 
                 <div className="flex items-center justify-between px-5 py-2 bg-white border-b border-gray-100 text-xs">
-                  <span className="font-semibold text-gray-700">Hiển thị kết quả theo:</span>
-                  <span className="px-3 py-1 rounded-full bg-gray-400 text-white font-bold text-[12px]">Sản phẩm</span>
+                  <span className="font-semibold text-gray-700">{t('home.searchBy')}</span>
+                  <span className="px-3 py-1 rounded-full bg-gray-400 text-white font-bold text-[12px]">{t('home.product')}</span>
                 </div>
 
                 <div className="max-h-[380px] overflow-y-auto custom-scrollbar">
                   {matchingSearchProducts.length === 0 ? (
                     <div className="p-8 text-center text-sm font-medium text-gray-500">
-                      Không tìm thấy sản phẩm phù hợp với từ khóa "{searchKeyword}".
+                      {t('home.searchEmpty')} "{searchKeyword}".
                     </div>
                   ) : searchViewMode === 'list' ? (
                     <div className="divide-y divide-gray-100">
@@ -462,7 +466,7 @@ export default function OrderPage({
                     onClick={() => setIsSearchBoxOpen(false)}
                     className="text-xs font-bold text-gray-700 hover:text-[#b22830] transition-colors"
                   >
-                    Xem thêm sản phẩm có chứa <span className="text-[#b22830] font-black">{searchKeyword}</span>
+                    {t('home.searchMore')} <span className="text-[#b22830] font-black">{searchKeyword}</span>
                   </button>
                 </div>
               </div>
@@ -473,16 +477,29 @@ export default function OrderPage({
         {/* Right Actions */}
         <div className="flex items-center gap-6 ml-auto mr-2 lg:mr-8">
           <div className="hidden md:flex items-center gap-2">
-            <img src="/hc-assets/uk.png" alt="EN" className="w-[30px] h-auto object-contain cursor-pointer hover:opacity-80 transition-opacity" />
+            <button 
+              type="button" 
+              onClick={() => i18n.changeLanguage('vi')}
+              className={`transition-all hover:scale-110 ${i18n.language === 'vi' ? 'ring-2 ring-[#b22830] opacity-100 rounded-[2px]' : 'opacity-40 hover:opacity-100'}`}
+            >
+              <img src="https://flagcdn.com/w40/vn.png" alt="VN" className="h-[20px] rounded-[2px] shadow-sm w-auto block" />
+            </button>
+            <button 
+              type="button" 
+              onClick={() => i18n.changeLanguage('en')}
+              className={`transition-all hover:scale-110 ${i18n.language === 'en' ? 'ring-2 ring-[#b22830] opacity-100 rounded-[2px]' : 'opacity-40 hover:opacity-100'}`}
+            >
+              <img src="https://flagcdn.com/w40/gb.png" alt="EN" className="h-[20px] rounded-[2px] shadow-sm w-auto block" />
+            </button>
           </div>
           
           <div className="hidden lg:flex items-center gap-3">
             <div className="w-[34px] h-[34px] rounded-full border border-[#b22830] flex items-center justify-center text-[#b22830]">
               <PhoneIcon className="w-[18px] h-[18px]" />
             </div>
-            <div className="flex flex-col">
-              <span className="text-[12px] text-gray-700 font-bold leading-tight">Giao tận nơi</span>
-              <span className="text-[14px] font-black text-[#333333] leading-tight">19001755</span>
+            <div className="flex flex-col text-right">
+              <span className="text-[11px] font-bold text-gray-500 uppercase">{t('home.appDesc')}</span>
+              <span className="text-[16px] font-black text-[#b22830] leading-none">1900 1755</span>
             </div>
           </div>
 
@@ -495,19 +512,41 @@ export default function OrderPage({
                 <UserCircleIcon className="w-5 h-5" />
               </div>
               <div className="hidden lg:flex flex-col">
-                <span className="text-[12px] text-gray-700 font-bold leading-tight">Tài khoản</span>
-                <span className="text-[12px] font-normal text-gray-500 leading-tight line-clamp-1">{userName || 'Đăng nhập'}</span>
+                <span className="text-[12px] text-gray-700 font-bold leading-tight">{t('header.account')}</span>
+                <span className="text-[12px] font-normal text-gray-500 leading-tight line-clamp-1">{userName || t('header.login')}</span>
                 {userName && (
                   <span 
                     onClick={(e) => { e.stopPropagation(); onLogout?.(); }}
                     className="text-[11px] text-[#b22830] hover:text-red-800 font-bold mt-0.5 transition-colors"
                   >
-                    Đăng xuất
+                    {t('header.logout')}
                   </span>
                 )}
               </div>
             </div>
 
+            {userName && (
+              <div className="absolute right-0 top-full pt-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[100]">
+                <div className="w-[240px] bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-gray-100 bg-[#f9f4ec] flex items-center gap-2">
+                    <UserIcon className="w-4 h-4 text-[#b22830]" />
+                    <span className="text-[14px] font-bold text-[#b22830]">Xin chào, {userName}</span>
+                  </div>
+                  <button onClick={onOpenProfile} className="w-full text-left px-4 py-2.5 text-[13px] font-medium text-gray-700 hover:bg-[#fcf8f2] hover:text-[#b22830] transition-colors flex items-center gap-2">
+                    <UserIcon className="w-4 h-4" />
+                    {t('header.profile')}
+                  </button>
+                  <button onClick={onOpenOrderHistory} className="w-full text-left px-4 py-2.5 text-[13px] font-medium text-gray-700 hover:bg-[#fcf8f2] hover:text-[#b22830] transition-colors flex items-center gap-2 border-b border-gray-100">
+                    <ClipboardDocumentListIcon className="w-4 h-4" />
+                    {t('header.orders')}
+                  </button>
+                  <button onClick={onLogout} className="w-full text-left px-4 py-2.5 text-[13px] font-bold text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2">
+                    <ArrowRightOnRectangleIcon className="w-4 h-4" />
+                    {t('header.logout')}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <button
@@ -515,7 +554,7 @@ export default function OrderPage({
             className="flex items-center gap-3 px-4 py-1.5 border border-[#b22830] rounded-md hover:bg-red-50 transition-colors bg-white h-[38px] cursor-pointer"
           >
             <ShoppingCartIcon className="w-5 h-5 text-[#b22830]" />
-            <span className="text-[14px] font-bold text-[#333333] mr-1">Giỏ hàng</span>
+            <span className="text-[14px] font-bold text-[#333333] mr-1">{t('header.cart')}</span>
             <span className="bg-[#f3f4f6] text-[#b22830] text-[13px] font-bold px-2 py-0.5 rounded-[4px] min-w-[24px] text-center border border-gray-200">
               {cartCount}
             </span>
@@ -540,18 +579,18 @@ export default function OrderPage({
                 <span className="w-full h-[2px] bg-[#b22830] block"></span>
                 <span className="w-full h-[2px] bg-[#b22830] block"></span>
               </div>
-              <span className="text-[14px] font-bold text-[#b22830] uppercase whitespace-nowrap">Danh mục sản phẩm</span>
+              <span className="text-[14px] font-bold text-[#b22830] uppercase whitespace-nowrap">{t('home.products')}</span>
             </div>
 
 
 
             <button type="button" onClick={() => onNavigate?.('chinh-sach-dat-hang')} className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity bg-transparent border-none p-0 cursor-pointer">
               <img src="/hc-assets/icon_chinhsach.png" alt="" className="w-5 h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-              <span className="text-[13px] font-medium">Chính sách đổi trả</span>
+              <span className="text-[13px] font-medium">{t('order.returnPolicy')}</span>
             </button>
             <button type="button" onClick={() => onNavigate?.('lien-he')} className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity bg-transparent border-none p-0 cursor-pointer">
               <img src="/hc-assets/icon_lienhe.png" alt="" className="w-5 h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-              <span className="text-[13px] font-medium">Liên hệ</span>
+              <span className="text-[13px] font-medium">{t('order.contact')}</span>
             </button>
             <a href="#" className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity">
               <img src="/hc-assets/icon_bank.png" alt="" className="w-5 h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
@@ -733,10 +772,10 @@ export default function OrderPage({
                     {activeCategory !== 'all' && (
                       <div className="mb-6">
                         <div className="text-[13px] text-[#999999] mb-4 font-medium">
-                          <span className="cursor-pointer hover:text-gray-800" onClick={() => handleCategorySelect('all')}>Trang chủ</span>
+                          <span className="cursor-pointer hover:text-gray-800" onClick={() => handleCategorySelect('all')}>{t('order.home')}</span>
                           <span className="mx-2">/</span>
                           <span className="text-[#333333]">
-                            {menuSections.find(s => s.id === activeCategory)?.label || 'Danh mục'}
+                            {menuSections.find(s => s.id === activeCategory)?.label || t('order.categories')}
                           </span>
                         </div>
                         
@@ -750,48 +789,48 @@ export default function OrderPage({
                         {/* Category Title */}
                         <div className="mb-6 border-b border-gray-100 pb-4">
                           <h1 className="text-[28px] font-serif font-bold text-[#111111] mb-2">
-                            Danh mục
+                            {t('order.categories')}
                           </h1>
                           <div className="flex flex-wrap items-center gap-4 text-[13px] text-[#333333] mb-4">
-                            <span className="font-bold">Sắp xếp:</span>
+                            <span className="font-bold">{t('order.sortBy')}</span>
                             <button
                               type="button"
                               onClick={() => setSortByOrder('name-asc')}
                               className={`transition-colors font-medium ${sortByOrder === 'name-asc' ? 'text-[#b22830] font-black underline' : 'text-[#666666] hover:text-[#b22830]'}`}
                             >
-                              Tên A → Z
+                              {t('order.nameAsc')}
                             </button>
                             <button
                               type="button"
                               onClick={() => setSortByOrder('name-desc')}
                               className={`transition-colors font-medium ${sortByOrder === 'name-desc' ? 'text-[#b22830] font-black underline' : 'text-[#666666] hover:text-[#b22830]'}`}
                             >
-                              Tên Z → A
+                              {t('order.nameDesc')}
                             </button>
                             <button
                               type="button"
                               onClick={() => setSortByOrder('price-asc')}
                               className={`transition-colors font-medium ${sortByOrder === 'price-asc' ? 'text-[#b22830] font-black underline' : 'text-[#666666] hover:text-[#b22830]'}`}
                             >
-                              Giá tăng dần
+                              {t('order.priceAsc')}
                             </button>
                             <button
                               type="button"
                               onClick={() => setSortByOrder('price-desc')}
                               className={`transition-colors font-medium ${sortByOrder === 'price-desc' ? 'text-[#b22830] font-black underline' : 'text-[#666666] hover:text-[#b22830]'}`}
                             >
-                              Giá giảm dần
+                              {t('order.priceDesc')}
                             </button>
                             <button
                               type="button"
                               onClick={() => setSortByOrder('newest')}
                               className={`transition-colors font-medium ${sortByOrder === 'newest' ? 'text-[#b22830] font-black underline' : 'text-[#666666] hover:text-[#b22830]'}`}
                             >
-                              Hàng mới
+                              {t('order.newest')}
                             </button>
                           </div>
                           <div className="text-[13px] font-bold text-[#333333] uppercase">
-                            HIỂN THỊ: <span className="text-[#b22830] font-black text-[15px]">{activeCategory === 'all' ? 'TẤT CẢ DANH MỤC' : categories.find(c => String(c.ma_danh_muc) === String(activeCategory).replace('group-', ''))?.ten_danh_muc || 'CÀ PHÊ'}</span>
+                            {t('order.showing')} <span className="text-[#b22830] font-black text-[15px]">{activeCategory === 'all' ? t('order.allCategories') : categories.find(c => String(c.ma_danh_muc) === String(activeCategory).replace('group-', ''))?.ten_danh_muc || 'CÀ PHÊ'}</span>
                           </div>
                         </div>
                       </div>
@@ -850,12 +889,12 @@ export default function OrderPage({
                                         {/* Badges */}
                                         {p.la_hot && (
                                           <div className="absolute bottom-0 left-0 bg-[#f37021] text-white text-[14px] font-black uppercase px-3 py-2 z-10 w-[90px] text-center leading-tight">
-                                            BÁN CHẠY!
+                                            {t('home.bestSeller')}
                                           </div>
                                         )}
                                         {!p.la_hot && p.la_moi && (
                                           <div className="absolute bottom-0 left-0 bg-[#00a651] text-white text-[14px] font-black uppercase px-3 py-2 z-10 w-[90px] text-center leading-tight">
-                                            THỬ NGAY!
+                                            {t('home.tryNow')}
                                           </div>
                                         )}
                                         {p.dang_giam_gia && (
@@ -866,7 +905,7 @@ export default function OrderPage({
                                       </div>
 
                                       <div className="p-4 flex flex-col flex-1">
-                                        <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Highlands Coffee</p>
+                                        <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Avengers Coffee</p>
                                         <h4 className="text-[14px] font-bold text-[#333333] mb-2 leading-tight cursor-pointer hover:text-[#b22830]" onClick={() => onViewDetail?.(p)}>
                                           {p.ten_san_pham}
                                         </h4>
@@ -905,7 +944,7 @@ export default function OrderPage({
                                     onClick={() => handleCategorySelect(section.id)}
                                     className="px-6 py-2 border border-[#b22830] text-[#b22830] text-[13px] font-bold rounded-full hover:bg-[#b22830] hover:text-white transition-colors"
                                   >
-                                    Xem tất cả &gt;
+                                    {t('home.viewAll')} &gt;
                                   </button>
                                 </div>
                               )}
