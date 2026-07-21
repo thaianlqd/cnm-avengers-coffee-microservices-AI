@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ShoppingCartIcon,
   HeartIcon,
@@ -64,6 +65,9 @@ export default function Header({
   const [showNotificationPopover, setShowNotificationPopover] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
+  const { t, i18n } = useTranslation();
+  const currentLng = i18n.language || 'vi';
+
   const handleOpenProfile = () => {
     setShowDropdown(false);
     if (isLoggedIn) {
@@ -78,10 +82,10 @@ export default function Header({
   const isOrderTab = activeTab === 'order';
 
   const leftNavItems = [
-    { id: 'menu-intro', label: 'THỰC ĐƠN', dropdownTabId: 'order' },
-    { id: 'about', label: 'VỀ HIGHLANDS' },
-    { id: 'careers', label: 'NGHỀ NGHIỆP' },
-    { id: 'contact', label: 'HỖ TRỢ' },
+    { id: 'menu-intro', label: t('header.menu'), dropdownTabId: 'order' },
+    { id: 'about', label: t('header.about') },
+    { id: 'careers', label: t('header.careers') },
+    { id: 'contact', label: t('header.support') },
   ];
 
   return (
@@ -187,7 +191,7 @@ export default function Header({
                 : 'text-white hover:text-white/80'
               }`}
           >
-            ĐẶT HÀNG
+            {t('header.order')}
           </button>
 
           <div className="flex items-center gap-3">
@@ -198,18 +202,26 @@ export default function Header({
               className="flex items-center gap-1.5 text-[13px] font-medium text-white hover:text-white/80 transition-colors"
             >
               <MapPinIcon className="h-4 w-4" />
-              Tìm kiếm cửa hàng
+              {t('header.findStore')}
             </button>
 
             <div className="mx-2 h-4 w-px bg-white/30"></div>
 
             {/* Language Flags */}
             <div className="flex items-center gap-2 mr-2">
-              <button type="button" className="transition-transform hover:scale-110">
-                <img src="https://flagcdn.com/w40/vn.png" alt="VN" className="h-[18px] rounded-[2px] shadow-sm w-auto" />
+              <button 
+                type="button" 
+                onClick={() => i18n.changeLanguage('vi')}
+                className={`transition-all hover:scale-110 ${currentLng === 'vi' ? 'ring-2 ring-white ring-offset-2 ring-offset-[#b22830] opacity-100 rounded-sm' : 'opacity-40 hover:opacity-100'}`}
+              >
+                <img src="https://flagcdn.com/w40/vn.png" alt="VN" className="h-[18px] rounded-[2px] shadow-sm w-auto block" />
               </button>
-              <button type="button" className="transition-transform hover:scale-110 opacity-60 hover:opacity-100">
-                <img src="https://flagcdn.com/w40/gb.png" alt="EN" className="h-[18px] rounded-[2px] shadow-sm w-auto" />
+              <button 
+                type="button" 
+                onClick={() => i18n.changeLanguage('en')}
+                className={`transition-all hover:scale-110 ${currentLng === 'en' ? 'ring-2 ring-white ring-offset-2 ring-offset-[#b22830] opacity-100 rounded-sm' : 'opacity-40 hover:opacity-100'}`}
+              >
+                <img src="https://flagcdn.com/w40/gb.png" alt="EN" className="h-[18px] rounded-[2px] shadow-sm w-auto block" />
               </button>
             </div>
 

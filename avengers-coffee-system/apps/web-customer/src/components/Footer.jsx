@@ -1,4 +1,7 @@
+import { useTranslation } from 'react-i18next';
+
 export default function Footer({ onTabChange }) {
+  const { t } = useTranslation();
   return (
     <footer className="bg-[#b22830] py-12 text-white w-full">
       <div className="mx-auto max-w-[1200px] px-4 md:px-6">
@@ -9,14 +12,14 @@ export default function Footer({ onTabChange }) {
           </div>
           
           <div className="flex flex-col gap-4">
-            <h3 className="text-[16px] font-bold uppercase mb-2">Về Highlands</h3>
+            <h3 className="text-[16px] font-bold uppercase mb-2">{t('footer.about')}</h3>
             <ul className="space-y-3 text-[14px]">
               <li>
                 <button 
                   onClick={() => { onTabChange?.('about'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="hover:text-red-200 transition-colors text-left"
                 >
-                  Nguồn gốc
+                  {t('footer.menu')}
                 </button>
               </li>
               <li>
@@ -24,7 +27,7 @@ export default function Footer({ onTabChange }) {
                   onClick={() => { onTabChange?.('about'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="hover:text-red-200 transition-colors text-left"
                 >
-                  Dịch vụ
+                  {t('footer.promotions')}
                 </button>
               </li>
               <li>
@@ -32,7 +35,7 @@ export default function Footer({ onTabChange }) {
                   onClick={() => { onTabChange?.('careers'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="hover:text-red-200 transition-colors text-left"
                 >
-                  Nghề Nghiệp
+                  {t('header.careers')}
                 </button>
               </li>
               <li>
@@ -40,32 +43,32 @@ export default function Footer({ onTabChange }) {
                   onClick={() => { onTabChange?.('contact'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="hover:text-red-200 transition-colors text-left"
                 >
-                  Hỗ trợ
+                  {t('header.support')}
                 </button>
               </li>
             </ul>
           </div>
           
           <div className="flex flex-col gap-4">
-            <h3 className="text-[16px] font-bold uppercase mb-2">Hệ thống cửa hàng</h3>
+            <h3 className="text-[16px] font-bold uppercase mb-2">{t('footer.stores')}</h3>
             <ul className="space-y-3 text-[14px]">
               <li>
                 <button 
                   onClick={() => { onTabChange?.('stores'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="hover:text-red-200 transition-colors text-left"
                 >
-                  Tìm cửa hàng gần nhất
+                  {t('header.findStore')}
                 </button>
               </li>
             </ul>
           </div>
           
           <div className="flex flex-col gap-4">
-            <h3 className="text-[16px] font-bold uppercase mb-2">Tin tức</h3>
+            <h3 className="text-[16px] font-bold uppercase mb-2">{t('home.news')}</h3>
           </div>
           
           <div className="flex flex-col gap-4">
-            <h3 className="text-[16px] font-bold uppercase mb-2">Theo dõi chúng tôi</h3>
+            <h3 className="text-[16px] font-bold uppercase mb-2">Socials</h3>
             <div className="flex gap-4">
               <a href="#" className="hover:text-red-200 transition-colors">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>
@@ -82,7 +85,7 @@ export default function Footer({ onTabChange }) {
         </div>
         
         <div className="mt-12 text-center md:text-left text-[13px] text-gray-200">
-          <p>© 2025 Highlands Coffee. All rights reserved</p>
+          <p>{t('footer.copyright')}</p>
         </div>
       </div>
     </footer>
