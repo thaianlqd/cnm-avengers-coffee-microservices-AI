@@ -148,6 +148,16 @@ export default function CartPage({
     apiClient.post('/ai/recommend/train').catch(() => undefined);
   }, [isLoggedInUser, maNguoiDung, queryClient]);
 
+  const { data: walletData } = useQuery({
+    queryKey: ['userWallet', maNguoiDung],
+    queryFn: async () => {
+      const response = await apiClient.get(`/customers/${maNguoiDung}/wallet`);
+      return response.data;
+    },
+    enabled: isLoggedInUser,
+    staleTime: 10 * 1000,
+  });
+
   const { data: addressPayload } = useQuery({
     queryKey: queryKeys.userAddresses(maNguoiDung),
     queryFn: async () => {
@@ -903,6 +913,14 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                       >
                         <option value="VNPAY">VNPAY (Thẻ / Mobile Banking)</option>
                         <option value="NGAN_HANG_QR">Ngân hàng QR</option>
+                        {isLoggedInUser && (
+                          <option 
+                            value="VI_DIEN_TU" 
+                            disabled={!walletData || Number(walletData?.wallet?.balance || 0) < tongTienSauGiam}
+                          >
+                            Ví điện tử (Số dư: {Number(walletData?.wallet?.balance || 0).toLocaleString('vi-VN')}đ)
+                          </option>
+                        )}
                         <option value="THANH_TOAN_KHI_NHAN_HANG">
                           {deliveryMode === 'GIAO_TAN_NOI' ? 'Thanh toán khi nhận hàng (COD)' : 'Thanh toán tại quầy'}
                         </option>

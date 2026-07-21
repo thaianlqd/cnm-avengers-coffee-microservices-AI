@@ -95,6 +95,7 @@ const PAYMENT_ICONS = {
   THANH_TOAN_KHI_NHAN_HANG: { icon: 'cash-outline', color: '#22c55e' },
   NGAN_HANG_QR: { icon: 'qr-code-outline', color: '#0ea5e9' },
   VNPAY: { icon: 'card-outline', color: '#dc2626' },
+  VI_DIEN_TU: { icon: 'wallet-outline', color: '#ea8025' },
 }
 
 function CartItem({ item, onIncrease, onDecrease, onRemove }) {
@@ -275,8 +276,17 @@ export function CartScreen({ navigation }) {
     enabled: Boolean(userId) && !String(userId).startsWith('anon-') && userId !== 'guest-customer',
     staleTime: 60 * 1000,
   })
-  
   const voucherItems = voucherQuery.data || []
+
+  const walletQuery = useQuery({
+    queryKey: ['userWallet', userId],
+    queryFn: async () => {
+      const response = await apiClient.get(`/customers/${userId}/wallet`)
+      return response.data
+    },
+    enabled: Boolean(userId) && !String(userId).startsWith('anon-') && userId !== 'guest-customer',
+    staleTime: 10 * 1000,
+  })
 
   const cart = safeArray(cartQuery.data).map(normalizeCartItem)
   const addresses = safeArray(addressesQuery.data)
@@ -1023,12 +1033,12 @@ export function CartScreen({ navigation }) {
               >
                 <View style={styles.paymentMethodLeftClean}>
                   <Ionicons
-                    name={paymentMethod === 'NGAN_HANG_QR' ? 'qr-code-outline' : paymentMethod === 'VNPAY' ? 'card-outline' : 'cash-outline'}
+                    name={paymentMethod === 'NGAN_HANG_QR' ? 'qr-code-outline' : paymentMethod === 'VNPAY' ? 'card-outline' : paymentMethod === 'VI_DIEN_TU' ? 'wallet-outline' : 'cash-outline'}
                     size={20}
                     color="#22c55e"
                   />
                   <Text style={styles.paymentMethodNameClean}>
-                    {paymentMethod === 'NGAN_HANG_QR' ? 'Ngân hàng / QR Code' : paymentMethod === 'VNPAY' ? 'Thẻ VNPAY / ATM' : 'Tiền mặt'}
+                    {paymentMethod === 'NGAN_HANG_QR' ? 'Ngân hàng / QR Code' : paymentMethod === 'VNPAY' ? 'Thẻ VNPAY / ATM' : paymentMethod === 'VI_DIEN_TU' ? 'Ví điện tử' : 'Tiền mặt'}
                   </Text>
                 </View>
                 <Text style={styles.paymentMethodChangeClean}>Đổi ›</Text>
@@ -1094,6 +1104,25 @@ export function CartScreen({ navigation }) {
                 <Text style={styles.paymentModalItemText}>Thẻ VNPAY / ATM</Text>
                 {paymentMethod === 'VNPAY' && <Ionicons name="checkmark-circle" size={24} color="#ea8025" />}
               </Pressable>
+              {Boolean(userId) && !String(userId).startsWith('anon-') && userId !== 'guest-customer' && (
+                <Pressable 
+                  style={[styles.paymentModalItem, (!walletQuery.data?.wallet?.balance || Number(walletQuery.data.wallet.balance) < finalAmount) && { opacity: 0.5 }]} 
+                  onPress={() => { 
+                    if (walletQuery.data?.wallet?.balance && Number(walletQuery.data.wallet.balance) >= finalAmount) {
+                      setPaymentMethod('VI_DIEN_TU'); 
+                      setPaymentModalVisible(false); 
+                    }
+                  }}
+                  disabled={!walletQuery.data?.wallet?.balance || Number(walletQuery.data.wallet.balance) < finalAmount}
+                >
+                  <Ionicons name="wallet-outline" size={24} color="#ea8025" />
+                  <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={[styles.paymentModalItemText, { flex: 0, marginRight: 8 }]}>Ví điện tử</Text>
+                    <Text style={{ fontSize: 12, color: '#64748b' }}>(Số dư: {Number(walletQuery.data?.wallet?.balance || 0).toLocaleString('vi-VN')}đ)</Text>
+                  </View>
+                  {paymentMethod === 'VI_DIEN_TU' && <Ionicons name="checkmark-circle" size={24} color="#ea8025" />}
+                </Pressable>
+              )}
             </View>
           </View>
         </Pressable>
