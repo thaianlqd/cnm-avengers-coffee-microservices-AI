@@ -243,21 +243,20 @@ export default function ChatWidget({ user, socketUrl }) {
 
   const ORDER_KEYWORDS = ['cho tôi', 'đặt', 'order', 'mua', 'lấy', 'muốn', 'cần', 'cho mình'];
 
-  const checkOrderIntent = async (text) => {
-    const looksLikeOrder = ORDER_KEYWORDS.some((kw) => text.toLowerCase().includes(kw));
-    if (!looksLikeOrder) return false;
+  const checkOrderIntent = async (text, historyText = '') => {
     try {
       const res = await apiClient.post('/ai/chat/order-intent', {
         text,
         user_id: aiUserId,
+        history: historyText,
       });
       const data = res.data;
       if (data?.can_order && data?.items?.length > 0) {
         setPendingOrder({
-          transcript: null,
           items: data.items,
           total: data.estimated_total,
           message: data.message,
+          paymentMethod: data.payment_method,
         });
         return true;
       }
@@ -286,16 +285,25 @@ export default function ChatWidget({ user, socketUrl }) {
       setMessagesForMode('AI', (prev) => [...prev, customerMessage]);
       scrollToBottom();
       try {
+        const recentHistory = messagesByMode['AI']
+          .slice(-6)
+          .map((m) => `${m.vai_tro_nguoi_gui === 'CUSTOMER' ? userName : 'AI'}: ${m.noi_dung}`)
+          .join('\n');
+
         // Check order intent first
-        const wasOrder = await checkOrderIntent(content);
+        const wasOrder = await checkOrderIntent(content, recentHistory);
         if (wasOrder) {
           setSending(false);
           return;
         }
+
+
+
         const res = await apiClient.post('/ai/chat', {
           user_id: aiUserId,
           user_name: userName,
           content,
+          history: recentHistory,
           reply_to: replyPayload,
         });
         const aiMsg = normalizeMessage({
@@ -372,9 +380,15 @@ export default function ChatWidget({ user, socketUrl }) {
       scrollToBottom();
       // Try parse as order intent
       try {
+        const recentHistoryVoice = messagesByMode['AI']
+          .slice(-6)
+          .map((m) => `${m.vai_tro_nguoi_gui === 'CUSTOMER' ? userName : 'AI'}: ${m.noi_dung}`)
+          .join('\n');
+          
         const res = await apiClient.post('/ai/chat/order-intent', {
           text: transcript,
           user_id: aiUserId,
+          history: recentHistoryVoice,
         });
         if (res.data?.can_order && res.data?.items?.length > 0) {
           setPendingOrder({
@@ -382,6 +396,7 @@ export default function ChatWidget({ user, socketUrl }) {
             items: res.data.items,
             total: res.data.estimated_total,
             message: res.data.message,
+            paymentMethod: res.data.payment_method,
           });
           return;
         }
@@ -415,11 +430,12 @@ export default function ChatWidget({ user, socketUrl }) {
           ten_san_pham: i.product_name,
           so_luong: i.quantity,
           gia_ban: i.price,
+          hinh_anh_url: i.image_url,
           ghi_chu: [i.size ? `Size ${i.size}` : '', i.note || ''].filter(Boolean).join(', '),
         }));
       await apiClient.post('/orders', {
         ma_nguoi_dung: aiUserId,
-        phuong_thuc_thanh_toan: 'TIEN_MAT',
+        phuong_thuc_thanh_toan: pendingOrder.paymentMethod || 'THANH_TOAN_KHI_NHAN_HANG',
         loai_don_hang: 'DELIVERY',
         chi_tiet_don_hang: items,
         ghi_chu: pendingOrder.transcript ? `Voice Order: ${pendingOrder.transcript}` : 'Chat Order',

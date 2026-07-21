@@ -14,6 +14,7 @@ import {
   Animated,
   KeyboardAvoidingView,
   Platform,
+  Modal,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
@@ -30,7 +31,47 @@ import {
   paymentMethodOptions,
   safeArray,
 } from '../lib/customerData'
+import {
+  buildAddressOptionsFromBranches,
+  getAddressSelectionDefaults,
+} from '../lib/addressOptions'
 import { colors, spacing, shadows, radius } from '../theme'
+
+function getBranchCode(b) {
+  return b?.ma_chi_nhanh || b?.co_so_ma || b?.branch_code || b?.ma_cua_hang || b?.id;
+}
+
+function getBranchName(b) {
+  return b?.ten_chi_nhanh || b?.ten_co_so || b?.ten_cua_hang || b?.name || 'Chi nhánh hệ thống';
+}
+
+function GenericPickerModal({ visible, title, options, selectedValue, onSelect, onClose }) {
+  return (
+    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
+      <Pressable style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end'}} onPress={onClose}>
+        <View style={{backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: 400, maxWidth: 600, width: '100%', alignSelf: 'center'}}>
+          <View style={{padding: 16, borderBottomWidth: 1, borderBottomColor: '#f1f5f9', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+            <Text style={{fontSize: 16, fontWeight: 'bold'}}>{title}</Text>
+            <Pressable onPress={onClose}><Ionicons name="close" size={24} color="#64748b" /></Pressable>
+          </View>
+          <ScrollView>
+            {options.map((opt, idx) => {
+              const label = typeof opt === 'string' ? opt : opt.label
+              const val = typeof opt === 'string' ? opt : opt.value
+              const isSelected = val === selectedValue
+              return (
+                <Pressable key={idx} style={{padding: 16, flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#f8fafc', backgroundColor: isSelected ? '#fff7ed' : '#fff'}} onPress={() => { onSelect(val); onClose(); }}>
+                  <Text style={{fontSize: 15, color: isSelected ? '#ea8025' : '#334155', fontWeight: isSelected ? '600' : '400'}}>{label}</Text>
+                  {isSelected && <Ionicons name="checkmark-circle" size={20} color="#ea8025" />}
+                </Pressable>
+              )
+            })}
+          </ScrollView>
+        </View>
+      </Pressable>
+    </Modal>
+  )
+}
 
 const DELIVERY_SLOTS = [
   '07:00 - 08:00',
@@ -126,7 +167,68 @@ export function CartScreen({ navigation }) {
   const [appliedVoucher, setAppliedVoucher] = useState(null)
   const [checkoutResult, setCheckoutResult] = useState(null)
   const [paymentConfirmed, setPaymentConfirmed] = useState(false)
+  const [guestEmail, setGuestEmail] = useState('')
+  const [guestPhone, setGuestPhone] = useState('')
+  const [guestSessionId, setGuestSessionId] = useState('')
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false)
+  const [addressModalVisible, setAddressModalVisible] = useState(false)
+  const [timeModalVisible, setTimeModalVisible] = useState(false)
+
   const bannerAnim = useRef(new Animated.Value(-80)).current
+
+  const publicBranchQuery = useQuery({
+    queryKey: ['public-branches'],
+    queryFn: async () => {
+      const response = await apiClient.get('/users/branches/public')
+      return response
+    },
+    staleTime: 60 * 1000,
+  })
+
+  const branches = safeArray(publicBranchQuery.data?.items || publicBranchQuery.data)
+  
+  const addressOptions = useMemo(
+    () => buildAddressOptionsFromBranches(branches),
+    [branches]
+  )
+  const defaultAddressSelection = useMemo(
+    () => getAddressSelectionDefaults(addressOptions),
+    [addressOptions]
+  )
+  
+  const [addressForm, setAddressForm] = useState(() => ({ ...defaultAddressSelection, street: '' }))
+  const [selectedBranchId, setSelectedBranchId] = useState('')
+  const [tableNumber, setTableNumber] = useState('')
+
+  const [cityModalVisible, setCityModalVisible] = useState(false)
+  const [districtModalVisible, setDistrictModalVisible] = useState(false)
+  const [wardModalVisible, setWardModalVisible] = useState(false)
+  const [branchModalVisible, setBranchModalVisible] = useState(false)
+
+  const districtOptions = useMemo(() => Object.keys(addressOptions[addressForm.city] || {}), [addressForm.city, addressOptions])
+  const wardOptions = useMemo(() => (addressOptions[addressForm.city]?.[addressForm.district] || []), [addressForm.city, addressForm.district, addressOptions])
+
+  const inventoryQuery = useQuery({
+    queryKey: ['inventory', selectedBranchId],
+    queryFn: async () => {
+      const response = await apiClient.get(`/inventory/items?branch_code=${selectedBranchId}`)
+      return safeArray(response?.data || response?.items || response)
+    },
+    enabled: Boolean(selectedBranchId),
+    staleTime: 5 * 1000,
+  })
+
+  useEffect(() => {
+    if (!addressForm.city && defaultAddressSelection.city) {
+      setAddressForm(prev => ({ ...prev, ...defaultAddressSelection }))
+    }
+  }, [addressForm.city, defaultAddressSelection])
+
+  useEffect(() => {
+    if (branches.length > 0 && !selectedBranchId) {
+      setSelectedBranchId(getBranchCode(branches[0]))
+    }
+  }, [branches, selectedBranchId])
 
   const cartQuery = useQuery({
     queryKey: ['customer', 'cart', userId],
@@ -158,18 +260,52 @@ export function CartScreen({ navigation }) {
   const productsQuery = useQuery({
     queryKey: ['customer', 'products', 'recommendations'],
     queryFn: async () => {
-      const res = await apiClient.get('/products')
+      const res = await apiClient.get('/menu/san-pham')
       return safeArray(res)
     },
     staleTime: 60 * 1000,
   })
 
+  const voucherQuery = useQuery({
+    queryKey: ['customer', 'vouchers', userId],
+    queryFn: async () => {
+      const response = await apiClient.get(`/vouchers?ma_nguoi_dung=${userId}`)
+      return safeArray(response)
+    },
+    enabled: Boolean(userId) && !String(userId).startsWith('anon-') && userId !== 'guest-customer',
+    staleTime: 60 * 1000,
+  })
+  
+  const voucherItems = voucherQuery.data || []
+
   const cart = safeArray(cartQuery.data).map(normalizeCartItem)
   const addresses = safeArray(addressesQuery.data)
 
+  const isAnyItemOutOfStock = useMemo(() => {
+    if (!inventoryQuery.data || inventoryQuery.data.length === 0) return false
+    const arr = inventoryQuery.data
+    return cart.some(item => {
+      const invItem = arr.find(i => String(i.ma_san_pham) === String(item.ma_san_pham))
+      return invItem && (invItem.dang_kinh_doanh === false || invItem.dang_kinh_doanh === 0 || invItem.dang_kinh_doanh === 'false')
+    })
+  }, [cart, inventoryQuery.data])
+
+  const taoDiaChiDayDu = () => {
+    const parts = [addressForm.street, addressForm.ward, addressForm.district, addressForm.city]
+      .map(item => String(item || '').trim())
+      .filter(Boolean)
+    return parts.join(', ')
+  }
+  const diaChiDayDu = taoDiaChiDayDu()
+
   const recommendedProducts = useMemo(() => {
     const all = productsQuery.data || []
-    return all.filter(p => !cart.some(c => c.ma_san_pham === p.id)).slice(0, 6)
+    return all.filter(p => {
+      const catName = String(p.danhMuc?.ten_danh_muc || p.danh_muc || '').toLowerCase()
+      const isFood = catName.includes('bánh') || catName.includes('đồ ăn') || catName.includes('food') || catName.includes('snack')
+      const inCart = cart.some(c => c.ma_san_pham === (p.id || p.ma_san_pham))
+      return isFood && !inCart
+    }).slice(0, 6)
   }, [productsQuery.data, cart])
 
   useEffect(() => {
@@ -183,7 +319,7 @@ export function CartScreen({ navigation }) {
     [addresses, selectedAddressId]
   )
 
-  const selectedAddressText = selectedAddress?.dia_chi_day_du || manualAddress
+  const selectedAddressText = deliveryMode === 'GIAO_TAN_NOI' ? diaChiDayDu : ''
 
   const totalAmount = cart.reduce((sum, item) => sum + Number(item.gia_ban || 0) * Number(item.so_luong || 0), 0)
   const totalItems = cart.reduce((sum, item) => sum + Number(item.so_luong || 0), 0)
@@ -293,16 +429,17 @@ export function CartScreen({ navigation }) {
       setCheckoutResult(null)
     },
     mutationFn: async () => {
-      if (!selectedAddressText) {
-        throw new Error('Chọn hoặc nhập địa chỉ giao hàng trước khi thanh toán.')
-      }
       return apiClient.post(`/customers/${userId}/thanh-toan/khoi-tao`, {
         phuong_thuc_thanh_toan: paymentMethod,
-        dia_chi_giao_hang: selectedAddressText,
-        khung_gio_giao: deliverySlot,
+        dia_chi_giao_hang: deliveryMode === 'GIAO_TAN_NOI' ? diaChiDayDu : (branches.find(b => getBranchCode(b) === selectedBranchId)?.dia_chi || ''),
+        phuong_thuc_giao_hang: deliveryMode,
+        chi_nhanh_id: deliveryMode !== 'GIAO_TAN_NOI' ? selectedBranchId : null,
+        so_ban: deliveryMode === 'DUNG_TAI_CHO' ? tableNumber : null,
         ghi_chu: note,
-        ma_khuyen_mai: appliedVoucher?.ma_khuyen_mai || undefined,
-        branch_code: undefined,
+        ma_voucher: appliedVoucher ? voucherCode : null,
+        guest_email: !user?.ma_nguoi_dung ? guestEmail : undefined,
+        guest_phone: !user?.ma_nguoi_dung ? guestPhone : undefined,
+        guest_session_id: !user?.ma_nguoi_dung ? guestSessionId : undefined,
       })
     },
     onSuccess: async (response) => {
@@ -316,27 +453,48 @@ export function CartScreen({ navigation }) {
     },
     onError: (error) => {
       const message = error?.response?.data?.message || error?.message || 'Không thể thanh toán.'
-      Alert.alert('Lỗi thanh toán', message)
+      if (Platform.OS === 'web') window.alert(message)
+      else Alert.alert('Lỗi thanh toán', message)
     },
   })
 
   const handleCheckout = () => {
     if (!cart.length) {
-      Alert.alert('Giỏ hàng trống', 'Thêm món vào giỏ trước khi thanh toán.')
+      if (Platform.OS === 'web') window.alert('Thêm món vào giỏ trước khi thanh toán.')
+      else Alert.alert('Giỏ hàng trống', 'Thêm món vào giỏ trước khi thanh toán.')
       return
     }
-    if (!selectedAddressText) {
-      Alert.alert('Thiếu địa chỉ', 'Vui lòng chọn hoặc nhập địa chỉ giao hàng.')
+    if (isAnyItemOutOfStock) {
+      if (Platform.OS === 'web') window.alert('Có sản phẩm trong giỏ đã hết hàng. Vui lòng xóa và thử lại.')
+      else Alert.alert('Hết hàng', 'Có sản phẩm trong giỏ đã hết hàng. Vui lòng xóa và thử lại.')
       return
     }
-    Alert.alert(
-      'Xác nhận đặt hàng',
-      `${totalItems} món · ${formatCurrency(finalAmount)}\nGiao đến: ${selectedAddressText}\nKhung giờ: ${deliverySlot}\nThanh toán: ${paymentMethodLabels[paymentMethod] || paymentMethod}`,
-      [
+    if (deliveryMode === 'GIAO_TAN_NOI' && !selectedAddressText) {
+      if (Platform.OS === 'web') window.alert('Vui lòng chọn hoặc nhập địa chỉ giao hàng.')
+      else Alert.alert('Thiếu địa chỉ', 'Vui lòng chọn hoặc nhập địa chỉ giao hàng.')
+      return
+    }
+    if (!user?.ma_nguoi_dung && !guestEmail.trim() && !guestPhone.trim()) {
+      if (Platform.OS === 'web') window.alert('Vui lòng nhập Email hoặc Số điện thoại để tiến hành thanh toán.')
+      else Alert.alert('Thiếu thông tin', 'Vui lòng nhập Email hoặc Số điện thoại để tiến hành thanh toán.')
+      return
+    }
+    const summary =
+      `${totalItems} món · ${formatCurrency(finalAmount)}\n` +
+      (deliveryMode === 'GIAO_TAN_NOI' ? `Giao đến: ${selectedAddressText}\n` : '') +
+      (deliveryMode === 'DUNG_TAI_CHO' && tableNumber ? `Số bàn: ${tableNumber}\n` : '') +
+      `Khung giờ: ${deliverySlot}\n` +
+      `Thanh toán: ${paymentMethodLabels[paymentMethod] || paymentMethod}`
+
+    if (Platform.OS === 'web') {
+      const confirm = window.confirm(`Xác nhận đặt hàng?\n\n${summary}`)
+      if (confirm) checkoutMutation.mutate()
+    } else {
+      Alert.alert('Xác nhận đặt hàng', summary, [
         { text: 'Hủy', style: 'cancel' },
         { text: 'Đặt hàng', onPress: () => checkoutMutation.mutate() },
-      ]
-    )
+      ])
+    }
   }
 
   // Auto-poll order payment status after checkout
@@ -547,9 +705,9 @@ export function CartScreen({ navigation }) {
             {/* Delivery Mode Tabs */}
             <View style={styles.deliveryModeRow}>
               {[
-                { id: 'giao_hang', label: 'Giao hàng tận nơi' },
-                { id: 'lay_tai_quan', label: 'Lấy tại quán' },
-                { id: 'dung_tai_cho', label: 'Dùng tại chỗ' },
+                { id: 'GIAO_TAN_NOI', label: 'Giao hàng tận nơi' },
+                { id: 'LAY_TAI_QUAN', label: 'Lấy tại quán' },
+                { id: 'DUNG_TAI_CHO', label: 'Dùng tại chỗ' },
               ].map((mode) => {
                 const active = deliveryMode === mode.id
                 return (
@@ -568,50 +726,74 @@ export function CartScreen({ navigation }) {
 
             {/* Store info & Delivery Time card */}
             <View style={styles.checkoutInfoCard}>
-              <Pressable
-                style={styles.checkoutInfoRow}
-                onPress={() => {
-                  if (addresses.length > 0) {
-                    Alert.alert('Chọn địa chỉ', '', addresses.map(a => ({
-                      text: a.ten_dia_chi || a.dia_chi_day_du,
-                      onPress: () => setSelectedAddressId(a.id)
-                    })).concat([{ text: 'Hủy', style: 'cancel' }]))
-                  }
-                }}
-              >
-                <Ionicons
-                  name={deliveryMode === 'dung_tai_cho' ? 'location-sharp' : 'map-outline'}
-                  size={20}
-                  color="#64748b"
-                  style={styles.checkoutInfoIcon}
-                />
-                <View style={styles.checkoutInfoContent}>
-                  <Text style={styles.checkoutInfoTitle}>
-                    {deliveryMode === 'dung_tai_cho' ? 'Dùng tại chỗ' : deliveryMode === 'lay_tai_quan' ? 'Lấy tại quán' : 'Giao hàng đến'}
-                  </Text>
-                  <Text style={styles.checkoutInfoSubtitle} numberOfLines={1}>
-                    {deliveryMode === 'giao_hang' ? (selectedAddressText || 'Nhập địa chỉ giao hàng bên dưới') : 'NTR Gold Coast'}
-                  </Text>
+              {deliveryMode === 'GIAO_TAN_NOI' ? (
+                <View style={{padding: 16}}>
+                  <Text style={{fontSize: 15, fontWeight: '700', marginBottom: 12}}>Địa chỉ giao hàng</Text>
+                  
+                  <View style={{flexDirection: 'row', gap: 12, marginBottom: 12}}>
+                    <Pressable style={styles.addressInputBtn} onPress={() => Object.keys(addressOptions).length && setCityModalVisible(true)}>
+                      <Text style={styles.addressInputText}>{addressForm.city || 'Thành phố'}</Text>
+                      <Ionicons name="chevron-down" size={16} color="#64748b" />
+                    </Pressable>
+                    <Pressable style={styles.addressInputBtn} onPress={() => districtOptions.length && setDistrictModalVisible(true)}>
+                      <Text style={styles.addressInputText}>{addressForm.district || 'Quận/Huyện'}</Text>
+                      <Ionicons name="chevron-down" size={16} color="#64748b" />
+                    </Pressable>
+                  </View>
+                  
+                  <View style={{flexDirection: 'row', gap: 12, marginBottom: 12}}>
+                    <Pressable style={[styles.addressInputBtn, {flex: 0.5}]} onPress={() => wardOptions.length && setWardModalVisible(true)}>
+                      <Text style={styles.addressInputText}>{addressForm.ward || 'Phường/Xã'}</Text>
+                      <Ionicons name="chevron-down" size={16} color="#64748b" />
+                    </Pressable>
+                    <TextInput
+                      style={[styles.addressTextInput, {flex: 0.5}]}
+                      placeholder="Số nhà, tên đường..."
+                      value={addressForm.street}
+                      onChangeText={t => setAddressForm(prev => ({ ...prev, street: t }))}
+                    />
+                  </View>
+
+                  <GenericPickerModal visible={cityModalVisible} title="Thành phố" options={Object.keys(addressOptions)} selectedValue={addressForm.city} onSelect={val => { setAddressForm(p => ({...p, city: val, district: '', ward: ''})); setCityModalVisible(false); }} onClose={() => setCityModalVisible(false)} />
+                  <GenericPickerModal visible={districtModalVisible} title="Quận/Huyện" options={districtOptions} selectedValue={addressForm.district} onSelect={val => { setAddressForm(p => ({...p, district: val, ward: ''})); setDistrictModalVisible(false); }} onClose={() => setDistrictModalVisible(false)} />
+                  <GenericPickerModal visible={wardModalVisible} title="Phường/Xã" options={wardOptions} selectedValue={addressForm.ward} onSelect={val => { setAddressForm(p => ({...p, ward: val})); setWardModalVisible(false); }} onClose={() => setWardModalVisible(false)} />
                 </View>
-                <Ionicons name="chevron-forward" size={18} color="#ef4444" />
-              </Pressable>
+              ) : (
+                <View style={{padding: 16}}>
+                  <Text style={{fontSize: 15, fontWeight: '700', marginBottom: 12}}>Chọn Cửa Hàng</Text>
+                  <Pressable style={styles.addressInputBtn} onPress={() => setBranchModalVisible(true)}>
+                    <Ionicons name="storefront-outline" size={18} color="#ea8025" style={{marginRight: 8}} />
+                    <Text style={[styles.addressInputText, {flex: 1}]} numberOfLines={1}>
+                      {branches.find(b => getBranchCode(b) === selectedBranchId) ? getBranchName(branches.find(b => getBranchCode(b) === selectedBranchId)) : 'Chọn cửa hàng'}
+                    </Text>
+                    <Ionicons name="chevron-down" size={16} color="#64748b" />
+                  </Pressable>
+                  <Text style={{fontSize: 12, color: '#64748b', marginTop: 4, paddingHorizontal: 4}}>
+                    {branches.find(b => getBranchCode(b) === selectedBranchId)?.dia_chi || ''}
+                  </Text>
+                  {deliveryMode === 'DUNG_TAI_CHO' && (
+                    <TextInput
+                      style={[styles.addressTextInput, {marginTop: 12}]}
+                      placeholder="Số bàn (không bắt buộc)"
+                      value={tableNumber}
+                      onChangeText={setTableNumber}
+                    />
+                  )}
+                  <GenericPickerModal visible={branchModalVisible} title="Chọn cửa hàng" options={branches.map(b => ({ label: getBranchName(b), value: getBranchCode(b) }))} selectedValue={selectedBranchId} onSelect={val => { setSelectedBranchId(val); setBranchModalVisible(false); }} onClose={() => setBranchModalVisible(false)} />
+                </View>
+              )}
 
               <View style={styles.checkoutInfoDivider} />
 
               <Pressable
                 style={styles.checkoutInfoRow}
-                onPress={() => {
-                  Alert.alert('Khung giờ giao', 'Chọn thời gian:', DELIVERY_SLOTS.slice(0, 5).map(s => ({
-                    text: s,
-                    onPress: () => setDeliverySlot(s)
-                  })).concat([{ text: 'Hủy', style: 'cancel' }]))
-                }}
+                onPress={() => setTimeModalVisible(true)}
               >
                 <Ionicons name="time-outline" size={20} color="#64748b" style={styles.checkoutInfoIcon} />
                 <View style={styles.checkoutInfoContent}>
-                  <Text style={styles.checkoutInfoTitle}>Tùy chọn thời gian giao hàng</Text>
+                  <Text style={styles.checkoutInfoTitle}>Tùy chọn thời gian</Text>
                   <Text style={styles.checkoutInfoSubtitle} numberOfLines={1}>
-                    2026-07-15, Càng sớm càng tốt ({deliverySlot})
+                    Càng sớm càng tốt ({deliverySlot})
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={18} color="#ef4444" />
@@ -624,31 +806,36 @@ export function CartScreen({ navigation }) {
               <View style={styles.cartListClean}>
                 {cart.map((item, index) => (
                   <View key={item.id || item.ma_san_pham || index} style={styles.cartItemRowClean}>
-                    {item.hinh_anh_url ? (
-                      <Image source={{ uri: item.hinh_anh_url }} style={styles.cartItemImgClean} resizeMode="cover" />
-                    ) : (
-                      <View style={[styles.cartItemImgClean, styles.cartItemImgPlaceholderClean]}>
-                        <Ionicons name="cafe-outline" size={22} color="#94a3b8" />
+                    <Pressable
+                      style={{ flexDirection: 'row', flex: 1 }}
+                      onPress={() => navigation.navigate('Menu', { editCartItem: item })}
+                    >
+                      {item.hinh_anh_url ? (
+                        <Image source={{ uri: item.hinh_anh_url }} style={styles.cartItemImgClean} resizeMode="cover" />
+                      ) : (
+                        <View style={[styles.cartItemImgClean, styles.cartItemImgPlaceholderClean]}>
+                          <Ionicons name="cafe-outline" size={22} color="#94a3b8" />
+                        </View>
+                      )}
+                      <View style={styles.cartItemInfoClean}>
+                        <Text style={styles.cartItemNameClean} numberOfLines={2}>{item.ten_san_pham}</Text>
+                        <Text style={styles.cartItemSizeClean}>
+                          Size {item.size || 'Nhỏ'}
+                          {item.toppings && item.toppings.length ? ` + ${Array.isArray(item.toppings) ? item.toppings.join(', ') : String(item.toppings)}` : ''}
+                        </Text>
+                        {(item.luong_da || item.do_ngot) ? (
+                          <Text style={[styles.cartItemSizeClean, { fontSize: 11, color: '#64748b', marginTop: 1 }]}>
+                            Đá: {item.luong_da || 'BT'} · Ngọt: {item.do_ngot || 'BT'}
+                          </Text>
+                        ) : null}
+                        {item.ghi_chu ? (
+                          <Text style={[styles.cartItemSizeClean, { fontSize: 11, fontStyle: 'italic', color: '#ea8025', marginTop: 1 }]}>
+                            Ghi chú: {item.ghi_chu}
+                          </Text>
+                        ) : null}
+                        <Text style={styles.cartItemPriceClean}>{formatCurrency(item.gia_ban)}</Text>
                       </View>
-                    )}
-                    <View style={styles.cartItemInfoClean}>
-                      <Text style={styles.cartItemNameClean} numberOfLines={2}>{item.ten_san_pham}</Text>
-                      <Text style={styles.cartItemSizeClean}>
-                        Size {item.size || 'Nhỏ'}
-                        {item.toppings && item.toppings.length ? ` + ${Array.isArray(item.toppings) ? item.toppings.join(', ') : String(item.toppings)}` : ''}
-                      </Text>
-                      {(item.luong_da || item.do_ngot) ? (
-                        <Text style={[styles.cartItemSizeClean, { fontSize: 11, color: '#64748b', marginTop: 1 }]}>
-                          Đá: {item.luong_da || 'BT'} · Ngọt: {item.do_ngot || 'BT'}
-                        </Text>
-                      ) : null}
-                      {item.ghi_chu ? (
-                        <Text style={[styles.cartItemSizeClean, { fontSize: 11, fontStyle: 'italic', color: '#ea8025', marginTop: 1 }]}>
-                          Ghi chú: {item.ghi_chu}
-                        </Text>
-                      ) : null}
-                      <Text style={styles.cartItemPriceClean}>{formatCurrency(item.gia_ban)}</Text>
-                    </View>
+                    </Pressable>
                     <View style={styles.qtyControlClean}>
                       <Pressable onPress={() => decreaseMutation.mutate(item)} style={styles.qtyBtnClean}>
                         <Text style={styles.qtyBtnTextClean}>−</Text>
@@ -664,87 +851,128 @@ export function CartScreen({ navigation }) {
             </View>
 
             {/* Upsell / Recommendations */}
-            <View style={styles.sectionContainerClean}>
-              <Text style={styles.sectionTitleClean}>Gợi ý dùng kèm</Text>
-              <Text style={styles.sectionSubtitleClean}>Thêm cùng giỏ hàng hiện tại - lựa chọn phổ biến</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.recomScrollContainer}>
-                {(recommendedProducts.length > 0 ? recommendedProducts : [
-                  { id: 'rec1', ten_san_pham: 'Wafu Pasta Heo Nướng Xốt Shoyu', gia_ban: 69000, hinh_anh_url: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=300' },
-                  { id: 'rec2', ten_san_pham: 'Wafu Pasta Bò Bằm Xốt Bolognese', gia_ban: 59000, hinh_anh_url: 'https://images.unsplash.com/photo-1621996346565-e3d5d6281298?w=300' },
-                  { id: 'rec3', ten_san_pham: 'Bánh Mì Que Bò Nắm Xốt Bơ', gia_ban: 22000, hinh_anh_url: 'https://images.unsplash.com/photo-1509722747041-616f39b57569?w=300' },
-                ]).map((p, idx) => (
-                  <View key={p.id || idx} style={styles.recomCardClean}>
-                    <View style={styles.recomCardTop}>
-                      {p.hinh_anh_url ? (
-                        <Image source={{ uri: p.hinh_anh_url }} style={styles.recomImgClean} resizeMode="cover" />
-                      ) : (
-                        <View style={[styles.recomImgClean, styles.cartItemImgPlaceholderClean]}>
-                          <Ionicons name="fast-food-outline" size={24} color="#94a3b8" />
+            {recommendedProducts.length > 0 && (
+              <View style={styles.sectionContainerClean}>
+                <Text style={styles.sectionTitleClean}>Gợi ý dùng kèm</Text>
+                <Text style={styles.sectionSubtitleClean}>Thêm cùng giỏ hàng hiện tại - lựa chọn phổ biến</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.recomScrollContainer}>
+                  {recommendedProducts.map((p, idx) => (
+                    <View key={p.id || p.ma_san_pham || idx} style={styles.recomCardClean}>
+                      <View style={styles.recomCardTop}>
+                        {p.hinh_anh_url ? (
+                          <Image source={{ uri: p.hinh_anh_url }} style={styles.recomImgClean} resizeMode="cover" />
+                        ) : (
+                          <View style={[styles.recomImgClean, styles.cartItemImgPlaceholderClean]}>
+                            <Ionicons name="fast-food-outline" size={24} color="#94a3b8" />
+                          </View>
+                        )}
+                        <View style={styles.recomInfoClean}>
+                          <Text style={styles.recomNameClean} numberOfLines={2}>{p.ten_san_pham}</Text>
                         </View>
-                      )}
-                      <View style={styles.recomInfoClean}>
-                        <Text style={styles.recomNameClean} numberOfLines={2}>{p.ten_san_pham}</Text>
-                        <Text style={styles.recomOldPriceClean}>{formatCurrency(Number(p.gia_ban) + 10000)}</Text>
                       </View>
+                      <Pressable
+                        style={styles.recomAddBtnClean}
+                        onPress={() => addMoreMutation.mutate({
+                          ma_san_pham: p.id || p.ma_san_pham,
+                          ten_san_pham: p.ten_san_pham,
+                          gia_ban: p.gia_ban,
+                          hinh_anh_url: p.hinh_anh_url,
+                          size: 'Nhỏ',
+                        })}
+                      >
+                        <Text style={styles.recomAddTextClean}>{formatCurrency(p.gia_ban)}  Thêm ›</Text>
+                      </Pressable>
                     </View>
-                    <Pressable
-                      style={styles.recomAddBtnClean}
-                      onPress={() => addMoreMutation.mutate({
-                        ma_san_pham: p.id || `rec_${idx}`,
-                        ten_san_pham: p.ten_san_pham,
-                        gia_ban: p.gia_ban,
-                        hinh_anh_url: p.hinh_anh_url,
-                        size: 'Vừa',
-                      })}
-                    >
-                      <Text style={styles.recomAddTextClean}>{formatCurrency(p.gia_ban)}  Thêm ›</Text>
-                    </Pressable>
-                  </View>
-                ))}
-              </ScrollView>
-              <View style={styles.feedbackPillClean}>
-                <Text style={styles.feedbackTextClean}>⭐ Hợp gu?</Text>
-                <Pressable style={styles.feedbackBtnClean} onPress={() => Alert.alert('Cảm ơn', 'Chúng tôi ghi nhận ý kiến của bạn!')}>
-                  <Text style={styles.feedbackEmojiClean}>👍</Text>
-                </Pressable>
-                <Pressable style={styles.feedbackBtnClean} onPress={() => Alert.alert('Cảm ơn', 'Chúng tôi sẽ cải thiện gợi ý!')}>
-                  <Text style={styles.feedbackEmojiClean}>👎</Text>
-                </Pressable>
+                  ))}
+                </ScrollView>
               </View>
-            </View>
+            )}
 
             {/* Vouchers Section */}
-            <View style={styles.sectionContainerClean}>
-              <View style={styles.sectionHeaderRowClean}>
-                <Text style={styles.sectionTitleClean}>Mã giảm giá</Text>
-                <Pressable onPress={() => Alert.alert('Mã giảm giá', 'Bạn đang có ưu đãi Miễn phí Upsize và Giảm 20%!')}>
-                  <Text style={styles.sectionLinkClean}>Tất cả mã ›</Text>
-                </Pressable>
-              </View>
-              <View style={styles.voucherCardClean}>
-                <View style={styles.voucherBadgeLeftClean}>
-                  <Text style={styles.voucherBadgeTextClean}>MIỄN PHÍ</Text>
-                  <Text style={styles.voucherBadgeSubClean}>UPSIZE</Text>
+            {voucherItems.length > 0 && (
+              <View style={styles.sectionContainerClean}>
+                <View style={styles.sectionHeaderRowClean}>
+                  <Text style={styles.sectionTitleClean}>Mã giảm giá</Text>
+                  <Pressable onPress={() => navigation.navigate('Menu')}>
+                    <Text style={styles.sectionLinkClean}>Tất cả mã ›</Text>
+                  </Pressable>
                 </View>
-                <View style={styles.voucherInfoClean}>
-                  <Text style={styles.voucherTitleClean}>Miễn phí Upsize BST Trà Shan/Americano mới</Text>
-                  <Text style={styles.voucherSubClean}>Còn 17 ngày</Text>
-                </View>
-                <Pressable
-                  onPress={() => {
-                    if (!appliedVoucher) {
-                      setAppliedVoucher({ ma_khuyen_mai: 'UPSIZE_FREE' })
-                      Alert.alert('Thành công', 'Đã áp dụng ưu đãi Miễn phí Upsize!')
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.recomScrollContainer}>
+                  {voucherItems.slice(0, 4).map((v) => {
+                    const isPercent = v.loai_khuyen_mai === 'PERCENT'
+                    const valueText = isPercent ? `${v.gia_tri}%` : `${(v.gia_tri / 1000)}K`
+                    let badgeLabel = 'GIẢM GIÁ'
+                    if (v.loai_khuyen_mai === 'FREE_ITEM' || String(v.ma_khuyen_mai).toUpperCase().includes('UPSIZE') || String(v.ten_khuyen_mai).toUpperCase().includes('UPSIZE')) {
+                      badgeLabel = 'MIỄN PHÍ\nUPSIZE'
+                    } else if (isPercent) {
+                      badgeLabel = `GIẢM\n${valueText}`
                     } else {
-                      setAppliedVoucher(null)
+                      badgeLabel = `GIẢM\n${valueText}`
                     }
-                  }}
-                  style={styles.voucherUseContainer}
-                >
-                  <Text style={styles.voucherUseBtnClean}>{appliedVoucher ? 'Đang dùng' : 'Dùng'}</Text>
-                </Pressable>
+
+                    return (
+                      <Pressable
+                        key={v.ma_khuyen_mai}
+                        style={{
+                          flexDirection: 'row',
+                          width: 330,
+                          height: 76,
+                          backgroundColor: '#fff',
+                          borderColor: appliedVoucher?.ma_khuyen_mai === v.ma_khuyen_mai ? '#e15923' : '#f5cbb8',
+                          borderWidth: 1,
+                          borderRadius: 12,
+                          padding: 10,
+                          alignItems: 'center',
+                          marginRight: 12
+                        }}
+                        onPress={() => {
+                          if (appliedVoucher?.ma_khuyen_mai === v.ma_khuyen_mai) {
+                            setAppliedVoucher(null)
+                          } else {
+                            setAppliedVoucher(v)
+                            Alert.alert('Thành công', 'Đã áp dụng ưu đãi ' + (v.ten_khuyen_mai || v.ma_khuyen_mai))
+                          }
+                        }}
+                      >
+                        {/* Left Badge */}
+                        <View style={{
+                          width: 70,
+                          height: '100%',
+                          backgroundColor: '#fff6f0',
+                          borderColor: '#fcdbc7',
+                          borderWidth: 1,
+                          borderRadius: 6,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          paddingHorizontal: 4
+                        }}>
+                          <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#e15923', textAlign: 'center' }}>
+                            {badgeLabel}
+                          </Text>
+                        </View>
+                        
+                        {/* Middle Info */}
+                        <View style={{ flex: 1, paddingHorizontal: 12, justifyContent: 'center' }}>
+                          <Text style={{ fontSize: 14, fontWeight: '600', color: '#282828', marginBottom: 2 }} numberOfLines={1}>
+                            {v.ten_khuyen_mai || v.mo_ta || `Giảm ${valueText} cho đơn hàng hợp lệ`}
+                          </Text>
+                          <Text style={{ fontSize: 12, color: '#64748b' }}>
+                            {v.han_su_dung ? `Còn ${Math.max(1, Math.ceil((new Date(v.han_su_dung) - new Date()) / (1000 * 60 * 60 * 24)))} ngày` : 'Không giới hạn'}
+                          </Text>
+                        </View>
+                        
+                        {/* Right Button */}
+                        <View style={{ paddingLeft: 8 }}>
+                          <Text style={{ fontSize: 13, fontWeight: 'bold', color: appliedVoucher?.ma_khuyen_mai === v.ma_khuyen_mai ? '#1a8b46' : '#e15923' }}>
+                            {appliedVoucher?.ma_khuyen_mai === v.ma_khuyen_mai ? 'Đang dùng' : 'Dùng'}
+                          </Text>
+                        </View>
+                      </Pressable>
+                    )
+                  })}
+                </ScrollView>
               </View>
-            </View>
+            )}
 
             {/* Input Fields */}
             <View style={styles.sectionContainerClean}>
@@ -791,14 +1019,7 @@ export function CartScreen({ navigation }) {
               </View>
               <Pressable
                 style={styles.paymentMethodRowClean}
-                onPress={() => {
-                  Alert.alert('Chọn phương thức thanh toán', '', [
-                    { text: '💵 Tiền mặt (khi nhận hàng)', onPress: () => setPaymentMethod('THANH_TOAN_KHI_NHAN_HANG') },
-                    { text: '📱 Ngân hàng / QR Code', onPress: () => setPaymentMethod('NGAN_HANG_QR') },
-                    { text: '💳 VNPAY', onPress: () => setPaymentMethod('VNPAY') },
-                    { text: 'Hủy', style: 'cancel' }
-                  ])
-                }}
+                onPress={() => setPaymentModalVisible(true)}
               >
                 <View style={styles.paymentMethodLeftClean}>
                   <Ionicons
@@ -846,6 +1067,86 @@ export function CartScreen({ navigation }) {
           </>
         ) : null}
       </ScrollView>
+
+      {/* Payment Method Modal for Web/Mobile compatibility */}
+      <Modal visible={paymentModalVisible} animationType="slide" transparent onRequestClose={() => setPaymentModalVisible(false)}>
+        <Pressable style={styles.paymentModalOverlay} onPress={() => setPaymentModalVisible(false)}>
+          <View style={styles.paymentModalCard}>
+            <View style={styles.paymentModalHeader}>
+              <Text style={styles.paymentModalTitle}>Chọn phương thức thanh toán</Text>
+              <Pressable onPress={() => setPaymentModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#64748b" />
+              </Pressable>
+            </View>
+            <View style={styles.paymentModalList}>
+              <Pressable style={styles.paymentModalItem} onPress={() => { setPaymentMethod('THANH_TOAN_KHI_NHAN_HANG'); setPaymentModalVisible(false); }}>
+                <Ionicons name="cash-outline" size={24} color="#22c55e" />
+                <Text style={styles.paymentModalItemText}>Tiền mặt</Text>
+                {paymentMethod === 'THANH_TOAN_KHI_NHAN_HANG' && <Ionicons name="checkmark-circle" size={24} color="#ea8025" />}
+              </Pressable>
+              <Pressable style={styles.paymentModalItem} onPress={() => { setPaymentMethod('NGAN_HANG_QR'); setPaymentModalVisible(false); }}>
+                <Ionicons name="qr-code-outline" size={24} color="#3b82f6" />
+                <Text style={styles.paymentModalItemText}>Ngân hàng / QR Code</Text>
+                {paymentMethod === 'NGAN_HANG_QR' && <Ionicons name="checkmark-circle" size={24} color="#ea8025" />}
+              </Pressable>
+              <Pressable style={styles.paymentModalItem} onPress={() => { setPaymentMethod('VNPAY'); setPaymentModalVisible(false); }}>
+                <Ionicons name="card-outline" size={24} color="#0ea5e9" />
+                <Text style={styles.paymentModalItemText}>Thẻ VNPAY / ATM</Text>
+                {paymentMethod === 'VNPAY' && <Ionicons name="checkmark-circle" size={24} color="#ea8025" />}
+              </Pressable>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Address Selection Modal */}
+      <Modal visible={addressModalVisible} animationType="slide" transparent onRequestClose={() => setAddressModalVisible(false)}>
+        <Pressable style={styles.paymentModalOverlay} onPress={() => setAddressModalVisible(false)}>
+          <View style={styles.paymentModalCard}>
+            <View style={styles.paymentModalHeader}>
+              <Text style={styles.paymentModalTitle}>Chọn địa chỉ giao hàng</Text>
+              <Pressable onPress={() => setAddressModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#64748b" />
+              </Pressable>
+            </View>
+            <ScrollView style={{ maxHeight: 300 }} contentContainerStyle={styles.paymentModalList}>
+              {addresses.map(a => (
+                <Pressable key={a.id} style={styles.paymentModalItem} onPress={() => { setSelectedAddressId(a.id); setAddressModalVisible(false); }}>
+                  <Ionicons name="location-outline" size={24} color="#ea8025" />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.paymentModalItemText, { fontWeight: '700' }]}>{a.ten_dia_chi}</Text>
+                    <Text style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>{a.dia_chi_day_du}</Text>
+                  </View>
+                  {selectedAddressId === a.id && <Ionicons name="checkmark-circle" size={24} color="#ea8025" />}
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Timeslot Selection Modal */}
+      <Modal visible={timeModalVisible} animationType="slide" transparent onRequestClose={() => setTimeModalVisible(false)}>
+        <Pressable style={styles.paymentModalOverlay} onPress={() => setTimeModalVisible(false)}>
+          <View style={styles.paymentModalCard}>
+            <View style={styles.paymentModalHeader}>
+              <Text style={styles.paymentModalTitle}>Chọn thời gian giao hàng</Text>
+              <Pressable onPress={() => setTimeModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#64748b" />
+              </Pressable>
+            </View>
+            <ScrollView style={{ maxHeight: 300 }} contentContainerStyle={styles.paymentModalList}>
+              {DELIVERY_SLOTS.slice(0, 5).map(s => (
+                <Pressable key={s} style={styles.paymentModalItem} onPress={() => { setDeliverySlot(s); setTimeModalVisible(false); }}>
+                  <Ionicons name="time-outline" size={24} color="#0ea5e9" />
+                  <Text style={styles.paymentModalItemText}>{s}</Text>
+                  {deliverySlot === s && <Ionicons name="checkmark-circle" size={24} color="#ea8025" />}
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        </Pressable>
+      </Modal>
 
       {/* Bottom Sticky Checkout Bar */}
       {cart.length > 0 ? (
@@ -2008,4 +2309,75 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#fff',
   },
+  
+  // Payment Modal Styles
+  paymentModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  paymentModalCard: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+  },
+  paymentModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  paymentModalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#1e293b',
+  },
+  paymentModalList: {
+    gap: 12,
+  },
+  paymentModalItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    gap: 12,
+  },
+  paymentModalItemText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#334155',
+  },
+  addressInputBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#fff',
+  },
+  addressInputText: {
+    fontSize: 14,
+    color: '#334155',
+  },
+  addressTextInput: {
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#334155',
+    backgroundColor: '#fff',
+  }
 })

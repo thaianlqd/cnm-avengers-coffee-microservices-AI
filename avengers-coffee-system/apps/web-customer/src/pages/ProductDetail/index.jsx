@@ -207,11 +207,17 @@ export default function ProductDetailPage({
 
   const handleMainAddToCart = (isBuyNow = false) => {
     if (hasDynamicVariants) {
-      const size = dynamicSelections['Kích thước'] || '';
-      const toppings = dynamicSelections['Topping'] || [];
-      const luongDa = dynamicSelections['Lượng đá'] || '';
-      const doNgot = dynamicSelections['Độ ngọt'] || '';
-      const loaiSua = dynamicSelections['Loại sữa'] || '';
+      const getVal = (keywords, isArray = false) => {
+        const key = Object.keys(dynamicSelections).find(k => keywords.some(kw => k.toLowerCase().includes(kw)));
+        if (key) return dynamicSelections[key];
+        return isArray ? [] : '';
+      };
+
+      const size = getVal(['kích thước', 'kích cỡ', 'size']);
+      const toppings = getVal(['topping', 'đồ kèm', 'thêm'], true);
+      const luongDa = getVal(['lượng đá', 'đá', 'ice']);
+      const doNgot = getVal(['độ ngọt', 'ngọt', 'đường', 'sugar']);
+      const loaiSua = getVal(['loại sữa', 'sữa', 'milk']);
       
       onAddToCart?.(product, quantity, size, {
         toppings,
@@ -239,11 +245,17 @@ export default function ProductDetailPage({
     const hasModalDynamic = modalProduct.bien_the && typeof modalProduct.bien_the === 'object' && Object.keys(modalProduct.bien_the).length > 0;
     
     if (hasModalDynamic) {
-      const size = modalDynamicSelections['Kích thước'] || '';
-      const toppings = modalDynamicSelections['Topping'] || [];
-      const luongDa = modalDynamicSelections['Lượng đá'] || '';
-      const doNgot = modalDynamicSelections['Độ ngọt'] || '';
-      const loaiSua = modalDynamicSelections['Loại sữa'] || '';
+      const getModalVal = (keywords, isArray = false) => {
+        const key = Object.keys(modalDynamicSelections).find(k => keywords.some(kw => k.toLowerCase().includes(kw)));
+        if (key) return modalDynamicSelections[key];
+        return isArray ? [] : '';
+      };
+
+      const size = getModalVal(['kích thước', 'kích cỡ', 'size']);
+      const toppings = getModalVal(['topping', 'đồ kèm', 'thêm'], true);
+      const luongDa = getModalVal(['lượng đá', 'đá', 'ice']);
+      const doNgot = getModalVal(['độ ngọt', 'ngọt', 'đường', 'sugar']);
+      const loaiSua = getModalVal(['loại sữa', 'sữa', 'milk']);
       
       onAddToCart?.(modalProduct, modalQuantity, size, {
         toppings,
