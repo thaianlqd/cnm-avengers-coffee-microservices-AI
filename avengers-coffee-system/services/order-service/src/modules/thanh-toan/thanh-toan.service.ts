@@ -28,6 +28,7 @@ type KhoiTaoThanhToanDto = {
   guest_email?: string;
   guest_phone?: string;
   session_id?: string;
+  ten_khach_hang?: string;
 };
 
 type TaoDonTaiQuayDto = {
@@ -1374,6 +1375,8 @@ export class ThanhToanService {
       khung_gio_giao: dto.khung_gio_giao ?? null,
       ghi_chu: dto.ghi_chu ?? null,
       loai_don_hang: dto.delivery_mode ?? null,
+      ma_ban: dto.table_number ?? null,
+      ten_khach_hang: dto.ten_khach_hang ?? (isGuest ? (dto.guest_email?.trim() || dto.guest_phone?.trim() || null) : null),
       phuong_thuc_thanh_toan: dto.phuong_thuc_thanh_toan,
       trang_thai_thanh_toan: trangThaiThanhToanBanDau,
       trang_thai_don_hang: 'MOI_TAO',
@@ -1390,10 +1393,11 @@ export class ThanhToanService {
           loai: 'PAYMENT',
           trang_thai: trangThaiThanhToanBanDau,
           thoi_gian: new Date().toISOString(),
-          ghi_chu: 'Khoi tao thanh toan',
+          ghi_chu: 'Phuong thuc thanh toan: ' + dto.phuong_thuc_thanh_toan,
         },
       ],
     }));
+    require('fs').appendFileSync('/app/error.log', '\n[DEBUG] Saved don_hang in DB: ma_ban=' + donHang.ma_ban + ', don_hang_id=' + donHang.ma_don_hang + '\n');
 
     // 2. Lưu chi tiết đơn hàng
     const chiTiet = gioHang.map((item) =>

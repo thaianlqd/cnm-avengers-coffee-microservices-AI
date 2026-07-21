@@ -75,6 +75,20 @@ const resources = {
         email: "Email: cskh@avengerscoffee.vn",
         address: "Địa chỉ: 123 Đường Cà Phê, Quận 1, TP.HCM",
         copyright: "© 2026 Avengers Coffee. All rights reserved."
+      },
+      giftcard: {
+        nav: {
+          "ve-the": "Về thẻ Avengers Coffee",
+          "bo-suu-tap": "Bộ sưu tập thẻ",
+          "chinh-sach": "Chính sách",
+          "ho-tro": "Hỗ trợ",
+          "mua-so-luong-lon": "Mua số lượng lớn",
+          "khuyen-mai": "Khuyến Mãi",
+          boSuuTap2024: "Bộ sưu tập 2024",
+          boSuuTap2025: "Bộ sưu tập 2025",
+          theFestive2025: "Thẻ Festive 2025",
+          xemTatCa: "Xem tất cả"
+        }
       }
     }
   },
@@ -151,6 +165,20 @@ const resources = {
         email: "Email: support@avengerscoffee.vn",
         address: "Address: 123 Coffee St, District 1, HCMC",
         copyright: "© 2026 Avengers Coffee. All rights reserved."
+      },
+      giftcard: {
+        nav: {
+          "ve-the": "About Avengers Card",
+          "bo-suu-tap": "Card Collection",
+          "chinh-sach": "Policies",
+          "ho-tro": "Support",
+          "mua-so-luong-lon": "Corporate Sales",
+          "khuyen-mai": "Promotions",
+          boSuuTap2024: "2024 Collection",
+          boSuuTap2025: "2025 Collection",
+          theFestive2025: "2025 Festive Card",
+          xemTatCa: "View all"
+        }
       }
     }
   }

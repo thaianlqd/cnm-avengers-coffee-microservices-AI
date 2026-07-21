@@ -48,7 +48,7 @@ export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider, categorie
       {/* ── 3. ĐỒNG HÀNH — 3 ảnh thật từ HC (text bên dưới ảnh) ── */}
       <section className="w-full bg-white py-16">
         <div className="mx-auto max-w-[1200px] px-4 md:px-6">
-          <h2 className="mb-12 text-center text-3xl font-bold text-[#333333] md:text-[38px]">
+          <h2 className="mb-12 text-center text-3xl font-bold font-sans text-[#333333] md:text-[38px]">
             {t('home.companion')}
           </h2>
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
@@ -75,8 +75,8 @@ export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider, categorie
 
       {/* ── 4. NƯỚC NGON / BÁNH NGON — 2 ảnh to với khối nền kem bên dưới ── */}
       <section className="w-full bg-white pb-16">
-        <div className="mx-auto max-w-[1200px] px-4 md:px-6">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div className="mx-auto w-full max-w-[1600px] px-4 md:px-8 xl:px-12">
+          <div className="grid grid-cols-1 gap-6 lg:gap-10 md:grid-cols-2">
             <button
               type="button"
               onClick={() => {
@@ -90,13 +90,13 @@ export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider, categorie
               <div className="overflow-hidden rounded-t-[20px] w-full">
                 <img
                   src={HC_IMG.nuocNgon}
-                  className="h-[460px] w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="h-[460px] md:h-[550px] lg:h-[650px] w-full object-cover transition-transform duration-700 group-hover:scale-105"
                   alt={t('home.tastyDrinks')}
                   onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80'; }}
                 />
               </div>
-              <div className="bg-[#f9f4ec] group-hover:bg-[#b22830] transition-colors duration-300 rounded-b-[20px] py-8 w-full flex items-center justify-center">
-                 <p className="text-center text-[18px] font-bold uppercase tracking-wide text-[#333333] group-hover:text-white transition-colors duration-300">{t('home.tastyDrinks')}</p>
+              <div className="bg-[#f9f4ec] group-hover:bg-[#e8decb] transition-colors duration-300 rounded-b-[20px] py-10 w-full flex items-center justify-center">
+                 <p className="text-center text-xl font-bold uppercase tracking-wide text-[#333333] transition-colors duration-300">{t('home.tastyDrinks')}</p>
               </div>
             </button>
             <button
@@ -112,13 +112,13 @@ export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider, categorie
               <div className="overflow-hidden rounded-t-[20px] w-full">
                 <img
                   src={HC_IMG.banhNgon}
-                  className="h-[460px] w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="h-[460px] md:h-[550px] lg:h-[650px] w-full object-cover transition-transform duration-700 group-hover:scale-105"
                   alt={t('home.tastyCakes')}
                   onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1517487881594-2787fef5ebf7?auto=format&fit=crop&w=800&q=80'; }}
                 />
               </div>
-              <div className="bg-[#f9f4ec] group-hover:bg-[#b22830] transition-colors duration-300 rounded-b-[20px] py-8 w-full flex items-center justify-center">
-                 <p className="text-center text-[18px] font-bold uppercase tracking-wide text-[#333333] group-hover:text-white transition-colors duration-300">{t('home.tastyCakes')}</p>
+              <div className="bg-[#b22830] group-hover:bg-[#911f25] transition-colors duration-300 rounded-b-[20px] py-10 w-full flex items-center justify-center">
+                 <p className="text-center text-xl font-bold uppercase tracking-wide text-white transition-colors duration-300">{t('home.tastyCakes')}</p>
               </div>
             </button>
           </div>

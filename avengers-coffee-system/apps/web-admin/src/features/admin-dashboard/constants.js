@@ -8,6 +8,7 @@ export const NAV_TABS = [
   { id: 'news', label: 'Quản lý tin tức' },
   { id: 'shift', label: 'Chốt ca' },
   { id: 'pos', label: 'POS tạo đơn nhanh' },
+  { id: 'table-management', label: 'Quản lý Bàn' },
 ]
 
 export const ACCOUNT_TAB = { id: 'account', label: 'Hồ sơ & Bảo mật' }

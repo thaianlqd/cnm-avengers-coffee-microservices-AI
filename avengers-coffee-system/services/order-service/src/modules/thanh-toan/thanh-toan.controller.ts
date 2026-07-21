@@ -20,8 +20,11 @@ export class ThanhToanController {
       delivery_mode?: 'GIAO_TAN_NOI' | 'LAY_TAI_QUAN' | 'DUNG_TAI_CHO';
       delivery_method?: 'INTERNAL' | 'LALAMOVE';
       table_number?: string;
+      ten_khach_hang?: string;
     },
   ) {
+    const fs = require('fs');
+    fs.appendFileSync('/app/error.log', '\n[DEBUG] khoiTao payload: ' + JSON.stringify(payload) + '\n');
     return this.thanhToanService.khoiTaoThanhToan(customerId, payload, req.ip || '127.0.0.1');
   }
 
