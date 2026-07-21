@@ -160,8 +160,11 @@ export function CartScreen({ navigation }) {
   const queryClient = useQueryClient()
   const [selectedAddressId, setSelectedAddressId] = useState('')
   const [deliveryMode, setDeliveryMode] = useState('dung_tai_cho')
+  const [shippingProvider, setShippingProvider] = useState('INTERNAL')
+  const [shippingProviderModalVisible, setShippingProviderModalVisible] = useState(false)
+  const computedKhungGio = 'Giao ngay (15-30 phút)';
+
   const [manualAddress, setManualAddress] = useState('')
-  const [deliverySlot, setDeliverySlot] = useState('18:00 - 19:00')
   const [note, setNote] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('THANH_TOAN_KHI_NHAN_HANG')
   const [voucherCode, setVoucherCode] = useState('')
@@ -334,7 +337,8 @@ export function CartScreen({ navigation }) {
   const totalAmount = cart.reduce((sum, item) => sum + Number(item.gia_ban || 0) * Number(item.so_luong || 0), 0)
   const totalItems = cart.reduce((sum, item) => sum + Number(item.so_luong || 0), 0)
   const discountAmount = appliedVoucher ? totalAmount * 0.1 : 0
-  const finalAmount = Math.max(0, totalAmount - discountAmount)
+  const deliveryFee = deliveryMode === 'GIAO_TAN_NOI' && shippingProvider === 'LALAMOVE' ? 25000 : 0
+  const finalAmount = Math.max(0, totalAmount - discountAmount) + deliveryFee
 
   const removeMutation = useMutation({
     mutationFn: async (itemId) => apiClient.delete(`/cart/${itemId}`),
@@ -443,6 +447,8 @@ export function CartScreen({ navigation }) {
         phuong_thuc_thanh_toan: paymentMethod,
         dia_chi_giao_hang: deliveryMode === 'GIAO_TAN_NOI' ? diaChiDayDu : (branches.find(b => getBranchCode(b) === selectedBranchId)?.dia_chi || ''),
         phuong_thuc_giao_hang: deliveryMode,
+        khung_gio_giao: computedKhungGio,
+        delivery_method: deliveryMode === 'GIAO_TAN_NOI' ? shippingProvider : null,
         chi_nhanh_id: deliveryMode !== 'GIAO_TAN_NOI' ? selectedBranchId : null,
         so_ban: deliveryMode === 'DUNG_TAI_CHO' ? tableNumber : null,
         ghi_chu: note,
@@ -493,7 +499,7 @@ export function CartScreen({ navigation }) {
       `${totalItems} món · ${formatCurrency(finalAmount)}\n` +
       (deliveryMode === 'GIAO_TAN_NOI' ? `Giao đến: ${selectedAddressText}\n` : '') +
       (deliveryMode === 'DUNG_TAI_CHO' && tableNumber ? `Số bàn: ${tableNumber}\n` : '') +
-      `Khung giờ: ${deliverySlot}\n` +
+      `Khung giờ: ${computedKhungGio}\n` +
       `Thanh toán: ${paymentMethodLabels[paymentMethod] || paymentMethod}`
 
     if (Platform.OS === 'web') {
@@ -738,6 +744,25 @@ export function CartScreen({ navigation }) {
             <View style={styles.checkoutInfoCard}>
               {deliveryMode === 'GIAO_TAN_NOI' ? (
                 <View style={{padding: 16}}>
+                  <Text style={{fontSize: 15, fontWeight: '700', marginBottom: 12}}>Phương thức giao hàng</Text>
+                  <Pressable style={[styles.addressInputBtn, { marginBottom: 16 }]} onPress={() => setShippingProviderModalVisible(true)}>
+                    <Text style={styles.addressInputText}>
+                      {shippingProvider === 'LALAMOVE' ? '🚚 Giao hỏa tốc Lalamove (25,000 đ)' : '🛵 Avengers Delivery (Miễn phí)'}
+                    </Text>
+                    <Ionicons name="chevron-down" size={16} color="#64748b" />
+                  </Pressable>
+                  <GenericPickerModal
+                    visible={shippingProviderModalVisible}
+                    title="Phương thức giao hàng"
+                    options={[
+                      { label: '🛵 Avengers Delivery (Miễn phí)', value: 'INTERNAL' },
+                      { label: '🚚 Giao hỏa tốc Lalamove (25,000 đ)', value: 'LALAMOVE' }
+                    ]}
+                    selectedValue={shippingProvider}
+                    onSelect={val => setShippingProvider(val)}
+                    onClose={() => setShippingProviderModalVisible(false)}
+                  />
+
                   <Text style={{fontSize: 15, fontWeight: '700', marginBottom: 12}}>Địa chỉ giao hàng</Text>
                   
                   <View style={{flexDirection: 'row', gap: 12, marginBottom: 12}}>
@@ -795,19 +820,7 @@ export function CartScreen({ navigation }) {
 
               <View style={styles.checkoutInfoDivider} />
 
-              <Pressable
-                style={styles.checkoutInfoRow}
-                onPress={() => setTimeModalVisible(true)}
-              >
-                <Ionicons name="time-outline" size={20} color="#64748b" style={styles.checkoutInfoIcon} />
-                <View style={styles.checkoutInfoContent}>
-                  <Text style={styles.checkoutInfoTitle}>Tùy chọn thời gian</Text>
-                  <Text style={styles.checkoutInfoSubtitle} numberOfLines={1}>
-                    Càng sớm càng tốt ({deliverySlot})
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={18} color="#ef4444" />
-              </Pressable>
+
             </View>
 
             {/* Cart Items Section */}
@@ -1063,6 +1076,17 @@ export function CartScreen({ navigation }) {
                     <Text style={[styles.summaryTableValClean, { color: '#22c55e' }]}>−{formatCurrency(discountAmount)}</Text>
                   </View>
                 ) : null}
+                {deliveryMode === 'GIAO_TAN_NOI' && shippingProvider === 'LALAMOVE' ? (
+                  <View style={styles.summaryTableRowClean}>
+                    <Text style={styles.summaryTableLabelClean}>Phí giao hàng (Lalamove)</Text>
+                    <Text style={styles.summaryTableValClean}>{formatCurrency(25000)}</Text>
+                  </View>
+                ) : deliveryMode === 'GIAO_TAN_NOI' && shippingProvider === 'INTERNAL' ? (
+                  <View style={styles.summaryTableRowClean}>
+                    <Text style={styles.summaryTableLabelClean}>Phí giao hàng (Avengers)</Text>
+                    <Text style={styles.summaryTableValClean}>Miễn phí</Text>
+                  </View>
+                ) : null}
                 <View style={styles.summaryTableRowClean}>
                   <Text style={styles.summaryTableLabelClean}>Thành tiền</Text>
                   <Text style={styles.summaryTableValClean}>{formatCurrency(finalAmount)}</Text>
@@ -1154,28 +1178,7 @@ export function CartScreen({ navigation }) {
         </Pressable>
       </Modal>
 
-      {/* Timeslot Selection Modal */}
-      <Modal visible={timeModalVisible} animationType="slide" transparent onRequestClose={() => setTimeModalVisible(false)}>
-        <Pressable style={styles.paymentModalOverlay} onPress={() => setTimeModalVisible(false)}>
-          <View style={styles.paymentModalCard}>
-            <View style={styles.paymentModalHeader}>
-              <Text style={styles.paymentModalTitle}>Chọn thời gian giao hàng</Text>
-              <Pressable onPress={() => setTimeModalVisible(false)}>
-                <Ionicons name="close" size={24} color="#64748b" />
-              </Pressable>
-            </View>
-            <ScrollView style={{ maxHeight: 300 }} contentContainerStyle={styles.paymentModalList}>
-              {DELIVERY_SLOTS.slice(0, 5).map(s => (
-                <Pressable key={s} style={styles.paymentModalItem} onPress={() => { setDeliverySlot(s); setTimeModalVisible(false); }}>
-                  <Ionicons name="time-outline" size={24} color="#0ea5e9" />
-                  <Text style={styles.paymentModalItemText}>{s}</Text>
-                  {deliverySlot === s && <Ionicons name="checkmark-circle" size={24} color="#ea8025" />}
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-        </Pressable>
-      </Modal>
+
 
       {/* Bottom Sticky Checkout Bar */}
       {cart.length > 0 ? (
@@ -2351,6 +2354,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: 24,
     paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+    maxWidth: 480, width: '100%', alignSelf: 'center',
   },
   paymentModalHeader: {
     flexDirection: 'row',

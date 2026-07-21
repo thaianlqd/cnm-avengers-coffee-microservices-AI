@@ -1,1320 +1,868 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { apiClient } from '../lib/apiClient';
 
-function getOrCreateAnonymousChatId() {
-  const storageKey = 'avengers_anon_chat_id';
-  const existing = sessionStorage.getItem(storageKey);
-  if (existing) return existing;
+// ─── Utilities ────────────────────────────────────────────────────────────────
+const fmtVND = (n) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
+const fmtTime = (v) => { if (!v) return ''; const d = new Date(v); return isNaN(d) ? '' : d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }); };
+const fmtDate = (v) => { if (!v) return ''; const d = new Date(v); return isNaN(d) ? '' : d.toLocaleDateString('vi-VN'); };
 
-  const created = `anon-chat-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
-  sessionStorage.setItem(storageKey, created);
-  return created;
+function getOrCreateAnonId() {
+  const k = 'avengers_anon_chat_id';
+  let id = sessionStorage.getItem(k);
+  if (!id) { id = `anon-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`; sessionStorage.setItem(k, id); }
+  return id;
 }
 
+function buildMsg(overrides) {
+  const raw = overrides.noi_dung || '';
+  const match = raw.match(/^\[\[reply:([^\]]+)\]\]\n?/);
+  let noi_dung = raw, reply_to = overrides.reply_to || null;
+  if (match) {
+    noi_dung = raw.replace(match[0], '');
+    try { const p = JSON.parse(decodeURIComponent(match[1])); reply_to = reply_to || { sender: p.sender, content: p.content }; } catch { /* */ }
+  }
+  return { id: `m-${Date.now()}-${Math.random().toString(36).slice(2)}`, ngay_tao: new Date().toISOString(), ...overrides, noi_dung, reply_to };
+}
+
+function encodeReply(reply) {
+  if (!reply) return null;
+  try { return encodeURIComponent(JSON.stringify({ sender: reply.sender, content: reply.content })); } catch { return null; }
+}
+
+function buildContentWithReply(content, reply) {
+  const enc = encodeReply(reply);
+  return enc ? `[[reply:${enc}]]\n${content}` : content;
+}
+
+const ORDER_STATUS = {
+  CHO_XAC_NHAN: { label: 'Chờ xác nhận', color: '#f59e0b' },
+  DA_XAC_NHAN: { label: 'Đã xác nhận', color: '#3b82f6' },
+  DANG_CHUAN_BI: { label: 'Đang pha chế', color: '#8b5cf6' },
+  DANG_GIAO: { label: 'Đang giao', color: '#f97316' },
+  HOAN_THANH: { label: 'Hoàn thành', color: '#22c55e' },
+  DA_HUY: { label: 'Đã huỷ', color: '#ef4444' },
+};
+
+// ─── Intent detection ─────────────────────────────────────────────────────────
+function detectIntent(text) {
+  const t = text.toLowerCase();
+  if (/(giỏ hàng|cart|checkout|thanh toán ngay)/.test(t)) return 'cart';
+  if (/(đơn hàng|đơn của tôi|trạng thái.*đơn|theo dõi.*đơn|giao chưa|shipper|kiểm tra đơn)/.test(t)) return 'orders';
+  if (/(cửa hàng|chi nhánh|địa chỉ|gần đây|ở đâu|tìm cửa)/.test(t)) return 'stores';
+  if (/(khuyến mãi|voucher|giảm giá|ưu đãi|mã giảm|coupon|deal)/.test(t)) return 'voucher';
+  if (/(thanh toán|payment|vnpay|tiền mặt|ví|momo|atm|qr code)/.test(t)) return 'payment';
+  if (/(thực đơn|menu|đồ uống|cà phê|latte|cappuccino|cold brew|americano|trà|sữa|đồ ăn|bánh|có gì ngon|món gì|xem menu)/.test(t)) return 'menu';
+  if (/(cho tôi|cho mình|đặt|mua|lấy|muốn order|cần order)\s*(\d+\s*)?(ly|cái|phần|suất|cốc)?/.test(t)) return 'order_intent';
+  if (/(đặt hàng|order ngay|mua ngay|tôi muốn đặt)/.test(t)) return 'order_intent';
+  return 'general';
+}
+
+const QUICK_ACTIONS = [
+  { id: 'menu', icon: '☕', label: 'Menu', text: 'Cho tôi xem menu đồ uống' },
+  { id: 'order', icon: '🛒', label: 'Đặt hàng', text: 'Tôi muốn đặt hàng' },
+  { id: 'orders', icon: '📦', label: 'Đơn hàng', text: 'Xem đơn hàng của tôi' },
+  { id: 'stores', icon: '📍', label: 'Cửa hàng', text: 'Cửa hàng ở đâu?' },
+  { id: 'voucher', icon: '🎁', label: 'Ưu đãi', text: 'Có khuyến mãi gì không?' },
+  { id: 'payment', icon: '💳', label: 'Thanh toán', text: 'Thanh toán được những phương thức nào?' },
+];
+
+// ─── Rich Card Components ─────────────────────────────────────────────────────
+function ProductCard({ p, onAdd }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <div
+      style={{ display: 'flex', gap: 10, padding: '10px 12px', background: hover ? '#f8f9fa' : '#fff', borderRadius: 12, border: '1px solid #e9ecef', cursor: 'pointer', transition: 'background 0.15s' }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
+      {p.hinh_anh_url ? (
+        <img src={p.hinh_anh_url} alt={p.ten_san_pham} style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 10, flexShrink: 0, border: '1px solid #f1f3f5' }} />
+      ) : (
+        <div style={{ width: 56, height: 56, borderRadius: 10, flexShrink: 0, background: 'linear-gradient(135deg,#fff3e0,#ffe0b2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>☕</div>
+      )}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#212529', lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{p.ten_san_pham}</p>
+        <p style={{ margin: '4px 0 0', fontSize: '0.8rem', fontWeight: 800, color: '#e8572a' }}>{fmtVND(p.gia_ban)}</p>
+        {p.danh_muc && <p style={{ margin: '2px 0 0', fontSize: '0.68rem', color: '#868e96', fontWeight: 600 }}>{p.danh_muc}</p>}
+      </div>
+      <button
+        onClick={(e) => { e.stopPropagation(); onAdd(p); }}
+        style={{ all: 'unset', cursor: 'pointer', width: 32, height: 32, borderRadius: '50%', background: '#e8572a', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, alignSelf: 'center', fontWeight: 900, fontSize: '1.2rem', boxShadow: '0 2px 8px rgba(232,87,42,0.35)', transition: 'transform 0.1s, box-shadow 0.1s' }}
+        onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.88)'; }}
+        onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+        title="Thêm vào giỏ"
+      >+</button>
+    </div>
+  );
+}
+
+function OrderCard({ o }) {
+  const s = ORDER_STATUS[o.trang_thai_don_hang] || { label: o.trang_thai_don_hang || 'N/A', color: '#868e96' };
+  const code = String(o.ma_don_hang || '').slice(-8).toUpperCase();
+  return (
+    <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e9ecef', overflow: 'hidden' }}>
+      <div style={{ padding: '10px 12px', borderBottom: '1px solid #f1f3f5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <p style={{ margin: 0, fontSize: '0.76rem', fontWeight: 800, color: '#212529', letterSpacing: '0.3px' }}>#{code}</p>
+          <p style={{ margin: '2px 0 0', fontSize: '0.65rem', color: '#868e96' }}>{fmtDate(o.ngay_tao)}</p>
+        </div>
+        <span style={{ fontSize: '0.65rem', fontWeight: 800, color: s.color, background: s.color + '18', padding: '4px 10px', borderRadius: 20, whiteSpace: 'nowrap' }}>{s.label}</span>
+      </div>
+      <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: '#e8572a' }}>{fmtVND(o.tong_tien)}</p>
+        <a href="/?tab=orders" style={{ fontSize: '0.68rem', fontWeight: 800, color: '#e8572a', textDecoration: 'none', padding: '4px 10px', border: '1px solid #e8572a40', borderRadius: 20 }}>Chi tiết →</a>
+      </div>
+    </div>
+  );
+}
+
+function StoreCard({ b }) {
+  return (
+    <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e9ecef', padding: '11px 13px' }}>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8 }}>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: '#fff3e0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '1.1rem' }}>🏪</div>
+        <div style={{ flex: 1 }}>
+          <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#212529' }}>{b.ten_chi_nhanh}</p>
+          <p style={{ margin: '3px 0 0', fontSize: '0.7rem', color: '#868e96', lineHeight: 1.45 }}>{b.dia_chi}</p>
+          {b.gio_mo_cua && <p style={{ margin: '3px 0 0', fontSize: '0.68rem', color: '#e8572a', fontWeight: 700 }}>🕐 {b.gio_mo_cua} – {b.gio_dong_cua}</p>}
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 7 }}>
+        {b.so_dien_thoai && (
+          <a href={`tel:${b.so_dien_thoai}`} style={{ flex: 1, fontSize: '0.7rem', fontWeight: 800, color: '#495057', background: '#f8f9fa', border: '1px solid #e9ecef', borderRadius: 8, padding: '6px 0', textDecoration: 'none', textAlign: 'center', display: 'block' }}>📞 Gọi ngay</a>
+        )}
+        {b.map_url && (
+          <a href={b.map_url} target="_blank" rel="noreferrer" style={{ flex: 1, fontSize: '0.7rem', fontWeight: 800, color: '#fff', background: '#e8572a', borderRadius: 8, padding: '6px 0', textDecoration: 'none', textAlign: 'center', display: 'block' }}>🗺️ Chỉ đường</a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PaymentCard() {
+  const methods = [
+    { icon: '💳', name: 'VNPAY', desc: 'ATM / Internet Banking / QR Code', color: '#1e40af' },
+    { icon: '📲', name: 'MoMo / ZaloPay', desc: 'Thanh toán qua ví điện tử', color: '#a21caf' },
+    { icon: '👛', name: 'Ví Avengers', desc: 'Nạp ví nhận hoàn xu tới 10%', color: '#e8572a' },
+    { icon: '💵', name: 'Tiền mặt (COD)', desc: 'Thanh toán khi nhận hàng', color: '#16a34a' },
+  ];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {methods.map((m) => (
+        <div key={m.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', background: '#fff', borderRadius: 10, border: '1px solid #e9ecef' }}>
+          <div style={{ width: 34, height: 34, borderRadius: 8, background: m.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>{m.icon}</div>
+          <div>
+            <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: 800, color: '#212529' }}>{m.name}</p>
+            <p style={{ margin: '1px 0 0', fontSize: '0.66rem', color: '#868e96' }}>{m.desc}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function VoucherCard({ v }) {
+  const val = v.loai_khuyen_mai === 'PERCENT' ? `${v.gia_tri}%` : fmtVND(v.gia_tri);
+  return (
+    <div style={{ display: 'flex', gap: 10, padding: '9px 11px', background: '#fff', borderRadius: 10, border: '1px solid #ffe0b2', alignItems: 'center' }}>
+      <div style={{ width: 44, height: 44, borderRadius: 10, background: 'linear-gradient(135deg,#e8572a,#ff8c42)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#fff', textAlign: 'center', lineHeight: 1.2 }}>{val}</span>
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: 800, color: '#212529', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v.ten_khuyen_mai || v.ma_khuyen_mai}</p>
+        <p style={{ margin: '2px 0 0', fontSize: '0.66rem', color: '#e8572a', fontWeight: 700, letterSpacing: '0.3px' }}>Mã: {v.ma_khuyen_mai}</p>
+        {v.dieu_kien_ap_dung && <p style={{ margin: '2px 0 0', fontSize: '0.63rem', color: '#868e96' }}>{v.dieu_kien_ap_dung}</p>}
+      </div>
+    </div>
+  );
+}
+
+// ─── Typing animation ─────────────────────────────────────────────────────────
+function TypingBubble() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, padding: '2px 0' }}>
+      <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg,#e8572a,#ff6b35)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', flexShrink: 0, boxShadow: '0 2px 8px rgba(232,87,42,0.3)' }}>☕</div>
+      <div style={{ background: '#f1f3f5', borderRadius: '18px 18px 18px 4px', padding: '12px 16px', display: 'flex', gap: 4, alignItems: 'center' }}>
+        {[0, 200, 400].map((d) => (
+          <div key={d} style={{ width: 7, height: 7, borderRadius: '50%', background: '#adb5bd', animation: `typingDot 1.2s ${d}ms infinite ease-in-out` }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Chat Widget ─────────────────────────────────────────────────────────
 export default function ChatWidget({ user, socketUrl }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
-  const [conversation, setConversation] = useState(null);
-  const [messagesByMode, setMessagesByMode] = useState({ STAFF: [], AI: [] });
+  const [chatMode, setChatMode] = useState('AI');
+  const [messages, setMessages] = useState([]);
+  const [staffMessages, setStaffMessages] = useState([]);
   const [inputText, setInputText] = useState('');
-  const [replyTarget, setReplyTarget] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [unread, setUnread] = useState(0);
-  const [chatMode, setChatMode] = useState('STAFF'); // 'STAFF' | 'AI'
-
-  // Voice + Order state
+  const [conversation, setConversation] = useState(null);
+  const [pendingOrder, setPendingOrder] = useState(null);
+  const [orderConfirming, setOrderConfirming] = useState(false);
+  const [replyTo, setReplyTo] = useState(null);
   const [isListening, setIsListening] = useState(false);
-  const [pendingOrder, setPendingOrder] = useState(null); // { items, total, message, transcript }
-  const [orderLoading, setOrderLoading] = useState(false);
-  const recognitionRef = useRef(null);
+  const [greeted, setGreeted] = useState(false);
+
+  // Data cache
+  const cache = useRef({ products: [], branches: [], orders: [], vouchers: [], loaded: false });
 
   const socketRef = useRef(null);
   const bottomRef = useRef(null);
+  const inputRef = useRef(null);
   const isOpenRef = useRef(false);
-  const chatModeRef = useRef('STAFF');
-  const textareaRef = useRef(null);
+  const chatModeRef = useRef('AI');
 
-  const userId = user?.ma_nguoi_dung || user?.maNguoiDung || null;
-  const userName = user?.ho_ten || user?.hoTen || user?.tenDangNhap || user?.email || 'Khách';
-  const anonymousChatIdRef = useRef(null);
+  const userId = user?.ma_nguoi_dung || null;
+  const userName = user?.ho_ten || user?.email || 'Khách';
+  const anonId = useRef(getOrCreateAnonId());
+  const effectiveUserId = userId || anonId.current;
 
-  if (!anonymousChatIdRef.current) {
-    anonymousChatIdRef.current = getOrCreateAnonymousChatId();
-  }
+  useEffect(() => { isOpenRef.current = isOpen; }, [isOpen]);
+  useEffect(() => { chatModeRef.current = chatMode; }, [chatMode]);
 
-  const aiUserId = userId || anonymousChatIdRef.current;
-  const staffChatUserId = userId || anonymousChatIdRef.current;
-  const messages = messagesByMode[chatMode] || [];
-  const isAiMode = chatMode === 'AI';
+  const scrollBottom = useCallback(() => setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 60), []);
 
-  const setMessagesForMode = (mode, updater) => {
-    setMessagesByMode((prev) => {
-      const current = prev[mode] || [];
-      const nextModeMessages = typeof updater === 'function' ? updater(current) : updater;
-      return {
-        ...prev,
-        [mode]: nextModeMessages,
-      };
-    });
-  };
+  const addAIMsg = useCallback((noi_dung, extras = {}) => {
+    const msg = buildMsg({ vai_tro_nguoi_gui: 'AI', ten_nguoi_gui: 'Trợ lý AI', noi_dung, ...extras });
+    setMessages((prev) => [...prev, msg]);
+    return msg;
+  }, []);
 
-  const encodeReplyMeta = (reply) => {
-    if (!reply) return null;
-    try {
-      return encodeURIComponent(JSON.stringify({ sender: reply.sender, content: reply.content }));
-    } catch {
-      return null;
-    }
-  };
+  const addUserMsg = useCallback((noi_dung) => {
+    const msg = buildMsg({ vai_tro_nguoi_gui: 'CUSTOMER', ten_nguoi_gui: userName, noi_dung });
+    setMessages((prev) => [...prev, msg]);
+    return msg;
+  }, [userName]);
 
-  const buildContentWithReplyMeta = (content, reply) => {
-    const encoded = encodeReplyMeta(reply);
-    if (!encoded) return content;
-    return `[[reply:${encoded}]]\n${content}`;
-  };
-
-  const parseContentAndReply = (rawContent) => {
-    const text = String(rawContent || '');
-    const match = text.match(/^\[\[reply:([^\]]+)\]\]\n?/);
-    if (!match) {
-      return { content: text, reply: null };
-    }
-    try {
-      const decoded = decodeURIComponent(match[1]);
-      const parsed = JSON.parse(decoded);
-      return {
-        content: text.replace(match[0], ''),
-        reply: {
-          sender: parsed?.sender || 'Tin nhắn được phản hồi',
-          content: parsed?.content || '',
-        },
-      };
-    } catch {
-      return { content: text, reply: null };
-    }
-  };
-
-  const toReplyPayload = (msg) => {
-    if (!msg) return null;
-    return {
-      id: msg.id,
-      sender: msg.ten_nguoi_gui || (msg.vai_tro_nguoi_gui === 'CUSTOMER' ? 'Bạn' : 'Hỗ trợ viên'),
-      content: String(msg.noi_dung || '').slice(0, 240),
+  // Prefetch all data eagerly
+  const prefetchData = useCallback(async () => {
+    if (cache.current.loaded) return;
+    cache.current.loaded = true;
+    const uid = userId;
+    const safe = (r) => {
+      if (!r) return [];
+      const d = r?.data || r;
+      return Array.isArray(d?.items) ? d.items : Array.isArray(d) ? d : [];
     };
-  };
+    await Promise.allSettled([
+      apiClient.get('/menu/san-pham').then((r) => { cache.current.products = safe(r).slice(0, 40); }).catch(() => {}),
+      apiClient.get('/users/branches/public').then((r) => { cache.current.branches = safe(r); }).catch(() => {}),
+      uid ? apiClient.get(`/customers/${uid}/orders?limit=8`).then((r) => { cache.current.orders = safe(r); }).catch(() => {}) : Promise.resolve(),
+      apiClient.get('/vouchers?trang_thai=ACTIVE&limit=12').then((r) => { cache.current.vouchers = safe(r); }).catch(() => {}),
+    ]);
+  }, [userId]);
 
-  const normalizeMessage = (msg) => {
-    const parsed = parseContentAndReply(msg.noi_dung);
-    return {
-      ...msg,
-      id: msg.id ?? `local-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      ngay_tao: msg.ngay_tao || new Date().toISOString(),
-      noi_dung: parsed.content,
-      reply_to: msg.reply_to || msg.replyTo || parsed.reply || null,
-    };
-  };
-
-  const formatTime = (value) => {
-    if (!value) return '';
-    const dt = new Date(value);
-    if (Number.isNaN(dt.getTime())) return '';
-    return dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const growTextarea = () => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    textarea.style.height = 'auto';
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 110)}px`;
-  };
-
-  const scrollToBottom = () => {
-    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 60);
-  };
-
+  // Socket for staff chat
   useEffect(() => {
-    isOpenRef.current = isOpen;
-  }, [isOpen]);
-
-  useEffect(() => {
-    chatModeRef.current = chatMode;
-  }, [chatMode]);
-
-  useEffect(() => {
-    growTextarea();
-  }, [inputText]);
-
-  useEffect(() => {
-    if (!staffChatUserId) return undefined;
-
-    const socket = io(`${socketUrl}/chat`, {
-      transports: ['websocket'],
-      auth: { userId: staffChatUserId, role: 'CUSTOMER' },
-    });
-
-    socket.emit('chat:subscribe', { userId: staffChatUserId, role: 'CUSTOMER' });
-
+    if (!effectiveUserId || !socketUrl) return;
+    const socket = io(`${socketUrl}/chat`, { transports: ['websocket'], auth: { userId: effectiveUserId, role: 'CUSTOMER' } });
+    socket.emit('chat:subscribe', { userId: effectiveUserId, role: 'CUSTOMER' });
     socket.on('chat:message:new', (msg) => {
-      const normalized = normalizeMessage(msg);
-      setMessagesForMode('STAFF', (prev) => (prev.some((m) => String(m.id) === String(normalized.id)) ? prev : [...prev, normalized]));
-      if (normalized.vai_tro_nguoi_gui !== 'CUSTOMER' && (!isOpenRef.current || chatModeRef.current !== 'STAFF')) {
+      const m = buildMsg(msg);
+      setStaffMessages((prev) => prev.some((x) => String(x.id) === String(m.id)) ? prev : [...prev, m]);
+      if (m.vai_tro_nguoi_gui !== 'CUSTOMER' && (!isOpenRef.current || chatModeRef.current !== 'STAFF')) {
         setUnread((n) => n + 1);
       }
-      scrollToBottom();
+      scrollBottom();
     });
-
-    socket.on('chat:conversation:update', (conv) => {
-      if (conv.ma_khach_hang === staffChatUserId) {
-        setConversation(conv);
-      }
-    });
-
+    socket.on('chat:conversation:update', (c) => { if (c.ma_khach_hang === effectiveUserId) setConversation(c); });
     socketRef.current = socket;
-    return () => {
-      socket.disconnect();
-      socketRef.current = null;
-    };
-  }, [socketUrl, staffChatUserId]);
+    return () => { socket.disconnect(); socketRef.current = null; };
+  }, [socketUrl, effectiveUserId, scrollBottom]);
 
-  useEffect(() => {
-    setConversation(null);
-    setUnread(0);
-    setMessagesByMode((prev) => ({
-      ...prev,
-      STAFF: [],
-    }));
-  }, [staffChatUserId]);
+  // Open staff chat
+  const openStaffChat = useCallback(async () => {
+    if (conversation) { scrollBottom(); return; }
+    setLoading(true);
+    try {
+      const res = await apiClient.post('/chat/conversations/open', { customer_user_id: effectiveUserId, customer_name: userName });
+      const conv = res?.data?.conversation || res?.conversation;
+      if (conv) {
+        setConversation(conv);
+        if (socketRef.current) socketRef.current.emit('chat:conversation:join', { conversationId: conv.ma_hoi_thoai });
+        const msgsRes = await apiClient.get(`/chat/conversations/${conv.ma_hoi_thoai}/messages?user_id=${effectiveUserId}&role=CUSTOMER`);
+        const items = msgsRes?.data?.items || [];
+        setStaffMessages(items.map((m) => buildMsg(m)));
+        scrollBottom();
+      }
+    } catch { /* ignore */ }
+    finally { setLoading(false); }
+  }, [conversation, effectiveUserId, userName, scrollBottom]);
 
-  useEffect(() => {
-    setMessagesByMode((prev) => ({
-      ...prev,
-      AI: [],
-    }));
-  }, [aiUserId]);
-
-  useEffect(() => {
-    if (conversation?.ma_hoi_thoai && socketRef.current) {
-      socketRef.current.emit('chat:conversation:join', { conversationId: conversation.ma_hoi_thoai });
-    }
-  }, [conversation?.ma_hoi_thoai]);
-
-  const openChat = async () => {
+  // Open chat window
+  const openChat = useCallback((mode = 'AI') => {
+    setChatMode(mode);
     setIsOpen(true);
     setUnread(0);
-    if (!staffChatUserId) return;
-    if (!conversation) {
-      setLoading(true);
-      try {
-        const res = await apiClient.post('/chat/conversations/open', {
-          customer_user_id: staffChatUserId,
-          customer_name: userName,
-        });
-        const conv = res.data.conversation;
-        setConversation(conv);
-        const msgsRes = await apiClient.get(
-          `/chat/conversations/${conv.ma_hoi_thoai}/messages?user_id=${staffChatUserId}&role=CUSTOMER`,
+    if (mode === 'AI') {
+      prefetchData();
+      if (!greeted) {
+        setGreeted(true);
+        const name = user?.ho_ten ? ` ${user.ho_ten.split(' ').slice(-1)[0]}` : '';
+        addAIMsg(
+          `Xin chào${name}! 👋 Mình là **Avengers AI** — trợ lý thông minh của Avengers Coffee.\n\nMình có thể giúp bạn:`,
+          { _quickReplies: QUICK_ACTIONS.slice(0, 5) }
         );
-        setMessagesForMode('STAFF', (msgsRes.data.items || []).map((item) => normalizeMessage(item)));
-        scrollToBottom();
-      } catch {
-        // ignore errors silently
-      } finally {
-        setLoading(false);
       }
     } else {
-      try {
-        await apiClient.patch(`/chat/conversations/${conversation.ma_hoi_thoai}/read`, {
-          reader_user_id: staffChatUserId,
-          reader_role: 'CUSTOMER',
-        });
-      } catch {
-        // ignore
-      }
-      scrollToBottom();
+      openStaffChat();
     }
-  };
+  }, [prefetchData, greeted, user, addAIMsg, openStaffChat]);
 
-  const closeChat = () => {
-    setIsOpen(false);
-    setReplyTarget(null);
-  };
-
-  const ORDER_KEYWORDS = ['cho tôi', 'đặt', 'order', 'mua', 'lấy', 'muốn', 'cần', 'cho mình'];
-
-  const checkOrderIntent = async (text, historyText = '') => {
+  // Add to cart
+  const addToCart = useCallback(async (product) => {
+    if (!userId) {
+      addAIMsg('Bạn cần đăng nhập để thêm vào giỏ hàng nhé! [Đăng nhập ngay](/login)', { _quickReplies: [{ id: 'login', icon: '🔑', label: 'Đăng nhập', text: 'Tôi muốn đăng nhập' }] });
+      return;
+    }
     try {
-      const res = await apiClient.post('/ai/chat/order-intent', {
-        text,
-        user_id: aiUserId,
-        history: historyText,
+      await apiClient.post('/cart', { ma_nguoi_dung: userId, ma_san_pham: product.id || product.ma_san_pham, ten_san_pham: product.ten_san_pham, gia_ban: product.gia_ban, hinh_anh_url: product.hinh_anh_url, size: 'Nhỏ', so_luong: 1 });
+      addAIMsg(`✅ Đã thêm **${product.ten_san_pham}** vào giỏ! Giá: ${fmtVND(product.gia_ban)}`, {
+        _quickReplies: [
+          { id: 'more', icon: '➕', label: 'Thêm món', text: 'Cho tôi xem thêm menu' },
+          { id: 'cart', icon: '🛒', label: 'Vào giỏ hàng', text: 'Tôi muốn xem giỏ hàng' },
+          { id: 'checkout', icon: '💳', label: 'Thanh toán', text: 'Tôi muốn thanh toán ngay' },
+        ],
       });
-      const data = res.data;
-      if (data?.can_order && data?.items?.length > 0) {
-        setPendingOrder({
-          items: data.items,
-          total: data.estimated_total,
-          message: data.message,
-          paymentMethod: data.payment_method,
-        });
-        return true;
-      }
     } catch {
-      // ignore — fall through to normal AI chat
+      addAIMsg('😢 Không thể thêm vào giỏ. Vui lòng thử lại!');
     }
-    return false;
-  };
+    scrollBottom();
+  }, [userId, addAIMsg, scrollBottom]);
 
-  const sendMessage = async () => {
-    const content = inputText.trim();
-    if (!content || sending) return;
-    const replyPayload = toReplyPayload(replyTarget);
+  // Process AI intent
+  const processIntent = useCallback(async (text) => {
+    const intent = detectIntent(text);
+
+    if (intent === 'cart') {
+      addAIMsg('🛒 Đang chuyển bạn đến giỏ hàng...');
+      setTimeout(() => { window.location.href = '/cart'; }, 800);
+      return;
+    }
+
+    if (intent === 'menu' || intent === 'order_intent') {
+      await prefetchData();
+      const products = cache.current.products;
+
+      let searchTerm = '';
+      if (intent === 'order_intent') {
+        searchTerm = text.toLowerCase()
+          .replace(/cho tôi|cho mình|tôi muốn|đặt|mua|lấy|muốn|cần|order|ngay|\d+\s*(ly|cái|phần|suất|cốc)/g, '')
+          .trim();
+      }
+
+      const matched = searchTerm
+        ? products.filter((p) => p.ten_san_pham?.toLowerCase().includes(searchTerm) || p.mo_ta?.toLowerCase().includes(searchTerm))
+        : [];
+      const shown = matched.length > 0 ? matched.slice(0, 5) : products.slice(0, 6);
+
+      if (shown.length > 0) {
+        const prefix = matched.length > 0
+          ? `Tìm thấy **${matched.length}** sản phẩm phù hợp với "${searchTerm}"! Bấm **+** để thêm vào giỏ:`
+          : 'Đây là menu nổi bật của Avengers Coffee ☕ Bấm **+** để thêm vào giỏ hàng:';
+        addAIMsg(prefix, {
+          _products: shown,
+          _quickReplies: [
+            { id: 'all-menu', icon: '📋', label: 'Xem tất cả menu', text: 'Cho tôi xem tất cả thực đơn' },
+            { id: 'stores', icon: '📍', label: 'Cửa hàng', text: 'Cửa hàng ở đâu?' },
+          ],
+        });
+      } else {
+        // Try AI API as fallback
+        try {
+          const r = await apiClient.post('/ai/chat/order-intent', { text, user_id: effectiveUserId });
+          const d = r?.data || r;
+          if (d?.can_order && d?.items?.length > 0) {
+            setPendingOrder({ items: d.items, total: d.estimated_total, message: d.message, paymentMethod: d.payment_method });
+            return;
+          }
+        } catch { /* */ }
+        addAIMsg('Mình chưa tìm thấy sản phẩm phù hợp. Bạn muốn xem toàn bộ menu không?', {
+          _quickReplies: [{ id: 'full-menu', icon: '📋', label: 'Xem full menu', text: 'Xem menu đồ uống' }],
+        });
+      }
+      return;
+    }
+
+    if (intent === 'orders') {
+      await prefetchData();
+      let orders = cache.current.orders;
+      if (!orders.length && userId) {
+        try {
+          const r = await apiClient.get(`/customers/${userId}/orders?limit=5`);
+          orders = (r?.data?.items || r?.items || []);
+          cache.current.orders = orders;
+        } catch { orders = []; }
+      }
+      if (orders.length > 0) {
+        addAIMsg(`Bạn có **${orders.length}** đơn hàng gần đây. Đây là danh sách:`, {
+          _orders: orders.slice(0, 4),
+          _quickReplies: [{ id: 'all-orders', icon: '📦', label: 'Xem tất cả đơn', text: 'Xem toàn bộ lịch sử đơn hàng' }],
+        });
+      } else if (!userId) {
+        addAIMsg('Bạn cần đăng nhập để xem đơn hàng nhé!', { _quickReplies: [{ id: 'login', icon: '🔑', label: 'Đăng nhập', text: 'Đăng nhập ngay' }] });
+      } else {
+        addAIMsg('Bạn chưa có đơn hàng nào. Hãy đặt ngay thôi! ☕', { _quickReplies: [{ id: 'order', icon: '🛒', label: 'Đặt hàng ngay', text: 'Cho tôi xem menu' }] });
+      }
+      return;
+    }
+
+    if (intent === 'stores') {
+      await prefetchData();
+      let branches = cache.current.branches;
+      if (!branches.length) {
+        try {
+          const r = await apiClient.get('/users/branches/public');
+          branches = (r?.data?.items || r?.items || r?.data || []);
+          cache.current.branches = branches;
+        } catch { branches = []; }
+      }
+      if (branches.length > 0) {
+        addAIMsg(`Avengers Coffee có **${branches.length}** chi nhánh. Đây là một số cửa hàng:`, {
+          _stores: branches.slice(0, 3),
+          _quickReplies: branches.length > 3 ? [{ id: 'more-stores', icon: '🗺️', label: 'Xem thêm', text: 'Cho tôi xem tất cả cửa hàng' }] : [],
+        });
+      } else {
+        addAIMsg('Hiện tại không tìm thấy thông tin cửa hàng. Bạn có thể gọi hotline **1900 1755** để được hỗ trợ!');
+      }
+      return;
+    }
+
+    if (intent === 'payment') {
+      addAIMsg('Avengers Coffee hỗ trợ **4 phương thức thanh toán** linh hoạt:', { _type: 'payment' });
+      return;
+    }
+
+    if (intent === 'voucher') {
+      await prefetchData();
+      let vouchers = cache.current.vouchers;
+      if (!vouchers.length) {
+        try {
+          const r = await apiClient.get('/vouchers?trang_thai=ACTIVE&limit=12');
+          vouchers = (r?.data?.items || r?.items || r?.data || []);
+          cache.current.vouchers = vouchers;
+        } catch { vouchers = []; }
+      }
+      if (vouchers.length > 0) {
+        addAIMsg(`🎉 Đang có **${vouchers.length}** ưu đãi cho bạn! Áp dụng khi thanh toán nhé:`, { _vouchers: vouchers.slice(0, 4) });
+      } else {
+        addAIMsg('Hiện chưa có khuyến mãi nào đang hoạt động. Theo dõi website để không bỏ lỡ deal hot!');
+      }
+      return;
+    }
+
+    // General → call AI API
+    try {
+      const history = messages.slice(-6).map((m) => `${m.vai_tro_nguoi_gui === 'CUSTOMER' ? userName : 'AI'}: ${m.noi_dung}`).join('\n');
+      // Try order intent first
+      const r = await apiClient.post('/ai/chat/order-intent', { text, user_id: effectiveUserId, history });
+      const d = r?.data || r;
+      if (d?.can_order && d?.items?.length > 0) {
+        setPendingOrder({ items: d.items, total: d.estimated_total, message: d.message, paymentMethod: d.payment_method });
+        return;
+      }
+      // Normal AI chat
+      const chatRes = await apiClient.post('/ai/chat', { user_id: effectiveUserId, user_name: userName, content: text, history });
+      const reply = chatRes?.data?.reply || chatRes?.reply;
+      if (reply) {
+        addAIMsg(reply, { _quickReplies: QUICK_ACTIONS.slice(0, 3) });
+        return;
+      }
+    } catch { /* fallthrough */ }
+
+    // Ultimate fallback
+    addAIMsg('Xin lỗi mình chưa hiểu rõ câu hỏi này. Bạn có thể thử hỏi về menu, đơn hàng hoặc cửa hàng nhé!', {
+      _quickReplies: QUICK_ACTIONS.slice(0, 4),
+    });
+  }, [messages, userName, effectiveUserId, userId, prefetchData, addAIMsg, scrollBottom]);
+
+  // Send message handler
+  const sendMessage = useCallback(async (overrideText) => {
+    const text = (overrideText !== undefined ? String(overrideText) : inputText).trim();
+    if (!text || sending) return;
+    if (overrideText === undefined) setInputText('');
     setSending(true);
-    setInputText('');
-    setReplyTarget(null);
+
     if (chatMode === 'AI') {
-      const customerMessage = normalizeMessage({
-        id: `user-${Date.now()}`,
-        vai_tro_nguoi_gui: 'CUSTOMER',
-        ten_nguoi_gui: userName,
-        noi_dung: content,
-        reply_to: replyPayload,
-        ngay_tao: new Date().toISOString(),
-      });
-      setMessagesForMode('AI', (prev) => [...prev, customerMessage]);
-      scrollToBottom();
+      addUserMsg(text);
+      scrollBottom();
+      setIsTyping(true);
+      await new Promise((res) => setTimeout(res, 700 + Math.random() * 400));
       try {
-        const recentHistory = messagesByMode['AI']
-          .slice(-6)
-          .map((m) => `${m.vai_tro_nguoi_gui === 'CUSTOMER' ? userName : 'AI'}: ${m.noi_dung}`)
-          .join('\n');
-
-        // Check order intent first
-        const wasOrder = await checkOrderIntent(content, recentHistory);
-        if (wasOrder) {
-          setSending(false);
-          return;
-        }
-
-
-
-        const res = await apiClient.post('/ai/chat', {
-          user_id: aiUserId,
-          user_name: userName,
-          content,
-          history: recentHistory,
-          reply_to: replyPayload,
-        });
-        const aiMsg = normalizeMessage({
-          id: `ai-${Date.now()}`,
-          vai_tro_nguoi_gui: 'AI',
-          ten_nguoi_gui: 'AI',
-          noi_dung: res.data.reply || 'Xin lỗi, tôi chưa hiểu.',
-          ngay_tao: new Date().toISOString(),
-        });
-        setMessagesForMode('AI', (prev) => [...prev, aiMsg]);
-        scrollToBottom();
-      } catch {
-        setInputText(content);
-        setMessagesForMode('AI', (prev) => prev.filter((item) => item.id !== customerMessage.id));
+        await processIntent(text);
       } finally {
+        setIsTyping(false);
         setSending(false);
+        scrollBottom();
       }
     } else {
-      if (!conversation) return setSending(false);
+      // Staff mode
+      if (!conversation) { setSending(false); return; }
+      const content = buildContentWithReply(text, replyTo ? { sender: replyTo.sender, content: replyTo.noi_dung?.slice(0, 200) } : null);
+      setReplyTo(null);
       try {
-        const contentToSend = buildContentWithReplyMeta(content, replyPayload);
         const res = await apiClient.post(`/chat/conversations/${conversation.ma_hoi_thoai}/messages`, {
-          sender_user_id: staffChatUserId,
-          sender_name: userName,
-          sender_role: 'CUSTOMER',
-          content: contentToSend,
-          reply_to: replyPayload,
+          sender_user_id: effectiveUserId, sender_name: userName, sender_role: 'CUSTOMER', content,
         });
-
-        if (res?.data?.conversation) {
-          setConversation(res.data.conversation);
-        }
-
+        if (res?.data?.conversation) setConversation(res.data.conversation);
         if (res?.data?.message) {
-          const normalized = normalizeMessage(res.data.message);
-          setMessagesForMode('STAFF', (prev) => (prev.some((m) => String(m.id) === String(normalized.id)) ? prev : [...prev, normalized]));
-          scrollToBottom();
+          const m = buildMsg(res.data.message);
+          setStaffMessages((prev) => prev.some((x) => String(x.id) === String(m.id)) ? prev : [...prev, m]);
+          scrollBottom();
         }
-      } catch {
-        setInputText(content);
-        setReplyTarget(replyPayload);
-      } finally {
-        setSending(false);
-      }
+      } catch { setInputText(text); }
+      finally { setSending(false); }
     }
-  };
+  }, [inputText, sending, chatMode, conversation, replyTo, effectiveUserId, userName, addUserMsg, scrollBottom, processIntent]);
 
-  const startVoice = () => {
-    if (!isAiMode) return;
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert('Trình duyệt không hỗ trợ voice. Dùng Chrome nhé!');
-      return;
-    }
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'vi-VN';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => setIsListening(false);
-    recognition.onerror = () => setIsListening(false);
-    recognition.onresult = async (event) => {
-      const transcript = event.results[0][0].transcript;
-      setIsListening(false);
-      // Show transcript in chat
-      const customerMessage = normalizeMessage({
-        id: `user-voice-${Date.now()}`,
-        vai_tro_nguoi_gui: 'CUSTOMER',
-        ten_nguoi_gui: userName,
-        noi_dung: `🎙️ "${transcript}"`,
-        ngay_tao: new Date().toISOString(),
-      });
-      setMessagesForMode('AI', (prev) => [...prev, customerMessage]);
-      scrollToBottom();
-      // Try parse as order intent
-      try {
-        const recentHistoryVoice = messagesByMode['AI']
-          .slice(-6)
-          .map((m) => `${m.vai_tro_nguoi_gui === 'CUSTOMER' ? userName : 'AI'}: ${m.noi_dung}`)
-          .join('\n');
-          
-        const res = await apiClient.post('/ai/chat/order-intent', {
-          text: transcript,
-          user_id: aiUserId,
-          history: recentHistoryVoice,
-        });
-        if (res.data?.can_order && res.data?.items?.length > 0) {
-          setPendingOrder({
-            transcript,
-            items: res.data.items,
-            total: res.data.estimated_total,
-            message: res.data.message,
-            paymentMethod: res.data.payment_method,
-          });
-          return;
-        }
-      } catch { /* fall through */ }
-      // Not an order — send to normal AI chat
-      try {
-        const res = await apiClient.post('/ai/chat', { user_id: aiUserId, user_name: userName, content: transcript });
-        const aiMsg = normalizeMessage({
-          id: `ai-${Date.now()}`,
-          vai_tro_nguoi_gui: 'AI',
-          ten_nguoi_gui: 'AI',
-          noi_dung: res.data.reply || 'Xin lỗi, tôi chưa hiểu.',
-          ngay_tao: new Date().toISOString(),
-        });
-        setMessagesForMode('AI', (prev) => [...prev, aiMsg]);
-        scrollToBottom();
-      } catch { /* ignore */ }
-    };
-    recognitionRef.current = recognition;
-    recognition.start();
-  };
+  // Voice
+  const startVoice = useCallback(() => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { alert('Chrome không hỗ trợ giọng nói. Dùng Chrome mới nhất nhé!'); return; }
+    const r = new SR();
+    r.lang = 'vi-VN'; r.interimResults = false; r.maxAlternatives = 1;
+    r.onstart = () => setIsListening(true);
+    r.onend = () => setIsListening(false);
+    r.onerror = () => setIsListening(false);
+    r.onresult = (e) => { const t = e.results[0][0].transcript; setIsListening(false); sendMessage(t); };
+    r.start();
+  }, [sendMessage]);
 
-  const handleConfirmOrder = async () => {
+  // Confirm voice/AI order
+  const confirmOrder = useCallback(async () => {
     if (!pendingOrder) return;
-    setOrderLoading(true);
+    setOrderConfirming(true);
     try {
-      const items = pendingOrder.items
-        .filter((i) => i.matched)
-        .map((i) => ({
-          ma_san_pham: i.product_id,
-          ten_san_pham: i.product_name,
-          so_luong: i.quantity,
-          gia_ban: i.price,
-          hinh_anh_url: i.image_url,
-          ghi_chu: [i.size ? `Size ${i.size}` : '', i.note || ''].filter(Boolean).join(', '),
-        }));
-      await apiClient.post('/orders', {
-        ma_nguoi_dung: aiUserId,
-        phuong_thuc_thanh_toan: pendingOrder.paymentMethod || 'THANH_TOAN_KHI_NHAN_HANG',
-        loai_don_hang: 'DELIVERY',
-        chi_tiet_don_hang: items,
-        ghi_chu: pendingOrder.transcript ? `Voice Order: ${pendingOrder.transcript}` : 'Chat Order',
+      const items = pendingOrder.items.filter((i) => i.matched).map((i) => ({ ma_san_pham: i.product_id, ten_san_pham: i.product_name, so_luong: i.quantity, gia_ban: i.price, hinh_anh_url: i.image_url, ghi_chu: [i.size ? `Size ${i.size}` : '', i.note || ''].filter(Boolean).join(', ') }));
+      await apiClient.post('/orders', { ma_nguoi_dung: effectiveUserId, phuong_thuc_thanh_toan: pendingOrder.paymentMethod || 'THANH_TOAN_KHI_NHAN_HANG', loai_don_hang: 'DELIVERY', chi_tiet_don_hang: items, ghi_chu: 'Chat Order' });
+      addAIMsg(`🎉 Đặt hàng thành công! Tổng: **${fmtVND(pendingOrder.total)}**\nĐơn hàng của bạn đang được chuẩn bị!`, {
+        _quickReplies: [{ id: 'orders', icon: '📦', label: 'Xem đơn hàng', text: 'Xem đơn hàng của tôi' }],
       });
-      const total = Number(pendingOrder.total || 0).toLocaleString('vi-VN');
-      const successMsg = normalizeMessage({
-        id: `ai-order-ok-${Date.now()}`,
-        vai_tro_nguoi_gui: 'AI',
-        ten_nguoi_gui: 'AI',
-        noi_dung: `✅ Đặt hàng thành công! Tổng: ${total}đ. Đơn hàng đang được xử lý nhé! ☕`,
-        ngay_tao: new Date().toISOString(),
-      });
-      setMessagesForMode('AI', (prev) => [...prev, successMsg]);
       setPendingOrder(null);
-      scrollToBottom();
-    } catch {
-      alert('Không thể tạo đơn. Thử lại nhé!');
-    } finally {
-      setOrderLoading(false);
-    }
-  };
+      scrollBottom();
+    } catch { alert('Không thể đặt hàng. Thử lại nhé!'); }
+    finally { setOrderConfirming(false); }
+  }, [pendingOrder, effectiveUserId, addAIMsg, scrollBottom]);
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
+  const activeMessages = chatMode === 'AI' ? messages : staffMessages;
 
-  const pickReply = (msg) => {
-    if (!msg) return;
-    setReplyTarget(toReplyPayload(msg));
-    setTimeout(() => textareaRef.current?.focus(), 0);
-  };
-
-  useEffect(() => {
-    if (!isOpen || chatMode !== 'STAFF') return;
-    if (unread > 0) {
-      setUnread(0);
-    }
-    scrollToBottom();
-  }, [isOpen, chatMode, unread, messages.length]);
-
-  const handleBubbleClick = () => {
-    if (isOpen) {
-      closeChat();
-      setShowMenu(false);
-      return;
-    }
-    setShowMenu(!showMenu);
-  };
-
-  const handleMenuChoice = (choice) => {
-    setShowMenu(false);
-    if (choice === 'AI') {
-      setChatMode('AI');
-      setIsOpen(true);
-      setUnread(0);
-    } else if (choice === 'STAFF') {
-      setChatMode('STAFF');
-      openChat();
-    } else if (choice === 'ZALO') {
-      window.open('https://zalo.me/0789019902', '_blank');
-    } else if (choice === 'CALL') {
-      window.location.href = 'tel:0773670599';
-    }
+  // ─── Render text with basic markdown ───────────────────────────────────────
+  const renderText = (text) => {
+    if (!text) return null;
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, i) => part.startsWith('**') && part.endsWith('**')
+      ? <strong key={i}>{part.slice(2, -2)}</strong>
+      : <span key={i}>{part}</span>
+    );
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        bottom: '20px',
-        right: '20px',
-        zIndex: 200,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-end',
-        gap: '12px',
-      }}
-    >
+    <>
+      {/* Chat Window */}
       {isOpen && (
-        <div
-          style={{
-            width: 'min(94vw, 400px)',
-            display: 'flex',
-            flexDirection: 'column',
-            borderRadius: '28px',
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(24px) saturate(1.4)',
-            WebkitBackdropFilter: 'blur(24px) saturate(1.4)',
-            boxShadow: '0 32px 64px -16px rgba(74, 55, 40, 0.28), 0 16px 32px -8px rgba(196, 18, 48, 0.08), 0 0 0 1px rgba(74, 55, 40, 0.06)',
-            border: '1px solid rgba(255, 255, 255, 0.6)',
-            overflow: 'hidden',
-            height: 'min(80vh, 700px)',
-            minHeight: '540px',
-            animation: 'chatBoxOpen 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-            fontFamily: "'Nunito', system-ui, -apple-system, sans-serif",
-          }}
-        >
+        <div style={{
+          position: 'fixed', bottom: 90, right: 20, zIndex: 1000,
+          width: 'min(94vw, 390px)', height: 'min(82vh, 660px)',
+          display: 'flex', flexDirection: 'column',
+          background: '#fffaf0',
+          borderRadius: 28,
+          boxShadow: '0 24px 64px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08)',
+          border: '1px solid #f8d7da',
+          overflow: 'hidden',
+          animation: 'chatOpen 0.35s cubic-bezier(0.34,1.56,0.64,1)',
+          fontFamily: "-apple-system, 'Segoe UI', Roboto, sans-serif",
+        }}>
           {/* Header */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '16px 20px',
-              background: isAiMode
-                ? 'linear-gradient(135deg, #8a0b1f 0%, #b3102a 40%, #d92b45 100%)'
-                : 'linear-gradient(135deg, #7a0a1b 0%, #c41230 45%, #e0334d 100%)',
-              borderBottom: '2px solid rgba(230, 69, 96, 0.35)',
-              boxShadow: '0 4px 20px rgba(196, 18, 48, 0.2), inset 0 -1px 0 rgba(255, 255, 255, 0.08)',
-              position: 'relative',
-              overflow: 'hidden',
-            }}
-          >
-            {/* Decorative shimmer */}
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: '-100%',
-              width: '200%',
-              height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent)',
-              animation: 'headerShimmer 4s ease-in-out infinite',
-              pointerEvents: 'none',
-            }} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative', zIndex: 1 }}>
-              {/* Avatar icon */}
-              <div style={{
-                width: 36,
-                height: 36,
-                borderRadius: '12px',
-                background: 'rgba(255, 255, 255, 0.15)',
-                border: '1.5px solid rgba(255, 255, 255, 0.25)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.1rem',
-                flexShrink: 0,
-              }}>
-                {chatMode === 'AI' ? '☕' : '👋'}
+          <div style={{
+            background: 'linear-gradient(135deg, #c41230 0%, #8a0b1f 100%)',
+            padding: '0 16px',
+            flexShrink: 0,
+          }}>
+            {/* Top bar */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingTop: 14, paddingBottom: 12 }}>
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'linear-gradient(135deg,#e8572a,#ff8c42)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', boxShadow: '0 2px 10px rgba(232,87,42,0.4)' }}>☕</div>
+                <div style={{ position: 'absolute', bottom: 0, right: 0, width: 11, height: 11, borderRadius: '50%', background: '#22c55e', border: '2px solid #1a1a2e' }} />
               </div>
-              <div>
-                <p style={{ margin: 0, color: '#ffffff', fontWeight: 800, fontSize: '0.92rem', letterSpacing: '0.3px' }}>
-                  {chatMode === 'AI' ? 'Trợ lý Avengers Coffee' : 'Tư vấn viên'}
+              <div style={{ flex: 1 }}>
+                <p style={{ margin: 0, color: '#fff', fontWeight: 700, fontSize: '0.9rem' }}>Avengers Coffee AI</p>
+                <p style={{ margin: '1px 0 0', color: 'rgba(255,255,255,0.6)', fontSize: '0.68rem' }}>
+                  {chatMode === 'AI' ? '🟢 Trả lời ngay lập tức' : '🟢 Nhân viên đang trực'}
                 </p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
-                  <span className="status-dot" />
-                  <p style={{ margin: 0, color: 'rgba(255,255,255,0.75)', fontSize: '0.7rem', fontWeight: 600 }}>
-                    {chatMode === 'AI' ? 'Luôn sẵn sàng hỗ trợ bạn' : 'Đang trực tuyến'}
-                  </p>
-                </div>
               </div>
+              <button onClick={() => setIsOpen(false)} style={{ border: 'none', padding: 0, outline: 'none', cursor: 'pointer', width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.7)', transition: 'background 0.2s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" style={{ width: 14, height: 14 }}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
             </div>
-            <button
-              onClick={closeChat}
-              className="chat-close-btn"
-              style={{
-                all: 'unset',
-                cursor: 'pointer',
-                color: '#fff',
-                width: 32,
-                height: 32,
-                borderRadius: '10px',
-                background: 'rgba(255, 255, 255, 0.12)',
-                backdropFilter: 'blur(8px)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                zIndex: 1,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.22)';
-                e.currentTarget.style.transform = 'rotate(90deg) scale(1.05)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
-                e.currentTarget.style.transform = 'rotate(0deg) scale(1)';
-              }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" style={{ width: '15px', height: '15px' }}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+
+            {/* Mode tabs */}
+            <div style={{ display: 'flex', gap: 4, paddingBottom: 14 }}>
+              {[{ mode: 'AI', label: '🤖 Trợ lý AI' }, { mode: 'STAFF', label: '👤 Nhân viên' }].map(({ mode, label }) => (
+                <button key={mode} onClick={() => { setChatMode(mode); if (mode === 'STAFF') openStaffChat(); }}
+                  style={{
+                    border: 'none', padding: 0, outline: 'none', cursor: 'pointer', flex: 1, padding: '7px 0', borderRadius: 10, fontSize: '0.72rem', fontWeight: 700, textAlign: 'center', transition: 'all 0.2s',
+                    background: chatMode === mode ? '#fff' : 'transparent',
+                    color: chatMode === mode ? '#c41230' : 'rgba(255,255,255,0.7)',
+                    border: chatMode === mode ? '1px solid transparent' : '1px solid transparent',
+                  }}
+                >{label}</button>
+              ))}
+            </div>
           </div>
 
-          {loading ? (
-            <div
-              style={{
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '40px',
-                gap: '12px',
-                background: '#faf7f3',
-              }}
-            >
-              <div style={{ position: 'relative', width: 40, height: 40 }}>
-                <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    border: '3px solid #f4f0eb',
-                    borderTopColor: '#c41230',
-                    borderRadius: '50%',
-                    animation: 'chat-spin 0.8s cubic-bezier(0.5, 0, 0.5, 1) infinite',
-                  }}
-                />
-              </div>
-              <p style={{ margin: 0, fontSize: '0.75rem', color: '#9a8c7e', fontWeight: 700 }}>Đang kết nối...</p>
-            </div>
-          ) : (
-            <>
-              {/* Messages */}
-              <div
-                className="chat-messages-scroll"
-                style={{
-                  flex: '1 1 0',
-                  overflowY: 'auto',
-                  padding: '16px 14px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px',
-                  minHeight: '60px',
-                  height: '100%',
-                  background: 'linear-gradient(180deg, #faf7f3 0%, #f5f0e8 100%)',
-                }}
-              >
-                {messages.length === 0 && (
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '48px 20px',
-                    gap: '12px',
-                    animation: 'fadeInUp 0.5s ease-out',
-                  }}>
-                    <div style={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: '50%',
-                      background: isAiMode
-                        ? 'linear-gradient(135deg, rgba(200, 154, 88, 0.12), rgba(200, 154, 88, 0.06))'
-                        : 'linear-gradient(135deg, rgba(196, 18, 48, 0.1), rgba(196, 18, 48, 0.04))',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '1.5rem',
-                    }}>
-                      {isAiMode ? '☕' : '💬'}
-                    </div>
-                    <p style={{
-                      margin: 0,
-                      color: '#9a8c7e',
-                      fontSize: '0.82rem',
-                      fontWeight: 700,
-                      textAlign: 'center',
-                    }}>
-                      {isAiMode ? 'Hỏi mình bất cứ điều gì về menu nhé!' : 'Nhắn tin để được hỗ trợ nhé!'}
-                    </p>
-                    <p style={{
-                      margin: 0,
-                      color: '#b8aa9c',
-                      fontSize: '0.72rem',
-                      fontWeight: 600,
-                      textAlign: 'center',
-                    }}>
-                      {isAiMode ? 'Giá cả • Khuyến mãi • Đặt hàng' : 'Nhân viên sẽ phản hồi sớm nhất'}
-                    </p>
+          {/* Messages area */}
+          <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto', padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 10, background: 'transparent' }}>
+            {activeMessages.length === 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 12, padding: '0 20px' }}>
+                <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'linear-gradient(135deg,#e8572a,#ff8c42)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem', boxShadow: '0 4px 20px rgba(232,87,42,0.3)' }}>☕</div>
+                <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: '#343a40', textAlign: 'center' }}>
+                  {chatMode === 'AI' ? 'Xin chào! Mình có thể giúp gì cho bạn?' : 'Nhân viên sẽ phản hồi sớm nhất'}
+                </p>
+                {chatMode === 'AI' && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, justifyContent: 'center' }}>
+                    {QUICK_ACTIONS.slice(0, 4).map((a) => (
+                      <button key={a.id} onClick={() => sendMessage(a.text)} style={{ border: 'none', outline: 'none', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 700, color: '#e8572a', background: '#fff', padding: '7px 13px', borderRadius: 20, border: '1.5px solid #e8572a30', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                        {a.icon} {a.label}
+                      </button>
+                    ))}
                   </div>
                 )}
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    style={{
-                      display: 'flex',
-                      justifyContent: msg.vai_tro_nguoi_gui === 'CUSTOMER' ? 'flex-end' : 'flex-start',
-                      alignItems: 'flex-end',
-                      gap: '8px',
-                    }}
-                  >
-                    {msg.vai_tro_nguoi_gui !== 'CUSTOMER' && (
-                      <div
-                        style={{
-                          width: '30px',
-                          height: '30px',
-                          borderRadius: '10px',
-                          background: msg.vai_tro_nguoi_gui === 'AI'
-                            ? 'linear-gradient(135deg, #c89a58, #b08543)'
-                            : 'linear-gradient(135deg, #c41230, #a30f28)',
-                          color: '#fff',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.85rem',
-                          boxShadow: msg.vai_tro_nguoi_gui === 'AI'
-                            ? '0 3px 10px rgba(200, 154, 88, 0.25)'
-                            : '0 3px 10px rgba(196, 18, 48, 0.2)',
-                          flexShrink: 0,
-                          marginBottom: '4px',
-                        }}
-                      >
-                        {msg.vai_tro_nguoi_gui === 'AI' ? '☕' : '👤'}
+              </div>
+            )}
+
+            {activeMessages.map((msg) => {
+              const isOwn = msg.vai_tro_nguoi_gui === 'CUSTOMER';
+              const isAI = msg.vai_tro_nguoi_gui === 'AI';
+              return (
+                <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isOwn ? 'flex-end' : 'flex-start' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 7, maxWidth: '84%' }}>
+                    {!isOwn && (
+                      <div style={{ width: 28, height: 28, borderRadius: '50%', background: isAI ? 'linear-gradient(135deg,#e8572a,#ff6b35)' : 'linear-gradient(135deg,#6366f1,#8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}>
+                        {isAI ? '☕' : '👤'}
                       </div>
                     )}
-                    <div
-                      style={{
-                        maxWidth: '78%',
-                        borderRadius: msg.vai_tro_nguoi_gui === 'CUSTOMER'
-                          ? '18px 18px 4px 18px'
-                          : '18px 18px 18px 4px',
-                        padding: '10px 14px 8px',
-                        fontSize: '0.85rem',
-                        background: msg.vai_tro_nguoi_gui === 'CUSTOMER'
-                          ? (isAiMode ? 'linear-gradient(135deg, #c89a58 0%, #b08543 100%)' : 'linear-gradient(135deg, #c41230 0%, #a30f28 100%)')
-                          : '#ffffff',
-                        color: msg.vai_tro_nguoi_gui === 'CUSTOMER' ? '#fff' : '#2d2118',
-                        border: msg.vai_tro_nguoi_gui === 'CUSTOMER'
-                          ? 'none'
-                          : '1px solid rgba(74, 55, 40, 0.08)',
-                        boxShadow: msg.vai_tro_nguoi_gui === 'CUSTOMER'
-                          ? (isAiMode
-                            ? '0 4px 16px rgba(200, 154, 88, 0.2)'
-                            : '0 4px 16px rgba(196, 18, 48, 0.18)')
-                          : '0 2px 8px rgba(74, 55, 40, 0.04), 0 0 0 1px rgba(74, 55, 40, 0.02)',
-                        animation: 'msgSlideIn 0.25s ease-out',
-                      }}
-                    >
-                      {msg.vai_tro_nguoi_gui !== 'CUSTOMER' && (
-                        <p
-                          style={{
-                            margin: '0 0 4px',
-                            fontSize: '0.68rem',
-                            fontWeight: 900,
-                            color: msg.vai_tro_nguoi_gui === 'AI' ? '#c89a58' : '#c41230',
-                            letterSpacing: '0.3px',
-                          }}
-                        >
-                          {msg.ten_nguoi_gui || (msg.vai_tro_nguoi_gui === 'AI' ? 'Trợ lý AI' : 'Nhân viên')}
-                        </p>
-                      )}
+                    <div style={{ flex: 1 }}>
+                      {/* Reply context */}
                       {msg.reply_to && (
-                        <div
-                          style={{
-                            borderLeft: msg.vai_tro_nguoi_gui === 'CUSTOMER' ? '3px solid rgba(255,255,255,0.85)' : (isAiMode ? '3px solid #c89a58' : '3px solid #c41230'),
-                            background: msg.vai_tro_nguoi_gui === 'CUSTOMER' ? 'rgba(255,255,255,0.18)' : '#fdfaf5',
-                            borderRadius: 8,
-                            padding: '6px 8px',
-                            marginBottom: 6,
-                          }}
-                        >
-                          <p style={{ margin: 0, fontSize: '0.67rem', fontWeight: 800, opacity: 0.92 }}>
-                            {msg.reply_to.sender || 'Tin nhắn được phản hồi'}
-                          </p>
-                          <p
-                            style={{
-                              margin: '2px 0 0',
-                              fontSize: '0.72rem',
-                              lineHeight: 1.3,
-                              opacity: 0.92,
-                              maxHeight: 34,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                            }}
-                          >
-                            {msg.reply_to.content}
-                          </p>
+                        <div style={{ marginBottom: 4, padding: '5px 10px', background: isOwn ? 'rgba(255,255,255,0.25)' : '#e9ecef', borderRadius: 8, borderLeft: `3px solid ${isOwn ? 'rgba(255,255,255,0.6)' : '#e8572a'}` }}>
+                          <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: 800, color: isOwn ? 'rgba(255,255,255,0.9)' : '#e8572a' }}>{msg.reply_to.sender}</p>
+                          <p style={{ margin: '1px 0 0', fontSize: '0.68rem', color: isOwn ? 'rgba(255,255,255,0.75)' : '#495057', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{msg.reply_to.content}</p>
                         </div>
                       )}
-                      <p
-                        style={{
-                          margin: 0,
-                          lineHeight: 1.4,
-                          wordBreak: 'break-word',
-                          whiteSpace: 'pre-wrap',
-                        }}
-                      >
-                        {msg.noi_dung}
-                      </p>
-                      <div
-                        style={{
-                          marginTop: 6,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: 10,
-                        }}
-                      >
-                        <span style={{ fontSize: '0.65rem', opacity: 0.82 }}>
-                          {formatTime(msg.ngay_tao)}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => pickReply(msg)}
-                          className="reply-btn-hover"
-                          style={{
-                            all: 'unset',
-                            fontSize: '0.65rem',
-                            cursor: 'pointer',
-                            fontWeight: 700,
-                            color: msg.vai_tro_nguoi_gui === 'CUSTOMER' ? 'rgba(255,255,255,0.85)' : (isAiMode ? '#c89a58' : '#c41230'),
-                            padding: '2px 6px',
-                            borderRadius: '6px',
-                            transition: 'all 0.2s',
-                          }}
-                        >
-                          ↩ Trả lời
-                        </button>
+
+                      {/* Main bubble */}
+                      <div style={{
+                        padding: '10px 14px',
+                        borderRadius: isOwn ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                        background: isOwn ? '#fff3e0' : '#fff',
+                        color: isOwn ? '#495057' : '#212529',
+                        fontSize: '0.84rem', lineHeight: 1.5,
+                        boxShadow: isOwn ? '0 3px 12px rgba(0,0,0,0.05)' : '0 2px 8px rgba(0,0,0,0.07)',
+                        border: '1px solid #ffe0b2',
+                        wordBreak: 'break-word',
+                      }}>
+                        {msg.vai_tro_nguoi_gui !== 'CUSTOMER' && (
+                          <p style={{ margin: '0 0 4px', fontSize: '0.65rem', fontWeight: 800, color: '#e8572a', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                            {msg.ten_nguoi_gui || (isAI ? 'Trợ lý AI' : 'Nhân viên')}
+                          </p>
+                        )}
+                        <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{renderText(msg.noi_dung)}</p>
+
+                        {/* Rich content blocks */}
+                        {msg._products && msg._products.length > 0 && (
+                          <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {msg._products.map((p, i) => <ProductCard key={i} p={p} onAdd={addToCart} />)}
+                          </div>
+                        )}
+                        {msg._orders && msg._orders.length > 0 && (
+                          <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {msg._orders.map((o, i) => <OrderCard key={i} o={o} />)}
+                          </div>
+                        )}
+                        {msg._stores && msg._stores.length > 0 && (
+                          <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {msg._stores.map((b, i) => <StoreCard key={i} b={b} />)}
+                          </div>
+                        )}
+                        {msg._type === 'payment' && (
+                          <div style={{ marginTop: 10 }}><PaymentCard /></div>
+                        )}
+                        {msg._vouchers && msg._vouchers.length > 0 && (
+                          <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {msg._vouchers.map((v, i) => <VoucherCard key={i} v={v} />)}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Quick replies */}
+                      {msg._quickReplies && msg._quickReplies.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 7 }}>
+                          {msg._quickReplies.map((r) => (
+                            <button key={r.id} onClick={() => sendMessage(r.text)} style={{ all: 'unset', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 700, color: '#e8572a', background: '#fff', padding: '6px 13px', borderRadius: 20, border: '1.5px solid #e8572a30', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', whiteSpace: 'nowrap', transition: 'all 0.15s' }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = '#fff3f0'; e.currentTarget.style.borderColor = '#e8572a70'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#e8572a30'; }}
+                            >
+                              {r.icon} {r.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Timestamp + reply */}
+                      <div style={{ display: 'flex', justifyContent: isOwn ? 'flex-end' : 'flex-start', alignItems: 'center', gap: 8, marginTop: 4, paddingLeft: isOwn ? 0 : 2 }}>
+                        <span style={{ fontSize: '0.6rem', color: '#adb5bd' }}>{fmtTime(msg.ngay_tao)}</span>
+                        {!isOwn && (
+                          <button onClick={() => setReplyTo(msg)} style={{ all: 'unset', cursor: 'pointer', fontSize: '0.6rem', color: '#adb5bd', fontWeight: 600 }}>↩ Trả lời</button>
+                        )}
                       </div>
                     </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {isTyping && <TypingBubble />}
+            <div ref={bottomRef} />
+          </div>
+
+          {/* Pending order confirmation */}
+          {pendingOrder && (
+            <div style={{ margin: '0 12px 8px', background: '#fff', borderRadius: 14, border: '1px solid #e9ecef', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+              <div style={{ background: 'linear-gradient(90deg,#e8572a,#d94b1e)', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: '0.9rem' }}>🛒</span>
+                <span style={{ color: '#fff', fontWeight: 800, fontSize: '0.76rem' }}>XÁC NHẬN ĐẶT HÀNG</span>
+              </div>
+              {pendingOrder.message && <p style={{ margin: '8px 14px 4px', fontSize: '0.8rem', fontWeight: 700, color: '#343a40' }}>{pendingOrder.message}</p>}
+              <div style={{ padding: '4px 14px 8px' }}>
+                {pendingOrder.items.filter((i) => i.matched).map((item, idx) => (
+                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid #f1f3f5' }}>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 700 }}>x{item.quantity} {item.product_name}</span>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 900, color: '#e8572a' }}>{fmtVND(item.subtotal || 0)}</span>
                   </div>
                 ))}
-                <div ref={bottomRef} />
-              </div>
-
-              {/* Input */}
-              <div
-                style={{
-                  borderTop: '1px solid rgba(74, 55, 40, 0.06)',
-                  background: 'rgba(255, 255, 255, 0.95)',
-                  backdropFilter: 'blur(8px)',
-                  padding: '10px 10px 12px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px',
-                }}
-              >
-                {replyTarget && (
-                  <div
-                    style={{
-                      width: '100%',
-                      borderRadius: 10,
-                      border: '1px solid #f2e6d6',
-                      background: '#faf6f0',
-                      padding: '6px 8px',
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      justifyContent: 'space-between',
-                      gap: 8,
-                    }}
-                  >
-                    <div style={{ minWidth: 0 }}>
-                      <p style={{ margin: 0, fontSize: '0.68rem', color: '#c41230', fontWeight: 800 }}>
-                        Đang reply: {replyTarget.sender || 'Tin nhắn'}
-                      </p>
-                      <p
-                        style={{
-                          margin: '2px 0 0',
-                          fontSize: '0.72rem',
-                          color: '#4a3728',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        {replyTarget.content}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setReplyTarget(null)}
-                      style={{
-                        all: 'unset',
-                        cursor: 'pointer',
-                        color: '#c41230',
-                        fontWeight: 900,
-                        fontSize: '0.78rem',
-                        lineHeight: 1,
-                      }}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                )}
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, width: '100%' }}>
-                  <textarea
-                    ref={textareaRef}
-                    value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder={chatMode === 'AI' ? 'Hỏi AI về menu, giá, khuyến mãi...' : 'Nhắn tin cho nhân viên...'}
-                    rows={1}
-                    className="chat-input-textarea"
-                    style={{
-                      flex: 1,
-                      resize: 'none',
-                      borderRadius: '22px',
-                      border: '1.5px solid rgba(74, 55, 40, 0.1)',
-                      background: '#f8f5f0',
-                      padding: '10px 14px',
-                      fontSize: '0.85rem',
-                      fontWeight: 600,
-                      fontFamily: 'inherit',
-                      minHeight: '42px',
-                      maxHeight: '110px',
-                      outline: 'none',
-                      color: '#2d2118',
-                      '--focus-color': isAiMode ? '#c89a58' : '#c41230',
-                      '--focus-glow': isAiMode ? 'rgba(200, 154, 88, 0.18)' : 'rgba(196, 18, 48, 0.18)',
-                      transition: 'all 0.2s ease',
-                    }}
-                  />
-
-                  {/* Voice button — AI mode only, uses Web Speech API */}
-                  {isAiMode && (
-                    <button
-                      onClick={startVoice}
-                      disabled={isListening || sending}
-                      title="Đặt hàng bằng giọng nói (Chrome)"
-                      style={{
-                        all: 'unset',
-                        cursor: isListening ? 'not-allowed' : 'pointer',
-                        width: 42,
-                        height: 42,
-                        borderRadius: '14px',
-                        background: isListening
-                          ? 'linear-gradient(135deg,#ef4444,#dc2626)'
-                          : 'linear-gradient(135deg,#c89a58,#b08543)',
-                        color: '#fff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        boxShadow: isListening
-                          ? '0 0 0 4px rgba(239,68,68,0.25), 0 4px 12px rgba(239,68,68,0.2)'
-                          : '0 4px 14px rgba(200,154,88,0.3)',
-                        animation: isListening ? 'micPulse 1s ease-in-out infinite' : 'none',
-                        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                      }}
-                    >
-                      {isListening ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" style={{ width: '16px', height: '16px' }}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 7.5A2.25 2.25 0 017.5 5.25h9a2.25 2.25 0 012.25 2.25v9a2.25 2.25 0 01-2.25 2.25h-9a2.25 2.25 0 01-2.25-2.25v-9z" />
-                        </svg>
-                      ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: '20px', height: '20px' }}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
-                        </svg>
-                      )}
-                    </button>
-                  )}
-
-                  <button
-                    onClick={sendMessage}
-                    disabled={!inputText.trim() || sending}
-                    style={{
-                      all: 'unset',
-                      cursor: !inputText.trim() || sending ? 'not-allowed' : 'pointer',
-                      background: isAiMode
-                        ? 'linear-gradient(135deg, #c89a58, #b08543)'
-                        : 'linear-gradient(135deg, #c41230, #a30f28)',
-                      color: '#fff',
-                      borderRadius: '14px',
-                      width: '42px',
-                      height: '42px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      opacity: !inputText.trim() || sending ? 0.4 : 1,
-                      flexShrink: 0,
-                      boxShadow: !inputText.trim() || sending
-                        ? 'none'
-                        : (isAiMode ? '0 4px 14px rgba(200,154,88,0.3)' : '0 4px 14px rgba(196,18,48,0.25)'),
-                      transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                      transform: sending ? 'scale(0.92)' : 'scale(1)',
-                    }}
-                    className="chat-send-btn"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" style={{ width: '18px', height: '18px' }}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-                    </svg>
-                  </button>
-
-                  {/* Order Confirmation Card */}
-                  {pendingOrder && (
-                    <div style={{
-                      position: 'absolute',
-                      bottom: '100%',
-                      left: 0,
-                      right: 0,
-                      margin: '0 8px 8px',
-                      background: '#fff',
-                      borderRadius: 16,
-                      border: '1.5px solid #c89a5840',
-                      boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                      overflow: 'hidden',
-                      zIndex: 10,
-                    }}>
-                      <div style={{ background: 'linear-gradient(90deg,#c89a58,#b28547)', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span>🎙️</span>
-                        <span style={{ color: '#fff', fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Đặt hàng bằng giọng nói</span>
-                      </div>
-                      {pendingOrder.transcript && (
-                        <div style={{ padding: '6px 14px', background: '#faf6f0', fontSize: '0.75rem', color: '#888', fontStyle: 'italic' }}>
-                          🗣 "{pendingOrder.transcript}"
-                        </div>
-                      )}
-                      {pendingOrder.message && (
-                        <div style={{ padding: '6px 14px 2px', fontSize: '0.82rem', fontWeight: 700, color: '#333' }}>{pendingOrder.message}</div>
-                      )}
-                      <div style={{ padding: '6px 14px 8px' }}>
-                        {pendingOrder.items.filter(i => i.matched).map((item, idx) => (
-                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0', borderBottom: '1px solid #f4f0eb' }}>
-                            <div>
-                              <span style={{ fontWeight: 800, fontSize: '0.82rem' }}>x{item.quantity} {item.product_name}</span>
-                              {item.note && <span style={{ fontSize: '0.72rem', color: '#888', marginLeft: 4 }}>({item.note})</span>}
-                            </div>
-                            <span style={{ fontWeight: 900, color: '#c41230', fontSize: '0.82rem' }}>{Number(item.subtotal || 0).toLocaleString('vi-VN')}đ</span>
-                          </div>
-                        ))}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, paddingTop: 6, borderTop: '2px solid #f4f0eb' }}>
-                          <span style={{ fontWeight: 900, fontSize: '0.85rem' }}>Tổng cộng</span>
-                          <span style={{ fontWeight: 900, color: '#c41230', fontSize: '0.9rem' }}>{Number(pendingOrder.total || 0).toLocaleString('vi-VN')}đ</span>
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', gap: 8, padding: '0 14px 12px', justifyContent: 'flex-end' }}>
-                        <button onClick={() => setPendingOrder(null)} style={{ all: 'unset', cursor: 'pointer', padding: '6px 14px', borderRadius: 999, background: '#f4f0eb', color: '#555', fontWeight: 700, fontSize: '0.78rem' }}>Bỏ qua</button>
-                        <button
-                          onClick={handleConfirmOrder}
-                          disabled={orderLoading}
-                          style={{ all: 'unset', cursor: orderLoading ? 'not-allowed' : 'pointer', padding: '6px 16px', borderRadius: 999, background: 'linear-gradient(90deg,#c41230,#a30f28)', color: '#fff', fontWeight: 900, fontSize: '0.78rem', opacity: orderLoading ? 0.7 : 1 }}
-                        >
-                          {orderLoading ? 'Đang đặt...' : '🛒 Đặt ngay'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+                  <span style={{ fontWeight: 800, fontSize: '0.82rem' }}>Tổng</span>
+                  <span style={{ fontWeight: 900, color: '#e8572a', fontSize: '0.86rem' }}>{fmtVND(pendingOrder.total)}</span>
                 </div>
               </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Menu */}
-      {showMenu && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '78px',
-            right: '0',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-          }}
-        >
-          {[
-            { name: 'Trợ lý ảo AI', icon: '☕', key: 'AI', color: '#c89a58', desc: 'Hỏi đáp thông minh' },
-            { name: 'Tư vấn viên', icon: '👋', key: 'STAFF', color: '#c41230', desc: 'Chat với nhân viên' },
-            { name: 'Chat Zalo', icon: '💬', key: 'ZALO', color: '#0ea5e9', desc: 'Nhắn qua Zalo' },
-            { name: 'Gọi điện', icon: '📞', key: 'CALL', color: '#4a3728', desc: 'Hotline hỗ trợ' },
-          ].map((item, idx) => (
-            <button
-              key={item.key}
-              onClick={() => handleMenuChoice(item.key)}
-              className="chat-menu-item"
-              style={{
-                all: 'unset',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '10px 16px',
-                borderRadius: '16px',
-                background: 'rgba(255, 255, 255, 0.97)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                color: '#2d2118',
-                fontSize: '0.85rem',
-                fontWeight: 800,
-                border: '1px solid rgba(74, 55, 40, 0.06)',
-                boxShadow: '0 4px 16px rgba(74, 55, 40, 0.08), 0 1px 3px rgba(0,0,0,0.04)',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                whiteSpace: 'nowrap',
-                animation: `menuItemIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) ${idx * 0.06}s both`,
-                fontFamily: "'Nunito', system-ui, sans-serif",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateX(-4px) scale(1.02)';
-                e.currentTarget.style.boxShadow = '0 8px 24px rgba(74, 55, 40, 0.14), 0 2px 6px rgba(0,0,0,0.06)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateX(0) scale(1)';
-                e.currentTarget.style.boxShadow = '0 4px 16px rgba(74, 55, 40, 0.08), 0 1px 3px rgba(0,0,0,0.04)';
-              }}
-            >
-              <span
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '10px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1rem',
-                  background: `linear-gradient(135deg, ${item.color}, ${item.color}dd)`,
-                  color: '#fff',
-                  boxShadow: `0 3px 8px ${item.color}30`,
-                  flexShrink: 0,
-                }}
-              >
-                {item.icon}
-              </span>
-              <div>
-                <span style={{ display: 'block', lineHeight: 1.2 }}>{item.name}</span>
-                <span style={{ display: 'block', fontSize: '0.65rem', fontWeight: 600, color: '#9a8c7e', marginTop: 1 }}>{item.desc}</span>
+              <div style={{ display: 'flex', gap: 8, padding: '0 14px 12px', justifyContent: 'flex-end' }}>
+                <button onClick={() => setPendingOrder(null)} style={{ all: 'unset', cursor: 'pointer', padding: '6px 16px', borderRadius: 20, background: '#f1f3f5', color: '#495057', fontWeight: 700, fontSize: '0.76rem' }}>Huỷ</button>
+                <button onClick={confirmOrder} disabled={orderConfirming} style={{ all: 'unset', cursor: orderConfirming ? 'not-allowed' : 'pointer', padding: '6px 18px', borderRadius: 20, background: 'linear-gradient(90deg,#e8572a,#d94b1e)', color: '#fff', fontWeight: 800, fontSize: '0.76rem', opacity: orderConfirming ? 0.75 : 1 }}>
+                  {orderConfirming ? 'Đang đặt...' : '✅ Đặt ngay'}
+                </button>
               </div>
-            </button>
-          ))}
+            </div>
+          )}
+
+          {/* Reply context bar */}
+          {replyTo && (
+            <div style={{ margin: '0 12px 4px', padding: '6px 12px', background: '#f8f9fa', borderRadius: 10, border: '1px solid #e9ecef', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ minWidth: 0 }}>
+                <p style={{ margin: 0, fontSize: '0.66rem', color: '#e8572a', fontWeight: 800 }}>Trả lời: {replyTo.ten_nguoi_gui || 'Tin nhắn'}</p>
+                <p style={{ margin: '1px 0 0', fontSize: '0.7rem', color: '#495057', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{replyTo.noi_dung}</p>
+              </div>
+              <button onClick={() => setReplyTo(null)} style={{ all: 'unset', cursor: 'pointer', color: '#868e96', fontSize: '1rem', lineHeight: 1, padding: '0 4px', flexShrink: 0 }}>✕</button>
+            </div>
+          )}
+
+          {/* Input area */}
+          <div style={{ padding: '10px 12px 14px', background: '#fff', borderTop: '1px solid #e9ecef', display: 'flex', flexDirection: 'column', gap: 9 }}>
+            {/* Quick bar */}
+            {chatMode === 'AI' && (
+              <div style={{ display: 'flex', gap: 5, overflowX: 'auto', paddingBottom: 1 }}>
+                {QUICK_ACTIONS.map((a) => (
+                  <button key={a.id} onClick={() => sendMessage(a.text)} style={{ all: 'unset', cursor: 'pointer', fontSize: '0.68rem', fontWeight: 700, color: '#495057', background: '#f8f9fa', padding: '5px 10px', borderRadius: 20, border: '1px solid #e9ecef', whiteSpace: 'nowrap', flexShrink: 0, transition: 'all 0.15s' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = '#fff3f0'; e.currentTarget.style.color = '#e8572a'; e.currentTarget.style.borderColor = '#e8572a40'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = '#f8f9fa'; e.currentTarget.style.color = '#495057'; e.currentTarget.style.borderColor = '#e9ecef'; }}
+                  >
+                    {a.icon} {a.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Input row */}
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+              <div style={{ flex: 1, background: '#f8f9fa', borderRadius: 22, border: '1.5px solid #e9ecef', padding: '9px 14px', transition: 'border-color 0.2s, box-shadow 0.2s', display: 'flex', alignItems: 'center' }}>
+                <textarea
+                  ref={inputRef}
+                  value={inputText}
+                  onChange={(e) => { setInputText(e.target.value); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px'; }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+                  onFocus={(e) => { e.currentTarget.parentElement.style.borderColor = '#e8572a'; e.currentTarget.parentElement.style.boxShadow = '0 0 0 3px rgba(232,87,42,0.12)'; }}
+                  onBlur={(e) => { e.currentTarget.parentElement.style.borderColor = '#e9ecef'; e.currentTarget.parentElement.style.boxShadow = 'none'; }}
+                  placeholder={chatMode === 'AI' ? 'Nhắn tin với AI...' : 'Nhắn tin cho nhân viên...'}
+                  rows={1}
+                  style={{ flex: 1, border: 'none', padding: 0, outline: 'none', background: 'transparent', fontSize: '0.84rem', color: '#212529', resize: 'none', maxHeight: 100, lineHeight: 1.5, fontFamily: 'inherit' }}
+                />
+              </div>
+
+              {chatMode === 'AI' && (
+                <button onClick={startVoice} disabled={isListening} title="Nói để đặt hàng"
+                  style={{ border: 'none', padding: 0, outline: 'none', cursor: 'pointer', width: 42, height: 42, borderRadius: '50%', background: isListening ? 'linear-gradient(135deg,#ef4444,#dc2626)' : '#f8f9fa', border: '1.5px solid #e9ecef', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s', boxShadow: isListening ? '0 0 0 4px rgba(239,68,68,0.2)' : 'none', animation: isListening ? 'micPulse 1s ease-in-out infinite' : 'none' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke={isListening ? '#fff' : '#868e96'} style={{ width: 18, height: 18 }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
+                  </svg>
+                </button>
+              )}
+
+              <button onClick={() => sendMessage()} disabled={!inputText.trim() || sending}
+                style={{ border: 'none', padding: 0, outline: 'none', cursor: !inputText.trim() || sending ? 'not-allowed' : 'pointer', width: 42, height: 42, borderRadius: '50%', background: !inputText.trim() || sending ? '#e9ecef' : 'linear-gradient(135deg,#e8572a,#d94b1e)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s', boxShadow: !inputText.trim() || sending ? 'none' : '0 3px 12px rgba(232,87,42,0.4)' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke={!inputText.trim() || sending ? '#adb5bd' : '#fff'} style={{ width: 16, height: 16, transform: 'translateX(1px)' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Bubble */}
+      {/* FAB button */}
       <button
-        onClick={handleBubbleClick}
-        className={`chat-bubble-fab ${isOpen ? 'open-state' : ''}`}
+        onClick={() => isOpen ? setIsOpen(false) : openChat('AI')}
         style={{
-          all: 'unset',
-          cursor: 'pointer',
-          width: '62px',
-          height: '62px',
-          borderRadius: '20px',
-          background: isOpen
-            ? 'linear-gradient(135deg, #8a0b1f, #6b0918)'
-            : 'linear-gradient(135deg, #c41230 0%, #e0334d 100%)',
-          color: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: isOpen
-            ? '0 8px 24px rgba(196, 18, 48, 0.25)'
-            : '0 8px 28px rgba(196, 18, 48, 0.35), 0 2px 8px rgba(196, 18, 48, 0.15)',
-          transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-          position: 'relative',
+          position: 'fixed', bottom: 20, right: 20, zIndex: 999,
+          border: 'none', padding: 0, outline: 'none', cursor: 'pointer',
+          width: 60, height: 60, borderRadius: 19,
+          background: isOpen ? 'linear-gradient(135deg,#8a0b1f,#6b0918)' : 'linear-gradient(135deg,#c41230,#e0334d)',
+          color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: isOpen ? '0 6px 20px rgba(196,18,48,0.25)' : '0 8px 26px rgba(196,18,48,0.35)',
+          transition: 'all 0.3s cubic-bezier(0.34,1.56,0.64,1)',
         }}
+        onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.08)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
       >
         {isOpen ? (
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" style={{ width: '22px', height: '22px', transition: 'transform 0.3s' }}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" style={{ width: 20, height: 20 }}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
         ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: '26px', height: '26px', transition: 'transform 0.3s' }}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-1.074-.765 6 6 0 001.257-2.909C3.125 15.642 2 13.931 2 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: 24, height: 24 }}><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-1.074-.765 6 6 0 001.257-2.909C3.125 15.642 2 13.931 2 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" /></svg>
         )}
         {!isOpen && unread > 0 && (
-          <span
-            style={{
-              position: 'absolute',
-              top: -4,
-              right: -4,
-              minWidth: 20,
-              height: 20,
-              padding: '0 5px',
-              background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-              color: '#fff',
-              fontSize: '10px',
-              fontWeight: 900,
-              borderRadius: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 2px 8px rgba(239, 68, 68, 0.45)',
-              border: '2px solid #fff',
-              animation: 'unreadBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            }}
-          >
+          <span style={{ position: 'absolute', top: -3, right: -3, minWidth: 19, height: 19, background: '#ef4444', color: '#fff', borderRadius: 10, fontSize: '0.65rem', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', border: '2px solid #fff' }}>
             {unread > 9 ? '9+' : unread}
           </span>
         )}
       </button>
 
       <style>{`
-        @keyframes chat-spin {
-          to { transform: rotate(360deg); }
-        }
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(12px) scale(0.97); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes chatBoxOpen {
-          from { opacity: 0; transform: translateY(20px) scale(0.94); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes msgSlideIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes menuItemIn {
-          from { opacity: 0; transform: translateX(16px) scale(0.92); }
-          to { opacity: 1; transform: translateX(0) scale(1); }
-        }
-        @keyframes headerShimmer {
-          0% { transform: translateX(-50%); }
-          100% { transform: translateX(50%); }
-        }
-        @keyframes micPulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.35); }
-          50% { box-shadow: 0 0 0 10px rgba(239,68,68,0); }
-        }
-        @keyframes pulseStatus {
-          0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
-          70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
-          100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-        }
-        @keyframes bubblePulse {
-          0% { box-shadow: 0 8px 28px rgba(196, 18, 48, 0.35), 0 0 0 0 rgba(196, 18, 48, 0.25); }
-          70% { box-shadow: 0 8px 28px rgba(196, 18, 48, 0.35), 0 0 0 10px rgba(196, 18, 48, 0); }
-          100% { box-shadow: 0 8px 28px rgba(196, 18, 48, 0.35), 0 0 0 0 rgba(196, 18, 48, 0); }
-        }
-        @keyframes unreadBounce {
-          from { transform: scale(0); }
-          to { transform: scale(1); }
-        }
-        .status-dot {
-          width: 7px;
-          height: 7px;
-          border-radius: 50%;
-          background: #22c55e;
-          display: inline-block;
-          animation: pulseStatus 2s infinite ease-in-out;
-        }
-        .chat-bubble-fab {
-          transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .chat-bubble-fab:hover {
-          transform: scale(1.06) rotate(3deg);
-        }
-        .chat-bubble-fab:active {
-          transform: scale(0.94);
-        }
-        .chat-bubble-fab:not(.open-state) {
-          animation: bubblePulse 3s infinite;
-        }
-        .chat-input-textarea {
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .chat-input-textarea::placeholder {
-          color: #b8aa9c;
-          font-weight: 600;
-        }
-        .chat-input-textarea:focus {
-          background: #ffffff !important;
-          box-shadow: 0 0 0 3px var(--focus-glow) !important;
-          border-color: var(--focus-color) !important;
-        }
-        .chat-send-btn {
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .chat-send-btn:hover:not(:disabled) {
-          transform: scale(1.06);
-        }
-        .chat-send-btn:active:not(:disabled) {
-          transform: scale(0.93);
-        }
-        .reply-btn-hover:hover {
-          background: rgba(0, 0, 0, 0.04);
-        }
-        .chat-messages-scroll::-webkit-scrollbar {
-          width: 4px;
-        }
-        .chat-messages-scroll::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .chat-messages-scroll::-webkit-scrollbar-thumb {
-          background: rgba(74, 55, 40, 0.15);
-          border-radius: 4px;
-        }
-        .chat-messages-scroll::-webkit-scrollbar-thumb:hover {
-          background: rgba(74, 55, 40, 0.25);
-        }
+        @keyframes chatOpen { from { opacity: 0; transform: scale(0.88) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes typingDot { 0%, 80%, 100% { transform: translateY(0); opacity: 0.5; } 40% { transform: translateY(-5px); opacity: 1; } }
+        @keyframes micPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.3); } 50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); } }
+        .chat-scroll::-webkit-scrollbar { width: 5px; }
+        .chat-scroll::-webkit-scrollbar-track { background: transparent; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
+        .chat-scroll { scroll-behavior: smooth; }
       `}</style>
-    </div>
+    </>
   );
 }
