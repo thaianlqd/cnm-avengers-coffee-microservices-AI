@@ -219,27 +219,63 @@ export default function ShipperMapView({
     }
 
     // Vẽ route line
-    const points = [];
-    if (shipperLocation?.latitude) points.push([shipperLocation.latitude, shipperLocation.longitude]);
-    if (storeLocation?.latitude) points.push([storeLocation.latitude, storeLocation.longitude]);
-    if (destinationLocation?.latitude) points.push([destinationLocation.latitude, destinationLocation.longitude]);
+    const fetchAndDrawRoute = async () => {
+      const points = [];
+      if (shipperLocation?.latitude) points.push(shipperLocation);
+      if (storeLocation?.latitude && (!deliveryStatus || deliveryStatus === 'PICKING_UP' || deliveryStatus === 'CONFIRMED')) {
+        points.push(storeLocation);
+      }
+      if (destinationLocation?.latitude && (deliveryStatus === 'IN_TRANSIT' || deliveryStatus === 'DANG_GIAO' || points.length < 2)) {
+        points.push(destinationLocation);
+      }
 
-    if (routeLineRef.current) {
-      map.removeLayer(routeLineRef.current);
-    }
+      if (routeLineRef.current) {
+        map.removeLayer(routeLineRef.current);
+      }
 
-    if (points.length >= 2) {
-      routeLineRef.current = L.polyline(points, {
-        color: '#4F46E5',
-        weight: 3,
-        opacity: 0.7,
-        dashArray: '8, 12',
-      }).addTo(map);
+      if (points.length >= 2) {
+        try {
+          // OSRM requires longitude,latitude
+          const coordsString = points.map(p => `${p.longitude},${p.latitude}`).join(';');
+          const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordsString}?alternatives=false&geometries=geojson&overview=full`);
+          const data = await res.json();
+          
+          let routeCoords = [];
+          if (data.routes && data.routes[0] && data.routes[0].geometry) {
+            // OSRM returns [longitude, latitude], Leaflet needs [latitude, longitude]
+            routeCoords = data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
+          } else {
+            // Fallback to straight lines if OSRM fails
+            routeCoords = points.map(p => [p.latitude, p.longitude]);
+          }
 
-      // Fit bounds to show all points
-      const bounds = L.latLngBounds(points);
-      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
-    }
+          routeLineRef.current = L.polyline(routeCoords, {
+            color: '#4F46E5',
+            weight: 4,
+            opacity: 0.8,
+            lineJoin: 'round'
+          }).addTo(map);
+
+          // Fit bounds to show the whole route
+          const bounds = L.latLngBounds(routeCoords);
+          map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+        } catch (error) {
+          console.error("Lỗi vẽ đường OSRM:", error);
+          // Fallback to straight line
+          const fallbackCoords = points.map(p => [p.latitude, p.longitude]);
+          routeLineRef.current = L.polyline(fallbackCoords, {
+            color: '#4F46E5',
+            weight: 3,
+            opacity: 0.7,
+            dashArray: '8, 12',
+          }).addTo(map);
+          const bounds = L.latLngBounds(fallbackCoords);
+          map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+        }
+      }
+    };
+
+    fetchAndDrawRoute();
   }, [shipperLocation, storeLocation, destinationLocation, leafletLoaded, shipperName, deliveryStatus]);
 
   return (

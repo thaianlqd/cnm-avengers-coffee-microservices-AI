@@ -131,7 +131,7 @@ export default function CareersPage() {
   };
 
   return (
-    <div className="w-full bg-[#fcfbfa] mt-[84px] min-h-screen">
+    <div className="w-full bg-[#fcfbfa] min-h-screen">
       {/* ── 1. HERO SECTION ── */}
       <section className="w-full relative h-[420px] md:h-[500px] overflow-hidden">
         <img 

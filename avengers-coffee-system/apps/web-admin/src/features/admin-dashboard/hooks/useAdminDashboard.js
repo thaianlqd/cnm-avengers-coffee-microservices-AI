@@ -295,6 +295,11 @@ export function useAdminDashboard() {
           so_luong_ton: soLuongTon,
           muc_canh_bao: Number(stock?.muc_canh_bao ?? 0),
           dang_ban: dangBan,
+          sizes: item.sizes || null,
+          luong_da: item.luong_da || null,
+          do_ngot: item.do_ngot || null,
+          loai_sua: item.loai_sua || null,
+          toppings: item.toppings || null,
         }
       })
 
@@ -1353,7 +1358,7 @@ export function useAdminDashboard() {
           loai_don_hang: posForm.loai_don_hang,
           phuong_thuc_thanh_toan: posForm.phuong_thuc_thanh_toan,
           ten_khach_hang: posForm.ten_khach_hang?.trim() || undefined,
-          ma_ban: posForm.loai_don_hang === 'TAI_CHO' ? posForm.ma_ban?.trim() || undefined : undefined,
+          ma_ban: ['TAI_CHO', 'DUNG_TAI_CHO'].includes(posForm.loai_don_hang) ? posForm.ma_ban?.trim() || undefined : undefined,
           ghi_chu: posForm.ghi_chu?.trim() || undefined,
           tien_khach_dua: isCashMethod ? Number(posCashInput || 0) : undefined,
           ten_thu_ngan: session?.user?.tenDangNhap || session?.user?.email || 'staff',

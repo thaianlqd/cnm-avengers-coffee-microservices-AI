@@ -35,6 +35,7 @@ const PAYMENT_METHOD_LABEL = {
 const BRANCH_LABEL = {
   MAC_DINH_CHI: 'Chi nhánh hệ thống',
   THE_GRACE_TOWER: 'The Grace Tower',
+  Q1: 'Highlands Coffee Indochina Riverside', // Fallback cho các đơn test
 };
 
 const ORDER_FLOW = ['MOI_TAO', 'DA_XAC_NHAN', 'DANG_CHUAN_BI', 'DANG_GIAO', 'HOAN_THANH'];
@@ -82,8 +83,10 @@ function fmtMoney(value) {
   return `${Number(value || 0).toLocaleString('vi-VN')}đ`;
 }
 
-function fmtBranch(branchCode) {
+function fmtBranch(branchCode, branches = []) {
   if (!branchCode) return 'Đang cập nhật';
+  const branch = branches.find(b => b.ma_chi_nhanh === branchCode || b.co_so_ma === branchCode || b.branch_code === branchCode);
+  if (branch) return branch.ten_chi_nhanh || branch.ten_co_so || branch.name || branchCode;
   return BRANCH_LABEL[branchCode] || branchCode;
 }
 
@@ -179,6 +182,17 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
     enabled: Boolean(isOpen),
     staleTime: 60 * 1000,
   });
+
+  const { data: publicBranchPayload } = useQuery({
+    queryKey: ['public-branches'],
+    queryFn: async () => {
+      const response = await apiClient.get('/users/branches/public');
+      return response.data;
+    },
+    enabled: Boolean(isOpen),
+    staleTime: 60 * 1000,
+  });
+  const allBranches = publicBranchPayload?.items || [];
 
   const cancelOrderMutation = useMutation({
     mutationFn: async ({ orderId, reason }) => {
@@ -548,18 +562,38 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                         <div>
                           <p className="text-xs font-black uppercase tracking-widest text-gray-400">Mã đơn hàng</p>
                           <p className="mt-1 text-sm font-black text-gray-800">{order.ma_don_hang}</p>
-                          <p className="mt-1 text-xs font-bold text-gray-500">Cơ sở xử lý: {fmtBranch(order.co_so_ma)}</p>
+                          <p className="mt-1 text-xs font-bold text-gray-500">Cơ sở xử lý: {fmtBranch(order.co_so_ma, allBranches)}</p>
                           <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-gray-500">
                             <ClockIcon className="h-4 w-4" />
                             {fmtDate(order.ngay_tao)}
                           </div>
-                          {order.loai_don_hang === 'GIAO_TAN_NOI' && (
-                            <div className="mt-2">
-                              <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold border ${order.phuong_thuc_giao_hang === 'LALAMOVE' ? 'bg-orange-50 text-orange-600 border-orange-200' : 'bg-indigo-50 text-indigo-600 border-indigo-200'}`}>
-                                {order.phuong_thuc_giao_hang === 'LALAMOVE' ? '🚀 Lalamove' : '🛵 Shipper Nội Bộ'}
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {order.loai_don_hang === 'DUNG_TAI_CHO' && (
+                              <span className="inline-block px-2 py-0.5 rounded text-xs font-bold border bg-red-50 text-red-600 border-red-200">
+                                📍 Dùng tại bàn {order.ma_ban ? `(Số ${order.ma_ban})` : ''}
                               </span>
-                            </div>
-                          )}
+                            )}
+                            {order.loai_don_hang === 'TAI_CHO' && (
+                              <span className="inline-block px-2 py-0.5 rounded text-xs font-bold border bg-orange-50 text-orange-600 border-orange-200">
+                                🏪 Tại quầy {order.ma_ban ? `- Bàn ${order.ma_ban}` : ''}
+                              </span>
+                            )}
+                            {order.loai_don_hang === 'LAY_TAI_QUAN' && (
+                              <span className="inline-block px-2 py-0.5 rounded text-xs font-bold border bg-blue-50 text-blue-600 border-blue-200">
+                                🛍️ Lấy tại quán
+                              </span>
+                            )}
+                            {order.loai_don_hang === 'MANG_DI' && (
+                              <span className="inline-block px-2 py-0.5 rounded text-xs font-bold border bg-yellow-50 text-yellow-600 border-yellow-200">
+                                🥡 Mang đi
+                              </span>
+                            )}
+                            {order.loai_don_hang === 'GIAO_TAN_NOI' && (
+                              <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold border ${order.phuong_thuc_giao_hang === 'LALAMOVE' ? 'bg-purple-50 text-purple-600 border-purple-200' : 'bg-indigo-50 text-indigo-600 border-indigo-200'}`}>
+                                {order.phuong_thuc_giao_hang === 'LALAMOVE' ? '🚀 Lalamove' : '🛵 Giao tận nơi (Nội bộ)'}
+                              </span>
+                            )}
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2 md:gap-3">
@@ -598,8 +632,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                               ) : null}
                             </div>
                           </div>
-
-                          <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Món đã đặt</p>
+                          <p className="mb-2 mt-4 text-xs font-black uppercase tracking-widest text-gray-400">Món đã đặt</p>
                           <div className="space-y-2">
                             {(order.chi_tiet || []).map((item) => (
                               <div key={item.id || `${item.ma_san_pham}-${item.ten_san_pham}`} className="rounded-xl bg-gray-50 px-3 py-2">
@@ -780,7 +813,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                             {PAYMENT_METHOD_LABEL[order.phuong_thuc_thanh_toan] || order.phuong_thuc_thanh_toan}
                           </p>
                           <p className="text-xs font-semibold text-gray-500">Địa chỉ: {order.dia_chi_giao_hang || '---'}</p>
-                          <p className="text-xs font-semibold text-gray-500">Cơ sở xử lý: {fmtBranch(order.co_so_ma)}</p>
+                          <p className="text-xs font-semibold text-gray-500">Cơ sở xử lý: {fmtBranch(order.co_so_ma, allBranches)}</p>
                           <p className="text-xs font-semibold text-gray-500">Khung giờ: {order.khung_gio_giao || '---'}</p>
                           <p className="text-xs font-semibold text-gray-500">Ghi chú: {order.ghi_chu || '---'}</p>
                           <p className="text-xs font-semibold text-gray-500">Trạng thái GD: {order.giao_dich?.trang_thai || '---'}</p>

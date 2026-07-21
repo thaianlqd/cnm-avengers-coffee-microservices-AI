@@ -27,6 +27,7 @@ import MenuIntroPage from './pages/MenuIntro';
 import CareersPage from './pages/Careers';
 import MembershipPage from './pages/Membership';
 import LuckyWheelPage from './pages/LuckyWheel';
+import GiftCardPage from './pages/GiftCard';
 import { CartProvider, useCart } from './context/CartContext'; // File mới bước 2
 import { apiClient } from './lib/apiClient';
 import { queryKeys } from './lib/queryKeys';
@@ -418,11 +419,11 @@ function HomeBannerSlider() {
   }, [slides.length]);
 
   return (
-    <div className="hc-banner-slider relative">
+    <div className="hc-banner-slider relative w-full overflow-hidden">
       <img
         src={slides[currentSlide]}
         alt={`Banner ${currentSlide + 1}`}
-        className="h-[520px] w-full object-cover hc-fade-in md:h-[650px] lg:h-[800px]"
+        className="w-full h-auto block hc-fade-in"
         onError={(e) => {
           e.currentTarget.src = FALLBACK_BANNER_URL;
         }}
@@ -459,7 +460,21 @@ function HomeBannerSlider() {
 function AppContent() {
   const [activeTab, setActiveTab] = useState(() => {
     const params = new URLSearchParams(window.location.search);
-    return params.get('tab') || 'home';
+    
+    // Tìm tableId và storeId (hỗ trợ cả trường hợp khách gõ nhầm ?FstoreId)
+    const storeId = params.get('storeId') || params.get('FstoreId') || params.get('?storeId');
+    const tableId = params.get('tableId');
+    
+    if (tableId) {
+      sessionStorage.setItem('qr_tableId', tableId);
+      if (storeId) {
+        sessionStorage.setItem('qr_storeId', storeId);
+      }
+      // Dọn dẹp cache cũ nếu có
+      localStorage.removeItem('qr_tableId');
+      localStorage.removeItem('qr_storeId');
+    }
+    return params.get('tab') || (tableId ? 'order' : 'home'); // redirect to order if scanned QR
   });
   const [selectedCatId, setSelectedCatId] = useState('all');
   const [activeMainSectionId, setActiveMainSectionId] = useState('must-try');
@@ -1556,7 +1571,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      {!['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail'].includes(activeTab) && (
+      {!['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail', 'gift-card'].includes(activeTab) && (
         <Header
           userName={user ? user.ho_ten || user.hoTen || 'Đăng nhập' : 'Đăng nhập'}
           activeTab={activeTab}
@@ -1819,6 +1834,8 @@ function AppContent() {
               handleOpenProductPage(product);
             }}
           />
+        ) : activeTab === 'gift-card' ? (
+          <GiftCardPage onBackToMain={() => setActiveTab('home')} />
         ) : ['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail'].includes(activeTab) ? (
           <OrderPage
             menuSections={menuSections}
@@ -1974,7 +1991,7 @@ function AppContent() {
         }}
       />
 
-      {['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail'].includes(activeTab) ? <OrderFooter onNavigate={setActiveTab} /> : <Footer onTabChange={setActiveTab} />}
+      {activeTab === 'gift-card' ? null : ['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail'].includes(activeTab) ? <OrderFooter onNavigate={setActiveTab} /> : <Footer onTabChange={setActiveTab} />}
       <ChatWidget user={user} socketUrl={socketUrl} />
 
       {notificationToast ? (
