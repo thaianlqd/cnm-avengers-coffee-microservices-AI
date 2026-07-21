@@ -65,6 +65,12 @@ export class Promotion {
   @Column({ type: 'varchar', length: 30, nullable: true })
   loai_su_kien: string | null;      // BIRTHDAY | TIER_UP | FREESHIP | LUCKY_WHEEL — đánh dấu voucher tự sinh
 
+  @Column({ type: 'varchar', default: 'PERSONAL' })
+  loai_phan_phoi: string;           // PUBLIC | TEMPLATE | PERSONAL
+
+  @Column({ type: 'varchar', nullable: true })
+  ma_template_goc: string | null;   // Mã template gốc từ order-service (nếu sinh từ Template)
+
   @Column({ type: 'varchar', nullable: true })
   hinh_anh: string | null;          // URL ảnh banner khuyến mãi
 

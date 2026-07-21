@@ -19,6 +19,13 @@ const DEFAULT_CUSTOMER_FORM = {
   trang_thai: 'ACTIVE',
 }
 
+const DEFAULT_CUSTOMER_MEMBERSHIP_FORM = {
+  diem_loyalty: 0,
+  diem_kha_dung: 0,
+  tong_chi_tieu: 0,
+  ngay_sinh: '',
+}
+
 const DEFAULT_BRANCH_FORM = {
   ma_chi_nhanh: '',
   ten_chi_nhanh: '',
@@ -241,6 +248,9 @@ const DEFAULT_PROMOTION_FORM = {
   ten_khuyen_mai: '',
   mo_ta: '',
   loai_khuyen_mai: 'PERCENT',
+  loai_phan_phoi: 'PUBLIC', // PUBLIC | TEMPLATE
+  ngu_canh_su_dung: [], // array of selected context codes e.g. ['TIER_UP', 'LUCKY_WHEEL', 'BIRTHDAY', 'FREESHIP']
+  so_ngay_hieu_luc: 30,
   gia_tri: 0,
   gia_tri_don_toi_thieu: 0,
   giam_toi_da: '',
@@ -312,6 +322,12 @@ export function useSystemAdmin() {
   const [savingCustomer, setSavingCustomer] = useState(false)
   const [editingCustomerId, setEditingCustomerId] = useState('')
   const [customerForm, setCustomerForm] = useState(DEFAULT_CUSTOMER_FORM)
+
+  const [membershipConfigsState, setMembershipConfigsState] = useState({ loading: true, error: '', tier_config: null, lucky_wheel_config: null })
+  const [savingMembershipConfig, setSavingMembershipConfig] = useState(false)
+  const [customerMembershipForm, setCustomerMembershipForm] = useState(DEFAULT_CUSTOMER_MEMBERSHIP_FORM)
+  const [editingCustomerMembershipId, setEditingCustomerMembershipId] = useState('')
+  const [savingCustomerMembership, setSavingCustomerMembership] = useState(false)
 
   const [categoriesState, setCategoriesState] = useState({ loading: true, error: '', items: [] })
   const [savingCategory, setSavingCategory] = useState(false)
@@ -513,6 +529,89 @@ export function useSystemAdmin() {
     }
   }
 
+  const loadMembershipConfigs = async () => {
+    setMembershipConfigsState((prev) => ({ ...prev, loading: true, error: '' }))
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/admin/membership-config`)
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Không tải được cấu hình membership')
+      setMembershipConfigsState({
+        loading: false,
+        error: '',
+        tier_config: payload?.tier_config || [],
+        lucky_wheel_config: payload?.lucky_wheel_config || {}
+      })
+    } catch (error) {
+      setMembershipConfigsState({
+        loading: false,
+        error: error.message || 'Không tải được cấu hình membership',
+        tier_config: [],
+        lucky_wheel_config: {}
+      })
+    }
+  }
+
+  const saveMembershipConfig = async (key, value) => {
+    setSavingMembershipConfig(true)
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/admin/membership-config`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, value })
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Không lưu được cấu hình')
+      await loadMembershipConfigs()
+      pushAdminNotification('Cập nhật cấu hình', 'Đã lưu thay đổi cấu hình thành công.')
+    } catch (error) {
+      window.alert(error.message || 'Không lưu được cấu hình')
+    } finally {
+      setSavingMembershipConfig(false)
+    }
+  }
+
+  const startEditCustomerMembership = (item) => {
+    setEditingCustomerMembershipId(item.ma_nguoi_dung)
+    setCustomerMembershipForm({
+      diem_loyalty: item.diem_loyalty ?? 0,
+      diem_kha_dung: item.diem_kha_dung ?? 0,
+      tong_chi_tieu: item.tong_chi_tieu ?? 0,
+      ngay_sinh: item.ngay_sinh ? new Date(item.ngay_sinh).toISOString().slice(0, 10) : '',
+    })
+  }
+
+  const cancelEditCustomerMembership = () => {
+    setEditingCustomerMembershipId('')
+    setCustomerMembershipForm(DEFAULT_CUSTOMER_MEMBERSHIP_FORM)
+  }
+
+  const saveCustomerMembership = async () => {
+    if (!editingCustomerMembershipId) return
+    setSavingCustomerMembership(true)
+    try {
+      const payload = {
+        diem_loyalty: Number(customerMembershipForm.diem_loyalty || 0),
+        diem_kha_dung: Number(customerMembershipForm.diem_kha_dung || 0),
+        tong_chi_tieu: Number(customerMembershipForm.tong_chi_tieu || 0),
+        ngay_sinh: customerMembershipForm.ngay_sinh || null,
+      }
+      const response = await fetch(`${API_BASE_URL}/users/admin/accounts/${editingCustomerMembershipId}/membership`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result?.message || 'Không lưu được thông tin thành viên')
+      cancelEditCustomerMembership()
+      await loadCustomers()
+      pushAdminNotification('Cập nhật thành viên', 'Đã lưu thay đổi thông tin thành viên thành công.')
+    } catch (error) {
+      window.alert(error.message || 'Không lưu được thông tin thành viên')
+    } finally {
+      setSavingCustomerMembership(false)
+    }
+  }
+
   const loadCategories = async () => {
     await categoriesQuery.refetch()
   }
@@ -526,20 +625,32 @@ export function useSystemAdmin() {
   }
 
   const startEditPromotion = (item) => {
-    setEditingPromotionCode(item.ma_khuyen_mai)
+    const code = item.ma_khuyen_mai || item.ma_voucher || ''
+    setEditingPromotionCode(code)
     const fmt = (d) => (d ? new Date(d).toISOString().slice(0, 16) : '')
+
+    let contextsArr = []
+    if (Array.isArray(item.ngu_canh_su_dung)) {
+      contextsArr = item.ngu_canh_su_dung
+    } else if (typeof item.ngu_canh_su_dung === 'string' && item.ngu_canh_su_dung) {
+      contextsArr = item.ngu_canh_su_dung.split(',').map((s) => s.trim()).filter(Boolean)
+    }
+
     setPromotionForm({
-      ma_khuyen_mai: item.ma_khuyen_mai || '',
-      ten_khuyen_mai: item.ten_khuyen_mai || '',
+      ma_khuyen_mai: code,
+      ten_khuyen_mai: item.ten_khuyen_mai || item.ten_voucher || '',
       mo_ta: item.mo_ta || '',
-      loai_khuyen_mai: item.loai_khuyen_mai || 'PERCENT',
+      loai_khuyen_mai: item.loai_khuyen_mai || item.loai || 'PERCENT',
+      loai_phan_phoi: item.loai_phan_phoi || 'PUBLIC',
+      ngu_canh_su_dung: contextsArr,
+      so_ngay_hieu_luc: item.so_ngay_hieu_luc || 30,
       gia_tri: item.gia_tri ?? 0,
-      gia_tri_don_toi_thieu: item.gia_tri_don_toi_thieu ?? 0,
+      gia_tri_don_toi_thieu: item.gia_tri_don_toi_thieu ?? item.don_hang_toi_thieu ?? 0,
       giam_toi_da: item.giam_toi_da !== null && item.giam_toi_da !== undefined ? String(item.giam_toi_da) : '',
-      so_luong_toi_da: item.so_luong_toi_da ?? 0,
+      so_luong_toi_da: item.so_luong_toi_da ?? item.tong_luot_dung ?? 0,
       gioi_han_moi_nguoi: item.gioi_han_moi_nguoi ?? 1,
       ngay_bat_dau: fmt(item.ngay_bat_dau),
-      ngay_ket_thuc: fmt(item.ngay_ket_thuc),
+      ngay_ket_thuc: fmt(item.ngay_ket_thuc || item.han_su_dung),
       trang_thai: item.trang_thai || 'ACTIVE',
       hien_thi_cho_khach: item.hien_thi_cho_khach !== false,
       ten_san_pham_tang: item.ten_san_pham_tang || '',
@@ -557,6 +668,11 @@ export function useSystemAdmin() {
     try {
       const payload = {
         ...promotionForm,
+        loai_phan_phoi: promotionForm.loai_phan_phoi || 'PUBLIC',
+        ngu_canh_su_dung: Array.isArray(promotionForm.ngu_canh_su_dung)
+          ? promotionForm.ngu_canh_su_dung.join(',')
+          : (promotionForm.ngu_canh_su_dung || ''),
+        so_ngay_hieu_luc: Number(promotionForm.so_ngay_hieu_luc || 30),
         gia_tri: Number(promotionForm.gia_tri || 0),
         gia_tri_don_toi_thieu: Number(promotionForm.gia_tri_don_toi_thieu || 0),
         giam_toi_da: promotionForm.giam_toi_da !== '' && promotionForm.giam_toi_da !== null
@@ -573,11 +689,11 @@ export function useSystemAdmin() {
 
       const method = editingPromotionCode ? 'PATCH' : 'POST'
       const endpoint = editingPromotionCode
-        ? `${API_BASE_URL}/promotions/admin/${editingPromotionCode}`
-        : `${API_BASE_URL}/promotions/admin`
+        ? `${API_BASE_URL}/vouchers/admin/${encodeURIComponent(editingPromotionCode)}`
+        : `${API_BASE_URL}/vouchers/admin`
 
       const sendPayload = editingPromotionCode
-        ? (({ ma_khuyen_mai: _unused, loai_khuyen_mai: _unused2, ...rest }) => rest)(payload)
+        ? (({ ma_khuyen_mai: _unused, ma_voucher: _unused2, ...rest }) => rest)(payload)
         : payload
 
       const response = await fetch(endpoint, {
@@ -589,8 +705,8 @@ export function useSystemAdmin() {
       if (!response.ok) throw new Error(result?.message || 'Khong luu duoc khuyen mai')
 
       cancelEditPromotion()
-      await loadPromotions()
-      pushAdminNotification('Cập nhật khuyến mãi', 'Đã lưu thay đổi khuyến mãi/voucher thành công.')
+      await promotionsQuery.refetch()
+      pushAdminNotification('Cập nhật Voucher', 'Đã lưu thay đổi voucher / template thành công.')
     } catch (error) {
       window.alert(error.message || 'Khong luu duoc khuyen mai')
     } finally {
@@ -599,15 +715,15 @@ export function useSystemAdmin() {
   }
 
   const deletePromotion = async (code) => {
-    if (!window.confirm('Xoa khuyen mai nay? Hanh dong nay khong the hoan tac.')) return
+    if (!window.confirm('Xoá voucher / template này? Hành động này không thể hoàn tác.')) return
     try {
       const safeCode = encodeURIComponent(String(code || '').trim())
-      const response = await fetch(`${API_BASE_URL}/promotions/admin/${safeCode}`, { method: 'DELETE' })
+      const response = await fetch(`${API_BASE_URL}/vouchers/admin/${safeCode}`, { method: 'DELETE' })
       const result = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(result?.message || 'Khong xoa duoc khuyen mai')
       if (editingPromotionCode === code) cancelEditPromotion()
-      await loadPromotions()
-      pushAdminNotification('Xóa khuyến mãi', `Đã xóa chương trình ${code} thành công.`)
+      await promotionsQuery.refetch()
+      pushAdminNotification('Xóa Voucher', `Đã xóa ${code} thành công.`)
     } catch (error) {
       window.alert(error.message || 'Khong xoa duoc khuyen mai')
     }
@@ -619,14 +735,18 @@ export function useSystemAdmin() {
       list = list.filter((item) => item.trang_thai === promotionFilter.status)
     }
     if (promotionFilter.type) {
-      list = list.filter((item) => item.loai_khuyen_mai === promotionFilter.type)
+      if (promotionFilter.type === 'PUBLIC' || promotionFilter.type === 'TEMPLATE') {
+        list = list.filter((item) => (item.loai_phan_phoi || 'PUBLIC') === promotionFilter.type)
+      } else {
+        list = list.filter((item) => (item.loai_khuyen_mai || item.loai) === promotionFilter.type)
+      }
     }
     if (promotionFilter.q.trim()) {
       const kw = promotionFilter.q.trim().toLowerCase()
       list = list.filter(
         (item) =>
-          String(item.ma_khuyen_mai).toLowerCase().includes(kw) ||
-          String(item.ten_khuyen_mai).toLowerCase().includes(kw) ||
+          String(item.ma_khuyen_mai || item.ma_voucher || '').toLowerCase().includes(kw) ||
+          String(item.ten_khuyen_mai || item.ten_voucher || '').toLowerCase().includes(kw) ||
           String(item.mo_ta || '').toLowerCase().includes(kw),
       )
     }
@@ -648,6 +768,7 @@ export function useSystemAdmin() {
     loadUsers()
     loadCustomers()
     loadAttributes()
+    loadMembershipConfigs()
   }, [])
 
   const startEditUser = (item) => {
@@ -1238,5 +1359,16 @@ export function useSystemAdmin() {
     savingPromotion,
     attributesState,
     loadAttributes,
+    membershipConfigsState,
+    savingMembershipConfig,
+    loadMembershipConfigs,
+    saveMembershipConfig,
+    customerMembershipForm,
+    setCustomerMembershipForm,
+    editingCustomerMembershipId,
+    savingCustomerMembership,
+    startEditCustomerMembership,
+    cancelEditCustomerMembership,
+    saveCustomerMembership,
   }
 }

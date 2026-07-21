@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -7,6 +7,7 @@ import { DeliveryAddress } from './delivery-address.entity';
 import { Promotion } from './promotion.entity';
 import { PromotionUsage } from './promotion-usage.entity';
 import { User } from './user.entity';
+import { MembershipConfig } from './membership-config.entity';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomInt, randomUUID } from 'crypto';
 import nodemailer, { type Transporter } from 'nodemailer';
@@ -16,8 +17,23 @@ const RESET_CODE_COOLDOWN_SECONDS = 60;
 const RESET_CODE_MAX_ATTEMPTS = 5;
 
 @Injectable()
-export class UserService {
+export class UserService implements OnModuleInit {
   private mailTransporter: Transporter | null = null;
+  private static tierConfigCache: any[] | null = null;
+  private static luckyWheelConfigCache: any = null;
+
+  async onModuleInit() {
+    try {
+      await this.loadConfigsIntoCache();
+    } catch (err) {
+      console.error('[onModuleInit] Failed to load membership configs into cache:', err);
+    }
+  }
+
+  async loadConfigsIntoCache() {
+    UserService.tierConfigCache = await this.layMembershipConfig('TIER_CONFIG');
+    UserService.luckyWheelConfigCache = await this.layMembershipConfig('LUCKY_WHEEL_CONFIG');
+  }
 
   constructor(
     private readonly jwtService: JwtService,
@@ -31,7 +47,172 @@ export class UserService {
     private promotionRepo: Repository<Promotion>,
     @InjectRepository(PromotionUsage)
     private promotionUsageRepo: Repository<PromotionUsage>,
+    @InjectRepository(MembershipConfig)
+    private membershipConfigRepo: Repository<MembershipConfig>,
   ) {}
+
+  private readonly ORDER_SERVICE_URL = process.env.ORDER_SERVICE_URL || 'http://order-service:3005';
+
+  private async getVoucherTemplate(templateCode: string): Promise<any> {
+    if (!templateCode) return null;
+    try {
+      const res = await fetch(`${this.ORDER_SERVICE_URL}/vouchers/templates?code=${encodeURIComponent(templateCode)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && (data.ma_voucher || data.ma_khuyen_mai)) return data;
+      }
+    } catch (e) {
+      console.error('[getVoucherTemplate] Order service fetch error:', e);
+    }
+    return await this.promotionRepo.findOne({ where: { ma_khuyen_mai: templateCode } });
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  MEMBERSHIP CONFIGS HELPERS
+  // ═══════════════════════════════════════════════════════
+
+  private readonly DEFAULT_TIER_CONFIG = [
+    {
+      ma_hang: 'MEMBER',
+      ten_hang: 'Thành viên',
+      diem_toi_thieu: 0,
+      he_so_diem: 1,
+      voucher_sinh_nhat_value: 10,
+      voucher_sinh_nhat_cap: 20000,
+      freeship_value: 0,
+      freeship_min_order: 0,
+      tier_up_voucher_value: 0,
+      luot_quay_thang: 1,
+      icon: '🎖️',
+      mau_sac: '#9ca3af',
+      gradient: ['#9ca3af', '#6b7280'],
+    },
+    {
+      ma_hang: 'SILVER',
+      ten_hang: 'Bạc',
+      diem_toi_thieu: 1000,
+      he_so_diem: 1.2,
+      voucher_sinh_nhat_value: 15,
+      voucher_sinh_nhat_cap: 40000,
+      freeship_value: 15000,
+      freeship_min_order: 0,
+      tier_up_voucher_value: 15000,
+      luot_quay_thang: 2,
+      icon: '🥈',
+      mau_sac: '#64748b',
+      gradient: ['#94a3b8', '#64748b'],
+    },
+    {
+      ma_hang: 'GOLD',
+      ten_hang: 'Vàng',
+      diem_toi_thieu: 3000,
+      he_so_diem: 1.5,
+      voucher_sinh_nhat_value: 25,
+      voucher_sinh_nhat_cap: 80000,
+      freeship_value: 25000,
+      freeship_min_order: 100000,
+      tier_up_voucher_value: 30000,
+      luot_quay_thang: 3,
+      icon: '🥇',
+      mau_sac: '#d97706',
+      gradient: ['#fbbf24', '#d97706'],
+    },
+    {
+      ma_hang: 'DIAMOND',
+      ten_hang: 'Kim cương',
+      diem_toi_thieu: 5000,
+      he_so_diem: 2,
+      voucher_sinh_nhat_value: 40,
+      voucher_sinh_nhat_cap: 150000,
+      freeship_value: 30000,
+      freeship_min_order: 0,
+      tier_up_voucher_value: 50000,
+      luot_quay_thang: 5,
+      icon: '💎',
+      mau_sac: '#0ea5e9',
+      gradient: ['#38bdf8', '#0ea5e9'],
+    },
+  ];
+
+  private readonly DEFAULT_LUCKY_WHEEL_CONFIG = {
+    chi_phi_quay: 100,
+    giai_thuong: [
+      { id: 1, ten: '+50 điểm', loai: 'POINTS', gia_tri: 50, xac_suat: 25, mau: '#FF6B6B', icon: '🎯' },
+      { id: 2, ten: '+100 điểm', loai: 'POINTS', gia_tri: 100, xac_suat: 20, mau: '#4ECDC4', icon: '⭐' },
+      { id: 3, ten: 'Voucher 10K', loai: 'VOUCHER', gia_tri: 10000, xac_suat: 18, mau: '#45B7D1', icon: '🎫' },
+      { id: 4, ten: '+200 điểm', loai: 'POINTS', gia_tri: 200, xac_suat: 12, mau: '#96CEB4', icon: '💎' },
+      { id: 5, ten: 'Voucher 20K', loai: 'VOUCHER', gia_tri: 20000, xac_suat: 10, mau: '#FFEAA7', icon: '🏷️' },
+      { id: 6, ten: 'Free Topping', loai: 'FREE_ITEM', gia_tri: 0, xac_suat: 8, mau: '#DDA0DD', icon: '🧋', ten_san_pham_tang: 'Topping bất kỳ' },
+      { id: 7, ten: 'Free Phin Sữa Đá', loai: 'FREE_ITEM', gia_tri: 0, xac_suat: 5, mau: '#FF9FF3', icon: '🎁', ten_san_pham_tang: 'Phin Sữa Đá' },
+      { id: 8, ten: 'Voucher 50K', loai: 'VOUCHER', gia_tri: 50000, xac_suat: 2, mau: '#F8B500', icon: '👑' },
+    ],
+  };
+
+  async layMembershipConfig(key: string): Promise<any> {
+    const config = await this.membershipConfigRepo.findOne({ where: { key } });
+    if (config) {
+      return config.value;
+    }
+
+    // Nếu chưa tồn tại, khởi tạo giá trị default
+    let value: any = null;
+    if (key === 'TIER_CONFIG') {
+      value = this.DEFAULT_TIER_CONFIG;
+    } else if (key === 'LUCKY_WHEEL_CONFIG') {
+      value = this.DEFAULT_LUCKY_WHEEL_CONFIG;
+    }
+
+    if (value) {
+      const newConfig = this.membershipConfigRepo.create({ key, value });
+      await this.membershipConfigRepo.save(newConfig);
+      return value;
+    }
+
+    return null;
+  }
+
+  async capNhatMembershipConfig(key: string, value: any): Promise<any> {
+    if (!key || !value) {
+      throw new BadRequestException('Du lieu khong hop le');
+    }
+
+    if (key === 'TIER_CONFIG') {
+      if (!Array.isArray(value) || value.length === 0) {
+        throw new BadRequestException('Tier config phai la mot mang hop le');
+      }
+      // Đảm bảo sắp xếp tăng dần theo điểm
+      value.sort((a, b) => Number(a.diem_toi_thieu || 0) - Number(b.diem_toi_thieu || 0));
+    } else if (key === 'LUCKY_WHEEL_CONFIG') {
+      if (!value.chi_phi_quay || !Array.isArray(value.giai_thuong) || value.giai_thuong.length !== 8) {
+        throw new BadRequestException('Vong quay may man phai gom chi phi quay va 8 giai thuong');
+      }
+      const tongXacSuat = value.giai_thuong.reduce((sum: number, prize: any) => sum + Number(prize.xac_suat || 0), 0);
+      // Cho phép sai số nhỏ do dấu phẩy động
+      if (Math.abs(tongXacSuat - 100) > 0.01) {
+        throw new BadRequestException('Tong xac suat cac o giai thuong phai bang 100%');
+      }
+    }
+
+    let config = await this.membershipConfigRepo.findOne({ where: { key } });
+    if (!config) {
+      config = this.membershipConfigRepo.create({ key, value });
+    } else {
+      config.value = value;
+    }
+
+    await this.membershipConfigRepo.save(config);
+    await this.loadConfigsIntoCache();
+    return config.value;
+  }
+
+  async layToanBoMembershipConfigs(): Promise<any> {
+    const tierConfig = await this.layMembershipConfig('TIER_CONFIG');
+    const luckyWheelConfig = await this.layMembershipConfig('LUCKY_WHEEL_CONFIG');
+    return {
+      tier_config: tierConfig,
+      lucky_wheel_config: luckyWheelConfig,
+    };
+  }
 
   private getResetCodeExpireMs() {
     return RESET_CODE_EXPIRE_MINUTES * 60 * 1000;
@@ -403,6 +584,11 @@ export class UserService {
         co_so_ma: user.co_so_ma,
         co_so_ten: user.co_so_ten,
         ngay_tao: user.ngay_tao,
+        diem_loyalty: user.diem_loyalty || 0,
+        diem_kha_dung: user.diem_kha_dung || 0,
+        tong_chi_tieu: Number(user.tong_chi_tieu || 0),
+        ngay_sinh: user.ngay_sinh || null,
+        so_dien_thoai: user.so_dien_thoai || null,
       })),
     };
   }
@@ -568,6 +754,89 @@ export class UserService {
         trang_thai: saved.trang_thai,
         co_so_ma: saved.co_so_ma,
         co_so_ten: saved.co_so_ten,
+      },
+    };
+  }
+
+  async capNhatMembershipAdmin(
+    userId: string,
+    payload: {
+      diem_loyalty?: number;
+      diem_kha_dung?: number;
+      tong_chi_tieu?: number;
+      ngay_sinh?: string;
+    },
+  ) {
+    const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: userId } });
+    if (!user) {
+      throw new NotFoundException('Khong tim thay tai khoan');
+    }
+
+    const hangTruoc = this.tinhHangThanhVien(user.diem_loyalty || 0);
+
+    if (payload.diem_loyalty !== undefined) {
+      const diemLoyalty = Number(payload.diem_loyalty);
+      if (isNaN(diemLoyalty) || diemLoyalty < 0) {
+        throw new BadRequestException('Diem loyalty khong hop le');
+      }
+      user.diem_loyalty = diemLoyalty;
+    }
+
+    if (payload.diem_kha_dung !== undefined) {
+      const diemKhaDung = Number(payload.diem_kha_dung);
+      if (isNaN(diemKhaDung) || diemKhaDung < 0) {
+        throw new BadRequestException('Diem kha dung khong hop le');
+      }
+      user.diem_kha_dung = diemKhaDung;
+    }
+
+    if (payload.tong_chi_tieu !== undefined) {
+      const tongChiTieu = Number(payload.tong_chi_tieu);
+      if (isNaN(tongChiTieu) || tongChiTieu < 0) {
+        throw new BadRequestException('Tong chi tieu khong hop le');
+      }
+      user.tong_chi_tieu = tongChiTieu;
+    }
+
+    if (payload.ngay_sinh !== undefined) {
+      if (!payload.ngay_sinh) {
+        user.ngay_sinh = null;
+      } else {
+        const parsed = new Date(payload.ngay_sinh);
+        if (isNaN(parsed.getTime())) {
+          throw new BadRequestException('Ngay sinh khong hop le');
+        }
+        user.ngay_sinh = parsed;
+      }
+    }
+
+    const saved = await this.userRepo.save(user);
+
+    // Kiểm tra thăng hạng
+    const hangSau = this.tinhHangThanhVien(saved.diem_loyalty);
+    let len_hang = false;
+    if (hangSau.ma_hang !== hangTruoc.ma_hang) {
+      const config = UserService.tierConfigCache || this.DEFAULT_TIER_CONFIG;
+      const sorted = [...config].sort((a, b) => Number(a.diem_toi_thieu || 0) - Number(b.diem_toi_thieu || 0));
+      const idxTruoc = sorted.findIndex((t) => t.ma_hang === hangTruoc.ma_hang);
+      const idxSau = sorted.findIndex((t) => t.ma_hang === hangSau.ma_hang);
+      if (idxSau > idxTruoc) {
+        len_hang = true;
+        await this.taoVoucherChaoMungLenHang(userId, hangSau.ma_hang, hangSau.hang);
+        await this.taoVoucherFreeshipTheoHang(userId, hangSau.ma_hang, hangSau.hang);
+      }
+    }
+
+    return {
+      message: 'Cap nhat membership thanh cong',
+      len_hang,
+      hang_moi: hangSau.ma_hang,
+      item: {
+        ma_nguoi_dung: saved.ma_nguoi_dung,
+        diem_loyalty: saved.diem_loyalty,
+        diem_kha_dung: saved.diem_kha_dung,
+        tong_chi_tieu: Number(saved.tong_chi_tieu),
+        ngay_sinh: saved.ngay_sinh,
       },
     };
   }
@@ -1093,58 +1362,126 @@ export class UserService {
     diem_can_len_hang: number | null;
     diem_bat_dau_hang: number;
   } {
-    if (diem >= 5000) {
-      return { hang: 'Kim cương', ma_hang: 'DIAMOND', diem_hien_tai: diem, diem_can_len_hang: null, diem_bat_dau_hang: 5000 };
+    const config = UserService.tierConfigCache || this.DEFAULT_TIER_CONFIG;
+    // Sắp xếp tăng dần theo điểm
+    const sorted = [...config].sort((a, b) => Number(a.diem_toi_thieu || 0) - Number(b.diem_toi_thieu || 0));
+
+    let matchedTier = sorted[0];
+    for (let i = 0; i < sorted.length; i++) {
+      if (diem >= Number(sorted[i].diem_toi_thieu || 0)) {
+        matchedTier = sorted[i];
+      }
     }
-    if (diem >= 3000) {
-      return { hang: 'Vàng', ma_hang: 'GOLD', diem_hien_tai: diem, diem_can_len_hang: 5000, diem_bat_dau_hang: 3000 };
-    }
-    if (diem >= 1000) {
-      return { hang: 'Bạc', ma_hang: 'SILVER', diem_hien_tai: diem, diem_can_len_hang: 3000, diem_bat_dau_hang: 1000 };
-    }
-    return { hang: 'Thành viên', ma_hang: 'MEMBER', diem_hien_tai: diem, diem_can_len_hang: 1000, diem_bat_dau_hang: 0 };
+
+    const currentIndex = sorted.findIndex((t) => t.ma_hang === matchedTier.ma_hang);
+    const nextTier = currentIndex < sorted.length - 1 ? sorted[currentIndex + 1] : null;
+
+    return {
+      hang: matchedTier.ten_hang,
+      ma_hang: matchedTier.ma_hang,
+      diem_hien_tai: diem,
+      diem_can_len_hang: nextTier ? Number(nextTier.diem_toi_thieu || 0) : null,
+      diem_bat_dau_hang: Number(matchedTier.diem_toi_thieu || 0),
+    };
   }
 
   private layQuyenLoiTheoHang(maHang: string) {
-    const QUYEN_LOI: Record<string, any> = {
-      MEMBER: {
+    const config = UserService.tierConfigCache || this.DEFAULT_TIER_CONFIG;
+    const tier = config.find((t) => t.ma_hang === maHang);
+    if (!tier) {
+      return {
         he_so_diem: 1,
-        voucher_sinh_nhat: 'Giảm 10% (tối đa 20K)',
-        freeship: null,
+        voucher_sinh_nhat: 'Giảm 10% (tối đa 20.000đ)',
+        freeship: 'Không hỗ trợ',
         luot_quay_thang: 1,
         voucher_exclusive: false,
         mau_sac: '#9ca3af',
         gradient: ['#9ca3af', '#6b7280'],
-      },
-      SILVER: {
-        he_so_diem: 1.2,
-        voucher_sinh_nhat: 'Giảm 15% (tối đa 40K)',
-        freeship: 'Giảm 30% phí ship',
-        luot_quay_thang: 2,
-        voucher_exclusive: false,
-        mau_sac: '#64748b',
-        gradient: ['#94a3b8', '#64748b'],
-      },
-      GOLD: {
-        he_so_diem: 1.5,
-        voucher_sinh_nhat: 'Giảm 25% (tối đa 80K) + 1 ly miễn phí size S',
-        freeship: 'Miễn phí ship đơn từ 100K',
-        luot_quay_thang: 3,
-        voucher_exclusive: true,
-        mau_sac: '#d97706',
-        gradient: ['#fbbf24', '#d97706'],
-      },
-      DIAMOND: {
-        he_so_diem: 2,
-        voucher_sinh_nhat: 'Giảm 40% (tối đa 150K) + 1 ly miễn phí size L',
-        freeship: 'Miễn phí ship mọi đơn',
-        luot_quay_thang: 5,
-        voucher_exclusive: true,
-        mau_sac: '#0ea5e9',
-        gradient: ['#38bdf8', '#0ea5e9'],
-      },
+      };
+    }
+
+    let bdayText = `Giảm ${tier.voucher_sinh_nhat_value ?? 10}% (tối đa ${Number(tier.voucher_sinh_nhat_cap ?? 20000).toLocaleString('vi-VN')}đ)`;
+    if (tier.ma_voucher_sinh_nhat) {
+      bdayText = `Mẫu voucher: ${tier.ma_voucher_sinh_nhat}`;
+    }
+
+    let freeshipText: string | null = null;
+    if (tier.ma_voucher_freeship) {
+      freeshipText = `Mẫu voucher: ${tier.ma_voucher_freeship}`;
+    } else if (Number(tier.freeship_value || 0) > 0) {
+      freeshipText = `Giảm ${Number(tier.freeship_value).toLocaleString('vi-VN')}đ phí ship${Number(tier.freeship_min_order || 0) > 0 ? ` đơn từ ${Number(tier.freeship_min_order).toLocaleString('vi-VN')}đ` : ''}`;
+    }
+
+    return {
+      he_so_diem: Number(tier.he_so_diem || 1),
+      voucher_sinh_nhat: bdayText,
+      freeship: freeshipText || 'Không hỗ trợ',
+      luot_quay_thang: Number(tier.luot_quay_thang || 1),
+      voucher_exclusive: tier.ma_hang === 'GOLD' || tier.ma_hang === 'DIAMOND',
+      mau_sac: tier.mau_sac || '#9ca3af',
+      gradient: tier.gradient || ['#9ca3af', '#6b7280'],
     };
-    return QUYEN_LOI[maHang] || QUYEN_LOI.MEMBER;
+  }
+
+  private async layQuyenLoiTheoHangAsync(maHang: string) {
+    const config = UserService.tierConfigCache || this.DEFAULT_TIER_CONFIG;
+    const tier = config.find((t) => t.ma_hang === maHang);
+    if (!tier) {
+      return {
+        he_so_diem: 1,
+        voucher_sinh_nhat: 'Giảm 10% (tối đa 20.000đ)',
+        freeship: 'Không hỗ trợ',
+        luot_quay_thang: 1,
+        voucher_exclusive: false,
+        mau_sac: '#9ca3af',
+        gradient: ['#9ca3af', '#6b7280'],
+      };
+    }
+
+    // Resolve Birthday Voucher Template Description
+    let bdayText = `Giảm ${tier.voucher_sinh_nhat_value ?? 10}% (tối đa ${Number(tier.voucher_sinh_nhat_cap ?? 20000).toLocaleString('vi-VN')}đ)`;
+    if (tier.ma_voucher_sinh_nhat) {
+      try {
+        const tpl = await this.getVoucherTemplate(tier.ma_voucher_sinh_nhat);
+        if (tpl) {
+          const type = tpl.loai || tpl.loai_khuyen_mai || 'PERCENT';
+          const val = Number(tpl.gia_tri || 0);
+          const minOrder = Number(tpl.don_hang_toi_thieu || tpl.gia_tri_don_toi_thieu || 0);
+          const minOrderStr = minOrder > 0 ? ` | Đơn từ ${minOrder.toLocaleString('vi-VN')}đ` : '';
+
+          if (type === 'PERCENT') {
+            const maxStr = tpl.giam_toi_da ? ` (tối đa ${Number(tpl.giam_toi_da).toLocaleString('vi-VN')}đ)` : '';
+            bdayText = `Giảm ${val}%${maxStr}${minOrderStr}`;
+          } else if (type === 'FIXED') {
+            bdayText = `Giảm ${val.toLocaleString('vi-VN')}đ${minOrderStr}`;
+          } else if (type === 'FREE_ITEM') {
+            bdayText = `Tặng ${tpl.ten_san_pham_tang || 'sản phẩm'}${minOrderStr}`;
+          }
+        }
+      } catch (e) {
+        console.error('[layQuyenLoiTheoHangAsync] Error fetching birthday template:', e);
+      }
+    }
+
+    // Resolve Freeship Benefit (Direct amount & min order configured by Admin)
+    let freeshipText: string = 'Không hỗ trợ';
+    const freeshipVal = Number(tier.freeship_value || 0);
+    const freeshipMinOrder = Number(tier.freeship_min_order || 0);
+    if (freeshipVal > 0) {
+      freeshipText = `Giảm ${freeshipVal.toLocaleString('vi-VN')}đ phí ship${freeshipMinOrder > 0 ? ` đơn từ ${freeshipMinOrder.toLocaleString('vi-VN')}đ` : ''}`;
+    }
+
+    return {
+      he_so_diem: Number(tier.he_so_diem || 1),
+      voucher_sinh_nhat: bdayText,
+      freeship: freeshipText || 'Không hỗ trợ',
+      freeship_value: freeshipVal,
+      freeship_min_order: freeshipMinOrder,
+      luot_quay_thang: Number(tier.luot_quay_thang || 1),
+      voucher_exclusive: tier.ma_hang === 'GOLD' || tier.ma_hang === 'DIAMOND',
+      mau_sac: tier.mau_sac || '#9ca3af',
+      gradient: tier.gradient || ['#9ca3af', '#6b7280'],
+    };
   }
 
   async layDiemLoyalty(maNguoiDung: string) {
@@ -1189,32 +1526,46 @@ export class UserService {
   }
 
   private async taoVoucherChaoMungLenHang(userId: string, maHang: string, tenHang: string) {
-    const TIER_UP_VALUES: Record<string, number> = { SILVER: 15000, GOLD: 30000, DIAMOND: 50000 };
-    const giaTriGiam = TIER_UP_VALUES[maHang] || 10000;
+    const config = UserService.tierConfigCache || this.DEFAULT_TIER_CONFIG;
+    const tier = config.find((t) => t.ma_hang === maHang);
+    const maVoucherMau = tier?.ma_voucher_thang_hang;
+
+    let template: any = null;
+    if (maVoucherMau) {
+      template = await this.getVoucherTemplate(maVoucherMau);
+    }
+
+    const giaTriGiam = template ? Number(template.gia_tri) : (tier ? Number(tier.tier_up_voucher_value ?? 10000) : 10000);
+    if (!template && giaTriGiam <= 0) return;
+
     const TIER_SHORT: Record<string, string> = { MEMBER: 'MB', SILVER: 'SV', GOLD: 'GD', DIAMOND: 'DM' };
     const shortTier = TIER_SHORT[maHang] || maHang;
     const code = `UP_${shortTier}_${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
     try {
       const p = new Promotion();
       p.ma_khuyen_mai = code;
-      p.ten_khuyen_mai = `Chúc mừng lên hạng ${tenHang}!`;
-      p.mo_ta = `Voucher chào mừng bạn đã lên hạng ${tenHang}. Giảm ${giaTriGiam.toLocaleString('vi-VN')}đ cho đơn tiếp theo.`;
-      p.loai_khuyen_mai = 'FIXED';
+      p.ten_khuyen_mai = template ? (template.ten_voucher || template.ten_khuyen_mai) : `Chúc mừng lên hạng ${tenHang}!`;
+      p.mo_ta = template ? (template.mo_ta || `Voucher quà tặng dành riêng cho thành viên hạng ${tenHang}`) : `Voucher chào mừng bạn đã lên hạng ${tenHang}. Giảm ${giaTriGiam.toLocaleString('vi-VN')}đ cho đơn tiếp theo.`;
+      p.loai_khuyen_mai = template ? (template.loai || template.loai_khuyen_mai || 'FIXED') : 'FIXED';
       p.gia_tri = giaTriGiam;
-      p.gia_tri_don_toi_thieu = 0;
-      p.giam_toi_da = null;
+      p.gia_tri_don_toi_thieu = template ? Number(template.don_hang_toi_thieu || template.gia_tri_don_toi_thieu || 0) : 0;
+      p.giam_toi_da = template ? (template.giam_toi_da ? Number(template.giam_toi_da) : null) : null;
       p.so_luong_toi_da = 1;
       p.so_luong_da_dung = 0;
       p.gioi_han_moi_nguoi = 1;
       p.ngay_bat_dau = new Date();
-      p.ngay_ket_thuc = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+      const validDays = template ? Number(template.so_ngay_hieu_luc || 30) : 30;
+      p.ngay_ket_thuc = new Date(Date.now() + validDays * 24 * 60 * 60 * 1000);
       p.trang_thai = 'ACTIVE';
       p.hien_thi_cho_khach = true;
       p.ma_nguoi_dung = userId;
       p.loai_su_kien = 'TIER_UP';
+      p.loai_phan_phoi = 'PERSONAL';
+      p.ma_template_goc = maVoucherMau || null;
       p.hang_toi_thieu = null;
-      p.ten_san_pham_tang = null;
-      p.hinh_anh = null;
+      p.ten_san_pham_tang = template ? template.ten_san_pham_tang : null;
+      p.hinh_anh = template ? template.hinh_anh : null;
       await this.promotionRepo.save(p);
     } catch (err) {
       console.error('[taoVoucherChaoMungLenHang] Error:', err);
@@ -1222,46 +1573,8 @@ export class UserService {
   }
 
   private async taoVoucherFreeshipTheoHang(userId: string, maHang: string, tenHang: string) {
-    if (maHang === 'MEMBER') return;
-
-    let value = 15000;
-    let minOrder = 0;
-    if (maHang === 'GOLD') {
-      value = 25000;
-      minOrder = 100000;
-    } else if (maHang === 'DIAMOND') {
-      value = 30000;
-      minOrder = 0;
-    }
-
-    const TIER_SHORT: Record<string, string> = { MEMBER: 'MB', SILVER: 'SV', GOLD: 'GD', DIAMOND: 'DM' };
-    const shortTier = TIER_SHORT[maHang] || maHang;
-    const code = `FS_${shortTier}_${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-    try {
-      const p = new Promotion();
-      p.ma_khuyen_mai = code;
-      p.ten_khuyen_mai = `Freeship ${tenHang}`;
-      p.mo_ta = `Ưu đãi giao hàng hạng ${tenHang}. Giảm tối đa ${value.toLocaleString('vi-VN')}đ phí vận chuyển${minOrder > 0 ? ` cho đơn hàng từ ${minOrder.toLocaleString('vi-VN')}đ` : ''}.`;
-      p.loai_khuyen_mai = 'FIXED';
-      p.gia_tri = value;
-      p.gia_tri_don_toi_thieu = minOrder;
-      p.giam_toi_da = null;
-      p.so_luong_toi_da = 1;
-      p.so_luong_da_dung = 0;
-      p.gioi_han_moi_nguoi = 1;
-      p.ngay_bat_dau = new Date();
-      p.ngay_ket_thuc = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
-      p.trang_thai = 'ACTIVE';
-      p.hien_thi_cho_khach = true;
-      p.ma_nguoi_dung = userId;
-      p.loai_su_kien = 'FREESHIP';
-      p.hang_toi_thieu = null;
-      p.ten_san_pham_tang = null;
-      p.hinh_anh = null;
-      await this.promotionRepo.save(p);
-    } catch (err) {
-      console.error('[taoVoucherFreeshipTheoHang] Error:', err);
-    }
+    // Ưu đãi giao hàng (Freeship) là đặc quyền tự động áp dụng trực tiếp khi thanh toán theo hạng, không phải mã voucher cá nhân.
+    return;
   }
 
   async taoVoucherSinhNhat(userId: string) {
@@ -1277,35 +1590,44 @@ export class UserService {
     const existed = await this.promotionRepo.findOne({ where: { ma_khuyen_mai: code } });
     if (existed) return;
 
-    const BIRTHDAY_BENEFITS: Record<string, { value: number; cap: number }> = {
-      MEMBER: { value: 10, cap: 20000 },
-      SILVER: { value: 15, cap: 40000 },
-      GOLD: { value: 25, cap: 80000 },
-      DIAMOND: { value: 40, cap: 150000 },
+    const config = UserService.tierConfigCache || this.DEFAULT_TIER_CONFIG;
+    const tier = config.find((t) => t.ma_hang === maHang);
+    const maVoucherMau = tier?.ma_voucher_sinh_nhat;
+
+    let template: any = null;
+    if (maVoucherMau) {
+      template = await this.getVoucherTemplate(maVoucherMau);
+    }
+
+    const benefit = {
+      value: template ? Number(template.gia_tri) : (tier ? Number(tier.voucher_sinh_nhat_value ?? 10) : 10),
+      cap: template ? (template.giam_toi_da ? Number(template.giam_toi_da) : 0) : (tier ? Number(tier.voucher_sinh_nhat_cap ?? 20000) : 20000),
     };
-    const benefit = BIRTHDAY_BENEFITS[maHang] || BIRTHDAY_BENEFITS.MEMBER;
 
     try {
       const p = new Promotion();
       p.ma_khuyen_mai = code;
-      p.ten_khuyen_mai = `Chúc mừng sinh nhật!`;
-      p.mo_ta = `Quà tặng sinh nhật dành riêng cho hạng ${hang.hang}. Giảm ${benefit.value}% (tối đa ${benefit.cap.toLocaleString('vi-VN')}đ) cho đơn hàng.`;
-      p.loai_khuyen_mai = 'PERCENT';
+      p.ten_khuyen_mai = template ? (template.ten_voucher || template.ten_khuyen_mai) : `Chúc mừng sinh nhật!`;
+      p.mo_ta = template ? (template.mo_ta || `Quà tặng sinh nhật dành riêng cho hạng ${hang.hang}`) : `Quà tặng sinh nhật dành riêng cho hạng ${hang.hang}. Giảm ${benefit.value}% (tối đa ${benefit.cap.toLocaleString('vi-VN')}đ) cho đơn hàng.`;
+      p.loai_khuyen_mai = template ? (template.loai || template.loai_khuyen_mai || 'PERCENT') : 'PERCENT';
       p.gia_tri = benefit.value;
-      p.gia_tri_don_toi_thieu = 0;
-      p.giam_toi_da = benefit.cap;
+      p.gia_tri_don_toi_thieu = template ? Number(template.don_hang_toi_thieu || template.gia_tri_don_toi_thieu || 0) : 0;
+      p.giam_toi_da = benefit.cap || null;
       p.so_luong_toi_da = 1;
       p.so_luong_da_dung = 0;
       p.gioi_han_moi_nguoi = 1;
       p.ngay_bat_dau = new Date();
-      p.ngay_ket_thuc = new Date(Date.now() + 45 * 24 * 60 * 60 * 1000); // 45 days
+      const validDays = template ? Number(template.so_ngay_hieu_luc || 45) : 45;
+      p.ngay_ket_thuc = new Date(Date.now() + validDays * 24 * 60 * 60 * 1000);
       p.trang_thai = 'ACTIVE';
       p.hien_thi_cho_khach = true;
       p.ma_nguoi_dung = userId;
       p.loai_su_kien = 'BIRTHDAY';
+      p.loai_phan_phoi = 'PERSONAL';
+      p.ma_template_goc = maVoucherMau || null;
       p.hang_toi_thieu = null;
-      p.ten_san_pham_tang = null;
-      p.hinh_anh = null;
+      p.ten_san_pham_tang = template ? template.ten_san_pham_tang : null;
+      p.hinh_anh = template ? template.hinh_anh : null;
       await this.promotionRepo.save(p);
     } catch (err) {
       console.error('[taoVoucherSinhNhat] Error:', err);
@@ -1397,8 +1719,16 @@ export class UserService {
     };
   }
 
-  /** Admin: lấy toàn bộ danh sách khuyến mãi */
+  /** Admin: lấy toàn bộ danh sách khuyến mãi (từ order-service master catalog + identity personal) */
   async layDanhSachKhuyenMaiAdmin() {
+    try {
+      const res = await fetch(`${this.ORDER_SERVICE_URL}/vouchers/admin`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      console.error('[layDanhSachKhuyenMaiAdmin] error fetching order-service:', e);
+    }
     const rows = await this.promotionRepo.find({ order: { ngay_tao: 'DESC' } });
     return {
       total: rows.length,
@@ -1406,128 +1736,82 @@ export class UserService {
     };
   }
 
-  /** Admin: tạo mã khuyến mãi mới */
-  async taoKhuyenMaiAdmin(payload: {
-    ma_khuyen_mai?: string;
-    ten_khuyen_mai?: string;
-    mo_ta?: string;
-    loai_khuyen_mai?: string;
-    gia_tri?: number;
-    gia_tri_don_toi_thieu?: number;
-    giam_toi_da?: number | null;
-    so_luong_toi_da?: number;
-    gioi_han_moi_nguoi?: number;
-    ngay_bat_dau?: string | null;
-    ngay_ket_thuc?: string | null;
-    trang_thai?: string;
-    hien_thi_cho_khach?: boolean;
-    ten_san_pham_tang?: string | null;
-    hinh_anh?: string | null;
-  }) {
-    const code = String(payload.ma_khuyen_mai || '').trim().toUpperCase().replace(/\s+/g, '_');
-    const name = String(payload.ten_khuyen_mai || '').trim();
-    const type = String(payload.loai_khuyen_mai || '').toUpperCase();
-
-    if (!code || !/^[A-Z0-9_]+$/.test(code)) {
-      throw new BadRequestException('ma_khuyen_mai chi duoc dung A-Z, 0-9, _');
+  /** Admin: tạo mã khuyến mãi mới (Proxy sang order-service) */
+  async taoKhuyenMaiAdmin(payload: any) {
+    try {
+      const res = await fetch(`${this.ORDER_SERVICE_URL}/vouchers/admin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new BadRequestException(data?.message || 'Không tạo được voucher');
+      return data;
+    } catch (e) {
+      if (e instanceof BadRequestException) throw e;
+      console.error('[taoKhuyenMaiAdmin] error proxying to order-service:', e);
+      throw new BadRequestException('Không kết nối được dịch vụ voucher');
     }
-    if (!name) throw new BadRequestException('ten_khuyen_mai la bat buoc');
-    if (!['PERCENT', 'FIXED', 'FREE_ITEM'].includes(type)) {
-      throw new BadRequestException('loai_khuyen_mai phai la PERCENT, FIXED hoac FREE_ITEM');
-    }
-    if (type !== 'FREE_ITEM' && Number(payload.gia_tri || 0) <= 0) {
-      throw new BadRequestException('gia_tri phai lon hon 0');
-    }
-    if (type === 'PERCENT' && Number(payload.gia_tri || 0) > 100) {
-      throw new BadRequestException('Phan tram giam khong duoc vuot qua 100');
-    }
-
-    const existed = await this.promotionRepo.findOne({ where: { ma_khuyen_mai: code } });
-    if (existed) throw new BadRequestException('Ma khuyen mai da ton tai');
-
-    const p = new Promotion();
-    p.ma_khuyen_mai = code;
-    p.ten_khuyen_mai = name;
-    p.mo_ta = payload.mo_ta?.trim() || null;
-    p.loai_khuyen_mai = type;
-    p.gia_tri = Number(payload.gia_tri || 0);
-    p.gia_tri_don_toi_thieu = Number(payload.gia_tri_don_toi_thieu || 0);
-    p.giam_toi_da = payload.giam_toi_da !== undefined && payload.giam_toi_da !== null ? Number(payload.giam_toi_da) : null;
-    p.so_luong_toi_da = Number(payload.so_luong_toi_da || 0);
-    p.gioi_han_moi_nguoi = Math.max(1, Number(payload.gioi_han_moi_nguoi || 1));
-    p.ngay_bat_dau = payload.ngay_bat_dau ? new Date(payload.ngay_bat_dau) : null;
-    p.ngay_ket_thuc = payload.ngay_ket_thuc ? new Date(payload.ngay_ket_thuc) : null;
-    p.trang_thai = ['ACTIVE', 'INACTIVE'].includes(String(payload.trang_thai || 'ACTIVE').toUpperCase())
-      ? String(payload.trang_thai).toUpperCase()
-      : 'ACTIVE';
-    p.hien_thi_cho_khach = payload.hien_thi_cho_khach !== false;
-    p.ten_san_pham_tang = payload.ten_san_pham_tang?.trim() || null;
-    p.hinh_anh = payload.hinh_anh?.trim() || null;
-    p.so_luong_da_dung = 0;
-
-    const saved = await this.promotionRepo.save(p);
-    return { message: 'Tao khuyen mai thanh cong', item: this.mapPromotionItem(saved) };
   }
 
-  /** Admin: cập nhật khuyến mãi */
-  async capNhatKhuyenMaiAdmin(
-    maKhuyenMai: string,
-    payload: {
-      ten_khuyen_mai?: string;
-      mo_ta?: string;
-      gia_tri?: number;
-      gia_tri_don_toi_thieu?: number;
-      giam_toi_da?: number | null;
-      so_luong_toi_da?: number;
-      gioi_han_moi_nguoi?: number;
-      ngay_bat_dau?: string | null;
-      ngay_ket_thuc?: string | null;
-      trang_thai?: string;
-      hien_thi_cho_khach?: boolean;
-      ten_san_pham_tang?: string | null;
-      hinh_anh?: string | null;
-    },
-  ) {
-    const p = await this.promotionRepo.findOne({ where: { ma_khuyen_mai: maKhuyenMai.toUpperCase() } });
-    if (!p) throw new NotFoundException('Khong tim thay khuyen mai');
-
-    if (payload.ten_khuyen_mai !== undefined) p.ten_khuyen_mai = String(payload.ten_khuyen_mai).trim();
-    if (payload.mo_ta !== undefined) p.mo_ta = payload.mo_ta?.trim() || null;
-    if (payload.gia_tri !== undefined) p.gia_tri = Number(payload.gia_tri);
-    if (payload.gia_tri_don_toi_thieu !== undefined) p.gia_tri_don_toi_thieu = Number(payload.gia_tri_don_toi_thieu);
-    if (payload.giam_toi_da !== undefined) p.giam_toi_da = payload.giam_toi_da !== null ? Number(payload.giam_toi_da) : null;
-    if (payload.so_luong_toi_da !== undefined) p.so_luong_toi_da = Number(payload.so_luong_toi_da);
-    if (payload.gioi_han_moi_nguoi !== undefined) p.gioi_han_moi_nguoi = Math.max(1, Number(payload.gioi_han_moi_nguoi));
-    if (payload.ngay_bat_dau !== undefined) p.ngay_bat_dau = payload.ngay_bat_dau ? new Date(payload.ngay_bat_dau) : null;
-    if (payload.ngay_ket_thuc !== undefined) p.ngay_ket_thuc = payload.ngay_ket_thuc ? new Date(payload.ngay_ket_thuc) : null;
-    if (payload.trang_thai !== undefined) {
-      const s = String(payload.trang_thai).toUpperCase();
-      if (['ACTIVE', 'INACTIVE'].includes(s)) p.trang_thai = s;
+  /** Admin: cập nhật khuyến mãi (Proxy sang order-service) */
+  async capNhatKhuyenMaiAdmin(maKhuyenMai: string, payload: any) {
+    try {
+      const res = await fetch(`${this.ORDER_SERVICE_URL}/vouchers/admin/${encodeURIComponent(maKhuyenMai)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new BadRequestException(data?.message || 'Không cập nhật được voucher');
+      return data;
+    } catch (e) {
+      if (e instanceof BadRequestException) throw e;
+      console.error('[capNhatKhuyenMaiAdmin] error proxying to order-service:', e);
+      throw new BadRequestException('Không kết nối được dịch vụ voucher');
     }
-    if (payload.hien_thi_cho_khach !== undefined) p.hien_thi_cho_khach = Boolean(payload.hien_thi_cho_khach);
-    if (payload.ten_san_pham_tang !== undefined) p.ten_san_pham_tang = payload.ten_san_pham_tang?.trim() || null;
-    if (payload.hinh_anh !== undefined) p.hinh_anh = payload.hinh_anh?.trim() || null;
-
-    const saved = await this.promotionRepo.save(p);
-    return { message: 'Cap nhat khuyen mai thanh cong', item: this.mapPromotionItem(saved) };
   }
 
-  /** Admin: xóa khuyến mãi */
+  /** Admin: xóa khuyến mãi (Proxy sang order-service) */
   async xoaKhuyenMaiAdmin(maKhuyenMai: string) {
-    const p = await this.promotionRepo.findOne({ where: { ma_khuyen_mai: maKhuyenMai.toUpperCase() } });
-    if (!p) throw new NotFoundException('Khong tim thay khuyen mai');
-    await this.promotionUsageRepo.delete({ ma_khuyen_mai: p.ma_khuyen_mai });
-    await this.promotionRepo.remove(p);
-    return { message: 'Xoa khuyen mai thanh cong', soft_deleted: false };
+    try {
+      const res = await fetch(`${this.ORDER_SERVICE_URL}/vouchers/admin/${encodeURIComponent(maKhuyenMai)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new BadRequestException(data?.message || 'Không xóa được voucher');
+      return data;
+    } catch (e) {
+      if (e instanceof BadRequestException) throw e;
+      console.error('[xoaKhuyenMaiAdmin] error proxying to order-service:', e);
+      throw new BadRequestException('Không kết nối được dịch vụ voucher');
+    }
   }
 
-  /** Customer: lấy danh sách voucher hiển thị được */
+  /** Customer: lấy danh sách voucher hiển thị được (kết hợp Public từ order-service và Personal từ identity) */
   async layVoucherChoKhach(userId?: string) {
     const now = new Date();
-    const rows = await this.promotionRepo.find({
-      where: { trang_thai: 'ACTIVE', hien_thi_cho_khach: true },
-      order: { ngay_tao: 'DESC' },
-    });
+
+    // 1. Mã công khai từ order-service
+    let publicVouchers: any[] = [];
+    try {
+      const res = await fetch(`${this.ORDER_SERVICE_URL}/vouchers`);
+      if (res.ok) {
+        const payload = await res.json();
+        publicVouchers = payload?.items || [];
+      }
+    } catch (e) {
+      console.error('[layVoucherChoKhach] order-service fetch error:', e);
+    }
+
+    // 2. Mã cá nhân từ identity.khuyen_mai
+    let personalRows: Promotion[] = [];
+    if (userId) {
+      personalRows = await this.promotionRepo.find({
+        where: { ma_nguoi_dung: userId, trang_thai: 'ACTIVE', hien_thi_cho_khach: true },
+        order: { ngay_tao: 'DESC' },
+      });
+    }
 
     const TIER_LEVELS: Record<string, number> = { MEMBER: 0, SILVER: 1, GOLD: 2, DIAMOND: 3 };
     let userTier = 'MEMBER';
@@ -1538,17 +1822,6 @@ export class UserService {
       }
     }
     const userTierVal = TIER_LEVELS[userTier] ?? 0;
-
-    const visibleRows = rows.filter((p) => {
-      if (p.ngay_bat_dau && new Date(p.ngay_bat_dau) > now) return false;
-      if (p.ngay_ket_thuc && new Date(p.ngay_ket_thuc) < now) return false;
-      if (p.so_luong_toi_da > 0 && p.so_luong_da_dung >= p.so_luong_toi_da) return false;
-      
-      // Lọc theo voucher cá nhân
-      if (p.ma_nguoi_dung && p.ma_nguoi_dung !== userId) return false;
-
-      return true;
-    });
 
     let usageMap: Record<string, number> = {};
     if (userId) {
@@ -1565,23 +1838,54 @@ export class UserService {
       }, {});
     }
 
+    const mappedPublic = publicVouchers.map((v) => {
+      const usedByUser = usageMap[v.ma_voucher] || 0;
+      const limitPerUser = v.gioi_han_moi_nguoi || 1;
+      const canUseByLimit = usedByUser < limitPerUser;
+      return {
+        ma_khuyen_mai: v.ma_voucher,
+        ten_khuyen_mai: v.ten_voucher || v.ma_voucher,
+        mo_ta: v.mo_ta || '',
+        loai_khuyen_mai: v.loai || 'FIXED',
+        gia_tri: Number(v.gia_tri || 0),
+        gia_tri_don_toi_thieu: Number(v.don_hang_toi_thieu || 0),
+        giam_toi_da: v.giam_toi_da !== null ? Number(v.giam_toi_da) : null,
+        so_luong_toi_da: v.tong_luot_dung || 0,
+        so_luong_da_dung: v.luot_da_dung || 0,
+        gioi_han_moi_nguoi: limitPerUser,
+        ngay_bat_dau: v.ngay_bat_dau,
+        ngay_ket_thuc: v.han_su_dung,
+        trang_thai: 'ACTIVE',
+        hien_thi_cho_khach: true,
+        hinh_anh: v.hinh_anh || null,
+        loai_phan_phoi: 'PUBLIC',
+        da_dung_boi_ban: usedByUser,
+        co_the_dung: canUseByLimit,
+      };
+    });
+
+    const mappedPersonal = personalRows.filter((p) => {
+      if (p.ngay_bat_dau && new Date(p.ngay_bat_dau) > now) return false;
+      if (p.ngay_ket_thuc && new Date(p.ngay_ket_thuc) < now) return false;
+      if (p.so_luong_toi_da > 0 && p.so_luong_da_dung >= p.so_luong_toi_da) return false;
+      return true;
+    }).map((p) => {
+      const usedByUser = usageMap[p.ma_khuyen_mai] || 0;
+      const canUseByLimit = usedByUser < p.gioi_han_moi_nguoi;
+      const reqTierVal = TIER_LEVELS[p.hang_toi_thieu || ''] ?? 0;
+      const meetsTier = userTierVal >= reqTierVal;
+      return {
+        ...this.mapPromotionItem(p, usedByUser),
+        co_the_dung: canUseByLimit && meetsTier,
+        hang_toi_thieu: p.hang_toi_thieu,
+        chua_dat_hang: !meetsTier,
+      };
+    });
+
+    const combined = [...mappedPublic, ...mappedPersonal];
     return {
-      total: visibleRows.length,
-      items: visibleRows.map((p) => {
-        const usedByUser = usageMap[p.ma_khuyen_mai] || 0;
-        const canUseByLimit = usedByUser < p.gioi_han_moi_nguoi;
-        
-        // Kiểm tra điều kiện hạng tối thiểu
-        const reqTierVal = TIER_LEVELS[p.hang_toi_thieu || ''] ?? 0;
-        const meetsTier = userTierVal >= reqTierVal;
-        
-        return {
-          ...this.mapPromotionItem(p, usedByUser),
-          co_the_dung: canUseByLimit && meetsTier,
-          hang_toi_thieu: p.hang_toi_thieu,
-          chua_dat_hang: !meetsTier,
-        };
-      }),
+      total: combined.length,
+      items: combined,
     };
   }
 
@@ -1966,84 +2270,71 @@ export class UserService {
   //  LUCKY WHEEL (Vòng quay may mắn)
   // ═══════════════════════════════════════════════════════
 
-  private readonly LUCKY_WHEEL_COST = 100; // 100 điểm khả dụng / lượt
-
   async layDanhSachGiaiThuongVongQuay() {
-    // Lấy danh sách sản phẩm từ menu (50K-70K) để random
-    let randomProduct: { ten: string; gia: number } | null = null;
-    try {
-      const menuUrl = String(process.env.MENU_SERVICE_URL || 'http://localhost:3002').replace(/\/+$/, '');
-      const res = await fetch(`${menuUrl}/menu/san-pham`, {
-        headers: { 'x-internal-token': String(process.env.INTERNAL_SERVICE_TOKEN || 'avengers-internal-2025') },
-        signal: AbortSignal.timeout(3000),
-      });
-      if (res.ok) {
-        const products = await res.json() as any[];
-        const eligible = (products || []).filter((p: any) => {
-          const price = Number(p?.gia_ban || 0);
-          return price >= 50000 && price <= 70000 && p?.trang_thai !== false;
-        });
-        if (eligible.length > 0) {
-          const picked = eligible[Math.floor(Math.random() * eligible.length)];
-          randomProduct = { ten: picked.ten_san_pham, gia: Number(picked.gia_ban) };
-        }
+    const config = UserService.luckyWheelConfigCache || this.DEFAULT_LUCKY_WHEEL_CONFIG;
+    const cost = Number(config.chi_phi_quay || 100);
+    const prizes = config.giai_thuong || this.DEFAULT_LUCKY_WHEEL_CONFIG.giai_thuong;
+
+    // Đảm bảo các thuộc tính được map đúng
+    const updatedPrizes = prizes.map(prize => {
+      if (prize.loai === 'FREE_ITEM' && !prize.ten_san_pham_tang) {
+        return { ...prize, ten_san_pham_tang: 'Topping bất kỳ' };
       }
-    } catch { /* ignore */ }
+      return prize;
+    });
 
-    const prizes = [
-      { id: 1, ten: '+50 điểm',     loai: 'POINTS', gia_tri: 50,    xac_suat: 25, mau: '#FF6B6B', icon: '🎯' },
-      { id: 2, ten: '+100 điểm',    loai: 'POINTS', gia_tri: 100,   xac_suat: 20, mau: '#4ECDC4', icon: '⭐' },
-      { id: 3, ten: 'Voucher 10K',  loai: 'VOUCHER', gia_tri: 10000, xac_suat: 18, mau: '#45B7D1', icon: '🎫' },
-      { id: 4, ten: '+200 điểm',    loai: 'POINTS', gia_tri: 200,   xac_suat: 12, mau: '#96CEB4', icon: '💎' },
-      { id: 5, ten: 'Voucher 20K',  loai: 'VOUCHER', gia_tri: 20000, xac_suat: 10, mau: '#FFEAA7', icon: '🏷️' },
-      { id: 6, ten: 'Free Topping', loai: 'FREE_ITEM', gia_tri: 0, ten_san_pham: 'Topping bất kỳ', xac_suat: 8, mau: '#DDA0DD', icon: '🧋' },
-      { id: 7, ten: randomProduct ? `Free ${randomProduct.ten}` : 'Voucher 30K', loai: randomProduct ? 'FREE_ITEM' : 'VOUCHER', gia_tri: randomProduct ? 0 : 30000, ten_san_pham: randomProduct?.ten || null, xac_suat: 5, mau: '#FF9FF3', icon: '🎁' },
-      { id: 8, ten: 'Voucher 50K',  loai: 'VOUCHER', gia_tri: 50000, xac_suat: 2, mau: '#F8B500', icon: '👑' },
-    ];
-
-    return { chi_phi_quay: this.LUCKY_WHEEL_COST, giai_thuong: prizes };
+    return { chi_phi_quay: cost, giai_thuong: updatedPrizes };
   }
 
   async quayMayMan(maNguoiDung: string) {
     const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: maNguoiDung } });
     if (!user) throw new NotFoundException('Khong tim thay nguoi dung');
-    if ((user.diem_kha_dung || 0) < this.LUCKY_WHEEL_COST) {
-      throw new BadRequestException(`Ban can it nhat ${this.LUCKY_WHEEL_COST} diem kha dung de quay. Hien tai: ${user.diem_kha_dung || 0} diem.`);
+
+    const { chi_phi_quay, giai_thuong } = await this.layDanhSachGiaiThuongVongQuay();
+
+    if ((user.diem_kha_dung || 0) < chi_phi_quay) {
+      throw new BadRequestException(`Ban can it nhat ${chi_phi_quay} diem kha dung de quay. Hien tai: ${user.diem_kha_dung || 0} diem.`);
     }
 
     // Trừ điểm
-    user.diem_kha_dung = (user.diem_kha_dung || 0) - this.LUCKY_WHEEL_COST;
+    user.diem_kha_dung = (user.diem_kha_dung || 0) - chi_phi_quay;
     await this.userRepo.save(user);
 
     // Lấy danh sách giải + random theo xác suất
-    const { giai_thuong: prizes } = await this.layDanhSachGiaiThuongVongQuay();
-    const totalWeight = prizes.reduce((sum, p) => sum + (p.xac_suat || 0), 0);
+    const totalWeight = giai_thuong.reduce((sum, p) => sum + Number(p.xac_suat || 0), 0);
     let random = Math.random() * totalWeight;
-    let winner = prizes[0];
-    for (const prize of prizes) {
-      random -= (prize.xac_suat || 0);
+    let winner = giai_thuong[0];
+    for (const prize of giai_thuong) {
+      random -= Number(prize.xac_suat || 0);
       if (random <= 0) { winner = prize; break; }
     }
 
     // Phát thưởng
     let voucherCode: string | null = null;
     if (winner.loai === 'POINTS') {
-      user.diem_kha_dung = (user.diem_kha_dung || 0) + winner.gia_tri;
-      user.diem_loyalty = (user.diem_loyalty || 0) + winner.gia_tri;
+      user.diem_kha_dung = (user.diem_kha_dung || 0) + Number(winner.gia_tri || 0);
+      user.diem_loyalty = (user.diem_loyalty || 0) + Number(winner.gia_tri || 0);
       await this.userRepo.save(user);
     } else if (winner.loai === 'VOUCHER' || winner.loai === 'FREE_ITEM') {
       voucherCode = `WHEEL_${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
       try {
+        let template: Promotion | null = null;
+        if (winner.ma_voucher) {
+          template = await this.promotionRepo.findOne({ where: { ma_khuyen_mai: winner.ma_voucher } });
+        }
+
         const p = new Promotion();
         p.ma_khuyen_mai = voucherCode;
-        p.ten_khuyen_mai = `Vòng quay: ${winner.ten}`;
-        p.mo_ta = winner.loai === 'FREE_ITEM'
-          ? `Bạn trúng thưởng: ${(winner as any).ten_san_pham || winner.ten}! Áp dụng khi đặt hàng.`
-          : `Bạn trúng voucher giảm ${winner.gia_tri.toLocaleString('vi-VN')}đ từ vòng quay may mắn!`;
-        p.loai_khuyen_mai = winner.loai === 'FREE_ITEM' ? 'FREE_ITEM' : 'FIXED';
-        p.gia_tri = winner.gia_tri;
-        p.gia_tri_don_toi_thieu = 0;
-        p.giam_toi_da = null;
+        p.ten_khuyen_mai = template ? template.ten_khuyen_mai : `Vòng quay: ${winner.ten}`;
+        p.mo_ta = template ? (template.mo_ta || `Phần thưởng vòng quay may mắn`) : (
+          winner.loai === 'FREE_ITEM'
+            ? `Bạn trúng thưởng: ${winner.ten_san_pham_tang || winner.ten}! Áp dụng khi đặt hàng.`
+            : `Bạn trúng voucher giảm ${Number(winner.gia_tri).toLocaleString('vi-VN')}đ từ vòng quay may mắn!`
+        );
+        p.loai_khuyen_mai = template ? template.loai_khuyen_mai : (winner.loai === 'FREE_ITEM' ? 'FREE_ITEM' : 'FIXED');
+        p.gia_tri = template ? Number(template.gia_tri) : Number(winner.gia_tri || 0);
+        p.gia_tri_don_toi_thieu = template ? Number(template.gia_tri_don_toi_thieu || 0) : 0;
+        p.giam_toi_da = template ? (template.giam_toi_da ? Number(template.giam_toi_da) : null) : null;
         p.so_luong_toi_da = 1;
         p.so_luong_da_dung = 0;
         p.gioi_han_moi_nguoi = 1;
@@ -2054,8 +2345,8 @@ export class UserService {
         p.ma_nguoi_dung = maNguoiDung;
         p.loai_su_kien = 'LUCKY_WHEEL';
         p.hang_toi_thieu = null;
-        p.ten_san_pham_tang = (winner as any).ten_san_pham || null;
-        p.hinh_anh = null;
+        p.ten_san_pham_tang = template ? template.ten_san_pham_tang : (winner.loai === 'FREE_ITEM' ? (winner.ten_san_pham_tang || 'Topping bất kỳ') : null);
+        p.hinh_anh = template ? template.hinh_anh : null;
         await this.promotionRepo.save(p);
       } catch (err) {
         console.error('[quayMayMan] Error creating voucher:', err);
@@ -2070,7 +2361,7 @@ export class UserService {
         gia_tri: winner.gia_tri,
         icon: winner.icon,
         mau: winner.mau,
-        ten_san_pham: (winner as any).ten_san_pham || null,
+        ten_san_pham: winner.loai === 'FREE_ITEM' ? (winner.ten_san_pham_tang || 'Topping bất kỳ') : null,
       },
       voucher_code: voucherCode,
       diem_kha_dung_con_lai: user.diem_kha_dung,
@@ -2088,7 +2379,7 @@ export class UserService {
 
     const diem = user.diem_loyalty || 0;
     const hang = this.tinhHangThanhVien(diem);
-    const quyenLoi = this.layQuyenLoiTheoHang(hang.ma_hang);
+    const quyenLoi = await this.layQuyenLoiTheoHangAsync(hang.ma_hang);
 
     // Lấy personal vouchers (sinh nhật, lên hạng, vòng quay)
     const personalVouchers = await this.promotionRepo.find({
@@ -2100,15 +2391,32 @@ export class UserService {
     const activePersonalVouchers = personalVouchers
       .filter(p => !p.ngay_ket_thuc || new Date(p.ngay_ket_thuc) > now)
       .filter(p => p.so_luong_toi_da <= 0 || p.so_luong_da_dung < p.so_luong_toi_da)
+      .filter(p => p.loai_su_kien !== 'FREESHIP' && !p.ma_khuyen_mai?.startsWith('FS_'))
       .map(p => this.mapPromotionItem(p));
 
-    // Tất cả các hạng để so sánh
-    const tatCaHang = [
-      { ma: 'MEMBER', ten: 'Thành viên', diem: 0, icon: '🎖️', ...this.layQuyenLoiTheoHang('MEMBER') },
-      { ma: 'SILVER', ten: 'Bạc', diem: 1000, icon: '🥈', ...this.layQuyenLoiTheoHang('SILVER') },
-      { ma: 'GOLD', ten: 'Vàng', diem: 3000, icon: '🥇', ...this.layQuyenLoiTheoHang('GOLD') },
-      { ma: 'DIAMOND', ten: 'Kim Cương', diem: 5000, icon: '💎', ...this.layQuyenLoiTheoHang('DIAMOND') },
-    ];
+    // Tất cả các hạng được đồng bộ động từ Admin Config
+    const tierConfigs = UserService.tierConfigCache || this.DEFAULT_TIER_CONFIG;
+    const TIER_ICONS: Record<string, string> = { MEMBER: '🎖️', SILVER: '🥈', GOLD: '🥇', DIAMOND: '💎' };
+
+    const tatCaHang = await Promise.all(
+      tierConfigs.map(async (t) => {
+        const q = await this.layQuyenLoiTheoHangAsync(t.ma_hang);
+        return {
+          ma: t.ma_hang,
+          ten: t.ten_hang,
+          diem: Number(t.diem_toi_thieu || 0),
+          icon: t.icon || TIER_ICONS[t.ma_hang] || '🎖️',
+          he_so_diem: q.he_so_diem,
+          voucher_sinh_nhat: q.voucher_sinh_nhat,
+          freeship: q.freeship,
+          luot_quay_thang: q.luot_quay_thang,
+          mau_sac: q.mau_sac,
+          ma_voucher_thang_hang: t.ma_voucher_thang_hang,
+          ma_voucher_sinh_nhat: t.ma_voucher_sinh_nhat,
+          ma_voucher_freeship: t.ma_voucher_freeship,
+        };
+      })
+    );
 
     return {
       ma_nguoi_dung: maNguoiDung,
