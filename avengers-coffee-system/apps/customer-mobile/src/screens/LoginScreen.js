@@ -369,6 +369,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#1e293b',
     fontWeight: '500',
+    outlineStyle: 'none',
   },
   eyeBtn: {
     paddingLeft: 8,

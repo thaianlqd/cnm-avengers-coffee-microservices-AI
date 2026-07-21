@@ -255,6 +255,11 @@ export const CartProvider = ({ children }) => {
       hinh_anh_url: itemCanSua.hinh_anh_url,
       so_luong: itemCanSua.so_luong,
       size: normalizedNextSize,
+      toppings: itemCanSua.toppings || [],
+      luong_da: itemCanSua.luong_da || '',
+      do_ngot: itemCanSua.do_ngot || '',
+      loai_sua: itemCanSua.loai_sua || '',
+      custom_attributes: itemCanSua.custom_attributes || {}
     });
 
     if (itemCanSua.id) {
@@ -288,20 +293,13 @@ export const CartProvider = ({ children }) => {
   const updateCartItemOptions = async (oldItem, newOptions) => {
     if (!oldItem) return;
 
-    // Find full product details from anywhere? We don't have products here, but we can just use the provided newOptions.
-    // However, we need to calculate the new price!
-    // Actually, it's easier to just pass the `newPrice` from the Modal.
-    // Let's change the CartEditModal to pass `finalPrice` as well!
-    // But wait, the `CartEditModal` doesn't pass `finalPrice`. I should update `CartEditModal.jsx` to pass `finalPrice`, or recalculate here.
-    // To minimize context changes, I will just accept `newPrice` in `newOptions`.
-    
     const newItem = {
-      ma_nguoi_dung: oldItem.ma_nguoi_dung,
+      ma_nguoi_dung: activeUserId || oldItem.ma_nguoi_dung,
       ma_san_pham: oldItem.ma_san_pham,
       ten_san_pham: oldItem.ten_san_pham,
-      gia_ban: newOptions.gia_ban,
+      gia_ban: Number(newOptions.gia_ban) || Number(oldItem.gia_ban) || 0,
       hinh_anh_url: oldItem.hinh_anh_url,
-      so_luong: oldItem.so_luong,
+      so_luong: Number(oldItem.so_luong) || 1,
       size: newOptions.size || 'Nhỏ',
       toppings: newOptions.toppings || [],
       luong_da: newOptions.luongDa || '',
@@ -310,17 +308,23 @@ export const CartProvider = ({ children }) => {
       custom_attributes: newOptions.custom_attributes || {}
     };
 
-    if (oldItem.id) {
-      await themVaoGioMutation.mutateAsync(newItem);
-      await xoaKhoiGioMutation.mutateAsync(oldItem.id);
-    } else {
-      setCart((prev) => {
-        const next = prev.filter(i => i !== oldItem);
-        return [...next, newItem];
-      });
+    try {
+      if (oldItem.id) {
+        await xoaKhoiGioMutation.mutateAsync(oldItem.id);
+        await new Promise(resolve => setTimeout(resolve, 200)); // Tránh race condition ở database
+        await themVaoGioMutation.mutateAsync(newItem);
+      } else {
+        setCart((prev) => {
+          const next = prev.filter(i => i !== oldItem);
+          return [...next, newItem];
+        });
+      }
+    } catch (e) {
+      console.error('Lỗi khi cập nhật món:', e);
+      alert('Không thể cập nhật món. Lỗi: ' + e.message);
+    } finally {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(activeUserId) });
     }
-
-    await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(activeUserId) });
   };
 
   const updateCartQuantity = async (maSanPham, size, delta) => {
@@ -336,13 +340,18 @@ export const CartProvider = ({ children }) => {
     }
 
     await themVaoGioMutation.mutateAsync({
-      ma_nguoi_dung: itemCanSua.ma_nguoi_dung,
+      ma_nguoi_dung: activeUserId || itemCanSua.ma_nguoi_dung,
       ma_san_pham: itemCanSua.ma_san_pham,
       ten_san_pham: itemCanSua.ten_san_pham,
       gia_ban: itemCanSua.gia_ban,
       hinh_anh_url: itemCanSua.hinh_anh_url,
       so_luong: delta,
       size: itemCanSua.size || 'Nhỏ',
+      toppings: itemCanSua.toppings || [],
+      luong_da: itemCanSua.luong_da || '',
+      do_ngot: itemCanSua.do_ngot || '',
+      loai_sua: itemCanSua.loai_sua || '',
+      custom_attributes: itemCanSua.custom_attributes || {}
     });
     await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(activeUserId) });
   };

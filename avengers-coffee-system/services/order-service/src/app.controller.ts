@@ -10,6 +10,7 @@ import { NotificationService } from './modules/notification/notification.service
 import { ThanhToanService } from './modules/thanh-toan/thanh-toan.service';
 import { FavoriteService } from './modules/favorite/favorite.service';
 import { ShipperService } from './modules/shipper/shipper.service';
+import { EntityManager } from 'typeorm';
 
 @Controller()
 export class AppController {
@@ -20,6 +21,7 @@ export class AppController {
     private readonly realtimeAnalyticsService: RealtimeAnalyticsService,
     private readonly favoriteService: FavoriteService,
     private readonly shipperService: ShipperService,
+    private readonly entityManager: EntityManager,
   ) {}
 
   private ensureSelfOrAdmin(currentUser: AuthUser | null, userId: string) {
@@ -671,5 +673,12 @@ export class AppController {
     @Body() body: { rating: number; comment?: string },
   ) {
     return this.shipperService.rateShipper(orderId, body.rating, body.comment);
+  }
+
+  @Get('debug-db')
+  async debugDb() {
+    const carts = await this.entityManager.query(`SELECT * FROM orders.gio_hang ORDER BY id DESC LIMIT 5`);
+    const details = await this.entityManager.query(`SELECT * FROM orders.chi_tiet_don_hang ORDER BY id DESC LIMIT 5`);
+    return { carts, details };
   }
 }

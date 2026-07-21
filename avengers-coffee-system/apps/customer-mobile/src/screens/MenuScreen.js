@@ -144,7 +144,7 @@ function ToppingModal({ visible, onClose, availableToppings = {}, selectedToppin
   )
 }
 
-function ProductDetailModal({ product, visible, onClose, onAddToCart, userId, allProducts = [] }) {
+function ProductDetailModal({ product, cartItem, visible, onClose, onAddToCart, onUpdateCart, userId, allProducts = [], varMap = {} }) {
   const [selectedSize, setSelectedSize] = useState('Nhỏ')
   const [selectedLuongDa, setSelectedLuongDa] = useState('Bình thường')
   const [selectedDoNgot, setSelectedDoNgot] = useState('Bình thường')
@@ -155,20 +155,31 @@ function ProductDetailModal({ product, visible, onClose, onAddToCart, userId, al
   const [quantity, setQuantity] = useState(1)
 
   useEffect(() => {
-    if (product) {
-      const sizeKeys = Object.keys(product.sizes || {})
+    if (cartItem) {
+      setSelectedSize(cartItem.size || 'Nhỏ')
+      setSelectedLuongDa(cartItem.luong_da || 'Bình thường')
+      setSelectedDoNgot(cartItem.do_ngot || 'Bình thường')
+      setSelectedToppings(Array.isArray(cartItem.toppings) ? cartItem.toppings : [])
+      setNote(cartItem.ghi_chu || '')
+      setQuantity(cartItem.so_luong || 1)
+      setShowToppings(true)
+      setShowToppingModal(false)
+    } else if (product) {
+      const pid = String(product.ma_san_pham || product.id || '')
+      const realSizes = varMap[pid]?.sizes || {}
+      const sizeKeys = Object.keys(realSizes).length > 0 ? Object.keys(realSizes) : Object.keys(product.sizes || {})
       setSelectedSize(sizeKeys.length > 0 ? sizeKeys[0] : 'Nhỏ')
       const ldKeys = Object.keys(product.luong_da || {})
       setSelectedLuongDa(ldKeys.length > 0 ? ldKeys[0] : 'Bình thường')
       const dnKeys = Object.keys(product.do_ngot || {})
       setSelectedDoNgot(dnKeys.length > 0 ? dnKeys[0] : 'Bình thường')
-      setSelectedToppings(product.toppings ? [] : [])
+      setSelectedToppings([])
       setShowToppings(true)
       setShowToppingModal(false)
       setNote('')
       setQuantity(1)
     }
-  }, [product])
+  }, [product, cartItem, varMap])
 
   const suggestions = useMemo(() => {
     const list = Array.isArray(allProducts) ? allProducts.filter(p => p && p.ma_san_pham !== product?.ma_san_pham) : []
@@ -183,7 +194,14 @@ function ProductDetailModal({ product, visible, onClose, onAddToCart, userId, al
 
   if (!product) return null
 
-  const availableSizes = product.sizes && Object.keys(product.sizes).length > 0 ? product.sizes : { 'Nhỏ': product.gia_ban || 35000, 'Vừa': (product.gia_ban || 35000) + 6000, 'Lớn': (product.gia_ban || 35000) + 10000 }
+  const pid = String(product.ma_san_pham || product.id || '')
+  const realSizes = varMap[pid]?.sizes || {}
+  const realToppings = varMap[pid]?.toppings || {}
+
+  // Use real CSDL sizes if available, otherwise fall back to product data, otherwise defaults
+  const availableSizes = Object.keys(realSizes).length > 0
+    ? realSizes
+    : (product.sizes && Object.keys(product.sizes).length > 0 ? product.sizes : { 'Nhỏ': product.gia_ban || 35000, 'Vừa': (product.gia_ban || 35000) + 6000, 'Lớn': (product.gia_ban || 35000) + 10000 })
   const sizeKeys = Object.keys(availableSizes)
 
   const availableLuongDa = product.luong_da && Object.keys(product.luong_da).length > 0 ? product.luong_da : { 'Bình thường': 0, 'Đá riêng': 0, 'Ít đá': 0 }
@@ -192,19 +210,22 @@ function ProductDetailModal({ product, visible, onClose, onAddToCart, userId, al
   const availableDoNgot = product.do_ngot && Object.keys(product.do_ngot).length > 0 ? product.do_ngot : { 'Bình thường': 0, 'Ít ngọt': 0, 'Thêm ngọt': 0 }
   const dnKeys = Object.keys(availableDoNgot)
 
-  const availableToppings = product.toppings && Object.keys(product.toppings).length > 0 ? product.toppings : {
-    'Kem Phô Mai Macchiato': 10000,
-    'Shot Espresso': 10000,
-    'Hạt Sen': 10000,
-    'Xốt Caramel': 10000,
-    'Đào Miếng': 10000,
-    'Trân Châu Hoàng Kim': 10000,
-    'Foam Dừa': 10000,
-    'Đài Hoa Hibiscus': 10000,
-    'Trân châu củ năng': 10000,
-    'Trân châu trắng': 10000,
-    'Thạch cà phê': 10000,
-  }
+  // Use real CSDL toppings if available
+  const availableToppings = Object.keys(realToppings).length > 0
+    ? realToppings
+    : (product.toppings && Object.keys(product.toppings).length > 0 ? product.toppings : {
+        'Kem Phô Mai Macchiato': 10000,
+        'Shot Espresso': 10000,
+        'Hạt Sen': 10000,
+        'Xốt Caramel': 10000,
+        'Đào Miếng': 10000,
+        'Trân Châu Hoàng Kim': 10000,
+        'Foam Dừa': 10000,
+        'Đài Hoa Hibiscus': 10000,
+        'Trân châu củ năng': 10000,
+        'Trân châu trắng': 10000,
+        'Thạch cà phê': 10000,
+      })
   const toppingKeys = Object.keys(availableToppings)
 
   const basePrice = Number(availableSizes[selectedSize] !== undefined ? availableSizes[selectedSize] : product.gia_ban || 0)
@@ -417,20 +438,25 @@ function ProductDetailModal({ product, visible, onClose, onAddToCart, userId, al
 
               <Pressable
                 onPress={() => {
-                  onAddToCart(product, quantity, selectedSize, {
+                  const options = {
                     toppings: selectedToppings,
                     luongDa: selectedLuongDa,
                     doNgot: selectedDoNgot,
                     note: note.trim(),
                     unitPrice,
-                  })
+                  }
+                  if (cartItem && onUpdateCart) {
+                    onUpdateCart(cartItem, quantity, selectedSize, options)
+                  } else {
+                    onAddToCart(product, quantity, selectedSize, options)
+                  }
                   onClose()
                 }}
                 style={({ pressed }) => [modalStyles.addCartActionBtn, pressed && { opacity: 0.92 }]}
               >
-                <Ionicons name="add-circle-outline" size={20} color="#ffffff" />
+                <Ionicons name={cartItem ? "checkmark-circle-outline" : "add-circle-outline"} size={20} color="#ffffff" />
                 <Text style={modalStyles.addCartActionText}>
-                  THÊM VÀO GIỎ - {formatCurrency(totalPrice)}
+                  {cartItem ? 'CẬP NHẬT - ' : 'THÊM VÀO GIỎ - '}{formatCurrency(totalPrice)}
                 </Text>
               </Pressable>
             </View>
@@ -463,16 +489,11 @@ export function MenuScreen({ navigation, route }) {
   const [onlyAvailable, setOnlyAvailable] = useState(false)
   const [onlyHot, setOnlyHot] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(null)
+  const [editingCartItem, setEditingCartItem] = useState(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [showFilterPanel, setShowFilterPanel] = useState(false)
 
-  useEffect(() => {
-    if (route?.params?.selectedProduct) {
-      setSelectedProduct(route.params.selectedProduct)
-      setIsDetailOpen(true)
-      navigation.setParams({ selectedProduct: null })
-    }
-  }, [route?.params?.selectedProduct, navigation])
+
 
   const sectionListRef = useRef(null)
   const sidebarListRef = useRef(null)
@@ -499,6 +520,54 @@ export function MenuScreen({ navigation, route }) {
     },
     staleTime: 60 * 1000,
   })
+
+  const variationsQuery = useQuery({
+    queryKey: ['customer', 'menu-variations'],
+    queryFn: async () => {
+      const res = await apiClient.get('/menu/san-pham/bien-the')
+      return safeArray(res)
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+
+  // Build a map: ma_san_pham -> { sizes: {SizeName: price}, toppings: {ToppingName: price} }
+  const varMap = useMemo(() => {
+    const map = {}
+    for (const v of safeArray(variationsQuery.data)) {
+      const pid = String(v.ma_san_pham || '')
+      if (!pid) continue
+      if (!map[pid]) map[pid] = { sizes: {}, toppings: {} }
+      const tt = String(v.ten_thuoc_tinh || '').toLowerCase()
+      const val = String(v.gia_tri || '')
+      const pt = Number(v.phu_thu || 0)
+      if (tt.includes('size') || tt.includes('kích')) {
+        map[pid].sizes[val] = pt
+      } else if (tt.includes('topping') || tt.includes('trân châu') || tt.includes('thạch')) {
+        map[pid].toppings[val] = pt
+      }
+    }
+    return map
+  }, [variationsQuery.data])
+
+  useEffect(() => {
+    if (route?.params?.selectedProduct) {
+      setSelectedProduct(route.params.selectedProduct)
+      setEditingCartItem(null)
+      setIsDetailOpen(true)
+      navigation.setParams({ selectedProduct: null })
+    }
+    if (route?.params?.editCartItem) {
+      setEditingCartItem(route.params.editCartItem)
+      const pId = route.params.editCartItem.ma_san_pham || route.params.editCartItem.id
+      let prod = null
+      if (productsQuery.data) {
+        prod = productsQuery.data.find(p => String(p.id || p.ma_san_pham) === String(pId))
+      }
+      setSelectedProduct(prod || route.params.editCartItem)
+      setIsDetailOpen(true)
+      navigation.setParams({ editCartItem: null })
+    }
+  }, [route?.params?.selectedProduct, route?.params?.editCartItem, navigation, productsQuery.data])
 
   const cartCountQuery = useQuery({
     queryKey: ['customer', 'cart', userId, 'count'],
@@ -631,6 +700,39 @@ export function MenuScreen({ navigation, route }) {
     addToCartMutation.mutate({ item, quantity, size, options, targetUserId })
     const toppingInfo = Array.isArray(options?.toppings) && options.toppings.length > 0 ? ` + ${options.toppings.join(', ')}` : ''
     Alert.alert('✓ Đã thêm vào giỏ', `${item.ten_san_pham} (${quantity}x Size ${size || 'Nhỏ'}${toppingInfo}) đã được thêm vào giỏ.`)
+  }
+
+  const updateCartItemMutation = useMutation({
+    mutationFn: async ({ cartItem, quantity, size, options = {}, targetUserId }) => {
+      const uid = targetUserId || userId || 'guest-customer'
+      if (cartItem.id) {
+        await apiClient.delete(`/cart/${cartItem.id}`).catch(() => {})
+      } else if (cartItem.ma_san_pham) {
+        await apiClient.delete(`/cart/${cartItem.ma_san_pham}`).catch(() => {})
+      }
+      return apiClient.post('/cart', {
+        ma_nguoi_dung: uid,
+        ma_san_pham: Number(cartItem.ma_san_pham || 0),
+        ten_san_pham: cartItem.ten_san_pham || 'Sản phẩm',
+        gia_ban: Number(options.unitPrice || cartItem.gia_ban || 0),
+        hinh_anh_url: cartItem.hinh_anh_url || '',
+        size: size || 'Nhỏ',
+        so_luong: Number(quantity || 1),
+        toppings: options.toppings || [],
+        luong_da: options.luongDa || 'Bình thường',
+        do_ngot: options.doNgot || 'Bình thường',
+        ghi_chu: options.note || '',
+      })
+    },
+    onSuccess: async (data, variables, context) => {
+      const uid = userId || 'guest-customer'
+      await queryClient.invalidateQueries({ queryKey: ['customer', 'cart', uid] })
+      await queryClient.invalidateQueries({ queryKey: ['customer', 'cart', uid, 'count'] })
+    }
+  })
+
+  const handleUpdateCart = (cartItem, quantity, size, options) => {
+    updateCartItemMutation.mutate({ cartItem, quantity, size, options })
   }
 
   const activeFiltersCount = [
@@ -941,17 +1043,25 @@ export function MenuScreen({ navigation, route }) {
       </Modal>
 
       {/* Product Detail Modal */}
-      <ProductDetailModal
-        product={selectedProduct}
-        visible={isDetailOpen}
-        onClose={() => {
-          setIsDetailOpen(false)
-          setSelectedProduct(null)
-        }}
-        onAddToCart={handleAddToCart}
-        userId={userId}
+      {isDetailOpen && (
+        <ProductDetailModal
+          product={selectedProduct}
+          cartItem={editingCartItem}
+          visible={isDetailOpen}
+          onClose={() => {
+            setIsDetailOpen(false)
+            setTimeout(() => {
+              setSelectedProduct(null)
+              setEditingCartItem(null)
+            }, 300)
+          }}
+          onAddToCart={handleAddToCart}
+          onUpdateCart={handleUpdateCart}
+          userId={userId}
         allProducts={productsQuery.data || []}
+        varMap={varMap}
       />
+      )}
 
       {/* Floating Cart Button */}
       <Pressable

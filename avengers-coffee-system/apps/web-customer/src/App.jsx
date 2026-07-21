@@ -1896,13 +1896,13 @@ function AppContent() {
                 onBackToHome={() => setActiveTab('order')} 
                 voucherItems={voucherItems}
                 suggestedPastries={suggestedPastries}
-                onAddToCart={(prod) => addToCart(user, prod, 1, 'Nhỏ')}
+                onAddToCart={(prod, qty, size, opts) => addToCart(user, prod, qty || 1, size || 'Nhỏ', opts)}
               />
             ) : activeTab === 'product-detail' ? (
               <ProductDetailPage
                 product={selectedProductForPage}
                 products={products}
-                onAddToCart={(prod, qty, size) => addToCart(user, prod, qty || 1, size || 'M')}
+                onAddToCart={(prod, qty, size, opts) => addToCart(user, prod, qty || 1, size || 'Nhỏ', opts)}
                 onBack={() => setActiveTab('order')}
                 onNavigate={setActiveTab}
               />

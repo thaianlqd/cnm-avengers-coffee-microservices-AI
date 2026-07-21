@@ -1403,6 +1403,10 @@ export class ThanhToanService {
         so_luong: item.so_luong,
         kich_co: item.size || 'Nhỏ',
         hinh_anh_url: item.hinh_anh_url,
+        toppings: item.toppings || [],
+        luong_da: item.luong_da || null,
+        do_ngot: item.do_ngot || null,
+        ghi_chu: item.custom_attributes?.ghi_chu || null,
       }),
     );
     await this.chiTietRepo.save(chiTiet);
@@ -1521,6 +1525,10 @@ export class ThanhToanService {
       ghi_chu?: string;
       kich_co?: string;
       hinh_anh_url?: string;
+      toppings?: string[];
+      luong_da?: string;
+      do_ngot?: string;
+      item_ghi_chu?: string;
     }>;
     ghi_chu?: string;
     dia_chi_giao_hang?: string;
@@ -1566,6 +1574,10 @@ export class ThanhToanService {
         so_luong: Number(item.so_luong || 1),
         kich_co: item.kich_co || 'Nhỏ',
         hinh_anh_url: item.hinh_anh_url || null,
+        toppings: item.toppings || [],
+        luong_da: item.luong_da || null,
+        do_ngot: item.do_ngot || null,
+        ghi_chu: item.item_ghi_chu || item.ghi_chu || null,
       }),
     );
     await this.chiTietRepo.save(chiTiet);
@@ -2076,6 +2088,13 @@ export class ThanhToanService {
           gia_ban: Number(ct.gia_ban),
           so_luong: ct.so_luong,
           hinh_anh_url: ct.hinh_anh_url,
+          kich_co: ct.kich_co,
+          toppings: ct.toppings,
+          luong_da: ct.luong_da,
+          do_ngot: ct.do_ngot,
+          loai_sua: ct.loai_sua,
+          ghi_chu: ct.ghi_chu,
+          custom_attributes: ct.custom_attributes,
         })),
         giao_dich: giaoDichGanNhat
           ? {
@@ -2358,6 +2377,10 @@ export class ThanhToanService {
       gia_ban: number;
       kich_co: string | null;
       hinh_anh_url: string | null;
+      toppings?: string[];
+      luong_da?: string | null;
+      do_ngot?: string | null;
+      ghi_chu?: string | null;
     }> = [];
 
     if (suDungCheDoThayTheMon) {
@@ -2374,6 +2397,10 @@ export class ThanhToanService {
           gia_ban: number;
           kich_co: string | null;
           hinh_anh_url: string | null;
+          toppings?: string[];
+          luong_da?: string | null;
+          do_ngot?: string | null;
+          ghi_chu?: string | null;
         }
       >();
 
@@ -2407,6 +2434,10 @@ export class ThanhToanService {
             gia_ban: giaBan,
             kich_co: kichCo,
             hinh_anh_url: hinhAnh,
+            toppings: (item as any)?.toppings || itemCu?.toppings || [],
+            luong_da: (item as any)?.luong_da || itemCu?.luong_da || null,
+            do_ngot: (item as any)?.do_ngot || itemCu?.do_ngot || null,
+            ghi_chu: (item as any)?.ghi_chu || itemCu?.ghi_chu || null,
           });
         }
       }
@@ -2430,6 +2461,10 @@ export class ThanhToanService {
               gia_ban: Number(item.gia_ban),
               kich_co: item.kich_co || null,
               hinh_anh_url: item.hinh_anh_url || null,
+              toppings: item.toppings || [],
+              luong_da: item.luong_da || null,
+              do_ngot: item.do_ngot || null,
+              ghi_chu: item.ghi_chu || null,
             };
           }
 
@@ -2441,6 +2476,10 @@ export class ThanhToanService {
             gia_ban: Number(item.gia_ban),
             kich_co: item.kich_co || null,
             hinh_anh_url: item.hinh_anh_url || null,
+            toppings: item.toppings || [],
+            luong_da: item.luong_da || null,
+            do_ngot: item.do_ngot || null,
+            ghi_chu: item.ghi_chu || null,
           };
         })
         .filter((item) => item.so_luong > 0);
@@ -2471,6 +2510,10 @@ export class ThanhToanService {
             gia_ban: item.gia_ban,
             kich_co: item.kich_co,
             hinh_anh_url: item.hinh_anh_url,
+            toppings: (item as any).toppings || [],
+            luong_da: (item as any).luong_da || null,
+            do_ngot: (item as any).do_ngot || null,
+            ghi_chu: (item as any).ghi_chu || null,
           }),
         );
         await chiTietRepo.save(chiTietMoi);
@@ -2627,8 +2670,12 @@ export class ThanhToanService {
           ten_san_pham: item.ten_san_pham,
           gia_ban: item.gia_ban,
           so_luong: item.so_luong,
-          kich_co: null,
-          hinh_anh_url: null,
+          kich_co: (item as any).kich_co || null,
+          hinh_anh_url: (item as any).hinh_anh_url || null,
+          toppings: (item as any).toppings || [],
+          luong_da: (item as any).luong_da || null,
+          do_ngot: (item as any).do_ngot || null,
+          ghi_chu: (item as any).ghi_chu || null,
         }),
       );
       await chiTietRepo.save(chiTietMoi);

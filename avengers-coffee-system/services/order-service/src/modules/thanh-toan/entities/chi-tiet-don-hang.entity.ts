@@ -32,4 +32,22 @@ export class ChiTietDonHang {
 
   @Column({ type: 'varchar', nullable: true })
   hinh_anh_url: string | null;
+
+  @Column({ type: 'jsonb', nullable: true, default: () => "'[]'::jsonb" })
+  toppings: string[];
+
+  @Column({ type: 'varchar', nullable: true })
+  luong_da: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  do_ngot: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  ghi_chu: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  loai_sua: string | null;
+
+  @Column({ type: 'jsonb', nullable: true, default: () => "'{}'::jsonb" })
+  custom_attributes: Record<string, any> | null;
 }

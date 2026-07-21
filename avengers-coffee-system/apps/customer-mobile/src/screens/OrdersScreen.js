@@ -616,7 +616,121 @@ const PAYMENT_STATUS_STYLE = {
   THAT_BAI:                     { color: '#ef4444', label: 'Thất bại' },
 }
 
-function OrderDetailModal({ order, visible, onClose, onCancel, onViewInvoice }) {
+
+function OrderRatingModal({ order, visible, onClose, userId }) {
+  const [rating, setRating] = useState(5)
+  const [comment, setComment] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+
+  useEffect(() => {
+    if (!visible) {
+      setRating(5)
+      setComment('')
+      setSubmitted(false)
+    }
+  }, [visible])
+
+  if (!order) return null
+
+  const handleSubmit = async () => {
+    if (submitting) return
+    setSubmitting(true)
+    try {
+      await apiClient.post(`/customers/${userId}/orders/${order.ma_don_hang}/review`, {
+        diem_danh_gia: rating,
+        nhan_xet: comment.trim() || 'Rất hài lòng!',
+      })
+      setSubmitted(true)
+      setTimeout(onClose, 2000)
+    } catch (e) {
+      Alert.alert('Lỗi', e?.response?.data?.message || e?.message || 'Không thể gửi đánh giá')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <View style={ratingStyles.container}>
+        <View style={ratingStyles.header}>
+          <TouchableOpacity onPress={onClose} style={ratingStyles.closeBtn}>
+            <Ionicons name="close" size={22} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={ratingStyles.headerTitle}>Đánh giá đơn hàng</Text>
+          <View style={{ width: 36 }} />
+        </View>
+
+        <ScrollView contentContainerStyle={ratingStyles.body} showsVerticalScrollIndicator={false}>
+          {submitted ? (
+            <View style={ratingStyles.successState}>
+              <View style={ratingStyles.successIcon}>
+                <Ionicons name="checkmark-circle" size={72} color={colors.success} />
+              </View>
+              <Text style={ratingStyles.successTitle}>Cảm ơn bạn! 🎉</Text>
+              <Text style={ratingStyles.successDesc}>Đánh giá của bạn giúp chúng tôi phục vụ bạn tốt hơn.</Text>
+            </View>
+          ) : (
+            <>
+              <View style={ratingStyles.shipperSection}>
+                <View style={[ratingStyles.shipperIcon, { backgroundColor: '#fff7ed', borderColor: '#ea8025' }]}>
+                  <Ionicons name="cafe" size={40} color="#ea8025" />
+                </View>
+                <Text style={ratingStyles.shipperLabel}>Đánh giá chất lượng đơn hàng</Text>
+                <Text style={ratingStyles.orderRef}>{order?.ma_don_hang?.slice(0, 16)}</Text>
+              </View>
+
+              <View style={ratingStyles.starsSection}>
+                <Text style={ratingStyles.starsTitle}>Mức độ hài lòng</Text>
+                <View style={ratingStyles.starsRow}>
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <TouchableOpacity key={star} onPress={() => setRating(star)} style={ratingStyles.starBtn}>
+                      <Ionicons
+                        name={star <= rating ? 'star' : 'star-outline'}
+                        size={44}
+                        color={star <= rating ? '#F59E0B' : colors.muted}
+                      />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <Text style={ratingStyles.starLabel}>
+                  {rating === 5 ? '🤩 Tuyệt vời!' : rating === 4 ? '😊 Tốt' : rating === 3 ? '😐 Bình thường' : rating === 2 ? '😕 Không tốt' : '😞 Rất tệ'}
+                </Text>
+              </View>
+
+              <View style={ratingStyles.commentSection}>
+                <Text style={ratingStyles.starsTitle}>Nhận xét của bạn (không bắt buộc)</Text>
+                <TextInput
+                  style={ratingStyles.commentInput}
+                  value={comment}
+                  onChangeText={setComment}
+                  placeholder="Chia sẻ cảm nhận về đồ uống, dịch vụ..."
+                  placeholderTextColor={colors.muted}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+              </View>
+
+              <TouchableOpacity
+                style={[ratingStyles.submitBtn, submitting && { opacity: 0.7 }]}
+                onPress={handleSubmit}
+                disabled={submitting}
+              >
+                {submitting
+                  ? <ActivityIndicator size="small" color="#fff" />
+                  : <Text style={ratingStyles.submitBtnText}>Gửi đánh giá ⭐</Text>
+                }
+              </TouchableOpacity>
+            </>
+          )}
+        </ScrollView>
+      </View>
+    </Modal>
+  )
+}
+
+function OrderDetailModal({ order, visible, onClose, onCancel, onViewInvoice, onRateOrder }) {
   if (!order) return null
   const statusStyle = STATUS_STYLE[order.trang_thai_don_hang] || { color: colors.muted, bg: colors.cream, icon: 'help-circle-outline' }
   const paymentStyle = PAYMENT_STATUS_STYLE[order.trang_thai_thanh_toan] || { color: colors.muted, label: order.trang_thai_thanh_toan }
@@ -695,6 +809,13 @@ function OrderDetailModal({ order, visible, onClose, onCancel, onViewInvoice }) 
                     {item.toppings && item.toppings.length ? (
                       <Text style={detailStyles.orderItemMeta}>Topping: {Array.isArray(item.toppings) ? item.toppings.join(', ') : item.toppings}</Text>
                     ) : null}
+                    {(item.luong_da || item.do_ngot) ? (
+                      <Text style={detailStyles.orderItemMeta}>
+                        {item.luong_da ? `Đá: ${item.luong_da}` : ''}
+                        {item.luong_da && item.do_ngot ? ' | ' : ''}
+                        {item.do_ngot ? `Ngọt: ${item.do_ngot}` : ''}
+                      </Text>
+                    ) : null}
                     {item.ghi_chu ? <Text style={[detailStyles.orderItemMeta, { fontStyle: 'italic', color: '#ea8025' }]}>Ghi chú: {item.ghi_chu}</Text> : null}
                     <View style={detailStyles.orderItemPriceRow}>
                       <Text style={detailStyles.orderItemQty}>x{item.so_luong}</Text>
@@ -742,6 +863,17 @@ function OrderDetailModal({ order, visible, onClose, onCancel, onViewInvoice }) 
               </Pressable>
             ) : null}
 
+            {/* Rate Order */}
+            {order.trang_thai_don_hang === 'HOAN_THANH' ? (
+              <Pressable
+                onPress={() => { onClose(); onRateOrder?.(order) }}
+                style={[detailStyles.invoiceBtn, { backgroundColor: '#fff7ed', borderColor: '#f97316', marginBottom: 8 }]}
+              >
+                <Ionicons name="star-outline" size={18} color="#f97316" />
+                <Text style={[detailStyles.invoiceBtnText, { color: '#f97316' }]}>Đánh giá đơn hàng</Text>
+              </Pressable>
+            ) : null}
+
             {/* View Invoice */}
             <Pressable
               onPress={() => onViewInvoice?.(order)}
@@ -767,6 +899,7 @@ export function OrdersScreen() {
   const [invoiceOrder, setInvoiceOrder] = useState(null)
   const [trackingOrder, setTrackingOrder] = useState(null)
   const [ratingOrder, setRatingOrder] = useState(null)
+  const [orderRatingTarget, setOrderRatingTarget] = useState(null)
 
   const ordersQuery = useQuery({
     queryKey: ['customer', 'orders', userId, statusFilter],
@@ -982,6 +1115,7 @@ export function OrdersScreen() {
           setSelectedOrder(null)
         }}
         onCancel={handleCancel}
+        onRateOrder={(order) => setOrderRatingTarget(order)}
         onViewInvoice={(order) => {
           setIsDetailOpen(false)
           setInvoiceOrder(order)
@@ -1008,6 +1142,14 @@ export function OrdersScreen() {
         order={ratingOrder}
         visible={Boolean(ratingOrder)}
         onClose={() => setRatingOrder(null)}
+        userId={userId}
+      />
+
+      {/* Order Rating Modal */}
+      <OrderRatingModal
+        order={orderRatingTarget}
+        visible={Boolean(orderRatingTarget)}
+        onClose={() => setOrderRatingTarget(null)}
         userId={userId}
       />
     </View>

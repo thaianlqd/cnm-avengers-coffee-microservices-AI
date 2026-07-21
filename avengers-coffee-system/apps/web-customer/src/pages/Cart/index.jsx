@@ -594,11 +594,7 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                           <h3 className="text-[14px] font-bold text-[#282828] line-clamp-2 leading-tight mb-1">
                             {p.ten_san_pham || p.name}
                           </h3>
-                          <p className="text-[14px] font-medium text-gray-500 mb-3">
-                            {Number(p.gia_ban || p.price || 0).toLocaleString('vi-VN')}đ
-                          </p>
-                          
-                          <div className="flex bg-[#feeee3] rounded-[24px] overflow-hidden w-fit hover:brightness-95 transition-all">
+                          <div className="flex bg-[#feeee3] rounded-[24px] overflow-hidden w-fit hover:brightness-95 transition-all mt-2">
                             <div className="px-3 py-1 text-[13px] font-bold text-[#e15923] flex items-center">
                               {Number(p.gia_ban || p.price || 0).toLocaleString('vi-VN')}đ
                             </div>
@@ -629,32 +625,37 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                     {voucherItems.slice(0, 4).map((v) => {
                       const isPercent = v.loai_khuyen_mai === 'PERCENT';
                       const valueText = isPercent ? `${v.gia_tri}%` : `${(v.gia_tri / 1000)}K`;
+                      let badgeLabel = 'GIẢM GIÁ';
+                      if (v.loai_khuyen_mai === 'FREE_ITEM' || String(v.ma_khuyen_mai).toUpperCase().includes('UPSIZE') || String(v.ten_khuyen_mai).toUpperCase().includes('UPSIZE')) {
+                        badgeLabel = 'MIỄN PHÍ\nUPSIZE';
+                      } else if (isPercent) {
+                        badgeLabel = `GIẢM\n${valueText}`;
+                      } else {
+                        badgeLabel = `GIẢM\n${valueText}`;
+                      }
+
                       return (
-                        <div key={v.ma_khuyen_mai} className="flex flex-shrink-0 w-[320px] sm:w-[350px] gap-2 items-center">
-                          {/* Khối bên trái: Icon + Text + Nút Dùng */}
-                          <div className="flex-1 h-[84px] bg-white border border-gray-200 rounded-[8px] flex items-center p-2 relative hover:border-[#e15923] transition-colors cursor-pointer" onClick={() => { setVoucherCode(v.ma_khuyen_mai); apDungVoucher(v.ma_khuyen_mai); }}>
-                            {/* Icon */}
-                            <div className="w-[60px] h-[60px] border border-gray-200 rounded-[4px] flex flex-col justify-center items-center mr-3 flex-shrink-0">
-                              <span className="text-[8px] font-black text-white bg-gray-400 px-1 rounded-sm mb-1 uppercase">Voucher</span>
-                              <span className="text-[10px] font-black text-[#e15923] text-center leading-none">MÃ<br/>GIẢM</span>
-                            </div>
-                            {/* Text */}
-                            <div className="flex-1 min-w-0 pr-8">
-                              <h4 className="text-[13px] font-bold text-[#282828] line-clamp-2 leading-tight mb-1">
-                                {v.mo_ta || `Giảm ${valueText} cho đơn hàng hợp lệ`}
-                              </h4>
-                              <p className="text-[11px] text-gray-400">
-                                {v.han_su_dung ? `Còn ${Math.max(1, Math.ceil((new Date(v.han_su_dung) - new Date()) / (1000 * 60 * 60 * 24)))} ngày` : 'Không giới hạn'}
-                              </p>
-                            </div>
-                            {/* Nút Dùng */}
-                            <span className="absolute right-3 bottom-2 text-[13px] text-[#e15923]">Dùng</span>
+                        <div key={v.ma_khuyen_mai} className="flex flex-shrink-0 w-[350px] sm:w-[380px] h-[76px] bg-white border border-[#f5cbb8] rounded-[12px] p-3 items-center cursor-pointer hover:border-[#e15923] transition-colors" onClick={() => { setVoucherCode(v.ma_khuyen_mai); apDungVoucher(v.ma_khuyen_mai); }}>
+                          {/* Left Badge */}
+                          <div className="flex-shrink-0 border border-[#fcdbc7] bg-[#fff6f0] rounded-[6px] h-full px-3 flex items-center justify-center min-w-[70px]">
+                            <span className="text-[12px] font-bold text-[#e15923] text-center uppercase whitespace-pre-line leading-[1.2]">
+                              {badgeLabel}
+                            </span>
                           </div>
                           
-                          {/* Khối bên phải: Tag giảm giá (ticket nhỏ) */}
-                          <div className="w-[54px] h-[84px] bg-[#fef5f0] border border-[#fef5f0] rounded-[8px] flex flex-col justify-center items-center relative">
-                             <span className="text-[10px] font-bold text-[#e15923] uppercase">Giảm</span>
-                             <span className="text-[16px] font-black text-[#e15923] leading-none mt-0.5">{valueText}</span>
+                          {/* Middle Info */}
+                          <div className="flex-1 min-w-0 px-4 flex flex-col justify-center">
+                            <h4 className="text-[14px] font-medium text-[#282828] truncate mb-0.5">
+                              {v.ten_khuyen_mai || v.mo_ta || `Giảm ${valueText} cho đơn hàng hợp lệ`}
+                            </h4>
+                            <p className="text-[13px] text-gray-500">
+                              {v.han_su_dung ? `Còn ${Math.max(1, Math.ceil((new Date(v.han_su_dung) - new Date()) / (1000 * 60 * 60 * 24)))} ngày` : 'Không giới hạn'}
+                            </p>
+                          </div>
+                          
+                          {/* Right Button */}
+                          <div className="flex-shrink-0 pl-2 pr-1">
+                            <span className="text-[14px] font-bold text-[#e15923]">Dùng</span>
                           </div>
                         </div>
                       )

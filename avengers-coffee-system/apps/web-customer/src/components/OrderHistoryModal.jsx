@@ -6,6 +6,7 @@ import { queryKeys } from '../lib/queryKeys';
 import ReviewForm from './ReviewForm';
 import OrderTrackingPage from '../pages/features_thaian/OrderTrackingPage';
 import { useCart } from '../context/CartContext';
+import CartEditModal from './CartEditModal';
 
 const ORDER_STATUS_LABEL = {
   MOI_TAO: 'Mới tạo',
@@ -119,6 +120,8 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
   const [editOrderId, setEditOrderId] = useState(null);
   const [reviewingProduct, setReviewingProduct] = useState(null);
   const [trackingOrderId, setTrackingOrderId] = useState(null);
+  const [editingItemIndex, setEditingItemIndex] = useState(null);
+  const [editingProduct, setEditingProduct] = useState(null);
   const [editForm, setEditForm] = useState({
     diaChi: '',
     khungGio: '',
@@ -244,6 +247,12 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
         soLuong: Number(item.so_luong || 0),
         kichCo: item.kich_co || 'Nhỏ',
         hinhAnhUrl: item.hinh_anh_url || '',
+        toppings: item.toppings || [],
+        luongDa: item.luong_da || '',
+        doNgot: item.do_ngot || '',
+        ghiChu: item.ghi_chu || '',
+        loaiSua: item.loai_sua || '',
+        custom_attributes: item.custom_attributes || {},
       })),
     });
   };
@@ -276,6 +285,13 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
               tenSanPham: product.ten_san_pham,
               giaBan: Number(product.gia_ban || 0),
               hinhAnhUrl: product.hinh_anh_url || '',
+              kichCo: 'Nhỏ',
+              toppings: [],
+              luongDa: '',
+              doNgot: '',
+              ghiChu: '',
+              loaiSua: '',
+              custom_attributes: {},
             }
           : item,
       ),
@@ -302,6 +318,12 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
           soLuong: 1,
           kichCo: 'Nhỏ',
           hinhAnhUrl: fallbackProduct.hinh_anh_url || '',
+          toppings: [],
+          luongDa: '',
+          doNgot: '',
+          ghiChu: '',
+          loaiSua: '',
+          custom_attributes: {},
         },
       ],
     }));
@@ -314,6 +336,33 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
     }));
   };
 
+  const moBangSuaTuyChon = (idx, item) => {
+    const product = menuProducts.find((p) => Number(p.ma_san_pham) === item.maSanPham);
+    if (!product) return;
+    setEditingProduct(product);
+    setEditingItemIndex(idx);
+  };
+
+  const handleSaveEditItemOptions = (newItem) => {
+    setEditForm((prev) => {
+      const newItems = [...prev.items];
+      const target = newItems[editingItemIndex];
+      newItems[editingItemIndex] = {
+        ...target,
+        kichCo: newItem.size,
+        luongDa: newItem.luong_da,
+        doNgot: newItem.do_ngot,
+        loaiSua: newItem.loai_sua,
+        toppings: newItem.toppings,
+        custom_attributes: newItem.custom_attributes,
+        giaBan: newItem.gia_ban,
+      };
+      return { ...prev, items: newItems };
+    });
+    setEditingItemIndex(null);
+    setEditingProduct(null);
+  };
+
   const luuSuaDon = () => {
     const normalizedItems = editForm.items
       .map((item) => ({
@@ -323,6 +372,12 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
         gia_ban: Number(item.giaBan || 0),
         kich_co: String(item.kichCo || '').trim() || null,
         hinh_anh_url: String(item.hinhAnhUrl || '').trim() || null,
+        toppings: item.toppings || [],
+        luong_da: item.luongDa || null,
+        do_ngot: item.doNgot || null,
+        loai_sua: item.loaiSua || null,
+        ghi_chu: item.ghiChu || null,
+        custom_attributes: item.custom_attributes || {},
       }))
       .filter((item) => item.so_luong > 0);
 
@@ -554,6 +609,19 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                                     <div>
                                       <p className="text-sm font-bold text-gray-700">{item.ten_san_pham}</p>
                                       <p className="text-xs font-semibold text-gray-500">Size: {item.kich_co || 'Nhỏ'} • SL: {item.so_luong}</p>
+                                      {item.toppings?.length > 0 && (
+                                        <p className="text-[11px] font-semibold text-gray-500 mt-0.5">Topping: {item.toppings.join(', ')}</p>
+                                      )}
+                                      {(item.luong_da || item.do_ngot) && (
+                                        <p className="text-[11px] font-semibold text-gray-500 mt-0.5">
+                                          {item.luong_da ? `Đá: ${item.luong_da}` : ''} 
+                                          {item.luong_da && item.do_ngot ? ' | ' : ''}
+                                          {item.do_ngot ? `Ngọt: ${item.do_ngot}` : ''}
+                                        </p>
+                                      )}
+                                      {item.ghi_chu && (
+                                        <p className="text-[11px] italic font-semibold text-tch-orange mt-0.5">Ghi chú: {item.ghi_chu}</p>
+                                      )}
                                     </div>
                                   </div>
                                   <span className="text-sm font-black text-tch-orange">{fmtMoney(item.gia_ban * item.so_luong)}</span>
@@ -584,9 +652,9 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                             <div className="mt-4 rounded-2xl border border-orange-100 bg-orange-50/50 p-4">
                               <p className="text-xs font-black uppercase tracking-widest text-gray-500">Chỉnh sửa đơn COD trước khi xác nhận</p>
                               <div className="mt-3 space-y-3">
-                                {editForm.items.map((item) => (
+                                {editForm.items.map((item, idx) => (
                                   <div key={item.lineId} className="space-y-2 rounded-xl bg-white px-3 py-3">
-                                    <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_120px_80px_auto] md:items-center">
+                                    <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_auto_80px_auto] md:items-center">
                                       <select
                                         value={item.maSanPham}
                                         onChange={(e) => capNhatMonSuaDon(item.lineId, e.target.value)}
@@ -598,21 +666,13 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                                           </option>
                                         ))}
                                       </select>
-                                      <select
-                                        value={item.kichCo}
-                                        onChange={(e) =>
-                                          setEditForm((prev) => ({
-                                            ...prev,
-                                            items: prev.items.map((x) =>
-                                              x.lineId === item.lineId ? { ...x, kichCo: e.target.value } : x,
-                                            ),
-                                          }))
-                                        }
-                                        className="rounded-lg border border-gray-200 px-2 py-2 text-xs font-bold text-gray-700 outline-none focus:border-tch-orange"
+                                      <button
+                                        type="button"
+                                        onClick={() => moBangSuaTuyChon(idx, item)}
+                                        className="rounded-lg border border-gray-200 px-3 py-2 text-[11px] font-black uppercase tracking-wide text-gray-700 hover:bg-gray-50"
                                       >
-                                        <option value="Nhỏ">Size Nhỏ</option>
-                                        <option value="Vừa">Size Vừa</option>
-                                      </select>
+                                        Tùy chọn
+                                      </button>
                                       <div className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-2 py-1">
                                         <button
                                           type="button"
@@ -638,9 +698,19 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                                         Xóa
                                       </button>
                                     </div>
-                                    <div className="flex items-center justify-between text-xs font-semibold text-gray-500">
-                                      <span>{item.tenSanPham}</span>
-                                      <span>{fmtMoney(Number(item.giaBan || 0) * Number(item.soLuong || 0))}</span>
+                                    <div className="flex items-start justify-between text-xs font-semibold text-gray-500">
+                                      <div className="flex flex-col gap-0.5">
+                                        <span>Size: {item.kichCo || 'Nhỏ'}</span>
+                                        {item.toppings?.length > 0 && <span className="text-[10px]">Topping: {item.toppings.join(', ')}</span>}
+                                        {(item.luongDa || item.doNgot) && (
+                                          <span className="text-[10px]">
+                                            {item.luongDa ? `Đá: ${item.luongDa}` : ''} 
+                                            {item.luongDa && item.doNgot ? ' | ' : ''}
+                                            {item.doNgot ? `Ngọt: ${item.doNgot}` : ''}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span className="mt-0.5 text-tch-orange">{fmtMoney(Number(item.giaBan || 0) * Number(item.soLuong || 0))}</span>
                                     </div>
                                   </div>
                                 ))}
@@ -834,6 +904,26 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
           onSaved={(message) => setActionMessage(message)}
           onDeleted={(message) => setActionMessage(message)}
           onClose={() => setReviewingProduct(null)}
+        />
+      )}
+
+      {editingItemIndex !== null && editingProduct && (
+        <CartEditModal
+          cartItem={{
+            size: editForm.items[editingItemIndex].kichCo,
+            luong_da: editForm.items[editingItemIndex].luongDa,
+            do_ngot: editForm.items[editingItemIndex].doNgot,
+            loai_sua: editForm.items[editingItemIndex].loaiSua,
+            toppings: editForm.items[editingItemIndex].toppings,
+            custom_attributes: editForm.items[editingItemIndex].custom_attributes,
+          }}
+          product={editingProduct}
+          isOpen={true}
+          onClose={() => {
+            setEditingItemIndex(null);
+            setEditingProduct(null);
+          }}
+          onSave={handleSaveEditItemOptions}
         />
       )}
     </div>
