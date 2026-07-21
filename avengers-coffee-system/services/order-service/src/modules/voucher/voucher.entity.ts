@@ -45,6 +45,41 @@ export class Voucher {
   @Column({ type: 'varchar', default: 'ACTIVE' })
   trang_thai: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  ten_voucher: string | null;
+
+  // 'PUBLIC' (mã công khai) | 'TEMPLATE' (template dùng cho chương trình nội bộ)
+  @Column({ type: 'varchar', default: 'PUBLIC' })
+  loai_phan_phoi: string;
+
+  // Chuỗi ngữ cảnh sử dụng cách nhau dấu phẩy: TIER_UP, LUCKY_WHEEL, BIRTHDAY, FREESHIP
+  @Column({ type: 'varchar', nullable: true })
+  ngu_canh_su_dung: string | null;
+
+  // Số ngày hiệu lực sau khi cấp mã cho khách (dành cho TEMPLATE)
+  @Column({ type: 'int', default: 30, nullable: true })
+  so_ngay_hieu_luc: number | null;
+
+  // Giới hạn mỗi người sử dụng bao nhiêu lần (dành cho PUBLIC)
+  @Column({ type: 'int', default: 1, nullable: true })
+  gioi_han_moi_nguoi: number | null;
+
+  // Tên sản phẩm tặng kèm (khi loai = FREE_ITEM)
+  @Column({ type: 'varchar', nullable: true })
+  ten_san_pham_tang: string | null;
+
+  // Ngày bắt đầu hiệu lực
+  @Column({ type: 'timestamp', nullable: true })
+  ngay_bat_dau: Date | null;
+
+  // Hiển thị cho khách hàng trên trang khuyến mãi công khai
+  @Column({ type: 'boolean', default: true })
+  hien_thi_cho_khach: boolean;
+
+  // URL hình ảnh banner
+  @Column({ type: 'varchar', nullable: true })
+  hinh_anh: string | null;
+
   @CreateDateColumn()
   ngay_tao: Date;
 
