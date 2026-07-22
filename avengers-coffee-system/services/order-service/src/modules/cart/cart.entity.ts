@@ -27,4 +27,19 @@ export class CartItem {
 
   @Column({ default: 1 })
   so_luong: number;
+
+  @Column({ type: 'jsonb', default: [] })
+  toppings?: string[];
+
+  @Column({ type: 'varchar', nullable: true })
+  luong_da?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  do_ngot?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  loai_sua?: string;
+
+  @Column({ type: 'jsonb', default: {} })
+  custom_attributes?: Record<string, any>;
 }

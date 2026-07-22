@@ -38,6 +38,9 @@ import { ShipperSchedule } from './modules/shipper/entities/shipper-schedule.ent
 import { ShipperException } from './modules/shipper/entities/shipper-exception.entity';
 import { FeaturesThaianModule } from './modules/shipper/features_thaian/features_thaian.module';
 import { DeliveryTracking } from './modules/shipper/features_thaian/delivery-tracking.entity';
+import { CustomerWallet } from './modules/customer-wallet/entities/customer-wallet.entity';
+import { CustomerWalletTransaction } from './modules/customer-wallet/entities/customer-wallet-transaction.entity';
+import { CustomerWalletModule } from './modules/customer-wallet/customer-wallet.module';
 
 import { BranchReview } from './entities/branch-review.entity';
 import { BranchReviewService } from './services/branch-review.service';
@@ -109,6 +112,8 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
             SurveyForm,
             SurveyResponse,
             BranchReview,
+            CustomerWallet,
+            CustomerWalletTransaction,
           ],
           synchronize: true,
         };
@@ -124,6 +129,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
     FavoriteModule,
     ShipperModule,
     FeaturesThaianModule,
+    CustomerWalletModule,
   ],
   controllers: [AppController, ReviewController, SurveyController, BranchReviewController],
   providers: [AppService, ReviewService, SurveyService, BranchReviewService],

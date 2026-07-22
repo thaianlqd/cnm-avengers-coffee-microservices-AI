@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { View, StyleSheet, TouchableOpacity, Text, SafeAreaView, Linking, Platform, Alert, ScrollView } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, Text, SafeAreaView, Linking, Platform, Alert, ScrollView, Modal, Image } from 'react-native'
 import * as Location from 'expo-location'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, radius, spacing, shadows, typography } from '../theme'
-import { useShipper } from '../context/ShipperContext'
+import { useShipper, globalState } from '../context/ShipperContext'
 import apiClient from '../lib/apiClient'
 
 let MapView, Marker, Polyline
@@ -45,6 +45,19 @@ function calcDistance(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
+function getManeuverText(step) {
+  if (!step || !step.maneuver) return 'Tiếp tục di chuyển'
+  const { type, modifier } = step.maneuver
+  const road = step.name || 'đường phía trước'
+  
+  if (type === 'turn') {
+    if (modifier?.includes('left')) return `↰ Rẽ trái vào ${road}`
+    if (modifier?.includes('right')) return `↱ Rẽ phải vào ${road}`
+  }
+  if (type === 'arrive') return `📍 Đã đến ${road}`
+  return `↑ Đi tiếp trên ${road}`
+}
+
 export function MapScreen({ route, navigation }) {
   const { delivery } = route.params
   const { shipper } = useShipper()
@@ -58,8 +71,19 @@ export function MapScreen({ route, navigation }) {
   const [selectedRouteStoreIndex, setSelectedRouteStoreIndex] = useState(0)
   const [selectedRouteCustomerIndex, setSelectedRouteCustomerIndex] = useState(0)
   
+  const [currentStepText, setCurrentStepText] = useState('Đang tìm đường...')
+  const [etaText, setEtaText] = useState('')
+  const [nextManeuverLocation, setNextManeuverLocation] = useState(null)
+  
+  const [showPoDModal, setShowPoDModal] = useState(false);
+  const [podImage, setPodImage] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const isSimulatingRef = useRef(false)
   const simulationInterval = useRef(null)
+  
+  const activeStepsRef = useRef([])
+  const currentStepIndexRef = useRef(0)
 
   const branchCode = delivery?.order?.co_so_ma || delivery?.branch_code;
   const branchInfo = getBranchInfo(branchCode);
@@ -106,15 +130,23 @@ export function MapScreen({ route, navigation }) {
 
       // Fetch OSRM routes to Store (Shipper -> Store)
       try {
-        const resStore = await fetch(`http://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${storeLng},${storeLat}?alternatives=true&geometries=geojson&overview=full`);
+        const resStore = await fetch(`http://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${storeLng},${storeLat}?alternatives=true&geometries=geojson&overview=full&steps=true`);
         const dataStore = await resStore.json();
         if (dataStore.code === 'Ok' && dataStore.routes) {
           const parsedStore = dataStore.routes.map(r => ({
             distance: r.distance / 1000,
             duration: r.duration / 60,
-            coordinates: r.geometry.coordinates.map(c => ({ latitude: c[1], longitude: c[0] }))
+            coordinates: r.geometry.coordinates.map(c => ({ latitude: c[1], longitude: c[0] })),
+            steps: r.legs[0]?.steps || []
           }));
           setRoutesToStore(parsedStore);
+          if (delivery?.status === 'PICKING_UP' || delivery?.status === 'CONFIRMED') {
+            activeStepsRef.current = parsedStore[0]?.steps || [];
+            currentStepIndexRef.current = 0;
+            if (activeStepsRef.current.length > 0) {
+              setCurrentStepText(getManeuverText(activeStepsRef.current[0]));
+            }
+          }
         }
       } catch (err) {
         console.warn('OSRM error (store):', err);
@@ -122,16 +154,27 @@ export function MapScreen({ route, navigation }) {
 
       // Fetch OSRM routes to Customer (Store -> Customer)
       try {
-        const resCust = await fetch(`http://router.project-osrm.org/route/v1/driving/${storeLng},${storeLat};${destLng},${destLat}?alternatives=true&geometries=geojson&overview=full`);
+        const resCust = await fetch(`http://router.project-osrm.org/route/v1/driving/${storeLng},${storeLat};${destLng},${destLat}?alternatives=true&geometries=geojson&overview=full&steps=true`);
         const dataCust = await resCust.json();
         if (dataCust.code === 'Ok' && dataCust.routes) {
           const parsedCust = dataCust.routes.map(r => ({
             distance: r.distance / 1000,
             duration: r.duration / 60,
-            coordinates: r.geometry.coordinates.map(c => ({ latitude: c[1], longitude: c[0] }))
+            coordinates: r.geometry.coordinates.map(c => ({ latitude: c[1], longitude: c[0] })),
+            steps: r.legs[0]?.steps || []
           }));
           setRoutesToCustomer(parsedCust);
-          if (parsedCust.length > 0) setDistance(parsedCust[0].distance);
+          if (parsedCust.length > 0) {
+            setDistance(parsedCust[0].distance);
+            setEtaText(formatETA(parsedCust[0].distance));
+            if (delivery?.status !== 'PICKING_UP' && delivery?.status !== 'CONFIRMED') {
+              activeStepsRef.current = parsedCust[0]?.steps || [];
+              currentStepIndexRef.current = 0;
+              if (activeStepsRef.current.length > 0) {
+                setCurrentStepText(getManeuverText(activeStepsRef.current[0]));
+              }
+            }
+          }
         }
       } catch (err) {
         console.warn('OSRM error (customer):', err);
@@ -143,6 +186,8 @@ export function MapScreen({ route, navigation }) {
           if (isSimulatingRef.current) return; // Bỏ qua GPS thật nếu đang giả lập
           
           setLocation(newLoc)
+          updateNavInstruction(newLoc.coords.latitude, newLoc.coords.longitude);
+
           const newD = calcDistance(newLoc.coords.latitude, newLoc.coords.longitude, destLat, destLng)
           setDistance(newD)
           if (shipper?.id) {
@@ -158,22 +203,63 @@ export function MapScreen({ route, navigation }) {
     return () => { 
       if (sub) sub.remove();
       if (simulationInterval.current) clearInterval(simulationInterval.current);
+      globalState.isSimulating = false;
     }
   }, [])
+
+  const updateNavInstruction = (lat, lng) => {
+    const steps = activeStepsRef.current;
+    if (!steps || steps.length === 0) return;
+
+    let minD = Infinity;
+    let closestIdx = currentStepIndexRef.current;
+    
+    // Tìm step gần nhất kể từ step hiện tại trở đi
+    for (let i = currentStepIndexRef.current; i < steps.length; i++) {
+      const step = steps[i];
+      if (step.maneuver && step.maneuver.location) {
+        const d = calcDistance(lat, lng, step.maneuver.location[1], step.maneuver.location[0]);
+        if (d < minD) {
+          minD = d;
+          closestIdx = i;
+        }
+      }
+    }
+
+    // Nếu khoảng cách đến step tiếp theo rất gần (< 50m) thì tiến lên step tiếp theo
+    if (minD < 0.05 && closestIdx + 1 < steps.length) {
+       closestIdx = closestIdx + 1;
+    }
+
+    currentStepIndexRef.current = closestIdx;
+    setCurrentStepText(getManeuverText(steps[closestIdx]));
+    
+    if (steps[closestIdx]?.maneuver?.location) {
+      setNextManeuverLocation({
+        latitude: steps[closestIdx].maneuver.location[1],
+        longitude: steps[closestIdx].maneuver.location[0]
+      });
+    }
+  };
 
   const simulateMovement = (targetLat, targetLng) => {
     if (!shipper?.id || !location) return;
     
     isSimulatingRef.current = true;
+    globalState.isSimulating = true;
     if (simulationInterval.current) clearInterval(simulationInterval.current);
     
     let pathCoords = [];
     if (targetLat === destLat && targetLng === destLng && routesToCustomer.length > 0) {
       // Đi tới khách -> dùng tuyến đường từ Shop tới Khách
       pathCoords = routesToCustomer[selectedRouteCustomerIndex].coordinates;
+      activeStepsRef.current = routesToCustomer[selectedRouteCustomerIndex].steps;
+      currentStepIndexRef.current = 0;
     } else if (targetLat === storeLat && targetLng === storeLng && routesToStore.length > 0) {
       // Đi tới shop -> dùng tuyến đường từ Vị trí tới Shop
       pathCoords = routesToStore[selectedRouteStoreIndex].coordinates;
+      activeStepsRef.current = routesToStore[selectedRouteStoreIndex].steps;
+      currentStepIndexRef.current = 0;
     } else {
       pathCoords = [
         { latitude: location.coords.latitude, longitude: location.coords.longitude },
@@ -203,6 +289,7 @@ export function MapScreen({ route, navigation }) {
       
       const newLoc = { coords: { latitude: newLat, longitude: newLng } };
       setLocation(newLoc);
+      updateNavInstruction(newLat, newLng);
       
       if (currentStep % 25 === 0 || currentStep === steps) {
         apiClient.patch(`/shippers/${shipper.id}/location`, {
@@ -234,20 +321,36 @@ export function MapScreen({ route, navigation }) {
     Linking.openURL(`tel:${phone}`)
   }
 
-  const handleCompleteDelivery = async () => {
+  const handleCompleteDelivery = () => {
+    setShowPoDModal(true);
+  };
+
+  const handleSimulateCamera = () => {
+    setPodImage('https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?w=500&q=80');
+  };
+
+  const submitCompleteDelivery = async () => {
     if (!shipper?.id || !delivery?.id) return;
     
+    setIsSubmitting(true);
     try {
       await apiClient.post(`/shippers/${shipper.id}/deliveries/${delivery.id}/complete`, {
         latitude: location?.coords?.latitude || destLat,
         longitude: location?.coords?.longitude || destLng,
+        proof_image_url: podImage
       });
       
       Alert.alert('Thành công', 'Đã hoàn thành đơn hàng!', [
-        { text: 'OK', onPress: () => navigation.goBack() }
+        { text: 'OK', onPress: () => {
+            setShowPoDModal(false);
+            navigation.goBack();
+          } 
+        }
       ]);
     } catch (err) {
       Alert.alert('Lỗi', err?.response?.data?.message || 'Không thể hoàn thành đơn hàng.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -261,7 +364,7 @@ export function MapScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       {MapView && (
-        <MapView style={styles.map} region={mapRegion} showsUserLocation={!isSimulatingRef.current} showsMyLocationButton>
+        <MapView style={styles.map} region={mapRegion} showsUserLocation={false} showsMyLocationButton>
           <Marker coordinate={{ latitude: storeLat, longitude: storeLng }} title="Cửa hàng Avengers" description="Lấy hàng tại đây">
             <View style={styles.markerStore}>
               <Ionicons name="storefront" size={20} color={colors.surface} />
@@ -274,11 +377,21 @@ export function MapScreen({ route, navigation }) {
             </View>
           </Marker>
 
-          {isSimulatingRef.current && location && (
-            <Marker coordinate={{ latitude: location.coords.latitude, longitude: location.coords.longitude }} title="Shipper giả lập">
+          {location && (
+            <Marker coordinate={{ latitude: location.coords.latitude, longitude: location.coords.longitude }} title="Shipper" zIndex={100}>
               <View style={styles.markerShipper}>
                 <Text style={{fontSize: 20}}>🛵</Text>
               </View>
+            </Marker>
+          )}
+
+          {nextManeuverLocation && (
+            <Marker coordinate={nextManeuverLocation} title="Điểm rẽ tiếp theo" zIndex={50}>
+              <View style={{
+                width: 16, height: 16, borderRadius: 8, backgroundColor: '#ef4444', 
+                borderWidth: 2, borderColor: '#fff',
+                shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 2
+              }} />
             </Marker>
           )}
 
@@ -305,7 +418,7 @@ export function MapScreen({ route, navigation }) {
               <Polyline
                 key={`cust-route-${index}`}
                 coordinates={route.coordinates}
-                strokeColor={isSelected ? colors.primary : '#fdba74'} // Orange for customer
+                strokeColor={isSelected ? '#3b82f6' : '#93c5fd'} // Blue for customer
                 strokeWidth={isSelected ? 6 : 4}
                 zIndex={isSelected ? 10 : 2}
                 tappable={true}
@@ -334,7 +447,7 @@ export function MapScreen({ route, navigation }) {
       )}
 
       {/* Header overlay */}
-      <SafeAreaView style={styles.headerWrap}>
+      <SafeAreaView style={styles.headerWrap} pointerEvents="box-none">
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={24} color={colors.text} />
@@ -345,6 +458,14 @@ export function MapScreen({ route, navigation }) {
           </View>
           <View style={{ width: 40 }} />
         </View>
+
+        {/* Turn-by-turn instruction */}
+        {currentStepText ? (
+          <View style={styles.navInstruction}>
+            <Text style={styles.navInstructionText}>{currentStepText}</Text>
+            {etaText ? <Text style={styles.navEtaText}>{etaText} • {distance?.toFixed(1)}km</Text> : null}
+          </View>
+        ) : null}
         
         {/* Nút giả lập demo - hiển thị trên cùng để dễ nhấn */}
         <View style={styles.demoControls}>
@@ -354,14 +475,66 @@ export function MapScreen({ route, navigation }) {
           <TouchableOpacity style={[styles.demoBtn, {backgroundColor: colors.danger}]} onPress={() => simulateMovement(destLat, destLng)}>
              <Text style={styles.demoBtnText}>Tới Khách</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.demoBtn, {backgroundColor: '#6b7280'}]} onPress={() => { isSimulatingRef.current = false; }}>
+
+          {(delivery?.status === 'PICKING_UP' || delivery?.status === 'CONFIRMED') && (
+            <TouchableOpacity style={[styles.demoBtn, {backgroundColor: colors.success}]} onPress={async () => {
+              try {
+                await apiClient.post(`/shippers/${shipper.id}/deliveries/${delivery.id}/start`, {
+                  latitude: location?.coords?.latitude,
+                  longitude: location?.coords?.longitude
+                });
+                navigation.setParams({ delivery: { ...delivery, status: 'IN_TRANSIT' } });
+                Alert.alert('Thành công', 'Đã lấy hàng thành công!');
+              } catch (error) {
+                Alert.alert('Lỗi', error.response?.data?.message || 'Không thể cập nhật trạng thái');
+              }
+            }}>
+               <Text style={styles.demoBtnText}>Đã Lấy Hàng</Text>
+            </TouchableOpacity>
+          )}
+
+          {(delivery?.status === 'IN_TRANSIT' || delivery?.status === 'DANG_GIAO') && (
+            <TouchableOpacity style={[styles.demoBtn, {backgroundColor: colors.success}]} onPress={handleCompleteDelivery}>
+               <Text style={styles.demoBtnText}>Hoàn Thành</Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity style={[styles.demoBtn, {backgroundColor: '#6b7280'}]} onPress={async () => { 
+            isSimulatingRef.current = false; 
+            globalState.isSimulating = false;
+            if (simulationInterval.current) {
+              clearInterval(simulationInterval.current);
+              simulationInterval.current = null;
+            }
+            try {
+              const realLoc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+              setLocation(realLoc);
+              if (shipper?.id) {
+                apiClient.patch(`/shippers/${shipper.id}/location`, {
+                  latitude: realLoc.coords.latitude,
+                  longitude: realLoc.coords.longitude,
+                }).catch(() => {});
+              }
+            } catch (e) {
+              console.log("Could not get real location on cancel");
+            }
+          }}>
              <Text style={styles.demoBtnText}>Hủy giả lập</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.demoBtn, {backgroundColor: colors.success}]} onPress={handleCompleteDelivery}>
-             <Text style={styles.demoBtnText}>Hoàn Thành</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
+
+      {/* Floating Actions on Map */}
+      <View style={styles.floatingActions} pointerEvents="box-none">
+        {delivery?.customer_phone && (
+          <TouchableOpacity style={[styles.floatingFab, {backgroundColor: colors.success}]} onPress={callCustomer}>
+            <Ionicons name="call" size={24} color="#fff" />
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity style={[styles.floatingFab, {backgroundColor: '#3b82f6'}]} onPress={openExternalNav}>
+          <Ionicons name="navigate" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
 
       {/* Footer Panel */}
       <ScrollView style={styles.footerPanel} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
@@ -450,6 +623,49 @@ export function MapScreen({ route, navigation }) {
           )}
         </View>
       </ScrollView>
+      {/* Modal Chụp Ảnh Minh Chứng (Proof of Delivery) */}
+      <Modal visible={showPoDModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Chụp ảnh minh chứng</Text>
+            <Text style={{ color: colors.textSecondary, marginBottom: 20, textAlign: 'center' }}>
+              Vui lòng chụp ảnh gói hàng đã giao để hoàn thành đơn.
+            </Text>
+            
+            {podImage ? (
+              <Image source={{ uri: podImage }} style={styles.podPreviewImage} />
+            ) : (
+              <View style={styles.podPlaceholder}>
+                <Ionicons name="camera-outline" size={48} color={colors.textSecondary} />
+                <Text style={{ color: colors.textSecondary, marginTop: 10 }}>Chưa có ảnh</Text>
+              </View>
+            )}
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.cameraBtn} onPress={handleSimulateCamera}>
+                <Ionicons name="camera" size={20} color="#fff" />
+                <Text style={styles.cameraBtnText}>Chụp ảnh (Demo)</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.submitBtn, (!podImage || isSubmitting) && { opacity: 0.5 }]} 
+                disabled={!podImage || isSubmitting}
+                onPress={submitCompleteDelivery}
+              >
+                <Text style={styles.submitBtnText}>{isSubmitting ? 'Đang gửi...' : 'Xác nhận Giao Xong'}</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.cancelBtn} 
+                onPress={() => { setShowPoDModal(false); setPodImage(null); }}
+              >
+                <Text style={styles.cancelBtnText}>Hủy</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   )
 }
@@ -534,7 +750,120 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    width: '85%',
+    borderRadius: radius.lg,
+    padding: spacing.xl,
+    alignItems: 'center'
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: colors.text
+  },
+  podPlaceholder: {
+    width: 200,
+    height: 200,
+    backgroundColor: '#f3f4f6',
+    borderRadius: radius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
+    borderStyle: 'dashed'
+  },
+  podPreviewImage: {
+    width: 200,
+    height: 200,
+    borderRadius: radius.md,
+    marginBottom: 20,
+    resizeMode: 'cover'
+  },
+  modalActions: {
+    width: '100%',
+    gap: 12
+  },
+  cameraBtn: {
+    backgroundColor: '#8b5cf6',
+    paddingVertical: 12,
+    borderRadius: radius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8
+  },
+  cameraBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16
+  },
+  submitBtn: {
+    backgroundColor: colors.success,
+    paddingVertical: 12,
+    borderRadius: radius.md,
+    alignItems: 'center'
+  },
+  submitBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16
+  },
+  cancelBtn: {
+    paddingVertical: 12,
+    alignItems: 'center'
+  },
+  cancelBtnText: {
+    color: colors.textSecondary,
+    fontSize: 16,
+    fontWeight: '500'
+  },
   routeBtnText: {
     fontSize: 12, fontWeight: 'bold', color: colors.textSecondary,
   },
+  navInstruction: {
+    backgroundColor: colors.primary,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    ...shadows.md,
+    alignItems: 'center',
+  },
+  navInstructionText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  navEtaText: {
+    color: '#dbeafe',
+    fontSize: 14,
+    marginTop: 4,
+  },
+  floatingActions: {
+    position: 'absolute',
+    right: spacing.md,
+    bottom: 250, // above footer panel
+    gap: spacing.md,
+  },
+  floatingFab: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...shadows.lg,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
 })
+

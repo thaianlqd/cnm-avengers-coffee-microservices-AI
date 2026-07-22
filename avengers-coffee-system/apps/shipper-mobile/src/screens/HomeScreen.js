@@ -18,7 +18,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
 import * as Location from 'expo-location'
 import { LinearGradient } from 'expo-linear-gradient'
-import { useShipper } from '../context/ShipperContext'
+import { useFocusEffect } from '@react-navigation/native'
+import { useShipper, globalState } from '../context/ShipperContext'
 import apiClient from '../lib/apiClient'
 import { colors, radius, spacing, shadows, typography } from '../theme'
 import { formatCurrency, formatDateTime } from '../lib/shipperData'
@@ -28,6 +29,7 @@ const GPS_INTERVAL_MS = 10000 // broadcast vị trí mỗi 10 giây
 export function HomeScreen({ navigation }) {
   const { shipper, updateStatus } = useShipper()
   const queryClient = useQueryClient()
+  const [activeTab, setActiveTab] = useState('AVAILABLE') // 'AVAILABLE' | 'ACCEPTED'
   const [isOnline, setIsOnline] = useState(shipper?.status === 'ACTIVE')
   const [locationGranted, setLocationGranted] = useState(false)
   const [currentLocation, setCurrentLocation] = useState(null)
@@ -51,11 +53,15 @@ export function HomeScreen({ navigation }) {
       })
       const { latitude, longitude } = loc.coords
       setCurrentLocation({ latitude, longitude })
-      await apiClient.patch(`/shippers/${shipper.id}/location`, {
-        latitude,
-        longitude,
-        updated_at: new Date().toISOString(),
-      })
+      
+      // Only patch backend if we are NOT currently simulating
+      if (!globalState.isSimulating) {
+        await apiClient.patch(`/shippers/${shipper.id}/location`, {
+          latitude,
+          longitude,
+          updated_at: new Date().toISOString(),
+        })
+      }
     } catch {
       // Silent fail — GPS broadcast is best-effort
     }
@@ -119,6 +125,23 @@ export function HomeScreen({ navigation }) {
     enabled: !!shipper?.id,
     refetchInterval: 20000, // auto-refresh mỗi 20s
   })
+
+  const filteredDeliveries = React.useMemo(() => {
+    if (!deliveries) return []
+    let list = []
+    if (activeTab === 'AVAILABLE') {
+      list = deliveries.filter(d => !d._already_accepted)
+    } else {
+      list = deliveries.filter(d => d._already_accepted)
+    }
+    
+    // Luôn sort đơn mới nhất lên đầu (DESC)
+    return list.sort((a, b) => {
+      const dateA = new Date(a.assigned_at || 0).getTime();
+      const dateB = new Date(b.assigned_at || 0).getTime();
+      return dateB - dateA;
+    });
+  }, [deliveries, activeTab])
 
   // Fetch stats summary
   const { data: stats } = useQuery({
@@ -351,9 +374,9 @@ export function HomeScreen({ navigation }) {
               <Text style={styles.sectionTitle}>
                 {isOnline ? 'Đơn hàng đang chờ' : 'Đơn hàng'}
               </Text>
-              {deliveries?.length > 0 && (
+              {filteredDeliveries?.length > 0 && (
                 <View style={styles.countBadge}>
-                  <Text style={styles.countText}>{deliveries.length}</Text>
+                  <Text style={styles.countText}>{filteredDeliveries.length}</Text>
                 </View>
               )}
             </View>
@@ -363,8 +386,23 @@ export function HomeScreen({ navigation }) {
             </TouchableOpacity>
           </View>
 
+          <View style={styles.tabsContainer}>
+            <TouchableOpacity
+              style={[styles.tabBtn, activeTab === 'AVAILABLE' && styles.tabBtnActive]}
+              onPress={() => setActiveTab('AVAILABLE')}
+            >
+              <Text style={[styles.tabText, activeTab === 'AVAILABLE' && styles.tabTextActive]}>Nhận đơn</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tabBtn, activeTab === 'ACCEPTED' && styles.tabBtnActive]}
+              onPress={() => setActiveTab('ACCEPTED')}
+            >
+              <Text style={[styles.tabText, activeTab === 'ACCEPTED' && styles.tabTextActive]}>Tiếp tục giao</Text>
+            </TouchableOpacity>
+          </View>
+
           <FlatList
-            data={deliveries}
+            data={filteredDeliveries}
             keyExtractor={(item) => item.id || item.ma_don_hang}
             renderItem={renderDeliveryItem}
             contentContainerStyle={styles.listContent}
@@ -469,6 +507,34 @@ const styles = StyleSheet.create({
   refreshBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.borderLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   refreshText: { fontSize: 12, color: colors.textSecondary, fontWeight: '600' },
   listContent: { paddingBottom: spacing.xxl + 40 },
+
+  // Tabs
+  tabsContainer: {
+    flexDirection: 'row',
+    backgroundColor: colors.borderLight,
+    borderRadius: radius.md,
+    padding: 4,
+    marginBottom: spacing.md,
+  },
+  tabBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: radius.sm,
+  },
+  tabBtnActive: {
+    backgroundColor: colors.surface,
+    ...shadows.sm,
+  },
+  tabText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+  tabTextActive: {
+    color: colors.primary,
+    fontWeight: '800',
+  },
 
   // Delivery Card (VTP Style)
   card: {

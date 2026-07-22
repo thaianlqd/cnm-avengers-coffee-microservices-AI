@@ -1,4 +1,13 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+/**
+ * ChatScreen.js — AI Chat Assistant Siêu Xịn
+ * Features:
+ * - Rich message rendering: product cards, order cards, store cards, image, quick replies
+ * - AI-powered ordering flow (search → customize → cart → payment)
+ * - Order tracking in chat
+ * - Store info with directions link
+ * - Voice ordering
+ */
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 import {
   View,
   Text,
@@ -11,6 +20,9 @@ import {
   Platform,
   Animated,
   Alert,
+  Image,
+  ScrollView,
+  Linking,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
@@ -18,10 +30,10 @@ import { Audio } from 'expo-av'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useUser } from '../context/UserContext'
 import apiClient from '../lib/apiClient'
-import { getUserDisplayName, getUserId } from '../lib/customerData'
+import { getUserDisplayName, getUserId, safeArray } from '../lib/customerData'
 import { colors, spacing, shadows, radius } from '../theme'
-import VoiceOrderCard from '../components/VoiceOrderCard'
 
+// ─── Helpers ────────────────────────────────────────────────────────────────
 function formatTime(value) {
   if (!value) return ''
   const d = new Date(value)
@@ -40,29 +52,292 @@ function formatCurrency(amount) {
   return Number(amount || 0).toLocaleString('vi-VN') + 'đ'
 }
 
-function MessageBubble({ message, isOwn }) {
+function getOrderStatusLabel(status) {
+  const labels = {
+    CHO_XAC_NHAN: { label: 'Vừa tạo', color: '#f59e0b', bg: '#fef3c7', icon: 'time-outline' },
+    DA_XAC_NHAN: { label: 'Đã xác nhận', color: '#3b82f6', bg: '#eff6ff', icon: 'checkmark-circle-outline' },
+    DANG_CHUAN_BI: { label: 'Đang chuẩn bị', color: '#8b5cf6', bg: '#f5f3ff', icon: 'cafe-outline' },
+    DANG_GIAO: { label: 'Đang giao', color: '#ea8025', bg: '#fff7ed', icon: 'bicycle-outline' },
+    HOAN_THANH: { label: 'Hoàn thành', color: '#22c55e', bg: '#f0fdf4', icon: 'checkmark-done-circle-outline' },
+    DA_HUY: { label: 'Đã huỷ', color: '#ef4444', bg: '#fef2f2', icon: 'close-circle-outline' },
+  }
+  return labels[status] || { label: status || 'N/A', color: '#64748b', bg: '#f1f5f9', icon: 'help-circle-outline' }
+}
+
+// ─── QUICK REPLY CHIPS ───────────────────────────────────────────────────────
+const QUICK_REPLIES = [
+  { id: 'menu', label: '☕ Xem menu', text: 'Cho tôi xem menu đồ uống' },
+  { id: 'order', label: '🛒 Đặt hàng', text: 'Tôi muốn đặt hàng' },
+  { id: 'orders', label: '📦 Đơn hàng', text: 'Kiểm tra đơn hàng của tôi' },
+  { id: 'stores', label: '📍 Cửa hàng', text: 'Cửa hàng gần tôi ở đâu?' },
+  { id: 'voucher', label: '🎟️ Ưu đãi', text: 'Có khuyến mãi gì không?' },
+  { id: 'payment', label: '💳 Thanh toán', text: 'Phương thức thanh toán nào được hỗ trợ?' },
+]
+
+// ─── AI LOCAL HANDLER ────────────────────────────────────────────────────────
+// Xử lý thông minh tại client để generate rich messages
+function detectIntent(text) {
+  const t = text.toLowerCase().trim()
+  if (/(đơn|order|đặt rồi|trạng thái|theo dõi|giao hàng)/.test(t)) return 'orders'
+  if (/(cửa hàng|chi nhánh|địa chỉ|địa điểm|gần đây|ở đâu)/.test(t)) return 'stores'
+  if (/(menu|thực đơn|đồ uống|coffee|cà phê|trà|sữa|đồ ăn|bánh|xem)/.test(t)) return 'menu'
+  if (/(khuyến mãi|voucher|giảm giá|ưu đãi|mã)/.test(t)) return 'voucher'
+  if (/(thanh toán|payment|vnpay|tiền mặt|ví|momo|atm)/.test(t)) return 'payment'
+  if (/(đặt|mua|cho tôi|order|lấy|muốn|cần)\s+\d*\s*(ly|cái|phần|suất)/.test(t)) return 'order_intent'
+  if (/(đặt|mua|cho tôi|order|lấy|muốn|cần)/.test(t)) return 'order_intent'
+  return 'chat'
+}
+
+// ─── RICH MESSAGE TYPES ─────────────────────────────────────────────────────
+
+// Product Card dạng mini (trong chat)
+function ProductMiniCard({ product, onAddToCart }) {
   return (
-    <View style={[styles.bubbleRow, isOwn && styles.bubbleRowOwn]}>
-      {!isOwn && (
-        <View style={styles.avatarStaff}>
-          <Ionicons name="headset-outline" size={16} color={colors.primary} />
+    <Pressable
+      style={richStyles.productCard}
+      onPress={() => onAddToCart && onAddToCart(product)}
+    >
+      {product.hinh_anh_url ? (
+        <Image source={{ uri: product.hinh_anh_url }} style={richStyles.productImg} resizeMode="cover" />
+      ) : (
+        <View style={[richStyles.productImg, richStyles.productImgPlaceholder]}>
+          <Ionicons name="cafe-outline" size={22} color="#94a3b8" />
         </View>
       )}
-      <View style={[styles.bubble, isOwn ? styles.bubbleOwn : styles.bubbleOther]}>
-        {!isOwn && message.ten_nguoi_gui ? (
-          <Text style={styles.bubbleSender}>{message.ten_nguoi_gui}</Text>
-        ) : null}
-        <Text style={[styles.bubbleText, isOwn && styles.bubbleTextOwn]}>
-          {message.noi_dung}
-        </Text>
-        <Text style={[styles.bubbleTime, isOwn && styles.bubbleTimeOwn]}>
-          {formatTime(message.ngay_tao)}
-        </Text>
+      <View style={richStyles.productInfo}>
+        <Text style={richStyles.productName} numberOfLines={2}>{product.ten_san_pham}</Text>
+        <Text style={richStyles.productPrice}>{formatCurrency(product.gia_ban)}</Text>
+      </View>
+      <Pressable style={richStyles.productAddBtn} onPress={() => onAddToCart && onAddToCart(product)}>
+        <Ionicons name="add" size={18} color="#fff" />
+      </Pressable>
+    </Pressable>
+  )
+}
+
+// Order mini card (trong chat)
+function OrderMiniCard({ order, onTrack }) {
+  const status = getOrderStatusLabel(order.trang_thai_don_hang)
+  const code = (order.ma_don_hang || '').slice(0, 13) + '...'
+  return (
+    <Pressable style={richStyles.orderCard} onPress={() => onTrack && onTrack(order)}>
+      <View style={richStyles.orderCardTop}>
+        <View>
+          <Text style={richStyles.orderCode}>#{code}</Text>
+          <Text style={richStyles.orderDate}>{formatDate(order.ngay_tao || order.created_at)}</Text>
+        </View>
+        <View style={[richStyles.statusBadge, { backgroundColor: status.bg }]}>
+          <Ionicons name={status.icon} size={12} color={status.color} />
+          <Text style={[richStyles.statusText, { color: status.color }]}>{status.label}</Text>
+        </View>
+      </View>
+      <View style={richStyles.orderCardBottom}>
+        <Text style={richStyles.orderTotal}>{formatCurrency(order.tong_tien || order.total)}</Text>
+        <View style={richStyles.trackBtn}>
+          <Ionicons name="navigate-outline" size={13} color={colors.primary} />
+          <Text style={richStyles.trackBtnText}>Xem chi tiết</Text>
+        </View>
+      </View>
+    </Pressable>
+  )
+}
+
+// Store mini card (trong chat)
+function StoreMiniCard({ branch }) {
+  const openMaps = () => {
+    if (branch.map_url) Linking.openURL(branch.map_url).catch(() => {})
+  }
+  const call = () => {
+    if (branch.so_dien_thoai) Linking.openURL(`tel:${branch.so_dien_thoai}`).catch(() => {})
+  }
+  return (
+    <View style={richStyles.storeCard}>
+      <View style={richStyles.storeCardTop}>
+        <View style={richStyles.storeIcon}>
+          <Ionicons name="storefront-outline" size={18} color={colors.primary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={richStyles.storeName} numberOfLines={2}>{branch.ten_chi_nhanh}</Text>
+          <Text style={richStyles.storeAddr} numberOfLines={2}>{branch.dia_chi}</Text>
+          {branch.gio_mo_cua && (
+            <Text style={richStyles.storeHours}>🕐 {branch.gio_mo_cua} – {branch.gio_dong_cua}</Text>
+          )}
+        </View>
+      </View>
+      <View style={richStyles.storeActions}>
+        {branch.so_dien_thoai && (
+          <Pressable style={richStyles.storeBtn} onPress={call}>
+            <Ionicons name="call-outline" size={13} color={colors.primary} />
+            <Text style={richStyles.storeBtnText}>Gọi ngay</Text>
+          </Pressable>
+        )}
+        {branch.map_url && (
+          <Pressable style={[richStyles.storeBtn, richStyles.storeBtnPrimary]} onPress={openMaps}>
+            <Ionicons name="navigate-outline" size={13} color="#fff" />
+            <Text style={[richStyles.storeBtnText, { color: '#fff' }]}>Chỉ đường</Text>
+          </Pressable>
+        )}
       </View>
     </View>
   )
 }
 
+// Info card cho Payment methods
+function PaymentInfoCard() {
+  const methods = [
+    { icon: 'card-outline', color: '#0ea5e9', label: 'VNPAY', desc: 'Thẻ ATM / Internet Banking' },
+    { icon: 'qr-code-outline', color: '#3b82f6', label: 'QR Code', desc: 'Quét mã ngân hàng' },
+    { icon: 'wallet-outline', color: '#ea8025', label: 'Ví Avengers', desc: 'Nạp tiền, nhận hoàn xu' },
+    { icon: 'cash-outline', color: '#22c55e', label: 'Tiền mặt', desc: 'Thanh toán khi nhận hàng' },
+  ]
+  return (
+    <View style={richStyles.infoCard}>
+      <Text style={richStyles.infoCardTitle}>💳 Phương thức thanh toán</Text>
+      {methods.map(m => (
+        <View key={m.label} style={richStyles.infoRow}>
+          <View style={[richStyles.infoIcon, { backgroundColor: m.color + '20' }]}>
+            <Ionicons name={m.icon} size={16} color={m.color} />
+          </View>
+          <View>
+            <Text style={richStyles.infoRowLabel}>{m.label}</Text>
+            <Text style={richStyles.infoRowDesc}>{m.desc}</Text>
+          </View>
+        </View>
+      ))}
+    </View>
+  )
+}
+
+// Voucher info card
+function VoucherInfoCard({ vouchers = [] }) {
+  return (
+    <View style={richStyles.infoCard}>
+      <Text style={richStyles.infoCardTitle}>🎟️ Ưu đãi đang có</Text>
+      {vouchers.length === 0 && (
+        <Text style={{ fontSize: 13, color: '#64748b', marginTop: 6 }}>
+          Hiện chưa có voucher nào. Hãy đăng ký thành viên để nhận ưu đãi!
+        </Text>
+      )}
+      {vouchers.slice(0, 3).map((v, i) => (
+        <View key={i} style={richStyles.voucherRow}>
+          <View style={richStyles.voucherBadge}>
+            <Text style={richStyles.voucherBadgeText}>
+              {v.loai_khuyen_mai === 'PERCENT' ? `${v.gia_tri}%` : `${Math.round((v.gia_tri || 0) / 1000)}K`}
+            </Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={richStyles.voucherName} numberOfLines={1}>{v.ten_khuyen_mai || v.ma_khuyen_mai}</Text>
+            <Text style={richStyles.voucherCode}>Mã: {v.ma_khuyen_mai}</Text>
+          </View>
+        </View>
+      ))}
+    </View>
+  )
+}
+
+// ─── AI BUBBLE (Rich content) ─────────────────────────────────────────────────
+function AIBubble({ message, onProductAdd, onOrderTrack, onQuickReply }) {
+  const { text, type, products, orders, stores, vouchers } = message
+
+  return (
+    <View style={styles.aiBubbleWrap}>
+      {/* Avatar */}
+      <LinearGradient colors={['#ea8025', '#c45c10']} style={styles.aiAvatar}>
+        <Text style={{ fontSize: 14 }}>☕</Text>
+      </LinearGradient>
+
+      <View style={styles.aiBubbleBody}>
+        {/* Text message */}
+        {!!text && (
+          <View style={styles.aiBubble}>
+            <Text style={styles.aiBubbleText}>{text}</Text>
+          </View>
+        )}
+
+        {/* Product list */}
+        {products && products.length > 0 && (
+          <View style={richStyles.richBlock}>
+            <Text style={richStyles.richBlockTitle}>☕ Sản phẩm phù hợp</Text>
+            {products.map((p, i) => (
+              <ProductMiniCard key={i} product={p} onAddToCart={onProductAdd} />
+            ))}
+          </View>
+        )}
+
+        {/* Orders */}
+        {orders && orders.length > 0 && (
+          <View style={richStyles.richBlock}>
+            <Text style={richStyles.richBlockTitle}>📦 Đơn hàng gần đây</Text>
+            {orders.map((o, i) => (
+              <OrderMiniCard key={i} order={o} onTrack={onOrderTrack} />
+            ))}
+          </View>
+        )}
+
+        {/* Stores */}
+        {stores && stores.length > 0 && (
+          <View style={richStyles.richBlock}>
+            <Text style={richStyles.richBlockTitle}>📍 Cửa hàng của chúng tôi</Text>
+            {stores.map((s, i) => (
+              <StoreMiniCard key={i} branch={s} />
+            ))}
+          </View>
+        )}
+
+        {/* Payment info */}
+        {type === 'payment' && <PaymentInfoCard />}
+
+        {/* Vouchers */}
+        {type === 'voucher' && <VoucherInfoCard vouchers={vouchers || []} />}
+
+        {/* Quick reply buttons */}
+        {message.quickReplies && message.quickReplies.length > 0 && (
+          <View style={styles.quickRepliesWrap}>
+            {message.quickReplies.map(qr => (
+              <Pressable key={qr.id} style={styles.quickReplyChip} onPress={() => onQuickReply(qr.text)}>
+                <Text style={styles.quickReplyText}>{qr.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
+      </View>
+    </View>
+  )
+}
+
+// ─── USER BUBBLE ────────────────────────────────────────────────────────────
+function UserBubble({ text, time }) {
+  return (
+    <View style={styles.userBubbleRow}>
+      <View style={styles.userBubble}>
+        <Text style={styles.userBubbleText}>{text}</Text>
+        {!!time && <Text style={styles.userBubbleTime}>{time}</Text>}
+      </View>
+    </View>
+  )
+}
+
+// ─── Staff text bubble (legacy, from server) ─────────────────────────────────
+function StaffBubble({ message }) {
+  return (
+    <View style={styles.aiBubbleWrap}>
+      <View style={[styles.aiAvatar, { backgroundColor: '#e2e8f0' }]}>
+        <Ionicons name="headset-outline" size={16} color="#475569" />
+      </View>
+      <View style={styles.aiBubbleBody}>
+        {message.ten_nguoi_gui && (
+          <Text style={styles.staffName}>{message.ten_nguoi_gui}</Text>
+        )}
+        <View style={styles.aiBubble}>
+          <Text style={styles.aiBubbleText}>{message.noi_dung}</Text>
+          <Text style={styles.aiBubbleTime}>{formatTime(message.ngay_tao)}</Text>
+        </View>
+      </View>
+    </View>
+  )
+}
+
+// ─── Date separator ───────────────────────────────────────────────────────────
 function DateSeparator({ date }) {
   return (
     <View style={styles.dateSeparator}>
@@ -73,26 +348,65 @@ function DateSeparator({ date }) {
   )
 }
 
-// ─── Recording pulse animation ────────────────────────────────────────────────
+// ─── Typing indicator ─────────────────────────────────────────────────────────
+function TypingIndicator() {
+  const dot1 = useRef(new Animated.Value(0)).current
+  const dot2 = useRef(new Animated.Value(0)).current
+  const dot3 = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    const animate = (dot, delay) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(dot, { toValue: -6, duration: 300, useNativeDriver: true }),
+          Animated.timing(dot, { toValue: 0, duration: 300, useNativeDriver: true }),
+          Animated.delay(600),
+        ])
+      ).start()
+    animate(dot1, 0)
+    animate(dot2, 150)
+    animate(dot3, 300)
+  }, [])
+
+  return (
+    <View style={styles.aiBubbleWrap}>
+      <LinearGradient colors={['#ea8025', '#c45c10']} style={styles.aiAvatar}>
+        <Text style={{ fontSize: 14 }}>☕</Text>
+      </LinearGradient>
+      <View style={[styles.aiBubble, { flexDirection: 'row', gap: 4, paddingVertical: 14, paddingHorizontal: 16 }]}>
+        {[dot1, dot2, dot3].map((dot, i) => (
+          <Animated.View
+            key={i}
+            style={[styles.typingDot, { transform: [{ translateY: dot }] }]}
+          />
+        ))}
+      </View>
+    </View>
+  )
+}
+
+// ─── MIC PULSE ────────────────────────────────────────────────────────────────
 function MicPulse() {
   const scale = useRef(new Animated.Value(1)).current
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(scale, { toValue: 1.3, duration: 500, useNativeDriver: true }),
+        Animated.timing(scale, { toValue: 1.25, duration: 500, useNativeDriver: true }),
         Animated.timing(scale, { toValue: 1, duration: 500, useNativeDriver: true }),
       ])
     ).start()
   }, [])
   return (
-    <Animated.View style={[styles.micPulse, { transform: [{ scale }] }]}>
+    <Animated.View style={{ transform: [{ scale }] }}>
       <LinearGradient colors={['#ef4444', '#dc2626']} style={styles.micPulseGrad}>
-        <Ionicons name="mic" size={20} color="#fff" />
+        <Ionicons name="mic" size={22} color="#fff" />
       </LinearGradient>
     </Animated.View>
   )
 }
 
+// ─── MAIN SCREEN ──────────────────────────────────────────────────────────────
 export function ChatScreen({ navigation }) {
   const { user } = useUser()
   const userId = getUserId(user)
@@ -100,152 +414,333 @@ export function ChatScreen({ navigation }) {
   const queryClient = useQueryClient()
   const flatListRef = useRef(null)
 
-  const [messageText, setMessageText] = useState('')
+  const [inputText, setInputText] = useState('')
+  const [isTyping, setIsTyping] = useState(false)
+  const [localMessages, setLocalMessages] = useState([]) // AI messages (local)
   const [conversationId, setConversationId] = useState(null)
   const fadeAnim = useRef(new Animated.Value(0)).current
 
-  // Voice state
+  // Voice
   const [isRecording, setIsRecording] = useState(false)
   const [voiceLoading, setVoiceLoading] = useState(false)
   const recordingRef = useRef(null)
 
-  // Order intent card state
-  const [pendingOrder, setPendingOrder] = useState(null) // { transcript, items, total, message }
-  const [orderLoading, setOrderLoading] = useState(false)
-
   useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: true,
-    }).start()
+    Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start()
   }, [])
 
-  // ─── Conversations ──────────────────────────────────────────────────────────
-  const openConversationMutation = useMutation({
-    mutationFn: async () => {
-      return apiClient.post('/chat/conversations/open', {
+  // ─── Load products for suggestions ───────────────────────────────────────
+  const productsQuery = useQuery({
+    queryKey: ['customer', 'products-all'],
+    queryFn: async () => {
+      const res = await apiClient.get('/products?limit=50')
+      return safeArray(res?.items || res)
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const branchesQuery = useQuery({
+    queryKey: ['customer', 'branches-all'],
+    queryFn: async () => {
+      const res = await apiClient.get('/users/branches/public')
+      return safeArray(res?.items || res)
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const ordersQuery = useQuery({
+    queryKey: ['customer', 'orders', userId],
+    queryFn: async () => {
+      const res = await apiClient.get(`/customers/${userId}/orders?limit=5`)
+      return safeArray(res?.items || res)
+    },
+    enabled: Boolean(userId) && !String(userId).startsWith('anon-'),
+    staleTime: 30 * 1000,
+  })
+
+  const vouchersQuery = useQuery({
+    queryKey: ['customer', 'vouchers'],
+    queryFn: async () => {
+      const res = await apiClient.get('/vouchers?trang_thai=ACTIVE&limit=10')
+      return safeArray(res?.items || res)
+    },
+    staleTime: 2 * 60 * 1000,
+  })
+
+  // ─── Open conversation ────────────────────────────────────────────────────
+  const openConvMutation = useMutation({
+    mutationFn: async () =>
+      apiClient.post('/chat/conversations/open', {
         customer_user_id: userId,
         customer_name: userName,
-      })
-    },
+      }),
     onSuccess: (data) => {
-      if (data?.conversation?.ma_hoi_thoai) {
-        setConversationId(data.conversation.ma_hoi_thoai)
-      }
+      if (data?.conversation?.ma_hoi_thoai) setConversationId(data.conversation.ma_hoi_thoai)
     },
   })
 
   useEffect(() => {
-    if (userId && !conversationId) {
-      openConversationMutation.mutate()
-    }
+    if (userId && !conversationId) openConvMutation.mutate()
   }, [userId])
 
-  const messagesQuery = useQuery({
+  // ─── Server messages ──────────────────────────────────────────────────────
+  const serverMsgQuery = useQuery({
     queryKey: ['chat', 'messages', conversationId],
-    queryFn: async () => {
-      const res = await apiClient.get(
+    queryFn: async () =>
+      apiClient.get(
         `/chat/conversations/${conversationId}/messages?user_id=${encodeURIComponent(userId)}&role=CUSTOMER`
-      )
-      return res
-    },
+      ),
     enabled: Boolean(conversationId),
-    refetchInterval: 3000,
-    staleTime: 2000,
+    refetchInterval: 5000,
+    staleTime: 3000,
   })
 
-  const messages = messagesQuery.data?.items || []
-  const conversation = messagesQuery.data?.conversation || null
+  const serverMessages = serverMsgQuery.data?.items || []
 
+  // ─── Add AI greeting on first load ───────────────────────────────────────
   useEffect(() => {
-    if (conversationId && conversation?.so_tin_nhan_chua_doc_khach > 0) {
-      apiClient
-        .patch(`/chat/conversations/${conversationId}/read`, {
-          reader_user_id: userId,
-          reader_role: 'CUSTOMER',
-        })
-        .catch(() => {})
+    if (localMessages.length === 0) {
+      setLocalMessages([
+        {
+          id: 'greeting',
+          role: 'ai',
+          text: `Xin chào${userName && userName !== 'Khách' ? ` ${userName}` : ''}! 👋 Mình là trợ lý AI của Avengers Coffee.\n\nMình có thể giúp bạn:`,
+          quickReplies: QUICK_REPLIES.slice(0, 4),
+        },
+      ])
     }
-  }, [conversationId, conversation?.so_tin_nhan_chua_doc_khach])
+  }, [])
 
-  // ─── Send text message ──────────────────────────────────────────────────────
-  const sendMutation = useMutation({
-    mutationFn: async (content) => {
-      return apiClient.post(`/chat/conversations/${conversationId}/messages`, {
+  // ─── Send to server ───────────────────────────────────────────────────────
+  const sendServerMsg = useMutation({
+    mutationFn: async (content) =>
+      apiClient.post(`/chat/conversations/${conversationId}/messages`, {
         sender_user_id: userId,
         sender_name: userName,
         sender_role: 'CUSTOMER',
         content,
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['chat', 'messages', conversationId] }),
+  })
+
+  // ─── Add to cart ──────────────────────────────────────────────────────────
+  const addToCartMutation = useMutation({
+    mutationFn: async (product) =>
+      apiClient.post('/cart', {
+        ma_nguoi_dung: userId,
+        ma_san_pham: product.id || product.ma_san_pham,
+        ten_san_pham: product.ten_san_pham,
+        gia_ban: product.gia_ban,
+        hinh_anh_url: product.hinh_anh_url,
+        size: 'Nhỏ',
+        so_luong: 1,
+      }),
+    onSuccess: (_, product) => {
+      queryClient.invalidateQueries({ queryKey: ['customer', 'cart', userId] })
+      appendAIMessage({
+        id: Date.now() + 'cart',
+        role: 'ai',
+        text: `✅ Đã thêm **${product.ten_san_pham}** vào giỏ hàng!\n\nBạn có muốn tiếp tục chọn thêm món hay vào giỏ để thanh toán?`,
+        quickReplies: [
+          { id: 'more', label: '➕ Thêm món khác', text: 'Tôi muốn xem thêm menu' },
+          { id: 'cart', label: '🛒 Vào giỏ hàng', text: 'Tôi muốn thanh toán ngay' },
+        ],
       })
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['chat', 'messages', conversationId] })
+    onError: () => {
+      appendAIMessage({ id: Date.now() + 'err', role: 'ai', text: '😢 Không thể thêm vào giỏ. Vui lòng thử lại!' })
     },
   })
 
-  const handleSend = useCallback(async () => {
-    const text = messageText.trim()
-    if (!text || !conversationId || sendMutation.isPending) return
-    setMessageText('')
+  // ─── Helpers ──────────────────────────────────────────────────────────────
+  function appendAIMessage(msg) {
+    setLocalMessages(prev => [...prev, msg])
+    setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 200)
+  }
 
-    // Check if text looks like an order intent before sending as normal message
-    const orderKeywords = ['cho tôi', 'đặt', 'order', 'mua', 'lấy', 'cần', 'muốn']
-    const looksLikeOrder = orderKeywords.some((kw) => text.toLowerCase().includes(kw))
+  function appendUserMessage(text) {
+    const msg = { id: `user-${Date.now()}`, role: 'user', text, time: formatTime(new Date()) }
+    setLocalMessages(prev => [...prev, msg])
+    setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100)
+  }
 
-    if (looksLikeOrder) {
-      // Try to parse as order intent
-      setVoiceLoading(true)
-      try {
-        const result = await apiClient.post('/ai/chat/order-intent', {
-          text,
-          user_id: userId,
-        })
-        if (result?.can_order && result?.items?.length > 0) {
-          setPendingOrder({
-            transcript: null,
-            items: result.items,
-            total: result.estimated_total,
-            message: result.message,
+  // ─── Process user intent ──────────────────────────────────────────────────
+  async function processMessage(text) {
+    appendUserMessage(text)
+    setIsTyping(true)
+    await new Promise(r => setTimeout(r, 600))
+
+    try {
+      const intent = detectIntent(text)
+      const products = productsQuery.data || []
+      const branches = branchesQuery.data || []
+      const orders = ordersQuery.data || []
+      const vouchers = vouchersQuery.data || []
+
+      if (intent === 'menu' || intent === 'order_intent') {
+        // Search products
+        const textLower = text.toLowerCase()
+        let matched = products.filter(p =>
+          p.ten_san_pham?.toLowerCase().includes(textLower.replace(/^(cho tôi|mua|lấy|đặt|muốn|cần)\s+\d*\s+/, '').trim()) ||
+          p.danh_muc?.toLowerCase().includes(textLower)
+        )
+        if (matched.length === 0) matched = products.slice(0, 6) // fallback: show top 6
+
+        if (intent === 'menu') {
+          appendAIMessage({
+            id: Date.now() + 'menu',
+            role: 'ai',
+            text: `Đây là menu nổi bật của Avengers Coffee ☕\nBấm vào món để thêm vào giỏ hàng nhé!`,
+            products: matched.slice(0, 5),
+            quickReplies: [
+              { id: 'all', label: '📋 Xem tất cả', text: 'Cho tôi xem tất cả đồ uống' },
+              { id: 'food', label: '🍰 Đồ ăn', text: 'Cho tôi xem đồ ăn' },
+            ],
           })
-          // Also send as chat message so staff can see
-          sendMutation.mutate(text)
-          return
+        } else {
+          // Order intent
+          const searchTerm = textLower
+            .replace(/cho tôi|mua|lấy|đặt|muốn|cần|tôi|\d+\s*(ly|cái|phần|suất)/g, '')
+            .trim()
+          const filtered = searchTerm
+            ? products.filter(p => p.ten_san_pham?.toLowerCase().includes(searchTerm))
+            : products.slice(0, 5)
+
+          appendAIMessage({
+            id: Date.now() + 'order',
+            role: 'ai',
+            text: filtered.length > 0
+              ? `Mình tìm thấy ${filtered.length} sản phẩm phù hợp! Chọn món bạn muốn nhé 👇`
+              : `Bạn muốn đặt gì nào? Đây là menu của mình:`,
+            products: (filtered.length > 0 ? filtered : products).slice(0, 5),
+          })
         }
-      } catch {
-        // Ignore — just send as normal message
-      } finally {
-        setVoiceLoading(false)
+      } else if (intent === 'orders') {
+        if (orders.length > 0) {
+          appendAIMessage({
+            id: Date.now() + 'orders',
+            role: 'ai',
+            text: `Đây là ${Math.min(orders.length, 3)} đơn hàng gần nhất của bạn. Bấm để xem chi tiết nhé!`,
+            orders: orders.slice(0, 3),
+            quickReplies: [
+              { id: 'all-orders', label: '📦 Xem tất cả đơn', text: 'Cho tôi xem tất cả đơn hàng' },
+            ],
+          })
+        } else {
+          appendAIMessage({
+            id: Date.now() + 'no-orders',
+            role: 'ai',
+            text: `Bạn chưa có đơn hàng nào. Hãy đặt ngay thôi nào! ☕`,
+            quickReplies: [
+              { id: 'order-now', label: '🛒 Đặt hàng ngay', text: 'Tôi muốn đặt hàng' },
+            ],
+          })
+        }
+      } else if (intent === 'stores') {
+        appendAIMessage({
+          id: Date.now() + 'stores',
+          role: 'ai',
+          text: `Avengers Coffee có ${branches.length} chi nhánh trên toàn quốc. Dưới đây là một số cửa hàng:`,
+          stores: branches.slice(0, 3),
+          quickReplies: branches.length > 3 ? [
+            { id: 'more-stores', label: '📍 Xem thêm', text: 'Cho tôi xem tất cả cửa hàng' },
+          ] : [],
+        })
+      } else if (intent === 'payment') {
+        appendAIMessage({
+          id: Date.now() + 'payment',
+          role: 'ai',
+          type: 'payment',
+          text: 'Avengers Coffee hỗ trợ nhiều phương thức thanh toán tiện lợi:',
+        })
+      } else if (intent === 'voucher') {
+        appendAIMessage({
+          id: Date.now() + 'voucher',
+          role: 'ai',
+          type: 'voucher',
+          text: vouchers.length > 0
+            ? `Mình đang có ${vouchers.length} ưu đãi đặc biệt cho bạn! 🎉`
+            : 'Hiện chưa có khuyến mãi nào. Nhưng đăng ký thành viên để nhận ưu đãi độc quyền nhé!',
+          vouchers,
+        })
+      } else {
+        // Generic: send to server chat + AI response
+        if (conversationId) sendServerMsg.mutate(text)
+
+        // Try AI endpoint
+        try {
+          const aiRes = await apiClient.post('/ai/chat/order-intent', { text, user_id: userId })
+          if (aiRes?.message || aiRes?.response) {
+            appendAIMessage({
+              id: Date.now() + 'ai',
+              role: 'ai',
+              text: aiRes.message || aiRes.response,
+              quickReplies: QUICK_REPLIES.slice(0, 3),
+            })
+            return
+          }
+        } catch { /* fallback */ }
+
+        // Fallback response
+        appendAIMessage({
+          id: Date.now() + 'fallback',
+          role: 'ai',
+          text: 'Mình chưa hiểu rõ yêu cầu của bạn 😊\nHãy thử hỏi về menu, đặt hàng, cửa hàng hoặc khuyến mãi nhé!',
+          quickReplies: QUICK_REPLIES.slice(0, 4),
+        })
       }
+
+      // Navigate to cart if requested
+      if (/giỏ hàng|thanh toán ngay|checkout/.test(text.toLowerCase())) {
+        setTimeout(() => navigation.navigate('Cart'), 800)
+      }
+      // Navigate to orders screen
+      if (/tất cả đơn|xem đơn|lịch sử/.test(text.toLowerCase())) {
+        setTimeout(() => navigation.navigate('Orders'), 800)
+      }
+    } finally {
+      setIsTyping(false)
     }
+  }
 
-    sendMutation.mutate(text)
-  }, [messageText, conversationId, sendMutation.isPending, userId])
+  // ─── Handlers ─────────────────────────────────────────────────────────────
+  const handleSend = useCallback(async () => {
+    const text = inputText.trim()
+    if (!text) return
+    setInputText('')
+    await processMessage(text)
+  }, [inputText, conversationId, userId])
 
-  // ─── Voice recording ────────────────────────────────────────────────────────
+  const handleQuickReply = useCallback((text) => {
+    processMessage(text)
+  }, [conversationId, userId, productsQuery.data, branchesQuery.data, ordersQuery.data])
+
+  const handleProductAdd = useCallback((product) => {
+    if (!userId || String(userId).startsWith('anon-')) {
+      Alert.alert('Cần đăng nhập', 'Vui lòng đăng nhập để thêm vào giỏ hàng')
+      return
+    }
+    addToCartMutation.mutate(product)
+  }, [userId])
+
+  const handleOrderTrack = useCallback((order) => {
+    navigation.navigate('Orders')
+  }, [navigation])
+
+  // ─── Voice ────────────────────────────────────────────────────────────────
   const startRecording = async () => {
     try {
       const { status } = await Audio.requestPermissionsAsync()
       if (status !== 'granted') {
-        Alert.alert(
-          'Cần quyền mic',
-          'Hãy cấp quyền microphone để sử dụng tính năng đặt hàng bằng giọng nói.',
-          [{ text: 'OK' }]
-        )
+        Alert.alert('Cần quyền mic', 'Hãy cấp quyền microphone để dùng tính năng giọng nói.')
         return
       }
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      })
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      )
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true })
+      const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY)
       recordingRef.current = recording
       setIsRecording(true)
     } catch (err) {
-      console.error('startRecording error:', err)
-      Alert.alert('Lỗi', 'Không thể bật microphone. Thử lại nhé!')
+      Alert.alert('Lỗi', 'Không thể bật microphone!')
     }
   }
 
@@ -253,143 +748,94 @@ export function ChatScreen({ navigation }) {
     if (!recordingRef.current) return
     setIsRecording(false)
     setVoiceLoading(true)
-
     try {
       await recordingRef.current.stopAndUnloadAsync()
       const uri = recordingRef.current.getURI()
       recordingRef.current = null
+      if (!uri) return
 
-      if (!uri) throw new Error('No recording URI')
-
-      // Build FormData to upload audio
       const formData = new FormData()
-      formData.append('audio', {
-        uri,
-        name: 'audio.m4a',
-        type: 'audio/m4a',
-      })
+      formData.append('audio', { uri, name: 'audio.m4a', type: 'audio/m4a' })
       formData.append('user_id', userId || '')
       formData.append('language', 'vi')
 
       const result = await apiClient.postForm('/ai/voice-order', formData)
-
       if (result?.transcript) {
-        // Send transcript as chat message
-        sendMutation.mutate(`🎙️ "${result.transcript}"`)
+        await processMessage(result.transcript)
       }
-
-      if (result?.can_order && result?.items?.length > 0) {
-        setPendingOrder({
-          transcript: result.transcript,
-          items: result.items,
-          total: result.estimated_total,
-          message: result.message,
-        })
-      } else if (result?.transcript) {
-        // Intent is QUERY — send to AI chat for normal response
-        // (already sent as message above)
-      }
-    } catch (err) {
-      console.error('voice-order error:', err)
-      Alert.alert(
-        'Không nhận được giọng nói',
-        'Hãy nói rõ hơn hoặc thử lại. Ví dụ: "Cho tôi 1 ly latte ít đường"'
-      )
+    } catch {
+      Alert.alert('Lỗi', 'Không thể nhận giọng nói. Thử lại!')
     } finally {
       setVoiceLoading(false)
     }
   }
 
-  // ─── Confirm order ──────────────────────────────────────────────────────────
-  const handleConfirmOrder = async () => {
-    if (!pendingOrder) return
-    setOrderLoading(true)
-    try {
-      const items = pendingOrder.items
-        .filter((i) => i.matched)
-        .map((i) => ({
-          ma_san_pham: i.product_id,
-          ten_san_pham: i.product_name,
-          so_luong: i.quantity,
-          gia_ban: i.price,
-          ghi_chu: [i.size ? `Size ${i.size}` : '', i.note || ''].filter(Boolean).join(', '),
-        }))
-
-      await apiClient.post('/orders', {
-        ma_nguoi_dung: userId,
-        phuong_thuc_thanh_toan: 'TIEN_MAT',
-        loai_don_hang: 'DELIVERY',
-        chi_tiet_don_hang: items,
-        ghi_chu: `Đặt qua AI Voice${pendingOrder.transcript ? ': ' + pendingOrder.transcript : ''}`,
-      })
-
-      sendMutation.mutate(`✅ Đã đặt hàng thành công! Tổng: ${formatCurrency(pendingOrder.total)}`)
-      setPendingOrder(null)
-      Alert.alert('🎉 Đặt hàng thành công!', 'Đơn hàng của bạn đang được xử lý.')
-    } catch (err) {
-      Alert.alert('Lỗi đặt hàng', 'Không thể tạo đơn. Thử lại nhé!')
-    } finally {
-      setOrderLoading(false)
-    }
-  }
-
-  // ─── Group messages by date ─────────────────────────────────────────────────
-  const messagesWithDates = React.useMemo(() => {
+  // ─── Combine local + server messages ─────────────────────────────────────
+  const allMessages = useMemo(() => {
     const result = []
     let lastDate = ''
-    for (const msg of messages) {
-      const msgDate = formatDate(msg.ngay_tao)
-      if (msgDate && msgDate !== lastDate) {
-        result.push({ type: 'date', date: msgDate, id: `date-${msgDate}` })
-        lastDate = msgDate
+
+    // Server messages (staff chat)
+    const staffMsgs = serverMessages
+      .filter(m => m.vai_tro_nguoi_gui !== 'CUSTOMER')
+      .map(m => ({ ...m, _source: 'staff' }))
+
+    // Customer server messages
+    const customerServerMsgs = serverMessages
+      .filter(m => m.vai_tro_nguoi_gui === 'CUSTOMER')
+      .map(m => ({ ...m, _source: 'customerServer' }))
+
+    // Merge local + server by date logic (simplified: append local at end)
+    const combined = [
+      ...localMessages,
+      ...staffMsgs,
+    ]
+
+    // Add date separators for staff messages
+    for (const msg of combined) {
+      if (msg._source === 'staff') {
+        const d = formatDate(msg.ngay_tao)
+        if (d && d !== lastDate) {
+          result.push({ type: 'date', date: d, id: `date-${d}` })
+          lastDate = d
+        }
       }
-      result.push({ type: 'message', ...msg })
+      result.push(msg)
     }
     return result
-  }, [messages])
+  }, [localMessages, serverMessages])
 
-  const staffName = conversation?.ten_nhan_su_phu_trach || 'Tư vấn viên'
-  const isLoading = openConversationMutation.isPending || (!conversationId && !openConversationMutation.isError)
+  const isLoading = openConvMutation.isPending
 
   return (
     <Animated.View style={[styles.screen, { opacity: fadeAnim }]}>
       {/* Header */}
-      <LinearGradient colors={['#1a0a02', '#3d1a08']} style={styles.header}>
+      <View style={styles.header}>
         <Pressable onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={22} color="#fff" />
+          <Ionicons name="arrow-back" size={22} color="#1e293b" />
         </Pressable>
         <View style={styles.headerInfo}>
-          <View style={styles.headerAvatarWrap}>
-            <LinearGradient colors={['#f26b1d', '#d4560e']} style={styles.headerAvatar}>
-              <Ionicons name="headset-outline" size={20} color="#fff" />
-            </LinearGradient>
-            <View style={styles.onlineDot} />
-          </View>
+          <LinearGradient colors={['#ea8025', '#c45c10']} style={styles.headerAvatar}>
+            <Text style={{ fontSize: 18 }}>☕</Text>
+          </LinearGradient>
+          <View style={styles.onlineDot} />
           <View>
-            <Text style={styles.headerTitle}>{staffName}</Text>
-            <Text style={styles.headerSubtitle}>Hỗ trợ & Đặt hàng AI</Text>
+            <Text style={styles.headerTitle}>Trợ lý Avengers Coffee</Text>
+            <Text style={styles.headerSubtitle}>🟢 Luôn sẵn sàng hỗ trợ bạn</Text>
           </View>
         </View>
-        {/* Voice hint badge */}
-        <View style={styles.voiceHint}>
-          <Ionicons name="mic-outline" size={12} color="#f26b1d" />
-          <Text style={styles.voiceHintText}>Voice Order</Text>
-        </View>
-      </LinearGradient>
+        <Pressable style={styles.voiceBadge} onPressIn={startRecording} onPressOut={stopRecordingAndProcess}>
+          <Ionicons name={isRecording ? 'stop' : 'mic-outline'} size={16} color={isRecording ? '#ef4444' : colors.primary} />
+          <Text style={[styles.voiceBadgeText, isRecording && { color: '#ef4444' }]}>
+            {isRecording ? 'Đang nghe...' : 'Voice'}
+          </Text>
+        </Pressable>
+      </View>
 
-      {/* Loading */}
       {isLoading ? (
         <View style={styles.loadingWrap}>
           <ActivityIndicator color={colors.primary} size="large" />
-          <Text style={styles.loadingText}>Đang kết nối với hỗ trợ...</Text>
-        </View>
-      ) : openConversationMutation.isError ? (
-        <View style={styles.loadingWrap}>
-          <Ionicons name="cloud-offline-outline" size={48} color={colors.muted} />
-          <Text style={styles.loadingText}>Không thể kết nối. Vui lòng thử lại.</Text>
-          <Pressable onPress={() => openConversationMutation.mutate()} style={styles.retryBtn}>
-            <Text style={styles.retryBtnText}>Thử lại</Text>
-          </Pressable>
+          <Text style={styles.loadingText}>Đang kết nối...</Text>
         </View>
       ) : (
         <KeyboardAvoidingView
@@ -400,48 +846,25 @@ export function ChatScreen({ navigation }) {
           {/* Messages */}
           <FlatList
             ref={flatListRef}
-            data={messagesWithDates}
-            keyExtractor={(item) => String(item.id || item.date)}
+            data={allMessages}
+            keyExtractor={(item, i) => String(item.id || item.ma_tin_nhan || i)}
             contentContainerStyle={styles.messagesList}
             showsVerticalScrollIndicator={false}
-            onContentSizeChange={() => {
-              flatListRef.current?.scrollToEnd({ animated: true })
-            }}
-            ListFooterComponent={
-              pendingOrder ? (
-                <VoiceOrderCard
-                  transcript={pendingOrder.transcript}
-                  items={pendingOrder.items}
-                  total={pendingOrder.total}
-                  message={pendingOrder.message}
-                  onConfirm={handleConfirmOrder}
-                  onDismiss={() => setPendingOrder(null)}
-                  loading={orderLoading}
-                />
-              ) : null
-            }
-            ListEmptyComponent={
-              <View style={styles.emptyChat}>
-                <View style={styles.emptyChatIcon}>
-                  <Ionicons name="chatbubbles-outline" size={48} color={colors.border} />
-                </View>
-                <Text style={styles.emptyChatTitle}>Xin chào! 👋</Text>
-                <Text style={styles.emptyChatText}>
-                  Chat hoặc nhấn 🎙️ để đặt hàng bằng giọng nói!{'\n'}
-                  Ví dụ: "Cho tôi 2 ly latte ít đường"
-                </Text>
-              </View>
-            }
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            ListFooterComponent={isTyping ? <TypingIndicator /> : null}
             renderItem={({ item }) => {
-              if (item.type === 'date') {
-                return <DateSeparator date={item.date} />
-              }
-              return (
-                <MessageBubble
+              if (item.type === 'date') return <DateSeparator date={item.date} />
+              if (item._source === 'staff') return <StaffBubble message={item} />
+              if (item.role === 'user') return <UserBubble text={item.text} time={item.time} />
+              if (item.role === 'ai') return (
+                <AIBubble
                   message={item}
-                  isOwn={item.vai_tro_nguoi_gui === 'CUSTOMER'}
+                  onProductAdd={handleProductAdd}
+                  onOrderTrack={handleOrderTrack}
+                  onQuickReply={handleQuickReply}
                 />
               )
+              return null
             }}
           />
 
@@ -454,22 +877,38 @@ export function ChatScreen({ navigation }) {
             </View>
           )}
 
-          {/* Voice processing indicator */}
+          {/* Voice processing */}
           {voiceLoading && !isRecording && (
             <View style={styles.voiceProcessing}>
               <ActivityIndicator color={colors.primary} size="small" />
-              <Text style={styles.voiceProcessingText}>AI đang phân tích...</Text>
+              <Text style={styles.voiceProcessingText}>AI đang phân tích giọng nói...</Text>
             </View>
+          )}
+
+          {/* Quick replies row (always-visible shortcuts) */}
+          {!isTyping && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.quickBarContent}
+              style={styles.quickBar}
+            >
+              {QUICK_REPLIES.map(qr => (
+                <Pressable key={qr.id} style={styles.quickBarChip} onPress={() => handleQuickReply(qr.text)}>
+                  <Text style={styles.quickBarChipText}>{qr.label}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
           )}
 
           {/* Input Bar */}
           <View style={styles.inputBar}>
             <View style={styles.inputWrap}>
               <TextInput
-                value={messageText}
-                onChangeText={setMessageText}
-                placeholder='Nhập hoặc nói "Cho tôi 2 ly latte..."'
-                placeholderTextColor={colors.placeholder}
+                value={inputText}
+                onChangeText={setInputText}
+                placeholder="Hỏi AI về menu, giá, khuyến mãi..."
+                placeholderTextColor="#94a3b8"
                 multiline
                 maxLength={500}
                 style={styles.textInput}
@@ -478,48 +917,35 @@ export function ChatScreen({ navigation }) {
               />
             </View>
 
-            {/* Mic button — hold to record */}
+            {/* Mic button */}
             <Pressable
               onPressIn={startRecording}
               onPressOut={stopRecordingAndProcess}
               disabled={voiceLoading}
-              style={({ pressed }) => [
-                styles.micBtn,
-                isRecording && styles.micBtnRecording,
-                pressed && { opacity: 0.85 },
-              ]}
+              style={styles.iconBtn}
             >
               <LinearGradient
-                colors={isRecording ? ['#ef4444', '#dc2626'] : ['#1a0a02', '#3d1a08']}
-                style={styles.micBtnGradient}
+                colors={isRecording ? ['#ef4444', '#dc2626'] : ['#f1f5f9', '#e2e8f0']}
+                style={styles.iconBtnGrad}
               >
-                {voiceLoading ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <Ionicons name={isRecording ? 'stop' : 'mic'} size={18} color="#fff" />
-                )}
+                {voiceLoading
+                  ? <ActivityIndicator color={colors.primary} size="small" />
+                  : <Ionicons name={isRecording ? 'stop' : 'mic'} size={18} color={isRecording ? '#fff' : '#475569'} />
+                }
               </LinearGradient>
             </Pressable>
 
             {/* Send button */}
             <Pressable
               onPress={handleSend}
-              disabled={!messageText.trim() || sendMutation.isPending || voiceLoading}
-              style={({ pressed }) => [
-                styles.sendBtn,
-                (!messageText.trim() || sendMutation.isPending) && styles.sendBtnDisabled,
-                pressed && { opacity: 0.85 },
-              ]}
+              disabled={!inputText.trim() || sendServerMsg.isPending}
+              style={[styles.iconBtn, !inputText.trim() && { opacity: 0.5 }]}
             >
               <LinearGradient
-                colors={messageText.trim() ? ['#f26b1d', '#d4560e'] : ['#ccc', '#bbb']}
-                style={styles.sendBtnGradient}
+                colors={inputText.trim() ? ['#ea8025', '#c45c10'] : ['#e2e8f0', '#cbd5e1']}
+                style={styles.iconBtnGrad}
               >
-                {sendMutation.isPending ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <Ionicons name="send" size={18} color="#fff" />
-                )}
+                <Ionicons name="send" size={16} color={inputText.trim() ? '#fff' : '#94a3b8'} />
               </LinearGradient>
             </Pressable>
           </View>
@@ -529,34 +955,210 @@ export function ChatScreen({ navigation }) {
   )
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.bg,
+// ─── RICH CONTENT STYLES ──────────────────────────────────────────────────────
+const richStyles = StyleSheet.create({
+  richBlock: {
+    marginTop: 8,
   },
-  header: {
+  richBlockTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#64748b',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  // Product card
+  productCard: {
     flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    marginBottom: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
     alignItems: 'center',
-    paddingTop: 50,
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.md,
-    gap: spacing.sm,
+    ...shadows.xs,
   },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+  productImg: {
+    width: 64,
+    height: 64,
+    backgroundColor: '#fdf5f0',
+  },
+  productImgPlaceholder: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerInfo: {
+  productInfo: {
+    flex: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  productName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1e293b',
+    lineHeight: 18,
+  },
+  productPrice: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#ea8025',
+    marginTop: 4,
+  },
+  productAddBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#ea8025',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  // Order card
+  orderCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+    ...shadows.xs,
+  },
+  orderCardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  orderCode: { fontSize: 13, fontWeight: '800', color: '#1e293b' },
+  orderDate: { fontSize: 11, color: '#64748b', marginTop: 2 },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  statusText: { fontSize: 11, fontWeight: '800' },
+  orderCardBottom: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  orderTotal: { fontSize: 15, fontWeight: '900', color: '#ea8025' },
+  trackBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#fff7ed',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderWidth: 1,
+    borderColor: '#fdba74',
+  },
+  trackBtnText: { fontSize: 12, fontWeight: '700', color: '#ea8025' },
+  // Store card
+  storeCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+    ...shadows.xs,
+  },
+  storeCardTop: { flexDirection: 'row', gap: 10, marginBottom: 10 },
+  storeIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#fff7ed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  storeName: { fontSize: 13, fontWeight: '800', color: '#1e293b' },
+  storeAddr: { fontSize: 12, color: '#64748b', marginTop: 2, lineHeight: 17 },
+  storeHours: { fontSize: 11, color: '#64748b', marginTop: 3 },
+  storeActions: { flexDirection: 'row', gap: 8 },
+  storeBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    justifyContent: 'center',
+    gap: 4,
+    backgroundColor: '#fff7ed',
+    borderRadius: 10,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#fdba74',
   },
-  headerAvatarWrap: { position: 'relative' },
+  storeBtnPrimary: {
+    backgroundColor: '#ea8025',
+    borderColor: '#ea8025',
+    flex: 1.5,
+  },
+  storeBtnText: { fontSize: 12, fontWeight: '700', color: '#ea8025' },
+  // Info card
+  infoCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 14,
+    padding: 14,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  infoCardTitle: { fontSize: 14, fontWeight: '800', color: '#1e293b', marginBottom: 10 },
+  infoRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+  infoIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  infoRowLabel: { fontSize: 13, fontWeight: '700', color: '#1e293b' },
+  infoRowDesc: { fontSize: 11, color: '#64748b', marginTop: 1 },
+  // Voucher
+  voucherRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+  voucherBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: '#fff7ed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#fdba74',
+    flexShrink: 0,
+  },
+  voucherBadgeText: { fontSize: 12, fontWeight: '900', color: '#ea8025', textAlign: 'center' },
+  voucherName: { fontSize: 13, fontWeight: '700', color: '#1e293b' },
+  voucherCode: { fontSize: 11, color: '#64748b', marginTop: 2 },
+})
+
+// ─── MAIN STYLES ─────────────────────────────────────────────────────────────
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: '#f8fafc' },
+
+  // Header
+  header: {
+    paddingTop: 52,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, position: 'relative' },
   headerAvatar: {
     width: 40,
     height: 40,
@@ -566,150 +1168,123 @@ const styles = StyleSheet.create({
   },
   onlineDot: {
     position: 'absolute',
+    left: 28,
     bottom: 0,
-    right: 0,
     width: 12,
     height: 12,
     borderRadius: 6,
     backgroundColor: '#22c55e',
     borderWidth: 2,
-    borderColor: '#1a0a02',
+    borderColor: '#fff',
   },
-  headerTitle: { fontSize: 16, fontWeight: '900', color: '#fff' },
-  headerSubtitle: { fontSize: 11, color: 'rgba(255,255,255,0.6)', fontWeight: '500' },
-  voiceHint: {
+  headerTitle: { fontSize: 15, fontWeight: '800', color: '#1e293b' },
+  headerSubtitle: { fontSize: 11, color: '#64748b', fontWeight: '500', marginTop: 1 },
+  voiceBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(242,107,29,0.2)',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    backgroundColor: '#fff7ed',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderWidth: 1,
-    borderColor: 'rgba(242,107,29,0.4)',
+    borderColor: '#fdba74',
   },
-  voiceHintText: { fontSize: 10, color: '#f26b1d', fontWeight: '800' },
+  voiceBadgeText: { fontSize: 11, fontWeight: '800', color: colors.primary },
 
   // Loading
-  loadingWrap: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.md,
-    padding: spacing.xl,
-  },
-  loadingText: { color: colors.muted, fontSize: 14, fontWeight: '600', textAlign: 'center' },
-  retryBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.full,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: 12,
-  },
-  retryBtnText: { color: '#fff', fontWeight: '900', fontSize: 14 },
+  loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  loadingText: { fontSize: 14, color: '#64748b', fontWeight: '600' },
 
-  // Messages
+  // Messages list
   messagesList: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
     paddingBottom: 8,
   },
 
-  // Date separator
-  dateSeparator: {
+  // AI bubble
+  aiBubbleWrap: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginVertical: spacing.md,
-  },
-  dateLine: { flex: 1, height: 1, backgroundColor: colors.borderLight },
-  dateText: { fontSize: 11, color: colors.muted, fontWeight: '700' },
-
-  // Bubble
-  bubbleRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
     gap: 8,
-    marginBottom: 10,
-    maxWidth: '85%',
+    marginBottom: 14,
+    maxWidth: '90%',
   },
-  bubbleRowOwn: { alignSelf: 'flex-end', flexDirection: 'row-reverse' },
-  avatarStaff: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#fff4ec',
+  aiAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.borderLight,
+    flexShrink: 0,
+    marginTop: 2,
   },
-  bubble: { borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10, maxWidth: '100%' },
-  bubbleOwn: { backgroundColor: colors.primary, borderBottomRightRadius: 4 },
-  bubbleOther: {
+  aiBubbleBody: { flex: 1 },
+  aiBubble: {
     backgroundColor: '#fff',
+    borderRadius: 18,
     borderBottomLeftRadius: 4,
+    padding: 12,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: '#e2e8f0',
     ...shadows.xs,
   },
-  bubbleSender: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: colors.primary,
-    marginBottom: 3,
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-  },
-  bubbleText: { fontSize: 14, color: colors.text, lineHeight: 20 },
-  bubbleTextOwn: { color: '#fff' },
-  bubbleTime: { fontSize: 10, color: colors.muted, marginTop: 4, alignSelf: 'flex-end', fontWeight: '500' },
-  bubbleTimeOwn: { color: 'rgba(255,255,255,0.7)' },
+  aiBubbleText: { fontSize: 14, color: '#1e293b', lineHeight: 21 },
+  aiBubbleTime: { fontSize: 10, color: '#94a3b8', marginTop: 4, alignSelf: 'flex-end' },
+  staffName: { fontSize: 10, fontWeight: '800', color: '#475569', marginBottom: 4, marginLeft: 2, textTransform: 'uppercase' },
 
-  // Empty chat
-  emptyChat: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.xxl,
-    gap: spacing.sm,
+  // User bubble
+  userBubbleRow: { alignSelf: 'flex-end', marginBottom: 14, maxWidth: '80%' },
+  userBubble: {
+    backgroundColor: '#ea8025',
+    borderRadius: 18,
+    borderBottomRightRadius: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
-  emptyChatIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.cream,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.sm,
+  userBubbleText: { fontSize: 14, color: '#fff', lineHeight: 21 },
+  userBubbleTime: { fontSize: 10, color: 'rgba(255,255,255,0.7)', marginTop: 4, alignSelf: 'flex-end' },
+
+  // Quick replies in bubble
+  quickRepliesWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
+  quickReplyChip: {
+    backgroundColor: '#fff7ed',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#fdba74',
   },
-  emptyChatTitle: { fontSize: 20, fontWeight: '900', color: colors.text },
-  emptyChatText: {
-    fontSize: 14,
-    color: colors.muted,
-    textAlign: 'center',
-    lineHeight: 22,
-    paddingHorizontal: spacing.xl,
-  },
+  quickReplyText: { fontSize: 12, fontWeight: '700', color: '#ea8025' },
+
+  // Date separator
+  dateSeparator: { flexDirection: 'row', alignItems: 'center', gap: 8, marginVertical: 12 },
+  dateLine: { flex: 1, height: 1, backgroundColor: '#e2e8f0' },
+  dateText: { fontSize: 11, color: '#94a3b8', fontWeight: '700' },
+
+  // Typing dots
+  typingDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#94a3b8' },
 
   // Recording overlay
   recordingOverlay: {
     position: 'absolute',
-    bottom: 80,
+    bottom: 120,
     left: 0,
     right: 0,
     alignItems: 'center',
     gap: 8,
   },
-  micPulse: { marginBottom: 4 },
   micPulseGrad: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.lg,
   },
   recordingText: { fontSize: 15, fontWeight: '800', color: '#ef4444' },
-  recordingHint: { fontSize: 12, color: colors.muted, fontWeight: '500' },
+  recordingHint: { fontSize: 12, color: '#64748b' },
 
   // Voice processing
   voiceProcessing: {
@@ -720,50 +1295,61 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: radius.full,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: '#e2e8f0',
     marginBottom: 4,
     ...shadows.sm,
   },
   voiceProcessingText: { fontSize: 13, color: colors.primary, fontWeight: '700' },
 
+  // Quick bar
+  quickBar: {
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+    maxHeight: 50,
+  },
+  quickBarContent: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  quickBarChip: {
+    backgroundColor: '#f1f5f9',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  quickBarChipText: { fontSize: 12, fontWeight: '700', color: '#475569' },
+
   // Input bar
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: 14,
     paddingVertical: 10,
     paddingBottom: Platform.OS === 'ios' ? 28 : 12,
-    backgroundColor: colors.card,
+    backgroundColor: '#fff',
     borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
-    gap: spacing.sm,
-    ...shadows.lg,
+    borderTopColor: '#f1f5f9',
+    gap: 8,
   },
   inputWrap: {
     flex: 1,
-    backgroundColor: colors.cream,
-    borderRadius: radius.xl,
+    backgroundColor: '#f8fafc',
+    borderRadius: 22,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: '#e2e8f0',
     paddingHorizontal: 14,
-    paddingVertical: Platform.OS === 'ios' ? 10 : 6,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
     maxHeight: 100,
   },
-  textInput: { fontSize: 14, color: colors.text, lineHeight: 20, fontWeight: '500' },
-  micBtn: { borderRadius: radius.full, overflow: 'hidden' },
-  micBtnRecording: { transform: [{ scale: 1.1 }] },
-  micBtnGradient: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendBtn: { borderRadius: radius.full, overflow: 'hidden' },
-  sendBtnDisabled: { opacity: 0.6 },
-  sendBtnGradient: {
+  textInput: { fontSize: 14, color: '#1e293b', lineHeight: 20 },
+  iconBtn: { borderRadius: 21, overflow: 'hidden' },
+  iconBtnGrad: {
     width: 42,
     height: 42,
     borderRadius: 21,
