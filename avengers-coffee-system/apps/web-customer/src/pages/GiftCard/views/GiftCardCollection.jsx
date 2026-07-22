@@ -40,41 +40,41 @@ export const GiftCardCollection = ({ onNavigate }) => {
     <div className="bg-white min-h-screen font-sans pb-24">
       <div className="max-w-[1024px] mx-auto px-4 pt-12">
         
-        {/* 2024 */}
+        {/* 2025 */}
         <h2 className="text-[28px] md:text-[32px] font-bold text-center text-[#b22830] mb-12">
-          Bộ Sưu Tập Thẻ 2024
+          Bộ Sưu Tập Thẻ 2025
         </h2>
 
         <CollectionSection 
-          title="Chill Hè 2024 Collection"
-          desc="Bộ sưu tập Thẻ Chill Hè với ba màu sắc tươi mát, trẻ trung"
-          note="*Thẻ còn ít tại một số cửa hàng*"
+          title="Chill Hè 2025 Collection"
+          desc="Bộ sưu tập Thẻ Chill Hè 2025 với ba màu sắc tươi mát, trẻ trung"
+          note="*Thẻ đang phát hành độc quyền trên hệ thống Gift Card trực tuyến*"
           images={[IMG_CHILL_1, IMG_CHILL_2, IMG_CHILL_3]}
         />
 
         <CollectionSection 
-          title="Tết Mà! 2024 Collection"
+          title="Tết Mã 2025 Collection"
           desc={`Thẻ "Vàng" nhận từ việc tham gia chương trình "TẶNG VẠN THẺ VÀNG, XE BẠC TỶ", đón ngàn lộc may năm mới.`}
-          note="*Chương trình đã kết thúc, Thẻ đã ngừng phát trên thị trường*"
+          note="*Thẻ đang phát hành giới hạn dịp Tết Ất Tỵ 2025*"
           images={[IMG_TET]}
         />
 
-        {/* 2023 */}
+        {/* 2026 */}
         <h2 className="text-[28px] md:text-[32px] font-bold text-center text-[#b22830] mb-12 mt-20">
-          Bộ Sưu Tập Thẻ 2023
+          Bộ Sưu Tập Thẻ 2026
         </h2>
 
         <CollectionSection 
-          title="Festive 2023 Collection"
-          desc={`Thẻ "Christmas" được phát hành vào mùa đông 2023 với hai màu đỏ và xanh.`}
-          note="*Chương trình đã kết thúc, Thẻ màu xanh đã ngừng phát trên thị trường*"
+          title="Festive 2026 Collection"
+          desc={`Thẻ "Christmas" chuẩn bị phát hành vào mùa đông 2026 với hai màu đỏ và xanh.`}
+          note="*Sắp ra mắt trên nền tảng Gift Card trực tuyến*"
           images={[IMG_FESTIVE_1, IMG_FESTIVE_2]}
         />
 
         <CollectionSection 
-          title="Thank You 2023 Collection"
+          title="Thank You 2026 Collection"
           desc={`Nhân dịp Sinh nhật lần thứ 24, lần đầu tiên Avengers Coffee cho ra mắt Bộ Thẻ Thank You dành tặng đến các Fan thân yêu thay lời "Cảm ơn" vì đã đồng hành cùng Avengers trong suốt thời gian vừa qua.`}
-          note="*Chương trình đã kết thúc, Thẻ đã ngừng phát trên thị trường*"
+          note="*Sắp ra mắt tri ân khách hàng năm 2026*"
           images={[IMG_THANKYOU_1, IMG_THANKYOU_2, IMG_THANKYOU_3]}
         />
 

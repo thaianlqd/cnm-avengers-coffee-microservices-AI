@@ -610,7 +610,7 @@ export default function ChatWidget({ user, socketUrl }) {
               {[{ mode: 'AI', label: '🤖 Trợ lý AI' }, { mode: 'STAFF', label: '👤 Nhân viên' }].map(({ mode, label }) => (
                 <button key={mode} onClick={() => { setChatMode(mode); if (mode === 'STAFF') openStaffChat(); }}
                   style={{
-                    border: 'none', padding: 0, outline: 'none', cursor: 'pointer', flex: 1, padding: '7px 0', borderRadius: 10, fontSize: '0.72rem', fontWeight: 700, textAlign: 'center', transition: 'all 0.2s',
+                    padding: 0, outline: 'none', cursor: 'pointer', flex: 1, padding: '7px 0', borderRadius: 10, fontSize: '0.72rem', fontWeight: 700, textAlign: 'center', transition: 'all 0.2s',
                     background: chatMode === mode ? '#fff' : 'transparent',
                     color: chatMode === mode ? '#c41230' : 'rgba(255,255,255,0.7)',
                     border: chatMode === mode ? '1px solid transparent' : '1px solid transparent',
@@ -631,7 +631,7 @@ export default function ChatWidget({ user, socketUrl }) {
                 {chatMode === 'AI' && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, justifyContent: 'center' }}>
                     {QUICK_ACTIONS.slice(0, 4).map((a) => (
-                      <button key={a.id} onClick={() => sendMessage(a.text)} style={{ border: 'none', outline: 'none', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 700, color: '#e8572a', background: '#fff', padding: '7px 13px', borderRadius: 20, border: '1.5px solid #e8572a30', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                      <button key={a.id} onClick={() => sendMessage(a.text)} style={{ outline: 'none', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 700, color: '#e8572a', background: '#fff', padding: '7px 13px', borderRadius: 20, border: '1.5px solid #e8572a30', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
                         {a.icon} {a.label}
                       </button>
                     ))}
@@ -809,7 +809,7 @@ export default function ChatWidget({ user, socketUrl }) {
 
               {chatMode === 'AI' && (
                 <button onClick={startVoice} disabled={isListening} title="Nói để đặt hàng"
-                  style={{ border: 'none', padding: 0, outline: 'none', cursor: 'pointer', width: 42, height: 42, borderRadius: '50%', background: isListening ? 'linear-gradient(135deg,#ef4444,#dc2626)' : '#f8f9fa', border: '1.5px solid #e9ecef', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s', boxShadow: isListening ? '0 0 0 4px rgba(239,68,68,0.2)' : 'none', animation: isListening ? 'micPulse 1s ease-in-out infinite' : 'none' }}>
+                  style={{ padding: 0, outline: 'none', cursor: 'pointer', width: 42, height: 42, borderRadius: '50%', background: isListening ? 'linear-gradient(135deg,#ef4444,#dc2626)' : '#f8f9fa', border: '1.5px solid #e9ecef', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s', boxShadow: isListening ? '0 0 0 4px rgba(239,68,68,0.2)' : 'none', animation: isListening ? 'micPulse 1s ease-in-out infinite' : 'none' }}>
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke={isListening ? '#fff' : '#868e96'} style={{ width: 18, height: 18 }}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
                   </svg>
