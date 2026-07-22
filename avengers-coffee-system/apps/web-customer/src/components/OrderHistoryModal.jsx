@@ -4,6 +4,7 @@ import { XMarkIcon, ClockIcon, CreditCardIcon } from '@heroicons/react/24/outlin
 import { apiClient } from '../lib/apiClient';
 import { queryKeys } from '../lib/queryKeys';
 import ReviewForm from './ReviewForm';
+import BranchReviewModal from './BranchReviewModal';
 import OrderTrackingPage from '../pages/features_thaian/OrderTrackingPage';
 import { useCart } from '../context/CartContext';
 
@@ -118,6 +119,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
   const [cancelReason, setCancelReason] = useState('');
   const [editOrderId, setEditOrderId] = useState(null);
   const [reviewingProduct, setReviewingProduct] = useState(null);
+  const [branchReviewOrder, setBranchReviewOrder] = useState(null);
   const [trackingOrderId, setTrackingOrderId] = useState(null);
   const [editForm, setEditForm] = useState({
     diaChi: '',
@@ -747,7 +749,16 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                           ) : null}
 
                           {order.trang_thai_don_hang === 'HOAN_THANH' ? (
-                            <p className="pt-2 text-xs font-semibold text-emerald-700">Đơn đã hoàn thành, không thể hủy.</p>
+                            <div className="pt-2 space-y-2">
+                              <p className="text-xs font-semibold text-emerald-700">Đơn đã hoàn thành!</p>
+                              <button
+                                type="button"
+                                onClick={() => setBranchReviewOrder(order)}
+                                className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-amber-800 hover:bg-amber-100 transition-colors shadow-sm"
+                              >
+                                🏢 ⭐ Đánh Giá Chi Nhánh
+                              </button>
+                            </div>
                           ) : null}
 
                           {coTheHuyDon(order) ? (
@@ -834,6 +845,18 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
           onSaved={(message) => setActionMessage(message)}
           onDeleted={(message) => setActionMessage(message)}
           onClose={() => setReviewingProduct(null)}
+        />
+      )}
+
+      {branchReviewOrder && (
+        <BranchReviewModal
+          isOpen={!!branchReviewOrder}
+          onClose={() => setBranchReviewOrder(null)}
+          orderData={branchReviewOrder}
+          onSuccess={() => {
+            setActionMessage('Cảm ơn bạn đã gửi đánh giá cho chi nhánh!');
+            queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
+          }}
         />
       )}
     </div>
