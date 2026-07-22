@@ -148,14 +148,6 @@ export default function CartPage({
     setGuestSessionId(gsid);
   }, []);
 
-  const discountAmount = voucherResult?.so_tien_giam || 0;
-  const tongTienSauGiam = Math.max(0, total - discountAmount);
-
-  const freeShip = tongTienSauGiam >= 150000;
-  const shippingFee = deliveryMethod === 'LALAMOVE' ? 25000 : 15000;
-  const finalTotal = (deliveryMode === 'GIAO_TAN_NOI' && !freeShip) ? tongTienSauGiam + shippingFee : tongTienSauGiam;
-
-
   const maNguoiDung = useMemo(() => activeUserId || 'anonymous', [activeUserId]);
   const isLoggedInUser = useMemo(() => {
     const value = String(maNguoiDung || '');
