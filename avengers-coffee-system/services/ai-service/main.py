@@ -283,7 +283,7 @@ def _build_base_business_context() -> Dict[str, Any]:
         LEFT JOIN {MENU_SCHEMA}.danh_muc dm ON dm.ma_danh_muc = sp.ma_danh_muc
         WHERE sp.trang_thai = TRUE
         ORDER BY sp.la_hot DESC, sp.la_moi DESC, sp.ma_san_pham DESC
-        LIMIT 10
+        LIMIT 100
     """
     top_sell_sql = f"""
         SELECT
@@ -324,9 +324,19 @@ def _build_base_business_context() -> Dict[str, Any]:
         ORDER BY cn.ten_chi_nhanh ASC
         LIMIT 8
     """
+    variations_sql = f"""
+        SELECT
+            bt.ma_san_pham,
+            tt.ten_thuoc_tinh,
+            bt.gia_tri,
+            bt.phu_thu
+        FROM {MENU_SCHEMA}.bien_the_san_pham bt
+        JOIN {MENU_SCHEMA}.thuoc_tinh tt ON bt.ma_thuoc_tinh = tt.id
+    """
 
     context: Dict[str, Any] = {
         "products": [],
+        "variations": [],
         "top_selling": [],
         "promotions": [],
         "branches": [],
@@ -348,6 +358,10 @@ def _build_base_business_context() -> Dict[str, Any]:
         context["branches"] = _fetch_rows(branches_sql)
     except Exception as exc:
         logger.warning("Khong lay duoc chi nhanh de lam context chat: %s", exc)
+    try:
+        context["variations"] = _fetch_rows(variations_sql)
+    except Exception as exc:
+        logger.warning("Khong lay duoc variations de lam context chat: %s", exc)
 
     return context
 
@@ -388,8 +402,16 @@ def _get_user_recent_orders(user_id: str) -> List[Dict[str, Any]]:
 
 
 def _render_context_for_prompt(base_context: Dict[str, Any], recent_orders: List[Dict[str, Any]]) -> str:
+    # Group variations by product_id
+    var_map = {}
+    for v in base_context.get("variations", []):
+        pid = v.get("ma_san_pham")
+        if pid not in var_map:
+            var_map[pid] = []
+        var_map[pid].append(v)
+
     product_lines = []
-    for p in base_context.get("products", [])[:8]:
+    for p in base_context.get("products", [])[:100]:
         tags = []
         if p.get("la_hot"):
             tags.append("HOT")
@@ -397,8 +419,30 @@ def _render_context_for_prompt(base_context: Dict[str, Any], recent_orders: List
             tags.append("MOI")
         tag_text = f" [{' '.join(tags)}]" if tags else ""
         category = p.get("ten_danh_muc") or "Khac"
+        price_val = float(p.get("gia_ban") or 0)
+        price_text = f"{price_val:,.0f} VND" if price_val > 0 else "Gia thay doi theo Size"
+        
+        # Build variations text
+        pid = p.get("ma_san_pham")
+        var_list = var_map.get(pid, [])
+        var_text = ""
+        if var_list:
+            grouped = {}
+            for v in var_list:
+                tt = v.get("ten_thuoc_tinh")
+                if tt not in grouped:
+                    grouped[tt] = []
+                pt = float(v.get("phu_thu") or 0)
+                pt_str = f"(+{pt:,.0f})" if pt > 0 else "(+0)"
+                grouped[tt].append(f"{v.get('gia_tri')} {pt_str}")
+            
+            var_parts = []
+            for tt, vals in grouped.items():
+                var_parts.append(f"{tt} [{', '.join(vals)}]")
+            var_text = f". Tuy chon: {'; '.join(var_parts)}"
+
         product_lines.append(
-            f"- {p.get('ten_san_pham')} ({category}) - {_to_price(p.get('gia_ban'))} VND{tag_text}"
+            f"- {p.get('ten_san_pham')} (Danh muc: {category}) - {price_text}{tag_text}{var_text}"
         )
 
     top_lines = [
@@ -986,6 +1030,7 @@ def _groq_primary_chat_reply(
     base_context: Dict[str, Any],
     recent_orders: List[Dict[str, Any]],
     reply_to_text: str = "",
+    history: str = "",
 ) -> Optional[str]:
     """Try Groq first for the AI chat reply. Returns text or None."""
     if not groq_is_available():
@@ -994,17 +1039,26 @@ def _groq_primary_chat_reply(
     context_text = _render_context_for_prompt(base_context, recent_orders)
 
     system_prompt = (
-        "Ban la nhan vien tu van Avengers Coffee, than thien va am tinh. "
-        "Su dung du lieu he thong (menu, khuyen mai, chi nhanh, don hang) de tu van chinh xac. "
-        "Neu khach co y dinh dat hang (noi 'cho toi', 'dat', 'order'...), "
-        "goi y ho bam nut 'Dat hang bang giong noi' hoac nhap mon muon dat. "
-        "Tra loi ngan gon, than thien, KHONG qua 3 cau tru khi can giai thich phuc tap."
+        "Ban la nhan vien tu van AI thong minh cua Avengers Coffee, rat than thien va chuyen nghiep. "
+        "Su dung du lieu he thong (menu, khuyen mai, chi nhanh) de tu van chinh xac. "
+        "Neu khach hoi chung chung hoac 'gi cung duoc', hay chu dong goi y 1-2 mon Best Seller. "
+        "QUAN TRONG 1: Neu khach yeu cau liet ke mot danh muc cu the (vd: ca phe, tra sua), ban PHAI loc dung Danh muc trong DU LIEU HE THONG de tra loi. Tuyet doi khong liet ke mon cua Danh muc khac. "
+        "QUAN TRONG 2: Neu khach chon mot mon co 'Tuy chon' (Size, Topping), ban PHAI doc ky cac Tuy chon va gia phu thu di kem (vi du: Size L +15k, Tran chau +10k). Hay chu dong hoi khach chon Size nao va bao gia cu the. Vi du: 'Anh chon Americano Mo, anh lay size Nho (59k), Vua (65k) hay Lon (75k) a?' "
+        "QUAN TRONG 3: Neu khach muon mua hang nhung CHUA NOI RO Hinh thuc thanh toan (Tien mat/ZaloPay/VNPAY), ban PHAI CHU DONG hoi khach. "
+        "Khi khach da chon du thong tin, ban TONG HOP lai don hang (kem gia tien) va yeu cau khach go chinh xac chu 'Chot don' hoac 'Dat hang' de he thong bat dau len don. "
+        "Tra loi ngan gon, than thien, giong mot nhan vien tu van chuyen nghiep nhe."
     )
     user_prompt = (
         f"DU LIEU HE THONG:\n{context_text}\n\n"
         f"Thong tin khach: ten={user_name}, id={user_id or 'unknown'}\n"
-        f"{reply_to_text}\n"
-        f"Cau hoi: {content}"
+    )
+    if history:
+        user_prompt += f"\n--- LICH SU TRO CHUYEN GAN DAY ---\n{history}\n---------------------------------\n"
+        
+    user_prompt += (
+        f"\n{reply_to_text}\n"
+        f"Khach: {content}\n"
+        f"AI:"
     )
     return groq_chat(system_prompt=system_prompt, user_prompt=user_prompt, max_tokens=480)
 
@@ -1016,6 +1070,7 @@ async def ai_chat(request: Request):
     try:
         data = await request.json()
         content = data.get("content", "").strip()
+        history = data.get("history", "").strip()
         user_id = str(data.get("user_id", "")).strip()
         user_name = str(data.get("user_name", "")).strip() or "Khach"
         reply_to = data.get("reply_to") or {}
@@ -1062,6 +1117,7 @@ async def ai_chat(request: Request):
             base_context=base_context,
             recent_orders=recent_orders,
             reply_to_text=reply_to_text,
+            history=history,
         )
         if groq_reply:
             _safe_log_inference(
@@ -1279,6 +1335,7 @@ class OrderIntentRequest(BaseModel):
     text: str
     user_id: Optional[str] = None
     branch_code: Optional[str] = None
+    history: Optional[str] = None
 
 
 @app.post("/ai/chat/order-intent")
@@ -1299,7 +1356,7 @@ async def chat_order_intent(body: OrderIntentRequest):
             detail="AI order-intent requires GROQ_API_KEY. Get free key at console.groq.com"
         )
 
-    intent_data = groq_extract_order_intent(text)
+    intent_data = groq_extract_order_intent(text, history=body.history)
     if not intent_data:
         return {
             "intent": "OTHER",
@@ -1335,6 +1392,7 @@ async def chat_order_intent(body: OrderIntentRequest):
         "estimated_total": estimated_total,
         "can_order": can_order,
         "delivery_type": intent_data.get("delivery_type"),
+        "payment_method": intent_data.get("payment_method") or "THANH_TOAN_KHI_NHAN_HANG",
         "branch_hint": intent_data.get("branch_hint") or body.branch_code,
         "raw_text": text,
         "message": (

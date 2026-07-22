@@ -15,6 +15,7 @@ import {
   Linking,
   Animated,
 } from 'react-native'
+import { useNavigation } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -52,8 +53,8 @@ function LiveTrackingModal({ order, visible, onClose, onOpenRating }) {
   const loadDelivery = useCallback(async () => {
     if (!order?.ma_don_hang) return
     try {
-      const res = await apiClient.get(`/customers/orders/${order.ma_don_hang}/delivery`)
-      setDelivery(res)
+      const res = await apiClient.get(`/shippers/delivery/tracking/${order.ma_don_hang}?t=${Date.now()}`)
+      setDelivery(res.data || res)
     } catch {
       setDelivery(null)
     }
@@ -82,14 +83,17 @@ function LiveTrackingModal({ order, visible, onClose, onOpenRating }) {
   }, [visible, order?.trang_thai_don_hang, pulseAnim])
 
   const openGoogleMaps = () => {
-    if (!delivery?.shipper_latitude || !delivery?.shipper_longitude) return
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${delivery.shipper_latitude},${delivery.shipper_longitude}`
+    const lat = delivery?.shipper_location?.latitude || delivery?.shipper_latitude
+    const lng = delivery?.shipper_location?.longitude || delivery?.shipper_longitude
+    if (!lat || !lng) return
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
     Linking.openURL(url)
   }
 
   const callShipper = () => {
-    if (!delivery?.shipper_phone) return
-    Linking.openURL(`tel:${delivery.shipper_phone}`)
+    const phone = delivery?.shipper?.so_dien_thoai || delivery?.shipper?.phone || delivery?.shipper_phone
+    if (!phone) return
+    Linking.openURL(`tel:${phone}`)
   }
 
   const currentStepIndex = DELIVERY_STEP_LABELS.findIndex(
@@ -99,34 +103,33 @@ function LiveTrackingModal({ order, visible, onClose, onOpenRating }) {
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={liveStyles.container}>
-        <LinearGradient colors={['#1a0a02', '#3d1a08']} style={liveStyles.header}>
+        <View style={liveStyles.header}>
           <TouchableOpacity onPress={onClose} style={liveStyles.closeBtn}>
-            <Ionicons name="close" size={22} color="#fff" />
+            <Ionicons name="arrow-back" size={24} color="#1e293b" />
           </TouchableOpacity>
-          <Text style={liveStyles.headerTitle}>📍 Theo dõi đơn hàng</Text>
-          <View style={{ width: 36 }} />
-        </LinearGradient>
+          <View>
+            <Text style={liveStyles.headerTitle}>Theo dõi đơn hàng</Text>
+            {order?.ma_don_hang && <Text style={liveStyles.headerSubtitle}>#{order.ma_don_hang}</Text>}
+          </View>
+        </View>
 
         <ScrollView contentContainerStyle={liveStyles.body} showsVerticalScrollIndicator={false}>
-          {/* Animated Shipper Icon */}
-          <View style={liveStyles.shipperSection}>
-            <Animated.View style={[liveStyles.shipperPulse, { transform: [{ scale: pulseAnim }] }]} />
-            <View style={liveStyles.shipperIconWrap}>
-              <Ionicons name="bicycle" size={36} color={colors.primary} />
+          {/* Status Banner */}
+          <LinearGradient colors={['#ea8025', '#d4560e']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={liveStyles.statusBanner}>
+            <View style={{ flex: 1 }}>
+              <Text style={liveStyles.statusBannerLabel}>Trạng thái hiện tại</Text>
+              <Text style={liveStyles.statusBannerTitle}>{DELIVERY_STEP_LABELS[currentStepIndex > -1 ? currentStepIndex : 0]?.label || order?.trang_thai_don_hang}</Text>
+              
+              {delivery?.tracking?.delivery_method && (
+                <View style={liveStyles.deliveryMethodBadge}>
+                  <Text style={liveStyles.deliveryMethodText}>
+                    {delivery.tracking.delivery_method === 'LALAMOVE' ? '🚀 Giao hỏa tốc Lalamove' : '🛵 Avengers Delivery'}
+                  </Text>
+                </View>
+              )}
             </View>
-            <Text style={liveStyles.shipperName}>
-              {delivery?.shipper_name || 'Đang tìm Shipper...'}
-            </Text>
-            {delivery?.shipper_phone && (
-              <Text style={liveStyles.shipperPhone}>{delivery.shipper_phone}</Text>
-            )}
-            {delivery?.estimated_delivery && (
-              <View style={liveStyles.etaBadge}>
-                <Ionicons name="time-outline" size={14} color={colors.primary} />
-                <Text style={liveStyles.etaText}>Dự kiến: {delivery.estimated_delivery}</Text>
-              </View>
-            )}
-          </View>
+            <Text style={{ fontSize: 48 }}>{DELIVERY_STEP_LABELS[currentStepIndex > -1 ? currentStepIndex : 0]?.icon === 'bicycle' ? '🛵' : '📦'}</Text>
+          </LinearGradient>
 
           {/* Progress Steps */}
           <View style={liveStyles.stepsSection}>
@@ -145,8 +148,8 @@ function LiveTrackingModal({ order, visible, onClose, onOpenRating }) {
                     ]}>
                       <Ionicons
                         name={isDone ? 'checkmark' : step.icon}
-                        size={14}
-                        color={isDone || isCurrent ? '#fff' : colors.muted}
+                        size={16}
+                        color={isDone ? '#fff' : isCurrent ? '#ea8025' : '#cbd5e1'}
                       />
                     </View>
                     {i < DELIVERY_STEP_LABELS.length - 1 && (
@@ -156,9 +159,9 @@ function LiveTrackingModal({ order, visible, onClose, onOpenRating }) {
                   <View style={liveStyles.stepRight}>
                     <Text style={[
                       liveStyles.stepLabel,
-                      isFuture && { color: colors.muted },
-                      isCurrent && { color: colors.primary, fontWeight: '800' },
-                      isDone && { color: colors.success },
+                      isFuture && { color: '#94a3b8' },
+                      isCurrent && { color: '#1e293b', fontWeight: '900' },
+                      isDone && { color: '#ea8025' },
                     ]}>
                       {step.label}
                     </Text>
@@ -170,6 +173,26 @@ function LiveTrackingModal({ order, visible, onClose, onOpenRating }) {
               )
             })}
           </View>
+
+          {/* Shipper Info */}
+          {(delivery?.shipper?.ho_ten || delivery?.shipper?.name || delivery?.shipper_name) ? (
+            <View style={liveStyles.shipperCard}>
+              <View style={liveStyles.shipperIconWrap}>
+                <Ionicons name="person" size={24} color="#ea8025" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={liveStyles.shipperName}>
+                  {delivery?.shipper?.ho_ten || delivery?.shipper?.name || delivery?.shipper_name}
+                </Text>
+                <Text style={liveStyles.shipperPhone}>Shipper giao hàng</Text>
+              </View>
+              {(delivery?.shipper?.so_dien_thoai || delivery?.shipper?.phone || delivery?.shipper_phone) && (
+                <TouchableOpacity onPress={callShipper} style={liveStyles.callBtn}>
+                  <Ionicons name="call" size={20} color="#fff" />
+                </TouchableOpacity>
+              )}
+            </View>
+          ) : null}
 
           {/* Order Info */}
           {order && (
@@ -192,13 +215,7 @@ function LiveTrackingModal({ order, visible, onClose, onOpenRating }) {
 
           {/* Action Buttons */}
           <View style={liveStyles.actions}>
-            {delivery?.shipper_phone && (
-              <TouchableOpacity style={liveStyles.actionBtn} onPress={callShipper}>
-                <Ionicons name="call" size={20} color="#fff" />
-                <Text style={liveStyles.actionBtnText}>Gọi Shipper</Text>
-              </TouchableOpacity>
-            )}
-            {delivery?.shipper_latitude && (
+            {(delivery?.shipper_location?.latitude || delivery?.shipper_latitude) && (
               <TouchableOpacity style={[liveStyles.actionBtn, { backgroundColor: '#10B981' }]} onPress={openGoogleMaps}>
                 <Ionicons name="map" size={20} color="#fff" />
                 <Text style={liveStyles.actionBtnText}>Xem bản đồ</Text>
@@ -223,61 +240,64 @@ function LiveTrackingModal({ order, visible, onClose, onOpenRating }) {
 }
 
 const liveStyles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
+  container: { flex: 1, backgroundColor: '#f8fafc', maxWidth: 480, width: '100%', alignSelf: 'center' },
   header: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingTop: 52, paddingBottom: 12, paddingHorizontal: 16,
+    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#f1f5f9',
+  },
+  closeBtn: { padding: 4, marginLeft: -4 },
+  headerTitle: { color: '#1e293b', fontSize: 18, fontWeight: '800' },
+  headerSubtitle: { color: '#64748b', fontSize: 12, fontWeight: '600', marginTop: 2 },
+  body: { padding: 16, paddingBottom: 60, gap: 16 },
+  
+  statusBanner: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20,
+    padding: 20, borderRadius: 20,
+    shadowColor: '#ea8025', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 8,
   },
-  closeBtn: { padding: 8 },
-  headerTitle: { color: '#fff', fontSize: 18, fontWeight: '800' },
-  body: { padding: spacing.lg, paddingBottom: 60 },
-  shipperSection: { alignItems: 'center', marginBottom: spacing.xl, position: 'relative', paddingTop: 20 },
-  shipperPulse: {
-    position: 'absolute', top: 8, width: 90, height: 90, borderRadius: 45,
-    backgroundColor: colors.primary + '20',
-  },
-  shipperIconWrap: {
-    width: 72, height: 72, borderRadius: 36, backgroundColor: colors.infoBg,
-    alignItems: 'center', justifyContent: 'center', marginBottom: spacing.md,
-    borderWidth: 3, borderColor: colors.primary,
-  },
-  shipperName: { fontSize: 20, fontWeight: '800', color: colors.text },
-  shipperPhone: { fontSize: 14, color: colors.textSecondary, marginTop: 4 },
-  etaBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.infoBg,
-    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, marginTop: 10,
-  },
-  etaText: { color: colors.primary, fontWeight: '700', fontSize: 13 },
+  statusBannerLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: '600' },
+  statusBannerTitle: { color: '#fff', fontSize: 22, fontWeight: '900', marginTop: 4, marginBottom: 8 },
+  deliveryMethodBadge: { alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' },
+  deliveryMethodText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  
   stepsSection: {
-    backgroundColor: colors.surface, borderRadius: 16, padding: spacing.lg, marginBottom: spacing.lg,
+    backgroundColor: '#fff', borderRadius: 20, padding: 20,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
   },
-  stepsTitle: { fontSize: 15, fontWeight: '700', color: colors.text, marginBottom: spacing.md },
+  stepsTitle: { fontSize: 16, fontWeight: '800', color: '#1e293b', marginBottom: 20 },
   step: { flexDirection: 'row', marginBottom: 0 },
   stepLeft: { alignItems: 'center', width: 40 },
-  stepDot: {
-    width: 32, height: 32, borderRadius: 16, backgroundColor: colors.borderLight,
-    alignItems: 'center', justifyContent: 'center',
+  stepDot: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#f1f5f9', alignItems: 'center', justifyContent: 'center' },
+  stepDotDone: { backgroundColor: '#ea8025' },
+  stepDotCurrent: { backgroundColor: '#fff', borderWidth: 2, borderColor: '#ea8025' },
+  stepLine: { width: 2, flex: 1, backgroundColor: '#f1f5f9', minHeight: 28, marginVertical: 4 },
+  stepLineDone: { backgroundColor: '#ea8025' },
+  stepRight: { flex: 1, paddingLeft: 12, paddingBottom: 24, justifyContent: 'flex-start', paddingTop: 6 },
+  stepLabel: { fontSize: 15, fontWeight: '700', color: '#1e293b' },
+  stepCurrent: { fontSize: 12, color: '#ea8025', marginTop: 4, fontWeight: '700' },
+
+  shipperCard: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 20, padding: 16, gap: 12,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
   },
-  stepDotDone: { backgroundColor: colors.success },
-  stepDotCurrent: { backgroundColor: colors.primary },
-  stepLine: { width: 2, flex: 1, backgroundColor: colors.borderLight, minHeight: 24, marginVertical: 4 },
-  stepLineDone: { backgroundColor: colors.success },
-  stepRight: { flex: 1, paddingLeft: spacing.sm, paddingBottom: 20, justifyContent: 'flex-start', paddingTop: 6 },
-  stepLabel: { fontSize: 14, fontWeight: '600', color: colors.text },
-  stepCurrent: { fontSize: 11, color: colors.primary, marginTop: 2, fontWeight: '600' },
+  shipperIconWrap: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#fff7ed', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#fdba74' },
+  shipperName: { fontSize: 16, fontWeight: '900', color: '#1e293b' },
+  shipperPhone: { fontSize: 13, color: '#64748b', marginTop: 2, fontWeight: '500' },
+  callBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#10b981', alignItems: 'center', justifyContent: 'center', shadowColor: '#10b981', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
+  
   orderInfo: {
-    backgroundColor: colors.surface, borderRadius: 12, padding: spacing.lg, marginBottom: spacing.lg,
+    backgroundColor: '#fff', borderRadius: 20, padding: 20, gap: 12,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
   },
-  orderInfoTitle: { fontSize: 15, fontWeight: '700', color: colors.text, marginBottom: spacing.sm },
-  orderInfoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
-  orderInfoLabel: { fontSize: 13, color: colors.textSecondary },
-  orderInfoValue: { fontSize: 13, fontWeight: '600', color: colors.text, flex: 1, textAlign: 'right' },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  actionBtn: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: colors.primary, paddingVertical: 12, borderRadius: 12, gap: 8, minWidth: '45%',
-  },
-  actionBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  orderInfoTitle: { fontSize: 16, fontWeight: '800', color: '#1e293b', marginBottom: 4 },
+  orderInfoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', borderBottomWidth: 1, borderBottomColor: '#f1f5f9', paddingBottom: 12 },
+  orderInfoLabel: { fontSize: 14, color: '#64748b', fontWeight: '500' },
+  orderInfoValue: { fontSize: 14, fontWeight: '800', color: '#1e293b', flex: 1, textAlign: 'right', marginLeft: 16 },
+  
+  actions: { flexDirection: 'row', gap: 12, marginTop: 8 },
+  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 16, gap: 8 },
+  actionBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
 })
 
 /* ────────────────────────────────────────────────────────────
@@ -425,7 +445,7 @@ function CommentInput({ comment, setComment }) {
 }
 
 const ratingStyles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
+  container: { flex: 1, backgroundColor: colors.bg, maxWidth: 480, width: '100%', alignSelf: 'center' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     padding: 16, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
@@ -616,7 +636,121 @@ const PAYMENT_STATUS_STYLE = {
   THAT_BAI:                     { color: '#ef4444', label: 'Thất bại' },
 }
 
-function OrderDetailModal({ order, visible, onClose, onCancel, onViewInvoice }) {
+
+function OrderRatingModal({ order, visible, onClose, userId }) {
+  const [rating, setRating] = useState(5)
+  const [comment, setComment] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+
+  useEffect(() => {
+    if (!visible) {
+      setRating(5)
+      setComment('')
+      setSubmitted(false)
+    }
+  }, [visible])
+
+  if (!order) return null
+
+  const handleSubmit = async () => {
+    if (submitting) return
+    setSubmitting(true)
+    try {
+      await apiClient.post(`/customers/${userId}/orders/${order.ma_don_hang}/review`, {
+        diem_danh_gia: rating,
+        nhan_xet: comment.trim() || 'Rất hài lòng!',
+      })
+      setSubmitted(true)
+      setTimeout(onClose, 2000)
+    } catch (e) {
+      Alert.alert('Lỗi', e?.response?.data?.message || e?.message || 'Không thể gửi đánh giá')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <View style={ratingStyles.container}>
+        <View style={ratingStyles.header}>
+          <TouchableOpacity onPress={onClose} style={ratingStyles.closeBtn}>
+            <Ionicons name="close" size={22} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={ratingStyles.headerTitle}>Đánh giá đơn hàng</Text>
+          <View style={{ width: 36 }} />
+        </View>
+
+        <ScrollView contentContainerStyle={ratingStyles.body} showsVerticalScrollIndicator={false}>
+          {submitted ? (
+            <View style={ratingStyles.successState}>
+              <View style={ratingStyles.successIcon}>
+                <Ionicons name="checkmark-circle" size={72} color={colors.success} />
+              </View>
+              <Text style={ratingStyles.successTitle}>Cảm ơn bạn! 🎉</Text>
+              <Text style={ratingStyles.successDesc}>Đánh giá của bạn giúp chúng tôi phục vụ bạn tốt hơn.</Text>
+            </View>
+          ) : (
+            <>
+              <View style={ratingStyles.shipperSection}>
+                <View style={[ratingStyles.shipperIcon, { backgroundColor: '#fff7ed', borderColor: '#ea8025' }]}>
+                  <Ionicons name="cafe" size={40} color="#ea8025" />
+                </View>
+                <Text style={ratingStyles.shipperLabel}>Đánh giá chất lượng đơn hàng</Text>
+                <Text style={ratingStyles.orderRef}>{order?.ma_don_hang?.slice(0, 16)}</Text>
+              </View>
+
+              <View style={ratingStyles.starsSection}>
+                <Text style={ratingStyles.starsTitle}>Mức độ hài lòng</Text>
+                <View style={ratingStyles.starsRow}>
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <TouchableOpacity key={star} onPress={() => setRating(star)} style={ratingStyles.starBtn}>
+                      <Ionicons
+                        name={star <= rating ? 'star' : 'star-outline'}
+                        size={44}
+                        color={star <= rating ? '#F59E0B' : colors.muted}
+                      />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <Text style={ratingStyles.starLabel}>
+                  {rating === 5 ? '🤩 Tuyệt vời!' : rating === 4 ? '😊 Tốt' : rating === 3 ? '😐 Bình thường' : rating === 2 ? '😕 Không tốt' : '😞 Rất tệ'}
+                </Text>
+              </View>
+
+              <View style={ratingStyles.commentSection}>
+                <Text style={ratingStyles.starsTitle}>Nhận xét của bạn (không bắt buộc)</Text>
+                <TextInput
+                  style={ratingStyles.commentInput}
+                  value={comment}
+                  onChangeText={setComment}
+                  placeholder="Chia sẻ cảm nhận về đồ uống, dịch vụ..."
+                  placeholderTextColor={colors.muted}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+              </View>
+
+              <TouchableOpacity
+                style={[ratingStyles.submitBtn, submitting && { opacity: 0.7 }]}
+                onPress={handleSubmit}
+                disabled={submitting}
+              >
+                {submitting
+                  ? <ActivityIndicator size="small" color="#fff" />
+                  : <Text style={ratingStyles.submitBtnText}>Gửi đánh giá ⭐</Text>
+                }
+              </TouchableOpacity>
+            </>
+          )}
+        </ScrollView>
+      </View>
+    </Modal>
+  )
+}
+
+function OrderDetailModal({ order, visible, onClose, onCancel, onViewInvoice, onRateOrder, onTrackOrder }) {
   if (!order) return null
   const statusStyle = STATUS_STYLE[order.trang_thai_don_hang] || { color: colors.muted, bg: colors.cream, icon: 'help-circle-outline' }
   const paymentStyle = PAYMENT_STATUS_STYLE[order.trang_thai_thanh_toan] || { color: colors.muted, label: order.trang_thai_thanh_toan }
@@ -695,6 +829,13 @@ function OrderDetailModal({ order, visible, onClose, onCancel, onViewInvoice }) 
                     {item.toppings && item.toppings.length ? (
                       <Text style={detailStyles.orderItemMeta}>Topping: {Array.isArray(item.toppings) ? item.toppings.join(', ') : item.toppings}</Text>
                     ) : null}
+                    {(item.luong_da || item.do_ngot) ? (
+                      <Text style={detailStyles.orderItemMeta}>
+                        {item.luong_da ? `Đá: ${item.luong_da}` : ''}
+                        {item.luong_da && item.do_ngot ? ' | ' : ''}
+                        {item.do_ngot ? `Ngọt: ${item.do_ngot}` : ''}
+                      </Text>
+                    ) : null}
                     {item.ghi_chu ? <Text style={[detailStyles.orderItemMeta, { fontStyle: 'italic', color: '#ea8025' }]}>Ghi chú: {item.ghi_chu}</Text> : null}
                     <View style={detailStyles.orderItemPriceRow}>
                       <Text style={detailStyles.orderItemQty}>x{item.so_luong}</Text>
@@ -742,14 +883,36 @@ function OrderDetailModal({ order, visible, onClose, onCancel, onViewInvoice }) 
               </Pressable>
             ) : null}
 
+            {/* Rate Order */}
+            {order.trang_thai_don_hang === 'HOAN_THANH' ? (
+              <Pressable
+                onPress={() => { onClose(); onRateOrder?.(order) }}
+                style={[detailStyles.invoiceBtn, { backgroundColor: '#fff7ed', borderColor: '#f97316', marginBottom: 8 }]}
+              >
+                <Ionicons name="star-outline" size={18} color="#f97316" />
+                <Text style={[detailStyles.invoiceBtnText, { color: '#f97316' }]}>Đánh giá đơn hàng</Text>
+              </Pressable>
+            ) : null}
+
             {/* View Invoice */}
             <Pressable
               onPress={() => onViewInvoice?.(order)}
-              style={detailStyles.invoiceBtn}
+              style={[detailStyles.invoiceBtn, { marginBottom: 8 }]}
             >
               <Ionicons name="document-text-outline" size={18} color={colors.primary} />
               <Text style={detailStyles.invoiceBtnText}>Xem hóa đơn</Text>
             </Pressable>
+
+            {/* Track Order */}
+            {['MOI_TAO', 'DANG_GIAO', 'DANG_CHUAN_BI', 'DA_XAC_NHAN'].includes(order.trang_thai_don_hang) ? (
+              <Pressable
+                onPress={() => onTrackOrder?.(order)}
+                style={[detailStyles.invoiceBtn, { backgroundColor: colors.infoBg, borderColor: colors.primary }]}
+              >
+                <Ionicons name="navigate" size={18} color={colors.primary} />
+                <Text style={[detailStyles.invoiceBtnText, { color: colors.primary }]}>Theo dõi đơn hàng</Text>
+              </Pressable>
+            ) : null}
           </View>
         </ScrollView>
       </View>
@@ -758,6 +921,7 @@ function OrderDetailModal({ order, visible, onClose, onCancel, onViewInvoice }) 
 }
 
 export function OrdersScreen() {
+  const navigation = useNavigation()
   const { user } = useUser()
   const userId = getUserId(user)
   const queryClient = useQueryClient()
@@ -767,6 +931,7 @@ export function OrdersScreen() {
   const [invoiceOrder, setInvoiceOrder] = useState(null)
   const [trackingOrder, setTrackingOrder] = useState(null)
   const [ratingOrder, setRatingOrder] = useState(null)
+  const [orderRatingTarget, setOrderRatingTarget] = useState(null)
 
   const ordersQuery = useQuery({
     queryKey: ['customer', 'orders', userId, statusFilter],
@@ -869,7 +1034,7 @@ export function OrdersScreen() {
               </Pressable>
             ) : null}
             {/* Live Tracking Button */}
-            {['DANG_GIAO', 'DANG_CHUAN_BI', 'DA_XAC_NHAN'].includes(item.trang_thai_don_hang) && (
+            {['MOI_TAO', 'DANG_GIAO', 'DANG_CHUAN_BI', 'DA_XAC_NHAN'].includes(item.trang_thai_don_hang) && (
               <Pressable
                 onPress={(e) => { e.stopPropagation?.(); setTrackingOrder(item) }}
                 style={[styles.detailBtn, { backgroundColor: colors.infoBg, borderColor: colors.primary, borderWidth: 1 }]}
@@ -907,23 +1072,26 @@ export function OrdersScreen() {
   return (
     <View style={styles.screen}>
       {/* Header */}
-      <LinearGradient colors={['#1a0a02', '#3d1a08']} style={styles.header}>
-        <Text style={styles.headerTitle}>Đơn hàng của tôi</Text>
-        <Text style={styles.headerSubtitle}>{orders.length} đơn hàng</Text>
-      </LinearGradient>
+      <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <Pressable onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={24} color="#1e293b" />
+          </Pressable>
+          <View>
+            <Text style={styles.headerTitle}>Đơn hàng của tôi</Text>
+            <Text style={styles.headerSubtitle}>{orders.length} đơn hàng</Text>
+          </View>
+        </View>
+      </View>
 
       {/* Status Filters */}
       <View style={styles.filterBar}>
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={STATUS_FILTERS}
-          keyExtractor={(item) => item.value}
-          contentContainerStyle={styles.filterList}
-          renderItem={({ item }) => {
+        <View style={[styles.filterList, { flexDirection: 'row', flexWrap: 'wrap' }]}>
+          {STATUS_FILTERS.map((item) => {
             const isActive = statusFilter === item.value
             return (
               <Pressable
+                key={item.value}
                 onPress={() => setStatusFilter(item.value)}
                 style={[styles.filterChip, isActive && styles.filterChipActive]}
               >
@@ -932,8 +1100,8 @@ export function OrdersScreen() {
                 </Text>
               </Pressable>
             )
-          }}
-        />
+          })}
+        </View>
       </View>
 
       {/* Loading */}
@@ -982,9 +1150,14 @@ export function OrdersScreen() {
           setSelectedOrder(null)
         }}
         onCancel={handleCancel}
+        onRateOrder={(order) => setOrderRatingTarget(order)}
         onViewInvoice={(order) => {
           setIsDetailOpen(false)
           setInvoiceOrder(order)
+        }}
+        onTrackOrder={(order) => {
+          setIsDetailOpen(false)
+          setTrackingOrder(order)
         }}
       />
 
@@ -1010,6 +1183,14 @@ export function OrdersScreen() {
         onClose={() => setRatingOrder(null)}
         userId={userId}
       />
+
+      {/* Order Rating Modal */}
+      <OrderRatingModal
+        order={orderRatingTarget}
+        visible={Boolean(orderRatingTarget)}
+        onClose={() => setOrderRatingTarget(null)}
+        userId={userId}
+      />
     </View>
   )
 }
@@ -1017,50 +1198,62 @@ export function OrdersScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.bg,
+    backgroundColor: '#f8fafc',
   },
   header: {
     paddingTop: 52,
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '900',
-    color: '#fff',
+    color: '#1e293b',
   },
   headerSubtitle: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.6)',
-    marginTop: 4,
-    fontWeight: '500',
+    color: '#64748b',
+    marginTop: 2,
+    fontWeight: '600',
   },
   filterBar: {
-    backgroundColor: colors.card,
+    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
+    borderBottomColor: '#f1f5f9',
   },
   filterList: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
   },
   filterChip: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: radius.full,
-    backgroundColor: colors.cream,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: 20,
+    backgroundColor: '#f1f5f9',
   },
   filterChipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: '#ea8025',
   },
   filterText: {
     fontSize: 13,
     fontWeight: '700',
-    color: colors.text,
+    color: '#475569',
   },
   filterTextActive: {
     color: '#fff',
@@ -1116,86 +1309,90 @@ const styles = StyleSheet.create({
 
   // Order Card
   orderCard: {
-    backgroundColor: colors.card,
-    borderRadius: radius.xl,
+    backgroundColor: '#fff',
+    borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: '#f1f5f9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   orderCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    padding: spacing.md,
-    paddingBottom: spacing.sm,
+    padding: 16,
+    paddingBottom: 12,
   },
   orderCodeWrap: {
     flex: 1,
   },
   orderCode: {
     fontSize: 15,
-    fontWeight: '900',
-    color: colors.text,
-    letterSpacing: 0.3,
+    fontWeight: '800',
+    color: '#1e293b',
+    letterSpacing: 0.2,
   },
   orderDate: {
-    fontSize: 11,
-    color: colors.muted,
-    marginTop: 3,
+    fontSize: 12,
+    color: '#64748b',
+    marginTop: 4,
     fontWeight: '500',
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    borderRadius: radius.full,
+    borderRadius: 20,
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 6,
   },
   statusText: {
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
-    letterSpacing: 0.3,
   },
   orderDivider: {
     height: 1,
-    backgroundColor: colors.borderLight,
-    marginHorizontal: spacing.md,
+    backgroundColor: '#f1f5f9',
+    marginHorizontal: 16,
   },
   orderBody: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: 10,
-    gap: 5,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
   },
   orderInfoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
   orderInfoText: {
     flex: 1,
-    fontSize: 12,
-    color: colors.textSecondary,
+    fontSize: 13,
+    color: '#475569',
     fontWeight: '500',
   },
   orderCardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.md,
-    paddingTop: 4,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    paddingTop: 8,
   },
   orderTotalLabel: {
-    fontSize: 11,
-    color: colors.muted,
-    fontWeight: '500',
+    fontSize: 12,
+    color: '#64748b',
+    fontWeight: '600',
   },
   orderTotal: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '900',
-    color: colors.primary,
+    color: '#ea8025',
   },
   orderActions: {
     flexDirection: 'row',
@@ -1237,15 +1434,13 @@ const styles = StyleSheet.create({
 const detailStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bg,
+    backgroundColor: '#f8fafc',
+    maxWidth: 480, width: '100%', alignSelf: 'center'
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
     backgroundColor: colors.card,
@@ -1296,9 +1491,9 @@ const detailStyles = StyleSheet.create({
     ...shadows.xs,
   },
   infoTitle: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '900',
-    color: colors.text,
+    color: '#1e293b',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 4,
@@ -1307,46 +1502,48 @@ const detailStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    gap: spacing.md,
-    paddingVertical: 5,
+    gap: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
+    borderBottomColor: '#f1f5f9',
   },
   infoLabel: {
-    fontSize: 13,
-    color: colors.muted,
-    fontWeight: '600',
+    fontSize: 14,
+    color: '#64748b',
+    fontWeight: '500',
     minWidth: 100,
   },
   infoValue: {
     flex: 1,
-    fontSize: 13,
-    color: colors.text,
+    fontSize: 14,
+    color: '#1e293b',
     fontWeight: '700',
     textAlign: 'right',
   },
   itemsCard: {
-    backgroundColor: colors.card,
-    borderRadius: radius.xl,
-    padding: spacing.md,
-    gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    ...shadows.xs,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 16,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   orderItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: 12,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
+    borderBottomColor: '#f1f5f9',
   },
   orderItemImage: {
-    width: 52,
-    height: 52,
-    borderRadius: radius.md,
-    backgroundColor: colors.cream,
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    backgroundColor: '#f1f5f9',
   },
   orderItemImagePlaceholder: {
     alignItems: 'center',
@@ -1354,17 +1551,17 @@ const detailStyles = StyleSheet.create({
   },
   orderItemInfo: {
     flex: 1,
-    gap: 2,
+    gap: 4,
   },
   orderItemName: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '800',
-    color: colors.text,
-    lineHeight: 18,
+    color: '#1e293b',
+    lineHeight: 20,
   },
   orderItemMeta: {
-    fontSize: 11,
-    color: colors.muted,
+    fontSize: 12,
+    color: '#64748b',
   },
   orderItemPriceRow: {
     flexDirection: 'row',
@@ -1372,28 +1569,30 @@ const detailStyles = StyleSheet.create({
     gap: 8,
   },
   orderItemQty: {
-    fontSize: 12,
-    color: colors.muted,
+    fontSize: 13,
+    color: '#64748b',
     fontWeight: '600',
   },
   orderItemPrice: {
-    fontSize: 12,
-    color: colors.textSecondary,
+    fontSize: 13,
+    color: '#475569',
     fontWeight: '700',
   },
   orderItemSubtotal: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '900',
-    color: colors.primary,
+    color: '#ea8025',
   },
   totalCard: {
-    backgroundColor: colors.card,
-    borderRadius: radius.xl,
-    padding: spacing.md,
-    gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    ...shadows.xs,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 16,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   totalRow: {
     flexDirection: 'row',
@@ -1401,33 +1600,33 @@ const detailStyles = StyleSheet.create({
     alignItems: 'center',
   },
   totalLabel: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    fontWeight: '600',
+    fontSize: 14,
+    color: '#64748b',
+    fontWeight: '500',
   },
   totalValue: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
-    color: colors.text,
+    color: '#1e293b',
   },
   totalFinalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 4,
-    paddingTop: spacing.sm,
+    marginTop: 8,
+    paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
+    borderTopColor: '#f1f5f9',
   },
   totalFinalLabel: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '800',
-    color: colors.text,
+    color: '#1e293b',
   },
   totalFinalValue: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '900',
-    color: colors.primary,
+    color: '#ea8025',
   },
   cancelBtn: {
     flexDirection: 'row',
@@ -1451,29 +1650,30 @@ const detailStyles = StyleSheet.create({
 const invoiceStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bg,
+    backgroundColor: '#f8fafc',
+    maxWidth: 480, width: '100%', alignSelf: 'center'
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
-    backgroundColor: colors.card,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 16,
+    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
+    borderBottomColor: '#f1f5f9',
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '900',
-    color: colors.text,
+    fontWeight: '800',
+    color: '#1e293b',
   },
   closeBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.cream,
+    backgroundColor: '#f1f5f9',
     alignItems: 'center',
     justifyContent: 'center',
   },

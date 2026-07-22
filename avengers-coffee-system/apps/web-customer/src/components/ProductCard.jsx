@@ -1,7 +1,9 @@
 import { HeartIcon as HeartOutlineIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
+import { useTranslation } from 'react-i18next';
 
 export default function ProductCard({ product, onView, onQuickAdd, onToggleFavorite, isFavorite = false }) {
+  const { t } = useTranslation();
   const { ten_san_pham, gia_ban, gia_niem_yet, hinh_anh_url, trang_thai, danhMuc, la_hot, la_moi } = product;
   const hasDiscount = Number(gia_niem_yet || 0) > Number(gia_ban || 0);
 
@@ -24,8 +26,8 @@ export default function ProductCard({ product, onView, onQuickAdd, onToggleFavor
         )}
         <div className="absolute left-2 top-2 flex gap-1.5">
           {hasDiscount ? <span className="rounded-full bg-[#c41230] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">Giảm giá</span> : null}
-          {la_hot ? <span className="rounded-full bg-[#e67a00] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">Nổi bật</span> : null}
-          {la_moi ? <span className="rounded-full bg-[#1a8b46] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">Mới</span> : null}
+          {la_hot ? <span className="rounded-full bg-[#e67a00] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">{t('home.bestSeller')}</span> : null}
+          {la_moi ? <span className="rounded-full bg-[#1a8b46] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">{t('home.tryNow')}</span> : null}
         </div>
         {onToggleFavorite ? (
           <button
@@ -49,7 +51,7 @@ export default function ProductCard({ product, onView, onQuickAdd, onToggleFavor
       {/* Nội dung */}
       <div className="flex flex-grow flex-col px-1">
         <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#1a8b46]">
-          {danhMuc?.ten_danh_muc || 'Sản phẩm'}
+          {danhMuc?.ten_danh_muc || t('home.product')}
         </p>
         
         <h3 

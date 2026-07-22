@@ -11,9 +11,10 @@ import { ThanhToanController, ThanhToanHeThongController, ThanhToanLegacyWebhook
 import { ThanhToanService } from './thanh-toan.service';
 import { VoucherModule } from '../voucher/voucher.module';
 import { FeaturesThaianModule } from '../shipper/features_thaian/features_thaian.module';
+import { CustomerWalletModule } from '../customer-wallet/customer-wallet.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CartItem, DonHang, ChiTietDonHang, GiaoDichThanhToan, CaDoiSoat, CaLamViecNhanVien]), NotificationModule, VoucherModule, FeaturesThaianModule],
+  imports: [TypeOrmModule.forFeature([CartItem, DonHang, ChiTietDonHang, GiaoDichThanhToan, CaDoiSoat, CaLamViecNhanVien]), NotificationModule, VoucherModule, FeaturesThaianModule, CustomerWalletModule],
   controllers: [ThanhToanController, ThanhToanHeThongController, ThanhToanLegacyWebhookController],
   providers: [ThanhToanService],
   exports: [ThanhToanService],

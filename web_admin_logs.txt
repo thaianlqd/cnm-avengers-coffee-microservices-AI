@@ -1,9 +1,0 @@
-
-> web-admin@0.0.0 dev
-> vite --host 0.0.0.0 --port 5174
-
-
-  VITE v7.3.1  ready in 2608 ms
-
-  ➜  Local:   http://localhost:5174/
-  ➜  Network: http://172.22.0.12:5174/
