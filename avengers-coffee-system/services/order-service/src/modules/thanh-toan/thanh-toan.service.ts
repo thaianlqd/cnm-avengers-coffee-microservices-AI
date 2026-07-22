@@ -2358,7 +2358,7 @@ export class ThanhToanService {
   }
 
   private taoMaThamChieu(cong: string, maDonHang: string) {
-    const prefix = cong === 'NGAN_HANG_QR' ? 'QR' : 'COD';
+    const prefix = cong === 'NGAN_HANG_QR' ? 'QR' : (cong === 'VI_DIEN_TU' ? 'WALLET' : 'COD');
     return `${prefix}-${maDonHang.slice(0, 8)}-${Date.now().toString().slice(-6)}`;
   }
 
@@ -2872,10 +2872,25 @@ export class ThanhToanService {
       throw new BadRequestException('Chi duoc huy don o trang thai moi tao hoac da xac nhan');
     }
 
+    console.log('[HuyDonHang] Starting cancellation for', maDonHang, 'Payment status:', donHang.trang_thai_thanh_toan, 'Method:', donHang.phuong_thuc_thanh_toan);
+
+    let newTrangThaiThanhToan = donHang.trang_thai_thanh_toan === 'DA_THANH_TOAN' ? donHang.trang_thai_thanh_toan : 'THAT_BAI';
+
+    if (donHang.trang_thai_thanh_toan === 'DA_THANH_TOAN') {
+      const phuongThucCanHoan = ['VI_DIEN_TU', 'MOMO', 'ZALOPAY', 'VNPAY', 'NGAN_HANG_QR'];
+      if (phuongThucCanHoan.includes(donHang.phuong_thuc_thanh_toan)) {
+        await this.customerWalletService.refundBalance(
+          maNguoiDung,
+          Number(donHang.tong_tien),
+          maDonHang
+        );
+        newTrangThaiThanhToan = 'DA_HOAN_TIEN';
+      }
+    }
+
     const updated = await this.capNhatTrangThaiDonHangHeThong(maDonHang, {
       trang_thai_don_hang: 'DA_HUY',
-      trang_thai_thanh_toan:
-        donHang.trang_thai_thanh_toan === 'DA_THANH_TOAN' ? donHang.trang_thai_thanh_toan : 'THAT_BAI',
+      trang_thai_thanh_toan: newTrangThaiThanhToan,
       ghi_chu: lyDo?.trim() || 'Khach hang huy don',
     });
 
@@ -2886,6 +2901,8 @@ export class ThanhToanService {
       loai: 'ORDER',
       du_lieu: { ma_don_hang: maDonHang, trang_thai_don_hang: 'DA_HUY' },
     });
+
+    await this.invalidateOrderCaches(maNguoiDung, donHang.co_so_ma);
 
     return { message: 'Huy don thanh cong', order: updated };
   }

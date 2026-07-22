@@ -107,4 +107,25 @@ export class CustomerWalletService {
 
     return true;
   }
+
+  async refundBalance(customerId: string, amount: number, referenceId: string) {
+    let wallet = await this.walletRepo.findOne({ where: { customer_id: customerId } });
+    if (!wallet) {
+      wallet = this.walletRepo.create({ customer_id: customerId, balance: 0 });
+    }
+
+    wallet.balance = Number(wallet.balance) + amount;
+    await this.walletRepo.save(wallet);
+
+    const transaction = this.transactionRepo.create({
+      customer_id: customerId,
+      amount: amount,
+      type: 'REFUND',
+      status: 'SUCCESS',
+      reference_id: referenceId,
+    });
+    await this.transactionRepo.save(transaction);
+
+    return true;
+  }
 }

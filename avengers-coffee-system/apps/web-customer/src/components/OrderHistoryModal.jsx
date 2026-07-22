@@ -30,6 +30,7 @@ const PAYMENT_METHOD_LABEL = {
   VNPAY: 'VNPAY',
   NGAN_HANG_QR: 'Ngân hàng QR',
   THANH_TOAN_KHI_NHAN_HANG: 'COD',
+  VI_DIEN_TU: 'Ví điện tử',
 };
 
 const BRANCH_LABEL = {
