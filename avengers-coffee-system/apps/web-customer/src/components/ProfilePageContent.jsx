@@ -1320,8 +1320,8 @@ export default function ProfilePageContent({
                         walletData.transactions.map((tx) => (
                           <div key={tx.id} className="flex items-center justify-between p-4 rounded-xl border border-gray-100 bg-white hover:border-gray-200 transition-colors">
                             <div className="flex items-center gap-3">
-                              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${tx.type === 'TOP_UP' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-                                {tx.type === 'TOP_UP' ? (
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${['TOP_UP', 'REFUND'].includes(tx.type) ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                                {['TOP_UP', 'REFUND'].includes(tx.type) ? (
                                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
                                 ) : (
                                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4" /></svg>
@@ -1329,7 +1329,7 @@ export default function ProfilePageContent({
                               </div>
                               <div>
                                 <p className="text-sm font-bold text-gray-800">
-                                  {tx.type === 'TOP_UP' ? 'Nạp tiền vào ví' : 'Thanh toán đơn hàng'}
+                                  {tx.type === 'TOP_UP' ? 'Nạp tiền vào ví' : tx.type === 'REFUND' ? 'Hoàn tiền đơn hàng' : 'Thanh toán đơn hàng'}
                                 </p>
                                 <p className="text-xs font-medium text-gray-500 mt-0.5">
                                   {new Date(tx.created_at).toLocaleString('vi-VN')}
@@ -1337,8 +1337,8 @@ export default function ProfilePageContent({
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className={`text-sm font-black ${tx.type === 'TOP_UP' ? 'text-green-600' : 'text-gray-800'}`}>
-                                {tx.type === 'TOP_UP' ? '+' : '-'}{Number(tx.amount).toLocaleString('vi-VN')} đ
+                              <p className={`text-sm font-black ${['TOP_UP', 'REFUND'].includes(tx.type) ? 'text-green-600' : 'text-gray-800'}`}>
+                                {['TOP_UP', 'REFUND'].includes(tx.type) ? '+' : '-'}{Number(tx.amount).toLocaleString('vi-VN')} đ
                               </p>
                               <span className={`inline-block mt-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
                                 tx.status === 'SUCCESS' ? 'bg-green-50 text-green-700' : tx.status === 'PENDING' ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'
