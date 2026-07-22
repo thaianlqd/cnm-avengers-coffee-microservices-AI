@@ -7,6 +7,7 @@ import { AccountCenterPanel } from '../../shared/components/AccountCenterPanel'
 import { AdminNotificationBell } from '../../shared/components/AdminNotificationBell'
 import { ManagerSurveyPanel } from '../../manager-dashboard/components/ManagerSurveyPanel'
 import { AdminMembershipConfigPanel } from './AdminMembershipConfigPanel'
+import { BranchDetailReviewsView } from './BranchDetailReviewsView'
 
 function fmtNumber(value) {
   return Number(value || 0).toLocaleString('vi-VN')
@@ -207,6 +208,7 @@ export function AdminSystemConsole({
   const promotionsPageData = useMemo(() => buildPage(promotionFilteredItems, promotionsPage), [promotionFilteredItems, promotionsPage])
 
   const [selectedAttributeSelect, setSelectedAttributeSelect] = useState('')
+  const [selectedBranchForReview, setSelectedBranchForReview] = useState(null)
   const [customAttributeName, setCustomAttributeName] = useState('')
   const [newOptionState, setNewOptionState] = useState({}) // { [attrName]: { name: '', price: '' } }
 
@@ -1447,10 +1449,16 @@ export function AdminSystemConsole({
         )}
 
         {activeTab === 'branches' && (
+          selectedBranchForReview ? (
+            <BranchDetailReviewsView
+              branch={selectedBranchForReview}
+              onBack={() => setSelectedBranchForReview(null)}
+            />
+          ) : (
           <section className="panel system-admin-panel">
             <div className="panel-head system-admin-panel-head">
               <h2>Quản lý chi nhánh cửa hàng</h2>
-              <span>CRUD chi nhánh: mã, tên, địa chỉ, số điện thoại, trạng thái</span>
+              <span>CRUD chi nhánh: mã, tên, địa chỉ, số điện thoại, trạng thái. Bấm vào 1 dòng chi nhánh để xem đánh giá chi tiết.</span>
             </div>
 
             <div className="system-admin-card" style={{ marginBottom: '0.8rem' }}>
@@ -1616,7 +1624,12 @@ export function AdminSystemConsole({
                 </thead>
                 <tbody>
                   {branchesPageData.rows.map((branch) => (
-                    <tr key={branch.ma_chi_nhanh}>
+                    <tr
+                      key={branch.ma_chi_nhanh}
+                      onClick={() => setSelectedBranchForReview(branch)}
+                      style={{ cursor: 'pointer' }}
+                      title="Bấm vào dòng để xem chi tiết & đánh giá chi nhánh"
+                    >
                       <td><strong>{branch.ten_chi_nhanh}</strong></td>
                       <td>{branch.ma_chi_nhanh}</td>
                       <td>{branch.dia_chi || '---'}</td>
@@ -1624,7 +1637,7 @@ export function AdminSystemConsole({
                       <td>{fmtNumber(branch.account_count)}</td>
                       <td>{branch.trang_thai}</td>
                       <td>{new Date(branch.ngay_cap_nhat || branch.ngay_tao).toLocaleString('vi-VN')}</td>
-                      <td>
+                      <td onClick={(e) => e.stopPropagation()}>
                         <div className="system-admin-table-actions">
                           <button type="button" className="secondary" onClick={() => startEditBranch(branch)}>Sửa</button>
                           <button
@@ -1645,6 +1658,7 @@ export function AdminSystemConsole({
               <Pagination pageData={branchesPageData} onPageChange={setBranchesPage} />
             </div>
           </section>
+          )
         )}
 
         {activeTab === 'ai-analytics' && (

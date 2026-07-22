@@ -39,6 +39,10 @@ import { ShipperException } from './modules/shipper/entities/shipper-exception.e
 import { FeaturesThaianModule } from './modules/shipper/features_thaian/features_thaian.module';
 import { DeliveryTracking } from './modules/shipper/features_thaian/delivery-tracking.entity';
 
+import { BranchReview } from './entities/branch-review.entity';
+import { BranchReviewService } from './services/branch-review.service';
+import { BranchReviewController } from './controllers/branch-review.controller';
+
 const orderSchema = process.env.DB_SCHEMA || 'orders';
 const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
 
@@ -104,12 +108,13 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
             DeliveryTracking,
             SurveyForm,
             SurveyResponse,
+            BranchReview,
           ],
           synchronize: true,
         };
       },
     }),
-    TypeOrmModule.forFeature([Review, SurveyForm, SurveyResponse]),
+    TypeOrmModule.forFeature([Review, SurveyForm, SurveyResponse, BranchReview]),
     InfrastructureModule,
     CartModule,
     NotificationModule,
@@ -120,7 +125,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
     ShipperModule,
     FeaturesThaianModule,
   ],
-  controllers: [AppController, ReviewController, SurveyController],
-  providers: [AppService, ReviewService, SurveyService],
+  controllers: [AppController, ReviewController, SurveyController, BranchReviewController],
+  providers: [AppService, ReviewService, SurveyService, BranchReviewService],
 })
 export class AppModule { }
