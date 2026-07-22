@@ -12,6 +12,9 @@ export default function OrderTrackingPage({ id, onBack }) {
   const [comment, setComment] = useState('');
   const [isRated, setIsRated] = useState(false);
   const [submittingRating, setSubmittingRating] = useState(false);
+  
+  // ETA & Distance
+  const [routeInfo, setRouteInfo] = useState(null);
 
   const handleRateShipper = async () => {
     setSubmittingRating(true);
@@ -76,7 +79,18 @@ export default function OrderTrackingPage({ id, onBack }) {
     );
   }
 
-  const { order, tracking, shipper, shipper_location, timeline, lalamove } = trackingData;
+  const { order, tracking, shipper, shipper_location, timeline, lalamove, shipper_delivery } = trackingData;
+
+  const deliveryNote = shipper_delivery?.delivery_note || '';
+  const isActuallyRated = isRated || (deliveryNote && deliveryNote.includes('[Đánh giá'));
+  let ratedStars = null;
+  let ratedComment = '';
+  if (isActuallyRated && deliveryNote) {
+     const match = deliveryNote.match(/\[Đánh giá (\d)⭐\]/);
+     if (match) ratedStars = parseInt(match[1]);
+     ratedComment = deliveryNote.replace(/\[Đánh giá \d⭐\]\s*/, '');
+  }
+
 
   const getBranchInfo = (code) => {
     switch (code) {
@@ -134,39 +148,61 @@ export default function OrderTrackingPage({ id, onBack }) {
         </div>
 
         {/* Rating Section when Completed */}
-        {order?.trang_thai_don_hang === 'HOAN_THANH' && !isRated && tracking?.delivery_mode === 'GIAO_TAN_NOI' && (
-          <div className="bg-white p-5 rounded-2xl shadow-lg border-2 border-indigo-100 text-center animate-fade-in-up">
-            <div className="text-4xl mb-2">🎉</div>
-            <h3 className="font-black text-xl text-gray-900 mb-1">Giao hàng thành công!</h3>
-            <p className="text-sm text-gray-500 mb-4">Bạn đánh giá tài xế giao hàng thế nào?</p>
-            
-            <div className="flex justify-center gap-2 mb-4">
-              {[1, 2, 3, 4, 5].map((star) => (
+        {order?.trang_thai_don_hang === 'HOAN_THANH' && tracking?.delivery_mode === 'GIAO_TAN_NOI' && (
+          <div className="bg-white p-5 rounded-2xl shadow-lg border-2 border-indigo-100 text-center animate-fade-in-up mb-4">
+            {!isActuallyRated ? (
+              <>
+                <div className="text-4xl mb-2">🎉</div>
+                <h3 className="font-black text-xl text-gray-900 mb-1">Giao hàng thành công!</h3>
+                <p className="text-sm text-gray-500 mb-4">Bạn đánh giá tài xế giao hàng thế nào?</p>
+                
+                <div className="flex justify-center gap-2 mb-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button 
+                      key={star} 
+                      onClick={() => setRating(star)}
+                      className={`text-3xl transition-transform hover:scale-110 ${star <= rating ? 'text-yellow-400' : 'text-gray-200'}`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+                
+                <textarea 
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Chia sẻ thêm cảm nhận của bạn (không bắt buộc)..."
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm mb-4 outline-none focus:border-indigo-500 transition-colors"
+                  rows={2}
+                />
+                
                 <button 
-                  key={star} 
-                  onClick={() => setRating(star)}
-                  className={`text-3xl transition-transform hover:scale-110 ${star <= rating ? 'text-yellow-400' : 'text-gray-200'}`}
+                  onClick={handleRateShipper}
+                  disabled={submittingRating}
+                  className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-indigo-700 disabled:opacity-50 transition-colors"
                 >
-                  ★
+                  {submittingRating ? 'Đang gửi...' : 'Gửi Đánh Giá'}
                 </button>
-              ))}
-            </div>
-            
-            <textarea 
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder="Chia sẻ thêm cảm nhận của bạn (không bắt buộc)..."
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm mb-4 outline-none focus:border-indigo-500 transition-colors"
-              rows={2}
-            />
-            
-            <button 
-              onClick={handleRateShipper}
-              disabled={submittingRating}
-              className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-            >
-              {submittingRating ? 'Đang gửi...' : 'Gửi Đánh Giá'}
-            </button>
+              </>
+            ) : (
+              <>
+                <div className="text-4xl mb-2">🎉</div>
+                <h3 className="font-black text-xl text-gray-900 mb-1">Giao hàng thành công!</h3>
+                <p className="text-sm text-gray-500 mb-4">Cảm ơn bạn đã đánh giá tài xế.</p>
+                <div className="flex justify-center gap-2 mb-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <span key={star} className={`text-3xl ${star <= (ratedStars || rating) ? 'text-yellow-400' : 'text-gray-200'}`}>
+                      ★
+                    </span>
+                  ))}
+                </div>
+                {(ratedComment || comment) ? (
+                  <p className="bg-gray-50 p-3 rounded-xl text-gray-600 text-sm font-medium border border-gray-100">
+                    "{ratedComment || comment}"
+                  </p>
+                ) : null}
+              </>
+            )}
           </div>
         )}
 
@@ -175,22 +211,31 @@ export default function OrderTrackingPage({ id, onBack }) {
           <div className="space-y-2">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-1 relative">
               <ShipperMapView 
-                height="350px"
+                height="60vh"
                 shipperLocation={shipper_location?.latitude ? shipper_location : { latitude: branchInfo.storeLoc.latitude + 0.002, longitude: branchInfo.storeLoc.longitude - 0.001 }}
                 storeLocation={tracking.store_location || branchInfo.storeLoc}
                 destinationLocation={tracking.destination_location || branchInfo.destLoc}
                 shipperName={shipper?.full_name || 'Tài xế'}
                 deliveryStatus={order.trang_thai_don_hang}
                 storeAddress={branchInfo.address}
+                onRouteInfo={setRouteInfo}
               />
-            </div>
-            
-            {/* Debug info */}
-            <div className="bg-gray-800 text-xs text-white p-2 rounded w-full">
-              <strong>DEBUG INFO:</strong><br/>
-              Shipper ID: {trackingData?.shipper?.id ? trackingData.shipper.id.split('-')[0] : 'CHƯA NHẬN ĐƠN (null)'} <br/>
-              Raw Loc: {JSON.stringify(trackingData?.shipper_location)} <br/>
-              ALL Deliveries for this order in DB: {JSON.stringify(trackingData?.DEBUG_ALL_DELIVERIES)}
+              
+              {/* Floating ETA Box */}
+              {routeInfo && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1000] bg-white/95 backdrop-blur shadow-xl rounded-2xl p-3 border border-indigo-50 flex items-center gap-4 w-[90%] max-w-sm animate-fade-in-up">
+                  <div className="flex-1 text-center border-r border-gray-100">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Thời gian đến</p>
+                    <p className="text-lg font-black text-indigo-600">
+                      {routeInfo.duration < 1 ? '< 1 phút' : `~${Math.round(routeInfo.duration)} phút`}
+                    </p>
+                  </div>
+                  <div className="flex-1 text-center">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Khoảng cách</p>
+                    <p className="text-lg font-black text-gray-900">{routeInfo.distance.toFixed(1)} km</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

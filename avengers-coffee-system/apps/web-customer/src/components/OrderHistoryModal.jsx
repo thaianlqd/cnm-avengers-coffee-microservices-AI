@@ -830,13 +830,16 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                             </div>
                           ) : null}
 
-                          {['DANG_GIAO', 'PICKING_UP', 'ASSIGNING_DRIVER'].includes(order.trang_thai_don_hang) && order.loai_don_hang === 'GIAO_TAN_NOI' ? (
+                          {['DANG_GIAO', 'PICKING_UP', 'ASSIGNING_DRIVER', 'HOAN_THANH'].includes(order.trang_thai_don_hang) && order.loai_don_hang === 'GIAO_TAN_NOI' ? (
                             <button
                               type="button"
                               onClick={() => setTrackingOrderId(order.ma_don_hang)}
                               className="mb-2 w-full flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-indigo-600 hover:bg-indigo-100"
                             >
-                              <span>📍</span> Theo dõi Shipper
+                              {order.trang_thai_don_hang === 'HOAN_THANH' 
+                                ? <><span>⭐</span> Xem & Đánh giá Shipper</> 
+                                : <><span>📍</span> Theo dõi Shipper</>
+                              }
                             </button>
                           ) : null}
 

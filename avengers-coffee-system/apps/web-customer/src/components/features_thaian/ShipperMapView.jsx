@@ -25,13 +25,32 @@ export default function ShipperMapView({
   deliveryStatus = '',
   storeAddress = 'Avengers Coffee',
   height = '400px',
+  onRouteInfo = null,
 }) {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const shipperMarkerRef = useRef(null);
   const storeMarkerRef = useRef(null);
   const destMarkerRef = useRef(null);
-  const routeLineRef = useRef(null);
+  const routeToStoreRef = useRef(null);
+  const routeToCustomerRef = useRef(null);
+  const nextManeuverRef = useRef(null);
+  const hasFitBoundsRef = useRef(false);
+
+  // Cached static routes
+  const cachedRouteStore = useRef(null);
+  const cachedRouteCustomer = useRef(null);
+  const cachedStepsStore = useRef([]);
+  const cachedStepsCustomer = useRef([]);
+
+  const calcDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
   const [leafletLoaded, setLeafletLoaded] = useState(false);
 
   // Dynamically import Leaflet (vì leaflet cần DOM)
@@ -112,6 +131,10 @@ export default function ShipperMapView({
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
+        hasFitBoundsRef.current = false;
+        routeToStoreRef.current = null;
+        routeToCustomerRef.current = null;
+        nextManeuverRef.current = null;
       }
     };
   }, [leafletLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -213,65 +236,123 @@ export default function ShipperMapView({
           .addTo(map)
           .bindPopup(`<b>🛵 ${shipperName}</b><br/>${statusText}`);
       }
-
-      // Center map trên shipper
-      map.panTo([shipperLocation.latitude, shipperLocation.longitude], { animate: true, duration: 1 });
     }
 
     // Vẽ route line
     const fetchAndDrawRoute = async () => {
-      const points = [];
-      if (shipperLocation?.latitude) points.push(shipperLocation);
-      if (storeLocation?.latitude && (!deliveryStatus || deliveryStatus === 'PICKING_UP' || deliveryStatus === 'CONFIRMED')) {
-        points.push(storeLocation);
-      }
-      if (destinationLocation?.latitude && (deliveryStatus === 'IN_TRANSIT' || deliveryStatus === 'DANG_GIAO' || points.length < 2)) {
-        points.push(destinationLocation);
-      }
+      let totalDistance = 0;
+      let totalDuration = 0;
+      let allCoords = [];
+      let activeSteps = [];
 
-      if (routeLineRef.current) {
-        map.removeLayer(routeLineRef.current);
-      }
-
-      if (points.length >= 2) {
-        try {
-          // OSRM requires longitude,latitude
-          const coordsString = points.map(p => `${p.longitude},${p.latitude}`).join(';');
-          const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordsString}?alternatives=false&geometries=geojson&overview=full`);
-          const data = await res.json();
-          
-          let routeCoords = [];
-          if (data.routes && data.routes[0] && data.routes[0].geometry) {
-            // OSRM returns [longitude, latitude], Leaflet needs [latitude, longitude]
-            routeCoords = data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
-          } else {
-            // Fallback to straight lines if OSRM fails
-            routeCoords = points.map(p => [p.latitude, p.longitude]);
+      try {
+        // 1. Shipper -> Store (Blue/Gray)
+        if (storeLocation?.latitude && shipperLocation?.latitude) {
+          if (!cachedRouteStore.current) {
+            const str1 = `${shipperLocation.longitude},${shipperLocation.latitude};${storeLocation.longitude},${storeLocation.latitude}`;
+            const res1 = await fetch(`https://router.project-osrm.org/route/v1/driving/${str1}?geometries=geojson&steps=true`);
+            const data1 = await res1.json();
+            if (data1.routes && data1.routes[0]) {
+              cachedRouteStore.current = data1.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+              cachedStepsStore.current = data1.routes[0].legs?.[0]?.steps || [];
+              totalDistance += data1.routes[0].distance;
+              totalDuration += data1.routes[0].duration;
+            }
           }
 
-          routeLineRef.current = L.polyline(routeCoords, {
-            color: '#4F46E5',
-            weight: 4,
-            opacity: 0.8,
-            lineJoin: 'round'
-          }).addTo(map);
+          if (cachedRouteStore.current) {
+            const blueStyle = { 
+              color: '#3b82f6', 
+              weight: 5,
+              opacity: 0.8
+            };
+            
+            if (routeToStoreRef.current) {
+              routeToStoreRef.current.setLatLngs(cachedRouteStore.current);
+              routeToStoreRef.current.setStyle(blueStyle);
+            } else {
+              routeToStoreRef.current = L.polyline(cachedRouteStore.current, blueStyle).addTo(map);
+            }
+            allCoords.push(...cachedRouteStore.current);
 
-          // Fit bounds to show the whole route
-          const bounds = L.latLngBounds(routeCoords);
-          map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
-        } catch (error) {
-          console.error("Lỗi vẽ đường OSRM:", error);
-          // Fallback to straight line
-          const fallbackCoords = points.map(p => [p.latitude, p.longitude]);
-          routeLineRef.current = L.polyline(fallbackCoords, {
-            color: '#4F46E5',
-            weight: 3,
-            opacity: 0.7,
-            dashArray: '8, 12',
-          }).addTo(map);
-          const bounds = L.latLngBounds(fallbackCoords);
-          map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+            if (deliveryStatus === 'PICKING_UP' || deliveryStatus === 'CONFIRMED') {
+              activeSteps = cachedStepsStore.current;
+            }
+          }
         }
+        
+        // 2. Store -> Customer (Orange)
+        if (storeLocation?.latitude && destinationLocation?.latitude) {
+          if (!cachedRouteCustomer.current) {
+            const str2 = `${storeLocation.longitude},${storeLocation.latitude};${destinationLocation.longitude},${destinationLocation.latitude}`;
+            const res2 = await fetch(`https://router.project-osrm.org/route/v1/driving/${str2}?geometries=geojson&steps=true`);
+            const data2 = await res2.json();
+            if (data2.routes && data2.routes[0]) {
+              cachedRouteCustomer.current = data2.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+              cachedStepsCustomer.current = data2.routes[0].legs?.[0]?.steps || [];
+              totalDistance += data2.routes[0].distance;
+              totalDuration += data2.routes[0].duration;
+            }
+          }
+
+          if (cachedRouteCustomer.current) {
+            if (routeToCustomerRef.current) routeToCustomerRef.current.setLatLngs(cachedRouteCustomer.current);
+            else routeToCustomerRef.current = L.polyline(cachedRouteCustomer.current, { color: '#3b82f6', weight: 5 }).addTo(map);
+            
+            allCoords.push(...cachedRouteCustomer.current);
+            
+            const isDelivering = deliveryStatus === 'IN_TRANSIT' || deliveryStatus === 'DANG_GIAO';
+            if (isDelivering) {
+              activeSteps = cachedStepsCustomer.current;
+            }
+          }
+        }
+
+        if (onRouteInfo && totalDistance > 0) {
+          onRouteInfo({ distance: totalDistance / 1000, duration: totalDuration / 60 });
+        }
+
+        // Draw Next Maneuver Red Dot
+        if (activeSteps.length > 0 && shipperLocation?.latitude) {
+          let minD = Infinity;
+          let closestIdx = 0;
+          for (let i = 0; i < activeSteps.length; i++) {
+            const step = activeSteps[i];
+            if (step.maneuver && step.maneuver.location) {
+              const d = calcDistance(shipperLocation.latitude, shipperLocation.longitude, step.maneuver.location[1], step.maneuver.location[0]);
+              if (d < minD) {
+                minD = d;
+                closestIdx = i;
+              }
+            }
+          }
+          if (minD < 0.05 && closestIdx + 1 < activeSteps.length) {
+            closestIdx++;
+          }
+          const nextStep = activeSteps[closestIdx];
+          if (nextStep?.maneuver?.location) {
+            const latlng = [nextStep.maneuver.location[1], nextStep.maneuver.location[0]];
+            if (nextManeuverRef.current) {
+              nextManeuverRef.current.setLatLng(latlng);
+            } else {
+              nextManeuverRef.current = L.circleMarker(latlng, {
+                color: '#fff', weight: 2, fillColor: '#ef4444', fillOpacity: 1, radius: 8
+              }).addTo(map);
+            }
+          }
+        } else if (nextManeuverRef.current) {
+          nextManeuverRef.current.remove();
+          nextManeuverRef.current = null;
+        }
+
+        if (!hasFitBoundsRef.current && allCoords.length > 0) {
+          const bounds = L.latLngBounds(allCoords);
+          map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+          hasFitBoundsRef.current = true;
+        }
+
+      } catch (error) {
+        console.error("OSRM error:", error);
       }
     };
 

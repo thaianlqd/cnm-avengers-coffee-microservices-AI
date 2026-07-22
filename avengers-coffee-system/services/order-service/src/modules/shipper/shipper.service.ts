@@ -99,7 +99,7 @@ export class ShipperService {
     let query = this.donHangRepo
       .createQueryBuilder('don')
       .leftJoinAndSelect('don.chi_tiet', 'chi_tiet')
-      .where('don.trang_thai_don_hang IN (:...statuses)', { statuses: ['DANG_GIAO', 'DANG_CHUAN_BI'] });
+      .where('don.trang_thai_don_hang = :status', { status: 'DANG_GIAO' });
 
     if (activeOrderIds.length > 0) {
       query = query.andWhere('don.ma_don_hang NOT IN (:...activeIds)', { activeIds: activeOrderIds });
@@ -110,7 +110,7 @@ export class ShipperService {
       query = query.andWhere('UPPER(REPLACE(don.co_so_ma, \'-\', \'_\')) = :branchCode', { branchCode: normalized });
     }
 
-    query = query.orderBy('don.ngay_tao', 'ASC');
+    query = query.orderBy('don.ngay_tao', 'DESC');
 
     const orders = await query.getMany();
 
@@ -636,10 +636,9 @@ export class ShipperService {
       await this.shipperRepo.update({ id: shipper.id }, { rating: Math.min(5, newRating) });
     }
 
-    // Lưu comment vào delivery note (nếu có)
-    if (comment?.trim()) {
-      await this.deliveryRepo.update({ id: delivery.id }, { delivery_note: `[Đánh giá ${safeRating}⭐] ${comment.trim()}` });
-    }
+    // Lưu đánh giá vào delivery note, dù có comment hay không
+    const newNote = `[Đánh giá ${safeRating}⭐] ${comment?.trim() || ''}`.trim();
+    await this.deliveryRepo.update({ id: delivery.id }, { delivery_note: newNote });
 
     return { success: true, message: 'Cảm ơn bạn đã đánh giá!', rating: safeRating };
   }

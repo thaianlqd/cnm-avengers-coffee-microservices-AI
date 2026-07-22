@@ -315,6 +315,7 @@ export class DeliveryTrackingService {
             picked_up_at: shipperDelivery.picked_up_at,
             delivered_at: shipperDelivery.delivered_at,
             proof_image_url: shipperDelivery.proof_image_url,
+            delivery_note: shipperDelivery.delivery_note,
           }
         : null,
       lalamove: lalamoveInfo,

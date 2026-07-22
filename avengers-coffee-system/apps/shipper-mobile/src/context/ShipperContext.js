@@ -4,6 +4,10 @@ import { clearShipperSession, loadShipperSession, saveShipperSession } from '../
 
 const ShipperContext = createContext(null)
 
+export const globalState = {
+  isSimulating: false
+};
+
 export function ShipperProvider({ children }) {
   const [shipper, setShipper] = useState(null)
   const [token, setToken] = useState(null)
