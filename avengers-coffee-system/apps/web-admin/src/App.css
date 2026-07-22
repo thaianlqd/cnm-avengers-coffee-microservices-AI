@@ -1,14 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --cream: #fff8ed;
-  --coffee: #2f2119;
-  --burnt: #2563eb;
-  --burnt-soft: #38bdf8;
-  --milk: #fff2e4;
-  --line: #e7d5c3;
+  --cream: #faf7f4;
+  --coffee: #1a1a1a;
+  --burnt: #c41230;
+  --burnt-soft: #a30f28;
+  --milk: #f4f0eb;
+  --line: #e8e2da;
   --paper: #ffffff;
-  --mint: #2d8f5c;
+  --mint: #059669;
 }
 
 #root {

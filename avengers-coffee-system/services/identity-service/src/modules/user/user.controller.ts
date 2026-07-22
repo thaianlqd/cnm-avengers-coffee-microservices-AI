@@ -403,4 +403,31 @@ export class UserController {
   async triggerBirthdayVouchers() {
     return this.userService.kiemTraVaSinhVoucherSinhNhat();
   }
+
+  @Roles('ADMIN')
+  @Get('users/admin/membership-config')
+  async layMembershipConfigAdmin() {
+    return this.userService.layToanBoMembershipConfigs();
+  }
+
+  @Roles('ADMIN')
+  @Patch('users/admin/membership-config')
+  async capNhatMembershipConfigAdmin(@Body() body: { key: string; value: any }) {
+    return this.userService.capNhatMembershipConfig(body.key, body.value);
+  }
+
+  @Roles('ADMIN')
+  @Patch('users/admin/accounts/:userId/membership')
+  async capNhatMembershipUserAdmin(
+    @Param('userId') userId: string,
+    @Body()
+    body: {
+      diem_loyalty?: number;
+      diem_kha_dung?: number;
+      tong_chi_tieu?: number;
+      ngay_sinh?: string;
+    },
+  ) {
+    return this.userService.capNhatMembershipAdmin(userId, body);
+  }
 }

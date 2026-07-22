@@ -38,6 +38,7 @@ async function bootstrap() {
         '/manager',
         '/products',
         '/reviews',
+        '/branch-reviews',
         '/surveys',
         '/shippers',
         '/vouchers',

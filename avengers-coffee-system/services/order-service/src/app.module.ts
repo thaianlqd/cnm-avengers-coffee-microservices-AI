@@ -42,6 +42,10 @@ import { CustomerWallet } from './modules/customer-wallet/entities/customer-wall
 import { CustomerWalletTransaction } from './modules/customer-wallet/entities/customer-wallet-transaction.entity';
 import { CustomerWalletModule } from './modules/customer-wallet/customer-wallet.module';
 
+import { BranchReview } from './entities/branch-review.entity';
+import { BranchReviewService } from './services/branch-review.service';
+import { BranchReviewController } from './controllers/branch-review.controller';
+
 const orderSchema = process.env.DB_SCHEMA || 'orders';
 const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
 
@@ -107,6 +111,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
             DeliveryTracking,
             SurveyForm,
             SurveyResponse,
+            BranchReview,
             CustomerWallet,
             CustomerWalletTransaction,
           ],
@@ -114,7 +119,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
         };
       },
     }),
-    TypeOrmModule.forFeature([Review, SurveyForm, SurveyResponse]),
+    TypeOrmModule.forFeature([Review, SurveyForm, SurveyResponse, BranchReview]),
     InfrastructureModule,
     CartModule,
     NotificationModule,
@@ -126,7 +131,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
     FeaturesThaianModule,
     CustomerWalletModule,
   ],
-  controllers: [AppController, ReviewController, SurveyController],
-  providers: [AppService, ReviewService, SurveyService],
+  controllers: [AppController, ReviewController, SurveyController, BranchReviewController],
+  providers: [AppService, ReviewService, SurveyService, BranchReviewService],
 })
 export class AppModule { }
