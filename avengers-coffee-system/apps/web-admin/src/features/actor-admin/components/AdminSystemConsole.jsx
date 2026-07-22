@@ -6,6 +6,8 @@ import { AdminShipperPanel } from './AdminShipperPanel'
 import { AccountCenterPanel } from '../../shared/components/AccountCenterPanel'
 import { AdminNotificationBell } from '../../shared/components/AdminNotificationBell'
 import { ManagerSurveyPanel } from '../../manager-dashboard/components/ManagerSurveyPanel'
+import { AdminMembershipConfigPanel } from './AdminMembershipConfigPanel'
+import { BranchDetailReviewsView } from './BranchDetailReviewsView'
 
 function fmtNumber(value) {
   return Number(value || 0).toLocaleString('vi-VN')
@@ -166,6 +168,17 @@ export function AdminSystemConsole({
     savingPromotion,
     attributesState,
     loadAttributes,
+    membershipConfigsState,
+    savingMembershipConfig,
+    loadMembershipConfigs,
+    saveMembershipConfig,
+    customerMembershipForm,
+    setCustomerMembershipForm,
+    editingCustomerMembershipId,
+    savingCustomerMembership,
+    startEditCustomerMembership,
+    cancelEditCustomerMembership,
+    saveCustomerMembership,
   } = useSystemAdmin()
 
   const usersPageData = useMemo(() => buildPage(usersState.items, usersPage), [usersState.items, usersPage])
@@ -195,6 +208,7 @@ export function AdminSystemConsole({
   const promotionsPageData = useMemo(() => buildPage(promotionFilteredItems, promotionsPage), [promotionFilteredItems, promotionsPage])
 
   const [selectedAttributeSelect, setSelectedAttributeSelect] = useState('')
+  const [selectedBranchForReview, setSelectedBranchForReview] = useState(null)
   const [customAttributeName, setCustomAttributeName] = useState('')
   const [newOptionState, setNewOptionState] = useState({}) // { [attrName]: { name: '', price: '' } }
 
@@ -303,6 +317,9 @@ export function AdminSystemConsole({
       onTaiForms();
       onTaiResponses();
     }
+    if (activeTab === 'membership-config') {
+      loadMembershipConfigs();
+    }
   }, [activeTab]);
 
   return (
@@ -322,6 +339,9 @@ export function AdminSystemConsole({
           </button>
           <button type="button" className={activeTab === 'customers' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('customers')}>
             Quản lý khách hàng
+          </button>
+          <button type="button" className={activeTab === 'membership-config' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('membership-config')}>
+            ⚙️ Thiết lập Membership
           </button>
           <button type="button" className={activeTab === 'branches' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('branches')}>
             Quản lý chi nhánh
@@ -497,248 +517,617 @@ export function AdminSystemConsole({
 
         {activeTab === 'promotions' && (
           <section className="panel system-admin-panel">
-            <div className="panel-head system-admin-panel-head">
-              <h2>Quản lý chương trình khuyến mãi &amp; Voucher</h2>
-              <span>Thiết lập, chỉnh sửa và kích hoạt các chương trình giảm giá / voucher</span>
-            </div>
-
-            <div className="system-admin-card" style={{ marginBottom: '0.8rem' }}>
-              <div className="panel-head">
-                <h2>{editingPromotionCode ? `Cập nhật: ${editingPromotionCode}` : 'Tạo chương trình khuyến mãi mới'}</h2>
+            <div
+              className="system-admin-card"
+              style={{
+                marginBottom: '1.5rem',
+                padding: '1.5rem',
+                borderRadius: '14px',
+                background: '#ffffff',
+                border: '1px solid #e8e2da',
+                borderTop: '4px solid #c41230',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
+              }}
+            >
+              <div style={{ marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid #f4f0eb' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#c41230', margin: 0, fontFamily: "'Playfair Display', 'Nunito', serif" }}>
+                  {editingPromotionCode ? `Cập nhật thông tin Voucher: ${editingPromotionCode}` : 'Tạo chương trình Voucher mới'}
+                </h3>
               </div>
 
-              <div className="system-admin-form-grid system-admin-form-grid--promotion">
-                <label>
-                  <span>Mã khuyến mãi (công khai)</span>
-                  <input
-                    value={promotionForm.ma_khuyen_mai}
-                    onChange={(e) => setPromotionForm((p) => ({ ...p, ma_khuyen_mai: e.target.value.toUpperCase().replace(/\s+/g, '_') }))}
-                    placeholder="VD: SUMMER10"
-                    disabled={Boolean(editingPromotionCode)}
-                  />
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ fontWeight: '600', fontSize: '0.85rem', color: '#374151', display: 'block', marginBottom: '0.5rem' }}>
+                  Loại hình phân phối <span style={{ color: '#ef4444' }}>*</span>
                 </label>
-                <label className="system-admin-promo-name-field">
-                  <span>Tên chương trình</span>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+                  <div
+                    onClick={() => {
+                      if (!editingPromotionCode) {
+                        setPromotionForm((p) => ({ ...p, loai_phan_phoi: 'PUBLIC' }));
+                      }
+                    }}
+                    style={{
+                      border: promotionForm.loai_phan_phoi === 'PUBLIC' ? '2px solid #c41230' : '1px solid #e8e2da',
+                      backgroundColor: promotionForm.loai_phan_phoi === 'PUBLIC' ? '#faf7f4' : '#ffffff',
+                      borderRadius: '10px',
+                      padding: '0.85rem 1rem',
+                      cursor: editingPromotionCode ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.15s ease-in-out'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', margin: 0, fontWeight: '700', fontSize: '0.9rem', color: '#1a1a1a' }}>
+                        <input
+                          type="radio"
+                          name="loai_phan_phoi"
+                          checked={promotionForm.loai_phan_phoi === 'PUBLIC'}
+                          onChange={() => {
+                            if (!editingPromotionCode) {
+                              setPromotionForm((p) => ({ ...p, loai_phan_phoi: 'PUBLIC' }));
+                            }
+                          }}
+                          style={{ accentColor: '#c41230', cursor: 'pointer' }}
+                        />
+                        Mã công khai
+                      </label>
+                      <span style={{ fontSize: '0.72rem', background: '#eff6ff', color: '#1d4ed8', padding: '0.15rem 0.5rem', borderRadius: '6px', fontWeight: '700', border: '1px solid #bfdbfe' }}>
+                        Phát hành rộng rãi
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '0.78rem', color: '#6b7280', margin: '0.25rem 0 0 1.5rem', lineHeight: 1.35 }}>
+                      Khách hàng nhập trực tiếp mã này trên ứng dụng khi đặt hàng thanh toán.
+                    </p>
+                  </div>
+
+                  <div
+                    onClick={() => {
+                      if (!editingPromotionCode) {
+                        setPromotionForm((p) => ({ ...p, loai_phan_phoi: 'TEMPLATE' }));
+                      }
+                    }}
+                    style={{
+                      border: promotionForm.loai_phan_phoi === 'TEMPLATE' ? '2px solid #c41230' : '1px solid #e8e2da',
+                      backgroundColor: promotionForm.loai_phan_phoi === 'TEMPLATE' ? '#faf7f4' : '#ffffff',
+                      borderRadius: '10px',
+                      padding: '0.85rem 1rem',
+                      cursor: editingPromotionCode ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.15s ease-in-out'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', margin: 0, fontWeight: '700', fontSize: '0.9rem', color: '#1a1a1a' }}>
+                        <input
+                          type="radio"
+                          name="loai_phan_phoi"
+                          checked={promotionForm.loai_phan_phoi === 'TEMPLATE'}
+                          onChange={() => {
+                            if (!editingPromotionCode) {
+                              setPromotionForm((p) => ({ ...p, loai_phan_phoi: 'TEMPLATE' }));
+                            }
+                          }}
+                          style={{ accentColor: '#c41230', cursor: 'pointer' }}
+                        />
+                        Template nội bộ
+                      </label>
+                      <span style={{ fontSize: '0.72rem', background: '#f3e8ff', color: '#6b21a8', padding: '0.15rem 0.5rem', borderRadius: '6px', fontWeight: '700', border: '1px solid #e9d5ff' }}>
+                        Dùng cho hệ thống
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '0.78rem', color: '#6b7280', margin: '0.25rem 0 0 1.5rem', lineHeight: 1.35 }}>
+                      Khuôn mẫu làm nguyên liệu để tự động sinh mã cho Thăng hạng, Sinh nhật, Vòng quay...
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '1rem', alignItems: 'start' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>
+                    {promotionForm.loai_phan_phoi === 'PUBLIC' ? 'Tên chương trình' : 'Tên mẫu template'} <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
                   <input
                     value={promotionForm.ten_khuyen_mai}
                     onChange={(e) => setPromotionForm((p) => ({ ...p, ten_khuyen_mai: e.target.value }))}
-                    placeholder="VD: Giảm 10% mùa hè 2025"
+                    placeholder={promotionForm.loai_phan_phoi === 'PUBLIC' ? 'VD: Khuyến mãi Mùa Hè 2026' : 'VD: Template Quà Sinh Nhật VIP'}
+                    style={{ width: '100%', height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem', fontFamily: 'inherit' }}
                   />
-                </label>
-                <label>
-                  <span>Loại khuyến mãi</span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>
+                      {promotionForm.loai_phan_phoi === 'PUBLIC' ? 'Mã Voucher' : 'Mã Template'} <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    {promotionForm.loai_phan_phoi === 'PUBLIC' && !editingPromotionCode && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const rnd = `PUB_${Math.random().toString(36).substring(2, 7).toUpperCase()}`
+                          setPromotionForm((p) => ({ ...p, ma_khuyen_mai: rnd }))
+                        }}
+                        style={{ border: 'none', background: 'none', color: '#c41230', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer', padding: 0 }}
+                      >
+                        Tạo mã ngẫu nhiên
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    value={promotionForm.ma_khuyen_mai}
+                    onChange={(e) => setPromotionForm((p) => ({ ...p, ma_khuyen_mai: e.target.value.toUpperCase().replace(/\s+/g, '_') }))}
+                    placeholder={promotionForm.loai_phan_phoi === 'PUBLIC' ? 'VD: SUMMER2026' : 'Tự động sinh mã'}
+                    disabled={Boolean(editingPromotionCode)}
+                    style={{ width: '100%', height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem', fontFamily: 'inherit', backgroundColor: editingPromotionCode || promotionForm.loai_phan_phoi === 'TEMPLATE' ? '#f9fafb' : '#ffffff' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>Hình thức giảm giá</label>
                   <select
                     value={promotionForm.loai_khuyen_mai}
                     onChange={(e) => setPromotionForm((p) => ({ ...p, loai_khuyen_mai: e.target.value }))}
-                    disabled={Boolean(editingPromotionCode)}
+                    style={{ width: '100%', height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem', fontFamily: 'inherit' }}
                   >
                     {(PROMOTION_TYPES || []).map((t) => (
                       <option key={t.code} value={t.code}>{t.label}</option>
                     ))}
                   </select>
-                </label>
+                </div>
 
-                <label>
-                  <span>
-                    {promotionForm.loai_khuyen_mai === 'PERCENT' ? 'Phần trăm giảm (%)' :
-                     promotionForm.loai_khuyen_mai === 'FIXED' ? 'Số tiền giảm (đ)' : 'Giá trị (không bắt buộc)'}
-                  </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>
+                    {promotionForm.loai_khuyen_mai === 'PERCENT' ? 'Mức giảm (%)' : promotionForm.loai_khuyen_mai === 'FIXED' ? 'Số tiền giảm (đ)' : 'Giá trị giảm'}
+                  </label>
                   <input
-                    type="number" min="0"
+                    type="number"
+                    min="0"
                     max={promotionForm.loai_khuyen_mai === 'PERCENT' ? 100 : undefined}
                     value={promotionForm.gia_tri}
                     onChange={(e) => setPromotionForm((p) => ({ ...p, gia_tri: e.target.value }))}
                     disabled={promotionForm.loai_khuyen_mai === 'FREE_ITEM'}
+                    style={{ width: '100%', height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem', fontFamily: 'inherit' }}
                   />
-                </label>
-                <label>
-                  <span>Giá trị đơn tối thiểu (đ)</span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  {promotionForm.loai_khuyen_mai === 'PERCENT' ? (
+                    <>
+                      <label style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>Giảm tối đa (đ)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={promotionForm.giam_toi_da}
+                        onChange={(e) => setPromotionForm((p) => ({ ...p, giam_toi_da: e.target.value }))}
+                        placeholder="Để trống = Không giới hạn"
+                        style={{ width: '100%', height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem', fontFamily: 'inherit' }}
+                      />
+                    </>
+                  ) : promotionForm.loai_khuyen_mai === 'FREE_ITEM' ? (
+                    <>
+                      <label style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>Sản phẩm tặng kèm</label>
+                      <input
+                        value={promotionForm.ten_san_pham_tang}
+                        onChange={(e) => setPromotionForm((p) => ({ ...p, ten_san_pham_tang: e.target.value }))}
+                        placeholder="VD: Phin Sữa Đá"
+                        style={{ width: '100%', height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem', fontFamily: 'inherit' }}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <label style={{ fontSize: '0.82rem', fontWeight: '600', color: '#9ca3af' }}>Giảm tối đa (đ)</label>
+                      <input
+                        disabled
+                        placeholder="Không áp dụng cho giảm cố định"
+                        style={{ width: '100%', height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem', backgroundColor: '#f9fafb' }}
+                      />
+                    </>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>Đơn tối thiểu (đ)</label>
                   <input
-                    type="number" min="0"
+                    type="number"
+                    min="0"
                     value={promotionForm.gia_tri_don_toi_thieu}
                     onChange={(e) => setPromotionForm((p) => ({ ...p, gia_tri_don_toi_thieu: e.target.value }))}
-                    placeholder="0 = không giới hạn"
+                    placeholder="0 = Không giới hạn"
+                    style={{ width: '100%', height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem', fontFamily: 'inherit' }}
                   />
-                </label>
-                {promotionForm.loai_khuyen_mai === 'PERCENT' ? (
-                  <label>
-                    <span>Giảm tối đa (đ, để trống = không giới hạn)</span>
-                    <input
-                      type="number" min="0"
-                      value={promotionForm.giam_toi_da}
-                      onChange={(e) => setPromotionForm((p) => ({ ...p, giam_toi_da: e.target.value }))}
-                      placeholder="VD: 50000"
-                    />
-                  </label>
-                ) : promotionForm.loai_khuyen_mai === 'FREE_ITEM' ? (
-                  <label>
-                    <span>Tên sản phẩm tặng kèm</span>
-                    <input
-                      value={promotionForm.ten_san_pham_tang}
-                      onChange={(e) => setPromotionForm((p) => ({ ...p, ten_san_pham_tang: e.target.value }))}
-                      placeholder="VD: Bánh quy chocolate"
-                    />
-                  </label>
-                ) : <div />}
+                </div>
 
-                <label>
-                  <span>Số lượng tối đa (0 = vô hạn)</span>
-                  <input
-                    type="number" min="0"
-                    value={promotionForm.so_luong_toi_da}
-                    onChange={(e) => setPromotionForm((p) => ({ ...p, so_luong_toi_da: e.target.value }))}
-                  />
-                </label>
-                <label>
-                  <span>Giới hạn mỗi khách</span>
-                  <input
-                    type="number" min="1"
-                    value={promotionForm.gioi_han_moi_nguoi}
-                    onChange={(e) => setPromotionForm((p) => ({ ...p, gioi_han_moi_nguoi: e.target.value }))}
-                  />
-                </label>
-                <label>
-                  <span>Trạng thái</span>
-                  <select value={promotionForm.trang_thai} onChange={(e) => setPromotionForm((p) => ({ ...p, trang_thai: e.target.value }))}>
-                    <option value="ACTIVE">✅ Hiệu lực</option>
-                    <option value="INACTIVE">⏸️ Tạm dừng</option>
-                  </select>
-                </label>
+                {promotionForm.loai_phan_phoi === 'PUBLIC' ? (
+                  <>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <label style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>Tổng lượt phát hành</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={promotionForm.so_luong_toi_da}
+                        onChange={(e) => setPromotionForm((p) => ({ ...p, so_luong_toi_da: e.target.value }))}
+                        placeholder="0 = Không giới hạn"
+                        style={{ width: '100%', height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem', fontFamily: 'inherit' }}
+                      />
+                    </div>
 
-                <label>
-                  <span>Ngày bắt đầu</span>
-                  <input type="datetime-local" value={promotionForm.ngay_bat_dau} onChange={(e) => setPromotionForm((p) => ({ ...p, ngay_bat_dau: e.target.value }))} />
-                </label>
-                <label>
-                  <span>Ngày kết thúc</span>
-                  <input type="datetime-local" value={promotionForm.ngay_ket_thuc} onChange={(e) => setPromotionForm((p) => ({ ...p, ngay_ket_thuc: e.target.value }))} />
-                </label>
-                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                  <span>Hiển thị cho khách</span>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={Boolean(promotionForm.hien_thi_cho_khach)}
-                      onChange={(e) => setPromotionForm((p) => ({ ...p, hien_thi_cho_khach: e.target.checked }))}
-                      style={{ width: 'auto', accentColor: 'var(--burnt)' }}
-                    />
-                    <span style={{ fontSize: '0.86rem', color: '#4a2f20' }}>Hiển thị trang khuyến mãi</span>
-                  </label>
-                </label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <label style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>Lượt dùng tối đa / Khách</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={promotionForm.gioi_han_moi_nguoi}
+                        onChange={(e) => setPromotionForm((p) => ({ ...p, gioi_han_moi_nguoi: e.target.value }))}
+                        style={{ width: '100%', height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem', fontFamily: 'inherit' }}
+                      />
+                    </div>
 
-                <label>
-                  <span>URL ảnh banner (tùy chọn)</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <label style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>Trạng thái hoạt động</label>
+                      <select
+                        value={promotionForm.trang_thai}
+                        onChange={(e) => setPromotionForm((p) => ({ ...p, trang_thai: e.target.value }))}
+                        style={{ width: '100%', height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem', fontFamily: 'inherit' }}
+                      >
+                        <option value="ACTIVE">Hoạt động</option>
+                        <option value="INACTIVE">Tạm dừng</option>
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <label style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>Thời gian bắt đầu</label>
+                      <input
+                        type="datetime-local"
+                        value={promotionForm.ngay_bat_dau}
+                        onChange={(e) => setPromotionForm((p) => ({ ...p, ngay_bat_dau: e.target.value }))}
+                        style={{ width: '100%', height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem', fontFamily: 'inherit' }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <label style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>Thời gian kết thúc</label>
+                      <input
+                        type="datetime-local"
+                        value={promotionForm.ngay_ket_thuc}
+                        onChange={(e) => setPromotionForm((p) => ({ ...p, ngay_ket_thuc: e.target.value }))}
+                        style={{ width: '100%', height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem', fontFamily: 'inherit' }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', justifyContent: 'center' }}>
+                      <label style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>Hiển thị trên ứng dụng</label>
+                      <div style={{ height: '38px', display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#faf7f4', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da' }}>
+                        <input
+                          type="checkbox"
+                          id="hien_thi_cho_khach_chk"
+                          checked={Boolean(promotionForm.hien_thi_cho_khach)}
+                          onChange={(e) => setPromotionForm((p) => ({ ...p, hien_thi_cho_khach: e.target.checked }))}
+                          style={{ width: '16px', height: '16px', accentColor: '#c41230', cursor: 'pointer' }}
+                        />
+                        <label htmlFor="hien_thi_cho_khach_chk" style={{ fontSize: '0.85rem', color: '#1a1a1a', cursor: 'pointer', margin: 0, fontWeight: '600' }}>
+                          Hiển thị trang Khuyến mãi
+                        </label>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <label style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>Ngữ cảnh áp dụng tự động</label>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', backgroundColor: '#faf7f4', padding: '0.55rem 0.85rem', borderRadius: '8px', border: '1px solid #e8e2da', minHeight: '38px', alignItems: 'center' }}>
+                        {[
+                          { code: 'TIER_UP', label: 'Thăng hạng' },
+                          { code: 'LUCKY_WHEEL', label: 'Vòng quay' },
+                          { code: 'BIRTHDAY', label: 'Sinh nhật' },
+                          { code: 'FREESHIP', label: 'Freeship' },
+                        ].map((ctx) => {
+                          const currentContexts = Array.isArray(promotionForm.ngu_canh_su_dung) ? promotionForm.ngu_canh_su_dung : []
+                          const isChecked = currentContexts.includes(ctx.code)
+                          return (
+                            <label key={ctx.code} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.82rem', color: '#1a1a1a', fontWeight: isChecked ? '700' : '500' }}>
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={(e) => {
+                                  let next = [...currentContexts]
+                                  if (e.target.checked) {
+                                    if (!next.includes(ctx.code)) next.push(ctx.code)
+                                  } else {
+                                    next = next.filter((c) => c !== ctx.code)
+                                  }
+                                  setPromotionForm((p) => ({ ...p, ngu_canh_su_dung: next }))
+                                }}
+                                style={{ accentColor: '#c41230' }}
+                              />
+                              {ctx.label}
+                            </label>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <label style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>Hạn dùng sau khi phát (ngày)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={promotionForm.so_ngay_hieu_luc}
+                        onChange={(e) => setPromotionForm((p) => ({ ...p, so_ngay_hieu_luc: e.target.value }))}
+                        placeholder="Mặc định: 30 ngày"
+                        style={{ width: '100%', height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem', fontFamily: 'inherit' }}
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>Đường dẫn hình ảnh Banner</label>
                   <input
                     value={promotionForm.hinh_anh}
                     onChange={(e) => setPromotionForm((p) => ({ ...p, hinh_anh: e.target.value }))}
-                    placeholder="https://... hoặc để trống"
+                    placeholder="https://..."
+                    style={{ width: '100%', height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem', fontFamily: 'inherit' }}
                   />
-                </label>
-                <label className="system-admin-promo-desc-field">
-                  <span>Mô tả chi tiết</span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>Mô tả chương trình</label>
                   <input
                     value={promotionForm.mo_ta}
                     onChange={(e) => setPromotionForm((p) => ({ ...p, mo_ta: e.target.value }))}
-                    placeholder="Mô tả điều kiện áp dụng..."
+                    placeholder="Nhập mô tả chi tiết..."
+                    style={{ width: '100%', height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem', fontFamily: 'inherit' }}
                   />
-                </label>
+                </div>
               </div>
 
-              <div className="system-admin-form-actions" style={{ marginTop: '0.7rem' }}>
-                <button type="button" onClick={savePromotion} disabled={savingPromotion}>
-                  {savingPromotion ? 'Đang lưu...' : editingPromotionCode ? 'Cập nhật' : 'Tạo khuyến mãi'}
-                </button>
+              <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #f4f0eb', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
                 {editingPromotionCode ? (
-                  <button type="button" className="secondary" onClick={cancelEditPromotion}>Hủy sửa</button>
+                  <button
+                    type="button"
+                    onClick={cancelEditPromotion}
+                    style={{
+                      padding: '0.55rem 1.25rem',
+                      borderRadius: '8px',
+                      border: '1px solid #e8e2da',
+                      backgroundColor: '#ffffff',
+                      color: '#4b5563',
+                      fontWeight: '600',
+                      fontSize: '0.875rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Hủy bỏ
+                  </button>
                 ) : null}
+                <button
+                  type="button"
+                  onClick={savePromotion}
+                  disabled={savingPromotion}
+                  style={{
+                    padding: '0.55rem 1.75rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    backgroundColor: '#c41230',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    fontSize: '0.875rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(196, 18, 48, 0.2)'
+                  }}
+                >
+                  {savingPromotion ? 'Đang lưu...' : editingPromotionCode ? 'Cập nhật Voucher' : 'Lưu chương trình Voucher'}
+                </button>
               </div>
             </div>
 
-            <div className="orders-filter-bar" style={{ marginBottom: '0.8rem' }}>
-              <div className="system-admin-promo-filter-grid">
+            <div className="orders-filter-bar" style={{ marginBottom: '1.25rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 180px 180px', gap: '0.75rem' }}>
                 <input
                   value={promotionFilter.q}
                   onChange={(e) => setPromotionFilter((prev) => ({ ...prev, q: e.target.value }))}
-                  placeholder="Tìm mã, tên, mô tả..."
+                  placeholder="Tìm kiếm mã hoặc tên chương trình..."
+                  style={{ height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem' }}
                 />
-                <select value={promotionFilter.status} onChange={(e) => setPromotionFilter((prev) => ({ ...prev, status: e.target.value }))}>
-                  <option value="">Tất cả trạng thái</option>
-                  <option value="ACTIVE">Hiệu lực</option>
-                  <option value="INACTIVE">Tạm dừng</option>
-                  <option value="EXPIRED">Hết hạn</option>
+                <select
+                  value={promotionFilter.type}
+                  onChange={(e) => setPromotionFilter((prev) => ({ ...prev, type: e.target.value }))}
+                  style={{ height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem' }}
+                >
+                  <option value="">Tất cả phân loại</option>
+                  <option value="PUBLIC">Mã công khai</option>
+                  <option value="TEMPLATE">Template nội bộ</option>
                 </select>
-                <select value={promotionFilter.type} onChange={(e) => setPromotionFilter((prev) => ({ ...prev, type: e.target.value }))}>
-                  <option value="">Tất cả loại</option>
-                  <option value="PERCENT">Giảm %</option>
-                  <option value="FIXED">Giảm tiền</option>
-                  <option value="FREE_ITEM">Tặng kèm</option>
+                <select
+                  value={promotionFilter.status}
+                  onChange={(e) => setPromotionFilter((prev) => ({ ...prev, status: e.target.value }))}
+                  style={{ height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem' }}
+                >
+                  <option value="">Tất cả trạng thái</option>
+                  <option value="ACTIVE">Hoạt động</option>
+                  <option value="INACTIVE">Tạm dừng</option>
                 </select>
               </div>
             </div>
 
-            {promotionsState.loading ? <p>Đang tải khuyến mãi...</p> : null}
+            {promotionsState.loading ? <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>Đang tải danh sách voucher...</p> : null}
             {promotionsState.error ? <p className="error-text">{promotionsState.error}</p> : null}
 
-            <div className="system-admin-table-wrap">
-              <table className="system-admin-table">
-                <thead>
-                  <tr>
-                    <th>Mã / Tên</th>
-                    <th>Loại</th>
-                    <th>Giá trị</th>
-                    <th>Điều kiện</th>
-                    <th>Hiệu lực</th>
-                    <th>Lượt dùng</th>
-                    <th>Trạng thái</th>
-                    <th>Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {promotionsPageData.rows.map((item) => (
-                    <tr key={item.ma_khuyen_mai}>
-                      <td>
-                        <strong>{item.ma_khuyen_mai}</strong>
-                        <p>{item.ten_khuyen_mai}</p>
-                      </td>
-                      <td>{PROMOTION_TYPE_LABELS[item.loai_khuyen_mai] || item.loai_khuyen_mai}</td>
-                      <td>
-                        {item.loai_khuyen_mai === 'PERCENT'
-                          ? `${item.gia_tri}%${item.giam_toi_da ? ` (tối đa ${fmtNumber(item.giam_toi_da)}đ)` : ''}`
-                          : item.loai_khuyen_mai === 'FIXED'
-                          ? `${fmtNumber(item.gia_tri)}đ`
-                          : item.ten_san_pham_tang || 'Xem mô tả'}
-                      </td>
-                      <td>
-                        <p>Đơn tối thiểu: {item.gia_tri_don_toi_thieu > 0 ? `${fmtNumber(item.gia_tri_don_toi_thieu)}đ` : 'Không yêu cầu'}</p>
-                        <p>Giới hạn/người: {item.gioi_han_moi_nguoi}</p>
-                      </td>
-                      <td>
-                        <p>Từ: {fmtDateShort(item.ngay_bat_dau)}</p>
-                        <p>Đến: {fmtDateShort(item.ngay_ket_thuc)}</p>
-                      </td>
-                      <td>{item.so_luong_da_dung}{item.so_luong_toi_da > 0 ? ` / ${fmtNumber(item.so_luong_toi_da)}` : ' / Vô hạn'}</td>
-                      <td>{PROMOTION_STATUS_LABELS[item.trang_thai] || item.trang_thai}</td>
-                      <td>
-                        <div className="system-admin-table-actions">
-                          <button type="button" className="secondary" onClick={() => startEditPromotion(item)}>Sửa</button>
-                          <button
-                            type="button"
-                            className="secondary"
-                            onClick={() => deletePromotion(item.ma_khuyen_mai)}
-                          >
-                            Xóa
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <Pagination pageData={promotionsPageData} onPageChange={setPromotionsPage} />
-            </div>
-              {!promotionsState.loading && promotionFilteredItems.length === 0 ? (
-                <p style={{ color: '#8c6b56' }}>Chưa có chương trình nào. Hãy tạo chương trình đầu tiên ở trên!</p>
-              ) : null}
+            {(!promotionFilter.type || promotionFilter.type === 'PUBLIC') && (
+              <div style={{ marginTop: '1rem', marginBottom: '2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                  <h3 style={{ margin: 0, color: '#c41230', fontWeight: '700', fontSize: '1rem', fontFamily: "'Playfair Display', 'Nunito', serif" }}>
+                    Danh sách Mã áp dụng công khai
+                  </h3>
+                  <span style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: '12px', fontWeight: '700', border: '1px solid #bfdbfe' }}>
+                    {promotionFilteredItems.filter((i) => (i.loai_phan_phoi || 'PUBLIC') === 'PUBLIC').length} mã
+                  </span>
+                </div>
+
+                {promotionFilteredItems.filter((i) => (i.loai_phan_phoi || 'PUBLIC') === 'PUBLIC').length > 0 ? (
+                  <div className="system-admin-table-wrap">
+                    <table className="system-admin-table">
+                      <thead>
+                        <tr>
+                          <th>Chương trình</th>
+                          <th>Loại giảm giá</th>
+                          <th>Đơn tối thiểu</th>
+                          <th>Thời gian áp dụng</th>
+                          <th>Lượt sử dụng</th>
+                          <th>Trạng thái</th>
+                          <th>Thao tác</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {promotionFilteredItems
+                          .filter((i) => (i.loai_phan_phoi || 'PUBLIC') === 'PUBLIC')
+                          .map((item) => (
+                            <tr key={item.ma_khuyen_mai || item.ma_voucher}>
+                              <td>
+                                <strong style={{ color: '#c41230', fontSize: '0.92rem' }}>{item.ma_khuyen_mai || item.ma_voucher}</strong>
+                                <p style={{ margin: '0.15rem 0 0 0', fontWeight: '600', color: '#1f2937' }}>{item.ten_khuyen_mai || item.ten_voucher}</p>
+                                {item.mo_ta ? <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: 0 }}>{item.mo_ta}</p> : null}
+                              </td>
+                              <td>
+                                <strong>
+                                  {(item.loai_khuyen_mai || item.loai) === 'PERCENT'
+                                    ? `${item.gia_tri}%${item.giam_toi_da ? ` (Tối đa ${fmtNumber(item.giam_toi_da)}đ)` : ''}`
+                                    : (item.loai_khuyen_mai || item.loai) === 'FIXED'
+                                    ? `${fmtNumber(item.gia_tri)}đ`
+                                    : `Tặng: ${item.ten_san_pham_tang || 'Món'}`}
+                                </strong>
+                              </td>
+                              <td>{item.gia_tri_don_toi_thieu > 0 || item.don_hang_toi_thieu > 0 ? `${fmtNumber(item.gia_tri_don_toi_thieu || item.don_hang_toi_thieu)}đ` : 'Không'}</td>
+                              <td>
+                                <p style={{ margin: 0, fontSize: '0.78rem' }}>Từ: {fmtDateShort(item.ngay_bat_dau)}</p>
+                                <p style={{ margin: 0, fontSize: '0.78rem' }}>Đến: {fmtDateShort(item.ngay_ket_thuc || item.han_su_dung)}</p>
+                              </td>
+                              <td>{item.so_luong_da_dung || item.luot_da_dung || 0}{item.so_luong_toi_da || item.tong_luot_dung ? ` / ${fmtNumber(item.so_luong_toi_da || item.tong_luot_dung)}` : ' / Vô hạn'}</td>
+                              <td>
+                                <span className={`status-tag ${item.trang_thai === 'ACTIVE' ? 'active' : 'inactive'}`}>
+                                  {PROMOTION_STATUS_LABELS[item.trang_thai] || item.trang_thai}
+                                </span>
+                              </td>
+                              <td>
+                                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => startEditPromotion(item)}
+                                    style={{ border: '1px solid #c41230', backgroundColor: '#ffffff', color: '#c41230', padding: '0.25rem 0.65rem', borderRadius: '6px', fontSize: '0.78rem', fontWeight: '600', cursor: 'pointer' }}
+                                  >
+                                    Chỉnh sửa
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => deletePromotion(item.ma_khuyen_mai || item.ma_voucher)}
+                                    style={{ border: '1px solid #ef4444', backgroundColor: '#ffffff', color: '#ef4444', padding: '0.25rem 0.65rem', borderRadius: '6px', fontSize: '0.78rem', fontWeight: '600', cursor: 'pointer' }}
+                                  >
+                                    Xóa
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p style={{ color: '#6b7280', fontSize: '0.85rem', fontStyle: 'italic' }}>Chưa có mã công khai nào.</p>
+                )}
+              </div>
+            )}
+
+            {(!promotionFilter.type || promotionFilter.type === 'TEMPLATE') && (
+              <div style={{ marginTop: '1.5rem', borderTop: '1px solid #e8e2da', paddingTop: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                  <h3 style={{ margin: 0, color: '#c41230', fontWeight: '700', fontSize: '1rem', fontFamily: "'Playfair Display', 'Nunito', serif" }}>
+                    Danh sách Template Voucher nội bộ
+                  </h3>
+                  <span style={{ backgroundColor: '#f3e8ff', color: '#6b21a8', fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: '12px', fontWeight: '700', border: '1px solid #e9d5ff' }}>
+                    {promotionFilteredItems.filter((i) => i.loai_phan_phoi === 'TEMPLATE').length} template
+                  </span>
+                </div>
+
+                {promotionFilteredItems.filter((i) => i.loai_phan_phoi === 'TEMPLATE').length > 0 ? (
+                  <div className="system-admin-table-wrap">
+                    <table className="system-admin-table">
+                      <thead>
+                        <tr>
+                          <th>Mẫu Voucher</th>
+                          <th>Ngữ cảnh áp dụng</th>
+                          <th>Quy tắc giảm giá</th>
+                          <th>Đơn tối thiểu</th>
+                          <th>Thời hạn khi cấp</th>
+                          <th>Trạng thái</th>
+                          <th>Thao tác</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {promotionFilteredItems
+                          .filter((i) => i.loai_phan_phoi === 'TEMPLATE')
+                          .map((item) => {
+                            const rawCtx = item.ngu_canh_su_dung || ''
+                            const ctxList = typeof rawCtx === 'string' ? rawCtx.split(',').map((s) => s.trim()).filter(Boolean) : (Array.isArray(rawCtx) ? rawCtx : [])
+                            const CTX_MAP = { TIER_UP: 'Thăng hạng', LUCKY_WHEEL: 'Vòng quay', BIRTHDAY: 'Sinh nhật', FREESHIP: 'Freeship' }
+                            return (
+                              <tr key={item.ma_khuyen_mai || item.ma_voucher}>
+                                <td>
+                                  <strong style={{ color: '#6b21a8', fontSize: '0.92rem' }}>{item.ma_khuyen_mai || item.ma_voucher}</strong>
+                                  <p style={{ margin: '0.15rem 0 0 0', fontWeight: '600', color: '#1f2937' }}>{item.ten_khuyen_mai || item.ten_voucher}</p>
+                                  {item.mo_ta ? <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: 0 }}>{item.mo_ta}</p> : null}
+                                </td>
+                                <td>
+                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                                    {ctxList.length > 0 ? ctxList.map((c) => (
+                                      <span key={c} style={{ backgroundColor: '#f3e8ff', color: '#6b21a8', fontSize: '0.72rem', padding: '0.1rem 0.45rem', borderRadius: '4px', fontWeight: '600' }}>
+                                        {CTX_MAP[c] || c}
+                                      </span>
+                                    )) : <span style={{ color: '#9ca3af', fontSize: '0.75rem' }}>Chưa chọn</span>}
+                                  </div>
+                                </td>
+                                <td>
+                                  <strong>
+                                    {(item.loai_khuyen_mai || item.loai) === 'PERCENT'
+                                      ? `${item.gia_tri}%${item.giam_toi_da ? ` (Tối đa ${fmtNumber(item.giam_toi_da)}đ)` : ''}`
+                                      : (item.loai_khuyen_mai || item.loai) === 'FIXED'
+                                      ? `${fmtNumber(item.gia_tri)}đ`
+                                      : `Tặng: ${item.ten_san_pham_tang || 'Món'}`}
+                                  </strong>
+                                </td>
+                                <td>{item.gia_tri_don_toi_thieu > 0 || item.don_hang_toi_thieu > 0 ? `${fmtNumber(item.gia_tri_don_toi_thieu || item.don_hang_toi_thieu)}đ` : 'Không'}</td>
+                                <td>{item.so_ngay_hieu_luc || 30} ngày</td>
+                                <td>
+                                  <span className={`status-tag ${item.trang_thai === 'ACTIVE' ? 'active' : 'inactive'}`}>
+                                    {PROMOTION_STATUS_LABELS[item.trang_thai] || item.trang_thai}
+                                  </span>
+                                </td>
+                                <td>
+                                  <div style={{ display: 'flex', gap: '0.4rem' }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => startEditPromotion(item)}
+                                      style={{ border: '1px solid #c41230', backgroundColor: '#ffffff', color: '#c41230', padding: '0.25rem 0.65rem', borderRadius: '6px', fontSize: '0.78rem', fontWeight: '600', cursor: 'pointer' }}
+                                    >
+                                      Chỉnh sửa
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => deletePromotion(item.ma_khuyen_mai || item.ma_voucher)}
+                                      style={{ border: '1px solid #ef4444', backgroundColor: '#ffffff', color: '#ef4444', padding: '0.25rem 0.65rem', borderRadius: '6px', fontSize: '0.78rem', fontWeight: '600', cursor: 'pointer' }}
+                                    >
+                                      Xóa
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p style={{ color: '#6b7280', fontSize: '0.85rem', fontStyle: 'italic' }}>Chưa có template nội bộ nào.</p>
+                )}
+              </div>
+            )}
           </section>
         )}
 
@@ -942,41 +1331,134 @@ export function AdminSystemConsole({
                   <tr>
                     <th>Họ tên / Username</th>
                     <th>Email</th>
+                    <th>Số điện thoại</th>
+                    <th>Hạng</th>
+                    <th>Điểm (Loyalty / Khả dụng)</th>
+                    <th>Tổng chi tiêu</th>
+                    <th>Ngày sinh</th>
                     <th>Trạng thái</th>
-                    <th>Ngày tạo</th>
                     <th>Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {customersPageData.rows.map((item) => (
-                    <tr key={item.ma_nguoi_dung}>
-                      <td>
-                        <strong>{item.ho_ten}</strong>
-                        <p>@{item.ten_dang_nhap}</p>
-                      </td>
-                      <td>{item.email || '---'}</td>
-                      <td>{item.trang_thai}</td>
-                      <td>{new Date(item.ngay_tao).toLocaleString('vi-VN')}</td>
-                      <td>
-                        <div className="system-admin-table-actions">
-                          <button type="button" className="secondary" onClick={() => startEditCustomer(item)}>Sửa</button>
-                          <button type="button" className="secondary" onClick={() => deleteCustomer(item.ma_nguoi_dung)}>Xóa</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {customersPageData.rows.map((item) => {
+                    const getCustomerRankBadge = (diem) => {
+                      if (diem >= 5000) return <span className="badge" style={{ backgroundColor: '#0ea5e9', color: 'white', padding: '0.2rem 0.5rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold' }}>💎 Kim Cương</span>;
+                      if (diem >= 3000) return <span className="badge" style={{ backgroundColor: '#d97706', color: 'white', padding: '0.2rem 0.5rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold' }}>🥇 Vàng</span>;
+                      if (diem >= 1000) return <span className="badge" style={{ backgroundColor: '#64748b', color: 'white', padding: '0.2rem 0.5rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold' }}>🥈 Bạc</span>;
+                      return <span className="badge" style={{ backgroundColor: '#9ca3af', color: 'white', padding: '0.2rem 0.5rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold' }}>🎖️ Thành viên</span>;
+                    };
+
+                    return (
+                      <tr key={item.ma_nguoi_dung}>
+                        <td>
+                          <strong>{item.ho_ten}</strong>
+                          <p>@{item.ten_dang_nhap}</p>
+                        </td>
+                        <td>{item.email || '---'}</td>
+                        <td>{item.so_dien_thoai || '---'}</td>
+                        <td>{getCustomerRankBadge(item.diem_loyalty)}</td>
+                        <td>
+                          <p>Loyalty: <strong>{fmtNumber(item.diem_loyalty)}</strong></p>
+                          <p>Khả dụng: <strong>{fmtNumber(item.diem_kha_dung)}</strong></p>
+                        </td>
+                        <td>{fmtNumber(item.tong_chi_tieu)}đ</td>
+                        <td>{fmtDateShort(item.ngay_sinh)}</td>
+                        <td>{item.trang_thai}</td>
+                        <td>
+                          <div className="system-admin-table-actions">
+                            <button type="button" className="secondary" onClick={() => startEditCustomer(item)}>Sửa profile</button>
+                            <button type="button" className="secondary" onClick={() => startEditCustomerMembership(item)}>Sửa điểm</button>
+                            <button type="button" className="secondary" onClick={() => deleteCustomer(item.ma_nguoi_dung)}>Xóa</button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
               <Pagination pageData={customersPageData} onPageChange={setCustomersPage} />
             </div>
+
+            {/* Modal Sửa Membership */}
+            {editingCustomerMembershipId && (
+              <div className="admin-modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                <div className="admin-modal" style={{ backgroundColor: 'white', padding: '2rem', borderRadius: '16px', width: '400px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', margin: 'auto' }}>
+                  <h3 style={{ borderBottom: '1px solid #e7dfd8', paddingBottom: '0.5rem', marginBottom: '1rem', color: 'var(--burnt)', marginTop: 0 }}>Chỉnh sửa Membership</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#6b503e' }}>Điểm Loyalty (Tích lũy xét hạng)</span>
+                      <input
+                        type="number"
+                        value={customerMembershipForm.diem_loyalty}
+                        onChange={(e) => setCustomerMembershipForm(prev => ({ ...prev, diem_loyalty: Number(e.target.value) }))}
+                        min="0"
+                        style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid #dcd3cb' }}
+                      />
+                    </label>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#6b503e' }}>Điểm khả dụng (Dùng để quay thưởng)</span>
+                      <input
+                        type="number"
+                        value={customerMembershipForm.diem_kha_dung}
+                        onChange={(e) => setCustomerMembershipForm(prev => ({ ...prev, diem_kha_dung: Number(e.target.value) }))}
+                        min="0"
+                        style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid #dcd3cb' }}
+                      />
+                    </label>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#6b503e' }}>Tổng chi tiêu tích lũy (đ)</span>
+                      <input
+                        type="number"
+                        value={customerMembershipForm.tong_chi_tieu}
+                        onChange={(e) => setCustomerMembershipForm(prev => ({ ...prev, tong_chi_tieu: Number(e.target.value) }))}
+                        min="0"
+                        style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid #dcd3cb' }}
+                      />
+                    </label>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#6b503e' }}>Ngày sinh</span>
+                      <input
+                        type="date"
+                        value={customerMembershipForm.ngay_sinh}
+                        onChange={(e) => setCustomerMembershipForm(prev => ({ ...prev, ngay_sinh: e.target.value }))}
+                        style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid #dcd3cb', color: '#4a2f20' }}
+                      />
+                    </label>
+                  </div>
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', justifyContent: 'flex-end' }}>
+                    <button type="button" className="secondary" onClick={cancelEditCustomerMembership} style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid #dcd3cb', cursor: 'pointer' }}>Hủy</button>
+                    <button type="button" onClick={saveCustomerMembership} disabled={savingCustomerMembership} style={{ backgroundColor: 'var(--burnt)', color: 'white', border: 'none', padding: '0.5rem 1.5rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', opacity: savingCustomerMembership ? 0.7 : 1 }}>
+                      {savingCustomerMembership ? 'Đang lưu...' : 'Lưu'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
         )}
 
+        {activeTab === 'membership-config' && (
+          <AdminMembershipConfigPanel
+            membershipConfigsState={membershipConfigsState}
+            savingMembershipConfig={savingMembershipConfig}
+            saveMembershipConfig={saveMembershipConfig}
+            promotionsState={promotionsState}
+            menuState={menuState}
+          />
+        )}
+
         {activeTab === 'branches' && (
+          selectedBranchForReview ? (
+            <BranchDetailReviewsView
+              branch={selectedBranchForReview}
+              onBack={() => setSelectedBranchForReview(null)}
+            />
+          ) : (
           <section className="panel system-admin-panel">
             <div className="panel-head system-admin-panel-head">
               <h2>Quản lý chi nhánh cửa hàng</h2>
-              <span>CRUD chi nhánh: mã, tên, địa chỉ, số điện thoại, trạng thái</span>
+              <span>CRUD chi nhánh: mã, tên, địa chỉ, số điện thoại, trạng thái. Bấm vào 1 dòng chi nhánh để xem đánh giá chi tiết.</span>
             </div>
 
             <div className="system-admin-card" style={{ marginBottom: '0.8rem' }}>
@@ -1142,7 +1624,12 @@ export function AdminSystemConsole({
                 </thead>
                 <tbody>
                   {branchesPageData.rows.map((branch) => (
-                    <tr key={branch.ma_chi_nhanh}>
+                    <tr
+                      key={branch.ma_chi_nhanh}
+                      onClick={() => setSelectedBranchForReview(branch)}
+                      style={{ cursor: 'pointer' }}
+                      title="Bấm vào dòng để xem chi tiết & đánh giá chi nhánh"
+                    >
                       <td><strong>{branch.ten_chi_nhanh}</strong></td>
                       <td>{branch.ma_chi_nhanh}</td>
                       <td>{branch.dia_chi || '---'}</td>
@@ -1150,7 +1637,7 @@ export function AdminSystemConsole({
                       <td>{fmtNumber(branch.account_count)}</td>
                       <td>{branch.trang_thai}</td>
                       <td>{new Date(branch.ngay_cap_nhat || branch.ngay_tao).toLocaleString('vi-VN')}</td>
-                      <td>
+                      <td onClick={(e) => e.stopPropagation()}>
                         <div className="system-admin-table-actions">
                           <button type="button" className="secondary" onClick={() => startEditBranch(branch)}>Sửa</button>
                           <button
@@ -1171,6 +1658,7 @@ export function AdminSystemConsole({
               <Pagination pageData={branchesPageData} onPageChange={setBranchesPage} />
             </div>
           </section>
+          )
         )}
 
         {activeTab === 'ai-analytics' && (

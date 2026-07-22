@@ -150,16 +150,51 @@ export default function CartPage({
 
   const discountAmount = voucherResult?.so_tien_giam || 0;
   const tongTienSauGiam = Math.max(0, total - discountAmount);
-  
+
   const freeShip = tongTienSauGiam >= 150000;
   const shippingFee = deliveryMethod === 'LALAMOVE' ? 25000 : 15000;
   const finalTotal = (deliveryMode === 'GIAO_TAN_NOI' && !freeShip) ? tongTienSauGiam + shippingFee : tongTienSauGiam;
+
 
   const maNguoiDung = useMemo(() => activeUserId || 'anonymous', [activeUserId]);
   const isLoggedInUser = useMemo(() => {
     const value = String(maNguoiDung || '');
     return Boolean(value && !value.startsWith('anon-') && value !== 'anonymous');
   }, [maNguoiDung]);
+
+  const { data: memData } = useQuery({
+    queryKey: queryKeys.membershipByUser(maNguoiDung),
+    queryFn: async () => {
+      const response = await apiClient.get(`/users/${maNguoiDung}/membership`);
+      return response.data;
+    },
+    enabled: Boolean(isLoggedInUser),
+    staleTime: 60 * 1000,
+  });
+
+  const phiGiaoHangGoc = useMemo(() => {
+    if (deliveryMode !== 'GIAO_TAN_NOI') return 0;
+    if (deliveryMethod === 'LALAMOVE') return 25000;
+    return 15000;
+  }, [deliveryMode, deliveryMethod]);
+
+  const memberTierName = memData?.hang_hien_tai?.hang || 'Thành viên';
+  const memberFreeshipVal = Number(memData?.quyen_loi_hien_tai?.freeship_value || 0);
+  const memberFreeshipMinOrder = Number(memData?.quyen_loi_hien_tai?.freeship_min_order || 0);
+
+  const isFreeshipEligible = useMemo(() => {
+    if (deliveryMode !== 'GIAO_TAN_NOI') return false;
+    if (memberFreeshipVal <= 0) return false;
+    if (memberFreeshipMinOrder > 0 && total < memberFreeshipMinOrder) return false;
+    return true;
+  }, [deliveryMode, memberFreeshipVal, memberFreeshipMinOrder, total]);
+
+  const giamPhiShipHanh = isFreeshipEligible ? Math.min(phiGiaoHangGoc, memberFreeshipVal) : 0;
+  const phiGiaoHangThucTe = Math.max(0, phiGiaoHangGoc - giamPhiShipHanh);
+
+  const discountAmount = voucherResult?.so_tien_giam || 0;
+  const tongTienSauGiamVoucher = Math.max(0, total - discountAmount);
+  const tongTienSauGiam = tongTienSauGiamVoucher + phiGiaoHangThucTe;
   const districtOptions = useMemo(() => Object.keys(addressOptions[addressForm.city] || {}), [addressForm.city, addressOptions]);
   const wardOptions = useMemo(
     () => (addressOptions[addressForm.city]?.[addressForm.district] || []),
@@ -924,9 +959,42 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                 )}
 
                 {/* Phí giao hàng */}
-                <div className="flex justify-between items-center text-sm font-semibold text-gray-500">
-                  <span>Phí giao hàng</span>
-                  <span className="text-[#1a1a1a] font-extrabold">Miễn phí</span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex justify-between items-center text-sm font-semibold text-gray-500">
+                    <span>Phí giao hàng</span>
+                    {deliveryMode !== 'GIAO_TAN_NOI' ? (
+                      <span className="text-emerald-600 font-extrabold">Miễn phí</span>
+                    ) : (
+                      <div className="text-right flex items-center gap-2">
+                        {giamPhiShipHanh > 0 && (
+                          <span className="text-xs font-semibold text-gray-400 line-through">
+                            {phiGiaoHangGoc.toLocaleString('vi-VN')}đ
+                          </span>
+                        )}
+                        {phiGiaoHangThucTe === 0 ? (
+                          <span className="text-emerald-600 font-extrabold">Miễn phí</span>
+                        ) : (
+                          <span className="text-[#1a1a1a] font-extrabold">{phiGiaoHangThucTe.toLocaleString('vi-VN')}đ</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Freeship privilege badge */}
+                  {deliveryMode === 'GIAO_TAN_NOI' && (
+                    isFreeshipEligible ? (
+                      <p className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 mt-1 flex items-center justify-between">
+                        <span>🚚 Đặc quyền Freeship {memberTierName}</span>
+                        <span>-{giamPhiShipHanh.toLocaleString('vi-VN')}đ</span>
+                      </p>
+                    ) : (
+                      memberFreeshipVal > 0 && memberFreeshipMinOrder > total && (
+                        <p className="text-[11px] font-semibold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-100 mt-1">
+                          💡 Mua thêm {(memberFreeshipMinOrder - total).toLocaleString('vi-VN')}đ để được tự động giảm {memberFreeshipVal.toLocaleString('vi-VN')}đ phí ship hạng {memberTierName}
+                        </p>
+                      )
+                    )
+                  )}
                 </div>
 
                 <div className="h-px bg-gray-100 my-4" />

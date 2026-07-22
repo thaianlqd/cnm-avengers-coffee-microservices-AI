@@ -264,6 +264,16 @@ export default function MembershipPage({ user, onNavigate }) {
                 <p className="text-lg font-black text-gray-800 mt-0.5">x{quyen_loi_hien_tai?.he_so_diem || 1}</p>
               </div>
             </div>
+
+            {/* Automatic Freeship Privilege Badge */}
+            <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between text-xs bg-emerald-50/60 p-3 rounded-xl border border-emerald-100 gap-2">
+              <span className="font-bold text-gray-700 flex items-center gap-1.5">
+                <span>🚚</span> Đặc quyền Freeship hạng {hang_hien_tai?.hang}:
+              </span>
+              <span className="font-black text-[#059669]">
+                {quyen_loi_hien_tai?.freeship || 'Không hỗ trợ'} <span className="text-[10px] text-gray-400 font-normal">(Tự động áp dụng khi đặt hàng)</span>
+              </span>
+            </div>
           </div>
 
           {/* Interactive Wheel Banner */}
