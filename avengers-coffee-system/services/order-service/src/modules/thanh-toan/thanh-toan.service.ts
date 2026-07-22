@@ -7,6 +7,7 @@ import { RabbitMqService } from '../../infrastructure/messaging/rabbitmq.service
 import { CartItem } from '../cart/cart.entity';
 import { NotificationService } from '../notification/notification.service';
 import { VoucherService } from '../voucher/voucher.service';
+import { CustomerWalletService } from '../customer-wallet/customer-wallet.service';
 import { CaLamViecNhanVien } from './entities/ca-lam-viec-nhan-vien.entity';
 import { CaDoiSoat } from './entities/ca-doi-soat.entity';
 import { ChiTietDonHang } from './entities/chi-tiet-don-hang.entity';
@@ -15,7 +16,7 @@ import { GiaoDichThanhToan } from './entities/giao-dich-thanh-toan.entity';
 import { DeliveryTrackingService } from '../shipper/features_thaian/delivery-tracking.service';
 
 type KhoiTaoThanhToanDto = {
-  phuong_thuc_thanh_toan: 'VNPAY' | 'NGAN_HANG_QR' | 'THANH_TOAN_KHI_NHAN_HANG';
+  phuong_thuc_thanh_toan: 'VNPAY' | 'NGAN_HANG_QR' | 'THANH_TOAN_KHI_NHAN_HANG' | 'VI_DIEN_TU';
   dia_chi_giao_hang: string;
   khung_gio_giao?: string;
   ghi_chu?: string;
@@ -27,6 +28,7 @@ type KhoiTaoThanhToanDto = {
   guest_email?: string;
   guest_phone?: string;
   session_id?: string;
+  ten_khach_hang?: string;
 };
 
 type TaoDonTaiQuayDto = {
@@ -38,7 +40,7 @@ type TaoDonTaiQuayDto = {
   ghi_chu?: string;
   tien_khach_dua?: number;
   branch_code?: string;
-  phuong_thuc_thanh_toan: 'VNPAY' | 'NGAN_HANG_QR' | 'THANH_TOAN_KHI_NHAN_HANG';
+  phuong_thuc_thanh_toan: 'VNPAY' | 'NGAN_HANG_QR' | 'THANH_TOAN_KHI_NHAN_HANG' | 'VI_DIEN_TU';
   items: Array<{
     ma_san_pham: number;
     ten_san_pham: string;
@@ -229,6 +231,7 @@ export class ThanhToanService {
     private readonly redisCacheService: RedisCacheService,
     private readonly rabbitMqService: RabbitMqService,
     private readonly deliveryTrackingService: DeliveryTrackingService,
+    private readonly customerWalletService: CustomerWalletService,
   ) {}
 
   private normalizeBranchCode(branchCode?: string) {
@@ -1372,6 +1375,8 @@ export class ThanhToanService {
       khung_gio_giao: dto.khung_gio_giao ?? null,
       ghi_chu: dto.ghi_chu ?? null,
       loai_don_hang: dto.delivery_mode ?? null,
+      ma_ban: dto.table_number ?? null,
+      ten_khach_hang: dto.ten_khach_hang ?? (isGuest ? (dto.guest_email?.trim() || dto.guest_phone?.trim() || null) : null),
       phuong_thuc_thanh_toan: dto.phuong_thuc_thanh_toan,
       trang_thai_thanh_toan: trangThaiThanhToanBanDau,
       trang_thai_don_hang: 'MOI_TAO',
@@ -1388,10 +1393,11 @@ export class ThanhToanService {
           loai: 'PAYMENT',
           trang_thai: trangThaiThanhToanBanDau,
           thoi_gian: new Date().toISOString(),
-          ghi_chu: 'Khoi tao thanh toan',
+          ghi_chu: 'Phuong thuc thanh toan: ' + dto.phuong_thuc_thanh_toan,
         },
       ],
     }));
+    require('fs').appendFileSync('/app/error.log', '\n[DEBUG] Saved don_hang in DB: ma_ban=' + donHang.ma_ban + ', don_hang_id=' + donHang.ma_don_hang + '\n');
 
     // 2. Lưu chi tiết đơn hàng
     const chiTiet = gioHang.map((item) =>
@@ -1403,6 +1409,10 @@ export class ThanhToanService {
         so_luong: item.so_luong,
         kich_co: item.size || 'Nhỏ',
         hinh_anh_url: item.hinh_anh_url,
+        toppings: item.toppings || [],
+        luong_da: item.luong_da || null,
+        do_ngot: item.do_ngot || null,
+        ghi_chu: item.custom_attributes?.ghi_chu || null,
       }),
     );
     await this.chiTietRepo.save(chiTiet);
@@ -1453,6 +1463,30 @@ export class ThanhToanService {
     await this.publishOrderCreatedEvent(donHang);
 
     // 4. Xử lý logic từng phương thức
+    if (dto.phuong_thuc_thanh_toan === 'VI_DIEN_TU') {
+      await this.customerWalletService.deductBalance(maNguoiDung, tongTien, maThamChieu);
+      
+      donHang.trang_thai_thanh_toan = 'DA_THANH_TOAN';
+      donHang.trang_thai_don_hang = 'DA_XAC_NHAN';
+      await this.donHangRepo.save(donHang);
+      
+      giaoDich.trang_thai = 'DA_THANH_TOAN';
+      await this.giaoDichRepo.save(giaoDich);
+
+      await Promise.all([
+        this.notificationService.taoThongBao({
+          ma_nguoi_dung: maNguoiDung,
+          tieu_de: 'Thanh toan vi dien tu thanh cong',
+          noi_dung: `Don #${donHang.ma_don_hang} da duoc thanh toan bang vi dien tu.`,
+          loai: 'PAYMENT',
+          du_lieu: { ma_don_hang: donHang.ma_don_hang, phuong_thuc_thanh_toan: 'VI_DIEN_TU' },
+        }),
+        this.tichDiemLoyalty(maNguoiDung, tongTienGoc),
+      ]);
+
+      return { message: 'Thanh toan vi dien tu thanh cong', don_hang: donHang, giao_dich: giaoDich };
+    }
+
     if (dto.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG') {
       await Promise.all([
         this.notificationService.taoThongBao({
@@ -1521,6 +1555,10 @@ export class ThanhToanService {
       ghi_chu?: string;
       kich_co?: string;
       hinh_anh_url?: string;
+      toppings?: string[];
+      luong_da?: string;
+      do_ngot?: string;
+      item_ghi_chu?: string;
     }>;
     ghi_chu?: string;
     dia_chi_giao_hang?: string;
@@ -1566,6 +1604,10 @@ export class ThanhToanService {
         so_luong: Number(item.so_luong || 1),
         kich_co: item.kich_co || 'Nhỏ',
         hinh_anh_url: item.hinh_anh_url || null,
+        toppings: item.toppings || [],
+        luong_da: item.luong_da || null,
+        do_ngot: item.do_ngot || null,
+        ghi_chu: item.item_ghi_chu || item.ghi_chu || null,
       }),
     );
     await this.chiTietRepo.save(chiTiet);
@@ -1659,6 +1701,14 @@ export class ThanhToanService {
     const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
 
     if (signed !== vnp_SecureHash) return { RspCode: '97', Message: 'Invalid signature' };
+
+    if (query.vnp_TxnRef && query.vnp_TxnRef.startsWith('WT_')) {
+      if (query.vnp_ResponseCode === '00') {
+        const success = await this.customerWalletService.processTopUpSuccess(query.vnp_TxnRef);
+        return { RspCode: success ? '00' : '99', Message: success ? 'Confirm Success' : 'Error processing' };
+      }
+      return { RspCode: '00', Message: 'Confirm Success' };
+    }
 
     const giaoDich = await this.giaoDichRepo.findOne({ where: { ma_tham_chieu: query.vnp_TxnRef } });
     if (!giaoDich) return { RspCode: '01', Message: 'Order not found' };
@@ -2076,6 +2126,13 @@ export class ThanhToanService {
           gia_ban: Number(ct.gia_ban),
           so_luong: ct.so_luong,
           hinh_anh_url: ct.hinh_anh_url,
+          kich_co: ct.kich_co,
+          toppings: ct.toppings,
+          luong_da: ct.luong_da,
+          do_ngot: ct.do_ngot,
+          loai_sua: ct.loai_sua,
+          ghi_chu: ct.ghi_chu,
+          custom_attributes: ct.custom_attributes,
         })),
         giao_dich: giaoDichGanNhat
           ? {
@@ -2301,7 +2358,7 @@ export class ThanhToanService {
   }
 
   private taoMaThamChieu(cong: string, maDonHang: string) {
-    const prefix = cong === 'NGAN_HANG_QR' ? 'QR' : 'COD';
+    const prefix = cong === 'NGAN_HANG_QR' ? 'QR' : (cong === 'VI_DIEN_TU' ? 'WALLET' : 'COD');
     return `${prefix}-${maDonHang.slice(0, 8)}-${Date.now().toString().slice(-6)}`;
   }
 
@@ -2358,6 +2415,10 @@ export class ThanhToanService {
       gia_ban: number;
       kich_co: string | null;
       hinh_anh_url: string | null;
+      toppings?: string[];
+      luong_da?: string | null;
+      do_ngot?: string | null;
+      ghi_chu?: string | null;
     }> = [];
 
     if (suDungCheDoThayTheMon) {
@@ -2374,6 +2435,10 @@ export class ThanhToanService {
           gia_ban: number;
           kich_co: string | null;
           hinh_anh_url: string | null;
+          toppings?: string[];
+          luong_da?: string | null;
+          do_ngot?: string | null;
+          ghi_chu?: string | null;
         }
       >();
 
@@ -2407,6 +2472,10 @@ export class ThanhToanService {
             gia_ban: giaBan,
             kich_co: kichCo,
             hinh_anh_url: hinhAnh,
+            toppings: (item as any)?.toppings || itemCu?.toppings || [],
+            luong_da: (item as any)?.luong_da || itemCu?.luong_da || null,
+            do_ngot: (item as any)?.do_ngot || itemCu?.do_ngot || null,
+            ghi_chu: (item as any)?.ghi_chu || itemCu?.ghi_chu || null,
           });
         }
       }
@@ -2430,6 +2499,10 @@ export class ThanhToanService {
               gia_ban: Number(item.gia_ban),
               kich_co: item.kich_co || null,
               hinh_anh_url: item.hinh_anh_url || null,
+              toppings: item.toppings || [],
+              luong_da: item.luong_da || null,
+              do_ngot: item.do_ngot || null,
+              ghi_chu: item.ghi_chu || null,
             };
           }
 
@@ -2441,6 +2514,10 @@ export class ThanhToanService {
             gia_ban: Number(item.gia_ban),
             kich_co: item.kich_co || null,
             hinh_anh_url: item.hinh_anh_url || null,
+            toppings: item.toppings || [],
+            luong_da: item.luong_da || null,
+            do_ngot: item.do_ngot || null,
+            ghi_chu: item.ghi_chu || null,
           };
         })
         .filter((item) => item.so_luong > 0);
@@ -2471,6 +2548,10 @@ export class ThanhToanService {
             gia_ban: item.gia_ban,
             kich_co: item.kich_co,
             hinh_anh_url: item.hinh_anh_url,
+            toppings: (item as any).toppings || [],
+            luong_da: (item as any).luong_da || null,
+            do_ngot: (item as any).do_ngot || null,
+            ghi_chu: (item as any).ghi_chu || null,
           }),
         );
         await chiTietRepo.save(chiTietMoi);
@@ -2627,8 +2708,12 @@ export class ThanhToanService {
           ten_san_pham: item.ten_san_pham,
           gia_ban: item.gia_ban,
           so_luong: item.so_luong,
-          kich_co: null,
-          hinh_anh_url: null,
+          kich_co: (item as any).kich_co || null,
+          hinh_anh_url: (item as any).hinh_anh_url || null,
+          toppings: (item as any).toppings || [],
+          luong_da: (item as any).luong_da || null,
+          do_ngot: (item as any).do_ngot || null,
+          ghi_chu: (item as any).ghi_chu || null,
         }),
       );
       await chiTietRepo.save(chiTietMoi);
@@ -2787,10 +2872,25 @@ export class ThanhToanService {
       throw new BadRequestException('Chi duoc huy don o trang thai moi tao hoac da xac nhan');
     }
 
+    console.log('[HuyDonHang] Starting cancellation for', maDonHang, 'Payment status:', donHang.trang_thai_thanh_toan, 'Method:', donHang.phuong_thuc_thanh_toan);
+
+    let newTrangThaiThanhToan = donHang.trang_thai_thanh_toan === 'DA_THANH_TOAN' ? donHang.trang_thai_thanh_toan : 'THAT_BAI';
+
+    if (donHang.trang_thai_thanh_toan === 'DA_THANH_TOAN') {
+      const phuongThucCanHoan = ['VI_DIEN_TU', 'MOMO', 'ZALOPAY', 'VNPAY', 'NGAN_HANG_QR'];
+      if (phuongThucCanHoan.includes(donHang.phuong_thuc_thanh_toan)) {
+        await this.customerWalletService.refundBalance(
+          maNguoiDung,
+          Number(donHang.tong_tien),
+          maDonHang
+        );
+        newTrangThaiThanhToan = 'DA_HOAN_TIEN';
+      }
+    }
+
     const updated = await this.capNhatTrangThaiDonHangHeThong(maDonHang, {
       trang_thai_don_hang: 'DA_HUY',
-      trang_thai_thanh_toan:
-        donHang.trang_thai_thanh_toan === 'DA_THANH_TOAN' ? donHang.trang_thai_thanh_toan : 'THAT_BAI',
+      trang_thai_thanh_toan: newTrangThaiThanhToan,
       ghi_chu: lyDo?.trim() || 'Khach hang huy don',
     });
 
@@ -2801,6 +2901,8 @@ export class ThanhToanService {
       loai: 'ORDER',
       du_lieu: { ma_don_hang: maDonHang, trang_thai_don_hang: 'DA_HUY' },
     });
+
+    await this.invalidateOrderCaches(maNguoiDung, donHang.co_so_ma);
 
     return { message: 'Huy don thanh cong', order: updated };
   }

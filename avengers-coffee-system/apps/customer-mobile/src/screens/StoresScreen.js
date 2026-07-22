@@ -114,7 +114,7 @@ function BranchCard({ branch, onPress }) {
   )
 }
 
-export function StoresScreen() {
+export function StoresScreen({ navigation }) {
   const [search, setSearch] = useState('')
   const [cityFilter, setCityFilter] = useState('all')
 
@@ -143,39 +143,42 @@ export function StoresScreen() {
   return (
     <View style={styles.screen}>
       {/* Header */}
-      <LinearGradient colors={['#1a0a02', '#3d1a08']} style={styles.header}>
-        <Text style={styles.headerTitle}>Cửa hàng của chúng tôi</Text>
-        <Text style={styles.headerSubtitle}>{branches.length} chi nhánh trên toàn quốc</Text>
+      <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <Pressable onPress={() => navigation?.goBack()} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={24} color="#1e293b" />
+          </Pressable>
+          <View>
+            <Text style={styles.headerTitle}>Cửa hàng của chúng tôi</Text>
+            <Text style={styles.headerSubtitle}>{branches.length} chi nhánh trên toàn quốc</Text>
+          </View>
+        </View>
 
         {/* Search */}
         <View style={styles.searchWrap}>
-          <Ionicons name="search-outline" size={18} color="rgba(255,255,255,0.6)" style={styles.searchIcon} />
+          <Ionicons name="search-outline" size={18} color="#64748b" style={styles.searchIcon} />
           <TextInput
             value={search}
             onChangeText={setSearch}
             placeholder="Tìm chi nhánh, địa chỉ..."
-            placeholderTextColor="rgba(255,255,255,0.45)"
+            placeholderTextColor="#94a3b8"
             style={styles.searchInput}
           />
           {search ? (
             <Pressable onPress={() => setSearch('')}>
-              <Ionicons name="close-circle" size={18} color="rgba(255,255,255,0.6)" />
+              <Ionicons name="close-circle" size={18} color="#94a3b8" />
             </Pressable>
           ) : null}
         </View>
-      </LinearGradient>
+      </View>
 
       {/* City Filter */}
       {cities.length > 1 ? (
         <View style={styles.cityBar}>
-          <FlatList
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            data={cities}
-            keyExtractor={(item) => item}
-            contentContainerStyle={styles.cityList}
-            renderItem={({ item }) => (
+          <View style={[styles.cityList, { flexDirection: 'row', flexWrap: 'wrap' }]}>
+            {cities.map(item => (
               <Pressable
+                key={item}
                 onPress={() => setCityFilter(item)}
                 style={[styles.cityChip, cityFilter === item && styles.cityChipActive]}
               >
@@ -183,8 +186,8 @@ export function StoresScreen() {
                   {item === 'all' ? '🗺️ Tất cả' : item}
                 </Text>
               </Pressable>
-            )}
-          />
+            ))}
+          </View>
         </View>
       ) : null}
 
@@ -231,37 +234,53 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingTop: 52,
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
     gap: spacing.md,
   },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: -8,
+  },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '900',
-    color: '#fff',
+    color: '#1e293b',
   },
   headerSubtitle: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.6)',
-    fontWeight: '500',
-    marginTop: -12,
+    color: '#64748b',
+    fontWeight: '600',
+    marginTop: 2,
   },
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: '#f1f5f9',
     borderRadius: radius.lg,
     paddingHorizontal: spacing.md,
     height: 46,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: '#e2e8f0',
   },
   searchIcon: {
     marginRight: 10,
   },
   searchInput: {
     flex: 1,
-    color: '#fff',
+    color: '#1e293b',
     fontSize: 14,
     fontWeight: '500',
   },

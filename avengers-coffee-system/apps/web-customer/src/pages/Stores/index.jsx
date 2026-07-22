@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../lib/apiClient';
 
@@ -65,6 +65,18 @@ export default function StoresPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStore, setSelectedStore] = useState(null);
   const [detailedStore, setDetailedStore] = useState(null); // For detailed view (Screenshot 4)
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (searchInputRef.current && !searchInputRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const cities = useMemo(() => {
     const citySet = new Set(stores.map(s => s.city).filter(Boolean));
@@ -85,11 +97,38 @@ export default function StoresPage() {
         const query = normalizeLocationText(searchQuery);
         const name = normalizeLocationText(store.name);
         const address = normalizeLocationText(store.address);
-        if (!name.includes(query) && !address.includes(query)) return false;
+        const city = normalizeLocationText(store.city);
+        const district = normalizeLocationText(store.district);
+        if (!name.includes(query) && !address.includes(query) && !city.includes(query) && !district.includes(query)) return false;
       }
       return true;
     });
   }, [stores, selectedCity, selectedDistrict, searchQuery]);
+
+  const suggestions = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const query = normalizeLocationText(searchQuery);
+    
+    // Cấp Thành phố
+    const matchingCities = cities
+      .filter(c => c !== 'ALL' && normalizeLocationText(c).includes(query))
+      .map(c => ({ type: 'city', text: c, value: c }));
+    
+    // Cấp Quận / Huyện
+    const allDistricts = Array.from(new Set(stores.map(s => s.district).filter(Boolean)));
+    const matchingDistricts = allDistricts
+      .filter(d => normalizeLocationText(d).includes(query))
+      .map(d => ({ type: 'district', text: d, value: d }));
+
+    // Cấp Cửa hàng
+    const matchingStoreItems = stores.filter(s => {
+      const name = normalizeLocationText(s.name);
+      const addr = normalizeLocationText(s.address);
+      return name.includes(query) || addr.includes(query);
+    }).slice(0, 5).map(s => ({ type: 'store', text: s.name, subtext: s.address, value: s }));
+
+    return [...matchingCities.slice(0, 2), ...matchingDistricts.slice(0, 3), ...matchingStoreItems];
+  }, [searchQuery, cities, stores]);
 
   // Set default selected store to the first one in the filtered list
   useEffect(() => {
@@ -174,14 +213,69 @@ export default function StoresPage() {
             <option value="ALL">Tiện ích</option>
           </select>
 
-          <div className="flex items-center w-[300px] ml-2 bg-white rounded-[3px] border border-gray-300 overflow-hidden focus-within:border-[#5c3a21]">
-            <input 
-              type="text" 
-              placeholder="Nhập tên đường, hoặc quận..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 h-10 px-4 text-[13px] font-medium text-[#333] outline-none"
-            />
+          <div className="relative flex items-center w-[300px] ml-2" ref={searchInputRef}>
+            <div className="flex items-center w-full bg-white rounded-[3px] border border-gray-300 overflow-hidden focus-within:border-[#5c3a21] shadow-sm">
+              <input 
+                type="text" 
+                placeholder="Nhập địa chỉ, tên đường, quận, thành phố..."
+                value={searchQuery}
+                onFocus={() => setShowSuggestions(true)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                className="flex-1 h-10 px-4 text-[13px] font-medium text-[#333] outline-none"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="px-3 text-gray-400 hover:text-[#a51a1a] transition-colors text-[16px] font-bold" title="Xóa">
+                  ✕
+                </button>
+              )}
+            </div>
+            
+            {/* Dropdown Autocomplete Menu */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 shadow-2xl rounded-md overflow-hidden z-[100] max-h-[400px] overflow-y-auto animate-fade-in">
+                <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  Gợi ý tìm kiếm
+                </div>
+                {suggestions.map((item, idx) => (
+                  <div 
+                    key={idx} 
+                    className="px-4 py-3 cursor-pointer hover:bg-red-50 border-b border-gray-50 last:border-none flex items-start gap-3 transition-colors"
+                    onClick={() => {
+                      if (item.type === 'city') {
+                        setSelectedCity(item.value);
+                        setSelectedDistrict('ALL');
+                        setSearchQuery('');
+                      } else if (item.type === 'district') {
+                        const storeWithDistrict = stores.find(s => s.district === item.value);
+                        if (storeWithDistrict) {
+                          setSelectedCity(storeWithDistrict.city);
+                          setSelectedDistrict(item.value);
+                        }
+                        setSearchQuery('');
+                      } else if (item.type === 'store') {
+                        setSelectedCity(item.value.city);
+                        setSelectedDistrict(item.value.district);
+                        setSelectedStore(item.value);
+                      }
+                      setShowSuggestions(false);
+                    }}
+                  >
+                    <div className="mt-0.5 flex-shrink-0">
+                      {item.type === 'city' && <span className="text-gray-400 text-lg">🏙️</span>}
+                      {item.type === 'district' && <span className="text-gray-400 text-lg">🏘️</span>}
+                      {item.type === 'store' && <span className="text-[#a51a1a] text-lg">📍</span>}
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-[13px] font-bold text-[#333]">{item.text}</div>
+                      {item.subtext && <div className="text-[12px] text-gray-500 mt-0.5 line-clamp-1">{item.subtext}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <button className="h-10 px-6 bg-[#5c3a21] text-white text-[13px] font-bold rounded-[3px] hover:bg-[#4a2e1a] transition-colors whitespace-nowrap flex items-center gap-2">
             <span className="text-[14px]">🔍</span> Tìm kiếm

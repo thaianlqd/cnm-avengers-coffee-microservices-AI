@@ -51,18 +51,21 @@ const STATUS_TRANSITIONS = {
   DA_HUY: [],
 }
 
-function layDanhSachTrangThaiCoTheChon(currentStatus) {
+function layDanhSachTrangThaiCoTheChon(currentStatus, loaiDonHang) {
   if (!currentStatus) return ORDER_STATUSES
   if (currentStatus === 'DA_HUY') return ['DA_HUY']
 
   const currentIndex = ORDER_FLOW.indexOf(currentStatus)
   if (currentIndex < 0) return [currentStatus]
 
-  const statuses = [currentStatus, ...ORDER_FLOW.slice(currentIndex + 1)]
-  if ((STATUS_TRANSITIONS[currentStatus] || []).includes('DA_HUY')) {
-    statuses.push('DA_HUY')
+  const transitions = STATUS_TRANSITIONS[currentStatus] || []
+  let possible = [currentStatus, ...transitions]
+  
+  if (['DUNG_TAI_CHO', 'TAI_CHO', 'LAY_TAI_QUAN'].includes(loaiDonHang)) {
+    possible = possible.filter(s => s !== 'DANG_GIAO');
   }
-  return statuses
+
+  return possible;
 }
 
 function getOrderTypeLabel(loai) {
@@ -108,6 +111,12 @@ function taoDraftTuDon(order) {
       ten_san_pham: normalizeViText(line.ten_san_pham || ''),
       so_luong: Number(line.so_luong || 1),
       gia_ban: Number(line.gia_ban || 0),
+      kich_co: line.kich_co || '',
+      luong_da: line.luong_da || '',
+      do_ngot: line.do_ngot || '',
+      loai_sua: line.loai_sua || '',
+      ghi_chu: line.ghi_chu || '',
+      toppings: line.toppings ? [...line.toppings] : [],
     })),
   }
 }
@@ -238,14 +247,41 @@ export function OrdersPanel({
             ma_san_pham: productId,
             ten_san_pham: normalizeViText(matched?.name || item.ten_san_pham || ''),
             gia_ban: Number(matched?.price || item.gia_ban || 0),
+            kich_co: '',
+            luong_da: '',
+            do_ngot: '',
+            loai_sua: '',
+            toppings: [],
+          }
+        }
+
+        const updatedItem = { ...item, [key]: value };
+
+        // Recalculate price if size, toppings, or milk type changes
+        if (['kich_co', 'toppings', 'loai_sua'].includes(key)) {
+          const matched = (inventoryState?.items || []).find((row) => Number(row.ma_san_pham) === item.ma_san_pham)
+          if (matched) {
+            let newPrice = Number(matched.price || 0)
+            if (updatedItem.kich_co && matched.sizes && matched.sizes[updatedItem.kich_co]) {
+              newPrice = Number(matched.sizes[updatedItem.kich_co])
+            }
+            if (updatedItem.loai_sua && matched.loai_sua && matched.loai_sua[updatedItem.loai_sua]) {
+              newPrice += Number(matched.loai_sua[updatedItem.loai_sua])
+            }
+            if (updatedItem.toppings && updatedItem.toppings.length > 0 && matched.toppings) {
+              updatedItem.toppings.forEach(t => {
+                if (matched.toppings[t]) newPrice += Number(matched.toppings[t])
+              })
+            }
+            updatedItem.gia_ban = newPrice
           }
         }
 
         if (key === 'so_luong') {
-          return { ...item, so_luong: Math.max(1, Number(value) || 1) }
+          return { ...updatedItem, so_luong: Math.max(1, Number(value) || 1) }
         }
 
-        return { ...item, [key]: value }
+        return updatedItem
       })
 
       return { ...prev, items: nextItems }
@@ -296,6 +332,12 @@ export function OrdersPanel({
         ten_san_pham: String(item.ten_san_pham || '').trim(),
         so_luong: Number(item.so_luong || 0),
         gia_ban: Number(item.gia_ban || 0),
+        kich_co: item.kich_co || undefined,
+        luong_da: item.luong_da || undefined,
+        do_ngot: item.do_ngot || undefined,
+        loai_sua: item.loai_sua || undefined,
+        ghi_chu: item.ghi_chu || undefined,
+        toppings: item.toppings && item.toppings.length > 0 ? item.toppings : undefined,
       }))
       .filter((item) => item.ma_san_pham > 0 && item.ten_san_pham && item.so_luong > 0 && item.gia_ban >= 0)
 
@@ -521,6 +563,19 @@ export function OrdersPanel({
                 <span className="order-type-badge">
                   {getOrderTypeLabel(order.loai_don_hang)}
                 </span>
+                {['DUNG_TAI_CHO', 'TAI_CHO'].includes(order.loai_don_hang) && order.ma_ban && (
+                  <span style={{ 
+                    fontSize: '0.75rem', 
+                    fontWeight: 'bold', 
+                    padding: '0.2rem 0.5rem', 
+                    borderRadius: '4px',
+                    border: '1px solid #991b1b',
+                    color: '#7f1d1d',
+                    backgroundColor: '#fef2f2'
+                  }}>
+                    📍 Bàn {order.ma_ban}
+                  </span>
+                )}
                 {order.loai_don_hang === 'GIAO_TAN_NOI' && (
                   <span style={{ 
                     fontSize: '0.75rem', 
@@ -555,8 +610,8 @@ export function OrdersPanel({
                 >
                   Xóa đơn
                 </button>
-                {/* Bàn giao cho Shipper */}
-                {['MOI_TAO', 'DA_XAC_NHAN', 'DANG_CHUAN_BI'].includes(normalizeOrderStatus(order.trang_thai_don_hang)) && (
+                {/* Bàn giao cho Shipper (Chỉ Giao tận nơi) */}
+                {order.loai_don_hang === 'GIAO_TAN_NOI' && ['MOI_TAO', 'DA_XAC_NHAN', 'DANG_CHUAN_BI'].includes(normalizeOrderStatus(order.trang_thai_don_hang)) && (
                   <button
                     type="button"
                     style={{
@@ -577,6 +632,30 @@ export function OrdersPanel({
                     title="Xác nhận bàn giao đơn này cho Shipper"
                   >
                     🚴 Bàn giao Shipper
+                  </button>
+                )}
+                {/* Nút Hoàn Thành (Cho đơn Dùng tại chỗ / Lấy tại quán) */}
+                {['DUNG_TAI_CHO', 'TAI_CHO', 'LAY_TAI_QUAN'].includes(order.loai_don_hang) && ['MOI_TAO', 'DA_XAC_NHAN', 'DANG_CHUAN_BI', 'DANG_GIAO'].includes(normalizeOrderStatus(order.trang_thai_don_hang)) && (
+                  <button
+                    type="button"
+                    style={{
+                      background: 'linear-gradient(135deg, #059669, #047857)',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '0.35rem 0.75rem',
+                      fontSize: '0.82rem',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                    }}
+                    disabled={updatingOrderId === order.ma_don_hang}
+                    onClick={() => onUpdateStatus(order.ma_don_hang, 'HOAN_THANH')}
+                    title="Xác nhận đã phục vụ / giao cho khách"
+                  >
+                    ✅ Đã phục vụ / Giao khách
                   </button>
                 )}
               </div>
@@ -605,7 +684,7 @@ export function OrdersPanel({
                 onChange={(e) => onUpdateStatus(order.ma_don_hang, e.target.value)}
                 disabled={updatingOrderId === order.ma_don_hang}
               >
-                {layDanhSachTrangThaiCoTheChon(normalizeOrderStatus(order.trang_thai_don_hang)).map((status) => (
+                {layDanhSachTrangThaiCoTheChon(normalizeOrderStatus(order.trang_thai_don_hang), order.loai_don_hang).map((status) => (
                   <option key={status} value={status}>
                     {ORDER_STATUS_LABEL[status]}
                   </option>
@@ -648,44 +727,101 @@ export function OrdersPanel({
                 </div>
 
                 <div style={{ marginTop: '0.6rem', display: 'grid', gap: '0.45rem' }}>
-                  {editDraft.items.map((line, index) => (
-                    <div key={`${line.ma_san_pham}-${index}`} className="pos-row">
-                      <select
-                        value={line.ma_san_pham}
-                        onChange={(e) => capNhatDongMon(index, 'ma_san_pham', e.target.value)}
-                      >
-                        {(inventoryState?.items || []).map((menuItem) => (
-                          <option key={menuItem.ma_san_pham} value={menuItem.ma_san_pham}>
-                            {normalizeViText(menuItem.name)}
-                          </option>
-                        ))}
-                      </select>
-                      <input
-                        type="number"
-                        min="1"
-                        value={line.so_luong}
-                        onChange={(e) => capNhatDongMon(index, 'so_luong', e.target.value)}
-                      />
-                      <input
-                        type="number"
-                        min="0"
-                        value={line.gia_ban}
-                        readOnly
-                        disabled
-                        title="Gia duoc khoa theo menu"
-                      />
-                      <input
-                        type="number"
-                        value={Number(line.gia_ban || 0) * Number(line.so_luong || 0)}
-                        readOnly
-                        disabled
-                        title="Thanh tien dong mon"
-                      />
-                      <button type="button" className="secondary" onClick={() => xoaDongMon(index)}>
-                        Xóa dòng
-                      </button>
+                  {editDraft.items.map((line, index) => {
+                    const matchedMenu = (inventoryState?.items || []).find(m => m.ma_san_pham === line.ma_san_pham);
+                    return (
+                    <div key={`${line.ma_san_pham}-${index}`} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid #f3f4f6' }}>
+                      <div className="pos-row">
+                        <select
+                          value={line.ma_san_pham}
+                          onChange={(e) => capNhatDongMon(index, 'ma_san_pham', e.target.value)}
+                        >
+                          {(inventoryState?.items || []).map((menuItem) => (
+                            <option key={menuItem.ma_san_pham} value={menuItem.ma_san_pham}>
+                              {normalizeViText(menuItem.name)}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="number"
+                          min="1"
+                          value={line.so_luong}
+                          onChange={(e) => capNhatDongMon(index, 'so_luong', e.target.value)}
+                        />
+                        <input
+                          type="number"
+                          min="0"
+                          value={line.gia_ban}
+                          onChange={(e) => capNhatDongMon(index, 'gia_ban', e.target.value)}
+                          title="Giá bán"
+                        />
+                        <input
+                          type="number"
+                          value={Number(line.gia_ban || 0) * Number(line.so_luong || 0)}
+                          readOnly
+                          disabled
+                          title="Thanh tien dong mon"
+                        />
+                        <button type="button" className="secondary" onClick={() => xoaDongMon(index)}>
+                          Xóa
+                        </button>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                        {matchedMenu?.sizes && Object.keys(matchedMenu.sizes).length > 0 ? (
+                          <select value={line.kich_co || ''} onChange={(e) => capNhatDongMon(index, 'kich_co', e.target.value)} style={{ width: '80px', fontSize: '0.75rem', padding: '0.35rem' }}>
+                            <option value="">Size...</option>
+                            {Object.keys(matchedMenu.sizes).map(s => <option key={s} value={s}>{s}</option>)}
+                          </select>
+                        ) : (
+                          <input type="text" placeholder="Size" value={line.kich_co || ''} onChange={(e) => capNhatDongMon(index, 'kich_co', e.target.value)} style={{ width: '60px', fontSize: '0.75rem', padding: '0.35rem' }} />
+                        )}
+                        
+                        {matchedMenu?.luong_da && Object.keys(matchedMenu.luong_da).length > 0 ? (
+                          <select value={line.luong_da || ''} onChange={(e) => capNhatDongMon(index, 'luong_da', e.target.value)} style={{ width: '90px', fontSize: '0.75rem', padding: '0.35rem' }}>
+                            <option value="">Đá...</option>
+                            {Object.keys(matchedMenu.luong_da).map(s => <option key={s} value={s}>{s}</option>)}
+                          </select>
+                        ) : (
+                          <input type="text" placeholder="Đá (VD: 50%)" value={line.luong_da || ''} onChange={(e) => capNhatDongMon(index, 'luong_da', e.target.value)} style={{ width: '90px', fontSize: '0.75rem', padding: '0.35rem' }} />
+                        )}
+
+                        {matchedMenu?.do_ngot && Object.keys(matchedMenu.do_ngot).length > 0 ? (
+                          <select value={line.do_ngot || ''} onChange={(e) => capNhatDongMon(index, 'do_ngot', e.target.value)} style={{ width: '90px', fontSize: '0.75rem', padding: '0.35rem' }}>
+                            <option value="">Ngọt...</option>
+                            {Object.keys(matchedMenu.do_ngot).map(s => <option key={s} value={s}>{s}</option>)}
+                          </select>
+                        ) : (
+                          <input type="text" placeholder="Ngọt (VD: 50%)" value={line.do_ngot || ''} onChange={(e) => capNhatDongMon(index, 'do_ngot', e.target.value)} style={{ width: '90px', fontSize: '0.75rem', padding: '0.35rem' }} />
+                        )}
+
+                        {matchedMenu?.loai_sua && Object.keys(matchedMenu.loai_sua).length > 0 ? (
+                          <select value={line.loai_sua || ''} onChange={(e) => capNhatDongMon(index, 'loai_sua', e.target.value)} style={{ width: '90px', fontSize: '0.75rem', padding: '0.35rem' }}>
+                            <option value="">Sữa...</option>
+                            {Object.keys(matchedMenu.loai_sua).map(s => <option key={s} value={s}>{s}</option>)}
+                          </select>
+                        ) : null}
+
+                        {matchedMenu?.toppings && Object.keys(matchedMenu.toppings).length > 0 ? (
+                           <div style={{ display: 'flex', gap: '0.2rem', flexWrap: 'wrap', flex: 1, border: '1px solid #d1d5db', padding: '0.3rem', borderRadius: '4px' }}>
+                             {Object.keys(matchedMenu.toppings).map(t => (
+                               <label key={t} style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.2rem', background: '#f3f4f6', padding: '0.2rem 0.4rem', borderRadius: '4px', cursor: 'pointer' }}>
+                                 <input type="checkbox" checked={(line.toppings || []).includes(t)} onChange={(e) => {
+                                   const current = new Set(line.toppings || []);
+                                   if (e.target.checked) current.add(t);
+                                   else current.delete(t);
+                                   capNhatDongMon(index, 'toppings', Array.from(current));
+                                 }} /> {t}
+                               </label>
+                             ))}
+                           </div>
+                        ) : (
+                          <input type="text" placeholder="Topping (phân cách bằng dấu phẩy)" value={(line.toppings || []).join(', ')} onChange={(e) => capNhatDongMon(index, 'toppings', e.target.value ? e.target.value.split(',').map(s=>s.trim()).filter(Boolean) : [])} style={{ flex: 1, minWidth: '150px', fontSize: '0.75rem', padding: '0.35rem' }} />
+                        )}
+
+                        <input type="text" placeholder="Ghi chú" value={line.ghi_chu || ''} onChange={(e) => capNhatDongMon(index, 'ghi_chu', e.target.value)} style={{ flex: 1, minWidth: '120px', fontSize: '0.75rem', padding: '0.35rem' }} />
+                      </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
 
                 <div style={{ marginTop: '0.75rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.65rem' }}>

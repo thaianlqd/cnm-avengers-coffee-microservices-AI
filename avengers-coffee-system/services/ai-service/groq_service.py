@@ -130,20 +130,22 @@ Schema:
       "product_name": "tên sản phẩm normalize (vd: Cà Phê Sữa Đá)",
       "quantity": 1,
       "size": "S" | "M" | "L" | null,
-      "note": "ít đường, thêm trân châu, ít đá..." | null
+      "note": "ít đường, thêm trân châu, ít đá, thanh toán tiền mặt..." | null
     }
   ],
   "delivery_type": "DELIVERY" | "PICKUP" | null,
+  "payment_method": "TIEN_MAT" | "VNPAY" | "ZALOPAY" | "THANH_TOAN_KHI_NHAN_HANG" | null,
   "branch_hint": "tên chi nhánh nếu khách đề cập" | null,
   "raw_text": "câu gốc"
 }
 
-Nếu khách hỏi (menu, giá, khuyến mãi...) thì intent="QUERY", items=[].
-Normalize tên: "cf sữa"→"Cà Phê Sữa", "latte"→"Latte", "trà đào"→"Trà Đào".
-Với số lượng: "hai ly"→2, "một"→1, "3 cái"→3."""
+Quy tắc CỰC KỲ QUAN TRỌNG:
+1. Trả về intent="ORDER" KHI VÀ CHỈ KHI khách có lệnh chốt đơn dứt khoát (ví dụ: "chốt đơn", "tiến hành đặt hàng", "đặt ngay", "oke đặt đi"). Nếu trả về intent="ORDER", bạn PHẢI dựa vào LỊCH SỬ CHAT để lấy đúng tên món, size, đá đường, thanh toán mà khách đã chọn trước đó.
+2. Trả về intent="QUERY" nếu khách đang hỏi menu, nói muốn mua gì đó nhưng chưa nói lệnh chốt đơn rõ ràng (ví dụ: "cho tôi cà phê", "tôi lấy 1 đen đá", "cho mình đặt 1 trà sữa"). intent="QUERY" sẽ nhường lại cho Tư vấn viên AI trả lời và tiếp tục hỏi khách chọn size, hình thức thanh toán.
+3. Normalize tên: "cf sữa"→"Cà Phê Sữa", "latte"→"Latte". Với số lượng: "hai ly"→2.
 
 
-def groq_extract_order_intent(user_text: str) -> Optional[Dict[str, Any]]:
+def groq_extract_order_intent(user_text: str, history: str = "") -> Optional[Dict[str, Any]]:
     """
     Extract order intent + items from natural language using Groq Llama.
     Returns parsed dict or None.
@@ -151,7 +153,7 @@ def groq_extract_order_intent(user_text: str) -> Optional[Dict[str, Any]]:
     if not user_text or not user_text.strip():
         return None
 
-    prompt = f'Phân tích câu sau:\n"{user_text.strip()}"'
+    prompt = f'Lịch sử chat:\n{history}\n\nTin nhắn hiện tại của khách:\n"{user_text.strip()}"'
     raw = groq_chat(
         system_prompt=_ORDER_SYSTEM_PROMPT,
         user_prompt=prompt,

@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Image,
   Modal,
+  Platform,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
@@ -60,7 +61,7 @@ export function ProfileScreen({ navigation }) {
   const { user, logout, updateSession } = useUser()
   const userId = getUserId(user)
   const queryClient = useQueryClient()
-  const [activeTab, setActiveTab] = useState('profile')
+  const [activeTab, setActiveTab] = useState('menu')
   const [profileForm, setProfileForm] = useState({ ho_ten: '', so_dien_thoai: '', avatar_url: '' })
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
   const [addressForm, setAddressForm] = useState({ tenDiaChi: '', diaChiDayDu: '', ghiChu: '', macDinh: false })
@@ -109,8 +110,18 @@ export function ProfileScreen({ navigation }) {
       const response = await apiClient.get(`/customers/${userId}/notifications?limit=10`)
       return response
     },
-    enabled: Boolean(userId),
+    enabled: Boolean(userId) && !String(userId).startsWith('anon-') && userId !== 'guest-customer',
     staleTime: 30 * 1000,
+  })
+
+  const vouchersQuery = useQuery({
+    queryKey: ['customer', 'vouchers', userId],
+    queryFn: async () => {
+      const response = await apiClient.get(`/vouchers?ma_nguoi_dung=${userId}`)
+      return safeArray(response)
+    },
+    enabled: Boolean(userId) && !String(userId).startsWith('anon-') && userId !== 'guest-customer',
+    staleTime: 60 * 1000,
   })
 
   const profile = profileQuery.data || null
@@ -119,6 +130,9 @@ export function ProfileScreen({ navigation }) {
   const reviews = reviewsQuery.data || []
   const notifications = safeArray(notificationsQuery.data?.items || notificationsQuery.data)
   const unreadCount = Number(notificationsQuery.data?.unreadCount || 0)
+  const vouchers = safeArray(vouchersQuery.data)
+  
+  const isLoggedIn = user && getUserId(user) !== 'guest-customer' && !String(getUserId(user)).startsWith('anon-')
 
   const diemLoyalty = Number(loyalty?.diem ?? user?.loyalty_points ?? 0)
   const tier = loyalty?.hang_thanh_vien?.ma_hang || user?.membership_tier || 'MEMBER'
@@ -249,21 +263,213 @@ export function ProfileScreen({ navigation }) {
   }
 
   const handleLogout = () => {
-    Alert.alert(
-      'Đăng xuất',
-      'Bạn có chắc muốn đăng xuất khỏi ứng dụng?',
-      [
-        { text: 'Hủy', style: 'cancel' },
-        { text: 'Đăng xuất', style: 'destructive', onPress: () => logout() },
-      ]
-    )
+    if (Platform.OS === 'web') {
+      if (window.confirm('Bạn có chắc muốn đăng xuất khỏi ứng dụng?')) {
+        setActiveTab('menu')
+        logout()
+      }
+    } else {
+      Alert.alert(
+        'Đăng xuất',
+        'Bạn có chắc muốn đăng xuất khỏi ứng dụng?',
+        [
+          { text: 'Hủy', style: 'cancel' },
+          { text: 'Đăng xuất', style: 'destructive', onPress: () => {
+            setActiveTab('menu')
+            logout()
+          }},
+        ]
+      )
+    }
   }
+
+  const renderBackHeader = (title) => (
+    <View style={styles.subHeaderRow}>
+      <Pressable onPress={() => setActiveTab('menu')} style={styles.subHeaderBackBtn}>
+        <Ionicons name="arrow-back" size={24} color="#1e293b" />
+      </Pressable>
+      <Text style={styles.subHeaderTitle}>{title}</Text>
+    </View>
+  )
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'menu':
+        return (
+          <View style={styles.menuContainer}>
+            {/* Guest Banner if not logged in */}
+            {!isLoggedIn && (
+              <View style={styles.guestContainer}>
+                <Ionicons name="person-circle-outline" size={64} color="#cbd5e1" />
+                <Text style={styles.guestTitle}>Chào bạn đến với Avengers Coffee</Text>
+                <Text style={styles.guestSubtitle}>Đăng nhập để nhận ưu đãi và trải nghiệm tốt nhất</Text>
+                <Pressable
+                  onPress={() => navigation?.navigate('Login')}
+                  style={({ pressed }) => [styles.primaryBtn, { width: '100%', marginTop: 20 }, pressed && { opacity: 0.85 }]}
+                >
+                  <LinearGradient colors={['#ea8025', '#d4560e']} style={styles.primaryBtnGradient}>
+                    <Ionicons name="log-in-outline" size={20} color="#fff" />
+                    <Text style={styles.primaryBtnText}>Đăng nhập / Đăng ký</Text>
+                  </LinearGradient>
+                </Pressable>
+              </View>
+            )}
+
+            {/* Loyalty Card if logged in */}
+            {isLoggedIn && (
+              <View
+                style={[styles.loyaltyCard, { backgroundColor: '#fff' }]}
+              >
+                <View style={styles.headerTop}>
+                  {user?.avatar_url ? (
+                    <Image source={{ uri: user.avatar_url }} style={styles.headerAvatar} />
+                  ) : (
+                    <View style={styles.headerAvatarFallback}>
+                      <Text style={styles.headerAvatarText}>
+                        {String(getUserDisplayName(user))[0]?.toUpperCase() || '☕'}
+                      </Text>
+                    </View>
+                  )}
+                  <View style={styles.headerInfo}>
+                    <Text style={styles.headerName}>{getUserDisplayName(user)}</Text>
+                    <Text style={styles.headerEmail}>{profile?.email || user?.email || ''}</Text>
+                  </View>
+                  <View style={styles.tierBadge}>
+                    <Text style={styles.tierBadgeText}>{tierConfig.icon} {tierConfig.label}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.loyaltyRow}>
+                  <View>
+                    <Text style={styles.loyaltyPoints}>{diemLoyalty.toLocaleString('vi-VN')}</Text>
+                    <Text style={styles.loyaltyLabel}>Điểm tích lũy</Text>
+                  </View>
+                  <View style={styles.loyaltyDivider} />
+                  <View>
+                    <Text style={styles.loyaltyMemberId}>{profile?.ma_nguoi_dung || userId}</Text>
+                    <Text style={styles.loyaltyLabel}>Mã thành viên</Text>
+                  </View>
+                </View>
+                {diemCanLen != null ? (
+                  <View style={styles.loyaltyProgress}>
+                    <View style={styles.loyaltyProgressInfo}>
+                      <Text style={styles.loyaltyProgressText}>{diemLoyalty.toLocaleString('vi-VN')} / {diemCanLen.toLocaleString('vi-VN')} điểm</Text>
+                      <Text style={styles.loyaltyProgressText}>Lên hạng tiếp</Text>
+                    </View>
+                    <View style={styles.loyaltyProgressBar}>
+                      <View style={[styles.loyaltyProgressFill, { width: `${phanTram}%` }]} />
+                    </View>
+                  </View>
+                ) : (
+                  <Text style={styles.maxTierText}>✨ Bạn đang ở hạng cao nhất!</Text>
+                )}
+              </View>
+            )}
+
+            {/* Grid 2x2 */}
+            <View style={styles.gridContainer}>
+              <Pressable style={styles.gridItem} onPress={() => isLoggedIn ? navigation?.navigate('Orders') : navigation?.navigate('Login')}>
+                <View style={styles.gridIconWrap}>
+                  <Ionicons name="document-text-outline" size={24} color="#ea8025" />
+                  {!isLoggedIn && <View style={styles.lockIconGrid}><Ionicons name="lock-closed" size={10} color="#fff" /></View>}
+                </View>
+                <Text style={styles.gridText}>Lịch sử đơn hàng</Text>
+              </Pressable>
+              <Pressable style={styles.gridItem}>
+                <View style={styles.gridIconWrap}>
+                  <Ionicons name="shield-checkmark-outline" size={24} color="#ea8025" />
+                </View>
+                <Text style={styles.gridText}>Điều khoản</Text>
+              </Pressable>
+              <Pressable style={styles.gridItem}>
+                <View style={styles.gridIconWrap}>
+                  <Ionicons name="cart-outline" size={24} color="#ea8025" />
+                </View>
+                <Text style={styles.gridText}>Tìm kiếm đơn hàng</Text>
+              </Pressable>
+              <Pressable style={styles.gridItem} onPress={() => isLoggedIn ? navigation?.navigate('Vouchers') : navigation?.navigate('Login')}>
+                <View style={styles.gridIconWrap}>
+                  <Ionicons name="gift-outline" size={24} color="#ea8025" />
+                  {!isLoggedIn && <View style={styles.lockIconGrid}><Ionicons name="lock-closed" size={10} color="#fff" /></View>}
+                </View>
+                <Text style={styles.gridText}>Ưu đãi riêng bạn</Text>
+              </Pressable>
+            </View>
+
+            {/* Hỗ trợ List */}
+            <Text style={styles.listSectionTitle}>Hỗ trợ</Text>
+            <View style={styles.listCard}>
+              <Pressable style={styles.listItem}>
+                <Ionicons name="star-outline" size={20} color="#64748b" />
+                <Text style={styles.listItemText}>Đánh giá đơn hàng</Text>
+                {!isLoggedIn ? <Ionicons name="lock-closed" size={16} color="#cbd5e1" /> : <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />}
+              </Pressable>
+              <View style={styles.listDivider} />
+              <Pressable style={styles.listItem}>
+                <Ionicons name="shield-outline" size={20} color="#64748b" />
+                <Text style={styles.listItemText}>Điều khoản thanh toán</Text>
+                <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
+              </Pressable>
+              <View style={styles.listDivider} />
+              <Pressable style={styles.listItem}>
+                <Ionicons name="chatbubbles-outline" size={20} color="#64748b" />
+                <Text style={styles.listItemText}>Liên hệ và góp ý</Text>
+                <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
+              </Pressable>
+              <View style={styles.listDivider} />
+              <Pressable style={styles.listItem}>
+                <Ionicons name="receipt-outline" size={20} color="#64748b" />
+                <Text style={styles.listItemText}>Hướng dẫn xuất hóa đơn GTGT</Text>
+                <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
+              </Pressable>
+            </View>
+
+            {/* Tài khoản List */}
+            <Text style={styles.listSectionTitle}>Tài khoản</Text>
+            <View style={styles.listCard}>
+              <Pressable style={styles.listItem} onPress={() => isLoggedIn ? setActiveTab('profile') : navigation?.navigate('Login')}>
+                <Ionicons name="person-outline" size={20} color="#64748b" />
+                <Text style={[styles.listItemText, !isLoggedIn && { color: '#94a3b8' }]}>Thông tin cá nhân</Text>
+                {!isLoggedIn ? <Ionicons name="lock-closed" size={16} color="#cbd5e1" /> : <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />}
+              </Pressable>
+              <View style={styles.listDivider} />
+              <Pressable style={styles.listItem} onPress={() => isLoggedIn ? setActiveTab('addresses') : navigation?.navigate('Login')}>
+                <Ionicons name="location-outline" size={20} color="#64748b" />
+                <Text style={[styles.listItemText, !isLoggedIn && { color: '#94a3b8' }]}>Địa chỉ đã lưu</Text>
+                {!isLoggedIn ? <Ionicons name="lock-closed" size={16} color="#cbd5e1" /> : <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />}
+              </Pressable>
+              <View style={styles.listDivider} />
+              <Pressable style={styles.listItem} onPress={() => isLoggedIn ? setActiveTab('password') : navigation?.navigate('Login')}>
+                <Ionicons name="lock-closed-outline" size={20} color="#64748b" />
+                <Text style={[styles.listItemText, !isLoggedIn && { color: '#94a3b8' }]}>Đổi mật khẩu</Text>
+                {!isLoggedIn ? <Ionicons name="lock-closed" size={16} color="#cbd5e1" /> : <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />}
+              </Pressable>
+              <View style={styles.listDivider} />
+              <Pressable style={styles.listItem} onPress={() => isLoggedIn ? navigation?.navigate('Wallet') : navigation?.navigate('Login')}>
+                <Ionicons name="wallet-outline" size={20} color="#64748b" />
+                <Text style={[styles.listItemText, !isLoggedIn && { color: '#94a3b8' }]}>Ví điện tử</Text>
+                {!isLoggedIn ? <Ionicons name="lock-closed" size={16} color="#cbd5e1" /> : <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />}
+              </Pressable>
+              <View style={styles.listDivider} />
+              <Pressable style={styles.listItem}>
+                <Ionicons name="information-circle-outline" size={20} color="#64748b" />
+                <Text style={styles.listItemText}>Về chúng tôi</Text>
+                <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
+              </Pressable>
+              <View style={styles.listDivider} />
+              <Pressable style={styles.listItem} onPress={() => isLoggedIn ? handleLogout() : null}>
+                <Ionicons name="log-out-outline" size={20} color={isLoggedIn ? colors.danger : '#cbd5e1'} />
+                <Text style={[styles.listItemText, !isLoggedIn ? { color: '#cbd5e1' } : { color: colors.danger }]}>Đăng xuất</Text>
+                {!isLoggedIn && <Ionicons name="lock-closed" size={16} color="#cbd5e1" />}
+              </Pressable>
+            </View>
+          </View>
+        )
+
       case 'profile':
         return (
           <View style={styles.tabContent}>
+            {renderBackHeader('Thông tin cá nhân')}
             {/* Avatar */}
             <View style={styles.avatarSection}>
               <Pressable onPress={() => {
@@ -342,61 +548,13 @@ export function ProfileScreen({ navigation }) {
               </Pressable>
             </View>
 
-            {/* Notifications Preview */}
-            {notifications.length > 0 ? (
-              <View style={styles.notifSection}>
-                <View style={styles.notifHeader}>
-                  <View style={styles.notifTitleRow}>
-                    <Ionicons name="notifications-outline" size={18} color={colors.primary} />
-                    <Text style={styles.notifTitle}>Thông báo</Text>
-                    {unreadCount > 0 ? (
-                      <View style={styles.unreadBadge}>
-                        <Text style={styles.unreadBadgeText}>{unreadCount}</Text>
-                      </View>
-                    ) : null}
-                  </View>
-                  {unreadCount > 0 ? (
-                    <Pressable onPress={() => markAllReadMutation.mutate()}>
-                      <Text style={styles.markAllRead}>Đánh dấu đọc tất</Text>
-                    </Pressable>
-                  ) : null}
-                </View>
-                {notifications.slice(0, 3).map((notif, i) => (
-                  <View key={notif.id || i} style={[styles.notifItem, !notif.da_doc && styles.notifItemUnread]}>
-                    <View style={[styles.notifDot, notif.da_doc && styles.notifDotRead]} />
-                    <View style={styles.notifContent}>
-                      <Text style={styles.notifTitle2}>{notif.tieu_de || notif.title || 'Thông báo'}</Text>
-                      <Text style={styles.notifBody} numberOfLines={2}>{notif.noi_dung || notif.content || ''}</Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            ) : null}
-
-            {/* Login or Logout */}
-            {!user || getUserId(user) === 'guest-customer' ? (
-              <Pressable
-                onPress={() => navigation?.navigate('Login')}
-                style={({ pressed }) => [styles.logoutBtn, { borderColor: '#ea8025', backgroundColor: '#fff9f5' }, pressed && { opacity: 0.85 }]}
-              >
-                <Ionicons name="log-in-outline" size={20} color="#ea8025" />
-                <Text style={[styles.logoutBtnText, { color: '#ea8025', fontWeight: '800' }]}>Đăng nhập ngay</Text>
-              </Pressable>
-            ) : (
-              <Pressable
-                onPress={handleLogout}
-                style={({ pressed }) => [styles.logoutBtn, pressed && { opacity: 0.85 }]}
-              >
-                <Ionicons name="log-out-outline" size={18} color={colors.danger} />
-                <Text style={styles.logoutBtnText}>Đăng xuất</Text>
-              </Pressable>
-            )}
           </View>
         )
 
       case 'password':
         return (
           <View style={styles.tabContent}>
+            {renderBackHeader('Đổi mật khẩu')}
             <View style={styles.formSection}>
               <Text style={styles.formSectionTitle}>Đổi mật khẩu</Text>
               <Text style={styles.formSectionSubtitle}>Nhập mật khẩu hiện tại và mật khẩu mới để cập nhật.</Text>
@@ -450,6 +608,7 @@ export function ProfileScreen({ navigation }) {
       case 'addresses':
         return (
           <View style={styles.tabContent}>
+            {renderBackHeader('Địa chỉ đã lưu')}
             {/* Address List */}
             {addressesQuery.isLoading ? (
               <View style={styles.loadingWrap}>
@@ -647,91 +806,26 @@ export function ProfileScreen({ navigation }) {
 
   return (
     <View style={styles.screen}>
-      {/* Header with Loyalty */}
-      <LinearGradient
-        colors={[...tierConfig.gradient, '#1a0a02']}
-        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-        style={styles.header}
-      >
-        <View style={styles.headerTop}>
-          {user?.avatar_url ? (
-            <Image source={{ uri: user.avatar_url }} style={styles.headerAvatar} />
-          ) : (
-            <View style={styles.headerAvatarFallback}>
-              <Text style={styles.headerAvatarText}>
-                {String(getUserDisplayName(user))[0]?.toUpperCase() || '☕'}
-              </Text>
-            </View>
-          )}
-          <View style={styles.headerInfo}>
-            <Text style={styles.headerName}>{getUserDisplayName(user)}</Text>
-            {!user || getUserId(user) === 'guest-customer' ? (
-              <Pressable onPress={() => navigation?.navigate('Login')} style={{ marginTop: 4 }}>
-                <Text style={{ color: '#fbbf24', fontWeight: '700', fontSize: 13, textDecorationLine: 'underline' }}>
-                  👉 Đăng nhập / Đăng ký ngay
-                </Text>
-              </Pressable>
-            ) : (
-              <Text style={styles.headerEmail}>{profile?.email || user?.email || ''}</Text>
-            )}
-          </View>
-          <View style={styles.tierBadge}>
-            <Text style={styles.tierBadgeText}>{tierConfig.icon} {tierConfig.label}</Text>
+      {activeTab === 'menu' && (
+        <View style={styles.mainHeader}>
+          <Text style={styles.mainHeaderTitle}>Tài khoản</Text>
+          <View style={styles.mainHeaderRight}>
+            <Pressable style={styles.headerIconBtn} onPress={() => isLoggedIn ? navigation?.navigate('Vouchers') : navigation?.navigate('Login')}>
+              <Ionicons name="ticket-outline" size={22} color="#ea8025" />
+              {vouchers.length > 0 && <View style={styles.headerIconDot} />}
+            </Pressable>
+            <Pressable style={styles.headerIconBtn} onPress={() => isLoggedIn ? navigation?.navigate('Notifications') : navigation?.navigate('Login')}>
+              <Ionicons name="notifications-outline" size={22} color="#ea8025" />
+              {unreadCount > 0 && <View style={styles.headerIconDot} />}
+            </Pressable>
           </View>
         </View>
-
-        {/* Loyalty card */}
-        <View style={styles.loyaltyCard}>
-          <View style={styles.loyaltyRow}>
-            <View>
-              <Text style={styles.loyaltyPoints}>{diemLoyalty.toLocaleString('vi-VN')}</Text>
-              <Text style={styles.loyaltyLabel}>Điểm tích lũy</Text>
-            </View>
-            <View style={styles.loyaltyDivider} />
-            <View>
-              <Text style={styles.loyaltyMemberId}>{profile?.ma_nguoi_dung || userId}</Text>
-              <Text style={styles.loyaltyLabel}>Mã thành viên</Text>
-            </View>
-          </View>
-          {diemCanLen != null ? (
-            <View style={styles.loyaltyProgress}>
-              <View style={styles.loyaltyProgressInfo}>
-                <Text style={styles.loyaltyProgressText}>{diemLoyalty.toLocaleString('vi-VN')} / {diemCanLen.toLocaleString('vi-VN')} điểm</Text>
-                <Text style={styles.loyaltyProgressText}>Lên hạng tiếp</Text>
-              </View>
-              <View style={styles.loyaltyProgressBar}>
-                <View style={[styles.loyaltyProgressFill, { width: `${phanTram}%` }]} />
-              </View>
-            </View>
-          ) : (
-            <Text style={styles.maxTierText}>✨ Bạn đang ở hạng cao nhất!</Text>
-          )}
-        </View>
-      </LinearGradient>
-
-      {/* Tabs */}
-      <View style={styles.tabsBar}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsList}>
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab.id
-            return (
-              <Pressable
-                key={tab.id}
-                onPress={() => setActiveTab(tab.id)}
-                style={[styles.tabBtn, isActive && styles.tabBtnActive]}
-              >
-                <Ionicons name={tab.icon} size={15} color={isActive ? colors.primary : colors.muted} />
-                <Text style={[styles.tabBtnText, isActive && styles.tabBtnTextActive]}>{tab.label}</Text>
-              </Pressable>
-            )
-          })}
-        </ScrollView>
-      </View>
+      )}
 
       {/* Tab Content */}
       <ScrollView
         style={styles.content}
-        contentContainerStyle={styles.contentPadding}
+        contentContainerStyle={activeTab === 'menu' ? styles.menuPadding : styles.contentPadding}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -807,22 +901,22 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: 26,
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.4)',
+    borderColor: colors.borderLight,
   },
   headerAvatarFallback: {
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: colors.cream,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.4)',
+    borderColor: colors.primary,
   },
   headerAvatarText: {
     fontSize: 22,
     fontWeight: '900',
-    color: '#fff',
+    color: colors.primary,
   },
   headerInfo: {
     flex: 1,
@@ -830,33 +924,38 @@ const styles = StyleSheet.create({
   headerName: {
     fontSize: 18,
     fontWeight: '900',
-    color: '#fff',
+    color: colors.text,
   },
   headerEmail: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.7)',
+    color: colors.muted,
     marginTop: 2,
   },
   tierBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: '#fff7ed',
     borderRadius: radius.full,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: '#ffedd5',
   },
   tierBadgeText: {
     fontSize: 11,
     fontWeight: '900',
-    color: '#fff',
+    color: '#ea8025',
   },
   loyaltyCard: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: '#fff',
     borderRadius: radius.xl,
     padding: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: colors.borderLight,
     gap: spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   loyaltyRow: {
     flexDirection: 'row',
@@ -865,23 +964,23 @@ const styles = StyleSheet.create({
   loyaltyPoints: {
     fontSize: 26,
     fontWeight: '900',
-    color: '#fff',
+    color: colors.primary,
   },
   loyaltyLabel: {
     fontSize: 11,
-    color: 'rgba(255,255,255,0.7)',
+    color: colors.muted,
     marginTop: 2,
   },
   loyaltyDivider: {
     width: 1,
     height: 40,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: colors.borderLight,
     marginHorizontal: spacing.lg,
   },
   loyaltyMemberId: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#fff',
+    color: colors.text,
   },
   loyaltyProgress: {
     gap: 6,
@@ -892,70 +991,220 @@ const styles = StyleSheet.create({
   },
   loyaltyProgressText: {
     fontSize: 11,
-    color: 'rgba(255,255,255,0.7)',
+    color: colors.muted,
     fontWeight: '600',
   },
   loyaltyProgressBar: {
     height: 6,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: colors.cream,
     borderRadius: radius.full,
     overflow: 'hidden',
   },
   loyaltyProgressFill: {
     height: '100%',
-    backgroundColor: '#fff',
+    backgroundColor: colors.primary,
     borderRadius: radius.full,
   },
   maxTierText: {
     fontSize: 13,
-    color: '#fff',
+    color: colors.primary,
     fontWeight: '800',
     textAlign: 'center',
   },
 
-  // Tabs Bar
-  tabsBar: {
-    backgroundColor: colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-  },
-  tabsList: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
-  },
-  tabBtn: {
+  // New Layout Styles
+  mainHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: radius.full,
-    backgroundColor: colors.cream,
+    justifyContent: 'space-between',
+    paddingTop: 56,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  mainHeaderTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#1e293b',
+  },
+  mainHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  headerIconBtn: {
+    position: 'relative',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#fff7ed',
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: '#ffedd5',
   },
-  tabBtnActive: {
-    backgroundColor: '#fff9f5',
-    borderColor: colors.primary,
+  headerIconDot: {
+    position: 'absolute',
+    top: 6,
+    right: 8,
+    width: 8,
+    height: 8,
+    backgroundColor: '#ef4444',
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#fff',
   },
-  tabBtnText: {
-    fontSize: 13,
+  menuContainer: {
+    gap: 16,
+  },
+  guestContainer: {
+    alignItems: 'center',
+    padding: 24,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  guestTitle: {
+    fontSize: 16,
     fontWeight: '700',
-    color: colors.muted,
+    color: '#1e293b',
+    marginTop: 12,
+    textAlign: 'center',
   },
-  tabBtnTextActive: {
-    color: colors.primary,
+  guestSubtitle: {
+    fontSize: 13,
+    color: '#64748b',
+    textAlign: 'center',
+    marginTop: 4,
+    lineHeight: 18,
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  gridItem: {
+    width: '48%',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  gridIconWrap: {
+    position: 'relative',
+    marginBottom: 12,
+  },
+  lockIconGrid: {
+    position: 'absolute',
+    bottom: -4,
+    right: -6,
+    backgroundColor: '#cbd5e1',
+    borderRadius: 10,
+    width: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#fff',
+  },
+  gridText: {
+    fontSize: 13,
+    color: '#475569',
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  listSectionTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#1e293b',
+    marginTop: 8,
+    marginLeft: 4,
+  },
+  listCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 12,
+  },
+  listItemText: {
+    flex: 1,
+    fontSize: 15,
+    color: '#334155',
+    fontWeight: '500',
+  },
+  listDivider: {
+    height: 1,
+    backgroundColor: '#f1f5f9',
+    marginLeft: 48,
+  },
+  subHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 32,
+    marginBottom: 20,
+    gap: 12,
+  },
+  subHeaderBackBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  subHeaderTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#1e293b',
+  },
+  loyaltyCard: {
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    gap: spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
   },
 
   // Content
+  // Content
   content: {
     flex: 1,
+    backgroundColor: '#f8fafc',
+  },
+  menuPadding: {
+    padding: 16,
+    gap: 20,
+    paddingBottom: 40,
   },
   contentPadding: {
-    padding: spacing.md,
-    paddingBottom: spacing.xxl,
-    gap: spacing.md,
+    padding: 16,
+    paddingBottom: 40,
+    gap: 16,
   },
   tabContent: {
     gap: spacing.md,
@@ -1401,6 +1650,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.xxl,
     padding: spacing.xl,
     gap: spacing.md,
+    maxWidth: 480, width: '100%', alignSelf: 'center',
   },
   avatarModalTitle: {
     fontSize: 18,

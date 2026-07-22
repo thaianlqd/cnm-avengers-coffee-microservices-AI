@@ -56,10 +56,30 @@ export default function CartPage({
   const queryClient = useQueryClient();
   const total = cart.reduce((sum, i) => sum + i.gia_ban * i.so_luong, 0);
 
-  const [deliveryMode, setDeliveryMode] = useState('GIAO_TAN_NOI');
+  const [deliveryMode, setDeliveryMode] = useState(() => {
+    const storedTableId = sessionStorage.getItem('qr_tableId');
+    return storedTableId ? 'DUNG_TAI_CHO' : 'GIAO_TAN_NOI';
+  });
   const [deliveryMethod, setDeliveryMethod] = useState('INTERNAL');
-  const [selectedBranch, setSelectedBranch] = useState('');
-  const [tableNumber, setTableNumber] = useState('');
+  const [selectedBranch, setSelectedBranch] = useState(() => {
+    return sessionStorage.getItem('qr_storeId') || '';
+  });
+  const [tableNumber, setTableNumber] = useState(() => {
+    return sessionStorage.getItem('qr_tableId') || '';
+  });
+
+  // Đảm bảo trạng thái được cập nhật kể cả khi Vite HMR giữ lại state cũ
+  useEffect(() => {
+    const qrTable = sessionStorage.getItem('qr_tableId');
+    const qrStore = sessionStorage.getItem('qr_storeId');
+    if (qrTable) {
+      setDeliveryMode('DUNG_TAI_CHO');
+      setTableNumber(qrTable);
+      if (qrStore) {
+        setSelectedBranch(qrStore);
+      }
+    }
+  }, []);
 
   // 1: Cart Items, 2: Checkout Info Form
   const [step, setStep] = useState(1);
@@ -102,9 +122,10 @@ export default function CartPage({
     [addressOptions],
   );
 
+  const computedKhungGio = 'Giao ngay (15-30 phút)';
+
   const [phuongThuc, setPhuongThuc] = useState('VNPAY');
   const [addressForm, setAddressForm] = useState(() => ({ ...defaultAddressSelection, street: '' }));
-  const [khungGio, setKhungGio] = useState('18:00 - 19:00');
   const [ghiChu, setGhiChu] = useState('');
   const [thongBao, setThongBao] = useState('');
   const [qrData, setQrData] = useState(null);
@@ -129,6 +150,10 @@ export default function CartPage({
 
   const discountAmount = voucherResult?.so_tien_giam || 0;
   const tongTienSauGiam = Math.max(0, total - discountAmount);
+  
+  const freeShip = tongTienSauGiam >= 150000;
+  const shippingFee = deliveryMethod === 'LALAMOVE' ? 25000 : 15000;
+  const finalTotal = (deliveryMode === 'GIAO_TAN_NOI' && !freeShip) ? tongTienSauGiam + shippingFee : tongTienSauGiam;
 
   const maNguoiDung = useMemo(() => activeUserId || 'anonymous', [activeUserId]);
   const isLoggedInUser = useMemo(() => {
@@ -147,6 +172,16 @@ export default function CartPage({
     queryClient.invalidateQueries({ queryKey: ['ai', 'recommend', maNguoiDung] });
     apiClient.post('/ai/recommend/train').catch(() => undefined);
   }, [isLoggedInUser, maNguoiDung, queryClient]);
+
+  const { data: walletData } = useQuery({
+    queryKey: ['userWallet', maNguoiDung],
+    queryFn: async () => {
+      const response = await apiClient.get(`/customers/${maNguoiDung}/wallet`);
+      return response.data;
+    },
+    enabled: isLoggedInUser,
+    staleTime: 10 * 1000,
+  });
 
   const { data: addressPayload } = useQuery({
     queryKey: queryKeys.userAddresses(maNguoiDung),
@@ -205,7 +240,6 @@ export default function CartPage({
     setVoucherError('');
   };
 
-  const khungGioHopLe = (value) => /^\s*\d{2}:\d{2}\s*-\s*\d{2}:\d{2}\s*$/.test(value || '');
 
   useEffect(() => {
     if (!defaultAddress) {
@@ -295,9 +329,11 @@ export default function CartPage({
   const khoiTaoThanhToanMutation = useMutation({
     mutationFn: async () => {
       const response = await apiClient.post(`/customers/${maNguoiDung}/thanh-toan/khoi-tao`, {
+        phuong_thuc_giao: deliveryMode,
         phuong_thuc_thanh_toan: phuongThuc,
+        khung_gio_giao: computedKhungGio,
+        phi_giao_hang: deliveryMode === 'GIAO_TAN_NOI' ? (freeShip ? 0 : shippingFee) : 0,
         dia_chi_giao_hang: deliveryMode === 'GIAO_TAN_NOI' ? diaChiDayDu : (deliveryMode === 'LAY_TAI_QUAN' ? 'Khách lấy tại quán' : 'Khách dùng tại chỗ'),
-        khung_gio_giao: khungGio,
         ghi_chu: ghiChu.trim() || 'Dat tu web-customer',
         ma_voucher: voucherResult?.ma_voucher || voucherResult?.ma_khuyen_mai || undefined,
         delivery_mode: deliveryMode,
@@ -307,6 +343,7 @@ export default function CartPage({
         guest_email: isLoggedInUser ? undefined : guestEmail.trim(),
         guest_phone: isLoggedInUser ? undefined : guestPhone.trim(),
         session_id: guestSessionId,
+        ten_khach_hang: isLoggedInUser ? (JSON.parse(localStorage.getItem('user') || '{}')?.ho_ten || undefined) : (guestEmail.trim() || guestPhone.trim()),
       });
       return response.data;
     },
@@ -363,10 +400,6 @@ export default function CartPage({
       }
     }
 
-    if (!khungGioHopLe(khungGio)) {
-      setThongBao('Khung giờ giao phải đúng định dạng HH:MM - HH:MM.');
-      return;
-    }
 
     setThongBao('');
     setQrData(null);
@@ -480,7 +513,7 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                       </div>
                       
                       {/* Chi tiết sản phẩm */}
-                      <div className="flex-1 min-w-0 flex flex-col justify-between h-24 sm:h-28 pr-6">
+                      <div className="flex-1 min-w-0 flex flex-col justify-between min-h-[6rem] sm:min-h-[7rem] pr-6">
                         <div className="space-y-1">
                           <h4 className="font-extrabold text-[15px] sm:text-base text-[#1a1a1a] leading-tight truncate">
                             {item.ten_san_pham}
@@ -594,11 +627,7 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                           <h3 className="text-[14px] font-bold text-[#282828] line-clamp-2 leading-tight mb-1">
                             {p.ten_san_pham || p.name}
                           </h3>
-                          <p className="text-[14px] font-medium text-gray-500 mb-3">
-                            {Number(p.gia_ban || p.price || 0).toLocaleString('vi-VN')}đ
-                          </p>
-                          
-                          <div className="flex bg-[#feeee3] rounded-[24px] overflow-hidden w-fit hover:brightness-95 transition-all">
+                          <div className="flex bg-[#feeee3] rounded-[24px] overflow-hidden w-fit hover:brightness-95 transition-all mt-2">
                             <div className="px-3 py-1 text-[13px] font-bold text-[#e15923] flex items-center">
                               {Number(p.gia_ban || p.price || 0).toLocaleString('vi-VN')}đ
                             </div>
@@ -613,55 +642,7 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                 </div>
               )}
 
-              {/* MÃ GIẢM GIÁ KHẢ DỤNG */}
-              {voucherItems && voucherItems.length > 0 && (
-                <div className="mt-8">
-                  <div className="flex justify-between items-center mb-4 px-1">
-                    <h2 className="text-[16px] font-bold text-[#282828]">
-                      Mã giảm giá
-                    </h2>
-                    <a href="#" className="text-[14px] text-[#e15923] hover:underline flex items-center">
-                      Tất cả mã <span className="ml-1 text-[10px]">❯</span>
-                    </a>
-                  </div>
-                  
-                  <div className="flex overflow-x-auto gap-4 pb-2 custom-scrollbar px-1">
-                    {voucherItems.slice(0, 4).map((v) => {
-                      const isPercent = v.loai_khuyen_mai === 'PERCENT';
-                      const valueText = isPercent ? `${v.gia_tri}%` : `${(v.gia_tri / 1000)}K`;
-                      return (
-                        <div key={v.ma_khuyen_mai} className="flex flex-shrink-0 w-[320px] sm:w-[350px] gap-2 items-center">
-                          {/* Khối bên trái: Icon + Text + Nút Dùng */}
-                          <div className="flex-1 h-[84px] bg-white border border-gray-200 rounded-[8px] flex items-center p-2 relative hover:border-[#e15923] transition-colors cursor-pointer" onClick={() => { setVoucherCode(v.ma_khuyen_mai); apDungVoucher(v.ma_khuyen_mai); }}>
-                            {/* Icon */}
-                            <div className="w-[60px] h-[60px] border border-gray-200 rounded-[4px] flex flex-col justify-center items-center mr-3 flex-shrink-0">
-                              <span className="text-[8px] font-black text-white bg-gray-400 px-1 rounded-sm mb-1 uppercase">Voucher</span>
-                              <span className="text-[10px] font-black text-[#e15923] text-center leading-none">MÃ<br/>GIẢM</span>
-                            </div>
-                            {/* Text */}
-                            <div className="flex-1 min-w-0 pr-8">
-                              <h4 className="text-[13px] font-bold text-[#282828] line-clamp-2 leading-tight mb-1">
-                                {v.mo_ta || `Giảm ${valueText} cho đơn hàng hợp lệ`}
-                              </h4>
-                              <p className="text-[11px] text-gray-400">
-                                {v.han_su_dung ? `Còn ${Math.max(1, Math.ceil((new Date(v.han_su_dung) - new Date()) / (1000 * 60 * 60 * 24)))} ngày` : 'Không giới hạn'}
-                              </p>
-                            </div>
-                            {/* Nút Dùng */}
-                            <span className="absolute right-3 bottom-2 text-[13px] text-[#e15923]">Dùng</span>
-                          </div>
-                          
-                          {/* Khối bên phải: Tag giảm giá (ticket nhỏ) */}
-                          <div className="w-[54px] h-[84px] bg-[#fef5f0] border border-[#fef5f0] rounded-[8px] flex flex-col justify-center items-center relative">
-                             <span className="text-[10px] font-bold text-[#e15923] uppercase">Giảm</span>
-                             <span className="text-[16px] font-black text-[#e15923] leading-none mt-0.5">{valueText}</span>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
+
               </>
             ) : (
               /* BƯỚC 2: FORM THÔNG TIN THANH TOÁN (CHECKOUT FORM) */
@@ -816,15 +797,22 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                           <div className="flex flex-col gap-1.5 mt-4">
                             <label className="text-xs font-bold text-gray-500">Số bàn (không bắt buộc)</label>
                             <div className="relative">
-                              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <span className="text-gray-400 font-black text-[13px]">#</span>
-                              </div>
                               <input
+                                type="text"
                                 value={tableNumber}
                                 onChange={(e) => setTableNumber(e.target.value)}
-                                placeholder="VD: Bàn 12"
-                                className="w-full rounded-xl border border-gray-200 bg-white pl-9 pr-4 py-3 text-sm font-semibold outline-none focus:border-[#c41230] transition-colors"
+                                placeholder="Ví dụ: Bàn 12"
+                                className={`w-full rounded-xl border ${tableNumber ? 'border-[#059669] bg-[#059669]/5 text-[#059669]' : 'border-gray-200 bg-white'} px-4 py-3 text-sm font-bold outline-none focus:border-[#c41230] transition-colors`}
                               />
+                            </div>
+                          </div>
+                        )}
+                        {deliveryMode === 'DUNG_TAI_CHO' && sessionStorage.getItem('qr_tableId') && tableNumber === sessionStorage.getItem('qr_tableId') && (
+                          <div className="mt-4 flex items-center gap-3 rounded-xl border border-[#c41230]/20 bg-[#c41230]/5 px-4 py-3 text-[#c41230]">
+                            <span className="text-xl">📍</span>
+                            <div>
+                              <p className="text-xs font-bold uppercase tracking-wider">Đang đặt món tại bàn</p>
+                              <p className="text-sm font-semibold">Bạn đang ngồi tại Bàn {tableNumber}. Nhân viên sẽ mang nước ra tận bàn cho bạn!</p>
                             </div>
                           </div>
                         )}
@@ -867,20 +855,7 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                       </div>
                     )}
 
-                    <h3 className="text-[11px] font-black uppercase text-[#c41230] tracking-widest">Thời gian &amp; Thanh toán</h3>
-
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-bold text-gray-500">Khung giờ giao hàng</label>
-                      <input
-                        value={khungGio}
-                        onChange={(e) => {
-                          setKhungGio(e.target.value);
-                          if (thongBao) setThongBao('');
-                        }}
-                        className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-[#c41230]"
-                        placeholder="Ví dụ: 18:00 - 19:00"
-                      />
-                    </div>
+                    <h3 className="text-[11px] font-black uppercase text-[#c41230] tracking-widest">Thanh toán & Ghi chú</h3>
 
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-bold text-gray-500">Ghi chú đơn hàng</label>
@@ -902,6 +877,14 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                       >
                         <option value="VNPAY">VNPAY (Thẻ / Mobile Banking)</option>
                         <option value="NGAN_HANG_QR">Ngân hàng QR</option>
+                        {isLoggedInUser && (
+                          <option 
+                            value="VI_DIEN_TU" 
+                            disabled={!walletData || Number(walletData?.wallet?.balance || 0) < tongTienSauGiam}
+                          >
+                            Ví điện tử (Số dư: {Number(walletData?.wallet?.balance || 0).toLocaleString('vi-VN')}đ)
+                          </option>
+                        )}
                         <option value="THANH_TOAN_KHI_NHAN_HANG">
                           {deliveryMode === 'GIAO_TAN_NOI' ? 'Thanh toán khi nhận hàng (COD)' : 'Thanh toán tại quầy'}
                         </option>
@@ -1007,6 +990,67 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                 {voucherError ? (
                   <p className="text-xs font-semibold text-red-500 pl-1">{voucherError}</p>
                 ) : null}
+              </div>
+
+              {/* MÃ GIẢM GIÁ KHẢ DỤNG - MOVED TO RIGHT COLUMN */}
+              <div className="mt-6">
+                <div className="flex justify-between items-center mb-3 px-1">
+                  <h2 className="text-[14px] font-bold text-[#282828]">
+                    Mã giảm giá khả dụng
+                  </h2>
+                  <a href="#" className="text-[12px] text-[#e15923] hover:underline flex items-center">
+                    Tất cả <span className="ml-1 text-[10px]">❯</span>
+                  </a>
+                </div>
+                
+                {(!voucherItems || voucherItems.length === 0) ? (
+                  <div className="text-center py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    <p className="text-sm text-gray-500 italic">Không có mã giảm giá nào</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {voucherItems.slice(0, 4).map((v) => {
+                      const isPercent = v.loai_khuyen_mai === 'PERCENT';
+                      const valueText = isPercent ? `${v.gia_tri}%` : `${(v.gia_tri / 1000)}K`;
+                      let badgeLabel = 'GIẢM GIÁ';
+                      if (v.loai_khuyen_mai === 'FREE_ITEM' || String(v.ma_khuyen_mai).toUpperCase().includes('UPSIZE') || String(v.ten_khuyen_mai).toUpperCase().includes('UPSIZE')) {
+                        badgeLabel = 'MIỄN PHÍ\nUPSIZE';
+                      } else if (isPercent) {
+                        badgeLabel = `GIẢM\n${valueText}`;
+                      } else {
+                        badgeLabel = `GIẢM\n${valueText}`;
+                      }
+
+                      return (
+                        <div key={v.ma_khuyen_mai} className="flex h-[76px] bg-white border border-[#f5cbb8] rounded-[12px] p-2 items-center cursor-pointer hover:border-[#e15923] transition-colors shadow-sm" onClick={() => { setVoucherCode(v.ma_khuyen_mai); apDungVoucher(v.ma_khuyen_mai); }}>
+                          {/* Left Badge */}
+                          <div className="flex-shrink-0 border border-[#fcdbc7] bg-[#fff6f0] rounded-[6px] h-full px-2 flex items-center justify-center min-w-[60px]">
+                            <span className="text-[10px] font-bold text-[#e15923] text-center uppercase whitespace-pre-line leading-[1.2]">
+                              {badgeLabel}
+                            </span>
+                          </div>
+                          
+                          {/* Middle Info */}
+                          <div className="flex-1 min-w-0 px-3 flex flex-col justify-center">
+                            <h4 className="text-[13px] font-bold text-[#282828] truncate mb-0.5">
+                              {v.ten_khuyen_mai || v.mo_ta || `Giảm ${valueText}`}
+                            </h4>
+                            <p className="text-[11px] text-gray-500">
+                              {v.han_su_dung ? `Còn ${Math.max(1, Math.ceil((new Date(v.han_su_dung) - new Date()) / (1000 * 60 * 60 * 24)))} ngày` : 'Không giới hạn'}
+                            </p>
+                          </div>
+                          
+                          {/* Right Button */}
+                          <div className="flex-shrink-0 pl-1 pr-1">
+                            <button className="text-[12px] font-bold text-white bg-[#e15923] px-3 py-1 rounded-full hover:bg-[#c44919]">
+                              Dùng
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Checkout Button */}
