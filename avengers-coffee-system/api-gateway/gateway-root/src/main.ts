@@ -45,6 +45,7 @@ async function bootstrap() {
         '/sepay_webhook.php',
         '/ANTHAI_TEST',
         '/GD_Full_ChucNang',
+        '/gift-cards',
       ],
     }),
   );
