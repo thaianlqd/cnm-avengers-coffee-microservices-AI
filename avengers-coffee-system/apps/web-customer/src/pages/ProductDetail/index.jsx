@@ -8,6 +8,7 @@ import {
   PlusIcon,
   MinusIcon
 } from '@heroicons/react/24/outline';
+import QuickViewModal from '../../components/QuickViewModal';
 
 export default function ProductDetailPage({
   product,
@@ -38,14 +39,10 @@ export default function ProductDetailPage({
   const lsKeys = Object.keys(availableLoaiSua);
   const [selectedLoaiSua, setSelectedLoaiSua] = useState(lsKeys.length > 0 ? lsKeys[0] : '');
 
-  const [modalProduct, setModalProduct] = useState(null);
-  const [modalQuantity, setModalQuantity] = useState(1);
-  const [modalSize, setModalSize] = useState('');
-  const [modalLuongDa, setModalLuongDa] = useState('');
-  const [modalDoNgot, setModalDoNgot] = useState('');
-  const [modalLoaiSua, setModalLoaiSua] = useState('');
-  const [modalToppings, setModalToppings] = useState([]);
   const [toastMessage, setToastMessage] = useState('');
+  
+  const [showToppingsList, setShowToppingsList] = useState(false);
+  const [showDynamicToppings, setShowDynamicToppings] = useState(false);
 
   // Dynamic variants state
   const hasDynamicVariants = product?.bien_the && typeof product.bien_the === 'object' && Object.keys(product.bien_the).length > 0;
@@ -68,39 +65,10 @@ export default function ProductDetailPage({
     return initial;
   });
 
-  const [modalDynamicSelections, setModalDynamicSelections] = useState({});
+  const [modalProduct, setModalProduct] = useState(null);
 
   const openModal = (relProduct) => {
     setModalProduct(relProduct);
-    setModalQuantity(1);
-    
-    const initial = {};
-    const hasModalDynamic = relProduct?.bien_the && typeof relProduct.bien_the === 'object' && Object.keys(relProduct.bien_the).length > 0;
-    if (hasModalDynamic) {
-      for (const [attrName, optionsObj] of Object.entries(relProduct.bien_the)) {
-        if (!optionsObj || typeof optionsObj !== 'object') continue;
-        const keys = Object.keys(optionsObj);
-        if (keys.length > 0) {
-          const isMulti = attrName.toLowerCase().includes('topping') || attrName.toLowerCase().includes('đồ kèm');
-          if (isMulti) {
-            initial[attrName] = [];
-          } else {
-            initial[attrName] = keys[0];
-          }
-        }
-      }
-    }
-    setModalDynamicSelections(initial);
-
-    const relSizeKeys = Object.keys(relProduct.sizes || {});
-    setModalSize(relSizeKeys.length > 0 ? relSizeKeys[0] : '');
-    const relLdKeys = Object.keys(relProduct.luong_da || {});
-    setModalLuongDa(relLdKeys.length > 0 ? relLdKeys[0] : '');
-    const relDnKeys = Object.keys(relProduct.do_ngot || {});
-    setModalDoNgot(relDnKeys.length > 0 ? relDnKeys[0] : '');
-    const relLsKeys = Object.keys(relProduct.loai_sua || {});
-    setModalLoaiSua(relLsKeys.length > 0 ? relLsKeys[0] : '');
-    setModalToppings([]);
   };
 
   const showToast = (msg) => {
@@ -138,33 +106,6 @@ export default function ProductDetailPage({
     }
     return extra;
   }, [hasDynamicVariants, product?.bien_the, dynamicSelections]);
-
-  const modalPrice = useMemo(() => {
-    if (!modalProduct) return 0;
-    const hasModalDynamic = modalProduct.bien_the && typeof modalProduct.bien_the === 'object' && Object.keys(modalProduct.bien_the).length > 0;
-    
-    if (hasModalDynamic) {
-      let extra = 0;
-      for (const [attrName, selection] of Object.entries(modalDynamicSelections)) {
-        const optionsObj = modalProduct.bien_the[attrName] || {};
-        if (Array.isArray(selection)) {
-          for (const val of selection) {
-            extra += Number(optionsObj[val]) || 0;
-          }
-        } else {
-          extra += Number(optionsObj[selection]) || 0;
-        }
-      }
-      return Number(modalProduct.gia_ban || modalProduct.price || 30000) + extra;
-    } else {
-      const modalBase = (modalSize && modalProduct.sizes?.[modalSize] !== undefined)
-        ? Number(modalProduct.sizes[modalSize])
-        : Number(modalProduct.gia_ban || modalProduct.price || 30000);
-      const modalTps = modalToppings.reduce((acc, t) => acc + Number(modalProduct.toppings?.[t] || 0), 0);
-      const modalLs = (modalLoaiSua && modalProduct.loai_sua?.[modalLoaiSua] !== undefined) ? Number(modalProduct.loai_sua[modalLoaiSua]) : 0;
-      return modalBase + modalTps + modalLs;
-    }
-  }, [modalProduct, modalSize, modalToppings, modalLoaiSua, modalDynamicSelections]);
 
   const basePrice = (selectedSize && availableSizes[selectedSize] !== undefined) 
     ? Number(availableSizes[selectedSize]) 
@@ -207,11 +148,17 @@ export default function ProductDetailPage({
 
   const handleMainAddToCart = (isBuyNow = false) => {
     if (hasDynamicVariants) {
-      const size = dynamicSelections['Kích thước'] || '';
-      const toppings = dynamicSelections['Topping'] || [];
-      const luongDa = dynamicSelections['Lượng đá'] || '';
-      const doNgot = dynamicSelections['Độ ngọt'] || '';
-      const loaiSua = dynamicSelections['Loại sữa'] || '';
+      const getVal = (keywords, isArray = false) => {
+        const key = Object.keys(dynamicSelections).find(k => keywords.some(kw => k.toLowerCase().includes(kw)));
+        if (key) return dynamicSelections[key];
+        return isArray ? [] : '';
+      };
+
+      const size = getVal(['kích thước', 'kích cỡ', 'size']);
+      const toppings = getVal(['topping', 'đồ kèm', 'thêm'], true);
+      const luongDa = getVal(['lượng đá', 'đá', 'ice']);
+      const doNgot = getVal(['độ ngọt', 'ngọt', 'đường', 'sugar']);
+      const loaiSua = getVal(['loại sữa', 'sữa', 'milk']);
       
       onAddToCart?.(product, quantity, size, {
         toppings,
@@ -232,36 +179,6 @@ export default function ProductDetailPage({
     if (isBuyNow) {
       setTimeout(() => onNavigate?.('cart'), 500);
     }
-  };
-
-  const handleModalAddToCart = () => {
-    if (!modalProduct) return;
-    const hasModalDynamic = modalProduct.bien_the && typeof modalProduct.bien_the === 'object' && Object.keys(modalProduct.bien_the).length > 0;
-    
-    if (hasModalDynamic) {
-      const size = modalDynamicSelections['Kích thước'] || '';
-      const toppings = modalDynamicSelections['Topping'] || [];
-      const luongDa = modalDynamicSelections['Lượng đá'] || '';
-      const doNgot = modalDynamicSelections['Độ ngọt'] || '';
-      const loaiSua = modalDynamicSelections['Loại sữa'] || '';
-      
-      onAddToCart?.(modalProduct, modalQuantity, size, {
-        toppings,
-        luongDa,
-        doNgot,
-        loaiSua,
-        custom_attributes: modalDynamicSelections,
-      });
-    } else {
-      onAddToCart?.(modalProduct, modalQuantity, modalSize, {
-        toppings: modalToppings,
-        luongDa: modalLuongDa,
-        doNgot: modalDoNgot,
-        loaiSua: modalLoaiSua,
-      });
-    }
-    showToast(`Đã thêm ${modalQuantity} x ${modalProduct.ten_san_pham} vào giỏ hàng!`);
-    setModalProduct(null);
   };
 
   return (
@@ -338,35 +255,67 @@ export default function ProductDetailPage({
                   const optionKeys = Object.keys(optionsObj || {});
                   if (optionKeys.length === 0) return null;
 
+                  if (isMulti) {
+                    return (
+                      <div key={attrName} className="relative mt-4">
+                        <span className="block text-xs font-bold text-gray-500 uppercase mb-2.5">{attrName}:</span>
+                        <button 
+                          type="button" 
+                          onClick={() => setShowDynamicToppings(!showDynamicToppings)}
+                          className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-gray-300 bg-gray-50 text-left font-bold text-sm hover:border-[#b22830] transition-colors"
+                        >
+                          <span>{dynamicSelections[attrName]?.length > 0 ? `Đã chọn (${dynamicSelections[attrName].length})` : 'Tuỳ chọn Topping'}</span>
+                          <span className="text-gray-400 text-xs">▼</span>
+                        </button>
+                        {showDynamicToppings && (
+                          <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-50 max-h-60 overflow-y-auto">
+                            <div className="flex flex-col gap-2">
+                              {optionKeys.map((opt) => {
+                                const isSelected = (dynamicSelections[attrName] || []).includes(opt);
+                                return (
+                                  <label key={opt} className="flex items-center gap-3 cursor-pointer group p-2 hover:bg-gray-50 rounded-md">
+                                    <input 
+                                      type="checkbox" 
+                                      checked={isSelected}
+                                      onChange={() => {
+                                        const currentList = dynamicSelections[attrName] || [];
+                                        const nextList = currentList.includes(opt)
+                                          ? currentList.filter(o => o !== opt)
+                                          : [...currentList, opt];
+                                        setDynamicSelections({
+                                          ...dynamicSelections,
+                                          [attrName]: nextList
+                                        });
+                                      }}
+                                      className="w-4 h-4 text-[#b22830] rounded border-gray-300 focus:ring-[#b22830]"
+                                    />
+                                    <span className="text-sm font-bold text-gray-700 group-hover:text-[#b22830] transition-colors flex-1">{opt}</span>
+                                    <span className="text-sm font-bold text-[#b22830]">+{Number(optionsObj[opt]).toLocaleString('vi-VN')}đ</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
                   return (
                     <div key={attrName} className="mt-4">
                       <span className="block text-sm font-bold text-gray-700 mb-2">{attrName}:</span>
                       <div className="flex flex-wrap items-center gap-3">
                         {optionKeys.map((opt) => {
-                          const isSelected = isMulti 
-                            ? (dynamicSelections[attrName] || []).includes(opt)
-                            : dynamicSelections[attrName] === opt;
-
+                          const isSelected = dynamicSelections[attrName] === opt;
                           return (
                             <button
                               key={opt}
                               type="button"
                               onClick={() => {
-                                if (isMulti) {
-                                  const currentList = dynamicSelections[attrName] || [];
-                                  const nextList = currentList.includes(opt)
-                                    ? currentList.filter(o => o !== opt)
-                                    : [...currentList, opt];
-                                  setDynamicSelections({
-                                    ...dynamicSelections,
-                                    [attrName]: nextList
-                                  });
-                                } else {
-                                  setDynamicSelections({
-                                    ...dynamicSelections,
-                                    [attrName]: opt
-                                  });
-                                }
+                                setDynamicSelections({
+                                  ...dynamicSelections,
+                                  [attrName]: opt
+                                });
                               }}
                               className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all flex items-center gap-2 ${
                                 isSelected
@@ -374,7 +323,6 @@ export default function ProductDetailPage({
                                   : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
                               }`}
                             >
-                              {isMulti && isSelected && <CheckIcon className="w-4 h-4" />}
                               {opt} {optionsObj[opt] > 0 ? `(+${Number(optionsObj[opt]).toLocaleString('vi-VN')}đ)` : ''}
                             </button>
                           );
@@ -478,35 +426,41 @@ export default function ProductDetailPage({
                   )}
 
                   {/* Toppings (Multi-select) */}
-                  {toppingKeys.length > 0 && (
-                    <div className="mt-4">
-                      <span className="block text-sm font-bold text-gray-700 mb-2">Thêm Topping:</span>
-                      <div className="flex flex-wrap items-center gap-3">
-                        {toppingKeys.map((tp) => {
-                          const isSelected = selectedToppings.includes(tp);
-                          return (
-                            <button
-                              key={tp}
-                              type="button"
-                              onClick={() => {
-                                if (isSelected) {
-                                  setSelectedToppings(selectedToppings.filter(t => t !== tp));
-                                } else {
-                                  setSelectedToppings([...selectedToppings, tp]);
-                                }
-                              }}
-                              className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all flex items-center gap-2 ${
-                                isSelected
-                                  ? 'border-[#b22830] bg-[#b22830] text-white shadow-sm'
-                                  : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
-                              }`}
-                            >
-                              {isSelected && <CheckIcon className="w-4 h-4" />}
-                              {tp} (+{Number(availableToppings[tp]).toLocaleString('vi-VN')}đ)
-                            </button>
-                          );
-                        })}
-                      </div>
+                  {product.toppings && Object.keys(product.toppings || {}).length > 0 && (
+                    <div className="relative mt-4">
+                      <span className="block text-xs font-bold text-gray-500 uppercase mb-2.5">Topping:</span>
+                      <button 
+                        type="button" 
+                        onClick={() => setShowToppingsList(!showToppingsList)}
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-gray-300 bg-gray-50 text-left font-bold text-sm hover:border-[#b22830] transition-colors"
+                      >
+                        <span>{selectedToppings.length > 0 ? `Đã chọn (${selectedToppings.length})` : 'Tuỳ chọn Topping'}</span>
+                        <span className="text-gray-400 text-xs">▼</span>
+                      </button>
+                      {showToppingsList && (
+                        <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-50 max-h-60 overflow-y-auto">
+                          <div className="flex flex-col gap-2">
+                            {Object.keys(product.toppings).map((tp) => {
+                              const isSelected = selectedToppings.includes(tp);
+                              return (
+                                <label key={tp} className="flex items-center gap-3 cursor-pointer group p-2 hover:bg-gray-50 rounded-md">
+                                  <input 
+                                    type="checkbox" 
+                                    checked={isSelected}
+                                    onChange={() => {
+                                      if (isSelected) setSelectedToppings(selectedToppings.filter(t => t !== tp));
+                                      else setSelectedToppings([...selectedToppings, tp]);
+                                    }}
+                                    className="w-4 h-4 text-[#b22830] rounded border-gray-300 focus:ring-[#b22830]"
+                                  />
+                                  <span className="text-sm font-bold text-gray-700 group-hover:text-[#b22830] transition-colors flex-1">{tp}</span>
+                                  <span className="text-sm font-bold text-[#b22830]">+{Number(product.toppings[tp]).toLocaleString('vi-VN')}đ</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </>
@@ -702,286 +656,13 @@ export default function ProductDetailPage({
         </div>
       </div>
 
-      {/* POPUP MODAL SẢN PHẨM CÙNG LOẠI (Chuẩn Ảnh 5) */}
+      {/* POPUP MODAL SẢN PHẨM CÙNG LOẠI */}
       {modalProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-fadeIn">
-          <div className="relative w-full max-w-4xl bg-white rounded-3xl overflow-hidden shadow-2xl grid grid-cols-1 md:grid-cols-12 max-h-[90vh] overflow-y-auto">
-            {/* Close Button top right */}
-            <button
-              type="button"
-              onClick={() => setModalProduct(null)}
-              className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors"
-            >
-              <XMarkIcon className="w-5 h-5 font-bold" />
-            </button>
-
-            {/* Left Column: Orange Background Gallery (Ảnh 5) */}
-            <div className="md:col-span-6 bg-[#f35b23] p-8 flex flex-col items-center justify-center relative">
-              <div className="w-full h-72 flex items-center justify-center">
-                <img
-                  src={modalProduct.hinh_anh_url || '/hc-assets/caphe-1.png'}
-                  alt={modalProduct.ten_san_pham}
-                  className="max-h-full max-w-full object-contain drop-shadow-2xl"
-                />
-              </div>
-
-              {/* Thumbnails below image */}
-              <div className="flex items-center gap-3 mt-6">
-                <div className="w-14 h-16 rounded-lg bg-orange-600 border-2 border-white overflow-hidden p-1">
-                  <img
-                    src={modalProduct.hinh_anh_url || '/hc-assets/caphe-1.png'}
-                    alt=""
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <div className="w-14 h-16 rounded-lg bg-orange-600/70 border border-orange-400 overflow-hidden p-1">
-                  <img
-                    src={modalProduct.hinh_anh_url || '/hc-assets/caphe-1.png'}
-                    alt=""
-                    className="w-full h-full object-contain opacity-80"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column: Modal Details (Ảnh 5) */}
-            <div className="md:col-span-6 p-8 flex flex-col justify-between">
-              <div>
-                <h2 className="text-2xl font-black text-[#222222] pr-8">
-                  {modalProduct.ten_san_pham}
-                </h2>
-                <p className="text-xs text-gray-500 mt-1">
-                  Thương hiệu: <span className="text-[#b22830] font-bold">Highlands Coffee</span> | Mã sản phẩm: <strong>0CPG08</strong>
-                </p>
-
-                <div className="mt-4">
-                  <span className="text-3xl font-black text-[#b22830]">
-                    {modalPrice.toLocaleString('vi-VN')}đ
-                  </span>
-                </div>
-
-                {/* Dynamic options or static fallbacks for Modal */}
-                {hasModalDynamic ? (
-                  Object.entries(modalProduct.bien_the || {}).map(([attrName, optionsObj]) => {
-                    const isMulti = attrName.toLowerCase().includes('topping') || attrName.toLowerCase().includes('đồ kèm');
-                    const optionKeys = Object.keys(optionsObj || {});
-                    if (optionKeys.length === 0) return null;
-
-                    return (
-                      <div key={attrName} className="mt-4">
-                        <span className="block text-xs font-bold text-gray-500 uppercase mb-2.5">{attrName}:</span>
-                        <div className="flex flex-wrap items-center gap-2.5">
-                          {optionKeys.map((opt) => {
-                            const isSelected = isMulti 
-                              ? (modalDynamicSelections[attrName] || []).includes(opt)
-                              : modalDynamicSelections[attrName] === opt;
-
-                            return (
-                              <button
-                                key={opt}
-                                type="button"
-                                onClick={() => {
-                                  if (isMulti) {
-                                    const currentList = modalDynamicSelections[attrName] || [];
-                                    const nextList = currentList.includes(opt)
-                                      ? currentList.filter(o => o !== opt)
-                                      : [...currentList, opt];
-                                    setModalDynamicSelections({
-                                      ...modalDynamicSelections,
-                                      [attrName]: nextList
-                                    });
-                                  } else {
-                                    setModalDynamicSelections({
-                                      ...modalDynamicSelections,
-                                      [attrName]: opt
-                                    });
-                                  }
-                                }}
-                                className={`px-4 py-2 rounded-full border text-xs font-bold transition-all flex items-center gap-1 ${
-                                  isSelected
-                                    ? 'border-[#b22830] text-[#b22830] bg-red-50/60 shadow-sm'
-                                    : 'border-gray-200 text-gray-600 hover:border-gray-400'
-                                }`}
-                              >
-                                {isMulti && isSelected && <CheckIcon className="w-3 h-3" />}
-                                {opt} {optionsObj[opt] > 0 ? `(+${Number(optionsObj[opt]).toLocaleString('vi-VN')}đ)` : ''}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <>
-                    {/* Size options */}
-                    <div className="mt-6">
-                      <span className="block text-xs font-bold text-gray-500 uppercase mb-2.5">
-                        Kích thước:
-                      </span>
-                      <div className="flex flex-wrap items-center gap-2.5">
-                        {Object.keys(modalProduct.sizes || {}).length > 0 ? (
-                          Object.keys(modalProduct.sizes).map((sz) => (
-                            <button
-                              key={sz}
-                              type="button"
-                              onClick={() => setModalSize(sz)}
-                              className={`px-4 py-2 rounded-full border text-xs font-bold transition-all ${
-                                modalSize === sz
-                                  ? 'border-[#b22830] text-[#b22830] bg-red-50/60'
-                                  : 'border-gray-200 text-gray-600 hover:border-gray-400'
-                              }`}
-                            >
-                              {sz} {modalProduct.sizes[sz] > 0 ? `(+${Number(modalProduct.sizes[sz]).toLocaleString('vi-VN')}đ)` : ''}
-                            </button>
-                          ))
-                        ) : (
-                          <button
-                            type="button"
-                            className="px-4 py-2 rounded-full border border-[#b22830] text-[#b22830] bg-red-50/60 text-xs font-bold"
-                          >
-                            Mặc định
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Lượng đá */}
-                    {Object.keys(modalProduct?.luong_da || {}).length > 0 && (
-                      <div className="mt-4">
-                        <span className="block text-xs font-bold text-gray-500 uppercase mb-2.5">Lượng đá:</span>
-                        <div className="flex flex-wrap items-center gap-2.5">
-                          {Object.keys(modalProduct.luong_da).map((ld) => (
-                            <button
-                              key={ld}
-                              type="button"
-                              onClick={() => setModalLuongDa(ld)}
-                              className={`px-4 py-2 rounded-full border text-xs font-bold transition-all ${
-                                modalLuongDa === ld
-                                  ? 'border-[#b22830] text-[#b22830] bg-red-50/60'
-                                  : 'border-gray-200 text-gray-600 hover:border-gray-400'
-                              }`}
-                            >
-                              {ld}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Độ ngọt */}
-                    {Object.keys(modalProduct?.do_ngot || {}).length > 0 && (
-                      <div className="mt-4">
-                        <span className="block text-xs font-bold text-gray-500 uppercase mb-2.5">Độ ngọt:</span>
-                        <div className="flex flex-wrap items-center gap-2.5">
-                          {Object.keys(modalProduct.do_ngot).map((dn) => (
-                            <button
-                              key={dn}
-                              type="button"
-                              onClick={() => setModalDoNgot(dn)}
-                              className={`px-4 py-2 rounded-full border text-xs font-bold transition-all ${
-                                modalDoNgot === dn
-                                  ? 'border-[#b22830] text-[#b22830] bg-red-50/60'
-                                  : 'border-gray-200 text-gray-600 hover:border-gray-400'
-                              }`}
-                            >
-                              {dn}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Loại sữa */}
-                    {Object.keys(modalProduct?.loai_sua || {}).length > 0 && (
-                      <div className="mt-4">
-                        <span className="block text-xs font-bold text-gray-500 uppercase mb-2.5">Loại sữa:</span>
-                        <div className="flex flex-wrap items-center gap-2.5">
-                          {Object.keys(modalProduct.loai_sua).map((ls) => (
-                            <button
-                              key={ls}
-                              type="button"
-                              onClick={() => setModalLoaiSua(ls)}
-                              className={`px-4 py-2 rounded-full border text-xs font-bold transition-all ${
-                                modalLoaiSua === ls
-                                  ? 'border-[#b22830] text-[#b22830] bg-red-50/60'
-                                  : 'border-gray-200 text-gray-600 hover:border-gray-400'
-                              }`}
-                            >
-                              {ls} {modalProduct.loai_sua[ls] >= 0 ? `(+${Number(modalProduct.loai_sua[ls]).toLocaleString('vi-VN')}đ)` : ''}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Toppings */}
-                    {Object.keys(modalProduct?.toppings || {}).length > 0 && (
-                      <div className="mt-4">
-                        <span className="block text-xs font-bold text-gray-500 uppercase mb-2.5">Topping:</span>
-                        <div className="flex flex-wrap items-center gap-2.5">
-                          {Object.keys(modalProduct.toppings).map((tp) => {
-                            const isSelected = modalToppings.includes(tp);
-                            return (
-                              <button
-                                key={tp}
-                                type="button"
-                                onClick={() => {
-                                  if (isSelected) setModalToppings(modalToppings.filter(t => t !== tp));
-                                  else setModalToppings([...modalToppings, tp]);
-                                }}
-                                className={`px-4 py-2 rounded-full border text-xs font-bold transition-all flex items-center gap-1 ${
-                                  isSelected
-                                    ? 'border-[#b22830] text-[#b22830] bg-red-50/60'
-                                    : 'border-gray-200 text-gray-600 hover:border-gray-400'
-                                }`}
-                              >
-                                {isSelected && <CheckIcon className="w-3 h-3" />}
-                                {tp} (+{Number(modalProduct.toppings[tp]).toLocaleString('vi-VN')}đ)
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {/* Quantity Selector */}
-                <div className="mt-6 flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setModalQuantity(Math.max(1, modalQuantity - 1))}
-                      className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors"
-                    >
-                      <MinusIcon className="w-4 h-4" />
-                    </button>
-                    <span className="w-10 text-center font-bold text-sm text-gray-800">{modalQuantity}</span>
-                    <button
-                      type="button"
-                      onClick={() => setModalQuantity(modalQuantity + 1)}
-                      className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors"
-                    >
-                      <PlusIcon className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* THÊM VÀO GIÒ HÀNG button (Ảnh 5) */}
-              <div className="mt-8">
-                <button
-                  type="button"
-                  onClick={handleModalAddToCart}
-                  className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-[#ff6b6b] hover:bg-[#e31837] text-white font-bold text-sm uppercase tracking-wider shadow-md transition-all"
-                >
-                  THÊM VÀO GIÒ HÀNG
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <QuickViewModal 
+          product={modalProduct} 
+          onClose={() => setModalProduct(null)} 
+          onAddToCart={onAddToCart} 
+        />
       )}
     </div>
   );

@@ -30,6 +30,7 @@ import StaffDeliveryPanel from './features/staff-dashboard/features_thaian/Staff
 import { AdminSystemConsole } from './features/actor-admin/components/AdminSystemConsole'
 import { ManagerShipperPanel } from './features/manager-dashboard/components/ManagerShipperPanel'
 import { AdminChatWidget } from './features/admin-dashboard/components/AdminChatWidget'
+import { TableManagementPanel } from './features/admin-dashboard/components/TableManagementPanel'
 import { AUTH_INVALID_EVENT } from './lib/adminFetch'
 import { AccountCenterPanel } from './features/shared/components/AccountCenterPanel'
 import { AdminNotificationBell } from './features/shared/components/AdminNotificationBell'
@@ -389,7 +390,7 @@ function App() {
                   value={posForm.ma_ban}
                   onChange={(e) => setPosForm((prev) => ({ ...prev, ma_ban: e.target.value }))}
                   placeholder="Mã bàn (nếu tại quầy)"
-                  disabled={posForm.loai_don_hang !== 'TAI_CHO'}
+                  disabled={!['TAI_CHO', 'DUNG_TAI_CHO'].includes(posForm.loai_don_hang)}
                 />
               </div>
 
@@ -543,6 +544,14 @@ function App() {
               ) : null}
             </div>
           </section>
+        )}
+
+        {activeTab === 'table-management' && (
+          <TableManagementPanel
+            ordersState={ordersState}
+            onUpdateStatus={capNhatTrangThaiDon}
+            session={session}
+          />
         )}
 
         {activeTab === 'workforce' && (

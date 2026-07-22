@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ShoppingCartIcon,
   HeartIcon,
@@ -64,6 +65,9 @@ export default function Header({
   const [showNotificationPopover, setShowNotificationPopover] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
+  const { t, i18n } = useTranslation();
+  const currentLng = i18n.language || 'vi';
+
   const handleOpenProfile = () => {
     setShowDropdown(false);
     if (isLoggedIn) {
@@ -78,16 +82,16 @@ export default function Header({
   const isOrderTab = activeTab === 'order';
 
   const leftNavItems = [
-    { id: 'menu-intro', label: 'THỰC ĐƠN', dropdownTabId: 'order' },
-    { id: 'about', label: 'VỀ HIGHLANDS' },
-    { id: 'careers', label: 'NGHỀ NGHIỆP' },
-    { id: 'contact', label: 'HỖ TRỢ' },
+    { id: 'menu-intro', label: t('header.menu'), dropdownTabId: 'order' },
+    { id: 'about', label: t('header.about') },
+    { id: 'careers', label: t('header.careers') },
+    { id: 'contact', label: t('header.support') },
   ];
 
   return (
     <header className="sticky top-0 z-50 bg-[#b22830] shadow-lg">
       {/* Top bar */}
-      <div className="mx-auto flex h-[84px] w-full max-w-[1380px] items-center justify-between px-4 md:px-6 relative">
+      <div className="mx-auto flex h-[100px] w-full max-w-[1380px] items-center justify-between px-4 md:px-6 relative">
 
         {/* Left nav */}
         <nav className="hidden flex-1 items-center justify-start gap-8 lg:flex">
@@ -101,7 +105,7 @@ export default function Header({
                     onSelectedCatIdChange?.('all');
                   }
                 }}
-                className={`relative py-7 text-[14px] font-black uppercase tracking-widest transition-all ${(activeTab === item.id || (item.id === 'menu-intro' && activeTab === 'order'))
+                className={`relative py-7 text-[16px] font-black uppercase tracking-widest transition-all ${(activeTab === item.id || (item.id === 'menu-intro' && activeTab === 'order'))
                     ? 'text-white'
                     : 'text-white hover:text-white/80'
                   }`}
@@ -110,7 +114,7 @@ export default function Header({
               </button>
 
               {item.dropdownTabId === 'order' && categories.length > 0 && (
-                <div className="fixed left-0 top-[84px] w-full bg-[#53382c] shadow-2xl invisible opacity-0 -translate-y-2 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 z-[60] border-t-2 border-[#b22830]">
+                <div className="fixed left-0 top-[100px] w-full bg-[#53382c] shadow-2xl invisible opacity-0 -translate-y-2 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 z-[60] border-t-2 border-[#b22830]">
                   <div className="mx-auto max-w-[1380px] px-10 py-8 flex flex-row justify-between items-start">
                     {/* Grouping Logic inline for UI */}
                     {(() => {
@@ -172,7 +176,7 @@ export default function Header({
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex shrink-0 cursor-pointer items-center justify-center z-10"
           onClick={() => onTabChange?.('home')}
         >
-          <img src="/hc-assets/red_BG_logo800.png" alt="Logo" className="h-[60px] w-auto" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+          <img src="/hc-assets/red_BG_logo800.png" alt="Logo" className="h-[90px] w-auto transition-transform hover:scale-105" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
         </div>
 
         {/* Right nav & tools */}
@@ -182,12 +186,12 @@ export default function Header({
           <button
             type="button"
             onClick={() => onTabChange?.('order')}
-            className={`rounded-full px-5 py-2 text-[13px] font-black tracking-widest transition-all uppercase ${activeTab === 'order'
+            className={`rounded-full px-6 py-2.5 text-[16px] font-black tracking-widest transition-all uppercase ${activeTab === 'order'
                 ? 'bg-transparent text-white'
                 : 'text-white hover:text-white/80'
               }`}
           >
-            ĐẶT HÀNG
+            {t('header.order')}
           </button>
 
           <div className="flex items-center gap-3">
@@ -195,21 +199,29 @@ export default function Header({
             <button
               type="button"
               onClick={() => onTabChange?.('stores')}
-              className="flex items-center gap-1.5 text-[13px] font-medium text-white hover:text-white/80 transition-colors"
+              className="flex items-center gap-1.5 text-[15px] font-medium text-white hover:text-white/80 transition-colors"
             >
-              <MapPinIcon className="h-4 w-4" />
-              Tìm kiếm cửa hàng
+              <MapPinIcon className="h-5 w-5" />
+              {t('header.findStore')}
             </button>
 
             <div className="mx-2 h-4 w-px bg-white/30"></div>
 
             {/* Language Flags */}
             <div className="flex items-center gap-2 mr-2">
-              <button type="button" className="transition-transform hover:scale-110">
-                <img src="https://flagcdn.com/w40/vn.png" alt="VN" className="h-[18px] rounded-[2px] shadow-sm w-auto" />
+              <button 
+                type="button" 
+                onClick={() => i18n.changeLanguage('vi')}
+                className={`transition-all hover:scale-110 ${currentLng === 'vi' ? 'ring-2 ring-white ring-offset-2 ring-offset-[#b22830] opacity-100 rounded-sm' : 'opacity-40 hover:opacity-100'}`}
+              >
+                <img src="https://flagcdn.com/w40/vn.png" alt="VN" className="h-[18px] rounded-[2px] shadow-sm w-auto block" />
               </button>
-              <button type="button" className="transition-transform hover:scale-110 opacity-60 hover:opacity-100">
-                <img src="https://flagcdn.com/w40/gb.png" alt="EN" className="h-[18px] rounded-[2px] shadow-sm w-auto" />
+              <button 
+                type="button" 
+                onClick={() => i18n.changeLanguage('en')}
+                className={`transition-all hover:scale-110 ${currentLng === 'en' ? 'ring-2 ring-white ring-offset-2 ring-offset-[#b22830] opacity-100 rounded-sm' : 'opacity-40 hover:opacity-100'}`}
+              >
+                <img src="https://flagcdn.com/w40/gb.png" alt="EN" className="h-[18px] rounded-[2px] shadow-sm w-auto block" />
               </button>
             </div>
 

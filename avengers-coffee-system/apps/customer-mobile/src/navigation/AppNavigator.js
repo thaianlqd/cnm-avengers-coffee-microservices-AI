@@ -19,6 +19,7 @@ import { VouchersScreen } from '../screens/VouchersScreen'
 import { StoresScreen } from '../screens/StoresScreen'
 import { NewsScreen } from '../screens/NewsScreen'
 import { ChatScreen } from '../screens/ChatScreen'
+import { WalletScreen } from '../screens/WalletScreen'
 
 const Stack = createNativeStackNavigator()
 const Tabs = createBottomTabNavigator()
@@ -139,6 +140,11 @@ export function AppNavigator() {
       <Stack.Screen name="Tabs" component={MainTabs} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Chat" component={ChatScreen} />
+      <Stack.Screen name="Wallet" component={WalletScreen} />
+      <Stack.Screen name="Orders" component={OrdersScreen} />
+      <Stack.Screen name="Vouchers" component={VouchersScreen} />
+      <Stack.Screen name="Stores" component={StoresScreen} />
+      <Stack.Screen name="News" component={NewsScreen} />
     </Stack.Navigator>
   )
 }

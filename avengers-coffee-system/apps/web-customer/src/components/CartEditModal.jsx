@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { useCart } from '../context/CartContext';
 
-export default function CartEditModal({ cartItem, product, isOpen, onClose }) {
+export default function CartEditModal({ cartItem, product, isOpen, onClose, onSave }) {
   const { updateCartItemOptions } = useCart();
   
   const [selectedSize, setSelectedSize] = useState('');
@@ -92,13 +92,20 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose }) {
 
   const handleUpdate = () => {
     if (hasDynamicVariants) {
-      const size = dynamicSelections['Kích thước'] || '';
-      const toppings = dynamicSelections['Topping'] || [];
-      const luongDa = dynamicSelections['Lượng đá'] || '';
-      const doNgot = dynamicSelections['Độ ngọt'] || '';
-      const loaiSua = dynamicSelections['Loại sữa'] || '';
+      // Tìm key phù hợp không phân biệt hoa thường
+      const getVal = (keywords, isArray = false) => {
+        const key = Object.keys(dynamicSelections).find(k => keywords.some(kw => k.toLowerCase().includes(kw)));
+        if (key) return dynamicSelections[key];
+        return isArray ? [] : '';
+      };
 
-      updateCartItemOptions(cartItem, {
+      const size = getVal(['kích thước', 'kích cỡ', 'size']);
+      const toppings = getVal(['topping', 'đồ kèm', 'thêm'], true);
+      const luongDa = getVal(['lượng đá', 'đá', 'ice']);
+      const doNgot = getVal(['độ ngọt', 'ngọt', 'đường', 'sugar']);
+      const loaiSua = getVal(['loại sữa', 'sữa', 'milk']);
+
+      const newItem = {
         size,
         luongDa,
         doNgot,
@@ -106,16 +113,26 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose }) {
         toppings,
         custom_attributes: dynamicSelections,
         gia_ban: finalPrice
-      });
+      };
+      if (onSave) {
+        onSave(newItem);
+      } else {
+        updateCartItemOptions(cartItem, newItem);
+      }
     } else {
-      updateCartItemOptions(cartItem, {
+      const newItem = {
         size: selectedSize,
         luongDa: selectedLuongDa,
         doNgot: selectedDoNgot,
         loaiSua: selectedLoaiSua,
         toppings: selectedToppings,
         gia_ban: finalPrice
-      });
+      };
+      if (onSave) {
+        onSave(newItem);
+      } else {
+        updateCartItemOptions(cartItem, newItem);
+      }
     }
     onClose();
   };

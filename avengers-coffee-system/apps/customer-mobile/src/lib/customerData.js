@@ -223,10 +223,12 @@ export const paymentMethodLabels = {
   THANH_TOAN_KHI_NHAN_HANG: 'Thanh toán khi nhận hàng',
   NGAN_HANG_QR: 'QR ngân hàng',
   VNPAY: 'VNPAY',
+  VI_DIEN_TU: 'Ví điện tử',
 }
 
 export const paymentMethodOptions = [
   { value: 'THANH_TOAN_KHI_NHAN_HANG', label: 'COD', description: 'Thanh toán khi nhận hàng' },
   { value: 'NGAN_HANG_QR', label: 'QR ngân hàng', description: 'Quét mã QR để chuyển khoản' },
   { value: 'VNPAY', label: 'VNPAY', description: 'Thanh toán online qua VNPAY' },
+  { value: 'VI_DIEN_TU', label: 'Ví điện tử', description: 'Thanh toán bằng ví điện tử' },
 ]
