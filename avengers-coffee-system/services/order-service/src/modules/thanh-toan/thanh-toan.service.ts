@@ -1673,17 +1673,15 @@ export class ThanhToanService {
         .map((key) => {
             const value = params[key];
             if (value === null || value === undefined || value === '') return null;
-            // Quan trọng: Cả key và value đều phải được encode đúng chuẩn
-            return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+            // Quan trọng: Cả key và value đều phải được encode đúng chuẩn (VNPAY dùng + thay cho %20)
+            return `${encodeURIComponent(key)}=${encodeURIComponent(String(value)).replace(/%20/g, '+')}`;
         })
         .filter(Boolean)
         .join('&');
 
     // 3. Tạo SecureHash (HMAC-SHA512)
     const hmac = crypto.createHmac('sha512', this.VNP_HASH_SECRET);
-    // Lưu ý: VNPAY yêu cầu encodeURIComponent nhưng có một số ký tự đặc biệt 
-    // encodeURIComponent của JS có thể khác với thư viện của VNPAY (hiếm gặp nhưng cần lưu ý)
-    const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex').toUpperCase();
+    const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
     
     // 4. Build URL cuối cùng
     const finalUrl = `${this.VNP_URL}?${signData}&vnp_SecureHash=${signed}`;

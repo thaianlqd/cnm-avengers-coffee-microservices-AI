@@ -75,7 +75,7 @@ export class GiftCardService {
     await this.giftCardRepo.save(card);
 
     // 2. Gửi Email xịn xò
-    let emailUrl: string | null | false = null;
+    let emailUrl: string | null | boolean = null;
     try {
       emailUrl = await this.sendGiftCardEmail(card);
     } catch (err) {
@@ -158,20 +158,39 @@ export class GiftCardService {
     };
   }
 
-  // Tiện ích gửi mail Ethereal (Miễn phí, không cần cấu hình tài khoản thật)
+  // Tiện ích gửi mail Ethereal (Miễn phí, không cần cấu hình tài khoản thật) hoặc Mail thật (nếu có cấu hình SMTP)
   private async sendGiftCardEmail(card: GiftCard) {
     try {
-      // Dùng Ethereal để test (nó sẽ cấp cho một link web để xem email đã gửi)
-      const testAccount = await nodemailer.createTestAccount();
-      const transporter = nodemailer.createTransport({
-        host: 'smtp.ethereal.email',
-        port: 587,
-        secure: false,
-        auth: {
-          user: testAccount.user,
-          pass: testAccount.pass,
-        },
-      });
+      let transporter;
+      let isDemo = false;
+
+      if (process.env.SMTP_HOST && process.env.SMTP_USER) {
+        // Gửi qua SMTP thật (Gmail, v.v...)
+        transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: Number(process.env.SMTP_PORT) || 587,
+          secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+        });
+        this.logger.log('Using REAL SMTP to send email');
+      } else {
+        // Fallback: Dùng Ethereal để test (nó sẽ cấp cho một link web để xem email đã gửi)
+        isDemo = true;
+        const testAccount = await nodemailer.createTestAccount();
+        transporter = nodemailer.createTransport({
+          host: 'smtp.ethereal.email',
+          port: 587,
+          secure: false,
+          auth: {
+            user: testAccount.user,
+            pass: testAccount.pass,
+          },
+        });
+        this.logger.log('Using Ethereal (Demo) to send email');
+      }
 
       // Tạo HTML template cực xịn
       const formattedValue = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(card.value);
@@ -216,12 +235,17 @@ export class GiftCardService {
         html: htmlContent,
       });
 
-      const url = nodemailer.getTestMessageUrl(info);
-      this.logger.log(`Email sent: ${url}`);
-      return url;
-    } catch (error) {
-      this.logger.error('Error sending email', error);
-      return null;
+      if (isDemo) {
+        const url = nodemailer.getTestMessageUrl(info);
+        this.logger.log(`Demo Email sent: ${url}`);
+        return url;
+      } else {
+        this.logger.log(`Real Email sent to: ${card.receiver_email}`);
+        return true; // Sent real email successfully, no preview URL
+      }
+    } catch (err) {
+      this.logger.error('Email error:', err);
+      return false;
     }
   }
 }

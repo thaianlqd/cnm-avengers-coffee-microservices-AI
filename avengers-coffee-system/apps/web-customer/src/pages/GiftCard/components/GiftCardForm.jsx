@@ -157,23 +157,8 @@ export const GiftCardForm = () => {
 
         {/* === White card form === */}
         <div className="max-w-[840px] mx-auto bg-white rounded-[24px] shadow-sm overflow-hidden mb-4 border border-gray-50">
-          
+          {/* Giá trị thẻ */}
           <div className="p-10 border-b border-gray-100">
-            {isError && (
-              <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 border border-red-100 relative z-10">
-                <p className="font-bold">Lỗi tải danh sách thẻ:</p>
-                <p className="text-sm">{String(error)}</p>
-              </div>
-            )}
-            
-            {/* DEBUG BLOCK - HIỂN THỊ TRỰC TIẾP LÊN MÀN HÌNH */}
-            <div className="bg-blue-50 text-blue-800 p-4 rounded-xl mb-6 border border-blue-200 relative z-10 text-xs overflow-auto">
-              <p className="font-bold mb-1">DEBUG INFO (sẽ xóa sau):</p>
-              <p>Trạng thái tải dữ liệu: {isFetchingThemes ? 'ĐANG TẢI (Loading)...' : 'ĐÃ TẢI XONG (Done)'}</p>
-              <p>Số lượng theme từ API: {dbThemes?.length}</p>
-              <pre className="mt-2 whitespace-pre-wrap">{JSON.stringify(dbThemes, null, 2)}</pre>
-            </div>
-
             <h3 className="text-[18px] font-bold text-[#1a1a1a] mb-2">Giá trị Thẻ Avengers Coffee</h3>
             <p className="text-[14px] text-[#666] mb-6">Vui lòng chọn giá trị Thẻ Avengers Coffee</p>
             <div className="flex flex-wrap gap-4">
