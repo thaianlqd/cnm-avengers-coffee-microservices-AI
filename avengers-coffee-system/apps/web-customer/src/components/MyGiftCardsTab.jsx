@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../lib/apiClient';
 import Swal from 'sweetalert2';
-import { GiftIcon } from '@heroicons/react/24/outline';
+import { GiftIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 export default function MyGiftCardsTab() {
   const [giftCardCode, setGiftCardCode] = useState('');
@@ -50,6 +50,20 @@ export default function MyGiftCardsTab() {
     },
     onError: (err) => {
       Swal.fire('Lỗi', err.response?.data?.message || 'Không thể nạp tiền', 'error');
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      const res = await apiClient.delete(`/gift-cards/${id}`);
+      return res.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['myGiftCards'] });
+      Swal.fire('Đã xóa', data.message, 'success');
+    },
+    onError: (err) => {
+      Swal.fire('Lỗi', err.response?.data?.message || 'Không thể xóa thẻ', 'error');
     },
   });
 
@@ -120,12 +134,35 @@ export default function MyGiftCardsTab() {
               >
                 {/* Ảnh thẻ */}
                 <div 
-                  className="w-full aspect-[1.6/1] bg-cover bg-center"
+                  className="w-full aspect-[1.6/1] bg-cover bg-center relative group"
                   style={{ backgroundImage: bgImage ? `url(${bgImage})` : 'none', backgroundColor: '#f1f1f1' }}
                 >
                   {!bgImage && (
                     <div className="w-full h-full flex items-center justify-center text-gray-400">Không có ảnh</div>
                   )}
+                  {/* Nút Xóa (Dành cho Dev Test) */}
+                  <button
+                    onClick={() => {
+                      Swal.fire({
+                        title: 'Xóa thẻ này?',
+                        text: 'Dữ liệu sẽ bị xóa hoàn toàn khỏi bộ sưu tập',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Xóa luôn',
+                        cancelButtonText: 'Hủy',
+                        confirmButtonColor: '#d33',
+                      }).then((result) => {
+                        if (result.isConfirmed) {
+                          deleteMutation.mutate(card.id);
+                        }
+                      });
+                    }}
+                    disabled={deleteMutation.isPending}
+                    className="absolute top-2 right-2 bg-white/80 hover:bg-red-500 hover:text-white text-red-500 p-2 rounded-full shadow backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                    title="Xóa thẻ (Test)"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
                 </div>
 
                 {/* Thông tin số dư và nút nạp */}
