@@ -158,6 +158,18 @@ export class GiftCardService {
     };
   }
 
+  async deleteGiftCard(id: string) {
+    const card = await this.giftCardRepo.findOne({ where: { id } });
+    if (!card) {
+      throw new BadRequestException('Không tìm thấy thẻ quà tặng');
+    }
+    await this.giftCardRepo.remove(card);
+    return {
+      success: true,
+      message: 'Đã xóa thẻ quà tặng thành công',
+    };
+  }
+
   // Tiện ích gửi mail Ethereal (Miễn phí, không cần cấu hình tài khoản thật) hoặc Mail thật (nếu có cấu hình SMTP)
   private async sendGiftCardEmail(card: GiftCard) {
     try {
@@ -229,7 +241,7 @@ export class GiftCardService {
       `;
 
       const info = await transporter.sendMail({
-        from: '"Avengers Coffee" <no-reply@avengerscoffee.com>',
+        from: `"Avengers Coffee" <${process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@avengerscoffee.com'}>`,
         to: card.receiver_email,
         subject: `🎁 Quà tặng ${formattedValue} từ ${card.sender_name}`,
         html: htmlContent,
@@ -245,7 +257,7 @@ export class GiftCardService {
       }
     } catch (err) {
       this.logger.error('Email error:', err);
-      return false;
+      return err.message || String(err);
     }
   }
 }

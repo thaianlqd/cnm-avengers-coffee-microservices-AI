@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, UseGuards, Req, Delete } from '@nestjs/common';
 import { GiftCardService } from './gift-card.service';
 import { PurchaseGiftCardDto, RedeemGiftCardDto } from './dto/gift-card.dto';
 
@@ -34,5 +34,10 @@ export class GiftCardController {
   @Post('transfer-balance')
   async transferGiftCardBalance(@Body() dto: { gift_card_id: string; customer_id: string }) {
     return this.giftCardService.transferGiftCardBalance(dto.gift_card_id, dto.customer_id);
+  }
+
+  @Delete(':id')
+  async deleteGiftCard(@Param('id') id: string) {
+    return this.giftCardService.deleteGiftCard(id);
   }
 }

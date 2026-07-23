@@ -100,16 +100,20 @@ export const GiftCardForm = () => {
       const res = await apiClient.post('/gift-cards/purchase', payload);
       
       if (res.data.success) {
-        Swal.fire({
-          title: '🎉 Mua thẻ thành công!',
-          html: `
-            <p>Thẻ quà tặng <b>${Number(selectedAmount).toLocaleString('vi-VN')}đ</b> đã được gửi tới <b>${recipientEmail}</b>.</p>
-            <p class="mt-2 text-sm text-gray-500">Người nhận có thể nạp mã này vào ví để mua hàng.</p>
-            ${res.data.email_url ? `<div class="mt-4"><a href="${res.data.email_url}" target="_blank" class="px-4 py-2 bg-blue-50 text-blue-600 rounded-md inline-block font-medium">👀 Xem trước Email (Demo)</a></div>` : ''}
-          `,
-          icon: 'success',
-          confirmButtonColor: '#b22830',
-        });
+        if (typeof res.data.email_url === 'string' && (res.data.email_url.includes('Error') || res.data.email_url.includes('failed') || res.data.email_url.includes('Timeout'))) {
+            Swal.fire('Thẻ đã được tạo, NHƯNG Lỗi gửi mail!', `Chi tiết lỗi: ${res.data.email_url}`, 'warning');
+        } else {
+            Swal.fire({
+            title: '🎉 Mua thẻ thành công!',
+            html: `
+                <p>Thẻ quà tặng <b>${Number(selectedAmount).toLocaleString('vi-VN')}đ</b> đã được gửi tới <b>${recipientEmail}</b>.</p>
+                <p class="mt-2 text-sm text-gray-500">Người nhận có thể nạp mã này vào ví để mua hàng.</p>
+                ${typeof res.data.email_url === 'string' ? `<div class="mt-4"><a href="${res.data.email_url}" target="_blank" class="px-4 py-2 bg-blue-50 text-blue-600 rounded-md inline-block font-medium">👀 Xem trước Email (Demo)</a></div>` : ''}
+            `,
+            icon: 'success',
+            confirmButtonColor: '#b22830',
+            });
+        }
         
         // Reset form
         setSenderName(''); setSenderEmail(''); setSenderPhone('');
