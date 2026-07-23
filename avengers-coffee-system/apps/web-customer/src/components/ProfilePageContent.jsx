@@ -586,10 +586,11 @@ export default function ProfilePageContent({
     'favourite-orders': <HeartIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
     membership: <IdentificationIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
     'lucky-wheel': <GiftIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
+    'gift-cards': <BookmarkIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
     addresses: <MapPinIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
     reviews: <StarOutlineIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
     password: <KeyIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
-    wallet: <BookmarkIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
+    wallet: <CheckBadgeIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
   };
 
   return (
