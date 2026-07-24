@@ -1638,6 +1638,10 @@ function AppContent() {
               setSelectedNewsArticleId(null);
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
+            onSelectArticle={(id) => {
+              setSelectedNewsArticleId(id);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           />
         ) : (
           <NewsPage onSelectArticle={setSelectedNewsArticleId} />

@@ -61,12 +61,17 @@ export default function LuckyWheelPage({ user, onNavigate }) {
         return;
       }
 
-      // Mỗi slot chiếm 360 / 8 = 45 độ
-      const degreesPerSegment = 360 / prizes.length;
-      const targetDegrees = 270 - (index * degreesPerSegment + degreesPerSegment / 2);
+      // Calculate target rotation so winning segment lands precisely under the top pointer (12 o'clock / 0deg)
+      const prizesCount = prizes.length || 8;
+      const degreesPerSegment = 360 / prizesCount;
+      const targetSegmentMid = (index + 0.5) * degreesPerSegment;
+      const targetAngleInCircle = (360 - (targetSegmentMid % 360)) % 360;
+
+      const extraRounds = 360 * 5; // 5 full spins
+      const currentMod = currentRotation % 360;
+      const diff = (targetAngleInCircle - currentMod + 360) % 360;
+      const newRotation = currentRotation + extraRounds + (diff === 0 ? 360 : diff);
       
-      // Quay thêm 5 vòng (1800 độ) để tạo cảm giác chuyển động nhanh
-      const newRotation = currentRotation + 1800 + (targetDegrees - (currentRotation % 360));
       setCurrentRotation(newRotation);
 
       setTimeout(() => {
@@ -254,48 +259,64 @@ export default function LuckyWheelPage({ user, onNavigate }) {
         </div>
 
         {/* Right column - Rules & Prizes list */}
-        <div className="lg:col-span-5 space-y-6">
-          <div className="bg-white rounded-[20px] border border-gray-200/70 p-6 shadow-sm">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-3 mb-4">
-              <TrophySolidIcon className="w-5 h-5 text-[#c89a58]" />
-              <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">Cơ cấu giải thưởng</h3>
+        <div className="lg:col-span-5 space-y-4">
+          <div className="bg-white rounded-2xl border border-gray-200/80 p-4 md:p-5 shadow-2xs">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-2.5 mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 border border-amber-200/50">
+                  <TrophySolidIcon className="w-4 h-4 text-amber-600" />
+                </div>
+                <h3 className="text-xs md:text-sm font-extrabold text-gray-900 uppercase tracking-wide">Cơ cấu giải thưởng</h3>
+              </div>
+              <span className="text-[10px] font-extrabold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/70">
+                {prizes.length} phần quà
+              </span>
             </div>
-            <div className="grid gap-3">
+            
+            <div className="grid grid-cols-2 gap-2">
               {prizes.map((prize) => (
-                <div key={prize.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-150 shadow-xs">
-                  <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[#b22830] border border-gray-200/60 shadow-inner">
-                      {getPrizeIcon(prize.icon, "w-4.5 h-4.5")}
+                <div 
+                  key={prize.id} 
+                  className="flex items-center justify-between p-2 px-2.5 rounded-xl bg-gray-50/80 border border-gray-200/60 hover:border-amber-300 hover:bg-amber-50/20 transition-all duration-200"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span 
+                      className="w-6 h-6 rounded-md flex items-center justify-center text-white shrink-0 shadow-2xs"
+                      style={{ backgroundColor: prize.mau || '#b22830' }}
+                    >
+                      {getPrizeIcon(prize.icon, "w-3.5 h-3.5 text-white drop-shadow-xs")}
                     </span>
-                    <span className="text-xs font-bold text-gray-700">{formatPrizeName(prize)}</span>
+                    <span className="text-[11px] font-bold text-gray-800 truncate" title={formatPrizeName(prize)}>
+                      {formatPrizeName(prize)}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-bold text-gray-400">Tỷ lệ: {prize.xac_suat}%</span>
+                  <span className="text-[9px] font-extrabold text-amber-800 bg-amber-100/80 px-1.5 py-0.5 rounded shrink-0 ml-1">
+                    {prize.xac_suat}%
+                  </span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-white rounded-[20px] border border-gray-200/70 p-6 shadow-sm">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-3 mb-3">
-              <InformationCircleIcon className="w-5 h-5 text-[#b22830]" />
-              <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">Thể lệ tham gia</h3>
+          <div className="bg-white rounded-2xl border border-gray-200/80 p-4 md:p-5 shadow-2xs">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2.5 mb-3">
+              <div className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center text-[#b22830] border border-red-100">
+                <InformationCircleIcon className="w-4 h-4 text-[#b22830]" />
+              </div>
+              <h3 className="text-xs md:text-sm font-extrabold text-gray-900 uppercase tracking-wide">Thể lệ tham gia</h3>
             </div>
-            <ul className="text-xs text-gray-500 space-y-2.5 pl-1.5 font-semibold leading-relaxed">
+            <ul className="text-[11px] text-gray-600 space-y-2 font-medium leading-snug">
               <li className="flex items-start gap-2">
-                <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                <span>Mỗi lượt quay tiêu tốn cố định {cost} điểm khả dụng.</span>
+                <CheckCircleIcon className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                <span>Mỗi lượt quay tiêu tốn <strong className="text-gray-900">{cost} điểm khả dụng</strong> (không ảnh hưởng điểm xét hạng).</span>
               </li>
               <li className="flex items-start gap-2">
-                <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                <span>Điểm tích lũy xét hạng thành viên (Gold, Diamond...) sẽ không bị ảnh hưởng khi quay.</span>
+                <CheckCircleIcon className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                <span>Voucher nhận được có HSD 14 ngày, tự động thêm vào kho quà cá nhân.</span>
               </li>
               <li className="flex items-start gap-2">
-                <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                <span>Voucher trúng thưởng có giá trị sử dụng trong vòng 14 ngày kể từ khi nhận.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                <span>Món nước/topping uống thử: hệ thống tự động gửi voucher FREE_ITEM trực tiếp vào tài khoản của bạn để áp dụng khi tạo đơn hàng.</span>
+                <CheckCircleIcon className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                <span>Tỷ lệ trúng thưởng 100%, có thể sử dụng voucher ngay khi tạo đơn hàng.</span>
               </li>
             </ul>
           </div>

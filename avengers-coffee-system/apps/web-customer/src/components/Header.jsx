@@ -18,6 +18,7 @@ import {
   InformationCircleIcon,
   BriefcaseIcon,
   ChatBubbleLeftEllipsisIcon,
+  NewspaperIcon,
   ArrowRightIcon,
 } from '@heroicons/react/24/outline';
 
@@ -91,6 +92,15 @@ export default function Header({
     { id: 'about', label: t('header.about'), icon: InformationCircleIcon },
     { id: 'careers', label: t('header.careers'), icon: BriefcaseIcon },
     { id: 'contact', label: t('header.support'), icon: ChatBubbleLeftEllipsisIcon },
+  ];
+
+  const mobileNavItems = [
+    { id: 'menu-intro', label: t('header.menu'), icon: HomeIcon },
+    { id: 'news', label: 'TIN TỨC', icon: NewspaperIcon },
+    { id: 'about', label: t('header.about'), icon: InformationCircleIcon },
+    { id: 'careers', label: t('header.careers'), icon: BriefcaseIcon },
+    { id: 'contact', label: t('header.support'), icon: ChatBubbleLeftEllipsisIcon },
+    { id: 'stores', label: t('header.findStore'), icon: MapPinIcon },
   ];
 
   return (
@@ -199,8 +209,25 @@ export default function Header({
         <div className="hidden flex-1 items-center justify-end gap-2 lg:flex">
           <button
             type="button"
+            onClick={() => onTabChange?.('news')}
+            className={`flex flex-col items-center gap-[3px] px-3 py-2 rounded-xl transition-all duration-200 ${
+              activeTab === 'news'
+                ? 'bg-white/15 text-white'
+                : 'text-white/75 hover:bg-white/10 hover:text-white'
+            }`}
+          >
+            <NewspaperIcon className="h-5 w-5" />
+            <span className="text-[11px] font-bold uppercase tracking-widest whitespace-nowrap">TIN TỨC</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => onTabChange?.('stores')}
-            className="flex flex-col items-center gap-[3px] px-3 py-2 rounded-xl text-white/75 hover:bg-white/10 hover:text-white transition-all duration-200"
+            className={`flex flex-col items-center gap-[3px] px-3 py-2 rounded-xl transition-all duration-200 ${
+              activeTab === 'stores'
+                ? 'bg-white/15 text-white'
+                : 'text-white/75 hover:bg-white/10 hover:text-white'
+            }`}
           >
             <MapPinIcon className="h-5 w-5" />
             <span className="text-[11px] font-bold uppercase tracking-widest whitespace-nowrap">{t('header.findStore')}</span>
@@ -351,7 +378,7 @@ export default function Header({
         <div className="border-t border-white/10 bg-[#a80f28] lg:hidden">
           <div className="mx-auto max-w-[1380px] px-4 py-4">
             <div className="grid gap-1">
-              {leftNavItems.map((item) => {
+              {mobileNavItems.map((item) => {
                 const ItemIcon = item.icon;
                 return (
                   <button
