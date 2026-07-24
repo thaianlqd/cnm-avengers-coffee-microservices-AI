@@ -1010,8 +1010,6 @@ export default function ChatWidget({ user, socketUrl }) {
               </button>
             </div>
           </div>
-
-          </div>
         </div>
       )}
     </>
