@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import MyGiftCardsTab from './MyGiftCardsTab';
 import { apiClient } from '../lib/apiClient';
 import { queryKeys } from '../lib/queryKeys';
 import { normalizeAddressSelection } from '../lib/addressOptions';
@@ -150,7 +151,6 @@ export default function ProfilePageContent({
       return response.data;
     },
     enabled: Boolean(userId),
-    enabled: Boolean(userId),
     staleTime: 60 * 1000,
   });
 
@@ -254,6 +254,22 @@ export default function ProfilePageContent({
   });
 
   const [topUpAmount, setTopUpAmount] = useState('');
+  const [giftCardCode, setGiftCardCode] = useState('');
+
+  const redeemGiftCardMutation = useMutation({
+    mutationFn: async (code) => {
+      const response = await apiClient.post('/gift-cards/redeem', { code, customer_id: userId });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      alert(data.message || 'Nạp thẻ thành công!');
+      queryClient.invalidateQueries({ queryKey: ['userWallet', userId] });
+      setGiftCardCode('');
+    },
+    onError: (error) => {
+      alert(error.response?.data?.message || 'Mã thẻ không hợp lệ hoặc đã được sử dụng');
+    }
+  });
 
   const savedAddresses = addressPayload?.items || [];
   const myReviews = reviewHistoryPayload?.items || [];
@@ -570,10 +586,11 @@ export default function ProfilePageContent({
     'favourite-orders': <HeartIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
     membership: <IdentificationIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
     'lucky-wheel': <GiftIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
+    'gift-cards': <BookmarkIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
     addresses: <MapPinIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
     reviews: <StarOutlineIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
     password: <KeyIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
-    wallet: <BookmarkIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
+    wallet: <CheckBadgeIcon className="w-4.5 h-4.5" strokeWidth={2.5} />,
   };
 
   return (
@@ -610,6 +627,7 @@ export default function ProfilePageContent({
               { id: 'membership', label: 'Hạng thành viên', iconId: 'membership' },
               { id: 'lucky-wheel', label: 'Vòng quay', iconId: 'lucky-wheel' },
               { id: 'wallet', label: 'Ví điện tử', iconId: 'wallet' },
+              { id: 'gift-cards', label: 'Thẻ quà tặng', iconId: 'gift-cards' },
               { id: 'addresses', label: 'Địa chỉ', iconId: 'addresses', count: savedAddresses.length },
               { id: 'reviews', label: 'Đánh giá', iconId: 'reviews' },
               { id: 'password', label: 'Đổi mật khẩu', iconId: 'password' },
@@ -1261,6 +1279,8 @@ export default function ProfilePageContent({
                     </div>
                   </div>
 
+
+
                   {/* Top-up Form */}
                   <div className="rounded-xl border border-gray-100 bg-gray-50 p-5">
                     <h4 className="text-sm font-black uppercase tracking-wide text-gray-800 mb-3">Nạp tiền vào ví</h4>
@@ -1356,6 +1376,8 @@ export default function ProfilePageContent({
                 </div>
               )}
             </div>
+          ) : activeTab === 'gift-cards' ? (
+            <MyGiftCardsTab />
           ) : activeTab === 'reviews' ? (
             <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-md shadow-gray-100/50">
               <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4">

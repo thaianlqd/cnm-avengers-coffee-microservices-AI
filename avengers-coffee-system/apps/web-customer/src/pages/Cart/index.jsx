@@ -359,7 +359,7 @@ export default function CartPage({
         phuong_thuc_giao: deliveryMode,
         phuong_thuc_thanh_toan: phuongThuc,
         khung_gio_giao: computedKhungGio,
-        phi_giao_hang: deliveryMode === 'GIAO_TAN_NOI' ? (freeShip ? 0 : shippingFee) : 0,
+        phi_giao_hang: deliveryMode === 'GIAO_TAN_NOI' ? phiGiaoHangThucTe : 0,
         dia_chi_giao_hang: deliveryMode === 'GIAO_TAN_NOI' ? diaChiDayDu : (deliveryMode === 'LAY_TAI_QUAN' ? 'Khách lấy tại quán' : 'Khách dùng tại chỗ'),
         ghi_chu: ghiChu.trim() || 'Dat tu web-customer',
         ma_voucher: voucherResult?.ma_voucher || voucherResult?.ma_khuyen_mai || undefined,
