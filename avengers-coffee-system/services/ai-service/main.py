@@ -1021,6 +1021,31 @@ def get_behavior_insights(branch_code: str = "ALL", limit: int = 6, days: int = 
         )
         raise HTTPException(status_code=500, detail=f"Khong the tai du lieu hanh vi mua sam: {exc}") from exc
 
+def _enrich_chat_cards(content: str, reply: str, base_context: Dict[str, Any], recent_orders: List[Dict[str, Any]]) -> Dict[str, Any]:
+    text_check = (content + " " + reply).lower()
+    cards: Dict[str, Any] = {}
+
+    if any(k in text_check for k in ["chi nhanh", "cua hang", "dia chi", "gan day", "o dau", "tim cua", "store", "branch"]):
+        branches = base_context.get("branches") or []
+        if branches:
+            cards["stores"] = branches[:5]
+
+    if any(k in text_check for k in ["menu", "thuc don", "mon", "do uong", "ca phe", "tra", "sua", "san pham", "dat", "order"]):
+        products = base_context.get("products") or []
+        if products:
+            cards["products"] = products[:6]
+
+    if any(k in text_check for k in ["voucher", "khuyen mai", "giam gia", "uu dai", "ma giam", "coupon"]):
+        promotions = base_context.get("promotions") or []
+        if promotions:
+            cards["vouchers"] = promotions[:5]
+
+    if any(k in text_check for k in ["don hang", "don cua toi", "trang thai don", "theo doi don", "giao chua", "history"]):
+        if recent_orders:
+            cards["orders"] = recent_orders[:3]
+
+    return cards
+
 # ─── Helper: Groq-primary chat reply ─────────────────────────────────────────
 
 def _groq_primary_chat_reply(
@@ -1041,12 +1066,11 @@ def _groq_primary_chat_reply(
     system_prompt = (
         "Ban la nhan vien tu van AI thong minh cua Avengers Coffee, rat than thien va chuyen nghiep. "
         "Su dung du lieu he thong (menu, khuyen mai, chi nhanh) de tu van chinh xac. "
+        "QUAN TRONG VE DINH DANG: Khi gioi thieu danh sach san pham, chi nhanh, khuyen mai hoac don hang, hay tra loi ngan gon, than thien (1-2 cau mo dau/goi y) va KHONG liet ke thu cong thanh danh sach gach dau dong dai thong tin dia chi/gia, vi he thong se tu dong hien thi cac The UI tuong tac (Product Card, Store Card, Voucher Card) cho khach hang. "
         "Neu khach hoi chung chung hoac 'gi cung duoc', hay chu dong goi y 1-2 mon Best Seller. "
-        "QUAN TRONG 1: Neu khach yeu cau liet ke mot danh muc cu the (vd: ca phe, tra sua), ban PHAI loc dung Danh muc trong DU LIEU HE THONG de tra loi. Tuyet doi khong liet ke mon cua Danh muc khac. "
-        "QUAN TRONG 2: Neu khach chon mot mon co 'Tuy chon' (Size, Topping), ban PHAI doc ky cac Tuy chon va gia phu thu di kem (vi du: Size L +15k, Tran chau +10k). Hay chu dong hoi khach chon Size nao va bao gia cu the. Vi du: 'Anh chon Americano Mo, anh lay size Nho (59k), Vua (65k) hay Lon (75k) a?' "
-        "QUAN TRONG 3: Neu khach muon mua hang nhung CHUA NOI RO Hinh thuc thanh toan (Tien mat/ZaloPay/VNPAY), ban PHAI CHU DONG hoi khach. "
-        "Khi khach da chon du thong tin, ban TONG HOP lai don hang (kem gia tien) va yeu cau khach go chinh xac chu 'Chot don' hoac 'Dat hang' de he thong bat dau len don. "
-        "Tra loi ngan gon, than thien, giong mot nhan vien tu van chuyen nghiep nhe."
+        "Neu khach yeu cau liet ke mot danh muc cu the (vd: ca phe, tra sua), ban PHAI loc dung Danh muc trong DU LIEU HE THONG. "
+        "Neu khach chon mon co 'Tuy chon' (Size, Topping), hay chu dong hoi khach chon Size nao va bao gia cu the. "
+        "Neu khach muon mua hang nhung CHUA NOI RO Hinh thuc thanh toan (Tien mat/ZaloPay/VNPAY), hay CHU DONG hoi khach."
     )
     user_prompt = (
         f"DU LIEU HE THONG:\n{context_text}\n\n"
@@ -1128,7 +1152,9 @@ async def ai_chat(request: Request):
                 request_payload={"content_preview": content[:180], "provider": "groq"},
                 response_payload={"reply_preview": groq_reply[:220], "provider": "groq"},
             )
-            return {"reply": groq_reply, "status": "success", "provider": "groq"}
+            cards = _enrich_chat_cards(content, groq_reply, base_context, recent_orders)
+            return {"reply": groq_reply, "status": "success", "provider": "groq", **cards}
+        # === Groq unavailable → fall through to Gemini ===
         # === Groq unavailable → fall through to Gemini ===
 
         if _is_gemini_blocked():
@@ -1210,7 +1236,8 @@ async def ai_chat(request: Request):
                 "reply_length": len(reply),
             },
         )
-        return {"reply": reply, "status": "success", "provider": "gemini"}
+        cards = _enrich_chat_cards(content, reply, base_context, recent_orders)
+        return {"reply": reply, "status": "success", "provider": "gemini", **cards}
     except requests.exceptions.HTTPError as e:
         error_message = _sanitize_error_text(str(e))
         status_code = e.response.status_code if e.response is not None else None

@@ -62,6 +62,12 @@ export class User {
   @Column({ type: 'numeric', precision: 15, scale: 2, default: 0 })
   tong_chi_tieu: number;
 
+  @Column({ type: 'numeric', precision: 15, scale: 2, default: 0 })
+  chi_tieu_thang_nay: number;
+
+  @Column({ type: 'varchar', nullable: true })
+  thang_chi_tieu_gan_nhat: string | null;
+
   @Column({ type: 'date', nullable: true })
   ngay_sinh: Date | null;
 

@@ -187,31 +187,98 @@ export default function OrderPage({
     alert(`Đã sao chép mã: ${code}`);
   };
 
-  const renderVoucher = (voucher) => {
-    const isPercent = voucher.loai_khuyen_mai === 'PERCENT';
-    const valueText = isPercent ? `${voucher.gia_tri}%` : `${(voucher.gia_tri / 1000)}K`;
+  const isPersonalVoucher = (v) => {
+    if (!v) return false;
+    if (v.loai_phan_phoi === 'PERSONAL') return true;
+    if (v.ma_nguoi_dung && String(v.ma_nguoi_dung).trim() !== '') return true;
+    if (v.loai_su_kien && v.loai_su_kien !== 'PUBLIC') return true;
+    const code = String(v.ma_khuyen_mai || v.ma_voucher || '').toUpperCase();
+    if (
+      code.startsWith('LW_') ||
+      code.startsWith('WHEEL_') ||
+      code.startsWith('BD_') ||
+      code.startsWith('TIER_') ||
+      code.startsWith('UP_') ||
+      code.startsWith('USER_') ||
+      code.startsWith('KS') ||
+      code.startsWith('SURVEY_')
+    ) return true;
+    return false;
+  };
+
+  const personalVouchers = useMemo(() => {
+    return (voucherItems || [])
+      .filter(isPersonalVoucher)
+      .filter((v) => v.co_the_dung !== false && (v.da_dung_boi_ban === undefined || v.da_dung_boi_ban < (v.gioi_han_moi_nguoi || 1)));
+  }, [voucherItems]);
+
+  const publicVouchers = useMemo(() => {
+    return (voucherItems || [])
+      .filter((v) => !isPersonalVoucher(v))
+      .filter((v) => v.co_the_dung !== false && (v.da_dung_boi_ban === undefined || v.da_dung_boi_ban < (v.gioi_han_moi_nguoi || 1)));
+  }, [voucherItems]);
+
+  const renderVoucherCard = (voucher, isPersonal = false) => {
+    const code = String(voucher.ma_khuyen_mai || voucher.ma_voucher || voucher.code || '').toUpperCase();
+    const type = String(voucher.loai_khuyen_mai || voucher.loai || '').toUpperCase();
+    const isPercent = type.includes('PERCENT');
+    const rawVal = Number(voucher.gia_tri || 0);
+    let valueText = isPercent ? `${rawVal}%` : (rawVal >= 1000 ? `${Math.round(rawVal / 1000)}K` : `${rawVal || 10}K`);
     
+    if (type.includes('FREE_ITEM') || code.includes('TOPPING')) {
+      valueText = 'FREE';
+    }
+
+    const badgeBg = isPersonal 
+      ? 'bg-gradient-to-br from-[#f26b1d] to-[#d4560e]' 
+      : 'bg-[#68c582]';
+    
+    const tagText = isPersonal
+      ? (
+          voucher.loai_su_kien === 'LUCKY_WHEEL' || code.startsWith('WHEEL_') || code.startsWith('LW_')
+            ? '🎲 VÒNG QUAY'
+            : voucher.loai_su_kien === 'BIRTHDAY' || code.startsWith('BD_')
+            ? '🎂 SINH NHẬT'
+            : voucher.loai_su_kien === 'SURVEY' || code.startsWith('KS') || code.startsWith('SURVEY_')
+            ? '📋 KHẢO SÁT'
+            : voucher.loai_su_kien === 'TIER_UP' || code.startsWith('UP_') || code.startsWith('TIER_')
+            ? '🎖️ THĂNG HẠNG'
+            : '🎁 CÁ NHÂN'
+        )
+      : '📢 CHUNG';
+
     return (
-      <div key={voucher.ma_khuyen_mai} className="flex border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm min-w-[280px] max-w-[320px] flex-shrink-0 relative">
-        <div className="absolute left-[-6px] top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full border-r border-gray-200"></div>
-        <div className="absolute right-[-6px] top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full border-l border-gray-200"></div>
+      <div key={code} className="flex border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm min-w-[290px] max-w-[320px] flex-shrink-0 relative group hover:shadow-md transition-all">
+        <div className="absolute left-[-6px] top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full border-r border-gray-200 z-10"></div>
+        <div className="absolute right-[-6px] top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full border-l border-gray-200 z-10"></div>
         
-        <div className="bg-[#68c582] text-white flex flex-col justify-center items-center w-[90px] p-2">
-          <span className="text-[14px] font-bold">GIẢM</span>
-          <span className="text-[26px] font-black leading-none mt-1">{valueText}</span>
+        {/* Left Badge */}
+        <div className={`${badgeBg} text-white flex flex-col justify-center items-center w-[95px] p-2 flex-shrink-0 relative`}>
+          <span className="text-[9px] font-black tracking-wider uppercase bg-white/20 px-1.5 py-0.5 rounded text-center mb-1">
+            {tagText}
+          </span>
+          <span className="text-[12px] font-bold">GIẢM</span>
+          <span className="text-[24px] font-black leading-none mt-0.5">{valueText}</span>
         </div>
         
-        <div className="p-4 flex-1 flex flex-col justify-center border-l border-dashed border-gray-200 pl-4">
-          <h4 className="text-[12px] font-black text-gray-800 uppercase">NHẬP MÃ: {voucher.ma_khuyen_mai}</h4>
-          <p className="text-[11px] text-gray-500 mt-1 line-clamp-2 font-medium">{voucher.mo_ta || `Giảm ${valueText} cho hóa đơn hợp lệ`}</p>
-          <div className="mt-3 flex items-center justify-between">
+        {/* Right Details */}
+        <div className="p-3 flex-1 flex flex-col justify-center border-l border-dashed border-gray-200 pl-4 min-w-0">
+          <h4 className="text-[12px] font-black text-gray-800 uppercase truncate" title={code}>
+            MÃ: <span className={isPersonal ? 'text-[#f26b1d]' : 'text-[#282828]'}>{code}</span>
+          </h4>
+          <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-2 font-medium">
+            {voucher.ten_khuyen_mai || voucher.mo_ta || (isPersonal ? 'Đặc quyền dành riêng cho bạn' : `Giảm ${valueText} toàn hệ thống`)}
+          </p>
+          <div className="mt-2.5 flex items-center justify-between">
             <button 
-              onClick={() => handleCopyVoucherCode(voucher.ma_khuyen_mai)}
-              className="bg-[#b22830] text-white text-[10px] font-bold px-3 py-1.5 rounded-full hover:bg-red-800 transition-colors uppercase tracking-wider"
+              onClick={() => handleCopyVoucherCode(code)}
+              className={`${isPersonal ? 'bg-[#f26b1d] hover:bg-[#c2410c]' : 'bg-[#b22830] hover:bg-red-800'} text-white text-[10px] font-bold px-3 py-1.5 rounded-full transition-colors uppercase tracking-wider cursor-pointer shadow-xs`}
             >
               Sao chép mã
             </button>
-            <button className="text-[11px] text-[#1f6fb2] hover:underline font-medium">Điều kiện</button>
+            <span className="text-[10px] text-gray-400 font-semibold">
+              {voucher.ngay_ket_thuc ? `HSD: ${new Date(voucher.ngay_ket_thuc).toLocaleDateString('vi-VN')}` : 'HSD: Hạn dài'}
+            </span>
           </div>
         </div>
       </div>
@@ -233,21 +300,39 @@ export default function OrderPage({
     setIsDropdownOpen(false);
     setIsMobileMenuOpen(false);
     
-    // Smooth scroll to products container if available
+    // Smooth scroll directly to the selected category section
     setTimeout(() => {
-      if (productsContainerRef.current) {
-        const headerOffset = 100; // Offset for sticky headers
-        const elementPosition = productsContainerRef.current.getBoundingClientRect().top;
+      const parsedId = String(id).replace('group-', '');
+      let targetElem = document.getElementById(`category-${parsedId}`) || document.getElementById(`category-${id}`);
+      
+      // If parent category selected, try to find section for its first child
+      if (!targetElem) {
+        const childCat = categories.find(c => String(c.ma_danh_muc_cha) === parsedId);
+        if (childCat) {
+          targetElem = document.getElementById(`category-${childCat.ma_danh_muc}`);
+        }
+      }
+
+      if (targetElem) {
+        const headerOffset = 110;
+        const elementPosition = targetElem.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-        
+
         window.scrollTo({
-          top: offsetPosition,
+          top: Math.max(0, offsetPosition),
           behavior: 'smooth'
         });
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (productsContainerRef.current) {
+        const headerOffset = 100;
+        const elementPosition = productsContainerRef.current.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+        window.scrollTo({
+          top: Math.max(0, offsetPosition),
+          behavior: 'smooth'
+        });
       }
-    }, 100);
+    }, 60);
   };
 
   const toggleParent = (parentId, e) => {
@@ -307,11 +392,11 @@ export default function OrderPage({
                 alt="Highlands Coffee" 
                 className="h-[60px] w-auto object-contain cursor-pointer" 
                 onClick={() => {
+                  handleCategorySelect('all');
                   if (onNavigate) {
                     onNavigate('order');
-                  } else {
-                    window.location.href = '/?tab=order';
                   }
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }} 
               />
             ) : (
@@ -620,34 +705,83 @@ export default function OrderPage({
             ) : (
               <>
                 {/* Hero Banner & Category Menu Area (Desktop Only) */}
-                {activeCategory === 'all' && (
-                  <div className="w-full mb-10 flex flex-col lg:flex-row items-stretch gap-8">
-                    
-                    {/* LEFT SIDEBAR (Category Menu Desktop) */}
-                    <div className="hidden lg:flex flex-col w-[260px] flex-shrink-0 z-10 bg-white shadow-sm border-l border-r border-b border-gray-100 pb-2">
-                      <ul className="w-full flex flex-col flex-1 overflow-y-auto no-scrollbar">
-                        {categoryMenuItems}
-                      </ul>
+                <div className="w-full mb-10 flex flex-col lg:flex-row items-stretch gap-8">
+                  
+                  {/* LEFT SIDEBAR (Category Menu Desktop) */}
+                  <div className="hidden lg:flex flex-col w-[260px] flex-shrink-0 z-10 bg-white shadow-sm border-l border-r border-b border-gray-100 pb-2">
+                    <ul className="w-full flex flex-col flex-1 overflow-y-auto no-scrollbar">
+                      {categoryMenuItems}
+                    </ul>
+                  </div>
+
+                  {/* HERO BANNER */}
+                  <div className="flex-1 min-w-0 flex pt-4 lg:pt-0">
+                    <BannerSlider />
+                  </div>
+                </div>
+
+                {/* Categorized Vouchers Section */}
+                <div className="mb-10 w-full flex flex-col gap-6">
+                  {/* Section 1: Personal Vouchers */}
+                  <div className="w-full">
+                    <div className="flex items-center justify-between mb-3 px-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">🎁</span>
+                        <h3 className="text-[16px] font-bold text-gray-900">Voucher Cá Nhân Dành Cho Bạn</h3>
+                        <span className="bg-amber-100 text-amber-800 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border border-amber-200">
+                          {personalVouchers.length} mã độc quyền
+                        </span>
+                      </div>
                     </div>
 
-                    {/* HERO BANNER */}
-                    <div className="flex-1 min-w-0 flex pt-4 lg:pt-0">
-                      <BannerSlider />
-                    </div>
+                    {personalVouchers.length > 0 ? (
+                      <div className="flex overflow-x-auto gap-4 pb-2 custom-scrollbar">
+                        {personalVouchers.map((v) => renderVoucherCard(v, true))}
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 rounded-xl p-4 shadow-sm">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-600 text-lg font-bold">
+                            🎁
+                          </div>
+                          <div>
+                            <p className="text-[13px] font-bold text-gray-800">Bạn chưa có voucher cá nhân nào trong kho quà</p>
+                            <p className="text-[11px] text-gray-500 mt-0.5">Thử vận may tại Vòng quay may mắn hoặc cập nhật sinh nhật để nhận ngay voucher độc quyền!</p>
+                          </div>
+                        </div>
+                        <button 
+                          type="button"
+                          onClick={() => onNavigate?.('lucky-wheel')}
+                          className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-[12px] font-bold rounded-lg shadow-sm transition-all whitespace-nowrap cursor-pointer"
+                        >
+                          🎲 Săn quà ngay
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
 
-                {/* Vouchers horizontally scrollable (Top-level if activeCategory is 'all') */}
-                {activeCategory === 'all' && voucherItems && voucherItems.length > 0 && (
-                  <div className="mb-10 w-full">
-                    <div className="flex overflow-x-auto gap-4 pb-4 custom-scrollbar">
-                      {voucherItems.map(renderVoucher)}
+                  {/* Section 2: Public Storewide Promotions */}
+                  {publicVouchers.length > 0 && (
+                    <div className="w-full">
+                      <div className="flex items-center justify-between mb-3 px-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">📢</span>
+                          <h3 className="text-[16px] font-bold text-gray-900">Chương Trình Khuyến Mãi Chung</h3>
+                          <span className="bg-emerald-100 text-emerald-800 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border border-emerald-200">
+                            {publicVouchers.length} ưu đãi chung
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex overflow-x-auto gap-4 pb-2 custom-scrollbar">
+                        {publicVouchers.map((v) => renderVoucherCard(v, false))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {/* AI TOP 3 RECOMMENDED PRODUCTS UNDER VOUCHER */}
-                {activeCategory === 'all' && aiRecommendedProducts && aiRecommendedProducts.length > 0 && (
+                {aiRecommendedProducts && aiRecommendedProducts.length > 0 && (
                   <div className="mb-10 w-full">
                     <div className="bg-white rounded-2xl border border-orange-100 p-6 md:p-8 shadow-sm">
                       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b border-gray-100 pb-5 mb-6">
@@ -780,91 +914,10 @@ export default function OrderPage({
             <div ref={productsContainerRef} className="flex flex-col lg:flex-row gap-8 px-6 lg:px-8 mt-6">
             {/* Right Column: Products List & Category Details */}
             <div className="flex-1 min-w-0">
-                    
-                    {/* Separate Category View Header (Breadcrumbs, sorting, title) */}
-                    {activeCategory !== 'all' && (
-                      <div className="mb-6">
-                        <div className="text-[13px] text-[#999999] mb-4 font-medium">
-                          <span className="cursor-pointer hover:text-gray-800" onClick={() => handleCategorySelect('all')}>{t('order.home')}</span>
-                          <span className="mx-2">/</span>
-                          <span className="text-[#333333]">
-                            {menuSections.find(s => s.id === activeCategory)?.label || t('order.categories')}
-                          </span>
-                        </div>
-                        
-                        {/* Vouchers horizontally scrollable */}
-                        {voucherItems && voucherItems.length > 0 && (
-                          <div className="flex overflow-x-auto gap-4 pb-4 mb-6 custom-scrollbar">
-                            {voucherItems.map(renderVoucher)}
-                          </div>
-                        )}
-
-                        {/* Category Title */}
-                        <div className="mb-6 border-b border-gray-100 pb-4">
-                          <h1 className="text-[28px] font-serif font-bold text-[#111111] mb-2">
-                            {t('order.categories')}
-                          </h1>
-                          <div className="flex flex-wrap items-center gap-4 text-[13px] text-[#333333] mb-4">
-                            <span className="font-bold">{t('order.sortBy')}</span>
-                            <button
-                              type="button"
-                              onClick={() => setSortByOrder('name-asc')}
-                              className={`transition-colors font-medium ${sortByOrder === 'name-asc' ? 'text-[#b22830] font-black underline' : 'text-[#666666] hover:text-[#b22830]'}`}
-                            >
-                              {t('order.nameAsc')}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setSortByOrder('name-desc')}
-                              className={`transition-colors font-medium ${sortByOrder === 'name-desc' ? 'text-[#b22830] font-black underline' : 'text-[#666666] hover:text-[#b22830]'}`}
-                            >
-                              {t('order.nameDesc')}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setSortByOrder('price-asc')}
-                              className={`transition-colors font-medium ${sortByOrder === 'price-asc' ? 'text-[#b22830] font-black underline' : 'text-[#666666] hover:text-[#b22830]'}`}
-                            >
-                              {t('order.priceAsc')}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setSortByOrder('price-desc')}
-                              className={`transition-colors font-medium ${sortByOrder === 'price-desc' ? 'text-[#b22830] font-black underline' : 'text-[#666666] hover:text-[#b22830]'}`}
-                            >
-                              {t('order.priceDesc')}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setSortByOrder('newest')}
-                              className={`transition-colors font-medium ${sortByOrder === 'newest' ? 'text-[#b22830] font-black underline' : 'text-[#666666] hover:text-[#b22830]'}`}
-                            >
-                              {t('order.newest')}
-                            </button>
-                          </div>
-                          <div className="text-[13px] font-bold text-[#333333] uppercase">
-                            {t('order.showing')} <span className="text-[#b22830] font-black text-[15px]">{activeCategory === 'all' ? t('order.allCategories') : categories.find(c => String(c.ma_danh_muc) === String(activeCategory).replace('group-', ''))?.ten_danh_muc || 'CÀ PHÊ'}</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
 
                     {/* Product Grids */}
                     <div className="space-y-12">
-                      {menuSections
-                        .filter((section) => {
-                          if (activeCategory === 'all') return true;
-                          const parsedActive = String(activeCategory).replace('group-', '');
-                          if (String(section.id) === parsedActive) return true;
-                          const sectionCat = categories.find(c => String(c.ma_danh_muc) === String(section.id));
-                          if (sectionCat && String(sectionCat.ma_danh_muc_cha) === parsedActive) return true;
-                          return false;
-                        })
-                        .map((section, idx) => {
-                          const parsedActive = String(activeCategory).replace('group-', '');
-                          const isParentCategory = activeCategory === 'all' ? false : categories.find(c => String(c.ma_danh_muc) === parsedActive)?.cap_bac === 1;
-                          const showSectionTitle = activeCategory === 'all' || isParentCategory;
-                          
+                      {menuSections.map((section, idx) => {
                           const allItems = section.subSections.flatMap(sub => sub.items);
                           const sortedItems = [...allItems].sort((a, b) => {
                             if (sortByOrder === 'price-asc') return Number(a.gia_ban || 0) - Number(b.gia_ban || 0);
@@ -872,23 +925,21 @@ export default function OrderPage({
                             if (sortByOrder === 'name-asc') return String(a.ten_san_pham || '').localeCompare(String(b.ten_san_pham || ''), 'vi');
                             return 0;
                           });
-                          const displayItems = activeCategory === 'all' ? sortedItems.slice(0, 5) : sortedItems;
-                          const hasMore = activeCategory === 'all' && allItems.length > 5;
+                          const displayItems = sortedItems;
+                          const hasMore = false;
                           const parentCatIndex = parentCats.findIndex(c => String(c.ma_danh_muc) === String(section.id));
                           const sectionIconUrl = parentCatIndex !== -1 ? MENU_ICONS[parentCatIndex % MENU_ICONS.length] : MENU_ICONS[idx % MENU_ICONS.length];
 
                           return (
                             <section key={section.id} id={`category-${section.id}`} className="scroll-mt-[120px]">
-                              {showSectionTitle && (
-                                <div className="flex items-center mb-6">
-                                  <div className="flex items-center gap-2">
-                                    <img src={sectionIconUrl} className="w-8 h-8 object-contain" alt="" />
-                                    <h3 className="text-2xl md:text-[28px] font-black text-[#333333] uppercase font-sans tracking-wide">
-                                      {section.label}
-                                    </h3>
-                                  </div>
+                              <div className="flex items-center mb-6">
+                                <div className="flex items-center gap-2">
+                                  <img src={sectionIconUrl} className="w-8 h-8 object-contain" alt="" />
+                                  <h3 className="text-2xl md:text-[28px] font-black text-[#333333] uppercase font-sans tracking-wide">
+                                    {section.label}
+                                  </h3>
                                 </div>
-                              )}
+                              </div>
 
                               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-10">
                                 {displayItems.map((p) => {

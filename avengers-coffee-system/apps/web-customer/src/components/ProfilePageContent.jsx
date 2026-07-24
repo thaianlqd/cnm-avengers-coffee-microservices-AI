@@ -150,7 +150,6 @@ export default function ProfilePageContent({
       return response.data;
     },
     enabled: Boolean(userId),
-    enabled: Boolean(userId),
     staleTime: 60 * 1000,
   });
 

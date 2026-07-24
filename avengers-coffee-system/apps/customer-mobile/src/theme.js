@@ -1,15 +1,17 @@
-// Customer Mobile Theme - Avengers Coffee
+// Customer Mobile Theme - Avengers Coffee (iOS Modern & Web Synced)
 export const colors = {
-  // Primary brand
+  // Primary brand (Orange & Highlands Crimson sync)
   primary: '#f26b1d',
   primaryDark: '#d4560e',
   primaryLight: '#ff9e64',
+  brandRed: '#c41230',
+  brandRedDark: '#a30f28',
   secondary: '#2f2119',
   accent: '#ff9e64',
 
   // Status
-  success: '#22c55e',
-  successBg: '#f0fdf4',
+  success: '#10b981',
+  successBg: '#ecfdf5',
   warning: '#f59e0b',
   warningBg: '#fffbeb',
   danger: '#ef4444',
@@ -17,67 +19,86 @@ export const colors = {
   info: '#0ea5e9',
   infoBg: '#f0f9ff',
 
-  // Backgrounds
-  bg: '#fdf7f2',
-  surface: '#fffcf9',
-  cream: '#f9f4ef',
+  // Backgrounds & Surfaces (iOS Cream & Glass)
+  bg: '#fbf7f2',
+  surface: '#ffffff',
+  cream: '#f4f0eb',
+  creamLight: '#faf7f4',
   card: '#ffffff',
+  glass: 'rgba(255, 255, 255, 0.88)',
+  glassDark: 'rgba(26, 12, 5, 0.85)',
 
   // Text
-  text: '#18100a',
-  textSecondary: '#5f4f48',
-  muted: '#a17a62',
+  text: '#1a1008',
+  textSecondary: '#5c4d44',
+  muted: '#9e897d',
 
   // Borders & Accents
-  border: '#ead8c6',
-  borderLight: '#f3e8dd',
-  divider: '#e2d0c0',
-  placeholder: '#c7b8ad',
+  border: '#ebdcd0',
+  borderLight: '#f3e9e0',
+  divider: '#e5d7cc',
+  placeholder: '#c4b3a7',
 
   // Overlay
-  overlay: 'rgba(24, 16, 10, 0.56)',
-  overlayLight: 'rgba(24, 16, 10, 0.35)',
+  overlay: 'rgba(20, 10, 5, 0.55)',
+  overlayLight: 'rgba(20, 10, 5, 0.30)',
 
-  // Special
+  // Loyalty & Tiers
   gold: '#f59e0b',
   diamond: '#0ea5e9',
+  silver: '#94a3b8',
+  member: '#a1a1aa',
 }
 
 export const shadows = {
   xs: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
     elevation: 1,
   },
   sm: {
-    shadowColor: '#000',
+    shadowColor: '#1a1008',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
     elevation: 2,
   },
   card: {
-    shadowColor: '#000',
+    shadowColor: '#1a1008',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
     elevation: 4,
   },
   lg: {
-    shadowColor: '#000',
+    shadowColor: '#1a1008',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.16,
-    shadowRadius: 16,
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
     elevation: 8,
+  },
+  iosFloating: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 10,
   },
   primary: {
     shadowColor: '#f26b1d',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.28,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  brandRed: {
+    shadowColor: '#c41230',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.28,
+    shadowRadius: 12,
+    elevation: 6,
   },
 }
 
@@ -91,11 +112,13 @@ export const spacing = {
 }
 
 export const radius = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
+  xs: 6,
+  sm: 10,
+  md: 14,
+  lg: 18,
+  xl: 22,
   xxl: 28,
+  pill: 9999,
   full: 9999,
 }
 
@@ -104,40 +127,43 @@ export const typography = {
     fontSize: 32,
     fontWeight: '900',
     lineHeight: 40,
+    letterSpacing: -0.5,
   },
   h2: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '800',
-    lineHeight: 36,
+    lineHeight: 34,
+    letterSpacing: -0.4,
   },
   h3: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '700',
-    lineHeight: 32,
-  },
-  h4: {
-    fontSize: 20,
-    fontWeight: '800',
     lineHeight: 28,
   },
-  body: {
-    fontSize: 16,
-    fontWeight: '400',
-    lineHeight: 24,
-  },
-  bodyBold: {
-    fontSize: 16,
+  h4: {
+    fontSize: 18,
     fontWeight: '700',
     lineHeight: 24,
   },
+  body: {
+    fontSize: 15,
+    fontWeight: '400',
+    lineHeight: 22,
+  },
+  bodyBold: {
+    fontSize: 15,
+    fontWeight: '700',
+    lineHeight: 22,
+  },
   label: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
-    lineHeight: 16,
+    lineHeight: 18,
   },
   caption: {
     fontSize: 12,
-    fontWeight: '400',
+    fontWeight: '500',
     lineHeight: 16,
   },
 }
+

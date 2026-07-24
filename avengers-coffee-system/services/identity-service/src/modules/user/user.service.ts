@@ -76,6 +76,7 @@ export class UserService implements OnModuleInit {
       ma_hang: 'MEMBER',
       ten_hang: 'Thành viên',
       diem_toi_thieu: 0,
+      chi_tieu_toi_thieu_thang: 0,
       he_so_diem: 1,
       voucher_sinh_nhat_value: 10,
       voucher_sinh_nhat_cap: 20000,
@@ -91,6 +92,7 @@ export class UserService implements OnModuleInit {
       ma_hang: 'SILVER',
       ten_hang: 'Bạc',
       diem_toi_thieu: 1000,
+      chi_tieu_toi_thieu_thang: 100000,
       he_so_diem: 1.2,
       voucher_sinh_nhat_value: 15,
       voucher_sinh_nhat_cap: 40000,
@@ -106,6 +108,7 @@ export class UserService implements OnModuleInit {
       ma_hang: 'GOLD',
       ten_hang: 'Vàng',
       diem_toi_thieu: 3000,
+      chi_tieu_toi_thieu_thang: 300000,
       he_so_diem: 1.5,
       voucher_sinh_nhat_value: 25,
       voucher_sinh_nhat_cap: 80000,
@@ -121,6 +124,7 @@ export class UserService implements OnModuleInit {
       ma_hang: 'DIAMOND',
       ten_hang: 'Kim cương',
       diem_toi_thieu: 5000,
+      chi_tieu_toi_thieu_thang: 500000,
       he_so_diem: 2,
       voucher_sinh_nhat_value: 40,
       voucher_sinh_nhat_cap: 150000,
@@ -1423,7 +1427,7 @@ export class UserService implements OnModuleInit {
     };
   }
 
-  private async layQuyenLoiTheoHangAsync(maHang: string) {
+  private async layQuyenLoiTheoHangAsync(maHang: string, datDieuKienDacQuyen: boolean = true) {
     const config = UserService.tierConfigCache || this.DEFAULT_TIER_CONFIG;
     const tier = config.find((t) => t.ma_hang === maHang);
     if (!tier) {
@@ -1435,6 +1439,23 @@ export class UserService implements OnModuleInit {
         voucher_exclusive: false,
         mau_sac: '#9ca3af',
         gradient: ['#9ca3af', '#6b7280'],
+      };
+    }
+
+    if (!datDieuKienDacQuyen && maHang !== 'MEMBER') {
+      const minSpendStr = Number(tier.chi_tieu_toi_thieu_thang || 0).toLocaleString('vi-VN');
+      return {
+        he_so_diem: 1,
+        voucher_sinh_nhat: `Chưa kích hoạt (Cần chi tiêu ${minSpendStr}đ/tháng)`,
+        freeship: `Chưa kích hoạt (Cần chi tiêu ${minSpendStr}đ/tháng)`,
+        freeship_value: 0,
+        freeship_min_order: 0,
+        luot_quay_thang: 1,
+        voucher_exclusive: false,
+        mau_sac: tier.mau_sac || '#9ca3af',
+        gradient: tier.gradient || ['#9ca3af', '#6b7280'],
+        dac_quyen_khoa: true,
+        ly_do_khoa: `Cần chi tiêu tối thiểu ${minSpendStr}đ trong tháng để kích hoạt đặc quyền Hạng ${tier.ten_hang}`,
       };
     }
 
@@ -1481,6 +1502,7 @@ export class UserService implements OnModuleInit {
       voucher_exclusive: tier.ma_hang === 'GOLD' || tier.ma_hang === 'DIAMOND',
       mau_sac: tier.mau_sac || '#9ca3af',
       gradient: tier.gradient || ['#9ca3af', '#6b7280'],
+      dac_quyen_khoa: false,
     };
   }
 
@@ -1505,11 +1527,30 @@ export class UserService implements OnModuleInit {
     const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: maNguoiDung } });
     if (!user) return { diem_moi: 0 }; // Silently fail - called cross-service
 
+    // Check monthly spend reset
+    const currentMonth = new Date().toISOString().substring(0, 7);
+    if (user.thang_chi_tieu_gan_nhat !== currentMonth) {
+      user.chi_tieu_thang_nay = 0;
+      user.thang_chi_tieu_gan_nhat = currentMonth;
+    }
+
     const hangTruoc = this.tinhHangThanhVien(user.diem_loyalty || 0);
-    const diemCong = Math.floor(diem);
-    user.diem_loyalty = (user.diem_loyalty || 0) + diemCong;
-    user.diem_kha_dung = (user.diem_kha_dung || 0) + diemCong;
-    user.tong_chi_tieu = Number(user.tong_chi_tieu || 0) + (diemCong * 1000);
+    const config = UserService.tierConfigCache || this.DEFAULT_TIER_CONFIG;
+    const tierConfig = config.find((t) => t.ma_hang === hangTruoc.ma_hang);
+    const minSpend = Number(tierConfig?.chi_tieu_toi_thieu_thang || 0);
+    const curMonthSpend = Number(user.chi_tieu_thang_nay || 0);
+    const activePrivilege = (hangTruoc.ma_hang === 'MEMBER') || (curMonthSpend >= minSpend);
+
+    // Dynamic multiplier based on privilege qualification
+    const multiplier = activePrivilege ? Number(tierConfig?.he_so_diem || 1) : 1;
+    const diemGoc = Math.floor(diem);
+    const diemCongActual = Math.floor(diemGoc * multiplier);
+
+    user.diem_loyalty = (user.diem_loyalty || 0) + diemCongActual;
+    user.diem_kha_dung = (user.diem_kha_dung || 0) + diemCongActual;
+    const addedMoney = diemGoc * 1000;
+    user.tong_chi_tieu = Number(user.tong_chi_tieu || 0) + addedMoney;
+    user.chi_tieu_thang_nay = Number(user.chi_tieu_thang_nay || 0) + addedMoney;
     await this.userRepo.save(user);
 
     const hangSau = this.tinhHangThanhVien(user.diem_loyalty);
@@ -1713,6 +1754,10 @@ export class UserService implements OnModuleInit {
       hien_thi_cho_khach: p.hien_thi_cho_khach,
       ten_san_pham_tang: p.ten_san_pham_tang,
       hinh_anh: p.hinh_anh,
+      loai_phan_phoi: p.loai_phan_phoi || (p.ma_nguoi_dung ? 'PERSONAL' : 'PUBLIC'),
+      loai_su_kien: p.loai_su_kien || null,
+      ma_nguoi_dung: p.ma_nguoi_dung || null,
+      ma_template_goc: p.ma_template_goc || null,
       ngay_tao: p.ngay_tao,
       ngay_cap_nhat: p.ngay_cap_nhat,
       da_dung_boi_ban: usedByUser,
@@ -1868,6 +1913,8 @@ export class UserService implements OnModuleInit {
       if (p.ngay_bat_dau && new Date(p.ngay_bat_dau) > now) return false;
       if (p.ngay_ket_thuc && new Date(p.ngay_ket_thuc) < now) return false;
       if (p.so_luong_toi_da > 0 && p.so_luong_da_dung >= p.so_luong_toi_da) return false;
+      const usedByUser = usageMap[p.ma_khuyen_mai] || 0;
+      if (usedByUser >= (p.gioi_han_moi_nguoi || 1)) return false;
       return true;
     }).map((p) => {
       const usedByUser = usageMap[p.ma_khuyen_mai] || 0;
@@ -1949,7 +1996,14 @@ export class UserService implements OnModuleInit {
         soTienGiam = Number(p.giam_toi_da);
       }
     } else if (p.loai_khuyen_mai === 'FIXED') {
-      soTienGiam = Math.min(Number(p.gia_tri), Number(giaTriDon));
+      const val = Number(p.gia_tri || 0);
+      soTienGiam = Math.min(val > 0 ? val : 10000, Number(giaTriDon));
+    } else if (p.loai_khuyen_mai === 'FREE_ITEM' || p.ma_khuyen_mai?.includes('TOPPING') || p.ten_khuyen_mai?.toLowerCase().includes('topping')) {
+      const freeVal = Number(p.gia_tri) > 0 ? Number(p.gia_tri) : 10000;
+      soTienGiam = Math.min(freeVal, Number(giaTriDon));
+    } else {
+      const freeVal = Number(p.gia_tri) > 0 ? Number(p.gia_tri) : 10000;
+      soTienGiam = Math.min(freeVal, Number(giaTriDon));
     }
 
     return {
@@ -2032,6 +2086,7 @@ export class UserService implements OnModuleInit {
     p.hinh_anh = null;
     p.ma_nguoi_dung = cleanUserId; // gán riêng cho user này
     p.loai_su_kien = 'SURVEY';
+    p.loai_phan_phoi = 'PERSONAL';
 
     const saved = await this.promotionRepo.save(p);
     return {
@@ -2275,12 +2330,27 @@ export class UserService implements OnModuleInit {
     const cost = Number(config.chi_phi_quay || 100);
     const prizes = config.giai_thuong || this.DEFAULT_LUCKY_WHEEL_CONFIG.giai_thuong;
 
-    // Đảm bảo các thuộc tính được map đúng
+    // Đảm bảo các thuộc tính được map đúng và hiển thị mô tả thay vì mã voucher thô
     const updatedPrizes = prizes.map(prize => {
-      if (prize.loai === 'FREE_ITEM' && !prize.ten_san_pham_tang) {
-        return { ...prize, ten_san_pham_tang: 'Topping bất kỳ' };
+      let ten = prize.ten;
+      if (prize.loai === 'VOUCHER' || (ten && String(ten).startsWith('TPL_'))) {
+        if (prize.mo_ta && !String(prize.mo_ta).startsWith('TPL_')) {
+          ten = prize.mo_ta;
+        } else if (prize.gia_tri > 0) {
+          if (prize.gia_tri <= 100) {
+            ten = `Giảm ${prize.gia_tri}%`;
+          } else if (prize.gia_tri >= 1000) {
+            ten = `Voucher ${(prize.gia_tri / 1000).toLocaleString('vi-VN')}K`;
+          } else {
+            ten = `Voucher Giảm Giá`;
+          }
+        } else {
+          ten = `Voucher Giảm Giá`;
+        }
+      } else if (prize.loai === 'FREE_ITEM' && !prize.ten_san_pham_tang) {
+        return { ...prize, ten, ten_san_pham_tang: 'Topping bất kỳ' };
       }
-      return prize;
+      return { ...prize, ten };
     });
 
     return { chi_phi_quay: cost, giai_thuong: updatedPrizes };
@@ -2313,7 +2383,7 @@ export class UserService implements OnModuleInit {
     let voucherCode: string | null = null;
     if (winner.loai === 'POINTS') {
       user.diem_kha_dung = (user.diem_kha_dung || 0) + Number(winner.gia_tri || 0);
-      user.diem_loyalty = (user.diem_loyalty || 0) + Number(winner.gia_tri || 0);
+      // Chỉ cộng vào điểm khả dụng, giữ nguyên điểm tích lũy hạng (diem_loyalty)
       await this.userRepo.save(user);
     } else if (winner.loai === 'VOUCHER' || winner.loai === 'FREE_ITEM') {
       voucherCode = `WHEEL_${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
@@ -2344,6 +2414,7 @@ export class UserService implements OnModuleInit {
         p.hien_thi_cho_khach = true;
         p.ma_nguoi_dung = maNguoiDung;
         p.loai_su_kien = 'LUCKY_WHEEL';
+        p.loai_phan_phoi = 'PERSONAL';
         p.hang_toi_thieu = null;
         p.ten_san_pham_tang = template ? template.ten_san_pham_tang : (winner.loai === 'FREE_ITEM' ? (winner.ten_san_pham_tang || 'Topping bất kỳ') : null);
         p.hinh_anh = template ? template.hinh_anh : null;
@@ -2377,9 +2448,25 @@ export class UserService implements OnModuleInit {
     const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: maNguoiDung } });
     if (!user) throw new NotFoundException('Khong tim thay nguoi dung');
 
+    // Monthly spend reset check
+    const currentMonth = new Date().toISOString().substring(0, 7);
+    if (user.thang_chi_tieu_gan_nhat !== currentMonth) {
+      user.chi_tieu_thang_nay = 0;
+      user.thang_chi_tieu_gan_nhat = currentMonth;
+      await this.userRepo.save(user);
+    }
+
     const diem = user.diem_loyalty || 0;
     const hang = this.tinhHangThanhVien(diem);
-    const quyenLoi = await this.layQuyenLoiTheoHangAsync(hang.ma_hang);
+
+    const tierConfigs = UserService.tierConfigCache || this.DEFAULT_TIER_CONFIG;
+    const currentTierConfig = tierConfigs.find(t => t.ma_hang === hang.ma_hang) || tierConfigs[0];
+    const chiTieuToiThieuThang = Number(currentTierConfig.chi_tieu_toi_thieu_thang || 0);
+    const chiTieuThangNay = Number(user.chi_tieu_thang_nay || 0);
+    const datDieuKienDacQuyen = (hang.ma_hang === 'MEMBER') || (chiTieuThangNay >= chiTieuToiThieuThang);
+    const conThieuThangNay = Math.max(0, chiTieuToiThieuThang - chiTieuThangNay);
+
+    const quyenLoi = await this.layQuyenLoiTheoHangAsync(hang.ma_hang, datDieuKienDacQuyen);
 
     // Lấy personal vouchers (sinh nhật, lên hạng, vòng quay)
     const personalVouchers = await this.promotionRepo.find({
@@ -2394,17 +2481,16 @@ export class UserService implements OnModuleInit {
       .filter(p => p.loai_su_kien !== 'FREESHIP' && !p.ma_khuyen_mai?.startsWith('FS_'))
       .map(p => this.mapPromotionItem(p));
 
-    // Tất cả các hạng được đồng bộ động từ Admin Config
-    const tierConfigs = UserService.tierConfigCache || this.DEFAULT_TIER_CONFIG;
     const TIER_ICONS: Record<string, string> = { MEMBER: '🎖️', SILVER: '🥈', GOLD: '🥇', DIAMOND: '💎' };
 
     const tatCaHang = await Promise.all(
       tierConfigs.map(async (t) => {
-        const q = await this.layQuyenLoiTheoHangAsync(t.ma_hang);
+        const q = await this.layQuyenLoiTheoHangAsync(t.ma_hang, true);
         return {
           ma: t.ma_hang,
           ten: t.ten_hang,
           diem: Number(t.diem_toi_thieu || 0),
+          chi_tieu_toi_thieu_thang: Number(t.chi_tieu_toi_thieu_thang || 0),
           icon: t.icon || TIER_ICONS[t.ma_hang] || '🎖️',
           he_so_diem: q.he_so_diem,
           voucher_sinh_nhat: q.voucher_sinh_nhat,
@@ -2423,6 +2509,10 @@ export class UserService implements OnModuleInit {
       diem_loyalty: diem,
       diem_kha_dung: user.diem_kha_dung || 0,
       tong_chi_tieu: Number(user.tong_chi_tieu || 0),
+      chi_tieu_thang_nay: chiTieuThangNay,
+      chi_tieu_toi_thieu_thang: chiTieuToiThieuThang,
+      con_thieu_thang_nay: conThieuThangNay,
+      dat_dieu_kien_dac_quyen: datDieuKienDacQuyen,
       hang_hien_tai: hang,
       quyen_loi_hien_tai: quyenLoi,
       tat_ca_hang: tatCaHang,
