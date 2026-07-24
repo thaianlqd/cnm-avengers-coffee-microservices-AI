@@ -751,8 +751,9 @@ export default function ChatWidget({ user, socketUrl }) {
                     border: 'none', outline: 'none', cursor: 'pointer', flex: 1, padding: '6px 0', borderRadius: 10,
                     fontSize: '0.74rem', fontWeight: 800, textAlign: 'center', transition: 'all 0.2s',
                     background: chatMode === mode ? '#FFFFFF' : 'transparent',
-                    color: chatMode === mode ? '#F08080' : '#718096',
-                    boxShadow: chatMode === mode ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+                    color: chatMode === mode ? '#b22830' : '#718096',
+                    boxShadow: chatMode === mode ? '0 2px 5px rgba(0,0,0,0.06)' : 'none',
+
                   }}
                 >
                   {label}
@@ -785,12 +786,18 @@ export default function ChatWidget({ user, socketUrl }) {
                 {chatMode === 'AI' && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center' }}>
                     {QUICK_ACTIONS.slice(0, 4).map((a) => (
-                      <button
-                        key={a.id}
-                        onClick={() => sendMessage(a.text)}
-                        style={{ border: 'none', outline: 'none', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 700, color: '#F08080', background: '#FFFFFF', padding: '7px 14px', borderRadius: 20, border: '1.5px solid #F0808040', boxShadow: '0 2px 6px rgba(240,128,128,0.1)' }}
-                      >
-                        {a.label}
+                  <button
+                    key={a.id}
+                    onClick={() => sendMessage(a.text)}
+                    style={{ 
+                      outline: 'none', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 700, 
+                      color: '#b22830', background: '#FFFFFF', padding: '7px 14px', 
+                      borderRadius: 20, border: '1px solid #b22830', 
+                      display: 'flex', alignItems: 'center', gap: 4 
+                    }}
+                  >
+                    {a.icon} {a.label}
+
                       </button>
                     ))}
                   </div>
@@ -954,56 +961,56 @@ export default function ChatWidget({ user, socketUrl }) {
             </div>
           )}
 
-          {/* Input Footer */}
-          <div style={{
-            padding: '10px 14px', background: '#FFFFFF',
-            borderTop: '1px solid #FFE3E3', display: 'flex', alignItems: 'center', gap: 8,
-          }}>
-            {/* Voice input button */}
-            <button
-              onClick={startVoice}
-              style={{ border: 'none', background: isListening ? '#EF4444' : '#FFF0F0', color: isListening ? '#FFF' : '#F08080', width: 36, height: 36, borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}
-              title="Nhập bằng giọng nói"
-            >
-              🎤
-            </button>
+          {/* Input area */}
+          <div style={{ padding: '10px 12px 14px', background: '#fff', borderTop: '1px solid #e9ecef', display: 'flex', flexDirection: 'column', gap: 9 }}>
+            {/* Quick bar */}
+            {chatMode === 'AI' && (
+              <div style={{ display: 'flex', gap: 5, overflowX: 'auto', paddingBottom: 1 }}>
+                {QUICK_ACTIONS.map((a) => (
+                  <button key={a.id} onClick={() => sendMessage(a.text)} style={{ all: 'unset', cursor: 'pointer', fontSize: '0.68rem', fontWeight: 700, color: '#495057', background: '#f8f9fa', padding: '5px 10px', borderRadius: 20, border: '1px solid #e9ecef', whiteSpace: 'nowrap', flexShrink: 0, transition: 'all 0.15s' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = '#fff3f0'; e.currentTarget.style.color = '#b22830'; e.currentTarget.style.borderColor = '#b2283040'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = '#f8f9fa'; e.currentTarget.style.color = '#495057'; e.currentTarget.style.borderColor = '#e9ecef'; }}
+                  >
+                    {a.icon} {a.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
-            {/* Input field */}
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') sendMessage(); }}
-              placeholder={chatMode === 'AI' ? 'Hỏi AI bất kỳ điều gì...' : 'Nhập tin nhắn...'}
-              style={{
-                flex: 1, padding: '10px 14px', borderRadius: 20,
-                border: '1.5px solid #FFE3E3', outline: 'none',
-                fontSize: '0.84rem', background: '#FAFAFA', color: '#2D3748',
-                transition: 'border 0.2s',
-              }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = '#F08080'; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = '#FFE3E3'; }}
-            />
+            {/* Input row */}
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+              <div style={{ flex: 1, background: '#f8f9fa', borderRadius: 22, border: '1.5px solid #e9ecef', padding: '9px 14px', transition: 'border-color 0.2s, box-shadow 0.2s', display: 'flex', alignItems: 'center' }}>
+                <textarea
+                  ref={inputRef}
+                  value={inputText}
+                  onChange={(e) => { setInputText(e.target.value); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px'; }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+                  onFocus={(e) => { e.currentTarget.parentElement.style.borderColor = '#b22830'; e.currentTarget.parentElement.style.boxShadow = '0 0 0 3px rgba(178,40,48,0.12)'; }}
+                  onBlur={(e) => { e.currentTarget.parentElement.style.borderColor = '#e9ecef'; e.currentTarget.parentElement.style.boxShadow = 'none'; }}
+                  placeholder={chatMode === 'AI' ? 'Nhắn tin với AI...' : 'Nhắn tin cho nhân viên...'}
+                  rows={1}
+                  style={{ flex: 1, border: 'none', padding: 0, outline: 'none', background: 'transparent', fontSize: '0.84rem', color: '#212529', resize: 'none', maxHeight: 100, lineHeight: 1.5, fontFamily: 'inherit' }}
+                />
+              </div>
 
-            {/* Send button */}
-            <button
-              onClick={() => sendMessage()}
-              disabled={!inputText.trim() || sending}
-              style={{
-                border: 'none', outline: 'none', cursor: (!inputText.trim() || sending) ? 'not-allowed' : 'pointer',
-                width: 36, height: 36, borderRadius: '50%',
-                background: (!inputText.trim() || sending) ? '#CBD5E0' : 'linear-gradient(135deg, #F08080 0%, #E55353 100%)',
-                color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0, boxShadow: (!inputText.trim() || sending) ? 'none' : '0 2px 8px rgba(240,128,128,0.4)',
-                transition: 'all 0.2s',
-              }}
-              title="Gửi"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="22" y1="2" x2="11" y2="13" />
-                <polygon points="22 2 15 22 11 13 2 9 22 2" />
-              </svg>
-            </button>
+              {chatMode === 'AI' && (
+                <button onClick={startVoice} disabled={isListening} title="Nói để đặt hàng"
+                  style={{ padding: 0, outline: 'none', cursor: 'pointer', width: 42, height: 42, borderRadius: '50%', background: isListening ? 'linear-gradient(135deg,#ef4444,#dc2626)' : '#f8f9fa', border: '1.5px solid #e9ecef', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s', boxShadow: isListening ? '0 0 0 4px rgba(239,68,68,0.2)' : 'none', animation: isListening ? 'micPulse 1s ease-in-out infinite' : 'none' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke={isListening ? '#fff' : '#868e96'} style={{ width: 18, height: 18 }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
+                  </svg>
+                </button>
+              )}
+
+              <button onClick={() => sendMessage()} disabled={!inputText.trim() || sending}
+                style={{ border: 'none', padding: 0, outline: 'none', cursor: !inputText.trim() || sending ? 'not-allowed' : 'pointer', width: 42, height: 42, borderRadius: '50%', background: !inputText.trim() || sending ? '#e9ecef' : 'linear-gradient(135deg,#b22830,#911f25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s', boxShadow: !inputText.trim() || sending ? 'none' : '0 3px 12px rgba(178,40,48,0.4)' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke={!inputText.trim() || sending ? '#adb5bd' : '#fff'} style={{ width: 16, height: 16, transform: 'translateX(1px)' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
           </div>
         </div>
       )}

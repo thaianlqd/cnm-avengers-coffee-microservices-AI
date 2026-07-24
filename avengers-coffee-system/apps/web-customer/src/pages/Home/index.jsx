@@ -95,8 +95,8 @@ export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider, categorie
                   onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80'; }}
                 />
               </div>
-              <div className="bg-[#f9f4ec] group-hover:bg-[#e8decb] transition-colors duration-300 rounded-b-[20px] py-10 w-full flex items-center justify-center">
-                 <p className="text-center text-xl font-bold uppercase tracking-wide text-[#333333] transition-colors duration-300">{t('home.tastyDrinks')}</p>
+              <div className="bg-[#b22830] group-hover:bg-[#911f25] transition-colors duration-300 rounded-b-[20px] py-10 w-full flex items-center justify-center">
+                 <p className="text-center text-xl font-bold uppercase tracking-wide text-white transition-colors duration-300">{t('home.tastyDrinks')}</p>
               </div>
             </button>
             <button
