@@ -2,7 +2,7 @@
   max-width: 1180px;
   margin: 0 auto;
   padding: 24px;
-  font-family: 'Nunito', system-ui, sans-serif;
+  font-family: 'Quicksand', 'Plus Jakarta Sans', system-ui, sans-serif;
 }
 
 .hero {
@@ -370,6 +370,7 @@ button:disabled {
   0% {
     transform: translateX(0);
   }
+
   100% {
     transform: translateX(calc(-50% - 8px));
   }
