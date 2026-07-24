@@ -152,45 +152,40 @@ export default function LuckyWheelPage({ user, onNavigate }) {
   return (
     <div className="bg-[#fcfbf9] min-h-screen pb-16">
       {/* Header */}
-      <section className="bg-gradient-to-b from-red-50/40 via-white to-[#fcfbf9] border-b border-gray-100">
-        <div className="mx-auto max-w-[1240px] px-4 py-10 md:px-6">
+      <section className="bg-gradient-to-b from-red-50/50 via-white to-[#fcfbf9] border-b border-gray-100">
+        <div className="mx-auto max-w-[1240px] px-4 py-8 md:px-6">
           <div className="flex items-center gap-1.5">
-            <SparklesIcon className="w-4 h-4 text-[#c89a58]" />
-            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#b22830]">Mini Game & Giải thưởng</p>
+            <SparklesIcon className="w-4 h-4 text-amber-600" />
+            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#b22830]">MINI GAME & ĐẶC QUYỀN MỤC THƯỞNG</p>
           </div>
-          <h1 className="mt-3 text-3xl font-black uppercase tracking-tight text-[#2b2b2b] md:text-5xl" style={{ fontFamily: "'Playfair Display', serif" }}>
-            Vòng quay may mắn
+          <h1 className="mt-2 text-3xl font-black uppercase tracking-tight text-gray-900 md:text-4xl font-sans">
+            VÒNG QUAY MAY MẮN
           </h1>
-          <p className="mt-3 max-w-[780px] text-sm font-semibold leading-relaxed text-gray-500 md:text-base">
-            Dùng {cost} điểm khả dụng của bạn để tham gia quay thưởng (không bị trừ điểm tích lũy xét hạng). Cơ hội 100% nhận điểm thưởng, voucher giảm giá tiền mặt hoặc đồ uống miễn phí hoàn toàn.
+          <p className="mt-2 max-w-[780px] text-xs font-semibold leading-relaxed text-gray-500 md:text-sm">
+            Dùng <strong className="text-gray-900">{cost} điểm khả dụng</strong> để tham gia quay thưởng (không ảnh hưởng điểm xét hạng thành viên). Cơ hội 100% trúng thưởng điểm, voucher tiền mặt hoặc ưu đãi độc quyền.
           </p>
         </div>
       </section>
 
-      <div className="mx-auto max-w-[1240px] px-4 md:px-6 mt-4 grid gap-8 lg:grid-cols-12 items-start">
+      <div className="mx-auto max-w-[1240px] px-4 md:px-6 mt-6 grid gap-8 lg:grid-cols-12 items-start">
         {/* Left column - The Wheel */}
         <div className="lg:col-span-7 flex flex-col items-center justify-center relative pt-2 pb-6">
           {/* Arrow / Marker */}
-          <div className="absolute top-[2px] z-30 flex flex-col items-center">
-            <div className="w-10 h-10 bg-[#b22830] rounded-full shadow-xl flex items-center justify-center border-4 border-[#c89a58] animate-bounce">
-              <ChevronDownIcon className="w-5 h-5 text-[#c89a58] stroke-[3]" />
+          <div className="absolute top-0 z-30 flex flex-col items-center">
+            <div className="w-10 h-10 bg-gradient-to-b from-[#c41230] to-[#80071c] rounded-full shadow-lg flex items-center justify-center border-2 border-amber-300">
+              <ChevronDownIcon className="w-5 h-5 text-amber-200 stroke-[3]" />
             </div>
-            <div className="w-0.5 h-3 bg-[#c89a58] -mt-1 shadow-md"></div>
+            <div className="w-1 h-3 bg-amber-400 -mt-1 shadow-sm rounded-b"></div>
           </div>
 
-          {/* Wheel container with gold accents and flashing bulbs illusion */}
-          <div className="relative w-[340px] h-[340px] md:w-[430px] md:h-[430px] rounded-full border-[14px] border-[#4a3728] bg-[#4a3728] shadow-2xl p-1 flex items-center justify-center">
-            {/* Outer gold rim */}
-            <div className="absolute inset-0 rounded-full border-[3px] border-[#c89a58] pointer-events-none z-10 m-[-8px]"></div>
-            
-            {/* Flashing bulbs around the rim */}
-            <div className="absolute inset-[-10px] rounded-full pointer-events-none z-15 flex items-center justify-center">
-              <div className="w-full h-full rounded-full border border-dashed border-[#c89a58]/40 animate-[spin_80s_linear_infinite]"></div>
-            </div>
+          {/* Wheel container with sleek gold & ruby rim */}
+          <div className="relative w-[340px] h-[340px] md:w-[420px] md:h-[420px] rounded-full border-[12px] border-amber-600/90 bg-[#b22830] ring-4 ring-amber-400/50 shadow-2xl p-1 flex items-center justify-center">
+            {/* Outer gold accent line */}
+            <div className="absolute inset-0 rounded-full border-[2px] border-amber-300/80 pointer-events-none z-10 m-[-6px]"></div>
             
             <div 
               ref={wheelRef}
-              className="w-full h-full rounded-full overflow-hidden relative transition-transform duration-[5000ms] cubic-bezier(0.1, 0.8, 0.1, 1) border-2 border-[#4a3728]"
+              className="w-full h-full rounded-full overflow-hidden relative transition-transform duration-[5000ms] cubic-bezier(0.1, 0.8, 0.1, 1) border-2 border-amber-700/50"
               style={{ 
                 transform: `rotate(${currentRotation}deg)`,
                 backgroundImage: prizes.length > 0 
@@ -210,11 +205,11 @@ export default function LuckyWheelPage({ user, onNavigate }) {
                       transform: `rotate(${angle}deg)`,
                     }}
                   >
-                    <div className="flex flex-col items-center justify-center -translate-y-[85px] md:-translate-y-[110px] rotate-[270deg] max-w-[85px] text-center">
-                      <div className="p-1.5 rounded-full bg-white/10 backdrop-blur-xs shadow-inner flex items-center justify-center">
-                        {getPrizeIcon(prize.icon, "w-6 h-6 text-white drop-shadow-md")}
+                    <div className="flex flex-col items-center justify-center -translate-y-[82px] md:-translate-y-[105px] rotate-[270deg] max-w-[85px] text-center">
+                      <div className="p-1.5 rounded-full bg-white/20 backdrop-blur-xs shadow-xs flex items-center justify-center">
+                        {getPrizeIcon(prize.icon, "w-5 h-5 text-white drop-shadow-sm")}
                       </div>
-                      <span className="text-[9px] md:text-[10px] font-black uppercase tracking-wider mt-1.5 drop-shadow-md leading-tight max-w-[70px]">
+                      <span className="text-[9px] md:text-[10px] font-black uppercase tracking-wider mt-1 drop-shadow-md leading-tight max-w-[68px]">
                         {displayName}
                       </span>
                     </div>
@@ -224,36 +219,36 @@ export default function LuckyWheelPage({ user, onNavigate }) {
             </div>
 
             {/* Inner Center Pin & SPIN Button */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-white rounded-full shadow-2xl flex items-center justify-center border-4 border-[#c89a58] z-20 hover:scale-105 transition-transform duration-200">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-white rounded-full shadow-2xl flex items-center justify-center border-4 border-amber-400 z-20 hover:scale-105 transition-transform duration-200">
               <button 
                 onClick={handleSpin}
                 disabled={isSpinning}
-                className="w-[76px] h-[76px] bg-gradient-to-br from-[#b22830] to-[#8f1d24] hover:from-[#c41230] hover:to-[#a30f28] text-white rounded-full flex flex-col items-center justify-center font-black uppercase tracking-widest text-[11px] shadow-lg active:scale-95 transition-all disabled:from-gray-300 disabled:to-gray-400 cursor-pointer border-none"
-                style={{ boxShadow: 'inset 0 3px 5px rgba(255,255,255,0.25), 0 4px 8px rgba(0,0,0,0.3)' }}
+                className="w-[78px] h-[78px] bg-gradient-to-br from-[#c41230] via-[#b22830] to-[#80071c] hover:from-[#d11535] hover:to-[#910a22] text-white rounded-full flex flex-col items-center justify-center font-black uppercase tracking-widest text-[11px] shadow-lg active:scale-95 transition-all disabled:from-gray-300 disabled:to-gray-400 cursor-pointer border-none"
               >
                 {isSpinning ? (
-                  <ArrowPathIcon className="h-6 w-6 animate-spin text-[#f4f0eb]" />
+                  <ArrowPathIcon className="h-6 w-6 animate-spin text-amber-200" />
                 ) : (
-                  <span className="text-xs font-black tracking-widest">QUAY</span>
+                  <span className="text-xs font-black tracking-widest drop-shadow-xs">QUAY</span>
                 )}
               </button>
             </div>
           </div>
 
-          <div className="mt-6 text-center bg-white py-4 px-8 rounded-2xl border border-gray-200/60 shadow-sm flex flex-col items-center gap-2">
+          {/* User Points Info Card */}
+          <div className="mt-6 text-center bg-white py-3.5 px-8 rounded-2xl border border-gray-200/80 shadow-2xs flex flex-col items-center gap-2">
             <div className="flex items-center gap-6">
               <div>
-                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Điểm khả dụng của bạn</p>
+                <p className="text-[9px] text-gray-400 font-extrabold uppercase tracking-wider">Điểm khả dụng của bạn</p>
                 <p className="text-base font-black text-[#b22830] mt-0.5">{diemKhaDung.toLocaleString('vi-VN')} điểm</p>
               </div>
-              <div className="h-8 w-px bg-gray-250"></div>
+              <div className="h-7 w-px bg-gray-200"></div>
               <div>
-                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Chi phí / lượt quay</p>
-                <p className="text-base font-black text-[#a38043] mt-0.5">{cost} điểm</p>
+                <p className="text-[9px] text-gray-400 font-extrabold uppercase tracking-wider">Chi phí / lượt quay</p>
+                <p className="text-base font-black text-amber-700 mt-0.5">{cost} điểm</p>
               </div>
             </div>
-            <p className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-              🛡️ Sử dụng điểm khả dụng để quay (Không trừ điểm tích lũy xét hạng)
+            <p className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-3 py-0.5 rounded-full border border-emerald-200/80">
+              Sử dụng điểm khả dụng để quay (Không bị trừ điểm tích lũy xét hạng)
             </p>
           </div>
         </div>

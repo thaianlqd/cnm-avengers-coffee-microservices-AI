@@ -83,16 +83,35 @@ export default function ProfilePage({ user, onOpenOrderHistory }) {
           )}
 
           {activeTab === 'password' && (
-            <>
-              <h2 className="text-[18px] font-black uppercase text-gray-800 mb-6">Đổi mật khẩu</h2>
-              <div className="space-y-4 max-w-sm">
-                <p className="text-[14px] text-gray-500 mb-4">Để đảm bảo tính bảo mật, vui lòng đặt mật khẩu với ít nhất 8 ký tự.</p>
-                <input type="password" placeholder="Mật khẩu cũ" className="w-full border border-gray-300 p-3 text-[14px] outline-none focus:border-[#b22830]" />
-                <input type="password" placeholder="Mật khẩu mới" className="w-full border border-gray-300 p-3 text-[14px] outline-none focus:border-[#b22830]" />
-                <input type="password" placeholder="Xác nhận mật khẩu mới" className="w-full border border-gray-300 p-3 text-[14px] outline-none focus:border-[#b22830]" />
-                <button className="bg-[#b22830] text-white px-6 py-3 font-bold text-[14px] hover:bg-red-800 transition-colors">ĐẶT LẠI MẬT KHẨU</button>
+            <div className="max-w-md rounded-2xl border border-gray-200/90 bg-white p-6 shadow-2xs">
+              <div className="flex items-center gap-2.5 border-b border-gray-100 pb-4 mb-4">
+                <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center text-[#b22830] border border-red-100 shrink-0">
+                  <span className="text-sm">🔒</span>
+                </div>
+                <div>
+                  <h2 className="text-base font-black uppercase text-gray-900 tracking-wide font-sans">Đổi Mật Khẩu</h2>
+                  <p className="text-xs font-semibold text-gray-500 mt-0.5">Đặt mật khẩu an toàn với ít nhất 6 ký tự để bảo vệ tài khoản</p>
+                </div>
               </div>
-            </>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-xs font-extrabold uppercase tracking-wider text-gray-700">Mật khẩu hiện tại</label>
+                  <input type="password" placeholder="Nhập mật khẩu hiện tại" className="w-full rounded-xl border border-gray-200/90 px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-red-100 transition-all text-gray-800" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-extrabold uppercase tracking-wider text-gray-700">Mật khẩu mới</label>
+                  <input type="password" placeholder="Nhập mật khẩu mới" className="w-full rounded-xl border border-gray-200/90 px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-red-100 transition-all text-gray-800" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-extrabold uppercase tracking-wider text-gray-700">Xác nhận mật khẩu mới</label>
+                  <input type="password" placeholder="Xác nhận lại mật khẩu mới" className="w-full rounded-xl border border-gray-200/90 px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-red-100 transition-all text-gray-800" />
+                </div>
+                <button className="w-full sm:w-auto rounded-xl bg-[#b22830] hover:bg-[#8f1d24] px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-2xs transition-all cursor-pointer active:scale-95">
+                  Cập nhật mật khẩu
+                </button>
+              </div>
+            </div>
           )}
 
           {activeTab === 'address' && (

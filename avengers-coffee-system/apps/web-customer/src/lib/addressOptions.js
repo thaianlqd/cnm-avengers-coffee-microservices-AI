@@ -78,17 +78,34 @@ export function getAddressSelectionDefaults(addressOptions) {
   return { city, district, ward };
 }
 
+function cleanGeoName(str) {
+  return normalizeText(str)
+    .replace(/\b(thanh pho|tp|quan|huyen|phuong|xa|thi tran|thi xa)\b/g, '')
+    .trim();
+}
+
 export function normalizeAddressSelection(parsedAddress, addressOptions) {
   const parsed = parsedAddress || {};
   const fallback = getAddressSelectionDefaults(addressOptions);
 
-  const city = parsed.city && addressOptions?.[parsed.city] ? parsed.city : fallback.city || parsed.city || '';
-  const districts = Object.keys(addressOptions?.[city] || {});
-  const district = districts.includes(parsed.district)
-    ? parsed.district
-    : districts[0] || parsed.district || fallback.district || '';
-  const wards = addressOptions?.[city]?.[district] || [];
-  const ward = wards.includes(parsed.ward) ? parsed.ward : wards[0] || parsed.ward || fallback.ward || '';
+  const cityKeys = Object.keys(addressOptions || {});
+  let city = cityKeys.find(
+    (c) => c === parsed.city || (parsed.city && (cleanGeoName(c) === cleanGeoName(parsed.city) || cleanGeoName(c).includes(cleanGeoName(parsed.city)) || cleanGeoName(parsed.city).includes(cleanGeoName(c))))
+  );
+  if (!city) city = fallback.city || parsed.city || '';
+
+  const districtMap = addressOptions?.[city] || {};
+  const districtKeys = Object.keys(districtMap);
+  let district = districtKeys.find(
+    (d) => d === parsed.district || (parsed.district && (cleanGeoName(d) === cleanGeoName(parsed.district) || cleanGeoName(d).includes(cleanGeoName(parsed.district)) || cleanGeoName(parsed.district).includes(cleanGeoName(d))))
+  );
+  if (!district) district = districtKeys[0] || parsed.district || fallback.district || '';
+
+  const wardKeys = districtMap[district] || [];
+  let ward = wardKeys.find(
+    (w) => w === parsed.ward || (parsed.ward && (cleanGeoName(w) === cleanGeoName(parsed.ward) || cleanGeoName(w).includes(cleanGeoName(parsed.ward)) || cleanGeoName(parsed.ward).includes(cleanGeoName(w))))
+  );
+  if (!ward) ward = wardKeys[0] || parsed.ward || fallback.ward || '';
 
   return {
     city,

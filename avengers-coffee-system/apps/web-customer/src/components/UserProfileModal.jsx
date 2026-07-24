@@ -240,47 +240,54 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
                 )}
               </div>
             ) : (
-              <div className="rounded-2xl border border-orange-100 bg-white p-5">
+              <div className="rounded-2xl border border-gray-200/90 bg-white p-5 shadow-2xs">
                 <form onSubmit={handleChangePassword} className="space-y-4">
                   <div>
-                    <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Mật khẩu hiện tại</p>
+                    <label className="mb-1 block text-xs font-extrabold uppercase tracking-wider text-gray-700">Mật khẩu hiện tại</label>
                     <input
                       type="password"
                       required
+                      placeholder="Mật khẩu hiện tại"
                       value={passwordForm.currentPassword}
                       onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                      className="w-full rounded-xl border border-gray-200/90 px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-red-100 transition-all text-gray-800"
                     />
                   </div>
 
                   <div>
-                    <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Mật khẩu mới</p>
+                    <label className="mb-1 block text-xs font-extrabold uppercase tracking-wider text-gray-700">Mật khẩu mới</label>
                     <input
                       type="password"
                       required
+                      placeholder="Mật khẩu mới ít nhất 6 ký tự"
                       value={passwordForm.newPassword}
                       onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                      className="w-full rounded-xl border border-gray-200/90 px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-red-100 transition-all text-gray-800"
                     />
                   </div>
 
                   <div>
-                    <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Xác nhận mật khẩu mới</p>
+                    <label className="mb-1 block text-xs font-extrabold uppercase tracking-wider text-gray-700">Xác nhận mật khẩu mới</label>
                     <input
                       type="password"
                       required
+                      placeholder="Xác nhận mật khẩu mới"
                       value={passwordForm.confirmPassword}
                       onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                      className="w-full rounded-xl border border-gray-200/90 px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-red-100 transition-all text-gray-800"
                     />
                   </div>
 
-                  {passwordError ? <p className="text-sm font-semibold text-red-600">{passwordError}</p> : null}
+                  {passwordError ? (
+                    <div className="rounded-xl bg-rose-50 border border-rose-200 p-2.5 text-xs font-semibold text-rose-700">
+                      {passwordError}
+                    </div>
+                  ) : null}
 
                   <button
                     type="submit"
                     disabled={changePasswordMutation.isPending}
-                    className="rounded-xl bg-tch-orange px-5 py-3 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-orange-200 disabled:bg-gray-300"
+                    className="w-full rounded-xl bg-[#b22830] hover:bg-[#8f1d24] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-2xs disabled:bg-gray-300 transition-all cursor-pointer active:scale-95"
                   >
                     {changePasswordMutation.isPending ? 'Đang xử lý...' : 'Đổi mật khẩu'}
                   </button>

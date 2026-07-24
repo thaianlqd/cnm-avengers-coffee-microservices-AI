@@ -123,11 +123,10 @@ export default function Header({
                       onSelectedCatIdChange?.('all');
                     }
                   }}
-                  className={`relative flex flex-col items-center gap-[3px] px-4 py-2 rounded-xl transition-all duration-200 ${
-                    isActive
+                  className={`relative flex flex-col items-center gap-[3px] px-4 py-2 rounded-xl transition-all duration-200 ${isActive
                       ? 'bg-white/15 text-white'
                       : 'text-white/75 hover:bg-white/10 hover:text-white'
-                  }`}
+                    }`}
                 >
                   <Icon className="h-5 w-5 flex-shrink-0" />
                   <span className="text-[11px] font-bold uppercase tracking-widest whitespace-nowrap">
@@ -210,11 +209,10 @@ export default function Header({
           <button
             type="button"
             onClick={() => onTabChange?.('news')}
-            className={`flex flex-col items-center gap-[3px] px-3 py-2 rounded-xl transition-all duration-200 ${
-              activeTab === 'news'
+            className={`flex flex-col items-center gap-[3px] px-3 py-2 rounded-xl transition-all duration-200 ${activeTab === 'news'
                 ? 'bg-white/15 text-white'
                 : 'text-white/75 hover:bg-white/10 hover:text-white'
-            }`}
+              }`}
           >
             <NewspaperIcon className="h-5 w-5" />
             <span className="text-[11px] font-bold uppercase tracking-widest whitespace-nowrap">TIN TỨC</span>
@@ -223,11 +221,10 @@ export default function Header({
           <button
             type="button"
             onClick={() => onTabChange?.('stores')}
-            className={`flex flex-col items-center gap-[3px] px-3 py-2 rounded-xl transition-all duration-200 ${
-              activeTab === 'stores'
+            className={`flex flex-col items-center gap-[3px] px-3 py-2 rounded-xl transition-all duration-200 ${activeTab === 'stores'
                 ? 'bg-white/15 text-white'
                 : 'text-white/75 hover:bg-white/10 hover:text-white'
-            }`}
+              }`}
           >
             <MapPinIcon className="h-5 w-5" />
             <span className="text-[11px] font-bold uppercase tracking-widest whitespace-nowrap">{t('header.findStore')}</span>
@@ -388,9 +385,8 @@ export default function Header({
                       onTabChange?.(item.id);
                       setShowMobileMenu(false);
                     }}
-                    className={`flex items-center gap-3 rounded-lg px-4 py-3 text-left text-[13px] font-extrabold tracking-[0.1em] transition-colors ${
-                      activeTab === item.id ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
-                    }`}
+                    className={`flex items-center gap-3 rounded-lg px-4 py-3 text-left text-[13px] font-extrabold tracking-[0.1em] transition-colors ${activeTab === item.id ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                      }`}
                   >
                     <ItemIcon className="h-5 w-5 flex-shrink-0" />
                     {item.label}

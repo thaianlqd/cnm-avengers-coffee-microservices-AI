@@ -199,8 +199,8 @@ export default function MembershipPage({ user, onNavigate }) {
       {/* Hero Banner */}
       <section className="bg-gradient-to-b from-red-50/40 via-white to-[#fcfbf9] border-b border-gray-100">
         <div className="mx-auto max-w-[1240px] px-4 py-12 md:px-6 md:py-14">
-          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#b22830]">Highlands Coffee Loyalty Club</p>
-          <h1 className="mt-3 text-3xl font-black uppercase tracking-tight text-[#2b2b2b] md:text-5xl" style={{ fontFamily: "'Playfair Display', serif" }}>
+          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#b22830]">Avengers Coffee Loyalty Club</p>
+          <h1 className="mt-3 text-3xl font-black uppercase tracking-tight text-[#2b2b2b] md:text-5xl font-sans">
             Đặc quyền thành viên
           </h1>
           <p className="mt-3 max-w-[780px] text-sm font-semibold leading-relaxed text-gray-500 md:text-base">
@@ -213,41 +213,53 @@ export default function MembershipPage({ user, onNavigate }) {
         {/* Left Column - Card & Progress */}
         <div className="lg:col-span-8 space-y-6">
           {/* Member Premium Card */}
-          <div className={`relative overflow-hidden rounded-2xl ${getTierGradient(hang_hien_tai?.ma_hang)} p-5 md:p-6 text-white shadow-md border`}>
-            <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full blur-2xl -mr-12 -mt-12 pointer-events-none"></div>
-            <div className="absolute bottom-0 left-0 w-56 h-56 bg-black/10 rounded-full blur-2xl -ml-16 -mb-16 pointer-events-none"></div>
+          <div className={`relative overflow-hidden rounded-3xl ${getTierGradient(hang_hien_tai?.ma_hang)} p-6 md:p-7 text-white shadow-2xl border transition-transform duration-300 hover:scale-[1.01]`}>
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/20 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none"></div>
 
-            <div className="flex flex-col h-full justify-between relative z-10 min-h-[140px]">
+            <div className="flex flex-col h-full justify-between relative z-10 min-h-[160px]">
               <div className="flex justify-between items-start">
-                <div>
-                  <div className="inline-flex items-center gap-1 text-[9px] uppercase tracking-widest bg-white/20 backdrop-blur-xs px-2 py-0.5 rounded-full text-white font-extrabold mb-1">
-                    <CheckBadgeIcon className="w-3 h-3 text-amber-300" /> THẺ HỘI VIÊN CHÍNH THỨC
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-1.5 text-[9px] uppercase tracking-[0.2em] bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-white font-black shadow-sm">
+                    <CheckBadgeIcon className="w-3.5 h-3.5 text-amber-300" /> THẺ HỘI VIÊN CHÍNH THỨC
                   </div>
-                  <h2 className="text-xl md:text-2xl font-black uppercase tracking-wider text-white mt-0.5">{hang_hien_tai?.hang || 'Thành viên'}</h2>
+                  <h2 className="text-2xl md:text-3xl font-black uppercase tracking-wider text-white mt-1">{hang_hien_tai?.hang || 'Thành viên'}</h2>
                 </div>
-                <div className="drop-shadow-md">
-                  {renderTierIcon(hang_hien_tai?.ma_hang, "w-12 h-12 md:w-14 md:h-14")}
+                <div className="drop-shadow-xl">
+                  {renderTierIcon(hang_hien_tai?.ma_hang, "w-14 h-14 md:w-16 md:h-16")}
                 </div>
               </div>
 
-              <div className="mt-4 flex justify-between items-end border-t border-white/20 pt-3.5">
+              {/* EMV Chip & Card Serial Number */}
+              <div className="my-4 flex items-center justify-between">
+                <div className="w-10 h-8 rounded-lg bg-gradient-to-tr from-amber-300 via-amber-200 to-yellow-400 border border-amber-100 shadow-md flex flex-col justify-around p-1.5 shrink-0">
+                  <div className="h-0.5 w-full bg-amber-600/50 rounded-full"></div>
+                  <div className="h-0.5 w-2/3 bg-amber-600/50 rounded-full"></div>
+                  <div className="h-0.5 w-4/5 bg-amber-600/50 rounded-full"></div>
+                </div>
+                <p className="font-mono text-xs md:text-sm font-black tracking-[0.2em] text-white/80 select-all">
+                  AVGR • {String(userId || 884920).padStart(6, '0')} • 2026
+                </p>
+              </div>
+
+              <div className="flex justify-between items-end border-t border-white/20 pt-4">
                 <div>
-                  <p className="text-[9px] uppercase tracking-widest text-white/70 font-extrabold">Chủ sở hữu</p>
-                  <p className="text-sm font-extrabold mt-0.5 text-white">{user?.ho_ten || user?.hoTen || 'Quý khách'}</p>
+                  <p className="text-[9px] uppercase tracking-[0.18em] text-white/60 font-black">Chủ sở hữu</p>
+                  <p className="text-sm md:text-base font-black mt-0.5 text-white tracking-wide">{user?.ho_ten || user?.hoTen || 'Quý khách'}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[9px] uppercase tracking-widest text-white/70 font-extrabold">Điểm tích lũy xét hạng</p>
-                  <p className="text-lg font-black mt-0.5 text-white">{diem_loyalty.toLocaleString('vi-VN')} <span className="text-xs font-semibold text-white/80">điểm</span></p>
+                  <p className="text-[9px] uppercase tracking-[0.18em] text-white/60 font-black">Điểm xét hạng</p>
+                  <p className="text-xl md:text-2xl font-black mt-0.5 text-white tracking-tight">{diem_loyalty.toLocaleString('vi-VN')} <span className="text-xs font-bold text-white/70">PTS</span></p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Progress to Next Tier */}
-          <div className="bg-white rounded-2xl border border-gray-200/80 p-5 md:p-6 shadow-2xs">
+          <div className="bg-white rounded-3xl border border-gray-200/80 p-6 md:p-7 shadow-sm space-y-5">
             {/* Temporary Downgrade / Maintenance Warning Banner */}
             {hang_hien_tai?.bi_ha_hang_do_thieu_chi_tieu && (
-              <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 text-amber-950 shadow-sm mb-5">
+              <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 text-amber-950 shadow-sm">
                 <div className="flex items-start gap-3">
                   <span className="text-2xl mt-0.5">⚠️</span>
                   <div className="space-y-1">
@@ -266,25 +278,60 @@ export default function MembershipPage({ user, onNavigate }) {
               </div>
             )}
 
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs md:text-sm font-extrabold text-gray-900 uppercase tracking-wide flex items-center gap-2">
-                <StarIcon className="w-4 h-4 text-amber-500" />
-                Tiến trình nâng hạng tiếp theo
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs md:text-sm font-black text-gray-900 uppercase tracking-wider flex items-center gap-2">
+                <SparklesIcon className="w-4 h-4 text-[#b22830]" />
+                Tiến trình nâng hạng thành viên
               </h3>
               {nextTier ? (
-                <span className="text-[11px] font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200/80">
-                  Cần thêm <strong className="text-amber-900 font-black">{(nextTier.diem - diem_loyalty).toLocaleString('vi-VN')} điểm</strong> để đạt hạng {nextTier.ten}
+                <span className="text-[11px] font-black text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200 shadow-2xs">
+                  Cần thêm <strong className="text-amber-900 font-black">{(nextTier.diem - diem_loyalty).toLocaleString('vi-VN')} điểm</strong> ➔ {nextTier.ten}
                 </span>
               ) : (
-                <span className="text-[11px] font-black text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200">
+                <span className="text-[11px] font-black text-rose-700 bg-rose-50 px-3 py-1 rounded-full border border-rose-200 shadow-2xs">
                   👑 Hạng cao nhất đạt được!
                 </span>
               )}
             </div>
 
-            <div className="h-3 w-full rounded-full bg-gray-100 p-0.5 overflow-hidden border border-gray-200/60 shadow-inner relative">
+            {/* Visual Tier Stepper Milestones */}
+            <div className="grid grid-cols-4 gap-2 pt-2 text-center">
+              {[
+                { code: 'MEMBER', name: 'MEMBER', minPts: 0 },
+                { code: 'SILVER', name: 'SILVER', minPts: 1000 },
+                { code: 'GOLD', name: 'GOLD', minPts: 5000 },
+                { code: 'DIAMOND', name: 'DIAMOND', minPts: 15000 },
+              ].map((tStep) => {
+                const isPassed = diem_loyalty >= tStep.minPts;
+                const isCurrent = hang_hien_tai?.ma_hang === tStep.code;
+
+                return (
+                  <div key={tStep.code} className="flex flex-col items-center">
+                    <div
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black transition-all border-2 ${
+                        isCurrent
+                          ? 'bg-[#b22830] text-white border-[#b22830] ring-4 ring-red-100 scale-110 shadow'
+                          : isPassed
+                          ? 'bg-emerald-500 text-white border-emerald-500'
+                          : 'bg-gray-100 text-gray-400 border-gray-200'
+                      }`}
+                    >
+                      {isPassed ? '✓' : ''}
+                    </div>
+                    <span className={`text-[10px] font-black uppercase mt-1.5 ${isCurrent ? 'text-[#b22830]' : isPassed ? 'text-gray-800' : 'text-gray-400'}`}>
+                      {tStep.name}
+                    </span>
+                    <span className="text-[9px] font-semibold text-gray-400">
+                      {tStep.minPts.toLocaleString('vi-VN')} PTS
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="h-3.5 w-full rounded-full bg-gray-100 p-0.5 overflow-hidden border border-gray-200/80 shadow-inner relative">
               <div 
-                className="h-full bg-gradient-to-r from-[#c41230] via-orange-500 to-amber-400 rounded-full transition-all duration-700 shadow-xs" 
+                className="h-full bg-gradient-to-r from-[#b22830] via-amber-500 to-yellow-400 rounded-full transition-all duration-1000 shadow-sm" 
                 style={{ width: `${phanTramLenHang}%` }}
               />
             </div>
@@ -435,7 +482,7 @@ export default function MembershipPage({ user, onNavigate }) {
               </div>
             ) : (
               <div className="space-y-3">
-                <p className="text-xs text-gray-500 font-semibold leading-relaxed">Thiết lập ngày sinh nhật để nhận voucher ưu đãi bất ngờ từ Highlands Coffee Loyalty Program.</p>
+                <p className="text-xs text-gray-500 font-semibold leading-relaxed">Thiết lập ngày sinh nhật để nhận voucher ưu đãi bất ngờ từ Avengers Coffee Loyalty Program.</p>
                 {isEditingBirthday ? (
                   <form onSubmit={handleUpdateBirthday} className="space-y-3">
                     <div className="grid grid-cols-3 gap-2">
@@ -540,22 +587,30 @@ export default function MembershipPage({ user, onNavigate }) {
 
       {/* Compare Tiers benefits Table */}
       <section className="mx-auto max-w-[1240px] px-4 md:px-6 mt-8">
-        <div className="bg-white rounded-2xl border border-gray-200/80 p-5 md:p-6 shadow-2xs overflow-hidden">
-          <div className="border-b border-gray-100 pb-3 mb-4">
-            <h3 className="text-base font-extrabold text-gray-900 uppercase tracking-wide">Bảng đối chiếu đặc quyền các hạng</h3>
-            <p className="text-xs text-gray-500 mt-0.5 font-medium">Đặc quyền được đồng bộ trực tiếp từ hệ thống thiết lập của quản trị viên (Admin Panel)</p>
+        <div className="bg-white rounded-3xl border border-gray-200/80 p-6 md:p-8 shadow-sm overflow-hidden space-y-6">
+          <div className="border-b border-gray-100 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-2">
+            <div>
+              <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight flex items-center gap-2">
+                <CheckBadgeIcon className="w-5 h-5 text-[#b22830]" />
+                Bảng đối chiếu đặc quyền các hạng thành viên
+              </h3>
+              <p className="text-xs text-gray-500 mt-1 font-semibold">Đặc quyền được đồng bộ trực tiếp từ hệ thống thiết lập của quản trị viên (Admin Panel)</p>
+            </div>
+            <span className="text-[10px] font-black uppercase text-gray-400 bg-gray-100 px-3 py-1 rounded-full self-start md:self-auto">
+              Cập nhật mới nhất 2026
+            </span>
           </div>
           
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[700px]">
+            <table className="w-full text-left border-collapse min-w-[750px]">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50/70">
-                  <th className="py-3 px-3 text-[10px] font-black text-gray-500 uppercase tracking-widest">Hạng thành viên</th>
-                  <th className="py-3 px-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Mốc điểm lên hạng</th>
-                  <th className="py-3 px-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Duy trì / Tháng</th>
-                  <th className="py-3 px-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Tích điểm (Loyalty)</th>
-                  <th className="py-3 px-3 text-[10px] font-black text-gray-500 uppercase tracking-widest">Voucher Sinh Nhật</th>
-                  <th className="py-3 px-3 text-[10px] font-black text-gray-500 uppercase tracking-widest">Miễn Phí Giao Hàng</th>
+                <tr className="border-b border-gray-200 bg-gray-50/80">
+                  <th className="py-3.5 px-4 text-[10px] font-black text-gray-600 uppercase tracking-wider">Hạng thành viên</th>
+                  <th className="py-3.5 px-4 text-[10px] font-black text-gray-600 uppercase tracking-wider text-center">Mốc điểm lên hạng</th>
+                  <th className="py-3.5 px-4 text-[10px] font-black text-gray-600 uppercase tracking-wider text-center">Duy trì / Tháng</th>
+                  <th className="py-3.5 px-4 text-[10px] font-black text-gray-600 uppercase tracking-wider text-center">Hệ số tích điểm</th>
+                  <th className="py-3.5 px-4 text-[10px] font-black text-gray-600 uppercase tracking-wider">Voucher Sinh Nhật</th>
+                  <th className="py-3.5 px-4 text-[10px] font-black text-gray-600 uppercase tracking-wider">Miễn Phí Giao Hàng</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -564,32 +619,46 @@ export default function MembershipPage({ user, onNavigate }) {
                   const minSpendMonthly = Number(hang.chi_tieu_toi_thieu_thang || 0);
 
                   return (
-                    <tr key={hang.ma} className={`transition-colors ${isCurrent ? 'bg-red-50/30 font-bold' : 'hover:bg-gray-50/50'}`}>
-                      <td className="py-3 px-3 flex items-center gap-2.5">
-                        {renderTierIcon(hang.ma, "w-8 h-8")}
-                        <div>
-                          <span className="text-xs md:text-sm font-extrabold text-gray-900">{hang.ten}</span>
+                    <tr key={hang.ma} className={`transition-colors ${isCurrent ? 'bg-red-50/40 border-l-4 border-l-[#b22830]' : 'hover:bg-gray-50/60'}`}>
+                      <td className="py-4 px-4 flex items-center gap-3">
+                        {renderTierIcon(hang.ma, "w-9 h-9 shrink-0")}
+                        <div className="flex items-center flex-wrap gap-2">
+                          <span className="text-xs md:text-sm font-black text-gray-900 tracking-wide">{hang.ten}</span>
                           {isCurrent && (
-                            <span className="ml-2 text-[8px] bg-[#c41230] text-white px-2 py-0.5 rounded-full font-black uppercase tracking-wider shadow-2xs">
-                              Hiện tại
+                            <span className="text-[9px] bg-[#b22830] text-white px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider shadow-xs whitespace-nowrap inline-flex items-center shrink-0">
+                              Hạng hiện tại
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="py-3 px-3 text-center text-xs font-extrabold text-gray-800">
-                        {Number(hang.diem || 0).toLocaleString('vi-VN')} điểm
+                      <td className="py-4 px-4 text-center text-xs font-black text-gray-800">
+                        {Number(hang.diem || 0).toLocaleString('vi-VN')} <span className="text-[10px] font-semibold text-gray-400">PTS</span>
                       </td>
-                      <td className="py-3 px-3 text-center text-xs font-semibold text-gray-600">
-                        {minSpendMonthly > 0 ? `${minSpendMonthly.toLocaleString('vi-VN')}đ/tháng` : 'Không yêu cầu'}
+                      <td className="py-4 px-4 text-center text-xs font-bold text-gray-600">
+                        {minSpendMonthly > 0 ? (
+                          <span className="bg-amber-50 text-amber-800 border border-amber-200/80 px-2.5 py-1 rounded-lg text-[11px]">
+                            {minSpendMonthly.toLocaleString('vi-VN')}đ/tháng
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-[11px]">Không yêu cầu</span>
+                        )}
                       </td>
-                      <td className="py-3 px-3 text-center text-xs font-black text-[#c41230]">
-                        x{hang.he_so_diem || 1}
+                      <td className="py-4 px-4 text-center">
+                        <span className="inline-block bg-red-100/70 text-[#b22830] font-black text-xs px-2.5 py-1 rounded-lg border border-red-200/60">
+                          x{hang.he_so_diem || 1}
+                        </span>
                       </td>
-                      <td className="py-3 px-3 text-xs text-gray-700 font-semibold">
-                        {hang.voucher_sinh_nhat || 'Giảm 10% (tối đa 20.000đ)'}
+                      <td className="py-4 px-4 text-xs text-gray-700 font-semibold">
+                        <div className="flex items-center gap-1.5">
+                          <GiftIcon className="w-4 h-4 text-amber-500 shrink-0" />
+                          <span>{hang.voucher_sinh_nhat || 'Giảm 10% (tối đa 20.000đ)'}</span>
+                        </div>
                       </td>
-                      <td className="py-3 px-3 text-xs text-gray-700 font-semibold">
-                        {hang.freeship || 'Không hỗ trợ'}
+                      <td className="py-4 px-4 text-xs text-gray-700 font-semibold">
+                        <div className="flex items-center gap-1.5">
+                          <TruckIcon className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>{hang.freeship || 'Không hỗ trợ'}</span>
+                        </div>
                       </td>
                     </tr>
                   );

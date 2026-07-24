@@ -93,9 +93,39 @@ function fmtBranch(branchCode, branches = []) {
 }
 
 function badgeClass(status) {
-  if (status === 'DA_THANH_TOAN' || status === 'THANH_CONG') return 'bg-emerald-50 text-emerald-700 border-emerald-100';
-  if (status === 'THAT_BAI' || status === 'DA_HUY') return 'bg-red-50 text-red-700 border-red-100';
-  return 'bg-amber-50 text-amber-700 border-amber-100';
+  if (['DA_THANH_TOAN', 'THANH_CONG', 'HOAN_THANH'].includes(status)) {
+    return 'bg-emerald-50 text-emerald-700 border-emerald-200/80';
+  }
+  if (['THAT_BAI', 'DA_HUY'].includes(status)) {
+    return 'bg-rose-50 text-rose-700 border-rose-200/80';
+  }
+  if (['DANG_GIAO', 'DANG_CHUAN_BI', 'DA_XAC_NHAN'].includes(status)) {
+    return 'bg-sky-50 text-sky-700 border-sky-200/80';
+  }
+  return 'bg-amber-50 text-amber-700 border-amber-200/80';
+}
+
+function renderOrderTypeTag(type, method, table) {
+  if (type === 'DUNG_TAI_CHO') {
+    return <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200/80">Dùng tại bàn {table ? `(Bàn ${table})` : ''}</span>;
+  }
+  if (type === 'TAI_CHO') {
+    return <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200/80">Tại quầy {table ? `- Bàn ${table}` : ''}</span>;
+  }
+  if (type === 'LAY_TAI_QUAN') {
+    return <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200/80">Lấy tại quán</span>;
+  }
+  if (type === 'MANG_DI') {
+    return <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200/80">Mang đi</span>;
+  }
+  if (type === 'GIAO_TAN_NOI') {
+    return (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${method === 'LALAMOVE' ? 'bg-purple-50 text-purple-700 border-purple-200/80' : 'bg-indigo-50 text-indigo-700 border-indigo-200/80'}`}>
+        {method === 'LALAMOVE' ? 'Giao hàng Lalamove' : 'Giao tận nơi'}
+      </span>
+    );
+  }
+  return null;
 }
 
 function coTheHuyDon(order) {
@@ -460,16 +490,20 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" onClick={onClose}></div>
 
-      <div className="relative z-10 h-[88vh] w-full max-w-5xl overflow-hidden rounded-[28px] border border-orange-100 bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-orange-50 bg-gradient-to-r from-orange-50 to-amber-50 px-6 py-5">
+      <div className="relative z-10 h-[88vh] w-full max-w-5xl overflow-hidden rounded-3xl border border-gray-200/80 bg-white shadow-2xl flex flex-col">
+        {/* Sleek Header */}
+        <div className="flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4.5">
           <div>
-            <h2 className="text-2xl font-black uppercase tracking-tight text-gray-800">Lịch sử đơn hàng</h2>
-            <p className="mt-1 text-sm font-semibold text-gray-500">Theo dõi trạng thái thanh toán và phương thức thanh toán từng đơn</p>
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-6 rounded-full bg-[#b22830]"></div>
+              <h2 className="text-xl font-black tracking-tight text-gray-900 font-sans">LỊCH SỬ ĐƠN HÀNG</h2>
+            </div>
+            <p className="mt-0.5 text-xs font-semibold text-gray-500">Quản lý, theo dõi tiến trình đơn và thông tin thanh toán</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-xl p-2 text-gray-500 hover:bg-white">
-            <XMarkIcon className="h-7 w-7" />
+          <button type="button" onClick={onClose} className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors cursor-pointer">
+            <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
 
@@ -482,8 +516,9 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
             <OrderTrackingPage id={trackingOrderId} onBack={() => setTrackingOrderId(null)} />
           </div>
         ) : (
-          <div className="flex h-[calc(88vh-86px)] flex-col">
-            <div className="grid grid-cols-1 gap-3 border-b border-gray-100 bg-white px-6 py-4 md:grid-cols-4">
+          <div className="flex flex-1 flex-col min-h-0 bg-gray-50/60">
+            {/* Filter Bar */}
+            <div className="grid grid-cols-1 gap-3 border-b border-gray-100 bg-white px-6 py-3.5 md:grid-cols-4 shadow-2xs">
               <input
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
@@ -492,14 +527,14 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                     setAppliedKeyword(searchKeyword.trim());
                   }
                 }}
-                className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold outline-none focus:border-tch-orange"
-                placeholder="Tìm theo mã đơn, mã tham chiếu, tên món..."
+                className="rounded-xl border border-gray-200/90 px-3.5 py-2 text-xs font-semibold text-gray-800 outline-none focus:border-[#b22830] focus:ring-1 focus:ring-[#b22830] transition-all bg-gray-50/50"
+                placeholder="Tìm mã đơn, tên món..."
               />
 
               <select
                 value={paymentStatusFilter}
                 onChange={(e) => setPaymentStatusFilter(e.target.value)}
-                className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold outline-none focus:border-tch-orange"
+                className="rounded-xl border border-gray-200/90 px-3 py-2 text-xs font-semibold text-gray-700 outline-none focus:border-[#b22830] transition-all bg-gray-50/50 cursor-pointer"
               >
                 <option value="ALL">Tất cả trạng thái thanh toán</option>
                 <option value="CHO_XU_LY">Chờ xử lý</option>
@@ -512,7 +547,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
               <select
                 value={paymentMethodFilter}
                 onChange={(e) => setPaymentMethodFilter(e.target.value)}
-                className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold outline-none focus:border-tch-orange"
+                className="rounded-xl border border-gray-200/90 px-3 py-2 text-xs font-semibold text-gray-700 outline-none focus:border-[#b22830] transition-all bg-gray-50/50 cursor-pointer"
               >
                 <option value="ALL">Tất cả phương thức thanh toán</option>
                 <option value="VNPAY">VNPAY</option>
@@ -523,7 +558,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
               <button
                 type="button"
                 onClick={() => setAppliedKeyword(searchKeyword.trim())}
-                className="rounded-xl bg-tch-orange px-4 py-2 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-orange-200"
+                className="rounded-xl bg-[#b22830] hover:bg-[#8e1c23] px-4 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-2xs transition-colors cursor-pointer"
               >
                 Tìm kiếm
               </button>
@@ -559,349 +594,148 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
 
               {!loading && !isError ? (
                 <div className="space-y-4">
-                  {orders.map((order) => (
-                    <div key={order.ma_don_hang} className="rounded-2xl border border-orange-100 bg-white p-5 shadow-sm">
-                      <div className="flex flex-col justify-between gap-4 border-b border-gray-100 pb-4 md:flex-row md:items-start">
-                        <div>
-                          <p className="text-xs font-black uppercase tracking-widest text-gray-400">Mã đơn hàng</p>
-                          <p className="mt-1 text-sm font-black text-gray-800">{order.ma_don_hang}</p>
-                          <p className="mt-1 text-xs font-bold text-gray-500">Cơ sở xử lý: {fmtBranch(order.co_so_ma, allBranches)}</p>
-                          <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-gray-500">
-                            <ClockIcon className="h-4 w-4" />
-                            {fmtDate(order.ngay_tao)}
-                          </div>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {order.loai_don_hang === 'DUNG_TAI_CHO' && (
-                              <span className="inline-block px-2 py-0.5 rounded text-xs font-bold border bg-red-50 text-red-600 border-red-200">
-                                📍 Dùng tại bàn {order.ma_ban ? `(Số ${order.ma_ban})` : ''}
+                  {orders.map((order) => {
+                    const timelineSteps = getTimeline(order);
+                    return (
+                      <div key={order.ma_don_hang} className="rounded-2xl border border-gray-200/80 bg-white p-5 shadow-2xs hover:shadow-md transition-all duration-300">
+                        {/* Order Header Info */}
+                        <div className="flex flex-col justify-between gap-3 border-b border-gray-100 pb-3.5 md:flex-row md:items-center">
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-xs font-mono font-black text-[#b22830] bg-red-50 border border-red-100 px-2 py-0.5 rounded-md">
+                                #{order.ma_don_hang}
                               </span>
-                            )}
-                            {order.loai_don_hang === 'TAI_CHO' && (
-                              <span className="inline-block px-2 py-0.5 rounded text-xs font-bold border bg-orange-50 text-orange-600 border-orange-200">
-                                🏪 Tại quầy {order.ma_ban ? `- Bàn ${order.ma_ban}` : ''}
-                              </span>
-                            )}
-                            {order.loai_don_hang === 'LAY_TAI_QUAN' && (
-                              <span className="inline-block px-2 py-0.5 rounded text-xs font-bold border bg-blue-50 text-blue-600 border-blue-200">
-                                🛍️ Lấy tại quán
-                              </span>
-                            )}
-                            {order.loai_don_hang === 'MANG_DI' && (
-                              <span className="inline-block px-2 py-0.5 rounded text-xs font-bold border bg-yellow-50 text-yellow-600 border-yellow-200">
-                                🥡 Mang đi
-                              </span>
-                            )}
-                            {order.loai_don_hang === 'GIAO_TAN_NOI' && (
-                              <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold border ${order.phuong_thuc_giao_hang === 'LALAMOVE' ? 'bg-purple-50 text-purple-600 border-purple-200' : 'bg-indigo-50 text-indigo-600 border-indigo-200'}`}>
-                                {order.phuong_thuc_giao_hang === 'LALAMOVE' ? '🚀 Lalamove' : '🛵 Giao tận nơi (Nội bộ)'}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2 md:gap-3">
-                          <span className={`rounded-full border px-3 py-1 text-center text-xs font-black uppercase ${badgeClass(order.trang_thai_thanh_toan)}`}>
-                            {PAYMENT_STATUS_LABEL[order.trang_thai_thanh_toan] || order.trang_thai_thanh_toan}
-                          </span>
-                          <span className={`rounded-full border px-3 py-1 text-center text-xs font-black uppercase ${badgeClass(order.giao_dich?.trang_thai || order.trang_thai_don_hang)}`}>
-                            {ORDER_STATUS_LABEL[order.trang_thai_don_hang] || order.trang_thai_don_hang}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
-                        <div className="lg:col-span-2">
-                          <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Tiến trình đơn hàng</p>
-                          <div className="mb-4 rounded-xl border border-orange-100 bg-orange-50/40 p-3">
-                            <div className="space-y-2">
-                              {getTimeline(order).map((step) => (
-                                <div key={`${order.ma_don_hang}-${step.status}`} className="flex items-start gap-3">
-                                  <div className={`mt-1 h-2.5 w-2.5 rounded-full ${step.reached ? 'bg-tch-orange' : 'bg-gray-300'}`}></div>
-                                  <div className="flex-1">
-                                    <p className={`text-xs font-black uppercase tracking-wide ${step.reached ? 'text-gray-700' : 'text-gray-400'}`}>
-                                      {step.label}
-                                    </p>
-                                    {step.time ? <p className="text-[11px] font-semibold text-gray-500">{fmtDate(step.time)}</p> : null}
-                                  </div>
-                                </div>
-                              ))}
-                              {order.trang_thai_don_hang === 'DA_HUY' ? (
-                                <div className="flex items-start gap-3">
-                                  <div className="mt-1 h-2.5 w-2.5 rounded-full bg-red-500"></div>
-                                  <div className="flex-1">
-                                    <p className="text-xs font-black uppercase tracking-wide text-red-600">Đã hủy</p>
-                                  </div>
-                                </div>
-                              ) : null}
+                              {renderOrderTypeTag(order.loai_don_hang, order.phuong_thuc_giao_hang, order.ma_ban)}
+                            </div>
+                            <div className="mt-2 flex items-center gap-4 text-xs text-gray-500 font-medium flex-wrap">
+                              <span>Cơ sở: <strong className="text-gray-800 font-semibold">{fmtBranch(order.co_so_ma, allBranches)}</strong></span>
+                              <span>•</span>
+                              <div className="flex items-center gap-1">
+                                <ClockIcon className="h-3.5 w-3.5 text-gray-400" />
+                                {fmtDate(order.ngay_tao)}
+                              </div>
                             </div>
                           </div>
-                          <p className="mb-2 mt-4 text-xs font-black uppercase tracking-widest text-gray-400">Món đã đặt</p>
-                          <div className="space-y-2">
-                            {(order.chi_tiet || []).map((item) => (
-                              <div key={item.id || `${item.ma_san_pham}-${item.ten_san_pham}`} className="rounded-xl bg-gray-50 px-3 py-2">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-3">
-                                    <img src={item.hinh_anh_url} alt={item.ten_san_pham} className="h-10 w-10 rounded-lg object-cover" />
-                                    <div>
-                                      <p className="text-sm font-bold text-gray-700">{item.ten_san_pham}</p>
-                                      <p className="text-xs font-semibold text-gray-500">Size: {item.kich_co || 'Nhỏ'} • SL: {item.so_luong}</p>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className={`rounded-lg border px-2.5 py-1 text-center text-[11px] font-extrabold uppercase ${badgeClass(order.trang_thai_thanh_toan)}`}>
+                              {PAYMENT_STATUS_LABEL[order.trang_thai_thanh_toan] || order.trang_thai_thanh_toan}
+                            </span>
+                            <span className={`rounded-lg border px-2.5 py-1 text-center text-[11px] font-extrabold uppercase ${badgeClass(order.giao_dich?.trang_thai || order.trang_thai_don_hang)}`}>
+                              {ORDER_STATUS_LABEL[order.trang_thai_don_hang] || order.trang_thai_don_hang}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Order Body: Details & Side Info */}
+                        <div className="mt-4 grid grid-cols-1 gap-5 lg:grid-cols-3">
+                          <div className="lg:col-span-2">
+                            {/* Horizontal Progress Timeline */}
+                            <div className="mb-4 rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+                              <div className="flex items-center justify-between relative">
+                                {timelineSteps.map((step, idx) => (
+                                  <div key={`${order.ma_don_hang}-${step.status}`} className="flex flex-col items-center text-center flex-1 relative z-10">
+                                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black transition-all ${
+                                      step.reached ? 'bg-[#b22830] text-white shadow-2xs' : 'bg-gray-200 text-gray-400'
+                                    }`}>
+                                      {idx + 1}
+                                    </div>
+                                    <span className={`text-[10px] font-bold mt-1 line-clamp-1 ${step.reached ? 'text-gray-800' : 'text-gray-400'}`}>
+                                      {step.label}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Product Items List */}
+                            <p className="mb-2 text-[11px] font-extrabold uppercase tracking-wider text-gray-400">Danh sách món đã đặt</p>
+                            <div className="space-y-2">
+                              {(order.chi_tiet || []).map((item) => (
+                                <div key={item.id || `${item.ma_san_pham}-${item.ten_san_pham}`} className="rounded-xl bg-gray-50/70 border border-gray-100 p-2.5 flex items-center justify-between gap-3">
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <img src={item.hinh_anh_url || '/hc-assets/caphe-1.png'} alt={item.ten_san_pham} className="h-11 w-11 rounded-lg object-cover bg-white border border-gray-100 shrink-0" />
+                                    <div className="min-w-0">
+                                      <p className="text-xs font-bold text-gray-900 truncate">{item.ten_san_pham}</p>
+                                      <p className="text-[11px] text-gray-500 font-medium">Size: {item.kich_co || 'Nhỏ'} • SL: {item.so_luong}</p>
                                       {item.toppings?.length > 0 && (
-                                        <p className="text-[11px] font-semibold text-gray-500 mt-0.5">Topping: {item.toppings.join(', ')}</p>
+                                        <p className="text-[10px] text-gray-500 truncate">Topping: {item.toppings.join(', ')}</p>
                                       )}
                                       {(item.luong_da || item.do_ngot) && (
-                                        <p className="text-[11px] font-semibold text-gray-500 mt-0.5">
+                                        <p className="text-[10px] text-gray-500">
                                           {item.luong_da ? `Đá: ${item.luong_da}` : ''} 
                                           {item.luong_da && item.do_ngot ? ' | ' : ''}
                                           {item.do_ngot ? `Ngọt: ${item.do_ngot}` : ''}
                                         </p>
                                       )}
-                                      {item.ghi_chu && (
-                                        <p className="text-[11px] italic font-semibold text-tch-orange mt-0.5">Ghi chú: {item.ghi_chu}</p>
-                                      )}
                                     </div>
                                   </div>
-                                  <span className="text-sm font-black text-tch-orange">{fmtMoney(item.gia_ban * item.so_luong)}</span>
+                                  <div className="flex flex-col items-end shrink-0 gap-1">
+                                    <span className="text-xs font-extrabold text-[#b22830]">{fmtMoney(item.gia_ban * item.so_luong)}</span>
+                                    {coTheDanhGiaDon(order) && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setReviewingProduct({ productId: item.ma_san_pham, productName: item.ten_san_pham, orderId: order.ma_don_hang })}
+                                        className="text-[10px] font-bold text-blue-600 hover:text-blue-800 underline cursor-pointer"
+                                      >
+                                        Đánh giá món
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (!coTheDanhGiaDon(order)) {
-                                      setActionMessage('Bạn chỉ có thể đánh giá sau khi đơn hàng đã giao thành công.');
-                                      return;
-                                    }
-                                    setReviewingProduct({ productId: item.ma_san_pham, productName: item.ten_san_pham, orderId: order.ma_don_hang });
-                                  }}
-                                  disabled={!coTheDanhGiaDon(order)}
-                                  className={`mt-2 w-full rounded-lg border px-2 py-1 text-[11px] font-black uppercase tracking-wide ${
-                                    coTheDanhGiaDon(order)
-                                      ? 'border-blue-200 bg-white text-blue-600'
-                                      : 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
-                                  }`}
-                                >
-                                  {coTheDanhGiaDon(order) ? 'Đánh giá' : 'Chờ giao hàng để đánh giá'}
-                                </button>
-                              </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
 
-                          {editOrderId === order.ma_don_hang ? (
-                            <div className="mt-4 rounded-2xl border border-orange-100 bg-orange-50/50 p-4">
-                              <p className="text-xs font-black uppercase tracking-widest text-gray-500">Chỉnh sửa đơn COD trước khi xác nhận</p>
-                              <div className="mt-3 space-y-3">
-                                {editForm.items.map((item, idx) => (
-                                  <div key={item.lineId} className="space-y-2 rounded-xl bg-white px-3 py-3">
-                                    <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_auto_80px_auto] md:items-center">
-                                      <select
-                                        value={item.maSanPham}
-                                        onChange={(e) => capNhatMonSuaDon(item.lineId, e.target.value)}
-                                        className="rounded-lg border border-gray-200 px-2 py-2 text-xs font-bold text-gray-700 outline-none focus:border-tch-orange"
-                                      >
-                                        {menuProducts.map((product) => (
-                                          <option key={product.ma_san_pham} value={product.ma_san_pham}>
-                                            {product.ten_san_pham}
-                                          </option>
-                                        ))}
-                                      </select>
-                                      <button
-                                        type="button"
-                                        onClick={() => moBangSuaTuyChon(idx, item)}
-                                        className="rounded-lg border border-gray-200 px-3 py-2 text-[11px] font-black uppercase tracking-wide text-gray-700 hover:bg-gray-50"
-                                      >
-                                        Tùy chọn
-                                      </button>
-                                      <div className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-2 py-1">
-                                        <button
-                                          type="button"
-                                          onClick={() => capNhatSoLuongSuaDon(item.lineId, -1)}
-                                          className="h-7 w-7 rounded-lg border border-gray-200 text-sm font-black text-gray-700"
-                                        >
-                                          -
-                                        </button>
-                                        <span className="min-w-6 text-center text-sm font-black text-gray-700">{item.soLuong}</span>
-                                        <button
-                                          type="button"
-                                          onClick={() => capNhatSoLuongSuaDon(item.lineId, 1)}
-                                          className="h-7 w-7 rounded-lg border border-gray-200 text-sm font-black text-gray-700"
-                                        >
-                                          +
-                                        </button>
-                                      </div>
-                                      <button
-                                        type="button"
-                                        onClick={() => xoaDongSuaDon(item.lineId)}
-                                        className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[11px] font-black uppercase tracking-wide text-red-600"
-                                      >
-                                        Xóa
-                                      </button>
-                                    </div>
-                                    <div className="flex items-start justify-between text-xs font-semibold text-gray-500">
-                                      <div className="flex flex-col gap-0.5">
-                                        <span>Size: {item.kichCo || 'Nhỏ'}</span>
-                                        {item.toppings?.length > 0 && <span className="text-[10px]">Topping: {item.toppings.join(', ')}</span>}
-                                        {(item.luongDa || item.doNgot) && (
-                                          <span className="text-[10px]">
-                                            {item.luongDa ? `Đá: ${item.luongDa}` : ''} 
-                                            {item.luongDa && item.doNgot ? ' | ' : ''}
-                                            {item.doNgot ? `Ngọt: ${item.doNgot}` : ''}
-                                          </span>
-                                        )}
-                                      </div>
-                                      <span className="mt-0.5 text-tch-orange">{fmtMoney(Number(item.giaBan || 0) * Number(item.soLuong || 0))}</span>
-                                    </div>
-                                  </div>
-                                ))}
-
-                                <button
-                                  type="button"
-                                  onClick={themDongSuaDon}
-                                  className="w-full rounded-xl border border-orange-200 bg-white px-3 py-2 text-xs font-black uppercase tracking-wide text-tch-orange"
-                                >
-                                  Thêm món/size
-                                </button>
-
-                                <div className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-gray-500">
-                                  Tổng tạm tính: {fmtMoney(editForm.items.reduce((sum, item) => sum + Number(item.giaBan || 0) * Number(item.soLuong || 0), 0))}
+                          {/* Order Summary & Actions Side Card */}
+                          <div className="flex flex-col justify-between rounded-xl border border-gray-100 bg-gray-50/70 p-3.5">
+                            <div className="space-y-2">
+                              <p className="text-[11px] font-extrabold uppercase tracking-wider text-gray-400">Thông tin thanh toán</p>
+                              <div className="flex items-center justify-between text-xs text-gray-700">
+                                <span className="font-medium text-gray-500">Phương thức:</span>
+                                <span className="font-bold">{PAYMENT_METHOD_LABEL[order.phuong_thuc_thanh_toan] || order.phuong_thuc_thanh_toan}</span>
+                              </div>
+                              {order.dia_chi_giao_hang && (
+                                <div className="text-xs text-gray-700">
+                                  <span className="font-medium text-gray-500">Địa chỉ: </span>
+                                  <span className="font-semibold text-gray-800 line-clamp-2">{order.dia_chi_giao_hang}</span>
                                 </div>
-
-                                <input
-                                  value={editForm.diaChi}
-                                  onChange={(e) => setEditForm((prev) => ({ ...prev, diaChi: e.target.value }))}
-                                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold outline-none focus:border-tch-orange"
-                                  placeholder="Địa chỉ giao hàng"
-                                />
-                                <input
-                                  value={editForm.khungGio}
-                                  onChange={(e) => setEditForm((prev) => ({ ...prev, khungGio: e.target.value }))}
-                                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold outline-none focus:border-tch-orange"
-                                  placeholder="Khung giờ giao"
-                                />
-                                <textarea
-                                  value={editForm.ghiChu}
-                                  onChange={(e) => setEditForm((prev) => ({ ...prev, ghiChu: e.target.value }))}
-                                  rows={3}
-                                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold outline-none focus:border-tch-orange resize-none"
-                                  placeholder="Ghi chú đơn hàng"
-                                />
-
-                                <div className="flex gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={luuSuaDon}
-                                    disabled={editOrderMutation.isPending}
-                                    className="flex-1 rounded-xl bg-tch-orange px-4 py-2 text-xs font-black uppercase tracking-wide text-white disabled:bg-orange-300"
-                                  >
-                                    {editOrderMutation.isPending ? 'Đang lưu...' : 'Lưu cập nhật'}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setEditOrderId(null);
-                                      setEditForm({ diaChi: '', khungGio: '', ghiChu: '', items: [] });
-                                      setActionMessage('');
-                                    }}
-                                    className="rounded-xl border border-gray-200 px-4 py-2 text-xs font-black uppercase tracking-wide text-gray-600"
-                                  >
-                                    Bỏ qua
-                                  </button>
+                              )}
+                              {order.ma_voucher && (
+                                <div className="rounded-lg border border-amber-200/80 bg-amber-50 px-2.5 py-1.5 text-xs flex items-center justify-between">
+                                  <span className="font-bold text-amber-800">Mã voucher: {order.ma_voucher}</span>
+                                  {order.so_tien_giam > 0 && <span className="font-extrabold text-amber-900">(-{fmtMoney(order.so_tien_giam)})</span>}
                                 </div>
+                              )}
+                              <div className="pt-2 border-t border-gray-200/80 flex items-center justify-between">
+                                <span className="text-xs font-bold text-gray-700">Tổng thanh toán:</span>
+                                <span className="text-base font-black text-[#b22830]">{fmtMoney(order.tong_tien)}</span>
                               </div>
                             </div>
-                          ) : null}
-                        </div>
 
-                        <div className="space-y-2 rounded-xl border border-gray-100 bg-gray-50 p-3">
-                          <p className="text-xs font-black uppercase tracking-widest text-gray-400">Thông tin thanh toán</p>
-                          <p className="flex items-center gap-2 text-sm font-bold text-gray-700">
-                            <CreditCardIcon className="h-4 w-4" />
-                            {PAYMENT_METHOD_LABEL[order.phuong_thuc_thanh_toan] || order.phuong_thuc_thanh_toan}
-                          </p>
-                          <p className="text-xs font-semibold text-gray-500">Địa chỉ: {order.dia_chi_giao_hang || '---'}</p>
-                          <p className="text-xs font-semibold text-gray-500">Cơ sở xử lý: {fmtBranch(order.co_so_ma, allBranches)}</p>
-                          <p className="text-xs font-semibold text-gray-500">Khung giờ: {order.khung_gio_giao || '---'}</p>
-                          <p className="text-xs font-semibold text-gray-500">Ghi chú: {order.ghi_chu || '---'}</p>
-                          <p className="text-xs font-semibold text-gray-500">Trạng thái GD: {order.giao_dich?.trang_thai || '---'}</p>
-                          <p className="text-xs font-semibold text-gray-500">Mã GD cổng: {order.giao_dich?.ma_giao_dich_cong || '---'}</p>
-                          <p className="text-xs font-semibold text-gray-500">Mã tham chiếu: {order.giao_dich?.ma_tham_chieu || '---'}</p>
-                          <p className="pt-2 text-base font-black text-tch-orange">Tổng: {fmtMoney(order.tong_tien)}</p>
-                          {order.ma_voucher ? (
-                            <div className="mt-1 rounded-lg border border-orange-100 bg-orange-50 px-3 py-1.5 text-xs">
-                              <span className="font-bold text-orange-600">Voucher: {order.ma_voucher}</span>
-                              {order.so_tien_giam > 0 && (
-                                <span className="ml-2 text-gray-600">(-{fmtMoney(order.so_tien_giam)})</span>
+                            {/* Order Action Buttons */}
+                            <div className="mt-4 pt-3 border-t border-gray-200/80 space-y-2">
+                              {['DANG_GIAO', 'PICKING_UP', 'ASSIGNING_DRIVER', 'HOAN_THANH'].includes(order.trang_thai_don_hang) && order.loai_don_hang === 'GIAO_TAN_NOI' && (
+                                <button
+                                  type="button"
+                                  onClick={() => setTrackingOrderId(order.ma_don_hang)}
+                                  className="w-full rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 py-2 text-xs font-bold uppercase tracking-wider text-indigo-700 transition-colors cursor-pointer"
+                                >
+                                  {order.trang_thai_don_hang === 'HOAN_THANH' ? 'Xem & Đánh giá Shipper' : 'Theo dõi vận chuyển'}
+                                </button>
                               )}
-                            </div>
-                          ) : null}
 
-                          {['DANG_GIAO', 'PICKING_UP', 'ASSIGNING_DRIVER', 'HOAN_THANH'].includes(order.trang_thai_don_hang) && order.loai_don_hang === 'GIAO_TAN_NOI' ? (
-                            <button
-                              type="button"
-                              onClick={() => setTrackingOrderId(order.ma_don_hang)}
-                              className="mb-2 w-full flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-indigo-600 hover:bg-indigo-100"
-                            >
-                              {order.trang_thai_don_hang === 'HOAN_THANH' 
-                                ? <><span>⭐</span> Xem & Đánh giá Shipper</> 
-                                : <><span>📍</span> Theo dõi Shipper</>
-                              }
-                            </button>
-                          ) : null}
+                              {order.trang_thai_don_hang === 'HOAN_THANH' && (
+                                <button
+                                  type="button"
+                                  onClick={() => setBranchReviewOrder(order)}
+                                  className="w-full rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 py-2 text-xs font-bold uppercase tracking-wider text-amber-800 transition-colors cursor-pointer"
+                                >
+                                  Đánh Giá Chi Nhánh
+                                </button>
+                              )}
 
-                          {coTheSuaDon(order) && editOrderId !== order.ma_don_hang ? (
-                            <button
-                              type="button"
-                              onClick={() => batDauSuaDon(order)}
-                              className="w-full rounded-xl border border-orange-200 bg-white px-3 py-2 text-xs font-black uppercase tracking-wide text-tch-orange"
-                            >
-                              Sửa đơn hàng
-                            </button>
-                          ) : null}
-
-                          {order.trang_thai_don_hang === 'HOAN_THANH' ? (
-                            <div className="pt-2 space-y-2">
-                              <p className="text-xs font-semibold text-emerald-700">Đơn đã hoàn thành!</p>
-                              <button
-                                type="button"
-                                onClick={() => setBranchReviewOrder(order)}
-                                className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-amber-800 hover:bg-amber-100 transition-colors shadow-sm"
-                              >
-                                🏢 ⭐ Đánh Giá Chi Nhánh
-                              </button>
-                            </div>
-                          ) : null}
-
-                          {coTheHuyDon(order) ? (
-                            <div className="pt-3">
-                              {cancelOrderId === order.ma_don_hang ? (
-                                <div className="space-y-2">
-                                  <textarea
-                                    value={cancelReason}
-                                    onChange={(e) => setCancelReason(e.target.value)}
-                                    rows={3}
-                                    className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold outline-none focus:border-red-300 resize-none"
-                                    placeholder="Nhập lý do hủy đơn (không bắt buộc)"
-                                  />
-                                  <div className="flex gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => cancelOrderMutation.mutate({ orderId: order.ma_don_hang, reason: cancelReason.trim() })}
-                                      disabled={cancelOrderMutation.isPending}
-                                      className="flex-1 rounded-xl bg-red-500 px-3 py-2 text-xs font-black uppercase tracking-wide text-white disabled:bg-red-300"
-                                    >
-                                      {cancelOrderMutation.isPending ? 'Đang hủy...' : 'Xác nhận hủy'}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setCancelOrderId(null);
-                                        setCancelReason('');
-                                        setActionMessage('');
-                                      }}
-                                      className="rounded-xl border border-gray-200 px-3 py-2 text-xs font-black uppercase tracking-wide text-gray-600"
-                                    >
-                                      Bỏ qua
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : (
+                              {coTheHuyDon(order) && (
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -909,33 +743,29 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                                     setCancelReason('');
                                     setActionMessage('');
                                   }}
-                                  className="w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-red-600"
+                                  className="w-full rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 py-2 text-xs font-bold uppercase tracking-wider text-rose-600 transition-colors cursor-pointer"
                                 >
                                   Hủy đơn hàng
                                 </button>
                               )}
-                            </div>
-                          ) : null}
 
-                          {/* Nút Đặt Lại Đơn Này */}
-                          <div className="pt-3 mt-1 border-t border-gray-200">
-                            <button
-                              type="button"
-                              onClick={() => handleReorder(order)}
-                              disabled={reorderMutation.isPending}
-                              className="w-full flex items-center justify-center gap-2 rounded-xl bg-orange-100 border border-orange-200 px-3 py-2 text-xs font-black uppercase tracking-wide text-orange-600 hover:bg-orange-200 disabled:opacity-50"
-                            >
-                              {reorderMutation.isPending && reorderMutation.variables?.ma_don_hang === order.ma_don_hang ? (
-                                'Đang xử lý...'
-                              ) : (
-                                <><span>🔄</span> Đặt lại đơn này</>
-                              )}
-                            </button>
+                              {/* Reorder Button */}
+                              <button
+                                type="button"
+                                onClick={() => handleReorder(order)}
+                                disabled={reorderMutation.isPending}
+                                className="w-full rounded-xl bg-[#b22830] hover:bg-[#8e1c23] py-2 text-xs font-bold uppercase tracking-wider text-white transition-colors cursor-pointer shadow-2xs disabled:opacity-50"
+                              >
+                                {reorderMutation.isPending && reorderMutation.variables?.ma_don_hang === order.ma_don_hang
+                                  ? 'Đang xử lý...'
+                                  : 'Đặt lại đơn này'}
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : null}
             </div>

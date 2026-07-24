@@ -359,59 +359,58 @@ export default function StoresPage() {
       ) : (
       <>
       {/* Top Filter Bar */}
-      <div className="w-full bg-[#f9f9f9] py-4 px-6 shadow-sm border-b border-gray-200 z-10">
-        <div className="max-w-[1400px] mx-auto flex flex-wrap items-center justify-center gap-3">
+      <div className="w-full bg-white py-3.5 px-6 border-b border-gray-200/80 shadow-2xs z-10">
+        <div className="max-w-[1400px] mx-auto flex flex-wrap items-center justify-center gap-2.5">
           <select 
-            className="h-10 px-4 bg-white border border-gray-300 rounded-[3px] text-[13px] text-[#333] font-medium outline-none focus:border-[#5c3a21] min-w-[140px] appearance-none"
+            className="h-9 px-3.5 bg-gray-50/60 border border-gray-200/90 rounded-xl text-xs text-gray-700 font-bold outline-none focus:border-[#b22830] min-w-[130px]"
             disabled
           >
             <option value="ALL">Việt Nam</option>
           </select>
+
           <select 
-            className="h-10 px-4 bg-white border border-gray-300 rounded-[3px] text-[13px] text-[#333] font-medium outline-none focus:border-[#5c3a21] min-w-[160px]"
+            className="h-9 px-3.5 bg-gray-50/60 border border-gray-200/90 rounded-xl text-xs text-gray-800 font-semibold outline-none focus:border-[#b22830] min-w-[160px] cursor-pointer"
             value={selectedCity}
             onChange={(e) => {
               setSelectedCity(e.target.value);
               setSelectedDistrict('ALL');
             }}
           >
-            <option value="ALL">Chọn Thành phố</option>
+            <option value="ALL">Tất cả Thành phố</option>
             {cities.filter(c => c !== 'ALL').map(c => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
+
           <select 
-            className="h-10 px-4 bg-white border border-gray-300 rounded-[3px] text-[13px] text-[#333] font-medium outline-none focus:border-[#5c3a21] min-w-[160px]"
+            className="h-9 px-3.5 bg-gray-50/60 border border-gray-200/90 rounded-xl text-xs text-gray-800 font-semibold outline-none focus:border-[#b22830] min-w-[160px] cursor-pointer disabled:opacity-50"
             value={selectedDistrict}
             onChange={(e) => setSelectedDistrict(e.target.value)}
             disabled={selectedCity === 'ALL'}
           >
-            <option value="ALL">Chọn Quận/Huyện</option>
+            <option value="ALL">Tất cả Quận/Huyện</option>
             {districts.filter(d => d !== 'ALL').map(d => (
               <option key={d} value={d}>{d}</option>
             ))}
           </select>
-          <select className="h-10 px-4 bg-white border border-gray-300 rounded-[3px] text-[13px] text-[#333] font-medium outline-none focus:border-[#5c3a21] min-w-[120px]">
-            <option value="ALL">Tiện ích</option>
-          </select>
 
-          <div className="relative flex items-center w-[300px] ml-2" ref={searchInputRef}>
-            <div className="flex items-center w-full bg-white rounded-[3px] border border-gray-300 overflow-hidden focus-within:border-[#5c3a21] shadow-sm">
+          <div className="relative flex items-center w-[320px]" ref={searchInputRef}>
+            <div className="flex items-center w-full bg-gray-50/60 rounded-xl border border-gray-200/90 overflow-hidden focus-within:border-[#b22830] focus-within:ring-2 focus-within:ring-red-100 transition-all">
               <input 
                 type="text" 
-                placeholder="Nhập địa chỉ, tên đường, quận, thành phố..."
+                placeholder="Nhập địa chỉ, tên đường, quận..."
                 value={searchQuery}
                 onFocus={() => setShowSuggestions(true)}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                   setShowSuggestions(true);
                 }}
-                className="flex-1 h-10 px-4 text-[13px] font-medium text-[#333] outline-none"
+                className="flex-1 h-9 px-3.5 text-xs font-semibold text-gray-800 bg-transparent outline-none"
               />
               {searchQuery && (
                 <button 
                   onClick={() => setSearchQuery('')} 
-                  className="px-3 text-gray-400 hover:text-[#a51a1a] transition-colors flex items-center justify-center" 
+                  className="px-2.5 text-gray-400 hover:text-[#b22830] transition-colors flex items-center justify-center cursor-pointer" 
                   title="Xóa"
                 >
                   <XMarkIcon className="w-4 h-4" />
@@ -421,14 +420,14 @@ export default function StoresPage() {
             
             {/* Dropdown Autocomplete Menu */}
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 shadow-2xl rounded-md overflow-hidden z-[100] max-h-[400px] overflow-y-auto animate-fade-in">
-                <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+              <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200/80 shadow-2xl rounded-2xl overflow-hidden z-[100] max-h-[380px] overflow-y-auto animate-fade-in">
+                <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
                   Gợi ý tìm kiếm
                 </div>
                 {suggestions.map((item, idx) => (
                   <div 
                     key={idx} 
-                    className="px-4 py-3 cursor-pointer hover:bg-red-50 border-b border-gray-50 last:border-none flex items-start gap-3 transition-colors"
+                    className="px-4 py-2.5 cursor-pointer hover:bg-red-50/50 border-b border-gray-50 last:border-none flex items-start gap-3 transition-colors"
                     onClick={() => {
                       if (item.type === 'city') {
                         setSelectedCity(item.value);
@@ -449,22 +448,23 @@ export default function StoresPage() {
                       setShowSuggestions(false);
                     }}
                   >
-                    <div className="mt-0.5 flex-shrink-0">
-                      {item.type === 'city' && <BuildingOffice2Icon className="w-5 h-5 text-gray-400" />}
-                      {item.type === 'district' && <HomeModernIcon className="w-5 h-5 text-gray-400" />}
-                      {item.type === 'store' && <MapPinIcon className="w-5 h-5 text-[#b22830]" />}
+                    <div className="mt-0.5 shrink-0">
+                      {item.type === 'city' && <BuildingOffice2Icon className="w-4 h-4 text-gray-400" />}
+                      {item.type === 'district' && <HomeModernIcon className="w-4 h-4 text-gray-400" />}
+                      {item.type === 'store' && <MapPinIcon className="w-4 h-4 text-[#b22830]" />}
                     </div>
-                    <div className="flex-1">
-                      <div className="text-[13px] font-bold text-[#333]">{item.text}</div>
-                      {item.subtext && <div className="text-[12px] text-gray-500 mt-0.5 line-clamp-1">{item.subtext}</div>}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-bold text-gray-900 truncate">{item.text}</div>
+                      {item.subtext && <div className="text-[11px] text-gray-500 truncate">{item.subtext}</div>}
                     </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
-          <button className="h-10 px-6 bg-[#5c3a21] text-white text-[13px] font-bold rounded-[3px] hover:bg-[#4a2e1a] transition-colors whitespace-nowrap flex items-center gap-2">
-            <MagnifyingGlassIcon className="w-4 h-4 text-white" />
+
+          <button className="h-9 px-5 bg-[#b22830] hover:bg-[#8f1d24] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-2xs flex items-center gap-1.5 active:scale-95">
+            <MagnifyingGlassIcon className="w-3.5 h-3.5 text-white" />
             Tìm kiếm
           </button>
         </div>
