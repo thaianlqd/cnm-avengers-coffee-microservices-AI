@@ -154,7 +154,14 @@ export class UserService implements OnModuleInit {
 
   async layMembershipConfig(key: string): Promise<any> {
     const config = await this.membershipConfigRepo.findOne({ where: { key } });
-    if (config) {
+    if (config && config.value) {
+      if (key === 'TIER_CONFIG' && Array.isArray(config.value)) {
+        const defaults: Record<string, number> = { SILVER: 100000, GOLD: 300000, DIAMOND: 500000 };
+        return config.value.map((t: any) => ({
+          ...t,
+          chi_tieu_toi_thieu_thang: Number((t.chi_tieu_toi_thieu_thang !== undefined && t.chi_tieu_toi_thieu_thang !== null && Number(t.chi_tieu_toi_thieu_thang) > 0) ? t.chi_tieu_toi_thieu_thang : (defaults[t.ma_hang] ?? 0)),
+        }));
+      }
       return config.value;
     }
 
@@ -1359,33 +1366,61 @@ export class UserService implements OnModuleInit {
     await this.deliveryAddressRepo.update({ ma_nguoi_dung: maNguoiDung, mac_dinh: true }, { mac_dinh: false });
   }
 
-  private tinhHangThanhVien(diem: number): {
+  private tinhHangThanhVien(diem: number, chiTieuThangNay: number = 0): {
     hang: string;
     ma_hang: string;
     diem_hien_tai: number;
     diem_can_len_hang: number | null;
     diem_bat_dau_hang: number;
+    hang_xet_the_diem: string;
+    ma_hang_xet_the_diem: string;
+    bi_ha_hang_do_thieu_chi_tieu: boolean;
+    chi_tieu_thang_nay: number;
+    chi_tieu_can_de_giu_hang: number;
   } {
     const config = UserService.tierConfigCache || this.DEFAULT_TIER_CONFIG;
     // Sắp xếp tăng dần theo điểm
     const sorted = [...config].sort((a, b) => Number(a.diem_toi_thieu || 0) - Number(b.diem_toi_thieu || 0));
 
-    let matchedTier = sorted[0];
+    // 1. Tìm hạng cao nhất đạt được theo ĐIỂM XÉT HẠNG (Loyalty Points)
+    let matchedEarnedTier = sorted[0];
     for (let i = 0; i < sorted.length; i++) {
       if (diem >= Number(sorted[i].diem_toi_thieu || 0)) {
-        matchedTier = sorted[i];
+        matchedEarnedTier = sorted[i];
       }
     }
 
-    const currentIndex = sorted.findIndex((t) => t.ma_hang === matchedTier.ma_hang);
+    // 2. Kiểm tra ĐIỀU KIỆN CHI TIÊU DUY TRÌ THÁNG NÀY
+    // Nếu chưa đạt chi tiêu tối thiểu tháng của hạng theo điểm, tự động lùi về hạng cao nhất đáp ứng đủ mức chi tiêu tháng (hoặc MEMBER nếu chưa tiêu đủ)
+    let matchedActiveTier = sorted[0];
+    for (let i = 0; i < sorted.length; i++) {
+      const tier = sorted[i];
+      const reqPoints = Number(tier.diem_toi_thieu || 0);
+      const reqSpendMonthly = Number(tier.chi_tieu_toi_thieu_thang || 0);
+
+      if (diem >= reqPoints) {
+        if (tier.ma_hang === 'MEMBER' || chiTieuThangNay >= reqSpendMonthly) {
+          matchedActiveTier = tier;
+        }
+      }
+    }
+
+    const currentIndex = sorted.findIndex((t) => t.ma_hang === matchedActiveTier.ma_hang);
     const nextTier = currentIndex < sorted.length - 1 ? sorted[currentIndex + 1] : null;
 
+    const biHaHang = matchedActiveTier.ma_hang !== matchedEarnedTier.ma_hang;
+
     return {
-      hang: matchedTier.ten_hang,
-      ma_hang: matchedTier.ma_hang,
+      hang: matchedActiveTier.ten_hang,
+      ma_hang: matchedActiveTier.ma_hang,
       diem_hien_tai: diem,
       diem_can_len_hang: nextTier ? Number(nextTier.diem_toi_thieu || 0) : null,
-      diem_bat_dau_hang: Number(matchedTier.diem_toi_thieu || 0),
+      diem_bat_dau_hang: Number(matchedActiveTier.diem_toi_thieu || 0),
+      hang_xet_the_diem: matchedEarnedTier.ten_hang,
+      ma_hang_xet_the_diem: matchedEarnedTier.ma_hang,
+      bi_ha_hang_do_thieu_chi_tieu: biHaHang,
+      chi_tieu_thang_nay: chiTieuThangNay,
+      chi_tieu_can_de_giu_hang: Number(matchedEarnedTier.chi_tieu_toi_thieu_thang || 0),
     };
   }
 
@@ -1510,7 +1545,8 @@ export class UserService implements OnModuleInit {
     const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: maNguoiDung } });
     if (!user) throw new NotFoundException('Khong tim thay nguoi dung');
     const diem = user.diem_loyalty || 0;
-    const hang = this.tinhHangThanhVien(diem);
+    const chiTieuThangNay = user.chi_tieu_thang_nay || 0;
+    const hang = this.tinhHangThanhVien(diem, chiTieuThangNay);
     const quyenLoi = this.layQuyenLoiTheoHang(hang.ma_hang);
     return {
       ma_nguoi_dung: maNguoiDung,
@@ -1534,7 +1570,7 @@ export class UserService implements OnModuleInit {
       user.thang_chi_tieu_gan_nhat = currentMonth;
     }
 
-    const hangTruoc = this.tinhHangThanhVien(user.diem_loyalty || 0);
+    const hangTruoc = this.tinhHangThanhVien(user.diem_loyalty || 0, user.chi_tieu_thang_nay || 0);
     const config = UserService.tierConfigCache || this.DEFAULT_TIER_CONFIG;
     const tierConfig = config.find((t) => t.ma_hang === hangTruoc.ma_hang);
     const minSpend = Number(tierConfig?.chi_tieu_toi_thieu_thang || 0);
@@ -1553,7 +1589,7 @@ export class UserService implements OnModuleInit {
     user.chi_tieu_thang_nay = Number(user.chi_tieu_thang_nay || 0) + addedMoney;
     await this.userRepo.save(user);
 
-    const hangSau = this.tinhHangThanhVien(user.diem_loyalty);
+    const hangSau = this.tinhHangThanhVien(user.diem_loyalty, user.chi_tieu_thang_nay);
     let len_hang = false;
     if (hangSau.ma_hang !== hangTruoc.ma_hang) {
       len_hang = true;
@@ -2488,13 +2524,13 @@ export class UserService implements OnModuleInit {
     }
 
     const diem = user.diem_loyalty || 0;
-    const hang = this.tinhHangThanhVien(diem);
+    const chiTieuThangNay = Number(user.chi_tieu_thang_nay || 0);
+    const hang = this.tinhHangThanhVien(diem, chiTieuThangNay);
 
     const tierConfigs = UserService.tierConfigCache || this.DEFAULT_TIER_CONFIG;
-    const currentTierConfig = tierConfigs.find(t => t.ma_hang === hang.ma_hang) || tierConfigs[0];
-    const chiTieuToiThieuThang = Number(currentTierConfig.chi_tieu_toi_thieu_thang || 0);
-    const chiTieuThangNay = Number(user.chi_tieu_thang_nay || 0);
-    const datDieuKienDacQuyen = (hang.ma_hang === 'MEMBER') || (chiTieuThangNay >= chiTieuToiThieuThang);
+    const earnedTierConfig = tierConfigs.find(t => t.ma_hang === hang.ma_hang_xet_the_diem) || tierConfigs[0];
+    const chiTieuToiThieuThang = Number(earnedTierConfig.chi_tieu_toi_thieu_thang || 0);
+    const datDieuKienDacQuyen = !hang.bi_ha_hang_do_thieu_chi_tieu;
     const conThieuThangNay = Math.max(0, chiTieuToiThieuThang - chiTieuThangNay);
 
     const quyenLoi = await this.layQuyenLoiTheoHangAsync(hang.ma_hang, datDieuKienDacQuyen);

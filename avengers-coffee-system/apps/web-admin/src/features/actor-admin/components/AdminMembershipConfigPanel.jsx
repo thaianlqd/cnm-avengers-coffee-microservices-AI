@@ -300,7 +300,7 @@ export function AdminMembershipConfigPanel({
                     </label>
 
                     <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                      <span style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>Chi tiêu min/Tháng (đ)</span>
+                      <span style={{ fontSize: '0.82rem', fontWeight: '700', color: '#c41230' }}>Chi tiêu duy trì / Tháng (đ)</span>
                       <input
                         type="number"
                         value={tier.chi_tieu_toi_thieu_thang ?? 0}
@@ -308,7 +308,8 @@ export function AdminMembershipConfigPanel({
                         disabled={tier.ma_hang === 'MEMBER'}
                         min="0"
                         step="10000"
-                        style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontWeight: '700', color: '#c41230', backgroundColor: tier.ma_hang === 'MEMBER' ? '#f9fafb' : '#ffffff' }}
+                        placeholder={tier.ma_hang === 'MEMBER' ? 'Không yêu cầu' : 'Ví dụ: 100000'}
+                        style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontWeight: '800', color: '#c41230', backgroundColor: tier.ma_hang === 'MEMBER' ? '#f9fafb' : '#ffffff' }}
                       />
                     </label>
                   </div>
