@@ -11,17 +11,6 @@ const QRCodeDisplay = ({ tableId, storeId }) => {
   // Dùng api.qrserver.com để sinh ảnh QR tĩnh
   const imgSrc = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrUrl)}&margin=10`
 
-  const renderItemOptions = (item) => {
-    const opts = [];
-    if (item.kich_co) opts.push(`Size ${item.kich_co}`);
-    if (item.luong_da) opts.push(`${item.luong_da}`);
-    if (item.do_ngot) opts.push(`${item.do_ngot}`);
-    if (item.loai_sua) opts.push(`${item.loai_sua}`);
-    if (item.toppings && item.toppings.length > 0) opts.push(`+ ${item.toppings.join(', ')}`);
-    if (item.ghi_chu) opts.push(`Ghi chú: ${item.ghi_chu}`);
-    return opts.length > 0 ? opts.join(' | ') : '';
-  };
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', padding: '1rem 0' }}>
       <p style={{ color: '#4b5563', fontSize: '0.9rem', textAlign: 'center' }}>
@@ -44,6 +33,18 @@ const QRCodeDisplay = ({ tableId, storeId }) => {
 
 export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
   const [selectedTable, setSelectedTable] = useState(null) // tableId
+  
+  const renderItemOptions = (item) => {
+    const opts = [];
+    if (item.kich_co) opts.push(`Size ${item.kich_co}`);
+    if (item.luong_da) opts.push(`${item.luong_da}`);
+    if (item.do_ngot) opts.push(`${item.do_ngot}`);
+    if (item.loai_sua) opts.push(`${item.loai_sua}`);
+    if (item.toppings && item.toppings.length > 0) opts.push(`+ ${item.toppings.join(', ')}`);
+    if (item.ghi_chu) opts.push(`Ghi chú: ${item.ghi_chu}`);
+    return opts.length > 0 ? opts.join(' | ') : '';
+  };
+
   
   const storeId = session?.user?.coSoMa || session?.user?.co_so_ma || 'HCM_DIEN_BIEN_PHU'
   

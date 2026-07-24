@@ -41,6 +41,9 @@ import { DeliveryTracking } from './modules/shipper/features_thaian/delivery-tra
 import { CustomerWallet } from './modules/customer-wallet/entities/customer-wallet.entity';
 import { CustomerWalletTransaction } from './modules/customer-wallet/entities/customer-wallet-transaction.entity';
 import { CustomerWalletModule } from './modules/customer-wallet/customer-wallet.module';
+import { GiftCardModule } from './modules/gift-card/gift-card.module';
+import { GiftCard } from './modules/gift-card/entities/gift-card.entity';
+import { GiftCardTheme } from './modules/gift-card/entities/gift-card-theme.entity';
 
 import { BranchReview } from './entities/branch-review.entity';
 import { BranchReviewService } from './services/branch-review.service';
@@ -114,6 +117,8 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
             BranchReview,
             CustomerWallet,
             CustomerWalletTransaction,
+            GiftCard,
+            GiftCardTheme,
           ],
           synchronize: true,
         };
@@ -130,6 +135,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
     ShipperModule,
     FeaturesThaianModule,
     CustomerWalletModule,
+    GiftCardModule,
   ],
   controllers: [AppController, ReviewController, SurveyController, BranchReviewController],
   providers: [AppService, ReviewService, SurveyService, BranchReviewService],

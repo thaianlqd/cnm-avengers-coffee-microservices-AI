@@ -182,6 +182,11 @@ services:
       PGSSLMODE: ${PGSSLMODE:-require}
       NODE_TLS_REJECT_UNAUTHORIZED: ${NODE_TLS_REJECT_UNAUTHORIZED:-0}
       DB_SCHEMA: ${ORDER_DB_SCHEMA:-orders}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_SECURE: ${SMTP_SECURE:-}
       PAYMENT_RETURN_BASE_URL: ${PAYMENT_RETURN_BASE_URL:-http://localhost:3000}
       WEB_CUSTOMER_BASE_URL: ${WEB_CUSTOMER_BASE_URL:-http://localhost:5173}
       VNPAY_URL: ${VNPAY_URL:-https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
