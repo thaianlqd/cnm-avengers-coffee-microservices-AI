@@ -198,7 +198,7 @@ export default function Header({
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex shrink-0 cursor-pointer items-center justify-center z-10"
           onClick={() => {
             onSelectedCatIdChange?.('all');
-            onTabChange?.('order');
+            onTabChange?.('home');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
         >
