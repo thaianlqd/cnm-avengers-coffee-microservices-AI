@@ -208,7 +208,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 1700M
 
   news-service:
     build:
