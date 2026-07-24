@@ -64,6 +64,9 @@ export function AdminMembershipConfigPanel({
       }
     } else if (field === 'ten_san_pham_tang' && value) {
       current.ten = `Free ${value}`;
+    } else if (field === 'loai' && value === 'FREE_TOPPING') {
+      current.ten = 'Free 1 Topping';
+      current.ten_san_pham_tang = '1 Topping';
     }
 
     updated[activePrizeIndex] = current;
@@ -297,7 +300,7 @@ export function AdminMembershipConfigPanel({
                     </label>
 
                     <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                      <span style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>Chi tiêu min/Tháng (đ)</span>
+                      <span style={{ fontSize: '0.82rem', fontWeight: '700', color: '#c41230' }}>Chi tiêu duy trì / Tháng (đ)</span>
                       <input
                         type="number"
                         value={tier.chi_tieu_toi_thieu_thang ?? 0}
@@ -305,7 +308,8 @@ export function AdminMembershipConfigPanel({
                         disabled={tier.ma_hang === 'MEMBER'}
                         min="0"
                         step="10000"
-                        style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontWeight: '700', color: '#c41230', backgroundColor: tier.ma_hang === 'MEMBER' ? '#f9fafb' : '#ffffff' }}
+                        placeholder={tier.ma_hang === 'MEMBER' ? 'Không yêu cầu' : 'Ví dụ: 100000'}
+                        style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontWeight: '800', color: '#c41230', backgroundColor: tier.ma_hang === 'MEMBER' ? '#f9fafb' : '#ffffff' }}
                       />
                     </label>
                   </div>
@@ -496,7 +500,7 @@ export function AdminMembershipConfigPanel({
                           {prize.ten}
                         </div>
                         <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                          {prize.loai === 'POINTS' ? `+${prize.gia_tri} điểm` : prize.loai === 'VOUCHER' ? 'Voucher' : `${prize.ten_san_pham_tang || 'Món'}`}
+                          {prize.loai === 'POINTS' ? `+${prize.gia_tri} điểm` : prize.loai === 'VOUCHER' ? 'Voucher' : prize.loai === 'FREE_TOPPING' ? 'Free 1 Topping' : `${prize.ten_san_pham_tang || 'Món'}`}
                         </span>
                       </div>
                     </div>
@@ -543,6 +547,7 @@ export function AdminMembershipConfigPanel({
                       <option value="POINTS">Cộng điểm khả dụng</option>
                       <option value="VOUCHER">Tặng Voucher giảm giá</option>
                       <option value="FREE_ITEM">Tặng sản phẩm menu</option>
+                      <option value="FREE_TOPPING">Tặng Voucher Free Topping</option>
                     </select>
                   </label>
 
@@ -628,6 +633,12 @@ export function AdminMembershipConfigPanel({
                         />
                       )}
                     </label>
+                  )}
+
+                  {activePrize.loai === 'FREE_TOPPING' && (
+                    <div style={{ background: '#f0fdf4', padding: '0.85rem', borderRadius: '10px', border: '1px solid #d1fae5', fontSize: '0.82rem', color: '#065f46', lineHeight: 1.5 }}>
+                      🎉 Phần thưởng <strong>Voucher Free Topping</strong>: Khi khách quay trúng ô này, hệ thống sẽ tự động cấp 1 voucher miễn phí 1 topping bất kỳ trong đơn hàng cho khách.
+                    </div>
                   )}
                 </div>
 
