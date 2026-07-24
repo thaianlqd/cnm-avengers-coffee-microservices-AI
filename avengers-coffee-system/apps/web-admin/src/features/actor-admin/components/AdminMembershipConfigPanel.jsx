@@ -51,8 +51,16 @@ export function AdminMembershipConfigPanel({
     if (field === 'ma_voucher' && value) {
       const foundVoucher = (promotionsState?.items || []).find(v => v.ma_khuyen_mai === value);
       if (foundVoucher) {
-        current.ten = foundVoucher.ten_khuyen_mai || foundVoucher.ma_khuyen_mai;
-        current.gia_tri = Number(foundVoucher.gia_tri || 0);
+        const val = Number(foundVoucher.gia_tri || 0);
+        const type = foundVoucher.loai_khuyen_mai || foundVoucher.loai;
+        let autoTitle = foundVoucher.ten_khuyen_mai;
+        if (!autoTitle || String(autoTitle).startsWith('TPL_')) {
+          if (type === 'PERCENT') autoTitle = `Giảm ${val}%`;
+          else if (type === 'FIXED') autoTitle = `Voucher ${val >= 1000 ? (val/1000) + 'K' : val + 'đ'}`;
+          else autoTitle = `Voucher Giảm Giá`;
+        }
+        current.ten = autoTitle;
+        current.gia_tri = val;
       }
     } else if (field === 'ten_san_pham_tang' && value) {
       current.ten = `Free ${value}`;
@@ -65,23 +73,24 @@ export function AdminMembershipConfigPanel({
   const totalProbability = prizes.reduce((sum, p) => sum + Number(p.xac_suat || 0), 0);
   const isWheelProbabilityValid = Math.abs(totalProbability - 100) < 0.01;
 
-  // Lọc voucher hoạt động theo từng phân loại ngữ cảnh template
+  // Chỉ lọc các Voucher dạng TEMPLATE đang ACTIVE cho Membership và Lucky Wheel
+  const activeTemplateVouchers = (promotionsState?.items || []).filter(
+    (p) => p.trang_thai === 'ACTIVE' && p.loai_phan_phoi === 'TEMPLATE'
+  )
+
   const hasContext = (v, ctxCode) => {
-    if (v.loai_phan_phoi === 'TEMPLATE') {
-      const rawCtx = v.ngu_canh_su_dung || ''
-      const list = typeof rawCtx === 'string'
-        ? rawCtx.split(',').map((s) => s.trim().toUpperCase())
-        : (Array.isArray(rawCtx) ? rawCtx : [])
-      return list.includes(ctxCode)
-    }
-    return v.loai_su_kien === ctxCode
+    if (v.loai_phan_phoi !== 'TEMPLATE') return false
+    const rawCtx = v.ngu_canh_su_dung || ''
+    const list = typeof rawCtx === 'string'
+      ? rawCtx.split(',').map((s) => s.trim().toUpperCase())
+      : (Array.isArray(rawCtx) ? rawCtx : [])
+    return list.includes(ctxCode)
   }
 
-  const activeVouchers = (promotionsState?.items || []).filter((p) => p.trang_thai === 'ACTIVE')
-  const tierUpVouchers = activeVouchers.filter((p) => hasContext(p, 'TIER_UP'))
-  const birthdayVouchers = activeVouchers.filter((p) => hasContext(p, 'BIRTHDAY'))
-  const freeshipVouchers = activeVouchers.filter((p) => hasContext(p, 'FREESHIP'))
-  const luckyWheelVouchers = activeVouchers.filter((p) => hasContext(p, 'LUCKY_WHEEL'))
+  const tierUpVouchers = activeTemplateVouchers.filter((p) => hasContext(p, 'TIER_UP'))
+  const birthdayVouchers = activeTemplateVouchers.filter((p) => hasContext(p, 'BIRTHDAY'))
+  const freeshipVouchers = activeTemplateVouchers.filter((p) => hasContext(p, 'FREESHIP'))
+  const luckyWheelVouchers = activeTemplateVouchers.filter((p) => hasContext(p, 'LUCKY_WHEEL'))
 
   const formatVoucherOptionText = (v) => {
     const code = v.ma_khuyen_mai || v.ma_voucher || ''
@@ -157,6 +166,7 @@ export function AdminMembershipConfigPanel({
     const payload = tiers.map(t => ({
       ...t,
       diem_toi_thieu: Number(t.diem_toi_thieu || 0),
+      chi_tieu_toi_thieu_thang: Number(t.chi_tieu_toi_thieu_thang || 0),
       he_so_diem: Number(t.he_so_diem || 1),
       luot_quay_thang: Number(t.luot_quay_thang || 1),
       ma_voucher_thang_hang: t.ma_voucher_thang_hang || null,
@@ -273,17 +283,32 @@ export function AdminMembershipConfigPanel({
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                  <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                    <span style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>Mốc điểm xét hạng</span>
-                    <input
-                      type="number"
-                      value={tier.diem_toi_thieu}
-                      onChange={(e) => handleTierChange(idx, 'diem_toi_thieu', Number(e.target.value))}
-                      disabled={tier.ma_hang === 'MEMBER'}
-                      min="0"
-                      style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontWeight: '700', backgroundColor: tier.ma_hang === 'MEMBER' ? '#f9fafb' : '#ffffff' }}
-                    />
-                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>Mốc điểm xét hạng</span>
+                      <input
+                        type="number"
+                        value={tier.diem_toi_thieu}
+                        onChange={(e) => handleTierChange(idx, 'diem_toi_thieu', Number(e.target.value))}
+                        disabled={tier.ma_hang === 'MEMBER'}
+                        min="0"
+                        style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontWeight: '700', backgroundColor: tier.ma_hang === 'MEMBER' ? '#f9fafb' : '#ffffff' }}
+                      />
+                    </label>
+
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>Chi tiêu min/Tháng (đ)</span>
+                      <input
+                        type="number"
+                        value={tier.chi_tieu_toi_thieu_thang ?? 0}
+                        onChange={(e) => handleTierChange(idx, 'chi_tieu_toi_thieu_thang', Number(e.target.value))}
+                        disabled={tier.ma_hang === 'MEMBER'}
+                        min="0"
+                        step="10000"
+                        style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontWeight: '700', color: '#c41230', backgroundColor: tier.ma_hang === 'MEMBER' ? '#f9fafb' : '#ffffff' }}
+                      />
+                    </label>
+                  </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                     <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
@@ -320,7 +345,7 @@ export function AdminMembershipConfigPanel({
                         style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.82rem' }}
                       >
                         <option value="">-- Mặc định (Tự động tạo Voucher) --</option>
-                        {(tierUpVouchers.length > 0 ? tierUpVouchers : activeVouchers).map((v) => (
+                        {(tierUpVouchers.length > 0 ? tierUpVouchers : activeTemplateVouchers).map((v) => (
                           <option key={v.ma_khuyen_mai} value={v.ma_khuyen_mai}>
                             {formatVoucherOptionText(v)}
                           </option>
@@ -337,7 +362,7 @@ export function AdminMembershipConfigPanel({
                         style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.82rem' }}
                       >
                         <option value="">-- Mặc định (Tự động tạo Voucher) --</option>
-                        {(birthdayVouchers.length > 0 ? birthdayVouchers : activeVouchers).map((v) => (
+                        {(birthdayVouchers.length > 0 ? birthdayVouchers : activeTemplateVouchers).map((v) => (
                           <option key={v.ma_khuyen_mai} value={v.ma_khuyen_mai}>
                             {formatVoucherOptionText(v)}
                           </option>
@@ -557,7 +582,7 @@ export function AdminMembershipConfigPanel({
                         style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e8e2da' }}
                       >
                         <option value="">-- Chọn Mẫu Voucher Vòng Quay --</option>
-                        {(luckyWheelVouchers.length > 0 ? luckyWheelVouchers : activeVouchers).map((v) => (
+                        {(luckyWheelVouchers.length > 0 ? luckyWheelVouchers : activeTemplateVouchers).map((v) => (
                           <option key={v.ma_khuyen_mai} value={v.ma_khuyen_mai}>
                             {formatVoucherOptionText(v)}
                           </option>

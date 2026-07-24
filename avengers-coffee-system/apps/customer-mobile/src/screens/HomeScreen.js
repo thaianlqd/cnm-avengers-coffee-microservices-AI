@@ -23,6 +23,8 @@ import {
   formatDateTime,
   getUserDisplayName,
   getUserId,
+  getVoucherDisplayTitle,
+  getVoucherDisplayDescription,
   normalizeBranch,
   normalizeCartItem,
   normalizeCategory,
@@ -112,6 +114,42 @@ function SearchBar({ onPress }) {
           <Ionicons name="chevron-forward" size={16} color="#fff" />
         </View>
       </Pressable>
+    </View>
+  )
+}
+
+function QuickFeaturesRow({ navigation }) {
+  const items = [
+    { label: 'Thành viên', icon: 'ribbon-outline', color: '#f26b1d', bg: '#fff4ed', route: 'Membership' },
+    { label: 'Vòng quay', icon: 'sparkles-outline', color: '#c41230', bg: '#fef2f2', route: 'LuckyWheel' },
+    { label: 'Gift Card', icon: 'card-outline', color: '#d97706', bg: '#fffbeb', route: 'GiftCard' },
+    { label: 'Ví điểm', icon: 'wallet-outline', color: '#0284c7', bg: '#f0f9ff', route: 'Wallet' },
+    { label: 'Vouchers', icon: 'ticket-outline', color: '#9333ea', bg: '#faf5ff', route: 'Vouchers' },
+    { label: 'Cửa hàng', icon: 'storefront-outline', color: '#16a34a', bg: '#f0fdf4', route: 'Stores' },
+    { label: 'Trợ giúp', icon: 'help-circle-outline', color: '#0ea5e9', bg: '#f0f9ff', route: 'Support' },
+    { label: 'Đánh giá', icon: 'star-outline', color: '#eab308', bg: '#fefce8', route: 'Survey' },
+  ]
+
+  return (
+    <View style={styles.quickFeaturesSection}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.quickFeaturesScroll}
+      >
+        {items.map((item, idx) => (
+          <Pressable
+            key={idx}
+            onPress={() => navigation.navigate(item.route)}
+            style={({ pressed }) => [styles.quickFeatureItem, pressed && { opacity: 0.82, transform: [{ scale: 0.96 }] }]}
+          >
+            <View style={[styles.quickFeatureIconWrap, { backgroundColor: item.bg }]}>
+              <Ionicons name={item.icon} size={22} color={item.color} />
+            </View>
+            <Text style={styles.quickFeatureLabel}>{item.label}</Text>
+          </Pressable>
+        ))}
+      </ScrollView>
     </View>
   )
 }
@@ -334,13 +372,15 @@ function ProductCard({ item, onPress }) {
 }
 
 function VoucherCard({ voucher }) {
-  const type = String(voucher?.loai_khuyen_mai || '').toUpperCase()
+  const type = String(voucher?.loai_khuyen_mai || voucher?.loai || '').toUpperCase()
   const typeConfig = {
     PERCENT: { color: '#22c55e', bg: '#f0fdf4', label: 'Giảm %' },
     FIXED: { color: '#0ea5e9', bg: '#f0f9ff', label: 'Giảm tiền' },
     FREE_ITEM: { color: '#a855f7', bg: '#faf5ff', label: 'Tặng kèm' },
   }
   const tc = typeConfig[type] || { color: colors.primary, bg: '#fff9f5', label: 'Ưu đãi' }
+  const title = getVoucherDisplayTitle(voucher)
+  const description = getVoucherDisplayDescription(voucher)
 
   return (
     <View style={[styles.voucherCard, shadows.sm]}>
@@ -351,12 +391,10 @@ function VoucherCard({ voucher }) {
       <View style={styles.voucherContent}>
         <View style={styles.voucherCodeRow}>
           <Ionicons name="ticket-outline" size={16} color={colors.primary} />
-          <Text style={styles.voucherCode}>{voucher.ma_khuyen_mai}</Text>
+          <Text style={styles.voucherCode}>{voucher.ma_khuyen_mai || voucher.ma_voucher}</Text>
         </View>
-        <Text style={styles.voucherName} numberOfLines={1}>{voucher.ten_khuyen_mai || voucher.ma_khuyen_mai}</Text>
-        <Text style={styles.voucherDate}>
-          HSD: {formatDateOnly(voucher.ngay_ket_thuc) || 'Không giới hạn'}
-        </Text>
+        <Text style={styles.voucherName} numberOfLines={1}>{title}</Text>
+        <Text style={styles.voucherDate} numberOfLines={1}>{description}</Text>
       </View>
     </View>
   )
@@ -737,220 +775,103 @@ export function HomeScreen({ navigation }) {
         <TopHeader />
         <TopPromoBanner />
         <SearchBar onPress={() => navigation.navigate('Menu')} />
-        <MockProminentNewsCard onPress={() => navigation.navigate('News')} />
-        <HomeMenuSection navigation={navigation} />
+        <QuickFeaturesRow navigation={navigation} />
 
-        {false && (
-          <React.Fragment>
-            {/* Loyalty points pill */}
-            <PointsPill diemLoyalty={diemLoyalty} onPress={() => navigation.navigate('Vouchers')} />
+        {/* Loyalty points pill */}
+        <PointsPill diemLoyalty={diemLoyalty} onPress={() => navigation.navigate('Membership')} />
 
-            {/* Quick Actions */}
-            <View style={styles.quickActionsCard}>
-              <Pressable
-                onPress={() => navigation.navigate('Menu')}
-                style={({ pressed }) => [styles.quickAction, pressed && { opacity: 0.85 }]}
-              >
-                <View style={[styles.quickActionIcon, { backgroundColor: '#fff1e8' }]}>
-                  <Ionicons name="restaurant-outline" size={22} color={colors.primary} />
-                </View>
-                <Text style={styles.quickActionLabel}>Menu</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => navigation.navigate('Cart')}
-                style={({ pressed }) => [styles.quickAction, pressed && { opacity: 0.85 }]}
-              >
-                <View style={[styles.quickActionIcon, { backgroundColor: '#eafaf0' }]}>
-                  <Ionicons name="bag-outline" size={22} color="#16a34a" />
-                </View>
-                <Text style={styles.quickActionLabel}>Giỏ hàng</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => navigation.navigate('Orders')}
-                style={({ pressed }) => [styles.quickAction, pressed && { opacity: 0.85 }]}
-              >
-                <View style={[styles.quickActionIcon, { backgroundColor: '#eaf6fd' }]}>
-                  <Ionicons name="receipt-outline" size={22} color="#0284c7" />
-                </View>
-                <Text style={styles.quickActionLabel}>Đơn hàng</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => navigation.navigate('Vouchers')}
-                style={({ pressed }) => [styles.quickAction, pressed && { opacity: 0.85 }]}
-              >
-                <View style={[styles.quickActionIcon, { backgroundColor: '#f6effc' }]}>
-                  <Ionicons name="gift-outline" size={22} color="#9333ea" />
-                </View>
-                <Text style={styles.quickActionLabel}>Voucher</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => navigation.navigate('Chat')}
-                style={({ pressed }) => [styles.quickAction, pressed && { opacity: 0.85 }]}
-              >
-                <View style={[styles.quickActionIcon, { backgroundColor: '#fdeef5' }]}>
-                  <Ionicons name="chatbubble-ellipses-outline" size={22} color="#db2777" />
-                </View>
-                <Text style={styles.quickActionLabel}>Hỗ trợ</Text>
-              </Pressable>
+        {/* AI Recommendations - Web Style */}
+        {displayTop3Products.length > 0 ? (
+          <View style={styles.aiRecsContainer}>
+            <View style={styles.aiRecsHeaderRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.aiRecsSubLabel}>SMART RECOMMENDATION</Text>
+                <Text style={styles.aiRecsTitle}>
+                  {userId ? 'TOP 3 MÓN HỢP GU CỦA BẠN' : 'TOP 3 MÓN PHỔ BIẾN'}
+                </Text>
+                <Text style={styles.aiRecsDesc}>
+                  {aiRecsData.is_personalized
+                    ? 'Cá nhân hóa theo lịch sử mua hàng, đánh giá, yêu thích và xu hướng dùng ưu đãi.'
+                    : userId
+                      ? 'Chưa đủ lịch sử, hiển thị các món phổ biến.'
+                      : 'Đang xem gợi ý cho khách vãng lai, dựa trên độ phổ biến toàn hệ thống.'}
+                </Text>
+              </View>
+              <View style={styles.aiRecsBadge}>
+                <Text style={styles.aiRecsBadgeText}>
+                  {aiRecsData.is_personalized ? 'AI PERSONAL' : 'AI POPULAR'}
+                </Text>
+              </View>
             </View>
 
-            {/* Loading */}
-            {isLoading ? (
-              <View style={styles.loadingWrap}>
-                <ActivityIndicator color={colors.primary} size="large" />
-                <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>
-              </View>
-            ) : null}
-
-            {/* AI Recommendations - Web Style */}
-            {displayTop3Products.length > 0 ? (
-              <View style={styles.aiRecsContainer}>
-                <View style={styles.aiRecsHeaderRow}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.aiRecsSubLabel}>SMART RECOMMENDATION</Text>
-                    <Text style={styles.aiRecsTitle}>
-                      {userId ? 'TOP 3 MÓN HỢP GU CỦA BẠN' : 'TOP 3 MÓN PHỔ BIẾN'}
-                    </Text>
-                    <Text style={styles.aiRecsDesc}>
-                      {aiRecsData.is_personalized
-                        ? 'Cá nhân hóa theo lịch sử mua hàng, đánh giá, yêu thích và xu hướng dùng ưu đãi.'
-                        : userId
-                          ? 'Chưa đủ lịch sử, hiển thị các món phổ biến.'
-                          : 'Đang xem gợi ý cho khách vãng lai, dựa trên độ phổ biến toàn hệ thống.'}
-                    </Text>
-                    <Text style={styles.aiRecsSyncLabel}>DONG BO CUSTOMER VOI TOP HANH VI 30 NGAY</Text>
-                  </View>
-                  <View style={styles.aiRecsBadge}>
-                    <Text style={styles.aiRecsBadgeText}>
-                      {aiRecsData.is_personalized ? 'AI PERSONAL' : 'AI POPULAR'}
-                    </Text>
-                  </View>
-                </View>
-
-                <FlatList
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  data={displayTop3Products}
-                  keyExtractor={(item) => String(item.ma_san_pham || item.id)}
-                  contentContainerStyle={styles.aiRecsListContent}
-                  renderItem={({ item }) => (
-                    <Pressable
-                      onPress={() => handleProductPress(item)}
-                      style={({ pressed }) => [styles.aiRecsCard, pressed && { opacity: 0.92 }]}
-                    >
-                      <View style={styles.aiRecsImageWrap}>
-                        {item.hinh_anh_url || item.image ? (
-                          <Image source={{ uri: item.hinh_anh_url || item.image }} style={styles.aiRecsImage} resizeMode="cover" />
-                        ) : (
-                          <View style={[styles.aiRecsImage, styles.itemImagePlaceholder]}>
-                            <Ionicons name="cafe-outline" size={32} color={colors.muted} />
-                          </View>
-                        )}
-                        <Pressable style={styles.aiRecsLikeBtn}>
-                          <Ionicons name="heart" size={16} color="#ef4444" />
-                        </Pressable>
+            <FlatList
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              data={displayTop3Products}
+              keyExtractor={(item) => String(item.ma_san_pham || item.id)}
+              contentContainerStyle={styles.aiRecsListContent}
+              renderItem={({ item }) => (
+                <Pressable
+                  onPress={() => handleProductPress(item)}
+                  style={({ pressed }) => [styles.aiRecsCard, pressed && { opacity: 0.92 }]}
+                >
+                  <View style={styles.aiRecsImageWrap}>
+                    {item.hinh_anh_url || item.image ? (
+                      <Image source={{ uri: item.hinh_anh_url || item.image }} style={styles.aiRecsImage} resizeMode="cover" />
+                    ) : (
+                      <View style={[styles.aiRecsImage, styles.itemImagePlaceholder]}>
+                        <Ionicons name="cafe-outline" size={32} color={colors.muted} />
                       </View>
-
-                      <View style={styles.aiRecsInfo}>
-                        <Text style={styles.aiRecsCategory} numberOfLines={1}>{item.danhMuc?.ten_danh_muc || item.danh_muc || item.category || 'Gợi ý AI'}</Text>
-                        <Text style={styles.aiRecsName} numberOfLines={1}>{item.ten_san_pham || item.name}</Text>
-                        <Text style={styles.aiRecsPrice}>{formatCurrency(Number(item.gia_ban || item.price || 0))}</Text>
-
-                        <View style={styles.aiRecsActions}>
-                          <Pressable
-                            style={styles.aiRecsBtnOutline}
-                            onPress={() => handleProductPress(item)}
-                          >
-                            <Text style={styles.aiRecsBtnOutlineText}>CHI TIẾT</Text>
-                          </Pressable>
-                          <Pressable
-                            style={styles.aiRecsBtnSolid}
-                            onPress={() => handleProductPress(item)}
-                          >
-                            <Text style={styles.aiRecsBtnSolidText}>THÊM</Text>
-                          </Pressable>
-                        </View>
-                      </View>
+                    )}
+                    <Pressable style={styles.aiRecsLikeBtn}>
+                      <Ionicons name="heart" size={16} color="#ef4444" />
                     </Pressable>
-                  )}
-                />
-              </View>
-            ) : null}
+                  </View>
 
-            {/* Featured Products */}
-            {products.length > 0 ? (
-              <View style={styles.section}>
-                <SectionHeader title="Sản phẩm nổi bật" icon="🔥" onSeeAll={() => navigation.navigate('Menu')} />
-                <FlatList
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  data={products}
-                  keyExtractor={(item) => String(item.id || item.ma_san_pham)}
-                  contentContainerStyle={styles.horizontalList}
-                  renderItem={({ item }) => <ProductCard item={item} onPress={handleProductPress} />}
-                />
-              </View>
-            ) : null}
+                  <View style={styles.aiRecsInfo}>
+                    <Text style={styles.aiRecsCategory} numberOfLines={1}>{item.danhMuc?.ten_danh_muc || item.danh_muc || item.category || 'Gợi ý AI'}</Text>
+                    <Text style={styles.aiRecsName} numberOfLines={1}>{item.ten_san_pham || item.name}</Text>
+                    <Text style={styles.aiRecsPrice}>{formatCurrency(Number(item.gia_ban || item.price || 0))}</Text>
 
-            {/* Vouchers */}
-            {vouchers.length > 0 ? (
-              <View style={styles.section}>
-                <SectionHeader title="Ưu đãi dành cho bạn" icon="🎟️" onSeeAll={() => navigation.navigate('Vouchers')} />
-                <FlatList
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  data={vouchers}
-                  keyExtractor={(item) => String(item.ma_khuyen_mai || item.id)}
-                  contentContainerStyle={styles.horizontalList}
-                  renderItem={({ item }) => <VoucherCard voucher={item} />}
-                />
-              </View>
-            ) : null}
-
-            {/* Branches */}
-            {branches.length > 0 ? (
-              <View style={styles.section}>
-                <SectionHeader title="Chi nhánh gần bạn" icon="📍" onSeeAll={() => navigation.navigate('Stores')} />
-                {branches.map((branch) => (
-                  <BranchCard key={branch.id} branch={branch} />
-                ))}
-              </View>
-            ) : null}
-
-            {/* News */}
-            {news.length > 0 ? (
-              <View style={styles.section}>
-                <SectionHeader title="Tin tức & Câu chuyện" icon="📰" onSeeAll={() => navigation.navigate('News')} />
-                {news.slice(0, 3).map((article) => (
-                  <NewsCard key={article.id} article={article} onPress={handleNewsPress} />
-                ))}
-              </View>
-            ) : null}
-
-            {/* Footer brand */}
-            <View style={styles.footerBrand}>
-              <Text style={styles.footerBrandText}>☕ Avengers Coffee</Text>
-              <Text style={styles.footerBrandSub}>Hương vị ngọt ngào mỗi ngày</Text>
-            </View>
-          </React.Fragment>
-        )}
-      </ScrollView>
-
-      {/* Floating Cart Button */}
-      <Pressable
-        onPress={() => navigation.navigate('Cart')}
-        style={styles.floatingCart}
-      >
-        <Ionicons name="cart" size={24} color="#ea8025" />
-        {cartCount > 0 ? (
-          <View style={styles.floatingCartBadge}>
-            <Text style={styles.floatingCartBadgeText}>{cartCount}</Text>
+                    <View style={styles.aiRecsActions}>
+                      <Pressable
+                        style={styles.aiRecsBtnOutline}
+                        onPress={() => handleProductPress(item)}
+                      >
+                        <Text style={styles.aiRecsBtnOutlineText}>CHI TIẾT</Text>
+                      </Pressable>
+                      <Pressable
+                        style={styles.aiRecsBtnSolid}
+                        onPress={() => handleProductPress(item)}
+                      >
+                        <Text style={styles.aiRecsBtnSolidText}>THÊM</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                </Pressable>
+              )}
+            />
           </View>
         ) : null}
+
+        {/* Prominent News & Events */}
+        <MockProminentNewsCard onPress={() => navigation.navigate('News')} />
+
+        {/* Footer brand */}
+        <View style={styles.footerBrand}>
+          <Text style={styles.footerBrandText}>☕ Avengers Coffee</Text>
+          <Text style={styles.footerBrandSub}>Hương vị ngọt ngào mỗi ngày</Text>
+        </View>
+      </ScrollView>
+
+      {/* Floating AI Chat Widget Button - Synced with Web */}
+      <Pressable
+        onPress={() => navigation.navigate('Chat')}
+        style={({ pressed }) => [styles.floatingChatWidget, pressed && { opacity: 0.9, transform: [{ scale: 0.95 }] }]}
+      >
+        <LinearGradient colors={['#f26b1d', '#c41230']} style={styles.floatingChatGradient}>
+          <Ionicons name="chatbubble-ellipses" size={26} color="#fff" />
+        </LinearGradient>
       </Pressable>
     </View>
   )
@@ -1811,5 +1732,53 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
     color: '#fff',
+  },
+  quickFeaturesSection: {
+    marginVertical: 12,
+  },
+  quickFeaturesScroll: {
+    paddingHorizontal: spacing.md,
+    gap: 14,
+  },
+  quickFeatureItem: {
+    alignItems: 'center',
+    width: 68,
+  },
+  quickFeatureIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+    ...shadows.xs,
+  },
+  quickFeatureLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.text,
+    textAlign: 'center',
+    lineHeight: 14,
+  },
+  floatingChatWidget: {
+    position: 'absolute',
+    bottom: 24,
+    right: 18,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    elevation: 8,
+    shadowColor: '#c41230',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    zIndex: 999,
+  },
+  floatingChatGradient: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 })

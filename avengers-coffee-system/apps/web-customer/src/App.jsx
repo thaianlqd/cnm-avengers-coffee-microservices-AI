@@ -1128,17 +1128,6 @@ function AppContent() {
   const filteredProducts = useMemo(() => {
     let list = [...products];
 
-    if (selectedCatId !== 'all') {
-      const parsedCatId = String(selectedCatId).replace('group-', '');
-      list = list.filter((p) => {
-        const catId = String(p.danhMuc?.ma_danh_muc || '');
-        if (catId === parsedCatId) return true;
-        const cat = categories.find(c => String(c.ma_danh_muc) === catId);
-        if (cat && String(cat.ma_danh_muc_cha) === parsedCatId) return true;
-        return false;
-      });
-    }
-
     if (searchKeyword.trim()) {
       const keyword = searchKeyword.trim().toLowerCase();
       list = list.filter((p) => {

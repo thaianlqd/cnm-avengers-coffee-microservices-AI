@@ -89,6 +89,10 @@ export default function MembershipPage({ user, onNavigate }) {
     diem_loyalty = 0,
     diem_kha_dung = 0,
     tong_chi_tieu = 0,
+    chi_tieu_thang_nay = 0,
+    chi_tieu_toi_thieu_thang = 0,
+    con_thieu_thang_nay = 0,
+    dat_dieu_kien_dac_quyen = true,
     hang_hien_tai = {},
     quyen_loi_hien_tai = {},
     tat_ca_hang = [],
@@ -245,25 +249,73 @@ export default function MembershipPage({ user, onNavigate }) {
             </div>
 
             <div className="mt-3 flex justify-between text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-              <span>{hang_hien_tai?.hang}</span>
+              <span>{hang_hien_tai?.hang} ({diem_loyalty.toLocaleString('vi-VN')} điểm xét hạng)</span>
               {nextTier && <span>{nextTier.ten} ({nextTier.diem.toLocaleString('vi-VN')}đ)</span>}
             </div>
 
             {/* Quick stats */}
-            <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-100 text-center">
-              <div>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Điểm khả dụng</p>
-                <p className="text-lg font-black text-[#b22830] mt-0.5">{diem_kha_dung.toLocaleString('vi-VN')}</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-6 border-t border-gray-100 text-center">
+              <div className="p-3 bg-amber-50/50 rounded-2xl border border-amber-100/60">
+                <p className="text-[10px] text-amber-800 font-bold uppercase tracking-wider">Điểm tích lũy xét hạng</p>
+                <p className="text-xl font-black text-amber-900 mt-0.5">{diem_loyalty.toLocaleString('vi-VN')}</p>
+                <p className="text-[9px] text-amber-600/80 font-medium mt-0.5">Dùng để giữ & lên hạng (Cố định)</p>
               </div>
-              <div>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Tổng chi tiêu</p>
+              <div className="p-3 bg-red-50/50 rounded-2xl border border-red-100/60">
+                <p className="text-[10px] text-red-800 font-bold uppercase tracking-wider">Điểm khả dụng (Tiêu dùng)</p>
+                <p className="text-xl font-black text-[#b22830] mt-0.5">{diem_kha_dung.toLocaleString('vi-VN')}</p>
+                <p className="text-[9px] text-red-600/80 font-medium mt-0.5">Dùng quay vòng quay & đổi quà</p>
+              </div>
+              <div className="p-3 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Tổng chi tiêu lũy kế</p>
                 <p className="text-lg font-black text-gray-800 mt-0.5">{tong_chi_tieu.toLocaleString('vi-VN')} đ</p>
+                <p className="text-[9px] text-gray-400 font-medium mt-0.5">Tất cả đơn hàng thành công</p>
               </div>
-              <div>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Hệ số tích điểm</p>
+              <div className="p-3 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Hệ số tích điểm</p>
                 <p className="text-lg font-black text-gray-800 mt-0.5">x{quyen_loi_hien_tai?.he_so_diem || 1}</p>
+                <p className="text-[9px] text-gray-400 font-medium mt-0.5">{dat_dieu_kien_dac_quyen ? 'Đặc quyền đang kích hoạt' : 'Hệ số gốc (x1.0)'}</p>
               </div>
             </div>
+
+            {/* Monthly Spending & Tier Privilege Condition Card */}
+            {hang_hien_tai?.ma_hang !== 'MEMBER' && chi_tieu_toi_thieu_thang > 0 && (
+              <div className={`mt-5 p-4 rounded-2xl border transition-all ${dat_dieu_kien_dac_quyen ? 'bg-emerald-50/60 border-emerald-200/80' : 'bg-amber-50/70 border-amber-200'}`}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">{dat_dieu_kien_dac_quyen ? '✅' : '⚠️'}</span>
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-900">Chi tiêu duy trì đặc quyền Tháng này</h4>
+                      <p className="text-[11px] text-gray-600 mt-0.5">
+                        Yêu cầu tối thiểu hạng {hang_hien_tai?.hang}: <strong className="text-gray-900">{chi_tieu_toi_thieu_thang.toLocaleString('vi-VN')}đ/tháng</strong>
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`text-[11px] font-black px-3 py-1 rounded-full ${dat_dieu_kien_dac_quyen ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white'}`}>
+                    {dat_dieu_kien_dac_quyen ? 'Đã đủ điều kiện đặc quyền' : `Còn thiếu ${con_thieu_thang_nay.toLocaleString('vi-VN')}đ`}
+                  </span>
+                </div>
+
+                {/* Progress bar */}
+                <div className="mt-3">
+                  <div className="flex justify-between text-[10px] font-bold text-gray-500 mb-1">
+                    <span>Đã chi tiêu tháng này: {chi_tieu_thang_nay.toLocaleString('vi-VN')}đ</span>
+                    <span>Mục tiêu: {chi_tieu_toi_thieu_thang.toLocaleString('vi-VN')}đ</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-gray-200/80 overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-500 ${dat_dieu_kien_dac_quyen ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                      style={{ width: `${Math.min(100, Math.round((chi_tieu_thang_nay / chi_tieu_toi_thieu_thang) * 100))}%` }}
+                    />
+                  </div>
+                </div>
+
+                {!dat_dieu_kien_dac_quyen && (
+                  <p className="mt-2.5 text-[11px] font-semibold text-amber-800 bg-amber-100/60 p-2 rounded-lg border border-amber-200/60">
+                    💡 Hãy đặt thêm hàng trong tháng này để kích hoạt đầy đủ đặc quyền nhân điểm x{quyen_loi_hien_tai?.he_so_diem || 1}, ưu đãi Freeship và quà tặng hạng {hang_hien_tai?.hang}!
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Automatic Freeship Privilege Badge */}
             <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between text-xs bg-emerald-50/60 p-3 rounded-xl border border-emerald-100 gap-2">

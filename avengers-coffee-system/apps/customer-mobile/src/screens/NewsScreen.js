@@ -13,6 +13,7 @@ import {
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
+import { useNavigation } from '@react-navigation/native'
 import { useQuery } from '@tanstack/react-query'
 import apiClient from '../lib/apiClient'
 import { formatDateTime, normalizeNewsArticle, safeArray } from '../lib/customerData'
@@ -151,7 +152,8 @@ function NewsListCard({ article, onPress }) {
   )
 }
 
-export function NewsScreen({ route }) {
+export function NewsScreen({ route, navigation: navigationProp }) {
+  const navigation = navigationProp || useNavigation()
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [selectedArticle, setSelectedArticle] = useState(route?.params?.article || null)
   const [isDetailOpen, setIsDetailOpen] = useState(Boolean(route?.params?.article))
@@ -177,10 +179,19 @@ export function NewsScreen({ route }) {
 
   return (
     <View style={styles.screen}>
-      {/* Header */}
+      {/* Header with Back button */}
       <LinearGradient colors={['#1a0a02', '#3d1a08']} style={styles.header}>
-        <Text style={styles.headerTitle}>Tin tức & Câu chuyện</Text>
-        <Text style={styles.headerSubtitle}>{articles.length} bài viết</Text>
+        <View style={styles.headerTopRow}>
+          {navigation?.canGoBack() ? (
+            <Pressable onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={12}>
+              <Ionicons name="chevron-back" size={24} color="#fff" />
+            </Pressable>
+          ) : null}
+          <View style={{ flex: 1 }}>
+            <Text style={styles.headerTitle}>Tin tức & Câu chuyện</Text>
+            <Text style={styles.headerSubtitle}>{articles.length} bài viết</Text>
+          </View>
+        </View>
       </LinearGradient>
 
       {/* Category Filter */}
@@ -270,12 +281,25 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
   },
   header: {
-    paddingTop: 52,
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
+    paddingTop: 48,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+  },
+  headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '900',
     color: '#fff',
   },
