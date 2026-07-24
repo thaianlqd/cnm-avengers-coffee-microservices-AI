@@ -174,6 +174,7 @@ export const CartProvider = ({ children }) => {
       so_luong: quantity,
       size: appliedSize,
       toppings: options.toppings || [],
+      topping_prices: (options.toppings || []).map(t => Number(availableToppings[t] || 5000)),
       luong_da: options.luongDa || '',
       do_ngot: options.doNgot || '',
       loai_sua: options.loaiSua || '',
@@ -302,6 +303,7 @@ export const CartProvider = ({ children }) => {
       so_luong: Number(oldItem.so_luong) || 1,
       size: newOptions.size || 'Nhỏ',
       toppings: newOptions.toppings || [],
+      topping_prices: newOptions.topping_prices || oldItem.topping_prices || [],
       luong_da: newOptions.luongDa || '',
       do_ngot: newOptions.doNgot || '',
       loai_sua: newOptions.loaiSua || '',
@@ -339,21 +341,36 @@ export const CartProvider = ({ children }) => {
       return;
     }
 
-    await themVaoGioMutation.mutateAsync({
-      ma_nguoi_dung: activeUserId || itemCanSua.ma_nguoi_dung,
-      ma_san_pham: itemCanSua.ma_san_pham,
-      ten_san_pham: itemCanSua.ten_san_pham,
-      gia_ban: itemCanSua.gia_ban,
-      hinh_anh_url: itemCanSua.hinh_anh_url,
-      so_luong: delta,
-      size: itemCanSua.size || 'Nhỏ',
-      toppings: itemCanSua.toppings || [],
-      luong_da: itemCanSua.luong_da || '',
-      do_ngot: itemCanSua.do_ngot || '',
-      loai_sua: itemCanSua.loai_sua || '',
-      custom_attributes: itemCanSua.custom_attributes || {}
-    });
-    await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(activeUserId) });
+    // Optimistically update local cart state immediately
+    setCart((prev) =>
+      prev.map((item) => {
+        if (item === itemCanSua || (item.ma_san_pham === maSanPham && (!size || item.size === size))) {
+          return { ...item, so_luong: item.so_luong + delta };
+        }
+        return item;
+      }),
+    );
+
+    try {
+      await themVaoGioMutation.mutateAsync({
+        ma_nguoi_dung: activeUserId || itemCanSua.ma_nguoi_dung,
+        ma_san_pham: itemCanSua.ma_san_pham,
+        ten_san_pham: itemCanSua.ten_san_pham,
+        gia_ban: itemCanSua.gia_ban,
+        hinh_anh_url: itemCanSua.hinh_anh_url,
+        so_luong: delta,
+        size: itemCanSua.size || 'Nhỏ',
+        toppings: itemCanSua.toppings || [],
+        luong_da: itemCanSua.luong_da || '',
+        do_ngot: itemCanSua.do_ngot || '',
+        loai_sua: itemCanSua.loai_sua || '',
+        custom_attributes: itemCanSua.custom_attributes || {},
+      });
+    } catch (e) {
+      console.error('Không thể đồng bộ số lượng giỏ hàng với máy chủ:', e);
+    } finally {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(activeUserId) });
+    }
   };
 
   const syncCartWithUser = async (user) => {

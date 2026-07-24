@@ -155,22 +155,16 @@ services:
   order-service:
     build:
       context: ./avengers-coffee-system/services/order-service
-      target: builder
     container_name: avengers_order_service
     init: true
     restart: unless-stopped
-    working_dir: /app
-    command: npm run start:dev
-    volumes:
-      - ./avengers-coffee-system/services/order-service:/app
-      - /app/node_modules
     depends_on:
       redis-cache:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: ${ORDER_PORT:-3005}
       JWT_SECRET: ${JWT_SECRET:-avengers-jwt-secret}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-avengers-internal-token}

@@ -22,6 +22,35 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://unentwined-johanne-b
 // Adjust if API_URL ends with /api, socket URL usually doesn't, but let's assume socket is at the same origin
 const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_URL || 'http://localhost:3005'
 
+const AI_PROMPT_PATTERNS = [
+  'gợi ý cho tôi menu đồ uống nổi bật',
+  'tôi muốn đặt đồ uống giao ngay',
+  'tôi muốn đặt hàng',
+  'kiểm tra trạng thái đơn hàng của tôi',
+  'kiểm tra đơn hàng của tôi',
+  'địa chỉ các chi nhánh gần đây',
+  'cửa hàng gần tôi ở đâu?',
+  'cửa hàng gần tôi',
+  'cho tôi xem mã giảm giá và khuyến mãi',
+  'có khuyến mãi gì không?',
+  'các phương thức thanh toán được hỗ trợ',
+  'phương thức thanh toán nào được hỗ trợ?',
+  'tôi muốn thanh toán ngay',
+  'trời mưa nên uống gì nhỉ',
+  'bạn thông minh đấy',
+  'cho tôi xem menu đồ uống',
+  'cho tôi xem menu'
+]
+
+function isStaffChatMessage(msg) {
+  if (!msg) return false
+  if (msg.vai_tro_nguoi_gui === 'AI') return false
+  if (msg.vai_tro_nguoi_gui === 'STAFF' || msg.vai_tro_nguoi_gui === 'MANAGER') return true
+  const textLower = String(msg.noi_dung || '').trim().toLowerCase()
+  if (AI_PROMPT_PATTERNS.some(p => textLower === p)) return false
+  return true
+}
+
 export function AdminChatWidget({ admin, sessionRole }) {
   const [isOpen, setIsOpen] = useState(false)
   const [view, setView] = useState('list') // 'list' | 'detail'
@@ -56,6 +85,7 @@ export function AdminChatWidget({ admin, sessionRole }) {
     socket.emit('chat:subscribe', { userId, role: userRole })
 
     socket.on('chat:message:new', (msg) => {
+      if (!isStaffChatMessage(msg)) return
       setMessages((prev) => {
         if (prev.some((m) => m.id === msg.id)) return prev
         const next = [...prev, msg]
@@ -119,7 +149,8 @@ export function AdminChatWidget({ admin, sessionRole }) {
     setMessages([])
     try {
       const res = await apiClient.get(`/chat/conversations/${conv.ma_hoi_thoai}/messages?user_id=${encodeURIComponent(userId)}&role=${userRole}`)
-      setMessages(res?.items || [])
+      const items = (res?.items || []).filter(isStaffChatMessage)
+      setMessages(items)
       setTimeout(() => flatListRef.current?.scrollToEnd({ animated: false }), 50)
       
       // mark as read

@@ -111,6 +111,7 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose, onSa
         doNgot,
         loaiSua,
         toppings,
+        topping_prices: (toppings || []).map(t => Number(availableToppings[t] || 0)),
         custom_attributes: dynamicSelections,
         gia_ban: finalPrice
       };
@@ -126,6 +127,7 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose, onSa
         doNgot: selectedDoNgot,
         loaiSua: selectedLoaiSua,
         toppings: selectedToppings,
+        topping_prices: (selectedToppings || []).map(t => Number(availableToppings[t] || 0)),
         gia_ban: finalPrice
       };
       if (onSave) {
