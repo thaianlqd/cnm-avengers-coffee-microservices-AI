@@ -39,7 +39,7 @@ export class VoucherController {
   }
 
   @Post('kiem-tra')
-  async kiemTra(@Body() body: { ma_voucher?: string; tong_tien?: number; user_id?: string }) {
+  async kiemTra(@Body() body: { ma_voucher?: string; tong_tien?: number; user_id?: string; has_toppings?: boolean; topping_price?: number }) {
     const maVoucher = body.ma_voucher?.trim();
     if (!maVoucher) {
       throw new BadRequestException('ma_voucher la bat buoc');
@@ -48,6 +48,8 @@ export class VoucherController {
       maVoucher,
       Number(body.tong_tien || 0),
       body.user_id,
+      body.has_toppings,
+      Number(body.topping_price || 0),
     );
     return {
       hop_le: true,

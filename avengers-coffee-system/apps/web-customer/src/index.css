@@ -1,16 +1,23 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Playfair+Display:wght@700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
   /* Highlands Coffee real colors */
-  --color-hc-red: #c41230;        /* primary red */
-  --color-hc-red-dark: #a30f28;   /* hover state */
-  --color-hc-cream: #f4f0eb;      /* section backgrounds */
-  --color-hc-cream-light: #faf7f4; /* lighter sections */
-  --color-hc-dark: #1a1a1a;       /* footer/dark text */
-  --color-hc-brown: #4a3728;      /* warm dark text */
-  --color-hc-gold: #c89a58;       /* accent gold */
-  
+  --color-hc-red: #c41230;
+  /* primary red */
+  --color-hc-red-dark: #a30f28;
+  /* hover state */
+  --color-hc-cream: #f4f0eb;
+  /* section backgrounds */
+  --color-hc-cream-light: #faf7f4;
+  /* lighter sections */
+  --color-hc-dark: #1a1a1a;
+  /* footer/dark text */
+  --color-hc-brown: #4a3728;
+  /* warm dark text */
+  --color-hc-gold: #c89a58;
+  /* accent gold */
+
   /* Legacy aliases — now mapped to red */
   --color-tch-orange: #c41230;
   --color-hc-green: #c41230;
@@ -22,22 +29,40 @@
 body {
   background: #ffffff;
   color: #1a1a1a;
-  font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+  font-family: 'Quicksand', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   font-weight: 600;
   letter-spacing: 0.01em;
 }
 
-h1, h2, h3, .brand-serif {
-  font-family: 'Playfair Display', 'Nunito', serif;
-  letter-spacing: 0.015em;
-  font-weight: 800;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.brand-serif {
+  font-family: 'Quicksand', 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: 0.01em;
+  font-weight: 700;
 }
 
 /* Custom scrollbar - HC red */
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: #f4f0eb; }
-::-webkit-scrollbar-thumb { background: #c41230; border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: #a30f28; }
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f4f0eb;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c41230;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a30f28;
+}
 
 /* ========== CAROUSEL ========== */
 .tch-hscroll-track {
@@ -159,25 +184,51 @@ h1, h2, h3, .brand-serif {
 
 /* ========== ANIMATIONS ========== */
 @keyframes hc-fade-in {
-  from { opacity: 0; transform: scale(1.02); }
-  to   { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
-.hc-fade-in { animation: hc-fade-in 0.6s ease-out; }
+
+.hc-fade-in {
+  animation: hc-fade-in 0.6s ease-out;
+}
 
 @keyframes hc-slide-up {
-  from { opacity: 0; transform: translateY(30px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.hc-slide-up { animation: hc-slide-up 0.7s ease-out; }
+
+.hc-slide-up {
+  animation: hc-slide-up 0.7s ease-out;
+}
 
 /* ========== UTILS ========== */
-.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
-.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
 
 .glass-surface {
-  background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(255,255,255,0.88));
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.88));
   border: 1px solid rgba(196, 18, 48, 0.12);
-  box-shadow: 0 10px 32px rgba(0,0,0,0.08);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.08);
   backdrop-filter: blur(6px);
 }
 
@@ -229,17 +280,34 @@ h1, h2, h3, .brand-serif {
 }
 
 @media (max-width: 768px) {
-  .tch-hscroll-track { --carousel-gap: 12px; }
-  .tch-hscroll-arrow { width: 34px; height: 34px; }
+  .tch-hscroll-track {
+    --carousel-gap: 12px;
+  }
+
+  .tch-hscroll-arrow {
+    width: 34px;
+    height: 34px;
+  }
 }
+
 @media (max-width: 520px) {
-  .tch-hscroll-track { --carousel-gap: 10px; }
+  .tch-hscroll-track {
+    --carousel-gap: 10px;
+  }
 }
 
 @keyframes scale-up {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
+
 .animate-scale-up {
   animation: scale-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
@@ -248,8 +316,11 @@ h1, h2, h3, .brand-serif {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 /* Hide scrollbar for IE, Edge and Firefox */
 .no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }

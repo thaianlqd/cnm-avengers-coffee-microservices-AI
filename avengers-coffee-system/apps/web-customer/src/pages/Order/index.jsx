@@ -9,8 +9,21 @@ import {
   ArrowRightOnRectangleIcon, 
   UserIcon, 
   ListBulletIcon, 
-  Squares2X2Icon 
+  Squares2X2Icon,
+  TicketIcon,
+  SparklesIcon,
+  GiftIcon,
+  MegaphoneIcon,
+  ClipboardDocumentCheckIcon,
+  ClipboardDocumentIcon,
+  ClockIcon,
+  CheckIcon,
+  TagIcon,
+  HeartIcon as HeartOutlineIcon,
+  TrophyIcon,
+  FireIcon
 } from '@heroicons/react/24/outline';
+import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import QuickViewModal from '../../components/QuickViewModal';
 import ProductCard from '../../components/ProductCard';
 
@@ -184,7 +197,8 @@ export default function OrderPage({
 
   const handleCopyVoucherCode = (code) => {
     navigator.clipboard.writeText(code);
-    alert(`Đã sao chép mã: ${code}`);
+    setCopiedVoucherCode(code);
+    setTimeout(() => setCopiedVoucherCode(null), 2500);
   };
 
   const isPersonalVoucher = (v) => {
@@ -229,56 +243,121 @@ export default function OrderPage({
       valueText = 'FREE';
     }
 
-    const badgeBg = isPersonal 
-      ? 'bg-gradient-to-br from-[#f26b1d] to-[#d4560e]' 
-      : 'bg-[#68c582]';
+    const isCopied = copiedVoucherCode === code;
+
+    let TagIconComp = TicketIcon;
+    let tagLabel = 'ĐẶC QUYỀN';
     
-    const tagText = isPersonal
-      ? (
-          voucher.loai_su_kien === 'LUCKY_WHEEL' || code.startsWith('WHEEL_') || code.startsWith('LW_')
-            ? '🎲 VÒNG QUAY'
-            : voucher.loai_su_kien === 'BIRTHDAY' || code.startsWith('BD_')
-            ? '🎂 SINH NHẬT'
-            : voucher.loai_su_kien === 'SURVEY' || code.startsWith('KS') || code.startsWith('SURVEY_')
-            ? '📋 KHẢO SÁT'
-            : voucher.loai_su_kien === 'TIER_UP' || code.startsWith('UP_') || code.startsWith('TIER_')
-            ? '🎖️ THĂNG HẠNG'
-            : '🎁 CÁ NHÂN'
-        )
-      : '📢 CHUNG';
+    if (isPersonal) {
+      if (voucher.loai_su_kien === 'LUCKY_WHEEL' || code.startsWith('WHEEL_') || code.startsWith('LW_')) {
+        TagIconComp = SparklesIcon;
+        tagLabel = 'VÒNG QUAY';
+      } else if (voucher.loai_su_kien === 'BIRTHDAY' || code.startsWith('BD_')) {
+        TagIconComp = GiftIcon;
+        tagLabel = 'SINH NHẬT';
+      } else if (voucher.loai_su_kien === 'SURVEY' || code.startsWith('KS') || code.startsWith('SURVEY_')) {
+        TagIconComp = ClipboardDocumentCheckIcon;
+        tagLabel = 'KHẢO SÁT';
+      } else if (voucher.loai_su_kien === 'TIER_UP' || code.startsWith('UP_') || code.startsWith('TIER_')) {
+        TagIconComp = TrophyIcon;
+        tagLabel = 'THĂNG HẠNG';
+      } else {
+        TagIconComp = GiftIcon;
+        tagLabel = 'CÁ NHÂN';
+      }
+    } else {
+      TagIconComp = MegaphoneIcon;
+      tagLabel = 'ƯU ĐÃI CHUNG';
+    }
+
+    const stubBg = isPersonal 
+      ? 'bg-gradient-to-b from-[#c41230] via-[#ab0c25] to-[#87041a]' 
+      : 'bg-gradient-to-b from-[#0f766e] via-[#0d645c] to-[#094842]';
 
     return (
-      <div key={code} className="flex border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm min-w-[290px] max-w-[320px] flex-shrink-0 relative group hover:shadow-md transition-all">
-        <div className="absolute left-[-6px] top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full border-r border-gray-200 z-10"></div>
-        <div className="absolute right-[-6px] top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full border-l border-gray-200 z-10"></div>
+      <div 
+        key={code} 
+        className={`relative flex border rounded-xl overflow-hidden bg-white shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 min-w-[245px] max-w-[265px] h-[78px] flex-shrink-0 group cursor-pointer ${
+          isPersonal ? 'border-amber-200/90 hover:border-amber-400' : 'border-gray-200/90 hover:border-teal-300'
+        }`}
+      >
+        {/* Cutout punch holes */}
+        <div className="absolute -top-1.5 left-[66px] w-3 h-3 bg-white rounded-full border-b border-gray-200/80 z-20 shadow-2xs"></div>
+        <div className="absolute -bottom-1.5 left-[66px] w-3 h-3 bg-white rounded-full border-t border-gray-200/80 z-20 shadow-2xs"></div>
         
-        {/* Left Badge */}
-        <div className={`${badgeBg} text-white flex flex-col justify-center items-center w-[95px] p-2 flex-shrink-0 relative`}>
-          <span className="text-[9px] font-black tracking-wider uppercase bg-white/20 px-1.5 py-0.5 rounded text-center mb-1">
-            {tagText}
+        {/* Left Stub */}
+        <div className={`${stubBg} text-white flex flex-col justify-center items-center w-[72px] px-1 py-1 flex-shrink-0 relative overflow-hidden select-none`}>
+          <span className="inline-flex items-center gap-0.5 text-[7.5px] font-extrabold tracking-wider uppercase bg-white/20 px-1 py-0.25 rounded-full text-white z-10">
+            <TagIconComp className="w-2 h-2 text-amber-200" />
+            {tagLabel}
           </span>
-          <span className="text-[12px] font-bold">GIẢM</span>
-          <span className="text-[24px] font-black leading-none mt-0.5">{valueText}</span>
+          
+          <div className="my-0.5 text-center z-10">
+            <span className="text-[17px] font-black leading-none tracking-tight block drop-shadow-xs font-sans">
+              {valueText}
+            </span>
+            <span className="text-[8px] font-extrabold tracking-widest uppercase text-white/80 block leading-none mt-0.5">GIẢM</span>
+          </div>
         </div>
+
+        {/* Dashed Divider Line */}
+        <div className="absolute left-[72px] top-1.5 bottom-1.5 border-l border-dashed border-gray-200/90 z-10"></div>
         
         {/* Right Details */}
-        <div className="p-3 flex-1 flex flex-col justify-center border-l border-dashed border-gray-200 pl-4 min-w-0">
-          <h4 className="text-[12px] font-black text-gray-800 uppercase truncate" title={code}>
-            MÃ: <span className={isPersonal ? 'text-[#f26b1d]' : 'text-[#282828]'}>{code}</span>
-          </h4>
-          <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-2 font-medium">
+        <div className="p-2 pl-3 flex-1 flex flex-col justify-between bg-white min-w-0">
+          <div className="flex items-center justify-between gap-1">
+            <div className="flex items-center gap-1 min-w-0">
+              <span className={`text-[10.5px] font-mono font-black tracking-wider uppercase truncate px-1.5 py-0.25 rounded ${
+                isPersonal ? 'bg-red-50 text-[#c41230] border border-red-100' : 'bg-gray-100 text-gray-800 border border-gray-200'
+              }`}>
+                {code}
+              </span>
+            </div>
+            {isPersonal && (
+              <span className="text-[8px] font-extrabold text-amber-700 bg-amber-50 px-1 py-0.25 rounded border border-amber-200/80 shrink-0">
+                ĐỘC QUYỀN
+              </span>
+            )}
+          </div>
+
+          <p className="text-[10px] text-gray-600 font-semibold truncate my-0.5" title={voucher.ten_khuyen_mai || voucher.mo_ta}>
             {voucher.ten_khuyen_mai || voucher.mo_ta || (isPersonal ? 'Đặc quyền dành riêng cho bạn' : `Giảm ${valueText} toàn hệ thống`)}
           </p>
-          <div className="mt-2.5 flex items-center justify-between">
+          
+          <div className="flex items-center justify-between gap-1 pt-1 border-t border-gray-100/80">
+            <div className="flex items-center gap-0.5 text-[8.5px] text-gray-400 font-medium">
+              <ClockIcon className="w-2.5 h-2.5 text-gray-400 shrink-0" />
+              <span className="truncate">
+                {voucher.ngay_ket_thuc ? new Date(voucher.ngay_ket_thuc).toLocaleDateString('vi-VN') : 'Hạn dài'}
+              </span>
+            </div>
+
             <button 
-              onClick={() => handleCopyVoucherCode(code)}
-              className={`${isPersonal ? 'bg-[#f26b1d] hover:bg-[#c2410c]' : 'bg-[#b22830] hover:bg-red-800'} text-white text-[10px] font-bold px-3 py-1.5 rounded-full transition-colors uppercase tracking-wider cursor-pointer shadow-xs`}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCopyVoucherCode(code);
+              }}
+              className={`text-[8.5px] font-bold px-2 py-0.5 rounded-md transition-all duration-200 flex items-center gap-0.5 cursor-pointer shrink-0 ${
+                isCopied 
+                  ? 'bg-emerald-600 text-white animate-pulse' 
+                  : isPersonal
+                  ? 'bg-[#c41230] hover:bg-[#a00b25] text-white active:scale-95'
+                  : 'bg-gray-900 hover:bg-gray-800 text-white active:scale-95'
+              }`}
             >
-              Sao chép mã
+              {isCopied ? (
+                <>
+                  <CheckIcon className="w-2.5 h-2.5 stroke-[3]" />
+                  ĐÃ CHÉP
+                </>
+              ) : (
+                <>
+                  <ClipboardDocumentIcon className="w-2.5 h-2.5" />
+                  SAO CHÉP
+                </>
+              )}
             </button>
-            <span className="text-[10px] text-gray-400 font-semibold">
-              {voucher.ngay_ket_thuc ? `HSD: ${new Date(voucher.ngay_ket_thuc).toLocaleDateString('vi-VN')}` : 'HSD: Hạn dài'}
-            </span>
           </div>
         </div>
       </div>
@@ -347,17 +426,23 @@ export default function OrderPage({
         const iconUrl = MENU_ICONS[idx % MENU_ICONS.length];
         const isActive = activeCategory === parent.ma_danh_muc;
         return (
-          <li key={parent.ma_danh_muc} className="flex flex-col border-b border-gray-100 last:border-b-0">
+          <li key={parent.ma_danh_muc} className="flex flex-col border-b border-gray-100/70 last:border-b-0">
             <button
               type="button"
               onClick={() => handleCategorySelect(parent.ma_danh_muc)}
-              className={`w-full flex items-center justify-between px-8 py-4 text-left transition-colors hover:bg-gray-50 bg-white ${
-                isActive ? 'text-[#b22830] font-bold' : 'text-[#333333]'
+              className={`w-full flex items-center justify-between px-6 py-3.5 text-left transition-all duration-200 ${
+                isActive 
+                  ? 'bg-[#b22830] text-white font-extrabold shadow-xs' 
+                  : 'text-gray-800 hover:bg-red-50/60 hover:text-[#b22830] font-semibold bg-white'
               }`}
             >
-              <div className="flex items-center gap-4">
-                <img src={iconUrl} alt={parent.ten_danh_muc} className="w-5 h-5 object-contain" />
-                <span className="text-[15px] font-bold capitalize">
+              <div className="flex items-center gap-3.5">
+                <img 
+                  src={iconUrl} 
+                  alt={parent.ten_danh_muc} 
+                  className={`w-5 h-5 object-contain transition-transform duration-200 ${isActive ? 'brightness-0 invert scale-110' : ''}`} 
+                />
+                <span className="text-[14px] capitalize tracking-wide">
                   {parent.ten_danh_muc.toLowerCase()}
                 </span>
               </div>
@@ -720,148 +805,143 @@ export default function OrderPage({
                   </div>
                 </div>
 
-                {/* Categorized Vouchers Section */}
-                <div className="mb-10 w-full flex flex-col gap-6">
-                  {/* Section 1: Personal Vouchers */}
-                  <div className="w-full">
-                    <div className="flex items-center justify-between mb-3 px-1">
+                {/* Single Compact Unified Voucher Row Section */}
+                {(personalVouchers.length > 0 || publicVouchers.length > 0) && (
+                  <div className="mb-5 w-full bg-gradient-to-r from-red-50/60 via-amber-50/40 to-white rounded-2xl border border-gray-100 p-3 shadow-2xs">
+                    <div className="flex items-center justify-between mb-2 px-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xl">🎁</span>
-                        <h3 className="text-[16px] font-bold text-gray-900">Voucher Cá Nhân Dành Cho Bạn</h3>
-                        <span className="bg-amber-100 text-amber-800 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border border-amber-200">
-                          {personalVouchers.length} mã độc quyền
+                        <div className="w-6 h-6 rounded-lg bg-[#b22830]/10 flex items-center justify-center text-[#b22830]">
+                          <TagIcon className="w-3.5 h-3.5 text-[#b22830]" />
+                        </div>
+                        <h3 className="text-sm font-extrabold text-gray-900 tracking-tight">Kho Voucher & Ưu Đãi Dành Cho Bạn</h3>
+                        <span className="inline-flex items-center gap-1 bg-[#b22830]/10 text-[#b22830] text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          {personalVouchers.length + publicVouchers.length} mã ưu đãi
                         </span>
                       </div>
-                    </div>
 
-                    {personalVouchers.length > 0 ? (
-                      <div className="flex overflow-x-auto gap-4 pb-2 custom-scrollbar">
-                        {personalVouchers.map((v) => renderVoucherCard(v, true))}
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-between bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 rounded-xl p-4 shadow-sm">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-600 text-lg font-bold">
-                            🎁
-                          </div>
-                          <div>
-                            <p className="text-[13px] font-bold text-gray-800">Bạn chưa có voucher cá nhân nào trong kho quà</p>
-                            <p className="text-[11px] text-gray-500 mt-0.5">Thử vận may tại Vòng quay may mắn hoặc cập nhật sinh nhật để nhận ngay voucher độc quyền!</p>
-                          </div>
-                        </div>
+                      {personalVouchers.length === 0 && (
                         <button 
                           type="button"
                           onClick={() => onNavigate?.('lucky-wheel')}
-                          className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-[12px] font-bold rounded-lg shadow-sm transition-all whitespace-nowrap cursor-pointer"
+                          className="text-[11px] font-bold text-amber-700 hover:text-amber-800 flex items-center gap-1 transition-colors cursor-pointer"
                         >
-                          🎲 Săn quà ngay
+                          <SparklesIcon className="w-3 h-3 text-amber-500" /> Săn thêm voucher cá nhân &gt;
                         </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Section 2: Public Storewide Promotions */}
-                  {publicVouchers.length > 0 && (
-                    <div className="w-full">
-                      <div className="flex items-center justify-between mb-3 px-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl">📢</span>
-                          <h3 className="text-[16px] font-bold text-gray-900">Chương Trình Khuyến Mãi Chung</h3>
-                          <span className="bg-emerald-100 text-emerald-800 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border border-emerald-200">
-                            {publicVouchers.length} ưu đãi chung
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex overflow-x-auto gap-4 pb-2 custom-scrollbar">
-                        {publicVouchers.map((v) => renderVoucherCard(v, false))}
-                      </div>
+                      )}
                     </div>
-                  )}
-                </div>
+
+                    {/* Single Horizontal Scroll Row (Personal vouchers first, then Public vouchers) */}
+                    <div className="flex overflow-x-auto gap-2.5 pb-1 custom-scrollbar">
+                      {personalVouchers.map((v) => renderVoucherCard(v, true))}
+                      {publicVouchers.map((v) => renderVoucherCard(v, false))}
+                    </div>
+                  </div>
+                )}
 
                 {/* AI TOP 3 RECOMMENDED PRODUCTS UNDER VOUCHER */}
                 {aiRecommendedProducts && aiRecommendedProducts.length > 0 && (
                   <div className="mb-10 w-full">
-                    <div className="bg-white rounded-2xl border border-orange-100 p-6 md:p-8 shadow-sm">
-                      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b border-gray-100 pb-5 mb-6">
+                    <div className="bg-white rounded-3xl border border-rose-100 p-6 md:p-8 shadow-2xs relative overflow-hidden">
+                      {/* Section Top Header */}
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-5 mb-6">
                         <div>
-                          <span className="text-[11px] font-black uppercase tracking-[0.22em] text-[#d67b3c]">
+                          <div className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.2em] text-[#c41230] bg-red-50 px-3 py-1 rounded-full border border-red-100/80 mb-2">
+                            <SparklesIcon className="w-3.5 h-3.5 text-[#c41230]" />
                             SMART RECOMMENDATION
-                          </span>
-                          <h2 className="mt-1 text-2xl md:text-3xl font-black uppercase tracking-tight text-[#113a5d]">
+                          </div>
+                          <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-gray-900 font-sans">
                             TOP 3 MÓN HỢP GU CỦA BẠN
                           </h2>
-                          <p className="mt-1 text-sm font-medium text-gray-600">
+                          <p className="mt-1 text-xs md:text-sm font-medium text-gray-500">
                             Cá nhân hóa theo lịch sử mua hàng, đánh giá, yêu thích và xu hướng dùng ưu đãi.
                           </p>
-                          <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-[#2c6e91]">
-                            DONG BO CUSTOMER VOI TOP HANH VI 30 NGAY
-                          </p>
                         </div>
-                        <button
-                          type="button"
-                          className="self-start inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-orange-300 bg-orange-50/50 text-xs font-bold text-[#d67b3c] uppercase tracking-wider"
-                        >
+                        
+                        <div className="self-start md:self-center inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-amber-300 bg-amber-50 text-xs font-black text-amber-800 uppercase tracking-wider shadow-2xs shrink-0">
+                          <SparklesIcon className="w-4 h-4 text-amber-600" />
                           AI PERSONAL
-                        </button>
+                        </div>
                       </div>
 
+                      {/* Unified Product Cards Grid */}
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {aiRecommendedProducts.slice(0, 3).map((product) => {
                           const isFav = isFavoriteProduct ? isFavoriteProduct(product) : false;
+                          const categoryName = product?.danhMuc?.ten_danh_muc || 'Highlands Coffee';
+
                           return (
                             <div
                               key={product.ma_san_pham || product.id}
+                              className="group relative flex flex-col justify-between rounded-2xl border border-gray-100 bg-white p-4 shadow-2xs transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer"
                               onClick={() => onViewDetail?.(product)}
-                              className="group relative flex flex-col justify-between rounded-[24px] bg-[#faf8f4] p-5 cursor-pointer transition-all hover:shadow-md"
                             >
                               <div>
-                                <div className="relative mb-4 flex h-[200px] items-center justify-center overflow-hidden rounded-2xl bg-white/60 p-3">
+                                {/* Image Container */}
+                                <div className="relative mb-3 flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl bg-[#f8f8f6] p-3">
                                   <img
                                     src={product.hinh_anh_url || product.img || '/hc-assets/caphe-1.png'}
                                     alt={product.ten_san_pham || product.name}
-                                    className="h-full w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 rounded-lg"
                                   />
+
+                                  {/* AI Special Tag */}
+                                  <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#c41230] to-amber-600 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-xs">
+                                    <SparklesIcon className="w-3 h-3 text-amber-200" />
+                                    Gợi ý AI
+                                  </span>
+
+                                  {/* Favorite Button */}
                                   <button
                                     type="button"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       onToggleFavorite?.(product);
                                     }}
-                                    className={`absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-colors ${
-                                      isFav ? 'text-[#b22830]' : 'text-gray-400 hover:text-[#b22830]'
-                                    }`}
+                                    className="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 shadow-sm transition-transform hover:scale-110"
+                                    aria-label={isFav ? 'Bỏ yêu thích' : 'Thêm yêu thích'}
                                   >
-                                    ♥
+                                    {isFav ? (
+                                      <HeartSolidIcon className="h-4 w-4 text-[#c41230]" />
+                                    ) : (
+                                      <HeartOutlineIcon className="h-4 w-4 text-gray-400" />
+                                    )}
                                   </button>
                                 </div>
 
-                                <p className="text-[11px] font-black uppercase tracking-wider text-gray-400">
-                                  {product?.danhMuc?.ten_danh_muc || 'CÀ PHÊ'}
+                                {/* Category Tag */}
+                                <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-[#00a651] font-sans">
+                                  {categoryName}
                                 </p>
-                                <h3 className="mt-1 text-lg font-black uppercase text-[#222222] line-clamp-1">
+
+                                {/* Title - Unified Sans-serif Font */}
+                                <h3 className="mb-2 min-h-[2.5rem] text-[16px] font-bold leading-tight text-gray-900 transition-colors group-hover:text-[#c41230] line-clamp-2 font-sans">
                                   {product.ten_san_pham || product.name}
                                 </h3>
-                                <p className="mt-2 text-xl font-black text-[#222222]">
-                                  {(Number(product.gia_ban) || 39000).toLocaleString('vi-VN')} đ
-                                </p>
+
+                                {/* Price */}
+                                <div className="mb-4">
+                                  <p className="text-[18px] font-black text-[#c41230] font-sans">
+                                    {(Number(product.gia_ban) || 39000).toLocaleString('vi-VN')} <span className="text-xs font-bold text-gray-500">đ</span>
+                                  </p>
+                                </div>
                               </div>
 
-                              <div className="mt-5 grid grid-cols-2 gap-3" onClick={(e) => e.stopPropagation()}>
+                              {/* Action Buttons */}
+                              <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
                                 <button
                                   type="button"
                                   onClick={() => onViewDetail?.(product)}
-                                  className="w-full rounded-full border border-[#c8762d] bg-white py-2 text-center text-xs font-bold uppercase text-[#c8762d] transition-colors hover:bg-orange-50"
+                                  className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 text-center text-xs font-extrabold uppercase tracking-wide text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 cursor-pointer"
                                 >
-                                  CHI TIẾT
+                                  Chi tiết
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => onQuickAdd?.(product)}
-                                  className="w-full rounded-full bg-[#b85d19] py-2 text-center text-xs font-bold uppercase text-white transition-colors hover:bg-[#a04e13]"
+                                  className="w-full rounded-lg bg-[#c41230] py-2 text-center text-xs font-extrabold uppercase tracking-wide text-white transition-colors hover:bg-[#a00b25] shadow-xs cursor-pointer flex items-center justify-center gap-1"
                                 >
-                                  THÊM
+                                  <ShoppingCartIcon className="w-3.5 h-3.5" />
+                                  Thêm
                                 </button>
                               </div>
                             </div>
@@ -899,11 +979,6 @@ export default function OrderPage({
                             : 'bg-[#f5f5f5] text-[#333333] hover:bg-gray-200'
                         }`}
                       >
-                        <img 
-                          src={iconUrl} 
-                          alt="" 
-                          className={`w-3.5 h-3.5 object-contain ${isActive ? 'brightness-0 invert' : ''}`} 
-                        />
                         {parent.ten_danh_muc}
                       </button>
                     );
@@ -932,65 +1007,100 @@ export default function OrderPage({
 
                           return (
                             <section key={section.id} id={`category-${section.id}`} className="scroll-mt-[120px]">
-                              <div className="flex items-center mb-6">
-                                <div className="flex items-center gap-2">
-                                  <img src={sectionIconUrl} className="w-8 h-8 object-contain" alt="" />
-                                  <h3 className="text-2xl md:text-[28px] font-black text-[#333333] uppercase font-sans tracking-wide">
+                              <div className="flex items-center justify-between border-b-2 border-gray-100 pb-3.5 mb-6 pt-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-2.5 h-7 rounded-full bg-[#b22830] shrink-0 shadow-2xs"></div>
+                                  <h3 className="text-xl md:text-2xl font-black text-gray-900 uppercase font-sans tracking-wide">
                                     {section.label}
                                   </h3>
                                 </div>
+                                <span className="text-xs font-extrabold text-[#b22830] bg-red-50 px-3.5 py-1 rounded-full border border-red-100 shadow-2xs">
+                                  {displayItems.length} món
+                                </span>
                               </div>
 
-                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-10">
+                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
                                 {displayItems.map((p) => {
-                                  // Custom Product Card styling for Order page
+                                  const isFav = isFavoriteProduct ? isFavoriteProduct(p) : false;
                                   return (
-                                    <div key={p.ma_san_pham} className="bg-white rounded-none border border-gray-100 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group relative flex flex-col hover:-translate-y-1">
-                                      <div className="relative aspect-square overflow-hidden bg-white cursor-pointer" onClick={() => (onOpenProductPage ? onOpenProductPage(p) : onViewDetail?.(p))}>
-                                        <img src={p.hinh_anh_url} alt={p.ten_san_pham} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                                    <div 
+                                      key={p.ma_san_pham || p.id} 
+                                      className="bg-white rounded-2xl border border-gray-100/90 overflow-hidden shadow-2xs hover:shadow-xl hover:border-red-100 transition-all duration-300 group relative flex flex-col hover:-translate-y-1 p-3 cursor-pointer"
+                                      onClick={() => (onOpenProductPage ? onOpenProductPage(p) : onViewDetail?.(p))}
+                                    >
+                                      {/* Product Image Container */}
+                                      <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-[#f8f8f6] p-2 flex items-center justify-center">
+                                        <img 
+                                          src={p.hinh_anh_url || '/hc-assets/caphe-1.png'} 
+                                          alt={p.ten_san_pham || p.name} 
+                                          className="w-full h-full object-cover rounded-lg transition-transform duration-500 group-hover:scale-105" 
+                                        />
                                         
-                                        {/* Magnifying Glass Hover Effect */}
+                                        {/* Magnifying Glass Quick View Hover Button */}
                                         <button 
                                           type="button"
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             setQuickViewProduct(p);
                                           }}
-                                          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 hover:bg-gray-50"
+                                          className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-20 hover:bg-white hover:scale-110 cursor-pointer"
+                                          title="Xem nhanh"
                                         >
-                                          <MagnifyingGlassIcon className="w-4 h-4 text-gray-800 font-bold" style={{ strokeWidth: 2.5 }} />
+                                          <MagnifyingGlassIcon className="w-4 h-4 text-gray-700 font-bold" />
                                         </button>
 
-                                        {/* Badges */}
-                                        {p.la_hot && (
-                                          <div className="absolute bottom-0 left-0 bg-[#f37021] text-white text-[11px] font-black uppercase px-2 py-1.5 z-10 max-w-[80px] text-left leading-tight">
-                                            MÓN MỚI<br/>THỬ NGAY!
-                                          </div>
+                                        {/* Favorite Heart Button */}
+                                        {onToggleFavorite && (
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              onToggleFavorite(p);
+                                            }}
+                                            className={`absolute ${p.dang_giam_gia || p.la_hot || p.la_moi ? 'top-2.5 right-12' : 'top-2.5 left-2.5'} flex h-8 w-8 items-center justify-center rounded-full bg-white/90 backdrop-blur-xs shadow-2xs transition-transform hover:scale-110 z-20 cursor-pointer`}
+                                            aria-label={isFav ? 'Bỏ yêu thích' : 'Thêm yêu thích'}
+                                          >
+                                            {isFav ? (
+                                              <HeartSolidIcon className="h-4 w-4 text-[#c41230]" />
+                                            ) : (
+                                              <HeartOutlineIcon className="h-4 w-4 text-gray-400 hover:text-[#c41230]" />
+                                            )}
+                                          </button>
                                         )}
-                                        {!p.la_hot && p.la_moi && (
-                                          <div className="absolute bottom-0 left-0 bg-[#00a651] text-white text-[11px] font-black uppercase px-2 py-1.5 z-10 max-w-[80px] text-left leading-tight">
-                                            {t('home.tryNow')}
-                                          </div>
-                                        )}
-                                        {p.dang_giam_gia && (
-                                          <div className="absolute top-2 left-2 w-10 h-10 rounded-full bg-[#b22830] text-white flex items-center justify-center text-[12px] font-bold z-10">
-                                            -{Math.round((1 - p.gia_ban / p.gia_niem_yet) * 100)}%
-                                          </div>
-                                        )}
+
+                                        {/* Badges Overlay */}
+                                        <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 z-10 pointer-events-none">
+                                          {p.la_hot && (
+                                            <span className="inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-2xs">
+                                              <FireIcon className="w-2.5 h-2.5" /> BESTSELLER
+                                            </span>
+                                          )}
+                                          {!p.la_hot && p.la_moi && (
+                                            <span className="inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-2xs">
+                                              <SparklesIcon className="w-2.5 h-2.5" /> MÓN MỚI
+                                            </span>
+                                          )}
+                                          {p.dang_giam_gia && (
+                                            <span className="inline-flex items-center rounded-full bg-[#b22830] px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-2xs">
+                                              -{Math.round((1 - p.gia_ban / p.gia_niem_yet) * 100)}%
+                                            </span>
+                                          )}
+                                        </div>
                                       </div>
 
-                                      <div className="p-5 flex flex-col flex-1">
-                                        <p className="text-[11px] text-gray-400 uppercase font-black tracking-wider mb-2">Highlands Coffee</p>
-                                        <h4 className="text-[16px] font-bold text-[#333333] mb-3 leading-tight cursor-pointer hover:text-[#b22830]" onClick={() => onViewDetail?.(p)}>
-                                          {p.ten_san_pham}
+                                      {/* Product Info */}
+                                      <div className="pt-3 px-1 flex flex-col flex-1">
+                                        <p className="text-[10px] font-extrabold text-[#00a651] uppercase tracking-wider mb-0.5">Highlands Coffee</p>
+                                        <h4 className="text-[15px] font-bold text-gray-900 mb-2 leading-snug min-h-[2.4rem] line-clamp-2 transition-colors group-hover:text-[#b22830]">
+                                          {p.ten_san_pham || p.name}
                                         </h4>
-                                        <div className="mt-auto flex items-end justify-between">
+                                        <div className="mt-auto pt-2 flex items-center justify-between border-t border-gray-100">
                                           <div className="flex flex-col">
-                                            <span className="text-[16px] font-bold text-[#ed1b2f]">
-                                              {Number(p.gia_ban).toLocaleString('vi-VN')}đ
+                                            <span className="text-[16px] font-black text-[#b22830] leading-none">
+                                              {Number(p.gia_ban).toLocaleString('vi-VN')} <span className="text-[11px] font-bold text-gray-500">đ</span>
                                             </span>
                                             {p.dang_giam_gia && (
-                                              <span className="text-[12px] text-gray-400 line-through">
+                                              <span className="text-[11px] text-gray-400 line-through mt-0.5">
                                                 {Number(p.gia_niem_yet).toLocaleString('vi-VN')}đ
                                               </span>
                                             )}
@@ -1001,9 +1111,10 @@ export default function OrderPage({
                                               e.stopPropagation();
                                               onQuickAdd?.(p);
                                             }}
-                                            className="w-8 h-8 rounded-full bg-[#ed1b2f] text-white flex items-center justify-center hover:bg-[#c41230] hover:scale-110 transition-all shadow-sm"
+                                            className="w-8 h-8 rounded-xl bg-[#b22830] text-white flex items-center justify-center hover:bg-[#8e1c23] hover:scale-105 active:scale-95 transition-all shadow-2xs cursor-pointer"
+                                            title="Thêm vào giỏ"
                                           >
-                                            <span className="text-xl font-bold leading-none -mt-1">+</span>
+                                            <span className="text-lg font-bold leading-none">+</span>
                                           </button>
                                         </div>
                                       </div>

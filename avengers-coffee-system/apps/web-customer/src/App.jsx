@@ -1638,6 +1638,10 @@ function AppContent() {
               setSelectedNewsArticleId(null);
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
+            onSelectArticle={(id) => {
+              setSelectedNewsArticleId(id);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           />
         ) : (
           <NewsPage onSelectArticle={setSelectedNewsArticleId} />
@@ -1650,7 +1654,7 @@ function AppContent() {
             <section className="border-b border-gray-100 bg-gradient-to-b from-[#e8f5ee] via-white to-[#f0faf4]">
               <div className="mx-auto max-w-[1240px] px-4 py-14 md:px-6 md:py-16">
                 <p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#1a8b46]">Voucher Center</p>
-                <h1 className="mt-4 text-4xl font-black uppercase tracking-tight text-[#1f1f1f] md:text-6xl" style={{ fontFamily: "'Playfair Display', serif" }}>
+                <h1 className="mt-4 text-4xl font-black uppercase tracking-tight text-[#1f1f1f] md:text-6xl font-sans">
                   Khuyến mãi dành cho bạn
                 </h1>
                 <p className="mt-4 max-w-[780px] text-base font-semibold leading-relaxed text-[#4d433c] md:text-lg">

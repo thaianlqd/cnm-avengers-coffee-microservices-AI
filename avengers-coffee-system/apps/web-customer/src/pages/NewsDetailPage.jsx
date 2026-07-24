@@ -1,10 +1,69 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeftIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, CalendarIcon, TagIcon, UserIcon, EyeIcon, ArrowRightIcon, NewspaperIcon } from '@heroicons/react/24/outline';
 import { apiClient } from '../lib/apiClient';
-import { normalizeNewsArticle } from '../lib/news';
+import { normalizeNewsArticle, FALLBACK_ARTICLES } from '../lib/news';
 
-export default function NewsDetailPage({ selectedArticleId, onBack }) {
+function parseInlineFormatting(text) {
+  if (!text) return '';
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return (
+        <strong key={i} className="font-black text-gray-900 bg-amber-100/60 px-1 py-0.5 rounded">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    return part;
+  });
+}
+
+function renderFormattedContent(rawContent) {
+  if (!rawContent) return null;
+  const lines = rawContent.split(/\n+/).map(l => l.trim()).filter(Boolean);
+
+  return (
+    <div className="space-y-6 text-[#2d2d2d] text-[16px] md:text-[17.5px] leading-[1.85] font-sans">
+      {lines.map((line, index) => {
+        // Section Headings (###, ##, #)
+        if (line.startsWith('###') || line.startsWith('##') || line.startsWith('#')) {
+          const headingText = line.replace(/^#+\s*/, '');
+          return (
+            <div key={index} className="pt-8 pb-3 mt-4 border-b-2 border-red-100">
+              <h3 className="text-xl md:text-2xl font-black uppercase text-[#b22830] tracking-tight flex items-center gap-3">
+                <span className="w-2 h-7 bg-[#b22830] rounded-full inline-block flex-shrink-0" />
+                {headingText}
+              </h3>
+            </div>
+          );
+        }
+
+        // Bullet list (- or *)
+        if (line.startsWith('- ') || line.startsWith('* ')) {
+          const listText = line.replace(/^[-*]\s*/, '');
+          return (
+            <div key={index} className="flex items-start gap-3.5 pl-3 my-3 bg-amber-50/40 p-3.5 rounded-xl border border-amber-100/60">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#b22830] mt-2 flex-shrink-0 shadow-sm" />
+              <div className="flex-1 text-gray-800 font-medium leading-relaxed">
+                {parseInlineFormatting(listText)}
+              </div>
+            </div>
+          );
+        }
+
+        // Standard Paragraph
+        return (
+          <p key={index} className="text-gray-800 font-normal leading-[1.85] tracking-wide">
+            {parseInlineFormatting(line)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+export default function NewsDetailPage({ selectedArticleId, onBack, onSelectArticle }) {
   const {
     data: article,
     isLoading,
@@ -12,173 +71,205 @@ export default function NewsDetailPage({ selectedArticleId, onBack }) {
   } = useQuery({
     queryKey: ['news', 'detail', selectedArticleId],
     queryFn: async () => {
-      const response = await apiClient.get(`/news/${selectedArticleId}`);
-      return normalizeNewsArticle(response.data);
+      const fallbackItem = FALLBACK_ARTICLES.find(item => item.id === selectedArticleId);
+      if (String(selectedArticleId).startsWith('fb-')) {
+        return fallbackItem || FALLBACK_ARTICLES[0];
+      }
+      try {
+        const response = await apiClient.get(`/news/${selectedArticleId}`);
+        const parsed = normalizeNewsArticle(response.data);
+        return parsed || fallbackItem || FALLBACK_ARTICLES[0];
+      } catch {
+        return fallbackItem || FALLBACK_ARTICLES[0];
+      }
     },
     enabled: Boolean(selectedArticleId),
     staleTime: 60 * 1000,
   });
 
-  const { data: relatedPayload } = useQuery({
-    queryKey: ['news', 'related', article?.category],
+  const { data: allArticlesPayload } = useQuery({
+    queryKey: ['news', 'all-related'],
     queryFn: async () => {
-      const response = await apiClient.get(
-        `/news/category/${encodeURIComponent(article.category)}?limit=4`,
-      );
-      return response.data;
+      try {
+        const response = await apiClient.get('/news?limit=20');
+        return response.data;
+      } catch {
+        return null;
+      }
     },
-    enabled: Boolean(article?.category),
     staleTime: 60 * 1000,
   });
 
   const relatedArticles = useMemo(() => {
-    const rows = (relatedPayload?.items || [])
-      .map((item) => normalizeNewsArticle(item))
-      .filter(Boolean);
-    return rows.filter((item) => item.id !== selectedArticleId).slice(0, 3);
-  }, [relatedPayload, selectedArticleId]);
+    const serverRows = (allArticlesPayload?.items || []).map((item) => normalizeNewsArticle(item)).filter(Boolean);
+    const pool = serverRows.length > 0 ? serverRows : FALLBACK_ARTICLES;
+    return pool.filter((item) => item.id !== selectedArticleId).slice(0, 3);
+  }, [allArticlesPayload, selectedArticleId]);
 
-  if (!selectedArticleId) {
-    return null;
-  }
+  if (!selectedArticleId) return null;
 
   if (isLoading) {
     return (
-      <section className="mx-auto max-w-[960px] px-4 py-16 md:px-6">
-        <p className="text-center text-lg font-semibold text-[#6f6258]">Đang tải bài viết...</p>
-      </section>
+      <div className="min-h-screen bg-gray-50 mt-[84px] py-16 flex items-center justify-center">
+        <div className="animate-pulse space-y-4 text-center">
+          <div className="w-12 h-12 rounded-full bg-red-200 mx-auto"></div>
+          <p className="text-sm font-bold text-gray-500">Đang tải bài viết...</p>
+        </div>
+      </div>
     );
   }
 
   if (isError || !article) {
     return (
-      <section className="mx-auto max-w-[960px] px-4 py-16 md:px-6">
-        <div className="rounded-3xl border border-[#f0d4b8] bg-white p-8 text-center">
-          <p className="text-lg font-semibold text-[#6f6258]">
+      <div className="min-h-screen bg-gray-50 mt-[84px] py-16 px-4">
+        <div className="max-w-md mx-auto rounded-3xl border border-red-100 bg-white p-8 text-center shadow-lg">
+          <p className="text-base font-bold text-gray-700">
             Không thể tải bài viết. Vui lòng thử lại.
           </p>
           <button
             type="button"
             onClick={onBack}
-            className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#e9b58f] px-5 py-2 text-sm font-black uppercase tracking-[0.16em] text-[#cc6a2d]"
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#b22830] text-white px-6 py-2.5 text-xs font-black uppercase tracking-wider shadow-md hover:bg-red-800 transition-all"
           >
-            <ChevronLeftIcon className="h-5 w-5" />
-            Quay lại
+            <ChevronLeftIcon className="h-4 w-4" />
+            Quay lại danh sách
           </button>
         </div>
-      </section>
+      </div>
     );
   }
 
   return (
-    <article className="min-h-screen bg-white mt-[84px]">
-      <div className="w-full">
-        <div className="max-w-[1000px] mx-auto px-4 py-8 md:px-6 md:py-10">
-          <div className="mb-8">
-            <button
-              type="button"
-              onClick={onBack}
-              className="inline-flex items-center gap-2 text-[#5c3a21] hover:text-[#b22830] text-[13px] font-bold uppercase transition-colors"
-            >
-              <ChevronLeftIcon className="h-4 w-4" />
-              Quay lại danh sách tin tức
-            </button>
-          </div>
+    <article className="min-h-screen bg-gray-50/50 mt-[84px] pb-20">
+      {/* Article Header & Cover */}
+      <div className="w-full bg-white border-b border-gray-100 shadow-sm pt-8 pb-12 px-4">
+        <div className="max-w-[880px] mx-auto space-y-6">
+          {/* Back button */}
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-[#b22830] text-xs font-black uppercase tracking-wider transition-colors bg-gray-100 hover:bg-red-50 px-4 py-2 rounded-full"
+          >
+            <ChevronLeftIcon className="h-4 w-4" />
+            Quay lại Tin Tức
+          </button>
 
-          <div className="mb-10 text-center">
-            <h1 className="text-[32px] md:text-[40px] font-bold uppercase text-[#333333] mb-4" style={{ fontFamily: 'Georgia, serif' }}>
-              {article.title}
-            </h1>
-            <div className="flex items-center justify-center gap-3 text-[#777777] text-[13px] font-medium">
-              <span className="text-[#b22830]">
-                <i className="fa fa-calendar-o"></i> 📅
-              </span>
+          {/* Category Badge & Meta */}
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <span className="bg-[#b22830] text-white text-[11px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full shadow-sm flex items-center gap-1.5">
+              <TagIcon className="w-3.5 h-3.5" />
+              {article.category}
+            </span>
+            <span className="text-xs text-gray-400 font-medium">•</span>
+            <span className="flex items-center gap-1 text-xs text-gray-500 font-bold">
+              <CalendarIcon className="w-4 h-4 text-[#b22830]" />
               {article.date}
-            </div>
-          </div>
-          
-          <div className="w-full mb-10">
-             <img src={article.image} alt={article.title} className="w-full h-auto rounded-sm" />
+            </span>
+            {article.author && (
+              <>
+                <span className="text-xs text-gray-400 font-medium">•</span>
+                <span className="flex items-center gap-1 text-xs text-gray-600 font-bold bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-100">
+                  <UserIcon className="w-3.5 h-3.5 text-amber-600" />
+                  {article.author}
+                </span>
+              </>
+            )}
+            {article.views > 0 && (
+              <>
+                <span className="text-xs text-gray-400 font-medium">•</span>
+                <span className="flex items-center gap-1 text-xs text-gray-500 font-bold">
+                  <EyeIcon className="w-4 h-4 text-blue-500" />
+                  {article.views} lượt xem
+                </span>
+              </>
+            )}
           </div>
 
-          <div className="max-w-[800px] mx-auto">
-            {article.excerpt ? (
-              <p className="text-[16px] font-bold leading-relaxed text-[#333333] mb-8">
-                {article.excerpt}
-              </p>
-            ) : null}
-          </div>
+          {/* Main Title */}
+          <h1 className="text-2xl md:text-4xl font-black text-gray-900 uppercase leading-tight tracking-tight font-sans">
+            {article.title}
+          </h1>
+
+          {/* Featured Cover Image */}
+          {article.image && (
+            <div className="w-full pt-4">
+              <img 
+                src={article.image} 
+                alt={article.title} 
+                className="w-full max-h-[480px] object-cover rounded-3xl shadow-xl border border-gray-100" 
+              />
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="border-b border-[#ece3cc] bg-white">
-        <div className="mx-auto max-w-[960px] px-4 py-12 md:px-6 md:py-16">
-          <div className="space-y-6 text-lg font-semibold leading-relaxed text-[#413a33] md:text-xl">
-            {(article.content || '')
-              .split(/\n+/)
-              .map((text) => text.trim())
-              .filter(Boolean)
-              .map((paragraph, index) => (
-                <p key={`${article.id}-${index}`} className="first-letter:text-2xl">
-                  {paragraph}
-                </p>
-              ))}
-          </div>
-
-          <div className="mt-12 rounded-2xl border border-[#e7b48d] bg-[#f7f0df] p-6 space-y-3">
-            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#d67b3c]">Thông tin bài viết</p>
-            <div className="grid gap-4 text-sm font-semibold text-[#433d38] md:grid-cols-3">
-              <div>
-                <span className="block text-[11px] font-black uppercase tracking-[0.16em] text-[#9d968f]">Danh mục</span>
-                <span className="mt-1 block text-base">{article.category}</span>
-              </div>
-              <div>
-                <span className="block text-[11px] font-black uppercase tracking-[0.16em] text-[#9d968f]">Ngày đăng</span>
-                <span className="mt-1 block text-base">{article.date}</span>
-              </div>
-              <div>
-                <span className="block text-[11px] font-black uppercase tracking-[0.16em] text-[#9d968f]">Tác giả</span>
-                <span className="mt-1 block text-base">{article.author}</span>
-              </div>
+      {/* Main Body Content Box */}
+      <div className="max-w-[880px] mx-auto px-4 -mt-4">
+        <div className="bg-white rounded-3xl p-6 md:p-12 shadow-sm border border-gray-100 space-y-8">
+          {/* Excerpt Summary Box */}
+          {article.excerpt && (
+            <div className="bg-red-50/60 border-l-4 border-l-[#b22830] p-6 rounded-r-2xl text-base md:text-lg font-bold text-gray-800 italic shadow-sm leading-relaxed">
+              "{article.excerpt}"
             </div>
-          </div>
+          )}
+
+          {/* Formatted Content */}
+          {renderFormattedContent(article.content)}
         </div>
       </div>
 
+      {/* Related Articles Section */}
       {relatedArticles.length > 0 && (
-        <div className="border-t border-[#ece3cc] bg-gradient-to-b from-white to-[#fbf7ea]">
-          <div className="mx-auto max-w-[960px] px-4 py-12 md:px-6 md:py-16">
-            <div className="mb-10">
-              <p className="text-[12px] font-black uppercase tracking-[0.4em] text-[#d67b3c]">Bài viết khác</p>
-              <h2 className="mt-3 text-3xl font-black uppercase text-[#161616] md:text-4xl">Có thể bạn sẽ thích</h2>
+        <div className="max-w-[1100px] mx-auto px-4 mt-16">
+          <div className="flex items-center justify-between mb-8 border-b border-gray-200 pb-4">
+            <div className="flex items-center gap-2">
+              <NewspaperIcon className="w-6 h-6 text-[#b22830]" />
+              <h2 className="text-xl md:text-2xl font-black uppercase text-gray-900 tracking-tight">
+                Bài viết cùng chủ đề
+              </h2>
             </div>
+          </div>
 
-            <div className="grid gap-8 md:grid-cols-3">
-              {relatedArticles.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => (window.location.hash = `#news/${item.id}`)}
-                  className="group overflow-hidden rounded-[28px] bg-[#f7f0df] text-left shadow-sm shadow-orange-100 transition-transform hover:-translate-y-2"
-                >
-                  <div className="relative overflow-hidden">
-                    <img src={item.image} alt={item.title} className="h-[240px] w-full object-cover transition-transform group-hover:scale-105" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {relatedArticles.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  onSelectArticle?.(item.id);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="group text-left bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="w-full overflow-hidden h-[180px] relative">
+                    <img 
+                      src={item.image} 
+                      alt={item.title} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                    />
+                    <span className="absolute top-3 left-3 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md">
+                      {item.category}
+                    </span>
                   </div>
-                  <div className="p-5">
-                    <div className="flex items-center justify-between gap-3 text-[11px] font-black uppercase tracking-[0.18em] text-[#d67b3c]">
-                      <span>{item.category}</span>
-                      <span className="text-[#9d968f]">{item.date}</span>
-                    </div>
-                    <h3 className="mt-4 text-2xl font-black uppercase leading-tight text-[#171717]">{item.title}</h3>
-                    {item.excerpt ? (
-                      <p className="mt-3 line-clamp-2 text-base font-semibold leading-relaxed text-[#433d38]">
-                        {item.excerpt}
-                      </p>
-                    ) : null}
+                  <div className="p-5 space-y-2">
+                    <h3 className="text-sm font-black uppercase text-gray-900 leading-snug group-hover:text-[#b22830] transition-colors line-clamp-2">
+                      {item.title}
+                    </h3>
                   </div>
-                </button>
-              ))}
-            </div>
+                </div>
+
+                <div className="p-5 pt-0 flex items-center justify-between text-xs text-gray-400 font-semibold border-t border-gray-50 mt-2">
+                  <span className="flex items-center gap-1 text-gray-500">
+                    <CalendarIcon className="w-3.5 h-3.5 text-[#b22830]" />
+                    {item.date}
+                  </span>
+                  <span className="flex items-center gap-1 text-[#b22830] font-bold group-hover:translate-x-1 transition-transform">
+                    Đọc ngay <ArrowRightIcon className="w-3.5 h-3.5" />
+                  </span>
+                </div>
+              </button>
+            ))}
           </div>
         </div>
       )}

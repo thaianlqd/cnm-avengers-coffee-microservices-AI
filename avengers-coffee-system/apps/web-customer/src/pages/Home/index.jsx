@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider, categories, setSelectedCatId }) {
   const { t } = useTranslation();
-  
+
   return (
     <>
       {/* ── 1. HERO BANNER SLIDER (exact HC banners) ── */}
@@ -23,7 +23,7 @@ export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider, categorie
               src={HC_IMG.appPromo}
               alt={t('home.appMember')}
               className="h-full w-full object-cover"
-              onError={(e) => { e.currentTarget.style.display='none'; }}
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
             />
           </div>
           {/* Right: text in cream background */}
@@ -96,7 +96,7 @@ export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider, categorie
                 />
               </div>
               <div className="bg-[#b22830] group-hover:bg-[#911f25] transition-colors duration-300 rounded-b-[20px] py-10 w-full flex items-center justify-center">
-                 <p className="text-center text-xl font-bold uppercase tracking-wide text-white transition-colors duration-300">{t('home.tastyDrinks')}</p>
+                <p className="text-center text-xl font-bold uppercase tracking-wide text-white transition-colors duration-300">{t('home.tastyDrinks')}</p>
               </div>
             </button>
             <button
@@ -118,7 +118,7 @@ export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider, categorie
                 />
               </div>
               <div className="bg-[#b22830] group-hover:bg-[#911f25] transition-colors duration-300 rounded-b-[20px] py-10 w-full flex items-center justify-center">
-                 <p className="text-center text-xl font-bold uppercase tracking-wide text-white transition-colors duration-300">{t('home.tastyCakes')}</p>
+                <p className="text-center text-xl font-bold uppercase tracking-wide text-white transition-colors duration-300">{t('home.tastyCakes')}</p>
               </div>
             </button>
           </div>
@@ -155,7 +155,7 @@ export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider, categorie
           </div>
         </div>
       </section>
-      
+
       {/* Khoảng trắng trước footer */}
       <div className="w-full h-[50px] bg-white"></div>
     </>

@@ -154,7 +154,14 @@ export class UserService implements OnModuleInit {
 
   async layMembershipConfig(key: string): Promise<any> {
     const config = await this.membershipConfigRepo.findOne({ where: { key } });
-    if (config) {
+    if (config && config.value) {
+      if (key === 'TIER_CONFIG' && Array.isArray(config.value)) {
+        const defaults: Record<string, number> = { SILVER: 100000, GOLD: 300000, DIAMOND: 500000 };
+        return config.value.map((t: any) => ({
+          ...t,
+          chi_tieu_toi_thieu_thang: Number((t.chi_tieu_toi_thieu_thang !== undefined && t.chi_tieu_toi_thieu_thang !== null && Number(t.chi_tieu_toi_thieu_thang) > 0) ? t.chi_tieu_toi_thieu_thang : (defaults[t.ma_hang] ?? 0)),
+        }));
+      }
       return config.value;
     }
 
@@ -1359,33 +1366,61 @@ export class UserService implements OnModuleInit {
     await this.deliveryAddressRepo.update({ ma_nguoi_dung: maNguoiDung, mac_dinh: true }, { mac_dinh: false });
   }
 
-  private tinhHangThanhVien(diem: number): {
+  private tinhHangThanhVien(diem: number, chiTieuThangNay: number = 0): {
     hang: string;
     ma_hang: string;
     diem_hien_tai: number;
     diem_can_len_hang: number | null;
     diem_bat_dau_hang: number;
+    hang_xet_the_diem: string;
+    ma_hang_xet_the_diem: string;
+    bi_ha_hang_do_thieu_chi_tieu: boolean;
+    chi_tieu_thang_nay: number;
+    chi_tieu_can_de_giu_hang: number;
   } {
     const config = UserService.tierConfigCache || this.DEFAULT_TIER_CONFIG;
     // Sắp xếp tăng dần theo điểm
     const sorted = [...config].sort((a, b) => Number(a.diem_toi_thieu || 0) - Number(b.diem_toi_thieu || 0));
 
-    let matchedTier = sorted[0];
+    // 1. Tìm hạng cao nhất đạt được theo ĐIỂM XÉT HẠNG (Loyalty Points)
+    let matchedEarnedTier = sorted[0];
     for (let i = 0; i < sorted.length; i++) {
       if (diem >= Number(sorted[i].diem_toi_thieu || 0)) {
-        matchedTier = sorted[i];
+        matchedEarnedTier = sorted[i];
       }
     }
 
-    const currentIndex = sorted.findIndex((t) => t.ma_hang === matchedTier.ma_hang);
+    // 2. Kiểm tra ĐIỀU KIỆN CHI TIÊU DUY TRÌ THÁNG NÀY
+    // Nếu chưa đạt chi tiêu tối thiểu tháng của hạng theo điểm, tự động lùi về hạng cao nhất đáp ứng đủ mức chi tiêu tháng (hoặc MEMBER nếu chưa tiêu đủ)
+    let matchedActiveTier = sorted[0];
+    for (let i = 0; i < sorted.length; i++) {
+      const tier = sorted[i];
+      const reqPoints = Number(tier.diem_toi_thieu || 0);
+      const reqSpendMonthly = Number(tier.chi_tieu_toi_thieu_thang || 0);
+
+      if (diem >= reqPoints) {
+        if (tier.ma_hang === 'MEMBER' || chiTieuThangNay >= reqSpendMonthly) {
+          matchedActiveTier = tier;
+        }
+      }
+    }
+
+    const currentIndex = sorted.findIndex((t) => t.ma_hang === matchedActiveTier.ma_hang);
     const nextTier = currentIndex < sorted.length - 1 ? sorted[currentIndex + 1] : null;
 
+    const biHaHang = matchedActiveTier.ma_hang !== matchedEarnedTier.ma_hang;
+
     return {
-      hang: matchedTier.ten_hang,
-      ma_hang: matchedTier.ma_hang,
+      hang: matchedActiveTier.ten_hang,
+      ma_hang: matchedActiveTier.ma_hang,
       diem_hien_tai: diem,
       diem_can_len_hang: nextTier ? Number(nextTier.diem_toi_thieu || 0) : null,
-      diem_bat_dau_hang: Number(matchedTier.diem_toi_thieu || 0),
+      diem_bat_dau_hang: Number(matchedActiveTier.diem_toi_thieu || 0),
+      hang_xet_the_diem: matchedEarnedTier.ten_hang,
+      ma_hang_xet_the_diem: matchedEarnedTier.ma_hang,
+      bi_ha_hang_do_thieu_chi_tieu: biHaHang,
+      chi_tieu_thang_nay: chiTieuThangNay,
+      chi_tieu_can_de_giu_hang: Number(matchedEarnedTier.chi_tieu_toi_thieu_thang || 0),
     };
   }
 
@@ -1510,7 +1545,8 @@ export class UserService implements OnModuleInit {
     const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: maNguoiDung } });
     if (!user) throw new NotFoundException('Khong tim thay nguoi dung');
     const diem = user.diem_loyalty || 0;
-    const hang = this.tinhHangThanhVien(diem);
+    const chiTieuThangNay = user.chi_tieu_thang_nay || 0;
+    const hang = this.tinhHangThanhVien(diem, chiTieuThangNay);
     const quyenLoi = this.layQuyenLoiTheoHang(hang.ma_hang);
     return {
       ma_nguoi_dung: maNguoiDung,
@@ -1534,7 +1570,7 @@ export class UserService implements OnModuleInit {
       user.thang_chi_tieu_gan_nhat = currentMonth;
     }
 
-    const hangTruoc = this.tinhHangThanhVien(user.diem_loyalty || 0);
+    const hangTruoc = this.tinhHangThanhVien(user.diem_loyalty || 0, user.chi_tieu_thang_nay || 0);
     const config = UserService.tierConfigCache || this.DEFAULT_TIER_CONFIG;
     const tierConfig = config.find((t) => t.ma_hang === hangTruoc.ma_hang);
     const minSpend = Number(tierConfig?.chi_tieu_toi_thieu_thang || 0);
@@ -1553,7 +1589,7 @@ export class UserService implements OnModuleInit {
     user.chi_tieu_thang_nay = Number(user.chi_tieu_thang_nay || 0) + addedMoney;
     await this.userRepo.save(user);
 
-    const hangSau = this.tinhHangThanhVien(user.diem_loyalty);
+    const hangSau = this.tinhHangThanhVien(user.diem_loyalty, user.chi_tieu_thang_nay);
     let len_hang = false;
     if (hangSau.ma_hang !== hangTruoc.ma_hang) {
       len_hang = true;
@@ -1937,7 +1973,7 @@ export class UserService implements OnModuleInit {
   }
 
   /** Customer: kiểm tra và áp dụng mã, gọi từ order service */
-  async kiemTraMaKhuyenMai(maKhuyenMai: string, userId: string, giaTriDon: number) {
+  async kiemTraMaKhuyenMai(maKhuyenMai: string, userId: string, giaTriDon: number, hasToppings?: boolean, toppingPrice?: number) {
     const code = String(maKhuyenMai || '').trim().toUpperCase();
     if (!code) throw new BadRequestException('Vui long nhap ma khuyen mai');
 
@@ -1956,9 +1992,14 @@ export class UserService implements OnModuleInit {
       throw new BadRequestException('Ma khuyen mai da su dung het luot');
     }
 
-    // Kiểm tra voucher cá nhân
-    if (p.ma_nguoi_dung && p.ma_nguoi_dung !== userId) {
-      throw new BadRequestException('Voucher nay khong thuoc so huu cua ban');
+    // Kiểm tra voucher cá nhân: chỉ người sở hữu mới dùng được
+    if (p.loai_phan_phoi === 'PERSONAL' || p.ma_nguoi_dung) {
+      if (!userId) {
+        throw new BadRequestException('Voucher cá nhân này yêu cầu đăng nhập tài khoản sở hữu');
+      }
+      if (p.ma_nguoi_dung && p.ma_nguoi_dung !== userId) {
+        throw new BadRequestException('Voucher nay khong thuoc so huu cua ban');
+      }
     }
 
     // Kiểm tra điều kiện hạng tối thiểu
@@ -1982,11 +2023,13 @@ export class UserService implements OnModuleInit {
       );
     }
 
-    const usedCount = await this.promotionUsageRepo.count({
-      where: { ma_khuyen_mai: code, ma_nguoi_dung: userId },
-    });
-    if (usedCount >= p.gioi_han_moi_nguoi) {
-      throw new BadRequestException('Ban da dung het luot su dung ma khuyen mai nay');
+    if (userId) {
+      const usedCount = await this.promotionUsageRepo.count({
+        where: { ma_khuyen_mai: code, ma_nguoi_dung: userId },
+      });
+      if (usedCount >= (p.gioi_han_moi_nguoi || 1)) {
+        throw new BadRequestException('Ban da dung het luot su dung ma khuyen mai nay');
+      }
     }
 
     let soTienGiam = 0;
@@ -1998,7 +2041,16 @@ export class UserService implements OnModuleInit {
     } else if (p.loai_khuyen_mai === 'FIXED') {
       const val = Number(p.gia_tri || 0);
       soTienGiam = Math.min(val > 0 ? val : 10000, Number(giaTriDon));
-    } else if (p.loai_khuyen_mai === 'FREE_ITEM' || p.ma_khuyen_mai?.includes('TOPPING') || p.ten_khuyen_mai?.toLowerCase().includes('topping')) {
+    } else if (p.loai_khuyen_mai === 'FREE_TOPPING' || p.ma_khuyen_mai?.includes('TOPPING') || p.ten_khuyen_mai?.toLowerCase().includes('topping')) {
+      if (hasToppings === false) {
+        throw new BadRequestException('Voucher này chỉ áp dụng cho đơn hàng có topping. Vui lòng thêm topping vào đơn.');
+      }
+      let freeVal = toppingPrice && Number(toppingPrice) > 0 ? Number(toppingPrice) : 5000;
+      if (p.giam_toi_da !== null && Number(p.giam_toi_da) > 0) {
+        freeVal = Math.min(freeVal, Number(p.giam_toi_da));
+      }
+      soTienGiam = Math.min(freeVal, Number(giaTriDon));
+    } else if (p.loai_khuyen_mai === 'FREE_ITEM') {
       const freeVal = Number(p.gia_tri) > 0 ? Number(p.gia_tri) : 10000;
       soTienGiam = Math.min(freeVal, Number(giaTriDon));
     } else {
@@ -2017,6 +2069,19 @@ export class UserService implements OnModuleInit {
     };
   }
 
+  /** Internal: lấy số lần user đã sử dụng mã voucher */
+  async layLuotDungUser(code: string, userId: string) {
+    const cleanCode = String(code || '').trim().toUpperCase();
+    const cleanUserId = String(userId || '').trim();
+    if (!cleanCode || !cleanUserId) {
+      return { luot_da_dung: 0 };
+    }
+    const count = await this.promotionUsageRepo.count({
+      where: { ma_khuyen_mai: cleanCode, ma_nguoi_dung: cleanUserId },
+    });
+    return { luot_da_dung: count };
+  }
+
   /** Internal: ghi nhận lượt dùng khuyến mãi sau khi tạo đơn thành công */
   async xacNhanSuDungKhuyenMai(payload: {
     ma_khuyen_mai: string;
@@ -2028,10 +2093,10 @@ export class UserService implements OnModuleInit {
     if (!code) throw new BadRequestException('ma_khuyen_mai la bat buoc');
 
     const p = await this.promotionRepo.findOne({ where: { ma_khuyen_mai: code } });
-    if (!p) throw new NotFoundException('Ma khuyen mai khong ton tai');
-
-    p.so_luong_da_dung = Number(p.so_luong_da_dung || 0) + 1;
-    await this.promotionRepo.save(p);
+    if (p) {
+      p.so_luong_da_dung = Number(p.so_luong_da_dung || 0) + 1;
+      await this.promotionRepo.save(p);
+    }
 
     const userId = String(payload.user_id || '').trim();
     if (userId) {
@@ -2047,7 +2112,7 @@ export class UserService implements OnModuleInit {
     return {
       message: 'Da ghi nhan su dung khuyen mai',
       ma_khuyen_mai: code,
-      so_luong_da_dung: p.so_luong_da_dung,
+      so_luong_da_dung: p ? p.so_luong_da_dung : 1,
     };
   }
 
@@ -2385,7 +2450,7 @@ export class UserService implements OnModuleInit {
       user.diem_kha_dung = (user.diem_kha_dung || 0) + Number(winner.gia_tri || 0);
       // Chỉ cộng vào điểm khả dụng, giữ nguyên điểm tích lũy hạng (diem_loyalty)
       await this.userRepo.save(user);
-    } else if (winner.loai === 'VOUCHER' || winner.loai === 'FREE_ITEM') {
+    } else if (winner.loai === 'VOUCHER' || winner.loai === 'FREE_ITEM' || winner.loai === 'FREE_TOPPING') {
       voucherCode = `WHEEL_${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
       try {
         let template: Promotion | null = null;
@@ -2395,13 +2460,15 @@ export class UserService implements OnModuleInit {
 
         const p = new Promotion();
         p.ma_khuyen_mai = voucherCode;
-        p.ten_khuyen_mai = template ? template.ten_khuyen_mai : `Vòng quay: ${winner.ten}`;
+        p.ten_khuyen_mai = template ? template.ten_khuyen_mai : (winner.loai === 'FREE_TOPPING' ? 'Voucher Free 1 Topping' : `Vòng quay: ${winner.ten}`);
         p.mo_ta = template ? (template.mo_ta || `Phần thưởng vòng quay may mắn`) : (
-          winner.loai === 'FREE_ITEM'
-            ? `Bạn trúng thưởng: ${winner.ten_san_pham_tang || winner.ten}! Áp dụng khi đặt hàng.`
-            : `Bạn trúng voucher giảm ${Number(winner.gia_tri).toLocaleString('vi-VN')}đ từ vòng quay may mắn!`
+          winner.loai === 'FREE_TOPPING'
+            ? `Bạn trúng voucher Free 1 Topping từ vòng quay may mắn! Áp dụng khi đơn hàng có topping.`
+            : winner.loai === 'FREE_ITEM'
+              ? `Bạn trúng thưởng: ${winner.ten_san_pham_tang || winner.ten}! Áp dụng khi đặt hàng.`
+              : `Bạn trúng voucher giảm ${Number(winner.gia_tri).toLocaleString('vi-VN')}đ từ vòng quay may mắn!`
         );
-        p.loai_khuyen_mai = template ? template.loai_khuyen_mai : (winner.loai === 'FREE_ITEM' ? 'FREE_ITEM' : 'FIXED');
+        p.loai_khuyen_mai = template ? template.loai_khuyen_mai : (winner.loai === 'FREE_TOPPING' ? 'FREE_TOPPING' : (winner.loai === 'FREE_ITEM' ? 'FREE_ITEM' : 'FIXED'));
         p.gia_tri = template ? Number(template.gia_tri) : Number(winner.gia_tri || 0);
         p.gia_tri_don_toi_thieu = template ? Number(template.gia_tri_don_toi_thieu || 0) : 0;
         p.giam_toi_da = template ? (template.giam_toi_da ? Number(template.giam_toi_da) : null) : null;
@@ -2457,13 +2524,13 @@ export class UserService implements OnModuleInit {
     }
 
     const diem = user.diem_loyalty || 0;
-    const hang = this.tinhHangThanhVien(diem);
+    const chiTieuThangNay = Number(user.chi_tieu_thang_nay || 0);
+    const hang = this.tinhHangThanhVien(diem, chiTieuThangNay);
 
     const tierConfigs = UserService.tierConfigCache || this.DEFAULT_TIER_CONFIG;
-    const currentTierConfig = tierConfigs.find(t => t.ma_hang === hang.ma_hang) || tierConfigs[0];
-    const chiTieuToiThieuThang = Number(currentTierConfig.chi_tieu_toi_thieu_thang || 0);
-    const chiTieuThangNay = Number(user.chi_tieu_thang_nay || 0);
-    const datDieuKienDacQuyen = (hang.ma_hang === 'MEMBER') || (chiTieuThangNay >= chiTieuToiThieuThang);
+    const earnedTierConfig = tierConfigs.find(t => t.ma_hang === hang.ma_hang_xet_the_diem) || tierConfigs[0];
+    const chiTieuToiThieuThang = Number(earnedTierConfig.chi_tieu_toi_thieu_thang || 0);
+    const datDieuKienDacQuyen = !hang.bi_ha_hang_do_thieu_chi_tieu;
     const conThieuThangNay = Math.max(0, chiTieuToiThieuThang - chiTieuThangNay);
 
     const quyenLoi = await this.layQuyenLoiTheoHangAsync(hang.ma_hang, datDieuKienDacQuyen);

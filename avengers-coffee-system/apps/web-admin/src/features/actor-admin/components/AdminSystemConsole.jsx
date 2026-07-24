@@ -154,6 +154,8 @@ export function AdminSystemConsole({
     deleteMenu,
     savingMenu,
     PROMOTION_TYPES,
+    menuItemsList,
+    allToppingsList,
     promotionsState,
     promotionFilter,
     setPromotionFilter,
@@ -355,21 +357,21 @@ export function AdminSystemConsole({
           <button type="button" className={activeTab === 'account' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('account')}>
             Hồ sơ &amp; Bảo mật
           </button>
-            <button type="button" className={activeTab === 'promotions' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('promotions')}>
-              Khuyến mãi &amp; Voucher
-            </button>
-            <button type="button" className={activeTab === 'survey-manage' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('survey-manage')}>
-              📊 Quản lý Khảo sát
-            </button>
-              <button type="button" className={activeTab === 'ai-analytics' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('ai-analytics')}>
-                Phân tích mua sắm
-              </button>
-              <button type="button" className={activeTab === 'system-ops' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('system-ops')}>
-                Giám sát hệ thống
-              </button>
-              <button type="button" className={activeTab === 'shippers' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('shippers')}>
-                🚴 Quản lý Shipper
-              </button>
+          <button type="button" className={activeTab === 'promotions' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('promotions')}>
+            Khuyến mãi &amp; Voucher
+          </button>
+          <button type="button" className={activeTab === 'survey-manage' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('survey-manage')}>
+            📊 Quản lý Khảo sát
+          </button>
+          <button type="button" className={activeTab === 'ai-analytics' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('ai-analytics')}>
+            Phân tích mua sắm
+          </button>
+          <button type="button" className={activeTab === 'system-ops' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('system-ops')}>
+            Giám sát hệ thống
+          </button>
+          <button type="button" className={activeTab === 'shippers' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('shippers')}>
+            🚴 Quản lý Shipper
+          </button>
         </div>
 
         <button type="button" className="logout-btn" onClick={onLogout}>Đăng xuất</button>
@@ -684,7 +686,7 @@ export function AdminSystemConsole({
                     value={promotionForm.gia_tri}
                     onChange={(e) => setPromotionForm((p) => ({ ...p, gia_tri: e.target.value }))}
                     disabled={promotionForm.loai_khuyen_mai === 'FREE_ITEM'}
-                    style={{ width: '100%', height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem', fontFamily: 'inherit' }}
+                    style={{ width: '100%', height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem', fontFamily: 'inherit', backgroundColor: promotionForm.loai_khuyen_mai === 'FREE_ITEM' ? '#f9fafb' : '#ffffff' }}
                   />
                 </div>
 
@@ -704,12 +706,16 @@ export function AdminSystemConsole({
                   ) : promotionForm.loai_khuyen_mai === 'FREE_ITEM' ? (
                     <>
                       <label style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>Sản phẩm tặng kèm</label>
-                      <input
+                      <select
                         value={promotionForm.ten_san_pham_tang}
                         onChange={(e) => setPromotionForm((p) => ({ ...p, ten_san_pham_tang: e.target.value }))}
-                        placeholder="VD: Phin Sữa Đá"
-                        style={{ width: '100%', height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem', fontFamily: 'inherit' }}
-                      />
+                        style={{ width: '100%', height: '38px', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.875rem', fontFamily: 'inherit', backgroundColor: '#ffffff' }}
+                      >
+                        <option value="">-- Chọn sản phẩm --</option>
+                        {(menuItemsList || []).map((item) => (
+                          <option key={item.id} value={item.name}>{item.name} ({Number(item.price).toLocaleString('vi-VN')}đ)</option>
+                        ))}
+                      </select>
                     </>
                   ) : (
                     <>
@@ -991,8 +997,10 @@ export function AdminSystemConsole({
                                   {(item.loai_khuyen_mai || item.loai) === 'PERCENT'
                                     ? `${item.gia_tri}%${item.giam_toi_da ? ` (Tối đa ${fmtNumber(item.giam_toi_da)}đ)` : ''}`
                                     : (item.loai_khuyen_mai || item.loai) === 'FIXED'
-                                    ? `${fmtNumber(item.gia_tri)}đ`
-                                    : `Tặng: ${item.ten_san_pham_tang || 'Món'}`}
+                                      ? `${fmtNumber(item.gia_tri)}đ`
+                                      : (item.loai_khuyen_mai || item.loai) === 'FREE_TOPPING'
+                                        ? `Free Topping`
+                                        : `Tặng: ${item.ten_san_pham_tang || 'Món'}`}
                                 </strong>
                               </td>
                               <td>{item.gia_tri_don_toi_thieu > 0 || item.don_hang_toi_thieu > 0 ? `${fmtNumber(item.gia_tri_don_toi_thieu || item.don_hang_toi_thieu)}đ` : 'Không'}</td>
@@ -1088,8 +1096,10 @@ export function AdminSystemConsole({
                                     {(item.loai_khuyen_mai || item.loai) === 'PERCENT'
                                       ? `${item.gia_tri}%${item.giam_toi_da ? ` (Tối đa ${fmtNumber(item.giam_toi_da)}đ)` : ''}`
                                       : (item.loai_khuyen_mai || item.loai) === 'FIXED'
-                                      ? `${fmtNumber(item.gia_tri)}đ`
-                                      : `Tặng: ${item.ten_san_pham_tang || 'Món'}`}
+                                        ? `${fmtNumber(item.gia_tri)}đ`
+                                        : (item.loai_khuyen_mai || item.loai) === 'FREE_TOPPING'
+                                          ? `Free Topping`
+                                          : `Tặng: ${item.ten_san_pham_tang || 'Món'}`}
                                   </strong>
                                 </td>
                                 <td>{item.gia_tri_don_toi_thieu > 0 || item.don_hang_toi_thieu > 0 ? `${fmtNumber(item.gia_tri_don_toi_thieu || item.don_hang_toi_thieu)}đ` : 'Không'}</td>
@@ -1455,209 +1465,209 @@ export function AdminSystemConsole({
               onBack={() => setSelectedBranchForReview(null)}
             />
           ) : (
-          <section className="panel system-admin-panel">
-            <div className="panel-head system-admin-panel-head">
-              <h2>Quản lý chi nhánh cửa hàng</h2>
-              <span>CRUD chi nhánh: mã, tên, địa chỉ, số điện thoại, trạng thái. Bấm vào 1 dòng chi nhánh để xem đánh giá chi tiết.</span>
-            </div>
+            <section className="panel system-admin-panel">
+              <div className="panel-head system-admin-panel-head">
+                <h2>Quản lý chi nhánh cửa hàng</h2>
+                <span>CRUD chi nhánh: mã, tên, địa chỉ, số điện thoại, trạng thái. Bấm vào 1 dòng chi nhánh để xem đánh giá chi tiết.</span>
+              </div>
 
-            <div className="system-admin-card" style={{ marginBottom: '0.8rem' }}>
-              <div className="panel-head"><h2>{editingBranchCode ? 'Cập nhật chi nhánh' : 'Tạo chi nhánh mới'}</h2></div>
-              <div className="system-admin-form-grid system-admin-form-grid--branch">
-                <label>
-                  <span>Mã chi nhánh</span>
-                  <input
-                    value={branchForm.ma_chi_nhanh}
-                    onChange={(e) => setBranchForm((p) => ({ ...p, ma_chi_nhanh: e.target.value.toUpperCase() }))}
-                    placeholder="VD: QUAN_1"
-                    disabled={Boolean(editingBranchCode)}
-                  />
-                </label>
-                <label>
-                  <span>Tên chi nhánh</span>
-                  <input value={branchForm.ten_chi_nhanh} onChange={(e) => setBranchForm((p) => ({ ...p, ten_chi_nhanh: e.target.value }))} />
-                </label>
+              <div className="system-admin-card" style={{ marginBottom: '0.8rem' }}>
+                <div className="panel-head"><h2>{editingBranchCode ? 'Cập nhật chi nhánh' : 'Tạo chi nhánh mới'}</h2></div>
+                <div className="system-admin-form-grid system-admin-form-grid--branch">
+                  <label>
+                    <span>Mã chi nhánh</span>
+                    <input
+                      value={branchForm.ma_chi_nhanh}
+                      onChange={(e) => setBranchForm((p) => ({ ...p, ma_chi_nhanh: e.target.value.toUpperCase() }))}
+                      placeholder="VD: QUAN_1"
+                      disabled={Boolean(editingBranchCode)}
+                    />
+                  </label>
+                  <label>
+                    <span>Tên chi nhánh</span>
+                    <input value={branchForm.ten_chi_nhanh} onChange={(e) => setBranchForm((p) => ({ ...p, ten_chi_nhanh: e.target.value }))} />
+                  </label>
 
-                <label className="system-admin-branch-city-field">
-                  <span>Tỉnh/Thành phố</span>
-                  <input
-                    className="system-admin-select-search"
-                    value={locationSearch.city}
-                    onChange={(e) => setLocationSearch((p) => ({ ...p, city: e.target.value }))}
-                    placeholder="Gõ để lọc tỉnh/thành"
-                  />
-                  <select
-                    value={branchForm.thanh_pho}
-                    onChange={(e) => {
-                      setBranchForm((p) => ({
-                        ...p,
-                        thanh_pho: e.target.value,
-                        quan_huyen: '',
-                        phuong_xa: '',
-                      }))
-                      setLocationSearch((p) => ({ ...p, district: '', ward: '' }))
-                    }}
-                  >
-                    {cityOptions.map((city) => (
-                      <option key={city.code} value={city.code}>{city.label}</option>
-                    ))}
-                  </select>
-                </label>
+                  <label className="system-admin-branch-city-field">
+                    <span>Tỉnh/Thành phố</span>
+                    <input
+                      className="system-admin-select-search"
+                      value={locationSearch.city}
+                      onChange={(e) => setLocationSearch((p) => ({ ...p, city: e.target.value }))}
+                      placeholder="Gõ để lọc tỉnh/thành"
+                    />
+                    <select
+                      value={branchForm.thanh_pho}
+                      onChange={(e) => {
+                        setBranchForm((p) => ({
+                          ...p,
+                          thanh_pho: e.target.value,
+                          quan_huyen: '',
+                          phuong_xa: '',
+                        }))
+                        setLocationSearch((p) => ({ ...p, district: '', ward: '' }))
+                      }}
+                    >
+                      {cityOptions.map((city) => (
+                        <option key={city.code} value={city.code}>{city.label}</option>
+                      ))}
+                    </select>
+                  </label>
 
-                <label className="system-admin-branch-district-field">
-                  <span>Quận/Huyện</span>
-                  <input
-                    className="system-admin-select-search"
-                    value={locationSearch.district}
-                    onChange={(e) => setLocationSearch((p) => ({ ...p, district: e.target.value }))}
-                    placeholder="Gõ để lọc quận/huyện"
-                    disabled={!branchForm.thanh_pho}
-                  />
-                  <select
-                    value={branchForm.quan_huyen}
-                    onChange={(e) => {
-                      setBranchForm((p) => ({ ...p, quan_huyen: e.target.value, phuong_xa: '' }))
-                      setLocationSearch((p) => ({ ...p, ward: '' }))
-                    }}
-                    disabled={!districtOptions.length}
-                  >
-                    <option value="">Chọn quận/huyện</option>
-                    {districtOptions.map((district) => (
-                      <option key={district.code} value={district.code}>{district.label}</option>
-                    ))}
-                  </select>
-                </label>
+                  <label className="system-admin-branch-district-field">
+                    <span>Quận/Huyện</span>
+                    <input
+                      className="system-admin-select-search"
+                      value={locationSearch.district}
+                      onChange={(e) => setLocationSearch((p) => ({ ...p, district: e.target.value }))}
+                      placeholder="Gõ để lọc quận/huyện"
+                      disabled={!branchForm.thanh_pho}
+                    />
+                    <select
+                      value={branchForm.quan_huyen}
+                      onChange={(e) => {
+                        setBranchForm((p) => ({ ...p, quan_huyen: e.target.value, phuong_xa: '' }))
+                        setLocationSearch((p) => ({ ...p, ward: '' }))
+                      }}
+                      disabled={!districtOptions.length}
+                    >
+                      <option value="">Chọn quận/huyện</option>
+                      {districtOptions.map((district) => (
+                        <option key={district.code} value={district.code}>{district.label}</option>
+                      ))}
+                    </select>
+                  </label>
 
-                <label className="system-admin-branch-ward-field">
-                  <span>Phường/Xã</span>
-                  <input
-                    className="system-admin-select-search"
-                    value={locationSearch.ward}
-                    onChange={(e) => setLocationSearch((p) => ({ ...p, ward: e.target.value }))}
-                    placeholder="Gõ để lọc phường/xã"
-                    disabled={!branchForm.quan_huyen}
-                  />
-                  <select
-                    value={branchForm.phuong_xa}
-                    onChange={(e) => setBranchForm((p) => ({ ...p, phuong_xa: e.target.value }))}
-                    disabled={!wardOptions.length}
-                  >
-                    <option value="">Chọn phường/xã</option>
-                    {wardOptions.map((ward) => (
-                      <option key={ward.code} value={ward.code}>{ward.label}</option>
-                    ))}
-                  </select>
-                </label>
+                  <label className="system-admin-branch-ward-field">
+                    <span>Phường/Xã</span>
+                    <input
+                      className="system-admin-select-search"
+                      value={locationSearch.ward}
+                      onChange={(e) => setLocationSearch((p) => ({ ...p, ward: e.target.value }))}
+                      placeholder="Gõ để lọc phường/xã"
+                      disabled={!branchForm.quan_huyen}
+                    />
+                    <select
+                      value={branchForm.phuong_xa}
+                      onChange={(e) => setBranchForm((p) => ({ ...p, phuong_xa: e.target.value }))}
+                      disabled={!wardOptions.length}
+                    >
+                      <option value="">Chọn phường/xã</option>
+                      {wardOptions.map((ward) => (
+                        <option key={ward.code} value={ward.code}>{ward.label}</option>
+                      ))}
+                    </select>
+                  </label>
 
-                <label>
-                  <span>Số điện thoại</span>
-                  <input value={branchForm.so_dien_thoai || ''} onChange={(e) => setBranchForm((p) => ({ ...p, so_dien_thoai: e.target.value }))} />
-                </label>
-                <label>
-                  <span>Giờ mở cửa (HH:MM)</span>
-                  <input value={branchForm.gio_mo_cua || ''} onChange={(e) => setBranchForm((p) => ({ ...p, gio_mo_cua: e.target.value }))} placeholder="07:00" />
-                </label>
-                <label>
-                  <span>Giờ đóng cửa (HH:MM)</span>
-                  <input value={branchForm.gio_dong_cua || ''} onChange={(e) => setBranchForm((p) => ({ ...p, gio_dong_cua: e.target.value }))} placeholder="22:00" />
-                </label>
-                <label>
-                  <span>Trạng thái</span>
-                  <select value={branchForm.trang_thai} onChange={(e) => setBranchForm((p) => ({ ...p, trang_thai: e.target.value }))}>
-                    <option value="ACTIVE">ACTIVE</option>
-                    <option value="INACTIVE">INACTIVE</option>
-                  </select>
-                </label>
-                <label className="system-admin-branch-address-field">
-                  <span>Địa chỉ chi tiết (số nhà, tên đường, tòa nhà)</span>
-                  <input
-                    value={branchForm.dia_chi_chi_tiet || ''}
-                    onChange={(e) => setBranchForm((p) => ({ ...p, dia_chi_chi_tiet: e.target.value }))}
-                    placeholder="VD: 123 Nguyen Dinh Chieu"
-                  />
-                </label>
-                <label className="system-admin-branch-address-field">
-                  <span>URL ảnh chi nhánh</span>
-                  <input
-                    value={branchForm.hinh_anh_url || ''}
-                    onChange={(e) => setBranchForm((p) => ({ ...p, hinh_anh_url: e.target.value }))}
-                    placeholder="https://..."
-                  />
-                </label>
-                <label className="system-admin-branch-address-field">
-                  <span>Link Google Maps</span>
-                  <input
-                    value={branchForm.map_url || ''}
-                    onChange={(e) => setBranchForm((p) => ({ ...p, map_url: e.target.value }))}
-                    placeholder="https://www.google.com/maps/search/?api=1&query=..."
-                  />
-                </label>
+                  <label>
+                    <span>Số điện thoại</span>
+                    <input value={branchForm.so_dien_thoai || ''} onChange={(e) => setBranchForm((p) => ({ ...p, so_dien_thoai: e.target.value }))} />
+                  </label>
+                  <label>
+                    <span>Giờ mở cửa (HH:MM)</span>
+                    <input value={branchForm.gio_mo_cua || ''} onChange={(e) => setBranchForm((p) => ({ ...p, gio_mo_cua: e.target.value }))} placeholder="07:00" />
+                  </label>
+                  <label>
+                    <span>Giờ đóng cửa (HH:MM)</span>
+                    <input value={branchForm.gio_dong_cua || ''} onChange={(e) => setBranchForm((p) => ({ ...p, gio_dong_cua: e.target.value }))} placeholder="22:00" />
+                  </label>
+                  <label>
+                    <span>Trạng thái</span>
+                    <select value={branchForm.trang_thai} onChange={(e) => setBranchForm((p) => ({ ...p, trang_thai: e.target.value }))}>
+                      <option value="ACTIVE">ACTIVE</option>
+                      <option value="INACTIVE">INACTIVE</option>
+                    </select>
+                  </label>
+                  <label className="system-admin-branch-address-field">
+                    <span>Địa chỉ chi tiết (số nhà, tên đường, tòa nhà)</span>
+                    <input
+                      value={branchForm.dia_chi_chi_tiet || ''}
+                      onChange={(e) => setBranchForm((p) => ({ ...p, dia_chi_chi_tiet: e.target.value }))}
+                      placeholder="VD: 123 Nguyen Dinh Chieu"
+                    />
+                  </label>
+                  <label className="system-admin-branch-address-field">
+                    <span>URL ảnh chi nhánh</span>
+                    <input
+                      value={branchForm.hinh_anh_url || ''}
+                      onChange={(e) => setBranchForm((p) => ({ ...p, hinh_anh_url: e.target.value }))}
+                      placeholder="https://..."
+                    />
+                  </label>
+                  <label className="system-admin-branch-address-field">
+                    <span>Link Google Maps</span>
+                    <input
+                      value={branchForm.map_url || ''}
+                      onChange={(e) => setBranchForm((p) => ({ ...p, map_url: e.target.value }))}
+                      placeholder="https://www.google.com/maps/search/?api=1&query=..."
+                    />
+                  </label>
 
-                <div className="system-admin-branch-address-preview">
-                  <strong>Địa chỉ đầy đủ:</strong>
-                  <span>{branchAddressPreview || 'Chưa đủ thông tin địa chỉ để hiển thị preview'}</span>
+                  <div className="system-admin-branch-address-preview">
+                    <strong>Địa chỉ đầy đủ:</strong>
+                    <span>{branchAddressPreview || 'Chưa đủ thông tin địa chỉ để hiển thị preview'}</span>
+                  </div>
+                </div>
+
+                <div className="system-admin-form-actions">
+                  <button type="button" onClick={saveBranch} disabled={savingBranch}>{savingBranch ? 'Đang lưu...' : 'Lưu chi nhánh'}</button>
+                  {editingBranchCode ? <button type="button" className="secondary" onClick={cancelEditBranch}>Hủy sửa</button> : null}
                 </div>
               </div>
 
-              <div className="system-admin-form-actions">
-                <button type="button" onClick={saveBranch} disabled={savingBranch}>{savingBranch ? 'Đang lưu...' : 'Lưu chi nhánh'}</button>
-                {editingBranchCode ? <button type="button" className="secondary" onClick={cancelEditBranch}>Hủy sửa</button> : null}
-              </div>
-            </div>
+              {branchesState.loading ? <p>Đang tải chi nhánh...</p> : null}
+              {branchesState.error ? <p className="error-text">{branchesState.error}</p> : null}
 
-            {branchesState.loading ? <p>Đang tải chi nhánh...</p> : null}
-            {branchesState.error ? <p className="error-text">{branchesState.error}</p> : null}
-
-            <div className="system-admin-table-wrap">
-              <table className="system-admin-table">
-                <thead>
-                  <tr>
-                    <th>Tên chi nhánh</th>
-                    <th>Mã</th>
-                    <th>Địa chỉ</th>
-                    <th>SĐT</th>
-                    <th>Tài khoản</th>
-                    <th>Trạng thái</th>
-                    <th>Cập nhật</th>
-                    <th>Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {branchesPageData.rows.map((branch) => (
-                    <tr
-                      key={branch.ma_chi_nhanh}
-                      onClick={() => setSelectedBranchForReview(branch)}
-                      style={{ cursor: 'pointer' }}
-                      title="Bấm vào dòng để xem chi tiết & đánh giá chi nhánh"
-                    >
-                      <td><strong>{branch.ten_chi_nhanh}</strong></td>
-                      <td>{branch.ma_chi_nhanh}</td>
-                      <td>{branch.dia_chi || '---'}</td>
-                      <td>{branch.so_dien_thoai || '---'}</td>
-                      <td>{fmtNumber(branch.account_count)}</td>
-                      <td>{branch.trang_thai}</td>
-                      <td>{new Date(branch.ngay_cap_nhat || branch.ngay_tao).toLocaleString('vi-VN')}</td>
-                      <td onClick={(e) => e.stopPropagation()}>
-                        <div className="system-admin-table-actions">
-                          <button type="button" className="secondary" onClick={() => startEditBranch(branch)}>Sửa</button>
-                          <button
-                            type="button"
-                            className="secondary"
-                            onClick={() => deleteBranch(branch.ma_chi_nhanh)}
-                            disabled={Number(branch.account_count || 0) > 0}
-                            title={Number(branch.account_count || 0) > 0 ? 'Không thể xóa vì đang có tài khoản gán vào' : ''}
-                          >
-                            Xóa
-                          </button>
-                        </div>
-                      </td>
+              <div className="system-admin-table-wrap">
+                <table className="system-admin-table">
+                  <thead>
+                    <tr>
+                      <th>Tên chi nhánh</th>
+                      <th>Mã</th>
+                      <th>Địa chỉ</th>
+                      <th>SĐT</th>
+                      <th>Tài khoản</th>
+                      <th>Trạng thái</th>
+                      <th>Cập nhật</th>
+                      <th>Thao tác</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              <Pagination pageData={branchesPageData} onPageChange={setBranchesPage} />
-            </div>
-          </section>
+                  </thead>
+                  <tbody>
+                    {branchesPageData.rows.map((branch) => (
+                      <tr
+                        key={branch.ma_chi_nhanh}
+                        onClick={() => setSelectedBranchForReview(branch)}
+                        style={{ cursor: 'pointer' }}
+                        title="Bấm vào dòng để xem chi tiết & đánh giá chi nhánh"
+                      >
+                        <td><strong>{branch.ten_chi_nhanh}</strong></td>
+                        <td>{branch.ma_chi_nhanh}</td>
+                        <td>{branch.dia_chi || '---'}</td>
+                        <td>{branch.so_dien_thoai || '---'}</td>
+                        <td>{fmtNumber(branch.account_count)}</td>
+                        <td>{branch.trang_thai}</td>
+                        <td>{new Date(branch.ngay_cap_nhat || branch.ngay_tao).toLocaleString('vi-VN')}</td>
+                        <td onClick={(e) => e.stopPropagation()}>
+                          <div className="system-admin-table-actions">
+                            <button type="button" className="secondary" onClick={() => startEditBranch(branch)}>Sửa</button>
+                            <button
+                              type="button"
+                              className="secondary"
+                              onClick={() => deleteBranch(branch.ma_chi_nhanh)}
+                              disabled={Number(branch.account_count || 0) > 0}
+                              title={Number(branch.account_count || 0) > 0 ? 'Không thể xóa vì đang có tài khoản gán vào' : ''}
+                            >
+                              Xóa
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <Pagination pageData={branchesPageData} onPageChange={setBranchesPage} />
+              </div>
+            </section>
           )
         )}
 
@@ -1870,13 +1880,13 @@ export function AdminSystemConsole({
                     <span>Mô tả ngắn gọn</span>
                     <input value={menuForm.description} onChange={(e) => setMenuForm((p) => ({ ...p, description: e.target.value }))} placeholder="Mô tả món..." />
                   </label>
-                  
-                   {/* Dynamic Variant & Attribute Builder */}
+
+                  {/* Dynamic Variant & Attribute Builder */}
                   <div className="system-admin-branch-address-field variant-manager-wrapper">
                     <div className="variant-manager">
                       <div className="variant-manager-title">Quản lý biến thể &amp; Tùy chọn món</div>
                       <div className="variant-manager-subtitle">Thiết lập các thuộc tính và phụ thu tương ứng cho sản phẩm (giống WooCommerce/Odoo)</div>
-                      
+
                       {/* List of active attributes */}
                       <div className="variant-groups-list">
                         {Object.entries(menuForm.bien_the || {}).length === 0 ? (
@@ -1897,7 +1907,7 @@ export function AdminSystemConsole({
                                   Xóa nhóm
                                 </button>
                               </div>
-                              
+
                               {/* List of values in this group */}
                               <div className="variant-options-list">
                                 {Object.entries(optionsObj || {}).length === 0 ? (
@@ -1925,7 +1935,7 @@ export function AdminSystemConsole({
                                   ))
                                 )}
                               </div>
-                              
+
                               {/* Add option to this group form */}
                               <div className="variant-option-add-form-inline">
                                 <input
@@ -1971,16 +1981,16 @@ export function AdminSystemConsole({
                               return <option key={attr.id} value={attr.name}>{attr.name}</option>
                             })}
                           </select>
-                          
+
                           <span style={{ fontSize: '0.86rem', color: '#8c6b56', alignSelf: 'center' }}>hoặc</span>
-                          
+
                           <input
                             type="text"
                             placeholder="Nhập biến thể mới..."
                             value={customAttributeName}
                             onChange={(e) => setCustomAttributeName(e.target.value)}
                           />
-                          
+
                           <button
                             type="button"
                             className="variant-add-btn"
@@ -2002,7 +2012,7 @@ export function AdminSystemConsole({
                       <input
                         type="file"
                         accept="image/png,image/jpeg,image/webp"
-                        onChange={(e) => uploadMenuImage(e.target.files?.[0]).catch(() => {})}
+                        onChange={(e) => uploadMenuImage(e.target.files?.[0]).catch(() => { })}
                       />
                       <span>{uploadState.loading ? 'Đang tải ảnh...' : 'Chọn ảnh JPG, PNG, WEBP'}</span>
                       <small>{menuForm.name ? `Tên file sẽ bám theo: ${menuForm.name}` : 'Nhập tên món trước để ra tên file đẹp hơn'}</small>

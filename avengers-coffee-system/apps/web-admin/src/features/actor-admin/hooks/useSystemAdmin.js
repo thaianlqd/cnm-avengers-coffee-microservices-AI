@@ -261,6 +261,7 @@ const DEFAULT_PROMOTION_FORM = {
   trang_thai: 'ACTIVE',
   hien_thi_cho_khach: true,
   ten_san_pham_tang: '',
+  topping_tang_ten: '',
   hinh_anh: '',
 }
 
@@ -443,6 +444,26 @@ export function useSystemAdmin() {
       items: promotionsQuery.data || [],
     })
   }, [promotionsQuery.data, promotionsQuery.error, promotionsQuery.isFetching, promotionsQuery.isLoading])
+
+  // Danh sách món ăn (từ menuQuery đã có sẵn)
+  const menuItemsList = useMemo(() => {
+    return (menuQuery.data || []).filter(item => item.dang_ban !== false)
+  }, [menuQuery.data])
+
+  // Danh sách topping duy nhất từ tất cả sản phẩm
+  const allToppingsList = useMemo(() => {
+    const toppingMap = {}
+    ;(menuQuery.data || []).forEach(item => {
+      if (item.toppings && typeof item.toppings === 'object') {
+        Object.entries(item.toppings).forEach(([name, price]) => {
+          if (!toppingMap[name] || toppingMap[name] < Number(price)) {
+            toppingMap[name] = Number(price)
+          }
+        })
+      }
+    })
+    return Object.entries(toppingMap).map(([name, price]) => ({ name, price })).sort((a, b) => a.name.localeCompare(b.name, 'vi'))
+  }, [menuQuery.data])
 
   const cityOptions = useMemo(() => {
     const all = Object.entries(LOCATION_TREE).map(([code, city]) => ({ code, label: city.label }))
@@ -1344,6 +1365,8 @@ export function useSystemAdmin() {
     deleteMenu,
     savingMenu,
     PROMOTION_TYPES,
+    menuItemsList,
+    allToppingsList,
     promotionsState,
     loadPromotions,
     promotionFilter,

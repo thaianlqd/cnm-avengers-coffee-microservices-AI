@@ -1345,7 +1345,8 @@ export class ThanhToanService {
     let soTienGiam = 0;
     let maVoucherApDung: string | null = null;
     if (dto.ma_voucher?.trim()) {
-      const voucherResult = await this.voucherService.kiemTraVoucher(dto.ma_voucher.trim(), tongTienGoc, maNguoiDung);
+      const hasToppings = gioHang.some(item => Array.isArray(item.toppings) && item.toppings.length > 0);
+      const voucherResult = await this.voucherService.kiemTraVoucher(dto.ma_voucher.trim(), tongTienGoc, maNguoiDung, hasToppings);
       soTienGiam = voucherResult.so_tien_giam;
       maVoucherApDung = voucherResult.voucher.ma_voucher;
     }

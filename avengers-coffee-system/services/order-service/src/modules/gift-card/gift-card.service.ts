@@ -5,8 +5,6 @@ import { GiftCard } from './entities/gift-card.entity';
 import { PurchaseGiftCardDto, RedeemGiftCardDto } from './dto/gift-card.dto';
 import { GiftCardTheme } from './entities/gift-card-theme.entity';
 import { CustomerWalletService } from '../customer-wallet/customer-wallet.service';
-import * as nodemailer from 'nodemailer';
-
 @Injectable()
 export class GiftCardService {
   private readonly logger = new Logger(GiftCardService.name);
@@ -173,6 +171,14 @@ export class GiftCardService {
   // Tiện ích gửi mail Ethereal (Miễn phí, không cần cấu hình tài khoản thật) hoặc Mail thật (nếu có cấu hình SMTP)
   private async sendGiftCardEmail(card: GiftCard) {
     try {
+      let nodemailer: any;
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        nodemailer = require('nodemailer');
+      } catch (e) {
+        this.logger.warn('Nodemailer module is not installed, skipping email sending.');
+        return null;
+      }
       let transporter;
       let isDemo = false;
 
