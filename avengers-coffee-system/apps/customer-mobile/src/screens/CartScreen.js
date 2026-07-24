@@ -336,7 +336,32 @@ export function CartScreen({ navigation }) {
 
   const totalAmount = cart.reduce((sum, item) => sum + Number(item.gia_ban || 0) * Number(item.so_luong || 0), 0)
   const totalItems = cart.reduce((sum, item) => sum + Number(item.so_luong || 0), 0)
-  const discountAmount = appliedVoucher ? totalAmount * 0.1 : 0
+
+  const discountAmount = useMemo(() => {
+    if (!appliedVoucher || totalAmount <= 0) return 0
+    const type = String(appliedVoucher.loai_khuyen_mai || appliedVoucher.loai || '').toUpperCase()
+    const val = Number(appliedVoucher.gia_tri ?? appliedVoucher.gia_tri_giam ?? appliedVoucher.phan_tram_giam ?? 0)
+    const maxDiscount = Number(appliedVoucher.giam_toi_da || 0)
+    const minOrder = Number(appliedVoucher.gia_tri_don_toi_thieu ?? appliedVoucher.don_hang_toi_thieu ?? 0)
+
+    if (minOrder > 0 && totalAmount < minOrder) return 0
+
+    if (type === 'PERCENT') {
+      let discount = Math.floor((totalAmount * (val || 10)) / 100)
+      if (maxDiscount > 0 && discount > maxDiscount) discount = maxDiscount
+      return Math.min(discount, totalAmount)
+    }
+    if (type === 'FIXED') {
+      const amount = val > 0 ? val : 10000
+      return Math.min(amount, totalAmount)
+    }
+    if (type === 'FREE_ITEM') {
+      const freeVal = val > 0 ? val : 10000 // Value of free topping / item
+      return Math.min(freeVal, totalAmount)
+    }
+    return Math.min(val > 0 ? val : 10000, totalAmount)
+  }, [appliedVoucher, totalAmount])
+
   const deliveryFee = deliveryMode === 'GIAO_TAN_NOI' && shippingProvider === 'LALAMOVE' ? 25000 : 0
   const finalAmount = Math.max(0, totalAmount - discountAmount) + deliveryFee
 

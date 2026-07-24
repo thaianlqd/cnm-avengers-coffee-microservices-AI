@@ -174,7 +174,11 @@ export default function Header({
         {/* Center logo */}
         <div
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex shrink-0 cursor-pointer items-center justify-center z-10"
-          onClick={() => onTabChange?.('home')}
+          onClick={() => {
+            onSelectedCatIdChange?.('all');
+            onTabChange?.('order');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
         >
           <img src="/hc-assets/red_BG_logo800.png" alt="Logo" className="h-[90px] w-auto transition-transform hover:scale-105" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
         </div>

@@ -580,12 +580,24 @@ export function MenuScreen({ navigation, route }) {
   })
   const cartCount = cartCountQuery.data || 0
 
-  const categories = categoriesQuery.data || []
+  const allCategories = categoriesQuery.data || []
+  const allProducts = productsQuery.data || []
 
-  // Apply search / price / availability / hot / sort filters (category itself is NOT
-  // a filter here — like The Coffee House app, the left rail just jumps to a section)
+  // Filter Level 1 main categories (6 main categories matching Web Customer)
+  const categories = useMemo(() => {
+    let mainCats = allCategories.filter(cat => Number(cat.cap_bac) === 1 || !cat.ma_danh_muc_cha)
+    if (mainCats.length === 0) mainCats = allCategories
+
+    return mainCats.filter(cat => {
+      const childIds = allCategories.filter(c => String(c.ma_danh_muc_cha) === String(cat.id)).map(c => String(c.id))
+      const targetIds = [String(cat.id), ...childIds]
+      return allProducts.some(p => targetIds.includes(String(p.danh_muc_id)) || String(p.danh_muc).toLowerCase().includes(cat.label.toLowerCase()))
+    })
+  }, [allCategories, allProducts])
+
+  // Apply search / price / availability / hot / sort filters
   const filteredProducts = useMemo(() => {
-    let list = [...(productsQuery.data || [])]
+    let list = [...allProducts]
 
     if (search.trim()) {
       const kw = search.trim().toLowerCase()
@@ -608,18 +620,23 @@ export function MenuScreen({ navigation, route }) {
     else if (sortBy === 'NAME_ASC') list.sort((a, b) => a.ten_san_pham.localeCompare(b.ten_san_pham, 'vi'))
 
     return list
-  }, [productsQuery.data, search, priceFilter, sortBy, onlyAvailable, onlyHot])
+  }, [allProducts, search, priceFilter, sortBy, onlyAvailable, onlyHot])
 
-  // Group into sections per category, in the same order as the sidebar
+  // Group into sections per main category
   const sections = useMemo(() => {
     return categories
-      .map((cat) => ({
-        id: String(cat.id),
-        title: cat.label,
-        data: filteredProducts.filter(p => String(p.danh_muc_id) === String(cat.id)),
-      }))
+      .map((cat) => {
+        const childIds = allCategories.filter(c => String(c.ma_danh_muc_cha) === String(cat.id)).map(c => String(c.id))
+        const targetIds = [String(cat.id), ...childIds]
+        const data = filteredProducts.filter(p => targetIds.includes(String(p.danh_muc_id)) || String(p.danh_muc).toLowerCase().includes(cat.label.toLowerCase()))
+        return {
+          id: String(cat.id),
+          title: cat.label,
+          data,
+        }
+      })
       .filter(sec => sec.data.length > 0)
-  }, [categories, filteredProducts])
+  }, [categories, allCategories, filteredProducts])
 
   const activeCategory = activeCategoryId ?? (sections[0]?.id ?? null)
 
@@ -958,6 +975,16 @@ export function MenuScreen({ navigation, route }) {
         </View>
       )}
 
+      {/* Floating AI Chat Widget Button */}
+      <Pressable
+        onPress={() => navigation.navigate('Chat')}
+        style={({ pressed }) => [styles.floatingChatWidget, pressed && { opacity: 0.9, transform: [{ scale: 0.95 }] }]}
+      >
+        <LinearGradient colors={['#f26b1d', '#c41230']} style={styles.floatingChatGradient}>
+          <Ionicons name="chatbubble-ellipses" size={26} color="#fff" />
+        </LinearGradient>
+      </Pressable>
+
       {/* Filter Modal */}
       <Modal visible={showFilterPanel} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowFilterPanel(false)}>
         <View style={filterStyles.container}>
@@ -1062,19 +1089,6 @@ export function MenuScreen({ navigation, route }) {
         varMap={varMap}
       />
       )}
-
-      {/* Floating Cart Button */}
-      <Pressable
-        onPress={() => navigation.navigate('Cart')}
-        style={styles.floatingCart}
-      >
-        <Ionicons name="cart" size={24} color="#ea8025" />
-        {cartCount > 0 ? (
-          <View style={styles.floatingCartBadge}>
-            <Text style={styles.floatingCartBadgeText}>{cartCount}</Text>
-          </View>
-        ) : null}
-      </Pressable>
     </View>
   )
 }
@@ -1313,7 +1327,6 @@ const styles = StyleSheet.create({
 
   // Product row (flat, TCH-style)
   row: {
-    flex: 1,
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
@@ -1396,6 +1409,27 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ea8025',
     backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  floatingChatWidget: {
+    position: 'absolute',
+    bottom: 24,
+    right: 18,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    elevation: 8,
+    shadowColor: '#c41230',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    zIndex: 999,
+  },
+  floatingChatGradient: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -27,8 +27,17 @@ export function safeArray(value) {
 }
 
 export function getUserId(user, fallbackId = '') {
-  const id = String(user?.ma_nguoi_dung || user?.id || user?.sub || fallbackId || '').trim()
-  return id || 'guest-customer'
+  const id = String(
+    user?.ma_nguoi_dung ||
+    user?.maNguoiDung ||
+    user?.id ||
+    user?.userId ||
+    user?.sub ||
+    fallbackId ||
+    ''
+  ).trim()
+  if (!id || id === 'guest-customer') return ''
+  return id
 }
 
 export function getUserDisplayName(user) {
@@ -232,3 +241,59 @@ export const paymentMethodOptions = [
   { value: 'VNPAY', label: 'VNPAY', description: 'Thanh toán online qua VNPAY' },
   { value: 'VI_DIEN_TU', label: 'Ví điện tử', description: 'Thanh toán bằng ví điện tử' },
 ]
+
+export function getVoucherDisplayTitle(v) {
+  if (!v) return ''
+  const type = String(v?.loai_khuyen_mai || v?.loai || '').toUpperCase()
+  const val = Number(v?.gia_tri ?? v?.gia_tri_giam ?? v?.phan_tram_giam ?? 0)
+  const maxDiscount = Number(v?.giam_toi_da || 0)
+
+  if (type === 'PERCENT' || (val > 0 && val <= 100)) {
+    const maxStr = maxDiscount > 0 ? ` (Tối đa ${maxDiscount.toLocaleString('vi-VN')}đ)` : ''
+    return `Giảm ${val}%${maxStr}`
+  }
+  if (type === 'FIXED' || val >= 1000) {
+    return `Giảm ${val.toLocaleString('vi-VN')}đ`
+  }
+  if (type === 'FREE_ITEM' || v?.ten_san_pham_tang) {
+    return `Tặng ${v?.ten_san_pham_tang || 'sản phẩm'}`
+  }
+  
+  if (v?.ten_khuyen_mai && !String(v.ten_khuyen_mai).startsWith('TPL_')) {
+    return v.ten_khuyen_mai
+  }
+  return 'Voucher Ưu Đãi'
+}
+
+export function getVoucherDisplayDescription(v) {
+  if (!v) return ''
+  if (v?.mo_ta && !String(v.mo_ta).startsWith('TPL_')) {
+    return v.mo_ta
+  }
+
+  const type = String(v?.loai_khuyen_mai || v?.loai || '').toUpperCase()
+  const val = Number(v?.gia_tri ?? v?.gia_tri_giam ?? v?.phan_tram_giam ?? 0)
+  const maxDiscount = Number(v?.giam_toi_da || 0)
+  const minOrder = Number(v?.gia_tri_don_toi_thieu ?? v?.don_hang_toi_thieu ?? 0)
+
+  const parts = []
+  if (type === 'PERCENT' || (val > 0 && val <= 100)) {
+    parts.push(`Mức giảm: Giảm ${val}%`)
+  } else if (type === 'FIXED' || val >= 1000) {
+    parts.push(`Mức giảm: Giảm ${val.toLocaleString('vi-VN')}đ`)
+  } else if (type === 'FREE_ITEM') {
+    parts.push(`Tặng: ${v?.ten_san_pham_tang || 'Sản phẩm menu'}`)
+  }
+
+  if (maxDiscount > 0) {
+    parts.push(`Giảm tối đa: ${maxDiscount.toLocaleString('vi-VN')}đ`)
+  }
+
+  if (minOrder > 0) {
+    parts.push(`Đơn tối thiểu: ${minOrder.toLocaleString('vi-VN')}đ`)
+  } else {
+    parts.push(`Đơn tối thiểu: 0đ`)
+  }
+
+  return parts.join(' • ')
+}

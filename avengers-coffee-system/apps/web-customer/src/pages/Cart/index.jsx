@@ -47,7 +47,7 @@ function tachDiaChiDayDu(rawAddress) {
 export default function CartPage({ 
   products = [], 
   onBackToHome, 
-  voucherItems = [], 
+  voucherItems: initialVouchers = [], 
   suggestedPastries = [], 
   onAddToCart 
 }) {
@@ -223,6 +223,53 @@ export default function CartPage({
   const savedAddresses = addressPayload?.items || [];
   const defaultAddress = savedAddresses.find((item) => item.mac_dinh) || null;
 
+  const { data: voucherPayload } = useQuery({
+    queryKey: ['cart-vouchers', maNguoiDung],
+    queryFn: async () => {
+      const q = isLoggedInUser ? `?user_id=${encodeURIComponent(maNguoiDung)}` : '';
+      const response = await apiClient.get(`/promotions/vouchers${q}`);
+      const data = response?.data || response;
+      return Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
+    },
+    staleTime: 15 * 1000,
+  });
+
+  const voucherItems = useMemo(() => {
+    if (voucherPayload && voucherPayload.length > 0) return voucherPayload;
+    return initialVouchers || [];
+  }, [voucherPayload, initialVouchers]);
+
+  const isPersonalVoucher = useCallback((v) => {
+    if (!v) return false;
+    if (v.loai_phan_phoi === 'PERSONAL') return true;
+    if (v.ma_nguoi_dung && String(v.ma_nguoi_dung).trim() !== '') return true;
+    if (v.loai_su_kien && v.loai_su_kien !== 'PUBLIC') return true;
+    const code = String(v.ma_khuyen_mai || v.ma_voucher || '').toUpperCase();
+    if (
+      code.startsWith('LW_') ||
+      code.startsWith('WHEEL_') ||
+      code.startsWith('BD_') ||
+      code.startsWith('TIER_') ||
+      code.startsWith('UP_') ||
+      code.startsWith('USER_') ||
+      code.startsWith('KS') ||
+      code.startsWith('SURVEY_')
+    ) return true;
+    return false;
+  }, []);
+
+  const personalVouchers = useMemo(() => {
+    return (voucherItems || [])
+      .filter(isPersonalVoucher)
+      .filter((v) => v.co_the_dung !== false && (v.da_dung_boi_ban === undefined || v.da_dung_boi_ban < (v.gioi_han_moi_nguoi || 1)));
+  }, [voucherItems, isPersonalVoucher]);
+
+  const publicVouchers = useMemo(() => {
+    return (voucherItems || [])
+      .filter((v) => !isPersonalVoucher(v))
+      .filter((v) => v.co_the_dung !== false && (v.da_dung_boi_ban === undefined || v.da_dung_boi_ban < (v.gioi_han_moi_nguoi || 1)));
+  }, [voucherItems, isPersonalVoucher]);
+
   useEffect(() => {
     if (!addressForm.city && defaultAddressSelection.city) {
       setAddressForm((prev) => ({ ...prev, ...defaultAddressSelection }));
@@ -235,12 +282,13 @@ export default function CartPage({
   }, [total]);
 
   const apDungVoucher = async (overrideCode) => {
-    const code = (overrideCode || voucherCode).trim();
+    const codeStr = typeof overrideCode === 'string' ? overrideCode : voucherCode;
+    const code = String(codeStr || '').trim();
     if (!code) {
       setVoucherError('Vui lòng nhập mã voucher');
       return;
     }
-    if (!cart.length) {
+    if (!cart || !cart.length) {
       setVoucherError('Giỏ hàng trống, chưa có sản phẩm để áp dụng voucher');
       return;
     }
@@ -252,10 +300,18 @@ export default function CartPage({
         tong_tien: total,
         user_id: isLoggedInUser ? maNguoiDung : '',
       });
-      setVoucherResult(response.data);
+      const d = response?.data || response;
+      if (d && (d.hop_le || d.so_tien_giam !== undefined)) {
+        setVoucherCode(code);
+        setVoucherResult(d);
+        setVoucherError('');
+      } else {
+        setVoucherResult(null);
+        setVoucherError('Mã voucher không hợp lệ');
+      }
     } catch (err) {
       setVoucherResult(null);
-      setVoucherError(err?.response?.data?.message || 'Mã voucher không hợp lệ');
+      setVoucherError(err?.response?.data?.message || 'Mã voucher không hợp lệ hoặc đã hết hạn');
     } finally {
       setIsCheckingVoucher(false);
     }
@@ -1068,47 +1124,114 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                     <p className="text-sm text-gray-500 italic">Không có mã giảm giá nào</p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-3">
-                    {voucherItems.slice(0, 4).map((v) => {
-                      const isPercent = v.loai_khuyen_mai === 'PERCENT';
-                      const valueText = isPercent ? `${v.gia_tri}%` : `${(v.gia_tri / 1000)}K`;
-                      let badgeLabel = 'GIẢM GIÁ';
-                      if (v.loai_khuyen_mai === 'FREE_ITEM' || String(v.ma_khuyen_mai).toUpperCase().includes('UPSIZE') || String(v.ten_khuyen_mai).toUpperCase().includes('UPSIZE')) {
-                        badgeLabel = 'MIỄN PHÍ\nUPSIZE';
-                      } else if (isPercent) {
-                        badgeLabel = `GIẢM\n${valueText}`;
-                      } else {
-                        badgeLabel = `GIẢM\n${valueText}`;
-                      }
-
-                      return (
-                        <div key={v.ma_khuyen_mai} className="flex h-[76px] bg-white border border-[#f5cbb8] rounded-[12px] p-2 items-center cursor-pointer hover:border-[#e15923] transition-colors shadow-sm" onClick={() => { setVoucherCode(v.ma_khuyen_mai); apDungVoucher(v.ma_khuyen_mai); }}>
-                          {/* Left Badge */}
-                          <div className="flex-shrink-0 border border-[#fcdbc7] bg-[#fff6f0] rounded-[6px] h-full px-2 flex items-center justify-center min-w-[60px]">
-                            <span className="text-[10px] font-bold text-[#e15923] text-center uppercase whitespace-pre-line leading-[1.2]">
-                              {badgeLabel}
-                            </span>
-                          </div>
-                          
-                          {/* Middle Info */}
-                          <div className="flex-1 min-w-0 px-3 flex flex-col justify-center">
-                            <h4 className="text-[13px] font-bold text-[#282828] truncate mb-0.5">
-                              {v.ten_khuyen_mai || v.mo_ta || `Giảm ${valueText}`}
-                            </h4>
-                            <p className="text-[11px] text-gray-500">
-                              {v.han_su_dung ? `Còn ${Math.max(1, Math.ceil((new Date(v.han_su_dung) - new Date()) / (1000 * 60 * 60 * 24)))} ngày` : 'Không giới hạn'}
-                            </p>
-                          </div>
-                          
-                          {/* Right Button */}
-                          <div className="flex-shrink-0 pl-1 pr-1">
-                            <button className="text-[12px] font-bold text-white bg-[#e15923] px-3 py-1 rounded-full hover:bg-[#c44919]">
-                              Dùng
-                            </button>
-                          </div>
+                  <div className="flex flex-col gap-5">
+                    {/* Nhóm 1: Voucher cá nhân */}
+                    {personalVouchers.length > 0 && (
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-1.5 px-0.5">
+                          <span className="text-sm">🎁</span>
+                          <span className="text-[12px] font-extrabold uppercase tracking-wider text-amber-700">Voucher dành riêng cho bạn</span>
                         </div>
-                      )
-                    })}
+                        {personalVouchers.map((v) => {
+                          const code = v.ma_khuyen_mai || v.ma_voucher || v.code;
+                          const type = String(v.loai_khuyen_mai || v.loai_giam_gia || v.loai || '').toUpperCase();
+                          const isPercent = type.includes('PERCENT');
+                          const rawVal = Number(v.gia_tri || v.val || 0);
+                          const valueText = isPercent ? `${rawVal}%` : (rawVal >= 1000 ? `${Math.round(rawVal / 1000)}K` : `${rawVal || 10}K`);
+                          
+                          let badgeLabel = `GIẢM\n${valueText}`;
+                          if (type.includes('FREE_ITEM') || String(code).toUpperCase().includes('TOPPING') || String(v.ten_khuyen_mai).toUpperCase().includes('TOPPING')) {
+                            badgeLabel = 'MIỄN PHÍ\nTOPPING';
+                          }
+
+                          return (
+                            <div key={code} className="flex h-[76px] bg-amber-50/40 border border-amber-200 rounded-[12px] p-2 items-center cursor-pointer hover:border-amber-500 transition-colors shadow-xs" onClick={() => { setVoucherCode(code); apDungVoucher(code); }}>
+                              {/* Left Badge */}
+                              <div className="flex-shrink-0 border border-amber-300 bg-amber-500 text-white rounded-[6px] h-full px-2 flex items-center justify-center min-w-[62px]">
+                                <span className="text-[9px] font-black text-center uppercase whitespace-pre-line leading-[1.2]">
+                                  {badgeLabel}
+                                </span>
+                              </div>
+                              
+                              {/* Middle Info */}
+                              <div className="flex-1 min-w-0 px-3 flex flex-col justify-center">
+                                <h4 className="text-[13px] font-bold text-gray-900 truncate mb-0.5">
+                                  {code} - {v.ten_khuyen_mai || v.mo_ta || `Đặc quyền cá nhân`}
+                                </h4>
+                                <p className="text-[11px] text-amber-700 font-medium">
+                                  {v.ngay_ket_thuc || v.han_su_dung ? `HSD: ${new Date(v.ngay_ket_thuc || v.han_su_dung).toLocaleDateString('vi-VN')}` : 'Hạn sử dụng dài'}
+                                </p>
+                              </div>
+                              
+                              {/* Right Button */}
+                              <div className="flex-shrink-0 pl-1 pr-1">
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setVoucherCode(code); apDungVoucher(code); }}
+                                  className="text-[12px] font-bold text-white bg-amber-600 px-3 py-1 rounded-full hover:bg-amber-700"
+                                >
+                                  Dùng
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Nhóm 2: Khuyến mãi chung */}
+                    {publicVouchers.length > 0 && (
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-1.5 px-0.5">
+                          <span className="text-sm">📢</span>
+                          <span className="text-[12px] font-extrabold uppercase tracking-wider text-gray-700">Khuyến mãi toàn cửa hàng</span>
+                        </div>
+                        {publicVouchers.map((v) => {
+                          const code = v.ma_khuyen_mai || v.ma_voucher || v.code;
+                          const type = String(v.loai_khuyen_mai || v.loai_giam_gia || v.loai || '').toUpperCase();
+                          const isPercent = type.includes('PERCENT');
+                          const rawVal = Number(v.gia_tri || v.val || 0);
+                          const valueText = isPercent ? `${rawVal}%` : (rawVal >= 1000 ? `${Math.round(rawVal / 1000)}K` : `${rawVal || 10}K`);
+                          
+                          let badgeLabel = `GIẢM\n${valueText}`;
+                          if (type.includes('FREE_ITEM') || String(code).toUpperCase().includes('TOPPING') || String(v.ten_khuyen_mai).toUpperCase().includes('TOPPING')) {
+                            badgeLabel = 'MIỄN PHÍ\nTOPPING';
+                          }
+
+                          return (
+                            <div key={code} className="flex h-[76px] bg-white border border-[#f5cbb8] rounded-[12px] p-2 items-center cursor-pointer hover:border-[#e15923] transition-colors shadow-xs" onClick={() => { setVoucherCode(code); apDungVoucher(code); }}>
+                              {/* Left Badge */}
+                              <div className="flex-shrink-0 border border-[#fcdbc7] bg-[#fff6f0] rounded-[6px] h-full px-2 flex items-center justify-center min-w-[62px]">
+                                <span className="text-[9px] font-bold text-[#e15923] text-center uppercase whitespace-pre-line leading-[1.2]">
+                                  {badgeLabel}
+                                </span>
+                              </div>
+                              
+                              {/* Middle Info */}
+                              <div className="flex-1 min-w-0 px-3 flex flex-col justify-center">
+                                <h4 className="text-[13px] font-bold text-[#282828] truncate mb-0.5">
+                                  {code} - {v.ten_khuyen_mai || v.mo_ta || `Giảm ${valueText}`}
+                                </h4>
+                                <p className="text-[11px] text-gray-500">
+                                  {v.ngay_ket_thuc || v.han_su_dung ? `HSD: ${new Date(v.ngay_ket_thuc || v.han_su_dung).toLocaleDateString('vi-VN')}` : 'Không giới hạn'}
+                                </p>
+                              </div>
+                              
+                              {/* Right Button */}
+                              <div className="flex-shrink-0 pl-1 pr-1">
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setVoucherCode(code); apDungVoucher(code); }}
+                                  className="text-[12px] font-bold text-white bg-[#e15923] px-3 py-1 rounded-full hover:bg-[#c44919]"
+                                >
+                                  Dùng
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

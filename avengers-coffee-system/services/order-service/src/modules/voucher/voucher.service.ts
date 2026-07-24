@@ -306,8 +306,12 @@ export class VoucherService {
         if (voucher.giam_toi_da !== null) {
           soTienGiam = Math.min(soTienGiam, Number(voucher.giam_toi_da));
         }
+      } else if (voucher.loai === 'FREE_ITEM' || voucher.ma_voucher?.includes('TOPPING') || voucher.mo_ta?.toLowerCase().includes('topping')) {
+        const freeVal = Number(voucher.gia_tri) > 0 ? Number(voucher.gia_tri) : 10000;
+        soTienGiam = Math.min(freeVal, tongTien);
       } else {
-        soTienGiam = Math.min(Number(voucher.gia_tri), tongTien);
+        const val = Number(voucher.gia_tri || 0);
+        soTienGiam = Math.min(val > 0 ? val : 10000, tongTien);
       }
 
       return {

@@ -66,12 +66,12 @@ function getOrderStatusLabel(status) {
 
 // ─── QUICK REPLY CHIPS ───────────────────────────────────────────────────────
 const QUICK_REPLIES = [
-  { id: 'menu', label: '☕ Xem menu', text: 'Cho tôi xem menu đồ uống' },
-  { id: 'order', label: '🛒 Đặt hàng', text: 'Tôi muốn đặt hàng' },
-  { id: 'orders', label: '📦 Đơn hàng', text: 'Kiểm tra đơn hàng của tôi' },
-  { id: 'stores', label: '📍 Cửa hàng', text: 'Cửa hàng gần tôi ở đâu?' },
-  { id: 'voucher', label: '🎟️ Ưu đãi', text: 'Có khuyến mãi gì không?' },
-  { id: 'payment', label: '💳 Thanh toán', text: 'Phương thức thanh toán nào được hỗ trợ?' },
+  { id: 'menu', label: 'Xem menu', icon: 'restaurant-outline', text: 'Cho tôi xem menu đồ uống' },
+  { id: 'order', label: 'Đặt hàng', icon: 'cart-outline', text: 'Tôi muốn đặt hàng' },
+  { id: 'orders', label: 'Đơn hàng', icon: 'receipt-outline', text: 'Kiểm tra đơn hàng của tôi' },
+  { id: 'stores', label: 'Cửa hàng', icon: 'location-outline', text: 'Cửa hàng gần tôi ở đâu?' },
+  { id: 'voucher', label: 'Ưu đãi', icon: 'pricetag-outline', text: 'Có khuyến mãi gì không?' },
+  { id: 'payment', label: 'Thanh toán', icon: 'card-outline', text: 'Phương thức thanh toán nào được hỗ trợ?' },
 ]
 
 // ─── AI LOCAL HANDLER ────────────────────────────────────────────────────────
@@ -192,7 +192,7 @@ function PaymentInfoCard() {
   ]
   return (
     <View style={richStyles.infoCard}>
-      <Text style={richStyles.infoCardTitle}>💳 Phương thức thanh toán</Text>
+      <Text style={richStyles.infoCardTitle}>Phương thức thanh toán</Text>
       {methods.map(m => (
         <View key={m.label} style={richStyles.infoRow}>
           <View style={[richStyles.infoIcon, { backgroundColor: m.color + '20' }]}>
@@ -212,25 +212,44 @@ function PaymentInfoCard() {
 function VoucherInfoCard({ vouchers = [] }) {
   return (
     <View style={richStyles.infoCard}>
-      <Text style={richStyles.infoCardTitle}>🎟️ Ưu đãi đang có</Text>
-      {vouchers.length === 0 && (
-        <Text style={{ fontSize: 13, color: '#64748b', marginTop: 6 }}>
-          Hiện chưa có voucher nào. Hãy đăng ký thành viên để nhận ưu đãi!
+      <Text style={richStyles.infoCardTitle}>Ưu đãi đang có</Text>
+      {(!vouchers || vouchers.length === 0) && (
+        <Text style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>
+          Hiện chưa có voucher khả dụng. Đăng ký thành viên để nhận ưu đãi!
         </Text>
       )}
-      {vouchers.slice(0, 3).map((v, i) => (
-        <View key={i} style={richStyles.voucherRow}>
-          <View style={richStyles.voucherBadge}>
-            <Text style={richStyles.voucherBadgeText}>
-              {v.loai_khuyen_mai === 'PERCENT' ? `${v.gia_tri}%` : `${Math.round((v.gia_tri || 0) / 1000)}K`}
-            </Text>
+      {vouchers.slice(0, 4).map((v, i) => {
+        const code = v.ma_khuyen_mai || v.ma_voucher || v.code || `VOUCHER-${i + 1}`
+        const name = v.ten_khuyen_mai || v.ten_voucher || v.name || v.title || `Voucher ${code}`
+        const type = String(v.loai_khuyen_mai || v.loai_giam_gia || v.loai || '').toUpperCase()
+        const rawVal = Number(v.gia_tri || v.gia_tri_giam || v.discount_value || 0)
+        let badgeText = 'HOT'
+        if (type.includes('PERCENT') || (rawVal > 0 && rawVal <= 100)) {
+          badgeText = `${rawVal || 10}%`
+        } else if (rawVal >= 1000) {
+          badgeText = `${Math.round(rawVal / 1000)}K`
+        } else if (rawVal > 0) {
+          badgeText = `${rawVal}K`
+        }
+
+        const minSpend = v.gia_tri_don_toi_thieu ? ` • Đơn từ ${Math.round(v.gia_tri_don_toi_thieu / 1000)}k` : ''
+        const expiry = v.ngay_ket_thuc ? `HSD: ${formatDateOnly(v.ngay_ket_thuc)}` : 'HSD: Dùng ngay'
+
+        return (
+          <View key={i} style={richStyles.voucherRow}>
+            <View style={richStyles.voucherBadge}>
+              <Text style={richStyles.voucherBadgeText}>{badgeText}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={richStyles.voucherName} numberOfLines={1}>{name}</Text>
+              <Text style={richStyles.voucherCode}>
+                Mã: <Text style={{ fontWeight: '800', color: '#ea8025' }}>{code}</Text>{minSpend}
+              </Text>
+              <Text style={{ fontSize: 10, color: '#94a3b8', marginTop: 2 }}>{expiry}</Text>
+            </View>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={richStyles.voucherName} numberOfLines={1}>{v.ten_khuyen_mai || v.ma_khuyen_mai}</Text>
-            <Text style={richStyles.voucherCode}>Mã: {v.ma_khuyen_mai}</Text>
-          </View>
-        </View>
-      ))}
+        )
+      })}
     </View>
   )
 }
@@ -243,7 +262,7 @@ function AIBubble({ message, onProductAdd, onOrderTrack, onQuickReply }) {
     <View style={styles.aiBubbleWrap}>
       {/* Avatar */}
       <LinearGradient colors={['#ea8025', '#c45c10']} style={styles.aiAvatar}>
-        <Text style={{ fontSize: 14 }}>☕</Text>
+        <Ionicons name="sparkles" size={16} color="#fff" />
       </LinearGradient>
 
       <View style={styles.aiBubbleBody}>
@@ -257,7 +276,7 @@ function AIBubble({ message, onProductAdd, onOrderTrack, onQuickReply }) {
         {/* Product list */}
         {products && products.length > 0 && (
           <View style={richStyles.richBlock}>
-            <Text style={richStyles.richBlockTitle}>☕ Sản phẩm phù hợp</Text>
+            <Text style={richStyles.richBlockTitle}>Sản phẩm phù hợp</Text>
             {products.map((p, i) => (
               <ProductMiniCard key={i} product={p} onAddToCart={onProductAdd} />
             ))}
@@ -267,7 +286,7 @@ function AIBubble({ message, onProductAdd, onOrderTrack, onQuickReply }) {
         {/* Orders */}
         {orders && orders.length > 0 && (
           <View style={richStyles.richBlock}>
-            <Text style={richStyles.richBlockTitle}>📦 Đơn hàng gần đây</Text>
+            <Text style={richStyles.richBlockTitle}>Đơn hàng gần đây</Text>
             {orders.map((o, i) => (
               <OrderMiniCard key={i} order={o} onTrack={onOrderTrack} />
             ))}
@@ -277,7 +296,7 @@ function AIBubble({ message, onProductAdd, onOrderTrack, onQuickReply }) {
         {/* Stores */}
         {stores && stores.length > 0 && (
           <View style={richStyles.richBlock}>
-            <Text style={richStyles.richBlockTitle}>📍 Cửa hàng của chúng tôi</Text>
+            <Text style={richStyles.richBlockTitle}>Cửa hàng của chúng tôi</Text>
             {stores.map((s, i) => (
               <StoreMiniCard key={i} branch={s} />
             ))}
@@ -295,6 +314,7 @@ function AIBubble({ message, onProductAdd, onOrderTrack, onQuickReply }) {
           <View style={styles.quickRepliesWrap}>
             {message.quickReplies.map(qr => (
               <Pressable key={qr.id} style={styles.quickReplyChip} onPress={() => onQuickReply(qr.text)}>
+                {qr.icon && <Ionicons name={qr.icon} size={14} color="#ea8025" style={{ marginRight: 4 }} />}
                 <Text style={styles.quickReplyText}>{qr.label}</Text>
               </Pressable>
             ))}
@@ -372,7 +392,7 @@ function TypingIndicator() {
   return (
     <View style={styles.aiBubbleWrap}>
       <LinearGradient colors={['#ea8025', '#c45c10']} style={styles.aiAvatar}>
-        <Text style={{ fontSize: 14 }}>☕</Text>
+        <Ionicons name="sparkles" size={16} color="#fff" />
       </LinearGradient>
       <View style={[styles.aiBubble, { flexDirection: 'row', gap: 4, paddingVertical: 14, paddingHorizontal: 16 }]}>
         {[dot1, dot2, dot3].map((dot, i) => (
@@ -433,8 +453,8 @@ export function ChatScreen({ navigation }) {
   const productsQuery = useQuery({
     queryKey: ['customer', 'products-all'],
     queryFn: async () => {
-      const res = await apiClient.get('/products?limit=50')
-      return safeArray(res?.items || res)
+      const res = await apiClient.get('/menu/san-pham')
+      return safeArray(res?.data || res?.items || res)
     },
     staleTime: 5 * 60 * 1000,
   })
@@ -504,7 +524,7 @@ export function ChatScreen({ navigation }) {
         {
           id: 'greeting',
           role: 'ai',
-          text: `Xin chào${userName && userName !== 'Khách' ? ` ${userName}` : ''}! 👋 Mình là trợ lý AI của Avengers Coffee.\n\nMình có thể giúp bạn:`,
+          text: `Xin chào${userName && userName !== 'Khách' ? ` ${userName}` : ''}! Mình là trợ lý AI của Avengers Coffee.\n\nMình có thể giúp bạn:`,
           quickReplies: QUICK_REPLIES.slice(0, 4),
         },
       ])
@@ -564,143 +584,145 @@ export function ChatScreen({ navigation }) {
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100)
   }
 
-  // ─── Process user intent ──────────────────────────────────────────────────
+  // ─── Process user message (Direct AI API call + Rich UI Cards) ───────────
   async function processMessage(text) {
     appendUserMessage(text)
     setIsTyping(true)
-    await new Promise(r => setTimeout(r, 600))
 
     try {
-      const intent = detectIntent(text)
-      const products = productsQuery.data || []
-      const branches = branchesQuery.data || []
-      const orders = ordersQuery.data || []
-      const vouchers = vouchersQuery.data || []
+      if (conversationId) sendServerMsg.mutate(text)
 
-      if (intent === 'menu' || intent === 'order_intent') {
-        // Search products
-        const textLower = text.toLowerCase()
-        let matched = products.filter(p =>
-          p.ten_san_pham?.toLowerCase().includes(textLower.replace(/^(cho tôi|mua|lấy|đặt|muốn|cần)\s+\d*\s+/, '').trim()) ||
-          p.danh_muc?.toLowerCase().includes(textLower)
-        )
-        if (matched.length === 0) matched = products.slice(0, 6) // fallback: show top 6
+      const history = localMessages
+        .slice(-6)
+        .map((m) => `${m.role === 'user' ? userName : 'AI'}: ${m.text || ''}`)
+        .join('\n')
 
-        if (intent === 'menu') {
-          appendAIMessage({
-            id: Date.now() + 'menu',
-            role: 'ai',
-            text: `Đây là menu nổi bật của Avengers Coffee ☕\nBấm vào món để thêm vào giỏ hàng nhé!`,
-            products: matched.slice(0, 5),
-            quickReplies: [
-              { id: 'all', label: '📋 Xem tất cả', text: 'Cho tôi xem tất cả đồ uống' },
-              { id: 'food', label: '🍰 Đồ ăn', text: 'Cho tôi xem đồ ăn' },
-            ],
-          })
-        } else {
-          // Order intent
-          const searchTerm = textLower
-            .replace(/cho tôi|mua|lấy|đặt|muốn|cần|tôi|\d+\s*(ly|cái|phần|suất)/g, '')
-            .trim()
-          const filtered = searchTerm
-            ? products.filter(p => p.ten_san_pham?.toLowerCase().includes(searchTerm))
-            : products.slice(0, 5)
+      const textLower = text.toLowerCase()
 
-          appendAIMessage({
-            id: Date.now() + 'order',
-            role: 'ai',
-            text: filtered.length > 0
-              ? `Mình tìm thấy ${filtered.length} sản phẩm phù hợp! Chọn món bạn muốn nhé 👇`
-              : `Bạn muốn đặt gì nào? Đây là menu của mình:`,
-            products: (filtered.length > 0 ? filtered : products).slice(0, 5),
-          })
-        }
-      } else if (intent === 'orders') {
-        if (orders.length > 0) {
-          appendAIMessage({
-            id: Date.now() + 'orders',
-            role: 'ai',
-            text: `Đây là ${Math.min(orders.length, 3)} đơn hàng gần nhất của bạn. Bấm để xem chi tiết nhé!`,
-            orders: orders.slice(0, 3),
-            quickReplies: [
-              { id: 'all-orders', label: '📦 Xem tất cả đơn', text: 'Cho tôi xem tất cả đơn hàng' },
-            ],
-          })
-        } else {
-          appendAIMessage({
-            id: Date.now() + 'no-orders',
-            role: 'ai',
-            text: `Bạn chưa có đơn hàng nào. Hãy đặt ngay thôi nào! ☕`,
-            quickReplies: [
-              { id: 'order-now', label: '🛒 Đặt hàng ngay', text: 'Tôi muốn đặt hàng' },
-            ],
-          })
-        }
-      } else if (intent === 'stores') {
-        appendAIMessage({
-          id: Date.now() + 'stores',
-          role: 'ai',
-          text: `Avengers Coffee có ${branches.length} chi nhánh trên toàn quốc. Dưới đây là một số cửa hàng:`,
-          stores: branches.slice(0, 3),
-          quickReplies: branches.length > 3 ? [
-            { id: 'more-stores', label: '📍 Xem thêm', text: 'Cho tôi xem tất cả cửa hàng' },
-          ] : [],
-        })
-      } else if (intent === 'payment') {
-        appendAIMessage({
-          id: Date.now() + 'payment',
-          role: 'ai',
-          type: 'payment',
-          text: 'Avengers Coffee hỗ trợ nhiều phương thức thanh toán tiện lợi:',
-        })
-      } else if (intent === 'voucher') {
-        appendAIMessage({
-          id: Date.now() + 'voucher',
-          role: 'ai',
-          type: 'voucher',
-          text: vouchers.length > 0
-            ? `Mình đang có ${vouchers.length} ưu đãi đặc biệt cho bạn! 🎉`
-            : 'Hiện chưa có khuyến mãi nào. Nhưng đăng ký thành viên để nhận ưu đãi độc quyền nhé!',
-          vouchers,
-        })
-      } else {
-        // Generic: send to server chat + AI response
-        if (conversationId) sendServerMsg.mutate(text)
+      // Direct navigation if requested
+      if (/giỏ hàng|thanh toán ngay|checkout/.test(textLower)) {
+        setTimeout(() => navigation.navigate('Cart'), 800)
+      }
+      if (/tất cả đơn|xem đơn|lịch sử/.test(textLower)) {
+        setTimeout(() => navigation.navigate('Orders'), 800)
+      }
 
-        // Try AI endpoint
+      // Order intent check if user is placing an order
+      if (/(đặt|mua|order|cho tôi|lấy)\s*(\d+)?/.test(textLower)) {
         try {
-          const aiRes = await apiClient.post('/ai/chat/order-intent', { text, user_id: userId })
-          if (aiRes?.message || aiRes?.response) {
+          const orderRes = await apiClient.post('/ai/chat/order-intent', { text, user_id: userId, history })
+          const d = orderRes?.data || orderRes
+          if (d?.can_order && d?.items?.length > 0) {
             appendAIMessage({
-              id: Date.now() + 'ai',
+              id: Date.now() + 'ai-order',
               role: 'ai',
-              text: aiRes.message || aiRes.response,
-              quickReplies: QUICK_REPLIES.slice(0, 3),
+              text: d.message || `Mình nhận thấy bạn muốn đặt hàng. Tổng tạm tính khoảng ${Number(d.estimated_total || 0).toLocaleString('vi-VN')}đ.`,
+              quickReplies: [{ id: 'cart', label: '🛒 Vào giỏ hàng', text: 'Xem giỏ hàng' }],
             })
             return
           }
-        } catch { /* fallback */ }
+        } catch { /* proceed to main AI chat */ }
+      }
 
-        // Fallback response
+      // Call primary AI Chat API (/ai/chat)
+      const chatRes = await apiClient.post('/ai/chat', {
+        user_id: userId,
+        user_name: userName,
+        content: text,
+        history,
+      })
+
+      const resData = chatRes?.data || chatRes
+      let replyText = resData?.reply || resData?.message
+
+      if (replyText) {
+        const productsAll = productsQuery.data || []
+        const branchesAll = branchesQuery.data || []
+        const ordersAll = ordersQuery.data || []
+        const vouchersAll = vouchersQuery.data || []
+
+        let stores = resData.stores
+        let products = resData.products
+        let vouchers = resData.vouchers
+        let orders = resData.orders
+        let type = resData.type
+
+        // 1. Store cards
+        if ((!stores || stores.length === 0) && (/(cửa hàng|chi nhánh|địa chỉ|ở đâu|gần đây)/.test(textLower) || /(cửa hàng|chi nhánh|địa chỉ)/.test(replyText.toLowerCase()))) {
+          stores = branchesAll.slice(0, 4)
+        }
+
+        // 2. Product cards
+        if ((!products || products.length === 0) && (/(thực đơn|menu|đồ uống|cà phê|phê|trà|sữa|đồ ăn|bánh|matcha|latte|có gì ngon|món|xem menu|đặt)/.test(textLower) || /(sản phẩm|đồ uống|menu|món|matcha|latte)/.test(replyText.toLowerCase()))) {
+          let prods = productsAll
+          const searchKeys = ['matcha', 'latte', 'americano', 'trà sữa', 'bánh', 'cà phê', 'phin', 'espresso', 'cold brew', 'trà']
+          const matchedKey = searchKeys.find((k) => textLower.includes(k) || replyText.toLowerCase().includes(k))
+          if (matchedKey && prods.length > 0) {
+            const filtered = prods.filter((p) =>
+              (p.ten_san_pham || '').toLowerCase().includes(matchedKey) ||
+              (p.ten_danh_muc || p.danh_muc || '').toLowerCase().includes(matchedKey)
+            )
+            if (filtered.length > 0) prods = filtered
+          }
+          products = prods.slice(0, 6)
+        }
+
+        // 3. Voucher cards
+        if ((!vouchers || vouchers.length === 0) && (/(khuyến mãi|voucher|giảm giá|ưu đãi|mã)/.test(textLower) || /(voucher|khuyến mãi|ưu đãi)/.test(replyText.toLowerCase()))) {
+          vouchers = vouchersAll.slice(0, 4)
+          type = 'voucher'
+        }
+
+        // 4. Order cards
+        if ((!orders || orders.length === 0) && (/(đơn hàng|đơn của tôi|trạng thái.*đơn|theo dõi.*đơn|giao chưa)/.test(textLower) || /(đơn hàng)/.test(replyText.toLowerCase()))) {
+          orders = ordersAll.slice(0, 3)
+        }
+
+        // 5. Payment info
+        if (/(thanh toán|payment|vnpay|ví|momo|atm)/.test(textLower)) {
+          type = 'payment'
+        }
+
+        // Clean up bullet list text lines if cards are present
+        const hasCards = Boolean(products?.length || stores?.length || vouchers?.length || orders?.length)
+        if (hasCards) {
+          const lines = replyText.split('\n')
+          const nonBulletLines = lines.filter((l) => {
+            const trimmed = l.trim()
+            if (/^\s*[-*•\d+.]\s+/.test(l)) return false
+            if (/^\*\*.+\*\*:?$/.test(trimmed)) return false
+            return true
+          })
+          const cleaned = nonBulletLines.join('\n').replace(/\n{3,}/g, '\n\n').trim()
+          if (cleaned) replyText = cleaned
+        }
+
         appendAIMessage({
-          id: Date.now() + 'fallback',
+          id: Date.now() + 'ai',
           role: 'ai',
-          text: 'Mình chưa hiểu rõ yêu cầu của bạn 😊\nHãy thử hỏi về menu, đặt hàng, cửa hàng hoặc khuyến mãi nhé!',
-          quickReplies: QUICK_REPLIES.slice(0, 4),
+          text: replyText,
+          type,
+          products,
+          orders,
+          stores,
+          vouchers,
+          quickReplies: QUICK_REPLIES.slice(0, 3),
         })
+        return
       }
-
-      // Navigate to cart if requested
-      if (/giỏ hàng|thanh toán ngay|checkout/.test(text.toLowerCase())) {
-        setTimeout(() => navigation.navigate('Cart'), 800)
-      }
-      // Navigate to orders screen
-      if (/tất cả đơn|xem đơn|lịch sử/.test(text.toLowerCase())) {
-        setTimeout(() => navigation.navigate('Orders'), 800)
-      }
+    } catch (e) {
+      console.error('[ChatScreen Mobile] AI API error:', e)
     } finally {
       setIsTyping(false)
     }
+
+    // Fallback response
+    appendAIMessage({
+      id: Date.now() + 'fallback',
+      role: 'ai',
+      text: 'Xin lỗi, mình chưa thể xử lý yêu cầu này ngay bây giờ. Vui lòng thử lại câu hỏi nhé!',
+      quickReplies: QUICK_REPLIES.slice(0, 4),
+    })
   }
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
@@ -816,7 +838,7 @@ export function ChatScreen({ navigation }) {
         </Pressable>
         <View style={styles.headerInfo}>
           <LinearGradient colors={['#ea8025', '#c45c10']} style={styles.headerAvatar}>
-            <Text style={{ fontSize: 18 }}>☕</Text>
+            <Ionicons name="sparkles" size={20} color="#fff" />
           </LinearGradient>
           <View style={styles.onlineDot} />
           <View>
@@ -895,6 +917,7 @@ export function ChatScreen({ navigation }) {
             >
               {QUICK_REPLIES.map(qr => (
                 <Pressable key={qr.id} style={styles.quickBarChip} onPress={() => handleQuickReply(qr.text)}>
+                  {qr.icon && <Ionicons name={qr.icon} size={13} color="#475569" style={{ marginRight: 4 }} />}
                   <Text style={styles.quickBarChipText}>{qr.label}</Text>
                 </Pressable>
               ))}
@@ -1249,6 +1272,8 @@ const styles = StyleSheet.create({
   // Quick replies in bubble
   quickRepliesWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
   quickReplyChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#fff7ed',
     borderRadius: 20,
     paddingHorizontal: 12,
@@ -1308,14 +1333,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
-    maxHeight: 50,
+    height: 46,
+    flexGrow: 0,
+    flexShrink: 0,
   },
   quickBarContent: {
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 7,
     gap: 8,
+    alignItems: 'center',
   },
   quickBarChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#f1f5f9',
     borderRadius: 20,
     paddingHorizontal: 12,
