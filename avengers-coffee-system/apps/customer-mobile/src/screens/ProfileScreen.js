@@ -397,29 +397,41 @@ export function ProfileScreen({ navigation }) {
             </View>
 
             {/* Hỗ trợ List */}
-            <Text style={styles.listSectionTitle}>Hỗ trợ</Text>
+            <Text style={styles.listSectionTitle}>Tiện ích & Trợ giúp</Text>
             <View style={styles.listCard}>
-              <Pressable style={styles.listItem}>
-                <Ionicons name="star-outline" size={20} color="#64748b" />
-                <Text style={styles.listItemText}>Đánh giá đơn hàng</Text>
-                {!isLoggedIn ? <Ionicons name="lock-closed" size={16} color="#cbd5e1" /> : <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />}
-              </Pressable>
-              <View style={styles.listDivider} />
-              <Pressable style={styles.listItem}>
-                <Ionicons name="shield-outline" size={20} color="#64748b" />
-                <Text style={styles.listItemText}>Điều khoản thanh toán</Text>
+              <Pressable style={styles.listItem} onPress={() => navigation?.navigate('Membership')}>
+                <Ionicons name="ribbon-outline" size={20} color="#ea8025" />
+                <Text style={styles.listItemText}>Đặc quyền hạng thẻ</Text>
                 <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
               </Pressable>
               <View style={styles.listDivider} />
-              <Pressable style={styles.listItem}>
-                <Ionicons name="chatbubbles-outline" size={20} color="#64748b" />
-                <Text style={styles.listItemText}>Liên hệ và góp ý</Text>
+              <Pressable style={styles.listItem} onPress={() => navigation?.navigate('LuckyWheel')}>
+                <Ionicons name="sparkles-outline" size={20} color="#ea8025" />
+                <Text style={styles.listItemText}>Vòng quay may mắn</Text>
                 <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
               </Pressable>
               <View style={styles.listDivider} />
-              <Pressable style={styles.listItem}>
-                <Ionicons name="receipt-outline" size={20} color="#64748b" />
-                <Text style={styles.listItemText}>Hướng dẫn xuất hóa đơn GTGT</Text>
+              <Pressable style={styles.listItem} onPress={() => navigation?.navigate('GiftCard')}>
+                <Ionicons name="card-outline" size={20} color="#ea8025" />
+                <Text style={styles.listItemText}>Thẻ quà tặng (GiftCard)</Text>
+                <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
+              </Pressable>
+              <View style={styles.listDivider} />
+              <Pressable style={styles.listItem} onPress={() => navigation?.navigate('Support')}>
+                <Ionicons name="help-circle-outline" size={20} color="#ea8025" />
+                <Text style={styles.listItemText}>Trung tâm hỗ trợ & FAQ</Text>
+                <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
+              </Pressable>
+              <View style={styles.listDivider} />
+              <Pressable style={styles.listItem} onPress={() => navigation?.navigate('Survey')}>
+                <Ionicons name="star-outline" size={20} color="#ea8025" />
+                <Text style={styles.listItemText}>Khảo sát & Góp ý trải nghiệm</Text>
+                <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
+              </Pressable>
+              <View style={styles.listDivider} />
+              <Pressable style={styles.listItem} onPress={() => navigation?.navigate('About')}>
+                <Ionicons name="information-circle-outline" size={20} color="#ea8025" />
+                <Text style={styles.listItemText}>Về Avengers Coffee</Text>
                 <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
               </Pressable>
             </View>
@@ -447,21 +459,18 @@ export function ProfileScreen({ navigation }) {
               <View style={styles.listDivider} />
               <Pressable style={styles.listItem} onPress={() => isLoggedIn ? navigation?.navigate('Wallet') : navigation?.navigate('Login')}>
                 <Ionicons name="wallet-outline" size={20} color="#64748b" />
-                <Text style={[styles.listItemText, !isLoggedIn && { color: '#94a3b8' }]}>Ví điện tử</Text>
+                <Text style={[styles.listItemText, !isLoggedIn && { color: '#94a3b8' }]}>Ví điểm Avengers</Text>
                 {!isLoggedIn ? <Ionicons name="lock-closed" size={16} color="#cbd5e1" /> : <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />}
               </Pressable>
-              <View style={styles.listDivider} />
-              <Pressable style={styles.listItem}>
-                <Ionicons name="information-circle-outline" size={20} color="#64748b" />
-                <Text style={styles.listItemText}>Về chúng tôi</Text>
-                <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
-              </Pressable>
-              <View style={styles.listDivider} />
-              <Pressable style={styles.listItem} onPress={() => isLoggedIn ? handleLogout() : null}>
-                <Ionicons name="log-out-outline" size={20} color={isLoggedIn ? colors.danger : '#cbd5e1'} />
-                <Text style={[styles.listItemText, !isLoggedIn ? { color: '#cbd5e1' } : { color: colors.danger }]}>Đăng xuất</Text>
-                {!isLoggedIn && <Ionicons name="lock-closed" size={16} color="#cbd5e1" />}
-              </Pressable>
+              {isLoggedIn && (
+                <>
+                  <View style={styles.listDivider} />
+                  <Pressable style={styles.listItem} onPress={handleLogout}>
+                    <Ionicons name="log-out-outline" size={20} color={colors.danger} />
+                    <Text style={[styles.listItemText, { color: colors.danger }]}>Đăng xuất</Text>
+                  </Pressable>
+                </>
+              )}
             </View>
           </View>
         )

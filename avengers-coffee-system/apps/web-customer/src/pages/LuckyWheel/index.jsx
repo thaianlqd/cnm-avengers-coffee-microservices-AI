@@ -127,6 +127,23 @@ export default function LuckyWheelPage({ user, onNavigate }) {
     spinMutation.mutate();
   };
 
+  const formatPrizeName = (prize) => {
+    if (!prize) return '';
+    const name = String(prize.ten || prize.ten_giai_thuong || '');
+    if (prize.loai === 'VOUCHER' || name.startsWith('TPL_') || name.startsWith('WHEEL_') || prize.ma_voucher) {
+      if (prize.mo_ta && !String(prize.mo_ta).startsWith('TPL_')) {
+        return prize.mo_ta;
+      }
+      const val = Number(prize.gia_tri || 0);
+      if (val > 0) {
+        if (val <= 100) return `Giảm ${val}%`;
+        if (val >= 1000) return `Voucher ${(val / 1000).toLocaleString('vi-VN')}K`;
+      }
+      if (name.startsWith('TPL_') || name.startsWith('WHEEL_')) return 'Voucher Giảm Giá';
+    }
+    return name;
+  };
+
   return (
     <div className="bg-[#fcfbf9] min-h-screen pb-16">
       {/* Header */}
@@ -140,7 +157,7 @@ export default function LuckyWheelPage({ user, onNavigate }) {
             Vòng quay may mắn
           </h1>
           <p className="mt-3 max-w-[780px] text-sm font-semibold leading-relaxed text-gray-500 md:text-base">
-            Dùng {cost} điểm khả dụng của bạn để tham gia quay thưởng. Cơ hội 100% nhận điểm thưởng, voucher giảm giá tiền mặt hoặc đồ uống miễn phí hoàn toàn.
+            Dùng {cost} điểm khả dụng của bạn để tham gia quay thưởng (không bị trừ điểm tích lũy xét hạng). Cơ hội 100% nhận điểm thưởng, voucher giảm giá tiền mặt hoặc đồ uống miễn phí hoàn toàn.
           </p>
         </div>
       </section>
@@ -179,6 +196,7 @@ export default function LuckyWheelPage({ user, onNavigate }) {
               {/* Prize texts inside segments */}
               {prizes.map((prize, idx) => {
                 const angle = idx * 45 + 22.5; // Center of segment
+                const displayName = formatPrizeName(prize);
                 return (
                   <div 
                     key={prize.id}
@@ -192,7 +210,7 @@ export default function LuckyWheelPage({ user, onNavigate }) {
                         {getPrizeIcon(prize.icon, "w-6 h-6 text-white drop-shadow-md")}
                       </div>
                       <span className="text-[9px] md:text-[10px] font-black uppercase tracking-wider mt-1.5 drop-shadow-md leading-tight max-w-[70px]">
-                        {prize.ten}
+                        {displayName}
                       </span>
                     </div>
                   </div>
@@ -217,16 +235,21 @@ export default function LuckyWheelPage({ user, onNavigate }) {
             </div>
           </div>
 
-          <div className="mt-6 text-center bg-white py-3.5 px-8 rounded-2xl border border-gray-200/60 shadow-sm flex items-center gap-6">
-            <div>
-              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Điểm khả dụng của bạn</p>
-              <p className="text-base font-black text-[#b22830] mt-0.5">{diemKhaDung.toLocaleString('vi-VN')} điểm</p>
+          <div className="mt-6 text-center bg-white py-4 px-8 rounded-2xl border border-gray-200/60 shadow-sm flex flex-col items-center gap-2">
+            <div className="flex items-center gap-6">
+              <div>
+                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Điểm khả dụng của bạn</p>
+                <p className="text-base font-black text-[#b22830] mt-0.5">{diemKhaDung.toLocaleString('vi-VN')} điểm</p>
+              </div>
+              <div className="h-8 w-px bg-gray-250"></div>
+              <div>
+                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Chi phí / lượt quay</p>
+                <p className="text-base font-black text-[#a38043] mt-0.5">{cost} điểm</p>
+              </div>
             </div>
-            <div className="h-8 w-px bg-gray-250"></div>
-            <div>
-              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Chi phí / lượt quay</p>
-              <p className="text-base font-black text-[#a38043] mt-0.5">{cost} điểm</p>
-            </div>
+            <p className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+              🛡️ Sử dụng điểm khả dụng để quay (Không trừ điểm tích lũy xét hạng)
+            </p>
           </div>
         </div>
 
@@ -244,7 +267,7 @@ export default function LuckyWheelPage({ user, onNavigate }) {
                     <span className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[#b22830] border border-gray-200/60 shadow-inner">
                       {getPrizeIcon(prize.icon, "w-4.5 h-4.5")}
                     </span>
-                    <span className="text-xs font-bold text-gray-700">{prize.ten}</span>
+                    <span className="text-xs font-bold text-gray-700">{formatPrizeName(prize)}</span>
                   </div>
                   <span className="text-[10px] font-bold text-gray-400">Tỷ lệ: {prize.xac_suat}%</span>
                 </div>

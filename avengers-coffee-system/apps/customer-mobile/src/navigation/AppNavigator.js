@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useUser } from '../context/UserContext'
 import apiClient from '../lib/apiClient'
 import { getUserId, normalizeCartItem, safeArray } from '../lib/customerData'
-import { colors } from '../theme'
+import { colors, shadows, radius } from '../theme'
 import { LoginScreen } from '../screens/LoginScreen'
 import { HomeScreen } from '../screens/HomeScreen'
 import { MenuScreen } from '../screens/MenuScreen'
@@ -20,20 +20,30 @@ import { StoresScreen } from '../screens/StoresScreen'
 import { NewsScreen } from '../screens/NewsScreen'
 import { ChatScreen } from '../screens/ChatScreen'
 import { WalletScreen } from '../screens/WalletScreen'
+import { MembershipScreen } from '../screens/MembershipScreen'
+import { LuckyWheelScreen } from '../screens/LuckyWheelScreen'
+import { GiftCardScreen } from '../screens/GiftCardScreen'
+import { AboutScreen } from '../screens/AboutScreen'
+import { SupportScreen } from '../screens/SupportScreen'
+import { SurveyScreen } from '../screens/SurveyScreen'
 
 const Stack = createNativeStackNavigator()
 const Tabs = createBottomTabNavigator()
 
 const TAB_ICONS = {
-  Home: { focused: 'home', unfocused: 'home-outline' },
+  Home: { focused: 'sparkles', unfocused: 'sparkles-outline' },
   Menu: { focused: 'cafe', unfocused: 'cafe-outline' },
-  Cart: { focused: 'receipt', unfocused: 'receipt-outline' },
+  Cart: { focused: 'bag-handle', unfocused: 'bag-handle-outline' },
   Profile: { focused: 'person-circle', unfocused: 'person-circle-outline' },
 }
 
 function TabBarIcon({ routeName, color, size, focused }) {
   const icons = TAB_ICONS[routeName] || { focused: 'ellipse', unfocused: 'ellipse-outline' }
-  return <Ionicons name={focused ? icons.focused : icons.unfocused} size={size} color={color} />
+  return (
+    <View style={[styles.tabIconWrap, focused && styles.tabIconWrapActive]}>
+      <Ionicons name={focused ? icons.focused : icons.unfocused} size={focused ? 22 : 20} color={focused ? colors.primary : color} />
+    </View>
+  )
 }
 
 function MainTabs() {
@@ -56,25 +66,26 @@ function MainTabs() {
     <Tabs.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: '#ea8025',
-        tabBarInactiveTintColor: '#8f8f8f',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: '#8e8e93',
         tabBarStyle: {
-          height: Platform.OS === 'ios' ? 82 : 70,
-          paddingBottom: Platform.OS === 'ios' ? 22 : 10,
+          height: Platform.OS === 'ios' ? 84 : 68,
+          paddingBottom: Platform.OS === 'ios' ? 24 : 10,
           paddingTop: 8,
-          backgroundColor: '#fff',
-          borderTopColor: '#f0f0f0',
-          borderTopWidth: 1,
-          elevation: 8,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
+          backgroundColor: '#ffffff',
+          borderTopColor: colors.borderLight,
+          borderTopWidth: 0.8,
+          elevation: 12,
+          shadowColor: '#1a1008',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.08,
+          shadowRadius: 16,
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '600',
-          marginTop: -5,
+          fontWeight: '700',
+          marginTop: -2,
+          letterSpacing: -0.2,
         },
         tabBarIcon: ({ color, size, focused }) => (
           <TabBarIcon routeName={route.name} color={color} size={size} focused={focused} />
@@ -89,20 +100,23 @@ function MainTabs() {
       <Tabs.Screen
         name="Menu"
         component={MenuScreen}
-        options={{ title: 'Menu' }}
+        options={{ title: 'Thực đơn' }}
       />
       <Tabs.Screen
         name="Cart"
         component={CartScreen}
         options={{
-          title: 'Đơn hàng',
+          title: 'Giỏ hàng',
           tabBarBadge: cartCount > 0 ? cartCount : undefined,
           tabBarBadgeStyle: {
-            backgroundColor: colors.primary,
+            backgroundColor: colors.brandRed,
             color: '#fff',
             fontSize: 10,
             fontWeight: '900',
             minWidth: 18,
+            height: 18,
+            borderRadius: 9,
+            lineHeight: 16,
           },
         }}
       />
@@ -122,21 +136,23 @@ export function AppNavigator() {
     return (
       <View style={styles.loadingWrap}>
         <LinearGradient
-          colors={['#1a0a02', '#3d1a08', '#f26b1d']}
+          colors={['#1a0c05', '#3d1a08', '#f26b1d']}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           style={styles.loadingGradient}
         >
-          <Text style={styles.loadingEmoji}>☕</Text>
+          <View style={styles.logoBadge}>
+            <Text style={styles.loadingEmoji}>☕</Text>
+          </View>
           <ActivityIndicator size="large" color="#fff" />
-          <Text style={styles.loadingText}>Đang khởi động ứng dụng...</Text>
-          <Text style={styles.loadingBrand}>Avengers Coffee</Text>
+          <Text style={styles.loadingText}>Đang kết nối Avengers Coffee...</Text>
+          <Text style={styles.loadingBrand}>AVENGERS COFFEE</Text>
         </LinearGradient>
       </View>
     )
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       <Stack.Screen name="Tabs" component={MainTabs} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Chat" component={ChatScreen} />
@@ -145,14 +161,30 @@ export function AppNavigator() {
       <Stack.Screen name="Vouchers" component={VouchersScreen} />
       <Stack.Screen name="Stores" component={StoresScreen} />
       <Stack.Screen name="News" component={NewsScreen} />
+      <Stack.Screen name="Membership" component={MembershipScreen} />
+      <Stack.Screen name="LuckyWheel" component={LuckyWheelScreen} />
+      <Stack.Screen name="GiftCard" component={GiftCardScreen} />
+      <Stack.Screen name="About" component={AboutScreen} />
+      <Stack.Screen name="Support" component={SupportScreen} />
+      <Stack.Screen name="Survey" component={SurveyScreen} />
     </Stack.Navigator>
   )
 }
 
 const styles = StyleSheet.create({
+  tabIconWrap: {
+    paddingHorizontal: 12,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabIconWrapActive: {
+    backgroundColor: '#fff4ed',
+  },
   loadingWrap: {
     flex: 1,
-    backgroundColor: '#1a0a02',
+    backgroundColor: '#1a0c05',
   },
   loadingGradient: {
     flex: 1,
@@ -160,21 +192,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 16,
   },
-  loadingEmoji: {
-    fontSize: 60,
+  logoBadge: {
+    width: 90,
+    height: 90,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
     marginBottom: 8,
+  },
+  loadingEmoji: {
+    fontSize: 44,
   },
   loadingText: {
     marginTop: 12,
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 15,
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 14,
     fontWeight: '600',
+    letterSpacing: 0.2,
   },
   loadingBrand: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '900',
     color: '#fff',
-    marginTop: 8,
-    letterSpacing: -0.5,
+    marginTop: 4,
+    letterSpacing: 1.5,
   },
 })
+

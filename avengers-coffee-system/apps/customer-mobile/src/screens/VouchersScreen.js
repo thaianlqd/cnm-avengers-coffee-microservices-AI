@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useQuery } from '@tanstack/react-query'
 import { useUser } from '../context/UserContext'
 import apiClient from '../lib/apiClient'
-import { formatDateOnly, getUserId, safeArray } from '../lib/customerData'
+import { formatDateOnly, getUserId, safeArray, getVoucherDisplayTitle, getVoucherDisplayDescription } from '../lib/customerData'
 import { colors, spacing, shadows, radius } from '../theme'
 // Clipboard import removed - using Alert fallback
 
@@ -24,13 +24,11 @@ const TYPE_CONFIG = {
 }
 
 function VoucherCard({ voucher, onCopy }) {
-  const type = String(voucher?.loai_khuyen_mai || '').toUpperCase()
+  const type = String(voucher?.loai_khuyen_mai || voucher?.loai || '').toUpperCase()
   const tc = TYPE_CONFIG[type] || { label: 'Ưu đãi', color: colors.primary, bg: '#fff9f5', icon: 'ticket-outline' }
 
-  const giaTri = Number(voucher?.gia_tri_giam || 0)
-  const phanTramGiam = Number(voucher?.phan_tram_giam || 0)
-  const donToiThieu = Number(voucher?.don_hang_toi_thieu || 0)
-
+  const title = getVoucherDisplayTitle(voucher)
+  const description = getVoucherDisplayDescription(voucher)
   const isExpired = voucher?.ngay_ket_thuc && new Date(voucher.ngay_ket_thuc) < new Date()
 
   return (
@@ -59,30 +57,22 @@ function VoucherCard({ voucher, onCopy }) {
           {isExpired ? <View style={styles.expiredBadge}><Text style={styles.expiredText}>Hết hạn</Text></View> : null}
         </View>
 
-        <Text style={styles.voucherName} numberOfLines={2}>{voucher.ten_khuyen_mai || voucher.ma_khuyen_mai}</Text>
+        <Text style={styles.voucherValue} numberOfLines={1}>{title}</Text>
 
-        <Text style={styles.voucherValue}>
-          {phanTramGiam > 0 ? `Giảm ${phanTramGiam}%` : giaTri > 0 ? `Giảm ${giaTri.toLocaleString('vi-VN')}đ` : 'Ưu đãi đặc biệt'}
-        </Text>
-
-        {donToiThieu > 0 ? (
-          <Text style={styles.voucherCondition}>
-            Đơn tối thiểu: {donToiThieu.toLocaleString('vi-VN')}đ
-          </Text>
-        ) : null}
+        <Text style={styles.voucherName} numberOfLines={2}>{description}</Text>
 
         <View style={styles.voucherFooter}>
           <View style={styles.voucherCodeWrap}>
             <Ionicons name="ticket-outline" size={13} color={isExpired ? colors.muted : tc.color} />
             <Text style={[styles.voucherCode, { color: isExpired ? colors.muted : tc.color }]}>
-              {voucher.ma_khuyen_mai}
+              {voucher.ma_khuyen_mai || voucher.ma_voucher}
             </Text>
           </View>
           <View style={styles.voucherDateCopyRow}>
             <Text style={styles.voucherDate}>HSD: {formatDateOnly(voucher.ngay_ket_thuc) || 'Không giới hạn'}</Text>
             {!isExpired ? (
               <Pressable
-                onPress={() => onCopy(voucher.ma_khuyen_mai)}
+                onPress={() => onCopy(voucher.ma_khuyen_mai || voucher.ma_voucher)}
                 style={[styles.copyBtn, { backgroundColor: tc.bg, borderColor: tc.color }]}
               >
                 <Ionicons name="copy-outline" size={12} color={tc.color} />
@@ -96,7 +86,7 @@ function VoucherCard({ voucher, onCopy }) {
   )
 }
 
-export function VouchersScreen() {
+export function VouchersScreen({ navigation }) {
   const { user } = useUser()
   const userId = getUserId(user)
   const [filter, setFilter] = useState('all')
@@ -124,9 +114,9 @@ export function VouchersScreen() {
     return true
   })
 
-  const handleCopy = (code) => {
+  const handleCopyCode = (code) => {
     Alert.alert(
-      '🎟️ Mã Voucher',
+      'Mã ưu đãi',
       `Mã của bạn: ${code}\n\nSao chép và dán vào ô nhập mã khi thanh toán.`,
       [{ text: 'Đã hiểu', style: 'default' }]
     )
@@ -135,9 +125,14 @@ export function VouchersScreen() {
   return (
     <View style={styles.screen}>
       {/* Header */}
-      <LinearGradient colors={['#1a0a02', '#3d1a08']} style={styles.header}>
-        <Text style={styles.headerTitle}>Ưu đãi & Voucher</Text>
-        <Text style={styles.headerSubtitle}>{vouchers.length} voucher hiện có</Text>
+      <LinearGradient colors={['#1a0a02', '#3d1a08']} style={styles.headerRow}>
+        <Pressable onPress={() => navigation?.goBack()} style={styles.backBtn} hitSlop={12}>
+          <Ionicons name="chevron-back" size={24} color="#fff" />
+        </Pressable>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.headerTitle}>Ưu đãi & Voucher</Text>
+          <Text style={styles.headerSubtitle}>{vouchers.length} voucher hiện có</Text>
+        </View>
       </LinearGradient>
 
       {/* Filters */}
@@ -184,7 +179,7 @@ export function VouchersScreen() {
       <FlatList
         data={filteredVouchers}
         keyExtractor={(item) => String(item.ma_khuyen_mai || item.id || Math.random())}
-        renderItem={({ item }) => <VoucherCard voucher={item} onCopy={handleCopy} />}
+        renderItem={({ item }) => <VoucherCard voucher={item} onCopy={handleCopyCode} />}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         onRefresh={() => vouchersQuery.refetch()}
@@ -199,13 +194,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bg,
   },
-  header: {
-    paddingTop: 52,
+  headerRow: {
+    paddingTop: 48,
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '900',
     color: '#fff',
   },
