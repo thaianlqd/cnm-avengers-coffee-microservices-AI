@@ -277,9 +277,13 @@ export default function CartPage({
   }, [addressForm.city, defaultAddressSelection]);
 
   useEffect(() => {
-    setVoucherResult(null);
-    setVoucherError('');
-  }, [total]);
+    if (voucherCode && cart && cart.length > 0) {
+      apDungVoucher(voucherCode);
+    } else {
+      setVoucherResult(null);
+      setVoucherError('');
+    }
+  }, [cart, total]);
 
   const apDungVoucher = async (overrideCode) => {
     const codeStr = typeof overrideCode === 'string' ? overrideCode : voucherCode;
@@ -295,10 +299,39 @@ export default function CartPage({
     setIsCheckingVoucher(true);
     setVoucherError('');
     try {
+      const hasToppings = cart.some(item => item.toppings && item.toppings.length > 0);
+      let toppingPrice = 0;
+      cart.forEach(item => {
+        // 1. Kiểm tra topping_prices đính kèm trên item
+        if (Array.isArray(item.topping_prices) && item.topping_prices.length > 0) {
+          const validPrices = item.topping_prices.map(Number).filter(p => p > 0);
+          if (validPrices.length > 0) {
+            const maxInItem = Math.max(...validPrices);
+            if (maxInItem > toppingPrice) toppingPrice = maxInItem;
+          }
+        }
+        // 2. Tra cứu danh sách tên topping với prop products để lấy giá chính xác
+        if (item.toppings && item.toppings.length > 0) {
+          item.toppings.forEach(tpName => {
+            (products || []).forEach(prod => {
+              if (prod.toppings && prod.toppings[tpName] !== undefined) {
+                const p = Number(prod.toppings[tpName]);
+                if (p > toppingPrice) toppingPrice = p;
+              }
+            });
+          });
+        }
+      });
+      if (hasToppings && toppingPrice === 0) {
+        toppingPrice = 5000;
+      }
+
       const response = await apiClient.post('/vouchers/kiem-tra', {
         ma_voucher: code,
         tong_tien: total,
         user_id: isLoggedInUser ? maNguoiDung : '',
+        has_toppings: hasToppings,
+        topping_price: toppingPrice,
       });
       const d = response?.data || response;
       if (d && (d.hop_le || d.so_tien_giam !== undefined)) {
@@ -311,7 +344,15 @@ export default function CartPage({
       }
     } catch (err) {
       setVoucherResult(null);
-      setVoucherError(err?.response?.data?.message || 'Mã voucher không hợp lệ hoặc đã hết hạn');
+      let rawMsg = err?.response?.data?.message || 'Mã voucher không hợp lệ hoặc đã hết hạn';
+      if (Array.isArray(rawMsg)) {
+        rawMsg = rawMsg.join(', ');
+      }
+      const cleanMsg = String(rawMsg)
+        .replace(/^[A-Za-z0-9_]+Exception:\s*/i, '')
+        .replace(/^[A-Za-z0-9_]+Error:\s*/i, '')
+        .trim();
+      setVoucherError(cleanMsg || 'Mã voucher không hợp lệ hoặc đã hết hạn');
     } finally {
       setIsCheckingVoucher(false);
     }

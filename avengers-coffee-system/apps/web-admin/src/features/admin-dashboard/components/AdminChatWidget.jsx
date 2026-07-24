@@ -4,6 +4,35 @@ import { API_BASE_URL } from '../constants';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3005';
 
+const AI_PROMPT_PATTERNS = [
+  'gợi ý cho tôi menu đồ uống nổi bật',
+  'tôi muốn đặt đồ uống giao ngay',
+  'tôi muốn đặt hàng',
+  'kiểm tra trạng thái đơn hàng của tôi',
+  'kiểm tra đơn hàng của tôi',
+  'địa chỉ các chi nhánh gần đây',
+  'cửa hàng gần tôi ở đâu?',
+  'cửa hàng gần tôi',
+  'cho tôi xem mã giảm giá và khuyến mãi',
+  'có khuyến mãi gì không?',
+  'các phương thức thanh toán được hỗ trợ',
+  'phương thức thanh toán nào được hỗ trợ?',
+  'tôi muốn thanh toán ngay',
+  'trời mưa nên uống gì nhỉ',
+  'bạn thông minh đấy',
+  'cho tôi xem menu đồ uống',
+  'cho tôi xem menu'
+];
+
+function isStaffChatMessage(msg) {
+  if (!msg) return false;
+  if (msg.vai_tro_nguoi_gui === 'AI') return false;
+  if (msg.vai_tro_nguoi_gui === 'STAFF' || msg.vai_tro_nguoi_gui === 'MANAGER') return true;
+  const textLower = String(msg.noi_dung || '').trim().toLowerCase();
+  if (AI_PROMPT_PATTERNS.some(p => textLower === p)) return false;
+  return true;
+}
+
 export function AdminChatWidget({ session }) {
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState('list'); // 'list' | 'detail'
@@ -41,6 +70,7 @@ export function AdminChatWidget({ session }) {
     socket.emit('chat:subscribe', { userId, role: userRole });
 
     socket.on('chat:message:new', (msg) => {
+      if (!isStaffChatMessage(msg)) return;
       setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
       scrollToBottom();
     });
@@ -104,7 +134,8 @@ export function AdminChatWidget({ session }) {
         `${API_BASE_URL}/chat/conversations/${conv.ma_hoi_thoai}/messages?user_id=${encodeURIComponent(userId)}&role=${userRole}`,
       );
       const data = await res.json().catch(() => ({}));
-      setMessages(data.items || []);
+      const staffItems = (data.items || []).filter(isStaffChatMessage);
+      setMessages(staffItems);
       scrollToBottom();
       // mark as read
       await fetch(`${API_BASE_URL}/chat/conversations/${conv.ma_hoi_thoai}/read`, {

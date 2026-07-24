@@ -125,6 +125,7 @@ export class VoucherService {
 
     let rawLoai = String(payload.loai || payload.loai_khuyen_mai || 'FIXED').toUpperCase();
     if (rawLoai === 'AMOUNT') rawLoai = 'FIXED';
+    if (!['PERCENT', 'FIXED', 'FREE_ITEM', 'FREE_TOPPING'].includes(rawLoai)) rawLoai = 'FIXED';
 
     let nguCanh = '';
     if (Array.isArray(payload.ngu_canh_su_dung)) {
@@ -201,6 +202,12 @@ export class VoucherService {
       v.ten_voucher = String(payload.ten_voucher || payload.ten_khuyen_mai).trim();
     }
     if (payload.mo_ta !== undefined) v.mo_ta = payload.mo_ta?.trim() || null;
+    if (payload.loai !== undefined || payload.loai_khuyen_mai !== undefined) {
+      let rawLoai = String(payload.loai || payload.loai_khuyen_mai).toUpperCase();
+      if (rawLoai === 'AMOUNT') rawLoai = 'FIXED';
+      if (!['PERCENT', 'FIXED', 'FREE_ITEM', 'FREE_TOPPING'].includes(rawLoai)) rawLoai = 'FIXED';
+      v.loai = rawLoai;
+    }
     if (payload.gia_tri !== undefined) v.gia_tri = Number(payload.gia_tri);
     if (payload.giam_toi_da !== undefined) v.giam_toi_da = payload.giam_toi_da !== null ? Number(payload.giam_toi_da) : null;
     
@@ -277,7 +284,7 @@ export class VoucherService {
     return this.mapVoucherToAdminItem(v);
   }
 
-  async kiemTraVoucher(maVoucher: string, tongTien: number, userId?: string): Promise<VoucherValidationResult> {
+  async kiemTraVoucher(maVoucher: string, tongTien: number, userId?: string, hasToppings?: boolean, toppingPrice?: number): Promise<VoucherValidationResult> {
     const code = maVoucher.trim().toUpperCase();
     const voucher = await this.voucherRepo.findOne({ where: { ma_voucher: code, trang_thai: 'ACTIVE' } });
 
@@ -294,6 +301,30 @@ export class VoucherService {
         throw new BadRequestException('Ma voucher da het luot su dung');
       }
 
+      if (userId) {
+        try {
+          const checkUserRes = await fetch(
+            `${this.IDENTITY_SERVICE_URL}/promotions/luot-dung-user?code=${encodeURIComponent(code)}&user_id=${encodeURIComponent(userId)}`,
+            {
+              headers: {
+                'x-internal-token': this.INTERNAL_SERVICE_TOKEN,
+              },
+            },
+          );
+          if (checkUserRes.ok) {
+            const userData: any = await checkUserRes.json().catch(() => ({}));
+            const usedCount = Number(userData?.luot_da_dung || 0);
+            const limitPerUser = voucher.gioi_han_moi_nguoi || 1;
+            if (usedCount >= limitPerUser) {
+              throw new BadRequestException('Ban da dung het luot su dung voucher nay');
+            }
+          }
+        } catch (err) {
+          if (err instanceof BadRequestException) throw err;
+          console.error('[kiemTraVoucher] Error checking user usage count:', err);
+        }
+      }
+
       if (tongTien < Number(voucher.don_hang_toi_thieu)) {
         throw new BadRequestException(
           `Don hang can dat toi thieu ${Number(voucher.don_hang_toi_thieu).toLocaleString('vi-VN')}d de ap dung voucher nay`,
@@ -306,12 +337,22 @@ export class VoucherService {
         if (voucher.giam_toi_da !== null) {
           soTienGiam = Math.min(soTienGiam, Number(voucher.giam_toi_da));
         }
-      } else if (voucher.loai === 'FREE_ITEM' || voucher.ma_voucher?.includes('TOPPING') || voucher.mo_ta?.toLowerCase().includes('topping')) {
+      } else if (voucher.loai === 'FREE_TOPPING') {
+        // Voucher free topping: đơn hàng phải có ít nhất 1 topping
+        if (hasToppings === false) {
+          throw new BadRequestException('Voucher này chỉ áp dụng cho đơn hàng có topping. Vui lòng thêm topping vào đơn.');
+        }
+        let freeVal = toppingPrice && Number(toppingPrice) > 0 ? Number(toppingPrice) : 5000;
+        if (voucher.giam_toi_da !== null && Number(voucher.giam_toi_da) > 0) {
+          freeVal = Math.min(freeVal, Number(voucher.giam_toi_da));
+        }
+        soTienGiam = Math.min(freeVal, tongTien);
+      } else if (voucher.loai === 'FREE_ITEM') {
         const freeVal = Number(voucher.gia_tri) > 0 ? Number(voucher.gia_tri) : 10000;
         soTienGiam = Math.min(freeVal, tongTien);
       } else {
         const val = Number(voucher.gia_tri || 0);
-        soTienGiam = Math.min(val > 0 ? val : 10000, tongTien);
+        soTienGiam = Math.min(val > 0 ? val : 0, tongTien);
       }
 
       return {
@@ -339,6 +380,8 @@ export class VoucherService {
         ma_khuyen_mai: code,
         user_id: userId || '',
         gia_tri_don: Number(tongTien || 0),
+        has_toppings: hasToppings,
+        topping_price: toppingPrice,
       }),
     });
 
@@ -366,26 +409,27 @@ export class VoucherService {
     const voucher = await this.voucherRepo.findOne({ where: { ma_voucher: code } });
     if (voucher && (voucher.loai_phan_phoi === 'PUBLIC' || !voucher.loai_phan_phoi)) {
       await this.voucherRepo.increment({ ma_voucher: code }, 'luot_da_dung', 1);
-      return;
     }
 
-    const identityResponse = await fetch(`${this.IDENTITY_SERVICE_URL}/promotions/xac-nhan-su-dung`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-internal-token': this.INTERNAL_SERVICE_TOKEN,
-      },
-      body: JSON.stringify({
-        ma_khuyen_mai: code,
-        user_id: userId || '',
-        ma_don_hang: maDonHang || null,
-        so_tien_giam: Number(soTienGiam || 0),
-      }),
-    });
+    if (userId) {
+      const identityResponse = await fetch(`${this.IDENTITY_SERVICE_URL}/promotions/xac-nhan-su-dung`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-token': this.INTERNAL_SERVICE_TOKEN,
+        },
+        body: JSON.stringify({
+          ma_khuyen_mai: code,
+          user_id: userId || '',
+          ma_don_hang: maDonHang || null,
+          so_tien_giam: Number(soTienGiam || 0),
+        }),
+      });
 
-    if (!identityResponse.ok) {
-      const payload: any = await identityResponse.json().catch(() => ({}));
-      throw new BadRequestException(payload?.message || 'Khong the ghi nhan su dung voucher');
+      if (!identityResponse.ok) {
+        const payload: any = await identityResponse.json().catch(() => ({}));
+        console.error('[apDungVoucher] Cannot record voucher usage in identity-service:', payload?.message);
+      }
     }
   }
 

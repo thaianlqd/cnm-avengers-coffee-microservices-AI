@@ -302,11 +302,74 @@ function TypingBubble() {
   );
 }
 
+const AI_SESSION_KEY = 'avengers_ai_chat_session';
+const AI_SESSION_TTL = 60 * 60 * 1000; // 1 hour (3,600,000 ms)
+
+function loadAISession() {
+  try {
+    const raw = localStorage.getItem(AI_SESSION_KEY) || sessionStorage.getItem(AI_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.timestamp || !Array.isArray(parsed.messages)) return null;
+    if (Date.now() - parsed.timestamp > AI_SESSION_TTL) {
+      localStorage.removeItem(AI_SESSION_KEY);
+      sessionStorage.removeItem(AI_SESSION_KEY);
+      return null;
+    }
+    return parsed.messages;
+  } catch {
+    return null;
+  }
+}
+
+function saveAISession(messages) {
+  try {
+    if (!messages || messages.length === 0) return;
+    const payload = {
+      timestamp: Date.now(),
+      messages,
+    };
+    localStorage.setItem(AI_SESSION_KEY, JSON.stringify(payload));
+  } catch { /* ignore */ }
+}
+
+const AI_PROMPT_PATTERNS = [
+  'gợi ý cho tôi menu đồ uống nổi bật',
+  'tôi muốn đặt đồ uống giao ngay',
+  'tôi muốn đặt hàng',
+  'kiểm tra trạng thái đơn hàng của tôi',
+  'kiểm tra đơn hàng của tôi',
+  'địa chỉ các chi nhánh gần đây',
+  'cửa hàng gần tôi ở đâu?',
+  'cửa hàng gần tôi',
+  'cho tôi xem mã giảm giá và khuyến mãi',
+  'có khuyến mãi gì không?',
+  'các phương thức thanh toán được hỗ trợ',
+  'phương thức thanh toán nào được hỗ trợ?',
+  'tôi muốn thanh toán ngay',
+  'trời mưa nên uống gì nhỉ',
+  'bạn thông minh đấy',
+  'cho tôi xem menu đồ uống',
+  'cho tôi xem menu'
+];
+
+function isStaffChatMessage(msg) {
+  if (!msg) return false;
+  if (msg.vai_tro_nguoi_gui === 'AI') return false;
+  if (msg.vai_tro_nguoi_gui === 'STAFF' || msg.vai_tro_nguoi_gui === 'MANAGER') return true;
+  const textLower = String(msg.noi_dung || '').trim().toLowerCase();
+  if (AI_PROMPT_PATTERNS.some(p => textLower === p)) return false;
+  return true;
+}
+
 // ─── Main Chat Widget Component ───────────────────────────────────────────────
 export default function ChatWidget({ user, socketUrl }) {
   const [isOpen, setIsOpen] = useState(false);
   const [chatMode, setChatMode] = useState('AI');
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => {
+    const saved = loadAISession();
+    return saved || [];
+  });
   const [staffMessages, setStaffMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [sending, setSending] = useState(false);
@@ -318,9 +381,13 @@ export default function ChatWidget({ user, socketUrl }) {
   const [orderConfirming, setOrderConfirming] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
   const [isListening, setIsListening] = useState(false);
-  const [greeted, setGreeted] = useState(false);
+  const [greeted, setGreeted] = useState(() => {
+    const saved = loadAISession();
+    return Boolean(saved && saved.length > 0);
+  });
 
   const socketRef = useRef(null);
+  const inputRef = useRef(null);
   const bottomRef = useRef(null);
   const isOpenRef = useRef(false);
   const chatModeRef = useRef('AI');
@@ -332,6 +399,12 @@ export default function ChatWidget({ user, socketUrl }) {
   const userName = user?.ho_ten || user?.hoTen || user?.email || 'Khách';
   const anonId = useRef(getOrCreateAnonId());
   const effectiveUserId = userId || anonId.current;
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveAISession(messages);
+    }
+  }, [messages]);
 
   const prefetchData = useCallback(async () => {
     if (cache.current.loaded) return cache.current;
@@ -374,6 +447,7 @@ export default function ChatWidget({ user, socketUrl }) {
     const socket = io(`${socketUrl}/chat`, { transports: ['websocket'], auth: { userId: effectiveUserId, role: 'CUSTOMER' } });
     socket.emit('chat:subscribe', { userId: effectiveUserId, role: 'CUSTOMER' });
     socket.on('chat:message:new', (msg) => {
+      if (!isStaffChatMessage(msg)) return;
       const m = buildMsg(msg);
       setStaffMessages((prev) => prev.some((x) => String(x.id) === String(m.id)) ? prev : [...prev, m]);
       if (m.vai_tro_nguoi_gui !== 'CUSTOMER' && (!isOpenRef.current || chatModeRef.current !== 'STAFF')) {
@@ -398,7 +472,8 @@ export default function ChatWidget({ user, socketUrl }) {
         if (socketRef.current) socketRef.current.emit('chat:conversation:join', { conversationId: conv.ma_hoi_thoai });
         const msgsRes = await apiClient.get(`/chat/conversations/${conv.ma_hoi_thoai}/messages?user_id=${effectiveUserId}&role=CUSTOMER`);
         const items = msgsRes?.data?.items || [];
-        setStaffMessages(items.map((m) => buildMsg(m)));
+        const staffOnly = items.filter(isStaffChatMessage);
+        setStaffMessages(staffOnly.map((m) => buildMsg(m)));
         scrollBottom();
       }
     } catch { /* ignore */ }
@@ -410,17 +485,21 @@ export default function ChatWidget({ user, socketUrl }) {
     setChatMode(mode);
     setIsOpen(true);
     setUnread(0);
-    if (mode === 'AI' && !greeted) {
-      setGreeted(true);
-      const nameStr = user?.ho_ten || user?.hoTen ? ` ${user.ho_ten || user.hoTen}` : '';
-      addAIMsg(
-        `Xin chào${nameStr}! 👋 Mình là Trợ lý AI của Avengers Coffee.\n\nHôm nay mình có thể hỗ trợ gì cho bạn?`,
-        { _quickReplies: QUICK_ACTIONS.slice(0, 4) }
-      );
+    if (mode === 'AI') {
+      const saved = loadAISession();
+      if (!saved || saved.length === 0) {
+        setMessages([]);
+        setGreeted(true);
+        const nameStr = user?.ho_ten || user?.hoTen ? ` ${user.ho_ten || user.hoTen}` : '';
+        addAIMsg(
+          `Xin chào${nameStr}! 👋 Mình là Trợ lý AI của Avengers Coffee.\n\nHôm nay mình có thể hỗ trợ gì cho bạn?`,
+          { _quickReplies: QUICK_ACTIONS.slice(0, 4) }
+        );
+      }
     } else if (mode === 'STAFF') {
       openStaffChat();
     }
-  }, [greeted, user, addAIMsg, openStaffChat]);
+  }, [user, addAIMsg, openStaffChat]);
 
   // Add item to cart
   const addToCart = useCallback(async (product) => {

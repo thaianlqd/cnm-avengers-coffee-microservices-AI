@@ -327,12 +327,14 @@ export class UserController {
   @Public()
   @Post('promotions/kiem-tra')
   async kiemTraMaKhuyenMai(
-    @Body() body: { ma_khuyen_mai?: string; user_id?: string; gia_tri_don?: number },
+    @Body() body: { ma_khuyen_mai?: string; user_id?: string; gia_tri_don?: number; has_toppings?: boolean; topping_price?: number },
   ) {
     return this.userService.kiemTraMaKhuyenMai(
       body.ma_khuyen_mai || '',
       body.user_id || '',
       Number(body.gia_tri_don || 0),
+      body.has_toppings,
+      Number(body.topping_price || 0),
     );
   }
 
@@ -348,6 +350,16 @@ export class UserController {
       ma_don_hang: body.ma_don_hang || null,
       so_tien_giam: Number(body.so_tien_giam || 0),
     });
+  }
+
+  /** Internal: lấy số lượt user đã sử dụng mã voucher */
+  @AllowInternal()
+  @Get('promotions/luot-dung-user')
+  async layLuotDungUser(
+    @Query('code') code: string,
+    @Query('user_id') userId: string,
+  ) {
+    return this.userService.layLuotDungUser(code, userId);
   }
 
   /** Internal: phát hành voucher giảm giá 20% khi hoàn thành khảo sát */

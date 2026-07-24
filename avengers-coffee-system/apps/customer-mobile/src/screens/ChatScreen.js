@@ -590,8 +590,6 @@ export function ChatScreen({ navigation }) {
     setIsTyping(true)
 
     try {
-      if (conversationId) sendServerMsg.mutate(text)
-
       const history = localMessages
         .slice(-6)
         .map((m) => `${m.role === 'user' ? userName : 'AI'}: ${m.text || ''}`)
@@ -799,7 +797,7 @@ export function ChatScreen({ navigation }) {
 
     // Server messages (staff chat)
     const staffMsgs = serverMessages
-      .filter(m => m.vai_tro_nguoi_gui !== 'CUSTOMER')
+      .filter(m => m.vai_tro_nguoi_gui === 'STAFF' || m.vai_tro_nguoi_gui === 'MANAGER')
       .map(m => ({ ...m, _source: 'staff' }))
 
     // Customer server messages
