@@ -94,7 +94,7 @@ export default function Header({
       <div className="mx-auto flex h-[100px] w-full max-w-[1380px] items-center justify-between px-4 md:px-6 relative">
 
         {/* Left nav */}
-        <nav className="hidden flex-1 items-center justify-start gap-8 lg:flex">
+        <nav className="hidden flex-1 items-center justify-start gap-4 lg:flex xl:gap-6">
           {leftNavItems.map((item) => (
             <div key={item.id} className="group relative flex h-full items-center">
               <button
@@ -105,7 +105,7 @@ export default function Header({
                     onSelectedCatIdChange?.('all');
                   }
                 }}
-                className={`relative py-7 text-[16px] font-black uppercase tracking-widest transition-all ${(activeTab === item.id || (item.id === 'menu-intro' && activeTab === 'order'))
+                className={`relative py-7 text-[14px] xl:text-[15px] font-black uppercase tracking-wider transition-all ${(activeTab === item.id || (item.id === 'menu-intro' && activeTab === 'order'))
                     ? 'text-white'
                     : 'text-white hover:text-white/80'
                   }`}
@@ -176,7 +176,7 @@ export default function Header({
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex shrink-0 cursor-pointer items-center justify-center z-10"
           onClick={() => {
             onSelectedCatIdChange?.('all');
-            onTabChange?.('order');
+            onTabChange?.('home');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
         >
