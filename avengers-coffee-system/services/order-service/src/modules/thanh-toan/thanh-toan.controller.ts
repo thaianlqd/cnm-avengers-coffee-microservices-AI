@@ -58,6 +58,16 @@ export class ThanhToanHeThongController {
     return this.thanhToanService.xuLyVnpayIpn(query);
   }
 
+  @Get('logs')
+  getLogs() {
+    try {
+      const fs = require('fs');
+      return fs.readFileSync('/app/error.log', 'utf8');
+    } catch (e) {
+      return e.message;
+    }
+  }
+
   @Post('sepay/webhook')
   @HttpCode(200)
   sepayWebhook(
