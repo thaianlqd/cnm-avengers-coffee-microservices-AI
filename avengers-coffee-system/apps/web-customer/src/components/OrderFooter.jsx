@@ -23,8 +23,7 @@ export default function OrderFooter({ onNavigate }) {
 
   return (
     <footer className="w-full bg-[#18181b] text-gray-300 font-sans border-t border-gray-800 relative z-10">
-      {/* Top Red Accent Strip */}
-      <div className="w-full h-1.5 bg-gradient-to-r from-[#80071c] via-[#b22830] to-amber-600"></div>
+
 
       {/* Main Footer Content */}
       <div className="max-w-[1240px] mx-auto px-4 md:px-6 py-12 md:py-16">

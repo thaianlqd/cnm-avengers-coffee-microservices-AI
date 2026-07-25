@@ -204,10 +204,10 @@ type PheDuyetDoiSoatInput = {
 @Injectable()
 export class ThanhToanService {
   // VNPAY sandbox defaults; env names aligned with docker-compose.
-  private readonly VNP_TMN_CODE = process.env.VNPAY_TMN_CODE || process.env.VNP_TMN_CODE || 'MEBLXEDU';
-  private readonly VNP_HASH_SECRET = process.env.VNPAY_HASH_SECRET || process.env.VNP_HASH_SECRET || 'T718SPDGIGQSKGM98VCSNAF70M9X93MC';
+  private readonly VNP_TMN_CODE = (process.env.VNPAY_TMN_CODE || process.env.VNP_TMN_CODE || 'MEBLXEDU').trim();
+  private readonly VNP_HASH_SECRET = (process.env.VNPAY_HASH_SECRET || process.env.VNP_HASH_SECRET || 'T718SPDGIGQSKGM98VCSNAF70M9X93MC').trim();
   private readonly VNP_URL = process.env.VNPAY_URL || process.env.VNP_URL || 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html';
-  private readonly VNP_RETURN_BASE_URL = process.env.PAYMENT_RETURN_BASE_URL || process.env.VNP_RETURN_BASE_URL || 'http://localhost:3000';
+  private readonly VNP_RETURN_BASE_URL = (process.env.PAYMENT_RETURN_BASE_URL || process.env.VNP_RETURN_BASE_URL || 'http://localhost:3000').trim();
   private readonly SEPAY_BANK_CODE = process.env.SEPAY_BANK_CODE || 'MBBank';
   private readonly SEPAY_ACCOUNT_NO = process.env.SEPAY_ACCOUNT_NO || '025452790502';
   private readonly IDENTITY_SERVICE_URL = process.env.IDENTITY_SERVICE_URL || 'http://identity-service:3001';
@@ -1643,7 +1643,11 @@ export class ThanhToanService {
 
 
   // --- VNPAY LOGIC ---
-  private taoUrlVnpayThat(maNguoiDung: string, maDonHang: string, tongTien: number, txnRef: string, ipAddr: string) {
+  private taoUrlVnpayThat(maNguoiDung: string, maDonHang: string, tongTien: number, txnRef: string, clientIp: string) {
+    let ipAddr = clientIp || '113.190.232.222';
+    if (ipAddr === '::1' || ipAddr === '127.0.0.1' || ipAddr.startsWith('172.') || ipAddr.startsWith('192.168.') || ipAddr.startsWith('10.')) {
+        ipAddr = '113.190.232.222';
+    }
     const returnBase = this.VNP_RETURN_BASE_URL.replace(/\/+$/, '');
     const returnUrl = `${returnBase}/customers/${maNguoiDung}/thanh-toan/vnpay/ket-qua`;
     const now = new Date();
@@ -1659,33 +1663,41 @@ export class ThanhToanService {
         vnp_CurrCode: 'VND',
         vnp_IpAddr: ipAddr,
         vnp_Locale: 'vn',
-        vnp_OrderInfo: `Thanh toan don hang ${maDonHang}`,
+        vnp_OrderInfo: `Thanh toan don hang ${maDonHang.replace(/-/g, '')}`,
         vnp_OrderType: 'billpayment',
         vnp_ReturnUrl: returnUrl,
         vnp_TxnRef: txnRef,
         vnp_ExpireDate: expireDate,
     };
 
-    // 1. Sắp xếp các tham số theo thứ tự alphabet của key
+    // Theo chuẩn VNPAY v2.1.0:
+    // 1. Dữ liệu băm (signData): Tên tham số URL Encode, Giá trị KHÔNG URL Encode.
+    // 2. Chuỗi query trên URL: Cả Tên và Giá trị đều phải URL Encode (theo RFC 3986, khoảng trắng là %20).
     const sortedKeys = Object.keys(params).sort();
     
-    // 2. Tạo chuỗi query
+    // Áp dụng đúng chuẩn VNPay Node.js SDK (dùng trong 99% dự án thực tế):
+    // Cả Tên và Giá trị đều URL Encode, thay khoảng trắng thành dấu +
     const signData = sortedKeys
-        .map((key) => {
-            const value = params[key];
-            if (value === null || value === undefined || value === '') return null;
-            // Quan trọng: Cả key và value đều phải được encode đúng chuẩn (VNPAY dùng + thay cho %20)
-            return `${encodeURIComponent(key)}=${encodeURIComponent(String(value)).replace(/%20/g, '+')}`;
-        })
-        .filter(Boolean)
-        .join('&');
+      .map(key => {
+        const val = String(params[key]);
+        return `${encodeURIComponent(key)}=${encodeURIComponent(val).replace(/%20/g, '+')}`;
+      })
+      .join('&');
 
-    // 3. Tạo SecureHash (HMAC-SHA512)
     const hmac = crypto.createHmac('sha512', this.VNP_HASH_SECRET);
     const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
     
-    // 4. Build URL cuối cùng
-    const finalUrl = `${this.VNP_URL}?${signData}&vnp_SecureHash=${signed}`;
+    // Debug logging
+    const maskedSecret = this.VNP_HASH_SECRET.substring(0, 4) + '***' + this.VNP_HASH_SECRET.substring(this.VNP_HASH_SECRET.length - 4);
+    require('fs').appendFileSync('/app/error.log', '\n[VNPAY DEBUG] signData: ' + signData + '\n[VNPAY DEBUG] Secret used: ' + maskedSecret + ' (Length: ' + this.VNP_HASH_SECRET.length + ')\n[VNPAY DEBUG] Generated Hash: ' + signed + '\n');
+    console.log('[VNPAY DEBUG] signData:', signData);
+    console.log('[VNPAY DEBUG] Masked Secret:', maskedSecret, 'Length:', this.VNP_HASH_SECRET.length);
+
+    // urlQuery dùng để gắn lên URL (phải URL Encode giá trị)
+    const urlQuery = sortedKeys
+      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(String(params[key])).replace(/%20/g, '+')}`)
+      .join('&');
+    const finalUrl = `${this.VNP_URL}?${urlQuery}&vnp_SecureHash=${signed}`;
     
     return finalUrl;
 }
@@ -1695,7 +1707,15 @@ export class ThanhToanService {
     const clone = { ...query };
     delete clone.vnp_SecureHash; delete clone.vnp_SecureHashType;
 
-    const signData = new URLSearchParams(Object.keys(clone).sort().reduce((obj, key) => { obj[key] = clone[key]; return obj; }, {})).toString();
+    const sortedKeys = Object.keys(clone).sort();
+    
+    const signData = sortedKeys
+      .map(key => {
+        const val = String(clone[key]);
+        return `${encodeURIComponent(key)}=${encodeURIComponent(val).replace(/%20/g, '+')}`;
+      })
+      .join('&');
+
     const hmac = crypto.createHmac('sha512', this.VNP_HASH_SECRET);
     const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
 

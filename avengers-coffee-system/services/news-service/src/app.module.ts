@@ -31,12 +31,15 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
         const password = process.env.DB_PASSWORD || '123';
         const database = process.env.DB_NAME || 'avengers_coffee';
 
+        const sslConfig = process.env.PGSSLMODE === 'require' ? { rejectUnauthorized: false } : false;
+
         const client = new Client({
           host,
           port,
           user: username,
           password,
           database,
+          ssl: sslConfig,
         });
 
         await client.connect();
@@ -50,6 +53,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
           username,
           password,
           database,
+          ssl: sslConfig,
           schema: newsSchema,
           entities: [Article],
           synchronize: true,

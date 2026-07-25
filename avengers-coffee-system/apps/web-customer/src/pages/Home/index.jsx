@@ -102,7 +102,7 @@ export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider, categorie
             <button
               type="button"
               onClick={() => {
-                const cat = categories?.find(c => c.ten_danh_muc && c.ten_danh_muc.toLowerCase().includes('trà'));
+                const cat = categories?.find(c => c.ten_danh_muc && c.ten_danh_muc.toLowerCase().includes('bánh'));
                 if (cat && setSelectedCatId) setSelectedCatId(cat.ma_danh_muc);
                 setActiveTab('order');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
