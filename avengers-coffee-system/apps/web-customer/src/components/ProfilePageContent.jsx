@@ -300,6 +300,25 @@ export default function ProfilePageContent({
   }, [defaultAddressSelection, userId]);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const walletStatus = params.get('wallet_payment');
+    if (walletStatus === 'success') {
+      alert('Nạp tiền vào ví qua VNPAY thành công!');
+      // Xóa param khỏi url
+      window.history.replaceState({}, document.title, window.location.pathname + '?tab=wallet');
+      if (activeTab !== 'wallet') {
+        setActiveTab('wallet');
+      }
+    } else if (walletStatus === 'failed') {
+      alert('Nạp tiền vào ví thất bại hoặc đã bị hủy!');
+      window.history.replaceState({}, document.title, window.location.pathname + '?tab=wallet');
+      if (activeTab !== 'wallet') {
+        setActiveTab('wallet');
+      }
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
     if (!addressForm.city && defaultAddressSelection.city) {
       setAddressForm((prev) => ({ ...prev, ...defaultAddressSelection }));
     }

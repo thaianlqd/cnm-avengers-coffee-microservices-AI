@@ -47,18 +47,56 @@ export class CustomerWalletService {
       customer_id: customerId,
       amount: amount,
       type: 'TOP_UP',
-      status: 'SUCCESS',
+      status: 'PENDING',
     });
-    await this.transactionRepo.save(transaction);
+    const savedTransaction = await this.transactionRepo.save(transaction);
 
-    let wallet = await this.walletRepo.findOne({ where: { customer_id: customerId } });
-    if (!wallet) {
-      wallet = this.walletRepo.create({ customer_id: customerId, balance: 0 });
+    const txnRef = `WT_${savedTransaction.id}`;
+    let finalIpAddr = ipAddr;
+    if (finalIpAddr === '::1' || finalIpAddr === '127.0.0.1' || finalIpAddr.startsWith('172.') || finalIpAddr.startsWith('192.168.') || finalIpAddr.startsWith('10.')) {
+        finalIpAddr = '113.190.232.222';
     }
-    wallet.balance = Number(wallet.balance) + amount;
-    await this.walletRepo.save(wallet);
 
-    return { message: 'Da nap tien thanh cong', redirect_url: null, success: true };
+    const returnBase = this.VNP_RETURN_BASE_URL.replace(/\/+$/, '');
+    const returnUrl = `${returnBase}/customers/${customerId}/thanh-toan/vnpay/ket-qua`;
+
+    const f = (n: number) => String(n).padStart(2, '0');
+    const now = new Date();
+    const vnTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+    const createDate = `${vnTime.getUTCFullYear()}${f(vnTime.getUTCMonth() + 1)}${f(vnTime.getUTCDate())}${f(vnTime.getUTCHours())}${f(vnTime.getUTCMinutes())}${f(vnTime.getUTCSeconds())}`;
+    const expireTime = new Date(now.getTime() + 20 * 60 * 1000 + (7 * 60 * 60 * 1000));
+    const expireDate = `${expireTime.getUTCFullYear()}${f(expireTime.getUTCMonth() + 1)}${f(expireTime.getUTCDate())}${f(expireTime.getUTCHours())}${f(expireTime.getUTCMinutes())}${f(expireTime.getUTCSeconds())}`;
+
+    const params: any = {
+        vnp_Version: '2.1.0',
+        vnp_Command: 'pay',
+        vnp_TmnCode: this.VNP_TMN_CODE,
+        vnp_Amount: String(Math.round(amount) * 100),
+        vnp_CreateDate: createDate,
+        vnp_CurrCode: 'VND',
+        vnp_IpAddr: finalIpAddr,
+        vnp_Locale: 'vn',
+        vnp_OrderInfo: `Nap tien vao vi ${txnRef}`,
+        vnp_OrderType: 'billpayment',
+        vnp_ReturnUrl: returnUrl,
+        vnp_TxnRef: txnRef,
+        vnp_ExpireDate: expireDate,
+    };
+
+    const sortedKeys = Object.keys(params).sort();
+    const signData = sortedKeys
+      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(String(params[key])).replace(/%20/g, '+')}`)
+      .join('&');
+
+    const hmac = crypto.createHmac('sha512', this.VNP_HASH_SECRET);
+    const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
+
+    const urlQuery = sortedKeys
+      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(String(params[key])).replace(/%20/g, '+')}`)
+      .join('&');
+    const redirectUrl = `${this.VNP_URL}?${urlQuery}&vnp_SecureHash=${signed}`;
+
+    return { message: 'Da khoi tao VNPAY', redirect_url: redirectUrl, success: true };
   }
 
 

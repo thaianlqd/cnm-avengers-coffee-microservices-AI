@@ -35,10 +35,17 @@ export class ThanhToanController {
     @Res() res: Response,
   ) {
     const result = await this.thanhToanService.ketQuaVnpayThat(customerId, query);
+
+    if (result.is_wallet_tx) {
+      const webBase = process.env.WEB_CUSTOMER_BASE_URL || 'http://localhost:5173';
+      const redirectUrl = `${webBase}/?tab=profile&wallet_payment=${result.success ? 'success' : 'failed'}`;
+      return res.redirect(302, redirectUrl);
+    }
+
     const redirectUrl = this.thanhToanService.taoUrlRedirectFrontEnd(
       customerId,
-      result.don_hang.ma_don_hang,
-      result.don_hang.trang_thai_thanh_toan === 'DA_THANH_TOAN',
+      result.don_hang!.ma_don_hang,
+      result.don_hang!.trang_thai_thanh_toan === 'DA_THANH_TOAN',
     );
     return res.redirect(302, redirectUrl);
   }

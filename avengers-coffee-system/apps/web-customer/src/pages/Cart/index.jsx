@@ -480,6 +480,9 @@ export default function CartPage({
 
   const khoiTaoThanhToanMutation = useMutation({
     mutationFn: async () => {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const customerName = user.ho_ten || user.hoTen || user.ten_dang_nhap || user.username || undefined;
+
       const response = await apiClient.post(`/customers/${maNguoiDung}/thanh-toan/khoi-tao`, {
         phuong_thuc_giao: deliveryMode,
         phuong_thuc_thanh_toan: phuongThuc,
@@ -495,7 +498,7 @@ export default function CartPage({
         guest_email: isLoggedInUser ? undefined : guestEmail.trim(),
         guest_phone: isLoggedInUser ? undefined : guestPhone.trim(),
         session_id: guestSessionId,
-        ten_khach_hang: isLoggedInUser ? (JSON.parse(localStorage.getItem('user') || '{}')?.ho_ten || undefined) : (guestEmail.trim() || guestPhone.trim()),
+        ten_khach_hang: isLoggedInUser ? customerName : (guestEmail.trim() || guestPhone.trim() || undefined),
       });
       return response.data;
     },
