@@ -18,12 +18,15 @@ const inventorySchema = process.env.DB_SCHEMA || 'inventory';
         const password = process.env.DB_PASSWORD || '123';
         const database = process.env.DB_NAME || 'avengers_coffee';
 
+        const sslConfig = process.env.PGSSLMODE === 'require' ? { rejectUnauthorized: false } : false;
+
         const client = new Client({
           host,
           port,
           user: username,
           password,
           database,
+          ssl: sslConfig,
         });
 
         await client.connect();
@@ -37,6 +40,7 @@ const inventorySchema = process.env.DB_SCHEMA || 'inventory';
           username,
           password,
           database,
+          ssl: sslConfig,
           schema: inventorySchema,
           entities: [InventoryItem],
           synchronize: true,

@@ -33,6 +33,11 @@ function buildMsg(overrides) {
   return { id: `m-${Date.now()}-${Math.random().toString(36).slice(2)}`, ngay_tao: new Date().toISOString(), ...overrides, noi_dung, reply_to };
 }
 
+function buildContentWithReply(text, reply) {
+  if (!reply) return text;
+  return `[[reply:${encodeURIComponent(JSON.stringify(reply))}]]\n${text}`;
+}
+
 function getInitials(name) {
   if (!name || name === 'Khách') return 'G';
   const parts = name.trim().split(/\s+/);
@@ -371,7 +376,10 @@ export default function ChatWidget({ user, socketUrl }) {
     return saved || [];
   });
   const [staffMessages, setStaffMessages] = useState([]);
-  const [inputText, setInputText] = useState('');
+  const [aiInputText, setAiInputText] = useState('');
+  const [staffInputText, setStaffInputText] = useState('');
+  const inputText = chatMode === 'AI' ? aiInputText : staffInputText;
+  const setInputText = chatMode === 'AI' ? setAiInputText : setStaffInputText;
   const [sending, setSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -465,8 +473,17 @@ export default function ChatWidget({ user, socketUrl }) {
     if (conversation) { scrollBottom(); return; }
     setLoading(true);
     try {
-      const res = await apiClient.post('/chat/conversations/open', { customer_user_id: effectiveUserId, customer_name: userName });
-      const conv = res?.data?.conversation || res?.conversation;
+      const token = window.localStorage.getItem('token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/chat/conversations/open`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ customer_user_id: effectiveUserId, customer_name: userName }),
+      });
+      const data = await res.json();
+      const conv = data?.conversation || data;
       if (conv) {
         setConversation(conv);
         if (socketRef.current) socketRef.current.emit('chat:conversation:join', { conversationId: conv.ma_hoi_thoai });
@@ -642,11 +659,11 @@ export default function ChatWidget({ user, socketUrl }) {
   const sendMessage = useCallback(async (overrideText) => {
     const text = (overrideText !== undefined ? String(overrideText) : inputText).trim();
     if (!text || sending) return;
-    if (overrideText === undefined) setInputText('');
     setSending(true);
 
     if (chatMode === 'AI') {
       addUserMsg(text);
+      if (overrideText === undefined) setInputText('');
       scrollBottom();
       setIsTyping(true);
       try {
@@ -658,21 +675,40 @@ export default function ChatWidget({ user, socketUrl }) {
       }
     } else {
       // Staff mode
-      if (!conversation) { setSending(false); return; }
+      if (!conversation) { 
+        setSending(false); 
+        return; 
+      }
       const content = buildContentWithReply(text, replyTo ? { sender: replyTo.ten_nguoi_gui || replyTo.sender, content: replyTo.noi_dung?.slice(0, 200) } : null);
       setReplyTo(null);
       try {
-        const res = await apiClient.post(`/chat/conversations/${conversation.ma_hoi_thoai}/messages`, {
-          sender_user_id: effectiveUserId, sender_name: userName, sender_role: 'CUSTOMER', content,
+        const token = window.localStorage.getItem('token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/chat/conversations/${conversation.ma_hoi_thoai}/messages`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            sender_user_id: effectiveUserId, sender_name: userName, sender_role: 'CUSTOMER', content,
+          }),
         });
-        if (res?.data?.conversation) setConversation(res.data.conversation);
-        if (res?.data?.message) {
-          const m = buildMsg(res.data.message);
+        
+        if (!res.ok) throw new Error('API Error');
+        const data = await res.json();
+        
+        if (overrideText === undefined) setInputText('');
+        if (data?.conversation) setConversation(data.conversation);
+        if (data?.message) {
+          const m = buildMsg(data.message);
           setStaffMessages((prev) => prev.some((x) => String(x.id) === String(m.id)) ? prev : [...prev, m]);
           scrollBottom();
         }
-      } catch { setInputText(text); }
-      finally { setSending(false); }
+      } catch (err) {
+        console.error('Failed to send message:', err);
+      } finally {
+        setSending(false);
+      }
     }
   }, [inputText, sending, chatMode, conversation, replyTo, effectiveUserId, userName, addUserMsg, scrollBottom, processAIMessage]);
 
@@ -825,7 +861,7 @@ export default function ChatWidget({ user, socketUrl }) {
               {[{ mode: 'AI', label: 'Trợ lý AI' }, { mode: 'STAFF', label: 'Nhân viên tư vấn' }].map(({ mode, label }) => (
                 <button
                   key={mode}
-                  onClick={() => { setChatMode(mode); if (mode === 'STAFF') openStaffChat(); }}
+                  onClick={() => { setChatMode(mode); setSending(false); if (mode === 'STAFF') openStaffChat(); }}
                   style={{
                     border: 'none', outline: 'none', cursor: 'pointer', flex: 1, padding: '6px 0', borderRadius: 10,
                     fontSize: '0.74rem', fontWeight: 800, textAlign: 'center', transition: 'all 0.2s',

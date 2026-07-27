@@ -739,6 +739,47 @@ function AppContent() {
     refetchInterval: 120 * 1000,
   });
 
+  // ── Sync Document Title with Active Tab ──
+  useEffect(() => {
+    let tabName = 'Trang chủ';
+    switch (activeTab) {
+      case 'home': tabName = 'Trang chủ'; break;
+      case 'order': {
+        if (selectedCatId === 'all') {
+          tabName = 'Đặt hàng';
+        } else {
+          const cat = categories?.find(c => String(c.ma_danh_muc) === String(selectedCatId));
+          tabName = cat ? cat.ten_danh_muc : 'Đặt hàng';
+        }
+        break;
+      }
+      case 'product-detail': {
+        if (selectedProductForPage) {
+          tabName = selectedProductForPage.ten_san_pham || 'Chi tiết sản phẩm';
+        } else {
+          tabName = 'Chi tiết sản phẩm';
+        }
+        break;
+      }
+      case 'cart': tabName = 'Giỏ hàng'; break;
+      case 'checkout': tabName = 'Thanh toán'; break;
+      case 'profile': tabName = 'Hồ sơ cá nhân'; break;
+      case 'order-history': tabName = 'Lịch sử đơn hàng'; break;
+      case 'news': tabName = 'Tin tức'; break;
+      case 'stores': tabName = 'Hệ thống cửa hàng'; break;
+      case 'about': tabName = 'Về chúng tôi'; break;
+      case 'careers': tabName = 'Tuyển dụng'; break;
+      case 'contact': tabName = 'Liên hệ'; break;
+      case 'vouchers': tabName = 'Kho Voucher'; break;
+      case 'gift-card': tabName = 'Thẻ quà tặng'; break;
+      case 'login': tabName = 'Đăng nhập'; break;
+      case 'menu-intro': tabName = 'Thực đơn'; break;
+      default: tabName = 'Trang chủ';
+    }
+    
+    document.title = `${tabName} | Avengers Coffee`;
+  }, [activeTab, selectedCatId, categories, selectedProductForPage]);
+
   const loading = isProductsLoading || isCategoriesLoading;
   const hasMenuError = isProductsError || isCategoriesError;
 
@@ -1289,14 +1330,14 @@ function AppContent() {
         danhMuc: { ten_danh_muc: item.category || 'Goi y AI' },
         mo_ta: item.reason || '',
       };
-    }).slice(0, 3);
+    }).slice(0, 5);
   }, [aiRecsData, products]);
 
   const syncedBehaviorTop3Products = useMemo(() => {
     const behaviorTopSource = behaviorInsightsData?.customer_sync_top_products?.length
       ? behaviorInsightsData.customer_sync_top_products
       : behaviorInsightsData?.top_products || [];
-    const behaviorTop = behaviorTopSource.slice(0, 3);
+    const behaviorTop = behaviorTopSource.slice(0, 5);
     if (!behaviorTop.length) return [];
 
     return behaviorTop.map((item) => {
@@ -1822,6 +1863,8 @@ function AppContent() {
             activeCategoryId={selectedCatId}
             onCategoryChange={(catId) => {
               setSelectedCatId(catId);
+              setActiveTab('order');
+              setSearchKeyword('');
             }}
             onOrderProduct={(product) => {
               handleOpenProductPage(product);
