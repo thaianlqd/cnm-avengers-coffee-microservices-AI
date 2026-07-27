@@ -375,6 +375,7 @@ export default function OrderPage({
     }
     setActiveCategory(id);
     if (onSelectedCatIdChange) onSelectedCatIdChange(id);
+    if (onSearchKeywordChange) onSearchKeywordChange(''); // Clear search when switching categories
     if (onNavigate) onNavigate('order');
     setIsDropdownOpen(false);
     setIsMobileMenuOpen(false);
@@ -790,20 +791,22 @@ export default function OrderPage({
             ) : (
               <>
                 {/* Hero Banner & Category Menu Area (Desktop Only) */}
-                <div className="w-full mb-10 flex flex-col lg:flex-row items-stretch gap-8">
-                  
-                  {/* LEFT SIDEBAR (Category Menu Desktop) */}
-                  <div className="hidden lg:flex flex-col w-[260px] flex-shrink-0 z-10 bg-white shadow-sm border-l border-r border-b border-gray-100 pb-2">
-                    <ul className="w-full flex flex-col flex-1 overflow-y-auto no-scrollbar">
-                      {categoryMenuItems}
-                    </ul>
-                  </div>
+                {activeCategory === 'all' && (
+                  <div className="w-full mb-10 flex flex-col lg:flex-row items-stretch gap-8">
+                    
+                    {/* LEFT SIDEBAR (Category Menu Desktop) */}
+                    <div className="hidden lg:flex flex-col w-[260px] flex-shrink-0 z-10 bg-white shadow-sm border-l border-r border-b border-gray-100 pb-2">
+                      <ul className="w-full flex flex-col flex-1 overflow-y-auto no-scrollbar">
+                        {categoryMenuItems}
+                      </ul>
+                    </div>
 
-                  {/* HERO BANNER */}
-                  <div className="flex-1 min-w-0 flex pt-4 lg:pt-0">
-                    <BannerSlider />
+                    {/* HERO BANNER */}
+                    <div className="flex-1 min-w-0 flex pt-4 lg:pt-0">
+                      <BannerSlider />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Single Compact Unified Voucher Row Section */}
                 {(personalVouchers.length > 0 || publicVouchers.length > 0) && (
@@ -839,7 +842,7 @@ export default function OrderPage({
                 )}
 
                 {/* AI TOP 3 RECOMMENDED PRODUCTS UNDER VOUCHER */}
-                {aiRecommendedProducts && aiRecommendedProducts.length > 0 && (
+                {activeCategory === 'all' && aiRecommendedProducts && aiRecommendedProducts.length > 0 && (
                   <div className="mb-10 w-full">
                     <div className="bg-white rounded-3xl border border-rose-100 p-6 md:p-8 shadow-2xs relative overflow-hidden">
                       {/* Section Top Header */}
@@ -850,7 +853,7 @@ export default function OrderPage({
                             SMART RECOMMENDATION
                           </div>
                           <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-gray-900 font-sans">
-                            TOP 3 MÓN HỢP GU CỦA BẠN
+                            TOP 5 MÓN HỢP GU CỦA BẠN
                           </h2>
                           <p className="mt-1 text-xs md:text-sm font-medium text-gray-500">
                             Cá nhân hóa theo lịch sử mua hàng, đánh giá, yêu thích và xu hướng dùng ưu đãi.
@@ -864,85 +867,91 @@ export default function OrderPage({
                       </div>
 
                       {/* Unified Product Cards Grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {aiRecommendedProducts.slice(0, 3).map((product) => {
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-8">
+                        {aiRecommendedProducts.slice(0, 5).map((product) => {
                           const isFav = isFavoriteProduct ? isFavoriteProduct(product) : false;
                           const categoryName = product?.danhMuc?.ten_danh_muc || 'Highlands Coffee';
 
                           return (
-                            <div
-                              key={product.ma_san_pham || product.id}
-                              className="group relative flex flex-col justify-between rounded-2xl border border-gray-100 bg-white p-4 shadow-2xs transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer"
-                              onClick={() => onViewDetail?.(product)}
+                            <div 
+                              key={product.ma_san_pham || product.id} 
+                              className="bg-white rounded-2xl border border-gray-100/90 overflow-hidden shadow-2xs hover:shadow-xl hover:border-red-100 transition-all duration-300 group relative flex flex-col hover:-translate-y-1 p-3 cursor-pointer"
+                              onClick={() => (onOpenProductPage ? onOpenProductPage(product) : onViewDetail?.(product))}
                             >
-                              <div>
-                                {/* Image Container */}
-                                <div className="relative mb-3 flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl bg-[#f8f8f6] p-3">
-                                  <img
-                                    src={product.hinh_anh_url || product.img || '/hc-assets/caphe-1.png'}
-                                    alt={product.ten_san_pham || product.name}
-                                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 rounded-lg"
-                                  />
+                              {/* Product Image Container */}
+                              <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-[#f8f8f6] p-2 flex items-center justify-center">
+                                <img 
+                                  src={product.hinh_anh_url || product.img || '/hc-assets/caphe-1.png'} 
+                                  alt={product.ten_san_pham || product.name} 
+                                  className="w-full h-full object-cover rounded-lg transition-transform duration-500 group-hover:scale-105" 
+                                />
+                                
+                                {/* Magnifying Glass Quick View Hover Button */}
+                                <button 
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setQuickViewProduct(product);
+                                  }}
+                                  className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-20 hover:bg-white hover:scale-110 cursor-pointer"
+                                  title="Xem nhanh"
+                                >
+                                  <MagnifyingGlassIcon className="w-4 h-4 text-gray-700 font-bold" />
+                                </button>
 
+                                {/* Badges Overlay */}
+                                <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 z-10 pointer-events-none">
                                   {/* AI Special Tag */}
-                                  <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#c41230] to-amber-600 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-xs">
-                                    <SparklesIcon className="w-3 h-3 text-amber-200" />
-                                    Gợi ý AI
+                                  <span className="inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-[#c41230] to-amber-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-2xs">
+                                    <SparklesIcon className="w-2.5 h-2.5 text-amber-200" /> GỢI Ý AI
                                   </span>
+                                  {product.la_hot && (
+                                    <span className="inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-2xs">
+                                      <FireIcon className="w-2.5 h-2.5" /> BESTSELLER
+                                    </span>
+                                  )}
+                                  {!product.la_hot && product.la_moi && (
+                                    <span className="inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-2xs">
+                                      <SparklesIcon className="w-2.5 h-2.5" /> MÓN MỚI
+                                    </span>
+                                  )}
+                                  {product.dang_giam_gia && (
+                                    <span className="inline-flex items-center rounded-full bg-[#b22830] px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-2xs">
+                                      -{Math.round((1 - product.gia_ban / product.gia_niem_yet) * 100)}%
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
 
-                                  {/* Favorite Button */}
+                              {/* Product Info */}
+                              <div className="pt-3 px-1 flex flex-col flex-1">
+                                <p className="text-[10px] font-extrabold text-[#00a651] uppercase tracking-wider mb-0.5">{categoryName}</p>
+                                <h4 className="text-[15px] font-bold text-gray-900 mb-2 leading-snug min-h-[2.4rem] line-clamp-2 transition-colors group-hover:text-[#b22830]">
+                                  {product.ten_san_pham || product.name}
+                                </h4>
+                                <div className="mt-auto pt-2 flex items-center justify-between border-t border-gray-100">
+                                  <div className="flex flex-col">
+                                    <span className="text-[16px] font-black text-[#b22830] leading-none">
+                                      {Number(product.gia_ban || 39000).toLocaleString('vi-VN')} <span className="text-[11px] font-bold text-gray-500">đ</span>
+                                    </span>
+                                    {product.dang_giam_gia && (
+                                      <span className="text-[11px] text-gray-400 line-through mt-0.5">
+                                        {Number(product.gia_niem_yet).toLocaleString('vi-VN')}đ
+                                      </span>
+                                    )}
+                                  </div>
                                   <button
                                     type="button"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      onToggleFavorite?.(product);
+                                      onQuickAdd?.(product);
                                     }}
-                                    className="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 shadow-sm transition-transform hover:scale-110"
-                                    aria-label={isFav ? 'Bỏ yêu thích' : 'Thêm yêu thích'}
+                                    className="w-8 h-8 rounded-xl bg-[#b22830] text-white flex items-center justify-center hover:bg-[#8e1c23] hover:scale-105 active:scale-95 transition-all shadow-2xs cursor-pointer"
+                                    title="Thêm vào giỏ"
                                   >
-                                    {isFav ? (
-                                      <HeartSolidIcon className="h-4 w-4 text-[#c41230]" />
-                                    ) : (
-                                      <HeartOutlineIcon className="h-4 w-4 text-gray-400" />
-                                    )}
+                                    <span className="text-lg font-bold leading-none">+</span>
                                   </button>
                                 </div>
-
-                                {/* Category Tag */}
-                                <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-[#00a651] font-sans">
-                                  {categoryName}
-                                </p>
-
-                                {/* Title - Unified Sans-serif Font */}
-                                <h3 className="mb-2 min-h-[2.5rem] text-[16px] font-bold leading-tight text-gray-900 transition-colors group-hover:text-[#c41230] line-clamp-2 font-sans">
-                                  {product.ten_san_pham || product.name}
-                                </h3>
-
-                                {/* Price */}
-                                <div className="mb-4">
-                                  <p className="text-[18px] font-black text-[#c41230] font-sans">
-                                    {(Number(product.gia_ban) || 39000).toLocaleString('vi-VN')} <span className="text-xs font-bold text-gray-500">đ</span>
-                                  </p>
-                                </div>
-                              </div>
-
-                              {/* Action Buttons */}
-                              <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
-                                <button
-                                  type="button"
-                                  onClick={() => onViewDetail?.(product)}
-                                  className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 text-center text-xs font-extrabold uppercase tracking-wide text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 cursor-pointer"
-                                >
-                                  Chi tiết
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => onQuickAdd?.(product)}
-                                  className="w-full rounded-lg bg-[#c41230] py-2 text-center text-xs font-extrabold uppercase tracking-wide text-white transition-colors hover:bg-[#a00b25] shadow-xs cursor-pointer flex items-center justify-center gap-1"
-                                >
-                                  <ShoppingCartIcon className="w-3.5 h-3.5" />
-                                  Thêm
-                                </button>
                               </div>
                             </div>
                           );
@@ -953,37 +962,39 @@ export default function OrderPage({
                 )}
 
                 {/* Mobile Horizontal Scroll Category Tab Bar (Sticky top below main header) */}
-                <div className="lg:hidden sticky top-[84px] z-30 bg-white border-b border-gray-100 py-3 shadow-md overflow-x-auto no-scrollbar flex gap-2 px-6">
-                  <button
-                    type="button"
-                    onClick={() => handleCategorySelect('all')}
-                    className={`inline-flex items-center justify-center px-4 py-2 rounded-full text-xs font-bold uppercase transition-all flex-shrink-0 ${
-                      activeCategory === 'all'
-                        ? 'bg-[#b22830] text-white shadow-sm'
-                        : 'bg-[#f5f5f5] text-[#333333] hover:bg-gray-200'
-                    }`}
-                  >
-                    Tất cả
-                  </button>
-                  {parentCats.map((parent, idx) => {
-                    const iconUrl = MENU_ICONS[idx % MENU_ICONS.length];
-                    const isActive = activeCategory === parent.ma_danh_muc;
-                    return (
-                      <button
-                        key={parent.ma_danh_muc}
-                        type="button"
-                        onClick={() => handleCategorySelect(parent.ma_danh_muc)}
-                        className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold uppercase transition-all flex-shrink-0 ${
-                          isActive
-                            ? 'bg-[#b22830] text-white shadow-sm'
-                            : 'bg-[#f5f5f5] text-[#333333] hover:bg-gray-200'
-                        }`}
-                      >
-                        {parent.ten_danh_muc}
-                      </button>
-                    );
-                  })}
-                </div>
+                {activeCategory === 'all' && (
+                  <div className="lg:hidden sticky top-[84px] z-30 bg-white border-b border-gray-100 py-3 shadow-md overflow-x-auto no-scrollbar flex gap-2 px-6">
+                    <button
+                      type="button"
+                      onClick={() => handleCategorySelect('all')}
+                      className={`inline-flex items-center justify-center px-4 py-2 rounded-full text-xs font-bold uppercase transition-all flex-shrink-0 ${
+                        activeCategory === 'all'
+                          ? 'bg-[#b22830] text-white shadow-sm'
+                          : 'bg-[#f5f5f5] text-[#333333] hover:bg-gray-200'
+                      }`}
+                    >
+                      Tất cả
+                    </button>
+                    {parentCats.map((parent, idx) => {
+                      const iconUrl = MENU_ICONS[idx % MENU_ICONS.length];
+                      const isActive = activeCategory === parent.ma_danh_muc;
+                      return (
+                        <button
+                          key={parent.ma_danh_muc}
+                          type="button"
+                          onClick={() => handleCategorySelect(parent.ma_danh_muc)}
+                          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold uppercase transition-all flex-shrink-0 ${
+                            isActive
+                              ? 'bg-[#b22830] text-white shadow-sm'
+                              : 'bg-[#f5f5f5] text-[#333333] hover:bg-gray-200'
+                          }`}
+                        >
+                          {parent.ten_danh_muc}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
 
 {/* Main Two-Column Layout for Products */}
             <div ref={productsContainerRef} className="flex flex-col lg:flex-row gap-8 px-6 lg:px-8 mt-6">
@@ -992,34 +1003,97 @@ export default function OrderPage({
 
                     {/* Product Grids */}
                     <div className="space-y-12">
-                      {menuSections.map((section, idx) => {
+                      {activeCategory !== 'all' && (
+                        (() => {
+                          const activeCatObj = categories.find(c => String(c.ma_danh_muc) === String(activeCategory));
+                          const parentCatObj = activeCatObj?.ma_danh_muc_cha ? categories.find(c => String(c.ma_danh_muc) === String(activeCatObj.ma_danh_muc_cha)) : null;
+                          const headingLabel = activeCatObj ? activeCatObj.ten_danh_muc : '';
+                          const parentLabel = parentCatObj ? parentCatObj.ten_danh_muc : '';
+                          return (
+                            <div className="mb-2">
+                              <div className="flex items-center gap-2 text-[13px] font-bold text-gray-400 mb-8 uppercase tracking-wider">
+                                <button type="button" onClick={() => handleCategorySelect('all')} className="hover:text-[#b22830] transition-colors cursor-pointer border-none bg-transparent p-0">Trang chủ</button>
+                                {parentLabel && (
+                                  <>
+                                    <span>/</span>
+                                    <button type="button" onClick={() => handleCategorySelect(parentCatObj.ma_danh_muc)} className="hover:text-[#b22830] transition-colors cursor-pointer border-none bg-transparent p-0">{parentLabel}</button>
+                                  </>
+                                )}
+                                <span>/</span>
+                                <span className="text-gray-900">{headingLabel}</span>
+                              </div>
+                              <div className="flex flex-col items-start pb-2 mb-2 gap-3 pt-2">
+                                <h2 className="text-2xl md:text-[28px] font-black text-[#333333] uppercase font-sans tracking-wide">
+                                  {headingLabel}
+                                </h2>
+                                <div className="flex flex-wrap items-center gap-4 text-[13px] font-medium text-gray-500">
+                                  <span className="text-[#333333] font-bold">Sắp xếp:</span>
+                                  <button onClick={() => setSortByOrder('name-asc')} className={`hover:text-[#b22830] transition-colors cursor-pointer border-none bg-transparent p-0 ${sortByOrder === 'name-asc' ? 'text-[#b22830]' : ''}`}>Tên A &rarr; Z</button>
+                                  <button onClick={() => setSortByOrder('name-desc')} className={`hover:text-[#b22830] transition-colors cursor-pointer border-none bg-transparent p-0 ${sortByOrder === 'name-desc' ? 'text-[#b22830]' : ''}`}>Tên Z &rarr; A</button>
+                                  <button onClick={() => setSortByOrder('price-asc')} className={`hover:text-[#b22830] transition-colors cursor-pointer border-none bg-transparent p-0 ${sortByOrder === 'price-asc' ? 'text-[#b22830]' : ''}`}>Giá tăng dần</button>
+                                  <button onClick={() => setSortByOrder('price-desc')} className={`hover:text-[#b22830] transition-colors cursor-pointer border-none bg-transparent p-0 ${sortByOrder === 'price-desc' ? 'text-[#b22830]' : ''}`}>Giá giảm dần</button>
+                                  <button onClick={() => setSortByOrder('newest')} className={`hover:text-[#b22830] transition-colors cursor-pointer border-none bg-transparent p-0 ${sortByOrder === 'newest' ? 'text-[#b22830]' : ''}`}>Hàng mới</button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()
+                      )}
+                      {(() => {
+                        const renderedSections = menuSections.filter(section => {
+                          if (activeCategory === 'all') return true;
+                          const isDirectMatch = String(activeCategory) === String(section.id);
+                          const sectionCat = categories.find(c => String(c.ma_danh_muc) === String(section.id));
+                          const isChildMatch = sectionCat && String(sectionCat.ma_danh_muc_cha) === String(activeCategory);
+                          return isDirectMatch || isChildMatch;
+                        });
+
+                        if (renderedSections.length === 0) {
+                          return (
+                            <div className="py-16 flex flex-col items-center justify-center bg-white rounded-3xl border border-gray-100 shadow-sm mt-4">
+                              <div className="w-24 h-24 mb-6 bg-gray-50 rounded-full flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-gray-400">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                                </svg>
+                              </div>
+                              <h3 className="text-xl font-bold text-gray-900 mb-2">Không tìm thấy sản phẩm</h3>
+                              <p className="text-gray-500 text-sm max-w-sm text-center">
+                                Không có sản phẩm nào phù hợp với tìm kiếm hoặc bộ lọc của bạn trong danh mục này.
+                              </p>
+                            </div>
+                          );
+                        }
+
+                        return renderedSections.map((section, idx) => {
                           const allItems = section.subSections.flatMap(sub => sub.items);
                           const sortedItems = [...allItems].sort((a, b) => {
                             if (sortByOrder === 'price-asc') return Number(a.gia_ban || 0) - Number(b.gia_ban || 0);
                             if (sortByOrder === 'price-desc') return Number(b.gia_ban || 0) - Number(a.gia_ban || 0);
                             if (sortByOrder === 'name-asc') return String(a.ten_san_pham || '').localeCompare(String(b.ten_san_pham || ''), 'vi');
+                            if (sortByOrder === 'name-desc') return String(b.ten_san_pham || '').localeCompare(String(a.ten_san_pham || ''), 'vi');
                             return 0;
                           });
-                          const displayItems = sortedItems;
-                          const hasMore = false;
+                          const isExpanded = activeCategory !== 'all';
+                          const displayItems = isExpanded ? sortedItems : sortedItems.slice(0, 5);
+                          const hasMore = !isExpanded && sortedItems.length > 5;
                           const parentCatIndex = parentCats.findIndex(c => String(c.ma_danh_muc) === String(section.id));
                           const sectionIconUrl = parentCatIndex !== -1 ? MENU_ICONS[parentCatIndex % MENU_ICONS.length] : MENU_ICONS[idx % MENU_ICONS.length];
 
                           return (
                             <section key={section.id} id={`category-${section.id}`} className="scroll-mt-[120px]">
-                              <div className="flex items-center justify-between border-b-2 border-gray-100 pb-3.5 mb-6 pt-4">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-2.5 h-7 rounded-full bg-[#b22830] shrink-0 shadow-2xs"></div>
-                                  <h3 className="text-xl md:text-2xl font-black text-gray-900 uppercase font-sans tracking-wide">
-                                    {section.label}
-                                  </h3>
+                                <div className="flex items-center justify-between border-b-2 border-gray-100 pb-3.5 mb-6 pt-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-2.5 h-7 rounded-full bg-[#b22830] shrink-0 shadow-2xs"></div>
+                                    <h3 className="text-xl md:text-2xl font-black text-gray-900 uppercase font-sans tracking-wide">
+                                      {section.label}
+                                    </h3>
+                                  </div>
+                                  <span className="text-xs font-extrabold text-[#b22830] bg-red-50 px-3.5 py-1 rounded-full border border-red-100 shadow-2xs">
+                                    {displayItems.length} món
+                                  </span>
                                 </div>
-                                <span className="text-xs font-extrabold text-[#b22830] bg-red-50 px-3.5 py-1 rounded-full border border-red-100 shadow-2xs">
-                                  {displayItems.length} món
-                                </span>
-                              </div>
 
-                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
+                              <div className={`grid gap-4 md:gap-6 lg:gap-8 ${activeCategory !== 'all' ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'}`}>
                                 {displayItems.map((p) => {
                                   const isFav = isFavoriteProduct ? isFavoriteProduct(p) : false;
                                   return (
@@ -1136,7 +1210,8 @@ export default function OrderPage({
                               )}
                             </section>
                           );
-                        })}
+                        });
+                      })()}
                     </div>
 
                   </div>
