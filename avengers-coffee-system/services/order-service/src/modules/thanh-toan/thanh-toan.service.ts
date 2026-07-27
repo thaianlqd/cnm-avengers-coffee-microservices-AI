@@ -1783,6 +1783,12 @@ export class ThanhToanService {
   }
 
   async ketQuaVnpayThat(maNguoiDung: string, query: Record<string, string>) {
+    if (query.vnp_TxnRef && query.vnp_TxnRef.startsWith('WT_')) {
+      const ipnResult = await this.xuLyVnpayIpn(query);
+      const isSuccess = ipnResult.RspCode === '00' || ipnResult.RspCode === '02';
+      return { message: isSuccess ? 'Thanh cong' : 'That bai', is_wallet_tx: true, success: isSuccess };
+    }
+
     const maDonHang = (query.vnp_TxnRef || '').split('_')[0];
     let donHang = await this.donHangRepo.findOne({ where: { ma_don_hang: maDonHang, ma_nguoi_dung: maNguoiDung } });
     if (!donHang) throw new NotFoundException('Khong tim thay don hang');
@@ -1790,7 +1796,7 @@ export class ThanhToanService {
     if (query.vnp_ResponseCode === '00' && donHang.trang_thai_thanh_toan !== 'DA_THANH_TOAN') {
       const ipnResult = await this.xuLyVnpayIpn(query);
       if (ipnResult.RspCode !== '00' && ipnResult.RspCode !== '02') {
-        return { message: 'That bai', don_hang: donHang };
+        return { message: 'That bai', don_hang: donHang, is_wallet_tx: false };
       }
 
       const donHangMoiNhat = await this.donHangRepo.findOne({
@@ -1802,7 +1808,7 @@ export class ThanhToanService {
     }
 
     const thanhCong = donHang.trang_thai_thanh_toan === 'DA_THANH_TOAN';
-    return { message: thanhCong ? 'Thanh cong' : 'That bai', don_hang: donHang };
+    return { message: thanhCong ? 'Thanh cong' : 'That bai', don_hang: donHang, is_wallet_tx: false, success: thanhCong };
   }
 
   // --- SEPAY WEBHOOK LOGIC ---
