@@ -155,6 +155,7 @@ services:
   order-service:
     build:
       context: ./avengers-coffee-system/services/order-service
+      target: dev
     container_name: avengers_order_service
     init: true
     restart: unless-stopped
@@ -163,8 +164,11 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    volumes:
+      - ./avengers-coffee-system/services/order-service/src:/app/src
+      - ./avengers-coffee-system/services/order-service/tsconfig.json:/app/tsconfig.json
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       PORT: ${ORDER_PORT:-3005}
       JWT_SECRET: ${JWT_SECRET:-avengers-jwt-secret}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-avengers-internal-token}

@@ -135,10 +135,32 @@ export default function CartPage({
     refetchInterval: 120 * 1000,
   });
 
-  const addressOptions = useMemo(
-    () => buildAddressOptionsFromBranches(publicBranchPayload?.items || []),
-    [publicBranchPayload],
-  );
+  const { data: vietnamProvinces } = useQuery({
+    queryKey: ['vietnam-provinces'],
+    queryFn: async () => {
+      const res = await fetch('https://provinces.open-api.vn/api/?depth=3');
+      return res.json();
+    },
+    staleTime: Infinity,
+  });
+
+  const addressOptions = useMemo(() => {
+    // Ưu tiên sử dụng full Tỉnh Thành Việt Nam từ API để người dùng thoải mái nhập
+    if (vietnamProvinces && Array.isArray(vietnamProvinces) && vietnamProvinces.length > 0) {
+      const options = {};
+      vietnamProvinces.forEach(p => {
+        options[p.name] = {};
+        if (p.districts) {
+          p.districts.forEach(d => {
+            options[p.name][d.name] = d.wards ? d.wards.map(w => w.name) : [];
+          });
+        }
+      });
+      return options;
+    }
+    // Fallback: Lấy từ danh sách cửa hàng nếu API lỗi
+    return buildAddressOptionsFromBranches(publicBranchPayload?.items || []);
+  }, [vietnamProvinces, publicBranchPayload]);
   const defaultAddressSelection = useMemo(
     () => getAddressSelectionDefaults(addressOptions),
     [addressOptions],
@@ -447,12 +469,85 @@ export default function CartPage({
       const cityMatches = allBranches.filter(b => {
         const bCity = String(b.thanh_pho || b.dia_chi || '').toLowerCase();
         const userCity = String(addressForm.city || '').toLowerCase();
-        return userCity && bCity.includes(userCity);
+        if (!userCity) return false;
+        
+        if (bCity.includes(userCity)) return true;
+        
+        // Smarter matching for HCM and HN
+        if ((userCity.includes('hồ chí minh') || userCity.includes('hcm')) && 
+            (bCity.includes('hồ chí minh') || bCity.includes('hcm'))) {
+          return true;
+        }
+        
+        if ((userCity.includes('hà nội') || userCity.includes('ha noi')) && 
+            (bCity.includes('hà nội') || bCity.includes('hn') || bCity.includes('ha noi'))) {
+          return true;
+        }
+        
+        return false;
       });
       
       // Nếu có chi nhánh cùng quận/huyện thì ưu tiên (nếu sau này có dữ liệu quận)
-      // Hiện tại lấy chi nhánh đầu tiên trong cùng thành phố
-      const targetBranch = cityMatches.length > 0 ? cityMatches[0] : allBranches[0];
+      let targetBranch = cityMatches.length > 0 ? cityMatches[0] : allBranches[0];
+
+      if (cityMatches.length > 1 && addressForm.district) {
+        const districtCoords = {
+          'bình tân': { lat: 10.7653, lng: 106.6083 },
+          'bình thạnh': { lat: 10.8106, lng: 106.7093 },
+          'gò vấp': { lat: 10.8387, lng: 106.6661 },
+          'phú nhuận': { lat: 10.7991, lng: 106.6781 },
+          'tân bình': { lat: 10.8015, lng: 106.6526 },
+          'tân phú': { lat: 10.7901, lng: 106.6262 },
+          'thủ đức': { lat: 10.8494, lng: 106.7537 },
+          'quận 1': { lat: 10.7756, lng: 106.7019 },
+          'quận 2': { lat: 10.7876, lng: 106.7416 },
+          'quận 3': { lat: 10.7834, lng: 106.6802 },
+          'quận 4': { lat: 10.7588, lng: 106.7012 },
+          'quận 5': { lat: 10.7540, lng: 106.6631 },
+          'quận 6': { lat: 10.7481, lng: 106.6353 },
+          'quận 7': { lat: 10.7340, lng: 106.7216 },
+          'quận 8': { lat: 10.7249, lng: 106.6346 },
+          'quận 9': { lat: 10.8277, lng: 106.8123 },
+          'quận 10': { lat: 10.7743, lng: 106.6675 },
+          'quận 11': { lat: 10.7628, lng: 106.6455 },
+          'quận 12': { lat: 10.8671, lng: 106.6413 },
+        };
+
+        const haversine = (lat1, lon1, lat2, lon2) => {
+          const p = 0.017453292519943295;
+          const a = 0.5 - Math.cos((lat2 - lat1) * p) / 2 +
+            Math.cos(lat1 * p) * Math.cos(lat2 * p) *
+            (1 - Math.cos((lon2 - lon1) * p)) / 2;
+          return 12742 * Math.asin(Math.sqrt(a));
+        };
+
+        const userDistKey = String(addressForm.district).toLowerCase().trim();
+        let userCoord = null;
+        for (const key of Object.keys(districtCoords)) {
+          if (userDistKey.includes(key)) userCoord = districtCoords[key];
+        }
+
+        if (userCoord) {
+          let minDist = Infinity;
+          let bestBranch = targetBranch;
+          for (const b of cityMatches) {
+            const bAddr = String(b.dia_chi || '').toLowerCase();
+            let bCoord = null;
+            for (const key of Object.keys(districtCoords)) {
+              if (bAddr.includes(key)) { bCoord = districtCoords[key]; break; }
+            }
+            if (bCoord) {
+              const d = haversine(userCoord.lat, userCoord.lng, bCoord.lat, bCoord.lng);
+              if (d < minDist) {
+                minDist = d;
+                bestBranch = b;
+              }
+            }
+          }
+          targetBranch = bestBranch;
+        }
+      }
+
       const branchId = targetBranch.ma_chi_nhanh || targetBranch.co_so_ma || targetBranch.branch_code || '';
 
       // Tự động chuyển chi nhánh nếu chi nhánh hiện tại không nằm trong cùng thành phố

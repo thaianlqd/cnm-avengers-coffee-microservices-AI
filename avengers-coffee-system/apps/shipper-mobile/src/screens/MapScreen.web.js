@@ -6,20 +6,31 @@ import { useShipper } from '../context/ShipperContext';
 import apiClient from '../lib/apiClient';
 
 const getBranchInfo = (code) => {
-  switch (code) {
-    case 'NVL_DN': 
-      return { address: 'Avengers Coffee - 200 Nguyễn Văn Linh, Đà Nẵng', storeLoc: { latitude: 16.0544, longitude: 108.2022 }, destLoc: { latitude: 16.0700, longitude: 108.2200 } };
-    case 'HBT_HCM': 
-      return { address: 'Avengers Coffee - 15 Hai Bà Trưng, TP.HCM', storeLoc: { latitude: 10.7769, longitude: 106.7009 }, destLoc: { latitude: 10.7800, longitude: 106.7100 } };
-    case 'PD_HN': 
-      return { address: 'Avengers Coffee - 10 Phạm Đình Hổ, Hà Nội', storeLoc: { latitude: 21.0285, longitude: 105.8542 }, destLoc: { latitude: 21.0350, longitude: 105.8600 } };
-    case 'MAC_DINH_CHI': 
-      return { address: 'Avengers Coffee - 30 Mạc Đĩnh Chi, TP.HCM', storeLoc: { latitude: 10.7831, longitude: 106.6992 }, destLoc: { latitude: 10.7900, longitude: 106.7050 } };
-    case 'HCM_DIEN_BIEN_PHU': 
-      return { address: 'Avengers Coffee - Điện Biên Phủ, TP.HCM', storeLoc: { latitude: 10.7930, longitude: 106.7000 }, destLoc: { latitude: 10.8000, longitude: 106.7100 } };
-    default: 
-      return { address: `Avengers Coffee - ${code || 'Cửa hàng'}`, storeLoc: { latitude: 10.7769, longitude: 106.7009 }, destLoc: { latitude: 10.7800, longitude: 106.7100 } };
+  const branches = {
+    'DN_INDOCHINA_RIVERSIDE': { address: 'Avengers Coffee - Indochina Riverside, Đà Nẵng', storeLoc: { latitude: 16.0717, longitude: 108.2241 } },
+    'DN_NGUYEN_VAN_THOAI':   { address: 'Avengers Coffee - Nguyễn Văn Thoại, Đà Nẵng', storeLoc: { latitude: 16.0543, longitude: 108.2435 } },
+    'DN_VTV8_BACH_DANG':     { address: 'Avengers Coffee - VTV8 Bạch Đằng, Đà Nẵng',   storeLoc: { latitude: 16.0645, longitude: 108.2230 } },
+    'HCM_DIEN_BIEN_PHU':    { address: 'Avengers Coffee - 220 Điện Biên Phủ, Q.3',     storeLoc: { latitude: 10.7836, longitude: 106.6896 } },
+    'HCM_LY_TU_TRONG':      { address: 'Avengers Coffee - Lý Tự Trọng, Q.1',           storeLoc: { latitude: 10.7745, longitude: 106.6983 } },
+    'HCM_TON_THAT_THIEP':   { address: 'Avengers Coffee - Tôn Thất Thiệp, Q.1',        storeLoc: { latitude: 10.7743, longitude: 106.7031 } },
+    'HN_DU_THUYEN':          { address: 'Avengers Coffee - Du Thuyền, Hà Nội',           storeLoc: { latitude: 21.0456, longitude: 105.8369 } },
+    'HN_LAM_VIEN_COMPLEX':  { address: 'Avengers Coffee - Làm Viên Complex, Hà Nội',   storeLoc: { latitude: 21.0401, longitude: 105.7904 } },
+    'HN_LINH_DAM_CT3':      { address: 'Avengers Coffee - Linh Đàm CT3, Hà Nội',       storeLoc: { latitude: 20.9634, longitude: 105.8306 } },
+  };
+  const normalized = (code || '').toUpperCase().replace(/-/g, '_');
+  const branch = branches[code] || branches[normalized];
+  if (branch) {
+    return {
+      address: branch.address,
+      storeLoc: branch.storeLoc,
+      destLoc: { latitude: branch.storeLoc.latitude + 0.003, longitude: branch.storeLoc.longitude + 0.003 },
+    };
   }
+  return {
+    address: `Avengers Coffee - ${code || 'Cửa hàng'}`,
+    storeLoc: { latitude: 10.7836, longitude: 106.6896 },
+    destLoc: { latitude: 10.7866, longitude: 106.6926 },
+  };
 };
 
 export function MapScreen({ route, navigation }) {
@@ -35,8 +46,14 @@ export function MapScreen({ route, navigation }) {
   const branchCode = delivery?.order?.co_so_ma || delivery?.branch_code;
   const branchInfo = getBranchInfo(branchCode);
   
-  const storeLocation = branchInfo.storeLoc;
-  const destinationLocation = branchInfo.destLoc;
+  const storeLocation = {
+    latitude: delivery?.tracking?.store_latitude ? Number(delivery.tracking.store_latitude) : branchInfo.storeLoc.latitude,
+    longitude: delivery?.tracking?.store_longitude ? Number(delivery.tracking.store_longitude) : branchInfo.storeLoc.longitude
+  };
+  const destinationLocation = {
+    latitude: delivery?.tracking?.destination_latitude ? Number(delivery.tracking.destination_latitude) : (delivery?.delivery_latitude ? Number(delivery.delivery_latitude) : branchInfo.destLoc.latitude),
+    longitude: delivery?.tracking?.destination_longitude ? Number(delivery.tracking.destination_longitude) : (delivery?.delivery_longitude ? Number(delivery.delivery_longitude) : branchInfo.destLoc.longitude)
+  };
   
   const [shipperLocation, setShipperLocation] = useState({
     latitude: storeLocation.latitude + (destinationLocation.latitude - storeLocation.latitude) * 0.3,
@@ -115,6 +132,42 @@ export function MapScreen({ route, navigation }) {
     if (!shipperMarkerRef.current) {
       shipperMarkerRef.current = L.marker([shipperLocation.latitude, shipperLocation.longitude], { icon: getIcon('shipper') }).addTo(map).bindPopup('<b>🛵 Vị trí của bạn</b>');
     }
+
+    // Vẽ đường route từ Shop → Khách bằng OSRM (fallback đường thẳng)
+    const drawRoute = async () => {
+      try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${storeLocation.longitude},${storeLocation.latitude};${destinationLocation.longitude},${destinationLocation.latitude}?geometries=geojson&overview=full`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.code === 'Ok' && data.routes?.[0]?.geometry?.coordinates) {
+          const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+          // Đường nền mờ (border effect)
+          L.polyline(coords, { color: '#1E40AF', weight: 8, opacity: 0.3 }).addTo(map);
+          // Đường chính màu xanh dương gradient
+          L.polyline(coords, { color: '#3B82F6', weight: 5, opacity: 0.9, dashArray: null }).addTo(map);
+          // Hiển thị khoảng cách
+          const distKm = (data.routes[0].distance / 1000).toFixed(1);
+          const durationMin = Math.round(data.routes[0].duration / 60);
+          const midIdx = Math.floor(coords.length / 2);
+          L.marker(coords[midIdx], {
+            icon: L.divIcon({
+              html: `<div style="background:rgba(59,130,246,0.9);color:white;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:bold;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.3);">📏 ${distKm} km · ⏱ ${durationMin} phút</div>`,
+              className: '',
+              iconAnchor: [60, 12],
+            })
+          }).addTo(map);
+        } else {
+          throw new Error('OSRM no route');
+        }
+      } catch (e) {
+        // Fallback: vẽ đường thẳng nét đứt
+        L.polyline(
+          [[storeLocation.latitude, storeLocation.longitude], [destinationLocation.latitude, destinationLocation.longitude]],
+          { color: '#3B82F6', weight: 4, opacity: 0.7, dashArray: '10, 8' }
+        ).addTo(map);
+      }
+    };
+    drawRoute();
 
     const bounds = L.latLngBounds([
       [storeLocation.latitude, storeLocation.longitude],

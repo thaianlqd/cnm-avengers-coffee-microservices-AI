@@ -118,9 +118,9 @@ export class ShipperController {
   async completeDelivery(
     @Param('shipperId') shipperId: string,
     @Param('deliveryId') deliveryId: string,
-    @Body() body: { latitude: number; longitude: number; proof_image_url?: string },
+    @Body() body: { latitude: number; longitude: number; proof_image_url?: string; is_batched?: boolean },
   ) {
-    return this.shipperService.completeDelivery(deliveryId, shipperId, body.latitude, body.longitude, body.proof_image_url);
+    return this.shipperService.completeDelivery(deliveryId, shipperId, body.latitude, body.longitude, body.proof_image_url, body.is_batched);
   }
 
   @Post(':shipperId/deliveries/:deliveryId/fail')
@@ -183,5 +183,23 @@ export class ShipperController {
   @Get(':shipperId/notifications')
   async getNotifications(@Param('shipperId') shipperId: string) {
     return this.shipperService.getNotifications(shipperId);
+  }
+
+  // ============ BATCH ORDERS ============
+
+  @Get(':shipperId/batch-orders')
+  async getBatchOrders(@Param('shipperId') shipperId: string) {
+    return this.shipperService.getBatchOrders(shipperId);
+  }
+
+  @Post(':shipperId/batch-orders/:batchId/accept')
+  async acceptBatchOrders(
+    @Param('shipperId') shipperId: string,
+    @Param('batchId') batchId: string,
+    @Body() body: { order_ids?: string[] },
+  ) {
+    // Lấy order_ids từ body hoặc từ batchId parse
+    const orderIds = body?.order_ids || [];
+    return this.shipperService.acceptBatchOrders(shipperId, orderIds);
   }
 }
