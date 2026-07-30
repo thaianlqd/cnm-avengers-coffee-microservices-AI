@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, EntityManager, IsNull, Repository } from 'typeorm';
+import { Brackets, EntityManager, In, IsNull, Repository } from 'typeorm';
 import { RedisCacheService } from '../../infrastructure/cache/redis-cache.service';
 import { RabbitMqService } from '../../infrastructure/messaging/rabbitmq.service';
 import { CartItem } from '../cart/cart.entity';
@@ -3334,7 +3334,10 @@ export class ThanhToanService {
 
     // Tìm các đơn hàng chưa gán tài khoản khớp với session_id HOẶC email HOẶC số điện thoại
     const query = this.donHangRepo.createQueryBuilder('don_hang')
-      .where('don_hang.ma_nguoi_dung IS NULL');
+      .where(
+        '(don_hang.ma_nguoi_dung IS NULL OR don_hang.ma_nguoi_dung = :emptyStr OR don_hang.ma_nguoi_dung LIKE :anonPrefix OR don_hang.ma_nguoi_dung = :anonWord)',
+        { emptyStr: '', anonPrefix: 'anon-%', anonWord: 'anonymous' },
+      );
 
     query.andWhere(
       new Brackets((qb) => {
@@ -3366,10 +3369,18 @@ export class ThanhToanService {
     if (matchedOrders.length > 0) {
       if (payload.confirmLink === true) {
         // Thực hiện liên kết thực tế khi người dùng đã xác nhận
-        for (const order of matchedOrders) {
-          order.ma_nguoi_dung = customerId;
+        const orderIds = matchedOrders.map((o) => o.ma_don_hang);
+        if (orderIds.length > 0) {
+          await this.donHangRepo.update(
+            { ma_don_hang: In(orderIds) },
+            {
+              ma_nguoi_dung: customerId,
+              guest_email: null,
+              guest_phone: null,
+              session_id: null,
+            },
+          );
         }
-        await this.donHangRepo.save(matchedOrders);
         return { success: true, linked: true, count: matchedOrders.length };
       } else {
         // Trả về tín hiệu promptLink để Frontend hỏi ý kiến (luôn hiển thị popup hỏi xác nhận)

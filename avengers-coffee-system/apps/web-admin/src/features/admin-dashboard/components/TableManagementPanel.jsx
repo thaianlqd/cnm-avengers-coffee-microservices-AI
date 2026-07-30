@@ -219,7 +219,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                     
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #e5e7eb', paddingTop: '0.75rem' }}>
                       <span style={{ fontSize: '0.9rem', color: '#6b7280' }}>Tổng bill:</span>
-                      <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#c41230' }}>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#2563eb' }}>
                         {fmtMoney(order.tong_tien)}
                       </span>
                     </div>

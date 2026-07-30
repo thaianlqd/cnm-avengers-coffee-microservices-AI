@@ -1,4 +1,28 @@
 import { useEffect, useMemo, useState } from 'react'
+import {
+  Activity,
+  AlertTriangle,
+  BarChart3,
+  Bell,
+  Brain,
+  CheckCircle2,
+  Clock,
+  Coins,
+  CreditCard,
+  Database,
+  FolderOpen,
+  Package,
+  RefreshCw,
+  Save,
+  Server,
+  ShieldCheck,
+  Sliders,
+  Store,
+  TrendingUp,
+  UserCheck,
+  XCircle,
+  Zap,
+} from 'lucide-react'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
 
 const CONFIG_KEY = 'avengers-system-ops-config'
@@ -39,23 +63,23 @@ function fmtCompactMoney(value) {
   return `${Math.round(amount)}`
 }
 
-function statusLabel(ok) {
-  return ok ? 'Hoạt động' : 'Lỗi'
-}
-
 function MiniTrendChart({ points = [], color = '#2563eb', title = '', valueFormatter = fmtNum }) {
-  const W = 330
-  const H = 126
-  const L = 38
-  const R = 10
-  const T = 10
-  const B = 24
+  const W = 480
+  const H = 140
+  const L = 42
+  const R = 15
+  const T = 15
+  const B = 28
 
   if (!points.length) {
-    return <div style={{ color: '#94a3b8', fontSize: 12 }}>Chưa có dữ liệu {title.toLowerCase()}</div>
+    return (
+      <div style={{ padding: '30px', textAlign: 'center', color: '#94a3b8', fontSize: '0.8125rem' }}>
+        Chưa có dữ liệu {title.toLowerCase()}
+      </div>
+    )
   }
 
-  const values = points.map((item) => toNumber(item?.value))
+  const values = points.map((item) => Number(item?.value || 0))
   const max = Math.max(...values, 1)
   const min = Math.min(...values, 0)
   const range = Math.max(max - min, 1)
@@ -85,34 +109,39 @@ function MiniTrendChart({ points = [], color = '#2563eb', title = '', valueForma
   const trendPct = first > 0 ? ((last - first) / first) * 100 : 0
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', display: 'block' }}>
-      <rect x="0" y="0" width={W} height={H} rx="10" fill="#f8fafc" />
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
+      <defs>
+        <linearGradient id={`grad-${title}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.0" />
+        </linearGradient>
+      </defs>
 
       {yTicks.map((tick, idx) => (
-        <line key={`grid-${idx}`} x1={L} y1={tick.y} x2={W - R} y2={tick.y} stroke="#e2e8f0" strokeWidth="1" />
+        <line key={`grid-${idx}`} x1={L} y1={tick.y} x2={W - R} y2={tick.y} stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3,3" />
       ))}
 
-      <path d={areaPath} fill={color} opacity="0.12" />
-      <path d={linePath} stroke={color} strokeWidth="2.5" fill="none" />
+      <path d={areaPath} fill={`url(#grad-${title})`} />
+      <path d={linePath} stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
 
       {values.map((value, idx) => (
-        <circle key={`dot-${idx}`} cx={xScale(idx)} cy={yScale(value)} r="2.2" fill={color} />
+        <circle key={`dot-${idx}`} cx={xScale(idx)} cy={yScale(value)} r="3" fill="#ffffff" stroke={color} strokeWidth="2" />
       ))}
 
       {yTicks.map((tick, idx) => (
-        <text key={`ylabel-${idx}`} x={L - 5} y={tick.y + 3} textAnchor="end" fontSize="9" fill="#64748b">
+        <text key={`ylabel-${idx}`} x={L - 6} y={tick.y + 3} textAnchor="end" fontSize="9" fontWeight="500" fill="#94a3b8">
           {valueFormatter(tick.value)}
         </text>
       ))}
 
       {xTicks.map((tick) => (
-        <text key={`xlabel-${tick.idx}`} x={xScale(tick.idx)} y={H - 7} textAnchor="middle" fontSize="9" fill="#64748b">
+        <text key={`xlabel-${tick.idx}`} x={xScale(tick.idx)} y={H - 8} textAnchor="middle" fontSize="9" fontWeight="500" fill="#94a3b8">
           {tick.label}
         </text>
       ))}
 
-      <text x={W - R} y={12} textAnchor="end" fontSize="9" fill={trendPct >= 0 ? '#166534' : '#b91c1c'}>
-        {trendPct >= 0 ? '▲' : '▼'} {Math.abs(trendPct).toFixed(1)}%
+      <text x={W - R} y={T + 2} textAnchor="end" fontSize="10" fontWeight="700" fill={trendPct >= 0 ? '#16a34a' : '#dc2626'}>
+        {trendPct >= 0 ? '▲ +' : '▼ '} {Math.abs(trendPct).toFixed(1)}%
       </text>
     </svg>
   )
@@ -284,24 +313,25 @@ export function SystemOpsPanel({ session }) {
       const realtimeStatusOk = realtimeChecks.length ? realtimeChecks.every((item) => item.ok) : false
 
       const endpointRows = [
-        { id: 'identity', name: 'Identity stats', ...checks[0] },
-        { id: 'menu', name: 'Menu categories', ...checks[1] },
+        { id: 'identity', name: 'Identity Service', icon: UserCheck, ...checks[0] },
+        { id: 'menu', name: 'Menu & Category API', icon: FolderOpen, ...checks[1] },
         {
           id: 'order-analytics',
-          name: `Order analytics realtime + DB (${Math.max(activeBranchCodes.length, 1)} chi nhánh)`,
+          name: `Order Analytics Realtime (${Math.max(activeBranchCodes.length, 1)} chi nhánh)`,
+          icon: BarChart3,
           ok: realtimeStatusOk,
           status: realtimeStatusOk ? 200 : 503,
           latency: realtimeLatency,
           payload: mergedPayload,
         },
-        { id: 'ai', name: 'AI model stats', ...checks[3] },
+        { id: 'ai', name: 'AI Prediction Service', icon: Brain, ...checks[3] },
       ]
 
       setEndpoints(endpointRows)
       setRealtime(mergedPayload)
 
       const now = new Date()
-      setLastUpdatedAt(now.toLocaleString('vi-VN'))
+      setLastUpdatedAt(now.toLocaleTimeString('vi-VN'))
 
       setHistory((prev) => {
         const prevLast = prev[prev.length - 1]
@@ -329,23 +359,24 @@ export function SystemOpsPanel({ session }) {
       const highLatency = endpointRows.filter((row) => row.latency > config.latencyWarnMs)
       const warnMessages = []
       if (highLatency.length) {
-        warnMessages.push(`Độ trễ cao: ${highLatency.map((row) => `${row.name} ${row.latency}ms`).join(', ')}`)
+        warnMessages.push(`Độ trễ cao: ${highLatency.map((row) => `${row.name} (${row.latency}ms)`).join(', ')}`)
       }
 
       const downServices = endpointRows.filter((row) => !row.ok)
       if (downServices.length) {
-        warnMessages.push(`Dịch vụ lỗi: ${downServices.map((row) => row.name).join(', ')}`)
+        warnMessages.push(`Dịch vụ gián đoạn: ${downServices.map((row) => row.name).join(', ')}`)
       }
 
       if (Number(mergedPayload.orders_cancelled || 0) >= config.cancelWarnCount) {
-        warnMessages.push(`Đơn hủy hôm nay đạt ${mergedPayload.orders_cancelled}, cần kiểm tra nguyên nhân`)
+        warnMessages.push(`Số đơn hủy hôm nay đạt ${mergedPayload.orders_cancelled} đơn, đạt ngưỡng cảnh báo`)
       }
 
-      const eventText = warnMessages.length ? warnMessages.join(' | ') : 'Hệ thống vận hành ổn định'
-      setEventLogs((prev) => [{ at: now.toLocaleString('vi-VN'), text: eventText }, ...prev].slice(0, 30))
+      const eventText = warnMessages.length ? warnMessages.join(' | ') : 'Tất cả dịch vụ hệ thống hoạt động ổn định'
+      const eventType = warnMessages.length ? (downServices.length ? 'ERROR' : 'WARN') : 'INFO'
+      setEventLogs((prev) => [{ at: now.toLocaleString('vi-VN'), text: eventText, type: eventType }, ...prev].slice(0, 30))
     } catch (error) {
       const now = new Date().toLocaleString('vi-VN')
-      setEventLogs((prev) => [{ at: now, text: `Lỗi theo dõi hệ thống: ${error.message || 'Không xác định'}` }, ...prev].slice(0, 30))
+      setEventLogs((prev) => [{ at: now, text: `Lỗi kiểm tra hệ thống: ${error.message || 'Không thể phản hồi'}`, type: 'ERROR' }, ...prev].slice(0, 30))
     } finally {
       setLoading(false)
     }
@@ -384,167 +415,386 @@ export function SystemOpsPanel({ session }) {
 
   const saveConfig = () => {
     window.localStorage.setItem(CONFIG_KEY, JSON.stringify(config))
-    window.alert('Đã lưu cấu hình giám sát hệ thống')
+    window.alert('Đã lưu cấu hình giám sát hệ thống thành công!')
   }
 
   return (
-    <section className="panel system-admin-panel">
-      <div className="panel-head system-admin-panel-head">
-        <h2>Cấu hình và giám sát hệ thống</h2>
-        <span>Theo dõi sức khỏe dịch vụ, độ trễ API và chỉ số vận hành theo thời gian thực</span>
-      </div>
+    <div style={{ padding: '1.5rem', backgroundColor: '#f8fafc', minHeight: '100%', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
-      <div className="system-ops-top-grid">
-        <div className="system-admin-card">
-          <div className="panel-head">
-            <h2>Cấu hình cảnh báo</h2>
-            <span>Lần cập nhật gần nhất: {lastUpdatedAt || 'Đang chờ dữ liệu'}</span>
+      {/* Header Bar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', backgroundColor: '#ffffff', padding: '1.25rem 1.5rem', borderRadius: '0.875rem', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.25rem' }}>
+            <h1 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
+              Giám sát &amp; Vận hành Hệ thống
+            </h1>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.2rem 0.6rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '600', backgroundColor: healthScore === 100 ? '#dcfce7' : healthScore >= 75 ? '#fef3c7' : '#fee2e2', color: healthScore === 100 ? '#15803d' : healthScore >= 75 ? '#b45309' : '#b91c1c' }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: healthScore === 100 ? '#22c55e' : healthScore >= 75 ? '#f59e0b' : '#ef4444' }} />
+              {healthScore === 100 ? 'Hệ thống tối ưu' : `Sức khỏe ${healthScore}%`}
+            </span>
           </div>
-          <div className="system-admin-form-grid" style={{ marginBottom: '0.7rem' }}>
-            <label>
-              <span>Tần suất quét (giây)</span>
-              <input type="number" min="5" value={config.pollSeconds} onChange={(e) => setConfig((p) => ({ ...p, pollSeconds: Number(e.target.value) || 20 }))} />
-            </label>
-            <label>
-              <span>Ngưỡng độ trễ cảnh báo (ms)</span>
-              <input type="number" min="100" value={config.latencyWarnMs} onChange={(e) => setConfig((p) => ({ ...p, latencyWarnMs: Number(e.target.value) || 800 }))} />
-            </label>
-            <label>
-              <span>Ngưỡng số đơn hủy / ngày</span>
-              <input type="number" min="1" value={config.cancelWarnCount} onChange={(e) => setConfig((p) => ({ ...p, cancelWarnCount: Number(e.target.value) || 5 }))} />
-            </label>
-          </div>
-          <div className="system-admin-form-actions">
-            <button type="button" onClick={saveConfig}>Lưu cấu hình</button>
-            <button type="button" className="secondary" onClick={runMonitoring}>Làm mới ngay</button>
-          </div>
-        </div>
-
-        <div className="system-admin-card">
-          <div className="panel-head">
-            <h2>Tổng quan theo dõi</h2>
-            <span>Dữ liệu thực tế theo chi nhánh đang hoạt động</span>
-          </div>
-          <div className="system-ops-summary-grid">
-            <article>
-              <p>Health score</p>
-              <strong>{healthScore}%</strong>
-              <small>{endpoints.filter((item) => item.ok).length}/{endpoints.length || 0} dịch vụ OK</small>
-            </article>
-            <article>
-              <p>Chi nhánh theo dõi</p>
-              <strong>{fmtNum(realtime?.branch_count)}</strong>
-              <small>Đang lấy dữ liệu toàn hệ thống</small>
-            </article>
-            <article>
-              <p>Redis analytics</p>
-              <strong>{realtime?.redis_enabled ? 'Bật' : 'Tắt'}</strong>
-              <small>{realtime?.date_key || '-'}</small>
-            </article>
-          </div>
-        </div>
-      </div>
-
-      {!hasRealtimeEvents ? (
-        <div className="system-admin-card system-ops-block">
-          <p style={{ margin: 0, color: '#7b5b45', fontWeight: 700 }}>
-            Chưa có sự kiện đơn hàng mới trong ngày nên các chỉ số realtime đang là 0. Hệ thống vẫn hoạt động bình thường.
+          <p style={{ margin: 0, fontSize: '0.8125rem', color: '#64748b' }}>
+            Theo dõi thời gian thực độ trễ API, trạng thái dịch vụ và chỉ số vận hành trên các chi nhánh
           </p>
         </div>
-      ) : null}
 
-      <div className="system-admin-insight-grid system-ops-kpi-grid">
-        <article>
-          <p>Đơn tạo trong ngày</p>
-          <strong>{fmtNum(realtime?.orders_created)}</strong>
-        </article>
-        <article>
-          <p>Đơn hoàn thành</p>
-          <strong>{fmtNum(realtime?.orders_completed)}</strong>
-        </article>
-        <article>
-          <p>Đơn bị hủy</p>
-          <strong>{fmtNum(realtime?.orders_cancelled)}</strong>
-        </article>
-        <article>
-          <p>Doanh thu hoàn thành</p>
-          <strong>{fmtMoney(realtime?.revenue_completed)}</strong>
-        </article>
-        <article>
-          <p>Thanh toán thành công</p>
-          <strong>{fmtNum(realtime?.payments_succeeded)}</strong>
-        </article>
-        <article>
-          <p>Thông báo đã gửi</p>
-          <strong>{fmtNum(realtime?.notifications_created)}</strong>
-        </article>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ fontSize: '0.78125rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <Clock size={14} color="#94a3b8" />
+            <span>Cập nhật: <strong>{lastUpdatedAt || 'Đang tải...'}</strong></span>
+          </div>
+          <button
+            type="button"
+            onClick={runMonitoring}
+            disabled={loading}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+              padding: '0.5rem 1rem', borderRadius: '0.5rem', border: '1px solid #e2e8f0',
+              backgroundColor: '#ffffff', color: '#1e293b', fontWeight: '600', fontSize: '0.8125rem',
+              cursor: loading ? 'not-allowed' : 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+              opacity: loading ? 0.7 : 1, transition: 'all 0.15s ease'
+            }}
+          >
+            <RefreshCw size={14} className={loading ? 'spin-icon' : ''} />
+            {loading ? 'Đang làm mới...' : 'Làm mới ngay'}
+          </button>
+        </div>
       </div>
 
-      <div className="system-admin-menu-layout system-ops-trend-grid">
-        <section className="system-admin-card">
-          <div className="panel-head"><h2>Xu hướng đơn hàng</h2><span>20 mốc gần nhất (đơn mới mỗi lần quét)</span></div>
-          <MiniTrendChart points={orderTrend} color="#1d4ed8" title="đơn hàng" valueFormatter={fmtNum} />
-        </section>
-        <section className="system-admin-card">
-          <div className="panel-head"><h2>Xu hướng doanh thu</h2><span>20 mốc gần nhất (doanh thu tăng thêm mỗi lần quét)</span></div>
-          <MiniTrendChart points={revenueTrend} color="#15803d" title="doanh thu" valueFormatter={fmtCompactMoney} />
-        </section>
+      {/* Top 2 Columns: Config & Health Overview */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
+        
+        {/* Config Card */}
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '0.875rem', border: '1px solid #e2e8f0', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid #f1f5f9' }}>
+              <Sliders size={18} color="#2563eb" />
+              <h2 style={{ fontSize: '0.9375rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+                Cấu hình cảnh báo hệ thống
+              </h2>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.875rem', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#475569' }}>Tần suất quét (s)</label>
+                <input
+                  type="number"
+                  min="5"
+                  value={config.pollSeconds}
+                  onChange={(e) => setConfig((p) => ({ ...p, pollSeconds: Number(e.target.value) || 20 }))}
+                  style={{ padding: '0.45rem 0.65rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.8125rem', fontWeight: '600', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#475569' }}>Ngưỡng độ trễ (ms)</label>
+                <input
+                  type="number"
+                  min="100"
+                  value={config.latencyWarnMs}
+                  onChange={(e) => setConfig((p) => ({ ...p, latencyWarnMs: Number(e.target.value) || 800 }))}
+                  style={{ padding: '0.45rem 0.65rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.8125rem', fontWeight: '600', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#475569' }}>Ngưỡng đơn hủy/ngày</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={config.cancelWarnCount}
+                  onChange={(e) => setConfig((p) => ({ ...p, cancelWarnCount: Number(e.target.value) || 5 }))}
+                  style={{ padding: '0.45rem 0.65rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.8125rem', fontWeight: '600', outline: 'none' }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.625rem', justifyContent: 'flex-end', paddingTop: '0.75rem', borderTop: '1px solid #f1f5f9' }}>
+            <button
+              type="button"
+              onClick={saveConfig}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.45rem 1rem', borderRadius: '0.5rem', backgroundColor: '#2563eb', color: '#ffffff', border: 'none', fontWeight: '600', fontSize: '0.8125rem', cursor: 'pointer', boxShadow: '0 1px 2px rgba(37, 99, 235, 0.2)' }}
+            >
+              <Save size={14} /> Lưu cấu hình
+            </button>
+          </div>
+        </div>
+
+        {/* Health Score Overview */}
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '0.875rem', border: '1px solid #e2e8f0', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid #f1f5f9' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Activity size={18} color="#059669" />
+              <h2 style={{ fontSize: '0.9375rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+                Tổng quan sức khỏe dịch vụ
+              </h2>
+            </div>
+            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Chi nhánh đang chạy</span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', textAlign: 'center' }}>
+            <div style={{ padding: '0.75rem 0.5rem', borderRadius: '0.625rem', backgroundColor: '#f8fafc', border: '1px solid #f1f5f9' }}>
+              <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 0.25rem', fontWeight: '600' }}>Health Score</p>
+              <strong style={{ fontSize: '1.5rem', fontWeight: '800', color: healthScore === 100 ? '#16a34a' : healthScore >= 75 ? '#d97706' : '#dc2626' }}>
+                {healthScore}%
+              </strong>
+              <p style={{ fontSize: '0.7rem', color: '#94a3b8', margin: '0.25rem 0 0' }}>
+                {endpoints.filter((i) => i.ok).length}/{endpoints.length} dịch vụ OK
+              </p>
+            </div>
+
+            <div style={{ padding: '0.75rem 0.5rem', borderRadius: '0.625rem', backgroundColor: '#f8fafc', border: '1px solid #f1f5f9' }}>
+              <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 0.25rem', fontWeight: '600' }}>Chi nhánh theo dõi</p>
+              <strong style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0f172a' }}>
+                {fmtNum(realtime?.branch_count)}
+              </strong>
+              <p style={{ fontSize: '0.7rem', color: '#94a3b8', margin: '0.25rem 0 0' }}>Toàn hệ thống</p>
+            </div>
+
+            <div style={{ padding: '0.75rem 0.5rem', borderRadius: '0.625rem', backgroundColor: '#f8fafc', border: '1px solid #f1f5f9' }}>
+              <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 0.25rem', fontWeight: '600' }}>Bộ nhớ Analytics</p>
+              <strong style={{ fontSize: '1.125rem', fontWeight: '700', color: realtime?.redis_enabled ? '#0284c7' : '#64748b', display: 'block', marginTop: '0.2rem' }}>
+                {realtime?.redis_enabled ? 'Redis Cache' : 'DB Direct'}
+              </strong>
+              <p style={{ fontSize: '0.7rem', color: '#94a3b8', margin: '0.25rem 0 0' }}>{realtime?.date_key || '-'}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="system-admin-card system-ops-block">
-        <div className="panel-head"><h2>Trạng thái kết nối dịch vụ</h2><span>{loading ? 'Đang cập nhật...' : 'Đã cập nhật'}</span></div>
-        <div className="system-admin-table-wrap">
-          <table className="system-admin-table">
+      {/* KPI Cards Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+        
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '0.75rem', padding: '1rem 1.125rem', border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#64748b' }}>Đơn mới trong ngày</span>
+            <div style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Package size={16} />
+            </div>
+          </div>
+          <div style={{ fontSize: '1.375rem', fontWeight: '800', color: '#0f172a' }}>
+            {fmtNum(realtime?.orders_created)}
+          </div>
+        </div>
+
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '0.75rem', padding: '1rem 1.125rem', border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#64748b' }}>Đơn hoàn thành</span>
+            <div style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CheckCircle2 size={16} />
+            </div>
+          </div>
+          <div style={{ fontSize: '1.375rem', fontWeight: '800', color: '#16a34a' }}>
+            {fmtNum(realtime?.orders_completed)}
+          </div>
+        </div>
+
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '0.75rem', padding: '1rem 1.125rem', border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#64748b' }}>Đơn bị hủy</span>
+            <div style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#fef2f2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <XCircle size={16} />
+            </div>
+          </div>
+          <div style={{ fontSize: '1.375rem', fontWeight: '800', color: realtime?.orders_cancelled >= config.cancelWarnCount ? '#dc2626' : '#0f172a' }}>
+            {fmtNum(realtime?.orders_cancelled)}
+          </div>
+        </div>
+
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '0.75rem', padding: '1rem 1.125rem', border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#64748b' }}>Doanh thu hoàn thành</span>
+            <div style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#fffbe8', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Coins size={16} />
+            </div>
+          </div>
+          <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#d97706', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {fmtMoney(realtime?.revenue_completed)}
+          </div>
+        </div>
+
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '0.75rem', padding: '1rem 1.125rem', border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#64748b' }}>Thanh toán thành công</span>
+            <div style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#f0f9ff', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CreditCard size={16} />
+            </div>
+          </div>
+          <div style={{ fontSize: '1.375rem', fontWeight: '800', color: '#0f172a' }}>
+            {fmtNum(realtime?.payments_succeeded)}
+          </div>
+        </div>
+
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '0.75rem', padding: '1rem 1.125rem', border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#64748b' }}>Thông báo đã gửi</span>
+            <div style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#faf5ff', color: '#9333ea', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Bell size={16} />
+            </div>
+          </div>
+          <div style={{ fontSize: '1.375rem', fontWeight: '800', color: '#0f172a' }}>
+            {fmtNum(realtime?.notifications_created)}
+          </div>
+        </div>
+
+      </div>
+
+      {/* Realtime Trends Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.25rem' }}>
+        
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '0.875rem', border: '1px solid #e2e8f0', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div>
+              <h3 style={{ fontSize: '0.9375rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+                Xu hướng đơn hàng mới
+              </h3>
+              <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0.15rem 0 0' }}>20 mốc gần nhất theo chu kỳ quét</p>
+            </div>
+            <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#2563eb', backgroundColor: '#eff6ff', padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
+              Đơn hàng
+            </span>
+          </div>
+          <MiniTrendChart points={orderTrend} color="#2563eb" title="đơn hàng" valueFormatter={fmtNum} />
+        </div>
+
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '0.875rem', border: '1px solid #e2e8f0', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div>
+              <h3 style={{ fontSize: '0.9375rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+                Xu hướng doanh thu
+              </h3>
+              <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0.15rem 0 0' }}>20 mốc gần nhất (doanh thu tăng thêm)</p>
+            </div>
+            <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#16a34a', backgroundColor: '#f0fdf4', padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
+              Doanh thu
+            </span>
+          </div>
+          <MiniTrendChart points={revenueTrend} color="#16a34a" title="doanh thu" valueFormatter={fmtCompactMoney} />
+        </div>
+
+      </div>
+
+      {/* Service Endpoints Status Table */}
+      <div style={{ backgroundColor: '#ffffff', borderRadius: '0.875rem', border: '1px solid #e2e8f0', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid #f1f5f9' }}>
+          <div>
+            <h2 style={{ fontSize: '0.9375rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+              Trạng thái kết nối dịch vụ API
+            </h2>
+            <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0.15rem 0 0' }}>Kiểm tra độ trễ và phản hồi của từng Microservice</p>
+          </div>
+          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+            {endpoints.filter((i) => i.ok).length}/{endpoints.length} Hoạt động
+          </span>
+        </div>
+
+        <div style={{ width: '100%', overflowX: 'hidden', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}>
+          <table style={{ width: '100%', minWidth: 0, tableLayout: 'fixed', borderCollapse: 'collapse', margin: 0 }}>
             <thead>
-              <tr>
-                <th>Dịch vụ</th>
-                <th>Trạng thái</th>
-                <th>HTTP</th>
-                <th>Độ trễ</th>
+              <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                <th style={{ width: '42%', textAlign: 'left', padding: '0.75rem 1rem', fontSize: '0.75rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tên Dịch vụ</th>
+                <th style={{ width: '23%', textAlign: 'left', padding: '0.75rem 1rem', fontSize: '0.75rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Trạng thái</th>
+                <th style={{ width: '15%', textAlign: 'center', padding: '0.75rem 1rem', fontSize: '0.75rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Mã HTTP</th>
+                <th style={{ width: '20%', textAlign: 'right', padding: '0.75rem 1rem', fontSize: '0.75rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>Độ trễ (Latency)</th>
               </tr>
             </thead>
             <tbody>
-              {endpoints.map((item) => (
-                <tr key={item.id}>
-                  <td><strong>{item.name}</strong></td>
-                  <td>
-                    <span className={`system-ops-status-pill ${item.ok ? 'ok' : 'down'}`}>{statusLabel(item.ok)}</span>
-                  </td>
-                  <td>{item.status}</td>
-                  <td>{item.latency} ms</td>
-                </tr>
-              ))}
+              {endpoints.map((item) => {
+                const IconComp = item.icon || Server
+                return (
+                  <tr key={item.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ textAlign: 'left', padding: '0.75rem 1rem', verticalAlign: 'middle' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', overflow: 'hidden' }}>
+                        <div style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#f1f5f9', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <IconComp size={15} />
+                        </div>
+                        <strong style={{ fontSize: '0.84375rem', color: '#0f172a', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.name}>
+                          {item.name}
+                        </strong>
+                      </div>
+                    </td>
+                    <td style={{ textAlign: 'left', padding: '0.75rem 1rem', verticalAlign: 'middle' }}>
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                        padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '600',
+                        backgroundColor: item.ok ? '#dcfce7' : '#fee2e2',
+                        color: item.ok ? '#15803d' : '#b91c1c', whiteSpace: 'nowrap'
+                      }}>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: item.ok ? '#22c55e' : '#ef4444' }} />
+                        {item.ok ? 'Sẵn sàng' : 'Gián đoạn'}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'center', padding: '0.75rem 1rem', verticalAlign: 'middle' }}>
+                      <span style={{ fontFamily: 'monospace', fontSize: '0.8125rem', fontWeight: '700', color: item.status === 200 ? '#16a34a' : '#dc2626' }}>
+                        {item.status || '503'}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'right', padding: '0.75rem 1rem', verticalAlign: 'middle' }}>
+                      <span style={{
+                        fontSize: '0.8125rem', fontWeight: '700', whiteSpace: 'nowrap',
+                        color: item.latency < 500 ? '#16a34a' : item.latency < 1000 ? '#d97706' : '#dc2626'
+                      }}>
+                        {item.latency} ms
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
       </div>
 
-      <div className="system-admin-card">
-        <div className="panel-head"><h2>Nhật ký cảnh báo</h2><span>Tự động cập nhật theo chu kỳ giám sát</span></div>
-        <div className="system-admin-table-wrap">
-          <table className="system-admin-table">
-            <thead>
-              <tr>
-                <th>Thời gian</th>
-                <th>Sự kiện</th>
-              </tr>
-            </thead>
-            <tbody>
-              {eventLogs.map((log, idx) => (
-                <tr key={`${log.at}-${idx}`}>
-                  <td>{log.at}</td>
-                  <td>{log.text}</td>
-                </tr>
-              ))}
-              {!eventLogs.length ? (
-                <tr>
-                  <td colSpan={2}>Chưa có cảnh báo nào trong phiên theo dõi hiện tại.</td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+      {/* System Event Logs */}
+      <div style={{ backgroundColor: '#ffffff', borderRadius: '0.875rem', border: '1px solid #e2e8f0', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid #f1f5f9' }}>
+          <div>
+            <h2 style={{ fontSize: '0.9375rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+              Nhật ký sự kiện &amp; Cảnh báo
+            </h2>
+            <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0.15rem 0 0' }}>Tự động ghi nhận trong các chu kỳ quét hệ thống</p>
+          </div>
+          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{eventLogs.length} sự kiện</span>
+        </div>
+
+        <div style={{ maxHeight: '240px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {eventLogs.map((log, idx) => {
+            const isError = log.type === 'ERROR'
+            const isWarn = log.type === 'WARN'
+            return (
+              <div
+                key={`${log.at}-${idx}`}
+                style={{
+                  display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.625rem 0.875rem',
+                  borderRadius: '0.5rem', fontSize: '0.8125rem',
+                  backgroundColor: isError ? '#fef2f2' : isWarn ? '#fffbe8' : '#f8fafc',
+                  border: `1px solid ${isError ? '#fecaca' : isWarn ? '#fef08a' : '#f1f5f9'}`
+                }}
+              >
+                <div style={{ flexShrink: 0, marginTop: '0.1rem' }}>
+                  {isError ? <XCircle size={14} color="#dc2626" /> : isWarn ? <AlertTriangle size={14} color="#d97706" /> : <CheckCircle2 size={14} color="#16a34a" />}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '0.15rem' }}>
+                    <span style={{ fontWeight: '600', color: isError ? '#991b1b' : isWarn ? '#854d0e' : '#1e293b' }}>
+                      {log.text}
+                    </span>
+                    <span style={{ fontSize: '0.72rem', color: '#94a3b8', flexShrink: 0 }}>{log.at}</span>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+
+          {!eventLogs.length ? (
+            <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.8125rem', margin: '1.5rem 0' }}>
+              Chưa có nhật ký cảnh báo nào trong phiên làm việc này.
+            </p>
+          ) : null}
         </div>
       </div>
-    </section>
+
+    </div>
   )
 }

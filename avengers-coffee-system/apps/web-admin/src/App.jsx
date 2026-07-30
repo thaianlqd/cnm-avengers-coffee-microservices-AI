@@ -266,11 +266,17 @@ function App() {
 
       <main className="content-area">
         <header className="content-header">
-          <div>
+          <div className="content-header-title">
             <h1>Trung tâm vận hành cửa hàng</h1>
             <p>Xin chào {session.user?.tenDangNhap || session.user?.email || 'nhan vien'}, cơ sở {branchName}.</p>
           </div>
-          <AdminNotificationBell session={session} />
+          <div className="header-right-actions">
+            <div className="header-search">
+              <span>🔍</span>
+              <input type="text" placeholder="Tìm kiếm mọi thứ..." />
+            </div>
+            <AdminNotificationBell session={session} />
+          </div>
         </header>
 
         {activeTab === 'overview' ? (
