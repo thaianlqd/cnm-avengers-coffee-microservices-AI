@@ -161,20 +161,21 @@ export default function CartPage({
   const [guestPhone, setGuestPhone] = useState('');
   const [guestSessionId, setGuestSessionId] = useState('');
 
+  const maNguoiDung = useMemo(() => activeUserId || 'anonymous', [activeUserId]);
+  const isLoggedInUser = useMemo(() => {
+    const value = String(maNguoiDung || '');
+    return Boolean(value && !value.startsWith('anon-') && value !== 'anonymous');
+  }, [maNguoiDung]);
+
   useEffect(() => {
+    if (isLoggedInUser) return;
     let gsid = localStorage.getItem('avengers_guest_session_id');
     if (!gsid) {
       gsid = `gsid_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
       localStorage.setItem('avengers_guest_session_id', gsid);
     }
     setGuestSessionId(gsid);
-  }, []);
-
-  const maNguoiDung = useMemo(() => activeUserId || 'anonymous', [activeUserId]);
-  const isLoggedInUser = useMemo(() => {
-    const value = String(maNguoiDung || '');
-    return Boolean(value && !value.startsWith('anon-') && value !== 'anonymous');
-  }, [maNguoiDung]);
+  }, [isLoggedInUser]);
 
   const { data: memData } = useQuery({
     queryKey: queryKeys.membershipByUser(maNguoiDung),

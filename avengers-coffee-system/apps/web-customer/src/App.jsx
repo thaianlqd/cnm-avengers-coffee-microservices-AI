@@ -967,6 +967,7 @@ function AppContent() {
         if (res.data?.autoLinked) {
           alert(`Đã tự động đồng bộ ${res.data.count} đơn hàng vãng lai gần đây của bạn vào tài khoản!`);
           localStorage.removeItem('avengers_guest_session_id');
+          localStorage.removeItem('avengers_anon_user_id');
           queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
         } else if (res.data?.promptLink) {
           setLinkOrderCount(res.data.count);
@@ -977,6 +978,9 @@ function AppContent() {
             guest_session_id: gsid,
           });
           setShowLinkOrderPrompt(true);
+        } else {
+          // Xóa gsid nếu không có đơn hàng match để không hỏi lại nữa
+          localStorage.removeItem('avengers_guest_session_id');
         }
       }).catch((err) => {
         console.error('Lỗi khi liên kết đơn hàng guest:', err);
@@ -997,6 +1001,8 @@ function AppContent() {
     queryClient.removeQueries({ queryKey: queryKeys.voucherList });
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('avengers_guest_session_id');
+    localStorage.removeItem('avengers_anon_user_id');
     setUser(null);
     await syncCartWithUser(null);
     // Sau khi user = null, query voucher sẽ re-fetch với anonymous (không có user_id)
@@ -2101,6 +2107,7 @@ function AppContent() {
                   }).then(() => {
                     alert('Liên kết đơn hàng thành công!');
                     localStorage.removeItem('avengers_guest_session_id');
+                    localStorage.removeItem('avengers_anon_user_id');
                     queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
                     setShowLinkOrderPrompt(false);
                   }).catch((err) => {
@@ -2117,7 +2124,11 @@ function AppContent() {
               <button
                 type="button"
                 disabled={isLinkingOrders}
-                onClick={() => setShowLinkOrderPrompt(false)}
+                onClick={() => {
+                  localStorage.removeItem('avengers_guest_session_id');
+                  localStorage.removeItem('avengers_anon_user_id');
+                  setShowLinkOrderPrompt(false);
+                }}
                 className="w-full py-3 hover:bg-gray-100 text-gray-500 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors cursor-pointer border-none bg-transparent"
               >
                 Để sau / Bỏ qua

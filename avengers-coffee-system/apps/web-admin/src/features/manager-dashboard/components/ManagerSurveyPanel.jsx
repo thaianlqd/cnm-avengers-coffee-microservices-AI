@@ -195,7 +195,7 @@ export function ManagerSurveyPanel({
     padding: '10px 22px',
     borderRadius: '30px',
     border: 'none',
-    background: isActive ? '#c41230' : '#f8f6f2',
+    background: isActive ? '#2563eb' : '#f8f6f2',
     color: isActive ? '#fff' : '#5c4d44',
     fontWeight: 600,
     fontSize: '13px',
@@ -284,7 +284,7 @@ export function ManagerSurveyPanel({
             /* SURVEY EDITOR */
             <form onSubmit={handleSaveForm} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <div style={cardStyle}>
-                <h3 style={{ margin: '0 0 20px 0', fontSize: '16px', fontWeight: 700, color: '#c41230', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <h3 style={{ margin: '0 0 20px 0', fontSize: '16px', fontWeight: 700, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   {editingFormId ? '✏️ Chỉnh sửa biểu mẫu' : '➕ Thêm biểu mẫu mới'}
                 </h3>
                 
@@ -344,7 +344,7 @@ export function ManagerSurveyPanel({
                     <div key={q.id} style={questionCardStyle}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
                         <div style={{ flex: 1 }}>
-                          <span style={{ fontSize: '11px', fontWeight: 700, color: '#c41230', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 700, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                             Câu hỏi {qIndex + 1}
                           </span>
                           <input
@@ -380,7 +380,7 @@ export function ManagerSurveyPanel({
                             type="checkbox"
                             checked={!!q.bat_buoc}
                             onChange={(e) => handleQuestionChange(q.id, 'bat_buoc', e.target.checked)}
-                            style={{ marginTop: '6px', width: '16px', height: '16px', accentColor: '#c41230' }}
+                            style={{ marginTop: '6px', width: '16px', height: '16px', accentColor: '#2563eb' }}
                           />
                         </div>
 
@@ -391,7 +391,7 @@ export function ManagerSurveyPanel({
                             marginTop: '20px',
                             padding: '10px 14px',
                             background: '#ffebeb',
-                            color: '#c41230',
+                            color: '#2563eb',
                             border: 'none',
                             borderRadius: '10px',
                             fontSize: '11px',
@@ -456,7 +456,7 @@ export function ManagerSurveyPanel({
                 </button>
                 <button
                   type="submit"
-                  style={{ flex: 2, padding: '14px', border: 'none', borderRadius: '30px', background: '#c41230', color: '#fff', fontWeight: 700, fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 14px rgba(196,18,48,0.2)' }}
+                  style={{ flex: 2, padding: '14px', border: 'none', borderRadius: '30px', background: '#2563eb', color: '#fff', fontWeight: 700, fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 14px rgba(196,18,48,0.2)' }}
                 >
                   Lưu biểu mẫu
                 </button>
@@ -473,7 +473,7 @@ export function ManagerSurveyPanel({
                   onClick={startCreateNew}
                   style={{
                     padding: '10px 20px',
-                    background: '#c41230',
+                    background: '#2563eb',
                     color: '#fff',
                     border: 'none',
                     borderRadius: '30px',
@@ -508,7 +508,7 @@ export function ManagerSurveyPanel({
                         borderRadius: '16px',
                         padding: '20px',
                         background: form.trang_thai ? '#fffdfa' : '#fff',
-                        borderLeft: form.trang_thai ? '6px solid #c41230' : '1px solid #efeae0',
+                        borderLeft: form.trang_thai ? '6px solid #2563eb' : '1px solid #efeae0',
                         boxShadow: '0 4px 12px rgba(0,0,0,0.015)',
                       }}
                     >
@@ -546,7 +546,7 @@ export function ManagerSurveyPanel({
                         </button>
                         <button
                           onClick={() => onXoaForm(form.id)}
-                          style={{ padding: '8px 16px', background: '#ffebeb', border: '1px solid #ffd1d1', color: '#c41230', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
+                          style={{ padding: '8px 16px', background: '#ffebeb', border: '1px solid #ffd1d1', color: '#2563eb', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
                         >
                           Xóa
                         </button>
@@ -630,7 +630,7 @@ export function ManagerSurveyPanel({
                       onClick={() => setSelectedResponse(resp)}
                       style={{
                         padding: '16px',
-                        border: isSelected ? '2px solid #c41230' : '1px solid #efeae0',
+                        border: isSelected ? '2px solid #2563eb' : '1px solid #efeae0',
                         borderRadius: '12px',
                         background: isSelected ? '#fffcfc' : '#fff',
                         cursor: 'pointer',
@@ -661,11 +661,11 @@ export function ManagerSurveyPanel({
                 {selectedResponse ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <div style={{ borderBottom: '2px solid #f6f3ed', paddingBottom: '16px', marginBottom: '4px' }}>
-                      <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#c41230' }}>
+                      <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#2563eb' }}>
                         Chi tiết phản hồi
                       </h4>
                       <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#1d1512', fontWeight: 600 }}>
-                        Khách hàng: <span style={{ color: '#c41230' }}>{selectedResponse.ten_nguoi_dung || 'Khách vãng lai'}</span>
+                        Khách hàng: <span style={{ color: '#2563eb' }}>{selectedResponse.ten_nguoi_dung || 'Khách vãng lai'}</span>
                       </p>
                       <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: '#685950', fontWeight: 450 }}>
                         SĐT: {selectedResponse.so_dien_thoai || 'Không cung cấp'} • Mã đơn: {selectedResponse.ma_don_hang || 'Không liên kết'}

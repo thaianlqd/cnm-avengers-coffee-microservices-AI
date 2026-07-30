@@ -143,10 +143,10 @@ export function AdminMembershipConfigPanel({
     const days = found.so_ngay_hieu_luc || 30
 
     return (
-      <div style={{ marginTop: '0.35rem', padding: '0.45rem 0.65rem', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e8e2da', fontSize: '0.76rem', color: '#4b5563', lineHeight: 1.4 }}>
+      <div style={{ marginTop: '0.35rem', padding: '0.45rem 0.65rem', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e5e7eb', fontSize: '0.76rem', color: '#4b5563', lineHeight: 1.4 }}>
         <div style={{ fontWeight: '700', color: '#1a1a1a' }}>{found.ten_khuyen_mai || found.ten_voucher} ({found.ma_khuyen_mai || found.ma_voucher})</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.25rem' }}>
-          <span>• <strong>Mức giảm:</strong> <span style={{ color: '#c41230', fontWeight: '800' }}>{valStr}</span></span>
+          <span>• <strong>Mức giảm:</strong> <span style={{ color: '#2563eb', fontWeight: '800' }}>{valStr}</span></span>
           <span>• <strong>Giảm tối đa:</strong> {maxDiscount}</span>
           <span>• <strong>Đơn tối thiểu:</strong> {minOrder > 0 ? `${minOrder.toLocaleString('vi-VN')}đ` : '0đ (Không giới hạn)'}</span>
           <span>• <strong>Hạn dùng cấp:</strong> {days} ngày</span>
@@ -213,13 +213,13 @@ export function AdminMembershipConfigPanel({
       </div>
 
       {/* Sub tabs navigation */}
-      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid #e8e2da', paddingBottom: '0.75rem', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid #e5e7eb', paddingBottom: '0.75rem', marginBottom: '1.5rem' }}>
         <button
           type="button"
           onClick={() => setActiveSubTab('ranks')}
           style={{
-            background: activeSubTab === 'ranks' ? '#c41230' : '#f4f0eb',
-            color: activeSubTab === 'ranks' ? '#ffffff' : '#4a3728',
+            background: activeSubTab === 'ranks' ? '#2563eb' : '#f9fafb',
+            color: activeSubTab === 'ranks' ? '#ffffff' : '#374151',
             border: 'none',
             padding: '0.55rem 1.25rem',
             borderRadius: '10px',
@@ -235,8 +235,8 @@ export function AdminMembershipConfigPanel({
           type="button"
           onClick={() => setActiveSubTab('wheel')}
           style={{
-            background: activeSubTab === 'wheel' ? '#c41230' : '#f4f0eb',
-            color: activeSubTab === 'wheel' ? '#ffffff' : '#4a3728',
+            background: activeSubTab === 'wheel' ? '#2563eb' : '#f9fafb',
+            color: activeSubTab === 'wheel' ? '#ffffff' : '#374151',
             border: 'none',
             padding: '0.55rem 1.25rem',
             borderRadius: '10px',
@@ -251,7 +251,7 @@ export function AdminMembershipConfigPanel({
       </div>
 
       {membershipConfigsState.error ? (
-        <div className="error-text" style={{ marginBottom: '1rem', color: '#c41230', fontWeight: '600' }}>{membershipConfigsState.error}</div>
+        <div className="error-text" style={{ marginBottom: '1rem', color: '#2563eb', fontWeight: '600' }}>{membershipConfigsState.error}</div>
       ) : null}
 
       {/* TAB 1: RANKS CONFIG */}
@@ -262,8 +262,8 @@ export function AdminMembershipConfigPanel({
               <div
                 key={tier.ma_hang}
                 style={{
-                  border: '1px solid #e8e2da',
-                  borderTop: `4px solid ${tier.mau_sac || '#c41230'}`,
+                  border: '1px solid #e5e7eb',
+                  borderTop: `4px solid ${tier.mau_sac || '#2563eb'}`,
                   borderRadius: '14px',
                   padding: '1.25rem',
                   backgroundColor: '#ffffff',
@@ -273,14 +273,14 @@ export function AdminMembershipConfigPanel({
                   gap: '1rem'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f4f0eb', paddingBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f9fafb', paddingBottom: '0.75rem' }}>
                   <div>
                     <h3 style={{ margin: 0, color: '#1a1a1a', fontWeight: '800', fontSize: '1.1rem' }}>
                       Hạng {tier.ten_hang}
                     </h3>
                     <span style={{ fontSize: '0.78rem', color: '#6b7280' }}>Mã định danh: {tier.ma_hang}</span>
                   </div>
-                  <span style={{ background: tier.mau_sac || '#c41230', color: '#ffffff', fontSize: '0.72rem', fontWeight: '700', padding: '0.2rem 0.6rem', borderRadius: '6px' }}>
+                  <span style={{ background: tier.mau_sac || '#2563eb', color: '#ffffff', fontSize: '0.72rem', fontWeight: '700', padding: '0.2rem 0.6rem', borderRadius: '6px' }}>
                     {tier.ma_hang}
                   </span>
                 </div>
@@ -295,12 +295,12 @@ export function AdminMembershipConfigPanel({
                         onChange={(e) => handleTierChange(idx, 'diem_toi_thieu', Number(e.target.value))}
                         disabled={tier.ma_hang === 'MEMBER'}
                         min="0"
-                        style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontWeight: '700', backgroundColor: tier.ma_hang === 'MEMBER' ? '#f9fafb' : '#ffffff' }}
+                        style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e5e7eb', fontWeight: '700', backgroundColor: tier.ma_hang === 'MEMBER' ? '#f9fafb' : '#ffffff' }}
                       />
                     </label>
 
                     <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                      <span style={{ fontSize: '0.82rem', fontWeight: '700', color: '#c41230' }}>Chi tiêu duy trì / Tháng (đ)</span>
+                      <span style={{ fontSize: '0.82rem', fontWeight: '700', color: '#2563eb' }}>Chi tiêu duy trì / Tháng (đ)</span>
                       <input
                         type="number"
                         value={tier.chi_tieu_toi_thieu_thang ?? 0}
@@ -309,7 +309,7 @@ export function AdminMembershipConfigPanel({
                         min="0"
                         step="10000"
                         placeholder={tier.ma_hang === 'MEMBER' ? 'Không yêu cầu' : 'Ví dụ: 100000'}
-                        style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da', fontWeight: '800', color: '#c41230', backgroundColor: tier.ma_hang === 'MEMBER' ? '#f9fafb' : '#ffffff' }}
+                        style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e5e7eb', fontWeight: '800', color: '#2563eb', backgroundColor: tier.ma_hang === 'MEMBER' ? '#f9fafb' : '#ffffff' }}
                       />
                     </label>
                   </div>
@@ -323,7 +323,7 @@ export function AdminMembershipConfigPanel({
                         value={tier.he_so_diem}
                         onChange={(e) => handleTierChange(idx, 'he_so_diem', Number(e.target.value))}
                         min="1"
-                        style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da' }}
+                        style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}
                       />
                     </label>
 
@@ -334,19 +334,19 @@ export function AdminMembershipConfigPanel({
                         value={tier.luot_quay_thang || 1}
                         onChange={(e) => handleTierChange(idx, 'luot_quay_thang', Number(e.target.value))}
                         min="1"
-                        style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e8e2da' }}
+                        style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}
                       />
                     </label>
                   </div>
 
                   {/* VOUCHER SELECTION */}
-                  <div style={{ background: '#faf7f4', padding: '0.85rem', borderRadius: '10px', border: '1px solid #e8e2da', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div style={{ background: '#f9fafb', padding: '0.85rem', borderRadius: '10px', border: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#c41230' }}>Quà Thăng Hạng</span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#2563eb' }}>Quà Thăng Hạng</span>
                       <select
                         value={tier.ma_voucher_thang_hang || ''}
                         onChange={(e) => handleTierChange(idx, 'ma_voucher_thang_hang', e.target.value)}
-                        style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.82rem' }}
+                        style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '0.82rem' }}
                       >
                         <option value="">-- Mặc định (Tự động tạo Voucher) --</option>
                         {(tierUpVouchers.length > 0 ? tierUpVouchers : activeTemplateVouchers).map((v) => (
@@ -363,7 +363,7 @@ export function AdminMembershipConfigPanel({
                       <select
                         value={tier.ma_voucher_sinh_nhat || ''}
                         onChange={(e) => handleTierChange(idx, 'ma_voucher_sinh_nhat', e.target.value)}
-                        style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.82rem' }}
+                        style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '0.82rem' }}
                       >
                         <option value="">-- Mặc định (Tự động tạo Voucher) --</option>
                         {(birthdayVouchers.length > 0 ? birthdayVouchers : activeTemplateVouchers).map((v) => (
@@ -375,7 +375,7 @@ export function AdminMembershipConfigPanel({
                       {renderVoucherDetailBadge(tier.ma_voucher_sinh_nhat)}
                     </label>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', paddingTop: '0.45rem', borderTop: '1px dashed #e8e2da' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', paddingTop: '0.45rem', borderTop: '1px dashed #e5e7eb' }}>
                       <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#059669' }}>Ưu đãi giao hàng</span>
                       <label style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                         <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#374151' }}>Mức giảm phí ship (đ)</span>
@@ -385,7 +385,7 @@ export function AdminMembershipConfigPanel({
                           value={tier.freeship_value ?? 0}
                           onChange={(e) => handleTierChange(idx, 'freeship_value', Number(e.target.value))}
                           placeholder="0 = Không hỗ trợ"
-                          style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.82rem', fontWeight: '600' }}
+                          style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '0.82rem', fontWeight: '600' }}
                         />
                       </label>
                       <label style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
@@ -396,7 +396,7 @@ export function AdminMembershipConfigPanel({
                           value={tier.freeship_min_order ?? 0}
                           onChange={(e) => handleTierChange(idx, 'freeship_min_order', Number(e.target.value))}
                           placeholder="0 = Mọi đơn hàng"
-                          style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e8e2da', fontSize: '0.82rem', fontWeight: '600' }}
+                          style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '0.82rem', fontWeight: '600' }}
                         />
                       </label>
                       <span style={{ fontSize: '0.74rem', color: '#4b5563', fontStyle: 'italic', marginTop: '0.1rem' }}>
@@ -417,7 +417,7 @@ export function AdminMembershipConfigPanel({
               onClick={saveTiersConfig}
               disabled={savingMembershipConfig}
               style={{
-                backgroundColor: '#c41230',
+                backgroundColor: '#2563eb',
                 color: '#ffffff',
                 border: 'none',
                 padding: '0.65rem 2rem',
@@ -438,7 +438,7 @@ export function AdminMembershipConfigPanel({
       {/* TAB 2: LUCKY WHEEL CONFIG */}
       {activeSubTab === 'wheel' && (
         <div className="space-y-6">
-          <div style={{ padding: '0.85rem 1.25rem', backgroundColor: '#ffffff', border: '1px solid #e8e2da', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ padding: '0.85rem 1.25rem', backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <span style={{ fontSize: '0.9rem', fontWeight: '600', color: '#1a1a1a' }}>Chi phí mỗi lượt quay (Điểm khả dụng):</span>
               <input
@@ -446,7 +446,7 @@ export function AdminMembershipConfigPanel({
                 value={wheelCost}
                 onChange={(e) => setWheelCost(Number(e.target.value))}
                 min="1"
-                style={{ padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid #e8e2da', width: '120px', fontWeight: '700', fontSize: '1rem', color: '#c41230' }}
+                style={{ padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid #e5e7eb', width: '120px', fontWeight: '700', fontSize: '1rem', color: '#2563eb' }}
               />
             </label>
             <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>Điểm khả dụng bị trừ của mỗi lượt quay</span>
@@ -469,8 +469,8 @@ export function AdminMembershipConfigPanel({
                     style={{
                       padding: '0.75rem 0.9rem',
                       borderRadius: '10px',
-                      border: isSelected ? '2px solid #c41230' : '1px solid #e8e2da',
-                      backgroundColor: isSelected ? '#fff7ed' : '#ffffff',
+                      border: isSelected ? '2px solid #2563eb' : '1px solid #e5e7eb',
+                      backgroundColor: isSelected ? '#eff6ff' : '#ffffff',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -484,7 +484,7 @@ export function AdminMembershipConfigPanel({
                           width: '28px',
                           height: '28px',
                           borderRadius: '50%',
-                          backgroundColor: prize.mau || '#c41230',
+                          backgroundColor: prize.mau || '#2563eb',
                           color: 'white',
                           display: 'flex',
                           alignItems: 'center',
@@ -504,7 +504,7 @@ export function AdminMembershipConfigPanel({
                         </span>
                       </div>
                     </div>
-                    <span style={{ fontWeight: '700', fontSize: '0.85rem', color: isSelected ? '#c41230' : '#4b5563' }}>
+                    <span style={{ fontWeight: '700', fontSize: '0.85rem', color: isSelected ? '#2563eb' : '#4b5563' }}>
                       {prize.xac_suat}%
                     </span>
                   </div>
@@ -517,7 +517,7 @@ export function AdminMembershipConfigPanel({
               <div
                 style={{
                   backgroundColor: '#ffffff',
-                  border: '1px solid #e8e2da',
+                  border: '1px solid #e5e7eb',
                   borderRadius: '14px',
                   padding: '1.25rem',
                   boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
@@ -526,11 +526,11 @@ export function AdminMembershipConfigPanel({
                   gap: '1rem'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f4f0eb', paddingBottom: '0.65rem' }}>
-                  <h3 style={{ margin: 0, color: '#c41230', fontWeight: '700', fontSize: '0.98rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f9fafb', paddingBottom: '0.65rem' }}>
+                  <h3 style={{ margin: 0, color: '#2563eb', fontWeight: '700', fontSize: '0.98rem' }}>
                     Chỉnh sửa Ô Thưởng #{activePrize.id}
                   </h3>
-                  <span style={{ background: '#f4f0eb', color: '#4a3728', padding: '0.15rem 0.55rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '600' }}>
+                  <span style={{ background: '#f9fafb', color: '#374151', padding: '0.15rem 0.55rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '600' }}>
                     {activePrize.loai}
                   </span>
                 </div>
@@ -542,7 +542,7 @@ export function AdminMembershipConfigPanel({
                     <select
                       value={activePrize.loai}
                       onChange={(e) => handleActivePrizeChange('loai', e.target.value)}
-                      style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e8e2da', fontWeight: '600', color: '#c41230' }}
+                      style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e5e7eb', fontWeight: '600', color: '#2563eb' }}
                     >
                       <option value="POINTS">Cộng điểm khả dụng</option>
                       <option value="VOUCHER">Tặng Voucher giảm giá</option>
@@ -558,13 +558,13 @@ export function AdminMembershipConfigPanel({
                       value={activePrize.ten}
                       onChange={(e) => handleActivePrizeChange('ten', e.target.value)}
                       placeholder="VD: +50 Điểm hoặc Free Phin Sữa"
-                      style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e8e2da' }}
+                      style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}
                     />
                   </label>
                 </div>
 
                 {/* DYNAMIC FIELD BASED ON LOAI */}
-                <div style={{ background: '#faf7f4', padding: '0.85rem', borderRadius: '10px', border: '1px solid #e8e2da' }}>
+                <div style={{ background: '#f9fafb', padding: '0.85rem', borderRadius: '10px', border: '1px solid #e5e7eb' }}>
                   {activePrize.loai === 'POINTS' && (
                     <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                       <span style={{ fontSize: '0.82rem', fontWeight: '600', color: '#374151' }}>Số điểm cộng</span>
@@ -573,7 +573,7 @@ export function AdminMembershipConfigPanel({
                         value={activePrize.gia_tri}
                         onChange={(e) => handleActivePrizeChange('gia_tri', Number(e.target.value))}
                         min="1"
-                        style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e8e2da', fontWeight: '700' }}
+                        style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e5e7eb', fontWeight: '700' }}
                       />
                     </label>
                   )}
@@ -584,7 +584,7 @@ export function AdminMembershipConfigPanel({
                       <select
                         value={activePrize.ma_voucher || ''}
                         onChange={(e) => handleActivePrizeChange('ma_voucher', e.target.value)}
-                        style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e8e2da' }}
+                        style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}
                       >
                         <option value="">-- Chọn Mẫu Voucher Vòng Quay --</option>
                         {(luckyWheelVouchers.length > 0 ? luckyWheelVouchers : activeTemplateVouchers).map((v) => (
@@ -602,7 +602,7 @@ export function AdminMembershipConfigPanel({
                             value={activePrize.gia_tri}
                             onChange={(e) => handleActivePrizeChange('gia_tri', Number(e.target.value))}
                             placeholder="Số tiền giảm (đ)"
-                            style={{ padding: '0.4rem 0.65rem', borderRadius: '8px', border: '1px solid #e8e2da', marginTop: '0.2rem', width: '100%' }}
+                            style={{ padding: '0.4rem 0.65rem', borderRadius: '8px', border: '1px solid #e5e7eb', marginTop: '0.2rem', width: '100%' }}
                           />
                         </div>
                       )}
@@ -616,7 +616,7 @@ export function AdminMembershipConfigPanel({
                         <select
                           value={activePrize.ten_san_pham_tang || ''}
                           onChange={(e) => handleActivePrizeChange('ten_san_pham_tang', e.target.value)}
-                          style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e8e2da' }}
+                          style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}
                         >
                           <option value="">-- Chọn Sản phẩm --</option>
                           {menuProducts.map((pName) => (
@@ -629,7 +629,7 @@ export function AdminMembershipConfigPanel({
                           value={activePrize.ten_san_pham_tang || ''}
                           onChange={(e) => handleActivePrizeChange('ten_san_pham_tang', e.target.value)}
                           placeholder="VD: Phin Sữa Đá"
-                          style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e8e2da' }}
+                          style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}
                         />
                       )}
                     </label>
@@ -649,7 +649,7 @@ export function AdminMembershipConfigPanel({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <input
                         type="color"
-                        value={activePrize.mau || '#c41230'}
+                        value={activePrize.mau || '#2563eb'}
                         onChange={(e) => handleActivePrizeChange('mau', e.target.value)}
                         style={{ width: '38px', height: '34px', padding: 0, border: 'none', cursor: 'pointer', borderRadius: '6px' }}
                       />
@@ -665,7 +665,7 @@ export function AdminMembershipConfigPanel({
                       onChange={(e) => handleActivePrizeChange('xac_suat', Number(e.target.value))}
                       min="0"
                       max="100"
-                      style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e8e2da', fontWeight: '700', color: '#c41230' }}
+                      style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #e5e7eb', fontWeight: '700', color: '#2563eb' }}
                     />
                   </label>
                 </div>
@@ -702,7 +702,7 @@ export function AdminMembershipConfigPanel({
               onClick={saveWheelConfig}
               disabled={savingMembershipConfig || !isWheelProbabilityValid}
               style={{
-                backgroundColor: isWheelProbabilityValid ? '#c41230' : '#9ca3af',
+                backgroundColor: isWheelProbabilityValid ? '#2563eb' : '#9ca3af',
                 color: '#ffffff',
                 border: 'none',
                 padding: '0.65rem 2rem',
