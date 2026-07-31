@@ -630,7 +630,7 @@ export function AdminBranchManagementPanel({
                     </tr>
                   </thead>
                   <tbody>
-                    {pageData.rows.map((branch) => {
+                    {pageData.rows.map((branch, index, array) => {
                       const branchCode = branch?.ma_chi_nhanh || ''
                       const isEditingThis = editingBranchCode === branchCode
                       const accountCount = Number(branch?.account_count || 0)
@@ -739,14 +739,15 @@ export function AdminBranchManagementPanel({
                               <div
                                 style={{
                                   position: 'absolute',
-                                  right: '0.25rem',
-                                  top: 'calc(100% + 4px)',
+                                  right: 'calc(100% + 6px)',
+                                  top: index >= (array.length - 2) ? 'auto' : '-4px',
+                                  bottom: index >= (array.length - 2) ? '-4px' : 'auto',
                                   backgroundColor: '#ffffff',
                                   border: '1px solid #e2e8f0',
                                   borderRadius: '8px',
                                   boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
                                   zIndex: 9999,
-                                  minWidth: '200px',
+                                  minWidth: '210px',
                                   padding: '0.35rem',
                                   display: 'flex',
                                   flexDirection: 'column',

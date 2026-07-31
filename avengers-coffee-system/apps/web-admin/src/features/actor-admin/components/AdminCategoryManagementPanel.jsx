@@ -372,7 +372,7 @@ export function AdminCategoryManagementPanel({
                     </tr>
                   </thead>
                   <tbody>
-                    {pageData.rows.map((cat) => {
+                    {pageData.rows.map((cat, index, array) => {
                       const productCount = Number(cat.product_count || 0)
                       const isLevel1 = Number(cat.cap_bac) === 1
                       const isEditingThis = editingCategoryId === String(cat.id || cat.code)
@@ -457,8 +457,9 @@ export function AdminCategoryManagementPanel({
                               <div
                                 style={{
                                   position: 'absolute',
-                                  right: '0.25rem',
-                                  top: 'calc(100% + 4px)',
+                                  right: 'calc(100% + 6px)',
+                                  top: index >= (array.length - 2) ? 'auto' : '-4px',
+                                  bottom: index >= (array.length - 2) ? '-4px' : 'auto',
                                   backgroundColor: '#ffffff',
                                   border: '1px solid #e2e8f0',
                                   borderRadius: '8px',
@@ -564,74 +565,90 @@ export function AdminCategoryManagementPanel({
 
             <form onSubmit={handleFormSubmit} className="cat-modal-body">
               {/* Input: Category Label */}
-              <div className="cat-form-group">
-                <label htmlFor="cat-modal-label">
-                  Tên danh mục <span className="cat-required">*</span>
+              <div className="cat-form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label htmlFor="cat-modal-label" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#334155' }}>
+                  Tên danh mục <span className="cat-required" style={{ color: '#ef4444' }}>*</span>
                 </label>
-                <input
-                  id="cat-modal-label"
-                  type="text"
-                  value={categoryForm.label}
-                  onChange={(e) => setCategoryForm((p) => ({ ...p, label: e.target.value }))}
-                  placeholder="Ví dụ: Cà phê phin, Trà trái cây, Bánh ngọt..."
-                  autoFocus
-                  required
-                />
+                <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                  <FolderTree size={16} color="#64748b" style={{ flexShrink: 0 }} />
+                  <input
+                    id="cat-modal-label"
+                    type="text"
+                    style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', boxShadow: 'none' }}
+                    value={categoryForm.label || ''}
+                    onChange={(e) => setCategoryForm((p) => ({ ...p, label: e.target.value }))}
+                    placeholder="Ví dụ: Cà phê phin, Trà trái cây, Bánh ngọt..."
+                    autoFocus
+                    required
+                  />
+                </div>
               </div>
 
               {/* Input: Category Level */}
-              <div className="cat-form-group">
-                <label htmlFor="cat-modal-level">Cấp bậc danh mục</label>
-                <select
-                  id="cat-modal-level"
-                  value={categoryForm.cap_bac}
-                  onChange={(e) =>
-                    setCategoryForm((p) => ({ ...p, cap_bac: Number(e.target.value) }))
-                  }
-                >
-                  <option value={1}>Cấp 1 - Danh mục chính</option>
-                  <option value={2}>Cấp 2 - Danh mục phụ</option>
-                </select>
+              <div className="cat-form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label htmlFor="cat-modal-level" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#334155' }}>Cấp bậc danh mục</label>
+                <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                  <Layers size={16} color="#64748b" style={{ flexShrink: 0 }} />
+                  <select
+                    id="cat-modal-level"
+                    style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', boxShadow: 'none', cursor: 'pointer' }}
+                    value={categoryForm.cap_bac}
+                    onChange={(e) =>
+                      setCategoryForm((p) => ({ ...p, cap_bac: Number(e.target.value) }))
+                    }
+                  >
+                    <option value={1}>Cấp 1 - Danh mục chính</option>
+                    <option value={2}>Cấp 2 - Danh mục phụ</option>
+                  </select>
+                </div>
               </div>
 
               {/* Input: Parent Category (Only if Level 2) */}
               {Number(categoryForm.cap_bac) === 2 && (
-                <div className="cat-form-group cat-form-group--highlight">
-                  <label htmlFor="cat-modal-parent">
-                    Danh mục cha <span className="cat-required">*</span>
+                <div className="cat-form-group cat-form-group--highlight" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <label htmlFor="cat-modal-parent" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#334155' }}>
+                    Danh mục cha <span className="cat-required" style={{ color: '#ef4444' }}>*</span>
                   </label>
-                  <select
-                    id="cat-modal-parent"
-                    value={categoryForm.ma_danh_muc_cha || ''}
-                    onChange={(e) =>
-                      setCategoryForm((p) => ({ ...p, ma_danh_muc_cha: e.target.value }))
-                    }
-                    required
-                  >
-                    <option value="">-- Chọn danh mục cha --</option>
-                    {categoriesState.items
-                      .filter((c) => Number(c.cap_bac) === 1)
-                      .map((c) => (
-                        <option key={c.code || c.id} value={c.code || c.id}>
-                          {c.label} (Mã: {c.code})
-                        </option>
-                      ))}
-                  </select>
+                  <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                    <Tag size={16} color="#64748b" style={{ flexShrink: 0 }} />
+                    <select
+                      id="cat-modal-parent"
+                      style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', boxShadow: 'none', cursor: 'pointer' }}
+                      value={categoryForm.ma_danh_muc_cha || ''}
+                      onChange={(e) =>
+                        setCategoryForm((p) => ({ ...p, ma_danh_muc_cha: e.target.value }))
+                      }
+                      required
+                    >
+                      <option value="">-- Chọn danh mục cha --</option>
+                      {categoriesState.items
+                        .filter((c) => Number(c.cap_bac) === 1)
+                        .map((c) => (
+                          <option key={c.code || c.id} value={c.code || c.id}>
+                            {c.label} (Mã: {c.code})
+                          </option>
+                        ))}
+                    </select>
+                  </div>
                 </div>
               )}
 
               {/* Input: Icon Selection / URL */}
-              <div className="cat-form-group">
-                <label htmlFor="cat-modal-icon">Biểu tượng (Icon)</label>
-                <input
-                  id="cat-modal-icon"
-                  type="text"
-                  value={categoryForm.icon || ''}
-                  onChange={(e) => setCategoryForm((p) => ({ ...p, icon: e.target.value }))}
-                  placeholder="Chọn icon mẫu bên dưới hoặc nhập đường dẫn ảnh..."
-                />
+              <div className="cat-form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label htmlFor="cat-modal-icon" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#334155' }}>Biểu tượng (Icon)</label>
+                <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                  <Sparkles size={16} color="#64748b" style={{ flexShrink: 0 }} />
+                  <input
+                    id="cat-modal-icon"
+                    type="text"
+                    style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', boxShadow: 'none' }}
+                    value={categoryForm.icon || ''}
+                    onChange={(e) => setCategoryForm((p) => ({ ...p, icon: e.target.value }))}
+                    placeholder="Chọn icon mẫu bên dưới hoặc nhập đường dẫn ảnh..."
+                  />
+                </div>
                 {/* Icon Presets */}
-                <div className="cat-icon-presets">
+                <div className="cat-icon-presets" style={{ marginTop: '0.5rem' }}>
                   <span className="cat-presets-label">Gợi ý icon mẫu:</span>
                   <div className="cat-presets-list">
                     {ICON_PRESETS.map((preset) => {
@@ -658,32 +675,62 @@ export function AdminCategoryManagementPanel({
               <div className="cat-modal-footer">
                 <button
                   type="button"
-                  className="cat-btn cat-btn--neutral"
+                  className="cat-btn cat-btn--neutral btn-cancel"
                   onClick={handleCloseModal}
                   disabled={savingCategory}
+                  style={{
+                    backgroundColor: '#fef2f2',
+                    background: '#fef2f2',
+                    color: '#dc2626',
+                    border: '1px solid #fecaca',
+                    height: '40px',
+                    padding: '0 1.25rem',
+                    borderRadius: '8px',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem'
+                  }}
                 >
-                  <X size={16} />
-                  <span>Hủy bỏ</span>
+                  <X size={16} color="#dc2626" />
+                  <span style={{ color: '#dc2626' }}>Hủy bỏ</span>
                 </button>
 
                 <button
                   type="submit"
-                  className="cat-btn cat-btn--success"
+                  className="cat-btn cat-btn--success btn-save"
                   disabled={savingCategory || !categoryForm.label.trim()}
+                  style={{
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    height: '40px',
+                    padding: '0 1.5rem',
+                    borderRadius: '8px',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
+                  }}
                 >
                   {savingCategory ? (
                     <>
-                      <RefreshCw size={16} className="cat-spin-icon" />
+                      <RefreshCw size={16} className="cat-spin-icon" color="#ffffff" />
                       <span>Đang lưu...</span>
                     </>
                   ) : editingCategoryId ? (
                     <>
-                      <Check size={16} />
+                      <Check size={16} color="#ffffff" />
                       <span>Lưu cập nhật</span>
                     </>
                   ) : (
                     <>
-                      <Plus size={16} />
+                      <Plus size={16} color="#ffffff" />
                       <span>Tạo danh mục</span>
                     </>
                   )}

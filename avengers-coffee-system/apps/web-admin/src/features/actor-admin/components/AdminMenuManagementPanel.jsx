@@ -539,7 +539,7 @@ function AdminMenuManagementPanelContent({
                     </tr>
                   </thead>
                   <tbody>
-                    {pageData.rows.filter(Boolean).map((item) => {
+                    {pageData.rows.filter(Boolean).map((item, index, array) => {
                       const isEditingThis = editingMenuId === item.id
                       const hasOriginalPrice = Number(item.original_price || 0) > Number(item.price || 0)
 
@@ -645,8 +645,9 @@ function AdminMenuManagementPanelContent({
                               <div
                                 style={{
                                   position: 'absolute',
-                                  right: '0.25rem',
-                                  top: 'calc(100% + 4px)',
+                                  right: 'calc(100% + 6px)',
+                                  top: index >= (array.length - 2) ? 'auto' : '-4px',
+                                  bottom: index >= (array.length - 2) ? '-4px' : 'auto',
                                   backgroundColor: '#ffffff',
                                   border: '1px solid #e2e8f0',
                                   borderRadius: '8px',

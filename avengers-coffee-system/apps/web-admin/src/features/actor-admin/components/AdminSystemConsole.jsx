@@ -382,7 +382,7 @@ export function AdminSystemConsole({
 
         <div className="system-admin-tabs">
           {/* GROUP 1: TỔNG QUAN & BÁO CÁO */}
-          <div style={{ marginBottom: '0.25rem' }}>
+          <div style={{ marginBottom: '0.85rem' }}>
             <button type="button" className="nav-group-header-btn" onClick={() => setActiveGroup(activeGroup === 'group-1' ? '' : 'group-1')}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 <PieChart size={15} color="#64748b" /> <span>Tổng quan &amp; Báo cáo</span>
@@ -405,7 +405,7 @@ export function AdminSystemConsole({
           </div>
 
           {/* GROUP 2: SẢN PHẨM & KINH DOANH */}
-          <div style={{ marginBottom: '0.25rem' }}>
+          <div style={{ marginBottom: '0.85rem' }}>
             <button type="button" className="nav-group-header-btn" onClick={() => setActiveGroup(activeGroup === 'group-2' ? '' : 'group-2')}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 <Package size={15} color="#64748b" /> <span>Sản phẩm &amp; Kinh doanh</span>
@@ -427,11 +427,11 @@ export function AdminSystemConsole({
             )}
           </div>
 
-          {/* GROUP 3: MẠNG LƯỚI & VẬN HÀNH */}
-          <div style={{ marginBottom: '0.25rem' }}>
+          {/* GROUP 3: MẠNG LƯỚI & QUẢN TRỊ HỆ THỐNG */}
+          <div style={{ marginBottom: '0.85rem' }}>
             <button type="button" className="nav-group-header-btn" onClick={() => setActiveGroup(activeGroup === 'group-3' ? '' : 'group-3')}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                <Map size={15} color="#64748b" /> <span>Mạng lưới &amp; Vận hành</span>
+                <Map size={15} color="#64748b" /> <span>Mạng lưới &amp; Quản trị hệ thống</span>
               </div>
               {activeGroup === 'group-3' ? <ChevronDown size={14} color="#94a3b8" /> : <ChevronRight size={14} color="#94a3b8" />}
             </button>
@@ -443,20 +443,6 @@ export function AdminSystemConsole({
                 <button type="button" className={activeTab === 'shippers' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('shippers')}>
                   <Bike size={15} /> Quản lý giao hàng
                 </button>
-              </div>
-            )}
-          </div>
-
-          {/* GROUP 4: KHÁCH HÀNG & THÀNH VIÊN */}
-          <div style={{ marginBottom: '0.25rem' }}>
-            <button type="button" className="nav-group-header-btn" onClick={() => setActiveGroup(activeGroup === 'group-4' ? '' : 'group-4')}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                <UsersIcon size={15} color="#64748b" /> <span>Khách hàng &amp; Thành viên</span>
-              </div>
-              {activeGroup === 'group-4' ? <ChevronDown size={14} color="#94a3b8" /> : <ChevronRight size={14} color="#94a3b8" />}
-            </button>
-            {activeGroup === 'group-4' && (
-              <div className="nav-group-children">
                 <button type="button" className={activeTab === 'customers' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('customers')}>
                   <UserCog size={15} /> Quản lý khách hàng
                 </button>
@@ -466,20 +452,6 @@ export function AdminSystemConsole({
                 <button type="button" className={activeTab === 'survey-manage' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('survey-manage')}>
                   <BarChart3 size={15} /> Quản lý Khảo sát
                 </button>
-              </div>
-            )}
-          </div>
-
-          {/* GROUP 5: QUẢN TRỊ HỆ THỐNG */}
-          <div style={{ marginBottom: '0.25rem' }}>
-            <button type="button" className="nav-group-header-btn" onClick={() => setActiveGroup(activeGroup === 'group-5' ? '' : 'group-5')}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                <Monitor size={15} color="#64748b" /> <span>Quản trị hệ thống</span>
-              </div>
-              {activeGroup === 'group-5' ? <ChevronDown size={14} color="#94a3b8" /> : <ChevronRight size={14} color="#94a3b8" />}
-            </button>
-            {activeGroup === 'group-5' && (
-              <div className="nav-group-children">
                 <button type="button" className={activeTab === 'users' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('users')}>
                   <Users size={15} /> Quản lý người dùng
                 </button>
