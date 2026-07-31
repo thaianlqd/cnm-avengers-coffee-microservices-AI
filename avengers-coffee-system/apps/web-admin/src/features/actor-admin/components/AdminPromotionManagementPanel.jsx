@@ -439,7 +439,7 @@ function AdminPromotionManagementPanelContent({
                     </tr>
                   </thead>
                   <tbody>
-                    {pageData.rows.map((item) => {
+                    {pageData.rows.map((item, index, array) => {
                       const code = item.ma_khuyen_mai || item.ma_voucher || '---'
                       const isEditingThis = editingPromotionCode === code
                       const discountLabel =
@@ -525,8 +525,9 @@ function AdminPromotionManagementPanelContent({
                               <div
                                 style={{
                                   position: 'absolute',
-                                  right: '0.25rem',
-                                  top: 'calc(100% + 4px)',
+                                  right: 'calc(100% + 6px)',
+                                  top: index >= (array.length - 2) ? 'auto' : '-4px',
+                                  bottom: index >= (array.length - 2) ? '-4px' : 'auto',
                                   backgroundColor: '#ffffff',
                                   border: '1px solid #e2e8f0',
                                   borderRadius: '8px',
@@ -589,7 +590,7 @@ function AdminPromotionManagementPanelContent({
                     </tr>
                   </thead>
                   <tbody>
-                    {pageData.rows.map((item) => {
+                    {pageData.rows.map((item, index, array) => {
                       const code = item.ma_khuyen_mai || item.ma_voucher || '---'
                       const isEditingThis = editingPromotionCode === code
                       const rawCtx = item.ngu_canh_su_dung || ''
@@ -667,8 +668,9 @@ function AdminPromotionManagementPanelContent({
                               <div
                                 style={{
                                   position: 'absolute',
-                                  right: '0.25rem',
-                                  top: 'calc(100% + 4px)',
+                                  right: 'calc(100% + 6px)',
+                                  top: index >= (array.length - 2) ? 'auto' : '-4px',
+                                  bottom: index >= (array.length - 2) ? '-4px' : 'auto',
                                   backgroundColor: '#ffffff',
                                   border: '1px solid #e2e8f0',
                                   borderRadius: '8px',

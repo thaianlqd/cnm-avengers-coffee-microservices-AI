@@ -5271,37 +5271,38 @@
 .ofb-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.28rem 0.72rem;
-  border: 1.5px solid #e0c8b3;
-  border-radius: 999px;
-  background: #fff;
-  color: #6f4f38;
+  gap: 0.35rem;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 9999px;
+  background: #ffffff;
+  color: #475569;
   font: inherit;
-  font-size: 0.83rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.14s;
+  transition: all 0.15s ease;
   white-space: nowrap;
 }
 
 .ofb-chip:hover {
-  border-color: var(--burnt);
-  color: var(--burnt);
-  background: #fff7f2;
+  border-color: #94a3b8;
+  color: #0f172a;
+  background: #f8fafc;
 }
 
 .ofb-chip--active {
-  background: var(--burnt);
-  border-color: var(--burnt);
-  color: #fff;
-  font-weight: 600;
-  box-shadow: 0 2px 6px rgba(214, 90, 18, 0.3);
+  background: #4f46e5 !important;
+  border-color: #4f46e5 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25) !important;
 }
 
 .ofb-chip--active:hover {
-  background: #c05210;
-  border-color: #c05210;
-  color: #fff;
+  background: #4338ca !important;
+  border-color: #4338ca !important;
+  color: #ffffff !important;
 }
 
 .ofb-chip-icon {
@@ -8804,42 +8805,103 @@
   letter-spacing: 0.01em;
 }
 
+.admin-app-shell,
+.system-admin-shell {
+  display: grid !important;
+  grid-template-columns: 260px minmax(0, 1fr) !important;
+  min-height: 100vh !important;
+}
+
 .left-nav,
 .system-admin-sidebar {
-  background: linear-gradient(180deg, #0a1a33 0%, #0d2342 58%, #132f55 100%);
+  background: #ffffff !important;
+  border-right: 1px solid #e2e8f0 !important;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03) !important;
+  width: 260px !important;
+  min-width: 260px !important;
+  max-width: 260px !important;
+  height: 100vh !important;
+  position: sticky !important;
+  top: 0 !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #cbd5e1 transparent !important;
 }
 
-.nav-tab,
-.system-admin-tabs .nav-tab {
-  background: rgba(13, 35, 66, 0.5);
-  border-color: rgba(148, 163, 184, 0.28);
+.left-nav::-webkit-scrollbar,
+.system-admin-sidebar::-webkit-scrollbar {
+  width: 4px !important;
 }
 
-.nav-tab.active,
-.system-admin-tabs .nav-tab.active,
+.left-nav::-webkit-scrollbar-thumb,
+.system-admin-sidebar::-webkit-scrollbar-thumb {
+  background: #cbd5e1 !important;
+  border-radius: 4px !important;
+}
+
+.left-nav .nav-tab {
+  background: transparent !important;
+  color: #475569 !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0.55rem 0.85rem !important;
+  font-size: 0.84rem !important;
+  font-weight: 600 !important;
+  transition: all 0.15s ease !important;
+}
+
+.left-nav .nav-tab:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
 .left-nav .nav-tab.active {
-  background: linear-gradient(90deg, #1d4ed8 0%, #2563eb 56%, #0ea5e9 100%);
+  background: #e0e7ff !important;
+  color: #4f46e5 !important;
+  font-weight: 700 !important;
 }
 
-.content-area,
-.system-admin-shell {
-  background:
-    radial-gradient(circle at 88% 12%, rgba(59, 130, 246, 0.16), transparent 34%),
-    radial-gradient(circle at 10% 8%, rgba(14, 165, 233, 0.12), transparent 26%),
-    #eef4fb;
+.content-area {
+  background: #f8fafc !important;
+}
+
+.content-header {
+  background: #ffffff !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  padding: 1rem 1.75rem !important;
+}
+
+.content-header-title h1 {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+  font-size: 1.25rem !important;
+}
+
+.content-header-title p {
+  color: #64748b !important;
+  font-size: 0.8125rem !important;
 }
 
 .logout-btn,
 .left-nav .logout-btn,
 .system-admin-sidebar .logout-btn {
-  background: linear-gradient(118deg, #0ea5e9, #2563eb);
-  border: 1px solid rgba(147, 197, 253, 0.55);
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+  border: 1px solid #fecaca !important;
+  font-weight: 600 !important;
+  transition: all 0.15s ease !important;
 }
 
 .logout-btn:hover,
 .left-nav .logout-btn:hover,
 .system-admin-sidebar .logout-btn:hover {
-  background: linear-gradient(118deg, #0284c7, #1d4ed8);
+  background: #fee2e2 !important;
+  color: #b91c1c !important;
 }
 
 .admin-notify-count {
@@ -9681,12 +9743,12 @@ tbody tr:hover {
 .nav-group-children {
   display: flex !important;
   flex-direction: column !important;
-  padding-left: 0.5rem !important;
+  padding-left: 0.6rem !important;
   margin-left: 0.85rem !important;
-  border-left: 1px solid #e2e8f0 !important;
-  margin-top: 0.15rem !important;
-  margin-bottom: 0.35rem !important;
-  gap: 0.15rem !important;
+  border-left: 2px solid #e2e8f0 !important;
+  margin-top: 0.35rem !important;
+  margin-bottom: 0.45rem !important;
+  gap: 0.25rem !important;
 }
 
 .system-admin-tabs .nav-tab {
@@ -9982,7 +10044,7 @@ button.btn-save:hover,
   border-color: #047857 !important;
 }
 
-/* Cancel / Delete / Secondary Buttons: White Background, Red Text */
+/* Cancel / Delete / Secondary Buttons: Soft Red Background, Bright Red Text */
 button.btn-cancel,
 .btn-cancel,
 button.btn-danger,
@@ -9991,10 +10053,10 @@ button.btn-danger,
 .system-admin-card button.secondary,
 .system-admin-panel button.secondary,
 .admin-modal button.secondary {
-  background-color: #ffffff !important;
-  background: #ffffff !important;
+  background-color: #fef2f2 !important;
+  background: #fef2f2 !important;
   color: #dc2626 !important;
-  border: 1px solid #dc2626 !important;
+  border: 1px solid #fecaca !important;
   font-weight: 600 !important;
 }
 
@@ -10006,10 +10068,10 @@ button.btn-danger:hover,
 .system-admin-card button.secondary:hover,
 .system-admin-panel button.secondary:hover,
 .admin-modal button.secondary:hover {
-  background-color: #fef2f2 !important;
-  background: #fef2f2 !important;
+  background-color: #fee2e2 !important;
+  background: #fee2e2 !important;
   color: #b91c1c !important;
-  border-color: #b91c1c !important;
+  border-color: #fca5a5 !important;
 }
 
 /* Dedicated Icon More (3-Dots) Button */
@@ -10061,7 +10123,7 @@ button.btn-danger:hover,
 .system-admin-table-wrap {
   border-radius: 8px !important;
   border: 1px solid #e2e8f0 !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   width: 100% !important;
   background: #ffffff !important;
 }
@@ -10151,6 +10213,56 @@ button.btn-danger:hover,
   padding: 0.15rem 0.5rem !important;
   border-radius: 6px !important;
   font-weight: 600 !important;
+}
+
+/* Centered Avatar Circle */
+.admin-avatar-circle {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  border-radius: 50% !important;
+  background-color: #eef2ff !important;
+  color: #4f46e5 !important;
+  font-weight: 700 !important;
+  font-size: 0.875rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  border: 1px solid #c7d2fe !important;
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.admin-avatar-circle span {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Strictly Fixed Responsive Table - No Horizontal Scroll */
+.admin-fit-table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+.admin-fit-table th,
+.admin-fit-table td {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  box-sizing: border-box !important;
 }
 
 /* Circular Progress */
@@ -12224,4 +12336,64 @@ svg.lucide *,
 .menu-manage-container svg * {
   fill: none !important;
   stroke: currentColor !important;
+}
+
+/* Subtabs navigation buttons styling */
+.admin-subtab-btn {
+  background: transparent !important;
+  color: #475569 !important;
+  border: 1px solid transparent !important;
+  padding: 0.55rem 1.25rem !important;
+  border-radius: 9px !important;
+  font-weight: 700 !important;
+  font-size: 0.875rem !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.admin-subtab-btn:hover {
+  background: #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+.admin-subtab-btn.is-active {
+  background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35) !important;
+}
+
+/* Green Save Button */
+.btn-save-green {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  height: 42px !important;
+  padding: 0 1.75rem !important;
+  border-radius: 10px !important;
+  font-weight: 700 !important;
+  font-size: 0.9rem !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-save-green:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-save-green:disabled {
+  background: #cbd5e1 !important;
+  color: #64748b !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  opacity: 0.7 !important;
 }
