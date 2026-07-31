@@ -940,8 +940,13 @@ export function OrdersPanel({
                         type="number"
                         min="0"
                         style={{ height: '32px', width: '100%', padding: '0 0.55rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.84rem', fontWeight: '700', marginTop: '0.2rem' }}
-                        value={editCashInput}
-                        onChange={(e) => setEditCashInput(Number(e.target.value) || 0)}
+                        value={editCashInput === 0 || editCashInput === '0' ? '' : editCashInput}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          setEditCashInput(val === '' ? 0 : Number(val))
+                        }}
+                        onFocus={(e) => e.target.select()}
+                        placeholder="0"
                       />
                       <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.72rem', fontWeight: '700', color: editCashInsufficient ? '#dc2626' : '#059669' }}>
                         {editCashInsufficient ? '⚠️ Tiền khách đưa chưa đủ' : `Tiền thối khách: ${fmtMoney(editChange)}`}

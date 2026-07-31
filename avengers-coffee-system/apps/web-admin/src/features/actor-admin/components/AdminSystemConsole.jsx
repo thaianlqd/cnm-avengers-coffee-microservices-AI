@@ -15,7 +15,7 @@ import { AdminBranchManagementPanel } from './AdminBranchManagementPanel'
 import { AdminOverviewDashboardPanel } from './AdminOverviewDashboardPanel'
 import { AdminUserManagementPanel } from './AdminUserManagementPanel'
 import { AdminCustomerManagementPanel } from './AdminCustomerManagementPanel'
-import { LayoutGrid, Users, UserCog, Settings, Store, FolderOpen, Coffee, ShieldCheck, Ticket, BarChart3, Brain, Activity, Bike, Search, ChevronDown, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, PieChart, Package, Map, UsersIcon, Monitor, TrendingUp, BarChart2, MapPin, Info, ArrowUpDown, UserPlus, Edit2, Trash2, Filter, MoreVertical, Coins } from 'lucide-react'
+import { LayoutGrid, Users, UserCog, Settings, Store, FolderOpen, Coffee, ShieldCheck, Ticket, BarChart3, Brain, Activity, Bike, Search, ChevronDown, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, PieChart, Package, Map, UsersIcon, Monitor, TrendingUp, BarChart2, MapPin, Info, ArrowUpDown, UserPlus, Edit2, Trash2, Filter, MoreVertical, Coins, LogOut } from 'lucide-react'
 function fmtNumber(value) {
   return Number(value || 0).toLocaleString('vi-VN')
 }
@@ -380,82 +380,327 @@ export function AdminSystemConsole({
           </p>
         </div>
 
-        <div className="system-admin-tabs">
-          {/* GROUP 1: TỔNG QUAN & BÁO CÁO */}
-          <div style={{ marginBottom: '0.85rem' }}>
-            <button type="button" className="nav-group-header-btn" onClick={() => setActiveGroup(activeGroup === 'group-1' ? '' : 'group-1')}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                <PieChart size={15} color="#64748b" /> <span>Tổng quan &amp; Báo cáo</span>
+        <div className="system-admin-tabs" style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+          {/* NHÓM 1: TỔNG QUAN & BÁO CÁO */}
+          <div>
+            <button
+              type="button"
+              className="nav-group-header-btn"
+              onClick={() => setActiveGroup(activeGroup === 'group-1' ? '' : 'group-1')}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justify: 'space-between',
+                padding: '0.55rem 0.65rem',
+                border: 'none',
+                background: activeGroup === 'group-1' ? '#f1f5f9' : 'transparent',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                color: '#475569',
+                fontWeight: '800',
+                fontSize: '0.725rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', overflow: 'hidden' }}>
+                <PieChart size={15} color="#4f46e5" />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Tổng quan &amp; Báo cáo</span>
               </div>
-              {activeGroup === 'group-1' ? <ChevronDown size={14} color="#94a3b8" /> : <ChevronRight size={14} color="#94a3b8" />}
+              {activeGroup === 'group-1' ? <ChevronDown size={14} color="#64748b" /> : <ChevronRight size={14} color="#94a3b8" />}
             </button>
             {activeGroup === 'group-1' && (
-              <div className="nav-group-children">
-                <button type="button" className={activeTab === 'overview' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('overview')}>
+              <div className="nav-group-children" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.35rem', paddingLeft: '0.35rem' }}>
+                <button
+                  type="button"
+                  className={activeTab === 'overview' ? 'nav-tab active' : 'nav-tab'}
+                  onClick={() => setActiveTab('overview')}
+                  style={activeTab === 'overview' ? {
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
+                    borderRadius: '8px'
+                  } : {}}
+                >
                   <LayoutGrid size={15} /> Dashboard tổng
                 </button>
-                <button type="button" className={activeTab === 'ai-analytics' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('ai-analytics')}>
+                <button
+                  type="button"
+                  className={activeTab === 'ai-analytics' ? 'nav-tab active' : 'nav-tab'}
+                  onClick={() => setActiveTab('ai-analytics')}
+                  style={activeTab === 'ai-analytics' ? {
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
+                    borderRadius: '8px'
+                  } : {}}
+                >
                   <Brain size={15} /> Phân tích mua sắm
                 </button>
-                <button type="button" className={activeTab === 'system-ops' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('system-ops')}>
+                <button
+                  type="button"
+                  className={activeTab === 'system-ops' ? 'nav-tab active' : 'nav-tab'}
+                  onClick={() => setActiveTab('system-ops')}
+                  style={activeTab === 'system-ops' ? {
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
+                    borderRadius: '8px'
+                  } : {}}
+                >
                   <Activity size={15} /> Giám sát hệ thống
                 </button>
               </div>
             )}
           </div>
 
-          {/* GROUP 2: SẢN PHẨM & KINH DOANH */}
-          <div style={{ marginBottom: '0.85rem' }}>
-            <button type="button" className="nav-group-header-btn" onClick={() => setActiveGroup(activeGroup === 'group-2' ? '' : 'group-2')}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                <Package size={15} color="#64748b" /> <span>Sản phẩm &amp; Kinh doanh</span>
+          {/* NHÓM 2: SẢN PHẨM & KHUYẾN MÃI */}
+          <div>
+            <button
+              type="button"
+              className="nav-group-header-btn"
+              onClick={() => setActiveGroup(activeGroup === 'group-2' ? '' : 'group-2')}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justify: 'space-between',
+                padding: '0.55rem 0.65rem',
+                border: 'none',
+                background: activeGroup === 'group-2' ? '#f1f5f9' : 'transparent',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                color: '#475569',
+                fontWeight: '800',
+                fontSize: '0.725rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', overflow: 'hidden' }}>
+                <Package size={15} color="#4f46e5" />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Sản phẩm &amp; Khuyến mãi</span>
               </div>
-              {activeGroup === 'group-2' ? <ChevronDown size={14} color="#94a3b8" /> : <ChevronRight size={14} color="#94a3b8" />}
+              {activeGroup === 'group-2' ? <ChevronDown size={14} color="#64748b" /> : <ChevronRight size={14} color="#94a3b8" />}
             </button>
             {activeGroup === 'group-2' && (
-              <div className="nav-group-children">
-                <button type="button" className={activeTab === 'categories' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('categories')}>
+              <div className="nav-group-children" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.35rem', paddingLeft: '0.35rem' }}>
+                <button
+                  type="button"
+                  className={activeTab === 'categories' ? 'nav-tab active' : 'nav-tab'}
+                  onClick={() => setActiveTab('categories')}
+                  style={activeTab === 'categories' ? {
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
+                    borderRadius: '8px'
+                  } : {}}
+                >
                   <FolderOpen size={15} /> Quản lý danh mục
                 </button>
-                <button type="button" className={activeTab === 'menu' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('menu')}>
+                <button
+                  type="button"
+                  className={activeTab === 'menu' ? 'nav-tab active' : 'nav-tab'}
+                  onClick={() => setActiveTab('menu')}
+                  style={activeTab === 'menu' ? {
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
+                    borderRadius: '8px'
+                  } : {}}
+                >
                   <Coffee size={15} /> Quản lý menu tổng
                 </button>
-                <button type="button" className={activeTab === 'promotions' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('promotions')}>
+                <button
+                  type="button"
+                  className={activeTab === 'promotions' ? 'nav-tab active' : 'nav-tab'}
+                  onClick={() => setActiveTab('promotions')}
+                  style={activeTab === 'promotions' ? {
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
+                    borderRadius: '8px'
+                  } : {}}
+                >
                   <Ticket size={15} /> Khuyến mãi &amp; Voucher
                 </button>
               </div>
             )}
           </div>
 
-          {/* GROUP 3: MẠNG LƯỚI & QUẢN TRỊ HỆ THỐNG */}
-          <div style={{ marginBottom: '0.85rem' }}>
-            <button type="button" className="nav-group-header-btn" onClick={() => setActiveGroup(activeGroup === 'group-3' ? '' : 'group-3')}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                <Map size={15} color="#64748b" /> <span>Mạng lưới &amp; Quản trị hệ thống</span>
+          {/* NHÓM 3: KHÁCH HÀNG & CSKH */}
+          <div>
+            <button
+              type="button"
+              className="nav-group-header-btn"
+              onClick={() => setActiveGroup(activeGroup === 'group-3' ? '' : 'group-3')}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justify: 'space-between',
+                padding: '0.55rem 0.65rem',
+                border: 'none',
+                background: activeGroup === 'group-3' ? '#f1f5f9' : 'transparent',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                color: '#475569',
+                fontWeight: '800',
+                fontSize: '0.725rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', overflow: 'hidden' }}>
+                <UserCog size={15} color="#4f46e5" />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Khách hàng &amp; CSKH</span>
               </div>
-              {activeGroup === 'group-3' ? <ChevronDown size={14} color="#94a3b8" /> : <ChevronRight size={14} color="#94a3b8" />}
+              {activeGroup === 'group-3' ? <ChevronDown size={14} color="#64748b" /> : <ChevronRight size={14} color="#94a3b8" />}
             </button>
             {activeGroup === 'group-3' && (
-              <div className="nav-group-children">
-                <button type="button" className={activeTab === 'branches' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('branches')}>
-                  <Store size={15} /> Quản lý chi nhánh
-                </button>
-                <button type="button" className={activeTab === 'shippers' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('shippers')}>
-                  <Bike size={15} /> Quản lý giao hàng
-                </button>
-                <button type="button" className={activeTab === 'customers' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('customers')}>
+              <div className="nav-group-children" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.35rem', paddingLeft: '0.35rem' }}>
+                <button
+                  type="button"
+                  className={activeTab === 'customers' ? 'nav-tab active' : 'nav-tab'}
+                  onClick={() => setActiveTab('customers')}
+                  style={activeTab === 'customers' ? {
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
+                    borderRadius: '8px'
+                  } : {}}
+                >
                   <UserCog size={15} /> Quản lý khách hàng
                 </button>
-                <button type="button" className={activeTab === 'membership-config' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('membership-config')}>
+                <button
+                  type="button"
+                  className={activeTab === 'membership-config' ? 'nav-tab active' : 'nav-tab'}
+                  onClick={() => setActiveTab('membership-config')}
+                  style={activeTab === 'membership-config' ? {
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
+                    borderRadius: '8px'
+                  } : {}}
+                >
                   <Settings size={15} /> Thiết lập Membership
                 </button>
-                <button type="button" className={activeTab === 'survey-manage' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('survey-manage')}>
+                <button
+                  type="button"
+                  className={activeTab === 'survey-manage' ? 'nav-tab active' : 'nav-tab'}
+                  onClick={() => setActiveTab('survey-manage')}
+                  style={activeTab === 'survey-manage' ? {
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
+                    borderRadius: '8px'
+                  } : {}}
+                >
                   <BarChart3 size={15} /> Quản lý Khảo sát
                 </button>
-                <button type="button" className={activeTab === 'users' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('users')}>
+              </div>
+            )}
+          </div>
+
+          {/* NHÓM 4: MẠNG LƯỚI & HỆ THỐNG */}
+          <div>
+            <button
+              type="button"
+              className="nav-group-header-btn"
+              onClick={() => setActiveGroup(activeGroup === 'group-4' ? '' : 'group-4')}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justify: 'space-between',
+                padding: '0.55rem 0.65rem',
+                border: 'none',
+                background: activeGroup === 'group-4' ? '#f1f5f9' : 'transparent',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                color: '#475569',
+                fontWeight: '800',
+                fontSize: '0.725rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', overflow: 'hidden' }}>
+                <Store size={15} color="#4f46e5" />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Mạng lưới &amp; Hệ thống</span>
+              </div>
+              {activeGroup === 'group-4' ? <ChevronDown size={14} color="#64748b" /> : <ChevronRight size={14} color="#94a3b8" />}
+            </button>
+            {activeGroup === 'group-4' && (
+              <div className="nav-group-children" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.35rem', paddingLeft: '0.35rem' }}>
+                <button
+                  type="button"
+                  className={activeTab === 'branches' ? 'nav-tab active' : 'nav-tab'}
+                  onClick={() => setActiveTab('branches')}
+                  style={activeTab === 'branches' ? {
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
+                    borderRadius: '8px'
+                  } : {}}
+                >
+                  <Store size={15} /> Quản lý chi nhánh
+                </button>
+                <button
+                  type="button"
+                  className={activeTab === 'shippers' ? 'nav-tab active' : 'nav-tab'}
+                  onClick={() => setActiveTab('shippers')}
+                  style={activeTab === 'shippers' ? {
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
+                    borderRadius: '8px'
+                  } : {}}
+                >
+                  <Bike size={15} /> Quản lý giao hàng
+                </button>
+                <button
+                  type="button"
+                  className={activeTab === 'users' ? 'nav-tab active' : 'nav-tab'}
+                  onClick={() => setActiveTab('users')}
+                  style={activeTab === 'users' ? {
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
+                    borderRadius: '8px'
+                  } : {}}
+                >
                   <Users size={15} /> Quản lý người dùng
                 </button>
-                <button type="button" className={activeTab === 'account' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('account')}>
+                <button
+                  type="button"
+                  className={activeTab === 'account' ? 'nav-tab active' : 'nav-tab'}
+                  onClick={() => setActiveTab('account')}
+                  style={activeTab === 'account' ? {
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
+                    borderRadius: '8px'
+                  } : {}}
+                >
                   <ShieldCheck size={15} /> Hồ sơ &amp; Bảo mật
                 </button>
               </div>
@@ -463,27 +708,83 @@ export function AdminSystemConsole({
           </div>
         </div>
 
-        <div style={{ marginTop: 'auto', padding: '0.75rem 1rem', borderTop: '1px solid #f1f5f9' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.75rem', padding: '0.25rem 0' }}>
-            <div style={{ width: '2.125rem', height: '2.125rem', borderRadius: '999px', backgroundColor: '#eef2ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '0.75rem', border: '1px solid #c7d2fe' }}>
+        <div style={{ marginTop: 'auto', padding: '0.85rem 1rem', borderTop: '1px solid #f1f5f9' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.85rem', padding: '0.25rem 0' }}>
+            <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: '999px', backgroundColor: '#e0e7ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.775rem', border: '1px solid #c7d2fe', boxShadow: '0 2px 4px rgba(79, 70, 229, 0.15)' }}>
               AD
             </div>
             <div style={{ overflow: 'hidden' }}>
-              <p style={{ margin: 0, fontSize: '0.8125rem', fontWeight: '600', color: '#0f172a', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{session?.user?.tenDangNhap || 'System Admin'}</p>
-              <p style={{ margin: 0, fontSize: '0.72rem', color: '#64748b', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{session?.user?.email || 'admin@avengers.com'}</p>
+              <p style={{ margin: 0, fontSize: '0.825rem', fontWeight: '700', color: '#0f172a', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{session?.user?.tenDangNhap || 'System Admin'}</p>
+              <p style={{ margin: 0, fontSize: '0.725rem', color: '#64748b', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{session?.user?.email || 'admin@avengers.com'}</p>
             </div>
           </div>
-          <button type="button" className="logout-btn" onClick={onLogout} style={{ width: '100%' }}>Đăng xuất</button>
+          <button
+            type="button"
+            className="logout-btn"
+            onClick={onLogout}
+            style={{
+              width: '100%',
+              height: '42px',
+              backgroundColor: '#fef2f2',
+              color: '#ef4444',
+              border: '1px solid #fecaca',
+              borderRadius: '10px',
+              fontWeight: '700',
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              boxShadow: '0 2px 6px rgba(239, 68, 68, 0.12)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#ef4444';
+              e.currentTarget.style.color = '#ffffff';
+              e.currentTarget.style.borderColor = '#ef4444';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.35)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#fef2f2';
+              e.currentTarget.style.color = '#ef4444';
+              e.currentTarget.style.borderColor = '#fecaca';
+              e.currentTarget.style.boxShadow = '0 2px 6px rgba(239, 68, 68, 0.12)';
+            }}
+          >
+            <LogOut size={16} /> <span>Đăng xuất</span>
+          </button>
         </div>
       </aside>
 
       <main className="system-admin-content" style={{ padding: 0, gap: 0 }}>
         <header className="system-admin-hero" style={{ padding: '1rem 2rem', backgroundColor: '#ffffff', borderBottom: '1px solid #e5e7eb', borderRadius: 0, margin: 0, borderTop: 'none', borderLeft: 'none', borderRight: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ color: '#9ca3af', fontSize: '0.875rem' }}>Overview</span>
-            <span style={{ color: '#d1d5db' }}>/</span>
-            <span style={{ fontWeight: '500', color: '#111827', fontSize: '0.875rem' }}>Dashboard</span>
-          </div>
+          {(() => {
+            const TAB_BREADCRUMBS = {
+              'overview': { group: 'Tổng quan & Báo cáo', label: 'Dashboard tổng' },
+              'ai-analytics': { group: 'Tổng quan & Báo cáo', label: 'Phân tích mua sắm AI' },
+              'system-ops': { group: 'Tổng quan & Báo cáo', label: 'Giám sát hệ thống' },
+              'categories': { group: 'Sản phẩm & Khuyến mãi', label: 'Quản lý danh mục' },
+              'menu': { group: 'Sản phẩm & Khuyến mãi', label: 'Quản lý menu tổng' },
+              'promotions': { group: 'Sản phẩm & Khuyến mãi', label: 'Khuyến mãi & Voucher' },
+              'customers': { group: 'Khách hàng & CSKH', label: 'Quản lý khách hàng' },
+              'membership-config': { group: 'Khách hàng & CSKH', label: 'Thiết lập Membership' },
+              'survey-manage': { group: 'Khách hàng & CSKH', label: 'Quản lý Khảo sát' },
+              'branches': { group: 'Mạng lưới & Hệ thống', label: 'Quản lý chi nhánh' },
+              'shippers': { group: 'Mạng lưới & Hệ thống', label: 'Quản lý giao hàng' },
+              'users': { group: 'Mạng lưới & Hệ thống', label: 'Quản lý người dùng' },
+              'account': { group: 'Tài khoản', label: 'Hồ sơ & Bảo mật' },
+            }
+            const activeCrumb = TAB_BREADCRUMBS[activeTab] || { group: 'Hệ thống Admin', label: 'Trang quản trị' }
+
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
+                <span style={{ color: '#64748b', fontWeight: '600' }}>{activeCrumb.group}</span>
+                <span style={{ color: '#cbd5e1', fontWeight: 'bold' }}>/</span>
+                <span style={{ fontWeight: '800', color: '#0f172a' }}>{activeCrumb.label}</span>
+              </div>
+            )
+          })()}
           
           <div className="system-admin-hero-tools" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ position: 'relative' }}>

@@ -107,11 +107,12 @@ function MiniTrendChart({ points = [], color = '#2563eb', title = '', valueForma
   const first = values[0]
   const last = values[values.length - 1]
   const trendPct = first > 0 ? ((last - first) / first) * 100 : 0
+  const gradId = `mini-grad-${title.replace(/[^a-zA-Z0-9]/g, '')}-${color.replace('#', '')}`
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
       <defs>
-        <linearGradient id={`grad-${title}`} x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity="0.25" />
           <stop offset="100%" stopColor={color} stopOpacity="0.0" />
         </linearGradient>
@@ -121,7 +122,7 @@ function MiniTrendChart({ points = [], color = '#2563eb', title = '', valueForma
         <line key={`grid-${idx}`} x1={L} y1={tick.y} x2={W - R} y2={tick.y} stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3,3" />
       ))}
 
-      <path d={areaPath} fill={`url(#grad-${title})`} />
+      <path d={areaPath} fill={`url(#${gradId})`} />
       <path d={linePath} stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
 
       {values.map((value, idx) => (
