@@ -285,8 +285,13 @@ export function PosOrderPanel({
                   type="number"
                   min="0"
                   style={{ height: '36px', width: '100%', padding: '0 0.65rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.9rem', fontWeight: '700', color: '#0f172a' }}
-                  value={posCashInput}
-                  onChange={(e) => setPosCashInput(Number(e.target.value) || 0)}
+                  value={posCashInput === 0 || posCashInput === '0' ? '' : posCashInput}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    setPosCashInput(val === '' ? 0 : Number(val))
+                  }}
+                  onFocus={(e) => e.target.select()}
+                  placeholder="0"
                 />
                 <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.78125rem', fontWeight: '700', color: posCashInsufficient ? '#dc2626' : '#059669' }}>
                   {posCashInsufficient ? '⚠️ Tiền khách đưa chưa đủ' : `Tiền thối lại: ${fmtMoney(posChange)}`}

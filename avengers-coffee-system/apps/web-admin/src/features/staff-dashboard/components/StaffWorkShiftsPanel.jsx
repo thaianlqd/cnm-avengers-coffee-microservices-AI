@@ -1,4 +1,25 @@
-import { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import {
+  Calendar,
+  User,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  PlusCircle,
+  Send,
+  ClipboardList,
+  History,
+  Check,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  TrendingUp,
+  Award,
+  RefreshCw,
+  Trash2,
+  FileText
+} from 'lucide-react'
 import { WorkforceCalendar, getInitialWeekStart } from './WorkforceCalendar'
 import { formatMinutesLabel, getAttendanceInsight, getAttendanceMetrics, getAttendanceToneClass } from '../../workforce/attendance'
 
@@ -24,9 +45,9 @@ const TABS = {
 const PAGE_SIZE = 8
 
 export function StaffWorkShiftsPanel({
-  myWorkShiftState,
+  myWorkShiftState = { items: [], loading: false, error: null },
   staffUsername,
-  shiftRequestState,
+  shiftRequestState = { items: [], loading: false, error: null },
   creatingShiftRequest,
   onRequestShift,
   onDeleteShiftRequest,
@@ -51,11 +72,11 @@ export function StaffWorkShiftsPanel({
   const [rejectedPage, setRejectedPage] = useState(1)
 
   const summary = useMemo(() => {
-    return getAttendanceMetrics(myWorkShiftState.items)
+    return getAttendanceMetrics(myWorkShiftState.items || [])
   }, [myWorkShiftState.items])
 
   const selectedShiftDetails = selectedShift
-    ? myWorkShiftState.items.find((item) => item.ma_ca_lam_viec === selectedShift.ma_ca_lam_viec) || selectedShift
+    ? (myWorkShiftState.items || []).find((item) => item.ma_ca_lam_viec === selectedShift.ma_ca_lam_viec) || selectedShift
     : null
   const selectedInsight = selectedShiftDetails ? getAttendanceInsight(selectedShiftDetails) : null
   const todayDate = toDateOnlyLocal()
@@ -70,11 +91,11 @@ export function StaffWorkShiftsPanel({
 
     const result = await onSelfAttendance(selectedShiftDetails.ma_ca_lam_viec, action)
     if (result?.ok) {
-      setAttendanceMessage(action === 'CHECK_IN' ? 'Đã check-in thành công.' : 'Đã check-out thành công.')
+      setAttendanceMessage(action === 'CHECK_IN' ? 'Đã điểm danh vào ca (Check-in) thành công!' : 'Đã điểm danh kết thúc (Check-out) thành công!')
       return
     }
 
-    setAttendanceError(result?.message || 'Khong cham cong duoc')
+    setAttendanceError(result?.message || 'Không thể thực hiện chấm công ca này.')
   }
 
   const pendingRequests = useMemo(() => {
@@ -129,96 +150,201 @@ export function StaffWorkShiftsPanel({
   }
 
   return (
-    <section className="panel workforce-panel">
-      <div className="panel-head">
-        <h2>Lịch làm của bạn</h2>
-        <span>{staffUsername || 'staff'}</span>
+    <div className="panel-container" style={{
+      padding: '1.75rem',
+      background: '#f8fafc',
+      borderRadius: '20px',
+      border: '1px solid #e2e8f0',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02)'
+    }}>
+      {/* Top Header */}
+      <div style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: '1rem',
+        marginBottom: '1.5rem'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+            color: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 10px rgba(16, 185, 129, 0.3)'
+          }}>
+            <Calendar size={24} />
+          </div>
+          <div>
+            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '800', color: '#0f172a' }}>
+              Lịch Làm Việc Cá Nhân
+            </h2>
+            <span style={{ fontSize: '0.825rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <User size={14} color="#059669" /> Nhân sự: <strong>{staffUsername || 'Nhân viên'}</strong>
+            </span>
+          </div>
+        </div>
       </div>
 
-      <div className="workforce-summary-grid">
-        <article>
-          <strong>{summary.totalShifts}</strong>
-          <span>Tổng ca đã xếp</span>
-        </article>
-        <article>
-          <strong>{summary.attendedDaysWeek}</strong>
-          <span>Ngày đi làm tuần này</span>
-        </article>
-        <article>
-          <strong>{summary.attendedDaysMonth}</strong>
-          <span>Ngày đi làm tháng này</span>
-        </article>
-        <article>
-          <strong>{summary.checkedInCount}</strong>
-          <span>Đang check-in</span>
-        </article>
-        <article>
-          <strong>{summary.completedCount}</strong>
-          <span>Đã check-out</span>
-        </article>
-        <article>
-          <strong>{summary.scheduledHours}</strong>
-          <span>Tổng giờ đã lên lịch</span>
-        </article>
-        <article>
-          <strong>{summary.workedHours}</strong>
-          <span>Giờ làm thực tế</span>
-        </article>
-        <article>
-          <strong>{summary.lateCount}</strong>
-          <span>Ca đi muộn</span>
-        </article>
-        <article>
-          <strong>{summary.earlyLeaveCount}</strong>
-          <span>Ca về sớm</span>
-        </article>
-        <article>
-          <strong>{summary.absentCount}</strong>
-          <span>Ca vắng mặt</span>
-        </article>
+      {/* Summary Cards Grid */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+        gap: '0.85rem',
+        marginBottom: '1.25rem'
+      }}>
+        <div style={{ background: '#ffffff', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Tổng ca đã xếp</span>
+          <strong style={{ fontSize: '1.25rem', display: 'block', color: '#1e293b', marginTop: '0.1rem' }}>
+            {summary.totalShifts} ca
+          </strong>
+        </div>
+
+        <div style={{ background: '#ffffff', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Đi làm tuần này</span>
+          <strong style={{ fontSize: '1.25rem', display: 'block', color: '#2563eb', marginTop: '0.1rem' }}>
+            {summary.attendedDaysWeek} ngày
+          </strong>
+        </div>
+
+        <div style={{ background: '#ffffff', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Đang Check-in</span>
+          <strong style={{ fontSize: '1.25rem', display: 'block', color: '#059669', marginTop: '0.1rem' }}>
+            {summary.checkedInCount} ca
+          </strong>
+        </div>
+
+        <div style={{ background: '#ffffff', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Giờ làm thực tế</span>
+          <strong style={{ fontSize: '1.25rem', display: 'block', color: '#059669', marginTop: '0.1rem' }}>
+            {summary.workedHours}h / {summary.scheduledHours}h
+          </strong>
+        </div>
+
+        <div style={{ background: '#ffffff', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Đi muộn / Vắng</span>
+          <strong style={{ fontSize: '1.25rem', display: 'block', color: summary.lateCount > 0 || summary.absentCount > 0 ? '#ef4444' : '#059669', marginTop: '0.1rem' }}>
+            {summary.lateCount} muộn • {summary.absentCount} vắng
+          </strong>
+        </div>
       </div>
 
-      <div className="workforce-insight-banner">
-        <strong>Tỷ lệ chấm công: {summary.attendanceRate}%</strong>
-        <span>Được tính từ những ca có check-in/check-out hoặc được xác nhận có mặt.</span>
+      {/* Attendance Insight Banner */}
+      <div style={{
+        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+        color: '#ffffff',
+        padding: '0.85rem 1.25rem',
+        borderRadius: '14px',
+        marginBottom: '1.5rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        boxShadow: '0 4px 10px rgba(16, 185, 129, 0.2)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <Award size={22} color="#ffffff" />
+          <div>
+            <strong style={{ fontSize: '1rem', display: 'block' }}>Tỷ lệ chấm công đạt: {summary.attendanceRate}%</strong>
+            <span style={{ fontSize: '0.8rem', opacity: 0.9 }}>Tỷ lệ được tính từ các ca làm có check-in / check-out hoặc được xác nhận có mặt.</span>
+          </div>
+        </div>
       </div>
 
-      {/* Tab Navigation */}
-      {enableRequestTabs ? (
-        <div className="workforce-tabs">
+      {/* Navigation Tabs */}
+      {enableRequestTabs && (
+        <div style={{
+          display: 'flex',
+          gap: '0.5rem',
+          background: '#ffffff',
+          padding: '0.35rem',
+          borderRadius: '12px',
+          border: '1px solid #e2e8f0',
+          marginBottom: '1.5rem'
+        }}>
           <button
             type="button"
-            className={`workforce-tab ${activeTab === TABS.REQUEST ? 'active' : ''}`}
             onClick={() => setActiveTab(TABS.REQUEST)}
+            style={{
+              flex: 1,
+              padding: '0.65rem 1rem',
+              borderRadius: '9px',
+              border: 'none',
+              background: activeTab === TABS.REQUEST ? '#10b981' : 'transparent',
+              color: activeTab === TABS.REQUEST ? '#ffffff' : '#64748b',
+              fontWeight: activeTab === TABS.REQUEST ? '700' : '500',
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.4rem',
+              transition: 'all 0.2s ease'
+            }}
           >
-            Yêu cầu mới
+            <Send size={16} /> Đăng ký ca mới
           </button>
+
           <button
             type="button"
-            className={`workforce-tab ${activeTab === TABS.HISTORY ? 'active' : ''}`}
             onClick={() => setActiveTab(TABS.HISTORY)}
+            style={{
+              flex: 1,
+              padding: '0.65rem 1rem',
+              borderRadius: '9px',
+              border: 'none',
+              background: activeTab === TABS.HISTORY ? '#10b981' : 'transparent',
+              color: activeTab === TABS.HISTORY ? '#ffffff' : '#64748b',
+              fontWeight: activeTab === TABS.HISTORY ? '700' : '500',
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.4rem',
+              transition: 'all 0.2s ease'
+            }}
           >
-            Lịch sử yêu cầu
+            <History size={16} /> Lịch sử đăng ký ({shiftRequestState?.items?.length || 0})
           </button>
+
           <button
             type="button"
-            className={`workforce-tab ${activeTab === TABS.SCHEDULE ? 'active' : ''}`}
             onClick={() => setActiveTab(TABS.SCHEDULE)}
+            style={{
+              flex: 1,
+              padding: '0.65rem 1rem',
+              borderRadius: '9px',
+              border: 'none',
+              background: activeTab === TABS.SCHEDULE ? '#10b981' : 'transparent',
+              color: activeTab === TABS.SCHEDULE ? '#ffffff' : '#64748b',
+              fontWeight: activeTab === TABS.SCHEDULE ? '700' : '500',
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.4rem',
+              transition: 'all 0.2s ease'
+            }}
           >
-            Lịch làm việc
+            <Calendar size={16} /> Lịch làm việc tuần
           </button>
         </div>
-      ) : null}
+      )}
 
-      {/* Tab: Yêu cầu mới */}
+      {/* Tab 1: Form đăng ký ca mới */}
       {enableRequestTabs && activeTab === TABS.REQUEST && (
         <form
-          className="workforce-form"
           onSubmit={async (event) => {
             event.preventDefault()
             if (typeof onRequestShift !== 'function') return
             if (requestForm.shift_date < todayDate) {
-              window.alert('Không thể đăng ký ca cho ngày đã qua.')
+              window.alert('Không thể đăng ký ca làm việc cho ngày đã qua.')
               return
             }
             const result = await onRequestShift(requestForm)
@@ -226,185 +352,233 @@ export function StaffWorkShiftsPanel({
               setRequestForm({ shift_date: new Date().toISOString().slice(0, 10), shift_code: 'SANG', note: '' })
             }
           }}
+          style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            border: '1px solid #e2e8f0',
+            padding: '1.5rem',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.25rem'
+          }}
         >
-          <div className="workforce-form-topbar">
-            <label>
-              Ngày muốn đăng ký
+          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <PlusCircle size={18} color="#10b981" /> Đăng ký nguyện vọng ca làm việc
+          </h3>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+            <div>
+              <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.35rem' }}>
+                Ngày muốn đăng ký
+              </label>
               <input
                 type="date"
                 value={requestForm.shift_date}
                 onChange={(e) => setRequestForm((prev) => ({ ...prev, shift_date: e.target.value }))}
                 min={todayDate}
                 required
+                style={{
+                  width: '100%',
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '0.875rem',
+                  boxSizing: 'border-box'
+                }}
               />
-            </label>
-            <label>
-              Khung ca
+            </div>
+
+            <div>
+              <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.35rem' }}>
+                Khung ca làm
+              </label>
               <select
                 value={requestForm.shift_code}
                 onChange={(e) => setRequestForm((prev) => ({ ...prev, shift_code: e.target.value }))}
+                style={{
+                  width: '100%',
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '0.875rem',
+                  boxSizing: 'border-box'
+                }}
               >
-                <option value="SANG">Ca sáng</option>
-                <option value="CHIEU">Ca chiều</option>
-                <option value="TOI">Ca tối</option>
+                <option value="SANG">Ca sáng (07:00 - 12:00)</option>
+                <option value="CHIEU">Ca chiều (12:00 - 17:00)</option>
+                <option value="TOI">Ca tối (17:00 - 22:00)</option>
               </select>
-            </label>
-            <label className="workforce-note-field">
-              Lý do / ghi chú
+            </div>
+
+            <div style={{ gridColumn: 'span 2' }}>
+              <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.35rem' }}>
+                Lý do / Ghi chú cho Quản lý
+              </label>
               <input
+                type="text"
                 value={requestForm.note}
                 onChange={(e) => setRequestForm((prev) => ({ ...prev, note: e.target.value }))}
-                placeholder="Ví dụ: đổi ca do lịch học"
+                placeholder="Ví dụ: Đăng ký làm thêm ca, xin đổi ca..."
+                style={{
+                  width: '100%',
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '0.875rem',
+                  boxSizing: 'border-box'
+                }}
               />
-            </label>
+            </div>
           </div>
 
-          <div className="workforce-detail-actions">
-            <button type="submit" disabled={creatingShiftRequest}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button
+              type="submit"
+              disabled={creatingShiftRequest}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.65rem 1.25rem',
+                borderRadius: '10px',
+                border: 'none',
+                background: '#10b981',
+                color: '#ffffff',
+                fontSize: '0.875rem',
+                fontWeight: '700',
+                cursor: creatingShiftRequest ? 'not-allowed' : 'pointer',
+                boxShadow: '0 4px 10px rgba(16, 185, 129, 0.25)'
+              }}
+            >
+              <Send size={16} />
               {creatingShiftRequest ? 'Đang gửi...' : 'Gửi yêu cầu đăng ký ca'}
             </button>
           </div>
 
-          {shiftRequestState?.error ? <p className="error-text">{shiftRequestState.error}</p> : null}
+          {shiftRequestState?.error && (
+            <div style={{ padding: '0.65rem', borderRadius: '8px', background: '#fef2f2', color: '#b91c1c', fontSize: '0.85rem' }}>
+              {shiftRequestState.error}
+            </div>
+          )}
         </form>
       )}
 
-      {/* Tab: Lịch sử yêu cầu */}
+      {/* Tab 2: Lịch sử yêu cầu */}
       {enableRequestTabs && activeTab === TABS.HISTORY && (
-        <div className="workforce-assignment-card">
-          <div className="workforce-detail-head">
-            <div>
-              <h3>Lịch sử yêu cầu đăng ký ca</h3>
-              <p>Theo dõi tất cả yêu cầu gửi cho manager.</p>
-            </div>
-          </div>
-          {shiftRequestState?.loading ? <p>Đang tải yêu cầu...</p> : null}
-          {!shiftRequestState?.loading && !(shiftRequestState?.items || []).length ? (
-            <p className="employee-empty">Chưa có yêu cầu đăng ký ca nào.</p>
-          ) : null}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          border: '1px solid #e2e8f0',
+          padding: '1.5rem',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)'
+        }}>
+          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <History size={18} color="#059669" /> Lịch sử các yêu cầu đăng ký ca
+          </h3>
 
-          {/* Pending Requests Section */}
+          {/* Pending Section */}
           {pendingRequests.length > 0 && (
-            <div className="workforce-request-section">
-              <h4>Yêu cầu đang chờ duyệt ({pendingRequests.length})</h4>
-              <div className="employee-list">
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', color: '#b45309', fontSize: '0.95rem', fontWeight: '700' }}>
+                Đang chờ phê duyệt ({pendingRequests.length})
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '0.85rem' }}>
                 {pendingPageRows.map((item) => (
-                  <article key={item.ma_ca_lam_viec} className="employee-card">
-                    <div className="employee-card-head">
-                      <div>
-                        <h3>{item.ten_ca}</h3>
-                        <p>{item.ngay_lam_viec} • {item.gio_bat_dau} - {item.gio_ket_thuc}</p>
-                      </div>
-                      <span className="employee-status-pill employee-status-pill--pending">PENDING</span>
+                  <div key={item.ma_ca_lam_viec} style={{ background: '#fffbe6', padding: '1rem', borderRadius: '12px', border: '1px solid #fde68a' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <strong style={{ fontSize: '0.95rem', color: '#1e293b' }}>{item.ten_ca}</strong>
+                      <span style={{ fontSize: '0.75rem', fontWeight: '700', background: '#fef3c7', color: '#b45309', padding: '0.2rem 0.5rem', borderRadius: '9999px' }}>
+                        Chờ duyệt
+                      </span>
                     </div>
-                    {item.note ? <p className="workforce-detail-note">Ghi chú: {item.note}</p> : null}
-                    <div className="workforce-detail-actions">
+                    <div style={{ fontSize: '0.825rem', color: '#475569', marginBottom: '0.5rem' }}>
+                      📅 {item.ngay_lam_viec} • {item.gio_bat_dau} - {item.gio_ket_thuc}
+                    </div>
+                    {item.note && <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Ghi chú: {item.note}</div>}
+                    <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'flex-end' }}>
                       <button
                         type="button"
-                        className="secondary"
-                        onClick={() => {
-                          console.log('Delete clicked for:', item.ma_ca_lam_viec)
-                          handleDeleteRequest(item.ma_ca_lam_viec)
+                        onClick={() => handleDeleteRequest(item.ma_ca_lam_viec)}
+                        disabled={Boolean(handlingShiftRequestId && String(item.ma_ca_lam_viec) === handlingShiftRequestId)}
+                        style={{
+                          background: '#ef4444',
+                          color: '#ffffff',
+                          border: 'none',
+                          padding: '0.35rem 0.75rem',
+                          borderRadius: '6px',
+                          fontSize: '0.775rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem'
                         }}
-                        disabled={!!(handlingShiftRequestId && String(item.ma_ca_lam_viec) === handlingShiftRequestId)}
                       >
-                        {handlingShiftRequestId && String(item.ma_ca_lam_viec) === handlingShiftRequestId ? 'Đang hủy...' : 'Hủy yêu cầu'}
+                        <Trash2 size={12} /> Hủy yêu cầu
                       </button>
                     </div>
-                  </article>
+                  </div>
                 ))}
               </div>
-              {pendingRequests.length > PAGE_SIZE ? (
-                <div className="ops-pagination" style={{ marginTop: '0.6rem' }}>
-                  <span>{(pendingSafePage - 1) * PAGE_SIZE + 1}-{Math.min(pendingSafePage * PAGE_SIZE, pendingRequests.length)} / {pendingRequests.length}</span>
-                  <div>
-                    <button type="button" className="secondary" onClick={() => setPendingPage(1)} disabled={pendingSafePage <= 1}>Đầu</button>
-                    <button type="button" className="secondary" onClick={() => setPendingPage((p) => Math.max(1, p - 1))} disabled={pendingSafePage <= 1}>Trước</button>
-                    <strong>Trang {pendingSafePage}/{pendingTotalPages}</strong>
-                    <button type="button" className="secondary" onClick={() => setPendingPage((p) => Math.min(pendingTotalPages, p + 1))} disabled={pendingSafePage >= pendingTotalPages}>Sau</button>
-                    <button type="button" className="secondary" onClick={() => setPendingPage(pendingTotalPages)} disabled={pendingSafePage >= pendingTotalPages}>Cuối</button>
-                  </div>
-                </div>
-              ) : null}
             </div>
           )}
 
-          {/* Approved Requests Section */}
+          {/* Approved Section */}
           {approvedRequests.length > 0 && (
-            <div className="workforce-request-section">
-              <h4>Yêu cầu đã duyệt ({approvedRequests.length})</h4>
-              <div className="employee-list">
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', color: '#047857', fontSize: '0.95rem', fontWeight: '700' }}>
+                Đã phê duyệt ({approvedRequests.length})
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '0.85rem' }}>
                 {approvedPageRows.map((item) => (
-                  <article key={item.ma_ca_lam_viec} className="employee-card">
-                    <div className="employee-card-head">
-                      <div>
-                        <h3>{item.ten_ca}</h3>
-                        <p>{item.ngay_lam_viec} • {item.gio_bat_dau} - {item.gio_ket_thuc}</p>
-                      </div>
-                      <span className="employee-status-pill employee-status-pill--approved">APPROVED</span>
+                  <div key={item.ma_ca_lam_viec} style={{ background: '#ecfdf5', padding: '1rem', borderRadius: '12px', border: '1px solid #a7f3d0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <strong style={{ fontSize: '0.95rem', color: '#1e293b' }}>{item.ten_ca}</strong>
+                      <span style={{ fontSize: '0.75rem', fontWeight: '700', background: '#d1fae5', color: '#047857', padding: '0.2rem 0.5rem', borderRadius: '9999px' }}>
+                        Đã duyệt
+                      </span>
                     </div>
-                    {item.note ? <p className="workforce-detail-note">Ghi chú: {item.note}</p> : null}
-                    {item.ghi_chu_duyet ? <p className="workforce-detail-note">Phản hồi manager: {item.ghi_chu_duyet}</p> : null}
-                  </article>
+                    <div style={{ fontSize: '0.825rem', color: '#475569' }}>
+                      📅 {item.ngay_lam_viec} • {item.gio_bat_dau} - {item.gio_ket_thuc}
+                    </div>
+                    {item.ghi_chu_duyet && <div style={{ fontSize: '0.8rem', color: '#047857', marginTop: '0.35rem' }}>Phản hồi: {item.ghi_chu_duyet}</div>}
+                  </div>
                 ))}
               </div>
-              {approvedRequests.length > PAGE_SIZE ? (
-                <div className="ops-pagination" style={{ marginTop: '0.6rem' }}>
-                  <span>{(approvedSafePage - 1) * PAGE_SIZE + 1}-{Math.min(approvedSafePage * PAGE_SIZE, approvedRequests.length)} / {approvedRequests.length}</span>
-                  <div>
-                    <button type="button" className="secondary" onClick={() => setApprovedPage(1)} disabled={approvedSafePage <= 1}>Đầu</button>
-                    <button type="button" className="secondary" onClick={() => setApprovedPage((p) => Math.max(1, p - 1))} disabled={approvedSafePage <= 1}>Trước</button>
-                    <strong>Trang {approvedSafePage}/{approvedTotalPages}</strong>
-                    <button type="button" className="secondary" onClick={() => setApprovedPage((p) => Math.min(approvedTotalPages, p + 1))} disabled={approvedSafePage >= approvedTotalPages}>Sau</button>
-                    <button type="button" className="secondary" onClick={() => setApprovedPage(approvedTotalPages)} disabled={approvedSafePage >= approvedTotalPages}>Cuối</button>
-                  </div>
-                </div>
-              ) : null}
             </div>
           )}
 
-          {/* Rejected Requests Section */}
+          {/* Rejected Section */}
           {rejectedRequests.length > 0 && (
-            <div className="workforce-request-section">
-              <h4>Yêu cầu bị từ chối ({rejectedRequests.length})</h4>
-              <div className="employee-list">
+            <div>
+              <h4 style={{ margin: '0 0 0.75rem 0', color: '#b91c1c', fontSize: '0.95rem', fontWeight: '700' }}>
+                Từ chối ({rejectedRequests.length})
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '0.85rem' }}>
                 {rejectedPageRows.map((item) => (
-                  <article key={item.ma_ca_lam_viec} className="employee-card">
-                    <div className="employee-card-head">
-                      <div>
-                        <h3>{item.ten_ca}</h3>
-                        <p>{item.ngay_lam_viec} • {item.gio_bat_dau} - {item.gio_ket_thuc}</p>
-                      </div>
-                      <span className="employee-status-pill employee-status-pill--rejected">REJECTED</span>
+                  <div key={item.ma_ca_lam_viec} style={{ background: '#fef2f2', padding: '1rem', borderRadius: '12px', border: '1px solid #fca5a5' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <strong style={{ fontSize: '0.95rem', color: '#1e293b' }}>{item.ten_ca}</strong>
+                      <span style={{ fontSize: '0.75rem', fontWeight: '700', background: '#fee2e2', color: '#b91c1c', padding: '0.2rem 0.5rem', borderRadius: '9999px' }}>
+                        Từ chối
+                      </span>
                     </div>
-                    {item.note ? <p className="workforce-detail-note">Ghi chú: {item.note}</p> : null}
-                    {item.ghi_chu_duyet ? <p className="workforce-detail-note">Lý do từ chối: {item.ghi_chu_duyet}</p> : null}
-                  </article>
+                    <div style={{ fontSize: '0.825rem', color: '#475569' }}>
+                      📅 {item.ngay_lam_viec} • {item.gio_bat_dau} - {item.gio_ket_thuc}
+                    </div>
+                    {item.ghi_chu_duyet && <div style={{ fontSize: '0.8rem', color: '#b91c1c', marginTop: '0.35rem' }}>Lý do từ chối: {item.ghi_chu_duyet}</div>}
+                  </div>
                 ))}
               </div>
-              {rejectedRequests.length > PAGE_SIZE ? (
-                <div className="ops-pagination" style={{ marginTop: '0.6rem' }}>
-                  <span>{(rejectedSafePage - 1) * PAGE_SIZE + 1}-{Math.min(rejectedSafePage * PAGE_SIZE, rejectedRequests.length)} / {rejectedRequests.length}</span>
-                  <div>
-                    <button type="button" className="secondary" onClick={() => setRejectedPage(1)} disabled={rejectedSafePage <= 1}>Đầu</button>
-                    <button type="button" className="secondary" onClick={() => setRejectedPage((p) => Math.max(1, p - 1))} disabled={rejectedSafePage <= 1}>Trước</button>
-                    <strong>Trang {rejectedSafePage}/{rejectedTotalPages}</strong>
-                    <button type="button" className="secondary" onClick={() => setRejectedPage((p) => Math.min(rejectedTotalPages, p + 1))} disabled={rejectedSafePage >= rejectedTotalPages}>Sau</button>
-                    <button type="button" className="secondary" onClick={() => setRejectedPage(rejectedTotalPages)} disabled={rejectedSafePage >= rejectedTotalPages}>Cuối</button>
-                  </div>
-                </div>
-              ) : null}
             </div>
           )}
         </div>
       )}
 
-      {/* Tab: Lịch làm việc */}
+      {/* Tab 3: Workforce Calendar View & Self Attendance Details */}
       {activeTab === TABS.SCHEDULE && (
         <>
-          {myWorkShiftState.loading ? <p>Đang tải lịch ca của bạn...</p> : null}
-          {myWorkShiftState.error ? <p className="error-text">{myWorkShiftState.error}</p> : null}
-
           <WorkforceCalendar
             items={myWorkShiftState.items}
             weekStart={weekStart}
@@ -415,32 +589,60 @@ export function StaffWorkShiftsPanel({
             mode="staff"
           />
 
-          <div className="workforce-detail-card">
+          {/* Selected Shift Attendance Action Card */}
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            border: '1px solid #e2e8f0',
+            padding: '1.5rem',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)',
+            marginTop: '1.25rem'
+          }}>
             {!selectedShiftDetails ? (
-              <p>Chọn một ô lịch để xem chi tiết ca làm trong tuần.</p>
+              <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem', fontStyle: 'italic', textAlign: 'center' }}>
+                Vui lòng nhấp chọn một ca làm việc trên bảng lịch ở trên để thực hiện điểm danh Check-in / Check-out.
+              </p>
             ) : (
-              <>
-                <div className="workforce-detail-head">
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
                   <div>
-                    <h3>{selectedShiftDetails.ten_ca}</h3>
-                    <p>
-                      {selectedShiftDetails.ngay_lam_viec} | {selectedShiftDetails.gio_bat_dau} - {selectedShiftDetails.gio_ket_thuc}
-                    </p>
+                    <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: '#0f172a' }}>
+                      {selectedShiftDetails.ten_ca}
+                    </h3>
+                    <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '600' }}>
+                      {selectedShiftDetails.ngay_lam_viec} • {selectedShiftDetails.gio_bat_dau} - {selectedShiftDetails.gio_ket_thuc}
+                    </span>
                   </div>
-                  <span className={`workforce-status-pill ${getAttendanceToneClass(selectedInsight)}`}>{selectedInsight.shortLabel}</span>
+                  <span style={{
+                    fontSize: '0.8rem',
+                    fontWeight: '700',
+                    padding: '0.3rem 0.75rem',
+                    borderRadius: '9999px',
+                    background: '#d1fae5',
+                    color: '#047857'
+                  }}>
+                    {selectedInsight?.shortLabel || 'Đã xếp lịch'}
+                  </span>
                 </div>
-                <div className="workforce-detail-meta">
-                  <span>Số giờ ca: {selectedShiftDetails.so_gio_ca}</span>
-                  <span>Check-in: {selectedShiftDetails.check_in_at ? new Date(selectedShiftDetails.check_in_at).toLocaleString('vi-VN') : 'Chưa có'}</span>
-                  <span>Check-out: {selectedShiftDetails.check_out_at ? new Date(selectedShiftDetails.check_out_at).toLocaleString('vi-VN') : 'Chưa có'}</span>
-                  <span>Giờ thực tế: {selectedInsight.workedHours}</span>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.85rem', marginBottom: '1.25rem' }}>
+                  <div style={{ background: '#f8fafc', padding: '0.65rem 0.85rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Check-in</span>
+                    <strong style={{ fontSize: '0.9rem', display: 'block', color: '#059669', marginTop: '0.1rem' }}>
+                      {selectedShiftDetails.check_in_at ? new Date(selectedShiftDetails.check_in_at).toLocaleString('vi-VN') : 'Chưa điểm danh'}
+                    </strong>
+                  </div>
+
+                  <div style={{ background: '#f8fafc', padding: '0.65rem 0.85rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Check-out</span>
+                    <strong style={{ fontSize: '0.9rem', display: 'block', color: '#2563eb', marginTop: '0.1rem' }}>
+                      {selectedShiftDetails.check_out_at ? new Date(selectedShiftDetails.check_out_at).toLocaleString('vi-VN') : 'Chưa điểm danh'}
+                    </strong>
+                  </div>
                 </div>
-                <div className="workforce-flag-row">
-                  {selectedInsight.flags.length ? selectedInsight.flags.map((flag) => (
-                    <span key={flag} className="workforce-flag-pill workforce-flag-pill--warning">{flag}</span>
-                  )) : <span className="workforce-flag-pill workforce-flag-pill--good">Chấm công đầy đủ và đúng giờ</span>}
-                </div>
-                <div className="workforce-detail-actions">
+
+                {/* Self Attendance Buttons */}
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <button
                     type="button"
                     onClick={() => handleSelfAttendance('CHECK_IN')}
@@ -450,19 +652,29 @@ export function StaffWorkShiftsPanel({
                       hasCheckedIn ||
                       checkingAttendanceShiftId === String(selectedShiftDetails.ma_ca_lam_viec)
                     }
-                    title={
-                      isFutureShift
-                        ? 'Ca tương lai chưa thể chấm công'
-                        : hasCheckedIn
-                          ? 'Bạn đã check-in ca này'
-                          : 'Check-in ca đang chọn'
-                    }
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.4rem',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: hasCheckedIn ? '#cbd5e1' : '#10b981',
+                      color: '#ffffff',
+                      fontSize: '0.9rem',
+                      fontWeight: '700',
+                      cursor: hasCheckedIn || isFutureShift ? 'not-allowed' : 'pointer',
+                      boxShadow: hasCheckedIn ? 'none' : '0 4px 10px rgba(16, 185, 129, 0.25)'
+                    }}
                   >
-                    {checkingAttendanceShiftId === String(selectedShiftDetails.ma_ca_lam_viec) ? 'Đang xử lý...' : 'Check-in ca này'}
+                    <CheckCircle2 size={18} />
+                    {checkingAttendanceShiftId === String(selectedShiftDetails.ma_ca_lam_viec) ? 'Đang xử lý...' : 'Check-in (Vào ca)'}
                   </button>
+
                   <button
                     type="button"
-                    className="secondary"
                     onClick={() => handleSelfAttendance('CHECK_OUT')}
                     disabled={
                       !selectedShiftDetails ||
@@ -471,30 +683,43 @@ export function StaffWorkShiftsPanel({
                       hasCheckedOut ||
                       checkingAttendanceShiftId === String(selectedShiftDetails.ma_ca_lam_viec)
                     }
-                    title={
-                      isFutureShift
-                        ? 'Ca tương lai chưa thể chấm công'
-                        : !hasCheckedIn
-                          ? 'Bạn cần check-in trước khi check-out'
-                          : hasCheckedOut
-                            ? 'Bạn đã check-out ca này'
-                            : 'Check-out ca đang chọn'
-                    }
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.4rem',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: !hasCheckedIn || hasCheckedOut ? '#cbd5e1' : '#ef4444',
+                      color: '#ffffff',
+                      fontSize: '0.9rem',
+                      fontWeight: '700',
+                      cursor: !hasCheckedIn || hasCheckedOut || isFutureShift ? 'not-allowed' : 'pointer',
+                      boxShadow: !hasCheckedIn || hasCheckedOut ? 'none' : '0 4px 10px rgba(239, 68, 68, 0.25)'
+                    }}
                   >
-                    {checkingAttendanceShiftId === String(selectedShiftDetails.ma_ca_lam_viec) ? 'Đang xử lý...' : 'Check-out ca này'}
+                    <XCircle size={18} />
+                    {checkingAttendanceShiftId === String(selectedShiftDetails.ma_ca_lam_viec) ? 'Đang xử lý...' : 'Check-out (Kết thúc ca)'}
                   </button>
                 </div>
-                {isFutureShift ? <p className="workforce-detail-note">Ca ở tương lai: chưa đến ngày nên không thể check-in/check-out.</p> : null}
-                {attendanceMessage ? <p>{attendanceMessage}</p> : null}
-                {attendanceError ? <p className="error-text">{attendanceError}</p> : null}
-                {selectedInsight.isLate ? <p className="workforce-detail-note">Bạn check-in muộn {formatMinutesLabel(selectedInsight.lateMinutes)} so với giờ bắt đầu ca.</p> : null}
-                {selectedInsight.leftEarly ? <p className="workforce-detail-note">Bạn check-out sớm {formatMinutesLabel(selectedInsight.earlyLeaveMinutes)} so với giờ kết thúc ca.</p> : null}
-                {selectedShiftDetails.note ? <p className="workforce-detail-note">Ghi chú: {selectedShiftDetails.note}</p> : null}
-              </>
+
+                {attendanceMessage && (
+                  <div style={{ marginTop: '0.85rem', padding: '0.65rem 0.85rem', borderRadius: '8px', background: '#ecfdf5', color: '#047857', fontSize: '0.85rem', fontWeight: '600' }}>
+                    ✓ {attendanceMessage}
+                  </div>
+                )}
+                {attendanceError && (
+                  <div style={{ marginTop: '0.85rem', padding: '0.65rem 0.85rem', borderRadius: '8px', background: '#fef2f2', color: '#b91c1c', fontSize: '0.85rem', fontWeight: '600' }}>
+                    ⚠️ {attendanceError}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </>
       )}
-    </section>
+    </div>
   )
 }
