@@ -1,18 +1,46 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --color-hc-red: #c41230;
-  --color-hc-red-dark: #a30f28;
-  --color-hc-cream: #f4f0eb;
-  --color-hc-cream-light: #faf7f4;
-  --color-hc-dark: #1a1a1a;
-  --color-hc-brown: #4a3728;
-  --color-hc-gold: #c89a58;
-  --burnt: #c41230;
-  --burnt-soft: #a30f28;
-  --coffee: #1a1a1a;
-  --line: #e8e2da;
-  --paper: #ffffff;
+  /* SaaS Primary Colors */
+  --primary: #4F46E5; /* Indigo 600 */
+  --primary-hover: #4338CA; /* Indigo 700 */
+  --primary-light: #EEF2FF; /* Indigo 50 */
+  
+  /* Status Colors */
+  --success: #10B981;
+  --success-bg: #D1FAE5;
+  --warning: #F59E0B;
+  --warning-bg: #FEF3C7;
+  --danger: #EF4444;
+  --danger-bg: #FEE2E2;
+  --info: #3B82F6;
+  --info-bg: #DBEAFE;
+  
+  /* Neutral/Grayscale */
+  --bg-app: #F8FAFC; /* Slate 50 - Very light background */
+  --bg-panel: #FFFFFF;
+  --text-main: #1E293B; /* Slate 800 */
+  --text-muted: #64748B; /* Slate 500 */
+  --border-light: #E2E8F0; /* Slate 200 */
+  --border-focus: #94A3B8;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  
+  /* Border Radius */
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  
+  /* Map old variables for compatibility during transition */
+  --burnt: var(--primary);
+  --burnt-soft: var(--primary-hover);
+  --coffee: var(--text-main);
+  --line: var(--border-light);
+  --paper: var(--bg-panel);
+  --cream: var(--bg-app);
 }
 
 * {
@@ -23,25 +51,23 @@ html,
 body,
 #root {
   margin: 0;
+  padding: 0;
   min-width: 320px;
-  min-height: 100%;
+  min-height: 100vh;
 }
 
 body {
-  font-family: 'Nunito', system-ui, -apple-system, sans-serif;
-  background: #faf7f4;
-  color: #1a1a1a;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  text-rendering: optimizeLegibility;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg-app);
+  color: var(--text-main);
+  font-weight: 400;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
-h1,
-h2,
-h3,
-.brand-serif {
-  font-family: 'Playfair Display', 'Nunito', serif;
-  font-weight: 800;
-  letter-spacing: 0.015em;
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
 }

@@ -22,12 +22,34 @@ import { OverviewPanel } from './features/admin-dashboard/components/OverviewPan
 import { OrdersPanel } from './features/admin-dashboard/components/OrdersPanel'
 import { MenuPanel } from './features/admin-dashboard/components/MenuPanel'
 import { ShiftPanel } from './features/admin-dashboard/components/ShiftPanel'
+import { PosOrderPanel } from './features/admin-dashboard/components/PosOrderPanel'
 import { ManagerWorkforcePanel } from './features/manager-dashboard/components/ManagerWorkforcePanel'
 import { ManagerEmployeePanel } from './features/manager-dashboard/components/ManagerEmployeePanel'
 import { ManagerCustomerCarePanel } from './features/manager-dashboard/components/ManagerCustomerCarePanel'
 import { StaffWorkShiftsPanel } from './features/staff-dashboard/components/StaffWorkShiftsPanel'
 import StaffDeliveryPanel from './features/staff-dashboard/features_thaian/StaffDeliveryPanel'
 import { AdminSystemConsole } from './features/actor-admin/components/AdminSystemConsole'
+import {
+  Bike,
+  Search,
+  LogOut,
+  LayoutGrid,
+  ShoppingBag,
+  Monitor,
+  Store,
+  Clock,
+  Coffee,
+  Newspaper,
+  Calendar,
+  UserCheck,
+  CheckCircle2,
+  Users,
+  Truck,
+  MessageSquare,
+  BarChart3,
+  ChevronDown,
+  ChevronRight
+} from 'lucide-react'
 import { ManagerShipperPanel } from './features/manager-dashboard/components/ManagerShipperPanel'
 import { AdminChatWidget } from './features/admin-dashboard/components/AdminChatWidget'
 import { TableManagementPanel } from './features/admin-dashboard/components/TableManagementPanel'
@@ -154,9 +176,21 @@ function App() {
         MANAGER_EMPLOYEE_MANAGEMENT_TAB,
         MANAGER_WORKFORCE_MANAGEMENT_TAB,
         MANAGER_CUSTOMER_CARE_TAB,
-        { id: 'shipper-manage', label: '🚴 Quản lý Shipper' },
+        { id: 'shipper-manage', label: 'Quản lý giao hàng' },
       ]
     : []
+
+  const [activeStaffGroup, setActiveStaffGroup] = useState('group-1')
+
+  useEffect(() => {
+    if (['overview', 'orders', 'pos', 'delivery', 'table-management', 'shift'].includes(activeTab)) {
+      setActiveStaffGroup('group-1')
+    } else if (['menu', 'news'].includes(activeTab)) {
+      setActiveStaffGroup('group-2')
+    } else if (['workforce', 'account', 'shift-approval', 'employee-manage', 'workforce-manage', 'shipper-manage', 'customer-care', 'survey-manage'].includes(activeTab)) {
+      setActiveStaffGroup('group-3')
+    }
+  }, [activeTab])
 
   const statusTone = (status) => {
     const map = {
@@ -227,50 +261,212 @@ function App() {
   return (
     <div className="admin-app-shell">
       <aside className="left-nav">
-        <h2>Avengers Admin</h2>
-        <p className="staff-tag">
-          Đang đăng nhập: {session.user?.tenDangNhap || session.user?.email || 'nhan vien'} ({isManager ? 'Manager' : 'Staff'}) - Cơ sở {branchName}
-        </p>
-        <button type="button" className="shipper-launcher-btn" onClick={openShipperLauncher}>
-          Mở Shipper Mobile
-        </button>
-        <nav>
-          <p className="nav-group-title">Chức năng cho staff</p>
-          {staffNavTabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              className={activeTab === tab.id ? 'nav-tab active' : 'nav-tab'}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              {tab.label}
-            </button>
-          ))}
+        <div style={{ padding: '0.75rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.625rem', borderBottom: '1px solid #f1f5f9', marginBottom: '0.75rem' }}>
+          <div style={{ width: '1.875rem', height: '1.875rem', backgroundColor: '#4f46e5', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(79, 70, 229, 0.25)' }}>
+            <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '1rem' }}>A</span>
+          </div>
+          <span style={{ fontWeight: '700', fontSize: '1.125rem', letterSpacing: '-0.025em', color: '#0f172a' }}>Avengers Admin</span>
+        </div>
 
-          {isManager ? <p className="nav-group-title nav-group-title--manager">Chức năng dành cho manager</p> : null}
-          {managerNavTabs.map((tab) => (
+
+
+        <div style={{ padding: '0 0.25rem', marginBottom: '0.85rem' }}>
+          <button type="button" className="shipper-launcher-btn" onClick={openShipperLauncher} style={{ width: '100%', margin: 0, height: '38px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', backgroundColor: '#e0e7ff', color: '#4f46e5', border: '1px solid #c7d2fe', borderRadius: '8px', fontWeight: '700', fontSize: '0.8125rem', cursor: 'pointer', transition: 'all 0.15s ease' }}>
+            <Bike size={16} color="#4f46e5" />
+            <span>Mở Shipper Mobile</span>
+          </button>
+        </div>
+
+        <nav style={{ padding: '0 0.25rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+          
+          {/* GROUP 1: VẬN HÀNH & BÁN HÀNG */}
+          <div>
             <button
-              key={tab.id}
               type="button"
-              className={activeTab === tab.id ? 'nav-tab active' : 'nav-tab'}
-              onClick={() => setActiveTab(tab.id)}
+              className="nav-group-header-btn"
+              onClick={() => setActiveStaffGroup(activeStaffGroup === 'group-1' ? '' : 'group-1')}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justify: 'space-between',
+                padding: '0.45rem 0.55rem',
+                border: 'none',
+                background: 'transparent',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                color: '#64748b',
+                fontWeight: '700',
+                fontSize: '0.7rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em'
+              }}
             >
-              {tab.label}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <ShoppingBag size={14} color="#64748b" />
+                <span>Vận hành &amp; Bán hàng</span>
+              </div>
+              {activeStaffGroup === 'group-1' ? <ChevronDown size={14} color="#94a3b8" /> : <ChevronRight size={14} color="#94a3b8" />}
             </button>
-          ))}
+
+            {activeStaffGroup === 'group-1' && (
+              <div className="nav-group-children" style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginTop: '0.25rem', paddingLeft: '0.35rem' }}>
+                <button type="button" className={activeTab === 'overview' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('overview')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <LayoutGrid size={15} /> <span>Tổng quan</span>
+                </button>
+                <button type="button" className={activeTab === 'orders' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('orders')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <ShoppingBag size={15} /> <span>Quản lý đơn hàng</span>
+                </button>
+                <button type="button" className={activeTab === 'pos' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('pos')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Monitor size={15} /> <span>POS tạo đơn nhanh</span>
+                </button>
+                <button type="button" className={activeTab === 'delivery' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('delivery')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Bike size={15} /> <span>Quản lý Giao hàng</span>
+                </button>
+                <button type="button" className={activeTab === 'table-management' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('table-management')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Store size={15} /> <span>Quản lý Bàn</span>
+                </button>
+                <button type="button" className={activeTab === 'shift' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('shift')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Clock size={15} /> <span>Chốt ca</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* GROUP 2: SẢN PHẨM & TIN TỨC */}
+          <div>
+            <button
+              type="button"
+              className="nav-group-header-btn"
+              onClick={() => setActiveStaffGroup(activeStaffGroup === 'group-2' ? '' : 'group-2')}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justify: 'space-between',
+                padding: '0.45rem 0.55rem',
+                border: 'none',
+                background: 'transparent',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                color: '#64748b',
+                fontWeight: '700',
+                fontSize: '0.7rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Coffee size={14} color="#64748b" />
+                <span>Sản phẩm &amp; Tin tức</span>
+              </div>
+              {activeStaffGroup === 'group-2' ? <ChevronDown size={14} color="#94a3b8" /> : <ChevronRight size={14} color="#94a3b8" />}
+            </button>
+
+            {activeStaffGroup === 'group-2' && (
+              <div className="nav-group-children" style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginTop: '0.25rem', paddingLeft: '0.35rem' }}>
+                <button type="button" className={activeTab === 'menu' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('menu')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Coffee size={15} /> <span>Quản lý thực đơn</span>
+                </button>
+                <button type="button" className={activeTab === 'news' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('news')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Newspaper size={15} /> <span>Quản lý tin tức</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* GROUP 3: NHÂN SỰ & QUẢN LÝ */}
+          <div>
+            <button
+              type="button"
+              className="nav-group-header-btn"
+              onClick={() => setActiveStaffGroup(activeStaffGroup === 'group-3' ? '' : 'group-3')}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justify: 'space-between',
+                padding: '0.45rem 0.55rem',
+                border: 'none',
+                background: 'transparent',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                color: '#64748b',
+                fontWeight: '700',
+                fontSize: '0.7rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Users size={14} color="#64748b" />
+                <span>Nhân sự &amp; Quản lý</span>
+              </div>
+              {activeStaffGroup === 'group-3' ? <ChevronDown size={14} color="#94a3b8" /> : <ChevronRight size={14} color="#94a3b8" />}
+            </button>
+
+            {activeStaffGroup === 'group-3' && (
+              <div className="nav-group-children" style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginTop: '0.25rem', paddingLeft: '0.35rem' }}>
+                <button type="button" className={activeTab === 'workforce' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('workforce')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Calendar size={15} /> <span>{isManager ? 'Lịch làm của tôi' : 'Lịch làm nhân sự'}</span>
+                </button>
+
+                <button type="button" className={activeTab === 'account' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('account')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <UserCheck size={15} /> <span>Hồ sơ &amp; Bảo mật</span>
+                </button>
+
+                {isManager && (
+                  <>
+                    <button type="button" className={activeTab === 'shift-approval' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('shift-approval')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <CheckCircle2 size={15} /> <span>Kiểm tra chốt ca</span>
+                    </button>
+                    <button type="button" className={activeTab === 'employee-manage' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('employee-manage')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Users size={15} /> <span>Quản lý nhân viên</span>
+                    </button>
+                    <button type="button" className={activeTab === 'workforce-manage' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('workforce-manage')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Calendar size={15} /> <span>Quản lý lịch làm nhân viên</span>
+                    </button>
+                    <button type="button" className={activeTab === 'shipper-manage' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('shipper-manage')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Truck size={15} /> <span>Quản lý giao hàng</span>
+                    </button>
+                    <button type="button" className={activeTab === 'customer-care' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('customer-care')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <MessageSquare size={15} /> <span>CSKH phản hồi đánh giá</span>
+                    </button>
+                    <button type="button" className={activeTab === 'survey-manage' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('survey-manage')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <BarChart3 size={15} /> <span>Quản lý khảo sát</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
         </nav>
-        <button type="button" className="logout-btn" onClick={logout}>
-          Đăng xuất
-        </button>
+
+        <div style={{ marginTop: 'auto', paddingTop: '0.75rem', paddingLeft: '0.25rem', paddingRight: '0.25rem' }}>
+          <button type="button" className="logout-btn" onClick={logout} style={{ width: '100%', height: '38px', borderRadius: '8px', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+            <LogOut size={16} /> Đăng xuất
+          </button>
+        </div>
       </aside>
 
       <main className="content-area">
-        <header className="content-header">
-          <div>
-            <h1>Trung tâm vận hành cửa hàng</h1>
-            <p>Xin chào {session.user?.tenDangNhap || session.user?.email || 'nhan vien'}, cơ sở {branchName}.</p>
+        <header className="content-header" style={{ padding: '1rem 1.75rem', backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="content-header-title">
+            <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', color: '#0f172a' }}>Trung tâm vận hành cửa hàng</h1>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8125rem', color: '#64748b' }}>Xin chào <strong>{session.user?.tenDangNhap || session.user?.email || 'nhan vien'}</strong>, cơ sở {branchName}.</p>
           </div>
-          <AdminNotificationBell session={session} />
+          <div className="header-right-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+            <div className="header-search" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <Search size={15} color="#64748b" style={{ position: 'absolute', left: '0.75rem', pointerEvents: 'none' }} />
+              <input
+                type="text"
+                placeholder="Tìm kiếm mọi thứ..."
+                style={{ padding: '0.45rem 0.85rem 0.45rem 2.2rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', fontSize: '0.8125rem', color: '#0f172a', outline: 'none', width: '220px' }}
+              />
+            </div>
+            <AdminNotificationBell session={session} />
+          </div>
         </header>
 
         {activeTab === 'overview' ? (
@@ -353,197 +549,32 @@ function App() {
         )}
 
         {activeTab === 'pos' && (
-          <section className="panel split">
-            <div>
-              <div className="panel-head">
-                <h2>POS tạo đơn nhanh</h2>
-                <span>Tạo đơn trực tiếp cho khách tại chỗ hoặc mang đi</span>
-              </div>
-
-              <div className="pos-row pos-form-row">
-                <select
-                  value={posForm.loai_don_hang}
-                  onChange={(e) => setPosForm((prev) => ({ ...prev, loai_don_hang: e.target.value }))}
-                >
-                  {POS_ORDER_TYPE_OPTIONS.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={posForm.phuong_thuc_thanh_toan}
-                  onChange={(e) => setPosForm((prev) => ({ ...prev, phuong_thuc_thanh_toan: e.target.value }))}
-                >
-                  {POS_PAYMENT_OPTIONS.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  value={posForm.ten_khach_hang}
-                  onChange={(e) => setPosForm((prev) => ({ ...prev, ten_khach_hang: e.target.value }))}
-                  placeholder="Tên khách (không bắt buộc)"
-                />
-                <input
-                  value={posForm.ma_ban}
-                  onChange={(e) => setPosForm((prev) => ({ ...prev, ma_ban: e.target.value }))}
-                  placeholder="Mã bàn (nếu tại quầy)"
-                  disabled={!['TAI_CHO', 'DUNG_TAI_CHO'].includes(posForm.loai_don_hang)}
-                />
-              </div>
-
-              <textarea
-                value={posForm.ghi_chu}
-                onChange={(e) => setPosForm((prev) => ({ ...prev, ghi_chu: e.target.value }))}
-                placeholder="Ghi chú đơn tại quầy"
-              />
-
-              <div className="pos-list">
-                {!inventoryState.loading && !inventoryState.items.length ? (
-                  <p>Không có món trong thực đơn để tạo đơn POS.</p>
-                ) : null}
-                {posItems.map((item, index) => (
-                  <div key={`${item.ma_san_pham}-${index}`} className="pos-row">
-                    <select value={item.ma_san_pham} onChange={(e) => updatePosItem(index, 'ma_san_pham', e.target.value)}>
-                      {inventoryState.items.map((menuItem) => (
-                        <option key={menuItem.ma_san_pham} value={menuItem.ma_san_pham}>
-                          {normalizeViText(menuItem.name)} {menuItem.dang_ban ? '' : '(Tạm hết)'}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="number"
-                      value={item.qty}
-                      onChange={(e) => updatePosItem(index, 'qty', e.target.value)}
-                      min="1"
-                    />
-                    <input
-                      type="number"
-                      value={item.price}
-                      readOnly
-                      disabled
-                      min="0"
-                      title="Giá món được khóa theo thực đơn"
-                    />
-                    <button type="button" onClick={() => removePosItem(index)}>
-                      Xóa
-                    </button>
-                  </div>
-                ))}
-              </div>
-              {posStatus.error ? <p className="error-text">{posStatus.error}</p> : null}
-              {posStatus.success ? <p>{posStatus.success}</p> : null}
-              {posHasUnavailableItem ? <p className="error-text">Có món đang tạm ngưng bán trong đơn POS. Vui lòng đổi món khác.</p> : null}
-              <button type="button" className="secondary" onClick={addPosItem} disabled={!inventoryState.items.length}>
-                Thêm dòng món
-              </button>
-            </div>
-            <div className="receipt-box">
-              <h3>Xem trước hóa đơn</h3>
-              <p>Tạm tính: {fmtMoney(posSubtotal)}</p>
-              <p>VAT 8% (tham khảo): {fmtMoney(posVat)}</p>
-              <strong>Tổng cộng thu khách: {fmtMoney(posTotal)}</strong>
-
-              {isCashMethod ? (
-                <div className="cash-box">
-                  <label htmlFor="cash-received">Tiền khách đưa</label>
-                  <input
-                    id="cash-received"
-                    type="number"
-                    min="0"
-                    value={posCashInput}
-                    onChange={(e) => setPosCashInput(Number(e.target.value) || 0)}
-                  />
-                  <p className={posCashInsufficient ? 'cash-warning' : ''}>
-                    {posCashInsufficient ? 'Tiền khách đưa chưa đủ' : `Tiền thối lại: ${fmtMoney(posChange)}`}
-                  </p>
-                </div>
-              ) : null}
-
-              <button
-                type="button"
-                onClick={taoDonTaiQuay}
-                disabled={
-                  creatingPosOrder ||
-                  inventoryState.loading ||
-                  !inventoryState.items.length ||
-                  posHasUnavailableItem ||
-                  (isCashMethod && posCashInsufficient)
-                }
-              >
-                {creatingPosOrder ? 'Đang tạo đơn...' : 'Xác nhận tạo đơn tại quầy'}
-              </button>
-
-              {lastPosOrder?.order ? (
-                <div className="pos-created-box">
-                  <h3>Đơn tại quầy vừa tạo</h3>
-                  <p>Mã đơn: {lastPosOrder.order.ma_don_hang?.slice(0, 8)?.toUpperCase()}</p>
-                  <p>
-                    Trạng thái đơn:{' '}
-                    <span className={`status-pill ${statusTone(lastPosOrder.order.trang_thai_don_hang)}`}>
-                      {ORDER_STATUS_LABEL[lastPosOrder.order.trang_thai_don_hang] || lastPosOrder.order.trang_thai_don_hang}
-                    </span>
-                  </p>
-                  <p>Trạng thái thanh toán: {lastPosOrder.order.trang_thai_thanh_toan}</p>
-                  {lastPosOrder.order.phuong_thuc_thanh_toan !== 'THANH_TOAN_KHI_NHAN_HANG' && lastPosOrder.paymentDetails?.qr_img_url ? (
-                    <>
-                      <small>Khách có thể quét QR để thanh toán nhanh:</small>
-                      <img src={lastPosOrder.paymentDetails.qr_img_url} alt="Mã QR thanh toán" className="pos-qr" />
-                    </>
-                  ) : null}
-                  {lastPosOrder.order.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG' ? (
-                    <small>Đơn tiền mặt: kiểm tra tiền nhận và in bill cho khách.</small>
-                  ) : null}
-                  <div className="pos-created-actions">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        capNhatTrangThaiDon(lastPosOrder.order.ma_don_hang, 'DA_XAC_NHAN')
-                        setActiveTab('orders')
-                      }}
-                    >
-                      Xác nhận đơn
-                    </button>
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={() => {
-                        capNhatTrangThaiDon(lastPosOrder.order.ma_don_hang, 'DANG_CHUAN_BI')
-                        setActiveTab('orders')
-                      }}
-                    >
-                      Chuyển sang Đang chuẩn bị
-                    </button>
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={() => {
-                        capNhatTrangThaiDon(lastPosOrder.order.ma_don_hang, 'HOAN_THANH')
-                        setActiveTab('orders')
-                      }}
-                    >
-                      Xác nhận đã hoàn thành
-                    </button>
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={() => {
-                        capNhatTrangThaiDon(lastPosOrder.order.ma_don_hang, 'DA_HUY')
-                        setActiveTab('orders')
-                      }}
-                    >
-                      Hủy đơn
-                    </button>
-                    <button type="button" className="secondary" onClick={inHoaDonPos}>
-                      In hóa đơn K80
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          </section>
+          <PosOrderPanel
+            posForm={posForm}
+            setPosForm={setPosForm}
+            posItems={posItems}
+            addPosItem={addPosItem}
+            updatePosItem={updatePosItem}
+            removePosItem={removePosItem}
+            inventoryState={inventoryState}
+            posStatus={posStatus}
+            posHasUnavailableItem={posHasUnavailableItem}
+            posSubtotal={posSubtotal}
+            posVat={posVat}
+            posTotal={posTotal}
+            isCashMethod={isCashMethod}
+            posCashInput={posCashInput}
+            setPosCashInput={setPosCashInput}
+            posCashInsufficient={posCashInsufficient}
+            posChange={posChange}
+            creatingPosOrder={creatingPosOrder}
+            taoDonTaiQuay={taoDonTaiQuay}
+            lastPosOrder={lastPosOrder}
+            inHoaDonPos={inHoaDonPos}
+            capNhatTrangThaiDon={capNhatTrangThaiDon}
+            setActiveTab={setActiveTab}
+            statusTone={statusTone}
+          />
         )}
 
         {activeTab === 'table-management' && (
