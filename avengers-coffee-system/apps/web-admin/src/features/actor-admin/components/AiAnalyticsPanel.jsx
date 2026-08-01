@@ -29,15 +29,46 @@ function StatusDot({ ok }) {
   )
 }
 
-function HorizontalBar({ label, value, max, note }) {
-  const width = max > 0 ? Math.max(6, Math.round((value / max) * 100)) : 0
+const PAYMENT_METHOD_LABELS = {
+  THANH_TOAN_KHI_NHAN_HANG: 'Thanh toán khi nhận hàng (COD)',
+  VNPAY: 'VNPay',
+  VI_DIEN_TU: 'Ví điện tử',
+  TIEN_MAT: 'Tiền mặt',
+  NGAN_HANG_QR: 'Chuyển khoản QR Bank',
+  MOMO: 'Ví MoMo',
+  ZALOPAY: 'Ví ZaloPay',
+  PAYOS: 'PayOS',
+  BANK_TRANSFER: 'Chuyển khoản ngân hàng',
+}
+
+function formatPaymentMethod(name) {
+  if (!name) return 'Khác'
+  const upper = String(name).trim().toUpperCase()
+  if (PAYMENT_METHOD_LABELS[upper]) return PAYMENT_METHOD_LABELS[upper]
+  return String(name)
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/(^\w|\s\w)/g, (m) => m.toUpperCase())
+}
+
+function HorizontalBar({ label, value, max, note, barGradient = 'linear-gradient(90deg, #2563eb, #38bdf8)' }) {
+  const width = max > 0 ? Math.max(4, Math.min(100, Math.round((value / max) * 100))) : 0
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 3fr auto', gap: 10, alignItems: 'center' }}>
-      <span style={{ fontSize: 12, color: '#334155', fontWeight: 600 }}>{label}</span>
-      <div style={{ width: '100%', height: 10, borderRadius: 99, background: '#e2e8f0', overflow: 'hidden' }}>
-        <div style={{ width: `${width}%`, height: '100%', background: 'linear-gradient(90deg,#2563eb,#38bdf8)' }} />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 5, padding: '4px 0' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, gap: 8 }}>
+        <span
+          style={{ fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+          title={label}
+        >
+          {label}
+        </span>
+        <span style={{ fontWeight: 700, color: '#0f172a', fontSize: 12, flexShrink: 0 }}>
+          {note || fmtNum(value)}
+        </span>
       </div>
-      <span style={{ fontSize: 12, color: '#0f172a', fontWeight: 700 }}>{note || fmtNum(value)}</span>
+      <div style={{ width: '100%', height: 8, borderRadius: 99, background: '#e2e8f0', overflow: 'hidden' }}>
+        <div style={{ width: `${width}%`, height: '100%', borderRadius: 99, background: barGradient, transition: 'width 0.4s ease-in-out' }} />
+      </div>
     </div>
   )
 }
@@ -228,7 +259,7 @@ export function AiAnalyticsPanel({ session }) {
       const query = `?branch_code=${encodeURIComponent(branchCode)}&limit=6&days=${encodeURIComponent(behaviorDays)}`
       return fetch(`${API_BASE_URL}/ai/behavior/insights${query}`).then(async (res) => {
         const payload = await res.json().catch(() => ({}))
-        if (!res.ok) throw new Error(payload?.detail || payload?.message || 'Khong tai duoc du lieu hanh vi mua hang')
+        if (!res.ok) throw new Error(payload?.detail || payload?.message || 'Không tải được dữ liệu hành vi mua hàng')
         return payload
       })
     },
@@ -302,7 +333,10 @@ export function AiAnalyticsPanel({ session }) {
   const branchOptions = useMemo(() => {
     const base = [{ value: 'ALL', label: 'Tất cả chi nhánh' }]
     const branches = stats?.demand_forecasting?.branches || []
-    branches.forEach(b => base.push({ value: b, label: b.replace(/_/g, ' ') }))
+    branches.forEach(b => {
+      const cleanLabel = b.replace(/_/g, ' ').toLowerCase().replace(/(^\w|\s\w)/g, (m) => m.toUpperCase())
+      base.push({ value: b, label: cleanLabel })
+    })
     return base
   }, [stats])
 
@@ -313,35 +347,35 @@ export function AiAnalyticsPanel({ session }) {
     return {
       totalOrders: Number(payload.total_orders || 0),
       topProducts: (payload.top_products || []).map((item) => ({
-        name: String(item?.product_name || item?.product_id || 'San pham'),
+        name: String(item?.product_name || item?.product_id || 'Sản phẩm'),
         qty: Number(item?.total_qty || 0),
       })),
       customerSyncTopProducts: (payload.customer_sync_top_products || []).map((item) => ({
-        name: String(item?.product_name || item?.product_id || 'San pham'),
+        name: String(item?.product_name || item?.product_id || 'Sản phẩm'),
         qty: Number(item?.total_qty || 0),
         score: Number(item?.sync_score || 0),
       })),
       paymentMix: (payload.payment_mix || []).map((item) => ({
-        name: String(item?.payment_method || 'Khac'),
+        name: String(item?.payment_method || 'Khác'),
         count: Number(item?.total_orders || 0),
       })),
       hourGroups: [
-        { key: 'SANG', label: 'Sang (06h-11h)', count: Number(hourMap.get('SANG') || 0) },
-        { key: 'TRUA', label: 'Trua (11h-14h)', count: Number(hourMap.get('TRUA') || 0) },
-        { key: 'CHIEU', label: 'Chieu (14h-18h)', count: Number(hourMap.get('CHIEU') || 0) },
-        { key: 'TOI', label: 'Toi (18h-23h)', count: Number(hourMap.get('TOI') || 0) },
+        { key: 'SANG', label: 'Sáng (06h - 11h)', count: Number(hourMap.get('SANG') || 0) },
+        { key: 'TRUA', label: 'Trưa (11h - 14h)', count: Number(hourMap.get('TRUA') || 0) },
+        { key: 'CHIEU', label: 'Chiều (14h - 18h)', count: Number(hourMap.get('CHIEU') || 0) },
+        { key: 'TOI', label: 'Tối (18h - 23h)', count: Number(hourMap.get('TOI') || 0) },
       ],
       topRated: (payload.top_rated_products || []).map((item) => ({
-        name: String(item?.product_name || item?.product_id || 'San pham'),
+        name: String(item?.product_name || item?.product_id || 'Sản phẩm'),
         avgRating: Number(item?.avg_rating || 0),
         reviews: Number(item?.total_reviews || 0),
       })),
       topFavorites: (payload.top_favorite_products || []).map((item) => ({
-        name: String(item?.product_name || item?.product_id || 'San pham'),
+        name: String(item?.product_name || item?.product_id || 'Sản phẩm'),
         count: Number(item?.favorite_count || 0),
       })),
       topVoucherProducts: (payload.top_voucher_products || []).map((item) => ({
-        name: String(item?.product_name || item?.product_id || 'San pham'),
+        name: String(item?.product_name || item?.product_id || 'Sản phẩm'),
         qty: Number(item?.voucher_qty || 0),
         orders: Number(item?.voucher_orders || 0),
       })),
@@ -367,17 +401,17 @@ export function AiAnalyticsPanel({ session }) {
       {/* ── Hero banner ────────────────────────────────────────────────── */}
       <div style={{
         background: 'linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 60%, #3b82f6 100%)',
-        borderRadius: 16, padding: '28px 32px', marginBottom: 28, color: '#fff',
+        borderRadius: 16, padding: '24px 28px', marginBottom: 24, color: '#ffffff',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16,
       }}>
         <div>
-          <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: 2, opacity: 0.7, textTransform: 'uppercase' }}>
-            Trung tâm phân tích AI
+          <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#93c5fd', textTransform: 'uppercase' }}>
+            TRUNG TÂM PHÂN TÍCH AI
           </p>
-          <h2 style={{ margin: '6px 0 8px', fontSize: 22, fontWeight: 900 }}>
+          <h2 style={{ margin: '6px 0 8px', fontSize: 20, fontWeight: 800, color: '#ffffff', letterSpacing: '-0.01em' }}>
             Gợi ý sản phẩm và Dự báo nhu cầu
           </h2>
-          <p style={{ margin: 0, fontSize: 13, opacity: 0.8, maxWidth: 500 }}>
+          <p style={{ margin: 0, fontSize: 13, color: '#e0e7ff', maxWidth: 520, lineHeight: 1.5 }}>
             Hệ thống tổng hợp hành vi mua hàng để gợi ý sản phẩm phù hợp,
             đồng thời dự báo số đơn hoặc doanh thu trong các ngày tiếp theo để hỗ trợ vận hành.
           </p>
@@ -388,9 +422,9 @@ export function AiAnalyticsPanel({ session }) {
             disabled={retrainCfMutation.isPending}
             onClick={handleRetrainCf}
             style={{
-              background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)',
-              color: '#fff', borderRadius: 8, padding: '8px 16px', cursor: 'pointer',
-              fontSize: 12, fontWeight: 700, backdropFilter: 'blur(4px)',
+              background: '#ffffff', color: '#1e40af', border: 'none',
+              borderRadius: 8, padding: '9px 16px', cursor: 'pointer',
+              fontSize: 12, fontWeight: 700, boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
             }}
           >
             {retrainCfMutation.isPending ? 'Đang cập nhật mô hình gợi ý...' : 'Cập nhật mô hình gợi ý'}
@@ -400,9 +434,9 @@ export function AiAnalyticsPanel({ session }) {
             disabled={retrainForecastMutation.isPending}
             onClick={handleRetrainForecast}
             style={{
-              background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)',
-              color: '#fff', borderRadius: 8, padding: '8px 16px', cursor: 'pointer',
-              fontSize: 12, fontWeight: 700, backdropFilter: 'blur(4px)',
+              background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.4)',
+              color: '#ffffff', borderRadius: 8, padding: '9px 16px', cursor: 'pointer',
+              fontSize: 12, fontWeight: 600, backdropFilter: 'blur(4px)',
             }}
           >
             {retrainForecastMutation.isPending ? 'Đang cập nhật mô hình dự báo...' : 'Cập nhật mô hình dự báo'}
@@ -443,7 +477,7 @@ export function AiAnalyticsPanel({ session }) {
               sub: stats.demand_forecasting?.engine || 'N/A', ok: stats.demand_forecasting?.is_trained,
             },
             {
-              label: 'Du lieu du bao', value: fmtNum(stats.demand_forecasting?.total_records),
+              label: 'Dữ liệu dự báo', value: fmtNum(stats.demand_forecasting?.total_records),
               sub: `${stats.demand_forecasting?.branches?.length || 0} chi nhánh`, ok: true,
             },
             {
@@ -456,17 +490,17 @@ export function AiAnalyticsPanel({ session }) {
             },
           ].map((card, i) => (
             <div key={i} style={{
-              background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12,
-              padding: '16px 18px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+              background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12,
+              padding: '14px 16px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
             }}>
-              <div style={{ fontSize: 11, color: '#6b7280', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
+              <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 {card.label}
               </div>
-              <div style={{ fontSize: 18, fontWeight: 900, color: '#111827', marginBottom: 4 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
                 <StatusDot ok={card.ok} />
-                {card.value}
+                <span>{card.value}</span>
               </div>
-              <div style={{ fontSize: 11, color: '#9ca3af' }}>{card.sub}</div>
+              <div style={{ fontSize: 11, color: '#64748b' }}>{card.sub}</div>
             </div>
           ))}
         </div>
@@ -487,7 +521,7 @@ export function AiAnalyticsPanel({ session }) {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
                 <tr style={{ background: '#f8fafc', color: '#374151' }}>
-                  <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #e5e7eb' }}>Chi so</th>
+                  <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #e5e7eb' }}>Chỉ số</th>
                   <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #e5e7eb' }}>Giá trị</th>
                   <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #e5e7eb' }}>Diễn giải cho quản trị</th>
                 </tr>
@@ -513,32 +547,32 @@ export function AiAnalyticsPanel({ session }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
           <div>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#111827' }}>
-              Bieu do hanh vi mua sam khach hang
+              Biểu đồ hành vi mua sắm Khách hàng
             </h3>
             <p style={{ margin: '6px 0 0', fontSize: 12, color: '#64748b' }}>
-              Tong hop du lieu thuc tu don hang, danh gia, yeu thich va voucher de dong bo voi logic goi y cua customer.
+              Tổng hợp dữ liệu thực từ đơn hàng, đánh giá, yêu thích và voucher để đồng bộ với gợi ý cho Khách hàng.
             </p>
             <span style={{ display: 'inline-block', marginTop: 8, padding: '3px 10px', borderRadius: 999, border: '1px solid #bfdbfe', background: '#eff6ff', color: '#1d4ed8', fontSize: 11, fontWeight: 700 }}>
-              Dong bo customer
+              Đồng bộ Khách hàng
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <strong style={{ fontSize: 13, color: '#1e40af' }}>Tong don da phan tich: {fmtNum(behaviorInsights.totalOrders)}</strong>
+            <strong style={{ fontSize: 13, color: '#1e40af' }}>Tổng đơn đã phân tích: {fmtNum(behaviorInsights.totalOrders)}</strong>
             <select
               value={behaviorDays}
               onChange={(e) => setBehaviorDays(Number(e.target.value) || 30)}
               style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, fontWeight: 700 }}
             >
-              <option value={1}>Hom nay</option>
-              <option value={7}>7 ngay</option>
-              <option value={30}>30 ngay</option>
-              <option value={90}>90 ngay</option>
+              <option value={1}>Hôm nay</option>
+              <option value={7}>7 ngày</option>
+              <option value={30}>30 ngày</option>
+              <option value={90}>90 ngày</option>
             </select>
           </div>
         </div>
 
-        {behaviorQuery.isLoading ? <p style={{ color: '#9ca3af', marginTop: 12 }}>Dang tai du lieu hanh vi...</p> : null}
-        {behaviorQuery.isError ? <p style={{ color: '#ef4444', marginTop: 12 }}>Khong tai duoc du lieu hanh vi mua sam.</p> : null}
+        {behaviorQuery.isLoading ? <p style={{ color: '#9ca3af', marginTop: 12 }}>Đang tải dữ liệu hành vi...</p> : null}
+        {behaviorQuery.isError ? <p style={{ color: '#ef4444', marginTop: 12 }}>Không tải được dữ liệu hành vi mua sắm.</p> : null}
 
         {!behaviorQuery.isLoading && !behaviorQuery.isError ? (
           <>
@@ -547,8 +581,8 @@ export function AiAnalyticsPanel({ session }) {
                 <thead>
                   <tr style={{ background: '#eff6ff' }}>
                     <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #dbeafe' }}>#</th>
-                    <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #dbeafe' }}>Top 5 san pham dong bo customer</th>
-                    <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #dbeafe' }}>Diem da tin hieu</th>
+                    <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #dbeafe' }}>Top 5 sản phẩm đồng bộ Khách hàng</th>
+                    <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #dbeafe' }}>Điểm đa tín hiệu</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -561,103 +595,121 @@ export function AiAnalyticsPanel({ session }) {
                   ))}
                   {topProductsSummaryRows.length === 0 ? (
                     <tr>
-                      <td colSpan={3} style={{ padding: '12px', color: '#64748b' }}>Chua co du lieu top san pham trong khoang thoi gian da chon.</td>
+                      <td colSpan={3} style={{ padding: '12px', color: '#64748b' }}>Chưa có dữ liệu top sản phẩm trong khoảng thời gian đã chọn.</td>
                     </tr>
                   ) : null}
                 </tbody>
               </table>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16, marginTop: 14 }}>
-            <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, background: '#f8fafc' }}>
-              <h4 style={{ margin: '0 0 10px', fontSize: 13, color: '#0f172a' }}>Top san pham duoc mua nhieu</h4>
-              <div style={{ display: 'grid', gap: 8 }}>
-                {behaviorInsights.topProducts.map((item) => (
-                  <HorizontalBar
-                    key={item.name}
-                    label={item.name}
-                    value={item.qty}
-                    max={behaviorInsights.topProducts[0]?.qty || 1}
-                    note={`${fmtNum(item.qty)} luot`}
-                  />
-                ))}
-              </div>
-            </section>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 20, marginTop: 16 }}>
+              <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 18, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 16 }}>🔥</span> Top sản phẩm được mua nhiều
+                </h4>
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {behaviorInsights.topProducts.map((item) => (
+                    <HorizontalBar
+                      key={item.name}
+                      label={item.name}
+                      value={item.qty}
+                      max={behaviorInsights.topProducts[0]?.qty || 1}
+                      note={`${fmtNum(item.qty)} lượt`}
+                      barGradient="linear-gradient(90deg, #2563eb, #38bdf8)"
+                    />
+                  ))}
+                </div>
+              </section>
 
-            <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, background: '#f8fafc' }}>
-              <h4 style={{ margin: '0 0 10px', fontSize: 13, color: '#0f172a' }}>Ty le phuong thuc thanh toan</h4>
-              <div style={{ display: 'grid', gap: 8 }}>
-                {behaviorInsights.paymentMix.map((item) => (
-                  <HorizontalBar
-                    key={item.name}
-                    label={item.name}
-                    value={item.count}
-                    max={behaviorInsights.paymentMix[0]?.count || 1}
-                    note={`${fmtNum(item.count)} don`}
-                  />
-                ))}
-              </div>
-            </section>
+              <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 18, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 16 }}>💳</span> Tỷ lệ phương thức thanh toán
+                </h4>
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {behaviorInsights.paymentMix.map((item) => (
+                    <HorizontalBar
+                      key={item.name}
+                      label={formatPaymentMethod(item.name)}
+                      value={item.count}
+                      max={behaviorInsights.paymentMix[0]?.count || 1}
+                      note={`${fmtNum(item.count)} đơn`}
+                      barGradient="linear-gradient(90deg, #10b981, #34d399)"
+                    />
+                  ))}
+                </div>
+              </section>
 
-            <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, background: '#f8fafc' }}>
-              <h4 style={{ margin: '0 0 10px', fontSize: 13, color: '#0f172a' }}>Khung gio mua sam noi bat</h4>
-              <div style={{ display: 'grid', gap: 8 }}>
-                {behaviorInsights.hourGroups.map((item) => (
-                  <HorizontalBar
-                    key={item.key}
-                    label={item.label}
-                    value={item.count}
-                    max={Math.max(...behaviorInsights.hourGroups.map((x) => x.count), 1)}
-                    note={`${fmtNum(item.count)} don`}
-                  />
-                ))}
-              </div>
-            </section>
+              <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 18, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 16 }}>⏰</span> Khung giờ mua sắm nổi bật
+                </h4>
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {behaviorInsights.hourGroups.map((item) => (
+                    <HorizontalBar
+                      key={item.key}
+                      label={item.label}
+                      value={item.count}
+                      max={Math.max(...behaviorInsights.hourGroups.map((x) => x.count), 1)}
+                      note={`${fmtNum(item.count)} đơn`}
+                      barGradient="linear-gradient(90deg, #f59e0b, #fbbf24)"
+                    />
+                  ))}
+                </div>
+              </section>
 
-            <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, background: '#f8fafc' }}>
-              <h4 style={{ margin: '0 0 10px', fontSize: 13, color: '#0f172a' }}>Top san pham duoc danh gia</h4>
-              <div style={{ display: 'grid', gap: 8 }}>
-                {(behaviorInsights.topRated || []).map((item) => (
-                  <HorizontalBar
-                    key={item.name}
-                    label={item.name}
-                    value={item.avgRating}
-                    max={5}
-                    note={`${fmtNum(item.avgRating, 2)} ★ (${fmtNum(item.reviews)} review)`}
-                  />
-                ))}
-              </div>
-            </section>
+              <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 18, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 16 }}>⭐</span> Top sản phẩm được đánh giá
+                </h4>
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {(behaviorInsights.topRated || []).map((item) => (
+                    <HorizontalBar
+                      key={item.name}
+                      label={item.name}
+                      value={item.avgRating}
+                      max={5}
+                      note={`${fmtNum(item.avgRating, 1)} ★ (${fmtNum(item.reviews)} đánh giá)`}
+                      barGradient="linear-gradient(90deg, #8b5cf6, #c084fc)"
+                    />
+                  ))}
+                </div>
+              </section>
 
-            <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, background: '#f8fafc' }}>
-              <h4 style={{ margin: '0 0 10px', fontSize: 13, color: '#0f172a' }}>Top san pham duoc yeu thich</h4>
-              <div style={{ display: 'grid', gap: 8 }}>
-                {(behaviorInsights.topFavorites || []).map((item) => (
-                  <HorizontalBar
-                    key={item.name}
-                    label={item.name}
-                    value={item.count}
-                    max={behaviorInsights.topFavorites?.[0]?.count || 1}
-                    note={`${fmtNum(item.count)} luot thich`}
-                  />
-                ))}
-              </div>
-            </section>
+              <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 18, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 16 }}>❤️</span> Top sản phẩm được yêu thích
+                </h4>
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {(behaviorInsights.topFavorites || []).map((item) => (
+                    <HorizontalBar
+                      key={item.name}
+                      label={item.name}
+                      value={item.count}
+                      max={behaviorInsights.topFavorites?.[0]?.count || 1}
+                      note={`${fmtNum(item.count)} lượt thích`}
+                      barGradient="linear-gradient(90deg, #ec4899, #f472b6)"
+                    />
+                  ))}
+                </div>
+              </section>
 
-            <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, background: '#f8fafc' }}>
-              <h4 style={{ margin: '0 0 10px', fontSize: 13, color: '#0f172a' }}>Top san pham mua kem voucher</h4>
-              <div style={{ display: 'grid', gap: 8 }}>
-                {(behaviorInsights.topVoucherProducts || []).map((item) => (
-                  <HorizontalBar
-                    key={item.name}
-                    label={item.name}
-                    value={item.qty}
-                    max={behaviorInsights.topVoucherProducts?.[0]?.qty || 1}
-                    note={`${fmtNum(item.qty)} sl / ${fmtNum(item.orders)} don`}
-                  />
-                ))}
-              </div>
-            </section>
+              <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 18, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 16 }}>🎟️</span> Top sản phẩm mua kèm Voucher
+                </h4>
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {(behaviorInsights.topVoucherProducts || []).map((item) => (
+                    <HorizontalBar
+                      key={item.name}
+                      label={item.name}
+                      value={item.qty}
+                      max={behaviorInsights.topVoucherProducts?.[0]?.qty || 1}
+                      note={`${fmtNum(item.qty)} SL / ${fmtNum(item.orders)} đơn`}
+                      barGradient="linear-gradient(90deg, #6366f1, #818cf8)"
+                    />
+                  ))}
+                </div>
+              </section>
             </div>
           </>
         ) : null}
@@ -671,10 +723,10 @@ export function AiAnalyticsPanel({ session }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
           <div>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#111827' }}>
-              Du bao nhu cau mua hang
+              Dự báo nhu cầu mua hàng
             </h3>
             <p style={{ margin: '4px 0 0', fontSize: 12, color: '#6b7280' }}>
-              {fc ? `Cong cu: ${fc.model_engine} · Cap nhat: ${fmtDate(fc.trained_at)}` : 'Đang tải...'}
+              {fc ? `Công cụ: ${fc.model_engine} · Cập nhật: ${fmtDate(fc.trained_at)}` : 'Đang tải...'}
             </p>
           </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -737,10 +789,10 @@ export function AiAnalyticsPanel({ session }) {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                 <thead>
                   <tr style={{ background: '#f8fafc', color: '#374151' }}>
-                    <th style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid #e5e7eb' }}>Ngay du bao</th>
-                    <th style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid #e5e7eb' }}>Du kien trung binh</th>
-                    <th style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid #e5e7eb' }}>Muc dao dong thap</th>
-                    <th style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid #e5e7eb' }}>Muc dao dong cao</th>
+                    <th style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid #e5e7eb' }}>Ngày dự báo</th>
+                    <th style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid #e5e7eb' }}>Dự kiến trung bình</th>
+                    <th style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid #e5e7eb' }}>Mức dao động thấp</th>
+                    <th style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid #e5e7eb' }}>Mức dao động cao</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -798,7 +850,7 @@ export function AiAnalyticsPanel({ session }) {
               fontSize: 13, fontWeight: 700, opacity: recommendTargetUserId ? 1 : 0.6,
             }}
           >
-            🔍 Goi y
+            🔍 Gợi ý
           </button>
         </div>
 

@@ -1,11 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../../admin-dashboard/constants';
+import {
+  Truck,
+  Bike,
+  Navigation,
+  CheckCircle2,
+  Clock,
+  MapPin,
+  ExternalLink,
+  RefreshCw,
+  AlertCircle,
+  Package
+} from 'lucide-react';
 
 export default function StaffDeliveryPanel() {
   const [deliveries, setDeliveries] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState(null);
-
   const [debugText, setDebugText] = useState('');
   const [lalamoveLinks, setLalamoveLinks] = useState({});
 
@@ -25,7 +35,7 @@ export default function StaffDeliveryPanel() {
       });
       
       setDeliveries(deliveryOrders);
-      setDebugText(`Tất cả đơn: ${allOrders.length} | Branch: ${branchCode} | Lọc được: ${deliveryOrders.length}`);
+      setDebugText(`Tổng đơn: ${allOrders.length} | Cơ sở: ${branchCode} | Đơn giao: ${deliveryOrders.length}`);
     } catch (err) {
       console.error(err);
       setDebugText(`Lỗi: ${err.message}`);
@@ -46,7 +56,6 @@ export default function StaffDeliveryPanel() {
       const session = JSON.parse(sessionStr);
       const token = session?.accessToken || session?.token || '';
 
-      // Bước 1: Chuyển đơn sang DANG_GIAO để Shipper nội bộ thấy trong pool
       const res = await fetch(`${API_BASE_URL}/shippers/orders/${orderId}/mark-ready`, {
         method: 'POST',
         headers: {
@@ -62,11 +71,11 @@ export default function StaffDeliveryPanel() {
         throw new Error(data?.message || `Lỗi ${res.status}`);
       }
 
-      alert(`✅ Đã chuyển đơn ${orderId.slice(0, 8)} sang trạng thái "Đang Giao"!\nShipper nội bộ đang có thể nhận đơn ngay bây giờ.`);
+      alert(`Đã chuyển đơn ${orderId.slice(0, 8)} sang trạng thái "Đang Giao"!\nShipper nội bộ có thể nhận đơn ngay.`);
       fetchDeliveries();
     } catch (err) {
       console.error(err);
-      alert(`❌ Lỗi khi chuyển đơn: ${err.message}`);
+      alert(`Lỗi khi chuyển đơn: ${err.message}`);
     }
   };
 
@@ -87,7 +96,6 @@ export default function StaffDeliveryPanel() {
           return { lat: data[0].lat, lng: data[0].lon };
         }
         
-        // Chờ 1.2s trước khi thử lại phần địa chỉ ngắn hơn để tránh Rate Limit
         await new Promise(resolve => setTimeout(resolve, 1200));
       }
     } catch (err) {
@@ -102,7 +110,6 @@ export default function StaffDeliveryPanel() {
       
       const trackingRes = await fetch(`${API_BASE_URL}/shippers/delivery/tracking/${order.ma_don_hang}`);
       
-      // Lấy thông tin địa chỉ thật từ DB
       let pickupAddressStr = "220 Điện Biên Phủ, Phường Võ Thị Sáu, Quận 3, TP.HCM";
       let senderNameStr = "Highlands Coffee";
       let bCode = "MAC_DINH_CHI";
@@ -126,7 +133,6 @@ export default function StaffDeliveryPanel() {
       
       const deliveryAddressStr = order.dia_chi_giao_hang || "Quận 1, TP. Hồ Chí Minh";
       
-      // Fallback toạ độ chuẩn cho các chi nhánh
       const BRANCH_COORDS = {
         'DIEN_BIEN_PHU': { lat: "10.783100", lng: "106.689600" },
         'MAC_DINH_CHI': { lat: "10.787612", lng: "106.697410" }
@@ -145,29 +151,17 @@ export default function StaffDeliveryPanel() {
         }
       }
 
-      // Chạy thuật toán dò toạ độ siêu phân tích (cắt bớt nếu địa chỉ có rác)
       const pickupCoords = await getCoordinatesFromAddress(pickupAddressStr);
       if (pickupCoords) {
-        pickupLat = pickupCoords.lat;
-        pickupLng = pickupCoords.lng;
-      }
-      
-      // Chờ 1 giây để tránh Rate Limit
-      await new Promise(resolve => setTimeout(resolve, 1200));
-
-      const deliveryCoords = await getCoordinatesFromAddress(deliveryAddressStr);
-      if (deliveryCoords) {
-        deliveryLat = deliveryCoords.lat;
-        deliveryLng = deliveryCoords.lng;
+        pickupLat = pickupCoords.lat.toString();
+        pickupLng = pickupCoords.lng.toString();
       }
 
-      let pickupAddress = pickupAddressStr;
-
-      const quoteRes = await fetch(`${API_BASE_URL}/shippers/delivery/lalamove/quotation`, {
+      const quoteRes = await fetch(`${API_BASE_URL}/shippers/delivery/lalamove/quote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          pickup_address: pickupAddress,
+          pickup_address: pickupAddressStr,
           pickup_lat: pickupLat,
           pickup_lng: pickupLng,
           delivery_address: deliveryAddressStr,
@@ -177,9 +171,7 @@ export default function StaffDeliveryPanel() {
       });
       
       let quoteData;
-      try {
-        quoteData = await quoteRes.json();
-      } catch (err) {}
+      try { quoteData = await quoteRes.json(); } catch (err) {}
       
       const quotationId = quoteData?.data?.data?.quotationId || quoteData?.data?.quotationId;
       const llmStops = quoteData?.data?.data?.stops || quoteData?.data?.stops || [];
@@ -187,40 +179,36 @@ export default function StaffDeliveryPanel() {
       const recipientStopId = llmStops[1]?.stopId;
 
       if (!quoteRes.ok || !quotationId) {
-        throw new Error(`Lỗi lấy báo giá từ Lalamove API: ${quoteData?.message || JSON.stringify(quoteData) || 'Không xác định'}`);
+        throw new Error(`Lỗi lấy báo giá từ Lalamove API: ${quoteData?.message || 'Không xác định'}`);
       }
 
-      // 2. TẠO ĐƠN HÀNG LALAMOVE (Place Order)
       const orderRes = await fetch(`${API_BASE_URL}/shippers/delivery/lalamove/order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-        quotation_id: quotationId,
-        sender_stop_id: senderStopId,
-        recipient_stop_id: recipientStopId,
-        sender_name: senderNameStr,
-        sender_phone: "+84773670599", // SĐT chính chủ của Sandbox Partner Portal VN
-        recipient_name: order.ten_khach_hang || "Khách Hàng",
-        recipient_phone: "+84987654321",
-        pickup_address: pickupAddress,
-        pickup_lat: pickupLat,
-        pickup_lng: pickupLng,
-        delivery_address: deliveryAddressStr,
-        delivery_lat: deliveryLat,
-        delivery_lng: deliveryLng,
-        remarks: "Đơn nước Avengers Coffee, giao cẩn thận!"
+          quotation_id: quotationId,
+          sender_stop_id: senderStopId,
+          recipient_stop_id: recipientStopId,
+          sender_name: senderNameStr,
+          sender_phone: "+84773670599",
+          recipient_name: order.ten_khach_hang || "Khách Hàng",
+          recipient_phone: "+84987654321",
+          pickup_address: pickupAddressStr,
+          pickup_lat: pickupLat,
+          pickup_lng: pickupLng,
+          delivery_address: deliveryAddressStr,
+          delivery_lat: deliveryLat,
+          delivery_lng: deliveryLng,
+          remarks: "Đơn nước Avengers Coffee, giao cẩn thận!"
         })
       });
       
       let orderData;
-      try {
-        orderData = await orderRes.json();
-      } catch (err) {}
-      
+      try { orderData = await orderRes.json(); } catch (err) {}
       let llmOrder = orderData?.data?.data || orderData?.data;
 
       if (!orderRes.ok || !llmOrder?.orderId) {
-         throw new Error(`Lỗi tạo đơn Lalamove API: ${orderData?.message || JSON.stringify(orderData) || 'Lỗi không xác định'}`);
+         throw new Error(`Lỗi tạo đơn Lalamove API: ${orderData?.message || 'Lỗi không xác định'}`);
       }
       
       await fetch(`${API_BASE_URL}/shippers/delivery/tracking/${order.ma_don_hang}/lalamove-info`, {
@@ -237,132 +225,149 @@ export default function StaffDeliveryPanel() {
         [order.ma_don_hang]: llmOrder.shareLink
       }));
 
-      alert(`✅ Đã gọi Lalamove thành công!\nMã đơn LLM: ${llmOrder.orderRef || llmOrder.orderId}`);
-      // Không cần fetchDeliveries ngay vì đã update state local
-      
+      alert(`Đã gọi Lalamove thành công!\nMã đơn LLM: ${llmOrder.orderRef || llmOrder.orderId}`);
     } catch (err) {
       console.error(err);
-      alert('❌ Lỗi khi gọi Lalamove: ' + err.message);
+      alert('Lỗi khi gọi Lalamove: ' + err.message);
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-      <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-        <span>🛵</span> Quản lý Giao hàng
-      </h2>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.25rem 1.5rem' }}>
+      
+      {/* HEADER */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.85rem' }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <Truck size={20} color="#4f46e5" /> Quản lý Giao hàng
+          </h2>
+          <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.78125rem', color: '#64748b' }}>
+            Điều phối giao nhận qua Shipper nội bộ hoặc dịch vụ Lalamove
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={fetchDeliveries}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', height: '32px', padding: '0 0.75rem', borderRadius: '6px', backgroundColor: '#ffffff', color: '#334155', border: '1px solid #cbd5e1', fontSize: '0.75rem', fontWeight: '600', cursor: 'pointer' }}
+        >
+          <RefreshCw size={13} /> Làm mới
+        </button>
+      </div>
 
       {loading ? (
-        <div className="animate-pulse space-y-3">
-          <div className="h-16 bg-gray-100 rounded-lg w-full"></div>
-          <div className="h-16 bg-gray-100 rounded-lg w-full"></div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+          <div style={{ height: '60px', backgroundColor: '#f1f5f9', borderRadius: '8px' }} />
+          <div style={{ height: '60px', backgroundColor: '#f1f5f9', borderRadius: '8px' }} />
         </div>
       ) : deliveries.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          <span className="text-3xl mb-2 block">🎉</span>
-          <p>Không có đơn hàng nào cần giao lúc này</p>
-          <p className="text-xs mt-4 text-red-500 bg-red-50 inline-block p-1 rounded">Debug: {debugText}</p>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '2.5rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+          <CheckCircle2 size={36} color="#059669" />
+          <p style={{ margin: 0, fontSize: '0.84rem', fontWeight: '600', color: '#334155' }}>Không có đơn hàng nào cần giao lúc này</p>
+          <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{debugText}</span>
         </div>
       ) : (
-        <div className="order-list">
-          {deliveries.map(order => (
-            <article key={order.ma_don_hang} className="order-card">
-              <div>
-                <h3>{order.ma_don_hang.slice(0, 8).toUpperCase()}</h3>
-                <p>Khách: {order.ten_khach_hang || order.ma_nguoi_dung}</p>
-                <p className="order-card-addr">📍 {order.dia_chi_giao_hang || 'Tại quán'}</p>
-                {order.phuong_thuc_giao_hang && (
-                  <p style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                    <span style={{ 
-                      fontSize: '0.75rem', 
-                      fontWeight: 'bold', 
-                      padding: '0.2rem 0.5rem', 
-                      borderRadius: '4px',
-                      border: '1px solid',
-                      color: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '#c2410c' : '#4338ca',
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+          {deliveries.map((order) => (
+            <div key={order.ma_don_hang} style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1rem 1.15rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '1rem', alignItems: 'center' }}>
+              
+              {/* Info Column */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <strong style={{ fontSize: '0.875rem', color: '#4f46e5', fontWeight: '700' }}>
+                    #{order.ma_don_hang.slice(0, 8).toUpperCase()}
+                  </strong>
+                  {order.phuong_thuc_giao_hang && (
+                    <span style={{
+                      fontSize: '0.68rem', fontWeight: '700', padding: '0.15rem 0.5rem', borderRadius: '4px',
                       backgroundColor: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '#fff7ed' : '#e0e7ff',
-                      borderColor: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '#ffedd5' : '#c7d2fe'
+                      color: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '#c2410c' : '#4338ca',
+                      border: `1px solid ${order.phuong_thuc_giao_hang === 'LALAMOVE' ? '#ffedd5' : '#c7d2fe'}`
                     }}>
-                      Khách chọn: {order.phuong_thuc_giao_hang === 'LALAMOVE' ? '🚀 Lalamove' : '🛵 Shipper Nội Bộ'}
+                      {order.phuong_thuc_giao_hang === 'LALAMOVE' ? 'Lalamove' : 'Shipper Nội Bộ'}
                     </span>
-                  </p>
-                )}
-                
-                <div style={{ display: 'flex', gap: '0.45rem', marginTop: '0.8rem', flexWrap: 'wrap' }}>
-                  {lalamoveLinks[order.ma_don_hang] ? (
-                    <>
-                      <div style={{
-                        background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0',
-                        padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.82rem', fontWeight: 'bold'
-                      }}>
-                        ✅ Đã giao Lalamove
-                      </div>
-                      <a 
-                        href={lalamoveLinks[order.ma_don_hang]} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="secondary"
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}
-                      >
-                        🗺️ Xem Tracking
-                      </a>
-                    </>
-                  ) : (
-                    <>
-                      <button 
-                        onClick={() => handleAssignInternal(order.ma_don_hang)}
-                        style={order.phuong_thuc_giao_hang !== 'LALAMOVE' ? {
-                          background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
-                          color: '#fff', border: 'none', borderRadius: '6px',
-                          padding: '0.35rem 0.75rem', fontSize: '0.82rem', fontWeight: '700', cursor: 'pointer'
-                        } : {}}
-                        className={order.phuong_thuc_giao_hang === 'LALAMOVE' ? "secondary" : ""}
-                      >
-                        {order.phuong_thuc_giao_hang !== 'LALAMOVE' && '✅ '}Shipper Nội Bộ
-                      </button>
-                      
-                      <button 
-                        onClick={() => handleCallLalamove(order)}
-                        style={order.phuong_thuc_giao_hang === 'LALAMOVE' ? {
-                          background: 'linear-gradient(135deg, #f97316, #ea580c)',
-                          color: '#fff', border: 'none', borderRadius: '6px',
-                          padding: '0.35rem 0.75rem', fontSize: '0.82rem', fontWeight: '700', cursor: 'pointer'
-                        } : {}}
-                        className={order.phuong_thuc_giao_hang !== 'LALAMOVE' ? "secondary" : ""}
-                      >
-                        {order.phuong_thuc_giao_hang === 'LALAMOVE' && '✅ '}Lalamove
-                      </button>
-                    </>
                   )}
                 </div>
-              </div>
-              
-              <div style={{ borderLeft: '1px solid #f0f0f0', paddingLeft: '1rem' }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#113a5d', marginBottom: '0.2rem' }}>COD</div>
-                <div style={{ fontSize: '1rem', fontWeight: 'bold', color: '#0052cc', marginBottom: '0.2rem' }}>
-                  {Number(order.tong_tien || 0).toLocaleString()} đ
-                </div>
-              </div>
 
-              <div className="order-actions" style={{ flexDirection: 'column', gap: '0.5rem' }}>
-                <span style={{ fontSize: '0.72rem', color: '#666', marginBottom: '0.2rem' }}>Trạng thái đơn</span>
-                <span style={{
-                  padding: '0.4rem 0.8rem',
-                  borderRadius: '20px',
-                  fontSize: '0.85rem',
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  backgroundColor: order.trang_thai_don_hang === 'DANG_GIAO' ? '#e0f2fe' : '#fef9c3',
-                  color: order.trang_thai_don_hang === 'DANG_GIAO' ? '#0369a1' : '#854d0e',
-                  border: `1px solid ${order.trang_thai_don_hang === 'DANG_GIAO' ? '#bae6fd' : '#fef08a'}`
-                }}>
-                  {order.trang_thai_don_hang}
+                <span style={{ fontSize: '0.78125rem', color: '#334155', fontWeight: '600' }}>
+                  Khách: {order.ten_khach_hang || order.ma_nguoi_dung}
+                </span>
+
+                <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <MapPin size={13} color="#64748b" /> {order.dia_chi_giao_hang || 'Tại quán'}
                 </span>
               </div>
-            </article>
+
+              {/* COD / Amount Column */}
+              <div style={{ borderLeft: '1px solid #f1f5f9', paddingLeft: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: '600' }}>TIỀN THU COD</span>
+                <span style={{ fontSize: '0.9rem', color: '#0f172a', fontWeight: '600' }}>
+                  {Number(order.tong_tien || 0).toLocaleString()} đ
+                </span>
+                <span style={{
+                  fontSize: '0.7rem', fontWeight: '700', display: 'inline-block', width: 'fit-content',
+                  padding: '0.15rem 0.5rem', borderRadius: '9999px', marginTop: '0.15rem',
+                  backgroundColor: order.trang_thai_don_hang === 'DANG_GIAO' ? '#e0f2fe' : '#fef9c3',
+                  color: order.trang_thai_don_hang === 'DANG_GIAO' ? '#0369a1' : '#854d0e'
+                }}>
+                  {order.trang_thai_don_hang === 'DANG_GIAO' ? 'Đang giao' : 'Đang chuẩn bị'}
+                </span>
+              </div>
+
+              {/* Action Buttons Column */}
+              <div style={{ display: 'flex', gap: '0.45rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                {lalamoveLinks[order.ma_don_hang] ? (
+                  <>
+                    <span style={{ backgroundColor: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', padding: '0.3rem 0.65rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <CheckCircle2 size={13} /> Đã gọi Lalamove
+                    </span>
+                    <a
+                      href={lalamoveLinks[order.ma_don_hang]}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ height: '32px', padding: '0 0.65rem', borderRadius: '6px', backgroundColor: '#ffffff', color: '#2563eb', border: '1px solid #bfdbfe', fontSize: '0.75rem', fontWeight: '600', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                    >
+                      <ExternalLink size={13} /> Tracking
+                    </a>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleAssignInternal(order.ma_don_hang)}
+                      style={{
+                        height: '32px', padding: '0 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer',
+                        backgroundColor: order.phuong_thuc_giao_hang !== 'LALAMOVE' ? '#4f46e5' : '#ffffff',
+                        color: order.phuong_thuc_giao_hang !== 'LALAMOVE' ? '#ffffff' : '#475569',
+                        border: order.phuong_thuc_giao_hang !== 'LALAMOVE' ? 'none' : '1px solid #cbd5e1',
+                        display: 'inline-flex', alignItems: 'center', gap: '0.3rem'
+                      }}
+                    >
+                      <Bike size={13} /> Shipper Nội Bộ
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleCallLalamove(order)}
+                      style={{
+                        height: '32px', padding: '0 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer',
+                        backgroundColor: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '#ea580c' : '#ffffff',
+                        color: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '#ffffff' : '#475569',
+                        border: order.phuong_thuc_giao_hang === 'LALAMOVE' ? 'none' : '1px solid #cbd5e1',
+                        display: 'inline-flex', alignItems: 'center', gap: '0.3rem'
+                      }}
+                    >
+                      <Navigation size={13} /> Lalamove
+                    </button>
+                  </>
+                )}
+              </div>
+
+            </div>
           ))}
         </div>
       )}
+
     </div>
   );
 }
