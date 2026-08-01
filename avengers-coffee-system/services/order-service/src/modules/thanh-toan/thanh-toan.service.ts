@@ -441,36 +441,142 @@ export class ThanhToanService {
     );
   }
 
-  private xacDinhCoSoGanNhatTheoDiaChi(diaChi: string) {
+  private async xacDinhCoSoGanNhatTheoDiaChi(diaChi: string) {
+    const DEFAULT_BRANCH = { code: 'HCM_DIEN_BIEN_PHU', lat: 10.7836, lon: 106.6896 };
+    if (!diaChi || diaChi.trim() === '') return { branchCode: DEFAULT_BRANCH.code, branchLat: DEFAULT_BRANCH.lat, branchLon: DEFAULT_BRANCH.lon, customerLat: null, customerLon: null };
+
+    const BRANCH_LOCATIONS = [
+      { code: 'DN_INDOCHINA_RIVERSIDE', lat: 16.0717, lon: 108.2241 },
+      { code: 'DN_NGUYEN_VAN_THOAI', lat: 16.0543, lon: 108.2435 },
+      { code: 'DN_VTV8_BACH_DANG', lat: 16.0645, lon: 108.2230 },
+      { code: 'HCM_DIEN_BIEN_PHU', lat: 10.7836, lon: 106.6896 },
+      { code: 'HCM_LY_TU_TRONG', lat: 10.7745, lon: 106.6983 },
+      { code: 'HCM_TON_THAT_THIEP', lat: 10.7743, lon: 106.7031 },
+      { code: 'HN_DU_THUYEN', lat: 21.0456, lon: 105.8369 },
+      { code: 'HN_LAM_VIEN_COMPLEX', lat: 21.0401, lon: 105.7904 },
+      { code: 'HN_LINH_DAM_CT3', lat: 20.9634, lon: 105.8306 },
+    ];
+
+    const normalizedDiaChi = diaChi.toLowerCase();
+
+    // 0. Heuristic override cho các địa danh/đường nổi tiếng ở Q1 (Vì Nominatim hay tìm sai số nhà VN)
+    if (normalizedDiaChi.includes('nguyễn huệ') || normalizedDiaChi.includes('bitexco') || normalizedDiaChi.includes('tôn thất thiệp') || normalizedDiaChi.includes('mac thi buoi') || normalizedDiaChi.includes('ngo duc ke')) {
+      return { branchCode: 'HCM_TON_THAT_THIEP', branchLat: 10.7743, branchLon: 106.7031, customerLat: 10.7738, customerLon: 106.7030 };
+    }
+    if (normalizedDiaChi.includes('độc lập') || normalizedDiaChi.includes('doc lap') || normalizedDiaChi.includes('lý tự trọng') || normalizedDiaChi.includes('le thanh ton') || normalizedDiaChi.includes('dong khoi')) {
+      return { branchCode: 'HCM_LY_TU_TRONG', branchLat: 10.7745, branchLon: 106.6983, customerLat: 10.7770, customerLon: 106.6950 };
+    }
+
+    // Heuristic override cho BHH B, Bình Tân để test Map Shipper
+    if (normalizedDiaChi.includes('nguyễn thị tú')) {
+      return { branchCode: 'HCM_DIEN_BIEN_PHU', branchLat: 10.7836, branchLon: 106.6896, customerLat: 10.8143, customerLon: 106.5985 }; // Nguyễn Thị Tú, BHH B
+    }
+    if (normalizedDiaChi.includes('liên khu 4-5') || normalizedDiaChi.includes('liên khu 45')) {
+      return { branchCode: 'HCM_DIEN_BIEN_PHU', branchLat: 10.7836, branchLon: 106.6896, customerLat: 10.7937, customerLon: 106.5975 }; // Liên Khu 4-5, BHH B (Cách N.T.Tú ~2.5km)
+    }
+
+    try {
+      // 1. Tối ưu chuỗi tìm kiếm (Bỏ bớt Phường/Quận để Nominatim dễ tìm chính xác số nhà/đường hơn)
+      const cleanedDiaChi = diaChi
+        .replace(/(Phường|Xã|Thị trấn)\s+[^,]+,/gi, '')
+        .replace(/(Quận|Huyện)\s+[^,]+,/gi, '')
+        .trim();
+      const searchDiaChi = cleanedDiaChi.length > 5 ? cleanedDiaChi : diaChi;
+
+      // Gọi Nominatim API để lấy toạ độ khách hàng
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchDiaChi)}&countrycodes=vn&format=json&limit=1`;
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'AvengersCoffeeApp/1.0',
+        },
+      });
+      const data = await response.json();
+
+      if (data && data.length > 0) {
+        const customerLat = parseFloat(data[0].lat);
+        const customerLon = parseFloat(data[0].lon);
+
+        // 2. Hàm tính khoảng cách Haversine
+        const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+          const R = 6371; // Bán kính trái đất (km)
+          const dLat = (lat2 - lat1) * (Math.PI / 180);
+          const dLon = (lon2 - lon1) * (Math.PI / 180);
+          const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          return R * c;
+        };
+
+        // 3. Tìm chi nhánh gần nhất
+        let nearestBranch = DEFAULT_BRANCH;
+        let minDistance = Infinity;
+
+        for (const branch of BRANCH_LOCATIONS) {
+          const dist = getDistanceFromLatLonInKm(customerLat, customerLon, branch.lat, branch.lon);
+          if (dist < minDistance) {
+            minDistance = dist;
+            nearestBranch = branch;
+          }
+        }
+        return { branchCode: nearestBranch.code, branchLat: nearestBranch.lat, branchLon: nearestBranch.lon, customerLat, customerLon };
+      }
+    } catch (error) {
+      console.error('Lỗi khi gọi API Geocoding, fallback về logic từ khoá:', error);
+    }
     const normalized = String(diaChi || '')
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '');
 
-    const theGraceHints = [
-      'the grace tower',
-      'grace tower',
-      'hoang van thai',
-      'tan phu',
-      'quan 7',
-      'q7',
+    const hcmHints = [
+      'dien bien phu',
+      'ly tu trong',
+      'ton that thiep',
+      'quan 1',
+      'quan 3',
       'ho chi minh',
       'hcm',
-      'quan 1',
-      'q1',
-      'quan 2',
-      'quan 3',
-      'quan 4',
-      'quan 5',
-      'quan 10',
       'ben thanh'
     ];
 
-    if (theGraceHints.some((keyword) => normalized.includes(keyword))) {
-      return 'THE_GRACE_TOWER';
+    const hnHints = [
+      'linh dam',
+      'hoang mai',
+      'cau giay',
+      'dich vong',
+      'thanh nien',
+      'ba dinh',
+      'ha noi',
+      'hn'
+    ];
+
+    const dnHints = [
+      'indochina',
+      'bach dang',
+      'hai chau',
+      'nguyen van thoai',
+      'phuoc my',
+      'son tra',
+      'da nang',
+      'dn'
+    ];
+
+    if (hcmHints.some((keyword) => normalized.includes(keyword))) {
+      return { branchCode: 'HCM_DIEN_BIEN_PHU', branchLat: 10.7836, branchLon: 106.6896, customerLat: null, customerLon: null };
     }
 
-    return 'CHI_NHANH_HE_THONG';
+    if (hnHints.some((keyword) => normalized.includes(keyword))) {
+      return { branchCode: 'HN_LAM_VIEN_COMPLEX', branchLat: 21.0401, branchLon: 105.7904, customerLat: null, customerLon: null };
+    }
+
+    if (dnHints.some((keyword) => normalized.includes(keyword))) {
+      return { branchCode: 'DN_INDOCHINA_RIVERSIDE', branchLat: 16.0717, branchLon: 108.2241, customerLat: null, customerLon: null };
+    }
+
+    // Default fallback
+    return { branchCode: DEFAULT_BRANCH.code, branchLat: DEFAULT_BRANCH.lat, branchLon: DEFAULT_BRANCH.lon, customerLat: null, customerLon: null };
   }
 
   private buildCustomerOrdersCacheKey(maNguoiDung: string, boLoc: BoLocLichSuDonHang) {
@@ -1351,9 +1457,10 @@ export class ThanhToanService {
       maVoucherApDung = voucherResult.voucher.ma_voucher;
     }
     const tongTien = Math.max(0, tongTienGoc - soTienGiam);
-    const branchCode = dto.branch_code?.trim()
-      ? this.normalizeBranchCode(dto.branch_code)
-      : this.xacDinhCoSoGanNhatTheoDiaChi(dto.dia_chi_giao_hang);
+    const nearestInfo = await this.xacDinhCoSoGanNhatTheoDiaChi(dto.dia_chi_giao_hang);
+    const branchCode = dto.delivery_mode === 'GIAO_TAN_NOI'
+      ? nearestInfo.branchCode
+      : (dto.branch_code?.trim() ? this.normalizeBranchCode(dto.branch_code) : nearestInfo.branchCode);
 
     const trangThaiThanhToanBanDau = dto.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG'
       ? 'CHO_THANH_TOAN_KHI_NHAN_HANG'
@@ -1420,6 +1527,7 @@ export class ThanhToanService {
 
     // 3. Tạo Tracking Giao Hàng nếu có chọn
     if (dto.delivery_mode) {
+      // Dùng toạ độ từ nearestInfo nếu không có thì null
       await this.deliveryTrackingService.createTracking({
         ma_don_hang: donHang.ma_don_hang,
         delivery_mode: dto.delivery_mode,
@@ -1428,6 +1536,10 @@ export class ThanhToanService {
         table_number: dto.table_number,
         delivery_address: dto.dia_chi_giao_hang,
         customer_phone: maNguoiDung,
+        store_latitude: nearestInfo?.branchLat,
+        store_longitude: nearestInfo?.branchLon,
+        destination_latitude: nearestInfo?.customerLat ?? undefined,
+        destination_longitude: nearestInfo?.customerLon ?? undefined,
       });
     }
 

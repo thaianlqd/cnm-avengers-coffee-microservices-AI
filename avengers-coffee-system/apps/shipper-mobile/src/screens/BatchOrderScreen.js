@@ -33,17 +33,27 @@ export function BatchOrderScreen({ navigation }) {
   })
 
   const acceptBatchMutation = useMutation({
-    mutationFn: (batchId) =>
-      apiClient.post(`/shippers/${shipper.id}/batch-orders/${batchId}/accept`),
-    onSuccess: (_, batchId) => {
+    mutationFn: (batchData) => {
+      const orderIds = (batchData.deliveries || []).map(d => d.ma_don_hang).filter(Boolean)
+      return apiClient.post(`/shippers/${shipper.id}/batch-orders/${batchData.id}/accept`, { order_ids: orderIds })
+    },
+    onSuccess: (_, batchData) => {
       setAccepting(null)
       queryClient.invalidateQueries(['batch-orders', shipper?.id])
       queryClient.invalidateQueries(['deliveries', shipper?.id])
-      Alert.alert(
-        '✅ Nhận đơn ghép thành công!',
-        'Tất cả đơn trong nhóm này đã được phân công cho bạn.',
-        [{ text: 'Xem đơn', onPress: () => navigation.navigate('Home') }]
-      )
+
+      // Lấy tọa độ shop từ tracking data thực tế
+      const firstDel = batchData.deliveries && batchData.deliveries[0]
+      const realStoreLat = firstDel?.tracking?.store_latitude || firstDel?.store_latitude || 10.7836
+      const realStoreLng = firstDel?.tracking?.store_longitude || firstDel?.store_longitude || 106.6896
+
+      navigation.navigate('BatchRoute', {
+        batch: batchData,
+        deliveries: batchData.deliveries || [],
+        storeLat: Number(realStoreLat),
+        storeLng: Number(realStoreLng),
+        storeName: `Avengers Coffee - ${batchData.branch_code || 'Cửa hàng'}`,
+      })
     },
     onError: (err) => {
       setAccepting(null)
@@ -53,16 +63,17 @@ export function BatchOrderScreen({ navigation }) {
 
   const handleAcceptBatch = (batch) => {
     const totalFee = batch.deliveries?.reduce((sum, d) => sum + (d.delivery_fee || 0), 0) || 0
+    const totalDist = Number(batch.total_distance_km || 0).toFixed(1)
     Alert.alert(
-      '📦 Nhận đơn ghép tuyến',
-      `Bạn sẽ nhận ${batch.deliveries?.length || 0} đơn với tổng phí ship: ${formatCurrency(totalFee)}\n\nKhu vực: ${batch.zone_label || 'Cùng khu vực'}`,
+      '🗺️ Nhận đơn ghép tuyến',
+      `Bạn sẽ nhận ${batch.deliveries?.length || 0} đơn\nTổng phí ship: ${formatCurrency(totalFee)}\nQuãng đường ước tính: ${totalDist} km\nKhu vực: ${batch.zone_label || 'Cùng khu vực'}\n\nSau khi nhận, AI sẽ tự động sắp xếp lộ trình tối ưu nhất cho bạn! 🧠`,
       [
         { text: 'Hủy', style: 'cancel' },
         {
-          text: 'Nhận tất cả',
+          text: '✅ Nhận & Xem Lộ Trình',
           onPress: () => {
             setAccepting(batch.id)
-            acceptBatchMutation.mutate(batch.id)
+            acceptBatchMutation.mutate(batch)
           },
         },
       ]

@@ -37,6 +37,19 @@ export function OrderDetailScreen({ route, navigation }) {
     },
   })
 
+  const { data: publicBranchPayload } = useQuery({
+    queryKey: ['public-branches'],
+    queryFn: async () => {
+      try {
+        const response = await apiClient.get('/users/branches/public')
+        return response?.data || response || { items: [] }
+      } catch (error) {
+        return { items: [] }
+      }
+    },
+    staleTime: 10 * 60 * 1000,
+  })
+
   const updateStatusMutation = useMutation({
     mutationFn: async ({ action, payload = {} }) => {
       setLoadingAction(action)
@@ -45,6 +58,8 @@ export function OrderDetailScreen({ route, navigation }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['deliveryDetail', deliveryId] })
       queryClient.invalidateQueries({ queryKey: ['availableOrders'] })
+      queryClient.invalidateQueries({ queryKey: ['acceptedOrders'] })
+      queryClient.invalidateQueries({ queryKey: ['deliveriesHistory'] })
       queryClient.invalidateQueries({ queryKey: ['shipperStats', shipper?.id] })
       setLoadingAction(null)
       setFailModalVisible(false)
@@ -184,11 +199,23 @@ export function OrderDetailScreen({ route, navigation }) {
     return null
   }
 
+  const getBranchInfo = () => {
+    const code = shipper?.branch_code || delivery?.branch_code || 'HCM_DIEN_BIEN_PHU';
+    let branch = publicBranchPayload?.items?.find(b => (b.ma_chi_nhanh || b.co_so_ma || b.branch_code) === code);
+    if (!branch) {
+      branch = publicBranchPayload?.items?.find(b => (b.ma_chi_nhanh || b.co_so_ma || b.branch_code) === 'HCM_DIEN_BIEN_PHU');
+    }
+    return {
+      name: branch ? (branch.ten_chi_nhanh || branch.ten_co_so || branch.name) : 'Cửa hàng lấy hàng',
+      address: branch ? (branch.dia_chi || branch.address) : 'Đang tải địa chỉ quán...'
+    }
+  }
+  const branchInfo = getBranchInfo();
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primaryDark} />
       
-      {/* VTP Style Header */}
       <LinearGradient colors={colors.gradientRed} style={styles.header}>
         <SafeAreaView>
           <View style={styles.headerTop}>
@@ -211,7 +238,6 @@ export function OrderDetailScreen({ route, navigation }) {
       </LinearGradient>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Status Card */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <View>
@@ -225,7 +251,6 @@ export function OrderDetailScreen({ route, navigation }) {
           {renderStepper()}
         </View>
 
-        {/* Address & Navigation */}
         <View style={styles.card}>
           <View style={styles.cardSectionHeader}>
             <Ionicons name="map" size={18} color={colors.primary} />
@@ -238,8 +263,8 @@ export function OrderDetailScreen({ route, navigation }) {
                 <Ionicons name="storefront" size={16} color={colors.textSecondary} />
               </View>
               <View style={styles.addressContent}>
-                <Text style={styles.addressLabel}>Điểm lấy hàng</Text>
-                <Text style={styles.addressValue}>Cửa hàng Avengers Coffee</Text>
+                <Text style={styles.addressLabel}>{branchInfo.name}</Text>
+                <Text style={styles.addressValue}>{branchInfo.address || delivery.pickup_address}</Text>
               </View>
             </View>
             <View style={styles.addressLine} />

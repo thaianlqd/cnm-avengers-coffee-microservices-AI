@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { View, StyleSheet, TouchableOpacity, Text, SafeAreaView, Linking, Platform, Alert, ScrollView, Modal, Image } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, Text, SafeAreaView, Linking, Platform, Alert, ScrollView, Modal, Image, Animated } from 'react-native'
 import * as Location from 'expo-location'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, radius, spacing, shadows, typography } from '../theme'
@@ -18,15 +18,50 @@ if (Platform.OS !== 'web') {
   }
 }
 
-const getBranchInfo = (code) => {
-  switch (code) {
-    case 'NVL_DN': return { address: 'Avengers Coffee - 200 Nguyễn Văn Linh, Đà Nẵng', storeLoc: { latitude: 16.0544, longitude: 108.2022 }, destLoc: { latitude: 16.0700, longitude: 108.2200 } };
-    case 'HBT_HCM': return { address: 'Avengers Coffee - 15 Hai Bà Trưng, TP.HCM', storeLoc: { latitude: 10.7769, longitude: 106.7009 }, destLoc: { latitude: 10.7800, longitude: 106.7100 } };
-    case 'PD_HN': return { address: 'Avengers Coffee - 10 Phạm Đình Hổ, Hà Nội', storeLoc: { latitude: 21.0285, longitude: 105.8542 }, destLoc: { latitude: 21.0350, longitude: 105.8600 } };
-    case 'MAC_DINH_CHI': return { address: 'Avengers Coffee - 30 Mạc Đĩnh Chi, TP.HCM', storeLoc: { latitude: 10.7831, longitude: 106.6992 }, destLoc: { latitude: 10.7900, longitude: 106.7050 } };
-    case 'HCM_DIEN_BIEN_PHU': return { address: 'Avengers Coffee - Điện Biên Phủ, TP.HCM', storeLoc: { latitude: 10.7930, longitude: 106.7000 }, destLoc: { latitude: 10.8000, longitude: 106.7100 } };
-    default: return { address: `Avengers Coffee - ${code || 'Cửa hàng'}`, storeLoc: { latitude: 10.7769, longitude: 106.7009 }, destLoc: { latitude: 10.7800, longitude: 106.7100 } };
+let CameraView = null
+let useCameraPermissions = null
+if (Platform.OS !== 'web') {
+  try {
+    const cam = require('expo-camera')
+    CameraView = cam.CameraView
+    useCameraPermissions = cam.useCameraPermissions
+  } catch (e) {
+    console.warn('expo-camera not found')
   }
+}
+
+const getBranchInfo = (code) => {
+  // Toạ độ khớp chính xác với BRANCH_LOCATIONS trong backend thanh-toan.service.ts
+  const branches = {
+    'DN_INDOCHINA_RIVERSIDE': { address: 'Avengers Coffee - Indochina Riverside, Đà Nẵng', storeLoc: { latitude: 16.0717, longitude: 108.2241 } },
+    'DN_NGUYEN_VAN_THOAI':   { address: 'Avengers Coffee - Nguyễn Văn Thoại, Đà Nẵng', storeLoc: { latitude: 16.0543, longitude: 108.2435 } },
+    'DN_VTV8_BACH_DANG':     { address: 'Avengers Coffee - VTV8 Bạch Đằng, Đà Nẵng',   storeLoc: { latitude: 16.0645, longitude: 108.2230 } },
+    'HCM_DIEN_BIEN_PHU':    { address: 'Avengers Coffee - 220 Điện Biên Phủ, Q.3',     storeLoc: { latitude: 10.7836, longitude: 106.6896 } },
+    'HCM_LY_TU_TRONG':      { address: 'Avengers Coffee - Lý Tự Trọng, Q.1',           storeLoc: { latitude: 10.7745, longitude: 106.6983 } },
+    'HCM_TON_THAT_THIEP':   { address: 'Avengers Coffee - Tôn Thất Thiệp, Q.1',        storeLoc: { latitude: 10.7743, longitude: 106.7031 } },
+    'HN_DU_THUYEN':          { address: 'Avengers Coffee - Du Thuyền, Hà Nội',           storeLoc: { latitude: 21.0456, longitude: 105.8369 } },
+    'HN_LAM_VIEN_COMPLEX':  { address: 'Avengers Coffee - Làm Viên Complex, Hà Nội',   storeLoc: { latitude: 21.0401, longitude: 105.7904 } },
+    'HN_LINH_DAM_CT3':      { address: 'Avengers Coffee - Linh Đàm CT3, Hà Nội',       storeLoc: { latitude: 20.9634, longitude: 105.8306 } },
+  };
+
+  // Normalize code: thử cả dạng gốc và dạng uppercase + replace dashes
+  const normalized = (code || '').toUpperCase().replace(/-/g, '_');
+  const branch = branches[code] || branches[normalized];
+
+  if (branch) {
+    return {
+      address: branch.address,
+      storeLoc: branch.storeLoc,
+      destLoc: { latitude: branch.storeLoc.latitude + 0.003, longitude: branch.storeLoc.longitude + 0.003 },
+    };
+  }
+
+  // Default fallback: HCM Điện Biên Phủ
+  return {
+    address: `Avengers Coffee - ${code || 'Cửa hàng'}`,
+    storeLoc: { latitude: 10.7836, longitude: 106.6896 },
+    destLoc: { latitude: 10.7866, longitude: 106.6926 },
+  };
 };
 
 function formatETA(distanceKm) {
@@ -58,6 +93,28 @@ function getManeuverText(step) {
   return `↑ Đi tiếp trên ${road}`
 }
 
+function formatCoord(val) {
+  if (val == null) return '---'
+  return Number(val).toFixed(5)
+}
+
+function formatWatermarkTime() {
+  const now = new Date()
+  const hh = String(now.getHours()).padStart(2, '0')
+  const mm = String(now.getMinutes()).padStart(2, '0')
+  const dd = String(now.getDate()).padStart(2, '0')
+  const mo = String(now.getMonth() + 1).padStart(2, '0')
+  const yy = now.getFullYear()
+  return `${hh}:${mm} ${dd}/${mo}/${yy}`
+}
+
+function usePodCamera() {
+  if (useCameraPermissions) {
+    return useCameraPermissions()
+  }
+  return [null, null]
+}
+
 export function MapScreen({ route, navigation }) {
   const { delivery } = route.params
   const { shipper } = useShipper()
@@ -75,9 +132,15 @@ export function MapScreen({ route, navigation }) {
   const [etaText, setEtaText] = useState('')
   const [nextManeuverLocation, setNextManeuverLocation] = useState(null)
   
-  const [showPoDModal, setShowPoDModal] = useState(false);
-  const [podImage, setPodImage] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [podStep, setPodStep] = useState('idle')
+  const [podImage, setPodImage] = useState(null)
+  const [watermarkTime, setWatermarkTime] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const podScaleAnim = useRef(new Animated.Value(0)).current
+  const podSuccessAnim = useRef(new Animated.Value(0)).current
+  const cameraRef = useRef(null)
+
+  const [cameraPermission, requestCameraPermission] = usePodCamera()
 
   const isSimulatingRef = useRef(false)
   const simulationInterval = useRef(null)
@@ -87,11 +150,33 @@ export function MapScreen({ route, navigation }) {
 
   const branchCode = delivery?.order?.co_so_ma || delivery?.branch_code;
   const branchInfo = getBranchInfo(branchCode);
-  const storeLat = branchInfo.storeLoc.latitude;
-  const storeLng = branchInfo.storeLoc.longitude;
+  
+  const storeLat = delivery?.tracking?.store_latitude 
+    ? Number(delivery.tracking.store_latitude) 
+    : branchInfo.storeLoc.latitude;
+  const storeLng = delivery?.tracking?.store_longitude 
+    ? Number(delivery.tracking.store_longitude) 
+    : branchInfo.storeLoc.longitude;
 
-  const destLat = delivery?.delivery_latitude ? Number(delivery.delivery_latitude) : branchInfo.destLoc.latitude;
-  const destLng = delivery?.delivery_longitude ? Number(delivery.delivery_longitude) : branchInfo.destLoc.longitude;
+  const destLat = delivery?.tracking?.destination_latitude 
+    ? Number(delivery.tracking.destination_latitude) 
+    : (delivery?.delivery_latitude ? Number(delivery.delivery_latitude) : branchInfo.destLoc.latitude);
+  const destLng = delivery?.tracking?.destination_longitude 
+    ? Number(delivery.tracking.destination_longitude) 
+    : (delivery?.delivery_longitude ? Number(delivery.delivery_longitude) : branchInfo.destLoc.longitude);
+
+  const openPodModal = () => {
+    setPodStep('camera')
+    setWatermarkTime(formatWatermarkTime())
+    Animated.spring(podScaleAnim, { toValue: 1, useNativeDriver: true, tension: 60, friction: 8 }).start()
+  }
+
+  const closePodModal = () => {
+    Animated.timing(podScaleAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => {
+      setPodStep('idle')
+      setPodImage(null)
+    })
+  }
 
   if (Platform.OS === 'web') {
     return (
@@ -128,7 +213,6 @@ export function MapScreen({ route, navigation }) {
       const startLat = initial.coords.latitude;
       const startLng = initial.coords.longitude;
 
-      // Fetch OSRM routes to Store (Shipper -> Store)
       try {
         const resStore = await fetch(`http://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${storeLng},${storeLat}?alternatives=true&geometries=geojson&overview=full&steps=true`);
         const dataStore = await resStore.json();
@@ -152,7 +236,6 @@ export function MapScreen({ route, navigation }) {
         console.warn('OSRM error (store):', err);
       }
 
-      // Fetch OSRM routes to Customer (Store -> Customer)
       try {
         const resCust = await fetch(`http://router.project-osrm.org/route/v1/driving/${storeLng},${storeLat};${destLng},${destLat}?alternatives=true&geometries=geojson&overview=full&steps=true`);
         const dataCust = await resCust.json();
@@ -183,8 +266,7 @@ export function MapScreen({ route, navigation }) {
       sub = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.High, timeInterval: 10000, distanceInterval: 10 },
         (newLoc) => {
-          if (isSimulatingRef.current) return; // Bỏ qua GPS thật nếu đang giả lập
-          
+          if (isSimulatingRef.current) return;
           setLocation(newLoc)
           updateNavInstruction(newLoc.coords.latitude, newLoc.coords.longitude);
 
@@ -214,7 +296,6 @@ export function MapScreen({ route, navigation }) {
     let minD = Infinity;
     let closestIdx = currentStepIndexRef.current;
     
-    // Tìm step gần nhất kể từ step hiện tại trở đi
     for (let i = currentStepIndexRef.current; i < steps.length; i++) {
       const step = steps[i];
       if (step.maneuver && step.maneuver.location) {
@@ -226,7 +307,6 @@ export function MapScreen({ route, navigation }) {
       }
     }
 
-    // Nếu khoảng cách đến step tiếp theo rất gần (< 50m) thì tiến lên step tiếp theo
     if (minD < 0.05 && closestIdx + 1 < steps.length) {
        closestIdx = closestIdx + 1;
     }
@@ -251,12 +331,10 @@ export function MapScreen({ route, navigation }) {
     
     let pathCoords = [];
     if (targetLat === destLat && targetLng === destLng && routesToCustomer.length > 0) {
-      // Đi tới khách -> dùng tuyến đường từ Shop tới Khách
       pathCoords = routesToCustomer[selectedRouteCustomerIndex].coordinates;
       activeStepsRef.current = routesToCustomer[selectedRouteCustomerIndex].steps;
       currentStepIndexRef.current = 0;
     } else if (targetLat === storeLat && targetLng === storeLng && routesToStore.length > 0) {
-      // Đi tới shop -> dùng tuyến đường từ Vị trí tới Shop
       pathCoords = routesToStore[selectedRouteStoreIndex].coordinates;
       activeStepsRef.current = routesToStore[selectedRouteStoreIndex].steps;
       currentStepIndexRef.current = 0;
@@ -273,7 +351,7 @@ export function MapScreen({ route, navigation }) {
 
     simulationInterval.current = setInterval(() => {
       currentStep++;
-      const progress = currentStep / steps; // 0 to 1
+      const progress = currentStep / steps;
       
       const totalSegments = pathCoords.length - 1;
       const exactIndex = progress * totalSegments;
@@ -321,36 +399,73 @@ export function MapScreen({ route, navigation }) {
     Linking.openURL(`tel:${phone}`)
   }
 
-  const handleCompleteDelivery = () => {
-    setShowPoDModal(true);
+  const handleCompleteDelivery = async () => {
+    if (CameraView && requestCameraPermission) {
+      if (!cameraPermission?.granted) {
+        const result = await requestCameraPermission()
+        if (!result.granted) {
+          Alert.alert('Cần quyền Camera', 'Ứng dụng cần quyền truy cập camera để chụp ảnh bằng chứng giao hàng.')
+          return
+        }
+      }
+      openPodModal()
+    } else {
+      openPodModal()
+    }
   };
 
-  const handleSimulateCamera = () => {
-    setPodImage('https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?w=500&q=80');
+  const handleTakePhoto = async () => {
+    if (!cameraRef.current) {
+      handleDemoPhoto()
+      return
+    }
+    try {
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.8,
+        base64: false,
+        skipProcessing: false,
+      })
+      setPodImage(photo.uri)
+      setPodStep('preview')
+    } catch (err) {
+      Alert.alert('Lỗi camera', 'Không thể chụp ảnh. Thử lại.')
+    }
+  };
+
+  const handleDemoPhoto = () => {
+    setPodImage('https://images.unsplash.com/photo-1610632380989-7f09b1a64f8a?w=600&q=80')
+    setWatermarkTime(formatWatermarkTime())
+    setPodStep('preview')
   };
 
   const submitCompleteDelivery = async () => {
     if (!shipper?.id || !delivery?.id) return;
     
     setIsSubmitting(true);
+    setPodStep('submitting');
     try {
       await apiClient.post(`/shippers/${shipper.id}/deliveries/${delivery.id}/complete`, {
         latitude: location?.coords?.latitude || destLat,
         longitude: location?.coords?.longitude || destLng,
-        proof_image_url: podImage
+        proof_image_url: podImage,
+        proof_metadata: {
+          timestamp: watermarkTime,
+          gps_lat: formatCoord(location?.coords?.latitude || destLat),
+          gps_lng: formatCoord(location?.coords?.longitude || destLng),
+          order_code: delivery?.ma_don_hang?.slice(0, 8).toUpperCase(),
+        }
       });
       
-      Alert.alert('Thành công', 'Đã hoàn thành đơn hàng!', [
-        { text: 'OK', onPress: () => {
-            setShowPoDModal(false);
-            navigation.goBack();
-          } 
-        }
-      ]);
+      setPodStep('done')
+      Animated.spring(podSuccessAnim, { toValue: 1, useNativeDriver: true, tension: 50, friction: 6 }).start()
+      setTimeout(() => {
+        closePodModal();
+        navigation.goBack();
+      }, 2200);
     } catch (err) {
-      Alert.alert('Lỗi', err?.response?.data?.message || 'Không thể hoàn thành đơn hàng.');
-    } finally {
       setIsSubmitting(false);
+      setPodStep('preview');
+      Alert.alert('Lỗi', err?.response?.data?.message || 'Không thể hoàn thành đơn hàng.');
     }
   };
 
@@ -360,6 +475,10 @@ export function MapScreen({ route, navigation }) {
     latitudeDelta: 0.04,
     longitudeDelta: 0.04,
   }
+
+  const currentLat = location?.coords?.latitude
+  const currentLng = location?.coords?.longitude
+  const orderCode = delivery?.ma_don_hang?.slice(0, 8).toUpperCase() || 'UNKNOWN'
 
   return (
     <View style={styles.container}>
@@ -395,14 +514,13 @@ export function MapScreen({ route, navigation }) {
             </Marker>
           )}
 
-          {/* Render Route to Store (Blue) */}
           {routesToStore.map((route, index) => {
             const isSelected = index === selectedRouteStoreIndex;
             return (
               <Polyline
                 key={`store-route-${index}`}
                 coordinates={route.coordinates}
-                strokeColor={isSelected ? '#3b82f6' : '#93c5fd'} // Blue for store
+                strokeColor={isSelected ? '#3b82f6' : '#93c5fd'}
                 strokeWidth={isSelected ? 5 : 3}
                 zIndex={isSelected ? 9 : 1}
                 tappable={true}
@@ -411,14 +529,13 @@ export function MapScreen({ route, navigation }) {
             );
           })}
 
-          {/* Render Route to Customer (Orange) */}
           {routesToCustomer.map((route, index) => {
             const isSelected = index === selectedRouteCustomerIndex;
             return (
               <Polyline
                 key={`cust-route-${index}`}
                 coordinates={route.coordinates}
-                strokeColor={isSelected ? '#3b82f6' : '#93c5fd'} // Blue for customer
+                strokeColor={isSelected ? '#3b82f6' : '#93c5fd'}
                 strokeWidth={isSelected ? 6 : 4}
                 zIndex={isSelected ? 10 : 2}
                 tappable={true}
@@ -430,7 +547,6 @@ export function MapScreen({ route, navigation }) {
             );
           })}
 
-          {/* Fallback Straight Line if OSRM not available */}
           {routesToCustomer.length === 0 && routesToStore.length === 0 && location && (
             <Polyline
               coordinates={[
@@ -446,7 +562,6 @@ export function MapScreen({ route, navigation }) {
         </MapView>
       )}
 
-      {/* Header overlay */}
       <SafeAreaView style={styles.headerWrap} pointerEvents="box-none">
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -459,7 +574,6 @@ export function MapScreen({ route, navigation }) {
           <View style={{ width: 40 }} />
         </View>
 
-        {/* Turn-by-turn instruction */}
         {currentStepText ? (
           <View style={styles.navInstruction}>
             <Text style={styles.navInstructionText}>{currentStepText}</Text>
@@ -467,7 +581,6 @@ export function MapScreen({ route, navigation }) {
           </View>
         ) : null}
         
-        {/* Nút giả lập demo - hiển thị trên cùng để dễ nhấn */}
         <View style={styles.demoControls}>
           <TouchableOpacity style={[styles.demoBtn, {backgroundColor: colors.primary}]} onPress={() => simulateMovement(storeLat, storeLng)}>
              <Text style={styles.demoBtnText}>Tới Shop</Text>
@@ -524,7 +637,6 @@ export function MapScreen({ route, navigation }) {
         </View>
       </SafeAreaView>
 
-      {/* Floating Actions on Map */}
       <View style={styles.floatingActions} pointerEvents="box-none">
         {delivery?.customer_phone && (
           <TouchableOpacity style={[styles.floatingFab, {backgroundColor: colors.success}]} onPress={callCustomer}>
@@ -536,7 +648,6 @@ export function MapScreen({ route, navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Footer Panel */}
       <ScrollView style={styles.footerPanel} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
         {routesToStore.length > 1 && (
           <View style={{ marginBottom: spacing.md }}>
@@ -623,49 +734,172 @@ export function MapScreen({ route, navigation }) {
           )}
         </View>
       </ScrollView>
-      {/* Modal Chụp Ảnh Minh Chứng (Proof of Delivery) */}
-      <Modal visible={showPoDModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Chụp ảnh minh chứng</Text>
-            <Text style={{ color: colors.textSecondary, marginBottom: 20, textAlign: 'center' }}>
-              Vui lòng chụp ảnh gói hàng đã giao để hoàn thành đơn.
-            </Text>
-            
-            {podImage ? (
-              <Image source={{ uri: podImage }} style={styles.podPreviewImage} />
-            ) : (
-              <View style={styles.podPlaceholder}>
-                <Ionicons name="camera-outline" size={48} color={colors.textSecondary} />
-                <Text style={{ color: colors.textSecondary, marginTop: 10 }}>Chưa có ảnh</Text>
+
+      <Modal visible={podStep !== 'idle'} transparent animationType="fade" statusBarTranslucent>
+        <View style={styles.podOverlay}>
+          <Animated.View style={[styles.podContainer, { transform: [{ scale: podScaleAnim }] }]}>
+            {podStep === 'camera' && (
+              <>
+                <View style={styles.podHeader}>
+                  <View style={styles.podHeaderLeft}>
+                    <View style={styles.podIconBadge}>
+                      <Ionicons name="camera" size={20} color="#fff" />
+                    </View>
+                    <View>
+                      <Text style={styles.podTitle}>Chụp ảnh bằng chứng</Text>
+                      <Text style={styles.podSubtitle}>Proof of Delivery (P.O.D)</Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity onPress={closePodModal} style={styles.podCloseBtn}>
+                    <Ionicons name="close" size={22} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+
+                {CameraView && cameraPermission?.granted ? (
+                  <View style={styles.cameraContainer}>
+                    <CameraView ref={cameraRef} style={styles.cameraView} facing="back">
+                      <View style={styles.cameraOverlay}>
+                        <View style={styles.scanFrame}>
+                          <View style={[styles.corner, styles.cornerTL]} />
+                          <View style={[styles.corner, styles.cornerTR]} />
+                          <View style={[styles.corner, styles.cornerBL]} />
+                          <View style={[styles.corner, styles.cornerBR]} />
+                        </View>
+                        <Text style={styles.cameraHint}>Hướng camera vào hàng đã giao</Text>
+                      </View>
+                    </CameraView>
+                  </View>
+                ) : (
+                  <View style={styles.cameraPlaceholder}>
+                    <Ionicons name="camera-outline" size={56} color={colors.muted} />
+                    <Text style={styles.cameraPlaceholderText}>
+                      {!cameraPermission?.granted ? 'Camera chưa được cấp quyền' : 'Camera không khả dụng'}
+                    </Text>
+                    <Text style={styles.cameraPlaceholderSub}>Chọn "Ảnh Demo" để tiếp tục test</Text>
+                  </View>
+                )}
+
+                <View style={styles.watermarkPreviewRow}>
+                  <Ionicons name="location" size={14} color={colors.primary} />
+                  <Text style={styles.watermarkPreviewText} numberOfLines={1}>
+                    GPS: {formatCoord(currentLat)}°N, {formatCoord(currentLng)}°E  •  {watermarkTime}
+                  </Text>
+                </View>
+
+                <View style={styles.podCameraActions}>
+                  {CameraView && cameraPermission?.granted ? (
+                    <TouchableOpacity style={styles.captureBtn} onPress={handleTakePhoto}>
+                      <View style={styles.captureInner} />
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity style={styles.demoPhotoBtn} onPress={handleDemoPhoto}>
+                      <Ionicons name="images-outline" size={20} color="#fff" />
+                      <Text style={styles.demoPhotoBtnText}>Ảnh Demo (Test)</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </>
+            )}
+
+            {podStep === 'preview' && (
+              <>
+                <View style={styles.podHeader}>
+                  <View style={styles.podHeaderLeft}>
+                    <View style={[styles.podIconBadge, { backgroundColor: '#8b5cf6' }]}>
+                      <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                    </View>
+                    <View>
+                      <Text style={styles.podTitle}>Xác nhận ảnh bằng chứng</Text>
+                      <Text style={styles.podSubtitle}>Kiểm tra ảnh trước khi gửi</Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity onPress={() => setPodStep('camera')} style={styles.podCloseBtn}>
+                    <Ionicons name="refresh" size={22} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.watermarkedImageContainer}>
+                  <Image source={{ uri: podImage }} style={styles.podPreviewImage} resizeMode="cover" />
+
+                  <View style={styles.watermarkOverlay}>
+                    <View style={styles.watermarkHeader}>
+                      <Ionicons name="shield-checkmark" size={12} color="#fff" />
+                      <Text style={styles.watermarkBrand}>AVENGERS COFFEE DELIVERY</Text>
+                    </View>
+                    <View style={styles.watermarkFooter}>
+                      <View style={styles.watermarkRow}>
+                        <Ionicons name="location" size={11} color="#fbbf24" />
+                        <Text style={styles.watermarkGPS}>
+                          {formatCoord(currentLat)}°N, {formatCoord(currentLng)}°E
+                        </Text>
+                      </View>
+                      <View style={styles.watermarkRow}>
+                        <Ionicons name="time" size={11} color="#fbbf24" />
+                        <Text style={styles.watermarkTime}>{watermarkTime}</Text>
+                      </View>
+                      <View style={styles.watermarkRow}>
+                        <Ionicons name="receipt" size={11} color="#fbbf24" />
+                        <Text style={styles.watermarkOrder}>Đơn #{orderCode}</Text>
+                      </View>
+                      <View style={[styles.watermarkRow, { marginTop: 3 }]}>
+                        <View style={styles.watermarkBadge}>
+                          <Text style={styles.watermarkBadgeText}>✓ GIAO THÀNH CÔNG</Text>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.podInfoBanner}>
+                  <Ionicons name="information-circle" size={16} color={colors.info} />
+                  <Text style={styles.podInfoText}>
+                    Ảnh và tọa độ GPS sẽ được lưu làm bằng chứng. Không thể chỉnh sửa sau khi xác nhận.
+                  </Text>
+                </View>
+
+                <View style={styles.podPreviewActions}>
+                  <TouchableOpacity style={styles.retakeBtn} onPress={() => setPodStep('camera')}>
+                    <Ionicons name="camera-reverse-outline" size={18} color={colors.textSecondary} />
+                    <Text style={styles.retakeBtnText}>Chụp lại</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.confirmDeliveryBtn} onPress={submitCompleteDelivery}>
+                    <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                    <Text style={styles.confirmDeliveryBtnText}>Xác nhận Giao Xong</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+
+            {podStep === 'submitting' && (
+              <View style={styles.podCenterState}>
+                <View style={styles.podSpinnerWrap}>
+                  <Ionicons name="cloud-upload" size={48} color={colors.primary} />
+                </View>
+                <Text style={styles.podStateTitle}>Đang xử lý...</Text>
+                <Text style={styles.podStateSubtitle}>Đang gửi ảnh bằng chứng lên hệ thống</Text>
               </View>
             )}
 
-            <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.cameraBtn} onPress={handleSimulateCamera}>
-                <Ionicons name="camera" size={20} color="#fff" />
-                <Text style={styles.cameraBtnText}>Chụp ảnh (Demo)</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.submitBtn, (!podImage || isSubmitting) && { opacity: 0.5 }]} 
-                disabled={!podImage || isSubmitting}
-                onPress={submitCompleteDelivery}
-              >
-                <Text style={styles.submitBtnText}>{isSubmitting ? 'Đang gửi...' : 'Xác nhận Giao Xong'}</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.cancelBtn} 
-                onPress={() => { setShowPoDModal(false); setPodImage(null); }}
-              >
-                <Text style={styles.cancelBtnText}>Hủy</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+            {podStep === 'done' && (
+              <View style={styles.podCenterState}>
+                <Animated.View style={[styles.podSuccessCircle, { transform: [{ scale: podSuccessAnim }] }]}>
+                  <Ionicons name="checkmark-circle" size={80} color={colors.success} />
+                </Animated.View>
+                <Text style={styles.podStateTitle}>Giao hàng thành công! 🎉</Text>
+                <Text style={styles.podStateSubtitle}>Ảnh bằng chứng đã được lưu vào hệ thống</Text>
+                <View style={styles.podDoneInfoRow}>
+                  <Ionicons name="location" size={14} color={colors.muted} />
+                  <Text style={styles.podDoneInfoText}>{formatCoord(currentLat)}°N, {formatCoord(currentLng)}°E</Text>
+                </View>
+                <View style={styles.podDoneInfoRow}>
+                  <Ionicons name="time" size={14} color={colors.muted} />
+                  <Text style={styles.podDoneInfoText}>{watermarkTime}</Text>
+                </View>
+              </View>
+            )}
+          </Animated.View>
         </View>
       </Modal>
-
     </View>
   )
 }
@@ -679,52 +913,22 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, padding: spacing.sm, margin: spacing.md,
     borderRadius: radius.lg, ...shadows.sm,
   },
-  demoControls: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
-    marginHorizontal: spacing.md,
-  },
-  demoBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    ...shadows.sm,
-  },
-  demoBtnText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
+  demoControls: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginHorizontal: spacing.md, flexWrap: 'wrap' },
+  demoBtn: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, ...shadows.sm },
+  demoBtnText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
   backBtn: { padding: spacing.sm },
   headerInfo: { alignItems: 'center' },
   headerTitle: { ...typography.bodyBold, color: colors.text },
   headerSub: { ...typography.caption, color: colors.primary },
-  markerStore: {
-    backgroundColor: colors.primary, padding: 8, borderRadius: 20,
-    borderWidth: 2, borderColor: colors.surface, ...shadows.sm,
-  },
-  markerDest: {
-    backgroundColor: colors.danger, padding: 6, borderRadius: 20,
-    borderWidth: 2, borderColor: colors.surface, ...shadows.sm,
-  },
-  markerShipper: {
-    backgroundColor: 'white',
-    padding: 2,
-    borderRadius: 25,
-    borderWidth: 2,
-    borderColor: '#4F46E5',
-    ...shadows.md,
-  },
+  markerStore: { backgroundColor: colors.primary, padding: 8, borderRadius: 20, borderWidth: 2, borderColor: colors.surface, ...shadows.sm },
+  markerDest: { backgroundColor: colors.danger, padding: 6, borderRadius: 20, borderWidth: 2, borderColor: colors.surface, ...shadows.sm },
+  markerShipper: { backgroundColor: 'white', padding: 2, borderRadius: 25, borderWidth: 2, borderColor: '#4F46E5', ...shadows.md },
   footerPanel: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     backgroundColor: colors.surface, padding: spacing.lg, paddingBottom: spacing.xxl,
     borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, ...shadows.lg,
   },
-  etaRow: {
-    flexDirection: 'row', backgroundColor: colors.bg, borderRadius: radius.md,
-    padding: spacing.md, marginBottom: spacing.md, alignItems: 'center',
-  },
+  etaRow: { flexDirection: 'row', backgroundColor: colors.bg, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md, alignItems: 'center' },
   etaItem: { flex: 1, alignItems: 'center' },
   etaValue: { ...typography.h4, color: colors.text, marginTop: 4 },
   etaLabel: { ...typography.caption, color: colors.muted },
@@ -735,135 +939,151 @@ const styles = StyleSheet.create({
   addressValue: { ...typography.bodyBold, color: colors.text, marginTop: 4 },
   errText: { color: colors.danger, fontSize: 12, marginBottom: spacing.sm },
   actionBtns: { flexDirection: 'row', alignItems: 'center' },
-  fab: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: colors.primary, paddingVertical: spacing.md,
-    borderRadius: radius.lg, gap: 8, ...shadows.sm,
-  },
+  fab: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radius.lg, gap: 8, ...shadows.sm },
   fabText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   routeBtn: {
     paddingVertical: 6, paddingHorizontal: 12,
     borderRadius: 16, backgroundColor: colors.bg,
     borderWidth: 1, borderColor: colors.border,
   },
-  routeBtnSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    width: '85%',
-    borderRadius: radius.lg,
-    padding: spacing.xl,
-    alignItems: 'center'
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: colors.text
-  },
-  podPlaceholder: {
-    width: 200,
-    height: 200,
-    backgroundColor: '#f3f4f6',
-    borderRadius: radius.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-    borderWidth: 2,
-    borderColor: '#e5e7eb',
-    borderStyle: 'dashed'
-  },
-  podPreviewImage: {
-    width: 200,
-    height: 200,
-    borderRadius: radius.md,
-    marginBottom: 20,
-    resizeMode: 'cover'
-  },
-  modalActions: {
-    width: '100%',
-    gap: 12
-  },
-  cameraBtn: {
-    backgroundColor: '#8b5cf6',
-    paddingVertical: 12,
-    borderRadius: radius.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8
-  },
-  cameraBtnText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16
-  },
-  submitBtn: {
-    backgroundColor: colors.success,
-    paddingVertical: 12,
-    borderRadius: radius.md,
-    alignItems: 'center'
-  },
-  submitBtnText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16
-  },
-  cancelBtn: {
-    paddingVertical: 12,
-    alignItems: 'center'
-  },
-  cancelBtnText: {
-    color: colors.textSecondary,
-    fontSize: 16,
-    fontWeight: '500'
-  },
-  routeBtnText: {
-    fontSize: 12, fontWeight: 'bold', color: colors.textSecondary,
-  },
+  routeBtnSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
+  routeBtnText: { fontSize: 12, fontWeight: 'bold', color: colors.textSecondary },
   navInstruction: {
-    backgroundColor: colors.primary,
-    marginHorizontal: spacing.md,
-    marginTop: spacing.sm,
-    padding: spacing.md,
-    borderRadius: radius.lg,
-    ...shadows.md,
-    alignItems: 'center',
+    backgroundColor: colors.primary, marginHorizontal: spacing.md,
+    marginTop: spacing.sm, padding: spacing.md,
+    borderRadius: radius.lg, ...shadows.md, alignItems: 'center',
   },
-  navInstructionText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  navEtaText: {
-    color: '#dbeafe',
-    fontSize: 14,
-    marginTop: 4,
-  },
-  floatingActions: {
-    position: 'absolute',
-    right: spacing.md,
-    bottom: 250, // above footer panel
-    gap: spacing.md,
-  },
+  navInstructionText: { color: '#fff', fontSize: 18, fontWeight: 'bold', textAlign: 'center' },
+  navEtaText: { color: '#dbeafe', fontSize: 14, marginTop: 4 },
+  floatingActions: { position: 'absolute', right: spacing.md, bottom: 250, gap: spacing.md },
   floatingFab: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...shadows.lg,
-    borderWidth: 2,
-    borderColor: '#fff',
+    width: 50, height: 50, borderRadius: 25,
+    justifyContent: 'center', alignItems: 'center',
+    ...shadows.lg, borderWidth: 2, borderColor: '#fff',
   },
+
+  // ─── POD Modal Styles ──────────────────────────────────────────
+  podOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.75)',
+    justifyContent: 'center', alignItems: 'center',
+    paddingHorizontal: spacing.md,
+  },
+  podContainer: {
+    backgroundColor: colors.surface, borderRadius: radius.xl,
+    width: '100%', maxWidth: 420, overflow: 'hidden', ...shadows.lg,
+  },
+  podHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    padding: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.borderLight,
+  },
+  podHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  podIconBadge: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: colors.primary,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  podTitle: { ...typography.bodyBold, color: colors.text, fontSize: 16 },
+  podSubtitle: { ...typography.caption, color: colors.textSecondary, marginTop: 1 },
+  podCloseBtn: { padding: spacing.xs },
+
+  // Camera
+  cameraContainer: { height: 280, margin: spacing.md, borderRadius: radius.lg, overflow: 'hidden' },
+  cameraView: { flex: 1 },
+  cameraOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  scanFrame: { width: 200, height: 200, position: 'relative' },
+  corner: { position: 'absolute', width: 24, height: 24, borderColor: '#fff', borderWidth: 3 },
+  cornerTL: { top: 0, left: 0, borderBottomWidth: 0, borderRightWidth: 0, borderTopLeftRadius: 4 },
+  cornerTR: { top: 0, right: 0, borderBottomWidth: 0, borderLeftWidth: 0, borderTopRightRadius: 4 },
+  cornerBL: { bottom: 0, left: 0, borderTopWidth: 0, borderRightWidth: 0, borderBottomLeftRadius: 4 },
+  cornerBR: { bottom: 0, right: 0, borderTopWidth: 0, borderLeftWidth: 0, borderBottomRightRadius: 4 },
+  cameraHint: {
+    color: '#fff', fontSize: 12, fontWeight: '600',
+    marginTop: 16, textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
+  },
+  cameraPlaceholder: {
+    height: 220, margin: spacing.md, borderRadius: radius.lg,
+    backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: colors.border, borderStyle: 'dashed',
+  },
+  cameraPlaceholderText: { color: colors.textSecondary, fontWeight: '600', fontSize: 15, marginTop: 12 },
+  cameraPlaceholderSub: { color: colors.muted, fontSize: 12, marginTop: 4 },
+
+  watermarkPreviewRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
+    backgroundColor: colors.primaryBg, marginHorizontal: spacing.md,
+    borderRadius: radius.md, marginBottom: spacing.sm,
+  },
+  watermarkPreviewText: { flex: 1, color: colors.primary, fontSize: 11, fontWeight: '600' },
+
+  podCameraActions: { paddingHorizontal: spacing.md, paddingBottom: spacing.lg, alignItems: 'center' },
+  captureBtn: {
+    width: 72, height: 72, borderRadius: 36, backgroundColor: '#fff',
+    borderWidth: 4, borderColor: colors.primary,
+    alignItems: 'center', justifyContent: 'center', ...shadows.primary,
+  },
+  captureInner: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.primary },
+  demoPhotoBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#8b5cf6', paddingVertical: 14, paddingHorizontal: 32,
+    borderRadius: radius.xl, ...shadows.sm,
+  },
+  demoPhotoBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+
+  // Preview + Watermark
+  watermarkedImageContainer: {
+    margin: spacing.md, borderRadius: radius.lg,
+    overflow: 'hidden', position: 'relative',
+  },
+  podPreviewImage: { width: '100%', height: 220 },
+  watermarkOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'space-between' },
+  watermarkHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: 'rgba(227, 26, 35, 0.88)',
+    paddingHorizontal: 10, paddingVertical: 6,
+  },
+  watermarkBrand: { color: '#fff', fontSize: 11, fontWeight: '900', letterSpacing: 0.5 },
+  watermarkFooter: { backgroundColor: 'rgba(0,0,0,0.75)', paddingHorizontal: 10, paddingVertical: 8 },
+  watermarkRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2 },
+  watermarkGPS: {
+    color: '#fff', fontSize: 11, fontWeight: '700',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  watermarkTime: { color: '#fff', fontSize: 11, fontWeight: '700' },
+  watermarkOrder: { color: '#fbbf24', fontSize: 11, fontWeight: '900' },
+  watermarkBadge: { backgroundColor: colors.success, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
+  watermarkBadgeText: { color: '#fff', fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
+
+  podInfoBanner: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
+    backgroundColor: colors.infoBg, marginHorizontal: spacing.md,
+    borderRadius: radius.md, padding: spacing.sm, marginBottom: spacing.sm,
+  },
+  podInfoText: { flex: 1, color: colors.info, fontSize: 11, lineHeight: 16 },
+
+  podPreviewActions: { flexDirection: 'row', gap: 10, padding: spacing.md, paddingTop: 0 },
+  retakeBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border,
+    paddingVertical: 14, borderRadius: radius.lg,
+  },
+  retakeBtnText: { color: colors.textSecondary, fontWeight: '700', fontSize: 14 },
+  confirmDeliveryBtn: {
+    flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: colors.success, paddingVertical: 14,
+    borderRadius: radius.lg, ...shadows.success,
+  },
+  confirmDeliveryBtnText: { color: '#fff', fontWeight: '900', fontSize: 15 },
+
+  // Submitting & Done states
+  podCenterState: { padding: spacing.xl, alignItems: 'center' },
+  podSpinnerWrap: { marginBottom: spacing.md },
+  podSuccessCircle: { marginBottom: spacing.md },
+  podStateTitle: { ...typography.h4, color: colors.text, textAlign: 'center', marginBottom: spacing.xs },
+  podStateSubtitle: { ...typography.body, color: colors.textSecondary, textAlign: 'center', marginBottom: spacing.md },
+  podDoneInfoRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  podDoneInfoText: { color: colors.muted, fontSize: 12 },
 })
+
 

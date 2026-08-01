@@ -16,6 +16,7 @@ import { MapScreen } from '../screens/MapScreen'
 import { ReportScreen } from '../screens/ReportScreen'
 import { ScheduleScreen } from '../screens/ScheduleScreen'
 import { BatchOrderScreen } from '../screens/BatchOrderScreen'
+import { BatchRouteScreen } from '../screens/BatchRouteScreen'
 import { ExceptionScreen } from '../screens/ExceptionScreen'
 import { VehicleScreen } from '../screens/VehicleScreen'
 import { NotificationScreen } from '../screens/NotificationScreen'
@@ -90,6 +91,7 @@ export function AppNavigator() {
           <Stack.Screen name="Report" component={ReportScreen} />
           <Stack.Screen name="Schedule" component={ScheduleScreen} />
           <Stack.Screen name="BatchOrder" component={BatchOrderScreen} />
+          <Stack.Screen name="BatchRoute" component={BatchRouteScreen} />
           <Stack.Screen name="Exception" component={ExceptionScreen} />
           <Stack.Screen name="Vehicle" component={VehicleScreen} />
           <Stack.Screen name="Notification" component={NotificationScreen} />

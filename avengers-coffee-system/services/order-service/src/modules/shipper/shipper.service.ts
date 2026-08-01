@@ -8,6 +8,7 @@ import { ShipperSchedule } from './entities/shipper-schedule.entity';
 import { ShipperException } from './entities/shipper-exception.entity';
 import { DonHang } from '../thanh-toan/entities/don-hang.entity';
 import { ChiTietDonHang } from '../thanh-toan/entities/chi-tiet-don-hang.entity';
+import { DeliveryTracking } from './features_thaian/delivery-tracking.entity';
 
 @Injectable()
 export class ShipperService {
@@ -19,6 +20,7 @@ export class ShipperService {
     @InjectRepository(ShipperException) private exceptionRepo: Repository<ShipperException>,
     @InjectRepository(DonHang) private donHangRepo: Repository<DonHang>,
     @InjectRepository(ChiTietDonHang) private chiTietRepo: Repository<ChiTietDonHang>,
+    @InjectRepository(DeliveryTracking) private trackingRepo: Repository<DeliveryTracking>,
   ) {}
 
   async login(username: string, password: string) {
@@ -114,27 +116,46 @@ export class ShipperService {
 
     const orders = await query.getMany();
 
-    return orders.map((o) => ({
-      id: o.ma_don_hang,
-      ma_don_hang: o.ma_don_hang,
-      delivery_address: o.dia_chi_giao_hang,
-      pickup_address: `Avengers Coffee - ${o.co_so_ma || 'MAC_DINH_CHI'}`,
-      cod_amount: o.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG' ? Number(o.tong_tien || 0) : 0,
-      order_value: Number(o.tong_tien || 0),
-      delivery_fee: 15000,
-      estimated_time: 30,
-      distance_km: null,
-      phuong_thuc_thanh_toan: o.phuong_thuc_thanh_toan,
-      branch_code: o.co_so_ma,
-      trang_thai: o.trang_thai_don_hang,
-      items: (o.chi_tiet || []).map((item) => ({
-        ten_san_pham: item.ten_san_pham,
-        so_luong: item.so_luong,
-        gia_ban: Number(item.gia_ban),
-        kich_co: item.kich_co,
-      })),
-      assigned_at: o.ngay_tao,
-    }));
+    // Lấy tracking data cho tất cả đơn để kèm toạ độ thật
+    const orderIds = orders.map(o => o.ma_don_hang);
+    const trackings = orderIds.length > 0
+      ? await this.trackingRepo.createQueryBuilder('t')
+          .where('t.ma_don_hang IN (:...orderIds)', { orderIds })
+          .getMany()
+      : [];
+    const trackingMap = new Map(trackings.map(t => [t.ma_don_hang, t]));
+
+    return orders.map((o) => {
+      const tr = trackingMap.get(o.ma_don_hang);
+      return {
+        id: o.ma_don_hang,
+        ma_don_hang: o.ma_don_hang,
+        delivery_address: o.dia_chi_giao_hang,
+        pickup_address: `Avengers Coffee - ${o.co_so_ma || 'MAC_DINH_CHI'}`,
+        cod_amount: o.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG' ? Number(o.tong_tien || 0) : 0,
+        order_value: Number(o.tong_tien || 0),
+        delivery_fee: 15000,
+        estimated_time: 30,
+        distance_km: null,
+        phuong_thuc_thanh_toan: o.phuong_thuc_thanh_toan,
+        branch_code: o.co_so_ma,
+        trang_thai: o.trang_thai_don_hang,
+        tracking: tr ? {
+          store_latitude: tr.store_latitude,
+          store_longitude: tr.store_longitude,
+          destination_latitude: tr.destination_latitude,
+          destination_longitude: tr.destination_longitude,
+          branch_code: tr.branch_code,
+        } : null,
+        items: (o.chi_tiet || []).map((item) => ({
+          ten_san_pham: item.ten_san_pham,
+          so_luong: item.so_luong,
+          gia_ban: Number(item.gia_ban),
+          kich_co: item.kich_co,
+        })),
+        assigned_at: o.ngay_tao,
+      };
+    });
   }
 
   /**
@@ -192,9 +213,20 @@ export class ShipperService {
     // Tăng total_deliveries của shipper
     await this.shipperRepo.increment({ id: shipperId }, 'total_deliveries', 1);
 
+    // Kèm tracking data để app có toạ độ ngay
+    const tracking = await this.trackingRepo.findOne({ where: { ma_don_hang: maDonHang } });
+
     return {
       success: true,
-      delivery: saved,
+      delivery: {
+        ...saved,
+        tracking: tracking ? {
+          store_latitude: tracking.store_latitude,
+          store_longitude: tracking.store_longitude,
+          destination_latitude: tracking.destination_latitude,
+          destination_longitude: tracking.destination_longitude,
+        } : null,
+      },
       message: 'Nhận đơn thành công',
     };
   }
@@ -215,19 +247,38 @@ export class ShipperService {
     
     if (deliveries.length === 0) return [];
     
-    // Đính kèm cod_amount và order_value
-    const orderIds = deliveries.map(d => d.ma_don_hang);
+    const orderIds = deliveries.map(d => d.ma_don_hang).filter(id => !!id);
     
-    const orders2 = await this.donHangRepo.createQueryBuilder('don')
-      .where('don.ma_don_hang IN (:...orderIds)', { orderIds })
-      .getMany();
+    let orders2: any[] = [];
+    let trackings: any[] = [];
+
+    if (orderIds.length > 0) {
+      try {
+        orders2 = await this.donHangRepo.createQueryBuilder('don')
+          .where('don.ma_don_hang IN (:...orderIds)', { orderIds })
+          .getMany();
+          
+        trackings = await this.trackingRepo.createQueryBuilder('t')
+          .where('t.ma_don_hang IN (:...orderIds)', { orderIds })
+          .getMany();
+      } catch (err) {
+        console.error('Error fetching orders2 or trackings in getAssignedDeliveries:', err.message);
+      }
+    }
 
     return deliveries.map(d => {
       const o = orders2.find(x => x.ma_don_hang === d.ma_don_hang);
+      const tracking = trackings.find(x => x.ma_don_hang === d.ma_don_hang);
       return {
         ...d,
         cod_amount: o?.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG' ? Number(o.tong_tien || 0) : 0,
-        order_value: Number(o?.tong_tien || 0)
+        order_value: Number(o?.tong_tien || 0),
+        tracking: tracking ? {
+          store_latitude: tracking.store_latitude,
+          store_longitude: tracking.store_longitude,
+          destination_latitude: tracking.destination_latitude,
+          destination_longitude: tracking.destination_longitude
+        } : null
       };
     });
   }
@@ -259,7 +310,20 @@ export class ShipperService {
     const cod_amount = donHang?.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG' ? Number(donHang.tong_tien || 0) : 0;
     const order_value = Number(donHang?.tong_tien || 0);
 
-    return { ...delivery, order: donHang, cod_amount, order_value };
+    const tracking = await this.trackingRepo.findOne({ where: { ma_don_hang: delivery.ma_don_hang } });
+
+    return { 
+      ...delivery, 
+      order: donHang, 
+      cod_amount, 
+      order_value,
+      tracking: tracking ? {
+        store_latitude: tracking.store_latitude,
+        store_longitude: tracking.store_longitude,
+        destination_latitude: tracking.destination_latitude,
+        destination_longitude: tracking.destination_longitude
+      } : null
+    };
   }
 
   async confirmPickup(deliveryId: string, shipperId: string) {
@@ -283,7 +347,7 @@ export class ShipperService {
     return { success: true, message: 'Delivery started' };
   }
 
-  async completeDelivery(deliveryId: string, shipperId: string, latitude: number, longitude: number, proofImageUrl?: string) {
+  async completeDelivery(deliveryId: string, shipperId: string, latitude: number, longitude: number, proofImageUrl?: string, isBatched?: boolean) {
     const delivery = await this.deliveryRepo.findOne({ where: { id: deliveryId } });
     if (!delivery) throw new NotFoundException('Delivery not found');
     if (delivery.shipper_id !== shipperId) throw new BadRequestException('Not authorized');
@@ -296,6 +360,7 @@ export class ShipperService {
         delivery_latitude: latitude,
         delivery_longitude: longitude,
         proof_image_url: proofImageUrl || null,
+        delivery_note: isBatched ? '[BATCHED] Giao ghép tuyến AI' : delivery.delivery_note,
       },
     );
 
@@ -641,5 +706,132 @@ export class ShipperService {
     await this.deliveryRepo.update({ id: delivery.id }, { delivery_note: newNote });
 
     return { success: true, message: 'Cảm ơn bạn đã đánh giá!', rating: safeRating };
+  }
+
+  // ============ BATCH ORDERS: Gom đơn cùng khu vực ============
+
+  private haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+      Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  /**
+   * GET /shippers/:shipperId/batch-orders
+   * Gom đơn DANG_GIAO cùng co_so_ma thành batch, kèm tracking data.
+   */
+  async getBatchOrders(shipperId: string) {
+    // Lấy tất cả đơn available (chưa có shipper active)
+    const activeDeliveries = await this.deliveryRepo
+      .createQueryBuilder('d')
+      .select(['d.ma_don_hang'])
+      .where('d.status IN (:...activeStatuses)', { activeStatuses: ['CONFIRMED', 'PICKING_UP', 'IN_TRANSIT'] })
+      .getMany();
+    const activeOrderIds = activeDeliveries.map(d => d.ma_don_hang).filter(id => !!id);
+
+    let query = this.donHangRepo
+      .createQueryBuilder('don')
+      .leftJoinAndSelect('don.chi_tiet', 'chi_tiet')
+      .where('don.trang_thai_don_hang = :status', { status: 'DANG_GIAO' });
+
+    if (activeOrderIds.length > 0) {
+      query = query.andWhere('don.ma_don_hang NOT IN (:...activeIds)', { activeIds: activeOrderIds });
+    }
+    query = query.orderBy('don.ngay_tao', 'DESC');
+    const orders = await query.getMany();
+
+    if (orders.length === 0) return [];
+
+    // Lấy tracking data
+    const orderIds = orders.map(o => o.ma_don_hang);
+    const trackings = await this.trackingRepo.createQueryBuilder('t')
+      .where('t.ma_don_hang IN (:...orderIds)', { orderIds })
+      .getMany();
+    const trackingMap = new Map(trackings.map(t => [t.ma_don_hang, t]));
+
+    // Gom theo co_so_ma (branch)
+    const groups = new Map<string, typeof orders>();
+    for (const order of orders) {
+      const key = order.co_so_ma || 'UNKNOWN';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(order);
+    }
+
+    // Chỉ tạo batch khi có >= 2 đơn cùng branch
+    const batches: any[] = [];
+    let batchIdx = 0;
+    for (const [branchCode, branchOrders] of groups) {
+      if (branchOrders.length < 2) continue;
+
+      const deliveries = branchOrders.map(o => {
+        const tr = trackingMap.get(o.ma_don_hang);
+        return {
+          id: o.ma_don_hang,
+          ma_don_hang: o.ma_don_hang,
+          delivery_address: o.dia_chi_giao_hang,
+          delivery_fee: 15000,
+          delivery_latitude: tr?.destination_latitude ? Number(tr.destination_latitude) : null,
+          delivery_longitude: tr?.destination_longitude ? Number(tr.destination_longitude) : null,
+          store_latitude: tr?.store_latitude ? Number(tr.store_latitude) : null,
+          store_longitude: tr?.store_longitude ? Number(tr.store_longitude) : null,
+          tracking: tr ? {
+            store_latitude: tr.store_latitude,
+            store_longitude: tr.store_longitude,
+            destination_latitude: tr.destination_latitude,
+            destination_longitude: tr.destination_longitude,
+          } : null,
+          order_value: Number(o.tong_tien || 0),
+          cod_amount: o.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG' ? Number(o.tong_tien || 0) : 0,
+          items: (o.chi_tiet || []).map(item => ({
+            ten_san_pham: item.ten_san_pham,
+            so_luong: item.so_luong,
+          })),
+        };
+      });
+
+      // Tính total distance ước tính
+      let totalDist = 0;
+      for (let i = 0; i < deliveries.length - 1; i++) {
+        const d1 = deliveries[i];
+        const d2 = deliveries[i + 1];
+        if (d1.delivery_latitude && d1.delivery_longitude && d2.delivery_latitude && d2.delivery_longitude) {
+          totalDist += this.haversineKm(
+            Number(d1.delivery_latitude), Number(d1.delivery_longitude),
+            Number(d2.delivery_latitude), Number(d2.delivery_longitude),
+          );
+        }
+      }
+
+      batches.push({
+        id: `batch-${branchCode}-${Date.now()}-${batchIdx}`,
+        zone_label: `Khu vực ${branchCode.replace(/_/g, ' ')}`,
+        branch_code: branchCode,
+        total_distance_km: Math.round(totalDist * 10) / 10,
+        deliveries,
+      });
+      batchIdx++;
+    }
+
+    return batches;
+  }
+
+  /**
+   * POST /shippers/:shipperId/batch-orders/:batchId/accept
+   * Nhận batch đơn: accept tất cả đơn trong batch.
+   */
+  async acceptBatchOrders(shipperId: string, orderIds: string[]) {
+    const results: any[] = [];
+    for (const orderId of orderIds) {
+      try {
+        const result = await this.acceptOrder(shipperId, orderId);
+        results.push({ ma_don_hang: orderId, success: true, delivery: result.delivery });
+      } catch (err) {
+        results.push({ ma_don_hang: orderId, success: false, error: err?.message || 'Unknown error' });
+      }
+    }
+    return { success: true, results, message: `Đã nhận ${results.filter(r => r.success).length}/${orderIds.length} đơn` };
   }
 }
