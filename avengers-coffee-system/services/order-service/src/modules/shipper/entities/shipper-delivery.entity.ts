@@ -56,6 +56,9 @@ export class ShipperDelivery {
   @UpdateDateColumn()
   updated_at: Date;
 
+  @Column({ type: 'boolean', default: false })
+  is_batched: boolean;
+
   @ManyToOne(() => Shipper, (shipper) => shipper.deliveries, { onDelete: 'SET NULL' })
   shipper: Shipper | null;
 }
