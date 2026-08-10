@@ -137,7 +137,7 @@ export class SurveyService {
 
     const savedResponse = await this.responseRepo.save(response);
 
-    // If logged in customer, issue a 20% discount voucher
+    // If logged in customer, issue a 20% discount voucher immediately
     if (userId) {
       try {
         const identityResponse = await fetch(`${this.IDENTITY_SERVICE_URL}/promotions/internal/phat-hanh`, {
@@ -181,6 +181,16 @@ export class SurveyService {
       message: 'Gui khao sat thanh cong! Dang nhap tai khoan de duoc nhan voucher 20% cho lan sau.',
       item: savedResponse,
     };
+  }
+
+  async phatVoucherSauHoanThanh(maDonHang: string) {
+    // Legacy stub - no-op when immediate voucher issuance is enabled
+    return;
+  }
+
+  async huyVoucherPending(maDonHang: string) {
+    // Legacy stub - no-op when immediate voucher issuance is enabled
+    return;
   }
 
   async layDanhSachPhanHoi() {

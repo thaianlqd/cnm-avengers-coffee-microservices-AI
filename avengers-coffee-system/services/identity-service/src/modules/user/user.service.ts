@@ -2135,7 +2135,7 @@ export class UserService implements OnModuleInit {
     const p = new Promotion();
     p.ma_khuyen_mai = code;
     p.ten_khuyen_mai = 'Voucher khảo sát 20%';
-    p.mo_ta = 'Mã ưu đãi giảm 20% cho đơn từ 100k (tối đa 3 ngày sử dụng), nhận được nhờ hoàn thành khảo sát.';
+    p.mo_ta = 'Mã ưu đãi giảm 20% cho đơn từ 100k (tối đa 5 ngày sử dụng), nhận được nhờ hoàn thành khảo sát.';
     p.loai_khuyen_mai = 'PERCENT';
     p.gia_tri = 20;
     p.gia_tri_don_toi_thieu = 100000;
@@ -2144,7 +2144,7 @@ export class UserService implements OnModuleInit {
     p.so_luong_da_dung = 0;
     p.gioi_han_moi_nguoi = 1;
     p.ngay_bat_dau = new Date();
-    p.ngay_ket_thuc = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 ngày
+    p.ngay_ket_thuc = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000); // 5 ngày
     p.trang_thai = 'ACTIVE';
     p.hien_thi_cho_khach = true;
     p.ten_san_pham_tang = null;

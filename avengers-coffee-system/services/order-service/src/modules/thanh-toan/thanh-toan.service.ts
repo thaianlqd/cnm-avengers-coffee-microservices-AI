@@ -14,6 +14,7 @@ import { ChiTietDonHang } from './entities/chi-tiet-don-hang.entity';
 import { DonHang } from './entities/don-hang.entity';
 import { GiaoDichThanhToan } from './entities/giao-dich-thanh-toan.entity';
 import { DeliveryTrackingService } from '../shipper/features_thaian/delivery-tracking.service';
+import { SurveyService } from '../../services/survey.service';
 
 type KhoiTaoThanhToanDto = {
   phuong_thuc_thanh_toan: 'VNPAY' | 'NGAN_HANG_QR' | 'THANH_TOAN_KHI_NHAN_HANG' | 'VI_DIEN_TU';
@@ -232,6 +233,7 @@ export class ThanhToanService {
     private readonly rabbitMqService: RabbitMqService,
     private readonly deliveryTrackingService: DeliveryTrackingService,
     private readonly customerWalletService: CustomerWalletService,
+    private readonly surveyService: SurveyService,
   ) {}
 
   private normalizeBranchCode(branchCode?: string) {
@@ -2218,7 +2220,6 @@ export class ThanhToanService {
 
     const danhSach = await query
       .orderBy('don_hang.ngay_tao', 'DESC')
-      .addOrderBy('giao_dich.ngay_tao', 'DESC')
       .getMany();
 
     const maDonHangs = danhSach.map(d => d.ma_don_hang);
@@ -3041,6 +3042,11 @@ export class ThanhToanService {
 
     await this.invalidateOrderCaches(maNguoiDung, donHang.co_so_ma);
 
+    // Hủy voucher khảo sát pending nếu có
+    await this.surveyService.huyVoucherPending(maDonHang).catch((err) => {
+      console.error('[HuyDonHang] Error cancelling survey voucher:', err);
+    });
+
     return { message: 'Huy don thanh cong', order: updated };
   }
 
@@ -3401,6 +3407,17 @@ export class ThanhToanService {
             trang_thai_thanh_toan: saved.trang_thai_thanh_toan,
           },
         });
+
+        // Phát voucher khảo sát khi đơn hoàn thành, hủy voucher khi đơn bị hủy
+        if (saved.trang_thai_don_hang === 'HOAN_THANH') {
+          await this.surveyService.phatVoucherSauHoanThanh(saved.ma_don_hang).catch((err) => {
+            console.error('[capNhatTrangThaiDonHangHeThong] Error issuing survey voucher:', err);
+          });
+        } else if (saved.trang_thai_don_hang === 'DA_HUY') {
+          await this.surveyService.huyVoucherPending(saved.ma_don_hang).catch((err) => {
+            console.error('[capNhatTrangThaiDonHangHeThong] Error cancelling survey voucher:', err);
+          });
+        }
       }
 
       if (paymentStatusChanged && saved.trang_thai_thanh_toan === 'DA_THANH_TOAN') {
@@ -3463,46 +3480,20 @@ export class ThanhToanService {
     payload: { guest_session_id?: string; email?: string; phone?: string; confirmLink?: boolean },
   ) {
     const cleanSession = payload.guest_session_id?.trim();
-    const cleanEmail = payload.email?.trim()?.toLowerCase();
-    const cleanPhone = payload.phone?.trim();
 
-    if (!cleanSession && !cleanEmail && !cleanPhone) {
+    // Chỉ tìm theo session_id để tránh đồng bộ sai đơn hàng sang tài khoản khác
+    if (!cleanSession) {
       return { success: true, linked: false, count: 0 };
     }
 
-    // Tìm các đơn hàng chưa gán tài khoản khớp với session_id HOẶC email HOẶC số điện thoại
-    const query = this.donHangRepo.createQueryBuilder('don_hang')
+    // Tìm các đơn hàng chưa gán tài khoản khớp với session_id
+    const matchedOrders = await this.donHangRepo.createQueryBuilder('don_hang')
       .where(
         '(don_hang.ma_nguoi_dung IS NULL OR don_hang.ma_nguoi_dung = :emptyStr OR don_hang.ma_nguoi_dung LIKE :anonPrefix OR don_hang.ma_nguoi_dung = :anonWord)',
         { emptyStr: '', anonPrefix: 'anon-%', anonWord: 'anonymous' },
-      );
-
-    query.andWhere(
-      new Brackets((qb) => {
-        let hasCondition = false;
-        if (cleanSession) {
-          qb.where('don_hang.session_id = :session', { session: cleanSession });
-          hasCondition = true;
-        }
-        if (cleanEmail) {
-          if (hasCondition) {
-            qb.orWhere('LOWER(don_hang.guest_email) = :email', { email: cleanEmail });
-          } else {
-            qb.where('LOWER(don_hang.guest_email) = :email', { email: cleanEmail });
-            hasCondition = true;
-          }
-        }
-        if (cleanPhone) {
-          if (hasCondition) {
-            qb.orWhere('don_hang.guest_phone = :phone', { phone: cleanPhone });
-          } else {
-            qb.where('don_hang.guest_phone = :phone', { phone: cleanPhone });
-          }
-        }
-      }),
-    );
-
-    const matchedOrders = await query.getMany();
+      )
+      .andWhere('don_hang.session_id = :session', { session: cleanSession })
+      .getMany();
 
     if (matchedOrders.length > 0) {
       if (payload.confirmLink === true) {
