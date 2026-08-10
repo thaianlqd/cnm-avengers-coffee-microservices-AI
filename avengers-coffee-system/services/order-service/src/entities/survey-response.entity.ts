@@ -34,6 +34,10 @@ export class SurveyResponse {
     cau_tra_loi: string | number;
   }>;
 
+  /** PENDING = chờ đơn hoàn thành, ISSUED = đã phát voucher, CANCELLED = đơn bị hủy */
+  @Column({ type: 'varchar', nullable: true, default: null })
+  trang_thai_voucher: 'PENDING' | 'ISSUED' | 'CANCELLED' | null;
+
   @CreateDateColumn()
   ngay_tao: Date;
 }

@@ -814,8 +814,67 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
             setEditingProduct(null);
           }}
           onSave={handleSaveEditItemOptions}
-
         />
+      )}
+
+      {/* Modal xác nhận hủy đơn hàng */}
+      {cancelOrderId && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-5 transform scale-100 transition-all">
+            <div className="flex items-center gap-3 border-b border-gray-100 pb-3">
+              <div className="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center text-rose-600 shrink-0">
+                <XMarkIcon className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-900 font-sans">Xác nhận hủy đơn hàng</h3>
+                <p className="text-xs font-semibold text-gray-500">Mã đơn: <span className="font-mono text-rose-600 font-black">#{cancelOrderId}</span></p>
+              </div>
+            </div>
+
+            <p className="text-xs font-semibold text-gray-600 leading-relaxed">
+              Bạn có chắc chắn muốn hủy đơn hàng này? Thao tác hủy đơn không thể hoàn tác.
+            </p>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-extrabold text-gray-700 uppercase tracking-wider">
+                Lý do hủy (không bắt buộc)
+              </label>
+              <textarea
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="Nhập lý do hủy đơn của bạn..."
+                className="w-full rounded-2xl border border-gray-200 p-3 text-xs font-semibold text-gray-800 outline-none focus:border-[#b22830] focus:ring-1 focus:ring-[#b22830] transition-all resize-none bg-gray-50/50"
+                rows={3}
+              />
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setCancelOrderId(null);
+                  setCancelReason('');
+                }}
+                className="flex-1 py-3 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-600 font-black text-xs uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                Bỏ qua
+              </button>
+              <button
+                type="button"
+                disabled={cancelOrderMutation.isPending}
+                onClick={() => {
+                  cancelOrderMutation.mutate({
+                    orderId: cancelOrderId,
+                    reason: cancelReason.trim() || 'Khách hàng hủy đơn',
+                  });
+                }}
+                className="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-rose-200 transition-all cursor-pointer disabled:opacity-50"
+              >
+                {cancelOrderMutation.isPending ? 'Đang hủy...' : 'Xác nhận hủy'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

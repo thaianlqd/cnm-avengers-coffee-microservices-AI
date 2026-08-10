@@ -195,7 +195,7 @@ export default function SurveyPage({ onBackToHome }) {
               GIẢM NGAY 20%
             </h3>
             <p className="text-xs text-gray-500 font-semibold">
-              Áp dụng cho đơn hàng kế tiếp từ 100.000đ. Hiệu lực 3 ngày.
+              Áp dụng cho đơn hàng kế tiếp từ 100.000đ. Hiệu lực 5 ngày.
             </p>
 
             <div className="flex items-center justify-between bg-white border border-dashed border-amber-300 rounded-2xl p-3.5 mt-4">
