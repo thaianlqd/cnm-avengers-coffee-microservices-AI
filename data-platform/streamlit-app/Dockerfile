@@ -19,8 +19,6 @@ CMD ["streamlit", "run", "app.py", \
      "--server.port=8501", \
      "--server.address=0.0.0.0", \
      "--server.headless=true", \
-     "--theme.base=dark", \
-     "--theme.primaryColor=#E31A23", \
-     "--theme.backgroundColor=#0F1117", \
-     "--theme.secondaryBackgroundColor=#1A1D27", \
-     "--theme.textColor=#FAFAFA"]
+     "--server.fileWatcherType=poll", \
+     "--server.runOnSave=true"]
+

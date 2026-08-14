@@ -16,6 +16,7 @@ services:
     networks:
       - data-network
 
+
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     container_name: avengers_kafka
@@ -32,7 +33,8 @@ services:
       KAFKA_DEFAULT_REPLICATION_FACTOR: 1
       KAFKA_NUM_PARTITIONS: 3
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_RETENTION_HOURS: 24
+      # Giới hạn heap JVM Kafka: tiết kiệm RAM tối đa
       KAFKA_HEAP_OPTS: "-Xmx512m -Xms256m"
       KAFKA_LOG4J_ROOT_LOGLEVEL: WARN
     ports:
@@ -47,13 +49,15 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 90s
 
-  # Kafka Web UI
+  # Kafka Web UI — tắt profile để tiết kiệm tài nguyên
+  # Bật khi cần: docker compose -f docker-compose.data.yml --profile tools up -d kafka-ui
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: avengers_kafka_ui
-    restart: unless-stopped
+    restart: "no"
+    profiles: ["tools"]
     depends_on:
       kafka:
         condition: service_healthy
@@ -123,12 +127,14 @@ services:
         condition: service_healthy
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      DB_HOST: postgres-db
-      DB_PORT: 5432
+      DB_HOST: ${DB_HOST:-postgres-db}
+      DB_PORT: ${DB_PORT:-5432}
       DB_USER: ${DB_USER:-admin}
       DB_PASSWORD: ${DB_PASSWORD:-123}
       DB_NAME: ${DB_NAME:-avengers_coffee}
-      POLL_INTERVAL_SECONDS: 30
+      POLL_INTERVAL_SECONDS: 60
+    volumes:
+      - ./data-platform/kafka-producer:/app
     networks:
       - avengers-network
       - data-network
@@ -148,22 +154,26 @@ services:
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
-      DB_HOST: postgres-db
-      DB_PORT: 5432
+      DB_HOST: ${DB_HOST:-postgres-db}
+      DB_PORT: ${DB_PORT:-5432}
       DB_USER: ${DB_USER:-admin}
       DB_PASSWORD: ${DB_PASSWORD:-123}
       DB_NAME: ${DB_NAME:-avengers_coffee}
+    volumes:
+      - ./data-platform/spark-jobs:/opt/spark-jobs
     networks:
       - avengers-network
       - data-network
 
   # =========================================
-  # ORCHESTRATION — Apache Airflow
+  # ORCHESTRATION — Apache Airflow (chỉ bật khi cần)
+  # Bật: docker compose -f docker-compose.data.yml --profile tools up -d airflow
   # =========================================
   airflow:
     build:
       context: ./data-platform/airflow
     container_name: avengers_airflow
+    profiles: ["tools"]
     restart: unless-stopped
     depends_on:
       minio:
@@ -175,10 +185,13 @@ services:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/airflow.db
       AIRFLOW__WEBSERVER__SECRET_KEY: avengers-airflow-secret-2025
       AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
+      # Tối ưu RAM cho Airflow (Tránh lỗi OOM Cannot allocate memory)
+      AIRFLOW__WEBSERVER__WORKERS: 1
+      AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL: 60
       AIRFLOW_ADMIN_USER: admin
       AIRFLOW_ADMIN_PASSWORD: admin123
-      DB_HOST: postgres-db
-      DB_PORT: 5432
+      DB_HOST: ${DB_HOST:-postgres-db}
+      DB_PORT: ${DB_PORT:-5432}
       DB_USER: ${DB_USER:-admin}
       DB_PASSWORD: ${DB_PASSWORD:-123}
       DB_NAME: ${DB_NAME:-avengers_coffee}
@@ -207,19 +220,37 @@ services:
       minio:
         condition: service_healthy
     environment:
-      DB_HOST: postgres-db
-      DB_PORT: 5432
-      DB_USER: ${DB_USER:-admin}
-      DB_PASSWORD: ${DB_PASSWORD:-123}
-      DB_NAME: ${DB_NAME:-avengers_coffee}
+      # ── Database (Supabase thật) ──────────────────────
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT:-6543}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-postgres}
+      DB_SSLMODE: require
+      # ── MinIO / Kafka ─────────────────────────────────
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      # ── Streamlit server ──────────────────────────────
       STREAMLIT_SERVER_HEADLESS: "true"
       STREAMLIT_SERVER_PORT: 8501
+      STREAMLIT_SERVER_RUN_ON_SAVE: "true"
+      STREAMLIT_SERVER_ENABLE_CORS: "false"
+      STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION: "false"
+      # ── Theme LIGHT (hot-reload thân thiện) ───────────
+      STREAMLIT_THEME_BASE: "light"
+      STREAMLIT_THEME_PRIMARY_COLOR: "#C41230"
+      STREAMLIT_THEME_BACKGROUND_COLOR: "#FCFCFC"
+      STREAMLIT_THEME_SECONDARY_BACKGROUND_COLOR: "#FEF2F2"
+      STREAMLIT_THEME_TEXT_COLOR: "#1A1A2E"
+      # ── AI Analytics ──────────────────────────────────
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      GROQ_API_KEY: ${GROQ_API_KEY}
     ports:
       - "8501:8501"
+    volumes:
+      - ./data-platform/streamlit-app:/app
     networks:
       - avengers-network
       - data-network
