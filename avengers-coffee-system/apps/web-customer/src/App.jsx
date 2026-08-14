@@ -539,6 +539,21 @@ function AppContent() {
     return () => window.removeEventListener('navigate-tab', handler);
   }, []);
 
+  const handleCloseOrderHistory = () => {
+    setIsOrderHistoryOpen(false);
+    if (activeTab === 'order-history') {
+      setActiveTab('profile');
+    }
+  };
+
+  // ── Sync order-history tab with OrderHistoryModal ─────────────────────────────
+  useEffect(() => {
+    if (activeTab === 'order-history') {
+      setIsOrderHistoryOpen(true);
+    }
+  }, [activeTab]);
+
+
 
 
   // ── AI Recommendations ──────────────────────────────────────────────────────
@@ -996,14 +1011,11 @@ function AppContent() {
     }
 
     // Tự động / Chủ động liên kết đơn hàng khách vãng lai
+    // Chỉ kiểm tra khi có guest_session_id trong localStorage (tránh hỏi sai tài khoản khác)
     const gsid = localStorage.getItem('avengers_guest_session_id') || '';
-    const userEmail = nextUser?.email || nextUser?.emailAddress || '';
-    const userPhone = nextUser?.so_dien_thoai || nextUser?.phone || '';
-    if (nextUserId && (gsid || userEmail || userPhone)) {
+    if (nextUserId && gsid) {
       apiClient.post(`/customers/${nextUserId}/orders/link-guest-orders`, {
         guest_session_id: gsid,
-        email: userEmail,
-        phone: userPhone,
       }).then((res) => {
         if (res.data?.autoLinked) {
           alert(`Đã tự động đồng bộ ${res.data.count} đơn hàng vãng lai gần đây của bạn vào tài khoản!`);
@@ -1014,14 +1026,13 @@ function AppContent() {
           setLinkOrderCount(res.data.count);
           setLinkOrderPayload({
             userId: nextUserId,
-            email: userEmail,
-            phone: userPhone,
             guest_session_id: gsid,
           });
           setShowLinkOrderPrompt(true);
         } else {
           // Xóa gsid nếu không có đơn hàng match để không hỏi lại nữa
           localStorage.removeItem('avengers_guest_session_id');
+          localStorage.removeItem('avengers_anon_user_id');
         }
       }).catch((err) => {
         console.error('Lỗi khi liên kết đơn hàng guest:', err);
@@ -1878,7 +1889,7 @@ function AppContent() {
           />
         ) : activeTab === 'gift-card' ? (
           <GiftCardPage onBackToMain={() => setActiveTab('home')} />
-        ) : ['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail'].includes(activeTab) ? (
+        ) : ['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail', 'order-history'].includes(activeTab) ? (
           <OrderPage
             menuSections={menuSections}
             products={products}
@@ -1939,7 +1950,7 @@ function AppContent() {
               <ChinhSachDatHangPage />
             ) : activeTab === 'lien-he' ? (
               <LienHePage />
-            ) : activeTab === 'profile' ? (
+            ) : (activeTab === 'profile' || activeTab === 'order-history') ? (
               <ProfilePageContent
                 user={user}
                 onUserUpdated={handleUserUpdated}
@@ -1988,7 +1999,7 @@ function AppContent() {
       />
       <OrderHistoryModal
         isOpen={isOrderHistoryOpen}
-        onClose={() => setIsOrderHistoryOpen(false)}
+        onClose={handleCloseOrderHistory}
         user={user}
       />
 

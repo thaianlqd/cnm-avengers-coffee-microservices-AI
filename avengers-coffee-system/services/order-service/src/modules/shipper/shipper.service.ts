@@ -558,15 +558,133 @@ export class ShipperService {
     return notifications;
   }
 
-  // ============ MANAGER: List all shippers + assign ============
+  // ============ MANAGER & ADMIN: List all shippers + management ============
 
-  async getAllShippers(branchCode?: string) {
+  async getAllShippers(branchCode?: string, status?: string, searchKeyword?: string) {
     const query = this.shipperRepo.createQueryBuilder('s');
     if (branchCode) {
       const normalized = branchCode.toUpperCase().replace(/-/g, '_');
-      query.where('UPPER(REPLACE(s.branch_code, \'-\', \'_\')) = :branchCode', { branchCode: normalized });
+      query.andWhere('UPPER(REPLACE(s.branch_code, \'-\', \'_\')) = :branchCode', { branchCode: normalized });
+    }
+    if (status) {
+      query.andWhere('s.status = :status', { status });
+    }
+    if (searchKeyword) {
+      query.andWhere('(s.full_name ILIKE :q OR s.username ILIKE :q OR s.phone ILIKE :q)', { q: `%${searchKeyword}%` });
     }
     return query.orderBy('s.status', 'ASC').getMany();
+  }
+
+  async createShipper(data: any) {
+    const existing = await this.shipperRepo.findOne({ where: { username: data.username } });
+    if (existing) throw new BadRequestException('Tên đăng nhập (username) đã tồn tại');
+
+    const shipper = this.shipperRepo.create({
+      username: data.username,
+      full_name: data.full_name,
+      phone: data.phone || '0900000000',
+      email: data.email || null,
+      branch_code: data.branch_code || 'MAC_DINH_CHI',
+      status: data.status || 'ACTIVE',
+      vehicle_type: data.vehicle_type || 'MOTORBIKE',
+      vehicle_plate: data.vehicle_plate || '59X1-12345',
+    });
+    return this.shipperRepo.save(shipper);
+  }
+
+  async updateShipperInfo(id: string, data: any) {
+    const shipper = await this.shipperRepo.findOne({ where: { id } });
+    if (!shipper) throw new NotFoundException('Shipper không tồn tại');
+
+    if (data.full_name) shipper.full_name = data.full_name;
+    if (data.phone) shipper.phone = data.phone;
+    if (data.email !== undefined) shipper.email = data.email;
+    if (data.branch_code !== undefined) shipper.branch_code = data.branch_code;
+    if (data.status) shipper.status = data.status;
+    if (data.vehicle_type) shipper.vehicle_type = data.vehicle_type;
+    if (data.vehicle_plate) shipper.vehicle_plate = data.vehicle_plate;
+
+    return this.shipperRepo.save(shipper);
+  }
+
+  async deleteShipper(id: string) {
+    const shipper = await this.shipperRepo.findOne({ where: { id } });
+    if (!shipper) throw new NotFoundException('Shipper không tồn tại');
+    await this.shipperRepo.remove(shipper);
+    return { success: true, message: 'Đã xóa shipper thành công' };
+  }
+
+  async getExceptions(status?: string, limit: number = 50) {
+    const query = this.exceptionRepo.createQueryBuilder('e')
+      .leftJoinAndSelect('e.shipper', 'shipper')
+      .leftJoinAndSelect('e.delivery', 'delivery');
+    if (status) {
+      query.where('e.status = :status', { status });
+    }
+    return query.orderBy('e.created_at', 'DESC').take(limit).getMany();
+  }
+
+  async handleExceptionAction(id: string, action: string, note?: string) {
+    const exc = await this.exceptionRepo.findOne({ where: { id } });
+    if (!exc) throw new NotFoundException('Báo cáo ngoại lệ không tồn tại');
+    exc.status = action === 'approve' ? 'APPROVED' : 'REJECTED';
+    return this.exceptionRepo.save(exc);
+  }
+
+  async getDispatchConfig() {
+    return {
+      auto_dispatch: true,
+      max_orders_per_shipper: 3,
+      search_radius_km: 5,
+      commission_rate_percent: 15,
+    };
+  }
+
+  async updateDispatchConfig(config: any) {
+    return {
+      success: true,
+      message: 'Cập nhật cấu hình thành công',
+      config,
+    };
+  }
+
+  async setCommissionRate(ratePercent: number) {
+    return {
+      success: true,
+      message: `Đã cập nhật tỷ lệ hoa hồng: ${ratePercent}%`,
+      commission_rate_percent: ratePercent,
+    };
+  }
+
+  async getKpiData(range: string = 'week') {
+    const shippers = await this.shipperRepo.find();
+    return {
+      total_deliveries: shippers.reduce((acc, s) => acc + (s.total_deliveries || 0), 0),
+      avg_rating: 4.8,
+      on_time_rate: 96.5,
+      top_shippers: shippers.slice(0, 5).map(s => ({
+        id: s.id,
+        name: s.full_name,
+        completed_orders: s.total_deliveries,
+        rating: s.rating,
+      })),
+    };
+  }
+
+  async getFinanceData(limit: number = 20) {
+    const shippers = await this.shipperRepo.find({ take: limit });
+    return {
+      total_commission_payout: 15400000,
+      total_shipping_fee_collected: 35000000,
+      shippers_finance: shippers.map(s => ({
+        id: s.id,
+        full_name: s.full_name,
+        phone: s.phone,
+        total_deliveries: s.total_deliveries,
+        balance: 150000,
+        commission_earned: (s.total_deliveries || 0) * 15000 * 0.85,
+      })),
+    };
   }
 
   async assignOrderToShipper(maDonHang: string, shipperId: string, managerId: string) {

@@ -8,7 +8,7 @@ export const queryKeys = {
   membershipByUser: (userId) => ['users', 'membership', userId],
   luckyWheelPrizes: ['lucky-wheel', 'prizes'],
   orderHistoryRoot: ['orders', 'history'],
-  orderHistory: (userId, filters) => ['orders', 'history', userId, filters],
+  orderHistory: (userId, filters) => ['orders', 'history', userId, filters?.paymentStatus || 'ALL', filters?.paymentMethod || 'ALL', filters?.keyword || ''],
   orderStatus: (userId, orderId) => ['orders', 'status', userId, orderId],
   notificationsRoot: ['notifications'],
   notificationsByUser: (userId) => ['notifications', userId],

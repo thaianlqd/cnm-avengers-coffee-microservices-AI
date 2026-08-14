@@ -12,11 +12,14 @@ import { ThanhToanService } from './thanh-toan.service';
 import { VoucherModule } from '../voucher/voucher.module';
 import { FeaturesThaianModule } from '../shipper/features_thaian/features_thaian.module';
 import { CustomerWalletModule } from '../customer-wallet/customer-wallet.module';
+import { SurveyResponse } from '../../entities/survey-response.entity';
+import { SurveyForm } from '../../entities/survey-form.entity';
+import { SurveyService } from '../../services/survey.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CartItem, DonHang, ChiTietDonHang, GiaoDichThanhToan, CaDoiSoat, CaLamViecNhanVien]), NotificationModule, VoucherModule, FeaturesThaianModule, CustomerWalletModule],
+  imports: [TypeOrmModule.forFeature([CartItem, DonHang, ChiTietDonHang, GiaoDichThanhToan, CaDoiSoat, CaLamViecNhanVien, SurveyResponse, SurveyForm]), NotificationModule, VoucherModule, FeaturesThaianModule, CustomerWalletModule],
   controllers: [ThanhToanController, ThanhToanHeThongController, ThanhToanLegacyWebhookController],
-  providers: [ThanhToanService],
+  providers: [ThanhToanService, SurveyService],
   exports: [ThanhToanService],
 })
 export class ThanhToanModule {}
