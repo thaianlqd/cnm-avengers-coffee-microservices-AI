@@ -43,7 +43,7 @@ def get_minio():
 
 def get_engine():
     return sqlalchemy.create_engine(
-        f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+        f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=require"
     )
 
 
@@ -190,6 +190,238 @@ def main():
         upload_json(s3, df.to_dict(orient="records"), "payment_methods/latest.json")
     except Exception as e:
         logger.warning(f"Payment method error: {e}")
+
+    # ══════════════════════════════════════════════════════════════
+    # HƯỚNG 1: TASTE ANALYTICS — Phân tích Khẩu vị theo Địa lý
+    # Nguồn: chi_tiet_don_hang.kich_co  (mapping = Size/Customization)
+    #        don_hang.co_so_ma           (Chi nhánh / Địa lý)
+    #        don_hang.khung_gio_giao     (Khung giờ đặt hàng)
+    # ══════════════════════════════════════════════════════════════
+    try:
+        # 8. Taste Profile by Branch — Top sản phẩm + size/variant mỗi chi nhánh
+        df = pd.read_sql("""
+            SELECT
+                COALESCE(d.co_so_ma, 'UNKNOWN') AS branch_code,
+                ct.ten_san_pham,
+                COALESCE(ct.kich_co, 'Standard') AS size_variant,
+                COUNT(*) AS order_count,
+                SUM(ct.so_luong) AS total_qty,
+                ROUND(AVG(d.tong_tien)::numeric, 0) AS avg_order_value
+            FROM orders.chi_tiet_don_hang ct
+            JOIN orders.don_hang d ON ct.ma_don_hang = d.ma_don_hang
+            WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO', 'DA_XAC_NHAN')
+              AND d.ngay_tao >= CURRENT_DATE - INTERVAL '90 days'
+            GROUP BY d.co_so_ma, ct.ten_san_pham, ct.kich_co
+            ORDER BY branch_code, total_qty DESC
+        """, engine)
+        upload_json(s3, df.to_dict(orient="records"), "taste_analytics/branch_taste_profile/latest.json")
+        logger.info(f"Taste by branch: {len(df)} rows")
+    except Exception as e:
+        logger.warning(f"Taste branch error: {e}")
+
+    try:
+        # 9. Taste by Time-of-Day — Khẩu vị thay đổi theo khung giờ
+        df = pd.read_sql("""
+            SELECT
+                EXTRACT(HOUR FROM d.ngay_tao)::int AS hour_of_day,
+                CASE
+                    WHEN EXTRACT(HOUR FROM d.ngay_tao) BETWEEN 6 AND 9   THEN 'Sáng sớm (6-9h)'
+                    WHEN EXTRACT(HOUR FROM d.ngay_tao) BETWEEN 10 AND 12 THEN 'Buổi sáng (10-12h)'
+                    WHEN EXTRACT(HOUR FROM d.ngay_tao) BETWEEN 13 AND 15 THEN 'Buổi trưa (13-15h)'
+                    WHEN EXTRACT(HOUR FROM d.ngay_tao) BETWEEN 16 AND 19 THEN 'Chiều tối (16-19h)'
+                    ELSE 'Tối khuya (19h+)'
+                END AS time_slot,
+                ct.ten_san_pham,
+                COALESCE(ct.kich_co, 'Standard') AS size_variant,
+                COUNT(*) AS order_count,
+                SUM(ct.so_luong) AS total_qty
+            FROM orders.chi_tiet_don_hang ct
+            JOIN orders.don_hang d ON ct.ma_don_hang = d.ma_don_hang
+            WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO', 'DA_XAC_NHAN')
+              AND d.ngay_tao >= CURRENT_DATE - INTERVAL '90 days'
+            GROUP BY hour_of_day, time_slot, ct.ten_san_pham, ct.kich_co
+            ORDER BY hour_of_day, total_qty DESC
+        """, engine)
+        upload_json(s3, df.to_dict(orient="records"), "taste_analytics/time_of_day_taste/latest.json")
+        logger.info(f"Taste by time: {len(df)} rows")
+    except Exception as e:
+        logger.warning(f"Taste time error: {e}")
+
+    try:
+        # 10. Product Category Popularity by Branch (Heatmap data)
+        df = pd.read_sql("""
+            SELECT
+                COALESCE(d.co_so_ma, 'UNKNOWN') AS branch_code,
+                ct.ten_san_pham,
+                COUNT(DISTINCT ct.ma_don_hang) AS unique_orders,
+                SUM(ct.so_luong) AS total_qty,
+                ROUND(100.0 * SUM(ct.so_luong) /
+                    SUM(SUM(ct.so_luong)) OVER (PARTITION BY d.co_so_ma), 2
+                ) AS pct_of_branch
+            FROM orders.chi_tiet_don_hang ct
+            JOIN orders.don_hang d ON ct.ma_don_hang = d.ma_don_hang
+            WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO', 'DA_XAC_NHAN')
+              AND d.ngay_tao >= CURRENT_DATE - INTERVAL '90 days'
+            GROUP BY d.co_so_ma, ct.ten_san_pham
+            ORDER BY branch_code, total_qty DESC
+        """, engine)
+        upload_json(s3, df.to_dict(orient="records"), "taste_analytics/branch_product_heatmap/latest.json")
+        logger.info(f"Branch heatmap: {len(df)} rows")
+    except Exception as e:
+        logger.warning(f"Branch heatmap error: {e}")
+
+    # ══════════════════════════════════════════════════════════════
+    # HƯỚNG 2: CUSTOMER WALLET ANALYTICS — Phân tích Dòng tiền Ví
+    # Nguồn: orders.customer_wallet_transaction
+    #        orders.don_hang.phuong_thuc_thanh_toan
+    # ══════════════════════════════════════════════════════════════
+    try:
+        # 11. Wallet adoption rate — Tỷ lệ dùng Ví vs các phương thức khác
+        df = pd.read_sql("""
+            SELECT
+                phuong_thuc_thanh_toan AS payment_method,
+                COUNT(*) AS order_count,
+                COALESCE(SUM(tong_tien), 0) AS total_revenue,
+                ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (), 2) AS pct_orders,
+                COUNT(DISTINCT ma_nguoi_dung) AS unique_customers
+            FROM orders.don_hang
+            WHERE trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+              AND ngay_tao >= CURRENT_DATE - INTERVAL '90 days'
+            GROUP BY phuong_thuc_thanh_toan
+            ORDER BY order_count DESC
+        """, engine)
+        upload_json(s3, df.to_dict(orient="records"), "wallet_analytics/payment_adoption/latest.json")
+        logger.info(f"Payment adoption: {len(df)} rows")
+    except Exception as e:
+        logger.warning(f"Wallet adoption error: {e}")
+
+    try:
+        # 12. Wallet transaction analysis — Top-up behavior & frequency
+        df = pd.read_sql("""
+            SELECT
+                customer_id::text,
+                type AS transaction_type,
+                status,
+                COUNT(*) AS tx_count,
+                COALESCE(SUM(amount), 0) AS total_amount,
+                ROUND(AVG(amount)::numeric, 0) AS avg_amount,
+                MIN(created_at) AS first_tx,
+                MAX(created_at) AS last_tx
+            FROM orders.customer_wallet_transaction
+            WHERE status = 'SUCCESS'
+            GROUP BY customer_id, type, status
+            ORDER BY total_amount DESC
+        """, engine)
+        upload_json(s3, df.to_dict(orient="records"), "wallet_analytics/wallet_transactions/latest.json")
+        logger.info(f"Wallet transactions: {len(df)} rows")
+    except Exception as e:
+        logger.warning(f"Wallet tx error: {e}")
+
+    try:
+        # 13. Customer value comparison — Wallet users vs COD users
+        df = pd.read_sql("""
+            SELECT
+                ma_nguoi_dung::text AS customer_id,
+                CASE
+                    WHEN MAX(phuong_thuc_thanh_toan) IN ('VI_AVENGERS', 'WALLET') THEN 'Dùng Ví'
+                    WHEN MAX(phuong_thuc_thanh_toan) IN ('VNPAY', 'MOMO', 'QR_CODE') THEN 'Ví điện tử bên ngoài'
+                    ELSE 'Tiền mặt / COD'
+                END AS payment_group,
+                COUNT(*) AS order_count,
+                COALESCE(SUM(tong_tien) FILTER (
+                    WHERE trang_thai_don_hang IN ('HOAN_THANH','DANG_GIAO')
+                ), 0) AS lifetime_value,
+                MAX(ngay_tao) AS last_order_date,
+                CURRENT_DATE - MAX(ngay_tao)::date AS days_since_last_order
+            FROM orders.don_hang
+            WHERE ma_nguoi_dung IS NOT NULL
+            GROUP BY ma_nguoi_dung
+        """, engine)
+        # Aggregate by payment group
+        if len(df) > 0:
+            df["lifetime_value"] = pd.to_numeric(df["lifetime_value"], errors="coerce").fillna(0)
+            df["days_since_last_order"] = pd.to_numeric(df["days_since_last_order"], errors="coerce").fillna(0)
+            summary = df.groupby("payment_group").agg(
+                customer_count=("customer_id", "count"),
+                avg_order_count=("order_count", "mean"),
+                avg_ltv=("lifetime_value", "mean"),
+                total_ltv=("lifetime_value", "sum"),
+                avg_days_inactive=("days_since_last_order", "mean"),
+            ).reset_index().round(2)
+            upload_json(s3, summary.to_dict(orient="records"), "wallet_analytics/wallet_vs_cod_comparison/latest.json")
+            logger.info(f"Wallet vs COD comparison: {len(summary)} groups")
+    except Exception as e:
+        logger.warning(f"Wallet comparison error: {e}")
+
+    # ══════════════════════════════════════════════════════════════
+    # HƯỚNG 3: LOGISTICS ANALYTICS — Phân tích Lalamove vs Shipper Nội bộ
+    # Nguồn: orders.delivery_tracking (bảng của features_thaian)
+    #        orders.shipper_delivery   (bảng gốc)
+    # ══════════════════════════════════════════════════════════════
+    try:
+        # 14. Delivery method performance comparison
+        df = pd.read_sql("""
+            SELECT
+                COALESCE(dt.delivery_method, 'INTERNAL') AS delivery_method,
+                dt.delivery_mode,
+                COUNT(*) AS total_orders,
+                COUNT(*) FILTER (WHERE dt.lalamove_status IN ('COMPLETED','DELIVERED')) AS completed,
+                COALESCE(AVG(dt.delivery_fee), 0) AS avg_delivery_fee,
+                COALESCE(AVG(dt.estimated_minutes), 0) AS avg_estimated_minutes,
+                COALESCE(dt.branch_code, 'UNKNOWN') AS branch_code
+            FROM orders.delivery_tracking dt
+            WHERE dt.created_at >= CURRENT_DATE - INTERVAL '90 days'
+            GROUP BY dt.delivery_method, dt.delivery_mode, dt.branch_code
+            ORDER BY total_orders DESC
+        """, engine)
+        upload_json(s3, df.to_dict(orient="records"), "logistics_analytics/delivery_method_performance/latest.json")
+        logger.info(f"Delivery method performance: {len(df)} rows")
+    except Exception as e:
+        logger.warning(f"Logistics performance error: {e}")
+
+    try:
+        # 15. Delivery cost by hour — Chi phí giao theo khung giờ
+        df = pd.read_sql("""
+            SELECT
+                EXTRACT(HOUR FROM d.ngay_tao)::int AS hour_of_day,
+                CASE
+                    WHEN EXTRACT(HOUR FROM d.ngay_tao) BETWEEN 11 AND 13 THEN 'Giờ cao điểm trưa'
+                    WHEN EXTRACT(HOUR FROM d.ngay_tao) BETWEEN 17 AND 19 THEN 'Giờ cao điểm chiều'
+                    ELSE 'Giờ thấp điểm'
+                END AS peak_label,
+                COALESCE(dt.delivery_method, 'INTERNAL') AS method,
+                COUNT(*) AS order_count,
+                COALESCE(AVG(dt.delivery_fee), 0) AS avg_fee,
+                COALESCE(AVG(dt.estimated_minutes), 0) AS avg_minutes
+            FROM orders.delivery_tracking dt
+            JOIN orders.don_hang d ON dt.ma_don_hang = d.ma_don_hang
+            WHERE d.ngay_tao >= CURRENT_DATE - INTERVAL '90 days'
+            GROUP BY hour_of_day, peak_label, dt.delivery_method
+            ORDER BY hour_of_day
+        """, engine)
+        upload_json(s3, df.to_dict(orient="records"), "logistics_analytics/cost_by_hour/latest.json")
+        logger.info(f"Delivery cost by hour: {len(df)} rows")
+    except Exception as e:
+        logger.warning(f"Logistics hour error: {e}")
+
+    try:
+        # 16. Delivery mode adoption — Tỷ lệ khách chọn giao tận nơi vs tự lấy
+        df = pd.read_sql("""
+            SELECT
+                delivery_mode,
+                COALESCE(branch_code, 'UNKNOWN') AS branch_code,
+                COUNT(*) AS order_count,
+                ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (PARTITION BY branch_code), 2) AS pct_of_branch,
+                COALESCE(AVG(delivery_fee), 0) AS avg_fee
+            FROM orders.delivery_tracking
+            WHERE created_at >= CURRENT_DATE - INTERVAL '90 days'
+            GROUP BY delivery_mode, branch_code
+            ORDER BY branch_code, order_count DESC
+        """, engine)
+        upload_json(s3, df.to_dict(orient="records"), "logistics_analytics/delivery_mode_adoption/latest.json")
+        logger.info(f"Delivery mode adoption: {len(df)} rows")
+    except Exception as e:
+        logger.warning(f"Logistics mode error: {e}")
 
     # Pipeline metadata
     upload_json(s3, {"last_run": datetime.now().isoformat(), "status": "success"}, "pipeline_meta/latest.json")

@@ -83,6 +83,7 @@ def get_db_conn():
         host=DB_HOST, port=DB_PORT, user=DB_USER,
         password=DB_PASSWORD, dbname=DB_NAME,
         cursor_factory=psycopg2.extras.RealDictCursor,
+        sslmode='require'
     )
 
 

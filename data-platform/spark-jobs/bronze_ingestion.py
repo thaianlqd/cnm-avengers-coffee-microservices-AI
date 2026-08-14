@@ -38,7 +38,7 @@ RUN_DATE = datetime.now().strftime("%Y/%m/%d")
 
 
 def get_engine():
-    url = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    url = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=require"
     return sqlalchemy.create_engine(url)
 
 
