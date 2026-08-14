@@ -539,6 +539,21 @@ function AppContent() {
     return () => window.removeEventListener('navigate-tab', handler);
   }, []);
 
+  const handleCloseOrderHistory = () => {
+    setIsOrderHistoryOpen(false);
+    if (activeTab === 'order-history') {
+      setActiveTab('profile');
+    }
+  };
+
+  // ── Sync order-history tab with OrderHistoryModal ─────────────────────────────
+  useEffect(() => {
+    if (activeTab === 'order-history') {
+      setIsOrderHistoryOpen(true);
+    }
+  }, [activeTab]);
+
+
 
 
   // ── AI Recommendations ──────────────────────────────────────────────────────
@@ -1874,7 +1889,7 @@ function AppContent() {
           />
         ) : activeTab === 'gift-card' ? (
           <GiftCardPage onBackToMain={() => setActiveTab('home')} />
-        ) : ['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail'].includes(activeTab) ? (
+        ) : ['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail', 'order-history'].includes(activeTab) ? (
           <OrderPage
             menuSections={menuSections}
             products={products}
@@ -1935,7 +1950,7 @@ function AppContent() {
               <ChinhSachDatHangPage />
             ) : activeTab === 'lien-he' ? (
               <LienHePage />
-            ) : activeTab === 'profile' ? (
+            ) : (activeTab === 'profile' || activeTab === 'order-history') ? (
               <ProfilePageContent
                 user={user}
                 onUserUpdated={handleUserUpdated}
@@ -1984,7 +1999,7 @@ function AppContent() {
       />
       <OrderHistoryModal
         isOpen={isOrderHistoryOpen}
-        onClose={() => setIsOrderHistoryOpen(false)}
+        onClose={handleCloseOrderHistory}
         user={user}
       />
 
