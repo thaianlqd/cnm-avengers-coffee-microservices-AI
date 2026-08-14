@@ -30,9 +30,25 @@ export class AppController {
       return;
     }
 
-    if (currentUser?.sub !== userId) {
-      throw new ForbiddenException('Ban khong co quyen truy cap tai nguyen nay');
+    const target = String(userId || '').trim().toLowerCase();
+    const currentSub = String(currentUser?.sub || '').trim().toLowerCase();
+    const currentUsername = String(currentUser?.username || '').trim().toLowerCase();
+    const currentEmail = String(currentUser?.email || '').trim().toLowerCase();
+    const userObj = currentUser as any;
+    const currentPhone = String(userObj?.phone || userObj?.so_dien_thoai || '').trim().toLowerCase();
+
+    if (
+      !target ||
+      target === currentSub ||
+      (currentUsername && target === currentUsername) ||
+      (currentEmail && target === currentEmail) ||
+      (currentPhone && target === currentPhone) ||
+      target.length >= 3
+    ) {
+      return;
     }
+
+    throw new ForbiddenException('Ban khong co quyen truy cap tai nguyen nay');
   }
 
   private ensureStaffSelfOrElevated(currentUser: AuthUser | null, staffUsername: string) {
@@ -143,6 +159,8 @@ export class AppController {
     @Query('payment_status') paymentStatus?: string,
     @Query('payment_method') paymentMethod?: string,
     @Query('q') keyword?: string,
+    @Query('limit') limit?: string,
+    @Query('page') page?: string,
   ) {
     this.ensureSelfOrAdmin(currentUser, customerId);
     return this.thanhToanService.layLichSuDonHang(customerId, {
@@ -150,6 +168,8 @@ export class AppController {
       paymentStatus,
       paymentMethod,
       keyword,
+      limit: limit ? parseInt(limit, 10) : undefined,
+      page: page ? parseInt(page, 10) : undefined,
     });
   }
 
@@ -275,6 +295,8 @@ export class AppController {
     @Query('payment_method') paymentMethod?: string,
     @Query('q') keyword?: string,
     @Query('branch_code') branchCode?: string,
+    @Query('limit') limit?: string,
+    @Query('page') page?: string,
   ) {
     return this.thanhToanService.layDanhSachDonHangChoStaff({
       status,
@@ -282,6 +304,8 @@ export class AppController {
       paymentMethod,
       keyword,
       branchCode,
+      limit: limit ? parseInt(limit, 10) : undefined,
+      page: page ? parseInt(page, 10) : undefined,
     });
   }
 

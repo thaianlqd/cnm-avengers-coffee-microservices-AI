@@ -14,6 +14,7 @@ import { ChiTietDonHang } from './entities/chi-tiet-don-hang.entity';
 import { DonHang } from './entities/don-hang.entity';
 import { GiaoDichThanhToan } from './entities/giao-dich-thanh-toan.entity';
 import { DeliveryTrackingService } from '../shipper/features_thaian/delivery-tracking.service';
+import { SurveyService } from '../../services/survey.service';
 
 type KhoiTaoThanhToanDto = {
   phuong_thuc_thanh_toan: 'VNPAY' | 'NGAN_HANG_QR' | 'THANH_TOAN_KHI_NHAN_HANG' | 'VI_DIEN_TU';
@@ -92,6 +93,8 @@ type BoLocLichSuDonHang = {
   paymentMethod?: string;
   keyword?: string;
   branchCode?: string;
+  limit?: number;
+  page?: number;
 };
 
 type LichSuTrangThai = {
@@ -232,6 +235,7 @@ export class ThanhToanService {
     private readonly rabbitMqService: RabbitMqService,
     private readonly deliveryTrackingService: DeliveryTrackingService,
     private readonly customerWalletService: CustomerWalletService,
+    private readonly surveyService: SurveyService,
   ) {}
 
   private normalizeBranchCode(branchCode?: string) {
@@ -2178,6 +2182,28 @@ export class ThanhToanService {
       payment_details: paymentDetails,
     };
   }
+  private async loadMenuImageMaps() {
+    try {
+      const allMenuProducts = await this.donHangRepo.query(
+        `SELECT ma_san_pham, ten_san_pham, hinh_anh_url FROM menu.san_pham WHERE hinh_anh_url IS NOT NULL`,
+      );
+
+      const menuImageMap = new Map<string, string>();
+      const menuNameImageMap = new Map<string, string>();
+
+      for (const p of allMenuProducts) {
+        if (p.hinh_anh_url) {
+          menuImageMap.set(String(p.ma_san_pham), p.hinh_anh_url);
+          if (p.ten_san_pham) {
+            menuNameImageMap.set(String(p.ten_san_pham).trim().toLowerCase(), p.hinh_anh_url);
+          }
+        }
+      }
+      return { menuImageMap, menuNameImageMap };
+    } catch {
+      return { menuImageMap: new Map<string, string>(), menuNameImageMap: new Map<string, string>() };
+    }
+  }
 
   async layLichSuDonHang(maNguoiDung: string, boLoc: BoLocLichSuDonHang = {}) {
     const cacheKey = this.buildCustomerOrdersCacheKey(maNguoiDung, boLoc);
@@ -2190,7 +2216,7 @@ export class ThanhToanService {
       .createQueryBuilder('don_hang')
       .leftJoinAndSelect('don_hang.chi_tiet', 'chi_tiet')
       .leftJoinAndSelect('don_hang.giao_dich_thanh_toan', 'giao_dich')
-      .where('don_hang.ma_nguoi_dung = :maNguoiDung', { maNguoiDung });
+      .where('(don_hang.ma_nguoi_dung = :maNguoiDung OR don_hang.guest_phone = :maNguoiDung OR don_hang.guest_email = :maNguoiDung)', { maNguoiDung });
 
     if (boLoc.status) {
       query.andWhere('don_hang.trang_thai_don_hang = :status', { status: boLoc.status });
@@ -2216,16 +2242,27 @@ export class ThanhToanService {
       );
     }
 
+    const limit = boLoc.limit && boLoc.limit > 0 ? Math.min(boLoc.limit, 100) : 50;
+    const page = boLoc.page && boLoc.page > 0 ? boLoc.page : 1;
+    const skip = (page - 1) * limit;
+
     const danhSach = await query
       .orderBy('don_hang.ngay_tao', 'DESC')
-      .addOrderBy('giao_dich.ngay_tao', 'DESC')
+      .take(limit)
+      .skip(skip)
       .getMany();
 
     const maDonHangs = danhSach.map(d => d.ma_don_hang);
     let trackings: any[] = [];
     if (maDonHangs.length > 0) {
-      trackings = await this.deliveryTrackingService.getTrackingsByOrderIds(maDonHangs);
+      try {
+        trackings = await this.deliveryTrackingService.getTrackingsByOrderIds(maDonHangs);
+      } catch (e) {
+        console.warn(`Loi getTrackingsByOrderIds: ${e.message}`);
+      }
     }
+
+    const { menuImageMap, menuNameImageMap } = await this.loadMenuImageMaps();
 
     const orders = danhSach.map((don) => {
       const giaoDichSorted = [...(don.giao_dich_thanh_toan || [])].sort(
@@ -2256,21 +2293,30 @@ export class ThanhToanService {
         lich_su_trang_thai: this.taoLichSuTrangThaiHienThi(don),
         ngay_tao: don.ngay_tao,
         ngay_cap_nhat: don.ngay_cap_nhat,
-        chi_tiet: (don.chi_tiet || []).map((ct) => ({
-          id: ct.id,
-          ma_san_pham: ct.ma_san_pham,
-          ten_san_pham: ct.ten_san_pham,
-          gia_ban: Number(ct.gia_ban),
-          so_luong: ct.so_luong,
-          hinh_anh_url: ct.hinh_anh_url,
-          kich_co: ct.kich_co,
-          toppings: ct.toppings,
-          luong_da: ct.luong_da,
-          do_ngot: ct.do_ngot,
-          loai_sua: ct.loai_sua,
-          ghi_chu: ct.ghi_chu,
-          custom_attributes: ct.custom_attributes,
-        })),
+        chi_tiet: (don.chi_tiet || []).map((ct) => {
+          let imgUrl = ct.hinh_anh_url;
+          if (!imgUrl || imgUrl === '/hc-assets/caphe-1.png') {
+            imgUrl =
+              menuImageMap.get(String(ct.ma_san_pham)) ||
+              menuNameImageMap.get(String(ct.ten_san_pham || '').trim().toLowerCase()) ||
+              null;
+          }
+          return {
+            id: ct.id,
+            ma_san_pham: ct.ma_san_pham,
+            ten_san_pham: ct.ten_san_pham,
+            gia_ban: Number(ct.gia_ban),
+            so_luong: ct.so_luong,
+            hinh_anh_url: imgUrl,
+            kich_co: ct.kich_co,
+            toppings: ct.toppings,
+            luong_da: ct.luong_da,
+            do_ngot: ct.do_ngot,
+            loai_sua: ct.loai_sua,
+            ghi_chu: ct.ghi_chu,
+            custom_attributes: ct.custom_attributes,
+          };
+        }),
         giao_dich: giaoDichGanNhat
           ? {
               ma_giao_dich: giaoDichGanNhat.ma_giao_dich,
@@ -2286,7 +2332,7 @@ export class ThanhToanService {
     });
 
     const result = { total: orders.length, orders };
-    await this.redisCacheService.setJson(cacheKey, result, 45);
+    await this.redisCacheService.setJson(cacheKey, result, 45).catch(() => undefined);
     return result;
   }
 
@@ -2329,9 +2375,15 @@ export class ThanhToanService {
       );
     }
 
+    const limit = boLoc.limit && boLoc.limit > 0 ? Math.min(boLoc.limit, 100) : 50;
+    const page = boLoc.page && boLoc.page > 0 ? boLoc.page : 1;
+    const skip = (page - 1) * limit;
+
     const danhSach = await query
       .orderBy('don_hang.ngay_tao', 'DESC')
       .addOrderBy('giao_dich.ngay_tao', 'DESC')
+      .take(limit)
+      .skip(skip)
       .getMany();
 
     const maDonHangs = danhSach.map(d => d.ma_don_hang);
@@ -3041,6 +3093,11 @@ export class ThanhToanService {
 
     await this.invalidateOrderCaches(maNguoiDung, donHang.co_so_ma);
 
+    // Hủy voucher khảo sát pending nếu có
+    await this.surveyService.huyVoucherPending(maDonHang).catch((err) => {
+      console.error('[HuyDonHang] Error cancelling survey voucher:', err);
+    });
+
     return { message: 'Huy don thanh cong', order: updated };
   }
 
@@ -3401,6 +3458,17 @@ export class ThanhToanService {
             trang_thai_thanh_toan: saved.trang_thai_thanh_toan,
           },
         });
+
+        // Phát voucher khảo sát khi đơn hoàn thành, hủy voucher khi đơn bị hủy
+        if (saved.trang_thai_don_hang === 'HOAN_THANH') {
+          await this.surveyService.phatVoucherSauHoanThanh(saved.ma_don_hang).catch((err) => {
+            console.error('[capNhatTrangThaiDonHangHeThong] Error issuing survey voucher:', err);
+          });
+        } else if (saved.trang_thai_don_hang === 'DA_HUY') {
+          await this.surveyService.huyVoucherPending(saved.ma_don_hang).catch((err) => {
+            console.error('[capNhatTrangThaiDonHangHeThong] Error cancelling survey voucher:', err);
+          });
+        }
       }
 
       if (paymentStatusChanged && saved.trang_thai_thanh_toan === 'DA_THANH_TOAN') {
@@ -3463,46 +3531,20 @@ export class ThanhToanService {
     payload: { guest_session_id?: string; email?: string; phone?: string; confirmLink?: boolean },
   ) {
     const cleanSession = payload.guest_session_id?.trim();
-    const cleanEmail = payload.email?.trim()?.toLowerCase();
-    const cleanPhone = payload.phone?.trim();
 
-    if (!cleanSession && !cleanEmail && !cleanPhone) {
+    // Chỉ tìm theo session_id để tránh đồng bộ sai đơn hàng sang tài khoản khác
+    if (!cleanSession) {
       return { success: true, linked: false, count: 0 };
     }
 
-    // Tìm các đơn hàng chưa gán tài khoản khớp với session_id HOẶC email HOẶC số điện thoại
-    const query = this.donHangRepo.createQueryBuilder('don_hang')
+    // Tìm các đơn hàng chưa gán tài khoản khớp với session_id
+    const matchedOrders = await this.donHangRepo.createQueryBuilder('don_hang')
       .where(
         '(don_hang.ma_nguoi_dung IS NULL OR don_hang.ma_nguoi_dung = :emptyStr OR don_hang.ma_nguoi_dung LIKE :anonPrefix OR don_hang.ma_nguoi_dung = :anonWord)',
         { emptyStr: '', anonPrefix: 'anon-%', anonWord: 'anonymous' },
-      );
-
-    query.andWhere(
-      new Brackets((qb) => {
-        let hasCondition = false;
-        if (cleanSession) {
-          qb.where('don_hang.session_id = :session', { session: cleanSession });
-          hasCondition = true;
-        }
-        if (cleanEmail) {
-          if (hasCondition) {
-            qb.orWhere('LOWER(don_hang.guest_email) = :email', { email: cleanEmail });
-          } else {
-            qb.where('LOWER(don_hang.guest_email) = :email', { email: cleanEmail });
-            hasCondition = true;
-          }
-        }
-        if (cleanPhone) {
-          if (hasCondition) {
-            qb.orWhere('don_hang.guest_phone = :phone', { phone: cleanPhone });
-          } else {
-            qb.where('don_hang.guest_phone = :phone', { phone: cleanPhone });
-          }
-        }
-      }),
-    );
-
-    const matchedOrders = await query.getMany();
+      )
+      .andWhere('don_hang.session_id = :session', { session: cleanSession })
+      .getMany();
 
     if (matchedOrders.length > 0) {
       if (payload.confirmLink === true) {

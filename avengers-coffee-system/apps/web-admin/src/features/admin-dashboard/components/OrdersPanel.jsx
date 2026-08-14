@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ORDER_STATUSES, ORDER_STATUS_LABEL } from '../constants'
 import { fmtMoney, normalizeOrderStatus, normalizeViText, paymentTag } from '../utils'
 import {
@@ -176,8 +176,12 @@ export function OrdersPanel({
   const [editDraft, setEditDraft] = useState(null)
   const [editCashInput, setEditCashInput] = useState(0)
 
-  const filteredOrders = useMemo(() => {
+  // Reset page to 1 when search or filter criteria change
+  useEffect(() => {
     setPage(1)
+  }, [searchText, filterType, filterStatus, filterPayment, filterDate, filterMonth])
+
+  const filteredOrders = useMemo(() => {
     return (ordersState?.items || []).filter((order) => {
       if (searchText) {
         const q = searchText.toLowerCase()

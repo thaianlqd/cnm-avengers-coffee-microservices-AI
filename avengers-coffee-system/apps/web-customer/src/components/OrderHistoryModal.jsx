@@ -42,6 +42,38 @@ const BRANCH_LABEL = {
 
 const ORDER_FLOW = ['MOI_TAO', 'DA_XAC_NHAN', 'DANG_CHUAN_BI', 'DANG_GIAO', 'HOAN_THANH'];
 
+const DEFAULT_PRODUCT_FALLBACK_IMG = '/hc-assets/phin-sua-da-eae59734-6d54-471e-a34f-7ffe0fb68e6c.jpg';
+
+function resolveProductImage(item, menuProducts = []) {
+  if (!item) return DEFAULT_PRODUCT_FALLBACK_IMG;
+
+  const rawUrl = String(item.hinh_anh_url || item.hinhAnhUrl || item.img || '').trim();
+  if (rawUrl && rawUrl !== '/hc-assets/caphe-1.png') {
+    return rawUrl;
+  }
+
+  if (item.ma_san_pham || item.maSanPham) {
+    const targetId = String(item.ma_san_pham || item.maSanPham);
+    const foundById = (menuProducts || []).find((p) => String(p.ma_san_pham || p.id) === targetId);
+    if (foundById?.hinh_anh_url && foundById.hinh_anh_url !== '/hc-assets/caphe-1.png') {
+      return foundById.hinh_anh_url;
+    }
+  }
+
+  const name = String(item.ten_san_pham || item.tenSanPham || '').trim().toLowerCase();
+  if (name && Array.isArray(menuProducts)) {
+    const foundByName = menuProducts.find((p) => {
+      const pName = String(p.ten_san_pham || p.name || '').trim().toLowerCase();
+      return pName && (pName === name || pName.includes(name) || name.includes(pName));
+    });
+    if (foundByName?.hinh_anh_url && foundByName.hinh_anh_url !== '/hc-assets/caphe-1.png') {
+      return foundByName.hinh_anh_url;
+    }
+  }
+
+  return DEFAULT_PRODUCT_FALLBACK_IMG;
+}
+
 function getTimeline(order) {
   const history = Array.isArray(order?.lich_su_trang_thai) ? order.lich_su_trang_thai : [];
   const orderHistory = history.filter((item) => item?.loai === 'ORDER' && item?.trang_thai);
@@ -166,7 +198,40 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
   });
   const [actionMessage, setActionMessage] = useState('');
 
-  const maNguoiDung = useMemo(() => user?.ma_nguoi_dung || null, [user]);
+  const [guestLookupId, setGuestLookupId] = useState('');
+  const [guestLookupInput, setGuestLookupInput] = useState('');
+
+  const effectiveUser = useMemo(() => {
+    if (user) return user;
+    try {
+      const saved = localStorage.getItem('user');
+      return saved ? JSON.parse(saved) : user;
+    } catch {
+      return user;
+    }
+  }, [user]);
+
+  const maNguoiDung = useMemo(() => {
+    if (!effectiveUser) return null;
+    if (typeof effectiveUser === 'string' || typeof effectiveUser === 'number') {
+      return String(effectiveUser).trim();
+    }
+    const targetId =
+      effectiveUser.ma_nguoi_dung ||
+      effectiveUser.maNguoiDung ||
+      effectiveUser.id ||
+      effectiveUser.userId ||
+      effectiveUser.so_dien_thoai ||
+      effectiveUser.soDienThoai ||
+      effectiveUser.phone ||
+      effectiveUser.email ||
+      null;
+    return targetId ? String(targetId).trim() : null;
+  }, [effectiveUser]);
+
+  const activeUserIdForQuery = useMemo(() => {
+    return maNguoiDung || guestLookupId.trim() || null;
+  }, [maNguoiDung, guestLookupId]);
 
   const currentFilters = useMemo(
     () => ({
@@ -183,8 +248,10 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
     isError,
     error,
   } = useQuery({
-    queryKey: queryKeys.orderHistory(maNguoiDung, currentFilters),
+    queryKey: queryKeys.orderHistory(activeUserIdForQuery, currentFilters),
     queryFn: async () => {
+      if (!activeUserIdForQuery) return [];
+      const cleanId = String(activeUserIdForQuery).trim();
       const params = new URLSearchParams();
 
       if (paymentStatusFilter !== 'ALL') {
@@ -198,12 +265,14 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
       }
 
       const query = params.toString() ? `?${params.toString()}` : '';
-      const response = await apiClient.get(`/customers/${maNguoiDung}/orders${query}`);
-      return response.data?.orders || [];
+      const response = await apiClient.get(`/customers/${encodeURIComponent(cleanId)}/orders${query}`);
+      const rawData = response.data;
+      if (Array.isArray(rawData)) return rawData;
+      return rawData?.orders || rawData?.items || [];
     },
-    enabled: Boolean(maNguoiDung && isOpen),
+    enabled: Boolean(activeUserIdForQuery && isOpen),
     staleTime: 30 * 1000,
-    refetchInterval: 10 * 1000,
+    retry: 1,
   });
 
   const { data: menuProducts = [] } = useQuery({
@@ -507,9 +576,34 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
           </button>
         </div>
 
-        {!maNguoiDung ? (
-          <div className="p-8 text-center">
-            <p className="text-lg font-bold text-gray-700">Bạn cần đăng nhập để xem lịch sử đơn hàng.</p>
+        {!activeUserIdForQuery ? (
+          <div className="p-8 text-center max-w-md mx-auto my-12 bg-white rounded-3xl border border-gray-100 shadow-xl space-y-4">
+            <div className="w-12 h-12 rounded-full bg-red-50 text-[#b22830] flex items-center justify-center mx-auto text-xl font-bold">
+              📦
+            </div>
+            <h3 className="text-lg font-black text-gray-800">Tra cứu lịch sử đơn hàng</h3>
+            <p className="text-xs font-semibold text-gray-500 leading-relaxed">
+              Bạn chưa đăng nhập. Nhập số điện thoại hoặc mã đơn hàng của bạn để xem tiến trình và lịch sử mua hàng.
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Nhập SĐT hoặc mã đơn hàng..."
+                value={guestLookupInput}
+                onChange={(e) => setGuestLookupInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') setGuestLookupId(guestLookupInput.trim());
+                }}
+                className="flex-1 rounded-xl border border-gray-200 px-3.5 py-2.5 text-xs font-semibold text-gray-800 outline-none focus:border-[#b22830]"
+              />
+              <button
+                type="button"
+                onClick={() => setGuestLookupId(guestLookupInput.trim())}
+                className="rounded-xl bg-[#b22830] hover:bg-[#8e1c23] px-4 py-2.5 text-xs font-bold text-white transition-colors cursor-pointer"
+              >
+                Tra cứu
+              </button>
+            </div>
           </div>
         ) : trackingOrderId ? (
           <div className="flex h-[calc(88vh-86px)] flex-col bg-gray-50 overflow-y-auto">
@@ -654,7 +748,15 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                               {(order.chi_tiet || []).map((item) => (
                                 <div key={item.id || `${item.ma_san_pham}-${item.ten_san_pham}`} className="rounded-xl bg-gray-50/70 border border-gray-100 p-2.5 flex items-center justify-between gap-3">
                                   <div className="flex items-center gap-3 min-w-0">
-                                    <img src={item.hinh_anh_url || '/hc-assets/caphe-1.png'} alt={item.ten_san_pham} className="h-11 w-11 rounded-lg object-cover bg-white border border-gray-100 shrink-0" />
+                                    <img
+                                      src={resolveProductImage(item, menuProducts)}
+                                      alt={item.ten_san_pham || 'Sản phẩm'}
+                                      className="h-11 w-11 rounded-lg object-cover bg-white border border-gray-100 shrink-0"
+                                      onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = DEFAULT_PRODUCT_FALLBACK_IMG;
+                                      }}
+                                    />
                                     <div className="min-w-0">
                                       <p className="text-xs font-bold text-gray-900 truncate">{item.ten_san_pham}</p>
                                       <p className="text-[11px] text-gray-500 font-medium">Size: {item.kich_co || 'Nhỏ'} • SL: {item.so_luong}</p>
@@ -814,8 +916,67 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
             setEditingProduct(null);
           }}
           onSave={handleSaveEditItemOptions}
-
         />
+      )}
+
+      {/* Modal xác nhận hủy đơn hàng */}
+      {cancelOrderId && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-5 transform scale-100 transition-all">
+            <div className="flex items-center gap-3 border-b border-gray-100 pb-3">
+              <div className="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center text-rose-600 shrink-0">
+                <XMarkIcon className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-900 font-sans">Xác nhận hủy đơn hàng</h3>
+                <p className="text-xs font-semibold text-gray-500">Mã đơn: <span className="font-mono text-rose-600 font-black">#{cancelOrderId}</span></p>
+              </div>
+            </div>
+
+            <p className="text-xs font-semibold text-gray-600 leading-relaxed">
+              Bạn có chắc chắn muốn hủy đơn hàng này? Thao tác hủy đơn không thể hoàn tác.
+            </p>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-extrabold text-gray-700 uppercase tracking-wider">
+                Lý do hủy (không bắt buộc)
+              </label>
+              <textarea
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="Nhập lý do hủy đơn của bạn..."
+                className="w-full rounded-2xl border border-gray-200 p-3 text-xs font-semibold text-gray-800 outline-none focus:border-[#b22830] focus:ring-1 focus:ring-[#b22830] transition-all resize-none bg-gray-50/50"
+                rows={3}
+              />
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setCancelOrderId(null);
+                  setCancelReason('');
+                }}
+                className="flex-1 py-3 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-600 font-black text-xs uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                Bỏ qua
+              </button>
+              <button
+                type="button"
+                disabled={cancelOrderMutation.isPending}
+                onClick={() => {
+                  cancelOrderMutation.mutate({
+                    orderId: cancelOrderId,
+                    reason: cancelReason.trim() || 'Khách hàng hủy đơn',
+                  });
+                }}
+                className="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-rose-200 transition-all cursor-pointer disabled:opacity-50"
+              >
+                {cancelOrderMutation.isPending ? 'Đang hủy...' : 'Xác nhận hủy'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
