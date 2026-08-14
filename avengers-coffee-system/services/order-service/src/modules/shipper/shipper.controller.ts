@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { ShipperService } from './shipper.service';
 
 @Controller('shippers')
@@ -8,6 +8,67 @@ export class ShipperController {
   @Post('login')
   async login(@Body() body: { username?: string; password?: string }) {
     return this.shipperService.login(String(body?.username || ''), String(body?.password || ''));
+  }
+
+  // ============ LIST SHIPPERS & CONFIG & ADMIN ============
+
+  @Get()
+  async getShippers(
+    @Query('branch_code') branchCode?: string,
+    @Query('status') status?: string,
+    @Query('q') searchKeyword?: string,
+  ) {
+    return this.shipperService.getAllShippers(branchCode, status, searchKeyword);
+  }
+
+  @Get('all')
+  async getAllShippers(@Query('branch_code') branchCode?: string) {
+    return this.shipperService.getAllShippers(branchCode);
+  }
+
+  @Get('config')
+  async getDispatchConfig() {
+    return this.shipperService.getDispatchConfig();
+  }
+
+  @Put('config')
+  async updateDispatchConfig(@Body() body: any) {
+    return this.shipperService.updateDispatchConfig(body);
+  }
+
+  @Put('commission-rate')
+  @Post('commission-rate')
+  async setCommissionRate(@Body() body: { rate_percent: number }) {
+    return this.shipperService.setCommissionRate(body.rate_percent);
+  }
+
+  @Get('kpi')
+  async getKpiData(@Query('range') range?: string) {
+    return this.shipperService.getKpiData(range);
+  }
+
+  @Get('finance')
+  async getFinanceData(@Query('limit') limit?: string) {
+    return this.shipperService.getFinanceData(Number(limit || 20));
+  }
+
+  @Get('exceptions')
+  async getExceptions(@Query('status') status?: string, @Query('limit') limit?: string) {
+    return this.shipperService.getExceptions(status, Number(limit || 50));
+  }
+
+  @Post('exceptions/:id/:action')
+  async handleExceptionAction(
+    @Param('id') id: string,
+    @Param('action') action: string,
+    @Body() body: { manager_note?: string },
+  ) {
+    return this.shipperService.handleExceptionAction(id, action, body?.manager_note);
+  }
+
+  @Post()
+  async createShipper(@Body() body: any) {
+    return this.shipperService.createShipper(body);
   }
 
   // ============ AVAILABLE ORDERS POOL ============
@@ -32,16 +93,19 @@ export class ShipperController {
 
   // ============ MANAGER: Assign order manually ============
 
-  @Get('all')
-  async getAllShippers(@Query('branch_code') branchCode?: string) {
-    return this.shipperService.getAllShippers(branchCode);
-  }
-
   @Post('assign-order')
   async assignOrderToShipper(
     @Body() body: { ma_don_hang: string; shipper_id: string; manager_id?: string },
   ) {
     return this.shipperService.assignOrderToShipper(body.ma_don_hang, body.shipper_id, body.manager_id || 'system');
+  }
+
+  @Post(':shipperId/deliveries')
+  async assignDeliveryToShipper(
+    @Param('shipperId') shipperId: string,
+    @Body() body: { ma_don_hang: string; manager_id?: string },
+  ) {
+    return this.shipperService.assignOrderToShipper(body.ma_don_hang, shipperId, body.manager_id || 'system');
   }
 
   // ============ PROFILE ============
