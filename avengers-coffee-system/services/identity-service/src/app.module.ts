@@ -52,7 +52,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
           ssl: sslConfig,
           schema: identitySchema,
           entities: [User, DeliveryAddress, Branch, Promotion, PromotionUsage, MembershipConfig],
-          synchronize: true,
+          synchronize: process.env.DB_SYNCHRONIZE === 'true',
         };
       },
     }),

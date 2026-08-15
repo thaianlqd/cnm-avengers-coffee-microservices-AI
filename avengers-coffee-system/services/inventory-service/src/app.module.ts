@@ -43,7 +43,7 @@ const inventorySchema = process.env.DB_SCHEMA || 'inventory';
           ssl: sslConfig,
           schema: inventorySchema,
           entities: [InventoryItem],
-          synchronize: true,
+          synchronize: process.env.DB_SYNCHRONIZE === 'true',
         };
       },
     }),

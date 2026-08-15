@@ -26,25 +26,38 @@ async function bootstrap() {
       const { DataSource } = require('typeorm');
       const dataSource = app.get(DataSource);
       const schema = process.env.DB_SCHEMA || 'orders';
-      await dataSource.query(`ALTER TABLE ${schema}.chi_tiet_don_hang ADD COLUMN IF NOT EXISTS toppings jsonb DEFAULT '[]'::jsonb`);
-      await dataSource.query(`ALTER TABLE ${schema}.chi_tiet_don_hang ADD COLUMN IF NOT EXISTS luong_da varchar`);
-      await dataSource.query(`ALTER TABLE ${schema}.chi_tiet_don_hang ADD COLUMN IF NOT EXISTS do_ngot varchar`);
-      await dataSource.query(`ALTER TABLE ${schema}.chi_tiet_don_hang ADD COLUMN IF NOT EXISTS ghi_chu varchar`);
-      await dataSource.query(`ALTER TABLE ${schema}.chi_tiet_don_hang ADD COLUMN IF NOT EXISTS loai_sua varchar`);
-      await dataSource.query(`ALTER TABLE ${schema}.chi_tiet_don_hang ADD COLUMN IF NOT EXISTS custom_attributes jsonb DEFAULT '{}'::jsonb`);
-      
-      await dataSource.query(`ALTER TABLE ${schema}.gio_hang ADD COLUMN IF NOT EXISTS toppings jsonb DEFAULT '[]'::jsonb`);
-      await dataSource.query(`ALTER TABLE ${schema}.gio_hang ADD COLUMN IF NOT EXISTS luong_da varchar`);
-      await dataSource.query(`ALTER TABLE ${schema}.gio_hang ADD COLUMN IF NOT EXISTS do_ngot varchar`);
-      await dataSource.query(`ALTER TABLE ${schema}.gio_hang ADD COLUMN IF NOT EXISTS ghi_chu varchar`);
-      await dataSource.query(`ALTER TABLE ${schema}.gio_hang ADD COLUMN IF NOT EXISTS loai_sua varchar`);
-      await dataSource.query(`ALTER TABLE ${schema}.gio_hang ADD COLUMN IF NOT EXISTS custom_attributes jsonb DEFAULT '{}'::jsonb`);
-      
-      await dataSource.query(`ALTER TABLE ${schema}.don_hang ADD COLUMN IF NOT EXISTS ma_ban varchar`);
-      console.log('Auto-migration for chi_tiet_don_hang columns successful');
-      
-      const res = await dataSource.query(`SELECT column_name FROM information_schema.columns WHERE table_schema = '${schema}' AND table_name = 'gio_hang'`);
-      fs.appendFileSync('/app/error.log', '\n[DEBUG] COLUMNS IN gio_hang: ' + JSON.stringify(res) + '\n');
+      const existingColsRes = await dataSource.query(`
+        SELECT table_name, column_name 
+        FROM information_schema.columns 
+        WHERE table_schema = '${schema}' 
+          AND table_name IN ('chi_tiet_don_hang', 'gio_hang', 'don_hang')
+      `);
+      const existingCols = new Set(
+        (existingColsRes || []).map((r: any) => `${r.table_name}.${r.column_name}`)
+      );
+
+      const addColIfNeeded = async (tableName: string, colName: string, colDef: string) => {
+        if (!existingCols.has(`${tableName}.${colName}`)) {
+          await dataSource.query(`ALTER TABLE ${schema}.${tableName} ADD COLUMN IF NOT EXISTS ${colName} ${colDef}`);
+        }
+      };
+
+      await addColIfNeeded('chi_tiet_don_hang', 'toppings', "jsonb DEFAULT '[]'::jsonb");
+      await addColIfNeeded('chi_tiet_don_hang', 'luong_da', "varchar");
+      await addColIfNeeded('chi_tiet_don_hang', 'do_ngot', "varchar");
+      await addColIfNeeded('chi_tiet_don_hang', 'ghi_chu', "varchar");
+      await addColIfNeeded('chi_tiet_don_hang', 'loai_sua', "varchar");
+      await addColIfNeeded('chi_tiet_don_hang', 'custom_attributes', "jsonb DEFAULT '{}'::jsonb");
+
+      await addColIfNeeded('gio_hang', 'toppings', "jsonb DEFAULT '[]'::jsonb");
+      await addColIfNeeded('gio_hang', 'luong_da', "varchar");
+      await addColIfNeeded('gio_hang', 'do_ngot', "varchar");
+      await addColIfNeeded('gio_hang', 'ghi_chu', "varchar");
+      await addColIfNeeded('gio_hang', 'loai_sua', "varchar");
+      await addColIfNeeded('gio_hang', 'custom_attributes', "jsonb DEFAULT '{}'::jsonb");
+
+      await addColIfNeeded('don_hang', 'ma_ban', "varchar");
+      console.log('Auto-migration column check successful');
 
     } catch (e) {
       console.error('Auto-migration failed', e);

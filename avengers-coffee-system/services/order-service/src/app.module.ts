@@ -122,7 +122,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
             GiftCardTheme,
             ShipperCodRemit,
           ],
-          synchronize: true,
+          synchronize: process.env.DB_SYNCHRONIZE === 'true',
         };
       },
     }),

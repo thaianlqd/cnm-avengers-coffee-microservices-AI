@@ -46,7 +46,7 @@ const menuSchema = process.env.DB_SCHEMA || 'menu';
           ssl: sslConfig,
           schema: menuSchema,
           entities: [SanPham, DanhMuc, ThuocTinh, BienTheSanPham],
-          synchronize: true,
+          synchronize: process.env.DB_SYNCHRONIZE === 'true',
         };
       },
     }),
