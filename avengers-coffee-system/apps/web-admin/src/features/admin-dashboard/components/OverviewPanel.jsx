@@ -306,8 +306,8 @@ export function OverviewPanel({ branchName, totals, overviewData, overviewRange,
             width: '44px',
             height: '44px',
             borderRadius: '12px',
-            backgroundColor: '#e0e7ff',
-            color: '#4f46e5',
+            backgroundColor: '#fef2f2',
+            color: '#ef4444',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -317,8 +317,70 @@ export function OverviewPanel({ branchName, totals, overviewData, overviewRange,
           </div>
           <div>
             <span style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500', display: 'block' }}>Món đang mở bán</span>
-            <strong style={{ fontSize: '1.25rem', color: '#4f46e5', fontWeight: '800', marginTop: '0.1rem', display: 'block' }}>
+            <strong style={{ fontSize: '1.25rem', color: '#ef4444', fontWeight: '800', marginTop: '0.1rem', display: 'block' }}>
               {totals.activeMenu} món
+            </strong>
+          </div>
+        </article>
+
+        <article style={{
+          backgroundColor: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: '16px',
+          padding: '1.15rem 1.25rem',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.85rem'
+        }}>
+          <div style={{
+            width: '44px',
+            height: '44px',
+            borderRadius: '12px',
+            backgroundColor: '#fffbeb',
+            color: '#d97706',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0
+          }}>
+            <Clock size={22} />
+          </div>
+          <div>
+            <span style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500', display: 'block' }}>Tiền COD Chờ duyệt</span>
+            <strong style={{ fontSize: '1.25rem', color: '#d97706', fontWeight: '800', marginTop: '0.1rem', display: 'block' }}>
+              {fmtMoney(totals.codPending || 0)}
+            </strong>
+          </div>
+        </article>
+
+        <article style={{
+          backgroundColor: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: '16px',
+          padding: '1.15rem 1.25rem',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.85rem'
+        }}>
+          <div style={{
+            width: '44px',
+            height: '44px',
+            borderRadius: '12px',
+            backgroundColor: '#f0fdf4',
+            color: '#16a34a',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0
+          }}>
+            <ShieldCheck size={22} />
+          </div>
+          <div>
+            <span style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500', display: 'block' }}>Tiền COD Đã thu</span>
+            <strong style={{ fontSize: '1.25rem', color: '#16a34a', fontWeight: '800', marginTop: '0.1rem', display: 'block' }}>
+              {fmtMoney(totals.codConfirmed || 0)}
             </strong>
           </div>
         </article>

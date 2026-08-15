@@ -92,6 +92,7 @@ export function useAdminDashboard() {
   const [replyingReviewId, setReplyingReviewId] = useState('')
   const [surveysState, setSurveysState] = useState({ loading: false, error: '', items: [] })
   const [surveyResponsesState, setSurveyResponsesState] = useState({ loading: false, error: '', items: [] })
+  const [codRemitsState, setCodRemitsState] = useState({ loading: false, error: '', items: [] })
   const knownOrderIdsRef = useRef(new Set())
   const knownOrderPaymentStatusRef = useRef(new Map())
 
@@ -440,6 +441,18 @@ export function useAdminDashboard() {
     }
   }
 
+  const taiDanhSachCod = async () => {
+    setCodRemitsState((prev) => ({ ...prev, loading: true, error: '' }))
+    try {
+      const response = await fetch(`${API_BASE_URL}/shippers/cod-remits?branch_code=${encodeURIComponent(sessionBranchCode)}`)
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Không tải được dữ liệu COD')
+      setCodRemitsState({ loading: false, error: '', items: Array.isArray(payload) ? payload : (payload?.items || payload?.data || []) })
+    } catch (error) {
+      setCodRemitsState({ loading: false, error: error.message || 'Lỗi tải COD', items: [] })
+    }
+  }
+
   const taoBieuMauKhaoSat = async (formPayload) => {
     try {
       const token = session?.token || session?.accessToken
@@ -536,6 +549,7 @@ export function useAdminDashboard() {
         taiReviewCSKH(),
         taiDanhSachBieuMau(),
         taiDanhSachPhanHoi(),
+        taiDanhSachCod(),
       ])
     }
   }, [session])
@@ -819,8 +833,15 @@ export function useAdminDashboard() {
       .filter((order) => order.trang_thai_don_hang === 'HOAN_THANH')
       .reduce((sum, order) => sum + Number(order.tong_tien || 0), 0)
 
-    return { gross, inProgress, activeMenu, revenue, analyticsCount: analyticsOrders.length }
-  }, [ordersState.items, inventoryState.items, overviewRange])
+    const codPending = codRemitsState.items
+      .filter((r) => r.status === 'PENDING')
+      .reduce((sum, r) => sum + Number(r.amount || 0), 0);
+    const codConfirmed = codRemitsState.items
+      .filter((r) => r.status === 'CONFIRMED' && new Date(r.updated_at || r.created_at).getTime() >= minTimestamp)
+      .reduce((sum, r) => sum + Number(r.amount || 0), 0);
+
+    return { gross, inProgress, activeMenu, revenue, analyticsCount: analyticsOrders.length, codPending, codConfirmed }
+  }, [ordersState.items, inventoryState.items, overviewRange, codRemitsState.items])
 
   const posSubtotal = useMemo(
     () => posItems.reduce((sum, item) => sum + Number(item.qty || 0) * Number(item.price || 0), 0),
