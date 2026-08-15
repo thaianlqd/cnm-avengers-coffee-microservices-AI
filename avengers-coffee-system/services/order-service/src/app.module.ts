@@ -36,6 +36,7 @@ import { ShipperDelivery } from './modules/shipper/entities/shipper-delivery.ent
 import { ShipperWallet } from './modules/shipper/entities/shipper-wallet.entity';
 import { ShipperSchedule } from './modules/shipper/entities/shipper-schedule.entity';
 import { ShipperException } from './modules/shipper/entities/shipper-exception.entity';
+import { ShipperCodRemit } from './modules/shipper/entities/shipper-cod-remit.entity';
 import { FeaturesThaianModule } from './modules/shipper/features_thaian/features_thaian.module';
 import { DeliveryTracking } from './modules/shipper/features_thaian/delivery-tracking.entity';
 import { CustomerWallet } from './modules/customer-wallet/entities/customer-wallet.entity';
@@ -119,6 +120,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
             CustomerWalletTransaction,
             GiftCard,
             GiftCardTheme,
+            ShipperCodRemit,
           ],
           synchronize: true,
         };

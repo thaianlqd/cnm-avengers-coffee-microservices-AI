@@ -478,6 +478,9 @@ export class ThanhToanService {
     if (normalizedDiaChi.includes('liên khu 4-5') || normalizedDiaChi.includes('liên khu 45')) {
       return { branchCode: 'HCM_DIEN_BIEN_PHU', branchLat: 10.7836, branchLon: 106.6896, customerLat: 10.7937, customerLon: 106.5975 }; // Liên Khu 4-5, BHH B (Cách N.T.Tú ~2.5km)
     }
+    if (normalizedDiaChi.includes('điện biên phủ') || normalizedDiaChi.includes('dien bien phu')) {
+      return { branchCode: 'HCM_DIEN_BIEN_PHU', branchLat: 10.7836, branchLon: 106.6896, customerLat: 10.7890, customerLon: 106.6980 }; // Giả lập Đa Kao Q1
+    }
 
     try {
       // 1. Tối ưu chuỗi tìm kiếm (Bỏ bớt Phường/Quận để Nominatim dễ tìm chính xác số nhà/đường hơn)

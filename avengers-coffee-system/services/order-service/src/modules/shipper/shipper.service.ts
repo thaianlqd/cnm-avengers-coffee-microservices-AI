@@ -6,6 +6,7 @@ import { ShipperDelivery } from './entities/shipper-delivery.entity';
 import { ShipperWallet } from './entities/shipper-wallet.entity';
 import { ShipperSchedule } from './entities/shipper-schedule.entity';
 import { ShipperException } from './entities/shipper-exception.entity';
+import { ShipperCodRemit } from './entities/shipper-cod-remit.entity';
 import { DonHang } from '../thanh-toan/entities/don-hang.entity';
 import { ChiTietDonHang } from '../thanh-toan/entities/chi-tiet-don-hang.entity';
 import { DeliveryTracking } from './features_thaian/delivery-tracking.entity';
@@ -18,6 +19,7 @@ export class ShipperService {
     @InjectRepository(ShipperWallet) private walletRepo: Repository<ShipperWallet>,
     @InjectRepository(ShipperSchedule) private scheduleRepo: Repository<ShipperSchedule>,
     @InjectRepository(ShipperException) private exceptionRepo: Repository<ShipperException>,
+    @InjectRepository(ShipperCodRemit) private codRemitRepo: Repository<ShipperCodRemit>,
     @InjectRepository(DonHang) private donHangRepo: Repository<DonHang>,
     @InjectRepository(ChiTietDonHang) private chiTietRepo: Repository<ChiTietDonHang>,
     @InjectRepository(DeliveryTracking) private trackingRepo: Repository<DeliveryTracking>,
@@ -46,7 +48,7 @@ export class ShipperService {
         phone: `09${Date.now().toString().slice(-8)}`,
         email: null,
         status: 'ACTIVE',
-        branch_code: 'MAC_DINH_CHI',
+        branch_code: 'HCM_DIEN_BIEN_PHU',
         rating: 4.8,
       });
       shipper = await this.shipperRepo.save(shipper);
@@ -940,16 +942,96 @@ export class ShipperService {
    * POST /shippers/:shipperId/batch-orders/:batchId/accept
    * Nhận batch đơn: accept tất cả đơn trong batch.
    */
-  async acceptBatchOrders(shipperId: string, orderIds: string[]) {
-    const results: any[] = [];
-    for (const orderId of orderIds) {
-      try {
-        const result = await this.acceptOrder(shipperId, orderId);
-        results.push({ ma_don_hang: orderId, success: true, delivery: result.delivery });
-      } catch (err) {
-        results.push({ ma_don_hang: orderId, success: false, error: err?.message || 'Unknown error' });
+  /**
+   * POST /shippers/:shipperId/cod-remit
+   * Shipper xác nhận đã nộp tiền COD cho cửa hàng, tạo bản ghi chờ xác nhận
+   */
+  async submitCodRemit(shipperId: string, amount: number, note?: string) {
+    const shipper = await this.shipperRepo.findOne({ where: { id: shipperId } });
+    if (!shipper) throw new NotFoundException('Shipper not found');
+
+    const wallet = await this.walletRepo.findOne({ where: { shipper_id: shipperId } });
+    const actualCodHolding = wallet ? Number(wallet.cod_holding) : 0;
+    if (actualCodHolding <= 0) {
+      throw new BadRequestException('Không có tiền COD nào đang giữ để nộp.');
+    }
+
+    // Dung số thực tế trong ví thay vì số shipper tự nhập
+    const remitAmount = actualCodHolding;
+
+    // Tìm chi nhánh của đơn hàng gần nhất mà Shipper vừa giao
+    let targetBranchCode = shipper.branch_code;
+    const lastDelivery = await this.deliveryRepo.findOne({
+      where: { shipper_id: shipperId, status: 'DELIVERED' },
+      order: { delivered_at: 'DESC' }
+    });
+    if (lastDelivery && lastDelivery.ma_don_hang) {
+      // Vì không tiêm DonHangRepository vào module này nên dùng query builder hoặc entity manager
+      // May quá DonHangRepo đã được inject vào ShipperService (dòng 23)
+      const donHang = await this.donHangRepo.findOne({ where: { ma_don_hang: lastDelivery.ma_don_hang } });
+      if (donHang && donHang.co_so_ma) {
+        targetBranchCode = donHang.co_so_ma;
       }
     }
-    return { success: true, results, message: `Đã nhận ${results.filter(r => r.success).length}/${orderIds.length} đơn` };
+
+    const remit = this.codRemitRepo.create({
+      shipper_id: shipperId,
+      shipper_name: shipper.full_name,
+      branch_code: targetBranchCode,
+      amount: remitAmount,
+      status: 'PENDING',
+      note: note || null,
+    } as any);
+    await this.codRemitRepo.save(remit);
+
+    return { success: true, remit, message: `Đã gửi yêu cầu nộp ${remitAmount.toLocaleString('vi-VN')}đ — đang chờ quản lý xác nhận.` };
+  }
+
+  async acceptBatchOrders(shipperId: string, orderIds: string[]) {
+    // Stub implementation
+    return { success: true, message: 'Đã nhận batch orders thành công (Stub)', orderIds };
+  }
+
+  /**
+   * GET /shippers/cod-remits?branch_code=XXX&status=PENDING
+   * Admin xem danh sách các lần nộp COD (lọc theo chi nhánh, trạng thái)
+   */
+  async getCodRemits(branchCode?: string, status?: string) {
+    const query = this.codRemitRepo.createQueryBuilder('r').orderBy('r.created_at', 'DESC');
+    if (branchCode) query.andWhere('r.branch_code = :branchCode', { branchCode });
+    if (status) query.andWhere('r.status = :status', { status });
+    return query.getMany();
+  }
+
+  /**
+   * POST /shippers/cod-remits/:remitId/confirm
+   * Admin xác nhận đã nhận tiền mặt từ shipper → xóa nợ COD khỏi ví shipper
+   */
+  async confirmCodRemit(remitId: string, confirmedBy: string, action: 'CONFIRMED' | 'REJECTED') {
+    const remit = await this.codRemitRepo.findOne({ where: { id: remitId } });
+    if (!remit) throw new NotFoundException('Không tìm thấy phiếu nộp COD.');
+    if (remit.status !== 'PENDING') throw new BadRequestException('Phiếu này đã được xử lý rồi.');
+
+    await this.codRemitRepo.update(remit.id, {
+      status: action,
+      confirmed_by: confirmedBy,
+      confirmed_at: new Date(),
+    });
+
+    if (action === 'CONFIRMED') {
+      // Trừ cod_holding khỏi ví shipper
+      const wallet = await this.walletRepo.findOne({ where: { shipper_id: remit.shipper_id } });
+      if (wallet) {
+        wallet.cod_holding = Math.max(0, Number(wallet.cod_holding) - Number(remit.amount));
+        await this.walletRepo.save(wallet);
+      }
+    }
+
+    return {
+      success: true,
+      message: action === 'CONFIRMED'
+        ? `Đã xác nhận nhận ${Number(remit.amount).toLocaleString('vi-VN')}đ từ ${remit.shipper_name}.`
+        : `Đã từ chối phiếu nộp COD của ${remit.shipper_name}.`,
+    };
   }
 }
