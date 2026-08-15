@@ -266,4 +266,42 @@ export class ShipperController {
     const orderIds = body?.order_ids || [];
     return this.shipperService.acceptBatchOrders(shipperId, orderIds);
   }
+
+  // ============ COD REMIT (Nộp tiền mặt về chi nhánh) ============
+
+  /**
+   * POST /shippers/:shipperId/cod-remit
+   * Shipper bấm "Xác nhận đã nộp COD" → Tạo phiếu chờ Admin duyệt
+   */
+  @Post(':shipperId/cod-remit')
+  async submitCodRemit(
+    @Param('shipperId') shipperId: string,
+    @Body() body: { amount?: number; note?: string },
+  ) {
+    return this.shipperService.submitCodRemit(shipperId, body.amount || 0, body.note);
+  }
+
+  /**
+   * GET /shippers/cod-remits?branch_code=XXX&status=PENDING
+   * Admin xem danh sách phiếu nộp COD
+   */
+  @Get('cod-remits')
+  async getCodRemits(
+    @Query('branch_code') branchCode?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.shipperService.getCodRemits(branchCode, status);
+  }
+
+  /**
+   * POST /shippers/cod-remits/:remitId/confirm
+   * Admin xác nhận hoặc từ chối phiếu nộp COD
+   */
+  @Post('cod-remits/:remitId/confirm')
+  async confirmCodRemit(
+    @Param('remitId') remitId: string,
+    @Body() body: { confirmed_by: string; action: 'CONFIRMED' | 'REJECTED' },
+  ) {
+    return this.shipperService.confirmCodRemit(remitId, body.confirmed_by, body.action);
+  }
 }

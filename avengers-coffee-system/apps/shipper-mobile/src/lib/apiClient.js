@@ -2,10 +2,7 @@ import axios from 'axios'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Platform } from 'react-native'
 
-// Sử dụng localhost:3000 nếu chạy trên web (trình duyệt), ngrok cho mobile thực tế
-const API_BASE_URL = Platform.OS === 'web' 
-  ? 'http://localhost:3000' 
-  : 'https://unentwined-johanne-biasedly.ngrok-free.dev'
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || (Platform.OS === 'web' ? 'http://localhost:3000' : 'http://10.0.2.2:3000')
 
 const TOKEN_KEY = 'shipper_auth_token'
 
