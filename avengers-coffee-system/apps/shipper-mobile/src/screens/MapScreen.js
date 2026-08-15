@@ -483,7 +483,7 @@ export function MapScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       {MapView && (
-        <MapView style={styles.map} region={mapRegion} showsUserLocation={false} showsMyLocationButton>
+        <MapView style={styles.map} initialRegion={mapRegion} showsUserLocation={true} showsMyLocationButton={true}>
           <Marker coordinate={{ latitude: storeLat, longitude: storeLng }} title="Cửa hàng Avengers" description="Lấy hàng tại đây">
             <View style={styles.markerStore}>
               <Ionicons name="storefront" size={20} color={colors.surface} />

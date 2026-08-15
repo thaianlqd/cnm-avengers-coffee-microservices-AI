@@ -170,6 +170,11 @@ export function ManagerSurveyPanel({
   // Selected form for analytics tab
   const [selectedAnalyticsFormId, setSelectedAnalyticsFormId] = useState('ALL');
 
+  useEffect(() => {
+    if (onTaiForms) onTaiForms();
+    if (onTaiResponses) onTaiResponses();
+  }, []); // Only fetch when this panel is opened
+
   const startCreateNew = () => {
     setFormTitle('');
     setFormDesc('');

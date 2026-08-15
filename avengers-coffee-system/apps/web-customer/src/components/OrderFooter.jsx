@@ -7,8 +7,10 @@ import {
   CheckCircleIcon,
   ShieldCheckIcon
 } from '@heroicons/react/24/outline';
+import { useTranslation } from 'react-i18next';
 
 export default function OrderFooter({ onNavigate }) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 
@@ -45,7 +47,7 @@ export default function OrderFooter({ onNavigate }) {
             </div>
 
             <p className="text-xs text-gray-400 font-medium leading-relaxed">
-              Highlands Coffee® Order thuộc CÔNG TY CỔ PHẦN DỊCH VỤ CÀ PHÊ CAO NGUYÊN tự hào là nhà phân phối hợp lệ cho tất cả các sản phẩm mang thương hiệu Highlands Coffee®. Trụ sở văn phòng:
+              {t('orderFooter.companyDesc')}
             </p>
 
             <ul className="space-y-2.5 text-xs text-gray-300 font-medium">
@@ -100,7 +102,7 @@ export default function OrderFooter({ onNavigate }) {
           {/* ── COL 2: CHÍNH SÁCH (3 Cols) ── */}
           <div className="lg:col-span-3 space-y-3">
             <h4 className="text-xs font-black text-white uppercase tracking-wider border-b border-gray-800 pb-2">
-              Chính Sách & Quyền Lợi
+              {t('orderFooter.policies')}
             </h4>
             <ul className="space-y-2.5 text-xs font-medium text-gray-400">
               <li>
@@ -109,7 +111,7 @@ export default function OrderFooter({ onNavigate }) {
                   onClick={() => onNavigate?.('chinh-sach-dat-hang')} 
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
-                  Chính sách đặt hàng & giao nhận
+                  {t('orderFooter.orderPolicy')}
                 </button>
               </li>
               <li>
@@ -117,7 +119,7 @@ export default function OrderFooter({ onNavigate }) {
                   type="button" 
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
-                  Chính sách bảo mật thông tin
+                  {t('orderFooter.privacyPolicy')}
                 </button>
               </li>
               <li>
@@ -125,7 +127,7 @@ export default function OrderFooter({ onNavigate }) {
                   type="button" 
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
-                  Chính sách thanh toán VNPAY Online
+                  {t('orderFooter.paymentPolicy')}
                 </button>
               </li>
               <li>
@@ -134,7 +136,7 @@ export default function OrderFooter({ onNavigate }) {
                   onClick={() => onNavigate?.('hoi-vien')}
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
-                  Quyền lợi hội viên Loyalty Club
+                  {t('orderFooter.memberBenefits')}
                 </button>
               </li>
             </ul>
@@ -143,7 +145,7 @@ export default function OrderFooter({ onNavigate }) {
           {/* ── COL 3: HỖ TRỢ KHÁCH HÀNG (2 Cols) ── */}
           <div className="lg:col-span-2 space-y-3">
             <h4 className="text-xs font-black text-white uppercase tracking-wider border-b border-gray-800 pb-2">
-              Hỗ Trợ Khách Hàng
+              {t('orderFooter.support')}
             </h4>
             <ul className="space-y-2.5 text-xs font-medium text-gray-400">
               <li>
@@ -152,7 +154,7 @@ export default function OrderFooter({ onNavigate }) {
                   onClick={() => onNavigate?.('tra-cuu-don-hang')}
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
-                  Tra cứu đơn hàng
+                  {t('orderFooter.trackOrder')}
                 </button>
               </li>
               <li>
@@ -161,7 +163,7 @@ export default function OrderFooter({ onNavigate }) {
                   onClick={() => onNavigate?.('cua-hang')}
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
-                  Tìm cửa hàng gần bạn
+                  {t('orderFooter.findStore')}
                 </button>
               </li>
               <li>
@@ -170,7 +172,7 @@ export default function OrderFooter({ onNavigate }) {
                   onClick={() => onNavigate?.('ho-tro')}
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
-                  Trung tâm trợ giúp & FAQ
+                  {t('orderFooter.helpCenter')}
                 </button>
               </li>
               <li>
@@ -179,7 +181,7 @@ export default function OrderFooter({ onNavigate }) {
                   onClick={() => onNavigate?.('vong-quay')}
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
-                  Vòng quay may mắn
+                  {t('orderFooter.luckyWheel')}
                 </button>
               </li>
             </ul>
@@ -188,17 +190,17 @@ export default function OrderFooter({ onNavigate }) {
           {/* ── COL 4: ĐĂNG KÝ NHẬN TIN (3 Cols) ── */}
           <div className="lg:col-span-3 space-y-3">
             <h4 className="text-xs font-black text-white uppercase tracking-wider border-b border-gray-800 pb-2">
-              Đăng Ký Nhận Ưu Đãi
+              {t('orderFooter.subscribe')}
             </h4>
             <p className="text-xs text-gray-400 font-medium leading-relaxed">
-              Nhận thông báo ưu đãi độc quyền, mã voucher và sản phẩm mới nhất từ Highlands Coffee.
+              {t('orderFooter.subscribeDesc')}
             </p>
 
             <form onSubmit={handleSubscribe} className="space-y-2 pt-1">
               <div className="relative flex items-center">
                 <input
                   type="email"
-                  placeholder="Nhập địa chỉ email của bạn..."
+                  placeholder={t('orderFooter.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3.5 py-2.5 pr-10 text-xs text-white placeholder-gray-500 outline-none focus:border-[#b22830] focus:ring-1 focus:ring-[#b22830] transition-all"
@@ -214,7 +216,7 @@ export default function OrderFooter({ onNavigate }) {
               </div>
               {subscribed && (
                 <p className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
-                  <CheckCircleIcon className="w-4 h-4" /> Đăng ký nhận tin thành công!
+                  <CheckCircleIcon className="w-4 h-4" /> {t('orderFooter.subscribeSuccess')}
                 </p>
               )}
             </form>
@@ -227,7 +229,7 @@ export default function OrderFooter({ onNavigate }) {
                 onError={(e) => { e.currentTarget.style.display = 'none'; }} 
               />
               <span className="text-[10px] text-gray-500 font-semibold flex items-center gap-1">
-                <ShieldCheckIcon className="w-4 h-4 text-emerald-500" /> Bản quyền bảo hộ 100%
+                <ShieldCheckIcon className="w-4 h-4 text-emerald-500" /> {t('orderFooter.copyrightText')}
               </span>
             </div>
           </div>
@@ -238,13 +240,13 @@ export default function OrderFooter({ onNavigate }) {
       {/* Bottom Copyright Line */}
       <div className="border-t border-gray-800/80 bg-[#111113] py-5 px-4">
         <div className="max-w-[1240px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500 font-medium">
-          <p>© 2026 Highlands Coffee®. Tất cả các quyền được bảo lưu.</p>
+          <p>{t('orderFooter.allRightsReserved')}</p>
           <div className="flex items-center gap-4 text-[11px]">
-            <a href="#" className="hover:text-gray-300 transition-colors">Điều khoản sử dụng</a>
+            <a href="#" className="hover:text-gray-300 transition-colors">{t('orderFooter.termsOfUse')}</a>
             <span>•</span>
-            <a href="#" className="hover:text-gray-300 transition-colors">Bảo mật thông tin</a>
+            <a href="#" className="hover:text-gray-300 transition-colors">{t('orderFooter.privacyPolicy')}</a>
             <span>•</span>
-            <a href="#" className="hover:text-gray-300 transition-colors">Sơ đồ trang web</a>
+            <a href="#" className="hover:text-gray-300 transition-colors">{t('orderFooter.siteMap')}</a>
           </div>
         </div>
       </div>

@@ -108,6 +108,27 @@ export default function OrderPage({
   const { t, i18n } = useTranslation();
   const currentLng = i18n.language || 'vi';
 
+  const tCategory = (name) => {
+    if (!name) return '';
+    const map = {
+      "Trà": "tea",
+      "Thức Uống Đá Xay": "frappuccino",
+      "Bánh & Đồ Ăn": "food",
+      "Cà Phê": "coffee",
+      "Khác": "other",
+      "Americano": "americano",
+      "Bánh Mặn": "savory",
+      "Bánh Ngọt": "sweet",
+      "Cold Brew": "coldBrew",
+      "Cà Phê Phin": "phin",
+      "Espresso": "espresso",
+      "Frappe": "frappe",
+      "Thẻ Quà Tặng": "giftCard"
+    };
+    const key = map[name];
+    return key ? t(`dbCategories.${key}`) : name;
+  };
+
   const [activeCategory, setActiveCategory] = useState(selectedCatId || 'all');
   
   useEffect(() => {
@@ -444,7 +465,7 @@ export default function OrderPage({
                   className={`w-5 h-5 object-contain transition-transform duration-200 ${isActive ? 'brightness-0 invert scale-110' : ''}`} 
                 />
                 <span className="text-[14px] capitalize tracking-wide">
-                  {parent.ten_danh_muc.toLowerCase()}
+                  {tCategory(parent.ten_danh_muc).toLowerCase()}
                 </span>
               </div>
             </button>
@@ -495,7 +516,7 @@ export default function OrderPage({
                   <span className="w-full h-[2px] bg-[#333333] block"></span>
                   <span className="w-full h-[2px] bg-[#333333] block"></span>
                 </div>
-                <span className="text-[16px] font-bold text-[#333333] whitespace-nowrap">Danh mục sản phẩm</span>
+                <span className="text-[16px] font-bold text-[#333333] whitespace-nowrap">{t('order.productCategories')}</span>
 
                 {/* Dropdown Backdrop */}
                 <div className="fixed inset-0 bg-black/40 z-[-1] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 pointer-events-none"></div>
@@ -758,7 +779,7 @@ export default function OrderPage({
               <span className="w-full h-[2px] bg-[#b22830] block"></span>
               <span className="w-full h-[2px] bg-[#b22830] block"></span>
             </div>
-            <span className="text-[15px] font-normal text-[#b22830] capitalize">Danh mục sản phẩm</span>
+            <span className="text-[15px] font-normal text-[#b22830] capitalize">{t('order.productCategories')}</span>
           </div>
 
           <button type="button" onClick={() => onNavigate?.('chinh-sach-dat-hang')} className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity bg-transparent border-none p-0 cursor-pointer">
@@ -816,9 +837,9 @@ export default function OrderPage({
                         <div className="w-6 h-6 rounded-lg bg-[#b22830]/10 flex items-center justify-center text-[#b22830]">
                           <TagIcon className="w-3.5 h-3.5 text-[#b22830]" />
                         </div>
-                        <h3 className="text-sm font-extrabold text-gray-900 tracking-tight">Kho Voucher & Ưu Đãi Dành Cho Bạn</h3>
+                        <h3 className="text-sm font-extrabold text-gray-900 tracking-tight">{t('order.voucherAndOffers')}</h3>
                         <span className="inline-flex items-center gap-1 bg-[#b22830]/10 text-[#b22830] text-[10px] font-bold px-2 py-0.5 rounded-full">
-                          {personalVouchers.length + publicVouchers.length} mã ưu đãi
+                          {t('order.offersCount', { count: personalVouchers.length + publicVouchers.length })}
                         </span>
                       </div>
 
@@ -828,7 +849,7 @@ export default function OrderPage({
                           onClick={() => onNavigate?.('lucky-wheel')}
                           className="text-[11px] font-bold text-amber-700 hover:text-amber-800 flex items-center gap-1 transition-colors cursor-pointer"
                         >
-                          <SparklesIcon className="w-3 h-3 text-amber-500" /> Săn thêm voucher cá nhân &gt;
+                          <SparklesIcon className="w-3 h-3 text-amber-500" /> {t('order.huntMoreVouchers')}
                         </button>
                       )}
                     </div>
@@ -853,10 +874,10 @@ export default function OrderPage({
                             SMART RECOMMENDATION
                           </div>
                           <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-gray-900 font-sans">
-                            TOP 5 MÓN HỢP GU CỦA BẠN
+                            {t('order.top5Favs')}
                           </h2>
                           <p className="mt-1 text-xs md:text-sm font-medium text-gray-500">
-                            Cá nhân hóa theo lịch sử mua hàng, đánh giá, yêu thích và xu hướng dùng ưu đãi.
+                            {t('order.aiDesc')}
                           </p>
                         </div>
                         
@@ -925,7 +946,7 @@ export default function OrderPage({
 
                               {/* Product Info */}
                               <div className="pt-3 px-1 flex flex-col flex-1">
-                                <p className="text-[10px] font-extrabold text-[#00a651] uppercase tracking-wider mb-0.5">{categoryName}</p>
+                                <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">{tCategory(categoryName)}</span>
                                 <h4 className="text-[15px] font-bold text-gray-900 mb-2 leading-snug min-h-[2.4rem] line-clamp-2 transition-colors group-hover:text-[#b22830]">
                                   {product.ten_san_pham || product.name}
                                 </h4>
@@ -1020,11 +1041,11 @@ export default function OrderPage({
                                   </>
                                 )}
                                 <span>/</span>
-                                <span className="text-gray-900">{headingLabel}</span>
+                                <span className="text-[14px]">{tCategory(headingLabel)}</span>
                               </div>
                               <div className="flex flex-col items-start pb-2 mb-2 gap-3 pt-2">
-                                <h2 className="text-2xl md:text-[28px] font-black text-[#333333] uppercase font-sans tracking-wide">
-                                  {headingLabel}
+                                <h2 className="text-[20px] sm:text-[24px] font-extrabold text-[#333333] mb-4 md:mb-6 capitalize">
+                                  {tCategory(headingLabel)}
                                 </h2>
                                 <div className="flex flex-wrap items-center gap-4 text-[13px] font-medium text-gray-500">
                                   <span className="text-[#333333] font-bold">Sắp xếp:</span>

@@ -7,7 +7,7 @@ async function bootstrap() {
   app.enableCors();
 
   const port = Number(process.env.PORT ?? 3001);
-  await app.listen(port);
-  console.log(`Identity-service da san sang tai: http://localhost:${port}`);
+  await app.listen(port, '0.0.0.0');
+  console.log(`Identity-service da san sang tai: http://0.0.0.0:${port}`);
 }
 bootstrap();

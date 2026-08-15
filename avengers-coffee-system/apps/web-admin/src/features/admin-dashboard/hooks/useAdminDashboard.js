@@ -428,7 +428,8 @@ export function useAdminDashboard() {
     setSurveyResponsesState((prev) => ({ ...prev, loading: true, error: '' }))
     try {
       const token = session?.token || session?.accessToken
-      const response = await fetch(`${API_BASE_URL}/surveys/responses`, {
+      const branchQuery = sessionBranchCode ? `?branch_code=${encodeURIComponent(sessionBranchCode)}` : ''
+      const response = await fetch(`${API_BASE_URL}/surveys/responses${branchQuery}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -541,18 +542,27 @@ export function useAdminDashboard() {
     if (sessionRole !== 'MANAGER') {
       taiYeuCauDangKyCa(false)
     }
-    if (sessionRole === 'MANAGER') {
-      Promise.all([
-        taiLichLamViecManager(),
-        taiDanhSachNhanSu(),
-        taiYeuCauDangKyCa(true),
-        taiReviewCSKH(),
-        taiDanhSachBieuMau(),
-        taiDanhSachPhanHoi(),
-        taiDanhSachCod(),
-      ])
+  // Remove the eager loading Promise.all from session initialization
     }
   }, [session])
+
+  useEffect(() => {
+    if (!session || sessionRole !== 'MANAGER') return
+    
+    if (activeTab === 'workforce-manage') {
+      taiLichLamViecManager()
+      taiDanhSachNhanSu()
+      taiYeuCauDangKyCa(true)
+    } else if (activeTab === 'employee-manage') {
+      taiDanhSachNhanSu()
+    } else if (activeTab === 'shift-approval') {
+      taiYeuCauDangKyCa(true)
+    } else if (activeTab === 'customer-care') {
+      taiReviewCSKH()
+    } else if (activeTab === 'delivery') {
+      taiDanhSachCod()
+    }
+  }, [activeTab, session, sessionRole])
 
   useEffect(() => {
     if (!session) return undefined

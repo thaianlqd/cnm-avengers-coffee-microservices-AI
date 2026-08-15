@@ -265,13 +265,21 @@ st.markdown("""
 
 """, unsafe_allow_html=True)
 
-# ─── Config ───────────────────────────────────────────────────────────────────
-DB_HOST     = os.getenv("DB_HOST", "aws-0-ap-southeast-1.pooler.supabase.com")
-DB_PORT     = os.getenv("DB_PORT", "5432")
-DB_USER     = os.getenv("DB_USER", "postgres.seneuycwihbyqjdtcdvu")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+# --- CẤU HÌNH SUPABASE CŨ (Để dành sau này dùng) ---
+# DB_HOST     = os.getenv("DB_HOST", "aws-0-ap-southeast-1.pooler.supabase.com")
+# DB_PORT     = os.getenv("DB_PORT", "6543")
+# DB_USER     = os.getenv("DB_USER", "postgres.seneuycwihbyqjdtcdvu")
+# DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+# DB_NAME     = os.getenv("DB_NAME", "postgres")
+# DB_SSLMODE  = os.getenv("DB_SSLMODE", "require")
+
+# --- CẤU HÌNH LOCAL ---
+DB_HOST     = os.getenv("DB_HOST", "localhost")
+DB_PORT     = os.getenv("DB_PORT", "5433")
+DB_USER     = os.getenv("DB_USER", "admin")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "123456")
 DB_NAME     = os.getenv("DB_NAME", "postgres")
-DB_SSLMODE  = os.getenv("DB_SSLMODE", "require")
+DB_SSLMODE  = os.getenv("DB_SSLMODE", "disable")
 
 MINIO_ENDPOINT   = os.getenv("MINIO_ENDPOINT", "http://minio:9000")
 MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "minioadmin")
