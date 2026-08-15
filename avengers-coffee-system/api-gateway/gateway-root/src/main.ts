@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { createProxyMiddleware } from 'http-proxy-middleware';
+import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -13,6 +13,7 @@ async function bootstrap() {
     createProxyMiddleware({
       target: process.env.IDENTITY_SERVICE_URL || 'http://localhost:3001',
       changeOrigin: true,
+      on: { proxyReq: fixRequestBody },
       pathFilter: ['/auth', '/users', '/promotions'],
     }),
   );
@@ -21,6 +22,7 @@ async function bootstrap() {
     createProxyMiddleware({
       target: process.env.MENU_SERVICE_URL || 'http://localhost:3003',
       changeOrigin: true,
+      on: { proxyReq: fixRequestBody },
       pathFilter: ['/menu'],
     }),
   );
@@ -29,6 +31,7 @@ async function bootstrap() {
     createProxyMiddleware({
       target: process.env.ORDER_SERVICE_URL || 'http://localhost:3005',
       changeOrigin: true,
+      on: { proxyReq: fixRequestBody },
       pathFilter: [
         '/cart',
         '/orders',
@@ -54,6 +57,7 @@ async function bootstrap() {
     createProxyMiddleware({
       target: process.env.INVENTORY_SERVICE_URL || 'http://localhost:3004',
       changeOrigin: true,
+      on: { proxyReq: fixRequestBody },
       pathFilter: ['/inventory'],
     }),
   );
@@ -62,6 +66,7 @@ async function bootstrap() {
     createProxyMiddleware({
       target: process.env.AI_SERVICE_URL || 'http://localhost:8000',
       changeOrigin: true,
+      on: { proxyReq: fixRequestBody },
       pathFilter: ['/ai'],
     }),
   );

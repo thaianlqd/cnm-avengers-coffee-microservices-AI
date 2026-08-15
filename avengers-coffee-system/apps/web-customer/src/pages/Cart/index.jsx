@@ -546,6 +546,15 @@ export default function CartPage({
             }
           }
           targetBranch = bestBranch;
+        } else {
+          // Fallback to string matching for nationwide districts without coordinates
+          const exactMatch = cityMatches.find(b => 
+            String(b.quan_huyen || '').toLowerCase() === userDistKey || 
+            String(b.dia_chi || '').toLowerCase().includes(userDistKey)
+          );
+          if (exactMatch) {
+            targetBranch = exactMatch;
+          }
         }
       }
 

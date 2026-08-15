@@ -9,6 +9,7 @@ import {
   MinusIcon
 } from '@heroicons/react/24/outline';
 import QuickViewModal from '../../components/QuickViewModal';
+import { useTranslation } from 'react-i18next';
 
 export default function ProductDetailPage({
   product,
@@ -17,6 +18,7 @@ export default function ProductDetailPage({
   onBack,
   onNavigate,
 }) {
+  const { t } = useTranslation();
   const [quantity, setQuantity] = useState(1);
   const availableSizes = product?.sizes || {};
   const sizeKeys = Object.keys(availableSizes);
@@ -199,7 +201,7 @@ export default function ProductDetailPage({
               onClick={() => onBack ? onBack() : onNavigate?.('order')}
               className="hover:text-[#b22830] transition-colors"
             >
-              Trang chủ
+              {t('order.home')}
             </button>
             <span>/</span>
             <span className="text-gray-600">{categoryName}</span>
@@ -235,10 +237,10 @@ export default function ProductDetailPage({
 
               {/* Status Line */}
               <div className="flex items-center gap-2 mt-3 text-sm text-gray-600">
-                <span>Tình trạng:</span>
-                <span className="text-[#b22830] font-bold">Còn hàng</span>
+                <span>{t('productDetail.status')}</span>
+                <span className="text-[#b22830] font-bold">{t('productDetail.inStock')}</span>
                 <span className="text-gray-300">|</span>
-                <span>Mã SKU: <strong className="text-gray-800">{sku}</strong></span>
+                <span>{t('productDetail.sku')} <strong className="text-gray-800">{sku}</strong></span>
               </div>
 
               {/* Price */}
@@ -468,7 +470,7 @@ export default function ProductDetailPage({
 
               {/* Quantity Selector */}
               <div className="mt-6 flex items-center gap-4">
-                <span className="text-sm font-bold text-gray-700">Số lượng:</span>
+                <span className="text-sm font-bold text-gray-700">{t('productDetail.quantity')}</span>
                 <div className="flex items-center border border-gray-300 rounded-full bg-white px-3 py-1 shadow-sm">
                   <button
                     type="button"
@@ -496,14 +498,14 @@ export default function ProductDetailPage({
                 onClick={() => handleMainAddToCart(true)}
                 className="flex-1 min-w-[160px] py-3.5 px-8 rounded-full bg-[#d0021b] text-white font-bold text-sm uppercase tracking-wider shadow-md hover:bg-[#a80014] transition-all text-center"
               >
-                MUA NGAY
+                {t('productDetail.buyNow')}
               </button>
               <button
                 type="button"
                 onClick={() => handleMainAddToCart(false)}
                 className="flex-1 min-w-[160px] py-3.5 px-8 rounded-full bg-[#ff5a5f] text-white font-bold text-sm uppercase tracking-wider shadow-md hover:bg-[#e0484d] transition-all text-center"
               >
-                THÊM VÀO GIÒ
+                {t('productDetail.addToCart')}
               </button>
             </div>
           </div>
@@ -514,7 +516,7 @@ export default function ProductDetailPage({
           {/* Left Description */}
           <div className="lg:col-span-8">
             <h2 className="text-2xl font-black text-[#222222] border-b-2 border-gray-800 pb-3 mb-6 uppercase">
-              Mô tả sản phẩm
+              {t('productDetail.description')}
             </h2>
             <div className="text-gray-700 leading-relaxed space-y-4 text-[15px]">
               <p>
@@ -537,7 +539,7 @@ export default function ProductDetailPage({
             <div className="bg-[#fffcf7] rounded-2xl border border-orange-100 p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4 pb-2 border-b border-orange-200/60">
                 <h3 className="font-black text-base text-[#8B4513] uppercase">
-                  Bánh ngon đừng bỏ lỡ 🍰
+                  {t('productDetail.missingCakes')} 🍰
                 </h3>
               </div>
               <div className="space-y-3">
@@ -582,11 +584,11 @@ export default function ProductDetailPage({
         {/* RELATED PRODUCTS SECTION (Sản phẩm cùng loại - Ảnh 4) */}
         <div className="mt-12">
           <h2 className="text-2xl font-black text-[#222222] mb-6 uppercase">
-            Sản phẩm cùng loại
+            {t('productDetail.relatedProducts')}
           </h2>
 
           {relatedProducts.length === 0 ? (
-            <p className="text-gray-500 text-sm">Hiện chưa có sản phẩm cùng loại.</p>
+            <p className="text-gray-500 text-sm">{t('productDetail.relatedProductsDesc')}</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
               {relatedProducts.map((relProduct) => (

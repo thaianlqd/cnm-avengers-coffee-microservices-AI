@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import {
   MagnifyingGlassIcon,
@@ -51,14 +52,15 @@ function buildMapEmbedUrl(address) {
 }
 
 export default function StoresPage() {
+  const { t } = useTranslation();
   const { data: publicBranchPayload, isLoading: isStoresLoading } = useQuery({
     queryKey: ['public-branches'],
     queryFn: async () => {
       const response = await apiClient.get('/users/branches/public');
       return response.data;
     },
-    staleTime: 60 * 1000,
-    refetchInterval: 120 * 1000,
+    staleTime: 10 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
   });
 
   const { data: branchStatsPayload } = useQuery({
@@ -67,8 +69,8 @@ export default function StoresPage() {
       const res = await apiClient.get('/branch-reviews/stats');
       return res.data;
     },
-    staleTime: 30 * 1000,
-    refetchInterval: 60 * 1000,
+    staleTime: 10 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
   });
 
   const branchStatsMap = useMemo(() => {
@@ -193,7 +195,7 @@ export default function StoresPage() {
   }, [filteredStores]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-84px)] bg-white mt-[84px]">
+    <div className="flex flex-col h-[calc(100vh-90px)] bg-white mt-0">
       {/* Detailed Store View */}
       {detailedStore ? (
         <div className="flex-1 overflow-y-auto bg-gray-50 pb-16">
@@ -203,7 +205,7 @@ export default function StoresPage() {
           >
             <span className="text-white text-sm font-bold flex items-center gap-2">
               <ArrowLeftIcon className="w-5 h-5 text-white" />
-              Quay lại danh sách cửa hàng
+              {t('stores.backToStores')}
             </span>
           </div>
 
@@ -230,27 +232,27 @@ export default function StoresPage() {
                     </span>
                   </div>
                   <h2 className="text-[22px] font-black uppercase text-[#333333] mb-4">{detailedStore.name}</h2>
-                  <div className="space-y-3">
-                    <div className="flex border-b border-gray-100 pb-3">
-                      <span className="text-[#a51a1a] w-24 text-[13px] font-bold flex items-center gap-1.5">
-                        <MapPinIcon className="w-4 h-4 text-[#a51a1a]" />
-                        Địa chỉ
-                      </span>
-                      <p className="text-[#333333] text-[14px] flex-1 font-medium">{detailedStore.address}</p>
-                    </div>
-                    <div className="flex border-b border-gray-100 pb-3">
-                      <span className="text-[#a51a1a] w-24 text-[13px] font-bold flex items-center gap-1.5">
-                        <PhoneIcon className="w-4 h-4 text-[#a51a1a]" />
-                        Hotline
-                      </span>
+                    <div className="space-y-3">
+                      <div className="flex border-b border-gray-100 pb-3">
+                        <span className="text-[#a51a1a] w-24 text-[13px] font-bold flex items-center gap-1.5">
+                          <MapPinIcon className="w-4 h-4 text-[#a51a1a]" />
+                          {t('stores.address')}
+                        </span>
+                        <p className="text-[#333333] text-[14px] flex-1 font-medium">{detailedStore.address}</p>
+                      </div>
+                      <div className="flex border-b border-gray-100 pb-3">
+                        <span className="text-[#a51a1a] w-24 text-[13px] font-bold flex items-center gap-1.5">
+                          <PhoneIcon className="w-4 h-4 text-[#a51a1a]" />
+                          {t('stores.hotline')}
+                        </span>
                       <p className="text-[#333333] text-[14px] flex-1 font-medium">{detailedStore.phone}</p>
                     </div>
                     <div className="pt-2 flex flex-wrap gap-4 text-[13px] text-gray-700 font-medium">
                       <span className="flex items-center gap-1.5 text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100">
-                        <WifiIcon className="w-4 h-4 text-blue-600" /> Wifi Miễn Phí
+                        <WifiIcon className="w-4 h-4 text-blue-600" /> {t('stores.freeWifi')}
                       </span>
                       <span className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">
-                        <CreditCardIcon className="w-4 h-4 text-emerald-600" /> Thanh toán thẻ
+                        <CreditCardIcon className="w-4 h-4 text-emerald-600" /> {t('stores.cardPayment')}
                       </span>
                       <span className="flex items-center gap-1.5 text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-100">
                         <ClockIcon className="w-4 h-4 text-amber-600" /> {detailedStore.hours}
@@ -266,16 +268,16 @@ export default function StoresPage() {
                     className="flex-1 bg-[#b22830] hover:bg-red-800 text-white text-xs font-black uppercase py-3 rounded-full transition-all shadow-md flex items-center justify-center gap-2"
                   >
                     <PencilSquareIcon className="w-4 h-4 text-white" />
-                    Viết Đánh Giá Chi Nhánh
+                    {t('stores.writeReview')}
                   </button>
                   <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(detailedStore.address)}`}
+                    href={buildMapEmbedUrl(detailedStore.address)}
                     target="_blank"
                     rel="noreferrer"
                     className="flex-1 bg-[#5c3a21] hover:bg-[#4a2e1a] text-white text-xs font-black uppercase py-3 rounded-full transition-all text-center flex items-center justify-center gap-2"
                   >
                     <ArrowTopRightOnSquareIcon className="w-4 h-4 text-white" />
-                    Xem Chỉ Đường
+                    {t('stores.directions')}
                   </a>
                 </div>
               </div>
@@ -285,35 +287,35 @@ export default function StoresPage() {
             <div className="bg-white p-8 shadow-sm rounded-2xl border border-gray-100 space-y-6">
               <h3 className="text-lg font-black uppercase text-gray-800 tracking-wide border-b border-gray-100 pb-3 flex items-center gap-2">
                 <ChatBubbleLeftRightIcon className="w-6 h-6 text-[#b22830]" />
-                Đánh giá & Nhận xét của Khách hàng ({detailedBranchReviews?.tong_luot_danh_gia || 0})
+                {t('stores.customerReviews')} ({detailedBranchReviews?.tong_luot_danh_gia || 0})
               </h3>
 
               {/* Criteria Scores */}
               {detailedBranchReviews && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-amber-50/50 p-4 rounded-2xl border border-amber-100/60">
                   <div className="text-center p-2">
-                    <p className="text-[11px] font-bold text-gray-500 uppercase">Thái độ phục vụ</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase">{t('stores.criteriaService')}</p>
                     <p className="text-xl font-black text-amber-700 mt-1 flex items-center justify-center gap-1">
                       <StarIconSolid className="w-5 h-5 text-amber-500" />
                       {detailedBranchReviews.tieu_chi_trung_binh?.phuc_vu || 5.0}
                     </p>
                   </div>
                   <div className="text-center p-2">
-                    <p className="text-[11px] font-bold text-gray-500 uppercase">Không gian & Vệ sinh</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase">{t('stores.criteriaCleanliness')}</p>
                     <p className="text-xl font-black text-amber-700 mt-1 flex items-center justify-center gap-1">
                       <StarIconSolid className="w-5 h-5 text-amber-500" />
                       {detailedBranchReviews.tieu_chi_trung_binh?.ve_sinh || 5.0}
                     </p>
                   </div>
                   <div className="text-center p-2">
-                    <p className="text-[11px] font-bold text-gray-500 uppercase">Tốc độ lên món</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase">{t('stores.criteriaSpeed')}</p>
                     <p className="text-xl font-black text-amber-700 mt-1 flex items-center justify-center gap-1">
                       <StarIconSolid className="w-5 h-5 text-amber-500" />
                       {detailedBranchReviews.tieu_chi_trung_binh?.toc_do || 5.0}
                     </p>
                   </div>
                   <div className="text-center p-2">
-                    <p className="text-[11px] font-bold text-gray-500 uppercase">Chất lượng đồ uống</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase">{t('stores.criteriaQuality')}</p>
                     <p className="text-xl font-black text-amber-700 mt-1 flex items-center justify-center gap-1">
                       <StarIconSolid className="w-5 h-5 text-amber-500" />
                       {detailedBranchReviews.tieu_chi_trung_binh?.chat_luong_mon || 5.0}
@@ -327,14 +329,14 @@ export default function StoresPage() {
                 {(detailedBranchReviews?.items || []).length === 0 ? (
                   <div className="py-12 text-center text-gray-400 space-y-2">
                     <StarIconSolid className="w-10 h-10 text-amber-300 mx-auto" />
-                    <p className="text-sm font-medium">Chưa có đánh giá nào cho chi nhánh này. Hãy là người đầu tiên để lại đánh giá!</p>
+                    <p className="text-sm font-medium">{t('stores.noReviews')}</p>
                   </div>
                 ) : (
                   (detailedBranchReviews?.items || []).map((review) => (
                     <div key={review.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 space-y-2">
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-sm text-gray-900">{review.ten_nguoi_dung || 'Khách hàng'}</span>
+                          <span className="font-bold text-sm text-gray-900">{review.ten_nguoi_dung || t('stores.customer')}</span>
                           <span className="bg-amber-100 text-amber-800 text-[11px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
                             <StarIconSolid className="w-3.5 h-3.5 text-amber-500" />
                             {review.diem_tong_quan}/5
@@ -376,7 +378,7 @@ export default function StoresPage() {
               setSelectedDistrict('ALL');
             }}
           >
-            <option value="ALL">Tất cả Thành phố</option>
+            <option value="ALL">{t('stores.allCities')}</option>
             {cities.filter(c => c !== 'ALL').map(c => (
               <option key={c} value={c}>{c}</option>
             ))}
@@ -388,7 +390,7 @@ export default function StoresPage() {
             onChange={(e) => setSelectedDistrict(e.target.value)}
             disabled={selectedCity === 'ALL'}
           >
-            <option value="ALL">Tất cả Quận/Huyện</option>
+            <option value="ALL">{t('stores.allDistricts')}</option>
             {districts.filter(d => d !== 'ALL').map(d => (
               <option key={d} value={d}>{d}</option>
             ))}
@@ -398,7 +400,7 @@ export default function StoresPage() {
             <div className="flex items-center w-full bg-gray-50/60 rounded-xl border border-gray-200/90 overflow-hidden focus-within:border-[#b22830] focus-within:ring-2 focus-within:ring-red-100 transition-all">
               <input 
                 type="text" 
-                placeholder="Nhập địa chỉ, tên đường, quận..."
+                placeholder={t('stores.searchPlaceholder')}
                 value={searchQuery}
                 onFocus={() => setShowSuggestions(true)}
                 onChange={(e) => {
@@ -422,7 +424,7 @@ export default function StoresPage() {
             {showSuggestions && suggestions.length > 0 && (
               <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200/80 shadow-2xl rounded-2xl overflow-hidden z-[100] max-h-[380px] overflow-y-auto animate-fade-in">
                 <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
-                  Gợi ý tìm kiếm
+                  {t('stores.searchSuggestions')}
                 </div>
                 {suggestions.map((item, idx) => (
                   <div 
@@ -465,7 +467,7 @@ export default function StoresPage() {
 
           <button className="h-9 px-5 bg-[#b22830] hover:bg-[#8f1d24] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-2xs flex items-center gap-1.5 active:scale-95">
             <MagnifyingGlassIcon className="w-3.5 h-3.5 text-white" />
-            Tìm kiếm
+            {t('stores.searchButton')}
           </button>
         </div>
       </div>

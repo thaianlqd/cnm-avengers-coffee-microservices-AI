@@ -52,7 +52,7 @@ async function bootstrap() {
     }
 
     await app.listen(port, '0.0.0.0');
-    console.log(`Order-service dang chay tai: http://0.0.0.0:${port}`);
+    console.log(`Order-service da san sang tai: http://0.0.0.0:${port}`);
   } catch (err) {
     fs.appendFileSync('/app/error.log', 'BOOTSTRAP ERROR: ' + String(err?.stack || err) + '\n');
     console.error('Bootstrap error', err);

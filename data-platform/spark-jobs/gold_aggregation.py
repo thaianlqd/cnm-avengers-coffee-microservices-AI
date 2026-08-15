@@ -43,7 +43,7 @@ def get_minio():
 
 def get_engine():
     return sqlalchemy.create_engine(
-        f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=require"
+        f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode={os.getenv('DB_SSLMODE', 'disable')}"
     )
 
 

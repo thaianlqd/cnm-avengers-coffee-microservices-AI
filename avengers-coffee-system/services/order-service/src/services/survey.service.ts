@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { SurveyForm } from '../entities/survey-form.entity';
 import { SurveyResponse } from '../entities/survey-response.entity';
 
@@ -14,6 +14,7 @@ export class SurveyService {
     private readonly formRepo: Repository<SurveyForm>,
     @InjectRepository(SurveyResponse)
     private readonly responseRepo: Repository<SurveyResponse>,
+    private readonly dataSource: DataSource,
   ) {}
 
   // ═══════════════════════════════════════════════════════
@@ -126,6 +127,21 @@ export class SurveyService {
       }
     }
 
+    let coSoMa = null;
+    if (payload.ma_don_hang?.trim()) {
+      try {
+        const rows = await this.dataSource.query(
+          'SELECT co_so_ma FROM orders.don_hang WHERE ma_don_hang = $1',
+          [payload.ma_don_hang.trim()]
+        );
+        if (rows && rows.length > 0) {
+          coSoMa = rows[0].co_so_ma;
+        }
+      } catch (err) {
+        console.error('Error looking up co_so_ma for survey response:', err);
+      }
+    }
+
     // Save response
     const response = new SurveyResponse();
     response.ma_bieu_mau = payload.ma_bieu_mau;
@@ -133,6 +149,7 @@ export class SurveyService {
     response.ten_nguoi_dung = payload.ten_nguoi_dung?.trim() || null;
     response.so_dien_thoai = payload.so_dien_thoai?.trim() || null;
     response.ma_don_hang = payload.ma_don_hang?.trim() || null;
+    response.co_so_ma = coSoMa;
     response.tra_loi = Array.isArray(payload.tra_loi) ? payload.tra_loi : [];
 
     const savedResponse = await this.responseRepo.save(response);
@@ -193,8 +210,15 @@ export class SurveyService {
     return;
   }
 
-  async layDanhSachPhanHoi() {
-    const list = await this.responseRepo.find({ order: { ngay_tao: 'DESC' } });
+  async layDanhSachPhanHoi(branchCode?: string) {
+    const where: any = {};
+    if (branchCode) {
+      where.co_so_ma = branchCode;
+    }
+    const list = await this.responseRepo.find({ 
+      where, 
+      order: { ngay_tao: 'DESC' } 
+    });
     return { total: list.length, items: list };
   }
 

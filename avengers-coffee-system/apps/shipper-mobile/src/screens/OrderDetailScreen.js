@@ -30,7 +30,7 @@ export function OrderDetailScreen({ route, navigation }) {
   const [failModalVisible, setFailModalVisible] = useState(false)
   const [failReason, setFailReason] = useState('')
 
-  const { data: delivery, isLoading } = useQuery({
+  const { data: delivery, isLoading, isError, error } = useQuery({
     queryKey: ['deliveryDetail', deliveryId],
     queryFn: async () => {
       return apiClient.get(`/shippers/${shipper.id}/deliveries/${deliveryId}`)
@@ -61,6 +61,7 @@ export function OrderDetailScreen({ route, navigation }) {
       queryClient.invalidateQueries({ queryKey: ['acceptedOrders'] })
       queryClient.invalidateQueries({ queryKey: ['deliveriesHistory'] })
       queryClient.invalidateQueries({ queryKey: ['shipperStats', shipper?.id] })
+      queryClient.invalidateQueries({ queryKey: ['shipperWallet', shipper?.id] })
       setLoadingAction(null)
       setFailModalVisible(false)
       setFailReason('')
@@ -106,10 +107,25 @@ export function OrderDetailScreen({ route, navigation }) {
     Linking.openURL(`tel:${phone}`)
   }
 
-  if (isLoading || !delivery) {
+  if (isLoading) {
     return (
       <View style={styles.loadingWrap}>
         <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    )
+  }
+
+  if (isError || !delivery) {
+    return (
+      <View style={styles.loadingWrap}>
+        <Ionicons name="warning-outline" size={48} color={colors.danger} style={{ marginBottom: 16 }} />
+        <Text style={styles.loadingText}>Không thể tải chi tiết đơn hàng.</Text>
+        <Text style={[styles.loadingText, { fontSize: 12, color: colors.muted, marginTop: 8 }]}>
+          {error?.message || 'Có lỗi xảy ra hoặc đơn hàng không tồn tại.'}
+        </Text>
+        <TouchableOpacity style={[styles.primaryBtn, { marginTop: 24, width: 200 }]} onPress={() => navigation.goBack()}>
+          <Text style={styles.btnText}>QUAY LẠI</Text>
+        </TouchableOpacity>
       </View>
     )
   }
@@ -200,14 +216,17 @@ export function OrderDetailScreen({ route, navigation }) {
   }
 
   const getBranchInfo = () => {
-    const code = shipper?.branch_code || delivery?.branch_code || 'HCM_DIEN_BIEN_PHU';
+    const code = delivery?.order?.co_so_ma || delivery?.branch_code || shipper?.branch_code || 'MAC_DINH_CHI';
     let branch = publicBranchPayload?.items?.find(b => (b.ma_chi_nhanh || b.co_so_ma || b.branch_code) === code);
-    if (!branch) {
-      branch = publicBranchPayload?.items?.find(b => (b.ma_chi_nhanh || b.co_so_ma || b.branch_code) === 'HCM_DIEN_BIEN_PHU');
+    
+    let address = branch?.dia_chi || branch?.address || delivery?.pickup_address;
+    if (!address) {
+      address = branch?.ten_chi_nhanh ? `Avengers Coffee - ${branch.ten_chi_nhanh}` : `Avengers Coffee - ${code}`;
     }
+
     return {
-      name: branch ? (branch.ten_chi_nhanh || branch.ten_co_so || branch.name) : 'Cửa hàng lấy hàng',
-      address: branch ? (branch.dia_chi || branch.address) : 'Đang tải địa chỉ quán...'
+      name: branch ? (branch.ten_chi_nhanh || branch.ten_co_so || branch.name) : `Cửa hàng (Mã: ${code})`,
+      address
     }
   }
   const branchInfo = getBranchInfo();

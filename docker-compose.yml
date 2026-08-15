@@ -1,24 +1,24 @@
 services:
-#  # CSDL PostgreSQL
-#  postgres-db:
-#    image: postgres:16
-#    container_name: avengers_db
-#    restart: unless-stopped
-#    environment:
-#      POSTGRES_USER: ${POSTGRES_USER:-admin}
-#      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-123}
-#      POSTGRES_DB: ${POSTGRES_DB:-avengers_coffee}
-#    ports:
-#      - "${POSTGRES_PORT:-5433}:5432"
-#    volumes:
-#      - avengers_pgdata:/var/lib/postgresql/data
-#    healthcheck:
-#      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-avengers_coffee}"]
-#      interval: 10s
-#      timeout: 5s
-#      retries: 5
-#    networks:
-#      - avengers-network
+  # CSDL PostgreSQL (Local DB thay cho Supabase)
+  postgres-db:
+    image: postgres:16
+    container_name: avengers_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - avengers_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - avengers-network
 
   # Bộ nhớ đệm Redis
   redis-cache:
@@ -81,6 +81,7 @@ services:
       FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
       FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-avengers-internal-token}
+      ORDER_SERVICE_URL: http://order-service:${ORDER_PORT:-3005}
       DB_HOST: ${DB_HOST:-postgres-db}
       DB_PORT: ${DB_PORT:-5432}
       DB_USER: ${DB_USER:-admin}
@@ -155,7 +156,7 @@ services:
   order-service:
     build:
       context: ./avengers-coffee-system/services/order-service
-      target: dev
+      target: runner
     container_name: avengers_order_service
     init: true
     restart: unless-stopped
@@ -164,11 +165,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-    volumes:
-      - ./avengers-coffee-system/services/order-service/src:/app/src
-      - ./avengers-coffee-system/services/order-service/tsconfig.json:/app/tsconfig.json
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: ${ORDER_PORT:-3005}
       JWT_SECRET: ${JWT_SECRET:-avengers-jwt-secret}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-avengers-internal-token}
@@ -365,10 +363,8 @@ services:
 
 
 
-# volumes:
-#   avengers_pgdata:
-
-
+volumes:
+  avengers_pgdata:
 networks:
   avengers-network:
     driver: bridge

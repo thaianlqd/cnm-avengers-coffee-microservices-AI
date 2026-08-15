@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { io } from 'socket.io-client';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -458,6 +459,7 @@ function HomeBannerSlider() {
 }
 
 function AppContent() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     
@@ -680,8 +682,8 @@ function AppContent() {
         };
       });
     },
-    staleTime: 60 * 1000,
-    refetchInterval: 90 * 1000,
+    staleTime: 10 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
   });
 
   // ── Sync activeTab and selectedProductForPage to URL Query Params ──
@@ -750,46 +752,47 @@ function AppContent() {
       const response = await apiClient.get('/menu/danh-muc');
       return response.data || [];
     },
-    staleTime: 5 * 60 * 1000,
-    refetchInterval: 120 * 1000,
+    staleTime: 10 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
   });
 
   // ── Sync Document Title with Active Tab ──
   useEffect(() => {
     let tabName = 'Trang chủ';
     switch (activeTab) {
-      case 'home': tabName = 'Trang chủ'; break;
+      case 'home': tabName = t('order.home', 'Trang chủ'); break;
       case 'order': {
         if (selectedCatId === 'all') {
-          tabName = 'Đặt hàng';
+          tabName = t('header.order', 'Đặt hàng');
         } else {
           const cat = categories?.find(c => String(c.ma_danh_muc) === String(selectedCatId));
-          tabName = cat ? cat.ten_danh_muc : 'Đặt hàng';
+          tabName = cat ? cat.ten_danh_muc : t('header.order', 'Đặt hàng');
         }
         break;
       }
       case 'product-detail': {
         if (selectedProductForPage) {
-          tabName = selectedProductForPage.ten_san_pham || 'Chi tiết sản phẩm';
+          tabName = selectedProductForPage.ten_san_pham || t('home.product', 'Chi tiết sản phẩm');
         } else {
-          tabName = 'Chi tiết sản phẩm';
+          tabName = t('home.product', 'Chi tiết sản phẩm');
         }
         break;
       }
-      case 'cart': tabName = 'Giỏ hàng'; break;
-      case 'checkout': tabName = 'Thanh toán'; break;
-      case 'profile': tabName = 'Hồ sơ cá nhân'; break;
-      case 'order-history': tabName = 'Lịch sử đơn hàng'; break;
-      case 'news': tabName = 'Tin tức'; break;
-      case 'stores': tabName = 'Hệ thống cửa hàng'; break;
-      case 'about': tabName = 'Về chúng tôi'; break;
-      case 'careers': tabName = 'Tuyển dụng'; break;
-      case 'contact': tabName = 'Liên hệ'; break;
-      case 'vouchers': tabName = 'Kho Voucher'; break;
-      case 'gift-card': tabName = 'Thẻ quà tặng'; break;
-      case 'login': tabName = 'Đăng nhập'; break;
-      case 'menu-intro': tabName = 'Thực đơn'; break;
-      default: tabName = 'Trang chủ';
+      case 'cart': tabName = t('header.cart', 'Giỏ hàng'); break;
+      case 'checkout': tabName = t('header.checkout', 'Thanh toán'); break;
+      case 'profile': tabName = t('header.profile', 'Hồ sơ cá nhân'); break;
+      case 'order-history': tabName = t('header.orders', 'Lịch sử đơn hàng'); break;
+      case 'news': tabName = t('header.news', 'Tin tức'); break;
+      case 'stores': tabName = t('header.findStore', 'Hệ thống cửa hàng'); break;
+      case 'about': tabName = t('header.about', 'Về chúng tôi'); break;
+      case 'lucky-wheel': tabName = t('header.luckyWheel', 'Vòng quay may mắn'); break;
+      case 'news-detail': tabName = t('header.newsDetail', 'Tin tức'); break;
+      case 'vouchers': tabName = t('order.voucherHub', 'Kho Voucher'); break;
+      case 'giftcard': tabName = t('header.giftCard', 'Thẻ quà tặng'); break;
+      case 'login': tabName = t('header.login', 'Đăng nhập'); break;
+      case 'membership': tabName = t('header.account', 'Thành viên'); break;
+      case 'menu-intro': tabName = t('header.menu', 'Thực đơn'); break;
+      default: tabName = t('order.home', 'Trang chủ');
     }
     
     document.title = `${tabName} | Avengers Coffee`;
@@ -806,7 +809,7 @@ function AppContent() {
       const response = await apiClient.get(`/customers/${userId}/notifications?limit=15`);
       return response.data;
     },
-    enabled: Boolean(userId),
+    enabled: Boolean(userId) && ['home', 'profile', 'order', 'news'].includes(activeTab),
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
   });
@@ -826,6 +829,7 @@ function AppContent() {
       const response = await apiClient.get(`/promotions/vouchers${query}`);
       return response.data;
     },
+    enabled: ['vouchers', 'order', 'cart', 'checkout', 'profile', 'giftcard'].includes(activeTab),
     staleTime: 60 * 1000,
     refetchInterval: 60 * 1000,
   });
@@ -843,6 +847,7 @@ function AppContent() {
       const response = await apiClient.get('/users/branches/public');
       return response.data;
     },
+    enabled: ['stores', 'order', 'checkout', 'profile'].includes(activeTab),
     staleTime: 60 * 1000,
     refetchInterval: 120 * 1000,
   });
@@ -858,6 +863,7 @@ function AppContent() {
       const res = await fetch('https://provinces.open-api.vn/api/?depth=3');
       return res.json();
     },
+    enabled: ['stores', 'order', 'checkout', 'profile'].includes(activeTab),
     staleTime: Infinity,
   });
 
@@ -887,6 +893,7 @@ function AppContent() {
       const response = await apiClient.get('/news?limit=100');
       return response.data;
     },
+    enabled: ['news', 'news-detail'].includes(activeTab),
     staleTime: 60 * 1000,
     refetchInterval: 90 * 1000,
   });

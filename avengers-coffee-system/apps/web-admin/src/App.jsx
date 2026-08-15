@@ -638,6 +638,19 @@ function App() {
           />
         )}
 
+        {activeTab === 'survey-manage' && isManager && (
+          <ManagerSurveyPanel
+            surveysState={surveysState}
+            surveyResponsesState={surveyResponsesState}
+            onKichHoatForm={kichHoatBieuMauKhaoSat}
+            onTaoForm={taoBieuMauKhaoSat}
+            onSuaForm={suaBieuMauKhaoSat}
+            onXoaForm={xoaBieuMauKhaoSat}
+            onTaiForms={taiDanhSachBieuMau}
+            onTaiResponses={taiDanhSachPhanHoi}
+          />
+        )}
+
         {activeTab === 'shipper-manage' && isManager && (
           <ManagerShipperPanel session={session} />
         )}

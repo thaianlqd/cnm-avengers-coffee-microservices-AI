@@ -396,19 +396,19 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
       items: prev.items.map((item) =>
         item.lineId === lineId
           ? {
-              ...item,
-              maSanPham: productId,
-              tenSanPham: product.ten_san_pham,
-              giaBan: Number(product.gia_ban || 0),
-              hinhAnhUrl: product.hinh_anh_url || '',
-              kichCo: 'Nhỏ',
-              toppings: [],
-              luongDa: '',
-              doNgot: '',
-              ghiChu: '',
-              loaiSua: '',
-              custom_attributes: {},
-            }
+            ...item,
+            maSanPham: productId,
+            tenSanPham: product.ten_san_pham,
+            giaBan: Number(product.gia_ban || 0),
+            hinhAnhUrl: product.hinh_anh_url || '',
+            kichCo: 'Nhỏ',
+            toppings: [],
+            luongDa: '',
+            doNgot: '',
+            ghiChu: '',
+            loaiSua: '',
+            custom_attributes: {},
+          }
           : item,
       ),
     }));
@@ -525,7 +525,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
     mutationFn: async (order) => {
       // 1. Thêm lại món vào giỏ
       await reorderItems(order.chi_tiet || []);
-      
+
       // 2. Khởi tạo thanh toán ngay lập tức
       const payload = {
         phuong_thuc_thanh_toan: order.phuong_thuc_thanh_toan || 'THANH_TOAN_KHI_NHAN_HANG',
@@ -536,7 +536,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
         delivery_method: order.phuong_thuc_giao_hang || 'NOI_BO',
         branch_code: order.co_so_ma,
       };
-      
+
       const response = await apiClient.post(`/customers/${activeUserId}/thanh-toan/khoi-tao`, payload);
       return response.data;
     },
@@ -729,9 +729,8 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                               <div className="flex items-center justify-between relative">
                                 {timelineSteps.map((step, idx) => (
                                   <div key={`${order.ma_don_hang}-${step.status}`} className="flex flex-col items-center text-center flex-1 relative z-10">
-                                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black transition-all ${
-                                      step.reached ? 'bg-[#b22830] text-white shadow-2xs' : 'bg-gray-200 text-gray-400'
-                                    }`}>
+                                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black transition-all ${step.reached ? 'bg-[#b22830] text-white shadow-2xs' : 'bg-gray-200 text-gray-400'
+                                      }`}>
                                       {idx + 1}
                                     </div>
                                     <span className={`text-[10px] font-bold mt-1 line-clamp-1 ${step.reached ? 'text-gray-800' : 'text-gray-400'}`}>
@@ -765,7 +764,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                                       )}
                                       {(item.luong_da || item.do_ngot) && (
                                         <p className="text-[10px] text-gray-500">
-                                          {item.luong_da ? `Đá: ${item.luong_da}` : ''} 
+                                          {item.luong_da ? `Đá: ${item.luong_da}` : ''}
                                           {item.luong_da && item.do_ngot ? ' | ' : ''}
                                           {item.do_ngot ? `Ngọt: ${item.do_ngot}` : ''}
                                         </p>
