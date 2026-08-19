@@ -10,3 +10,4 @@ kafka-python==2.0.2
 numpy==1.26.4
 scikit-learn==1.5.2
 anthropic>=0.30.0
+scipy==1.13.0

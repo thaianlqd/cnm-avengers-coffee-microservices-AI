@@ -345,8 +345,8 @@ export function MapScreen({ route, navigation }) {
       ];
     }
 
-    const steps = 150;
-    const intervalMs = 200;
+    const steps = 75;
+    const intervalMs = 200; // Trả lại tốc độ cũ (tổng 15s) để khớp với polling 15s của app Customer
     let currentStep = 0;
 
     simulationInterval.current = setInterval(() => {
@@ -369,7 +369,7 @@ export function MapScreen({ route, navigation }) {
       setLocation(newLoc);
       updateNavInstruction(newLat, newLng);
       
-      if (currentStep % 25 === 0 || currentStep === steps) {
+      if (currentStep % 15 === 0 || currentStep === steps) {
         apiClient.patch(`/shippers/${shipper.id}/location`, {
           latitude: newLat,
           longitude: newLng,

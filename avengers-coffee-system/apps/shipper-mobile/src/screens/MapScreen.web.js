@@ -194,8 +194,8 @@ export function MapScreen({ route, navigation }) {
     if (!shipper?.id) return;
     if (movementIntervalRef.current) clearInterval(movementIntervalRef.current);
     
-    const steps = 40; 
-    const intervalMs = 200; 
+    const steps = 75; 
+    const intervalMs = 200; // Trả lại tốc độ cũ (tổng 15s) để khớp với tốc độ polling 15s của khách hàng
     
     let currentStep = 0;
     const startLat = shipperLocation.latitude;
@@ -209,8 +209,8 @@ export function MapScreen({ route, navigation }) {
       
       setShipperLocation({ latitude: newLat, longitude: newLng });
       
-      // CHỈ GỬI API UPDATE LÊN BACKEND MỖI 10 BƯỚC (2 GIÂY) ĐỂ TRÁNH QUÁ TẢI SERVER
-      if (currentStep % 10 === 0 || currentStep === steps) {
+      // CHỈ GỬI API UPDATE LÊN BACKEND MỖI 15 BƯỚC (3 GIÂY) ĐỂ TRÁNH QUÁ TẢI SERVER
+      if (currentStep % 15 === 0 || currentStep === steps) {
         apiClient.patch(`/shippers/${shipper.id}/location`, {
           latitude: newLat,
           longitude: newLng,

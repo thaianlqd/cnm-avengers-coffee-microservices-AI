@@ -428,7 +428,7 @@ export function useAdminDashboard() {
     setSurveyResponsesState((prev) => ({ ...prev, loading: true, error: '' }))
     try {
       const token = session?.token || session?.accessToken
-      const branchQuery = sessionBranchCode ? `?branch_code=${encodeURIComponent(sessionBranchCode)}` : ''
+      const branchQuery = (sessionRole === 'MANAGER' && sessionBranchCode) ? `?branch_code=${encodeURIComponent(sessionBranchCode)}` : ''
       const response = await fetch(`${API_BASE_URL}/surveys/responses${branchQuery}`, {
         headers: {
           Authorization: `Bearer ${token}`
@@ -542,8 +542,6 @@ export function useAdminDashboard() {
     if (sessionRole !== 'MANAGER') {
       taiYeuCauDangKyCa(false)
     }
-  // Remove the eager loading Promise.all from session initialization
-    }
   }, [session])
 
   useEffect(() => {
@@ -561,6 +559,9 @@ export function useAdminDashboard() {
       taiReviewCSKH()
     } else if (activeTab === 'delivery') {
       taiDanhSachCod()
+    } else if (activeTab === 'survey-manage') {
+      taiDanhSachBieuMau()
+      taiDanhSachPhanHoi()
     }
   }, [activeTab, session, sessionRole])
 
