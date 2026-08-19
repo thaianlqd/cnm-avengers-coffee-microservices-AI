@@ -271,8 +271,10 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
       return rawData?.orders || rawData?.items || [];
     },
     enabled: Boolean(activeUserIdForQuery && isOpen),
-    staleTime: 30 * 1000,
-    retry: 1,
+    staleTime: 60 * 1000,          // 60 giây — giảm refetch không cần thiết
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000), // Backoff: 1s, 2s, 4s...
+    placeholderData: (prev) => prev, // Giữ data cũ khi filter thay đổi, không chớp trắng
   });
 
   const { data: menuProducts = [] } = useQuery({

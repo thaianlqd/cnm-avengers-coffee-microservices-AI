@@ -220,13 +220,13 @@ services:
       minio:
         condition: service_healthy
     environment:
-      # ── Database (Supabase thật) ──────────────────────
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT:-6543}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      # ── Database (Local Postgres) ──────────────────────
+      DB_HOST: ${DB_HOST:-postgres-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-admin}
+      DB_PASSWORD: ${DB_PASSWORD:-123456}
       DB_NAME: ${DB_NAME:-postgres}
-      DB_SSLMODE: require
+      DB_SSLMODE: disable
       # ── MinIO / Kafka ─────────────────────────────────
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
@@ -247,10 +247,10 @@ services:
       # ── AI Analytics ──────────────────────────────────
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       GROQ_API_KEY: ${GROQ_API_KEY}
-    ports:
-      - "8501:8501"
     volumes:
       - ./data-platform/streamlit-app:/app
+    ports:
+      - "8501:8501"
     networks:
       - avengers-network
       - data-network

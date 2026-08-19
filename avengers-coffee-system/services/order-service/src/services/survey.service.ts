@@ -211,15 +211,31 @@ export class SurveyService {
   }
 
   async layDanhSachPhanHoi(branchCode?: string) {
-    const where: any = {};
+    // Build WHERE clause
+    const conditions: string[] = [];
+    const params: any[] = [];
+    let paramIdx = 1;
+
+    const orderSchema = process.env.DB_SCHEMA || 'orders';
+
     if (branchCode) {
-      where.co_so_ma = branchCode;
+      conditions.push(`r.co_so_ma = $${paramIdx++}`);
+      params.push(branchCode);
     }
-    const list = await this.responseRepo.find({ 
-      where, 
-      order: { ngay_tao: 'DESC' } 
-    });
-    return { total: list.length, items: list };
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    // JOIN with survey_form to get ten_form (survey title)
+    const rows = await this.responseRepo.manager.query(
+      `SELECT r.*, f.tieu_de AS ten_form
+       FROM "${orderSchema}"."khao_sat_phan_hoi" r
+       LEFT JOIN "${orderSchema}"."khao_sat_bieu_mau" f ON f.id = r.ma_bieu_mau
+       ${whereClause}
+       ORDER BY r.ngay_tao DESC`,
+      params,
+    );
+
+    return { total: rows.length, items: rows };
   }
 
   async checkStatus(userId: string) {

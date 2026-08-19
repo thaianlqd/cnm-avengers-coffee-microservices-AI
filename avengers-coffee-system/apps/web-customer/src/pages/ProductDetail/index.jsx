@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   MagnifyingGlassIcon,
   ShoppingBagIcon,
@@ -6,10 +7,14 @@ import {
   CheckIcon,
   XMarkIcon,
   PlusIcon,
-  MinusIcon
+  MinusIcon,
 } from '@heroicons/react/24/outline';
+import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import QuickViewModal from '../../components/QuickViewModal';
 import { useTranslation } from 'react-i18next';
+import { apiClient } from '../../lib/apiClient';
+import { queryKeys } from '../../lib/queryKeys';
+
 
 export default function ProductDetailPage({
   product,
@@ -132,6 +137,22 @@ export default function ProductDetailPage({
       ))
       .slice(0, 6);
   }, [products, product, categoryName]);
+
+  // Fetch reviews của sản phẩm
+  const productIdStr = String(product?.ma_san_pham || '');
+  const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
+    queryKey: queryKeys.productReviews(productIdStr),
+    queryFn: async () => {
+      const res = await apiClient.get(`/products/${productIdStr}/reviews`);
+      return res.data;
+    },
+    enabled: Boolean(productIdStr),
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const reviewItems = reviewsData?.items || [];
+  const totalReviews = reviewsData?.tongReview || 0;
+  const avgRating = reviewsData?.diemTrungBinh || 0;
 
   // Danh sách bánh ngon side widget
   const pastryItems = useMemo(() => {
@@ -579,6 +600,174 @@ export default function ProductDetailPage({
               </div>
             </div>
           </div>
+        </div>
+
+        {/* PRODUCT REVIEWS SECTION */}
+        <div className="mt-12 pb-14 border-b border-gray-200">
+          <div className="flex items-center gap-3 mb-8">
+            <h2 className="text-2xl font-black text-[#222222] uppercase">
+              Đánh giá từ khách hàng
+            </h2>
+            {totalReviews > 0 && (
+              <span className="bg-[#b22830]/10 text-[#b22830] text-sm font-black px-3 py-1 rounded-full">
+                {totalReviews} đánh giá
+              </span>
+            )}
+          </div>
+
+          {reviewsLoading ? (
+            /* Skeleton Loading */
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="bg-gray-50 rounded-2xl p-5 animate-pulse">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-gray-200" />
+                    <div className="space-y-2">
+                      <div className="h-3 bg-gray-200 rounded w-32" />
+                      <div className="h-3 bg-gray-200 rounded w-20" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-3 bg-gray-200 rounded w-full" />
+                    <div className="h-3 bg-gray-200 rounded w-3/4" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : reviewItems.length === 0 ? (
+            /* Empty State */
+            <div className="text-center py-14 bg-[#fafafa] rounded-2xl border border-gray-100">
+              <div className="text-5xl mb-4">⭐</div>
+              <h3 className="text-lg font-black text-gray-700 mb-2">Chưa có đánh giá nào</h3>
+              <p className="text-sm text-gray-400 font-medium">
+                Hãy mua và trải nghiệm sản phẩm để là người đầu tiên đánh giá!
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              {/* LEFT: Summary Bar */}
+              <div className="lg:col-span-4">
+                <div className="bg-gradient-to-b from-[#fff9f9] to-white border border-red-50 rounded-2xl p-6 shadow-sm sticky top-24">
+                  <div className="text-center mb-5">
+                    <div className="text-6xl font-black text-[#b22830] leading-none">
+                      {avgRating.toFixed(1)}
+                    </div>
+                    <div className="flex items-center justify-center gap-1 mt-2">
+                      {[1, 2, 3, 4, 5].map(star => (
+                        <StarIconSolid
+                          key={star}
+                          className={`w-5 h-5 ${
+                            star <= Math.round(avgRating)
+                              ? 'text-amber-400'
+                              : 'text-gray-200'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-sm text-gray-500 font-semibold mt-1">
+                      {totalReviews} lượt đánh giá
+                    </p>
+                  </div>
+
+                  {/* Rating distribution bars */}
+                  <div className="space-y-2">
+                    {[5, 4, 3, 2, 1].map(star => {
+                      const count = reviewItems.filter(r => r.so_sao === star).length;
+                      const pct = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
+                      return (
+                        <div key={star} className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-gray-500 w-4">{star}</span>
+                          <StarIconSolid className="w-3 h-3 text-amber-400 flex-shrink-0" />
+                          <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+                            <div
+                              className="h-full bg-amber-400 rounded-full transition-all duration-700"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-gray-400 font-semibold w-5 text-right">{count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT: Review list */}
+              <div className="lg:col-span-8 space-y-4">
+                {reviewItems.map((review, idx) => {
+                  const displayName = review.ten_nguoi_dung
+                    ? review.ten_nguoi_dung.length > 2
+                      ? review.ten_nguoi_dung[0] + '*'.repeat(review.ten_nguoi_dung.length - 2) + review.ten_nguoi_dung[review.ten_nguoi_dung.length - 1]
+                      : review.ten_nguoi_dung
+                    : 'Khách hàng';
+
+                  const initials = (review.ten_nguoi_dung || 'K')[0].toUpperCase();
+                  const avatarColors = [
+                    'bg-rose-100 text-rose-600',
+                    'bg-indigo-100 text-indigo-600',
+                    'bg-emerald-100 text-emerald-600',
+                    'bg-amber-100 text-amber-700',
+                    'bg-violet-100 text-violet-600',
+                  ];
+                  const colorClass = avatarColors[idx % avatarColors.length];
+
+                  return (
+                    <div
+                      key={review.id}
+                      className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow"
+                    >
+                      {/* Header */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-base flex-shrink-0 ${colorClass}`}>
+                            {initials}
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-800 text-sm">{displayName}</p>
+                            <p className="text-xs text-gray-400">
+                              {review.ngay_tao
+                                ? new Date(review.ngay_tao).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                                : 'Vừa đây'}
+                            </p>
+                          </div>
+                        </div>
+                        {/* Stars */}
+                        <div className="flex items-center gap-0.5 flex-shrink-0">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <StarIconSolid
+                              key={star}
+                              className={`w-4 h-4 ${
+                                star <= review.so_sao ? 'text-amber-400' : 'text-gray-200'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Comment */}
+                      {review.binh_luan && (
+                        <p className="text-sm text-gray-700 leading-relaxed mb-3">
+                          “{review.binh_luan}”
+                        </p>
+                      )}
+
+                      {/* Manager reply */}
+                      {review.phan_hoi_quan_ly && (
+                        <div className="bg-[#fdf8f4] border-l-4 border-[#b22830] rounded-r-xl p-3 mt-2">
+                          <p className="text-xs font-black text-[#b22830] mb-1 uppercase tracking-wider">
+                            ☕ Phản hồi của Avengers Coffee
+                          </p>
+                          <p className="text-xs text-gray-700 leading-relaxed">
+                            {review.phan_hoi_quan_ly}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* RELATED PRODUCTS SECTION (Sản phẩm cùng loại - Ảnh 4) */}

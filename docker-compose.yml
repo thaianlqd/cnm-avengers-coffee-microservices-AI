@@ -97,7 +97,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 256M
 
   menu-service:
     build:
@@ -125,7 +125,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 256M
 
   inventory-service:
     build:
@@ -151,7 +151,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 256M
 
   order-service:
     build:
@@ -204,7 +204,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1700M
+          memory: 384M
 
   news-service:
     build:
@@ -235,7 +235,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 256M
 
   api-gateway:
     build:
@@ -272,7 +272,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 384M
 
   ai-service:
     build:
@@ -300,7 +300,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 256M
 
 
   web-customer:

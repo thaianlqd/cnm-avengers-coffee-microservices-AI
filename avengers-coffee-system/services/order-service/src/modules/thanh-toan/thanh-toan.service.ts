@@ -2335,7 +2335,7 @@ export class ThanhToanService {
     });
 
     const result = { total: orders.length, orders };
-    await this.redisCacheService.setJson(cacheKey, result, 45).catch(() => undefined);
+    await this.redisCacheService.setJson(cacheKey, result, 120).catch(() => undefined); // Tăng từ 45s → 120s
     return result;
   }
 
@@ -2448,7 +2448,7 @@ export class ThanhToanService {
     });
 
     const result = { total: orders.length, orders };
-    await this.redisCacheService.setJson(cacheKey, result, 30);
+    await this.redisCacheService.setJson(cacheKey, result, 60); // Tăng từ 30s → 60s
     return result;
   }
 

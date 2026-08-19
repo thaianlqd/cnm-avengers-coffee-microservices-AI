@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ShipperMapView from '../../components/features_thaian/ShipperMapView';
 import { apiClient } from '../../lib/apiClient';
 
@@ -6,6 +6,7 @@ export default function OrderTrackingPage({ id, onBack }) {
   const [trackingData, setTrackingData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const isMounted = useRef(true);
   
   // Rating states
   const [rating, setRating] = useState(5);
@@ -32,29 +33,43 @@ export default function OrderTrackingPage({ id, onBack }) {
   const fetchTracking = async () => {
     try {
       const res = await apiClient.get(`/shippers/delivery/tracking/${id}?t=${Date.now()}`);
-      
+      if (!isMounted.current) return;
+
       // Ensure coordinates are numbers because Postgres decimal comes as string
       if (res.data?.shipper_location?.latitude) {
         res.data.shipper_location.latitude = Number(res.data.shipper_location.latitude);
         res.data.shipper_location.longitude = Number(res.data.shipper_location.longitude);
       }
-      
+
       setTrackingData(res.data);
       setError(null);
     } catch (err) {
-      setError(err.response?.data?.message || 'Không tìm thấy thông tin đơn hàng');
+      if (!isMounted.current) return;
+      // Chỉ hiện lỗi khi chưa có data (lần đầu load).
+      // Nếu đã có data cũ, giữ nguyên — polling tạm lỗi, sẽ tự retry sau.
+      setTrackingData((prev) => {
+        if (prev === null) {
+          setError(err.response?.data?.message || 'Không tìm thấy thông tin đơn hàng');
+        }
+        return prev;
+      });
     } finally {
-      setLoading(false);
+      if (isMounted.current) setLoading(false);
     }
   };
 
   useEffect(() => {
+    isMounted.current = true;
     fetchTracking();
+    // Tăng lên 15s để giảm burst request lên server
     const interval = setInterval(() => {
       fetchTracking();
-    }, 5000); // Poll every 5s for realtime updates
-    
-    return () => clearInterval(interval);
+    }, 15000);
+
+    return () => {
+      isMounted.current = false;
+      clearInterval(interval);
+    };
   }, [id]);
 
   if (loading && !trackingData) {
