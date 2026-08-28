@@ -116,12 +116,28 @@ export function HomeScreen({ navigation }) {
     queryKey: ['availableOrders', shipper?.id],
     queryFn: async () => {
       if (!shipper?.id) return []
+      // apiClient queue automatically prevents OkHttp HTTP/2 concurrent deadlock over Ngrok!
       const [available, mine] = await Promise.all([
         apiClient.get(`/shippers/available-orders`),
         apiClient.get(`/shippers/${shipper.id}/deliveries?status=CONFIRMED`),
       ])
+      
       const availList = Array.isArray(available) ? available : []
-      const mineList = Array.isArray(mine) ? mine : []
+      const mineListRaw = Array.isArray(mine) ? mine : []
+      
+      // Enrich mineList with co_so_ma by fetching details if the backend hasn't been updated yet
+      const mineList = await Promise.all(mineListRaw.map(async (d) => {
+        if (!d.co_so_ma) {
+          try {
+            const detail = await apiClient.get(`/shippers/${shipper.id}/deliveries/${d.id}`)
+            return { ...d, co_so_ma: detail?.order?.co_so_ma }
+          } catch (e) {
+            return d
+          }
+        }
+        return d
+      }))
+
       const mineOrderIds = new Set(mineList.map(d => d.ma_don_hang))
       const newAvail = availList.filter(o => !mineOrderIds.has(o.ma_don_hang))
       return [...mineList.map(d => ({ ...d, _already_accepted: true })), ...newAvail]
@@ -337,7 +353,8 @@ export function HomeScreen({ navigation }) {
         const response = await apiClient.get('/users/branches/public')
         return response?.data || response || { items: [] }
       } catch (error) {
-        console.log('Error fetching branches', error)
+        // Silent fail for public branches as we have fallback logic.
+        // Prevents spamming the console when Ngrok free-tier drops connections (503).
         return { items: [] }
       }
     },
@@ -564,10 +581,22 @@ export function HomeScreen({ navigation }) {
     onSuccess: (res, item) => {
       queryClient.invalidateQueries({ queryKey: ['availableOrders'] })
       queryClient.invalidateQueries({ queryKey: ['shipperStats', shipper?.id] })
-      const deliveryId = res?.delivery?.id || item?.id || item?.ma_don_hang
+      
+      const resDeliveryId = res?.delivery?.id || res?.delivery?.ma_don_hang
+      const fallbackId = item?.ma_don_hang || item?.id
+      const deliveryId = resDeliveryId || fallbackId
+
+      if (!deliveryId) {
+        Alert.alert('Lỗi', 'Không lấy được mã đơn hàng. Vui lòng tải lại trang.')
+        return
+      }
+
       navigation.navigate('OrderDetail', { deliveryId })
     },
-    onError: (e) => Alert.alert('Lỗi', e?.response?.data?.message || e?.message || 'Không thể nhận đơn'),
+    onError: (e) => {
+      console.error('Accept Order Error:', e?.response?.data || e?.message)
+      Alert.alert('Lỗi', e?.response?.data?.message || e?.message || 'Không thể nhận đơn')
+    },
   })
 
   const renderDeliveryItem = ({ item }) => {
@@ -604,22 +633,18 @@ export function HomeScreen({ navigation }) {
             <View style={{ flex: 1 }}>
               <Text style={styles.routeLabel}>
                 {(() => {
-                   const code = shipper?.branch_code || item?.branch_code || 'HCM_DIEN_BIEN_PHU';
+                   const code = item?.co_so_ma || item?.branch_code || shipper?.branch_code || 'MAC_DINH_CHI';
                    let branch = publicBranchPayload?.items?.find(b => (b.ma_chi_nhanh || b.co_so_ma || b.branch_code) === code);
-                   if (!branch) {
-                     branch = publicBranchPayload?.items?.find(b => (b.ma_chi_nhanh || b.co_so_ma || b.branch_code) === 'HCM_DIEN_BIEN_PHU');
-                   }
-                   return branch ? (branch.ten_chi_nhanh || branch.ten_co_so || branch.name) : 'Cửa hàng lấy hàng';
+                   return branch ? (branch.ten_chi_nhanh || branch.ten_co_so || branch.name) : `Cửa hàng (Mã: ${code})`;
                 })()}
               </Text>
               <Text style={styles.routeAddress} numberOfLines={2}>
                 {(() => {
-                   const code = shipper?.branch_code || item?.branch_code || 'HCM_DIEN_BIEN_PHU';
+                   const code = item?.co_so_ma || item?.branch_code || shipper?.branch_code || 'MAC_DINH_CHI';
                    let branch = publicBranchPayload?.items?.find(b => (b.ma_chi_nhanh || b.co_so_ma || b.branch_code) === code);
-                   if (!branch) {
-                     branch = publicBranchPayload?.items?.find(b => (b.ma_chi_nhanh || b.co_so_ma || b.branch_code) === 'HCM_DIEN_BIEN_PHU');
-                   }
-                   return branch?.dia_chi || branch?.address || item.pickup_address || 'Chưa cập nhật địa chỉ quán';
+                   const addr = branch?.dia_chi || branch?.address || item?.pickup_address;
+                   if (addr) return addr;
+                   return branch?.ten_chi_nhanh ? `Avengers Coffee - ${branch.ten_chi_nhanh}` : `Avengers Coffee - ${code}`;
                 })()}
               </Text>
             </View>

@@ -114,9 +114,22 @@ export function WalletScreen({ navigation }) {
     enabled: !!shipper?.id,
   })
 
+  // Public branches to map branch codes to names
+  const { data: publicBranchPayload } = useQuery({
+    queryKey: ['publicBranches'],
+    queryFn: async () => apiClient.get('/users/branches/public')
+  })
+
+  const getBranchName = (code) => {
+    if (code === 'LEGACY_COD') return 'Tiền nợ cũ (Chưa phân loại)'
+    if (!publicBranchPayload?.items) return `Cơ sở: ${code}`
+    const b = publicBranchPayload.items.find(x => (x.ma_chi_nhanh || x.co_so_ma || x.branch_code) === code)
+    return b ? (b.ten_chi_nhanh || b.ten_co_so || b.name) : `Cơ sở: ${code}`
+  }
+
   const remitMutation = useMutation({
-    mutationFn: async () => {
-      return apiClient.post(`/shippers/${shipper.id}/cod-remit`, { amount: wallet?.cod_holding || 0 })
+    mutationFn: async ({ branchCode, amount }) => {
+      return apiClient.post(`/shippers/${shipper.id}/cod-remit`, { amount, branch_code: branchCode })
     },
     onSuccess: () => {
       Alert.alert('✅ Thành công', 'Đã xác nhận nộp COD cho cửa hàng.')
@@ -127,13 +140,14 @@ export function WalletScreen({ navigation }) {
     onError: (e) => Alert.alert('Lỗi', e?.message || 'Không thể nộp COD lúc này'),
   })
 
-  const handleRemitCOD = () => {
+  const handleRemitCOD = (branchCode, amount) => {
+    const branchName = getBranchName(branchCode)
     Alert.alert(
       'Xác nhận nộp COD',
-      `Bạn xác nhận đã nộp ${formatCurrency(wallet?.cod_holding || 0)} tiền thu hộ cho cửa hàng?`,
+      `Bạn xác nhận đã nộp ${formatCurrency(amount)} tiền thu hộ cho ${branchName}?`,
       [
         { text: 'Hủy', style: 'cancel' },
-        { text: 'Xác nhận', onPress: () => remitMutation.mutate() },
+        { text: 'Xác nhận', onPress: () => remitMutation.mutate({ branchCode, amount }) },
       ]
     )
   }
@@ -217,17 +231,43 @@ export function WalletScreen({ navigation }) {
             Vui lòng nộp lại tiền thu hộ cho quầy cửa hàng trước cuối ca làm việc.
           </Text>
 
-          {codHolding > 0 && (
-            <TouchableOpacity
-              style={styles.codBtn}
-              onPress={handleRemitCOD}
-              disabled={remitMutation.isPending}
-            >
-              {remitMutation.isPending
-                ? <ActivityIndicator size="small" color={colors.warning} />
-                : <Text style={styles.codBtnText}>✓ Xác nhận đã nộp COD</Text>
-              }
-            </TouchableOpacity>
+          {/* Breakdown by Branch */}
+          {wallet?.cod_details && Object.values(wallet.cod_details).some(v => v > 0) ? (
+            <View style={{ marginTop: 12 }}>
+              {Object.entries(wallet.cod_details).map(([branch, amount]) => amount > 0 ? (
+                <View key={branch} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFFBEB', padding: 12, borderRadius: 8, marginBottom: 8 }}>
+                  <View style={{ flex: 1, paddingRight: 8 }}>
+                    <Text style={{ fontWeight: 'bold', color: colors.warning, fontSize: 13, marginBottom: 2 }}>
+                      {getBranchName(branch)}
+                    </Text>
+                    <Text style={{ fontSize: 16, fontWeight: 'bold', color: colors.text }}>{formatCurrency(amount)}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={{ backgroundColor: colors.warning, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 6 }}
+                    onPress={() => handleRemitCOD(branch, amount)}
+                    disabled={remitMutation.isPending}
+                  >
+                    {remitMutation.isPending
+                      ? <ActivityIndicator size="small" color="#fff" />
+                      : <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 13 }}>Nộp</Text>
+                    }
+                  </TouchableOpacity>
+                </View>
+              ) : null)}
+            </View>
+          ) : (
+            codHolding > 0 && (
+              <TouchableOpacity
+                style={styles.codBtn}
+                onPress={() => handleRemitCOD('LEGACY_COD', codHolding)}
+                disabled={remitMutation.isPending}
+              >
+                {remitMutation.isPending
+                  ? <ActivityIndicator size="small" color={colors.warning} />
+                  : <Text style={styles.codBtnText}>✓ Xác nhận đã nộp COD</Text>
+                }
+              </TouchableOpacity>
+            )
           )}
         </View>
 

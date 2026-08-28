@@ -504,7 +504,7 @@ export default function ProfilePageContent({
           const addr = data.address;
           
           const rawCity = addr.city || addr.municipality || addr.province || addr.state || addr.region || addr.town || '';
-          const rawDistrict = addr.county || addr.district || addr.suburb || addr.town || addr.city_district || '';
+          const rawDistrict = addr.county || addr.district || addr.city_district || addr.town || '';
           const rawWard = addr.village || addr.ward || addr.suburb || addr.quarter || addr.hamlet || '';
           const rawStreet = [addr.house_number, addr.road].filter(Boolean).join(' ') || data.display_name;
           
@@ -519,7 +519,16 @@ export default function ProfilePageContent({
             return optionsArray.find(opt => {
                 let optNorm = removeAccents(opt).replace(/(thanh pho|tinh|quan|huyen|thi xa|phuong|xa|thi tran)\s+/gi, '').replace(/\s+city/gi, '').trim();
                 if (optNorm.includes('ho chi minh')) optNorm = 'ho chi minh';
-                return optNorm === target || optNorm.includes(target) || target.includes(optNorm);
+                
+                if (optNorm === target) return true;
+                if (target.includes(optNorm)) {
+                    // Tránh trường hợp "12" match với "1" (chỉ match số nếu đứng 1 mình)
+                    if (/^\d+$/.test(optNorm) || optNorm.length <= 2) {
+                        return new RegExp(`\\b${optNorm}\\b`).test(target);
+                    }
+                    return true;
+                }
+                return false;
             });
           };
 

@@ -395,7 +395,15 @@ export class UserService implements OnModuleInit {
 
     if (!user) throw new UnauthorizedException('Tài khoản không tồn tại');
 
-    const isMatch = await bcrypt.compare(password, user.mat_khau_hash);
+    let isMatch = false;
+    if (user.mat_khau_hash.startsWith('$2a$') || user.mat_khau_hash.startsWith('$2b$')) {
+      isMatch = await bcrypt.compare(password, user.mat_khau_hash);
+    } else {
+      const sha256Hash = createHash('sha256').update(password).digest('hex');
+      if (sha256Hash === user.mat_khau_hash) {
+        isMatch = true;
+      }
+    }
     if (!isMatch) throw new UnauthorizedException('Sai mật khẩu');
     if (user.trang_thai !== 'ACTIVE') throw new UnauthorizedException('Tai khoan da bi vo hieu hoa');
 
@@ -415,7 +423,8 @@ export class UserService implements OnModuleInit {
         co_so_ma: user.co_so_ma,
         co_so_ten: user.co_so_ten,
         nhanVoucherSinhNhat: receivedBirthdayVoucher,
-      }
+      },
+      requirePasswordChange: user.require_password_change,
     };
   }
 
@@ -608,7 +617,7 @@ export class UserService implements OnModuleInit {
     ten_dang_nhap?: string;
     mat_khau?: string;
     ho_ten?: string;
-    vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER';
+    vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER' | 'ACCOUNTANT';
     co_so_ma?: string;
     email?: string;
   }) {
@@ -619,7 +628,7 @@ export class UserService implements OnModuleInit {
     const branchCode = String(payload.co_so_ma || '').trim();
     const branchInfo = branchCode ? await this.resolveBranchInfo(branchCode) : null;
 
-    if (!username || !password || !fullName || !['STAFF', 'MANAGER', 'CUSTOMER'].includes(role)) {
+    if (!username || !password || !fullName || !['STAFF', 'MANAGER', 'CUSTOMER', 'ACCOUNTANT'].includes(role)) {
       throw new BadRequestException('Du lieu tao tai khoan khong hop le');
     }
     if (password.length < 6) {
@@ -628,7 +637,7 @@ export class UserService implements OnModuleInit {
     if (branchCode && !branchInfo) {
       throw new BadRequestException('co_so_ma khong hop le');
     }
-    if (role !== 'CUSTOMER' && !branchInfo) {
+    if (!['CUSTOMER', 'ACCOUNTANT'].includes(role) && !branchInfo) {
       throw new BadRequestException('Vui long chon chi nhanh hop le');
     }
 
@@ -674,7 +683,7 @@ export class UserService implements OnModuleInit {
       ten_dang_nhap?: string;
       mat_khau?: string;
       ho_ten?: string;
-      vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER';
+      vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER' | 'ACCOUNTANT';
       co_so_ma?: string;
       trang_thai?: 'ACTIVE' | 'INACTIVE';
       email?: string;
@@ -714,8 +723,8 @@ export class UserService implements OnModuleInit {
 
     if (payload.vai_tro !== undefined) {
       const role = String(payload.vai_tro).toUpperCase();
-      if (!['STAFF', 'MANAGER', 'CUSTOMER'].includes(role)) {
-        throw new BadRequestException('Chi cho phep role STAFF, MANAGER hoac CUSTOMER');
+      if (!['STAFF', 'MANAGER', 'CUSTOMER', 'ACCOUNTANT'].includes(role)) {
+        throw new BadRequestException('Chi cho phep role STAFF, MANAGER, ACCOUNTANT hoac CUSTOMER');
       }
       user.vai_tro = role;
     }
@@ -730,7 +739,7 @@ export class UserService implements OnModuleInit {
     if (payload.co_so_ma !== undefined) {
       const branchCode = String(payload.co_so_ma || '').trim();
       if (!branchCode) {
-        if (String(user.vai_tro || '').toUpperCase() === 'CUSTOMER') {
+        if (['CUSTOMER', 'ACCOUNTANT'].includes(String(user.vai_tro || '').toUpperCase())) {
           user.co_so_ma = null;
           user.co_so_ten = null;
         } else {
@@ -1208,13 +1217,23 @@ export class UserService implements OnModuleInit {
       throw new NotFoundException('Khong tim thay nguoi dung');
     }
 
-    const isMatch = await bcrypt.compare(currentPassword, user.mat_khau_hash);
+    let isMatch = false;
+    if (user.mat_khau_hash.startsWith('$2a$') || user.mat_khau_hash.startsWith('$2b$')) {
+      isMatch = await bcrypt.compare(currentPassword, user.mat_khau_hash);
+    } else {
+      const sha256Hash = createHash('sha256').update(currentPassword).digest('hex');
+      if (sha256Hash === user.mat_khau_hash) {
+        isMatch = true;
+      }
+    }
+
     if (!isMatch) {
       throw new UnauthorizedException('Mat khau hien tai khong dung');
     }
 
     const salt = await bcrypt.genSalt();
     user.mat_khau_hash = await bcrypt.hash(newPassword, salt);
+    user.require_password_change = false; // Reset the flag
     await this.userRepo.save(user);
 
     return { message: 'Doi mat khau thanh cong' };

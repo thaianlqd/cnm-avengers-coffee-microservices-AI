@@ -24,7 +24,7 @@ export class SurveyController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'MANAGER')
   @Get('forms')
   async layDanhSachBieuMau() {
     return this.surveyService.layDanhSachBieuMau();
@@ -79,10 +79,10 @@ export class SurveyController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'MANAGER')
   @Get('responses')
-  async layDanhSachPhanHoi() {
-    return this.surveyService.layDanhSachPhanHoi();
+  async layDanhSachPhanHoi(@Query('branch_code') branchCode?: string) {
+    return this.surveyService.layDanhSachPhanHoi(branchCode);
   }
 
   @Get('check-status')

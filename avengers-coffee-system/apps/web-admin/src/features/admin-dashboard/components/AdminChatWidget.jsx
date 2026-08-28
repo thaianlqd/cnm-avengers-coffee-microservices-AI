@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { API_BASE_URL } from '../constants';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3005';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || `http://${window.location.hostname}:3005`;
 
 const AI_PROMPT_PATTERNS = [
   'gợi ý cho tôi menu đồ uống nổi bật',

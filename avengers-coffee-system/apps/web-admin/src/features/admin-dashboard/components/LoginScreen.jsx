@@ -1,4 +1,68 @@
-export function LoginScreen({ loginForm, setLoginForm, loginStatus, onLogin }) {
+import { useState } from 'react'
+
+export function LoginScreen({ loginForm, setLoginForm, loginStatus, onLogin, pendingPasswordChange, onConfirmPasswordChange }) {
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [localError, setLocalError] = useState('')
+
+  if (pendingPasswordChange) {
+    const handleConfirm = (e) => {
+      e.preventDefault()
+      if (newPassword !== confirmPassword) {
+        setLocalError('Mật khẩu nhập lại không khớp')
+        return
+      }
+      if (newPassword.length < 6) {
+        setLocalError('Mật khẩu mới phải có ít nhất 6 ký tự')
+        return
+      }
+      setLocalError('')
+      onConfirmPasswordChange(newPassword)
+    }
+
+    return (
+      <div className="admin-login-shell">
+        <section className="login-brand-panel">
+          <p className="eyebrow">Bảo Mật Hệ Thống</p>
+          <h1>Bắt buộc đổi mật khẩu lần đầu</h1>
+          <p>Tài khoản Franchisee của bạn yêu cầu phải đổi mật khẩu ở lần đăng nhập đầu tiên để đảm bảo an toàn.</p>
+        </section>
+
+        <section className="login-card">
+          <h2>Đổi mật khẩu mới</h2>
+          <p>Xin chào, {pendingPasswordChange.user?.hoTen}</p>
+          <form onSubmit={handleConfirm} className="login-form">
+            <label htmlFor="newPassword">Mật khẩu mới</label>
+            <input
+              id="newPassword"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Nhập mật khẩu mới"
+              required
+            />
+
+            <label htmlFor="confirmPassword">Nhập lại mật khẩu mới</label>
+            <input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Xác nhận mật khẩu mới"
+              required
+            />
+
+            {(localError || loginStatus.error) && <p className="error-text">{localError || loginStatus.error}</p>}
+
+            <button type="submit" disabled={loginStatus.loading}>
+              {loginStatus.loading ? 'Đang cập nhật...' : 'Cập nhật mật khẩu'}
+            </button>
+          </form>
+        </section>
+      </div>
+    )
+  }
+
   return (
     <div className="admin-login-shell">
       <section className="login-brand-panel">

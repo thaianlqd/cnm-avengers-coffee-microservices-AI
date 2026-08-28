@@ -20,6 +20,7 @@ import {
   ChatBubbleLeftEllipsisIcon,
   NewspaperIcon,
   ArrowRightIcon,
+  BuildingStorefrontIcon,
 } from '@heroicons/react/24/outline';
 
 function fmtNotificationTime(value) {
@@ -92,6 +93,7 @@ export default function Header({
     { id: 'about', label: t('header.about'), icon: InformationCircleIcon },
     { id: 'careers', label: t('header.careers'), icon: BriefcaseIcon },
     { id: 'contact', label: t('header.support'), icon: ChatBubbleLeftEllipsisIcon },
+    { id: 'nhuong-quyen', label: 'NHƯỢNG QUYỀN', icon: BuildingStorefrontIcon },
   ];
 
   const mobileNavItems = [
@@ -101,6 +103,7 @@ export default function Header({
     { id: 'careers', label: t('header.careers'), icon: BriefcaseIcon },
     { id: 'contact', label: t('header.support'), icon: ChatBubbleLeftEllipsisIcon },
     { id: 'stores', label: t('header.findStore'), icon: MapPinIcon },
+    { id: 'nhuong-quyen', label: 'NHƯỢNG QUYỀN', icon: BuildingStorefrontIcon },
   ];
 
   return (
@@ -123,7 +126,11 @@ export default function Header({
                       onSelectedCatIdChange?.('all');
                     }
                   }}
-                  className={`relative flex flex-col items-center gap-[3px] px-4 py-2 rounded-xl transition-all duration-200 ${isActive
+                  className={`relative flex flex-col items-center gap-[3px] px-4 py-2 rounded-xl transition-all duration-200 ${item.highlight
+                      ? isActive
+                        ? 'bg-amber-400 text-amber-900'
+                        : 'bg-amber-400/20 text-amber-200 hover:bg-amber-400/30 hover:text-amber-100'
+                      : isActive
                       ? 'bg-white/15 text-white'
                       : 'text-white/75 hover:bg-white/10 hover:text-white'
                     }`}

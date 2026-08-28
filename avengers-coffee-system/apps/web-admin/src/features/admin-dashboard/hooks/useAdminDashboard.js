@@ -3,7 +3,7 @@ import { io } from 'socket.io-client'
 import { API_BASE_URL, ORDER_STATUSES, OVERVIEW_TIME_RANGES, PAYMENT_METHOD_LABEL } from '../constants'
 import { cutTimeByRange, normalizeViText, toDateKey, toDateLabel } from '../utils'
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3005'
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || `http://${window.location.hostname}:3005`
 
 function getVnDateKey(input) {
   const source = input ? new Date(input) : new Date()
@@ -31,6 +31,7 @@ const ADMIN_LOCAL_NOTIFY_EVENT = 'avengers-admin-local-notify'
 export function useAdminDashboard() {
   const [loginForm, setLoginForm] = useState({ identifier: '', password: '' })
   const [loginStatus, setLoginStatus] = useState({ loading: false, error: '' })
+  const [pendingPasswordChange, setPendingPasswordChange] = useState(null)
   const [session, setSession] = useState(() => {
     const raw = window.localStorage.getItem('adminSession')
     if (!raw) return null
@@ -428,7 +429,8 @@ export function useAdminDashboard() {
     setSurveyResponsesState((prev) => ({ ...prev, loading: true, error: '' }))
     try {
       const token = session?.token || session?.accessToken
-      const response = await fetch(`${API_BASE_URL}/surveys/responses`, {
+      const branchQuery = (sessionRole === 'MANAGER' && sessionBranchCode) ? `?branch_code=${encodeURIComponent(sessionBranchCode)}` : ''
+      const response = await fetch(`${API_BASE_URL}/surveys/responses${branchQuery}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -535,27 +537,37 @@ export function useAdminDashboard() {
   }
 
   useEffect(() => {
-    if (!session) return
+    if (!session || sessionRole === 'FRANCHISEE') return
 
     taiLichLamViecCuaToi()
     if (sessionRole !== 'MANAGER') {
       taiYeuCauDangKyCa(false)
     }
-    if (sessionRole === 'MANAGER') {
-      Promise.all([
-        taiLichLamViecManager(),
-        taiDanhSachNhanSu(),
-        taiYeuCauDangKyCa(true),
-        taiReviewCSKH(),
-        taiDanhSachBieuMau(),
-        taiDanhSachPhanHoi(),
-        taiDanhSachCod(),
-      ])
-    }
   }, [session])
 
   useEffect(() => {
-    if (!session) return undefined
+    if (!session || sessionRole === 'FRANCHISEE' || sessionRole !== 'MANAGER') return
+    
+    if (activeTab === 'workforce-manage') {
+      taiLichLamViecManager()
+      taiDanhSachNhanSu()
+      taiYeuCauDangKyCa(true)
+    } else if (activeTab === 'employee-manage') {
+      taiDanhSachNhanSu()
+    } else if (activeTab === 'shift-approval') {
+      taiYeuCauDangKyCa(true)
+    } else if (activeTab === 'customer-care') {
+      taiReviewCSKH()
+    } else if (activeTab === 'delivery') {
+      taiDanhSachCod()
+    } else if (activeTab === 'survey-manage') {
+      taiDanhSachBieuMau()
+      taiDanhSachPhanHoi()
+    }
+  }, [activeTab, session, sessionRole])
+
+  useEffect(() => {
+    if (!session || sessionRole === 'FRANCHISEE') return undefined
 
     const socket = io(`${SOCKET_URL}/notifications`, {
       transports: ['websocket'],
@@ -1021,8 +1033,8 @@ export function useAdminDashboard() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: loginForm.identifier,
-          password: loginForm.password,
+          tai_khoan: loginForm.identifier,
+          mat_khau: loginForm.password,
         }),
       })
 
@@ -1030,6 +1042,15 @@ export function useAdminDashboard() {
 
       if (!response.ok || !payload?.user) {
         throw new Error(payload?.message || 'Không thể đăng nhập với tài khoản này')
+      }
+
+      if (payload.requirePasswordChange) {
+        setPendingPasswordChange({
+          ...payload,
+          tempPassword: loginForm.password,
+        })
+        setLoginStatus({ loading: false, error: '' })
+        return
       }
 
       const nextSession = {
@@ -1049,8 +1070,45 @@ export function useAdminDashboard() {
   const logout = useCallback(() => {
     window.localStorage.removeItem('adminSession')
     setSession(null)
+    setPendingPasswordChange(null)
     setActiveTab('overview')
   }, [])
+
+  const confirmFirstLoginPasswordChange = async (newPassword) => {
+    setLoginStatus({ loading: true, error: '' })
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/${pendingPasswordChange.user.ma_nguoi_dung}/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${pendingPasswordChange.accessToken}`,
+        },
+        body: JSON.stringify({
+          currentPassword: pendingPasswordChange.tempPassword,
+          newPassword,
+        }),
+      })
+
+      const payload = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(payload?.message || 'Đổi mật khẩu thất bại')
+      }
+
+      const nextSession = {
+        loginAt: new Date().toISOString(),
+        token: pendingPasswordChange.accessToken,
+        user: pendingPasswordChange.user,
+      }
+
+      window.localStorage.setItem('adminSession', JSON.stringify(nextSession))
+      setSession(nextSession)
+      setPendingPasswordChange(null)
+      setLoginStatus({ loading: false, error: '' })
+    } catch (error) {
+      setLoginStatus({ loading: false, error: error.message || 'Đổi mật khẩu thất bại' })
+    }
+  }
 
   const capNhatTrangThaiDon = async (orderId, nextStatus) => {
     setUpdatingOrderId(orderId)
@@ -1873,6 +1931,9 @@ export function useAdminDashboard() {
     overviewData,
     login,
     logout,
+    pendingPasswordChange,
+    setPendingPasswordChange,
+    confirmFirstLoginPasswordChange,
     capNhatTrangThaiDon,
     capNhatDonChoStaff,
     xoaDonChoStaff,

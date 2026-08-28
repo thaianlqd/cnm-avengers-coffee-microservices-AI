@@ -345,8 +345,8 @@ export function MapScreen({ route, navigation }) {
       ];
     }
 
-    const steps = 150;
-    const intervalMs = 200;
+    const steps = 75;
+    const intervalMs = 200; // Trả lại tốc độ cũ (tổng 15s) để khớp với polling 15s của app Customer
     let currentStep = 0;
 
     simulationInterval.current = setInterval(() => {
@@ -369,7 +369,7 @@ export function MapScreen({ route, navigation }) {
       setLocation(newLoc);
       updateNavInstruction(newLat, newLng);
       
-      if (currentStep % 25 === 0 || currentStep === steps) {
+      if (currentStep % 15 === 0 || currentStep === steps) {
         apiClient.patch(`/shippers/${shipper.id}/location`, {
           latitude: newLat,
           longitude: newLng,
@@ -483,7 +483,7 @@ export function MapScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       {MapView && (
-        <MapView style={styles.map} region={mapRegion} showsUserLocation={false} showsMyLocationButton>
+        <MapView style={styles.map} initialRegion={mapRegion} showsUserLocation={true} showsMyLocationButton={true}>
           <Marker coordinate={{ latitude: storeLat, longitude: storeLng }} title="Cửa hàng Avengers" description="Lấy hàng tại đây">
             <View style={styles.markerStore}>
               <Ionicons name="storefront" size={20} color={colors.surface} />

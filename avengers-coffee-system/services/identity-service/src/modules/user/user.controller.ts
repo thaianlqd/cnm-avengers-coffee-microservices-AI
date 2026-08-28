@@ -92,7 +92,7 @@ export class UserController {
       ten_dang_nhap?: string;
       mat_khau?: string;
       ho_ten?: string;
-      vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER';
+      vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER' | 'ACCOUNTANT';
       co_so_ma?: string;
       email?: string;
     },
@@ -109,7 +109,7 @@ export class UserController {
       ten_dang_nhap?: string;
       mat_khau?: string;
       ho_ten?: string;
-      vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER';
+      vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER' | 'ACCOUNTANT';
       co_so_ma?: string;
       trang_thai?: 'ACTIVE' | 'INACTIVE';
       email?: string;
@@ -190,14 +190,14 @@ export class UserController {
     return this.userService.xoaChiNhanhAdmin(branchCode);
   }
 
-  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER')
+  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER', 'FRANCHISEE')
   @Get('users/:userId/profile')
   async layThongTinCaNhan(@Param('userId') userId: string, @CurrentUser() currentUser: AuthUser | null) {
     this.ensureSelfOrAdmin(currentUser, userId);
     return this.userService.layThongTinCaNhan(userId);
   }
 
-  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER')
+  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER', 'FRANCHISEE')
   @Patch('users/:userId/profile')
   async capNhatThongTinCaNhan(
     @Param('userId') userId: string,
@@ -208,7 +208,7 @@ export class UserController {
     return this.userService.capNhatThongTinCaNhan(userId, body);
   }
 
-  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER')
+  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER', 'FRANCHISEE')
   @Post('users/:userId/change-password')
   async doiMatKhau(
     @Param('userId') userId: string,
@@ -219,14 +219,14 @@ export class UserController {
     return this.userService.doiMatKhau(userId, body);
   }
 
-  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER')
+  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER', 'FRANCHISEE')
   @Get('users/:userId/addresses')
   async layDanhSachDiaChi(@Param('userId') userId: string, @CurrentUser() currentUser: AuthUser | null) {
     this.ensureSelfOrAdmin(currentUser, userId);
     return this.userService.layDanhSachDiaChi(userId);
   }
 
-  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER')
+  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER', 'FRANCHISEE')
   @Post('users/:userId/addresses')
   async themDiaChi(
     @Param('userId') userId: string,
@@ -237,7 +237,7 @@ export class UserController {
     return this.userService.themDiaChi(userId, body);
   }
 
-  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER')
+  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER', 'FRANCHISEE')
   @Patch('users/:userId/addresses/:addressId')
   async capNhatDiaChi(
     @Param('userId') userId: string,
@@ -249,7 +249,7 @@ export class UserController {
     return this.userService.capNhatDiaChi(userId, Number(addressId), body);
   }
 
-  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER')
+  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER', 'FRANCHISEE')
   @Patch('users/:userId/addresses/:addressId/default')
   async datDiaChiMacDinh(
     @Param('userId') userId: string,
@@ -260,7 +260,7 @@ export class UserController {
     return this.userService.datDiaChiMacDinh(userId, Number(addressId));
   }
 
-  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER')
+  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER', 'FRANCHISEE')
   @Delete('users/:userId/addresses/:addressId')
   async xoaDiaChi(
     @Param('userId') userId: string,
@@ -271,7 +271,7 @@ export class UserController {
     return this.userService.xoaDiaChi(userId, Number(addressId));
   }
 
-  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER')
+  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER', 'FRANCHISEE')
   @Get('users/:userId/loyalty')
   async layDiemLoyalty(@Param('userId') userId: string, @CurrentUser() currentUser: AuthUser | null) {
     this.ensureSelfOrAdmin(currentUser, userId);
@@ -381,7 +381,7 @@ export class UserController {
     return this.userService.layDanhSachGiaiThuongVongQuay();
   }
 
-  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER')
+  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER', 'FRANCHISEE')
   @Post('users/:userId/lucky-wheel/spin')
   async quayMayMan(@Param('userId') userId: string, @CurrentUser() currentUser: AuthUser | null) {
     this.ensureSelfOrAdmin(currentUser, userId);
@@ -392,14 +392,14 @@ export class UserController {
   //  MEMBERSHIP & BIRTHDAY
   // ═══════════════════════════════════════════════════════
 
-  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER')
+  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER', 'FRANCHISEE')
   @Get('users/:userId/membership')
   async layThongTinMembership(@Param('userId') userId: string, @CurrentUser() currentUser: AuthUser | null) {
     this.ensureSelfOrAdmin(currentUser, userId);
     return this.userService.layThongTinMembership(userId);
   }
 
-  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER')
+  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER', 'FRANCHISEE')
   @Patch('users/:userId/birthday')
   async capNhatNgaySinh(
     @Param('userId') userId: string,

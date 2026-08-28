@@ -84,7 +84,7 @@ export default function NewsDetailPage({ selectedArticleId, onBack, onSelectArti
       }
     },
     enabled: Boolean(selectedArticleId),
-    staleTime: 60 * 1000,
+    staleTime: 10 * 60 * 1000,
   });
 
   const { data: allArticlesPayload } = useQuery({
@@ -97,7 +97,7 @@ export default function NewsDetailPage({ selectedArticleId, onBack, onSelectArti
         return null;
       }
     },
-    staleTime: 60 * 1000,
+    staleTime: 10 * 60 * 1000,
   });
 
   const relatedArticles = useMemo(() => {
@@ -110,7 +110,7 @@ export default function NewsDetailPage({ selectedArticleId, onBack, onSelectArti
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 mt-[84px] py-16 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 mt-0 py-16 flex items-center justify-center">
         <div className="animate-pulse space-y-4 text-center">
           <div className="w-12 h-12 rounded-full bg-red-200 mx-auto"></div>
           <p className="text-sm font-bold text-gray-500">Đang tải bài viết...</p>
@@ -121,7 +121,7 @@ export default function NewsDetailPage({ selectedArticleId, onBack, onSelectArti
 
   if (isError || !article) {
     return (
-      <div className="min-h-screen bg-gray-50 mt-[84px] py-16 px-4">
+      <div className="min-h-screen bg-gray-50 mt-0 py-16 px-4">
         <div className="max-w-md mx-auto rounded-3xl border border-red-100 bg-white p-8 text-center shadow-lg">
           <p className="text-base font-bold text-gray-700">
             Không thể tải bài viết. Vui lòng thử lại.
@@ -140,7 +140,7 @@ export default function NewsDetailPage({ selectedArticleId, onBack, onSelectArti
   }
 
   return (
-    <article className="min-h-screen bg-gray-50/50 mt-[84px] pb-20">
+    <article className="min-h-screen bg-gray-50/50 mt-0 pb-20">
       {/* Article Header & Cover */}
       <div className="w-full bg-white border-b border-gray-100 shadow-sm pt-8 pb-12 px-4">
         <div className="max-w-[880px] mx-auto space-y-6">

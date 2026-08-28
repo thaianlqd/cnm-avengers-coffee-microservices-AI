@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
-  timeout: 15000,
+  baseURL: `http://${window.location.hostname}:3000`,
+  timeout: 60000,
 });
 
 apiClient.interceptors.request.use((config) => {

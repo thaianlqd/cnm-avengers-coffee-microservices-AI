@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { ShipperService } from './shipper.service';
 
 @Controller('shippers')
@@ -276,9 +276,10 @@ export class ShipperController {
   @Post(':shipperId/cod-remit')
   async submitCodRemit(
     @Param('shipperId') shipperId: string,
-    @Body() body: { amount?: number; note?: string },
+    @Body() body: { amount?: number; branch_code?: string; note?: string },
   ) {
-    return this.shipperService.submitCodRemit(shipperId, body.amount || 0, body.note);
+    if (!body.branch_code) throw new BadRequestException('Vui lòng chọn cơ sở để nộp tiền');
+    return this.shipperService.submitCodRemit(shipperId, body.amount || 0, body.branch_code, body.note);
   }
 
   /**
