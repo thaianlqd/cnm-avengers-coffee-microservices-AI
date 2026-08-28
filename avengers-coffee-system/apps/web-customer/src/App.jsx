@@ -29,6 +29,7 @@ import CareersPage from './pages/Careers';
 import MembershipPage from './pages/Membership';
 import LuckyWheelPage from './pages/LuckyWheel';
 import GiftCardPage from './pages/GiftCard';
+import FranchisePage from './pages/FranchisePage';
 import { CartProvider, useCart } from './context/CartContext'; // File mới bước 2
 import { apiClient } from './lib/apiClient';
 import { queryKeys } from './lib/queryKeys';
@@ -529,7 +530,7 @@ function AppContent() {
   const userId = user?.ma_nguoi_dung || user?.maNguoiDung || null;
   const isLoggedIn = !!userId;
   const aiTargetUserId = userId || 'anon-popular';
-  const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3005';
+  const socketUrl = import.meta.env.VITE_SOCKET_URL || `http://${window.location.hostname}:3005`;
 
   // ── Navigate from sub-pages via custom event ────────────────────────────────
   useEffect(() => {
@@ -1896,6 +1897,8 @@ function AppContent() {
           />
         ) : activeTab === 'gift-card' ? (
           <GiftCardPage onBackToMain={() => setActiveTab('home')} />
+        ) : activeTab === 'nhuong-quyen' ? (
+          <FranchisePage onNavigate={setActiveTab} />
         ) : ['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail', 'order-history'].includes(activeTab) ? (
           <OrderPage
             menuSections={menuSections}

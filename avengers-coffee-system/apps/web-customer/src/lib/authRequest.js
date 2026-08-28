@@ -17,7 +17,7 @@ function uniqueUrls(urls) {
 
 export function getAuthBaseUrls() {
   const configuredUrls = splitConfiguredUrls(import.meta.env.VITE_AUTH_URLS);
-  const apiUrl = normalizeBaseUrl(import.meta.env.VITE_API_URL || 'http://localhost:3000');
+  const apiUrl = normalizeBaseUrl(import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`);
   const fallbackUrls = [
     apiUrl,
     'http://localhost:3001',

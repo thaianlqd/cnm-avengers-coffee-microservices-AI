@@ -105,6 +105,7 @@ export function AdminUserManagementPanel({
   const totalUsers = safePageData.total || allUsersList.length
   const managerCount = allUsersList.filter(u => u && u.vai_tro === 'MANAGER').length
   const staffCount = allUsersList.filter(u => u && u.vai_tro === 'STAFF').length
+  const accountantCount = allUsersList.filter(u => u && u.vai_tro === 'ACCOUNTANT').length
   const activeCount = allUsersList.filter(u => u && u.trang_thai === 'ACTIVE').length
 
   return (
@@ -160,6 +161,16 @@ export function AdminUserManagementPanel({
           <div>
             <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>NHÂN VIÊN (STAFF)</span>
             <strong style={{ display: 'block', fontSize: '1.2rem', color: '#059669', marginTop: '0.1rem' }}>{staffCount}</strong>
+          </div>
+        </div>
+
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.85rem', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <UsersIcon size={20} color="#d97706" />
+          </div>
+          <div>
+            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>KẾ TOÁN (ACCOUNTANT)</span>
+            <strong style={{ display: 'block', fontSize: '1.2rem', color: '#d97706', marginTop: '0.1rem' }}>{accountantCount}</strong>
           </div>
         </div>
 
@@ -286,7 +297,8 @@ export function AdminUserManagementPanel({
                   onChange={(e) => setUserForm((p) => ({ ...p, vai_tro: e.target.value }))}
                 >
                   <option value="STAFF">STAFF - Nhân viên cửa hàng</option>
-                  <option value="MANAGER">MANAGER - Quản lý chi nhánh</option>
+                  <option value="MANAGER">MANAGER - Quản lý cửa hàng</option>
+                  <option value="ACCOUNTANT">ACCOUNTANT - Kế toán hội sở</option>
                   <option value="ADMIN">ADMIN - Quản trị viên hệ thống</option>
                 </select>
               </div>
@@ -388,6 +400,7 @@ export function AdminUserManagementPanel({
               <option value="ADMIN">ADMIN</option>
               <option value="MANAGER">MANAGER</option>
               <option value="STAFF">STAFF</option>
+              <option value="ACCOUNTANT">ACCOUNTANT</option>
             </select>
 
             <select

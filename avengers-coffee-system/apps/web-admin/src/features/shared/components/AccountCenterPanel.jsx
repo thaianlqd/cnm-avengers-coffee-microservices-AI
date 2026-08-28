@@ -18,7 +18,7 @@ import {
   AlertCircle
 } from 'lucide-react'
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3005'
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || `http://${window.location.hostname}:3005`
 const ADMIN_LOCAL_NOTIFY_EVENT = 'avengers-admin-local-notify'
 const PAGE_SIZE = 8
 

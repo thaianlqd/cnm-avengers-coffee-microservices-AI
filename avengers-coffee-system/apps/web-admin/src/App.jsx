@@ -57,6 +57,9 @@ import { AUTH_INVALID_EVENT } from './lib/adminFetch'
 import { AccountCenterPanel } from './features/shared/components/AccountCenterPanel'
 import { AdminNotificationBell } from './features/shared/components/AdminNotificationBell'
 import { NewsPanel } from './features/shared/components/NewsPanel'
+import { FranchisePanel } from './features/franchise/FranchisePanel'
+import { FranchiseePortal } from './features/franchise/FranchiseePortal'
+import { AccountantFranchiseShell } from './features/franchise/AccountantFranchiseShell'
 
 function App() {
   const [adminToast, setAdminToast] = useState(null)
@@ -161,9 +164,13 @@ function App() {
     kichHoatBieuMauKhaoSat,
     taiDanhSachBieuMau,
     taiDanhSachPhanHoi,
+    pendingPasswordChange,
+    confirmFirstLoginPasswordChange,
   } = useAdminDashboard()
 
   const userRole = session?.user?.vaiTro || session?.user?.vai_tro || DASHBOARD_ROLES.STAFF
+  const isFranchisee = userRole === DASHBOARD_ROLES.FRANCHISEE
+  const isAccountant = userRole === DASHBOARD_ROLES.ACCOUNTANT
   const branchName = session?.user?.coSoTen || session?.user?.co_so_ten || 'Chi nhánh hệ thống'
   const isSystemAdmin = userRole === DASHBOARD_ROLES.ADMIN
   const isManager = userRole === DASHBOARD_ROLES.MANAGER
@@ -237,8 +244,28 @@ function App() {
     return () => window.removeEventListener(ADMIN_LOCAL_NOTIFY_EVENT, handleLocalNotify)
   }, [])
 
-  if (!session) {
+  if (!session && !pendingPasswordChange) {
     return <LoginScreen loginForm={loginForm} setLoginForm={setLoginForm} loginStatus={loginStatus} onLogin={login} />
+  }
+
+  if (pendingPasswordChange) {
+    return (
+      <LoginScreen
+        pendingPasswordChange={pendingPasswordChange}
+        loginStatus={loginStatus}
+        onConfirmPasswordChange={confirmFirstLoginPasswordChange}
+      />
+    )
+  }
+
+  // Role FRANCHISEE → Portal riêng, không dùng Admin shell
+  if (isFranchisee) {
+    return <FranchiseePortal session={session} onLogout={logout} />
+  }
+
+  // Role ACCOUNTANT → Giao diện quản lý nhượng quyền + kế toán
+  if (isAccountant) {
+    return <AccountantFranchiseShell session={session} onLogout={logout} />
   }
 
   if (isSystemAdmin) {
@@ -653,6 +680,12 @@ function App() {
 
         {activeTab === 'shipper-manage' && isManager && (
           <ManagerShipperPanel session={session} />
+        )}
+
+        {activeTab === 'franchise-manage' && (
+          <div style={{ padding: '1.5rem 1.75rem' }}>
+            <FranchisePanel />
+          </div>
         )}
 
         {activeTab === 'account' ? <AccountCenterPanel session={session} /> : null}

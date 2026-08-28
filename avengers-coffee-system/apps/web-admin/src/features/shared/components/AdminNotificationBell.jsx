@@ -16,7 +16,7 @@ import {
 import { io } from 'socket.io-client'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3005'
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || `http://${window.location.hostname}:3005`
 const PAGE_SIZE = 5
 
 function getSessionUserId(session) {

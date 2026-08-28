@@ -287,7 +287,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN')
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Get('staff/orders')
   getStaffOrders(
     @Query('status') status?: string,
@@ -295,6 +295,8 @@ export class AppController {
     @Query('payment_method') paymentMethod?: string,
     @Query('q') keyword?: string,
     @Query('branch_code') branchCode?: string,
+    @Query('date_from') dateFrom?: string,
+    @Query('date_to') dateTo?: string,
     @Query('limit') limit?: string,
     @Query('page') page?: string,
   ) {
@@ -304,13 +306,15 @@ export class AppController {
       paymentMethod,
       keyword,
       branchCode,
+      dateFrom,
+      dateTo,
       limit: limit ? parseInt(limit, 10) : undefined,
       page: page ? parseInt(page, 10) : undefined,
     });
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN')
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Patch('staff/orders/:orderId/status')
   updateStaffOrderStatus(
     @Param('orderId') orderId: string,
@@ -320,7 +324,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN')
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Patch('staff/orders/:orderId')
   updateStaffOrder(
     @Param('orderId') orderId: string,
@@ -338,6 +342,7 @@ export class AppController {
         ten_san_pham: string;
         so_luong: number;
         gia_ban: number;
+        toppings?: string[];
       }>;
     },
   ) {
@@ -345,7 +350,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN')
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Delete('staff/orders/:orderId')
   deleteStaffOrder(
     @Param('orderId') orderId: string,
@@ -356,7 +361,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN')
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Post('staff/orders')
   createStaffOrder(
     @Req() req: Request,
@@ -376,6 +381,7 @@ export class AppController {
         ten_san_pham: string;
         so_luong: number;
         gia_ban: number;
+        toppings?: string[];
       }>;
     },
   ) {
@@ -383,7 +389,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN')
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Get('staff/shifts/preview')
   previewShift(
     @Query('shift_date') shiftDate?: string,
@@ -404,7 +410,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN')
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Post('staff/shifts/close')
   closeShift(
     @Body()
@@ -423,14 +429,14 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN')
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Get('staff/shifts/history')
   getShiftHistory(@Query('limit') limit?: string, @Query('branch_code') branchCode?: string) {
     return this.thanhToanService.layLichSuChotCa(Number(limit || 20), branchCode);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN')
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Patch('staff/shifts/:id')
   updateShift(
     @Param('id') id: string,
@@ -440,7 +446,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN')
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Delete('staff/shifts/:id')
   deleteShift(@Param('id') id: string, @Query('branch_code') branchCode?: string) {
     return this.thanhToanService.xoaCaLamViec(id, branchCode);
@@ -518,7 +524,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN')
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Get('staff/work-shifts')
   getWorkShiftsForStaff(
     @CurrentUser() currentUser: AuthUser | null,
@@ -533,7 +539,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN')
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Post('staff/work-shifts/requests')
   requestWorkShift(
     @CurrentUser() currentUser: AuthUser | null,
@@ -597,7 +603,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN')
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Delete('staff/work-shifts/requests/:id')
   deleteShiftRequest(@Param('id') id: string, @Query('branch_code') branchCode?: string) {
     return this.thanhToanService.xoaYeuCauDangKyCa(id, branchCode);
@@ -631,7 +637,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN')
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Patch('staff/work-shifts/self/attendance')
   staffCheckInOut(
     @CurrentUser() currentUser: AuthUser | null,
@@ -669,7 +675,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN')
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Get('staff/analytics/realtime')
   getRealtimeAnalytics(@Query('branch_code') branchCode?: string) {
     return this.realtimeAnalyticsService.getSnapshot(branchCode);

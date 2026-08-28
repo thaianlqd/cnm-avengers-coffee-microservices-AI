@@ -76,4 +76,7 @@ export class User {
 
   @OneToMany(() => DeliveryAddress, (address) => address.nguoi_dung)
   danh_sach_dia_chi: DeliveryAddress[];
+
+  @Column({ type: 'boolean', default: false })
+  require_password_change: boolean;
 }

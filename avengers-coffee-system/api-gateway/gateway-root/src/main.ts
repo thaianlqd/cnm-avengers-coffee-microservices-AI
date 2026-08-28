@@ -7,6 +7,11 @@ async function bootstrap() {
 
   app.enableCors();
 
+  app.use((req, res, next) => {
+    console.log(`[Gateway] Incoming Request: ${req.method} ${req.originalUrl} from ${req.headers.origin || 'unknown origin'}`);
+    next();
+  });
+
   const httpAdapter = app.getHttpAdapter().getInstance();
 
   httpAdapter.use(
@@ -14,7 +19,7 @@ async function bootstrap() {
       target: process.env.IDENTITY_SERVICE_URL || 'http://localhost:3001',
       changeOrigin: true,
       on: { proxyReq: fixRequestBody },
-      pathFilter: ['/auth', '/users', '/promotions'],
+      pathFilter: ['/auth', '/users', '/promotions', '/franchise'],
     }),
   );
 
