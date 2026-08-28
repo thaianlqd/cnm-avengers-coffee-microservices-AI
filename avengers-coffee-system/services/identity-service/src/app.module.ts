@@ -13,6 +13,15 @@ import { PromotionUsage } from './modules/user/promotion-usage.entity';
 import { User } from './modules/user/user.entity';
 import { MembershipConfig } from './modules/user/membership-config.entity';
 import { UserModule } from './modules/user/user.module';
+import { FranchiseModule } from './modules/franchise/franchise.module';
+import { ComboNguyenLieu } from './modules/franchise/entities/combo-nguyen-lieu.entity';
+import { HoSoDangKy } from './modules/franchise/entities/ho-so-dang-ky.entity';
+import { Kiosk } from './modules/franchise/entities/kiosk.entity';
+import { HopDongNhuongQuyen } from './modules/franchise/entities/hop-dong.entity';
+import { DonMuaCombo } from './modules/franchise/entities/don-mua-combo.entity';
+import { CongNo } from './modules/franchise/entities/cong-no.entity';
+import { RoyaltyHangThang } from './modules/franchise/entities/royalty.entity';
+import { KetQuaDoiSoat } from './modules/franchise/entities/doi-soat.entity';
 
 const identitySchema = process.env.DB_SCHEMA || 'identity';
 const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
@@ -40,6 +49,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
 
         await client.connect();
         await client.query(`CREATE SCHEMA IF NOT EXISTS "${identitySchema}"`);
+        await client.query(`CREATE SCHEMA IF NOT EXISTS "franchise"`);
         await client.end();
 
         return {
@@ -51,7 +61,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
           database,
           ssl: sslConfig,
           schema: identitySchema,
-          entities: [User, DeliveryAddress, Branch, Promotion, PromotionUsage, MembershipConfig],
+          entities: [User, DeliveryAddress, Branch, Promotion, PromotionUsage, MembershipConfig, ComboNguyenLieu, HoSoDangKy, Kiosk, HopDongNhuongQuyen, DonMuaCombo, CongNo, RoyaltyHangThang, KetQuaDoiSoat],
           synchronize: true,
         };
       },
@@ -64,6 +74,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
       },
     }),
     UserModule,
+    FranchiseModule,
   ],
   providers: [
     {

@@ -1,4 +1,4 @@
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+export const API_BASE_URL = `http://${window.location.hostname}:3000`
 
 export const NAV_TABS = [
   { id: 'overview', label: 'Tổng quan' },
@@ -9,6 +9,7 @@ export const NAV_TABS = [
   { id: 'shift', label: 'Chốt ca' },
   { id: 'pos', label: 'POS tạo đơn nhanh' },
   { id: 'table-management', label: 'Quản lý Bàn' },
+  { id: 'franchise-manage', label: '🏪 Nhượng quyền Kiosk' },
 ]
 
 export const ACCOUNT_TAB = { id: 'account', label: 'Hồ sơ & Bảo mật' }
@@ -24,6 +25,8 @@ export const DASHBOARD_ROLES = {
   ADMIN: 'ADMIN',
   MANAGER: 'MANAGER',
   STAFF: 'STAFF',
+  FRANCHISEE: 'FRANCHISEE',
+  ACCOUNTANT: 'ACCOUNTANT',
 }
 
 export const ORDER_STATUSES = ['MOI_TAO', 'DA_XAC_NHAN', 'DANG_CHUAN_BI', 'DANG_GIAO', 'HOAN_THANH', 'DA_HUY']

@@ -47,6 +47,7 @@ type TaoDonTaiQuayDto = {
     ten_san_pham: string;
     so_luong: number;
     gia_ban: number;
+    toppings?: string[];
   }>;
 };
 
@@ -77,6 +78,7 @@ type CapNhatDonHangChoStaffDto = {
     ten_san_pham: string;
     so_luong: number;
     gia_ban: number;
+    toppings?: string[];
   }>;
 };
 
@@ -93,6 +95,8 @@ type BoLocLichSuDonHang = {
   paymentMethod?: string;
   keyword?: string;
   branchCode?: string;
+  dateFrom?: string;
+  dateTo?: string;
   limit?: number;
   page?: number;
 };
@@ -2001,6 +2005,7 @@ export class ThanhToanService {
       ten_san_pham: String(item.ten_san_pham || '').trim(),
       so_luong: Number(item.so_luong),
       gia_ban: Number(item.gia_ban),
+      toppings: Array.isArray(item.toppings) ? item.toppings : [],
     }));
 
     const isInvalidItem = normalizedItems.some(
@@ -2083,6 +2088,7 @@ export class ThanhToanService {
           so_luong: item.so_luong,
           kich_co: null,
           hinh_anh_url: null,
+          toppings: item.toppings,
         }),
       );
       const chiTietSaved = await chiTietRepo.save(chiTiet);
@@ -2361,6 +2367,12 @@ export class ThanhToanService {
     }
     if (boLoc.paymentMethod) {
       query.andWhere('don_hang.phuong_thuc_thanh_toan = :paymentMethod', { paymentMethod: boLoc.paymentMethod });
+    }
+    if (boLoc.dateFrom) {
+      query.andWhere('don_hang.ngay_tao >= :dateFrom', { dateFrom: new Date(boLoc.dateFrom).toISOString() });
+    }
+    if (boLoc.dateTo) {
+      query.andWhere('don_hang.ngay_tao <= :dateTo', { dateTo: new Date(boLoc.dateTo).toISOString() });
     }
     if (boLoc.keyword?.trim()) {
       const keywordLike = `%${boLoc.keyword.trim()}%`;

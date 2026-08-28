@@ -14,6 +14,7 @@ import { AdminPromotionManagementPanel } from './AdminPromotionManagementPanel'
 import { AdminBranchManagementPanel } from './AdminBranchManagementPanel'
 import { AdminOverviewDashboardPanel } from './AdminOverviewDashboardPanel'
 import { AdminUserManagementPanel } from './AdminUserManagementPanel'
+import { AdminKioskManagementPanel } from './AdminKioskManagementPanel'
 import { AdminCustomerManagementPanel } from './AdminCustomerManagementPanel'
 import { LayoutGrid, Users, UserCog, Settings, Store, FolderOpen, Coffee, ShieldCheck, Ticket, BarChart3, Brain, Activity, Bike, Search, ChevronDown, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, PieChart, Package, Map, UsersIcon, Monitor, TrendingUp, BarChart2, MapPin, Info, ArrowUpDown, UserPlus, Edit2, Trash2, Filter, MoreVertical, Coins, LogOut } from 'lucide-react'
 function fmtNumber(value) {
@@ -677,6 +678,20 @@ export function AdminSystemConsole({
                 </button>
                 <button
                   type="button"
+                  className={activeTab === 'kiosks' ? 'nav-tab active' : 'nav-tab'}
+                  onClick={() => setActiveTab('kiosks')}
+                  style={activeTab === 'kiosks' ? {
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
+                    borderRadius: '8px'
+                  } : {}}
+                >
+                  <Store size={15} /> Quản lý Kiosk
+                </button>
+                <button
+                  type="button"
                   className={activeTab === 'users' ? 'nav-tab active' : 'nav-tab'}
                   onClick={() => setActiveTab('users')}
                   style={activeTab === 'users' ? {
@@ -861,6 +876,10 @@ export function AdminSystemConsole({
             usersPage={usersPage}
             setUsersPage={setUsersPage}
           />
+        )}
+
+        {activeTab === 'kiosks' && (
+          <AdminKioskManagementPanel session={session} />
         )}
 
         {activeTab === 'customers' && (

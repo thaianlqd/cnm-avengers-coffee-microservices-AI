@@ -1,5 +1,5 @@
 services:
-  # CSDL PostgreSQL (Local DB thay cho Supabase)
+  # ── Infrastructure ──────────────────────────────────────────────────────────
   postgres-db:
     image: postgres:16
     container_name: avengers_db
@@ -20,7 +20,6 @@ services:
     networks:
       - avengers-network
 
-  # Bộ nhớ đệm Redis
   redis-cache:
     image: redis:7-alpine
     container_name: avengers_redis
@@ -39,7 +38,6 @@ services:
         limits:
           memory: 128M
 
-  # Message Broker RabbitMQ
   rabbitmq:
     image: rabbitmq:3-management
     container_name: avengers_mq
@@ -49,10 +47,10 @@ services:
       - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
     healthcheck:
       test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping || exit 1"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 60s
     networks:
       - avengers-network
     deploy:
@@ -60,6 +58,7 @@ services:
         limits:
           memory: 512M
 
+  # ── Backend Services (Production builds — nhẹ, ổn định) ─────────────────────
   identity-service:
     build:
       context: ./avengers-coffee-system/services/identity-service
@@ -98,6 +97,11 @@ services:
       resources:
         limits:
           memory: 256M
+    # Dùng "docker compose watch" để tự rebuild khi sửa code (không tốn RAM)
+    develop:
+      watch:
+        - action: rebuild
+          path: ./avengers-coffee-system/services/identity-service/src
 
   menu-service:
     build:
@@ -302,7 +306,7 @@ services:
         limits:
           memory: 256M
 
-
+  # ── Frontend (Vite hot-reload — tự cập nhật khi Ctrl+S) ────────────────────
   web-customer:
     build:
       context: ./avengers-coffee-system/apps/web-customer
@@ -311,13 +315,13 @@ services:
     init: true
     restart: unless-stopped
     working_dir: /app
-    command: npm run dev -- --host 0.0.0.0 --port 5175
+    command: npm run dev -- --host 0.0.0.0 --port 5175 --force
     depends_on:
       api-gateway:
         condition: service_started
     environment:
-      - VITE_API_URL=${WEB_CUSTOMER_API_URL:-http://localhost:3000}
-      - VITE_SOCKET_URL=${WEB_CUSTOMER_SOCKET_URL:-http://localhost:3005}
+      - VITE_API_URL=${WEB_CUSTOMER_API_URL}
+      - VITE_SOCKET_URL=${WEB_CUSTOMER_SOCKET_URL}
       - VITE_GOOGLE_CLIENT_ID=${WEB_CUSTOMER_GOOGLE_CLIENT_ID}
       - VITE_RECAPTCHA_SITE_KEY=${WEB_CUSTOMER_RECAPTCHA_SITE_KEY}
       - VITE_FACEBOOK_APP_ID=${WEB_CUSTOMER_FACEBOOK_APP_ID}
@@ -341,13 +345,13 @@ services:
     init: true
     restart: unless-stopped
     working_dir: /app
-    command: npm run dev -- --host 0.0.0.0 --port 5174
+    command: npm run dev -- --host 0.0.0.0 --port 5174 --force
     depends_on:
       api-gateway:
         condition: service_started
     environment:
-      - VITE_API_URL=${WEB_ADMIN_API_URL:-http://localhost:3000}
-      - VITE_SOCKET_URL=${WEB_ADMIN_SOCKET_URL:-http://localhost:3005}
+      - VITE_API_URL=${WEB_ADMIN_API_URL}
+      - VITE_SOCKET_URL=${WEB_ADMIN_SOCKET_URL}
     volumes:
       - ./avengers-coffee-system/apps/web-admin:/app
       - /app/node_modules
@@ -361,10 +365,9 @@ services:
         limits:
           memory: 512M
 
-
-
 volumes:
   avengers_pgdata:
+
 networks:
   avengers-network:
     driver: bridge
