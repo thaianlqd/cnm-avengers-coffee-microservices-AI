@@ -2,15 +2,22 @@ import os
 import sqlalchemy
 import pandas as pd
 
-# Supabase Credentials from previous context
-DB_USER     = os.getenv("DB_USER", "postgres.qctwmsomtdixczwixewh")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "Anhthang2002@")
-DB_HOST     = os.getenv("DB_HOST", "aws-0-ap-southeast-1.pooler.supabase.com")
-DB_PORT     = os.getenv("DB_PORT", "6543")
+# --- CẤU HÌNH SUPABASE CŨ (Để dành sau này dùng) ---
+# DB_USER     = os.getenv("DB_USER", "postgres.qctwmsomtdixczwixewh")
+# DB_PASSWORD = os.getenv("DB_PASSWORD", "Anhthang2002@")
+# DB_HOST     = os.getenv("DB_HOST", "aws-0-ap-southeast-1.pooler.supabase.com")
+# DB_PORT     = os.getenv("DB_PORT", "6543")
+# DB_NAME     = os.getenv("DB_NAME", "postgres")
+
+# --- CẤU HÌNH LOCAL ---
+DB_USER     = os.getenv("DB_USER", "admin")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "123456")
+DB_HOST     = os.getenv("DB_HOST", "localhost")
+DB_PORT     = os.getenv("DB_PORT", "5433")
 DB_NAME     = os.getenv("DB_NAME", "postgres")
 
 def get_engine():
-    url = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=require"
+    url = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=disable"
     return sqlalchemy.create_engine(url, pool_pre_ping=True)
 
 engine = get_engine()

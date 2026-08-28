@@ -1,7 +1,7 @@
 import os
 import sqlalchemy
 
-url = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}?sslmode=require"
+url = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}?sslmode={os.getenv('DB_SSLMODE', 'disable')}"
 print(f"Connecting to: {os.getenv('DB_HOST')}")
 engine = sqlalchemy.create_engine(url)
 

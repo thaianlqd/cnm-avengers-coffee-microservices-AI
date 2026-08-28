@@ -1,26 +1,25 @@
 services:
-#  # CSDL PostgreSQL
-#  postgres-db:
-#    image: postgres:16
-#    container_name: avengers_db
-#    restart: unless-stopped
-#    environment:
-#      POSTGRES_USER: ${POSTGRES_USER:-admin}
-#      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-123}
-#      POSTGRES_DB: ${POSTGRES_DB:-avengers_coffee}
-#    ports:
-#      - "${POSTGRES_PORT:-5433}:5432"
-#    volumes:
-#      - avengers_pgdata:/var/lib/postgresql/data
-#    healthcheck:
-#      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-avengers_coffee}"]
-#      interval: 10s
-#      timeout: 5s
-#      retries: 5
-#    networks:
-#      - avengers-network
+  # ── Infrastructure ──────────────────────────────────────────────────────────
+  postgres-db:
+    image: postgres:16
+    container_name: avengers_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - avengers_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - avengers-network
 
-  # Bộ nhớ đệm Redis
   redis-cache:
     image: redis:7-alpine
     container_name: avengers_redis
@@ -39,7 +38,6 @@ services:
         limits:
           memory: 128M
 
-  # Message Broker RabbitMQ
   rabbitmq:
     image: rabbitmq:3-management
     container_name: avengers_mq
@@ -49,10 +47,10 @@ services:
       - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
     healthcheck:
       test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping || exit 1"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 60s
     networks:
       - avengers-network
     deploy:
@@ -60,6 +58,7 @@ services:
         limits:
           memory: 512M
 
+  # ── Backend Services (Production builds — nhẹ, ổn định) ─────────────────────
   identity-service:
     build:
       context: ./avengers-coffee-system/services/identity-service
@@ -81,6 +80,7 @@ services:
       FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
       FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-avengers-internal-token}
+      ORDER_SERVICE_URL: http://order-service:${ORDER_PORT:-3005}
       DB_HOST: ${DB_HOST:-postgres-db}
       DB_PORT: ${DB_PORT:-5432}
       DB_USER: ${DB_USER:-admin}
@@ -96,7 +96,12 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 256M
+    # Dùng "docker compose watch" để tự rebuild khi sửa code (không tốn RAM)
+    develop:
+      watch:
+        - action: rebuild
+          path: ./avengers-coffee-system/services/identity-service/src
 
   menu-service:
     build:
@@ -124,7 +129,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 256M
 
   inventory-service:
     build:
@@ -150,12 +155,12 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 256M
 
   order-service:
     build:
       context: ./avengers-coffee-system/services/order-service
-      target: dev
+      target: runner
     container_name: avengers_order_service
     init: true
     restart: unless-stopped
@@ -164,11 +169,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-    volumes:
-      - ./avengers-coffee-system/services/order-service/src:/app/src
-      - ./avengers-coffee-system/services/order-service/tsconfig.json:/app/tsconfig.json
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: ${ORDER_PORT:-3005}
       JWT_SECRET: ${JWT_SECRET:-avengers-jwt-secret}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-avengers-internal-token}
@@ -206,7 +208,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1700M
+          memory: 384M
 
   news-service:
     build:
@@ -237,7 +239,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 256M
 
   api-gateway:
     build:
@@ -274,7 +276,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 384M
 
   ai-service:
     build:
@@ -302,9 +304,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 256M
 
-
+  # ── Frontend (Vite hot-reload — tự cập nhật khi Ctrl+S) ────────────────────
   web-customer:
     build:
       context: ./avengers-coffee-system/apps/web-customer
@@ -313,13 +315,13 @@ services:
     init: true
     restart: unless-stopped
     working_dir: /app
-    command: npm run dev -- --host 0.0.0.0 --port 5175
+    command: npm run dev -- --host 0.0.0.0 --port 5175 --force
     depends_on:
       api-gateway:
         condition: service_started
     environment:
-      - VITE_API_URL=${WEB_CUSTOMER_API_URL:-http://localhost:3000}
-      - VITE_SOCKET_URL=${WEB_CUSTOMER_SOCKET_URL:-http://localhost:3005}
+      - VITE_API_URL=${WEB_CUSTOMER_API_URL}
+      - VITE_SOCKET_URL=${WEB_CUSTOMER_SOCKET_URL}
       - VITE_GOOGLE_CLIENT_ID=${WEB_CUSTOMER_GOOGLE_CLIENT_ID}
       - VITE_RECAPTCHA_SITE_KEY=${WEB_CUSTOMER_RECAPTCHA_SITE_KEY}
       - VITE_FACEBOOK_APP_ID=${WEB_CUSTOMER_FACEBOOK_APP_ID}
@@ -343,13 +345,13 @@ services:
     init: true
     restart: unless-stopped
     working_dir: /app
-    command: npm run dev -- --host 0.0.0.0 --port 5174
+    command: npm run dev -- --host 0.0.0.0 --port 5174 --force
     depends_on:
       api-gateway:
         condition: service_started
     environment:
-      - VITE_API_URL=${WEB_ADMIN_API_URL:-http://localhost:3000}
-      - VITE_SOCKET_URL=${WEB_ADMIN_SOCKET_URL:-http://localhost:3005}
+      - VITE_API_URL=${WEB_ADMIN_API_URL}
+      - VITE_SOCKET_URL=${WEB_ADMIN_SOCKET_URL}
     volumes:
       - ./avengers-coffee-system/apps/web-admin:/app
       - /app/node_modules
@@ -363,11 +365,8 @@ services:
         limits:
           memory: 512M
 
-
-
-# volumes:
-#   avengers_pgdata:
-
+volumes:
+  avengers_pgdata:
 
 networks:
   avengers-network:

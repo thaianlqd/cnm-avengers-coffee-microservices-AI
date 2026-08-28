@@ -15,7 +15,7 @@ export default function NewsPage({ onSelectArticle }) {
         return null;
       }
     },
-    staleTime: 60 * 1000,
+    staleTime: 10 * 60 * 1000,
     refetchInterval: 90 * 1000,
   });
 
@@ -29,7 +29,7 @@ export default function NewsPage({ onSelectArticle }) {
   const listArticles = newsArticles.slice(1);
 
   return (
-    <div className="w-full bg-white mt-[84px] min-h-screen">
+    <div className="w-full bg-white mt-0 min-h-screen">
       {/* Top Banner Header */}
       <div className="bg-[#b22830] text-white py-12 px-4 shadow-md">
         <div className="max-w-[1200px] mx-auto text-center space-y-3">

@@ -371,7 +371,7 @@ const ROUTE_COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981']
         shipperCoord.timing({
           latitude: coord.latitude,
           longitude: coord.longitude,
-          duration: 40, // Đã giảm từ 300ms xuống 40ms để xe chạy siêu tốc!
+          duration: 150, // Điều chỉnh về 150ms để nhanh vừa phải (không siêu tốc, không rùa bò)
           useNativeDriver: false
         }).start(() => {
           step++
@@ -379,8 +379,10 @@ const ROUTE_COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981']
         })
       } else {
         // Fallback for Web/Errors
-        step++
-        animateLoop()
+        setTimeout(() => {
+          step++
+          animateLoop()
+        }, 150)
       }
     }
     

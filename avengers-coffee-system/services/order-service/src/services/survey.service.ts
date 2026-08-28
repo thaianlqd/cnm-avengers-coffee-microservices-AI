@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { SurveyForm } from '../entities/survey-form.entity';
 import { SurveyResponse } from '../entities/survey-response.entity';
 
@@ -14,6 +14,7 @@ export class SurveyService {
     private readonly formRepo: Repository<SurveyForm>,
     @InjectRepository(SurveyResponse)
     private readonly responseRepo: Repository<SurveyResponse>,
+    private readonly dataSource: DataSource,
   ) {}
 
   // ═══════════════════════════════════════════════════════
@@ -126,6 +127,21 @@ export class SurveyService {
       }
     }
 
+    let coSoMa = null;
+    if (payload.ma_don_hang?.trim()) {
+      try {
+        const rows = await this.dataSource.query(
+          'SELECT co_so_ma FROM orders.don_hang WHERE ma_don_hang = $1',
+          [payload.ma_don_hang.trim()]
+        );
+        if (rows && rows.length > 0) {
+          coSoMa = rows[0].co_so_ma;
+        }
+      } catch (err) {
+        console.error('Error looking up co_so_ma for survey response:', err);
+      }
+    }
+
     // Save response
     const response = new SurveyResponse();
     response.ma_bieu_mau = payload.ma_bieu_mau;
@@ -133,6 +149,7 @@ export class SurveyService {
     response.ten_nguoi_dung = payload.ten_nguoi_dung?.trim() || null;
     response.so_dien_thoai = payload.so_dien_thoai?.trim() || null;
     response.ma_don_hang = payload.ma_don_hang?.trim() || null;
+    response.co_so_ma = coSoMa;
     response.tra_loi = Array.isArray(payload.tra_loi) ? payload.tra_loi : [];
 
     const savedResponse = await this.responseRepo.save(response);
@@ -193,9 +210,32 @@ export class SurveyService {
     return;
   }
 
-  async layDanhSachPhanHoi() {
-    const list = await this.responseRepo.find({ order: { ngay_tao: 'DESC' } });
-    return { total: list.length, items: list };
+  async layDanhSachPhanHoi(branchCode?: string) {
+    // Build WHERE clause
+    const conditions: string[] = [];
+    const params: any[] = [];
+    let paramIdx = 1;
+
+    const orderSchema = process.env.DB_SCHEMA || 'orders';
+
+    if (branchCode) {
+      conditions.push(`r.co_so_ma = $${paramIdx++}`);
+      params.push(branchCode);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    // JOIN with survey_form to get ten_form (survey title)
+    const rows = await this.responseRepo.manager.query(
+      `SELECT r.*, f.tieu_de AS ten_form
+       FROM "${orderSchema}"."khao_sat_phan_hoi" r
+       LEFT JOIN "${orderSchema}"."khao_sat_bieu_mau" f ON f.id = r.ma_bieu_mau
+       ${whereClause}
+       ORDER BY r.ngay_tao DESC`,
+      params,
+    );
+
+    return { total: rows.length, items: rows };
   }
 
   async checkStatus(userId: string) {

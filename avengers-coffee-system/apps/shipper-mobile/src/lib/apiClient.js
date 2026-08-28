@@ -11,13 +11,29 @@ const apiClient = axios.create({
   timeout: 60000,
   headers: {
     'ngrok-skip-browser-warning': 'true',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
   },
 })
 
 let authToken = null
 
+let queuePromise = Promise.resolve()
+
 apiClient.interceptors.request.use(
   async (config) => {
+    const priorPromise = queuePromise
+    let release
+    queuePromise = new Promise((resolve) => { release = resolve })
+    config._releaseQueue = release
+    
+    // Đợi request trước đó hoàn thành (timeout max 10s để tránh kẹt vĩnh viễn)
+    await Promise.race([
+      priorPromise.catch(() => {}),
+      new Promise(res => setTimeout(res, 10000))
+    ])
+
     if (!authToken) {
       try {
         authToken = await AsyncStorage.getItem(TOKEN_KEY)
@@ -31,12 +47,26 @@ apiClient.interceptors.request.use(
     }
     return config
   },
-  (error) => Promise.reject(error),
+  (error) => {
+    // Nếu request interceptor có lỗi, phải release queue (nếu có)
+    if (error.config?._releaseQueue) error.config._releaseQueue()
+    return Promise.reject(error)
+  },
 )
 
 apiClient.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    if (response.config?._releaseQueue) {
+      response.config._releaseQueue()
+      delete response.config._releaseQueue
+    }
+    return response.data
+  },
   async (error) => {
+    if (error.config?._releaseQueue) {
+      error.config._releaseQueue()
+      delete error.config._releaseQueue
+    }
     if (error.response?.status === 401) {
       authToken = null
       await AsyncStorage.removeItem(TOKEN_KEY)

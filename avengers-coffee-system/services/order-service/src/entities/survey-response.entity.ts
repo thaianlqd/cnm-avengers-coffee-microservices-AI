@@ -27,6 +27,9 @@ export class SurveyResponse {
   @Column({ type: 'varchar', nullable: true })
   ma_don_hang: string | null;
 
+  @Column({ type: 'varchar', nullable: true })
+  co_so_ma: string | null;
+
   @Column({ type: 'jsonb', default: () => "'[]'::jsonb" })
   tra_loi: Array<{
     cau_hoi_id: string;

@@ -17,6 +17,9 @@ export class ShipperWallet {
   @Column({ type: 'decimal', precision: 15, scale: 2, default: 0 })
   cod_holding: number;
 
+  @Column({ type: 'jsonb', default: () => "'{}'::jsonb" })
+  cod_details: Record<string, number>;
+
   @Column({ type: 'decimal', precision: 15, scale: 2, default: 0 })
   pending_commission: number;
 

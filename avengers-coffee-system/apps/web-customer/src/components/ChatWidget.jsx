@@ -477,7 +477,7 @@ export default function ChatWidget({ user, socketUrl }) {
       const headers = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/chat/conversations/open`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`}/chat/conversations/open`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ customer_user_id: effectiveUserId, customer_name: userName }),
@@ -686,7 +686,7 @@ export default function ChatWidget({ user, socketUrl }) {
         const headers = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
         
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/chat/conversations/${conversation.ma_hoi_thoai}/messages`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`}/chat/conversations/${conversation.ma_hoi_thoai}/messages`, {
           method: 'POST',
           headers,
           body: JSON.stringify({

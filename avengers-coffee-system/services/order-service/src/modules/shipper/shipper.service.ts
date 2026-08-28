@@ -110,8 +110,9 @@ export class ShipperService {
     }
 
     if (branchCode) {
-      const normalized = branchCode.toUpperCase().replace(/-/g, '_');
-      query = query.andWhere('UPPER(REPLACE(don.co_so_ma, \'-\', \'_\')) = :branchCode', { branchCode: normalized });
+      // Bỏ filter cơ sở để shipper (demo) có thể thấy tất cả đơn hàng trên hệ thống
+      // const normalized = branchCode.toUpperCase().replace(/-/g, '_');
+      // query = query.andWhere("UPPER(REPLACE(don.co_so_ma, '-', '_')) = :branchCode", { branchCode: normalized });
     }
 
     query = query.orderBy('don.ngay_tao', 'DESC');
@@ -275,6 +276,7 @@ export class ShipperService {
         ...d,
         cod_amount: o?.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG' ? Number(o.tong_tien || 0) : 0,
         order_value: Number(o?.tong_tien || 0),
+        co_so_ma: o?.co_so_ma,
         tracking: tracking ? {
           store_latitude: tracking.store_latitude,
           store_longitude: tracking.store_longitude,
@@ -368,9 +370,11 @@ export class ShipperService {
 
     // Cập nhật đơn hàng → HOAN_THANH
     let cod_amount = 0;
+    let branch_code = 'MAC_DINH_CHI';
     if (delivery.ma_don_hang) {
       const donHang = await this.donHangRepo.findOne({ where: { ma_don_hang: delivery.ma_don_hang } });
       if (donHang) {
+        branch_code = donHang.co_so_ma || 'MAC_DINH_CHI';
         if (donHang.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG') {
           cod_amount = Number(donHang.tong_tien || 0);
         }
@@ -403,7 +407,7 @@ export class ShipperService {
     // Cập nhật Ví tài xế (ShipperWallet)
     let wallet = await this.walletRepo.findOne({ where: { shipper_id: shipperId } });
     if (!wallet) {
-      wallet = this.walletRepo.create({ shipper_id: shipperId, balance: 0, cod_holding: 0, pending_commission: 0 });
+      wallet = this.walletRepo.create({ shipper_id: shipperId, balance: 0, cod_holding: 0, pending_commission: 0, cod_details: {} });
     }
     
     // Hardcode phí giao hàng = 15,000 VND
@@ -412,6 +416,11 @@ export class ShipperService {
     wallet.balance = Number(wallet.balance) + delivery_fee;
     if (cod_amount > 0) {
       wallet.cod_holding = Number(wallet.cod_holding) + cod_amount;
+      
+      const currentDetails = typeof wallet.cod_details === 'object' && wallet.cod_details !== null ? { ...wallet.cod_details } : {};
+      const currentBranchCod = Number(currentDetails[branch_code] || 0);
+      currentDetails[branch_code] = currentBranchCod + cod_amount;
+      wallet.cod_details = currentDetails;
     }
     await this.walletRepo.save(wallet);
 
@@ -946,45 +955,54 @@ export class ShipperService {
    * POST /shippers/:shipperId/cod-remit
    * Shipper xác nhận đã nộp tiền COD cho cửa hàng, tạo bản ghi chờ xác nhận
    */
-  async submitCodRemit(shipperId: string, amount: number, note?: string) {
+  async submitCodRemit(shipperId: string, amount: number, branchCode: string, note?: string) {
     const shipper = await this.shipperRepo.findOne({ where: { id: shipperId } });
     if (!shipper) throw new NotFoundException('Shipper not found');
 
     const wallet = await this.walletRepo.findOne({ where: { shipper_id: shipperId } });
-    const actualCodHolding = wallet ? Number(wallet.cod_holding) : 0;
-    if (actualCodHolding <= 0) {
-      throw new BadRequestException('Không có tiền COD nào đang giữ để nộp.');
+    if (!wallet) throw new BadRequestException('Ví không tồn tại');
+
+    const currentDetails = typeof wallet.cod_details === 'object' && wallet.cod_details !== null ? wallet.cod_details : {};
+    let actualCodHoldingForBranch = Number(currentDetails[branchCode] || 0);
+
+    // Tính tổng COD đã được tracking
+    const trackedCodSum = Object.values(currentDetails).reduce((sum, val) => sum + Number(val || 0), 0);
+    const untrackedLegacyCod = Math.max(0, Number(wallet.cod_holding) - Number(trackedCodSum));
+
+    // Nếu tiền nộp vượt quá mức branch đang giữ, nhưng vẫn nằm trong khoản tiền cũ chưa tracking
+    if (amount > actualCodHoldingForBranch && amount <= actualCodHoldingForBranch + untrackedLegacyCod) {
+      actualCodHoldingForBranch += untrackedLegacyCod;
     }
 
-    // Dung số thực tế trong ví thay vì số shipper tự nhập
-    const remitAmount = actualCodHolding;
+    if (actualCodHoldingForBranch <= 0) {
+      throw new BadRequestException('Không có tiền COD nào của cơ sở này đang giữ để nộp.');
+    }
 
-    // Tìm chi nhánh của đơn hàng gần nhất mà Shipper vừa giao
-    let targetBranchCode = shipper.branch_code;
-    const lastDelivery = await this.deliveryRepo.findOne({
-      where: { shipper_id: shipperId, status: 'DELIVERED' },
-      order: { delivered_at: 'DESC' }
-    });
-    if (lastDelivery && lastDelivery.ma_don_hang) {
-      // Vì không tiêm DonHangRepository vào module này nên dùng query builder hoặc entity manager
-      // May quá DonHangRepo đã được inject vào ShipperService (dòng 23)
-      const donHang = await this.donHangRepo.findOne({ where: { ma_don_hang: lastDelivery.ma_don_hang } });
-      if (donHang && donHang.co_so_ma) {
-        targetBranchCode = donHang.co_so_ma;
-      }
+    if (amount > actualCodHoldingForBranch) {
+      throw new BadRequestException(`Số tiền nộp (${amount}) vượt quá số COD đang giữ của cơ sở này (${actualCodHoldingForBranch}).`);
     }
 
     const remit = this.codRemitRepo.create({
       shipper_id: shipperId,
       shipper_name: shipper.full_name,
-      branch_code: targetBranchCode,
-      amount: remitAmount,
+      branch_code: branchCode,
+      amount: amount,
       status: 'PENDING',
       note: note || null,
     } as any);
     await this.codRemitRepo.save(remit);
 
-    return { success: true, remit, message: `Đã gửi yêu cầu nộp ${remitAmount.toLocaleString('vi-VN')}đ — đang chờ quản lý xác nhận.` };
+    // Trừ tiền ngay lập tức khỏi ví shipper để UI không hiển thị nữa (tránh shipper bấm nộp 2 lần)
+    wallet.cod_holding = Math.max(0, Number(wallet.cod_holding) - amount);
+    if (branchCode !== 'LEGACY_COD' && typeof wallet.cod_details === 'object' && wallet.cod_details !== null) {
+      const currentDetails = { ...wallet.cod_details };
+      const currentBranchCod = Number(currentDetails[branchCode] || 0);
+      currentDetails[branchCode] = Math.max(0, currentBranchCod - amount);
+      wallet.cod_details = currentDetails;
+    }
+    await this.walletRepo.save(wallet);
+
+    return { success: true, remit, message: `Đã gửi yêu cầu nộp ${amount.toLocaleString('vi-VN')}đ — đang chờ quản lý xác nhận.` };
   }
 
   async acceptBatchOrders(shipperId: string, orderIds: string[]) {
@@ -1018,11 +1036,19 @@ export class ShipperService {
       confirmed_at: new Date(),
     });
 
-    if (action === 'CONFIRMED') {
-      // Trừ cod_holding khỏi ví shipper
+    if (action === 'REJECTED') {
+      // HOÀN LẠI TIỀN cho shipper (vì admin từ chối phiếu nộp)
       const wallet = await this.walletRepo.findOne({ where: { shipper_id: remit.shipper_id } });
       if (wallet) {
-        wallet.cod_holding = Math.max(0, Number(wallet.cod_holding) - Number(remit.amount));
+        wallet.cod_holding = Number(wallet.cod_holding) + Number(remit.amount);
+        
+        if (typeof wallet.cod_details === 'object' && wallet.cod_details !== null && remit.branch_code !== 'LEGACY_COD') {
+          const currentDetails = { ...wallet.cod_details };
+          const currentBranchCod = Number(currentDetails[remit.branch_code] || 0);
+          currentDetails[remit.branch_code] = currentBranchCod + Number(remit.amount);
+          wallet.cod_details = currentDetails;
+        }
+
         await this.walletRepo.save(wallet);
       }
     }
