@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, In } from 'typeorm';
 import { ComboNguyenLieu } from './entities/combo-nguyen-lieu.entity';
 import { HoSoDangKy } from './entities/ho-so-dang-ky.entity';
 import { Kiosk } from './entities/kiosk.entity';
@@ -9,6 +9,8 @@ import { DonMuaCombo } from './entities/don-mua-combo.entity';
 import { CongNo } from './entities/cong-no.entity';
 import { RoyaltyHangThang } from './entities/royalty.entity';
 import { KetQuaDoiSoat } from './entities/doi-soat.entity';
+import { BienBanViPham } from './entities/bien-ban-vi-pham.entity';
+import { AuditLog } from './entities/audit-log.entity';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import nodemailer from 'nodemailer';
@@ -39,6 +41,12 @@ export class FranchiseService {
 
     @InjectRepository(KetQuaDoiSoat)
     private doiSoatRepo: Repository<KetQuaDoiSoat>,
+
+    @InjectRepository(BienBanViPham)
+    private bienBanRepo: Repository<BienBanViPham>,
+
+    @InjectRepository(AuditLog)
+    private auditLogRepo: Repository<AuditLog>,
 
     private dataSource: DataSource,
   ) {}
@@ -161,7 +169,26 @@ export class FranchiseService {
   }
 
   // ─────────────────────────────────────────────
-  // UC-B01: Hồ sơ đăng ký
+  // Audit Log Helper
+  // ─────────────────────────────────────────────
+  private async logAction(adminId: string | null, hanhDong: string, chiTiet: string | null = null) {
+    try {
+      await this.auditLogRepo.save(this.auditLogRepo.create({
+        admin_id: adminId,
+        hanh_dong: hanhDong,
+        chi_tiet: chiTiet
+      }));
+    } catch (e) {
+      console.error('Lỗi ghi AuditLog:', e);
+    }
+  }
+
+  async getAuditLogs() {
+    return this.auditLogRepo.find({ order: { thoi_gian: 'DESC' }, take: 100 });
+  }
+
+  // ─────────────────────────────────────────────
+  // UC-ADMIN: Quản lý Hồ sơ Đăng ký (UC-B01)
   // ─────────────────────────────────────────────
 
   async dangKyHoSo(body: any) {
@@ -193,10 +220,44 @@ export class FranchiseService {
     return query.getMany();
   }
 
-  async duyetHoSo(id: string, adminId: string) {
+  async yeuCauDatCoc(id: string, adminId: string) {
     const hoSo = await this.hoSoRepo.findOne({ where: { id } });
     if (!hoSo) throw new NotFoundException('Không tìm thấy hồ sơ');
     if (hoSo.trang_thai !== 'CHO_XEM_XET') throw new BadRequestException('Hồ sơ không ở trạng thái chờ xem xét');
+
+    // Kiểm tra độc quyền địa lý
+    if (hoSo.quan_huyen && hoSo.thanh_pho) {
+      const existing = await this.kioskRepo.count({
+        where: {
+          quan_huyen: hoSo.quan_huyen,
+          thanh_pho: hoSo.thanh_pho,
+          trang_thai: In(['DANG_HOAT_DONG', 'DANG_THIET_LAP', 'TAM_DUNG', 'CHO_KY_HOP_DONG'])
+        }
+      });
+      if (existing > 0) {
+        throw new BadRequestException(`Vi phạm độc quyền: Khu vực ${hoSo.quan_huyen}, ${hoSo.thanh_pho} đã có Kiosk hoạt động!`);
+      }
+    }
+
+    hoSo.trang_thai = 'CHO_DAT_COC';
+    hoSo.nguoi_xu_ly_id = adminId;
+    await this.hoSoRepo.save(hoSo);
+    await this.logAction(adminId, 'YEU_CAU_DAT_COC', `Hồ sơ: ${id}`);
+    
+    // Gửi email yêu cầu đặt cọc
+    this.sendMail(
+      hoSo.email,
+      '[Avengers Coffee] Yêu cầu đặt cọc giữ chỗ khu vực',
+      `Chào ${hoSo.ho_ten},\nHồ sơ của bạn đã qua vòng duyệt sơ bộ. Vui lòng chuyển khoản 5.000.000đ tiền cọc giữ chỗ khu vực (${hoSo.quan_huyen} - ${hoSo.thanh_pho}) để chúng tôi tiến hành cấp tài khoản.`
+    ).catch(e => console.error('[franchise-mail] deposit email error:', e.message));
+
+    return { success: true, message: 'Đã yêu cầu khách hàng đặt cọc 5.000.000đ.', data: hoSo };
+  }
+
+  async duyetHoSo(id: string, adminId: string) {
+    const hoSo = await this.hoSoRepo.findOne({ where: { id } });
+    if (!hoSo) throw new NotFoundException('Không tìm thấy hồ sơ');
+    if (hoSo.trang_thai !== 'CHO_DAT_COC') throw new BadRequestException('Hồ sơ chưa được yêu cầu đặt cọc');
     // Kiểm tra xem người dùng đã tồn tại chưa
     const existingUsers = await this.dataSource.query(
       `SELECT ma_nguoi_dung, ten_dang_nhap FROM identity.nguoi_dung WHERE email = $1 OR so_dien_thoai = $2 LIMIT 1`,
@@ -261,13 +322,24 @@ export class FranchiseService {
     const hanThanhToan = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     if (soTienKhoiTao > 0) {
+      // Khoản 1: Tiền đặt cọc (5tr)
       await this.congNoRepo.save(this.congNoRepo.create({
         kiosk_id: newKiosk.id,
         loai_phat_sinh: 'KHOI_TAO',
-        so_tien: soTienKhoiTao,
+        so_tien: 5000000,
+        han_thanh_toan: new Date().toISOString().split('T')[0],
+        trang_thai: 'DA_THANH_TOAN',
+        ghi_chu: 'Tiền đặt cọc giữ chỗ (Đã thu)',
+      }));
+
+      // Khoản 2: Còn lại
+      await this.congNoRepo.save(this.congNoRepo.create({
+        kiosk_id: newKiosk.id,
+        loai_phat_sinh: 'KHOI_TAO',
+        so_tien: soTienKhoiTao - 5000000,
         han_thanh_toan: hanThanhToan,
         trang_thai: 'CON_NO',
-        ghi_chu: 'Phí nhượng quyền ban đầu (Tài sản & Setup)',
+        ghi_chu: 'Phí nhượng quyền ban đầu (Đã trừ cọc)',
       }));
     }
 
@@ -275,6 +347,7 @@ export class FranchiseService {
     hoSo.trang_thai = 'DA_DUYET';
     hoSo.nguoi_xu_ly_id = adminId;
     await this.hoSoRepo.save(hoSo);
+    await this.logAction(adminId, 'DUYET_HO_SO', `Hồ sơ: ${id}`);
 
     // Gửi email credentials cho franchisee (fire-and-forget)
     this.sendMail(
@@ -298,20 +371,78 @@ export class FranchiseService {
     hoSo.ly_do_tu_choi = ly_do;
     hoSo.nguoi_xu_ly_id = adminId;
     await this.hoSoRepo.save(hoSo);
-    return { success: true, message: 'Đã từ chối hồ sơ.', data: hoSo };
+    await this.logAction(adminId, 'TU_CHOI_HO_SO', `Hồ sơ: ${id}, Lý do: ${ly_do}`);
+    
+    // Gửi email thông báo từ chối
+    this.sendMail(
+      hoSo.email,
+      '[Avengers Coffee] Thông báo kết quả xét duyệt hồ sơ nhượng quyền',
+      `Chào ${hoSo.ho_ten},\nCảm ơn bạn đã quan tâm đến hệ thống Avengers Coffee.\nRất tiếc, hồ sơ đăng ký nhượng quyền khu vực (${hoSo.quan_huyen} - ${hoSo.thanh_pho}) của bạn chưa phù hợp ở thời điểm hiện tại.\n\nLý do từ chối: ${ly_do}\n\nHy vọng sẽ có cơ hội hợp tác với bạn trong tương lai. Xin cảm ơn!`
+    ).catch(e => console.error('[franchise-mail] tu-choi email error:', e.message));
+
+    return { success: true, message: 'Đã từ chối hồ sơ và gửi email thông báo.', data: hoSo };
+  }
+
+  async huyHoSoDangKy(id: string) {
+    const hoSo = await this.hoSoRepo.findOne({ where: { id } });
+    if (!hoSo) throw new NotFoundException('Không tìm thấy hồ sơ');
+    if (hoSo.trang_thai !== 'CHO_XEM_XET') throw new BadRequestException('Chỉ có thể hủy khi hồ sơ đang chờ xem xét (chưa được xử lý).');
+    
+    hoSo.trang_thai = 'TU_CHOI'; // Hoặc trạng thái HUY nếu DB hỗ trợ
+    hoSo.ly_do_tu_choi = 'Khách hàng tự hủy đăng ký';
+    await this.hoSoRepo.save(hoSo);
+    return { success: true, message: 'Bạn đã hủy hồ sơ thành công.', data: hoSo };
   }
 
   // ─────────────────────────────────────────────
   // UC-B02: Kiosk & Hợp đồng
   // ─────────────────────────────────────────────
 
+  async layDanhSachKioskPublic() {
+    return this.kioskRepo.find({
+      where: { trang_thai: 'DANG_HOAT_DONG' },
+      select: ['id', 'ma_kiosk', 'ten_kiosk', 'dia_chi', 'quan_huyen', 'thanh_pho', 'loai_kiosk', 'ngay_tao'],
+      order: { ngay_tao: 'DESC' }
+    });
+  }
+
   async layDanhSachKiosk() {
     const kiosks = await this.kioskRepo.find({ order: { ngay_tao: 'DESC' } });
-    // Enrich với thông tin hợp đồng
     const result = await Promise.all(kiosks.map(async (k) => {
       const hopDong = await this.hopDongRepo.findOne({ where: { kiosk_id: k.id }, order: { ngay_tao: 'DESC' } });
-      const congNoCount = await this.congNoRepo.count({ where: { kiosk_id: k.id, trang_thai: 'CON_NO' } });
-      return { ...k, hop_dong: hopDong, so_cong_no_chua_thanh_toan: congNoCount };
+      const danhSachCongNo = await this.congNoRepo.find({ where: { kiosk_id: k.id } });
+      const danhSachDoiSoat = await this.doiSoatRepo.find({ where: { kiosk_id: k.id } });
+
+      let congNoCount = 0;
+      let score = 100;
+
+      danhSachCongNo.forEach(cn => {
+        if (cn.trang_thai === 'CON_NO') {
+          congNoCount++;
+          score -= 5;
+        }
+        if (cn.trang_thai === 'QUA_HAN') score -= 20;
+      });
+
+      danhSachDoiSoat.forEach(ds => {
+        if (ds.muc_canh_bao === 'VANG') score -= 15;
+        if (ds.muc_canh_bao === 'DO') score -= 30;
+      });
+
+      if (k.so_combo_hien_tai > 50) score += 10;
+
+      let rank = 'C';
+      if (score >= 90) rank = 'S';
+      else if (score >= 70) rank = 'A';
+      else if (score >= 50) rank = 'B';
+
+      return { 
+        ...k, 
+        hop_dong: hopDong, 
+        so_cong_no_chua_thanh_toan: congNoCount,
+        diem_danh_gia: score,
+        xep_hang: rank
+      };
     }));
     return result;
   }
@@ -331,6 +462,10 @@ export class FranchiseService {
     if (!kiosk) throw new NotFoundException('Không tìm thấy kiosk');
     if (kiosk.trang_thai !== 'CHO_KY_HOP_DONG') throw new BadRequestException('Kiosk không ở trạng thái chờ ký hợp đồng');
 
+    if (!body.file_hop_dong_url) {
+      throw new BadRequestException('Bắt buộc phải đính kèm bản scan Hợp đồng đã ký (PDF/Ảnh) trước khi tạo.');
+    }
+
     const hopDong = await this.hopDongRepo.save(this.hopDongRepo.create({
       kiosk_id: kioskId,
       goi_kiosk: kiosk.loai_kiosk,
@@ -338,6 +473,7 @@ export class FranchiseService {
       ngay_het_han: body.ngay_het_han,
       ty_le_royalty_phan_tram: body.ty_le_royalty_phan_tram ?? 7.0,
       so_combo_khoi_diem: body.so_combo_khoi_diem ?? 0,
+      file_hop_dong_url: body.file_hop_dong_url,
       trang_thai: 'HIEU_LUC',
       nguoi_tao_id: adminId,
     }));
@@ -855,39 +991,133 @@ export class FranchiseService {
         await this.congNoRepo.save(cn);
       }
 
-      // Ngày 4+: Tính tiền phạt (Ở đây demo update số tiền + ghi chú)
-      if (diffDays >= 4) {
-        // Phạt 0.1%/ngày
-        // Để demo đơn giản tránh sinh vô hạn record, ta ghi nhận số tiền phạt trực tiếp hoặc ghi chú
-        cn.ghi_chu = `Quá hạn ${diffDays} ngày. Đã áp dụng phạt trễ hạn.`;
+      // Ngày 4+ (> 3 ngày): Phạt 2% trễ hạn (chỉ phạt 1 lần, dựa trên việc phi_phat_tre_han == 0)
+      if (diffDays > 3 && Number(cn.phi_phat_tre_han) === 0) {
+        cn.phi_phat_tre_han = Number(cn.so_tien) * 0.02;
+        cn.ghi_chu = (cn.ghi_chu ? cn.ghi_chu + '\n' : '') + `Phạt trễ hạn 2% (Quá hạn ${diffDays} ngày)`;
         await this.congNoRepo.save(cn);
         totalPhat++;
       }
 
-      // Ngày 8+: Khóa Portal (Vô hiệu hóa user)
-      if (diffDays >= 8) {
+      // Ngày 8+ (> 7 ngày): Tự động NGUNG_HOAT_DONG kiosk (Khóa Kiosk)
+      if (diffDays > 7) {
         const kiosk = await this.kioskRepo.findOne({ where: { id: cn.kiosk_id } });
-        if (kiosk) {
-          await this.dataSource.query('UPDATE identity.users SET is_active = false WHERE id = $1', [kiosk.franchisee_id]);
-          totalKhoa++;
-        }
-      }
-
-      // Ngày 15+: Tạm dừng Kiosk
-      if (diffDays >= 15) {
-        const kiosk = await this.kioskRepo.findOne({ where: { id: cn.kiosk_id } });
-        if (kiosk && kiosk.trang_thai !== 'TAM_DUNG' && kiosk.trang_thai !== 'NGUNG_HOAT_DONG') {
-          kiosk.trang_thai = 'TAM_DUNG';
+        if (kiosk && kiosk.trang_thai !== 'NGUNG_HOAT_DONG') {
+          kiosk.trang_thai = 'NGUNG_HOAT_DONG';
           await this.kioskRepo.save(kiosk);
-          totalTamDung++;
+          totalKhoa++;
+          totalTamDung++; // Dùng chung biến báo cáo
         }
       }
     }
     
     return { 
       success: true, 
-      message: `Quét nợ xong: Đánh dấu/phạt ${totalPhat} khoản, Khóa ${totalKhoa} tài khoản, Tạm dừng ${totalTamDung} Kiosk` 
+      message: `Quét nợ xong: Đánh dấu/phạt ${totalPhat} khoản, Khóa Kiosk ${totalKhoa} trường hợp.` 
     };
   }
+
+  // ─────────────────────────────────────────────
+  // UC-ADMIN: Dashboard Statistics
+  // ─────────────────────────────────────────────
+  async thongKeAdmin() {
+    const tongKiosk = await this.kioskRepo.count({ where: { trang_thai: 'DANG_HOAT_DONG' } });
+    const tongDonCombo = await this.donMuaComboRepo.count();
+    
+    const congNo = await this.congNoRepo.find({ where: { trang_thai: 'CON_NO' } });
+    const tongNo = congNo.reduce((acc, c) => acc + Number(c.so_tien), 0);
+
+    const royalty = await this.royaltyRepo.find({ where: { trang_thai: 'DA_THANH_TOAN' } });
+    const tongRoyalty = royalty.reduce((acc, r) => acc + Number(r.so_tien_royalty), 0);
+
+    return {
+      success: true,
+      data: {
+        tong_kiosk_hoat_dong: tongKiosk,
+        tong_don_combo: tongDonCombo,
+        tong_no_chua_thu: tongNo,
+        tong_royalty_da_thu: tongRoyalty
+      }
+    };
+  }
+
+  // ─────────────────────────────────────────────
+  // UC-ADMIN: Lập Biên Bản Vi Phạm
+  // ─────────────────────────────────────────────
+  async lapBienBan(kioskId: string, adminId: string, body: any) {
+    const bienBan = this.bienBanRepo.create({
+      kiosk_id: kioskId,
+      loai_vi_pham: body.loai_vi_pham,
+      hinh_phat: body.hinh_phat,
+      so_tien_phat: body.so_tien_phat || 0,
+      trang_thai: 'CHUA_NOP',
+      ly_do: body.ly_do,
+      nguoi_lap_id: adminId,
+    });
+    await this.bienBanRepo.save(bienBan);
+
+    if (body.hinh_phat === 'TIEN_PHAT' && body.so_tien_phat > 0) {
+      const hanThanhToan = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      await this.congNoRepo.save(this.congNoRepo.create({
+        kiosk_id: kioskId,
+        loai_phat_sinh: 'KHOI_TAO', // dùng tạm type này để phạt
+        so_tien: body.so_tien_phat,
+        han_thanh_toan: hanThanhToan,
+        trang_thai: 'CON_NO',
+        ghi_chu: `Phạt vi phạm: ${body.ly_do}`,
+      }));
+    }
+
+    await this.logAction(adminId, 'LAP_BIEN_BAN', `Kiosk: ${kioskId}, Lỗi: ${body.loai_vi_pham}`);
+
+    return { success: true, message: 'Đã lập biên bản vi phạm thành công.', data: bienBan };
+  }
+
+  // ─────────────────────────────────────────────
+  // UC-DEV: Tua Nhanh Thời Gian
+  // ─────────────────────────────────────────────
+  async tuaNhanhNo(congNoId: string, days: number) {
+    const cn = await this.congNoRepo.findOne({ where: { id: congNoId } });
+    if (!cn) throw new NotFoundException('Không tìm thấy công nợ');
+    
+    if (cn.han_thanh_toan) {
+      const targetDate = new Date(cn.han_thanh_toan);
+      targetDate.setDate(targetDate.getDate() - days);
+      cn.han_thanh_toan = targetDate.toISOString().split('T')[0];
+      await this.congNoRepo.save(cn);
+      await this.logAction(null, 'TUA_NHANH_NO', `Công nợ ${cn.id} lùi ${days} ngày`);
+    }
+    
+    return { success: true, message: `Đã tua nhanh công nợ lùi về ${days} ngày trước. Hạn mới: ${cn.han_thanh_toan}` };
+  }
+
+  // ─────────────────────────────────────────────
+  // UC-ADMIN: Vòng đời Kiosk
+  // ─────────────────────────────────────────────
+  async giaHanHopDong(kioskId: string, adminId: string, ngayHetHanMoi: string) {
+    const hd = await this.hopDongRepo.findOne({ where: { kiosk_id: kioskId } });
+    if (!hd) throw new NotFoundException('Không tìm thấy hợp đồng');
+    hd.ngay_het_han = ngayHetHanMoi;
+    await this.hopDongRepo.save(hd);
+    await this.logAction(adminId, 'GIA_HAN_HOP_DONG', `Kiosk: ${kioskId}, Hạn mới: ${ngayHetHanMoi}`);
+    return { success: true, message: 'Đã gia hạn hợp đồng thành công.' };
+  }
+
+  async chamDutHopDong(kioskId: string, adminId: string) {
+    const kiosk = await this.kioskRepo.findOne({ where: { id: kioskId } });
+    if (!kiosk) throw new NotFoundException('Kiosk không tồn tại');
+    kiosk.trang_thai = 'NGUNG_HOAT_DONG';
+    await this.kioskRepo.save(kiosk);
+
+    const hd = await this.hopDongRepo.findOne({ where: { kiosk_id: kioskId } });
+    if (hd) {
+      hd.trang_thai = 'DA_HUY';
+      await this.hopDongRepo.save(hd);
+    }
+    await this.dataSource.query('UPDATE identity.users SET is_active = false WHERE id = $1', [kiosk.franchisee_id]);
+    await this.logAction(adminId, 'CHAM_DUT_HOP_DONG', `Kiosk: ${kioskId}`);
+    return { success: true, message: 'Đã chấm dứt hợp đồng Kiosk vĩnh viễn.' };
+  }
 }
+
 

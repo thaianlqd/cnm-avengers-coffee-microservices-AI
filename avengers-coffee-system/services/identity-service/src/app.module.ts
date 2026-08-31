@@ -22,6 +22,8 @@ import { DonMuaCombo } from './modules/franchise/entities/don-mua-combo.entity';
 import { CongNo } from './modules/franchise/entities/cong-no.entity';
 import { RoyaltyHangThang } from './modules/franchise/entities/royalty.entity';
 import { KetQuaDoiSoat } from './modules/franchise/entities/doi-soat.entity';
+import { BienBanViPham } from './modules/franchise/entities/bien-ban-vi-pham.entity';
+import { AuditLog } from './modules/franchise/entities/audit-log.entity';
 
 const identitySchema = process.env.DB_SCHEMA || 'identity';
 const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
@@ -61,7 +63,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
           database,
           ssl: sslConfig,
           schema: identitySchema,
-          entities: [User, DeliveryAddress, Branch, Promotion, PromotionUsage, MembershipConfig, ComboNguyenLieu, HoSoDangKy, Kiosk, HopDongNhuongQuyen, DonMuaCombo, CongNo, RoyaltyHangThang, KetQuaDoiSoat],
+          entities: [User, DeliveryAddress, Branch, Promotion, PromotionUsage, MembershipConfig, ComboNguyenLieu, HoSoDangKy, Kiosk, HopDongNhuongQuyen, DonMuaCombo, CongNo, RoyaltyHangThang, KetQuaDoiSoat, BienBanViPham, AuditLog],
           synchronize: true,
         };
       },
