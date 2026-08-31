@@ -23,6 +23,9 @@ export class CongNo {
   @Column({ type: 'date', nullable: true })
   han_thanh_toan: string | null;
 
+  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
+  phi_phat_tre_han: number;
+
   @Column({ type: 'varchar', length: 20, default: 'CON_NO' })
   trang_thai: 'CON_NO' | 'DA_THANH_TOAN' | 'QUA_HAN';
 

@@ -23,6 +23,12 @@ export class FranchiseController {
   }
 
   @Roles('ADMIN', 'ACCOUNTANT')
+  @Patch('ho-so/:id/yeu-cau-coc')
+  async yeuCauDatCoc(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.franchiseService.yeuCauDatCoc(id, user.sub);
+  }
+
+  @Roles('ADMIN', 'ACCOUNTANT')
   @Patch('ho-so/:id/duyet')
   async duyetHoSo(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.franchiseService.duyetHoSo(id, user.sub);
@@ -34,7 +40,19 @@ export class FranchiseController {
     return this.franchiseService.tuChoiHoSo(id, user.sub, body.ly_do);
   }
 
+  @Public()
+  @Patch('ho-so/:id/huy')
+  async huyHoSoDangKy(@Param('id') id: string) {
+    return this.franchiseService.huyHoSoDangKy(id);
+  }
+
   // ─── UC-B02: Kiosk & Hợp đồng ─────────────────────
+  @Public()
+  @Get('kiosk/public')
+  async layDanhSachKioskPublic() {
+    return this.franchiseService.layDanhSachKioskPublic();
+  }
+
   @Roles('ADMIN', 'ACCOUNTANT', 'MANAGER')
   @Get('kiosk')
   async layDanhSachKiosk() {
@@ -187,5 +205,47 @@ export class FranchiseController {
   @Post('cron/xu-ly-no-qua-han')
   async cronXuLyNoQuaHan() {
     return this.franchiseService.xuLyNoQuaHan();
+  }
+
+  // ─── Thống kê Admin ──────────────────────────────
+  @Get('dashboard/admin')
+  @Roles('ADMIN', 'MANAGER')
+  async thongKeAdmin() {
+    return this.franchiseService.thongKeAdmin();
+  }
+
+  // ─── Lập Biên Bản ─────────────────────────────
+  @Roles('ADMIN')
+  @Post('doi-soat/:kiosk_id/lap-bien-ban')
+  async lapBienBan(@Param('kiosk_id') kioskId: string, @Body() body: any, @CurrentUser() user: AuthUser) {
+    return this.franchiseService.lapBienBan(kioskId, user.sub, body);
+  }
+
+  // ─── DEV TOOL: Tua Nhanh Nợ ────────────────────
+  @Roles('ADMIN')
+  @Post('cong-no/:id/tua-nhanh')
+  async tuaNhanhNo(@Param('id') id: string, @Body() body: any) {
+    return this.franchiseService.tuaNhanhNo(id, body.days || 8);
+  }
+
+  // ─── Gia Hạn & Chấm Dứt HĐ ──────────────────────
+  @Roles('ADMIN')
+  @Post('kiosk/:id/gia-han')
+  async giaHanHopDong(@Param('id') kioskId: string, @Body() body: any, @CurrentUser() user: AuthUser) {
+    return this.franchiseService.giaHanHopDong(kioskId, user.sub, body.ngay_het_han_moi);
+  }
+
+  @Roles('ADMIN')
+  @Post('kiosk/:id/cham-dut')
+  async chamDutHopDong(@Param('id') kioskId: string, @CurrentUser() user: AuthUser) {
+    return this.franchiseService.chamDutHopDong(kioskId, user.sub);
+  }
+
+  // ─── Audit Log ──────────────────────────────────
+  @Roles('ADMIN')
+  @Get('audit-logs')
+  async getAuditLogs() {
+    const logs = await this.franchiseService.getAuditLogs();
+    return { success: true, data: logs };
   }
 }
