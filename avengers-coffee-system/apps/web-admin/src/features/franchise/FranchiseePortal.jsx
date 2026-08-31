@@ -97,6 +97,19 @@ const fmtDate = (d) => {
   }
 };
 
+// ─── Modal Component ───────────────────────────────────────────────────────
+const Modal = ({ title, onClose, children }) => (
+  <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+    <div style={{ background: '#fff', borderRadius: 16, padding: 28, minWidth: 480, maxWidth: 580, width: '100%', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>{title}</h3>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#6b7280' }}>×</button>
+      </div>
+      {children}
+    </div>
+  </div>
+)
+
 const apiFetch = async (path, opts = {}) => {
   const session = JSON.parse(localStorage.getItem('adminSession') || '{}')
   const token = session?.token || session?.accessToken
@@ -201,6 +214,10 @@ export function FranchiseePortal({ session, onLogout }) {
   const [selectedDebt, setSelectedDebt] = useState(null);
   const [walletBalance, setWalletBalance] = useState(0);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [invoiceModal, setInvoiceModal] = useState(null);
+
+  // Scoring Modal
+  const [scoringCriteriaModal, setScoringCriteriaModal] = useState(false);
 
   const handleNapTien = () => setWalletBalance(prev => prev + 100000000);
 
@@ -429,14 +446,14 @@ export function FranchiseePortal({ session, onLogout }) {
     finally { setOrdering(false) }
   }
 
-  const tongCongNo = congNos.filter(c => c.trang_thai !== 'DA_THANH_TOAN').reduce((s, c) => s + Number(c.so_tien), 0)
+  const tongCongNo = congNos.filter(c => c.trang_thai !== 'DA_THANH_TOAN').reduce((s, c) => s + Number(c.so_tien) + Number(c.phi_phat_tre_han || 0), 0)
 
   // ★ COMPUTED from activeKioskId context
   const activeKiosk = kiosks.find(k => k.id === activeKioskId) || kiosks[0] || null
   const congNoTheoKiosk = congNos.filter(c => !activeKioskId || c.kiosk_id === activeKioskId)
   const royaltyTheoKiosk = royalties.filter(r => !activeKioskId || r.kiosk_id === activeKioskId)
   const donTheoKiosk = dons.filter(d => !activeKioskId || d.kiosk_id === activeKioskId)
-  const tongCongNoTheoKiosk = congNoTheoKiosk.filter(c => c.trang_thai !== 'DA_THANH_TOAN').reduce((s, c) => s + Number(c.so_tien), 0)
+  const tongCongNoTheoKiosk = congNoTheoKiosk.filter(c => c.trang_thai !== 'DA_THANH_TOAN').reduce((s, c) => s + Number(c.so_tien) + Number(c.phi_phat_tre_han || 0), 0)
 
   const LOAI_KIOSK_LABEL = {
     'XE_LUU_DONG': { label: 'Xe lưu động', emoji: '🚚', color: '#0369a1', bg: '#e0f2fe' },
@@ -709,12 +726,23 @@ export function FranchiseePortal({ session, onLogout }) {
                   </div>
 
                   {/* Kiosk cards */}
-                  <h3 style={{ fontWeight: 800, fontSize: 18, color: '#1e293b', marginBottom: 16 }}>Tất cả Kiosk của tôi</h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <h3 style={{ margin: 0, fontWeight: 800, fontSize: 18, color: '#1e293b' }}>Tất cả Kiosk của tôi</h3>
+                    <button onClick={() => setScoringCriteriaModal(true)} style={{ background: '#f8fafc', border: '1px solid #cbd5e1', color: '#334155', fontWeight: 600, padding: '6px 12px', borderRadius: 8, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      ℹ️ Xem tiêu chí chấm điểm
+                    </button>
+                  </div>
                   <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))' }}>
                     {kiosks.map(k => {
                       const loai = LOAI_KIOSK_LABEL[k.loai_kiosk] || { label: k.loai_kiosk, emoji: '🏪', color: '#374151', bg: '#f1f5f9' }
                       const kioskCongNo = congNos.filter(c => c.kiosk_id === k.id && c.trang_thai !== 'DA_THANH_TOAN')
                       const tongNoKiosk = kioskCongNo.reduce((s, c) => s + Number(c.so_tien), 0)
+                      
+                      const ngayHetHan = k.hop_dong?.ngay_het_han ? new Date(k.hop_dong.ngay_het_han) : null;
+                      const daysLeft = ngayHetHan ? Math.ceil((ngayHetHan.getTime() - Date.now()) / (1000 * 3600 * 24)) : 999;
+                      const isExpiringSoon = daysLeft <= 30 && daysLeft >= 0;
+                      const isExpired = daysLeft < 0;
+
                       return (
                         <div key={k.id} style={{
                           background: '#fff', borderRadius: 20, border: `2px solid ${k.id === activeKioskId ? loai.color : 'transparent'}`,
@@ -729,12 +757,24 @@ export function FranchiseePortal({ session, onLogout }) {
                                 <div style={{ fontSize: 11, color: loai.color, opacity: 0.8 }}>{loai.label} • {k.ma_kiosk}</div>
                               </div>
                             </div>
-                            <span style={{ padding: '4px 10px', borderRadius: 99, fontSize: 11, fontWeight: 800,
-                              background: k.trang_thai === 'DANG_HOAT_DONG' ? '#dcfce7' : k.trang_thai === 'TAM_DUNG' ? '#ffedd5' : '#fef9c3',
-                              color: k.trang_thai === 'DANG_HOAT_DONG' ? '#059669' : k.trang_thai === 'TAM_DUNG' ? '#c2410c' : '#92400e' }}>
-                              {k.trang_thai === 'DANG_HOAT_DONG' ? '✅ Hoạt động' : k.trang_thai === 'TAM_DUNG' ? '⏸️ Tạm dừng' : '⏳ ' + k.trang_thai}
-                            </span>
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              {k.xep_hang && (
+                                <span title={`Điểm: ${k.diem_danh_gia}`} style={{ padding: '4px 10px', borderRadius: 99, fontSize: 11, fontWeight: 800, background: k.xep_hang === 'S' ? '#fef08a' : k.xep_hang === 'A' ? '#bfdbfe' : k.xep_hang === 'B' ? '#bbf7d0' : '#fecaca', color: k.xep_hang === 'S' ? '#854d0e' : k.xep_hang === 'A' ? '#1e3a8a' : k.xep_hang === 'B' ? '#14532d' : '#7f1d1d' }}>
+                                  🏆 Hạng {k.xep_hang}
+                                </span>
+                              )}
+                              <span style={{ padding: '4px 10px', borderRadius: 99, fontSize: 11, fontWeight: 800,
+                                background: k.trang_thai === 'DANG_HOAT_DONG' ? '#dcfce7' : k.trang_thai === 'TAM_DUNG' ? '#ffedd5' : '#fef9c3',
+                                color: k.trang_thai === 'DANG_HOAT_DONG' ? '#059669' : k.trang_thai === 'TAM_DUNG' ? '#c2410c' : '#92400e' }}>
+                                {k.trang_thai === 'DANG_HOAT_DONG' ? '✅ Hoạt động' : k.trang_thai === 'TAM_DUNG' ? '⏸️ Tạm dừng' : '⏳ ' + k.trang_thai}
+                              </span>
+                            </div>
                           </div>
+                          {(isExpiringSoon || isExpired) && (
+                            <div style={{ padding: '8px 18px', background: isExpired ? '#fee2e2' : '#ffedd5', borderBottom: `1px solid ${isExpired ? '#fecaca' : '#fed7aa'}`, color: isExpired ? '#b91c1c' : '#c2410c', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                              ⚠️ {isExpired ? `Hợp đồng đã quá hạn ${Math.abs(daysLeft)} ngày! Kiosk sẽ bị thu hồi nếu không gia hạn.` : `Hợp đồng sắp hết hạn trong ${daysLeft} ngày tới. Vui lòng gia hạn!`}
+                            </div>
+                          )}
                           <div style={{ padding: '14px 18px', display: 'flex', gap: 10 }}>
                             <div style={{ flex: 1, background: '#fffbeb', borderRadius: 10, padding: '8px 12px', border: '1px solid #fde68a', textAlign: 'center' }}>
                               <div style={{ fontSize: 10, color: '#a16207', fontWeight: 700 }}>COMBO CÒN</div>
@@ -753,17 +793,35 @@ export function FranchiseePortal({ session, onLogout }) {
                               </div>
                             )}
                           </div>
-                          <div style={{ padding: '0 18px 14px', display: 'flex', gap: 8 }}>
+                          <div style={{ padding: '0 18px 14px', display: 'flex', gap: 8, alignItems: 'center' }}>
                             <div style={{ fontSize: 12, color: '#64748b', flex: 1 }}>📍 {k.dia_chi}, {k.thanh_pho}</div>
-                            <button onClick={() => { switchKiosk(k.id); setTab('menu') }} style={{
-                              padding: '5px 12px', borderRadius: 8, border: `1px solid ${loai.color}`, background: loai.bg,
-                              color: loai.color, fontSize: 12, fontWeight: 700, cursor: 'pointer'
-                            }}>Xem thực đơn →</button>
-                            {k.trang_thai === 'DANG_HOAT_DONG' && (
-                              <button onClick={() => { switchKiosk(k.id); setTab('pos') }} style={{
-                                padding: '5px 12px', borderRadius: 8, border: 'none', background: '#f59e0b',
-                                color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer'
-                              }}>POS 🖥️</button>
+                            {k.trang_thai === 'CHO_KY_HOP_DONG' ? (
+                              <button onClick={() => {
+                                if (confirm('Bạn có chắc chắn muốn hủy Kiosk này và yêu cầu hoàn cọc?\nHệ thống sẽ gọi API để hoàn tiền theo quy định.')) {
+                                  apiFetch(`/franchise/ho-so/${k.ho_so_id}/huy`, { method: 'PATCH' })
+                                    .then(res => {
+                                      alert(`[THÀNH CÔNG] ${res.message}\nSố tiền hoàn lại: ${res.data?.refund_amount || 0}đ`);
+                                      loadAll();
+                                    })
+                                    .catch(e => alert('Lỗi: ' + e.message));
+                                }
+                              }} style={{
+                                padding: '5px 12px', borderRadius: 8, border: '1px solid #dc2626', background: '#fff',
+                                color: '#dc2626', fontSize: 12, fontWeight: 700, cursor: 'pointer'
+                              }}>✖️ Yêu cầu Hủy & Hoàn cọc</button>
+                            ) : (
+                              <>
+                                <button onClick={() => { switchKiosk(k.id); setTab('menu') }} style={{
+                                  padding: '5px 12px', borderRadius: 8, border: `1px solid ${loai.color}`, background: loai.bg,
+                                  color: loai.color, fontSize: 12, fontWeight: 700, cursor: 'pointer'
+                                }}>Xem thực đơn →</button>
+                                {k.trang_thai === 'DANG_HOAT_DONG' && (
+                                  <button onClick={() => { switchKiosk(k.id); setTab('pos') }} style={{
+                                    padding: '5px 12px', borderRadius: 8, border: 'none', background: '#f59e0b',
+                                    color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer'
+                                  }}>POS 🖥️</button>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>
@@ -1053,6 +1111,7 @@ export function FranchiseePortal({ session, onLogout }) {
                             <div style={{ fontSize: 13, color: '#64748b', marginTop: 8, fontWeight: 700 }}>Kiosk: {c.kiosk?.ten_kiosk} ({c.kiosk?.ma_kiosk})</div>
                             <div style={{ fontSize: 13, color: '#64748b', marginTop: 4, fontWeight: 500 }}>Hạn: {fmtDate(c.han_thanh_toan)}</div>
                             {c.trang_thai === 'QUA_HAN' && <div style={{ fontSize: 13, color: '#dc2626', fontWeight: 800, marginTop: 8, display: 'inline-block', background: '#fef2f2', padding: '4px 10px', borderRadius: 99 }}>⚠️ Đã quá hạn!</div>}
+                            {c.so_lan_nhac_nho > 0 && <div style={{ fontSize: 12, color: '#b91c1c', fontWeight: 800, marginTop: 8, marginLeft: 8, display: 'inline-block', background: '#fee2e2', padding: '4px 10px', borderRadius: 99 }}>Cảnh báo: Lần {c.so_lan_nhac_nho}/3</div>}
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ fontSize: 22, fontWeight: 900, color: c.trang_thai === 'DA_THANH_TOAN' ? '#059669' : '#d97706' }}>{fmtMoney(c.so_tien)}</div>
@@ -1062,10 +1121,15 @@ export function FranchiseePortal({ session, onLogout }) {
                                 background: '#3b82f6', color: '#fff', border: 'none', boxShadow: '0 4px 14px rgba(59,130,246,0.3)'
                               }}>💳 Thanh toán (Ví Avengers)</button>
                             ) : (
-                              <span style={{
-                                display: 'inline-block', marginTop: 8, padding: '4px 12px', borderRadius: 99, fontSize: 11, fontWeight: 800,
-                                background: '#dcfce7', color: '#059669'
-                              }}>Đã thanh toán</span>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, marginTop: 8 }}>
+                                <span style={{ padding: '4px 12px', borderRadius: 99, fontSize: 11, fontWeight: 800, background: '#dcfce7', color: '#059669' }}>
+                                  Đã thanh toán
+                                </span>
+                                <button onClick={() => setInvoiceModal(c)} style={{
+                                  padding: '4px 12px', borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                                  background: '#fff', color: '#374151', border: '1px solid #d1d5db'
+                                }}>🖨️ In Hóa Đơn VAT</button>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -1608,6 +1672,172 @@ export function FranchiseePortal({ session, onLogout }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Scoring Criteria Modal */}
+      {scoringCriteriaModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          background: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(6px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 24, width: '100%', maxWidth: 500, overflow: 'hidden',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', animation: 'slideUp 0.3s ease-out',
+            display: 'flex', flexDirection: 'column', maxHeight: '90vh'
+          }}>
+            <div style={{ padding: '24px 24px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>🎯</span> Tiêu Chí Chấm Điểm Kiosk
+              </h3>
+              <button onClick={() => setScoringCriteriaModal(false)} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#64748b' }}>×</button>
+            </div>
+            <div style={{ padding: 24, overflowY: 'auto' }}>
+              <p style={{ margin: '0 0 20px', color: '#475569', fontSize: 14, lineHeight: 1.6 }}>
+                Điểm đánh giá hiệu suất của mỗi Kiosk được hệ thống tính toán <b>tự động & minh bạch</b> dựa trên hoạt động kinh doanh thực tế. Điểm khởi điểm là <b>100đ</b>.
+              </p>
+              
+              <div style={{ marginBottom: 24 }}>
+                <h4 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700, color: '#0f172a', textTransform: 'uppercase' }}>📉 Điểm Trừ (Vi phạm)</h4>
+                <div style={{ display: 'grid', gap: 10 }}>
+                  <div style={{ background: '#fef2f2', padding: '12px 16px', borderRadius: 12, border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#991b1b', fontWeight: 600, fontSize: 13 }}>Nợ quá hạn / Chưa thanh toán</span>
+                    <span style={{ color: '#dc2626', fontWeight: 900 }}>-10đ / Khoản</span>
+                  </div>
+                  <div style={{ background: '#fffbeb', padding: '12px 16px', borderRadius: 12, border: '1px solid #fde68a', display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#92400e', fontWeight: 600, fontSize: 13 }}>Biên bản Đối soát: Cảnh báo Vàng</span>
+                    <span style={{ color: '#d97706', fontWeight: 900 }}>-15đ / Biên bản</span>
+                  </div>
+                  <div style={{ background: '#fef2f2', padding: '12px 16px', borderRadius: 12, border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#991b1b', fontWeight: 600, fontSize: 13 }}>Biên bản Đối soát: Cảnh báo Đỏ</span>
+                    <span style={{ color: '#dc2626', fontWeight: 900 }}>-30đ / Biên bản</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 24 }}>
+                <h4 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700, color: '#0f172a', textTransform: 'uppercase' }}>📈 Điểm Cộng (Thành tích)</h4>
+                <div style={{ display: 'grid', gap: 10 }}>
+                  <div style={{ background: '#ecfdf5', padding: '12px 16px', borderRadius: 12, border: '1px solid #a7f3d0', display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#065f46', fontWeight: 600, fontSize: 13 }}>Tiêu thụ tích lũy &gt; 50 Combo gốc</span>
+                    <span style={{ color: '#059669', fontWeight: 900 }}>+10đ</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700, color: '#0f172a', textTransform: 'uppercase' }}>🏆 Xếp Hạng</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, textAlign: 'center' }}>
+                  <div style={{ background: '#fef08a', padding: '10px', borderRadius: 12 }}>
+                    <div style={{ fontWeight: 900, color: '#854d0e', fontSize: 20 }}>S</div>
+                    <div style={{ fontSize: 11, color: '#a16207', fontWeight: 700, marginTop: 4 }}>≥ 90đ</div>
+                  </div>
+                  <div style={{ background: '#bfdbfe', padding: '10px', borderRadius: 12 }}>
+                    <div style={{ fontWeight: 900, color: '#1e3a8a', fontSize: 20 }}>A</div>
+                    <div style={{ fontSize: 11, color: '#1d4ed8', fontWeight: 700, marginTop: 4 }}>≥ 70đ</div>
+                  </div>
+                  <div style={{ background: '#bbf7d0', padding: '10px', borderRadius: 12 }}>
+                    <div style={{ fontWeight: 900, color: '#14532d', fontSize: 20 }}>B</div>
+                    <div style={{ fontSize: 11, color: '#15803d', fontWeight: 700, marginTop: 4 }}>≥ 50đ</div>
+                  </div>
+                  <div style={{ background: '#fecaca', padding: '10px', borderRadius: 12 }}>
+                    <div style={{ fontWeight: 900, color: '#7f1d1d', fontSize: 20 }}>C</div>
+                    <div style={{ fontSize: 11, color: '#b91c1c', fontWeight: 700, marginTop: 4 }}>&lt; 50đ</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            <div style={{ padding: 20, background: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
+              <button onClick={() => setScoringCriteriaModal(false)} style={{ width: '100%', padding: '12px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
+                Đã hiểu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {invoiceModal && (
+        <Modal title="🖨️ HÓA ĐƠN GIÁ TRỊ GIA TĂNG (Bản Thể Hiện)" onClose={() => setInvoiceModal(null)}>
+          <div id="invoice-print-area" style={{ padding: '20px 30px', background: '#fff', border: '1px dashed #ccc', color: '#111827', fontFamily: 'monospace' }}>
+            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+              <h2 style={{ margin: '0 0 5px 0' }}>CÔNG TY CP AVENGERS COFFEE</h2>
+              <div style={{ fontSize: 13 }}>MST: 0123456789 - SĐT: 1900 1234</div>
+              <div style={{ fontSize: 13 }}>Địa chỉ: 123 Đường Nhượng Quyền, TP. HCM</div>
+              <hr style={{ borderTop: '1px dashed #ccc', margin: '15px 0' }}/>
+              <h3 style={{ margin: '0 0 5px 0' }}>HÓA ĐƠN GIÁ TRỊ GIA TĂNG</h3>
+              <div style={{ fontSize: 12 }}>Bản thể hiện của hóa đơn điện tử</div>
+            </div>
+            
+            <div style={{ marginBottom: 15, fontSize: 13, lineHeight: '1.6' }}>
+              <div><b>Khách hàng:</b> {invoiceModal.kiosk?.ten_kiosk}</div>
+              <div><b>Mã Kiosk:</b> {invoiceModal.kiosk?.ma_kiosk}</div>
+              <div><b>Nội dung xuất:</b> {invoiceModal.loai_phat_sinh === 'KHOI_TAO' ? 'Phí nhượng quyền và setup ban đầu' : 'Thanh toán công nợ / Royalty'}</div>
+              <div><b>Ngày thanh toán:</b> {new Date().toLocaleDateString('vi-VN')}</div>
+            </div>
+
+            <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse', marginBottom: 15 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px dashed #ccc', textAlign: 'left' }}>
+                  <th style={{ paddingBottom: 5 }}>Nội dung</th>
+                  <th style={{ paddingBottom: 5, textAlign: 'right' }}>Thành tiền</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style={{ paddingTop: 10 }}>Tiền hàng (chưa VAT)</td>
+                  <td style={{ paddingTop: 10, textAlign: 'right' }}>{fmtMoney((Number(invoiceModal.so_tien) + Number(invoiceModal.phi_phat_tre_han||0)) / 1.08)}</td>
+                </tr>
+                <tr>
+                  <td style={{ paddingTop: 5 }}>Thuế GTGT (8%)</td>
+                  <td style={{ paddingTop: 5, textAlign: 'right' }}>{fmtMoney((Number(invoiceModal.so_tien) + Number(invoiceModal.phi_phat_tre_han||0)) - ((Number(invoiceModal.so_tien) + Number(invoiceModal.phi_phat_tre_han||0)) / 1.08))}</td>
+                </tr>
+                <tr style={{ fontWeight: 700 }}>
+                  <td style={{ paddingTop: 10, borderTop: '1px dashed #ccc' }}>TỔNG CỘNG</td>
+                  <td style={{ paddingTop: 10, borderTop: '1px dashed #ccc', textAlign: 'right' }}>{fmtMoney(Number(invoiceModal.so_tien) + Number(invoiceModal.phi_phat_tre_han||0))}</td>
+                </tr>
+              </tbody>
+            </table>
+            
+            <div style={{ textAlign: 'center', fontSize: 12, marginTop: 30, color: '#6b7280' }}>
+              <div>(Đã ký bởi Công ty CP Avengers Coffee)</div>
+              <div style={{ marginTop: 4 }}>* Đây là hóa đơn giả lập cho bài Demo.</div>
+            </div>
+          </div>
+          <div style={{ marginTop: 20, textAlign: 'right', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <button onClick={() => setInvoiceModal(null)} style={{ padding: '8px 16px', background: '#fff', color: '#374151', borderRadius: 8, border: '1px solid #d1d5db', fontWeight: 600, cursor: 'pointer' }}>Đóng</button>
+            <button onClick={() => {
+              const printContent = document.getElementById('invoice-print-area').innerHTML;
+              const printWindow = window.open('', '_blank');
+              printWindow.document.write(`
+                <html>
+                  <head>
+                    <title>Hoa don VAT - Avengers Coffee</title>
+                    <style>
+                      body { font-family: monospace; padding: 20px; color: #111827; max-width: 800px; margin: 0 auto; }
+                      table { width: 100%; border-collapse: collapse; }
+                      th, td { text-align: left; }
+                      hr { border-top: 1px dashed #ccc; }
+                      @media print {
+                        @page { margin: 0; size: A5 landscape; }
+                        body { padding: 30px; }
+                      }
+                    </style>
+                  </head>
+                  <body>
+                    ${printContent}
+                  </body>
+                </html>
+              `);
+              printWindow.document.close();
+              printWindow.focus();
+              setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+              }, 250);
+            }} style={{ padding: '8px 16px', background: '#3b82f6', color: '#fff', borderRadius: 8, border: 'none', fontWeight: 600, cursor: 'pointer' }}>🖨️ In Hóa Đơn (PDF)</button>
+          </div>
+        </Modal>
       )}
 
       {/* ── PAYMENT MODAL (DEMO) ───────────────────────── */}

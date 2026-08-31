@@ -115,6 +115,13 @@ export default function FranchisePage({ onNavigate }) {
   const [result, setResult] = useState(null); // { success, message }
   const [activeStep, setActiveStep] = useState(null);
 
+  // States cho tính năng Tra Cứu Hồ Sơ
+  const [showLookup, setShowLookup] = useState(false);
+  const [lookupPhone, setLookupPhone] = useState('');
+  const [lookupResult, setLookupResult] = useState(null);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupError, setLookupError] = useState(null);
+
   const [provinces, setProvinces] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [kiosks, setKiosks] = useState([]);
@@ -156,19 +163,57 @@ export default function FranchisePage({ onNavigate }) {
     setSubmitting(true);
     setResult(null);
     try {
-      const res = await fetch(`${API_URL}/franchise/dang-ky`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Gửi hồ sơ thất bại');
+      const response = await apiClient.post(`/franchise/dang-ky`, form);
+      const data = response.data;
       setResult({ success: true, message: data.message });
       setForm(DEFAULT_FORM);
     } catch (err) {
-      setResult({ success: false, message: err.message });
+      const errorMsg = err.response?.data?.message || err.message || 'Gửi hồ sơ thất bại';
+      setResult({ success: false, message: errorMsg });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleLookup = async (e) => {
+    e.preventDefault();
+    if (!lookupPhone) return;
+    setLookupLoading(true);
+    setLookupError(null);
+    setLookupResult(null);
+    try {
+      const res = await apiClient.get(`/franchise/ho-so/tra-cuu`, { params: { so_dien_thoai: lookupPhone } });
+      setLookupResult(res.data.data);
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || err.message || 'Lỗi tra cứu';
+      setLookupError(errorMsg);
+    } finally {
+      setLookupLoading(false);
+    }
+  };
+
+  const handleCancelApplication = async (id) => {
+    if (!confirm('Bạn có chắc chắn muốn hủy hồ sơ đăng ký này không? Hành động này không thể hoàn tác!')) return;
+    try {
+      const res = await fetch(`${API_URL}/franchise/ho-so/${id}/huy`, { method: 'PATCH' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Hủy thất bại');
+      alert(`Thành công!\n\n${data.message}`);
+      // Refresh tra cứu
+      handleLookup({ preventDefault: () => {} });
+    } catch (err) {
+      alert(`Lỗi: ${err.message}`);
+    }
+  };
+
+  const getStatusBadge = (stt) => {
+    switch (stt) {
+      case 'CHO_XEM_XET': return { label: 'Chờ xem xét', color: '#6b7280', bg: '#f3f4f6' };
+      case 'CHO_DAT_COC': return { label: 'Chờ đặt cọc', color: '#d97706', bg: '#fef3c7' };
+      case 'DA_DUYET': return { label: 'Đã duyệt / Đã cọc', color: '#16a34a', bg: '#f0fdf4' };
+      case 'TU_CHOI': return { label: 'Đã từ chối', color: '#dc2626', bg: '#fef2f2' };
+      case 'DA_HUY': return { label: 'Đã hủy', color: '#dc2626', bg: '#fef2f2' };
+      default: return { label: stt, color: '#374151', bg: '#f3f4f6' };
     }
   };
 
@@ -204,9 +249,12 @@ export default function FranchisePage({ onNavigate }) {
             }}>
               📝 Đăng Ký Ngay
             </a>
-            <div style={{ padding: '14px 24px', background: 'rgba(255,255,255,0.12)', color: '#fff', fontWeight: 600, fontSize: 14, borderRadius: 12, border: '1px solid rgba(255,255,255,0.25)' }}>
-              📧 {COMPANY_EMAIL}
-            </div>
+            <button onClick={() => setShowLookup(true)} style={{
+              display: 'inline-block', padding: '14px 32px', background: 'rgba(255,255,255,0.12)',
+              color: '#fff', fontWeight: 800, fontSize: 15, borderRadius: 12, border: '1px solid rgba(255,255,255,0.25)', cursor: 'pointer'
+            }}>
+              🔍 Tra Cứu & Hủy Hồ Sơ
+            </button>
           </div>
         </div>
       </section>
@@ -544,6 +592,71 @@ export default function FranchisePage({ onNavigate }) {
           </div>
         </div>
       </section>
+
+      {/* ── LOOKUP MODAL ────────────────────────────────────────── */}
+      {showLookup && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }}>
+          <div style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 600, maxHeight: '90vh', overflowY: 'auto', padding: 24, boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#1f2937' }}>🔍 Tra Cứu Hồ Sơ Đăng Ký</h3>
+              <button onClick={() => { setShowLookup(false); setLookupResult(null); setLookupError(null); setLookupPhone(''); }} style={{ background: 'none', border: 'none', fontSize: 24, color: '#9ca3af', cursor: 'pointer' }}>×</button>
+            </div>
+
+            <form onSubmit={handleLookup} style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
+              <input type="tel" placeholder="Nhập số điện thoại đã đăng ký..." value={lookupPhone} onChange={e => setLookupPhone(e.target.value)}
+                style={{ flex: 1, padding: '12px 16px', border: '1.5px solid #e5e7eb', borderRadius: 10, fontSize: 15, outline: 'none' }} required />
+              <button type="submit" disabled={lookupLoading} style={{ padding: '0 24px', background: '#b22830', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, cursor: lookupLoading ? 'wait' : 'pointer' }}>
+                {lookupLoading ? 'Đang tìm...' : 'Tra cứu'}
+              </button>
+            </form>
+
+            {lookupError && <div style={{ padding: 12, background: '#fef2f2', color: '#dc2626', borderRadius: 8, fontSize: 14, fontWeight: 600, marginBottom: 20 }}>❌ {lookupError}</div>}
+
+            {lookupResult && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {lookupResult.map(hs => {
+                  const badge = getStatusBadge(hs.trang_thai);
+                  const pkg = PACKAGES.find(p => p.id === hs.goi_kiosk);
+                  return (
+                    <div key={hs.id} style={{ border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, background: '#f9fafb' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                        <div>
+                          <div style={{ fontWeight: 800, color: '#1f2937', fontSize: 16 }}>Hồ sơ ngày {new Date(hs.ngay_tao).toLocaleDateString('vi-VN')}</div>
+                          <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>Khu vực: {hs.quan_huyen}, {hs.thanh_pho}</div>
+                          <div style={{ fontSize: 13, color: '#6b7280' }}>Gói đăng ký: <strong style={{color: '#92400e'}}>{pkg ? pkg.name : hs.goi_kiosk}</strong></div>
+                        </div>
+                        <div style={{ padding: '6px 12px', background: badge.bg, color: badge.color, borderRadius: 99, fontSize: 12, fontWeight: 700 }}>
+                          {badge.label}
+                        </div>
+                      </div>
+                      
+                      {hs.ghi_chu && <div style={{ fontSize: 13, color: '#4b5563', background: '#fff', padding: 8, borderRadius: 6, border: '1px dashed #d1d5db', marginBottom: 12 }}><i>Ghi chú HT:</i> {hs.ghi_chu}</div>}
+                      {hs.ly_do_tu_choi && <div style={{ fontSize: 13, color: '#dc2626', background: '#fef2f2', padding: 8, borderRadius: 6, border: '1px dashed #fca5a5', marginBottom: 12 }}><i>Lý do:</i> {hs.ly_do_tu_choi}</div>}
+
+                      {/* Các trạng thái cho phép khách hàng chủ động Hủy */}
+                      {(hs.trang_thai === 'CHO_XEM_XET' || hs.trang_thai === 'CHO_DAT_COC') && (
+                        <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
+                          <button onClick={() => handleCancelApplication(hs.id)} style={{ padding: '8px 16px', background: '#fff', color: '#dc2626', border: '1.5px solid #dc2626', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                            ✖️ Hủy đăng ký (Chưa cọc)
+                          </button>
+                        </div>
+                      )}
+                      {hs.trang_thai === 'DA_DUYET' && (
+                        <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: 12, textAlign: 'right' }}>
+                          <span style={{ fontSize: 12, color: '#059669', fontWeight: 600 }}>
+                            ✅ Hồ sơ đã duyệt và cấp tài khoản. Vui lòng đăng nhập Cổng Nhượng Quyền để quản lý / Yêu cầu hoàn cọc.
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

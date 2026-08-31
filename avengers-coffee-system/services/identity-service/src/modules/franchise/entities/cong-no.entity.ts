@@ -29,6 +29,9 @@ export class CongNo {
   @Column({ type: 'varchar', length: 20, default: 'CON_NO' })
   trang_thai: 'CON_NO' | 'DA_THANH_TOAN' | 'QUA_HAN';
 
+  @Column({ type: 'int', default: 0 })
+  so_lan_nhac_nho: number;
+
   @Column({ type: 'timestamptz', nullable: true })
   ngay_xac_nhan_thanh_toan: Date | null;
 
