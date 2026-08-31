@@ -10,6 +10,8 @@ import { DonMuaCombo } from './entities/don-mua-combo.entity';
 import { CongNo } from './entities/cong-no.entity';
 import { RoyaltyHangThang } from './entities/royalty.entity';
 import { KetQuaDoiSoat } from './entities/doi-soat.entity';
+import { BienBanViPham } from './entities/bien-ban-vi-pham.entity';
+import { AuditLog } from './entities/audit-log.entity';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { KetQuaDoiSoat } from './entities/doi-soat.entity';
       CongNo,
       RoyaltyHangThang,
       KetQuaDoiSoat,
+      BienBanViPham,
+      AuditLog,
     ]),
   ],
   controllers: [FranchiseController],

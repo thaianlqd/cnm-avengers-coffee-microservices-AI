@@ -20,6 +20,9 @@ export class HopDongNhuongQuyen {
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 7.0 })
   ty_le_royalty_phan_tram: number;
 
+  @Column({ type: 'text', nullable: true })
+  file_hop_dong_url: string | null;
+
   @Column({ type: 'int', default: 0 })
   so_combo_khoi_diem: number;
 
