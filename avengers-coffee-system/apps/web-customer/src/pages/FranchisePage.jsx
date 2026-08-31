@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { apiClient } from '../lib/apiClient';
 
 const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`;
+
+const buildMapEmbedUrl = (address) => `https://www.google.com/maps?q=${encodeURIComponent(String(address || ''))}&output=embed`;
 
 const COMPANY_EMAIL = 'ankudo1234@gmail.com';
 
@@ -112,7 +115,41 @@ export default function FranchisePage({ onNavigate }) {
   const [result, setResult] = useState(null); // { success, message }
   const [activeStep, setActiveStep] = useState(null);
 
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [kiosks, setKiosks] = useState([]);
+  const [selectedKiosk, setSelectedKiosk] = useState(null);
+  const [isLoadingKiosks, setIsLoadingKiosks] = useState(true);
+  const [errorMsg, setErrorMsg] = useState(null);
+
+  useEffect(() => {
+    fetch('https://provinces.open-api.vn/api/?depth=2')
+      .then(res => res.json())
+      .then(data => setProvinces(data))
+      .catch(err => console.error(err));
+
+    apiClient.get(`/franchise/kiosk/public`)
+      .then(res => {
+        const data = res.data;
+        const arr = Array.isArray(data) ? data : (data?.data || data?.items || []);
+        setKiosks(arr);
+        if (arr.length > 0) setSelectedKiosk(arr[0]);
+      })
+      .catch(err => {
+        console.error(err);
+        setErrorMsg(err.message + " | " + JSON.stringify(err.response?.data || {}));
+      })
+      .finally(() => setIsLoadingKiosks(false));
+  }, []);
+
   const handleChange = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+
+  const handleChangeProvince = (e) => {
+    const val = e.target.value;
+    setForm(f => ({ ...f, thanh_pho: val, quan_huyen: '' }));
+    const selected = provinces.find(p => p.name === val);
+    setDistricts(selected ? selected.districts : []);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -310,6 +347,46 @@ export default function FranchisePage({ onNavigate }) {
         </div>
       </section>
 
+      {/* ── BẢN ĐỒ HỆ THỐNG KIOSK ──────────────────────────── */}
+      <section style={{ padding: '64px 20px', maxWidth: 1100, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+          <div style={{ display: 'inline-block', padding: '4px 14px', background: '#fef9c3', color: '#92400e', borderRadius: 99, fontSize: 12, fontWeight: 700, marginBottom: 12 }}>Hệ thống đối tác</div>
+          <h2 style={{ fontSize: 32, fontWeight: 900, color: '#1f2937', margin: 0 }}>Mạng Lưới Kiosk Avengers</h2>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, height: 500, background: '#fff', borderRadius: 20, overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb' }}>
+          <div style={{ display: 'flex', height: '100%' }}>
+            {/* List */}
+            <div style={{ width: 350, overflowY: 'auto', borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+              {kiosks.map(kiosk => (
+                <div key={kiosk.id} onClick={() => setSelectedKiosk(kiosk)} style={{ padding: 20, borderBottom: '1px solid #f3f4f6', cursor: 'pointer', background: selectedKiosk?.id === kiosk.id ? '#fffbeb' : '#fff', transition: 'all 0.2s' }}>
+                  <div style={{ fontWeight: 800, fontSize: 15, color: '#92400e', marginBottom: 4 }}>{kiosk.ten_kiosk}</div>
+                  <div style={{ fontSize: 13, color: '#4b5563', marginBottom: 6 }}>📍 {kiosk.dia_chi}, {kiosk.quan_huyen}, {kiosk.thanh_pho}</div>
+                  <div style={{ display: 'inline-block', padding: '2px 8px', background: '#fde68a', color: '#92400e', borderRadius: 4, fontSize: 11, fontWeight: 700 }}>{kiosk.loai_kiosk}</div>
+                </div>
+              ))}
+              {isLoadingKiosks && <div style={{ padding: 20, textAlign: 'center', color: '#6b7280' }}>Đang tải danh sách Kiosk...</div>}
+              {errorMsg && <div style={{ padding: 20, textAlign: 'center', color: 'red' }}>Lỗi: {errorMsg}</div>}
+              {!isLoadingKiosks && !errorMsg && kiosks.length === 0 && <div style={{ padding: 30, textAlign: 'center', color: '#6b7280', fontSize: 14 }}>Hệ thống đang cập nhật Kiosk.<br/><span style={{fontSize: 12}}>Hãy trở thành đối tác đầu tiên!</span></div>}
+            </div>
+            {/* Map */}
+            <div style={{ flex: 1, background: '#f3f4f6', position: 'relative' }}>
+              {selectedKiosk ? (
+                <iframe
+                  title={`Map ${selectedKiosk.ten_kiosk}`}
+                  src={buildMapEmbedUrl(`${selectedKiosk.dia_chi}, ${selectedKiosk.quan_huyen}, ${selectedKiosk.thanh_pho}`)}
+                  style={{ width: '100%', height: '100%', border: 'none' }}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af' }}>Chọn một Kiosk để xem bản đồ</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── FORM ĐĂNG KÝ ───────────────────────────────────── */}
       <section id="dang-ky" style={{ padding: '64px 20px', background: 'linear-gradient(135deg,#fffbf5,#fff7ed)' }}>
         <div style={{ maxWidth: 720, margin: '0 auto' }}>
@@ -400,14 +477,24 @@ export default function FranchisePage({ onNavigate }) {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 100px', gap: 12, marginBottom: 16 }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Quận/Huyện</label>
-                  <input name="quan_huyen" value={form.quan_huyen} onChange={handleChange} placeholder="Hải Châu"
-                    style={{ width: '100%', padding: '10px 13px', border: '1.5px solid #fde68a', borderRadius: 10, fontSize: 14, boxSizing: 'border-box', background: '#fffbeb', color: '#1f2937' }} />
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tỉnh/Thành phố *</label>
+                  <select name="thanh_pho" value={form.thanh_pho} onChange={handleChangeProvince} required
+                    style={{ width: '100%', padding: '10px 13px', border: '1.5px solid #fde68a', borderRadius: 10, fontSize: 14, boxSizing: 'border-box', background: '#fffbeb', color: '#1f2937' }}>
+                    <option value="" disabled>Chọn Tỉnh/TP</option>
+                    {provinces.map(p => (
+                      <option key={p.code} value={p.name}>{p.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tỉnh/Thành phố</label>
-                  <input name="thanh_pho" value={form.thanh_pho} onChange={handleChange} placeholder="Đà Nẵng"
-                    style={{ width: '100%', padding: '10px 13px', border: '1.5px solid #fde68a', borderRadius: 10, fontSize: 14, boxSizing: 'border-box', background: '#fffbeb', color: '#1f2937' }} />
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Quận/Huyện *</label>
+                  <select name="quan_huyen" value={form.quan_huyen} onChange={handleChange} required disabled={!form.thanh_pho}
+                    style={{ width: '100%', padding: '10px 13px', border: '1.5px solid #fde68a', borderRadius: 10, fontSize: 14, boxSizing: 'border-box', background: form.thanh_pho ? '#fffbeb' : '#f3f4f6', color: '#1f2937' }}>
+                    <option value="" disabled>Chọn Quận/Huyện</option>
+                    {districts.map(d => (
+                      <option key={d.code} value={d.name}>{d.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Diện tích</label>
