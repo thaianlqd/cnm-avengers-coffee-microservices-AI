@@ -36,7 +36,7 @@ export class HoSoDangKy {
   ghi_chu: string | null;
 
   @Column({ type: 'varchar', length: 30, default: 'CHO_XEM_XET' })
-  trang_thai: 'CHO_XEM_XET' | 'CHO_DAT_COC' | 'DA_DUYET' | 'TU_CHOI';
+  trang_thai: 'CHO_XEM_XET' | 'CHO_DAT_COC' | 'DA_DUYET' | 'TU_CHOI' | 'DA_HUY';
 
   @Column({ type: 'text', nullable: true })
   ly_do_tu_choi: string | null;

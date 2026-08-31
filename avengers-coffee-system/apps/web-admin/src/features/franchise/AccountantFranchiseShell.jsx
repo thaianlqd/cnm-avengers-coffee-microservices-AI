@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { FranchisePanel } from './FranchisePanel'
+import BiDashboard from './BiDashboard'
+import { API_BASE_URL } from '../admin-dashboard/constants'
 
 /**
  * AccountantFranchiseShell
@@ -13,6 +15,37 @@ export function AccountantFranchiseShell({ session, onLogout }) {
     session?.user?.tenDangNhap ||
     session?.user?.ten_dang_nhap ||
     'Kế toán'
+
+  const [currentModule, setCurrentModule] = useState('franchise')
+  const [biData, setBiData] = useState(null)
+  const [biError, setBiError] = useState(null)
+
+  const token = session?.token || session?.accessToken
+
+  useEffect(() => {
+    if (currentModule === 'bi') {
+      setBiData(null)
+      setBiError(null)
+      fetch(`${API_BASE_URL}/franchise/dashboard/admin`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        }
+      })
+      .then(async res => {
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errText}`);
+        }
+        return res.json();
+      })
+      .then(res => {
+        if (res.success) setBiData(res.data)
+        else setBiError("Lỗi dữ liệu: " + JSON.stringify(res))
+      })
+      .catch(err => setBiError(err.message))
+    }
+  }, [currentModule, token])
 
   return (
     <div
@@ -59,21 +92,39 @@ export function AccountantFranchiseShell({ session, onLogout }) {
           </div>
         </div>
 
-        {/* Menu (Chỉ để decor vì các tab nằm trong FranchisePanel) */}
+        {/* Menu */}
         <div style={{ flex: 1, padding: '20px' }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Modules Hệ Thống</div>
-          <div style={{
-            padding: '10px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.15)', borderLeft: '3px solid #fff',
-            color: '#fff', fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10
-          }}>
+          
+          <div 
+            onClick={() => setCurrentModule('franchise')}
+            style={{
+              padding: '10px 14px', borderRadius: 8, cursor: 'pointer',
+              background: currentModule === 'franchise' ? 'rgba(255,255,255,0.15)' : 'transparent', 
+              borderLeft: currentModule === 'franchise' ? '3px solid #fff' : '3px solid transparent',
+              color: currentModule === 'franchise' ? '#fff' : 'rgba(255,255,255,0.7)', 
+              fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10,
+              transition: 'all .2s'
+            }}>
             <span style={{ fontSize: 18 }}>🤝</span> Quản lý Nhượng quyền
           </div>
-          {/* Mock disabled menus cho chuyên nghiệp */}
-          <div style={{ padding: '10px 14px', marginTop: 4, color: 'rgba(255,255,255,0.7)', fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 10, opacity: 0.7 }}>
-            <span style={{ fontSize: 18 }}>📉</span> Báo cáo Doanh thu (Sắp ra mắt)
+
+          <div 
+            onClick={() => setCurrentModule('bi')}
+            style={{ 
+              padding: '10px 14px', marginTop: 4, borderRadius: 8, cursor: 'pointer',
+              background: currentModule === 'bi' ? 'rgba(255,255,255,0.15)' : 'transparent', 
+              borderLeft: currentModule === 'bi' ? '3px solid #fff' : '3px solid transparent',
+              color: currentModule === 'bi' ? '#fff' : 'rgba(255,255,255,0.7)', 
+              fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10,
+              transition: 'all .2s'
+            }}>
+            <span style={{ fontSize: 18 }}>📉</span> Báo cáo Doanh thu (BI)
           </div>
-          <div style={{ padding: '10px 14px', color: 'rgba(255,255,255,0.7)', fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 10, opacity: 0.7 }}>
-            <span style={{ fontSize: 18 }}>🏦</span> Quản trị Dòng tiền (Sắp ra mắt)
+
+          {/* Mock disabled menu */}
+          <div style={{ padding: '10px 14px', marginTop: 4, color: 'rgba(255,255,255,0.4)', fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 18, filter: 'grayscale(1)' }}>🏦</span> Quản trị Dòng tiền (Sắp ra mắt)
           </div>
         </div>
 
@@ -110,9 +161,18 @@ export function AccountantFranchiseShell({ session, onLogout }) {
           </div>
         </header>
 
-        {/* Nội dung FranchisePanel (đã bao gồm các Tab: Kiosk, Combo, Công nợ, Royalty...) */}
+        {/* Nội dung chính */}
         <div style={{ flex: 1, padding: 24, maxWidth: 1280, margin: '0 auto', width: '100%' }}>
-          <FranchisePanel />
+          {currentModule === 'franchise' ? (
+            <FranchisePanel />
+          ) : biError ? (
+            <div style={{ padding: 40, background: '#fee2e2', color: '#991b1b', borderRadius: 16 }}>
+              Lỗi tải báo cáo BI: {biError} 
+              <br/>(Có thể bạn chưa Restart lại Backend Identity-Service sau khi code mới được cập nhật)
+            </div>
+          ) : (
+            <BiDashboard data={biData} />
+          )}
         </div>
       </main>
     </div>
