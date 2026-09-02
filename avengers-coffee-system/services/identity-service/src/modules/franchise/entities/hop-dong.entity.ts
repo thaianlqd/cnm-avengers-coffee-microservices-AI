@@ -26,8 +26,14 @@ export class HopDongNhuongQuyen {
   @Column({ type: 'int', default: 0 })
   so_combo_khoi_diem: number;
 
+  @Column({ type: 'int', default: 3 })
+  so_ngay_an_han: number;
+
+  @Column({ type: 'decimal', precision: 5, scale: 2, default: 2.0 })
+  phan_tram_phat_tre_han: number;
+
   @Column({ type: 'varchar', length: 20, default: 'HIEU_LUC' })
-  trang_thai: 'HIEU_LUC' | 'HET_HAN' | 'DA_HUY';
+  trang_thai: 'HIEU_LUC' | 'HET_HAN' | 'DA_HUY' | 'CHAM_DUT';
 
   @Column({ type: 'date', nullable: true })
   ngay_khai_truong: string | null;
