@@ -16,6 +16,12 @@ export class FranchiseController {
     return this.franchiseService.dangKyHoSo(body);
   }
 
+  @Public()
+  @Get('ho-so/tra-cuu')
+  async traCuuHoSo(@Query('so_dien_thoai') soDienThoai: string) {
+    return this.franchiseService.traCuuHoSo(soDienThoai);
+  }
+
   @Roles('ADMIN', 'ACCOUNTANT')
   @Get('ho-so')
   async layDanhSachHoSo(@Query('trang_thai') trang_thai?: string) {
@@ -194,7 +200,7 @@ export class FranchiseController {
   }
 
   // ─── Cập nhật Trạng thái Kiosk (Thủ công) ──────────
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'ACCOUNTANT')
   @Patch('kiosk/:id/trang-thai')
   async capNhatTrangThaiKiosk(@Param('id') id: string, @Body() body: any) {
     return this.franchiseService.capNhatTrangThaiKiosk(id, body.trang_thai);
@@ -209,7 +215,7 @@ export class FranchiseController {
 
   // ─── Thống kê Admin ──────────────────────────────
   @Get('dashboard/admin')
-  @Roles('ADMIN', 'MANAGER')
+  @Roles('ADMIN', 'MANAGER', 'ACCOUNTANT')
   async thongKeAdmin() {
     return this.franchiseService.thongKeAdmin();
   }
@@ -222,20 +228,20 @@ export class FranchiseController {
   }
 
   // ─── DEV TOOL: Tua Nhanh Nợ ────────────────────
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'ACCOUNTANT')
   @Post('cong-no/:id/tua-nhanh')
   async tuaNhanhNo(@Param('id') id: string, @Body() body: any) {
     return this.franchiseService.tuaNhanhNo(id, body.days || 8);
   }
 
   // ─── Gia Hạn & Chấm Dứt HĐ ──────────────────────
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'ACCOUNTANT')
   @Post('kiosk/:id/gia-han')
   async giaHanHopDong(@Param('id') kioskId: string, @Body() body: any, @CurrentUser() user: AuthUser) {
     return this.franchiseService.giaHanHopDong(kioskId, user.sub, body.ngay_het_han_moi);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'ACCOUNTANT')
   @Post('kiosk/:id/cham-dut')
   async chamDutHopDong(@Param('id') kioskId: string, @CurrentUser() user: AuthUser) {
     return this.franchiseService.chamDutHopDong(kioskId, user.sub);
