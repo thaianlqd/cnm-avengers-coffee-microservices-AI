@@ -7,6 +7,7 @@ import { DonHang } from './entities/don-hang.entity';
 import { GiaoDichThanhToan } from './entities/giao-dich-thanh-toan.entity';
 import { CaDoiSoat } from './entities/ca-doi-soat.entity';
 import { CaLamViecNhanVien } from './entities/ca-lam-viec-nhan-vien.entity';
+import { KioskShiftSession } from './entities/kiosk-shift-session.entity';
 import { ThanhToanController, ThanhToanHeThongController, ThanhToanLegacyWebhookController } from './thanh-toan.controller';
 import { ThanhToanService } from './thanh-toan.service';
 import { VoucherModule } from '../voucher/voucher.module';
@@ -17,7 +18,7 @@ import { SurveyForm } from '../../entities/survey-form.entity';
 import { SurveyService } from '../../services/survey.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CartItem, DonHang, ChiTietDonHang, GiaoDichThanhToan, CaDoiSoat, CaLamViecNhanVien, SurveyResponse, SurveyForm]), NotificationModule, VoucherModule, FeaturesThaianModule, CustomerWalletModule],
+  imports: [TypeOrmModule.forFeature([CartItem, DonHang, ChiTietDonHang, GiaoDichThanhToan, CaDoiSoat, CaLamViecNhanVien, KioskShiftSession, SurveyResponse, SurveyForm]), NotificationModule, VoucherModule, FeaturesThaianModule, CustomerWalletModule],
   controllers: [ThanhToanController, ThanhToanHeThongController, ThanhToanLegacyWebhookController],
   providers: [ThanhToanService, SurveyService],
   exports: [ThanhToanService],
