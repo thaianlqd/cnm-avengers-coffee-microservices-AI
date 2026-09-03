@@ -183,7 +183,7 @@ function App() {
         MANAGER_EMPLOYEE_MANAGEMENT_TAB,
         MANAGER_WORKFORCE_MANAGEMENT_TAB,
         MANAGER_CUSTOMER_CARE_TAB,
-        { id: 'shipper-manage', label: 'Quản lý giao hàng' },
+        { id: 'shipper-manage', label: 'Quản lý NV giao hàng' },
       ]
     : []
 
@@ -348,7 +348,7 @@ function App() {
                   <Monitor size={15} /> <span>POS tạo đơn nhanh</span>
                 </button>
                 <button type="button" className={activeTab === 'delivery' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('delivery')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Bike size={15} /> <span>Quản lý Giao hàng</span>
+                  <Bike size={15} /> <span>Quản lý NV giao hàng</span>
                 </button>
                 <button type="button" className={activeTab === 'table-management' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('table-management')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Store size={15} /> <span>Quản lý Bàn</span>
@@ -454,7 +454,7 @@ function App() {
                       <Calendar size={15} /> <span>Quản lý lịch làm nhân viên</span>
                     </button>
                     <button type="button" className={activeTab === 'shipper-manage' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('shipper-manage')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Truck size={15} /> <span>Quản lý giao hàng</span>
+                      <Truck size={15} /> <span>Quản lý NV giao hàng</span>
                     </button>
                     <button type="button" className={activeTab === 'customer-care' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('customer-care')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <MessageSquare size={15} /> <span>CSKH phản hồi đánh giá</span>

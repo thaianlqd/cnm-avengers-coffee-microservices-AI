@@ -113,6 +113,17 @@ const Btn = ({ children, onClick, variant = 'primary', small, disabled, style: e
   )
 }
 
+const Pagination = ({ page, totalPages, setPage }) => {
+  if (totalPages <= 1) return null;
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 16 }}>
+      <Btn small variant="outline" disabled={page === 1} onClick={() => setPage(p => p - 1)}>← Trước</Btn>
+      <div style={{ fontSize: 13, fontWeight: 600, color: '#4b5563' }}>Trang {page} / {totalPages}</div>
+      <Btn small variant="outline" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>Sau →</Btn>
+    </div>
+  )
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // TAB 1: Hồ Sơ Đăng Ký (UC-B01)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -124,6 +135,8 @@ function HoSoDangKyTab() {
   const [tuChoiId, setTuChoiId] = useState(null)
   const [lyDo, setLyDo] = useState('')
   const [msg, setMsg] = useState(null)
+  const [page, setPage] = useState(1)
+  const pageSize = 5
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -133,6 +146,10 @@ function HoSoDangKyTab() {
   }, [filter])
 
   useEffect(() => { load() }, [load])
+  useEffect(() => { setPage(1) }, [filter])
+
+  const totalPages = Math.ceil(items.length / pageSize)
+  const currentItems = items.slice((page - 1) * pageSize, page * pageSize)
 
   const yeuCauDatCoc = async (id) => {
     if (!confirm('Xác nhận yêu cầu Kiosk này đặt cọc 5.000.000đ giữ chỗ? Hệ thống sẽ tự kiểm tra độc quyền khu vực.')) return
@@ -196,7 +213,7 @@ function HoSoDangKyTab() {
       {loading ? <div style={{ textAlign: 'center', padding: 40, color: '#6b7280' }}>Đang tải...</div> : (
         <div style={{ display: 'grid', gap: 12 }}>
           {items.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af' }}>Chưa có hồ sơ nào.</div>}
-          {items.map(item => (
+          {currentItems.map(item => (
             <div key={item.id} style={{ background: '#fff', borderRadius: 12, padding: 18, border: '1.5px solid #e5e7eb', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
                 <div>
@@ -232,6 +249,9 @@ function HoSoDangKyTab() {
               {item.ghi_chu && <div style={{ marginTop: 8, padding: 8, background: '#f9fafb', borderRadius: 6, fontSize: 12, color: '#6b7280' }}>📝 {item.ghi_chu}</div>}
             </div>
           ))}
+
+          {/* Phân trang */}
+          <Pagination page={page} totalPages={totalPages} setPage={setPage} />
         </div>
       )}
 
@@ -258,6 +278,8 @@ function HoSoDangKyTab() {
 function KioskManageTab() {
   const [kiosks, setKiosks] = useState([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const pageSize = 5
   const [hopDongModal, setHopDongModal] = useState(null)
   const [giaHanModal, setGiaHanModal] = useState(null)
   const [chamDutModal, setChamDutModal] = useState(null)
@@ -272,6 +294,9 @@ function KioskManageTab() {
   }
 
   useEffect(() => { load() }, [])
+
+  const totalPages = Math.ceil(kiosks.length / pageSize)
+  const currentKiosks = kiosks.slice((page - 1) * pageSize, page * pageSize)
 
   const taoHopDong = async () => {
     try {
@@ -317,7 +342,7 @@ function KioskManageTab() {
 
       {loading ? <div style={{ textAlign: 'center', padding: 40 }}>Đang tải...</div> : (
         <div style={{ display: 'grid', gap: 12 }}>
-          {kiosks.map(k => {
+          {currentKiosks.map(k => {
             const st = STATUS_KIOSK[k.trang_thai] || {}
             return (
               <div key={k.id} style={{ background: '#fff', borderRadius: 14, padding: 18, border: `2px solid ${st.color}33`, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
@@ -390,6 +415,7 @@ function KioskManageTab() {
               </div>
             )
           })}
+          <Pagination page={page} totalPages={totalPages} setPage={setPage} />
         </div>
       )}
 
@@ -472,6 +498,8 @@ function DonMuaComboTab() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('')
   const [msg, setMsg] = useState(null)
+  const [page, setPage] = useState(1)
+  const pageSize = 5
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -481,6 +509,10 @@ function DonMuaComboTab() {
   }, [filter])
 
   useEffect(() => { load() }, [load])
+  useEffect(() => { setPage(1) }, [filter])
+
+  const totalPages = Math.ceil(items.length / pageSize)
+  const currentItems = items.slice((page - 1) * pageSize, page * pageSize)
 
   const giaoDon = async (id) => {
     const ghi_chu = prompt('Ghi chú giao hàng (có thể để trống):')
@@ -525,7 +557,7 @@ function DonMuaComboTab() {
               </tr>
             </thead>
             <tbody>
-              {items.map(d => (
+              {currentItems.map(d => (
                 <tr key={d.id} style={{ background: '#fff', borderRadius: 8, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                   <td style={{ padding: '10px 12px', fontWeight: 600, fontSize: 13 }}>{d.kiosk?.ten_kiosk || d.kiosk_id.slice(0, 8)} <br/><span style={{fontSize: 11, color: '#9ca3af', fontWeight: 500}}>{d.kiosk?.ma_kiosk}</span></td>
                   <td style={{ padding: '10px 12px', fontSize: 13 }}>{d.combo?.ten_combo || '—'}</td>
@@ -546,6 +578,7 @@ function DonMuaComboTab() {
               ))}
             </tbody>
           </table>
+          <Pagination page={page} totalPages={totalPages} setPage={setPage} />
           {items.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af' }}>Chưa có đơn nào.</div>}
         </div>
       )}
@@ -562,6 +595,8 @@ function CongNoTab() {
   const [filter, setFilter] = useState('')
   const [invoiceModal, setInvoiceModal] = useState(null)
   const [msg, setMsg] = useState(null)
+  const [page, setPage] = useState(1)
+  const pageSize = 5
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -571,6 +606,10 @@ function CongNoTab() {
   }, [filter])
 
   useEffect(() => { load() }, [load])
+  useEffect(() => { setPage(1) }, [filter])
+
+  const totalPages = Math.ceil(items.length / pageSize)
+  const currentItems = items.slice((page - 1) * pageSize, page * pageSize)
 
   const xacNhan = async (id) => {
     const ghi_chu = prompt('Ghi chú (số tài khoản, ngày chuyển...):') || ''
@@ -659,7 +698,7 @@ function CongNoTab() {
 
       {loading ? <div style={{ textAlign: 'center', padding: 40 }}>Đang tải...</div> : (
         <div style={{ display: 'grid', gap: 10 }}>
-          {items.map(c => (
+          {currentItems.map(c => (
             <div key={c.id} style={{ background: '#fff', borderRadius: 10, padding: 16, border: `1.5px solid ${c.trang_thai === 'QUA_HAN' ? '#fca5a5' : '#e5e7eb'}`, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
               <div>
                 <div style={{ fontWeight: 700, fontSize: 14 }}>{c.kiosk?.ten_kiosk} <span style={{fontSize: 12, color: '#9ca3af', fontWeight: 500}}>({c.kiosk?.ma_kiosk})</span></div>
@@ -693,6 +732,7 @@ function CongNoTab() {
               </div>
             </div>
           ))}
+          <Pagination page={page} totalPages={totalPages} setPage={setPage} />
           {items.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af' }}>Không có công nợ.</div>}
         </div>
       )}
@@ -763,6 +803,8 @@ function RoyaltyTab() {
   const [filter, setFilter] = useState('')
   const [tinhingLoading, setTinhingLoading] = useState(false)
   const [msg, setMsg] = useState(null)
+  const [page, setPage] = useState(1)
+  const pageSize = 5
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -772,6 +814,10 @@ function RoyaltyTab() {
   }, [filter])
 
   useEffect(() => { load() }, [load])
+  useEffect(() => { setPage(1) }, [filter])
+
+  const totalPages = Math.ceil(items.length / pageSize)
+  const currentItems = items.slice((page - 1) * pageSize, page * pageSize)
 
   const tinhRoyalty = async () => {
     setTinhingLoading(true)
@@ -829,7 +875,7 @@ function RoyaltyTab() {
 
       {loading ? <div style={{ textAlign: 'center', padding: 40 }}>Đang tải...</div> : (
         <div style={{ display: 'grid', gap: 10 }}>
-          {items.map(r => (
+          {currentItems.map(r => (
             <div key={r.id} style={{ background: '#fff', borderRadius: 12, padding: 16, border: '1.5px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
               <div>
                 <div style={{ fontWeight: 700, fontSize: 14 }}>{r.kiosk?.ten_kiosk} <span style={{fontSize: 12, color: '#9ca3af', fontWeight: 500}}>({r.kiosk?.ma_kiosk})</span> <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 400 }}>·</span> <span style={{ fontSize: 13, color: '#6366f1' }}>Tháng {r.thang}</span></div>
@@ -845,6 +891,7 @@ function RoyaltyTab() {
               </div>
             </div>
           ))}
+          <Pagination page={page} totalPages={totalPages} setPage={setPage} />
           {items.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af' }}>Chưa có dữ liệu royalty.</div>}
         </div>
       )}
@@ -862,6 +909,8 @@ function DoiSoatTab() {
   const [bienBanModal, setBienBanModal] = useState(null)
   const [form, setForm] = useState({ loai_vi_pham: 'GIAN_LAN_NGUYEN_LIEU', hinh_phat: 'TIEN_PHAT', so_tien_phat: 5000000, ly_do: 'Gian lận doanh thu dựa trên số liệu đối soát' })
   const [msg, setMsg] = useState(null)
+  const [page, setPage] = useState(1)
+  const pageSize = 5
 
   const load = async () => {
     setLoading(true)
@@ -871,6 +920,9 @@ function DoiSoatTab() {
   }
 
   useEffect(() => { load() }, [])
+
+  const totalPages = Math.ceil(items.length / pageSize)
+  const currentItems = items.slice((page - 1) * pageSize, page * pageSize)
 
   const chayDoiSoat = async () => {
     setRunning(true)
@@ -921,7 +973,7 @@ function DoiSoatTab() {
 
       {loading ? <div style={{ textAlign: 'center', padding: 40 }}>Đang tải...</div> : (
         <div style={{ display: 'grid', gap: 10 }}>
-          {items.map(d => {
+          {currentItems.map(d => {
             const cb = CANH_BAO[d.muc_canh_bao] || CANH_BAO.XANH
             return (
               <div key={d.id} style={{ background: '#fff', borderRadius: 12, padding: 18, border: `2px solid ${cb.color}44`, background: cb.bg }}>
@@ -963,6 +1015,7 @@ function DoiSoatTab() {
               </div>
             )
           })}
+          <Pagination page={page} totalPages={totalPages} setPage={setPage} />
           {items.length === 0 && <div style={{ textAlign: 'center', padding: 50, color: '#9ca3af' }}>
             <div style={{ fontSize: 40, marginBottom: 8 }}>🔍</div>
             <div style={{ fontWeight: 600 }}>Chưa có dữ liệu đối soát</div>
@@ -1020,6 +1073,8 @@ function DoiSoatTab() {
 function AuditLogTab() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const pageSize = 10
 
   const load = async () => {
     setLoading(true)
@@ -1029,6 +1084,9 @@ function AuditLogTab() {
   }
   useEffect(() => { load() }, [])
 
+  const totalPages = Math.ceil(items.length / pageSize)
+  const currentItems = items.slice((page - 1) * pageSize, page * pageSize)
+
   return (
     <div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
@@ -1036,6 +1094,7 @@ function AuditLogTab() {
         <Btn small variant="outline" onClick={load}>🔄 Làm mới</Btn>
       </div>
       {loading ? <div style={{ textAlign: 'center', padding: 40 }}>Đang tải...</div> : (
+        <>
         <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 6px' }}>
           <thead>
             <tr style={{ fontSize: 12, color: '#6b7280', textAlign: 'left' }}>
@@ -1046,7 +1105,7 @@ function AuditLogTab() {
             </tr>
           </thead>
           <tbody>
-            {items.map(d => (
+            {currentItems.map(d => (
               <tr key={d.id} style={{ background: '#fff', borderRadius: 8, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                 <td style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280' }}>{new Date(d.thoi_gian).toLocaleString('vi-VN')}</td>
                 <td style={{ padding: '10px 12px', fontWeight: 700, fontSize: 13, color: '#4f46e5' }}>{d.hanh_dong}</td>
@@ -1056,6 +1115,8 @@ function AuditLogTab() {
             ))}
           </tbody>
         </table>
+        <Pagination page={page} totalPages={totalPages} setPage={setPage} />
+        </>
       )}
       {items.length === 0 && !loading && <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af' }}>Chưa có log.</div>}
     </div>

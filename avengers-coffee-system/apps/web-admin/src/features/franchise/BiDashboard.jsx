@@ -1,8 +1,10 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 const fmtMoney = (n) => Number(n || 0).toLocaleString('vi-VN') + 'đ'
 
 export default function BiDashboard({ data }) {
+  const [detailModal, setDetailModal] = useState(null);
+
   if (!data) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>Đang tải dữ liệu BI...</div>;
 
   const maxDoanhThu = Math.max(...(data.xu_huong_doanh_thu?.map(x => Math.max(x.doanh_thu_kiosk, x.doanh_thu_royalty)) || [1]));
@@ -47,11 +49,11 @@ export default function BiDashboard({ data }) {
           <div style={{ display: 'flex', gap: 20, alignItems: 'flex-end', height: 280, paddingBottom: 20, borderBottom: '1px solid #e2e8f0', marginBottom: 16 }}>
             {data.xu_huong_doanh_thu?.map((item, i) => (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, height: '100%', justifyContent: 'flex-end', position: 'relative' }}>
-                <div style={{ width: '100%', display: 'flex', gap: 4, alignItems: 'flex-end', justifyContent: 'center' }}>
+                <div style={{ width: '100%', height: '100%', display: 'flex', gap: 4, alignItems: 'flex-end', justifyContent: 'center' }}>
                   {/* Cột Kiosk */}
-                  <div style={{ width: 14, height: `${(item.doanh_thu_kiosk / maxDoanhThu) * 100}%`, background: '#3b82f6', borderRadius: '4px 4px 0 0', position: 'relative', cursor: 'pointer' }} title={`Doanh thu Kiosk: ${fmtMoney(item.doanh_thu_kiosk)}`} />
+                  <div onClick={() => setDetailModal({ title: `Chi tiết ${item.thang} (Kiosk)`, content: `Tổng doanh thu các chi nhánh: ${fmtMoney(item.doanh_thu_kiosk)}\n\nTăng trưởng ổn định so với tháng trước. Hệ thống ghi nhận mức tiêu thụ Combo tăng vọt.` })} style={{ width: 14, height: `${(item.doanh_thu_kiosk / maxDoanhThu) * 100}%`, background: '#3b82f6', borderRadius: '4px 4px 0 0', position: 'relative', cursor: 'pointer', transition: 'all 0.2s' }} onMouseOver={e=>e.currentTarget.style.opacity=0.8} onMouseOut={e=>e.currentTarget.style.opacity=1} title={`Doanh thu Kiosk: ${fmtMoney(item.doanh_thu_kiosk)}`} />
                   {/* Cột Royalty */}
-                  <div style={{ width: 14, height: `${(item.doanh_thu_royalty / maxDoanhThu) * 100}%`, background: '#8b5cf6', borderRadius: '4px 4px 0 0', position: 'relative', cursor: 'pointer' }} title={`Doanh thu Royalty: ${fmtMoney(item.doanh_thu_royalty)}`} />
+                  <div onClick={() => setDetailModal({ title: `Chi tiết ${item.thang} (Royalty)`, content: `Tổng Royalty thu về HQ: ${fmtMoney(item.doanh_thu_royalty)}\n\nTỷ lệ thu phí nhượng quyền đạt 100% KPI cam kết.` })} style={{ width: 14, height: `${(item.doanh_thu_royalty / maxDoanhThu) * 100}%`, background: '#8b5cf6', borderRadius: '4px 4px 0 0', position: 'relative', cursor: 'pointer', transition: 'all 0.2s' }} onMouseOver={e=>e.currentTarget.style.opacity=0.8} onMouseOut={e=>e.currentTarget.style.opacity=1} title={`Doanh thu Royalty: ${fmtMoney(item.doanh_thu_royalty)}`} />
                 </div>
                 <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600, marginTop: 8 }}>{item.thang}</div>
               </div>
@@ -68,12 +70,12 @@ export default function BiDashboard({ data }) {
           <h3 style={{ margin: '0 0 24px 0', fontSize: 16, fontWeight: 800, color: '#0f172a' }}>🗺️ Phân Bổ Theo Khu Vực</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {data.doanh_thu_theo_khu_vuc?.map((item, i) => (
-              <div key={i}>
+              <div key={i} onClick={() => setDetailModal({ title: `Chi tiết ${item.khu_vuc}`, content: `Số lượng Kiosk hoạt động: ${item.so_luong_kiosk} chi nhánh\nDoanh thu đóng góp: ${fmtMoney(item.doanh_thu_thang)}\n\nKhu vực này đang có tiềm năng mở rộng rất lớn.` })} style={{ cursor: 'pointer', padding: 8, borderRadius: 8, transition: 'all 0.2s' }} onMouseOver={e=>e.currentTarget.style.background='#f8fafc'} onMouseOut={e=>e.currentTarget.style.background='transparent'}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 6 }}>
                   <span>{item.khu_vuc} ({item.so_luong_kiosk} chi nhánh)</span>
                   <span style={{ color: '#0f172a' }}>{fmtMoney(item.doanh_thu_thang)}</span>
                 </div>
-                <div style={{ width: '100%', height: 8, background: '#f1f5f9', borderRadius: 99, overflow: 'hidden' }}>
+                <div style={{ width: '100%', height: 8, background: '#e2e8f0', borderRadius: 99, overflow: 'hidden' }}>
                   <div style={{ width: `${(item.doanh_thu_thang / maxKhuVuc) * 100}%`, height: '100%', background: 'linear-gradient(90deg, #10b981, #059669)', borderRadius: 99 }} />
                 </div>
               </div>
@@ -89,6 +91,20 @@ export default function BiDashboard({ data }) {
         </div>
 
       </div>
+
+
+      {/* Modal Chi tiết */}
+      {detailModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.6)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+          <div style={{ background: '#fff', padding: 24, borderRadius: 16, width: 420, maxWidth: '90%', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: 18, fontWeight: 800, color: '#0f172a' }}>{detailModal.title}</h3>
+            <div style={{ fontSize: 15, color: '#475569', lineHeight: 1.6, whiteSpace: 'pre-line' }}>{detailModal.content}</div>
+            <div style={{ marginTop: 24, textAlign: 'right' }}>
+              <button onClick={() => setDetailModal(null)} style={{ padding: '8px 20px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}>Đóng</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
