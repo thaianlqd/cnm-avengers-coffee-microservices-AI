@@ -79,4 +79,13 @@ export class User {
 
   @Column({ type: 'boolean', default: false })
   require_password_change: boolean;
+
+  @Column({ type: 'uuid', nullable: true })
+  parent_franchisee_id: string | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  kiosk_id: string | null;
+
+  @Column({ type: 'jsonb', nullable: true, default: () => "'[]'::jsonb" })
+  pos_permissions: string[];
 }

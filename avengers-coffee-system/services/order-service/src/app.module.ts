@@ -16,6 +16,7 @@ import { ChiTietDonHang } from './modules/thanh-toan/entities/chi-tiet-don-hang.
 import { GiaoDichThanhToan } from './modules/thanh-toan/entities/giao-dich-thanh-toan.entity';
 import { CaDoiSoat } from './modules/thanh-toan/entities/ca-doi-soat.entity';
 import { CaLamViecNhanVien } from './modules/thanh-toan/entities/ca-lam-viec-nhan-vien.entity';
+import { KioskShiftSession } from './modules/thanh-toan/entities/kiosk-shift-session.entity';
 import { Review } from './entities/review.entity';
 import { ReviewService } from './services/review.service';
 import { ReviewController } from './controllers/review.controller';
@@ -101,6 +102,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
             GiaoDichThanhToan,
             CaDoiSoat,
             CaLamViecNhanVien,
+            KioskShiftSession,
             ThongBao,
             Review,
             Voucher,

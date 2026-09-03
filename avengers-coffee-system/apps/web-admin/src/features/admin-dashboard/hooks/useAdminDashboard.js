@@ -94,6 +94,7 @@ export function useAdminDashboard() {
   const [surveysState, setSurveysState] = useState({ loading: false, error: '', items: [] })
   const [surveyResponsesState, setSurveyResponsesState] = useState({ loading: false, error: '', items: [] })
   const [codRemitsState, setCodRemitsState] = useState({ loading: false, error: '', items: [] })
+  const [activeKioskShift, setActiveKioskShift] = useState(null)
   const knownOrderIdsRef = useRef(new Set())
   const knownOrderPaymentStatusRef = useRef(new Map())
 
@@ -536,14 +537,33 @@ export function useAdminDashboard() {
     }
   }
 
+  const taiCaKioskDaMo = useCallback(async () => {
+    if (!sessionBranchCode) return null
+    try {
+      const response = await fetch(`${API_BASE_URL}/staff/kiosk-shifts/active?branch_code=${encodeURIComponent(sessionBranchCode)}`)
+      const payload = await response.json().catch(() => ({}))
+      if (response.ok && payload?.has_open_shift) {
+        setActiveKioskShift(payload.active_shift)
+        return payload.active_shift
+      } else {
+        setActiveKioskShift(null)
+        return null
+      }
+    } catch {
+      setActiveKioskShift(null)
+      return null
+    }
+  }, [sessionBranchCode])
+
   useEffect(() => {
     if (!session || sessionRole === 'FRANCHISEE') return
 
+    taiCaKioskDaMo()
     taiLichLamViecCuaToi()
     if (sessionRole !== 'MANAGER') {
       taiYeuCauDangKyCa(false)
     }
-  }, [session])
+  }, [session, taiCaKioskDaMo])
 
   useEffect(() => {
     if (!session || sessionRole === 'FRANCHISEE' || sessionRole !== 'MANAGER') return
@@ -1261,6 +1281,60 @@ export function useAdminDashboard() {
     }
   }
 
+  const hoanHuyDonHangPos = async (orderId, { reason, branch_code } = {}) => {
+    setUpdatingOrderId(orderId)
+    try {
+      const targetBranch = branch_code || sessionBranchCode
+      const token = session?.token || session?.accessToken
+      const response = await fetch(`${API_BASE_URL}/staff/orders/${orderId}/refund-void`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          reason: reason || 'Nhân viên hoàn tiền mặt và hủy đơn quầy Kiosk',
+          branch_code: targetBranch,
+          staff_name: session?.user?.tenDangNhap || session?.user?.email || 'Nhân viên Kiosk',
+        }),
+      })
+
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(result?.message || 'Hoàn tiền và hủy đơn thất bại')
+      }
+
+      await Promise.all([
+        refreshOrders(),
+        taiCaKioskDaMo(),
+      ])
+
+      setLastPosOrder((prev) => {
+        if (!prev?.order || prev.order.ma_don_hang !== orderId) return prev
+        return {
+          ...prev,
+          order: {
+            ...prev.order,
+            trang_thai_don_hang: 'DA_HUY',
+            trang_thai_thanh_toan: result?.order?.trang_thai_thanh_toan || 'DA_HOAN_TIEN',
+          },
+        }
+      })
+
+      pushAdminNotification(
+        'Hoàn tiền mặt & hủy đơn thành công',
+        `Đơn #${orderId.slice(0, 8).toUpperCase()} đã được hủy và hoàn tiền mặt cho khách.`,
+      )
+
+      return result
+    } catch (error) {
+      await refreshOrders()
+      throw error
+    } finally {
+      setUpdatingOrderId('')
+    }
+  }
+
   const capNhatTonKho = async (productId) => {
     const item = inventoryState.items.find((row) => row.ma_san_pham === productId)
     if (!item) return
@@ -1937,6 +2011,9 @@ export function useAdminDashboard() {
     capNhatTrangThaiDon,
     capNhatDonChoStaff,
     xoaDonChoStaff,
+    hoanHuyDonHangPos,
+    activeKioskShift,
+    taiCaKioskDaMo,
     capNhatTonKho,
     capNhatTrangThaiBanMon,
     chotCaTienMat,
