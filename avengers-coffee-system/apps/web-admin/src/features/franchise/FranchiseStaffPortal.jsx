@@ -693,18 +693,18 @@ export function FranchiseStaffPortal({ session, onLogout }) {
       </div>
 
       {/* ─── MAIN CONTENT AREA ─── */}
-      <main style={{ flex: 1, padding: 24, maxWidth: 1400, width: '100%', margin: '0 auto', boxSizing: 'border-box' }}>
+      <main style={{ flex: 1, padding: 24, maxWidth: 1400, width: '100%', margin: '0 auto', boxSizing: 'border-box', overflowX: 'hidden' }}>
         
         {/* ═══════════════════════════════════════════════════════════ */}
         {/* TAB 1: POS BÁN HÀNG TẠI KIOSK */}
         {/* ═══════════════════════════════════════════════════════════ */}
         {tab === 'pos' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 390px', gap: 24, alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 380px', gap: 20, alignItems: 'start', width: '100%' }}>
             {/* Left: Menu & Product Select */}
-            <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 20, boxShadow: '0 4px 16px rgba(0,0,0,0.02)' }}>
+            <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 20, boxShadow: '0 4px 16px rgba(0,0,0,0.02)', minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
               {/* Search & Categories */}
-              <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
-                <div style={{ position: 'relative', flex: 1, minWidth: 220 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18, width: '100%' }}>
+                <div style={{ position: 'relative', width: '100%' }}>
                   <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
                   <input
                     type="text"
@@ -729,7 +729,7 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                   )}
                 </div>
 
-                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
+                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', width: '100%', maxWidth: '100%', paddingBottom: 6, scrollbarWidth: 'thin' }}>
                   {['Tất cả', ...new Set(menuItems.map((m) => m.danh_muc).filter(Boolean))].map((cat) => {
                     const isCatActive = menuCategory === cat || (cat === 'Tất cả' && !menuCategory)
                     return (
@@ -743,7 +743,7 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                           color: isCatActive ? '#ffffff' : '#64748b',
                           fontWeight: isCatActive ? 800 : 600, fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap',
                           boxShadow: isCatActive ? '0 2px 8px rgba(5,150,105,0.25)' : 'none',
-                          transition: 'all .15s ease'
+                          transition: 'all .15s ease', flexShrink: 0
                         }}
                       >
                         {cat}
@@ -768,7 +768,7 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                   </button>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 14 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 14, width: '100%', boxSizing: 'border-box' }}>
                   {menuItems
                     .filter((item) => {
                       const matchSearch = !menuSearch || (item.ten_san_pham || '').toLowerCase().includes(menuSearch.toLowerCase())
@@ -783,7 +783,8 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                           background: '#ffffff', borderRadius: 14, border: '1px solid #e2e8f0',
                           padding: 12, cursor: 'pointer', display: 'flex', flexDirection: 'column',
                           justifyContent: 'space-between', minHeight: 180, transition: 'all .2s ease',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.02)', position: 'relative', overflow: 'hidden'
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.02)', position: 'relative', overflow: 'hidden',
+                          minWidth: 0, boxSizing: 'border-box'
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.borderColor = '#10b981'
@@ -842,7 +843,7 @@ export function FranchiseStaffPortal({ session, onLogout }) {
             </div>
 
             {/* Right: Cart & Order Summary */}
-            <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 20, boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
+            <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 20, boxShadow: '0 4px 16px rgba(0,0,0,0.03)', minWidth: 0, boxSizing: 'border-box' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                 <h3 style={{ margin: 0, fontSize: 15, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Receipt size={18} color="#059669" /> Đơn hàng tại quầy Kiosk
@@ -991,7 +992,7 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                   </>
                 ) : (
                   <>
-                    <Check size={18} />
+                    <ShoppingBag size={18} />
                     <span>Hoàn tất &amp; Thanh toán ({fmtMoney(cartTotal)})</span>
                   </>
                 )}
@@ -1004,10 +1005,10 @@ export function FranchiseStaffPortal({ session, onLogout }) {
         {/* TAB 2: LỊCH LÀM VIỆC & ĐĂNG KÝ CA KIOSK */}
         {/* ═══════════════════════════════════════════════════════════ */}
         {tab === 'shift_schedule' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%' }}>
             
             {/* Form Đăng ký nguyện vọng ca làm việc */}
-            <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.02)' }}>
+            <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.02)', width: '100%', boxSizing: 'border-box' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
                 <div>
                   <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1123,7 +1124,7 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                   />
                 </div>
 
-                {/* 2. Chọn Khung ca làm việc dạng Cards trực quan */}
+                {/* 2. Chọn Khung ca làm việc dạng Cards trực quan - Dùng radio dot không dùng icon checkmark */}
                 <div>
                   <label style={{ fontSize: 13, fontWeight: 800, color: '#334155', display: 'block', marginBottom: 8 }}>
                     2. Chọn khung ca làm việc *
@@ -1150,7 +1151,7 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                         >
                           <div style={{
                             width: 36, height: 36, borderRadius: 10, background: tmpl.badgeBg,
-                            color: tmpl.text, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            color: tmpl.text, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
                           }}>
                             <Icon size={18} />
                           </div>
@@ -1160,7 +1161,13 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                             </div>
                             <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>{tmpl.time}</div>
                           </div>
-                          {isSelected && <CheckCircle2 size={18} color={tmpl.accent} />}
+                          
+                          {/* Radio pill trạng thái chọn - không dùng icon dấu tích */}
+                          <div style={{
+                            width: 20, height: 20, borderRadius: '50%',
+                            border: isSelected ? `5px solid ${tmpl.accent}` : '2px solid #cbd5e1',
+                            background: '#ffffff', transition: 'all .15s ease', flexShrink: 0
+                          }} />
                         </div>
                       )
                     })}
@@ -1208,7 +1215,7 @@ export function FranchiseStaffPortal({ session, onLogout }) {
             </div>
 
             {/* Bảng Lịch Tuần Kiosk - Hiển thị ca của mình & đồng nghiệp */}
-            <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.02)' }}>
+            <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.02)', width: '100%', boxSizing: 'border-box' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
                 <div>
                   <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1260,7 +1267,8 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                       transition: 'all .15s ease'
                     }}
                   >
-                    <span>Tuần kế tiếp ⭐ (Đang nhận ca)</span>
+                    <Sparkles size={14} color={weekOffset === 1 ? '#ffffff' : '#059669'} />
+                    <span>Tuần kế tiếp (Đang nhận ca)</span>
                   </button>
 
                   <button
@@ -1276,33 +1284,33 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                 </div>
               </div>
 
-              {/* Grid 7 Cột Lịch tuần */}
+              {/* Grid 7 Cột Lịch tuần - Không bị tràn ngang màn hình */}
               {workShiftsLoading ? (
                 <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>
                   <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 10px', color: '#059669' }} />
                   <div>Đang tải lịch phân ca Kiosk...</div>
                 </div>
               ) : (
-                <div style={{ overflowX: 'auto', paddingBottom: 6 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(160px, 1fr))', gap: 12, minWidth: 1120 }}>
+                <div style={{ width: '100%', overflowX: 'auto', paddingBottom: 6 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(130px, 1fr))', gap: 10, width: '100%' }}>
                     {currentWeekDays.map((day) => {
                       const dayShifts = combinedShifts.filter((s) => s.ngay_lam_viec === day.dateKey && s.trang_thai_yeu_cau !== 'REJECTED')
                       return (
                         <div key={day.dateKey} style={{
                           background: '#ffffff', borderRadius: 14,
                           border: day.isToday ? '2px solid #059669' : '1px solid #e2e8f0',
-                          overflow: 'hidden', minHeight: 400, display: 'flex', flexDirection: 'column',
+                          overflow: 'hidden', minHeight: 380, display: 'flex', flexDirection: 'column',
                           boxShadow: day.isToday ? '0 4px 12px rgba(5,150,105,0.1)' : '0 2px 6px rgba(0,0,0,0.02)'
                         }}>
                           {/* Header Ngày */}
                           <div style={{
-                            padding: '10px 8px', textAlign: 'center',
+                            padding: '10px 6px', textAlign: 'center',
                             background: day.isToday ? '#059669' : '#f8fafc',
                             color: day.isToday ? '#ffffff' : '#0f172a',
                             borderBottom: '1px solid #e2e8f0'
                           }}>
                             <div style={{ fontWeight: 800, fontSize: 13 }}>{day.label}</div>
-                            <div style={{ fontSize: 12, opacity: day.isToday ? 0.9 : 0.7, marginTop: 2 }}>
+                            <div style={{ fontSize: 11, opacity: day.isToday ? 0.9 : 0.7, marginTop: 2 }}>
                               {day.date.getDate()}/{day.date.getMonth() + 1}
                             </div>
                             {day.isToday && (
@@ -1313,7 +1321,7 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                           </div>
 
                           {/* 3 Khung ca trong ngày */}
-                          <div style={{ padding: 10, flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          <div style={{ padding: 8, flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
                             {SHIFT_TEMPLATES.map((tmpl) => {
                               const matching = dayShifts.filter((s) => s.ma_khung_ca === tmpl.id)
                               const hasMyShift = matching.some((s) => s.staff_username === userName)
@@ -1335,7 +1343,7 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                                   </div>
 
                                   {matching.length === 0 ? (
-                                    <div style={{ padding: '6px 4px', textAlign: 'center' }}>
+                                    <div style={{ padding: '6px 2px', textAlign: 'center' }}>
                                       <div style={{ fontSize: 11, color: '#94a3b8', fontStyle: 'italic', marginBottom: 4 }}>
                                         Chưa có người trực
                                       </div>
@@ -1344,9 +1352,9 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                                           type="button"
                                           onClick={() => handleQuickSelectShift(day.dateKey, tmpl.id)}
                                           style={{
-                                            padding: '3px 8px', background: '#ffffff', border: `1px solid ${tmpl.border}`,
-                                            borderRadius: 6, fontSize: 10, fontWeight: 700, color: tmpl.text,
-                                            cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 2
+                                            padding: '4px 8px', background: '#ffffff', border: `1px solid ${tmpl.border}`,
+                                            borderRadius: 6, fontSize: 10, fontWeight: 800, color: tmpl.text,
+                                            cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 3
                                           }}
                                         >
                                           <Plus size={10} /> Đăng ký ca
@@ -1371,7 +1379,7 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                                         >
                                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
                                             <span style={{ fontWeight: 800, color: isMe ? '#059669' : '#0f172a', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                              {isMe ? <Sparkles size={11} color="#059669" /> : <User size={11} color="#64748b" />}
+                                              {isMe ? <UserCheck size={12} color="#059669" /> : <User size={12} color="#64748b" />}
                                               {s.staff_name || s.staff_username} {isMe && '(Tôi)'}
                                             </span>
                                           </div>
@@ -1379,18 +1387,20 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                                           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                             {isPending && (
                                               <span style={{
-                                                fontSize: 9, fontWeight: 800, padding: '1px 6px', borderRadius: 4,
-                                                background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a'
+                                                fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 6,
+                                                background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a',
+                                                display: 'inline-flex', alignItems: 'center', gap: 4
                                               }}>
-                                                ⏳ Chờ duyệt
+                                                <Clock size={11} color="#b45309" /> Chờ duyệt
                                               </span>
                                             )}
                                             {isApproved && (
                                               <span style={{
-                                                fontSize: 9, fontWeight: 800, padding: '1px 6px', borderRadius: 4,
-                                                background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0'
+                                                fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 6,
+                                                background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0',
+                                                display: 'inline-flex', alignItems: 'center', gap: 4
                                               }}>
-                                                ✅ Đã duyệt
+                                                <ShieldCheck size={11} color="#15803d" /> Đã duyệt
                                               </span>
                                             )}
                                           </div>
@@ -1411,7 +1421,7 @@ export function FranchiseStaffPortal({ session, onLogout }) {
             </div>
 
             {/* Danh sách lịch sử yêu cầu ca của cá nhân */}
-            <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.02)' }}>
+            <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.02)', width: '100%', boxSizing: 'border-box' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
                 <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Users size={18} color="#059669" /> Lịch sử đăng ký ca làm việc của tôi tại Kiosk
@@ -1473,8 +1483,12 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           {isPending && (
                             <>
-                              <span style={{ padding: '4px 10px', borderRadius: 99, background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', fontSize: 12, fontWeight: 800 }}>
-                                ⏳ Chờ Quản lý duyệt
+                              <span style={{
+                                padding: '4px 12px', borderRadius: 99, background: '#fef3c7', color: '#b45309',
+                                border: '1px solid #fde68a', fontSize: 12, fontWeight: 800,
+                                display: 'inline-flex', alignItems: 'center', gap: 5
+                              }}>
+                                <Clock size={13} color="#b45309" /> Chờ Quản lý duyệt
                               </span>
                               {/* Nút hủy yêu cầu - Màu đỏ chuẩn UX cho hành động hủy/xóa */}
                               <button
@@ -1490,13 +1504,21 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                             </>
                           )}
                           {isApproved && (
-                            <span style={{ padding: '4px 10px', borderRadius: 99, background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', fontSize: 12, fontWeight: 800 }}>
-                              ✅ Đã duyệt chính thức
+                            <span style={{
+                              padding: '4px 12px', borderRadius: 99, background: '#dcfce7', color: '#15803d',
+                              border: '1px solid #bbf7d0', fontSize: 12, fontWeight: 800,
+                              display: 'inline-flex', alignItems: 'center', gap: 5
+                            }}>
+                              <ShieldCheck size={13} color="#15803d" /> Đã duyệt chính thức
                             </span>
                           )}
                           {isRejected && (
-                            <span style={{ padding: '4px 10px', borderRadius: 99, background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', fontSize: 12, fontWeight: 800 }}>
-                              ❌ Từ chối {req.ghi_chu_duyet && `(${req.ghi_chu_duyet})`}
+                            <span style={{
+                              padding: '4px 12px', borderRadius: 99, background: '#fef2f2', color: '#dc2626',
+                              border: '1px solid #fecaca', fontSize: 12, fontWeight: 800,
+                              display: 'inline-flex', alignItems: 'center', gap: 5
+                            }}>
+                              <AlertTriangle size={13} color="#dc2626" /> Từ chối {req.ghi_chu_duyet && `(${req.ghi_chu_duyet})`}
                             </span>
                           )}
                         </div>
@@ -1523,8 +1545,12 @@ export function FranchiseStaffPortal({ session, onLogout }) {
             ) : activeKioskShift?.has_open_shift ? (
               <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 14, padding: 20, marginBottom: 20 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                  <span style={{ padding: '4px 10px', borderRadius: 99, background: '#059669', color: '#fff', fontSize: 11, fontWeight: 800 }}>
-                    ● Đang mở ca bán hàng
+                  <span style={{
+                    padding: '4px 10px', borderRadius: 99, background: '#059669', color: '#fff', fontSize: 11, fontWeight: 800,
+                    display: 'inline-flex', alignItems: 'center', gap: 6
+                  }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ffffff', display: 'inline-block' }} />
+                    Đang mở ca bán hàng
                   </span>
                   <span style={{ fontSize: 12, color: '#065f46' }}>
                     Mở lúc: {new Date(activeKioskShift.active_shift?.thoi_gian_mo).toLocaleTimeString('vi-VN')}
