@@ -53,7 +53,7 @@ export class AppController {
 
   private ensureStaffSelfOrElevated(currentUser: AuthUser | null, staffUsername: string) {
     const role = String(currentUser?.role || '').toUpperCase();
-    if (['ADMIN', 'MANAGER'].includes(role)) {
+    if (['ADMIN', 'MANAGER', 'FRANCHISEE'].includes(role)) {
       return;
     }
 
@@ -287,7 +287,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE', 'FRANCHISE_STAFF')
   @Get('staff/orders')
   getStaffOrders(
     @Query('status') status?: string,
@@ -314,7 +314,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE', 'FRANCHISE_STAFF')
   @Patch('staff/orders/:orderId/status')
   updateStaffOrderStatus(
     @Param('orderId') orderId: string,
@@ -324,7 +324,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE', 'FRANCHISE_STAFF')
   @Patch('staff/orders/:orderId')
   updateStaffOrder(
     @Param('orderId') orderId: string,
@@ -350,7 +350,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE', 'FRANCHISE_STAFF')
   @Delete('staff/orders/:orderId')
   deleteStaffOrder(
     @Param('orderId') orderId: string,
@@ -361,7 +361,32 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE', 'FRANCHISE_STAFF')
+  @Post('staff/orders/:orderId/refund-void')
+  refundVoidStaffOrder(
+    @Param('orderId') orderId: string,
+    @Body() payload: { reason: string; branch_code?: string; staff_name?: string },
+    @CurrentUser() currentUser: AuthUser | null,
+  ) {
+    return this.thanhToanService.hoanHuyDonHangPos(orderId, {
+      ...payload,
+      staff_username: currentUser?.username || 'staff',
+      staff_name: payload.staff_name || currentUser?.username || 'Nhân viên Kiosk',
+    });
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE', 'FRANCHISE_STAFF')
+  @Get('staff/orders/:orderId/refund-eligibility')
+  checkRefundEligibility(
+    @Param('orderId') orderId: string,
+    @Query('branch_code') branchCode?: string,
+  ) {
+    return this.thanhToanService.kiemTraHopLeHoanHuyPos(orderId, branchCode);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE', 'FRANCHISE_STAFF')
   @Post('staff/orders')
   createStaffOrder(
     @Req() req: Request,
@@ -452,8 +477,84 @@ export class AppController {
     return this.thanhToanService.xoaCaLamViec(id, branchCode);
   }
 
+  // ─── KIOSK SHIFT SESSIONS (RÀNG BUỘC MỞ CA & 1 CA/KIOSK) ───
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('MANAGER', 'ADMIN')
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
+  @Post('staff/kiosk-shifts/open')
+  openKioskShift(
+    @Body()
+    payload: {
+      branch_code: string;
+      cash_open: number;
+      staff_username?: string;
+      staff_name?: string;
+      note?: string;
+    },
+    @CurrentUser() currentUser: AuthUser | null,
+  ) {
+    return this.thanhToanService.moCaKiosk({
+      ...payload,
+      staff_username: payload.staff_username || currentUser?.username || undefined,
+      staff_name: payload.staff_name || currentUser?.username || undefined,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
+  @Post('staff/kiosk-shifts/close')
+  closeKioskShift(
+    @Body()
+    payload: {
+      branch_code: string;
+      cash_close: number;
+      note?: string;
+      staff_username?: string;
+    },
+    @CurrentUser() currentUser: AuthUser | null,
+  ) {
+    return this.thanhToanService.chotCaKiosk({
+      ...payload,
+      staff_username: payload.staff_username || currentUser?.username || undefined,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('MANAGER', 'ADMIN', 'FRANCHISEE')
+  @Post('staff/kiosk-shifts/force-close')
+  forceCloseKioskShift(
+    @Body()
+    payload: {
+      branch_code: string;
+      reason?: string;
+    },
+    @CurrentUser() currentUser: AuthUser | null,
+  ) {
+    return this.thanhToanService.cuongCheChotCaKiosk({
+      branch_code: payload.branch_code,
+      reason: payload.reason,
+      manager_username: currentUser?.username || 'Franchisee / Manager',
+    });
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
+  @Get('staff/kiosk-shifts/active')
+  getActiveKioskShift(@Query('branch_code') branchCode: string) {
+    return this.thanhToanService.layCaKioskDangMo(branchCode);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
+  @Get('staff/kiosk-shifts/history')
+  getKioskShiftHistory(
+    @Query('branch_code') branchCode?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.thanhToanService.layLichSuCaKiosk(branchCode, limit ? parseInt(limit, 10) : 30);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('MANAGER', 'ADMIN', 'FRANCHISEE')
   @Patch('manager/shifts/:id/approval')
   approveShiftReconciliation(
     @Param('id') id: string,
@@ -463,7 +564,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('MANAGER', 'ADMIN')
+  @Roles('MANAGER', 'ADMIN', 'FRANCHISEE')
   @Post('manager/work-shifts')
   createWorkShift(
     @Body()
@@ -483,7 +584,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('MANAGER', 'ADMIN')
+  @Roles('MANAGER', 'ADMIN', 'FRANCHISEE', 'STAFF', 'FRANCHISE_STAFF')
   @Get('manager/work-shifts')
   getWorkShiftsForManager(
     @Query('from') from?: string,
@@ -500,7 +601,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('MANAGER', 'ADMIN')
+  @Roles('MANAGER', 'ADMIN', 'FRANCHISEE')
   @Patch('manager/work-shifts/:id/attendance')
   updateWorkShiftAttendance(
     @Param('id') id: string,
@@ -517,14 +618,14 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('MANAGER', 'ADMIN')
+  @Roles('MANAGER', 'ADMIN', 'FRANCHISEE')
   @Delete('manager/work-shifts/:id')
   deleteWorkShift(@Param('id') id: string, @Query('branch_code') branchCode?: string) {
     return this.thanhToanService.xoaLichLamViecChoManager(id, branchCode);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
+  @Roles('STAFF', 'FRANCHISE_STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Get('staff/work-shifts')
   getWorkShiftsForStaff(
     @CurrentUser() currentUser: AuthUser | null,
@@ -539,7 +640,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
+  @Roles('STAFF', 'FRANCHISE_STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Post('staff/work-shifts/requests')
   requestWorkShift(
     @CurrentUser() currentUser: AuthUser | null,
@@ -555,7 +656,7 @@ export class AppController {
   ) {
     const role = String(currentUser?.role || '').toUpperCase();
     const resolvedStaffUsername =
-      role === 'STAFF'
+      ['STAFF', 'FRANCHISE_STAFF'].includes(role)
         ? currentUser?.username || payload.staff_username || ''
         : payload.staff_username || currentUser?.username || '';
 
@@ -568,7 +669,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('MANAGER', 'ADMIN')
+  @Roles('MANAGER', 'ADMIN', 'FRANCHISEE')
   @Get('manager/work-shifts/requests')
   getWorkShiftRequestsForManager(
     @Query('status') status?: 'PENDING' | 'APPROVED' | 'REJECTED',
@@ -581,7 +682,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('MANAGER', 'ADMIN')
+  @Roles('MANAGER', 'ADMIN', 'FRANCHISEE')
   @Patch('manager/work-shifts/requests/:id')
   handleWorkShiftRequestByManager(
     @Param('id') id: string,
@@ -603,14 +704,14 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
+  @Roles('STAFF', 'FRANCHISE_STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Delete('staff/work-shifts/requests/:id')
   deleteShiftRequest(@Param('id') id: string, @Query('branch_code') branchCode?: string) {
     return this.thanhToanService.xoaYeuCauDangKyCa(id, branchCode);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('MANAGER', 'ADMIN')
+  @Roles('MANAGER', 'ADMIN', 'FRANCHISEE')
   @Delete('manager/work-shifts/requests/:id')
   deleteWorkShiftRequest(@Param('id') id: string, @Query('branch_code') branchCode?: string) {
     return this.thanhToanService.xoaYeuCauDangKyCa(id, branchCode);

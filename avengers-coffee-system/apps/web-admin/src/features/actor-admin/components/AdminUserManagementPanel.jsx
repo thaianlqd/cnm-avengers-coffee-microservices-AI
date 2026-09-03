@@ -296,10 +296,12 @@ export function AdminUserManagementPanel({
                   value={safeUserForm.vai_tro || 'STAFF'}
                   onChange={(e) => setUserForm((p) => ({ ...p, vai_tro: e.target.value }))}
                 >
-                  <option value="STAFF">STAFF - Nhân viên cửa hàng</option>
-                  <option value="MANAGER">MANAGER - Quản lý cửa hàng</option>
+                  <option value="STAFF">STAFF - Nhân viên cửa hàng chính thức</option>
+                  <option value="MANAGER">MANAGER - Quản lý cửa hàng chính thức</option>
+                  <option value="FRANCHISEE">FRANCHISEE - Admin nhượng quyền (Chủ Kiosk)</option>
+                  <option value="FRANCHISE_STAFF">FRANCHISE_STAFF - Nhân viên Kiosk nhượng quyền</option>
                   <option value="ACCOUNTANT">ACCOUNTANT - Kế toán hội sở</option>
-                  <option value="ADMIN">ADMIN - Quản trị viên hệ thống</option>
+                  <option value="ADMIN">ADMIN - Quản trị viên hệ thống HQ</option>
                 </select>
               </div>
             </div>
@@ -397,10 +399,12 @@ export function AdminUserManagementPanel({
               onChange={(e) => setUserFilters((prev) => ({ ...prev, role: e.target.value }))}
             >
               <option value="">Tất cả Vai trò</option>
-              <option value="ADMIN">ADMIN</option>
-              <option value="MANAGER">MANAGER</option>
-              <option value="STAFF">STAFF</option>
-              <option value="ACCOUNTANT">ACCOUNTANT</option>
+              <option value="ADMIN">ADMIN (HQ Chuỗi)</option>
+              <option value="MANAGER">MANAGER (Quản lý cửa hàng)</option>
+              <option value="STAFF">STAFF (Nhân viên cửa hàng)</option>
+              <option value="FRANCHISEE">FRANCHISEE (Admin nhượng quyền)</option>
+              <option value="FRANCHISE_STAFF">FRANCHISE_STAFF (Nhân viên Kiosk)</option>
+              <option value="ACCOUNTANT">ACCOUNTANT (Kế toán)</option>
             </select>
 
             <select
@@ -484,21 +488,33 @@ export function AdminUserManagementPanel({
 
                       {/* Role Badge */}
                       <td style={{ padding: '0.85rem 1rem' }}>
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            padding: '0.2rem 0.6rem',
-                            borderRadius: '9999px',
-                            fontSize: '0.72rem',
-                            fontWeight: '800',
-                            backgroundColor: item?.vai_tro === 'ADMIN' ? '#f5f3ff' : (item?.vai_tro === 'MANAGER' ? '#eff6ff' : '#ecfdf5'),
-                            color: item?.vai_tro === 'ADMIN' ? '#7c3aed' : (item?.vai_tro === 'MANAGER' ? '#2563eb' : '#059669'),
-                            border: item?.vai_tro === 'ADMIN' ? '1px solid #ddd6fe' : (item?.vai_tro === 'MANAGER' ? '1px solid #bfdbfe' : '1px solid #a7f3d0')
-                          }}
-                        >
-                          {item?.vai_tro || 'STAFF'}
-                        </span>
+                        {(() => {
+                          const roleMeta = {
+                            ADMIN: { bg: '#f5f3ff', color: '#7c3aed', border: '#ddd6fe', label: 'Admin HQ' },
+                            MANAGER: { bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe', label: 'Quản lý chính thức' },
+                            STAFF: { bg: '#ecfdf5', color: '#059669', border: '#a7f3d0', label: 'Nhân viên chính thức' },
+                            FRANCHISEE: { bg: '#fffbeb', color: '#b45309', border: '#fde68a', label: 'Admin nhượng quyền' },
+                            FRANCHISE_STAFF: { bg: '#f0fdf4', color: '#0d9488', border: '#99f6e4', label: 'Staff Kiosk' },
+                            ACCOUNTANT: { bg: '#f0f9ff', color: '#0284c7', border: '#bae6fd', label: 'Kế toán chuỗi' },
+                          }[item?.vai_tro] || { bg: '#f1f5f9', color: '#475569', border: '#e2e8f0', label: item?.vai_tro || 'Staff' }
+                          return (
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                padding: '0.25rem 0.65rem',
+                                borderRadius: '9999px',
+                                fontSize: '0.72rem',
+                                fontWeight: '800',
+                                backgroundColor: roleMeta.bg,
+                                color: roleMeta.color,
+                                border: `1px solid ${roleMeta.border}`
+                              }}
+                            >
+                              {roleMeta.label}
+                            </span>
+                          )
+                        })()}
                       </td>
 
                       {/* Status Badge */}

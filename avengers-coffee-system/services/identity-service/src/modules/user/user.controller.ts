@@ -67,6 +67,11 @@ export class UserController {
     return this.userService.verifyRecaptcha(body);
   }
 
+  @Get('users/me')
+  async layThongTinCuaToi(@CurrentUser() authUser: AuthUser) {
+    return this.userService.layThongTinCuaToi(authUser?.sub || '');
+  }
+
   @AllowInternal()
   @Roles('ADMIN', 'MANAGER')
   @Get('users/workforce')

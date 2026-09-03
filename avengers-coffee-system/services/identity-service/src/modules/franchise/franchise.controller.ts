@@ -1,5 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Res } from '@nestjs/common';
-import type { Response } from 'express';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Res } from '@nestjs/common';
 import { CurrentUser, Public, Roles } from '../../auth/auth.decorators';
 import type { AuthUser } from '../../auth/auth.types';
 import { FranchiseService } from './franchise.service';
@@ -104,7 +103,7 @@ export class FranchiseController {
 
   @Public()
   @Get('vnpay/return')
-  async vnpayReturn(@Query() query: Record<string, string>, @Res() res: Response) {
+  async vnpayReturn(@Query() query: Record<string, string>, @Res() res: any) {
     const result = await this.franchiseService.ketQuaVnpay(query);
     const webAdminUrl = process.env.WEB_ADMIN_URL || 'http://localhost:5174';
     // Redirect về trang FranchiseePortal, tab order
@@ -248,4 +247,54 @@ export class FranchiseController {
     const logs = await this.franchiseService.getAuditLogs();
     return { success: true, data: logs };
   }
+
+  // ─── UC-FRANCHISEE: Quản lý nhân viên con tại Kiosk ──
+  @Roles('FRANCHISEE', 'ADMIN')
+  @Get('staff')
+  async layDanhSachNhanVienCon(
+    @CurrentUser() user: AuthUser,
+    @Query('kiosk_id') kioskId?: string,
+    @Query('q') keyword?: string,
+  ) {
+    return this.franchiseService.layDanhSachNhanVienCon(user.sub, kioskId, keyword);
+  }
+
+  @Roles('FRANCHISEE', 'ADMIN')
+  @Post('staff')
+  async taoNhanVienCon(
+    @CurrentUser() user: AuthUser,
+    @Body() body: any,
+  ) {
+    return this.franchiseService.taoNhanVienCon(user.sub, body);
+  }
+
+  @Roles('FRANCHISEE', 'ADMIN')
+  @Patch('staff/:id')
+  async capNhatNhanVienCon(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthUser,
+    @Body() body: any,
+  ) {
+    return this.franchiseService.capNhatNhanVienCon(user.sub, id, body);
+  }
+
+  @Roles('FRANCHISEE', 'ADMIN')
+  @Post('staff/:id/reset-password')
+  async doiMatKhauNhanVienCon(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthUser,
+    @Body() body: any,
+  ) {
+    return this.franchiseService.doiMatKhauNhanVienCon(user.sub, id, body);
+  }
+
+  @Roles('FRANCHISEE', 'ADMIN')
+  @Delete('staff/:id')
+  async xoaNhanVienCon(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.franchiseService.xoaNhanVienCon(user.sub, id);
+  }
 }
+

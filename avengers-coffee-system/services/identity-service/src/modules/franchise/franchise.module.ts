@@ -12,6 +12,7 @@ import { RoyaltyHangThang } from './entities/royalty.entity';
 import { KetQuaDoiSoat } from './entities/doi-soat.entity';
 import { BienBanViPham } from './entities/bien-ban-vi-pham.entity';
 import { AuditLog } from './entities/audit-log.entity';
+import { User } from '../user/user.entity';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AuditLog } from './entities/audit-log.entity';
       KetQuaDoiSoat,
       BienBanViPham,
       AuditLog,
+      User,
     ]),
   ],
   controllers: [FranchiseController],

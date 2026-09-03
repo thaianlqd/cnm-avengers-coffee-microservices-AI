@@ -1,3 +1,4 @@
+import React, { useState } from 'react'
 import {
   Monitor,
   Store,
@@ -44,7 +45,7 @@ export function PosOrderPanel({
   inHoaDonPos,
   capNhatTrangThaiDon,
   setActiveTab,
-  statusTone
+  statusTone,
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '1.25rem 1.5rem' }}>
