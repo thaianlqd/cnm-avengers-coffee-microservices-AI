@@ -857,7 +857,14 @@ export function FranchiseePortal({ session, onLogout }) {
                       </select>
                     </div>
 
-                    <div style={{ marginBottom: 24 }}>
+                    {activeKiosk && activeKiosk.trang_thai !== 'DANG_HOAT_DONG' ? (
+                      <div style={{ padding: '16px 20px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 16, color: '#991b1b', fontSize: 14, lineHeight: 1.6 }}>
+                        <div style={{ fontWeight: 800, fontSize: 16, marginBottom: 8 }}>⚠️ Kiosk chưa đủ điều kiện hoạt động</div>
+                        Kiosk của bạn chưa khai trương. Vui lòng hoàn tất <b>Ký hợp đồng</b> và được hệ thống xác nhận <b>Khai trương</b> trước khi đặt mua combo nguyên liệu bổ sung.
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ marginBottom: 24 }}>
                       <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: '#475569', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Chọn gói combo</label>
                       <div style={{ display: 'grid', gap: 12 }}>
                         {combos.filter(c => {
@@ -950,6 +957,8 @@ export function FranchiseePortal({ session, onLogout }) {
                       }}>
                       {ordering ? '⏳ Đang xử lý...' : '📦 Xác nhận đặt hàng'}
                     </button>
+                      </>
+                    )}
                   </div>
                 </div>
               )}

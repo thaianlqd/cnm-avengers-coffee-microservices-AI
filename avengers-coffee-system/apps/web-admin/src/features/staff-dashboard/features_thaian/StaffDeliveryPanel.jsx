@@ -298,7 +298,7 @@ export default function StaffDeliveryPanel() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.85rem' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-            <Truck size={20} color="#4f46e5" /> Quản lý Giao hàng
+            <Truck size={20} color="#4f46e5" /> Quản lý NV giao hàng
           </h2>
           <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.78125rem', color: '#64748b' }}>
             Điều phối giao nhận qua Shipper nội bộ hoặc dịch vụ Lalamove
