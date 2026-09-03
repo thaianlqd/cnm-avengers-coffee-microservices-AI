@@ -10,6 +10,7 @@ import { VoucherService } from '../voucher/voucher.service';
 import { CustomerWalletService } from '../customer-wallet/customer-wallet.service';
 import { CaLamViecNhanVien } from './entities/ca-lam-viec-nhan-vien.entity';
 import { CaDoiSoat } from './entities/ca-doi-soat.entity';
+import { KioskShiftSession } from './entities/kiosk-shift-session.entity';
 import { ChiTietDonHang } from './entities/chi-tiet-don-hang.entity';
 import { DonHang } from './entities/don-hang.entity';
 import { GiaoDichThanhToan } from './entities/giao-dich-thanh-toan.entity';
@@ -233,6 +234,8 @@ export class ThanhToanService {
     private readonly caDoiSoatRepo: Repository<CaDoiSoat>,
     @InjectRepository(CaLamViecNhanVien)
     private readonly caLamViecNhanVienRepo: Repository<CaLamViecNhanVien>,
+    @InjectRepository(KioskShiftSession)
+    private readonly kioskShiftSessionRepo: Repository<KioskShiftSession>,
     private readonly notificationService: NotificationService,
     private readonly voucherService: VoucherService,
     private readonly redisCacheService: RedisCacheService,
@@ -314,6 +317,10 @@ export class ThanhToanService {
   }
 
   private layThoiGianHoanThanhDon(donHang: DonHang) {
+    if (donHang.trang_thai_don_hang === 'DA_HUY' || donHang.trang_thai_thanh_toan === 'DA_HOAN_TIEN') {
+      return null;
+    }
+
     const lichSu = Array.isArray(donHang.lich_su_trang_thai) ? donHang.lich_su_trang_thai : [];
     const mocHoanThanh = [...lichSu]
       .filter((item) => item?.loai === 'ORDER' && item?.trang_thai === 'HOAN_THANH' && item?.thoi_gian)
@@ -333,7 +340,10 @@ export class ThanhToanService {
     return null;
   }
 
-  private async layTapUsernameNhanVienTheoChiNhanh(branchCode: string, roles: Array<'STAFF' | 'MANAGER'> = ['STAFF']) {
+  private async layTapUsernameNhanVienTheoChiNhanh(
+    branchCode: string,
+    roles: Array<'STAFF' | 'MANAGER' | 'FRANCHISE_STAFF'> = ['STAFF', 'FRANCHISE_STAFF'],
+  ) {
 
     try {
       const responses = await Promise.all(
@@ -827,7 +837,7 @@ export class ThanhToanService {
     }
 
     const branchCode = this.normalizeBranchCode(input.branch_code);
-    const validStaffByBranch = await this.layTapUsernameNhanVienTheoChiNhanh(branchCode, ['STAFF', 'MANAGER']);
+    const validStaffByBranch = await this.layTapUsernameNhanVienTheoChiNhanh(branchCode, ['STAFF', 'MANAGER', 'FRANCHISE_STAFF']);
     if (!validStaffByBranch.has(staffUsername.toLowerCase())) {
       throw new BadRequestException('Nhan vien khong thuoc chi nhanh dang thao tac');
     }
@@ -892,7 +902,7 @@ export class ThanhToanService {
 
   async layDanhSachLichLamViecChoManager(boLoc: BoLocLichLamViec = {}) {
     const branchCode = this.normalizeBranchCode(boLoc.branchCode);
-    const validStaffByBranch = await this.layTapUsernameNhanVienTheoChiNhanh(branchCode, ['STAFF', 'MANAGER']);
+    const validStaffByBranch = await this.layTapUsernameNhanVienTheoChiNhanh(branchCode, ['STAFF', 'MANAGER', 'FRANCHISE_STAFF']);
     const query = this.caLamViecNhanVienRepo
       .createQueryBuilder('ca')
       .where('ca.co_so_ma = :branchCode', { branchCode });
@@ -913,7 +923,10 @@ export class ThanhToanService {
       .addOrderBy('ca.ngay_tao', 'DESC')
       .getMany();
 
-    const filteredRows = rows.filter((row) => validStaffByBranch.has(String(row.staff_username || '').trim().toLowerCase()));
+    const filteredRows =
+      validStaffByBranch && validStaffByBranch.size > 0
+        ? rows.filter((row) => validStaffByBranch.has(String(row.staff_username || '').trim().toLowerCase()))
+        : rows;
 
     return {
       total: filteredRows.length,
@@ -1012,7 +1025,7 @@ export class ThanhToanService {
   async layLichLamViecChoStaff(staffUsername: string, from?: string, to?: string, branchCodeRaw?: string) {
     const normalizedUsername = String(staffUsername || '').trim();
     const branchCode = this.normalizeBranchCode(branchCodeRaw);
-    const validStaffByBranch = await this.layTapUsernameNhanVienTheoChiNhanh(branchCode, ['STAFF', 'MANAGER']);
+    const validStaffByBranch = await this.layTapUsernameNhanVienTheoChiNhanh(branchCode, ['STAFF', 'MANAGER', 'FRANCHISE_STAFF']);
     if (!normalizedUsername) {
       throw new BadRequestException('staff_username la bat buoc');
     }
@@ -1072,6 +1085,46 @@ export class ThanhToanService {
     }
   }
 
+  private kiemTraRangBuocDangKyCa(shiftDateStr: string) {
+    const now = new Date();
+    // Giờ Việt Nam (UTC+7)
+    const vnNow = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+    const vnDayOfWeek = vnNow.getUTCDay(); // 0: Chủ Nhật, 1: Thứ 2, ..., 6: Thứ 7
+
+    // 1. Ràng buộc: Chỉ được đăng ký ca trước Chủ Nhật hàng tuần (từ Thứ 2 đến hết Thứ 7)
+    if (vnDayOfWeek === 0) {
+      throw new BadRequestException(
+        'Thời hạn đăng ký ca làm việc cho tuần tới đã kết thúc. Nhân viên chỉ được đăng ký ca trước Chủ Nhật hàng tuần (hạn chót: 23:59 Thứ Bảy) để Quản lý chi nhánh duyệt lịch làm việc chính thức.',
+      );
+    }
+
+    // 2. Ràng buộc: Chỉ được đăng ký cho tuần kế tiếp (Thứ 2 đến Chủ Nhật của tuần sau)
+    const currentMondayUtc = Date.UTC(
+      vnNow.getUTCFullYear(),
+      vnNow.getUTCMonth(),
+      vnNow.getUTCDate() - (vnDayOfWeek - 1),
+    );
+
+    const nextMondayDate = new Date(currentMondayUtc + 7 * 24 * 60 * 60 * 1000);
+    const nextSundayDate = new Date(currentMondayUtc + 13 * 24 * 60 * 60 * 1000);
+
+    const fmtDate = (d: Date) => {
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(d.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+
+    const nextMondayStr = fmtDate(nextMondayDate);
+    const nextSundayStr = fmtDate(nextSundayDate);
+
+    if (shiftDateStr < nextMondayStr || shiftDateStr > nextSundayStr) {
+      throw new BadRequestException(
+        `Chỉ được đăng ký ca làm việc cho tuần kế tiếp (từ ngày ${nextMondayStr} đến ngày ${nextSundayStr}). Vui lòng chọn ngày làm việc trong tuần tiếp theo.`,
+      );
+    }
+  }
+
   async taoYeuCauDangKyCaChoStaff(input: TaoYeuCauDangKyCaInput) {
     const staffUsername = String(input.staff_username || '').trim();
     const shiftDate = String(input.shift_date || '').trim();
@@ -1084,15 +1137,34 @@ export class ThanhToanService {
       throw new BadRequestException('shift_date la bat buoc');
     }
 
+    // Kiểm tra ràng buộc đăng ký ca (chỉ trước Chủ Nhật & chỉ tuần kế tiếp)
+    this.kiemTraRangBuocDangKyCa(shiftDate);
+
     const shiftSlot = this.layKhungCaLamViec(shiftCode);
     if (!shiftSlot) {
       throw new BadRequestException('shift_code khong hop le');
     }
 
-    const branchCode = this.normalizeBranchCode(input.branch_code);
-    const validStaffByBranch = await this.layTapUsernameNhanVienTheoChiNhanh(branchCode);
+    let branchCode = this.normalizeBranchCode(input.branch_code);
+    let validStaffByBranch = await this.layTapUsernameNhanVienTheoChiNhanh(branchCode, ['STAFF', 'FRANCHISE_STAFF']);
     if (!validStaffByBranch.has(staffUsername.toLowerCase())) {
-      throw new BadRequestException('Nhan vien khong thuoc chi nhanh dang thao tac');
+      try {
+        const res = await fetch(`${this.IDENTITY_SERVICE_URL}/users/workforce`, {
+          headers: { 'x-internal-token': this.INTERNAL_SERVICE_TOKEN },
+        });
+        const payload: any = await res.json().catch(() => ({}));
+        const found = (Array.isArray(payload?.items) ? payload.items : []).find(
+          (u: any) => String(u?.ten_dang_nhap || '').toLowerCase() === staffUsername.toLowerCase(),
+        );
+        if (found && found.co_so_ma) {
+          branchCode = this.normalizeBranchCode(found.co_so_ma);
+          validStaffByBranch = await this.layTapUsernameNhanVienTheoChiNhanh(branchCode, ['STAFF', 'FRANCHISE_STAFF']);
+        }
+      } catch (e) {}
+    }
+
+    if (!validStaffByBranch.has(staffUsername.toLowerCase())) {
+      throw new BadRequestException(`Nhân viên ${staffUsername} không thuộc chi nhánh ${branchCode}`);
     }
 
     await this.kiemTraTrungCaLamViec(branchCode, staffUsername, shiftDate, shiftCode);
@@ -2024,6 +2096,15 @@ export class ThanhToanService {
 
     const tongTien = normalizedItems.reduce((sum, item) => sum + item.gia_ban * item.so_luong, 0);
     const branchCode = this.normalizeBranchCode(dto.branch_code);
+
+    // ─── RÀNG BUỘC 1: Nhân viên chỉ thao tác trong ca đang mở ───
+    const activeShift = await this.kioskShiftSessionRepo.findOne({
+      where: { co_so_ma: branchCode, trang_thai: 'OPEN' },
+    });
+    if (!activeShift && (branchCode.startsWith('KSK') || branchCode !== 'MAC_DINH_CHI')) {
+      throw new BadRequestException(`Kiosk ${branchCode} hiện chưa mở ca làm việc. Vui lòng thực hiện mở ca trước khi thao tác bán hàng POS!`);
+    }
+
     const isCash = phuongThuc === 'THANH_TOAN_KHI_NHAN_HANG';
     const tienKhachDua = isCash ? Math.max(Number(dto.tien_khach_dua ?? tongTien), 0) : null;
     if (isCash && (tienKhachDua as number) < tongTien) {
@@ -3293,12 +3374,13 @@ export class ThanhToanService {
   }
 
   private async tinhTongHopDoiSoat(from: Date, to: Date, branchCode: string) {
+    const normalizedBranch = this.normalizeBranchCode(branchCode);
     const danhSach = await this.donHangRepo
       .createQueryBuilder('don_hang')
       .leftJoinAndSelect('don_hang.giao_dich_thanh_toan', 'giao_dich')
       .where('don_hang.ngay_tao >= :from', { from: from.toISOString() })
       .andWhere('don_hang.ngay_tao <= :to', { to: to.toISOString() })
-      .andWhere('don_hang.co_so_ma = :branchCode', { branchCode })
+      .andWhere('don_hang.co_so_ma = :branchCode', { branchCode: normalizedBranch })
       .orderBy('don_hang.ngay_tao', 'ASC')
       .addOrderBy('giao_dich.ngay_tao', 'DESC')
       .getMany();
@@ -3314,8 +3396,12 @@ export class ThanhToanService {
     let tongDonHopLe = 0;
 
     danhSach.forEach((order) => {
-      const completedAt = this.layThoiGianHoanThanhDon(order);
-      if (!completedAt) {
+      // 1. Loại trừ tuyệt đối các đơn đã bị hủy hoặc hoàn tiền (Refund / Void)
+      if (
+        order.trang_thai_don_hang === 'DA_HUY' ||
+        order.trang_thai_thanh_toan === 'DA_HOAN_TIEN' ||
+        order.trang_thai_thanh_toan === 'THAT_BAI'
+      ) {
         return;
       }
 
@@ -3324,15 +3410,13 @@ export class ThanhToanService {
         return;
       }
 
-      if (createdAt < from || createdAt > to || completedAt < from || completedAt > to) {
-        return;
-      }
-
       const tongTien = Number(order.tong_tien || 0);
       tongDonHopLe += 1;
       doanhThuDonHoanThanh += tongTien;
 
-      const laDonTaiShop = ['TAI_CHO', 'MANG_DI'].includes(String(order.loai_don_hang || '').toUpperCase());
+      const laDonTaiShop = ['TAI_CHO', 'MANG_DI', 'LAY_TAI_QUAN', 'DUNG_TAI_CHO'].includes(
+        String(order.loai_don_hang || '').toUpperCase(),
+      );
       if (laDonTaiShop) {
         doanhThuTaiShop += tongTien;
       } else {
@@ -3344,18 +3428,7 @@ export class ThanhToanService {
         return;
       }
 
-      const giaoDich = [...(order.giao_dich_thanh_toan || [])].sort(
-        (a, b) => new Date(b.ngay_tao).getTime() - new Date(a.ngay_tao).getTime(),
-      )[0];
-      const daThuTien =
-        giaoDich?.trang_thai === 'THANH_CONG' ||
-        order.trang_thai_thanh_toan === 'DA_THANH_TOAN' ||
-        order.trang_thai_thanh_toan === 'CHO_THANH_TOAN_KHI_NHAN_HANG';
-
-      if (!daThuTien) {
-        return;
-      }
-
+      // Đơn tiền mặt tại quầy POS / COD
       tongDonTienMat += 1;
       const tienKhachDua = Number(order.tien_khach_dua ?? tongTien);
       const tienThoiDon = Number(order.tien_thoi ?? Math.max(tienKhachDua - tongTien, 0));
@@ -3584,5 +3657,433 @@ export class ThanhToanService {
     }
 
     return { success: true, linked: false, count: 0 };
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // 5. QUẢN LÝ CA TRỰC KIOSK & RÀNG BUỘC NGHIỆP VỤ (THÀNH AN)
+  // ─────────────────────────────────────────────────────────────
+
+  async moCaKiosk(input: {
+    branch_code: string;
+    staff_username?: string;
+    staff_name?: string;
+    cash_open: number;
+    note?: string;
+  }) {
+    const branchCode = this.normalizeBranchCode(input.branch_code);
+    const cashOpen = this.chuanHoaSoTien(input.cash_open, 0);
+
+    // ─── RÀNG BUỘC 2: Không cho 2 người mở ca cùng lúc trên 1 Kiosk ───
+    const existingOpenShift = await this.kioskShiftSessionRepo.findOne({
+      where: { co_so_ma: branchCode, trang_thai: 'OPEN' },
+    });
+
+    if (existingOpenShift) {
+      const opener = existingOpenShift.staff_name || existingOpenShift.staff_username || 'nhân viên khác';
+      let openTimeStr = '';
+      try {
+        const dt = new Date(existingOpenShift.thoi_gian_mo_ca);
+        openTimeStr = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')} ngày ${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth() + 1).padStart(2, '0')}`;
+      } catch (e) {
+        openTimeStr = 'trước đó';
+      }
+
+      throw new BadRequestException(
+        `Kiosk ${branchCode} đang có ca làm việc mở bởi nhân viên "${opener}" (mở lúc ${openTimeStr}). Không thể mở 2 ca cùng lúc trên 1 Kiosk! Vui lòng yêu cầu chốt ca trước khi mở ca mới.`,
+      );
+    }
+
+    const newShift = this.kioskShiftSessionRepo.create({
+      co_so_ma: branchCode,
+      staff_username: input.staff_username?.trim() || null,
+      staff_name: input.staff_name?.trim() || input.staff_username?.trim() || 'Nhân viên Kiosk',
+      trang_thai: 'OPEN',
+      thoi_gian_mo_ca: new Date(),
+      tien_dau_ca: cashOpen,
+      tien_cuoi_ca: null,
+      tien_mat_he_thong: 0,
+      doanh_thu_he_thong: 0,
+      tien_mat_ky_vong: cashOpen,
+      chenh_lech: null,
+      tong_don_hang: 0,
+      tong_don_tien_mat: 0,
+      ghi_chu: input.note?.trim() || null,
+      du_lieu_chi_tiet: {},
+    });
+
+    const saved = await this.kioskShiftSessionRepo.save(newShift);
+
+    return {
+      message: `Mở ca làm việc tại Kiosk ${branchCode} thành công!`,
+      shift: saved,
+    };
+  }
+
+  async chotCaKiosk(input: {
+    branch_code: string;
+    cash_close: number;
+    note?: string;
+    staff_username?: string;
+  }) {
+    const branchCode = this.normalizeBranchCode(input.branch_code);
+    const cashClose = this.chuanHoaSoTien(input.cash_close, 0);
+
+    const activeShift = await this.kioskShiftSessionRepo.findOne({
+      where: { co_so_ma: branchCode, trang_thai: 'OPEN' },
+    });
+
+    if (!activeShift) {
+      throw new BadRequestException(`Kiosk ${branchCode} hiện không có ca làm việc nào đang mở để chốt ca.`);
+    }
+
+    const now = new Date();
+    const startTime = new Date(activeShift.thoi_gian_mo_ca);
+
+    // Tính toán tổng kết doanh số các đơn hàng trong phiên ca
+    const tongHop = await this.tinhTongHopDoiSoat(startTime, now, branchCode);
+
+    const tienDauCa = Number(activeShift.tien_dau_ca || 0);
+    const tienMatHeThong = tongHop.tienMatThucThu || 0;
+    const tienMatKyVong = tienDauCa + tienMatHeThong;
+    const chenhLech = cashClose - tienMatKyVong;
+
+    activeShift.trang_thai = 'CLOSED';
+    activeShift.thoi_gian_dong_ca = now;
+    activeShift.tien_cuoi_ca = cashClose;
+    activeShift.tien_mat_he_thong = tienMatHeThong;
+    activeShift.doanh_thu_he_thong = tongHop.doanhThuDonHoanThanh || 0;
+    activeShift.tien_mat_ky_vong = tienMatKyVong;
+    activeShift.chenh_lech = chenhLech;
+    activeShift.tong_don_hang = tongHop.tongDon || 0;
+    activeShift.tong_don_tien_mat = tongHop.tongDonTienMat || 0;
+    activeShift.ghi_chu = input.note?.trim() || activeShift.ghi_chu;
+    activeShift.du_lieu_chi_tiet = {
+      non_cash_revenue: tongHop.doanhThuKhongTienMat,
+      cash_in_gross: tongHop.tienMatThuVao,
+      cash_change_out: tongHop.tienThoi,
+      online_revenue: tongHop.doanhThuOnline,
+      in_store_revenue: tongHop.doanhThuTaiShop,
+    };
+
+    const updated = await this.kioskShiftSessionRepo.save(activeShift);
+
+    return {
+      message: `Chốt ca làm việc Kiosk ${branchCode} thành công!`,
+      shift: updated,
+    };
+  }
+
+  async cuongCheChotCaKiosk(input: {
+    branch_code: string;
+    reason?: string;
+    manager_username?: string;
+  }) {
+    const branchCode = this.normalizeBranchCode(input.branch_code);
+
+    const activeShift = await this.kioskShiftSessionRepo.findOne({
+      where: { co_so_ma: branchCode, trang_thai: 'OPEN' },
+    });
+
+    if (!activeShift) {
+      throw new BadRequestException(`Kiosk ${branchCode} không có ca làm việc nào đang mở để cưỡng chế đóng.`);
+    }
+
+    const now = new Date();
+    const startTime = new Date(activeShift.thoi_gian_mo_ca);
+    const tongHop = await this.tinhTongHopDoiSoat(startTime, now, branchCode);
+
+    const tienDauCa = Number(activeShift.tien_dau_ca || 0);
+    const tienMatHeThong = tongHop.tienMatThucThu || 0;
+
+    activeShift.trang_thai = 'FORCE_CLOSED';
+    activeShift.thoi_gian_dong_ca = now;
+    activeShift.dong_ca_boi = input.manager_username || 'Admin / Franchisee';
+    activeShift.tien_mat_he_thong = tienMatHeThong;
+    activeShift.doanh_thu_he_thong = tongHop.doanhThuDonHoanThanh || 0;
+    activeShift.tien_mat_ky_vong = tienDauCa + tienMatHeThong;
+    activeShift.tong_don_hang = tongHop.tongDon || 0;
+    activeShift.tong_don_tien_mat = tongHop.tongDonTienMat || 0;
+    activeShift.ghi_chu = `[Cưỡng chế đóng ca bởi ${input.manager_username || 'Admin'}] ${input.reason || 'Bàn giao ca cho nhân viên mới'}`;
+    activeShift.du_lieu_chi_tiet = {
+      non_cash_revenue: tongHop.doanhThuKhongTienMat,
+      cash_in_gross: tongHop.tienMatThuVao,
+      cash_change_out: tongHop.tienThoi,
+      online_revenue: tongHop.doanhThuOnline,
+      in_store_revenue: tongHop.doanhThuTaiShop,
+    };
+
+    const updated = await this.kioskShiftSessionRepo.save(activeShift);
+
+    return {
+      message: `Đã cưỡng chế chốt ca Kiosk ${branchCode} thành công! Kiosk đã sẵn sàng để mở ca mới.`,
+      shift: updated,
+    };
+  }
+
+  async layCaKioskDangMo(branchCodeRaw: string) {
+    const branchCode = this.normalizeBranchCode(branchCodeRaw);
+
+    const activeShift = await this.kioskShiftSessionRepo.findOne({
+      where: { co_so_ma: branchCode, trang_thai: 'OPEN' },
+    });
+
+    if (!activeShift) {
+      return {
+        has_open_shift: false,
+        active_shift: null,
+        live_stats: null,
+      };
+    }
+
+    const now = new Date();
+    const startTime = new Date(activeShift.thoi_gian_mo_ca);
+    const tongHop = await this.tinhTongHopDoiSoat(startTime, now, branchCode);
+
+    const tienDauCa = Number(activeShift.tien_dau_ca || 0);
+    const tienMatHeThong = tongHop.tienMatThucThu || 0;
+    const tienMatKyVong = tienDauCa + tienMatHeThong;
+
+    return {
+      has_open_shift: true,
+      active_shift: {
+        ...activeShift,
+        tien_dau_ca: tienDauCa,
+      },
+      live_stats: {
+        total_orders: tongHop.tongDon || 0,
+        total_revenue: tongHop.doanhThuDonHoanThanh || 0,
+        cash_orders: tongHop.tongDonTienMat || 0,
+        cash_revenue: tienMatHeThong,
+        non_cash_revenue: tongHop.doanhThuKhongTienMat || 0,
+        expected_cash: tienMatKyVong,
+        duration_minutes: Math.max(0, Math.floor((now.getTime() - startTime.getTime()) / 60000)),
+      },
+    };
+  }
+
+  async layLichSuCaKiosk(branchCodeRaw?: string, limit = 30) {
+    const query = this.kioskShiftSessionRepo.createQueryBuilder('s');
+
+    if (branchCodeRaw && branchCodeRaw.trim() && branchCodeRaw !== 'ALL') {
+      query.andWhere('s.co_so_ma = :code', { code: this.normalizeBranchCode(branchCodeRaw) });
+    }
+
+    query.orderBy('s.thoi_gian_mo_ca', 'DESC').limit(limit);
+    const shifts = await query.getMany();
+
+    return shifts.map((s) => ({
+      ...s,
+      tien_dau_ca: Number(s.tien_dau_ca || 0),
+      tien_cuoi_ca: s.tien_cuoi_ca !== null ? Number(s.tien_cuoi_ca) : null,
+      tien_mat_he_thong: Number(s.tien_mat_he_thong || 0),
+      doanh_thu_he_thong: Number(s.doanh_thu_he_thong || 0),
+      tien_mat_ky_vong: Number(s.tien_mat_ky_vong || 0),
+      chenh_lech: s.chenh_lech !== null ? Number(s.chenh_lech) : null,
+    }));
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // 6. HOÀN / HỦY ĐƠN HÀNG POS TẠI KIOSK (REFUND / VOID) (THÀNH AN)
+  // ─────────────────────────────────────────────────────────────
+
+  async kiemTraHopLeHoanHuyPos(maDonHang: string, branchCodeRaw?: string) {
+    const branchCode = this.normalizeBranchCode(branchCodeRaw);
+    const donHang = await this.donHangRepo.findOne({
+      where: { ma_don_hang: maDonHang, co_so_ma: branchCode },
+    });
+
+    if (!donHang) {
+      return {
+        hop_le: false,
+        ly_do: 'Không tìm thấy đơn hàng tại chi nhánh này',
+        active_shift: null,
+      };
+    }
+
+    if (donHang.trang_thai_don_hang === 'DA_HUY' || donHang.trang_thai_thanh_toan === 'DA_HOAN_TIEN') {
+      return {
+        hop_le: false,
+        ly_do: 'Đơn hàng này đã được hủy/hoàn tiền trước đó',
+        active_shift: null,
+      };
+    }
+
+    const activeShift = await this.kioskShiftSessionRepo.findOne({
+      where: { co_so_ma: branchCode, trang_thai: 'OPEN' },
+    });
+
+    if (!activeShift) {
+      return {
+        hop_le: false,
+        ly_do: 'Kiosk hiện chưa mở ca làm việc hoặc ca đã chốt',
+        active_shift: null,
+      };
+    }
+
+    const orderCreatedTime = new Date(donHang.ngay_tao).getTime();
+    const shiftOpenTime = new Date(activeShift.thoi_gian_mo_ca).getTime();
+
+    if (orderCreatedTime < shiftOpenTime) {
+      return {
+        hop_le: false,
+        ly_do: 'Đơn hàng này thuộc về ca làm việc trước đã chốt',
+        active_shift: {
+          id: activeShift.id,
+          staff_name: activeShift.staff_name,
+          thoi_gian_mo_ca: activeShift.thoi_gian_mo_ca,
+        },
+      };
+    }
+
+    return {
+      hop_le: true,
+      ly_do: '',
+      active_shift: {
+        id: activeShift.id,
+        staff_name: activeShift.staff_name,
+        thoi_gian_mo_ca: activeShift.thoi_gian_mo_ca,
+      },
+    };
+  }
+
+  async hoanHuyDonHangPos(
+    maDonHang: string,
+    input: {
+      reason: string;
+      branch_code?: string;
+      staff_username?: string;
+      staff_name?: string;
+    },
+  ) {
+    const branchCode = this.normalizeBranchCode(input.branch_code);
+    const reason = String(input.reason || '').trim();
+    if (!reason) {
+      throw new BadRequestException('Vui lòng cung cấp lý do hoàn/hủy đơn hàng POS!');
+    }
+
+    const donHang = await this.donHangRepo.findOne({
+      where: { ma_don_hang: maDonHang, co_so_ma: branchCode },
+      relations: ['chi_tiet', 'giao_dich_thanh_toan'],
+    });
+
+    if (!donHang) {
+      throw new NotFoundException(`Không tìm thấy đơn hàng #${maDonHang.slice(0, 8)} tại chi nhánh này.`);
+    }
+
+    if (donHang.trang_thai_don_hang === 'DA_HUY' || donHang.trang_thai_thanh_toan === 'DA_HOAN_TIEN') {
+      throw new BadRequestException('Đơn hàng này đã được hủy/hoàn tiền trước đó!');
+    }
+
+    // ─── RÀNG BUỘC 1: Phải có ca Kiosk đang mở ───
+    const activeShift = await this.kioskShiftSessionRepo.findOne({
+      where: { co_so_ma: branchCode, trang_thai: 'OPEN' },
+    });
+
+    if (!activeShift) {
+      throw new BadRequestException(
+        `Kiosk ${branchCode} hiện chưa mở ca làm việc hoặc ca đã chốt. Chỉ được phép hoàn/hủy đơn hàng trong ca đang mở!`,
+      );
+    }
+
+    // ─── RÀNG BUỘC 2: Đơn hàng phải được tạo trong cùng ca đang mở ───
+    const orderCreatedTime = new Date(donHang.ngay_tao).getTime();
+    const shiftOpenTime = new Date(activeShift.thoi_gian_mo_ca).getTime();
+
+    if (orderCreatedTime < shiftOpenTime) {
+      const shiftDateFormatted = new Date(activeShift.thoi_gian_mo_ca).toLocaleString('vi-VN');
+      throw new BadRequestException(
+        `Đơn hàng #${maDonHang.slice(0, 8).toUpperCase()} được tạo trước phiên ca hiện tại (mở lúc ${shiftDateFormatted}). Không thể hoàn/hủy đơn của ca đã chốt!`,
+      );
+    }
+
+    const tongTien = Number(donHang.tong_tien || 0);
+    const wasPaid = donHang.trang_thai_thanh_toan === 'DA_THANH_TOAN';
+    const nextPaymentStatus = wasPaid ? 'DA_HOAN_TIEN' : 'THAT_BAI';
+    const staffDisplayName = input.staff_name || input.staff_username || 'Nhân viên Kiosk';
+
+    const updatedOrder = await this.donHangRepo.manager.transaction(async (manager) => {
+      const donHangRepo = manager.getRepository(DonHang);
+      const giaoDichRepo = manager.getRepository(GiaoDichThanhToan);
+
+      const lichSu: LichSuTrangThai[] = Array.isArray(donHang.lich_su_trang_thai) ? [...donHang.lich_su_trang_thai] : [];
+      const nowIso = new Date().toISOString();
+
+      lichSu.push({
+        loai: 'ORDER',
+        trang_thai: 'DA_HUY',
+        thoi_gian: nowIso,
+        ghi_chu: `[Hoàn/Hủy POS - ${staffDisplayName}] Lý do: ${reason}`,
+      });
+
+      lichSu.push({
+        loai: 'PAYMENT',
+        trang_thai: nextPaymentStatus,
+        thoi_gian: nowIso,
+        ghi_chu: wasPaid
+          ? `[Hoàn tiền mặt tại quầy Kiosk] Xuất quỹ quầy hoàn trả: ${tongTien.toLocaleString('vi-VN')} đ`
+          : '[Hủy giao dịch quầy chưa thanh toán]',
+      });
+
+      donHang.trang_thai_don_hang = 'DA_HUY';
+      donHang.trang_thai_thanh_toan = nextPaymentStatus;
+      donHang.ghi_chu = donHang.ghi_chu ? `${donHang.ghi_chu} | [HỦY POS]: ${reason}` : `[HỦY POS]: ${reason}`;
+      donHang.lich_su_trang_thai = lichSu;
+      donHang.ngay_cap_nhat = new Date();
+
+      const saved = await donHangRepo.save(donHang);
+
+      // Cập nhật giao dịch thanh toán
+      const latestTxn = await giaoDichRepo.findOne({
+        where: { ma_don_hang: maDonHang },
+        order: { ngay_tao: 'DESC' },
+      });
+      if (latestTxn) {
+        latestTxn.trang_thai = nextPaymentStatus;
+        await giaoDichRepo.save(latestTxn);
+      }
+
+      return saved;
+    });
+
+    // Hủy voucher khảo sát pending (nếu có)
+    await this.surveyService.huyVoucherPending(maDonHang).catch(() => {});
+
+    // Xóa cache
+    await this.invalidateOrderCaches(updatedOrder.ma_nguoi_dung, updatedOrder.co_so_ma);
+
+    // Bắn sự kiện RabbitMQ & thông báo nội bộ
+    await this.rabbitMqService.publish('order.status.changed', {
+      orderId: updatedOrder.ma_don_hang,
+      userId: updatedOrder.ma_nguoi_dung,
+      branchCode: updatedOrder.co_so_ma,
+      totalAmount: Number(updatedOrder.tong_tien || 0),
+      status: 'DA_HUY',
+      paymentStatus: nextPaymentStatus,
+      action: 'POS_REFUND_VOID',
+      reason,
+      refundAmount: wasPaid ? tongTien : 0,
+      refundMethod: 'TIEN_MAT_TAI_QUAY',
+    });
+
+    await this.guiThongBaoDonHangChoNhanSuChiNhanh({
+      branchCode: updatedOrder.co_so_ma,
+      title: 'Hoàn/Hủy đơn hàng POS tại Kiosk',
+      content: `Đơn #${maDonHang.slice(0, 8).toUpperCase()} đã được ${staffDisplayName} hoàn/hủy. Xuất quỹ tiền mặt: ${wasPaid ? tongTien.toLocaleString('vi-VN') + ' đ' : '0 đ'}. Lý do: ${reason}`,
+      type: 'ORDER',
+      data: {
+        ma_don_hang: maDonHang,
+        co_so_ma: updatedOrder.co_so_ma,
+        trang_thai_don_hang: 'DA_HUY',
+        trang_thai_thanh_toan: nextPaymentStatus,
+      },
+    });
+
+    return {
+      message: 'Hoàn tiền mặt và hủy giao dịch POS thành công!',
+      order: updatedOrder,
+      shift: activeShift,
+      refund_amount: wasPaid ? tongTien : 0,
+      refund_method: 'TIEN_MAT_TAI_QUAY',
+    };
   }
 }
