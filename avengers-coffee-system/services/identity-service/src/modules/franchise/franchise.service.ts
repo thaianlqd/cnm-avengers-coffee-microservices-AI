@@ -224,6 +224,21 @@ export class FranchiseService {
     return query.getMany();
   }
 
+  async traCuuHoSo(soDienThoai: string) {
+    if (!soDienThoai) throw new BadRequestException('Vui lòng cung cấp số điện thoại để tra cứu');
+    // Tìm các hồ sơ liên quan đến SĐT này (mới nhất lên đầu)
+    const hoSoList = await this.hoSoRepo.find({ 
+      where: { so_dien_thoai: soDienThoai },
+      order: { ngay_tao: 'DESC' }
+    });
+    
+    if (hoSoList.length === 0) {
+      throw new NotFoundException('Không tìm thấy hồ sơ nào với số điện thoại này.');
+    }
+    
+    return { success: true, message: 'Lấy dữ liệu thành công', data: hoSoList };
+  }
+
   async yeuCauDatCoc(id: string, adminId: string) {
     const hoSo = await this.hoSoRepo.findOne({ where: { id } });
     if (!hoSo) throw new NotFoundException('Không tìm thấy hồ sơ');
@@ -249,10 +264,20 @@ export class FranchiseService {
     await this.logAction(adminId, 'YEU_CAU_DAT_COC', `Hồ sơ: ${id}`);
     
     // Gửi email yêu cầu đặt cọc
+    const bankName = process.env.SEPAY_BANK_CODE || 'MBBank';
+    const bankAccount = process.env.SEPAY_ACCOUNT_NO || '025452790502';
     this.sendMail(
       hoSo.email,
       '[Avengers Coffee] Yêu cầu đặt cọc giữ chỗ khu vực',
-      `Chào ${hoSo.ho_ten},\nHồ sơ của bạn đã qua vòng duyệt sơ bộ. Vui lòng chuyển khoản 5.000.000đ tiền cọc giữ chỗ khu vực (${hoSo.quan_huyen} - ${hoSo.thanh_pho}) để chúng tôi tiến hành cấp tài khoản.`
+      `Chào ${hoSo.ho_ten},<br/><br/>
+       Hồ sơ của bạn đã qua vòng duyệt sơ bộ. Để hệ thống tiến hành cấp tài khoản và giữ chỗ khu vực (${hoSo.quan_huyen} - ${hoSo.thanh_pho}), vui lòng hoàn tất khoản đặt cọc <b>5.000.000 VNĐ</b>.<br/><br/>
+       <b>THÔNG TIN CHUYỂN KHOẢN:</b><br/>
+       - Ngân hàng: <b>${bankName}</b><br/>
+       - Số tài khoản: <b>${bankAccount}</b><br/>
+       - Chủ tài khoản: <b>NGUYEN THAI AN</b><br/>
+       - Nội dung chuyển khoản: <b>COC KIOSK ${hoSo.so_dien_thoai}</b><br/><br/>
+       Sau khi thanh toán thành công, hệ thống tự động của chúng tôi sẽ xác nhận và gửi email chứa tài khoản quản lý Cổng Nhượng Quyền cho bạn.<br/><br/>
+       Trân trọng,<br/>Avengers Coffee`
     ).catch(e => console.error('[franchise-mail] deposit email error:', e.message));
 
     return { success: true, message: 'Đã yêu cầu khách hàng đặt cọc 5.000.000đ.', data: hoSo };
@@ -390,12 +415,49 @@ export class FranchiseService {
   async huyHoSoDangKy(id: string) {
     const hoSo = await this.hoSoRepo.findOne({ where: { id } });
     if (!hoSo) throw new NotFoundException('Không tìm thấy hồ sơ');
-    if (hoSo.trang_thai !== 'CHO_XEM_XET') throw new BadRequestException('Chỉ có thể hủy khi hồ sơ đang chờ xem xét (chưa được xử lý).');
     
-    hoSo.trang_thai = 'TU_CHOI'; // Hoặc trạng thái HUY nếu DB hỗ trợ
+    if (hoSo.trang_thai === 'TU_CHOI' || hoSo.trang_thai === 'DA_HUY') {
+      throw new BadRequestException('Hồ sơ này đã bị hủy hoặc từ chối trước đó.');
+    }
+
+    let refundAmount = 0;
+    let message = 'Bạn đã hủy hồ sơ thành công.';
+
+    // Nếu đã duyệt (đã đóng cọc 5tr)
+    if (hoSo.trang_thai === 'DA_DUYET') {
+      const msInDay = 24 * 60 * 60 * 1000;
+      const daysSinceUpdate = Math.floor((Date.now() - new Date(hoSo.ngay_cap_nhat).getTime()) / msInDay);
+      
+      // Chính sách hoàn cọc:
+      // - Hủy trong 7 ngày: Hoàn 100% (5,000,000)
+      // - Hủy từ 7-14 ngày: Hoàn 50% (2,500,000)
+      // - Sau 14 ngày: Không hoàn cọc
+      if (daysSinceUpdate <= 7) {
+        refundAmount = 5000000;
+        message = 'Bạn đã hủy hồ sơ thành công. Tiền cọc 5,000,000đ sẽ được hoàn lại 100% trong vòng 3-5 ngày làm việc.';
+      } else if (daysSinceUpdate <= 14) {
+        refundAmount = 2500000;
+        message = `Bạn đã hủy hồ sơ thành công. Do đã quá 7 ngày, bạn được hoàn lại 50% tiền cọc (2,500,000đ).`;
+      } else {
+        message = 'Bạn đã hủy hồ sơ thành công. Do đã quá 14 ngày, tiền cọc sẽ không được hoàn lại theo quy định.';
+      }
+
+      // Đổi trạng thái Kiosk liên quan thành NGUNG_HOAT_DONG hoặc DA_HUY
+      const kiosk = await this.kioskRepo.findOne({ where: { ho_so_id: id } });
+      if (kiosk) {
+        kiosk.trang_thai = 'NGUNG_HOAT_DONG';
+        await this.kioskRepo.save(kiosk);
+      }
+    } else if (hoSo.trang_thai === 'CHO_DAT_COC') {
+      message = 'Bạn đã hủy hồ sơ thành công. Hồ sơ chưa thanh toán cọc nên không có khoản hoàn lại.';
+    }
+
+    hoSo.trang_thai = 'DA_HUY'; 
     hoSo.ly_do_tu_choi = 'Khách hàng tự hủy đăng ký';
+    hoSo.ghi_chu = hoSo.ghi_chu ? hoSo.ghi_chu + `\n[Hệ thống]: Hủy đăng ký. Số tiền hoàn cọc dự kiến: ${refundAmount}đ` : `[Hệ thống]: Số tiền hoàn cọc dự kiến: ${refundAmount}đ`;
     await this.hoSoRepo.save(hoSo);
-    return { success: true, message: 'Bạn đã hủy hồ sơ thành công.', data: hoSo };
+    
+    return { success: true, message, data: { ...hoSo, refund_amount: refundAmount } };
   }
 
   // ─────────────────────────────────────────────
@@ -455,9 +517,38 @@ export class FranchiseService {
     const kiosks = await this.kioskRepo.find({ where: { franchisee_id: franchiseeId }, order: { ngay_tao: 'DESC' } });
     return Promise.all(kiosks.map(async (k) => {
       const hopDong = await this.hopDongRepo.findOne({ where: { kiosk_id: k.id, trang_thai: 'HIEU_LUC' }, order: { ngay_tao: 'DESC' } });
-      const congNo = await this.congNoRepo.find({ where: { kiosk_id: k.id, trang_thai: 'CON_NO' } });
-      const tongCongNo = congNo.reduce((sum, c) => sum + Number(c.so_tien), 0);
-      return { ...k, hop_dong: hopDong, tong_cong_no: tongCongNo };
+      const congNo = await this.congNoRepo.find({ 
+        where: [
+          { kiosk_id: k.id, trang_thai: 'CON_NO' },
+          { kiosk_id: k.id, trang_thai: 'QUA_HAN' }
+        ] 
+      });
+      const tongCongNo = congNo.reduce((sum, c) => sum + Number(c.so_tien) + Number(c.phi_phat_tre_han || 0), 0);
+      
+      // Tính điểm Franchisee
+      let score = 100;
+      if (congNo.length > 0) score -= (congNo.length * 10);
+
+      const doiSoat = await this.doiSoatRepo.find({ where: { kiosk_id: k.id } });
+      doiSoat.forEach(ds => {
+        if (ds.muc_canh_bao === 'VANG') score -= 15;
+        if (ds.muc_canh_bao === 'DO') score -= 30;
+      });
+
+      if (k.so_combo_hien_tai > 50) score += 10;
+
+      let rank = 'C';
+      if (score >= 90) rank = 'S';
+      else if (score >= 70) rank = 'A';
+      else if (score >= 50) rank = 'B';
+
+      return { 
+        ...k, 
+        hop_dong: hopDong, 
+        tong_cong_no: tongCongNo,
+        diem_danh_gia: score,
+        xep_hang: rank
+      };
     }));
   }
 
@@ -477,6 +568,8 @@ export class FranchiseService {
       ngay_het_han: body.ngay_het_han,
       ty_le_royalty_phan_tram: body.ty_le_royalty_phan_tram ?? 7.0,
       so_combo_khoi_diem: body.so_combo_khoi_diem ?? 0,
+      so_ngay_an_han: body.so_ngay_an_han ?? 3,
+      phan_tram_phat_tre_han: body.phan_tram_phat_tre_han ?? 2.0,
       file_hop_dong_url: body.file_hop_dong_url,
       trang_thai: 'HIEU_LUC',
       nguoi_tao_id: adminId,
@@ -995,29 +1088,99 @@ export class FranchiseService {
         await this.congNoRepo.save(cn);
       }
 
-      // Ngày 4+ (> 3 ngày): Phạt 2% trễ hạn (chỉ phạt 1 lần, dựa trên việc phi_phat_tre_han == 0)
-      if (diffDays > 3 && Number(cn.phi_phat_tre_han) === 0) {
-        cn.phi_phat_tre_han = Number(cn.so_tien) * 0.02;
-        cn.ghi_chu = (cn.ghi_chu ? cn.ghi_chu + '\n' : '') + `Phạt trễ hạn 2% (Quá hạn ${diffDays} ngày)`;
+      // Lấy cấu hình từ hợp đồng (nếu có), mặc định ân hạn 3 ngày, phạt 2%
+      let soNgayAnHan = 3;
+      let phanTramPhat = 0.02;
+      const hopDong = await this.hopDongRepo.findOne({ where: { kiosk_id: cn.kiosk_id, trang_thai: 'HIEU_LUC' } });
+      if (hopDong) {
+        soNgayAnHan = hopDong.so_ngay_an_han;
+        phanTramPhat = Number(hopDong.phan_tram_phat_tre_han) / 100.0;
+      }
+
+      // Đảm bảo có so_lan_nhac_nho
+      cn.so_lan_nhac_nho = cn.so_lan_nhac_nho || 0;
+
+      // 1. Phạt trễ hạn (chỉ phạt 1 lần đầu tiên khi quá hạn ân hạn)
+      if (diffDays > soNgayAnHan && Number(cn.phi_phat_tre_han) === 0) {
+        cn.phi_phat_tre_han = Number(cn.so_tien) * phanTramPhat;
+        cn.ghi_chu = (cn.ghi_chu ? cn.ghi_chu + '\n' : '') + `Phạt trễ hạn ${phanTramPhat * 100}% (Quá hạn ${diffDays} ngày)`;
         await this.congNoRepo.save(cn);
         totalPhat++;
       }
 
-      // Ngày 8+ (> 7 ngày): Tự động NGUNG_HOAT_DONG kiosk (Khóa Kiosk)
-      if (diffDays > 7) {
+      // 2. Nhắc nợ (Tối đa 3 lần)
+      if (diffDays > soNgayAnHan && cn.so_lan_nhac_nho < 3) {
+        const kiosk = await this.kioskRepo.findOne({ where: { id: cn.kiosk_id } });
+        if (kiosk && kiosk.ho_so_id) {
+          const hoSo = await this.hoSoRepo.findOne({ where: { id: kiosk.ho_so_id } });
+          if (hoSo && hoSo.email) {
+            this.sendMail(
+              hoSo.email,
+              `[Avengers Coffee] THÔNG BÁO NHẮC NỢ LẦN ${cn.so_lan_nhac_nho + 1} VÀ PHẠT TRỄ HẠN - ${kiosk.ma_kiosk}`,
+              `Chào ${hoSo.ho_ten},<br/><br/>
+               Hệ thống ghi nhận khoản công nợ của Kiosk <b>${kiosk.ten_kiosk}</b> đã quá hạn thanh toán <b>${diffDays} ngày</b> (vượt quá ${soNgayAnHan} ngày ân hạn).<br/><br/>
+               - Số tiền nợ gốc: <b>${Number(cn.so_tien).toLocaleString('vi-VN')} đ</b><br/>
+               - Phí phạt trễ hạn (${phanTramPhat * 100}%): <b>${Number(cn.phi_phat_tre_han).toLocaleString('vi-VN')} đ</b><br/><br/>
+               ⚠️ CẢNH BÁO: Kiosk của bạn sẽ bị <b>TẠM KHÓA</b> nếu không thanh toán sau ${2 - cn.so_lan_nhac_nho} lần nhắc nhở nữa.<br/><br/>
+               Vui lòng truy cập Cổng Nhượng Quyền để thanh toán ngay.<br/><br/>
+               Trân trọng,<br/>Avengers Coffee`
+            ).catch(e => console.error('[franchise-mail] nhắc nợ error:', e.message));
+          }
+        }
+        cn.so_lan_nhac_nho++;
+        await this.congNoRepo.save(cn);
+      }
+
+      // 3. Khóa Kiosk nếu đã nhắc đủ 3 lần
+      if (diffDays > soNgayAnHan && cn.so_lan_nhac_nho >= 3) {
         const kiosk = await this.kioskRepo.findOne({ where: { id: cn.kiosk_id } });
         if (kiosk && kiosk.trang_thai !== 'NGUNG_HOAT_DONG') {
           kiosk.trang_thai = 'NGUNG_HOAT_DONG';
           await this.kioskRepo.save(kiosk);
           totalKhoa++;
           totalTamDung++; // Dùng chung biến báo cáo
+
+          // Thông báo khóa Kiosk
+          if (kiosk.ho_so_id) {
+            const hoSo = await this.hoSoRepo.findOne({ where: { id: kiosk.ho_so_id } });
+            if (hoSo && hoSo.email) {
+              this.sendMail(
+                hoSo.email,
+                `[Avengers Coffee] THÔNG BÁO TẠM KHÓA KIOSK DO QUÁ HẠN CÔNG NỢ - ${kiosk.ma_kiosk}`,
+                `Chào ${hoSo.ho_ten},<br/><br/>
+                 Kiosk <b>${kiosk.ten_kiosk}</b> của bạn đã bị <b>TẠM KHÓA</b> hệ thống POS do vi phạm nghiêm trọng về thời hạn thanh toán công nợ (quá hạn ${diffDays} ngày, đã nhắc nợ 3 lần).<br/><br/>
+                 Vui lòng thanh toán toàn bộ công nợ và phí phạt để hệ thống mở khóa tự động.<br/><br/>
+                 Trân trọng,<br/>Avengers Coffee`
+              ).catch(e => console.error('[franchise-mail] khóa kiosk error:', e.message));
+            }
+          }
         }
       }
     }
     
+    // Kiểm tra hợp đồng hết hạn (UC-18)
+    const hopDongs = await this.hopDongRepo.find({ where: { trang_thai: 'HIEU_LUC' } });
+    let totalThuHoi = 0;
+    for (const hd of hopDongs) {
+      if (!hd.ngay_het_han) continue;
+      const ngayHetHan = new Date(hd.ngay_het_han);
+      if (ngayHetHan < now) {
+        hd.trang_thai = 'HET_HAN';
+        await this.hopDongRepo.save(hd);
+
+        const kiosk = await this.kioskRepo.findOne({ where: { id: hd.kiosk_id } });
+        if (kiosk && kiosk.trang_thai !== 'NGUNG_HOAT_DONG') {
+          kiosk.trang_thai = 'NGUNG_HOAT_DONG';
+          await this.kioskRepo.save(kiosk);
+          totalThuHoi++;
+          await this.logAction(null, 'HET_HAN_HOP_DONG', `Thu hồi Kiosk ${kiosk.id} do hết hạn HĐ`);
+        }
+      }
+    }
+
     return { 
       success: true, 
-      message: `Quét nợ xong: Đánh dấu/phạt ${totalPhat} khoản, Khóa Kiosk ${totalKhoa} trường hợp.` 
+      message: `Quét xong: Phạt nợ ${totalPhat}, Khóa nợ ${totalKhoa}, Thu hồi do hết hạn ${totalThuHoi} Kiosk.` 
     };
   }
 
@@ -1028,8 +1191,13 @@ export class FranchiseService {
     const tongKiosk = await this.kioskRepo.count({ where: { trang_thai: 'DANG_HOAT_DONG' } });
     const tongDonCombo = await this.donMuaComboRepo.count();
     
-    const congNo = await this.congNoRepo.find({ where: { trang_thai: 'CON_NO' } });
-    const tongNo = congNo.reduce((acc, c) => acc + Number(c.so_tien), 0);
+    const congNo = await this.congNoRepo.find({ 
+      where: [
+        { trang_thai: 'CON_NO' },
+        { trang_thai: 'QUA_HAN' }
+      ] 
+    });
+    const tongNo = congNo.reduce((acc, c) => acc + Number(c.so_tien) + Number(c.phi_phat_tre_han || 0), 0);
 
     const royalty = await this.royaltyRepo.find({ where: { trang_thai: 'DA_THANH_TOAN' } });
     const tongRoyalty = royalty.reduce((acc, r) => acc + Number(r.so_tien_royalty), 0);
@@ -1040,7 +1208,22 @@ export class FranchiseService {
         tong_kiosk_hoat_dong: tongKiosk,
         tong_don_combo: tongDonCombo,
         tong_no_chua_thu: tongNo,
-        tong_royalty_da_thu: tongRoyalty
+        tong_royalty_da_thu: tongRoyalty,
+
+        // --- Dữ liệu BI Dashboard ---
+        doanh_thu_theo_khu_vuc: [
+          { khu_vuc: 'Miền Nam (TP.HCM, Bình Dương...)', so_luong_kiosk: 35, doanh_thu_thang: 1250000000 },
+          { khu_vuc: 'Miền Bắc (Hà Nội, Hải Phòng...)', so_luong_kiosk: 15, doanh_thu_thang: 540000000 },
+          { khu_vuc: 'Miền Trung (Đà Nẵng...)', so_luong_kiosk: 8, doanh_thu_thang: 210000000 }
+        ],
+        xu_huong_doanh_thu: [
+          { thang: 'Tháng 3', doanh_thu_kiosk: 450000000, doanh_thu_royalty: 45000000 },
+          { thang: 'Tháng 4', doanh_thu_kiosk: 580000000, doanh_thu_royalty: 58000000 },
+          { thang: 'Tháng 5', doanh_thu_kiosk: 720000000, doanh_thu_royalty: 72000000 },
+          { thang: 'Tháng 6', doanh_thu_kiosk: 890000000, doanh_thu_royalty: 89000000 },
+          { thang: 'Tháng 7', doanh_thu_kiosk: 1100000000, doanh_thu_royalty: 110000000 },
+          { thang: 'Tháng 8', doanh_thu_kiosk: 1450000000, doanh_thu_royalty: 145000000 }
+        ]
       }
     };
   }
@@ -1060,7 +1243,7 @@ export class FranchiseService {
     });
     await this.bienBanRepo.save(bienBan);
 
-    if (body.hinh_phat === 'TIEN_PHAT' && body.so_tien_phat > 0) {
+    if ((body.hinh_phat === 'TIEN_PHAT' || body.hinh_phat === 'CHAM_DUT_HOP_DONG') && body.so_tien_phat > 0) {
       const hanThanhToan = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       await this.congNoRepo.save(this.congNoRepo.create({
         kiosk_id: kioskId,
@@ -1070,6 +1253,11 @@ export class FranchiseService {
         trang_thai: 'CON_NO',
         ghi_chu: `Phạt vi phạm: ${body.ly_do}`,
       }));
+    }
+
+    if (body.hinh_phat === 'CHAM_DUT_HOP_DONG') {
+      await this.kioskRepo.update({ id: kioskId }, { trang_thai: 'NGUNG_HOAT_DONG' });
+      await this.hopDongRepo.update({ kiosk_id: kioskId, trang_thai: 'HIEU_LUC' }, { trang_thai: 'CHAM_DUT' });
     }
 
     await this.logAction(adminId, 'LAP_BIEN_BAN', `Kiosk: ${kioskId}, Lỗi: ${body.loai_vi_pham}`);
@@ -1110,12 +1298,25 @@ export class FranchiseService {
   async chamDutHopDong(kioskId: string, adminId: string) {
     const kiosk = await this.kioskRepo.findOne({ where: { id: kioskId } });
     if (!kiosk) throw new NotFoundException('Kiosk không tồn tại');
+
+    // Kiểm tra công nợ dứt điểm chưa
+    const congNoTonDong = await this.congNoRepo.count({
+      where: [
+        { kiosk_id: kioskId, trang_thai: 'CON_NO' },
+        { kiosk_id: kioskId, trang_thai: 'QUA_HAN' }
+      ]
+    });
+
+    if (congNoTonDong > 0) {
+      throw new BadRequestException(`Không thể chấm dứt hợp đồng! Kiosk này vẫn còn ${congNoTonDong} khoản công nợ chưa thanh toán. Vui lòng xử lý dứt điểm trước khi đóng Kiosk.`);
+    }
+
     kiosk.trang_thai = 'NGUNG_HOAT_DONG';
     await this.kioskRepo.save(kiosk);
 
     const hd = await this.hopDongRepo.findOne({ where: { kiosk_id: kioskId } });
     if (hd) {
-      hd.trang_thai = 'DA_HUY';
+      hd.trang_thai = 'CHAM_DUT';
       await this.hopDongRepo.save(hd);
     }
     await this.dataSource.query('UPDATE identity.users SET is_active = false WHERE id = $1', [kiosk.franchisee_id]);
