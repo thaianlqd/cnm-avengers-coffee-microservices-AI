@@ -43,7 +43,10 @@ import {
   ArrowRight,
   Tag,
   Info,
-  CheckSquare
+  CheckSquare,
+  Package,
+  LayoutGrid,
+  List
 } from 'lucide-react'
 import { API_BASE_URL } from '../admin-dashboard/constants'
 
@@ -55,6 +58,34 @@ const SHIFT_TEMPLATES = [
   { id: 'TOI', name: 'Ca Tối', time: '18:00 - 23:00', start: '18:00', end: '23:00', icon: Moon, bg: '#f0fdf4', border: '#dcfce7', text: '#15803d', accent: '#16a34a', badgeBg: '#dcfce7' },
 ]
 
+// Cấu hình danh mục và sản phẩm cho từng gói nhượng quyền
+const KIOSK_PACKAGES = {
+  XE_LUU_DONG: {
+    name: 'Gói Xe Cà Phê Lưu Động',
+    short: 'Xe Lưu Động',
+    color: '#d97706',
+    bg: '#fef3c7',
+    border: '#fde68a',
+    desc: 'Chỉ kinh doanh cà phê, trà & đồ uống pha chế nhanh mang đi',
+  },
+  KIOSK_CO_DINH: {
+    name: 'Gói Kiosk Cố Định Take-Away',
+    short: 'Kiosk Cố Định',
+    color: '#7c3aed',
+    bg: '#ede9fe',
+    border: '#ddd6fe',
+    desc: 'Kinh doanh đồ uống hoàn chỉnh & bánh ngọt ăn kèm',
+  },
+  CONTAINER_CAFE: {
+    name: 'Gói Container Café Cao Cấp',
+    short: 'Container Café',
+    color: '#059669',
+    bg: '#ecfdf5',
+    border: '#a7f3d0',
+    desc: 'Kinh doanh thực đơn đầy đủ: Thức uống chuyên nghiệp, bánh ngọt và bánh mặn',
+  },
+}
+
 export function FranchiseStaffPortal({ session, onLogout }) {
   const [profile, setProfile] = useState(session?.user || {})
   const user = { ...(session?.user || {}), ...profile }
@@ -63,6 +94,23 @@ export function FranchiseStaffPortal({ session, onLogout }) {
   const kioskCode = user.coSoMa || user.co_so_ma || 'KSK-011'
   const kioskName = user.coSoTen || user.co_so_ten || 'Kiosk Avengers'
   const token = session?.token || session?.accessToken
+
+  // ─── THÔNG TIN KIOSK & GÓI NHƯỢNG QUYỀN ĐĂNG KÝ ───
+  const [kioskInfo, setKioskInfo] = useState(null)
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/franchise/kiosk/public`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((kiosks) => {
+        const found = (Array.isArray(kiosks) ? kiosks : []).find((k) => k.ma_kiosk === kioskCode)
+        if (found) {
+          setKioskInfo(found)
+        }
+      })
+      .catch(() => {})
+  }, [kioskCode])
+
+  const currentPackageType = kioskInfo?.loai_kiosk || 'CONTAINER_CAFE'
+  const packageMeta = KIOSK_PACKAGES[currentPackageType] || KIOSK_PACKAGES.CONTAINER_CAFE
 
   useEffect(() => {
     if (token) {
@@ -136,7 +184,6 @@ export function FranchiseStaffPortal({ session, onLogout }) {
       return `${day}/${m}`
     }
 
-    // Danh sách 7 ngày của tuần tới để render các nút chọn nhanh
     const nextDays = []
     const dayNames = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ Nhật']
     for (let i = 0; i < 7; i++) {
@@ -159,10 +206,14 @@ export function FranchiseStaffPortal({ session, onLogout }) {
   }, [])
 
   // ─── TAB 1: POS STATES & HANDLERS ───
-  const [menuItems, setMenuItems] = useState([])
+  const [rawMenuItems, setRawMenuItems] = useState([])
   const [menuLoading, setMenuLoading] = useState(false)
   const [menuSearch, setMenuSearch] = useState('')
   const [menuCategory, setMenuCategory] = useState('')
+  const [posViewMode, setPosViewMode] = useState('grid') // 'grid' | 'compact'
+  const [posPage, setPosPage] = useState(1)
+  const ITEMS_PER_PAGE = 12
+
   const [cart, setCart] = useState([])
   const [paymentMethod, setPaymentMethod] = useState('TIEN_MAT')
   const [cashGiven, setCashGiven] = useState('')
@@ -217,14 +268,85 @@ export function FranchiseStaffPortal({ session, onLogout }) {
         }
       })
 
-      setMenuItems(normalized)
+      setRawMenuItems(normalized)
     } catch (e) {
       console.error('Lỗi khi tải thực đơn:', e)
-      setMenuItems([])
+      setRawMenuItems([])
     } finally {
       setMenuLoading(false)
     }
   }, [apiFetch])
+
+  // LỌC SẢN PHẨM CHUẨN XÁC THEO GÓI NHƯỢNG QUYỀN ĐÃ ĐĂNG KÝ
+  const packageAllowedMenu = useMemo(() => {
+    if (!Array.isArray(rawMenuItems)) return []
+    return rawMenuItems.filter((item) => {
+      const cat = String(item.danh_muc || '').trim()
+      const catLower = cat.toLowerCase()
+
+      // Luôn loại bỏ các danh mục nội bộ không kinh doanh lẻ tại quầy Kiosk
+      if (catLower.includes('topping') || catLower.includes('ưu đãi') || catLower.includes('merchandise')) {
+        return false
+      }
+
+      // 1. Gói Xe Cà Phê Lưu Động (XE_LUU_DONG):
+      // Chỉ phục vụ cà phê và trà truyền thống
+      if (currentPackageType === 'XE_LUU_DONG') {
+        const isCoffeeOrTea =
+          catLower.includes('cà phê') || catLower.includes('espresso') ||
+          catLower.includes('americano') || catLower.includes('latte') ||
+          catLower.includes('trà')
+        const isFood = catLower.includes('bánh') || catLower.includes('pizza')
+        return isCoffeeOrTea && !isFood
+      }
+
+      // 2. Gói Kiosk Cố Định (KIOSK_CO_DINH):
+      // Đồ uống đầy đủ & Bánh ngọt (không bán đồ nướng mặn như Pizza, Bánh mặn)
+      if (currentPackageType === 'KIOSK_CO_DINH') {
+        const isFoodNotAllowed = catLower.includes('pizza') || catLower.includes('bánh mặn')
+        return !isFoodNotAllowed
+      }
+
+      // 3. Gói Container Café (CONTAINER_CAFE):
+      // Đầy đủ đồ uống, bánh ngọt và bánh mặn (không bán pizza nhà hàng)
+      if (currentPackageType === 'CONTAINER_CAFE') {
+        return !catLower.includes('pizza')
+      }
+
+      return true
+    })
+  }, [rawMenuItems, currentPackageType])
+
+  // Reset trang về 1 khi người dùng đổi từ khóa tìm kiếm hoặc đổi danh mục
+  useEffect(() => {
+    setPosPage(1)
+  }, [menuSearch, menuCategory])
+
+  // Danh sách sản phẩm sau khi tìm kiếm và chọn danh mục
+  const filteredProducts = useMemo(() => {
+    return packageAllowedMenu.filter((item) => {
+      const matchSearch = !menuSearch || (item.ten_san_pham || '').toLowerCase().includes(menuSearch.toLowerCase())
+      const matchCat = !menuCategory || item.danh_muc === menuCategory
+      return matchSearch && matchCat
+    })
+  }, [packageAllowedMenu, menuSearch, menuCategory])
+
+  // Phân trang sản phẩm để tránh cuộn chuột quá dài
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE) || 1
+  const paginatedProducts = useMemo(() => {
+    const start = (posPage - 1) * ITEMS_PER_PAGE
+    return filteredProducts.slice(start, start + ITEMS_PER_PAGE)
+  }, [filteredProducts, posPage])
+
+  // Danh sách các danh mục có trong gói kèm số lượng món
+  const categoryCounts = useMemo(() => {
+    const map = new Map()
+    packageAllowedMenu.forEach((item) => {
+      const cat = item.danh_muc || 'Món khác'
+      map.set(cat, (map.get(cat) || 0) + 1)
+    })
+    return map
+  }, [packageAllowedMenu])
 
   // ─── TAB 2: WORK SHIFTS STATES & HANDLERS ───
   const [weekOffset, setWeekOffset] = useState(0)
@@ -340,7 +462,6 @@ export function FranchiseStaffPortal({ session, onLogout }) {
     }
   }
 
-  // Tiện ích: Chọn nhanh ngày và ca từ ô trong bảng lịch
   const handleQuickSelectShift = (dateKey, shiftCode) => {
     if (nextWeekRange.isSunday) {
       window.alert('Cổng đăng ký ca cho tuần tới đã đóng vào 23:59 Thứ 7.')
@@ -539,7 +660,6 @@ export function FranchiseStaffPortal({ session, onLogout }) {
           body: JSON.stringify(payload),
         })
       } catch (err1) {
-        // Fallback
         res = await apiFetch('/orders/pos', {
           method: 'POST',
           body: JSON.stringify({ ...payload, chi_nhanh_ma: kioskCode, tong_tien: cartTotal }),
@@ -558,15 +678,12 @@ export function FranchiseStaffPortal({ session, onLogout }) {
     }
   }
 
-  // Tổng hợp lịch ca của toàn bộ chi nhánh (kết hợp ca phân bổ & ca đăng ký cá nhân)
   const combinedShifts = useMemo(() => {
     const shiftMap = new Map()
-    // Thêm các ca từ workShifts
     workShifts.forEach((s) => {
       const key = `${s.ma_ca_lam_viec || s.id}`
       shiftMap.set(key, s)
     })
-    // Thêm các ca từ myShiftRequests nếu chưa có trong map
     myShiftRequests.forEach((req) => {
       const key = `${req.ma_ca_lam_viec || req.id}`
       if (!shiftMap.has(key)) {
@@ -595,23 +712,23 @@ export function FranchiseStaffPortal({ session, onLogout }) {
 
       {/* ─── HEADER ─── */}
       <header style={{
-        background: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '14px 24px',
+        background: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '12px 24px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{
-            width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg, #10b981, #059669)',
+            width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, #10b981, #059669)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff',
             boxShadow: '0 4px 10px rgba(16,185,129,0.25)'
           }}>
-            <Coffee size={22} />
+            <Coffee size={20} />
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 18, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>Avengers Coffee</span>
+              <span style={{ fontSize: 17, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>Avengers Coffee</span>
               <span style={{
-                fontSize: 11, fontWeight: 800, padding: '3px 8px', borderRadius: 99,
+                fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 99,
                 background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0'
               }}>
                 Nhân viên Kiosk
@@ -620,6 +737,8 @@ export function FranchiseStaffPortal({ session, onLogout }) {
             <div style={{ fontSize: 12, color: '#64748b', display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
               <Store size={13} color="#10b981" />
               <span>{kioskName} ({kioskCode})</span>
+              <span style={{ color: '#cbd5e1' }}>•</span>
+              <span style={{ color: packageMeta.color, fontWeight: 700 }}>{packageMeta.name}</span>
             </div>
           </div>
         </div>
@@ -648,7 +767,7 @@ export function FranchiseStaffPortal({ session, onLogout }) {
 
       {/* ─── NAVIGATION TABS VỚI HIỆU ỨNG SELECTED RÕ RÀNG ─── */}
       <div style={{
-        background: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '8px 24px',
+        background: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '6px 24px',
         display: 'flex', gap: 10, overflowX: 'auto'
       }}>
         {[
@@ -664,7 +783,7 @@ export function FranchiseStaffPortal({ session, onLogout }) {
               key={t.id}
               onClick={() => setTab(t.id)}
               style={{
-                padding: '10px 18px',
+                padding: '9px 16px',
                 borderRadius: 12,
                 border: isSelected ? '1px solid #10b981' : '1px solid transparent',
                 background: isSelected ? '#ecfdf5' : 'transparent',
@@ -693,112 +812,176 @@ export function FranchiseStaffPortal({ session, onLogout }) {
       </div>
 
       {/* ─── MAIN CONTENT AREA ─── */}
-      <main style={{ flex: 1, padding: 24, maxWidth: 1400, width: '100%', margin: '0 auto', boxSizing: 'border-box', overflowX: 'hidden' }}>
+      <main style={{ flex: 1, padding: 20, maxWidth: 1440, width: '100%', margin: '0 auto', boxSizing: 'border-box', overflowX: 'hidden' }}>
         
         {/* ═══════════════════════════════════════════════════════════ */}
-        {/* TAB 1: POS BÁN HÀNG TẠI KIOSK */}
+        {/* TAB 1: POS BÁN HÀNG TẠI KIOSK - CỐ ĐỊNH CHIỀU CAO KHÔNG CUỘN TRANG */}
         {/* ═══════════════════════════════════════════════════════════ */}
         {tab === 'pos' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 380px', gap: 20, alignItems: 'start', width: '100%' }}>
-            {/* Left: Menu & Product Select */}
-            <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 20, boxShadow: '0 4px 16px rgba(0,0,0,0.02)', minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
-              {/* Search & Categories */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18, width: '100%' }}>
-                <div style={{ position: 'relative', width: '100%' }}>
-                  <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
-                  <input
-                    type="text"
-                    value={menuSearch}
-                    onChange={(e) => setMenuSearch(e.target.value)}
-                    placeholder="Tìm món cafe, trà, bánh..."
-                    style={{
-                      width: '100%', padding: '10px 14px 10px 38px', borderRadius: 12,
-                      border: '1px solid #cbd5e1', fontSize: 13, outline: 'none', boxSizing: 'border-box',
-                      transition: 'border-color .15s'
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = '#10b981'}
-                    onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
-                  />
-                  {menuSearch && (
-                    <button
-                      onClick={() => setMenuSearch('')}
-                      style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 390px', gap: 20,
+            alignItems: 'start', width: '100%', height: 'calc(100vh - 150px)', minHeight: 640
+          }}>
+            {/* Left: Menu & Product Select với Header cố định và vùng cuộn riêng */}
+            <div style={{
+              background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0',
+              padding: 16, boxShadow: '0 4px 16px rgba(0,0,0,0.02)', minWidth: 0,
+              width: '100%', height: '100%', boxSizing: 'border-box', display: 'flex',
+              flexDirection: 'column', overflow: 'hidden'
+            }}>
+              {/* Header cố định: Thông tin gói nhượng quyền & Chế độ xem */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{
+                    padding: '4px 10px', borderRadius: 8, background: packageMeta.bg,
+                    color: packageMeta.color, border: `1px solid ${packageMeta.border}`,
+                    fontSize: 12, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6
+                  }}>
+                    <Package size={14} />
+                    <span>{packageMeta.name}</span>
+                  </span>
+                  <span style={{ fontSize: 12, color: '#64748b' }}>
+                    Áp dụng: <b>{packageAllowedMenu.length}</b> món theo gói
+                  </span>
                 </div>
 
-                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', width: '100%', maxWidth: '100%', paddingBottom: 6, scrollbarWidth: 'thin' }}>
-                  {['Tất cả', ...new Set(menuItems.map((m) => m.danh_muc).filter(Boolean))].map((cat) => {
-                    const isCatActive = menuCategory === cat || (cat === 'Tất cả' && !menuCategory)
-                    return (
-                      <button
-                        key={cat}
-                        onClick={() => setMenuCategory(cat === 'Tất cả' ? '' : cat)}
-                        style={{
-                          padding: '7px 16px', borderRadius: 99,
-                          border: isCatActive ? '1px solid #059669' : '1px solid #e2e8f0',
-                          background: isCatActive ? '#059669' : '#ffffff',
-                          color: isCatActive ? '#ffffff' : '#64748b',
-                          fontWeight: isCatActive ? 800 : 600, fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap',
-                          boxShadow: isCatActive ? '0 2px 8px rgba(5,150,105,0.25)' : 'none',
-                          transition: 'all .15s ease', flexShrink: 0
-                        }}
-                      >
-                        {cat}
-                      </button>
-                    )
-                  })}
+                {/* Nút chuyển chế độ xem: Lưới ảnh hoặc Danh sách gọn */}
+                <div style={{ display: 'flex', alignItems: 'center', background: '#f1f5f9', borderRadius: 8, padding: 2 }}>
+                  <button
+                    onClick={() => setPosViewMode('grid')}
+                    title="Dạng lưới hình ảnh"
+                    style={{
+                      padding: '5px 10px', border: 'none', borderRadius: 6, cursor: 'pointer',
+                      background: posViewMode === 'grid' ? '#ffffff' : 'transparent',
+                      color: posViewMode === 'grid' ? '#059669' : '#64748b',
+                      fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4,
+                      boxShadow: posViewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                    }}
+                  >
+                    <LayoutGrid size={14} /> Lưới
+                  </button>
+                  <button
+                    onClick={() => setPosViewMode('compact')}
+                    title="Dạng danh sách gọn - xem nhiều món cùng lúc"
+                    style={{
+                      padding: '5px 10px', border: 'none', borderRadius: 6, cursor: 'pointer',
+                      background: posViewMode === 'compact' ? '#ffffff' : 'transparent',
+                      color: posViewMode === 'compact' ? '#059669' : '#64748b',
+                      fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4,
+                      boxShadow: posViewMode === 'compact' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                    }}
+                  >
+                    <List size={14} /> Gọn
+                  </button>
                 </div>
               </div>
 
-              {/* Product Grid */}
-              {menuLoading ? (
-                <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
-                  <RefreshCw size={28} className="animate-spin" style={{ margin: '0 auto 12px', color: '#059669' }} />
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>Đang tải thực đơn Kiosk...</div>
-                </div>
-              ) : menuItems.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b', background: '#f8fafc', borderRadius: 12 }}>
-                  <Coffee size={36} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#334155' }}>Chưa có món nào trong thực đơn</div>
-                  <button onClick={loadMenu} style={{ marginTop: 12, padding: '8px 16px', background: '#059669', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                    Tải lại thực đơn
+              {/* Ô tìm kiếm nhanh */}
+              <div style={{ position: 'relative', width: '100%', marginBottom: 10 }}>
+                <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
+                <input
+                  type="text"
+                  value={menuSearch}
+                  onChange={(e) => setMenuSearch(e.target.value)}
+                  placeholder="Tìm kiếm nhanh tên món cafe, trà, bánh..."
+                  style={{
+                    width: '100%', padding: '9px 12px 9px 36px', borderRadius: 10,
+                    border: '1px solid #cbd5e1', fontSize: 13, outline: 'none', boxSizing: 'border-box',
+                    transition: 'border-color .15s'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#10b981'}
+                  onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
+                />
+                {menuSearch && (
+                  <button
+                    onClick={() => setMenuSearch('')}
+                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                  >
+                    <X size={14} />
                   </button>
-                </div>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 14, width: '100%', boxSizing: 'border-box' }}>
-                  {menuItems
-                    .filter((item) => {
-                      const matchSearch = !menuSearch || (item.ten_san_pham || '').toLowerCase().includes(menuSearch.toLowerCase())
-                      const matchCat = !menuCategory || item.danh_muc === menuCategory
-                      return matchSearch && matchCat
-                    })
-                    .map((item) => (
+                )}
+              </div>
+
+              {/* Thanh lọc danh mục với số lượng món */}
+              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', width: '100%', maxWidth: '100%', paddingBottom: 6, marginBottom: 10, scrollbarWidth: 'thin' }}>
+                <button
+                  onClick={() => setMenuCategory('')}
+                  style={{
+                    padding: '6px 14px', borderRadius: 99,
+                    border: !menuCategory ? '1px solid #059669' : '1px solid #e2e8f0',
+                    background: !menuCategory ? '#059669' : '#ffffff',
+                    color: !menuCategory ? '#ffffff' : '#475569',
+                    fontWeight: !menuCategory ? 800 : 600, fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap',
+                    boxShadow: !menuCategory ? '0 2px 6px rgba(5,150,105,0.25)' : 'none',
+                    transition: 'all .15s ease', flexShrink: 0
+                  }}
+                >
+                  Tất cả ({packageAllowedMenu.length})
+                </button>
+                {Array.from(categoryCounts.entries()).map(([cat, count]) => {
+                  const isCatActive = menuCategory === cat
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setMenuCategory(cat)}
+                      style={{
+                        padding: '6px 14px', borderRadius: 99,
+                        border: isCatActive ? '1px solid #059669' : '1px solid #e2e8f0',
+                        background: isCatActive ? '#059669' : '#ffffff',
+                        color: isCatActive ? '#ffffff' : '#475569',
+                        fontWeight: isCatActive ? 800 : 600, fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap',
+                        boxShadow: isCatActive ? '0 2px 6px rgba(5,150,105,0.25)' : 'none',
+                        transition: 'all .15s ease', flexShrink: 0
+                      }}
+                    >
+                      {cat} ({count})
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Vùng hiển thị sản phẩm có cuộn chuột riêng biệt */}
+              <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4, minHeight: 0 }}>
+                {menuLoading ? (
+                  <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
+                    <RefreshCw size={26} className="animate-spin" style={{ margin: '0 auto 10px', color: '#059669' }} />
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>Đang kiểm tra thực đơn gói {packageMeta.short}...</div>
+                  </div>
+                ) : filteredProducts.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '50px 20px', color: '#64748b', background: '#f8fafc', borderRadius: 12 }}>
+                    <Coffee size={32} style={{ margin: '0 auto 10px', opacity: 0.4 }} />
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Không tìm thấy sản phẩm phù hợp</div>
+                    <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>
+                      {menuSearch ? 'Thử tìm với từ khóa khác' : 'Chưa có món trong danh mục này'}
+                    </div>
+                  </div>
+                ) : posViewMode === 'grid' ? (
+                  /* Dạng Lưới Thẻ Ảnh (Grid) */
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12, boxSizing: 'border-box' }}>
+                    {paginatedProducts.map((item) => (
                       <div
                         key={item.ma_san_pham}
                         onClick={() => addToCart(item)}
                         style={{
-                          background: '#ffffff', borderRadius: 14, border: '1px solid #e2e8f0',
-                          padding: 12, cursor: 'pointer', display: 'flex', flexDirection: 'column',
-                          justifyContent: 'space-between', minHeight: 180, transition: 'all .2s ease',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.02)', position: 'relative', overflow: 'hidden',
-                          minWidth: 0, boxSizing: 'border-box'
+                          background: '#ffffff', borderRadius: 12, border: '1px solid #e2e8f0',
+                          padding: 10, cursor: 'pointer', display: 'flex', flexDirection: 'column',
+                          justifyContent: 'space-between', minHeight: 165, transition: 'all .15s ease',
+                          boxShadow: '0 2px 5px rgba(0,0,0,0.02)', position: 'relative', overflow: 'hidden',
+                          boxSizing: 'border-box'
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.borderColor = '#10b981'
                           e.currentTarget.style.transform = 'translateY(-2px)'
-                          e.currentTarget.style.boxShadow = '0 8px 20px rgba(16,185,129,0.12)'
+                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(16,185,129,0.12)'
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.borderColor = '#e2e8f0'
                           e.currentTarget.style.transform = 'translateY(0)'
-                          e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.02)'
+                          e.currentTarget.style.boxShadow = '0 2px 5px rgba(0,0,0,0.02)'
                         }}
                       >
-                        {/* Ảnh sản phẩm */}
-                        <div style={{ width: '100%', height: 90, borderRadius: 10, background: '#f8fafc', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
+                        {/* Ảnh món */}
+                        <div style={{ width: '100%', height: 80, borderRadius: 8, background: '#f8fafc', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                           {item.hinh_anh_url ? (
                             <img
                               src={item.hinh_anh_url}
@@ -811,92 +994,212 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                             />
                           ) : null}
                           <div style={{ display: item.hinh_anh_url ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', color: '#94a3b8' }}>
-                            <Coffee size={30} />
+                            <Coffee size={24} />
                           </div>
                         </div>
 
                         <div>
-                          <div style={{ fontWeight: 800, fontSize: 13, color: '#0f172a', marginBottom: 4, lineClamp: 2, display: '-webkit-box', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          <div style={{ fontWeight: 800, fontSize: 12, color: '#0f172a', marginBottom: 3, lineClamp: 2, display: '-webkit-box', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                             {item.ten_san_pham}
                           </div>
-                          <span style={{ fontSize: 10, color: '#64748b', background: '#f1f5f9', padding: '2px 6px', borderRadius: 4, fontWeight: 600 }}>
+                          <span style={{ fontSize: 9, color: '#64748b', background: '#f1f5f9', padding: '1px 5px', borderRadius: 4, fontWeight: 600 }}>
                             {item.danh_muc}
                           </span>
                         </div>
 
-                        <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontWeight: 900, fontSize: 14, color: '#059669' }}>
+                        <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontWeight: 900, fontSize: 13, color: '#059669' }}>
                             {fmtMoney(item.gia_ban)}
                           </span>
                           <span style={{
-                            width: 28, height: 28, borderRadius: 8, background: '#ecfdf5',
+                            width: 24, height: 24, borderRadius: 6, background: '#ecfdf5',
                             color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 16, fontWeight: 900, transition: 'all .15s ease'
+                            fontSize: 14, fontWeight: 900
                           }}>
                             +
                           </span>
                         </div>
                       </div>
                     ))}
-                </div>
-              )}
+                  </div>
+                ) : (
+                  /* Dạng Danh Sách Gọn (Compact Rows) */
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {paginatedProducts.map((item) => (
+                      <div
+                        key={item.ma_san_pham}
+                        onClick={() => addToCart(item)}
+                        style={{
+                          background: '#ffffff', borderRadius: 10, border: '1px solid #e2e8f0',
+                          padding: '8px 12px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between',
+                          alignItems: 'center', transition: 'all .15s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = '#10b981'
+                          e.currentTarget.style.background = '#f0fdf4'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = '#e2e8f0'
+                          e.currentTarget.style.background = '#ffffff'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+                          <div style={{ width: 34, height: 34, borderRadius: 6, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                            {item.hinh_anh_url ? (
+                              <img src={item.hinh_anh_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => e.currentTarget.style.display = 'none'} />
+                            ) : (
+                              <Coffee size={16} color="#94a3b8" />
+                            )}
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {item.ten_san_pham}
+                            </div>
+                            <span style={{ fontSize: 10, color: '#64748b' }}>{item.danh_muc}</span>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <span style={{ fontWeight: 900, fontSize: 13, color: '#059669' }}>
+                            {fmtMoney(item.gia_ban)}
+                          </span>
+                          <button
+                            type="button"
+                            style={{
+                              padding: '4px 10px', borderRadius: 6, background: '#ecfdf5',
+                              color: '#059669', border: '1px solid #a7f3d0', fontWeight: 800,
+                              fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 2
+                            }}
+                          >
+                            <Plus size={12} /> Thêm
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer cố định: Thanh phân trang thông minh */}
+              <div style={{
+                marginTop: 10, paddingTop: 10, borderTop: '1px solid #f1f5f9',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8
+              }}>
+                <span style={{ fontSize: 11, color: '#64748b' }}>
+                  Hiển thị <b>{(posPage - 1) * ITEMS_PER_PAGE + 1}</b> – <b>{Math.min(posPage * ITEMS_PER_PAGE, filteredProducts.length)}</b> trong <b>{filteredProducts.length}</b> món
+                </span>
+
+                {totalPages > 1 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <button
+                      disabled={posPage <= 1}
+                      onClick={() => setPosPage((p) => Math.max(1, p - 1))}
+                      style={{
+                        padding: '4px 8px', borderRadius: 6, border: '1px solid #cbd5e1',
+                        background: posPage <= 1 ? '#f8fafc' : '#ffffff',
+                        color: posPage <= 1 ? '#cbd5e1' : '#334155',
+                        cursor: posPage <= 1 ? 'not-allowed' : 'pointer', fontSize: 11, fontWeight: 700
+                      }}
+                    >
+                      Trước
+                    </button>
+
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter((p) => p === 1 || p === totalPages || Math.abs(p - posPage) <= 1)
+                      .map((p, idx, arr) => (
+                        <React.Fragment key={p}>
+                          {idx > 0 && arr[idx - 1] !== p - 1 && <span style={{ fontSize: 11, color: '#94a3b8' }}>...</span>}
+                          <button
+                            onClick={() => setPosPage(p)}
+                            style={{
+                              width: 26, height: 26, borderRadius: 6,
+                              border: posPage === p ? '1px solid #059669' : '1px solid #e2e8f0',
+                              background: posPage === p ? '#059669' : '#ffffff',
+                              color: posPage === p ? '#ffffff' : '#334155',
+                              fontWeight: posPage === p ? 800 : 600, fontSize: 11, cursor: 'pointer'
+                            }}
+                          >
+                            {p}
+                          </button>
+                        </React.Fragment>
+                      ))}
+
+                    <button
+                      disabled={posPage >= totalPages}
+                      onClick={() => setPosPage((p) => Math.min(totalPages, p + 1))}
+                      style={{
+                        padding: '4px 8px', borderRadius: 6, border: '1px solid #cbd5e1',
+                        background: posPage >= totalPages ? '#f8fafc' : '#ffffff',
+                        color: posPage >= totalPages ? '#cbd5e1' : '#334155',
+                        cursor: posPage >= totalPages ? 'not-allowed' : 'pointer', fontSize: 11, fontWeight: 700
+                      }}
+                    >
+                      Sau
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Right: Cart & Order Summary */}
-            <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 20, boxShadow: '0 4px 16px rgba(0,0,0,0.03)', minWidth: 0, boxSizing: 'border-box' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Receipt size={18} color="#059669" /> Đơn hàng tại quầy Kiosk
+            {/* Right: Cart & Order Summary cố định chiều cao */}
+            <div style={{
+              background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0',
+              padding: 16, boxShadow: '0 4px 16px rgba(0,0,0,0.03)', minWidth: 0,
+              boxSizing: 'border-box', height: '100%', display: 'flex', flexDirection: 'column'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Receipt size={17} color="#059669" /> Đơn hàng tại quầy Kiosk
                 </h3>
                 {cart.length > 0 && (
                   <button
                     onClick={() => setCart([])}
-                    style={{ background: '#fee2e2', border: 'none', color: '#dc2626', padding: '4px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                    style={{ background: '#fee2e2', border: 'none', color: '#dc2626', padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
                   >
                     Xóa tất cả
                   </button>
                 )}
               </div>
 
-              {/* Cart Item List */}
-              <div style={{ maxHeight: 280, overflowY: 'auto', marginBottom: 16 }}>
+              {/* Cart Item List với cuộn chuột riêng */}
+              <div style={{ flex: 1, overflowY: 'auto', marginBottom: 12, paddingRight: 4 }}>
                 {cart.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '40px 0', color: '#94a3b8' }}>
-                    <ShoppingBag size={34} style={{ margin: '0 auto 8px', opacity: 0.4 }} />
+                    <ShoppingBag size={32} style={{ margin: '0 auto 8px', opacity: 0.4 }} />
                     <div style={{ fontSize: 13, fontWeight: 600 }}>Chưa có món nào được chọn</div>
                     <div style={{ fontSize: 11, color: '#cbd5e1', marginTop: 2 }}>Nhấn vào món bên trái để thêm vào đơn</div>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {cart.map((item) => (
-                      <div key={item.ma_san_pham} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
+                      <div key={item.ma_san_pham} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid #f1f5f9' }}>
                         <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                             {item.ten_san_pham}
                           </div>
-                          <div style={{ fontSize: 12, color: '#059669', fontWeight: 800 }}>{fmtMoney(item.gia_ban)}</div>
+                          <div style={{ fontSize: 11, color: '#059669', fontWeight: 800 }}>{fmtMoney(item.gia_ban)}</div>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                           <button
                             onClick={() => updateCartQty(item.ma_san_pham, -1)}
-                            style={{ width: 24, height: 24, borderRadius: 6, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            style={{ width: 22, height: 22, borderRadius: 5, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                           >
-                            <Minus size={12} />
+                            <Minus size={11} />
                           </button>
-                          <span style={{ fontSize: 13, fontWeight: 800, width: 22, textAlign: 'center' }}>{item.qty}</span>
+                          <span style={{ fontSize: 12, fontWeight: 800, width: 20, textAlign: 'center' }}>{item.qty}</span>
                           <button
                             onClick={() => updateCartQty(item.ma_san_pham, 1)}
-                            style={{ width: 24, height: 24, borderRadius: 6, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            style={{ width: 22, height: 22, borderRadius: 5, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                           >
-                            <Plus size={12} />
+                            <Plus size={11} />
                           </button>
                           <button
                             onClick={() => removeCartItem(item.ma_san_pham)}
                             title="Xóa món"
-                            style={{ width: 24, height: 24, borderRadius: 6, border: '1px solid #fee2e2', background: '#fef2f2', color: '#dc2626', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: 4 }}
+                            style={{ width: 22, height: 22, borderRadius: 5, border: '1px solid #fee2e2', background: '#fef2f2', color: '#dc2626', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: 2 }}
                           >
-                            <Trash2 size={12} />
+                            <Trash2 size={11} />
                           </button>
                         </div>
                       </div>
@@ -906,23 +1209,23 @@ export function FranchiseStaffPortal({ session, onLogout }) {
               </div>
 
               {/* Calculation Breakdown */}
-              <div style={{ background: '#f8fafc', borderRadius: 12, padding: 14, marginBottom: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#64748b', marginBottom: 6 }}>
+              <div style={{ background: '#f8fafc', borderRadius: 10, padding: 10, marginBottom: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#64748b', marginBottom: 4 }}>
                   <span>Tạm tính ({cart.reduce((a, c) => a + c.qty, 0)} món):</span>
                   <span style={{ fontWeight: 700, color: '#0f172a' }}>{fmtMoney(cartSubtotal)}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, fontWeight: 900, color: '#059669', paddingTop: 8, borderTop: '1px dashed #cbd5e1' }}>
-                  <span>Tổng tiền thanh toán:</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 900, color: '#059669', paddingTop: 6, borderTop: '1px dashed #cbd5e1' }}>
+                  <span>Tổng thanh toán:</span>
                   <span>{fmtMoney(cartTotal)}</span>
                 </div>
               </div>
 
               {/* Payment Methods */}
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 6 }}>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 11, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
                   Phương thức thanh toán
                 </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
                   {[
                     { id: 'TIEN_MAT', label: 'Tiền mặt' },
                     { id: 'NGAN_HANG_QR', label: 'QR Pay' },
@@ -934,12 +1237,12 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                         key={m.id}
                         onClick={() => setPaymentMethod(m.id)}
                         style={{
-                          padding: '9px 4px', borderRadius: 10,
+                          padding: '7px 4px', borderRadius: 8,
                           border: isSelected ? '1.5px solid #059669' : '1px solid #cbd5e1',
                           background: isSelected ? '#ecfdf5' : '#fff',
                           color: isSelected ? '#047857' : '#475569',
-                          fontWeight: isSelected ? 800 : 600, fontSize: 12, cursor: 'pointer',
-                          boxShadow: isSelected ? '0 2px 6px rgba(16,185,129,0.15)' : 'none',
+                          fontWeight: isSelected ? 800 : 600, fontSize: 11, cursor: 'pointer',
+                          boxShadow: isSelected ? '0 2px 5px rgba(16,185,129,0.15)' : 'none',
                           transition: 'all .15s ease'
                         }}
                       >
@@ -952,8 +1255,8 @@ export function FranchiseStaffPortal({ session, onLogout }) {
 
               {/* Cash Given & Change */}
               {paymentMethod === 'TIEN_MAT' && (
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
                     Tiền khách đưa
                   </label>
                   <input
@@ -961,38 +1264,38 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                     value={cashGiven}
                     onChange={(e) => setCashGiven(e.target.value)}
                     placeholder="Nhập số tiền..."
-                    style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 12, outline: 'none', boxSizing: 'border-box' }}
                   />
                   {Number(cashGiven) > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginTop: 6, fontWeight: 700, color: '#047857' }}>
-                      <span>Tiền thối lại khách:</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginTop: 4, fontWeight: 700, color: '#047857' }}>
+                      <span>Tiền thối lại:</span>
                       <span>{fmtMoney(cartChange)}</span>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Checkout CTA Button - Màu xanh lá chuẩn UX */}
+              {/* Checkout CTA Button */}
               <button
                 onClick={handleCheckoutPos}
                 disabled={cart.length === 0 || posSubmitting}
                 style={{
-                  width: '100%', padding: '13px', borderRadius: 12, border: 'none',
+                  width: '100%', padding: '11px', borderRadius: 10, border: 'none',
                   background: cart.length === 0 ? '#94a3b8' : 'linear-gradient(135deg, #10b981, #059669)',
-                  color: '#fff', fontSize: 14, fontWeight: 800, cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
-                  boxShadow: cart.length === 0 ? 'none' : '0 4px 14px rgba(16,185,129,0.35)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  color: '#fff', fontSize: 13, fontWeight: 800, cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
+                  boxShadow: cart.length === 0 ? 'none' : '0 4px 12px rgba(16,185,129,0.3)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   transition: 'all .2s ease'
                 }}
               >
                 {posSubmitting ? (
                   <>
-                    <RefreshCw size={16} className="animate-spin" />
-                    <span>Đang xử lý đơn hàng...</span>
+                    <RefreshCw size={15} className="animate-spin" />
+                    <span>Đang xử lý...</span>
                   </>
                 ) : (
                   <>
-                    <ShoppingBag size={18} />
+                    <ShoppingBag size={16} />
                     <span>Hoàn tất &amp; Thanh toán ({fmtMoney(cartTotal)})</span>
                   </>
                 )}
@@ -1490,7 +1793,6 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                               }}>
                                 <Clock size={13} color="#b45309" /> Chờ Quản lý duyệt
                               </span>
-                              {/* Nút hủy yêu cầu - Màu đỏ chuẩn UX cho hành động hủy/xóa */}
                               <button
                                 onClick={() => handleDeleteMyRequest(req.ma_ca_lam_viec)}
                                 style={{
@@ -1620,6 +1922,7 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                 <div><span style={{ color: '#64748b' }}>Email:</span> <b style={{ color: '#0f172a' }}>{user.email || '—'}</b></div>
                 <div><span style={{ color: '#64748b' }}>Vai trò:</span> <span style={{ padding: '2px 8px', borderRadius: 6, background: '#ecfdf5', color: '#047857', fontWeight: 800, fontSize: 11 }}>Nhân viên Kiosk nhượng quyền</span></div>
                 <div><span style={{ color: '#64748b' }}>Kiosk làm việc:</span> <b style={{ color: '#0f172a' }}>{kioskName} ({kioskCode})</b></div>
+                <div><span style={{ color: '#64748b' }}>Mô hình nhượng quyền:</span> <b style={{ color: packageMeta.color }}>{packageMeta.name}</b></div>
               </div>
             </div>
 
