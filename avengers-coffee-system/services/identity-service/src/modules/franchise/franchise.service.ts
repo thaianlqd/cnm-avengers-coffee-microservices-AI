@@ -457,6 +457,7 @@ export class FranchiseService {
     hoSo.ghi_chu = hoSo.ghi_chu ? hoSo.ghi_chu + `\n[Hệ thống]: Hủy đăng ký. Số tiền hoàn cọc dự kiến: ${refundAmount}đ` : `[Hệ thống]: Số tiền hoàn cọc dự kiến: ${refundAmount}đ`;
     await this.hoSoRepo.save(hoSo);
     
+    await this.logAction(null, 'HUY_HO_SO', `Hồ sơ: ${id}, Hoàn cọc: ${refundAmount}`);
     return { success: true, message, data: { ...hoSo, refund_amount: refundAmount } };
   }
 
@@ -580,10 +581,11 @@ export class FranchiseService {
     kiosk.trang_thai = 'DANG_THIET_LAP';
     await this.kioskRepo.save(kiosk);
 
+    await this.logAction(adminId, 'TAO_HOP_DONG', `Kiosk: ${kioskId}`);
     return { success: true, message: 'Hợp đồng đã được tạo. Kiosk đang trong giai đoạn thiết lập.', data: hopDong };
   }
 
-  async xacNhanKhaiTruong(kioskId: string) {
+  async xacNhanKhaiTruong(kioskId: string, adminId: string) {
     const kiosk = await this.kioskRepo.findOne({ where: { id: kioskId } });
     if (!kiosk) throw new NotFoundException('Không tìm thấy kiosk');
     if (kiosk.trang_thai !== 'DANG_THIET_LAP') throw new BadRequestException('Kiosk không ở trạng thái đang thiết lập');
@@ -595,6 +597,7 @@ export class FranchiseService {
       hopDong.ngay_khai_truong = new Date().toISOString().split('T')[0];
       await this.hopDongRepo.save(hopDong);
     }
+    await this.logAction(adminId, 'KHAI_TRUONG_KIOSK', `Kiosk: ${kioskId}`);
     return { success: true, message: 'Kiosk đã khai trương và chính thức hoạt động!', data: kiosk };
   }
 
@@ -766,6 +769,7 @@ export class FranchiseService {
       }));
     }
 
+    await this.logAction(adminId, 'GIAO_DON_COMBO', `Đơn: ${donId}`);
     return { success: true, message: 'Đã xác nhận giao combo và cộng vào kho kiosk.', data: don };
   }
 
@@ -776,6 +780,7 @@ export class FranchiseService {
     don.ghi_chu_admin = ghi_chu;
     don.nguoi_xu_ly_id = adminId;
     await this.donMuaComboRepo.save(don);
+    await this.logAction(adminId, 'TAM_HOAN_DON_COMBO', `Đơn: ${donId}, Lý do: ${ghi_chu}`);
     return { success: true, message: 'Đơn đã tạm hoãn do kho không đủ hàng.', data: don };
   }
 
@@ -819,6 +824,7 @@ export class FranchiseService {
     congNo.nguoi_xac_nhan_id = accountantId;
     congNo.ghi_chu = ghi_chu || null;
     await this.congNoRepo.save(congNo);
+    await this.logAction(accountantId, 'XAC_NHAN_THANH_TOAN_CONG_NO', `Công nợ: ${id}`);
     return { success: true, message: 'Đã xác nhận thanh toán công nợ thành công.', data: congNo };
   }
 
@@ -912,6 +918,7 @@ export class FranchiseService {
         results.push(royalty);
       }
     }
+    await this.logAction(adminId, 'TINH_ROYALTY_THANG', `Tháng: ${thang}, Số lượng Kiosk: ${kiosks.length}`);
     return { success: true, message: `Đã tính royalty cho tháng ${thang} - ${results.length} kiosk.`, data: results };
   }
 
