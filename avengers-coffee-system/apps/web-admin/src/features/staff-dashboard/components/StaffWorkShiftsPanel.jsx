@@ -57,11 +57,32 @@ export function StaffWorkShiftsPanel({
   checkingAttendanceShiftId,
   enableRequestTabs = true,
 }) {
+  const nextWeekRange = useMemo(() => {
+    const now = new Date()
+    const currentDay = now.getDay() // 0 is Sunday, 1 is Monday...
+    const isSunday = currentDay === 0
+    // Monday of current week
+    const currentMonday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (currentDay === 0 ? 6 : currentDay - 1))
+    // Monday of next week
+    const nextMonday = new Date(currentMonday.getFullYear(), currentMonday.getMonth(), currentMonday.getDate() + 7)
+    // Sunday of next week
+    const nextSunday = new Date(currentMonday.getFullYear(), currentMonday.getMonth(), currentMonday.getDate() + 13)
+
+    const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    return {
+      isSunday,
+      nextMondayStr: fmt(nextMonday),
+      nextSundayStr: fmt(nextSunday),
+      nextMondayFmt: `${String(nextMonday.getDate()).padStart(2, '0')}/${String(nextMonday.getMonth() + 1).padStart(2, '0')}`,
+      nextSundayFmt: `${String(nextSunday.getDate()).padStart(2, '0')}/${String(nextSunday.getMonth() + 1).padStart(2, '0')}`
+    }
+  }, [])
+
   const [weekStart, setWeekStart] = useState(getInitialWeekStart)
   const [selectedShift, setSelectedShift] = useState(null)
   const [activeTab, setActiveTab] = useState(enableRequestTabs ? TABS.REQUEST : TABS.SCHEDULE)
   const [requestForm, setRequestForm] = useState(() => ({
-    shift_date: new Date().toISOString().slice(0, 10),
+    shift_date: nextWeekRange.nextMondayStr,
     shift_code: 'SANG',
     note: '',
   }))
@@ -343,13 +364,17 @@ export function StaffWorkShiftsPanel({
           onSubmit={async (event) => {
             event.preventDefault()
             if (typeof onRequestShift !== 'function') return
-            if (requestForm.shift_date < todayDate) {
-              window.alert('Không thể đăng ký ca làm việc cho ngày đã qua.')
+            if (nextWeekRange.isSunday) {
+              window.alert('Hạn chót đăng ký ca cho tuần sau đã kết thúc (trước Chủ Nhật hàng tuần). Quản lý chi nhánh đang xét duyệt lịch.')
+              return
+            }
+            if (requestForm.shift_date < nextWeekRange.nextMondayStr || requestForm.shift_date > nextWeekRange.nextSundayStr) {
+              window.alert(`Chỉ được đăng ký ca làm việc cho tuần kế tiếp (${nextWeekRange.nextMondayFmt} - ${nextWeekRange.nextSundayFmt}).`)
               return
             }
             const result = await onRequestShift(requestForm)
             if (result?.ok) {
-              setRequestForm({ shift_date: new Date().toISOString().slice(0, 10), shift_code: 'SANG', note: '' })
+              setRequestForm({ shift_date: nextWeekRange.nextMondayStr, shift_code: 'SANG', note: '' })
             }
           }}
           style={{
@@ -363,20 +388,54 @@ export function StaffWorkShiftsPanel({
             gap: '1.25rem'
           }}
         >
-          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <PlusCircle size={18} color="#10b981" /> Đăng ký nguyện vọng ca làm việc
-          </h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <PlusCircle size={18} color="#10b981" /> Đăng ký nguyện vọng ca làm việc
+            </h3>
+            <span style={{
+              fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 99,
+              background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0'
+            }}>
+              Tuần kế tiếp: {nextWeekRange.nextMondayFmt} – {nextWeekRange.nextSundayFmt}
+            </span>
+          </div>
+
+          {/* Banner cảnh báo nếu hôm nay là Chủ Nhật */}
+          {nextWeekRange.isSunday ? (
+            <div style={{
+              background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 12,
+              padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12,
+              color: '#92400e', fontSize: 13, fontWeight: 600
+            }}>
+              <AlertCircle size={22} color="#d97706" style={{ flexShrink: 0 }} />
+              <div>
+                <strong style={{ display: 'block', color: '#b45309', marginBottom: 2 }}>Cổng đăng ký ca tuần tới đã đóng</strong>
+                Thời hạn đăng ký ca kết thúc trước ngày Chủ Nhật hàng tuần (hạn chót 23:59 Thứ Bảy). Quản lý chi nhánh đang tiến hành xét duyệt lịch làm việc chính thức.
+              </div>
+            </div>
+          ) : (
+            <div style={{
+              background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12,
+              padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10,
+              color: '#166534', fontSize: 12, fontWeight: 600
+            }}>
+              <Clock size={16} color="#15803d" style={{ flexShrink: 0 }} />
+              <span>Chỉ nhận đăng ký ca cho <b>tuần kế tiếp</b> ({nextWeekRange.nextMondayFmt} – {nextWeekRange.nextSundayFmt}). Hạn chót gửi yêu cầu trước Chủ Nhật (23:59 Thứ 7).</span>
+            </div>
+          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
             <div>
               <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.35rem' }}>
-                Ngày muốn đăng ký
+                Ngày muốn đăng ký *
               </label>
               <input
                 type="date"
                 value={requestForm.shift_date}
                 onChange={(e) => setRequestForm((prev) => ({ ...prev, shift_date: e.target.value }))}
-                min={todayDate}
+                min={nextWeekRange.nextMondayStr}
+                max={nextWeekRange.nextSundayStr}
+                disabled={nextWeekRange.isSunday}
                 required
                 style={{
                   width: '100%',
@@ -384,49 +443,57 @@ export function StaffWorkShiftsPanel({
                   borderRadius: '10px',
                   border: '1px solid #cbd5e1',
                   fontSize: '0.875rem',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  background: nextWeekRange.isSunday ? '#f1f5f9' : '#ffffff'
                 }}
               />
+              <span style={{ fontSize: 11, color: '#64748b', marginTop: 4, display: 'block' }}>
+                Phạm vi: {nextWeekRange.nextMondayFmt} – {nextWeekRange.nextSundayFmt}
+              </span>
             </div>
 
             <div>
               <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.35rem' }}>
-                Khung ca làm
+                Khung ca làm *
               </label>
               <select
                 value={requestForm.shift_code}
                 onChange={(e) => setRequestForm((prev) => ({ ...prev, shift_code: e.target.value }))}
+                disabled={nextWeekRange.isSunday}
                 style={{
                   width: '100%',
                   padding: '0.55rem 0.75rem',
                   borderRadius: '10px',
                   border: '1px solid #cbd5e1',
                   fontSize: '0.875rem',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  background: nextWeekRange.isSunday ? '#f1f5f9' : '#ffffff'
                 }}
               >
-                <option value="SANG">Ca sáng (07:00 - 12:00)</option>
-                <option value="CHIEU">Ca chiều (12:00 - 17:00)</option>
-                <option value="TOI">Ca tối (17:00 - 22:00)</option>
+                <option value="SANG">Ca sáng (06:00 - 12:00)</option>
+                <option value="CHIEU">Ca chiều (12:00 - 18:00)</option>
+                <option value="TOI">Ca tối (18:00 - 23:00)</option>
               </select>
             </div>
 
             <div style={{ gridColumn: 'span 2' }}>
               <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.35rem' }}>
-                Lý do / Ghi chú cho Quản lý
+                Lý do / Ghi chú cho Quản lý chi nhánh
               </label>
               <input
                 type="text"
                 value={requestForm.note}
                 onChange={(e) => setRequestForm((prev) => ({ ...prev, note: e.target.value }))}
-                placeholder="Ví dụ: Đăng ký làm thêm ca, xin đổi ca..."
+                disabled={nextWeekRange.isSunday}
+                placeholder="Ví dụ: Đăng ký làm thêm ca, xin ưu tiên trực máy pha chính..."
                 style={{
                   width: '100%',
                   padding: '0.55rem 0.75rem',
                   borderRadius: '10px',
                   border: '1px solid #cbd5e1',
                   fontSize: '0.875rem',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  background: nextWeekRange.isSunday ? '#f1f5f9' : '#ffffff'
                 }}
               />
             </div>
@@ -435,7 +502,7 @@ export function StaffWorkShiftsPanel({
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <button
               type="submit"
-              disabled={creatingShiftRequest}
+              disabled={creatingShiftRequest || nextWeekRange.isSunday}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -443,12 +510,12 @@ export function StaffWorkShiftsPanel({
                 padding: '0.65rem 1.25rem',
                 borderRadius: '10px',
                 border: 'none',
-                background: '#10b981',
+                background: nextWeekRange.isSunday ? '#94a3b8' : 'linear-gradient(135deg, #10b981, #059669)',
                 color: '#ffffff',
                 fontSize: '0.875rem',
                 fontWeight: '700',
-                cursor: creatingShiftRequest ? 'not-allowed' : 'pointer',
-                boxShadow: '0 4px 10px rgba(16, 185, 129, 0.25)'
+                cursor: (creatingShiftRequest || nextWeekRange.isSunday) ? 'not-allowed' : 'pointer',
+                boxShadow: nextWeekRange.isSunday ? 'none' : '0 4px 10px rgba(16, 185, 129, 0.25)'
               }}
             >
               <Send size={16} />
