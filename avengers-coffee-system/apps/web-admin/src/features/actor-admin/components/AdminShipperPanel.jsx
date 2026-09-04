@@ -366,7 +366,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
             <Truck size={24} />
           </div>
           <div>
-            <h2 style={{ fontSize: '1.4rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>Quản lý giao hàng toàn hệ thống</h2>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>Quản lý nhân viên giao hàng toàn hệ thống</h2>
             <span style={{ fontSize: '0.875rem', color: '#64748b' }}>Hồ sơ nhân viên, cấu hình phân công tự động, KPI hiệu suất và hoa hồng chi trả</span>
           </div>
         </div>
