@@ -297,13 +297,24 @@ export class UserService implements OnModuleInit {
   }
 
   private taoAccessToken(user: User) {
+    const isFranchiseStaff = Boolean(
+      user.vai_tro === 'FRANCHISE_STAFF' ||
+      user.parent_franchisee_id ||
+      user.kiosk_id ||
+      (user.vai_tro === 'STAFF' && user.co_so_ma && user.co_so_ma.startsWith('KSK-'))
+    );
+    const effectiveRole = isFranchiseStaff ? 'FRANCHISE_STAFF' : (user.vai_tro || 'CUSTOMER');
+
     return this.jwtService.signAsync({
       sub: user.ma_nguoi_dung,
-      role: user.vai_tro || 'CUSTOMER',
+      role: effectiveRole,
+      rawRole: user.vai_tro,
       username: user.ten_dang_nhap || null,
       email: user.email || null,
       branchCode: user.co_so_ma || null,
       branchName: user.co_so_ten || null,
+      parentFranchiseeId: user.parent_franchisee_id || null,
+      kioskId: user.kiosk_id || null,
     });
   }
 
@@ -407,6 +418,14 @@ export class UserService implements OnModuleInit {
     if (!isMatch) throw new UnauthorizedException('Sai mật khẩu');
     if (user.trang_thai !== 'ACTIVE') throw new UnauthorizedException('Tai khoan da bi vo hieu hoa');
 
+    const isFranchiseStaff = Boolean(
+      user.vai_tro === 'FRANCHISE_STAFF' ||
+      user.parent_franchisee_id ||
+      user.kiosk_id ||
+      (user.vai_tro === 'STAFF' && user.co_so_ma && user.co_so_ma.startsWith('KSK-'))
+    );
+    const effectiveRole = isFranchiseStaff ? 'FRANCHISE_STAFF' : (user.vai_tro || 'CUSTOMER');
+
     // Trả về đúng format để Frontend AuthModal.jsx của bác đọc được
     const receivedBirthdayVoucher = await this.kiemTraVaSinhVoucherSinhNhatChoUser(user.ma_nguoi_dung);
     const accessToken = await this.taoAccessToken(user);
@@ -417,11 +436,17 @@ export class UserService implements OnModuleInit {
         hoTen: user.ho_ten,
         tenDangNhap: user.ten_dang_nhap,
         email: user.email,
-        vaiTro: user.vai_tro || 'STAFF',
+        vaiTro: effectiveRole,
+        vai_tro: effectiveRole,
         coSoMa: user.co_so_ma,
         coSoTen: user.co_so_ten,
         co_so_ma: user.co_so_ma,
         co_so_ten: user.co_so_ten,
+        parent_franchisee_id: user.parent_franchisee_id || null,
+        parentFranchiseeId: user.parent_franchisee_id || null,
+        kiosk_id: user.kiosk_id || null,
+        kioskId: user.kiosk_id || null,
+        pos_permissions: user.pos_permissions || [],
         nhanVoucherSinhNhat: receivedBirthdayVoucher,
       },
       requirePasswordChange: user.require_password_change,
@@ -538,18 +563,56 @@ export class UserService implements OnModuleInit {
     };
   }
 
+  async layThongTinCuaToi(userId: string) {
+    const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: userId } });
+    if (!user) throw new NotFoundException('Người dùng không tồn tại');
+    const isFranchiseStaff = Boolean(
+      user.vai_tro === 'FRANCHISE_STAFF' ||
+      user.parent_franchisee_id ||
+      user.kiosk_id ||
+      (user.vai_tro === 'STAFF' && user.co_so_ma && user.co_so_ma.startsWith('KSK-'))
+    );
+    const effectiveRole = isFranchiseStaff ? 'FRANCHISE_STAFF' : (user.vai_tro || 'CUSTOMER');
+
+    return {
+      ma_nguoi_dung: user.ma_nguoi_dung,
+      hoTen: user.ho_ten,
+      ho_ten: user.ho_ten,
+      tenDangNhap: user.ten_dang_nhap,
+      ten_dang_nhap: user.ten_dang_nhap,
+      email: user.email,
+      so_dien_thoai: user.so_dien_thoai,
+      vaiTro: effectiveRole,
+      vai_tro: effectiveRole,
+      coSoMa: user.co_so_ma,
+      co_so_ma: user.co_so_ma,
+      coSoTen: user.co_so_ten,
+      co_so_ten: user.co_so_ten,
+      kiosk_id: user.kiosk_id,
+      kioskId: user.kiosk_id,
+      parent_franchisee_id: user.parent_franchisee_id,
+      parentFranchiseeId: user.parent_franchisee_id,
+      pos_permissions: user.pos_permissions || [],
+    };
+  }
+
   async layDanhSachNhanSu(role?: string, branchCode?: string) {
     const query = this.userRepo
       .createQueryBuilder('user')
-      .where('user.vai_tro IN (:...roles)', { roles: ['STAFF', 'MANAGER'] })
+      .where('user.vai_tro IN (:...roles)', { roles: ['STAFF', 'MANAGER', 'FRANCHISE_STAFF'] })
       .andWhere('user.trang_thai = :status', { status: 'ACTIVE' })
 
     if (role?.trim()) {
-      query.andWhere('user.vai_tro = :role', { role: role.trim().toUpperCase() })
+      const upperRole = role.trim().toUpperCase();
+      if (upperRole === 'STAFF') {
+        query.andWhere('user.vai_tro IN (:...staffRoles)', { staffRoles: ['STAFF', 'FRANCHISE_STAFF'] });
+      } else {
+        query.andWhere('user.vai_tro = :role', { role: upperRole });
+      }
     }
 
     if (branchCode?.trim()) {
-      query.andWhere('user.co_so_ma = :branchCode', { branchCode: branchCode.trim().toUpperCase() })
+      query.andWhere('UPPER(user.co_so_ma) = :branchCode', { branchCode: branchCode.trim().toUpperCase() });
     }
 
     const rows = await query

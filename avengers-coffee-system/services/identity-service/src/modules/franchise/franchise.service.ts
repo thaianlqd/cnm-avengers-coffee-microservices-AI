@@ -11,6 +11,7 @@ import { RoyaltyHangThang } from './entities/royalty.entity';
 import { KetQuaDoiSoat } from './entities/doi-soat.entity';
 import { BienBanViPham } from './entities/bien-ban-vi-pham.entity';
 import { AuditLog } from './entities/audit-log.entity';
+import { User } from '../user/user.entity';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import nodemailer from 'nodemailer';
@@ -47,6 +48,9 @@ export class FranchiseService {
 
     @InjectRepository(AuditLog)
     private auditLogRepo: Repository<AuditLog>,
+
+    @InjectRepository(User)
+    private userRepo: Repository<User>,
 
     private dataSource: DataSource,
   ) {}
@@ -1325,6 +1329,229 @@ export class FranchiseService {
     await this.dataSource.query('UPDATE identity.users SET is_active = false WHERE id = $1', [kiosk.franchisee_id]);
     await this.logAction(adminId, 'CHAM_DUT_HOP_DONG', `Kiosk: ${kioskId}`);
     return { success: true, message: 'Đã chấm dứt hợp đồng Kiosk vĩnh viễn.' };
+  }
+
+  // ─────────────────────────────────────────────
+  // UC-FRANCHISEE: Quản lý nhân viên con tại Kiosk
+  // ─────────────────────────────────────────────
+  async layDanhSachNhanVienCon(franchiseeId: string, kioskId?: string, keyword?: string) {
+    // Lấy danh sách kiosk của franchisee
+    const kiosks = await this.kioskRepo.find({ where: { franchisee_id: franchiseeId } });
+    const kioskCodes = kiosks.map(k => k.ma_kiosk);
+    const kioskIds = kiosks.map(k => k.id);
+
+    if (kiosks.length === 0) {
+      return [];
+    }
+
+    const query = this.userRepo.createQueryBuilder('u')
+      .where('(u.parent_franchisee_id = :franchiseeId OR (u.vai_tro IN (:...staffRoles) AND u.co_so_ma IN (:...kioskCodes)))', {
+        franchiseeId,
+        staffRoles: ['STAFF', 'FRANCHISE_STAFF'],
+        kioskCodes: kioskCodes.length ? kioskCodes : ['__NONE__']
+      });
+
+    if (kioskId) {
+      const targetKiosk = kiosks.find(k => k.id === kioskId || k.ma_kiosk === kioskId);
+      if (targetKiosk) {
+        query.andWhere('(u.kiosk_id = :kioskId OR u.co_so_ma = :kioskCode)', {
+          kioskId: targetKiosk.id,
+          kioskCode: targetKiosk.ma_kiosk
+        });
+      }
+    }
+
+    if (keyword && keyword.trim()) {
+      const kw = `%${keyword.trim().toLowerCase()}%`;
+      query.andWhere('(LOWER(u.ho_ten) LIKE :kw OR LOWER(u.ten_dang_nhap) LIKE :kw OR LOWER(u.so_dien_thoai) LIKE :kw OR LOWER(u.email) LIKE :kw)', { kw });
+    }
+
+    query.orderBy('u.ngay_tao', 'DESC');
+    const users = await query.getMany();
+
+    return users.map(u => {
+      const matchedKiosk = kiosks.find(k => k.id === u.kiosk_id || k.ma_kiosk === u.co_so_ma);
+      return {
+        ma_nguoi_dung: u.ma_nguoi_dung,
+        ten_dang_nhap: u.ten_dang_nhap,
+        ho_ten: u.ho_ten,
+        email: u.email,
+        so_dien_thoai: u.so_dien_thoai,
+        avatar_url: u.avatar_url,
+        vai_tro: u.vai_tro,
+        trang_thai: u.trang_thai,
+        co_so_ma: u.co_so_ma || matchedKiosk?.ma_kiosk || null,
+        co_so_ten: u.co_so_ten || matchedKiosk?.ten_kiosk || null,
+        kiosk_id: u.kiosk_id || matchedKiosk?.id || null,
+        parent_franchisee_id: u.parent_franchisee_id,
+        pos_permissions: Array.isArray(u.pos_permissions) ? u.pos_permissions : ['pos_allow_order', 'pos_allow_open_close_shift'],
+        require_password_change: u.require_password_change,
+        ngay_tao: u.ngay_tao,
+      };
+    });
+  }
+
+  async taoNhanVienCon(franchiseeId: string, body: any) {
+    const { ten_dang_nhap, mat_khau, ho_ten, email, so_dien_thoai, kiosk_id, pos_permissions } = body;
+    if (!ten_dang_nhap || !mat_khau || !ho_ten) {
+      throw new BadRequestException('Vui lòng nhập đầy đủ tên đăng nhập, mật khẩu và họ tên');
+    }
+
+    const normalizedUsername = String(ten_dang_nhap).trim().toLowerCase();
+    const existing = await this.userRepo.findOne({
+      where: [{ ten_dang_nhap: normalizedUsername }, ...(email ? [{ email }] : [])]
+    });
+    if (existing) {
+      throw new ConflictException('Tên đăng nhập hoặc email đã được sử dụng');
+    }
+
+    // Kiểm tra kiosk có thuộc quyền sở hữu của franchisee không
+    let targetKiosk: Kiosk | null = null;
+    if (kiosk_id) {
+      targetKiosk = await this.kioskRepo.findOne({ where: { id: kiosk_id, franchisee_id: franchiseeId } });
+      if (!targetKiosk) {
+        targetKiosk = await this.kioskRepo.findOne({ where: { ma_kiosk: kiosk_id, franchisee_id: franchiseeId } });
+      }
+    }
+    if (!targetKiosk) {
+      const myKiosks = await this.kioskRepo.find({ where: { franchisee_id: franchiseeId } });
+      if (myKiosks.length > 0) targetKiosk = myKiosks[0];
+    }
+
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(mat_khau, salt);
+
+    const defaultPermissions = [
+      'pos_allow_order',
+      'pos_allow_cancel',
+      'pos_allow_discount',
+      'pos_allow_open_close_shift',
+      'pos_allow_view_report'
+    ];
+
+    const newUser = this.userRepo.create({
+      ten_dang_nhap: normalizedUsername,
+      mat_khau_hash: hashedPassword,
+      ho_ten: String(ho_ten).trim(),
+      email: email ? String(email).trim().toLowerCase() : null,
+      so_dien_thoai: so_dien_thoai ? String(so_dien_thoai).trim() : null,
+      vai_tro: 'FRANCHISE_STAFF',
+      trang_thai: 'ACTIVE',
+      parent_franchisee_id: franchiseeId,
+      kiosk_id: targetKiosk ? targetKiosk.id : null,
+      co_so_ma: targetKiosk ? targetKiosk.ma_kiosk : null,
+      co_so_ten: targetKiosk ? targetKiosk.ten_kiosk : null,
+      pos_permissions: Array.isArray(pos_permissions) && pos_permissions.length > 0 ? pos_permissions : defaultPermissions,
+      require_password_change: false,
+    });
+
+    const saved = await this.userRepo.save(newUser);
+    await this.logAction(franchiseeId, 'TAO_NHAN_VIEN_CON', `Tạo nhân viên ${saved.ten_dang_nhap} (${saved.ho_ten}) cho Kiosk ${saved.co_so_ma}`);
+
+    return {
+      message: 'Tạo tài khoản nhân viên con thành công!',
+      staff: {
+        ma_nguoi_dung: saved.ma_nguoi_dung,
+        ten_dang_nhap: saved.ten_dang_nhap,
+        ho_ten: saved.ho_ten,
+        email: saved.email,
+        so_dien_thoai: saved.so_dien_thoai,
+        vai_tro: saved.vai_tro,
+        co_so_ma: saved.co_so_ma,
+        co_so_ten: saved.co_so_ten,
+        kiosk_id: saved.kiosk_id,
+        pos_permissions: saved.pos_permissions,
+        trang_thai: saved.trang_thai,
+      }
+    };
+  }
+
+  async capNhatNhanVienCon(franchiseeId: string, staffId: string, body: any) {
+    const staff = await this.userRepo.findOne({ where: { ma_nguoi_dung: staffId } });
+    if (!staff) throw new NotFoundException('Không tìm thấy nhân viên');
+
+    // Kiểm tra quyền: staff phải do franchisee tạo hoặc thuộc kiosk của franchisee
+    const kiosks = await this.kioskRepo.find({ where: { franchisee_id: franchiseeId } });
+    const kioskCodes = kiosks.map(k => k.ma_kiosk);
+    const isOwner = staff.parent_franchisee_id === franchiseeId || (staff.co_so_ma && kioskCodes.includes(staff.co_so_ma));
+    if (!isOwner) throw new BadRequestException('Bạn không có quyền quản lý nhân viên này');
+
+    if (body.ho_ten !== undefined) staff.ho_ten = String(body.ho_ten).trim();
+    if (body.email !== undefined) staff.email = body.email ? String(body.email).trim().toLowerCase() : null;
+    if (body.so_dien_thoai !== undefined) staff.so_dien_thoai = body.so_dien_thoai ? String(body.so_dien_thoai).trim() : null;
+    if (body.trang_thai !== undefined) staff.trang_thai = body.trang_thai;
+    if (body.pos_permissions !== undefined && Array.isArray(body.pos_permissions)) {
+      staff.pos_permissions = body.pos_permissions;
+    }
+
+    if (body.kiosk_id) {
+      const targetKiosk = kiosks.find(k => k.id === body.kiosk_id || k.ma_kiosk === body.kiosk_id);
+      if (targetKiosk) {
+        staff.kiosk_id = targetKiosk.id;
+        staff.co_so_ma = targetKiosk.ma_kiosk;
+        staff.co_so_ten = targetKiosk.ten_kiosk;
+      }
+    }
+
+    const updated = await this.userRepo.save(staff);
+    await this.logAction(franchiseeId, 'CAP_NHAT_NHAN_VIEN_CON', `Cập nhật nhân viên ${updated.ten_dang_nhap}`);
+
+    return {
+      message: 'Cập nhật thông tin nhân viên thành công!',
+      staff: {
+        ma_nguoi_dung: updated.ma_nguoi_dung,
+        ten_dang_nhap: updated.ten_dang_nhap,
+        ho_ten: updated.ho_ten,
+        email: updated.email,
+        so_dien_thoai: updated.so_dien_thoai,
+        co_so_ma: updated.co_so_ma,
+        co_so_ten: updated.co_so_ten,
+        kiosk_id: updated.kiosk_id,
+        pos_permissions: updated.pos_permissions,
+        trang_thai: updated.trang_thai,
+      }
+    };
+  }
+
+  async doiMatKhauNhanVienCon(franchiseeId: string, staffId: string, body: any) {
+    const staff = await this.userRepo.findOne({ where: { ma_nguoi_dung: staffId } });
+    if (!staff) throw new NotFoundException('Không tìm thấy nhân viên');
+
+    const kiosks = await this.kioskRepo.find({ where: { franchisee_id: franchiseeId } });
+    const kioskCodes = kiosks.map(k => k.ma_kiosk);
+    const isOwner = staff.parent_franchisee_id === franchiseeId || (staff.co_so_ma && kioskCodes.includes(staff.co_so_ma));
+    if (!isOwner) throw new BadRequestException('Bạn không có quyền quản lý nhân viên này');
+
+    const newPassword = body.mat_khau_moi || body.password || body.mat_khau;
+    if (!newPassword || newPassword.length < 4) {
+      throw new BadRequestException('Mật khẩu mới phải có ít nhất 4 ký tự');
+    }
+
+    const salt = await bcrypt.genSalt();
+    staff.mat_khau_hash = await bcrypt.hash(newPassword, salt);
+    staff.require_password_change = false;
+
+    await this.userRepo.save(staff);
+    await this.logAction(franchiseeId, 'DOI_MAT_KHAU_NHAN_VIEN_CON', `Đổi mật khẩu cho ${staff.ten_dang_nhap}`);
+
+    return { message: 'Đổi mật khẩu nhân viên thành công!' };
+  }
+
+  async xoaNhanVienCon(franchiseeId: string, staffId: string) {
+    const staff = await this.userRepo.findOne({ where: { ma_nguoi_dung: staffId } });
+    if (!staff) throw new NotFoundException('Không tìm thấy nhân viên');
+
+    const kiosks = await this.kioskRepo.find({ where: { franchisee_id: franchiseeId } });
+    const kioskCodes = kiosks.map(k => k.ma_kiosk);
+    const isOwner = staff.parent_franchisee_id === franchiseeId || (staff.co_so_ma && kioskCodes.includes(staff.co_so_ma));
+    if (!isOwner) throw new BadRequestException('Bạn không có quyền quản lý nhân viên này');
+
+    // Chuyển trạng thái sang INACTIVE hoặc xóa
+    staff.trang_thai = 'INACTIVE';
+    await this.userRepo.save(staff);
+    await this.logAction(franchiseeId, 'KHOA_NHAN_VIEN_CON', `Khóa/xóa nhân viên ${staff.ten_dang_nhap}`);
+
+    return { message: 'Đã vô hiệu hóa tài khoản nhân viên thành công!' };
   }
 }
 

@@ -976,7 +976,7 @@ function DoiSoatTab() {
           {currentItems.map(d => {
             const cb = CANH_BAO[d.muc_canh_bao] || CANH_BAO.XANH
             return (
-              <div key={d.id} style={{ background: '#fff', borderRadius: 12, padding: 18, border: `2px solid ${cb.color}44`, background: cb.bg }}>
+              <div key={d.id} style={{ borderRadius: 12, padding: 18, border: `2px solid ${cb.color}44`, background: cb.bg }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: 15 }}>

@@ -59,6 +59,7 @@ import { AdminNotificationBell } from './features/shared/components/AdminNotific
 import { NewsPanel } from './features/shared/components/NewsPanel'
 import { FranchisePanel } from './features/franchise/FranchisePanel'
 import { FranchiseePortal } from './features/franchise/FranchiseePortal'
+import { FranchiseStaffPortal } from './features/franchise/FranchiseStaffPortal'
 import { AccountantFranchiseShell } from './features/franchise/AccountantFranchiseShell'
 
 function App() {
@@ -133,6 +134,8 @@ function App() {
     capNhatTrangThaiDon,
     capNhatDonChoStaff,
     xoaDonChoStaff,
+    hoanHuyDonHangPos,
+    activeKioskShift,
     capNhatTonKho,
     capNhatTrangThaiBanMon,
     chotCaTienMat,
@@ -169,14 +172,28 @@ function App() {
   } = useAdminDashboard()
 
   const userRole = session?.user?.vaiTro || session?.user?.vai_tro || DASHBOARD_ROLES.STAFF
+  const branchCode = session?.user?.coSoMa || session?.user?.co_so_ma || ''
   const isFranchisee = userRole === DASHBOARD_ROLES.FRANCHISEE
   const isAccountant = userRole === DASHBOARD_ROLES.ACCOUNTANT
+  const isFranchiseStaff =
+    userRole === DASHBOARD_ROLES.FRANCHISE_STAFF ||
+    Boolean(
+      session?.user?.parent_franchisee_id ||
+      session?.user?.parentFranchiseeId ||
+      session?.user?.kiosk_id ||
+      session?.user?.kioskId ||
+      (branchCode && branchCode.startsWith('KSK-'))
+    )
   const branchName = session?.user?.coSoTen || session?.user?.co_so_ten || 'Chi nhánh hệ thống'
   const isSystemAdmin = userRole === DASHBOARD_ROLES.ADMIN
   const isManager = userRole === DASHBOARD_ROLES.MANAGER
   const staffNavTabs = isManager
     ? [...NAV_TABS, { ...WORKFORCE_TAB, label: 'Lịch làm của tôi' }, ACCOUNT_TAB]
-    : [...NAV_TABS, WORKFORCE_TAB, ACCOUNT_TAB]
+    : [
+        ...NAV_TABS.filter((t) => !['franchise-manage', 'menu', 'news'].includes(t.id)),
+        { ...WORKFORCE_TAB, label: 'Lịch làm việc của tôi' },
+        ACCOUNT_TAB,
+      ]
   const managerNavTabs = isManager
     ? [
         MANAGER_SHIFT_APPROVAL_TAB,
@@ -258,9 +275,15 @@ function App() {
     )
   }
 
-  // Role FRANCHISEE → Portal riêng, không dùng Admin shell
+  // Phân vùng 2: Cửa hàng nhượng quyền (Franchise Kiosks)
+  // 1. Admin nhượng quyền (Franchisee Admin)
   if (isFranchisee) {
     return <FranchiseePortal session={session} onLogout={logout} />
+  }
+
+  // 2. Nhân viên Kiosk nhượng quyền (Franchise Staff)
+  if (isFranchiseStaff) {
+    return <FranchiseStaffPortal session={session} onLogout={logout} />
   }
 
   // Role ACCOUNTANT → Giao diện quản lý nhượng quyền + kế toán
