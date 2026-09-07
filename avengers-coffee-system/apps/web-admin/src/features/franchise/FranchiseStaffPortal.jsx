@@ -482,6 +482,8 @@ export function FranchiseStaffPortal({ session, onLogout }) {
   // ─── TAB 3: KIOSK LIVE SHIFTS ───
   const [activeKioskShift, setActiveKioskShift] = useState(null)
   const [activeShiftLoading, setActiveShiftLoading] = useState(false)
+  const [kioskShiftHistory, setKioskShiftHistory] = useState([])
+  const [shiftHistoryLoading, setShiftHistoryLoading] = useState(false)
   const [showOpenShiftModal, setShowOpenShiftModal] = useState(false)
   const [showCloseShiftModal, setShowCloseShiftModal] = useState(false)
   const [cashOpenInput, setCashOpenInput] = useState(500000)
@@ -492,7 +494,12 @@ export function FranchiseStaffPortal({ session, onLogout }) {
   const loadActiveKioskShift = useCallback(async () => {
     setActiveShiftLoading(true)
     try {
-      const res = await apiFetch(`/manager/kiosks/${kioskCode}/live-shift`)
+      let res = null
+      try {
+        res = await apiFetch(`/staff/kiosk-shifts/active?branch_code=${kioskCode}`)
+      } catch {
+        res = await apiFetch(`/manager/kiosks/${kioskCode}/live-shift`).catch(() => null)
+      }
       setActiveKioskShift(res)
     } catch (e) {
       console.error(e)
@@ -501,22 +508,54 @@ export function FranchiseStaffPortal({ session, onLogout }) {
     }
   }, [apiFetch, kioskCode])
 
+  const loadKioskShiftHistory = useCallback(async () => {
+    setShiftHistoryLoading(true)
+    try {
+      let res = null
+      try {
+        res = await apiFetch(`/staff/kiosk-shifts/history?branch_code=${kioskCode}&limit=20`)
+      } catch {
+        res = await apiFetch(`/manager/kiosks/${kioskCode}/shift-history`).catch(() => [])
+      }
+      setKioskShiftHistory(Array.isArray(res) ? res : res?.items || [])
+    } catch (e) {
+      console.error(e)
+      setKioskShiftHistory([])
+    } finally {
+      setShiftHistoryLoading(false)
+    }
+  }, [apiFetch, kioskCode])
+
   const handleOpenKioskShift = async (e) => {
     e.preventDefault()
     setKioskShiftSubmitting(true)
     try {
-      await apiFetch(`/manager/kiosks/${kioskCode}/open-shift`, {
-        method: 'POST',
-        body: JSON.stringify({
-          staff_username: userName,
-          staff_name: userFullName,
-          cash_open: Number(cashOpenInput) || 0,
-          note: shiftNote,
+      try {
+        await apiFetch('/staff/kiosk-shifts/open', {
+          method: 'POST',
+          body: JSON.stringify({
+            branch_code: kioskCode,
+            staff_username: userName,
+            staff_name: userFullName,
+            cash_open: Number(cashOpenInput) || 0,
+            note: shiftNote,
+          })
         })
-      })
+      } catch {
+        await apiFetch(`/manager/kiosks/${kioskCode}/open-shift`, {
+          method: 'POST',
+          body: JSON.stringify({
+            staff_username: userName,
+            staff_name: userFullName,
+            cash_open: Number(cashOpenInput) || 0,
+            note: shiftNote,
+          })
+        })
+      }
       showToast('success', 'Mở ca làm việc tại Kiosk thành công!')
       setShowOpenShiftModal(false)
       loadActiveKioskShift()
+      loadKioskShiftHistory()
     } catch (err) {
       showToast('error', err.message)
     } finally {
@@ -528,16 +567,29 @@ export function FranchiseStaffPortal({ session, onLogout }) {
     e.preventDefault()
     setKioskShiftSubmitting(true)
     try {
-      await apiFetch(`/manager/kiosks/${kioskCode}/close-shift`, {
-        method: 'POST',
-        body: JSON.stringify({
-          cash_close: Number(cashCloseInput) || 0,
-          note: shiftNote,
+      try {
+        await apiFetch('/staff/kiosk-shifts/close', {
+          method: 'POST',
+          body: JSON.stringify({
+            branch_code: kioskCode,
+            cash_close: Number(cashCloseInput) || 0,
+            note: shiftNote,
+            staff_username: userName,
+          })
         })
-      })
+      } catch {
+        await apiFetch(`/manager/kiosks/${kioskCode}/close-shift`, {
+          method: 'POST',
+          body: JSON.stringify({
+            cash_close: Number(cashCloseInput) || 0,
+            note: shiftNote,
+          })
+        })
+      }
       showToast('success', 'Chốt ca làm việc và kiểm kê tiền mặt thành công!')
       setShowCloseShiftModal(false)
       loadActiveKioskShift()
+      loadKioskShiftHistory()
     } catch (err) {
       showToast('error', err.message)
     } finally {
@@ -586,8 +638,9 @@ export function FranchiseStaffPortal({ session, onLogout }) {
       loadMyShiftRequests()
     } else if (tab === 'kiosk_shifts') {
       loadActiveKioskShift()
+      loadKioskShiftHistory()
     }
-  }, [tab, loadWorkShifts, loadMyShiftRequests, loadActiveKioskShift])
+  }, [tab, loadWorkShifts, loadMyShiftRequests, loadActiveKioskShift, loadKioskShiftHistory])
 
   // Cart calculations
   const cartSubtotal = useMemo(() => cart.reduce((acc, item) => acc + item.gia_ban * item.qty, 0), [cart])
@@ -1834,128 +1887,483 @@ export function FranchiseStaffPortal({ session, onLogout }) {
         )}
 
         {/* ═══════════════════════════════════════════════════════════ */}
-        {/* TAB 3: MỞ / CHỐT CA KIOSK */}
+        {/* TAB 3: MỞ / CHỐT CA KIOSK - FULL WIDTH DASHBOARD */}
         {/* ═══════════════════════════════════════════════════════════ */}
         {tab === 'kiosk_shifts' && (
-          <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.02)', maxWidth: 650 }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Clock size={20} color="#059669" /> Trạng thái ca làm việc tại Kiosk
-            </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.25fr)', gap: 24, width: '100%', alignItems: 'start', boxSizing: 'border-box' }}>
+            {/* Cột trái: Trạng thái ca trực hiện tại & Thao tác mở/chốt ca */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div style={{
+                background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0',
+                padding: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.02)', width: '100%', boxSizing: 'border-box'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Clock size={20} color="#059669" /> Trạng thái ca làm việc hiện tại
+                  </h3>
+                  <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>
+                    Chi nhánh: <b style={{ color: '#0f172a' }}>{kioskName} ({kioskCode})</b>
+                  </span>
+                </div>
 
-            {activeShiftLoading ? (
-              <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>Đang kiểm tra ca Kiosk...</div>
-            ) : activeKioskShift?.has_open_shift ? (
-              <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 14, padding: 20, marginBottom: 20 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                  <span style={{
-                    padding: '4px 10px', borderRadius: 99, background: '#059669', color: '#fff', fontSize: 11, fontWeight: 800,
-                    display: 'inline-flex', alignItems: 'center', gap: 6
+                {activeShiftLoading ? (
+                  <div style={{ textAlign: 'center', padding: '50px 0', color: '#64748b' }}>
+                    <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 10px', color: '#059669' }} />
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>Đang kiểm tra dữ liệu ca Kiosk...</div>
+                  </div>
+                ) : activeKioskShift?.has_open_shift ? (
+                  <div>
+                    <div style={{
+                      background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 14,
+                      padding: 20, marginBottom: 20
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
+                        <span style={{
+                          padding: '5px 12px', borderRadius: 99, background: '#059669', color: '#fff',
+                          fontSize: 12, fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 6,
+                          boxShadow: '0 2px 6px rgba(5,150,105,0.25)'
+                        }}>
+                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ffffff', display: 'inline-block' }} />
+                          Đang mở ca bán hàng
+                        </span>
+                        <span style={{ fontSize: 12, color: '#065f46', fontWeight: 600 }}>
+                          Mở lúc: {new Date(activeKioskShift.active_shift?.thoi_gian_mo || activeKioskShift.active_shift?.thoi_gian_mo_ca).toLocaleTimeString('vi-VN')}
+                        </span>
+                      </div>
+
+                      {/* 4 Ô thống kê trực tiếp trong ca */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 16 }}>
+                        <div style={{ background: '#ffffff', padding: 14, borderRadius: 12, border: '1px solid #d1fae5' }}>
+                          <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Tiền mặt trong két đầu ca:</div>
+                          <div style={{ fontSize: 16, fontWeight: 900, color: '#0f172a', marginTop: 4 }}>
+                            {fmtMoney(activeKioskShift.active_shift?.tien_dau_ca)}
+                          </div>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: 14, borderRadius: 12, border: '1px solid #d1fae5' }}>
+                          <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Nhân viên mở ca:</div>
+                          <div style={{ fontSize: 15, fontWeight: 800, color: '#0f172a', marginTop: 4 }}>
+                            {activeKioskShift.active_shift?.staff_name || activeKioskShift.active_shift?.staff_username || userFullName}
+                          </div>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: 14, borderRadius: 12, border: '1px solid #d1fae5' }}>
+                          <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Doanh thu trong ca:</div>
+                          <div style={{ fontSize: 16, fontWeight: 900, color: '#059669', marginTop: 4 }}>
+                            {fmtMoney(activeKioskShift.live_stats?.total_revenue || 0)}
+                          </div>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: 14, borderRadius: 12, border: '1px solid #d1fae5' }}>
+                          <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Số đơn hoàn thành:</div>
+                          <div style={{ fontSize: 16, fontWeight: 900, color: '#0f172a', marginTop: 4 }}>
+                            {activeKioskShift.live_stats?.total_orders || 0} đơn
+                          </div>
+                        </div>
+                      </div>
+
+                      {activeKioskShift.live_stats?.expected_cash ? (
+                        <div style={{
+                          background: '#f0fdf4', border: '1px dashed #86efac', borderRadius: 10,
+                          padding: '10px 14px', marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                        }}>
+                          <span style={{ fontSize: 12, color: '#166534', fontWeight: 700 }}>
+                            Tiền mặt kỳ vọng trong két hiện tại:
+                          </span>
+                          <span style={{ fontSize: 15, fontWeight: 900, color: '#15803d' }}>
+                            {fmtMoney(activeKioskShift.live_stats.expected_cash)}
+                          </span>
+                        </div>
+                      ) : null}
+
+                      <button
+                        onClick={() => setShowCloseShiftModal(true)}
+                        style={{
+                          width: '100%', padding: '12px 20px', borderRadius: 12, border: 'none',
+                          background: 'linear-gradient(135deg, #10b981, #059669)', color: '#ffffff',
+                          fontWeight: 800, fontSize: 14, cursor: 'pointer',
+                          boxShadow: '0 4px 14px rgba(16,185,129,0.3)', display: 'flex',
+                          alignItems: 'center', justifyContent: 'center', gap: 8,
+                          transition: 'all .2s ease'
+                        }}
+                      >
+                        <Lock size={16} />
+                        <span>Kiểm kê tiền mặt &amp; Chốt ca Kiosk</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{
+                    background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14,
+                    padding: 32, textAlign: 'center'
                   }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ffffff', display: 'inline-block' }} />
-                    Đang mở ca bán hàng
-                  </span>
-                  <span style={{ fontSize: 12, color: '#065f46' }}>
-                    Mở lúc: {new Date(activeKioskShift.active_shift?.thoi_gian_mo).toLocaleTimeString('vi-VN')}
-                  </span>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                  <div style={{ background: '#fff', padding: 12, borderRadius: 10 }}>
-                    <div style={{ fontSize: 11, color: '#64748b' }}>Tiền mặt đầu ca:</div>
-                    <div style={{ fontSize: 15, fontWeight: 900, color: '#0f172a' }}>{fmtMoney(activeKioskShift.active_shift?.tien_dau_ca)}</div>
+                    <div style={{
+                      width: 52, height: 52, borderRadius: 16, background: '#f1f5f9',
+                      color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      margin: '0 auto 16px'
+                    }}>
+                      <Lock size={24} />
+                    </div>
+                    <div style={{ fontSize: 16, fontWeight: 900, color: '#0f172a', marginBottom: 8 }}>
+                      Kiosk hiện chưa mở ca làm việc
+                    </div>
+                    <p style={{ fontSize: 13, color: '#64748b', margin: '0 auto 20px', maxWidth: 420, lineHeight: 1.5 }}>
+                      Bạn cần bắt đầu mở ca bán hàng và kiểm đếm số tiền mặt thực tế có trong két trước khi tạo đơn tại quầy POS.
+                    </p>
+                    <button
+                      onClick={() => setShowOpenShiftModal(true)}
+                      style={{
+                        padding: '12px 28px', borderRadius: 12, border: 'none',
+                        background: 'linear-gradient(135deg, #10b981, #059669)', color: '#ffffff',
+                        fontWeight: 800, fontSize: 14, cursor: 'pointer', display: 'inline-flex',
+                        alignItems: 'center', gap: 8, boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
+                        transition: 'all .2s ease'
+                      }}
+                    >
+                      <PlayCircle size={18} />
+                      <span>Bắt đầu mở ca Kiosk</span>
+                    </button>
                   </div>
-                  <div style={{ background: '#fff', padding: 12, borderRadius: 10 }}>
-                    <div style={{ fontSize: 11, color: '#64748b' }}>Người mở ca:</div>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>{activeKioskShift.active_shift?.staff_name}</div>
+                )}
+              </div>
+
+              {/* Thẻ hướng dẫn quy trình kiểm két */}
+              <div style={{
+                background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0',
+                padding: 20, boxShadow: '0 4px 16px rgba(0,0,0,0.02)', width: '100%', boxSizing: 'border-box'
+              }}>
+                <h4 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <ShieldCheck size={16} color="#059669" /> Quy trình kiểm két &amp; Bàn giao ca Kiosk
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 12, color: '#475569' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                    <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, flexShrink: 0 }}>1</span>
+                    <span><b>Đầu ca:</b> Kiểm đếm toàn bộ tiền mặt thực tế trong két, nhập chính xác vào hệ thống và xác nhận mở ca.</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                    <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, flexShrink: 0 }}>2</span>
+                    <span><b>Trong ca:</b> Thu ngân chỉ tạo đơn và in hóa đơn cho khách khi ca làm việc đang ở trạng thái Mở.</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                    <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, flexShrink: 0 }}>3</span>
+                    <span><b>Cuối ca:</b> Kiểm đếm tiền mặt thực tế, đối chiếu với số liệu kỳ vọng của hệ thống và ghi chú chênh lệch (nếu có).</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Cột phải: Lịch sử các phiên ca làm việc tại Kiosk */}
+            <div style={{
+              background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0',
+              padding: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.02)', width: '100%', boxSizing: 'border-box'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 10 }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <CalendarDays size={18} color="#059669" /> Lịch sử các phiên ca tại Kiosk
+                  </h3>
+                  <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
+                    Nhật ký kiểm kê và bàn giao két tiền giữa các nhân viên trực
                   </div>
                 </div>
 
                 <button
-                  onClick={() => setShowCloseShiftModal(true)}
+                  onClick={() => {
+                    loadActiveKioskShift()
+                    loadKioskShiftHistory()
+                  }}
                   style={{
-                    width: '100%', padding: '12px', borderRadius: 10, border: 'none',
-                    background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff',
-                    fontWeight: 800, fontSize: 13, cursor: 'pointer', boxShadow: '0 4px 12px rgba(16,185,129,0.3)'
+                    padding: '6px 12px', background: '#f8fafc', border: '1px solid #cbd5e1',
+                    borderRadius: 8, fontSize: 11, fontWeight: 700, color: '#334155', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 5
                   }}
                 >
-                  Kiểm kê tiền mặt &amp; Chốt ca Kiosk
+                  <RefreshCw size={12} /> Làm mới
                 </button>
               </div>
-            ) : (
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: 24, textAlign: 'center' }}>
-                <div style={{ width: 48, height: 48, borderRadius: 14, background: '#e2e8f0', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-                  <Lock size={22} />
+
+              {shiftHistoryLoading ? (
+                <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>
+                  <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 10px', color: '#059669' }} />
+                  <div>Đang tải lịch sử ca Kiosk...</div>
                 </div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: '#0f172a', marginBottom: 6 }}>Kiosk hiện chưa mở ca làm việc</div>
-                <p style={{ fontSize: 12, color: '#64748b', margin: '0 auto 16px', maxWidth: 380 }}>
-                  Bạn cần mở ca bán hàng và nhập số tiền mặt có trong két trước khi tạo đơn tại Kiosk.
-                </p>
-                <button
-                  onClick={() => setShowOpenShiftModal(true)}
-                  style={{
-                    padding: '10px 20px', borderRadius: 10, border: 'none',
-                    background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff',
-                    fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6,
-                    boxShadow: '0 4px 12px rgba(16,185,129,0.3)'
-                  }}
-                >
-                  <PlayCircle size={16} /> Bắt đầu mở ca Kiosk
-                </button>
-              </div>
-            )}
+              ) : kioskShiftHistory.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '60px 20px', background: '#f8fafc', borderRadius: 12, color: '#94a3b8' }}>
+                  <Clock size={36} style={{ margin: '0 auto 10px', opacity: 0.4 }} />
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Chưa có lịch sử phiên ca nào</div>
+                  <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>
+                    Các phiên ca sau khi chốt kiểm kê sẽ được lưu lại đầy đủ tại đây
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {kioskShiftHistory.map((s) => {
+                    const isOpen = s.trang_thai === 'OPEN'
+                    const openTime = s.thoi_gian_mo_ca ? new Date(s.thoi_gian_mo_ca).toLocaleString('vi-VN') : '—'
+                    const closeTime = s.thoi_gian_dong_ca ? new Date(s.thoi_gian_dong_ca).toLocaleString('vi-VN') : '—'
+                    const diff = s.chenh_lech !== null ? Number(s.chenh_lech) : 0
+
+                    return (
+                      <div
+                        key={s.id || s.ma_phien_ca}
+                        style={{
+                          background: isOpen ? '#f0fdf4' : '#ffffff',
+                          border: isOpen ? '1.5px solid #86efac' : '1px solid #e2e8f0',
+                          borderRadius: 12, padding: 16, transition: 'all .15s ease',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontWeight: 800, fontSize: 13, color: '#0f172a' }}>
+                              {s.staff_name || s.staff_username || 'Nhân viên'}
+                            </span>
+                            <span style={{ fontSize: 11, color: '#64748b' }}>
+                              @{s.staff_username}
+                            </span>
+                          </div>
+
+                          <span style={{
+                            padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 800,
+                            background: isOpen ? '#dcfce7' : '#f1f5f9',
+                            color: isOpen ? '#15803d' : '#475569',
+                            border: isOpen ? '1px solid #bbf7d0' : '1px solid #e2e8f0',
+                            display: 'inline-flex', alignItems: 'center', gap: 4
+                          }}>
+                            {isOpen ? <ShieldCheck size={12} color="#15803d" /> : <CheckCircle2 size={12} color="#475569" />}
+                            <span>{isOpen ? 'Đang mở' : 'Đã chốt ca'}</span>
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, fontSize: 11, background: '#f8fafc', padding: 10, borderRadius: 8, marginBottom: 8 }}>
+                          <div>
+                            <span style={{ color: '#64748b', display: 'block' }}>Tiền đầu ca:</span>
+                            <b style={{ color: '#0f172a' }}>{fmtMoney(s.tien_dau_ca)}</b>
+                          </div>
+                          <div>
+                            <span style={{ color: '#64748b', display: 'block' }}>Doanh thu TM:</span>
+                            <b style={{ color: '#059669' }}>{fmtMoney(s.tien_mat_he_thong || 0)}</b>
+                          </div>
+                          <div>
+                            <span style={{ color: '#64748b', display: 'block' }}>Tiền nộp cuối:</span>
+                            <b style={{ color: '#0f172a' }}>{s.tien_cuoi_ca !== null ? fmtMoney(s.tien_cuoi_ca) : '—'}</b>
+                          </div>
+                          <div>
+                            <span style={{ color: '#64748b', display: 'block' }}>Chênh lệch:</span>
+                            <b style={{ color: diff === 0 ? '#059669' : diff > 0 ? '#0284c7' : '#dc2626' }}>
+                              {s.chenh_lech !== null ? (diff > 0 ? `+${fmtMoney(diff)}` : fmtMoney(diff)) : '—'}
+                            </b>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, color: '#64748b' }}>
+                          <span>Mở: {openTime}</span>
+                          <span>Đóng: {closeTime}</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
         {/* ═══════════════════════════════════════════════════════════ */}
-        {/* TAB 4: TÀI KHOẢN CÁ NHÂN */}
+        {/* TAB 4: TÀI KHOẢN CÁ NHÂN - FULL WIDTH 2-COLUMN LAYOUT */}
         {/* ═══════════════════════════════════════════════════════════ */}
         {tab === 'account' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, maxWidth: 880 }}>
-            <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.02)' }}>
-              <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <User size={18} color="#059669" /> Thông tin nhân viên Kiosk
-              </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.1fr) minmax(0, 1fr)', gap: 24, width: '100%', alignItems: 'start', boxSizing: 'border-box' }}>
+            {/* Cột trái: Thông tin nhân sự & Chi nhánh Kiosk */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div style={{
+                background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0',
+                padding: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.02)', width: '100%', boxSizing: 'border-box'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid #f1f5f9' }}>
+                  <div style={{
+                    width: 56, height: 56, borderRadius: 16,
+                    background: 'linear-gradient(135deg, #10b981, #059669)',
+                    color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 22, fontWeight: 900, boxShadow: '0 4px 12px rgba(16,185,129,0.25)',
+                    flexShrink: 0
+                  }}>
+                    {userFullName.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 18, fontWeight: 900, color: '#0f172a' }}>{userFullName}</div>
+                    <div style={{ fontSize: 13, color: '#64748b', marginTop: 2 }}>@{userName}</div>
+                    <div style={{ marginTop: 6 }}>
+                      <span style={{
+                        padding: '3px 10px', borderRadius: 99, background: '#ecfdf5',
+                        color: '#047857', border: '1px solid #a7f3d0', fontSize: 11, fontWeight: 800
+                      }}>
+                        Nhân viên Kiosk nhượng quyền
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13 }}>
-                <div><span style={{ color: '#64748b' }}>Họ và tên:</span> <b style={{ color: '#0f172a' }}>{userFullName}</b></div>
-                <div><span style={{ color: '#64748b' }}>Tên đăng nhập:</span> <b style={{ color: '#0f172a' }}>@{userName}</b></div>
-                <div><span style={{ color: '#64748b' }}>Email:</span> <b style={{ color: '#0f172a' }}>{user.email || '—'}</b></div>
-                <div><span style={{ color: '#64748b' }}>Vai trò:</span> <span style={{ padding: '2px 8px', borderRadius: 6, background: '#ecfdf5', color: '#047857', fontWeight: 800, fontSize: 11 }}>Nhân viên Kiosk nhượng quyền</span></div>
-                <div><span style={{ color: '#64748b' }}>Kiosk làm việc:</span> <b style={{ color: '#0f172a' }}>{kioskName} ({kioskCode})</b></div>
-                <div><span style={{ color: '#64748b' }}>Mô hình nhượng quyền:</span> <b style={{ color: packageMeta.color }}>{packageMeta.name}</b></div>
+                <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Store size={16} color="#059669" /> Thông tin Kiosk làm việc
+                </h4>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, fontSize: 13, marginBottom: 20 }}>
+                  <div style={{ background: '#f8fafc', padding: 12, borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                    <span style={{ fontSize: 11, color: '#64748b', display: 'block', marginBottom: 2 }}>Chi nhánh làm việc:</span>
+                    <b style={{ color: '#0f172a' }}>{kioskName}</b>
+                  </div>
+                  <div style={{ background: '#f8fafc', padding: 12, borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                    <span style={{ fontSize: 11, color: '#64748b', display: 'block', marginBottom: 2 }}>Mã định danh Kiosk:</span>
+                    <b style={{ color: '#059669' }}>{kioskCode}</b>
+                  </div>
+                  <div style={{ background: '#f8fafc', padding: 12, borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                    <span style={{ fontSize: 11, color: '#64748b', display: 'block', marginBottom: 2 }}>Mô hình hợp đồng:</span>
+                    <b style={{ color: packageMeta.color }}>{packageMeta.name}</b>
+                  </div>
+                  <div style={{ background: '#f8fafc', padding: 12, borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                    <span style={{ fontSize: 11, color: '#64748b', display: 'block', marginBottom: 2 }}>Trạng thái nhân sự:</span>
+                    <b style={{ color: '#059669' }}>Đang hoạt động</b>
+                  </div>
+                  <div style={{ background: '#f8fafc', padding: 12, borderRadius: 10, border: '1px solid #e2e8f0', gridColumn: 'span 2' }}>
+                    <span style={{ fontSize: 11, color: '#64748b', display: 'block', marginBottom: 2 }}>Hòm thư điện tử (Email):</span>
+                    <b style={{ color: '#0f172a' }}>{user.email || `${userName}@avengerscoffee.vn`}</b>
+                  </div>
+                </div>
+              </div>
+
+              {/* Thẻ quyền hạn tài khoản tại quầy POS */}
+              <div style={{
+                background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0',
+                padding: 22, boxShadow: '0 4px 16px rgba(0,0,0,0.02)', width: '100%', boxSizing: 'border-box'
+              }}>
+                <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <CheckCheck size={16} color="#059669" /> Quyền hạn vận hành được cấp phép
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 12, color: '#475569' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <ShieldCheck size={15} color="#059669" />
+                    <span>Tạo đơn bán hàng POS và xuất phiếu in hóa đơn cho khách</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <ShieldCheck size={15} color="#059669" />
+                    <span>Mở ca làm việc và kiểm kê két tiền mặt tại chi nhánh Kiosk</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <ShieldCheck size={15} color="#059669" />
+                    <span>Đăng ký nguyện vọng lịch ca làm việc theo tuần cho Quản lý duyệt</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <ShieldCheck size={15} color="#059669" />
+                    <span>Tra cứu danh mục sản phẩm theo đúng gói hợp đồng nhượng quyền</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.02)' }}>
-              <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Key size={18} color="#059669" /> Đổi mật khẩu đăng nhập
-              </h3>
+            {/* Cột phải: Đổi mật khẩu đăng nhập & Tiêu chuẩn bảo mật */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div style={{
+                background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0',
+                padding: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.02)', width: '100%', boxSizing: 'border-box'
+              }}>
+                <h3 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Key size={18} color="#059669" /> Đổi mật khẩu tài khoản
+                </h3>
+                <p style={{ margin: '0 0 20px', fontSize: 13, color: '#64748b' }}>
+                  Đổi mật khẩu định kỳ giúp bảo vệ tài khoản thu ngân và doanh thu ca của bạn.
+                </p>
 
-              <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Mật khẩu hiện tại</label>
-                  <input type="password" required value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+                <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 6 }}>
+                      Mật khẩu hiện tại *
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      value={oldPassword}
+                      onChange={(e) => setOldPassword(e.target.value)}
+                      placeholder="Nhập mật khẩu đang sử dụng"
+                      style={{
+                        width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #cbd5e1',
+                        fontSize: 13, outline: 'none', boxSizing: 'border-box', transition: 'border-color .15s'
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = '#10b981'}
+                      onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 6 }}>
+                      Mật khẩu mới *
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Tối thiểu 6 ký tự"
+                      style={{
+                        width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #cbd5e1',
+                        fontSize: 13, outline: 'none', boxSizing: 'border-box', transition: 'border-color .15s'
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = '#10b981'}
+                      onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 6 }}>
+                      Xác nhận mật khẩu mới *
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Nhập lại mật khẩu mới vừa tạo"
+                      style={{
+                        width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #cbd5e1',
+                        fontSize: 13, outline: 'none', boxSizing: 'border-box', transition: 'border-color .15s'
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = '#10b981'}
+                      onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={changingPassword}
+                    style={{
+                      marginTop: 6, padding: '12px 24px', borderRadius: 12, border: 'none',
+                      background: 'linear-gradient(135deg, #10b981, #059669)', color: '#ffffff',
+                      fontWeight: 800, fontSize: 14, cursor: 'pointer',
+                      boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      transition: 'all .2s ease'
+                    }}
+                  >
+                    <Key size={16} />
+                    <span>{changingPassword ? 'Đang cập nhật...' : 'Cập nhật mật khẩu mới'}</span>
+                  </button>
+                </form>
+              </div>
+
+              {/* Thẻ hướng dẫn an toàn bảo mật */}
+              <div style={{
+                background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0',
+                padding: 20, boxShadow: '0 4px 16px rgba(0,0,0,0.02)', width: '100%', boxSizing: 'border-box'
+              }}>
+                <h4 style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <AlertCircle size={15} color="#059669" /> Lưu ý an toàn tài khoản Kiosk
+                </h4>
+                <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1.6 }}>
+                  • Tuyệt đối không cung cấp mật khẩu đăng nhập cho khách hàng hoặc nhân viên ca khác.<br />
+                  • Luôn bấm <b>Đăng xuất</b> hoặc <b>Chốt ca Kiosk</b> khi rời khỏi quầy POS.<br />
+                  • Nếu nghi ngờ mật khẩu bị lộ, vui lòng đổi mật khẩu ngay và báo Quản lý Kiosk.
                 </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Mật khẩu mới</label>
-                  <input type="password" required value={newPassword} onChange={(e) => setNewPassword(e.target.value)} style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Xác nhận mật khẩu mới</label>
-                  <input type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-                <button
-                  type="submit"
-                  disabled={changingPassword}
-                  style={{
-                    marginTop: 8, padding: '11px', borderRadius: 10, border: 'none',
-                    background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff',
-                    fontWeight: 800, fontSize: 13, cursor: 'pointer', boxShadow: '0 4px 12px rgba(16,185,129,0.3)'
-                  }}
-                >
-                  {changingPassword ? 'Đang cập nhật...' : 'Cập nhật mật khẩu'}
-                </button>
-              </form>
+              </div>
             </div>
           </div>
         )}
