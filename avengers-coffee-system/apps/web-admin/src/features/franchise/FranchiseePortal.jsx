@@ -29,6 +29,7 @@ import {
   X,
   RefreshCw,
   Eye,
+  EyeOff,
   Coffee,
   AlertTriangle,
   ChevronLeft,
@@ -345,6 +346,7 @@ export function FranchiseePortal({ session, onLogout }) {
   })
   const [resetPwdInput, setResetPwdInput] = useState('')
   const [staffSubmitting, setStaffSubmitting] = useState(false)
+  const [showStaffPassword, setShowStaffPassword] = useState(false)
 
   // ─── 5.2: Work Shift Scheduling States ───
   const [workShifts, setWorkShifts] = useState([])
@@ -450,7 +452,12 @@ export function FranchiseePortal({ session, onLogout }) {
       setCombos(c || [])
       setDons(d || [])
       setCongNos(cn || [])
-      setRoyalties(r || [])
+      const royaltiesData = r || []
+      const royaltiesWithKiosk = royaltiesData.map(roy => {
+        const kiosk = (k || []).find(kk => kk.id === roy.kiosk_id)
+        return { ...roy, kiosk }
+      })
+      setRoyalties(royaltiesWithKiosk)
       if (k && k.length > 0) {
         setActiveKioskId(prev => {
           if (prev && k.some(kk => kk.id === prev)) return prev
@@ -915,9 +922,11 @@ export function FranchiseePortal({ session, onLogout }) {
   const handleRefundVoidPos = async (orderId, payload) => {
     setVoidSubmitting(true)
     try {
+      const kiosk = kiosks.find(k => k.id === activeKioskId)
+      const finalPayload = { ...payload, branch_code: payload.branch_code || kiosk?.ma_kiosk }
       const res = await apiFetch(`/staff/orders/${orderId}/refund-void`, {
         method: 'POST',
-        body: JSON.stringify(payload),
+        body: JSON.stringify(finalPayload),
       })
       setMsg({ type: 'success', text: `✅ ${res.message || 'Đã hoàn tiền mặt và hủy đơn hàng POS thành công!'}` })
       setShowVoidModal(false)
@@ -1421,6 +1430,7 @@ export function FranchiseePortal({ session, onLogout }) {
                         )
                       })}
                     </div>
+
                   </div>
                 )}
 
@@ -1829,11 +1839,15 @@ export function FranchiseePortal({ session, onLogout }) {
                               <CalendarCheck size={20} />
                             </div>
                             <div>
-                              <div style={{ fontWeight: 800, fontSize: 14, color: '#92400e' }}>
-                                Có {pendingList.length} yêu cầu đăng ký ca làm việc mới
-                              </div>
-                              <div style={{ fontSize: 12, color: '#b45309', marginTop: 2 }}>
-                                Nhân viên đã gửi yêu cầu phân ca tuần kế tiếp cần duyệt
+<div>
+  <div style={{ fontWeight: 800, fontSize: 14, color: '#92400e' }}>
+    Có {pendingList.length} yêu cầu đăng ký ca làm việc mới chờ duyệt
+  </div>
+  <div style={{ fontSize: 12, color: '#b45309', marginTop: 2 }}>
+    Hãy xem xét và bấm Duyệt để chuyển thành ca làm việc chính thức cho Kiosk.
+  </div>
+</div>
+
                               </div>
                             </div>
                           </div>
@@ -2938,6 +2952,29 @@ export function FranchiseePortal({ session, onLogout }) {
                 {/* ═══════════════════════════════════════════════════════════ */}
                 {tab === 'royalty' && (
                   <div style={{ maxWidth: 680 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                      <h3 style={{ margin: 0, fontSize: 16, color: '#0f172a' }}>Bảng Kê Royalty</h3>
+                      <button 
+                        onClick={async () => {
+                          try {
+                            const d = new Date()
+                            d.setMonth(d.getMonth() - 1)
+                            const thangTruoc = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`
+                            const res = await apiFetch('/franchise/royalty/tinh-thang', { 
+                              method: 'POST', 
+                              body: JSON.stringify({ thang: thangTruoc }) 
+                            })
+                            setMsg({ type: 'success', text: `✅ ${res.message || 'Đã tính Royalty thành công!'}` })
+                            setTimeout(() => window.location.reload(), 1500)
+                          } catch (e) {
+                            setMsg({ type: 'error', text: e.message })
+                          }
+                        }}
+                        style={{ padding: '6px 12px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer', fontSize: 12 }}
+                      >
+                        ⚡ Tính Royalty Tháng Trước (Demo)
+                      </button>
+                    </div>
                     <div style={{ display: 'grid', gap: 16 }}>
                       {royaltyTheoKiosk.map(r => (
                         <div key={r.id} style={{ background: '#fff', borderRadius: 20, padding: 24, border: '1px solid #e2e8f0', boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
@@ -3018,14 +3055,23 @@ export function FranchiseePortal({ session, onLogout }) {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                   <div>
                     <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 6 }}>Mật khẩu khởi tạo *</label>
-                    <input type="password" required value={staffForm.mat_khau} onChange={e => setStaffForm(f => ({ ...f, mat_khau: e.target.value }))} placeholder="••••••"
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                    <div style={{ position: 'relative' }}>
+                      <input type={showStaffPassword ? "text" : "password"} required value={staffForm.mat_khau} onChange={e => setStaffForm(f => ({ ...f, mat_khau: e.target.value }))} placeholder="••••••"
+                        style={{ width: '100%', padding: '10px 40px 10px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                      <button 
+                        type="button" 
+                        onClick={() => setShowStaffPassword(!showStaffPassword)}
+                        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        {showStaffPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 6 }}>Kiosk phân công *</label>
                     <select value={staffForm.kiosk_id || activeKioskId} onChange={e => setStaffForm(f => ({ ...f, kiosk_id: e.target.value }))}
                       style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none', background: '#f8fafc', fontWeight: 600, boxSizing: 'border-box' }}>
-                      {kiosks.map(k => <option key={k.id} value={k.id}>{k.ten_kiosk} ({k.ma_kiosk})</option>)}
+                      {kiosks.filter(k => k.trang_thai === 'DANG_HOAT_DONG').map(k => <option key={k.id} value={k.id}>{k.ten_kiosk} ({k.ma_kiosk})</option>)}
                     </select>
                   </div>
                 </div>
@@ -3566,7 +3612,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                 </div>
                                 {req.note && (
                                   <div style={{ fontSize: 12, color: '#64748b', marginTop: 4, fontStyle: 'italic' }}>
-                                    Ghi chú: "{req.note}"
+                                    Ghi chú: &quot;{req.note}&quot;
                                   </div>
                                 )}
                                 {req.ghi_chu_duyet && (
@@ -3666,7 +3712,7 @@ export function FranchiseePortal({ session, onLogout }) {
               </div>
             </div>
           </div>
-        )}
+      )}
 
       {/* Scoring Criteria Modal */}
       {scoringCriteriaModal && (
@@ -3840,11 +3886,11 @@ export function FranchiseePortal({ session, onLogout }) {
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999,
           background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
-        }}>
+        }} onClick={() => setShowPayment(false)}>
           <div style={{
             background: '#fff', borderRadius: 24, width: '100%', maxWidth: 400, overflow: 'hidden',
             boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', animation: 'slideUp 0.3s ease-out'
-          }}>
+          }} onClick={e => e.stopPropagation()}>
             <div style={{ background: 'linear-gradient(135deg, #4338ca, #3b82f6)', padding: '24px', textAlign: 'center', color: '#fff' }}>
               <div style={{ fontSize: 40, marginBottom: 8 }}>💳</div>
               <h3 style={{ margin: 0, fontSize: 22, fontWeight: 900 }}>Avengers Pay</h3>
@@ -3874,6 +3920,7 @@ export function FranchiseePortal({ session, onLogout }) {
                     width: '100%', padding: '10px', background: '#dbeafe', color: '#1d4ed8',
                     border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer', marginTop: 8
                   }}>
+                    + Nạp thêm tiền vào ví
                   </button>
                 )}
               </div>
@@ -3894,6 +3941,7 @@ export function FranchiseePortal({ session, onLogout }) {
                 </button>
               </div>
             </div>
+
           </div>
         </div>
       )}

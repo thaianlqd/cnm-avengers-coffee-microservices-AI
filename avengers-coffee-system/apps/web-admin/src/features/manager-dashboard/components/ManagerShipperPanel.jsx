@@ -203,7 +203,7 @@ export function ManagerShipperPanel({ session }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.85rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.85rem' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-            <Bike size={20} color="#4f46e5" /> Quản lý Giao hàng
+            <Bike size={20} color="#4f46e5" /> Quản lý NV giao hàng
           </h1>
           <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.78125rem', color: '#64748b' }}>
             Theo dõi đội ngũ giao nhận, điều phối phân công đơn hàng và xử lý sự cố ngoại lệ thời gian thực.
