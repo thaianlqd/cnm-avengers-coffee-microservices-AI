@@ -1058,26 +1058,38 @@ export function FranchiseePortal({ session, onLogout }) {
   const tongCongNoTheoKiosk = congNoTheoKiosk.filter(c => c.trang_thai !== 'DA_THANH_TOAN').reduce((s, c) => s + Number(c.so_tien) + Number(c.phi_phat_tre_han || 0), 0)
 
   const LOAI_KIOSK_LABEL = {
-    'XE_LUU_DONG': { label: 'Xe lưu động', emoji: '🚚', color: '#0369a1', bg: '#e0f2fe' },
-    'KIOSK_CO_DINH': { label: 'Kiosk cố định', emoji: '🏪', color: '#7c3aed', bg: '#ede9fe' },
-    'CONTAINER_CAFE': { label: 'Container café', emoji: '📦', color: '#065f46', bg: '#d1fae5' },
+    'XE_LUU_DONG': { label: 'Xe lưu động', color: '#0369a1', bg: '#e0f2fe' },
+    'KIOSK_CO_DINH': { label: 'Kiosk cố định', color: '#7c3aed', bg: '#ede9fe' },
+    'CONTAINER_CAFE': { label: 'Container café', color: '#065f46', bg: '#d1fae5' },
   }
 
   const filterMenuByKiosk = (items, kType) => {
     if (!kType) return items;
-    if (kType === 'XE_LUU_DONG') {
-      return items.filter(m => {
-        const cat = String(getCategoryName(m.danh_muc || m.danhMuc)).toLowerCase()
-        return cat.includes('cà phê') || cat.includes('espresso') || cat.includes('americano') || cat.includes('trà')
-      })
-    }
-    if (kType === 'KIOSK_CO_DINH') {
-      return items.filter(m => {
-        const cat = String(getCategoryName(m.danh_muc || m.danhMuc)).toLowerCase()
+    return items.filter(m => {
+      const cat = String(getCategoryName(m.danh_muc || m.danhMuc)).toLowerCase()
+      // Luôn loại bỏ các danh mục nội bộ không kinh doanh lẻ tại quầy Kiosk
+      if (cat.includes('topping') || cat.includes('ưu đãi') || cat.includes('merchandise')) {
+        return false
+      }
+      // 1. Gói Xe Cà Phê Lưu Động (XE_LUU_DONG)
+      if (kType === 'XE_LUU_DONG') {
+        const isCoffeeOrTea =
+          cat.includes('cà phê') || cat.includes('espresso') ||
+          cat.includes('americano') || cat.includes('latte') ||
+          cat.includes('trà')
+        const isFood = cat.includes('bánh') || cat.includes('pizza')
+        return isCoffeeOrTea && !isFood
+      }
+      // 2. Gói Kiosk Cố Định (KIOSK_CO_DINH)
+      if (kType === 'KIOSK_CO_DINH') {
         return !cat.includes('pizza') && !cat.includes('bánh mặn')
-      })
-    }
-    return items;
+      }
+      // 3. Gói Container Café (CONTAINER_CAFE)
+      if (kType === 'CONTAINER_CAFE') {
+        return !cat.includes('pizza')
+      }
+      return true
+    })
   }
 
   const availableMenu = filterMenuByKiosk(menuItems, activeKiosk?.loai_kiosk)
@@ -1121,7 +1133,6 @@ export function FranchiseePortal({ session, onLogout }) {
     { id: 'staff_manage', icon: Users, label: 'Quản lý nhân viên' },
     { id: 'shift_schedule', icon: CalendarDays, label: 'Phân ca làm việc' },
     { id: 'kiosk_shifts', icon: Clock, label: 'Ca trực & Chốt ca' },
-    { id: 'pos', icon: Coffee, label: 'POS Bán Hàng' },
     { id: 'pos_orders', icon: Receipt, label: 'Đơn bán hàng' },
     { id: 'menu', icon: FileText, label: 'Thực đơn' },
     { id: 'order', icon: Package, label: 'Đặt Combo' },
@@ -1828,11 +1839,15 @@ export function FranchiseePortal({ session, onLogout }) {
                               <CalendarCheck size={20} />
                             </div>
                             <div>
-                              <div style={{ fontWeight: 800, fontSize: 13, color: '#92400e' }}>
-                                Có {pendingList.length} ca làm việc do nhân viên đăng ký tuần tới đang chờ duyệt
-                              </div>
-                              <div style={{ fontSize: 11, color: '#b45309', marginTop: 2 }}>
-                                Hãy xem xét và bấm Duyệt để chuyển thành ca làm việc chính thức cho Kiosk.
+<div>
+  <div style={{ fontWeight: 800, fontSize: 14, color: '#92400e' }}>
+    Có {pendingList.length} yêu cầu đăng ký ca làm việc mới chờ duyệt
+  </div>
+  <div style={{ fontSize: 12, color: '#b45309', marginTop: 2 }}>
+    Hãy xem xét và bấm Duyệt để chuyển thành ca làm việc chính thức cho Kiosk.
+  </div>
+</div>
+
                               </div>
                             </div>
                           </div>
@@ -2176,421 +2191,307 @@ export function FranchiseePortal({ session, onLogout }) {
                 {/* ═══════════════════════════════════════════════════════════ */}
                 {/* TAB 4: CA TRỰC KIOSK & CHỐT CA (RÀNG BUỘC MỞ CA & 1 CA/KIOSK) */}
                 {/* ═══════════════════════════════════════════════════════════ */}
-                {tab === 'kiosk_shifts' && (
-                  <div>
-                    {/* Header */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 14 }}>
-                      <div>
-                        <h3 style={{ margin: 0, fontSize: 22, fontWeight: 900, color: '#0f172a' }}>Giám Sát & Quản Lý Ca Trực Kiosk</h3>
-                        <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 14 }}>
-                          Ràng buộc mở ca trực tiếp trên máy POS, kiểm soát dòng tiền đầu ca & cuối ca, ngăn trùng lặp ca.
-                        </p>
-                      </div>
-
-                      <div style={{ display: 'flex', gap: 10 }}>
-                        <button onClick={() => { loadActiveKioskShift(); loadKioskShiftHistory(); }} style={{
-                          padding: '10px 16px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: 12,
-                          fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
-                        }}>
-                          <RefreshCw size={14} /> Cập nhật số liệu
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* LIVE ACTIVE SHIFT CARD */}
-                    {activeKioskShiftLoading ? (
-                      <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>⏳ Đang kiểm tra trạng thái ca trực...</div>
-                    ) : activeKioskShift?.has_open_shift ? (
-                      <div style={{
-                        background: 'linear-gradient(135deg, #064e3b, #047857)', borderRadius: 24, padding: '28px', color: '#fff',
-                        boxShadow: '0 10px 30px rgba(4,120,87,0.25)', marginBottom: 32
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
-                          <div>
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 99, background: 'rgba(255,255,255,0.2)', fontSize: 12, fontWeight: 800, marginBottom: 12 }}>
-                              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#34d399', display: 'inline-block' }}></span>
-                              KIOSK ĐANG TRONG CA TRỰC MỞ
-                            </div>
-                            <h2 style={{ margin: '0 0 6px', fontSize: 26, fontWeight: 900 }}>
-                              Thu ngân: {activeKioskShift.active_shift?.staff_name || activeKioskShift.active_shift?.staff_username}
-                            </h2>
-                            <div style={{ fontSize: 13, opacity: 0.85 }}>
-                              Tài khoản: @{activeKioskShift.active_shift?.staff_username} • Mở lúc: {fmtDate(activeKioskShift.active_shift?.thoi_gian_mo_ca)} (Đã trực {activeKioskShift.live_stats?.duration_minutes} phút)
-                            </div>
-                          </div>
-
-                          <div style={{ display: 'flex', gap: 10 }}>
-                            <button onClick={() => {
-                              setCloseShiftForm({
-                                cash_close: activeKioskShift.live_stats?.expected_cash || 0,
-                                note: '',
-                              });
-                              setShowCloseShiftModal(true);
-                            }} style={{
-                              padding: '12px 20px', background: '#fff', color: '#065f46', border: 'none', borderRadius: 12,
-                              fontWeight: 800, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-                              boxShadow: '0 4px 14px rgba(0,0,0,0.1)'
-                            }}>
-                              <CheckCircle2 size={16} /> Chốt ca làm việc
-                            </button>
-                            <button onClick={() => setShowForceCloseModal(true)} style={{
-                              padding: '12px 16px', background: 'rgba(239,68,68,0.25)', color: '#fecaca', border: '1px solid rgba(239,68,68,0.4)',
-                              borderRadius: 12, fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
-                            }} title="Cưỡng chế đóng ca khi nhân viên trước quên chốt">
-                              <ShieldAlert size={16} /> Cưỡng chế bàn giao
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Live Metrics Grid */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.15)' }}>
-                          <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: '14px 16px' }}>
-                            <div style={{ fontSize: 11, opacity: 0.8, fontWeight: 700, textTransform: 'uppercase' }}>Tiền mặt đầu ca</div>
-                            <div style={{ fontSize: 20, fontWeight: 900, marginTop: 4 }}>{fmtMoney(activeKioskShift.active_shift?.tien_dau_ca)}</div>
-                          </div>
-                          <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: '14px 16px' }}>
-                            <div style={{ fontSize: 11, opacity: 0.8, fontWeight: 700, textTransform: 'uppercase' }}>Doanh thu trong ca</div>
-                            <div style={{ fontSize: 20, fontWeight: 900, marginTop: 4 }}>{fmtMoney(activeKioskShift.live_stats?.total_revenue)}</div>
-                          </div>
-                          <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: '14px 16px' }}>
-                            <div style={{ fontSize: 11, opacity: 0.8, fontWeight: 700, textTransform: 'uppercase' }}>Số đơn bán tại quầy</div>
-                            <div style={{ fontSize: 20, fontWeight: 900, marginTop: 4 }}>{activeKioskShift.live_stats?.total_orders} đơn</div>
-                          </div>
-                          <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 14, padding: '14px 16px', border: '1px solid rgba(255,255,255,0.2)' }}>
-                            <div style={{ fontSize: 11, opacity: 0.9, fontWeight: 800, textTransform: 'uppercase', color: '#fef08a' }}>Tiền mặt kỳ vọng trong két</div>
-                            <div style={{ fontSize: 22, fontWeight: 900, color: '#fef08a', marginTop: 4 }}>{fmtMoney(activeKioskShift.live_stats?.expected_cash)}</div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div style={{
-                        background: '#fff', borderRadius: 24, padding: '36px', border: '2px dashed #cbd5e1',
-                        textAlign: 'center', marginBottom: 32
-                      }}>
-                        <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                          <Clock size={28} />
-                        </div>
-                        <h3 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 900, color: '#0f172a' }}>Kiosk Hiện Chưa Mở Ca Làm Việc</h3>
-                        <p style={{ margin: '0 auto 20px', maxWidth: 480, color: '#64748b', fontSize: 14 }}>
-                          Theo quy định ràng buộc, nhân viên chỉ có thể thực hiện thao tác bán hàng trên máy POS khi Kiosk đang có ca làm việc mở. Vui lòng mở ca và kê khai tiền mặt đầu ca để bắt đầu.
-                        </p>
-                        <button onClick={() => {
-                          setOpenShiftForm({
-                            staff_username: subStaffList[0]?.ten_dang_nhap || userName,
-                            staff_name: subStaffList[0]?.ho_ten || userName,
-                            cash_open: 500000,
-                            note: '',
-                          });
-                          setShowOpenShiftModal(true);
-                        }} style={{
-                          padding: '12px 24px', background: '#059669', color: '#fff', border: 'none',
-                          borderRadius: 14, fontWeight: 800, fontSize: 15, cursor: 'pointer', display: 'inline-flex',
-                          alignItems: 'center', gap: 8, boxShadow: '0 6px 20px rgba(5,150,105,0.35)'
-                        }}>
-                          <PlayCircle size={18} /> Mở ca làm việc ngay
-                        </button>
-                      </div>
-                    )}
-
-                    {/* KIOSK SHIFT HISTORY */}
-                    <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #e2e8f0', padding: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.02)' }}>
-                      <h4 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 900, color: '#0f172a' }}>
-                        Lịch Sử Ca Trực & Đối Soát Két Tiền Kiosk
-                      </h4>
-
-                      {kioskShiftHistoryLoading ? (
-                        <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>⏳ Đang tải lịch sử ca...</div>
-                      ) : kioskShiftHistory.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>Chưa có ca trực nào được ghi nhận trên Kiosk này.</div>
-                      ) : (
-                        <div style={{ overflowX: 'auto' }}>
-                          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                            <thead>
-                              <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                                {['Thời Gian', 'Thu Ngân', 'Đầu Ca', 'Doanh Thu', 'Số Đơn', 'Cuối Ca Thực Tế', 'Chênh Lệch', 'Trạng Thái'].map(h => (
-                                  <th key={h} style={{ padding: '12px 14px', textAlign: 'left', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase' }}>{h}</th>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {kioskShiftHistory.map(shift => {
-                                const isForceClosed = shift.trang_thai === 'FORCE_CLOSED'
-                                const isClosed = shift.trang_thai === 'CLOSED'
-                                const diff = shift.chenh_lech
-                                return (
-                                  <tr key={shift.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                    <td style={{ padding: '14px', fontSize: 13, color: '#1e293b' }}>
-                                      <div style={{ fontWeight: 700 }}>{fmtDate(shift.thoi_gian_mo_ca)}</div>
-                                      <div style={{ fontSize: 11, color: '#64748b' }}>Đóng: {shift.thoi_gian_dong_ca ? fmtDate(shift.thoi_gian_dong_ca) : 'Đang mở'}</div>
-                                    </td>
-                                    <td style={{ padding: '14px', fontSize: 13, color: '#0f172a', fontWeight: 700 }}>
-                                      {shift.staff_name || shift.staff_username}
-                                      <div style={{ fontSize: 11, color: '#64748b', fontWeight: 400 }}>@{shift.staff_username}</div>
-                                    </td>
-                                    <td style={{ padding: '14px', fontSize: 13, fontWeight: 700, color: '#475569' }}>
-                                      {fmtMoney(shift.tien_dau_ca)}
-                                    </td>
-                                    <td style={{ padding: '14px', fontSize: 13, fontWeight: 800, color: '#059669' }}>
-                                      {fmtMoney(shift.doanh_thu_he_thong)}
-                                    </td>
-                                    <td style={{ padding: '14px', fontSize: 13, fontWeight: 700, color: '#1e293b' }}>
-                                      {shift.tong_don_hang} đơn
-                                    </td>
-                                    <td style={{ padding: '14px', fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
-                                      {shift.tien_cuoi_ca !== null ? fmtMoney(shift.tien_cuoi_ca) : '—'}
-                                    </td>
-                                    <td style={{ padding: '14px', fontSize: 13 }}>
-                                      {diff === null || diff === undefined ? (
-                                        <span style={{ color: '#94a3b8' }}>—</span>
-                                      ) : diff === 0 ? (
-                                        <span style={{ color: '#059669', fontWeight: 800 }}>✓ Khớp chuẩn 0đ</span>
-                                      ) : diff > 0 ? (
-                                        <span style={{ color: '#d97706', fontWeight: 800 }}>+ {fmtMoney(diff)} (Thừa)</span>
-                                      ) : (
-                                        <span style={{ color: '#dc2626', fontWeight: 800 }}>- {fmtMoney(Math.abs(diff))} (Thiếu)</span>
-                                      )}
-                                    </td>
-                                    <td style={{ padding: '14px' }}>
-                                      <span style={{
-                                        padding: '4px 10px', borderRadius: 99, fontSize: 11, fontWeight: 800,
-                                        background: shift.trang_thai === 'OPEN' ? '#ecfdf5' : isForceClosed ? '#fee2e2' : '#f1f5f9',
-                                        color: shift.trang_thai === 'OPEN' ? '#059669' : isForceClosed ? '#dc2626' : '#475569',
-                                        border: `1px solid ${shift.trang_thai === 'OPEN' ? '#a7f3d0' : isForceClosed ? '#fecaca' : '#cbd5e1'}`
-                                      }}>
-                                        {shift.trang_thai === 'OPEN' ? '🟢 Đang mở' : isForceClosed ? '⚠️ Ép đóng ca' : '✓ Đã chốt ca'}
-                                      </span>
-                                    </td>
-                                  </tr>
-                                )
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
                 {/* ═══════════════════════════════════════════════════════════ */}
-                {/* TAB 5: POS BÁN HÀNG (INTEGRATED SHIFT CONSTRAINT) */}
+                {/* TAB: GIÁM SÁT CA TRỰC & ĐỐI SOÁT KÉT TIỀN (kiosk_shifts) */}
                 {/* ═══════════════════════════════════════════════════════════ */}
-                {tab === 'pos' && (() => {
-                  const kioskActive = activeKiosk?.trang_thai === 'DANG_HOAT_DONG'
-                  if (!kioskActive) return (
-                    <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-                      <div style={{ fontSize: 60, marginBottom: 16 }}>🔒</div>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: '#1e293b', marginBottom: 8 }}>POS chưa khả dụng</div>
-                      <div style={{ color: '#64748b', fontSize: 14 }}>Kiosk <b>{activeKiosk?.ten_kiosk}</b> đang ở trạng thái <b>{activeKiosk?.trang_thai}</b>. Chọn một Kiosk đang hoạt động để dùng POS.</div>
-                    </div>
-                  )
-
-                  const hasOpenShift = activeKioskShift?.has_open_shift
+                {tab === 'kiosk_shifts' && (() => {
+                  const lastClosedShift = kioskShiftHistory.find(s => s.trang_thai === 'CLOSED' || s.trang_thai === 'FORCE_CLOSED') || kioskShiftHistory[0]
 
                   return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                      {/* SHIFT CONSTRAINT BANNER IN POS */}
-                      {!hasOpenShift && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                      {/* Tiêu đề & Công cụ quản trị */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
+                        <div>
+                          <h3 style={{ margin: 0, fontSize: 22, fontWeight: 900, color: '#0f172a' }}>Giám Sát Ca Trực và Đối Soát Két Tiền</h3>
+                          <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 14 }}>
+                            Theo dõi tình trạng hoạt động thực tế tại Kiosk, kiểm soát dòng tiền đầu ca, doanh thu và đối soát chốt két của nhân viên.
+                          </p>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                          <button
+                            onClick={() => { loadActiveKioskShift(); loadKioskShiftHistory(); }}
+                            style={{
+                              padding: '10px 18px', background: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: 12,
+                              fontWeight: 700, fontSize: 13, color: '#334155', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.03)', transition: 'all 0.15s ease'
+                            }}
+                          >
+                            <RefreshCw size={15} /> Làm mới số liệu
+                          </button>
+
+                          <button
+                            onClick={() => setTab('shift_schedule')}
+                            style={{
+                              padding: '10px 18px', background: '#ecfdf5', border: '1.5px solid #a7f3d0', borderRadius: 12,
+                              fontWeight: 700, fontSize: 13, color: '#065f46', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+                              boxShadow: '0 2px 6px rgba(6,95,70,0.05)', transition: 'all 0.15s ease'
+                            }}
+                          >
+                            <CalendarDays size={15} /> Xem lịch phân ca
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* 1. THẺ GIÁM SÁT CA TRỰC HIỆN THỜI */}
+                      {activeKioskShiftLoading ? (
+                        <div style={{ textAlign: 'center', padding: '40px 20px', background: '#ffffff', borderRadius: 20, border: '1px solid #e2e8f0', color: '#64748b' }}>
+                          Đang kiểm tra trạng thái ca trực thời gian thực...
+                        </div>
+                      ) : activeKioskShift?.has_open_shift ? (
+                        /* Đang có ca trực mở tại Kiosk */
                         <div style={{
-                          background: '#fef2f2', border: '2px solid #fecaca', borderRadius: 16, padding: '16px 20px',
-                          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16,
-                          boxShadow: '0 4px 16px rgba(220,38,38,0.08)'
+                          background: 'linear-gradient(135deg, #064e3b 0%, #047857 100%)', borderRadius: 24, padding: '28px', color: '#ffffff',
+                          boxShadow: '0 12px 32px rgba(4,120,87,0.22)'
                         }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <div style={{ width: 40, height: 40, borderRadius: 10, background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <Lock size={20} />
-                            </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
                             <div>
-                              <div style={{ fontWeight: 800, color: '#991b1b', fontSize: 15 }}>Chức năng thanh toán POS bị khóa — Kiosk chưa mở ca làm việc</div>
-                              <div style={{ color: '#b91c1c', fontSize: 13 }}>Theo ràng buộc vận hành, nhân viên cần mở ca và kê khai tiền mặt đầu ca trước khi tạo đơn bán hàng.</div>
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.18)', fontSize: 12, fontWeight: 800, marginBottom: 12, letterSpacing: '0.04em' }}>
+                                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#34d399', display: 'inline-block' }}></span>
+                                CA TRỰC ĐANG HOẠT ĐỘNG
+                              </div>
+
+                              <h2 style={{ margin: '0 0 6px', fontSize: 26, fontWeight: 900, color: '#ffffff' }}>
+                                Thu ngân: {activeKioskShift.active_shift?.staff_name || activeKioskShift.active_shift?.staff_username}
+                              </h2>
+
+                              <div style={{ fontSize: 14, opacity: 0.9 }}>
+                                Tài khoản: @{activeKioskShift.active_shift?.staff_username} • Bắt đầu ca: {fmtDate(activeKioskShift.active_shift?.thoi_gian_mo_ca)} (Thời gian đã trực: {activeKioskShift.live_stats?.duration_minutes} phút)
+                              </div>
+                            </div>
+
+                            {/* Quyền quản trị của Admin */}
+                            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                              <button
+                                onClick={() => setTab('pos_orders')}
+                                style={{
+                                  padding: '11px 18px', background: 'rgba(255,255,255,0.16)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.3)',
+                                  borderRadius: 12, fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
+                                }}
+                              >
+                                <Receipt size={15} /> Xem đơn trong ca
+                              </button>
+
+                              <button
+                                onClick={() => setShowForceCloseModal(true)}
+                                style={{
+                                  padding: '11px 18px', background: '#dc2626', color: '#ffffff', border: 'none',
+                                  borderRadius: 12, fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                                  boxShadow: '0 4px 14px rgba(220,38,38,0.35)'
+                                }}
+                                title="Cưỡng chế đóng ca khi nhân viên trước quên chốt hoặc bỏ ca"
+                              >
+                                <ShieldAlert size={15} /> Cưỡng chế đóng ca
+                              </button>
                             </div>
                           </div>
-                          <button onClick={() => {
-                            setOpenShiftForm({
-                              staff_username: subStaffList[0]?.ten_dang_nhap || userName,
-                              staff_name: subStaffList[0]?.ho_ten || userName,
-                              cash_open: 500000,
-                              note: '',
-                            });
-                            setShowOpenShiftModal(true);
-                          }} style={{
-                            padding: '10px 18px', background: '#059669', color: '#fff', border: 'none', borderRadius: 10,
-                            fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                            whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(5,150,105,0.25)'
-                          }}>
-                            <PlayCircle size={16} /> Mở ca bán hàng ngay
-                          </button>
+
+                          {/* 4 Thẻ số liệu tài chính thời gian thực */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginTop: 24, paddingTop: 22, borderTop: '1px solid rgba(255,255,255,0.18)' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: '16px' }}>
+                              <div style={{ fontSize: 12, opacity: 0.85, fontWeight: 700 }}>Tiền mặt đầu ca bàn giao</div>
+                              <div style={{ fontSize: 22, fontWeight: 900, marginTop: 6 }}>{fmtMoney(activeKioskShift.active_shift?.tien_dau_ca)}</div>
+                            </div>
+
+                            <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: '16px' }}>
+                              <div style={{ fontSize: 12, opacity: 0.85, fontWeight: 700 }}>Doanh thu tạm tính trong ca</div>
+                              <div style={{ fontSize: 22, fontWeight: 900, marginTop: 6 }}>{fmtMoney(activeKioskShift.live_stats?.total_revenue)}</div>
+                            </div>
+
+                            <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: '16px' }}>
+                              <div style={{ fontSize: 12, opacity: 0.85, fontWeight: 700 }}>Số đơn đã bán tại quầy</div>
+                              <div style={{ fontSize: 22, fontWeight: 900, marginTop: 6 }}>{activeKioskShift.live_stats?.total_orders} đơn</div>
+                            </div>
+
+                            <div style={{ background: 'rgba(255,255,255,0.16)', borderRadius: 14, padding: '16px', border: '1px solid rgba(255,255,255,0.22)' }}>
+                              <div style={{ fontSize: 12, opacity: 0.95, fontWeight: 800, color: '#fef08a' }}>Tiền mặt kỳ vọng trong két</div>
+                              <div style={{ fontSize: 24, fontWeight: 900, color: '#fef08a', marginTop: 6 }}>{fmtMoney(activeKioskShift.live_stats?.expected_cash)}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Kiosk hiện chưa mở ca - Thiết kế quản trị chuyên nghiệp */
+                        <div style={{
+                          background: '#ffffff', borderRadius: 24, padding: '32px', border: '1.5px solid #e2e8f0',
+                          boxShadow: '0 4px 18px rgba(0,0,0,0.03)'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
+                            <div style={{ maxWidth: 640 }}>
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 14px', borderRadius: 999, background: '#f1f5f9', color: '#475569', fontSize: 12, fontWeight: 800, marginBottom: 14 }}>
+                                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#94a3b8', display: 'inline-block' }}></span>
+                                HIỆN CHƯA CÓ CA TRỰC MỞ
+                              </div>
+
+                              <h3 style={{ margin: '0 0 10px', fontSize: 22, fontWeight: 900, color: '#0f172a' }}>
+                                Kiosk Hiện Đang Chờ Mở Ca Trực
+                              </h3>
+
+                              <p style={{ margin: 0, color: '#64748b', fontSize: 14, lineHeight: 1.6 }}>
+                                Chi nhánh <b>{activeKiosk?.ten_kiosk}</b> ({activeKiosk?.ma_kiosk}) hiện chưa có nhân viên đăng nhập mở ca trên máy POS.
+                                Khi nhân viên bắt đầu ca làm việc và kê khai vốn tiền mặt ban đầu, toàn bộ dữ liệu đối soát và dòng tiền thời gian thực sẽ tự động kích hoạt tại bảng giám sát này.
+                              </p>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 240 }}>
+                              <button
+                                onClick={() => setTab('shift_schedule')}
+                                style={{
+                                  padding: '12px 20px', background: '#059669', color: '#ffffff', border: 'none',
+                                  borderRadius: 12, fontWeight: 800, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                                  boxShadow: '0 4px 14px rgba(5,150,105,0.25)', transition: 'background 0.15s ease'
+                                }}
+                              >
+                                <CalendarDays size={16} /> Kiểm tra lịch phân ca
+                              </button>
+
+                              <button
+                                onClick={() => setTab('staff_manage')}
+                                style={{
+                                  padding: '11px 20px', background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1',
+                                  borderRadius: 12, fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+                                }}
+                              >
+                                <Users size={15} /> Quản lý danh sách nhân viên
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Thẻ tóm tắt thông tin ca gần nhất vừa đóng */}
+                          {lastClosedShift && (
+                            <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, background: '#f8fafc', padding: '16px 20px', borderRadius: 14 }}>
+                              <div>
+                                <span style={{ fontSize: 12, fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Ca trực kết thúc gần nhất:</span>
+                                <div style={{ fontSize: 14, fontWeight: 800, color: '#0f172a', marginTop: 2 }}>
+                                  Thu ngân: {lastClosedShift.staff_name || lastClosedShift.staff_username} (Đóng lúc: {fmtDate(lastClosedShift.thoi_gian_dong_ca)})
+                                </div>
+                              </div>
+
+                              <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
+                                <div>
+                                  <span style={{ fontSize: 12, color: '#64748b' }}>Tiền thực tế cuối ca:</span>
+                                  <div style={{ fontSize: 15, fontWeight: 800, color: '#0f172a' }}>{fmtMoney(lastClosedShift.tien_cuoi_ca)}</div>
+                                </div>
+                                <div>
+                                  <span style={{ fontSize: 12, color: '#64748b' }}>Chênh lệch đối soát:</span>
+                                  <div>
+                                    {lastClosedShift.chenh_lech === 0 ? (
+                                      <span style={{ fontSize: 13, fontWeight: 800, color: '#059669' }}>Khớp chuẩn 0đ</span>
+                                    ) : (lastClosedShift.chenh_lech > 0 ? (
+                                      <span style={{ fontSize: 13, fontWeight: 800, color: '#d97706' }}>+ {fmtMoney(lastClosedShift.chenh_lech)} (Thừa)</span>
+                                    ) : (
+                                      <span style={{ fontSize: 13, fontWeight: 800, color: '#dc2626' }}>- {fmtMoney(Math.abs(lastClosedShift.chenh_lech))} (Thiếu)</span>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 24, alignItems: 'start', height: 'calc(100vh - 160px)' }}>
-                        {/* LEFT: Thực đơn chọn nhanh */}
-                        <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-                          <div style={{ display: 'flex', gap: 10, padding: '16px 20px', borderBottom: '1px solid #f1f5f9', background: '#f8fafc', flexWrap: 'nowrap', overflowX: 'auto' }}>
-                            <input value={menuSearch} onChange={e => setMenuSearch(e.target.value)} placeholder="🔍 Tìm sản phẩm nhanh..."
-                              style={{ flexShrink: 0, width: 220, padding: '10px 16px', border: '1px solid #cbd5e1', borderRadius: 12, fontSize: 14, outline: 'none', fontWeight: 600, color: '#1e293b' }} />
-                            {[...new Set(availableMenu.map(m => getCategoryName(m.danh_muc || m.danhMuc)).filter(Boolean))].map(c => (
-                              <button key={c} onClick={() => setMenuCategory(prev => prev === c ? '' : c)}
-                                style={{ flexShrink: 0, padding: '8px 18px', borderRadius: 99, border: menuCategory === c ? 'none' : '1px solid #cbd5e1', background: menuCategory === c ? '#0f172a' : '#fff', color: menuCategory === c ? '#fff' : '#475569', fontWeight: 700, fontSize: 14, cursor: 'pointer', transition: 'all .2s' }}>{c}</button>
-                            ))}
+                      {/* 2. BẢNG LỊCH SỬ CA TRỰC & ĐỐI SOÁT KÉT TIỀN */}
+                      <div style={{ background: '#ffffff', borderRadius: 22, border: '1px solid #e2e8f0', padding: 26, boxShadow: '0 4px 16px rgba(0,0,0,0.02)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+                          <div>
+                            <h4 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a' }}>
+                              Lịch Sử Ca Trực và Đối Soát Két Tiền Kiosk
+                            </h4>
+                            <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 13 }}>
+                              Bảng kê chi tiết các ca làm việc, số tiền thực thu và đối soát sai lệch két tiền giữa ca.
+                            </p>
                           </div>
-                          
-                          <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
-                            {menuLoading ? <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>⏳ Đang tải...</div> : (
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 16 }}>
-                                {availableMenu.filter(m => {
-                                  const matchSearch = !menuSearch || (m.ten_san_pham || m.tenSanPham || '').toLowerCase().includes(menuSearch.toLowerCase())
-                                  const matchCat = !menuCategory || getCategoryName(m.danh_muc || m.danhMuc) === menuCategory
-                                  return matchSearch && matchCat && m.trang_thai !== 'HET_HANG' && m.is_available !== false
-                                }).map((m, i) => {
-                                  const name = m.ten_san_pham || m.tenSanPham || 'SP'
-                                  const price = Number(m.gia_ban || m.gia || 0)
-                                  const img = m.hinh_anh_url || m.hinhAnhUrl || m.hinh_anh || m.hinhAnh || m.imageUrl
-                                  const inCart = posCart.find(c => c.ma_san_pham === m.ma_san_pham)
+
+                          <div style={{ fontSize: 13, color: '#64748b', fontWeight: 600 }}>
+                            Tổng cộng: <b style={{ color: '#0f172a' }}>{kioskShiftHistory.length}</b> ca đã ghi nhận
+                          </div>
+                        </div>
+
+                        {kioskShiftHistoryLoading ? (
+                          <div style={{ textAlign: 'center', padding: '48px 20px', color: '#64748b' }}>Đang tải lịch sử ca trực...</div>
+                        ) : kioskShiftHistory.length === 0 ? (
+                          <div style={{ textAlign: 'center', padding: '48px 20px', color: '#94a3b8', fontSize: 14 }}>
+                            Chưa có ca trực nào được ghi nhận trên Kiosk này.
+                          </div>
+                        ) : (
+                          <div style={{ overflowX: 'auto' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                              <thead>
+                                <tr style={{ background: '#f8fafc', borderBottom: '1.5px solid #e2e8f0' }}>
+                                  {['Thời Gian Ca', 'Thu Ngân Phụ Trách', 'Tiền Đầu Ca', 'Doanh Thu Hệ Thống', 'Số Đơn', 'Thực Tế Cuối Ca', 'Chênh Lệch Đối Soát', 'Trạng Thái'].map(h => (
+                                    <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{h}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {kioskShiftHistory.map(shift => {
+                                  const isForceClosed = shift.trang_thai === 'FORCE_CLOSED'
+                                  const isOpen = shift.trang_thai === 'OPEN'
+                                  const diff = shift.chenh_lech
                                   return (
-                                    <div key={i} style={{
-                                      position: 'relative',
-                                      background: inCart ? '#fffbeb' : '#fff', borderRadius: 16, border: `2px solid ${inCart ? '#f59e0b' : 'transparent'}`, overflow: 'hidden',
-                                      padding: 0, textAlign: 'left', display: 'flex', flexDirection: 'column',
-                                      boxShadow: inCart ? '0 0 0 3px rgba(245,158,11,0.2)' : '0 4px 12px rgba(0,0,0,0.03)', transition: 'transform .1s, box-shadow .1s'
-                                    }}>
-                                      <div onClick={() => addToCart(m)} style={{ cursor: 'pointer', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                        {img ? (
-                                          <div style={{ width: '100%', paddingTop: '75%', position: 'relative', borderBottom: '1px solid #f1f5f9' }}>
-                                            <img src={img} alt={name} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                                          </div>
-                                        ) : (
-                                          <div style={{ width: '100%', paddingTop: '75%', position: 'relative', background: 'linear-gradient(135deg, #fef3c7, #fde68a)', borderBottom: '1px solid #f1f5f9' }}>
-                                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>☕</div>
-                                          </div>
-                                        )}
-                                        <div style={{ padding: '14px 12px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                          <div style={{ fontSize: 14, fontWeight: 800, color: '#1e293b', marginBottom: 6, lineHeight: 1.4, height: 39, overflow: 'hidden' }}>{name}</div>
-                                          <div style={{ fontSize: 15, color: '#ea580c', fontWeight: 900, marginTop: 'auto' }}>{fmtMoney(price)}</div>
-                                          {inCart && <div style={{ fontSize: 12, color: '#f59e0b', fontWeight: 800, marginTop: 4 }}>✓ Đã chọn ({inCart.sl})</div>}
+                                    <tr key={shift.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                      <td style={{ padding: '16px', fontSize: 13, color: '#1e293b' }}>
+                                        <div style={{ fontWeight: 700 }}>Mở: {fmtDate(shift.thoi_gian_mo_ca)}</div>
+                                        <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
+                                          Đóng: {shift.thoi_gian_dong_ca ? fmtDate(shift.thoi_gian_dong_ca) : 'Đang trong ca'}
                                         </div>
-                                      </div>
-                                    </div>
+                                      </td>
+
+                                      <td style={{ padding: '16px', fontSize: 13, color: '#0f172a', fontWeight: 700 }}>
+                                        <div>{shift.staff_name || shift.staff_username}</div>
+                                        <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>@{shift.staff_username}</div>
+                                      </td>
+
+                                      <td style={{ padding: '16px', fontSize: 13, fontWeight: 700, color: '#475569' }}>
+                                        {fmtMoney(shift.tien_dau_ca)}
+                                      </td>
+
+                                      <td style={{ padding: '16px', fontSize: 13, fontWeight: 800, color: '#059669' }}>
+                                        {fmtMoney(shift.doanh_thu_he_thong)}
+                                      </td>
+
+                                      <td style={{ padding: '16px', fontSize: 13, fontWeight: 700, color: '#1e293b' }}>
+                                        {shift.tong_don_hang} đơn
+                                      </td>
+
+                                      <td style={{ padding: '16px', fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
+                                        {shift.tien_cuoi_ca !== null ? fmtMoney(shift.tien_cuoi_ca) : '—'}
+                                      </td>
+
+                                      <td style={{ padding: '16px', fontSize: 13 }}>
+                                        {diff === null || diff === undefined ? (
+                                          <span style={{ color: '#94a3b8' }}>Chưa chốt</span>
+                                        ) : diff === 0 ? (
+                                          <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 800, background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0' }}>
+                                            Khớp chuẩn 0đ
+                                          </span>
+                                        ) : diff > 0 ? (
+                                          <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 800, background: '#fffbeb', color: '#b45309', border: '1px solid #fde68a' }}>
+                                            + {fmtMoney(diff)} (Thừa)
+                                          </span>
+                                        ) : (
+                                          <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 800, background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}>
+                                            - {fmtMoney(Math.abs(diff))} (Thiếu)
+                                          </span>
+                                        )}
+                                      </td>
+
+                                      <td style={{ padding: '16px' }}>
+                                        <span style={{
+                                          padding: '5px 12px', borderRadius: 999, fontSize: 12, fontWeight: 800,
+                                          background: isOpen ? '#ecfdf5' : isForceClosed ? '#fef2f2' : '#f1f5f9',
+                                          color: isOpen ? '#047857' : isForceClosed ? '#dc2626' : '#475569',
+                                          border: `1px solid ${isOpen ? '#a7f3d0' : isForceClosed ? '#fecaca' : '#cbd5e1'}`
+                                        }}>
+                                          {isOpen ? 'Đang mở' : isForceClosed ? 'Ép đóng ca' : 'Đã chốt ca'}
+                                        </span>
+                                      </td>
+                                    </tr>
                                   )
                                 })}
-                              </div>
-                            )}
+                              </tbody>
+                            </table>
                           </div>
-                        </div>
-
-                        {/* RIGHT: Giỏ hàng POS */}
-                        <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #e2e8f0', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', position: 'sticky', top: 80 }}>
-                          <div style={{ padding: '18px 20px', borderBottom: '1px solid #f1f5f9' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <div style={{ fontWeight: 900, fontSize: 16, color: '#1e293b' }}>🖥️ Đơn Hàng Tại Quầy</div>
-                              {hasOpenShift ? (
-                                <span style={{ fontSize: 11, fontWeight: 800, color: '#059669', background: '#ecfdf5', padding: '3px 8px', borderRadius: 99 }}>
-                                  ● Thu ngân: {activeKioskShift.active_shift?.staff_name}
-                                </span>
-                              ) : (
-                                <span style={{ fontSize: 11, fontWeight: 800, color: '#dc2626', background: '#fee2e2', padding: '3px 8px', borderRadius: 99 }}>
-                                  ● Chưa mở ca
-                                </span>
-                              )}
-                            </div>
-                            <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>Kiosk: {activeKiosk?.ten_kiosk} ({activeKiosk?.ma_kiosk})</div>
-                          </div>
-
-                          <div style={{ padding: '0 16px', maxHeight: 280, overflowY: 'auto' }}>
-                            {posCart.length === 0 ? (
-                              <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8', fontSize: 14 }}>Chưa có sản phẩm nào.<br/>Bấm vào thực đơn để thêm.</div>
-                            ) : posCart.map(c => (
-                              <div key={c.cartItemId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 0', borderBottom: '1px solid #f8fafc' }}>
-                                <div style={{ flex: 1 }}>
-                                  <div style={{ fontWeight: 700, fontSize: 13, color: '#1e293b' }}>{c.ten_san_pham || c.tenSanPham}</div>
-                                  <div style={{ fontSize: 12, color: '#d97706', fontWeight: 700, marginTop: 2 }}>{fmtMoney(c.gia_ban)}</div>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                  <button onClick={() => updateCartQty(c.cartItemId, c.sl - 1)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #cbd5e1', background: '#f8fafc', cursor: 'pointer', fontWeight: 800 }}>−</button>
-                                  <span style={{ fontWeight: 800, fontSize: 14, minWidth: 22, textAlign: 'center' }}>{c.sl}</span>
-                                  <button onClick={() => updateCartQty(c.cartItemId, c.sl + 1)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #cbd5e1', background: '#f8fafc', cursor: 'pointer', fontWeight: 800 }}>+</button>
-                                  <button onClick={() => removeFromCart(c.cartItemId)} style={{ width: 30, height: 30, borderRadius: 8, border: 'none', background: '#fee2e2', color: '#ef4444', cursor: 'pointer', fontWeight: 800, marginLeft: 4 }}>×</button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-
-                          <div style={{ padding: '14px 20px', borderTop: '1px solid #f1f5f9' }}>
-                            <div style={{ marginBottom: 12 }}>
-                              <label style={{ fontSize: 12, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 6 }}>HÌNH THỨC THANH TOÁN</label>
-                              <select value={posPayment} onChange={e => setPosPayment(e.target.value)}
-                                style={{ width: '100%', padding: '8px 10px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, fontWeight: 600 }}>
-                                <option value='TIEN_MAT'>💵 Tiền mặt</option>
-                                <option value='CHUYEN_KHOAN'>🏦 Chuyển khoản QR</option>
-                                <option value='VNPAY'>💻 VNPAY QR</option>
-                              </select>
-                            </div>
-
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, padding: '12px 14px', background: '#fffbeb', borderRadius: 10, border: '1px solid #fde68a' }}>
-                              <span style={{ fontSize: 13, fontWeight: 800, color: '#92400e' }}>TỔNG CỘNG</span>
-                              <span style={{ fontSize: 20, fontWeight: 900, color: '#d97706' }}>{fmtMoney(posTotal)}</span>
-                            </div>
-
-                            {posPayment === 'TIEN_MAT' && (
-                              <div style={{ background: '#f8fafc', padding: 12, borderRadius: 10, border: '1px solid #e2e8f0', marginBottom: 12 }}>
-                                <label style={{ fontSize: 12, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 4 }}>Tiền khách đưa (VNĐ)</label>
-                                <input type="number" min="0" value={posCashInput === 0 ? '' : posCashInput} onChange={e => setPosCashInput(e.target.value === '' ? '' : Number(e.target.value))} placeholder="0" style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 14, fontWeight: 700, boxSizing: 'border-box' }} />
-                                <div style={{ marginTop: 6, fontSize: 12, fontWeight: 700, color: posCashInsufficient ? '#ef4444' : '#10b981' }}>
-                                  {posCashInsufficient ? '⚠️ Tiền khách đưa chưa đủ' : `Tiền thối lại: ${fmtMoney(posChange)}`}
-                                </div>
-                              </div>
-                            )}
-
-                            {posOrderResult && (
-                              <div style={{ marginBottom: 12, padding: '12px', borderRadius: 12, background: posOrderResult.success ? (posOrderResult.voided ? '#fee2e2' : '#f0fdf4') : '#fef2f2', border: `1px solid ${posOrderResult.success ? (posOrderResult.voided ? '#fecaca' : '#bbf7d0') : '#fecaca'}` }}>
-                                <div style={{ color: posOrderResult.success ? (posOrderResult.voided ? '#991b1b' : '#15803d') : '#dc2626', fontWeight: 800, fontSize: 13, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-                                  <span>{posOrderResult.voided ? `⚠️ Đơn #${posOrderResult.ma_don} đã được hoàn tiền mặt & hủy` : (posOrderResult.success ? `✅ Đơn #${posOrderResult.ma_don} thành công!` : `❌ Lỗi: ${posOrderResult.error}`)}</span>
-                                  {posOrderResult.success && !posOrderResult.voided && (
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setVoidModalOrder({
-                                          ma_don_hang: posOrderResult.ma_don,
-                                          tong_tien: posOrderResult.tong,
-                                          phuong_thuc_thanh_toan: posOrderResult.method,
-                                          trang_thai_thanh_toan: 'DA_THANH_TOAN',
-                                          trang_thai_don_hang: 'HOAN_THANH',
-                                          ngay_tao: new Date().toISOString()
-                                        })
-                                        setShowVoidModal(true)
-                                      }}
-                                      style={{
-                                        padding: '4px 10px',
-                                        borderRadius: 8,
-                                        border: '1px solid #fecaca',
-                                        backgroundColor: '#dc2626',
-                                        color: '#ffffff',
-                                        fontSize: 11,
-                                        fontWeight: 800,
-                                        cursor: 'pointer',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: 4,
-                                        boxShadow: '0 2px 5px rgba(220,38,38,0.25)'
-                                      }}
-                                    >
-                                      <RotateCcw size={12} color="#fff" /> Hoàn tiền mặt &amp; Hủy đơn
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-
-                            <button onClick={submitPosOrder} disabled={posSubmitting || posCart.length === 0 || posCashInsufficient || !hasOpenShift}
-                              style={{
-                                width: '100%', padding: '14px', background: (!hasOpenShift || posCart.length === 0 || posCashInsufficient) ? '#cbd5e1' : '#059669',
-                                color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 800,
-                                cursor: (!hasOpenShift || posCart.length === 0 || posCashInsufficient) ? 'not-allowed' : 'pointer',
-                                boxShadow: (!hasOpenShift || !posCart.length || posCashInsufficient) ? 'none' : '0 6px 16px rgba(5,150,105,0.35)'
-                              }}>
-                              {posSubmitting ? '⏳ Đang tạo đơn...' : !hasOpenShift ? '🔒 Cần mở ca để bán hàng' : '🖥️ Thanh toán & In đơn'}
-                            </button>
-                          </div>
-                        </div>
+                        )}
                       </div>
                     </div>
                   )
@@ -2753,50 +2654,164 @@ export function FranchiseePortal({ session, onLogout }) {
                     return matchSearch && matchCat
                   })
                   const categories = [...new Set(availableMenu.map(m => getCategoryName(m.danh_muc || m.danhMuc)).filter(Boolean))]
+                  const totalPages = Math.ceil(filteredMenu.length / itemsPerPage) || 1
+                  const currentKioskLabel = LOAI_KIOSK_LABEL[activeKiosk?.loai_kiosk]?.label || 'Container café'
+
                   return (
                     <div>
-                      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 24, alignItems: 'center', background: '#fff', padding: '16px 20px', borderRadius: 16, border: '1px solid #e2e8f0' }}>
-                        <input value={menuSearch} onChange={e => { setMenuSearch(e.target.value); setMenuPage(1); }} placeholder="🔍 Tìm kiếm tên món..."
-                          style={{ flex: 1, minWidth: 200, padding: '10px 16px', border: '1px solid #cbd5e1', borderRadius: 10, fontSize: 14, outline: 'none', background: '#f8fafc' }} />
-                        <select value={menuCategory} onChange={e => { setMenuCategory(e.target.value); setMenuPage(1); }}
-                          style={{ padding: '10px 16px', border: '1px solid #cbd5e1', borderRadius: 10, fontSize: 14, background: '#f8fafc', outline: 'none', fontWeight: 600, color: '#334155' }}>
-                          <option value=''>🏷️ Tất cả danh mục</option>
-                          {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                        </select>
+                      {/* Thống kê gói & bộ lọc tìm kiếm */}
+                      <div style={{ background: '#ffffff', padding: '18px 24px', borderRadius: 16, border: '1px solid #e2e8f0', marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <span style={{
+                              padding: '5px 12px', borderRadius: 8, background: '#ecfdf5',
+                              color: '#065f46', border: '1px solid #a7f3d0', fontSize: 13, fontWeight: 800
+                            }}>
+                              Gói {currentKioskLabel}
+                            </span>
+                            <span style={{ fontSize: 13, color: '#64748b', fontWeight: 600 }}>
+                              Áp dụng: <strong style={{ color: '#0f172a' }}>{availableMenu.length}</strong> món chuẩn gói nhượng quyền
+                            </span>
+                          </div>
+                          <div style={{ fontSize: 13, color: '#64748b' }}>
+                            Đang xem <b>{filteredMenu.length}</b> món phù hợp
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+                          <input
+                            value={menuSearch}
+                            onChange={e => { setMenuSearch(e.target.value); setMenuPage(1); }}
+                            placeholder="Tìm kiếm tên món..."
+                            style={{ flex: 1, minWidth: 220, padding: '10px 16px', border: '1.5px solid #cbd5e1', borderRadius: 10, fontSize: 14, outline: 'none', background: '#f8fafc', color: '#0f172a' }}
+                          />
+                          <select
+                            value={menuCategory}
+                            onChange={e => { setMenuCategory(e.target.value); setMenuPage(1); }}
+                            style={{ padding: '10px 16px', border: '1.5px solid #cbd5e1', borderRadius: 10, fontSize: 14, background: '#f8fafc', outline: 'none', fontWeight: 700, color: '#334155' }}
+                          >
+                            <option value=''>Tất cả danh mục ({availableMenu.length})</option>
+                            {categories.map(c => {
+                              const countInCat = availableMenu.filter(m => getCategoryName(m.danh_muc || m.danhMuc) === c).length
+                              return <option key={c} value={c}>{c} ({countInCat})</option>
+                            })}
+                          </select>
+                        </div>
                       </div>
 
+                      {/* Lưới sản phẩm */}
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 20 }}>
                         {filteredMenu.slice((menuPage - 1) * itemsPerPage, menuPage * itemsPerPage).map((m, i) => {
                           const name = m.ten_san_pham || m.tenSanPham || 'Sản phẩm'
                           const price = m.gia_ban || m.gia || 0
                           const img = m.hinh_anh_url || m.hinhAnhUrl || m.hinh_anh || m.hinhAnh || m.imageUrl
                           return (
-                            <div key={i} style={{ background: '#fff', borderRadius: 20, border: '1px solid #e2e8f0', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+                            <div key={i} style={{ background: '#ffffff', borderRadius: 18, border: '1px solid #e2e8f0', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 4px 14px rgba(0,0,0,0.03)' }}>
                               {img ? (
                                 <div style={{ position: 'relative', width: '100%', paddingTop: '75%' }}>
                                   <img src={img} alt={name} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                                 </div>
                               ) : (
-                                <div style={{ width: '100%', paddingTop: '75%', position: 'relative', background: 'linear-gradient(135deg, #fef3c7, #fde68a)' }}>
-                                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>☕</div>
+                                <div style={{ width: '100%', paddingTop: '75%', position: 'relative', background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
+                                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#94a3b8', fontWeight: 700 }}>
+                                    Hình ảnh món
+                                  </div>
                                 </div>
                               )}
                               <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                 <div>
                                   <div style={{ fontWeight: 800, fontSize: 16, color: '#0f172a', marginBottom: 4 }}>{name}</div>
-                                  <div style={{ fontSize: 12, color: '#64748b' }}>{getCategoryName(m.danh_muc || m.danhMuc)}</div>
+                                  <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>{getCategoryName(m.danh_muc || m.danhMuc)}</div>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 14 }}>
                                   <div style={{ fontWeight: 900, color: '#d97706', fontSize: 17 }}>{fmtMoney(price)}</div>
-                                  <button onClick={() => { addToCart(m); setTab('pos'); }} style={{ padding: '6px 14px', background: '#059669', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                                    Bán tại POS →
-                                  </button>
+                                  <span
+                                    style={{
+                                      padding: '5px 12px', background: '#f0fdf4', color: '#15803d',
+                                      borderRadius: 8, fontSize: 12, fontWeight: 700, border: '1px solid #bbf7d0'
+                                    }}
+                                  >
+                                    Đang phục vụ
+                                  </span>
                                 </div>
                               </div>
                             </div>
                           )
                         })}
                       </div>
+
+                      {filteredMenu.length === 0 && (
+                        <div style={{ textAlign: 'center', padding: '48px 20px', background: '#ffffff', borderRadius: 16, border: '1px dashed #cbd5e1', color: '#64748b', marginTop: 12 }}>
+                          Không tìm thấy món phù hợp với tiêu chí tìm kiếm.
+                        </div>
+                      )}
+
+                      {/* Thanh phân trang hoàn chỉnh */}
+                      {filteredMenu.length > 0 && (
+                        <div style={{
+                          marginTop: 24, padding: '16px 20px', background: '#ffffff', borderRadius: 16,
+                          border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12
+                        }}>
+                          <div style={{ fontSize: 13, color: '#64748b' }}>
+                            Hiển thị <b>{(menuPage - 1) * itemsPerPage + 1}</b> – <b>{Math.min(menuPage * itemsPerPage, filteredMenu.length)}</b> trong tổng số <b>{filteredMenu.length}</b> món
+                          </div>
+
+                          {totalPages > 1 && (
+                            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                              <button
+                                disabled={menuPage <= 1}
+                                onClick={() => setMenuPage(p => Math.max(1, p - 1))}
+                                style={{
+                                  padding: '7px 14px', borderRadius: 8,
+                                  border: '1px solid #cbd5e1',
+                                  background: menuPage <= 1 ? '#f1f5f9' : '#ffffff',
+                                  color: menuPage <= 1 ? '#94a3b8' : '#1e293b',
+                                  fontWeight: 700, fontSize: 13,
+                                  cursor: menuPage <= 1 ? 'not-allowed' : 'pointer'
+                                }}
+                              >
+                                Trang trước
+                              </button>
+
+                              {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(p => {
+                                const isCurrent = menuPage === p
+                                return (
+                                  <button
+                                    key={p}
+                                    onClick={() => setMenuPage(p)}
+                                    style={{
+                                      width: 34, height: 34, borderRadius: 8,
+                                      border: isCurrent ? 'none' : '1px solid #cbd5e1',
+                                      background: isCurrent ? '#059669' : '#ffffff',
+                                      color: isCurrent ? '#ffffff' : '#334155',
+                                      fontWeight: isCurrent ? 800 : 600, fontSize: 13,
+                                      cursor: 'pointer',
+                                      boxShadow: isCurrent ? '0 2px 6px rgba(5,150,105,0.3)' : 'none'
+                                    }}
+                                  >
+                                    {p}
+                                  </button>
+                                )
+                              })}
+
+                              <button
+                                disabled={menuPage >= totalPages}
+                                onClick={() => setMenuPage(p => Math.min(totalPages, p + 1))}
+                                style={{
+                                  padding: '7px 14px', borderRadius: 8,
+                                  border: '1px solid #cbd5e1',
+                                  background: menuPage >= totalPages ? '#f1f5f9' : '#ffffff',
+                                  color: menuPage >= totalPages ? '#94a3b8' : '#1e293b',
+                                  fontWeight: 700, fontSize: 13,
+                                  cursor: menuPage >= totalPages ? 'not-allowed' : 'pointer'
+                                }}
+                              >
+                                Trang sau
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )
                 })()}
@@ -3872,10 +3887,61 @@ export function FranchiseePortal({ session, onLogout }) {
           background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
         }} onClick={() => setShowPayment(false)}>
-          <div style={{ background: '#fff', padding: 24, borderRadius: 16 }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ margin: '0 0 16px' }}>Thanh toán Công Nợ</h3>
-            <p>Tính năng thanh toán đang được tích hợp. Vui lòng quay lại sau.</p>
-            <button onClick={() => setShowPayment(false)} style={{ padding: '8px 16px', borderRadius: 8, background: '#f1f5f9', border: 'none', cursor: 'pointer', marginTop: 16 }}>Đóng</button>
+          <div style={{
+            background: '#fff', borderRadius: 24, width: '100%', maxWidth: 400, overflow: 'hidden',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', animation: 'slideUp 0.3s ease-out'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ background: 'linear-gradient(135deg, #4338ca, #3b82f6)', padding: '24px', textAlign: 'center', color: '#fff' }}>
+              <div style={{ fontSize: 40, marginBottom: 8 }}>💳</div>
+              <h3 style={{ margin: 0, fontSize: 22, fontWeight: 900 }}>Avengers Pay</h3>
+              <p style={{ margin: '4px 0 0', fontSize: 14, opacity: 0.8 }}>Thanh toán công nợ</p>
+            </div>
+            
+            <div style={{ padding: 24 }}>
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <div style={{ fontSize: 14, color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Số tiền cần thanh toán</div>
+                <div style={{ fontSize: 36, fontWeight: 900, color: '#1e293b', marginTop: 4 }}>
+                  {fmtMoney(selectedDebt.so_tien)}
+                </div>
+                <div style={{ fontSize: 14, color: '#3b82f6', fontWeight: 700, marginTop: 4 }}>
+                  {selectedDebt.loai_phat_sinh === 'KHOI_TAO' ? 'Phí nhượng quyền ban đầu' : 'Thanh toán hóa đơn'}
+                </div>
+              </div>
+
+              <div style={{ background: '#f8fafc', padding: 16, borderRadius: 16, border: '1px solid #e2e8f0', marginBottom: 24 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span style={{ fontSize: 14, color: '#64748b', fontWeight: 600 }}>Số dư ví hiện tại:</span>
+                  <span style={{ fontSize: 16, fontWeight: 800, color: walletBalance >= Number(selectedDebt.so_tien) ? '#059669' : '#dc2626' }}>
+                    {fmtMoney(walletBalance)}
+                  </span>
+                </div>
+                {walletBalance < Number(selectedDebt.so_tien) && (
+                  <button onClick={handleNapTien} type="button" style={{
+                    width: '100%', padding: '10px', background: '#dbeafe', color: '#1d4ed8',
+                    border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer', marginTop: 8
+                  }}>
+                    + Nạp thêm tiền vào ví
+                  </button>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button type="button" onClick={() => { setShowPayment(false); setSelectedDebt(null); }} disabled={paymentProcessing}
+                  style={{ flex: 1, padding: '14px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}>
+                  Hủy bỏ
+                </button>
+                <button type="button" onClick={handleThanhToan} disabled={walletBalance < Number(selectedDebt.so_tien) || paymentProcessing}
+                  style={{
+                    flex: 2, padding: '14px', background: walletBalance < Number(selectedDebt.so_tien) ? '#cbd5e1' : '#4f46e5',
+                    color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 800,
+                    cursor: walletBalance < Number(selectedDebt.so_tien) || paymentProcessing ? 'not-allowed' : 'pointer',
+                    boxShadow: walletBalance < Number(selectedDebt.so_tien) ? 'none' : '0 4px 14px rgba(79,70,229,0.4)'
+                  }}>
+                  {paymentProcessing ? 'Đang xử lý...' : 'Xác nhận thanh toán'}
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       )}

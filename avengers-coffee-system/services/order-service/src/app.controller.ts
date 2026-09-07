@@ -479,7 +479,7 @@ export class AppController {
 
   // ─── KIOSK SHIFT SESSIONS (RÀNG BUỘC MỞ CA & 1 CA/KIOSK) ───
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
+  @Roles('STAFF', 'FRANCHISE_STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Post('staff/kiosk-shifts/open')
   openKioskShift(
     @Body()
@@ -500,7 +500,7 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
+  @Roles('STAFF', 'FRANCHISE_STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Post('staff/kiosk-shifts/close')
   closeKioskShift(
     @Body()
@@ -537,14 +537,14 @@ export class AppController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
+  @Roles('STAFF', 'FRANCHISE_STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Get('staff/kiosk-shifts/active')
   getActiveKioskShift(@Query('branch_code') branchCode: string) {
     return this.thanhToanService.layCaKioskDangMo(branchCode);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
+  @Roles('STAFF', 'FRANCHISE_STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
   @Get('staff/kiosk-shifts/history')
   getKioskShiftHistory(
     @Query('branch_code') branchCode?: string,
