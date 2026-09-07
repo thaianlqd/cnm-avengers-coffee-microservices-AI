@@ -11,109 +11,178 @@ const PACKAGES = [
   {
     id: 'XE_LUU_DONG',
     name: 'Xe Cà Phê Lưu Động',
-    emoji: '🛺',
-    area: 'Xe đẩy / xe máy',
+    area: 'Xe đẩy hoặc xe máy',
     invest: 'Từ 20 triệu',
     investDetail: 'Trọn gói: 20.000.000 đ',
-    royalty: '4%',
+    royalty: '4% mỗi tháng',
     color: '#d97706',
-    gradient: 'linear-gradient(135deg,#fef9c3,#fde68a)',
+    gradient: 'linear-gradient(135deg, #fffbeb, #fef3c7)',
     border: '#fbbf24',
     tag: 'Vốn thấp nhất',
     desc: 'Phù hợp người mới bắt đầu. Di chuyển linh hoạt đến khu công nghiệp, trường học, chợ sáng, sự kiện ngoài trời.',
     features: [
-      { name: 'Xe đẩy / xe máy cải tiến có mái che', price: 12000000 },
+      { name: 'Xe đẩy hoặc xe máy cải tiến có mái che', price: 12000000 },
       { name: 'Máy pha cà phê phin chuẩn thương hiệu', price: 2000000 },
-      { name: 'Dụng cụ pha chế & ly in logo', price: 1500000 },
-      { name: 'Training 2 ngày & Hỗ trợ tuyến đường', price: 1000000 },
+      { name: 'Dụng cụ pha chế và ly in biểu trưng', price: 1500000 },
+      { name: 'Đào tạo 2 ngày và Hỗ trợ tuyến đường', price: 1000000 },
     ],
     combos: [
-      { name: 'Combo Nguyên Liệu Đầu Kỳ', gia: 3500000, ly: 120, ingredients: [
-        { name: 'Sữa Tươi (Lẻ) x 200', price: 1000000 },
-        { name: 'Sữa Đặc (Lẻ) x 100', price: 500000 },
-        { name: 'Trân Châu Hoàng Kim (Lẻ) x 100', price: 1000000 },
-        { name: 'Thạch Sương Sáo (Lẻ) x 100', price: 1000000 }
-      ] }
-    ]
+      {
+        name: 'Combo Nguyên Liệu Đầu Kỳ',
+        gia: 3500000,
+        ly: 120,
+        ingredients: [
+          { name: 'Sữa Tươi 200 hộp', price: 1000000 },
+          { name: 'Sữa Đặc 100 hộp', price: 500000 },
+          { name: 'Trân Châu Hoàng Kim 100 gói', price: 1000000 },
+          { name: 'Thạch Sương Sáo 100 gói', price: 1000000 },
+        ],
+      },
+    ],
   },
   {
     id: 'KIOSK_CO_DINH',
-    name: 'Kiosk Take-Away Cố Định',
-    emoji: '☕',
-    area: '6 - 15 m²',
+    name: 'Kiosk Cố Định',
+    area: 'Từ 6 đến 15 mét vuông',
     invest: '50 triệu',
     investDetail: 'Trọn gói: 50.000.000 đ',
-    royalty: '6%',
+    royalty: '6% mỗi tháng',
     color: '#b22830',
-    gradient: 'linear-gradient(135deg,#fff1f2,#fecdd3)',
+    gradient: 'linear-gradient(135deg, #fff1f2, #fecdd3)',
     border: '#f87171',
-    tag: '⭐ Phổ biến nhất',
-    desc: 'Quầy kiosk cố định take-away phù hợp mặt tiền nhỏ, tầng trệt chung cư, trong TTTM, bệnh viện, trường học.',
+    tag: 'Phổ biến nhất',
+    desc: 'Quầy kiosk cố định mang đi phù hợp mặt tiền nhỏ, tầng trệt chung cư, trong trung tâm thương mại, bệnh viện, trường học.',
     features: [
       { name: 'Quầy kiosk thiết kế chuẩn thương hiệu', price: 25000000 },
       { name: 'Máy pha espresso bán tự động', price: 15000000 },
       { name: 'Bộ dụng cụ pha chế hoàn chỉnh', price: 3000000 },
-      { name: 'Chi phí thi công, setup & training', price: 1500000 },
+      { name: 'Chi phí thi công, lắp đặt và đào tạo', price: 1500000 },
     ],
     combos: [
-      { name: 'Combo Nguyên Liệu Đầu Kỳ', gia: 5500000, ly: 200, ingredients: [
-        { name: 'Sữa Tươi (Lẻ) x 300', price: 1500000 },
-        { name: 'Sữa Đặc (Lẻ) x 100', price: 500000 },
-        { name: 'Sữa Yến Mạch (Lẻ) x 100', price: 500000 },
-        { name: 'Đào Miếng (Lẻ) x 100', price: 1000000 },
-        { name: 'Trân Châu Trắng (Lẻ) x 200', price: 2000000 }
-      ] }
-    ]
+      {
+        name: 'Combo Nguyên Liệu Đầu Kỳ',
+        gia: 5500000,
+        ly: 200,
+        ingredients: [
+          { name: 'Sữa Tươi 300 hộp', price: 1500000 },
+          { name: 'Sữa Đặc 100 hộp', price: 500000 },
+          { name: 'Sữa Yến Mạch 100 hộp', price: 500000 },
+          { name: 'Đào Miếng 100 hộp', price: 1000000 },
+          { name: 'Trân Châu Trắng 200 gói', price: 2000000 },
+        ],
+      },
+    ],
   },
   {
     id: 'CONTAINER_CAFE',
-    name: 'Container Mini Café',
-    emoji: '🏠',
-    area: '15 - 25 m²',
+    name: 'Container Mini Quán',
+    area: 'Từ 15 đến 25 mét vuông',
     invest: '75 triệu',
     investDetail: 'Trọn gói: 75.000.000 đ',
-    royalty: '7%',
+    royalty: '7% mỗi tháng',
     color: '#1e3a5f',
-    gradient: 'linear-gradient(135deg,#eff6ff,#dbeafe)',
+    gradient: 'linear-gradient(135deg, #eff6ff, #dbeafe)',
     border: '#93c5fd',
-    tag: 'Cao cấp & nổi bật',
+    tag: 'Cao cấp và nổi bật',
     desc: 'Container hoặc không gian nhỏ có chỗ ngồi mini. Phù hợp công viên, khu dân cư, ven đường đẹp, có phong cách riêng.',
     features: [
-      { name: 'Container 20ft, Nội thất & Decor', price: 40000000 },
-      { name: 'Máy espresso chuyên nghiệp + máy xay', price: 25000000 },
-      { name: 'Bộ phần mềm POS & thiết bị', price: 2500000 },
+      { name: 'Container 20ft, Nội thất và Trang trí', price: 40000000 },
+      { name: 'Máy espresso chuyên nghiệp kèm máy xay', price: 25000000 },
+      { name: 'Bộ phần mềm thu ngân và thiết bị', price: 2500000 },
     ],
     combos: [
-      { name: 'Combo Nguyên Liệu Đầu Kỳ', gia: 7500000, ly: 280, ingredients: [
-        { name: 'Sữa Yến Mạch (Lẻ) x 300', price: 1500000 },
-        { name: 'Kem Phô Mai Macchiato (Lẻ) x 150', price: 1500000 },
-        { name: 'Trái Vải (Lẻ) x 150', price: 1500000 },
-        { name: 'Foam Dừa (Lẻ) x 100', price: 1000000 },
-        { name: 'Đài Hoa Hibiscus (Lẻ) x 200', price: 2000000 }
-      ] }
-    ]
+      {
+        name: 'Combo Nguyên Liệu Đầu Kỳ',
+        gia: 7500000,
+        ly: 280,
+        ingredients: [
+          { name: 'Sữa Yến Mạch 300 hộp', price: 1500000 },
+          { name: 'Kem Phô Mai Macchiato 150 hộp', price: 1500000 },
+          { name: 'Trái Vải 150 hộp', price: 1500000 },
+          { name: 'Kem Bọt Dừa 100 hộp', price: 1000000 },
+          { name: 'Đài Hoa Atiso Đỏ 200 gói', price: 2000000 },
+        ],
+      },
+    ],
   },
 ];
 
-
 const STEPS = [
-  { n: 1, icon: '📝', title: 'Nộp hồ sơ đăng ký', desc: 'Điền form thông tin, hệ thống tự xử lý và gửi email xác nhận ngay lập tức.' },
-  { n: 2, icon: '☎️', title: 'Tư vấn & Khảo sát', desc: 'Đội ngũ phát triển nhượng quyền liên hệ trong 24h, đặt lịch gặp & khảo sát mặt bằng.' },
-  { n: 3, icon: '📃', title: 'Ký hợp đồng & Setup', desc: 'Ký hợp đồng chính thức, bộ phận kỹ thuật bắt đầu triển khai kiosk theo chuẩn thương hiệu.' },
-  { n: 4, icon: '🚀', title: 'Khai trương & Vận hành', desc: 'Nhận tài khoản hệ thống, bắt đầu vận hành với đầy đủ công cụ quản lý từ Hội Sở.' },
+  {
+    n: '01',
+    title: 'Nộp hồ sơ đăng ký',
+    desc: 'Điền biểu mẫu thông tin, hệ thống tự động xử lý và gửi thư xác nhận ngay lập tức.',
+  },
+  {
+    n: '02',
+    title: 'Tư vấn và Khảo sát',
+    desc: 'Đội ngũ phát triển nhượng quyền liên hệ trong 24 giờ, đặt lịch gặp và khảo sát mặt bằng thực tế.',
+  },
+  {
+    n: '03',
+    title: 'Ký hợp đồng và Setup',
+    desc: 'Ký kết hợp đồng chính thức, bộ phận kỹ thuật bắt đầu triển khai kiosk theo chuẩn thương hiệu.',
+  },
+  {
+    n: '04',
+    title: 'Khai trương và Vận hành',
+    desc: 'Nhận tài khoản hệ thống, bắt đầu vận hành với đầy đủ công cụ quản lý chuyên nghiệp từ Hội Sở.',
+  },
 ];
 
 const DEFAULT_FORM = {
-  ho_ten: '', email: '', so_dien_thoai: '',
-  dia_chi_mat_bang: '', quan_huyen: '', thanh_pho: '',
-  dien_tich_m2: '', goi_kiosk: 'KIOSK_CO_DINH', ghi_chu: '',
+  ho_ten: '',
+  email: '',
+  so_dien_thoai: '',
+  dia_chi_mat_bang: '',
+  quan_huyen: '',
+  thanh_pho: '',
+  dien_tich_m2: '',
+  goi_kiosk: 'KIOSK_CO_DINH',
+  ghi_chu: '',
+};
+
+const getPackageName = (id) => {
+  const pkg = PACKAGES.find((p) => p.id === id);
+  if (pkg) return pkg.name;
+  if (id === 'XE_LUU_DONG') return 'Xe Cà Phê Lưu Động';
+  if (id === 'KIOSK_CO_DINH') return 'Kiosk Cố Định';
+  if (id === 'CONTAINER_CAFE') return 'Container Mini Quán';
+  return id ? id.replace(/_/g, ' ') : '';
+};
+
+const formatKioskType = (type) => {
+  if (!type) return '';
+  const map = {
+    XE_LUU_DONG: 'Xe Cà Phê Lưu Động',
+    KIOSK_CO_DINH: 'Kiosk Cố Định',
+    CONTAINER_CAFE: 'Container Mini Quán',
+  };
+  return map[type] || type.replace(/_/g, ' ');
+};
+
+const getStatusBadge = (stt) => {
+  switch (stt) {
+    case 'CHO_XEM_XET':
+      return { label: 'Chờ xem xét', color: '#4b5563', bg: '#f3f4f6', border: '#d1d5db' };
+    case 'CHO_DAT_COC':
+      return { label: 'Chờ đặt cọc', color: '#b45309', bg: '#fef3c7', border: '#fcd34d' };
+    case 'DA_DUYET':
+      return { label: 'Đã duyệt và Đã cọc', color: '#15803d', bg: '#f0fdf4', border: '#86efac' };
+    case 'TU_CHOI':
+      return { label: 'Đã từ chối', color: '#b91c1c', bg: '#fef2f2', border: '#fca5a5' };
+    case 'DA_HUY':
+      return { label: 'Đã hủy', color: '#b91c1c', bg: '#fef2f2', border: '#fca5a5' };
+    default:
+      return { label: stt ? stt.replace(/_/g, ' ') : '', color: '#374151', bg: '#f3f4f6', border: '#e5e7eb' };
+  }
 };
 
 export default function FranchisePage({ onNavigate }) {
   const [form, setForm] = useState(DEFAULT_FORM);
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState(null); // { success, message }
-  const [activeStep, setActiveStep] = useState(null);
+  const [result, setResult] = useState(null);
+  const [activeStep, setActiveStep] = useState(0);
 
   // States cho tính năng Tra Cứu Hồ Sơ
   const [showLookup, setShowLookup] = useState(false);
@@ -131,30 +200,31 @@ export default function FranchisePage({ onNavigate }) {
 
   useEffect(() => {
     fetch('https://provinces.open-api.vn/api/?depth=2')
-      .then(res => res.json())
-      .then(data => setProvinces(data))
-      .catch(err => console.error(err));
+      .then((res) => res.json())
+      .then((data) => setProvinces(data))
+      .catch((err) => console.error(err));
 
-    apiClient.get(`/franchise/kiosk/public`)
-      .then(res => {
+    apiClient
+      .get(`/franchise/kiosk/public`)
+      .then((res) => {
         const data = res.data;
-        const arr = Array.isArray(data) ? data : (data?.data || data?.items || []);
+        const arr = Array.isArray(data) ? data : data?.data || data?.items || [];
         setKiosks(arr);
         if (arr.length > 0) setSelectedKiosk(arr[0]);
       })
-      .catch(err => {
+      .catch((err) => {
         console.error(err);
-        setErrorMsg(err.message + " | " + JSON.stringify(err.response?.data || {}));
+        setErrorMsg('Không thể tải danh sách cửa hàng vào lúc này.');
       })
       .finally(() => setIsLoadingKiosks(false));
   }, []);
 
-  const handleChange = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+  const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
   const handleChangeProvince = (e) => {
     const val = e.target.value;
-    setForm(f => ({ ...f, thanh_pho: val, quan_huyen: '' }));
-    const selected = provinces.find(p => p.name === val);
+    setForm((f) => ({ ...f, thanh_pho: val, quan_huyen: '' }));
+    const selected = provinces.find((p) => p.name === val);
     setDistricts(selected ? selected.districts : []);
   };
 
@@ -185,7 +255,7 @@ export default function FranchisePage({ onNavigate }) {
       const res = await apiClient.get(`/franchise/ho-so/tra-cuu`, { params: { so_dien_thoai: lookupPhone } });
       setLookupResult(res.data.data);
     } catch (err) {
-      const errorMsg = err.response?.data?.message || err.message || 'Lỗi tra cứu';
+      const errorMsg = err.response?.data?.message || err.message || 'Lỗi tra cứu hồ sơ';
       setLookupError(errorMsg);
     } finally {
       setLookupLoading(false);
@@ -195,456 +265,1101 @@ export default function FranchisePage({ onNavigate }) {
   const handleCancelApplication = async (id) => {
     if (!confirm('Bạn có chắc chắn muốn hủy hồ sơ đăng ký này không? Hành động này không thể hoàn tác!')) return;
     try {
-      const res = await fetch(`${API_URL}/franchise/ho-so/${id}/huy`, { method: 'PATCH' });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Hủy thất bại');
-      alert(`Thành công!\n\n${data.message}`);
-      // Refresh tra cứu
+      const res = await apiClient.patch(`/franchise/ho-so/${id}/huy`);
+      alert(`Thành công!\n\n${res.data?.message || 'Đã hủy hồ sơ thành công'}`);
       handleLookup({ preventDefault: () => {} });
     } catch (err) {
-      alert(`Lỗi: ${err.message}`);
-    }
-  };
-
-  const getStatusBadge = (stt) => {
-    switch (stt) {
-      case 'CHO_XEM_XET': return { label: 'Chờ xem xét', color: '#6b7280', bg: '#f3f4f6' };
-      case 'CHO_DAT_COC': return { label: 'Chờ đặt cọc', color: '#d97706', bg: '#fef3c7' };
-      case 'DA_DUYET': return { label: 'Đã duyệt / Đã cọc', color: '#16a34a', bg: '#f0fdf4' };
-      case 'TU_CHOI': return { label: 'Đã từ chối', color: '#dc2626', bg: '#fef2f2' };
-      case 'DA_HUY': return { label: 'Đã hủy', color: '#dc2626', bg: '#fef2f2' };
-      default: return { label: stt, color: '#374151', bg: '#f3f4f6' };
+      const msg = err.response?.data?.message || err.message || 'Hủy hồ sơ thất bại';
+      alert(`Lỗi: ${msg}`);
     }
   };
 
   return (
-    <div style={{ fontFamily: '"Segoe UI",Inter,system-ui,sans-serif', background: '#fffbf5', minHeight: '100vh' }}>
+    <div style={{ fontFamily: 'Inter, "Segoe UI", system-ui, -apple-system, sans-serif', background: '#fdfbf7', minHeight: '100vh', color: '#1f2937' }}>
+      {/* ── HERO BANNER ──────────────────────────────────────────── */}
+      <section
+        style={{
+          background: 'linear-gradient(135deg, #6b1419 0%, #8f1b23 50%, #75171d 100%)',
+          padding: '88px 24px 104px',
+          textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            top: -60,
+            left: -60,
+            width: 320,
+            height: 320,
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.04)',
+            pointerEvents: 'none',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            bottom: -90,
+            right: -40,
+            width: 420,
+            height: 420,
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.03)',
+            pointerEvents: 'none',
+          }}
+        />
 
-      {/* ── HERO ──────────────────────────────────────────── */}
-      <section style={{
-        background: 'linear-gradient(135deg,#7c1d24 0%,#b22830 50%,#8B2635 100%)',
-        padding: '80px 20px 100px', textAlign: 'center', position: 'relative', overflow: 'hidden'
-      }}>
-        {/* Decorative circles */}
-        <div style={{ position: 'absolute', top: -60, left: -60, width: 300, height: 300, borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
-        <div style={{ position: 'absolute', bottom: -80, right: -40, width: 400, height: 400, borderRadius: '50%', background: 'rgba(255,255,255,0.03)' }} />
-
-        <div style={{ position: 'relative', maxWidth: 720, margin: '0 auto' }}>
-          <div style={{ display: 'inline-block', padding: '6px 18px', borderRadius: 99, background: 'rgba(255,255,255,0.15)', color: '#fde68a', fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 20 }}>
-            ☕ Cơ Hội Nhượng Quyền Avengers Coffee
+        <div style={{ position: 'relative', maxWidth: 780, margin: '0 auto' }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '8px 20px',
+              borderRadius: 999,
+              background: 'rgba(255, 255, 255, 0.12)',
+              border: '1px solid rgba(255, 255, 255, 0.22)',
+              color: '#fef08a',
+              fontSize: 13,
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              marginBottom: 24,
+            }}
+          >
+            Cơ Hội Nhượng Quyền Avengers Coffee
           </div>
-          <h1 style={{ color: '#fff', fontSize: 'clamp(32px,5vw,56px)', fontWeight: 900, lineHeight: 1.1, margin: '0 0 20px' }}>
-            Cùng Avengers Coffee<br />
+
+          <h1
+            style={{
+              color: '#ffffff',
+              fontSize: 'clamp(32px, 5.2vw, 56px)',
+              fontWeight: 900,
+              lineHeight: 1.18,
+              margin: '0 0 20px',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            Cùng Avengers Coffee
+            <br />
             <span style={{ color: '#fbbf24' }}>Xây Dựng Tương Lai</span>
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: 18, lineHeight: 1.7, maxWidth: 560, margin: '0 auto 32px' }}>
-            Gia nhập hệ thống nhượng quyền của chúng tôi — thương hiệu cà phê được tin yêu hàng đầu. 
-            Chúng tôi cung cấp mô hình kinh doanh đã được kiểm chứng và hỗ trợ toàn diện.
+
+          <p
+            style={{
+              color: 'rgba(255, 255, 255, 0.9)',
+              fontSize: 18,
+              lineHeight: 1.7,
+              maxWidth: 620,
+              margin: '0 auto 36px',
+              fontWeight: 400,
+            }}
+          >
+            Gia nhập hệ thống nhượng quyền của chúng tôi — thương hiệu cà phê được tin yêu hàng đầu. Chúng tôi cung cấp mô hình kinh doanh đã được kiểm chứng và đồng hành hỗ trợ toàn diện.
           </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href="#dang-ky" style={{
-              display: 'inline-block', padding: '14px 32px', background: 'linear-gradient(135deg,#f59e0b,#d97706)',
-              color: '#fff', fontWeight: 800, fontSize: 15, borderRadius: 12, textDecoration: 'none',
-              boxShadow: '0 4px 20px rgba(245,158,11,0.5)', letterSpacing: '0.02em'
-            }}>
-              📝 Đăng Ký Ngay
+
+          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a
+              href="#dang-ky"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '14px 34px',
+                background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
+                color: '#ffffff',
+                fontWeight: 800,
+                fontSize: 15,
+                borderRadius: 12,
+                textDecoration: 'none',
+                boxShadow: '0 6px 20px rgba(180, 83, 9, 0.45)',
+                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+              }}
+            >
+              Đăng Ký Ngay
             </a>
-            <button onClick={() => setShowLookup(true)} style={{
-              display: 'inline-block', padding: '14px 32px', background: 'rgba(255,255,255,0.12)',
-              color: '#fff', fontWeight: 800, fontSize: 15, borderRadius: 12, border: '1px solid rgba(255,255,255,0.25)', cursor: 'pointer'
-            }}>
-              🔍 Tra Cứu & Hủy Hồ Sơ
+
+            <button
+              onClick={() => setShowLookup(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '14px 30px',
+                background: 'rgba(255, 255, 255, 0.14)',
+                color: '#ffffff',
+                fontWeight: 700,
+                fontSize: 15,
+                borderRadius: 12,
+                border: '1.5px solid rgba(255, 255, 255, 0.35)',
+                cursor: 'pointer',
+                transition: 'background 0.2s ease, border-color 0.2s ease',
+              }}
+            >
+              Tra Cứu và Hủy Hồ Sơ
             </button>
           </div>
         </div>
       </section>
 
-      {/* ── STATS BAR ───────────────────────────────────────── */}
-      <section style={{ background: '#fff', padding: '0', borderBottom: '1px solid #fde68a' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)' }}>
+      {/* ── THÔNG SỐ NỔI BẬT ───────────────────────────────── */}
+      <section style={{ background: '#ffffff', borderBottom: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.02)' }}>
+        <div style={{ maxWidth: 1120, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
           {[
             { n: '50+', label: 'Kiosk trên toàn quốc' },
             { n: '95%', label: 'Đối tác hài lòng' },
-            { n: '24h', label: 'Phản hồi hồ sơ' },
-            { n: '7 ngày', label: 'Hỗ trợ setup' },
+            { n: '24 giờ', label: 'Phản hồi hồ sơ nhanh chóng' },
+            { n: '7 ngày', label: 'Hỗ trợ thiết lập hoàn thiện' },
           ].map((s, i) => (
-            <div key={i} style={{ padding: '28px 20px', textAlign: 'center', borderRight: i < 3 ? '1px solid #fde68a' : 'none' }}>
-              <div style={{ fontSize: 30, fontWeight: 900, color: '#b22830' }}>{s.n}</div>
-              <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>{s.label}</div>
+            <div
+              key={i}
+              style={{
+                padding: '30px 20px',
+                textAlign: 'center',
+                borderRight: i < 3 ? '1px solid #f1f5f9' : 'none',
+              }}
+            >
+              <div style={{ fontSize: 32, fontWeight: 900, color: '#8f1b23', letterSpacing: '-0.02em' }}>{s.n}</div>
+              <div style={{ fontSize: 14, color: '#64748b', marginTop: 6, fontWeight: 500 }}>{s.label}</div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── CÁC GÓI NHƯỢNG QUYỀN ─────────────────────────── */}
-      <section style={{ padding: '64px 20px', maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <div style={{ display: 'inline-block', padding: '4px 14px', background: '#fef9c3', color: '#92400e', borderRadius: 99, fontSize: 12, fontWeight: 700, marginBottom: 12 }}>Các gói đầu tư</div>
-          <h2 style={{ fontSize: 32, fontWeight: 900, color: '#1f2937', margin: 0 }}>Chọn Mô Hình Phù Hợp</h2>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 24 }}>
-          {PACKAGES.map(pkg => (
-            <div key={pkg.id} style={{
-              background: '#fff', borderRadius: 20, overflow: 'hidden',
-              border: form.goi_kiosk === pkg.id ? `2.5px solid ${pkg.color}` : '1.5px solid #e5e7eb',
-              boxShadow: form.goi_kiosk === pkg.id ? `0 8px 32px ${pkg.color}25` : '0 2px 12px rgba(0,0,0,0.06)',
-              transition: 'all .25s', cursor: 'pointer', transform: form.goi_kiosk === pkg.id ? 'translateY(-4px)' : 'none'
-            }} onClick={() => setForm(f => ({ ...f, goi_kiosk: pkg.id }))}>
-              <div style={{ background: pkg.gradient, padding: '24px 24px 20px', borderBottom: `1.5px solid ${pkg.border}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div style={{ fontSize: 20, fontWeight: 900, color: pkg.color }}>
-                    <span style={{ marginRight: 8 }}>{pkg.emoji}</span>
-                    {pkg.name}
-                  </div>
-                  <span style={{ padding: '3px 10px', background: pkg.color, color: '#fff', borderRadius: 99, fontSize: 11, fontWeight: 700 }}>{pkg.tag}</span>
-                </div>
-                <div style={{ marginTop: 12, fontSize: 26, fontWeight: 900, color: '#1f2937' }}>{pkg.invest}</div>
-                <div style={{ fontSize: 13, color: '#6b7280', marginTop: 2 }}>{pkg.investDetail}</div>
-                <p style={{ fontSize: 13, color: '#4b5563', lineHeight: 1.5, marginTop: 12, marginBottom: 0 }}>
-                  {pkg.desc}
-                </p>
-                <div style={{ display: 'flex', gap: 16, marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(0,0,0,0.05)' }}>
-                  {[{ label: 'Mặt bằng', v: pkg.area }, { label: 'Royalty', v: pkg.royalty + '/tháng' }].map((item, i) => (
-                    <div key={i} style={{ fontSize: 12 }}>
-                      <div style={{ color: '#9ca3af' }}>{item.label}</div>
-                      <div style={{ fontWeight: 700, color: '#374151' }}>{item.v}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div style={{ padding: '20px 24px' }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Chi tiết chi phí:</div>
-                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {pkg.features.map((f, i) => (
-                    <li key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#374151', alignItems: 'flex-start', gap: 8 }}>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <span style={{ color: pkg.color, flexShrink: 0, marginTop: 1 }}>✓</span>
-                        <span>{f.name}</span>
-                      </div>
-                      <span style={{ fontWeight: 600, color: '#4b5563', flexShrink: 0 }}>{f.price.toLocaleString('vi-VN')} đ</span>
-                    </li>
-                  ))}
-                </ul>
-                <div style={{ marginTop: 16, padding: '12px', background: '#f9fafb', borderRadius: 8, border: '1px dashed #d1d5db' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', marginBottom: 4 }}>📦 COMBO NGUYÊN LIỆU ĐẦU KỲ</div>
-                  {pkg.combos.map((c, idx) => (
-                    <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#374151', fontWeight: 600 }}>{c.name}</span>
-                        <span style={{ color: '#059669', fontWeight: 700 }}>{(c.gia).toLocaleString('vi-VN')} đ</span>
-                      </div>
-                      {c.ingredients && c.ingredients.map((ing, ingIdx) => (
-                         <div key={ingIdx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, paddingLeft: 12, color: '#6b7280' }}>
-                           <span>- {ing.name}</span>
-                           <span>{ing.price.toLocaleString('vi-VN')} đ</span>
-                         </div>
-                      ))}
-                    </div>
-                  ))}
-                  <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>* Ước tính pha chế ~{pkg.combos[0].ly} ly đồ uống</div>
-                </div>
-                <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#1f2937' }}>TỔNG CỘNG</div>
-                  <div style={{ fontSize: 18, fontWeight: 900, color: pkg.color }}>
-                    {(pkg.features.reduce((sum, f) => sum + f.price, 0) + (pkg.combos[0]?.gia || 0)).toLocaleString('vi-VN')} đ
-                  </div>
-                </div>
-                <button onClick={(e) => { e.stopPropagation(); setForm(f => ({ ...f, goi_kiosk: pkg.id })); document.getElementById('dang-ky')?.scrollIntoView({ behavior: 'smooth' }); }}
-                  style={{
-                    marginTop: 20, width: '100%', padding: '11px', border: `1.5px solid ${pkg.border}`,
-                    background: form.goi_kiosk === pkg.id ? pkg.color : 'transparent',
-                    color: form.goi_kiosk === pkg.id ? '#fff' : pkg.color,
-                    borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: 'pointer', transition: 'all .2s'
-                  }}>
-                  {form.goi_kiosk === pkg.id ? '✓ Đã chọn gói này' : 'Chọn gói này'}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── QUY TRÌNH ──────────────────────────────────────── */}
-      <section style={{ background: '#fff', padding: '64px 20px' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <div style={{ display: 'inline-block', padding: '4px 14px', background: '#fee2e2', color: '#b22830', borderRadius: 99, fontSize: 12, fontWeight: 700, marginBottom: 12 }}>Quy trình hợp tác</div>
-            <h2 style={{ fontSize: 32, fontWeight: 900, color: '#1f2937', margin: 0 }}>4 Bước Đơn Giản</h2>
+      {/* ── CÁC GÓI ĐẦU TƯ ─────────────────────────────────── */}
+      <section style={{ padding: '72px 24px', maxWidth: 1160, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 52 }}>
+          <div
+            style={{
+              display: 'inline-block',
+              padding: '6px 16px',
+              background: '#fef3c7',
+              color: '#92400e',
+              borderRadius: 999,
+              fontSize: 12,
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              marginBottom: 12,
+            }}
+          >
+            Các gói đầu tư
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 24 }}>
-            {STEPS.map((step, i) => (
-              <div key={step.n} onClick={() => setActiveStep(activeStep === i ? null : i)}
+          <h2 style={{ fontSize: 34, fontWeight: 900, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>Chọn Mô Hình Phù Hợp</h2>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 28 }}>
+          {PACKAGES.map((pkg) => {
+            const isSelected = form.goi_kiosk === pkg.id;
+            return (
+              <div
+                key={pkg.id}
+                onClick={() => setForm((f) => ({ ...f, goi_kiosk: pkg.id }))}
                 style={{
-                  padding: 24, borderRadius: 16, cursor: 'pointer', transition: 'all .2s',
-                  background: activeStep === i ? '#fff1f2' : '#f9fafb',
-                  border: activeStep === i ? '2px solid #f87171' : '1.5px solid #e5e7eb',
-                  boxShadow: activeStep === i ? '0 4px 20px rgba(178,40,48,0.1)' : 'none'
-                }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-                  <div style={{
-                    width: 44, height: 44, borderRadius: 12, background: activeStep === i ? '#b22830' : '#e5e7eb',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0
-                  }}>{step.icon}</div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: activeStep === i ? '#b22830' : '#9ca3af', textTransform: 'uppercase' }}>Bước {step.n}</div>
+                  background: '#ffffff',
+                  borderRadius: 20,
+                  overflow: 'hidden',
+                  border: isSelected ? `2.5px solid ${pkg.color}` : '1.5px solid #e2e8f0',
+                  boxShadow: isSelected ? `0 16px 36px -8px ${pkg.color}35` : '0 4px 16px rgba(0, 0, 0, 0.04)',
+                  transition: 'all 0.25s ease',
+                  cursor: 'pointer',
+                  transform: isSelected ? 'translateY(-4px)' : 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                {/* Header card */}
+                <div style={{ background: pkg.gradient, padding: '26px 26px 22px', borderBottom: `1px solid ${pkg.border}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                    <div>
+                      <div style={{ fontSize: 21, fontWeight: 900, color: pkg.color }}>{pkg.name}</div>
+                      <div style={{ marginTop: 10, fontSize: 28, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>{pkg.invest}</div>
+                      <div style={{ fontSize: 13, color: '#475569', marginTop: 2, fontWeight: 500 }}>{pkg.investDetail}</div>
+                    </div>
+                    <div
+                      style={{
+                        padding: '5px 12px',
+                        background: pkg.color,
+                        color: '#ffffff',
+                        borderRadius: 999,
+                        fontSize: 12,
+                        fontWeight: 700,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {pkg.tag}
+                    </div>
+                  </div>
+
+                  <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.6, marginTop: 14, marginBottom: 0 }}>{pkg.desc}</p>
+
+                  <div style={{ display: 'flex', gap: 24, marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(0, 0, 0, 0.06)' }}>
+                    {[
+                      { label: 'Không gian', v: pkg.area },
+                      { label: 'Phí duy trì', v: pkg.royalty },
+                    ].map((item, i) => (
+                      <div key={i} style={{ fontSize: 13 }}>
+                        <div style={{ color: '#64748b', fontSize: 12 }}>{item.label}</div>
+                        <div style={{ fontWeight: 700, color: '#1e293b', marginTop: 2 }}>{item.v}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div style={{ fontWeight: 800, fontSize: 16, color: '#1f2937', marginBottom: 8 }}>{step.title}</div>
-                <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>{step.desc}</div>
+
+                {/* Body card */}
+                <div style={{ padding: '24px 26px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: '#64748b', marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    Chi tiết hạng mục đầu tư
+                  </div>
+
+                  <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {pkg.features.map((f, i) => (
+                      <li key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#334155', alignItems: 'flex-start', gap: 12 }}>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: pkg.color, flexShrink: 0 }} />
+                          <span>{f.name}</span>
+                        </div>
+                        <span style={{ fontWeight: 700, color: '#1e293b', flexShrink: 0 }}>{f.price.toLocaleString('vi-VN')} đ</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Combo nguyên liệu */}
+                  <div style={{ marginTop: 20, padding: '14px', background: '#f8fafc', borderRadius: 12, border: '1px solid #e2e8f0' }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: '#475569', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Combo Nguyên Liệu Đầu Kỳ
+                    </div>
+                    {pkg.combos.map((c, idx) => (
+                      <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ color: '#1e293b', fontWeight: 700 }}>{c.name}</span>
+                          <span style={{ color: '#15803d', fontWeight: 800 }}>{c.gia.toLocaleString('vi-VN')} đ</span>
+                        </div>
+                        {c.ingredients &&
+                          c.ingredients.map((ing, ingIdx) => (
+                            <div key={ingIdx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, paddingLeft: 8, color: '#64748b' }}>
+                              <span>• {ing.name}</span>
+                              <span>{ing.price.toLocaleString('vi-VN')} đ</span>
+                            </div>
+                          ))}
+                      </div>
+                    ))}
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6, fontStyle: 'italic' }}>* Ước tính pha chế khoảng {pkg.combos[0].ly} ly đồ uống</div>
+                  </div>
+
+                  {/* Tổng cộng */}
+                  <div
+                    style={{
+                      marginTop: 20,
+                      paddingTop: 16,
+                      borderTop: '1px solid #e2e8f0',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <div style={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>TỔNG CỘNG DỰ KIẾN</div>
+                    <div style={{ fontSize: 19, fontWeight: 900, color: pkg.color }}>
+                      {(pkg.features.reduce((sum, f) => sum + f.price, 0) + (pkg.combos[0]?.gia || 0)).toLocaleString('vi-VN')} đ
+                    </div>
+                  </div>
+
+                  {/* Nút hành động */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setForm((f) => ({ ...f, goi_kiosk: pkg.id }));
+                      document.getElementById('dang-ky')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    style={{
+                      marginTop: 22,
+                      width: '100%',
+                      padding: '13px',
+                      border: isSelected ? 'none' : `1.5px solid ${pkg.border}`,
+                      background: isSelected ? '#16a34a' : '#ffffff',
+                      color: isSelected ? '#ffffff' : pkg.color,
+                      borderRadius: 12,
+                      fontWeight: 800,
+                      fontSize: 14,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      boxShadow: isSelected ? '0 4px 14px rgba(22, 163, 74, 0.3)' : 'none',
+                    }}
+                  >
+                    {isSelected ? 'Đã chọn gói này' : 'Chọn gói này'}
+                  </button>
+                </div>
               </div>
-            ))}
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ── QUY TRÌNH HỢP TÁC ──────────────────────────────── */}
+      <section style={{ background: '#ffffff', padding: '72px 24px', borderTop: '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9' }}>
+        <div style={{ maxWidth: 1120, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 50 }}>
+            <div
+              style={{
+                display: 'inline-block',
+                padding: '6px 16px',
+                background: '#fee2e2',
+                color: '#8f1b23',
+                borderRadius: 999,
+                fontSize: 12,
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                marginBottom: 12,
+              }}
+            >
+              Quy trình hợp tác
+            </div>
+            <h2 style={{ fontSize: 34, fontWeight: 900, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>4 Bước Đơn Giản</h2>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+            {STEPS.map((step, i) => {
+              const isActive = activeStep === i;
+              return (
+                <div
+                  key={step.n}
+                  onClick={() => setActiveStep(i)}
+                  style={{
+                    padding: '26px 22px',
+                    borderRadius: 18,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    background: isActive ? '#fff1f2' : '#f8fafc',
+                    border: isActive ? '2px solid #f87171' : '1.5px solid #e2e8f0',
+                    boxShadow: isActive ? '0 8px 24px rgba(143, 27, 35, 0.08)' : 'none',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+                    <div
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 12,
+                        background: isActive ? '#8f1b23' : '#e2e8f0',
+                        color: isActive ? '#ffffff' : '#64748b',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 16,
+                        fontWeight: 900,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {step.n}
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: isActive ? '#8f1b23' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Bước {step.n}
+                    </div>
+                  </div>
+
+                  <div style={{ fontWeight: 800, fontSize: 17, color: '#0f172a', marginBottom: 8 }}>{step.title}</div>
+                  <div style={{ fontSize: 14, color: '#64748b', lineHeight: 1.6 }}>{step.desc}</div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* ── BẢN ĐỒ HỆ THỐNG KIOSK ──────────────────────────── */}
-      <section style={{ padding: '64px 20px', maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <div style={{ display: 'inline-block', padding: '4px 14px', background: '#fef9c3', color: '#92400e', borderRadius: 99, fontSize: 12, fontWeight: 700, marginBottom: 12 }}>Hệ thống đối tác</div>
-          <h2 style={{ fontSize: 32, fontWeight: 900, color: '#1f2937', margin: 0 }}>Mạng Lưới Kiosk Avengers</h2>
+      {/* ── BẢN ĐỒ HỆ THỐNG CỬA HÀNG ───────────────────────── */}
+      <section style={{ padding: '72px 24px', maxWidth: 1120, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 44 }}>
+          <div
+            style={{
+              display: 'inline-block',
+              padding: '6px 16px',
+              background: '#fef3c7',
+              color: '#92400e',
+              borderRadius: 999,
+              fontSize: 12,
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              marginBottom: 12,
+            }}
+          >
+            Hệ thống đối tác
+          </div>
+          <h2 style={{ fontSize: 34, fontWeight: 900, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>Mạng Lưới Kiosk Avengers</h2>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, height: 500, background: '#fff', borderRadius: 20, overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: 520,
+            background: '#ffffff',
+            borderRadius: 20,
+            overflow: 'hidden',
+            boxShadow: '0 12px 32px rgba(0, 0, 0, 0.06)',
+            border: '1px solid #e2e8f0',
+          }}
+        >
           <div style={{ display: 'flex', height: '100%' }}>
-            {/* List */}
-            <div style={{ width: 350, overflowY: 'auto', borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-              {kiosks.map(kiosk => (
-                <div key={kiosk.id} onClick={() => setSelectedKiosk(kiosk)} style={{ padding: 20, borderBottom: '1px solid #f3f4f6', cursor: 'pointer', background: selectedKiosk?.id === kiosk.id ? '#fffbeb' : '#fff', transition: 'all 0.2s' }}>
-                  <div style={{ fontWeight: 800, fontSize: 15, color: '#92400e', marginBottom: 4 }}>{kiosk.ten_kiosk}</div>
-                  <div style={{ fontSize: 13, color: '#4b5563', marginBottom: 6 }}>📍 {kiosk.dia_chi}, {kiosk.quan_huyen}, {kiosk.thanh_pho}</div>
-                  <div style={{ display: 'inline-block', padding: '2px 8px', background: '#fde68a', color: '#92400e', borderRadius: 4, fontSize: 11, fontWeight: 700 }}>{kiosk.loai_kiosk}</div>
+            {/* Danh sách cửa hàng */}
+            <div style={{ width: 360, overflowY: 'auto', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+              {kiosks.map((kiosk) => {
+                const isSelected = selectedKiosk?.id === kiosk.id;
+                return (
+                  <div
+                    key={kiosk.id}
+                    onClick={() => setSelectedKiosk(kiosk)}
+                    style={{
+                      padding: '20px 22px',
+                      borderBottom: '1px solid #f1f5f9',
+                      borderLeft: isSelected ? '4px solid #8f1b23' : '4px solid transparent',
+                      cursor: 'pointer',
+                      background: isSelected ? '#fff5f5' : '#ffffff',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <div style={{ fontWeight: 800, fontSize: 15, color: isSelected ? '#8f1b23' : '#0f172a', marginBottom: 4 }}>{kiosk.ten_kiosk}</div>
+                    <div style={{ fontSize: 13, color: '#475569', marginBottom: 8, lineHeight: 1.5 }}>
+                      {kiosk.dia_chi}, {kiosk.quan_huyen}, {kiosk.thanh_pho}
+                    </div>
+                    <div style={{ display: 'inline-block', padding: '3px 10px', background: '#fef3c7', color: '#92400e', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>
+                      {formatKioskType(kiosk.loai_kiosk)}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {isLoadingKiosks && <div style={{ padding: 24, textAlign: 'center', color: '#64748b', fontSize: 14 }}>Đang tải danh sách cửa hàng...</div>}
+
+              {errorMsg && <div style={{ padding: 24, textAlign: 'center', color: '#dc2626', fontSize: 14 }}>{errorMsg}</div>}
+
+              {!isLoadingKiosks && !errorMsg && kiosks.length === 0 && (
+                <div style={{ padding: 36, textAlign: 'center', color: '#64748b', fontSize: 14, lineHeight: 1.6 }}>
+                  Hệ thống đang cập nhật danh sách cửa hàng.
+                  <br />
+                  <span style={{ fontSize: 13, color: '#8f1b23', fontWeight: 700 }}>Hãy trở thành đối tác đầu tiên của chúng tôi!</span>
                 </div>
-              ))}
-              {isLoadingKiosks && <div style={{ padding: 20, textAlign: 'center', color: '#6b7280' }}>Đang tải danh sách Kiosk...</div>}
-              {errorMsg && <div style={{ padding: 20, textAlign: 'center', color: 'red' }}>Lỗi: {errorMsg}</div>}
-              {!isLoadingKiosks && !errorMsg && kiosks.length === 0 && <div style={{ padding: 30, textAlign: 'center', color: '#6b7280', fontSize: 14 }}>Hệ thống đang cập nhật Kiosk.<br/><span style={{fontSize: 12}}>Hãy trở thành đối tác đầu tiên!</span></div>}
+              )}
             </div>
-            {/* Map */}
-            <div style={{ flex: 1, background: '#f3f4f6', position: 'relative' }}>
+
+            {/* Khung bản đồ */}
+            <div style={{ flex: 1, background: '#f8fafc', position: 'relative' }}>
               {selectedKiosk ? (
                 <iframe
-                  title={`Map ${selectedKiosk.ten_kiosk}`}
+                  title={`Bản đồ ${selectedKiosk.ten_kiosk}`}
                   src={buildMapEmbedUrl(`${selectedKiosk.dia_chi}, ${selectedKiosk.quan_huyen}, ${selectedKiosk.thanh_pho}`)}
                   style={{ width: '100%', height: '100%', border: 'none' }}
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
                 />
               ) : (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af' }}>Chọn một Kiosk để xem bản đồ</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8', fontSize: 15 }}>
+                  Chọn một cửa hàng trong danh sách để xem vị trí bản đồ
+                </div>
               )}
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── FORM ĐĂNG KÝ ───────────────────────────────────── */}
-      <section id="dang-ky" style={{ padding: '64px 20px', background: 'linear-gradient(135deg,#fffbf5,#fff7ed)' }}>
-        <div style={{ maxWidth: 720, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <div style={{ display: 'inline-block', padding: '4px 14px', background: '#fef9c3', color: '#92400e', borderRadius: 99, fontSize: 12, fontWeight: 700, marginBottom: 12 }}>Bắt đầu hành trình</div>
-            <h2 style={{ fontSize: 32, fontWeight: 900, color: '#1f2937', margin: '0 0 12px' }}>Đăng Ký Hồ Sơ Nhượng Quyền</h2>
-            <p style={{ color: '#6b7280', fontSize: 15 }}>
-              Chúng tôi sẽ phản hồi trong vòng <strong>24 giờ làm việc</strong>. Email xác nhận sẽ gửi về <strong style={{ color: '#b22830' }}>{COMPANY_EMAIL}</strong>.
+      {/* ── BIỂU MẪU ĐĂNG KÝ ───────────────────────────────── */}
+      <section id="dang-ky" style={{ padding: '72px 24px', background: '#f8fafc' }}>
+        <div style={{ maxWidth: 740, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 44 }}>
+            <div
+              style={{
+                display: 'inline-block',
+                padding: '6px 16px',
+                background: '#fef3c7',
+                color: '#92400e',
+                borderRadius: 999,
+                fontSize: 12,
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                marginBottom: 12,
+              }}
+            >
+              Bắt đầu hành trình
+            </div>
+            <h2 style={{ fontSize: 34, fontWeight: 900, color: '#0f172a', margin: '0 0 14px', letterSpacing: '-0.02em' }}>Đăng Ký Hồ Sơ Nhượng Quyền</h2>
+            <p style={{ color: '#64748b', fontSize: 15, margin: 0, lineHeight: 1.6 }}>
+              Chúng tôi sẽ phản hồi trong vòng <strong>24 giờ làm việc</strong>. Thư xác nhận sẽ được gửi về hộp thư tiếp nhận <strong style={{ color: '#8f1b23' }}>{COMPANY_EMAIL}</strong>.
             </p>
           </div>
 
           {result ? (
-            <div style={{
-              padding: 32, borderRadius: 20, textAlign: 'center',
-              background: result.success ? '#f0fdf4' : '#fef2f2',
-              border: `2px solid ${result.success ? '#86efac' : '#fca5a5'}`,
-              boxShadow: '0 4px 24px rgba(0,0,0,0.06)'
-            }}>
-              <div style={{ fontSize: 56, marginBottom: 16 }}>{result.success ? '🎉' : '⚠️'}</div>
-              <h3 style={{ fontSize: 22, fontWeight: 900, color: result.success ? '#16a34a' : '#dc2626', margin: '0 0 12px' }}>
-                {result.success ? 'Hồ sơ đã được tiếp nhận!' : 'Gửi hồ sơ thất bại'}
+            <div
+              style={{
+                padding: '36px 30px',
+                borderRadius: 20,
+                textAlign: 'center',
+                background: result.success ? '#f0fdf4' : '#fef2f2',
+                border: `2px solid ${result.success ? '#86efac' : '#fca5a5'}`,
+                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.05)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'inline-block',
+                  padding: '6px 18px',
+                  borderRadius: 999,
+                  background: result.success ? '#dcfce7' : '#fee2e2',
+                  color: result.success ? '#15803d' : '#b91c1c',
+                  fontWeight: 800,
+                  fontSize: 13,
+                  marginBottom: 16,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                {result.success ? 'Tiếp nhận thành công' : 'Gửi hồ sơ chưa thành công'}
+              </div>
+
+              <h3 style={{ fontSize: 22, fontWeight: 900, color: result.success ? '#15803d' : '#b91c1c', margin: '0 0 12px' }}>
+                {result.success ? 'Hồ sơ đã được tiếp nhận thành công' : 'Đã xảy ra lỗi khi gửi hồ sơ'}
               </h3>
-              <p style={{ color: result.success ? '#15803d' : '#b91c1c', fontSize: 15, lineHeight: 1.6, margin: '0 0 24px' }}>{result.message}</p>
+
+              <p style={{ color: result.success ? '#166534' : '#991b1b', fontSize: 15, lineHeight: 1.6, margin: '0 0 24px' }}>{result.message}</p>
+
               {result.success && (
-                <div style={{ padding: '16px 20px', background: '#fff', borderRadius: 12, border: '1px solid #86efac', marginBottom: 20, textAlign: 'left' }}>
-                  <div style={{ fontSize: 13, color: '#166534', fontWeight: 700, marginBottom: 8 }}>✅ Bước tiếp theo:</div>
-                  <ul style={{ margin: 0, padding: '0 0 0 16px', color: '#374151', fontSize: 14, lineHeight: 2 }}>
-                    <li>Email xác nhận đã gửi về hòm thư của bạn</li>
-                    <li>Đội ngũ tư vấn sẽ liên hệ trong 24 giờ làm việc</li>
-                    <li>Chuẩn bị thông tin mặt bằng và vốn đầu tư để tư vấn chính xác hơn</li>
+                <div style={{ padding: '20px 24px', background: '#ffffff', borderRadius: 14, border: '1px solid #bbf7d0', marginBottom: 24, textAlign: 'left' }}>
+                  <div style={{ fontSize: 14, color: '#15803d', fontWeight: 800, marginBottom: 10 }}>Các bước tiếp theo:</div>
+                  <ul style={{ margin: 0, padding: '0 0 0 18px', color: '#334155', fontSize: 14, lineHeight: 2 }}>
+                    <li>Thư xác nhận đã được gửi đến hộp thư của quý khách</li>
+                    <li>Đội ngũ tư vấn sẽ liên hệ trực tiếp trong vòng 24 giờ làm việc</li>
+                    <li>Quý khách vui lòng chuẩn bị thông tin mặt bằng và nguồn vốn dự kiến để được tư vấn chính xác nhất</li>
                   </ul>
                 </div>
               )}
-              <button onClick={() => setResult(null)}
-                style={{ padding: '11px 28px', background: '#b22830', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>
-                {result.success ? '← Về trang nhượng quyền' : '← Thử lại'}
+
+              <button
+                onClick={() => setResult(null)}
+                style={{
+                  padding: '12px 30px',
+                  background: result.success ? '#15803d' : '#b91c1c',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 12,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  boxShadow: result.success ? '0 4px 14px rgba(21, 128, 61, 0.3)' : '0 4px 14px rgba(185, 28, 28, 0.3)',
+                }}
+              >
+                {result.success ? 'Trở về trang nhượng quyền' : 'Thử lại'}
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} style={{ background: '#fff', padding: 40, borderRadius: 24, boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)', position: 'relative', zIndex: 10 }}>
-
-              {/* Package selector inline */}
-              <div style={{ marginBottom: 24 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: '#92400e', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Gói nhượng quyền quan tâm *
+            <form onSubmit={handleSubmit} style={{ background: '#ffffff', padding: '40px 36px', borderRadius: 24, boxShadow: '0 16px 40px -12px rgba(0, 0, 0, 0.08)', border: '1px solid #e2e8f0' }}>
+              {/* Chọn mô hình gói đầu tư */}
+              <div style={{ marginBottom: 26 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: '#475569', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Mô hình nhượng quyền quan tâm *
                 </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
-                  {PACKAGES.map(pkg => (
-                    <label key={pkg.id} style={{
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 8px',
-                      border: `2px solid ${form.goi_kiosk === pkg.id ? pkg.color : '#e5e7eb'}`,
-                      borderRadius: 12, cursor: 'pointer', textAlign: 'center',
-                      background: form.goi_kiosk === pkg.id ? `${pkg.color}10` : '#f9fafb', transition: 'all .15s'
-                    }}>
-                      <input type="radio" name="goi_kiosk" value={pkg.id} checked={form.goi_kiosk === pkg.id} onChange={handleChange} style={{ display: 'none' }} />
-                      <div style={{ fontWeight: 800, fontSize: 13, color: form.goi_kiosk === pkg.id ? pkg.color : '#374151' }}>{pkg.name}</div>
-                      <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{pkg.invest}</div>
-                    </label>
-                  ))}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 12 }}>
+                  {PACKAGES.map((pkg) => {
+                    const isSelected = form.goi_kiosk === pkg.id;
+                    return (
+                      <label
+                        key={pkg.id}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          padding: '16px 12px',
+                          border: isSelected ? `2px solid ${pkg.color}` : '1.5px solid #e2e8f0',
+                          borderRadius: 14,
+                          cursor: 'pointer',
+                          textAlign: 'center',
+                          background: isSelected ? `${pkg.color}10` : '#ffffff',
+                          transition: 'all 0.2s ease',
+                          boxShadow: isSelected ? `0 4px 14px ${pkg.color}20` : 'none',
+                        }}
+                      >
+                        <input type="radio" name="goi_kiosk" value={pkg.id} checked={isSelected} onChange={handleChange} style={{ display: 'none' }} />
+                        <div style={{ fontWeight: 800, fontSize: 14, color: isSelected ? pkg.color : '#1e293b' }}>{pkg.name}</div>
+                        <div style={{ fontSize: 12, color: '#64748b', marginTop: 4, fontWeight: 600 }}>{pkg.invest}</div>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+              {/* Họ tên và Số điện thoại */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, marginBottom: 18 }}>
                 {[
-                  { name: 'ho_ten', label: 'Họ và tên *', placeholder: 'Nguyễn Văn A', required: true },
-                  { name: 'so_dien_thoai', label: 'Số điện thoại *', placeholder: '0912 345 678', required: true },
-                ].map(field => (
+                  { name: 'ho_ten', label: 'Họ và tên *', placeholder: 'Ví dụ: Nguyễn Văn A', required: true },
+                  { name: 'so_dien_thoai', label: 'Số điện thoại liên hệ *', placeholder: 'Ví dụ: 0912345678', required: true },
+                ].map((field) => (
                   <div key={field.name}>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{field.label}</label>
-                    <input name={field.name} value={form[field.name]} onChange={handleChange} placeholder={field.placeholder} required={field.required}
-                      style={{ width: '100%', padding: '10px 13px', border: '1.5px solid #fde68a', borderRadius: 10, fontSize: 14, boxSizing: 'border-box', background: '#fffbeb', color: '#1f2937' }} />
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>{field.label}</label>
+                    <input
+                      name={field.name}
+                      value={form[field.name]}
+                      onChange={handleChange}
+                      placeholder={field.placeholder}
+                      required={field.required}
+                      style={{
+                        width: '100%',
+                        padding: '12px 14px',
+                        border: '1.5px solid #cbd5e1',
+                        borderRadius: 10,
+                        fontSize: 14,
+                        boxSizing: 'border-box',
+                        background: '#ffffff',
+                        color: '#0f172a',
+                        outline: 'none',
+                      }}
+                    />
                   </div>
                 ))}
               </div>
 
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Email nhận thông tin *</label>
-                <input name="email" type="email" value={form.email} onChange={handleChange} placeholder="example@gmail.com" required
-                  style={{ width: '100%', padding: '10px 13px', border: '1.5px solid #fde68a', borderRadius: 10, fontSize: 14, boxSizing: 'border-box', background: '#fffbeb', color: '#1f2937' }} />
-                <div style={{ fontSize: 11, color: '#a16207', marginTop: 5 }}>📧 Email xác nhận và thông tin tài khoản sẽ gửi về địa chỉ này</div>
+              {/* Email */}
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Hộp thư điện tử nhận thông tin *</label>
+                <input
+                  name="email"
+                  type="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  placeholder="name@example.com"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    border: '1.5px solid #cbd5e1',
+                    borderRadius: 10,
+                    fontSize: 14,
+                    boxSizing: 'border-box',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    outline: 'none',
+                  }}
+                />
+                <div style={{ fontSize: 12, color: '#64748b', marginTop: 6 }}>Thư xác nhận và thông tin tài khoản quản trị sẽ gửi về địa chỉ thư này</div>
               </div>
 
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Địa chỉ mặt bằng dự kiến *</label>
-                <input name="dia_chi_mat_bang" value={form.dia_chi_mat_bang} onChange={handleChange} placeholder="Số 123, Đường ABC" required
-                  style={{ width: '100%', padding: '10px 13px', border: '1.5px solid #fde68a', borderRadius: 10, fontSize: 14, boxSizing: 'border-box', background: '#fffbeb', color: '#1f2937' }} />
+              {/* Địa chỉ mặt bằng */}
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Địa chỉ mặt bằng dự kiến *</label>
+                <input
+                  name="dia_chi_mat_bang"
+                  value={form.dia_chi_mat_bang}
+                  onChange={handleChange}
+                  placeholder="Số nhà, Tên đường"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    border: '1.5px solid #cbd5e1',
+                    borderRadius: 10,
+                    fontSize: 14,
+                    boxSizing: 'border-box',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    outline: 'none',
+                  }}
+                />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 100px', gap: 12, marginBottom: 16 }}>
+              {/* Tỉnh thành, Quận huyện, Diện tích */}
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1.2fr', gap: 14, marginBottom: 18 }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tỉnh/Thành phố *</label>
-                  <select name="thanh_pho" value={form.thanh_pho} onChange={handleChangeProvince} required
-                    style={{ width: '100%', padding: '10px 13px', border: '1.5px solid #fde68a', borderRadius: 10, fontSize: 14, boxSizing: 'border-box', background: '#fffbeb', color: '#1f2937' }}>
-                    <option value="" disabled>Chọn Tỉnh/TP</option>
-                    {provinces.map(p => (
-                      <option key={p.code} value={p.name}>{p.name}</option>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Tỉnh, Thành phố *</label>
+                  <select
+                    name="thanh_pho"
+                    value={form.thanh_pho}
+                    onChange={handleChangeProvince}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '12px 14px',
+                      border: '1.5px solid #cbd5e1',
+                      borderRadius: 10,
+                      fontSize: 14,
+                      boxSizing: 'border-box',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="" disabled>
+                      Chọn Tỉnh hoặc Thành phố
+                    </option>
+                    {provinces.map((p) => (
+                      <option key={p.code} value={p.name}>
+                        {p.name}
+                      </option>
                     ))}
                   </select>
                 </div>
+
                 <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Quận/Huyện *</label>
-                  <select name="quan_huyen" value={form.quan_huyen} onChange={handleChange} required disabled={!form.thanh_pho}
-                    style={{ width: '100%', padding: '10px 13px', border: '1.5px solid #fde68a', borderRadius: 10, fontSize: 14, boxSizing: 'border-box', background: form.thanh_pho ? '#fffbeb' : '#f3f4f6', color: '#1f2937' }}>
-                    <option value="" disabled>Chọn Quận/Huyện</option>
-                    {districts.map(d => (
-                      <option key={d.code} value={d.name}>{d.name}</option>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Quận, Huyện *</label>
+                  <select
+                    name="quan_huyen"
+                    value={form.quan_huyen}
+                    onChange={handleChange}
+                    required
+                    disabled={!form.thanh_pho}
+                    style={{
+                      width: '100%',
+                      padding: '12px 14px',
+                      border: '1.5px solid #cbd5e1',
+                      borderRadius: 10,
+                      fontSize: 14,
+                      boxSizing: 'border-box',
+                      background: form.thanh_pho ? '#ffffff' : '#f1f5f9',
+                      color: '#0f172a',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="" disabled>
+                      Chọn Quận hoặc Huyện
+                    </option>
+                    {districts.map((d) => (
+                      <option key={d.code} value={d.name}>
+                        {d.name}
+                      </option>
                     ))}
                   </select>
                 </div>
+
                 <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Diện tích</label>
-                  <input name="dien_tich_m2" type="number" value={form.dien_tich_m2} onChange={handleChange} placeholder="m²"
-                    style={{ width: '100%', padding: '10px 13px', border: '1.5px solid #fde68a', borderRadius: 10, fontSize: 14, boxSizing: 'border-box', background: '#fffbeb', color: '#1f2937' }} />
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Diện tích (m²)</label>
+                  <input
+                    name="dien_tich_m2"
+                    type="number"
+                    value={form.dien_tich_m2}
+                    onChange={handleChange}
+                    placeholder="m²"
+                    style={{
+                      width: '100%',
+                      padding: '12px 14px',
+                      border: '1.5px solid #cbd5e1',
+                      borderRadius: 10,
+                      fontSize: 14,
+                      boxSizing: 'border-box',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      outline: 'none',
+                    }}
+                  />
                 </div>
               </div>
 
-              <div style={{ marginBottom: 24 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Ghi chú thêm</label>
-                <textarea name="ghi_chu" value={form.ghi_chu} onChange={handleChange} rows={3}
-                  placeholder="Kinh nghiệm kinh doanh, câu hỏi muốn hỏi trước, v.v..."
-                  style={{ width: '100%', padding: '10px 13px', border: '1.5px solid #fde68a', borderRadius: 10, fontSize: 14, boxSizing: 'border-box', background: '#fffbeb', color: '#1f2937', resize: 'vertical', fontFamily: 'inherit' }} />
+              {/* Ghi chú */}
+              <div style={{ marginBottom: 28 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Ghi chú thêm</label>
+                <textarea
+                  name="ghi_chu"
+                  value={form.ghi_chu}
+                  onChange={handleChange}
+                  rows={3}
+                  placeholder="Kinh nghiệm kinh doanh, câu hỏi hoặc yêu cầu cần tư vấn chi tiết..."
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    border: '1.5px solid #cbd5e1',
+                    borderRadius: 10,
+                    fontSize: 14,
+                    boxSizing: 'border-box',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    resize: 'vertical',
+                    fontFamily: 'inherit',
+                    outline: 'none',
+                  }}
+                />
               </div>
 
-              <button type="submit" disabled={submitting}
+              {/* Nút gửi - Màu xanh lá cho hành động xác nhận gửi theo chuẩn UX */}
+              <button
+                type="submit"
+                disabled={submitting}
                 style={{
-                  width: '100%', padding: '15px', background: submitting ? '#d1d5db' : 'linear-gradient(135deg,#b22830,#d94040)',
-                  color: '#fff', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 800, cursor: submitting ? 'not-allowed' : 'pointer',
-                  boxShadow: submitting ? 'none' : '0 4px 20px rgba(178,40,48,0.35)', letterSpacing: '0.02em'
-                }}>
-                {submitting ? '⏳ Đang gửi hồ sơ...' : '📝 Nộp Hồ Sơ Đăng Ký'}
+                  width: '100%',
+                  padding: '15px',
+                  background: submitting ? '#94a3b8' : '#16a34a',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 12,
+                  fontSize: 16,
+                  fontWeight: 800,
+                  cursor: submitting ? 'not-allowed' : 'pointer',
+                  boxShadow: submitting ? 'none' : '0 6px 20px rgba(22, 163, 74, 0.35)',
+                  transition: 'background 0.2s ease, transform 0.15s ease',
+                }}
+              >
+                {submitting ? 'Đang gửi hồ sơ...' : 'Nộp Hồ Sơ Đăng Ký'}
               </button>
 
-              <p style={{ textAlign: 'center', fontSize: 12, color: '#9ca3af', margin: '16px 0 0' }}>
-                Bằng cách gửi form này, bạn đồng ý để chúng tôi liên hệ tư vấn. Thông tin được bảo mật tuyệt đối.
+              <p style={{ textAlign: 'center', fontSize: 12, color: '#94a3b8', margin: '16px 0 0', lineHeight: 1.6 }}>
+                Bằng cách gửi biểu mẫu này, quý khách đồng ý để chúng tôi liên hệ tư vấn. Mọi thông tin được cam kết bảo mật theo chính sách thương hiệu.
               </p>
             </form>
           )}
         </div>
       </section>
 
+      {/* ── THÔNG TIN LIÊN HỆ TRỰC TIẾP ─────────────────────── */}
+      <section style={{ background: '#0f172a', padding: '54px 24px', textAlign: 'center', color: '#ffffff' }}>
+        <div style={{ maxWidth: 640, margin: '0 auto' }}>
+          <h3 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 10px', color: '#ffffff' }}>Muốn tư vấn trực tiếp?</h3>
+          <p style={{ color: '#94a3b8', fontSize: 15, margin: '0 0 28px', lineHeight: 1.6 }}>
+            Liên hệ trực tiếp với bộ phận phát triển nhượng quyền Avengers Coffee
+          </p>
 
-      {/* ── CONTACT INFO ──────────────────────────────────── */}
-      <section style={{ background: '#1f2937', padding: '48px 20px', textAlign: 'center' }}>
-        <div style={{ maxWidth: 600, margin: '0 auto' }}>
-          <h3 style={{ color: '#fff', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Muốn tư vấn trực tiếp?</h3>
-          <p style={{ color: '#9ca3af', fontSize: 15, margin: '0 0 24px' }}>Liên hệ trực tiếp với bộ phận phát triển nhượng quyền</p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href={`mailto:${COMPANY_EMAIL}`} style={{
-              padding: '12px 24px', background: '#b22830', color: '#fff', borderRadius: 10,
-              fontWeight: 700, fontSize: 14, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8
-            }}>✉️ {COMPANY_EMAIL}</a>
-            <div style={{ padding: '12px 24px', background: '#374151', color: '#d1d5db', borderRadius: 10, fontWeight: 600, fontSize: 14 }}>
-              📞 1800 6936
+          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a
+              href={`mailto:${COMPANY_EMAIL}`}
+              style={{
+                padding: '13px 28px',
+                background: '#8f1b23',
+                color: '#ffffff',
+                borderRadius: 12,
+                fontWeight: 700,
+                fontSize: 14,
+                textDecoration: 'none',
+                boxShadow: '0 4px 14px rgba(143, 27, 35, 0.4)',
+              }}
+            >
+              {COMPANY_EMAIL}
+            </a>
+
+            <div
+              style={{
+                padding: '13px 28px',
+                background: '#1e293b',
+                color: '#e2e8f0',
+                borderRadius: 12,
+                fontWeight: 700,
+                fontSize: 14,
+                border: '1px solid #334155',
+              }}
+            >
+              Hotline: 1800 6936
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── LOOKUP MODAL ────────────────────────────────────────── */}
+      {/* ── MODAL TRA CỨU HỒ SƠ ───────────────────────────────── */}
       {showLookup && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }}>
-          <div style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 600, maxHeight: '90vh', overflowY: 'auto', padding: 24, boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#1f2937' }}>🔍 Tra Cứu Hồ Sơ Đăng Ký</h3>
-              <button onClick={() => { setShowLookup(false); setLookupResult(null); setLookupError(null); setLookupPhone(''); }} style={{ background: 'none', border: 'none', fontSize: 24, color: '#9ca3af', cursor: 'pointer' }}>×</button>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(15, 23, 42, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: 20,
+            backdropFilter: 'blur(4px)',
+          }}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: 22,
+              width: '100%',
+              maxWidth: 620,
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              padding: '28px 30px',
+              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.2)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
+              <h3 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: '#0f172a' }}>Tra Cứu Hồ Sơ Đăng Ký</h3>
+              <button
+                onClick={() => {
+                  setShowLookup(false);
+                  setLookupResult(null);
+                  setLookupError(null);
+                  setLookupPhone('');
+                }}
+                style={{
+                  background: '#f1f5f9',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '6px 12px',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: '#64748b',
+                  cursor: 'pointer',
+                }}
+              >
+                Đóng
+              </button>
             </div>
 
-            <form onSubmit={handleLookup} style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
-              <input type="tel" placeholder="Nhập số điện thoại đã đăng ký..." value={lookupPhone} onChange={e => setLookupPhone(e.target.value)}
-                style={{ flex: 1, padding: '12px 16px', border: '1.5px solid #e5e7eb', borderRadius: 10, fontSize: 15, outline: 'none' }} required />
-              <button type="submit" disabled={lookupLoading} style={{ padding: '0 24px', background: '#b22830', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, cursor: lookupLoading ? 'wait' : 'pointer' }}>
+            <form onSubmit={handleLookup} style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
+              <input
+                type="tel"
+                placeholder="Nhập số điện thoại đã đăng ký..."
+                value={lookupPhone}
+                onChange={(e) => setLookupPhone(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: '12px 16px',
+                  border: '1.5px solid #cbd5e1',
+                  borderRadius: 12,
+                  fontSize: 14,
+                  outline: 'none',
+                  color: '#0f172a',
+                }}
+                required
+              />
+              <button
+                type="submit"
+                disabled={lookupLoading}
+                style={{
+                  padding: '0 24px',
+                  background: '#8f1b23',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 12,
+                  fontWeight: 800,
+                  fontSize: 14,
+                  cursor: lookupLoading ? 'wait' : 'pointer',
+                  boxShadow: '0 4px 12px rgba(143, 27, 35, 0.3)',
+                }}
+              >
                 {lookupLoading ? 'Đang tìm...' : 'Tra cứu'}
               </button>
             </form>
 
-            {lookupError && <div style={{ padding: 12, background: '#fef2f2', color: '#dc2626', borderRadius: 8, fontSize: 14, fontWeight: 600, marginBottom: 20 }}>❌ {lookupError}</div>}
+            {lookupError && (
+              <div
+                style={{
+                  padding: '14px 16px',
+                  background: '#fef2f2',
+                  color: '#b91c1c',
+                  borderRadius: 12,
+                  border: '1px solid #fca5a5',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  marginBottom: 20,
+                }}
+              >
+                {lookupError}
+              </div>
+            )}
 
             {lookupResult && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {lookupResult.map(hs => {
+                {lookupResult.map((hs) => {
                   const badge = getStatusBadge(hs.trang_thai);
-                  const pkg = PACKAGES.find(p => p.id === hs.goi_kiosk);
+                  const pkgName = getPackageName(hs.goi_kiosk);
+                  const canCancel = hs.trang_thai === 'CHO_XEM_XET' || hs.trang_thai === 'CHO_DAT_COC';
+
                   return (
-                    <div key={hs.id} style={{ border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, background: '#f9fafb' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                    <div
+                      key={hs.id}
+                      style={{
+                        border: '1.5px solid #e2e8f0',
+                        borderRadius: 16,
+                        padding: '18px 20px',
+                        background: '#f8fafc',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12, gap: 12 }}>
                         <div>
-                          <div style={{ fontWeight: 800, color: '#1f2937', fontSize: 16 }}>Hồ sơ ngày {new Date(hs.ngay_tao).toLocaleDateString('vi-VN')}</div>
-                          <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>Khu vực: {hs.quan_huyen}, {hs.thanh_pho}</div>
-                          <div style={{ fontSize: 13, color: '#6b7280' }}>Gói đăng ký: <strong style={{color: '#92400e'}}>{pkg ? pkg.name : hs.goi_kiosk}</strong></div>
+                          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 16 }}>
+                            Hồ sơ ngày {new Date(hs.ngay_tao).toLocaleDateString('vi-VN')}
+                          </div>
+                          <div style={{ fontSize: 13, color: '#475569', marginTop: 4 }}>
+                            Khu vực: {hs.quan_huyen}, {hs.thanh_pho}
+                          </div>
+                          <div style={{ fontSize: 13, color: '#475569', marginTop: 2 }}>
+                            Mô hình đăng ký: <strong style={{ color: '#8f1b23' }}>{pkgName}</strong>
+                          </div>
                         </div>
-                        <div style={{ padding: '6px 12px', background: badge.bg, color: badge.color, borderRadius: 99, fontSize: 12, fontWeight: 700 }}>
+
+                        <div
+                          style={{
+                            padding: '5px 12px',
+                            background: badge.bg,
+                            color: badge.color,
+                            border: `1px solid ${badge.border}`,
+                            borderRadius: 999,
+                            fontSize: 12,
+                            fontWeight: 800,
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
                           {badge.label}
                         </div>
                       </div>
-                      
-                      {hs.ghi_chu && <div style={{ fontSize: 13, color: '#4b5563', background: '#fff', padding: 8, borderRadius: 6, border: '1px dashed #d1d5db', marginBottom: 12 }}><i>Ghi chú HT:</i> {hs.ghi_chu}</div>}
-                      {hs.ly_do_tu_choi && <div style={{ fontSize: 13, color: '#dc2626', background: '#fef2f2', padding: 8, borderRadius: 6, border: '1px dashed #fca5a5', marginBottom: 12 }}><i>Lý do:</i> {hs.ly_do_tu_choi}</div>}
 
-                      {/* Các trạng thái cho phép khách hàng chủ động Hủy */}
-                      {(hs.trang_thai === 'CHO_XEM_XET' || hs.trang_thai === 'CHO_DAT_COC') && (
-                        <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
-                          <button onClick={() => handleCancelApplication(hs.id)} style={{ padding: '8px 16px', background: '#fff', color: '#dc2626', border: '1.5px solid #dc2626', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                            ✖️ Hủy đăng ký (Chưa cọc)
+                      {hs.ghi_chu && (
+                        <div
+                          style={{
+                            fontSize: 13,
+                            color: '#334155',
+                            background: '#ffffff',
+                            padding: '10px 12px',
+                            borderRadius: 8,
+                            border: '1px dashed #cbd5e1',
+                            marginBottom: 12,
+                          }}
+                        >
+                          <i>Ghi chú từ hệ thống:</i> {hs.ghi_chu}
+                        </div>
+                      )}
+
+                      {hs.ly_do_tu_choi && (
+                        <div
+                          style={{
+                            fontSize: 13,
+                            color: '#b91c1c',
+                            background: '#fef2f2',
+                            padding: '10px 12px',
+                            borderRadius: 8,
+                            border: '1px dashed #fca5a5',
+                            marginBottom: 12,
+                          }}
+                        >
+                          <i>Lý do từ chối:</i> {hs.ly_do_tu_choi}
+                        </div>
+                      )}
+
+                      {/* Nút hủy hồ sơ - Hành động nguy hiểm dùng màu đỏ chuẩn UX */}
+                      {canCancel && (
+                        <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 14, display: 'flex', justifyContent: 'flex-end' }}>
+                          <button
+                            onClick={() => handleCancelApplication(hs.id)}
+                            style={{
+                              padding: '9px 18px',
+                              background: '#dc2626',
+                              color: '#ffffff',
+                              border: 'none',
+                              borderRadius: 10,
+                              fontSize: 13,
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              boxShadow: '0 4px 12px rgba(220, 38, 38, 0.25)',
+                              transition: 'background 0.15s ease',
+                            }}
+                          >
+                            Hủy đăng ký hồ sơ
                           </button>
                         </div>
                       )}
+
                       {hs.trang_thai === 'DA_DUYET' && (
-                        <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: 12, textAlign: 'right' }}>
-                          <span style={{ fontSize: 12, color: '#059669', fontWeight: 600 }}>
-                            ✅ Hồ sơ đã duyệt và cấp tài khoản. Vui lòng đăng nhập Cổng Nhượng Quyền để quản lý / Yêu cầu hoàn cọc.
+                        <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 14, textAlign: 'right' }}>
+                          <span style={{ fontSize: 13, color: '#15803d', fontWeight: 700 }}>
+                            Hồ sơ đã được duyệt và cấp tài khoản. Quý khách vui lòng đăng nhập Cổng Nhượng Quyền để quản lý hoặc gửi yêu cầu hoàn cọc.
                           </span>
                         </div>
                       )}
@@ -656,7 +1371,6 @@ export default function FranchisePage({ onNavigate }) {
           </div>
         </div>
       )}
-
     </div>
   );
 }
