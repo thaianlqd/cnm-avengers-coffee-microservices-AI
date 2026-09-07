@@ -1839,19 +1839,14 @@ export function FranchiseePortal({ session, onLogout }) {
                               <CalendarCheck size={20} />
                             </div>
                             <div>
-<div>
-  <div style={{ fontWeight: 800, fontSize: 14, color: '#92400e' }}>
-    Có {pendingList.length} yêu cầu đăng ký ca làm việc mới chờ duyệt
-  </div>
-  <div style={{ fontSize: 12, color: '#b45309', marginTop: 2 }}>
-    Hãy xem xét và bấm Duyệt để chuyển thành ca làm việc chính thức cho Kiosk.
-  </div>
-</div>
-
+                              <div style={{ fontWeight: 800, fontSize: 14, color: '#92400e' }}>
+                                Có {pendingList.length} yêu cầu đăng ký ca làm việc mới chờ duyệt
+                              </div>
+                              <div style={{ fontSize: 12, color: '#b45309', marginTop: 2 }}>
+                                Hãy xem xét và bấm Duyệt để chuyển thành ca làm việc chính thức cho Kiosk.
                               </div>
                             </div>
                           </div>
-
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <button
                               onClick={() => setShowShiftRequestsModal(true)}
