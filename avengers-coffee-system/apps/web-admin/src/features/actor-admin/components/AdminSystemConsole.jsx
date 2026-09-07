@@ -674,7 +674,7 @@ export function AdminSystemConsole({
                     borderRadius: '8px'
                   } : {}}
                 >
-                  <Bike size={15} /> Quản lý giao hàng
+                  <Bike size={15} /> Quản lý NV giao hàng
                 </button>
                 <button
                   type="button"
@@ -786,7 +786,7 @@ export function AdminSystemConsole({
               'membership-config': { group: 'Khách hàng & CSKH', label: 'Thiết lập Membership' },
               'survey-manage': { group: 'Khách hàng & CSKH', label: 'Quản lý Khảo sát' },
               'branches': { group: 'Mạng lưới & Hệ thống', label: 'Quản lý chi nhánh' },
-              'shippers': { group: 'Mạng lưới & Hệ thống', label: 'Quản lý giao hàng' },
+              'shippers': { group: 'Mạng lưới & Hệ thống', label: 'Quản lý nhân viên giao hàng' },
               'users': { group: 'Mạng lưới & Hệ thống', label: 'Quản lý người dùng' },
               'account': { group: 'Tài khoản', label: 'Hồ sơ & Bảo mật' },
             }

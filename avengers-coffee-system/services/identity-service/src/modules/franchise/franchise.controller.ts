@@ -78,8 +78,8 @@ export class FranchiseController {
 
   @Roles('ADMIN', 'FRANCHISEE')
   @Patch('kiosk/:id/khai-truong')
-  async xacNhanKhaiTruong(@Param('id') id: string) {
-    return this.franchiseService.xacNhanKhaiTruong(id);
+  async xacNhanKhaiTruong(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.franchiseService.xacNhanKhaiTruong(id, user.sub);
   }
 
   // ─── UC-B03: Đơn mua combo ─────────────────────────
@@ -167,7 +167,7 @@ export class FranchiseController {
     return this.franchiseService.layRoyaltyCuaToi(user.sub);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'FRANCHISEE')
   @Post('royalty/tinh-thang')
   async tinhRoyaltyThang(@Body() body: any, @CurrentUser() user: AuthUser) {
     return this.franchiseService.tinhRoyaltyThang(user.sub, body.thang);

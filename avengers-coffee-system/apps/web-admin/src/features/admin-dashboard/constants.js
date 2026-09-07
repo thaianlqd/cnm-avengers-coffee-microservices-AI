@@ -3,7 +3,7 @@ export const API_BASE_URL = `http://${window.location.hostname}:3000`
 export const NAV_TABS = [
   { id: 'overview', label: 'Tổng quan' },
   { id: 'orders', label: 'Quản lý đơn hàng' },
-  { id: 'delivery', label: 'Quản lý Giao hàng' },
+  { id: 'delivery', label: 'Quản lý NV giao hàng' },
   { id: 'menu', label: 'Quản lý thực đơn' },
   { id: 'news', label: 'Quản lý tin tức' },
   { id: 'shift', label: 'Chốt ca' },
