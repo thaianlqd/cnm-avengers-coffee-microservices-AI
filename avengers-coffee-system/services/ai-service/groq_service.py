@@ -41,9 +41,9 @@ def groq_is_available() -> bool:
     return _get_groq_client() is not None
 
 
-# ─── Chat: Llama-3.3-70b-versatile ───────────────────────────────────────────
-
-GROQ_CHAT_MODEL = "llama-3.3-70b-versatile"   # 30k context, free
+# ─── Chat: Llama 3.1 8B Instant ───────────────────────────────────────────
+# Đóng vai trò là trợ lý AI (Phân tích, báo cáo, chitchat).
+GROQ_CHAT_MODEL = "llama-3.1-8b-instant"   # 30k context, free
 GROQ_FAST_MODEL = "llama-3.1-8b-instant"       # ultra-fast fallback
 
 

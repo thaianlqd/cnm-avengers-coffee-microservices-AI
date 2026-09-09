@@ -96,19 +96,19 @@ export default function StoresPage() {
         id: code,
         code,
         city,
-        district: String(branch?.quan_huyen || '').trim() || 'Chưa phân loại',
         name: String(branch?.ten_chi_nhanh || '').trim() || `Chi nhánh ${index + 1}`,
         address: String(branch?.dia_chi || '').trim() || 'Đang cập nhật địa chỉ',
         hours: fallbackHours,
         phone: branch?.so_dien_thoai || '1900 1755',
         rating: stats?.diem_trung_binh || 5.0,
         reviewCount: stats?.tong_luot_danh_gia || 0,
+        type: branch?.loai_diem_ban || 'CHI_NHANH_CHINH',
       };
     });
   }, [publicBranchPayload, branchStatsMap]);
 
   const [selectedCity, setSelectedCity] = useState('ALL');
-  const [selectedDistrict, setSelectedDistrict] = useState('ALL');
+  const [selectedType, setSelectedType] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStore, setSelectedStore] = useState(null);
   const [detailedStore, setDetailedStore] = useState(null);
@@ -141,27 +141,20 @@ export default function StoresPage() {
     return ['ALL', ...Array.from(citySet).sort()];
   }, [stores]);
 
-  const districts = useMemo(() => {
-    if (selectedCity === 'ALL') return [];
-    const districtSet = new Set(stores.filter(s => s.city === selectedCity).map(s => s.district).filter(Boolean));
-    return ['ALL', ...Array.from(districtSet).sort()];
-  }, [stores, selectedCity]);
-
   const filteredStores = useMemo(() => {
     return stores.filter(store => {
       if (selectedCity !== 'ALL' && store.city !== selectedCity) return false;
-      if (selectedDistrict !== 'ALL' && store.district !== selectedDistrict) return false;
+      if (selectedType !== 'ALL' && store.type !== selectedType) return false;
       if (searchQuery) {
         const query = normalizeLocationText(searchQuery);
         const name = normalizeLocationText(store.name);
         const address = normalizeLocationText(store.address);
         const city = normalizeLocationText(store.city);
-        const district = normalizeLocationText(store.district);
-        if (!name.includes(query) && !address.includes(query) && !city.includes(query) && !district.includes(query)) return false;
+        if (!name.includes(query) && !address.includes(query) && !city.includes(query)) return false;
       }
       return true;
     });
-  }, [stores, selectedCity, selectedDistrict, searchQuery]);
+  }, [stores, selectedCity, selectedType, searchQuery]);
 
   const suggestions = useMemo(() => {
     if (!searchQuery.trim()) return [];
@@ -171,18 +164,13 @@ export default function StoresPage() {
       .filter(c => c !== 'ALL' && normalizeLocationText(c).includes(query))
       .map(c => ({ type: 'city', text: c, value: c }));
     
-    const allDistricts = Array.from(new Set(stores.map(s => s.district).filter(Boolean)));
-    const matchingDistricts = allDistricts
-      .filter(d => normalizeLocationText(d).includes(query))
-      .map(d => ({ type: 'district', text: d, value: d }));
-
     const matchingStoreItems = stores.filter(s => {
       const name = normalizeLocationText(s.name);
       const addr = normalizeLocationText(s.address);
       return name.includes(query) || addr.includes(query);
     }).slice(0, 5).map(s => ({ type: 'store', text: s.name, subtext: s.address, value: s }));
 
-    return [...matchingCities.slice(0, 2), ...matchingDistricts.slice(0, 3), ...matchingStoreItems];
+    return [...matchingCities.slice(0, 3), ...matchingStoreItems];
   }, [searchQuery, cities, stores]);
 
   // Set default selected store ONLY when filtered stores change (not on manual deselect)
@@ -223,7 +211,7 @@ export default function StoresPage() {
               <div className="flex-1 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-3 mb-3">
-                    <span className="bg-amber-100 text-amber-900 text-xs font-black px-3 py-1 rounded-full flex items-center gap-1.5 border border-amber-200">
+                    <span className="bg-red-50 text-red-900 text-xs font-black px-3 py-1 rounded-full flex items-center gap-1.5 border border-red-200">
                       <StarIconSolid className="w-4 h-4 text-amber-500" />
                       {detailedBranchReviews?.diem_trung_binh || detailedStore.rating || 5.0} / 5.0
                     </span>
@@ -254,7 +242,7 @@ export default function StoresPage() {
                       <span className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">
                         <CreditCardIcon className="w-4 h-4 text-emerald-600" /> {t('stores.cardPayment')}
                       </span>
-                      <span className="flex items-center gap-1.5 text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-100">
+                      <span className="flex items-center gap-1.5 text-red-700 bg-red-50 px-2.5 py-1 rounded-lg border border-red-100">
                         <ClockIcon className="w-4 h-4 text-amber-600" /> {detailedStore.hours}
                       </span>
                     </div>
@@ -292,31 +280,31 @@ export default function StoresPage() {
 
               {/* Criteria Scores */}
               {detailedBranchReviews && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-amber-50/50 p-4 rounded-2xl border border-amber-100/60">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-red-50/50 p-4 rounded-2xl border border-red-100/60">
                   <div className="text-center p-2">
                     <p className="text-[11px] font-bold text-gray-500 uppercase">{t('stores.criteriaService')}</p>
-                    <p className="text-xl font-black text-amber-700 mt-1 flex items-center justify-center gap-1">
+                    <p className="text-xl font-black text-red-700 mt-1 flex items-center justify-center gap-1">
                       <StarIconSolid className="w-5 h-5 text-amber-500" />
                       {detailedBranchReviews.tieu_chi_trung_binh?.phuc_vu || 5.0}
                     </p>
                   </div>
                   <div className="text-center p-2">
                     <p className="text-[11px] font-bold text-gray-500 uppercase">{t('stores.criteriaCleanliness')}</p>
-                    <p className="text-xl font-black text-amber-700 mt-1 flex items-center justify-center gap-1">
+                    <p className="text-xl font-black text-red-700 mt-1 flex items-center justify-center gap-1">
                       <StarIconSolid className="w-5 h-5 text-amber-500" />
                       {detailedBranchReviews.tieu_chi_trung_binh?.ve_sinh || 5.0}
                     </p>
                   </div>
                   <div className="text-center p-2">
                     <p className="text-[11px] font-bold text-gray-500 uppercase">{t('stores.criteriaSpeed')}</p>
-                    <p className="text-xl font-black text-amber-700 mt-1 flex items-center justify-center gap-1">
+                    <p className="text-xl font-black text-red-700 mt-1 flex items-center justify-center gap-1">
                       <StarIconSolid className="w-5 h-5 text-amber-500" />
                       {detailedBranchReviews.tieu_chi_trung_binh?.toc_do || 5.0}
                     </p>
                   </div>
                   <div className="text-center p-2">
                     <p className="text-[11px] font-bold text-gray-500 uppercase">{t('stores.criteriaQuality')}</p>
-                    <p className="text-xl font-black text-amber-700 mt-1 flex items-center justify-center gap-1">
+                    <p className="text-xl font-black text-red-700 mt-1 flex items-center justify-center gap-1">
                       <StarIconSolid className="w-5 h-5 text-amber-500" />
                       {detailedBranchReviews.tieu_chi_trung_binh?.chat_luong_mon || 5.0}
                     </p>
@@ -337,7 +325,7 @@ export default function StoresPage() {
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-sm text-gray-900">{review.ten_nguoi_dung || t('stores.customer')}</span>
-                          <span className="bg-amber-100 text-amber-800 text-[11px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
+                          <span className="bg-red-50 text-red-800 text-[11px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
                             <StarIconSolid className="w-3.5 h-3.5 text-amber-500" />
                             {review.diem_tong_quan}/5
                           </span>
@@ -375,7 +363,6 @@ export default function StoresPage() {
             value={selectedCity}
             onChange={(e) => {
               setSelectedCity(e.target.value);
-              setSelectedDistrict('ALL');
             }}
           >
             <option value="ALL">{t('stores.allCities')}</option>
@@ -385,15 +372,15 @@ export default function StoresPage() {
           </select>
 
           <select 
-            className="h-9 px-3.5 bg-gray-50/60 border border-gray-200/90 rounded-xl text-xs text-gray-800 font-semibold outline-none focus:border-[#b22830] min-w-[160px] cursor-pointer disabled:opacity-50"
-            value={selectedDistrict}
-            onChange={(e) => setSelectedDistrict(e.target.value)}
-            disabled={selectedCity === 'ALL'}
+            className="h-9 px-3.5 bg-gray-50/60 border border-gray-200/90 rounded-xl text-xs text-gray-800 font-semibold outline-none focus:border-[#b22830] min-w-[160px] cursor-pointer"
+            value={selectedType}
+            onChange={(e) => {
+              setSelectedType(e.target.value);
+            }}
           >
-            <option value="ALL">{t('stores.allDistricts')}</option>
-            {districts.filter(d => d !== 'ALL').map(d => (
-              <option key={d} value={d}>{d}</option>
-            ))}
+            <option value="ALL">Tất cả loại điểm bán</option>
+            <option value="CHI_NHANH_CHINH">Cửa hàng chuẩn</option>
+            <option value="KIOSK_VE_TINH">Kiosk vệ tinh nội bộ</option>
           </select>
 
           <div className="relative flex items-center w-[320px]" ref={searchInputRef}>
@@ -433,18 +420,9 @@ export default function StoresPage() {
                     onClick={() => {
                       if (item.type === 'city') {
                         setSelectedCity(item.value);
-                        setSelectedDistrict('ALL');
-                        setSearchQuery('');
-                      } else if (item.type === 'district') {
-                        const storeWithDistrict = stores.find(s => s.district === item.value);
-                        if (storeWithDistrict) {
-                          setSelectedCity(storeWithDistrict.city);
-                          setSelectedDistrict(item.value);
-                        }
                         setSearchQuery('');
                       } else if (item.type === 'store') {
                         setSelectedCity(item.value.city);
-                        setSelectedDistrict(item.value.district);
                         setSelectedStore(item.value);
                       }
                       setShowSuggestions(false);
@@ -452,7 +430,6 @@ export default function StoresPage() {
                   >
                     <div className="mt-0.5 shrink-0">
                       {item.type === 'city' && <BuildingOffice2Icon className="w-4 h-4 text-gray-400" />}
-                      {item.type === 'district' && <HomeModernIcon className="w-4 h-4 text-gray-400" />}
                       {item.type === 'store' && <MapPinIcon className="w-4 h-4 text-[#b22830]" />}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -497,10 +474,22 @@ export default function StoresPage() {
                   }`}
                 >
                   <div className="flex justify-between items-start">
-                    <h3 className={`uppercase font-bold text-[15px] mb-2 leading-snug ${isSelected ? 'text-[#b22830]' : 'text-[#333333]'}`}>
-                      {store.name}
-                    </h3>
-                    <span className="bg-amber-100 text-amber-800 text-[11px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 border border-amber-200 flex-shrink-0 ml-2">
+                    <div className="flex flex-col gap-1">
+                      <h3 className={`uppercase font-bold text-[15px] leading-snug ${isSelected ? 'text-[#b22830]' : 'text-[#333333]'}`}>
+                        {store.name}
+                      </h3>
+                      {store.type === 'KIOSK_VE_TINH' && (
+                        <span className="self-start text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded uppercase font-bold">
+                          Kiosk Vệ Tinh Nội Bộ
+                        </span>
+                      )}
+                      {store.type === 'XE_NUOC_FRUIT' && (
+                        <span className="self-start text-[10px] bg-orange-100 text-orange-800 px-2 py-0.5 rounded uppercase font-bold">
+                          Xe Đẩy
+                        </span>
+                      )}
+                    </div>
+                    <span className="bg-red-50 text-red-800 text-[11px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 border border-red-200 flex-shrink-0 ml-2">
                       <StarIconSolid className="w-3.5 h-3.5 text-amber-500" />
                       {store.rating} ({store.reviewCount})
                     </span>

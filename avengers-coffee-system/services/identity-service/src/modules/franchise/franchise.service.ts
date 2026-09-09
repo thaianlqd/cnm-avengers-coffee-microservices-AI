@@ -192,18 +192,68 @@ export class FranchiseService {
   }
 
   // ─────────────────────────────────────────────
+  // Helper: Tính khoảng cách (Haversine formula - Đơn vị: km)
+  // ─────────────────────────────────────────────
+  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371; // Bán kính Trái Đất (km)
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  // ─────────────────────────────────────────────
   // UC-ADMIN: Quản lý Hồ sơ Đăng ký (UC-B01)
   // ─────────────────────────────────────────────
 
   async dangKyHoSo(body: any) {
+    // Kiểm tra độc quyền địa lý ngay tại lúc đăng ký (Bán kính 0.5km = 500m)
+    if (body.vi_do && body.kinh_do) {
+      const activeKiosks = await this.kioskRepo.find({
+        where: {
+          trang_thai: In(['DANG_HOAT_DONG', 'DANG_THIET_LAP', 'TAM_DUNG', 'CHO_KY_HOP_DONG'])
+        }
+      });
+      
+      const MIN_DISTANCE_KM = 0.5; // 500m
+      for (const k of activeKiosks) {
+        if (k.vi_do && k.kinh_do) {
+          const dist = this.calculateDistance(Number(body.vi_do), Number(body.kinh_do), Number(k.vi_do), Number(k.kinh_do));
+          if (dist < MIN_DISTANCE_KM) {
+            throw new BadRequestException(`Rất tiếc! Khu vực này cách Kiosk "${k.ten_kiosk}" (${k.dia_chi}) chỉ ${Math.round(dist * 1000)}m. Vui lòng chọn mặt bằng khác xa hơn 500m để đảm bảo quyền lợi độc quyền.`);
+          }
+        }
+      }
+    } else {
+      // Fallback nếu không có tọa độ, check theo Phường/Xã tạm
+      if (body.phuong_xa && body.thanh_pho) {
+        const existing = await this.kioskRepo.count({
+          where: {
+            phuong_xa: body.phuong_xa,
+            thanh_pho: body.thanh_pho,
+            trang_thai: In(['DANG_HOAT_DONG', 'DANG_THIET_LAP', 'TAM_DUNG', 'CHO_KY_HOP_DONG'])
+          }
+        });
+        if (existing > 0) {
+          throw new BadRequestException(`Rất tiếc! Khu vực ${body.phuong_xa}, ${body.thanh_pho} đã có Kiosk hoạt động!`);
+        }
+      }
+    }
+
     const hoSo = this.hoSoRepo.create({
       ho_ten: body.ho_ten,
       email: body.email,
       so_dien_thoai: body.so_dien_thoai,
       dia_chi_mat_bang: body.dia_chi_mat_bang,
-      quan_huyen: body.quan_huyen || null,
+      phuong_xa: body.phuong_xa || null,
       thanh_pho: body.thanh_pho || null,
       dien_tich_m2: body.dien_tich_m2 || null,
+      vi_do: body.vi_do || null,
+      kinh_do: body.kinh_do || null,
       goi_kiosk: body.goi_kiosk,
       ghi_chu: body.ghi_chu || null,
       trang_thai: 'CHO_XEM_XET',
@@ -244,20 +294,6 @@ export class FranchiseService {
     if (!hoSo) throw new NotFoundException('Không tìm thấy hồ sơ');
     if (hoSo.trang_thai !== 'CHO_XEM_XET') throw new BadRequestException('Hồ sơ không ở trạng thái chờ xem xét');
 
-    // Kiểm tra độc quyền địa lý
-    if (hoSo.quan_huyen && hoSo.thanh_pho) {
-      const existing = await this.kioskRepo.count({
-        where: {
-          quan_huyen: hoSo.quan_huyen,
-          thanh_pho: hoSo.thanh_pho,
-          trang_thai: In(['DANG_HOAT_DONG', 'DANG_THIET_LAP', 'TAM_DUNG', 'CHO_KY_HOP_DONG'])
-        }
-      });
-      if (existing > 0) {
-        throw new BadRequestException(`Vi phạm độc quyền: Khu vực ${hoSo.quan_huyen}, ${hoSo.thanh_pho} đã có Kiosk hoạt động!`);
-      }
-    }
-
     hoSo.trang_thai = 'CHO_DAT_COC';
     hoSo.nguoi_xu_ly_id = adminId;
     await this.hoSoRepo.save(hoSo);
@@ -270,7 +306,7 @@ export class FranchiseService {
       hoSo.email,
       '[Avengers Coffee] Yêu cầu đặt cọc giữ chỗ khu vực',
       `Chào ${hoSo.ho_ten},<br/><br/>
-       Hồ sơ của bạn đã qua vòng duyệt sơ bộ. Để hệ thống tiến hành cấp tài khoản và giữ chỗ khu vực (${hoSo.quan_huyen} - ${hoSo.thanh_pho}), vui lòng hoàn tất khoản đặt cọc <b>5.000.000 VNĐ</b>.<br/><br/>
+       Hồ sơ của bạn đã qua vòng duyệt sơ bộ. Để hệ thống tiến hành cấp tài khoản và giữ chỗ khu vực (${hoSo.phuong_xa} - ${hoSo.thanh_pho}), vui lòng hoàn tất khoản đặt cọc <b>5.000.000 VNĐ</b>.<br/><br/>
        <b>THÔNG TIN CHUYỂN KHOẢN:</b><br/>
        - Ngân hàng: <b>${bankName}</b><br/>
        - Số tài khoản: <b>${bankAccount}</b><br/>
@@ -333,8 +369,10 @@ export class FranchiseService {
       ma_kiosk: maKiosk,
       ten_kiosk: `Kiosk Avengers ${hoSo.thanh_pho || 'Mới'}`,
       dia_chi: hoSo.dia_chi_mat_bang,
-      quan_huyen: hoSo.quan_huyen,
+      phuong_xa: hoSo.phuong_xa,
       thanh_pho: hoSo.thanh_pho,
+      vi_do: hoSo.vi_do,
+      kinh_do: hoSo.kinh_do,
       loai_kiosk: hoSo.goi_kiosk,
       ho_so_id: id,
       franchisee_id: franchiseeId,
@@ -406,7 +444,7 @@ export class FranchiseService {
     this.sendMail(
       hoSo.email,
       '[Avengers Coffee] Thông báo kết quả xét duyệt hồ sơ nhượng quyền',
-      `Chào ${hoSo.ho_ten},\nCảm ơn bạn đã quan tâm đến hệ thống Avengers Coffee.\nRất tiếc, hồ sơ đăng ký nhượng quyền khu vực (${hoSo.quan_huyen} - ${hoSo.thanh_pho}) của bạn chưa phù hợp ở thời điểm hiện tại.\n\nLý do từ chối: ${ly_do}\n\nHy vọng sẽ có cơ hội hợp tác với bạn trong tương lai. Xin cảm ơn!`
+      `Chào ${hoSo.ho_ten},\nCảm ơn bạn đã quan tâm đến hệ thống Avengers Coffee.\nRất tiếc, hồ sơ đăng ký nhượng quyền khu vực (${hoSo.phuong_xa} - ${hoSo.thanh_pho}) của bạn chưa phù hợp ở thời điểm hiện tại.\n\nLý do từ chối: ${ly_do}\n\nHy vọng sẽ có cơ hội hợp tác với bạn trong tương lai. Xin cảm ơn!`
     ).catch(e => console.error('[franchise-mail] tu-choi email error:', e.message));
 
     return { success: true, message: 'Đã từ chối hồ sơ và gửi email thông báo.', data: hoSo };
@@ -468,7 +506,7 @@ export class FranchiseService {
   async layDanhSachKioskPublic() {
     return this.kioskRepo.find({
       where: { trang_thai: 'DANG_HOAT_DONG' },
-      select: ['id', 'ma_kiosk', 'ten_kiosk', 'dia_chi', 'quan_huyen', 'thanh_pho', 'loai_kiosk', 'ngay_tao'],
+      select: ['id', 'ma_kiosk', 'ten_kiosk', 'dia_chi', 'phuong_xa', 'thanh_pho', 'loai_kiosk', 'ngay_tao'],
       order: { ngay_tao: 'DESC' }
     });
   }

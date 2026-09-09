@@ -8,9 +8,11 @@ import { Promotion } from './promotion.entity';
 import { PromotionUsage } from './promotion-usage.entity';
 import { User } from './user.entity';
 import { MembershipConfig } from './membership-config.entity';
+import { KhuVuc } from './khu-vuc.entity';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomInt, randomUUID } from 'crypto';
 import nodemailer, { type Transporter } from 'nodemailer';
+import type { AuthUser } from '../../auth/auth.types';
 
 const RESET_CODE_EXPIRE_MINUTES = 10;
 const RESET_CODE_COOLDOWN_SECONDS = 60;
@@ -49,6 +51,8 @@ export class UserService implements OnModuleInit {
     private promotionUsageRepo: Repository<PromotionUsage>,
     @InjectRepository(MembershipConfig)
     private membershipConfigRepo: Repository<MembershipConfig>,
+    @InjectRepository(KhuVuc)
+    private khuVucRepo: Repository<KhuVuc>,
   ) {}
 
   private readonly ORDER_SERVICE_URL = process.env.ORDER_SERVICE_URL || 'http://order-service:3005';
@@ -347,13 +351,13 @@ export class UserService implements OnModuleInit {
       ten_chi_nhanh: branch.ten_chi_nhanh,
       dia_chi: branch.dia_chi,
       thanh_pho: branch.thanh_pho,
-      quan_huyen: branch.quan_huyen,
       so_dien_thoai: branch.so_dien_thoai,
       hinh_anh_url: branch.hinh_anh_url,
       gio_mo_cua: branch.gio_mo_cua,
       gio_dong_cua: branch.gio_dong_cua,
       map_url: branch.map_url,
       trang_thai: branch.trang_thai,
+      loai_diem_ban: branch.loai_diem_ban,
       ngay_tao: branch.ngay_tao,
       ngay_cap_nhat: branch.ngay_cap_nhat,
     };
@@ -599,20 +603,23 @@ export class UserService implements OnModuleInit {
   async layDanhSachNhanSu(role?: string, branchCode?: string) {
     const query = this.userRepo
       .createQueryBuilder('user')
-      .where('user.vai_tro IN (:...roles)', { roles: ['STAFF', 'MANAGER', 'FRANCHISE_STAFF'] })
+      .where('user.vai_tro IN (:...roles)', { roles: ['STAFF', 'MANAGER', 'FRANCHISE_STAFF', 'KIOSK_STAFF'] })
       .andWhere('user.trang_thai = :status', { status: 'ACTIVE' })
 
     if (role?.trim()) {
       const upperRole = role.trim().toUpperCase();
       if (upperRole === 'STAFF') {
-        query.andWhere('user.vai_tro IN (:...staffRoles)', { staffRoles: ['STAFF', 'FRANCHISE_STAFF'] });
+        query.andWhere('user.vai_tro IN (:...staffRoles)', { staffRoles: ['STAFF', 'FRANCHISE_STAFF', 'KIOSK_STAFF'] });
       } else {
         query.andWhere('user.vai_tro = :role', { role: upperRole });
       }
     }
 
     if (branchCode?.trim()) {
-      query.andWhere('UPPER(user.co_so_ma) = :branchCode', { branchCode: branchCode.trim().toUpperCase() });
+      query.andWhere(
+        '(UPPER(user.co_so_ma) = :branchCode OR UPPER(user.co_so_ma) IN (SELECT UPPER(ma_chi_nhanh) FROM identity.chi_nhanh WHERE UPPER(chi_nhanh_me_ma) = :branchCode))',
+        { branchCode: branchCode.trim().toUpperCase() }
+      );
     }
 
     const rows = await query
@@ -643,7 +650,10 @@ export class UserService implements OnModuleInit {
     }
 
     if (input.branchCode?.trim()) {
-      query.andWhere('user.co_so_ma = :branchCode', { branchCode: input.branchCode.trim().toUpperCase() });
+      query.andWhere(
+        '(user.co_so_ma = :branchCode OR user.co_so_ma IN (SELECT ma_chi_nhanh FROM identity.chi_nhanh WHERE chi_nhanh_me_ma = :branchCode))',
+        { branchCode: input.branchCode.trim().toUpperCase() }
+      );
     }
 
     if (input.keyword?.trim()) {
@@ -680,7 +690,7 @@ export class UserService implements OnModuleInit {
     ten_dang_nhap?: string;
     mat_khau?: string;
     ho_ten?: string;
-    vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER' | 'ACCOUNTANT';
+    vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER' | 'ACCOUNTANT' | 'KIOSK_STAFF';
     co_so_ma?: string;
     email?: string;
   }) {
@@ -691,7 +701,7 @@ export class UserService implements OnModuleInit {
     const branchCode = String(payload.co_so_ma || '').trim();
     const branchInfo = branchCode ? await this.resolveBranchInfo(branchCode) : null;
 
-    if (!username || !password || !fullName || !['STAFF', 'MANAGER', 'CUSTOMER', 'ACCOUNTANT'].includes(role)) {
+    if (!username || !password || !fullName || !['STAFF', 'MANAGER', 'CUSTOMER', 'ACCOUNTANT', 'KIOSK_STAFF'].includes(role)) {
       throw new BadRequestException('Du lieu tao tai khoan khong hop le');
     }
     if (password.length < 6) {
@@ -740,13 +750,75 @@ export class UserService implements OnModuleInit {
     };
   }
 
+  async taoKioskStaff(
+    manager: AuthUser,
+    payload: {
+      ten_dang_nhap?: string;
+      mat_khau?: string;
+      ho_ten?: string;
+      co_so_ma?: string;
+    }
+  ) {
+    if (!manager?.branchCode) throw new BadRequestException('Manager khong co co_so_ma hop le');
+
+    const username = String(payload.ten_dang_nhap || '').trim();
+    const password = String(payload.mat_khau || '');
+    const fullName = String(payload.ho_ten || '').trim();
+    const kioskCode = String(payload.co_so_ma || '').trim();
+
+    if (!username || !password || !fullName || !kioskCode) {
+      throw new BadRequestException('Du lieu tao tai khoan khong hop le');
+    }
+    if (password.length < 6) {
+      throw new BadRequestException('Mat khau phai tu 6 ky tu tro len');
+    }
+
+    const kioskInfo = await this.branchRepo.findOne({ where: { ma_chi_nhanh: kioskCode, loai_diem_ban: 'KIOSK_VE_TINH' } });
+    if (!kioskInfo || kioskInfo.chi_nhanh_me_ma !== manager.branchCode) {
+      throw new BadRequestException('Kiosk khong thuoc quyen quan ly cua ban');
+    }
+
+    const existed = await this.userRepo.findOne({ where: [{ ten_dang_nhap: username }] });
+    if (existed) {
+      throw new BadRequestException('Ten dang nhap da ton tai');
+    }
+
+    const salt = await bcrypt.genSalt();
+    const mat_khau_hash = await bcrypt.hash(password, salt);
+
+    const created = this.userRepo.create({
+      ma_nguoi_dung: randomUUID(),
+      ten_dang_nhap: username,
+      email: `${username}@kiosk.local`,
+      mat_khau_hash,
+      ho_ten: fullName,
+      vai_tro: 'KIOSK_STAFF',
+      trang_thai: 'ACTIVE',
+      co_so_ma: kioskInfo.ma_chi_nhanh,
+      co_so_ten: kioskInfo.ten_chi_nhanh,
+    });
+
+    const saved = await this.userRepo.save(created);
+    return {
+      message: 'Tao tai khoan Kiosk Staff thanh cong',
+      item: {
+        ma_nguoi_dung: saved.ma_nguoi_dung,
+        ten_dang_nhap: saved.ten_dang_nhap,
+        ho_ten: saved.ho_ten,
+        vai_tro: saved.vai_tro,
+        co_so_ma: saved.co_so_ma,
+        co_so_ten: saved.co_so_ten,
+      }
+    };
+  }
+
   async capNhatTaiKhoanHeThong(
     userId: string,
     payload: {
       ten_dang_nhap?: string;
       mat_khau?: string;
       ho_ten?: string;
-      vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER' | 'ACCOUNTANT';
+      vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER' | 'ACCOUNTANT' | 'KIOSK_STAFF';
       co_so_ma?: string;
       trang_thai?: 'ACTIVE' | 'INACTIVE';
       email?: string;
@@ -786,8 +858,8 @@ export class UserService implements OnModuleInit {
 
     if (payload.vai_tro !== undefined) {
       const role = String(payload.vai_tro).toUpperCase();
-      if (!['STAFF', 'MANAGER', 'CUSTOMER', 'ACCOUNTANT'].includes(role)) {
-        throw new BadRequestException('Chi cho phep role STAFF, MANAGER, ACCOUNTANT hoac CUSTOMER');
+      if (!['STAFF', 'MANAGER', 'CUSTOMER', 'ACCOUNTANT', 'KIOSK_STAFF'].includes(role)) {
+        throw new BadRequestException('Chi cho phep role STAFF, MANAGER, ACCOUNTANT, KIOSK_STAFF hoac CUSTOMER');
       }
       user.vai_tro = role;
     }
@@ -1007,7 +1079,6 @@ export class UserService implements OnModuleInit {
     ten_chi_nhanh?: string;
     dia_chi?: string;
     thanh_pho?: string;
-    quan_huyen?: string;
     so_dien_thoai?: string;
     hinh_anh_url?: string;
     gio_mo_cua?: string;
@@ -1020,7 +1091,6 @@ export class UserService implements OnModuleInit {
     const phone = payload.so_dien_thoai?.trim() || null;
     const address = payload.dia_chi?.trim() || null;
     const city = payload.thanh_pho?.trim() || null;
-    const district = payload.quan_huyen?.trim() || null;
     const imageUrl = payload.hinh_anh_url?.trim() || null;
     const openTime = this.normalizeTimeValue(payload.gio_mo_cua);
     const closeTime = this.normalizeTimeValue(payload.gio_dong_cua);
@@ -1052,7 +1122,6 @@ export class UserService implements OnModuleInit {
       ten_chi_nhanh: branchName,
       dia_chi: address,
       thanh_pho: city,
-      quan_huyen: district,
       so_dien_thoai: phone,
       hinh_anh_url: imageUrl,
       gio_mo_cua: openTime,
@@ -1074,7 +1143,6 @@ export class UserService implements OnModuleInit {
       ten_chi_nhanh?: string;
       dia_chi?: string;
       thanh_pho?: string;
-      quan_huyen?: string;
       so_dien_thoai?: string;
       hinh_anh_url?: string;
       gio_mo_cua?: string;
@@ -1117,10 +1185,6 @@ export class UserService implements OnModuleInit {
 
     if (payload.thanh_pho !== undefined) {
       branch.thanh_pho = payload.thanh_pho?.trim() || null;
-    }
-
-    if (payload.quan_huyen !== undefined) {
-      branch.quan_huyen = payload.quan_huyen?.trim() || null;
     }
 
     if (payload.hinh_anh_url !== undefined) {
@@ -2659,17 +2723,11 @@ export class UserService implements OnModuleInit {
       diem_kha_dung: user.diem_kha_dung || 0,
       tong_chi_tieu: Number(user.tong_chi_tieu || 0),
       chi_tieu_thang_nay: chiTieuThangNay,
-      chi_tieu_toi_thieu_thang: chiTieuToiThieuThang,
-      con_thieu_thang_nay: conThieuThangNay,
-      dat_dieu_kien_dac_quyen: datDieuKienDacQuyen,
-      hang_hien_tai: hang,
-      quyen_loi_hien_tai: quyenLoi,
-      tat_ca_hang: tatCaHang,
-      voucher_ca_nhan: activePersonalVouchers,
-      ngay_sinh: user.ngay_sinh,
+      chi_tieu_toi_thieu_thang: null,
+      con_thieu_thang_nay: null,
+      dat_dieu_kien_dac_quyen: false,
     };
   }
-
   async capNhatNgaySinh(maNguoiDung: string, ngaySinh: string) {
     const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: maNguoiDung } });
     if (!user) throw new NotFoundException('Khong tim thay nguoi dung');
@@ -2733,4 +2791,132 @@ export class UserService implements OnModuleInit {
         throw new BadRequestException('Xác minh reCAPTCHA thất bại, vui lòng thử lại');
       }
     }
+
+  // ────────────────────────────────────────────────────
+  // KHU VỰC (ZONE) & KIOSK VỆ TINH NỘI BỘ
+  // ────────────────────────────────────────────────────
+
+  async layDanhSachKhuVuc(trang_thai?: string) {
+    const where: any = {};
+    if (trang_thai) where.trang_thai = trang_thai;
+    return this.khuVucRepo.find({ where, order: { ten_khu_vuc: 'ASC' } });
   }
+
+  async taoKhuVuc(body: { ma_khu_vuc: string; ten_khu_vuc: string; thanh_pho?: string; mo_ta?: string; nguoi_quan_ly_ma?: string }) {
+    const ma = body.ma_khu_vuc.trim().toUpperCase();
+    const existed = await this.khuVucRepo.findOne({ where: { ma_khu_vuc: ma } });
+    if (existed) throw new BadRequestException(`Mã khu vực '${ma}' đã tồn tại`);
+    const kv = this.khuVucRepo.create({
+      ma_khu_vuc: ma,
+      ten_khu_vuc: body.ten_khu_vuc.trim(),
+      thanh_pho: body.thanh_pho?.trim() || null,
+      mo_ta: body.mo_ta?.trim() || null,
+      nguoi_quan_ly_ma: body.nguoi_quan_ly_ma?.trim() || null,
+      trang_thai: 'ACTIVE',
+    });
+    return this.khuVucRepo.save(kv);
+  }
+
+  async capNhatKhuVuc(id: string, body: { ten_khu_vuc?: string; thanh_pho?: string; mo_ta?: string; nguoi_quan_ly_ma?: string; trang_thai?: string }) {
+    const kv = await this.khuVucRepo.findOne({ where: { id } });
+    if (!kv) throw new NotFoundException('Không tìm thấy khu vực');
+    if (body.ten_khu_vuc) kv.ten_khu_vuc = body.ten_khu_vuc.trim();
+    if (body.thanh_pho !== undefined) kv.thanh_pho = body.thanh_pho?.trim() || null;
+    if (body.mo_ta !== undefined) kv.mo_ta = body.mo_ta?.trim() || null;
+    if (body.nguoi_quan_ly_ma !== undefined) kv.nguoi_quan_ly_ma = body.nguoi_quan_ly_ma?.trim() || null;
+    if (body.trang_thai) kv.trang_thai = body.trang_thai as any;
+    return this.khuVucRepo.save(kv);
+  }
+
+  async layDanhSachKioskVeTinh(filter?: { khu_vuc_id?: string; trang_thai?: string; thanh_pho?: string; chi_nhanh_me_ma?: string }) {
+    const query = this.branchRepo.createQueryBuilder('b')
+      .where("b.loai_diem_ban = 'KIOSK_VE_TINH'");
+    if (filter?.khu_vuc_id) query.andWhere('b.khu_vuc_id = :khu_vuc_id', { khu_vuc_id: filter.khu_vuc_id });
+    if (filter?.trang_thai) query.andWhere('b.trang_thai = :trang_thai', { trang_thai: filter.trang_thai });
+    if (filter?.thanh_pho) query.andWhere('LOWER(b.thanh_pho) LIKE :tp', { tp: `%${filter.thanh_pho.toLowerCase()}%` });
+    if (filter?.chi_nhanh_me_ma) query.andWhere('b.chi_nhanh_me_ma = :chi_nhanh_me_ma', { chi_nhanh_me_ma: filter.chi_nhanh_me_ma });
+    query.orderBy('b.ma_chi_nhanh', 'ASC');
+    const rows = await query.getMany();
+    const zoneIds = [...new Set(rows.map(r => r.khu_vuc_id).filter(Boolean))] as string[];
+    let zoneMap: Record<string, any> = {};
+    if (zoneIds.length > 0) {
+      const zones = await this.khuVucRepo.createQueryBuilder('kv').where('kv.id IN (:...ids)', { ids: zoneIds }).getMany();
+      zoneMap = Object.fromEntries(zones.map(z => [z.id, z]));
+    }
+    return rows.map(b => ({
+      ma_chi_nhanh: b.ma_chi_nhanh,
+      ten_chi_nhanh: b.ten_chi_nhanh,
+      dia_chi: b.dia_chi,
+      thanh_pho: b.thanh_pho,
+      loai_diem_ban: b.loai_diem_ban,
+      loai_vi_tri: b.loai_vi_tri,
+      vi_do: b.vi_do,
+      kinh_do: b.kinh_do,
+      gio_mo_cua: b.gio_mo_cua,
+      gio_dong_cua: b.gio_dong_cua,
+      chi_nhanh_me_ma: b.chi_nhanh_me_ma,
+      mo_ta: b.mo_ta,
+      trang_thai: b.trang_thai,
+      khu_vuc: b.khu_vuc_id && zoneMap[b.khu_vuc_id] ? {
+        id: zoneMap[b.khu_vuc_id].id,
+        ma_khu_vuc: zoneMap[b.khu_vuc_id].ma_khu_vuc,
+        ten_khu_vuc: zoneMap[b.khu_vuc_id].ten_khu_vuc,
+      } : null,
+    }));
+  }
+
+  async taoKioskVeTinh(body: {
+    ma_chi_nhanh: string; ten_chi_nhanh: string; dia_chi: string;
+    thanh_pho?: string; gio_mo_cua?: string; gio_dong_cua?: string;
+    loai_vi_tri?: string; vi_do?: number; kinh_do?: number;
+    khu_vuc_id?: string; chi_nhanh_me_ma?: string; mo_ta?: string;
+  }) {
+    const ma = body.ma_chi_nhanh.trim().toUpperCase();
+    const existed = await this.branchRepo.findOne({ where: { ma_chi_nhanh: ma } });
+    if (existed) throw new BadRequestException(`Mã '${ma}' đã tồn tại`);
+    const kiosk = this.branchRepo.create({
+      ma_chi_nhanh: ma,
+      ten_chi_nhanh: body.ten_chi_nhanh.trim(),
+      dia_chi: body.dia_chi.trim(),
+      thanh_pho: body.thanh_pho?.trim() || null,
+      gio_mo_cua: body.gio_mo_cua || null,
+      gio_dong_cua: body.gio_dong_cua || null,
+      trang_thai: 'ACTIVE',
+      loai_diem_ban: 'KIOSK_VE_TINH',
+      loai_vi_tri: (body.loai_vi_tri as any) || null,
+      vi_do: body.vi_do ?? null,
+      kinh_do: body.kinh_do ?? null,
+      khu_vuc_id: body.khu_vuc_id || null,
+      chi_nhanh_me_ma: body.chi_nhanh_me_ma?.trim().toUpperCase() || null,
+      mo_ta: body.mo_ta?.trim() || null,
+    });
+    return this.branchRepo.save(kiosk);
+  }
+
+  async capNhatKioskVeTinh(ma: string, body: any) {
+    const kiosk = await this.branchRepo.findOne({ where: { ma_chi_nhanh: ma.toUpperCase(), loai_diem_ban: 'KIOSK_VE_TINH' as any } });
+    if (!kiosk) throw new NotFoundException('Không tìm thấy Kiosk Vệ Tinh');
+    const fields = ['ten_chi_nhanh','dia_chi','thanh_pho','gio_mo_cua','gio_dong_cua','loai_vi_tri','vi_do','kinh_do','khu_vuc_id','chi_nhanh_me_ma','mo_ta','trang_thai'];
+    for (const f of fields) {
+      if (body[f] !== undefined) (kiosk as any)[f] = body[f];
+    }
+    return this.branchRepo.save(kiosk);
+  }
+
+  async thongKeKioskTheoCumKhuVuc(chi_nhanh_me_ma?: string) {
+    const kiosks = await this.layDanhSachKioskVeTinh({ chi_nhanh_me_ma });
+    const zones = await this.layDanhSachKhuVuc();
+    const grouped = zones.map(zone => {
+      const diem_ban = kiosks.filter(k => k.khu_vuc && k.khu_vuc.id === zone.id);
+      return {
+        zone,
+        tong_diem_ban: diem_ban.length,
+        dang_hoat_dong: diem_ban.filter(k => k.trang_thai === 'ACTIVE').length,
+        tam_dung: diem_ban.filter(k => k.trang_thai !== 'ACTIVE').length,
+        diem_ban,
+      };
+    });
+    const khong_zone = kiosks.filter(k => !k.khu_vuc);
+    return { theo_cum: grouped, chua_phan_khu_vuc: khong_zone, tong_tat_ca: kiosks.length };
+  }
+}

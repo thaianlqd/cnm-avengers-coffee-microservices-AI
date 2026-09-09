@@ -16,6 +16,7 @@ import { AdminOverviewDashboardPanel } from './AdminOverviewDashboardPanel'
 import { AdminUserManagementPanel } from './AdminUserManagementPanel'
 import { AdminKioskManagementPanel } from './AdminKioskManagementPanel'
 import { AdminCustomerManagementPanel } from './AdminCustomerManagementPanel'
+import { AdminSatelliteKioskPanel } from './AdminSatelliteKioskPanel'
 import { LayoutGrid, Users, UserCog, Settings, Store, FolderOpen, Coffee, ShieldCheck, Ticket, BarChart3, Brain, Activity, Bike, Search, ChevronDown, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, PieChart, Package, Map, UsersIcon, Monitor, TrendingUp, BarChart2, MapPin, Info, ArrowUpDown, UserPlus, Edit2, Trash2, Filter, MoreVertical, Coins, LogOut } from 'lucide-react'
 function fmtNumber(value) {
   return Number(value || 0).toLocaleString('vi-VN')
@@ -688,7 +689,21 @@ export function AdminSystemConsole({
                     borderRadius: '8px'
                   } : {}}
                 >
-                  <Store size={15} /> Quản lý Kiosk
+                  <Store size={15} /> Kiosk Nhượng Quyền
+                </button>
+                <button
+                  type="button"
+                  className={activeTab === 'satellite_kiosks' ? 'nav-tab active' : 'nav-tab'}
+                  onClick={() => setActiveTab('satellite_kiosks')}
+                  style={activeTab === 'satellite_kiosks' ? {
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
+                    borderRadius: '8px'
+                  } : {}}
+                >
+                  <MapPin size={15} /> Kiosk Vệ Tinh Nội Bộ
                 </button>
                 <button
                   type="button"
@@ -880,6 +895,10 @@ export function AdminSystemConsole({
 
         {activeTab === 'kiosks' && (
           <AdminKioskManagementPanel session={session} />
+        )}
+
+        {activeTab === 'satellite_kiosks' && (
+          <AdminSatelliteKioskPanel session={session} />
         )}
 
         {activeTab === 'customers' && (

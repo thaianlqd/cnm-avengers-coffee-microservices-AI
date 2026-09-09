@@ -112,7 +112,7 @@ export default function Header({
       <div className="mx-auto flex h-[90px] w-full max-w-[1380px] items-center justify-between px-4 md:px-6 relative">
 
         {/* Left nav */}
-        <nav className="hidden flex-1 items-center justify-start gap-1 lg:flex">
+        <nav className="hidden flex-1 items-center justify-start gap-2 pr-12 lg:flex">
           {leftNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id || (item.id === 'menu-intro' && activeTab === 'order');
@@ -126,7 +126,7 @@ export default function Header({
                       onSelectedCatIdChange?.('all');
                     }
                   }}
-                  className={`relative flex flex-col items-center gap-[3px] px-4 py-2 rounded-xl transition-all duration-200 ${item.highlight
+                  className={`relative flex flex-col items-center gap-[3px] px-3 py-2 rounded-xl transition-all duration-200 ${item.highlight
                       ? isActive
                         ? 'bg-amber-400 text-amber-900'
                         : 'bg-amber-400/20 text-amber-200 hover:bg-amber-400/30 hover:text-amber-100'
@@ -136,7 +136,7 @@ export default function Header({
                     }`}
                 >
                   <Icon className="h-5 w-5 flex-shrink-0" />
-                  <span className="text-[11px] font-bold uppercase tracking-widest whitespace-nowrap">
+                  <span className="text-[11px] font-bold uppercase tracking-wider whitespace-nowrap">
                     {item.label}
                   </span>
                   {isActive && (
@@ -212,7 +212,7 @@ export default function Header({
           <img src="/hc-assets/red_BG_logo800.png" alt="Logo" className="h-[80px] w-auto transition-transform hover:scale-105" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
         </div>
 
-        <div className="hidden flex-1 items-center justify-end gap-2 lg:flex">
+        <div className="hidden flex-1 items-center justify-end gap-2 pl-12 lg:flex">
           <button
             type="button"
             onClick={() => onTabChange?.('news')}

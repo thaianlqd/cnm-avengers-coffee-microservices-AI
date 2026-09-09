@@ -29,7 +29,7 @@ import BranchSelector from '../../components/features_thaian/BranchSelector';
 const AVAILABLE_SIZES = ['Nhỏ', 'Vừa'];
 
 function taoDiaChiDayDu(addressForm) {
-  const parts = [addressForm.street, addressForm.ward, addressForm.district, addressForm.city]
+  const parts = [addressForm.street, addressForm.ward, addressForm.city]
     .map((item) => String(item || '').trim())
     .filter(Boolean);
   return parts.join(', ');
@@ -38,7 +38,7 @@ function taoDiaChiDayDu(addressForm) {
 function tachDiaChiDayDu(rawAddress) {
   const raw = String(rawAddress || '').trim();
   if (!raw) {
-    return { city: '', district: '', ward: '', street: '' };
+    return { city: '', ward: '', street: '' };
   }
 
   const parts = raw
@@ -46,24 +46,18 @@ function tachDiaChiDayDu(rawAddress) {
     .map((part) => part.trim())
     .filter(Boolean);
 
-  if (parts.length >= 4) {
+  if (parts.length >= 3) {
     const city = parts[parts.length - 1] || '';
-    const district = parts[parts.length - 2] || '';
-    const ward = parts[parts.length - 3] || '';
-    const street = parts.slice(0, parts.length - 3).join(', ');
-    return { city, district, ward, street: street || raw };
-  } else if (parts.length === 3) {
-    const city = parts[2] || '';
-    const district = parts[1] || '';
-    const street = parts[0] || '';
-    return { city, district, ward: '', street: street || raw };
+    const ward = parts[parts.length - 2] || '';
+    const street = parts.slice(0, parts.length - 2).join(', ');
+    return { city, ward, street: street || raw };
   } else if (parts.length === 2) {
     const city = parts[1] || '';
     const street = parts[0] || '';
-    return { city, district: '', ward: '', street: street || raw };
+    return { city, ward: '', street: street || raw };
   }
 
-  return { city: '', district: '', ward: '', street: raw };
+  return { city: '', ward: '', street: raw };
 }
 
 export default function CartPage({ 
@@ -138,7 +132,7 @@ export default function CartPage({
   const { data: vietnamProvinces } = useQuery({
     queryKey: ['vietnam-provinces'],
     queryFn: async () => {
-      const res = await fetch('https://provinces.open-api.vn/api/?depth=3');
+      const res = await fetch('/provinces.json');
       return res.json();
     },
     staleTime: Infinity,
@@ -149,12 +143,7 @@ export default function CartPage({
     if (vietnamProvinces && Array.isArray(vietnamProvinces) && vietnamProvinces.length > 0) {
       const options = {};
       vietnamProvinces.forEach(p => {
-        options[p.name] = {};
-        if (p.districts) {
-          p.districts.forEach(d => {
-            options[p.name][d.name] = d.wards ? d.wards.map(w => w.name) : [];
-          });
-        }
+        options[p.name] = p.wards ? p.wards.map(w => w.name) : [];
       });
       return options;
     }
@@ -240,21 +229,13 @@ export default function CartPage({
     return base;
   }, [addressOptions, addressForm.city]);
 
-  const districtOptions = useMemo(() => {
-    const base = Object.keys(addressOptions[addressForm.city] || {});
-    if (addressForm.district && !base.includes(addressForm.district)) {
-      return [addressForm.district, ...base];
-    }
-    return base;
-  }, [addressForm.city, addressForm.district, addressOptions]);
-
   const wardOptions = useMemo(() => {
-    const base = addressOptions[addressForm.city]?.[addressForm.district] || [];
+    const base = addressOptions[addressForm.city] || [];
     if (addressForm.ward && !base.includes(addressForm.ward)) {
       return [addressForm.ward, ...base];
     }
     return base;
-  }, [addressForm.city, addressForm.district, addressForm.ward, addressOptions]);
+  }, [addressForm.city, addressForm.ward, addressOptions]);
 
   const diaChiDayDu = useMemo(() => taoDiaChiDayDu(addressForm), [addressForm]);
 
@@ -798,20 +779,20 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
 
         {/* FREESHIP & PRIVILEGE PROGRESS BAR */}
         {deliveryMode === 'GIAO_TAN_NOI' && (
-          <div className="mb-8 bg-gradient-to-r from-[#fffbeb] via-[#fff7ed] to-[#fef3c7] text-[#78350f] rounded-[24px] p-5 sm:p-6 shadow-xs border border-amber-200/80 relative overflow-hidden">
+          <div className="mb-8 bg-gradient-to-r from-red-50 via-white to-red-50 text-[#b22830] rounded-[24px] p-5 sm:p-6 shadow-xs border border-red-200/80 relative overflow-hidden">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
               <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-amber-200/60 text-amber-900 flex items-center justify-center shrink-0 border border-amber-300 text-xs font-black tracking-wider uppercase">
+                <div className="w-10 h-10 rounded-xl bg-red-100/60 text-[#b22830] flex items-center justify-center shrink-0 border border-red-200 text-xs font-black tracking-wider uppercase">
                   FREE
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="text-xs sm:text-sm font-extrabold uppercase tracking-wide text-amber-950">
+                    <h4 className="text-xs sm:text-sm font-extrabold uppercase tracking-wide text-red-950">
                       Đặc quyền Freeship hạng {memberTierName}
                     </h4>
-                    <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-amber-200/70 text-amber-900 rounded-full border border-amber-300/80">VIP</span>
+                    <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-red-100 text-red-900 rounded-full border border-red-200/80">VIP</span>
                   </div>
-                  <p className="text-xs font-semibold text-amber-900/90 mt-1">
+                  <p className="text-xs font-semibold text-red-900/90 mt-1">
                     {isFreeshipEligible ? (
                       <span className="text-emerald-700 font-bold">Đã đủ điều kiện Freeship! Giảm ngay {giamPhiShipHanh.toLocaleString('vi-VN')}đ phí giao hàng</span>
                     ) : memberFreeshipMinOrder > total ? (
@@ -824,11 +805,11 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
               </div>
               {memberFreeshipMinOrder > 0 && (
                 <div className="w-full sm:w-56 shrink-0 space-y-1.5 bg-white/80 p-3 rounded-2xl border border-amber-200/80 shadow-xs">
-                  <div className="flex justify-between text-[11px] font-bold text-amber-900">
+                  <div className="flex justify-between text-[11px] font-bold text-red-900">
                     <span>Tiến trình Freeship</span>
                     <span className="text-emerald-700 font-black">{Math.min(100, Math.round((total / memberFreeshipMinOrder) * 100))}%</span>
                   </div>
-                  <div className="h-2.5 w-full bg-amber-100 rounded-full overflow-hidden border border-amber-200">
+                  <div className="h-2.5 w-full bg-red-100 rounded-full overflow-hidden border border-red-200">
                     <div 
                       className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all duration-500"
                       style={{ width: `${Math.min(100, (total / memberFreeshipMinOrder) * 100)}%` }}
@@ -912,7 +893,7 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                               </span>
                             )}
                             {item.toppings && item.toppings.length > 0 && (
-                              <span className="px-2.5 py-0.5 bg-amber-50 text-amber-900 border border-amber-200/80 rounded-full text-[11px]">
+                              <span className="px-2.5 py-0.5 bg-red-50 text-red-900 border border-red-200/80 rounded-full text-[11px]">
                                 Topping: {item.toppings.join(', ')}
                               </span>
                             )}
@@ -1081,21 +1062,18 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                                 if (!selected) return;
 
                                 let city = selected.thanh_pho || selected.city;
-                                let district = selected.quan_huyen || selected.district;
                                 let ward = selected.phuong_xa || selected.ward;
                                 let street = selected.so_nha_ten_duong || selected.street;
 
-                                if (!city || !district || !ward || !street) {
+                                if (!city || !ward || !street) {
                                   const parsed = tachDiaChiDayDu(selected.dia_chi_day_du);
                                   city = city || parsed.city;
-                                  district = district || parsed.district;
                                   ward = ward || parsed.ward;
                                   street = street || parsed.street;
                                 }
 
                                 setAddressForm({
                                   city,
-                                  district,
                                   ward,
                                   street,
                                   savedAddressId: selected.id,
@@ -1119,57 +1097,43 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                         {/* Thành phố */}
                         <div className="flex flex-col gap-1.5">
                           <label className="text-xs font-bold text-gray-500">Thành phố</label>
-                          <select
+                          <input
+                            list="cart-cities-list"
                             value={addressForm.city}
+                            placeholder="Chọn hoặc nhập Thành phố..."
                             onChange={(e) => {
                               const nextCity = e.target.value;
-                              const nextDistrict = Object.keys(addressOptions[nextCity] || {})[0] || '';
-                              const nextWard = (addressOptions[nextCity]?.[nextDistrict] || [])[0] || '';
-                              setAddressForm((prev) => ({ ...prev, city: nextCity, district: nextDistrict, ward: nextWard }));
+                              const nextWard = (addressOptions[nextCity] || [])[0] || '';
+                              setAddressForm((prev) => ({ ...prev, city: nextCity, ward: nextWard }));
                               if (thongBao) setThongBao('');
                             }}
                             className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/20 transition-all"
-                          >
+                          />
+                          <datalist id="cart-cities-list">
                             {cityOptions.map((city) => (
-                              <option key={city} value={city}>{city}</option>
+                              <option key={city} value={city} />
                             ))}
-                          </select>
-                        </div>
-
-                        {/* Quận */}
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-xs font-bold text-gray-500">Quận / Huyện</label>
-                          <select
-                            value={addressForm.district}
-                            onChange={(e) => {
-                              const nextDistrict = e.target.value;
-                              const nextWard = (addressOptions[addressForm.city]?.[nextDistrict] || [])[0] || '';
-                              setAddressForm((prev) => ({ ...prev, district: nextDistrict, ward: nextWard }));
-                              if (thongBao) setThongBao('');
-                            }}
-                            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/20 transition-all"
-                          >
-                            {districtOptions.map((district) => (
-                              <option key={district} value={district}>{district}</option>
-                            ))}
-                          </select>
+                          </datalist>
                         </div>
 
                         {/* Phường */}
                         <div className="flex flex-col gap-1.5">
                           <label className="text-xs font-bold text-gray-500">Phường / Xã</label>
-                          <select
+                          <input
+                            list="cart-wards-list"
                             value={addressForm.ward}
+                            placeholder="Chọn hoặc nhập Phường / Xã..."
                             onChange={(e) => {
                               setAddressForm((prev) => ({ ...prev, ward: e.target.value }));
                               if (thongBao) setThongBao('');
                             }}
                             className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/20 transition-all"
-                          >
+                          />
+                          <datalist id="cart-wards-list">
                             {wardOptions.map((ward) => (
-                              <option key={ward} value={ward}>{ward}</option>
+                              <option key={ward} value={ward} />
                             ))}
-                          </select>
+                          </datalist>
                         </div>
 
                         {/* Số nhà, tên đường */}
@@ -1336,7 +1300,7 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
                                 <span className="text-xs font-black text-[#1a1a1a]">Ví Avengers</span>
-                                <span className="text-[9px] font-extrabold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                                <span className="text-[9px] font-extrabold text-[#b22830] bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
                                   {Number(walletData?.wallet?.balance || 0).toLocaleString('vi-VN')}đ
                                 </span>
                               </div>
@@ -1436,7 +1400,7 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                       </p>
                     ) : (
                       memberFreeshipVal > 0 && memberFreeshipMinOrder > total && (
-                        <p className="text-[11px] font-semibold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 mt-1">
+                        <p className="text-[11px] font-semibold text-[#b22830] bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 mt-1">
                           Mua thêm {(memberFreeshipMinOrder - total).toLocaleString('vi-VN')}đ để tự động Freeship {memberFreeshipVal.toLocaleString('vi-VN')}đ hạng {memberTierName}
                         </p>
                       )
@@ -1531,7 +1495,7 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                     {personalVouchers.length > 0 && (
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-1.5 px-0.5">
-                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-800">Dành riêng cho bạn</span>
+                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#b22830]">Dành riêng cho bạn</span>
                         </div>
                         {personalVouchers.map((v) => {
                           const code = v.ma_khuyen_mai || v.ma_voucher || v.code;
@@ -1552,17 +1516,17 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                               onClick={() => { setVoucherCode(code); apDungVoucher(code); }}
                             >
                               {/* Left Badge */}
-                              <div className="w-18 bg-amber-500 text-white p-2.5 flex flex-col items-center justify-center shrink-0 text-center relative border-r border-dashed border-amber-300">
+                              <div className="w-18 bg-[#b22830] text-white p-2.5 flex flex-col items-center justify-center shrink-0 text-center relative border-r border-dashed border-red-300">
                                 <span className="text-[10px] font-black tracking-wider uppercase leading-tight">{badgeLabel}</span>
                               </div>
                               
                               {/* Content */}
                               <div className="flex-1 p-3 flex flex-col justify-center min-w-0">
                                 <div className="flex items-center gap-1.5 mb-0.5">
-                                  <span className="px-2 py-0.5 bg-amber-200/80 text-amber-900 text-[10px] font-black rounded uppercase tracking-wider">{code}</span>
+                                  <span className="px-2 py-0.5 bg-red-100/80 text-[#b22830] text-[10px] font-black rounded uppercase tracking-wider">{code}</span>
                                 </div>
                                 <h5 className="text-xs font-extrabold text-gray-900 truncate leading-snug">{v.ten_khuyen_mai || v.mo_ta || `Voucher quà tặng`}</h5>
-                                <p className="text-[10px] font-semibold text-amber-800 mt-0.5">
+                                <p className="text-[10px] font-semibold text-[#b22830] mt-0.5">
                                   {v.ngay_ket_thuc || v.han_su_dung ? `HSD: ${new Date(v.ngay_ket_thuc || v.han_su_dung).toLocaleDateString('vi-VN')}` : 'Hạn sử dụng dài'}
                                 </p>
                               </div>
@@ -1572,7 +1536,7 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); setVoucherCode(code); apDungVoucher(code); }}
-                                  className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-[11px] rounded-full shadow-xs transition-colors"
+                                  className="px-3 py-1 bg-[#b22830] hover:bg-[#8f1b23] text-white font-extrabold text-[11px] rounded-full shadow-xs transition-colors"
                                 >
                                   Dùng
                                 </button>

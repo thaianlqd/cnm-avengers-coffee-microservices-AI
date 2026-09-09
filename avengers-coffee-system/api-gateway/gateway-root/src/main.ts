@@ -19,7 +19,7 @@ async function bootstrap() {
       target: process.env.IDENTITY_SERVICE_URL || 'http://localhost:3001',
       changeOrigin: true,
       on: { proxyReq: fixRequestBody },
-      pathFilter: ['/auth', '/users', '/promotions', '/franchise'],
+      pathFilter: ['/auth', '/users', '/promotions', '/franchise', '/admin'],
     }),
   );
 

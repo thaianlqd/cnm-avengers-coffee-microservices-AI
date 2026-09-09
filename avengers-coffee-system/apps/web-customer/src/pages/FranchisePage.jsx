@@ -15,9 +15,9 @@ const PACKAGES = [
     invest: 'Từ 20 triệu',
     investDetail: 'Trọn gói: 20.000.000 đ',
     royalty: '4% mỗi tháng',
-    color: '#d97706',
-    gradient: 'linear-gradient(135deg, #fffbeb, #fef3c7)',
-    border: '#fbbf24',
+    color: '#b22830',
+    gradient: 'linear-gradient(135deg, #fff1f2, #fecdd3)',
+    border: '#f87171',
     tag: 'Vốn thấp nhất',
     desc: 'Phù hợp người mới bắt đầu. Di chuyển linh hoạt đến khu công nghiệp, trường học, chợ sáng, sự kiện ngoài trời.',
     features: [
@@ -135,7 +135,7 @@ const DEFAULT_FORM = {
   email: '',
   so_dien_thoai: '',
   dia_chi_mat_bang: '',
-  quan_huyen: '',
+  phuong_xa: '',
   thanh_pho: '',
   dien_tich_m2: '',
   goi_kiosk: 'KIOSK_CO_DINH',
@@ -192,14 +192,14 @@ export default function FranchisePage({ onNavigate }) {
   const [lookupError, setLookupError] = useState(null);
 
   const [provinces, setProvinces] = useState([]);
-  const [districts, setDistricts] = useState([]);
+  const [wards, setWards] = useState([]);
   const [kiosks, setKiosks] = useState([]);
   const [selectedKiosk, setSelectedKiosk] = useState(null);
   const [isLoadingKiosks, setIsLoadingKiosks] = useState(true);
   const [errorMsg, setErrorMsg] = useState(null);
 
   useEffect(() => {
-    fetch('https://provinces.open-api.vn/api/?depth=2')
+    fetch('/provinces.json')
       .then((res) => res.json())
       .then((data) => setProvinces(data))
       .catch((err) => console.error(err));
@@ -223,9 +223,9 @@ export default function FranchisePage({ onNavigate }) {
 
   const handleChangeProvince = (e) => {
     const val = e.target.value;
-    setForm((f) => ({ ...f, thanh_pho: val, quan_huyen: '' }));
+    setForm((f) => ({ ...f, thanh_pho: val, phuong_xa: '' }));
     const selected = provinces.find((p) => p.name === val);
-    setDistricts(selected ? selected.districts : []);
+    setWards(selected ? selected.wards : []);
   };
 
   const handleSubmit = async (e) => {
@@ -233,7 +233,40 @@ export default function FranchisePage({ onNavigate }) {
     setSubmitting(true);
     setResult(null);
     try {
-      const response = await apiClient.post(`/franchise/dang-ky`, form);
+      // Geocode địa chỉ sang tọa độ
+      let vi_do = null;
+      let kinh_do = null;
+      let addressObj = null;
+      try {
+        const fullAddress = `${form.dia_chi_mat_bang}, ${form.phuong_xa}, ${form.thanh_pho}`;
+        const geocodeRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(fullAddress)}`);
+        const geocodeData = await geocodeRes.json();
+        if (geocodeData && geocodeData.length > 0) {
+          vi_do = parseFloat(geocodeData[0].lat);
+          kinh_do = parseFloat(geocodeData[0].lon);
+          addressObj = geocodeData[0].address || {};
+        }
+      } catch (geocodeErr) {
+        console.warn('Geocoding failed:', geocodeErr);
+      }
+
+      if (!vi_do || !kinh_do) {
+        throw new Error('Hệ thống bản đồ không tìm thấy địa chỉ này! Vui lòng kiểm tra lại số nhà, tên đường đảm bảo địa chỉ là có thật và chính xác.');
+      }
+
+      // Ràng buộc tính nhất quán địa lý: Check xem Phường/Xã chọn ở dropdown có khớp với kết quả thực tế trên bản đồ không
+      if (addressObj && form.phuong_xa) {
+        const addressString = Object.values(addressObj).join(' ').toLowerCase();
+        // Lấy tên lõi của phường/xã để so sánh (bỏ chữ Phường/Xã)
+        const coreWard = form.phuong_xa.toLowerCase().replace('phường', '').replace('xã', '').replace('thị trấn', '').trim();
+        
+        if (!addressString.includes(coreWard)) {
+          throw new Error(`Cảnh báo mâu thuẫn địa lý: Mặt bằng bạn nhập không nằm trong ${form.phuong_xa}. Vui lòng chọn đúng Phường/Xã thực tế của mặt bằng!`);
+        }
+      }
+
+      const submitData = { ...form, vi_do, kinh_do };
+      const response = await apiClient.post(`/franchise/dang-ky`, submitData);
       const data = response.data;
       setResult({ success: true, message: data.message });
       setForm(DEFAULT_FORM);
@@ -367,7 +400,7 @@ export default function FranchisePage({ onNavigate }) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: '14px 34px',
-                background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
+                background: 'linear-gradient(135deg, #b22830 0%, #8f1b23 100%)',
                 color: '#ffffff',
                 fontWeight: 800,
                 fontSize: 15,
@@ -434,8 +467,8 @@ export default function FranchisePage({ onNavigate }) {
             style={{
               display: 'inline-block',
               padding: '6px 16px',
-              background: '#fef3c7',
-              color: '#92400e',
+              background: '#fce7e8',
+              color: '#b22830',
               borderRadius: 999,
               fontSize: 12,
               fontWeight: 800,
@@ -534,7 +567,7 @@ export default function FranchisePage({ onNavigate }) {
                       <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ color: '#1e293b', fontWeight: 700 }}>{c.name}</span>
-                          <span style={{ color: '#15803d', fontWeight: 800 }}>{c.gia.toLocaleString('vi-VN')} đ</span>
+                          <span style={{ color: '#8f1b23', fontWeight: 800 }}>{c.gia.toLocaleString('vi-VN')} đ</span>
                         </div>
                         {c.ingredients &&
                           c.ingredients.map((ing, ingIdx) => (
@@ -577,14 +610,14 @@ export default function FranchisePage({ onNavigate }) {
                       width: '100%',
                       padding: '13px',
                       border: isSelected ? 'none' : `1.5px solid ${pkg.border}`,
-                      background: isSelected ? '#16a34a' : '#ffffff',
+                      background: isSelected ? '#8f1b23' : '#ffffff',
                       color: isSelected ? '#ffffff' : pkg.color,
                       borderRadius: 12,
                       fontWeight: 800,
                       fontSize: 14,
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
-                      boxShadow: isSelected ? '0 4px 14px rgba(22, 163, 74, 0.3)' : 'none',
+                      boxShadow: isSelected ? '0 4px 14px rgba(143, 27, 35, 0.3)' : 'none',
                     }}
                   >
                     {isSelected ? 'Đã chọn gói này' : 'Chọn gói này'}
@@ -675,8 +708,8 @@ export default function FranchisePage({ onNavigate }) {
             style={{
               display: 'inline-block',
               padding: '6px 16px',
-              background: '#fef3c7',
-              color: '#92400e',
+              background: '#fce7e8',
+              color: '#b22830',
               borderRadius: 999,
               fontSize: 12,
               fontWeight: 800,
@@ -722,9 +755,9 @@ export default function FranchisePage({ onNavigate }) {
                   >
                     <div style={{ fontWeight: 800, fontSize: 15, color: isSelected ? '#8f1b23' : '#0f172a', marginBottom: 4 }}>{kiosk.ten_kiosk}</div>
                     <div style={{ fontSize: 13, color: '#475569', marginBottom: 8, lineHeight: 1.5 }}>
-                      {kiosk.dia_chi}, {kiosk.quan_huyen}, {kiosk.thanh_pho}
+                      {kiosk.dia_chi}, {kiosk.phuong_xa}, {kiosk.thanh_pho}
                     </div>
-                    <div style={{ display: 'inline-block', padding: '3px 10px', background: '#fef3c7', color: '#92400e', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>
+                    <div style={{ display: 'inline-block', padding: '3px 10px', background: '#fce7e8', color: '#b22830', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>
                       {formatKioskType(kiosk.loai_kiosk)}
                     </div>
                   </div>
@@ -749,7 +782,7 @@ export default function FranchisePage({ onNavigate }) {
               {selectedKiosk ? (
                 <iframe
                   title={`Bản đồ ${selectedKiosk.ten_kiosk}`}
-                  src={buildMapEmbedUrl(`${selectedKiosk.dia_chi}, ${selectedKiosk.quan_huyen}, ${selectedKiosk.thanh_pho}`)}
+                  src={buildMapEmbedUrl(`${selectedKiosk.dia_chi}, ${selectedKiosk.phuong_xa}, ${selectedKiosk.thanh_pho}`)}
                   style={{ width: '100%', height: '100%', border: 'none' }}
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
@@ -772,8 +805,8 @@ export default function FranchisePage({ onNavigate }) {
               style={{
                 display: 'inline-block',
                 padding: '6px 16px',
-                background: '#fef3c7',
-                color: '#92400e',
+                background: '#fce7e8',
+                color: '#b22830',
                 borderRadius: 999,
                 fontSize: 12,
                 fontWeight: 800,
@@ -966,14 +999,16 @@ export default function FranchisePage({ onNavigate }) {
                 />
               </div>
 
-              {/* Tỉnh thành, Quận huyện, Diện tích */}
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1.2fr', gap: 14, marginBottom: 18 }}>
+              {/* Tỉnh thành, Phường xã, Diện tích */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 18 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Tỉnh, Thành phố *</label>
-                  <select
+                  <input
+                    list="provinces-list"
                     name="thanh_pho"
                     value={form.thanh_pho}
                     onChange={handleChangeProvince}
+                    placeholder="Chọn hoặc nhập Tỉnh/Thành phố..."
                     required
                     style={{
                       width: '100%',
@@ -986,24 +1021,24 @@ export default function FranchisePage({ onNavigate }) {
                       color: '#0f172a',
                       outline: 'none',
                     }}
-                  >
-                    <option value="" disabled>
-                      Chọn Tỉnh hoặc Thành phố
-                    </option>
+                  />
+                  <datalist id="provinces-list">
                     {provinces.map((p) => (
-                      <option key={p.code} value={p.name}>
-                        {p.name}
-                      </option>
+                      <option key={p.code} value={p.name} />
                     ))}
-                  </select>
+                  </datalist>
                 </div>
 
+
+
                 <div>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Quận, Huyện *</label>
-                  <select
-                    name="quan_huyen"
-                    value={form.quan_huyen}
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Phường, Xã *</label>
+                  <input
+                    list="wards-list"
+                    name="phuong_xa"
+                    value={form.phuong_xa}
                     onChange={handleChange}
+                    placeholder="Chọn hoặc nhập Phường/Xã..."
                     required
                     disabled={!form.thanh_pho}
                     style={{
@@ -1017,16 +1052,12 @@ export default function FranchisePage({ onNavigate }) {
                       color: '#0f172a',
                       outline: 'none',
                     }}
-                  >
-                    <option value="" disabled>
-                      Chọn Quận hoặc Huyện
-                    </option>
-                    {districts.map((d) => (
-                      <option key={d.code} value={d.name}>
-                        {d.name}
-                      </option>
+                  />
+                  <datalist id="wards-list">
+                    {wards.map((w, idx) => (
+                      <option key={idx} value={w.name} />
                     ))}
-                  </select>
+                  </datalist>
                 </div>
 
                 <div>
@@ -1084,14 +1115,14 @@ export default function FranchisePage({ onNavigate }) {
                 style={{
                   width: '100%',
                   padding: '15px',
-                  background: submitting ? '#94a3b8' : '#16a34a',
+                  background: submitting ? '#94a3b8' : '#8f1b23',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: 12,
                   fontSize: 16,
                   fontWeight: 800,
                   cursor: submitting ? 'not-allowed' : 'pointer',
-                  boxShadow: submitting ? 'none' : '0 6px 20px rgba(22, 163, 74, 0.35)',
+                  boxShadow: submitting ? 'none' : '0 6px 20px rgba(143, 27, 35, 0.35)',
                   transition: 'background 0.2s ease, transform 0.15s ease',
                 }}
               >
@@ -1278,7 +1309,7 @@ export default function FranchisePage({ onNavigate }) {
                             Hồ sơ ngày {new Date(hs.ngay_tao).toLocaleDateString('vi-VN')}
                           </div>
                           <div style={{ fontSize: 13, color: '#475569', marginTop: 4 }}>
-                            Khu vực: {hs.quan_huyen}, {hs.thanh_pho}
+                            Khu vực: {hs.phuong_xa}, {hs.thanh_pho}
                           </div>
                           <div style={{ fontSize: 13, color: '#475569', marginTop: 2 }}>
                             Mô hình đăng ký: <strong style={{ color: '#8f1b23' }}>{pkgName}</strong>

@@ -1057,6 +1057,14 @@ export function FranchiseePortal({ session, onLogout }) {
   const donTheoKiosk = dons.filter(d => !activeKioskId || d.kiosk_id === activeKioskId)
   const tongCongNoTheoKiosk = congNoTheoKiosk.filter(c => c.trang_thai !== 'DA_THANH_TOAN').reduce((s, c) => s + Number(c.so_tien) + Number(c.phi_phat_tre_han || 0), 0)
 
+  const completedDonTheoKiosk = donTheoKiosk.filter(d => d.trang_thai_don_hang === 'HOAN_THANH')
+  const tongDoanhThuKiosk = completedDonTheoKiosk.reduce((s, d) => s + Number(d.tong_tien || 0), 0)
+  const totalCupsSold = completedDonTheoKiosk.reduce((s, d) => {
+    const items = d.chi_tiet || [];
+    return s + items.reduce((sum, item) => sum + (item.so_luong || 0), 0)
+  }, 0)
+  const loiNhuanNhuongQuyen = Math.round(tongDoanhThuKiosk * 0.07)
+
   const LOAI_KIOSK_LABEL = {
     'XE_LUU_DONG': { label: 'Xe lưu động', color: '#0369a1', bg: '#e0f2fe' },
     'KIOSK_CO_DINH': { label: 'Kiosk cố định', color: '#7c3aed', bg: '#ede9fe' },
@@ -1354,6 +1362,54 @@ export function FranchiseePortal({ session, onLogout }) {
                           </div>
                         )
                       })}
+                    </div>
+
+                    {/* Profit Report Widget */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, marginTop: 32 }}>
+                      <h3 style={{ fontWeight: 900, fontSize: 18, color: '#0f172a', margin: 0 }}>Báo Cáo Đối Soát Doanh Thu & Phí Nhượng Quyền</h3>
+                    </div>
+                    
+                    <div style={{ background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)', borderRadius: 20, padding: '24px', border: '1px solid #e2e8f0', boxShadow: '0 4px 16px rgba(0,0,0,0.03)', marginBottom: 32, display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+                        <div>
+                          <div style={{ fontSize: 12, color: '#475569', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>Tổng số đơn (Hoàn thành)</div>
+                          <div style={{ fontSize: 24, fontWeight: 900, color: '#0f172a' }}>{completedDonTheoKiosk.length} <span style={{ fontSize: 14, fontWeight: 700, color: '#64748b' }}>đơn</span></div>
+                        </div>
+                        <div style={{ width: 1, background: '#cbd5e1' }}></div>
+                        <div>
+                          <div style={{ fontSize: 12, color: '#475569', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>Tổng ly / Sản phẩm</div>
+                          <div style={{ fontSize: 24, fontWeight: 900, color: '#0f172a' }}>{totalCupsSold} <span style={{ fontSize: 14, fontWeight: 700, color: '#64748b' }}>ly</span></div>
+                        </div>
+                        <div style={{ width: 1, background: '#cbd5e1' }}></div>
+                        <div>
+                          <div style={{ fontSize: 12, color: '#475569', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>Tổng doanh thu POS</div>
+                          <div style={{ fontSize: 24, fontWeight: 900, color: '#0f172a' }}>{fmtMoney(tongDoanhThuKiosk)}</div>
+                        </div>
+                      </div>
+                      
+                      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                        {/* 7% Royalty Fee (Trích về Tổng công ty) */}
+                        <div style={{ background: '#fff', borderRadius: 16, padding: '16px 20px', border: '2px solid #fecaca', boxShadow: '0 8px 24px rgba(220, 38, 38, 0.08)', minWidth: 200, textAlign: 'center' }}>
+                          <div style={{ fontSize: 12, color: '#b91c1c', fontWeight: 800, textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                            Phí Nhượng Quyền (7%)
+                          </div>
+                          <div style={{ fontSize: 24, fontWeight: 900, color: '#dc2626' }}>{fmtMoney(loiNhuanNhuongQuyen)}</div>
+                          <div style={{ fontSize: 11, color: '#ef4444', fontWeight: 600, marginTop: 6, fontStyle: 'italic' }}>
+                            Trích nộp về công ty mẹ
+                          </div>
+                        </div>
+
+                        {/* 93% Net Revenue (Thực nhận của Đối tác) */}
+                        <div style={{ background: '#fff', borderRadius: 16, padding: '16px 20px', border: '2px solid #34d399', boxShadow: '0 8px 24px rgba(16, 185, 129, 0.1)', minWidth: 220, textAlign: 'center' }}>
+                          <div style={{ fontSize: 12, color: '#047857', fontWeight: 800, textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                            <Sparkles size={16} /> Doanh Thu Kiosk Nhận (93%)
+                          </div>
+                          <div style={{ fontSize: 28, fontWeight: 900, color: '#059669' }}>{fmtMoney(tongDoanhThuKiosk - loiNhuanNhuongQuyen)}</div>
+                          <div style={{ fontSize: 11, color: '#10b981', fontWeight: 600, marginTop: 6, fontStyle: 'italic' }}>
+                            Doanh thu thực nhận của đối tác
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Kiosk list cards */}

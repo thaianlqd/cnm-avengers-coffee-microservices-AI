@@ -192,12 +192,12 @@ export function StaffWorkShiftsPanel({
             width: '42px',
             height: '42px',
             borderRadius: '12px',
-            background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+            background: 'var(--primary)',
             color: '#ffffff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 10px rgba(16, 185, 129, 0.3)'
+            boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)'
           }}>
             <Calendar size={24} />
           </div>
@@ -206,7 +206,7 @@ export function StaffWorkShiftsPanel({
               Lịch Làm Việc Cá Nhân
             </h2>
             <span style={{ fontSize: '0.825rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <User size={14} color="#059669" /> Nhân sự: <strong>{staffUsername || 'Nhân viên'}</strong>
+              <User size={14} color="var(--primary)" /> Nhân sự: <strong>{staffUsername || 'Nhân viên'}</strong>
             </span>
           </div>
         </div>
@@ -235,21 +235,21 @@ export function StaffWorkShiftsPanel({
 
         <div style={{ background: '#ffffff', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
           <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Đang Check-in</span>
-          <strong style={{ fontSize: '1.25rem', display: 'block', color: '#059669', marginTop: '0.1rem' }}>
+          <strong style={{ fontSize: '1.25rem', display: 'block', color: 'var(--primary)', marginTop: '0.1rem' }}>
             {summary.checkedInCount} ca
           </strong>
         </div>
 
         <div style={{ background: '#ffffff', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
           <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Giờ làm thực tế</span>
-          <strong style={{ fontSize: '1.25rem', display: 'block', color: '#059669', marginTop: '0.1rem' }}>
+          <strong style={{ fontSize: '1.25rem', display: 'block', color: 'var(--primary)', marginTop: '0.1rem' }}>
             {summary.workedHours}h / {summary.scheduledHours}h
           </strong>
         </div>
 
         <div style={{ background: '#ffffff', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
           <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Đi muộn / Vắng</span>
-          <strong style={{ fontSize: '1.25rem', display: 'block', color: summary.lateCount > 0 || summary.absentCount > 0 ? '#ef4444' : '#059669', marginTop: '0.1rem' }}>
+          <strong style={{ fontSize: '1.25rem', display: 'block', color: summary.lateCount > 0 || summary.absentCount > 0 ? '#ef4444' : 'var(--primary)', marginTop: '0.1rem' }}>
             {summary.lateCount} muộn • {summary.absentCount} vắng
           </strong>
         </div>
@@ -257,7 +257,7 @@ export function StaffWorkShiftsPanel({
 
       {/* Attendance Insight Banner */}
       <div style={{
-        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+        background: 'var(--primary)',
         color: '#ffffff',
         padding: '0.85rem 1.25rem',
         borderRadius: '14px',
@@ -265,7 +265,7 @@ export function StaffWorkShiftsPanel({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        boxShadow: '0 4px 10px rgba(16, 185, 129, 0.2)'
+        boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <Award size={22} color="#ffffff" />
@@ -295,7 +295,7 @@ export function StaffWorkShiftsPanel({
               padding: '0.65rem 1rem',
               borderRadius: '9px',
               border: 'none',
-              background: activeTab === TABS.REQUEST ? '#10b981' : 'transparent',
+              background: activeTab === TABS.REQUEST ? 'var(--primary)' : 'transparent',
               color: activeTab === TABS.REQUEST ? '#ffffff' : '#64748b',
               fontWeight: activeTab === TABS.REQUEST ? '700' : '500',
               fontSize: '0.875rem',
@@ -390,11 +390,11 @@ export function StaffWorkShiftsPanel({
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
             <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <PlusCircle size={18} color="#10b981" /> Đăng ký nguyện vọng ca làm việc
+              <PlusCircle size={18} color="var(--primary)" /> Đăng ký nguyện vọng ca làm việc
             </h3>
             <span style={{
               fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 99,
-              background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0'
+              background: 'var(--primary-light)', color: 'var(--primary-hover)', border: '1px solid var(--border-light)'
             }}>
               Tuần kế tiếp: {nextWeekRange.nextMondayFmt} – {nextWeekRange.nextSundayFmt}
             </span>
@@ -415,11 +415,11 @@ export function StaffWorkShiftsPanel({
             </div>
           ) : (
             <div style={{
-              background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12,
+              background: 'var(--primary-light)', border: '1px solid var(--border-light)', borderRadius: 12,
               padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10,
-              color: '#166534', fontSize: 12, fontWeight: 600
+              color: 'var(--primary-hover)', fontSize: 12, fontWeight: 600
             }}>
-              <Clock size={16} color="#15803d" style={{ flexShrink: 0 }} />
+              <Clock size={16} color="var(--primary)" style={{ flexShrink: 0 }} />
               <span>Chỉ nhận đăng ký ca cho <b>tuần kế tiếp</b> ({nextWeekRange.nextMondayFmt} – {nextWeekRange.nextSundayFmt}). Hạn chót gửi yêu cầu trước Chủ Nhật (23:59 Thứ 7).</span>
             </div>
           )}
@@ -510,12 +510,12 @@ export function StaffWorkShiftsPanel({
                 padding: '0.65rem 1.25rem',
                 borderRadius: '10px',
                 border: 'none',
-                background: nextWeekRange.isSunday ? '#94a3b8' : 'linear-gradient(135deg, #10b981, #059669)',
+                background: nextWeekRange.isSunday ? '#94a3b8' : 'var(--primary)',
                 color: '#ffffff',
                 fontSize: '0.875rem',
                 fontWeight: '700',
                 cursor: (creatingShiftRequest || nextWeekRange.isSunday) ? 'not-allowed' : 'pointer',
-                boxShadow: nextWeekRange.isSunday ? 'none' : '0 4px 10px rgba(16, 185, 129, 0.25)'
+                boxShadow: nextWeekRange.isSunday ? 'none' : '0 4px 10px rgba(0, 0, 0, 0.15)'
               }}
             >
               <Send size={16} />
@@ -541,7 +541,7 @@ export function StaffWorkShiftsPanel({
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)'
         }}>
           <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <History size={18} color="#059669" /> Lịch sử các yêu cầu đăng ký ca
+            <History size={18} color="var(--primary)" /> Lịch sử các yêu cầu đăng ký ca
           </h3>
 
           {/* Pending Section */}
@@ -594,22 +594,22 @@ export function StaffWorkShiftsPanel({
           {/* Approved Section */}
           {approvedRequests.length > 0 && (
             <div style={{ marginBottom: '1.5rem' }}>
-              <h4 style={{ margin: '0 0 0.75rem 0', color: '#047857', fontSize: '0.95rem', fontWeight: '700' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', color: 'var(--primary)', fontSize: '0.95rem', fontWeight: '700' }}>
                 Đã phê duyệt ({approvedRequests.length})
               </h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '0.85rem' }}>
                 {approvedPageRows.map((item) => (
-                  <div key={item.ma_ca_lam_viec} style={{ background: '#ecfdf5', padding: '1rem', borderRadius: '12px', border: '1px solid #a7f3d0' }}>
+                  <div key={item.ma_ca_lam_viec} style={{ background: 'var(--primary-light)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                       <strong style={{ fontSize: '0.95rem', color: '#1e293b' }}>{item.ten_ca}</strong>
-                      <span style={{ fontSize: '0.75rem', fontWeight: '700', background: '#d1fae5', color: '#047857', padding: '0.2rem 0.5rem', borderRadius: '9999px' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: '700', background: 'var(--primary-light)', color: 'var(--primary-hover)', padding: '0.2rem 0.5rem', borderRadius: '9999px' }}>
                         Đã duyệt
                       </span>
                     </div>
                     <div style={{ fontSize: '0.825rem', color: '#475569' }}>
                       📅 {item.ngay_lam_viec} • {item.gio_bat_dau} - {item.gio_ket_thuc}
                     </div>
-                    {item.ghi_chu_duyet && <div style={{ fontSize: '0.8rem', color: '#047857', marginTop: '0.35rem' }}>Phản hồi: {item.ghi_chu_duyet}</div>}
+                    {item.ghi_chu_duyet && <div style={{ fontSize: '0.8rem', color: 'var(--primary-hover)', marginTop: '0.35rem' }}>Phản hồi: {item.ghi_chu_duyet}</div>}
                   </div>
                 ))}
               </div>
@@ -685,8 +685,8 @@ export function StaffWorkShiftsPanel({
                     fontWeight: '700',
                     padding: '0.3rem 0.75rem',
                     borderRadius: '9999px',
-                    background: '#d1fae5',
-                    color: '#047857'
+                    background: 'var(--primary-light)',
+                    color: 'var(--primary-hover)'
                   }}>
                     {selectedInsight?.shortLabel || 'Đã xếp lịch'}
                   </span>
@@ -695,7 +695,7 @@ export function StaffWorkShiftsPanel({
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.85rem', marginBottom: '1.25rem' }}>
                   <div style={{ background: '#f8fafc', padding: '0.65rem 0.85rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Check-in</span>
-                    <strong style={{ fontSize: '0.9rem', display: 'block', color: '#059669', marginTop: '0.1rem' }}>
+                    <strong style={{ fontSize: '0.9rem', display: 'block', color: 'var(--primary)', marginTop: '0.1rem' }}>
                       {selectedShiftDetails.check_in_at ? new Date(selectedShiftDetails.check_in_at).toLocaleString('vi-VN') : 'Chưa điểm danh'}
                     </strong>
                   </div>
@@ -728,12 +728,12 @@ export function StaffWorkShiftsPanel({
                       padding: '0.75rem 1rem',
                       borderRadius: '10px',
                       border: 'none',
-                      background: hasCheckedIn ? '#cbd5e1' : '#10b981',
+                      background: hasCheckedIn ? '#cbd5e1' : 'var(--primary)',
                       color: '#ffffff',
                       fontSize: '0.9rem',
                       fontWeight: '700',
                       cursor: hasCheckedIn || isFutureShift ? 'not-allowed' : 'pointer',
-                      boxShadow: hasCheckedIn ? 'none' : '0 4px 10px rgba(16, 185, 129, 0.25)'
+                      boxShadow: hasCheckedIn ? 'none' : '0 4px 10px rgba(0, 0, 0, 0.15)'
                     }}
                   >
                     <CheckCircle2 size={18} />
@@ -773,7 +773,7 @@ export function StaffWorkShiftsPanel({
                 </div>
 
                 {attendanceMessage && (
-                  <div style={{ marginTop: '0.85rem', padding: '0.65rem 0.85rem', borderRadius: '8px', background: '#ecfdf5', color: '#047857', fontSize: '0.85rem', fontWeight: '600' }}>
+                  <div style={{ marginTop: '0.85rem', padding: '0.65rem 0.85rem', borderRadius: '8px', background: 'var(--primary-light)', color: 'var(--primary-hover)', fontSize: '0.85rem', fontWeight: '600' }}>
                     ✓ {attendanceMessage}
                   </div>
                 )}

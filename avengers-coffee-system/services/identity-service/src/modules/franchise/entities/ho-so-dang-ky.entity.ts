@@ -18,13 +18,19 @@ export class HoSoDangKy {
   dia_chi_mat_bang: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  quan_huyen: string | null;
+  phuong_xa: string | null;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   thanh_pho: string | null;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   dien_tich_m2: number | null;
+
+  @Column({ type: 'decimal', precision: 10, scale: 6, nullable: true })
+  vi_do: number | null;
+
+  @Column({ type: 'decimal', precision: 10, scale: 6, nullable: true })
+  kinh_do: number | null;
 
   @Column({ type: 'varchar', length: 20 })
   goi_kiosk: 'XE_LUU_DONG' | 'KIOSK_CO_DINH' | 'CONTAINER_CAFE';

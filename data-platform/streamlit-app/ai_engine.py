@@ -144,7 +144,7 @@ def call_groq(messages, tools=None):
         "Content-Type": "application/json"
     }
     payload = {
-        "model": "llama-3.3-70b-versatile",
+        "model": "llama-3.1-8b-instant",
         "messages": messages,
         "temperature": 0.1,
     }
