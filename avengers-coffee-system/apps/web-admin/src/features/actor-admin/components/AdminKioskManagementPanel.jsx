@@ -3,7 +3,7 @@ import { Store, CheckCircle2, XCircle, Search, RefreshCw, FileText, ChevronLeft,
 
 const ITEMS_PER_PAGE = 6;
 
-const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`;
+import { API_BASE_URL } from '../../admin-dashboard/constants';
 
 function fmtMoney(num) {
   if (!num) return '0đ';
@@ -27,7 +27,7 @@ export function AdminKioskManagementPanel({ session }) {
   const loadKiosks = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/franchise/kiosk`, {
+      const res = await fetch(`${API_BASE_URL}/franchise/kiosk`, {
         headers: {
           'Authorization': `Bearer ${session.token}`,
         },

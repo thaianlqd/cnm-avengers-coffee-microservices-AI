@@ -528,7 +528,8 @@ except ImportError as _e:
 tabs = st.tabs([
     "Tổng Quan", "Doanh Thu", "Sản Phẩm",
     "Khách Hàng", "Shipper & Giao Hàng", "Trí Tuệ Nhân Tạo (AI)",
-    "Khẩu Vị & Sở Thích", "Phân Tích Chuyên Sâu", "Kiến Trúc Hệ Thống"
+    "Khẩu Vị & Sở Thích", "Phân Tích Chuyên Sâu", "Kiến Trúc Hệ Thống",
+    "🚨 Đối Soát Dòng Tiền", "🏪 Sức Khoẻ Nhượng Quyền",
 ])
 
 
@@ -3048,3 +3049,539 @@ with tabs[8]:
         - 📐 **Structured**: Thông tin Chi nhánh, Sản phẩm, Bảng tổng hợp (Fact Orders), Người dùng.
         - Dữ liệu ở đây đã được làm sạch 100% (Gold standard), sẵn sàng để vẽ biểu đồ không cần tiền xử lý thêm.
         """)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  TAB 10: ĐỐI SOÁT DÒNG TIỀN & PHÁT HIỆN GIAN LẬN (Real-time Fraud Detection)
+# ═══════════════════════════════════════════════════════════════════════════════
+with tabs[9]:
+    st.markdown("""
+    <div style='margin-bottom:20px;'>
+      <h2 style='margin:0;font-size:24px;font-weight:800;color:#0F172A;'>🚨 Đối Soát Dòng Tiền & Phát Hiện Gian Lận</h2>
+      <p style='color:#64748B;font-size:14px;margin-top:4px;'>
+        Hệ thống giám sát tự động nhận diện thất thoát dòng tiền, bất thường giao dịch và các
+        dấu hiệu gian lận trên toàn bộ 120 chi nhánh (20 Stores + 100 Kiosks) theo thời gian thực.
+      </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── KPIs tổng hợp ──
+    @st.cache_data(ttl=120, show_spinner=False)
+    def get_fraud_kpis():
+        return query_df("""
+            SELECT
+                COUNT(*) FILTER (WHERE trang_thai_don_hang = 'DA_HUY'
+                    AND EXTRACT(HOUR FROM ngay_tao) BETWEEN 22 AND 23
+                    AND ngay_tao >= NOW() - INTERVAL '30 days')
+                    AS late_night_cancellations,
+
+                COALESCE(SUM(tong_tien) FILTER (WHERE trang_thai_don_hang = 'DA_HUY'
+                    AND EXTRACT(HOUR FROM ngay_tao) BETWEEN 22 AND 23
+                    AND ngay_tao >= NOW() - INTERVAL '30 days'), 0)
+                    AS late_night_revenue_lost,
+
+                COUNT(*) FILTER (WHERE phuong_thuc_thanh_toan = 'COD'
+                    AND trang_thai_thanh_toan = 'CHO_THANH_TOAN'
+                    AND trang_thai_don_hang = 'HOAN_THANH'
+                    AND ngay_tao <= NOW() - INTERVAL '24 hours')
+                    AS cod_pending_count,
+
+                COALESCE(SUM(tong_tien) FILTER (WHERE phuong_thuc_thanh_toan = 'COD'
+                    AND trang_thai_thanh_toan = 'CHO_THANH_TOAN'
+                    AND trang_thai_don_hang = 'HOAN_THANH'
+                    AND ngay_tao <= NOW() - INTERVAL '24 hours'), 0)
+                    AS cod_pending_amount,
+
+                COUNT(*) FILTER (WHERE trang_thai_don_hang = 'DA_HUY'
+                    AND ngay_tao >= NOW() - INTERVAL '30 days')
+                    AS total_cancelled_30d,
+
+                COALESCE(SUM(tong_tien) FILTER (WHERE trang_thai_don_hang = 'DA_HUY'
+                    AND ngay_tao >= NOW() - INTERVAL '30 days'), 0)
+                    AS total_lost_30d
+            FROM orders.don_hang
+        """)
+
+    fraud_kpi = get_fraud_kpis()
+    if not fraud_kpi.empty:
+        row = fraud_kpi.iloc[0]
+        fk1, fk2, fk3, fk4 = st.columns(4)
+        fk1.metric(
+            "🌙 Huỷ khuya (22-23h) / 30 ngày",
+            f"{int(row.get('late_night_cancellations', 0)):,} đơn",
+            help="Nghi vấn gian lận phí nhượng quyền 7%: Huỷ đơn sau 22h để giảm doanh thu tổng kết"
+        )
+        fk2.metric(
+            "💸 Dòng tiền mất (huỷ khuya)",
+            fmt_vnd(float(row.get('late_night_revenue_lost', 0))),
+            help="Ước tính doanh thu bị ẩn đi thông qua thủ thuật huỷ đơn muộn"
+        )
+        fk3.metric(
+            "⏳ Tiền COD đang treo",
+            f"{int(row.get('cod_pending_count', 0)):,} đơn",
+            help="Đơn hàng COD đã giao thành công nhưng shipper chưa nộp tiền > 24 giờ"
+        )
+        fk4.metric(
+            "💰 Giá trị COD treo",
+            fmt_vnd(float(row.get('cod_pending_amount', 0))),
+            help="Tổng số tiền mặt đang bị giữ lại bởi shipper chưa đối soát"
+        )
+
+    st.markdown("---")
+
+    col_left, col_right = st.columns([1.2, 1])
+
+    # ── Biểu đồ 1: Đơn huỷ khuya theo chi nhánh (Top 15 nghi vấn cao nhất) ──
+    with col_left:
+        st.markdown("#### 🔴 Top Chi Nhánh Có Tần Suất Huỷ Đơn Khuya Cao Nhất (30 ngày)")
+
+        @st.cache_data(ttl=120, show_spinner=False)
+        def get_late_cancel_by_branch():
+            return query_df("""
+                SELECT
+                    co_so_ma,
+                    COUNT(*) AS so_don_huy_khuya,
+                    ROUND(SUM(tong_tien)::numeric, 0) AS tong_tien_mat
+                FROM orders.don_hang
+                WHERE trang_thai_don_hang = 'DA_HUY'
+                  AND EXTRACT(HOUR FROM ngay_tao) BETWEEN 22 AND 23
+                  AND ngay_tao >= NOW() - INTERVAL '30 days'
+                GROUP BY co_so_ma
+                ORDER BY so_don_huy_khuya DESC
+                LIMIT 15
+            """)
+
+        df_late = get_late_cancel_by_branch()
+        if not df_late.empty:
+            df_late["so_don_huy_khuya"] = df_late["so_don_huy_khuya"].astype(int)
+            fig_late = px.bar(
+                df_late, x="so_don_huy_khuya", y="co_so_ma",
+                orientation="h",
+                color="so_don_huy_khuya",
+                color_continuous_scale=["#FEF3C7", "#F59E0B", "#DC2626"],
+                text="so_don_huy_khuya",
+                labels={"so_don_huy_khuya": "Số đơn huỷ khuya", "co_so_ma": "Mã cơ sở"},
+            )
+            fig_late.update_traces(textposition="outside")
+            fig_late.update_coloraxes(showscale=False)
+            fig_late = apply_layout(fig_late, height=420)
+            st.plotly_chart(fig_late, use_container_width=True)
+            st.caption("⚠️ Ngưỡng cảnh báo: > 3 đơn huỷ khuya/tuần = Đánh cờ 🚩 FRAUD RISK")
+        else:
+            st.info("Không có dữ liệu huỷ đơn khuya trong 30 ngày qua.")
+
+    # ── Biểu đồ 2: Phân phối giờ huỷ đơn ──
+    with col_right:
+        st.markdown("#### 🕐 Phân Phối Đơn Huỷ Theo Giờ Trong Ngày")
+
+        @st.cache_data(ttl=300, show_spinner=False)
+        def get_cancel_by_hour():
+            return query_df("""
+                SELECT
+                    EXTRACT(HOUR FROM ngay_tao)::int AS gio,
+                    COUNT(*) AS so_don
+                FROM orders.don_hang
+                WHERE trang_thai_don_hang = 'DA_HUY'
+                  AND ngay_tao >= NOW() - INTERVAL '30 days'
+                GROUP BY gio
+                ORDER BY gio
+            """)
+
+        df_hour = get_cancel_by_hour()
+        if not df_hour.empty:
+            df_hour["color"] = df_hour["gio"].apply(
+                lambda h: "#DC2626" if h >= 22 or h <= 1 else ("#F59E0B" if h >= 20 else "#94A3B8")
+            )
+            fig_hour = go.Figure(go.Bar(
+                x=df_hour["gio"], y=df_hour["so_don"],
+                marker_color=df_hour["color"],
+                text=df_hour["so_don"], textposition="outside",
+            ))
+            fig_hour.add_vrect(x0=21.5, x1=23.5, fillcolor="rgba(220,38,38,0.08)",
+                               line_width=0, annotation_text="🚨 Khung giờ nguy hiểm",
+                               annotation_position="top left")
+            fig_hour = apply_layout(fig_hour, height=420,
+                                    xaxis_title="Giờ trong ngày", yaxis_title="Số đơn huỷ")
+            st.plotly_chart(fig_hour, use_container_width=True)
+        else:
+            st.info("Chưa có dữ liệu.")
+
+    st.markdown("---")
+
+    # ── Bảng chi tiết đơn COD đang treo ──
+    st.markdown("#### ⏳ Danh Sách Đơn COD Đang Treo > 24h (Shipper Chưa Nộp Tiền)")
+
+    @st.cache_data(ttl=60, show_spinner=False)
+    def get_cod_pending_list():
+        return query_df("""
+            SELECT
+                ma_don_hang,
+                co_so_ma,
+                ten_khach_hang,
+                ROUND(tong_tien::numeric, 0)    AS so_tien_cod,
+                TO_CHAR(ngay_tao, 'DD/MM/YYYY HH24:MI') AS thoi_gian_dat,
+                ROUND(EXTRACT(EPOCH FROM (NOW() - ngay_tao))/3600, 1) AS gio_da_treo
+            FROM orders.don_hang
+            WHERE phuong_thuc_thanh_toan = 'COD'
+              AND trang_thai_thanh_toan   = 'CHO_THANH_TOAN'
+              AND trang_thai_don_hang     = 'HOAN_THANH'
+              AND ngay_tao <= NOW() - INTERVAL '24 hours'
+            ORDER BY ngay_tao ASC
+            LIMIT 100
+        """)
+
+    df_cod = get_cod_pending_list()
+    if not df_cod.empty:
+        df_cod["so_tien_cod"] = df_cod["so_tien_cod"].apply(lambda x: f"{int(x):,} đ")
+        df_cod["gio_da_treo"] = df_cod["gio_da_treo"].apply(lambda h: f"⏰ {h:.1f}h")
+        df_cod.columns = ["Mã Đơn", "Chi Nhánh", "Tên Khách", "Số Tiền COD", "Đặt Lúc", "Đã Treo"]
+        st.dataframe(df_cod, use_container_width=True, height=320)
+        total_cod_vnd = get_fraud_kpis().iloc[0].get("cod_pending_amount", 0)
+        st.error(f"⚠️ Tổng tiền COD đang bị giữ: **{fmt_vnd(float(total_cod_vnd))}** — Cần đối soát khẩn!")
+    else:
+        st.success("✅ Không có đơn COD nào đang bị treo. Dòng tiền đang được đối soát tốt!")
+
+    st.markdown("---")
+
+    # ── Xu hướng tổng thiệt hại dòng tiền theo ngày ──
+    st.markdown("#### 📉 Xu Hướng Dòng Tiền Thất Thoát Ước Tính (30 ngày)")
+
+    @st.cache_data(ttl=300, show_spinner=False)
+    def get_daily_loss():
+        return query_df("""
+            SELECT
+                DATE(ngay_tao) AS ngay,
+                COALESCE(SUM(tong_tien) FILTER (
+                    WHERE trang_thai_don_hang = 'DA_HUY'
+                      AND EXTRACT(HOUR FROM ngay_tao) BETWEEN 22 AND 23
+                ), 0) AS mat_gian_lan,
+                COALESCE(SUM(tong_tien) FILTER (
+                    WHERE phuong_thuc_thanh_toan = 'COD'
+                      AND trang_thai_thanh_toan = 'CHO_THANH_TOAN'
+                      AND trang_thai_don_hang = 'HOAN_THANH'
+                ), 0) AS mat_cod_treo
+            FROM orders.don_hang
+            WHERE ngay_tao >= NOW() - INTERVAL '30 days'
+            GROUP BY DATE(ngay_tao)
+            ORDER BY ngay
+        """)
+
+    df_loss = get_daily_loss()
+    if not df_loss.empty:
+        fig_loss = go.Figure()
+        fig_loss.add_trace(go.Scatter(
+            x=df_loss["ngay"], y=df_loss["mat_gian_lan"],
+            name="Gian lận huỷ khuya", mode="lines+markers",
+            line=dict(color="#DC2626", width=2.5), fill="tozeroy",
+            fillcolor="rgba(220,38,38,0.10)"
+        ))
+        fig_loss.add_trace(go.Scatter(
+            x=df_loss["ngay"], y=df_loss["mat_cod_treo"],
+            name="COD treo (Shipper)", mode="lines+markers",
+            line=dict(color="#F59E0B", width=2.5, dash="dot"), fill="tozeroy",
+            fillcolor="rgba(245,158,11,0.08)"
+        ))
+        fig_loss = apply_layout(fig_loss, height=320, yaxis_title="VNĐ thất thoát ước tính")
+        st.plotly_chart(fig_loss, use_container_width=True)
+
+    if AI_ENGINE_OK:
+        if 'session_id' not in st.session_state:
+            import uuid
+            st.session_state.session_id = str(uuid.uuid4())
+        render_insight_btn(
+            "Phân tích ngắn gọn (3 điểm) về tình trạng thất thoát dòng tiền: số đơn hủy khuya, số COD đang treo, và đề xuất 2 hành động ưu tiên.",
+            "Dữ liệu đối soát dòng tiền Avengers Coffee",
+            get_engine(),
+            st.session_state.session_id,
+            "fraud_tab"
+        )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  TAB 11: SỨC KHOẺ NHƯỢNG QUYỀN (Franchise Health & Cash-Flow Forecasting)
+# ═══════════════════════════════════════════════════════════════════════════════
+with tabs[10]:
+    st.markdown("""
+    <div style='margin-bottom:20px;'>
+      <h2 style='margin:0;font-size:24px;font-weight:800;color:#0F172A;'>🏪 Sức Khoẻ Nhượng Quyền & Dự Báo Dòng Tiền</h2>
+      <p style='color:#64748B;font-size:14px;margin-top:4px;'>
+        Giám sát Unit Economics (Kinh tế Đơn vị) cho 100+ Kiosk nhượng quyền toàn quốc.
+        Dự báo dòng tiền phí nhượng quyền 7% và phân loại sức khoẻ tài chính theo thời gian thực.
+      </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── KPI tổng quan nhượng quyền ──
+    @st.cache_data(ttl=300, show_spinner=False)
+    def get_franchise_kpis():
+        return query_df("""
+            SELECT
+                COUNT(DISTINCT co_so_ma) FILTER (
+                    WHERE co_so_ma LIKE '%-K%'
+                ) AS total_kiosks,
+                COUNT(DISTINCT co_so_ma) FILTER (
+                    WHERE co_so_ma NOT LIKE '%-K%'
+                ) AS total_main_stores,
+                COALESCE(SUM(tong_tien) FILTER (
+                    WHERE co_so_ma LIKE '%-K%'
+                      AND trang_thai_don_hang = 'HOAN_THANH'
+                      AND ngay_tao >= NOW() - INTERVAL '30 days'
+                ), 0) AS kiosk_revenue_30d,
+                COALESCE(SUM(tong_tien) FILTER (
+                    WHERE co_so_ma NOT LIKE '%-K%'
+                      AND trang_thai_don_hang = 'HOAN_THANH'
+                      AND ngay_tao >= NOW() - INTERVAL '30 days'
+                ), 0) AS store_revenue_30d,
+                COUNT(DISTINCT co_so_ma) FILTER (
+                    WHERE co_so_ma LIKE '%-K%'
+                      AND trang_thai_don_hang = 'HOAN_THANH'
+                      AND ngay_tao >= NOW() - INTERVAL '30 days'
+                ) AS active_kiosks_30d
+            FROM orders.don_hang
+        """)
+
+    fk = get_franchise_kpis()
+    if not fk.empty:
+        r = fk.iloc[0]
+        kiosk_rev = float(r.get("kiosk_revenue_30d", 0))
+        store_rev = float(r.get("store_revenue_30d", 0))
+        royalty_fee = kiosk_rev * 0.07
+
+        k1, k2, k3, k4, k5 = st.columns(5)
+        k1.metric("🏪 Tổng Kiosk Nhượng Quyền", f"{int(r.get('total_kiosks', 0)):,}")
+        k2.metric("🏠 Cửa Hàng Tự Doanh", f"{int(r.get('total_main_stores', 0)):,}")
+        k3.metric("💰 Doanh Thu Kiosk / 30 ngày", fmt_vnd(kiosk_rev))
+        k4.metric("📊 Phí NQ Thu Về (7%) / 30 ngày", fmt_vnd(royalty_fee),
+                  help="Dòng tiền phí nhượng quyền ước tính Franchisor thu được")
+        k5.metric("🟢 Kiosk Đang Hoạt Động", f"{int(r.get('active_kiosks_30d', 0)):,}")
+
+    st.markdown("---")
+
+    # ── Bảng xếp hạng sức khoẻ Kiosk ──
+    st.markdown("#### 🏆 Bảng Xếp Hạng Sức Khoẻ Tài Chính Kiosk (30 ngày gần nhất)")
+    st.caption("Công thức: Tỷ suất lợi nhuận = (Doanh thu - Tiền giảm giá voucher) / Doanh thu. < 15% = 🔴 UNHEALTHY")
+
+    @st.cache_data(ttl=300, show_spinner=False)
+    def get_kiosk_health():
+        return query_df("""
+            SELECT
+                co_so_ma,
+                COUNT(*) AS tong_don,
+                ROUND(SUM(tong_tien) FILTER (WHERE trang_thai_don_hang = 'HOAN_THANH')::numeric, 0) AS doanh_thu,
+                ROUND(SUM(so_tien_giam) FILTER (WHERE trang_thai_don_hang = 'HOAN_THANH')::numeric, 0) AS tong_giam_gia,
+                COUNT(*) FILTER (WHERE trang_thai_don_hang = 'DA_HUY') AS don_huy,
+                ROUND(
+                    (1.0 - COALESCE(SUM(so_tien_giam) FILTER (WHERE trang_thai_don_hang = 'HOAN_THANH'), 0)
+                         / NULLIF(SUM(tong_tien) FILTER (WHERE trang_thai_don_hang = 'HOAN_THANH'), 0)
+                    ) * 100, 1
+                ) AS ty_suat_loi_nhuan_pct,
+                ROUND(SUM(tong_tien) FILTER (WHERE trang_thai_don_hang = 'HOAN_THANH')::numeric * 0.07, 0) AS phi_nhuong_quyen
+            FROM orders.don_hang
+            WHERE co_so_ma LIKE '%-K%'
+              AND ngay_tao >= NOW() - INTERVAL '30 days'
+            GROUP BY co_so_ma
+            HAVING COUNT(*) FILTER (WHERE trang_thai_don_hang = 'HOAN_THANH') > 0
+            ORDER BY doanh_thu DESC NULLS LAST
+            LIMIT 50
+        """)
+
+    df_health = get_kiosk_health()
+    if not df_health.empty:
+        # Phân loại sức khoẻ
+        def classify_health(pct):
+            if pct is None: return "⚪ N/A"
+            pct = float(pct)
+            if pct >= 75: return "🟢 HEALTHY"
+            elif pct >= 50: return "🟡 STABLE"
+            elif pct >= 30: return "🟠 WARNING"
+            else: return "🔴 UNHEALTHY"
+
+        df_health["suc_khoe"] = df_health["ty_suat_loi_nhuan_pct"].apply(classify_health)
+        df_health["doanh_thu_fmt"] = df_health["doanh_thu"].apply(lambda x: fmt_vnd(float(x)) if x else "0")
+        df_health["phi_nq_fmt"] = df_health["phi_nhuong_quyen"].apply(lambda x: fmt_vnd(float(x)) if x else "0")
+        df_health["ty_suat_fmt"] = df_health["ty_suat_loi_nhuan_pct"].apply(
+            lambda x: f"{float(x):.1f}%" if x else "N/A"
+        )
+
+        display_cols = ["co_so_ma", "tong_don", "doanh_thu_fmt", "phi_nq_fmt", "ty_suat_fmt", "don_huy", "suc_khoe"]
+        df_display = df_health[display_cols].copy()
+        df_display.columns = ["Mã Kiosk", "Tổng Đơn", "Doanh Thu", "Phí NQ (7%)", "Tỷ Suất LN", "Đơn Huỷ", "Sức Khoẻ"]
+
+        unhealthy = (df_health["ty_suat_loi_nhuan_pct"].astype(float) < 30).sum()
+        if unhealthy > 0:
+            st.warning(f"⚠️ Có **{unhealthy} Kiosk** đang ở mức UNHEALTHY/WARNING — Cần hỗ trợ khẩn!")
+
+        st.dataframe(df_display, use_container_width=True, height=400)
+
+    st.markdown("---")
+
+    col_a, col_b = st.columns(2)
+
+    # ── Biểu đồ doanh thu Kiosk theo vùng ──
+    with col_a:
+        st.markdown("#### 🗺️ Doanh Thu Theo Tỉnh/Thành Phố (Kiosk Nhượng Quyền)")
+
+        @st.cache_data(ttl=300, show_spinner=False)
+        def get_kiosk_by_city():
+            return query_df("""
+                SELECT
+                    SPLIT_PART(dia_chi_giao_hang, ', ', 2) AS thanh_pho,
+                    COUNT(DISTINCT co_so_ma) AS so_kiosk,
+                    ROUND(SUM(tong_tien) FILTER (WHERE trang_thai_don_hang = 'HOAN_THANH')::numeric, 0) AS doanh_thu
+                FROM orders.don_hang
+                WHERE co_so_ma LIKE '%-K%'
+                  AND ngay_tao >= NOW() - INTERVAL '30 days'
+                GROUP BY SPLIT_PART(dia_chi_giao_hang, ', ', 2)
+                ORDER BY doanh_thu DESC NULLS LAST
+                LIMIT 14
+            """)
+
+        df_city = get_kiosk_by_city()
+        if not df_city.empty:
+            fig_city = px.bar(
+                df_city, x="doanh_thu", y="thanh_pho",
+                orientation="h",
+                color="doanh_thu",
+                color_continuous_scale=["#DBEAFE", "#2563EB", "#1E3A8A"],
+                text="so_kiosk",
+                labels={"doanh_thu": "Doanh thu (VNĐ)", "thanh_pho": "Tỉnh/Thành"},
+                custom_data=["so_kiosk"],
+            )
+            fig_city.update_traces(
+                texttemplate="%{customdata[0]} kiosks",
+                textposition="inside"
+            )
+            fig_city.update_coloraxes(showscale=False)
+            fig_city = apply_layout(fig_city, height=420)
+            st.plotly_chart(fig_city, use_container_width=True)
+
+    # ── Biểu đồ tỷ trọng loại đơn ──
+    with col_b:
+        st.markdown("#### 🥧 Cơ Cấu Loại Đơn Hàng: Kiosk vs Main Store")
+
+        @st.cache_data(ttl=300, show_spinner=False)
+        def get_order_type_mix():
+            return query_df("""
+                SELECT
+                    CASE WHEN co_so_ma LIKE '%-K%' THEN 'Kiosk (NQ)' ELSE 'Main Store' END AS loai_co_so,
+                    COALESCE(loai_don_hang, 'KHAC') AS loai_don,
+                    COUNT(*) AS so_don,
+                    ROUND(SUM(tong_tien)::numeric, 0) AS doanh_thu
+                FROM orders.don_hang
+                WHERE trang_thai_don_hang = 'HOAN_THANH'
+                  AND ngay_tao >= NOW() - INTERVAL '30 days'
+                GROUP BY loai_co_so, loai_don
+                ORDER BY loai_co_so, so_don DESC
+            """)
+
+        df_mix = get_order_type_mix()
+        if not df_mix.empty:
+            fig_mix = px.sunburst(
+                df_mix, path=["loai_co_so", "loai_don"],
+                values="so_don",
+                color="loai_co_so",
+                color_discrete_map={
+                    "Kiosk (NQ)": "#2563EB",
+                    "Main Store": "#C41230",
+                },
+            )
+            fig_mix = apply_layout(fig_mix, height=420)
+            st.plotly_chart(fig_mix, use_container_width=True)
+
+    st.markdown("---")
+
+    # ── Dự báo dòng tiền phí nhượng quyền 30 ngày tới ──
+    st.markdown("#### 📈 Dự Báo Dòng Tiền Phí Nhượng Quyền 7% — 30 Ngày Tới")
+
+    @st.cache_data(ttl=600, show_spinner=False)
+    def get_daily_kiosk_revenue():
+        return query_df("""
+            SELECT
+                DATE(ngay_tao) AS ds,
+                SUM(tong_tien) AS y
+            FROM orders.don_hang
+            WHERE co_so_ma LIKE '%-K%'
+              AND trang_thai_don_hang = 'HOAN_THANH'
+              AND ngay_tao >= NOW() - INTERVAL '90 days'
+            GROUP BY DATE(ngay_tao)
+            ORDER BY ds
+        """)
+
+    df_ts = get_daily_kiosk_revenue()
+    if not df_ts.empty and len(df_ts) >= 14:
+        try:
+            from prophet import Prophet
+            import warnings
+            warnings.filterwarnings("ignore")
+            m = Prophet(daily_seasonality=False, weekly_seasonality=True, yearly_seasonality=False,
+                        changepoint_prior_scale=0.1)
+            m.fit(df_ts.rename(columns={"ds": "ds", "y": "y"}))
+            future = m.make_future_dataframe(periods=30)
+            forecast = m.predict(future)
+
+            # Tạo biểu đồ forecast
+            fig_fc = go.Figure()
+            fig_fc.add_trace(go.Scatter(
+                x=df_ts["ds"], y=(df_ts["y"] * 0.07).round(0),
+                name="Phí NQ thực tế (7%)", mode="lines+markers",
+                line=dict(color="#2563EB", width=2),
+            ))
+            forecast_future = forecast[forecast["ds"] > df_ts["ds"].max()]
+            fig_fc.add_trace(go.Scatter(
+                x=forecast_future["ds"], y=(forecast_future["yhat"] * 0.07).round(0),
+                name="Dự báo (Prophet)", mode="lines",
+                line=dict(color="#10B981", width=2.5, dash="dash"),
+            ))
+            fig_fc.add_trace(go.Scatter(
+                x=list(forecast_future["ds"]) + list(reversed(list(forecast_future["ds"]))),
+                y=list((forecast_future["yhat_upper"] * 0.07).round(0)) + list(reversed(list((forecast_future["yhat_lower"] * 0.07).round(0)))),
+                fill="toself", fillcolor="rgba(16,185,129,0.08)",
+                line=dict(color="rgba(255,255,255,0)"),
+                name="Khoảng tin cậy 95%",
+            ))
+
+            projected_royalty = float(forecast_future["yhat"].sum() * 0.07)
+            st.success(f"📊 Dự báo tổng phí nhượng quyền thu về trong **30 ngày tới**: **{fmt_vnd(projected_royalty)}**")
+
+            fig_fc = apply_layout(fig_fc, height=360, yaxis_title="Phí NQ 7% ước tính (VNĐ)")
+            st.plotly_chart(fig_fc, use_container_width=True)
+
+        except ImportError:
+            # Fallback nếu không có Prophet: dùng rolling mean
+            df_ts["rolling_avg"] = df_ts["y"].rolling(7, min_periods=1).mean()
+            avg_daily = df_ts["rolling_avg"].iloc[-7:].mean()
+            projected = avg_daily * 30 * 0.07
+
+            import pandas as pd
+            future_dates = pd.date_range(df_ts["ds"].max(), periods=31, freq="D")[1:]
+            projected_vals = [avg_daily * 0.07] * 30
+
+            fig_fc = go.Figure()
+            fig_fc.add_trace(go.Scatter(
+                x=df_ts["ds"], y=(df_ts["y"] * 0.07).round(0),
+                name="Phí NQ thực tế", mode="lines+markers",
+                line=dict(color="#2563EB", width=2),
+            ))
+            fig_fc.add_trace(go.Scatter(
+                x=future_dates, y=projected_vals,
+                name="Dự báo (Rolling Avg)", mode="lines",
+                line=dict(color="#10B981", width=2.5, dash="dash"),
+            ))
+            st.info(f"📊 Dự báo (Rolling Average) tổng phí NQ 30 ngày tới: **{fmt_vnd(projected)}**")
+            fig_fc = apply_layout(fig_fc, height=360, yaxis_title="Phí NQ 7% (VNĐ)")
+            st.plotly_chart(fig_fc, use_container_width=True)
+    else:
+        st.info("⏳ Cần ít nhất 14 ngày dữ liệu để dự báo. Hãy chạy script generate_big_data.py trước.")
+
+    if AI_ENGINE_OK:
+        if 'session_id' not in st.session_state:
+            import uuid
+            st.session_state.session_id = str(uuid.uuid4())
+        render_insight_btn(
+            "Phân tích 3 điểm về sức khoẻ nhượng quyền: top Kiosk hiệu quả nhất, Kiosk nào đang cần hỗ trợ, và dự báo dòng tiền phí nhượng quyền.",
+            "Dữ liệu sức khoẻ tài chính Kiosk nhượng quyền Avengers Coffee",
+            get_engine(),
+            st.session_state.session_id,
+            "franchise_tab"
+        )
+

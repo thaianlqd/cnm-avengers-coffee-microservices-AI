@@ -6,13 +6,14 @@ import { Promotion } from './promotion.entity';
 import { PromotionUsage } from './promotion-usage.entity';
 import { User } from './user.entity';
 import { MembershipConfig } from './membership-config.entity';
+import { KhuVuc } from './khu-vuc.entity';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, DeliveryAddress, Branch, Promotion, PromotionUsage, MembershipConfig])],
+  imports: [TypeOrmModule.forFeature([User, DeliveryAddress, Branch, Promotion, PromotionUsage, MembershipConfig, KhuVuc])],
   providers: [UserService],
   controllers: [UserController],
   exports: [UserService]
 })
-export class UserModule {}
+export class UserModule {}

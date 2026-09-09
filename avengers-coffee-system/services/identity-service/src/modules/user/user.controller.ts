@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, ForbiddenException, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, ForbiddenException, Get, Param, Patch, Post, Query, UnauthorizedException } from '@nestjs/common';
 import { AllowInternal, CurrentUser, Public, Roles } from '../../auth/auth.decorators';
 import type { AuthUser } from '../../auth/auth.types';
 import { UserService } from './user.service';
@@ -97,12 +97,30 @@ export class UserController {
       ten_dang_nhap?: string;
       mat_khau?: string;
       ho_ten?: string;
-      vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER' | 'ACCOUNTANT';
+      vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER' | 'ACCOUNTANT' | 'KIOSK_STAFF';
       co_so_ma?: string;
       email?: string;
     },
   ) {
     return this.userService.taoTaiKhoanHeThong(body);
+  }
+
+  @Roles('MANAGER')
+  @Post('users/manager/kiosk-staff')
+  async taoKioskStaff(
+    @Body()
+    body: {
+      ten_dang_nhap?: string;
+      mat_khau?: string;
+      ho_ten?: string;
+      co_so_ma?: string;
+    },
+    @CurrentUser() currentUser: AuthUser | null,
+  ) {
+    if (!currentUser) {
+      throw new UnauthorizedException();
+    }
+    return this.userService.taoKioskStaff(currentUser, body);
   }
 
   @Roles('ADMIN')
@@ -114,7 +132,7 @@ export class UserController {
       ten_dang_nhap?: string;
       mat_khau?: string;
       ho_ten?: string;
-      vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER' | 'ACCOUNTANT';
+      vai_tro?: 'STAFF' | 'MANAGER' | 'CUSTOMER' | 'ACCOUNTANT' | 'KIOSK_STAFF';
       co_so_ma?: string;
       trang_thai?: 'ACTIVE' | 'INACTIVE';
       email?: string;
@@ -135,7 +153,7 @@ export class UserController {
     return this.userService.layThongKeHeThong();
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'MANAGER')
   @Get('users/admin/branches')
   async layDanhSachChiNhanhAdmin() {
     return this.userService.layDanhSachChiNhanhAdmin();
@@ -156,7 +174,6 @@ export class UserController {
       ten_chi_nhanh?: string;
       dia_chi?: string;
       thanh_pho?: string;
-      quan_huyen?: string;
       so_dien_thoai?: string;
       hinh_anh_url?: string;
       gio_mo_cua?: string;
@@ -177,7 +194,6 @@ export class UserController {
       ten_chi_nhanh?: string;
       dia_chi?: string;
       thanh_pho?: string;
-      quan_huyen?: string;
       so_dien_thoai?: string;
       hinh_anh_url?: string;
       gio_mo_cua?: string;
@@ -446,5 +462,60 @@ export class UserController {
     },
   ) {
     return this.userService.capNhatMembershipAdmin(userId, body);
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  KHU VỰC (ZONE) — KIOSK VỆ TINH NỘI BỘ
+  // ═══════════════════════════════════════════════════════
+
+  @Roles('ADMIN', 'MANAGER')
+  @Get('admin/zones')
+  async layDanhSachKhuVuc(@Query('trang_thai') trang_thai?: string) {
+    return this.userService.layDanhSachKhuVuc(trang_thai);
+  }
+
+  @Roles('ADMIN')
+  @Post('admin/zones')
+  async taoKhuVuc(@Body() body: any) {
+    return this.userService.taoKhuVuc(body);
+  }
+
+  @Roles('ADMIN')
+  @Patch('admin/zones/:id')
+  async capNhatKhuVuc(@Param('id') id: string, @Body() body: any) {
+    return this.userService.capNhatKhuVuc(id, body);
+  }
+
+  @Roles('ADMIN', 'MANAGER')
+  @Get('admin/satellite-kiosks')
+  async layDanhSachKioskVeTinh(
+    @CurrentUser() currentUser: AuthUser | null,
+    @Query('khu_vuc_id') khu_vuc_id?: string,
+    @Query('trang_thai') trang_thai?: string,
+    @Query('thanh_pho') thanh_pho?: string,
+  ) {
+    const isManager = currentUser?.role === 'MANAGER';
+    const chi_nhanh_me_ma = isManager ? (currentUser?.branchCode || undefined) : undefined;
+    return this.userService.layDanhSachKioskVeTinh({ khu_vuc_id, trang_thai, thanh_pho, chi_nhanh_me_ma });
+  }
+
+  @Roles('ADMIN', 'MANAGER')
+  @Get('admin/satellite-kiosks/stats')
+  async thongKeKioskTheoCumKhuVuc(@CurrentUser() currentUser: AuthUser | null) {
+    const isManager = currentUser?.role === 'MANAGER';
+    const chi_nhanh_me_ma = isManager ? (currentUser?.branchCode || undefined) : undefined;
+    return this.userService.thongKeKioskTheoCumKhuVuc(chi_nhanh_me_ma);
+  }
+
+  @Roles('ADMIN')
+  @Post('admin/satellite-kiosks')
+  async taoKioskVeTinh(@Body() body: any) {
+    return this.userService.taoKioskVeTinh(body);
+  }
+
+  @Roles('ADMIN')
+  @Patch('admin/satellite-kiosks/:ma')
+  async capNhatKioskVeTinh(@Param('ma') ma: string, @Body() body: any) {
+    return this.userService.capNhatKioskVeTinh(ma, body);
   }
 }

@@ -71,3 +71,21 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text-main);
   margin: 0;
 }
+
+body.theme-kiosk {
+  --primary: #ea580c; /* Orange 600 */
+  --primary-hover: #c2410c; /* Orange 700 */
+  --primary-light: #ffedd5; /* Orange 100 */
+  --text-main: #431407; /* Dark Orange/Brown for contrast */
+  --bg-app: #fff7ed; /* Orange 50 */
+  --bg-panel: #ffffff;
+  --border-light: #fed7aa; /* Orange 200 */
+  --text-muted: #9a3412; /* Muted orange */
+  
+  --burnt: var(--primary);
+  --burnt-soft: var(--primary-hover);
+  --coffee: var(--text-main);
+  --line: var(--border-light);
+  --paper: var(--bg-panel);
+  --cream: var(--bg-app);
+}

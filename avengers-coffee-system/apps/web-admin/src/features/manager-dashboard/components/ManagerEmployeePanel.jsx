@@ -18,9 +18,11 @@ import {
   RefreshCw,
   AlertCircle,
   Filter,
-  User
+  User,
+  UserPlus
 } from 'lucide-react'
 import { formatMinutesLabel, getAttendanceInsight } from '../../workforce/attendance'
+import { API_BASE_URL } from '../../admin-dashboard/constants'
 
 const PAGE_SIZE = 6
 
@@ -108,10 +110,46 @@ function toShiftLabel(shift) {
 export function ManagerEmployeePanel({
   workShiftState = { items: [], loading: false, error: null },
   workforceUsersState = { items: [], loading: false, error: null },
+  taoKioskStaff,
+  session
 }) {
   const [keyword, setKeyword] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [page, setPage] = useState(1)
+
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [addForm, setAddForm] = useState({ ho_ten: '', ten_dang_nhap: '', mat_khau: '', co_so_ma: '' })
+  const [kiosks, setKiosks] = useState([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (showAddModal) {
+      fetch(`${API_BASE_URL}/branches/public`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.items) {
+            const myKiosks = data.items.filter(b => b.chi_nhanh_me_ma === session?.user?.coSoMa && b.loai_diem_ban === 'KIOSK_VE_TINH')
+            setKiosks(myKiosks)
+          }
+        })
+        .catch(console.error)
+    }
+  }, [showAddModal, session])
+
+  const handleAddSubmit = async (e) => {
+    e.preventDefault()
+    if (!taoKioskStaff) return
+    setIsSubmitting(true)
+    const res = await taoKioskStaff(addForm)
+    setIsSubmitting(false)
+    if (res.ok) {
+      setShowAddModal(false)
+      setAddForm({ ho_ten: '', ten_dang_nhap: '', mat_khau: '', co_so_ma: '' })
+      window.location.reload()
+    } else {
+      alert(res.message)
+    }
+  }
 
   const todayKey = useMemo(() => toDateOnlyLocal(new Date()), [])
 
@@ -261,6 +299,25 @@ export function ManagerEmployeePanel({
             </span>
           </div>
         </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.65rem 1rem',
+            background: '#2563eb',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '8px',
+            fontWeight: '600',
+            fontSize: '0.9rem',
+            cursor: 'pointer',
+            boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.2)'
+          }}
+        >
+          <UserPlus size={18} /> Thêm nhân viên Kiosk
+        </button>
       </div>
 
       {/* Summary KPI Grid */}
@@ -732,6 +789,46 @@ export function ManagerEmployeePanel({
             >
               Tiếp <ChevronRight size={16} />
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Add Modal */}
+      {showAddModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#fff', padding: '1.5rem 2rem', borderRadius: '16px', width: '400px', maxWidth: '90vw', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}>
+            <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.25rem', color: '#0f172a', fontWeight: '800' }}>Thêm Kiosk Staff</h3>
+            <form onSubmit={handleAddSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', fontWeight: '600', color: '#334155' }}>Họ tên</label>
+                <input required type="text" value={addForm.ho_ten} onChange={e => setAddForm({ ...addForm, ho_ten: e.target.value })} style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem' }} placeholder="Nguyễn Văn A" />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', fontWeight: '600', color: '#334155' }}>Tên đăng nhập</label>
+                <input required type="text" value={addForm.ten_dang_nhap} onChange={e => setAddForm({ ...addForm, ten_dang_nhap: e.target.value })} style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem' }} placeholder="vana_kiosk1" />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', fontWeight: '600', color: '#334155' }}>Mật khẩu (Tối thiểu 6 ký tự)</label>
+                <input required type="password" value={addForm.mat_khau} onChange={e => setAddForm({ ...addForm, mat_khau: e.target.value })} style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem' }} placeholder="••••••••" minLength={6} />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', fontWeight: '600', color: '#334155' }}>Kiosk trực thuộc</label>
+                <select required value={addForm.co_so_ma} onChange={e => setAddForm({ ...addForm, co_so_ma: e.target.value })} style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', backgroundColor: '#fff' }}>
+                  <option value="">-- Chọn kiosk vệ tinh --</option>
+                  {kiosks.map(k => (
+                    <option key={k.ma_chi_nhanh} value={k.ma_chi_nhanh}>{k.ten_chi_nhanh}</option>
+                  ))}
+                </select>
+                {kiosks.length === 0 && <span style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '0.25rem', display: 'block' }}>Chưa có kiosk nào thuộc quản lý của bạn.</span>}
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button type="button" onClick={() => setShowAddModal(false)} style={{ padding: '0.5rem 1rem', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}>Hủy</button>
+                <button type="submit" disabled={isSubmitting || kiosks.length === 0} style={{ padding: '0.5rem 1rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: (isSubmitting || kiosks.length === 0) ? 'not-allowed' : 'pointer', opacity: (isSubmitting || kiosks.length === 0) ? 0.6 : 1 }}>
+                  {isSubmitting ? 'Đang lưu...' : 'Tạo tài khoản'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

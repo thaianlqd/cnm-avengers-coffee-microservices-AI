@@ -12,6 +12,7 @@ import { Promotion } from './modules/user/promotion.entity';
 import { PromotionUsage } from './modules/user/promotion-usage.entity';
 import { User } from './modules/user/user.entity';
 import { MembershipConfig } from './modules/user/membership-config.entity';
+import { KhuVuc } from './modules/user/khu-vuc.entity';
 import { UserModule } from './modules/user/user.module';
 import { FranchiseModule } from './modules/franchise/franchise.module';
 import { ComboNguyenLieu } from './modules/franchise/entities/combo-nguyen-lieu.entity';
@@ -63,7 +64,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
           database,
           ssl: sslConfig,
           schema: identitySchema,
-          entities: [User, DeliveryAddress, Branch, Promotion, PromotionUsage, MembershipConfig, ComboNguyenLieu, HoSoDangKy, Kiosk, HopDongNhuongQuyen, DonMuaCombo, CongNo, RoyaltyHangThang, KetQuaDoiSoat, BienBanViPham, AuditLog],
+          entities: [User, DeliveryAddress, Branch, Promotion, PromotionUsage, MembershipConfig, ComboNguyenLieu, HoSoDangKy, Kiosk, HopDongNhuongQuyen, DonMuaCombo, CongNo, RoyaltyHangThang, KetQuaDoiSoat, BienBanViPham, AuditLog, KhuVuc],
           synchronize: true,
         };
       },
