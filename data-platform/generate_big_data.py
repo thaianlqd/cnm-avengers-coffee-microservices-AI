@@ -51,7 +51,7 @@ CREATE SCHEMA IF NOT EXISTS context;
 
 CREATE TABLE IF NOT EXISTS finance.hop_dong_nq (
     ma_hop_dong UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    co_so_ma VARCHAR(50), franchisee_ten TEXT, von_dau_tu_vnd BIGINT,
+    co_so_ma VARCHAR(100), franchisee_ten TEXT, von_dau_tu_vnd BIGINT,
     phi_nhuong_quyen_pct DECIMAL(5,2) DEFAULT 7.00,
     phi_thuong_hieu_pct DECIMAL(5,2) DEFAULT 2.00,
     ngay_ky DATE, thoi_han_thang SMALLINT, ngay_het_han DATE,
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS finance.hop_dong_nq (
 );
 CREATE TABLE IF NOT EXISTS finance.chi_phi_van_hanh (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    co_so_ma VARCHAR(50), ky_ke_toan DATE,
+    co_so_ma VARCHAR(100), ky_ke_toan DATE,
     chi_phi_cogs BIGINT, chi_phi_mat_bang BIGINT,
     chi_phi_luong BIGINT, chi_phi_logistics BIGINT, chi_phi_marketing BIGINT
 );

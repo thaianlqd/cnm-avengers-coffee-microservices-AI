@@ -88,4 +88,7 @@ export class User {
 
   @Column({ type: 'jsonb', nullable: true, default: () => "'[]'::jsonb" })
   pos_permissions: string[];
+
+  @Column({ type: 'numeric', precision: 15, scale: 2, default: 0 })
+  so_du_vi: number;
 }

@@ -518,4 +518,26 @@ export class UserController {
   async capNhatKioskVeTinh(@Param('ma') ma: string, @Body() body: any) {
     return this.userService.capNhatKioskVeTinh(ma, body);
   }
+
+
+  // ==============================================================================================
+  // VÍ ĐIỆN TỬ (E-WALLET)
+  // ==============================================================================================
+
+  @Roles('FRANCHISEE', 'CUSTOMER')
+  @Get('wallet/info')
+  async getWalletInfo(@CurrentUser() currentUser: AuthUser) {
+    if (!currentUser) throw new UnauthorizedException();
+    return this.userService.getWalletInfo(currentUser.sub);
+  }
+
+  @Roles('FRANCHISEE', 'CUSTOMER')
+  @Post('wallet/deposit')
+  async depositWallet(
+    @CurrentUser() currentUser: AuthUser,
+    @Body() body: { amount: number, description?: string }
+  ) {
+    if (!currentUser) throw new UnauthorizedException();
+    return this.userService.depositWallet(currentUser.sub, body.amount, body.description);
+  }
 }

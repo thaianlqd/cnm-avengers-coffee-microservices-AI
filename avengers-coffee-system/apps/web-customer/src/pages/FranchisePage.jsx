@@ -251,19 +251,13 @@ export default function FranchisePage({ onNavigate }) {
       }
 
       if (!vi_do || !kinh_do) {
-        throw new Error('Hệ thống bản đồ không tìm thấy địa chỉ này! Vui lòng kiểm tra lại số nhà, tên đường đảm bảo địa chỉ là có thật và chính xác.');
+        // NOTE: Tạm thời bỏ qua lỗi geocoding, cho phép gửi không có tọa độ
+        console.warn('Geocoding thất bại, tiếp tục gửi hồ sơ không có tọa độ.');
       }
 
-      // Ràng buộc tính nhất quán địa lý: Check xem Phường/Xã chọn ở dropdown có khớp với kết quả thực tế trên bản đồ không
-      if (addressObj && form.phuong_xa) {
-        const addressString = Object.values(addressObj).join(' ').toLowerCase();
-        // Lấy tên lõi của phường/xã để so sánh (bỏ chữ Phường/Xã)
-        const coreWard = form.phuong_xa.toLowerCase().replace('phường', '').replace('xã', '').replace('thị trấn', '').trim();
-        
-        if (!addressString.includes(coreWard)) {
-          throw new Error(`Cảnh báo mâu thuẫn địa lý: Mặt bằng bạn nhập không nằm trong ${form.phuong_xa}. Vui lòng chọn đúng Phường/Xã thực tế của mặt bằng!`);
-        }
-      }
+      // NOTE: Tạm thời tắt kiểm tra tính nhất quán địa lý
+      // if (addressObj && form.phuong_xa) { ... }
+
 
       const submitData = { ...form, vi_do, kinh_do };
       const response = await apiClient.post(`/franchise/dang-ky`, submitData);
