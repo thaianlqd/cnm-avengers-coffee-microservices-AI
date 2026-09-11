@@ -703,7 +703,7 @@ export function AdminSystemConsole({
                     borderRadius: '8px'
                   } : {}}
                 >
-                  <MapPin size={15} /> Kiosk Vệ Tinh Nội Bộ
+                  <MapPin size={15} /> Điểm Bán Take-away
                 </button>
                 <button
                   type="button"

@@ -9,6 +9,7 @@ import { PromotionUsage } from './promotion-usage.entity';
 import { User } from './user.entity';
 import { MembershipConfig } from './membership-config.entity';
 import { KhuVuc } from './khu-vuc.entity';
+import { WalletTransaction } from './wallet-transaction.entity';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomInt, randomUUID } from 'crypto';
 import nodemailer, { type Transporter } from 'nodemailer';
@@ -53,6 +54,8 @@ export class UserService implements OnModuleInit {
     private membershipConfigRepo: Repository<MembershipConfig>,
     @InjectRepository(KhuVuc)
     private khuVucRepo: Repository<KhuVuc>,
+    @InjectRepository(WalletTransaction)
+    private walletTxRepo: Repository<WalletTransaction>,
   ) {}
 
   private readonly ORDER_SERVICE_URL = process.env.ORDER_SERVICE_URL || 'http://order-service:3005';
@@ -2918,5 +2921,51 @@ export class UserService implements OnModuleInit {
     });
     const khong_zone = kiosks.filter(k => !k.khu_vuc);
     return { theo_cum: grouped, chua_phan_khu_vuc: khong_zone, tong_tat_ca: kiosks.length };
+  }
+
+  // ==============================================================================================
+  // VÍ ĐIỆN TỬ (E-WALLET)
+  // ==============================================================================================
+
+  async getWalletInfo(maNguoiDung: string) {
+    const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: maNguoiDung } });
+    if (!user) throw new Error('Không tìm thấy người dùng');
+
+    const transactions = await this.walletTxRepo.find({
+      where: { ma_nguoi_dung: maNguoiDung },
+      order: { ngay_tao: 'DESC' },
+      take: 50
+    });
+
+    return {
+      so_du_vi: Number(user.so_du_vi || 0),
+      giao_dich: transactions
+    };
+  }
+
+  async depositWallet(maNguoiDung: string, soTien: number, moTa?: string) {
+    if (soTien <= 0) throw new Error('Số tiền nạp phải lớn hơn 0');
+
+    const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: maNguoiDung } });
+    if (!user) throw new Error('Không tìm thấy người dùng');
+
+    // 1. Cập nhật số dư
+    user.so_du_vi = Number(user.so_du_vi || 0) + Number(soTien);
+    await this.userRepo.save(user);
+
+    // 2. Ghi log giao dịch
+    const tx = this.walletTxRepo.create({
+      ma_nguoi_dung: maNguoiDung,
+      so_tien: soTien,
+      loai_giao_dich: 'NAP_TIEN',
+      mo_ta: moTa || 'Nạp tiền vào ví điện tử'
+    });
+    await this.walletTxRepo.save(tx);
+
+    return {
+      message: 'Nạp tiền thành công',
+      so_du_moi: user.so_du_vi,
+      giao_dich: tx
+    };
   }
 }

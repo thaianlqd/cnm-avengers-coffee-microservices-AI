@@ -380,7 +380,7 @@ export default function StoresPage() {
           >
             <option value="ALL">Tất cả loại điểm bán</option>
             <option value="CHI_NHANH_CHINH">Cửa hàng chuẩn</option>
-            <option value="KIOSK_VE_TINH">Kiosk vệ tinh nội bộ</option>
+            <option value="KIOSK_VE_TINH">Điểm bán take-away</option>
           </select>
 
           <div className="relative flex items-center w-[320px]" ref={searchInputRef}>
@@ -480,7 +480,7 @@ export default function StoresPage() {
                       </h3>
                       {store.type === 'KIOSK_VE_TINH' && (
                         <span className="self-start text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded uppercase font-bold">
-                          Kiosk Vệ Tinh Nội Bộ
+                          Điểm Take-away
                         </span>
                       )}
                       {store.type === 'XE_NUOC_FRUIT' && (

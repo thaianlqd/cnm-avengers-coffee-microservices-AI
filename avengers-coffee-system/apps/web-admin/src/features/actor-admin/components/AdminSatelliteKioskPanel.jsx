@@ -9,6 +9,10 @@ const LOAI_VI_TRI_META = {
   CONG_TRUONG:   { label: 'Cổng trường',     color: '#10b981', bg: '#ecfdf5' },
   TOA_VAN_PHONG: { label: 'Tòa văn phòng',   color: '#3b82f6', bg: '#eff6ff' },
   KHU_DAN_CU:    { label: 'Khu dân cư',      color: '#8b5cf6', bg: '#f5f3ff' },
+  TRAM_XANG:     { label: 'Trạm xăng/Dừng nghỉ', color: '#ef4444', bg: '#fef2f2' },
+  BEN_XE:        { label: 'Bến xe/Sân bay',  color: '#06b6d4', bg: '#ecfeff' },
+  KHU_CONG_NGHIEP:{ label: 'Khu công nghiệp',color: '#64748b', bg: '#f8fafc' },
+  CONG_VIEN:     { label: 'Công viên/Khu DL', color: '#84cc16', bg: '#f7fee7' }
 }
 
 function apiFetch(token, path, options = {}) {
@@ -129,21 +133,23 @@ export function AdminSatelliteKioskPanel({ session }) {
     <div className="panel system-admin-panel" style={{ padding: '1.5rem' }}>
       {/* HEADER */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 10, background: 'linear-gradient(135deg, #4f46e5, #6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)' }}>
-            <MapPin size={20} color="white" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+            <MapPin size={24} />
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#0f172a' }}>Kiosk Vệ Tinh Nội Bộ</h2>
-            <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>Quản lý {kiosks.length} điểm bán takeaway trực thuộc công ty — {zones.length} khu vực</p>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#0f172a' }}>Điểm Bán Take-away</h2>
+            <p style={{ margin: '2px 0 0', fontSize: 13, color: '#64748b' }}>
+              Quản lý {stats?.total || kiosks.length} điểm bán takeaway trực thuộc công ty — {stats?.zoneCount || zones.length} khu vực
+            </p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={loadAll} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #e2e8f0', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
             <RefreshCw size={14} /> Làm mới
           </button>
-          <button onClick={() => { setForm(DEFAULT_FORM); setEditingMa(null); setShowForm(true) }} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #4f46e5, #6366f1)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700 }}>
-            <Plus size={14} /> Thêm kiosk mới
+          <button onClick={() => { setEditingMa(null); setForm(DEFAULT_FORM); setShowForm(true) }} style={{ padding: '9px 16px', borderRadius: 8, border: 'none', background: 'white', color: '#1e293b', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <Plus size={16} /> Thêm điểm bán mới
           </button>
         </div>
       </div>
@@ -163,7 +169,7 @@ export function AdminSatelliteKioskPanel({ session }) {
 
       {/* VIEW TABS */}
       <div style={{ display: 'flex', marginBottom: '1.25rem', borderBottom: '2px solid #f1f5f9' }}>
-        {[{ id: 'list', label: 'Danh sách Kiosk' }, { id: 'stats', label: 'Thống kê Zone' }, { id: 'zones', label: 'Khu vực' }].map(tab => (
+        {[{ id: 'list', label: 'Danh sách Điểm Bán' }, { id: 'stats', label: 'Thống kê Zone' }, { id: 'zones', label: 'Khu vực' }].map(tab => (
           <button key={tab.id} onClick={() => setActiveView(tab.id)} style={{ padding: '9px 18px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: activeView === tab.id ? '#4f46e5' : '#64748b', borderBottom: activeView === tab.id ? '2px solid #4f46e5' : '2px solid transparent', marginBottom: -2 }}>
             {tab.label}
           </button>
@@ -175,18 +181,18 @@ export function AdminSatelliteKioskPanel({ session }) {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: 'white', borderRadius: 16, padding: '2rem', width: 580, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 60px rgba(0,0,0,0.2)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0f172a' }}>{editingMa ? 'Cập nhật Kiosk Vệ Tinh' : 'Tạo Kiosk Vệ Tinh Mới'}</h3>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0f172a' }}>{editingMa ? 'Cập nhật Điểm Bán Take-away' : 'Tạo Điểm Bán Take-away Mới'}</h3>
               <button onClick={() => { setShowForm(false); setError(null) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}><X size={20} /></button>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               {!editingMa && (
                 <div style={{ gridColumn: '1/-1' }}>
-                  <label style={lbl}>Mã Kiosk *</label>
+                  <label style={lbl}>Mã Điểm Bán *</label>
                   <input value={form.ma_chi_nhanh} onChange={e => setForm(f => ({ ...f, ma_chi_nhanh: e.target.value.toUpperCase() }))} placeholder="VD: KVT011" style={inp} />
                 </div>
               )}
               <div style={{ gridColumn: '1/-1' }}>
-                <label style={lbl}>Tên Kiosk *</label>
+                <label style={lbl}>Tên Điểm Bán *</label>
                 <input value={form.ten_chi_nhanh} onChange={e => setForm(f => ({ ...f, ten_chi_nhanh: e.target.value }))} placeholder="VD: Avengers Coffee - Landmark 81" style={inp} />
               </div>
               <div style={{ gridColumn: '1/-1' }}>
@@ -388,7 +394,6 @@ export function AdminSatelliteKioskPanel({ session }) {
             </div>
           )}
         </>
-      )}
     </div>
   )
 }

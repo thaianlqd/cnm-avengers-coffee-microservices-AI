@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { FranchisePanel } from './FranchisePanel'
 import BiDashboard from './BiDashboard'
+import { DongTienTab } from './DongTienTab'
 import { API_BASE_URL } from '../admin-dashboard/constants'
 
 /**
@@ -75,8 +76,8 @@ export function AccountantFranchiseShell({ session, onLogout }) {
           <div style={{
             width: 42, height: 42, borderRadius: 10,
             background: '#2563eb', // Lighter Blue
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22
-          }}>💼</div>
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 'bold'
+          }}>AC</div>
           <div>
             <div style={{ fontWeight: 800, fontSize: 16, color: '#fff', letterSpacing: '0.02em' }}>Avengers Coffee</div>
             <div style={{ fontSize: 11, color: '#bfdbfe', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 2 }}>Khối Kế Toán & TC</div>
@@ -106,7 +107,7 @@ export function AccountantFranchiseShell({ session, onLogout }) {
               fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10,
               transition: 'all .2s'
             }}>
-            <span style={{ fontSize: 18 }}>🤝</span> Quản lý Nhượng quyền
+            Quản lý Nhượng quyền
           </div>
 
           <div 
@@ -119,12 +120,20 @@ export function AccountantFranchiseShell({ session, onLogout }) {
               fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10,
               transition: 'all .2s'
             }}>
-            <span style={{ fontSize: 18 }}>📉</span> Báo cáo Doanh thu (BI)
+            Báo cáo Doanh thu (BI)
           </div>
 
-          {/* Mock disabled menu */}
-          <div style={{ padding: '10px 14px', marginTop: 4, color: 'rgba(255,255,255,0.4)', fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 18, filter: 'grayscale(1)' }}>🏦</span> Quản trị Dòng tiền (Sắp ra mắt)
+          <div 
+            onClick={() => setCurrentModule('thu-chi')}
+            style={{ 
+              padding: '10px 14px', marginTop: 4, borderRadius: 8, cursor: 'pointer',
+              background: currentModule === 'thu-chi' ? 'rgba(255,255,255,0.15)' : 'transparent', 
+              borderLeft: currentModule === 'thu-chi' ? '3px solid #fff' : '3px solid transparent',
+              color: currentModule === 'thu-chi' ? '#fff' : 'rgba(255,255,255,0.7)', 
+              fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10,
+              transition: 'all .2s'
+            }}>
+            Quản trị Dòng tiền (Thu/Chi)
           </div>
         </div>
 
@@ -165,6 +174,8 @@ export function AccountantFranchiseShell({ session, onLogout }) {
         <div style={{ flex: 1, padding: 24, maxWidth: 1280, margin: '0 auto', width: '100%' }}>
           {currentModule === 'franchise' ? (
             <FranchisePanel />
+          ) : currentModule === 'thu-chi' ? (
+            <DongTienTab />
           ) : biError ? (
             <div style={{ padding: 40, background: '#fee2e2', color: '#991b1b', borderRadius: 16 }}>
               Lỗi tải báo cáo BI: {biError} 

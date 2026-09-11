@@ -15,6 +15,12 @@ export class FranchiseController {
     return this.franchiseService.dangKyHoSo(body);
   }
 
+  @Roles('FRANCHISEE')
+  @Post('dang-ky-noi-bo')
+  async dangKyNoiBo(@Body() body: any, @CurrentUser() user: AuthUser) {
+    return this.franchiseService.dangKyHoSoNoiBo(body, user.sub);
+  }
+
   @Public()
   @Get('ho-so/tra-cuu')
   async traCuuHoSo(@Query('so_dien_thoai') soDienThoai: string) {
@@ -37,6 +43,12 @@ export class FranchiseController {
   @Patch('ho-so/:id/duyet')
   async duyetHoSo(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.franchiseService.duyetHoSo(id, user.sub);
+  }
+
+  @Roles('ADMIN', 'ACCOUNTANT')
+  @Patch('ho-so/:id/duyet-noi-bo')
+  async duyetHoSoNoiBo(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.franchiseService.duyetHoSoNoiBo(id, user.sub);
   }
 
   @Roles('ADMIN', 'ACCOUNTANT')
@@ -196,6 +208,19 @@ export class FranchiseController {
   @Post('doi-soat/chay-thang-nay')
   async chayDoiSoat(@Body() body: any, @CurrentUser() user: AuthUser) {
     return this.franchiseService.chayDoiSoat(user.sub, body.ky);
+  }
+
+  // ─── Quản trị Dòng tiền (Thu/Chi) ───────────────
+  @Roles('ADMIN', 'ACCOUNTANT')
+  @Get('thu-chi')
+  async getDanhSachThuChi(@Query() query: any) {
+    return this.franchiseService.getDanhSachThuChi(query);
+  }
+
+  @Roles('ADMIN', 'ACCOUNTANT')
+  @Post('thu-chi')
+  async taoPhieuThuChi(@Body() body: any, @CurrentUser() user: AuthUser) {
+    return this.franchiseService.taoPhieuThuChi(user.sub, body);
   }
 
   // ─── Cập nhật Trạng thái Kiosk (Thủ công) ──────────

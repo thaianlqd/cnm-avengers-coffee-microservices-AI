@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Lock,
   Unlock,
+  Wallet,
   PlayCircle,
   XCircle,
   ArrowRight,
@@ -317,6 +318,11 @@ export function FranchiseePortal({ session, onLogout }) {
   const [dons, setDons] = useState([])
   const [congNos, setCongNos] = useState([])
   const [royalties, setRoyalties] = useState([])
+  
+  // Wallet states
+  const [walletInfo, setWalletInfo] = useState({ so_du_vi: 0, giao_dich: [] })
+  const [depositAmount, setDepositAmount] = useState('')
+  const [depositLoading, setDepositLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [msg, setMsg] = useState(null)
   const [orderForm, setOrderForm] = useState({ kiosk_id: '', combo_id: '', so_luong: 1, phuong_thuc_thanh_toan: 'CONG_NO' })
@@ -394,6 +400,8 @@ export function FranchiseePortal({ session, onLogout }) {
   const [posSubmitting, setPosSubmitting] = useState(false)
   const [posOrderResult, setPosOrderResult] = useState(null)
   const [posCashInput, setPosCashInput] = useState('')
+  const [posViewMode, setPosViewMode] = useState('grid')
+  const [posPage, setPosPage] = useState(1)
 
   // POS Orders state & Refund/Void states (Thành An)
   const [posOrders, setPosOrders] = useState([])
@@ -412,6 +420,25 @@ export function FranchiseePortal({ session, onLogout }) {
 
   // Scoring Modal
   const [scoringCriteriaModal, setScoringCriteriaModal] = useState(false);
+
+  // Expansion state
+  const [expansionForm, setExpansionForm] = useState({ dia_chi_mat_bang: '', phuong_xa: '', thanh_pho: '', dien_tich_m2: '', goi_kiosk: 'KIOSK_CO_DINH' })
+  const [expansionSubmitting, setExpansionSubmitting] = useState(false)
+
+
+  const handleExpansionSubmit = async (e) => {
+    e.preventDefault()
+    setExpansionSubmitting(true)
+    try {
+      const res = await apiFetch('/franchise/dang-ky-noi-bo', { method: 'POST', body: JSON.stringify(expansionForm) })
+      setMsg({ type: 'success', text: res.message })
+      setExpansionForm({ dia_chi_mat_bang: '', phuong_xa: '', thanh_pho: '', dien_tich_m2: '', goi_kiosk: 'KIOSK_CO_DINH' })
+    } catch (err) {
+      setMsg({ type: 'error', text: err.message })
+    } finally {
+      setExpansionSubmitting(false)
+    }
+  }
 
   const handleNapTien = () => setWalletBalance(prev => prev + 100000000);
 
@@ -441,17 +468,19 @@ export function FranchiseePortal({ session, onLogout }) {
   const loadAll = async (isInitial = false) => {
     if (isInitial) setLoading(true)
     try {
-      const [k, c, d, cn, r] = await Promise.all([
+      const [k, c, d, cn, r, w] = await Promise.all([
         apiFetch('/franchise/kiosk/cua-toi'),
         apiFetch('/franchise/combo'),
         apiFetch('/franchise/don-mua-combo/cua-toi'),
         apiFetch('/franchise/cong-no/cua-toi'),
         apiFetch('/franchise/royalty/cua-toi'),
+        apiFetch('/wallet/info'),
       ])
       setKiosks(k || [])
       setCombos(c || [])
       setDons(d || [])
       setCongNos(cn || [])
+      if (w) setWalletInfo(w)
       const royaltiesData = r || []
       const royaltiesWithKiosk = royaltiesData.map(roy => {
         const kiosk = (k || []).find(kk => kk.id === roy.kiosk_id)
@@ -1102,6 +1131,48 @@ export function FranchiseePortal({ session, onLogout }) {
 
   const availableMenu = filterMenuByKiosk(menuItems, activeKiosk?.loai_kiosk)
 
+  // POS Variables setup using availableMenu
+  const categoryCounts = useMemo(() => {
+    const m = new Map()
+    availableMenu.forEach(item => {
+      const cat = getCategoryName(item.danh_muc)
+      m.set(cat, (m.get(cat) || 0) + 1)
+    })
+    return m
+  }, [availableMenu])
+
+  const packageMeta = useMemo(() => {
+    if (!activeKiosk) return { name: 'Đang tải...', short: '...', bg: '#f1f5f9', color: '#475569', border: '#cbd5e1' }
+    if (activeKiosk.loai_kiosk === 'CONTAINER_CAFE') {
+      return { name: 'Gói VIP (Container)', short: 'VIP', bg: '#fef2f2', color: '#991b1b', border: '#fecaca' }
+    }
+    if (activeKiosk.loai_kiosk === 'XE_LUU_DONG') {
+      return { name: 'Gói Cơ Bản (Xe Kiosk)', short: 'Cơ Bản', bg: '#f0fdf4', color: '#166534', border: '#bbf7d0' }
+    }
+    return { name: 'Gói Tiêu Chuẩn (Cố Định)', short: 'Tiêu Chuẩn', bg: '#eff6ff', color: '#1e40af', border: '#bfdbfe' }
+  }, [activeKiosk])
+
+  const packageAllowedMenu = availableMenu // ALIAS for POS block compatibility
+
+  const filteredProducts = useMemo(() => {
+    let list = packageAllowedMenu
+    if (menuCategory) {
+      list = list.filter(item => getCategoryName(item.danh_muc) === menuCategory)
+    }
+    if (menuSearch) {
+      const q = menuSearch.toLowerCase()
+      list = list.filter(item => (item.ten_san_pham || '').toLowerCase().includes(q))
+    }
+    return list
+  }, [packageAllowedMenu, menuCategory, menuSearch])
+
+  const ITEMS_PER_PAGE = posViewMode === 'grid' ? 12 : 20
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE) || 1
+  const paginatedProducts = useMemo(() => {
+    const start = (posPage - 1) * ITEMS_PER_PAGE
+    return filteredProducts.slice(start, start + ITEMS_PER_PAGE)
+  }, [filteredProducts, posPage, ITEMS_PER_PAGE])
+
   const switchKiosk = (kioskId) => {
     setActiveKioskId(kioskId)
     setOrderForm(f => ({ ...f, kiosk_id: kioskId, combo_id: '' }))
@@ -1138,15 +1209,18 @@ export function FranchiseePortal({ session, onLogout }) {
 
   const TABS = [
     { id: 'dashboard', icon: Store, label: 'Tổng quan Kiosk' },
+    { id: 'pos', icon: Coffee, label: 'Bán hàng POS' },
     { id: 'staff_manage', icon: Users, label: 'Quản lý nhân viên' },
     { id: 'shift_schedule', icon: CalendarDays, label: 'Phân ca làm việc' },
     { id: 'kiosk_shifts', icon: Clock, label: 'Ca trực & Chốt ca' },
     { id: 'pos_orders', icon: Receipt, label: 'Đơn bán hàng' },
     { id: 'menu', icon: FileText, label: 'Thực đơn' },
+    { id: 'wallet', icon: Wallet, label: 'Ví điện tử' },
     { id: 'order', icon: Package, label: 'Đặt Combo' },
     { id: 'history', icon: FileText, label: 'Lịch sử nhập' },
     { id: 'debt', icon: CreditCard, label: 'Công nợ' },
     { id: 'royalty', icon: TrendingUp, label: 'Royalty' },
+    { id: 'expansion', icon: Store, label: 'Mở rộng chi nhánh' },
   ]
 
   const alertBanner = msg && (
@@ -2872,6 +2946,24 @@ export function FranchiseePortal({ session, onLogout }) {
                 {/* ═══════════════════════════════════════════════════════════ */}
                 {tab === 'order' && (
                   <div style={{ maxWidth: 680 }}>
+                    {/* Check if selected kiosk is DANG_HOAT_DONG */}
+                    {(() => {
+                      const selectedKiosk = kiosks.find(k => k.id === orderForm.kiosk_id) || kiosks[0];
+                      const isActive = selectedKiosk?.trang_thai === 'DANG_HOAT_DONG';
+                      if (!isActive) {
+                        return (
+                          <div style={{ background: '#fef3c7', border: '1.5px solid #f59e0b', borderRadius: 20, padding: 32, textAlign: 'center' }}>
+                            <div style={{ fontSize: 48, marginBottom: 12 }}>🏗️</div>
+                            <div style={{ fontSize: 18, fontWeight: 800, color: '#92400e', marginBottom: 8 }}>Kiosk chưa khai trương chính thức</div>
+                            <div style={{ fontSize: 14, color: '#78350f', lineHeight: 1.6 }}>
+                              Kiosk <b>{selectedKiosk?.ten_kiosk || selectedKiosk?.ma_kiosk}</b> đang ở trạng thái <b>{selectedKiosk?.trang_thai || 'chưa xác định'}</b>.<br/>
+                              Chỉ có thể đặt mua combo sau khi kiosk đã <b>ĐANG HOẠT ĐỘNG</b> chính thức.<br/><br/>
+                              Vui lòng hoàn tất quá trình ký hợp đồng và khai trương trước.
+                            </div>
+                          </div>
+                        );
+                      }
+                      return (
                     <div style={{ background: '#fff', borderRadius: 24, padding: 32, border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
                       <h3 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 900, color: '#0f172a' }}>📦 Đặt Mua Combo Nguyên Liệu</h3>
                       
@@ -2879,14 +2971,22 @@ export function FranchiseePortal({ session, onLogout }) {
                         <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: '#475569', marginBottom: 8, textTransform: 'uppercase' }}>Kiosk nhận hàng</label>
                         <select value={orderForm.kiosk_id} onChange={e => switchKiosk(e.target.value)}
                           style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: 12, fontSize: 14, background: '#f8fafc', color: '#1e293b', fontWeight: 600, outline: 'none' }}>
-                          {kiosks.map(k => <option key={k.id} value={k.id}>{k.ten_kiosk} ({k.ma_kiosk})</option>)}
+                          {kiosks.filter(k => k.trang_thai === 'DANG_HOAT_DONG').map(k => <option key={k.id} value={k.id}>{k.ten_kiosk} ({k.ma_kiosk})</option>)}
                         </select>
                       </div>
 
                       <div style={{ marginBottom: 20 }}>
                         <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: '#475569', marginBottom: 10, textTransform: 'uppercase' }}>Chọn gói combo</label>
                         <div style={{ display: 'grid', gap: 12 }}>
-                          {combos.map(c => (
+                          {combos.filter(c => {
+                            if (!selectedKiosk) return true;
+                            const name = (c.ten_combo || '').toLowerCase();
+                            const type = selectedKiosk.loai_kiosk;
+                            if (type === 'XE_LUU_DONG') return name.includes('xe') || name.includes('lưu động');
+                            if (type === 'KIOSK_CO_DINH') return name.includes('cố định');
+                            if (type === 'CONTAINER_CAFE') return name.includes('container');
+                            return true;
+                          }).map(c => (
                             <div key={c.id} onClick={() => setOrderForm(f => ({ ...f, combo_id: c.id }))} style={{
                               padding: '18px', border: `2px solid ${orderForm.combo_id === c.id ? '#f59e0b' : '#e2e8f0'}`,
                               borderRadius: 16, cursor: 'pointer', background: orderForm.combo_id === c.id ? '#fffbeb' : '#fff'
@@ -2931,6 +3031,8 @@ export function FranchiseePortal({ session, onLogout }) {
                         {ordering ? '⏳ Đang xử lý...' : '✓ Xác nhận đặt mua Combo'}
                       </button>
                     </div>
+                      );
+                    })()}
                   </div>
                 )}
 
@@ -2970,13 +3072,106 @@ export function FranchiseePortal({ session, onLogout }) {
                 )}
 
                 {/* ═══════════════════════════════════════════════════════════ */}
+                {/* TAB: VÍ ĐIỆN TỬ (wallet) */}
+                {/* ═══════════════════════════════════════════════════════════ */}
+                {tab === 'wallet' && (
+                  <div style={{ maxWidth: 720 }}>
+                    {/* Số dư ví */}
+                    <div style={{ background: 'linear-gradient(135deg, #1e293b, #0f172a)', borderRadius: 24, padding: 30, color: '#fff', marginBottom: 24, boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Wallet size={24} color="#fcd34d" />
+                          </div>
+                          <div>
+                            <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 600 }}>Số dư khả dụng</div>
+                            <div style={{ fontSize: 32, fontWeight: 900, color: '#fcd34d', textShadow: '0 2px 10px rgba(245,158,11,0.3)' }}>
+                              {fmtMoney(walletInfo?.so_du_vi || 0)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div style={{ display: 'flex', gap: 12, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 24 }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, marginBottom: 8 }}>Nạp tiền vào ví</div>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <input 
+                              type="number" 
+                              placeholder="Nhập số tiền..."
+                              value={depositAmount}
+                              onChange={e => setDepositAmount(e.target.value)}
+                              style={{ flex: 1, padding: '10px 16px', borderRadius: 12, border: 'none', outline: 'none', fontSize: 15, background: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                            />
+                            <button 
+                              disabled={depositLoading || !depositAmount || depositAmount <= 0}
+                              onClick={async () => {
+                                setDepositLoading(true)
+                                try {
+                                  await apiFetch('/wallet/deposit', {
+                                    method: 'POST',
+                                    body: JSON.stringify({ amount: Number(depositAmount), description: 'Nạp tiền vào ví' })
+                                  })
+                                  setMsg({ type: 'success', text: `Nạp thành công ${fmtMoney(depositAmount)} vào ví!` })
+                                  setDepositAmount('')
+                                  loadAll(false)
+                                } catch (e) {
+                                  setMsg({ type: 'error', text: e.message || 'Lỗi nạp tiền' })
+                                } finally {
+                                  setDepositLoading(false)
+                                }
+                              }}
+                              style={{ 
+                                padding: '0 24px', borderRadius: 12, border: 'none', 
+                                background: '#fcd34d', color: '#0f172a', fontWeight: 800, cursor: 'pointer',
+                                opacity: (depositLoading || !depositAmount || depositAmount <= 0) ? 0.5 : 1
+                              }}
+                            >
+                              {depositLoading ? 'Đang nạp...' : 'Nạp ngay'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Lịch sử giao dịch */}
+                    <div style={{ background: '#fff', borderRadius: 24, border: '1px solid #e2e8f0', padding: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.02)' }}>
+                      <h4 style={{ margin: '0 0 20px', fontSize: 18, color: '#0f172a' }}>Lịch sử giao dịch</h4>
+                      {(!walletInfo?.giao_dich || walletInfo.giao_dich.length === 0) ? (
+                        <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>Chưa có giao dịch nào</div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          {walletInfo.giao_dich.map((tx, idx) => (
+                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderRadius: 16, background: '#f8fafc' }}>
+                              <div>
+                                <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 14 }}>
+                                  {tx.loai_giao_dich === 'NAP_TIEN' ? 'Nạp tiền vào ví' :
+                                   tx.loai_giao_dich === 'MUA_COMBO' ? 'Thanh toán đơn mua combo' :
+                                   tx.loai_giao_dich === 'TRA_CONG_NO' ? 'Thanh toán công nợ' : tx.loai_giao_dich}
+                                </div>
+                                <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
+                                  {fmtDate(tx.ngay_giao_dich)} • {tx.mo_ta}
+                                </div>
+                              </div>
+                              <div style={{ fontWeight: 900, fontSize: 16, color: tx.so_tien > 0 ? '#059669' : '#dc2626' }}>
+                                {tx.so_tien > 0 ? '+' : ''}{fmtMoney(tx.so_tien)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* ═══════════════════════════════════════════════════════════ */}
                 {/* TAB: CÔNG NỢ (debt) */}
                 {/* ═══════════════════════════════════════════════════════════ */}
                 {tab === 'debt' && (
                   <div style={{ maxWidth: 680 }}>
                     <div style={{ display: 'grid', gap: 16 }}>
                       {congNoTheoKiosk.map(c => (
-                        <div key={c.id} style={{ background: '#fff', borderRadius: 20, padding: 24, border: '1px solid #e2e8f0', boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
+                        <div key={c.id} style={{ background: '#fff', borderRadius: 20, padding: 24, border: `1.5px solid ${c.trang_thai === 'DA_THANH_TOAN' ? '#bbf7d0' : '#fecaca'}`, boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
                               <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 16 }}>
@@ -2985,18 +3180,52 @@ export function FranchiseePortal({ session, onLogout }) {
                               <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Kiosk: {c.kiosk?.ten_kiosk} ({c.kiosk?.ma_kiosk})</div>
                             </div>
                             <div style={{ textAlign: 'right' }}>
-                              <div style={{ fontSize: 20, fontWeight: 900, color: '#d97706' }}>{fmtMoney(c.so_tien)}</div>
+                              <div style={{ fontSize: 20, fontWeight: 900, color: c.trang_thai === 'DA_THANH_TOAN' ? '#059669' : '#d97706' }}>{fmtMoney(c.so_tien)}</div>
                               <span style={{ display: 'inline-block', marginTop: 6, padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 800, background: c.trang_thai === 'DA_THANH_TOAN' ? '#dcfce7' : '#fef2f2', color: c.trang_thai === 'DA_THANH_TOAN' ? '#059669' : '#dc2626' }}>
                                 {c.trang_thai === 'DA_THANH_TOAN' ? 'Đã thanh toán' : 'Chưa thanh toán'}
                               </span>
                             </div>
                           </div>
+                          {c.trang_thai !== 'DA_THANH_TOAN' && (
+                            <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #f1f5f9', display: 'flex', gap: 10 }}>
+                              <button
+                                onClick={async () => {
+                                  if (!window.confirm(`Xác nhận thanh toán ${fmtMoney(c.so_tien)} bằng ví?`)) return;
+                                  try {
+                                    await apiFetch(`/franchise/cong-no/${c.id}/thanh-toan-vi`, { method: 'PATCH' });
+                                    setMsg({ type: 'success', text: '✅ Thanh toán công nợ thành công!' });
+                                    loadAll(false);
+                                  } catch (e) {
+                                    setMsg({ type: 'error', text: e.message || 'Thanh toán thất bại' });
+                                  }
+                                }}
+                                style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #6366f1, #4f46e5)', color: '#fff', fontWeight: 800, fontSize: 14, cursor: 'pointer' }}
+                              >
+                                💳 Thanh toán bằng Ví
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    const res = await apiFetch(`/franchise/cong-no/${c.id}/tua-nhanh`, { method: 'POST' });
+                                    if (res.vnpay_url) { window.location.href = res.vnpay_url; return; }
+                                    setMsg({ type: 'error', text: 'Không lấy được link VNPay' });
+                                  } catch (e) {
+                                    setMsg({ type: 'error', text: e.message || 'Lỗi tạo link VNPay' });
+                                  }
+                                }}
+                                style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#fff', color: '#0f172a', fontWeight: 800, fontSize: 14, cursor: 'pointer' }}
+                              >
+                                🏦 Thanh toán VNPay
+                              </button>
+                            </div>
+                          )}
                         </div>
                       ))}
                       {congNoTheoKiosk.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#059669', background: '#ecfdf5', borderRadius: 16 }}>✓ Bạn không có khoản nợ nào.</div>}
                     </div>
                   </div>
                 )}
+
 
                 {/* ═══════════════════════════════════════════════════════════ */}
                 {/* TAB: ROYALTY (royalty) */}
@@ -3057,6 +3286,488 @@ export function FranchiseePortal({ session, onLogout }) {
                       {royaltyTheoKiosk.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>Chưa có dữ liệu royalty tháng nào.</div>}
                     </div>
                   </div>
+                )}
+
+                {/* ── Mở rộng chi nhánh ── */}
+                {/* ── Mở rộng chi nhánh ── */}
+                {tab === 'expansion' && (
+                  <div style={{ animation: 'fadeIn 0.3s', maxWidth: 1000, margin: '0 auto' }}>
+                    <div style={{ textAlign: 'center', marginBottom: 40 }}>
+                      <h2 style={{ margin: '0 0 12px', fontSize: 32, fontWeight: 900, color: '#0f172a' }}>Mở Rộng Chi Nhánh</h2>
+                      <p style={{ margin: '0 auto', color: '#64748b', fontSize: 16, maxWidth: 600 }}>
+                        Đăng ký mở thêm Kiosk nhượng quyền cực nhanh. Chọn mô hình phù hợp với khu vực kinh doanh mới của bạn.
+                      </p>
+                    </div>
+
+                    {/* 3 Cards */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24, marginBottom: 40 }}>
+                      {/* Card 1 */}
+                      <div 
+                        onClick={() => setExpansionForm(f => ({ ...f, goi_kiosk: 'XE_LUU_DONG' }))}
+                        style={{ 
+                          background: expansionForm.goi_kiosk === 'XE_LUU_DONG' ? '#fff1f2' : '#fff', 
+                          border: expansionForm.goi_kiosk === 'XE_LUU_DONG' ? '2px solid #be123c' : '1px solid #e2e8f0', 
+                          borderRadius: 24, padding: 32, cursor: 'pointer', transition: 'all 0.2s', position: 'relative',
+                          boxShadow: expansionForm.goi_kiosk === 'XE_LUU_DONG' ? '0 12px 24px rgba(190,18,60,0.1)' : '0 4px 12px rgba(0,0,0,0.05)'
+                        }}
+                      >
+                        {expansionForm.goi_kiosk === 'XE_LUU_DONG' && <div style={{ position: 'absolute', top: -12, right: 24, background: '#be123c', color: '#fff', padding: '4px 12px', borderRadius: 99, fontSize: 12, fontWeight: 800 }}>Đang chọn</div>}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                          <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#be123c' }}>Xe Lưu Động</h3>
+                          <span style={{ background: '#be123c', color: '#fff', padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700 }}>Vốn thấp nhất</span>
+                        </div>
+                        <div style={{ fontSize: 32, fontWeight: 900, color: '#0f172a', marginBottom: 4 }}>Từ 35 triệu</div>
+                        <div style={{ fontSize: 14, color: '#64748b', marginBottom: 20 }}>Phù hợp người mới bắt đầu. Di chuyển linh hoạt.</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#334155', borderTop: '1px solid #e2e8f0', paddingTop: 16 }}>
+                          <div>
+                            <div style={{ color: '#64748b', marginBottom: 4 }}>Không gian</div>
+                            <div style={{ fontWeight: 700 }}>Xe đẩy/Xe máy</div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ color: '#64748b', marginBottom: 4 }}>Phí duy trì</div>
+                            <div style={{ fontWeight: 700 }}>4% mỗi tháng</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Card 2 */}
+                      <div 
+                        onClick={() => setExpansionForm(f => ({ ...f, goi_kiosk: 'KIOSK_CO_DINH' }))}
+                        style={{ 
+                          background: expansionForm.goi_kiosk === 'KIOSK_CO_DINH' ? '#fff7ed' : '#fff', 
+                          border: expansionForm.goi_kiosk === 'KIOSK_CO_DINH' ? '2px solid #c2410c' : '1px solid #e2e8f0', 
+                          borderRadius: 24, padding: 32, cursor: 'pointer', transition: 'all 0.2s', position: 'relative',
+                          boxShadow: expansionForm.goi_kiosk === 'KIOSK_CO_DINH' ? '0 12px 24px rgba(194,65,12,0.1)' : '0 4px 12px rgba(0,0,0,0.05)'
+                        }}
+                      >
+                        {expansionForm.goi_kiosk === 'KIOSK_CO_DINH' && <div style={{ position: 'absolute', top: -12, right: 24, background: '#c2410c', color: '#fff', padding: '4px 12px', borderRadius: 99, fontSize: 12, fontWeight: 800 }}>Đang chọn</div>}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                          <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#c2410c' }}>Kiosk Cố Định</h3>
+                          <span style={{ background: '#c2410c', color: '#fff', padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700 }}>Phổ biến nhất</span>
+                        </div>
+                        <div style={{ fontSize: 32, fontWeight: 900, color: '#0f172a', marginBottom: 4 }}>Từ 60 triệu</div>
+                        <div style={{ fontSize: 14, color: '#64748b', marginBottom: 20 }}>Quầy kiosk mang đi phù hợp mặt tiền nhỏ, sảnh.</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#334155', borderTop: '1px solid #e2e8f0', paddingTop: 16 }}>
+                          <div>
+                            <div style={{ color: '#64748b', marginBottom: 4 }}>Không gian</div>
+                            <div style={{ fontWeight: 700 }}>6 - 15 m²</div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ color: '#64748b', marginBottom: 4 }}>Phí duy trì</div>
+                            <div style={{ fontWeight: 700 }}>6% mỗi tháng</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Card 3 */}
+                      <div 
+                        onClick={() => setExpansionForm(f => ({ ...f, goi_kiosk: 'CONTAINER_CAFE' }))}
+                        style={{ 
+                          background: expansionForm.goi_kiosk === 'CONTAINER_CAFE' ? '#f0f9ff' : '#fff', 
+                          border: expansionForm.goi_kiosk === 'CONTAINER_CAFE' ? '2px solid #0369a1' : '1px solid #e2e8f0', 
+                          borderRadius: 24, padding: 32, cursor: 'pointer', transition: 'all 0.2s', position: 'relative',
+                          boxShadow: expansionForm.goi_kiosk === 'CONTAINER_CAFE' ? '0 12px 24px rgba(3,105,161,0.1)' : '0 4px 12px rgba(0,0,0,0.05)'
+                        }}
+                      >
+                        {expansionForm.goi_kiosk === 'CONTAINER_CAFE' && <div style={{ position: 'absolute', top: -12, right: 24, background: '#0369a1', color: '#fff', padding: '4px 12px', borderRadius: 99, fontSize: 12, fontWeight: 800 }}>Đang chọn</div>}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                          <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#0369a1' }}>Container Café</h3>
+                          <span style={{ background: '#0f172a', color: '#fff', padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700 }}>Cao cấp</span>
+                        </div>
+                        <div style={{ fontSize: 32, fontWeight: 900, color: '#0f172a', marginBottom: 4 }}>Từ 150 triệu</div>
+                        <div style={{ fontSize: 14, color: '#64748b', marginBottom: 20 }}>Không gian container có chỗ ngồi mini, phá cách.</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#334155', borderTop: '1px solid #e2e8f0', paddingTop: 16 }}>
+                          <div>
+                            <div style={{ color: '#64748b', marginBottom: 4 }}>Không gian</div>
+                            <div style={{ fontWeight: 700 }}>15 - 25 m²</div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ color: '#64748b', marginBottom: 4 }}>Phí duy trì</div>
+                            <div style={{ fontWeight: 700 }}>7% mỗi tháng</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <form onSubmit={handleExpansionSubmit} style={{ background: '#fff', borderRadius: 24, padding: 40, border: '1px solid #e2e8f0', boxShadow: '0 4px 16px rgba(0,0,0,0.03)', maxWidth: 800, margin: '0 auto' }}>
+                      <h3 style={{ margin: '0 0 24px', fontSize: 20, fontWeight: 800, color: '#0f172a' }}>Nhập thông tin mặt bằng dự kiến</h3>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 32 }}>
+                        <div style={{ gridColumn: '1 / -1' }}>
+                          <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Địa chỉ mặt bằng dự kiến *</label>
+                          <input type="text" required value={expansionForm.dia_chi_mat_bang} onChange={e => setExpansionForm(f => ({ ...f, dia_chi_mat_bang: e.target.value }))} placeholder="Số nhà, tên đường..." style={{ width: '100%', padding: '14px 16px', borderRadius: 12, border: '1px solid #cbd5e1', fontSize: 15 }} />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Phường / Xã *</label>
+                          <input type="text" required value={expansionForm.phuong_xa} onChange={e => setExpansionForm(f => ({ ...f, phuong_xa: e.target.value }))} placeholder="Nhập Phường/Xã" style={{ width: '100%', padding: '14px 16px', borderRadius: 12, border: '1px solid #cbd5e1', fontSize: 15 }} />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Thành phố / Tỉnh *</label>
+                          <input type="text" required value={expansionForm.thanh_pho} onChange={e => setExpansionForm(f => ({ ...f, thanh_pho: e.target.value }))} placeholder="Nhập Thành phố/Tỉnh" style={{ width: '100%', padding: '14px 16px', borderRadius: 12, border: '1px solid #cbd5e1', fontSize: 15 }} />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Diện tích dự kiến (m2)</label>
+                          <input type="number" value={expansionForm.dien_tich_m2} onChange={e => setExpansionForm(f => ({ ...f, dien_tich_m2: e.target.value }))} placeholder="VD: 15" style={{ width: '100%', padding: '14px 16px', borderRadius: 12, border: '1px solid #cbd5e1', fontSize: 15 }} />
+                        </div>
+                        <div style={{ alignSelf: 'end' }}>
+                          <div style={{ padding: '14px 16px', background: '#f8fafc', borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 14, color: '#475569', fontWeight: 600 }}>
+                            📌 Đang chọn gói: <span style={{ color: '#0f172a', fontWeight: 800 }}>{expansionForm.goi_kiosk === 'XE_LUU_DONG' ? 'Xe Lưu Động' : expansionForm.goi_kiosk === 'KIOSK_CO_DINH' ? 'Kiosk Cố Định' : 'Container Café'}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        <button type="submit" disabled={expansionSubmitting} style={{
+                          padding: '16px 40px', borderRadius: 12, border: 'none', background: '#059669', color: '#fff', fontSize: 16, fontWeight: 800, cursor: expansionSubmitting ? 'not-allowed' : 'pointer', opacity: expansionSubmitting ? 0.7 : 1, transition: 'all 0.2s', boxShadow: '0 8px 16px rgba(5,150,105,0.2)'
+                        }}>
+                          {expansionSubmitting ? 'Đang gửi yêu cầu...' : '🚀 Gửi Yêu Cầu Mở Rộng Kiosk'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+                {/* ── Bán hàng POS ── */}
+                {tab === 'pos' && (
+                  activeKiosk?.trang_thai !== 'DANG_HOAT_DONG' ? (
+                    <div style={{ textAlign: 'center', padding: '60px 20px', background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', margin: '0 auto', maxWidth: 600, marginTop: 40 }}>
+                      <Lock size={48} color="#94a3b8" style={{ margin: '0 auto 16px' }} />
+                      <h2 style={{ fontSize: 20, fontWeight: 800, color: '#334155', marginBottom: 8 }}>Kiosk Chưa Hoạt Động</h2>
+                      <p style={{ color: '#64748b' }}>Kiosk này hiện chưa khai trương chính thức hoặc chưa hoàn tất mua Combo nhượng quyền.<br />Vui lòng liên hệ Quản lý để biết thêm chi tiết.</p>
+                    </div>
+                  ) : (
+                  <div style={{
+                    display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 390px', gap: 20,
+                    alignItems: 'start', width: '100%', height: 'calc(100vh - 150px)', minHeight: 640
+                  }}>
+                    {/* Left: Menu & Product Select */}
+                    <div style={{
+                      background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0',
+                      padding: 16, boxShadow: '0 4px 16px rgba(0,0,0,0.02)', minWidth: 0,
+                      width: '100%', height: '100%', boxSizing: 'border-box', display: 'flex',
+                      flexDirection: 'column', overflow: 'hidden'
+                    }}>
+                      {/* Header cố định */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{
+                            padding: '4px 10px', borderRadius: 8, background: packageMeta.bg,
+                            color: packageMeta.color, border: `1px solid ${packageMeta.border}`,
+                            fontSize: 12, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6
+                          }}>
+                            <Package size={14} />
+                            <span>{packageMeta.name}</span>
+                          </span>
+                          <span style={{ fontSize: 12, color: '#64748b' }}>
+                            Áp dụng: <b>{packageAllowedMenu.length}</b> món theo gói
+                          </span>
+                        </div>
+
+                        {/* Nút chuyển chế độ xem */}
+                        <div style={{ display: 'flex', alignItems: 'center', background: '#f1f5f9', borderRadius: 8, padding: 2 }}>
+                          <button
+                            onClick={() => setPosViewMode('grid')}
+                            title="Dạng lưới hình ảnh"
+                            style={{
+                              padding: '5px 10px', border: 'none', borderRadius: 6, cursor: 'pointer',
+                              background: posViewMode === 'grid' ? '#ffffff' : 'transparent',
+                              color: posViewMode === 'grid' ? '#059669' : '#64748b',
+                              fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4,
+                              boxShadow: posViewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                            }}
+                          >
+                            <Store size={14} /> Lưới
+                          </button>
+                          <button
+                            onClick={() => setPosViewMode('compact')}
+                            title="Dạng danh sách gọn"
+                            style={{
+                              padding: '5px 10px', border: 'none', borderRadius: 6, cursor: 'pointer',
+                              background: posViewMode === 'compact' ? '#ffffff' : 'transparent',
+                              color: posViewMode === 'compact' ? '#059669' : '#64748b',
+                              fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4,
+                              boxShadow: posViewMode === 'compact' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                            }}
+                          >
+                            <FileText size={14} /> Gọn
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Ô tìm kiếm nhanh */}
+                      <div style={{ position: 'relative', width: '100%', marginBottom: 10 }}>
+                        <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
+                        <input
+                          type="text"
+                          value={menuSearch}
+                          onChange={(e) => setMenuSearch(e.target.value)}
+                          placeholder="Tìm kiếm nhanh tên món cafe, trà, bánh..."
+                          style={{
+                            width: '100%', padding: '9px 12px 9px 36px', borderRadius: 10,
+                            border: '1px solid #cbd5e1', fontSize: 13, outline: 'none', boxSizing: 'border-box'
+                          }}
+                        />
+                        {menuSearch && (
+                          <button
+                            onClick={() => setMenuSearch('')}
+                            style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Thanh lọc danh mục với số lượng món */}
+                      <div style={{ display: 'flex', gap: 6, overflowX: 'auto', width: '100%', maxWidth: '100%', paddingBottom: 6, marginBottom: 10, scrollbarWidth: 'thin' }}>
+                        <button
+                          onClick={() => setMenuCategory('')}
+                          style={{
+                            padding: '6px 14px', borderRadius: 99,
+                            border: !menuCategory ? '1px solid #059669' : '1px solid #e2e8f0',
+                            background: !menuCategory ? '#059669' : '#ffffff',
+                            color: !menuCategory ? '#ffffff' : '#475569',
+                            fontWeight: !menuCategory ? 800 : 600, fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap',
+                            boxShadow: !menuCategory ? '0 2px 6px rgba(5,150,105,0.25)' : 'none',
+                            transition: 'all .15s ease', flexShrink: 0
+                          }}
+                        >
+                          Tất cả ({packageAllowedMenu.length})
+                        </button>
+                        {Array.from(categoryCounts.entries()).map(([cat, count]) => {
+                          const isCatActive = menuCategory === cat
+                          return (
+                            <button
+                              key={cat}
+                              onClick={() => setMenuCategory(cat)}
+                              style={{
+                                padding: '6px 14px', borderRadius: 99,
+                                border: isCatActive ? '1px solid #059669' : '1px solid #e2e8f0',
+                                background: isCatActive ? '#059669' : '#ffffff',
+                                color: isCatActive ? '#ffffff' : '#475569',
+                                fontWeight: isCatActive ? 800 : 600, fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap',
+                                boxShadow: isCatActive ? '0 2px 6px rgba(5,150,105,0.25)' : 'none',
+                                transition: 'all .15s ease', flexShrink: 0
+                              }}
+                            >
+                              {cat} ({count})
+                            </button>
+                          )
+                        })}
+                      </div>
+
+                      {/* Vùng hiển thị sản phẩm */}
+                      <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4, minHeight: 0 }}>
+                        {menuLoading ? (
+                          <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
+                            <RefreshCw size={26} className="animate-spin" style={{ margin: '0 auto 10px', color: '#059669' }} />
+                            <div style={{ fontSize: 13, fontWeight: 600 }}>Đang tải thực đơn...</div>
+                          </div>
+                        ) : filteredProducts.length === 0 ? (
+                          <div style={{ textAlign: 'center', padding: '50px 20px', color: '#64748b', background: '#f8fafc', borderRadius: 12 }}>
+                            <Coffee size={32} style={{ margin: '0 auto 10px', opacity: 0.4 }} />
+                            <div style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Không tìm thấy sản phẩm phù hợp</div>
+                          </div>
+                        ) : posViewMode === 'grid' ? (
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12, boxSizing: 'border-box' }}>
+                            {paginatedProducts.map((item) => (
+                              <div
+                                key={item.ma_san_pham}
+                                onClick={() => addToCart(item)}
+                                style={{
+                                  background: '#ffffff', borderRadius: 12, border: '1px solid #e2e8f0',
+                                  padding: 10, cursor: 'pointer', display: 'flex', flexDirection: 'column',
+                                  justifyContent: 'space-between', minHeight: 165, transition: 'all .15s ease',
+                                  boxShadow: '0 2px 5px rgba(0,0,0,0.02)', position: 'relative', overflow: 'hidden',
+                                  boxSizing: 'border-box'
+                                }}
+                              >
+                                <div style={{ width: '100%', height: 80, borderRadius: 8, background: '#f8fafc', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                                  {item.hinh_anh_url ? (
+                                    <img src={item.hinh_anh_url} alt={item.ten_san_pham} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  ) : (
+                                    <Coffee size={24} color="#94a3b8" />
+                                  )}
+                                </div>
+                                <div>
+                                  <div style={{ fontWeight: 800, fontSize: 12, color: '#0f172a', marginBottom: 3 }}>{item.ten_san_pham}</div>
+                                  <span style={{ fontSize: 9, color: '#64748b', background: '#f1f5f9', padding: '1px 5px', borderRadius: 4, fontWeight: 600 }}>{item.danh_muc}</span>
+                                </div>
+                                <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <span style={{ fontWeight: 900, fontSize: 13, color: '#059669' }}>{fmtMoney(item.gia_ban)}</span>
+                                  <span style={{ width: 24, height: 24, borderRadius: 6, background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 900 }}>+</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {paginatedProducts.map((item) => (
+                              <div
+                                key={item.ma_san_pham}
+                                onClick={() => addToCart(item)}
+                                style={{
+                                  background: '#ffffff', borderRadius: 10, border: '1px solid #e2e8f0',
+                                  padding: '8px 12px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between',
+                                  alignItems: 'center', transition: 'all .15s ease'
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+                                  <div style={{ width: 34, height: 34, borderRadius: 6, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                                    {item.hinh_anh_url ? (
+                                      <img src={item.hinh_anh_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                      <Coffee size={16} color="#94a3b8" />
+                                    )}
+                                  </div>
+                                  <div style={{ minWidth: 0 }}>
+                                    <div style={{ fontSize: 13, fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.ten_san_pham}</div>
+                                    <span style={{ fontSize: 10, color: '#64748b' }}>{item.danh_muc}</span>
+                                  </div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                  <span style={{ fontWeight: 900, fontSize: 13, color: '#059669' }}>{fmtMoney(item.gia_ban)}</span>
+                                  <button type="button" style={{ padding: '4px 10px', borderRadius: 6, background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', fontWeight: 800, fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 2 }}>
+                                    Thêm
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Footer cố định: Thanh phân trang */}
+                      <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                        <span style={{ fontSize: 11, color: '#64748b' }}>
+                          Hiển thị <b>{(posPage - 1) * ITEMS_PER_PAGE + 1}</b> – <b>{Math.min(posPage * ITEMS_PER_PAGE, filteredProducts.length)}</b> trong <b>{filteredProducts.length}</b> món
+                        </span>
+                        {totalPages > 1 && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <button
+                              disabled={posPage <= 1} onClick={() => setPosPage((p) => Math.max(1, p - 1))}
+                              style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #cbd5e1', background: posPage <= 1 ? '#f8fafc' : '#ffffff', color: posPage <= 1 ? '#cbd5e1' : '#334155', cursor: posPage <= 1 ? 'not-allowed' : 'pointer', fontSize: 11, fontWeight: 700 }}
+                            >Trước</button>
+                            <button
+                              disabled={posPage >= totalPages} onClick={() => setPosPage((p) => Math.min(totalPages, p + 1))}
+                              style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #cbd5e1', background: posPage >= totalPages ? '#f8fafc' : '#ffffff', color: posPage >= totalPages ? '#cbd5e1' : '#334155', cursor: posPage >= totalPages ? 'not-allowed' : 'pointer', fontSize: 11, fontWeight: 700 }}
+                            >Sau</button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right: Cart & Order Summary */}
+                    <div style={{
+                      background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0',
+                      padding: 16, boxShadow: '0 4px 16px rgba(0,0,0,0.03)', minWidth: 0,
+                      boxSizing: 'border-box', height: '100%', display: 'flex', flexDirection: 'column'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                        <h3 style={{ margin: 0, fontSize: 14, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <Receipt size={17} color="#059669" /> Đơn hàng tại quầy Kiosk
+                        </h3>
+                        {posCart.length > 0 && (
+                          <button onClick={() => setPosCart([])} style={{ background: '#fee2e2', border: 'none', color: '#dc2626', padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                            Xóa tất cả
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Cart Item List */}
+                      <div style={{ flex: 1, overflowY: 'auto', marginBottom: 12, paddingRight: 4 }}>
+                        {posCart.length === 0 ? (
+                          <div style={{ textAlign: 'center', padding: '40px 0', color: '#94a3b8' }}>
+                            <Package size={32} style={{ margin: '0 auto 8px', opacity: 0.4 }} />
+                            <div style={{ fontSize: 13, fontWeight: 600 }}>Chưa có món nào được chọn</div>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {posCart.map((item) => (
+                              <div key={item.cartItemId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid #f1f5f9' }}>
+                                <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
+                                  <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{item.ten_san_pham}</div>
+                                  <div style={{ fontSize: 11, color: '#059669', fontWeight: 800 }}>{fmtMoney(item.gia_ban)}</div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                                  <button onClick={() => updateCartQty(item.cartItemId, item.sl - 1)} style={{ width: 22, height: 22, borderRadius: 5, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>-</button>
+                                  <span style={{ fontSize: 12, fontWeight: 800, width: 20, textAlign: 'center' }}>{item.sl}</span>
+                                  <button onClick={() => updateCartQty(item.cartItemId, item.sl + 1)} style={{ width: 22, height: 22, borderRadius: 5, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                                  <button onClick={() => removeFromCart(item.cartItemId)} style={{ width: 22, height: 22, borderRadius: 5, border: '1px solid #fee2e2', background: '#fef2f2', color: '#dc2626', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: 2 }}><Trash2 size={11} /></button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Calculation Breakdown */}
+                      <div style={{ background: '#f8fafc', borderRadius: 10, padding: 10, marginBottom: 12 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#64748b', marginBottom: 4 }}>
+                          <span>Tạm tính ({posCart.reduce((a, c) => a + c.sl, 0)} món):</span>
+                          <span style={{ fontWeight: 700, color: '#0f172a' }}>{fmtMoney(posTotal)}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 900, color: '#059669', paddingTop: 6, borderTop: '1px dashed #cbd5e1' }}>
+                          <span>Tổng thanh toán:</span>
+                          <span>{fmtMoney(posTotal)}</span>
+                        </div>
+                      </div>
+
+                      {/* Payment Methods */}
+                      <div style={{ marginBottom: 12 }}>
+                        <label style={{ fontSize: 11, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Phương thức thanh toán</label>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+                          {[{ id: 'TIEN_MAT', label: 'Tiền mặt' }, { id: 'NGAN_HANG_QR', label: 'QR Pay' }, { id: 'THE', label: 'Thẻ' }].map((m) => {
+                            const isSelected = posPayment === m.id
+                            return (
+                              <button
+                                key={m.id} onClick={() => setPosPayment(m.id)}
+                                style={{
+                                  padding: '7px 4px', borderRadius: 8, border: isSelected ? '1.5px solid #059669' : '1px solid #cbd5e1',
+                                  background: isSelected ? '#ecfdf5' : '#fff', color: isSelected ? '#047857' : '#475569',
+                                  fontWeight: isSelected ? 800 : 600, fontSize: 11, cursor: 'pointer', transition: 'all .15s ease'
+                                }}
+                              >{m.label}</button>
+                            )
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Cash Given & Change */}
+                      {posPayment === 'TIEN_MAT' && (
+                        <div style={{ marginBottom: 12 }}>
+                          <label style={{ fontSize: 11, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Tiền khách đưa</label>
+                          <input type="number" value={posCashInput} onChange={(e) => setPosCashInput(e.target.value)} placeholder="Nhập số tiền..." style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 12, outline: 'none', boxSizing: 'border-box' }} />
+                          {Number(posCashInput) > 0 && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginTop: 4, fontWeight: 700, color: '#047857' }}>
+                              <span>Tiền thối lại:</span>
+                              <span>{fmtMoney(posChange)}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Checkout CTA Button */}
+                      <button
+                        onClick={submitPosOrder} disabled={posCart.length === 0 || posSubmitting}
+                        style={{
+                          width: '100%', padding: '11px', borderRadius: 10, border: 'none',
+                          background: posCart.length === 0 ? '#94a3b8' : 'linear-gradient(135deg, #10b981, #059669)',
+                          color: '#fff', fontSize: 13, fontWeight: 800, cursor: posCart.length === 0 ? 'not-allowed' : 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all .2s ease'
+                        }}
+                      >
+                        {posSubmitting ? (
+                          <>
+                            <RefreshCw size={15} className="animate-spin" />
+                            <span>Đang xử lý...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>Hoàn tất &amp; Thanh toán ({fmtMoney(posTotal)})</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  )
                 )}
               </>
             )}
