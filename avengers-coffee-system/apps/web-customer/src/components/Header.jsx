@@ -112,12 +112,13 @@ export default function Header({
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-[#b22830] shadow-md border-b border-red-900/40">
+    <header className="sticky top-0 z-50 bg-[#b22830] shadow-lg border-b border-red-900/40">
       {/* Main Top bar */}
-      <div className="mx-auto flex h-[84px] w-full max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-[90px] w-full max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-8 relative">
         
         {/* ── LEFT NAVIGATION ── */}
-        <nav className="hidden lg:flex flex-1 items-center justify-start gap-2">
+        <nav className="hidden lg:flex flex-1 items-center justify-start gap-2 pr-12">
+
           {leftNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id || (item.id === 'order' && (activeTab === 'menu-intro' || activeTab === 'order'));
@@ -132,13 +133,18 @@ export default function Header({
                     }
                   }}
                   className={`relative flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all duration-200 cursor-pointer ${
-                    isActive
-                      ? 'bg-white/20 text-white font-black shadow-xs'
-                      : 'text-white/85 hover:bg-white/10 hover:text-white font-bold'
+                    item.highlight
+                      ? isActive
+                        ? 'bg-amber-400 text-amber-900 font-black shadow-xs'
+                        : 'bg-amber-400/20 text-amber-200 hover:bg-amber-400/30 hover:text-amber-100 font-bold'
+                      : isActive
+                        ? 'bg-white/20 text-white font-black shadow-xs'
+                        : 'text-white/85 hover:bg-white/10 hover:text-white font-bold'
                   }`}
                 >
                   <Icon className="h-4 w-4 flex-shrink-0 opacity-90" />
                   <span className="text-[13px] uppercase tracking-wider whitespace-nowrap">
+
                     {item.label}
                   </span>
                   {isActive && (
@@ -247,6 +253,7 @@ export default function Header({
               </button>
             );
           })}
+
 
           {/* Language Switcher */}
           <div className="flex items-center gap-1.5 mx-1.5 bg-black/15 p-1 rounded-lg">

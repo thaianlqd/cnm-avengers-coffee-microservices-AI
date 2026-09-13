@@ -8,5 +8,8 @@ export default defineConfig({
     watch: {
       usePolling: true,
     },
+    hmr: {
+      overlay: false
+    }
   },
 })

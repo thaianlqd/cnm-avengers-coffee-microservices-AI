@@ -22,9 +22,10 @@ async function bootstrap() {
       target: process.env.IDENTITY_SERVICE_URL || 'http://localhost:3001',
       changeOrigin: true,
       on: { proxyReq: fixRequestBody },
-      pathFilter: ['/auth', '/users', '/promotions', '/franchise'],
-      timeout: PROXY_TIMEOUT,
-      proxyTimeout: PROXY_TIMEOUT,
+          pathFilter: ['/auth', '/users', '/promotions', '/franchise', '/admin', '/wallet'],
+          timeout: PROXY_TIMEOUT,
+          proxyTimeout: PROXY_TIMEOUT,
+
     }),
   );
 

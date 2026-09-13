@@ -12,6 +12,7 @@ import { Promotion } from './modules/user/promotion.entity';
 import { PromotionUsage } from './modules/user/promotion-usage.entity';
 import { User } from './modules/user/user.entity';
 import { MembershipConfig } from './modules/user/membership-config.entity';
+import { KhuVuc } from './modules/user/khu-vuc.entity';
 import { UserModule } from './modules/user/user.module';
 import { FranchiseModule } from './modules/franchise/franchise.module';
 import { ComboNguyenLieu } from './modules/franchise/entities/combo-nguyen-lieu.entity';
@@ -24,6 +25,9 @@ import { RoyaltyHangThang } from './modules/franchise/entities/royalty.entity';
 import { KetQuaDoiSoat } from './modules/franchise/entities/doi-soat.entity';
 import { BienBanViPham } from './modules/franchise/entities/bien-ban-vi-pham.entity';
 import { AuditLog } from './modules/franchise/entities/audit-log.entity';
+
+import { ThuChi } from './modules/franchise/entities/thu-chi.entity';
+import { WalletTransaction } from './modules/user/wallet-transaction.entity';
 
 const identitySchema = process.env.DB_SCHEMA || 'identity';
 const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
@@ -49,13 +53,14 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
           database,
           ssl: sslConfig,
           schema: identitySchema,
-          entities: [User, DeliveryAddress, Branch, Promotion, PromotionUsage, MembershipConfig, ComboNguyenLieu, HoSoDangKy, Kiosk, HopDongNhuongQuyen, DonMuaCombo, CongNo, RoyaltyHangThang, KetQuaDoiSoat, BienBanViPham, AuditLog],
+          entities: [User, DeliveryAddress, Branch, Promotion, PromotionUsage, MembershipConfig, ComboNguyenLieu, HoSoDangKy, Kiosk, HopDongNhuongQuyen, DonMuaCombo, CongNo, RoyaltyHangThang, KetQuaDoiSoat, BienBanViPham, AuditLog, KhuVuc, ThuChi, WalletTransaction],
           extra: {
             max: 2,
             connectionTimeoutMillis: 10000,
             idleTimeoutMillis: 5000,
           },
           synchronize: false,
+
         };
       },
     }),

@@ -410,7 +410,7 @@ export function OrdersPanel({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.85rem' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <ShoppingBag size={20} color="#4f46e5" /> Quản Lý Đơn Hàng
+            <ShoppingBag size={20} color="var(--primary)" /> Quản Lý Đơn Hàng
           </h1>
           <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.78125rem', color: '#64748b' }}>
             Theo dõi, lọc đơn hàng real-time, xử lý trạng thái và quản lý doanh thu đối soát theo ca làm việc.
@@ -432,12 +432,12 @@ export function OrdersPanel({
         </div>
 
         <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#e0e7ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <TrendingUp size={18} color="#4f46e5" />
+          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <TrendingUp size={18} color="var(--primary)" />
           </div>
           <div style={{ overflow: 'hidden' }}>
             <span style={{ fontSize: '0.78125rem', color: '#64748b', fontWeight: '600', whiteSpace: 'nowrap', display: 'block' }}>Doanh thu hoàn thành</span>
-            <strong style={{ display: 'block', fontSize: '1.05rem', color: '#4f46e5', marginTop: '0.05rem' }}>{fmtMoney(financeSummary.tongDoanhThu)}</strong>
+            <strong style={{ display: 'block', fontSize: '1.05rem', color: 'var(--primary)', marginTop: '0.05rem' }}>{fmtMoney(financeSummary.tongDoanhThu)}</strong>
           </div>
         </div>
 
@@ -497,7 +497,7 @@ export function OrdersPanel({
           <div style={{ fontSize: '0.78125rem', color: '#64748b', fontWeight: '600' }}>
             {hasActiveFilter ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span>Khớp: <strong style={{ color: '#4f46e5' }}>{filteredOrders.length}</strong> / {(ordersState?.items || []).length} đơn</span>
+                <span>Khớp: <strong style={{ color: 'var(--primary)' }}>{filteredOrders.length}</strong> / {(ordersState?.items || []).length} đơn</span>
                 <button type="button" onClick={resetFilters} style={{ backgroundColor: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.2rem 0.6rem', fontSize: '0.72rem', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
                   <RotateCcw size={12} /> Xóa bộ lọc
                 </button>
@@ -515,7 +515,7 @@ export function OrdersPanel({
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            style={{ height: '36px', padding: '0 0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: filterStatus ? '#e0e7ff' : '#ffffff', fontSize: '0.8125rem', fontWeight: filterStatus ? '700' : '500', color: filterStatus ? '#4f46e5' : '#334155', cursor: 'pointer' }}
+            style={{ height: '36px', padding: '0 0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: filterStatus ? 'var(--primary-light)' : '#ffffff', fontSize: '0.8125rem', fontWeight: filterStatus ? '700' : '500', color: filterStatus ? 'var(--primary-hover)' : '#334155', cursor: 'pointer' }}
           >
             {STATUS_OPTIONS.map((opt) => (
               <option key={opt.id} value={opt.id}>{opt.label}</option>
@@ -526,7 +526,7 @@ export function OrdersPanel({
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            style={{ height: '36px', padding: '0 0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: filterType ? '#e0e7ff' : '#ffffff', fontSize: '0.8125rem', fontWeight: filterType ? '700' : '500', color: filterType ? '#4f46e5' : '#334155', cursor: 'pointer' }}
+            style={{ height: '36px', padding: '0 0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: filterType ? 'var(--primary-light)' : '#ffffff', fontSize: '0.8125rem', fontWeight: filterType ? '700' : '500', color: filterType ? 'var(--primary-hover)' : '#334155', cursor: 'pointer' }}
           >
             {ORDER_TYPE_OPTIONS.map((opt) => (
               <option key={opt.id} value={opt.id}>{opt.label}</option>
@@ -537,7 +537,7 @@ export function OrdersPanel({
           <select
             value={filterPayment}
             onChange={(e) => setFilterPayment(e.target.value)}
-            style={{ height: '36px', padding: '0 0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: filterPayment ? '#e0e7ff' : '#ffffff', fontSize: '0.8125rem', fontWeight: filterPayment ? '700' : '500', color: filterPayment ? '#4f46e5' : '#334155', cursor: 'pointer' }}
+            style={{ height: '36px', padding: '0 0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: filterPayment ? 'var(--primary-light)' : '#ffffff', fontSize: '0.8125rem', fontWeight: filterPayment ? '700' : '500', color: filterPayment ? 'var(--primary-hover)' : '#334155', cursor: 'pointer' }}
           >
             {PAYMENT_OPTIONS.map((opt) => (
               <option key={opt.id} value={opt.id}>{opt.label}</option>
@@ -553,7 +553,7 @@ export function OrdersPanel({
               setFilterDate(e.target.value)
               if (e.target.value) setFilterMonth('')
             }}
-            style={{ height: '36px', padding: '0 0.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: filterDate ? '#e0e7ff' : '#ffffff', fontSize: '0.78125rem', color: '#0f172a' }}
+            style={{ height: '36px', padding: '0 0.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: filterDate ? 'var(--primary-light)' : '#ffffff', fontSize: '0.78125rem', color: '#0f172a' }}
           />
 
           {/* Input: Tháng */}
@@ -565,7 +565,7 @@ export function OrdersPanel({
               setFilterMonth(e.target.value)
               if (e.target.value) setFilterDate('')
             }}
-            style={{ height: '36px', padding: '0 0.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: filterMonth ? '#e0e7ff' : '#ffffff', fontSize: '0.78125rem', color: '#0f172a' }}
+            style={{ height: '36px', padding: '0 0.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: filterMonth ? 'var(--primary-light)' : '#ffffff', fontSize: '0.78125rem', color: '#0f172a' }}
           />
 
         </div>
