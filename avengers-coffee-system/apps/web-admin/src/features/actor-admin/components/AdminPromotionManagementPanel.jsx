@@ -62,7 +62,7 @@ class PanelErrorBoundary extends Component {
         <div style={{ padding: '2.5rem 1.5rem', textAlign: 'center', background: '#ffffff', borderRadius: '16px', border: '1px solid #fee2e2', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
           <AlertCircle size={32} color="#dc2626" style={{ marginBottom: '0.75rem' }} />
           <h3 style={{ color: '#dc2626', margin: '0 0 0.5rem', fontSize: '1.1rem', fontWeight: '700' }}>
-            Không thể hiển thị Giao diện Khuyến mãi &amp; Voucher
+            Không thể hiển thị Giao diện Khuyến mãi và Voucher
           </h3>
           <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '1.25rem' }}>
             Chi tiết lỗi: {this.state.error?.message || 'Có sự cố xảy ra khi xử lý dữ liệu khuyến mãi.'}
@@ -261,70 +261,6 @@ function AdminPromotionManagementPanelContent({
 
   return (
     <div className="promo-manage-container">
-      {/* Header section */}
-      <div className="promo-manage-header">
-        <div className="promo-manage-header-title">
-          <div className="promo-manage-icon-wrapper">
-            <Ticket size={24} className="promo-header-icon" />
-          </div>
-          <div>
-            <h2>Quản lý Khuyến mãi &amp; Voucher</h2>
-            <p>Thiết lập danh sách mã ưu đãi công khai và các mẫu Voucher nội bộ phát tự động</p>
-          </div>
-        </div>
-        <div className="promo-manage-header-actions">
-          {loadPromotions && (
-            <button type="button" className="promo-refresh-btn" onClick={loadPromotions} title="Tải lại dữ liệu">
-              <RefreshCw size={16} />
-              <span>Tải lại</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* KPI Overview Cards */}
-      <div className="promo-kpi-grid">
-        <div className="promo-kpi-card promo-kpi-card--total">
-          <div className="promo-kpi-icon promo-kpi-icon--total">
-            <Ticket size={20} />
-          </div>
-          <div className="promo-kpi-content">
-            <span className="promo-kpi-label">Tổng số Voucher</span>
-            <span className="promo-kpi-value">{stats.total}</span>
-          </div>
-        </div>
-
-        <div className="promo-kpi-card promo-kpi-card--public">
-          <div className="promo-kpi-icon promo-kpi-icon--public">
-            <Tag size={20} />
-          </div>
-          <div className="promo-kpi-content">
-            <span className="promo-kpi-label">Mã công khai</span>
-            <span className="promo-kpi-value">{stats.publicCount}</span>
-          </div>
-        </div>
-
-        <div className="promo-kpi-card promo-kpi-card--template">
-          <div className="promo-kpi-icon promo-kpi-icon--template">
-            <Sparkles size={20} />
-          </div>
-          <div className="promo-kpi-content">
-            <span className="promo-kpi-label">Template nội bộ</span>
-            <span className="promo-kpi-value">{stats.templateCount}</span>
-          </div>
-        </div>
-
-        <div className="promo-kpi-card promo-kpi-card--active">
-          <div className="promo-kpi-icon promo-kpi-icon--active">
-            <CheckCircle2 size={20} />
-          </div>
-          <div className="promo-kpi-content">
-            <span className="promo-kpi-label">Đang hiệu lực</span>
-            <span className="promo-kpi-value">{stats.activeCount}</span>
-          </div>
-        </div>
-      </div>
-
       {/* Full Width Card */}
       <div className="promo-list-card">
         {/* Toolbar & Filters */}
@@ -389,6 +325,13 @@ function AdminPromotionManagementPanelContent({
               <option value="INACTIVE">Tạm dừng</option>
             </select>
 
+            {loadPromotions && (
+              <button type="button" className="promo-refresh-btn" onClick={loadPromotions} title="Tải lại dữ liệu">
+                <RefreshCw size={16} />
+                <span>Tải lại</span>
+              </button>
+            )}
+
             <button
               type="button"
               className="promo-btn promo-btn--success promo-create-btn"
@@ -429,7 +372,7 @@ function AdminPromotionManagementPanelContent({
                 <table className="promo-table">
                   <thead>
                     <tr>
-                      <th style={{ width: '25%' }}>Mã &amp; Tên chương trình</th>
+                      <th style={{ width: '25%' }}>Mã và Tên chương trình</th>
                       <th style={{ width: '18%' }}>Quy tắc giảm giá</th>
                       <th style={{ width: '15%' }}>Đơn tối thiểu</th>
                       <th style={{ width: '17%' }}>Thời gian áp dụng</th>
@@ -508,67 +451,31 @@ function AdminPromotionManagementPanelContent({
                             )}
                           </td>
 
-                          <td style={{ textAlign: 'center', position: 'relative', whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
-                            <button
-                              type="button"
-                              className="btn-icon-more"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setOpenPromoActionId(openPromoActionId === code ? null : code)
-                              }}
-                              title="Thao tác"
-                            >
-                              <MoreVertical size={16} color="#475569" />
-                            </button>
-
-                            {openPromoActionId === code && (
-                              <div
-                                style={{
-                                  position: 'absolute',
-                                  right: 'calc(100% + 6px)',
-                                  top: index >= (array.length - 2) ? 'auto' : '-4px',
-                                  bottom: index >= (array.length - 2) ? '-4px' : 'auto',
-                                  backgroundColor: '#ffffff',
-                                  border: '1px solid #e2e8f0',
-                                  borderRadius: '8px',
-                                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-                                  zIndex: 9999,
-                                  minWidth: '170px',
-                                  padding: '0.35rem',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  gap: '0.15rem'
+                          <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', justifyContent: 'center' }}>
+                              <button
+                                type="button"
+                                className="admin-table-action-btn btn-edit"
+                                onClick={() => {
+                                  if (startEditPromotion) startEditPromotion(item)
+                                  setIsModalOpen(true)
                                 }}
-                                onClick={(e) => e.stopPropagation()}
+                                title="Chỉnh sửa mã voucher"
                               >
-                                <button
-                                  type="button"
-                                  className="btn-dropdown-item"
-                                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.45rem 0.65rem', borderRadius: '6px', fontSize: '0.8125rem', fontWeight: '500', color: '#2563eb', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                                  onClick={() => {
-                                    setOpenPromoActionId(null)
-                                    if (startEditPromotion) startEditPromotion(item)
-                                    setIsModalOpen(true)
-                                  }}
-                                >
-                                  <Edit3 size={14} color="#2563eb" /> Chỉnh sửa mã
-                                </button>
+                                <Edit3 size={15} />
+                              </button>
 
-                                <div style={{ borderTop: '1px solid #f1f5f9', margin: '0.2rem 0' }}></div>
-
-                                <button
-                                  type="button"
-                                  className="btn-dropdown-item danger"
-                                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.45rem 0.65rem', borderRadius: '6px', fontSize: '0.8125rem', fontWeight: '500', color: '#dc2626', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                                  onClick={() => {
-                                    setOpenPromoActionId(null)
-                                    if (deletePromotion) deletePromotion(code)
-                                  }}
-                                >
-                                  <Trash2 size={14} color="#dc2626" /> Xóa voucher
-                                </button>
-                              </div>
-                            )}
+                              <button
+                                type="button"
+                                className="admin-table-action-btn btn-delete"
+                                onClick={() => {
+                                  if (deletePromotion) deletePromotion(code)
+                                }}
+                                title="Xóa mã voucher"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       )
@@ -651,67 +558,31 @@ function AdminPromotionManagementPanelContent({
                           </td>
 
                           {/* Actions */}
-                          <td style={{ textAlign: 'center', position: 'relative', whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
-                            <button
-                              type="button"
-                              className="btn-icon-more"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setOpenPromoActionId(openPromoActionId === code ? null : code)
-                              }}
-                              title="Thao tác"
-                            >
-                              <MoreVertical size={16} color="#475569" />
-                            </button>
-
-                            {openPromoActionId === code && (
-                              <div
-                                style={{
-                                  position: 'absolute',
-                                  right: 'calc(100% + 6px)',
-                                  top: index >= (array.length - 2) ? 'auto' : '-4px',
-                                  bottom: index >= (array.length - 2) ? '-4px' : 'auto',
-                                  backgroundColor: '#ffffff',
-                                  border: '1px solid #e2e8f0',
-                                  borderRadius: '8px',
-                                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-                                  zIndex: 9999,
-                                  minWidth: '170px',
-                                  padding: '0.35rem',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  gap: '0.15rem'
+                          <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', justifyContent: 'center' }}>
+                              <button
+                                type="button"
+                                className="admin-table-action-btn btn-edit"
+                                onClick={() => {
+                                  if (startEditPromotion) startEditPromotion(item)
+                                  setIsModalOpen(true)
                                 }}
-                                onClick={(e) => e.stopPropagation()}
+                                title="Chỉnh sửa template"
                               >
-                                <button
-                                  type="button"
-                                  className="btn-dropdown-item"
-                                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.45rem 0.65rem', borderRadius: '6px', fontSize: '0.8125rem', fontWeight: '500', color: '#2563eb', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                                  onClick={() => {
-                                    setOpenPromoActionId(null)
-                                    if (startEditPromotion) startEditPromotion(item)
-                                    setIsModalOpen(true)
-                                  }}
-                                >
-                                  <Edit3 size={14} color="#2563eb" /> Chỉnh sửa template
-                                </button>
+                                <Edit3 size={15} />
+                              </button>
 
-                                <div style={{ borderTop: '1px solid #f1f5f9', margin: '0.2rem 0' }}></div>
-
-                                <button
-                                  type="button"
-                                  className="btn-dropdown-item danger"
-                                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.45rem 0.65rem', borderRadius: '6px', fontSize: '0.8125rem', fontWeight: '500', color: '#dc2626', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                                  onClick={() => {
-                                    setOpenPromoActionId(null)
-                                    if (deletePromotion) deletePromotion(code)
-                                  }}
-                                >
-                                  <Trash2 size={14} color="#dc2626" /> Xóa template
-                                </button>
-                              </div>
-                            )}
+                              <button
+                                type="button"
+                                className="admin-table-action-btn btn-delete"
+                                onClick={() => {
+                                  if (deletePromotion) deletePromotion(code)
+                                }}
+                                title="Xóa template"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       )
@@ -764,7 +635,7 @@ function AdminPromotionManagementPanelContent({
                 onClick={() => setModalActiveTab('basic')}
               >
                 <Ticket size={15} />
-                <span>Thông tin &amp; Quy tắc giảm</span>
+                <span>Thông tin và Quy tắc giảm giá</span>
               </button>
 
               <button
@@ -773,7 +644,7 @@ function AdminPromotionManagementPanelContent({
                 onClick={() => setModalActiveTab('rules')}
               >
                 <Sliders size={15} />
-                <span>{safeForm.loai_phan_phoi === 'TEMPLATE' ? 'Ngữ cảnh tự động' : 'Điều kiện & Phân phối'}</span>
+                <span>{safeForm.loai_phan_phoi === 'TEMPLATE' ? 'Ngữ cảnh tự động' : 'Điều kiện và Phân phối'}</span>
               </button>
             </div>
 
@@ -1038,7 +909,7 @@ function AdminPromotionManagementPanelContent({
                       </div>
 
                       <div className="promo-form-group">
-                        <label htmlFor="promo-per-user-qty">Lượt sử dụng tối đa / Khách</label>
+                        <label htmlFor="promo-per-user-qty">Lượt dùng tối đa mỗi khách</label>
                         <input
                           id="promo-per-user-qty"
                           type="number"
@@ -1156,29 +1027,59 @@ function AdminPromotionManagementPanelContent({
                   className="promo-btn promo-btn--neutral"
                   onClick={handleCloseModal}
                   disabled={savingPromotion}
+                  style={{
+                    backgroundColor: '#fef2f2',
+                    background: '#fef2f2',
+                    color: '#dc2626',
+                    border: '1px solid #fecaca',
+                    height: '40px',
+                    padding: '0 1.25rem',
+                    borderRadius: '8px',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem'
+                  }}
                 >
-                  <X size={16} />
-                  <span>Hủy bỏ</span>
+                  <X size={16} color="#dc2626" />
+                  <span style={{ color: '#dc2626' }}>Hủy bỏ</span>
                 </button>
 
                 <button
                   type="submit"
                   className="promo-btn promo-btn--success"
                   disabled={savingPromotion || !String(safeForm.ten_khuyen_mai || '').trim() || !safeForm.ma_khuyen_mai}
+                  style={{
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    height: '40px',
+                    padding: '0 1.5rem',
+                    borderRadius: '8px',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
+                  }}
                 >
                   {savingPromotion ? (
                     <>
-                      <RefreshCw size={16} className="promo-spin-icon" />
+                      <RefreshCw size={16} className="promo-spin-icon" color="#ffffff" />
                       <span>Đang lưu...</span>
                     </>
                   ) : editingPromotionCode ? (
                     <>
-                      <Check size={16} />
+                      <Check size={16} color="#ffffff" />
                       <span>Lưu cập nhật</span>
                     </>
                   ) : (
                     <>
-                      <Plus size={16} />
+                      <Plus size={16} color="#ffffff" />
                       <span>Tạo chương trình</span>
                     </>
                   )}

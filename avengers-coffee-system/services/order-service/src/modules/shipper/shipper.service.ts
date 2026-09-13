@@ -1030,9 +1030,12 @@ export class ShipperService {
     if (!remit) throw new NotFoundException('Không tìm thấy phiếu nộp COD.');
     if (remit.status !== 'PENDING') throw new BadRequestException('Phiếu này đã được xử lý rồi.');
 
+    const isUuid = Boolean(confirmedBy && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(confirmedBy));
+    const confirmedByUuid = isUuid ? confirmedBy : null;
+
     await this.codRemitRepo.update(remit.id, {
       status: action,
-      confirmed_by: confirmedBy,
+      confirmed_by: confirmedByUuid as any,
       confirmed_at: new Date(),
     });
 

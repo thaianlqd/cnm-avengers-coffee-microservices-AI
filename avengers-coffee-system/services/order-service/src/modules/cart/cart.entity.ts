@@ -19,7 +19,7 @@ export class CartItem {
   @Column({ type: 'decimal' })
   gia_ban: number;
 
-  @Column()
+  @Column({ type: 'varchar', nullable: true, default: '' })
   hinh_anh_url: string;
 
   @Column({ name: 'kich_co', default: 'Nhỏ' })

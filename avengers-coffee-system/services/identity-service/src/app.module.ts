@@ -40,20 +40,6 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
 
         const sslConfig = process.env.PGSSLMODE === 'require' ? { rejectUnauthorized: false } : false;
 
-        const client = new Client({
-          host,
-          port,
-          user: username,
-          password,
-          database,
-          ssl: sslConfig,
-        });
-
-        await client.connect();
-        await client.query(`CREATE SCHEMA IF NOT EXISTS "${identitySchema}"`);
-        await client.query(`CREATE SCHEMA IF NOT EXISTS "franchise"`);
-        await client.end();
-
         return {
           type: 'postgres' as const,
           host,
@@ -64,7 +50,12 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
           ssl: sslConfig,
           schema: identitySchema,
           entities: [User, DeliveryAddress, Branch, Promotion, PromotionUsage, MembershipConfig, ComboNguyenLieu, HoSoDangKy, Kiosk, HopDongNhuongQuyen, DonMuaCombo, CongNo, RoyaltyHangThang, KetQuaDoiSoat, BienBanViPham, AuditLog],
-          synchronize: true,
+          extra: {
+            max: 2,
+            connectionTimeoutMillis: 10000,
+            idleTimeoutMillis: 5000,
+          },
+          synchronize: false,
         };
       },
     }),

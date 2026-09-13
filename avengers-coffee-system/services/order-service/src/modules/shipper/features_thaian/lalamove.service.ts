@@ -54,6 +54,7 @@ export class LalamoveService {
       const fetchOptions: RequestInit = {
         method: method.toUpperCase(),
         headers,
+        signal: AbortSignal.timeout(4000),
       };
       if (bodyStr && method.toUpperCase() !== 'GET') {
         fetchOptions.body = bodyStr;

@@ -32,10 +32,6 @@ const menuSchema = process.env.DB_SCHEMA || 'menu';
           ssl: sslConfig,
         });
 
-        await client.connect();
-        await client.query(`CREATE SCHEMA IF NOT EXISTS "${menuSchema}"`);
-        await client.end();
-
         return {
           type: 'postgres' as const,
           host,
@@ -46,7 +42,12 @@ const menuSchema = process.env.DB_SCHEMA || 'menu';
           ssl: sslConfig,
           schema: menuSchema,
           entities: [SanPham, DanhMuc, ThuocTinh, BienTheSanPham],
-          synchronize: true,
+          extra: {
+            max: 2,
+            connectionTimeoutMillis: 10000,
+            idleTimeoutMillis: 5000,
+          },
+          synchronize: false,
         };
       },
     }),

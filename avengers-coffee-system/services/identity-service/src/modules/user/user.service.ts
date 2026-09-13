@@ -274,24 +274,170 @@ export class UserService implements OnModuleInit {
       return;
     }
 
+    const heroImage = 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1200&h=480&q=85';
+    const footerImage = 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=1200&h=260&q=85';
+
     const html = `
-      <div style="font-family:Arial,sans-serif;color:#222;line-height:1.6;max-width:560px;margin:0 auto;padding:20px;border:1px solid #eee;border-radius:16px;">
-        <h2 style="margin:0 0 12px;color:#d97706;">Đặt lại mật khẩu</h2>
-        <p style="margin:0 0 8px;">Xin chào ${fullName || 'bạn'},</p>
-        <p style="margin:0 0 16px;">Bạn vừa yêu cầu đặt lại mật khẩu cho tài khoản tại ${appName}.</p>
-        <div style="font-size:30px;font-weight:700;letter-spacing:8px;background:#fff7ed;color:#9a3412;border-radius:12px;padding:12px 16px;text-align:center;margin:0 0 16px;">
-          ${code}
-        </div>
-        <p style="margin:0 0 8px;">Mã có hiệu lực trong ${RESET_CODE_EXPIRE_MINUTES} phút.</p>
-        <p style="margin:0;color:#6b7280;">Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.</p>
-      </div>
+      <!DOCTYPE html>
+      <html lang="vi">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Mã Xác Thực Đặt Lại Mật Khẩu</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap" rel="stylesheet">
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 36px 0;">
+          <tr>
+            <td align="center">
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 25px 60px rgba(15, 23, 42, 0.14); border: 1px solid #e2e8f0;">
+                
+                <!-- 1. TOP BRAND HEADER -->
+                <tr>
+                  <td style="padding: 22px 32px; background-color: #170c08; text-align: center; border-bottom: 2px solid #d97706;">
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td align="center">
+                          <table border="0" cellspacing="0" cellpadding="0">
+                            <tr>
+                              <td style="vertical-align: middle;">
+                                <img src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=120&h=120&q=80" width="46" height="46" alt="Avengers Coffee Logo" style="display: block; border-radius: 50%; border: 2px solid #f59e0b; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35); object-fit: cover;" />
+                              </td>
+                              <td style="vertical-align: middle; padding-left: 14px; text-align: left;">
+                                <div style="font-size: 21px; font-weight: 900; color: #ffffff; letter-spacing: 2px; line-height: 1.1; text-transform: uppercase;">
+                                  ${appName}
+                                </div>
+                                <div style="font-size: 11px; font-weight: 700; color: #f59e0b; letter-spacing: 2.2px; text-transform: uppercase; margin-top: 3px;">
+                                  THẾ MỚI ĐẬM VỊ • XÁC THỰC BẢO MẬT
+                                </div>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- 2. HERO BANNER IMAGE -->
+                <tr>
+                  <td style="padding: 0; line-height: 0; background-color: #170c08;">
+                    <img src="${heroImage}" width="600" style="display: block; width: 100%; max-width: 600px; height: auto; border: 0; outline: none; object-fit: cover;" alt="Avengers Coffee Security Banner" />
+                  </td>
+                </tr>
+
+                <!-- 3. HERO TITLE SECTION -->
+                <tr>
+                  <td style="padding: 0; background: linear-gradient(180deg, #7f1d1d 0%, #4c0519 100%); text-align: center;">
+                    <div style="padding: 28px 24px 28px 24px;">
+                      <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.15); padding: 5px 16px; border-radius: 20px; font-size: 11px; font-weight: 800; color: #fef08a; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; border: 1px solid rgba(254, 240, 138, 0.4);">
+                        ● XÁC THỰC TÀI KHOẢN
+                      </div>
+                      <h1 style="margin: 0 0 6px 0; font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 2px 8px rgba(0,0,0,0.4);">
+                        MÃ XÁC THỰC ĐẶT LẠI MẬT KHẨU
+                      </h1>
+                      <p style="margin: 0; font-size: 13px; color: #fef08a; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                        YÊU CẦU BẢO MẬT TÀI KHOẢN KHÁCH HÀNG
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- 4. GREETING & BIG OTP BOX -->
+                <tr>
+                  <td style="padding: 36px 36px 24px 36px; text-align: center;">
+                    <h2 style="margin: 0 0 14px 0; font-size: 18px; font-weight: 800; color: #0f172a;">
+                      Xin chào ${fullName || 'Quý khách'},
+                    </h2>
+                    <p style="font-size: 14.5px; color: #334155; line-height: 1.75; margin: 0 0 24px 0;">
+                      Bạn vừa gửi yêu cầu đặt lại mật khẩu cho tài khoản tại <strong>${appName}</strong>. Dưới đây là mã xác thực OTP dùng một lần của bạn:
+                    </p>
+
+                    <!-- Big OTP Code Box -->
+                    <div style="margin: 0 auto 24px auto; display: inline-block; background-color: #fff7ed; border: 2px dashed #f97316; border-radius: 18px; padding: 20px 44px; box-shadow: 0 8px 24px rgba(249, 115, 22, 0.15);">
+                      <div style="font-size: 12px; color: #9a3412; font-weight: 800; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1.5px;">MÃ XÁC THỰC OTP CỦA BẠN:</div>
+                      <div style="font-size: 38px; font-weight: 900; color: #c2410c; letter-spacing: 8px; font-family: 'Plus Jakarta Sans', monospace;">${code}</div>
+                    </div>
+
+                    <div style="background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; padding: 14px 18px; font-size: 13px; color: #475569; line-height: 1.6; max-width: 480px; margin: 0 auto;">
+                      <span style="font-weight: 700; color: #0f172a;">● Lưu ý hiệu lực:</span> Mã xác thực này có giá trị trong vòng <strong>${RESET_CODE_EXPIRE_MINUTES} phút</strong>.<br/>
+                      Nếu bạn không gửi yêu cầu này, vui lòng bỏ qua email để mật khẩu tiếp tục được giữ an toàn tuyệt đối.
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- 5. FOOTER ARTWORK BANNER -->
+                <tr>
+                  <td style="padding: 0; line-height: 0; background-color: #170c08;">
+                    <img src="${footerImage}" width="600" style="display: block; width: 100%; max-width: 600px; height: auto; border: 0; outline: none; object-fit: cover;" alt="Avengers Coffee Footer" />
+                  </td>
+                </tr>
+
+                <!-- 6. LUXURY FOOTER -->
+                <tr>
+                  <td style="background-color: #170c08; padding: 36px 28px; text-align: center; color: #ffffff; border-top: 2px solid #d97706;">
+                    
+                    <div style="margin-bottom: 14px;">
+                      <img src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=120&h=120&q=80" width="48" height="48" alt="Avengers Coffee" style="display: inline-block; border-radius: 50%; border: 2px solid #f59e0b; box-shadow: 0 4px 14px rgba(0,0,0,0.5); object-fit: cover;" />
+                    </div>
+
+                    <div style="font-size: 18px; font-weight: 900; letter-spacing: 2px; margin-bottom: 6px; text-transform: uppercase; color: #ffffff;">
+                      ${appName} VIETNAM
+                    </div>
+                    <div style="font-size: 11px; font-weight: 700; color: #f59e0b; letter-spacing: 1.8px; text-transform: uppercase; margin-bottom: 20px;">
+                      THẾ MỚI ĐẬM VỊ • ĐẬM VỊ ĐAM MÊ
+                    </div>
+
+                    <!-- Social Icons -->
+                    <table align="center" border="0" cellspacing="0" cellpadding="0" style="margin: 0 auto 20px auto;">
+                      <tr>
+                        <td style="padding: 0 8px;">
+                          <a href="https://facebook.com" target="_blank" style="text-decoration: none;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" width="30" height="30" alt="Facebook" style="display: block; border-radius: 50%; background-color: #ffffff; padding: 4px; box-sizing: border-box;" />
+                          </a>
+                        </td>
+                        <td style="padding: 0 8px;">
+                          <a href="https://tiktok.com" target="_blank" style="text-decoration: none;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" width="30" height="30" alt="TikTok" style="display: block; border-radius: 50%; background-color: #ffffff; padding: 4px; box-sizing: border-box;" />
+                          </a>
+                        </td>
+                        <td style="padding: 0 8px;">
+                          <a href="https://instagram.com" target="_blank" style="text-decoration: none;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" width="30" height="30" alt="Instagram" style="display: block; border-radius: 50%; background-color: #ffffff; padding: 4px; box-sizing: border-box;" />
+                          </a>
+                        </td>
+                        <td style="padding: 0 8px;">
+                          <a href="https://youtube.com" target="_blank" style="text-decoration: none;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" width="30" height="30" alt="YouTube" style="display: block; border-radius: 50%; background-color: #ffffff; padding: 4px; box-sizing: border-box;" />
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <p style="margin: 0 0 6px 0; font-size: 13px; color: rgba(255, 255, 255, 0.9); line-height: 1.5;">
+                      Hotline chăm sóc khách hàng: <strong style="color: #fef08a;">1800 6936</strong> • Email: <strong style="color: #ffffff;">support@avengers.coffee</strong>
+                    </p>
+                    <p style="margin: 0; font-size: 11.5px; color: rgba(255, 255, 255, 0.65);">
+                      Bản quyền © 2026 ${appName}. Tất cả quyền được bảo hộ.
+                    </p>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
     `;
 
     await transporter.sendMail({
       from: `${appName} <${fromEmail}>`,
       to: email,
-      subject: `[${appName}] Ma OTP dat lai mat khau`,
-      text: `Ma OTP dat lai mat khau cua ban la ${code}. Ma co hieu luc trong ${RESET_CODE_EXPIRE_MINUTES} phut.`,
+      subject: `[${appName}] Mã OTP đặt lại mật khẩu của bạn: ${code}`,
+      text: `Mã OTP đặt lại mật khẩu của bạn là ${code}. Mã có hiệu lực trong ${RESET_CODE_EXPIRE_MINUTES} phút.`,
       html,
     });
   }

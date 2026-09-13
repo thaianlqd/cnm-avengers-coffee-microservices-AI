@@ -1,88 +1,864 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
 import { apiClient } from '../../lib/apiClient';
+import {
+  MagnifyingGlassIcon,
+  TruckIcon,
+  ClockIcon,
+  ArrowPathIcon,
+  ChevronRightIcon,
+  ArrowLeftIcon,
+  ShieldCheckIcon,
+  ExclamationCircleIcon,
+  CheckCircleIcon,
+  DocumentDuplicateIcon,
+  BuildingStorefrontIcon,
+  MapPinIcon,
+  PhoneIcon,
+  UserIcon,
+  CreditCardIcon,
+  ShoppingBagIcon,
+  TicketIcon,
+  PrinterIcon,
+  SparklesIcon,
+  XCircleIcon
+} from '@heroicons/react/24/outline';
+import { CheckIcon } from '@heroicons/react/24/solid';
 
-export default function OrderLookupPage() {
-  const [code, setCode] = useState('');
+export default function OrderLookupPage({
+  initialCode = '',
+  onBack,
+  onOrderMore,
+  onNavigate,
+}) {
+  const [code, setCode] = useState(initialCode || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  const [orderResult, setOrderResult] = useState(null);
+  const [recentLookups, setRecentLookups] = useState([]);
+  const [copiedCode, setCopiedCode] = useState(false);
 
-  const handleLookup = async (e) => {
-    e.preventDefault();
-    if (!code.trim()) return;
-    
+  // Load recent lookups from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('avengers_recent_lookups') || '[]');
+      if (Array.isArray(saved)) setRecentLookups(saved);
+    } catch {}
+  }, []);
+
+  const saveRecentCode = (searchedCode) => {
+    const clean = searchedCode.trim().toUpperCase();
+    if (!clean) return;
+    setRecentLookups((prev) => {
+      const list = Array.isArray(prev) ? prev : [];
+      const updated = [clean, ...list.filter((c) => c !== clean)].slice(0, 5);
+      try {
+        localStorage.setItem('avengers_recent_lookups', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  const performLookup = async (targetCode) => {
+    const cleanCode = String(targetCode || '').trim();
+    if (!cleanCode) return;
+
     setLoading(true);
     setError(null);
     try {
-      const res = await apiClient.get(`/shippers/delivery/tracking/by-code/lookup?code=${encodeURIComponent(code.trim())}`);
-      if (res.data?.order?.ma_don_hang) {
-        navigate(`/tracking/${res.data.order.ma_don_hang}`);
+      const res = await apiClient.get(
+        `/shippers/delivery/tracking/by-code/lookup?code=${encodeURIComponent(cleanCode)}`
+      );
+      if (res.data?.order) {
+        setOrderResult(res.data);
+        saveRecentCode(cleanCode);
+      } else {
+        throw new Error('Không tìm thấy dữ liệu đơn hàng');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Không tìm thấy đơn hàng. Vui lòng kiểm tra lại mã.');
+      setOrderResult(null);
+      if (err.response?.status === 404) {
+        setError('Không tìm thấy đơn hàng tương ứng với mã này. Vui lòng kiểm tra lại mã tra cứu (VD: AC-FD2C0) hoặc mã đơn hàng.');
+      } else if (err.response?.status >= 500 || err.code === 'ECONNABORTED' || !err.response) {
+        setError('Kết nối máy chủ đang bận xử lý dữ liệu. Vui lòng bấm nút "Tra Cứu Ngay" để thử lại.');
+      } else {
+        setError(
+          err.response?.data?.message ||
+            'Không tìm thấy đơn hàng tương ứng. Vui lòng kiểm tra lại mã tra cứu (VD: AC-A1B2C) hoặc mã đơn hàng.'
+        );
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  const searchedInitialCodeRef = useRef(null);
+
+  // Auto trigger lookup if initialCode is passed
+  useEffect(() => {
+    const clean = String(initialCode || '').trim().toUpperCase();
+    if (clean && searchedInitialCodeRef.current !== clean) {
+      searchedInitialCodeRef.current = clean;
+      setCode(clean);
+      performLookup(clean);
+    }
+  }, [initialCode]);
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    if (!code.trim()) return;
+    performLookup(code);
+  };
+
+  const handleQuickLookup = (recentCode) => {
+    setCode(recentCode);
+    performLookup(recentCode);
+  };
+
+  const handleResetSearch = () => {
+    setOrderResult(null);
+    setError(null);
+    setCode('');
+  };
+
+  const handleCopy = (textToCopy) => {
+    if (!textToCopy) return;
+    navigator.clipboard.writeText(textToCopy);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  // Helper formatting functions
+  const formatCurrency = (amount) => {
+    return (Number(amount) || 0).toLocaleString('vi-VN') + ' đ';
+  };
+
+  const formatDateTime = (dateStr) => {
+    if (!dateStr) return 'Đang cập nhật';
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' - ' + d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  // Status mappings
+  const getOrderStatusMeta = (status) => {
+    const st = String(status || '').toUpperCase();
+    if (st === 'DA_HUY' || st === 'CANCELLED') {
+      return {
+        label: 'Đã hủy đơn',
+        colorClass: 'bg-red-100 text-red-700 border-red-200',
+        badgeBg: 'bg-red-600',
+        stepIndex: -1,
+        desc: 'Đơn hàng đã được hủy theo yêu cầu hoặc do sự cố.'
+      };
+    }
+    if (st === 'HOAN_THANH' || st === 'COMPLETED' || st === 'DELIVERED') {
+      return {
+        label: 'Giao hàng thành công',
+        colorClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+        badgeBg: 'bg-emerald-600',
+        stepIndex: 4,
+        desc: 'Đơn hàng đã được giao đến tay quý khách thành công.'
+      };
+    }
+    if (st === 'DANG_GIAO' || st === 'PICKED_UP' || st === 'ON_GOING') {
+      return {
+        label: 'Đang giao hàng',
+        colorClass: 'bg-blue-100 text-blue-800 border-blue-200',
+        badgeBg: 'bg-blue-600',
+        stepIndex: 3,
+        desc: 'Shipper đang trên đường vận chuyển món ngon đến bạn.'
+      };
+    }
+    if (st === 'DANG_CHUAN_BI' || st === 'DANG_PHA_CHE' || st === 'CONFIRMED' || st === 'DA_TIEP_NHAN' || st === 'PROCESSING' || st === 'PICKING_UP') {
+      return {
+        label: 'Đang pha chế và đóng gói',
+        colorClass: 'bg-amber-100 text-amber-800 border-amber-200',
+        badgeBg: 'bg-amber-600',
+        stepIndex: 2,
+        desc: 'Barista đang chuẩn bị đồ uống và đóng gói cẩn thận.'
+      };
+    }
+    return {
+      label: 'Đã tiếp nhận đơn',
+      colorClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      badgeBg: 'bg-emerald-600',
+      stepIndex: 1,
+      desc: 'Hệ thống đã ghi nhận đơn hàng và chuyển đến quầy pha chế.'
+    };
+  };
+
+  const getPaymentMethodText = (method) => {
+    const m = String(method || '').toUpperCase();
+    if (m === 'COD' || m === 'TIEN_MAT') return 'Tiền mặt khi nhận hàng (COD)';
+    if (m === 'VNPAY') return 'Thanh toán trực tuyến VNPAY';
+    if (m === 'MOMO') return 'Ví điện tử MoMo';
+    if (m === 'CHUYEN_KHOAN' || m === 'BANKING') return 'Chuyển khoản ngân hàng';
+    return method || 'Thanh toán khi nhận hàng';
+  };
+
+  const getPaymentStatusMeta = (status) => {
+    const st = String(status || '').toUpperCase();
+    if (st === 'DA_THANH_TOAN' || st === 'PAID' || st === 'SUCCESS') {
+      return {
+        label: 'Đã thanh toán',
+        className: 'bg-emerald-50 text-emerald-700 border-emerald-200 font-bold'
+      };
+    }
+    return {
+      label: 'Chờ thanh toán',
+      className: 'bg-amber-50 text-amber-700 border-amber-200 font-bold'
+    };
+  };
+
+  const getDeliveryModeText = (mode, order) => {
+    const dm = String(mode || order?.loai_don_hang || '').toUpperCase();
+    if (dm === 'TAKE_AWAY' || dm === 'MANG_VE' || dm === 'PICKUP') return 'Đến lấy tại cửa hàng (Mang về)';
+    if (dm === 'DINE_IN' || dm === 'TAI_BAN' || order?.ma_ban) return `Dùng tại bàn (${order?.ma_ban || 'Tại quán'})`;
+    return 'Giao hàng tận nơi';
+  };
+
+  // Branch code to name mapping
+  const getBranchName = (branchCode) => {
+    const codeStr = String(branchCode || '').toUpperCase();
+    if (codeStr.includes('MAC_DINH_CHI') || codeStr.includes('MDC')) return 'Avengers Coffee - Mạc Đĩnh Chi (Quận 1, TP.HCM)';
+    if (codeStr.includes('NGUYEN_THI_MINH_KHAI') || codeStr.includes('NTMK')) return 'Avengers Coffee - Nguyễn Thị Minh Khai (Quận 3, TP.HCM)';
+    if (codeStr.includes('TRUONG_CHINH')) return 'Avengers Coffee - Trường Chinh (Thanh Xuân, Hà Nội)';
+    return 'Avengers Coffee Flagship Store';
+  };
+
+  const currentOrder = orderResult?.order;
+  const currentTracking = orderResult?.tracking;
+  const currentShipper = orderResult?.shipper;
+  const currentStatusMeta = currentOrder ? getOrderStatusMeta(currentOrder.trang_thai_don_hang) : null;
+  const paymentMeta = currentOrder ? getPaymentStatusMeta(currentOrder.trang_thai_thanh_toan) : null;
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden">
-        {/* Banner */}
-        <div className="bg-indigo-600 h-32 relative overflow-hidden flex items-center justify-center">
-          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
-          <div className="text-5xl relative z-10">🔍</div>
-        </div>
-        
-        <div className="p-8">
-          <h1 className="text-2xl font-black text-gray-900 text-center mb-2">Tra cứu đơn hàng</h1>
-          <p className="text-gray-500 text-center text-sm mb-8">Nhập mã đơn hàng (VD: DH12345) hoặc mã tra cứu (VD: AC-A1B2C) để xem tiến trình giao hàng.</p>
-          
-          <form onSubmit={handleLookup} className="space-y-4">
-            <div>
-              <label htmlFor="code" className="block text-sm font-bold text-gray-700 mb-1">
-                Mã tra cứu
-              </label>
-              <input
-                type="text"
-                id="code"
-                value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
-                placeholder="Nhập mã tra cứu..."
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all font-medium"
-                required
-              />
+    <div className="w-full min-h-screen bg-[#fcfaf7] py-6 md:py-10 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+
+        {/* ── BREADCRUMB & HEADER ── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#ebdcd0]">
+          <div>
+            <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+              <button
+                type="button"
+                onClick={onBack || (() => onNavigate?.('order'))}
+                className="hover:text-[#b22830] transition-colors cursor-pointer"
+              >
+                Trang chủ
+              </button>
+              <span>›</span>
+              <button
+                type="button"
+                onClick={onBack || (() => onNavigate?.('order'))}
+                className="hover:text-[#b22830] transition-colors cursor-pointer"
+              >
+                Đặt hàng
+              </button>
+              <span>›</span>
+              <span className="text-[#b22830]">Tra cứu đơn hàng</span>
             </div>
-            
-            {error && (
-              <div className="p-3 bg-red-50 text-red-600 text-sm font-medium rounded-lg border border-red-100 flex gap-2">
-                <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                {error}
-              </div>
+            <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-[#1f1f1f] font-sans flex items-center gap-3">
+              Tra Cứu Đơn Hàng
+              <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-red-100 text-[#b22830] normal-case tracking-normal">
+                <TruckIcon className="w-3.5 h-3.5" />
+                Khách hàng & Vãng lai
+              </span>
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-bold transition-all shadow-xs cursor-pointer"
+              >
+                <ArrowLeftIcon className="w-3.5 h-3.5" />
+                <span>Quay lại</span>
+              </button>
             )}
-            
             <button
-              type="submit"
-              disabled={loading || !code.trim()}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-bold py-3.5 px-4 rounded-xl transition-colors flex items-center justify-center gap-2"
+              type="button"
+              onClick={onOrderMore || (() => onNavigate?.('order'))}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#b22830] hover:bg-[#961c23] text-white text-xs font-bold transition-all shadow-md shadow-red-900/20 active:scale-95 cursor-pointer"
             >
-              {loading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                'Tra cứu ngay'
-              )}
-            </button>
-          </form>
-          
-          <div className="mt-6 text-center">
-            <button onClick={() => navigate('/')} className="text-indigo-600 font-bold text-sm hover:underline">
-              ← Về trang chủ
+              <ShoppingBagIcon className="w-3.5 h-3.5" />
+              <span>Xem thực đơn đặt món</span>
             </button>
           </div>
         </div>
+
+        {/* ── SEARCH CARD ── */}
+        <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-[#ede5dc]">
+          <form onSubmit={handleFormSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="order-search-input" className="block text-xs font-extrabold text-gray-700 uppercase tracking-wider mb-2">
+                Nhập mã tra cứu hoặc mã đơn hàng <span className="text-[#b22830]">*</span>
+              </label>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <input
+                    id="order-search-input"
+                    type="text"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.toUpperCase())}
+                    placeholder="Ví dụ: AC-A1B2C hoặc DH12345..."
+                    className="w-full pl-12 pr-10 py-3.5 rounded-2xl border border-gray-300 focus:border-[#b22830] focus:ring-4 focus:ring-red-100 outline-none transition-all font-mono font-bold text-gray-800 text-sm placeholder:font-sans placeholder:font-normal placeholder:text-gray-400 bg-gray-50/50 focus:bg-white"
+                    required
+                  />
+                  <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  {code && (
+                    <button
+                      type="button"
+                      onClick={() => setCode('')}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-xs bg-gray-200 hover:bg-gray-300 rounded-full w-5 h-5 flex items-center justify-center transition-colors cursor-pointer"
+                      title="Xóa mã"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading || !code.trim()}
+                  className="sm:w-auto px-8 py-3.5 rounded-2xl bg-[#16a34a] hover:bg-[#15803d] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold text-sm shadow-md shadow-green-700/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer flex-shrink-0"
+                >
+                  {loading ? (
+                    <>
+                      <ArrowPathIcon className="w-5 h-5 animate-spin" />
+                      <span>Đang tra cứu...</span>
+                    </>
+                  ) : (
+                    <>
+                      <MagnifyingGlassIcon className="w-5 h-5 stroke-[2.5]" />
+                      <span>Tra Cứu Ngay</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Error banner */}
+            {error && (
+              <div className="p-4 bg-red-50 text-red-700 text-xs md:text-sm font-semibold rounded-2xl border border-red-100 flex items-start gap-3 animate-fadeIn">
+                <ExclamationCircleIcon className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p>{error}</p>
+                  <p className="mt-1 text-xs text-red-600 font-normal">
+                    Mẹo: Mã tra cứu thường có 8 ký tự dạng <span className="font-mono font-bold">AC-XXXXX</span> được gửi trong email xác nhận khi bạn đặt hàng thành công.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Recent Searches Pills */}
+            {recentLookups.length > 0 && (
+              <div className="pt-3 border-t border-gray-100 flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider mr-1">
+                  <ClockIcon className="w-3.5 h-3.5 text-gray-400" />
+                  <span>Tra cứu gần đây:</span>
+                </div>
+                {recentLookups.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => handleQuickLookup(c)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl border text-xs font-mono font-bold transition-all cursor-pointer ${
+                      code === c
+                        ? 'bg-red-50 border-red-300 text-[#b22830]'
+                        : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-red-50 hover:border-red-200 hover:text-[#b22830]'
+                    }`}
+                  >
+                    <span>{c}</span>
+                    <ChevronRightIcon className="w-3 h-3 opacity-60" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </form>
+        </div>
+
+        {/* ── CONDITIONAL CONTENT: RESULT OR EMPTY INSTRUCTION ── */}
+        {orderResult && currentOrder ? (
+          <div className="space-y-6 animate-fadeIn">
+            
+            {/* 1. ORDER STATUS & TIMELINE CARD */}
+            <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-[#ede5dc] space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-gray-100">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Mã đơn hàng:</span>
+                    <span className="font-mono font-black text-gray-900 text-base md:text-lg bg-gray-100 px-2.5 py-0.5 rounded-lg border border-gray-200">
+                      #{currentOrder.ma_don_hang?.substring(0, 8).toUpperCase()}
+                    </span>
+                    {currentTracking?.tracking_code && (
+                      <span className="inline-flex items-center gap-1 font-mono font-bold text-xs bg-amber-50 text-amber-900 border border-amber-200 px-2 py-0.5 rounded-lg">
+                        Mã tra cứu: {currentTracking.tracking_code}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(currentOrder.ma_don_hang)}
+                      className="text-gray-400 hover:text-gray-600 transition-colors p-1 cursor-pointer"
+                      title="Sao chép mã đơn"
+                    >
+                      {copiedCode ? <CheckIcon className="w-4 h-4 text-green-600" /> : <DocumentDuplicateIcon className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <p className="text-xs font-medium text-gray-500">
+                    Thời gian đặt: <span className="font-bold text-gray-700">{formatDateTime(currentOrder.ngay_tao)}</span>
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className={`px-4 py-2 rounded-2xl border flex items-center gap-2 ${currentStatusMeta.colorClass}`}>
+                    <span className={`w-2.5 h-2.5 rounded-full ${currentStatusMeta.badgeBg} ${currentStatusMeta.stepIndex > 0 && currentStatusMeta.stepIndex < 4 ? 'animate-pulse' : ''}`} />
+                    <span className="text-xs md:text-sm font-black uppercase tracking-wide">{currentStatusMeta.label}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Explanation Banner */}
+              <div className="bg-[#faf7f4] rounded-2xl p-4 border border-[#e8dfd5] flex items-center gap-3">
+                <SparklesIcon className="w-5 h-5 text-[#b22830] flex-shrink-0" />
+                <p className="text-xs md:text-sm font-semibold text-gray-700">
+                  {currentStatusMeta.desc}
+                </p>
+              </div>
+
+              {/* 4-Step Timeline (Visual) */}
+              {currentStatusMeta.stepIndex >= 0 ? (
+                <div className="pt-4 pb-2">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative">
+                    {[
+                      {
+                        step: 1,
+                        title: 'Đã nhận đơn',
+                        desc: 'Hệ thống xác nhận',
+                        icon: ShoppingBagIcon,
+                      },
+                      {
+                        step: 2,
+                        title: 'Đang pha chế',
+                        desc: 'Barista chuẩn bị',
+                        icon: BuildingStorefrontIcon,
+                      },
+                      {
+                        step: 3,
+                        title: 'Đang giao hàng',
+                        desc: 'Shipper vận chuyển',
+                        icon: TruckIcon,
+                      },
+                      {
+                        step: 4,
+                        title: 'Hoàn thành',
+                        desc: 'Đã nhận đồ uống',
+                        icon: CheckCircleIcon,
+                      },
+                    ].map((item, idx) => {
+                      const isCompleted = currentStatusMeta.stepIndex >= item.step;
+                      const isCurrent = currentStatusMeta.stepIndex === item.step;
+                      const IconComp = item.icon;
+
+                      return (
+                        <div
+                          key={item.step}
+                          className={`relative flex flex-col items-center text-center p-4 rounded-2xl border transition-all ${
+                            isCurrent
+                              ? 'bg-amber-50/80 border-amber-300 shadow-sm ring-2 ring-amber-200/50'
+                              : isCompleted
+                              ? 'bg-emerald-50/60 border-emerald-200'
+                              : 'bg-gray-50 border-gray-200 opacity-60'
+                          }`}
+                        >
+                          <div
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2.5 ${
+                              isCurrent
+                                ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30 animate-bounce'
+                                : isCompleted
+                                ? 'bg-emerald-600 text-white'
+                                : 'bg-gray-200 text-gray-500'
+                            }`}
+                          >
+                            {isCompleted && !isCurrent ? (
+                              <CheckIcon className="w-5 h-5 stroke-[3]" />
+                            ) : (
+                              <IconComp className="w-5 h-5" />
+                            )}
+                          </div>
+                          <span
+                            className={`text-xs font-black uppercase tracking-wider mb-1 ${
+                              isCurrent
+                                ? 'text-amber-900'
+                                : isCompleted
+                                ? 'text-emerald-900'
+                                : 'text-gray-500'
+                            }`}
+                          >
+                            {item.title}
+                          </span>
+                          <span className="text-[11px] font-medium text-gray-500">
+                            {item.desc}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3 text-red-700">
+                  <XCircleIcon className="w-6 h-6 flex-shrink-0" />
+                  <span className="text-xs md:text-sm font-bold">
+                    Đơn hàng này đã bị hủy. Nếu có bất kỳ thắc mắc nào về hoàn tiền hoặc đơn hàng, vui lòng liên hệ hotline 1900 1755.
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* 2. TWO-COLUMN DETAILS: SHIPPING & ORDER INFO */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* Shipping & Delivery Information */}
+              <div className="bg-white rounded-3xl p-6 md:p-7 shadow-sm border border-[#ede5dc] space-y-4">
+                <div className="flex items-center gap-2.5 pb-3 border-b border-gray-100">
+                  <div className="w-8 h-8 rounded-lg bg-red-50 text-[#b22830] flex items-center justify-center">
+                    <TruckIcon className="w-4 h-4" />
+                  </div>
+                  <h2 className="text-sm font-black uppercase tracking-wider text-gray-900">
+                    Thông Tin Giao Nhận
+                  </h2>
+                </div>
+
+                <div className="space-y-3.5 text-xs md:text-sm">
+                  <div>
+                    <span className="text-gray-500 font-medium block text-xs">Hình thức nhận hàng:</span>
+                    <span className="font-extrabold text-gray-900 mt-0.5 block">
+                      {getDeliveryModeText(currentTracking?.delivery_mode, currentOrder)}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-gray-500 font-medium block text-xs">Địa chỉ nhận hàng:</span>
+                    <div className="flex items-start gap-1.5 mt-0.5">
+                      <MapPinIcon className="w-4 h-4 text-[#b22830] flex-shrink-0 mt-0.5" />
+                      <span className="font-bold text-gray-800 leading-relaxed">
+                        {currentOrder.dia_chi_giao_hang || 'Tại quầy cửa hàng'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-gray-500 font-medium block text-xs">Cơ sở xử lý:</span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <BuildingStorefrontIcon className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                      <span className="font-bold text-gray-800">
+                        {getBranchName(currentOrder.co_so_ma || currentTracking?.branch_code)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Shipper info if available */}
+                  <div className="pt-2 border-t border-gray-100">
+                    <span className="text-gray-500 font-medium block text-xs mb-1.5">Người giao hàng:</span>
+                    {currentShipper?.full_name ? (
+                      <div className="bg-gray-50 rounded-2xl p-3 border border-gray-200/80 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-9 rounded-full bg-[#b22830] text-white flex items-center justify-center font-black text-xs">
+                            {currentShipper.full_name.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="font-extrabold text-gray-900 text-xs md:text-sm">{currentShipper.full_name}</p>
+                            <p className="text-[11px] font-medium text-gray-500">
+                              {currentShipper.vehicle_plate ? `Biển số: ${currentShipper.vehicle_plate}` : 'Shipper Avengers Coffee'}
+                            </p>
+                          </div>
+                        </div>
+                        {currentShipper.phone && (
+                          <a
+                            href={`tel:${currentShipper.phone}`}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold transition-colors"
+                          >
+                            <PhoneIcon className="w-3.5 h-3.5" />
+                            <span>{currentShipper.phone}</span>
+                          </a>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 text-gray-600 text-xs font-medium">
+                        {currentStatusMeta.stepIndex >= 3
+                          ? 'Đội ngũ giao hàng đang vận chuyển đến bạn.'
+                          : 'Hệ thống đang chuẩn bị đồ uống và sẽ phân công tài xế khi hoàn tất pha chế.'}
+                      </div>
+                    )}
+                  </div>
+
+                  {currentOrder.ghi_chu && (
+                    <div className="pt-2 border-t border-gray-100">
+                      <span className="text-gray-500 font-medium block text-xs">Ghi chú giao hàng:</span>
+                      <p className="mt-1 p-2.5 bg-amber-50/70 border border-amber-100 rounded-xl text-amber-900 font-medium text-xs">
+                        "{currentOrder.ghi_chu}"
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Recipient & Payment Information */}
+              <div className="bg-white rounded-3xl p-6 md:p-7 shadow-sm border border-[#ede5dc] space-y-4">
+                <div className="flex items-center gap-2.5 pb-3 border-b border-gray-100">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                    <UserIcon className="w-4 h-4" />
+                  </div>
+                  <h2 className="text-sm font-black uppercase tracking-wider text-gray-900">
+                    Người Nhận & Thanh Toán
+                  </h2>
+                </div>
+
+                <div className="space-y-3.5 text-xs md:text-sm">
+                  <div>
+                    <span className="text-gray-500 font-medium block text-xs">Khách hàng nhận:</span>
+                    <span className="font-extrabold text-gray-900 mt-0.5 block">
+                      {currentOrder.ten_khach_hang || 'Khách hàng Avengers Coffee'}
+                    </span>
+                  </div>
+
+                  {currentOrder.guest_phone && (
+                    <div>
+                      <span className="text-gray-500 font-medium block text-xs">Số điện thoại:</span>
+                      <span className="font-bold text-gray-800 mt-0.5 block font-mono">
+                        {currentOrder.guest_phone}
+                      </span>
+                    </div>
+                  )}
+
+                  {currentOrder.guest_email && (
+                    <div>
+                      <span className="text-gray-500 font-medium block text-xs">Email nhận thông báo:</span>
+                      <span className="font-medium text-gray-800 mt-0.5 block">
+                        {currentOrder.guest_email}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="pt-2 border-t border-gray-100">
+                    <span className="text-gray-500 font-medium block text-xs">Phương thức thanh toán:</span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <CreditCardIcon className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                      <span className="font-bold text-gray-800">
+                        {getPaymentMethodText(currentOrder.phuong_thuc_thanh_toan)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-gray-500 font-medium block text-xs">Trạng thái thanh toán:</span>
+                    <div className="mt-1">
+                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs border ${paymentMeta.className}`}>
+                        {paymentMeta.label}
+                      </span>
+                    </div>
+                  </div>
+
+                  {currentOrder.ma_voucher && (
+                    <div className="pt-2 border-t border-gray-100">
+                      <span className="text-gray-500 font-medium block text-xs">Mã ưu đãi đã áp dụng:</span>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <TicketIcon className="w-4 h-4 text-[#b22830]" />
+                        <span className="font-mono font-black text-xs text-[#b22830] bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
+                          {currentOrder.ma_voucher}
+                        </span>
+                        {currentOrder.so_tien_giam > 0 && (
+                          <span className="text-xs font-bold text-emerald-700">
+                            (Giảm {formatCurrency(currentOrder.so_tien_giam)})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 3. ORDER ITEMS & BILL DETAILS */}
+            <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-[#ede5dc] space-y-6">
+              <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
+                    <ShoppingBagIcon className="w-4 h-4" />
+                  </div>
+                  <h2 className="text-sm md:text-base font-black uppercase tracking-wider text-gray-900">
+                    Chi Tiết Món Đã Đặt ({currentOrder.items?.length || 0} món)
+                  </h2>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-gray-800 transition-colors p-1 cursor-pointer"
+                >
+                  <PrinterIcon className="w-4 h-4" />
+                  <span className="hidden sm:inline">In biên nhận</span>
+                </button>
+              </div>
+
+              {/* Items List */}
+              <div className="divide-y divide-gray-100">
+                {(currentOrder.items || []).map((item, index) => {
+                  const itemTotal = (Number(item.gia_ban) || 0) * (Number(item.so_luong) || 1);
+                  return (
+                    <div key={index} className="py-4 flex items-center justify-between gap-4 first:pt-0 last:pb-0">
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <img
+                          src={item.hinh_anh_url || '/hc-assets/menu_icon_1.png'}
+                          alt={item.ten_san_pham}
+                          className="w-14 h-14 object-contain rounded-2xl bg-[#fbf8f5] p-1.5 border border-gray-100 flex-shrink-0"
+                          onError={(e) => {
+                            e.currentTarget.src = '/hc-assets/menu_icon_1.png';
+                          }}
+                        />
+                        <div className="min-w-0">
+                          <h3 className="font-black text-gray-900 text-sm md:text-base leading-tight truncate">
+                            {item.ten_san_pham}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-gray-500 font-medium">
+                            {item.kich_co && (
+                              <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-md font-bold text-[11px]">
+                                Size {item.kich_co}
+                              </span>
+                            )}
+                            <span>Số lượng: <strong className="text-gray-900">{item.so_luong}</strong></span>
+                            <span>Đơn giá: {formatCurrency(item.gia_ban)}</span>
+                          </div>
+                          {item.tuy_chon && (
+                            <p className="text-[11px] text-gray-500 mt-1 italic">
+                              Tùy chọn: {typeof item.tuy_chon === 'string' ? item.tuy_chon : JSON.stringify(item.tuy_chon)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="text-right flex-shrink-0">
+                        <span className="font-black text-[#b22830] text-sm md:text-base">
+                          {formatCurrency(itemTotal)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Price Calculation Summary */}
+              <div className="pt-4 border-t border-gray-100 bg-[#faf7f4] rounded-2xl p-5 space-y-2.5">
+                <div className="flex justify-between text-xs md:text-sm text-gray-600 font-medium">
+                  <span>Tạm tính tiền món:</span>
+                  <span className="font-bold text-gray-900">
+                    {formatCurrency(
+                      (currentOrder.items || []).reduce(
+                        (sum, item) => sum + (Number(item.gia_ban) || 0) * (Number(item.so_luong) || 1),
+                        0
+                      )
+                    )}
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-xs md:text-sm text-gray-600 font-medium">
+                  <span>Phí giao hàng:</span>
+                  <span className="font-bold text-gray-900">
+                    {Number(currentTracking?.delivery_fee || 0) > 0
+                      ? formatCurrency(currentTracking.delivery_fee)
+                      : 'Miễn phí'}
+                  </span>
+                </div>
+
+                {Number(currentOrder.so_tien_giam || 0) > 0 && (
+                  <div className="flex justify-between text-xs md:text-sm text-emerald-700 font-bold">
+                    <span>Giảm giá voucher:</span>
+                    <span>-{formatCurrency(currentOrder.so_tien_giam)}</span>
+                  </div>
+                )}
+
+                <div className="pt-3 border-t border-gray-200/80 flex justify-between items-center text-sm md:text-base">
+                  <span className="font-black text-gray-900 uppercase tracking-wide">Tổng tiền thanh toán:</span>
+                  <span className="font-black text-xl md:text-2xl text-[#b22830] font-sans">
+                    {formatCurrency(currentOrder.tong_tien)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Bottom Actions */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={handleResetSearch}
+                  className="w-full sm:w-auto px-6 py-3 rounded-2xl border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-bold text-xs md:text-sm transition-all shadow-xs cursor-pointer text-center"
+                >
+                  Tra cứu đơn hàng khác
+                </button>
+
+                <button
+                  type="button"
+                  onClick={onOrderMore || (() => onNavigate?.('order'))}
+                  className="w-full sm:w-auto px-8 py-3 rounded-2xl bg-[#b22830] hover:bg-[#961c23] text-white font-bold text-xs md:text-sm transition-all shadow-md shadow-red-900/20 active:scale-95 cursor-pointer text-center flex items-center justify-center gap-2"
+                >
+                  <ShoppingBagIcon className="w-4 h-4" />
+                  <span>Tiếp tục đặt món</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        ) : (
+          /* ── INITIAL STATE: GUIDE & INSTRUCTIONS ── */
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fadeIn">
+            
+            <div className="bg-white rounded-3xl p-6 shadow-sm border border-[#ede5dc] flex flex-col items-center text-center space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-red-50 text-[#b22830] flex items-center justify-center">
+                <DocumentDuplicateIcon className="w-6 h-6" />
+              </div>
+              <h3 className="font-black text-sm uppercase tracking-wide text-gray-900">
+                1. Lấy mã tra cứu
+              </h3>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Kiểm tra <strong>Email xác nhận đơn hàng</strong> hoặc tin nhắn biên nhận sau khi đặt hàng để lấy mã tra cứu (VD: AC-A1B2C).
+              </p>
+            </div>
+
+            <div className="bg-white rounded-3xl p-6 shadow-sm border border-[#ede5dc] flex flex-col items-center text-center space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center">
+                <MagnifyingGlassIcon className="w-6 h-6" />
+              </div>
+              <h3 className="font-black text-sm uppercase tracking-wide text-gray-900">
+                2. Tra cứu tức thì
+              </h3>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Nhập mã vào khung tìm kiếm bên trên và nhấn <strong>"Tra cứu ngay"</strong> để kiểm tra tiến trình xử lý đơn hàng.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-3xl p-6 shadow-sm border border-[#ede5dc] flex flex-col items-center text-center space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                <ShieldCheckIcon className="w-6 h-6" />
+              </div>
+              <h3 className="font-black text-sm uppercase tracking-wide text-gray-900">
+                3. Đảm bảo quyền lợi
+              </h3>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Mọi thông tin đơn hàng, hóa đơn và người giao hàng đều được bảo mật và cập nhật liên tục theo thời gian thực.
+              </p>
+            </div>
+
+          </div>
+        )}
+
       </div>
     </div>
   );

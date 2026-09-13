@@ -34,7 +34,7 @@ const ICON_PRESETS = [
   { name: 'Utensils', icon: Utensils, label: 'Đồ ăn' },
   { name: 'Cake', icon: Cake, label: 'Bánh ngọt' },
   { name: 'Flame', icon: Flame, label: 'Món hot' },
-  { name: 'Package', icon: Package, label: 'Gói/Combo' },
+  { name: 'Package', icon: Package, label: 'Gói và Combo' },
   { name: 'Sparkles', icon: Sparkles, label: 'Đặc biệt' },
   { name: 'Heart', icon: Heart, label: 'Yêu thích' }
 ]
@@ -209,74 +209,6 @@ export function AdminCategoryManagementPanel({
 
   return (
     <div className="cat-manage-container">
-      {/* Header section with Action Button */}
-      <div className="cat-manage-header">
-        <div className="cat-manage-header-title">
-          <div className="cat-manage-icon-wrapper">
-            <FolderTree size={24} className="cat-header-icon" />
-          </div>
-          <div>
-            <h2>Quản lý danh mục thực đơn</h2>
-            <p>Thiết lập danh mục chính và danh mục phụ để phân loại món ăn, đồ uống trong hệ thống menu</p>
-          </div>
-        </div>
-        <div className="cat-manage-header-actions">
-          {onRefresh && (
-            <button type="button" className="cat-refresh-btn" onClick={onRefresh} title="Tải lại dữ liệu">
-              <RefreshCw size={16} />
-              <span>Tải lại</span>
-            </button>
-          )}
-          <button type="button" className="cat-btn cat-btn--success" onClick={handleOpenAddModal}>
-            <Plus size={18} />
-            <span>Thêm danh mục mới</span>
-          </button>
-        </div>
-      </div>
-
-      {/* KPI Overview Cards */}
-      <div className="cat-kpi-grid">
-        <div className="cat-kpi-card cat-kpi-card--total">
-          <div className="cat-kpi-icon cat-kpi-icon--total">
-            <FolderTree size={20} />
-          </div>
-          <div className="cat-kpi-content">
-            <span className="cat-kpi-label">Tổng số danh mục</span>
-            <span className="cat-kpi-value">{stats.total}</span>
-          </div>
-        </div>
-
-        <div className="cat-kpi-card cat-kpi-card--level1">
-          <div className="cat-kpi-icon cat-kpi-icon--level1">
-            <Layers size={20} />
-          </div>
-          <div className="cat-kpi-content">
-            <span className="cat-kpi-label">Danh mục chính (Cấp 1)</span>
-            <span className="cat-kpi-value">{stats.level1Count}</span>
-          </div>
-        </div>
-
-        <div className="cat-kpi-card cat-kpi-card--level2">
-          <div className="cat-kpi-icon cat-kpi-icon--level2">
-            <Tag size={20} />
-          </div>
-          <div className="cat-kpi-content">
-            <span className="cat-kpi-label">Danh mục phụ (Cấp 2)</span>
-            <span className="cat-kpi-value">{stats.level2Count}</span>
-          </div>
-        </div>
-
-        <div className="cat-kpi-card cat-kpi-card--active">
-          <div className="cat-kpi-icon cat-kpi-icon--active">
-            <Coffee size={20} />
-          </div>
-          <div className="cat-kpi-content">
-            <span className="cat-kpi-label">Đang có sản phẩm</span>
-            <span className="cat-kpi-value">{stats.activeWithProducts}</span>
-          </div>
-        </div>
-      </div>
-
       {/* Category List & Data Table (FULL WIDTH 100%) */}
       <div className="cat-list-card cat-list-card--full">
         {/* List Toolbar & Filters */}
@@ -303,7 +235,7 @@ export function AdminCategoryManagementPanel({
             )}
           </div>
 
-          {/* Level Filter Tabs */}
+          {/* Level Filter Tabs & Actions */}
           <div className="cat-toolbar-right">
             <div className="cat-filter-pills">
               <button
@@ -328,6 +260,12 @@ export function AdminCategoryManagementPanel({
                 Danh mục phụ ({stats.level2Count})
               </button>
             </div>
+            {onRefresh && (
+              <button type="button" className="cat-refresh-btn" onClick={onRefresh} title="Tải lại dữ liệu">
+                <RefreshCw size={15} />
+                <span>Tải lại</span>
+              </button>
+            )}
             <button type="button" className="cat-btn cat-btn--success cat-btn--sm" onClick={handleOpenAddModal}>
               <Plus size={16} />
               <span>Tạo danh mục</span>
@@ -440,85 +378,34 @@ export function AdminCategoryManagementPanel({
                             </span>
                           </td>
 
-                          <td style={{ textAlign: 'center', position: 'relative', whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
-                            <button
-                              type="button"
-                              className="btn-icon-more"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setOpenCatActionId(openCatActionId === (cat.id || cat.code) ? null : (cat.id || cat.code))
-                              }}
-                              title="Thao tác"
-                            >
-                              <MoreVertical size={16} color="#475569" />
-                            </button>
-
-                            {openCatActionId === (cat.id || cat.code) && (
-                              <div
-                                style={{
-                                  position: 'absolute',
-                                  right: 'calc(100% + 6px)',
-                                  top: index >= (array.length - 2) ? 'auto' : '-4px',
-                                  bottom: index >= (array.length - 2) ? '-4px' : 'auto',
-                                  backgroundColor: '#ffffff',
-                                  border: '1px solid #e2e8f0',
-                                  borderRadius: '8px',
-                                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-                                  zIndex: 9999,
-                                  minWidth: '170px',
-                                  padding: '0.35rem',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  gap: '0.15rem'
+                          <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', justifyContent: 'center' }}>
+                              <button
+                                type="button"
+                                className="admin-table-action-btn btn-edit"
+                                onClick={() => {
+                                  startEditCategory(cat)
+                                  setIsModalOpen(true)
                                 }}
-                                onClick={(e) => e.stopPropagation()}
+                                title="Chỉnh sửa danh mục"
                               >
-                                <button
-                                  type="button"
-                                  className="btn-dropdown-item"
-                                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.45rem 0.65rem', borderRadius: '6px', fontSize: '0.8125rem', fontWeight: '500', color: '#2563eb', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                                  onClick={() => {
-                                    setOpenCatActionId(null)
-                                    startEditCategory(cat)
-                                    setIsModalOpen(true)
-                                  }}
-                                >
-                                  <Edit3 size={14} color="#2563eb" /> Chỉnh sửa danh mục
-                                </button>
+                                <Edit3 size={15} />
+                              </button>
 
-                                <div style={{ borderTop: '1px solid #f1f5f9', margin: '0.2rem 0' }}></div>
-
-                                <button
-                                  type="button"
-                                  className="btn-dropdown-item danger"
-                                  disabled={productCount > 0}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.5rem',
-                                    width: '100%',
-                                    padding: '0.45rem 0.65rem',
-                                    borderRadius: '6px',
-                                    fontSize: '0.8125rem',
-                                    fontWeight: '500',
-                                    color: productCount > 0 ? '#94a3b8' : '#dc2626',
-                                    background: 'transparent',
-                                    border: 'none',
-                                    cursor: productCount > 0 ? 'not-allowed' : 'pointer',
-                                    textAlign: 'left',
-                                    opacity: productCount > 0 ? 0.6 : 1
-                                  }}
-                                  onClick={() => {
-                                    if (productCount > 0) return
-                                    setOpenCatActionId(null)
-                                    deleteCategory(cat.id || cat.code, cat.label)
-                                  }}
-                                  title={productCount > 0 ? `Không thể xóa vì danh mục đang chứa ${productCount} sản phẩm` : 'Xóa danh mục này'}
-                                >
-                                  <Trash2 size={14} color={productCount > 0 ? '#94a3b8' : '#dc2626'} /> Xóa danh mục
-                                </button>
-                              </div>
-                            )}
+                              <button
+                                type="button"
+                                className="admin-table-action-btn btn-delete"
+                                disabled={productCount > 0}
+                                onClick={() => {
+                                  if (productCount > 0) return
+                                  deleteCategory(cat.id || cat.code, cat.label)
+                                }}
+                                title={productCount > 0 ? `Không thể xóa vì danh mục đang chứa ${productCount} sản phẩm` : 'Xóa danh mục này'}
+                                style={{ opacity: productCount > 0 ? 0.4 : 1, cursor: productCount > 0 ? 'not-allowed' : 'pointer' }}
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       )

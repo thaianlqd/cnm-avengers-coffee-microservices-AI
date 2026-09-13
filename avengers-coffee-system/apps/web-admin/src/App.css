@@ -95,7 +95,7 @@
 }
 
 .login-form button,
-.panel button,
+.panel-btn,
 .logout-btn,
 .nav-tab {
   border: none;
@@ -106,7 +106,7 @@
 }
 
 .login-form button,
-.panel button,
+.panel-btn,
 .logout-btn {
   background: linear-gradient(120deg, var(--burnt), var(--burnt-soft));
   color: #fff;
@@ -10347,6 +10347,113 @@ button.btn-danger:hover,
   stroke-width: 2.2px !important;
 }
 
+/* ==========================================================================
+   UNIFIED ADMIN TABLE ACTION BUTTONS (NO PADDING SQUEEZING SVG)
+   ========================================================================== */
+.admin-table-action-btn,
+button.admin-table-action-btn,
+.panel button.admin-table-action-btn,
+.system-admin-panel button.admin-table-action-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  max-width: 32px !important;
+  max-height: 32px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 8px !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  border: 1px solid transparent !important;
+  flex-shrink: 0 !important;
+}
+
+.admin-table-action-btn svg,
+button.admin-table-action-btn svg,
+.panel button.admin-table-action-btn svg {
+  display: block !important;
+  width: 15px !important;
+  height: 15px !important;
+  min-width: 15px !important;
+  min-height: 15px !important;
+  flex-shrink: 0 !important;
+  stroke-width: 2px !important;
+  pointer-events: none !important;
+}
+
+/* Variant 1: Edit / View (Indigo/Blue) */
+.admin-table-action-btn.btn-edit,
+button.admin-table-action-btn.btn-edit {
+  background-color: #eff6ff !important;
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #2563eb !important;
+}
+.admin-table-action-btn.btn-edit:hover,
+button.admin-table-action-btn.btn-edit:hover {
+  background-color: #2563eb !important;
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25) !important;
+}
+
+/* Variant 2: Special / Membership / Key (Purple/Violet) */
+.admin-table-action-btn.btn-special,
+button.admin-table-action-btn.btn-special {
+  background-color: #f5f3ff !important;
+  background: #f5f3ff !important;
+  border-color: #ddd6fe !important;
+  color: #7c3aed !important;
+}
+.admin-table-action-btn.btn-special:hover,
+button.admin-table-action-btn.btn-special:hover {
+  background-color: #7c3aed !important;
+  background: #7c3aed !important;
+  border-color: #7c3aed !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 10px rgba(124, 58, 237, 0.25) !important;
+}
+
+/* Variant 3: Delete / Danger / Reject (Red) */
+.admin-table-action-btn.btn-delete,
+button.admin-table-action-btn.btn-delete {
+  background-color: #fef2f2 !important;
+  background: #fef2f2 !important;
+  border-color: #fecaca !important;
+  color: #dc2626 !important;
+}
+.admin-table-action-btn.btn-delete:hover,
+button.admin-table-action-btn.btn-delete:hover {
+  background-color: #dc2626 !important;
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 10px rgba(220, 38, 38, 0.25) !important;
+}
+
+/* Variant 4: Success / Activate (Emerald Green) */
+.admin-table-action-btn.btn-success,
+button.admin-table-action-btn.btn-success {
+  background-color: #ecfdf5 !important;
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #059669 !important;
+}
+.admin-table-action-btn.btn-success:hover,
+button.admin-table-action-btn.btn-success:hover {
+  background-color: #059669 !important;
+  background: #059669 !important;
+  border-color: #059669 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 10px rgba(5, 150, 105, 0.25) !important;
+}
+
 .menu-pagination-bar,
 .cat-pagination-bar {
   display: flex;
@@ -12366,6 +12473,38 @@ svg.lucide *,
   box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35) !important;
 }
 
+.delivery-input-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  padding: 0 0.75rem !important;
+  height: 42px !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
+  transition: border-color 0.2s ease !important;
+}
+
+.delivery-input-wrapper:focus-within {
+  border-color: #4f46e5 !important;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15) !important;
+}
+
+.delivery-input-wrapper input,
+.delivery-input-wrapper select {
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+  font-size: 0.875rem !important;
+  color: #0f172a !important;
+  box-shadow: none !important;
+}
+
 /* Green Save Button */
 .btn-save-green {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
@@ -12397,3 +12536,328 @@ svg.lucide *,
   box-shadow: none !important;
   opacity: 0.7 !important;
 }
+
+/* ==========================================================================
+   KRAVIO / 43TOWEB ENTERPRISE PRECISION DESIGN SYSTEM OVERRIDES
+   ========================================================================== */
+
+/* 1. Base Panel & Container Overrides */
+.system-admin-panel,
+.branch-manage-container,
+.customer-manage-container,
+.category-manage-container,
+.menu-manage-container,
+.promotion-manage-container {
+  background: #f7f9fb !important;
+  border: none !important;
+  box-shadow: none !important;
+  font-family: 'Inter', sans-serif !important;
+  width: 100% !important;
+  color: #111827 !important;
+}
+
+/* 2. White Surface Cards */
+.system-admin-card,
+.branch-list-card,
+.branch-form-card,
+.admin-card {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 10px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  padding: 1.35rem !important;
+  transition: box-shadow 0.2s ease !important;
+}
+
+.system-admin-card:hover,
+.branch-list-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+}
+
+/* 3. KPI Stat Cards */
+.branch-kpi-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+  gap: 1.25rem !important;
+  margin-bottom: 1.25rem !important;
+}
+
+.branch-kpi-card {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 10px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  padding: 1.25rem !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.branch-kpi-icon {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+.branch-kpi-icon--total { background: #eff6ff !important; color: #2563eb !important; }
+.branch-kpi-icon--active { background: #ecfdf5 !important; color: #10b981 !important; }
+.branch-kpi-icon--inactive { background: #fef2f2 !important; color: #ef4444 !important; }
+.branch-kpi-icon--staff { background: #fffbeb !important; color: #f59e0b !important; }
+
+.branch-kpi-label {
+  font-size: 0.775rem !important;
+  font-weight: 600 !important;
+  color: #6b7280 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  display: block !important;
+}
+
+.branch-kpi-value {
+  font-size: 1.5rem !important;
+  font-weight: 800 !important;
+  color: #111827 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.2 !important;
+  display: block !important;
+  margin-top: 0.15rem !important;
+}
+
+/* 4. Toolbar, Search & Filter Controls */
+.branch-toolbar {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 0.85rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.branch-search-input-wrap input,
+.admin-search-input {
+  background: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 6px !important;
+  padding: 0.45rem 2rem 0.45rem 0.85rem !important;
+  font-size: 0.825rem !important;
+  color: #111827 !important;
+  outline: none !important;
+  transition: all 0.15s ease !important;
+}
+
+.branch-search-input-wrap input:focus,
+.admin-search-input:focus {
+  border-color: #2563eb !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+.branch-filter-select,
+.admin-filter-select {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 6px !important;
+  padding: 0.45rem 0.85rem !important;
+  font-size: 0.825rem !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+  outline: none !important;
+  cursor: pointer !important;
+  transition: border-color 0.15s ease !important;
+}
+
+.branch-filter-select:focus,
+.admin-filter-select:focus {
+  border-color: #2563eb !important;
+}
+
+/* 5. Kravio Modern Enterprise Tables */
+.branch-table-wrapper,
+.admin-table-wrapper {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  background: #ffffff !important;
+}
+
+.branch-table,
+.admin-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  font-size: 0.825rem !important;
+  text-align: left !important;
+}
+
+.branch-table th,
+.admin-table th {
+  background: #f8fafc !important;
+  color: #64748b !important;
+  font-weight: 700 !important;
+  font-size: 0.725rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  padding: 0.75rem 1rem !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.branch-table td,
+.admin-table td {
+  padding: 0.85rem 1rem !important;
+  border-bottom: 1px solid #f3f4f6 !important;
+  color: #374151 !important;
+  background: #ffffff !important;
+  vertical-align: middle !important;
+  transition: background 0.12s ease !important;
+}
+
+.branch-table-row:hover td,
+.admin-table-row:hover td {
+  background: #f8fafc !important;
+}
+
+/* 6. Status Pills & Badges */
+.badge-status-active,
+.status-pill--active {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  padding: 0.25rem 0.65rem !important;
+  border-radius: 999px !important;
+  font-size: 0.725rem !important;
+  font-weight: 700 !important;
+  background: #ecfdf5 !important;
+  color: #059669 !important;
+  border: 1px solid #a7f3d0 !important;
+}
+
+.badge-status-inactive,
+.status-pill--inactive {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  padding: 0.25rem 0.65rem !important;
+  border-radius: 999px !important;
+  font-size: 0.725rem !important;
+  font-weight: 700 !important;
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+  border: 1px solid #fecaca !important;
+}
+
+/* 7. Action Buttons (Strict UX UI Color System) */
+/* Create & Save = Green */
+.branch-btn--create,
+.branch-btn--save,
+.btn-kravio-create {
+  background: #10b981 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 0.45rem 1rem !important;
+  font-size: 0.825rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  box-shadow: 0 1px 2px rgba(16, 185, 129, 0.2) !important;
+  transition: all 0.15s ease !important;
+}
+
+.branch-btn--create:hover,
+.branch-btn--save:hover,
+.btn-kravio-create:hover {
+  background: #059669 !important;
+}
+
+/* Cancel & Delete = Red */
+.branch-btn--cancel,
+.btn-kravio-delete {
+  background: #fef2f2 !important;
+  color: #ef4444 !important;
+  border: 1px solid #fee2e2 !important;
+  border-radius: 6px !important;
+  padding: 0.45rem 0.95rem !important;
+  font-size: 0.825rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  transition: all 0.15s ease !important;
+}
+
+.branch-btn--cancel:hover,
+.btn-kravio-delete:hover {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  border-color: #ef4444 !important;
+}
+
+/* Edit & View = Blue / Indigo */
+.branch-action-btn--edit,
+.btn-kravio-edit {
+  background: #eff6ff !important;
+  color: #2563eb !important;
+  border: 1px solid #dbeafe !important;
+  border-radius: 6px !important;
+  padding: 0.35rem 0.75rem !important;
+  font-size: 0.775rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  transition: all 0.15s ease !important;
+}
+
+.branch-action-btn--edit:hover,
+.btn-kravio-edit:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+}
+
+/* Pagination Bar */
+.branch-pagination-bar,
+.admin-pagination-bar {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 0.85rem 0.25rem 0.25rem 0.25rem !important;
+  font-size: 0.8rem !important;
+  color: #6b7280 !important;
+}
+
+.branch-pg-btn,
+.admin-pg-btn {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 6px !important;
+  border: 1px solid #e5e7eb !important;
+  background: #ffffff !important;
+  color: #374151 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.12s ease !important;
+}
+
+.branch-pg-btn:hover:not(:disabled),
+.admin-pg-btn:hover:not(:disabled) {
+  background: #f3f4f6 !important;
+  border-color: #d1d5db !important;
+  color: #111827 !important;
+}
+
+.branch-pg-btn:disabled,
+.admin-pg-btn:disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+}
