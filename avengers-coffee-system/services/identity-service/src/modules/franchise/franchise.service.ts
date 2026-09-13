@@ -336,7 +336,7 @@ export class FranchiseService {
           <tr><td style="color: #64748b; padding: 6px 0; width: 38%;">Họ tên đối tác:</td><td style="font-weight: 700; color: #0f172a;">${hoSo.ho_ten}</td></tr>
           <tr><td style="color: #64748b; padding: 6px 0;">Email liên hệ:</td><td style="font-weight: 700; color: #0f172a;">${hoSo.email}</td></tr>
           <tr><td style="color: #64748b; padding: 6px 0;">Số điện thoại:</td><td style="font-weight: 700; color: #0f172a;">${hoSo.so_dien_thoai}</td></tr>
-          <tr><td style="color: #64748b; padding: 6px 0;">Khu vực đăng ký:</td><td style="font-weight: 700; color: #0f172a;">${hoSo.quan_huyen ? hoSo.quan_huyen + ' - ' : ''}${hoSo.thanh_pho || 'Chưa xác định'}</td></tr>
+          <tr><td style="color: #64748b; padding: 6px 0;">Khu vực đăng ký:</td><td style="font-weight: 700; color: #0f172a;">${hoSo.phuong_xa ? hoSo.phuong_xa + ' - ' : ''}${hoSo.thanh_pho || 'Chưa xác định'}</td></tr>
           <tr><td style="color: #64748b; padding: 6px 0;">Gói nhượng quyền:</td><td style="font-weight: 800; color: #b45309;">${hoSo.goi_kiosk}</td></tr>
         </table>
       </div>
@@ -567,12 +567,12 @@ export class FranchiseService {
       '[Avengers Coffee] Yêu cầu đặt cọc giữ chỗ khu vực nhượng quyền',
       this.buildFranchiseBrandedHtml({
         heroTitle: 'YÊU CẦU ĐẶT CỌC GIỮ CHỖ KHU VỰC',
-        heroSubtitle: `KHU VỰC: ${hoSo.quan_huyen ? hoSo.quan_huyen + ' - ' : ''}${hoSo.thanh_pho}`,
+        heroSubtitle: `KHU VỰC: ${hoSo.phuong_xa ? hoSo.phuong_xa + ' - ' : ''}${hoSo.thanh_pho}`,
         badgeTitle: 'SỐ TIỀN ĐẶT CỌC GIỮ CHỖ',
         badgeValue: '5.000.000 VNĐ',
         badgeSub: 'Khoản cọc sẽ được khấu trừ trực tiếp vào hợp đồng nhượng quyền',
         greetingTitle: `Kính chào ${hoSo.ho_ten},`,
-        greetingBody: `Hồ sơ đăng ký của bạn đã vượt qua vòng thẩm định sơ bộ. Để hệ thống tiến hành cấp tài khoản quản trị Kiosk và thiết lập độc quyền khu vực (${hoSo.quan_huyen ? hoSo.quan_huyen + ' - ' : ''}${hoSo.thanh_pho}), vui lòng hoàn tất khoản đặt cọc giữ chỗ:`,
+        greetingBody: `Hồ sơ đăng ký của bạn đã vượt qua vòng thẩm định sơ bộ. Để hệ thống tiến hành cấp tài khoản quản trị Kiosk và thiết lập độc quyền khu vực (${hoSo.phuong_xa ? hoSo.phuong_xa + ' - ' : ''}${hoSo.thanh_pho}), vui lòng hoàn tất khoản đặt cọc giữ chỗ:`,
         contentHtml: depositTableHtml,
         noticeTitle: 'XÁC NHẬN TỰ ĐỘNG:',
         noticeHtml: 'Sau khi thanh toán thành công, hệ thống tự động sẽ đối soát giao dịch và gửi tài khoản quản lý Kiosk về email của bạn trong vòng vài phút.',
@@ -779,9 +779,9 @@ export class FranchiseService {
       '[Avengers Coffee] Thông báo kết quả xét duyệt hồ sơ nhượng quyền',
       this.buildFranchiseBrandedHtml({
         heroTitle: 'THÔNG BÁO KẾT QUẢ XÉT DUYỆT HỒ SƠ',
-        heroSubtitle: `KHU VỰC: ${hoSo.quan_huyen ? hoSo.quan_huyen + ' - ' : ''}${hoSo.thanh_pho}`,
+        heroSubtitle: `KHU VỰC: ${hoSo.phuong_xa ? hoSo.phuong_xa + ' - ' : ''}${hoSo.thanh_pho}`,
         greetingTitle: `Kính chào ${hoSo.ho_ten},`,
-        greetingBody: `Cảm ơn bạn đã quan tâm đến hệ thống nhượng quyền Avengers Coffee. Rất tiếc, hồ sơ đăng ký nhượng quyền khu vực (${hoSo.quan_huyen ? hoSo.quan_huyen + ' - ' : ''}${hoSo.thanh_pho}) của bạn chưa phù hợp ở thời điểm hiện tại.`,
+        greetingBody: `Cảm ơn bạn đã quan tâm đến hệ thống nhượng quyền Avengers Coffee. Rất tiếc, hồ sơ đăng ký nhượng quyền khu vực (${hoSo.phuong_xa ? hoSo.phuong_xa + ' - ' : ''}${hoSo.thanh_pho}) của bạn chưa phù hợp ở thời điểm hiện tại.`,
         contentHtml: `
           <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 14px; padding: 18px 20px;">
             <div style="font-size: 12.5px; font-weight: 800; color: #be123c; text-transform: uppercase; margin-bottom: 6px;">

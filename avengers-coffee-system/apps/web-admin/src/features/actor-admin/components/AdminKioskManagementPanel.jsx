@@ -23,8 +23,6 @@ import { getAdminAccessToken } from '../../../lib/adminFetch'
 
 const ITEMS_PER_PAGE = 6;
 
-import { API_BASE_URL } from '../../admin-dashboard/constants';
-
 
 function fmtMoney(num) {
   if (!num) return '0 đ'
@@ -305,24 +303,6 @@ export function AdminKioskManagementPanel({ session }) {
                   </div>
                   <div>{getStatusBadge(k.trang_thai)}</div>
                 </div>
-                <div style={{
-                  padding: '4px 10px', borderRadius: 99, fontSize: '0.75rem', fontWeight: 800,
-                  background: k.trang_thai === 'DANG_HOAT_DONG' ? '#dcfce7' : 
-                              k.trang_thai === 'TAM_DUNG' ? '#ffedd5' :
-                              k.trang_thai === 'NGUNG_HOAT_DONG' ? '#f3f4f6' : 
-                              k.trang_thai === 'CHO_KY_HOP_DONG' ? '#e0e7ff' : '#fef9c3',
-                  color: k.trang_thai === 'DANG_HOAT_DONG' ? '#059669' : 
-                         k.trang_thai === 'TAM_DUNG' ? '#c2410c' :
-                         k.trang_thai === 'NGUNG_HOAT_DONG' ? '#4b5563' : 
-                         k.trang_thai === 'CHO_KY_HOP_DONG' ? '#4338ca' : '#d97706'
-                }}>
-                  {k.trang_thai === 'DANG_HOAT_DONG' ? 'ĐANG HOẠT ĐỘNG' : 
-                   k.trang_thai === 'TAM_DUNG' ? 'TẠM DỪNG' :
-                   k.trang_thai === 'NGUNG_HOAT_DONG' ? 'ĐÃ ĐÓNG' : 
-                   k.trang_thai === 'CHO_KY_HOP_DONG' ? 'CHỜ KÝ HĐ' : 'ĐANG SETUP'}
-                </div>
-              </div>
-
               {/* Card Body */}
               <div style={{ padding: '1rem 1.15rem', fontSize: '0.8125rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '0.55rem', flex: 1 }}>
                 <div>
@@ -332,65 +312,41 @@ export function AdminKioskManagementPanel({ session }) {
                   <span style={{ color: '#64748b' }}>Địa chỉ:</span> <strong>{k.dia_chi_day_du || k.dia_chi || k.thanh_pho || '(Chưa cập nhật)'}</strong>
                 </div>
                 <div>
-                  <span style={{ color: '#64748b' }}>ID Đối tác:</span> <strong style={{ fontFamily: 'monospace' }}>{k.franchisee_id}</strong>
+                  <span style={{ color: '#64748b' }}>ID Đối tác:</span> <strong style={{ fontFamily: 'monospace' }}>{k.franchisee_id || 'Chưa gán'}</strong>
                 </div>
-                
-                {k.hop_dong && (
-                  <div style={{ marginTop: '0.5rem', padding: '12px', background: '#f0f9ff', borderRadius: '8px', border: '1px dashed #bae6fd' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, color: '#0369a1', marginBottom: 8 }}>
-                      <FileText size={16} /> Hợp đồng hiệu lực
+
+                {/* Contract Info Box */}
+                {k.hop_dong ? (
+                  <div style={{ marginTop: '0.45rem', padding: '0.75rem', backgroundColor: '#f0f9ff', borderRadius: '8px', border: '1px solid #bae6fd', fontSize: '0.775rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                      <strong style={{ color: '#0369a1', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <FileText size={14} /> Hợp đồng hiệu lực
+                      </strong>
+                      <span style={{ color: '#0369a1', fontWeight: '700' }}>Royalty: {k.hop_dong.ty_le_royalty_phan_tram || 7}%</span>
                     </div>
-                    <div><strong>Tỷ lệ Royalty:</strong> {k.hop_dong.ty_le_royalty_phan_tram}%</div>
-                    <div><strong>Ngày ký:</strong> {fmtDate(k.hop_dong.ngay_ky)}</div>
-                    <div><strong>Hết hạn:</strong> {fmtDate(k.hop_dong.ngay_het_han)}</div>
-                    {k.hop_dong.file_hop_dong_url && (
-                      <div style={{ marginTop: 4 }}>
-                        <strong>Bản Scan:</strong> <button onClick={() => setContractModal(k)} style={{ background: 'none', border: 'none', padding: 0, color: '#2563eb', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }}>Xem Hợp đồng (Bản in)</button>
-                      </div>
-                    )}
+                    <div style={{ color: '#475569' }}>
+                      Thời hạn: {fmtDate(k.hop_dong.ngay_ky)} đến {fmtDate(k.hop_dong.ngay_het_han)}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setContractModal(k)}
+                      style={{ marginTop: '0.45rem', background: 'none', border: 'none', padding: 0, color: '#2563eb', textDecoration: 'underline', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                    >
+                      Xem bản in hợp đồng →
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ marginTop: '0.45rem', padding: '0.65rem 0.75rem', backgroundColor: '#fef2f2', borderRadius: '8px', border: '1px dashed #fca5a5', color: '#b91c1c', fontSize: '0.75rem', fontWeight: '600' }}>
+                    Chưa có hợp đồng chính thức
                   </div>
                 )}
 
+                {k.so_cong_no_chua_thanh_toan > 0 && (
+                  <div style={{ marginTop: '0.35rem', padding: '0.45rem 0.65rem', backgroundColor: '#fff7ed', borderRadius: '6px', border: '1px solid #fed7aa', color: '#c2410c', fontWeight: '700', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <AlertTriangle size={14} /> Có {k.so_cong_no_chua_thanh_toan} khoản nợ cần thanh toán
                   </div>
-                  <div>
-                    <span style={{ color: '#64748b' }}>Địa chỉ:</span> <strong>{k.dia_chi_day_du || k.dia_chi || '---'}</strong>
-                  </div>
-                  <div>
-                    <span style={{ color: '#64748b' }}>Đối tác quản lý:</span> <strong style={{ color: '#4f46e5' }}>{k.franchisee_id || 'Chưa gán'}</strong>
-                  </div>
-
-                  {/* Contract Info Box */}
-                  {k.hop_dong ? (
-                    <div style={{ marginTop: '0.45rem', padding: '0.75rem', backgroundColor: '#f0f9ff', borderRadius: '8px', border: '1px solid #bae6fd', fontSize: '0.775rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-                        <strong style={{ color: '#0369a1', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                          <FileText size={14} /> Hợp đồng hiệu lực
-                        </strong>
-                        <span style={{ color: '#0369a1', fontWeight: '700' }}>Royalty: {k.hop_dong.ty_le_royalty_phan_tram || 7}%</span>
-                      </div>
-                      <div style={{ color: '#475569' }}>
-                        Thời hạn: {fmtDate(k.hop_dong.ngay_ky)} đến {fmtDate(k.hop_dong.ngay_het_han)}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setContractModal(k)}
-                        style={{ marginTop: '0.45rem', background: 'none', border: 'none', padding: 0, color: '#2563eb', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-                      >
-                        Xem bản in hợp đồng →
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={{ marginTop: '0.45rem', padding: '0.65rem 0.75rem', backgroundColor: '#fef2f2', borderRadius: '8px', border: '1px dashed #fca5a5', color: '#b91c1c', fontSize: '0.75rem', fontWeight: '600' }}>
-                      Chưa có hợp đồng chính thức
-                    </div>
-                  )}
-
-                  {k.so_cong_no_chua_thanh_toan > 0 && (
-                    <div style={{ marginTop: '0.35rem', padding: '0.45rem 0.65rem', backgroundColor: '#fff7ed', borderRadius: '6px', border: '1px solid #fed7aa', color: '#c2410c', fontWeight: '700', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <AlertTriangle size={14} /> Có {k.so_cong_no_chua_thanh_toan} khoản nợ cần thanh toán
-                    </div>
-                  )}
-                </div>
+                )}
+              </div>
 
                 {/* Card Actions Footer */}
                 <div style={{ padding: '0.75rem 1.15rem', backgroundColor: '#f8fafc', borderTop: '1px solid #f1f5f9', display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
