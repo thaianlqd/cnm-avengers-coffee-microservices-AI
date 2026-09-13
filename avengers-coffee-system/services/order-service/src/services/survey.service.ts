@@ -91,6 +91,10 @@ export class SurveyService {
       throw new NotFoundException('Khong tim thay bieu mau khao sat');
     }
 
+    try {
+      await this.responseRepo.delete({ ma_bieu_mau: id });
+    } catch {}
+
     await this.formRepo.delete(id);
     return { message: 'Xoa bieu mau khao sat thanh cong', id };
   }

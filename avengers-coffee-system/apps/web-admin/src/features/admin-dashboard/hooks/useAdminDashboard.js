@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 import { API_BASE_URL, ORDER_STATUSES, OVERVIEW_TIME_RANGES, PAYMENT_METHOD_LABEL } from '../constants'
 import { cutTimeByRange, normalizeViText, toDateKey, toDateLabel } from '../utils'
+import { getAdminAccessToken } from '../../../lib/adminFetch'
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || `http://${window.location.hostname}:3005`
 
@@ -422,10 +423,10 @@ export function useAdminDashboard() {
   const taiDanhSachBieuMau = async () => {
     setSurveysState((prev) => ({ ...prev, loading: true, error: '' }))
     try {
-      const token = session?.token || session?.accessToken
+      const token = getAdminAccessToken() || session?.token || session?.accessToken
       const response = await fetch(`${API_BASE_URL}/surveys/forms`, {
         headers: {
-          Authorization: `Bearer ${token}`
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         }
       })
       const payload = await response.json().catch(() => ({}))
@@ -439,11 +440,11 @@ export function useAdminDashboard() {
   const taiDanhSachPhanHoi = async () => {
     setSurveyResponsesState((prev) => ({ ...prev, loading: true, error: '' }))
     try {
-      const token = session?.token || session?.accessToken
+      const token = getAdminAccessToken() || session?.token || session?.accessToken
       const branchQuery = (sessionRole === 'MANAGER' && sessionBranchCode) ? `?branch_code=${encodeURIComponent(sessionBranchCode)}` : ''
       const response = await fetch(`${API_BASE_URL}/surveys/responses${branchQuery}`, {
         headers: {
-          Authorization: `Bearer ${token}`
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         }
       })
       const payload = await response.json().catch(() => ({}))
@@ -468,12 +469,12 @@ export function useAdminDashboard() {
 
   const taoBieuMauKhaoSat = async (formPayload) => {
     try {
-      const token = session?.token || session?.accessToken
+      const token = getAdminAccessToken() || session?.token || session?.accessToken
       const response = await fetch(`${API_BASE_URL}/surveys/forms`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         body: JSON.stringify(formPayload)
       })
@@ -489,12 +490,12 @@ export function useAdminDashboard() {
 
   const suaBieuMauKhaoSat = async (id, formPayload) => {
     try {
-      const token = session?.token || session?.accessToken
+      const token = getAdminAccessToken() || session?.token || session?.accessToken
       const response = await fetch(`${API_BASE_URL}/surveys/forms/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         body: JSON.stringify(formPayload)
       })
@@ -508,14 +509,14 @@ export function useAdminDashboard() {
     }
   }
 
-  const xoaBieuMauKhaoSat = async (id) => {
-    if (!window.confirm('Xác nhận xóa biểu mẫu khảo sát này?')) return { ok: false }
+  const xoaBieuMauKhaoSat = async (id, skipConfirm = false) => {
+    if (!skipConfirm && !window.confirm('Xác nhận xóa biểu mẫu khảo sát này?')) return { ok: false }
     try {
-      const token = session?.token || session?.accessToken
+      const token = getAdminAccessToken() || session?.token || session?.accessToken
       const response = await fetch(`${API_BASE_URL}/surveys/forms/${id}`, {
         method: 'DELETE',
         headers: {
-          Authorization: `Bearer ${token}`
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         }
       })
       const payload = await response.json().catch(() => ({}))
@@ -530,11 +531,11 @@ export function useAdminDashboard() {
 
   const kichHoatBieuMauKhaoSat = async (id) => {
     try {
-      const token = session?.token || session?.accessToken
+      const token = getAdminAccessToken() || session?.token || session?.accessToken
       const response = await fetch(`${API_BASE_URL}/surveys/forms/${id}/activate`, {
         method: 'PATCH',
         headers: {
-          Authorization: `Bearer ${token}`
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         }
       })
       const payload = await response.json().catch(() => ({}))
@@ -607,19 +608,19 @@ export function useAdminDashboard() {
   }, [session, taiCaKioskDaMo])
 
   useEffect(() => {
-    if (!session || sessionRole === 'FRANCHISEE' || sessionRole !== 'MANAGER') return
+    if (!session || sessionRole === 'FRANCHISEE') return
     
-    if (activeTab === 'workforce-manage') {
+    if (activeTab === 'workforce-manage' && sessionRole === 'MANAGER') {
       taiLichLamViecManager()
       taiDanhSachNhanSu()
       taiYeuCauDangKyCa(true)
-    } else if (activeTab === 'employee-manage') {
+    } else if (activeTab === 'employee-manage' && sessionRole === 'MANAGER') {
       taiDanhSachNhanSu()
-    } else if (activeTab === 'shift-approval') {
+    } else if (activeTab === 'shift-approval' && sessionRole === 'MANAGER') {
       taiYeuCauDangKyCa(true)
-    } else if (activeTab === 'customer-care') {
+    } else if (activeTab === 'customer-care' && sessionRole === 'MANAGER') {
       taiReviewCSKH()
-    } else if (activeTab === 'delivery') {
+    } else if (activeTab === 'delivery' && sessionRole === 'MANAGER') {
       taiDanhSachCod()
     } else if (activeTab === 'survey-manage') {
       taiDanhSachBieuMau()

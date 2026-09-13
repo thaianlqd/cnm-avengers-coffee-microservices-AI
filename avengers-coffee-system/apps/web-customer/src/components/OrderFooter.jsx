@@ -151,7 +151,7 @@ export default function OrderFooter({ onNavigate }) {
               <li>
                 <button 
                   type="button" 
-                  onClick={() => onNavigate?.('tra-cuu-don-hang')}
+                  onClick={() => { onNavigate?.('tra-cuu-don'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
                   {t('orderFooter.trackOrder')}

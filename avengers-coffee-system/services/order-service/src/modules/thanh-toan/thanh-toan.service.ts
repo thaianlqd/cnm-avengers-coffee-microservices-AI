@@ -16,6 +16,7 @@ import { DonHang } from './entities/don-hang.entity';
 import { GiaoDichThanhToan } from './entities/giao-dich-thanh-toan.entity';
 import { DeliveryTrackingService } from '../shipper/features_thaian/delivery-tracking.service';
 import { SurveyService } from '../../services/survey.service';
+import { SmtpService } from '../smtp/smtp.service';
 
 type KhoiTaoThanhToanDto = {
   phuong_thuc_thanh_toan: 'VNPAY' | 'NGAN_HANG_QR' | 'THANH_TOAN_KHI_NHAN_HANG' | 'VI_DIEN_TU';
@@ -243,6 +244,7 @@ export class ThanhToanService {
     private readonly deliveryTrackingService: DeliveryTrackingService,
     private readonly customerWalletService: CustomerWalletService,
     private readonly surveyService: SurveyService,
+    private readonly smtpService: SmtpService,
   ) {}
 
   private normalizeBranchCode(branchCode?: string) {
@@ -1555,8 +1557,8 @@ export class ThanhToanService {
     const donHang = await this.donHangRepo.save(this.donHangRepo.create({
       ma_don_hang: maDonHang,
       ma_nguoi_dung: isGuest ? null : maNguoiDung,
-      guest_email: isGuest ? (dto.guest_email?.trim() || null) : null,
-      guest_phone: isGuest ? (dto.guest_phone?.trim() || null) : null,
+      guest_email: (dto.guest_email?.trim() || null),
+      guest_phone: (dto.guest_phone?.trim() || null),
       session_id: dto.session_id?.trim() || null,
       co_so_ma: branchCode,
       tong_tien: tongTien,
@@ -1567,7 +1569,7 @@ export class ThanhToanService {
       ghi_chu: dto.ghi_chu ?? null,
       loai_don_hang: dto.delivery_mode ?? null,
       ma_ban: dto.table_number ?? null,
-      ten_khach_hang: dto.ten_khach_hang ?? (isGuest ? (dto.guest_email?.trim() || dto.guest_phone?.trim() || null) : null),
+      ten_khach_hang: dto.ten_khach_hang ?? (dto.guest_email?.trim() || dto.guest_phone?.trim() || 'Khách hàng'),
       phuong_thuc_thanh_toan: dto.phuong_thuc_thanh_toan,
       trang_thai_thanh_toan: trangThaiThanhToanBanDau,
       trang_thai_don_hang: 'MOI_TAO',
@@ -1588,7 +1590,6 @@ export class ThanhToanService {
         },
       ],
     }));
-    require('fs').appendFileSync('/app/error.log', '\n[DEBUG] Saved don_hang in DB: ma_ban=' + donHang.ma_ban + ', don_hang_id=' + donHang.ma_don_hang + '\n');
 
     // 2. Lưu chi tiết đơn hàng
     const chiTiet = gioHang.map((item) =>
@@ -1609,9 +1610,10 @@ export class ThanhToanService {
     await this.chiTietRepo.save(chiTiet);
 
     // 3. Tạo Tracking Giao Hàng nếu có chọn
+    let createdTracking: any = null;
     if (dto.delivery_mode) {
       // Dùng toạ độ từ nearestInfo nếu không có thì null
-      await this.deliveryTrackingService.createTracking({
+      createdTracking = await this.deliveryTrackingService.createTracking({
         ma_don_hang: donHang.ma_don_hang,
         delivery_mode: dto.delivery_mode,
         delivery_method: dto.delivery_method,
@@ -1625,6 +1627,11 @@ export class ThanhToanService {
         destination_longitude: nearestInfo?.customerLon ?? undefined,
       });
     }
+
+    // Gửi email xác nhận đơn hàng kèm liên kết theo dõi (bất đồng bộ)
+    this.guiEmailXacNhanDonHang(donHang, chiTiet, createdTracking?.tracking_code).catch((err) => {
+      console.error('[ORDER EMAIL ERROR]', err);
+    });
 
     // 4. Tạo mã tham chiếu giao dịch
     const maThamChieu = dto.phuong_thuc_thanh_toan === 'VNPAY'
@@ -1828,6 +1835,10 @@ export class ThanhToanService {
       });
     } catch {}
 
+    try {
+      this.guiEmailXacNhanDonHang(donHang, chiTiet).catch((err) => console.error('[ORDER EMAIL ERROR]', err));
+    } catch {}
+
     return {
       success: true,
       message: 'Tạo đơn hàng thành công',
@@ -1881,12 +1892,6 @@ export class ThanhToanService {
 
     const hmac = crypto.createHmac('sha512', this.VNP_HASH_SECRET);
     const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
-    
-    // Debug logging
-    const maskedSecret = this.VNP_HASH_SECRET.substring(0, 4) + '***' + this.VNP_HASH_SECRET.substring(this.VNP_HASH_SECRET.length - 4);
-    require('fs').appendFileSync('/app/error.log', '\n[VNPAY DEBUG] signData: ' + signData + '\n[VNPAY DEBUG] Secret used: ' + maskedSecret + ' (Length: ' + this.VNP_HASH_SECRET.length + ')\n[VNPAY DEBUG] Generated Hash: ' + signed + '\n');
-    console.log('[VNPAY DEBUG] signData:', signData);
-    console.log('[VNPAY DEBUG] Masked Secret:', maskedSecret, 'Length:', this.VNP_HASH_SECRET.length);
 
     // urlQuery dùng để gắn lên URL (phải URL Encode giá trị)
     const urlQuery = sortedKeys
@@ -4085,5 +4090,9 @@ export class ThanhToanService {
       refund_amount: wasPaid ? tongTien : 0,
       refund_method: 'TIEN_MAT_TAI_QUAY',
     };
+  }
+
+  async guiEmailXacNhanDonHang(donHang: DonHang, chiTiet: ChiTietDonHang[], trackingCode?: string) {
+    return this.smtpService.sendOrderConfirmationEmail(donHang, chiTiet, trackingCode);
   }
 }

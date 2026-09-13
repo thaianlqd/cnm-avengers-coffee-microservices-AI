@@ -344,74 +344,6 @@ function AdminMenuManagementPanelContent({
 
   return (
     <div className="menu-manage-container">
-      {/* Header section */}
-      <div className="menu-manage-header">
-        <div className="menu-manage-header-title">
-          <div className="menu-manage-icon-wrapper">
-            <Coffee size={24} className="menu-header-icon" />
-          </div>
-          <div>
-            <h2>Quản lý menu thực đơn tổng</h2>
-            <p>Quản lý toàn bộ danh sách món ăn, đồ uống, giá bán, nhóm biến thể và hình ảnh sản phẩm</p>
-          </div>
-        </div>
-        <div className="menu-manage-header-actions">
-          {loadMenu && (
-            <button type="button" className="menu-refresh-btn" onClick={loadMenu} title="Tải lại danh sách">
-              <RefreshCw size={16} />
-              <span>Tải lại</span>
-            </button>
-          )}
-          <button type="button" className="menu-btn menu-btn--success" onClick={handleOpenAddModal}>
-            <Plus size={18} />
-            <span>Thêm món mới</span>
-          </button>
-        </div>
-      </div>
-
-      {/* KPI Stat Cards */}
-      <div className="menu-kpi-grid">
-        <div className="menu-kpi-card menu-kpi-card--total">
-          <div className="menu-kpi-icon menu-kpi-icon--total">
-            <Coffee size={20} />
-          </div>
-          <div className="menu-kpi-content">
-            <span className="menu-kpi-label">Tổng số món</span>
-            <span className="menu-kpi-value">{stats.total}</span>
-          </div>
-        </div>
-
-        <div className="menu-kpi-card menu-kpi-card--active">
-          <div className="menu-kpi-icon menu-kpi-icon--active">
-            <CheckCircle2 size={20} />
-          </div>
-          <div className="menu-kpi-content">
-            <span className="menu-kpi-label">Đang kinh doanh</span>
-            <span className="menu-kpi-value">{stats.activeCount}</span>
-          </div>
-        </div>
-
-        <div className="menu-kpi-card menu-kpi-card--hot">
-          <div className="menu-kpi-icon menu-kpi-icon--hot">
-            <Flame size={20} />
-          </div>
-          <div className="menu-kpi-content">
-            <span className="menu-kpi-label">Món Hot / Bán chạy</span>
-            <span className="menu-kpi-value">{stats.hotCount}</span>
-          </div>
-        </div>
-
-        <div className="menu-kpi-card menu-kpi-card--discount">
-          <div className="menu-kpi-icon menu-kpi-icon--discount">
-            <Tag size={20} />
-          </div>
-          <div className="menu-kpi-content">
-            <span className="menu-kpi-label">Đang giảm giá</span>
-            <span className="menu-kpi-value">{stats.discountCount}</span>
-          </div>
-        </div>
-      </div>
-
       {/* Full Width Product Data Table Card */}
       <div className="menu-list-card">
         {/* Toolbar & Filters */}
@@ -494,6 +426,13 @@ function AdminMenuManagementPanelContent({
                 Tạm ngưng
               </button>
             </div>
+
+            {loadMenu && (
+              <button type="button" className="menu-refresh-btn" onClick={loadMenu} title="Tải lại danh sách">
+                <RefreshCw size={15} />
+                <span>Tải lại</span>
+              </button>
+            )}
 
             <button type="button" className="menu-btn menu-btn--success menu-btn--sm" onClick={handleOpenAddModal}>
               <Plus size={16} />
@@ -628,67 +567,31 @@ function AdminMenuManagementPanelContent({
                             </div>
                           </td>
 
-                          <td style={{ textAlign: 'center', position: 'relative', whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
-                            <button
-                              type="button"
-                              className="btn-icon-more"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setOpenMenuActionId(openMenuActionId === item.id ? null : item.id)
-                              }}
-                              title="Thao tác"
-                            >
-                              <MoreVertical size={16} color="#475569" />
-                            </button>
-
-                            {openMenuActionId === item.id && (
-                              <div
-                                style={{
-                                  position: 'absolute',
-                                  right: 'calc(100% + 6px)',
-                                  top: index >= (array.length - 2) ? 'auto' : '-4px',
-                                  bottom: index >= (array.length - 2) ? '-4px' : 'auto',
-                                  backgroundColor: '#ffffff',
-                                  border: '1px solid #e2e8f0',
-                                  borderRadius: '8px',
-                                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-                                  zIndex: 9999,
-                                  minWidth: '170px',
-                                  padding: '0.35rem',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  gap: '0.15rem'
+                          <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', justifyContent: 'center' }}>
+                              <button
+                                type="button"
+                                className="admin-table-action-btn btn-edit"
+                                onClick={() => {
+                                  if (startEditMenu) startEditMenu(item)
+                                  setIsModalOpen(true)
                                 }}
-                                onClick={(e) => e.stopPropagation()}
+                                title="Chỉnh sửa sản phẩm"
                               >
-                                <button
-                                  type="button"
-                                  className="btn-dropdown-item"
-                                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.45rem 0.65rem', borderRadius: '6px', fontSize: '0.8125rem', fontWeight: '500', color: '#2563eb', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                                  onClick={() => {
-                                    setOpenMenuActionId(null)
-                                    if (startEditMenu) startEditMenu(item)
-                                    setIsModalOpen(true)
-                                  }}
-                                >
-                                  <Edit3 size={14} color="#2563eb" /> Chỉnh sửa sản phẩm
-                                </button>
+                                <Edit3 size={15} />
+                              </button>
 
-                                <div style={{ borderTop: '1px solid #f1f5f9', margin: '0.2rem 0' }}></div>
-
-                                <button
-                                  type="button"
-                                  className="btn-dropdown-item danger"
-                                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.45rem 0.65rem', borderRadius: '6px', fontSize: '0.8125rem', fontWeight: '500', color: '#dc2626', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                                  onClick={() => {
-                                    setOpenMenuActionId(null)
-                                    if (deleteMenu) deleteMenu(item.id)
-                                  }}
-                                >
-                                  <Trash2 size={14} color="#dc2626" /> Xóa sản phẩm
-                                </button>
-                              </div>
-                            )}
+                              <button
+                                type="button"
+                                className="admin-table-action-btn btn-delete"
+                                onClick={() => {
+                                  if (deleteMenu) deleteMenu(item.id)
+                                }}
+                                title="Xóa sản phẩm"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       )
@@ -824,7 +727,7 @@ function AdminMenuManagementPanelContent({
 
                     {/* Original Price */}
                     <div className="menu-form-group">
-                      <label htmlFor="menu-orig-price-input">Giá niêm yết / gốc (VNĐ)</label>
+                      <label htmlFor="menu-orig-price-input">Giá gốc niêm yết (VNĐ)</label>
                       <input
                         id="menu-orig-price-input"
                         type="number"
@@ -851,7 +754,7 @@ function AdminMenuManagementPanelContent({
 
                   {/* Status & Toggles Box */}
                   <div className="menu-status-box">
-                    <h4>Trạng thái & Nhãn hiển thị</h4>
+                    <h4>Trạng thái và Nhãn hiển thị</h4>
                     <div className="menu-toggles-grid">
                       {/* Active Selling Toggle */}
                       <label className="menu-toggle-item">
@@ -916,8 +819,21 @@ function AdminMenuManagementPanelContent({
                               className="menu-variant-del-group-btn"
                               onClick={() => removeAttributeGroup(attrName)}
                               title={`Xóa nhóm "${attrName}"`}
+                              style={{
+                                backgroundColor: '#fef2f2',
+                                color: '#dc2626',
+                                border: '1px solid #fecaca',
+                                borderRadius: '6px',
+                                padding: '0.3rem 0.6rem',
+                                fontSize: '0.75rem',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.3rem'
+                              }}
                             >
-                              <Trash2 size={13} />
+                              <Trash2 size={13} color="#dc2626" />
                               <span>Xóa nhóm</span>
                             </button>
                           </div>
@@ -966,8 +882,14 @@ function AdminMenuManagementPanelContent({
                               type="button"
                               className="menu-btn menu-btn--success menu-btn--sm"
                               onClick={() => addOptionToGroup(attrName)}
+                              style={{
+                                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                color: '#ffffff',
+                                border: 'none',
+                                boxShadow: '0 2px 6px rgba(16, 185, 129, 0.25)'
+                              }}
                             >
-                              <Plus size={14} />
+                              <Plus size={14} color="#ffffff" />
                               <span>Thêm tùy chọn</span>
                             </button>
                           </div>
@@ -1013,8 +935,14 @@ function AdminMenuManagementPanelContent({
                           type="button"
                           className="menu-btn menu-btn--success menu-btn--sm"
                           onClick={addAttributeGroup}
+                          style={{
+                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                            color: '#ffffff',
+                            border: 'none',
+                            boxShadow: '0 2px 6px rgba(16, 185, 129, 0.25)'
+                          }}
                         >
-                          <Plus size={14} />
+                          <Plus size={14} color="#ffffff" />
                           <span>Tạo nhóm</span>
                         </button>
                       </div>
@@ -1083,8 +1011,17 @@ function AdminMenuManagementPanelContent({
                             type="button"
                             className="menu-act-btn menu-act-btn--danger"
                             onClick={() => clearMenuImage && clearMenuImage()}
+                            style={{
+                              backgroundColor: '#fef2f2',
+                              color: '#dc2626',
+                              border: '1px solid #fecaca',
+                              borderRadius: '6px',
+                              padding: '0.35rem 0.75rem',
+                              fontWeight: '600',
+                              cursor: 'pointer'
+                            }}
                           >
-                            <Trash2 size={13} />
+                            <Trash2 size={13} color="#dc2626" />
                             <span>Xóa ảnh</span>
                           </button>
                         </div>
@@ -1101,29 +1038,59 @@ function AdminMenuManagementPanelContent({
                   className="menu-btn menu-btn--neutral"
                   onClick={handleCloseModal}
                   disabled={savingMenu}
+                  style={{
+                    backgroundColor: '#fef2f2',
+                    background: '#fef2f2',
+                    color: '#dc2626',
+                    border: '1px solid #fecaca',
+                    height: '40px',
+                    padding: '0 1.25rem',
+                    borderRadius: '8px',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem'
+                  }}
                 >
-                  <X size={16} />
-                  <span>Hủy bỏ</span>
+                  <X size={16} color="#dc2626" />
+                  <span style={{ color: '#dc2626' }}>Hủy bỏ</span>
                 </button>
 
                 <button
                   type="submit"
                   className="menu-btn menu-btn--success"
                   disabled={savingMenu || !String(safeMenuForm.name || '').trim() || !safeMenuForm.category_code}
+                  style={{
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    height: '40px',
+                    padding: '0 1.5rem',
+                    borderRadius: '8px',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
+                  }}
                 >
                   {savingMenu ? (
                     <>
-                      <RefreshCw size={16} className="menu-spin-icon" />
+                      <RefreshCw size={16} className="menu-spin-icon" color="#ffffff" />
                       <span>Đang lưu...</span>
                     </>
                   ) : editingMenuId ? (
                     <>
-                      <Check size={16} />
+                      <Check size={16} color="#ffffff" />
                       <span>Lưu cập nhật</span>
                     </>
                   ) : (
                     <>
-                      <Plus size={16} />
+                      <Plus size={16} color="#ffffff" />
                       <span>Tạo món mới</span>
                     </>
                   )}

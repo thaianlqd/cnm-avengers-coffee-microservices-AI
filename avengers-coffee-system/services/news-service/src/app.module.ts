@@ -30,21 +30,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
         const username = process.env.DB_USER || 'admin';
         const password = process.env.DB_PASSWORD || '123';
         const database = process.env.DB_NAME || 'avengers_coffee';
-
         const sslConfig = process.env.PGSSLMODE === 'require' ? { rejectUnauthorized: false } : false;
-
-        const client = new Client({
-          host,
-          port,
-          user: username,
-          password,
-          database,
-          ssl: sslConfig,
-        });
-
-        await client.connect();
-        await client.query(`CREATE SCHEMA IF NOT EXISTS "${newsSchema}"`);
-        await client.end();
 
         return {
           type: 'postgres' as const,
@@ -56,7 +42,12 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
           ssl: sslConfig,
           schema: newsSchema,
           entities: [Article],
-          synchronize: true,
+          extra: {
+            max: 2,
+            connectionTimeoutMillis: 10000,
+            idleTimeoutMillis: 5000,
+          },
+          synchronize: false,
           logging: false,
         };
       },

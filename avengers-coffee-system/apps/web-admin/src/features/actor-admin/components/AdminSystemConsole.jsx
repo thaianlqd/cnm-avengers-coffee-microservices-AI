@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSystemAdmin } from '../hooks/useSystemAdmin'
-import { AiAnalyticsPanel } from './AiAnalyticsPanel'
-import { SystemOpsPanel } from './SystemOpsPanel'
 import { AdminShipperPanel } from './AdminShipperPanel'
 import { AccountCenterPanel } from '../../shared/components/AccountCenterPanel'
 import { AdminNotificationBell } from '../../shared/components/AdminNotificationBell'
@@ -16,8 +14,10 @@ import { AdminOverviewDashboardPanel } from './AdminOverviewDashboardPanel'
 import { AdminUserManagementPanel } from './AdminUserManagementPanel'
 import { AdminKioskManagementPanel } from './AdminKioskManagementPanel'
 import { AdminCustomerManagementPanel } from './AdminCustomerManagementPanel'
+import { AdminSmtpConfigPanel } from './AdminSmtpConfigPanel'
 import { AdminSatelliteKioskPanel } from './AdminSatelliteKioskPanel'
-import { LayoutGrid, Users, UserCog, Settings, Store, FolderOpen, Coffee, ShieldCheck, Ticket, BarChart3, Brain, Activity, Bike, Search, ChevronDown, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, PieChart, Package, Map, UsersIcon, Monitor, TrendingUp, BarChart2, MapPin, Info, ArrowUpDown, UserPlus, Edit2, Trash2, Filter, MoreVertical, Coins, LogOut } from 'lucide-react'
+import { LayoutGrid, Users, UserCog, Settings, Store, FolderOpen, Coffee, ShieldCheck, Ticket, BarChart3, Brain, Activity, Bike, Search, ChevronDown, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, PieChart, Package, Map, UsersIcon, Monitor, TrendingUp, BarChart2, MapPin, Info, ArrowUpDown, UserPlus, Edit2, Trash2, Filter, MoreVertical, Coins, LogOut, MailCheck, Mail, Send } from 'lucide-react'
+
 function fmtNumber(value) {
   return Number(value || 0).toLocaleString('vi-VN')
 }
@@ -35,7 +35,7 @@ function normalizeText(value) {
     .trim()
 }
 
-const PROMOTION_TYPE_LABELS = { PERCENT: 'Giảm %', FIXED: 'Giảm tiền', FREE_ITEM: 'Tặng kèm' }
+const PROMOTION_TYPE_LABELS = { PERCENT: 'Giảm phần trăm (%)', FIXED: 'Giảm tiền (VNĐ)', FREE_ITEM: 'Tặng kèm món' }
 const PROMOTION_STATUS_LABELS = { ACTIVE: 'Hiệu lực', INACTIVE: 'Tạm dừng', EXPIRED: 'Hết hạn' }
 const PAGE_SIZE = 10
 const ADMIN_LOCAL_NOTIFY_EVENT = 'avengers-admin-local-notify'
@@ -203,6 +203,8 @@ export function AdminSystemConsole({
     startEditCustomerMembership,
     cancelEditCustomerMembership,
     saveCustomerMembership,
+    recentOrders,
+    recentUsers,
   } = useSystemAdmin()
 
   const staffUsersOnly = useMemo(() => {
@@ -367,329 +369,413 @@ export function AdminSystemConsole({
   }, [activeTab]);
 
   return (
-    <div className="system-admin-shell">
-      <aside className="system-admin-sidebar">
-        <div style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.625rem', borderBottom: '1px solid #f1f5f9', marginBottom: '0.75rem' }}>
-          <div style={{ width: '1.875rem', height: '1.875rem', backgroundColor: '#4f46e5', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(79, 70, 229, 0.25)' }}>
-            <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '1rem' }}>A</span>
+    <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', backgroundColor: '#f7f9fb' }}>
+      {/* KRAVIO ENTERPRISE SIDEBAR */}
+      <aside
+        style={{
+          width: '260px',
+          backgroundColor: '#ffffff',
+          borderRight: '1px solid #e5e7eb',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          flexShrink: 0,
+          zIndex: 20
+        }}
+      >
+        {/* Logo Section */}
+        <div style={{ padding: '1.25rem 1.25rem 1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <div style={{ width: '34px', height: '34px', backgroundColor: '#0f172a', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0, 0, 0, 0.15)' }}>
+            <span style={{ color: '#ffffff', fontWeight: '800', fontSize: '1.1rem' }}>A</span>
           </div>
-          <span style={{ fontWeight: '700', fontSize: '1.125rem', letterSpacing: '-0.025em', color: '#0f172a' }}>Avengers</span>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontWeight: '800', fontSize: '1.1rem', letterSpacing: '-0.02em', color: '#0f172a', lineHeight: '1.15' }}>Avengers</span>
+            <span style={{ fontSize: '0.65rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Enterprise Console</span>
+          </div>
         </div>
         
-        <div style={{ padding: '0 1.25rem', marginBottom: '0.5rem' }}>
-          <p className="staff-tag" style={{ margin: 0, fontSize: '0.7rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#94a3b8' }}>
-            Main Navigation
-          </p>
-        </div>
-
-        <div className="system-admin-tabs" style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-          {/* NHÓM 1: TỔNG QUAN & BÁO CÁO */}
-          <div>
-            <button
-              type="button"
-              className="nav-group-header-btn"
-              onClick={() => setActiveGroup(activeGroup === 'group-1' ? '' : 'group-1')}
+        {/* Global Sidebar Search */}
+        <div style={{ padding: '0 1rem 0.85rem 1rem' }}>
+          <div style={{ position: 'relative' }}>
+            <Search size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+            <input
+              type="text"
+              placeholder="Tìm nhanh tính năng..."
               style={{
                 width: '100%',
+                padding: '0.45rem 2rem 0.45rem 2.15rem',
+                backgroundColor: '#f9fafb',
+                border: '1px solid #e5e7eb',
+                borderRadius: '6px',
+                fontSize: '0.775rem',
+                color: '#111827',
+                outline: 'none',
+                transition: 'border-color 0.15s ease'
+              }}
+              onFocus={(e) => { e.target.style.borderColor = '#2563eb'; e.target.style.backgroundColor = '#ffffff'; }}
+              onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.backgroundColor = '#f9fafb'; }}
+            />
+            <span style={{ position: 'absolute', right: '0.65rem', top: '50%', transform: 'translateY(-50%)', fontSize: '0.65rem', color: '#9ca3af', fontFamily: 'monospace', fontWeight: '700' }}>⌘K</span>
+          </div>
+        </div>
+
+        {/* Navigation Sections */}
+        <nav className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '0 0.85rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+          
+          {/* NHÓM 1: TỔNG QUAN VÀ BÁO CÁO */}
+          <div>
+            <div style={{ fontSize: '0.75rem', fontWeight: '800', color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em', padding: '0.35rem 0.65rem', marginBottom: '0.35rem' }}>
+              Tổng Quan và Báo Cáo
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab('overview')}
+              style={{
                 display: 'flex',
                 alignItems: 'center',
-                justify: 'space-between',
-                padding: '0.55rem 0.65rem',
-                border: 'none',
-                background: activeGroup === 'group-1' ? '#f1f5f9' : 'transparent',
+                gap: '0.65rem',
+                width: '100%',
+                padding: '0.6rem 0.75rem',
                 borderRadius: '8px',
+                fontSize: '0.85rem',
+                fontWeight: activeTab === 'overview' ? '700' : '500',
+                color: activeTab === 'overview' ? '#2563eb' : '#475569',
+                backgroundColor: activeTab === 'overview' ? '#eff6ff' : 'transparent',
+                border: activeTab === 'overview' ? '1px solid #dbeafe' : '1px solid transparent',
                 cursor: 'pointer',
-                color: '#475569',
-                fontWeight: '800',
-                fontSize: '0.725rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
+                textAlign: 'left',
                 transition: 'all 0.15s ease'
               }}
+              onMouseEnter={(e) => { if (activeTab !== 'overview') e.currentTarget.style.backgroundColor = '#f8fafc' }}
+              onMouseLeave={(e) => { if (activeTab !== 'overview') e.currentTarget.style.backgroundColor = 'transparent' }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', overflow: 'hidden' }}>
-                <PieChart size={15} color="#4f46e5" />
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Tổng quan &amp; Báo cáo</span>
-              </div>
-              {activeGroup === 'group-1' ? <ChevronDown size={14} color="#64748b" /> : <ChevronRight size={14} color="#94a3b8" />}
+              <LayoutGrid size={17} color={activeTab === 'overview' ? '#2563eb' : '#64748b'} />
+              <span>Dashboard Tổng Quan</span>
             </button>
-            {activeGroup === 'group-1' && (
-              <div className="nav-group-children" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.35rem', paddingLeft: '0.35rem' }}>
-                <button
-                  type="button"
-                  className={activeTab === 'overview' ? 'nav-tab active' : 'nav-tab'}
-                  onClick={() => setActiveTab('overview')}
-                  style={activeTab === 'overview' ? {
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
-                    color: '#ffffff',
-                    fontWeight: '700',
-                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
-                    borderRadius: '8px'
-                  } : {}}
-                >
-                  <LayoutGrid size={15} /> Dashboard tổng
-                </button>
-                <button
-                  type="button"
-                  className={activeTab === 'ai-analytics' ? 'nav-tab active' : 'nav-tab'}
-                  onClick={() => setActiveTab('ai-analytics')}
-                  style={activeTab === 'ai-analytics' ? {
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
-                    color: '#ffffff',
-                    fontWeight: '700',
-                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
-                    borderRadius: '8px'
-                  } : {}}
-                >
-                  <Brain size={15} /> Phân tích mua sắm
-                </button>
-                <button
-                  type="button"
-                  className={activeTab === 'system-ops' ? 'nav-tab active' : 'nav-tab'}
-                  onClick={() => setActiveTab('system-ops')}
-                  style={activeTab === 'system-ops' ? {
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
-                    color: '#ffffff',
-                    fontWeight: '700',
-                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
-                    borderRadius: '8px'
-                  } : {}}
-                >
-                  <Activity size={15} /> Giám sát hệ thống
-                </button>
-              </div>
-            )}
           </div>
 
-          {/* NHÓM 2: SẢN PHẨM & KHUYẾN MÃI */}
+          {/* NHÓM 2: SẢN PHẨM VÀ KHUYẾN MÃI */}
           <div>
             <button
               type="button"
-              className="nav-group-header-btn"
               onClick={() => setActiveGroup(activeGroup === 'group-2' ? '' : 'group-2')}
               style={{
                 width: '100%',
                 display: 'flex',
                 alignItems: 'center',
-                justify: 'space-between',
-                padding: '0.55rem 0.65rem',
+                justifyContent: 'space-between',
+                padding: '0.45rem 0.65rem',
                 border: 'none',
-                background: activeGroup === 'group-2' ? '#f1f5f9' : 'transparent',
-                borderRadius: '8px',
+                background: activeGroup === 'group-2' ? '#f8fafc' : 'transparent',
+                borderRadius: '6px',
                 cursor: 'pointer',
-                color: '#475569',
+                color: '#334155',
                 fontWeight: '800',
-                fontSize: '0.725rem',
+                fontSize: '0.75rem',
                 textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-                transition: 'all 0.15s ease'
+                letterSpacing: '0.04em'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', overflow: 'hidden' }}>
-                <Package size={15} color="#4f46e5" />
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Sản phẩm &amp; Khuyến mãi</span>
-              </div>
-              {activeGroup === 'group-2' ? <ChevronDown size={14} color="#64748b" /> : <ChevronRight size={14} color="#94a3b8" />}
+              <span>Sản Phẩm và Khuyến Mãi</span>
+              {activeGroup === 'group-2' ? <ChevronDown size={14} color="#334155" strokeWidth={2.5} /> : <ChevronRight size={14} color="#64748b" strokeWidth={2.5} />}
             </button>
+            
             {activeGroup === 'group-2' && (
-              <div className="nav-group-children" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.35rem', paddingLeft: '0.35rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.35rem', paddingLeft: '0.25rem' }}>
                 <button
                   type="button"
-                  className={activeTab === 'categories' ? 'nav-tab active' : 'nav-tab'}
                   onClick={() => setActiveTab('categories')}
-                  style={activeTab === 'categories' ? {
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
-                    color: '#ffffff',
-                    fontWeight: '700',
-                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
-                    borderRadius: '8px'
-                  } : {}}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    width: '100%',
+                    padding: '0.55rem 0.65rem',
+                    borderRadius: '8px',
+                    fontSize: '0.825rem',
+                    fontWeight: activeTab === 'categories' ? '700' : '500',
+                    color: activeTab === 'categories' ? '#2563eb' : '#475569',
+                    backgroundColor: activeTab === 'categories' ? '#eff6ff' : 'transparent',
+                    border: activeTab === 'categories' ? '1px solid #dbeafe' : '1px solid transparent',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => { if (activeTab !== 'categories') e.currentTarget.style.backgroundColor = '#f8fafc' }}
+                  onMouseLeave={(e) => { if (activeTab !== 'categories') e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
-                  <FolderOpen size={15} /> Quản lý danh mục
+                  <FolderOpen size={16} color={activeTab === 'categories' ? '#2563eb' : '#64748b'} />
+                  <span>Quản lý danh mục</span>
                 </button>
+
                 <button
                   type="button"
-                  className={activeTab === 'menu' ? 'nav-tab active' : 'nav-tab'}
                   onClick={() => setActiveTab('menu')}
-                  style={activeTab === 'menu' ? {
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
-                    color: '#ffffff',
-                    fontWeight: '700',
-                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
-                    borderRadius: '8px'
-                  } : {}}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    width: '100%',
+                    padding: '0.55rem 0.65rem',
+                    borderRadius: '8px',
+                    fontSize: '0.825rem',
+                    fontWeight: activeTab === 'menu' ? '700' : '500',
+                    color: activeTab === 'menu' ? '#2563eb' : '#475569',
+                    backgroundColor: activeTab === 'menu' ? '#eff6ff' : 'transparent',
+                    border: activeTab === 'menu' ? '1px solid #dbeafe' : '1px solid transparent',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => { if (activeTab !== 'menu') e.currentTarget.style.backgroundColor = '#f8fafc' }}
+                  onMouseLeave={(e) => { if (activeTab !== 'menu') e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
-                  <Coffee size={15} /> Quản lý menu tổng
+                  <Coffee size={16} color={activeTab === 'menu' ? '#2563eb' : '#64748b'} />
+                  <span>Quản lý menu tổng</span>
                 </button>
+
                 <button
                   type="button"
-                  className={activeTab === 'promotions' ? 'nav-tab active' : 'nav-tab'}
                   onClick={() => setActiveTab('promotions')}
-                  style={activeTab === 'promotions' ? {
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
-                    color: '#ffffff',
-                    fontWeight: '700',
-                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
-                    borderRadius: '8px'
-                  } : {}}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    width: '100%',
+                    padding: '0.55rem 0.65rem',
+                    borderRadius: '8px',
+                    fontSize: '0.825rem',
+                    fontWeight: activeTab === 'promotions' ? '700' : '500',
+                    color: activeTab === 'promotions' ? '#2563eb' : '#475569',
+                    backgroundColor: activeTab === 'promotions' ? '#eff6ff' : 'transparent',
+                    border: activeTab === 'promotions' ? '1px solid #dbeafe' : '1px solid transparent',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => { if (activeTab !== 'promotions') e.currentTarget.style.backgroundColor = '#f8fafc' }}
+                  onMouseLeave={(e) => { if (activeTab !== 'promotions') e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
-                  <Ticket size={15} /> Khuyến mãi &amp; Voucher
+                  <Ticket size={16} color={activeTab === 'promotions' ? '#2563eb' : '#64748b'} />
+                  <span>Khuyến mãi và Voucher</span>
                 </button>
               </div>
             )}
           </div>
 
-          {/* NHÓM 3: KHÁCH HÀNG & CSKH */}
+          {/* NHÓM 3: KHÁCH HÀNG VÀ CHĂM SÓC KHÁCH HÀNG */}
           <div>
             <button
               type="button"
-              className="nav-group-header-btn"
               onClick={() => setActiveGroup(activeGroup === 'group-3' ? '' : 'group-3')}
               style={{
                 width: '100%',
                 display: 'flex',
                 alignItems: 'center',
-                justify: 'space-between',
-                padding: '0.55rem 0.65rem',
+                justifyContent: 'space-between',
+                padding: '0.45rem 0.65rem',
                 border: 'none',
-                background: activeGroup === 'group-3' ? '#f1f5f9' : 'transparent',
-                borderRadius: '8px',
+                background: activeGroup === 'group-3' ? '#f8fafc' : 'transparent',
+                borderRadius: '6px',
                 cursor: 'pointer',
-                color: '#475569',
+                color: '#334155',
                 fontWeight: '800',
-                fontSize: '0.725rem',
+                fontSize: '0.75rem',
                 textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-                transition: 'all 0.15s ease'
+                letterSpacing: '0.04em'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', overflow: 'hidden' }}>
-                <UserCog size={15} color="#4f46e5" />
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Khách hàng &amp; CSKH</span>
-              </div>
-              {activeGroup === 'group-3' ? <ChevronDown size={14} color="#64748b" /> : <ChevronRight size={14} color="#94a3b8" />}
+              <span>Khách Hàng và CSKH</span>
+              {activeGroup === 'group-3' ? <ChevronDown size={14} color="#334155" strokeWidth={2.5} /> : <ChevronRight size={14} color="#64748b" strokeWidth={2.5} />}
             </button>
+            
             {activeGroup === 'group-3' && (
-              <div className="nav-group-children" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.35rem', paddingLeft: '0.35rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.35rem', paddingLeft: '0.25rem' }}>
                 <button
                   type="button"
-                  className={activeTab === 'customers' ? 'nav-tab active' : 'nav-tab'}
                   onClick={() => setActiveTab('customers')}
-                  style={activeTab === 'customers' ? {
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
-                    color: '#ffffff',
-                    fontWeight: '700',
-                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
-                    borderRadius: '8px'
-                  } : {}}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    width: '100%',
+                    padding: '0.55rem 0.65rem',
+                    borderRadius: '8px',
+                    fontSize: '0.825rem',
+                    fontWeight: activeTab === 'customers' ? '700' : '500',
+                    color: activeTab === 'customers' ? '#2563eb' : '#475569',
+                    backgroundColor: activeTab === 'customers' ? '#eff6ff' : 'transparent',
+                    border: activeTab === 'customers' ? '1px solid #dbeafe' : '1px solid transparent',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => { if (activeTab !== 'customers') e.currentTarget.style.backgroundColor = '#f8fafc' }}
+                  onMouseLeave={(e) => { if (activeTab !== 'customers') e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
-                  <UserCog size={15} /> Quản lý khách hàng
+                  <Users size={16} color={activeTab === 'customers' ? '#2563eb' : '#64748b'} />
+                  <span>Quản lý khách hàng</span>
                 </button>
+
                 <button
                   type="button"
-                  className={activeTab === 'membership-config' ? 'nav-tab active' : 'nav-tab'}
                   onClick={() => setActiveTab('membership-config')}
-                  style={activeTab === 'membership-config' ? {
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
-                    color: '#ffffff',
-                    fontWeight: '700',
-                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
-                    borderRadius: '8px'
-                  } : {}}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    width: '100%',
+                    padding: '0.55rem 0.65rem',
+                    borderRadius: '8px',
+                    fontSize: '0.825rem',
+                    fontWeight: activeTab === 'membership-config' ? '700' : '500',
+                    color: activeTab === 'membership-config' ? '#2563eb' : '#475569',
+                    backgroundColor: activeTab === 'membership-config' ? '#eff6ff' : 'transparent',
+                    border: activeTab === 'membership-config' ? '1px solid #dbeafe' : '1px solid transparent',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => { if (activeTab !== 'membership-config') e.currentTarget.style.backgroundColor = '#f8fafc' }}
+                  onMouseLeave={(e) => { if (activeTab !== 'membership-config') e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
-                  <Settings size={15} /> Thiết lập Membership
+                  <Settings size={16} color={activeTab === 'membership-config' ? '#2563eb' : '#64748b'} />
+                  <span>Thiết lập hạng thành viên</span>
                 </button>
+
                 <button
                   type="button"
-                  className={activeTab === 'survey-manage' ? 'nav-tab active' : 'nav-tab'}
                   onClick={() => setActiveTab('survey-manage')}
-                  style={activeTab === 'survey-manage' ? {
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
-                    color: '#ffffff',
-                    fontWeight: '700',
-                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
-                    borderRadius: '8px'
-                  } : {}}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    width: '100%',
+                    padding: '0.55rem 0.65rem',
+                    borderRadius: '8px',
+                    fontSize: '0.825rem',
+                    fontWeight: activeTab === 'survey-manage' ? '700' : '500',
+                    color: activeTab === 'survey-manage' ? '#2563eb' : '#475569',
+                    backgroundColor: activeTab === 'survey-manage' ? '#eff6ff' : 'transparent',
+                    border: activeTab === 'survey-manage' ? '1px solid #dbeafe' : '1px solid transparent',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => { if (activeTab !== 'survey-manage') e.currentTarget.style.backgroundColor = '#f8fafc' }}
+                  onMouseLeave={(e) => { if (activeTab !== 'survey-manage') e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
-                  <BarChart3 size={15} /> Quản lý Khảo sát
+                  <BarChart3 size={16} color={activeTab === 'survey-manage' ? '#2563eb' : '#64748b'} />
+                  <span>Khảo sát khách hàng</span>
                 </button>
               </div>
             )}
           </div>
 
-          {/* NHÓM 4: MẠNG LƯỚI & HỆ THỐNG */}
+          {/* NHÓM 4: MẠNG LƯỚI VÀ CHI NHÁNH */}
           <div>
             <button
               type="button"
-              className="nav-group-header-btn"
               onClick={() => setActiveGroup(activeGroup === 'group-4' ? '' : 'group-4')}
               style={{
                 width: '100%',
                 display: 'flex',
                 alignItems: 'center',
-                justify: 'space-between',
-                padding: '0.55rem 0.65rem',
+                justifyContent: 'space-between',
+                padding: '0.45rem 0.65rem',
                 border: 'none',
-                background: activeGroup === 'group-4' ? '#f1f5f9' : 'transparent',
-                borderRadius: '8px',
+                background: activeGroup === 'group-4' ? '#f8fafc' : 'transparent',
+                borderRadius: '6px',
                 cursor: 'pointer',
-                color: '#475569',
+                color: '#334155',
                 fontWeight: '800',
-                fontSize: '0.725rem',
+                fontSize: '0.75rem',
                 textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-                transition: 'all 0.15s ease'
+                letterSpacing: '0.04em'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', overflow: 'hidden' }}>
-                <Store size={15} color="#4f46e5" />
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Mạng lưới &amp; Hệ thống</span>
-              </div>
-              {activeGroup === 'group-4' ? <ChevronDown size={14} color="#64748b" /> : <ChevronRight size={14} color="#94a3b8" />}
+              <span>Mạng Lưới và Chi Nhánh</span>
+              {activeGroup === 'group-4' ? <ChevronDown size={14} color="#334155" strokeWidth={2.5} /> : <ChevronRight size={14} color="#64748b" strokeWidth={2.5} />}
             </button>
+            
             {activeGroup === 'group-4' && (
-              <div className="nav-group-children" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.35rem', paddingLeft: '0.35rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.35rem', paddingLeft: '0.25rem' }}>
                 <button
                   type="button"
-                  className={activeTab === 'branches' ? 'nav-tab active' : 'nav-tab'}
                   onClick={() => setActiveTab('branches')}
-                  style={activeTab === 'branches' ? {
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
-                    color: '#ffffff',
-                    fontWeight: '700',
-                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
-                    borderRadius: '8px'
-                  } : {}}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    width: '100%',
+                    padding: '0.55rem 0.65rem',
+                    borderRadius: '8px',
+                    fontSize: '0.825rem',
+                    fontWeight: activeTab === 'branches' ? '700' : '500',
+                    color: activeTab === 'branches' ? '#2563eb' : '#475569',
+                    backgroundColor: activeTab === 'branches' ? '#eff6ff' : 'transparent',
+                    border: activeTab === 'branches' ? '1px solid #dbeafe' : '1px solid transparent',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => { if (activeTab !== 'branches') e.currentTarget.style.backgroundColor = '#f8fafc' }}
+                  onMouseLeave={(e) => { if (activeTab !== 'branches') e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
-                  <Store size={15} /> Quản lý chi nhánh
+                  <Store size={16} color={activeTab === 'branches' ? '#2563eb' : '#64748b'} />
+                  <span>Quản lý chi nhánh</span>
                 </button>
+
                 <button
                   type="button"
-                  className={activeTab === 'shippers' ? 'nav-tab active' : 'nav-tab'}
                   onClick={() => setActiveTab('shippers')}
-                  style={activeTab === 'shippers' ? {
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
-                    color: '#ffffff',
-                    fontWeight: '700',
-                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
-                    borderRadius: '8px'
-                  } : {}}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    width: '100%',
+                    padding: '0.55rem 0.65rem',
+                    borderRadius: '8px',
+                    fontSize: '0.825rem',
+                    fontWeight: activeTab === 'shippers' ? '700' : '500',
+                    color: activeTab === 'shippers' ? '#2563eb' : '#475569',
+                    backgroundColor: activeTab === 'shippers' ? '#eff6ff' : 'transparent',
+                    border: activeTab === 'shippers' ? '1px solid #dbeafe' : '1px solid transparent',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => { if (activeTab !== 'shippers') e.currentTarget.style.backgroundColor = '#f8fafc' }}
+                  onMouseLeave={(e) => { if (activeTab !== 'shippers') e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
-                  <Bike size={15} /> Quản lý NV giao hàng
+                  <Bike size={16} color={activeTab === 'shippers' ? '#2563eb' : '#64748b'} />
+                  <span>Quản lý giao hàng</span>
                 </button>
+
                 <button
                   type="button"
-                  className={activeTab === 'kiosks' ? 'nav-tab active' : 'nav-tab'}
                   onClick={() => setActiveTab('kiosks')}
-                  style={activeTab === 'kiosks' ? {
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
-                    color: '#ffffff',
-                    fontWeight: '700',
-                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
-                    borderRadius: '8px'
-                  } : {}}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    width: '100%',
+                    padding: '0.55rem 0.65rem',
+                    borderRadius: '8px',
+                    fontSize: '0.825rem',
+                    fontWeight: activeTab === 'kiosks' ? '700' : '500',
+                    color: activeTab === 'kiosks' ? '#2563eb' : '#475569',
+                    backgroundColor: activeTab === 'kiosks' ? '#eff6ff' : 'transparent',
+                    border: activeTab === 'kiosks' ? '1px solid #dbeafe' : '1px solid transparent',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => { if (activeTab !== 'kiosks') e.currentTarget.style.backgroundColor = '#f8fafc' }}
+                  onMouseLeave={(e) => { if (activeTab !== 'kiosks') e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
-                  <Store size={15} /> Kiosk Nhượng Quyền
+                  <Monitor size={16} color={activeTab === 'kiosks' ? '#2563eb' : '#64748b'} />
+                  <span>Quản lý Kiosk</span>
                 </button>
                 <button
                   type="button"
@@ -704,141 +790,244 @@ export function AdminSystemConsole({
                   } : {}}
                 >
                   <MapPin size={15} /> Điểm Bán Take-away
+
                 </button>
+
                 <button
                   type="button"
-                  className={activeTab === 'users' ? 'nav-tab active' : 'nav-tab'}
                   onClick={() => setActiveTab('users')}
-                  style={activeTab === 'users' ? {
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
-                    color: '#ffffff',
-                    fontWeight: '700',
-                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
-                    borderRadius: '8px'
-                  } : {}}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    width: '100%',
+                    padding: '0.55rem 0.65rem',
+                    borderRadius: '8px',
+                    fontSize: '0.825rem',
+                    fontWeight: activeTab === 'users' ? '700' : '500',
+                    color: activeTab === 'users' ? '#2563eb' : '#475569',
+                    backgroundColor: activeTab === 'users' ? '#eff6ff' : 'transparent',
+                    border: activeTab === 'users' ? '1px solid #dbeafe' : '1px solid transparent',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => { if (activeTab !== 'users') e.currentTarget.style.backgroundColor = '#f8fafc' }}
+                  onMouseLeave={(e) => { if (activeTab !== 'users') e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
-                  <Users size={15} /> Quản lý người dùng
+                  <UserCog size={16} color={activeTab === 'users' ? '#2563eb' : '#64748b'} />
+                  <span>Quản lý nhân sự</span>
                 </button>
+
                 <button
                   type="button"
-                  className={activeTab === 'account' ? 'nav-tab active' : 'nav-tab'}
-                  onClick={() => setActiveTab('account')}
-                  style={activeTab === 'account' ? {
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
-                    color: '#ffffff',
-                    fontWeight: '700',
-                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
-                    borderRadius: '8px'
-                  } : {}}
+                  onClick={() => setActiveTab('smtp')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    width: '100%',
+                    padding: '0.55rem 0.65rem',
+                    borderRadius: '8px',
+                    fontSize: '0.825rem',
+                    fontWeight: activeTab === 'smtp' ? '700' : '500',
+                    color: activeTab === 'smtp' ? '#2563eb' : '#475569',
+                    backgroundColor: activeTab === 'smtp' ? '#eff6ff' : 'transparent',
+                    border: activeTab === 'smtp' ? '1px solid #dbeafe' : '1px solid transparent',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => { if (activeTab !== 'smtp') e.currentTarget.style.backgroundColor = '#f8fafc' }}
+                  onMouseLeave={(e) => { if (activeTab !== 'smtp') e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
-                  <ShieldCheck size={15} /> Hồ sơ &amp; Bảo mật
+                  <MailCheck size={16} color={activeTab === 'smtp' ? '#2563eb' : '#64748b'} />
+                  <span>Cấu hình Email &amp; SMTP</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('account')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    width: '100%',
+                    padding: '0.55rem 0.65rem',
+                    borderRadius: '8px',
+                    fontSize: '0.825rem',
+                    fontWeight: activeTab === 'account' ? '700' : '500',
+                    color: activeTab === 'account' ? '#2563eb' : '#475569',
+                    backgroundColor: activeTab === 'account' ? '#eff6ff' : 'transparent',
+                    border: activeTab === 'account' ? '1px solid #dbeafe' : '1px solid transparent',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => { if (activeTab !== 'account') e.currentTarget.style.backgroundColor = '#f8fafc' }}
+                  onMouseLeave={(e) => { if (activeTab !== 'account') e.currentTarget.style.backgroundColor = 'transparent' }}
+                >
+                  <ShieldCheck size={16} color={activeTab === 'account' ? '#2563eb' : '#64748b'} />
+                  <span>Hồ sơ và Bảo mật</span>
                 </button>
               </div>
             )}
           </div>
-        </div>
 
-        <div style={{ marginTop: 'auto', padding: '0.85rem 1rem', borderTop: '1px solid #f1f5f9' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.85rem', padding: '0.25rem 0' }}>
-            <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: '999px', backgroundColor: '#e0e7ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.775rem', border: '1px solid #c7d2fe', boxShadow: '0 2px 4px rgba(79, 70, 229, 0.15)' }}>
+        </nav>
+
+        {/* User Profile (Bottom Widget) */}
+        <div style={{ padding: '0.85rem 1rem', borderTop: '1px solid #e5e7eb', backgroundColor: '#ffffff' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.75rem' }}>
+            <div style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '999px',
+              backgroundColor: '#ffedd5',
+              color: '#ea580c',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: '800',
+              fontSize: '0.825rem',
+              flexShrink: 0
+            }}>
               AD
             </div>
-            <div style={{ overflow: 'hidden' }}>
-              <p style={{ margin: 0, fontSize: '0.825rem', fontWeight: '700', color: '#0f172a', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{session?.user?.tenDangNhap || 'System Admin'}</p>
-              <p style={{ margin: 0, fontSize: '0.725rem', color: '#64748b', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{session?.user?.email || 'admin@avengers.com'}</p>
+            <div style={{ overflow: 'hidden', flex: 1 }}>
+              <p style={{ margin: 0, fontSize: '0.825rem', fontWeight: '700', color: '#111827', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                {session?.user?.tenDangNhap || 'Quản trị viên Tổng'}
+              </p>
+              <p style={{ margin: 0, fontSize: '0.7rem', color: '#9ca3af', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                {session?.user?.email || 'admin@avengers.coffee'}
+              </p>
             </div>
           </div>
           <button
             type="button"
-            className="logout-btn"
             onClick={onLogout}
             style={{
               width: '100%',
-              height: '42px',
+              height: '36px',
               backgroundColor: '#fef2f2',
               color: '#ef4444',
-              border: '1px solid #fecaca',
-              borderRadius: '10px',
+              border: '1px solid #fee2e2',
+              borderRadius: '6px',
               fontWeight: '700',
-              fontSize: '0.85rem',
+              fontSize: '0.8rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.5rem',
-              boxShadow: '0 2px 6px rgba(239, 68, 68, 0.12)',
-              transition: 'all 0.2s ease'
+              gap: '0.45rem',
+              transition: 'all 0.15s ease'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#ef4444';
-              e.currentTarget.style.color = '#ffffff';
-              e.currentTarget.style.borderColor = '#ef4444';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.35)';
+              e.currentTarget.style.backgroundColor = '#ef4444'
+              e.currentTarget.style.color = '#ffffff'
+              e.currentTarget.style.borderColor = '#ef4444'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#fef2f2';
-              e.currentTarget.style.color = '#ef4444';
-              e.currentTarget.style.borderColor = '#fecaca';
-              e.currentTarget.style.boxShadow = '0 2px 6px rgba(239, 68, 68, 0.12)';
+              e.currentTarget.style.backgroundColor = '#fef2f2'
+              e.currentTarget.style.color = '#ef4444'
+              e.currentTarget.style.borderColor = '#fee2e2'
             }}
           >
-            <LogOut size={16} /> <span>Đăng xuất</span>
+            <LogOut size={15} /> <span>Đăng xuất</span>
           </button>
         </div>
       </aside>
 
-      <main className="system-admin-content" style={{ padding: 0, gap: 0 }}>
-        <header className="system-admin-hero" style={{ padding: '1rem 2rem', backgroundColor: '#ffffff', borderBottom: '1px solid #e5e7eb', borderRadius: 0, margin: 0, borderTop: 'none', borderLeft: 'none', borderRight: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* MAIN CONTENT WRAPPER */}
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden', backgroundColor: '#f7f9fb' }}>
+        
+        {/* TOP NAVIGATION BAR */}
+        <header
+          style={{
+            height: '60px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 2rem',
+            backgroundColor: '#ffffff',
+            borderBottom: '1px solid #e5e7eb',
+            flexShrink: 0
+          }}
+        >
           {(() => {
             const TAB_BREADCRUMBS = {
-              'overview': { group: 'Tổng quan & Báo cáo', label: 'Dashboard tổng' },
-              'ai-analytics': { group: 'Tổng quan & Báo cáo', label: 'Phân tích mua sắm AI' },
-              'system-ops': { group: 'Tổng quan & Báo cáo', label: 'Giám sát hệ thống' },
-              'categories': { group: 'Sản phẩm & Khuyến mãi', label: 'Quản lý danh mục' },
-              'menu': { group: 'Sản phẩm & Khuyến mãi', label: 'Quản lý menu tổng' },
-              'promotions': { group: 'Sản phẩm & Khuyến mãi', label: 'Khuyến mãi & Voucher' },
+              'overview': { group: 'Tổng quan', label: 'Dashboard tổng' },
+              'categories': { group: 'Sản phẩm & Menu', label: 'Quản lý danh mục' },
+              'menu': { group: 'Sản phẩm & Menu', label: 'Quản lý menu tổng' },
+              'promotions': { group: 'Sản phẩm & Menu', label: 'Khuyến mãi & Voucher' },
               'customers': { group: 'Khách hàng & CSKH', label: 'Quản lý khách hàng' },
               'membership-config': { group: 'Khách hàng & CSKH', label: 'Thiết lập Membership' },
               'survey-manage': { group: 'Khách hàng & CSKH', label: 'Quản lý Khảo sát' },
               'branches': { group: 'Mạng lưới & Hệ thống', label: 'Quản lý chi nhánh' },
-              'shippers': { group: 'Mạng lưới & Hệ thống', label: 'Quản lý nhân viên giao hàng' },
+              'shippers': { group: 'Mạng lưới & Hệ thống', label: 'Quản lý giao hàng' },
+              'kiosks': { group: 'Mạng lưới & Hệ thống', label: 'Quản lý Kiosk' },
               'users': { group: 'Mạng lưới & Hệ thống', label: 'Quản lý người dùng' },
+              'smtp': { group: 'Mạng lưới & Hệ thống', label: 'Cấu hình Email & SMTP' },
               'account': { group: 'Tài khoản', label: 'Hồ sơ & Bảo mật' },
             }
-            const activeCrumb = TAB_BREADCRUMBS[activeTab] || { group: 'Hệ thống Admin', label: 'Trang quản trị' }
+            const activeCrumb = TAB_BREADCRUMBS[activeTab] || { group: 'Quản trị', label: 'Hệ thống' }
 
             return (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
-                <span style={{ color: '#64748b', fontWeight: '600' }}>{activeCrumb.group}</span>
-                <span style={{ color: '#cbd5e1', fontWeight: 'bold' }}>/</span>
-                <span style={{ fontWeight: '800', color: '#0f172a' }}>{activeCrumb.label}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.85rem' }}>
+                <LayoutGrid size={15} color="#9ca3af" />
+                <span style={{ color: '#6b7280', fontWeight: '500' }}>{activeCrumb.group}</span>
+                <span style={{ color: '#d1d5db', margin: '0 0.15rem' }}>/</span>
+                <span style={{ fontWeight: '700', color: '#111827' }}>{activeCrumb.label}</span>
               </div>
             )
           })()}
           
-          <div className="system-admin-hero-tools" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
             <div style={{ position: 'relative' }}>
-               <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-               <input type="text" placeholder="Search anything" style={{ padding: '0.5rem 1rem 0.5rem 2.25rem', borderRadius: '6px', border: '1px solid #e5e7eb', backgroundColor: '#f9fafb', fontSize: '0.875rem', outline: 'none', width: '250px' }} />
-               <span style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontSize: '0.625rem', color: '#9ca3af', fontFamily: 'monospace' }}>⌘K</span>
+              <Search size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+              <input
+                type="text"
+                placeholder="Tìm kiếm dữ liệu..."
+                style={{
+                  padding: '0.4rem 2rem 0.4rem 2.15rem',
+                  borderRadius: '6px',
+                  border: '1px solid #e5e7eb',
+                  backgroundColor: '#f9fafb',
+                  fontSize: '0.8rem',
+                  outline: 'none',
+                  width: '230px',
+                  color: '#111827'
+                }}
+                onFocus={(e) => { e.target.style.borderColor = '#2563eb'; e.target.style.backgroundColor = '#ffffff'; }}
+                onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.backgroundColor = '#f9fafb'; }}
+              />
+              <span style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontSize: '0.65rem', color: '#9ca3af', fontFamily: 'monospace' }}>⌘K</span>
             </div>
+            
             <AdminNotificationBell session={session} />
           </div>
         </header>
 
-        {activeTab === 'account' ? <AccountCenterPanel session={session} /> : null}
+        {/* SCROLLABLE VIEWPORT CONTENT */}
+        <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', backgroundColor: '#f7f9fb' }}>
+          {activeTab === 'account' ? <AccountCenterPanel session={session} /> : null}
 
-        {activeTab === 'overview' && (
-          <AdminOverviewDashboardPanel
-            statsState={statsState}
-            dashboardSummary={dashboardSummary}
-            roleChartRows={roleChartRows}
-            branchChartRows={branchChartRows}
-          />
-        )}
+          {activeTab === 'overview' && (
+            <AdminOverviewDashboardPanel
+              statsState={statsState}
+              dashboardSummary={dashboardSummary}
+              roleChartRows={roleChartRows}
+              branchChartRows={branchChartRows}
+              recentOrders={recentOrders}
+              recentUsers={recentUsers}
+              branchesState={branchesState}
+              menuState={menuState}
+              promotionsState={promotionsState}
+            />
+          )}
 
         {activeTab === 'promotions' && (
-          <section className="panel system-admin-panel" style={{ padding: '24px 28px' }}>
+          <section style={{ padding: '1.75rem 2rem', backgroundColor: '#f7f9fb', minHeight: '100%' }}>
             <AdminPromotionManagementPanel
               promotionsState={promotionsState}
               loadPromotions={loadPromotions}
@@ -897,6 +1086,9 @@ export function AdminSystemConsole({
           <AdminKioskManagementPanel session={session} />
         )}
 
+        {activeTab === 'smtp' && (
+          <AdminSmtpConfigPanel />
+        )}
         {activeTab === 'satellite_kiosks' && (
           <AdminSatelliteKioskPanel session={session} />
         )}
@@ -944,7 +1136,7 @@ export function AdminSystemConsole({
               onBack={() => setSelectedBranchForReview(null)}
             />
           ) : (
-            <section className="panel system-admin-panel" style={{ padding: '24px 28px' }}>
+            <section style={{ padding: '1.75rem 2rem', backgroundColor: '#f7f9fb', minHeight: '100%' }}>
               <AdminBranchManagementPanel
                 branchesState={branchesState}
                 loadBranches={loadBranches}
@@ -968,16 +1160,8 @@ export function AdminSystemConsole({
           )
         )}
 
-        {activeTab === 'ai-analytics' && (
-          <section className="panel system-admin-panel" style={{ padding: '28px 32px' }}>
-            <AiAnalyticsPanel session={session} />
-          </section>
-        )}
-
-        {activeTab === 'system-ops' && <SystemOpsPanel session={session} />}
-
         {activeTab === 'categories' && (
-          <section className="panel system-admin-panel" style={{ padding: '24px 28px' }}>
+          <section style={{ padding: '1.75rem 2rem', backgroundColor: '#f7f9fb', minHeight: '100%' }}>
             <AdminCategoryManagementPanel
               categoriesState={categoriesState}
               categoryForm={categoryForm}
@@ -1000,7 +1184,7 @@ export function AdminSystemConsole({
         )}
 
         {activeTab === 'menu' && (
-          <section className="panel system-admin-panel" style={{ padding: '24px 28px' }}>
+          <section style={{ padding: '1.75rem 2rem', backgroundColor: '#f7f9fb', minHeight: '100%' }}>
             <AdminMenuManagementPanel
               menuState={menuState}
               loadMenu={loadMenu}
@@ -1050,6 +1234,7 @@ export function AdminSystemConsole({
             <p style={{ margin: 0, color: '#666', fontSize: '13px' }}>{adminToast.message}</p>
           </div>
         ) : null}
+        </div>
       </main>
     </div>
   )

@@ -56,6 +56,7 @@ export class CartService {
     
     return this.cartRepo.save(this.cartRepo.create({
       ...dto,
+      hinh_anh_url: dto.hinh_anh_url || '',
       size: kichCo,
       toppings: dto.toppings || [],
       luong_da: dto.luong_da || '',

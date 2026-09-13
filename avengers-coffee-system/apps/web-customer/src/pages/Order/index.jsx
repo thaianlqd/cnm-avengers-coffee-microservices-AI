@@ -21,7 +21,10 @@ import {
   TagIcon,
   HeartIcon as HeartOutlineIcon,
   TrophyIcon,
-  FireIcon
+  FireIcon,
+  ChevronDownIcon,
+  Bars3Icon,
+  TruckIcon
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import QuickViewModal from '../../components/QuickViewModal';
@@ -143,6 +146,18 @@ export default function OrderPage({
   const [searchViewMode, setSearchViewMode] = useState('list'); // 'list' | 'grid'
   const [isSearchBoxOpen, setIsSearchBoxOpen] = useState(false);
   const [copiedVoucherCode, setCopiedVoucherCode] = useState(null);
+  const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
+  const [trackingOrderId, setTrackingOrderId] = useState(null);
+  const [hasRecentLookup, setHasRecentLookup] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('avengers_recent_lookups') || '[]');
+      if (Array.isArray(saved) && saved.length > 0) {
+        setHasRecentLookup(true);
+      }
+    } catch {}
+  }, [isTrackingModalOpen]);
 
   const fullText = t('home.searchPlaceholder');
   const [placeholderText, setPlaceholderText] = useState("");
@@ -209,12 +224,28 @@ export default function OrderPage({
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
+
+      // ScrollSpy for Category Section
+      const scrollPos = window.scrollY + 180;
+      const sections = document.querySelectorAll('section[id^="category-"]');
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const section = sections[i];
+        if (section.offsetTop <= scrollPos) {
+          const catId = section.id.replace('category-', '');
+          setActiveCategory((prev) => {
+            if (prev !== catId) {
+              return catId;
+            }
+            return prev;
+          });
+          break;
+        }
+      }
     };
-    window.addEventListener('scroll', handleScroll);
-    // Initial check
+    window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [menuSections]);
 
   const handleCopyVoucherCode = (code) => {
     navigator.clipboard.writeText(code);
@@ -401,6 +432,11 @@ export default function OrderPage({
     setIsDropdownOpen(false);
     setIsMobileMenuOpen(false);
     
+    if (id === 'all') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     // Smooth scroll directly to the selected category section
     setTimeout(() => {
       const parsedId = String(id).replace('group-', '');
@@ -415,7 +451,7 @@ export default function OrderPage({
       }
 
       if (targetElem) {
-        const headerOffset = 110;
+        const headerOffset = 90;
         const elementPosition = targetElem.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
@@ -424,7 +460,7 @@ export default function OrderPage({
           behavior: 'smooth'
         });
       } else if (productsContainerRef.current) {
-        const headerOffset = 100;
+        const headerOffset = 80;
         const elementPosition = productsContainerRef.current.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
@@ -433,7 +469,7 @@ export default function OrderPage({
           behavior: 'smooth'
         });
       }
-    }, 60);
+    }, 50);
   };
 
   const toggleParent = (parentId, e) => {
@@ -452,7 +488,7 @@ export default function OrderPage({
             <button
               type="button"
               onClick={() => handleCategorySelect(parent.ma_danh_muc)}
-              className={`w-full flex items-center justify-between px-6 py-3.5 text-left transition-all duration-200 ${
+              className={`w-full flex items-center justify-between px-6 py-3.5 text-left transition-all duration-200 cursor-pointer ${
                 isActive 
                   ? 'bg-[#b22830] text-white font-extrabold shadow-xs' 
                   : 'text-gray-800 hover:bg-red-50/60 hover:text-[#b22830] font-semibold bg-white'
@@ -484,6 +520,7 @@ export default function OrderPage({
         <div className="flex items-center h-full relative" ref={mobileMenuRef}>
           {/* Mobile Menu Button */}
           <button 
+            type="button"
             className="w-10 h-10 flex flex-col justify-center gap-1 cursor-pointer mr-2 lg:hidden"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
@@ -497,7 +534,7 @@ export default function OrderPage({
               <img 
                 src="/hc-assets/logo.png" 
                 alt="Highlands Coffee" 
-                className="h-[60px] w-auto object-contain cursor-pointer" 
+                className="h-[60px] w-auto object-contain cursor-pointer transition-transform hover:scale-105" 
                 onClick={() => {
                   handleCategorySelect('all');
                   if (onNavigate) {
@@ -508,22 +545,25 @@ export default function OrderPage({
               />
             ) : (
               <div 
-                ref={isScrolled ? dropdownRef : null}
-                className="group flex items-center gap-4 cursor-pointer w-full relative h-full select-none"
+                ref={dropdownRef}
+                className="group flex items-center gap-3 cursor-pointer w-full relative h-full select-none"
+                onClick={() => setIsDropdownOpen((prev) => !prev)}
               >
                 <div className="w-5 flex flex-col gap-[3px]">
                   <span className="w-full h-[2px] bg-[#333333] block"></span>
                   <span className="w-full h-[2px] bg-[#333333] block"></span>
                   <span className="w-full h-[2px] bg-[#333333] block"></span>
                 </div>
-                <span className="text-[16px] font-bold text-[#333333] whitespace-nowrap">{t('order.productCategories')}</span>
-
-                {/* Dropdown Backdrop */}
-                <div className="fixed inset-0 bg-black/40 z-[-1] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 pointer-events-none"></div>
+                <span className="text-[15px] font-bold text-[#333333] whitespace-nowrap">{t('order.productCategories')}</span>
+                <ChevronDownIcon className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
 
                 {/* Dropdown List in Top Header */}
                 <ul 
-                  className="absolute top-full left-0 w-[300px] bg-white shadow-xl border border-gray-100 transition-all duration-300 z-[100] opacity-0 invisible pointer-events-none translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:pointer-events-auto group-hover:translate-y-0"
+                  className={`absolute top-full left-0 w-[280px] bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 transition-all duration-200 z-[100] ${
+                    isDropdownOpen 
+                      ? 'opacity-100 visible translate-y-0' 
+                      : 'opacity-0 invisible -translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0'
+                  }`}
                   onClick={(e) => e.stopPropagation()}
                 >
                   {categoryMenuItems}
@@ -755,6 +795,20 @@ export default function OrderPage({
             )}
           </div>
 
+          {/* Nút Tra cứu đơn hàng trên Header */}
+          <button
+            type="button"
+            onClick={() => {
+              if (onNavigate) onNavigate('tra-cuu-don');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 border border-[#b22830] rounded-md hover:bg-red-50 text-[#b22830] font-bold text-[13px] transition-all bg-white h-[38px] cursor-pointer shadow-2xs group"
+            title="Tra cứu đơn hàng"
+          >
+            <TruckIcon className="w-4 h-4 text-[#b22830] group-hover:scale-110 transition-transform" />
+            <span className="hidden sm:inline">Tra cứu đơn</span>
+          </button>
+
           <button
             onClick={onOpenCart}
             className="flex items-center gap-3 px-4 py-1.5 border border-[#b22830] rounded-md hover:bg-red-50 transition-colors bg-white h-[38px] cursor-pointer"
@@ -770,7 +824,7 @@ export default function OrderPage({
 
       {/* FULL WIDTH RED BAR */}
       <div className="w-full h-[50px] bg-[#b22830] relative z-20">
-        <div className="mx-auto flex h-full w-full max-w-[1440px] px-4 lg:px-8 items-center gap-8">
+        <div className="mx-auto flex h-full w-full max-w-[1440px] px-4 lg:px-8 items-center gap-6 lg:gap-8">
           {/* Categories Header in Red Bar (Static) */}
           <div className="hidden lg:flex h-full w-[260px] shrink-0 items-center bg-[#f9f9f9] px-6 select-none relative">
             <div className="absolute top-0 left-0 w-full h-[2px] bg-[#b22830]"></div>
@@ -782,6 +836,18 @@ export default function OrderPage({
             <span className="text-[15px] font-normal text-[#b22830] capitalize">{t('order.productCategories')}</span>
           </div>
 
+          <button 
+            type="button" 
+            onClick={() => {
+              if (onNavigate) onNavigate('tra-cuu-don');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }} 
+            className="flex items-center gap-2 text-amber-200 hover:text-white transition-colors bg-transparent border-none p-0 cursor-pointer font-bold"
+          >
+            <TruckIcon className="w-4 h-4 text-amber-200" />
+            <span className="text-[13px]">Tra cứu đơn hàng</span>
+          </button>
+
           <button type="button" onClick={() => onNavigate?.('chinh-sach-dat-hang')} className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity bg-transparent border-none p-0 cursor-pointer">
             <img src="/hc-assets/icon_chinhsach.png" alt="" className="w-5 h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
             <span className="text-[13px] font-medium">{t('order.returnPolicy')}</span>
@@ -790,7 +856,7 @@ export default function OrderPage({
             <img src="/hc-assets/icon_lienhe.png" alt="" className="w-5 h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
             <span className="text-[13px] font-medium">{t('order.contact')}</span>
           </button>
-          <a href="#" className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity">
+          <a href="#" className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity hidden sm:flex">
             <img src="/hc-assets/icon_bank.png" alt="" className="w-5 h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
             <span className="text-[13px] font-medium">Bankrista Thịnh Vượng</span>
           </a>
@@ -812,22 +878,19 @@ export default function OrderPage({
             ) : (
               <>
                 {/* Hero Banner & Category Menu Area (Desktop Only) */}
-                {activeCategory === 'all' && (
-                  <div className="w-full mb-10 flex flex-col lg:flex-row items-stretch gap-8">
-                    
-                    {/* LEFT SIDEBAR (Category Menu Desktop) */}
-                    <div className="hidden lg:flex flex-col w-[260px] flex-shrink-0 z-10 bg-white shadow-sm border-l border-r border-b border-gray-100 pb-2">
-                      <ul className="w-full flex flex-col flex-1 overflow-y-auto no-scrollbar">
-                        {categoryMenuItems}
-                      </ul>
-                    </div>
-
-                    {/* HERO BANNER */}
-                    <div className="flex-1 min-w-0 flex pt-4 lg:pt-0">
-                      <BannerSlider />
-                    </div>
+                <div className="w-full mb-10 flex flex-col lg:flex-row items-stretch gap-8">
+                  {/* LEFT SIDEBAR (Category Menu Desktop) */}
+                  <div className="hidden lg:flex flex-col w-[260px] flex-shrink-0 z-10 bg-white shadow-sm border-l border-r border-b border-gray-100 rounded-b-2xl overflow-hidden pb-2">
+                    <ul className="w-full flex flex-col flex-1 overflow-y-auto no-scrollbar">
+                      {categoryMenuItems}
+                    </ul>
                   </div>
-                )}
+
+                  {/* HERO BANNER */}
+                  <div className="flex-1 min-w-0 flex pt-4 lg:pt-0">
+                    <BannerSlider />
+                  </div>
+                </div>
 
                 {/* Single Compact Unified Voucher Row Section */}
                 {(personalVouchers.length > 0 || publicVouchers.length > 0) && (
@@ -863,7 +926,7 @@ export default function OrderPage({
                 )}
 
                 {/* AI TOP 3 RECOMMENDED PRODUCTS UNDER VOUCHER */}
-                {activeCategory === 'all' && aiRecommendedProducts && aiRecommendedProducts.length > 0 && (
+                {aiRecommendedProducts && aiRecommendedProducts.length > 0 && (
                   <div className="mb-10 w-full">
                     <div className="bg-white rounded-3xl border border-rose-100 p-6 md:p-8 shadow-2xs relative overflow-hidden">
                       {/* Section Top Header */}
@@ -983,91 +1046,46 @@ export default function OrderPage({
                 )}
 
                 {/* Mobile Horizontal Scroll Category Tab Bar (Sticky top below main header) */}
-                {activeCategory === 'all' && (
-                  <div className="lg:hidden sticky top-[84px] z-30 bg-white border-b border-gray-100 py-3 shadow-md overflow-x-auto no-scrollbar flex gap-2 px-6">
-                    <button
-                      type="button"
-                      onClick={() => handleCategorySelect('all')}
-                      className={`inline-flex items-center justify-center px-4 py-2 rounded-full text-xs font-bold uppercase transition-all flex-shrink-0 ${
-                        activeCategory === 'all'
-                          ? 'bg-[#b22830] text-white shadow-sm'
-                          : 'bg-[#f5f5f5] text-[#333333] hover:bg-gray-200'
-                      }`}
-                    >
-                      Tất cả
-                    </button>
-                    {parentCats.map((parent, idx) => {
-                      const iconUrl = MENU_ICONS[idx % MENU_ICONS.length];
-                      const isActive = activeCategory === parent.ma_danh_muc;
-                      return (
-                        <button
-                          key={parent.ma_danh_muc}
-                          type="button"
-                          onClick={() => handleCategorySelect(parent.ma_danh_muc)}
-                          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold uppercase transition-all flex-shrink-0 ${
-                            isActive
-                              ? 'bg-[#b22830] text-white shadow-sm'
-                              : 'bg-[#f5f5f5] text-[#333333] hover:bg-gray-200'
-                          }`}
-                        >
-                          {parent.ten_danh_muc}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                <div className="lg:hidden sticky top-[84px] z-30 bg-white border-b border-gray-100 py-3 shadow-md overflow-x-auto no-scrollbar flex gap-2 px-4 sm:px-6">
+                  <button
+                    type="button"
+                    onClick={() => handleCategorySelect('all')}
+                    className={`inline-flex items-center justify-center px-4 py-2 rounded-full text-xs font-bold uppercase transition-all flex-shrink-0 cursor-pointer ${
+                      activeCategory === 'all'
+                        ? 'bg-[#b22830] text-white shadow-sm'
+                        : 'bg-[#f5f5f5] text-[#333333] hover:bg-gray-200'
+                    }`}
+                  >
+                    Tất cả
+                  </button>
+                  {parentCats.map((parent, idx) => {
+                    const iconUrl = MENU_ICONS[idx % MENU_ICONS.length];
+                    const isActive = activeCategory === parent.ma_danh_muc;
+                    return (
+                      <button
+                        key={parent.ma_danh_muc}
+                        type="button"
+                        onClick={() => handleCategorySelect(parent.ma_danh_muc)}
+                        className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold uppercase transition-all flex-shrink-0 cursor-pointer ${
+                          isActive
+                            ? 'bg-[#b22830] text-white shadow-sm'
+                            : 'bg-[#f5f5f5] text-[#333333] hover:bg-gray-200'
+                        }`}
+                      >
+                        {parent.ten_danh_muc}
+                      </button>
+                    );
+                  })}
+                </div>
 
-{/* Main Two-Column Layout for Products */}
-            <div ref={productsContainerRef} className="flex flex-col lg:flex-row gap-8 px-6 lg:px-8 mt-6">
-            {/* Right Column: Products List & Category Details */}
+{/* Main Layout for Products */}
+            <div ref={productsContainerRef} className="flex flex-col gap-8 px-4 sm:px-6 lg:px-8 mt-6">
             <div className="flex-1 min-w-0">
 
-                    {/* Product Grids */}
+                    {/* Product Grids - All Category Sections rendered, Smooth Scroll to target */}
                     <div className="space-y-12">
-                      {activeCategory !== 'all' && (
-                        (() => {
-                          const activeCatObj = categories.find(c => String(c.ma_danh_muc) === String(activeCategory));
-                          const parentCatObj = activeCatObj?.ma_danh_muc_cha ? categories.find(c => String(c.ma_danh_muc) === String(activeCatObj.ma_danh_muc_cha)) : null;
-                          const headingLabel = activeCatObj ? activeCatObj.ten_danh_muc : '';
-                          const parentLabel = parentCatObj ? parentCatObj.ten_danh_muc : '';
-                          return (
-                            <div className="mb-2">
-                              <div className="flex items-center gap-2 text-[13px] font-bold text-gray-400 mb-8 uppercase tracking-wider">
-                                <button type="button" onClick={() => handleCategorySelect('all')} className="hover:text-[#b22830] transition-colors cursor-pointer border-none bg-transparent p-0">Trang chủ</button>
-                                {parentLabel && (
-                                  <>
-                                    <span>/</span>
-                                    <button type="button" onClick={() => handleCategorySelect(parentCatObj.ma_danh_muc)} className="hover:text-[#b22830] transition-colors cursor-pointer border-none bg-transparent p-0">{parentLabel}</button>
-                                  </>
-                                )}
-                                <span>/</span>
-                                <span className="text-[14px]">{tCategory(headingLabel)}</span>
-                              </div>
-                              <div className="flex flex-col items-start pb-2 mb-2 gap-3 pt-2">
-                                <h2 className="text-[20px] sm:text-[24px] font-extrabold text-[#333333] mb-4 md:mb-6 capitalize">
-                                  {tCategory(headingLabel)}
-                                </h2>
-                                <div className="flex flex-wrap items-center gap-4 text-[13px] font-medium text-gray-500">
-                                  <span className="text-[#333333] font-bold">Sắp xếp:</span>
-                                  <button onClick={() => setSortByOrder('name-asc')} className={`hover:text-[#b22830] transition-colors cursor-pointer border-none bg-transparent p-0 ${sortByOrder === 'name-asc' ? 'text-[#b22830]' : ''}`}>Tên A &rarr; Z</button>
-                                  <button onClick={() => setSortByOrder('name-desc')} className={`hover:text-[#b22830] transition-colors cursor-pointer border-none bg-transparent p-0 ${sortByOrder === 'name-desc' ? 'text-[#b22830]' : ''}`}>Tên Z &rarr; A</button>
-                                  <button onClick={() => setSortByOrder('price-asc')} className={`hover:text-[#b22830] transition-colors cursor-pointer border-none bg-transparent p-0 ${sortByOrder === 'price-asc' ? 'text-[#b22830]' : ''}`}>Giá tăng dần</button>
-                                  <button onClick={() => setSortByOrder('price-desc')} className={`hover:text-[#b22830] transition-colors cursor-pointer border-none bg-transparent p-0 ${sortByOrder === 'price-desc' ? 'text-[#b22830]' : ''}`}>Giá giảm dần</button>
-                                  <button onClick={() => setSortByOrder('newest')} className={`hover:text-[#b22830] transition-colors cursor-pointer border-none bg-transparent p-0 ${sortByOrder === 'newest' ? 'text-[#b22830]' : ''}`}>Hàng mới</button>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })()
-                      )}
                       {(() => {
-                        const renderedSections = menuSections.filter(section => {
-                          if (activeCategory === 'all') return true;
-                          const isDirectMatch = String(activeCategory) === String(section.id);
-                          const sectionCat = categories.find(c => String(c.ma_danh_muc) === String(section.id));
-                          const isChildMatch = sectionCat && String(sectionCat.ma_danh_muc_cha) === String(activeCategory);
-                          return isDirectMatch || isChildMatch;
-                        });
+                        const renderedSections = menuSections;
 
                         if (renderedSections.length === 0) {
                           return (
@@ -1094,14 +1112,12 @@ export default function OrderPage({
                             if (sortByOrder === 'name-desc') return String(b.ten_san_pham || '').localeCompare(String(a.ten_san_pham || ''), 'vi');
                             return 0;
                           });
-                          const isExpanded = activeCategory !== 'all';
-                          const displayItems = isExpanded ? sortedItems : sortedItems.slice(0, 5);
-                          const hasMore = !isExpanded && sortedItems.length > 5;
+                          const displayItems = sortedItems;
                           const parentCatIndex = parentCats.findIndex(c => String(c.ma_danh_muc) === String(section.id));
                           const sectionIconUrl = parentCatIndex !== -1 ? MENU_ICONS[parentCatIndex % MENU_ICONS.length] : MENU_ICONS[idx % MENU_ICONS.length];
 
                           return (
-                            <section key={section.id} id={`category-${section.id}`} className="scroll-mt-[120px]">
+                            <section key={section.id} id={`category-${section.id}`} className="scroll-mt-[100px]">
                                 <div className="flex items-center justify-between border-b-2 border-gray-100 pb-3.5 mb-6 pt-4">
                                   <div className="flex items-center gap-3">
                                     <div className="w-2.5 h-7 rounded-full bg-[#b22830] shrink-0 shadow-2xs"></div>
@@ -1114,7 +1130,7 @@ export default function OrderPage({
                                   </span>
                                 </div>
 
-                              <div className={`grid gap-4 md:gap-6 lg:gap-8 ${activeCategory !== 'all' ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'}`}>
+                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-8">
                                 {displayItems.map((p) => {
                                   const isFav = isFavoriteProduct ? isFavoriteProduct(p) : false;
                                   return (
@@ -1217,18 +1233,6 @@ export default function OrderPage({
                                   );
                                 })}
                               </div>
-
-                              {hasMore && (
-                                <div className="mt-8 flex justify-center">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleCategorySelect(section.id)}
-                                    className="px-6 py-2 border border-[#b22830] text-[#b22830] text-[14px] font-medium rounded-full hover:bg-[#b22830] hover:text-white transition-colors bg-white flex items-center gap-1"
-                                  >
-                                    Xem tất cả <span className="text-[12px] font-bold mt-[2px]">&gt;</span>
-                                  </button>
-                                </div>
-                              )}
                             </section>
                           );
                         });

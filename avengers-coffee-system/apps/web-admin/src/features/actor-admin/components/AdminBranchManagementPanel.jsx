@@ -213,75 +213,6 @@ export function AdminBranchManagementPanel({
 
   return (
     <div className="branch-manage-container">
-      {/* Header Section */}
-      <div className="branch-manage-header">
-        <div className="branch-manage-header-title">
-          <div className="branch-manage-icon-wrapper">
-            <Store size={26} className="branch-header-icon" />
-          </div>
-          <div>
-            <h2>Quản lý Chi nhánh Cửa hàng</h2>
-            <p>Thiết lập danh sách điểm bán, địa chỉ, giờ hoạt động và theo dõi phản hồi đánh giá</p>
-          </div>
-        </div>
-        <div className="branch-manage-header-actions">
-          {loadBranches && (
-            <button
-              type="button"
-              className="branch-refresh-btn"
-              onClick={loadBranches}
-              title="Tải lại dữ liệu"
-            >
-              <RefreshCw size={16} />
-              <span>Tải lại</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* KPI Overview Cards */}
-      <div className="branch-kpi-grid">
-        <div className="branch-kpi-card branch-kpi-card--total">
-          <div className="branch-kpi-icon branch-kpi-icon--total">
-            <Store size={20} />
-          </div>
-          <div className="branch-kpi-content">
-            <span className="branch-kpi-label">Tổng số Chi nhánh</span>
-            <span className="branch-kpi-value">{stats.total}</span>
-          </div>
-        </div>
-
-        <div className="branch-kpi-card branch-kpi-card--active">
-          <div className="branch-kpi-icon branch-kpi-icon--active">
-            <CheckCircle2 size={20} />
-          </div>
-          <div className="branch-kpi-content">
-            <span className="branch-kpi-label">Đang hoạt động</span>
-            <span className="branch-kpi-value">{stats.active}</span>
-          </div>
-        </div>
-
-        <div className="branch-kpi-card branch-kpi-card--inactive">
-          <div className="branch-kpi-icon branch-kpi-icon--inactive">
-            <AlertCircle size={20} />
-          </div>
-          <div className="branch-kpi-content">
-            <span className="branch-kpi-label">Tạm dừng hoạt động</span>
-            <span className="branch-kpi-value">{stats.inactive}</span>
-          </div>
-        </div>
-
-        <div className="branch-kpi-card branch-kpi-card--staff">
-          <div className="branch-kpi-icon branch-kpi-icon--staff">
-            <Users size={20} />
-          </div>
-          <div className="branch-kpi-content">
-            <span className="branch-kpi-label">Tổng Nhân sự gán</span>
-            <span className="branch-kpi-value">{stats.totalAccounts}</span>
-          </div>
-        </div>
-      </div>
-
       {/* Form Card (Create / Edit Branch) */}
       {showForm && (
         <div className="branch-form-card">
@@ -585,16 +516,30 @@ export function AdminBranchManagementPanel({
             </select>
           </div>
 
-          {!showForm && (
-            <button
-              type="button"
-              className="branch-btn branch-btn--create"
-              onClick={handleOpenAddForm}
-            >
-              <Plus size={18} strokeWidth={2.5} style={{ stroke: '#ffffff' }} />
-              <span>Thêm chi nhánh mới</span>
-            </button>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            {loadBranches && (
+              <button
+                type="button"
+                className="branch-refresh-btn"
+                onClick={loadBranches}
+                title="Tải lại dữ liệu"
+              >
+                <RefreshCw size={15} />
+                <span>Tải lại</span>
+              </button>
+            )}
+
+            {!showForm && (
+              <button
+                type="button"
+                className="branch-btn branch-btn--create"
+                onClick={handleOpenAddForm}
+              >
+                <Plus size={18} strokeWidth={2.5} style={{ stroke: '#ffffff' }} />
+                <span>Thêm chi nhánh mới</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Loading & Error States */}
@@ -625,12 +570,12 @@ export function AdminBranchManagementPanel({
                 <table className="branch-table">
                   <thead>
                     <tr>
-                      <th style={{ width: '25%' }}>Chi nhánh &amp; Mã</th>
-                      <th style={{ width: '28%' }}>Địa chỉ &amp; Bản đồ</th>
+                      <th style={{ width: '23%' }}>Chi nhánh &amp; Mã</th>
+                      <th style={{ width: '26%' }}>Địa chỉ &amp; Bản đồ</th>
                       <th style={{ width: '18%' }}>Liên hệ &amp; Giờ mở cửa</th>
                       <th style={{ width: '10%' }}>Tài khoản</th>
                       <th style={{ width: '10%' }}>Trạng thái</th>
-                      <th style={{ width: '9%' }} className="text-right">Thao tác</th>
+                      <th style={{ width: '13%', textAlign: 'center' }}>Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -726,96 +671,35 @@ export function AdminBranchManagementPanel({
                             </span>
                           </td>
 
-                          <td style={{ textAlign: 'center', position: 'relative', whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
-                            <button
-                              type="button"
-                              className="btn-icon-more"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setOpenBranchActionId(openBranchActionId === branchCode ? null : branchCode)
-                              }}
-                              title="Thao tác"
-                            >
-                              <MoreVertical size={16} color="#475569" />
-                            </button>
-
-                            {openBranchActionId === branchCode && (
-                              <div
-                                style={{
-                                  position: 'absolute',
-                                  right: 'calc(100% + 6px)',
-                                  top: index >= (array.length - 2) ? 'auto' : '-4px',
-                                  bottom: index >= (array.length - 2) ? '-4px' : 'auto',
-                                  backgroundColor: '#ffffff',
-                                  border: '1px solid #e2e8f0',
-                                  borderRadius: '8px',
-                                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-                                  zIndex: 9999,
-                                  minWidth: '210px',
-                                  padding: '0.35rem',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  gap: '0.15rem'
-                                }}
-                                onClick={(e) => e.stopPropagation()}
+                          <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', justifyContent: 'center' }}>
+                              <button
+                                type="button"
+                                className="admin-table-action-btn btn-special"
+                                onClick={() => setSelectedBranchForReview && setSelectedBranchForReview(branch)}
+                                title="Xem và phản hồi đánh giá chi nhánh"
                               >
-                                <button
-                                  type="button"
-                                  className="btn-dropdown-item"
-                                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.45rem 0.65rem', borderRadius: '6px', fontSize: '0.8125rem', fontWeight: '500', color: '#6366f1', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                                  onClick={() => {
-                                    setOpenBranchActionId(null)
-                                    setSelectedBranchForReview && setSelectedBranchForReview(branch)
-                                  }}
-                                >
-                                  <Star size={14} color="#6366f1" /> Xem chi tiết &amp; Đánh giá
-                                </button>
+                                <Star size={15} />
+                              </button>
 
-                                <button
-                                  type="button"
-                                  className="btn-dropdown-item"
-                                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.45rem 0.65rem', borderRadius: '6px', fontSize: '0.8125rem', fontWeight: '500', color: '#2563eb', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                                  onClick={() => {
-                                    setOpenBranchActionId(null)
-                                    startEditBranch && startEditBranch(branch)
-                                  }}
-                                >
-                                  <Edit3 size={14} color="#2563eb" /> Chỉnh sửa chi nhánh
-                                </button>
+                              <button
+                                type="button"
+                                className="admin-table-action-btn btn-edit"
+                                onClick={() => startEditBranch && startEditBranch(branch)}
+                                title="Chỉnh sửa chi nhánh"
+                              >
+                                <Edit3 size={15} />
+                              </button>
 
-                                <div style={{ borderTop: '1px solid #f1f5f9', margin: '0.2rem 0' }}></div>
-
-                                <button
-                                  type="button"
-                                  className="btn-dropdown-item danger"
-                                  disabled={accountCount > 0}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.5rem',
-                                    width: '100%',
-                                    padding: '0.45rem 0.65rem',
-                                    borderRadius: '6px',
-                                    fontSize: '0.8125rem',
-                                    fontWeight: '500',
-                                    color: accountCount > 0 ? '#94a3b8' : '#dc2626',
-                                    background: 'transparent',
-                                    border: 'none',
-                                    cursor: accountCount > 0 ? 'not-allowed' : 'pointer',
-                                    textAlign: 'left',
-                                    opacity: accountCount > 0 ? 0.6 : 1
-                                  }}
-                                  onClick={() => {
-                                    if (accountCount > 0) return
-                                    setOpenBranchActionId(null)
-                                    deleteBranch && deleteBranch(branchCode)
-                                  }}
-                                  title={accountCount > 0 ? 'Không thể xóa chi nhánh đang có nhân sự/tài khoản gán vào' : 'Xóa chi nhánh này'}
-                                >
-                                  <Trash2 size={14} color={accountCount > 0 ? '#94a3b8' : '#dc2626'} /> Xóa chi nhánh
-                                </button>
-                              </div>
-                            )}
+                              <button
+                                type="button"
+                                className="admin-table-action-btn btn-delete"
+                                onClick={() => deleteBranch && deleteBranch(branchCode)}
+                                title={accountCount > 0 ? `Chi nhánh có ${accountCount} tài khoản liên kết` : 'Xóa chi nhánh'}
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       )

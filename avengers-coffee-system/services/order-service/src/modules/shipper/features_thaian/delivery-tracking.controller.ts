@@ -40,21 +40,21 @@ export class DeliveryTrackingController {
   }
 
   /**
-   * GET /shippers/delivery/tracking/:maDonHang
-   * Lấy tracking info đầy đủ (timeline + shipper location + order detail).
-   */
-  @Get(':maDonHang')
-  async getTrackingInfo(@Param('maDonHang') maDonHang: string) {
-    return this.trackingService.getTrackingInfo(maDonHang);
-  }
-
-  /**
    * GET /shippers/delivery/tracking/by-code/lookup?code=AC-XXXXX
    * Tra cứu đơn hàng bằng mã tracking code (cho khách vãng lai).
    */
   @Get('by-code/lookup')
   async lookupByCode(@Query('code') code: string) {
     return this.trackingService.lookupByCode(code);
+  }
+
+  /**
+   * GET /shippers/delivery/tracking/:maDonHang
+   * Lấy tracking info đầy đủ (timeline + shipper location + order detail).
+   */
+  @Get(':maDonHang')
+  async getTrackingInfo(@Param('maDonHang') maDonHang: string) {
+    return this.trackingService.getTrackingInfo(maDonHang);
   }
 
   /**
