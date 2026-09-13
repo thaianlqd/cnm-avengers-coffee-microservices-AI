@@ -12,7 +12,9 @@ import { RoyaltyHangThang } from './entities/royalty.entity';
 import { KetQuaDoiSoat } from './entities/doi-soat.entity';
 import { BienBanViPham } from './entities/bien-ban-vi-pham.entity';
 import { AuditLog } from './entities/audit-log.entity';
+import { ThuChi } from './entities/thu-chi.entity';
 import { User } from '../user/user.entity';
+import { WalletTransaction } from '../user/wallet-transaction.entity';
 
 @Module({
   imports: [
@@ -27,7 +29,9 @@ import { User } from '../user/user.entity';
       KetQuaDoiSoat,
       BienBanViPham,
       AuditLog,
+      ThuChi,
       User,
+      WalletTransaction,
     ]),
   ],
   controllers: [FranchiseController],

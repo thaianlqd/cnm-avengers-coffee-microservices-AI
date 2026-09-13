@@ -22,7 +22,8 @@ import {
   Building,
   UserCog,
   CheckCircle2,
-  MoreVertical
+  MoreVertical,
+  MapPin
 } from 'lucide-react'
 
 function Pagination({ pageData, onPageChange }) {
@@ -70,12 +71,21 @@ export function AdminUserManagementPanel({
   const formRef = useRef(null)
   const [openUserActionId, setOpenUserActionId] = useState(null)
 
+  const [selectedCityFilter, setSelectedCityFilter] = useState('')
+
   // Defensive fallbacks
   const safeUserForm = userForm || {}
   const safeUserFilters = userFilters || { q: '', role: '', branch_code: '' }
   const safeUsersState = usersState || { loading: false, error: '', items: [] }
   const safePageData = usersPageData || { rows: [], total: 0, totalPages: 1, page: 1 }
   const safeBranchOptions = (branchOptions || []).filter(b => b && (b.code || b.ma_chi_nhanh))
+  
+  const cityList = Array.from(new Set(safeBranchOptions.map(b => b.thanh_pho).filter(Boolean))).sort()
+  
+  const filteredBranchOptions = safeBranchOptions.filter(b => {
+    if (!selectedCityFilter) return true
+    return b.thanh_pho === selectedCityFilter
+  })
 
   const handleStartEdit = (user) => {
     if (!user) return
@@ -311,20 +321,40 @@ export function AdminUserManagementPanel({
               <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                 Chi nhánh làm việc
               </label>
-              <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
-                <Store size={16} color="#64748b" style={{ flexShrink: 0 }} />
-                <select
-                  style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', fontWeight: '600', cursor: 'pointer' }}
-                  value={safeUserForm.co_so_ma || ''}
-                  onChange={(e) => setUserForm((p) => ({ ...p, co_so_ma: e.target.value }))}
-                >
-                  <option value="">-- Áp dụng tất cả / Chưa gán --</option>
-                  {safeBranchOptions.map((branch) => (
-                    <option key={branch.code || branch.ma_chi_nhanh} value={branch.code || branch.ma_chi_nhanh}>
-                      {branch.name || branch.ten_chi_nhanh}
-                    </option>
-                  ))}
-                </select>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {/* Search / Filter input */}
+                <div style={{ display: 'flex', alignItems: 'center', height: '36px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.6rem', gap: '0.5rem' }}>
+                  <MapPin size={14} color="#64748b" style={{ flexShrink: 0 }} />
+                  <select
+                    style={{ flex: 1, border: 'none', outline: 'none', fontSize: '0.8rem', color: '#0f172a', fontWeight: '500', background: 'transparent', cursor: 'pointer' }}
+                    value={selectedCityFilter}
+                    onChange={e => {
+                      setSelectedCityFilter(e.target.value);
+                      setUserForm((p) => ({ ...p, co_so_ma: '' })); // reset branch selection when city changes
+                    }}
+                  >
+                    <option value="">-- Lọc theo tất cả Thành phố --</option>
+                    {cityList.map(city => (
+                      <option key={city} value={city}>{city}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                  <Store size={16} color="#64748b" style={{ flexShrink: 0 }} />
+                  <select
+                    style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', fontWeight: '600', cursor: 'pointer' }}
+                    value={safeUserForm.co_so_ma || ''}
+                    onChange={(e) => setUserForm((p) => ({ ...p, co_so_ma: e.target.value }))}
+                  >
+                    <option value="">-- Áp dụng tất cả / Chưa gán --</option>
+                    {filteredBranchOptions.map((branch) => (
+                      <option key={branch.code || branch.ma_chi_nhanh} value={branch.code || branch.ma_chi_nhanh}>
+                        {branch.name || branch.ten_chi_nhanh} {branch.thanh_pho ? `(${branch.thanh_pho})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
 

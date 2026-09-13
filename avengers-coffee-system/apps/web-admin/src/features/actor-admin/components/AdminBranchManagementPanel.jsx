@@ -120,7 +120,11 @@ export function AdminBranchManagementPanel({
     }
   }, [editingBranchCode])
 
-  const safeBranchItems = useMemo(() => branchesState?.items || [], [branchesState])
+  const safeBranchItems = useMemo(() => {
+    return (branchesState?.items || []).filter(
+      b => b?.loai_diem_ban !== 'KIOSK_VE_TINH' && b?.loai_diem_ban !== 'KIOSK_NHUONG_QUYEN'
+    )
+  }, [branchesState])
   const safeCityOptions = useMemo(() => cityOptions || [], [cityOptions])
   const safeDistrictOptions = useMemo(() => districtOptions || [], [districtOptions])
   const safeWardOptions = useMemo(() => wardOptions || [], [wardOptions])

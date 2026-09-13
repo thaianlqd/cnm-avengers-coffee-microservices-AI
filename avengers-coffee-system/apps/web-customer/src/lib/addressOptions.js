@@ -1,4 +1,4 @@
-function normalizeText(value) {
+export function normalizeText(value) {
   return String(value || '')
     .toLowerCase()
     .normalize('NFD')
@@ -41,30 +41,23 @@ export function buildAddressOptionsFromBranches(branches) {
 
   for (const branch of branches || []) {
     const city = normalizeBranchValue(branch?.thanh_pho);
-    const district = normalizeBranchValue(branch?.quan_huyen);
-    const ward = extractWardFromAddress(branch?.dia_chi) || district;
+    const ward = extractWardFromAddress(branch?.dia_chi);
 
-    if (!city || !district || !ward) {
+    if (!city || !ward) {
       continue;
     }
 
     if (!options[city]) {
-      options[city] = {};
+      options[city] = [];
     }
 
-    if (!options[city][district]) {
-      options[city][district] = [];
-    }
-
-    if (!options[city][district].includes(ward)) {
-      options[city][district].push(ward);
+    if (!options[city].includes(ward)) {
+      options[city].push(ward);
     }
   }
 
-  Object.values(options).forEach((districts) => {
-    Object.values(districts).forEach((wards) => {
-      wards.sort((a, b) => a.localeCompare(b, 'vi'));
-    });
+  Object.values(options).forEach((wards) => {
+    wards.sort((a, b) => a.localeCompare(b, 'vi'));
   });
 
   return options;
@@ -72,10 +65,9 @@ export function buildAddressOptionsFromBranches(branches) {
 
 export function getAddressSelectionDefaults(addressOptions) {
   const city = Object.keys(addressOptions || {})[0] || '';
-  const district = city ? Object.keys(addressOptions[city] || {})[0] || '' : '';
-  const ward = city && district ? (addressOptions[city]?.[district] || [])[0] || '' : '';
+  const ward = city ? (addressOptions[city] || [])[0] || '' : '';
 
-  return { city, district, ward };
+  return { city, ward };
 }
 
 function cleanGeoName(str) {
@@ -94,14 +86,7 @@ export function normalizeAddressSelection(parsedAddress, addressOptions) {
   );
   if (!city) city = fallback.city || parsed.city || '';
 
-  const districtMap = addressOptions?.[city] || {};
-  const districtKeys = Object.keys(districtMap);
-  let district = districtKeys.find(
-    (d) => d === parsed.district || (parsed.district && (cleanGeoName(d) === cleanGeoName(parsed.district) || cleanGeoName(d).includes(cleanGeoName(parsed.district)) || cleanGeoName(parsed.district).includes(cleanGeoName(d))))
-  );
-  if (!district) district = districtKeys[0] || parsed.district || fallback.district || '';
-
-  const wardKeys = districtMap[district] || [];
+  const wardKeys = addressOptions?.[city] || [];
   let ward = wardKeys.find(
     (w) => w === parsed.ward || (parsed.ward && (cleanGeoName(w) === cleanGeoName(parsed.ward) || cleanGeoName(w).includes(cleanGeoName(parsed.ward)) || cleanGeoName(parsed.ward).includes(cleanGeoName(w))))
   );
@@ -109,7 +94,6 @@ export function normalizeAddressSelection(parsedAddress, addressOptions) {
 
   return {
     city,
-    district,
     ward,
     street: String(parsed.street || '').trim(),
   };

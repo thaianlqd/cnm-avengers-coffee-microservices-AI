@@ -237,7 +237,6 @@ function normalizeBranchStore(branch, index) {
     id: String(branch?.ma_chi_nhanh || `branch-${index + 1}`),
     code: String(branch?.ma_chi_nhanh || `branch-${index + 1}`),
     city,
-    district: String(branch?.quan_huyen || '').trim() || 'Chưa phân loại',
     name: String(branch?.ten_chi_nhanh || '').trim() || `Chi nhánh ${index + 1}`,
     address: String(branch?.dia_chi || '').trim() || 'Đang cập nhật địa chỉ',
     hours: fallbackHours,
@@ -861,7 +860,7 @@ function AppContent() {
   const { data: vietnamProvinces } = useQuery({
     queryKey: ['vietnam-provinces'],
     queryFn: async () => {
-      const res = await fetch('https://provinces.open-api.vn/api/?depth=3');
+      const res = await fetch('/provinces.json');
       return res.json();
     },
     enabled: ['stores', 'order', 'checkout', 'profile'].includes(activeTab),
@@ -872,12 +871,7 @@ function AppContent() {
     if (vietnamProvinces && Array.isArray(vietnamProvinces) && vietnamProvinces.length > 0) {
       const options = {};
       vietnamProvinces.forEach(p => {
-        options[p.name] = {};
-        if (p.districts) {
-          p.districts.forEach(d => {
-            options[p.name][d.name] = d.wards ? d.wards.map(w => w.name) : [];
-          });
-        }
+        options[p.name] = p.wards ? p.wards.map(w => w.name) : [];
       });
       return options;
     }

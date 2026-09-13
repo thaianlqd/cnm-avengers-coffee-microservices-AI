@@ -309,8 +309,8 @@ export function AccountCenterPanel({ session }) {
                 width: '3.5rem',
                 height: '3.5rem',
                 borderRadius: '50%',
-                backgroundColor: '#eef2ff',
-                color: '#4f46e5',
+                backgroundColor: 'var(--primary-light)',
+                color: 'var(--primary)',
                 display: 'flex',
                 alignItems: 'center',
                 justify: 'center',
@@ -395,8 +395,8 @@ export function AccountCenterPanel({ session }) {
             display: 'flex',
             alignItems: 'center',
             gap: '0.4rem',
-            backgroundColor: activeTab === 'profile' ? '#eef2ff' : 'transparent',
-            color: activeTab === 'profile' ? '#4f46e5' : '#64748b',
+            backgroundColor: activeTab === 'profile' ? 'var(--primary-light)' : 'transparent',
+            color: activeTab === 'profile' ? 'var(--primary-hover)' : '#64748b',
             transition: 'all 0.15s ease'
           }}
         >
@@ -416,8 +416,8 @@ export function AccountCenterPanel({ session }) {
             display: 'flex',
             alignItems: 'center',
             gap: '0.4rem',
-            backgroundColor: activeTab === 'security' ? '#eef2ff' : 'transparent',
-            color: activeTab === 'security' ? '#4f46e5' : '#64748b',
+            backgroundColor: activeTab === 'security' ? 'var(--primary-light)' : 'transparent',
+            color: activeTab === 'security' ? 'var(--primary-hover)' : '#64748b',
             transition: 'all 0.15s ease'
           }}
         >
@@ -437,8 +437,8 @@ export function AccountCenterPanel({ session }) {
             display: 'flex',
             alignItems: 'center',
             gap: '0.4rem',
-            backgroundColor: activeTab === 'notifications' ? '#eef2ff' : 'transparent',
-            color: activeTab === 'notifications' ? '#4f46e5' : '#64748b',
+            backgroundColor: activeTab === 'notifications' ? 'var(--primary-light)' : 'transparent',
+            color: activeTab === 'notifications' ? 'var(--primary-hover)' : '#64748b',
             transition: 'all 0.15s ease'
           }}
         >
@@ -448,10 +448,10 @@ export function AccountCenterPanel({ session }) {
 
       {/* TAB 1: Profile Info */}
       {activeTab === 'profile' && (
-        <section className="system-admin-card" style={{ borderTop: '3px solid #4f46e5' }}>
+        <section className="system-admin-card" style={{ borderTop: '3px solid var(--primary)' }}>
           <div style={{ marginBottom: '1.25rem', paddingBottom: '0.65rem', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h2 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <User size={17} color="#4f46e5" /> Cập nhật hồ sơ cá nhân
+              <User size={17} color="var(--primary)" /> Cập nhật hồ sơ cá nhân
             </h2>
             <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Thông tin tài khoản {session?.user?.tenDangNhap}</span>
           </div>
@@ -525,11 +525,11 @@ export function AccountCenterPanel({ session }) {
             <div style={{ backgroundColor: '#f8fafc', padding: '1.25rem', borderRadius: '10px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center', textAlign: 'center' }}>
               <span style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#475569', alignSelf: 'flex-start' }}>Xem trước ảnh đại diện</span>
               
-              <div style={{ width: '5.5rem', height: '5.5rem', borderRadius: '50%', overflow: 'hidden', border: '3px solid #6366f1', boxShadow: '0 4px 10px rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#eef2ff' }}>
+              <div style={{ width: '5.5rem', height: '5.5rem', borderRadius: '50%', overflow: 'hidden', border: '3px solid #6366f1', boxShadow: '0 4px 10px rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--primary-light)' }}>
                 {profileForm.avatarUrl ? (
                   <img src={profileForm.avatarUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                  <span style={{ fontSize: '2rem', fontWeight: '700', color: '#4f46e5' }}>{displayName.charAt(0).toUpperCase()}</span>
+                  <span style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--primary)' }}>{displayName.charAt(0).toUpperCase()}</span>
                 )}
               </div>
 
@@ -545,7 +545,7 @@ export function AccountCenterPanel({ session }) {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: '#64748b' }}>Vai trò quyền hạn:</span>
-                  <span style={{ fontWeight: '600', color: '#4f46e5' }}>{userRole}</span>
+                  <span style={{ fontWeight: '600', color: 'var(--primary)' }}>{userRole}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: '#64748b' }}>Xác thực tài khoản:</span>

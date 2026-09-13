@@ -43,7 +43,17 @@ export function useAdminDashboard() {
     }
   })
 
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState(() => {
+    const saved = localStorage.getItem('adminSession')
+    let role = ''
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        role = parsed?.user?.vai_tro || parsed?.user?.vaiTro || ''
+      } catch (e) {}
+    }
+    return role === 'KIOSK_STAFF' ? 'pos' : 'overview'
+  })
   const [ordersState, setOrdersState] = useState({ loading: true, error: '', items: [] })
   const [inventoryState, setInventoryState] = useState({ loading: true, error: '', items: [] })
   const [updatingOrderId, setUpdatingOrderId] = useState('')
@@ -51,7 +61,7 @@ export function useAdminDashboard() {
   const [savingMenuStatusId, setSavingMenuStatusId] = useState(0)
   const [overviewRange, setOverviewRange] = useState(OVERVIEW_TIME_RANGES[1].id)
   const [stockDrafts, setStockDrafts] = useState({})
-  const [shiftInput, setShiftInput] = useState({ cashOpen: 1000000, cashClose: 3540000, note: '' })
+  const [shiftInput, setShiftInput] = useState({ cashOpen: 0, cashClose: 0, note: '' })
   const [shiftDate, setShiftDate] = useState(() => getVnDateKey())
   const [shiftRange, setShiftRange] = useState(() => taoKhoangChotCaTheoNgay(getVnDateKey()))
   const [shiftPreview, setShiftPreview] = useState(null)
@@ -554,6 +564,37 @@ export function useAdminDashboard() {
       return null
     }
   }, [sessionBranchCode])
+
+  const moCaKiosk = async ({ cash_open, note }) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/staff/kiosk-shifts/open`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          branch_code: sessionBranchCode,
+          staff_username: sessionUsername,
+          staff_name: session?.user?.hoTen || session?.user?.ho_ten || sessionUsername,
+          cash_open: Number(cash_open) || 0,
+          note: note || '',
+        })
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.message || 'Lỗi mở ca')
+      
+      alert('Mở ca làm việc thành công!')
+      await taiCaKioskDaMo()
+      return true
+    } catch (err) {
+      alert(err.message)
+      return false
+    }
+  }
+
+  useEffect(() => {
+    if (activeKioskShift) {
+      setShiftInput(prev => ({ ...prev, cashOpen: activeKioskShift.tien_dau_ca || 0 }))
+    }
+  }, [activeKioskShift])
 
   useEffect(() => {
     if (!session || sessionRole === 'FRANCHISEE') return
@@ -1081,6 +1122,10 @@ export function useAdminDashboard() {
 
       window.localStorage.setItem('adminSession', JSON.stringify(nextSession))
       setSession(nextSession)
+      
+      const role = payload?.user?.vai_tro || payload?.user?.vaiTro || ''
+      setActiveTab(role === 'KIOSK_STAFF' ? 'pos' : 'overview')
+      
       setLoginStatus({ loading: false, error: '' })
     } catch (error) {
       setLoginStatus({ loading: false, error: error.message || 'Đăng nhập thất bại' })
@@ -1946,6 +1991,26 @@ export function useAdminDashboard() {
     }
   }
 
+  const taoKioskStaff = async (payload) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/manager/kiosk-staff`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.token}`,
+        },
+        body: JSON.stringify(payload),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(data?.message || 'Tạo nhân viên Kiosk thất bại')
+      }
+      return { ok: true, message: data.message || 'Tạo thành công' }
+    } catch (error) {
+      return { ok: false, message: error.message || 'Lỗi kết nối' }
+    }
+  }
+
   return {
     loginForm,
     setLoginForm,
@@ -2014,6 +2079,7 @@ export function useAdminDashboard() {
     hoanHuyDonHangPos,
     activeKioskShift,
     taiCaKioskDaMo,
+    moCaKiosk,
     capNhatTonKho,
     capNhatTrangThaiBanMon,
     chotCaTienMat,
@@ -2045,5 +2111,6 @@ export function useAdminDashboard() {
     kichHoatBieuMauKhaoSat,
     taiDanhSachBieuMau,
     taiDanhSachPhanHoi,
+    taoKioskStaff,
   }
 }
