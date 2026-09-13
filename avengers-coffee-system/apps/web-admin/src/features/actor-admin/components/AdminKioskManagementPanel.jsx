@@ -21,7 +21,10 @@ import {
 import { API_BASE_URL } from '../../admin-dashboard/constants'
 import { getAdminAccessToken } from '../../../lib/adminFetch'
 
-const ITEMS_PER_PAGE = 6
+const ITEMS_PER_PAGE = 6;
+
+import { API_BASE_URL } from '../../admin-dashboard/constants';
+
 
 function fmtMoney(num) {
   if (!num) return '0 đ'
@@ -48,11 +51,12 @@ export function AdminKioskManagementPanel({ session }) {
 
   const loadKiosks = async () => {
     try {
-      setLoading(true)
-      setError(null)
-      const token = getAdminAccessToken() || session?.token || session?.accessToken
+      setLoading(true);
+      setError(null);
+      const token = getAdminAccessToken() || session?.token || session?.accessToken;
 
       let res = await fetch(`${API_BASE_URL}/franchise/kiosk`, {
+
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         }
@@ -301,11 +305,52 @@ export function AdminKioskManagementPanel({ session }) {
                   </div>
                   <div>{getStatusBadge(k.trang_thai)}</div>
                 </div>
+                <div style={{
+                  padding: '4px 10px', borderRadius: 99, fontSize: '0.75rem', fontWeight: 800,
+                  background: k.trang_thai === 'DANG_HOAT_DONG' ? '#dcfce7' : 
+                              k.trang_thai === 'TAM_DUNG' ? '#ffedd5' :
+                              k.trang_thai === 'NGUNG_HOAT_DONG' ? '#f3f4f6' : 
+                              k.trang_thai === 'CHO_KY_HOP_DONG' ? '#e0e7ff' : '#fef9c3',
+                  color: k.trang_thai === 'DANG_HOAT_DONG' ? '#059669' : 
+                         k.trang_thai === 'TAM_DUNG' ? '#c2410c' :
+                         k.trang_thai === 'NGUNG_HOAT_DONG' ? '#4b5563' : 
+                         k.trang_thai === 'CHO_KY_HOP_DONG' ? '#4338ca' : '#d97706'
+                }}>
+                  {k.trang_thai === 'DANG_HOAT_DONG' ? 'ĐANG HOẠT ĐỘNG' : 
+                   k.trang_thai === 'TAM_DUNG' ? 'TẠM DỪNG' :
+                   k.trang_thai === 'NGUNG_HOAT_DONG' ? 'ĐÃ ĐÓNG' : 
+                   k.trang_thai === 'CHO_KY_HOP_DONG' ? 'CHỜ KÝ HĐ' : 'ĐANG SETUP'}
+                </div>
+              </div>
 
-                {/* Card Body */}
-                <div style={{ padding: '1rem 1.15rem', fontSize: '0.8125rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '0.55rem', flex: 1 }}>
-                  <div>
-                    <span style={{ color: '#64748b' }}>Loại hình:</span> <strong>{k.loai_kiosk || 'Kiosk Tiêu Chuẩn'}</strong>
+              {/* Card Body */}
+              <div style={{ padding: '1rem 1.15rem', fontSize: '0.8125rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '0.55rem', flex: 1 }}>
+                <div>
+                  <span style={{ color: '#64748b' }}>Loại Kiosk:</span> <strong>{k.loai_kiosk || 'Kiosk Tiêu Chuẩn'}</strong>
+                </div>
+                <div>
+                  <span style={{ color: '#64748b' }}>Địa chỉ:</span> <strong>{k.dia_chi_day_du || k.dia_chi || k.thanh_pho || '(Chưa cập nhật)'}</strong>
+                </div>
+                <div>
+                  <span style={{ color: '#64748b' }}>ID Đối tác:</span> <strong style={{ fontFamily: 'monospace' }}>{k.franchisee_id}</strong>
+                </div>
+                
+                {k.hop_dong && (
+                  <div style={{ marginTop: '0.5rem', padding: '12px', background: '#f0f9ff', borderRadius: '8px', border: '1px dashed #bae6fd' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, color: '#0369a1', marginBottom: 8 }}>
+                      <FileText size={16} /> Hợp đồng hiệu lực
+                    </div>
+                    <div><strong>Tỷ lệ Royalty:</strong> {k.hop_dong.ty_le_royalty_phan_tram}%</div>
+                    <div><strong>Ngày ký:</strong> {fmtDate(k.hop_dong.ngay_ky)}</div>
+                    <div><strong>Hết hạn:</strong> {fmtDate(k.hop_dong.ngay_het_han)}</div>
+                    {k.hop_dong.file_hop_dong_url && (
+                      <div style={{ marginTop: 4 }}>
+                        <strong>Bản Scan:</strong> <button onClick={() => setContractModal(k)} style={{ background: 'none', border: 'none', padding: 0, color: '#2563eb', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }}>Xem Hợp đồng (Bản in)</button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                   </div>
                   <div>
                     <span style={{ color: '#64748b' }}>Địa chỉ:</span> <strong>{k.dia_chi_day_du || k.dia_chi || '---'}</strong>
@@ -353,50 +398,78 @@ export function AdminKioskManagementPanel({ session }) {
                     <button
                       type="button"
                       onClick={async () => {
-                        if (!window.confirm('Tạo hợp đồng với mức Royalty mặc định 7%?')) return
-                        const fileUrl = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'
-                        const token = getAdminAccessToken() || session?.token
-                        await fetch(`${API_BASE_URL}/franchise/kiosk/${k.id}/hop-dong`, {
-                          method: 'POST',
-                          headers: {
-                            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                            'Content-Type': 'application/json'
-                          },
-                          body: JSON.stringify({
-                            ngay_ky: new Date().toISOString(),
-                            ngay_het_han: new Date(Date.now() + 5 * 365 * 24 * 60 * 60 * 1000).toISOString(),
-                            ty_le_royalty_phan_tram: 7,
-                            so_combo_khoi_diem: 5,
-                            file_hop_dong_url: fileUrl
-                          })
-                        })
-                        loadKiosks()
+                        if (!window.confirm('Tạo hợp đồng với mức Royalty mặc định 7%?')) return;
+                        try {
+                          const fileUrl = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
+                          const token = getAdminAccessToken() || session?.token;
+                          
+                          const res = await fetch(`${API_BASE_URL}/franchise/kiosk/${k.id}/hop-dong`, {
+                            method: 'POST',
+                            headers: {
+                              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                              'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                              ngay_ky: new Date().toISOString(),
+                              ngay_het_han: new Date(Date.now() + 5 * 365 * 24 * 60 * 60 * 1000).toISOString(),
+                              ty_le_royalty_phan_tram: 7,
+                              so_combo_khoi_diem: 5,
+                              file_hop_dong_url: fileUrl
+                            })
+                          });
+
+                          if (!res.ok) { 
+                            const err = await res.json(); 
+                            alert('Lỗi: ' + (err.message || 'Ký hợp đồng thất bại')); 
+                            return; 
+                          }
+                          
+                          alert('✅ Ký hợp đồng thành công! Kiosk đang chuyển sang DANG_THIET_LAP. Bấm "Khai trương" khi thiết lập xong.');
+                          loadKiosks();
+                        } catch (e) {
+                          alert('Lỗi: ' + e.message);
+                        }
                       }}
                       style={{ height: '32px', padding: '0 0.75rem', borderRadius: '6px', border: '1px solid #c7d2fe', backgroundColor: '#e0e7ff', color: '#4338ca', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer' }}
                     >
-                      Ký hợp đồng & Thiết lập
+                      Ký HĐ & Thiết Lập
                     </button>
+
                   )}
 
                   {k.trang_thai === 'DANG_THIET_LAP' && (
                     <button
                       type="button"
                       onClick={async () => {
-                        if (!window.confirm('Xác nhận Kiosk đã thiết lập xong và sẵn sàng khai trương?')) return
-                        const token = getAdminAccessToken() || session?.token
-                        await fetch(`${API_BASE_URL}/franchise/kiosk/${k.id}/khai-truong`, {
-                          method: 'PATCH',
-                          headers: {
-                            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                            'Content-Type': 'application/json'
+                        if (!window.confirm('Xác nhận Kiosk đã thiết lập xong và sẵn sàng khai trương?')) return;
+                        try {
+                          const token = getAdminAccessToken() || session?.token;
+                          
+                          const res = await fetch(`${API_BASE_URL}/franchise/kiosk/${k.id}/khai-truong`, {
+                            method: 'PATCH',
+                            headers: {
+                              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                              'Content-Type': 'application/json'
+                            }
+                          });
+                          
+                          if (!res.ok) { 
+                            const err = await res.json(); 
+                            alert('Lỗi: ' + (err.message || 'Khai trương thất bại')); 
+                            return; 
                           }
-                        })
-                        loadKiosks()
+                          
+                          alert('🎉 Khai trương thành công! Kiosk đã chuyển sang ĐANG HOẠT ĐỘNG.');
+                          loadKiosks();
+                        } catch (e) {
+                          alert('Lỗi: ' + e.message);
+                        }
                       }}
                       style={{ height: '32px', padding: '0 0.75rem', borderRadius: '6px', border: '1px solid #a7f3d0', backgroundColor: '#ecfdf5', color: '#059669', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer' }}
                     >
-                      Khai trương Kiosk
+                      🎉 Khai trương Kiosk
                     </button>
+
                   )}
 
                   {k.trang_thai === 'DANG_HOAT_DONG' && (

@@ -871,6 +871,13 @@ export function FranchiseStaffPortal({ session, onLogout }) {
         {/* TAB 1: POS BÁN HÀNG TẠI KIOSK - CỐ ĐỊNH CHIỀU CAO KHÔNG CUỘN TRANG */}
         {/* ═══════════════════════════════════════════════════════════ */}
         {tab === 'pos' && (
+          kioskInfo?.trang_thai !== 'DANG_HOAT_DONG' ? (
+            <div style={{ textAlign: 'center', padding: '60px 20px', background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', margin: '0 auto', maxWidth: 600, marginTop: 40 }}>
+              <Lock size={48} color="#94a3b8" style={{ margin: '0 auto 16px' }} />
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: '#334155', marginBottom: 8 }}>Kiosk Chưa Hoạt Động</h2>
+              <p style={{ color: '#64748b' }}>Kiosk này hiện chưa khai trương chính thức hoặc chưa hoàn tất mua Combo nhượng quyền.<br />Vui lòng liên hệ Quản lý để biết thêm chi tiết.</p>
+            </div>
+          ) : (
           <div style={{
             display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 390px', gap: 20,
             alignItems: 'start', width: '100%', height: 'calc(100vh - 150px)', minHeight: 640
@@ -1355,8 +1362,8 @@ export function FranchiseStaffPortal({ session, onLogout }) {
               </button>
             </div>
           </div>
+          )
         )}
-
         {/* ═══════════════════════════════════════════════════════════ */}
         {/* TAB 2: LỊCH LÀM VIỆC & ĐĂNG KÝ CA KIOSK */}
         {/* ═══════════════════════════════════════════════════════════ */}
