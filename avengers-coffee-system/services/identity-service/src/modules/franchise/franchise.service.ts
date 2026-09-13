@@ -768,7 +768,7 @@ export class FranchiseService {
 
       const currentBalance = Number(user.so_du_vi || 0);
       if (currentBalance < tongTien) {
-        throw new BadRequestException(`Số dư ví không đủ để thanh toán. Bạn cần ${tongTien.toLocaleString()}đ nhưng ví chỉ có ${currentBalance.toLocaleString()}đ.`);
+        throw new BadRequestException(`Số dư ví không đủ để thanh toán. Bạn cần ${tongTien.toLocaleString('vi-VN')}đ nhưng ví chỉ có ${currentBalance.toLocaleString('vi-VN')}đ.`);
       }
 
       // Trừ tiền ví
@@ -986,7 +986,7 @@ export class FranchiseService {
     const tongTienThanhToan = Number(congNo.so_tien) + Number(congNo.phi_phat_tre_han || 0);
     const currentBalance = Number(user.so_du_vi || 0);
     if (currentBalance < tongTienThanhToan) {
-      throw new BadRequestException('Số dư ví không đủ để thanh toán. Vui lòng nạp thêm tiền.');
+      throw new BadRequestException(`Số dư ví không đủ để thanh toán. Bạn cần ${tongTienThanhToan.toLocaleString('vi-VN')}đ nhưng ví chỉ có ${currentBalance.toLocaleString('vi-VN')}đ. Vui lòng nạp thêm tiền.`);
     }
 
     // Deduct balance

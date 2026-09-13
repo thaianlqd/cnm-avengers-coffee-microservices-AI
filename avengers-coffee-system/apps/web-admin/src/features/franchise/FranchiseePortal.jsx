@@ -226,12 +226,12 @@ const SHIFT_TEMPLATES = [
     start: '06:00',
     end: '12:00',
     icon: Sun,
-    bg: '#fffdf5',
-    headerBg: '#fef3c7',
-    text: '#92400e',
-    border: '#fde68a',
-    accent: '#d97706',
-    pillBg: '#fef3c7',
+    bg: '#f8fafc',
+    headerBg: '#f1f5f9',
+    text: '#334155',
+    border: '#cbd5e1',
+    accent: '#475569',
+    pillBg: '#f1f5f9',
   },
   {
     id: 'CHIEU',
@@ -241,12 +241,12 @@ const SHIFT_TEMPLATES = [
     start: '12:00',
     end: '18:00',
     icon: Sunset,
-    bg: '#f0f9ff',
-    headerBg: '#e0f2fe',
-    text: '#0369a1',
-    border: '#bae6fd',
-    accent: '#0284c7',
-    pillBg: '#e0f2fe',
+    bg: '#f8fafc',
+    headerBg: '#f1f5f9',
+    text: '#334155',
+    border: '#cbd5e1',
+    accent: '#475569',
+    pillBg: '#f1f5f9',
   },
   {
     id: 'TOI',
@@ -256,12 +256,12 @@ const SHIFT_TEMPLATES = [
     start: '18:00',
     end: '23:00',
     icon: Moon,
-    bg: '#faf5ff',
-    headerBg: '#f3e8ff',
-    text: '#6b21a8',
-    border: '#e9d5ff',
-    accent: '#7c3aed',
-    pillBg: '#f3e8ff',
+    bg: '#f8fafc',
+    headerBg: '#f1f5f9',
+    text: '#334155',
+    border: '#cbd5e1',
+    accent: '#475569',
+    pillBg: '#f1f5f9',
   },
 ];
 
@@ -330,6 +330,9 @@ export function FranchiseePortal({ session, onLogout }) {
 
   // ★ KIOSK CONTEXT
   const [activeKioskId, setActiveKioskId] = useState('')
+  const [kioskFilterStatus, setKioskFilterStatus] = useState('ALL')
+  const [kioskFilterType, setKioskFilterType] = useState('ALL')
+  const [kioskPage, setKioskPage] = useState(1)
 
   // ─── 5.1: Sub-staff Management States (Thành An) ───
   const [subStaffList, setSubStaffList] = useState([])
@@ -1062,7 +1065,11 @@ export function FranchiseePortal({ session, onLogout }) {
   }, [])
 
   const datMuaCombo = async () => {
-    if (!orderForm.kiosk_id || !orderForm.combo_id) { setMsg({ type: 'error', text: 'Vui lòng chọn kiosk và combo!' }); return }
+    if (!orderForm.kiosk_id || !orderForm.combo_id) { 
+      setMsg({ type: 'error', text: 'Vui lòng click chọn một gói combo ở trên trước khi đặt mua!' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return; 
+    }
     setOrdering(true)
     try {
       const res = await apiFetch('/franchise/don-mua-combo', { method: 'POST', body: JSON.stringify(orderForm) })
@@ -1073,11 +1080,36 @@ export function FranchiseePortal({ session, onLogout }) {
       setMsg({ type: 'success', text: `✅ ${res.message}` })
       setOrderForm(f => ({ ...f, combo_id: '', so_luong: 1 }))
       loadAll(false)
-    } catch (e) { setMsg({ type: 'error', text: e.message }) }
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } catch (e) {
+      console.error('LỖI KHI ĐẶT COMBO:', e)
+      const errText = typeof e.message === 'string' ? e.message : JSON.stringify(e.message || e)
+      setMsg({ type: 'error', text: errText })
+      alert(`Lỗi: ${errText}`)
+    }
     finally { setOrdering(false) }
   }
 
   const tongCongNo = congNos.filter(c => c.trang_thai !== 'DA_THANH_TOAN').reduce((s, c) => s + Number(c.so_tien) + Number(c.phi_phat_tre_han || 0), 0)
+
+  const selectedKioskForOrder = kiosks.find(k => k.id === orderForm.kiosk_id) || kiosks[0];
+  const availableCombos = useMemo(() => {
+    return combos.filter(c => {
+      if (!selectedKioskForOrder) return true;
+      const name = (c.ten_combo || '').toLowerCase();
+      const type = selectedKioskForOrder.loai_kiosk;
+      if (type === 'XE_LUU_DONG') return name.includes('xe') || name.includes('lưu động');
+      if (type === 'KIOSK_CO_DINH') return name.includes('cố định');
+      if (type === 'CONTAINER_CAFE') return name.includes('container');
+      return true;
+    });
+  }, [combos, selectedKioskForOrder]);
+
+  useEffect(() => {
+    if (availableCombos.length > 0 && !availableCombos.find(c => c.id === orderForm.combo_id)) {
+      setOrderForm(f => ({ ...f, combo_id: availableCombos[0].id }));
+    }
+  }, [availableCombos, orderForm.combo_id]);
 
   // ★ COMPUTED from activeKioskId context
   const activeKiosk = kiosks.find(k => k.id === activeKioskId) || kiosks[0] || null
@@ -1242,68 +1274,69 @@ export function FranchiseePortal({ session, onLogout }) {
 
   return (
     <ErrorBoundary>
+      <style>{`
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
       <div style={{ display: 'flex', minHeight: '100vh', fontFamily: '"Segoe UI",Inter,system-ui,sans-serif', background: '#f8fafc' }}>
         {/* ── Sidebar ─────────────────────────────────────── */}
         <aside style={{
-          width: 256, flexShrink: 0, background: 'linear-gradient(180deg, #3f1d0b, #652b0f)',
+          width: 256, flexShrink: 0, background: '#0f172a',
           display: 'flex', flexDirection: 'column', padding: '24px 0', position: 'sticky', top: 0, height: '100vh',
-          boxShadow: '4px 0 24px rgba(0,0,0,0.08)'
+          borderRight: '1px solid #1e293b'
         }}>
           {/* Logo */}
-          <div style={{ padding: '0 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ padding: '0 20px 20px', borderBottom: '1px solid #1e293b' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
               <div style={{
-                width: 42, height: 42, borderRadius: 12,
-                background: 'linear-gradient(135deg, #f59e0b, #d97706)', 
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(245,158,11,0.3)'
+                width: 36, height: 36, borderRadius: 8,
+                background: '#2563eb', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
               }}>
-                <Coffee size={24} color="#ffffff" />
+                <Coffee size={20} color="#ffffff" />
               </div>
               <div>
-                <div style={{ color: '#fff', fontWeight: 900, fontSize: 15, lineHeight: 1.2, letterSpacing: '0.02em' }}>Avengers Coffee</div>
-                <div style={{ color: '#fcd34d', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Quản Lý Nhượng Quyền</div>
+                <div style={{ color: '#f8fafc', fontWeight: 800, fontSize: 15, letterSpacing: '-0.01em' }}>Avengers Coffee</div>
+                <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Đối tác nhượng quyền</div>
               </div>
             </div>
           </div>
 
           {/* User info */}
-          <div style={{ padding: '16px 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ padding: '16px 20px 20px', borderBottom: '1px solid #1e293b' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{
-                width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.12)',
+                width: 40, height: 40, borderRadius: '50%', background: '#1e293b',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#fff', fontWeight: 800, fontSize: 18, border: '1px solid rgba(255,255,255,0.2)'
+                color: '#f8fafc', fontWeight: 700, fontSize: 16
               }}>
                 {userName.charAt(0).toUpperCase()}
               </div>
               <div>
-                <div style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>{userName}</div>
+                <div style={{ color: '#f8fafc', fontWeight: 600, fontSize: 14 }}>{userName}</div>
                 <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, padding: '2px 8px', borderRadius: 99,
-                  background: 'rgba(245,158,11,0.2)', color: '#fde68a', fontSize: 10, fontWeight: 800, letterSpacing: '0.04em'
+                  color: '#64748b', fontSize: 12, fontWeight: 500, marginTop: 2
                 }}>
-                  <ShieldCheck size={12} /> FRANCHISEE ADMIN
+                  Franchisee Admin
                 </div>
               </div>
             </div>
           </div>
 
           {/* Nav Tabs */}
-          <nav style={{ flex: 1, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 4, overflowY: 'auto' }}>
+          <nav className="hide-scroll" style={{ flex: 1, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 4, overflowY: 'auto' }}>
             {TABS.map(t => {
               const IconComp = t.icon
               const isSelected = tab === t.id
               return (
                 <button key={t.id} onClick={() => setTab(t.id)} style={{
                   display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
-                  border: 'none', borderRadius: 12, cursor: 'pointer', textAlign: 'left',
-                  fontWeight: isSelected ? 800 : 600, fontSize: 13, transition: 'all .2s',
-                  background: isSelected ? 'rgba(255,255,255,0.18)' : 'transparent',
-                  color: isSelected ? '#fff' : 'rgba(255,255,255,0.75)',
-                  boxShadow: isSelected ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
+                  border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'left',
+                  fontWeight: isSelected ? 600 : 500, fontSize: 14, transition: 'background .2s',
+                  background: isSelected ? '#1e293b' : 'transparent',
+                  color: isSelected ? '#f8fafc' : '#94a3b8',
                 }}>
-                  <IconComp size={18} color={isSelected ? '#fcd34d' : 'rgba(255,255,255,0.8)'} />
+                  <IconComp size={18} color={isSelected ? '#38bdf8' : '#64748b'} />
                   <span>{t.label}</span>
                 </button>
               )
@@ -1311,12 +1344,12 @@ export function FranchiseePortal({ session, onLogout }) {
           </nav>
 
           {/* Logout */}
-          <div style={{ padding: '16px 14px 0' }}>
+          <div style={{ padding: '16px 20px' }}>
             <button onClick={onLogout} style={{
-              width: '100%', padding: '10px', border: '1px solid rgba(255,255,255,0.2)',
-              borderRadius: 12, background: 'rgba(255,255,255,0.08)', cursor: 'pointer',
-              color: '#fef3c7', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              transition: 'background .2s'
+              width: '100%', padding: '10px', border: '1px solid #1e293b',
+              borderRadius: 8, background: 'transparent', cursor: 'pointer',
+              color: '#94a3b8', fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              transition: 'all .2s'
             }}>
               <span>Đăng xuất</span>
             </button>
@@ -1366,35 +1399,22 @@ export function FranchiseePortal({ session, onLogout }) {
           </header>
 
           {/* KIOSK CONTEXT SELECTOR BAR */}
-          {tab !== 'dashboard' && kiosks.length > 0 && (
-            <div style={{ background: '#fff', borderBottom: '1px solid #f1f5f9', padding: '12px 32px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', position: 'sticky', top: 68, zIndex: 40 }}>
-              <span style={{ fontSize: 12, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', flexShrink: 0 }}>
-                🏪 Kiosk đang chọn:
-              </span>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', flex: 1 }}>
-                {kiosks.map(k => {
-                  const loai = LOAI_KIOSK_LABEL[k.loai_kiosk] || { label: k.loai_kiosk, emoji: '🏪', color: '#374151', bg: '#f1f5f9' }
-                  const isActive = k.id === activeKioskId
-                  return (
-                    <button key={k.id} onClick={() => switchKiosk(k.id)} style={{
-                      display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px',
-                      borderRadius: 99, border: `2px solid ${isActive ? loai.color : '#e2e8f0'}`,
-                      background: isActive ? loai.bg : '#f8fafc',
-                      color: isActive ? loai.color : '#64748b',
-                      cursor: 'pointer', fontWeight: isActive ? 800 : 600, fontSize: 13,
-                      transition: 'all .15s', boxShadow: isActive ? `0 0 0 3px ${loai.bg}` : 'none'
-                    }}>
-                      <span>{loai.emoji}</span>
-                      <span>{k.ten_kiosk} ({k.ma_kiosk})</span>
-                      <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 99, background: isActive ? loai.color : '#e2e8f0', color: isActive ? '#fff' : '#94a3b8', fontWeight: 800 }}>
-                        {loai.label}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
+          {tab !== 'dashboard' && tab !== 'wallet' && kiosks.length > 0 && (
+            <div style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', padding: '12px 32px', display: 'flex', alignItems: 'center', gap: 16, position: 'sticky', top: 68, zIndex: 40 }}>
+              <label style={{ fontSize: 14, fontWeight: 600, color: '#334155' }}>
+                Chọn Kiosk:
+              </label>
+              <select 
+                value={activeKioskId || ''} 
+                onChange={(e) => switchKiosk(e.target.value)}
+                style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 14, minWidth: 250, outline: 'none', background: '#f8fafc', color: '#0f172a', fontWeight: 500 }}
+              >
+                {kiosks.map(k => (
+                   <option key={k.id} value={k.id}>{k.ten_kiosk} ({k.ma_kiosk})</option>
+                ))}
+              </select>
               {activeKiosk && (
-                <div style={{ fontSize: 12, color: '#64748b', flexShrink: 0, fontWeight: 500 }}>
+                <div style={{ fontSize: 13, color: '#64748b' }}>
                   📍 {activeKiosk.dia_chi}, {activeKiosk.thanh_pho}
                 </div>
               )}
@@ -1488,77 +1508,142 @@ export function FranchiseePortal({ session, onLogout }) {
 
                     {/* Kiosk list cards */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                      <h3 style={{ fontWeight: 900, fontSize: 18, color: '#0f172a', margin: 0 }}>Danh Sách Kiosk Của Tôi</h3>
+                      <h3 style={{ fontWeight: 800, fontSize: 18, color: '#0f172a', margin: 0 }}>Danh Sách Kiosk Của Tôi</h3>
                       <button onClick={() => setTab('staff_manage')} style={{
-                        padding: '8px 16px', background: '#059669', color: '#fff', border: 'none', borderRadius: 10,
-                        fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                        boxShadow: '0 4px 12px rgba(5,150,105,0.25)'
+                        padding: '8px 16px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 8,
+                        fontWeight: 600, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                       }}>
                         <UserPlus size={16} /> Quản lý nhân viên
                       </button>
                     </div>
 
-                    <div style={{ display: 'grid', gap: 18, gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))' }}>
-                      {kiosks.map(k => {
-                        const loai = LOAI_KIOSK_LABEL[k.loai_kiosk] || { label: k.loai_kiosk, emoji: '🏪', color: '#374151', bg: '#f1f5f9' }
-                        const kioskCongNo = congNos.filter(c => c.kiosk_id === k.id && c.trang_thai !== 'DA_THANH_TOAN')
-                        const tongNoKiosk = kioskCongNo.reduce((s, c) => s + Number(c.so_tien), 0)
+                    <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
+                      <select 
+                        value={kioskFilterStatus} 
+                        onChange={(e) => { setKioskFilterStatus(e.target.value); setKioskPage(1); }}
+                        style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13, background: '#fff', outline: 'none' }}
+                      >
+                        <option value="ALL">Tất cả trạng thái</option>
+                        <option value="DANG_HOAT_DONG">Đang hoạt động</option>
+                        <option value="TAM_DUNG">Tạm dừng</option>
+                      </select>
+
+                      <select 
+                        value={kioskFilterType} 
+                        onChange={(e) => { setKioskFilterType(e.target.value); setKioskPage(1); }}
+                        style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13, background: '#fff', outline: 'none' }}
+                      >
+                        <option value="ALL">Tất cả loại hình</option>
+                        {Object.keys(LOAI_KIOSK_LABEL).map(k => (
+                          <option key={k} value={k}>{LOAI_KIOSK_LABEL[k].label}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
+                      {(() => {
+                        let filtered = kiosks.filter(k => {
+                          if (kioskFilterStatus !== 'ALL' && k.trang_thai !== kioskFilterStatus) return false;
+                          if (kioskFilterType !== 'ALL' && k.loai_kiosk !== kioskFilterType) return false;
+                          return true;
+                        });
+                        const limit = 6;
+                        const totalPages = Math.ceil(filtered.length / limit) || 1;
+                        const start = (kioskPage - 1) * limit;
+                        const paginated = filtered.slice(start, start + limit);
+                        
+                        if (filtered.length === 0) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b', gridColumn: '1 / -1' }}>Không tìm thấy Kiosk phù hợp</div>;
+
                         return (
-                          <div key={k.id} style={{
-                            background: '#fff', borderRadius: 20, border: `2px solid ${k.id === activeKioskId ? loai.color : '#e2e8f0'}`,
-                            boxShadow: k.id === activeKioskId ? `0 0 0 4px ${loai.bg}` : '0 4px 16px rgba(0,0,0,0.04)',
-                            overflow: 'hidden', transition: 'all .2s'
-                          }}>
-                            <div style={{ background: loai.bg, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                <span style={{ fontSize: 28 }}>{loai.emoji}</span>
-                                <div>
-                                  <div style={{ fontWeight: 900, fontSize: 16, color: loai.color }}>{k.ten_kiosk}</div>
-                                  <div style={{ fontSize: 12, color: loai.color, opacity: 0.85, fontWeight: 600 }}>{loai.label} • {k.ma_kiosk}</div>
+                          <>
+                            {paginated.map(k => {
+                              const loai = LOAI_KIOSK_LABEL[k.loai_kiosk] || { label: k.loai_kiosk, emoji: '🏪', color: '#475569', bg: '#f8fafc' }
+                              const kioskCongNo = congNos.filter(c => c.kiosk_id === k.id && c.trang_thai !== 'DA_THANH_TOAN')
+                              const tongNoKiosk = kioskCongNo.reduce((s, c) => s + Number(c.so_tien), 0)
+                              return (
+                                <div key={k.id} style={{
+                                  background: '#fff', borderRadius: 12, border: `1px solid ${k.id === activeKioskId ? '#3b82f6' : '#cbd5e1'}`,
+                                  boxShadow: k.id === activeKioskId ? '0 0 0 1px #3b82f6' : '0 2px 8px rgba(0,0,0,0.02)',
+                                  overflow: 'hidden', transition: 'all .2s'
+                                }}>
+                                  <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #f1f5f9' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                      <div style={{ width: 40, height: 40, borderRadius: 8, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0', fontSize: 20 }}>
+                                        {loai.emoji}
+                                      </div>
+                                      <div>
+                                        <div style={{ fontWeight: 700, fontSize: 15, color: '#0f172a' }}>{k.ten_kiosk}</div>
+                                        <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500, marginTop: 2 }}>{loai.label} • {k.ma_kiosk}</div>
+                                      </div>
+                                    </div>
+                                    <span style={{
+                                      padding: '4px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700,
+                                      background: k.trang_thai === 'DANG_HOAT_DONG' ? '#ecfdf5' : '#fef2f2',
+                                      color: k.trang_thai === 'DANG_HOAT_DONG' ? '#059669' : '#dc2626',
+                                      border: `1px solid ${k.trang_thai === 'DANG_HOAT_DONG' ? '#a7f3d0' : '#fecaca'}`
+                                    }}>
+                                      {k.trang_thai === 'DANG_HOAT_DONG' ? 'Đang hoạt động' : 'Tạm dừng'}
+                                    </span>
+                                  </div>
+
+                                  <div style={{ padding: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, background: '#f8fafc' }}>
+                                    <div>
+                                      <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>COMBO NGUYÊN LIỆU</div>
+                                      <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', marginTop: 4 }}>{k.so_combo_hien_tai || 0}</div>
+                                    </div>
+                                    <div>
+                                      <div style={{ fontSize: 11, color: tongNoKiosk > 0 ? '#ef4444' : '#64748b', fontWeight: 600 }}>CÔNG NỢ</div>
+                                      <div style={{ fontSize: 16, fontWeight: 700, color: tongNoKiosk > 0 ? '#ef4444' : '#0f172a', marginTop: 4 }}>{fmtMoney(tongNoKiosk)}</div>
+                                    </div>
+                                  </div>
+
+                                  <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', background: '#fff' }}>
+                                    <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
+                                      📍 {k.dia_chi}
+                                    </div>
+                                    <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                                      <button onClick={() => { switchKiosk(k.id); setTab('kiosk_shifts'); }} style={{
+                                        padding: '6px 10px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#fff',
+                                        color: '#334155', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
+                                      }}>
+                                        <Clock size={14} /> Ca trực
+                                      </button>
+                                      <button onClick={() => { switchKiosk(k.id); setTab('pos'); }} style={{
+                                        padding: '6px 10px', borderRadius: 6, border: 'none', background: '#2563eb',
+                                        color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
+                                      }}>
+                                        <Coffee size={14} /> POS
+                                      </button>
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
-                              <span style={{
-                                padding: '4px 12px', borderRadius: 99, fontSize: 11, fontWeight: 800,
-                                background: k.trang_thai === 'DANG_HOAT_DONG' ? '#dcfce7' : '#fee2e2',
-                                color: k.trang_thai === 'DANG_HOAT_DONG' ? '#059669' : '#dc2626'
-                              }}>
-                                {k.trang_thai === 'DANG_HOAT_DONG' ? 'Đang hoạt động' : 'Tạm dừng'}
-                              </span>
-                            </div>
-
-                            <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                              <div style={{ background: '#fffbeb', borderRadius: 12, padding: '10px 14px', border: '1px solid #fde68a' }}>
-                                <div style={{ fontSize: 11, color: '#92400e', fontWeight: 700 }}>COMBO NGUYÊN LIỆU</div>
-                                <div style={{ fontSize: 20, fontWeight: 900, color: '#78350f', marginTop: 2 }}>{k.so_combo_hien_tai || 0}</div>
-                              </div>
-                              <div style={{ background: tongNoKiosk > 0 ? '#fef2f2' : '#f0fdf4', borderRadius: 12, padding: '10px 14px', border: `1px solid ${tongNoKiosk > 0 ? '#fecaca' : '#bbf7d0'}` }}>
-                                <div style={{ fontSize: 11, color: tongNoKiosk > 0 ? '#991b1b' : '#166534', fontWeight: 700 }}>CÔNG NỢ</div>
-                                <div style={{ fontSize: 15, fontWeight: 900, color: tongNoKiosk > 0 ? '#dc2626' : '#059669', marginTop: 2 }}>{fmtMoney(tongNoKiosk)}</div>
-                              </div>
-                            </div>
-
-                            <div style={{ padding: '0 20px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: 14 }}>
-                              <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>
-                                📍 {k.dia_chi}
-                              </div>
-                              <div style={{ display: 'flex', gap: 8 }}>
-                                <button onClick={() => { switchKiosk(k.id); setTab('kiosk_shifts'); }} style={{
-                                  padding: '6px 12px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff',
-                                  color: '#334155', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
-                                }}>
-                                  <Clock size={14} /> Ca trực
+                              )
+                            })}
+                            
+                            {/* Pagination controls */}
+                            {totalPages > 1 && (
+                              <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 12 }}>
+                                <button 
+                                  disabled={kioskPage <= 1}
+                                  onClick={() => setKioskPage(p => p - 1)}
+                                  style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #cbd5e1', background: kioskPage <= 1 ? '#f1f5f9' : '#fff', color: kioskPage <= 1 ? '#94a3b8' : '#0f172a', cursor: kioskPage <= 1 ? 'not-allowed' : 'pointer' }}
+                                >
+                                  Trước
                                 </button>
-                                <button onClick={() => { switchKiosk(k.id); setTab('pos'); }} style={{
-                                  padding: '6px 12px', borderRadius: 8, border: 'none', background: '#059669',
-                                  color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
-                                }}>
-                                  <Coffee size={14} /> Bán hàng POS
+                                <span style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>Trang {kioskPage} / {totalPages}</span>
+                                <button 
+                                  disabled={kioskPage >= totalPages}
+                                  onClick={() => setKioskPage(p => p + 1)}
+                                  style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #cbd5e1', background: kioskPage >= totalPages ? '#f1f5f9' : '#fff', color: kioskPage >= totalPages ? '#94a3b8' : '#0f172a', cursor: kioskPage >= totalPages ? 'not-allowed' : 'pointer' }}
+                                >
+                                  Sau
                                 </button>
                               </div>
-                            </div>
-                          </div>
+                            )}
+                          </>
                         )
-                      })}
+                      })()}
                     </div>
 
                   </div>
@@ -1590,11 +1675,11 @@ export function FranchiseePortal({ session, onLogout }) {
                         });
                         setShowCreateStaffModal(true);
                       }} style={{
-                        padding: '12px 22px', background: 'linear-gradient(135deg, #059669, #047857)', color: '#fff', border: 'none',
-                        borderRadius: 14, fontWeight: 800, fontSize: 14, cursor: 'pointer', display: 'flex',
-                        alignItems: 'center', gap: 8, boxShadow: '0 6px 18px rgba(5,150,105,0.3)', transition: 'all .2s'
+                        padding: '12px 22px', background: '#0f172a', color: '#fff', border: 'none',
+                        borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex',
+                        alignItems: 'center', gap: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'all .2s'
                       }}>
-                        <UserPlus size={18} /> Thêm nhân viên con mới
+                        <UserPlus size={16} /> Thêm nhân viên con mới
                       </button>
                     </div>
 
@@ -1667,9 +1752,9 @@ export function FranchiseePortal({ session, onLogout }) {
                                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                                         <div style={{
                                           width: 42, height: 42, borderRadius: '50%', flexShrink: 0,
-                                          background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                                          color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                          fontWeight: 900, fontSize: 16, border: '2px solid #fff', boxShadow: '0 2px 8px rgba(245,158,11,0.25)'
+                                          background: '#f8fafc', color: '#0f172a',
+                                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                          fontWeight: 800, fontSize: 16, border: '1px solid #cbd5e1'
                                         }}>
                                           {s.ho_ten?.charAt(0).toUpperCase() || 'U'}
                                         </div>
@@ -1683,8 +1768,8 @@ export function FranchiseePortal({ session, onLogout }) {
                                     {/* Tài khoản */}
                                     <td style={{ padding: '16px 20px' }}>
                                       <span style={{
-                                        fontWeight: 800, color: '#1e293b', fontSize: 13, background: '#f1f5f9',
-                                        padding: '4px 10px', borderRadius: 8, display: 'inline-block', border: '1px solid #e2e8f0'
+                                        fontWeight: 700, color: '#334155', fontSize: 13, background: '#f8fafc',
+                                        padding: '4px 10px', borderRadius: 8, display: 'inline-block', border: '1px solid #cbd5e1'
                                       }}>
                                         @{s.ten_dang_nhap}
                                       </span>
@@ -1710,8 +1795,8 @@ export function FranchiseePortal({ session, onLogout }) {
                                     <td style={{ padding: '16px 20px' }}>
                                       <div style={{
                                         display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px',
-                                        borderRadius: 99, background: '#eff6ff', color: '#1d4ed8', fontSize: 12,
-                                        fontWeight: 800, border: '1px solid #bfdbfe', maxWidth: 220, whiteSpace: 'nowrap'
+                                        borderRadius: 8, background: '#f8fafc', color: '#334155', fontSize: 12,
+                                        fontWeight: 700, border: '1px solid #cbd5e1', maxWidth: 220, whiteSpace: 'nowrap'
                                       }}>
                                         <Store size={14} />
                                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{kioskName}</span>
@@ -1724,16 +1809,16 @@ export function FranchiseePortal({ session, onLogout }) {
                                         {perms.length === 0 ? (
                                           <span style={{ fontSize: 12, color: '#94a3b8', fontStyle: 'italic' }}>Chưa cấp quyền</span>
                                         ) : perms.length === 5 ? (
-                                          <span style={{ padding: '4px 10px', borderRadius: 8, background: '#fef3c7', color: '#92400e', fontSize: 12, fontWeight: 800, border: '1px solid #fde68a', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                            ⭐ Toàn quyền POS
+                                          <span style={{ padding: '4px 10px', borderRadius: 8, background: '#0f172a', color: '#ffffff', fontSize: 12, fontWeight: 700, border: '1px solid #0f172a', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                            Toàn quyền POS
                                           </span>
                                         ) : (
                                           perms.map(p => {
                                             const pObj = POS_PERMISSIONS_LIST.find(x => x.id === p)
                                             return (
                                               <span key={p} style={{
-                                                padding: '3px 8px', borderRadius: 6, background: '#f0fdf4',
-                                                color: '#15803d', fontSize: 11, fontWeight: 700, border: '1px solid #bbf7d0',
+                                                padding: '3px 8px', borderRadius: 6, background: '#f8fafc',
+                                                color: '#334155', fontSize: 11, fontWeight: 600, border: '1px solid #cbd5e1',
                                                 whiteSpace: 'nowrap'
                                               }} title={pObj?.desc}>
                                                 ✓ {pObj?.label || p}
@@ -1883,9 +1968,9 @@ export function FranchiseePortal({ session, onLogout }) {
                           <button
                             onClick={() => setWeekOffset(0)}
                             style={{
-                              padding: '8px 14px', border: weekOffset === 0 ? '1px solid #a7f3d0' : '1px solid transparent',
-                              background: weekOffset === 0 ? '#ecfdf5' : 'transparent',
-                              color: weekOffset === 0 ? '#047857' : '#64748b',
+                              padding: '8px 14px', border: weekOffset === 0 ? '1px solid #0f172a' : '1px solid transparent',
+                              background: weekOffset === 0 ? '#0f172a' : 'transparent',
+                              color: weekOffset === 0 ? '#ffffff' : '#64748b',
                               cursor: 'pointer', borderRadius: 10, fontWeight: 800, fontSize: 13,
                               display: 'flex', alignItems: 'center', gap: 6, transition: 'all .15s'
                             }}
@@ -1934,10 +2019,10 @@ export function FranchiseePortal({ session, onLogout }) {
                             setShowCreateShiftModal(true);
                           }}
                           style={{
-                            padding: '10px 18px', background: 'linear-gradient(135deg, #10b981, #059669)',
-                            color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, fontSize: 13,
+                            padding: '10px 18px', background: '#0f172a',
+                            color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 13,
                             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                            boxShadow: '0 4px 14px rgba(16,185,129,0.35)', transition: 'all .2s'
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'all .2s'
                           }}
                           onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
                           onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
@@ -1995,10 +2080,10 @@ export function FranchiseePortal({ session, onLogout }) {
                               onClick={handleApproveAllPending}
                               disabled={shiftRequestsLoading}
                               style={{
-                                padding: '7px 14px', background: 'linear-gradient(135deg, #10b981, #059669)',
-                                border: 'none', borderRadius: 10, fontSize: 12, fontWeight: 800, color: '#ffffff',
+                                padding: '7px 14px', background: '#0f172a',
+                                border: 'none', borderRadius: 10, fontSize: 12, fontWeight: 700, color: '#ffffff',
                                 cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
-                                boxShadow: '0 3px 8px rgba(16,185,129,0.3)', transition: 'all .15s'
+                                boxShadow: '0 3px 8px rgba(0,0,0,0.1)', transition: 'all .15s'
                               }}
                               onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
                               onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
@@ -2026,15 +2111,15 @@ export function FranchiseePortal({ session, onLogout }) {
                             return (
                               <div key={day.dateKey} style={{
                                 background: '#fff', borderRadius: 16,
-                                border: day.isToday ? '2px solid #059669' : '1px solid #e2e8f0',
+                                border: day.isToday ? '2px solid #0f172a' : '1px solid #e2e8f0',
                                 overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 560,
-                                boxShadow: day.isToday ? '0 8px 24px -4px rgba(5,150,105,0.18)' : '0 2px 10px rgba(0,0,0,0.03)',
+                                boxShadow: day.isToday ? '0 8px 24px -4px rgba(0,0,0,0.1)' : '0 2px 10px rgba(0,0,0,0.03)',
                                 transition: 'all .2s'
                               }}>
                                 {/* Day Header */}
                                 <div style={{
                                   padding: '14px 10px',
-                                  background: day.isToday ? 'linear-gradient(135deg, #064e3b, #047857)' : '#f8fafc',
+                                  background: day.isToday ? '#0f172a' : '#f8fafc',
                                   borderBottom: day.isToday ? 'none' : '1px solid #e2e8f0',
                                   textAlign: 'center', color: day.isToday ? '#fff' : '#0f172a'
                                 }}>
@@ -2044,7 +2129,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                       padding: '1px 6px', borderRadius: 6,
                                       background: day.isToday ? 'rgba(255,255,255,0.2)' : '#e2e8f0',
                                       fontSize: 10, fontWeight: 800,
-                                      color: day.isToday ? '#a7f3d0' : '#475569'
+                                      color: day.isToday ? '#ffffff' : '#475569'
                                     }}>
                                       {activeDayShifts.length} ca
                                     </span>
@@ -2053,7 +2138,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                   <div style={{
                                     display: 'inline-block', marginTop: 4, padding: '2px 8px', borderRadius: 99,
                                     background: day.isToday ? '#ffffff' : '#f1f5f9',
-                                    fontSize: 11, fontWeight: 800, color: day.isToday ? '#047857' : '#475569',
+                                    fontSize: 11, fontWeight: 800, color: day.isToday ? '#0f172a' : '#475569',
                                     border: day.isToday ? 'none' : '1px solid #e2e8f0'
                                   }}>
                                     {String(day.date.getDate()).padStart(2, '0')}/{String(day.date.getMonth() + 1).padStart(2, '0')}
@@ -2064,9 +2149,9 @@ export function FranchiseePortal({ session, onLogout }) {
                                       <span style={{
                                         display: 'inline-flex', alignItems: 'center', gap: 4,
                                         background: 'rgba(255,255,255,0.2)', padding: '2px 8px',
-                                        borderRadius: 99, fontSize: 10, fontWeight: 800, color: '#a7f3d0'
+                                        borderRadius: 99, fontSize: 10, fontWeight: 800, color: '#ffffff'
                                       }}>
-                                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#34d399', display: 'inline-block' }} />
+                                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ffffff', display: 'inline-block' }} />
                                         Hôm nay
                                       </span>
                                     </div>
@@ -2366,8 +2451,8 @@ export function FranchiseePortal({ session, onLogout }) {
                       ) : activeKioskShift?.has_open_shift ? (
                         /* Đang có ca trực mở tại Kiosk */
                         <div style={{
-                          background: 'linear-gradient(135deg, #064e3b 0%, #047857 100%)', borderRadius: 24, padding: '28px', color: '#ffffff',
-                          boxShadow: '0 12px 32px rgba(4,120,87,0.22)'
+                          background: '#0f172a', borderRadius: 24, padding: '28px', color: '#ffffff',
+                          boxShadow: '0 8px 32px rgba(0,0,0,0.15)'
                         }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
                             <div>
@@ -2400,9 +2485,9 @@ export function FranchiseePortal({ session, onLogout }) {
                               <button
                                 onClick={() => setShowForceCloseModal(true)}
                                 style={{
-                                  padding: '11px 18px', background: '#dc2626', color: '#ffffff', border: 'none',
+                                  padding: '11px 18px', background: '#ffffff', color: '#dc2626', border: 'none',
                                   borderRadius: 12, fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                                  boxShadow: '0 4px 14px rgba(220,38,38,0.35)'
+                                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                                 }}
                                 title="Cưỡng chế đóng ca khi nhân viên trước quên chốt hoặc bỏ ca"
                               >
@@ -2461,9 +2546,9 @@ export function FranchiseePortal({ session, onLogout }) {
                               <button
                                 onClick={() => setTab('shift_schedule')}
                                 style={{
-                                  padding: '12px 20px', background: '#059669', color: '#ffffff', border: 'none',
+                                  padding: '12px 20px', background: '#0f172a', color: '#ffffff', border: 'none',
                                   borderRadius: 12, fontWeight: 800, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                                  boxShadow: '0 4px 14px rgba(5,150,105,0.25)', transition: 'background 0.15s ease'
+                                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'background 0.15s ease'
                                 }}
                               >
                                 <CalendarDays size={16} /> Kiểm tra lịch phân ca
@@ -2671,7 +2756,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                   </td>
                                   <td style={{ padding: '14px 16px', color: '#64748b', fontSize: 13, fontWeight: 500 }}>{fmtDate(d.ngay_tao)}</td>
                                   <td style={{ padding: '14px 16px', color: '#475569', fontSize: 13, fontWeight: 600 }}>{d.ten_khach_hang || 'Khách tại quầy'}</td>
-                                  <td style={{ padding: '14px 16px', fontWeight: 900, color: isVoided ? '#94a3b8' : '#d97706', fontSize: 15, textDecoration: isVoided ? 'line-through' : 'none' }}>
+                                  <td style={{ padding: '14px 16px', fontWeight: 900, color: isVoided ? '#94a3b8' : '#0f172a', fontSize: 15, textDecoration: isVoided ? 'line-through' : 'none' }}>
                                     {fmtMoney(d.tong_tien)}
                                   </td>
                                   <td style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#475569' }}>
@@ -2717,20 +2802,20 @@ export function FranchiseePortal({ session, onLogout }) {
                                         style={{
                                           padding: '6px 12px',
                                           borderRadius: 8,
-                                          border: '1.5px solid #dc2626',
-                                          backgroundColor: '#dc2626',
-                                          color: '#ffffff',
+                                          border: '1.5px solid #e2e8f0',
+                                          backgroundColor: '#ffffff',
+                                          color: '#dc2626',
                                           fontWeight: 800,
                                           fontSize: 12,
                                           cursor: 'pointer',
                                           display: 'inline-flex',
                                           alignItems: 'center',
                                           gap: 5,
-                                          boxShadow: '0 2px 6px rgba(220, 38, 38, 0.25)',
+                                          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.03)',
                                           transition: 'all 0.15s ease'
                                         }}
                                       >
-                                        <RotateCcw size={13} color="#ffffff" />
+                                        <RotateCcw size={13} color="#dc2626" />
                                         <span>Hoàn Tiền &amp; Hủy POS</span>
                                       </button>
                                     ) : (
@@ -2763,7 +2848,7 @@ export function FranchiseePortal({ session, onLogout }) {
                             })}
                           </tbody>
                         </table>
-                        {posOrders.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#a16207' }}>Chưa có đơn bán hàng nào trong thời gian này.</div>}
+                        {posOrders.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>Chưa có đơn bán hàng nào trong thời gian này.</div>}
                       </div>
                     )}
                   </div>
@@ -2833,8 +2918,8 @@ export function FranchiseePortal({ session, onLogout }) {
                           return (
                             <div key={i} style={{ background: '#ffffff', borderRadius: 18, border: '1px solid #e2e8f0', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 4px 14px rgba(0,0,0,0.03)' }}>
                               {img ? (
-                                <div style={{ position: 'relative', width: '100%', paddingTop: '75%' }}>
-                                  <img src={img} alt={name} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <div style={{ width: '100%', height: 160, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, borderBottom: '1px solid #f1f5f9' }}>
+                                  <img src={img} alt={name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                                 </div>
                               ) : (
                                 <div style={{ width: '100%', paddingTop: '75%', position: 'relative', background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
@@ -2849,11 +2934,11 @@ export function FranchiseePortal({ session, onLogout }) {
                                   <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>{getCategoryName(m.danh_muc || m.danhMuc)}</div>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 14 }}>
-                                  <div style={{ fontWeight: 900, color: '#d97706', fontSize: 17 }}>{fmtMoney(price)}</div>
+                                  <div style={{ fontWeight: 900, color: '#0f172a', fontSize: 17 }}>{fmtMoney(price)}</div>
                                   <span
                                     style={{
-                                      padding: '5px 12px', background: '#f0fdf4', color: '#15803d',
-                                      borderRadius: 8, fontSize: 12, fontWeight: 700, border: '1px solid #bbf7d0'
+                                      padding: '5px 12px', background: '#f8fafc', color: '#334155',
+                                      borderRadius: 8, fontSize: 12, fontWeight: 700, border: '1px solid #cbd5e1'
                                     }}
                                   >
                                     Đang phục vụ
@@ -2946,57 +3031,48 @@ export function FranchiseePortal({ session, onLogout }) {
                 {/* ═══════════════════════════════════════════════════════════ */}
                 {tab === 'order' && (
                   <div style={{ maxWidth: 680 }}>
-                    {/* Check if selected kiosk is DANG_HOAT_DONG */}
                     {(() => {
                       const selectedKiosk = kiosks.find(k => k.id === orderForm.kiosk_id) || kiosks[0];
                       const isActive = selectedKiosk?.trang_thai === 'DANG_HOAT_DONG';
                       if (!isActive) {
                         return (
-                          <div style={{ background: '#fef3c7', border: '1.5px solid #f59e0b', borderRadius: 20, padding: 32, textAlign: 'center' }}>
-                            <div style={{ fontSize: 48, marginBottom: 12 }}>🏗️</div>
-                            <div style={{ fontSize: 18, fontWeight: 800, color: '#92400e', marginBottom: 8 }}>Kiosk chưa khai trương chính thức</div>
-                            <div style={{ fontSize: 14, color: '#78350f', lineHeight: 1.6 }}>
+                          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 16, padding: 32, textAlign: 'center' }}>
+                            <AlertCircle size={40} color="#64748b" style={{ margin: '0 auto 16px' }} />
+                            <div style={{ fontSize: 18, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Kiosk chưa khai trương chính thức</div>
+                            <div style={{ fontSize: 14, color: '#64748b', lineHeight: 1.6 }}>
                               Kiosk <b>{selectedKiosk?.ten_kiosk || selectedKiosk?.ma_kiosk}</b> đang ở trạng thái <b>{selectedKiosk?.trang_thai || 'chưa xác định'}</b>.<br/>
-                              Chỉ có thể đặt mua combo sau khi kiosk đã <b>ĐANG HOẠT ĐỘNG</b> chính thức.<br/><br/>
-                              Vui lòng hoàn tất quá trình ký hợp đồng và khai trương trước.
+                              Chỉ có thể đặt mua combo sau khi kiosk đã <b>ĐANG HOẠT ĐỘNG</b> chính thức.
                             </div>
                           </div>
                         );
                       }
                       return (
-                    <div style={{ background: '#fff', borderRadius: 24, padding: 32, border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
-                      <h3 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 900, color: '#0f172a' }}>📦 Đặt Mua Combo Nguyên Liệu</h3>
+                    <div style={{ background: '#fff', borderRadius: 16, padding: 32, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                      <h3 style={{ margin: '0 0 24px', fontSize: 18, fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}><Package size={20} /> Đặt Mua Combo Nguyên Liệu</h3>
                       
                       <div style={{ marginBottom: 20 }}>
-                        <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: '#475569', marginBottom: 8, textTransform: 'uppercase' }}>Kiosk nhận hàng</label>
+                        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 8 }}>Kiosk nhận hàng</label>
                         <select value={orderForm.kiosk_id} onChange={e => switchKiosk(e.target.value)}
-                          style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: 12, fontSize: 14, background: '#f8fafc', color: '#1e293b', fontWeight: 600, outline: 'none' }}>
+                          style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 14, background: '#fff', color: '#1e293b', outline: 'none' }}>
                           {kiosks.filter(k => k.trang_thai === 'DANG_HOAT_DONG').map(k => <option key={k.id} value={k.id}>{k.ten_kiosk} ({k.ma_kiosk})</option>)}
                         </select>
                       </div>
 
-                      <div style={{ marginBottom: 20 }}>
-                        <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: '#475569', marginBottom: 10, textTransform: 'uppercase' }}>Chọn gói combo</label>
+                      <div style={{ marginBottom: 24 }}>
+                        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 12 }}>Chọn gói combo</label>
                         <div style={{ display: 'grid', gap: 12 }}>
-                          {combos.filter(c => {
-                            if (!selectedKiosk) return true;
-                            const name = (c.ten_combo || '').toLowerCase();
-                            const type = selectedKiosk.loai_kiosk;
-                            if (type === 'XE_LUU_DONG') return name.includes('xe') || name.includes('lưu động');
-                            if (type === 'KIOSK_CO_DINH') return name.includes('cố định');
-                            if (type === 'CONTAINER_CAFE') return name.includes('container');
-                            return true;
-                          }).map(c => (
+                          {availableCombos.map(c => (
                             <div key={c.id} onClick={() => setOrderForm(f => ({ ...f, combo_id: c.id }))} style={{
-                              padding: '18px', border: `2px solid ${orderForm.combo_id === c.id ? '#f59e0b' : '#e2e8f0'}`,
-                              borderRadius: 16, cursor: 'pointer', background: orderForm.combo_id === c.id ? '#fffbeb' : '#fff'
+                              padding: '16px', border: `1px solid ${orderForm.combo_id === c.id ? '#2563eb' : '#e2e8f0'}`,
+                              borderRadius: 12, cursor: 'pointer', background: orderForm.combo_id === c.id ? '#eff6ff' : '#fff',
+                              transition: 'all 0.2s'
                             }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <div>
-                                  <div style={{ fontWeight: 900, fontSize: 16, color: '#0f172a' }}>{c.ten_combo}</div>
-                                  <div style={{ fontSize: 13, color: '#059669', fontWeight: 700, marginTop: 4 }}>Ước tính ~{c.so_ly_pha_che_uoc_tinh} ly</div>
+                                  <div style={{ fontWeight: 600, fontSize: 15, color: orderForm.combo_id === c.id ? '#1e3a8a' : '#0f172a' }}>{c.ten_combo}</div>
+                                  <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Ước tính ~{c.so_ly_pha_che_uoc_tinh} ly</div>
                                 </div>
-                                <div style={{ fontSize: 18, fontWeight: 900, color: '#d97706' }}>{fmtMoney(c.gia_ban)}</div>
+                                <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a' }}>{fmtMoney(c.gia_ban)}</div>
                               </div>
                             </div>
                           ))}
@@ -3005,30 +3081,30 @@ export function FranchiseePortal({ session, onLogout }) {
 
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
                         <div>
-                          <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: '#475569', marginBottom: 8 }}>Số lượng combo</label>
+                          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 8 }}>Số lượng</label>
                           <input type="number" min="1" max="50" value={orderForm.so_luong}
                             onChange={e => setOrderForm(f => ({ ...f, so_luong: Number(e.target.value) }))}
-                            style={{ width: '100%', padding: '12px', border: '1px solid #cbd5e1', borderRadius: 12, fontSize: 16, fontWeight: 800, textAlign: 'center', boxSizing: 'border-box' }} />
+                            style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 14, boxSizing: 'border-box', outline: 'none' }} />
                         </div>
                         <div>
-                          <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: '#475569', marginBottom: 8 }}>Phương thức thanh toán</label>
+                          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 8 }}>Phương thức thanh toán</label>
                           <select value={orderForm.phuong_thuc_thanh_toan}
                             onChange={e => setOrderForm(f => ({ ...f, phuong_thuc_thanh_toan: e.target.value }))}
-                            style={{ width: '100%', padding: '12px', border: '1px solid #cbd5e1', borderRadius: 12, fontSize: 14, background: '#f8fafc', fontWeight: 600 }}>
-                            <option value="CONG_NO">💳 Ghi nợ (Trả sau)</option>
-                            <option value="VNPAY">💻 VNPAY</option>
-                            <option value="VI_DIEN_TU">📱 Ví Avengers</option>
+                            style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 14, background: '#fff', outline: 'none' }}>
+                            <option value="CONG_NO">Ghi nợ (Trả sau)</option>
+                            <option value="VNPAY">VNPAY</option>
+                            <option value="VI_DIEN_TU">Ví điện tử</option>
                           </select>
                         </div>
                       </div>
 
-                      <button onClick={datMuaCombo} disabled={ordering || !orderForm.combo_id}
+                      <button onClick={datMuaCombo} disabled={ordering}
                         style={{
-                          width: '100%', padding: '16px', background: ordering ? '#cbd5e1' : '#059669',
-                          color: '#fff', border: 'none', borderRadius: 14, fontSize: 16, fontWeight: 800, cursor: 'pointer',
-                          boxShadow: '0 6px 20px rgba(5,150,105,0.3)'
+                          width: '100%', padding: '14px', background: ordering ? '#cbd5e1' : '#0f172a',
+                          color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                          display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, transition: 'background 0.2s'
                         }}>
-                        {ordering ? '⏳ Đang xử lý...' : '✓ Xác nhận đặt mua Combo'}
+                        {ordering ? 'Đang xử lý...' : <><Check size={18} /> Xác nhận đặt mua</>}
                       </button>
                     </div>
                       );
@@ -3040,26 +3116,26 @@ export function FranchiseePortal({ session, onLogout }) {
                 {/* TAB: LỊCH SỬ NHẬP (history) */}
                 {/* ═══════════════════════════════════════════════════════════ */}
                 {tab === 'history' && (
-                  <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.02)' }}>
+                  <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                       <thead>
                         <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                           {['Combo', 'Kiosk', 'Số lượng', 'Tổng tiền', 'Thanh toán', 'Ngày đặt', 'Trạng thái'].map(h => (
-                            <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase' }}>{h}</th>
+                            <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: '#64748b' }}>{h}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
                         {donTheoKiosk.map((d) => (
                           <tr key={d.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                            <td style={{ padding: '14px 16px', fontWeight: 800, color: '#0f172a' }}>{d.combo?.ten_combo || 'Combo'}</td>
-                            <td style={{ padding: '14px 16px', color: '#64748b', fontSize: 13 }}>{d.kiosk?.ten_kiosk} ({d.kiosk?.ma_kiosk})</td>
-                            <td style={{ padding: '14px 16px', fontWeight: 800, textAlign: 'center' }}>×{d.so_luong}</td>
-                            <td style={{ padding: '14px 16px', fontWeight: 900, color: '#d97706' }}>{fmtMoney(d.tong_tien)}</td>
-                            <td style={{ padding: '14px 16px', fontSize: 13, fontWeight: 700 }}>{d.phuong_thuc_thanh_toan}</td>
-                            <td style={{ padding: '14px 16px', color: '#64748b', fontSize: 13 }}>{fmtDate(d.ngay_dat)}</td>
-                            <td style={{ padding: '14px 16px' }}>
-                              <span style={{ padding: '4px 10px', borderRadius: 99, fontSize: 11, fontWeight: 800, background: d.trang_thai === 'DA_GIAO' ? '#dcfce7' : '#fef9c3', color: d.trang_thai === 'DA_GIAO' ? '#059669' : '#d97706' }}>
+                            <td style={{ padding: '12px 16px', fontWeight: 500, color: '#0f172a', fontSize: 14 }}>{d.combo?.ten_combo || 'Combo'}</td>
+                            <td style={{ padding: '12px 16px', color: '#64748b', fontSize: 13 }}>{d.kiosk?.ten_kiosk}</td>
+                            <td style={{ padding: '12px 16px', color: '#334155', fontSize: 14 }}>{d.so_luong}</td>
+                            <td style={{ padding: '12px 16px', fontWeight: 600, color: '#0f172a', fontSize: 14 }}>{fmtMoney(d.tong_tien)}</td>
+                            <td style={{ padding: '12px 16px', fontSize: 13, color: '#475569' }}>{d.phuong_thuc_thanh_toan}</td>
+                            <td style={{ padding: '12px 16px', color: '#64748b', fontSize: 13 }}>{fmtDate(d.ngay_dat)}</td>
+                            <td style={{ padding: '12px 16px' }}>
+                              <span style={{ padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 500, background: d.trang_thai === 'DA_GIAO' ? '#f0fdf4' : '#f8fafc', color: d.trang_thai === 'DA_GIAO' ? '#16a34a' : '#475569', border: `1px solid ${d.trang_thai === 'DA_GIAO' ? '#bbf7d0' : '#e2e8f0'}` }}>
                                 {d.trang_thai === 'DA_GIAO' ? 'Đã giao' : d.trang_thai}
                               </span>
                             </td>
@@ -3067,7 +3143,7 @@ export function FranchiseePortal({ session, onLogout }) {
                         ))}
                       </tbody>
                     </table>
-                    {donTheoKiosk.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#a16207' }}>Chưa có đơn nhập combo nào.</div>}
+                    {donTheoKiosk.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#64748b', fontSize: 14 }}>Chưa có đơn nhập combo nào.</div>}
                   </div>
                 )}
 
@@ -3077,31 +3153,31 @@ export function FranchiseePortal({ session, onLogout }) {
                 {tab === 'wallet' && (
                   <div style={{ maxWidth: 720 }}>
                     {/* Số dư ví */}
-                    <div style={{ background: 'linear-gradient(135deg, #1e293b, #0f172a)', borderRadius: 24, padding: 30, color: '#fff', marginBottom: 24, boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Wallet size={24} color="#fcd34d" />
+                    <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 16, padding: 32, marginBottom: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                          <div style={{ width: 56, height: 56, borderRadius: 12, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Wallet size={28} color="#2563eb" />
                           </div>
                           <div>
-                            <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 600 }}>Số dư khả dụng</div>
-                            <div style={{ fontSize: 32, fontWeight: 900, color: '#fcd34d', textShadow: '0 2px 10px rgba(245,158,11,0.3)' }}>
+                            <div style={{ color: '#64748b', fontSize: 14, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.02em' }}>Số dư khả dụng</div>
+                            <div style={{ fontSize: 36, fontWeight: 800, color: '#0f172a', marginTop: 4 }}>
                               {fmtMoney(walletInfo?.so_du_vi || 0)}
                             </div>
                           </div>
                         </div>
                       </div>
                       
-                      <div style={{ display: 'flex', gap: 12, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 24 }}>
+                      <div style={{ display: 'flex', gap: 12, borderTop: '1px solid #e2e8f0', paddingTop: 24 }}>
                         <div style={{ flex: 1 }}>
-                          <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, marginBottom: 8 }}>Nạp tiền vào ví</div>
-                          <div style={{ display: 'flex', gap: 8 }}>
+                          <div style={{ color: '#475569', fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Nạp tiền vào ví</div>
+                          <div style={{ display: 'flex', gap: 12 }}>
                             <input 
                               type="number" 
-                              placeholder="Nhập số tiền..."
+                              placeholder="Nhập số tiền cần nạp..."
                               value={depositAmount}
                               onChange={e => setDepositAmount(e.target.value)}
-                              style={{ flex: 1, padding: '10px 16px', borderRadius: 12, border: 'none', outline: 'none', fontSize: 15, background: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                              style={{ flex: 1, padding: '12px 16px', borderRadius: 8, border: '1px solid #cbd5e1', outline: 'none', fontSize: 15, background: '#f8fafc', color: '#0f172a' }}
                             />
                             <button 
                               disabled={depositLoading || !depositAmount || depositAmount <= 0}
@@ -3122,9 +3198,10 @@ export function FranchiseePortal({ session, onLogout }) {
                                 }
                               }}
                               style={{ 
-                                padding: '0 24px', borderRadius: 12, border: 'none', 
-                                background: '#fcd34d', color: '#0f172a', fontWeight: 800, cursor: 'pointer',
-                                opacity: (depositLoading || !depositAmount || depositAmount <= 0) ? 0.5 : 1
+                                padding: '0 24px', borderRadius: 8, border: 'none', 
+                                background: '#2563eb', color: '#ffffff', fontWeight: 600, fontSize: 15, cursor: 'pointer',
+                                opacity: (depositLoading || !depositAmount || depositAmount <= 0) ? 0.6 : 1,
+                                transition: 'background .2s'
                               }}
                             >
                               {depositLoading ? 'Đang nạp...' : 'Nạp ngay'}
@@ -3135,16 +3212,16 @@ export function FranchiseePortal({ session, onLogout }) {
                     </div>
 
                     {/* Lịch sử giao dịch */}
-                    <div style={{ background: '#fff', borderRadius: 24, border: '1px solid #e2e8f0', padding: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.02)' }}>
-                      <h4 style={{ margin: '0 0 20px', fontSize: 18, color: '#0f172a' }}>Lịch sử giao dịch</h4>
+                    <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #cbd5e1', padding: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+                      <h4 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Lịch sử giao dịch</h4>
                       {(!walletInfo?.giao_dich || walletInfo.giao_dich.length === 0) ? (
                         <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>Chưa có giao dịch nào</div>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                           {walletInfo.giao_dich.map((tx, idx) => (
-                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderRadius: 16, background: '#f8fafc' }}>
+                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: 12, background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                               <div>
-                                <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 14 }}>
+                                <div style={{ fontWeight: 600, color: '#1e293b', fontSize: 14 }}>
                                   {tx.loai_giao_dich === 'NAP_TIEN' ? 'Nạp tiền vào ví' :
                                    tx.loai_giao_dich === 'MUA_COMBO' ? 'Thanh toán đơn mua combo' :
                                    tx.loai_giao_dich === 'TRA_CONG_NO' ? 'Thanh toán công nợ' : tx.loai_giao_dich}
@@ -3153,7 +3230,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                   {fmtDate(tx.ngay_giao_dich)} • {tx.mo_ta}
                                 </div>
                               </div>
-                              <div style={{ fontWeight: 900, fontSize: 16, color: tx.so_tien > 0 ? '#059669' : '#dc2626' }}>
+                              <div style={{ fontWeight: 700, fontSize: 16, color: tx.so_tien > 0 ? '#16a34a' : '#ef4444' }}>
                                 {tx.so_tien > 0 ? '+' : ''}{fmtMoney(tx.so_tien)}
                               </div>
                             </div>
@@ -3171,37 +3248,38 @@ export function FranchiseePortal({ session, onLogout }) {
                   <div style={{ maxWidth: 680 }}>
                     <div style={{ display: 'grid', gap: 16 }}>
                       {congNoTheoKiosk.map(c => (
-                        <div key={c.id} style={{ background: '#fff', borderRadius: 20, padding: 24, border: `1.5px solid ${c.trang_thai === 'DA_THANH_TOAN' ? '#bbf7d0' : '#fecaca'}`, boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
+                        <div key={c.id} style={{ background: '#fff', borderRadius: 16, padding: 24, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
-                              <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 16 }}>
-                                {c.loai_phat_sinh === 'KHOI_TAO' ? '🏪 Phí nhượng quyền ban đầu' : '📦 Công nợ nguyên liệu'}
+                              <div style={{ fontWeight: 600, color: '#0f172a', fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                {c.loai_phat_sinh === 'KHOI_TAO' ? <Store size={16} color="#64748b" /> : <Package size={16} color="#64748b" />}
+                                {c.loai_phat_sinh === 'KHOI_TAO' ? 'Phí nhượng quyền ban đầu' : 'Công nợ nguyên liệu'}
                               </div>
-                              <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Kiosk: {c.kiosk?.ten_kiosk} ({c.kiosk?.ma_kiosk})</div>
+                              <div style={{ fontSize: 13, color: '#64748b', marginTop: 6 }}>Kiosk: {c.kiosk?.ten_kiosk} ({c.kiosk?.ma_kiosk})</div>
                             </div>
                             <div style={{ textAlign: 'right' }}>
-                              <div style={{ fontSize: 20, fontWeight: 900, color: c.trang_thai === 'DA_THANH_TOAN' ? '#059669' : '#d97706' }}>{fmtMoney(c.so_tien)}</div>
-                              <span style={{ display: 'inline-block', marginTop: 6, padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 800, background: c.trang_thai === 'DA_THANH_TOAN' ? '#dcfce7' : '#fef2f2', color: c.trang_thai === 'DA_THANH_TOAN' ? '#059669' : '#dc2626' }}>
+                              <div style={{ fontSize: 18, fontWeight: 700, color: '#0f172a' }}>{fmtMoney(c.so_tien)}</div>
+                              <span style={{ display: 'inline-block', marginTop: 6, padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 500, background: c.trang_thai === 'DA_THANH_TOAN' ? '#f0fdf4' : '#fff1f2', color: c.trang_thai === 'DA_THANH_TOAN' ? '#16a34a' : '#e11d48', border: `1px solid ${c.trang_thai === 'DA_THANH_TOAN' ? '#bbf7d0' : '#fecdd3'}` }}>
                                 {c.trang_thai === 'DA_THANH_TOAN' ? 'Đã thanh toán' : 'Chưa thanh toán'}
                               </span>
                             </div>
                           </div>
                           {c.trang_thai !== 'DA_THANH_TOAN' && (
-                            <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #f1f5f9', display: 'flex', gap: 10 }}>
+                            <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #f1f5f9', display: 'flex', gap: 12 }}>
                               <button
                                 onClick={async () => {
                                   if (!window.confirm(`Xác nhận thanh toán ${fmtMoney(c.so_tien)} bằng ví?`)) return;
                                   try {
                                     await apiFetch(`/franchise/cong-no/${c.id}/thanh-toan-vi`, { method: 'PATCH' });
-                                    setMsg({ type: 'success', text: '✅ Thanh toán công nợ thành công!' });
+                                    setMsg({ type: 'success', text: 'Thanh toán công nợ thành công!' });
                                     loadAll(false);
                                   } catch (e) {
                                     setMsg({ type: 'error', text: e.message || 'Thanh toán thất bại' });
                                   }
                                 }}
-                                style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #6366f1, #4f46e5)', color: '#fff', fontWeight: 800, fontSize: 14, cursor: 'pointer' }}
+                                style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#2563eb', color: '#fff', fontWeight: 500, fontSize: 14, cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}
                               >
-                                💳 Thanh toán bằng Ví
+                                <Wallet size={16} /> Thanh toán Ví
                               </button>
                               <button
                                 onClick={async () => {
@@ -3213,15 +3291,15 @@ export function FranchiseePortal({ session, onLogout }) {
                                     setMsg({ type: 'error', text: e.message || 'Lỗi tạo link VNPay' });
                                   }
                                 }}
-                                style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#fff', color: '#0f172a', fontWeight: 800, fontSize: 14, cursor: 'pointer' }}
+                                style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', color: '#334155', fontWeight: 500, fontSize: 14, cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}
                               >
-                                🏦 Thanh toán VNPay
+                                <CreditCard size={16} /> Thanh toán VNPay
                               </button>
                             </div>
                           )}
                         </div>
                       ))}
-                      {congNoTheoKiosk.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#059669', background: '#ecfdf5', borderRadius: 16 }}>✓ Bạn không có khoản nợ nào.</div>}
+                      {congNoTheoKiosk.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#64748b', fontSize: 14, background: '#f8fafc', borderRadius: 16, border: '1px solid #e2e8f0' }}>Không có khoản nợ nào.</div>}
                     </div>
                   </div>
                 )}
@@ -3232,8 +3310,8 @@ export function FranchiseePortal({ session, onLogout }) {
                 {/* ═══════════════════════════════════════════════════════════ */}
                 {tab === 'royalty' && (
                   <div style={{ maxWidth: 680 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                      <h3 style={{ margin: 0, fontSize: 16, color: '#0f172a' }}>Bảng Kê Royalty</h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                      <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#0f172a' }}>Bảng Kê Royalty</h3>
                       <button 
                         onClick={async () => {
                           try {
@@ -3244,46 +3322,46 @@ export function FranchiseePortal({ session, onLogout }) {
                               method: 'POST', 
                               body: JSON.stringify({ thang: thangTruoc }) 
                             })
-                            setMsg({ type: 'success', text: `✅ ${res.message || 'Đã tính Royalty thành công!'}` })
+                            setMsg({ type: 'success', text: `${res.message || 'Đã tính Royalty thành công!'}` })
                             setTimeout(() => window.location.reload(), 1500)
                           } catch (e) {
                             setMsg({ type: 'error', text: e.message })
                           }
                         }}
-                        style={{ padding: '6px 12px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer', fontSize: 12 }}
+                        style={{ padding: '8px 14px', background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1', borderRadius: 8, fontWeight: 500, cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}
                       >
-                        ⚡ Tính Royalty Tháng Trước (Demo)
+                        <RefreshCw size={14} /> Tính Royalty Tháng Trước
                       </button>
                     </div>
                     <div style={{ display: 'grid', gap: 16 }}>
                       {royaltyTheoKiosk.map(r => (
-                        <div key={r.id} style={{ background: '#fff', borderRadius: 20, padding: 24, border: '1px solid #e2e8f0', boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                        <div key={r.id} style={{ background: '#fff', borderRadius: 16, padding: 24, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
                             <div>
-                              <div style={{ fontWeight: 900, color: '#0f172a', fontSize: 17 }}>Tháng {r.thang}</div>
-                              <div style={{ fontSize: 13, color: '#64748b' }}>Kiosk: {r.kiosk?.ten_kiosk} ({r.kiosk?.ma_kiosk})</div>
+                              <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 16 }}>Tháng {r.thang}</div>
+                              <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Kiosk: {r.kiosk?.ten_kiosk}</div>
                             </div>
-                            <span style={{ padding: '4px 12px', borderRadius: 99, fontSize: 12, fontWeight: 800, background: r.trang_thai === 'DA_THANH_TOAN' ? '#dcfce7' : '#fef3c7', color: r.trang_thai === 'DA_THANH_TOAN' ? '#059669' : '#d97706' }}>
+                            <span style={{ padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 500, background: r.trang_thai === 'DA_THANH_TOAN' ? '#f0fdf4' : '#f8fafc', color: r.trang_thai === 'DA_THANH_TOAN' ? '#16a34a' : '#475569', border: `1px solid ${r.trang_thai === 'DA_THANH_TOAN' ? '#bbf7d0' : '#e2e8f0'}` }}>
                               {r.trang_thai === 'DA_THANH_TOAN' ? 'Đã thanh toán' : 'Chờ đối soát'}
                             </span>
                           </div>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-                            <div style={{ background: '#f8fafc', padding: 12, borderRadius: 10, textAlign: 'center' }}>
-                              <div style={{ fontSize: 11, color: '#64748b', fontWeight: 700 }}>DOANH THU</div>
-                              <div style={{ fontSize: 16, fontWeight: 900, color: '#0f172a', marginTop: 4 }}>{fmtMoney(r.doanh_thu_thuc_te)}</div>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+                            <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 12 }}>
+                              <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>Doanh thu</div>
+                              <div style={{ fontSize: 15, fontWeight: 600, color: '#0f172a', marginTop: 4 }}>{fmtMoney(r.doanh_thu_thuc_te)}</div>
                             </div>
-                            <div style={{ background: '#f8fafc', padding: 12, borderRadius: 10, textAlign: 'center' }}>
-                              <div style={{ fontSize: 11, color: '#64748b', fontWeight: 700 }}>TỶ LỆ</div>
-                              <div style={{ fontSize: 16, fontWeight: 900, color: '#d97706', marginTop: 4 }}>{r.ty_le_royalty}%</div>
+                            <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 12 }}>
+                              <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>Tỷ lệ</div>
+                              <div style={{ fontSize: 15, fontWeight: 600, color: '#334155', marginTop: 4 }}>{r.ty_le_royalty}%</div>
                             </div>
-                            <div style={{ background: '#f8fafc', padding: 12, borderRadius: 10, textAlign: 'center' }}>
-                              <div style={{ fontSize: 11, color: '#64748b', fontWeight: 700 }}>PHÍ PHẢI NỘP</div>
-                              <div style={{ fontSize: 16, fontWeight: 900, color: '#dc2626', marginTop: 4 }}>{fmtMoney(r.so_tien_royalty)}</div>
+                            <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 12 }}>
+                              <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>Phí phải nộp</div>
+                              <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginTop: 4 }}>{fmtMoney(r.so_tien_royalty)}</div>
                             </div>
                           </div>
                         </div>
                       ))}
-                      {royaltyTheoKiosk.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>Chưa có dữ liệu royalty tháng nào.</div>}
+                      {royaltyTheoKiosk.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#64748b', fontSize: 14, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 16 }}>Chưa có dữ liệu royalty.</div>}
                     </div>
                   </div>
                 )}
@@ -3291,42 +3369,36 @@ export function FranchiseePortal({ session, onLogout }) {
                 {/* ── Mở rộng chi nhánh ── */}
                 {/* ── Mở rộng chi nhánh ── */}
                 {tab === 'expansion' && (
-                  <div style={{ animation: 'fadeIn 0.3s', maxWidth: 1000, margin: '0 auto' }}>
-                    <div style={{ textAlign: 'center', marginBottom: 40 }}>
-                      <h2 style={{ margin: '0 0 12px', fontSize: 32, fontWeight: 900, color: '#0f172a' }}>Mở Rộng Chi Nhánh</h2>
-                      <p style={{ margin: '0 auto', color: '#64748b', fontSize: 16, maxWidth: 600 }}>
-                        Đăng ký mở thêm Kiosk nhượng quyền cực nhanh. Chọn mô hình phù hợp với khu vực kinh doanh mới của bạn.
+                  <div style={{ animation: 'fadeIn 0.3s', maxWidth: 900 }}>
+                    <div style={{ marginBottom: 32 }}>
+                      <h2 style={{ margin: '0 0 8px', fontSize: 24, fontWeight: 700, color: '#0f172a' }}>Mở Rộng Chi Nhánh</h2>
+                      <p style={{ margin: 0, color: '#64748b', fontSize: 14 }}>
+                        Đăng ký mở thêm Kiosk nhượng quyền. Chọn mô hình phù hợp với khu vực kinh doanh mới của bạn.
                       </p>
                     </div>
 
                     {/* 3 Cards */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24, marginBottom: 40 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20, marginBottom: 40 }}>
                       {/* Card 1 */}
                       <div 
                         onClick={() => setExpansionForm(f => ({ ...f, goi_kiosk: 'XE_LUU_DONG' }))}
                         style={{ 
-                          background: expansionForm.goi_kiosk === 'XE_LUU_DONG' ? '#fff1f2' : '#fff', 
-                          border: expansionForm.goi_kiosk === 'XE_LUU_DONG' ? '2px solid #be123c' : '1px solid #e2e8f0', 
-                          borderRadius: 24, padding: 32, cursor: 'pointer', transition: 'all 0.2s', position: 'relative',
-                          boxShadow: expansionForm.goi_kiosk === 'XE_LUU_DONG' ? '0 12px 24px rgba(190,18,60,0.1)' : '0 4px 12px rgba(0,0,0,0.05)'
+                          background: '#fff', 
+                          border: expansionForm.goi_kiosk === 'XE_LUU_DONG' ? '2px solid #2563eb' : '1px solid #e2e8f0', 
+                          borderRadius: 16, padding: 24, cursor: 'pointer', transition: 'all 0.2s', position: 'relative',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                         }}
                       >
-                        {expansionForm.goi_kiosk === 'XE_LUU_DONG' && <div style={{ position: 'absolute', top: -12, right: 24, background: '#be123c', color: '#fff', padding: '4px 12px', borderRadius: 99, fontSize: 12, fontWeight: 800 }}>Đang chọn</div>}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-                          <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#be123c' }}>Xe Lưu Động</h3>
-                          <span style={{ background: '#be123c', color: '#fff', padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700 }}>Vốn thấp nhất</span>
+                        {expansionForm.goi_kiosk === 'XE_LUU_DONG' && <div style={{ position: 'absolute', top: 16, right: 16 }}><CheckCircle2 size={20} color="#2563eb" /></div>}
+                        <div style={{ marginBottom: 16 }}>
+                          <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600, color: '#0f172a' }}>Xe Lưu Động</h3>
+                          <span style={{ color: '#64748b', fontSize: 12 }}>Vốn thấp nhất</span>
                         </div>
-                        <div style={{ fontSize: 32, fontWeight: 900, color: '#0f172a', marginBottom: 4 }}>Từ 35 triệu</div>
-                        <div style={{ fontSize: 14, color: '#64748b', marginBottom: 20 }}>Phù hợp người mới bắt đầu. Di chuyển linh hoạt.</div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#334155', borderTop: '1px solid #e2e8f0', paddingTop: 16 }}>
-                          <div>
-                            <div style={{ color: '#64748b', marginBottom: 4 }}>Không gian</div>
-                            <div style={{ fontWeight: 700 }}>Xe đẩy/Xe máy</div>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ color: '#64748b', marginBottom: 4 }}>Phí duy trì</div>
-                            <div style={{ fontWeight: 700 }}>4% mỗi tháng</div>
-                          </div>
+                        <div style={{ fontSize: 24, fontWeight: 700, color: '#0f172a', marginBottom: 12 }}>Từ 35 triệu</div>
+                        <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20, lineHeight: 1.5 }}>Phù hợp người mới bắt đầu. Di chuyển linh hoạt.</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#334155', borderTop: '1px solid #f1f5f9', paddingTop: 16 }}>
+                          <div><div style={{ color: '#94a3b8', marginBottom: 2, fontSize: 11 }}>Không gian</div><div style={{ fontWeight: 500 }}>Xe đẩy/Xe máy</div></div>
+                          <div style={{ textAlign: 'right' }}><div style={{ color: '#94a3b8', marginBottom: 2, fontSize: 11 }}>Phí duy trì</div><div style={{ fontWeight: 500 }}>4% / tháng</div></div>
                         </div>
                       </div>
 
@@ -3334,28 +3406,22 @@ export function FranchiseePortal({ session, onLogout }) {
                       <div 
                         onClick={() => setExpansionForm(f => ({ ...f, goi_kiosk: 'KIOSK_CO_DINH' }))}
                         style={{ 
-                          background: expansionForm.goi_kiosk === 'KIOSK_CO_DINH' ? '#fff7ed' : '#fff', 
-                          border: expansionForm.goi_kiosk === 'KIOSK_CO_DINH' ? '2px solid #c2410c' : '1px solid #e2e8f0', 
-                          borderRadius: 24, padding: 32, cursor: 'pointer', transition: 'all 0.2s', position: 'relative',
-                          boxShadow: expansionForm.goi_kiosk === 'KIOSK_CO_DINH' ? '0 12px 24px rgba(194,65,12,0.1)' : '0 4px 12px rgba(0,0,0,0.05)'
+                          background: '#fff', 
+                          border: expansionForm.goi_kiosk === 'KIOSK_CO_DINH' ? '2px solid #2563eb' : '1px solid #e2e8f0', 
+                          borderRadius: 16, padding: 24, cursor: 'pointer', transition: 'all 0.2s', position: 'relative',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                         }}
                       >
-                        {expansionForm.goi_kiosk === 'KIOSK_CO_DINH' && <div style={{ position: 'absolute', top: -12, right: 24, background: '#c2410c', color: '#fff', padding: '4px 12px', borderRadius: 99, fontSize: 12, fontWeight: 800 }}>Đang chọn</div>}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-                          <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#c2410c' }}>Kiosk Cố Định</h3>
-                          <span style={{ background: '#c2410c', color: '#fff', padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700 }}>Phổ biến nhất</span>
+                        {expansionForm.goi_kiosk === 'KIOSK_CO_DINH' && <div style={{ position: 'absolute', top: 16, right: 16 }}><CheckCircle2 size={20} color="#2563eb" /></div>}
+                        <div style={{ marginBottom: 16 }}>
+                          <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600, color: '#0f172a' }}>Kiosk Cố Định</h3>
+                          <span style={{ color: '#64748b', fontSize: 12 }}>Phổ biến nhất</span>
                         </div>
-                        <div style={{ fontSize: 32, fontWeight: 900, color: '#0f172a', marginBottom: 4 }}>Từ 60 triệu</div>
-                        <div style={{ fontSize: 14, color: '#64748b', marginBottom: 20 }}>Quầy kiosk mang đi phù hợp mặt tiền nhỏ, sảnh.</div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#334155', borderTop: '1px solid #e2e8f0', paddingTop: 16 }}>
-                          <div>
-                            <div style={{ color: '#64748b', marginBottom: 4 }}>Không gian</div>
-                            <div style={{ fontWeight: 700 }}>6 - 15 m²</div>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ color: '#64748b', marginBottom: 4 }}>Phí duy trì</div>
-                            <div style={{ fontWeight: 700 }}>6% mỗi tháng</div>
-                          </div>
+                        <div style={{ fontSize: 24, fontWeight: 700, color: '#0f172a', marginBottom: 12 }}>Từ 60 triệu</div>
+                        <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20, lineHeight: 1.5 }}>Quầy kiosk mang đi phù hợp mặt tiền nhỏ, sảnh.</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#334155', borderTop: '1px solid #f1f5f9', paddingTop: 16 }}>
+                          <div><div style={{ color: '#94a3b8', marginBottom: 2, fontSize: 11 }}>Không gian</div><div style={{ fontWeight: 500 }}>6 - 15 m²</div></div>
+                          <div style={{ textAlign: 'right' }}><div style={{ color: '#94a3b8', marginBottom: 2, fontSize: 11 }}>Phí duy trì</div><div style={{ fontWeight: 500 }}>6% / tháng</div></div>
                         </div>
                       </div>
 
@@ -3363,63 +3429,52 @@ export function FranchiseePortal({ session, onLogout }) {
                       <div 
                         onClick={() => setExpansionForm(f => ({ ...f, goi_kiosk: 'CONTAINER_CAFE' }))}
                         style={{ 
-                          background: expansionForm.goi_kiosk === 'CONTAINER_CAFE' ? '#f0f9ff' : '#fff', 
-                          border: expansionForm.goi_kiosk === 'CONTAINER_CAFE' ? '2px solid #0369a1' : '1px solid #e2e8f0', 
-                          borderRadius: 24, padding: 32, cursor: 'pointer', transition: 'all 0.2s', position: 'relative',
-                          boxShadow: expansionForm.goi_kiosk === 'CONTAINER_CAFE' ? '0 12px 24px rgba(3,105,161,0.1)' : '0 4px 12px rgba(0,0,0,0.05)'
+                          background: '#fff', 
+                          border: expansionForm.goi_kiosk === 'CONTAINER_CAFE' ? '2px solid #2563eb' : '1px solid #e2e8f0', 
+                          borderRadius: 16, padding: 24, cursor: 'pointer', transition: 'all 0.2s', position: 'relative',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                         }}
                       >
-                        {expansionForm.goi_kiosk === 'CONTAINER_CAFE' && <div style={{ position: 'absolute', top: -12, right: 24, background: '#0369a1', color: '#fff', padding: '4px 12px', borderRadius: 99, fontSize: 12, fontWeight: 800 }}>Đang chọn</div>}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-                          <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#0369a1' }}>Container Café</h3>
-                          <span style={{ background: '#0f172a', color: '#fff', padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700 }}>Cao cấp</span>
+                        {expansionForm.goi_kiosk === 'CONTAINER_CAFE' && <div style={{ position: 'absolute', top: 16, right: 16 }}><CheckCircle2 size={20} color="#2563eb" /></div>}
+                        <div style={{ marginBottom: 16 }}>
+                          <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600, color: '#0f172a' }}>Container Café</h3>
+                          <span style={{ color: '#64748b', fontSize: 12 }}>Cao cấp</span>
                         </div>
-                        <div style={{ fontSize: 32, fontWeight: 900, color: '#0f172a', marginBottom: 4 }}>Từ 150 triệu</div>
-                        <div style={{ fontSize: 14, color: '#64748b', marginBottom: 20 }}>Không gian container có chỗ ngồi mini, phá cách.</div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#334155', borderTop: '1px solid #e2e8f0', paddingTop: 16 }}>
-                          <div>
-                            <div style={{ color: '#64748b', marginBottom: 4 }}>Không gian</div>
-                            <div style={{ fontWeight: 700 }}>15 - 25 m²</div>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ color: '#64748b', marginBottom: 4 }}>Phí duy trì</div>
-                            <div style={{ fontWeight: 700 }}>7% mỗi tháng</div>
-                          </div>
+                        <div style={{ fontSize: 24, fontWeight: 700, color: '#0f172a', marginBottom: 12 }}>Từ 150 triệu</div>
+                        <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20, lineHeight: 1.5 }}>Không gian container có chỗ ngồi mini, phá cách.</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#334155', borderTop: '1px solid #f1f5f9', paddingTop: 16 }}>
+                          <div><div style={{ color: '#94a3b8', marginBottom: 2, fontSize: 11 }}>Không gian</div><div style={{ fontWeight: 500 }}>15 - 25 m²</div></div>
+                          <div style={{ textAlign: 'right' }}><div style={{ color: '#94a3b8', marginBottom: 2, fontSize: 11 }}>Phí duy trì</div><div style={{ fontWeight: 500 }}>7% / tháng</div></div>
                         </div>
                       </div>
                     </div>
 
-                    <form onSubmit={handleExpansionSubmit} style={{ background: '#fff', borderRadius: 24, padding: 40, border: '1px solid #e2e8f0', boxShadow: '0 4px 16px rgba(0,0,0,0.03)', maxWidth: 800, margin: '0 auto' }}>
-                      <h3 style={{ margin: '0 0 24px', fontSize: 20, fontWeight: 800, color: '#0f172a' }}>Nhập thông tin mặt bằng dự kiến</h3>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 32 }}>
+                    <form onSubmit={handleExpansionSubmit} style={{ background: '#fff', borderRadius: 16, padding: 32, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                      <h3 style={{ margin: '0 0 24px', fontSize: 18, fontWeight: 600, color: '#0f172a' }}>Thông tin mặt bằng dự kiến</h3>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 32 }}>
                         <div style={{ gridColumn: '1 / -1' }}>
-                          <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Địa chỉ mặt bằng dự kiến *</label>
-                          <input type="text" required value={expansionForm.dia_chi_mat_bang} onChange={e => setExpansionForm(f => ({ ...f, dia_chi_mat_bang: e.target.value }))} placeholder="Số nhà, tên đường..." style={{ width: '100%', padding: '14px 16px', borderRadius: 12, border: '1px solid #cbd5e1', fontSize: 15 }} />
+                          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 8 }}>Địa chỉ mặt bằng dự kiến *</label>
+                          <input type="text" required value={expansionForm.dia_chi_mat_bang} onChange={e => setExpansionForm(f => ({ ...f, dia_chi_mat_bang: e.target.value }))} placeholder="Số nhà, tên đường..." style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none' }} />
                         </div>
                         <div>
-                          <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Phường / Xã *</label>
-                          <input type="text" required value={expansionForm.phuong_xa} onChange={e => setExpansionForm(f => ({ ...f, phuong_xa: e.target.value }))} placeholder="Nhập Phường/Xã" style={{ width: '100%', padding: '14px 16px', borderRadius: 12, border: '1px solid #cbd5e1', fontSize: 15 }} />
+                          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 8 }}>Phường / Xã *</label>
+                          <input type="text" required value={expansionForm.phuong_xa} onChange={e => setExpansionForm(f => ({ ...f, phuong_xa: e.target.value }))} placeholder="Nhập Phường/Xã" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none' }} />
                         </div>
                         <div>
-                          <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Thành phố / Tỉnh *</label>
-                          <input type="text" required value={expansionForm.thanh_pho} onChange={e => setExpansionForm(f => ({ ...f, thanh_pho: e.target.value }))} placeholder="Nhập Thành phố/Tỉnh" style={{ width: '100%', padding: '14px 16px', borderRadius: 12, border: '1px solid #cbd5e1', fontSize: 15 }} />
+                          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 8 }}>Thành phố / Tỉnh *</label>
+                          <input type="text" required value={expansionForm.thanh_pho} onChange={e => setExpansionForm(f => ({ ...f, thanh_pho: e.target.value }))} placeholder="Nhập Thành phố/Tỉnh" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none' }} />
                         </div>
                         <div>
-                          <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Diện tích dự kiến (m2)</label>
-                          <input type="number" value={expansionForm.dien_tich_m2} onChange={e => setExpansionForm(f => ({ ...f, dien_tich_m2: e.target.value }))} placeholder="VD: 15" style={{ width: '100%', padding: '14px 16px', borderRadius: 12, border: '1px solid #cbd5e1', fontSize: 15 }} />
-                        </div>
-                        <div style={{ alignSelf: 'end' }}>
-                          <div style={{ padding: '14px 16px', background: '#f8fafc', borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 14, color: '#475569', fontWeight: 600 }}>
-                            📌 Đang chọn gói: <span style={{ color: '#0f172a', fontWeight: 800 }}>{expansionForm.goi_kiosk === 'XE_LUU_DONG' ? 'Xe Lưu Động' : expansionForm.goi_kiosk === 'KIOSK_CO_DINH' ? 'Kiosk Cố Định' : 'Container Café'}</span>
-                          </div>
+                          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 8 }}>Diện tích dự kiến (m2)</label>
+                          <input type="number" value={expansionForm.dien_tich_m2} onChange={e => setExpansionForm(f => ({ ...f, dien_tich_m2: e.target.value }))} placeholder="VD: 15" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none' }} />
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'center' }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
                         <button type="submit" disabled={expansionSubmitting} style={{
-                          padding: '16px 40px', borderRadius: 12, border: 'none', background: '#059669', color: '#fff', fontSize: 16, fontWeight: 800, cursor: expansionSubmitting ? 'not-allowed' : 'pointer', opacity: expansionSubmitting ? 0.7 : 1, transition: 'all 0.2s', boxShadow: '0 8px 16px rgba(5,150,105,0.2)'
+                          padding: '12px 24px', borderRadius: 8, border: 'none', background: '#0f172a', color: '#fff', fontSize: 14, fontWeight: 600, cursor: expansionSubmitting ? 'not-allowed' : 'pointer', opacity: expansionSubmitting ? 0.7 : 1, transition: 'all 0.2s'
                         }}>
-                          {expansionSubmitting ? 'Đang gửi yêu cầu...' : '🚀 Gửi Yêu Cầu Mở Rộng Kiosk'}
+                          {expansionSubmitting ? 'Đang gửi yêu cầu...' : 'Gửi yêu cầu mở rộng'}
                         </button>
                       </div>
                     </form>
@@ -3520,12 +3575,11 @@ export function FranchiseePortal({ session, onLogout }) {
                         <button
                           onClick={() => setMenuCategory('')}
                           style={{
-                            padding: '6px 14px', borderRadius: 99,
-                            border: !menuCategory ? '1px solid #059669' : '1px solid #e2e8f0',
-                            background: !menuCategory ? '#059669' : '#ffffff',
+                            padding: '6px 14px', borderRadius: 8,
+                            border: '1px solid ' + (!menuCategory ? '#0f172a' : '#cbd5e1'),
+                            background: !menuCategory ? '#0f172a' : '#ffffff',
                             color: !menuCategory ? '#ffffff' : '#475569',
-                            fontWeight: !menuCategory ? 800 : 600, fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap',
-                            boxShadow: !menuCategory ? '0 2px 6px rgba(5,150,105,0.25)' : 'none',
+                            fontWeight: !menuCategory ? 700 : 500, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
                             transition: 'all .15s ease', flexShrink: 0
                           }}
                         >
@@ -3538,12 +3592,11 @@ export function FranchiseePortal({ session, onLogout }) {
                               key={cat}
                               onClick={() => setMenuCategory(cat)}
                               style={{
-                                padding: '6px 14px', borderRadius: 99,
-                                border: isCatActive ? '1px solid #059669' : '1px solid #e2e8f0',
-                                background: isCatActive ? '#059669' : '#ffffff',
+                                padding: '6px 14px', borderRadius: 8,
+                                border: '1px solid ' + (isCatActive ? '#0f172a' : '#cbd5e1'),
+                                background: isCatActive ? '#0f172a' : '#ffffff',
                                 color: isCatActive ? '#ffffff' : '#475569',
-                                fontWeight: isCatActive ? 800 : 600, fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap',
-                                boxShadow: isCatActive ? '0 2px 6px rgba(5,150,105,0.25)' : 'none',
+                                fontWeight: isCatActive ? 700 : 500, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
                                 transition: 'all .15s ease', flexShrink: 0
                               }}
                             >
@@ -3557,7 +3610,7 @@ export function FranchiseePortal({ session, onLogout }) {
                       <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4, minHeight: 0 }}>
                         {menuLoading ? (
                           <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
-                            <RefreshCw size={26} className="animate-spin" style={{ margin: '0 auto 10px', color: '#059669' }} />
+                            <RefreshCw size={26} className="animate-spin" style={{ margin: '0 auto 10px', color: '#2563eb' }} />
                             <div style={{ fontSize: 13, fontWeight: 600 }}>Đang tải thực đơn...</div>
                           </div>
                         ) : filteredProducts.length === 0 ? (
@@ -3566,33 +3619,35 @@ export function FranchiseePortal({ session, onLogout }) {
                             <div style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Không tìm thấy sản phẩm phù hợp</div>
                           </div>
                         ) : posViewMode === 'grid' ? (
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12, boxSizing: 'border-box' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, boxSizing: 'border-box' }}>
                             {paginatedProducts.map((item) => (
                               <div
                                 key={item.ma_san_pham}
                                 onClick={() => addToCart(item)}
                                 style={{
-                                  background: '#ffffff', borderRadius: 12, border: '1px solid #e2e8f0',
+                                  background: '#ffffff', borderRadius: 12, border: '1px solid #cbd5e1',
                                   padding: 10, cursor: 'pointer', display: 'flex', flexDirection: 'column',
-                                  justifyContent: 'space-between', minHeight: 165, transition: 'all .15s ease',
-                                  boxShadow: '0 2px 5px rgba(0,0,0,0.02)', position: 'relative', overflow: 'hidden',
+                                  justifyContent: 'space-between', minHeight: 180, transition: 'all .15s ease',
+                                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)', position: 'relative', overflow: 'hidden',
                                   boxSizing: 'border-box'
                                 }}
+                                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#94a3b8'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#cbd5e1'; }}
                               >
-                                <div style={{ width: '100%', height: 80, borderRadius: 8, background: '#f8fafc', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                                <div style={{ width: '100%', height: 100, borderRadius: 8, background: '#f8fafc', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 8, boxSizing: 'border-box' }}>
                                   {item.hinh_anh_url ? (
-                                    <img src={item.hinh_anh_url} alt={item.ten_san_pham} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <img src={item.hinh_anh_url} alt={item.ten_san_pham} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                                   ) : (
-                                    <Coffee size={24} color="#94a3b8" />
+                                    <Coffee size={32} color="#cbd5e1" />
                                   )}
                                 </div>
                                 <div>
-                                  <div style={{ fontWeight: 800, fontSize: 12, color: '#0f172a', marginBottom: 3 }}>{item.ten_san_pham}</div>
-                                  <span style={{ fontSize: 9, color: '#64748b', background: '#f1f5f9', padding: '1px 5px', borderRadius: 4, fontWeight: 600 }}>{item.danh_muc}</span>
+                                  <div style={{ fontWeight: 700, fontSize: 13, color: '#0f172a', marginBottom: 4, lineHeight: 1.3 }}>{item.ten_san_pham}</div>
+                                  <span style={{ fontSize: 10, color: '#64748b', background: '#f1f5f9', padding: '2px 6px', borderRadius: 4, fontWeight: 600 }}>{item.danh_muc}</span>
                                 </div>
-                                <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <span style={{ fontWeight: 900, fontSize: 13, color: '#059669' }}>{fmtMoney(item.gia_ban)}</span>
-                                  <span style={{ width: 24, height: 24, borderRadius: 6, background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 900 }}>+</span>
+                                <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <span style={{ fontWeight: 800, fontSize: 14, color: '#0f172a' }}>{fmtMoney(item.gia_ban)}</span>
+                                  <span style={{ width: 26, height: 26, borderRadius: 6, background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 600 }}>+</span>
                                 </div>
                               </div>
                             ))}
@@ -3604,27 +3659,29 @@ export function FranchiseePortal({ session, onLogout }) {
                                 key={item.ma_san_pham}
                                 onClick={() => addToCart(item)}
                                 style={{
-                                  background: '#ffffff', borderRadius: 10, border: '1px solid #e2e8f0',
-                                  padding: '8px 12px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between',
+                                  background: '#ffffff', borderRadius: 10, border: '1px solid #cbd5e1',
+                                  padding: '10px 14px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between',
                                   alignItems: 'center', transition: 'all .15s ease'
                                 }}
+                                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#94a3b8'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#cbd5e1'; }}
                               >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-                                  <div style={{ width: 34, height: 34, borderRadius: 6, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
+                                  <div style={{ width: 40, height: 40, borderRadius: 8, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0, padding: 4 }}>
                                     {item.hinh_anh_url ? (
-                                      <img src={item.hinh_anh_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                      <img src={item.hinh_anh_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                                     ) : (
-                                      <Coffee size={16} color="#94a3b8" />
+                                      <Coffee size={20} color="#cbd5e1" />
                                     )}
                                   </div>
                                   <div style={{ minWidth: 0 }}>
-                                    <div style={{ fontSize: 13, fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.ten_san_pham}</div>
-                                    <span style={{ fontSize: 10, color: '#64748b' }}>{item.danh_muc}</span>
+                                    <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.ten_san_pham}</div>
+                                    <span style={{ fontSize: 11, color: '#64748b' }}>{item.danh_muc}</span>
                                   </div>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                  <span style={{ fontWeight: 900, fontSize: 13, color: '#059669' }}>{fmtMoney(item.gia_ban)}</span>
-                                  <button type="button" style={{ padding: '4px 10px', borderRadius: 6, background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', fontWeight: 800, fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                                  <span style={{ fontWeight: 800, fontSize: 14, color: '#0f172a' }}>{fmtMoney(item.gia_ban)}</span>
+                                  <button type="button" style={{ padding: '6px 12px', borderRadius: 6, background: '#eff6ff', color: '#2563eb', border: 'none', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
                                     Thêm
                                   </button>
                                 </div>
@@ -3635,19 +3692,19 @@ export function FranchiseePortal({ session, onLogout }) {
                       </div>
 
                       {/* Footer cố định: Thanh phân trang */}
-                      <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-                        <span style={{ fontSize: 11, color: '#64748b' }}>
-                          Hiển thị <b>{(posPage - 1) * ITEMS_PER_PAGE + 1}</b> – <b>{Math.min(posPage * ITEMS_PER_PAGE, filteredProducts.length)}</b> trong <b>{filteredProducts.length}</b> món
+                      <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                        <span style={{ fontSize: 12, color: '#64748b' }}>
+                          Hiển thị <b>{(posPage - 1) * ITEMS_PER_PAGE + 1}</b> – <b>{Math.min(posPage * ITEMS_PER_PAGE, filteredProducts.length)}</b> / <b>{filteredProducts.length}</b> món
                         </span>
                         {totalPages > 1 && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <button
                               disabled={posPage <= 1} onClick={() => setPosPage((p) => Math.max(1, p - 1))}
-                              style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #cbd5e1', background: posPage <= 1 ? '#f8fafc' : '#ffffff', color: posPage <= 1 ? '#cbd5e1' : '#334155', cursor: posPage <= 1 ? 'not-allowed' : 'pointer', fontSize: 11, fontWeight: 700 }}
+                              style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #cbd5e1', background: posPage <= 1 ? '#f8fafc' : '#ffffff', color: posPage <= 1 ? '#94a3b8' : '#334155', cursor: posPage <= 1 ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600 }}
                             >Trước</button>
                             <button
                               disabled={posPage >= totalPages} onClick={() => setPosPage((p) => Math.min(totalPages, p + 1))}
-                              style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #cbd5e1', background: posPage >= totalPages ? '#f8fafc' : '#ffffff', color: posPage >= totalPages ? '#cbd5e1' : '#334155', cursor: posPage >= totalPages ? 'not-allowed' : 'pointer', fontSize: 11, fontWeight: 700 }}
+                              style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #cbd5e1', background: posPage >= totalPages ? '#f8fafc' : '#ffffff', color: posPage >= totalPages ? '#94a3b8' : '#334155', cursor: posPage >= totalPages ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600 }}
                             >Sau</button>
                           </div>
                         )}
@@ -3657,40 +3714,40 @@ export function FranchiseePortal({ session, onLogout }) {
                     {/* Right: Cart & Order Summary */}
                     <div style={{
                       background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0',
-                      padding: 16, boxShadow: '0 4px 16px rgba(0,0,0,0.03)', minWidth: 0,
+                      padding: 20, boxShadow: '0 4px 16px rgba(0,0,0,0.02)', minWidth: 0,
                       boxSizing: 'border-box', height: '100%', display: 'flex', flexDirection: 'column'
                     }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                        <h3 style={{ margin: 0, fontSize: 14, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <Receipt size={17} color="#059669" /> Đơn hàng tại quầy Kiosk
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                        <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <Receipt size={18} color="#0f172a" /> Đơn hàng Kiosk
                         </h3>
                         {posCart.length > 0 && (
-                          <button onClick={() => setPosCart([])} style={{ background: '#fee2e2', border: 'none', color: '#dc2626', padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                          <button onClick={() => setPosCart([])} style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                             Xóa tất cả
                           </button>
                         )}
                       </div>
 
                       {/* Cart Item List */}
-                      <div style={{ flex: 1, overflowY: 'auto', marginBottom: 12, paddingRight: 4 }}>
+                      <div style={{ flex: 1, overflowY: 'auto', marginBottom: 16, paddingRight: 4 }}>
                         {posCart.length === 0 ? (
-                          <div style={{ textAlign: 'center', padding: '40px 0', color: '#94a3b8' }}>
-                            <Package size={32} style={{ margin: '0 auto 8px', opacity: 0.4 }} />
-                            <div style={{ fontSize: 13, fontWeight: 600 }}>Chưa có món nào được chọn</div>
+                          <div style={{ textAlign: 'center', padding: '60px 0', color: '#94a3b8' }}>
+                            <Package size={40} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
+                            <div style={{ fontSize: 14, fontWeight: 500 }}>Chưa có món nào được chọn</div>
                           </div>
                         ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                             {posCart.map((item) => (
-                              <div key={item.cartItemId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid #f1f5f9' }}>
-                                <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
-                                  <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{item.ten_san_pham}</div>
-                                  <div style={{ fontSize: 11, color: '#059669', fontWeight: 800 }}>{fmtMoney(item.gia_ban)}</div>
+                              <div key={item.cartItemId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #f1f5f9' }}>
+                                <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
+                                  <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', marginBottom: 4 }}>{item.ten_san_pham}</div>
+                                  <div style={{ fontSize: 13, color: '#0f172a', fontWeight: 600 }}>{fmtMoney(item.gia_ban)}</div>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                                  <button onClick={() => updateCartQty(item.cartItemId, item.sl - 1)} style={{ width: 22, height: 22, borderRadius: 5, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>-</button>
-                                  <span style={{ fontSize: 12, fontWeight: 800, width: 20, textAlign: 'center' }}>{item.sl}</span>
-                                  <button onClick={() => updateCartQty(item.cartItemId, item.sl + 1)} style={{ width: 22, height: 22, borderRadius: 5, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
-                                  <button onClick={() => removeFromCart(item.cartItemId)} style={{ width: 22, height: 22, borderRadius: 5, border: '1px solid #fee2e2', background: '#fef2f2', color: '#dc2626', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: 2 }}><Trash2 size={11} /></button>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <button onClick={() => updateCartQty(item.cartItemId, item.sl - 1)} style={{ width: 26, height: 26, borderRadius: 6, border: '1px solid #cbd5e1', background: '#f8fafc', cursor: 'pointer', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>-</button>
+                                  <span style={{ fontSize: 14, fontWeight: 700, width: 24, textAlign: 'center', color: '#0f172a' }}>{item.sl}</span>
+                                  <button onClick={() => updateCartQty(item.cartItemId, item.sl + 1)} style={{ width: 26, height: 26, borderRadius: 6, border: '1px solid #cbd5e1', background: '#f8fafc', cursor: 'pointer', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                                  <button onClick={() => removeFromCart(item.cartItemId)} style={{ width: 26, height: 26, borderRadius: 6, border: 'none', background: '#fee2e2', color: '#dc2626', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: 4 }}><Trash2 size={13} /></button>
                                 </div>
                               </div>
                             ))}
@@ -3699,30 +3756,30 @@ export function FranchiseePortal({ session, onLogout }) {
                       </div>
 
                       {/* Calculation Breakdown */}
-                      <div style={{ background: '#f8fafc', borderRadius: 10, padding: 10, marginBottom: 12 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#64748b', marginBottom: 4 }}>
+                      <div style={{ background: '#f8fafc', borderRadius: 12, padding: 16, marginBottom: 16, border: '1px solid #e2e8f0' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748b', marginBottom: 8 }}>
                           <span>Tạm tính ({posCart.reduce((a, c) => a + c.sl, 0)} món):</span>
-                          <span style={{ fontWeight: 700, color: '#0f172a' }}>{fmtMoney(posTotal)}</span>
+                          <span style={{ fontWeight: 600, color: '#0f172a' }}>{fmtMoney(posTotal)}</span>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 900, color: '#059669', paddingTop: 6, borderTop: '1px dashed #cbd5e1' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 16, fontWeight: 800, color: '#0f172a', paddingTop: 12, borderTop: '1px dashed #cbd5e1' }}>
                           <span>Tổng thanh toán:</span>
                           <span>{fmtMoney(posTotal)}</span>
                         </div>
                       </div>
 
                       {/* Payment Methods */}
-                      <div style={{ marginBottom: 12 }}>
-                        <label style={{ fontSize: 11, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Phương thức thanh toán</label>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+                      <div style={{ marginBottom: 16 }}>
+                        <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 8 }}>Phương thức thanh toán</label>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                           {[{ id: 'TIEN_MAT', label: 'Tiền mặt' }, { id: 'NGAN_HANG_QR', label: 'QR Pay' }, { id: 'THE', label: 'Thẻ' }].map((m) => {
                             const isSelected = posPayment === m.id
                             return (
                               <button
                                 key={m.id} onClick={() => setPosPayment(m.id)}
                                 style={{
-                                  padding: '7px 4px', borderRadius: 8, border: isSelected ? '1.5px solid #059669' : '1px solid #cbd5e1',
-                                  background: isSelected ? '#ecfdf5' : '#fff', color: isSelected ? '#047857' : '#475569',
-                                  fontWeight: isSelected ? 800 : 600, fontSize: 11, cursor: 'pointer', transition: 'all .15s ease'
+                                  padding: '8px 4px', borderRadius: 8, border: '1px solid ' + (isSelected ? '#0f172a' : '#cbd5e1'),
+                                  background: isSelected ? '#0f172a' : '#fff', color: isSelected ? '#ffffff' : '#475569',
+                                  fontWeight: isSelected ? 700 : 600, fontSize: 12, cursor: 'pointer', transition: 'all .15s ease'
                                 }}
                               >{m.label}</button>
                             )
@@ -3732,11 +3789,11 @@ export function FranchiseePortal({ session, onLogout }) {
 
                       {/* Cash Given & Change */}
                       {posPayment === 'TIEN_MAT' && (
-                        <div style={{ marginBottom: 12 }}>
-                          <label style={{ fontSize: 11, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Tiền khách đưa</label>
-                          <input type="number" value={posCashInput} onChange={(e) => setPosCashInput(e.target.value)} placeholder="Nhập số tiền..." style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 12, outline: 'none', boxSizing: 'border-box' }} />
+                        <div style={{ marginBottom: 16 }}>
+                          <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 8 }}>Tiền khách đưa</label>
+                          <input type="number" value={posCashInput} onChange={(e) => setPosCashInput(e.target.value)} placeholder="Nhập số tiền..." style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
                           {Number(posCashInput) > 0 && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginTop: 4, fontWeight: 700, color: '#047857' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginTop: 8, fontWeight: 700, color: '#0f172a' }}>
                               <span>Tiền thối lại:</span>
                               <span>{fmtMoney(posChange)}</span>
                             </div>
@@ -3748,20 +3805,20 @@ export function FranchiseePortal({ session, onLogout }) {
                       <button
                         onClick={submitPosOrder} disabled={posCart.length === 0 || posSubmitting}
                         style={{
-                          width: '100%', padding: '11px', borderRadius: 10, border: 'none',
-                          background: posCart.length === 0 ? '#94a3b8' : 'linear-gradient(135deg, #10b981, #059669)',
-                          color: '#fff', fontSize: 13, fontWeight: 800, cursor: posCart.length === 0 ? 'not-allowed' : 'pointer',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all .2s ease'
+                          width: '100%', padding: '14px', borderRadius: 10, border: 'none',
+                          background: posCart.length === 0 ? '#cbd5e1' : '#0f172a',
+                          color: '#fff', fontSize: 14, fontWeight: 800, cursor: posCart.length === 0 ? 'not-allowed' : 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all .2s ease'
                         }}
                       >
                         {posSubmitting ? (
                           <>
-                            <RefreshCw size={15} className="animate-spin" />
+                            <RefreshCw size={16} className="animate-spin" />
                             <span>Đang xử lý...</span>
                           </>
                         ) : (
                           <>
-                            <span>Hoàn tất &amp; Thanh toán ({fmtMoney(posTotal)})</span>
+                            <span>Thanh toán {fmtMoney(posTotal)}</span>
                           </>
                         )}
                       </button>
@@ -3789,7 +3846,7 @@ export function FranchiseePortal({ session, onLogout }) {
             }} onClick={e => e.stopPropagation()}>
               <div style={{ padding: '24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: '#f1f5f9', color: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <UserPlus size={20} />
                   </div>
                   <div>
@@ -3867,7 +3924,7 @@ export function FranchiseePortal({ session, onLogout }) {
                       return (
                         <label key={perm.id} style={{
                           display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 14px', borderRadius: 10,
-                          border: `1px solid ${isChecked ? '#a7f3d0' : '#e2e8f0'}`, background: isChecked ? '#f0fdf4' : '#fff',
+                          border: `1px solid ${isChecked ? '#0f172a' : '#e2e8f0'}`, background: isChecked ? '#f8fafc' : '#fff',
                           cursor: 'pointer', transition: 'all .15s'
                         }}>
                           <input type="checkbox" checked={isChecked} onChange={() => {
@@ -3891,7 +3948,7 @@ export function FranchiseePortal({ session, onLogout }) {
 
                 <div style={{ display: 'flex', gap: 12 }}>
                   <button type="button" onClick={() => setShowCreateStaffModal(false)} style={{ flex: 1, padding: '12px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</button>
-                  <button type="submit" disabled={staffSubmitting} style={{ flex: 2, padding: '12px', background: '#059669', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 14px rgba(5,150,105,0.3)' }}>
+                  <button type="submit" disabled={staffSubmitting} style={{ flex: 2, padding: '12px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                     {staffSubmitting ? 'Đang lưu...' : '✓ Xác nhận tạo tài khoản'}
                   </button>
                 </div>
@@ -3962,7 +4019,7 @@ export function FranchiseePortal({ session, onLogout }) {
                       return (
                         <label key={perm.id} style={{
                           display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 14px', borderRadius: 10,
-                          border: `1px solid ${isChecked ? '#a7f3d0' : '#e2e8f0'}`, background: isChecked ? '#f0fdf4' : '#fff',
+                          border: `1px solid ${isChecked ? '#0f172a' : '#e2e8f0'}`, background: isChecked ? '#f8fafc' : '#fff',
                           cursor: 'pointer'
                         }}>
                           <input type="checkbox" checked={isChecked} onChange={() => {
@@ -3985,9 +4042,9 @@ export function FranchiseePortal({ session, onLogout }) {
                 </div>
 
                 <div style={{ display: 'flex', gap: 12 }}>
-                  <button type="button" onClick={() => setShowEditStaffModal(false)} style={{ flex: 1, padding: '12px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</button>
-                  <button type="submit" disabled={staffSubmitting} style={{ flex: 2, padding: '12px', background: '#059669', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 14px rgba(5,150,105,0.3)' }}>
-                    {staffSubmitting ? 'Đang lưu...' : '✓ Lưu thay đổi'}
+                  <button type="button" onClick={() => setShowEditStaffModal(false)} style={{ flex: 1, padding: '12px', background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</button>
+                  <button type="submit" disabled={staffSubmitting} style={{ flex: 2, padding: '12px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                    {staffSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
                   </button>
                 </div>
               </form>
@@ -4024,9 +4081,9 @@ export function FranchiseePortal({ session, onLogout }) {
                 </div>
 
                 <div style={{ display: 'flex', gap: 12 }}>
-                  <button type="button" onClick={() => setShowResetPwdModal(false)} style={{ flex: 1, padding: '12px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</button>
-                  <button type="submit" disabled={staffSubmitting} style={{ flex: 2, padding: '12px', background: '#d97706', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 14px rgba(217,119,6,0.3)' }}>
-                    {staffSubmitting ? 'Đang lưu...' : '✓ Xác nhận đổi MK'}
+                  <button type="button" onClick={() => setShowResetPwdModal(false)} style={{ flex: 1, padding: '12px', background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</button>
+                  <button type="submit" disabled={staffSubmitting} style={{ flex: 2, padding: '12px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                    {staffSubmitting ? 'Đang lưu...' : 'Xác nhận đổi MK'}
                   </button>
                 </div>
               </form>

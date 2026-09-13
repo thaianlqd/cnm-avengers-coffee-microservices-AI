@@ -64,6 +64,14 @@ const apiFetch = async (path, opts = {}) => {
   return res.json()
 }
 
+const getComboDesc = (price) => {
+  const p = Number(price);
+  if (p === 3500000) return 'Sữa Tươi 200 hộp, Sữa Đặc 100 hộp, Trân Châu HK 100 gói, Sương Sáo 100 gói. (Khoảng 120 ly)';
+  if (p === 5500000) return 'Sữa Tươi 300 hộp, Sữa Đặc 100 hộp, Yến Mạch 100 hộp, Đào Miếng 100 hộp, Trân Châu Trắng 200 gói. (Khoảng 200 ly)';
+  if (p === 7500000) return 'Yến Mạch 300 hộp, Macchiato 150 hộp, Trà Lài 150 hộp, Bột Dừa 100 hộp, Atiso Đỏ 200 gói. (Khoảng 280 ly)';
+  return '';
+}
+
 // ─── Badge Component ───────────────────────────────────────────────────────
 const Badge = ({ status, map }) => {
   const s = map[status] || { label: status, color: '#6b7280', bg: '#f9fafb' }
@@ -601,7 +609,14 @@ function DonMuaComboTab() {
               {currentItems.map(d => (
                 <tr key={d.id} style={{ background: '#fff', borderRadius: 8, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                   <td style={{ padding: '10px 12px', fontWeight: 600, fontSize: 13 }}>{d.kiosk?.ten_kiosk || d.kiosk_id.slice(0, 8)} <br/><span style={{fontSize: 11, color: '#9ca3af', fontWeight: 500}}>{d.kiosk?.ma_kiosk}</span></td>
-                  <td style={{ padding: '10px 12px', fontSize: 13 }}>{d.combo?.ten_combo || '—'}</td>
+                  <td style={{ padding: '10px 12px', fontSize: 13 }}>
+                    <div style={{ fontWeight: 600, color: '#1e40af' }}>{d.combo?.ten_combo || '—'}</div>
+                    {getComboDesc(d.combo?.gia_ban || d.don_gia) && (
+                      <div style={{ fontSize: 11, color: '#047857', marginTop: 4, fontStyle: 'italic', maxWidth: 280 }}>
+                        {getComboDesc(d.combo?.gia_ban || d.don_gia)}
+                      </div>
+                    )}
+                  </td>
                   <td style={{ padding: '10px 12px', fontWeight: 700 }}>×{d.so_luong}</td>
                   <td style={{ padding: '10px 12px', fontWeight: 700, color: '#6366f1' }}>{fmtMoney(d.tong_tien)}</td>
                   <td style={{ padding: '10px 12px', fontSize: 12 }}>{d.phuong_thuc_thanh_toan === 'CONG_NO' ? '💳 Công nợ' : d.phuong_thuc_thanh_toan}</td>
@@ -634,6 +649,7 @@ function CongNoTab() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('')
+  const [filterLoai, setFilterLoai] = useState('')
   const [invoiceModal, setInvoiceModal] = useState(null)
   const [msg, setMsg] = useState(null)
   const [page, setPage] = useState(1)
@@ -700,6 +716,9 @@ function CongNoTab() {
   const tongChuaThanhToan = items.filter(i => i.trang_thai !== 'DA_THANH_TOAN').reduce((s, i) => s + Number(i.so_tien), 0)
   const soQuaHan = items.filter(i => i.trang_thai === 'QUA_HAN').length
 
+  const displayItems = currentItems.filter(i => filterLoai === '' ? true : i.loai_phat_sinh === filterLoai)
+  const displayTotalPages = Math.ceil(items.filter(i => filterLoai === '' ? true : i.loai_phat_sinh === filterLoai).length / pageSize)
+
   return (
     <div>
       <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
@@ -717,9 +736,15 @@ function CongNoTab() {
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <h3 style={{ margin: 0, flex: 1, fontSize: 17, fontWeight: 700 }}>Theo Dõi Công Nợ</h3>
+        <select value={filterLoai} onChange={e => { setFilterLoai(e.target.value); setPage(1); }} style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer' }}>
+          <option value="">Tất cả loại công nợ</option>
+          <option value="KHOI_TAO">Phí nhượng quyền ban đầu</option>
+          <option value="NGUYEN_LIEU">Đặt mua combo nguyên liệu</option>
+          <option value="ROYALTY">Phí Royalty</option>
+        </select>
         {['', 'CON_NO', 'QUA_HAN', 'DA_THANH_TOAN'].map(s => (
           <Btn key={s} small variant={filter === s ? 'primary' : 'outline'} onClick={() => setFilter(s)}>
-            {s === '' ? 'Tất cả' : STATUS_CONG_NO[s]?.label}
+            {s === '' ? 'Tất cả trạng thái' : STATUS_CONG_NO[s]?.label}
           </Btn>
         ))}
         <Btn small variant="outline" onClick={load}>Tải lại</Btn>
@@ -739,12 +764,15 @@ function CongNoTab() {
 
       {loading ? <div style={{ textAlign: 'center', padding: 40 }}>Đang tải...</div> : (
         <div style={{ display: 'grid', gap: 10 }}>
-          {currentItems.map(c => (
+          {displayItems.map(c => (
             <div key={c.id} style={{ background: '#fff', borderRadius: 10, padding: 16, border: `1.5px solid ${c.trang_thai === 'QUA_HAN' ? '#fca5a5' : '#e5e7eb'}`, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
               <div>
                 <div style={{ fontWeight: 700, fontSize: 14 }}>{c.kiosk?.ten_kiosk} <span style={{fontSize: 12, color: '#9ca3af', fontWeight: 500}}>({c.kiosk?.ma_kiosk})</span></div>
-                <div style={{ fontSize: 12, color: '#6b7280' }}>{c.loai_phat_sinh === 'KHOI_TAO' ? 'Phí nhượng quyền ban đầu' : c.loai_phat_sinh === 'NGUYEN_LIEU' ? 'Công nợ nguyên liệu' : 'Phí royalty'}</div>
-                <div style={{ fontSize: 12, color: '#374151', marginTop: 2 }}>Hạn: {fmtDate(c.han_thanh_toan)}</div>
+                <div style={{ fontSize: 13, color: '#1e40af', fontWeight: 600, marginTop: 4 }}>{c.loai_phat_sinh === 'KHOI_TAO' ? 'Phí nhượng quyền ban đầu' : c.loai_phat_sinh === 'NGUYEN_LIEU' ? 'Công nợ đặt mua combo nguyên liệu' : 'Phí royalty'}</div>
+                {c.loai_phat_sinh === 'NGUYEN_LIEU' && getComboDesc(c.so_tien) && (
+                  <div style={{ fontSize: 12, color: '#047857', marginTop: 2, fontStyle: 'italic', maxWidth: 400 }}>📦 Chi tiết: {getComboDesc(c.so_tien)}</div>
+                )}
+                <div style={{ fontSize: 12, color: '#374151', marginTop: 6 }}>Hạn: {fmtDate(c.han_thanh_toan)}</div>
                 {c.ghi_chu && <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>Ghi chú: {c.ghi_chu}</div>}
               </div>
               <div style={{ textAlign: 'right' }}>
@@ -773,8 +801,8 @@ function CongNoTab() {
               </div>
             </div>
           ))}
-          <Pagination page={page} totalPages={totalPages} setPage={setPage} />
-          {items.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af' }}>Không có công nợ.</div>}
+          <Pagination page={page} totalPages={displayTotalPages} setPage={setPage} />
+          {displayItems.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af' }}>Không có khoản công nợ nào thỏa mãn bộ lọc.</div>}
         </div>
       )}
 
