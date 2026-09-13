@@ -22,7 +22,8 @@ import {
   Building,
   UserCog,
   CheckCircle2,
-  MoreVertical
+  MoreVertical,
+  RefreshCw
 } from 'lucide-react'
 
 function Pagination({ pageData, onPageChange }) {
@@ -110,80 +111,6 @@ export function AdminUserManagementPanel({
 
   return (
     <section className="panel system-admin-panel" style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      
-      {/* HEADER SECTION */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '1rem' }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <UserCog size={22} color="#4f46e5" /> Quản Lý Người Dùng &amp; Phân Quyền
-          </h1>
-          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8125rem', color: '#64748b' }}>
-            Quản lý tài khoản nhân viên (STAFF), quản lý cửa hàng (MANAGER) và điều phối phân bổ chi nhánh.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          className="btn-save-green"
-          onClick={handleStartCreateNew}
-        >
-          <UserPlus size={18} color="#ffffff" />
-          <span>Thêm Tài Khoản Mới</span>
-        </button>
-      </div>
-
-      {/* KPI SUMMARY CARDS */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.85rem', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#e0e7ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <UsersIcon size={20} color="#4f46e5" />
-          </div>
-          <div>
-            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>TỔNG TÀI KHOẢN</span>
-            <strong style={{ display: 'block', fontSize: '1.2rem', color: '#0f172a', marginTop: '0.1rem' }}>{totalUsers}</strong>
-          </div>
-        </div>
-
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.85rem', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Building size={20} color="#2563eb" />
-          </div>
-          <div>
-            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>QUẢN LÝ (MANAGER)</span>
-            <strong style={{ display: 'block', fontSize: '1.2rem', color: '#2563eb', marginTop: '0.1rem' }}>{managerCount}</strong>
-          </div>
-        </div>
-
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.85rem', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <UserCheck size={20} color="#059669" />
-          </div>
-          <div>
-            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>NHÂN VIÊN (STAFF)</span>
-            <strong style={{ display: 'block', fontSize: '1.2rem', color: '#059669', marginTop: '0.1rem' }}>{staffCount}</strong>
-          </div>
-        </div>
-
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.85rem', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <UsersIcon size={20} color="#d97706" />
-          </div>
-          <div>
-            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>KẾ TOÁN (ACCOUNTANT)</span>
-            <strong style={{ display: 'block', fontSize: '1.2rem', color: '#d97706', marginTop: '0.1rem' }}>{accountantCount}</strong>
-          </div>
-        </div>
-
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.85rem', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Activity size={20} color="#16a34a" />
-          </div>
-          <div>
-            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>ĐANG HOẠT ĐỘNG</span>
-            <strong style={{ display: 'block', fontSize: '1.2rem', color: '#16a34a', marginTop: '0.1rem' }}>{activeCount}</strong>
-          </div>
-        </div>
-      </div>
 
       {/* USER EDIT / CREATE FORM CARD */}
       <div ref={formRef} className="system-admin-card" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', boxShadow: '0 8px 24px -4px rgba(15, 23, 42, 0.06)', overflow: 'hidden' }}>
@@ -296,12 +223,12 @@ export function AdminUserManagementPanel({
                   value={safeUserForm.vai_tro || 'STAFF'}
                   onChange={(e) => setUserForm((p) => ({ ...p, vai_tro: e.target.value }))}
                 >
-                  <option value="STAFF">STAFF - Nhân viên cửa hàng chính thức</option>
-                  <option value="MANAGER">MANAGER - Quản lý cửa hàng chính thức</option>
-                  <option value="FRANCHISEE">FRANCHISEE - Admin nhượng quyền (Chủ Kiosk)</option>
-                  <option value="FRANCHISE_STAFF">FRANCHISE_STAFF - Nhân viên Kiosk nhượng quyền</option>
-                  <option value="ACCOUNTANT">ACCOUNTANT - Kế toán hội sở</option>
-                  <option value="ADMIN">ADMIN - Quản trị viên hệ thống HQ</option>
+                  <option value="STAFF">Nhân viên cửa hàng chính thức (STAFF)</option>
+                  <option value="MANAGER">Quản lý cửa hàng (MANAGER)</option>
+                  <option value="FRANCHISEE">Đối tác nhượng quyền Kiosk (FRANCHISEE)</option>
+                  <option value="FRANCHISE_STAFF">Nhân viên Kiosk nhượng quyền</option>
+                  <option value="ACCOUNTANT">Kế toán hội sở (ACCOUNTANT)</option>
+                  <option value="ADMIN">Quản trị viên hệ thống (ADMIN)</option>
                 </select>
               </div>
             </div>
@@ -398,13 +325,13 @@ export function AdminUserManagementPanel({
               value={safeUserFilters.role || ''}
               onChange={(e) => setUserFilters((prev) => ({ ...prev, role: e.target.value }))}
             >
-              <option value="">Tất cả Vai trò</option>
-              <option value="ADMIN">ADMIN (HQ Chuỗi)</option>
-              <option value="MANAGER">MANAGER (Quản lý cửa hàng)</option>
-              <option value="STAFF">STAFF (Nhân viên cửa hàng)</option>
-              <option value="FRANCHISEE">FRANCHISEE (Admin nhượng quyền)</option>
-              <option value="FRANCHISE_STAFF">FRANCHISE_STAFF (Nhân viên Kiosk)</option>
-              <option value="ACCOUNTANT">ACCOUNTANT (Kế toán)</option>
+              <option value="">Tất cả vai trò</option>
+              <option value="ADMIN">Quản trị viên HQ</option>
+              <option value="MANAGER">Quản lý cửa hàng</option>
+              <option value="STAFF">Nhân viên cửa hàng</option>
+              <option value="FRANCHISEE">Đối tác Kiosk</option>
+              <option value="FRANCHISE_STAFF">Nhân viên Kiosk</option>
+              <option value="ACCOUNTANT">Kế toán chuỗi</option>
             </select>
 
             <select
@@ -438,7 +365,17 @@ export function AdminUserManagementPanel({
                 fontWeight: '600'
               }}
             >
-              <Filter size={14} color="#64748b" /> Lọc
+              <RefreshCw size={14} color="#64748b" /> Làm mới
+            </button>
+
+            <button
+              type="button"
+              className="btn-save-green"
+              onClick={handleStartCreateNew}
+              style={{ height: '38px', padding: '0 1rem' }}
+            >
+              <UserPlus size={16} color="#ffffff" />
+              <span>Thêm tài khoản</span>
             </button>
           </div>
         </div>
@@ -490,13 +427,13 @@ export function AdminUserManagementPanel({
                       <td style={{ padding: '0.85rem 1rem' }}>
                         {(() => {
                           const roleMeta = {
-                            ADMIN: { bg: '#f5f3ff', color: '#7c3aed', border: '#ddd6fe', label: 'Admin HQ' },
-                            MANAGER: { bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe', label: 'Quản lý chính thức' },
-                            STAFF: { bg: '#ecfdf5', color: '#059669', border: '#a7f3d0', label: 'Nhân viên chính thức' },
-                            FRANCHISEE: { bg: '#fffbeb', color: '#b45309', border: '#fde68a', label: 'Admin nhượng quyền' },
-                            FRANCHISE_STAFF: { bg: '#f0fdf4', color: '#0d9488', border: '#99f6e4', label: 'Staff Kiosk' },
+                            ADMIN: { bg: '#f5f3ff', color: '#7c3aed', border: '#ddd6fe', label: 'Quản trị HQ' },
+                            MANAGER: { bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe', label: 'Quản lý cửa hàng' },
+                            STAFF: { bg: '#ecfdf5', color: '#059669', border: '#a7f3d0', label: 'Nhân viên cửa hàng' },
+                            FRANCHISEE: { bg: '#fffbeb', color: '#b45309', border: '#fde68a', label: 'Đối tác Kiosk' },
+                            FRANCHISE_STAFF: { bg: '#f0fdf4', color: '#0d9488', border: '#99f6e4', label: 'Nhân viên Kiosk' },
                             ACCOUNTANT: { bg: '#f0f9ff', color: '#0284c7', border: '#bae6fd', label: 'Kế toán chuỗi' },
-                          }[item?.vai_tro] || { bg: '#f1f5f9', color: '#475569', border: '#e2e8f0', label: item?.vai_tro || 'Staff' }
+                          }[item?.vai_tro] || { bg: '#f1f5f9', color: '#475569', border: '#e2e8f0', label: item?.vai_tro || 'Nhân sự' }
                           return (
                             <span
                               style={{
@@ -543,85 +480,31 @@ export function AdminUserManagementPanel({
                         {item?.co_so_ten || 'Tất cả chi nhánh'}
                       </td>
 
-                      {/* 3-Dots Action Dropdown */}
-                      <td style={{ padding: '0.85rem 1rem', textAlign: 'center', position: 'relative' }}>
-                        <button
-                          type="button"
-                          className="btn-icon-more"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setOpenUserActionId(String(openUserActionId) === String(itemId) ? null : itemId)
-                          }}
-                          title="Thao tác"
-                        >
-                          <MoreVertical size={16} color="#475569" />
-                        </button>
-
-                        {String(openUserActionId) === String(itemId) && (
-                          <div
-                            style={{
-                              position: 'absolute',
-                              right: 'calc(100% + 6px)',
-                              top: '-4px',
-                              backgroundColor: '#ffffff',
-                              border: '1px solid #e2e8f0',
-                              borderRadius: '10px',
-                              boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.18)',
-                              zIndex: 9999,
-                              minWidth: '170px',
-                              padding: '0.35rem',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: '0.2rem'
-                            }}
-                            onClick={(e) => e.stopPropagation()}
+                      <td style={{ padding: '0.85rem 1rem', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', justifyContent: 'center' }}>
+                          <button
+                            type="button"
+                            className="admin-table-action-btn btn-edit"
+                            onClick={() => handleStartEdit(item)}
+                            title="Chỉnh sửa tài khoản"
                           >
-                            <button
-                              type="button"
-                              className="btn-dropdown-item"
-                              onClick={() => {
-                                setOpenUserActionId(null)
-                                handleStartEdit(item)
-                              }}
-                              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.8125rem', fontWeight: '600', color: '#2563eb', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%' }}
-                            >
-                              <Edit3 size={14} color="#2563eb" /> Chỉnh sửa tài khoản
-                            </button>
+                            <Edit3 size={15} />
+                          </button>
 
-                            <div style={{ borderTop: '1px solid #f1f5f9', margin: '0.15rem 0' }}></div>
-
-                            <button
-                              type="button"
-                              className="btn-dropdown-item danger"
-                              disabled={item?.vai_tro === 'ADMIN'}
-                              onClick={() => {
-                                if (item?.vai_tro === 'ADMIN') return
-                                setOpenUserActionId(null)
-                                if (window.confirm(`Bạn có chắc muốn xóa tài khoản "${item?.ten_dang_nhap || ''}"?`)) {
-                                  deleteUser(item?.ma_nguoi_dung || itemId)
-                                }
-                              }}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                padding: '0.5rem 0.75rem',
-                                borderRadius: '6px',
-                                fontSize: '0.8125rem',
-                                fontWeight: '600',
-                                color: '#dc2626',
-                                backgroundColor: 'transparent',
-                                border: 'none',
-                                cursor: item?.vai_tro === 'ADMIN' ? 'not-allowed' : 'pointer',
-                                opacity: item?.vai_tro === 'ADMIN' ? 0.4 : 1,
-                                textAlign: 'left',
-                                width: '100%'
-                              }}
-                            >
-                              <Trash2 size={14} color="#dc2626" /> Xóa tài khoản
-                            </button>
-                          </div>
-                        )}
+                          <button
+                            type="button"
+                            className="admin-table-action-btn btn-delete"
+                            disabled={item?.vai_tro === 'ADMIN'}
+                            onClick={() => {
+                              if (item?.vai_tro === 'ADMIN') return
+                              deleteUser(item?.ma_nguoi_dung || itemId)
+                            }}
+                            title={item?.vai_tro === 'ADMIN' ? 'Không thể xóa tài khoản Quản trị viên chính' : 'Xóa tài khoản'}
+                            style={{ opacity: item?.vai_tro === 'ADMIN' ? 0.4 : 1, cursor: item?.vai_tro === 'ADMIN' ? 'not-allowed' : 'pointer' }}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
                       </td>
 
                     </tr>

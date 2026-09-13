@@ -102,74 +102,300 @@ export class FranchiseService {
     }
   }
 
-  private mailAutoReply(hoSo: any): string {
+  private buildFranchiseBrandedHtml(options: {
+    heroTitle: string;
+    heroSubtitle?: string;
+    badgeTitle?: string;
+    badgeValue?: string;
+    badgeSub?: string;
+    greetingTitle: string;
+    greetingBody: string;
+    contentHtml?: string;
+    ctaText?: string;
+    ctaUrl?: string;
+    ctaSubText?: string;
+    noticeTitle?: string;
+    noticeHtml?: string;
+  }): string {
+    const heroImage = 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1200&h=480&q=85';
+    const footerImage = 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=1200&h=260&q=85';
+
     return `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#222;">
-        <div style="background:linear-gradient(135deg,#b22830,#8B2635);padding:32px;text-align:center;border-radius:12px 12px 0 0;">
-          <h1 style="color:#fff;margin:0;font-size:26px;">☕ Avengers Coffee</h1>
-          <p style="color:rgba(255,255,255,0.8);margin:8px 0 0;">Hệ thống nhượng quyền</p>
+      <!DOCTYPE html>
+      <html lang="vi">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${options.heroTitle}</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap" rel="stylesheet">
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 36px 0;">
+          <tr>
+            <td align="center">
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 25px 60px rgba(15, 23, 42, 0.14); border: 1px solid #e2e8f0;">
+                
+                <!-- 1. TOP BRAND HEADER -->
+                <tr>
+                  <td style="padding: 22px 32px; background-color: #170c08; text-align: center; border-bottom: 2px solid #d97706;">
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td align="center">
+                          <table border="0" cellspacing="0" cellpadding="0">
+                            <tr>
+                              <td style="vertical-align: middle;">
+                                <img src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=120&h=120&q=80" width="46" height="46" alt="Avengers Coffee Logo" style="display: block; border-radius: 50%; border: 2px solid #f59e0b; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35); object-fit: cover;" />
+                              </td>
+                              <td style="vertical-align: middle; padding-left: 14px; text-align: left;">
+                                <div style="font-size: 21px; font-weight: 900; color: #ffffff; letter-spacing: 2px; line-height: 1.1; text-transform: uppercase;">
+                                  AVENGERS COFFEE
+                                </div>
+                                <div style="font-size: 11px; font-weight: 700; color: #f59e0b; letter-spacing: 2.2px; text-transform: uppercase; margin-top: 3px;">
+                                  HỆ THỐNG NHƯỢNG QUYỀN TOÀN QUỐC
+                                </div>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- 2. HERO BANNER IMAGE -->
+                <tr>
+                  <td style="padding: 0; line-height: 0; background-color: #170c08;">
+                    <img src="${heroImage}" width="600" style="display: block; width: 100%; max-width: 600px; height: auto; border: 0; outline: none; object-fit: cover;" alt="Avengers Coffee Franchise Banner" />
+                  </td>
+                </tr>
+
+                <!-- 3. HERO TITLE SECTION -->
+                <tr>
+                  <td style="padding: 0; background: linear-gradient(180deg, #7f1d1d 0%, #4c0519 100%); text-align: center;">
+                    <div style="padding: 28px 24px 28px 24px;">
+                      <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.15); padding: 5px 16px; border-radius: 20px; font-size: 11px; font-weight: 800; color: #fef08a; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; border: 1px solid rgba(254, 240, 138, 0.4);">
+                        ● THÔNG TIN ĐỐI TÁC NHƯỢNG QUYỀN
+                      </div>
+                      <h1 style="margin: 0 0 6px 0; font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 2px 8px rgba(0,0,0,0.4);">
+                        ${options.heroTitle}
+                      </h1>
+                      ${options.heroSubtitle ? `
+                        <p style="margin: 0; font-size: 13px; color: #fef08a; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                          ${options.heroSubtitle}
+                        </p>
+                      ` : ''}
+
+                      ${options.badgeValue ? `
+                        <table align="center" border="0" cellspacing="0" cellpadding="0" style="margin: 18px auto 0 auto; background-color: #ffffff; border-radius: 16px; border: 2px solid #f59e0b; box-shadow: 0 12px 32px rgba(0,0,0,0.3); max-width: 480px; width: 92%;">
+                          <tr>
+                            <td style="padding: 16px 22px; text-align: center;">
+                              ${options.badgeTitle ? `
+                                <div style="font-size: 11.5px; font-weight: 800; color: #991b1b; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 4px;">
+                                  ${options.badgeTitle}
+                                </div>
+                              ` : ''}
+                              <div style="font-size: 26px; font-weight: 900; color: #7f1d1d; letter-spacing: 1px; font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;">
+                                ${options.badgeValue}
+                              </div>
+                              ${options.badgeSub ? `
+                                <div style="font-size: 12px; color: #475569; margin-top: 5px; font-weight: 600;">
+                                  ${options.badgeSub}
+                                </div>
+                              ` : ''}
+                            </td>
+                          </tr>
+                        </table>
+                      ` : ''}
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- 4. GREETING & MAIN CONTENT -->
+                <tr>
+                  <td style="padding: 36px 36px 20px 36px;">
+                    <h2 style="margin: 0 0 14px 0; font-size: 18px; font-weight: 800; color: #0f172a; text-align: center;">
+                      ${options.greetingTitle}
+                    </h2>
+                    <div style="font-size: 14.5px; color: #334155; line-height: 1.75; margin: 0 0 20px 0; text-align: left;">
+                      ${options.greetingBody}
+                    </div>
+
+                    ${options.contentHtml ? `
+                      <div style="margin-bottom: 22px;">
+                        ${options.contentHtml}
+                      </div>
+                    ` : ''}
+
+                    ${options.ctaUrl && options.ctaText ? `
+                      <div style="margin: 24px 0 16px 0; text-align: center;">
+                        <a href="${options.ctaUrl}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #15803d 0%, #16a34a 100%); color: #ffffff; text-decoration: none; padding: 18px 44px; border-radius: 14px; font-weight: 900; font-size: 15px; letter-spacing: 1px; text-transform: uppercase; box-shadow: 0 8px 24px rgba(22, 163, 74, 0.35); line-height: 1.2;">
+                          <div style="color: #ffffff;">${options.ctaText}</div>
+                          ${options.ctaSubText ? `
+                            <div style="font-size: 11px; opacity: 0.92; font-weight: 700; margin-top: 4px; letter-spacing: 1.8px; color: #e2fbe8;">${options.ctaSubText}</div>
+                          ` : ''}
+                        </a>
+                      </div>
+                    ` : ''}
+
+                    ${options.noticeHtml ? `
+                      <div style="background-color: #f8fafc; border-radius: 14px; border: 1px solid #e2e8f0; padding: 16px 20px; font-size: 13px; color: #475569; line-height: 1.7;">
+                        ${options.noticeTitle ? `
+                          <div style="font-weight: 800; color: #0f172a; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">
+                            ● ${options.noticeTitle}
+                          </div>
+                        ` : ''}
+                        ${options.noticeHtml}
+                      </div>
+                    ` : ''}
+                  </td>
+                </tr>
+
+                <!-- 5. FOOTER ARTWORK BANNER -->
+                <tr>
+                  <td style="padding: 0; line-height: 0; background-color: #170c08;">
+                    <img src="${footerImage}" width="600" style="display: block; width: 100%; max-width: 600px; height: auto; border: 0; outline: none; object-fit: cover;" alt="Avengers Coffee Footer" />
+                  </td>
+                </tr>
+
+                <!-- 6. LUXURY FOOTER -->
+                <tr>
+                  <td style="background-color: #170c08; padding: 36px 28px; text-align: center; color: #ffffff; border-top: 2px solid #d97706;">
+                    
+                    <div style="margin-bottom: 14px;">
+                      <img src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=120&h=120&q=80" width="48" height="48" alt="Avengers Coffee" style="display: inline-block; border-radius: 50%; border: 2px solid #f59e0b; box-shadow: 0 4px 14px rgba(0,0,0,0.5); object-fit: cover;" />
+                    </div>
+
+                    <div style="font-size: 18px; font-weight: 900; letter-spacing: 2px; margin-bottom: 6px; text-transform: uppercase; color: #ffffff;">
+                      AVENGERS COFFEE VIETNAM
+                    </div>
+                    <div style="font-size: 11px; font-weight: 700; color: #f59e0b; letter-spacing: 1.8px; text-transform: uppercase; margin-bottom: 20px;">
+                      HỆ THỐNG NHƯỢNG QUYỀN VÀNG
+                    </div>
+
+                    <!-- Social Icons -->
+                    <table align="center" border="0" cellspacing="0" cellpadding="0" style="margin: 0 auto 20px auto;">
+                      <tr>
+                        <td style="padding: 0 8px;">
+                          <a href="https://facebook.com" target="_blank" style="text-decoration: none;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" width="30" height="30" alt="Facebook" style="display: block; border-radius: 50%; background-color: #ffffff; padding: 4px; box-sizing: border-box;" />
+                          </a>
+                        </td>
+                        <td style="padding: 0 8px;">
+                          <a href="https://tiktok.com" target="_blank" style="text-decoration: none;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" width="30" height="30" alt="TikTok" style="display: block; border-radius: 50%; background-color: #ffffff; padding: 4px; box-sizing: border-box;" />
+                          </a>
+                        </td>
+                        <td style="padding: 0 8px;">
+                          <a href="https://instagram.com" target="_blank" style="text-decoration: none;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" width="30" height="30" alt="Instagram" style="display: block; border-radius: 50%; background-color: #ffffff; padding: 4px; box-sizing: border-box;" />
+                          </a>
+                        </td>
+                        <td style="padding: 0 8px;">
+                          <a href="https://youtube.com" target="_blank" style="text-decoration: none;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" width="30" height="30" alt="YouTube" style="display: block; border-radius: 50%; background-color: #ffffff; padding: 4px; box-sizing: border-box;" />
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <p style="margin: 0 0 6px 0; font-size: 13px; color: rgba(255, 255, 255, 0.9); line-height: 1.5;">
+                      Hotline đối tác nhượng quyền: <strong style="color: #fef08a;">1800 6936</strong> • Email: <strong style="color: #ffffff;">support@avengers.coffee</strong>
+                    </p>
+                    <p style="margin: 0; font-size: 11.5px; color: rgba(255, 255, 255, 0.65);">
+                      Bản quyền © 2026 Avengers Coffee. Tất cả quyền được bảo hộ.
+                    </p>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+  }
+
+  private mailAutoReply(hoSo: any): string {
+    const infoTableHtml = `
+      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px 20px; margin-bottom: 18px;">
+        <div style="font-size: 12.5px; font-weight: 800; color: #991b1b; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.8px;">
+          ● THÔNG TIN HỒ SƠ ĐÃ ĐĂNG KÝ:
         </div>
-        <div style="padding:32px;background:#fff;border:1px solid #e5e7eb;border-top:none;">
-          <h2 style="color:#b22830;margin:0 0 16px;">Chúng tôi đã nhận hồ sơ của bạn!</h2>
-          <p style="margin:0 0 12px;">Xin chào <strong>${hoSo.ho_ten}</strong>,</p>
-          <p style="margin:0 0 16px;line-height:1.7;color:#4b5563;">Cảm ơn bạn đã quan tâm đến cơ hội nhượng quyền <strong>Avengers Coffee</strong>. Hồ sơ đăng ký của bạn đã được tiếp nhận thành công.</p>
-          <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:20px;margin:0 0 20px;">
-            <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:10px;">📋 Thông tin hồ sơ đã đăng ký:</div>
-            <table style="width:100%;font-size:14px;">
-              <tr><td style="color:#6b7280;padding:4px 0;">Họ tên:</td><td style="font-weight:600;">${hoSo.ho_ten}</td></tr>
-              <tr><td style="color:#6b7280;padding:4px 0;">Email:</td><td style="font-weight:600;">${hoSo.email}</td></tr>
-              <tr><td style="color:#6b7280;padding:4px 0;">Điện thoại:</td><td style="font-weight:600;">${hoSo.so_dien_thoai}</td></tr>
-              <tr><td style="color:#6b7280;padding:4px 0;">Khu vực:</td><td style="font-weight:600;">${hoSo.thanh_pho || 'Chưa xác định'}</td></tr>
-              <tr><td style="color:#6b7280;padding:4px 0;">Gói đăng ký:</td><td style="font-weight:600;">${hoSo.goi_kiosk}</td></tr>
-            </table>
-          </div>
-          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:20px;margin-bottom:20px;">
-            <div style="font-size:13px;font-weight:700;color:#166534;margin-bottom:8px;">⏭️ Bước tiếp theo:</div>
-            <ol style="margin:0;padding-left:18px;color:#374151;font-size:14px;line-height:2;">
-              <li>Đội ngũ tư vấn sẽ liên hệ với bạn trong vòng <strong>24 giờ làm việc</strong></li>
-              <li>Chuẩn bị thông tin về mặt bằng và vốn đầu tư để tư vấn chính xác hơn</li>
-              <li>Sau khi ký hợp đồng, tài khoản hệ thống sẽ được cấp tự động qua email</li>
-            </ol>
-          </div>
-          <p style="color:#6b7280;font-size:13px;">Mọi thắc mắc vui lòng liên hệ: <a href="mailto:ankudo1234@gmail.com" style="color:#b22830;">ankudo1234@gmail.com</a> | Hotline: 1800 6936</p>
+        <table style="width: 100%; font-size: 13.5px; border-collapse: collapse;">
+          <tr><td style="color: #64748b; padding: 6px 0; width: 38%;">Họ tên đối tác:</td><td style="font-weight: 700; color: #0f172a;">${hoSo.ho_ten}</td></tr>
+          <tr><td style="color: #64748b; padding: 6px 0;">Email liên hệ:</td><td style="font-weight: 700; color: #0f172a;">${hoSo.email}</td></tr>
+          <tr><td style="color: #64748b; padding: 6px 0;">Số điện thoại:</td><td style="font-weight: 700; color: #0f172a;">${hoSo.so_dien_thoai}</td></tr>
+          <tr><td style="color: #64748b; padding: 6px 0;">Khu vực đăng ký:</td><td style="font-weight: 700; color: #0f172a;">${hoSo.quan_huyen ? hoSo.quan_huyen + ' - ' : ''}${hoSo.thanh_pho || 'Chưa xác định'}</td></tr>
+          <tr><td style="color: #64748b; padding: 6px 0;">Gói nhượng quyền:</td><td style="font-weight: 800; color: #b45309;">${hoSo.goi_kiosk}</td></tr>
+        </table>
+      </div>
+
+      <div style="background-color: #f0fdf4; border: 1px solid #86efac; border-radius: 14px; padding: 18px 20px;">
+        <div style="font-size: 12.5px; font-weight: 800; color: #166534; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.8px;">
+          ● CÁC BƯỚC TIẾP THEO:
         </div>
-        <div style="background:#f9fafb;padding:16px;text-align:center;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;font-size:12px;color:#9ca3af;">
-          © 2026 Avengers Coffee. Tất cả quyền được bảo lưu.
-        </div>
-      </div>`;
+        <ol style="margin: 0; padding-left: 18px; color: #374151; font-size: 13.5px; line-height: 1.8;">
+          <li>Đội ngũ tư vấn nhượng quyền sẽ liên hệ thẩm định trong vòng <strong>24 giờ làm việc</strong>.</li>
+          <li>Khảo sát vị trí mặt bằng và tính toán dung lượng thị trường độc quyền theo quận/huyện.</li>
+          <li>Sau khi hoàn tất hồ sơ và ký kết hợp đồng, tài khoản Kiosk sẽ được cấp tự động qua email.</li>
+        </ol>
+      </div>
+    `;
+
+    return this.buildFranchiseBrandedHtml({
+      heroTitle: 'TIẾP NHẬN HỒ SƠ ĐĂNG KÝ',
+      heroSubtitle: 'CHÚNG TÔI ĐÃ NHẬN ĐƯỢC HỒ SƠ CỦA BẠN',
+      greetingTitle: `Kính chào ${hoSo.ho_ten},`,
+      greetingBody: `Cảm ơn bạn đã quan tâm đến cơ hội hợp tác kinh doanh cùng <strong>Avengers Coffee</strong>. Hồ sơ đăng ký nhượng quyền của bạn đã được ghi nhận vào hệ thống.`,
+      contentHtml: infoTableHtml,
+      noticeTitle: 'KÊNH HỖ TRỢ TRỰC TIẾP:',
+      noticeHtml: 'Mọi câu hỏi liên quan đến chính sách nhượng quyền, vui lòng liên hệ hotline <strong>1800 6936</strong> hoặc email <strong>support@avengers.coffee</strong>.',
+    });
   }
 
   private mailCredentials(hoTen: string, username: string, password: string, maKiosk: string): string {
     const loginUrl = String(process.env.WEB_ADMIN_URL || 'http://127.0.0.1:5174').trim();
-    return `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#222;">
-        <div style="background:linear-gradient(135deg,#b22830,#8B2635);padding:32px;text-align:center;border-radius:12px 12px 0 0;">
-          <h1 style="color:#fff;margin:0;font-size:26px;">☕ Avengers Coffee</h1>
-          <p style="color:rgba(255,255,255,0.8);margin:8px 0 0;">Hồ sơ nhượng quyền đã được phê duyệt!</p>
+    
+    const credentialsHtml = `
+      <div style="background-color: #fffbeb; border: 2px solid #f59e0b; border-radius: 16px; padding: 22px 24px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(245, 158, 11, 0.1);">
+        <div style="font-size: 12.5px; font-weight: 800; color: #92400e; text-transform: uppercase; margin-bottom: 14px; letter-spacing: 0.8px;">
+          ● THÔNG TIN ĐĂNG NHẬP HỆ THỐNG:
         </div>
-        <div style="padding:32px;background:#fff;border:1px solid #e5e7eb;border-top:none;">
-          <h2 style="color:#16a34a;margin:0 0 16px;">🎉 Chúc mừng ${hoTen}!</h2>
-          <p style="margin:0 0 16px;line-height:1.7;color:#4b5563;">Hồ sơ nhượng quyền của bạn đã được <strong>phê duyệt chính thức</strong>. Dưới đây là thông tin tài khoản để truy cập hệ thống quản lý Kiosk:</p>
-          <div style="background:#fef9c3;border:2px solid #fbbf24;border-radius:12px;padding:24px;margin:0 0 24px;">
-            <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:14px;">🔑 Thông tin đăng nhập:</div>
-            <table style="width:100%;">
-              <tr><td style="color:#6b7280;font-size:14px;padding:6px 0;">Tên đăng nhập:</td><td style="font-size:18px;font-weight:900;color:#1f2937;font-family:monospace;">${username}</td></tr>
-              <tr><td style="color:#6b7280;font-size:14px;padding:6px 0;">Mật khẩu mặc định:</td><td style="font-size:18px;font-weight:900;color:#b22830;font-family:monospace;">${password}</td></tr>
-              <tr><td style="color:#6b7280;font-size:14px;padding:6px 0;">Mã Kiosk:</td><td style="font-size:16px;font-weight:700;color:#1f2937;">${maKiosk}</td></tr>
-            </table>
-          </div>
-          <a href="${loginUrl}" style="display:block;text-align:center;background:linear-gradient(135deg,#b22830,#d94040);color:#fff;padding:14px 32px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;margin-bottom:20px;">
-            🚀 Đăng nhập hệ thống ngay
-          </a>
-          <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:16px;margin-bottom:20px;">
-            <div style="font-size:13px;font-weight:700;color:#dc2626;margin-bottom:6px;">⚠️ Lưu ý bảo mật:</div>
-            <p style="margin:0;font-size:13px;color:#374151;line-height:1.6;">Hệ thống sẽ yêu cầu bạn <strong>đổi mật khẩu</strong> ngay lần đăng nhập đầu tiên. Vui lòng không chia sẻ thông tin đăng nhập với bất kỳ ai.</p>
-          </div>
-        </div>
-        <div style="background:#f9fafb;padding:16px;text-align:center;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;font-size:12px;color:#9ca3af;">
-          © 2026 Avengers Coffee. Hỗ trợ: ankudo1234@gmail.com | 1800 6936
-        </div>
-      </div>`;
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="color: #64748b; font-size: 13.5px; padding: 8px 0; width: 40%;">Tên đăng nhập:</td>
+            <td style="font-size: 17px; font-weight: 900; color: #0f172a; font-family: 'Plus Jakarta Sans', monospace;">${username}</td>
+          </tr>
+          <tr>
+            <td style="color: #64748b; font-size: 13.5px; padding: 8px 0;">Mật khẩu mặc định:</td>
+            <td style="font-size: 17px; font-weight: 900; color: #b91c1c; font-family: 'Plus Jakarta Sans', monospace;">${password}</td>
+          </tr>
+          <tr>
+            <td style="color: #64748b; font-size: 13.5px; padding: 8px 0;">Mã Kiosk cấp quyền:</td>
+            <td style="font-size: 15px; font-weight: 800; color: #15803d;">${maKiosk}</td>
+          </tr>
+        </table>
+      </div>
+    `;
+
+    return this.buildFranchiseBrandedHtml({
+      heroTitle: 'HỒ SƠ NHƯỢNG QUYỀN ĐÃ ĐƯỢC PHÊ DUYỆT',
+      heroSubtitle: 'CẤP TÀI KHOẢN QUẢN TRỊ KIOSK CHÍNH THỨC',
+      badgeTitle: 'MÃ KIOSK ĐƯỢC CẤP',
+      badgeValue: maKiosk,
+      badgeSub: `Chủ sở hữu: ${hoTen}`,
+      greetingTitle: `Chúc mừng đối tác ${hoTen},`,
+      greetingBody: `Hồ sơ nhượng quyền của bạn đã được <strong>phê duyệt chính thức</strong> bởi Avengers Coffee Vietnam. Dưới đây là thông tin tài khoản đăng nhập Cổng Quản Trị Kiosk:`,
+      contentHtml: credentialsHtml,
+      ctaText: 'ĐĂNG NHẬP HỆ THỐNG QUẢN TRỊ',
+      ctaSubText: 'KIOSK MANAGEMENT CONSOLE',
+      ctaUrl: loginUrl,
+      noticeTitle: 'LƯU Ý BẢO MẬT TÀI KHOẢN:',
+      noticeHtml: 'Để đảm bảo an toàn thông tin kinh doanh, hệ thống sẽ yêu cầu bạn <strong>đổi mật khẩu ngay lần đăng nhập đầu tiên</strong>. Vui lòng không chia sẻ tài khoản cho bên thứ ba.',
+    });
   }
 
   // ─────────────────────────────────────────────
@@ -266,18 +492,37 @@ export class FranchiseService {
     // Gửi email yêu cầu đặt cọc
     const bankName = process.env.SEPAY_BANK_CODE || 'MBBank';
     const bankAccount = process.env.SEPAY_ACCOUNT_NO || '025452790502';
+    
+    const depositTableHtml = `
+      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px 20px; margin-bottom: 18px;">
+        <div style="font-size: 12.5px; font-weight: 800; color: #991b1b; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.8px;">
+          ● THÔNG TIN CHUYỂN KHOẢN ĐẶT CỌC:
+        </div>
+        <table style="width: 100%; font-size: 13.5px; border-collapse: collapse;">
+          <tr><td style="color: #64748b; padding: 6px 0; width: 40%;">Ngân hàng thụ hưởng:</td><td style="font-weight: 800; color: #0f172a;">${bankName}</td></tr>
+          <tr><td style="color: #64748b; padding: 6px 0;">Số tài khoản:</td><td style="font-weight: 900; color: #1e40af; font-family: 'Plus Jakarta Sans', monospace; font-size: 16px;">${bankAccount}</td></tr>
+          <tr><td style="color: #64748b; padding: 6px 0;">Chủ tài khoản:</td><td style="font-weight: 800; color: #0f172a;">NGUYEN THAI AN</td></tr>
+          <tr><td style="color: #64748b; padding: 6px 0;">Số tiền đặt cọc:</td><td style="font-weight: 900; color: #b91c1c; font-size: 16px;">5.000.000 VNĐ</td></tr>
+          <tr><td style="color: #64748b; padding: 6px 0;">Cú pháp chuyển khoản:</td><td style="font-weight: 800; color: #0f172a; font-family: monospace; background: #eff6ff; padding: 2px 8px; border-radius: 6px;">COC KIOSK ${hoSo.so_dien_thoai}</td></tr>
+        </table>
+      </div>
+    `;
+
     this.sendMail(
       hoSo.email,
-      '[Avengers Coffee] Yêu cầu đặt cọc giữ chỗ khu vực',
-      `Chào ${hoSo.ho_ten},<br/><br/>
-       Hồ sơ của bạn đã qua vòng duyệt sơ bộ. Để hệ thống tiến hành cấp tài khoản và giữ chỗ khu vực (${hoSo.quan_huyen} - ${hoSo.thanh_pho}), vui lòng hoàn tất khoản đặt cọc <b>5.000.000 VNĐ</b>.<br/><br/>
-       <b>THÔNG TIN CHUYỂN KHOẢN:</b><br/>
-       - Ngân hàng: <b>${bankName}</b><br/>
-       - Số tài khoản: <b>${bankAccount}</b><br/>
-       - Chủ tài khoản: <b>NGUYEN THAI AN</b><br/>
-       - Nội dung chuyển khoản: <b>COC KIOSK ${hoSo.so_dien_thoai}</b><br/><br/>
-       Sau khi thanh toán thành công, hệ thống tự động của chúng tôi sẽ xác nhận và gửi email chứa tài khoản quản lý Cổng Nhượng Quyền cho bạn.<br/><br/>
-       Trân trọng,<br/>Avengers Coffee`
+      '[Avengers Coffee] Yêu cầu đặt cọc giữ chỗ khu vực nhượng quyền',
+      this.buildFranchiseBrandedHtml({
+        heroTitle: 'YÊU CẦU ĐẶT CỌC GIỮ CHỖ KHU VỰC',
+        heroSubtitle: `KHU VỰC: ${hoSo.quan_huyen ? hoSo.quan_huyen + ' - ' : ''}${hoSo.thanh_pho}`,
+        badgeTitle: 'SỐ TIỀN ĐẶT CỌC GIỮ CHỖ',
+        badgeValue: '5.000.000 VNĐ',
+        badgeSub: 'Khoản cọc sẽ được khấu trừ trực tiếp vào hợp đồng nhượng quyền',
+        greetingTitle: `Kính chào ${hoSo.ho_ten},`,
+        greetingBody: `Hồ sơ đăng ký của bạn đã vượt qua vòng thẩm định sơ bộ. Để hệ thống tiến hành cấp tài khoản quản trị Kiosk và thiết lập độc quyền khu vực (${hoSo.quan_huyen ? hoSo.quan_huyen + ' - ' : ''}${hoSo.thanh_pho}), vui lòng hoàn tất khoản đặt cọc giữ chỗ:`,
+        contentHtml: depositTableHtml,
+        noticeTitle: 'XÁC NHẬN TỰ ĐỘNG:',
+        noticeHtml: 'Sau khi thanh toán thành công, hệ thống tự động sẽ đối soát giao dịch và gửi tài khoản quản lý Kiosk về email của bạn trong vòng vài phút.',
+      }),
     ).catch(e => console.error('[franchise-mail] deposit email error:', e.message));
 
     return { success: true, message: 'Đã yêu cầu khách hàng đặt cọc 5.000.000đ.', data: hoSo };
@@ -381,7 +626,7 @@ export class FranchiseService {
     // Gửi email credentials cho franchisee (fire-and-forget)
     this.sendMail(
       hoSo.email,
-      '[☕ Avengers Coffee] Hồ sơ nhượng quyền được phê duyệt - Thông tin tài khoản',
+      '[Avengers Coffee] Hồ sơ nhượng quyền được phê duyệt - Thông tin tài khoản',
       this.mailCredentials(hoSo.ho_ten, username, defaultPassword, maKiosk),
     ).catch(e => console.error('[franchise-mail] credentials email error:', e.message));
 
@@ -406,7 +651,24 @@ export class FranchiseService {
     this.sendMail(
       hoSo.email,
       '[Avengers Coffee] Thông báo kết quả xét duyệt hồ sơ nhượng quyền',
-      `Chào ${hoSo.ho_ten},\nCảm ơn bạn đã quan tâm đến hệ thống Avengers Coffee.\nRất tiếc, hồ sơ đăng ký nhượng quyền khu vực (${hoSo.quan_huyen} - ${hoSo.thanh_pho}) của bạn chưa phù hợp ở thời điểm hiện tại.\n\nLý do từ chối: ${ly_do}\n\nHy vọng sẽ có cơ hội hợp tác với bạn trong tương lai. Xin cảm ơn!`
+      this.buildFranchiseBrandedHtml({
+        heroTitle: 'THÔNG BÁO KẾT QUẢ XÉT DUYỆT HỒ SƠ',
+        heroSubtitle: `KHU VỰC: ${hoSo.quan_huyen ? hoSo.quan_huyen + ' - ' : ''}${hoSo.thanh_pho}`,
+        greetingTitle: `Kính chào ${hoSo.ho_ten},`,
+        greetingBody: `Cảm ơn bạn đã quan tâm đến hệ thống nhượng quyền Avengers Coffee. Rất tiếc, hồ sơ đăng ký nhượng quyền khu vực (${hoSo.quan_huyen ? hoSo.quan_huyen + ' - ' : ''}${hoSo.thanh_pho}) của bạn chưa phù hợp ở thời điểm hiện tại.`,
+        contentHtml: `
+          <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 14px; padding: 18px 20px;">
+            <div style="font-size: 12.5px; font-weight: 800; color: #be123c; text-transform: uppercase; margin-bottom: 6px;">
+              ● LÝ DO CHƯA THỂ PHÊ DUYỆT:
+            </div>
+            <div style="font-size: 14px; color: #881337; line-height: 1.6;">
+              ${ly_do}
+            </div>
+          </div>
+        `,
+        noticeTitle: 'CƠ HỘI HỢP TÁC TRONG TƯƠNG LAI:',
+        noticeHtml: 'Chúng tôi luôn chào đón bạn đăng ký lại khi đã chuẩn bị xong mặt bằng hoặc khu vực tiềm năng mới. Xin trân trọng cảm ơn!',
+      }),
     ).catch(e => console.error('[franchise-mail] tu-choi email error:', e.message));
 
     return { success: true, message: 'Đã từ chối hồ sơ và gửi email thông báo.', data: hoSo };
@@ -1121,16 +1383,40 @@ export class FranchiseService {
         if (kiosk && kiosk.ho_so_id) {
           const hoSo = await this.hoSoRepo.findOne({ where: { id: kiosk.ho_so_id } });
           if (hoSo && hoSo.email) {
+            const portalUrl = String(process.env.WEB_ADMIN_URL || 'http://127.0.0.1:5174').trim();
+            const debtHtml = `
+              <div style="background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 14px; padding: 18px 20px; margin-bottom: 18px;">
+                <div style="font-size: 12.5px; font-weight: 800; color: #92400e; text-transform: uppercase; margin-bottom: 10px;">
+                  ● CHI TIẾT KHOẢN NỢ QUÁ HẠN:
+                </div>
+                <table style="width: 100%; font-size: 13.5px; border-collapse: collapse;">
+                  <tr><td style="color: #64748b; padding: 6px 0; width: 45%;">Kiosk quản lý:</td><td style="font-weight: 700; color: #0f172a;">${kiosk.ten_kiosk} (${kiosk.ma_kiosk})</td></tr>
+                  <tr><td style="color: #64748b; padding: 6px 0;">Số ngày quá hạn:</td><td style="font-weight: 800; color: #b91c1c;">${diffDays} ngày (Ân hạn: ${soNgayAnHan} ngày)</td></tr>
+                  <tr><td style="color: #64748b; padding: 6px 0;">Nợ gốc cần trả:</td><td style="font-weight: 800; color: #0f172a;">${Number(cn.so_tien).toLocaleString('vi-VN')} đ</td></tr>
+                  <tr><td style="color: #64748b; padding: 6px 0;">Phí phạt trễ hạn (${phanTramPhat * 100}%):</td><td style="font-weight: 800; color: #b91c1c;">${Number(cn.phi_phat_tre_han).toLocaleString('vi-VN')} đ</td></tr>
+                  <tr><td style="color: #64748b; padding: 6px 0;">Tổng thanh toán:</td><td style="font-weight: 900; color: #991b1b; font-size: 15.5px;">${(Number(cn.so_tien) + Number(cn.phi_phat_tre_han)).toLocaleString('vi-VN')} đ</td></tr>
+                </table>
+              </div>
+            `;
+
             this.sendMail(
               hoSo.email,
-              `[Avengers Coffee] THÔNG BÁO NHẮC NỢ LẦN ${cn.so_lan_nhac_nho + 1} VÀ PHẠT TRỄ HẠN - ${kiosk.ma_kiosk}`,
-              `Chào ${hoSo.ho_ten},<br/><br/>
-               Hệ thống ghi nhận khoản công nợ của Kiosk <b>${kiosk.ten_kiosk}</b> đã quá hạn thanh toán <b>${diffDays} ngày</b> (vượt quá ${soNgayAnHan} ngày ân hạn).<br/><br/>
-               - Số tiền nợ gốc: <b>${Number(cn.so_tien).toLocaleString('vi-VN')} đ</b><br/>
-               - Phí phạt trễ hạn (${phanTramPhat * 100}%): <b>${Number(cn.phi_phat_tre_han).toLocaleString('vi-VN')} đ</b><br/><br/>
-               ⚠️ CẢNH BÁO: Kiosk của bạn sẽ bị <b>TẠM KHÓA</b> nếu không thanh toán sau ${2 - cn.so_lan_nhac_nho} lần nhắc nhở nữa.<br/><br/>
-               Vui lòng truy cập Cổng Nhượng Quyền để thanh toán ngay.<br/><br/>
-               Trân trọng,<br/>Avengers Coffee`
+              `[Avengers Coffee] Thông báo nhắc nợ lần ${cn.so_lan_nhac_nho + 1} và phạt trễ hạn - ${kiosk.ma_kiosk}`,
+              this.buildFranchiseBrandedHtml({
+                heroTitle: `NHẮC NỢ LẦN ${cn.so_lan_nhac_nho + 1} & PHẠT TRỄ HẠN`,
+                heroSubtitle: `KIOSK: ${kiosk.ma_kiosk} • QUÁ HẠN ${diffDays} NGÀY`,
+                badgeTitle: 'TỔNG NỢ CẦN THANH TOÁN',
+                badgeValue: `${(Number(cn.so_tien) + Number(cn.phi_phat_tre_han)).toLocaleString('vi-VN')} đ`,
+                badgeSub: `Bao gồm nợ gốc và phí phạt trễ hạn`,
+                greetingTitle: `Kính gửi đối tác ${hoSo.ho_ten},`,
+                greetingBody: `Hệ thống ghi nhận khoản công nợ của Kiosk <strong>${kiosk.ten_kiosk}</strong> đã quá hạn thanh toán <strong>${diffDays} ngày</strong> (vượt quá ${soNgayAnHan} ngày ân hạn theo quy định).`,
+                contentHtml: debtHtml,
+                ctaText: 'TRUY CẬP CỔNG ĐỐI TÁC THANH TOÁN',
+                ctaSubText: 'PAY NOW ON PARTNER PORTAL',
+                ctaUrl: portalUrl,
+                noticeTitle: 'CẢNH BÁO QUAN TRỌNG:',
+                noticeHtml: `Kiosk của bạn sẽ bị <strong>TẠM KHÓA TOÀN DIỆN HỆ THỐNG POS</strong> nếu không hoàn tất thanh toán sau ${2 - cn.so_lan_nhac_nho} lần nhắc nhở nữa. Vui lòng thanh toán sớm để tránh gián đoạn kinh doanh.`,
+              }),
             ).catch(e => console.error('[franchise-mail] nhắc nợ error:', e.message));
           }
         }
@@ -1151,13 +1437,34 @@ export class FranchiseService {
           if (kiosk.ho_so_id) {
             const hoSo = await this.hoSoRepo.findOne({ where: { id: kiosk.ho_so_id } });
             if (hoSo && hoSo.email) {
+              const portalUrl = String(process.env.WEB_ADMIN_URL || 'http://127.0.0.1:5174').trim();
               this.sendMail(
                 hoSo.email,
                 `[Avengers Coffee] THÔNG BÁO TẠM KHÓA KIOSK DO QUÁ HẠN CÔNG NỢ - ${kiosk.ma_kiosk}`,
-                `Chào ${hoSo.ho_ten},<br/><br/>
-                 Kiosk <b>${kiosk.ten_kiosk}</b> của bạn đã bị <b>TẠM KHÓA</b> hệ thống POS do vi phạm nghiêm trọng về thời hạn thanh toán công nợ (quá hạn ${diffDays} ngày, đã nhắc nợ 3 lần).<br/><br/>
-                 Vui lòng thanh toán toàn bộ công nợ và phí phạt để hệ thống mở khóa tự động.<br/><br/>
-                 Trân trọng,<br/>Avengers Coffee`
+                this.buildFranchiseBrandedHtml({
+                  heroTitle: 'THÔNG BÁO TẠM KHÓA HỆ THỐNG KIOSK',
+                  heroSubtitle: `KIOSK: ${kiosk.ma_kiosk} • QUÁ HẠN CÔNG NỢ NGHIÊM TRỌNG`,
+                  badgeTitle: 'TRẠNG THÁI HOẠT ĐỘNG',
+                  badgeValue: 'ĐÃ TẠM KHÓA POS',
+                  badgeSub: 'Hệ thống tự động khóa sau 3 lần gửi thông báo nhắc nợ',
+                  greetingTitle: `Kính gửi đối tác ${hoSo.ho_ten},`,
+                  greetingBody: `Kiosk <strong>${kiosk.ten_kiosk} (${kiosk.ma_kiosk})</strong> của bạn đã bị <strong>TẠM KHÓA HỆ THỐNG BÁN HÀNG POS</strong> do vi phạm thời hạn thanh toán công nợ (quá hạn ${diffDays} ngày).`,
+                  contentHtml: `
+                    <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 14px; padding: 18px 20px;">
+                      <div style="font-size: 12.5px; font-weight: 800; color: #be123c; text-transform: uppercase; margin-bottom: 6px;">
+                        ● HƯỚNG DẪN MỞ KHÓA KIOSK:
+                      </div>
+                      <div style="font-size: 13.5px; color: #881337; line-height: 1.7;">
+                        Vui lòng truy cập Cổng Nhượng Quyền và thanh toán toàn bộ công nợ gốc kèm phí phạt trễ hạn. Hệ thống sẽ tự động khôi phục quyền truy cập POS ngay sau khi ghi nhận thanh toán.
+                      </div>
+                    </div>
+                  `,
+                  ctaText: 'THANH TOÁN CÔNG NỢ NGAY',
+                  ctaSubText: 'RESTORE KIOSK ACCESS',
+                  ctaUrl: portalUrl,
+                  noticeTitle: 'KÊNH HỖ TRỢ ĐỐI TÁC:',
+                  noticeHtml: 'Mọi thắc mắc cần hỗ trợ xử lý công nợ, vui lòng liên hệ phòng Tài chính Avengers Coffee qua hotline <strong>1800 6936</strong>.',
+                }),
               ).catch(e => console.error('[franchise-mail] khóa kiosk error:', e.message));
             }
           }

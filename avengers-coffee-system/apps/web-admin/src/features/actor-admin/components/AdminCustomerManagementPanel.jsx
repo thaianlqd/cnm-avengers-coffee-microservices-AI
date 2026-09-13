@@ -153,145 +153,6 @@ export function AdminCustomerManagementPanel({
 
   return (
     <section className="panel system-admin-panel" style={{ padding: '1rem 0.75rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      {/* Header & Main Action Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <UserCog size={22} color="#4f46e5" /> Quản lý Khách hàng &amp; Thành viên
-          </h1>
-          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8125rem', color: '#64748b' }}>
-            Quản lý danh sách tài khoản khách hàng, điểm tích lũy Loyalty và xếp hạng thành viên hệ thống
-          </p>
-        </div>
-
-        <button
-          type="button"
-          className={isFormActive ? 'btn-cancel' : 'btn-save'}
-          onClick={() => {
-            if (editingCustomerId) {
-              cancelEditCustomer()
-              setShowCreateForm(false)
-            } else {
-              setShowCreateForm((prev) => !prev)
-            }
-          }}
-          style={{ height: '38px', padding: '0 1.1rem' }}
-        >
-          {isFormActive ? (
-            <>
-              <X size={16} /> Đóng biểu mẫu
-            </>
-          ) : (
-            <>
-              <UserPlus size={16} /> Tạo tài khoản khách hàng
-            </>
-          )}
-        </button>
-      </div>
-
-      {/* Modern KPI Stats Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1rem' }}>
-        {/* KPI 1: Total Customers */}
-        <div
-          className="system-admin-kpi-card"
-          style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '12px',
-            padding: '1rem 1.15rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1rem',
-            boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.03)'
-          }}
-        >
-          <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: '#eef2ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Users size={22} />
-          </div>
-          <div>
-            <p style={{ margin: 0, fontSize: '0.78125rem', color: '#64748b', fontWeight: '500' }}>Tổng số Khách hàng</p>
-            <h3 style={{ margin: '0.2rem 0 0 0', fontSize: '1.35rem', fontWeight: '700', color: '#0f172a' }}>
-              {fmtNumber(totalCustomersCount)}
-            </h3>
-          </div>
-        </div>
-
-        {/* KPI 2: VIP Customers */}
-        <div
-          className="system-admin-kpi-card"
-          style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '12px',
-            padding: '1rem 1.15rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1rem',
-            boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.03)'
-          }}
-        >
-          <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: '#fffbeb', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Crown size={22} />
-          </div>
-          <div>
-            <p style={{ margin: 0, fontSize: '0.78125rem', color: '#64748b', fontWeight: '500' }}>Khách hàng VIP (Vàng/Kim Cương)</p>
-            <h3 style={{ margin: '0.2rem 0 0 0', fontSize: '1.35rem', fontWeight: '700', color: '#b45309' }}>
-              {fmtNumber(vipCount)}
-            </h3>
-          </div>
-        </div>
-
-        {/* KPI 3: Active Accounts */}
-        <div
-          className="system-admin-kpi-card"
-          style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '12px',
-            padding: '1rem 1.15rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1rem',
-            boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.03)'
-          }}
-        >
-          <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <ShieldCheck size={22} />
-          </div>
-          <div>
-            <p style={{ margin: 0, fontSize: '0.78125rem', color: '#64748b', fontWeight: '500' }}>Đang hoạt động</p>
-            <h3 style={{ margin: '0.2rem 0 0 0', fontSize: '1.35rem', fontWeight: '700', color: '#059669' }}>
-              {fmtNumber(activeCount)}
-            </h3>
-          </div>
-        </div>
-
-        {/* KPI 4: Total Loyalty Points */}
-        <div
-          className="system-admin-kpi-card"
-          style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '12px',
-            padding: '1rem 1.15rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1rem',
-            boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.03)'
-          }}
-        >
-          <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: '#f3e8ff', color: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Coins size={22} />
-          </div>
-          <div>
-            <p style={{ margin: 0, fontSize: '0.78125rem', color: '#64748b', fontWeight: '500' }}>Tổng điểm Loyalty toàn hệ thống</p>
-            <h3 style={{ margin: '0.2rem 0 0 0', fontSize: '1.35rem', fontWeight: '700', color: '#6d28d9' }}>
-              {fmtNumber(totalLoyaltyPoints)} pt
-            </h3>
-          </div>
-        </div>
-      </div>
-
       {/* Form Card: Tạo / Sửa Khách hàng - REDESIGNED LOVELY 2-COLUMN CARD */}
       {isFormActive && (
         <div
@@ -697,9 +558,33 @@ export function AdminCustomerManagementPanel({
             onClick={() => loadCustomers && loadCustomers()}
             style={{ height: '36px' }}
           >
-            <RefreshCw size={14} /> Lọc dữ liệu
+            <RefreshCw size={14} /> Làm mới
           </button>
         </div>
+
+        <button
+          type="button"
+          className={isFormActive ? 'btn-cancel' : 'btn-save'}
+          onClick={() => {
+            if (editingCustomerId) {
+              cancelEditCustomer()
+              setShowCreateForm(false)
+            } else {
+              setShowCreateForm((prev) => !prev)
+            }
+          }}
+          style={{ height: '36px', padding: '0 1rem' }}
+        >
+          {isFormActive ? (
+            <>
+              <X size={15} /> Đóng biểu mẫu
+            </>
+          ) : (
+            <>
+              <UserPlus size={15} /> Tạo tài khoản khách hàng
+            </>
+          )}
+        </button>
       </div>
 
       {customersState.loading ? <p style={{ fontSize: '0.8125rem', color: '#64748b', margin: 0 }}>Đang tải danh sách khách hàng...</p> : null}
@@ -710,12 +595,12 @@ export function AdminCustomerManagementPanel({
         <table className="admin-fit-table system-admin-table" style={{ width: '100%', tableLayout: 'fixed', maxWidth: '100%' }}>
           <thead>
             <tr>
-              <th style={{ width: '23%', whiteSpace: 'nowrap' }}>Khách hàng</th>
+              <th style={{ width: '22%', whiteSpace: 'nowrap' }}>Khách hàng</th>
               <th style={{ width: '20%', whiteSpace: 'nowrap' }}>Email</th>
               <th style={{ width: '15%', whiteSpace: 'nowrap' }}>Hạng thành viên</th>
-              <th style={{ width: '18%', whiteSpace: 'nowrap' }}>Điểm khả dụng</th>
+              <th style={{ width: '16%', whiteSpace: 'nowrap' }}>Điểm khả dụng</th>
               <th style={{ width: '12%', whiteSpace: 'nowrap' }}>Trạng thái</th>
-              <th style={{ width: '12%', textAlign: 'center', whiteSpace: 'nowrap' }}>Thao tác</th>
+              <th style={{ width: '15%', textAlign: 'center', whiteSpace: 'nowrap' }}>Thao tác</th>
             </tr>
           </thead>
           <tbody>
@@ -774,78 +659,35 @@ export function AdminCustomerManagementPanel({
                     </span>
                   </td>
 
-                  <td style={{ textAlign: 'center', position: 'relative', whiteSpace: 'nowrap' }}>
-                    <button
-                      type="button"
-                      className="btn-icon-more"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setOpenCustomerActionId(openCustomerActionId === item.ma_nguoi_dung ? null : item.ma_nguoi_dung)
-                      }}
-                      title="Thao tác"
-                    >
-                      <MoreVertical size={16} color="#475569" />
-                    </button>
-
-                    {openCustomerActionId === item.ma_nguoi_dung && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          right: 'calc(100% + 6px)',
-                          top: index >= (array.length - 2) ? 'auto' : '-4px',
-                          bottom: index >= (array.length - 2) ? '-4px' : 'auto',
-                          backgroundColor: '#ffffff',
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '8px',
-                          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-                          zIndex: 9999,
-                          minWidth: '200px',
-                          padding: '0.35rem',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '0.15rem'
-                        }}
-                        onClick={(e) => e.stopPropagation()}
+                  <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', justifyContent: 'center' }}>
+                      <button
+                        type="button"
+                        className="admin-table-action-btn btn-edit"
+                        onClick={() => startEditCustomer(item)}
+                        title="Chỉnh sửa thông tin khách hàng"
                       >
-                        <button
-                          type="button"
-                          className="btn-dropdown-item"
-                          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.45rem 0.65rem', borderRadius: '6px', fontSize: '0.8125rem', fontWeight: '500', color: '#2563eb', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                          onClick={() => {
-                            setOpenCustomerActionId(null)
-                            startEditCustomer(item)
-                          }}
-                        >
-                          <Edit3 size={14} color="#2563eb" /> Chỉnh sửa thông tin
-                        </button>
+                        <Edit3 size={15} />
+                      </button>
 
-                        <button
-                          type="button"
-                          className="btn-dropdown-item"
-                          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.45rem 0.65rem', borderRadius: '6px', fontSize: '0.8125rem', fontWeight: '500', color: '#6366f1', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                          onClick={() => {
-                            setOpenCustomerActionId(null)
-                            startEditCustomerMembership(item)
-                          }}
-                        >
-                          <Award size={14} color="#6366f1" /> Sửa Membership &amp; Điểm
-                        </button>
+                      <button
+                        type="button"
+                        className="admin-table-action-btn btn-special"
+                        onClick={() => startEditCustomerMembership(item)}
+                        title="Sửa Hạng thành viên & Điểm thưởng"
+                      >
+                        <Award size={15} />
+                      </button>
 
-                        <div style={{ borderTop: '1px solid #f1f5f9', margin: '0.2rem 0' }}></div>
-
-                        <button
-                          type="button"
-                          className="btn-dropdown-item danger"
-                          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.45rem 0.65rem', borderRadius: '6px', fontSize: '0.8125rem', fontWeight: '500', color: '#dc2626', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                          onClick={() => {
-                            setOpenCustomerActionId(null)
-                            deleteCustomer(item.ma_nguoi_dung)
-                          }}
-                        >
-                          <Trash2 size={14} color="#dc2626" /> Xóa tài khoản
-                        </button>
-                      </div>
-                    )}
+                      <button
+                        type="button"
+                        className="admin-table-action-btn btn-delete"
+                        onClick={() => deleteCustomer(item.ma_nguoi_dung)}
+                        title="Xóa tài khoản khách hàng"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               )

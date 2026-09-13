@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
+import { getAdminAccessToken } from '../../../lib/adminFetch'
+
+const authHeaders = (extra = {}) => {
+  const token = getAdminAccessToken()
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...extra,
+  }
+}
 
 const DEFAULT_USER_FORM = {
   ten_dang_nhap: '',
@@ -238,8 +247,8 @@ const DEFAULT_CATEGORY_FORM = {
 }
 
 const PROMOTION_TYPES = [
-  { code: 'PERCENT', label: 'Giảm theo %' },
-  { code: 'FIXED', label: 'Giảm số tiền cố định' },
+  { code: 'PERCENT', label: 'Giảm theo phần trăm (%)' },
+  { code: 'FIXED', label: 'Giảm số tiền cố định (VNĐ)' },
   { code: 'FREE_ITEM', label: 'Tặng kèm sản phẩm' },
 ]
 
@@ -305,6 +314,20 @@ async function fetchPromotions() {
   const response = await fetch(`${API_BASE_URL}/promotions/admin`)
   const payload = await readJsonResponse(response, {})
   if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc danh sach khuyen mai')
+  return payload?.items || []
+}
+
+async function fetchRecentOrders() {
+  const response = await fetch(`${API_BASE_URL}/staff/orders?limit=200`)
+  const payload = await readJsonResponse(response, {})
+  if (!response.ok) return []
+  return payload?.items || payload?.orders || []
+}
+
+async function fetchAccountsAdmin() {
+  const response = await fetch(`${API_BASE_URL}/users/admin/accounts`)
+  const payload = await readJsonResponse(response, {})
+  if (!response.ok) return []
   return payload?.items || []
 }
 
@@ -387,6 +410,16 @@ export function useSystemAdmin() {
     queryFn: fetchPromotions,
   })
 
+  const ordersQuery = useQuery({
+    queryKey: ['system-admin', 'recent-orders'],
+    queryFn: fetchRecentOrders,
+  })
+
+  const accountsQuery = useQuery({
+    queryKey: ['system-admin', 'all-accounts'],
+    queryFn: fetchAccountsAdmin,
+  })
+
   useEffect(() => {
     setStatsState({
       loading: statsQuery.isLoading || statsQuery.isFetching,
@@ -394,6 +427,16 @@ export function useSystemAdmin() {
       data: statsQuery.data ?? null,
     })
   }, [statsQuery.data, statsQuery.error, statsQuery.isFetching, statsQuery.isLoading])
+
+  useEffect(() => {
+    if (accountsQuery.data) {
+      setUsersState({
+        loading: accountsQuery.isLoading || accountsQuery.isFetching,
+        error: accountsQuery.error?.message || '',
+        items: accountsQuery.data || [],
+      })
+    }
+  }, [accountsQuery.data, accountsQuery.error, accountsQuery.isFetching, accountsQuery.isLoading])
 
   useEffect(() => {
     const items = [...(branchesQuery.data || [])].sort((a, b) => {
@@ -918,16 +961,19 @@ export function useSystemAdmin() {
   }
 
   const deleteBranch = async (branchCode) => {
-    if (!window.confirm('Xoa chi nhanh nay?')) return
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa chi nhánh "${branchCode}"?`)) return
     try {
-      const response = await fetch(`${API_BASE_URL}/users/admin/branches/${branchCode}`, { method: 'DELETE' })
+      const response = await fetch(`${API_BASE_URL}/users/admin/branches/${branchCode}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      })
       const result = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(result?.message || 'Khong xoa duoc chi nhanh')
+      if (!response.ok) throw new Error(result?.message || 'Không thể xóa chi nhánh')
       if (editingBranchCode === branchCode) cancelEditBranch()
       await Promise.all([loadBranches(), loadUsers(), loadStats()])
-      pushAdminNotification('Xóa chi nhánh', `Đã xóa chi nhánh ${branchCode}.`)
+      pushAdminNotification('Xóa chi nhánh', `Đã xóa chi nhánh ${branchCode} thành công.`)
     } catch (error) {
-      window.alert(error.message || 'Khong xoa duoc chi nhanh')
+      window.alert(error.message || 'Không thể xóa chi nhánh')
     }
   }
 
@@ -935,7 +981,7 @@ export function useSystemAdmin() {
     setSavingUser(true)
     try {
       if (!editingUserId && !userForm.mat_khau) {
-        throw new Error('Vui long nhap mat khau cho tai khoan moi')
+        throw new Error('Vui lòng nhập mật khẩu cho tài khoản mới')
       }
 
       const payload = {
@@ -955,33 +1001,36 @@ export function useSystemAdmin() {
 
       const response = await fetch(endpoint, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(payload),
       })
       const result = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(result?.message || 'Khong luu duoc tai khoan')
+      if (!response.ok) throw new Error(result?.message || 'Không thể lưu tài khoản')
 
       cancelEditUser()
       await Promise.all([loadUsers(), loadStats()])
       pushAdminNotification('Cập nhật tài khoản', 'Đã lưu thay đổi tài khoản người dùng.')
     } catch (error) {
-      window.alert(error.message || 'Khong luu duoc tai khoan')
+      window.alert(error.message || 'Không thể lưu tài khoản')
     } finally {
       setSavingUser(false)
     }
   }
 
   const deleteUser = async (userId) => {
-    if (!window.confirm('Xoa tai khoan nay? Hanh dong nay khong the hoan tac.')) return
+    if (!window.confirm('Xác nhận xóa tài khoản này? Hành động này không thể hoàn tác.')) return
     try {
-      const response = await fetch(`${API_BASE_URL}/users/admin/accounts/${userId}`, { method: 'DELETE' })
+      const response = await fetch(`${API_BASE_URL}/users/admin/accounts/${userId}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      })
       const result = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(result?.message || 'Khong xoa duoc tai khoan')
+      if (!response.ok) throw new Error(result?.message || 'Không thể xóa tài khoản')
       if (editingUserId === userId) cancelEditUser()
       await Promise.all([loadUsers(), loadStats()])
       pushAdminNotification('Xóa tài khoản', 'Đã xóa tài khoản người dùng thành công.')
     } catch (error) {
-      window.alert(error.message || 'Khong xoa duoc tai khoan')
+      window.alert(error.message || 'Không thể xóa tài khoản')
     }
   }
 
@@ -989,7 +1038,7 @@ export function useSystemAdmin() {
     setSavingCustomer(true)
     try {
       if (!editingCustomerId && !customerForm.mat_khau) {
-        throw new Error('Vui long nhap mat khau cho tai khoan moi')
+        throw new Error('Vui lòng nhập mật khẩu cho tài khoản khách hàng mới')
       }
 
       const payload = {
@@ -1008,33 +1057,36 @@ export function useSystemAdmin() {
 
       const response = await fetch(endpoint, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(payload),
       })
       const result = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(result?.message || 'Khong luu duoc khach hang')
+      if (!response.ok) throw new Error(result?.message || 'Không thể lưu thông tin khách hàng')
 
       cancelEditCustomer()
       await Promise.all([loadCustomers(), loadUsers(), loadStats()])
       pushAdminNotification('Cập nhật khách hàng', 'Đã lưu thay đổi tài khoản khách hàng.')
     } catch (error) {
-      window.alert(error.message || 'Khong luu duoc khach hang')
+      window.alert(error.message || 'Không thể lưu thông tin khách hàng')
     } finally {
       setSavingCustomer(false)
     }
   }
 
   const deleteCustomer = async (userId) => {
-    if (!window.confirm('Xoa tai khoan khach hang nay? Hanh dong nay khong the hoan tac.')) return
+    if (!window.confirm('Xác nhận xóa tài khoản khách hàng này? Hành động này không thể hoàn tác.')) return
     try {
-      const response = await fetch(`${API_BASE_URL}/users/admin/accounts/${userId}`, { method: 'DELETE' })
+      const response = await fetch(`${API_BASE_URL}/users/admin/accounts/${userId}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      })
       const result = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(result?.message || 'Khong xoa duoc khach hang')
+      if (!response.ok) throw new Error(result?.message || 'Không thể xóa khách hàng')
       if (editingCustomerId === userId) cancelEditCustomer()
       await Promise.all([loadCustomers(), loadUsers(), loadStats()])
       pushAdminNotification('Xóa khách hàng', 'Đã xóa tài khoản khách hàng thành công.')
     } catch (error) {
-      window.alert(error.message || 'Khong xoa duoc khach hang')
+      window.alert(error.message || 'Không thể xóa khách hàng')
     }
   }
 
@@ -1393,5 +1445,7 @@ export function useSystemAdmin() {
     startEditCustomerMembership,
     cancelEditCustomerMembership,
     saveCustomerMembership,
+    recentOrders: ordersQuery.data || [],
+    recentUsers: accountsQuery.data || [],
   }
 }

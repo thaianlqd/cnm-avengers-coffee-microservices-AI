@@ -13,8 +13,6 @@ export class SurveyController {
   //  SURVEY FORM ENDPOINTS
   // ═══════════════════════════════════════════════════════
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
   @Post('forms')
   async taoBieuMau(
     @CurrentUser() currentUser: AuthUser | null,
@@ -23,8 +21,6 @@ export class SurveyController {
     return this.surveyService.taoBieuMau(body, currentUser?.username || currentUser?.email || 'manager');
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'MANAGER')
   @Get('forms')
   async layDanhSachBieuMau() {
     return this.surveyService.layDanhSachBieuMau();
@@ -35,15 +31,11 @@ export class SurveyController {
     return this.surveyService.layBieuMauActive();
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
   @Patch('forms/:id/activate')
   async kickHoatBieuMau(@Param('id') id: string) {
     return this.surveyService.kickHoatBieuMau(Number(id));
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
   @Put('forms/:id')
   async suaBieuMau(
     @Param('id') id: string,
@@ -52,8 +44,6 @@ export class SurveyController {
     return this.surveyService.suaBieuMau(Number(id), body);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
   @Delete('forms/:id')
   async xoaBieuMau(@Param('id') id: string) {
     return this.surveyService.xoaBieuMau(Number(id));

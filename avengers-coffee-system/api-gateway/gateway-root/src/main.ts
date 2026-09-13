@@ -14,12 +14,17 @@ async function bootstrap() {
 
   const httpAdapter = app.getHttpAdapter().getInstance();
 
+  // Timeout configuration: 120 seconds to handle slow remote DB (Supabase) and external API calls
+  const PROXY_TIMEOUT = 120000; // 120 seconds
+
   httpAdapter.use(
     createProxyMiddleware({
       target: process.env.IDENTITY_SERVICE_URL || 'http://localhost:3001',
       changeOrigin: true,
       on: { proxyReq: fixRequestBody },
       pathFilter: ['/auth', '/users', '/promotions', '/franchise'],
+      timeout: PROXY_TIMEOUT,
+      proxyTimeout: PROXY_TIMEOUT,
     }),
   );
 
@@ -29,6 +34,8 @@ async function bootstrap() {
       changeOrigin: true,
       on: { proxyReq: fixRequestBody },
       pathFilter: ['/menu'],
+      timeout: PROXY_TIMEOUT,
+      proxyTimeout: PROXY_TIMEOUT,
     }),
   );
 
@@ -54,7 +61,10 @@ async function bootstrap() {
         '/ANTHAI_TEST',
         '/GD_Full_ChucNang',
         '/gift-cards',
+        '/smtp',
       ],
+      timeout: PROXY_TIMEOUT,
+      proxyTimeout: PROXY_TIMEOUT,
     }),
   );
 
@@ -64,6 +74,8 @@ async function bootstrap() {
       changeOrigin: true,
       on: { proxyReq: fixRequestBody },
       pathFilter: ['/inventory'],
+      timeout: PROXY_TIMEOUT,
+      proxyTimeout: PROXY_TIMEOUT,
     }),
   );
 
@@ -73,6 +85,8 @@ async function bootstrap() {
       changeOrigin: true,
       on: { proxyReq: fixRequestBody },
       pathFilter: ['/ai'],
+      timeout: PROXY_TIMEOUT,
+      proxyTimeout: PROXY_TIMEOUT,
     }),
   );
 
@@ -81,6 +95,8 @@ async function bootstrap() {
       target: process.env.NEWS_SERVICE_URL || 'http://localhost:3006',
       changeOrigin: true,
       pathFilter: ['/news', '/uploads/news'],
+      timeout: PROXY_TIMEOUT,
+      proxyTimeout: PROXY_TIMEOUT,
     }),
   );
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
-import { getAdminAccessToken } from '../../../lib/adminFetch'
+import { getAdminAccessToken, getAdminSession } from '../../../lib/adminFetch'
 import {
   Bike,
   Truck,
@@ -23,6 +23,9 @@ import {
   TrendingUp,
   X,
   Check,
+  Clock,
+  MapPin,
+  FileText,
 } from 'lucide-react'
 
 async function apiFetch(path, options = {}) {
@@ -177,9 +180,13 @@ export function AdminShipperPanel({ branchOptions = [] }) {
   const handleConfirmCod = async (remitId, action) => {
     setCodConfirming(remitId + action)
     try {
+      const session = getAdminSession()
+      const adminUserId = session?.user?.id || session?.user?.userId || session?.userId || null
+      const isUuid = Boolean(adminUserId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(adminUserId))
+
       await apiFetch(`/shippers/cod-remits/${remitId}/confirm`, {
         method: 'POST',
-        body: JSON.stringify({ confirmed_by: 'admin', action }),
+        body: JSON.stringify({ confirmed_by: isUuid ? adminUserId : null, action }),
       })
       await loadCodRemits()
     } catch (e) {
@@ -285,118 +292,26 @@ export function AdminShipperPanel({ branchOptions = [] }) {
   }
 
   return (
-    <section className="panel system-admin-panel" style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '16px' }}>
-      {/* Component Specific CSS Fixes */}
-      <style>{`
-        .delivery-tab-btn {
-          display: inline-flex !important;
-          align-items: center !important;
-          gap: 0.55rem !important;
-          padding: 0.7rem 1.35rem !important;
-          border-radius: 12px !important;
-          font-weight: 700 !important;
-          font-size: 0.875rem !important;
-          cursor: pointer !important;
-          transition: all 0.2s ease !important;
-          border: 1.5px solid #cbd5e1 !important;
-          background-color: #ffffff !important;
-          background-image: none !important;
-          color: #475569 !important;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
-          outline: none !important;
-        }
-
-        .delivery-tab-btn:hover {
-          background-color: #f1f5f9 !important;
-          color: #0f172a !important;
-          border-color: #94a3b8 !important;
-        }
-
-        .delivery-tab-btn.active,
-        .delivery-tab-btn.active:hover {
-          background-color: #2563eb !important;
-          background-image: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
-          color: #ffffff !important;
-          border-color: #1d4ed8 !important;
-          box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45) !important;
-        }
-
-        .delivery-tab-btn.active svg,
-        .delivery-tab-btn.active span {
-          color: #ffffff !important;
-        }
-
-        .delivery-input-wrapper {
-          display: flex !important;
-          align-items: center !important;
-          gap: 0.5rem !important;
-          background-color: #ffffff !important;
-          border: 1px solid #cbd5e1 !important;
-          border-radius: 8px !important;
-          padding: 0 0.75rem !important;
-          height: 42px !important;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
-          transition: border-color 0.2s ease !important;
-        }
-
-        .delivery-input-wrapper:focus-within {
-          border-color: #2563eb !important;
-          box-shadow: 0 0 0 3px rgba(37,99,235,0.15) !important;
-        }
-
-        .delivery-input-wrapper input,
-        .delivery-input-wrapper select {
-          border: none !important;
-          outline: none !important;
-          background: transparent !important;
-          padding: 0 !important;
-          margin: 0 !important;
-          height: 100% !important;
-          width: 100% !important;
-          font-size: 0.875rem !important;
-          color: #0f172a !important;
-          box-shadow: none !important;
-        }
-      `}</style>
-
-      {/* Header */}
-      <div className="panel-head system-admin-panel-head" style={{ marginBottom: '1.5rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{ padding: '0.6rem', borderRadius: '12px', background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(37,99,235,0.25)' }}>
-            <Truck size={24} />
-          </div>
-          <div>
-            <h2 style={{ fontSize: '1.4rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>Quản lý nhân viên giao hàng toàn hệ thống</h2>
-            <span style={{ fontSize: '0.875rem', color: '#64748b' }}>Hồ sơ nhân viên, cấu hình phân công tự động, KPI hiệu suất và hoa hồng chi trả</span>
-          </div>
+    <section className="panel system-admin-panel" style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      {/* Sub-tabs Toolbar */}
+      <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', overflowX: 'auto', paddingBottom: '0.25rem' }}>
+        <div style={{ display: 'inline-flex', backgroundColor: '#f1f5f9', padding: '0.35rem', borderRadius: '12px', border: '1px solid #e2e8f0', gap: '0.35rem' }}>
+          {ADMIN_DELIVERY_TABS.map(tab => {
+            const IconComp = tab.icon
+            const isActive = activeTab === tab.id
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                className={`admin-subtab-btn ${isActive ? 'is-active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <IconComp size={17} color={isActive ? '#ffffff' : '#475569'} />
+                <span>{tab.label}</span>
+              </button>
+            )
+          })}
         </div>
-      </div>
-
-      {/* Sub-tabs Nav */}
-      <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1.5rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
-        {ADMIN_DELIVERY_TABS.map(tab => {
-          const IconComp = tab.icon
-          const isActive = activeTab === tab.id
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              className={`delivery-tab-btn ${isActive ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-              style={isActive ? {
-                backgroundColor: '#2563eb',
-                backgroundImage: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
-                color: '#ffffff',
-                borderColor: '#1d4ed8',
-                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.45)',
-              } : {}}
-            >
-              <IconComp size={18} style={{ color: isActive ? '#ffffff' : '#64748b' }} />
-              <span style={{ color: isActive ? '#ffffff' : '#475569' }}>{tab.label}</span>
-              {isActive && <Check size={16} style={{ color: '#ffffff', marginLeft: '0.2rem' }} />}
-            </button>
-          )
-        })}
       </div>
 
       {/* TAB 1: CRUD & LIST */}
@@ -605,12 +520,12 @@ export function AdminShipperPanel({ branchOptions = [] }) {
           </div>
 
           {/* Table List */}
-          {shippersLoading ? (
+          {shippersLoading && shippers.length === 0 ? (
             <div style={{ background: '#fff', padding: '2rem', textAlign: 'center', borderRadius: '12px', color: '#64748b' }}>
               <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem auto', color: '#2563eb' }} />
               <p style={{ margin: 0 }}>Đang tải danh sách nhân viên giao hàng...</p>
             </div>
-          ) : shippersError ? (
+          ) : shippersError && shippers.length === 0 ? (
             <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '1rem', borderRadius: '12px', color: '#dc2626' }}>
               <p style={{ margin: 0, fontWeight: '600' }}>Lỗi tải dữ liệu: {shippersError}</p>
             </div>
@@ -1241,124 +1156,218 @@ export function AdminShipperPanel({ branchOptions = [] }) {
         </div>
       )}
       {activeTab === 'cod' && (
-        <div style={{ padding: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-            <div>
-              <h3 style={{ margin: 0, fontWeight: '800', color: '#0f172a', fontSize: '1.05rem' }}>💵 Đối Soát Tiền Mặt COD</h3>
-              <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#94a3b8' }}>
-                Danh sách Shipper đã gửi xác nhận nộp tiền COD — Admin kiểm tra và xác nhận
-              </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Status Filter Bar & Refresh Action */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.85rem', backgroundColor: '#ffffff', padding: '0.85rem 1.15rem', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              {[
+                { id: 'PENDING', label: 'Chờ duyệt', Icon: Clock, color: '#d97706', bg: '#fffbeb', border: '#fde68a' },
+                { id: 'CONFIRMED', label: 'Đã xác nhận', Icon: CheckCircle2, color: '#059669', bg: '#ecfdf5', border: '#a7f3d0' },
+                { id: 'REJECTED', label: 'Từ chối', Icon: XCircle, color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
+                { id: '', label: 'Tất cả phiếu', Icon: Filter, color: '#4f46e5', bg: '#eff6ff', border: '#bfdbfe' },
+              ].map(opt => {
+                const isSelected = codStatusFilter === opt.id
+                const OptIcon = opt.Icon
+                return (
+                  <button
+                    key={opt.id || 'all'}
+                    type="button"
+                    onClick={() => { setCodStatusFilter(opt.id); }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      padding: '0.45rem 0.95rem',
+                      borderRadius: '9999px',
+                      fontSize: '0.8125rem',
+                      fontWeight: isSelected ? '700' : '600',
+                      cursor: 'pointer',
+                      border: isSelected ? `1.5px solid ${opt.color}` : '1px solid #cbd5e1',
+                      backgroundColor: isSelected ? opt.bg : '#ffffff',
+                      color: isSelected ? opt.color : '#475569',
+                      boxShadow: isSelected ? '0 2px 6px rgba(0,0,0,0.04)' : 'none',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <OptIcon size={14} color={isSelected ? opt.color : '#64748b'} />
+                    <span>{opt.label}</span>
+                  </button>
+                )
+              })}
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              {['PENDING', 'CONFIRMED', 'REJECTED', ''].map(s => (
-                <button
-                  key={s || 'all'}
-                  onClick={() => { setCodStatusFilter(s); }}
-                  style={{
-                    padding: '0.35rem 0.85rem', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: '700',
-                    cursor: 'pointer', border: '1.5px solid',
-                    backgroundColor: codStatusFilter === s ? '#1e40af' : '#fff',
-                    color: codStatusFilter === s ? '#fff' : '#475569',
-                    borderColor: codStatusFilter === s ? '#1e40af' : '#e2e8f0',
-                  }}
-                >
-                  {s === 'PENDING' ? '⏳ Chờ duyệt' : s === 'CONFIRMED' ? '✅ Đã xác nhận' : s === 'REJECTED' ? '❌ Từ chối' : 'Tất cả'}
-                </button>
-              ))}
-              <button
-                onClick={loadCodRemits}
-                style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer', color: '#475569' }}
-              >
-                <RefreshCw size={14} />
-              </button>
-            </div>
+
+            <button
+              type="button"
+              onClick={loadCodRemits}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.45rem 0.85rem',
+                borderRadius: '8px',
+                border: '1px solid #cbd5e1',
+                backgroundColor: '#ffffff',
+                color: '#334155',
+                fontSize: '0.8125rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+              title="Tải lại danh sách"
+            >
+              <RefreshCw size={14} color="#64748b" />
+              <span>Tải lại</span>
+            </button>
           </div>
 
+          {/* COD Remits Table */}
           {codLoading ? (
-            <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>Đang tải...</div>
+            <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>Đang tải danh sách đối soát COD...</div>
           ) : codRemits.length === 0 ? (
-            <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>
-              <CheckCircle2 size={36} style={{ margin: '0 auto 0.75rem', color: '#cbd5e1' }} />
-              <p style={{ margin: 0 }}>Không có phiếu nộp COD nào {codStatusFilter ? `(${codStatusFilter})` : ''}.</p>
+            <div style={{ padding: '3rem', textAlign: 'center', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', color: '#64748b' }}>
+              <CheckCircle2 size={36} color="#cbd5e1" style={{ margin: '0 auto 0.75rem auto' }} />
+              <p style={{ margin: 0, fontWeight: '700', fontSize: '0.95rem', color: '#334155' }}>Không có phiếu nộp tiền COD nào</p>
+              <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8125rem' }}>{codStatusFilter ? `Chưa ghi nhận phiếu với trạng thái "${codStatusFilter}".` : 'Danh sách phiếu nộp đang trống.'}</p>
             </div>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-                    {['⏰ Thời gian', '👨‍🚚 Shipper', '🏪 Chi nhánh', '💵 Số tiền', '💬 Ghi chú', 'Trạng thái', 'Hành động'].map(h => (
-                      <th key={h} style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '700', color: '#475569', fontSize: '0.8rem' }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {codRemits.map((r, i) => {
-                    const isPending = r.status === 'PENDING'
-                    const isConfirmed = r.status === 'CONFIRMED'
-                    return (
-                      <tr key={r.id || i} style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: isPending ? '#fffbeb' : isConfirmed ? '#f0fdf4' : '#fff1f2' }}>
-                        <td style={{ padding: '0.85rem 1rem', color: '#64748b', fontSize: '0.78rem' }}>
-                          {r.created_at ? new Date(r.created_at).toLocaleString('vi-VN') : '—'}
-                        </td>
-                        <td style={{ padding: '0.85rem 1rem', fontWeight: '700', color: '#0f172a' }}>
-                          {r.shipper_name || r.shipper_id?.slice(0, 8)}
-                        </td>
-                        <td style={{ padding: '0.85rem 1rem', color: '#475569', fontSize: '0.8rem' }}>
-                          {r.branch_code || '—'}
-                        </td>
-                        <td style={{ padding: '0.85rem 1rem', fontWeight: '800', color: '#dc2626', fontSize: '1rem' }}>
-                          {fmtCurrency(r.amount)}
-                        </td>
-                        <td style={{ padding: '0.85rem 1rem', color: '#94a3b8', fontSize: '0.8rem', maxWidth: '160px' }}>
-                          {r.note || '—'}
-                        </td>
-                        <td style={{ padding: '0.85rem 1rem' }}>
-                          <span style={{
-                            display: 'inline-block', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '700',
-                            backgroundColor: isPending ? '#fffbeb' : isConfirmed ? '#ecfdf5' : '#fef2f2',
-                            color: isPending ? '#b45309' : isConfirmed ? '#047857' : '#dc2626',
-                            border: `1px solid ${isPending ? '#fde68a' : isConfirmed ? '#a7f3d0' : '#fecaca'}`,
-                          }}>
-                            {isPending ? '⏳ Chờ duyệt' : isConfirmed ? '✅ Đã xác nhận' : '❌ Từ chối'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '0.85rem 1rem' }}>
-                          {isPending ? (
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                              <button
-                                onClick={() => handleConfirmCod(r.id, 'CONFIRMED')}
-                                disabled={codConfirming === r.id + 'CONFIRMED'}
-                                style={{
-                                  padding: '0.35rem 0.8rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: '700',
-                                  background: '#059669', color: '#fff', border: 'none', cursor: 'pointer',
-                                  opacity: codConfirming === r.id + 'CONFIRMED' ? 0.6 : 1,
-                                }}
-                              >
-                                <Check size={13} style={{ marginRight: 4 }} />Đã nhận tiền
-                              </button>
-                              <button
-                                onClick={() => handleConfirmCod(r.id, 'REJECTED')}
-                                disabled={codConfirming === r.id + 'REJECTED'}
-                                style={{
-                                  padding: '0.35rem 0.8rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: '700',
-                                  background: '#fff', color: '#dc2626', border: '1.5px solid #fecaca', cursor: 'pointer',
-                                  opacity: codConfirming === r.id + 'REJECTED' ? 0.6 : 1,
-                                }}
-                              >
-                                <X size={13} style={{ marginRight: 4 }} />Từ chối
-                              </button>
-                            </div>
-                          ) : (
-                            <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
-                              {isConfirmed ? `✓ ${fmtDate(r.confirmed_at)}` : '✕ Đã từ chối'}
+            <div style={{ backgroundColor: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.05em' }}>
+                      <th style={{ padding: '0.85rem 1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Clock size={14} color="#64748b" /> Thời gian nộp</div>
+                      </th>
+                      <th style={{ padding: '0.85rem 1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Users size={14} color="#64748b" /> Shipper</div>
+                      </th>
+                      <th style={{ padding: '0.85rem 1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><MapPin size={14} color="#64748b" /> Chi nhánh</div>
+                      </th>
+                      <th style={{ padding: '0.85rem 1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Coins size={14} color="#64748b" /> Số tiền COD</div>
+                      </th>
+                      <th style={{ padding: '0.85rem 1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><FileText size={14} color="#64748b" /> Ghi chú</div>
+                      </th>
+                      <th style={{ padding: '0.85rem 1rem' }}>Trạng thái</th>
+                      <th style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {codRemits.map((r, i) => {
+                      const isPending = r.status === 'PENDING'
+                      const isConfirmed = r.status === 'CONFIRMED'
+                      return (
+                        <tr key={r.id || i} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background-color 0.15s ease' }}>
+                          <td style={{ padding: '0.85rem 1rem', color: '#64748b', fontSize: '0.8125rem' }}>
+                            {r.created_at ? new Date(r.created_at).toLocaleString('vi-VN') : '—'}
+                          </td>
+                          <td style={{ padding: '0.85rem 1rem', fontWeight: '700', color: '#0f172a' }}>
+                            {r.shipper_name || r.shipper_id?.slice(0, 8)}
+                          </td>
+                          <td style={{ padding: '0.85rem 1rem', color: '#475569', fontSize: '0.8125rem' }}>
+                            {r.branch_code || 'Toàn hệ thống'}
+                          </td>
+                          <td style={{ padding: '0.85rem 1rem', fontWeight: '800', color: '#dc2626', fontSize: '0.95rem' }}>
+                            {fmtCurrency(r.amount)}
+                          </td>
+                          <td style={{ padding: '0.85rem 1rem', color: '#64748b', fontSize: '0.8125rem', maxWidth: '200px' }}>
+                            {r.note || '—'}
+                          </td>
+                          <td style={{ padding: '0.85rem 1rem' }}>
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                              padding: '0.25rem 0.65rem',
+                              borderRadius: '9999px',
+                              fontSize: '0.75rem',
+                              fontWeight: '700',
+                              backgroundColor: isPending ? '#fffbeb' : isConfirmed ? '#ecfdf5' : '#fef2f2',
+                              color: isPending ? '#b45309' : isConfirmed ? '#047857' : '#dc2626',
+                              border: `1px solid ${isPending ? '#fde68a' : isConfirmed ? '#a7f3d0' : '#fecaca'}`,
+                            }}>
+                              {isPending ? (
+                                <>
+                                  <Clock size={12} color="#b45309" />
+                                  <span>Chờ duyệt</span>
+                                </>
+                              ) : isConfirmed ? (
+                                <>
+                                  <CheckCircle2 size={12} color="#047857" />
+                                  <span>Đã xác nhận</span>
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle size={12} color="#dc2626" />
+                                  <span>Từ chối</span>
+                                </>
+                              )}
                             </span>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+                          </td>
+                          <td style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>
+                            {isPending ? (
+                              <div style={{ display: 'flex', gap: '0.45rem', justifyContent: 'center' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleConfirmCod(r.id, 'CONFIRMED')}
+                                  disabled={codConfirming === r.id + 'CONFIRMED'}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.35rem',
+                                    padding: '0.35rem 0.75rem',
+                                    borderRadius: '8px',
+                                    fontSize: '0.78125rem',
+                                    fontWeight: '700',
+                                    backgroundColor: '#ecfdf5',
+                                    color: '#059669',
+                                    border: '1px solid #a7f3d0',
+                                    cursor: 'pointer',
+                                    opacity: codConfirming === r.id + 'CONFIRMED' ? 0.6 : 1,
+                                    transition: 'all 0.15s ease'
+                                  }}
+                                >
+                                  <CheckCircle2 size={14} color="#059669" />
+                                  <span>Đã nhận tiền</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleConfirmCod(r.id, 'REJECTED')}
+                                  disabled={codConfirming === r.id + 'REJECTED'}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.35rem',
+                                    padding: '0.35rem 0.75rem',
+                                    borderRadius: '8px',
+                                    fontSize: '0.78125rem',
+                                    fontWeight: '700',
+                                    backgroundColor: '#fef2f2',
+                                    color: '#dc2626',
+                                    border: '1px solid #fecaca',
+                                    cursor: 'pointer',
+                                    opacity: codConfirming === r.id + 'REJECTED' ? 0.6 : 1,
+                                    transition: 'all 0.15s ease'
+                                  }}
+                                >
+                                  <XCircle size={14} color="#dc2626" />
+                                  <span>Từ chối</span>
+                                </button>
+                              </div>
+                            ) : (
+                              <span style={{ fontSize: '0.78125rem', color: isConfirmed ? '#059669' : '#94a3b8', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                                {isConfirmed ? <><CheckCircle2 size={13} color="#059669" /> Đã xác nhận {fmtDate(r.confirmed_at)}</> : <><XCircle size={13} color="#94a3b8" /> Đã từ chối</>}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>
