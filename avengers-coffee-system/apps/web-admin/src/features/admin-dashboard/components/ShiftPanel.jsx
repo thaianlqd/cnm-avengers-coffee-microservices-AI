@@ -665,7 +665,7 @@ export function ShiftPanel({
           <>
             {/* Header */}
             <div style={{
-              background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+              background: 'var(--primary)',
               padding: '1rem 1.25rem',
               color: '#ffffff',
               display: 'flex',
@@ -689,7 +689,7 @@ export function ShiftPanel({
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(105px, 1fr))', gap: '0.65rem' }}>
                 <div>
                   <label htmlFor="shift-date" style={{ fontSize: '0.775rem', fontWeight: '700', color: '#374151', display: 'flex', alignItems: 'center', gap: '0.25rem', marginBottom: '0.25rem' }}>
-                    <Calendar size={13} color="#10b981" /> Ngày chốt
+                    <Calendar size={13} color="var(--primary)" /> Ngày chốt
                   </label>
                   <input
                     id="shift-date"
@@ -736,7 +736,7 @@ export function ShiftPanel({
                 </div>
 
                 <div>
-                  <label htmlFor="cash-close" style={{ fontSize: '0.775rem', fontWeight: '700', color: '#059669', display: 'block', marginBottom: '0.25rem' }}>
+                  <label htmlFor="cash-close" style={{ fontSize: '0.775rem', fontWeight: '700', color: 'var(--primary)', display: 'block', marginBottom: '0.25rem' }}>
                     Tiền cuối ca
                   </label>
                   <input
@@ -754,10 +754,10 @@ export function ShiftPanel({
                       width: '100%',
                       padding: '0.45rem 0.55rem',
                       borderRadius: '8px',
-                      border: '1.5px solid #10b981',
+                      border: '1.5px solid var(--primary)',
                       fontSize: '0.85rem',
                       fontWeight: '700',
-                      color: '#059669',
+                      color: 'var(--primary)',
                       boxSizing: 'border-box'
                     }}
                   />
@@ -805,7 +805,7 @@ export function ShiftPanel({
                   {/* Card 2: Thực thu tiền mặt */}
                   <div style={{ background: '#ffffff', padding: '0.5rem 0.65rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '0.725rem', color: '#64748b' }}>Thực thu tiền mặt</span>
-                    <strong style={{ fontSize: '0.9rem', display: 'block', color: '#059669', marginTop: '0.1rem' }}>
+                    <strong style={{ fontSize: '0.9rem', display: 'block', color: 'var(--primary)', marginTop: '0.1rem' }}>
                       {fmtMoney(preview?.system?.cash_revenue ?? 0)}
                     </strong>
                   </div>
@@ -944,7 +944,7 @@ export function ShiftPanel({
                   padding: '0.7rem 1rem',
                   borderRadius: '10px',
                   border: 'none',
-                  background: Boolean(existingShift) ? '#cbd5e1' : 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                  background: Boolean(existingShift) ? '#cbd5e1' : 'var(--primary)',
                   color: '#ffffff',
                   fontSize: '0.925rem',
                   fontWeight: '700',
@@ -992,7 +992,7 @@ export function ShiftPanel({
           borderBottom: '1px solid #f1f5f9'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <ClipboardList size={20} color="#059669" />
+            <ClipboardList size={20} color="var(--primary)" />
             <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: '#0f172a' }}>
               {isApprovalMode ? 'Biên bản chờ kiểm tra' : 'Lịch sử ca đã chốt'}
             </h2>
@@ -1120,7 +1120,7 @@ export function ShiftPanel({
                     height: '28px',
                     borderRadius: '6px',
                     border: 'none',
-                    background: safePage === p ? '#10b981' : 'transparent',
+                    background: safePage === p ? 'var(--primary)' : 'transparent',
                     color: safePage === p ? '#ffffff' : '#64748b',
                     fontWeight: safePage === p ? '700' : '500',
                     fontSize: '0.775rem',

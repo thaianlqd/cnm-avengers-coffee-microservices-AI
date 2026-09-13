@@ -15,10 +15,16 @@ export class Kiosk {
   dia_chi: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  quan_huyen: string | null;
+  phuong_xa: string | null;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   thanh_pho: string | null;
+
+  @Column({ type: 'decimal', precision: 10, scale: 6, nullable: true })
+  vi_do: number | null;
+
+  @Column({ type: 'decimal', precision: 10, scale: 6, nullable: true })
+  kinh_do: number | null;
 
   @Column({ type: 'varchar', length: 20 })
   loai_kiosk: 'XE_LUU_DONG' | 'KIOSK_CO_DINH' | 'CONTAINER_CAFE';

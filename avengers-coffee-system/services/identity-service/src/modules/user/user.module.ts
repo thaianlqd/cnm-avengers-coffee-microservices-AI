@@ -1,16 +1,29 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Branch } from './branch.entity';
+import { UserController } from './user.controller';
+import { UserService } from './user.service';
+import { User } from './user.entity';
 import { DeliveryAddress } from './delivery-address.entity';
+import { KhuVuc } from './khu-vuc.entity';
 import { Promotion } from './promotion.entity';
 import { PromotionUsage } from './promotion-usage.entity';
-import { User } from './user.entity';
 import { MembershipConfig } from './membership-config.entity';
-import { UserService } from './user.service';
-import { UserController } from './user.controller';
+import { WalletTransaction } from './wallet-transaction.entity';
+import { Branch } from './branch.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, DeliveryAddress, Branch, Promotion, PromotionUsage, MembershipConfig])],
+  imports: [
+    TypeOrmModule.forFeature([
+      User, 
+      DeliveryAddress, 
+      KhuVuc, 
+      Promotion, 
+      PromotionUsage, 
+      MembershipConfig,
+      WalletTransaction,
+      Branch
+    ])
+  ],
   providers: [UserService],
   controllers: [UserController],
   exports: [UserService]

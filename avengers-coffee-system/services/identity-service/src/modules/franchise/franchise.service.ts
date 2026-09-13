@@ -11,7 +11,9 @@ import { RoyaltyHangThang } from './entities/royalty.entity';
 import { KetQuaDoiSoat } from './entities/doi-soat.entity';
 import { BienBanViPham } from './entities/bien-ban-vi-pham.entity';
 import { AuditLog } from './entities/audit-log.entity';
+import { ThuChi } from './entities/thu-chi.entity';
 import { User } from '../user/user.entity';
+import { WalletTransaction } from '../user/wallet-transaction.entity';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import nodemailer from 'nodemailer';
@@ -51,6 +53,12 @@ export class FranchiseService {
 
     @InjectRepository(User)
     private userRepo: Repository<User>,
+
+    @InjectRepository(WalletTransaction)
+    private walletTxRepo: Repository<WalletTransaction>,
+
+    @InjectRepository(ThuChi)
+    private thuChiRepo: Repository<ThuChi>,
 
     private dataSource: DataSource,
   ) {}
@@ -192,18 +200,49 @@ export class FranchiseService {
   }
 
   // ─────────────────────────────────────────────
+  // Helper: Tính khoảng cách (Haversine formula - Đơn vị: km)
+  // ─────────────────────────────────────────────
+  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371; // Bán kính Trái Đất (km)
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  // ─────────────────────────────────────────────
   // UC-ADMIN: Quản lý Hồ sơ Đăng ký (UC-B01)
   // ─────────────────────────────────────────────
 
   async dangKyHoSo(body: any) {
+    const existingUsers = await this.dataSource.query(
+      `SELECT ma_nguoi_dung, email, so_dien_thoai FROM identity.nguoi_dung WHERE email = $1 OR so_dien_thoai = $2 LIMIT 1`,
+      [body.email, body.so_dien_thoai]
+    );
+
+    if (existingUsers && existingUsers.length > 0) {
+      const u = existingUsers[0];
+      if (u.email === body.email) {
+        throw new BadRequestException('Email này đã được đăng ký tài khoản. Nếu bạn là đối tác hiện tại, vui lòng đăng nhập vào Portal để đăng ký thêm Kiosk!');
+      } else {
+        throw new BadRequestException('Số điện thoại này đã được đăng ký tài khoản. Nếu bạn là đối tác hiện tại, vui lòng đăng nhập vào Portal để đăng ký thêm Kiosk!');
+      }
+    }
+
     const hoSo = this.hoSoRepo.create({
       ho_ten: body.ho_ten,
       email: body.email,
       so_dien_thoai: body.so_dien_thoai,
       dia_chi_mat_bang: body.dia_chi_mat_bang,
-      quan_huyen: body.quan_huyen || null,
+      phuong_xa: body.phuong_xa || null,
       thanh_pho: body.thanh_pho || null,
       dien_tich_m2: body.dien_tich_m2 || null,
+      vi_do: body.vi_do || null,
+      kinh_do: body.kinh_do || null,
       goi_kiosk: body.goi_kiosk,
       ghi_chu: body.ghi_chu || null,
       trang_thai: 'CHO_XEM_XET',
@@ -216,6 +255,35 @@ export class FranchiseService {
       this.mailAutoReply(hoSo),
     ).catch(e => console.error('[franchise-mail] auto-reply error:', e.message));
     return { success: true, message: 'Hồ sơ đăng ký đã được tiếp nhận. Email xác nhận đã gửi về ' + hoSo.email + '. Chúng tôi sẽ liên hệ trong 2-3 ngày làm việc.', data: hoSo };
+  }
+
+  async dangKyHoSoNoiBo(body: any, userId: string) {
+    const userResult = await this.dataSource.query(
+      `SELECT ho_ten, email, so_dien_thoai FROM identity.nguoi_dung WHERE ma_nguoi_dung = $1 LIMIT 1`,
+      [userId]
+    );
+    if (!userResult || userResult.length === 0) {
+      throw new BadRequestException('Tài khoản không tồn tại');
+    }
+    const user = userResult[0];
+
+    const hoSo = this.hoSoRepo.create({
+      ho_ten: user.ho_ten,
+      email: user.email,
+      so_dien_thoai: user.so_dien_thoai,
+      dia_chi_mat_bang: body.dia_chi_mat_bang,
+      phuong_xa: body.phuong_xa || null,
+      thanh_pho: body.thanh_pho || null,
+      dien_tich_m2: body.dien_tich_m2 || null,
+      vi_do: body.vi_do || null,
+      kinh_do: body.kinh_do || null,
+      goi_kiosk: body.goi_kiosk,
+      ghi_chu: body.ghi_chu || null,
+      trang_thai: 'CHO_XEM_XET',
+    });
+    await this.hoSoRepo.save(hoSo);
+    
+    return { success: true, message: 'Hồ sơ mở rộng chi nhánh đã được tiếp nhận. Chúng tôi sẽ liên hệ sớm nhất!', data: hoSo };
   }
 
   async layDanhSachHoSo(trang_thai?: string) {
@@ -244,20 +312,6 @@ export class FranchiseService {
     if (!hoSo) throw new NotFoundException('Không tìm thấy hồ sơ');
     if (hoSo.trang_thai !== 'CHO_XEM_XET') throw new BadRequestException('Hồ sơ không ở trạng thái chờ xem xét');
 
-    // Kiểm tra độc quyền địa lý
-    if (hoSo.quan_huyen && hoSo.thanh_pho) {
-      const existing = await this.kioskRepo.count({
-        where: {
-          quan_huyen: hoSo.quan_huyen,
-          thanh_pho: hoSo.thanh_pho,
-          trang_thai: In(['DANG_HOAT_DONG', 'DANG_THIET_LAP', 'TAM_DUNG', 'CHO_KY_HOP_DONG'])
-        }
-      });
-      if (existing > 0) {
-        throw new BadRequestException(`Vi phạm độc quyền: Khu vực ${hoSo.quan_huyen}, ${hoSo.thanh_pho} đã có Kiosk hoạt động!`);
-      }
-    }
-
     hoSo.trang_thai = 'CHO_DAT_COC';
     hoSo.nguoi_xu_ly_id = adminId;
     await this.hoSoRepo.save(hoSo);
@@ -270,7 +324,7 @@ export class FranchiseService {
       hoSo.email,
       '[Avengers Coffee] Yêu cầu đặt cọc giữ chỗ khu vực',
       `Chào ${hoSo.ho_ten},<br/><br/>
-       Hồ sơ của bạn đã qua vòng duyệt sơ bộ. Để hệ thống tiến hành cấp tài khoản và giữ chỗ khu vực (${hoSo.quan_huyen} - ${hoSo.thanh_pho}), vui lòng hoàn tất khoản đặt cọc <b>5.000.000 VNĐ</b>.<br/><br/>
+       Hồ sơ của bạn đã qua vòng duyệt sơ bộ. Để hệ thống tiến hành cấp tài khoản và giữ chỗ khu vực (${hoSo.phuong_xa} - ${hoSo.thanh_pho}), vui lòng hoàn tất khoản đặt cọc <b>5.000.000 VNĐ</b>.<br/><br/>
        <b>THÔNG TIN CHUYỂN KHOẢN:</b><br/>
        - Ngân hàng: <b>${bankName}</b><br/>
        - Số tài khoản: <b>${bankAccount}</b><br/>
@@ -289,26 +343,34 @@ export class FranchiseService {
     if (hoSo.trang_thai !== 'CHO_DAT_COC') throw new BadRequestException('Hồ sơ chưa được yêu cầu đặt cọc');
     // Kiểm tra xem người dùng đã tồn tại chưa
     const existingUsers = await this.dataSource.query(
-      `SELECT ma_nguoi_dung, ten_dang_nhap FROM identity.nguoi_dung WHERE email = $1 OR so_dien_thoai = $2 LIMIT 1`,
+      `SELECT ma_nguoi_dung, ten_dang_nhap, email, so_dien_thoai, vai_tro FROM identity.nguoi_dung WHERE email = $1 OR so_dien_thoai = $2 LIMIT 1`,
       [hoSo.email, hoSo.so_dien_thoai]
     );
 
     let franchiseeId;
-    let username = `franchise_${Date.now()}`;
+    let username = hoSo.so_dien_thoai || hoSo.email || `franchise_${Date.now()}`;
     const defaultPassword = '123456';
     const hashedPwd = require('crypto').createHash('sha256').update(defaultPassword).digest('hex');
     let isNewUser = true;
 
     if (existingUsers && existingUsers.length > 0) {
-      franchiseeId = existingUsers[0].ma_nguoi_dung;
-      username = existingUsers[0].ten_dang_nhap;
-      isNewUser = false;
-      // Reset mật khẩu về 123456 và nâng cấp role thành FRANCHISEE
-      await this.dataSource.query(
-        `UPDATE identity.nguoi_dung SET mat_khau_hash = $1, require_password_change = true, vai_tro = 'FRANCHISEE' WHERE ma_nguoi_dung = $2`,
-        [hashedPwd, franchiseeId]
-      );
-    } else {
+      const u = existingUsers[0];
+      if (u.vai_tro === 'FRANCHISEE') {
+        // Đối tác nội bộ mở rộng chi nhánh -> Tái sử dụng tài khoản
+        franchiseeId = u.ma_nguoi_dung;
+        username = u.ten_dang_nhap;
+        isNewUser = false;
+      } else {
+        // Trùng lặp với role khác (CUSTOMER, STAFF, v.v)
+        if (u.email === hoSo.email) {
+          throw new BadRequestException('Email này đã được sử dụng cho một tài khoản khác. Vui lòng dùng email khác để tạo tài khoản mới!');
+        } else {
+          throw new BadRequestException('Số điện thoại này đã được sử dụng. Vui lòng dùng số điện thoại khác để tạo tài khoản mới!');
+        }
+      }
+    }
+
+    if (isNewUser) {
       try {
         const insertResult = await this.dataSource.query(
           `INSERT INTO identity.nguoi_dung (ten_dang_nhap, mat_khau_hash, ho_ten, email, so_dien_thoai, vai_tro, trang_thai, require_password_change)
@@ -318,11 +380,12 @@ export class FranchiseService {
         franchiseeId = insertResult[0]?.ma_nguoi_dung;
       } catch (error) {
         if (error.code === '23505') {
-          throw new BadRequestException('Lỗi hệ thống: Xung đột dữ liệu email/SĐT.');
+          throw new BadRequestException('Lỗi hệ thống: Xung đột dữ liệu username/email/SĐT đã tồn tại.');
         }
         throw error;
       }
     }
+
 
     if (!franchiseeId) throw new Error('Không tạo/lấy được tài khoản FRANCHISEE');
 
@@ -333,8 +396,10 @@ export class FranchiseService {
       ma_kiosk: maKiosk,
       ten_kiosk: `Kiosk Avengers ${hoSo.thanh_pho || 'Mới'}`,
       dia_chi: hoSo.dia_chi_mat_bang,
-      quan_huyen: hoSo.quan_huyen,
+      phuong_xa: hoSo.phuong_xa,
       thanh_pho: hoSo.thanh_pho,
+      vi_do: hoSo.vi_do,
+      kinh_do: hoSo.kinh_do,
       loai_kiosk: hoSo.goi_kiosk,
       ho_so_id: id,
       franchisee_id: franchiseeId,
@@ -392,6 +457,66 @@ export class FranchiseService {
     };
   }
 
+  /**
+   * Duyệt hồ sơ nội bộ — Dành cho đối tác quen đã có tài khoản FRANCHISEE.
+   * Không cần đặt cọc, không tạo tài khoản mới. Chỉ tạo Kiosk mới.
+   */
+  async duyetHoSoNoiBo(id: string, adminId: string) {
+    const hoSo = await this.hoSoRepo.findOne({ where: { id } });
+    if (!hoSo) throw new NotFoundException('Không tìm thấy hồ sơ');
+    if (hoSo.trang_thai !== 'CHO_XEM_XET') throw new BadRequestException('Hồ sơ không ở trạng thái chờ xem xét');
+    if (!hoSo.franchisee_user_id) throw new BadRequestException('Hồ sơ này không phải đăng ký nội bộ (không có franchisee_user_id)');
+
+    const franchiseeId = hoSo.franchisee_user_id;
+
+    // Tạo Kiosk mới
+    const kioskCount = await this.kioskRepo.count();
+    const maKiosk = `KSK-${String(kioskCount + 1).padStart(3, '0')}`;
+    const newKiosk = await this.kioskRepo.save(this.kioskRepo.create({
+      ma_kiosk: maKiosk,
+      ten_kiosk: `Kiosk Avengers ${hoSo.thanh_pho || 'Mới'} (Chi nhánh ${kioskCount + 1})`,
+      dia_chi: hoSo.dia_chi_mat_bang,
+      phuong_xa: hoSo.phuong_xa,
+      thanh_pho: hoSo.thanh_pho,
+      vi_do: hoSo.vi_do,
+      kinh_do: hoSo.kinh_do,
+      loai_kiosk: hoSo.goi_kiosk,
+      ho_so_id: id,
+      franchisee_id: franchiseeId,
+      trang_thai: 'CHO_KY_HOP_DONG',
+    }));
+
+    // Tạo công nợ đầu tư ban đầu (không có cọc vì khách quen)
+    let soTienKhoiTao = 0;
+    if (hoSo.goi_kiosk === 'XE_LUU_DONG') { soTienKhoiTao = 20000000; }
+    else if (hoSo.goi_kiosk === 'KIOSK_CO_DINH') { soTienKhoiTao = 50000000; }
+    else if (hoSo.goi_kiosk === 'CONTAINER_CAFE') { soTienKhoiTao = 75000000; }
+
+    if (soTienKhoiTao > 0) {
+      const hanThanhToan = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      await this.congNoRepo.save(this.congNoRepo.create({
+        kiosk_id: newKiosk.id,
+        loai_phat_sinh: 'KHOI_TAO',
+        so_tien: soTienKhoiTao,
+        han_thanh_toan: hanThanhToan,
+        trang_thai: 'CON_NO',
+        ghi_chu: `Chi phí mở rộng chi nhánh gói ${hoSo.goi_kiosk} (Đối tác nội bộ)`,
+      }));
+    }
+
+    hoSo.franchisee_user_id = franchiseeId;
+    hoSo.trang_thai = 'DA_DUYET';
+    hoSo.nguoi_xu_ly_id = adminId;
+    await this.hoSoRepo.save(hoSo);
+    await this.logAction(adminId, 'DUYET_HO_SO_NOI_BO', `Hồ sơ: ${id}, Kiosk: ${maKiosk}`);
+
+    return {
+      success: true,
+      message: `✅ Đã duyệt hồ sơ mở rộng nội bộ! Kiosk ${maKiosk} đã được tạo tại ${hoSo.dia_chi_mat_bang}.`,
+      data: { hoSo, maKiosk, newKiosk },
+    };
+  }
+
   async tuChoiHoSo(id: string, adminId: string, ly_do: string) {
     const hoSo = await this.hoSoRepo.findOne({ where: { id } });
     if (!hoSo) throw new NotFoundException('Không tìm thấy hồ sơ');
@@ -406,7 +531,7 @@ export class FranchiseService {
     this.sendMail(
       hoSo.email,
       '[Avengers Coffee] Thông báo kết quả xét duyệt hồ sơ nhượng quyền',
-      `Chào ${hoSo.ho_ten},\nCảm ơn bạn đã quan tâm đến hệ thống Avengers Coffee.\nRất tiếc, hồ sơ đăng ký nhượng quyền khu vực (${hoSo.quan_huyen} - ${hoSo.thanh_pho}) của bạn chưa phù hợp ở thời điểm hiện tại.\n\nLý do từ chối: ${ly_do}\n\nHy vọng sẽ có cơ hội hợp tác với bạn trong tương lai. Xin cảm ơn!`
+      `Chào ${hoSo.ho_ten},\nCảm ơn bạn đã quan tâm đến hệ thống Avengers Coffee.\nRất tiếc, hồ sơ đăng ký nhượng quyền khu vực (${hoSo.phuong_xa} - ${hoSo.thanh_pho}) của bạn chưa phù hợp ở thời điểm hiện tại.\n\nLý do từ chối: ${ly_do}\n\nHy vọng sẽ có cơ hội hợp tác với bạn trong tương lai. Xin cảm ơn!`
     ).catch(e => console.error('[franchise-mail] tu-choi email error:', e.message));
 
     return { success: true, message: 'Đã từ chối hồ sơ và gửi email thông báo.', data: hoSo };
@@ -468,7 +593,7 @@ export class FranchiseService {
   async layDanhSachKioskPublic() {
     return this.kioskRepo.find({
       where: { trang_thai: 'DANG_HOAT_DONG' },
-      select: ['id', 'ma_kiosk', 'ten_kiosk', 'dia_chi', 'quan_huyen', 'thanh_pho', 'loai_kiosk', 'ngay_tao'],
+      select: ['id', 'ma_kiosk', 'ten_kiosk', 'dia_chi', 'phuong_xa', 'thanh_pho', 'loai_kiosk', 'ngay_tao'],
       order: { ngay_tao: 'DESC' }
     });
   }
@@ -638,8 +763,27 @@ export class FranchiseService {
     }
 
     if (don.phuong_thuc_thanh_toan === 'VI_DIEN_TU') {
-      // Giả lập thanh toán Ví điện tử thành công ngay lập tức
-      don.trang_thai = 'DA_DAT';
+      const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: franchiseeId } });
+      if (!user) throw new NotFoundException('Không tìm thấy tài khoản');
+
+      const currentBalance = Number(user.so_du_vi || 0);
+      if (currentBalance < tongTien) {
+        throw new BadRequestException(`Số dư ví không đủ để thanh toán. Bạn cần ${tongTien.toLocaleString('vi-VN')}đ nhưng ví chỉ có ${currentBalance.toLocaleString('vi-VN')}đ.`);
+      }
+
+      // Trừ tiền ví
+      user.so_du_vi = currentBalance - tongTien;
+      await this.userRepo.save(user);
+
+      // Ghi log giao dịch ví
+      await this.walletTxRepo.save(this.walletTxRepo.create({
+        ma_nguoi_dung: franchiseeId,
+        so_tien: -tongTien,
+        loai_giao_dich: 'MUA_COMBO',
+        mo_ta: `Mua combo: ${soLuong} x ${combo.ten_combo} (Kiosk ${kiosk.ma_kiosk})`
+      }));
+
+      don.trang_thai = 'DA_DAT'; // Cập nhật trạng thái thành công
       don.thanh_toan_ngay = true;
       await this.donMuaComboRepo.save(don);
       return { success: true, message: `Thanh toán qua Ví điện tử thành công. Đã trừ ${tongTien.toLocaleString()}đ.`, data: don };
@@ -835,6 +979,28 @@ export class FranchiseService {
     if (!kiosk) throw new BadRequestException('Không có quyền thanh toán công nợ này');
     if (congNo.trang_thai === 'DA_THANH_TOAN') throw new BadRequestException('Công nợ này đã được thanh toán');
     
+    // Check wallet balance
+    const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: franchiseeId } });
+    if (!user) throw new NotFoundException('Không tìm thấy tài khoản');
+    
+    const tongTienThanhToan = Number(congNo.so_tien) + Number(congNo.phi_phat_tre_han || 0);
+    const currentBalance = Number(user.so_du_vi || 0);
+    if (currentBalance < tongTienThanhToan) {
+      throw new BadRequestException(`Số dư ví không đủ để thanh toán. Bạn cần ${tongTienThanhToan.toLocaleString('vi-VN')}đ nhưng ví chỉ có ${currentBalance.toLocaleString('vi-VN')}đ. Vui lòng nạp thêm tiền.`);
+    }
+
+    // Deduct balance
+    user.so_du_vi = currentBalance - tongTienThanhToan;
+    await this.userRepo.save(user);
+
+    // Create wallet transaction
+    await this.walletTxRepo.save(this.walletTxRepo.create({
+      ma_nguoi_dung: franchiseeId,
+      so_tien: -tongTienThanhToan,
+      loai_giao_dich: 'TRA_CONG_NO',
+      mo_ta: `Thanh toán công nợ Kiosk ${kiosk.ma_kiosk}`
+    }));
+
     congNo.trang_thai = 'DA_THANH_TOAN';
     congNo.ngay_xac_nhan_thanh_toan = new Date();
     congNo.nguoi_xac_nhan_id = franchiseeId; // Tự thanh toán qua ví
@@ -1552,6 +1718,64 @@ export class FranchiseService {
     await this.logAction(franchiseeId, 'KHOA_NHAN_VIEN_CON', `Khóa/xóa nhân viên ${staff.ten_dang_nhap}`);
 
     return { message: 'Đã vô hiệu hóa tài khoản nhân viên thành công!' };
+  }
+
+  // ─────────────────────────────────────────────
+  // QUẢN TRỊ DÒNG TIỀN (THU/CHI)
+  // ─────────────────────────────────────────────
+
+  async getDanhSachThuChi(query: any) {
+    const qb = this.thuChiRepo.createQueryBuilder('tc');
+
+    if (query.kiosk_id) {
+      qb.andWhere('tc.kiosk_id = :kiosk_id', { kiosk_id: query.kiosk_id });
+    }
+    if (query.loai_phieu) {
+      qb.andWhere('tc.loai_phieu = :loai_phieu', { loai_phieu: query.loai_phieu });
+    }
+    if (query.danh_muc) {
+      qb.andWhere('tc.danh_muc = :danh_muc', { danh_muc: query.danh_muc });
+    }
+
+    qb.orderBy('tc.ngay_tao', 'DESC');
+    
+    // Thống kê tổng
+    const all = await qb.getMany();
+    const tong_thu = all.filter(x => x.loai_phieu === 'THU').reduce((sum, x) => sum + Number(x.so_tien), 0);
+    const tong_chi = all.filter(x => x.loai_phieu === 'CHI').reduce((sum, x) => sum + Number(x.so_tien), 0);
+    const ton_quy = tong_thu - tong_chi;
+
+    return {
+      danh_sach: all,
+      thong_ke: {
+        tong_thu,
+        tong_chi,
+        ton_quy
+      }
+    };
+  }
+
+  async taoPhieuThuChi(adminId: string, body: any) {
+    if (!body.so_tien || body.so_tien <= 0) {
+      throw new BadRequestException('Số tiền không hợp lệ');
+    }
+    if (!body.loai_phieu || !['THU', 'CHI'].includes(body.loai_phieu)) {
+      throw new BadRequestException('Loại phiếu không hợp lệ');
+    }
+
+    const phieu = this.thuChiRepo.create({
+      kiosk_id: body.kiosk_id || null,
+      loai_phieu: body.loai_phieu,
+      danh_muc: body.danh_muc || 'KHAC',
+      so_tien: body.so_tien,
+      ghi_chu: body.ghi_chu || null,
+      nguoi_thuc_hien_id: adminId,
+    });
+
+    await this.thuChiRepo.save(phieu);
+    await this.logAction(adminId, `TAO_PHIEU_${body.loai_phieu}`, `Tạo phiếu ${body.loai_phieu} số tiền ${body.so_tien}`);
+
+    return { message: `Đã tạo phiếu ${body.loai_phieu === 'THU' ? 'thu' : 'chi'} thành công!`, data: phieu };
   }
 }
 

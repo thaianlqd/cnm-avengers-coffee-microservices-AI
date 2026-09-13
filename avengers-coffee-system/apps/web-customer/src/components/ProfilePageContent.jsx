@@ -282,10 +282,9 @@ export default function ProfilePageContent({
   const savedAddresses = addressPayload?.items || [];
   const myReviews = reviewHistoryPayload?.items || [];
   const diemLoyalty = loyaltyData?.diem || 0;
-  const districtOptions = useMemo(() => Object.keys(addressOptions[addressForm.city] || {}), [addressForm.city, addressOptions]);
   const wardOptions = useMemo(
-    () => (addressOptions[addressForm.city]?.[addressForm.district] || []),
-    [addressForm.city, addressForm.district, addressOptions],
+    () => (addressOptions[addressForm.city] || []),
+    [addressForm.city, addressOptions],
   );
   const diaChiDayDu = useMemo(() => taoDiaChiDayDu(addressForm), [addressForm]);
 
@@ -336,19 +335,7 @@ export default function ProfilePageContent({
     }
   }, [profile]);
 
-  useEffect(() => {
-    if (!districtOptions.length) {
-      return;
-    }
-
-    if (!districtOptions.includes(addressForm.district)) {
-      setAddressForm((prev) => ({
-        ...prev,
-        district: districtOptions[0],
-        ward: (addressOptions[prev.city]?.[districtOptions[0]] || [])[0] || '',
-      }));
-    }
-  }, [addressForm.city, addressForm.district, districtOptions, addressOptions]);
+  
 
   useEffect(() => {
     if (!wardOptions.length) {
@@ -536,18 +523,14 @@ export default function ProfilePageContent({
           let matchedCity = findBestMatch(cityOptions, rawCity) || findBestMatch(cityOptions, data.display_name);
           if (!matchedCity) matchedCity = cityOptions[0];
 
-          const districtOptions = Object.keys(addressOptions[matchedCity] || {});
-          let matchedDistrict = findBestMatch(districtOptions, rawDistrict) || findBestMatch(districtOptions, data.display_name);
-          if (!matchedDistrict) matchedDistrict = districtOptions[0] || '';
-
-          const wardOptions = addressOptions[matchedCity]?.[matchedDistrict] || [];
+          const wardOptions = addressOptions[matchedCity] || [];
           let matchedWard = findBestMatch(wardOptions, rawWard) || findBestMatch(wardOptions, data.display_name);
           if (!matchedWard) matchedWard = wardOptions[0] || '';
 
           setAddressForm((prev) => ({
             ...prev,
             city: matchedCity || prev.city,
-            district: matchedDistrict || prev.district,
+            district: '',
             ward: matchedWard || prev.ward,
             street: rawStreet || prev.street,
           }));
@@ -1240,15 +1223,13 @@ export default function ProfilePageContent({
                             value={addressForm.city}
                             onChange={(e) => {
                               const newCity = e.target.value;
-                              const newDistricts = Object.keys(addressOptions[newCity] || {});
-                              const defaultDistrict = newDistricts[0] || '';
-                              const defaultWards = addressOptions[newCity]?.[defaultDistrict] || [];
+                              const defaultWards = addressOptions[newCity] || [];
                               const defaultWard = defaultWards[0] || '';
 
                               setAddressForm((prev) => ({
                                 ...prev,
                                 city: newCity,
-                                district: defaultDistrict,
+                                district: '',
                                 ward: defaultWard,
                               }));
                             }}
@@ -1264,35 +1245,7 @@ export default function ProfilePageContent({
                         </div>
                       </div>
 
-                      <div className="grid gap-3 grid-cols-2">
-                        <div>
-                          <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Quận / Huyện</p>
-                          <div className="relative">
-                            <select
-                              value={addressForm.district}
-                              onChange={(e) => {
-                                const newDistrict = e.target.value;
-                                const defaultWards = addressOptions[addressForm.city]?.[newDistrict] || [];
-                                const defaultWard = defaultWards[0] || '';
-
-                                setAddressForm((prev) => ({
-                                  ...prev,
-                                  district: newDistrict,
-                                  ward: defaultWard,
-                                }));
-                              }}
-                              className="w-full rounded-xl border border-gray-200 pl-10 pr-4 py-3 text-sm font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-[#b22830]/10 transition-all duration-200 bg-white appearance-none cursor-pointer"
-                            >
-                              {districtOptions.map((d) => (
-                                <option key={d} value={d}>
-                                  {d}
-                                </option>
-                              ))}
-                            </select>
-                            <MapPinIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-                          </div>
-                        </div>
-
+                      <div className="grid gap-3 grid-cols-1">
                         <div>
                           <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Phường / Xã</p>
                           <div className="relative">
