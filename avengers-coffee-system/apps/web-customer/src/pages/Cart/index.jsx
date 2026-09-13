@@ -581,8 +581,8 @@ export default function CartPage({
         delivery_method: deliveryMethod,
         branch_code: selectedBranch,
         table_number: deliveryMode === 'DUNG_TAI_CHO' ? tableNumber : undefined,
-        guest_email: isLoggedInUser ? undefined : guestEmail.trim(),
-        guest_phone: isLoggedInUser ? undefined : guestPhone.trim(),
+        guest_email: (isLoggedInUser ? (user.email || user.email_address || undefined) : guestEmail.trim()) || undefined,
+        guest_phone: (isLoggedInUser ? (user.so_dien_thoai || user.phone || user.sdt || undefined) : guestPhone.trim()) || undefined,
         session_id: guestSessionId,
         ten_khach_hang: isLoggedInUser ? customerName : (guestEmail.trim() || guestPhone.trim() || undefined),
       });

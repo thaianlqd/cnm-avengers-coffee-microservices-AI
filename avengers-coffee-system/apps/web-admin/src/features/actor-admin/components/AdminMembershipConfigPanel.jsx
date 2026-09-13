@@ -328,44 +328,8 @@ export function AdminMembershipConfigPanel({
 
   return (
     <section className="panel system-admin-panel" style={{ padding: '1rem 0.75rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Award size={22} color="#4f46e5" /> Thiết lập Membership &amp; Vòng Quay
-          </h1>
-          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8125rem', color: '#64748b' }}>
-            Cấu hình mốc xét hạng, hệ số tích điểm, quà tặng thăng hạng và cơ cấu Vòng quay may mắn
-          </p>
-        </div>
-
-        {activeSubTab === 'ranks' && (
-          <button
-            type="button"
-            className={showTierForm ? 'btn-cancel' : 'btn-save'}
-            onClick={() => {
-              if (showTierForm) {
-                setShowTierForm(false);
-              } else {
-                openCreateTierForm();
-              }
-            }}
-            style={{ height: '38px', padding: '0 1.1rem' }}
-          >
-            {showTierForm ? (
-              <>
-                <X size={16} /> Đóng biểu mẫu
-              </>
-            ) : (
-              <>
-                <UserPlus size={16} /> Tạo hạng thành viên mới
-              </>
-            )}
-          </button>
-        )}
-      </div>
-
-      {/* High-Impact Selected Sub Tabs Navigation Bar */}
-      <div style={{ display: 'flex', alignItems: 'center', margin: '0.25rem 0 0.5rem 0' }}>
+      {/* High-Impact Selected Sub Tabs Navigation Bar with Action Button */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', margin: '0 0 0.5rem 0' }}>
         <div
           style={{
             display: 'inline-flex',
@@ -395,6 +359,31 @@ export function AdminMembershipConfigPanel({
             <span>Vòng Quay May Mắn (8 Ô)</span>
           </button>
         </div>
+
+        {activeSubTab === 'ranks' && (
+          <button
+            type="button"
+            className={showTierForm ? 'btn-cancel' : 'btn-save'}
+            onClick={() => {
+              if (showTierForm) {
+                setShowTierForm(false);
+              } else {
+                openCreateTierForm();
+              }
+            }}
+            style={{ height: '38px', padding: '0 1.1rem' }}
+          >
+            {showTierForm ? (
+              <>
+                <X size={16} /> Đóng biểu mẫu
+              </>
+            ) : (
+              <>
+                <UserPlus size={16} /> Tạo hạng thành viên mới
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {membershipConfigsState.error ? (

@@ -9,5 +9,12 @@ def get_db_engine() -> Engine:
     user = os.getenv("DB_USER", "admin")
     password = os.getenv("DB_PASSWORD", "123")
     dbname = os.getenv("DB_NAME", "avengers_coffee")
-    url = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}"
-    return create_engine(url, pool_pre_ping=True, connect_args={"connect_timeout": 10})
+    url = f"postgresql://{user}:{password}@{host}:{port}/{dbname}?sslmode=require"
+    return create_engine(
+        url,
+        pool_size=1,
+        max_overflow=2,
+        pool_recycle=60,
+        pool_pre_ping=True,
+        connect_args={"connect_timeout": 10}
+    )

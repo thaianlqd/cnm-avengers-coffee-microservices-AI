@@ -21,10 +21,11 @@ export class ThanhToanController {
       delivery_method?: 'INTERNAL' | 'LALAMOVE';
       table_number?: string;
       ten_khach_hang?: string;
+      guest_email?: string;
+      guest_phone?: string;
+      session_id?: string;
     },
   ) {
-    const fs = require('fs');
-    fs.appendFileSync('/app/error.log', '\n[DEBUG] khoiTao payload: ' + JSON.stringify(payload) + '\n');
     return this.thanhToanService.khoiTaoThanhToan(customerId, payload, req.ip || '127.0.0.1');
   }
 

@@ -5,6 +5,7 @@ import { GiftCard } from './entities/gift-card.entity';
 import { PurchaseGiftCardDto, RedeemGiftCardDto } from './dto/gift-card.dto';
 import { GiftCardTheme } from './entities/gift-card-theme.entity';
 import { CustomerWalletService } from '../customer-wallet/customer-wallet.service';
+import { buildBrandedEmailHtml } from '../smtp/smtp.service';
 @Injectable()
 export class GiftCardService {
   private readonly logger = new Logger(GiftCardService.name);
@@ -210,46 +211,60 @@ export class GiftCardService {
         this.logger.log('Using Ethereal (Demo) to send email');
       }
 
-      // Tạo HTML template cực xịn
+      // Tạo HTML template Pizza-Hut style cực xịn
       const formattedValue = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(card.value);
-      
-      const themeColors = {
-        default: '#b22830',
-        birthday: '#ff9800',
-        anniversary: '#e91e63',
-        apology: '#607d8b'
-      };
-      const mainColor = themeColors[card.theme] || themeColors.default;
+      const clientBaseUrl = process.env.CUSTOMER_WEB_URL || process.env.WEB_CUSTOMER_BASE_URL || 'http://localhost:5173';
+      const redeemUrl = `${clientBaseUrl}/?tab=wallet&code=${encodeURIComponent(card.code)}`;
 
-      const htmlContent = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaea; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-          <div style="background-color: ${mainColor}; color: white; padding: 30px; text-align: center;">
-            <h1 style="margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px;">🎁 Avengers Coffee Gift Card</h1>
-          </div>
-          <div style="padding: 40px 30px; background-color: #fafafa; text-align: center;">
-            <p style="font-size: 18px; color: #333;">Chào <strong>${card.receiver_name || 'bạn'}</strong>,</p>
-            <p style="font-size: 16px; color: #555; line-height: 1.6;">Bạn vừa nhận được một thẻ quà tặng trị giá <strong style="color: ${mainColor}; font-size: 20px;">${formattedValue}</strong> từ <strong>${card.sender_name}</strong>!</p>
-            
-            ${card.message ? `<div style="margin: 30px 0; padding: 20px; background-color: white; border-left: 4px solid ${mainColor}; font-style: italic; color: #666; font-size: 16px;">"${card.message}"</div>` : ''}
-            
-            <div style="margin: 40px auto; background: white; padding: 20px; border-radius: 15px; border: 2px dashed ${mainColor}; display: inline-block;">
-              <p style="margin: 0 0 10px 0; font-size: 14px; color: #888;">Mã thẻ của bạn:</p>
-              <h2 style="margin: 0; font-size: 32px; letter-spacing: 3px; color: #333;">${card.code}</h2>
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${card.code}" style="margin-top: 20px; width: 150px; height: 150px;" alt="QR Code" />
+      const giftDetailsHtml = `
+        <div style="background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; text-align: center; margin-bottom: 16px;">
+          ${card.message ? `
+            <div style="background-color: #ffffff; border-left: 4px solid #b22830; padding: 14px 18px; border-radius: 8px; font-style: italic; color: #475569; font-size: 14px; margin-bottom: 18px; text-align: left; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+              "${card.message}"
             </div>
+          ` : ''}
 
-            <p style="font-size: 14px; color: #777;">Sử dụng mã này trên ứng dụng Avengers Coffee để nạp vào Ví Điện Tử hoặc mang mã QR này đến quầy thu ngân để thanh toán trực tiếp.</p>
-          </div>
-          <div style="background-color: #333; color: #aaa; text-align: center; padding: 15px; font-size: 12px;">
-            © 2026 Avengers Coffee. All rights reserved.
+          <div style="margin: 12px auto; background: #ffffff; padding: 16px; border-radius: 12px; border: 2px dashed #b22830; display: inline-block;">
+            <div style="font-size: 12px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">MÃ THẺ QUÀ TẶNG CỦA BẠN:</div>
+            <div style="font-size: 26px; font-weight: 900; letter-spacing: 3px; color: #b22830; font-family: monospace;">${card.code}</div>
+            <div style="margin-top: 14px;">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${card.code}" style="width: 140px; height: 140px; border-radius: 8px;" alt="QR Code" />
+            </div>
           </div>
         </div>
       `;
 
+      const termsHtml = `
+        - Thẻ quà tặng có giá trị thanh toán toàn bộ menu tại chuỗi cửa hàng Avengers Coffee.<br/>
+        - Sử dụng mã để nạp tiền vào Ví Điện Tử trên website hoặc đưa mã QR cho thu ngân tại quầy.<br/>
+        - Thẻ có thể sử dụng nhiều lần cho đến khi hết số dư.
+      `;
+
+      const htmlContent = buildBrandedEmailHtml({
+        headerTagline: 'THẾ MỚI ĐẬM VỊ • MÓN QUÀ ĐẶC QUYỀN',
+        heroTitle: 'BẠN NHẬN ĐƯỢC E-GIFT CARD ĐẶC QUYỀN',
+        heroSubtitle: `MÓN QUÀ YÊU THƯƠNG TỪ ${card.sender_name.toUpperCase()}`,
+        heroBadgeTitle: 'GIÁ TRỊ THẺ QUÀ TẶNG',
+        heroBadgeValue: formattedValue,
+        heroBadgeSub: `Mã thẻ: ${card.code} • Người gửi: ${card.sender_name}`,
+        greetingTitle: `Chúc mừng ${card.receiver_name || 'bạn'},`,
+        greetingBody: `Bạn vừa nhận được một chiếc <strong>E-Gift Card</strong> trị giá <strong>${formattedValue}</strong> từ <strong>${card.sender_name}</strong> gửi tặng qua Avengers Coffee.`,
+        greetingEn: `You have received a special Gift Card worth ${formattedValue} from ${card.sender_name}.`,
+        highlightCode: card.code,
+        ctaText: 'NẠP VÍ & SỬ DỤNG NGAY',
+        ctaSubText: 'REDEEM GIFT CARD NOW',
+        ctaUrl: redeemUrl,
+        ctaColor: 'green',
+        detailsTitle: 'THÔNG TIN THẺ QUÀ TẶNG (GIFT CARD DETAILS):',
+        detailsHtml: giftDetailsHtml,
+        termsTitle: 'ĐIỀU KIỆN & HƯỚNG DẪN SỬ DỤNG:',
+        termsHtml: termsHtml,
+      });
+
       const info = await transporter.sendMail({
         from: `"Avengers Coffee" <${process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@avengerscoffee.com'}>`,
         to: card.receiver_email,
-        subject: `🎁 Quà tặng ${formattedValue} từ ${card.sender_name}`,
+        subject: `[Avengers Coffee] Quà tặng ${formattedValue} từ ${card.sender_name}`,
         html: htmlContent,
       });
 

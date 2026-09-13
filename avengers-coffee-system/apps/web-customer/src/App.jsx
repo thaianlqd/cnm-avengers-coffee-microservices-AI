@@ -30,6 +30,8 @@ import MembershipPage from './pages/Membership';
 import LuckyWheelPage from './pages/LuckyWheel';
 import GiftCardPage from './pages/GiftCard';
 import FranchisePage from './pages/FranchisePage';
+import OrderLookupPage from './pages/features_thaian/OrderLookupPage';
+import OrderTrackingPage from './pages/features_thaian/OrderTrackingPage';
 import { CartProvider, useCart } from './context/CartContext'; // File mới bước 2
 import { apiClient } from './lib/apiClient';
 import { queryKeys } from './lib/queryKeys';
@@ -478,6 +480,10 @@ function AppContent() {
     }
     return params.get('tab') || (tableId ? 'order' : 'home'); // redirect to order if scanned QR
   });
+  const [trackingOrderId, setTrackingOrderId] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('id') || params.get('orderId') || params.get('code') || null;
+  });
   const [selectedCatId, setSelectedCatId] = useState('all');
   const [activeMainSectionId, setActiveMainSectionId] = useState('must-try');
   const [activeSubSectionId, setActiveSubSectionId] = useState('');
@@ -569,9 +575,8 @@ function AppContent() {
       return res.data;
     },
     enabled: true,
-    staleTime: 5 * 60 * 1000,
-    refetchInterval: 30 * 1000,
-    refetchOnWindowFocus: true,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
     retry: 0,
   });
 
@@ -581,9 +586,8 @@ function AppContent() {
       const res = await apiClient.get('/ai/behavior/insights?branch_code=ALL&limit=5&days=30');
       return res.data;
     },
-    staleTime: 3 * 60 * 1000,
-    refetchInterval: 45 * 1000,
-    refetchOnWindowFocus: true,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
     retry: 0,
   });
 
@@ -1691,20 +1695,27 @@ function AppContent() {
           <CareersPage />
         ) : activeTab === 'contact' ? (
           <Support />
-        ) : activeTab === 'news' ? selectedNewsArticleId ? (
-          <NewsDetailPage
-            selectedArticleId={selectedNewsArticleId}
-            onBack={() => {
-              setSelectedNewsArticleId(null);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onSelectArticle={(id) => {
-              setSelectedNewsArticleId(id);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-          />
-        ) : (
-          <NewsPage onSelectArticle={setSelectedNewsArticleId} />
+        ) : activeTab === 'news' ? (
+          selectedNewsArticleId ? (
+            <NewsDetailPage
+              selectedArticleId={selectedNewsArticleId}
+              onBack={() => {
+                setSelectedNewsArticleId(null);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onSelectArticle={(id) => {
+                setSelectedNewsArticleId(id);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
+          ) : (
+            <NewsPage
+              onSelectArticle={(id) => {
+                setSelectedNewsArticleId(id);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
+          )
         ) : activeTab === 'stores' ? (
           <StoresPage />
         ) : activeTab === 'survey' ? (
@@ -1893,7 +1904,7 @@ function AppContent() {
           <GiftCardPage onBackToMain={() => setActiveTab('home')} />
         ) : activeTab === 'nhuong-quyen' ? (
           <FranchisePage onNavigate={setActiveTab} />
-        ) : ['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail', 'order-history'].includes(activeTab) ? (
+        ) : ['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail', 'order-history', 'tra-cuu-don', 'tracking'].includes(activeTab) ? (
           <OrderPage
             menuSections={menuSections}
             products={products}
@@ -1980,6 +1991,19 @@ function AppContent() {
                 onBack={() => setActiveTab('order')}
                 onNavigate={setActiveTab}
               />
+            ) : (activeTab === 'tra-cuu-don' || activeTab === 'tracking') ? (
+              <OrderLookupPage
+                initialCode={trackingOrderId || ''}
+                onBack={() => {
+                  setActiveTab('order');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onOrderMore={() => {
+                  setActiveTab('order');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onNavigate={setActiveTab}
+              />
             ) : null}
           </OrderPage>
         ) : null}
@@ -2048,7 +2072,7 @@ function AppContent() {
         }}
       />
 
-      {activeTab === 'gift-card' ? null : ['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail'].includes(activeTab) ? <OrderFooter onNavigate={setActiveTab} /> : <Footer onTabChange={setActiveTab} />}
+      {activeTab === 'gift-card' ? null : ['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail', 'tra-cuu-don', 'tracking'].includes(activeTab) ? <OrderFooter onNavigate={setActiveTab} /> : <Footer onTabChange={setActiveTab} />}
       <ChatWidget user={user} socketUrl={socketUrl} />
 
       {notificationToast ? (

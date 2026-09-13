@@ -29,10 +29,6 @@ const inventorySchema = process.env.DB_SCHEMA || 'inventory';
           ssl: sslConfig,
         });
 
-        await client.connect();
-        await client.query(`CREATE SCHEMA IF NOT EXISTS "${inventorySchema}"`);
-        await client.end();
-
         return {
           type: 'postgres' as const,
           host,
@@ -43,7 +39,12 @@ const inventorySchema = process.env.DB_SCHEMA || 'inventory';
           ssl: sslConfig,
           schema: inventorySchema,
           entities: [InventoryItem],
-          synchronize: true,
+          extra: {
+            max: 2,
+            connectionTimeoutMillis: 10000,
+            idleTimeoutMillis: 5000,
+          },
+          synchronize: false,
         };
       },
     }),

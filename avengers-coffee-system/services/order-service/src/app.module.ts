@@ -50,6 +50,8 @@ import { GiftCardTheme } from './modules/gift-card/entities/gift-card-theme.enti
 import { BranchReview } from './entities/branch-review.entity';
 import { BranchReviewService } from './services/branch-review.service';
 import { BranchReviewController } from './controllers/branch-review.controller';
+import { SmtpConfig } from './modules/smtp/smtp-config.entity';
+import { SmtpModule } from './modules/smtp/smtp.module';
 
 const orderSchema = process.env.DB_SCHEMA || 'orders';
 const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
@@ -72,19 +74,6 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
         const database = process.env.DB_NAME || 'avengers_coffee';
 
         const sslConfig = process.env.PGSSLMODE === 'require' ? { rejectUnauthorized: false } : false;
-
-        const client = new Client({
-          host,
-          port,
-          user: username,
-          password,
-          database,
-          ssl: sslConfig,
-        });
-
-        await client.connect();
-        await client.query(`CREATE SCHEMA IF NOT EXISTS "${orderSchema}"`);
-        await client.end();
 
         return {
           type: 'postgres' as const,
@@ -123,12 +112,18 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
             GiftCard,
             GiftCardTheme,
             ShipperCodRemit,
+            SmtpConfig,
           ],
-          synchronize: true,
+          extra: {
+            max: 3,
+            connectionTimeoutMillis: 30000,
+            idleTimeoutMillis: 2000,
+          },
+          synchronize: false,
         };
       },
     }),
-    TypeOrmModule.forFeature([Review, SurveyForm, SurveyResponse, BranchReview]),
+    TypeOrmModule.forFeature([Review, SurveyForm, SurveyResponse, BranchReview, SmtpConfig]),
     InfrastructureModule,
     CartModule,
     NotificationModule,
@@ -140,6 +135,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
     FeaturesThaianModule,
     CustomerWalletModule,
     GiftCardModule,
+    SmtpModule,
   ],
   controllers: [AppController, ReviewController, SurveyController, BranchReviewController],
   providers: [AppService, ReviewService, SurveyService, BranchReviewService],

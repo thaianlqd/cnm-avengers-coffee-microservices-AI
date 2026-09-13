@@ -8,6 +8,7 @@ import { Shipper } from '../entities/shipper.entity';
 import { DonHang } from '../../thanh-toan/entities/don-hang.entity';
 import { ChiTietDonHang } from '../../thanh-toan/entities/chi-tiet-don-hang.entity';
 import { LalamoveService } from './lalamove.service';
+import { RedisCacheService } from '../../../infrastructure/cache/redis-cache.service';
 
 /**
  * DeliveryTrackingService — Service thống nhất cho cả Lalamove lẫn Shipper nội bộ.
@@ -28,6 +29,7 @@ export class DeliveryTrackingService {
     @InjectRepository(DonHang) private donHangRepo: Repository<DonHang>,
     @InjectRepository(ChiTietDonHang) private chiTietRepo: Repository<ChiTietDonHang>,
     private readonly lalamoveService: LalamoveService,
+    private readonly redisCacheService: RedisCacheService,
   ) {}
 
   // ─────────────── Tạo tracking record ───────────────
@@ -113,7 +115,29 @@ export class DeliveryTrackingService {
    * Lấy thông tin tracking đầy đủ cho 1 đơn hàng.
    * Bao gồm: trạng thái đơn, timeline, thông tin shipper, vị trí GPS.
    */
-  async getTrackingInfo(maDonHang: string) {
+  async getTrackingInfo(identifier: string, preloadedTracking?: DeliveryTracking | null) {
+    const cleanId = String(identifier || '').trim();
+    if (!cleanId) throw new NotFoundException('Mã đơn hàng không hợp lệ');
+
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId);
+    let maDonHang = cleanId;
+
+    if (!isUuid) {
+      if (preloadedTracking?.ma_don_hang) {
+        maDonHang = preloadedTracking.ma_don_hang;
+      } else {
+        const tr = await this.trackingRepo
+          .createQueryBuilder('t')
+          .where('UPPER(t.tracking_code) = :code', { code: cleanId.toUpperCase() })
+          .getOne();
+        if (tr?.ma_don_hang) {
+          maDonHang = tr.ma_don_hang;
+        } else {
+          throw new NotFoundException('Không tìm thấy thông tin đơn hàng');
+        }
+      }
+    }
+
     // 1. Lấy thông tin đơn hàng
     const donHang = await this.donHangRepo.findOne({
       where: { ma_don_hang: maDonHang },
@@ -122,9 +146,9 @@ export class DeliveryTrackingService {
     if (!donHang) throw new NotFoundException('Đơn hàng không tồn tại');
 
     // 2. Lấy delivery tracking record
-    const tracking = await this.trackingRepo.findOne({
+    const tracking = preloadedTracking || (await this.trackingRepo.findOne({
       where: { ma_don_hang: maDonHang },
-    });
+    }));
 
     // 3. Lấy shipper delivery (nếu có)
     let shipperDelivery = await this.deliveryRepo.findOne({
@@ -132,18 +156,22 @@ export class DeliveryTrackingService {
       order: { assigned_at: 'DESC' },
     });
 
-    // DEMO FIX: Nếu chưa có shipper nhận đơn, tự động gán cho 1 shipper đang active (để fix lỗi không đồng bộ)
+    // DEMO FIX: Nếu chưa có shipper nhận đơn, tự động gán cho 1 shipper đang active
     if (!shipperDelivery) {
-      const activeShipper = await this.shipperRepo.findOne({ where: { status: 'ACTIVE' } });
-      if (activeShipper) {
-        shipperDelivery = this.deliveryRepo.create({
-          ma_don_hang: maDonHang,
-          shipper_id: activeShipper.id,
-          status: 'CONFIRMED',
-          delivery_address: donHang.dia_chi_giao_hang,
-          delivery_fee: 15000,
-        });
-        shipperDelivery = await this.deliveryRepo.save(shipperDelivery);
+      try {
+        const activeShipper = await this.shipperRepo.findOne({ where: { status: 'ACTIVE' } });
+        if (activeShipper) {
+          shipperDelivery = this.deliveryRepo.create({
+            ma_don_hang: maDonHang,
+            shipper_id: activeShipper.id,
+            status: 'CONFIRMED',
+            delivery_address: donHang.dia_chi_giao_hang,
+            delivery_fee: 15000,
+          });
+          shipperDelivery = await this.deliveryRepo.save(shipperDelivery);
+        }
+      } catch (err) {
+        this.logger.warn(`Could not auto-assign shipper: ${err.message}`);
       }
     }
 
@@ -154,21 +182,42 @@ export class DeliveryTrackingService {
     if (shipperDelivery?.shipper_id) {
       let shipper = await this.shipperRepo.findOne({ where: { id: shipperDelivery.shipper_id } });
       
-      // DEMO FIX 2: Tự động khởi tạo Shipper "Ghost" nếu ID này không tồn tại trong DB
-      // (Do app mobile đang dùng session cũ có ID shipper không còn trong Supabase)
       if (!shipper) {
-        shipper = this.shipperRepo.create({
-          id: shipperDelivery.shipper_id,
-          username: `shipper_${shipperDelivery.shipper_id.substring(0, 8)}`,
-          full_name: 'Tài xế Avengers (Fix)',
-          phone: '0999999999',
-          status: 'ACTIVE',
-          branch_code: 'MAC_DINH_CHI',
-          rating: 5.0,
-          current_latitude: 10.7915,
-          current_longitude: 106.6974
-        });
-        shipper = await this.shipperRepo.save(shipper);
+        try {
+          shipper = this.shipperRepo.create({
+            id: shipperDelivery.shipper_id,
+            username: `shipper_${shipperDelivery.shipper_id.substring(0, 8)}`,
+            full_name: 'Tài xế Avengers (Fix)',
+            phone: '0999999999',
+            status: 'ACTIVE',
+            branch_code: 'MAC_DINH_CHI',
+            rating: 5.0,
+            current_latitude: 10.7915,
+            current_longitude: 106.6974,
+          });
+          shipper = await this.shipperRepo.save(shipper);
+        } catch {
+          // If save fails (e.g. duplicate username), construct fallback object in-memory
+          shipper = {
+            id: shipperDelivery.shipper_id,
+            username: `shipper_${shipperDelivery.shipper_id.substring(0, 8)}`,
+            full_name: 'Tài xế Avengers',
+            phone: '0999999999',
+            status: 'ACTIVE',
+            branch_code: 'MAC_DINH_CHI',
+            rating: 5.0,
+            current_latitude: 10.7915,
+            current_longitude: 106.6974,
+            vehicle_type: 'MOTORBIKE',
+            vehicle_plate: '59-S1 888.88',
+            avatar_url: null,
+            total_deliveries: 10,
+            created_at: new Date(),
+            updated_at: new Date(),
+            email: null,
+            deliveries: [],
+          } as Shipper;
+        }
       }
 
       if (shipper) {
@@ -273,6 +322,15 @@ export class DeliveryTrackingService {
     return {
       order: {
         ma_don_hang: donHang.ma_don_hang,
+        ten_khach_hang: donHang.ten_khach_hang,
+        guest_phone: donHang.guest_phone,
+        guest_email: donHang.guest_email,
+        co_so_ma: donHang.co_so_ma,
+        loai_don_hang: donHang.loai_don_hang,
+        ma_ban: donHang.ma_ban,
+        ma_voucher: donHang.ma_voucher,
+        so_tien_giam: Number(donHang.so_tien_giam || 0),
+        khung_gio_giao: donHang.khung_gio_giao,
         trang_thai_don_hang: donHang.trang_thai_don_hang,
         trang_thai_thanh_toan: donHang.trang_thai_thanh_toan,
         tong_tien: Number(donHang.tong_tien),
@@ -280,12 +338,17 @@ export class DeliveryTrackingService {
         ghi_chu: donHang.ghi_chu,
         ngay_tao: donHang.ngay_tao,
         phuong_thuc_thanh_toan: donHang.phuong_thuc_thanh_toan,
+        lich_su_trang_thai: donHang.lich_su_trang_thai,
         items: (donHang.chi_tiet || []).map((item) => ({
           ten_san_pham: item.ten_san_pham,
           so_luong: item.so_luong,
           gia_ban: Number(item.gia_ban),
           kich_co: item.kich_co,
           hinh_anh_url: item.hinh_anh_url,
+          toppings: item.toppings || [],
+          luong_da: item.luong_da || null,
+          do_ngot: item.do_ngot || null,
+          ghi_chu: item.ghi_chu || null,
         })),
       },
       tracking: tracking
@@ -320,7 +383,6 @@ export class DeliveryTrackingService {
         : null,
       lalamove: lalamoveInfo,
       timeline,
-      DEBUG_ALL_DELIVERIES, // TRẢ VỀ ĐỂ DEBUG
     };
   }
 
@@ -333,30 +395,48 @@ export class DeliveryTrackingService {
     const normalizedCode = String(code || '').trim().toUpperCase();
     if (!normalizedCode) throw new BadRequestException('Vui lòng nhập mã tra cứu');
 
-    // Thử tìm theo tracking_code trước
-    let tracking = await this.trackingRepo.findOne({
-      where: { tracking_code: normalizedCode },
-    });
+    const cacheKey = `delivery_lookup:${normalizedCode}`;
+    try {
+      const cached = await this.redisCacheService?.getJson<any>(cacheKey);
+      if (cached?.order) {
+        return cached;
+      }
+    } catch {}
 
-    // Nếu không tìm thấy, thử theo ma_don_hang
-    if (!tracking) {
+    // 1. Thử tìm theo tracking_code trước (không phân biệt hoa thường)
+    let tracking = await this.trackingRepo
+      .createQueryBuilder('t')
+      .where('UPPER(t.tracking_code) = :code', { code: normalizedCode })
+      .getOne();
+
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(normalizedCode);
+
+    // 2. Nếu không tìm thấy và là UUID, thử theo ma_don_hang trong delivery_tracking
+    if (!tracking && isUuid) {
       tracking = await this.trackingRepo.findOne({
         where: { ma_don_hang: normalizedCode },
       });
     }
 
-    // Nếu vẫn không thấy, tìm đơn hàng trực tiếp
-    if (!tracking) {
+    // 3. Nếu vẫn không thấy và là UUID, tìm trực tiếp từ bảng don_hang
+    if (!tracking && isUuid) {
       const donHang = await this.donHangRepo.findOne({
         where: { ma_don_hang: normalizedCode },
       });
       if (donHang) {
-        return this.getTrackingInfo(donHang.ma_don_hang);
+        const result = await this.getTrackingInfo(donHang.ma_don_hang);
+        try { await this.redisCacheService?.setJson(cacheKey, result, 15); } catch {}
+        return result;
       }
+    }
+
+    if (!tracking) {
       throw new NotFoundException('Không tìm thấy đơn hàng với mã này');
     }
 
-    return this.getTrackingInfo(tracking.ma_don_hang);
+    const result = await this.getTrackingInfo(tracking.ma_don_hang, tracking);
+    try { await this.redisCacheService?.setJson(cacheKey, result, 15); } catch {}
+    return result;
   }
 
   // ─────────────── Lấy vị trí shipper real-time ───────────────
