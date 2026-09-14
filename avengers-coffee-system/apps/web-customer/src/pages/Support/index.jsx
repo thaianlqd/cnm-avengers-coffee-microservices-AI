@@ -50,13 +50,13 @@ export default function Support() {
   return (
     <main className="flex-grow w-full bg-[#fcfbf9] font-sans min-h-screen pb-20">
       {/* ── 1. HERO SECTION ── */}
-      <section className="relative w-full bg-gradient-to-b from-[#80071c] via-[#b22830] to-[#600312] py-20 px-4 flex flex-col items-center justify-center text-center overflow-hidden">
+      <section className="relative w-full bg-[#5e0b0f] py-20 px-4 flex flex-col items-center justify-center text-center overflow-hidden">
         {/* Subtle background glow circle */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-red-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="relative z-10 max-w-3xl mx-auto">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-amber-200 border border-white/20 text-xs font-bold uppercase tracking-widest backdrop-blur-xs mb-4">
-            <QuestionMarkCircleIcon className="w-4 h-4 text-amber-300" /> Trung Tâm Trợ Giúp Khách Hàng
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white border border-white/20 text-xs font-bold uppercase tracking-widest backdrop-blur-xs mb-4">
+            <QuestionMarkCircleIcon className="w-4 h-4 text-white" /> Trung Tâm Trợ Giúp Khách Hàng
           </span>
           <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight font-sans">
             Chúng tôi có thể giúp gì cho bạn?

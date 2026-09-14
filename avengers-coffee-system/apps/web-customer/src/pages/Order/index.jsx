@@ -148,6 +148,41 @@ export default function OrderPage({
   const [copiedVoucherCode, setCopiedVoucherCode] = useState(null);
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
   const [trackingOrderId, setTrackingOrderId] = useState(null);
+  
+  const [recentProducts, setRecentProducts] = useState([]);
+  
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('hc_recent_products');
+      if (saved) {
+        setRecentProducts(JSON.parse(saved));
+      }
+    } catch (error) {
+      console.error('Failed to load recent products', error);
+    }
+  }, []);
+
+  const handleProductClick = (product, isQuickView = false) => {
+    setRecentProducts(prev => {
+      const currentId = product.ma_san_pham || product.id;
+      const filtered = prev.filter(p => (p.ma_san_pham || p.id) !== currentId);
+      const updated = [product, ...filtered].slice(0, 4);
+      try {
+        localStorage.setItem('hc_recent_products', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    if (isQuickView) {
+      setQuickViewProduct(product);
+    } else {
+      if (onOpenProductPage) {
+        onOpenProductPage(product);
+      } else {
+        onViewDetail?.(product);
+      }
+    }
+  };
   const [hasRecentLookup, setHasRecentLookup] = useState(false);
 
   useEffect(() => {
@@ -196,6 +231,7 @@ export default function OrderPage({
 
   const [sortByOrder, setSortByOrder] = useState('default'); // 'default' | 'price-asc' | 'price-desc' | 'name-asc'
   const [expandedParents, setExpandedParents] = useState({});
+  const [viewCategory, setViewCategory] = useState('all');
   const mobileMenuRef = useRef(null);
   const dropdownRef = useRef(null);
   const productsContainerRef = useRef(null);
@@ -426,6 +462,7 @@ export default function OrderPage({
       return;
     }
     setActiveCategory(id);
+    setViewCategory('all'); // Go back to overview mode when using header menu
     if (onSelectedCatIdChange) onSelectedCatIdChange(id);
     if (onSearchKeywordChange) onSearchKeywordChange(''); // Clear search when switching categories
     if (onNavigate) onNavigate('order');
@@ -842,9 +879,9 @@ export default function OrderPage({
               if (onNavigate) onNavigate('tra-cuu-don');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }} 
-            className="flex items-center gap-2 text-amber-200 hover:text-white transition-colors bg-transparent border-none p-0 cursor-pointer font-bold"
+            className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity bg-transparent border-none p-0 cursor-pointer font-bold"
           >
-            <TruckIcon className="w-4 h-4 text-amber-200" />
+            <TruckIcon className="w-4 h-4 text-white" />
             <span className="text-[13px]">Tra cứu đơn hàng</span>
           </button>
 
@@ -878,19 +915,21 @@ export default function OrderPage({
             ) : (
               <>
                 {/* Hero Banner & Category Menu Area (Desktop Only) */}
-                <div className="w-full mb-10 flex flex-col lg:flex-row items-stretch gap-8">
-                  {/* LEFT SIDEBAR (Category Menu Desktop) */}
-                  <div className="hidden lg:flex flex-col w-[260px] flex-shrink-0 z-10 bg-white shadow-sm border-l border-r border-b border-gray-100 rounded-b-2xl overflow-hidden pb-2">
-                    <ul className="w-full flex flex-col flex-1 overflow-y-auto no-scrollbar">
-                      {categoryMenuItems}
-                    </ul>
-                  </div>
+                {viewCategory === 'all' && (
+                  <div className="w-full mb-10 flex flex-col lg:flex-row items-stretch gap-8">
+                    {/* LEFT SIDEBAR (Category Menu Desktop) */}
+                    <div className="hidden lg:flex flex-col w-[260px] flex-shrink-0 z-10 bg-white shadow-sm border-l border-r border-b border-gray-100 rounded-b-2xl overflow-hidden pb-2">
+                      <ul className="w-full flex flex-col flex-1 overflow-y-auto no-scrollbar">
+                        {categoryMenuItems}
+                      </ul>
+                    </div>
 
-                  {/* HERO BANNER */}
-                  <div className="flex-1 min-w-0 flex pt-4 lg:pt-0">
-                    <BannerSlider />
+                    {/* HERO BANNER */}
+                    <div className="flex-1 min-w-0 flex pt-4 lg:pt-0">
+                      <BannerSlider />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Single Compact Unified Voucher Row Section */}
                 {(personalVouchers.length > 0 || publicVouchers.length > 0) && (
@@ -926,7 +965,7 @@ export default function OrderPage({
                 )}
 
                 {/* AI TOP 3 RECOMMENDED PRODUCTS UNDER VOUCHER */}
-                {aiRecommendedProducts && aiRecommendedProducts.length > 0 && (
+                {viewCategory === 'all' && aiRecommendedProducts && aiRecommendedProducts.length > 0 && (
                   <div className="mb-10 w-full">
                     <div className="bg-white rounded-3xl border border-rose-100 p-6 md:p-8 shadow-2xs relative overflow-hidden">
                       {/* Section Top Header */}
@@ -959,83 +998,63 @@ export default function OrderPage({
                           return (
                             <div 
                               key={product.ma_san_pham || product.id} 
-                              className="bg-white rounded-2xl border border-gray-100/90 overflow-hidden shadow-2xs hover:shadow-xl hover:border-red-100 transition-all duration-300 group relative flex flex-col hover:-translate-y-1 p-3 cursor-pointer"
-                              onClick={() => (onOpenProductPage ? onOpenProductPage(product) : onViewDetail?.(product))}
+                              className="bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 group relative flex flex-col cursor-pointer"
+                              onClick={() => handleProductClick(product)}
                             >
                               {/* Product Image Container */}
-                              <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-[#f8f8f6] p-2 flex items-center justify-center">
+                              <div className="relative aspect-[4/3] w-full overflow-hidden flex items-center justify-center bg-[#f5f0e1]">
                                 <img 
                                   src={product.hinh_anh_url || product.img || '/hc-assets/caphe-1.png'} 
                                   alt={product.ten_san_pham || product.name} 
-                                  className="w-full h-full object-cover rounded-lg transition-transform duration-500 group-hover:scale-105" 
+                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 mix-blend-multiply" 
                                 />
                                 
-                                {/* Magnifying Glass Quick View Hover Button */}
-                                <button 
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setQuickViewProduct(product);
-                                  }}
-                                  className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-20 hover:bg-white hover:scale-110 cursor-pointer"
-                                  title="Xem nhanh"
-                                >
-                                  <MagnifyingGlassIcon className="w-4 h-4 text-gray-700 font-bold" />
-                                </button>
-
                                 {/* Badges Overlay */}
-                                <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 z-10 pointer-events-none">
-                                  {/* AI Special Tag */}
-                                  <span className="inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-[#c41230] to-amber-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-2xs">
-                                    <SparklesIcon className="w-2.5 h-2.5 text-amber-200" /> GỢI Ý AI
+                                <div className="absolute top-2 left-2 flex flex-col gap-1 z-10 pointer-events-none">
+                                  <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-[#c41230] to-amber-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+                                    <SparklesIcon className="w-3 h-3 text-amber-200" /> Gợi ý AI
                                   </span>
                                   {product.la_hot && (
-                                    <span className="inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-2xs">
-                                      <FireIcon className="w-2.5 h-2.5" /> BESTSELLER
-                                    </span>
-                                  )}
-                                  {!product.la_hot && product.la_moi && (
-                                    <span className="inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-2xs">
-                                      <SparklesIcon className="w-2.5 h-2.5" /> MÓN MỚI
-                                    </span>
-                                  )}
-                                  {product.dang_giam_gia && (
-                                    <span className="inline-flex items-center rounded-full bg-[#b22830] px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-2xs">
-                                      -{Math.round((1 - product.gia_ban / product.gia_niem_yet) * 100)}%
+                                    <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-orange-500 to-amber-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+                                      Bán chạy
                                     </span>
                                   )}
                                 </div>
                               </div>
 
                               {/* Product Info */}
-                              <div className="pt-3 px-1 flex flex-col flex-1">
-                                <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">{tCategory(categoryName)}</span>
-                                <h4 className="text-[15px] font-bold text-gray-900 mb-2 leading-snug min-h-[2.4rem] line-clamp-2 transition-colors group-hover:text-[#b22830]">
+                              <div className="p-4 flex flex-col flex-1 relative bg-white">
+                                <span className="text-[11px] text-gray-400 uppercase tracking-widest font-normal mb-1 block">
+                                  HIGHLANDS COFFEE
+                                </span>
+                                <h4 className="text-[14px] font-medium text-[#333333] mb-2 leading-snug line-clamp-2">
                                   {product.ten_san_pham || product.name}
                                 </h4>
-                                <div className="mt-auto pt-2 flex items-center justify-between border-t border-gray-100">
+                                <div className="mt-auto pt-1 flex items-center justify-between">
                                   <div className="flex flex-col">
-                                    <span className="text-[16px] font-black text-[#b22830] leading-none">
-                                      {Number(product.gia_ban || 39000).toLocaleString('vi-VN')} <span className="text-[11px] font-bold text-gray-500">đ</span>
+                                    <span className="text-[15px] font-semibold text-[#b22830] leading-none">
+                                      {Number(product.gia_ban || 39000).toLocaleString('vi-VN')}đ
                                     </span>
                                     {product.dang_giam_gia && (
-                                      <span className="text-[11px] text-gray-400 line-through mt-0.5">
+                                      <span className="text-[12px] text-gray-400 line-through mt-1">
                                         {Number(product.gia_niem_yet).toLocaleString('vi-VN')}đ
                                       </span>
                                     )}
                                   </div>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onQuickAdd?.(product);
-                                    }}
-                                    className="w-8 h-8 rounded-xl bg-[#b22830] text-white flex items-center justify-center hover:bg-[#8e1c23] hover:scale-105 active:scale-95 transition-all shadow-2xs cursor-pointer"
-                                    title="Thêm vào giỏ"
-                                  >
-                                    <span className="text-lg font-bold leading-none">+</span>
-                                  </button>
                                 </div>
+                                
+                                {/* Absolute positioned + button as in Highlands */}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onQuickAdd?.(product);
+                                  }}
+                                  className="absolute bottom-3 right-3 w-6 h-6 rounded-full bg-[#b22830] text-white flex items-center justify-center hover:bg-[#8e1c23] hover:scale-110 active:scale-95 transition-all shadow-sm cursor-pointer z-10"
+                                  title="Thêm vào giỏ"
+                                >
+                                  <span className="text-sm font-bold leading-none">+</span>
+                                </button>
                               </div>
                             </div>
                           );
@@ -1046,10 +1065,14 @@ export default function OrderPage({
                 )}
 
                 {/* Mobile Horizontal Scroll Category Tab Bar (Sticky top below main header) */}
-                <div className="lg:hidden sticky top-[84px] z-30 bg-white border-b border-gray-100 py-3 shadow-md overflow-x-auto no-scrollbar flex gap-2 px-4 sm:px-6">
-                  <button
+                {viewCategory === 'all' && (
+                  <div className="lg:hidden sticky top-[84px] z-30 bg-white border-b border-gray-100 py-3 shadow-md overflow-x-auto no-scrollbar flex gap-2 px-4 sm:px-6">
+                    <button
                     type="button"
-                    onClick={() => handleCategorySelect('all')}
+                    onClick={() => {
+                      setViewCategory('all');
+                      handleCategorySelect('all');
+                    }}
                     className={`inline-flex items-center justify-center px-4 py-2 rounded-full text-xs font-bold uppercase transition-all flex-shrink-0 cursor-pointer ${
                       activeCategory === 'all'
                         ? 'bg-[#b22830] text-white shadow-sm'
@@ -1077,6 +1100,7 @@ export default function OrderPage({
                     );
                   })}
                 </div>
+                )}
 
 {/* Main Layout for Products */}
             <div ref={productsContainerRef} className="flex flex-col gap-8 px-4 sm:px-6 lg:px-8 mt-6">
@@ -1085,7 +1109,9 @@ export default function OrderPage({
                     {/* Product Grids - All Category Sections rendered, Smooth Scroll to target */}
                     <div className="space-y-12">
                       {(() => {
-                        const renderedSections = menuSections;
+                        const renderedSections = viewCategory === 'all' 
+                          ? menuSections 
+                          : menuSections.filter(s => String(s.id) === String(viewCategory));
 
                         if (renderedSections.length === 0) {
                           return (
@@ -1112,23 +1138,46 @@ export default function OrderPage({
                             if (sortByOrder === 'name-desc') return String(b.ten_san_pham || '').localeCompare(String(a.ten_san_pham || ''), 'vi');
                             return 0;
                           });
-                          const displayItems = sortedItems;
+                          const displayItems = viewCategory === 'all' ? sortedItems.slice(0, 5) : sortedItems;
+                          const hasMore = viewCategory === 'all' && sortedItems.length > 5;
+                          
                           const parentCatIndex = parentCats.findIndex(c => String(c.ma_danh_muc) === String(section.id));
                           const sectionIconUrl = parentCatIndex !== -1 ? MENU_ICONS[parentCatIndex % MENU_ICONS.length] : MENU_ICONS[idx % MENU_ICONS.length];
 
                           return (
                             <section key={section.id} id={`category-${section.id}`} className="scroll-mt-[100px]">
-                                <div className="flex items-center justify-between border-b-2 border-gray-100 pb-3.5 mb-6 pt-4">
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-2.5 h-7 rounded-full bg-[#b22830] shrink-0 shadow-2xs"></div>
-                                    <h3 className="text-xl md:text-2xl font-black text-gray-900 uppercase font-sans tracking-wide">
+                                {viewCategory !== 'all' ? (
+                                  <div className="mb-6 pt-2">
+                                    <div className="text-[13px] text-gray-500 mb-8 uppercase tracking-wider font-semibold">
+                                      <span className="cursor-pointer hover:text-[#b22830] transition-colors" onClick={() => setViewCategory('all')}>Trang chủ</span> 
+                                      <span className="mx-2">/</span> 
+                                      <span className="text-[#333333] font-bold">{section.label}</span>
+                                    </div>
+                                    <h1 className="text-3xl md:text-[32px] font-normal text-[#333333] uppercase mb-8">
                                       {section.label}
-                                    </h3>
+                                    </h1>
+                                    <div className="flex flex-wrap items-center gap-4 md:gap-6 text-[13px] font-semibold text-gray-500 mb-8 pb-4">
+                                      <span className="text-gray-900 font-bold mr-2">Sắp xếp:</span>
+                                      <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'name-asc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('name-asc')}>Tên A → Z</button>
+                                      <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'name-desc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('name-desc')}>Tên Z → A</button>
+                                      <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'price-asc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('price-asc')}>Giá tăng dần</button>
+                                      <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'price-desc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('price-desc')}>Giá giảm dần</button>
+                                      <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'default' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('default')}>Hàng mới</button>
+                                    </div>
                                   </div>
-                                  <span className="text-xs font-extrabold text-[#b22830] bg-red-50 px-3.5 py-1 rounded-full border border-red-100 shadow-2xs">
-                                    {displayItems.length} món
-                                  </span>
-                                </div>
+                                ) : (
+                                  <div className="flex items-center justify-between border-b-2 border-gray-100 pb-3.5 mb-6 pt-4">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-2.5 h-7 rounded-full bg-[#b22830] shrink-0 shadow-2xs"></div>
+                                      <h3 className="text-xl md:text-2xl font-black text-gray-900 uppercase font-sans tracking-wide">
+                                        {section.label}
+                                      </h3>
+                                    </div>
+                                    <span className="text-xs font-extrabold text-[#b22830] bg-red-50 px-3.5 py-1 rounded-full border border-red-100 shadow-2xs">
+                                      {sortedItems.length} món
+                                    </span>
+                                  </div>
+                                )}
 
                               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-8">
                                 {displayItems.map((p) => {
@@ -1136,111 +1185,154 @@ export default function OrderPage({
                                   return (
                                     <div 
                                       key={p.ma_san_pham || p.id} 
-                                      className="bg-white rounded-2xl border border-gray-100/90 overflow-hidden shadow-2xs hover:shadow-xl hover:border-red-100 transition-all duration-300 group relative flex flex-col hover:-translate-y-1 p-3 cursor-pointer"
-                                      onClick={() => (onOpenProductPage ? onOpenProductPage(p) : onViewDetail?.(p))}
+                                      className="bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 group relative flex flex-col cursor-pointer"
+                                      onClick={() => handleProductClick(p)}
                                     >
                                       {/* Product Image Container */}
-                                      <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-[#f8f8f6] p-2 flex items-center justify-center">
+                                      <div className="relative aspect-[4/3] w-full overflow-hidden flex items-center justify-center bg-[#f5f0e1]">
                                         <img 
                                           src={p.hinh_anh_url || '/hc-assets/caphe-1.png'} 
                                           alt={p.ten_san_pham || p.name} 
-                                          className="w-full h-full object-cover rounded-lg transition-transform duration-500 group-hover:scale-105" 
+                                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 mix-blend-multiply" 
                                         />
                                         
-                                        {/* Magnifying Glass Quick View Hover Button */}
-                                        <button 
-                                          type="button"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setQuickViewProduct(p);
-                                          }}
-                                          className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-20 hover:bg-white hover:scale-110 cursor-pointer"
-                                          title="Xem nhanh"
-                                        >
-                                          <MagnifyingGlassIcon className="w-4 h-4 text-gray-700 font-bold" />
-                                        </button>
-
-                                        {/* Favorite Heart Button */}
-                                        {onToggleFavorite && (
-                                          <button
-                                            type="button"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              onToggleFavorite(p);
-                                            }}
-                                            className={`absolute ${p.dang_giam_gia || p.la_hot || p.la_moi ? 'top-2.5 right-12' : 'top-2.5 left-2.5'} flex h-8 w-8 items-center justify-center rounded-full bg-white/90 backdrop-blur-xs shadow-2xs transition-transform hover:scale-110 z-20 cursor-pointer`}
-                                            aria-label={isFav ? 'Bỏ yêu thích' : 'Thêm yêu thích'}
-                                          >
-                                            {isFav ? (
-                                              <HeartSolidIcon className="h-4 w-4 text-[#c41230]" />
-                                            ) : (
-                                              <HeartOutlineIcon className="h-4 w-4 text-gray-400 hover:text-[#c41230]" />
-                                            )}
-                                          </button>
-                                        )}
-
                                         {/* Badges Overlay */}
-                                        <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 z-10 pointer-events-none">
+                                        <div className="absolute top-2 left-2 flex flex-col gap-1 z-10 pointer-events-none">
                                           {p.la_hot && (
-                                            <span className="inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-2xs">
-                                              <FireIcon className="w-2.5 h-2.5" /> BESTSELLER
+                                            <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-orange-500 to-amber-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+                                              Bán chạy
                                             </span>
                                           )}
                                           {!p.la_hot && p.la_moi && (
-                                            <span className="inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-2xs">
-                                              <SparklesIcon className="w-2.5 h-2.5" /> MÓN MỚI
-                                            </span>
-                                          )}
-                                          {p.dang_giam_gia && (
-                                            <span className="inline-flex items-center rounded-full bg-[#b22830] px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-2xs">
-                                              -{Math.round((1 - p.gia_ban / p.gia_niem_yet) * 100)}%
+                                            <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-emerald-600 to-teal-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+                                              Món mới
                                             </span>
                                           )}
                                         </div>
                                       </div>
 
                                       {/* Product Info */}
-                                      <div className="pt-3 px-1 flex flex-col flex-1">
-                                        <p className="text-[10px] font-extrabold text-[#00a651] uppercase tracking-wider mb-0.5">Highlands Coffee</p>
-                                        <h4 className="text-[15px] font-bold text-gray-900 mb-2 leading-snug min-h-[2.4rem] line-clamp-2 transition-colors group-hover:text-[#b22830]">
+                                      <div className="p-4 flex flex-col flex-1 relative bg-white">
+                                        <span className="text-[11px] text-gray-400 uppercase tracking-widest font-normal mb-1 block">
+                                          HIGHLANDS COFFEE
+                                        </span>
+                                        <h4 className="text-[14px] font-medium text-[#333333] mb-2 leading-snug line-clamp-2">
                                           {p.ten_san_pham || p.name}
                                         </h4>
-                                        <div className="mt-auto pt-2 flex items-center justify-between border-t border-gray-100">
+                                        <div className="mt-auto pt-1 flex items-center justify-between">
                                           <div className="flex flex-col">
-                                            <span className="text-[16px] font-black text-[#b22830] leading-none">
-                                              {Number(p.gia_ban).toLocaleString('vi-VN')} <span className="text-[11px] font-bold text-gray-500">đ</span>
+                                            <span className="text-[15px] font-semibold text-[#b22830] leading-none">
+                                              {Number(p.gia_ban || 39000).toLocaleString('vi-VN')}đ
                                             </span>
                                             {p.dang_giam_gia && (
-                                              <span className="text-[11px] text-gray-400 line-through mt-0.5">
+                                              <span className="text-[12px] text-gray-400 line-through mt-1">
                                                 {Number(p.gia_niem_yet).toLocaleString('vi-VN')}đ
                                               </span>
                                             )}
                                           </div>
-                                          <button
-                                            type="button"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              onQuickAdd?.(p);
-                                            }}
-                                            className="w-8 h-8 rounded-xl bg-[#b22830] text-white flex items-center justify-center hover:bg-[#8e1c23] hover:scale-105 active:scale-95 transition-all shadow-2xs cursor-pointer"
-                                            title="Thêm vào giỏ"
-                                          >
-                                            <span className="text-lg font-bold leading-none">+</span>
-                                          </button>
                                         </div>
+                                        
+                                        {/* Absolute positioned + button as in Highlands */}
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            onQuickAdd?.(p);
+                                          }}
+                                          className="absolute bottom-3 right-3 w-6 h-6 rounded-full bg-[#b22830] text-white flex items-center justify-center hover:bg-[#8e1c23] hover:scale-110 active:scale-95 transition-all shadow-sm cursor-pointer z-10"
+                                          title="Thêm vào giỏ"
+                                        >
+                                          <span className="text-sm font-bold leading-none">+</span>
+                                        </button>
                                       </div>
                                     </div>
                                   );
                                 })}
                               </div>
+                              {hasMore && (
+                                <div className="mt-6 flex justify-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setViewCategory(section.id);
+                                      setActiveCategory(section.id);
+                                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                                    }}
+                                    className="px-6 py-2.5 rounded-full border-2 border-[#b22830] text-[#b22830] font-bold text-[14px] hover:bg-[#b22830] hover:text-white transition-all duration-300 cursor-pointer flex items-center gap-2"
+                                  >
+                                    Xem tất cả {sortedItems.length} món
+                                  </button>
+                                </div>
+                              )}
                             </section>
-                          );
-                        });
-                      })()}
-                    </div>
+                           );
+                         });
+                       })()}
+                     </div>
 
-                  </div>
-                </div>
+                    {/* RECENTLY VIEWED PRODUCTS */}
+                    {viewCategory === 'all' && recentProducts.length > 0 && (
+                      <div className="mt-16 mb-8 w-full border-t border-gray-100 pt-10">
+                        <h2 className="text-[22px] font-bold text-gray-900 mb-6 font-sans">
+                          Sản phẩm đã xem
+                        </h2>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-8">
+                          {recentProducts.map((p) => (
+                            <div 
+                              key={p.ma_san_pham || p.id} 
+                              className="bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 group relative flex flex-col cursor-pointer"
+                              onClick={() => handleProductClick(p)}
+                            >
+                              {/* Product Image Container */}
+                              <div className="relative aspect-[4/3] w-full overflow-hidden flex items-center justify-center bg-[#f5f0e1]">
+                                <img 
+                                  src={p.hinh_anh_url || p.img || '/hc-assets/caphe-1.png'} 
+                                  alt={p.ten_san_pham || p.name} 
+                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 mix-blend-multiply" 
+                                />
+                              </div>
+
+                              {/* Product Info */}
+                              <div className="p-4 flex flex-col flex-1 relative bg-white">
+                                <span className="text-[11px] text-gray-400 uppercase tracking-widest font-normal mb-1 block">
+                                  HIGHLANDS COFFEE
+                                </span>
+                                <h4 className="text-[14px] font-medium text-[#333333] mb-2 leading-snug line-clamp-2">
+                                  {p.ten_san_pham || p.name}
+                                </h4>
+                                <div className="mt-auto pt-1 flex items-center justify-between">
+                                  <div className="flex flex-col">
+                                    <span className="text-[15px] font-semibold text-[#b22830] leading-none">
+                                      {Number(p.gia_ban || 39000).toLocaleString('vi-VN')}đ
+                                    </span>
+                                    {p.dang_giam_gia && (
+                                      <span className="text-[12px] text-gray-400 line-through mt-1">
+                                        {Number(p.gia_niem_yet).toLocaleString('vi-VN')}đ
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onQuickAdd?.(p);
+                                  }}
+                                  className="absolute bottom-3 right-3 w-6 h-6 rounded-full bg-[#b22830] text-white flex items-center justify-center hover:bg-[#8e1c23] hover:scale-110 active:scale-95 transition-all shadow-sm cursor-pointer z-10"
+                                  title="Thêm vào giỏ"
+                                >
+                                  <span className="text-sm font-bold leading-none">+</span>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+ 
+                   </div>
+                 </div>
               </>
             )}
           </div>
