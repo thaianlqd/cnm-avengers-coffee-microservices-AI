@@ -753,8 +753,8 @@ export default function ChatWidget({ user, socketUrl }) {
     if (!text) return null;
     const parts = text.split(/(\*\*[^*]+\*\*)/g);
     return parts.map((part, i) => part.startsWith('**') && part.endsWith('**')
-      ? <strong key={i} style={{ color: 'inherit', fontWeight: 800 }}>{part.slice(2, -2)}</strong>
-      : <span key={i}>{part}</span>
+      ? <strong key={i} style={{ color: 'inherit', fontWeight: 600 }}>{part.slice(2, -2)}</strong>
+      : <span key={i} style={{ fontWeight: 400 }}>{part}</span>
     );
   };
 
@@ -809,66 +809,78 @@ export default function ChatWidget({ user, socketUrl }) {
       {/* Main Chat Window Panel */}
       {isOpen && (
         <div style={{
-          position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
-          width: 'min(94vw, 400px)', height: 'min(84vh, 670px)',
+          position: 'fixed', bottom: 16, right: 16, zIndex: 9999,
+          width: 'min(94vw, 420px)', height: 'min(85vh, 600px)',
           display: 'flex', flexDirection: 'column',
-          background: '#FFFFFF',
-          borderRadius: 24,
-          boxShadow: '0 20px 50px rgba(0,0,0,0.15), 0 4px 20px rgba(240,128,128,0.2)',
-          border: '1px solid #FFE3E3',
+          background: '#F4F6F8',
+          borderRadius: 8,
+          boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+          border: '1px solid #E2E8F0',
           overflow: 'hidden',
           animation: 'chatOpen 0.3s cubic-bezier(0.34,1.56,0.64,1)',
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+          fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
         }}>
           {/* Reference Image Styled Header */}
           <div style={{
-            background: 'linear-gradient(135deg, #FFFFFF 0%, #FFF5F5 100%)',
-            borderBottom: '1px solid #FFE3E3',
-            padding: '12px 16px 10px',
+            background: '#FFFFFF',
+            padding: '12px 16px',
             flexShrink: 0,
+            borderBottom: '1px solid #E2E8F0',
+            position: 'relative',
           }}>
-            {/* Top window controls row */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              {/* Window controls (x - +) */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  style={{ border: 'none', background: '#F0808022', color: '#F08080', width: 18, height: 18, borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold' }}
-                  title="Đóng"
-                >×</button>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  style={{ border: 'none', background: '#E2E8F0', color: '#718096', width: 18, height: 18, borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold' }}
-                  title="Thu nhỏ"
-                >−</button>
-                <button
-                  style={{ border: 'none', background: '#E2E8F0', color: '#718096', width: 18, height: 18, borderRadius: '50%', cursor: 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold' }}
-                >+</button>
+            {/* Header Content */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              {/* Avatar & Title */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ position: 'relative' }}>
+                  {chatMode === 'AI' ? <AIAvatar size={36} /> : <CustomerAvatar user={user} size={36} />}
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 500, color: '#111111', letterSpacing: '0.2px' }}>
+                    {chatMode === 'AI' ? 'Trợ lý Avengers' : 'Nhân viên Hỗ trợ'}
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: '#666666', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22C55E' }} title="Online" />
+                    Trực tuyến - Trả lời ngay
+                  </div>
+                </div>
               </div>
 
-              {/* Title / User info */}
+              {/* Window controls (Minimize & Close) */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                {chatMode === 'AI' ? <AIAvatar size={24} /> : <CustomerAvatar user={user} size={24} />}
-                <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#2D3748' }}>
-                  {chatMode === 'AI' ? 'Avengers AI Assistant' : 'Hỗ trợ Khách hàng'}
-                </span>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22C55E', display: 'inline-block' }} title="Online" />
+                <button
+                  onClick={() => setIsOpen(false)}
+                  style={{ all: 'unset', cursor: 'pointer', background: '#F1F5F9', color: '#64748B', width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#E2E8F0'; e.currentTarget.style.color = '#334155'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.color = '#64748B'; }}
+                  title="Thu nhỏ"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 14 12 22 20 14"></polyline><line x1="12" y1="2" x2="12" y2="22"></line></svg>
+                </button>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  style={{ all: 'unset', cursor: 'pointer', background: '#F1F5F9', color: '#64748B', width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#E2E8F0'; e.currentTarget.style.color = '#334155'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.color = '#64748B'; }}
+                  title="Đóng"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
               </div>
             </div>
 
             {/* Mode switch tabs */}
-            <div style={{ display: 'flex', background: '#FFEBEB', padding: 3, borderRadius: 12, gap: 2 }}>
-              {[{ mode: 'AI', label: 'Trợ lý AI' }, { mode: 'STAFF', label: 'Nhân viên tư vấn' }].map(({ mode, label }) => (
+            <div style={{ display: 'flex', background: '#F1F5F9', padding: 4, borderRadius: 6, gap: 4, marginTop: 12 }}>
+              {[{ mode: 'AI', label: 'Trợ lý AI' }, { mode: 'STAFF', label: 'Nhân viên' }].map(({ mode, label }) => (
                 <button
                   key={mode}
                   onClick={() => { setChatMode(mode); setSending(false); if (mode === 'STAFF') openStaffChat(); }}
                   style={{
-                    border: 'none', outline: 'none', cursor: 'pointer', flex: 1, padding: '6px 0', borderRadius: 10,
-                    fontSize: '0.74rem', fontWeight: 800, textAlign: 'center', transition: 'all 0.2s',
+                    border: 'none', outline: 'none', cursor: 'pointer', flex: 1, padding: '5px 0', borderRadius: 4,
+                    fontSize: '0.76rem', fontWeight: 500, textAlign: 'center', transition: 'all 0.2s',
                     background: chatMode === mode ? '#FFFFFF' : 'transparent',
-                    color: chatMode === mode ? '#b22830' : '#718096',
-                    boxShadow: chatMode === mode ? '0 2px 5px rgba(0,0,0,0.06)' : 'none',
-
+                    color: chatMode === mode ? '#111111' : '#64748B',
+                    boxShadow: chatMode === mode ? '0 1px 4px rgba(0,0,0,0.05)' : 'none',
                   }}
                 >
                   {label}
@@ -901,18 +913,17 @@ export default function ChatWidget({ user, socketUrl }) {
                 {chatMode === 'AI' && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center' }}>
                     {QUICK_ACTIONS.slice(0, 4).map((a) => (
-                  <button
-                    key={a.id}
-                    onClick={() => sendMessage(a.text)}
-                    style={{ 
-                      outline: 'none', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 700, 
-                      color: '#b22830', background: '#FFFFFF', padding: '7px 14px', 
-                      borderRadius: 20, border: '1px solid #b22830', 
-                      display: 'flex', alignItems: 'center', gap: 4 
-                    }}
-                  >
-                    {a.icon} {a.label}
-
+                      <button
+                        key={a.id}
+                        onClick={() => sendMessage(a.text)}
+                        style={{ 
+                          outline: 'none', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 500, 
+                          color: '#4B5563', background: '#FFFFFF', padding: '7px 14px', 
+                          borderRadius: 20, border: '1px solid #E5E7EB', 
+                          display: 'flex', alignItems: 'center', gap: 4 
+                        }}
+                      >
+                        {a.icon} {a.label}
                       </button>
                     ))}
                   </div>
@@ -930,50 +941,20 @@ export default function ChatWidget({ user, socketUrl }) {
                   justifyContent: isOwn ? 'flex-end' : 'flex-start',
                   alignItems: 'flex-end', gap: 8,
                 }}>
-                  {/* Left avatar for AI / Staff */}
-                  {!isOwn && (isAI ? <AIAvatar size={32} /> : <StaffAvatar name={msg.ten_nguoi_gui} size={32} />)}
-
-                  <div style={{ maxWidth: '82%', display: 'flex', flexDirection: 'column', alignItems: isOwn ? 'flex-end' : 'flex-start' }}>
-                    {/* Reply to reference banner */}
-                    {msg.reply_to && (
-                      <div style={{
-                        marginBottom: 4, padding: '5px 10px',
-                        background: isOwn ? 'rgba(240,128,128,0.15)' : '#EDF2F7',
-                        borderRadius: 8, borderLeft: `3px solid ${isOwn ? '#F08080' : '#6366F1'}`
-                      }}>
-                        <p style={{ margin: 0, fontSize: '0.64rem', fontWeight: 800, color: isOwn ? '#E55353' : '#4F46E5' }}>{msg.reply_to.sender}</p>
-                        <p style={{ margin: '1px 0 0', fontSize: '0.68rem', color: '#4A5568', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{msg.reply_to.content}</p>
-                      </div>
-                    )}
-
-                    {/* Speech Bubble Container with pointer tail */}
+                  <div style={{ maxWidth: '85%', display: 'flex', flexDirection: 'column', alignItems: isOwn ? 'flex-end' : 'flex-start' }}>
+                    {/* Speech Bubble Container */}
                     <div style={{
                       position: 'relative',
                       padding: '10px 14px',
-                      borderRadius: isOwn ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                      background: isOwn ? 'linear-gradient(135deg, #F08080 0%, #E55353 100%)' : '#FFFFFF',
-                      color: isOwn ? '#FFFFFF' : '#2D3748',
-                      fontSize: '0.84rem', lineHeight: 1.5,
-                      boxShadow: isOwn ? '0 4px 14px rgba(240,128,128,0.3)' : '0 2px 10px rgba(0,0,0,0.06)',
-                      border: isOwn ? 'none' : '1px solid #FFE3E3',
+                      borderRadius: 12,
+                      background: isOwn ? '#b22830' : '#FFFFFF',
+                      color: isOwn ? '#FFFFFF' : '#111827',
+                      fontSize: '0.88rem', lineHeight: 1.5,
+                      fontWeight: 400,
+                      border: isOwn ? 'none' : '1px solid #E2E8F0',
                       wordBreak: 'break-word',
                     }}>
-                      {/* Tail Triangle */}
-                      <div style={{
-                        position: 'absolute', bottom: 0,
-                        [isOwn ? 'right' : 'left']: -6,
-                        width: 0, height: 0,
-                        borderTop: '8px solid transparent',
-                        borderRight: isOwn ? 'none' : '8px solid #FFFFFF',
-                        borderLeft: isOwn ? '8px solid #E55353' : 'none',
-                      }} />
-
-                      {!isOwn && (
-                        <p style={{ margin: '0 0 4px', fontSize: '0.65rem', fontWeight: 800, color: '#F08080', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                          {msg.ten_nguoi_gui || (isAI ? 'Trợ lý AI' : 'Nhân viên')}
-                        </p>
-                      )}
-                      <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{renderText(msg.noi_dung)}</p>
+                      <p style={{ margin: 0, whiteSpace: 'pre-wrap', fontWeight: 400 }}>{renderText(msg.noi_dung)}</p>
 
                       {/* Rich Content Cards */}
                       {msg._products && msg._products.length > 0 && (
@@ -1008,9 +989,9 @@ export default function ChatWidget({ user, socketUrl }) {
                           <button
                             key={r.id}
                             onClick={() => sendMessage(r.text)}
-                            style={{ all: 'unset', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 700, color: '#F08080', background: '#FFFFFF', padding: '5px 12px', borderRadius: 16, border: '1.5px solid #F0808040', boxShadow: '0 1px 4px rgba(240,128,128,0.1)', whiteSpace: 'nowrap', transition: 'all 0.15s' }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = '#FFF0F0'; e.currentTarget.style.borderColor = '#F08080'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#F0808040'; }}
+                            style={{ all: 'unset', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 500, color: '#4B5563', background: '#FFFFFF', padding: '5px 12px', borderRadius: 16, border: '1px solid #E5E7EB', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', whiteSpace: 'nowrap', transition: 'all 0.15s' }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = '#F9FAFB'; e.currentTarget.style.borderColor = '#D1D5DB'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#E5E7EB'; }}
                           >
                             {r.label}
                           </button>
@@ -1018,17 +999,11 @@ export default function ChatWidget({ user, socketUrl }) {
                       </div>
                     )}
 
-                    {/* Time & Reply Trigger */}
-                    <div style={{ display: 'flex', justifyContent: isOwn ? 'flex-end' : 'flex-start', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                      <span style={{ fontSize: '0.62rem', color: '#A0AEC0', fontWeight: 600 }}>{fmtTime(msg.ngay_tao)}</span>
-                      {!isOwn && (
-                        <button onClick={() => setReplyTo(msg)} style={{ all: 'unset', cursor: 'pointer', fontSize: '0.62rem', color: '#F08080', fontWeight: 700 }}>Trả lời</button>
-                      )}
+                    {/* Time */}
+                    <div style={{ display: 'flex', justifyContent: isOwn ? 'flex-end' : 'flex-start', alignItems: 'center', marginTop: 4 }}>
+                      <span style={{ fontSize: '0.62rem', color: '#94A3B8', fontWeight: 500 }}>{fmtTime(msg.ngay_tao)}</span>
                     </div>
                   </div>
-
-                  {/* Right avatar for Customer */}
-                  {isOwn && <CustomerAvatar user={user} size={32} />}
                 </div>
               );
             })}
@@ -1118,7 +1093,7 @@ export default function ChatWidget({ user, socketUrl }) {
               )}
 
               <button onClick={() => sendMessage()} disabled={!inputText.trim() || sending}
-                style={{ border: 'none', padding: 0, outline: 'none', cursor: !inputText.trim() || sending ? 'not-allowed' : 'pointer', width: 42, height: 42, borderRadius: '50%', background: !inputText.trim() || sending ? '#e9ecef' : 'linear-gradient(135deg,#b22830,#911f25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s', boxShadow: !inputText.trim() || sending ? 'none' : '0 3px 12px rgba(178,40,48,0.4)' }}>
+                style={{ border: 'none', padding: 0, outline: 'none', cursor: !inputText.trim() || sending ? 'not-allowed' : 'pointer', width: 42, height: 42, borderRadius: '50%', background: !inputText.trim() || sending ? '#e9ecef' : '#b22830', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s', boxShadow: !inputText.trim() || sending ? 'none' : '0 2px 8px rgba(178,40,48,0.3)' }}>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke={!inputText.trim() || sending ? '#adb5bd' : '#fff'} style={{ width: 16, height: 16, transform: 'translateX(1px)' }}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
                 </svg>
