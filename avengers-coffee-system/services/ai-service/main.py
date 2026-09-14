@@ -28,7 +28,6 @@ from groq_service import (
     groq_transcribe_audio,
     groq_extract_order_intent,
     match_products_to_db,
-    GROQ_CHAT_MODEL,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -134,18 +133,25 @@ async def lifespan(app: FastAPI):
         ensure_ai_storage(engine, AI_SCHEMA)
     except Exception as e:
         logger.warning(f"Loi tao schema/table AI: {e}")
-    try:
-        cf_model.train(engine)
-    except Exception as e:
-        logger.warning(f"Loi train CF: {e}")
-    try:
-        fc_model.train(engine)
-    except Exception as e:
-        logger.warning(f"Loi train Forecast: {e}")
-    try:
-        _sync_ai_model_registry(engine)
-    except Exception as e:
-        logger.warning(f"Loi dong bo metadata model AI: {e}")
+    import asyncio
+    
+    def _init_models():
+        try:
+            cf_model.train(engine)
+        except Exception as e:
+            logger.warning(f"Loi train CF: {e}")
+        try:
+            fc_model.train(engine)
+        except Exception as e:
+            logger.warning(f"Loi train Forecast: {e}")
+        try:
+            _sync_ai_model_registry(engine)
+        except Exception as e:
+            logger.warning(f"Loi dong bo metadata model AI: {e}")
+            
+    # Chạy đồng bộ trong thread ẩn để không block Uvicorn nhận request
+    asyncio.create_task(asyncio.to_thread(_init_models))
+    
     yield
     logger.info("AI Service dang tat.")
 
@@ -331,7 +337,7 @@ def _build_base_business_context() -> Dict[str, Any]:
             bt.gia_tri,
             bt.phu_thu
         FROM {MENU_SCHEMA}.bien_the_san_pham bt
-        JOIN {MENU_SCHEMA}.thuoc_tinh tt ON bt.ma_thuoc_tinh = tt.id
+        JOIN {MENU_SCHEMA}.thuoc_tinh tt ON bt.ma_thuoc_tinh = tt.ma_thuoc_tinh
     """
 
     context: Dict[str, Any] = {
@@ -613,7 +619,7 @@ def _build_local_chat_fallback(content: str, user_name: str, base_context: Dict[
 
 
 def _call_gemini_chat(gemini_api_key: str, system_text: str, user_text: str, max_output_tokens: int = 650) -> Dict[str, Any]:
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={gemini_api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={gemini_api_key}"
     payload = {
         "system_instruction": {"parts": [{"text": system_text}]},
         "contents": [{"role": "user", "parts": [{"text": user_text}]}],
@@ -650,6 +656,73 @@ def _call_gemini_chat(gemini_api_key: str, system_text: str, user_text: str, max
 
 
 # Routes bat buoc co /ai de khop voi gateway
+
+
+# ── Agent Chat Models ────────────────────────────────────────────────────────
+
+class AgentChatMessage(BaseModel):
+    role: str   # "user" | "assistant"
+    content: str
+
+
+class AgentChatRequest(BaseModel):
+    session_id: str
+    message: str
+    history: Optional[List[AgentChatMessage]] = None
+
+
+class AgentChatResponse(BaseModel):
+    reply: str
+    checkout_payload: Optional[Dict[str, Any]] = None
+    tool_calls_log: Optional[List[Dict[str, Any]]] = None
+    error: Optional[str] = None
+
+
+# ── Agent Chat Endpoint ──────────────────────────────────────────────────────
+
+@app.post("/ai/agent/chat", response_model=AgentChatResponse)
+def agent_chat(body: AgentChatRequest):
+    """
+    Endpoint Agentic Chat với Function Calling (Bước 2+3 của RAG Roadmap).
+
+    Khác với /ai/chat cũ (Zero-shot), endpoint này:
+      - Có Tool Calling: tự tra giá DB, quản lý giỏ hàng theo session
+      - Có Branch Guard: bắt buộc khách chọn chi nhánh trước khi báo giá
+      - Có Guardrail: request_checkout trả tín hiệu xác nhận, không tự tạo đơn
+
+    Frontend sử dụng:
+      - Gửi POST với session_id (user_id hoặc anon_id), message, history
+      - Nếu nhận checkout_payload != null → hiển thị popup xác nhận đơn
+    """
+    from agent_service import run_agent
+
+    history = [{"role": m.role, "content": m.content} for m in (body.history or [])]
+    result = run_agent(
+        session_id=body.session_id,
+        user_message=body.message,
+        history=history,
+    )
+    return AgentChatResponse(
+        reply=result.get("reply", ""),
+        checkout_payload=result.get("checkout_payload"),
+        tool_calls_log=result.get("tool_calls_log"),
+        error=result.get("error"),
+    )
+
+
+@app.get("/ai/agent/cart/{session_id}")
+def get_agent_cart(session_id: str):
+    """Lấy giỏ hàng hiện tại của session (dùng để debug hoặc hiển thị ở Frontend)."""
+    import cart_manager
+    return cart_manager.get_cart(session_id)
+
+
+@app.delete("/ai/agent/cart/{session_id}")
+def clear_agent_cart(session_id: str):
+    """Xoá giỏ hàng của session (sau khi tạo đơn thành công)."""
+    import cart_manager
+    cart_manager.clear_cart(session_id)
+    return {"status": "ok", "message": f"Đã xoá giỏ hàng cho session {session_id}"}
 
 
 @app.get("/ai/model/stats")
@@ -1517,6 +1590,6 @@ def health():
         "status": "ok",
         "cf_trained": cf_model.is_trained,
         "groq_available": groq_is_available(),
-        "groq_model": GROQ_CHAT_MODEL,
+        "groq_model": "dynamic_fallback",
         "stt_model": "whisper-large-v3-turbo",
     }

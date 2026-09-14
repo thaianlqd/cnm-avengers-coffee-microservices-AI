@@ -1,0 +1,202 @@
+"""
+agent_service.py
+----------------
+Orchestrator cho Agentic Chat của Avengers Coffee.
+
+Chịu trách nhiệm:
+  - Xây dựng System Prompt phù hợp với ngữ cảnh (giỏ hàng, chi nhánh, lịch sử)
+  - [Phase 2] Inject RAG context vào system prompt nếu câu hỏi liên quan FAQ/chính sách
+  - [Phase 3] Guardrails: kiểm tra input/output trước và sau khi gọi LLM
+  - Gọi groq_agent_chat (Function Calling loop)
+  - Trả về reply text + checkout_payload (nếu có) cho API endpoint
+
+KHÔNG chứa business logic DB hoặc cart logic — những thứ đó nằm ở
+agent_tools.py và cart_manager.py.
+"""
+import logging
+from typing import Any, Dict, List, Optional
+
+import cart_manager
+from agent_tools import ALL_TOOL_SCHEMAS, TOOL_EXECUTORS
+from groq_service import groq_agent_chat
+import guardrails
+
+logger = logging.getLogger(__name__)
+
+# ── System Prompt ──────────────────────────────────────────────────────────────
+_AGENT_SYSTEM_PROMPT = """Bạn là trợ lý ảo của Avengers Coffee — một chuỗi cà phê tại Việt Nam.
+Nhiệm vụ của bạn là tư vấn và hỗ trợ khách đặt đồ uống qua hội thoại.
+
+QUY TẮC BẮT BUỘC:
+1. LUÔN hỏi chi nhánh trước khi báo giá hoặc kiểm tra tồn kho. Gọi tool ask_branch() nếu khách chưa nói.
+2. Giá bán phải lấy từ tool check_price_and_stock. KHÔNG được tự bịa giá.
+3. Chỉ thêm vào giỏ sau khi đã biết product_id và giá thật từ check_price_and_stock.
+4. Khi khách muốn chốt đơn, gọi request_checkout() để hệ thống xác nhận tổng tiền.
+5. Trả lời ngắn gọn, thân thiện bằng tiếng Việt. Không dùng Markdown quá phức tạp.
+6. Khi khách hỏi về chính sách, FAQ, thành phần, khuyến mãi: gọi tool search_knowledge_base trước.
+7. Khi khách hỏi gợi ý món ngon hoặc bán chạy: gọi tool get_recommendations (mặc định criteria="hot"). NẾU khách hỏi món "đánh giá cao", "5 sao", phải truyền criteria="rating".
+8. KHÔNG cam kết hoàn tiền, giảm giá hay điều chỉnh giá ngoài những gì hệ thống cho phép.
+
+THÔNG TIN PHIÊN HIỆN TẠI:
+{session_context}
+{rag_context}"""
+
+
+def _build_session_context(session_id: str) -> str:
+    """Tóm tắt ngữ cảnh phiên hiện tại để nhét vào system prompt."""
+    branch_id = cart_manager.get_branch(session_id)
+    cart_text = cart_manager.cart_summary_text(session_id)
+    branch_info = f"Chi nhánh đang chọn: {branch_id}" if branch_id else "Chi nhánh: Chưa chọn"
+    return f"{branch_info}\nGiỏ hàng hiện tại:\n{cart_text}"
+
+
+def _build_rag_context(user_message: str) -> str:
+    """
+    [Phase 2] Lấy RAG context liên quan đến câu hỏi.
+    Chỉ inject nếu câu hỏi có liên quan đến FAQ/chính sách/thành phần.
+    """
+    # Từ khóa trigger RAG — chỉ gọi RAG khi thật sự cần thiết
+    rag_trigger_keywords = [
+        "chính sách", "đổi trả", "hoàn tiền", "giờ mở cửa", "thành phần",
+        "nguyên liệu", "khuyến mãi", "ưu đãi", "tích điểm", "thành viên",
+        "sinh nhật", "học sinh", "sinh viên", "dị ứng", "sữa đậu", "không đường",
+        "giao hàng", "phí giao", "thanh toán", "vnpay", "zalopay",
+        "policy", "faq", "quy định", "điều khoản",
+    ]
+    msg_lower = user_message.lower()
+    if not any(kw in msg_lower for kw in rag_trigger_keywords):
+        return ""
+
+    try:
+        from rag_service import get_rag_service
+        rag = get_rag_service()
+        context = rag.retrieve(user_message, top_k=2)
+        if context:
+            return f"\nTÀI LIỆU THAM KHẢO (dùng để trả lời chính xác):\n{context}"
+    except Exception as e:
+        logger.warning("[AgentService] RAG context error: %s", e)
+    return ""
+
+
+def _build_messages(
+    session_id: str,
+    history: List[Dict[str, str]],
+    user_message: str,
+) -> List[Dict[str, Any]]:
+    """
+    Xây dựng danh sách messages gửi lên Groq.
+
+    Args:
+        session_id: ID phiên chat của khách.
+        history:    Lịch sử chat [{"role": "user"|"assistant", "content": str}].
+                    Tối đa 8 lượt gần nhất để tránh tràn context.
+        user_message: Tin nhắn mới nhất của khách.
+    """
+    session_ctx = _build_session_context(session_id)
+    rag_ctx = _build_rag_context(user_message)
+    system_content = _AGENT_SYSTEM_PROMPT.format(
+        session_context=session_ctx,
+        rag_context=rag_ctx,
+    )
+
+    messages: List[Dict[str, Any]] = [
+        {"role": "system", "content": system_content}
+    ]
+
+    # Giữ tối đa 8 lượt lịch sử (16 messages) để tránh tràn context
+    trimmed_history = history[-8:] if len(history) > 8 else history
+    for h in trimmed_history:
+        if h.get("role") in ("user", "assistant") and h.get("content"):
+            messages.append({"role": h["role"], "content": h["content"]})
+
+    messages.append({"role": "user", "content": user_message})
+    return messages
+
+
+# ── Public API ────────────────────────────────────────────────────────────────
+
+def run_agent(
+    session_id: str,
+    user_message: str,
+    history: Optional[List[Dict[str, str]]] = None,
+    max_tool_rounds: int = 5,
+) -> Dict[str, Any]:
+    """
+    Điểm vào chính của Agent. Được gọi từ FastAPI endpoint.
+
+    Args:
+        session_id:     ID phiên chat (từ frontend, ví dụ: user_id hoặc anon_id).
+        user_message:   Tin nhắn mới nhất của khách.
+        history:        Lịch sử hội thoại (list of {role, content}).
+        max_tool_rounds: Số vòng tool tối đa (default 5).
+
+    Returns:
+        {
+          "reply":            str,       # Câu trả lời dạng text cho khách
+          "checkout_payload": dict|None, # Nếu khách muốn chốt đơn (Guardrail trigger)
+          "tool_calls_log":   list,      # Debug log các tool đã gọi
+          "error":            str|None,
+        }
+    """
+    if not session_id or not user_message:
+        return {
+            "reply": "Xin lỗi, mình không nhận được tin nhắn của bạn. Bạn thử lại nhé!",
+            "checkout_payload": None,
+            "tool_calls_log": [],
+            "error": "missing_input",
+        }
+
+    # ── [Phase 3] Lớp 1: Guardrails — Kiểm tra Input ─────────────────────────
+    is_safe, block_reason = guardrails.check_input(user_message, session_id)
+    if not is_safe:
+        safe_reply = guardrails.get_block_reply(block_reason or "")
+        logger.info(
+            "[AgentService] Input blocked: session=%s reason=%s",
+            session_id, block_reason
+        )
+        return {
+            "reply": safe_reply,
+            "checkout_payload": None,
+            "tool_calls_log": [],
+            "error": f"blocked:{block_reason}",
+        }
+
+    # ── Build messages (bao gồm RAG context nếu cần) ──────────────────────────
+    messages = _build_messages(
+        session_id=session_id,
+        history=history or [],
+        user_message=user_message,
+    )
+
+    # ── Gọi Groq Agent ────────────────────────────────────────────────────────
+    result = groq_agent_chat(
+        messages=messages,
+        tools=ALL_TOOL_SCHEMAS,
+        tool_executors=TOOL_EXECUTORS,
+        max_tool_rounds=max_tool_rounds,
+    )
+
+    # ── [Phase 3] Lớp 2: Guardrails — Kiểm tra Output ────────────────────────
+    if result.get("reply"):
+        safe_reply, was_modified = guardrails.check_output(result["reply"])
+        if was_modified:
+            logger.warning(
+                "[AgentService] Output was modified by guardrails: session=%s", session_id
+            )
+        result["reply"] = safe_reply
+
+    # ── Xử lý rate limit từ Groq ──────────────────────────────────────────────
+    if result.get("error") == "rate_limit":
+        result["reply"] = (
+            "Mình đang bận hơn bình thường một chút. "
+            "Bạn chờ mình vài giây rồi gửi lại nhé!"
+        )
+
+    logger.info(
+        "[AgentService] session=%s tools_called=%d checkout=%s error=%s",
+        session_id,
+        len(result.get("tool_calls_log", [])),
+        "yes" if result.get("checkout_payload") else "no",
+        result.get("error"),
+    )
+    return result
