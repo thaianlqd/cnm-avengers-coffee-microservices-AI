@@ -90,9 +90,11 @@ export default function Header({
   const isOrderTab = activeTab === 'order';
 
   const leftNavItems = [
-    { id: 'order', label: t('header.menu') || 'THỰC ĐƠN', dropdownTabId: 'order', icon: HomeIcon },
+    { id: 'menu-intro', label: t('header.menu') || 'THỰC ĐƠN', dropdownTabId: 'menu-intro', icon: HomeIcon },
     { id: 'about', label: t('header.about') || 'VỀ CHÚNG TÔI', icon: InformationCircleIcon },
     { id: 'nhuong-quyen', label: 'NHƯỢNG QUYỀN', icon: BuildingStorefrontIcon },
+    { id: 'careers', label: t('header.careers') || 'NGHỀ NGHIỆP', icon: BriefcaseIcon },
+    { id: 'contact', label: t('header.support') || 'HỖ TRỢ', icon: ChatBubbleLeftEllipsisIcon },
   ];
 
   const rightNavItems = [
@@ -114,10 +116,11 @@ export default function Header({
   return (
     <header className="sticky top-0 z-50 bg-[#b22830] shadow-lg border-b border-red-900/40">
       {/* Main Top bar */}
-      <div className="mx-auto flex h-[90px] w-full max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-8 relative">
+      <div className="mx-auto flex h-[90px] w-full max-w-[1440px] items-center justify-between px-2 sm:px-6 lg:px-8 relative">
         
         {/* ── LEFT NAVIGATION ── */}
-        <nav className="hidden lg:flex flex-1 items-center justify-start gap-2 pr-12">
+        <div className="flex-1 flex items-center justify-start min-w-0">
+          <nav className="hidden lg:flex items-center justify-start gap-0.5 xl:gap-1.5">
 
           {leftNavItems.map((item) => {
             const Icon = item.icon;
@@ -132,7 +135,7 @@ export default function Header({
                       onSelectedCatIdChange?.('all');
                     }
                   }}
-                  className={`relative flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all duration-200 cursor-pointer ${
+                  className={`relative flex items-center gap-1.5 px-1.5 py-1.5 rounded-xl transition-all duration-200 cursor-pointer ${
                     item.highlight
                       ? isActive
                         ? 'bg-amber-400 text-amber-900 font-black shadow-xs'
@@ -142,19 +145,16 @@ export default function Header({
                         : 'text-white/85 hover:bg-white/10 hover:text-white font-bold'
                   }`}
                 >
-                  <Icon className="h-4 w-4 flex-shrink-0 opacity-90" />
-                  <span className="text-[13px] uppercase tracking-wider whitespace-nowrap">
+                  <Icon className="h-3.5 w-3.5 flex-shrink-0 opacity-90 hidden xl:block" />
+                  <span className="text-[10px] xl:text-[11.5px] uppercase tracking-wider whitespace-nowrap">
 
                     {item.label}
                   </span>
-                  {isActive && (
-                    <span className="absolute bottom-[-4px] left-1/2 -translate-x-1/2 h-[3px] w-[24px] rounded-full bg-amber-300" />
-                  )}
                 </button>
 
                 {/* Dropdown Mega Menu for THỰC ĐƠN */}
-                {item.dropdownTabId === 'order' && categories.length > 0 && (
-                  <div className="fixed left-0 top-[84px] w-full bg-[#4a2e23] shadow-2xl invisible opacity-0 -translate-y-2 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 z-[60] border-t-2 border-amber-500/80">
+                {item.dropdownTabId === 'menu-intro' && categories.length > 0 && (
+                  <div className="fixed left-0 top-[84px] w-full bg-[#4a2e23] shadow-2xl invisible opacity-0 -translate-y-2 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 z-[60]">
                     <div className="mx-auto max-w-[1380px] px-10 py-8 flex flex-row justify-between items-start gap-8">
                       {(() => {
                         const parentCats = categories.filter(c => c.cap_bac === 1 || !c.ma_danh_muc_cha);
@@ -173,8 +173,8 @@ export default function Header({
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onTabChange?.('order');
-                                onSelectedCatIdChange?.(col.id);
+                                onTabChange?.('menu-intro');
+                                onSelectedCatIdChange?.(`group-${col.id}`);
                                 document.activeElement?.blur();
                               }}
                               className="text-[#e2b078] hover:text-white font-black text-[14px] uppercase mb-3.5 tracking-wider text-left transition-colors cursor-pointer border-b border-amber-800/40 pb-2"
@@ -189,7 +189,7 @@ export default function Header({
                                     className="text-white/80 hover:text-white hover:translate-x-1 text-[13px] font-medium transition-all text-left block w-full"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      onTabChange?.('order');
+                                      onTabChange?.('menu-intro');
                                       onSelectedCatIdChange?.(cat.ma_danh_muc);
                                       document.activeElement?.blur();
                                     }}
@@ -208,11 +208,12 @@ export default function Header({
               </div>
             );
           })}
-        </nav>
+          </nav>
+        </div>
 
         {/* ── CENTER LOGO ── */}
         <div
-          className="flex shrink-0 cursor-pointer items-center justify-center px-4 transition-transform hover:scale-105 active:scale-95 duration-200"
+          className="flex-shrink-0 flex items-center justify-center z-10 px-2 cursor-pointer transition-transform hover:scale-105 active:scale-95 duration-200"
           onClick={() => {
             onSelectedCatIdChange?.('all');
             onTabChange?.('home');
@@ -220,36 +221,34 @@ export default function Header({
           }}
         >
           <img 
-            src="/hc-assets/red_BG_logo800.png" 
+            src="/hc-assets/logo-footer.png" 
             alt="Avengers Coffee" 
-            className="h-[64px] sm:h-[72px] w-auto drop-shadow-md" 
+            className="h-[64px] sm:h-[72px] w-auto drop-shadow-md brightness-0 invert" 
             onError={(e) => { e.currentTarget.style.display = 'none'; }} 
           />
         </div>
 
         {/* ── RIGHT NAVIGATION ── */}
-        <div className="hidden lg:flex flex-1 items-center justify-end gap-2.5">
-          {rightNavItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => onTabChange?.(item.id)}
-                className={`relative flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-200 cursor-pointer ${
+        <div className="flex-1 flex items-center justify-end min-w-0">
+          <div className="hidden lg:flex items-center justify-end gap-1 xl:gap-2">
+            {rightNavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onTabChange?.(item.id)}
+                  className={`relative flex items-center gap-1.5 px-1.5 py-1.5 rounded-xl transition-all duration-200 cursor-pointer ${
                   isActive
                     ? 'bg-white/20 text-white font-black shadow-xs'
                     : 'text-white/85 hover:bg-white/10 hover:text-white font-bold'
                 }`}
               >
-                <Icon className="h-4 w-4 flex-shrink-0 opacity-90" />
-                <span className="text-[13px] uppercase tracking-wider whitespace-nowrap">
+                <Icon className="h-4 w-4 flex-shrink-0 opacity-90 hidden xl:block" />
+                <span className="text-[11px] xl:text-[13px] uppercase tracking-wider whitespace-nowrap">
                   {item.label}
                 </span>
-                {isActive && (
-                  <span className="absolute bottom-[-4px] left-1/2 -translate-x-1/2 h-[3px] w-[24px] rounded-full bg-amber-300" />
-                )}
               </button>
             );
           })}
@@ -265,7 +264,7 @@ export default function Header({
                 currentLng === 'vi' ? 'bg-white shadow-xs scale-105' : 'opacity-60 hover:opacity-100'
               }`}
             >
-              <img src="https://flagcdn.com/w40/vn.png" alt="VN" className="h-[14px] w-auto rounded-[2px] block" />
+              <img src="https://flagcdn.com/w40/vn.png" alt="VN" className="h-[14px] w-[20px] object-cover rounded-[2px] block" />
             </button>
             <button
               type="button"
@@ -275,7 +274,7 @@ export default function Header({
                 currentLng === 'en' ? 'bg-white shadow-xs scale-105' : 'opacity-60 hover:opacity-100'
               }`}
             >
-              <img src="https://flagcdn.com/w40/gb.png" alt="EN" className="h-[14px] w-auto rounded-[2px] block" />
+              <img src="https://flagcdn.com/w40/gb.png" alt="EN" className="h-[14px] w-[20px] object-cover rounded-[2px] block" />
             </button>
           </div>
 
@@ -296,7 +295,7 @@ export default function Header({
         </div>
 
         {/* ── MOBILE HAMBURGER BUTTON ── */}
-        <div className="flex items-center gap-2 lg:hidden">
+        <div className="flex items-center gap-2 lg:hidden ml-2">
           <button
             type="button"
             onClick={() => setShowMobileMenu(!showMobileMenu)}
@@ -304,6 +303,7 @@ export default function Header({
           >
             {showMobileMenu ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
           </button>
+        </div>
         </div>
       </div>
 

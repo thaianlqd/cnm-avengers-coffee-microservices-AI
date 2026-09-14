@@ -65,7 +65,7 @@ export default function Footer({ onTabChange }) {
                   onClick={() => { onTabChange?.('tra-cuu-don'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="hover:text-red-200 transition-colors text-left flex items-center gap-1.5 font-semibold text-amber-300 hover:text-amber-200"
                 >
-                  <span>🚚 Tra cứu đơn hàng</span>
+                  <span>Tra cứu đơn hàng</span>
                 </button>
               </li>
             </ul>
