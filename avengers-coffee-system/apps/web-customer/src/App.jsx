@@ -1624,7 +1624,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      {!['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail', 'gift-card'].includes(activeTab) && (
+      {!['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail', 'gift-card', 'order-history', 'tra-cuu-don', 'tracking'].includes(activeTab) && (
         <Header
           userName={user ? user.ho_ten || user.hoTen || 'Đăng nhập' : 'Đăng nhập'}
           activeTab={activeTab}
@@ -1688,6 +1688,16 @@ function AppContent() {
             HomeBannerSlider={HomeBannerSlider}
             categories={categories}
             setSelectedCatId={setSelectedCatId}
+          />
+        ) : activeTab === 'menu-intro' ? (
+          <MenuIntroPage
+            categories={categories}
+            products={products}
+            activeCategoryId={selectedCatId}
+            onCategoryChange={setSelectedCatId}
+            onOrderProduct={(product) => {
+              setActiveTab('order');
+            }}
           />
         ) : activeTab === 'about' ? (
           <About setActiveTab={setActiveTab} />
