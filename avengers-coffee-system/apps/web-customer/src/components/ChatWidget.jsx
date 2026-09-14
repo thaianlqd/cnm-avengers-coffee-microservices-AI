@@ -548,7 +548,25 @@ export default function ChatWidget({ user, socketUrl }) {
     scrollBottom();
   }, [userId, addAIMsg, scrollBottom]);
 
-  // Direct AI API handler (100% dynamic response from backend AI service + UI Cards)
+  // ── Agent API call (Phase 2+3: RAG + Guardrails + Tool Calling) ─────────────
+  const callAgentAPI = useCallback(async (text) => {
+    // Build history as [{role, content}] for the Agent endpoint
+    const history = messages.slice(-8).map((m) => ({
+      role: m.vai_tro_nguoi_gui === 'CUSTOMER' ? 'user' : 'assistant',
+      content: m.noi_dung || '',
+    })).filter((m) => m.content);
+
+    const agentRes = await apiClient.post('/ai/agent/chat', {
+      session_id: effectiveUserId,
+      message: text,
+      history,
+    });
+
+    const d = agentRes?.data || agentRes;
+    return d;
+  }, [messages, effectiveUserId]);
+
+  // Direct AI API handler (primary: /ai/agent/chat, fallback: /ai/chat)
   const processAIMessage = useCallback(async (text) => {
     const textLower = text.toLowerCase();
 
@@ -562,11 +580,80 @@ export default function ChatWidget({ user, socketUrl }) {
     // Prefetch data cache if needed
     await prefetchData();
 
+    // ── LUỒNG 1: Gọi AI Agent mới (RAG + Guardrails + Tool Calling) ──────────
     try {
-      // Build conversation history snippet
+      const agentData = await callAgentAPI(text);
+      const agentReply = agentData?.reply;
+      const checkoutPayload = agentData?.checkout_payload;
+      const agentError = agentData?.error;
+
+      // Xử lý checkout_payload: Agent muốn xác nhận đơn hàng
+      if (checkoutPayload && checkoutPayload.order_summary) {
+        const summary = checkoutPayload.order_summary;
+        // Chuyển đổi sang format pendingOrder đang dùng
+        setPendingOrder({
+          items: (summary.items || []).map((i) => ({
+            matched: true,
+            product_id: i.product_id,
+            product_name: i.product_name || i.ten_san_pham,
+            quantity: i.quantity || i.so_luong || 1,
+            price: i.unit_price || i.gia_ban || 0,
+            size: i.size,
+            note: i.note,
+          })),
+          total: summary.total_price,
+          message: agentReply || `Tổng đơn: ${fmtVND(summary.total_price)} tại ${summary.branch_name}`,
+          paymentMethod: summary.payment_method || 'THANH_TOAN_KHI_NHAN_HANG',
+          branch_id: summary.branch_id,
+          branch_name: summary.branch_name,
+        });
+        if (agentReply) addAIMsg(agentReply, { _quickReplies: [] });
+        return;
+      }
+
+      // Có reply hợp lệ từ Agent
+      if (agentReply && !agentError?.startsWith('blocked:')) {
+        const extras = {};
+
+        // Enrich với UI cards dựa trên nội dung reply + câu hỏi
+        if (/(cửa hàng|chi nhánh|địa chỉ|ở đâu|gần đây)/.test(textLower) || /(chi nhánh|địa chỉ)/.test(agentReply.toLowerCase())) {
+          extras._stores = cache.current.branches.slice(0, 4);
+        }
+        // 2. Menu / Sản phẩm
+        if (/(thực đơn|menu|đồ uống|cà phê|trà|sữa|matcha|có gì ngon|gợi ý|bán chạy|đánh giá|sp|sản phẩm|yêu thích)/.test(textLower) || /(sản phẩm|đồ uống|menu|món|sp|yêu thích|gợi ý)/.test(agentReply.toLowerCase())) {
+          // Lọc ra đúng những món được AI nhắc đến trong câu trả lời
+          const replyLower = agentReply.toLowerCase();
+          const mentioned = cache.current.products.filter(p => replyLower.includes(p.ten_san_pham.toLowerCase()));
+          extras._products = mentioned.length > 0 ? mentioned.slice(0, 6) : cache.current.products.slice(0, 6);
+        }
+        if (/(khuyến mãi|voucher|giảm giá|ưu đãi)/.test(textLower)) {
+          extras._vouchers = cache.current.vouchers.slice(0, 4);
+        }
+        if (/(đơn hàng|đơn của tôi|trạng thái.*đơn)/.test(textLower)) {
+          extras._orders = cache.current.orders.slice(0, 3);
+        }
+        if (/(thanh toán|vnpay|zalopay|momo)/.test(textLower)) {
+          extras._type = 'payment';
+        }
+
+        addAIMsg(agentReply, { ...extras, _quickReplies: QUICK_ACTIONS.slice(0, 3) });
+        return;
+      }
+
+      // Nếu Agent bị guardrail block, agentReply đã là safe fallback reply
+      if (agentReply && agentError?.startsWith('blocked:')) {
+        addAIMsg(agentReply);
+        return;
+      }
+    } catch (agentErr) {
+      console.warn('[ChatWidget] Agent API failed, falling back to legacy /ai/chat:', agentErr?.message || agentErr);
+    }
+
+    // ── LUỒNG 2: Fallback về /ai/chat cũ ──────────────────────────────────────
+    try {
       const history = messages.slice(-6).map((m) => `${m.vai_tro_nguoi_gui === 'CUSTOMER' ? userName : 'AI'}: ${m.noi_dung}`).join('\n');
 
-      // Check order intent if customer wants to order directly
+      // Check order intent
       if (/(đặt|mua|order|cho tôi|cho mình)\s*(\d+)?/.test(textLower)) {
         try {
           const orderRes = await apiClient.post('/ai/chat/order-intent', { text, user_id: effectiveUserId, history });
@@ -578,7 +665,6 @@ export default function ChatWidget({ user, socketUrl }) {
         } catch { /* proceed to general chat */ }
       }
 
-      // Call primary AI Chat endpoint (`/ai/chat`)
       const chatRes = await apiClient.post('/ai/chat', {
         user_id: effectiveUserId,
         user_name: userName,
@@ -592,43 +678,28 @@ export default function ChatWidget({ user, socketUrl }) {
 
       if (reply) {
         const extras = {};
-
-        // 1. Stores / Chi nhánh
         if ((resData.stores && resData.stores.length > 0) || /(cửa hàng|chi nhánh|địa chỉ|ở đâu|gần đây|tìm cửa)/.test(textLower) || /(cửa hàng|chi nhánh|địa chỉ)/.test(reply.toLowerCase())) {
           extras._stores = (resData.stores && resData.stores.length > 0) ? resData.stores : cache.current.branches.slice(0, 4);
         }
-
-        // 2. Menu / Sản phẩm
         if ((resData.products && resData.products.length > 0) || /(thực đơn|menu|đồ uống|cà phê|phê|trà|sữa|đồ ăn|bánh|matcha|latte|có gì ngon|món|xem menu|đặt)/.test(textLower) || /(sản phẩm|đồ uống|menu|món|matcha|latte)/.test(reply.toLowerCase())) {
           let prods = (resData.products && resData.products.length > 0) ? resData.products : cache.current.products;
           const searchKeys = ['matcha', 'latte', 'americano', 'trà sữa', 'bánh', 'cà phê', 'phin', 'espresso', 'cold brew', 'trà'];
           const matchedKey = searchKeys.find((k) => textLower.includes(k) || reply.toLowerCase().includes(k));
           if (matchedKey && prods.length > 0) {
-            const filtered = prods.filter((p) =>
-              (p.ten_san_pham || '').toLowerCase().includes(matchedKey) ||
-              (p.ten_danh_muc || p.danh_muc || '').toLowerCase().includes(matchedKey)
-            );
+            const filtered = prods.filter((p) => (p.ten_san_pham || '').toLowerCase().includes(matchedKey) || (p.ten_danh_muc || p.danh_muc || '').toLowerCase().includes(matchedKey));
             if (filtered.length > 0) prods = filtered;
           }
           extras._products = prods.slice(0, 6);
         }
-
-        // 3. Vouchers / Khuyến mãi
         if ((resData.vouchers && resData.vouchers.length > 0) || /(khuyến mãi|voucher|giảm giá|ưu đãi|mã)/.test(textLower) || /(voucher|khuyến mãi|ưu đãi)/.test(reply.toLowerCase())) {
           extras._vouchers = (resData.vouchers && resData.vouchers.length > 0) ? resData.vouchers : cache.current.vouchers.slice(0, 4);
         }
-
-        // 4. Orders / Đơn hàng
         if ((resData.orders && resData.orders.length > 0) || /(đơn hàng|đơn của tôi|trạng thái.*đơn|theo dõi.*đơn|giao chưa)/.test(textLower) || /(đơn hàng)/.test(reply.toLowerCase())) {
           extras._orders = (resData.orders && resData.orders.length > 0) ? resData.orders : cache.current.orders.slice(0, 3);
         }
-
-        // 5. Payment
         if (/(thanh toán|payment|vnpay|ví|momo|atm)/.test(textLower)) {
           extras._type = 'payment';
         }
-
-        // Clean up bullet list text lines if interactive cards are present
         const hasCards = Boolean(extras._products || extras._stores || extras._vouchers || extras._orders);
         if (hasCards) {
           const lines = reply.split('\n');
@@ -641,19 +712,19 @@ export default function ChatWidget({ user, socketUrl }) {
           const cleanedText = nonBulletLines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
           if (cleanedText) reply = cleanedText;
         }
-
         addAIMsg(reply, { ...extras, _quickReplies: QUICK_ACTIONS.slice(0, 3) });
         return;
       }
     } catch (err) {
-      console.error('[ChatWidget] AI API error:', err);
+      console.error('[ChatWidget] Legacy AI API error:', err);
     }
 
     // Ultimate fallback
     addAIMsg('Xin lỗi, mình gặp gián đoạn kết nối ngắn. Bạn vui lòng thử lại câu hỏi nhé!', {
       _quickReplies: QUICK_ACTIONS.slice(0, 3),
     });
-  }, [messages, userName, effectiveUserId, replyTo, prefetchData, addAIMsg]);
+  }, [messages, userName, effectiveUserId, replyTo, prefetchData, addAIMsg, callAgentAPI]);
+
 
   // Send message trigger
   const sendMessage = useCallback(async (overrideText) => {
