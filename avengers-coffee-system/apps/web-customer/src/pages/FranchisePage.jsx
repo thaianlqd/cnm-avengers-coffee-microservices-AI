@@ -306,7 +306,7 @@ export default function FranchisePage({ onNavigate }) {
       {/* ── HERO BANNER ──────────────────────────────────────────── */}
       <section
         style={{
-          background: 'linear-gradient(135deg, #6b1419 0%, #8f1b23 50%, #75171d 100%)',
+          background: '#5e0b0f',
           padding: '88px 24px 104px',
           textAlign: 'center',
           position: 'relative',
@@ -347,7 +347,7 @@ export default function FranchisePage({ onNavigate }) {
               borderRadius: 999,
               background: 'rgba(255, 255, 255, 0.12)',
               border: '1px solid rgba(255, 255, 255, 0.22)',
-              color: '#fef08a',
+              color: '#ffffff',
               fontSize: 13,
               fontWeight: 700,
               letterSpacing: '0.08em',
@@ -370,7 +370,7 @@ export default function FranchisePage({ onNavigate }) {
           >
             Cùng Avengers Coffee
             <br />
-            <span style={{ color: '#fbbf24' }}>Xây Dựng Tương Lai</span>
+            <span style={{ color: '#ffffff' }}>Xây Dựng Tương Lai</span>
           </h1>
 
           <p
