@@ -54,6 +54,17 @@ TOOL_ASK_BRANCH = {
 }
 
 
+def _clean_dict(d: dict) -> dict:
+    import decimal
+    res = {}
+    for k, v in d.items():
+        if isinstance(v, decimal.Decimal):
+            res[k] = float(v)
+        else:
+            res[k] = v
+    return res
+
+
 def execute_ask_branch() -> Dict[str, Any]:
     """Lấy danh sách chi nhánh từ DB để LLM trình bày cho khách (có check giờ)."""
     try:
@@ -78,16 +89,16 @@ def execute_ask_branch() -> Dict[str, Any]:
             rows = conn.execute(text(
                 f"""
                 SELECT c.ma_chi_nhanh, c.ten_chi_nhanh, c.dia_chi,
-                       ROUND(COALESCE(AVG(d.diem_tong_quan), 0)::numeric, 1) as avg_rating,
+                       ROUND(COALESCE(AVG(d.diem_tong_quan), 0)::numeric, 1)::float as avg_rating,
                        COUNT(d.id) as total_reviews
                 FROM {identity_schema}.chi_nhanh c
-                LEFT JOIN {order_schema}.danh_gia_chi_nhanh d ON c.ma_chi_nhanh = d.ma_chi_nhanh
+                LEFT JOIN {order_schema}.danh_gia_chi_nhanh d ON c.ma_chi_nhanh::text = d.ma_chi_nhanh::text
                 WHERE c.trang_thai = 'ACTIVE'
                 GROUP BY c.ma_chi_nhanh, c.ten_chi_nhanh, c.dia_chi
                 ORDER BY avg_rating DESC, c.ten_chi_nhanh ASC LIMIT 10
                 """
             )).mappings().all()
-        branches = [dict(r) for r in rows]
+        branches = [_clean_dict(dict(r)) for r in rows]
         return {
             "status": "need_branch_selection",
             "branches": branches,
@@ -106,22 +117,22 @@ TOOL_FIND_NEAREST_BRANCH = {
     "type": "function",
     "function": {
         "name": "find_nearest_branch",
-        "description": "Tìm kiếm chi nhánh gần nhất theo Quận/Huyện/Tỉnh thành mà khách hàng yêu cầu.",
+        "description": "Tìm kiếm chi nhánh (cửa hàng cà phê) gần nhất. Nếu khách hỏi 'gần tôi' hoặc không nói rõ địa điểm, hãy ĐỂ TRỐNG tham số location (location='') để hệ thống tự động lấy địa chỉ mặc định của khách. KHÔNG dùng tool này để trả lời câu hỏi 'địa chỉ của tôi ở đâu' (hãy dùng get_user_profile).",
         "parameters": {
             "type": "object",
             "properties": {
                 "location": {
                     "type": "string",
-                    "description": "Địa điểm Quận, Huyện, hoặc Thành phố (ví dụ: 'Hải Châu', 'Quận 1')."
+                    "description": "Địa điểm Quận, Huyện, hoặc Thành phố (ví dụ: 'Hải Châu', 'Quận 1'). Để trống nếu muốn tìm theo địa chỉ của khách."
                 },
             },
-            "required": ["location"],
+            "required": [],
         },
     },
 }
 
-def execute_find_nearest_branch(location: str, session_id: str = "") -> Dict[str, Any]:
-    """Tìm chi nhánh dựa trên text địa chỉ hoặc Sổ địa chỉ của người dùng."""
+def execute_find_nearest_branch(location: str = "", session_id: str = "") -> Dict[str, Any]:
+    """Tìm chi nhánh gần nhất dựa trên geocoding và khoảng cách Haversine."""
     try:
         import datetime
         # Fix Timezone: UTC+7 (Vietnam)
@@ -139,72 +150,110 @@ def execute_find_nearest_branch(location: str, session_id: str = "") -> Dict[str
         import os
         identity_schema = os.getenv("IDENTITY_SCHEMA", "identity")
         order_schema = os.getenv("ORDER_SCHEMA", "orders")
-        
-        words = [w for w in _norm(location).split() if len(w) > 1]
-        
-        # Nếu khách chỉ nói "gần tôi", "tôi", "ở đây" mà không có địa danh cụ thể
-        generic_words = {"toi", "gan", "day", "nao", "nhat"}
-        is_generic = all(w in generic_words for w in words)
-        
-        used_saved_address = False
-        saved_address_text = ""
-        
+
+        from sqlalchemy import text
+        from utils.geo import geocode_address, haversine_distance
+
+        target_address = location.strip() if location else ""
+        user_lat, user_lon = None, None
+
         with engine.connect() as conn:
-            if not words or is_generic:
-                # Tìm địa chỉ mặc định của người dùng
-                if session_id:
-                    addr = conn.execute(text(
-                        f"""
-                        SELECT dia_chi_day_du 
-                        FROM {identity_schema}.dia_chi_giao_hang 
-                        WHERE ma_nguoi_dung = :uid AND mac_dinh = true
-                        LIMIT 1
-                        """
-                    ), {"uid": session_id}).fetchone()
-                    
-                    if addr and addr[0]:
-                        saved_address_text = addr[0]
-                        # Lấy 2 phần cuối của địa chỉ (thường là Quận, Tỉnh)
-                        parts = [p.strip() for p in saved_address_text.split(',')]
-                        search_parts = parts[-2:] if len(parts) >= 2 else parts
-                        search_text = " ".join(search_parts)
-                        words = [w for w in _norm(search_text).split() if len(w) > 1]
-                        used_saved_address = True
+            # 1. Tìm địa chỉ mặc định của người dùng nếu location trống hoặc quá chung chung
+            generic_words = {"toi", "gan", "day", "nao", "nhat"}
+            is_generic = all(w in generic_words for w in location.lower().replace(",", " ").split()) if location else True
             
-            if not words or is_generic and not used_saved_address:
+            if (not target_address or is_generic) and session_id:
+                addr = conn.execute(text(
+                    f"""
+                    SELECT dia_chi_day_du, vi_do, kinh_do
+                    FROM {identity_schema}.dia_chi_giao_hang 
+                    WHERE ma_nguoi_dung::text = :uid AND mac_dinh = true
+                    LIMIT 1
+                    """
+                ), {"uid": session_id}).fetchone()
+                
+                if addr and addr[0]:
+                    target_address = addr[0]
+                    if addr[1] is not None and addr[2] is not None:
+                        user_lat = float(addr[1])
+                        user_lon = float(addr[2])
+
+            if not target_address:
                 return {
                     "status": "need_location",
-                    "message": "Hệ thống AI hiện chưa được cấp quyền truy cập GPS của khách hàng, và bạn chưa có địa chỉ mặc định trong Sổ địa chỉ. Hãy lịch sự hỏi khách hàng đang ở Quận, Huyện hoặc Tỉnh thành nào để bạn có thể tìm chi nhánh gần nhất."
+                    "message": "Hệ thống AI hiện chưa được cấp quyền truy cập GPS của khách hàng, và bạn chưa có địa chỉ mặc định. Hãy hỏi khách hàng đang ở địa chỉ nào để tìm chi nhánh gần nhất."
                 }
+
+            # 2. Geocode nếu chưa có tọa độ (hoặc user tự gõ location)
+            if user_lat is None or user_lon is None:
+                coords = geocode_address(target_address)
+                if not coords:
+                    return {
+                        "status": "not_found",
+                        "message": f"Rất tiếc, hệ thống bản đồ không thể xác định được vị trí của '{target_address}'. Bạn có thể cung cấp địa chỉ cụ thể hơn không?"
+                    }
+                user_lat, user_lon = coords
                 
-            pattern = "%(" + "|".join(words) + ")%"
-            
-            rows = conn.execute(text(
-                f"""
-                SELECT c.ma_chi_nhanh, c.ten_chi_nhanh, c.dia_chi,
-                       ROUND(COALESCE(AVG(d.diem_tong_quan), 0)::numeric, 1) as avg_rating,
+                # Nếu là địa chỉ mặc định trong DB mà chưa có tọa độ -> Lưu lại cache
+                if session_id and not location:
+                    conn.execute(text(
+                        f"""
+                        UPDATE {identity_schema}.dia_chi_giao_hang 
+                        SET vi_do = :lat, kinh_do = :lng 
+                        WHERE ma_nguoi_dung::text = :uid AND mac_dinh = true
+                        """
+                    ), {"lat": user_lat, "lng": user_lon, "uid": session_id})
+                    conn.commit()
+
+            # 3. Lấy tất cả chi nhánh ĐÃ CÓ tọa độ
+            query = f"""
+                SELECT c.ma_chi_nhanh, c.ten_chi_nhanh, c.dia_chi, c.vi_do, c.kinh_do,
+                       ROUND(COALESCE(AVG(d.diem_tong_quan), 0)::numeric, 1)::float as avg_rating,
                        COUNT(d.id) as total_reviews
                 FROM {identity_schema}.chi_nhanh c
-                LEFT JOIN {order_schema}.danh_gia_chi_nhanh d ON c.ma_chi_nhanh = d.ma_chi_nhanh
-                WHERE c.trang_thai = 'ACTIVE' 
-                  AND (LOWER(c.dia_chi) SIMILAR TO :pattern OR LOWER(c.ten_chi_nhanh) SIMILAR TO :pattern OR LOWER(c.thanh_pho) SIMILAR TO :pattern)
-                GROUP BY c.ma_chi_nhanh, c.ten_chi_nhanh, c.dia_chi
-                ORDER BY avg_rating DESC, c.ten_chi_nhanh ASC LIMIT 5
-                """
-            ), {"pattern": pattern}).mappings().all()
+                LEFT JOIN {order_schema}.danh_gia_chi_nhanh d ON c.ma_chi_nhanh::text = d.ma_chi_nhanh::text
+                WHERE c.trang_thai = 'ACTIVE' AND c.vi_do IS NOT NULL AND c.kinh_do IS NOT NULL
+                GROUP BY c.ma_chi_nhanh, c.ten_chi_nhanh, c.dia_chi, c.vi_do, c.kinh_do
+            """
+            rows = conn.execute(text(query)).mappings().all()
+
+            if not rows:
+                return {
+                    "status": "not_found",
+                    "message": "Hiện tại hệ thống chưa có chi nhánh nào được cập nhật tọa độ trên bản đồ."
+                }
+
+            # 4. Tính khoảng cách Haversine và Sort
+            import decimal
+            branches = []
+            for r in rows:
+                dist = haversine_distance(user_lat, user_lon, float(r["vi_do"]), float(r["kinh_do"]))
+                branch_dict = {}
+                for k, v in r.items():
+                    if isinstance(v, decimal.Decimal):
+                        branch_dict[k] = float(v)
+                    else:
+                        branch_dict[k] = v
+                branch_dict["khoang_cach_km"] = round(dist, 1)
+                branches.append(branch_dict)
+
+            # Sort theo khoảng cách tăng dần, lấy Top 3
+            branches.sort(key=lambda x: x["khoang_cach_km"])
+            top_branches = branches[:3]
+
+            nearest_dist = top_branches[0]["khoang_cach_km"]
             
-        branches = [dict(r) for r in rows]
-        if not branches:
+            msg = f"Dựa vào địa chỉ của khách ({target_address}), đây là top 3 chi nhánh gần nhất. BẮT BUỘC: Bạn PHẢI đọc TÊN CỤ THỂ của chi nhánh và BÁO SỐ KM (khoang_cach_km) cho khách."
+            
+            if nearest_dist > 15:
+                msg += f" WARNING: Chi nhánh gần nhất cũng cách tới {nearest_dist}km. Hãy báo rõ cho khách là khu vực của khách khá xa các chi nhánh hiện tại."
+
             return {
-                "status": "not_found",
-                "message": f"Rất tiếc, mình không tìm thấy chi nhánh nào gần khu vực '{saved_address_text or location}'. Bạn có muốn xem tất cả chi nhánh không?"
+                "status": "ok",
+                "branches": top_branches,
+                "message": msg
             }
-            
-        return {
-            "status": "ok",
-            "branches": branches,
-            "message": f"Dựa vào địa chỉ mặc định của khách ({saved_address_text}), đây là các chi nhánh phù hợp." if used_saved_address else "Đây là các chi nhánh phù hợp với khu vực bạn tìm.",
-        }
+
     except Exception as e:
         logger.warning("[AgentTools] find_nearest_branch error: %s", e)
         return {"status": "error", "message": "Không thể tìm kiếm chi nhánh lúc này."}
@@ -332,7 +381,7 @@ def execute_check_price_and_stock(
                     LIMIT 3
                     """
                 ), {"pattern": pattern}).mappings().all()
-            top = [dict(r) for r in rows]
+            top = [_clean_dict(dict(r)) for r in rows]
         else:
             top = []
 
@@ -448,7 +497,7 @@ def execute_get_product_insights(product_name: str) -> Dict[str, Any]:
                     ROUND(COALESCE(AVG(so_sao), 0)::numeric, 1) as avg_rating,
                     COUNT(id) as total_reviews
                 FROM {order_schema}.danh_gia_san_pham
-                WHERE ma_san_pham = :pid
+                WHERE ma_san_pham::text = :pid
                 """
             ), {"pid": product_id}).fetchone()
 
@@ -457,7 +506,7 @@ def execute_get_product_insights(product_name: str) -> Dict[str, Any]:
                 f"""
                 SELECT binh_luan
                 FROM {order_schema}.danh_gia_san_pham
-                WHERE ma_san_pham = :pid AND binh_luan IS NOT NULL AND LENGTH(binh_luan) >= 2
+                WHERE ma_san_pham::text = :pid AND binh_luan IS NOT NULL AND LENGTH(binh_luan) >= 2
                 ORDER BY ngay_tao DESC
                 LIMIT 2
                 """
@@ -470,7 +519,7 @@ def execute_get_product_insights(product_name: str) -> Dict[str, Any]:
                 "avg_rating": 0,
                 "total_reviews": 0,
                 "recent_reviews": [],
-                "message": f"Món {found_name} chưa có đánh giá nào."
+                "message": f"BẮT BUỘC: Bạn phải thông báo Y HỆT câu sau: 'Hiện tại món {found_name} chưa có đánh giá nào'. TUYỆT ĐỐI KHÔNG tự bịa ra số sao (như 4.8 hay 5 sao) hay tự bịa số lượng đánh giá (như 100 đánh giá). Nếu bạn bịa, hệ thống sẽ lỗi."
             }
 
         # Pre-format reviews in code so LLM doesn't have to invent phrasing
@@ -489,7 +538,7 @@ def execute_get_product_insights(product_name: str) -> Dict[str, Any]:
             "avg_rating": float(stats[0]),
             "total_reviews": int(stats[1]),
             "recent_reviews_formatted": review_text,
-            "message": f"Gợi ý: Phần đánh giá đã được trích xuất sẵn thành chuỗi: [{review_text}]. Bạn chỉ cần chèn Y HỆT đoạn chuỗi này vào câu trả lời mà không được tự ý sửa hay thêm bất kỳ tính từ nào khác."
+            "message": f"BẮT BUỘC: Bạn phải đọc đúng thông số: món này có {float(stats[0])} sao dựa trên {int(stats[1])} đánh giá. Sau đó chèn y hệt đoạn nhận xét: [{review_text}]. TUYỆT ĐỐI KHÔNG làm tròn hay bịa thêm."
         }
     except Exception as e:
         logger.warning("[AgentTools] get_product_insights error: %s", e)
@@ -760,7 +809,7 @@ def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "
                     f"""
                     SELECT sp.ten_san_pham, COALESCE(AVG(dg.so_sao), 0) as avg_rating
                     FROM {menu_schema}.san_pham sp
-                    JOIN {order_schema}.danh_gia_san_pham dg ON sp.ma_san_pham::text = dg.ma_san_pham
+                    JOIN {order_schema}.danh_gia_san_pham dg ON sp.ma_san_pham::text = dg.ma_san_pham::text
                     WHERE sp.trang_thai = TRUE
                     GROUP BY sp.ma_san_pham, sp.ten_san_pham
                     ORDER BY avg_rating DESC, sp.ten_san_pham ASC
@@ -768,8 +817,10 @@ def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "
                     """
                 ), {"top_k": top_k}).mappings().all()
             if not rows:
-                products = []
-                note = "Hiện tại chưa có sản phẩm nào được đánh giá."
+                return {
+                    "status": "not_found", 
+                    "message": "BẮT BUỘC: Bạn phải nói với khách Y HỆT câu này: 'Hiện tại chưa có sản phẩm nào có đánh giá trên hệ thống'. TUYỆT ĐỐI KHÔNG được tự ý lấy món bất kỳ và gán cho nó rating cao."
+                }
             else:
                 products = [r["ten_san_pham"] for r in rows]
                 if len(products) < top_k:
@@ -937,7 +988,7 @@ def execute_get_order_history(session_id: str) -> Dict[str, Any]:
                 "message": "Bạn chưa có đơn hàng nào trong lịch sử."
             }
 
-        history = [dict(r) for r in rows]
+        history = [_clean_dict(dict(r)) for r in rows]
         # format date slightly
         for h in history:
             if h.get('ngay_tao'):
@@ -1190,7 +1241,79 @@ def execute_get_user_preferences(session_id: str) -> Dict[str, Any]:
         logger.warning("[AgentTools] get_user_preferences error: %s", e)
         return {"status": "error", "message": "Lỗi khi lấy thói quen khách hàng."}
 
+# ─────────────────────────────────────────────────────────────────────────────
+#  TOOL: get_user_profile  –  Lấy thông tin cá nhân và địa chỉ của khách
+# ─────────────────────────────────────────────────────────────────────────────
 
+TOOL_GET_USER_PROFILE = {
+    "type": "function",
+    "function": {
+        "name": "get_user_profile",
+        "description": (
+            "Lấy thông tin cá nhân (tên, email, SĐT) và sổ địa chỉ của người dùng. "
+            "Sử dụng tool này khi khách hàng hỏi về địa chỉ của họ, tên của họ, hoặc các thông tin cá nhân khác."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+        },
+    },
+}
+
+def execute_get_user_profile(session_id: str) -> Dict[str, Any]:
+    """Lấy thông tin cá nhân và địa chỉ của khách hàng."""
+    try:
+        import uuid
+        try:
+            uuid_obj = uuid.UUID(session_id)
+        except ValueError:
+            return {"status": "unauthorized", "message": "Khách ẩn danh, không có thông tin cá nhân."}
+
+        engine = _get_engine()
+        import os
+        identity_schema = os.getenv("IDENTITY_SCHEMA", "identity")
+
+        with engine.connect() as conn:
+            # Lấy thông tin cơ bản
+            user_info = conn.execute(text(
+                f"""
+                SELECT ho_ten, email, so_dien_thoai
+                FROM {identity_schema}.nguoi_dung
+                WHERE ma_nguoi_dung = :id
+                """
+            ), {"id": session_id}).fetchone()
+
+            if not user_info:
+                return {"status": "not_found", "message": "Không tìm thấy thông tin người dùng."}
+                
+            # Lấy sổ địa chỉ
+            addresses = conn.execute(text(
+                f"""
+                SELECT ten_dia_chi, dia_chi_day_du, mac_dinh
+                FROM {identity_schema}.dia_chi_giao_hang
+                WHERE ma_nguoi_dung = :uid
+                ORDER BY mac_dinh DESC
+                """
+            ), {"uid": str(uuid_obj)}).fetchall()
+
+        address_list = []
+        for addr in addresses:
+            address_list.append(f"- {addr[0] or 'Địa chỉ'}: {addr[1]} {'(Mặc định)' if addr[2] else ''}")
+            
+        address_text = "\n".join(address_list) if address_list else "Chưa lưu địa chỉ nào."
+
+        return {
+            "status": "ok",
+            "name": user_info[0] or "Chưa cập nhật",
+            "email": user_info[1] or "Chưa cập nhật",
+            "phone": user_info[2] or "Chưa cập nhật",
+            "addresses": address_text,
+            "message": "Đây là thông tin của khách hàng. Hãy trả lời thân thiện dựa trên thông tin này."
+        }
+    except Exception as e:
+        logger.warning("[AgentTools] get_user_profile error: %s", e)
+        return {"status": "error", "message": "Lỗi khi lấy thông tin cá nhân."}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1213,6 +1336,7 @@ ALL_TOOL_SCHEMAS: List[Dict[str, Any]] = [
     TOOL_GET_ORDER_DETAILS,
     TOOL_CANCEL_ORDER,
     TOOL_GET_USER_PREFERENCES,
+    TOOL_GET_USER_PROFILE,
 ]
 
 # Dispatch map: tool_name -> executor function
@@ -1233,5 +1357,6 @@ TOOL_EXECUTORS = {
     "get_order_details": lambda args, session_id: execute_get_order_details(session_id=session_id, **args),
     "cancel_order": lambda args, session_id: execute_cancel_order(session_id=session_id, **args),
     "get_user_preferences": lambda args, session_id: execute_get_user_preferences(session_id=session_id),
+    "get_user_profile": lambda args, session_id: execute_get_user_profile(session_id=session_id),
 }
 

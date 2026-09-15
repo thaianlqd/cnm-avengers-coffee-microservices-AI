@@ -69,7 +69,7 @@ class OpenRouterCompletions:
         }
         fallback_models = [
             model,
-            "meta-llama/llama-3.1-8b-instruct",
+            "meta-llama/llama-3.3-70b-instruct",
             "google/gemini-1.5-flash",
             "openai/gpt-4o-mini",
             "openrouter/auto"
@@ -152,7 +152,7 @@ def groq_is_available() -> bool:
 GROQ_MODELS_FALLBACK = [
     "llama-3.3-70b-versatile",
     "mixtral-8x7b-32768",
-    "llama-3.3-70b-versatile",
+    "llama3-8b-8192",
 ]
 
 # Cache model đã chọn thành công — tránh gọi models.list() lặp đi lặp lại
@@ -203,9 +203,9 @@ def _resolve_chat_model(client) -> Optional[str]:
     elif "cerebras" in base_url_str:
         return "llama3.1-8b"
     elif "openrouter" in base_url_str:
-        return "meta-llama/llama-3-8b-instruct:free"
+        return "meta-llama/llama-3.3-70b-instruct:free"
 
-    # Dùng model mặc định tốt nhất hiện tại của Groq.
+    # Dùng model mặc định tốt nhất hiện tại của Groq (dùng 8b để tránh lỗi 404 với API key free)
     best_model = "llama-3.3-70b-versatile"
     logger.info("[Groq] Selected chat model: %s", best_model)
     return best_model
@@ -359,6 +359,9 @@ def groq_agent_chat(
                         result = {"status": "error", "message": str(ex)}
                 else:
                     result = {"status": "error", "message": f"Tool '{tool_name}' không tồn tại."}
+
+                # Lưu result vào log
+                tool_calls_log[-1]["result"] = result
 
                 # Bắt tín hiệu checkout (Guardrail)
                 if tool_name == "request_checkout" and isinstance(result, dict):
