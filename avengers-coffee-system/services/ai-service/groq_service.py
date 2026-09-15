@@ -150,7 +150,7 @@ def groq_is_available() -> bool:
 
 # Danh sách model fallback cứng (dùng khi không gọi được models.list())
 GROQ_MODELS_FALLBACK = [
-    "gemma2-9b-it",
+    "llama-3.3-70b-versatile",
     "mixtral-8x7b-32768",
     "llama-3.3-70b-versatile",
 ]
@@ -206,7 +206,7 @@ def _resolve_chat_model(client) -> Optional[str]:
         return "meta-llama/llama-3-8b-instruct:free"
 
     # Dùng model mặc định tốt nhất hiện tại của Groq.
-    best_model = "gemma2-9b-it"
+    best_model = "llama-3.3-70b-versatile"
     logger.info("[Groq] Selected chat model: %s", best_model)
     return best_model
 
@@ -215,6 +215,7 @@ def groq_agent_chat(
     messages: List[Dict[str, Any]],
     tools: Optional[List[Dict[str, Any]]] = None,
     tool_executors: Optional[Dict[str, Any]] = None,
+    session_id: str = "",
     max_tool_rounds: int = 5,
     max_tokens: int = 2048,
 ) -> Dict[str, Any]:
@@ -232,6 +233,7 @@ def groq_agent_chat(
         messages:       Danh sách messages theo chuẩn OpenAI (system, user, assistant, tool).
         tools:          List JSON Schema của tools (TOOL_SCHEMAS từ agent_tools.py).
         tool_executors: Dict {tool_name: callable(args) -> dict}.
+        session_id:     ID phiên chat (dùng cho session state/cart).
         max_tool_rounds: Số vòng tối đa gọi tool trước khi dừng.
         max_tokens:     Token tối đa cho mỗi lần gọi Groq.
 
@@ -349,7 +351,10 @@ def groq_agent_chat(
                 executor = (tool_executors or {}).get(tool_name)
                 if executor:
                     try:
-                        result = executor(tool_args)
+                        try:
+                            result = executor(tool_args, session_id)
+                        except TypeError:
+                            result = executor(tool_args)
                     except Exception as ex:
                         result = {"status": "error", "message": str(ex)}
                 else:

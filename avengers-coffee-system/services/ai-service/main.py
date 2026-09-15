@@ -619,7 +619,7 @@ def _build_local_chat_fallback(content: str, user_name: str, base_context: Dict[
 
 
 def _call_gemini_chat(gemini_api_key: str, system_text: str, user_text: str, max_output_tokens: int = 650) -> Dict[str, Any]:
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={gemini_api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
     payload = {
         "system_instruction": {"parts": [{"text": system_text}]},
         "contents": [{"role": "user", "parts": [{"text": user_text}]}],

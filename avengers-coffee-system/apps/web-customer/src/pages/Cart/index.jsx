@@ -111,13 +111,13 @@ export default function CartPage({
   });
 
   const isAnyItemOutOfStock = useMemo(() => {
-    if (!inventoryData) return false;
+    if (!inventoryData || deliveryMode === 'GIAO_TAN_NOI') return false;
     const arr = Array.isArray(inventoryData) ? inventoryData : (inventoryData.items || []);
     return cart.some(item => {
       const invItem = arr.find(i => String(i.ma_san_pham) === String(item.ma_san_pham));
       return invItem && (invItem.dang_kinh_doanh === false || invItem.dang_kinh_doanh === 0 || invItem.dang_kinh_doanh === 'false');
     });
-  }, [cart, inventoryData]);
+  }, [cart, inventoryData, deliveryMode]);
 
   const { data: publicBranchPayload } = useQuery({
     queryKey: ['public-branches'],
@@ -845,7 +845,7 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                 ) : (
                   cart.map((item, idx) => {
                     const inventoryItem = inventoryData?.find(i => String(i.ma_san_pham) === String(item.ma_san_pham));
-                    const isOutOfStock = inventoryData && inventoryItem && inventoryItem.dang_kinh_doanh === false;
+                    const isOutOfStock = deliveryMode !== 'GIAO_TAN_NOI' && inventoryData && inventoryItem && inventoryItem.dang_kinh_doanh === false;
 
                     return (
                     <div 
@@ -925,7 +925,7 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                           <p className="text-[#1a1a1a] font-black text-xl">
                             {Number(item.gia_ban).toLocaleString('vi-VN')}đ
                           </p>
-                          {isOutOfStock && (
+                          {isOutOfStock && step === 2 && (
                             <div className="mt-1.5 text-[11px] font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-lg border border-red-100 inline-block">
                               Tạm hết hàng tại chi nhánh này
                             </div>
@@ -1611,7 +1611,7 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                 <button
                   type="button"
                   onClick={handleCheckoutClick}
-                  disabled={isAnyItemOutOfStock || cart.length === 0}
+                  disabled={cart.length === 0}
                   className="w-full mt-6 py-4 bg-[#1a1a1a] hover:bg-[#c41230] text-white rounded-full font-black uppercase text-xs sm:text-sm tracking-widest shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span>Tiến hành thanh toán</span>
