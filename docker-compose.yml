@@ -294,17 +294,17 @@ services:
       AI_PORT: ${AI_PORT:-8000}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
     expose:
       - "${AI_PORT:-8000}"
     ports:
-      - "${AI_PORT:-8000}:8000"
-      - "${AI_PORT:-8000}"
+      - "8009:8000"
     networks:
       - avengers-network
     deploy:
       resources:
         limits:
-          memory: 256M
+          memory: 1024M
 
   # ── Frontend (Vite hot-reload — tự cập nhật khi Ctrl+S) ────────────────────
   web-customer:
