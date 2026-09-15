@@ -77,6 +77,70 @@ function tachDiaChiDayDu(rawAddress) {
   return { city, district, ward, street: street || raw };
 }
 
+const SearchableSelect = ({ options, value, onChange, placeholder, icon: Icon, disabled }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const wrapperRef = React.useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredOptions = options.filter(opt => opt.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div className={`relative ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`} ref={wrapperRef}>
+      <div 
+        className={`w-full rounded-xl border border-gray-200 pl-10 pr-4 py-3 text-sm font-semibold outline-none bg-white flex justify-between items-center transition-all duration-200 focus-within:border-[#b22830] focus-within:ring-2 focus-within:ring-[#b22830]/10 ${disabled ? 'cursor-not-allowed bg-gray-50' : 'cursor-pointer'}`}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+      >
+        <span className={value ? 'text-gray-900' : 'text-gray-400'}>{value || placeholder}</span>
+        <svg className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+      </div>
+      {Icon && <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />}
+      
+      {isOpen && (
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+          <div className="sticky top-0 bg-white p-2 border-b border-gray-100">
+            <input
+              autoFocus
+              type="text"
+              placeholder="Tìm kiếm..."
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#b22830] transition-colors"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+          {filteredOptions.length > 0 ? (
+            filteredOptions.map(opt => (
+              <div 
+                key={opt}
+                className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-gray-50 transition-colors ${value === opt ? 'bg-[#fbdcde] text-[#b22830] font-bold' : 'text-gray-700'}`}
+                onClick={() => {
+                  onChange(opt);
+                  setIsOpen(false);
+                  setSearch('');
+                }}
+              >
+                {opt}
+              </div>
+            ))
+          ) : (
+            <div className="px-4 py-3 text-sm text-gray-500 text-center italic">Không tìm thấy</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function ProfilePageContent({
   user: profileUser,
   onUserUpdated: onProfileUpdated,
@@ -1202,30 +1266,48 @@ export default function ProfilePageContent({
                   <form onSubmit={handleSaveAddress} className="space-y-4">
                     <div>
                       <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Tên gợi nhớ địa chỉ</p>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          required
-                          placeholder="ví dụ: Nhà riêng, Văn phòng"
-                          value={addressForm.tenDiaChi}
-                          onChange={(e) => setAddressForm((prev) => ({ ...prev, tenDiaChi: e.target.value }))}
-                          className="w-full rounded-xl border border-gray-200 pl-10 pr-4 py-3 text-sm font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-[#b22830]/10 transition-all duration-200 bg-white"
-                        />
-                        <BookmarkIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <div className="grid gap-3 grid-cols-1">
+                        <div className="relative z-30">
+                          <SearchableSelect
+                            options={['Nhà riêng', 'Văn phòng', 'Công ty', 'Trường học', 'Khác']}
+                            value={['Nhà riêng', 'Văn phòng', 'Công ty', 'Trường học'].includes(addressForm.tenDiaChi) ? addressForm.tenDiaChi : (addressForm.tenDiaChi ? 'Khác' : '')}
+                            onChange={(val) => {
+                              if (val === 'Khác') {
+                                setAddressForm(prev => ({ ...prev, tenDiaChi: ' ' }));
+                              } else {
+                                setAddressForm(prev => ({ ...prev, tenDiaChi: val }));
+                              }
+                            }}
+                            placeholder="Chọn tên gợi nhớ..."
+                            icon={BookmarkIcon}
+                          />
+                        </div>
+                        
+                        {(!['Nhà riêng', 'Văn phòng', 'Công ty', 'Trường học', ''].includes(addressForm.tenDiaChi)) && (
+                          <div className="relative">
+                            <input
+                              type="text"
+                              required
+                              placeholder="Nhập tên khác..."
+                              value={addressForm.tenDiaChi === ' ' ? '' : addressForm.tenDiaChi}
+                              onChange={(e) => setAddressForm((prev) => ({ ...prev, tenDiaChi: e.target.value || ' ' }))}
+                              className="w-full rounded-xl border border-gray-200 pl-4 pr-4 py-3 text-sm font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-[#b22830]/10 transition-all duration-200 bg-white"
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
 
                     <div className="grid gap-3 grid-cols-1">
                       <div>
                         <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Tỉnh / Thành phố</p>
-                        <div className="relative">
-                          <select
+                        <div className="relative z-20">
+                          <SearchableSelect
+                            options={Object.keys(addressOptions)}
                             value={addressForm.city}
-                            onChange={(e) => {
-                              const newCity = e.target.value;
+                            onChange={(newCity) => {
                               const defaultWards = addressOptions[newCity] || [];
                               const defaultWard = defaultWards[0] || '';
-
                               setAddressForm((prev) => ({
                                 ...prev,
                                 city: newCity,
@@ -1233,34 +1315,24 @@ export default function ProfilePageContent({
                                 ward: defaultWard,
                               }));
                             }}
-                            className="w-full rounded-xl border border-gray-200 pl-10 pr-4 py-3 text-sm font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-[#b22830]/10 transition-all duration-200 bg-white appearance-none cursor-pointer"
-                          >
-                            {Object.keys(addressOptions).map((c) => (
-                              <option key={c} value={c}>
-                                {c}
-                              </option>
-                            ))}
-                          </select>
-                          <MapPinIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                            placeholder="Chọn Tỉnh / Thành phố"
+                            icon={MapPinIcon}
+                          />
                         </div>
                       </div>
 
                       <div className="grid gap-3 grid-cols-1">
                         <div>
                           <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Phường / Xã</p>
-                          <div className="relative">
-                            <select
+                          <div className="relative z-10">
+                            <SearchableSelect
+                              options={wardOptions}
                               value={addressForm.ward}
-                              onChange={(e) => setAddressForm((prev) => ({ ...prev, ward: e.target.value }))}
-                              className="w-full rounded-xl border border-gray-200 pl-10 pr-4 py-3 text-sm font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-[#b22830]/10 transition-all duration-200 bg-white appearance-none cursor-pointer"
-                            >
-                              {wardOptions.map((w) => (
-                                <option key={w} value={w}>
-                                  {w}
-                                </option>
-                              ))}
-                            </select>
-                            <MapPinIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                              onChange={(newWard) => setAddressForm((prev) => ({ ...prev, ward: newWard }))}
+                              placeholder="Chọn Phường / Xã"
+                              icon={MapPinIcon}
+                              disabled={!addressForm.city}
+                            />
                           </div>
                         </div>
                       </div>

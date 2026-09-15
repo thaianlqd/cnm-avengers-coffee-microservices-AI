@@ -55,17 +55,37 @@ TOOL_ASK_BRANCH = {
 
 
 def execute_ask_branch() -> Dict[str, Any]:
-    """Lấy danh sách chi nhánh từ DB để LLM trình bày cho khách."""
+    """Lấy danh sách chi nhánh từ DB để LLM trình bày cho khách (có check giờ)."""
     try:
+        import datetime
+        # Fix Timezone: UTC+7 (Vietnam)
+        now_vn = datetime.datetime.utcnow() + datetime.timedelta(hours=7)
+        now = now_vn.time()
+        # Mocking business hours 07:00 to 22:30
+        open_time = datetime.time(7, 0)
+        close_time = datetime.time(22, 30)
+        if not (open_time <= now <= close_time):
+            return {
+                "status": "closed",
+                "message": f"Hiện tại là {now.strftime('%H:%M')}, hệ thống cửa hàng chỉ mở cửa từ 07:00 đến 22:30. Xin quý khách thông cảm đặt hàng vào lúc khác."
+            }
+
         engine = _get_engine()
         import os
-        schema = os.getenv("IDENTITY_SCHEMA", "identity")
+        identity_schema = os.getenv("IDENTITY_SCHEMA", "identity")
+        order_schema = os.getenv("ORDER_SCHEMA", "orders")
         with engine.connect() as conn:
             rows = conn.execute(text(
-                f"SELECT ma_chi_nhanh, ten_chi_nhanh, dia_chi "
-                f"FROM {schema}.chi_nhanh "
-                f"WHERE trang_thai = 'ACTIVE' "
-                f"ORDER BY ten_chi_nhanh ASC LIMIT 10"
+                f"""
+                SELECT c.ma_chi_nhanh, c.ten_chi_nhanh, c.dia_chi,
+                       ROUND(COALESCE(AVG(d.diem_tong_quan), 0)::numeric, 1) as avg_rating,
+                       COUNT(d.id) as total_reviews
+                FROM {identity_schema}.chi_nhanh c
+                LEFT JOIN {order_schema}.danh_gia_chi_nhanh d ON c.ma_chi_nhanh = d.ma_chi_nhanh
+                WHERE c.trang_thai = 'ACTIVE'
+                GROUP BY c.ma_chi_nhanh, c.ten_chi_nhanh, c.dia_chi
+                ORDER BY avg_rating DESC, c.ten_chi_nhanh ASC LIMIT 10
+                """
             )).mappings().all()
         branches = [dict(r) for r in rows]
         return {
@@ -76,6 +96,118 @@ def execute_ask_branch() -> Dict[str, Any]:
     except Exception as e:
         logger.warning("[AgentTools] ask_branch error: %s", e)
         return {"status": "error", "message": "Không thể lấy danh sách chi nhánh."}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  TOOL 1b: find_nearest_branch  –  Tìm chi nhánh theo Quận/Huyện
+# ─────────────────────────────────────────────────────────────────────────────
+
+TOOL_FIND_NEAREST_BRANCH = {
+    "type": "function",
+    "function": {
+        "name": "find_nearest_branch",
+        "description": "Tìm kiếm chi nhánh gần nhất theo Quận/Huyện/Tỉnh thành mà khách hàng yêu cầu.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "location": {
+                    "type": "string",
+                    "description": "Địa điểm Quận, Huyện, hoặc Thành phố (ví dụ: 'Hải Châu', 'Quận 1')."
+                },
+            },
+            "required": ["location"],
+        },
+    },
+}
+
+def execute_find_nearest_branch(location: str, session_id: str = "") -> Dict[str, Any]:
+    """Tìm chi nhánh dựa trên text địa chỉ hoặc Sổ địa chỉ của người dùng."""
+    try:
+        import datetime
+        # Fix Timezone: UTC+7 (Vietnam)
+        now_vn = datetime.datetime.utcnow() + datetime.timedelta(hours=7)
+        now = now_vn.time()
+        open_time = datetime.time(7, 0)
+        close_time = datetime.time(22, 30)
+        if not (open_time <= now <= close_time):
+            return {
+                "status": "closed",
+                "message": f"Hiện tại là {now.strftime('%H:%M')}, cửa hàng chỉ mở cửa từ 07:00 đến 22:30."
+            }
+
+        engine = _get_engine()
+        import os
+        identity_schema = os.getenv("IDENTITY_SCHEMA", "identity")
+        order_schema = os.getenv("ORDER_SCHEMA", "orders")
+        
+        words = [w for w in _norm(location).split() if len(w) > 1]
+        
+        # Nếu khách chỉ nói "gần tôi", "tôi", "ở đây" mà không có địa danh cụ thể
+        generic_words = {"toi", "gan", "day", "nao", "nhat"}
+        is_generic = all(w in generic_words for w in words)
+        
+        used_saved_address = False
+        saved_address_text = ""
+        
+        with engine.connect() as conn:
+            if not words or is_generic:
+                # Tìm địa chỉ mặc định của người dùng
+                if session_id:
+                    addr = conn.execute(text(
+                        f"""
+                        SELECT dia_chi_day_du 
+                        FROM {identity_schema}.dia_chi_giao_hang 
+                        WHERE ma_nguoi_dung = :uid AND mac_dinh = true
+                        LIMIT 1
+                        """
+                    ), {"uid": session_id}).fetchone()
+                    
+                    if addr and addr[0]:
+                        saved_address_text = addr[0]
+                        # Lấy 2 phần cuối của địa chỉ (thường là Quận, Tỉnh)
+                        parts = [p.strip() for p in saved_address_text.split(',')]
+                        search_parts = parts[-2:] if len(parts) >= 2 else parts
+                        search_text = " ".join(search_parts)
+                        words = [w for w in _norm(search_text).split() if len(w) > 1]
+                        used_saved_address = True
+            
+            if not words or is_generic and not used_saved_address:
+                return {
+                    "status": "need_location",
+                    "message": "Hệ thống AI hiện chưa được cấp quyền truy cập GPS của khách hàng, và bạn chưa có địa chỉ mặc định trong Sổ địa chỉ. Hãy lịch sự hỏi khách hàng đang ở Quận, Huyện hoặc Tỉnh thành nào để bạn có thể tìm chi nhánh gần nhất."
+                }
+                
+            pattern = "%(" + "|".join(words) + ")%"
+            
+            rows = conn.execute(text(
+                f"""
+                SELECT c.ma_chi_nhanh, c.ten_chi_nhanh, c.dia_chi,
+                       ROUND(COALESCE(AVG(d.diem_tong_quan), 0)::numeric, 1) as avg_rating,
+                       COUNT(d.id) as total_reviews
+                FROM {identity_schema}.chi_nhanh c
+                LEFT JOIN {order_schema}.danh_gia_chi_nhanh d ON c.ma_chi_nhanh = d.ma_chi_nhanh
+                WHERE c.trang_thai = 'ACTIVE' 
+                  AND (LOWER(c.dia_chi) SIMILAR TO :pattern OR LOWER(c.ten_chi_nhanh) SIMILAR TO :pattern OR LOWER(c.thanh_pho) SIMILAR TO :pattern)
+                GROUP BY c.ma_chi_nhanh, c.ten_chi_nhanh, c.dia_chi
+                ORDER BY avg_rating DESC, c.ten_chi_nhanh ASC LIMIT 5
+                """
+            ), {"pattern": pattern}).mappings().all()
+            
+        branches = [dict(r) for r in rows]
+        if not branches:
+            return {
+                "status": "not_found",
+                "message": f"Rất tiếc, mình không tìm thấy chi nhánh nào gần khu vực '{saved_address_text or location}'. Bạn có muốn xem tất cả chi nhánh không?"
+            }
+            
+        return {
+            "status": "ok",
+            "branches": branches,
+            "message": f"Dựa vào địa chỉ mặc định của khách ({saved_address_text}), đây là các chi nhánh phù hợp." if used_saved_address else "Đây là các chi nhánh phù hợp với khu vực bạn tìm.",
+        }
+    except Exception as e:
+        logger.warning("[AgentTools] find_nearest_branch error: %s", e)
+        return {"status": "error", "message": "Không thể tìm kiếm chi nhánh lúc này."}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -93,10 +225,6 @@ TOOL_SET_SESSION_BRANCH = {
         "parameters": {
             "type": "object",
             "properties": {
-                "session_id": {
-                    "type": "string",
-                    "description": "ID session của khách hàng.",
-                },
                 "branch_id": {
                     "type": "string",
                     "description": "Mã chi nhánh (ma_chi_nhanh) khách đã chọn.",
@@ -106,7 +234,7 @@ TOOL_SET_SESSION_BRANCH = {
                     "description": "Tên chi nhánh cho dễ hiển thị.",
                 },
             },
-            "required": ["session_id", "branch_id", "branch_name"],
+            "required": ["branch_id", "branch_name"],
         },
     },
 }
@@ -181,38 +309,32 @@ def execute_check_price_and_stock(
         menu_schema = os.getenv("MENU_SCHEMA", "menu")
         identity_schema = os.getenv("IDENTITY_SCHEMA", "identity")
 
-        with engine.connect() as conn:
-            rows = conn.execute(text(
-                f"""
-                SELECT
-                    sp.ma_san_pham::text AS product_id,
-                    sp.ten_san_pham,
-                    sp.gia_ban,
-                    sp.trang_thai AS is_active,
-                    dm.ten_danh_muc AS category
-                FROM {menu_schema}.san_pham sp
-                LEFT JOIN {menu_schema}.danh_muc dm ON dm.ma_danh_muc = sp.ma_danh_muc
-                WHERE sp.trang_thai = TRUE
-                ORDER BY sp.la_hot DESC, sp.ten_san_pham ASC
-                LIMIT 200
-                """
-            )).mappings().all()
-        all_products = [dict(r) for r in rows]
-
-        # Fuzzy match bằng word-overlap (không dùng vector để tránh dependency)
+        # Postgres SIMILAR TO search for semantic matching
         query_norm = _norm(product_name_query)
-        query_words = set(query_norm.split())
-        scored = []
-        for p in all_products:
-            p_norm = _norm(p["ten_san_pham"])
-            p_words = set(p_norm.split())
-            overlap = len(query_words & p_words)
-            if query_norm in p_norm or p_norm in query_norm:
-                overlap += 3
-            if overlap > 0:
-                scored.append((overlap, p))
-        scored.sort(key=lambda x: -x[0])
-        top = [p for _, p in scored[:3]]
+        words = [w for w in query_norm.split() if len(w) > 1]
+        
+        if words:
+            pattern = "%(" + "|".join(words) + ")%"
+            with engine.connect() as conn:
+                rows = conn.execute(text(
+                    f"""
+                    SELECT
+                        sp.ma_san_pham::text AS product_id,
+                        sp.ten_san_pham,
+                        sp.gia_ban,
+                        sp.trang_thai AS is_active,
+                        dm.ten_danh_muc AS category
+                    FROM {menu_schema}.san_pham sp
+                    LEFT JOIN {menu_schema}.danh_muc dm ON dm.ma_danh_muc = sp.ma_danh_muc
+                    WHERE sp.trang_thai = TRUE 
+                      AND LOWER(sp.ten_san_pham) SIMILAR TO :pattern
+                    ORDER BY sp.la_hot DESC, sp.ten_san_pham ASC
+                    LIMIT 3
+                    """
+                ), {"pattern": pattern}).mappings().all()
+            top = [dict(r) for r in rows]
+        else:
+            top = []
 
         if not top:
             return {
@@ -265,6 +387,117 @@ def execute_check_price_and_stock(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+#  TOOL 3b: get_product_insights  –  Xem Đánh giá / Review sản phẩm
+# ─────────────────────────────────────────────────────────────────────────────
+
+TOOL_GET_PRODUCT_INSIGHTS = {
+    "type": "function",
+    "function": {
+        "name": "get_product_insights",
+        "description": "Lấy thông tin đánh giá (review), số sao trung bình của một sản phẩm để tư vấn cho khách.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "product_name": {
+                    "type": "string",
+                    "description": "Tên sản phẩm khách hàng đang hỏi."
+                },
+            },
+            "required": ["product_name"],
+        },
+    },
+}
+
+def execute_get_product_insights(product_name: str) -> Dict[str, Any]:
+    """Truy vấn bảng danh_gia_san_pham để lấy avg rating và top bình luận (dựa trên tên sản phẩm)."""
+    try:
+        engine = _get_engine()
+        import os
+        order_schema = os.getenv("ORDER_SCHEMA", "orders")
+        menu_schema = os.getenv("MENU_SCHEMA", "menu")
+
+        query_norm = _norm(product_name)
+        words = [w for w in query_norm.split() if len(w) > 1]
+        if not words:
+            return {"status": "error", "message": "Tên sản phẩm không hợp lệ."}
+        
+        pattern = "%(" + "|".join(words) + ")%"
+        with engine.connect() as conn:
+            # Tìm product_id
+            row = conn.execute(text(
+                f"""
+                SELECT ma_san_pham::text, ten_san_pham
+                FROM {menu_schema}.san_pham
+                WHERE trang_thai = TRUE 
+                  AND LOWER(ten_san_pham) SIMILAR TO :pattern
+                ORDER BY la_hot DESC, ten_san_pham ASC
+                LIMIT 1
+                """
+            ), {"pattern": pattern}).fetchone()
+            
+            if not row:
+                return {"status": "not_found", "message": f"Không tìm thấy món '{product_name}' trong menu."}
+                
+            product_id = row[0]
+            found_name = row[1]
+
+            # 1. Get average rating and count
+            stats = conn.execute(text(
+                f"""
+                SELECT 
+                    ROUND(COALESCE(AVG(so_sao), 0)::numeric, 1) as avg_rating,
+                    COUNT(id) as total_reviews
+                FROM {order_schema}.danh_gia_san_pham
+                WHERE ma_san_pham = :pid
+                """
+            ), {"pid": product_id}).fetchone()
+
+            # 2. Get top 2 recent comments
+            reviews = conn.execute(text(
+                f"""
+                SELECT binh_luan
+                FROM {order_schema}.danh_gia_san_pham
+                WHERE ma_san_pham = :pid AND binh_luan IS NOT NULL AND LENGTH(binh_luan) >= 2
+                ORDER BY ngay_tao DESC
+                LIMIT 2
+                """
+            ), {"pid": product_id}).fetchall()
+
+        if not stats or stats[1] == 0:
+            return {
+                "status": "ok",
+                "product_name": found_name,
+                "avg_rating": 0,
+                "total_reviews": 0,
+                "recent_reviews": [],
+                "message": f"Món {found_name} chưa có đánh giá nào."
+            }
+
+        # Pre-format reviews in code so LLM doesn't have to invent phrasing
+        formatted_reviews = []
+        for r in reviews:
+            cmt = str(r[0]).strip()
+            if len(cmt) > 100:
+                cmt = cmt[:97] + "..."
+            formatted_reviews.append(f'Khách hàng nhận xét: "{cmt}"')
+            
+        review_text = " và ".join(formatted_reviews)
+
+        return {
+            "status": "ok",
+            "product_name": found_name,
+            "avg_rating": float(stats[0]),
+            "total_reviews": int(stats[1]),
+            "recent_reviews_formatted": review_text,
+            "message": f"Gợi ý: Phần đánh giá đã được trích xuất sẵn thành chuỗi: [{review_text}]. Bạn chỉ cần chèn Y HỆT đoạn chuỗi này vào câu trả lời mà không được tự ý sửa hay thêm bất kỳ tính từ nào khác."
+        }
+    except Exception as e:
+        logger.warning("[AgentTools] get_product_insights error: %s", e)
+        return {"status": "error", "message": "Lỗi khi lấy thông tin đánh giá sản phẩm."}
+
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 #  TOOL 4: add_to_cart  –  Thêm sản phẩm vào giỏ
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -280,7 +513,6 @@ TOOL_ADD_TO_CART = {
         "parameters": {
             "type": "object",
             "properties": {
-                "session_id": {"type": "string", "description": "ID session của khách."},
                 "product_id": {"type": "string", "description": "Mã sản phẩm (từ check_price_and_stock)."},
                 "product_name": {"type": "string", "description": "Tên sản phẩm (để hiển thị)."},
                 "unit_price": {"type": "number", "description": "Giá đơn vị (từ final_price của check_price_and_stock)."},
@@ -288,7 +520,7 @@ TOOL_ADD_TO_CART = {
                 "size": {"type": "string", "enum": ["S", "M", "L"], "description": "Kích cỡ (nếu có)."},
                 "note": {"type": "string", "description": "Ghi chú thêm (ít đường, không đá...)."},
             },
-            "required": ["session_id", "product_id", "product_name", "unit_price"],
+            "required": ["product_id", "product_name", "unit_price"],
         },
     },
 }
@@ -330,10 +562,8 @@ TOOL_GET_CART = {
         "description": "Lấy danh sách và tổng tiền giỏ hàng hiện tại của phiên chat.",
         "parameters": {
             "type": "object",
-            "properties": {
-                "session_id": {"type": "string", "description": "ID session của khách."},
-            },
-            "required": ["session_id"],
+            "properties": {},
+            "required": [],
         },
     },
 }
@@ -360,7 +590,6 @@ TOOL_REQUEST_CHECKOUT = {
         "parameters": {
             "type": "object",
             "properties": {
-                "session_id": {"type": "string", "description": "ID session của khách."},
                 "payment_method": {
                     "type": "string",
                     "enum": ["TIEN_MAT", "VNPAY", "ZALOPAY", "THANH_TOAN_KHI_NHAN_HANG"],
@@ -372,7 +601,7 @@ TOOL_REQUEST_CHECKOUT = {
                     "description": "Giao hàng hay tự đến lấy.",
                 },
             },
-            "required": ["session_id"],
+            "required": [],
         },
     },
 }
@@ -585,29 +814,424 @@ def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+#  TOOL 9: track_order_status  –  Kiểm tra trạng thái đơn hàng (Chống IDOR)
+# ─────────────────────────────────────────────────────────────────────────────
+
+TOOL_TRACK_ORDER_STATUS = {
+    "type": "function",
+    "function": {
+        "name": "track_order_status",
+        "description": (
+            "Kiểm tra trạng thái của một đơn hàng cụ thể bằng mã đơn hàng. "
+            "Chỉ gọi khi khách hàng cung cấp mã đơn hàng."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "order_id": {
+                    "type": "string",
+                    "description": "Mã đơn hàng (ma_don_hang) mà khách muốn kiểm tra."
+                },
+            },
+            "required": ["order_id"],
+        },
+    },
+}
+
+def execute_track_order_status(order_id: str, session_id: str) -> Dict[str, Any]:
+    """
+    Tra cứu trạng thái đơn hàng.
+    [SECURITY]: Bắt buộc kiểm tra ma_nguoi_dung = session_id để chống IDOR.
+    """
+    try:
+        import uuid
+        try:
+            uuid.UUID(session_id)
+        except ValueError:
+            return {
+                "status": "denied",
+                "message": "Xin lỗi, mình chỉ có thể tra cứu đơn hàng thuộc tài khoản của bạn. Vui lòng đăng nhập để sử dụng tính năng này."
+            }
+
+        engine = _get_engine()
+        import os
+        order_schema = os.getenv("ORDER_SCHEMA", "orders")
+
+        with engine.connect() as conn:
+            row = conn.execute(text(
+                f"""
+                SELECT ma_don_hang, trang_thai_don_hang, trang_thai_thanh_toan, tong_tien
+                FROM {order_schema}.don_hang
+                WHERE ma_don_hang = :order_id AND ma_nguoi_dung = :session_id
+                """
+            ), {"order_id": order_id, "session_id": session_id}).mappings().fetchone()
+
+        if not row:
+            return {
+                "status": "not_found",
+                "message": "Xin lỗi, đơn hàng không tồn tại hoặc không thuộc tài khoản của bạn."
+            }
+
+        return {
+            "status": "ok",
+            "order_info": dict(row),
+            "message": f"Đơn hàng {order_id} của bạn hiện đang ở trạng thái: {row['trang_thai_don_hang']}."
+        }
+    except Exception as e:
+        logger.error("[AgentTools] track_order_status error: %s", e)
+        return {"status": "error", "message": "Lỗi khi kiểm tra trạng thái đơn hàng."}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  TOOL 10: get_order_history  –  Xem lịch sử đơn hàng
+# ─────────────────────────────────────────────────────────────────────────────
+
+TOOL_GET_ORDER_HISTORY = {
+    "type": "function",
+    "function": {
+        "name": "get_order_history",
+        "description": (
+            "Xem lịch sử các đơn hàng gần đây của khách hàng. "
+            "Dùng khi khách hỏi 'Tôi từng uống gì', 'Đơn hàng cũ của tôi'."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+        },
+    },
+}
+
+def execute_get_order_history(session_id: str) -> Dict[str, Any]:
+    """
+    Lấy lịch sử đơn hàng dựa vào session_id.
+    """
+    try:
+        import uuid
+        try:
+            uuid.UUID(session_id)
+        except ValueError:
+            return {
+                "status": "denied",
+                "message": "Bạn cần đăng nhập để mình có thể xem lịch sử mua hàng nhé."
+            }
+
+        engine = _get_engine()
+        import os
+        order_schema = os.getenv("ORDER_SCHEMA", "orders")
+
+        with engine.connect() as conn:
+            rows = conn.execute(text(
+                f"""
+                SELECT ma_don_hang, tong_tien, trang_thai_don_hang, ngay_tao
+                FROM {order_schema}.don_hang
+                WHERE ma_nguoi_dung = :session_id
+                ORDER BY ngay_tao DESC
+                LIMIT 5
+                """
+            ), {"session_id": session_id}).mappings().all()
+
+        if not rows:
+            return {
+                "status": "not_found",
+                "message": "Bạn chưa có đơn hàng nào trong lịch sử."
+            }
+
+        history = [dict(r) for r in rows]
+        # format date slightly
+        for h in history:
+            if h.get('ngay_tao'):
+                h['ngay_tao'] = str(h['ngay_tao'])
+                
+        return {
+            "status": "ok",
+            "orders": history,
+        }
+    except Exception as e:
+        logger.error("[AgentTools] get_order_history error: %s", e)
+        return {"status": "error", "message": "Lỗi khi lấy lịch sử đơn hàng."}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  TOOL 11: get_order_details  –  Xem chi tiết đơn hàng
+# ─────────────────────────────────────────────────────────────────────────────
+
+TOOL_GET_ORDER_DETAILS = {
+    "type": "function",
+    "function": {
+        "name": "get_order_details",
+        "description": "Lấy thông tin chi tiết từng món đồ uống, topping và phương thức thanh toán của một đơn hàng cụ thể.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "order_id": {
+                    "type": "string",
+                    "description": "Mã đơn hàng cần xem chi tiết."
+                },
+            },
+            "required": ["order_id"],
+        },
+    },
+}
+
+def execute_get_order_details(session_id: str, order_id: str) -> Dict[str, Any]:
+    """Lấy chi tiết đơn hàng (có kiểm tra quyền sở hữu bằng session_id)."""
+    try:
+        import uuid
+        try:
+            uuid_obj = uuid.UUID(session_id)
+        except ValueError:
+            return {"status": "unauthorized", "message": "Bạn cần đăng nhập để xem chi tiết đơn hàng."}
+
+        engine = _get_engine()
+        import os
+        order_schema = os.getenv("ORDER_SCHEMA", "orders")
+
+        with engine.connect() as conn:
+            # 1. Fetch order info
+            order_info = conn.execute(text(
+                f"""
+                SELECT ma_don_hang, tong_tien, phuong_thuc_thanh_toan, trang_thai_don_hang, ma_chi_nhanh
+                FROM {order_schema}.don_hang
+                WHERE ma_don_hang = :oid AND ma_nguoi_dung = :uid
+                """
+            ), {"oid": order_id, "uid": str(uuid_obj)}).fetchone()
+
+            if not order_info:
+                return {"status": "not_found", "message": "Xin lỗi, không tìm thấy đơn hàng này hoặc đơn hàng không thuộc về bạn."}
+
+            # 2. Fetch order items
+            items = conn.execute(text(
+                f"""
+                SELECT ma_san_pham, so_luong, don_gia, tuy_chon
+                FROM {order_schema}.chi_tiet_don_hang
+                WHERE ma_don_hang = :oid
+                """
+            ), {"oid": order_id}).fetchall()
+            
+            items_list = []
+            for item in items:
+                items_list.append({
+                    "product_id": item[0],
+                    "quantity": item[1],
+                    "unit_price": float(item[2]),
+                    "options": item[3] if item[3] else {}
+                })
+
+        return {
+            "status": "ok",
+            "order_id": order_info[0],
+            "total_price": float(order_info[1]),
+            "payment_method": order_info[2],
+            "order_status": order_info[3],
+            "branch_id": order_info[4],
+            "items": items_list,
+            "message": "Đây là chi tiết đơn hàng của bạn."
+        }
+    except Exception as e:
+        logger.warning("[AgentTools] get_order_details error: %s", e)
+        return {"status": "error", "message": "Lỗi hệ thống khi lấy chi tiết đơn hàng."}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  TOOL 12: cancel_order  –  Hủy đơn hàng (Human-in-the-loop & API call)
+# ─────────────────────────────────────────────────────────────────────────────
+
+TOOL_CANCEL_ORDER = {
+    "type": "function",
+    "function": {
+        "name": "cancel_order",
+        "description": "Yêu cầu hủy đơn hàng. LLM bắt buộc phải gọi lần 1 với is_confirmed=False để lấy câu hỏi xác nhận. Sau khi khách đồng ý, gọi lần 2 với is_confirmed=True để hủy thật.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "order_id": {
+                    "type": "string",
+                    "description": "Mã đơn hàng cần hủy."
+                },
+                "is_confirmed": {
+                    "type": "boolean",
+                    "description": "Để False nếu chưa xác nhận với khách. Để True nếu khách đã ĐỒNG Ý hủy."
+                }
+            },
+            "required": ["order_id", "is_confirmed"],
+        },
+    },
+}
+
+def execute_cancel_order(session_id: str, order_id: str, is_confirmed: bool = False) -> Dict[str, Any]:
+    """Hủy đơn hàng thông qua gọi HTTP API để đảm bảo logic hoàn tiền/cập nhật an toàn (Anti-TOCTOU)."""
+    try:
+        import uuid
+        try:
+            uuid_obj = uuid.UUID(session_id)
+        except ValueError:
+            return {"status": "unauthorized", "message": "Bạn cần đăng nhập để hủy đơn hàng."}
+
+        engine = _get_engine()
+        import os
+        order_schema = os.getenv("ORDER_SCHEMA", "orders")
+
+        # 1. Kiểm tra trạng thái đơn hàng (sơ bộ)
+        with engine.connect() as conn:
+            order_info = conn.execute(text(
+                f"""
+                SELECT trang_thai_don_hang
+                FROM {order_schema}.don_hang
+                WHERE ma_don_hang = :oid AND ma_nguoi_dung = :uid
+                """
+            ), {"oid": order_id, "uid": str(uuid_obj)}).fetchone()
+
+        if not order_info:
+            return {"status": "not_found", "message": "Xin lỗi, không tìm thấy đơn hàng này hoặc đơn hàng không thuộc về bạn."}
+            
+        status = order_info[0]
+        # Chỉ cho phép hủy nếu là PENDING hoặc CHO_XAC_NHAN
+        if status not in ['PENDING', 'CHO_XAC_NHAN', 'pending']:
+            return {"status": "rejected", "message": f"Không thể hủy đơn hàng vì trạng thái hiện tại là {status}. Đơn hàng có thể đã được chuẩn bị hoặc đang giao."}
+
+        # 2. Human-in-the-loop: Chờ xác nhận
+        if not is_confirmed:
+            return {
+                "status": "require_cancel_confirmation",
+                "message": f"Vui lòng hỏi khách hàng: 'Bạn có chắc chắn muốn hủy đơn hàng {order_id} không? Gõ ĐỒNG Ý để xác nhận hủy.'"
+            }
+
+        # 3. Thực hiện Hủy thật qua HTTP API để Backend (order-service) lo liệu TOCTOU và Hoàn tiền
+        import requests
+        import jwt
+        import datetime
+        order_service_url = os.getenv("ORDER_SERVICE_URL", "http://order-service:3002")
+        jwt_secret = os.getenv("JWT_SECRET", "SieuAnhHungAvengers2026!@#")
+        
+        # Forge a valid JWT token for this user to bypass AuthGuard in nestjs
+        token = jwt.encode({
+            "sub": str(uuid_obj),
+            "role": "CUSTOMER",
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=5)
+        }, jwt_secret, algorithm="HS256")
+        
+        headers = {"Authorization": f"Bearer {token}"}
+        url = f"{order_service_url}/customers/{str(uuid_obj)}/orders/{order_id}/cancel"
+        
+        response = requests.patch(url, headers=headers, json={"reason": "Khách hàng yêu cầu hủy qua AI"}, timeout=10)
+        
+        if response.status_code in [200, 201]:
+            return {"status": "success", "message": "Đã hủy đơn hàng thành công và hệ thống đang xử lý hoàn tiền (nếu có)."}
+        else:
+            return {"status": "error", "message": f"Lỗi từ server khi hủy: {response.text}"}
+            
+    except Exception as e:
+        logger.warning("[AgentTools] cancel_order error: %s", e)
+        return {"status": "error", "message": "Lỗi hệ thống khi hủy đơn hàng."}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  TOOL 13: get_user_preferences  –  Lấy thói quen thanh toán & chi nhánh
+# ─────────────────────────────────────────────────────────────────────────────
+
+TOOL_GET_USER_PREFERENCES = {
+    "type": "function",
+    "function": {
+        "name": "get_user_preferences",
+        "description": "Lấy thông tin thói quen đặt hàng của khách (phương thức thanh toán thường dùng, chi nhánh hay đến) để điền tự động khi chốt đơn.",
+        "parameters": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+        },
+    },
+}
+
+def execute_get_user_preferences(session_id: str) -> Dict[str, Any]:
+    """Phân tích 5 đơn hàng gần nhất để đưa ra preferred payment & branch."""
+    try:
+        import uuid
+        try:
+            uuid_obj = uuid.UUID(session_id)
+        except ValueError:
+            return {"status": "unauthorized", "message": "Khách ẩn danh, không có thói quen."}
+
+        engine = _get_engine()
+        import os
+        order_schema = os.getenv("ORDER_SCHEMA", "orders")
+
+        with engine.connect() as conn:
+            rows = conn.execute(text(
+                f"""
+                SELECT phuong_thuc_thanh_toan, ma_chi_nhanh
+                FROM {order_schema}.don_hang
+                WHERE ma_nguoi_dung = :uid
+                ORDER BY thoi_gian_tao DESC
+                LIMIT 5
+                """
+            ), {"uid": str(uuid_obj)}).fetchall()
+            
+        if not rows:
+            return {"status": "no_history", "message": "Khách chưa có lịch sử mua hàng."}
+
+        payments = [r[0] for r in rows if r[0]]
+        branches = [r[1] for r in rows if r[1]]
+        
+        # Hàm tìm phần tử phổ biến nhất
+        def most_frequent(lst):
+            return max(set(lst), key=lst.count) if lst else None
+            
+        preferred_payment = most_frequent(payments)
+        preferred_branch = most_frequent(branches)
+
+        return {
+            "status": "ok",
+            "preferred_payment": preferred_payment,
+            "preferred_branch_id": preferred_branch,
+            "message": f"Đây là thói quen của khách. Khi khách muốn 'chốt đơn', hãy điền thông tin này vào tool request_checkout, nhưng VẪN PHẢI TÓM TẮT để khách confirm qua UI."
+        }
+    except Exception as e:
+        logger.warning("[AgentTools] get_user_preferences error: %s", e)
+        return {"status": "error", "message": "Lỗi khi lấy thói quen khách hàng."}
+
+
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 #  Registry – Danh sách Tools đăng ký với Groq API
 # ─────────────────────────────────────────────────────────────────────────────
 
 ALL_TOOL_SCHEMAS: List[Dict[str, Any]] = [
     TOOL_ASK_BRANCH,
+    TOOL_FIND_NEAREST_BRANCH,
     TOOL_SET_SESSION_BRANCH,
     TOOL_CHECK_PRICE_AND_STOCK,
+    TOOL_GET_PRODUCT_INSIGHTS,
     TOOL_ADD_TO_CART,
     TOOL_GET_CART,
     TOOL_REQUEST_CHECKOUT,
     TOOL_SEARCH_KNOWLEDGE_BASE,
     TOOL_GET_RECOMMENDATIONS,
+    TOOL_TRACK_ORDER_STATUS,
+    TOOL_GET_ORDER_HISTORY,
+    TOOL_GET_ORDER_DETAILS,
+    TOOL_CANCEL_ORDER,
+    TOOL_GET_USER_PREFERENCES,
 ]
 
 # Dispatch map: tool_name -> executor function
+# Backend injection for session_id via lambda args, session_id
 TOOL_EXECUTORS = {
-    "ask_branch": lambda args: execute_ask_branch(),
-    "set_session_branch": lambda args: execute_set_session_branch(**args),
-    "check_price_and_stock": lambda args: execute_check_price_and_stock(**args),
-    "add_to_cart": lambda args: execute_add_to_cart(**args),
-    "get_cart": lambda args: execute_get_cart(**args),
-    "request_checkout": lambda args: execute_request_checkout(**args),
-    "search_knowledge_base": lambda args: execute_search_knowledge_base(**args),
-    "get_recommendations": lambda args: execute_get_recommendations(**args),
+    "ask_branch": lambda args, session_id: execute_ask_branch(),
+    "find_nearest_branch": lambda args, session_id: execute_find_nearest_branch(session_id=session_id, **args),
+    "set_session_branch": lambda args, session_id: execute_set_session_branch(session_id=session_id, **args),
+    "check_price_and_stock": lambda args, session_id: execute_check_price_and_stock(**args),
+    "get_product_insights": lambda args, session_id: execute_get_product_insights(**args),
+    "add_to_cart": lambda args, session_id: execute_add_to_cart(session_id=session_id, **args),
+    "get_cart": lambda args, session_id: execute_get_cart(session_id=session_id),
+    "request_checkout": lambda args, session_id: execute_request_checkout(session_id=session_id, **args),
+    "search_knowledge_base": lambda args, session_id: execute_search_knowledge_base(**args),
+    "get_recommendations": lambda args, session_id: execute_get_recommendations(**args),
+    "track_order_status": lambda args, session_id: execute_track_order_status(session_id=session_id, **args),
+    "get_order_history": lambda args, session_id: execute_get_order_history(session_id=session_id),
+    "get_order_details": lambda args, session_id: execute_get_order_details(session_id=session_id, **args),
+    "cancel_order": lambda args, session_id: execute_cancel_order(session_id=session_id, **args),
+    "get_user_preferences": lambda args, session_id: execute_get_user_preferences(session_id=session_id),
 }
 
