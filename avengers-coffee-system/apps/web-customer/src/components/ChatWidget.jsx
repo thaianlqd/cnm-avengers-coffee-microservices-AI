@@ -435,10 +435,15 @@ export default function ChatWidget({ user, socketUrl }) {
     return cache.current;
   }, [userId]);
 
-  useEffect(() => { isOpenRef.current = isOpen; }, [isOpen]);
-  useEffect(() => { chatModeRef.current = chatMode; }, [chatMode]);
-
   const scrollBottom = useCallback(() => setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 80), []);
+
+  useEffect(() => { 
+    isOpenRef.current = isOpen; 
+    if (isOpen) {
+      setTimeout(scrollBottom, 100);
+    }
+  }, [isOpen, scrollBottom]);
+  useEffect(() => { chatModeRef.current = chatMode; }, [chatMode]);
 
   const addAIMsg = useCallback((noi_dung, extras = {}) => {
     const msg = buildMsg({ vai_tro_nguoi_gui: 'AI', ten_nguoi_gui: 'Trợ lý AI', noi_dung, ...extras });
@@ -1137,19 +1142,7 @@ export default function ChatWidget({ user, socketUrl }) {
 
           {/* Input area */}
           <div style={{ padding: '10px 12px 14px', background: '#fff', borderTop: '1px solid #e9ecef', display: 'flex', flexDirection: 'column', gap: 9 }}>
-            {/* Quick bar */}
-            {chatMode === 'AI' && (
-              <div style={{ display: 'flex', gap: 5, overflowX: 'auto', paddingBottom: 1 }}>
-                {QUICK_ACTIONS.map((a) => (
-                  <button key={a.id} onClick={() => sendMessage(a.text)} style={{ all: 'unset', cursor: 'pointer', fontSize: '0.68rem', fontWeight: 700, color: '#495057', background: '#f8f9fa', padding: '5px 10px', borderRadius: 20, border: '1px solid #e9ecef', whiteSpace: 'nowrap', flexShrink: 0, transition: 'all 0.15s' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = '#fff3f0'; e.currentTarget.style.color = '#b22830'; e.currentTarget.style.borderColor = '#b2283040'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = '#f8f9fa'; e.currentTarget.style.color = '#495057'; e.currentTarget.style.borderColor = '#e9ecef'; }}
-                  >
-                    {a.icon} {a.label}
-                  </button>
-                ))}
-              </div>
-            )}
+            {/* Quick bar removed as per user request */}
 
             {/* Input row */}
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>

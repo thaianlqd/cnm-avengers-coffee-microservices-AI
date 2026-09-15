@@ -57,9 +57,12 @@ TOOL_ASK_BRANCH = {
 def _clean_dict(d: dict) -> dict:
     import decimal
     res = {}
+    import uuid
     for k, v in d.items():
         if isinstance(v, decimal.Decimal):
             res[k] = float(v)
+        elif isinstance(v, uuid.UUID):
+            res[k] = str(v)
         else:
             res[k] = v
     return res
@@ -608,7 +611,7 @@ TOOL_GET_CART = {
     "type": "function",
     "function": {
         "name": "get_cart",
-        "description": "Lấy danh sách và tổng tiền giỏ hàng hiện tại của phiên chat.",
+        "description": "Lấy danh sách và tổng tiền giỏ hàng hiện tại (chưa thanh toán/chưa đặt) của phiên chat. KHÔNG dùng để tra cứu đơn hàng đã đặt thành công.",
         "parameters": {
             "type": "object",
             "properties": {},
@@ -925,7 +928,7 @@ def execute_track_order_status(order_id: str, session_id: str) -> Dict[str, Any]
 
         return {
             "status": "ok",
-            "order_info": dict(row),
+            "order_info": _clean_dict(dict(row)),
             "message": f"Đơn hàng {order_id} của bạn hiện đang ở trạng thái: {row['trang_thai_don_hang']}."
         }
     except Exception as e:
@@ -942,8 +945,9 @@ TOOL_GET_ORDER_HISTORY = {
     "function": {
         "name": "get_order_history",
         "description": (
-            "Xem lịch sử các đơn hàng gần đây của khách hàng. "
-            "Dùng khi khách hỏi 'Tôi từng uống gì', 'Đơn hàng cũ của tôi'."
+            "Xem danh sách đơn hàng đã đặt của khách (bao gồm đơn hàng mới tạo, đang giao, lịch sử). "
+            "Dùng khi khách hỏi: 'Tôi có đơn hàng nào không', 'Kiểm tra đơn hàng của tôi', 'Tôi từng uống gì', 'Đơn hàng cũ của tôi'. "
+            "ĐỪNG nhầm lẫn với get_cart (giỏ hàng chưa đặt)."
         ),
         "parameters": {
             "type": "object",
@@ -1042,7 +1046,7 @@ def execute_get_order_details(session_id: str, order_id: str) -> Dict[str, Any]:
             # 1. Fetch order info
             order_info = conn.execute(text(
                 f"""
-                SELECT ma_don_hang, tong_tien, phuong_thuc_thanh_toan, trang_thai_don_hang, ma_chi_nhanh
+                SELECT ma_don_hang, tong_tien, phuong_thuc_thanh_toan, trang_thai_don_hang, co_so_ma
                 FROM {order_schema}.don_hang
                 WHERE ma_don_hang = :oid AND ma_nguoi_dung = :uid
                 """
@@ -1054,7 +1058,7 @@ def execute_get_order_details(session_id: str, order_id: str) -> Dict[str, Any]:
             # 2. Fetch order items
             items = conn.execute(text(
                 f"""
-                SELECT ma_san_pham, so_luong, don_gia, tuy_chon
+                SELECT ma_san_pham, ten_san_pham, so_luong, gia_ban, kich_co, toppings, luong_da, do_ngot, ghi_chu
                 FROM {order_schema}.chi_tiet_don_hang
                 WHERE ma_don_hang = :oid
                 """
@@ -1064,14 +1068,19 @@ def execute_get_order_details(session_id: str, order_id: str) -> Dict[str, Any]:
             for item in items:
                 items_list.append({
                     "product_id": item[0],
-                    "quantity": item[1],
-                    "unit_price": float(item[2]),
-                    "options": item[3] if item[3] else {}
+                    "product_name": item[1],
+                    "quantity": item[2],
+                    "unit_price": float(item[3]) if item[3] else 0.0,
+                    "size": item[4],
+                    "toppings": item[5] if item[5] else [],
+                    "ice": item[6],
+                    "sugar": item[7],
+                    "note": item[8]
                 })
 
         return {
             "status": "ok",
-            "order_id": order_info[0],
+            "order_id": str(order_info[0]),
             "total_price": float(order_info[1]),
             "payment_method": order_info[2],
             "order_status": order_info[3],
@@ -1137,8 +1146,8 @@ def execute_cancel_order(session_id: str, order_id: str, is_confirmed: bool = Fa
             return {"status": "not_found", "message": "Xin lỗi, không tìm thấy đơn hàng này hoặc đơn hàng không thuộc về bạn."}
             
         status = order_info[0]
-        # Chỉ cho phép hủy nếu là PENDING hoặc CHO_XAC_NHAN
-        if status not in ['PENDING', 'CHO_XAC_NHAN', 'pending']:
+        # Chỉ cho phép hủy nếu là MOI_TAO, PENDING hoặc CHO_XAC_NHAN
+        if status not in ['MOI_TAO', 'PENDING', 'CHO_XAC_NHAN', 'pending']:
             return {"status": "rejected", "message": f"Không thể hủy đơn hàng vì trạng thái hiện tại là {status}. Đơn hàng có thể đã được chuẩn bị hoặc đang giao."}
 
         # 2. Human-in-the-loop: Chờ xác nhận
@@ -1152,8 +1161,8 @@ def execute_cancel_order(session_id: str, order_id: str, is_confirmed: bool = Fa
         import requests
         import jwt
         import datetime
-        order_service_url = os.getenv("ORDER_SERVICE_URL", "http://order-service:3002")
-        jwt_secret = os.getenv("JWT_SECRET", "SieuAnhHungAvengers2026!@#")
+        order_service_url = os.getenv("ORDER_SERVICE_URL", "http://order-service:3005")
+        jwt_secret = os.getenv("JWT_SECRET", "your_strong_jwt_secret_here")
         
         # Forge a valid JWT token for this user to bypass AuthGuard in nestjs
         token = jwt.encode({
@@ -1210,10 +1219,10 @@ def execute_get_user_preferences(session_id: str) -> Dict[str, Any]:
         with engine.connect() as conn:
             rows = conn.execute(text(
                 f"""
-                SELECT phuong_thuc_thanh_toan, ma_chi_nhanh
+                SELECT phuong_thuc_thanh_toan, co_so_ma
                 FROM {order_schema}.don_hang
                 WHERE ma_nguoi_dung = :uid
-                ORDER BY thoi_gian_tao DESC
+                ORDER BY ngay_tao DESC
                 LIMIT 5
                 """
             ), {"uid": str(uuid_obj)}).fetchall()
