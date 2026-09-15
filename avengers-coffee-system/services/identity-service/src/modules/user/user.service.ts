@@ -1529,6 +1529,41 @@ export class UserService implements OnModuleInit {
     };
   }
 
+  private async _geocodeAddress(address: string): Promise<{ vi_do: number | null; kinh_do: number | null }> {
+    try {
+      const apiKey = process.env.VIETMAP_API_KEY;
+      if (!apiKey) return { vi_do: null, kinh_do: null };
+
+      // Buoc 1: Tim kiem dia chi de lay ref_id
+      const searchUrl = `https://maps.vietmap.vn/api/search/v3?apikey=${apiKey}&text=${encodeURIComponent(address)}`;
+      const searchRes = await fetch(searchUrl);
+      
+      if (searchRes.ok) {
+        const searchData = await searchRes.json();
+        if (searchData && Array.isArray(searchData) && searchData.length > 0) {
+          const refId = searchData[0].ref_id;
+          if (refId) {
+            // Buoc 2: Dung ref_id de lay toa do
+            const placeUrl = `https://maps.vietmap.vn/api/place/v3?apikey=${apiKey}&refid=${refId}`;
+            const placeRes = await fetch(placeUrl);
+            if (placeRes.ok) {
+              const placeData = await placeRes.json();
+              if (placeData && placeData.lat && placeData.lng) {
+                return {
+                  vi_do: parseFloat(placeData.lat),
+                  kinh_do: parseFloat(placeData.lng),
+                };
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('[_geocodeAddress] Error:', e);
+    }
+    return { vi_do: null, kinh_do: null };
+  }
+
   async themDiaChi(
     maNguoiDung: string,
     payload: { tenDiaChi?: string; diaChiDayDu?: string; ghiChu?: string; macDinh?: boolean },
@@ -1552,12 +1587,16 @@ export class UserService implements OnModuleInit {
       await this.boMacDinhTatCaDiaChi(maNguoiDung);
     }
 
+    const { vi_do, kinh_do } = await this._geocodeAddress(diaChiDayDu);
+
     const created = this.deliveryAddressRepo.create({
       ma_nguoi_dung: maNguoiDung,
       ten_dia_chi: tenDiaChi,
       dia_chi_day_du: diaChiDayDu,
       ghi_chu: ghiChu || null,
       mac_dinh: shouldSetDefault,
+      vi_do,
+      kinh_do,
     });
 
     const saved = await this.deliveryAddressRepo.save(created);
@@ -1587,7 +1626,12 @@ export class UserService implements OnModuleInit {
       if (!diaChiDayDu) {
         throw new BadRequestException('diaChiDayDu khong duoc de trong');
       }
-      address.dia_chi_day_du = diaChiDayDu;
+      if (address.dia_chi_day_du !== diaChiDayDu) {
+        address.dia_chi_day_du = diaChiDayDu;
+        const { vi_do, kinh_do } = await this._geocodeAddress(diaChiDayDu);
+        address.vi_do = vi_do;
+        address.kinh_do = kinh_do;
+      }
     }
 
     if (payload.ghiChu !== undefined) {

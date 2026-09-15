@@ -725,6 +725,27 @@ def clear_agent_cart(session_id: str):
     return {"status": "ok", "message": f"Đã xoá giỏ hàng cho session {session_id}"}
 
 
+@app.get("/")
+def read_root():
+    return {"message": "Avengers AI Service is running!"}
+
+
+@app.get("/debug-branches")
+def debug_branches():
+    from sqlalchemy import text
+    from db import _get_engine
+    import decimal
+    with _get_engine().connect() as conn:
+        res = conn.execute(text("SELECT ten_chi_nhanh, vi_do, kinh_do FROM identity.chi_nhanh WHERE vi_do IS NOT NULL AND kinh_do IS NOT NULL")).mappings().all()
+        out = []
+        for r in res:
+            d = dict(r)
+            for k,v in d.items():
+                if isinstance(v, decimal.Decimal): d[k] = float(v)
+            out.append(d)
+        return out
+
+
 @app.get("/ai/model/stats")
 def model_stats():
     return {

@@ -403,10 +403,13 @@ export default function ChatWidget({ user, socketUrl }) {
   // Data cache & prefetch
   const cache = useRef({ products: [], branches: [], orders: [], vouchers: [], loaded: false });
 
-  const userId = user?.ma_nguoi_dung || user?.maNguoiDung || null;
+  const userId = user?.id || user?.ma_nguoi_dung || user?.maNguoiDung || null;
   const userName = user?.ho_ten || user?.hoTen || user?.email || 'Khách';
   const anonId = useRef(getOrCreateAnonId());
   const effectiveUserId = userId || anonId.current;
+  
+  console.log("ChatWidget debug - user object:", user);
+  console.log("ChatWidget debug - effectiveUserId:", effectiveUserId);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -616,8 +619,18 @@ export default function ChatWidget({ user, socketUrl }) {
         const extras = {};
 
         // Enrich với UI cards dựa trên nội dung reply + câu hỏi
-        if (/(cửa hàng|chi nhánh|địa chỉ|ở đâu|gần đây)/.test(textLower) || /(chi nhánh|địa chỉ)/.test(agentReply.toLowerCase())) {
-          extras._stores = cache.current.branches.slice(0, 4);
+        const toolCalls = agentData?.tool_calls_log || [];
+        const branchTool = toolCalls.find(t => t.tool === 'find_nearest_branch' || t.tool === 'ask_branch');
+        const hasProfileTool = toolCalls.some(t => t.tool === 'get_user_profile');
+
+        if (branchTool && branchTool.result && branchTool.result.branches) {
+          extras._stores = branchTool.result.branches.slice(0, 4);
+        } else if (/(cửa hàng|chi nhánh|ở đâu|gần đây)/.test(textLower) && !hasProfileTool || /(chi nhánh)/.test(agentReply.toLowerCase())) {
+          const replyLower = agentReply.toLowerCase();
+          const mentionedBranches = cache.current.branches.filter(b => b.ten_chi_nhanh && replyLower.includes(b.ten_chi_nhanh.toLowerCase()));
+          if (mentionedBranches.length > 0) {
+            extras._stores = mentionedBranches.slice(0, 4);
+          }
         }
         // 2. Menu / Sản phẩm
         if (/(thực đơn|menu|đồ uống|cà phê|trà|sữa|matcha|có gì ngon|gợi ý|bán chạy|đánh giá|sp|sản phẩm|yêu thích)/.test(textLower) || /(sản phẩm|đồ uống|menu|món|sp|yêu thích|gợi ý)/.test(agentReply.toLowerCase())) {
@@ -678,7 +691,7 @@ export default function ChatWidget({ user, socketUrl }) {
 
       if (reply) {
         const extras = {};
-        if ((resData.stores && resData.stores.length > 0) || /(cửa hàng|chi nhánh|địa chỉ|ở đâu|gần đây|tìm cửa)/.test(textLower) || /(cửa hàng|chi nhánh|địa chỉ)/.test(reply.toLowerCase())) {
+        if ((resData.stores && resData.stores.length > 0) || /(cửa hàng|chi nhánh|ở đâu|gần đây|tìm cửa)/.test(textLower) || /(cửa hàng|chi nhánh)/.test(reply.toLowerCase())) {
           extras._stores = (resData.stores && resData.stores.length > 0) ? resData.stores : cache.current.branches.slice(0, 4);
         }
         if ((resData.products && resData.products.length > 0) || /(thực đơn|menu|đồ uống|cà phê|phê|trà|sữa|đồ ăn|bánh|matcha|latte|có gì ngon|món|xem menu|đặt)/.test(textLower) || /(sản phẩm|đồ uống|menu|món|matcha|latte)/.test(reply.toLowerCase())) {

@@ -35,6 +35,12 @@ export class DeliveryAddress {
   @Column({ type: 'boolean', default: false })
   mac_dinh: boolean;
 
+  @Column({ type: 'float', nullable: true })
+  vi_do: number | null;
+
+  @Column({ type: 'float', nullable: true })
+  kinh_do: number | null;
+
   @CreateDateColumn()
   ngay_tao: Date;
 
