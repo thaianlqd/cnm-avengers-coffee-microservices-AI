@@ -20,22 +20,59 @@ import {
   TicketIcon,
   PrinterIcon,
   SparklesIcon,
-  XCircleIcon
+  XCircleIcon,
+  ArrowRightIcon
 } from '@heroicons/react/24/outline';
 import { CheckIcon } from '@heroicons/react/24/solid';
+import { io } from 'socket.io-client';
+import { resolveAddressCoordinates } from '../../lib/geocodingService';
+import ShipperMapView from '../../components/features_thaian/ShipperMapView';
+
 
 export default function OrderLookupPage({
   initialCode = '',
   onBack,
   onOrderMore,
   onNavigate,
+  user: propUser,
+  onOpenOrderHistory,
 }) {
+  const [currentUser, setCurrentUser] = useState(() => {
+    if (propUser) return propUser;
+    try {
+      return JSON.parse(localStorage.getItem('user') || 'null');
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    if (propUser) {
+      setCurrentUser(propUser);
+    }
+  }, [propUser]);
+
   const [code, setCode] = useState(initialCode || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [orderResult, setOrderResult] = useState(null);
   const [recentLookups, setRecentLookups] = useState([]);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [publicBranches, setPublicBranches] = useState([]);
+
+  // Tải danh sách chi nhánh công khai để hiển thị chính xác tên cơ sở
+  useEffect(() => {
+    let isMounted = true;
+    apiClient.get('/users/branches/public')
+      .then(res => {
+        const items = Array.isArray(res.data?.items) ? res.data.items : (Array.isArray(res.data) ? res.data : []);
+        if (isMounted && items.length > 0) {
+          setPublicBranches(items);
+        }
+      })
+      .catch(() => {});
+    return () => { isMounted = false; };
+  }, []);
 
   // Load recent lookups from localStorage on mount
   useEffect(() => {
@@ -90,6 +127,65 @@ export default function OrderLookupPage({
       setLoading(false);
     }
   };
+
+  // Real-time tracking qua WebSocket và Polling cập nhật vị trí shipper liên tục
+  useEffect(() => {
+    if (!orderResult?.order) return;
+
+    const orderId = orderResult.order.ma_don_hang || orderResult.order.id;
+    const trackingCode = orderResult.tracking?.tracking_code || orderResult.order.tracking_code || code;
+    const isDangGiao = orderResult.order.trang_thai_don_hang === 'DANG_GIAO' || orderResult.tracking?.status === 'IN_TRANSIT';
+
+    // 1. WebSocket kết nối tới namespace /notifications
+    const socketBase = import.meta.env.VITE_SOCKET_URL || `http://${window.location.hostname}:3005`;
+    const socket = io(`${socketBase}/notifications`, {
+      transports: ['websocket'],
+      reconnectionAttempts: 5,
+    });
+
+    socket.on('connect', () => {
+      socket.emit('tracking:subscribe', { maDonHang: orderId, trackingCode });
+    });
+
+    socket.on('shipper:location:update', (data) => {
+      if (data?.latitude && data?.longitude) {
+        const lat = Number(data.latitude);
+        const lng = Number(data.longitude);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          setOrderResult((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              shipper_location: {
+                latitude: lat,
+                longitude: lng,
+                updated_at: data.thoiGianCapNhat || new Date().toISOString(),
+              },
+            };
+          });
+        }
+      }
+    });
+
+    // 2. Polling phụ trợ: 3s nếu đang giao, 10s nếu trạng thái khác
+    const pollInterval = setInterval(async () => {
+      const targetQuery = trackingCode || code;
+      if (!targetQuery) return;
+      try {
+        const res = await apiClient.get(
+          `/shippers/delivery/tracking/by-code/lookup?code=${encodeURIComponent(targetQuery)}&t=${Date.now()}`
+        );
+        if (res.data?.order) {
+          setOrderResult(res.data);
+        }
+      } catch {}
+    }, isDangGiao ? 3000 : 10000);
+
+    return () => {
+      socket.disconnect();
+      clearInterval(pollInterval);
+    };
+  }, [orderResult?.order?.ma_don_hang, orderResult?.order?.trang_thai_don_hang, code]);
 
   const searchedInitialCodeRef = useRef(null);
 
@@ -196,11 +292,12 @@ export default function OrderLookupPage({
 
   const getPaymentMethodText = (method) => {
     const m = String(method || '').toUpperCase();
-    if (m === 'COD' || m === 'TIEN_MAT') return 'Tiền mặt khi nhận hàng (COD)';
+    if (m === 'COD' || m === 'TIEN_MAT' || m === 'THANH_TOAN_KHI_NHAN_HANG') return 'Thanh toán tiền mặt khi nhận hàng (COD)';
     if (m === 'VNPAY') return 'Thanh toán trực tuyến VNPAY';
     if (m === 'MOMO') return 'Ví điện tử MoMo';
-    if (m === 'CHUYEN_KHOAN' || m === 'BANKING') return 'Chuyển khoản ngân hàng';
-    return method || 'Thanh toán khi nhận hàng';
+    if (m === 'CHUYEN_KHOAN' || m === 'BANKING' || m === 'NGAN_HANG_QR' || m === 'SEPAY' || m === 'VIETQR') return 'Chuyển khoản QR ngân hàng (VietQR)';
+    if (m === 'VI_DIEN_TU' || m === 'WALLET') return 'Ví điện tử Avengers';
+    return String(method || '').replace(/_/g, ' ') || 'Thanh toán khi nhận hàng';
   };
 
   const getPaymentStatusMeta = (status) => {
@@ -224,13 +321,35 @@ export default function OrderLookupPage({
     return 'Giao hàng tận nơi';
   };
 
-  // Branch code to name mapping
+  // Branch lookup logic
+  const getBranch = (branchCode) => {
+    if (!branchCode) return null;
+    const codeStr = String(branchCode).trim().toUpperCase();
+    const codeNorm = codeStr.replace(/-/g, '_');
+
+    // 1. Tìm khớp chính xác trong danh sách chi nhánh công khai
+    let matched = publicBranches.find(b => {
+      const bCode = String(b.ma_chi_nhanh || b.co_so_ma || b.branch_code || b.id || '').trim().toUpperCase();
+      return bCode === codeStr || bCode === codeNorm || bCode.replace(/-/g, '_') === codeNorm;
+    });
+    if (matched) return matched;
+
+    // 2. Tìm khớp tương đối trong danh sách
+    matched = publicBranches.find(b => {
+      const bCode = String(b.ma_chi_nhanh || b.co_so_ma || b.branch_code || '').trim().toUpperCase();
+      return (bCode && (bCode.includes(codeNorm) || codeNorm.includes(bCode)));
+    });
+    return matched || null;
+  };
+
   const getBranchName = (branchCode) => {
-    const codeStr = String(branchCode || '').toUpperCase();
-    if (codeStr.includes('MAC_DINH_CHI') || codeStr.includes('MDC')) return 'Avengers Coffee - Mạc Đĩnh Chi (Quận 1, TP.HCM)';
-    if (codeStr.includes('NGUYEN_THI_MINH_KHAI') || codeStr.includes('NTMK')) return 'Avengers Coffee - Nguyễn Thị Minh Khai (Quận 3, TP.HCM)';
-    if (codeStr.includes('TRUONG_CHINH')) return 'Avengers Coffee - Trường Chinh (Thanh Xuân, Hà Nội)';
-    return 'Avengers Coffee Flagship Store';
+    if (!branchCode) return 'Cửa hàng Avengers Coffee tiếp nhận';
+    const matched = getBranch(branchCode);
+    if (matched) {
+      return matched.ten_chi_nhanh || matched.name || matched.ten_co_so;
+    }
+    const cleanLabel = String(branchCode).replace(/^(HC_|HCM_|HN_|DN_)/i, '').replace(/_/g, ' ');
+    return `Avengers Coffee - Chi nhánh ${cleanLabel}`;
   };
 
   const currentOrder = orderResult?.order;
@@ -269,7 +388,7 @@ export default function OrderLookupPage({
               Tra Cứu Đơn Hàng
               <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-red-100 text-[#b22830] normal-case tracking-normal">
                 <TruckIcon className="w-3.5 h-3.5" />
-                Khách hàng & Vãng lai
+                Khách Vãng Lai &amp; Đơn Hàng
               </span>
             </h1>
           </div>
@@ -295,6 +414,39 @@ export default function OrderLookupPage({
             </button>
           </div>
         </div>
+
+        {/* ── BANNER DÀNH CHO TÀI KHOẢN ĐÃ ĐĂNG NHẬP ── */}
+        {currentUser && (
+          <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-white rounded-3xl p-5 md:p-6 border border-emerald-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-600/20">
+                <UserIcon className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs sm:text-sm font-extrabold text-emerald-950">
+                  Bạn đang đăng nhập tài khoản: <span className="text-emerald-700">{currentUser.ho_ten || currentUser.full_name || currentUser.username || currentUser.email || 'Hội viên Avengers'}</span>
+                </p>
+                <p className="text-xs text-emerald-800/80 mt-0.5 font-medium">
+                  Mọi đơn hàng của bạn đều được lưu tự động trong Lịch sử đơn hàng, bạn có thể xem nhanh tại đây mà không cần nhập mã tra cứu.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (onOpenOrderHistory) {
+                  onOpenOrderHistory();
+                } else if (onNavigate) {
+                  onNavigate('order-history');
+                }
+              }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-bold transition-all shadow-md shadow-green-700/20 active:scale-95 cursor-pointer shrink-0"
+            >
+              <span>Xem Lịch Sử Đơn Hàng</span>
+              <ArrowRightIcon className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
         {/* ── SEARCH CARD ── */}
         <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-[#ede5dc]">
@@ -400,9 +552,13 @@ export default function OrderLookupPage({
                     <span className="font-mono font-black text-gray-900 text-base md:text-lg bg-gray-100 px-2.5 py-0.5 rounded-lg border border-gray-200">
                       #{currentOrder.ma_don_hang?.substring(0, 8).toUpperCase()}
                     </span>
-                    {currentTracking?.tracking_code && (
-                      <span className="inline-flex items-center gap-1 font-mono font-bold text-xs bg-amber-50 text-amber-900 border border-amber-200 px-2 py-0.5 rounded-lg">
-                        Mã tra cứu: {currentTracking.tracking_code}
+                    {currentTracking?.tracking_code ? (
+                      <span className="inline-flex items-center gap-1 font-mono font-bold text-xs bg-amber-50 text-amber-900 border border-amber-200 px-2.5 py-0.5 rounded-lg">
+                        Mã tra cứu khách vãng lai: {currentTracking.tracking_code}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 font-sans font-bold text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-lg">
+                        Đơn hàng thành viên (Theo dõi qua Lịch sử đơn hàng)
                       </span>
                     )}
                     <button
@@ -566,40 +722,54 @@ export default function OrderLookupPage({
                     </div>
                   </div>
 
-                  {/* Shipper info if available */}
-                  <div className="pt-2 border-t border-gray-100">
-                    <span className="text-gray-500 font-medium block text-xs mb-1.5">Người giao hàng:</span>
-                    {currentShipper?.full_name ? (
-                      <div className="bg-gray-50 rounded-2xl p-3 border border-gray-200/80 flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-9 h-9 rounded-full bg-[#b22830] text-white flex items-center justify-center font-black text-xs">
-                            {currentShipper.full_name.charAt(0)}
+                  {/* Shipper info for delivery orders */}
+                  {(currentTracking?.delivery_mode === 'GIAO_TAN_NOI' || currentOrder.loai_don_hang === 'GIAO_TAN_NOI') ? (
+                    <div className="pt-2 border-t border-gray-100">
+                      <span className="text-gray-500 font-medium block text-xs mb-1.5">Người giao hàng:</span>
+                      {currentShipper?.full_name ? (
+                        <div className="bg-gray-50 rounded-2xl p-3 border border-gray-200/80 flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-9 h-9 rounded-full bg-[#b22830] text-white flex items-center justify-center font-black text-xs">
+                              {currentShipper.full_name.charAt(0)}
+                            </div>
+                            <div>
+                              <p className="font-extrabold text-gray-900 text-xs md:text-sm">{currentShipper.full_name}</p>
+                              <p className="text-[11px] font-medium text-gray-500">
+                                {currentShipper.vehicle_plate ? `Biển số: ${currentShipper.vehicle_plate}` : 'Tài xế Avengers Coffee'}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-extrabold text-gray-900 text-xs md:text-sm">{currentShipper.full_name}</p>
-                            <p className="text-[11px] font-medium text-gray-500">
-                              {currentShipper.vehicle_plate ? `Biển số: ${currentShipper.vehicle_plate}` : 'Shipper Avengers Coffee'}
-                            </p>
-                          </div>
+                          {currentShipper.phone && (
+                            <a
+                              href={`tel:${currentShipper.phone}`}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold transition-colors"
+                            >
+                              <PhoneIcon className="w-3.5 h-3.5" />
+                              <span>{currentShipper.phone}</span>
+                            </a>
+                          )}
                         </div>
-                        {currentShipper.phone && (
-                          <a
-                            href={`tel:${currentShipper.phone}`}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold transition-colors"
-                          >
-                            <PhoneIcon className="w-3.5 h-3.5" />
-                            <span>{currentShipper.phone}</span>
-                          </a>
-                        )}
+                      ) : (
+                        <div className="bg-amber-50/70 rounded-xl p-3 border border-amber-100/90 text-amber-900 text-xs font-medium flex items-center gap-2.5">
+                          <div className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                          <span>
+                            {currentStatusMeta.stepIndex >= 3
+                              ? 'Đơn hàng đang trên đường vận chuyển.'
+                              : 'Đơn hàng đang chờ cửa hàng xác nhận và điều phối tài xế giao hàng.'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="pt-2 border-t border-gray-100">
+                      <span className="text-gray-500 font-medium block text-xs mb-1.5">Hình thức phục vụ:</span>
+                      <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 text-gray-700 text-xs font-medium">
+                        {currentOrder.loai_don_hang === 'DUNG_TAI_CHO' || currentOrder.ma_ban
+                          ? `Phục vụ tại bàn: Nhân viên sẽ mang thức uống ra tận Bàn ${currentOrder.ma_ban || 'quý khách'}.`
+                          : 'Đến lấy tại quầy: Vui lòng đọc mã đơn hàng cho Barista tại quầy khi nhận món.'}
                       </div>
-                    ) : (
-                      <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 text-gray-600 text-xs font-medium">
-                        {currentStatusMeta.stepIndex >= 3
-                          ? 'Đội ngũ giao hàng đang vận chuyển đến bạn.'
-                          : 'Hệ thống đang chuẩn bị đồ uống và sẽ phân công tài xế khi hoàn tất pha chế.'}
-                      </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
                   {currentOrder.ghi_chu && (
                     <div className="pt-2 border-t border-gray-100">
@@ -688,7 +858,68 @@ export default function OrderLookupPage({
               </div>
             </div>
 
+            {/* LIVE TRACKING MAP */}
+
+            {(currentTracking?.delivery_mode === 'GIAO_TAN_NOI' || currentOrder?.loai_don_hang === 'GIAO_TAN_NOI') && (
+              <div className="bg-white rounded-3xl p-6 md:p-7 shadow-sm border border-[#ede5dc] space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-gray-100">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-red-50 text-[#b22830] flex items-center justify-center">
+                      <MapPinIcon className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h2 className="text-sm font-black uppercase tracking-wider text-gray-900">
+                        Bản Đồ Theo Dõi Lộ Trình Giao Hàng
+                      </h2>
+                      <p className="text-[11px] font-medium text-gray-500">
+                        Định vị vệ tinh hiển thị vị trí quán, tuyến đường di chuyển và tài xế trực tiếp
+                      </p>
+                    </div>
+                  </div>
+                  {currentShipper?.full_name && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 self-start sm:self-auto">
+                      <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
+                      Tài xế đang kết nối
+                    </span>
+                  )}
+                </div>
+
+                <div className="rounded-2xl overflow-hidden border border-gray-200/80 relative shadow-inner">
+                  {(() => {
+                    const matchedB = getBranch(currentOrder?.co_so_ma || currentTracking?.branch_code);
+                    const storeLoc = currentTracking?.store_location || (matchedB?.vi_do && matchedB?.kinh_do ? { latitude: Number(matchedB.vi_do), longitude: Number(matchedB.kinh_do) } : { latitude: 10.80734, longitude: 106.717612 });
+
+                    let destLoc = currentTracking?.destination_location || (currentOrder?.delivery_latitude ? { latitude: Number(currentOrder.delivery_latitude), longitude: Number(currentOrder.delivery_longitude) } : null);
+                    if (!destLoc || !destLoc.latitude) {
+                      const custAddr = currentTracking?.destination_address || currentOrder?.dia_chi_giao_hang || '';
+                      const resolved = resolveAddressCoordinates(custAddr);
+                      if (resolved) {
+                        destLoc = { latitude: resolved.lat, longitude: resolved.lng };
+                      } else {
+                        destLoc = { latitude: storeLoc.latitude + 0.005, longitude: storeLoc.longitude + 0.005 };
+                      }
+                    }
+
+                    const addr = currentTracking?.branch_address || matchedB?.dia_chi || getBranchName(currentOrder?.co_so_ma || currentTracking?.branch_code);
+
+                    return (
+                      <ShipperMapView
+                        height="380px"
+                        storeLocation={storeLoc}
+                        destinationLocation={destLoc}
+                        shipperLocation={orderResult?.shipper_location?.latitude ? orderResult.shipper_location : null}
+                        shipperName={currentShipper?.full_name || 'Tài xế Avengers'}
+                        deliveryStatus={currentOrder?.trang_thai_don_hang}
+                        storeAddress={addr}
+                      />
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
+
             {/* 3. ORDER ITEMS & BILL DETAILS */}
+
             <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-[#ede5dc] space-y-6">
               <div className="flex items-center justify-between pb-4 border-b border-gray-100">
                 <div className="flex items-center gap-2.5">

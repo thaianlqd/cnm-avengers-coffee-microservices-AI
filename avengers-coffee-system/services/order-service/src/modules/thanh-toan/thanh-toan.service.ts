@@ -27,6 +27,8 @@ type KhoiTaoThanhToanDto = {
   branch_code?: string;
   delivery_mode?: 'GIAO_TAN_NOI' | 'LAY_TAI_QUAN' | 'DUNG_TAI_CHO';
   delivery_method?: 'INTERNAL' | 'LALAMOVE';
+  destination_latitude?: number;
+  destination_longitude?: number;
   table_number?: string;
   guest_email?: string;
   guest_phone?: string;
@@ -221,6 +223,8 @@ export class ThanhToanService {
   private readonly SEPAY_ACCOUNT_NO = process.env.SEPAY_ACCOUNT_NO || '025452790502';
   private readonly IDENTITY_SERVICE_URL = process.env.IDENTITY_SERVICE_URL || 'http://identity-service:3001';
   private readonly INTERNAL_SERVICE_TOKEN = process.env.INTERNAL_SERVICE_TOKEN || 'avengers-internal-token';
+  private readonly MAPBOX_ACCESS_TOKEN = (process.env.MAPBOX_ACCESS_TOKEN || '').trim();
+  private branchCache: { data: any[]; expiresAt: number } | null = null;
 
   constructor(
     @InjectRepository(CartItem)
@@ -245,7 +249,7 @@ export class ThanhToanService {
     private readonly customerWalletService: CustomerWalletService,
     private readonly surveyService: SurveyService,
     private readonly smtpService: SmtpService,
-  ) {}
+  ) { }
 
   private normalizeBranchCode(branchCode?: string) {
     return String(branchCode || 'MAC_DINH_CHI').trim().toUpperCase();
@@ -443,6 +447,20 @@ export class ThanhToanService {
     const branchCode = this.normalizeBranchCode(payload.branchCode || undefined);
     if (!branchCode) return;
 
+    // 1. Invalidate Redis cache for staff orders list of this branch
+    await this.redisCacheService.deleteByPrefix(`orders:staff:${branchCode}:`).catch(() => undefined);
+
+    // 2. Emit real-time WebSocket event directly to branch room
+    this.notificationService.guiSuKienDonHangTheoChiNhanh(branchCode, {
+      action: payload.data?.action || (payload.type === 'PAYMENT' ? 'PAYMENT_UPDATED' : 'UPDATED'),
+      orderId: payload.data?.ma_don_hang,
+      status: payload.data?.trang_thai_don_hang,
+      paymentStatus: payload.data?.trang_thai_thanh_toan,
+      data: payload.data,
+      title: payload.title,
+      content: payload.content,
+    });
+
     const recipients = await this.layDanhSachNhanSuNhanThongBaoTheoChiNhanh(branchCode);
     if (!recipients.length) return;
 
@@ -461,146 +479,264 @@ export class ThanhToanService {
     );
   }
 
-  private async xacDinhCoSoGanNhatTheoDiaChi(diaChi: string) {
-    const DEFAULT_BRANCH = { code: 'HCM_DIEN_BIEN_PHU', lat: 10.7836, lon: 106.6896 };
-    if (!diaChi || diaChi.trim() === '') return { branchCode: DEFAULT_BRANCH.code, branchLat: DEFAULT_BRANCH.lat, branchLon: DEFAULT_BRANCH.lon, customerLat: null, customerLon: null };
-
-    const BRANCH_LOCATIONS = [
-      { code: 'DN_INDOCHINA_RIVERSIDE', lat: 16.0717, lon: 108.2241 },
-      { code: 'DN_NGUYEN_VAN_THOAI', lat: 16.0543, lon: 108.2435 },
-      { code: 'DN_VTV8_BACH_DANG', lat: 16.0645, lon: 108.2230 },
-      { code: 'HCM_DIEN_BIEN_PHU', lat: 10.7836, lon: 106.6896 },
-      { code: 'HCM_LY_TU_TRONG', lat: 10.7745, lon: 106.6983 },
-      { code: 'HCM_TON_THAT_THIEP', lat: 10.7743, lon: 106.7031 },
-      { code: 'HN_DU_THUYEN', lat: 21.0456, lon: 105.8369 },
-      { code: 'HN_LAM_VIEN_COMPLEX', lat: 21.0401, lon: 105.7904 },
-      { code: 'HN_LINH_DAM_CT3', lat: 20.9634, lon: 105.8306 },
-    ];
-
-    const normalizedDiaChi = diaChi.toLowerCase();
-
-    // 0. Heuristic override cho các địa danh/đường nổi tiếng ở Q1 (Vì Nominatim hay tìm sai số nhà VN)
-    if (normalizedDiaChi.includes('nguyễn huệ') || normalizedDiaChi.includes('bitexco') || normalizedDiaChi.includes('tôn thất thiệp') || normalizedDiaChi.includes('mac thi buoi') || normalizedDiaChi.includes('ngo duc ke')) {
-      return { branchCode: 'HCM_TON_THAT_THIEP', branchLat: 10.7743, branchLon: 106.7031, customerLat: 10.7738, customerLon: 106.7030 };
+  private async layDanhSachChiNhanhHeThong(): Promise<any[]> {
+    const now = Date.now();
+    if (this.branchCache && this.branchCache.expiresAt > now && this.branchCache.data?.length > 0) {
+      return this.branchCache.data;
     }
-    if (normalizedDiaChi.includes('độc lập') || normalizedDiaChi.includes('doc lap') || normalizedDiaChi.includes('lý tự trọng') || normalizedDiaChi.includes('le thanh ton') || normalizedDiaChi.includes('dong khoi')) {
-      return { branchCode: 'HCM_LY_TU_TRONG', branchLat: 10.7745, branchLon: 106.6983, customerLat: 10.7770, customerLon: 106.6950 };
-    }
-
-    // Heuristic override cho BHH B, Bình Tân để test Map Shipper
-    if (normalizedDiaChi.includes('nguyễn thị tú')) {
-      return { branchCode: 'HCM_DIEN_BIEN_PHU', branchLat: 10.7836, branchLon: 106.6896, customerLat: 10.8143, customerLon: 106.5985 }; // Nguyễn Thị Tú, BHH B
-    }
-    if (normalizedDiaChi.includes('liên khu 4-5') || normalizedDiaChi.includes('liên khu 45')) {
-      return { branchCode: 'HCM_DIEN_BIEN_PHU', branchLat: 10.7836, branchLon: 106.6896, customerLat: 10.7937, customerLon: 106.5975 }; // Liên Khu 4-5, BHH B (Cách N.T.Tú ~2.5km)
-    }
-    if (normalizedDiaChi.includes('điện biên phủ') || normalizedDiaChi.includes('dien bien phu')) {
-      return { branchCode: 'HCM_DIEN_BIEN_PHU', branchLat: 10.7836, branchLon: 106.6896, customerLat: 10.7890, customerLon: 106.6980 }; // Giả lập Đa Kao Q1
-    }
-
     try {
-      // 1. Tối ưu chuỗi tìm kiếm (Bỏ bớt Phường/Quận để Nominatim dễ tìm chính xác số nhà/đường hơn)
-      const cleanedDiaChi = diaChi
+      const response = await fetch(`${this.IDENTITY_SERVICE_URL}/branches/public`);
+      if (response.ok) {
+        const json: any = await response.json();
+        const list = Array.isArray(json) ? json : (json.items || json.branches || json.data || []);
+        if (list.length > 0) {
+          this.branchCache = { data: list, expiresAt: now + 10 * 60 * 1000 };
+          return list;
+        }
+      }
+    } catch (e: any) {
+      console.warn('[THANH-TOAN] Could not load branches from identity-service:', e?.message || e);
+    }
+    return this.branchCache?.data || [];
+  }
+
+  private readonly VIETNAM_DISTRICT_COORDS: Record<string, { lat: number; lon: number }> = {
+    // TP. Hồ Chí Minh
+    'quận 1': { lat: 10.7756, lon: 106.7019 },
+    'quận 2': { lat: 10.7876, lon: 106.7416 },
+    'quận 3': { lat: 10.7834, lon: 106.6802 },
+    'quận 4': { lat: 10.7588, lon: 106.7012 },
+    'quận 5': { lat: 10.7540, lon: 106.6631 },
+    'quận 6': { lat: 10.7481, lon: 106.6353 },
+    'quận 7': { lat: 10.7340, lon: 106.7216 },
+    'quận 8': { lat: 10.7249, lon: 106.6346 },
+    'quận 9': { lat: 10.8277, lon: 106.8123 },
+    'quận 10': { lat: 10.7743, lon: 106.6675 },
+    'quận 11': { lat: 10.7628, lon: 106.6455 },
+    'quận 12': { lat: 10.8671, lon: 106.6413 },
+    'bình thạnh': { lat: 10.8106, lon: 106.7093 },
+    'gò vấp': { lat: 10.8387, lon: 106.6661 },
+    'phú nhuận': { lat: 10.7991, lon: 106.6781 },
+    'tân bình': { lat: 10.8015, lon: 106.6526 },
+    'tân phú': { lat: 10.7901, lon: 106.6262 },
+    'bình tân': { lat: 10.7653, lon: 106.6083 },
+    'thủ đức': { lat: 10.8494, lon: 106.7537 },
+    'hóc môn': { lat: 10.8841, lon: 106.5912 },
+    'bình chánh': { lat: 10.6874, lon: 106.5938 },
+    'nhà bè': { lat: 10.6952, lon: 106.7323 },
+    'củ chi': { lat: 10.9731, lon: 106.4939 },
+    'cần giờ': { lat: 10.4114, lon: 106.9547 },
+    // Hà Nội
+    'ba đình': { lat: 21.0341, lon: 105.8239 },
+    'hoàn kiếm': { lat: 21.0313, lon: 105.8526 },
+    'tây hồ': { lat: 21.0718, lon: 105.8228 },
+    'long biên': { lat: 21.0365, lon: 105.8929 },
+    'cầu giấy': { lat: 21.0313, lon: 105.7928 },
+    'đống đa': { lat: 21.0181, lon: 105.8275 },
+    'hai bà trưng': { lat: 21.0063, lon: 105.8524 },
+    'hoàng mai': { lat: 20.9764, lon: 105.8452 },
+    'thanh xuân': { lat: 20.9937, lon: 105.8118 },
+    'nam từ liêm': { lat: 21.0189, lon: 105.7621 },
+    'bắc từ liêm': { lat: 21.0664, lon: 105.7634 },
+    'hà đông': { lat: 20.9723, lon: 105.7765 },
+    // Đà Nẵng
+    'hải châu': { lat: 16.0680, lon: 108.2208 },
+    'thanh khê': { lat: 16.0620, lon: 108.1873 },
+    'sơn trà': { lat: 16.0820, lon: 108.2433 },
+    'ngũ hành sơn': { lat: 16.0026, lon: 108.2562 },
+    'liên chiểu': { lat: 16.0963, lon: 108.1472 },
+    'cẩm lệ': { lat: 16.0177, lon: 108.1963 },
+    // Bình Dương
+    'thủ dầu một': { lat: 10.9804, lon: 106.6519 },
+    'dĩ an': { lat: 10.9068, lon: 106.7718 },
+    'thuận an': { lat: 10.9168, lon: 106.6961 },
+    // Thành phố lớn
+    'hồ chí minh': { lat: 10.7769, lon: 106.7009 },
+    'hà nội': { lat: 21.0285, lon: 105.8542 },
+    'đà nẵng': { lat: 16.0544, lon: 108.2022 },
+    'bình dương': { lat: 10.9804, lon: 106.6519 },
+    'cần thơ': { lat: 10.0452, lon: 105.7469 },
+  };
+
+  private readonly VIETMAP_API_KEY =
+    process.env.VIETMAP_API_KEY || 'dbdd3165b3cb0d85239a7f59f410a9fa925974c4a6d4c54b';
+
+  private async geocodeDiaChiVietmap(diaChi: string): Promise<{ lat: number; lon: number } | null> {
+    if (!diaChi?.trim()) return null;
+    try {
+      const url = `https://maps.vietmap.vn/api/search/v3?apikey=${this.VIETMAP_API_KEY}&text=${encodeURIComponent(diaChi.trim())}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data: any = await res.json();
+        if (Array.isArray(data) && data.length > 0 && data[0]?.ref_id) {
+          const pUrl = `https://maps.vietmap.vn/api/place/v3?apikey=${this.VIETMAP_API_KEY}&refid=${encodeURIComponent(data[0].ref_id)}`;
+          const pRes = await fetch(pUrl);
+          if (pRes.ok) {
+            const pData: any = await pRes.json();
+            if (pData?.lat != null && pData?.lng != null) {
+              return { lat: Number(pData.lat), lon: Number(pData.lng) };
+            }
+          }
+        }
+      }
+    } catch (err: any) {
+      console.warn('[THANH-TOAN] Vietmap geocoding error:', err?.message || err);
+    }
+    return null;
+  }
+
+  private async geocodeDiaChiVietNam(diaChi: string): Promise<{ lat: number; lon: number } | null> {
+    if (!diaChi?.trim()) return null;
+
+    // 1. Ưu tiên số 1: Vietmap API (Độ chính xác cao nhất tại Việt Nam)
+    const vietmapGeo = await this.geocodeDiaChiVietmap(diaChi);
+    if (vietmapGeo) return vietmapGeo;
+
+    // 2. Dự phòng Mapbox
+    const mapboxGeo = await this.geocodeDiaChiMapbox(diaChi);
+    if (mapboxGeo) return mapboxGeo;
+
+    // 3. Dự phòng OpenStreetMap Nominatim
+    try {
+      const cleaned = diaChi
         .replace(/(Phường|Xã|Thị trấn)\s+[^,]+,/gi, '')
         .replace(/(Quận|Huyện)\s+[^,]+,/gi, '')
         .trim();
-      const searchDiaChi = cleanedDiaChi.length > 5 ? cleanedDiaChi : diaChi;
-
-      // Gọi Nominatim API để lấy toạ độ khách hàng
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchDiaChi)}&countrycodes=vn&format=json&limit=1`;
-      const response = await fetch(url, {
-        headers: {
-          'User-Agent': 'AvengersCoffeeApp/1.0',
-        },
-      });
-      const data = await response.json();
-
-      if (data && data.length > 0) {
-        const customerLat = parseFloat(data[0].lat);
-        const customerLon = parseFloat(data[0].lon);
-
-        // 2. Hàm tính khoảng cách Haversine
-        const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-          const R = 6371; // Bán kính trái đất (km)
-          const dLat = (lat2 - lat1) * (Math.PI / 180);
-          const dLon = (lon2 - lon1) * (Math.PI / 180);
-          const a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-          return R * c;
-        };
-
-        // 3. Tìm chi nhánh gần nhất
-        let nearestBranch = DEFAULT_BRANCH;
-        let minDistance = Infinity;
-
-        for (const branch of BRANCH_LOCATIONS) {
-          const dist = getDistanceFromLatLonInKm(customerLat, customerLon, branch.lat, branch.lon);
-          if (dist < minDistance) {
-            minDistance = dist;
-            nearestBranch = branch;
+      const queries = [cleaned.length > 5 ? cleaned : diaChi, diaChi];
+      for (const q of queries) {
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&countrycodes=vn&format=json&limit=1`;
+        const res = await fetch(url, { headers: { 'User-Agent': 'AvengersCoffeeApp/1.0' } });
+        if (res.ok) {
+          const data: any = await res.json();
+          if (data?.[0]?.lat && data?.[0]?.lon) {
+            return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
           }
         }
-        return { branchCode: nearestBranch.code, branchLat: nearestBranch.lat, branchLon: nearestBranch.lon, customerLat, customerLon };
       }
-    } catch (error) {
-      console.error('Lỗi khi gọi API Geocoding, fallback về logic từ khoá:', error);
-    }
-    const normalized = String(diaChi || '')
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
+    } catch { }
 
-    const hcmHints = [
-      'dien bien phu',
-      'ly tu trong',
-      'ton that thiep',
-      'quan 1',
-      'quan 3',
-      'ho chi minh',
-      'hcm',
-      'ben thanh'
-    ];
-
-    const hnHints = [
-      'linh dam',
-      'hoang mai',
-      'cau giay',
-      'dich vong',
-      'thanh nien',
-      'ba dinh',
-      'ha noi',
-      'hn'
-    ];
-
-    const dnHints = [
-      'indochina',
-      'bach dang',
-      'hai chau',
-      'nguyen van thoai',
-      'phuoc my',
-      'son tra',
-      'da nang',
-      'dn'
-    ];
-
-    if (hcmHints.some((keyword) => normalized.includes(keyword))) {
-      return { branchCode: 'HCM_DIEN_BIEN_PHU', branchLat: 10.7836, branchLon: 106.6896, customerLat: null, customerLon: null };
+    // 4. Fallback từ điển quận/huyện/thành phố Việt Nam
+    const lower = diaChi.toLowerCase();
+    for (const [key, coord] of Object.entries(this.VIETNAM_DISTRICT_COORDS)) {
+      if (lower.includes(key)) {
+        return coord;
+      }
     }
 
-    if (hnHints.some((keyword) => normalized.includes(keyword))) {
-      return { branchCode: 'HN_LAM_VIEN_COMPLEX', branchLat: 21.0401, branchLon: 105.7904, customerLat: null, customerLon: null };
-    }
-
-    if (dnHints.some((keyword) => normalized.includes(keyword))) {
-      return { branchCode: 'DN_INDOCHINA_RIVERSIDE', branchLat: 16.0717, branchLon: 108.2241, customerLat: null, customerLon: null };
-    }
-
-    // Default fallback
-    return { branchCode: DEFAULT_BRANCH.code, branchLat: DEFAULT_BRANCH.lat, branchLon: DEFAULT_BRANCH.lon, customerLat: null, customerLon: null };
+    return null;
   }
+
+  private async geocodeDiaChiMapbox(diaChi: string): Promise<{ lat: number; lon: number } | null> {
+    if (!diaChi?.trim()) return null;
+    try {
+      const cleaned = diaChi
+        .replace(/(Phường|Xã|Thị trấn)\s+[^,]+,/gi, '')
+        .replace(/(Quận|Huyện)\s+[^,]+,/gi, '')
+        .trim();
+      const queries = [cleaned.length > 5 ? cleaned : diaChi, diaChi];
+      for (const query of queries) {
+        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${this.MAPBOX_ACCESS_TOKEN}&country=vn&language=vi&limit=1`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const data: any = await res.json();
+          if (data?.features?.length > 0 && Array.isArray(data.features[0].center)) {
+            const [lon, lat] = data.features[0].center;
+            return { lat: Number(lat), lon: Number(lon) };
+          }
+        }
+      }
+    } catch (err: any) {
+      console.warn('[THANH-TOAN] Mapbox geocoding error:', err?.message || err);
+    }
+    return null;
+  }
+
+  private async xacDinhCoSoGanNhatTheoDiaChi(
+    diaChi: string,
+    targetBranchCode?: string,
+    clientLat?: number,
+    clientLon?: number,
+  ) {
+    const DEFAULT_BRANCH = { code: 'HCM_DIEN_BIEN_PHU', lat: 10.7836, lon: 106.6896 };
+    const allBranches = await this.layDanhSachChiNhanhHeThong();
+
+    // 1. Ưu tiên toạ độ client gửi lên nếu hợp lệ
+    let customerLat: number | null = (clientLat != null && !isNaN(Number(clientLat))) ? Number(clientLat) : null;
+    let customerLon: number | null = (clientLon != null && !isNaN(Number(clientLon))) ? Number(clientLon) : null;
+
+    // Nếu chưa có, giải mã địa chỉ bằng đa tầng geocode
+    if (customerLat == null || customerLon == null) {
+      const geo = await this.geocodeDiaChiVietNam(diaChi);
+      if (geo) {
+        customerLat = geo.lat;
+        customerLon = geo.lon;
+      }
+    }
+
+    // 2. If targetBranchCode is specified by customer or checkout, look it up in allBranches
+    if (targetBranchCode?.trim()) {
+      const normalizedTarget = targetBranchCode.trim().toUpperCase();
+      const matchedBranch = allBranches.find(
+        (b) => (b.ma_chi_nhanh || '').toUpperCase() === normalizedTarget,
+      );
+      if (matchedBranch && matchedBranch.vi_do && matchedBranch.kinh_do) {
+        return {
+          branchCode: matchedBranch.ma_chi_nhanh,
+          branchLat: Number(matchedBranch.vi_do),
+          branchLon: Number(matchedBranch.kinh_do),
+          customerLat,
+          customerLon,
+        };
+      }
+    }
+
+    // 3. Find closest branch if customer coordinates are known
+    const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * (Math.PI / 180);
+      const dLon = (lon2 - lon1) * (Math.PI / 180);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    };
+
+    if (customerLat != null && customerLon != null && allBranches.length > 0) {
+      let nearest: any = null;
+      let minDistance = Infinity;
+
+      for (const branch of allBranches) {
+        if (branch.vi_do && branch.kinh_do) {
+          const bLat = Number(branch.vi_do);
+          const bLon = Number(branch.kinh_do);
+          const dist = getDistanceFromLatLonInKm(customerLat, customerLon, bLat, bLon);
+          if (dist < minDistance) {
+            minDistance = dist;
+            nearest = {
+              branchCode: branch.ma_chi_nhanh,
+              branchLat: bLat,
+              branchLon: bLon,
+              customerLat,
+              customerLon,
+            };
+          }
+        }
+      }
+      if (nearest) return nearest;
+    }
+
+    // 4. Default fallback branch
+    return {
+      branchCode: targetBranchCode || DEFAULT_BRANCH.code,
+      branchLat: DEFAULT_BRANCH.lat,
+      branchLon: DEFAULT_BRANCH.lon,
+      customerLat,
+      customerLon,
+    };
+  }
+
 
   private buildCustomerOrdersCacheKey(maNguoiDung: string, boLoc: BoLocLichSuDonHang) {
     return `orders:customer:${maNguoiDung}:${JSON.stringify(boLoc || {})}`;
@@ -637,6 +773,7 @@ export class ThanhToanService {
       content: `Don #${String(order.ma_don_hang || '').slice(0, 8).toUpperCase()} vua duoc tao.`,
       type: 'ORDER',
       data: {
+        action: 'CREATED',
         ma_don_hang: order.ma_don_hang,
         co_so_ma: order.co_so_ma,
         trang_thai_don_hang: order.trang_thai_don_hang,
@@ -1162,7 +1299,7 @@ export class ThanhToanService {
           branchCode = this.normalizeBranchCode(found.co_so_ma);
           validStaffByBranch = await this.layTapUsernameNhanVienTheoChiNhanh(branchCode, ['STAFF', 'FRANCHISE_STAFF']);
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (!validStaffByBranch.has(staffUsername.toLowerCase())) {
@@ -1520,8 +1657,8 @@ export class ThanhToanService {
 
     const isGuest = !maNguoiDung || maNguoiDung === 'anonymous' || maNguoiDung === 'guest' || maNguoiDung.startsWith('anon-');
     if (isGuest) {
-      if (!dto.guest_email?.trim() && !dto.guest_phone?.trim()) {
-        throw new BadRequestException('Khách vãng lai cần nhập ít nhất Email hoặc Số điện thoại để định danh.');
+      if (!dto.guest_email?.trim() || !dto.guest_phone?.trim()) {
+        throw new BadRequestException('Khách hàng cần nhập đầy đủ cả Email và Số điện thoại để hoàn tất đặt đơn.');
       }
     }
 
@@ -1542,10 +1679,13 @@ export class ThanhToanService {
       maVoucherApDung = voucherResult.voucher.ma_voucher;
     }
     const tongTien = Math.max(0, tongTienGoc - soTienGiam);
-    const nearestInfo = await this.xacDinhCoSoGanNhatTheoDiaChi(dto.dia_chi_giao_hang);
-    const branchCode = dto.delivery_mode === 'GIAO_TAN_NOI'
-      ? nearestInfo.branchCode
-      : (dto.branch_code?.trim() ? this.normalizeBranchCode(dto.branch_code) : nearestInfo.branchCode);
+    const nearestInfo = await this.xacDinhCoSoGanNhatTheoDiaChi(
+      dto.dia_chi_giao_hang,
+      dto.branch_code?.trim(),
+      dto.destination_latitude,
+      dto.destination_longitude,
+    );
+    const branchCode = nearestInfo.branchCode;
 
     const trangThaiThanhToanBanDau = dto.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG'
       ? 'CHO_THANH_TOAN_KHI_NHAN_HANG'
@@ -1609,10 +1749,12 @@ export class ThanhToanService {
     );
     await this.chiTietRepo.save(chiTiet);
 
-    // 3. Tạo Tracking Giao Hàng nếu có chọn
+    // 3. Tạo Tracking Giao Hàng nếu có chọn (chỉ sinh mã tra cứu cho khách vãng lai)
     let createdTracking: any = null;
     if (dto.delivery_mode) {
-      // Dùng toạ độ từ nearestInfo nếu không có thì null
+      const resolvedDestLat = nearestInfo?.customerLat ?? (dto.destination_latitude ? Number(dto.destination_latitude) : undefined);
+      const resolvedDestLng = nearestInfo?.customerLon ?? (dto.destination_longitude ? Number(dto.destination_longitude) : undefined);
+
       createdTracking = await this.deliveryTrackingService.createTracking({
         ma_don_hang: donHang.ma_don_hang,
         delivery_mode: dto.delivery_mode,
@@ -1620,11 +1762,13 @@ export class ThanhToanService {
         branch_code: branchCode,
         table_number: dto.table_number,
         delivery_address: dto.dia_chi_giao_hang,
-        customer_phone: maNguoiDung,
+        customer_phone: isGuest ? (dto.guest_phone || null) : maNguoiDung,
+        customer_name: isGuest ? (dto.ten_khach_hang || dto.guest_email || 'Khách vãng lai') : undefined,
         store_latitude: nearestInfo?.branchLat,
         store_longitude: nearestInfo?.branchLon,
-        destination_latitude: nearestInfo?.customerLat ?? undefined,
-        destination_longitude: nearestInfo?.customerLon ?? undefined,
+        destination_latitude: resolvedDestLat,
+        destination_longitude: resolvedDestLng,
+        is_guest: isGuest,
       });
     }
 
@@ -1635,8 +1779,8 @@ export class ThanhToanService {
 
     // 4. Tạo mã tham chiếu giao dịch
     const maThamChieu = dto.phuong_thuc_thanh_toan === 'VNPAY'
-        ? `${donHang.ma_don_hang}_${Date.now()}`
-        : this.taoMaThamChieu(dto.phuong_thuc_thanh_toan, donHang.ma_don_hang);
+      ? `${donHang.ma_don_hang}_${Date.now()}`
+      : this.taoMaThamChieu(dto.phuong_thuc_thanh_toan, donHang.ma_don_hang);
 
     const giaoDich = await this.giaoDichRepo.save(
       this.giaoDichRepo.create({
@@ -1668,11 +1812,11 @@ export class ThanhToanService {
     // 4. Xử lý logic từng phương thức
     if (dto.phuong_thuc_thanh_toan === 'VI_DIEN_TU') {
       await this.customerWalletService.deductBalance(maNguoiDung, tongTien, maThamChieu);
-      
+
       donHang.trang_thai_thanh_toan = 'DA_THANH_TOAN';
       donHang.trang_thai_don_hang = 'DA_XAC_NHAN';
       await this.donHangRepo.save(donHang);
-      
+
       giaoDich.trang_thai = 'DA_THANH_TOAN';
       await this.giaoDichRepo.save(giaoDich);
 
@@ -1687,7 +1831,13 @@ export class ThanhToanService {
         this.tichDiemLoyalty(maNguoiDung, tongTienGoc),
       ]);
 
-      return { message: 'Thanh toan vi dien tu thanh cong', don_hang: donHang, giao_dich: giaoDich };
+      return {
+        message: 'Thanh toan vi dien tu thanh cong',
+        don_hang: donHang,
+        giao_dich: giaoDich,
+        tracking_code: createdTracking?.tracking_code || null,
+        is_guest: isGuest,
+      };
     }
 
     if (dto.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG') {
@@ -1695,8 +1845,8 @@ export class ThanhToanService {
         this.notificationService.taoThongBao({
           ma_nguoi_dung: maNguoiDung,
           tieu_de: dto.delivery_mode === 'GIAO_TAN_NOI' ? 'Don COD cho thu tien' : 'Don cho thanh toan tai quay',
-          noi_dung: dto.delivery_mode === 'GIAO_TAN_NOI' 
-            ? `Don #${donHang.ma_don_hang} se duoc thu tien khi giao hang.` 
+          noi_dung: dto.delivery_mode === 'GIAO_TAN_NOI'
+            ? `Don #${donHang.ma_don_hang} se duoc thu tien khi giao hang.`
             : `Don #${donHang.ma_don_hang} vui long thanh toan tai quay.`,
           loai: 'PAYMENT',
           du_lieu: { ma_don_hang: donHang.ma_don_hang, phuong_thuc_thanh_toan: 'THANH_TOAN_KHI_NHAN_HANG' },
@@ -1704,7 +1854,13 @@ export class ThanhToanService {
         // COD: tích điểm ngay khi đặt hàng (điểm chờ xác nhận)
         this.tichDiemLoyalty(maNguoiDung, tongTienGoc),
       ]);
-      return { message: 'Da tao don hang COD thanh cong', don_hang: donHang, giao_dich: giaoDich };
+      return {
+        message: 'Da tao don hang COD thanh cong',
+        don_hang: donHang,
+        giao_dich: giaoDich,
+        tracking_code: createdTracking?.tracking_code || null,
+        is_guest: isGuest,
+      };
     }
 
     if (dto.phuong_thuc_thanh_toan === 'VNPAY') {
@@ -1722,7 +1878,13 @@ export class ThanhToanService {
         loai: 'PAYMENT',
         du_lieu: { ma_don_hang: donHang.ma_don_hang, phuong_thuc_thanh_toan: 'VNPAY' },
       });
-      return { message: 'Da khoi tao VNPAY', don_hang: donHang, redirect_url: redirectUrl };
+      return {
+        message: 'Da khoi tao VNPAY',
+        don_hang: donHang,
+        redirect_url: redirectUrl,
+        tracking_code: createdTracking?.tracking_code || null,
+        is_guest: isGuest,
+      };
     }
 
     // Mặc định là NGAN_HANG_QR (Sepay)
@@ -1736,6 +1898,8 @@ export class ThanhToanService {
     return {
       message: 'Da khoi tao thanh toan QR ngan hang',
       don_hang: donHang,
+      tracking_code: createdTracking?.tracking_code || null,
+      is_guest: isGuest,
       payment_details: {
         ma_don_hang: donHang.ma_don_hang,
         so_tien: tongTien,
@@ -1833,11 +1997,11 @@ export class ThanhToanService {
         loai: 'ORDER',
         du_lieu: { ma_don_hang: donHang.ma_don_hang, trang_thai_don_hang: donHang.trang_thai_don_hang },
       });
-    } catch {}
+    } catch { }
 
     try {
       this.guiEmailXacNhanDonHang(donHang, chiTiet).catch((err) => console.error('[ORDER EMAIL ERROR]', err));
-    } catch {}
+    } catch { }
 
     return {
       success: true,
@@ -1852,7 +2016,7 @@ export class ThanhToanService {
   private taoUrlVnpayThat(maNguoiDung: string, maDonHang: string, tongTien: number, txnRef: string, clientIp: string) {
     let ipAddr = clientIp || '113.190.232.222';
     if (ipAddr === '::1' || ipAddr === '127.0.0.1' || ipAddr.startsWith('172.') || ipAddr.startsWith('192.168.') || ipAddr.startsWith('10.')) {
-        ipAddr = '113.190.232.222';
+      ipAddr = '113.190.232.222';
     }
     const returnBase = this.VNP_RETURN_BASE_URL.replace(/\/+$/, '');
     const returnUrl = `${returnBase}/customers/${maNguoiDung}/thanh-toan/vnpay/ket-qua`;
@@ -1861,26 +2025,26 @@ export class ThanhToanService {
     const expireDate = this.formatVnpDate(new Date(now.getTime() + 20 * 60 * 1000));
 
     const params: any = {
-        vnp_Version: '2.1.0',
-        vnp_Command: 'pay',
-        vnp_TmnCode: this.VNP_TMN_CODE,
-        vnp_Amount: String(Math.round(tongTien) * 100),
-        vnp_CreateDate: createDate,
-        vnp_CurrCode: 'VND',
-        vnp_IpAddr: ipAddr,
-        vnp_Locale: 'vn',
-        vnp_OrderInfo: `Thanh toan don hang ${maDonHang.replace(/-/g, '')}`,
-        vnp_OrderType: 'billpayment',
-        vnp_ReturnUrl: returnUrl,
-        vnp_TxnRef: txnRef,
-        vnp_ExpireDate: expireDate,
+      vnp_Version: '2.1.0',
+      vnp_Command: 'pay',
+      vnp_TmnCode: this.VNP_TMN_CODE,
+      vnp_Amount: String(Math.round(tongTien) * 100),
+      vnp_CreateDate: createDate,
+      vnp_CurrCode: 'VND',
+      vnp_IpAddr: ipAddr,
+      vnp_Locale: 'vn',
+      vnp_OrderInfo: `Thanh toan don hang ${maDonHang.replace(/-/g, '')}`,
+      vnp_OrderType: 'billpayment',
+      vnp_ReturnUrl: returnUrl,
+      vnp_TxnRef: txnRef,
+      vnp_ExpireDate: expireDate,
     };
 
     // Theo chuẩn VNPAY v2.1.0:
     // 1. Dữ liệu băm (signData): Tên tham số URL Encode, Giá trị KHÔNG URL Encode.
     // 2. Chuỗi query trên URL: Cả Tên và Giá trị đều phải URL Encode (theo RFC 3986, khoảng trắng là %20).
     const sortedKeys = Object.keys(params).sort();
-    
+
     // Áp dụng đúng chuẩn VNPay Node.js SDK (dùng trong 99% dự án thực tế):
     // Cả Tên và Giá trị đều URL Encode, thay khoảng trắng thành dấu +
     const signData = sortedKeys
@@ -1898,9 +2062,9 @@ export class ThanhToanService {
       .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(String(params[key])).replace(/%20/g, '+')}`)
       .join('&');
     const finalUrl = `${this.VNP_URL}?${urlQuery}&vnp_SecureHash=${signed}`;
-    
+
     return finalUrl;
-}
+  }
 
   async xuLyVnpayIpn(query: Record<string, string>) {
     const vnp_SecureHash = query.vnp_SecureHash;
@@ -1908,7 +2072,7 @@ export class ThanhToanService {
     delete clone.vnp_SecureHash; delete clone.vnp_SecureHashType;
 
     const sortedKeys = Object.keys(clone).sort();
-    
+
     const signData = sortedKeys
       .map(key => {
         const val = String(clone[key]);
@@ -2197,8 +2361,8 @@ export class ThanhToanService {
     });
 
     const { donHang, chiTiet, giaoDich, maThamChieu } = taoDonResult;
-  await this.invalidateOrderCaches(maNguoiDung, branchCode);
-  await this.publishOrderCreatedEvent(donHang);
+    await this.invalidateOrderCaches(maNguoiDung, branchCode);
+    await this.publishOrderCreatedEvent(donHang);
 
     const orderData = {
       ma_don_hang: donHang.ma_don_hang,
@@ -2414,14 +2578,14 @@ export class ThanhToanService {
         }),
         giao_dich: giaoDichGanNhat
           ? {
-              ma_giao_dich: giaoDichGanNhat.ma_giao_dich,
-              cong_thanh_toan: giaoDichGanNhat.cong_thanh_toan,
-              ma_tham_chieu: giaoDichGanNhat.ma_tham_chieu,
-              ma_giao_dich_cong: giaoDichGanNhat.ma_giao_dich_cong,
-              so_tien: Number(giaoDichGanNhat.so_tien),
-              trang_thai: giaoDichGanNhat.trang_thai,
-              ngay_tao: giaoDichGanNhat.ngay_tao,
-            }
+            ma_giao_dich: giaoDichGanNhat.ma_giao_dich,
+            cong_thanh_toan: giaoDichGanNhat.cong_thanh_toan,
+            ma_tham_chieu: giaoDichGanNhat.ma_tham_chieu,
+            ma_giao_dich_cong: giaoDichGanNhat.ma_giao_dich_cong,
+            so_tien: Number(giaoDichGanNhat.so_tien),
+            trang_thai: giaoDichGanNhat.trang_thai,
+            ngay_tao: giaoDichGanNhat.ngay_tao,
+          }
           : null,
       };
     });
@@ -2533,14 +2697,14 @@ export class ThanhToanService {
         })),
         giao_dich: giaoDichGanNhat
           ? {
-              ma_giao_dich: giaoDichGanNhat.ma_giao_dich,
-              cong_thanh_toan: giaoDichGanNhat.cong_thanh_toan,
-              ma_tham_chieu: giaoDichGanNhat.ma_tham_chieu,
-              ma_giao_dich_cong: giaoDichGanNhat.ma_giao_dich_cong,
-              so_tien: Number(giaoDichGanNhat.so_tien),
-              trang_thai: giaoDichGanNhat.trang_thai,
-              ngay_tao: giaoDichGanNhat.ngay_tao,
-            }
+            ma_giao_dich: giaoDichGanNhat.ma_giao_dich,
+            cong_thanh_toan: giaoDichGanNhat.cong_thanh_toan,
+            ma_tham_chieu: giaoDichGanNhat.ma_tham_chieu,
+            ma_giao_dich_cong: giaoDichGanNhat.ma_giao_dich_cong,
+            so_tien: Number(giaoDichGanNhat.so_tien),
+            trang_thai: giaoDichGanNhat.trang_thai,
+            ngay_tao: giaoDichGanNhat.ngay_tao,
+          }
           : null,
       };
     });
@@ -3096,9 +3260,11 @@ export class ThanhToanService {
       content: `Don #${String(maDonHang || '').slice(0, 8).toUpperCase()} da duoc staff cap nhat thong tin.`,
       type: 'ORDER',
       data: {
+        action: 'UPDATED',
         ma_don_hang: maDonHang,
         co_so_ma: donHang.co_so_ma,
         trang_thai_don_hang: donHang.trang_thai_don_hang,
+        order: ketQua,
       },
     });
 
@@ -3141,6 +3307,7 @@ export class ThanhToanService {
       content: `Don #${String(maDonHang || '').slice(0, 8).toUpperCase()} da duoc xoa khoi he thong cua chi nhanh.`,
       type: 'ORDER',
       data: {
+        action: 'DELETED',
         ma_don_hang: maDonHang,
         co_so_ma: donHang.co_so_ma,
         trang_thai_don_hang: donHang.trang_thai_don_hang,
@@ -3290,6 +3457,30 @@ export class ThanhToanService {
       throw new NotFoundException('Khong tim thay don hang');
     }
 
+    await this.invalidateOrderCaches(updated.ma_nguoi_dung, updated.co_so_ma);
+
+    await this.rabbitMqService.publish('order.status.changed', {
+      orderId: updated.ma_don_hang,
+      userId: updated.ma_nguoi_dung,
+      branchCode: updated.co_so_ma,
+      totalAmount: Number(updated.tong_tien || 0),
+      status: updated.trang_thai_don_hang,
+    });
+
+    await this.guiThongBaoDonHangChoNhanSuChiNhanh({
+      branchCode: updated.co_so_ma,
+      title: 'Cap nhat trang thai don hang',
+      content: `Don #${String(updated.ma_don_hang || '').slice(0, 8).toUpperCase()} -> ${this.mapTrangThaiDonHangLabel(updated.trang_thai_don_hang)}.`,
+      type: 'ORDER',
+      data: {
+        action: 'STATUS_CHANGED',
+        ma_don_hang: updated.ma_don_hang,
+        co_so_ma: updated.co_so_ma,
+        trang_thai_don_hang: updated.trang_thai_don_hang,
+        trang_thai_thanh_toan: updated.trang_thai_thanh_toan,
+      },
+    });
+
     if (donHang.ma_nguoi_dung) {
       await this.notificationService.taoThongBao({
         ma_nguoi_dung: donHang.ma_nguoi_dung,
@@ -3297,6 +3488,12 @@ export class ThanhToanService {
         noi_dung: `Don #${maDonHang} da chuyen sang trang thai ${trangThai}.`,
         loai: 'ORDER',
         du_lieu: { ma_don_hang: maDonHang, trang_thai_don_hang: trangThai },
+      });
+    }
+
+    if (updated) {
+      this.smtpService.sendOrderStatusUpdateEmail(updated, trangThai).catch((err) => {
+        console.error(`[ORDER STATUS EMAIL ERROR] ${err.message}`);
       });
     }
 
@@ -3464,8 +3661,8 @@ export class ThanhToanService {
     }
 
     const transitions: Record<string, string[]> = {
-      MOI_TAO: ['DA_XAC_NHAN', 'DANG_CHUAN_BI', 'DANG_GIAO', 'DA_HUY'],
-      DA_XAC_NHAN: ['DANG_CHUAN_BI', 'DANG_GIAO', 'DA_HUY'],
+      MOI_TAO: ['DA_XAC_NHAN', 'DANG_CHUAN_BI', 'DANG_GIAO', 'HOAN_THANH', 'DA_HUY'],
+      DA_XAC_NHAN: ['DANG_CHUAN_BI', 'DANG_GIAO', 'HOAN_THANH', 'DA_HUY'],
       DANG_CHUAN_BI: ['DANG_GIAO', 'HOAN_THANH', 'DA_HUY'],
       DANG_GIAO: ['HOAN_THANH', 'DA_HUY'],
       HOAN_THANH: [],
@@ -3562,6 +3759,11 @@ export class ThanhToanService {
             console.error('[capNhatTrangThaiDonHangHeThong] Error cancelling survey voucher:', err);
           });
         }
+
+        // Tự động gửi email cập nhật trạng thái đơn hàng (nếu khách có email)
+        this.smtpService.sendOrderStatusUpdateEmail(saved, saved.trang_thai_don_hang, payload.ghi_chu).catch((err) => {
+          console.error(`[ORDER STATUS EMAIL ERROR] ${err.message}`);
+        });
       }
 
       if (paymentStatusChanged && saved.trang_thai_thanh_toan === 'DA_THANH_TOAN') {
@@ -4051,7 +4253,7 @@ export class ThanhToanService {
     });
 
     // Hủy voucher khảo sát pending (nếu có)
-    await this.surveyService.huyVoucherPending(maDonHang).catch(() => {});
+    await this.surveyService.huyVoucherPending(maDonHang).catch(() => { });
 
     // Xóa cache
     await this.invalidateOrderCaches(updatedOrder.ma_nguoi_dung, updatedOrder.co_so_ma);

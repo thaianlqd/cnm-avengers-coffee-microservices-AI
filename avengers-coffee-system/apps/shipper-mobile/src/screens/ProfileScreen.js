@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Ale
 import { Ionicons } from '@expo/vector-icons'
 import { useShipper } from '../context/ShipperContext'
 import { colors, radius, spacing, shadows, typography } from '../theme'
+import { formatBranchName } from '../lib/branchHelper'
 
 export function ProfileScreen({ navigation }) {
   const { shipper, logout } = useShipper()
@@ -22,7 +23,7 @@ export function ProfileScreen({ navigation }) {
     { icon: 'notifications-outline', title: 'Thông báo', screen: 'Notification', badge: null },
     { icon: 'calendar-outline', title: 'Lịch làm việc', screen: 'Schedule', badge: null },
     { icon: 'bar-chart-outline', title: 'Đối soát thu nhập', screen: 'Report', badge: null },
-    { icon: 'copy-outline', title: 'Nhận đơn ghép tuyến', screen: 'BatchOrder', badge: null },
+    { icon: 'git-network-outline', title: 'Nhận đơn ghép tuyến', screen: 'BatchOrder', badge: 'Sắp có' },
     { icon: 'bicycle-outline', title: 'Phương tiện của tôi', screen: 'Vehicle', badge: null },
     { icon: 'warning-outline', title: 'Báo cáo ngoại lệ', screen: 'Exception', badge: null },
   ]
@@ -34,18 +35,20 @@ export function ProfileScreen({ navigation }) {
           <View style={styles.avatarWrap}>
             <Ionicons name="person" size={40} color={colors.primary} />
           </View>
-          <View style={styles.infoWrap}>
-            <Text style={styles.name}>{shipper?.full_name}</Text>
-            <Text style={styles.username}>@{shipper?.username}</Text>
-            <View style={styles.ratingWrap}>
-              <Ionicons name="star" size={14} color={colors.warning} />
-              <Text style={styles.ratingText}>{shipper?.rating || 5.0} Đánh giá</Text>
+          <View style={styles.headerInfo}>
+            <Text style={styles.name}>{shipper?.full_name || 'Shipper'}</Text>
+            <Text style={styles.phone}>{shipper?.phone || '0901234567'}</Text>
+            <View style={styles.branchPill}>
+              <Ionicons name="storefront-outline" size={13} color={colors.primary} />
+              <Text style={styles.branchPillText}>
+                {shipper?.branch_code ? formatBranchName(shipper.branch_code) : 'Chưa phân cơ sở'}
+              </Text>
             </View>
           </View>
         </View>
 
         <View style={styles.menuSection}>
-          <Text style={styles.sectionTitle}>Quản lý tài khoản</Text>
+          <Text style={styles.sectionTitle}>Tài khoản</Text>
           <View style={styles.menuCard}>
             {menuItems.map((item, index) => (
               <React.Fragment key={item.title}>
@@ -57,6 +60,11 @@ export function ProfileScreen({ navigation }) {
                     <Ionicons name={item.icon} size={20} color={colors.primary} />
                   </View>
                   <Text style={styles.menuText}>{item.title}</Text>
+                  {item.badge && (
+                    <View style={styles.menuBadge}>
+                      <Text style={styles.menuBadgeText}>{item.badge}</Text>
+                    </View>
+                  )}
                   <Ionicons name="chevron-forward" size={20} color={colors.muted} />
                 </TouchableOpacity>
                 {index < menuItems.length - 1 && <View style={styles.divider} />}
@@ -120,7 +128,23 @@ const styles = StyleSheet.create({
   },
   infoWrap: { flex: 1 },
   name: { ...typography.h3, color: colors.text },
-  username: { ...typography.body, color: colors.textSecondary, marginBottom: spacing.xs },
+  phone: { ...typography.body, color: colors.textSecondary, marginBottom: 2 },
+  branchPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primaryBg,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.md,
+    alignSelf: 'flex-start',
+    marginTop: 6,
+    gap: 6,
+  },
+  branchPillText: {
+    color: colors.primaryDark,
+    fontWeight: '700',
+    fontSize: 12,
+  },
   ratingWrap: { flexDirection: 'row', alignItems: 'center' },
   ratingText: { ...typography.caption, color: colors.warning, marginLeft: 4, fontWeight: 'bold' },
 
@@ -145,6 +169,19 @@ const styles = StyleSheet.create({
     marginRight: spacing.md,
   },
   menuText: { flex: 1, ...typography.bodyBold, color: colors.text },
+  menuBadge: {
+    backgroundColor: colors.infoBg,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.round,
+    marginRight: spacing.sm,
+  },
+  menuBadgeText: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: '700',
+    fontSize: 11,
+  },
   divider: { height: 1, backgroundColor: colors.borderLight, marginLeft: 60 },
 
   logoutBtn: {

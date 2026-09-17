@@ -1,14 +1,46 @@
 import axios from 'axios'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { Platform } from 'react-native'
+import { Platform, NativeModules } from 'react-native'
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || (Platform.OS === 'web' ? 'http://localhost:3000' : 'http://10.0.2.2:3000')
+export function getApiBaseUrl() {
+  if (Platform.OS === 'web') {
+    return process.env.EXPO_PUBLIC_API_URL_WEB || 'http://localhost:3000'
+  }
+
+  // 1. Lấy IP máy dev trực tiếp từ scriptURL của Metro bundler
+  try {
+    const scriptURL = NativeModules?.SourceCode?.scriptURL
+    if (scriptURL) {
+      const match = scriptURL.match(/https?:\/\/([^:\/]+)/)
+      if (match && match[1] && match[1] !== 'localhost' && match[1] !== '127.0.0.1') {
+        return `http://${match[1]}:3000`
+      }
+    }
+  } catch (_) {}
+
+  // 2. Kiểm tra biến môi trường (bỏ qua nếu là IP cũ 192.168.1.157)
+  const envUrl = process.env.EXPO_PUBLIC_API_URL
+  if (envUrl && !envUrl.includes('192.168.1.157')) {
+    return envUrl
+  }
+
+  // 3. Fallback IP LAN máy hiện tại
+  return 'http://192.168.1.167:3000'
+}
+
+export function getSocketUrl() {
+  const base = getApiBaseUrl()
+  // Order service WebSocket server runs on port 3005
+  return base.replace(':3000', ':3005')
+}
+
+const API_BASE_URL = getApiBaseUrl()
 
 const TOKEN_KEY = 'shipper_auth_token'
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 60000,
+  timeout: 15000,
   headers: {
     'ngrok-skip-browser-warning': 'true',
     'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -19,20 +51,28 @@ const apiClient = axios.create({
 
 let authToken = null
 
+const isNgrok = (API_BASE_URL || '').includes('ngrok')
 let queuePromise = Promise.resolve()
 
 apiClient.interceptors.request.use(
   async (config) => {
-    const priorPromise = queuePromise
-    let release
-    queuePromise = new Promise((resolve) => { release = resolve })
-    config._releaseQueue = release
-    
-    // Đợi request trước đó hoàn thành (timeout max 10s để tránh kẹt vĩnh viễn)
-    await Promise.race([
-      priorPromise.catch(() => {}),
-      new Promise(res => setTimeout(res, 10000))
-    ])
+    const activeBaseUrl = getApiBaseUrl()
+    if (!config.baseURL || config.baseURL.includes('192.168.1.157')) {
+      config.baseURL = activeBaseUrl
+    }
+
+    if (isNgrok) {
+      const priorPromise = queuePromise
+      let release
+      queuePromise = new Promise((resolve) => { release = resolve })
+      config._releaseQueue = release
+      
+      // Đợi request trước đó hoàn thành (timeout max 5s để tránh kẹt)
+      await Promise.race([
+        priorPromise.catch(() => {}),
+        new Promise(res => setTimeout(res, 5000))
+      ])
+    }
 
     if (!authToken) {
       try {
@@ -45,10 +85,10 @@ apiClient.interceptors.request.use(
       config.headers = config.headers || {}
       config.headers.Authorization = `Bearer ${authToken}`
     }
+    console.log(`[apiClient] 🚀 ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`)
     return config
   },
   (error) => {
-    // Nếu request interceptor có lỗi, phải release queue (nếu có)
     if (error.config?._releaseQueue) error.config._releaseQueue()
     return Promise.reject(error)
   },
@@ -67,6 +107,8 @@ apiClient.interceptors.response.use(
       error.config._releaseQueue()
       delete error.config._releaseQueue
     }
+    const fullUrl = `${error.config?.baseURL || ''}${error.config?.url || ''}`
+    console.warn(`[apiClient Error] ⚠️ ${error.config?.method?.toUpperCase()} ${fullUrl}: ${error.message}`)
     if (error.response?.status === 401) {
       authToken = null
       await AsyncStorage.removeItem(TOKEN_KEY)
@@ -91,4 +133,5 @@ export function getAuthToken() {
   return authToken
 }
 
+export { apiClient }
 export default apiClient

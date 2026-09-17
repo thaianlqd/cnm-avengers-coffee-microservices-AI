@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { ShipperProvider } from './src/context/ShipperContext'
 import { AppNavigator } from './src/navigation/AppNavigator'
 import { colors } from './src/theme'
+import './src/lib/backgroundLocationManager'
 
 const queryClient = new QueryClient({
   defaultOptions: {
