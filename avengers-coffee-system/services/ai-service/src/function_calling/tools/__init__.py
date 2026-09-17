@@ -3,7 +3,9 @@ from typing import Dict, Any, List
 from .branch_tools import (
     TOOL_ASK_BRANCH, execute_ask_branch,
     TOOL_FIND_NEAREST_BRANCH, execute_find_nearest_branch,
-    TOOL_SET_SESSION_BRANCH, execute_set_session_branch
+    TOOL_SET_SESSION_BRANCH, execute_set_session_branch,
+    TOOL_GET_TOP_RATED_STORES, execute_get_top_rated_stores,
+    TOOL_GET_STORE_REVIEWS, execute_get_store_reviews,
 )
 from .product_tools import (
     TOOL_GET_PRODUCT_OPTIONS, execute_get_product_options,
@@ -37,6 +39,8 @@ ALL_TOOL_SCHEMAS: List[Dict[str, Any]] = [
     TOOL_ASK_BRANCH,
     TOOL_FIND_NEAREST_BRANCH,
     TOOL_SET_SESSION_BRANCH,
+    TOOL_GET_TOP_RATED_STORES,
+    TOOL_GET_STORE_REVIEWS,
     TOOL_GET_PRODUCT_OPTIONS,
     TOOL_CHECK_PRICE_AND_STOCK,
     TOOL_GET_PRODUCT_INSIGHTS,
@@ -62,6 +66,8 @@ TOOL_EXECUTORS = {
     "ask_branch": lambda args, session_id: execute_ask_branch(),
     "find_nearest_branch": lambda args, session_id: execute_find_nearest_branch(session_id=session_id, **args),
     "set_session_branch": lambda args, session_id: execute_set_session_branch(session_id=session_id, **args),
+    "get_top_rated_stores": lambda args, session_id: execute_get_top_rated_stores(**args),
+    "get_store_reviews": lambda args, session_id: execute_get_store_reviews(**args),
     "get_product_options": lambda args, session_id: execute_get_product_options(**args),
     "check_price_and_stock": lambda args, session_id: execute_check_price_and_stock(**args),
     "get_product_insights": lambda args, session_id: execute_get_product_insights(**args),
