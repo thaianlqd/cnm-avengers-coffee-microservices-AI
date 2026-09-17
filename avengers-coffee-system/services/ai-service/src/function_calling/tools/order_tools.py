@@ -259,7 +259,12 @@ def execute_cancel_order(session_id: str, order_id: str, is_confirmed: bool = Fa
         headers = {"Authorization": f"Bearer {token}"}
         url = f"{order_service_url}/customers/{valid_uid}/orders/{order_id}/cancel"
         
-        response = requests.patch(url, headers=headers, json={"reason": "Khách hàng yêu cầu hủy qua AI"}, timeout=10)
+        try:
+            response = requests.patch(url, headers=headers, json={"reason": "Khách hàng yêu cầu hủy qua AI"}, timeout=10)
+        except requests.exceptions.ConnectionError:
+            fallback_url = "http://host.docker.internal:3005"
+            url = f"{fallback_url}/customers/{valid_uid}/orders/{order_id}/cancel"
+            response = requests.patch(url, headers=headers, json={"reason": "Khách hàng yêu cầu hủy qua AI"}, timeout=10)
         
         if response.status_code in [200, 201]:
             return {"status": "success", "message": "Đã hủy đơn hàng thành công và hệ thống đang xử lý hoàn tiền (nếu có)."}
@@ -418,7 +423,12 @@ def execute_update_order(session_id: str, order_id: str, new_items: list, is_con
         payload = {
             "items": enriched_items
         }
-        patch_resp = requests.patch(url, headers=headers, json=payload, timeout=10)
+        try:
+            patch_resp = requests.patch(url, headers=headers, json=payload, timeout=10)
+        except requests.exceptions.ConnectionError:
+            fallback_url = "http://host.docker.internal:3005"
+            url = f"{fallback_url}/customers/{valid_uid}/orders/{order_id}"
+            patch_resp = requests.patch(url, headers=headers, json=payload, timeout=10)
         
         if patch_resp.status_code in [200, 201]:
             return {"status": "success", "message": f"Đã cập nhật đơn hàng thành công. Tổng tiền mới là {new_total_price} VND."}

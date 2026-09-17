@@ -200,11 +200,25 @@ export class BranchReviewService {
     return result;
   }
 
-  async checkDaDanhGia(ma_don_hang?: string, ma_nguoi_dung?: string) {
-    if (ma_don_hang) {
-      const review = await this.branchReviewRepo.findOne({ where: { ma_don_hang } });
-      return { da_danh_gia: !!review, review };
+  async checkDaDanhGia(orderId?: string, userId?: string) {
+    if (!orderId && !userId) return false;
+    const query = this.branchReviewRepo.createQueryBuilder('review');
+    if (orderId) {
+      query.andWhere('review.ma_don_hang = :orderId', { orderId });
     }
-    return { da_danh_gia: false, review: null };
+    if (userId) {
+      query.andWhere('review.ma_nguoi_dung = :userId', { userId });
+    }
+    const count = await query.getCount();
+    return count > 0;
+  }
+
+  async xoaDanhGia(id: number) {
+    const review = await this.branchReviewRepo.findOne({ where: { id } });
+    if (!review) {
+      throw new BadRequestException('Không tìm thấy đánh giá');
+    }
+    await this.branchReviewRepo.remove(review);
+    return { success: true, message: 'Xóa đánh giá thành công' };
   }
 }

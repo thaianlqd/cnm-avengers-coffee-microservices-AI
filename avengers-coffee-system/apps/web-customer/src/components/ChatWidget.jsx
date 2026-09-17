@@ -526,10 +526,20 @@ export default function ChatWidget({ user, socketUrl }) {
     }
   }, [user, addAIMsg, openStaffChat]);
 
-  const handleResetChat = useCallback(() => {
+  const handleResetChat = useCallback(async () => {
     if (window.confirm('Bạn có muốn bắt đầu lại đoạn hội thoại AI mới không?')) {
       localStorage.removeItem(AI_SESSION_KEY);
       sessionStorage.removeItem(AI_SESSION_KEY);
+      
+      // Đồng thời xoá luôn giỏ hàng của AI ở backend để tránh dồn món cũ
+      if (effectiveUserId) {
+        try {
+          await apiClient.delete(`/ai/agent/cart/${effectiveUserId}`);
+        } catch (err) {
+          console.warn("Không thể xoá giỏ hàng AI backend:", err);
+        }
+      }
+
       const nameStr = user?.ho_ten || user?.hoTen ? ` ${user.ho_ten || user.hoTen}` : '';
       const msg = buildMsg({ 
         vai_tro_nguoi_gui: 'AI', 
@@ -645,9 +655,11 @@ export default function ChatWidget({ user, socketUrl }) {
         const branchTool = toolCalls.find(t => t.tool === 'find_nearest_branch' || t.tool === 'ask_branch');
         const hasProfileTool = toolCalls.some(t => t.tool === 'get_user_profile');
 
+        const askingReview = /(đánh giá|bình luận|nhận xét|review)/.test(textLower);
+
         if (branchTool && branchTool.result && branchTool.result.branches) {
           extras._stores = branchTool.result.branches.slice(0, 4);
-        } else if (/(cửa hàng|chi nhánh|ở đâu|gần đây)/.test(textLower) && !hasProfileTool || /(chi nhánh)/.test(agentReply.toLowerCase())) {
+        } else if (!askingReview && (/(cửa hàng|chi nhánh|ở đâu|gần đây)/.test(textLower) && !hasProfileTool || /(chi nhánh)/.test(agentReply.toLowerCase()))) {
           const replyLower = agentReply.toLowerCase();
           const mentionedBranches = cache.current.branches.filter(b => b.ten_chi_nhanh && replyLower.includes(b.ten_chi_nhanh.toLowerCase()));
           if (mentionedBranches.length > 0) {
@@ -655,7 +667,7 @@ export default function ChatWidget({ user, socketUrl }) {
           }
         }
         // 2. Menu / Sản phẩm
-        const userAskedMenu = /(thực đơn|menu|đồ uống|cà phê|trà|sữa|matcha|có gì ngon|gợi ý|bán chạy|đánh giá|\bsp\b|sản phẩm|yêu thích)/.test(textLower);
+        const userAskedMenu = /(thực đơn|menu|đồ uống|cà phê|trà|sữa|matcha|có gì ngon|gợi ý|bán chạy|\bsp\b|sản phẩm|yêu thích)/.test(textLower);
         const aiMentionedMenu = /(sản phẩm|đồ uống|menu|\bmón\b|\bsp\b|yêu thích|gợi ý)/.test(agentReply.toLowerCase());
         
         let recommendedProducts = [];
