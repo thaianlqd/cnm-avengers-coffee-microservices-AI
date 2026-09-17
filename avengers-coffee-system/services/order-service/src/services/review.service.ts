@@ -148,14 +148,31 @@ export class ReviewService {
     soSao: number;
     binhLuan?: string;
     maDonHang?: string;
+    maKiosk?: string;  // Nhượng quyền kiosk
   }) {
-    const { maSanPham, maNguoiDung, soSao, binhLuan, maDonHang } = payload;
+    const { maSanPham, maNguoiDung, soSao, binhLuan, maDonHang, maKiosk } = payload;
 
     if (soSao < 1 || soSao > 5) {
       throw new BadRequestException('soSao phai trong khoang 1 den 5');
     }
 
-    await this.kiemTraDieuKienDanhGia(maNguoiDung, maSanPham, maDonHang);
+    // Với đơn kiosk: kiểm tra điều kiện đơn hoàn thành có thể linh hoạt hơn
+    // vì kiosk có thể đã giao hàng nhưng không có trạng thái HOAN_THANH
+    if (!maKiosk) {
+      await this.kiemTraDieuKienDanhGia(maNguoiDung, maSanPham, maDonHang);
+    } else if (maDonHang) {
+      // Kiểm tra đơn hàng có thuộc về kiosk này không
+      const ketQua = await this.reviewRepo.manager.query(
+        `SELECT dh.ma_don_hang, dh.trang_thai_don_hang
+         FROM "${orderSchema}"."don_hang" dh
+         WHERE dh.ma_don_hang = $1 AND dh.co_so_ma = $2
+         LIMIT 1`,
+        [maDonHang, maKiosk],
+      );
+      if (!ketQua?.[0]) {
+        throw new BadRequestException('Don hang nay khong thuoc kiosk nay hoac khong ton tai');
+      }
+    }
 
     // Chi update review khi trung ca user + san pham + don hang.
     // Neu user mua lai san pham o don khac, se tao review moi.
@@ -180,6 +197,7 @@ export class ReviewService {
       existing.so_sao = soSao;
       existing.binh_luan = binhLuan || null;
       existing.ma_don_hang = maDonHang || existing.ma_don_hang || null;
+      if (maKiosk) (existing as any).ma_kiosk = maKiosk;
       const updated = await this.reviewRepo.save(existing);
       return { message: 'Cap nhat danh gia thanh cong', item: updated };
     }
@@ -192,15 +210,20 @@ export class ReviewService {
       binh_luan: binhLuan || null,
       ma_don_hang: maDonHang || null,
     });
+    if (maKiosk) (review as any).ma_kiosk = maKiosk;
 
     const saved = await this.reviewRepo.save(review);
     return { message: 'Tao danh gia thanh cong', item: saved };
   }
 
-  // Lấy tất cả reviews của một sản phẩm
-  async layDanhGiaSanPham(maSanPham: string) {
+  // Lấy tất cả reviews của một sản phẩm, hỗ trợ lọc theo kiosk
+  async layDanhGiaSanPham(maSanPham: string, maKiosk?: string) {
+    const where: any = { ma_san_pham: maSanPham };
+    if (maKiosk?.trim()) {
+      where.ma_kiosk = maKiosk.trim();
+    }
     const reviews = await this.reviewRepo.find({
-      where: { ma_san_pham: maSanPham },
+      where,
       order: { ngay_tao: 'DESC' },
     });
 

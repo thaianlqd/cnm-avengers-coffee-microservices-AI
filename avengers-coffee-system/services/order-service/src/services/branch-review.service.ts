@@ -19,6 +19,8 @@ export class CreateBranchReviewDto {
   };
   nhan_xet?: string;
   hinh_anh_urls?: string[];
+  // Nhượng quyền: có thể đánh giá kiosk thay vì chi nhánh thưỜng
+  ma_kiosk?: string;
 }
 
 @Injectable()
@@ -29,7 +31,10 @@ export class BranchReviewService {
   ) {}
 
   async taoDanhGia(dto: CreateBranchReviewDto): Promise<BranchReview> {
-    if (!dto.ma_chi_nhanh) {
+    // Với kiosk nhượng quyền: ma_chi_nhanh có thể được replace bằng ma_kiosk
+    const isKiosk = !!dto.ma_kiosk;
+    const maChiNhanh = isKiosk ? dto.ma_kiosk! : dto.ma_chi_nhanh;
+    if (!isKiosk && !dto.ma_chi_nhanh) {
       throw new BadRequestException('Mã chi nhánh không được để trống');
     }
     if (!dto.diem_tong_quan || dto.diem_tong_quan < 1 || dto.diem_tong_quan > 5) {
@@ -52,7 +57,7 @@ export class BranchReviewService {
       : `Khách vãng lai #${guestCode}`;
 
     const review = this.branchReviewRepo.create({
-      ma_chi_nhanh: dto.ma_chi_nhanh,
+      ma_chi_nhanh: maChiNhanh,
       ten_chi_nhanh: dto.ten_chi_nhanh || null,
       ma_nguoi_dung: dto.ma_nguoi_dung || null,
       ten_nguoi_dung: resolvedName,
@@ -69,6 +74,8 @@ export class BranchReviewService {
       hinh_anh_urls: dto.hinh_anh_urls || [],
       trang_thai: 'APPROVED',
     });
+    // Gắn ma_kiosk nếu là đánh giá kiosk
+    if (isKiosk) (review as any).ma_kiosk = dto.ma_kiosk;
 
     return this.branchReviewRepo.save(review);
   }
