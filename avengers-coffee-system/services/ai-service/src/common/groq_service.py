@@ -11,6 +11,7 @@ import json
 import logging
 import os
 import re
+import time
 import unicodedata
 from typing import Any, Dict, List, Optional
 
@@ -69,8 +70,8 @@ class OpenRouterCompletions:
         }
         fallback_models = [
             model,
-            "meta-llama/llama-3.3-70b-instruct",
-            "google/gemini-1.5-flash",
+            "google/gemini-flash-1.5",
+            "google/gemini-pro-1.5",
             "openai/gpt-4o-mini",
             "openrouter/auto"
         ]
@@ -97,6 +98,39 @@ class OpenRouterClient:
         self.chat = OpenRouterChat(api_key)
         self.base_url = "https://openrouter.ai/api/v1"
 
+class GeminiCompletions:
+    def __init__(self, api_key):
+        self.api_key = api_key
+        
+    def create(self, model, messages, tools=None, tool_choice="auto", max_tokens=2048, temperature=0.1):
+        import requests
+        payload = {
+            "model": "gemini-3.6-flash",
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": temperature
+        }
+        if tools:
+            payload["tools"] = tools
+            payload["tool_choice"] = tool_choice
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        resp = requests.post("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", json=payload, headers=headers)
+        if resp.ok:
+            return FakeResponse(resp.json())
+        raise Exception(f"Gemini API error {resp.status_code}: {resp.text}")
+
+class GeminiChat:
+    def __init__(self, api_key):
+        self.completions = GeminiCompletions(api_key)
+
+class GeminiClient:
+    def __init__(self, api_key):
+        self.chat = GeminiChat(api_key)
+        self.base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
+
 def _get_groq_client():
     global _llm_clients, _clients_initialized, _active_client_idx
     if _clients_initialized:
@@ -116,16 +150,21 @@ def _get_groq_client():
         keys = [k.strip() for k in groq_env.split(",") if k.strip()]
         for k in keys:
             if k and "your_groq" not in k:
-                client = Groq(api_key=k)
+                client = Groq(api_key=k, max_retries=0)
                 _llm_clients.append(client)
                 
-        # (Removed Gemini and Cerebras initialization because Groq SDK hardcodes /openai/v1 path which breaks them)
-        pass
+        if gemini_env and "your_gemini" not in gemini_env:
+            keys = [k.strip() for k in gemini_env.split(",") if k.strip()]
+            for k in keys:
+                client = GeminiClient(api_key=k)
+                # Put Gemini AT THE FRONT so it's preferred over Groq since Gemini has a massive context window and rate limit
+                _llm_clients.insert(0, client)
             
         # 4. Khởi tạo OpenRouter client
         if openrouter_env and "your_openrouter" not in openrouter_env:
             openrouter_client = OpenRouterClient(api_key=openrouter_env)
-            _llm_clients.append(openrouter_client)
+            # Tạm thời bỏ OpenRouter khỏi fallback list do hết credit (402)
+            # _llm_clients.append(openrouter_client)
             
         if _llm_clients:
             logger.info("[LLM] Initialized %d clients for round-robin", len(_llm_clients))
@@ -151,12 +190,14 @@ def groq_is_available() -> bool:
 # Danh sách model fallback cứng (dùng khi không gọi được models.list())
 GROQ_MODELS_FALLBACK = [
     "llama-3.3-70b-versatile",
-    "mixtral-8x7b-32768",
-    "llama3-8b-8192",
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b",
 ]
 
 # Cache model đã chọn thành công — tránh gọi models.list() lặp đi lặp lại
 _selected_chat_model: Optional[str] = None
+_banned_models_until: Dict[str, float] = {}
 
 def groq_chat(system_prompt: str, user_prompt: str, max_tokens: int = 512) -> Optional[str]:
     """
@@ -196,28 +237,65 @@ def _resolve_chat_model(client) -> Optional[str]:
     Lấy model chat phù hợp từ API.
     Tránh gọi models.list() lặp lại mỗi request.
     """
+    global _selected_chat_model, _banned_models_until
+    
+    # Xoá các model đã hết hạn ban
+    now = time.time()
+    for m in list(_banned_models_until.keys()):
+        if now > _banned_models_until[m]:
+            del _banned_models_until[m]
+
+    if _selected_chat_model and _selected_chat_model not in _banned_models_until:
+        return _selected_chat_model
+
     # Nếu client hiện tại là Gemini/Cerebras/OpenRouter, ta dùng luôn model cứng tương ứng
     base_url_str = str(getattr(client, "base_url", ""))
     if "generativelanguage" in base_url_str:
-        return "gemini-1.5-flash"
+        return "gemini-3.6-flash"
     elif "cerebras" in base_url_str:
         return "llama3.1-8b"
     elif "openrouter" in base_url_str:
-        return "meta-llama/llama-3.3-70b-instruct:free"
+        return "google/gemini-flash-1.5"
 
-    # Dùng model mặc định tốt nhất hiện tại của Groq (dùng 8b để tránh lỗi 404 với API key free)
-    best_model = "llama-3.3-70b-versatile"
-    logger.info("[Groq] Selected chat model: %s", best_model)
-    return best_model
+    try:
+        models = client.models.list().data
+        available_ids = [m.id for m in models]
+        logger.info("[Groq] Available models: %s", available_ids)
+        for preferred in GROQ_MODELS_FALLBACK:
+            if preferred in available_ids and preferred not in _banned_models_until:
+                _selected_chat_model = preferred
+                logger.info("[Groq] Selected chat model from API: %s", _selected_chat_model)
+                return _selected_chat_model
+        
+        # Nếu không có model nào trong preferred list, ta lấy đại model đầu tiên có chữ gpt hoặc qwen hoặc llama
+        for av_model in available_ids:
+            if av_model not in _banned_models_until and ("gpt" in av_model or "qwen" in av_model or "llama" in av_model):
+                # Loại trừ các model chuyên biệt không hỗ trợ chat/tool
+                if "guard" in av_model.lower() or "whisper" in av_model.lower():
+                    continue
+                _selected_chat_model = av_model
+                logger.info("[Groq] Auto-selected from available: %s", _selected_chat_model)
+                return _selected_chat_model
 
+    except Exception as e:
+        logger.warning("[Groq] Could not list models: %s", e)
+
+    # Nếu tất cả các model khả dụng đều bị ban, xóa ban để thử lại
+    if len(_banned_models_until) > 0:
+        logger.warning("[Groq] All preferred models are rate-limited. Clearing bans.")
+        _banned_models_until.clear()
+        
+    _selected_chat_model = "openai/gpt-oss-20b"
+    logger.info("[Groq] Fallback chat model: %s", _selected_chat_model)
+    return _selected_chat_model
 
 def groq_agent_chat(
     messages: List[Dict[str, Any]],
     tools: Optional[List[Dict[str, Any]]] = None,
     tool_executors: Optional[Dict[str, Any]] = None,
     session_id: str = "",
-    max_tool_rounds: int = 5,
-    max_tokens: int = 2048,
+    max_tool_rounds: int = 3,
+    max_tokens: int = 400,
 ) -> Dict[str, Any]:
     """
     Agentic chat loop với Groq Function Calling.
@@ -231,7 +309,7 @@ def groq_agent_chat(
 
     Args:
         messages:       Danh sách messages theo chuẩn OpenAI (system, user, assistant, tool).
-        tools:          List JSON Schema của tools (TOOL_SCHEMAS từ agent_tools.py).
+        tools:          List JSON Schema của tools (TOOL_SCHEMAS từ function_calling/tools).
         tool_executors: Dict {tool_name: callable(args) -> dict}.
         session_id:     ID phiên chat (dùng cho session state/cart).
         max_tool_rounds: Số vòng tối đa gọi tool trước khi dừng.
@@ -252,6 +330,7 @@ def groq_agent_chat(
     tool_calls_log = []
     checkout_payload = None
     current_messages = list(messages)
+    turn_tool_cache = {}
 
     # Resolve model một lần duy nhất cho cả cuộc hội thoại (cached sau lần đầu)
     model = _resolve_chat_model(client)
@@ -281,6 +360,7 @@ def groq_agent_chat(
                 continue
                 
             try:
+                t0 = time.perf_counter()
                 kwargs: Dict[str, Any] = {
                     "model": model,
                     "messages": current_messages,
@@ -296,13 +376,33 @@ def groq_agent_chat(
                 break # Thành công thì thoát vòng lặp retry
                 
             except Exception as e:
+                t1 = time.perf_counter()
                 err = str(e)
                 last_err = err
-                logger.warning("[Groq Agent] API error round=%d retry=%d: %s", round_idx, retry_idx, err[:120])
+                logger.warning("[Groq Agent] API error round=%d retry=%d (took %.2fs): %s", round_idx, retry_idx, t1 - t0, err[:120])
                 
+                if "413" in err or "too large" in err.lower():
+                    logger.warning("[Groq Agent] Payload too large (413). Stripping history to prevent failure.")
+                    # Keep only system message (index 0) and the very last message (user_message)
+                    if len(current_messages) > 2:
+                        current_messages = [current_messages[0], current_messages[-1]]
+                        continue # Retry immediately with stripped messages
+                    else:
+                        return {"reply": "", "tool_calls_log": tool_calls_log, "checkout_payload": checkout_payload, "error": "Context window exceeded."}
+
                 if "404" in err or "does not exist" in err or "decommissioned" in err:
                     global _selected_chat_model
                     _selected_chat_model = None
+                
+                if "429" in err or "rate_limit" in err.lower():
+                    _banned_models_until[model] = time.time() + 60
+                    _selected_chat_model = None
+                    logger.warning("[Groq Agent] Model %s rate limited, banning for 60s.", model)
+
+                if "400" in err and "tool calling" in err.lower():
+                    _banned_models_until[model] = time.time() + 86400  # Ban 1 ngày vì model này không hỗ trợ tool
+                    _selected_chat_model = None
+                    logger.warning("[Groq Agent] Model %s doesn't support tools, banning for 1 day.", model)
                     
                 switch_groq_client()
                 continue
@@ -310,8 +410,8 @@ def groq_agent_chat(
         if not success or not resp:
             # Nếu chạy hết các client mà vẫn lỗi (hoặc mất mạng)
             logger.error("[Groq Agent] All clients failed in round=%d. Last error: %s", round_idx, last_err)
-            return {"reply": "", "tool_calls_log": tool_calls_log, "checkout_payload": checkout_payload,
-                    "error": "rate_limit" if ("rate_limit" in last_err.lower() or "429" in last_err) else "All LLM clients failed."}
+            return {"reply": "Hệ thống đang quá tải hoặc hết token, vui lòng thử lại sau ít phút.", "tool_calls_log": tool_calls_log, "checkout_payload": checkout_payload,
+                    "error": "rate_limit" if ("rate_limit" in last_err.lower() or "429" in last_err or "402" in last_err) else "All LLM clients failed."}
 
         choice = resp.choices[0]
         assistant_msg = choice.message
@@ -340,28 +440,37 @@ def groq_agent_chat(
                 tool_name = tc.function.name
                 try:
                     import json as _json
-                    tool_args = _json.loads(tc.function.arguments or "{}")
+                    tool_args_str = tc.function.arguments or "{}"
+                    tool_args = _json.loads(tool_args_str)
                 except Exception:
+                    tool_args_str = "{}"
                     tool_args = {}
 
-                logger.info("[Groq Agent] Tool call round=%d: %s args=%s", round_idx, tool_name, tool_args)
-                tool_calls_log.append({"tool": tool_name, "args": tool_args, "round": round_idx})
-
-                # Dispatch đến executor
-                executor = (tool_executors or {}).get(tool_name)
-                if executor:
-                    try:
-                        try:
-                            result = executor(tool_args, session_id)
-                        except TypeError:
-                            result = executor(tool_args)
-                    except Exception as ex:
-                        result = {"status": "error", "message": str(ex)}
+                # Chống lặp tool: kiểm tra hash cache
+                tool_hash = f"{tool_name}_{tool_args_str}"
+                if tool_hash in turn_tool_cache:
+                    logger.info("[Groq Agent] Cache Hit! Trả ngay kết quả tool đã gọi: %s", tool_hash)
+                    result = turn_tool_cache[tool_hash]
                 else:
-                    result = {"status": "error", "message": f"Tool '{tool_name}' không tồn tại."}
+                    logger.info("[Groq Agent] Tool call round=%d: %s args=%s", round_idx, tool_name, tool_args)
+                    
+                    # Dispatch đến executor
+                    executor = (tool_executors or {}).get(tool_name)
+                    if executor:
+                        try:
+                            try:
+                                result = executor(tool_args, session_id)
+                            except TypeError:
+                                result = executor(tool_args)
+                        except Exception as ex:
+                            result = {"status": "error", "message": str(ex)}
+                    else:
+                        result = {"status": "error", "message": f"Tool '{tool_name}' không tồn tại."}
+                    
+                    # Lưu vào cache
+                    turn_tool_cache[tool_hash] = result
 
-                # Lưu result vào log
-                tool_calls_log[-1]["result"] = result
+                tool_calls_log.append({"tool": tool_name, "args": tool_args, "round": round_idx, "result": result})
 
                 # Bắt tín hiệu checkout (Guardrail)
                 if tool_name == "request_checkout" and isinstance(result, dict):
@@ -373,6 +482,7 @@ def groq_agent_chat(
                 current_messages.append({
                     "role": "tool",
                     "tool_call_id": tc.id,
+                    "name": tc.function.name,
                     "content": _json.dumps(result, ensure_ascii=False),
                 })
 

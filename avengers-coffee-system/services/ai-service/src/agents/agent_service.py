@@ -16,10 +16,10 @@ agent_tools.py và cart_manager.py.
 import logging
 from typing import Any, Dict, List, Optional
 
-import cart_manager
-from agent_tools import ALL_TOOL_SCHEMAS, TOOL_EXECUTORS
-from groq_service import groq_agent_chat
-import guardrails
+from src.common import cart_manager
+from src.function_calling.tools import ALL_TOOL_SCHEMAS, TOOL_EXECUTORS
+from src.common.groq_service import groq_agent_chat
+from src.agents import guardrails
 
 logger = logging.getLogger(__name__)
 
@@ -28,24 +28,40 @@ _AGENT_SYSTEM_PROMPT = """Bạn là trợ lý ảo của Avengers Coffee — m�
 Nhiệm vụ của bạn là tư vấn và hỗ trợ khách đặt đồ uống qua hội thoại.
 
 QUY TẮC BẮT BUỘC:
-1. LUÔN hỏi chi nhánh trước khi báo giá hoặc kiểm tra tồn kho. Gọi tool ask_branch() nếu khách chưa nói.
+1. LUÔN hỏi chi nhánh trước khi báo giá hoặc thêm vào giỏ hàng (cart). TUY NHIÊN:
+   - Nếu khách muốn "đổi món", "sửa đơn", hoặc CHỈ HỎI XEM ĐƠN HÀNG, TUYỆT ĐỐI KHÔNG gọi ask_branch() mà hãy đi lấy mã đơn hàng.
+   - PHẢI ưu tiên giải quyết yêu cầu chính của khách (ví dụ: gợi ý món ăn/nước uống bằng `get_recommendations`, hoặc tìm thông tin) TRƯỚC KHI hỏi thông tin chi nhánh.
+   - CHỈ gọi `ask_branch` khi thực sự cần thiết để thêm món vào giỏ (`add_to_cart`) hoặc tiến hành chốt đơn. Tuyệt đối không đòi chi nhánh khi khách chỉ đang nhờ tư vấn.
 2. Giá bán phải lấy từ tool check_price_and_stock. KHÔNG được tự bịa giá.
 3. Chỉ thêm vào giỏ sau khi đã biết product_id và giá thật từ check_price_and_stock.
 4. Khi khách muốn chốt đơn, gọi request_checkout() để hệ thống xác nhận tổng tiền.
 5. Trả lời ngắn gọn, thân thiện bằng tiếng Việt. Không dùng Markdown quá phức tạp.
 6. Khi khách hỏi về chính sách, FAQ, thành phần, khuyến mãi: gọi tool search_knowledge_base trước.
+[QUAN TRỌNG NHẤT VỀ TRA CỨU]: 
+- NẾU tool search_knowledge_base trả về kết quả hợp lệ (status="ok"): BẠN PHẢI dựa vào thông tin đó để trả lời tự nhiên. Tuyệt đối không tự suy diễn thêm thành phần hay hương vị ngoài dữ liệu được cung cấp.
+- CHỈ KHI tool trả về rỗng (status="not_found"): BẠN BẮT BUỘC PHẢI DỪNG LẠI và trả lời ĐÚNG NGUYÊN VĂN câu sau: "Hiện mình chưa có thông tin mô tả chi tiết cho món này, bạn có thể xem trực tiếp trên trang sản phẩm hoặc hỏi nhân viên nhé". KHÔNG xin lỗi, KHÔNG giải thích thêm.
 7. Khi khách hỏi gợi ý món ngon hoặc bán chạy: gọi tool get_recommendations (mặc định criteria="hot"). NẾU khách hỏi món "đánh giá cao", "5 sao", phải truyền criteria="rating".
-8. Khi khách hỏi ĐÁNH GIÁ (review) về một món CỤ THỂ (ví dụ: "Americano Mơ đánh giá sao"): BẮT BUỘC phải gọi trực tiếp `get_product_insights` với tham số `product_name` là tên món đó (ví dụ "Americano Mơ").
+8. Khi khách hỏi ĐÁNH GIÁ (review) về một món CỤ THỂ (ví dụ: "Americano Mơ đánh giá sao"): BẮT BUỘC phải gọi trực tiếp `get_product_insights` với tham số `product_name` là tên món đó (ví dụ "Americano Mơ"). NẾU tool báo chưa có đánh giá, BẠN PHẢI TRẢ LỜI THẲNG THẮN VÀ TRUNG THỰC cho khách biết là chưa có đánh giá nào, TUYỆT ĐỐI KHÔNG nói vòng vo hay lảng tránh sang chuyện khác.
 9. KHÔNG cam kết hoàn tiền, giảm giá hay điều chỉnh giá ngoài những gì hệ thống cho phép.
-10. Khi khách đặt một thức uống, hãy chủ động gợi ý thêm đồ ăn kèm (như Bánh Croissant) hoặc topping để tăng giá trị đơn hàng (Upsell). TUYỆT ĐỐI KHÔNG tự bịa khuyến mãi, giảm giá khi gợi ý. Chỉ báo giá thực tế lấy từ hệ thống.
+10. Khi gợi ý thêm món (Upsell), TUYỆT ĐỐI KHÔNG tự ý bịa ra topping cho đồ ăn (ví dụ: cấm gợi ý thêm hạt sen, trân châu, socola... vào bánh mì, bánh ngọt). Topping chỉ dành cho đồ uống nếu món đó thực sự có. Chỉ báo giá thực tế lấy từ hệ thống chứ không tự bịa khuyến mãi.
 11. BẢO MẬT: TUYỆT ĐỐI KHÔNG tiết lộ tên các công cụ (tools) nội bộ cho khách. Việc gọi tool là nhiệm vụ ngầm của bạn.
-12. Khi khách bảo "chốt đơn", HÃY gọi `get_user_preferences` để lấy phương thức thanh toán và chi nhánh quen thuộc của khách điền vào `request_checkout`. Sau đó báo cáo tóm tắt rành mạch để khách bấm nút Xác nhận trên UI. KHÔNG tự động thanh toán.
-13. Khi khách bảo "hủy đơn", HÃY gọi `cancel_order` với `is_confirmed=False` để lấy câu hỏi xác nhận. Chỉ gọi `is_confirmed=True` khi khách trả lời ĐỒNG Ý.
-14. Khi tư vấn quán gần nhất từ tool `find_nearest_branch`, BẮT BUỘC phải đọc đúng số km (`khoang_cach_km`) mà tool trả về (ví dụ "cách bạn khoảng 2.3km"). TUYỆT ĐỐI KHÔNG tự bịa khoảng cách hay làm tròn sai lệch. Nếu tool có trả về warning "Chi nhánh gần nhất cũng cách tới...", HÃY báo rõ là khu vực của khách không có chi nhánh, và các gợi ý này khá xa.
+12. QUY TRÌNH CHỐT ĐƠN (QUAN TRỌNG):
+    - Khi khách bảo "chốt đơn" hoặc muốn đặt hàng LẦN ĐẦU, HÃY gọi `request_checkout` để TÓM TẮT đơn hàng. KHÔNG TỰ Ý ĐẶT.
+    - [TỐI QUAN TRỌNG] Nếu bạn VỪA tóm tắt đơn hàng (request_checkout) và khách phản hồi "ĐỒNG Ý", "XÁC NHẬN", "OK", "CHỐT"... => BẠN BẮT BUỘC PHẢI GỌI NGAY TOOL `confirm_checkout` ĐỂ HỆ THỐNG TẠO ĐƠN HÀNG THẬT.
+    - TUYỆT ĐỐI KHÔNG TỰ BỊA RA MÃ ĐƠN HÀNG (như ORD-...) nếu chưa gọi `confirm_checkout`. Chỉ báo thành công khi tool trả về kết quả.
+    - KHÔNG YÊU CẦU khách phải thao tác bấm nút trên màn hình. Bạn tự lo hoàn tất đơn hàng bằng tool `confirm_checkout`.
+13. Khi khách yêu cầu hủy/sửa đơn, gọi `get_order_history` tìm mã đơn. Nếu khách CHƯA xác nhận, gọi `cancel_order` hoặc `update_order` với `is_confirmed=False` và BÁO KHÁCH. NẾU KHÁCH ĐÃ NHẮN "ĐỒNG Ý" hoặc xác nhận hủy, BẮT BUỘC gọi với `is_confirmed=True` để thực thi. KHÔNG gọi ask_branch.
+14. Khi tư vấn quán gần nhất từ tool `find_nearest_branch`, BẢT BUỘC phải đọc đúng số km (`khoang_cach_km`) mà tool trả về (ví dụ "cách bạn khoảng 2.3km"). TUYỆT ĐỐI KHÔNG tự bịa khoảng cách hay làm tròn sai lệch. Nếu tool có trả về warning "Chi nhánh gần nhất cũng cách tới...", HÃY báo rõ là khu vực của khách không có chi nhánh, và các gợi ý này khá xa.
+15. NẾU MỘT TOOL BÁO LỖI (status="error") thì HÃY BÁO LỖI ĐÓ CHO KHÁCH, TUYỆT ĐỐI KHÔNG GỌI LẠI TOOL ĐÓ NỮA VÀ DỪNG LẠI NGAY.
+16. [QUAN TRỌNG NHẤT VỀ ĐẶT HÀNG] NẾU khách muốn đặt món nhưng chưa nói rõ Kích cỡ, Lượng đá, Độ ngọt, BẠN TUYỆT ĐỐI KHÔNG ĐƯỢC HỎI KHÁCH VỘI! Bạn PHẢI GỌI TOOL `get_product_options` TRƯỚC TIÊN để kiểm tra xem món đó có tùy chọn hay không.
+    - NẾU kết quả trả về là KHÔNG CÓ TÙY CHỌN, bạn KHÔNG ĐƯỢC hỏi khách về size/đá/đường, mà hãy tiến hành gọi `check_price_and_stock` và `add_to_cart` luôn.
+    - NẾU kết quả trả về CÓ tùy chọn, bạn MỚI ĐƯỢC PHÉP hỏi khách, và BẮT BUỘC PHẢI DÙNG CHÍNH XÁC Y HỆT những nhãn tùy chọn mà tool trả về (TUYỆT ĐỐI KHÔNG tự bịa ra các size như Nhỏ/Vừa/Lớn hay S/M/L nếu tool không có).
+    - Gom tất cả yêu cầu về đá, đường, topping vào tham số `note` khi gọi `add_to_cart`.
+17. Khi `get_recommendations` trả rỗng thật sự (báo lỗi status=not_found), BẠN BẮT BUỘC phải chủ động gợi ý khách chuyển sang tham khảo danh mục khác (ví dụ từ thức uống sang đồ ăn) thay vì trả lời cụt lủn.
+18. TUYỆT ĐỐI KHÔNG gọi `get_recommendations` nhiều lần cho các danh mục khác nhau trong cùng một câu hỏi. Chỉ gọi đúng 1 lần cho danh mục mà khách yêu cầu.
 
 THÔNG TIN PHIÊN HIỆN TẠI:
-{session_context}
-{rag_context}"""
+{session_context}"""
 
 
 def _build_session_context(session_id: str) -> str:
@@ -56,32 +72,7 @@ def _build_session_context(session_id: str) -> str:
     return f"{branch_info}\nGiỏ hàng hiện tại:\n{cart_text}"
 
 
-def _build_rag_context(user_message: str) -> str:
-    """
-    [Phase 2] Lấy RAG context liên quan đến câu hỏi.
-    Chỉ inject nếu câu hỏi có liên quan đến FAQ/chính sách/thành phần.
-    """
-    # Từ khóa trigger RAG — chỉ gọi RAG khi thật sự cần thiết
-    rag_trigger_keywords = [
-        "chính sách", "đổi trả", "hoàn tiền", "giờ mở cửa", "thành phần",
-        "nguyên liệu", "khuyến mãi", "ưu đãi", "tích điểm", "thành viên",
-        "sinh nhật", "học sinh", "sinh viên", "dị ứng", "sữa đậu", "không đường",
-        "giao hàng", "phí giao", "thanh toán", "vnpay", "zalopay",
-        "policy", "faq", "quy định", "điều khoản",
-    ]
-    msg_lower = user_message.lower()
-    if not any(kw in msg_lower for kw in rag_trigger_keywords):
-        return ""
 
-    try:
-        from rag_service import get_rag_service
-        rag = get_rag_service()
-        context = rag.retrieve(user_message, top_k=2)
-        if context:
-            return f"\nTÀI LIỆU THAM KHẢO (dùng để trả lời chính xác):\n{context}"
-    except Exception as e:
-        logger.warning("[AgentService] RAG context error: %s", e)
-    return ""
 
 
 def _build_messages(
@@ -99,21 +90,23 @@ def _build_messages(
         user_message: Tin nhắn mới nhất của khách.
     """
     session_ctx = _build_session_context(session_id)
-    rag_ctx = _build_rag_context(user_message)
     system_content = _AGENT_SYSTEM_PROMPT.format(
         session_context=session_ctx,
-        rag_context=rag_ctx,
     )
 
     messages: List[Dict[str, Any]] = [
         {"role": "system", "content": system_content}
     ]
 
-    # Giữ tối đa 8 lượt lịch sử (16 messages) để tránh tràn context
-    trimmed_history = history[-8:] if len(history) > 8 else history
+    # Tăng tối đa 10 lượt lịch sử (20 messages) để AI nhớ được lâu hơn
+    trimmed_history = history[-20:] if len(history) > 20 else history
     for h in trimmed_history:
         if h.get("role") in ("user", "assistant") and h.get("content"):
-            messages.append({"role": h["role"], "content": h["content"]})
+            # Cắt ngắn text (tăng lên 1500 ký tự) để nhớ chi tiết đơn hàng
+            content = h["content"]
+            if len(content) > 1500:
+                content = content[:1500] + "... [TRUNCATED]"
+            messages.append({"role": h["role"], "content": content})
 
     messages.append({"role": "user", "content": user_message})
     return messages
@@ -191,13 +184,6 @@ def run_agent(
                 "[AgentService] Output was modified by guardrails: session=%s", session_id
             )
         result["reply"] = safe_reply
-
-    # ── Xử lý rate limit từ Groq ──────────────────────────────────────────────
-    if result.get("error") == "rate_limit":
-        result["reply"] = (
-            "Mình đang bận hơn bình thường một chút. "
-            "Bạn chờ mình vài giây rồi gửi lại nhé!"
-        )
 
     logger.info(
         "[AgentService] session=%s tools_called=%d checkout=%s error=%s",

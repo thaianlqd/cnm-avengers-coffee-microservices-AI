@@ -294,6 +294,8 @@ services:
       DB_NAME: ${DB_NAME:-avengers_coffee}
       PGSSLMODE: ${PGSSLMODE:-require}
       AI_PORT: ${AI_PORT:-8000}
+      JWT_SECRET: ${JWT_SECRET:-avengers-jwt-secret}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-avengers-internal-token}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
