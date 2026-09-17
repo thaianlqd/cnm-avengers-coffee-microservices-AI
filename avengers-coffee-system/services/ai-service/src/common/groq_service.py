@@ -131,6 +131,39 @@ class GeminiClient:
         self.chat = GeminiChat(api_key)
         self.base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
 
+class OpenAICompletions:
+    def __init__(self, api_key):
+        self.api_key = api_key
+        
+    def create(self, model, messages, tools=None, tool_choice="auto", max_tokens=1000, temperature=0.1):
+        import requests
+        payload = {
+            "model": "gpt-4o-mini",
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": temperature
+        }
+        if tools:
+            payload["tools"] = tools
+            payload["tool_choice"] = tool_choice
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        resp = requests.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers)
+        if resp.ok:
+            return FakeResponse(resp.json())
+        raise Exception(f"OpenAI API error {resp.status_code}: {resp.text}")
+
+class OpenAIChat:
+    def __init__(self, api_key):
+        self.completions = OpenAICompletions(api_key)
+
+class OpenAIClient:
+    def __init__(self, api_key):
+        self.chat = OpenAIChat(api_key)
+        self.base_url = "https://api.openai.com/v1"
+
 def _get_groq_client():
     global _llm_clients, _clients_initialized, _active_client_idx
     if _clients_initialized:
@@ -142,6 +175,7 @@ def _get_groq_client():
     gemini_env = os.getenv("GEMINI_API_KEY", "").strip()
     cerebras_env = os.getenv("CEREBRAS_API_KEY", "").strip()
     openrouter_env = os.getenv("OPENROUTER_API_KEY", "").strip()
+    openai_env = os.getenv("OPENAI_API_KEY", "").strip()
     
     _clients_initialized = True
     try:
@@ -166,6 +200,14 @@ def _get_groq_client():
             # Tạm thời bỏ OpenRouter khỏi fallback list do hết credit (402)
             # _llm_clients.append(openrouter_client)
             
+        # 5. Khởi tạo OpenAI client
+        if openai_env and "your_openai" not in openai_env:
+            keys = [k.strip() for k in openai_env.split(",") if k.strip()]
+            for k in keys:
+                client = OpenAIClient(api_key=k)
+                # Put OpenAI AT THE VERY FRONT since it's the best model and highest rate limit usually
+                _llm_clients.insert(0, client)
+                
         if _llm_clients:
             logger.info("[LLM] Initialized %d clients for round-robin", len(_llm_clients))
             return _llm_clients[_active_client_idx]
@@ -192,7 +234,6 @@ GROQ_MODELS_FALLBACK = [
     "llama-3.3-70b-versatile",
     "openai/gpt-oss-120b",
     "openai/gpt-oss-20b",
-    "qwen/qwen3.8-27b",
 ]
 
 # Cache model đã chọn thành công — tránh gọi models.list() lặp đi lặp lại
@@ -256,6 +297,8 @@ def _resolve_chat_model(client) -> Optional[str]:
         return "llama3.1-8b"
     elif "openrouter" in base_url_str:
         return "google/gemini-flash-1.5"
+    elif "api.openai.com" in base_url_str:
+        return "gpt-4o-mini"
 
     try:
         models = client.models.list().data
@@ -267,9 +310,9 @@ def _resolve_chat_model(client) -> Optional[str]:
                 logger.info("[Groq] Selected chat model from API: %s", _selected_chat_model)
                 return _selected_chat_model
         
-        # Nếu không có model nào trong preferred list, ta lấy đại model đầu tiên có chữ gpt hoặc qwen hoặc llama
+        # Nếu không có model nào trong preferred list, ta lấy đại model đầu tiên có chữ gpt hoặc llama
         for av_model in available_ids:
-            if av_model not in _banned_models_until and ("gpt" in av_model or "qwen" in av_model or "llama" in av_model):
+            if av_model not in _banned_models_until and ("gpt" in av_model or "llama" in av_model):
                 # Loại trừ các model chuyên biệt không hỗ trợ chat/tool
                 if "guard" in av_model.lower() or "whisper" in av_model.lower():
                     continue
@@ -323,6 +366,7 @@ def groq_agent_chat(
           "error": str | None,
         }
     """
+    global _selected_chat_model
     client = _get_groq_client()
     if client is None:
         return {"reply": "", "tool_calls_log": [], "checkout_payload": None, "error": "Groq client unavailable"}
@@ -382,6 +426,14 @@ def groq_agent_chat(
                 logger.warning("[Groq Agent] API error round=%d retry=%d (took %.2fs): %s", round_idx, retry_idx, t1 - t0, err[:120])
                 
                 if "413" in err or "too large" in err.lower():
+                    if "tokens per minute" in err.lower() or "tpm" in err.lower():
+                        # Đôi khi Groq trả 413 cho lỗi vượt quá TPM thay vì 429
+                        _banned_models_until[model] = time.time() + 60
+                        _selected_chat_model = None
+                        logger.warning("[Groq Agent] Model %s TPM limit reached (413), banning for 60s.", model)
+                        switch_groq_client()
+                        continue
+                        
                     logger.warning("[Groq Agent] Payload too large (413). Stripping history to prevent failure.")
                     # Keep only system message (index 0) and the very last message (user_message)
                     if len(current_messages) > 2:
@@ -391,7 +443,6 @@ def groq_agent_chat(
                         return {"reply": "", "tool_calls_log": tool_calls_log, "checkout_payload": checkout_payload, "error": "Context window exceeded."}
 
                 if "404" in err or "does not exist" in err or "decommissioned" in err:
-                    global _selected_chat_model
                     _selected_chat_model = None
                 
                 if "429" in err or "rate_limit" in err.lower():

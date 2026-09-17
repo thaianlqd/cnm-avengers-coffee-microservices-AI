@@ -46,6 +46,7 @@ def _safe_schema_name(value: Optional[str], default: str) -> str:
 IDENTITY_SCHEMA = _safe_schema_name(os.getenv("IDENTITY_SCHEMA"), "identity")
 MENU_SCHEMA = _safe_schema_name(os.getenv("MENU_SCHEMA"), "menu")
 ORDER_SCHEMA = _safe_schema_name(os.getenv("ORDER_SCHEMA"), "orders")
+FRANCHISE_SCHEMA = _safe_schema_name(os.getenv("FRANCHISE_SCHEMA"), "franchise")
 AI_SCHEMA = safe_schema_name(os.getenv("AI_SCHEMA"), "ai")
 
 _base_context_cache: Dict[str, Any] = {"expires_at": datetime.min, "value": None}
@@ -321,15 +322,40 @@ def _build_base_business_context() -> Dict[str, Any]:
         LIMIT 6
     """
     branches_sql = f"""
+        WITH ratings AS (
+            SELECT ma_chi_nhanh, ROUND(AVG(diem_tong_quan), 1) as diem_trung_binh, COUNT(*) as tong_luot_danh_gia
+            FROM {ORDER_SCHEMA}.danh_gia_chi_nhanh
+            WHERE trang_thai = 'APPROVED'
+            GROUP BY ma_chi_nhanh
+        ),
+        branches_and_kiosks AS (
+            SELECT
+                cn.ma_chi_nhanh AS id_chi_nhanh,
+                cn.ten_chi_nhanh AS ten,
+                cn.dia_chi,
+                'CHI_NHANH_CHINH' as loai
+            FROM {IDENTITY_SCHEMA}.chi_nhanh cn
+            WHERE cn.trang_thai = 'ACTIVE'
+            UNION ALL
+            SELECT
+                k.ma_kiosk AS id_chi_nhanh,
+                k.ten_kiosk AS ten,
+                k.dia_chi,
+                k.loai_kiosk as loai
+            FROM {FRANCHISE_SCHEMA}.kiosk k
+            WHERE k.trang_thai = 'DANG_HOAT_DONG'
+        )
         SELECT
-            cn.ma_chi_nhanh,
-            cn.ten_chi_nhanh,
-            cn.dia_chi,
-            cn.so_dien_thoai
-        FROM {IDENTITY_SCHEMA}.chi_nhanh cn
-        WHERE cn.trang_thai = 'ACTIVE'
-        ORDER BY cn.ten_chi_nhanh ASC
-        LIMIT 8
+            b.id_chi_nhanh as ma_chi_nhanh,
+            b.ten as ten_chi_nhanh,
+            b.dia_chi,
+            b.loai,
+            COALESCE(r.diem_trung_binh, 0) as diem_trung_binh,
+            COALESCE(r.tong_luot_danh_gia, 0) as tong_luot_danh_gia
+        FROM branches_and_kiosks b
+        LEFT JOIN ratings r ON b.id_chi_nhanh = r.ma_chi_nhanh
+        ORDER BY r.diem_trung_binh DESC NULLS LAST
+        LIMIT 20
     """
     variations_sql = f"""
         SELECT
@@ -469,10 +495,11 @@ def _render_context_for_prompt(base_context: Dict[str, Any], recent_orders: List
             value_text = f"tang {km.get('ten_san_pham_tang') or 'qua tang'}"
         promo_lines.append(f"- {km.get('ma_khuyen_mai')}: {km.get('ten_khuyen_mai')} ({value_text})")
 
-    branch_lines = [
-        f"- {b.get('ten_chi_nhanh')}: {b.get('dia_chi') or 'Dang cap nhat dia chi'}"
-        for b in base_context.get("branches", [])[:5]
-    ]
+    branch_lines = []
+    for b in base_context.get("branches", [])[:20]:
+        loai_text = "Cửa hàng chính" if b.get('loai') == "CHI_NHANH_CHINH" else "Kiosk"
+        rating_text = f"{b.get('diem_trung_binh')} sao ({b.get('tong_luot_danh_gia')} lượt)" if b.get('tong_luot_danh_gia', 0) > 0 else "Chưa có đánh giá"
+        branch_lines.append(f"- [{loai_text}] {b.get('ten_chi_nhanh')}: {b.get('dia_chi') or 'Đang cập nhật địa chỉ'} - Đánh giá: {rating_text}")
 
     order_lines = [
         f"- Don {o.get('ma_don_hang')}: {_to_price(o.get('tong_tien'))} VND, order={o.get('trang_thai_don_hang')}, payment={o.get('trang_thai_thanh_toan')}"
@@ -1172,7 +1199,7 @@ def get_behavior_insights(branch_code: str = "ALL", limit: int = 6, days: int = 
         raise HTTPException(status_code=500, detail=f"Khong the tai du lieu hanh vi mua sam: {exc}") from exc
 
 def _enrich_chat_cards(content: str, reply: str, base_context: Dict[str, Any], recent_orders: List[Dict[str, Any]]) -> Dict[str, Any]:
-    text_check = (content + " " + reply).lower()
+    text_check = content.lower()
     cards: Dict[str, Any] = {}
 
     if any(k in text_check for k in ["chi nhanh", "cua hang", "dia chi", "gan day", "o dau", "tim cua", "store", "branch"]):
@@ -1214,8 +1241,12 @@ def _groq_primary_chat_reply(
     context_text = _render_context_for_prompt(base_context, recent_orders)
 
     system_prompt = (
-        "Ban la nhan vien tu van AI thong minh cua Avengers Coffee, rat than thien va chuyen nghiep. "
-        "Su dung du lieu he thong (menu, khuyen mai, chi nhanh) de tu van chinh xac. "
+        "Ban la tro ly ao Avengers Coffee. Ngan gon, nhiet tinh. "
+        "Chi dung du lieu he thong cung cap de tra loi (menu, chi nhanh, kiosk, don hang, ...). "
+        "Khong du doan menu/chi nhanh/kiosk ngoai du lieu. "
+        "TUYET DOI KHONG tu bia ra cac goi nhuong quyen hay bat ky thong tin nao khong co trong DU LIEU HE THONG. "
+        "Neu khach hoi ve chi nhanh hay Kiosk, CHI duoc phep ke ten nhung diem ban co trong DU LIEU HE THONG ben duoi. "
+        "Neu khach hoi ve chinh sach, thong tin nhan su, hay van de nam ngoai du lieu, tra loi la ban chua the ho tro vao luc nay. "
         "QUAN TRONG VE DINH DANG: Khi gioi thieu danh sach san pham, chi nhanh, khuyen mai hoac don hang, hay tra loi ngan gon, than thien (1-2 cau mo dau/goi y) va KHONG liet ke thu cong thanh danh sach gach dau dong dai thong tin dia chi/gia, vi he thong se tu dong hien thi cac The UI tuong tac (Product Card, Store Card, Voucher Card) cho khach hang. "
         "Neu khach hoi chung chung hoac 'gi cung duoc', hay chu dong goi y 1-2 mon Best Seller. "
         "Neu khach yeu cau liet ke mot danh muc cu the (vd: ca phe, tra sua), ban PHAI loc dung Danh muc trong DU LIEU HE THONG. "
@@ -1328,9 +1359,9 @@ async def ai_chat(request: Request):
 
         system_text = (
             "Ban la nhan vien tu van cua Avengers Coffee. "
-            "Su dung du lieu he thong de tu van menu, gia, khuyen mai, chi nhanh va tinh trang don. "
+            "Su dung du lieu he thong de tu van menu, gia, khuyen mai, chi nhanh, kiosk va tinh trang don. "
             "Neu du lieu khong co, noi ro la chua du thong tin va de nghi cach kiem tra tiep. "
-            "Khong du doan vuot qua du lieu duoc cung cap. "
+            "Khong du doan vuot qua du lieu duoc cung cap. TUYET DOI KHONG tu bia ra cac goi nhuong quyen. "
             f"LUON ket thuc cau tra loi bang token {_AI_END_TOKEN} o CUOI CUNG."
         )
         first_user_text = f"{context_text}\n\n{user_prompt}"
