@@ -303,6 +303,22 @@ def set_is_checking_out(session_id: str, is_checking_out: bool) -> None:
         session["is_checking_out"] = is_checking_out
         _touch(session_id, session, sync_db=True)
 
+def set_checkout_prefs(session_id: str, payment_method: str, delivery_type: str) -> None:
+    """Lưu tạm thời phương thức thanh toán và giao hàng khi Tóm tắt đơn hàng."""
+    with _get_session_lock(session_id):
+        session = _get_or_create_session(session_id)
+        session["checkout_prefs"] = {
+            "payment_method": payment_method,
+            "delivery_type": delivery_type
+        }
+        _touch(session_id, session, sync_db=False)
+
+def get_checkout_prefs(session_id: str) -> Optional[Dict[str, str]]:
+    """Lấy cấu hình thanh toán và giao hàng đã lưu tạm thời."""
+    with _get_session_lock(session_id):
+        session = _get_or_create_session(session_id)
+        return session.get("checkout_prefs")
+
 def cart_summary_text(session_id: str) -> str:
     """Tạo chuỗi text tóm tắt giỏ hàng – dùng để nhét vào Prompt cho LLM nhớ context."""
     cart = get_cart(session_id)

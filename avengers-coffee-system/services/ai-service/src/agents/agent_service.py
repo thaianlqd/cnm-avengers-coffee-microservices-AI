@@ -46,7 +46,8 @@ QUY TẮC BẮT BUỘC:
 10. Khi gợi ý thêm món (Upsell), TUYỆT ĐỐI KHÔNG tự ý bịa ra topping cho đồ ăn (ví dụ: cấm gợi ý thêm hạt sen, trân châu, socola... vào bánh mì, bánh ngọt). Topping chỉ dành cho đồ uống nếu món đó thực sự có. Chỉ báo giá thực tế lấy từ hệ thống chứ không tự bịa khuyến mãi.
 11. BẢO MẬT: TUYỆT ĐỐI KHÔNG tiết lộ tên các công cụ (tools) nội bộ cho khách. Việc gọi tool là nhiệm vụ ngầm của bạn.
 12. QUY TRÌNH CHỐT ĐƠN (QUAN TRỌNG):
-    - Khi khách bảo "chốt đơn" hoặc muốn đặt hàng LẦN ĐẦU, HÃY gọi `request_checkout` để TÓM TẮT đơn hàng. KHÔNG TỰ Ý ĐẶT.
+    - Khi khách bảo "chốt đơn" hoặc muốn đặt hàng, TRƯỚC TIÊN hãy hỏi khách phương thức thanh toán (Tiền mặt/VNPay/Chuyển khoản/Ví) và hình thức giao hàng (Giao tận nơi/Mang đi/Tại chỗ) nếu chưa biết.
+    - Sau khi khách chọn xong, HÃY gọi `request_checkout` để TÓM TẮT đơn hàng. KHÔNG TỰ Ý ĐẶT TRƯỚC KHI TÓM TẮT.
     - [TỐI QUAN TRỌNG] Nếu bạn VỪA tóm tắt đơn hàng (request_checkout) và khách phản hồi "ĐỒNG Ý", "XÁC NHẬN", "OK", "CHỐT"... => BẠN BẮT BUỘC PHẢI GỌI NGAY TOOL `confirm_checkout` ĐỂ HỆ THỐNG TẠO ĐƠN HÀNG THẬT.
     - TUYỆT ĐỐI KHÔNG TỰ BỊA RA MÃ ĐƠN HÀNG (như ORD-...) nếu chưa gọi `confirm_checkout`. Chỉ báo thành công khi tool trả về kết quả.
     - KHÔNG YÊU CẦU khách phải thao tác bấm nút trên màn hình. Bạn tự lo hoàn tất đơn hàng bằng tool `confirm_checkout`.
@@ -145,7 +146,6 @@ def run_agent(
             "error": "missing_input",
         }
 
-    # ── [Phase 3] Lớp 1: Guardrails — Kiểm tra Input ─────────────────────────
     is_safe, block_reason = guardrails.check_input(user_message, session_id)
     if not is_safe:
         safe_reply = guardrails.get_block_reply(block_reason or "")
@@ -159,6 +159,58 @@ def run_agent(
             "tool_calls_log": [],
             "error": f"blocked:{block_reason}",
         }
+
+    # ── [NEW] INTERCEPT: Khách xác nhận chốt đơn ─────────────────────────────
+    user_msg_lower = user_message.strip().lower()
+    confirm_keywords = ["đồng ý", "xác nhận", "ok", "oke", "chốt", "đặt đi", "tiến hành", "okela", "chốt đơn"]
+    # Kiểm tra xem user_msg có trùng hoặc bắt đầu bằng keyword không
+    is_confirming = any(user_msg_lower == kw or user_msg_lower.startswith(kw + " ") or user_msg_lower.startswith(kw + "!") for kw in confirm_keywords)
+    
+    if is_confirming and history:
+        last_assistant_msg = next((h["content"] for h in reversed(history) if h.get("role") == "assistant"), "")
+        if "Khách cần xác nhận trước khi tôi tiến hành đặt" in last_assistant_msg:
+            logger.info("[AgentService] Intercepted checkout confirmation from user: '%s'", user_message)
+            from src.function_calling.tools.cart_tools import execute_confirm_checkout
+            
+            checkout_res = execute_confirm_checkout(session_id)
+            if checkout_res.get("status") == "success":
+                order_id = checkout_res.get("order_id", "Không rõ")
+                total = checkout_res.get("total_price", 0)
+                reply = f"🎉 Đặt hàng thành công! Mã đơn hàng của bạn là: **{order_id}**.\nTổng cộng: {total:,.0f}đ. Cảm ơn bạn đã ủng hộ!".replace(',', '.')
+            else:
+                reply = f"❌ Rất tiếc, quá trình tạo đơn hàng thất bại: {checkout_res.get('message', 'Lỗi không xác định')}."
+            
+            return {
+                "reply": reply,
+                "checkout_payload": None,
+                "tool_calls_log": [{"tool": "confirm_checkout", "result": checkout_res}],
+                "error": None,
+            }
+            
+        elif "xác nhận hủy" in last_assistant_msg.lower():
+            logger.info("[AgentService] Intercepted cancel_order confirmation from user: '%s'", user_message)
+            from src.function_calling.tools.order_tools import execute_cancel_order
+            import re
+            
+            # Extract order_id from text: "hủy đơn hàng {order_id} không"
+            match = re.search(r"đơn hàng ([\w\-]+) không", last_assistant_msg.lower())
+            if not match:
+                match = re.search(r"([\w\-]{36})", last_assistant_msg)
+                
+            if match:
+                order_id = match.group(1)
+                cancel_res = execute_cancel_order(session_id, order_id, is_confirmed=True)
+                if cancel_res.get("status") == "success":
+                    reply = f"✅ Đơn hàng **{order_id}** đã được hủy thành công."
+                else:
+                    reply = f"❌ Rất tiếc, không thể hủy đơn hàng: {cancel_res.get('message', 'Lỗi không xác định')}."
+                    
+                return {
+                    "reply": reply,
+                    "checkout_payload": None,
+                    "tool_calls_log": [{"tool": "cancel_order", "result": cancel_res}],
+                    "error": None,
+                }
 
     # ── Build messages (bao gồm RAG context nếu cần) ──────────────────────────
     messages = _build_messages(

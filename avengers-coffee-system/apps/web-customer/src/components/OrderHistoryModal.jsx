@@ -8,7 +8,6 @@ import BranchReviewModal from './BranchReviewModal';
 import OrderTrackingPage from '../pages/features_thaian/OrderTrackingPage';
 import { useCart } from '../context/CartContext';
 import CartEditModal from './CartEditModal';
-import KioskOrderCard from './KioskOrderCard';
 
 const ORDER_STATUS_LABEL = {
   MOI_TAO: 'Mới tạo',
@@ -181,7 +180,6 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
   const queryClient = useQueryClient();
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('ALL');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('ALL');
-  const [orderTypeFilter, setOrderTypeFilter] = useState('ALL');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [appliedKeyword, setAppliedKeyword] = useState('');
   const [cancelOrderId, setCancelOrderId] = useState(null);
@@ -643,16 +641,6 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
               </select>
 
               <select
-                value={orderTypeFilter}
-                onChange={(e) => setOrderTypeFilter(e.target.value)}
-                className="rounded-xl border border-gray-200/90 px-3 py-2 text-xs font-semibold text-gray-700 outline-none focus:border-[#b22830] transition-all bg-gray-50/50 cursor-pointer"
-              >
-                <option value="ALL">Tất cả loại đơn</option>
-                <option value="NORMAL">Đơn cửa hàng</option>
-                <option value="KIOSK">Đơn nhượng quyền (Kiosk)</option>
-              </select>
-
-              <select
                 value={paymentMethodFilter}
                 onChange={(e) => setPaymentMethodFilter(e.target.value)}
                 className="rounded-xl border border-gray-200/90 px-3 py-2 text-xs font-semibold text-gray-700 outline-none focus:border-[#b22830] transition-all bg-gray-50/50 cursor-pointer"
@@ -702,25 +690,8 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
 
               {!loading && !isError ? (
                 <div className="space-y-4">
-                  {orders.filter(order => {
-                    if (orderTypeFilter === 'ALL') return true;
-                    if (orderTypeFilter === 'KIOSK') return order.loai_don_hang === 'KIOSK';
-                    return order.loai_don_hang !== 'KIOSK';
-                  }).map((order) => {
+                  {orders.map((order) => {
                     const timelineSteps = getTimeline(order);
-                    
-                    if (order.loai_don_hang === 'KIOSK') {
-                      return (
-                        <KioskOrderCard 
-                          key={order.ma_don_hang} 
-                          order={order} 
-                          allBranches={allBranches} 
-                          menuProducts={menuProducts} 
-                          onCancelClick={(id) => { setCancelOrderId(id); setCancelReason(''); setActionMessage(''); }}
-                          onReviewProductClick={setReviewingProduct} 
-                        />
-                      );
-                    }
 
                     return (
                       <div key={order.ma_don_hang} className="rounded-2xl border border-gray-200/80 bg-white p-5 shadow-2xs hover:shadow-md transition-all duration-300">

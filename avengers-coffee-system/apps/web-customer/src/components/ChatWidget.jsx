@@ -526,10 +526,20 @@ export default function ChatWidget({ user, socketUrl }) {
     }
   }, [user, addAIMsg, openStaffChat]);
 
-  const handleResetChat = useCallback(() => {
+  const handleResetChat = useCallback(async () => {
     if (window.confirm('Bạn có muốn bắt đầu lại đoạn hội thoại AI mới không?')) {
       localStorage.removeItem(AI_SESSION_KEY);
       sessionStorage.removeItem(AI_SESSION_KEY);
+      
+      // Đồng thời xoá luôn giỏ hàng của AI ở backend để tránh dồn món cũ
+      if (effectiveUserId) {
+        try {
+          await apiClient.delete(`/ai/agent/cart/${effectiveUserId}`);
+        } catch (err) {
+          console.warn("Không thể xoá giỏ hàng AI backend:", err);
+        }
+      }
+
       const nameStr = user?.ho_ten || user?.hoTen ? ` ${user.ho_ten || user.hoTen}` : '';
       const msg = buildMsg({ 
         vai_tro_nguoi_gui: 'AI', 
