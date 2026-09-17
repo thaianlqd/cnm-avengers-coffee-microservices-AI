@@ -813,4 +813,33 @@ export class AppController {
     const details = await this.entityManager.query(`SELECT * FROM orders.chi_tiet_don_hang ORDER BY id DESC LIMIT 5`);
     return { carts, details };
   }
+
+  // ─────────────────── KIOSK FRANCHISE PRICING ───────────────────────────────
+
+  /**
+   * GET /franchise/kiosk-prices?ma_kiosk=KSK-016
+   * Lấy bảng giá sản phẩm của một kiosk nhượng quyền
+   * Frontend dùng để hiển thị giá khi chọn tab Nhượng quyền trong giỏ hàng
+   */
+  @Get('orders/kiosk-prices')
+  async getKioskPrices(@Query('ma_kiosk') maKiosk: string) {
+    if (!maKiosk?.trim()) {
+      return { items: [] };
+    }
+    const rows = await this.entityManager.query(
+      `SELECT g.ma_san_pham, g.gia_kiosk, sp.ten_san_pham
+       FROM franchise.gia_san_pham_kiosk g
+       JOIN menu.san_pham sp ON sp.ma_san_pham = g.ma_san_pham
+       WHERE g.ma_kiosk = $1 AND sp.trang_thai = TRUE`,
+      [maKiosk.trim()],
+    );
+    return {
+      ma_kiosk: maKiosk.trim(),
+      items: rows.map((r: any) => ({
+        ma_san_pham: Number(r.ma_san_pham),
+        ten_san_pham: r.ten_san_pham,
+        gia_kiosk: Number(r.gia_kiosk),
+      })),
+    };
+  }
 }

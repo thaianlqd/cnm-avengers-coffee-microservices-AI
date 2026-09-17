@@ -1469,6 +1469,14 @@ export class FranchiseService {
     return { success: true, message: `Đã cập nhật trạng thái Kiosk thành ${trang_thai}` };
   }
 
+  // UC: Xóa Kiosk vĩnh viễn (Admin)
+  async xoaKiosk(id: string) {
+    const kiosk = await this.kioskRepo.findOne({ where: { id } });
+    if (!kiosk) throw new NotFoundException('Không tìm thấy kiosk');
+    await this.kioskRepo.remove(kiosk);
+    return { success: true, message: 'Đã xóa Kiosk thành công' };
+  }
+
   // UC: Xử lý nợ quá hạn tự động (Cron Job / Manual trigger)
   async xuLyNoQuaHan() {
     const congNos = await this.congNoRepo.find({ 

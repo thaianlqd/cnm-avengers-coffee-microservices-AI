@@ -14,14 +14,13 @@ Cách dùng:
 """
 import json
 import logging
-import os
 import unicodedata
 import re
+import logging
 from typing import List, Optional
+from src.rag.data_ingestion import load_all_rag_data
 
 logger = logging.getLogger(__name__)
-
-_KNOWLEDGE_BASE_PATH = os.path.join(os.path.dirname(__file__), "knowledge_base.json")
 
 
 def _normalize_text(text: str) -> str:
@@ -47,14 +46,18 @@ class RAGService:
         self._tfidf_matrix = None
         self._loaded = False
 
-    def load(self, path: str = _KNOWLEDGE_BASE_PATH) -> None:
+    def load(self) -> None:
         """Nạp knowledge base và build TF-IDF index."""
         try:
             from sklearn.feature_extraction.text import TfidfVectorizer
             import numpy as np
 
-            with open(path, "r", encoding="utf-8") as f:
-                docs = json.load(f)
+            # Lấy dữ liệu từ data_ingestion (Cả tĩnh và DB)
+            docs = load_all_rag_data()
+
+            if not docs:
+                logger.warning("[RAG] No documents loaded. RAG disabled.")
+                return
 
             self._docs = docs
             # Kết hợp title + content để tăng độ chính xác khi match
@@ -72,8 +75,6 @@ class RAGService:
             self._loaded = True
             logger.info("[RAG] Knowledge base loaded: %d documents indexed.", len(docs))
 
-        except FileNotFoundError:
-            logger.warning("[RAG] knowledge_base.json not found at %s. RAG disabled.", path)
         except ImportError:
             logger.warning("[RAG] scikit-learn not available. RAG disabled.")
         except Exception as e:
@@ -135,15 +136,20 @@ class RAGService:
 
             top_indices = scores.argsort()[::-1][:top_k]
             results = []
+            logger.info("[RAG] Debug search for query: '%s'", query)
             for idx in top_indices:
-                if scores[idx] >= 0.05:
-                    doc = self._docs[idx]
+                doc = self._docs[idx]
+                score = round(float(scores[idx]), 3)
+                logger.info("[RAG] Score=%.3f | Title=%s | Content=%s", score, doc['title'], doc['content'][:50])
+                if score >= 0.05:
                     results.append({
                         "id": doc["id"],
                         "title": doc["title"],
                         "content": doc["content"],
-                        "score": round(float(scores[idx]), 3),
+                        "score": score,
                     })
+            
+            logger.info("[RAG] search returning %d results", len(results))
             return results
 
         except Exception as e:

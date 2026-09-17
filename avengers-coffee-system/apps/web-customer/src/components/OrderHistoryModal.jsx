@@ -632,7 +632,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                 onChange={(e) => setPaymentStatusFilter(e.target.value)}
                 className="rounded-xl border border-gray-200/90 px-3 py-2 text-xs font-semibold text-gray-700 outline-none focus:border-[#b22830] transition-all bg-gray-50/50 cursor-pointer"
               >
-                <option value="ALL">Tất cả trạng thái thanh toán</option>
+                <option value="ALL">Tất cả thanh toán</option>
                 <option value="CHO_XU_LY">Chờ xử lý</option>
                 <option value="CHO_THANH_TOAN">Chờ thanh toán</option>
                 <option value="CHO_THANH_TOAN_KHI_NHAN_HANG">Thu tiền khi nhận hàng</option>
@@ -645,7 +645,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                 onChange={(e) => setPaymentMethodFilter(e.target.value)}
                 className="rounded-xl border border-gray-200/90 px-3 py-2 text-xs font-semibold text-gray-700 outline-none focus:border-[#b22830] transition-all bg-gray-50/50 cursor-pointer"
               >
-                <option value="ALL">Tất cả phương thức thanh toán</option>
+                <option value="ALL">Tất cả phương thức</option>
                 <option value="VNPAY">VNPAY</option>
                 <option value="NGAN_HANG_QR">Ngân hàng QR</option>
                 <option value="THANH_TOAN_KHI_NHAN_HANG">COD</option>
@@ -695,6 +695,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                 <div className="space-y-4">
                   {orders.map((order) => {
                     const timelineSteps = getTimeline(order);
+
                     return (
                       <div key={order.ma_don_hang} className="rounded-2xl border border-gray-200/80 bg-white p-5 shadow-2xs hover:shadow-md transition-all duration-300">
                         {/* Order Header Info */}

@@ -139,7 +139,7 @@ export class DeliveryTrackingService {
    */
   async createTracking(input: {
     ma_don_hang: string;
-    delivery_mode: 'GIAO_TAN_NOI' | 'LAY_TAI_QUAN' | 'DUNG_TAI_CHO';
+    delivery_mode: 'GIAO_TAN_NOI' | 'LAY_TAI_QUAN' | 'DUNG_TAI_CHO' | 'KIOSK';
     delivery_method?: 'INTERNAL' | 'LALAMOVE' | null;
     branch_code?: string;
     table_number?: string;

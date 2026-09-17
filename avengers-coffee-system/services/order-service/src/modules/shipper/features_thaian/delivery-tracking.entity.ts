@@ -28,7 +28,7 @@ export class DeliveryTracking {
    * - DUNG_TAI_CHO: Dùng tại chỗ (tại quán)
    */
   @Column({ type: 'varchar', default: 'GIAO_TAN_NOI' })
-  delivery_mode: 'GIAO_TAN_NOI' | 'LAY_TAI_QUAN' | 'DUNG_TAI_CHO';
+  delivery_mode: 'GIAO_TAN_NOI' | 'LAY_TAI_QUAN' | 'DUNG_TAI_CHO' | 'KIOSK';
 
   /**
    * Phương thức giao hàng (chỉ áp dụng khi delivery_mode = GIAO_TAN_NOI):

@@ -116,12 +116,13 @@ class CollaborativeFilterModel:
                             sp.ten_san_pham,
                             sp.gia_ban,
                             sp.hinh_anh_url,
+                            sp.ma_danh_muc,
                             dm.ten_danh_muc
                         FROM menu.san_pham sp
                         LEFT JOIN menu.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc
                         WHERE sp.trang_thai = TRUE
                     """)).fetchall(),
-                    columns=["ma_san_pham", "ten_san_pham", "gia_ban", "hinh_anh_url", "ten_danh_muc"],
+                    columns=["ma_san_pham", "ten_san_pham", "gia_ban", "hinh_anh_url", "ma_danh_muc", "ten_danh_muc"],
                 )
 
                 # ── popular items (fallback / cold start) ────────────
@@ -144,6 +145,7 @@ class CollaborativeFilterModel:
                     "price": float(row["gia_ban"] or 0),
                     "image": row["hinh_anh_url"],
                     "category": row["ten_danh_muc"],
+                    "category_id": row["ma_danh_muc"],
                     "order_count": 0,
                 }
                 for _, row in menu_df.iterrows()
@@ -154,7 +156,7 @@ class CollaborativeFilterModel:
             for _, row in pop_df.iterrows():
                 detail = self.item_details.get(
                     row["ma_san_pham"],
-                    {"id": row["ma_san_pham"], "name": row["ma_san_pham"], "price": 0, "image": None, "category": None, "order_count": 0},
+                    {"id": row["ma_san_pham"], "name": row["ma_san_pham"], "price": 0, "image": None, "category": None, "category_id": None, "order_count": 0},
                 )
                 self.popular_items.append({
                     **detail,
@@ -237,20 +239,36 @@ class CollaborativeFilterModel:
     def has_user_history(self, user_id: str) -> bool:
         return user_id in self.user_ids
 
-    def recommend(self, user_id: str, limit: int = 6, branch_code: Optional[str] = None) -> list:
-        if not self.is_trained:
-            return self.popular_items[:limit]
+    def _is_valid_category(self, category_id, category_filter):
+        if category_filter == "all":
+            return True
+        food_ids = {2, 3, 11, 104}
+        non_drink_ids = {2, 3, 11, 104, 10, 12, 16, 105, 108}
+        
+        try:
+            cid = int(category_id) if category_id is not None else None
+        except:
+            cid = None
 
-        # Cold start
-        if user_id not in self.user_ids:
-            return self.popular_items[:limit]
+        if category_filter == "drink":
+            return cid not in non_drink_ids
+        elif category_filter == "food":
+            return cid in food_ids
+        return True
+
+    def recommend(self, user_id: str, limit: int = 6, branch_code: Optional[str] = None, category_filter: str = "all") -> list:
+        # Filter popular items early
+        filtered_popular = [item for item in self.popular_items if self._is_valid_category(item.get("category_id"), category_filter)]
+        
+        if not self.is_trained or user_id not in self.user_ids:
+            return filtered_popular[:limit]
 
         user_idx = self.user_ids.index(user_id)
         user_scores = self.user_item_matrix[user_idx]
         interacted = set(int(i) for i in np.where(user_scores > 0)[0])
 
         if not interacted:
-            return self.popular_items[:limit]
+            return filtered_popular[:limit]
 
         # Score items via item-item similarity
         rec_scores = np.zeros(len(self.item_ids))
@@ -258,15 +276,28 @@ class CollaborativeFilterModel:
             if item_idx < self.item_similarity.shape[0]:
                 rec_scores += self.item_similarity[item_idx] * user_scores[item_idx]
 
-        # Zero out already-seen items
-        for idx in interacted:
-            if idx < len(rec_scores):
+        # Zero out already-seen items and invalid categories
+        for idx in range(len(rec_scores)):
+            if idx in interacted:
+                rec_scores[idx] = 0
+                continue
+            item_id = self.item_ids[idx]
+            detail = self.item_details.get(item_id, {})
+            if not self._is_valid_category(detail.get("category_id"), category_filter):
                 rec_scores[idx] = 0
 
-        top_indices = np.argsort(rec_scores)[::-1]
+        # Deterministic sort: secondary sort by item name (alphabet) when scores are equal
+        # To do this with argsort, we can sort by name first, then by score (stable sort)
+        item_names = [self.item_details.get(iid, {}).get("name", "") for iid in self.item_ids]
+        indices = list(range(len(self.item_ids)))
+        
+        # Sort indices by name (ascending)
+        indices.sort(key=lambda x: item_names[x])
+        # Stable sort indices by score (descending)
+        indices.sort(key=lambda x: rec_scores[x], reverse=True)
 
         results = []
-        for idx in top_indices:
+        for idx in indices:
             if len(results) >= limit:
                 break
             if rec_scores[idx] <= 0:
@@ -274,7 +305,7 @@ class CollaborativeFilterModel:
             item_id = self.item_ids[idx]
             detail = self.item_details.get(
                 item_id,
-                {"id": item_id, "name": item_id, "price": 0, "image": None, "category": None, "order_count": 0},
+                {"id": item_id, "name": item_id, "price": 0, "image": None, "category": None, "category_id": None, "order_count": 0},
             )
             results.append({
                 **detail,
@@ -282,9 +313,9 @@ class CollaborativeFilterModel:
                 "reason": "Phù hợp với khẩu vị của bạn",
             })
 
-        # Fill remaining with popular items
+        # Fill remaining with filtered popular items
         seen_ids = {r["id"] for r in results}
-        for item in self.popular_items:
+        for item in filtered_popular:
             if len(results) >= limit:
                 break
             if item["id"] not in seen_ids:

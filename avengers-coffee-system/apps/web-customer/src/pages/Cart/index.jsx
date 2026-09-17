@@ -73,16 +73,41 @@ export default function CartPage({
   const { cart, removeFromCart, updateCartQuantity, activeUserId, refreshCart } = useCart();
   const [editingItem, setEditingItem] = useState(null);
   const queryClient = useQueryClient();
-  const total = cart.reduce((sum, i) => sum + i.gia_ban * i.so_luong, 0);
-
+  
   const [deliveryMode, setDeliveryMode] = useState(() => {
     const storedTableId = sessionStorage.getItem('qr_tableId');
     return storedTableId ? 'DUNG_TAI_CHO' : 'GIAO_TAN_NOI';
   });
-  const [deliveryMethod, setDeliveryMethod] = useState('INTERNAL');
   const [selectedBranch, setSelectedBranch] = useState(() => {
     return sessionStorage.getItem('qr_storeId') || '';
   });
+
+  const { data: kioskPrices } = useQuery({
+    queryKey: ['kiosk-prices', selectedBranch],
+    queryFn: async () => {
+      const response = await apiClient.get(`/orders/kiosk-prices?ma_kiosk=${selectedBranch}`);
+      const items = response.data?.items || [];
+      const priceMap = {};
+      items.forEach(i => { priceMap[i.ma_san_pham] = i.gia_kiosk; });
+      return priceMap;
+    },
+    enabled: deliveryMode === 'KIOSK' && Boolean(selectedBranch),
+    staleTime: 60 * 1000,
+  });
+
+  const displayCart = useMemo(() => {
+    if (deliveryMode === 'KIOSK') {
+      return cart.map(item => ({
+        ...item,
+        gia_ban: kioskPrices?.[item.ma_san_pham] || Math.round(item.gia_ban * 0.9)
+      }));
+    }
+    return cart;
+  }, [cart, deliveryMode, kioskPrices]);
+
+  const total = displayCart.reduce((sum, i) => sum + i.gia_ban * i.so_luong, 0);
+
+  const [deliveryMethod, setDeliveryMethod] = useState('INTERNAL');
   const [tableNumber, setTableNumber] = useState(() => {
     return sessionStorage.getItem('qr_tableId') || '';
   });
@@ -131,6 +156,32 @@ export default function CartPage({
     staleTime: 60 * 1000,
     refetchInterval: 120 * 1000,
   });
+
+  const { data: publicKioskPayload } = useQuery({
+    queryKey: ['public-kiosks'],
+    queryFn: async () => {
+      const response = await apiClient.get('/franchise/kiosk/public');
+      const data = response.data;
+      return Array.isArray(data) ? data : data?.data || data?.items || [];
+    },
+    enabled: deliveryMode === 'KIOSK',
+    staleTime: 60 * 1000,
+  });
+
+  const availableLocations = useMemo(() => {
+    if (deliveryMode === 'KIOSK') {
+      return (publicKioskPayload || []).map((k) => ({
+        ma_chi_nhanh: k.ma_kiosk || k.id,
+        ten_chi_nhanh: k.ten_kiosk || 'Kiosk ' + (k.ma_kiosk || k.id),
+        dia_chi: k.dia_chi,
+        phuong_xa: k.phuong_xa,
+        quan_huyen: k.quan_huyen,
+        thanh_pho: k.thanh_pho,
+        is_kiosk: true
+      }));
+    }
+    return publicBranchPayload?.items || [];
+  }, [deliveryMode, publicKioskPayload, publicBranchPayload]);
 
   const { data: vietnamProvinces } = useQuery({
     queryKey: ['vietnam-provinces'],
@@ -697,7 +748,9 @@ export default function CartPage({
         phuong_thuc_thanh_toan: phuongThuc,
         khung_gio_giao: computedKhungGio,
         phi_giao_hang: deliveryMode === 'GIAO_TAN_NOI' ? phiGiaoHangThucTe : 0,
-        dia_chi_giao_hang: deliveryMode === 'GIAO_TAN_NOI' ? diaChiDayDu : (deliveryMode === 'LAY_TAI_QUAN' ? 'Khách lấy tại quán' : 'Khách dùng tại chỗ'),
+        dia_chi_giao_hang: deliveryMode === 'GIAO_TAN_NOI' 
+          ? diaChiDayDu 
+          : (deliveryMode === 'LAY_TAI_QUAN' ? 'Khách lấy tại quán' : (deliveryMode === 'KIOSK' ? 'Mua tại Kiosk' : 'Khách dùng tại chỗ')),
         ghi_chu: ghiChu.trim() || 'Dat tu web-customer',
         ma_voucher: voucherResult?.ma_voucher || voucherResult?.ma_khuyen_mai || undefined,
         delivery_mode: deliveryMode,
@@ -705,6 +758,7 @@ export default function CartPage({
         destination_latitude: targetLat,
         destination_longitude: targetLng,
         branch_code: selectedBranch,
+        ma_kiosk: deliveryMode === 'KIOSK' ? selectedBranch : undefined,
         table_number: deliveryMode === 'DUNG_TAI_CHO' ? tableNumber : undefined,
         guest_email: (isLoggedInUser ? (user.email || user.email_address || undefined) : guestEmail.trim()) || undefined,
         guest_phone: (isLoggedInUser ? (user.so_dien_thoai || user.phone || user.sdt || undefined) : guestPhone.trim()) || undefined,
@@ -1334,7 +1388,7 @@ export default function CartPage({
                           Chọn cửa hàng nhận đồ
                         </h3>
                         <BranchSelector 
-                          branches={publicBranchPayload?.items} 
+                          branches={availableLocations} 
                           selectedBranch={selectedBranch} 
                           onChange={setSelectedBranch} 
                         />

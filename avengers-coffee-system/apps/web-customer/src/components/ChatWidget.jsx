@@ -403,10 +403,13 @@ export default function ChatWidget({ user, socketUrl }) {
   // Data cache & prefetch
   const cache = useRef({ products: [], branches: [], orders: [], vouchers: [], loaded: false });
 
-  const userId = user?.ma_nguoi_dung || user?.maNguoiDung || null;
+  const userId = user?.id || user?.ma_nguoi_dung || user?.maNguoiDung || null;
   const userName = user?.ho_ten || user?.hoTen || user?.email || 'Khách';
   const anonId = useRef(getOrCreateAnonId());
   const effectiveUserId = userId || anonId.current;
+  
+  console.log("ChatWidget debug - user object:", user);
+  console.log("ChatWidget debug - effectiveUserId:", effectiveUserId);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -432,10 +435,15 @@ export default function ChatWidget({ user, socketUrl }) {
     return cache.current;
   }, [userId]);
 
-  useEffect(() => { isOpenRef.current = isOpen; }, [isOpen]);
-  useEffect(() => { chatModeRef.current = chatMode; }, [chatMode]);
-
   const scrollBottom = useCallback(() => setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 80), []);
+
+  useEffect(() => { 
+    isOpenRef.current = isOpen; 
+    if (isOpen) {
+      setTimeout(scrollBottom, 100);
+    }
+  }, [isOpen, scrollBottom]);
+  useEffect(() => { chatModeRef.current = chatMode; }, [chatMode]);
 
   const addAIMsg = useCallback((noi_dung, extras = {}) => {
     const msg = buildMsg({ vai_tro_nguoi_gui: 'AI', ten_nguoi_gui: 'Trợ lý AI', noi_dung, ...extras });
@@ -518,6 +526,33 @@ export default function ChatWidget({ user, socketUrl }) {
     }
   }, [user, addAIMsg, openStaffChat]);
 
+  const handleResetChat = useCallback(async () => {
+    if (window.confirm('Bạn có muốn bắt đầu lại đoạn hội thoại AI mới không?')) {
+      localStorage.removeItem(AI_SESSION_KEY);
+      sessionStorage.removeItem(AI_SESSION_KEY);
+      
+      // Đồng thời xoá luôn giỏ hàng của AI ở backend để tránh dồn món cũ
+      if (effectiveUserId) {
+        try {
+          await apiClient.delete(`/ai/agent/cart/${effectiveUserId}`);
+        } catch (err) {
+          console.warn("Không thể xoá giỏ hàng AI backend:", err);
+        }
+      }
+
+      const nameStr = user?.ho_ten || user?.hoTen ? ` ${user.ho_ten || user.hoTen}` : '';
+      const msg = buildMsg({ 
+        vai_tro_nguoi_gui: 'AI', 
+        ten_nguoi_gui: 'Trợ lý AI', 
+        noi_dung: `Xin chào${nameStr}! 👋 Mình là Trợ lý AI của Avengers Coffee.\n\nHôm nay mình có thể hỗ trợ gì cho bạn?`, 
+        _quickReplies: QUICK_ACTIONS.slice(0, 4) 
+      });
+      setMessages([msg]);
+      setPendingOrder(null);
+      setReplyTo(null);
+    }
+  }, [user]);
+
   // Add item to cart
   const addToCart = useCallback(async (product) => {
     if (!userId) {
@@ -588,8 +623,8 @@ export default function ChatWidget({ user, socketUrl }) {
       const agentError = agentData?.error;
 
       // Xử lý checkout_payload: Agent muốn xác nhận đơn hàng
-      if (checkoutPayload && checkoutPayload.order_summary) {
-        const summary = checkoutPayload.order_summary;
+      if (checkoutPayload && (checkoutPayload.order_summary || checkoutPayload.items)) {
+        const summary = checkoutPayload.order_summary || checkoutPayload;
         // Chuyển đổi sang format pendingOrder đang dùng
         setPendingOrder({
           items: (summary.items || []).map((i) => ({
@@ -616,15 +651,49 @@ export default function ChatWidget({ user, socketUrl }) {
         const extras = {};
 
         // Enrich với UI cards dựa trên nội dung reply + câu hỏi
-        if (/(cửa hàng|chi nhánh|địa chỉ|ở đâu|gần đây)/.test(textLower) || /(chi nhánh|địa chỉ)/.test(agentReply.toLowerCase())) {
-          extras._stores = cache.current.branches.slice(0, 4);
+        const toolCalls = agentData?.tool_calls_log || [];
+        const branchTool = toolCalls.find(t => t.tool === 'find_nearest_branch' || t.tool === 'ask_branch');
+        const hasProfileTool = toolCalls.some(t => t.tool === 'get_user_profile');
+
+        const askingReview = /(đánh giá|bình luận|nhận xét|review)/.test(textLower);
+
+        if (branchTool && branchTool.result && branchTool.result.branches) {
+          extras._stores = branchTool.result.branches.slice(0, 4);
+        } else if (!askingReview && (/(cửa hàng|chi nhánh|ở đâu|gần đây)/.test(textLower) && !hasProfileTool || /(chi nhánh)/.test(agentReply.toLowerCase()))) {
+          const replyLower = agentReply.toLowerCase();
+          const mentionedBranches = cache.current.branches.filter(b => b.ten_chi_nhanh && replyLower.includes(b.ten_chi_nhanh.toLowerCase()));
+          if (mentionedBranches.length > 0) {
+            extras._stores = mentionedBranches.slice(0, 4);
+          }
         }
         // 2. Menu / Sản phẩm
-        if (/(thực đơn|menu|đồ uống|cà phê|trà|sữa|matcha|có gì ngon|gợi ý|bán chạy|đánh giá|sp|sản phẩm|yêu thích)/.test(textLower) || /(sản phẩm|đồ uống|menu|món|sp|yêu thích|gợi ý)/.test(agentReply.toLowerCase())) {
-          // Lọc ra đúng những món được AI nhắc đến trong câu trả lời
+        const userAskedMenu = /(thực đơn|menu|đồ uống|cà phê|trà|sữa|matcha|có gì ngon|gợi ý|bán chạy|\bsp\b|sản phẩm|yêu thích)/.test(textLower);
+        const aiMentionedMenu = /(sản phẩm|đồ uống|menu|\bmón\b|\bsp\b|yêu thích|gợi ý)/.test(agentReply.toLowerCase());
+        
+        let recommendedProducts = [];
+        const recTool = toolCalls.find(t => t.tool === 'get_recommendations' || t.tool === 'check_price_and_stock');
+        if (recTool && recTool.result && recTool.result.products) {
+           const rp = recTool.result.products;
+           if (typeof rp === 'string') {
+              const names = rp.split(',').map(s => s.trim().toLowerCase());
+              recommendedProducts = cache.current.products.filter(p => names.some(n => p.ten_san_pham.toLowerCase().includes(n)));
+           } else if (Array.isArray(rp)) {
+              const names = rp.map(item => (item.product_name || item.name || '').toLowerCase());
+              recommendedProducts = cache.current.products.filter(p => names.some(n => p.ten_san_pham.toLowerCase().includes(n)));
+           }
+        }
+
+        if (userAskedMenu || aiMentionedMenu || recommendedProducts.length > 0) {
           const replyLower = agentReply.toLowerCase();
           const mentioned = cache.current.products.filter(p => replyLower.includes(p.ten_san_pham.toLowerCase()));
-          extras._products = mentioned.length > 0 ? mentioned.slice(0, 6) : cache.current.products.slice(0, 6);
+          
+          if (recommendedProducts.length > 0) {
+            extras._products = recommendedProducts.slice(0, 6);
+          } else if (mentioned.length > 0) {
+            extras._products = mentioned.slice(0, 6);
+          } else if (userAskedMenu) {
+            extras._products = cache.current.products.slice(0, 6);
+          }
         }
         if (/(khuyến mãi|voucher|giảm giá|ưu đãi)/.test(textLower)) {
           extras._vouchers = cache.current.vouchers.slice(0, 4);
@@ -678,18 +747,27 @@ export default function ChatWidget({ user, socketUrl }) {
 
       if (reply) {
         const extras = {};
-        if ((resData.stores && resData.stores.length > 0) || /(cửa hàng|chi nhánh|địa chỉ|ở đâu|gần đây|tìm cửa)/.test(textLower) || /(cửa hàng|chi nhánh|địa chỉ)/.test(reply.toLowerCase())) {
+        if ((resData.stores && resData.stores.length > 0) || /(cửa hàng|chi nhánh|ở đâu|gần đây|tìm cửa)/.test(textLower) || /(cửa hàng|chi nhánh)/.test(reply.toLowerCase())) {
           extras._stores = (resData.stores && resData.stores.length > 0) ? resData.stores : cache.current.branches.slice(0, 4);
         }
-        if ((resData.products && resData.products.length > 0) || /(thực đơn|menu|đồ uống|cà phê|phê|trà|sữa|đồ ăn|bánh|matcha|latte|có gì ngon|món|xem menu|đặt)/.test(textLower) || /(sản phẩm|đồ uống|menu|món|matcha|latte)/.test(reply.toLowerCase())) {
+        if ((resData.products && resData.products.length > 0) || /(thực đơn|menu|đồ uống|cà phê|phê|trà|sữa|đồ ăn|bánh|matcha|latte|có gì ngon|\bmón\b|xem menu|đặt)/.test(textLower) || /(sản phẩm|đồ uống|menu|\bmón\b|matcha|latte)/.test(reply.toLowerCase())) {
+          const userAsked = /(thực đơn|menu|đồ uống|cà phê|phê|trà|sữa|đồ ăn|bánh|matcha|latte|có gì ngon|\bmón\b|xem menu|đặt)/.test(textLower);
           let prods = (resData.products && resData.products.length > 0) ? resData.products : cache.current.products;
           const searchKeys = ['matcha', 'latte', 'americano', 'trà sữa', 'bánh', 'cà phê', 'phin', 'espresso', 'cold brew', 'trà'];
           const matchedKey = searchKeys.find((k) => textLower.includes(k) || reply.toLowerCase().includes(k));
+          let filtered = [];
           if (matchedKey && prods.length > 0) {
-            const filtered = prods.filter((p) => (p.ten_san_pham || '').toLowerCase().includes(matchedKey) || (p.ten_danh_muc || p.danh_muc || '').toLowerCase().includes(matchedKey));
+            filtered = prods.filter((p) => (p.ten_san_pham || '').toLowerCase().includes(matchedKey) || (p.ten_danh_muc || p.danh_muc || '').toLowerCase().includes(matchedKey));
             if (filtered.length > 0) prods = filtered;
           }
-          extras._products = prods.slice(0, 6);
+          
+          if (resData.products && resData.products.length > 0) {
+            extras._products = prods.slice(0, 6);
+          } else if (filtered.length > 0) {
+            extras._products = filtered.slice(0, 6);
+          } else if (userAsked) {
+            extras._products = prods.slice(0, 6);
+          }
         }
         if ((resData.vouchers && resData.vouchers.length > 0) || /(khuyến mãi|voucher|giảm giá|ưu đãi|mã)/.test(textLower) || /(voucher|khuyến mãi|ưu đãi)/.test(reply.toLowerCase())) {
           extras._vouchers = (resData.vouchers && resData.vouchers.length > 0) ? resData.vouchers : cache.current.vouchers.slice(0, 4);
@@ -801,12 +879,10 @@ export default function ChatWidget({ user, socketUrl }) {
     if (!pendingOrder) return;
     setOrderConfirming(true);
     try {
-      const items = pendingOrder.items.filter((i) => i.matched).map((i) => ({
-        ma_san_pham: i.product_id, ten_san_pham: i.product_name, so_luong: i.quantity, gia_ban: i.price, hinh_anh_url: i.image_url,
-        ghi_chu: [i.size ? `Size ${i.size}` : '', i.note || ''].filter(Boolean).join(', ')
-      }));
-      await apiClient.post('/orders', {
-        ma_nguoi_dung: effectiveUserId, phuong_thuc_thanh_toan: pendingOrder.paymentMethod || 'THANH_TOAN_KHI_NHAN_HANG', loai_don_hang: 'DELIVERY', chi_tiet_don_hang: items, ghi_chu: 'Chat Order'
+      await apiClient.post('/ai/cart/checkout', {
+        session_id: effectiveUserId,
+        payment_method: pendingOrder.paymentMethod || 'THANH_TOAN_KHI_NHAN_HANG',
+        delivery_type: 'DELIVERY'
       });
       addAIMsg(`🎉 Đặt hàng thành công! Tổng cộng: **${fmtVND(pendingOrder.total)}**\nĐơn hàng của bạn đang được chuẩn bị!`, {
         _quickReplies: [{ id: 'orders', label: 'Xem đơn hàng', text: 'Xem đơn hàng của tôi' }],
@@ -919,6 +995,23 @@ export default function ChatWidget({ user, socketUrl }) {
 
               {/* Window controls (Minimize & Close) */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {chatMode === 'AI' && (
+                  <button
+                    onClick={handleResetChat}
+                    style={{
+                      all: 'unset', cursor: 'pointer', background: '#FEF2F2', color: '#EF4444',
+                      padding: '4px 10px', borderRadius: 14, fontSize: '0.72rem', fontWeight: 600,
+                      display: 'flex', alignItems: 'center', gap: 4, transition: 'all 0.2s',
+                      border: '1px solid #FEE2E2'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = '#FEE2E2'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = '#FEF2F2'; }}
+                    title="Bắt đầu cuộc trò chuyện mới"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                    Làm mới
+                  </button>
+                )}
                 <button
                   onClick={() => setIsOpen(false)}
                   style={{ all: 'unset', cursor: 'pointer', background: '#F1F5F9', color: '#64748B', width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
@@ -1053,22 +1146,7 @@ export default function ChatWidget({ user, socketUrl }) {
                       )}
                     </div>
 
-                    {/* Quick Replies below AI messages */}
-                    {msg._quickReplies && msg._quickReplies.length > 0 && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-                        {msg._quickReplies.map((r) => (
-                          <button
-                            key={r.id}
-                            onClick={() => sendMessage(r.text)}
-                            style={{ all: 'unset', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 500, color: '#4B5563', background: '#FFFFFF', padding: '5px 12px', borderRadius: 16, border: '1px solid #E5E7EB', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', whiteSpace: 'nowrap', transition: 'all 0.15s' }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = '#F9FAFB'; e.currentTarget.style.borderColor = '#D1D5DB'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#E5E7EB'; }}
-                          >
-                            {r.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+
 
                     {/* Time */}
                     <div style={{ display: 'flex', justifyContent: isOwn ? 'flex-end' : 'flex-start', alignItems: 'center', marginTop: 4 }}>
