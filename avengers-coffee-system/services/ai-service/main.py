@@ -721,9 +721,35 @@ def get_agent_cart(session_id: str):
 
 @app.delete("/ai/agent/cart/{session_id}")
 def clear_agent_cart(session_id: str):
-    """Xoá giỏ hàng của session (sau khi tạo đơn thành công)."""
+    """Xoá giỏ hàng của session (sau khi tạo đơn thành công hoặc khi Làm mới chat)."""
     from src.common import cart_manager
     cart_manager.clear_cart(session_id)
+    
+    # Sync with main order-service cart to fully reset
+    from src.function_calling.helpers import _get_service_jwt, _require_valid_session
+    import requests, logging
+    
+    valid_uid = _require_valid_session(session_id)
+    if valid_uid:
+        try:
+            token = _get_service_jwt(valid_uid)
+            order_service_url = os.getenv("ORDER_SERVICE_URL", "http://order-service:3005")
+            try:
+                requests.delete(
+                    f"{order_service_url}/cart/clear/{valid_uid}",
+                    headers={"Authorization": f"Bearer {token}"},
+                    timeout=5
+                )
+            except requests.exceptions.ConnectionError:
+                fallback_url = "http://host.docker.internal:3005"
+                requests.delete(
+                    f"{fallback_url}/cart/clear/{valid_uid}",
+                    headers={"Authorization": f"Bearer {token}"},
+                    timeout=5
+                )
+        except Exception as e:
+            logging.getLogger(__name__).error(f"[CartSync] Failed to clear main cart on reset: {e}")
+
     return {"status": "ok", "message": f"Đã xoá giỏ hàng cho session {session_id}"}
 
 

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Delete } from '@nestjs/common';
 import { BranchReviewService, CreateBranchReviewDto } from '../services/branch-review.service';
 
 @Controller('branch-reviews')
@@ -13,6 +13,11 @@ export class BranchReviewController {
   @Get('branch/:ma_chi_nhanh')
   async layDanhSachTheoChiNhanh(@Param('ma_chi_nhanh') ma_chi_nhanh: string) {
     return this.branchReviewService.layDanhSachDanhGiaChiNhanh(ma_chi_nhanh);
+  }
+
+  @Delete(':id')
+  async xoaDanhGia(@Param('id') id: string) {
+    return this.branchReviewService.xoaDanhGia(Number(id));
   }
 
   @Get('stats')

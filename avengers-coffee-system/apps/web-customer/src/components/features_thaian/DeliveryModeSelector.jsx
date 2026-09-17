@@ -16,11 +16,6 @@ export default function DeliveryModeSelector({ selectedMode, onChange }) {
       id: 'DUNG_TAI_CHO',
       label: 'Dùng tại chỗ',
       desc: 'Thưởng thức trực tiếp tại không gian quán'
-    },
-    {
-      id: 'KIOSK',
-      label: 'Nhượng quyền',
-      desc: 'Mua tại kiosk với giá ưu đãi riêng'
     }
   ];
 

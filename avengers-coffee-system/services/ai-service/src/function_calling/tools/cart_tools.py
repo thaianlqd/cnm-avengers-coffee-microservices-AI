@@ -43,9 +43,107 @@ def execute_add_to_cart(
         size=size,
         note=note,
     )
+    
+    # Sync with main order-service cart
+    import os, requests, logging
+    from src.function_calling.helpers import _get_service_jwt, _require_valid_session, _get_engine
+    
+    # Lấy hinh_anh_url từ db
+    hinh_anh_url = ""
+    try:
+        engine = _get_engine()
+        menu_schema = os.getenv("MENU_SCHEMA", "menu")
+        with engine.connect() as conn:
+            from sqlalchemy import text
+            r = conn.execute(text(f"SELECT hinh_anh_url FROM {menu_schema}.san_pham WHERE ma_san_pham::text = :pid"), {"pid": product_id}).fetchone()
+            if r and r[0]:
+                hinh_anh_url = r[0]
+    except Exception as e:
+        logging.getLogger(__name__).error(f"[CartSync] Failed to fetch image URL: {e}")
+
+    valid_uid = _require_valid_session(session_id)
+    if valid_uid:
+        try:
+            token = _get_service_jwt(valid_uid)
+            order_service_url = os.getenv("ORDER_SERVICE_URL", "http://order-service:3005")
+            payload = {
+                "ma_nguoi_dung": valid_uid,
+                "ma_san_pham": int(product_id) if str(product_id).isdigit() else 0,
+                "ten_san_pham": product_name,
+                "gia_ban": float(unit_price),
+                "hinh_anh_url": hinh_anh_url, 
+                "size": size or "Nhỏ",
+                "so_luong": max(1, int(quantity)),
+                "note": note
+            }
+            try:
+                res = requests.post(
+                    f"{order_service_url}/cart", 
+                    json=payload, 
+                    headers={"Authorization": f"Bearer {token}"}, 
+                    timeout=5
+                )
+                res.raise_for_status()
+            except requests.exceptions.ConnectionError:
+                # Fallback to host.docker.internal if order-service runs on host
+                fallback_url = "http://host.docker.internal:3005"
+                res = requests.post(
+                    f"{fallback_url}/cart", 
+                    json=payload, 
+                    headers={"Authorization": f"Bearer {token}"}, 
+                    timeout=5
+                )
+                res.raise_for_status()
+        except Exception as e:
+            logging.getLogger(__name__).error(f"[CartSync] Failed to sync add_to_cart to main service: {e}")
+
     return {
         "status": "ok",
         "message": f"Đã thêm {product_name} x{quantity} vào giỏ.",
+        "cart": cart,
+    }
+
+TOOL_REMOVE_FROM_CART = {
+    "type": "function",
+    "function": {
+        "name": "remove_from_cart",
+        "description": "Xoá hoàn toàn một sản phẩm khỏi giỏ hàng. Dùng khi khách đổi ý hoặc muốn huỷ món.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "product_id": {"type": "string", "description": "Mã sản phẩm cần xoá."},
+                "size": {"type": "string", "description": "Kích cỡ cần xoá (nếu có)."}
+            },
+            "required": ["product_id"]
+        },
+    },
+}
+
+def execute_remove_from_cart(session_id: str, product_id: str, size: Optional[str] = None) -> Dict[str, Any]:
+    cart = cart_manager.remove_item(session_id, product_id, size)
+    
+    # Sync with main order-service cart
+    import os, requests, logging
+    from src.function_calling.helpers import _get_service_jwt, _require_valid_session
+    
+    valid_uid = _require_valid_session(session_id)
+    if valid_uid:
+        try:
+            token = _get_service_jwt(valid_uid)
+            order_service_url = os.getenv("ORDER_SERVICE_URL", "http://order-service:3005")
+            try:
+                # order-service hiện tại xoá theo cartItemId (id bản ghi) chứ không phải product_id.
+                # Tuy nhiên api xoá theo ma_nguoi_dung và ma_san_pham chưa có trong cart.controller, 
+                # nên ta tạm bỏ qua sync xoá chi tiết, chỉ đồng bộ AI session.
+                pass
+            except Exception as e:
+                pass
+        except Exception as e:
+            logging.getLogger(__name__).error(f"[CartSync] Failed to sync remove_from_cart: {e}")
+
+    return {
+        "status": "ok",
+        "message": f"Đã xoá sản phẩm khỏi giỏ hàng.",
         "cart": cart,
     }
 
@@ -69,9 +167,11 @@ TOOL_REQUEST_CHECKOUT = {
     "function": {
         "name": "request_checkout",
         "description": (
-            "Gọi tool này NGAY LẬP TỨC khi khách đồng ý đặt hàng/chốt đơn. "
-            "Tool sẽ trả về tín hiệu để UI tự động hiện ra các nút chọn phương thức thanh toán và giao hàng. "
-            "TUYỆT ĐỐI KHÔNG HỎI LẠI khách về phương thức thanh toán hay giao hàng, cứ để tham số mặc định và gọi tool này ngay."
+            "Gọi tool này khi khách đồng ý đặt hàng/chốt đơn. "
+            "TRƯỚC KHI GỌI, BẠN PHẢI HỎI RÕ KHÁCH 2 thông tin nếu chưa biết: "
+            "1. Phương thức thanh toán (Tiền mặt, VNPay, Chuyển khoản, Ví điện tử). "
+            "2. Hình thức nhận hàng (Giao tận nơi, Mang đi, Dùng tại quán). "
+            "Nếu khách đã cung cấp, hãy truyền vào tham số tương ứng và gọi tool này."
         ),
         "parameters": {
             "type": "object",
@@ -110,6 +210,9 @@ def execute_request_checkout(
         }
 
     total = sum(float(i["unit_price"]) * int(i["quantity"]) for i in cart["items"])
+    
+    # Store checkout preferences for later confirmation
+    cart_manager.set_checkout_prefs(session_id, payment_method, delivery_type)
 
     return {
         "status": "require_confirmation",
@@ -163,8 +266,42 @@ def execute_confirm_checkout(
     delivery_type: str = "MANG_DI"
 ) -> Dict[str, Any]:
     from src.common.checkout_service import finalize_checkout
-    return finalize_checkout(
+    
+    # Lấy lại preferences đã lưu nếu có
+    prefs = cart_manager.get_checkout_prefs(session_id)
+    if prefs:
+        payment_method = prefs.get("payment_method", payment_method)
+        delivery_type = prefs.get("delivery_type", delivery_type)
+        
+    result = finalize_checkout(
         session_id=session_id,
         payment_method=payment_method,
         delivery_type=delivery_type
     )
+    
+    # Nếu tạo đơn thành công, xoá luôn main cart
+    if result.get("status") == "success":
+        import os, requests, logging
+        from src.function_calling.helpers import _get_service_jwt, _require_valid_session
+        valid_uid = _require_valid_session(session_id)
+        if valid_uid:
+            try:
+                token = _get_service_jwt(valid_uid)
+                order_service_url = os.getenv("ORDER_SERVICE_URL", "http://order-service:3005")
+                try:
+                    requests.delete(
+                        f"{order_service_url}/cart/clear/{valid_uid}",
+                        headers={"Authorization": f"Bearer {token}"},
+                        timeout=5
+                    )
+                except requests.exceptions.ConnectionError:
+                    fallback_url = "http://host.docker.internal:3005"
+                    requests.delete(
+                        f"{fallback_url}/cart/clear/{valid_uid}",
+                        headers={"Authorization": f"Bearer {token}"},
+                        timeout=5
+                    )
+            except Exception as e:
+                logging.getLogger(__name__).error(f"[CartSync] Failed to clear main cart: {e}")
+                
+    return result

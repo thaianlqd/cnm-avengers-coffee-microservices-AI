@@ -211,13 +211,22 @@ export default function StoresPage() {
               <div className="flex-1 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-3 mb-3">
-                    <span className="bg-red-50 text-red-900 text-xs font-black px-3 py-1 rounded-full flex items-center gap-1.5 border border-red-200">
-                      <StarIconSolid className="w-4 h-4 text-amber-500" />
-                      {detailedBranchReviews?.diem_trung_binh || detailedStore.rating || 5.0} / 5.0
-                    </span>
-                    <span className="text-xs text-gray-500 font-medium">
-                      ({detailedBranchReviews?.tong_luot_danh_gia || detailedStore.reviewCount || 0} đánh giá)
-                    </span>
+                    {(detailedBranchReviews?.tong_luot_danh_gia || detailedStore.reviewCount || 0) > 0 ? (
+                      <>
+                        <span className="bg-red-50 text-red-900 text-xs font-black px-3 py-1 rounded-full flex items-center gap-1.5 border border-red-200">
+                          <StarIconSolid className="w-4 h-4 text-amber-500" />
+                          {Number(detailedBranchReviews?.diem_trung_binh || detailedStore.rating || 5.0).toFixed(1)} / 5.0
+                        </span>
+                        <span className="text-xs text-gray-500 font-medium">
+                          ({detailedBranchReviews?.tong_luot_danh_gia || detailedStore.reviewCount || 0} đánh giá)
+                        </span>
+                      </>
+                    ) : (
+                      <span className="bg-gray-100 text-gray-500 text-xs font-black px-3 py-1 rounded-full flex items-center gap-1.5 border border-gray-200">
+                        <StarIconSolid className="w-4 h-4 text-gray-400" />
+                        Chưa có đánh giá
+                      </span>
+                    )}
                   </div>
                   <h2 className="text-[22px] font-black uppercase text-[#333333] mb-4">{detailedStore.name}</h2>
                     <div className="space-y-3">
@@ -489,10 +498,17 @@ export default function StoresPage() {
                         </span>
                       )}
                     </div>
-                    <span className="bg-red-50 text-red-800 text-[11px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 border border-red-200 flex-shrink-0 ml-2">
-                      <StarIconSolid className="w-3.5 h-3.5 text-amber-500" />
-                      {store.rating} ({store.reviewCount})
-                    </span>
+                    {store.reviewCount > 0 ? (
+                      <span className="bg-red-50 text-red-800 text-[11px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 border border-red-200 flex-shrink-0 ml-2">
+                        <StarIconSolid className="w-3.5 h-3.5 text-amber-500" />
+                        {Number(store.rating).toFixed(1)} ({store.reviewCount})
+                      </span>
+                    ) : (
+                      <span className="bg-gray-100 text-gray-500 text-[11px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 border border-gray-200 flex-shrink-0 ml-2">
+                        <StarIconSolid className="w-3.5 h-3.5 text-amber-500" />
+                        Chưa có đánh giá
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-start gap-2.5 mt-2">
