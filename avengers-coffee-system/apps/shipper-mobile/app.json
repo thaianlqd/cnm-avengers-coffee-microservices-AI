@@ -3,7 +3,6 @@
     "name": "Avengers Coffee - Shipper",
     "slug": "shipper-mobile",
     "version": "1.0.0",
-    "sdkVersion": "54.0.0",
     "newArchEnabled": false,
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -18,25 +17,40 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
         "CAMERA"
       ]
     },
     "ios": {
       "infoPlist": {
+        "UIBackgroundModes": [
+          "location",
+          "fetch"
+        ],
         "NSLocationWhenInUseUsageDescription": "Ứng dụng cần vị trí để điều hướng giao hàng",
-        "NSLocationAlwaysUsageDescription": "Cần vị trí để theo dõi hành trình giao hàng",
-        "NSCameraUsageDescription": "Chụp ảnh xác nhận giao hàng"
+        "NSLocationAlwaysUsageDescription": "Ứng dụng cần theo dõi vị trí liên tục để khách hàng xem được lộ trình thời gian thực ngay cả khi bạn mở Google Maps hoặc tắt màn hình",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Ứng dụng cần theo dõi vị trí liên tục để khách hàng xem được lộ trình thời gian thực ngay cả khi bạn mở Google Maps hoặc tắt màn hình",
+        "NSCameraUsageDescription": "Chụp ảnh xác nhận giao hàng",
+        "LSApplicationQueriesSchemes": [
+          "comgooglemaps",
+          "googlechromes"
+        ]
       }
     },
     "splash": {
       "backgroundColor": "#0f172a"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "plugins": [
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Ứng dụng cần vị trí để theo dõi hành trình giao hàng"
+          "locationAlwaysAndWhenInUsePermission": "Ứng dụng cần vị trí để theo dõi hành trình giao hàng liên tục cho khách hàng",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
         }
       ],
       [
@@ -45,7 +59,8 @@
           "cameraPermission": "Ứng dụng cần camera để chụp ảnh xác nhận giao hàng",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-status-bar"
     ]
   }
 }

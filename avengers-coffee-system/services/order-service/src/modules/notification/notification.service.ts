@@ -86,4 +86,12 @@ export class NotificationService {
   guiSuKienNhanSuTheoChiNhanh(branchCode: string, payload: Record<string, any>) {
     this.notificationGateway.guiSuKienNhanSuTheoChiNhanh(branchCode, payload);
   }
+
+  guiSuKienDonHangTheoChiNhanh(branchCode: string, payload: Record<string, any>) {
+    this.notificationGateway.guiSuKienDonHangTheoChiNhanh(branchCode, payload);
+  }
+
+  phatSongDonHangChoShipper(payload: Record<string, any>) {
+    this.notificationGateway.phatSongDonHangChoShipper(payload);
+  }
 }

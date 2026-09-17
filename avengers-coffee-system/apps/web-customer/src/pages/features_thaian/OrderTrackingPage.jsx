@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { io } from 'socket.io-client';
 import ShipperMapView from '../../components/features_thaian/ShipperMapView';
 import { apiClient } from '../../lib/apiClient';
+import { resolveAddressCoordinates } from '../../lib/geocodingService';
 
 export default function OrderTrackingPage({ id, onBack }) {
   const [trackingData, setTrackingData] = useState(null);
@@ -61,16 +63,55 @@ export default function OrderTrackingPage({ id, onBack }) {
   useEffect(() => {
     isMounted.current = true;
     fetchTracking();
-    // Tăng lên 15s để giảm burst request lên server
+
+    const isDangGiao = trackingData?.order?.trang_thai_don_hang === 'DANG_GIAO' || trackingData?.tracking?.status === 'IN_TRANSIT';
+    const pollTime = isDangGiao ? 3000 : 8000;
+
+    // 1. Polling tự động
     const interval = setInterval(() => {
       fetchTracking();
-    }, 15000);
+    }, pollTime);
+
+    // 2. WebSocket nhận vị trí Shipper tức thời
+    const socketBase = import.meta.env.VITE_SOCKET_URL || `http://${window.location.hostname}:3005`;
+    const socket = io(`${socketBase}/notifications`, {
+      transports: ['websocket'],
+      reconnectionAttempts: 5,
+    });
+
+    const orderId = trackingData?.order?.ma_don_hang || id;
+    const trackingCode = trackingData?.tracking?.tracking_code || trackingData?.order?.tracking_code;
+
+    socket.on('connect', () => {
+      socket.emit('tracking:subscribe', { maDonHang: orderId, trackingCode });
+    });
+
+    socket.on('shipper:location:update', (data) => {
+      if (data?.latitude && data?.longitude && isMounted.current) {
+        const lat = Number(data.latitude);
+        const lng = Number(data.longitude);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          setTrackingData((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              shipper_location: {
+                latitude: lat,
+                longitude: lng,
+                updated_at: data.thoiGianCapNhat || new Date().toISOString(),
+              },
+            };
+          });
+        }
+      }
+    });
 
     return () => {
       isMounted.current = false;
       clearInterval(interval);
+      socket.disconnect();
     };
-  }, [id]);
+  }, [id, trackingData?.order?.trang_thai_don_hang, trackingData?.tracking?.status]);
 
   if (loading && !trackingData) {
     return (
@@ -107,26 +148,47 @@ export default function OrderTrackingPage({ id, onBack }) {
   }
 
 
+  const [publicBranches, setPublicBranches] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    apiClient.get('/users/branches/public')
+      .then((res) => {
+        const items = Array.isArray(res.data?.items) ? res.data.items : (Array.isArray(res.data) ? res.data : []);
+        if (isMounted && items.length > 0) {
+          setPublicBranches(items);
+        }
+      })
+      .catch(() => {});
+    return () => { isMounted = false; };
+  }, []);
+
   const getBranchInfo = (code) => {
-    switch (code) {
-      case 'NVL_DN': 
-        return { address: 'Avengers Coffee - 200 Nguyễn Văn Linh, Đà Nẵng', storeLoc: { latitude: 16.0544, longitude: 108.2022 }, destLoc: { latitude: 16.0700, longitude: 108.2200 } };
-      case 'HBT_HCM': 
-        return { address: 'Avengers Coffee - 15 Hai Bà Trưng, TP.HCM', storeLoc: { latitude: 10.7769, longitude: 106.7009 }, destLoc: { latitude: 10.7800, longitude: 106.7100 } };
-      case 'PD_HN': 
-        return { address: 'Avengers Coffee - 10 Phạm Đình Hổ, Hà Nội', storeLoc: { latitude: 21.0285, longitude: 105.8542 }, destLoc: { latitude: 21.0350, longitude: 105.8600 } };
-      case 'MAC_DINH_CHI': 
-        return { address: 'Avengers Coffee - 30 Mạc Đĩnh Chi, TP.HCM', storeLoc: { latitude: 10.7831, longitude: 106.6992 }, destLoc: { latitude: 10.7900, longitude: 106.7050 } };
-      case 'HCM_DIEN_BIEN_PHU': 
-        return { address: 'Avengers Coffee - Điện Biên Phủ, TP.HCM', storeLoc: { latitude: 10.7930, longitude: 106.7000 }, destLoc: { latitude: 10.8000, longitude: 106.7100 } };
-      default: 
-        return { address: `Avengers Coffee - ${code || 'Cửa hàng'}`, storeLoc: { latitude: 10.7769, longitude: 106.7009 }, destLoc: { latitude: 10.7800, longitude: 106.7100 } };
-    }
+    const codeStr = String(code || '').trim().toUpperCase();
+    const codeNorm = codeStr.replace(/-/g, '_');
+    const branch = publicBranches.find((b) => {
+      const bCode = String(b.ma_chi_nhanh || b.co_so_ma || b.branch_code || b.id || '').trim().toUpperCase();
+      return bCode === codeStr || bCode === codeNorm || bCode.replace(/-/g, '_') === codeNorm;
+    });
+
+    const storeLoc = tracking?.store_location?.latitude
+      ? tracking.store_location
+      : (branch?.vi_do && branch?.kinh_do ? { latitude: Number(branch.vi_do), longitude: Number(branch.kinh_do) } : { latitude: 10.80734, longitude: 106.717612 });
+
+    const branchName = tracking?.branch_name || branch?.ten_chi_nhanh || branch?.name || `Avengers Coffee - ${codeStr || 'Cơ sở'}`;
+    const branchAddress = tracking?.branch_address || branch?.dia_chi || branchName;
+
+    return {
+      name: branchName,
+      address: branchAddress,
+      storeLoc,
+    };
   };
 
-  const branchInfo = getBranchInfo(tracking?.branch_code);
+  const branchInfo = getBranchInfo(tracking?.branch_code || order?.co_so_ma);
 
   const currentStep = [...timeline].reverse().find(s => s.completed) || timeline[0];
+
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -227,9 +289,22 @@ export default function OrderTrackingPage({ id, onBack }) {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-1 relative">
               <ShipperMapView 
                 height="60vh"
-                shipperLocation={shipper_location?.latitude ? shipper_location : { latitude: branchInfo.storeLoc.latitude + 0.002, longitude: branchInfo.storeLoc.longitude - 0.001 }}
-                storeLocation={tracking.store_location || branchInfo.storeLoc}
-                destinationLocation={tracking.destination_location || branchInfo.destLoc}
+                shipperLocation={shipper_location?.latitude ? shipper_location : null}
+                storeLocation={tracking?.store_location || branchInfo.storeLoc}
+                destinationLocation={(() => {
+                  let destLoc = tracking?.destination_location || (order?.delivery_latitude ? { latitude: Number(order.delivery_latitude), longitude: Number(order.delivery_longitude) } : null);
+                  if (!destLoc || !destLoc.latitude) {
+                    const addr = tracking?.destination_address || order?.dia_chi_giao_hang || '';
+                    const resolved = resolveAddressCoordinates(addr);
+                    if (resolved) {
+                      destLoc = { latitude: resolved.lat, longitude: resolved.lng };
+                    } else {
+                      const baseStore = tracking?.store_location || branchInfo.storeLoc;
+                      destLoc = { latitude: baseStore.latitude + 0.005, longitude: baseStore.longitude + 0.005 };
+                    }
+                  }
+                  return destLoc;
+                })()}
                 shipperName={shipper?.full_name || 'Tài xế'}
                 deliveryStatus={order.trang_thai_don_hang}
                 storeAddress={branchInfo.address}

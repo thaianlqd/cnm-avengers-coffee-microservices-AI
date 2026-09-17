@@ -19,6 +19,8 @@ export class ThanhToanController {
       branch_code?: string;
       delivery_mode?: 'GIAO_TAN_NOI' | 'LAY_TAI_QUAN' | 'DUNG_TAI_CHO';
       delivery_method?: 'INTERNAL' | 'LALAMOVE';
+      destination_latitude?: number;
+      destination_longitude?: number;
       table_number?: string;
       ten_khach_hang?: string;
       guest_email?: string;

@@ -4,7 +4,9 @@ import { Repository } from 'typeorm';
 import { SmtpConfig } from './smtp-config.entity';
 import { DonHang } from '../thanh-toan/entities/don-hang.entity';
 import { ChiTietDonHang } from '../thanh-toan/entities/chi-tiet-don-hang.entity';
+import { DeliveryTracking } from '../shipper/features_thaian/delivery-tracking.entity';
 import * as nodemailer from 'nodemailer';
+import * as crypto from 'crypto';
 
 export interface EmailTemplateOptions {
   headerTagline?: string;
@@ -18,6 +20,8 @@ export interface EmailTemplateOptions {
   greetingBody: string;
   greetingEn?: string;
   highlightCode?: string;
+  highlightLabel?: string;
+  highlightSubText?: string;
   ctaText: string;
   ctaSubText?: string;
   ctaUrl: string;
@@ -156,9 +160,16 @@ export function buildBrandedEmailHtml(options: EmailTemplateOptions): string {
 
                   <!-- Highlight Code Box -->
                   ${options.highlightCode ? `
-                    <div style="margin: 18px auto 24px auto; display: inline-block; padding: 12px 28px; background-color: #fff7ed; border: 2px dashed #f97316; border-radius: 14px; box-shadow: 0 2px 8px rgba(249, 115, 22, 0.1);">
-                      <span style="font-size: 11px; color: #9a3412; font-weight: 800; text-transform: uppercase; display: block; margin-bottom: 4px; letter-spacing: 1px;">Mã định danh hệ thống:</span>
-                      <span style="font-size: 24px; font-weight: 900; color: #c2410c; letter-spacing: 3px; font-family: 'Plus Jakarta Sans', monospace;">${options.highlightCode}</span>
+                    <div style="margin: 20px auto 26px auto; display: block; max-width: 440px; padding: 18px 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 16px; box-shadow: 0 4px 16px rgba(22, 163, 74, 0.12); text-align: center;">
+                      <span style="font-size: 11.5px; color: #15803d; font-weight: 800; text-transform: uppercase; display: block; margin-bottom: 6px; letter-spacing: 1.2px;">
+                        ${options.highlightLabel || 'MÃ TRA CỨU ĐƠN HÀNG (THEO DÕI TRỰC TIẾP):'}
+                      </span>
+                      <div style="font-size: 28px; font-weight: 900; color: #166534; letter-spacing: 3.5px; font-family: 'Plus Jakarta Sans', monospace; margin: 4px 0 6px 0;">
+                        ${options.highlightCode}
+                      </div>
+                      <div style="font-size: 12px; color: #15803d; font-weight: 600; line-height: 1.5;">
+                        ${options.highlightSubText || 'Nhập mã này tại mục Tra cứu đơn trên website để theo dõi tiến độ đơn hàng mà không cần đăng nhập'}
+                      </div>
                     </div>
                   ` : ''}
 
@@ -312,7 +323,66 @@ export class SmtpService {
   constructor(
     @InjectRepository(SmtpConfig)
     private readonly smtpRepo: Repository<SmtpConfig>,
+    @InjectRepository(DeliveryTracking)
+    private readonly trackingRepo: Repository<DeliveryTracking>,
   ) {}
+
+  /**
+   * Đảm bảo luôn có mã tra cứu đơn hàng (AC-XXXXX) cho khách vãng lai và email thông báo.
+   * Tự động tái sử dụng nếu đã có, hoặc tạo mới và lưu vào bảng delivery_tracking.
+   */
+  async resolveTrackingCode(donHang: DonHang, providedCode?: string): Promise<string> {
+    try {
+      const cleanProvided = String(providedCode || '').trim().toUpperCase();
+      if (cleanProvided && cleanProvided !== 'NULL' && cleanProvided !== 'UNDEFINED') {
+        return cleanProvided;
+      }
+
+      if (!donHang?.ma_don_hang) {
+        return `AC-${crypto.randomBytes(3).toString('hex').toUpperCase().slice(0, 5)}`;
+      }
+
+      // 1. Tìm bản ghi delivery_tracking tương ứng với ma_don_hang
+      const tracking = await this.trackingRepo.findOne({
+        where: { ma_don_hang: donHang.ma_don_hang },
+      });
+
+      if (tracking?.tracking_code && tracking.tracking_code.trim()) {
+        return tracking.tracking_code.trim().toUpperCase();
+      }
+
+      // 2. Nếu đã có bản ghi tracking nhưng chưa có tracking_code, sinh mã mới và cập nhật
+      const newTrackingCode = `AC-${crypto.randomBytes(3).toString('hex').toUpperCase().slice(0, 5)}`;
+
+      if (tracking) {
+        tracking.tracking_code = newTrackingCode;
+        await this.trackingRepo.save(tracking);
+        this.logger.log(`[SMTP] Generated and assigned new tracking_code ${newTrackingCode} to existing delivery_tracking for order #${donHang.ma_don_hang}`);
+        return newTrackingCode;
+      }
+
+      // 3. Nếu chưa có bản ghi delivery_tracking nào, tạo mới cho đơn hàng
+      const newTracking = this.trackingRepo.create({
+        ma_don_hang: donHang.ma_don_hang,
+        tracking_code: newTrackingCode,
+        delivery_mode: (donHang.loai_don_hang as any) || 'GIAO_TAN_NOI',
+        delivery_method: donHang.loai_don_hang === 'GIAO_TAN_NOI' ? 'INTERNAL' : null,
+        customer_name: donHang.ten_khach_hang || donHang.guest_email || 'Khách vãng lai',
+        customer_phone: donHang.guest_phone || null,
+        delivery_address: donHang.dia_chi_giao_hang || null,
+        branch_code: donHang.co_so_ma || null,
+        table_number: donHang.ma_ban || null,
+      });
+
+      await this.trackingRepo.save(newTracking);
+      this.logger.log(`[SMTP] Created new delivery_tracking with tracking_code ${newTrackingCode} for order #${donHang.ma_don_hang}`);
+      return newTrackingCode;
+    } catch (err) {
+      this.logger.warn(`[SMTP] Error resolving tracking code for order #${donHang?.ma_don_hang}: ${err.message}`);
+      const fallbackSuffix = String(donHang?.ma_don_hang || '').replace(/-/g, '').slice(-5).toUpperCase() || 'ORDER';
+      return `AC-${fallbackSuffix}`;
+    }
+  }
 
   async getConfig(): Promise<SmtpConfig> {
     try {
@@ -394,6 +464,10 @@ export class SmtpService {
     if (dto.is_active !== undefined) existing.is_active = Boolean(dto.is_active);
 
     return this.smtpRepo.save(existing);
+  }
+
+  async getInternalConfig(): Promise<SmtpConfig> {
+    return this.getConfig();
   }
 
   private async createTransporter(customConfig?: Partial<SmtpConfig>): Promise<{ transporter: nodemailer.Transporter; fromAddress: string; isDemo: boolean }> {
@@ -539,8 +613,11 @@ export class SmtpService {
 
       const { transporter, fromAddress, isDemo } = await this.createTransporter();
 
+      // Đảm bảo luôn phân giải được mã tra cứu đơn hàng ngắn (AC-XXXXX) cho khách vãng lai
+      const resolvedTrackingCode = await this.resolveTrackingCode(donHang, trackingCode);
+
       const clientBaseUrl = process.env.CUSTOMER_WEB_URL || process.env.WEB_CUSTOMER_BASE_URL || 'http://localhost:5173';
-      const trackingUrl = `${clientBaseUrl}/?tab=tracking&id=${encodeURIComponent(donHang.ma_don_hang)}`;
+      const trackingUrl = `${clientBaseUrl}/?tab=tracking&code=${encodeURIComponent(resolvedTrackingCode)}`;
       
       const formattedTotal = Number(donHang.tong_tien || 0).toLocaleString('vi-VN') + ' đ';
       const formattedDiscount = Number(donHang.so_tien_giam || 0).toLocaleString('vi-VN') + ' đ';
@@ -586,34 +663,34 @@ export class SmtpService {
         <div style="background-color: #f8fafc; border-radius: 14px; border: 1px solid #e2e8f0; padding: 18px 20px; margin-bottom: 22px;">
           <table style="width: 100%; border-collapse: collapse; font-size: 13.5px;">
             <tr>
-              <td style="padding: 6px 0; color: #64748b; width: 40%;">Mã đơn hàng:</td>
-              <td style="padding: 6px 0; text-align: right; color: #b22830; font-family: 'Plus Jakarta Sans', monospace; font-weight: 800; font-size: 14.5px;">#${donHang.ma_don_hang}</td>
+              <td style="padding: 7px 0; color: #64748b; width: 40%;">Mã đơn hàng:</td>
+              <td style="padding: 7px 0; text-align: right; color: #b22830; font-family: 'Plus Jakarta Sans', monospace; font-weight: 800; font-size: 14.5px;">#${donHang.ma_don_hang}</td>
             </tr>
-            ${trackingCode ? `
             <tr>
-              <td style="padding: 6px 0; color: #64748b;">Mã tra cứu giao nhận:</td>
-              <td style="padding: 6px 0; text-align: right; color: #2563eb; font-family: 'Plus Jakarta Sans', monospace; font-weight: 800; font-size: 14px;">
-                <span style="background-color: #eff6ff; padding: 3px 10px; border-radius: 6px; border: 1px solid #bfdbfe;">${trackingCode}</span>
+              <td style="padding: 7px 0; color: #64748b; font-weight: 600;">Mã tra cứu đơn hàng:</td>
+              <td style="padding: 7px 0; text-align: right;">
+                <span style="display: inline-block; background-color: #ecfdf5; color: #047857; font-family: 'Plus Jakarta Sans', monospace; font-weight: 900; font-size: 15px; padding: 4px 12px; border-radius: 8px; border: 1px solid #a7f3d0; letter-spacing: 1.2px;">
+                  ${resolvedTrackingCode}
+                </span>
               </td>
             </tr>
-            ` : ''}
             <tr>
-              <td style="padding: 6px 0; color: #64748b;">Thời gian đặt:</td>
-              <td style="padding: 6px 0; text-align: right; color: #1e293b; font-weight: 600;">${new Date(donHang.ngay_tao || Date.now()).toLocaleString('vi-VN')}</td>
+              <td style="padding: 7px 0; color: #64748b;">Thời gian đặt:</td>
+              <td style="padding: 7px 0; text-align: right; color: #1e293b; font-weight: 600;">${new Date(donHang.ngay_tao || Date.now()).toLocaleString('vi-VN')}</td>
             </tr>
             <tr>
-              <td style="padding: 6px 0; color: #64748b;">Hình thức nhận:</td>
-              <td style="padding: 6px 0; text-align: right; color: #059669; font-weight: 800;">${deliveryModeName}</td>
+              <td style="padding: 7px 0; color: #64748b;">Hình thức nhận:</td>
+              <td style="padding: 7px 0; text-align: right; color: #059669; font-weight: 800;">${deliveryModeName}</td>
             </tr>
             ${donHang.dia_chi_giao_hang && donHang.loai_don_hang === 'GIAO_TAN_NOI' ? `
             <tr>
-              <td style="padding: 6px 0; color: #64748b; vertical-align: top;">Địa chỉ giao hàng:</td>
-              <td style="padding: 6px 0; text-align: right; color: #1e293b; font-weight: 600; max-width: 290px; line-height: 1.4;">${donHang.dia_chi_giao_hang}</td>
+              <td style="padding: 7px 0; color: #64748b; vertical-align: top;">Địa chỉ giao hàng:</td>
+              <td style="padding: 7px 0; text-align: right; color: #1e293b; font-weight: 600; max-width: 290px; line-height: 1.4;">${donHang.dia_chi_giao_hang}</td>
             </tr>
             ` : ''}
             <tr>
-              <td style="padding: 6px 0; color: #64748b;">Phương thức thanh toán:</td>
-              <td style="padding: 6px 0; text-align: right; color: #1e293b; font-weight: 600;">${paymentMethodName}</td>
+              <td style="padding: 7px 0; color: #64748b;">Phương thức thanh toán:</td>
+              <td style="padding: 7px 0; text-align: right; color: #1e293b; font-weight: 600;">${paymentMethodName}</td>
             </tr>
           </table>
         </div>
@@ -643,12 +720,6 @@ export class SmtpService {
             </tr>
           </tfoot>
         </table>
-
-        <!-- Direct Link Box -->
-        <div style="background-color: #eff6ff; border-radius: 12px; border: 1px dashed #93c5fd; padding: 14px 16px; font-size: 12.5px; color: #1e40af; text-align: center;">
-          <span style="font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">● Tra cứu trực tiếp:</span> Bạn có thể mở liên kết dưới đây bất cứ lúc nào:<br/>
-          <a href="${trackingUrl}" style="color: #2563eb; word-break: break-all; font-weight: 700; text-decoration: underline; margin-top: 4px; display: inline-block;">${trackingUrl}</a>
-        </div>
       `;
 
       const termsHtml = `
@@ -657,8 +728,6 @@ export class SmtpService {
         - Hotline hỗ trợ đơn hàng: <strong>1800 6936</strong> (hoạt động từ 7:00 đến 22:30 mỗi ngày).<br/>
         - <em>*Terms & Conditions: Orders are handcrafted fresh. Please inspect upon delivery.*</em>
       `;
-
-      const shortOrderId = String(donHang.ma_don_hang || '').slice(-8).toUpperCase();
 
       const htmlContent = buildBrandedEmailHtml({
         headerTagline: 'THẾ MỚI ĐẬM VỊ • ĐẬM VỊ ĐAM MÊ',
@@ -671,9 +740,8 @@ export class SmtpService {
         greetingTitle: `Kính chào ${donHang.ten_khach_hang || 'Quý khách'},`,
         greetingBody: `Cảm ơn bạn đã tin tưởng và đặt món tại <strong>Avengers Coffee</strong>! Đơn hàng của bạn đã được ghi nhận vào hệ thống và đội ngũ barista đang khẩn trương chuẩn bị những món đồ uống tươi ngon nhất.`,
         greetingEn: 'Thank you for ordering at Avengers Coffee! Your handcrafted drinks and freshly baked pastries are on the way.',
-        highlightCode: trackingCode || shortOrderId,
         ctaText: 'THEO DÕI HÀNH TRÌNH ĐƠN HÀNG',
-        ctaSubText: 'ORDER TRACKING NOW',
+        ctaSubText: 'LIVE ORDER TRACKING',
         ctaUrl: trackingUrl,
         ctaColor: 'green',
         detailsTitle: 'THÔNG TIN CHI TIẾT ĐƠN HÀNG (ORDER DETAILS):',
@@ -706,4 +774,180 @@ export class SmtpService {
       return null;
     }
   }
+
+  async sendMail(options: {
+    to: string;
+    subject: string;
+    html: string;
+    text?: string;
+    from_name?: string;
+    from_email?: string;
+  }): Promise<{ success: boolean; messageId?: string; previewUrl?: string }> {
+    const { to, subject, html, text, from_name, from_email } = options;
+    if (!to || !to.includes('@')) {
+      throw new Error('Địa chỉ email người nhận không hợp lệ.');
+    }
+
+    const customConfig = (from_name || from_email) ? {
+      from_name: from_name?.trim(),
+      from_email: from_email?.trim(),
+    } : undefined;
+
+    const { transporter, fromAddress, isDemo } = await this.createTransporter(customConfig);
+
+    const info = await transporter.sendMail({
+      from: fromAddress,
+      to: to.trim(),
+      subject,
+      text: text || undefined,
+      html,
+    });
+
+    let previewUrl: string | undefined;
+    if (isDemo) {
+      previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
+      this.logger.log(`[SMTP-DEMO] Preview for ${to}: ${previewUrl}`);
+    }
+
+    this.logger.log(`[SMTP-SEND] Sent "${subject}" to ${to} (MessageId: ${info.messageId})`);
+    return {
+      success: true,
+      messageId: info.messageId,
+      previewUrl,
+    };
+  }
+
+  async sendOrderStatusUpdateEmail(
+    donHang: DonHang,
+    newStatus: string,
+    note?: string,
+  ): Promise<{ success: boolean; messageId?: string; previewUrl?: string } | null> {
+    try {
+      const emailRecipient = (donHang.guest_email || '').trim() ||
+        (donHang.ma_nguoi_dung && donHang.ma_nguoi_dung.includes('@') ? donHang.ma_nguoi_dung.trim() : '');
+
+      if (!emailRecipient) {
+        return null;
+      }
+
+      // Đảm bảo luôn lấy được mã tra cứu đơn hàng cho khách theo dõi
+      const resolvedTrackingCode = await this.resolveTrackingCode(donHang);
+
+      const clientBaseUrl = process.env.CUSTOMER_WEB_URL || process.env.WEB_CUSTOMER_BASE_URL || 'http://localhost:5173';
+      const trackingUrl = `${clientBaseUrl}/?tab=tracking&code=${encodeURIComponent(resolvedTrackingCode)}`;
+      const formattedTotal = Number(donHang.tong_tien || 0).toLocaleString('vi-VN') + ' đ';
+
+      let heroTitle = 'CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG';
+      let heroSubtitle = 'TIẾN TRÌNH ĐƠN HÀNG CỦA BẠN TẠI AVENGERS COFFEE';
+      let badgeTitle = 'TRẠNG THÁI HIỆN TẠI';
+      let badgeValue = newStatus;
+      let greetingTitle = `Kính gửi ${donHang.ten_khach_hang || 'Quý khách'},`;
+      let greetingBody = `Đơn hàng #${donHang.ma_don_hang} của bạn đã được cập nhật trạng thái mới.`;
+      let ctaColor: 'green' | 'blue' | 'red' = 'blue';
+
+      switch (newStatus) {
+        case 'DA_XAC_NHAN':
+          heroTitle = 'ĐƠN HÀNG ĐÃ ĐƯỢC XÁC NHẬN';
+          heroSubtitle = 'BARISTA ĐANG BẮT ĐẦU CHUẨN BỊ MÓN';
+          badgeValue = 'ĐÃ XÁC NHẬN';
+          ctaColor = 'blue';
+          greetingBody = `Đơn hàng <strong>#${donHang.ma_don_hang}</strong> của bạn đã được hệ thống xác nhận thành công! Đội ngũ Barista Avengers Coffee đang khẩn trương chuẩn bị những nguyên liệu tươi ngon nhất.`;
+          break;
+        case 'DANG_CHUAN_BI':
+          heroTitle = 'ĐỒ UỐNG ĐANG ĐƯỢC PHA CHẾ';
+          heroSubtitle = 'TỪNG LY CÀ PHÊ ĐẬM VỊ ĐANG DẦN HOÀN THIỆN';
+          badgeValue = 'ĐANG PHA CHẾ';
+          ctaColor = 'blue';
+          greetingBody = `Đơn hàng <strong>#${donHang.ma_don_hang}</strong> đang được các chuyên gia pha chế tại quầy chuẩn bị tỉ mỉ theo đúng chuẩn công thức của Avengers Coffee.`;
+          break;
+        case 'DANG_GIAO':
+          heroTitle = 'ĐƠN HÀNG ĐANG TRÊN ĐƯỜNG GIAO';
+          heroSubtitle = 'SHIPPER ĐANG TỐC HÀNH MANG ĐỒ UỐNG ĐẾN BẠN';
+          badgeValue = 'ĐANG GIAO HÀNG';
+          ctaColor = 'blue';
+          greetingBody = `Đơn hàng <strong>#${donHang.ma_don_hang}</strong> đã sẵn sàng và đang được đối tác shipper giao đến bạn. Vui lòng giữ liên lạc điện thoại để nhận những ly đồ uống thơm ngon nhất nhé!`;
+          break;
+        case 'HOAN_THANH':
+          heroTitle = 'ĐƠN HÀNG ĐÃ GIAO THÀNH CÔNG';
+          heroSubtitle = 'CẢM ƠN BẠN ĐÃ LỰA CHỌN AVENGERS COFFEE';
+          badgeValue = 'HOÀN TẤT GIAO HÀNG';
+          ctaColor = 'green';
+          greetingBody = `Đơn hàng <strong>#${donHang.ma_don_hang}</strong> đã được giao thành công! Chúc bạn có những phút giây tràn đầy năng lượng và thưởng thức trọn vẹn hương vị tuyệt vời cùng Avengers Coffee.`;
+          break;
+        case 'DA_HUY':
+          heroTitle = 'THÔNG BÁO HỦY ĐƠN HÀNG';
+          heroSubtitle = 'ĐƠN HÀNG ĐÃ ĐƯỢC HỦY THEO YÊU CẦU';
+          badgeValue = 'ĐÃ HỦY ĐƠN';
+          ctaColor = 'red';
+          greetingBody = `Đơn hàng <strong>#${donHang.ma_don_hang}</strong> đã được hủy.${note ? ` Lý do: <strong>${note}</strong>.` : ''} Nếu bạn cần hỗ trợ thêm thông tin hoặc hỗ trợ hoàn tiền, vui lòng liên hệ tổng đài 1800 6936.`;
+          break;
+      }
+
+      const statusDetailsHtml = `
+        <div style="background-color: #f8fafc; border-radius: 14px; border: 1px solid #e2e8f0; padding: 18px 20px; margin-bottom: 22px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 13.5px;">
+            <tr>
+              <td style="padding: 7px 0; color: #64748b; width: 40%;">Mã đơn hàng:</td>
+              <td style="padding: 7px 0; text-align: right; color: #b22830; font-family: 'Plus Jakarta Sans', monospace; font-weight: 800; font-size: 14.5px;">#${donHang.ma_don_hang}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px 0; color: #64748b; font-weight: 600;">Mã tra cứu đơn hàng:</td>
+              <td style="padding: 7px 0; text-align: right;">
+                <span style="display: inline-block; background-color: #ecfdf5; color: #047857; font-family: 'Plus Jakarta Sans', monospace; font-weight: 900; font-size: 15px; padding: 4px 12px; border-radius: 8px; border: 1px solid #a7f3d0; letter-spacing: 1.2px;">
+                  ${resolvedTrackingCode}
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 7px 0; color: #64748b;">Thời gian cập nhật:</td>
+              <td style="padding: 7px 0; text-align: right; color: #1e293b; font-weight: 600;">${new Date().toLocaleString('vi-VN')}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px 0; color: #64748b;">Tổng thanh toán:</td>
+              <td style="padding: 7px 0; text-align: right; color: #0f172a; font-weight: 800;">${formattedTotal}</td>
+            </tr>
+            ${donHang.dia_chi_giao_hang ? `
+            <tr>
+              <td style="padding: 7px 0; color: #64748b; vertical-align: top;">Địa chỉ giao:</td>
+              <td style="padding: 7px 0; text-align: right; color: #1e293b; font-weight: 600; line-height: 1.4;">${donHang.dia_chi_giao_hang}</td>
+            </tr>
+            ` : ''}
+            ${note ? `
+            <tr>
+              <td style="padding: 7px 0; color: #64748b; vertical-align: top;">Ghi chú:</td>
+              <td style="padding: 7px 0; text-align: right; color: #b91c1c; font-weight: 700;">${note}</td>
+            </tr>
+            ` : ''}
+          </table>
+        </div>
+      `;
+
+      const htmlContent = buildBrandedEmailHtml({
+        headerTagline: 'THẾ MỚI ĐẬM VỊ • HỆ THỐNG ĐƠN HÀNG',
+        heroTitle,
+        heroSubtitle,
+        heroBadgeTitle: badgeTitle,
+        heroBadgeValue: badgeValue,
+        heroBadgeSub: `Mã đơn: #${donHang.ma_don_hang}`,
+        greetingTitle,
+        greetingBody,
+        ctaText: 'THEO DÕI HÀNH TRÌNH ĐƠN HÀNG',
+        ctaSubText: 'LIVE ORDER TRACKING',
+        ctaUrl: trackingUrl,
+        ctaColor,
+        detailsTitle: 'THÔNG TIN CẬP NHẬT ĐƠN HÀNG:',
+        detailsHtml: statusDetailsHtml,
+      });
+
+      return this.sendMail({
+        to: emailRecipient,
+        subject: `[Avengers Coffee] #${donHang.ma_don_hang} - ${badgeValue}`,
+        html: htmlContent,
+      });
+    } catch (err) {
+      this.logger.error(`[sendOrderStatusUpdateEmail] Error: ${err.message}`, err.stack);
+      return null;
+    }
+  }
 }
+

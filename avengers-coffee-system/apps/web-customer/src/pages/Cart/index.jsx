@@ -25,6 +25,9 @@ import { PencilIcon, CheckCircleIcon, StarIcon } from '@heroicons/react/24/solid
 import DeliveryModeSelector from '../../components/features_thaian/DeliveryModeSelector';
 import DeliveryMethodPicker from '../../components/features_thaian/DeliveryMethodPicker';
 import BranchSelector from '../../components/features_thaian/BranchSelector';
+import AddressAutocompleteInput from '../../components/features_thaian/AddressAutocompleteInput';
+import NearbyBranchChecker from '../../components/features_thaian/NearbyBranchChecker';
+import { geocodeAddress } from '../../lib/geocodingService';
 
 const AVAILABLE_SIZES = ['Nhỏ', 'Vừa'];
 
@@ -210,6 +213,15 @@ export default function CartPage({
 
   const [phuongThuc, setPhuongThuc] = useState('VNPAY');
   const [addressForm, setAddressForm] = useState(() => ({ ...defaultAddressSelection, street: '' }));
+  const [userCoordinates, setUserCoordinates] = useState(null);
+  const [stockValidation, setStockValidation] = useState({
+    canOrder: true,
+    hasCoordinates: false,
+    hasNearbyBranch: true,
+    reason: '',
+    message: '',
+    missingItems: [],
+  });
   const [ghiChu, setGhiChu] = useState('');
   const [thongBao, setThongBao] = useState('');
   const [qrData, setQrData] = useState(null);
@@ -221,7 +233,83 @@ export default function CartPage({
   const [isCheckingVoucher, setIsCheckingVoucher] = useState(false);
   const [guestEmail, setGuestEmail] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
+  const [guestEmailTouched, setGuestEmailTouched] = useState(false);
+  const [guestPhoneTouched, setGuestPhoneTouched] = useState(false);
   const [guestSessionId, setGuestSessionId] = useState('');
+
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
+  const isValidPhone = (phone) => {
+    const clean = String(phone || '').trim().replace(/[\s.-]/g, '');
+    return /^(0)(3|5|7|8|9)[0-9]{8}$/.test(clean) || /^0[0-9]{9}$/.test(clean);
+  };
+
+  const showEmailError = guestEmailTouched && (!guestEmail.trim() || !isValidEmail(guestEmail));
+  const emailErrorMessage = !guestEmail.trim() 
+    ? 'Vui lòng nhập Email nhận đơn' 
+    : (!isValidEmail(guestEmail) ? 'Định dạng Email chưa chính xác' : '');
+
+  const showPhoneError = guestPhoneTouched && (!guestPhone.trim() || !isValidPhone(guestPhone));
+  const phoneErrorMessage = !guestPhone.trim() 
+    ? 'Vui lòng nhập Số điện thoại' 
+    : (!isValidPhone(guestPhone) ? 'Số điện thoại cần 10 số (bắt đầu bằng 0)' : '');
+
+  const handleAddressSelect = useCallback((item) => {
+    if (item.lat && item.lng) {
+      setUserCoordinates({ lat: Number(item.lat), lng: Number(item.lng) });
+    }
+
+    let resolvedCity = item.city || '';
+    let resolvedWard = item.ward || '';
+    let resolvedStreet = item.street || item.title || '';
+
+    // Tìm thành phố phù hợp nhất trong danh sách addressOptions (provinces)
+    const availableCities = Object.keys(addressOptions || {});
+    if (resolvedCity && availableCities.length > 0) {
+      const cleanRes = resolvedCity.toLowerCase().replace(/^(thành phố|tỉnh)\s+/i, '').trim();
+      const matchCity = availableCities.find((c) => {
+        const cleanC = c.toLowerCase().replace(/^(thành phố|tỉnh)\s+/i, '').trim();
+        return cleanC === cleanRes;
+      }) || availableCities.find((c) => {
+        const cleanC = c.toLowerCase().replace(/^(thành phố|tỉnh)\s+/i, '').trim();
+        return cleanC.includes(cleanRes) || cleanRes.includes(cleanC);
+      });
+      if (matchCity) {
+        resolvedCity = matchCity;
+      }
+    }
+
+    // Tìm phường/xã phù hợp nhất trong danh sách của thành phố đó
+    if (resolvedCity && resolvedWard) {
+      const availableWards = addressOptions[resolvedCity] || [];
+      const cleanResW = resolvedWard.toLowerCase().replace(/^(phường|xã|thị trấn|p\.|x\.)\s*/i, '').trim();
+
+      // 1. Ưu tiên khớp chính xác tuyệt đối tên phường (tránh nhầm lẫn 'An Phú' với 'An Phú Đông', 'Tân Phú' với 'Tân Phú Trung')
+      let matchWard = availableWards.find((w) => {
+        const cleanW = w.toLowerCase().replace(/^(phường|xã|thị trấn|p\.|x\.)\s*/i, '').trim();
+        return cleanW === cleanResW;
+      });
+
+      // 2. Nếu không có khớp chính xác, tìm theo tiền tố nguyên từ
+      if (!matchWard) {
+        matchWard = availableWards.find((w) => {
+          const cleanW = w.toLowerCase().replace(/^(phường|xã|thị trấn|p\.|x\.)\s*/i, '').trim();
+          return cleanW.startsWith(cleanResW + ' ') || cleanResW.startsWith(cleanW + ' ');
+        });
+      }
+
+      if (matchWard) {
+        resolvedWard = matchWard;
+      }
+    }
+
+    setAddressForm((prev) => ({
+      ...prev,
+      city: resolvedCity || prev.city,
+      ward: resolvedWard || prev.ward,
+      street: resolvedStreet || prev.street,
+    }));
+    setThongBao('');
+  }, [addressOptions]);
 
   const maNguoiDung = useMemo(() => activeUserId || 'anonymous', [activeUserId]);
   const isLoggedInUser = useMemo(() => {
@@ -595,15 +683,18 @@ export default function CartPage({
       // Tự động chuyển chi nhánh nếu chi nhánh hiện tại không nằm trong cùng thành phố
       // CHỈ ÁP DỤNG KHI GIAO TẬN NƠI
       if (deliveryMode === 'GIAO_TAN_NOI') {
-        if (!selectedBranch) {
-          setSelectedBranch(branchId);
-        } else {
-          const currentBranch = allBranches.find(b => (b.ma_chi_nhanh || b.co_so_ma || b.branch_code) === selectedBranch);
-          const currentBranchCity = String(currentBranch?.thanh_pho || currentBranch?.dia_chi || '').toLowerCase();
-          const userCity = String(addressForm.city || '').toLowerCase();
-          
-          if (userCity && !currentBranchCity.includes(userCity)) {
+        // Chỉ fallback theo thành phố nếu CHƯA có tọa độ GPS (khi đã có GPS thì NearbyBranchChecker tự chọn chi nhánh gần nhất)
+        if (!userCoordinates) {
+          if (!selectedBranch) {
             setSelectedBranch(branchId);
+          } else {
+            const currentBranch = allBranches.find(b => (b.ma_chi_nhanh || b.co_so_ma || b.branch_code) === selectedBranch);
+            const currentBranchCity = String(currentBranch?.thanh_pho || currentBranch?.dia_chi || '').toLowerCase();
+            const userCity = String(addressForm.city || '').toLowerCase();
+            
+            if (userCity && !currentBranchCity.includes(userCity)) {
+              setSelectedBranch(branchId);
+            }
           }
         }
       } else {
@@ -613,12 +704,44 @@ export default function CartPage({
         }
       }
     }
-  }, [publicBranchPayload, selectedBranch, addressForm.city, deliveryMode]);
+  }, [publicBranchPayload, selectedBranch, addressForm.city, deliveryMode, userCoordinates]);
+
+  // Tự động Geocode tọa độ GPS khi người dùng chỉnh sửa địa chỉ thủ công
+  useEffect(() => {
+    if (deliveryMode !== 'GIAO_TAN_NOI') return;
+    const full = taoDiaChiDayDu(addressForm);
+    if (!full || full.trim().length < 5) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        const geo = await geocodeAddress(full);
+        if (geo && geo.lat && geo.lng) {
+          setUserCoordinates({ lat: geo.lat, lng: geo.lng });
+        }
+      } catch {}
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [addressForm.street, addressForm.ward, addressForm.city, deliveryMode]);
 
   const khoiTaoThanhToanMutation = useMutation({
     mutationFn: async () => {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       const customerName = user.ho_ten || user.hoTen || user.ten_dang_nhap || user.username || undefined;
+
+      let targetLat = userCoordinates?.lat ? Number(userCoordinates.lat) : undefined;
+      let targetLng = userCoordinates?.lng ? Number(userCoordinates.lng) : undefined;
+
+      // Nếu chưa có toạ độ GPS mà là giao tận nơi, thử geocode nhanh địa chỉ đầy đủ
+      if ((!targetLat || !targetLng) && deliveryMode === 'GIAO_TAN_NOI' && diaChiDayDu) {
+        try {
+          const geo = await geocodeAddress(diaChiDayDu);
+          if (geo?.lat && geo?.lng) {
+            targetLat = Number(geo.lat);
+            targetLng = Number(geo.lng);
+          }
+        } catch {}
+      }
 
       const response = await apiClient.post(`/customers/${maNguoiDung}/thanh-toan/khoi-tao`, {
         phuong_thuc_giao: deliveryMode,
@@ -632,6 +755,8 @@ export default function CartPage({
         ma_voucher: voucherResult?.ma_voucher || voucherResult?.ma_khuyen_mai || undefined,
         delivery_mode: deliveryMode,
         delivery_method: deliveryMethod,
+        destination_latitude: targetLat,
+        destination_longitude: targetLng,
         branch_code: selectedBranch,
         ma_kiosk: deliveryMode === 'KIOSK' ? selectedBranch : undefined,
         table_number: deliveryMode === 'DUNG_TAI_CHO' ? tableNumber : undefined,
@@ -677,19 +802,50 @@ export default function CartPage({
     }
 
     if (!isLoggedInUser) {
-      if (!guestEmail.trim() && !guestPhone.trim()) {
-        setThongBao('Vui lòng nhập ít nhất Email hoặc Số điện thoại để tiến hành đặt hàng.');
+      setGuestEmailTouched(true);
+      setGuestPhoneTouched(true);
+
+      const trimmedEmail = guestEmail.trim();
+      const trimmedPhone = guestPhone.trim();
+
+      if (!trimmedEmail && !trimmedPhone) {
+        setThongBao('Vui lòng nhập đầy đủ cả Email và Số điện thoại để tiến hành đặt hàng.');
+        return;
+      }
+
+      if (!trimmedEmail) {
+        setThongBao('Vui lòng nhập Email nhận đơn.');
+        return;
+      }
+
+      if (!isValidEmail(trimmedEmail)) {
+        setThongBao('Địa chỉ Email không đúng định dạng. Ví dụ: nguyenvan@gmail.com');
+        return;
+      }
+
+      if (!trimmedPhone) {
+        setThongBao('Vui lòng nhập Số điện thoại liên hệ.');
+        return;
+      }
+
+      if (!isValidPhone(trimmedPhone)) {
+        setThongBao('Số điện thoại không hợp lệ. Vui lòng nhập đúng 10 số điện thoại di động.');
         return;
       }
     }
 
     if (deliveryMode === 'GIAO_TAN_NOI') {
-      if (!addressForm.city || !addressForm.district || !addressForm.ward || !addressForm.street?.trim()) {
-        setThongBao('Vui lòng chọn thành phố, quận, phường và nhập số nhà/đường đầy đủ.');
+      if (!stockValidation.canOrder) {
+        setThongBao(stockValidation.message || 'Không thể đặt hàng do chi nhánh gần bạn đã hết món.');
         return;
       }
 
-      if (diaChiDayDu.length < 16) {
+      if (!addressForm.city || !addressForm.ward || !addressForm.street?.trim()) {
+        setThongBao('Vui lòng chọn thành phố, phường/xã và nhập số nhà/tên đường đầy đủ.');
+        return;
+      }
+
+      if (diaChiDayDu.length < 8) {
         setThongBao('Địa chỉ giao hàng chưa đủ chi tiết. Vui lòng bổ sung số nhà và tên đường.');
         return;
       }
@@ -717,10 +873,19 @@ export default function CartPage({
         return;
       }
 
-if (deliveryMode === 'GIAO_TAN_NOI') {
-              setThongBao('Tạo đơn hàng COD thành công. Đơn sẽ được thu tiền khi nhận hàng.');
+            if (isLoggedInUser) {
+              setThongBao(
+                deliveryMode === 'GIAO_TAN_NOI'
+                  ? 'Đặt hàng thành công! Đơn hàng đã được lưu vào Lịch sử đơn hàng của bạn và sẽ thu tiền khi nhận hàng.'
+                  : 'Đặt hàng thành công! Đơn hàng đã được lưu vào Lịch sử đơn hàng của bạn. Vui lòng thanh toán tại quầy khi nhận món.'
+              );
             } else {
-              setThongBao('Tạo đơn hàng thành công. Vui lòng thanh toán tại quầy.');
+              const guestTrackingCode = data?.tracking_code;
+              setThongBao(
+                guestTrackingCode
+                  ? `Đặt hàng thành công! Mã tra cứu của bạn là ${guestTrackingCode}. Quý khách vui lòng lưu lại mã này để theo dõi tiến độ tại trang Tra cứu đơn hàng.`
+                  : 'Đặt hàng thành công! Đơn hàng của quý khách đã được hệ thống ghi nhận.'
+              );
             }
             setTimeout(() => {
               queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
@@ -1132,6 +1297,9 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                                   street,
                                   savedAddressId: selected.id,
                                 });
+                                if (selected.vi_do && selected.kinh_do) {
+                                  setUserCoordinates({ lat: Number(selected.vi_do), lng: Number(selected.kinh_do) });
+                                }
                                 if (selected.ghi_chu && !ghiChu.trim()) {
                                   setGhiChu(selected.ghi_chu);
                                 }
@@ -1148,62 +1316,71 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                           </div>
                         ) : null}
 
-                        {/* Thành phố */}
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-xs font-bold text-gray-500">Thành phố</label>
-                          <input
-                            list="cart-cities-list"
-                            value={addressForm.city}
-                            placeholder="Chọn hoặc nhập Thành phố..."
-                            onChange={(e) => {
-                              const nextCity = e.target.value;
-                              const nextWard = (addressOptions[nextCity] || [])[0] || '';
-                              setAddressForm((prev) => ({ ...prev, city: nextCity, ward: nextWard }));
-                              if (thongBao) setThongBao('');
-                            }}
-                            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/20 transition-all"
-                          />
-                          <datalist id="cart-cities-list">
-                            {cityOptions.map((city) => (
-                              <option key={city} value={city} />
-                            ))}
-                          </datalist>
+                        {/* Ô nhập Số nhà, tên đường thông minh (gợi ý dropdown bản đồ + nút lấy GPS) */}
+                        <AddressAutocompleteInput
+                          label="Số nhà, tên đường / Địa chỉ nhận hàng"
+                          value={addressForm.street}
+                          onChange={(street) => {
+                            setAddressForm((prev) => ({ ...prev, street }));
+                            if (thongBao) setThongBao('');
+                          }}
+                          onSelectAddress={handleAddressSelect}
+                        />
+
+                        {/* Chi tiết Tỉnh/Thành phố & Phường/Xã (Tự động điền khi chọn gợi ý hoặc chọn tay) */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {/* Thành phố */}
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-bold text-gray-500">Tỉnh / Thành phố</label>
+                            <select
+                              value={addressForm.city}
+                              onChange={(e) => {
+                                const nextCity = e.target.value;
+                                const nextWard = (addressOptions[nextCity] || [])[0] || '';
+                                setAddressForm((prev) => ({ ...prev, city: nextCity, ward: nextWard }));
+                                if (thongBao) setThongBao('');
+                              }}
+                              className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-xs font-bold text-gray-800 outline-none focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/20 transition-all cursor-pointer truncate"
+                            >
+                              <option value="">-- Chọn Tỉnh / Thành phố --</option>
+                              {cityOptions.map((city) => (
+                                <option key={city} value={city}>
+                                  {city}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* Phường / Xã */}
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-bold text-gray-500">Phường / Xã</label>
+                            <select
+                              value={addressForm.ward}
+                              onChange={(e) => {
+                                setAddressForm((prev) => ({ ...prev, ward: e.target.value }));
+                                if (thongBao) setThongBao('');
+                              }}
+                              className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-xs font-bold text-gray-800 outline-none focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/20 transition-all cursor-pointer truncate"
+                            >
+                              <option value="">-- Chọn Phường / Xã --</option>
+                              {wardOptions.map((ward) => (
+                                <option key={ward} value={ward}>
+                                  {ward}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
 
-                        {/* Phường */}
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-xs font-bold text-gray-500">Phường / Xã</label>
-                          <input
-                            list="cart-wards-list"
-                            value={addressForm.ward}
-                            placeholder="Chọn hoặc nhập Phường / Xã..."
-                            onChange={(e) => {
-                              setAddressForm((prev) => ({ ...prev, ward: e.target.value }));
-                              if (thongBao) setThongBao('');
-                            }}
-                            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/20 transition-all"
-                          />
-                          <datalist id="cart-wards-list">
-                            {wardOptions.map((ward) => (
-                              <option key={ward} value={ward} />
-                            ))}
-                          </datalist>
-                        </div>
-
-                        {/* Số nhà, tên đường */}
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-xs font-bold text-gray-500">Số nhà, tên đường</label>
-                          <input
-                            value={addressForm.street}
-                            onChange={(e) => {
-                              setAddressForm((prev) => ({ ...prev, street: e.target.value }));
-                              if (thongBao) setThongBao('');
-                            }}
-                            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/20 transition-all"
-                            placeholder="Ví dụ: 28 Nguyễn Văn Linh"
-                          />
-                        </div>
-                        <p className="text-[11px] font-bold text-gray-500 bg-gray-50 p-2.5 rounded-lg border border-gray-200/60">📍 Địa chỉ nhận: {diaChiDayDu || '---'}</p>
+                        {/* KIỂM TRA BÁN KÍNH 5KM VÀ TỒN KHO MÓN ĂN (CUỘN ĐỘC LẬP) */}
+                        <NearbyBranchChecker
+                          branches={publicBranchPayload?.items || []}
+                          userCoordinates={userCoordinates}
+                          cart={cart}
+                          selectedBranch={selectedBranch}
+                          onSelectBranch={setSelectedBranch}
+                          onStockStatusChange={setStockValidation}
+                        />
                       </>
                     ) : (
                       <>
@@ -1245,34 +1422,82 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                   {/* Cột phải form: Thông tin liên hệ & Phương thức thanh toán */}
                   <div className="space-y-4">
                     {!isLoggedInUser && (
-                      <div className="bg-[#faf7f4] border border-[#e8e2da] rounded-[20px] p-5 space-y-4 mb-2">
-                        <h3 className="text-xs font-black uppercase text-[#c41230] tracking-widest">
-                          Thông tin khách hàng
-                        </h3>
-                        <div className="flex flex-col gap-3">
+                      <div className="bg-[#faf7f4] border border-[#e8e2da] rounded-[20px] p-5 space-y-4 mb-2 shadow-2xs">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-xs font-black uppercase text-[#c41230] tracking-widest flex items-center gap-1.5">
+                            <span>Thông tin khách hàng</span>
+                            <span className="text-red-600 font-bold">*</span>
+                          </h3>
+                          <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">
+                            Bắt buộc cả hai
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col gap-3.5">
+                          {/* EMAIL NHẬN ĐƠN */}
                           <div className="flex flex-col gap-1">
-                            <label className="text-xs font-bold text-gray-600">Email nhận đơn</label>
+                            <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
+                              <span className="flex items-center gap-1">
+                                <span>Email nhận đơn</span>
+                                <span className="text-red-600 font-bold">*</span>
+                              </span>
+                              {showEmailError && (
+                                <span className="text-[11px] font-bold text-red-600">
+                                  {emailErrorMessage}
+                                </span>
+                              )}
+                            </label>
                             <input
                               type="email"
                               value={guestEmail}
-                              onChange={(e) => setGuestEmail(e.target.value)}
-                              placeholder="VD: nguyenvan@gmail.com"
-                              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/20 transition-all"
+                              onBlur={() => setGuestEmailTouched(true)}
+                              onChange={(e) => {
+                                setGuestEmail(e.target.value);
+                                if (thongBao) setThongBao('');
+                              }}
+                              placeholder="Ví dụ: nguyenvan@gmail.com"
+                              className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm font-semibold outline-none transition-all ${
+                                showEmailError
+                                  ? 'border-red-500 bg-red-50/20 text-red-900 focus:ring-2 focus:ring-red-500/20'
+                                  : 'border-gray-200 focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/20'
+                              }`}
                             />
                           </div>
+
+                          {/* SỐ ĐIỆN THOẠI */}
                           <div className="flex flex-col gap-1">
-                            <label className="text-xs font-bold text-gray-600">Số điện thoại</label>
+                            <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
+                              <span className="flex items-center gap-1">
+                                <span>Số điện thoại liên hệ</span>
+                                <span className="text-red-600 font-bold">*</span>
+                              </span>
+                              {showPhoneError && (
+                                <span className="text-[11px] font-bold text-red-600">
+                                  {phoneErrorMessage}
+                                </span>
+                              )}
+                            </label>
                             <input
                               type="tel"
                               value={guestPhone}
-                              onChange={(e) => setGuestPhone(e.target.value)}
-                              placeholder="VD: 0987654321"
-                              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/20 transition-all"
+                              onBlur={() => setGuestPhoneTouched(true)}
+                              onChange={(e) => {
+                                setGuestPhone(e.target.value);
+                                if (thongBao) setThongBao('');
+                              }}
+                              placeholder="Ví dụ: 0987654321"
+                              className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm font-semibold outline-none transition-all ${
+                                showPhoneError
+                                  ? 'border-red-500 bg-red-50/20 text-red-900 focus:ring-2 focus:ring-red-500/20'
+                                  : 'border-gray-200 focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/20'
+                              }`}
                             />
                           </div>
                         </div>
-                        <p className="text-[10px] text-gray-400 font-bold leading-relaxed">
-                          * Nhập Email/SĐT để hệ thống thông báo trạng thái đơn và đồng bộ lịch sử.
+
+                        <p className="text-[11px] text-gray-500 font-medium leading-relaxed flex items-start gap-1">
+                          <span className="text-red-600 font-bold">*</span>
+                          <span>Bắt buộc nhập cả Email và Số điện thoại để hệ thống gửi thông báo đơn hàng và liên hệ giao hàng.</span>
                         </p>
                       </div>
                     )}
@@ -1673,15 +1898,24 @@ if (deliveryMode === 'GIAO_TAN_NOI') {
                 </button>
               ) : (
                 <>
-                  {isAnyItemOutOfStock && (
+                  {deliveryMode === 'GIAO_TAN_NOI' && !stockValidation.canOrder && stockValidation.message && (
+                    <div className="mt-4 p-3 rounded-2xl bg-red-50 border border-red-200 text-center">
+                      <p className="text-xs font-bold text-red-700">
+                        {stockValidation.message}
+                      </p>
+                    </div>
+                  )}
+
+                  {deliveryMode !== 'GIAO_TAN_NOI' && isAnyItemOutOfStock && (
                     <p className="mt-4 text-xs font-bold text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-100 text-center">
                       Có món trong giỏ hàng đã hết hàng tại chi nhánh này. Vui lòng kiểm tra lại giỏ hàng!
                     </p>
                   )}
+
                   <button
                     onClick={khoiTaoThanhToan}
-                    disabled={khoiTaoThanhToanMutation.isPending || isAnyItemOutOfStock}
-                    className="w-full mt-6 py-4 bg-[#c41230] hover:bg-[#a30f28] text-white rounded-full font-black uppercase text-xs sm:text-sm tracking-widest shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    disabled={khoiTaoThanhToanMutation.isPending || (deliveryMode !== 'GIAO_TAN_NOI' && isAnyItemOutOfStock) || (deliveryMode === 'GIAO_TAN_NOI' && !stockValidation.canOrder)}
+                    className="w-full mt-6 py-4 bg-[#c41230] hover:bg-[#a30f28] text-white rounded-full font-black uppercase text-xs sm:text-sm tracking-widest shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {khoiTaoThanhToanMutation.isPending ? (
                       <>

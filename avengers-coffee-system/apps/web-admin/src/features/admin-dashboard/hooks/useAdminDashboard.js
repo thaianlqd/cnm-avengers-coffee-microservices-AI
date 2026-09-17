@@ -156,8 +156,8 @@ export function useAdminDashboard() {
   }
   const ORDER_FLOW = ['MOI_TAO', 'DA_XAC_NHAN', 'DANG_CHUAN_BI', 'DANG_GIAO', 'HOAN_THANH']
   const ORDER_TRANSITIONS = {
-    MOI_TAO: ['DA_XAC_NHAN', 'DA_HUY'],
-    DA_XAC_NHAN: ['DANG_CHUAN_BI', 'DA_HUY'],
+    MOI_TAO: ['DA_XAC_NHAN', 'DANG_CHUAN_BI', 'HOAN_THANH', 'DA_HUY'],
+    DA_XAC_NHAN: ['DANG_CHUAN_BI', 'HOAN_THANH', 'DA_HUY'],
     DANG_CHUAN_BI: ['DANG_GIAO', 'HOAN_THANH', 'DA_HUY'],
     DANG_GIAO: ['HOAN_THANH', 'DA_HUY'],
     HOAN_THANH: [],
@@ -192,8 +192,10 @@ export function useAdminDashboard() {
     return path
   }
 
-  const refreshOrders = async () => {
-    setOrdersState((prev) => ({ ...prev, loading: true, error: '' }))
+  const refreshOrders = async ({ silent = false } = {}) => {
+    if (!silent) {
+      setOrdersState((prev) => ({ ...prev, loading: true, error: '' }))
+    }
 
     try {
       const params = new URLSearchParams({ branch_code: sessionBranchCode })
@@ -264,7 +266,9 @@ export function useAdminDashboard() {
         }
       })
     } catch (error) {
-      setOrdersState({ loading: false, error: error.message || 'Không tải được danh sách đơn hàng', items: [] })
+      if (!silent) {
+        setOrdersState({ loading: false, error: error.message || 'Không tải được danh sách đơn hàng', items: [] })
+      }
     }
   }
 
@@ -330,7 +334,7 @@ export function useAdminDashboard() {
     refreshOrders()
     refreshMenuAndInventory()
 
-    const ordersTimer = window.setInterval(refreshOrders, 15000)
+    const ordersTimer = window.setInterval(() => refreshOrders({ silent: true }), 45000)
     const inventoryTimer = window.setInterval(refreshMenuAndInventory, 90000)
 
     return () => {
@@ -654,10 +658,48 @@ export function useAdminDashboard() {
         userId: session?.user?.maNguoiDung || session?.user?.ma_nguoi_dung || sessionUsername,
       })
       socket.emit('workforce:subscribe', { branchCode: sessionBranchCode })
+      socket.emit('orders:subscribe', { branchCode: sessionBranchCode })
 
-      refreshOrders()
+      refreshOrders({ silent: true })
       refreshMenuAndInventory()
       syncWorkforceData()
+    })
+
+    socket.on('order:event', (event) => {
+      const eventBranch = String(event?.branchCode || '').toUpperCase()
+      if (eventBranch && eventBranch !== sessionBranchCode) return
+
+      const action = String(event?.action || '').toUpperCase()
+      const orderId = event?.orderId || event?.data?.ma_don_hang
+
+      if (action === 'DELETED' && orderId) {
+        setOrdersState((prev) => ({
+          ...prev,
+          items: prev.items.filter((o) => o.ma_don_hang !== orderId),
+        }))
+        return
+      }
+
+      if ((action === 'STATUS_CHANGED' || action === 'PAYMENT_UPDATED') && orderId) {
+        const nextStatus = event?.status || event?.data?.trang_thai_don_hang
+        const nextPayment = event?.paymentStatus || event?.data?.trang_thai_thanh_toan
+        setOrdersState((prev) => ({
+          ...prev,
+          items: prev.items.map((o) =>
+            o.ma_don_hang === orderId
+              ? {
+                  ...o,
+                  ...(nextStatus ? { trang_thai_don_hang: nextStatus } : {}),
+                  ...(nextPayment ? { trang_thai_thanh_toan: nextPayment } : {}),
+                }
+              : o,
+          ),
+        }))
+        refreshOrders({ silent: true })
+        return
+      }
+
+      refreshOrders({ silent: true })
     })
 
     socket.on('notification:new', (notification) => {
@@ -666,7 +708,7 @@ export function useAdminDashboard() {
       const domain = String(notification?.du_lieu?.domain || '').toUpperCase()
 
       if (type === 'ORDER' || type === 'PAYMENT' || hasOrderData) {
-        refreshOrders()
+        refreshOrders({ silent: true })
         refreshMenuAndInventory()
       }
 
@@ -1177,49 +1219,58 @@ export function useAdminDashboard() {
   }
 
   const capNhatTrangThaiDon = async (orderId, nextStatus) => {
+    if (!orderId || !nextStatus) return
     setUpdatingOrderId(orderId)
 
+    // 1. Optimistic UI update: instantly update local state
+    let previousStatus = ''
+    setOrdersState((prev) => {
+      const target = prev.items.find((order) => order.ma_don_hang === orderId)
+      if (target) {
+        previousStatus = target.trang_thai_don_hang
+      }
+      return {
+        ...prev,
+        items: prev.items.map((order) =>
+          order.ma_don_hang === orderId
+            ? { ...order, trang_thai_don_hang: nextStatus }
+            : order,
+        ),
+      }
+    })
+
+    setLastPosOrder((prev) => {
+      if (!prev?.order || prev.order.ma_don_hang !== orderId) return prev
+      return {
+        ...prev,
+        order: { ...prev.order, trang_thai_don_hang: nextStatus },
+      }
+    })
+
     try {
-      const currentOrder = ordersState.items.find((order) => order.ma_don_hang === orderId)
-      const fallbackOrder = lastPosOrder?.order?.ma_don_hang === orderId ? lastPosOrder.order : null
-      const currentStatus = currentOrder?.trang_thai_don_hang || fallbackOrder?.trang_thai_don_hang || ''
+      // 2. Direct single PATCH call to backend
+      const response = await fetch(`${API_BASE_URL}/staff/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: nextStatus, branch_code: sessionBranchCode }),
+      })
 
-      const path = currentStatus
-        ? xayDuongDiTrangThaiDon(currentStatus, nextStatus)
-        : [nextStatus]
-
-      if (path === null) {
-        throw new Error(`Khong the chuyen trang thai tu ${currentStatus || 'N/A'} sang ${nextStatus}`)
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(payload?.message || 'Cập nhật trạng thái thất bại')
       }
 
-      if (!path.length) return
+      const updatedOrder = payload?.order || null
+      const appliedStatus = updatedOrder?.trang_thai_don_hang || nextStatus
 
-      let appliedStatus = currentStatus
-      let latestOrderPayload = null
-
-      for (const stepStatus of path) {
-        const response = await fetch(`${API_BASE_URL}/staff/orders/${orderId}/status`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: stepStatus, branch_code: sessionBranchCode }),
-        })
-
-        const payload = await response.json().catch(() => ({}))
-        if (!response.ok) {
-          throw new Error(payload?.message || 'Cập nhật trạng thái thất bại')
-        }
-
-        latestOrderPayload = payload?.order || null
-        appliedStatus = latestOrderPayload?.trang_thai_don_hang || stepStatus
-      }
-
+      // 3. Confirm with actual server-returned data
       setOrdersState((prev) => ({
         ...prev,
         items: prev.items.map((order) =>
           order.ma_don_hang === orderId
             ? {
                 ...order,
-                ...(latestOrderPayload || {}),
+                ...(updatedOrder || {}),
                 trang_thai_don_hang: appliedStatus,
               }
             : order,
@@ -1230,7 +1281,7 @@ export function useAdminDashboard() {
         if (!prev?.order || prev.order.ma_don_hang !== orderId) return prev
         const mergedOrder = {
           ...prev.order,
-          ...(latestOrderPayload || {}),
+          ...(updatedOrder || {}),
           trang_thai_don_hang: appliedStatus,
         }
         return {
@@ -1245,6 +1296,24 @@ export function useAdminDashboard() {
         `Đơn #${orderId.slice(0, 8).toUpperCase()} đã chuyển sang ${appliedStatus}.`,
       )
     } catch (error) {
+      // Rollback optimistic update on error
+      if (previousStatus) {
+        setOrdersState((prev) => ({
+          ...prev,
+          items: prev.items.map((order) =>
+            order.ma_don_hang === orderId
+              ? { ...order, trang_thai_don_hang: previousStatus }
+              : order,
+          ),
+        }))
+        setLastPosOrder((prev) => {
+          if (!prev?.order || prev.order.ma_don_hang !== orderId) return prev
+          return {
+            ...prev,
+            order: { ...prev.order, trang_thai_don_hang: previousStatus },
+          }
+        })
+      }
       window.alert(error.message || 'Cập nhật trạng thái thất bại')
     } finally {
       setUpdatingOrderId('')
@@ -1262,10 +1331,10 @@ export function useAdminDashboard() {
 
       const result = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error(result?.message || 'Cap nhat don hang that bai')
+        throw new Error(result?.message || 'Cập nhật đơn hàng thất bại')
       }
 
-      await refreshOrders()
+      await refreshOrders({ silent: true })
 
       setLastPosOrder((prev) => {
         if (!prev?.order || prev.order.ma_don_hang !== orderId) return prev
@@ -1290,6 +1359,12 @@ export function useAdminDashboard() {
 
   const xoaDonChoStaff = async (orderId, reason = '') => {
     setUpdatingOrderId(orderId)
+    // Optimistic removal from state
+    setOrdersState((prev) => ({
+      ...prev,
+      items: prev.items.filter((order) => order.ma_don_hang !== orderId),
+    }))
+
     try {
       const params = new URLSearchParams({ branch_code: sessionBranchCode })
       if (reason?.trim()) {
@@ -1302,11 +1377,11 @@ export function useAdminDashboard() {
 
       const result = await response.json().catch(() => ({}))
       if (!response.ok) {
-        await refreshOrders()
-        throw new Error(result?.message || 'Xoa don that bai')
+        await refreshOrders({ silent: true })
+        throw new Error(result?.message || 'Xóa đơn thất bại')
       }
 
-      await refreshOrders()
+      await refreshOrders({ silent: true })
 
       setLastPosOrder((prev) => {
         if (!prev?.order || prev.order.ma_don_hang !== orderId) return prev
@@ -1320,7 +1395,7 @@ export function useAdminDashboard() {
 
       return result
     } catch (error) {
-      await refreshOrders()
+      await refreshOrders({ silent: true })
       throw error
     } finally {
       setUpdatingOrderId('')

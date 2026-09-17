@@ -10,9 +10,11 @@ import { PromotionUsage } from './promotion-usage.entity';
 import { MembershipConfig } from './membership-config.entity';
 import { WalletTransaction } from './wallet-transaction.entity';
 import { Branch } from './branch.entity';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
+    EmailModule,
     TypeOrmModule.forFeature([
       User, 
       DeliveryAddress, 

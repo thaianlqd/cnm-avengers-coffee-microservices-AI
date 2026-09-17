@@ -2,6 +2,7 @@ import { Body, Controller, Delete, ForbiddenException, Get, Param, Patch, Post, 
 import type { Request } from 'express';
 import { CurrentUser, Roles } from './auth/auth.decorators';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from './auth/optional-jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
 import type { AuthUser } from './auth/auth.types';
 import { RealtimeAnalyticsService } from './infrastructure/analytics/realtime-analytics.service';
@@ -149,7 +150,7 @@ export class AppController {
     return this.favoriteService.chuyenTrangThaiYeuThich(customerId, payload);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(OptionalJwtAuthGuard, RolesGuard)
   @Roles('CUSTOMER', 'ADMIN')
   @Get('customers/:customerId/orders')
   getOrders(

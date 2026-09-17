@@ -10,6 +10,8 @@ import { ShipperCodRemit } from './entities/shipper-cod-remit.entity';
 import { DonHang } from '../thanh-toan/entities/don-hang.entity';
 import { ChiTietDonHang } from '../thanh-toan/entities/chi-tiet-don-hang.entity';
 import { DeliveryTracking } from './features_thaian/delivery-tracking.entity';
+import { NotificationGateway } from '../notification/notification.gateway';
+import { RedisCacheService } from '../../infrastructure/cache/redis-cache.service';
 
 @Injectable()
 export class ShipperService {
@@ -23,7 +25,159 @@ export class ShipperService {
     @InjectRepository(DonHang) private donHangRepo: Repository<DonHang>,
     @InjectRepository(ChiTietDonHang) private chiTietRepo: Repository<ChiTietDonHang>,
     @InjectRepository(DeliveryTracking) private trackingRepo: Repository<DeliveryTracking>,
+    private readonly notificationGateway: NotificationGateway,
+    private readonly redisCacheService: RedisCacheService,
   ) {}
+
+  private branchCache: { data: any[]; expiresAt: number } | null = null;
+  private readonly IDENTITY_SERVICE_URL = process.env.IDENTITY_SERVICE_URL || 'http://identity-service:3001';
+
+  async layDanhSachChiNhanh(): Promise<any[]> {
+    const now = Date.now();
+    if (this.branchCache && this.branchCache.expiresAt > now && this.branchCache.data?.length > 0) {
+      return this.branchCache.data;
+    }
+    try {
+      let response = await fetch(`${this.IDENTITY_SERVICE_URL}/users/branches/public`).catch(() => null);
+      if (!response || !response.ok) {
+        response = await fetch(`${this.IDENTITY_SERVICE_URL}/branches/public`).catch(() => null);
+      }
+      if (response && response.ok) {
+        const json: any = await response.json();
+        const list = Array.isArray(json) ? json : (json.items || json.branches || json.data || []);
+        if (list.length > 0) {
+          this.branchCache = { data: list, expiresAt: now + 15 * 60 * 1000 };
+          return list;
+        }
+      }
+    } catch (err: any) {
+      console.warn('[SHIPPER-SERVICE] Could not load branches from identity-service:', err?.message || err);
+    }
+    return this.branchCache?.data || [];
+  }
+
+  normalizeBranchKey(str?: string | null): string {
+    if (!str) return '';
+    return String(str)
+      .toUpperCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/^(AVENGERS|HIGHLANDS|CN|KVT|COSO|CHINHANH|STORE|BRANCH)[_\-\s:—–]*/gi, '')
+      .replace(/^(HCM|HN|DN|SG|BD|BNIN|HP|VT)[_\-\s:]*/gi, '')
+      .replace(/[_\-\s,.:—–]/g, '');
+  }
+
+  checkBranchMatch(branchCodeA?: string | null, branchCodeB?: string | null, branches: any[] = []): boolean {
+    if (!branchCodeA || !branchCodeB) return false;
+    const rawA = String(branchCodeA).trim().toUpperCase();
+    const rawB = String(branchCodeB).trim().toUpperCase();
+    if (rawA === rawB) return true;
+
+    const repA = rawA.replace(/[-_\s]/g, '_');
+    const repB = rawB.replace(/[-_\s]/g, '_');
+    if (repA === repB) return true;
+
+    const keyA = this.normalizeBranchKey(rawA);
+    const keyB = this.normalizeBranchKey(rawB);
+    if (keyA && keyB && keyA === keyB) {
+      return true;
+    }
+
+    if (branches.length > 0) {
+      const matchA = branches.find((b) => {
+        const bCode = String(b.ma_chi_nhanh || b.co_so_ma || b.branch_code || '').trim().toUpperCase();
+        return bCode === rawA || bCode.replace(/[-_\s]/g, '_') === repA || (keyA && this.normalizeBranchKey(bCode) === keyA);
+      });
+      const matchB = branches.find((b) => {
+        const bCode = String(b.ma_chi_nhanh || b.co_so_ma || b.branch_code || '').trim().toUpperCase();
+        return bCode === rawB || bCode.replace(/[-_\s]/g, '_') === repB || (keyB && this.normalizeBranchKey(bCode) === keyB);
+      });
+      if (matchA && matchB) {
+        const codeA = String(matchA.ma_chi_nhanh || matchA.co_so_ma || matchA.branch_code || '').trim().toUpperCase();
+        const codeB = String(matchB.ma_chi_nhanh || matchB.co_so_ma || matchB.branch_code || '').trim().toUpperCase();
+        if (codeA && codeB && codeA === codeB) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  getPossibleBranchCodes(branchCode?: string | null, branches: any[] = []): string[] {
+    if (!branchCode) return [];
+    const raw = String(branchCode).trim().toUpperCase();
+    const rep = raw.replace(/[-_\s]/g, '_');
+    const hyphen = raw.replace(/[-_\s]/g, '-');
+    const key = this.normalizeBranchKey(raw);
+
+    const codes = new Set<string>([raw, rep, hyphen]);
+
+    for (const b of branches) {
+      const bCode = String(b.ma_chi_nhanh || b.co_so_ma || b.branch_code || '').trim().toUpperCase();
+      const bKey = this.normalizeBranchKey(bCode);
+      if (bCode === raw || bCode.replace(/[-_\s]/g, '_') === rep || (bKey && key && bKey === key)) {
+        if (bCode) {
+          codes.add(bCode);
+          codes.add(bCode.replace(/[-_\s]/g, '_'));
+          codes.add(bCode.replace(/[-_\s]/g, '-'));
+        }
+      }
+    }
+
+    return Array.from(codes).filter(Boolean);
+  }
+
+  resolveBranchInfoSync(branchCode?: string, branches: any[] = []) {
+    if (!branchCode) {
+      return {
+        store_name: 'Avengers Coffee',
+        store_address: 'Hệ thống Avengers Coffee, TP. Hồ Chí Minh',
+        latitude: 10.798093,
+        longitude: 106.710982,
+      };
+    }
+
+    const cleanCode = String(branchCode).trim().toUpperCase();
+    const normKey = cleanCode.replace(/[_\-\s]/g, '');
+
+    const found = branches.find((b) => {
+      const bCode = String(b.ma_chi_nhanh || b.co_so_ma || b.branch_code || b.id || '').trim().toUpperCase();
+      const bNorm = bCode.replace(/[_\-\s]/g, '');
+      const bName = String(b.ten_chi_nhanh || '').trim().toUpperCase();
+      return bCode === cleanCode || bNorm === normKey || bName.includes(cleanCode) || bName.replace(/[_\-\s]/g, '').includes(normKey);
+    });
+
+    if (found) {
+      return {
+        store_name: found.ten_chi_nhanh || `Avengers Coffee - ${cleanCode}`,
+        store_address: found.dia_chi ? `${found.dia_chi}${found.thanh_pho ? ', ' + found.thanh_pho : ''}` : 'TP. Hồ Chí Minh',
+        latitude: found.vi_do ? Number(found.vi_do) : null,
+        longitude: found.kinh_do ? Number(found.kinh_do) : null,
+      };
+    }
+
+    // Generic parse nếu mã chưa có trong DB (tổng quát, không hardcode)
+    const readable = cleanCode
+      .replace(/^(HCM|HN|DN|SG|CN|KVT|HC)[_\-]?/i, '')
+      .replace(/[_\-]+/g, ' ')
+      .trim()
+      .toLowerCase()
+      .replace(/(^|\s)\S/g, (l) => l.toUpperCase());
+
+    const finalName = readable ? `Avengers Coffee - Chi nhánh ${readable}` : 'Avengers Coffee';
+    return {
+      store_name: finalName,
+      store_address: `Cửa hàng ${finalName}`,
+      latitude: null,
+      longitude: null,
+    };
+  }
+
+  async getBranchInfo(branchCode?: string) {
+    const branches = await this.layDanhSachChiNhanh();
+    return this.resolveBranchInfoSync(branchCode, branches);
+  }
 
   async login(username: string, password: string) {
     const normalizedUsername = String(username || '').trim();
@@ -34,13 +188,13 @@ export class ShipperService {
     }
 
     const demoPassword = String(process.env.SHIPPER_DEMO_PASSWORD || '123456').trim();
-    if (normalizedPassword !== demoPassword) {
-      throw new UnauthorizedException('Invalid shipper credentials');
-    }
 
     let shipper = await this.shipperRepo.findOne({ where: { username: normalizedUsername } });
 
     if (!shipper) {
+      if (normalizedPassword !== demoPassword) {
+        throw new UnauthorizedException('Thông tin đăng nhập tài xế không hợp lệ');
+      }
       const usernameSlug = normalizedUsername.replace(/[^a-zA-Z0-9_\-]/g, '').slice(0, 24) || 'shipper';
       shipper = this.shipperRepo.create({
         username: normalizedUsername,
@@ -50,8 +204,16 @@ export class ShipperService {
         status: 'ACTIVE',
         branch_code: 'HCM_DIEN_BIEN_PHU',
         rating: 4.8,
+        password: normalizedPassword,
       });
       shipper = await this.shipperRepo.save(shipper);
+    } else {
+      const validPassword =
+        (shipper.password && normalizedPassword === String(shipper.password).trim()) ||
+        normalizedPassword === demoPassword;
+      if (!validPassword) {
+        throw new UnauthorizedException('Mật khẩu đăng nhập tài xế không chính xác');
+      }
     }
 
     return {
@@ -70,10 +232,49 @@ export class ShipperService {
   }
 
   async updateShipperLocation(shipperId: string, latitude: number, longitude: number) {
+    const numLat = Number(latitude);
+    const numLng = Number(longitude);
+
     await this.shipperRepo.update(
       { id: shipperId },
-      { current_latitude: latitude, current_longitude: longitude, status: 'ACTIVE' },
+      { current_latitude: numLat, current_longitude: numLng, status: 'ACTIVE' },
     );
+
+    // Broadcast vị trí tài xế qua WebSocket tới khách và xóa cache Redis để thông tin luôn cập nhật tức thì
+    try {
+      const activeDeliveries = await this.deliveryRepo.find({
+        where: [
+          { shipper_id: shipperId, status: 'CONFIRMED' },
+          { shipper_id: shipperId, status: 'PICKING_UP' },
+          { shipper_id: shipperId, status: 'IN_TRANSIT' },
+        ],
+      });
+
+      for (const d of activeDeliveries) {
+        if (d.ma_don_hang) {
+          const tracking = await this.trackingRepo.findOne({ where: { ma_don_hang: d.ma_don_hang } });
+          const trackingCode = tracking?.tracking_code || null;
+
+          if (this.redisCacheService) {
+            await this.redisCacheService.delete(`delivery_lookup:${d.ma_don_hang.toUpperCase()}`).catch(() => {});
+            if (trackingCode) {
+              await this.redisCacheService.delete(`delivery_lookup:${trackingCode.toUpperCase()}`).catch(() => {});
+            }
+          }
+
+          if (this.notificationGateway) {
+            this.notificationGateway.guiViTriShipper(d.ma_don_hang, trackingCode, {
+              latitude: numLat,
+              longitude: numLng,
+              shipper_id: shipperId,
+              status: d.status,
+              updated_at: new Date().toISOString(),
+            });
+          }
+        }
+      }
+    } catch {}
+
     return { success: true, message: 'Location updated' };
   }
 
@@ -87,9 +288,26 @@ export class ShipperService {
   /**
    * Lấy danh sách đơn hàng trạng thái DANG_GIAO và chưa có shipper nào đang giao.
    * Shipper nhìn thấy pool này và tự nhận (self-assign).
-   * Chỉ loại trừ đơn đang có delivery record active (CONFIRMED, PICKING_UP, IN_TRANSIT).
+   * Phân quyền nghiêm ngặt theo chi nhánh: Shipper chỉ thấy đơn thuộc cơ sở của mình.
    */
-  async getAvailableOrders(branchCode?: string) {
+  async getAvailableOrders(branchCode?: string, shipperId?: string) {
+    const branches = await this.layDanhSachChiNhanh();
+    let effectiveBranch = branchCode ? String(branchCode).trim() : '';
+
+    if (shipperId) {
+      const shipper = await this.shipperRepo.findOne({ where: { id: shipperId } });
+      if (!shipper || !shipper.branch_code) {
+        // Tài xế chưa được gán chi nhánh -> tuyệt đối không xem đơn chi nhánh khác
+        return [];
+      }
+      effectiveBranch = shipper.branch_code.trim();
+    }
+
+    if (!effectiveBranch) {
+      // Không có chi nhánh cụ thể -> trả về rỗng để bảo vệ tính đóng gói theo chi nhánh
+      return [];
+    }
+
     // Chỉ lấy delivery records ĐANG ACTIVE (chưa kết thúc)
     const activeDeliveries = await this.deliveryRepo
       .createQueryBuilder('d')
@@ -109,32 +327,40 @@ export class ShipperService {
       query = query.andWhere('don.ma_don_hang NOT IN (:...activeIds)', { activeIds: activeOrderIds });
     }
 
-    if (branchCode) {
-      // Bỏ filter cơ sở để shipper (demo) có thể thấy tất cả đơn hàng trên hệ thống
-      // const normalized = branchCode.toUpperCase().replace(/-/g, '_');
-      // query = query.andWhere("UPPER(REPLACE(don.co_so_ma, '-', '_')) = :branchCode", { branchCode: normalized });
-    }
+    // Phân quyền nghiêm ngặt theo cơ sở: Shipper chỉ thấy đơn thuộc cơ sở của mình
+    const possibleCodes = this.getPossibleBranchCodes(effectiveBranch, branches);
+    query = query.andWhere(
+      "(UPPER(REPLACE(don.co_so_ma, '-', '_')) IN (:...possibleCodes) OR UPPER(don.co_so_ma) IN (:...possibleCodes))",
+      { possibleCodes },
+    );
 
     query = query.orderBy('don.ngay_tao', 'DESC');
 
     const orders = await query.getMany();
 
+    // Lọc lại lần cuối bằng checkBranchMatch để bảo đảm 100% không lọt đơn chi nhánh khác
+    const matchedOrders = orders.filter((o) => this.checkBranchMatch(effectiveBranch, o.co_so_ma, branches));
+
     // Lấy tracking data cho tất cả đơn để kèm toạ độ thật
-    const orderIds = orders.map(o => o.ma_don_hang);
+    const orderIds = matchedOrders.map((o) => o.ma_don_hang);
     const trackings = orderIds.length > 0
       ? await this.trackingRepo.createQueryBuilder('t')
           .where('t.ma_don_hang IN (:...orderIds)', { orderIds })
           .getMany()
       : [];
-    const trackingMap = new Map(trackings.map(t => [t.ma_don_hang, t]));
+    const trackingMap = new Map(trackings.map((t) => [t.ma_don_hang, t]));
 
-    return orders.map((o) => {
+    return matchedOrders.map((o) => {
       const tr = trackingMap.get(o.ma_don_hang);
+      const branchInfo = this.resolveBranchInfoSync(o.co_so_ma, branches);
+
       return {
         id: o.ma_don_hang,
         ma_don_hang: o.ma_don_hang,
         delivery_address: o.dia_chi_giao_hang,
-        pickup_address: `Avengers Coffee - ${o.co_so_ma || 'MAC_DINH_CHI'}`,
+        pickup_address: branchInfo.store_address,
+        store_name: branchInfo.store_name,
+        store_address: branchInfo.store_address,
         cod_amount: o.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG' ? Number(o.tong_tien || 0) : 0,
         order_value: Number(o.tong_tien || 0),
         delivery_fee: 15000,
@@ -144,12 +370,18 @@ export class ShipperService {
         branch_code: o.co_so_ma,
         trang_thai: o.trang_thai_don_hang,
         tracking: tr ? {
-          store_latitude: tr.store_latitude,
-          store_longitude: tr.store_longitude,
+          store_latitude: tr.store_latitude || branchInfo.latitude,
+          store_longitude: tr.store_longitude || branchInfo.longitude,
           destination_latitude: tr.destination_latitude,
           destination_longitude: tr.destination_longitude,
-          branch_code: tr.branch_code,
-        } : null,
+          branch_code: tr.branch_code || o.co_so_ma,
+        } : (branchInfo.latitude && branchInfo.longitude ? {
+          store_latitude: branchInfo.latitude,
+          store_longitude: branchInfo.longitude,
+          destination_latitude: null,
+          destination_longitude: null,
+          branch_code: o.co_so_ma,
+        } : null),
         items: (o.chi_tiet || []).map((item) => ({
           ten_san_pham: item.ten_san_pham,
           so_luong: item.so_luong,
@@ -174,6 +406,23 @@ export class ShipperService {
 
     if (!donHang) throw new NotFoundException('Đơn hàng không tồn tại');
 
+    const shipper = await this.shipperRepo.findOne({ where: { id: shipperId } });
+    if (!shipper) throw new NotFoundException('Tài xế không tồn tại');
+
+    if (!shipper.branch_code) {
+      throw new BadRequestException('Tài xế chưa được phân bổ chi nhánh hoạt động. Vui lòng liên hệ quản lý.');
+    }
+
+    if (!donHang.co_so_ma) {
+      throw new BadRequestException('Đơn hàng không có thông tin chi nhánh hợp lệ.');
+    }
+
+    const branches = await this.layDanhSachChiNhanh();
+    const isMatch = this.checkBranchMatch(shipper.branch_code, donHang.co_so_ma, branches);
+    if (!isMatch) {
+      throw new BadRequestException(`Bạn là tài xế trực thuộc cơ sở ${shipper.branch_code}, không thể nhận đơn hàng của cơ sở ${donHang.co_so_ma}.`);
+    }
+
     const acceptableStatuses = ['DANG_GIAO', 'DANG_CHUAN_BI', 'DA_XAC_NHAN'];
     if (!acceptableStatuses.includes(donHang.trang_thai_don_hang)) {
       throw new BadRequestException(`Đơn hàng không thể nhận ở trạng thái ${donHang.trang_thai_don_hang}`);
@@ -197,13 +446,23 @@ export class ShipperService {
       await this.deliveryRepo.update({ id: existing.id }, { status: 'CANCELLED' });
     }
 
-    // Tạo ShipperDelivery record mới
+    // Lấy thông tin chi nhánh thực tế từ database
+    const branchInfo = await this.getBranchInfo(donHang.co_so_ma);
+
+    // Lấy tracking data để gán toạ độ chính xác cho đơn
+    const tracking = await this.trackingRepo.findOne({ where: { ma_don_hang: maDonHang } });
+
+    // Tạo ShipperDelivery record mới kèm toạ độ điểm lấy và điểm giao
     const delivery = this.deliveryRepo.create({
       ma_don_hang: maDonHang,
       shipper_id: shipperId,
       status: 'CONFIRMED',
       delivery_address: donHang.dia_chi_giao_hang,
       delivery_fee: 15000,
+      delivery_latitude: tracking?.destination_latitude ? Number(tracking.destination_latitude) : null,
+      delivery_longitude: tracking?.destination_longitude ? Number(tracking.destination_longitude) : null,
+      pickup_latitude: tracking?.store_latitude ? Number(tracking.store_latitude) : branchInfo.latitude,
+      pickup_longitude: tracking?.store_longitude ? Number(tracking.store_longitude) : branchInfo.longitude,
     });
 
     const saved = await this.deliveryRepo.save(delivery);
@@ -216,19 +475,31 @@ export class ShipperService {
     // Tăng total_deliveries của shipper
     await this.shipperRepo.increment({ id: shipperId }, 'total_deliveries', 1);
 
-    // Kèm tracking data để app có toạ độ ngay
-    const tracking = await this.trackingRepo.findOne({ where: { ma_don_hang: maDonHang } });
+    this.notificationGateway.phatSongDonHangChoShipper({
+      action: 'ORDER_ACCEPTED',
+      orderId: maDonHang,
+      shipperId,
+      branchCode: donHang.co_so_ma,
+    });
 
     return {
       success: true,
       delivery: {
         ...saved,
+        store_name: branchInfo.store_name,
+        store_address: branchInfo.store_address,
+        pickup_address: branchInfo.store_address,
         tracking: tracking ? {
-          store_latitude: tracking.store_latitude,
-          store_longitude: tracking.store_longitude,
+          store_latitude: tracking.store_latitude || branchInfo.latitude,
+          store_longitude: tracking.store_longitude || branchInfo.longitude,
           destination_latitude: tracking.destination_latitude,
           destination_longitude: tracking.destination_longitude,
-        } : null,
+        } : (branchInfo.latitude && branchInfo.longitude ? {
+          store_latitude: branchInfo.latitude,
+          store_longitude: branchInfo.longitude,
+          destination_latitude: null,
+          destination_longitude: null,
+        } : null),
       },
       message: 'Nhận đơn thành công',
     };
@@ -269,20 +540,36 @@ export class ShipperService {
       }
     }
 
+    const branches = await this.layDanhSachChiNhanh();
+
     return deliveries.map(d => {
       const o = orders2.find(x => x.ma_don_hang === d.ma_don_hang);
       const tracking = trackings.find(x => x.ma_don_hang === d.ma_don_hang);
+      const branchInfo = this.resolveBranchInfoSync(o?.co_so_ma, branches);
+      const storeLat = tracking?.store_latitude || d.pickup_latitude || branchInfo.latitude;
+      const storeLng = tracking?.store_longitude || d.pickup_longitude || branchInfo.longitude;
+
       return {
         ...d,
         cod_amount: o?.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG' ? Number(o.tong_tien || 0) : 0,
         order_value: Number(o?.tong_tien || 0),
         co_so_ma: o?.co_so_ma,
+        pickup_address: branchInfo.store_address,
+        store_name: branchInfo.store_name,
+        store_address: branchInfo.store_address,
+        pickup_latitude: storeLat,
+        pickup_longitude: storeLng,
         tracking: tracking ? {
-          store_latitude: tracking.store_latitude,
-          store_longitude: tracking.store_longitude,
+          store_latitude: storeLat,
+          store_longitude: storeLng,
           destination_latitude: tracking.destination_latitude,
           destination_longitude: tracking.destination_longitude
-        } : null
+        } : (storeLat && storeLng ? {
+          store_latitude: storeLat,
+          store_longitude: storeLng,
+          destination_latitude: d.delivery_latitude,
+          destination_longitude: d.delivery_longitude
+        } : null)
       };
     });
   }
@@ -315,18 +602,36 @@ export class ShipperService {
     const order_value = Number(donHang?.tong_tien || 0);
 
     const tracking = await this.trackingRepo.findOne({ where: { ma_don_hang: delivery.ma_don_hang } });
+    const branchInfo = await this.getBranchInfo(donHang?.co_so_ma);
+
+    const destLat = tracking?.destination_latitude ? Number(tracking.destination_latitude) : (delivery.delivery_latitude ? Number(delivery.delivery_latitude) : null);
+    const destLng = tracking?.destination_longitude ? Number(tracking.destination_longitude) : (delivery.delivery_longitude ? Number(delivery.delivery_longitude) : null);
+    const storeLat = tracking?.store_latitude ? Number(tracking.store_latitude) : (delivery.pickup_latitude ? Number(delivery.pickup_latitude) : branchInfo.latitude);
+    const storeLng = tracking?.store_longitude ? Number(tracking.store_longitude) : (delivery.pickup_longitude ? Number(delivery.pickup_longitude) : branchInfo.longitude);
 
     return { 
       ...delivery, 
+      delivery_latitude: destLat,
+      delivery_longitude: destLng,
+      pickup_latitude: storeLat,
+      pickup_longitude: storeLng,
+      pickup_address: branchInfo.store_address,
+      store_name: branchInfo.store_name,
+      store_address: branchInfo.store_address,
       order: donHang, 
       cod_amount, 
       order_value,
       tracking: tracking ? {
-        store_latitude: tracking.store_latitude,
-        store_longitude: tracking.store_longitude,
-        destination_latitude: tracking.destination_latitude,
-        destination_longitude: tracking.destination_longitude
-      } : null
+        store_latitude: storeLat,
+        store_longitude: storeLng,
+        destination_latitude: destLat,
+        destination_longitude: destLng
+      } : (storeLat && storeLng ? {
+        store_latitude: storeLat,
+        store_longitude: storeLng,
+        destination_latitude: destLat,
+        destination_longitude: destLng
+      } : null)
     };
   }
 
@@ -465,8 +770,8 @@ export class ShipperService {
     const shipper = await this.shipperRepo.findOne({ where: { id: shipperId } });
     if (!shipper) throw new BadRequestException('Shipper not found');
     if (!shipper.current_latitude || !shipper.current_longitude) {
-      // Trả về available orders thay vì throw
-      return this.getAvailableOrders(shipper.branch_code || undefined);
+      // Trả về available orders của cơ sở shipper thay vì throw
+      return this.getAvailableOrders(shipper.branch_code || undefined, shipperId);
     }
 
     const deliveries = await this.deliveryRepo
@@ -548,7 +853,7 @@ export class ShipperService {
   async getNotifications(shipperId: string) {
     // Check pending available orders for this shipper's branch
     const shipper = await this.shipperRepo.findOne({ where: { id: shipperId } });
-    const availableCount = shipper ? (await this.getAvailableOrders(shipper.branch_code || undefined)).length : 0;
+    const availableCount = shipper ? (await this.getAvailableOrders(shipper.branch_code || undefined, shipperId)).length : 0;
 
     const notifications: Array<{ id: string; title: string; content: string; created_at: Date; type: string }> = [];
 
@@ -593,7 +898,7 @@ export class ShipperService {
     const shipper = this.shipperRepo.create({
       username: data.username,
       full_name: data.full_name,
-      phone: data.phone || '0900000000',
+      phone: data.phone || data.phone_number || '0900000000',
       email: data.email || null,
       branch_code: data.branch_code || 'MAC_DINH_CHI',
       status: data.status || 'ACTIVE',
@@ -607,21 +912,61 @@ export class ShipperService {
     const shipper = await this.shipperRepo.findOne({ where: { id } });
     if (!shipper) throw new NotFoundException('Shipper không tồn tại');
 
+    if (data.username && data.username !== shipper.username) {
+      const existing = await this.shipperRepo.findOne({ where: { username: data.username } });
+      if (existing && existing.id !== id) {
+        throw new BadRequestException('Tên đăng nhập (username) đã tồn tại');
+      }
+      shipper.username = data.username;
+    }
     if (data.full_name) shipper.full_name = data.full_name;
-    if (data.phone) shipper.phone = data.phone;
+    if (data.phone !== undefined || data.phone_number !== undefined) {
+      shipper.phone = data.phone || data.phone_number || '';
+    }
     if (data.email !== undefined) shipper.email = data.email;
     if (data.branch_code !== undefined) shipper.branch_code = data.branch_code;
     if (data.status) shipper.status = data.status;
     if (data.vehicle_type) shipper.vehicle_type = data.vehicle_type;
     if (data.vehicle_plate) shipper.vehicle_plate = data.vehicle_plate;
+    if (data.password) shipper.password = String(data.password).trim();
 
     return this.shipperRepo.save(shipper);
+  }
+
+  async resetAccount(id: string, newPassword?: string) {
+    const shipper = await this.shipperRepo.findOne({ where: { id } });
+    if (!shipper) throw new NotFoundException('Tài xế không tồn tại');
+
+    const defaultPass = String(newPassword || '123456').trim();
+    shipper.password = defaultPass;
+    shipper.status = 'ACTIVE';
+    await this.shipperRepo.save(shipper);
+
+    // Xóa cache nhóm đơn kẹt trong Redis để reset sạch phiên giao dịch
+    try {
+      await this.redisCacheService.delete(`shipper:batch:${id}`);
+      await this.redisCacheService.delete(`shipper:active:${id}`);
+    } catch (err: any) {
+      console.warn('[resetAccount] Failed to clear redis cache:', err?.message || err);
+    }
+
+    return {
+      success: true,
+      message: `Đã reset tài khoản tài xế @${shipper.username} thành công. Mật khẩu mặc định là: ${defaultPass}`,
+      default_password: defaultPass,
+      shipper,
+    };
   }
 
   async deleteShipper(id: string) {
     const shipper = await this.shipperRepo.findOne({ where: { id } });
     if (!shipper) throw new NotFoundException('Shipper không tồn tại');
-    await this.shipperRepo.remove(shipper);
+    try {
+      await this.shipperRepo.remove(shipper);
+    } catch {
+      shipper.status = 'INACTIVE';
+      await this.shipperRepo.save(shipper);
+    }
     return { success: true, message: 'Đã xóa shipper thành công' };
   }
 
@@ -712,8 +1057,20 @@ export class ShipperService {
     const shipper = await this.shipperRepo.findOne({ where: { id: shipperId } });
     if (!shipper) throw new NotFoundException('Shipper không tồn tại');
 
+    // Chặn nếu nhân viên gán đơn khác chi nhánh của shipper
+    if (shipper.branch_code && donHang.co_so_ma) {
+      const branches = await this.layDanhSachChiNhanh();
+      const isMatch = this.checkBranchMatch(shipper.branch_code, donHang.co_so_ma, branches);
+      if (!isMatch) {
+        throw new BadRequestException(`Tài xế ${shipper.full_name} thuộc cơ sở ${shipper.branch_code}, không thể phân công đơn của cơ sở ${donHang.co_so_ma}.`);
+      }
+    }
+
     // Hủy delivery record cũ nếu có
     await this.deliveryRepo.update({ ma_don_hang: maDonHang }, { status: 'CANCELLED' });
+
+    // Lấy tracking data để gán toạ độ
+    const tracking = await this.trackingRepo.findOne({ where: { ma_don_hang: maDonHang } });
 
     // Tạo delivery record mới
     const delivery = this.deliveryRepo.create({
@@ -722,6 +1079,10 @@ export class ShipperService {
       status: 'CONFIRMED',
       delivery_address: donHang.dia_chi_giao_hang,
       delivery_fee: 15000,
+      delivery_latitude: tracking?.destination_latitude ? Number(tracking.destination_latitude) : null,
+      delivery_longitude: tracking?.destination_longitude ? Number(tracking.destination_longitude) : null,
+      pickup_latitude: tracking?.store_latitude ? Number(tracking.store_latitude) : null,
+      pickup_longitude: tracking?.store_longitude ? Number(tracking.store_longitude) : null,
     });
     const saved = await this.deliveryRepo.save(delivery);
 
@@ -853,6 +1214,10 @@ export class ShipperService {
    * Gom đơn DANG_GIAO cùng co_so_ma thành batch, kèm tracking data.
    */
   async getBatchOrders(shipperId: string) {
+    const branches = await this.layDanhSachChiNhanh();
+    const shipper = await this.shipperRepo.findOne({ where: { id: shipperId } });
+    if (!shipper || !shipper.branch_code) return [];
+
     // Lấy tất cả đơn available (chưa có shipper active)
     const activeDeliveries = await this.deliveryRepo
       .createQueryBuilder('d')
@@ -869,10 +1234,19 @@ export class ShipperService {
     if (activeOrderIds.length > 0) {
       query = query.andWhere('don.ma_don_hang NOT IN (:...activeIds)', { activeIds: activeOrderIds });
     }
+
+    // Chỉ lấy đơn hàng thuộc chi nhánh của shipper
+    const possibleCodes = this.getPossibleBranchCodes(shipper.branch_code, branches);
+    query = query.andWhere(
+      "(UPPER(REPLACE(don.co_so_ma, '-', '_')) IN (:...possibleCodes) OR UPPER(don.co_so_ma) IN (:...possibleCodes))",
+      { possibleCodes },
+    );
+
     query = query.orderBy('don.ngay_tao', 'DESC');
     const orders = await query.getMany();
+    const matchedOrders = orders.filter((o) => this.checkBranchMatch(shipper.branch_code, o.co_so_ma, branches));
 
-    if (orders.length === 0) return [];
+    if (matchedOrders.length === 0) return [];
 
     // Lấy tracking data
     const orderIds = orders.map(o => o.ma_don_hang);
@@ -955,15 +1329,17 @@ export class ShipperService {
    * POST /shippers/:shipperId/cod-remit
    * Shipper xác nhận đã nộp tiền COD cho cửa hàng, tạo bản ghi chờ xác nhận
    */
-  async submitCodRemit(shipperId: string, amount: number, branchCode: string, note?: string) {
+  async submitCodRemit(shipperId: string, amount: number, branchCode?: string, note?: string) {
     const shipper = await this.shipperRepo.findOne({ where: { id: shipperId } });
     if (!shipper) throw new NotFoundException('Shipper not found');
+
+    const effectiveBranchCode = (branchCode || shipper.branch_code || 'MAC_DINH_CHI').trim();
 
     const wallet = await this.walletRepo.findOne({ where: { shipper_id: shipperId } });
     if (!wallet) throw new BadRequestException('Ví không tồn tại');
 
     const currentDetails = typeof wallet.cod_details === 'object' && wallet.cod_details !== null ? wallet.cod_details : {};
-    let actualCodHoldingForBranch = Number(currentDetails[branchCode] || 0);
+    let actualCodHoldingForBranch = Number(currentDetails[effectiveBranchCode] || 0);
 
     // Tính tổng COD đã được tracking
     const trackedCodSum = Object.values(currentDetails).reduce((sum, val) => sum + Number(val || 0), 0);
@@ -994,8 +1370,8 @@ export class ShipperService {
 
     // Trừ tiền ngay lập tức khỏi ví shipper để UI không hiển thị nữa (tránh shipper bấm nộp 2 lần)
     wallet.cod_holding = Math.max(0, Number(wallet.cod_holding) - amount);
-    if (branchCode !== 'LEGACY_COD' && typeof wallet.cod_details === 'object' && wallet.cod_details !== null) {
-      const currentDetails = { ...wallet.cod_details };
+    if (branchCode && branchCode !== 'LEGACY_COD' && typeof wallet.cod_details === 'object' && wallet.cod_details !== null) {
+      const currentDetails = { ...wallet.cod_details } as Record<string, number>;
       const currentBranchCod = Number(currentDetails[branchCode] || 0);
       currentDetails[branchCode] = Math.max(0, currentBranchCod - amount);
       wallet.cod_details = currentDetails;
@@ -1006,8 +1382,257 @@ export class ShipperService {
   }
 
   async acceptBatchOrders(shipperId: string, orderIds: string[]) {
-    // Stub implementation
-    return { success: true, message: 'Đã nhận batch orders thành công (Stub)', orderIds };
+    if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
+      throw new BadRequestException('Vui lòng chọn ít nhất 1 đơn hàng để ghép đơn.');
+    }
+
+    const shipper = await this.shipperRepo.findOne({ where: { id: shipperId } });
+    if (!shipper) throw new NotFoundException('Tài xế không tồn tại.');
+
+    const branches = await this.layDanhSachChiNhanh();
+    const acceptedDeliveries: any[] = [];
+    let commonBranchInfo: any = null;
+
+    for (const orderId of orderIds) {
+      try {
+        const donHang = await this.donHangRepo.findOne({
+          where: { ma_don_hang: orderId },
+          relations: ['chi_tiet'],
+        });
+        if (!donHang) continue;
+
+        if (!commonBranchInfo) {
+          const bCode = (donHang.co_so_ma || shipper.branch_code) || undefined;
+          commonBranchInfo = await this.getBranchInfo(bCode);
+        }
+
+        let delivery = await this.deliveryRepo.findOne({
+          where: { ma_don_hang: orderId },
+        });
+
+        const tracking = await this.trackingRepo.findOne({ where: { ma_don_hang: orderId } });
+
+        if (delivery) {
+          delivery.status = 'CONFIRMED';
+          delivery.shipper_id = shipperId;
+          delivery.is_batched = true;
+          if (!delivery.delivery_latitude && tracking?.destination_latitude) {
+            delivery.delivery_latitude = Number(tracking.destination_latitude);
+          }
+          if (!delivery.delivery_longitude && tracking?.destination_longitude) {
+            delivery.delivery_longitude = Number(tracking.destination_longitude);
+          }
+          if (!delivery.pickup_latitude) {
+            delivery.pickup_latitude = tracking?.store_latitude ? Number(tracking.store_latitude) : commonBranchInfo?.latitude;
+          }
+          if (!delivery.pickup_longitude) {
+            delivery.pickup_longitude = tracking?.store_longitude ? Number(tracking.store_longitude) : commonBranchInfo?.longitude;
+          }
+          await this.deliveryRepo.save(delivery);
+        } else {
+          delivery = this.deliveryRepo.create({
+            ma_don_hang: orderId,
+            shipper_id: shipperId,
+            status: 'CONFIRMED',
+            delivery_address: donHang.dia_chi_giao_hang,
+            delivery_fee: 15000,
+            is_batched: true,
+            delivery_latitude: tracking?.destination_latitude ? Number(tracking.destination_latitude) : null,
+            delivery_longitude: tracking?.destination_longitude ? Number(tracking.destination_longitude) : null,
+            pickup_latitude: tracking?.store_latitude ? Number(tracking.store_latitude) : commonBranchInfo?.latitude,
+            pickup_longitude: tracking?.store_longitude ? Number(tracking.store_longitude) : commonBranchInfo?.longitude,
+          });
+          await this.deliveryRepo.save(delivery);
+          await this.shipperRepo.increment({ id: shipperId }, 'total_deliveries', 1);
+        }
+
+        if (donHang.trang_thai_don_hang !== 'DANG_GIAO') {
+          await this.donHangRepo.update({ ma_don_hang: orderId }, { trang_thai_don_hang: 'DANG_GIAO' });
+        }
+
+        acceptedDeliveries.push({
+          id: delivery.id,
+          ma_don_hang: donHang.ma_don_hang,
+          status: delivery.status,
+          delivery_address: donHang.dia_chi_giao_hang,
+          delivery_fee: Number(delivery.delivery_fee || 15000),
+          delivery_latitude: delivery.delivery_latitude,
+          delivery_longitude: delivery.delivery_longitude,
+          pickup_latitude: delivery.pickup_latitude,
+          pickup_longitude: delivery.pickup_longitude,
+          customer_name: donHang.ten_khach_hang || 'Khách hàng',
+          customer_phone: donHang.guest_phone || '',
+          order_value: Number(donHang.tong_tien || 0),
+          cod_amount: donHang.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG' ? Number(donHang.tong_tien || 0) : 0,
+          tracking: tracking ? {
+            store_latitude: tracking.store_latitude,
+            store_longitude: tracking.store_longitude,
+            destination_latitude: tracking.destination_latitude,
+            destination_longitude: tracking.destination_longitude,
+          } : null,
+          items: (donHang.chi_tiet || []).map(i => ({ ten_san_pham: i.ten_san_pham, so_luong: i.so_luong })),
+        });
+      } catch (err: any) {
+        console.warn(`[acceptBatchOrders] Lỗi khi gán đơn ${orderId}:`, err?.message || err);
+      }
+    }
+
+    if (acceptedDeliveries.length === 0) {
+      throw new BadRequestException('Không thể nhận đơn hàng nào trong danh sách đã chọn.');
+    }
+
+    const batchId = `batch-${Date.now()}`;
+    const totalCod = acceptedDeliveries.reduce((sum, d) => sum + (d.cod_amount || 0), 0);
+    const totalFee = acceptedDeliveries.reduce((sum, d) => sum + (d.delivery_fee || 15000), 0);
+
+    const batch = {
+      id: batchId,
+      batch_code: batchId.toUpperCase(),
+      shipper_id: shipperId,
+      branch_code: shipper.branch_code,
+      store_name: commonBranchInfo?.store_name || 'Avengers Coffee',
+      store_address: commonBranchInfo?.store_address || 'Cửa hàng Avengers Coffee',
+      store_latitude: commonBranchInfo?.latitude || 10.7834,
+      store_longitude: commonBranchInfo?.longitude || 106.6802,
+      total_orders: acceptedDeliveries.length,
+      total_cod: totalCod,
+      total_fee: totalFee,
+      status: 'IN_PROGRESS',
+      created_at: new Date().toISOString(),
+      deliveries: acceptedDeliveries,
+    };
+
+    if (this.redisCacheService) {
+      await this.redisCacheService.setJson(`shipper:batch:${shipperId}`, batch, 86400).catch(() => {});
+    }
+
+    this.notificationGateway.phatSongDonHangChoShipper({
+      action: 'BATCH_CREATED',
+      orderIds,
+      shipperId,
+      branchCode: batch.branch_code,
+    });
+
+    return {
+      success: true,
+      message: `Đã ghép thành công ${acceptedDeliveries.length} đơn hàng`,
+      batch,
+    };
+  }
+
+  async getActiveBatch(shipperId: string) {
+    if (this.redisCacheService) {
+      const cached = await this.redisCacheService.getJson<any>(`shipper:batch:${shipperId}`).catch(() => null);
+      if (cached && cached.deliveries && cached.deliveries.length > 0) {
+        const activeCount = await this.deliveryRepo.count({
+          where: {
+            shipper_id: shipperId,
+            is_batched: true,
+            status: 'CONFIRMED',
+          },
+        });
+        if (activeCount > 0) {
+          return { active: true, batch: cached };
+        }
+      }
+    }
+
+    const batchedDeliveries = await this.deliveryRepo.find({
+      where: {
+        shipper_id: shipperId,
+        is_batched: true,
+      },
+    });
+
+    const activeDeliveries = batchedDeliveries.filter(d => ['CONFIRMED', 'PICKING_UP', 'IN_TRANSIT'].includes(d.status));
+    if (activeDeliveries.length === 0) {
+      return { active: false, batch: null };
+    }
+
+    const shipper = await this.shipperRepo.findOne({ where: { id: shipperId } });
+    const orderIds = activeDeliveries.map(d => d.ma_don_hang);
+    const donHangs = await this.donHangRepo.find({
+      where: orderIds.map(id => ({ ma_don_hang: id })),
+      relations: ['chi_tiet'],
+    });
+    const donHangMap = new Map(donHangs.map(o => [o.ma_don_hang, o]));
+
+    const trackings = await this.trackingRepo.find({
+      where: orderIds.map(id => ({ ma_don_hang: id })),
+    });
+    const trackingMap = new Map(trackings.map(t => [t.ma_don_hang, t]));
+
+    const activeBranchCode = (shipper?.branch_code || donHangs[0]?.co_so_ma) || undefined;
+    const branchInfo = await this.getBranchInfo(activeBranchCode);
+
+    const enrichedDeliveries = activeDeliveries.map(d => {
+      const order = donHangMap.get(d.ma_don_hang);
+      const tracking = trackingMap.get(d.ma_don_hang);
+      return {
+        id: d.id,
+        ma_don_hang: d.ma_don_hang,
+        status: d.status,
+        delivery_address: d.delivery_address || order?.dia_chi_giao_hang,
+        delivery_fee: Number(d.delivery_fee || 15000),
+        delivery_latitude: d.delivery_latitude || (tracking?.destination_latitude ? Number(tracking.destination_latitude) : null),
+        delivery_longitude: d.delivery_longitude || (tracking?.destination_longitude ? Number(tracking.destination_longitude) : null),
+        pickup_latitude: d.pickup_latitude || branchInfo.latitude,
+        pickup_longitude: d.pickup_longitude || branchInfo.longitude,
+        customer_name: order?.ten_khach_hang || 'Khách hàng',
+        customer_phone: order?.guest_phone || '',
+        order_value: Number(order?.tong_tien || 0),
+        cod_amount: order?.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG' ? Number(order?.tong_tien || 0) : 0,
+        tracking: tracking ? {
+          store_latitude: tracking.store_latitude,
+          store_longitude: tracking.store_longitude,
+          destination_latitude: tracking.destination_latitude,
+          destination_longitude: tracking.destination_longitude,
+        } : null,
+        items: (order?.chi_tiet || []).map(i => ({ ten_san_pham: i.ten_san_pham, so_luong: i.so_luong })),
+      };
+    });
+
+    const batch = {
+      id: `batch-${Date.now()}`,
+      batch_code: `BATCH-${(shipper?.branch_code || 'HCM').replace(/_/g, '')}`,
+      shipper_id: shipperId,
+      branch_code: shipper?.branch_code,
+      store_name: branchInfo.store_name,
+      store_address: branchInfo.store_address,
+      store_latitude: branchInfo.latitude || 10.7834,
+      store_longitude: branchInfo.longitude || 106.6802,
+      total_orders: enrichedDeliveries.length,
+      total_cod: enrichedDeliveries.reduce((sum, d) => sum + d.cod_amount, 0),
+      total_fee: enrichedDeliveries.reduce((sum, d) => sum + d.delivery_fee, 0),
+      status: 'IN_PROGRESS',
+      created_at: new Date().toISOString(),
+      deliveries: enrichedDeliveries,
+    };
+
+    if (this.redisCacheService) {
+      await this.redisCacheService.setJson(`shipper:batch:${shipperId}`, batch, 86400).catch(() => {});
+    }
+
+    return { active: true, batch };
+  }
+
+  async cancelBatch(shipperId: string, batchId?: string) {
+    await this.deliveryRepo.update(
+      { shipper_id: shipperId, is_batched: true },
+      { is_batched: false }
+    );
+    if (this.redisCacheService) {
+      await this.redisCacheService.delete(`shipper:batch:${shipperId}`).catch(() => {});
+    }
+    this.notificationGateway.phatSongDonHangChoShipper({
+      action: 'BATCH_CANCELLED',
+      batchId,
+      shipperId,
+    });
+    return {
+      success: true,
+      message: 'Đã hủy nhóm ghép đơn. Các đơn hàng đã được tách ra để giao riêng lẻ.',
+    };
   }
 
   /**
