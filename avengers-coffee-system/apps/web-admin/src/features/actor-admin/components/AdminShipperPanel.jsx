@@ -91,6 +91,25 @@ export function AdminShipperPanel({ branchOptions = [] }) {
   const [saving, setSaving] = useState(false)
   const [searchQ, setSearchQ] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
+  const [filterBranch, setFilterBranch] = useState('')
+  const [internalBranches, setInternalBranches] = useState([])
+  const effectiveBranches = branchOptions.length > 0 ? branchOptions : internalBranches
+
+  useEffect(() => {
+    if (branchOptions.length === 0) {
+      apiFetch('/users/branches/public')
+        .then(res => {
+          const list = res?.data || res?.items || res || []
+          if (Array.isArray(list)) {
+            setInternalBranches(list.map(b => ({
+              code: b.ma_chi_nhanh || b.ma_co_so || b.code || b.id,
+              name: b.ten_chi_nhanh || b.ten_co_so || b.name || b.code
+            })))
+          }
+        })
+        .catch(() => {})
+    }
+  }, [branchOptions])
 
   // Config state
   const [config, setConfig] = useState({
@@ -125,6 +144,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
       const q = new URLSearchParams()
       if (searchQ) q.set('q', searchQ)
       if (filterStatus) q.set('status', filterStatus)
+      if (filterBranch) q.set('branch_code', filterBranch)
       const res = await apiFetch(`/shippers/all?${q.toString()}`)
       setShippers(Array.isArray(res) ? res : res?.items || res?.data || [])
     } catch (e) {
@@ -132,7 +152,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
     } finally {
       setShippersLoading(false)
     }
-  }, [searchQ, filterStatus])
+  }, [searchQ, filterStatus, filterBranch])
 
   const loadConfig = useCallback(async () => {
     try {
@@ -216,12 +236,22 @@ export function AdminShipperPanel({ branchOptions = [] }) {
       if (editingId) {
         await apiFetch(`/shippers/${editingId}`, {
           method: 'PATCH',
-          body: JSON.stringify({ ...form, password: form.password || undefined }),
+          body: JSON.stringify({
+            ...form,
+            phone: form.phone_number,
+            password: form.password || undefined,
+          }),
         })
         alert('Đã cập nhật thông tin nhân viên giao hàng!')
       } else {
         if (!form.password) { alert('Cần nhập mật khẩu khi tạo tài khoản mới'); setSaving(false); return }
-        await apiFetch('/shippers', { method: 'POST', body: JSON.stringify(form) })
+        await apiFetch('/shippers', {
+          method: 'POST',
+          body: JSON.stringify({
+            ...form,
+            phone: form.phone_number,
+          }),
+        })
         alert('Tạo tài khoản giao hàng thành công!')
       }
       setForm({ ...BLANK_FORM })
@@ -319,7 +349,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {/* Filter & Search */}
           <div style={{ background: '#ffffff', padding: '1rem', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 240px 140px', gap: '1rem', alignItems: 'center' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 200px 180px 130px', gap: '0.85rem', alignItems: 'center' }}>
               {/* Search Input Box */}
               <div className="delivery-input-wrapper">
                 <Search size={18} style={{ color: '#64748b', flexShrink: 0 }} />
@@ -329,6 +359,17 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                   placeholder="Tìm theo username, họ tên, số điện thoại..."
                   onKeyDown={e => e.key === 'Enter' && loadShippers()}
                 />
+              </div>
+
+              {/* Filter Branch Select Box */}
+              <div className="delivery-input-wrapper">
+                <Filter size={16} style={{ color: '#64748b', flexShrink: 0 }} />
+                <select value={filterBranch} onChange={e => setFilterBranch(e.target.value)}>
+                  <option value="">Tất cả cơ sở</option>
+                  {effectiveBranches.map(b => (
+                    <option key={b.code || b.id} value={b.code || b.id}>{b.name || b.code}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Filter Status Select Box */}
@@ -463,8 +504,8 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                   style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.875rem', background: '#fff' }}
                 >
                   <option value="">Chọn chi nhánh phụ trách</option>
-                  {branchOptions.map(b => (
-                    <option key={b.code} value={b.code}>{b.name}</option>
+                  {effectiveBranches.map(b => (
+                    <option key={b.code || b.id} value={b.code || b.id}>{b.name || b.code}</option>
                   ))}
                 </select>
               </label>
@@ -555,7 +596,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                         </td>
                         <td style={{ padding: '0.85rem 1rem' }}>
                           <div style={{ color: '#334155' }}>{s.email || '—'}</div>
-                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{s.phone_number || '—'}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{s.phone || s.phone_number || '—'}</div>
                         </td>
                         <td style={{ padding: '0.85rem 1rem' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -605,7 +646,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                                   username: s.username,
                                   full_name: s.full_name,
                                   email: s.email || '',
-                                  phone_number: s.phone_number || '',
+                                  phone_number: s.phone || s.phone_number || '',
                                   vehicle_type: s.vehicle_type || 'MOTORBIKE',
                                   vehicle_plate: s.vehicle_plate || '',
                                   branch_code: s.branch_code || '',

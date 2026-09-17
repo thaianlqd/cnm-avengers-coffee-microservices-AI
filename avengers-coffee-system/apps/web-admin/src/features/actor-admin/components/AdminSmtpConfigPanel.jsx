@@ -283,7 +283,7 @@ export function AdminSmtpConfigPanel() {
                 Cấu hình máy chủ gửi Email (SMTP)
               </h3>
               <span style={{ fontSize: '0.8125rem', color: '#64748b' }}>
-                Hệ thống tự động gửi hóa đơn & liên kết theo dõi đơn hàng cho khách hàng
+                Đồng bộ máy chủ gửi thư tự động cho toàn bộ hệ thống Avengers Coffee
               </span>
             </div>
           </div>
@@ -374,6 +374,28 @@ export function AdminSmtpConfigPanel() {
         {/* Form Body */}
         <form onSubmit={handleSave} style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1.35rem' }}>
           
+          {/* Synchronized System Notice Banner */}
+          <div
+            style={{
+              padding: '0.9rem 1.25rem',
+              borderRadius: '12px',
+              backgroundColor: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              fontSize: '0.85rem',
+              color: '#166534',
+              fontWeight: '600',
+              boxShadow: '0 2px 8px rgba(22, 163, 74, 0.05)'
+            }}
+          >
+            <ShieldCheck size={20} color="#15803d" style={{ flexShrink: 0 }} />
+            <span>
+              Cấu hình này tự động đồng bộ hóa và áp dụng tức thời cho toàn bộ hệ thống: Hóa đơn đơn hàng, Cập nhật trạng thái giao nhận, Thẻ quà tặng điện tử, Mã OTP đặt lại mật khẩu và Hồ sơ nhượng quyền Kiosk.
+            </span>
+          </div>
+
           {/* Quick Presets Bar */}
           <div
             style={{
@@ -565,7 +587,7 @@ export function AdminSmtpConfigPanel() {
                   onChange={(e) => setForm((p) => ({ ...p, secure: e.target.value === 'SSL' }))}
                 >
                   <option value="TLS">STARTTLS (Khuyên dùng cho Cổng 587)</option>
-                  <option value="SSL">SSL / TLS Trực tiếp (Dành cho Cổng 465)</option>
+                  <option value="SSL">SSL hoặc TLS Trực tiếp (Dành cho Cổng 465)</option>
                 </select>
               </div>
             </div>

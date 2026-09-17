@@ -14,6 +14,7 @@ import * as bcrypt from 'bcrypt';
 import { createHash, randomInt, randomUUID } from 'crypto';
 import nodemailer, { type Transporter } from 'nodemailer';
 import type { AuthUser } from '../../auth/auth.types';
+import { MailSenderService } from '../email/mail-sender.service';
 
 const RESET_CODE_EXPIRE_MINUTES = 10;
 const RESET_CODE_COOLDOWN_SECONDS = 60;
@@ -56,6 +57,7 @@ export class UserService implements OnModuleInit {
     private khuVucRepo: Repository<KhuVuc>,
     @InjectRepository(WalletTransaction)
     private walletTxRepo: Repository<WalletTransaction>,
+    private readonly mailSender: MailSenderService,
   ) {}
 
   private readonly ORDER_SERVICE_URL = process.env.ORDER_SERVICE_URL || 'http://order-service:3005';
@@ -248,39 +250,8 @@ export class UserService implements OnModuleInit {
     return String(randomInt(0, 1_000_000)).padStart(6, '0');
   }
 
-  private getOrCreateTransporter() {
-    if (this.mailTransporter) {
-      return this.mailTransporter;
-    }
-
-    const host = String(process.env.SMTP_HOST || '').trim();
-    const user = String(process.env.SMTP_USER || '').trim();
-    const pass = String(process.env.SMTP_PASS || '').trim();
-    if (!host || !user || !pass) {
-      return null;
-    }
-
-    const port = Number(process.env.SMTP_PORT || 587);
-    this.mailTransporter = nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465,
-      auth: { user, pass },
-    });
-
-    return this.mailTransporter;
-  }
-
   private async guiMailDatLaiMatKhau(email: string, fullName: string, code: string) {
-    const transporter = this.getOrCreateTransporter();
-    const appName = String(process.env.APP_NAME || 'The Avengers House').trim();
-    const fromEmail = String(process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@avengershouse.local').trim();
-
-    if (!transporter) {
-      console.warn(`[forgot-password][DEV] OTP for ${email}: ${code}`);
-      return;
-    }
-
+    const appName = String(process.env.APP_NAME || 'Avengers Coffee').trim();
     const heroImage = 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1200&h=480&q=85';
     const footerImage = 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=1200&h=260&q=85';
 
@@ -299,11 +270,13 @@ export class UserService implements OnModuleInit {
         <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 36px 0;">
           <tr>
             <td align="center">
+              
+              <!-- Main Email Shell (600px standard) -->
               <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 25px 60px rgba(15, 23, 42, 0.14); border: 1px solid #e2e8f0;">
                 
-                <!-- 1. TOP BRAND HEADER -->
+                <!-- 1. TOP LUXURY BRAND HEADER -->
                 <tr>
-                  <td style="padding: 22px 32px; background-color: #170c08; text-align: center; border-bottom: 2px solid #d97706;">
+                  <td style="padding: 24px 32px; background-color: #170c08; text-align: center; border-bottom: 2px solid #d97706;">
                     <table width="100%" border="0" cellspacing="0" cellpadding="0">
                       <tr>
                         <td align="center">
@@ -314,10 +287,10 @@ export class UserService implements OnModuleInit {
                               </td>
                               <td style="vertical-align: middle; padding-left: 14px; text-align: left;">
                                 <div style="font-size: 21px; font-weight: 900; color: #ffffff; letter-spacing: 2px; line-height: 1.1; text-transform: uppercase;">
-                                  ${appName}
+                                  ${appName.toUpperCase()}
                                 </div>
                                 <div style="font-size: 11px; font-weight: 700; color: #f59e0b; letter-spacing: 2.2px; text-transform: uppercase; margin-top: 3px;">
-                                  THẾ MỚI ĐẬM VỊ • XÁC THỰC BẢO MẬT
+                                  THẾ MỚI ĐẬM VỊ • ĐẬM VỊ ĐAM MÊ
                                 </div>
                               </td>
                             </tr>
@@ -328,38 +301,26 @@ export class UserService implements OnModuleInit {
                   </td>
                 </tr>
 
-                <!-- 2. HERO BANNER IMAGE -->
+                <!-- 2. HIGH-RES HERO BANNER IMAGE -->
                 <tr>
                   <td style="padding: 0; line-height: 0; background-color: #170c08;">
-                    <img src="${heroImage}" width="600" style="display: block; width: 100%; max-width: 600px; height: auto; border: 0; outline: none; object-fit: cover;" alt="Avengers Coffee Security Banner" />
+                    <img src="${heroImage}" width="600" style="display: block; width: 100%; max-width: 600px; height: auto; border: 0; outline: none; object-fit: cover;" alt="Avengers Coffee Banner" />
                   </td>
                 </tr>
 
-                <!-- 3. HERO TITLE SECTION -->
+                <!-- 3. HERO TITLE & BADGE SECTION -->
                 <tr>
                   <td style="padding: 0; background: linear-gradient(180deg, #7f1d1d 0%, #4c0519 100%); text-align: center;">
-                    <div style="padding: 28px 24px 28px 24px;">
+                    <div style="padding: 32px 24px 30px 24px;">
                       <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.15); padding: 5px 16px; border-radius: 20px; font-size: 11px; font-weight: 800; color: #fef08a; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; border: 1px solid rgba(254, 240, 138, 0.4);">
-                        ● XÁC THỰC TÀI KHOẢN
+                        BẢO MẬT TÀI KHOẢN
                       </div>
                       <h1 style="margin: 0 0 6px 0; font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 2px 8px rgba(0,0,0,0.4);">
                         MÃ XÁC THỰC ĐẶT LẠI MẬT KHẨU
                       </h1>
-                      <p style="margin: 0; font-size: 13px; color: #fef08a; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
-                        YÊU CẦU BẢO MẬT TÀI KHOẢN KHÁCH HÀNG
+                      <p style="margin: 0 0 20px 0; font-size: 13px; color: #fef08a; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                        HIỆU LỰC TRONG VÒNG ${RESET_CODE_EXPIRE_MINUTES} PHÚT
                       </p>
-                    </div>
-                  </td>
-                </tr>
-
-                <!-- 4. GREETING & BIG OTP BOX -->
-                <tr>
-                  <td style="padding: 36px 36px 24px 36px; text-align: center;">
-                    <h2 style="margin: 0 0 14px 0; font-size: 18px; font-weight: 800; color: #0f172a;">
-                      Xin chào ${fullName || 'Quý khách'},
-                    </h2>
-                    <p style="font-size: 14.5px; color: #334155; line-height: 1.75; margin: 0 0 24px 0;">
-                      Bạn vừa gửi yêu cầu đặt lại mật khẩu cho tài khoản tại <strong>${appName}</strong>. Dưới đây là mã xác thực OTP dùng một lần của bạn:
                     </p>
 
                     <!-- Big OTP Code Box -->
@@ -440,13 +401,122 @@ export class UserService implements OnModuleInit {
       </html>
     `;
 
-    await transporter.sendMail({
-      from: `${appName} <${fromEmail}>`,
-      to: email,
-      subject: `[${appName}] Mã OTP đặt lại mật khẩu của bạn: ${code}`,
-      text: `Mã OTP đặt lại mật khẩu của bạn là ${code}. Mã có hiệu lực trong ${RESET_CODE_EXPIRE_MINUTES} phút.`,
-      html,
-    });
+    try {
+      await this.mailSender.sendMail({
+        to: email,
+        subject: `[${appName}] Mã OTP đặt lại mật khẩu của bạn: ${code}`,
+        text: `Mã OTP đặt lại mật khẩu của bạn là ${code}. Mã có hiệu lực trong ${RESET_CODE_EXPIRE_MINUTES} phút.`,
+        html,
+      });
+      console.log(`[forgot-password] OTP email sent successfully to ${email}`);
+    } catch (err: any) {
+      console.warn(`[forgot-password] Mail send error (${err.message}). Fallback OTP for ${email}: ${code}`);
+    }
+  }
+
+  private async guiMailChaoMungHoiVien(email: string, fullName: string) {
+    const appName = String(process.env.APP_NAME || 'Avengers Coffee').trim();
+    const clientBaseUrl = process.env.CUSTOMER_WEB_URL || process.env.WEB_CUSTOMER_BASE_URL || 'http://localhost:5173';
+    const heroImage = 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&h=480&q=85';
+
+    const html = `
+      <!DOCTYPE html>
+      <html lang="vi">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Chào Mừng Gia Nhập Avengers Coffee</title>
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap" rel="stylesheet">
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 36px 0;">
+          <tr>
+            <td align="center">
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 25px 60px rgba(15, 23, 42, 0.14); border: 1px solid #e2e8f0;">
+                
+                <!-- HEADER -->
+                <tr>
+                  <td style="padding: 24px 32px; background-color: #170c08; text-align: center; border-bottom: 2px solid #d97706;">
+                    <div style="font-size: 21px; font-weight: 900; color: #ffffff; letter-spacing: 2px; text-transform: uppercase;">
+                      AVENGERS COFFEE
+                    </div>
+                    <div style="font-size: 11px; font-weight: 700; color: #f59e0b; letter-spacing: 2.2px; text-transform: uppercase; margin-top: 3px;">
+                      THẾ MỚI ĐẬM VỊ • ĐẬM VỊ ĐAM MÊ
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- HERO IMAGE -->
+                <tr>
+                  <td style="padding: 0; line-height: 0; background-color: #170c08;">
+                    <img src="${heroImage}" width="600" style="display: block; width: 100%; max-width: 600px; height: auto;" alt="Banner" />
+                  </td>
+                </tr>
+
+                <!-- HERO BANNER -->
+                <tr>
+                  <td style="padding: 30px 24px; background: linear-gradient(180deg, #15803d 0%, #166534 100%); text-align: center;">
+                    <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.2); padding: 5px 16px; border-radius: 20px; font-size: 11px; font-weight: 800; color: #ffffff; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px;">
+                      HỘI VIÊN CHÍNH THỨC
+                    </div>
+                    <h1 style="margin: 0 0 6px 0; font-size: 22px; font-weight: 900; color: #ffffff; text-transform: uppercase;">
+                      CHÀO MỪNG BẠN GIA NHẬP HỘI VIÊN!
+                    </h1>
+                    <p style="margin: 0; font-size: 13px; color: #bbf7d0; font-weight: 700; text-transform: uppercase;">
+                      HÀNG NGÀN ĐẶC QUYỀN & ƯU ĐÃI ĐANG CHỜ ĐÓN
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- CONTENT -->
+                <tr>
+                  <td style="padding: 36px 36px 20px 36px; text-align: center;">
+                    <h2 style="margin: 0 0 14px 0; font-size: 19px; font-weight: 800; color: #0f172a;">
+                      Kính chào ${fullName || 'Quý khách'},
+                    </h2>
+                    <p style="font-size: 14.5px; color: #334155; line-height: 1.75; margin: 0 0 20px 0;">
+                      Cảm ơn bạn đã đăng ký tài khoản tại <strong>Avengers Coffee</strong>. Từ hôm nay, mỗi đơn hàng của bạn đều được tích lũy điểm thưởng để đổi sang các voucher đồ uống hấp dẫn cùng nhiều quà tặng sinh nhật đặc quyền!
+                    </p>
+
+                    <div style="margin: 24px 0;">
+                      <a href="${clientBaseUrl}" style="background: linear-gradient(135deg, #15803d 0%, #16a34a 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 12px; font-weight: 800; font-size: 14px; display: inline-block; letter-spacing: 0.5px; box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);">
+                        KHÁM PHÁ MENU & ĐẶT MÓN NGAY
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- FOOTER -->
+                <tr>
+                  <td style="padding: 24px 32px; background-color: #170c08; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <p style="margin: 0 0 6px 0; font-size: 12px; color: #94a3b8;">
+                      Hotline: <strong style="color: #fef08a;">1800 6936</strong> • Email: <strong style="color: #ffffff;">support@avengers.coffee</strong>
+                    </p>
+                    <p style="margin: 0; font-size: 11px; color: #64748b;">
+                      Bản quyền © 2026 ${appName}. Tất cả quyền được bảo hộ.
+                    </p>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+
+    try {
+      await this.mailSender.sendMail({
+        to: email,
+        subject: `[${appName}] Chào mừng bạn gia nhập Hội viên Avengers Coffee!`,
+        text: `Chào mừng ${fullName || 'bạn'} gia nhập Hội viên Avengers Coffee!`,
+        html,
+      });
+      console.log(`[register] Welcome email sent successfully to ${email}`);
+    } catch (err: any) {
+      console.warn(`[register] Could not send welcome email to ${email}: ${err.message}`);
+    }
   }
 
   private taoAccessToken(user: User) {
@@ -507,6 +577,8 @@ export class UserService implements OnModuleInit {
       map_url: branch.map_url,
       trang_thai: branch.trang_thai,
       loai_diem_ban: branch.loai_diem_ban,
+      vi_do: branch.vi_do != null ? Number(branch.vi_do) : null,
+      kinh_do: branch.kinh_do != null ? Number(branch.kinh_do) : null,
       ngay_tao: branch.ngay_tao,
       ngay_cap_nhat: branch.ngay_cap_nhat,
     };
@@ -542,6 +614,13 @@ export class UserService implements OnModuleInit {
     });
 
     const savedUser = await this.userRepo.save(newUser);
+
+    if (savedUser.email && savedUser.email.includes('@')) {
+      this.guiMailChaoMungHoiVien(savedUser.email, savedUser.ho_ten || 'Hội viên mới').catch((err) => {
+        console.warn('[register] Welcome email send error:', err.message);
+      });
+    }
+
     return { message: 'Đăng ký thành công!', userId: savedUser.ma_nguoi_dung };
   }
 

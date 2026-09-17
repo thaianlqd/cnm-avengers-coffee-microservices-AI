@@ -19,19 +19,20 @@ export function DeliveriesScreen() {
   const deliveriesQuery = useQuery({
     queryKey: ['shipper-mobile', 'deliveries', shipper?.id, selectedFilter],
     queryFn: async () => {
-      if (!shipper?.id) return demoDeliveries
+      if (!shipper?.id) return []
       try {
         const params = selectedFilter === 'Tất cả' ? {} : { status: selectedFilter }
         const response = await apiClient.get(`/shippers/${shipper.id}/deliveries`, { params })
-        return response?.length ? response : demoDeliveries
+        return Array.isArray(response) ? response : (response?.data || [])
       } catch {
-        return demoDeliveries
+        return []
       }
     },
+    enabled: Boolean(shipper?.id),
   })
 
   const list = useMemo(() => {
-    const data = deliveriesQuery.data || demoDeliveries
+    const data = deliveriesQuery.data || []
     if (selectedFilter === 'Tất cả') return data
     return data.filter((item) => item.status === selectedFilter)
   }, [deliveriesQuery.data, selectedFilter])

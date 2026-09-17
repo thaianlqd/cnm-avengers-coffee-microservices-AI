@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
   Alert,
   TextInput,
@@ -14,6 +13,7 @@ import {
   Platform,
   StatusBar,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -21,6 +21,10 @@ import { useShipper } from '../context/ShipperContext'
 import apiClient from '../lib/apiClient'
 import { colors, radius, spacing, shadows, typography } from '../theme'
 import { formatCurrency, deliveryStatusLabels, deliveryStatusColors } from '../lib/shipperData'
+import * as Location from 'expo-location'
+import { formatBranchName, formatBranchFullTitle, formatBranchAddress, setGlobalBranchList } from '../lib/branchHelper'
+import { openGoogleMapsNavigation } from '../lib/navigationHelper'
+import { startBackgroundLocationTracking } from '../lib/backgroundLocationManager'
 
 export function OrderDetailScreen({ route, navigation }) {
   const { deliveryId } = route.params
@@ -42,7 +46,9 @@ export function OrderDetailScreen({ route, navigation }) {
     queryFn: async () => {
       try {
         const response = await apiClient.get('/users/branches/public')
-        return response?.data || response || { items: [] }
+        const payload = response?.data || response || { items: [] }
+        setGlobalBranchList(payload)
+        return payload
       } catch (error) {
         return { items: [] }
       }
@@ -55,7 +61,7 @@ export function OrderDetailScreen({ route, navigation }) {
       setLoadingAction(action)
       return apiClient.post(`/shippers/${shipper.id}/deliveries/${deliveryId}/${action}`, payload)
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['deliveryDetail', deliveryId] })
       queryClient.invalidateQueries({ queryKey: ['availableOrders'] })
       queryClient.invalidateQueries({ queryKey: ['acceptedOrders'] })
@@ -65,6 +71,10 @@ export function OrderDetailScreen({ route, navigation }) {
       setLoadingAction(null)
       setFailModalVisible(false)
       setFailReason('')
+
+      if (variables?.action === 'start') {
+        navigation.navigate('Map', { delivery: { ...delivery, status: 'IN_TRANSIT' } })
+      }
     },
     onError: (err) => {
       setLoadingAction(null)
@@ -94,12 +104,33 @@ export function OrderDetailScreen({ route, navigation }) {
     updateStatusMutation.mutate({ action: 'fail', payload: { reason: failReason.trim() } })
   }
 
-  const openNavigation = (address) => {
-    const encodedAddress = encodeURIComponent(address || '')
-    const googleMapsUrl = `https://maps.google.com/maps?daddr=${encodedAddress}`
-    const appleMapsUrl = `maps:?daddr=${encodedAddress}`
-    const url = Platform.OS === 'ios' ? appleMapsUrl : googleMapsUrl
-    Linking.openURL(url).catch(() => Linking.openURL(googleMapsUrl))
+  const customerAddress = String(
+    delivery?.delivery_address ||
+    delivery?.dia_chi_giao_hang ||
+    delivery?.order?.dia_chi_giao_hang ||
+    delivery?.tracking?.delivery_address ||
+    ''
+  ).trim();
+
+  const openNavigation = async (address) => {
+    try {
+      const cur = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      if (cur?.coords && shipper?.id) {
+        apiClient.patch(`/shippers/${shipper.id}/location`, {
+          latitude: cur.coords.latitude,
+          longitude: cur.coords.longitude,
+        }).catch(() => {});
+      }
+    } catch (e) {}
+
+    if (shipper?.id && (delivery?.status === 'IN_TRANSIT' || delivery?.status === 'PICKING_UP')) {
+      startBackgroundLocationTracking(shipper.id).catch(() => {});
+    }
+
+    openGoogleMapsNavigation(address || customerAddress, {
+      latitude: delivery?.delivery_latitude || delivery?.tracking?.destination_latitude,
+      longitude: delivery?.delivery_longitude || delivery?.tracking?.destination_longitude,
+    });
   }
 
   const callCustomer = (phone) => {
@@ -189,26 +220,36 @@ export function OrderDetailScreen({ route, navigation }) {
     }
     if (delivery.status === 'IN_TRANSIT') {
       return (
-        <View style={styles.actionRow}>
+        <View style={{ gap: 10 }}>
           <TouchableOpacity
-            style={[styles.primaryBtn, { flex: 1, backgroundColor: colors.success, marginRight: 8 }]}
-            onPress={() => {
-              Alert.alert('Xác nhận giao thành công', 'Bạn đã giao hàng và thu tiền đầy đủ?', [
-                { text: 'Đóng', style: 'cancel' },
-                { text: 'Xác nhận ĐÃ GIAO', onPress: () => handleAction('complete') },
-              ])
-            }}
-            disabled={loadingAction !== null}
+            style={[styles.primaryBtn, { backgroundColor: '#4338CA', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }]}
+            onPress={() => navigation.navigate('Map', { delivery })}
           >
-            {loadingAction === 'complete' ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>GIAO THÀNH CÔNG</Text>}
+            <Ionicons name="navigate-circle-outline" size={22} color="#fff" />
+            <Text style={styles.btnText}>MỞ BẢN ĐỒ VÀ ĐỊNH VỊ GPS TRỰC TIẾP</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.primaryBtn, { flex: 1, backgroundColor: colors.danger, marginLeft: 8 }]}
-            onPress={() => setFailModalVisible(true)}
-            disabled={loadingAction !== null}
-          >
-            {loadingAction === 'fail' ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>GIAO THẤT BẠI</Text>}
-          </TouchableOpacity>
+
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={[styles.primaryBtn, { flex: 1, backgroundColor: colors.success, marginRight: 8 }]}
+              onPress={() => {
+                Alert.alert('Xác nhận giao thành công', 'Bạn đã giao hàng và thu tiền đầy đủ?', [
+                  { text: 'Đóng', style: 'cancel' },
+                  { text: 'Xác nhận ĐÃ GIAO', onPress: () => handleAction('complete') },
+                ])
+              }}
+              disabled={loadingAction !== null}
+            >
+              {loadingAction === 'complete' ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>GIAO THÀNH CÔNG</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.primaryBtn, { flex: 1, backgroundColor: colors.danger, marginLeft: 8 }]}
+              onPress={() => setFailModalVisible(true)}
+              disabled={loadingAction !== null}
+            >
+              {loadingAction === 'fail' ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>GIAO THẤT BẠI</Text>}
+            </TouchableOpacity>
+          </View>
         </View>
       )
     }
@@ -216,25 +257,23 @@ export function OrderDetailScreen({ route, navigation }) {
   }
 
   const getBranchInfo = () => {
-    const code = delivery?.order?.co_so_ma || delivery?.branch_code || shipper?.branch_code || 'MAC_DINH_CHI';
-    let branch = publicBranchPayload?.items?.find(b => (b.ma_chi_nhanh || b.co_so_ma || b.branch_code) === code);
-    
-    let address = branch?.dia_chi || branch?.address || delivery?.pickup_address;
-    if (!address) {
-      address = branch?.ten_chi_nhanh ? `Avengers Coffee - ${branch.ten_chi_nhanh}` : `Avengers Coffee - ${code}`;
-    }
+    const code = delivery?.order?.co_so_ma || delivery?.branch_code || shipper?.branch_code;
+    const name = (delivery?.store_name && !delivery.store_name.includes('_'))
+      ? (delivery.store_name.toLowerCase().includes('avengers coffee') ? delivery.store_name : `Avengers Coffee - ${delivery.store_name}`)
+      : formatBranchFullTitle(code, publicBranchPayload);
 
-    return {
-      name: branch ? (branch.ten_chi_nhanh || branch.ten_co_so || branch.name) : `Cửa hàng (Mã: ${code})`,
-      address
-    }
+    const address = (delivery?.store_address && !delivery.store_address.includes('_'))
+      ? delivery.store_address
+      : formatBranchAddress(code, publicBranchPayload, delivery?.pickup_address);
+
+    return { name, address };
   }
   const branchInfo = getBranchInfo();
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primaryDark} />
-      
+
       <LinearGradient colors={colors.gradientRed} style={styles.header}>
         <SafeAreaView>
           <View style={styles.headerTop}>
@@ -275,7 +314,7 @@ export function OrderDetailScreen({ route, navigation }) {
             <Ionicons name="map" size={18} color={colors.primary} />
             <Text style={styles.sectionTitle}>Hành trình</Text>
           </View>
-          
+
           <View style={styles.addressContainer}>
             <View style={styles.addressRow}>
               <View style={[styles.addressIconWrap, { backgroundColor: '#F3F4F6' }]}>
@@ -293,7 +332,7 @@ export function OrderDetailScreen({ route, navigation }) {
               </View>
               <View style={styles.addressContent}>
                 <Text style={styles.addressLabel}>Điểm giao hàng</Text>
-                <Text style={styles.addressValue}>{delivery.delivery_address || 'Chưa cập nhật'}</Text>
+                <Text style={styles.addressValue}>{customerAddress || 'Chưa cập nhật'}</Text>
               </View>
             </View>
           </View>
@@ -307,11 +346,11 @@ export function OrderDetailScreen({ route, navigation }) {
               <Text style={[styles.actionChipText, { color: colors.text }]}>Xem bản đồ</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.actionChip, { flex: 1, backgroundColor: colors.successBg, borderWidth: 1, borderColor: colors.success + '40' }]}
-              onPress={() => openNavigation(delivery.delivery_address)}
+              style={[styles.actionChip, { flex: 1, backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#93C5FD' }]}
+              onPress={() => openNavigation(customerAddress)}
             >
-              <Ionicons name="navigate" size={18} color={colors.success} />
-              <Text style={[styles.actionChipText, { color: colors.success }]}>Chỉ đường</Text>
+              <Ionicons name="navigate" size={18} color="#2563EB" />
+              <Text style={[styles.actionChipText, { color: '#2563EB', fontWeight: '700' }]}>Mở Google Maps</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -323,7 +362,7 @@ export function OrderDetailScreen({ route, navigation }) {
               <Ionicons name="person" size={18} color={colors.primary} />
               <Text style={styles.sectionTitle}>Người nhận</Text>
             </View>
-            
+
             <View style={styles.customerRow}>
               <View style={styles.customerInfo}>
                 <Text style={styles.customerName}>{delivery.customer_name || 'Khách hàng'}</Text>
@@ -393,7 +432,7 @@ export function OrderDetailScreen({ route, navigation }) {
               </TouchableOpacity>
             </View>
             <Text style={styles.modalDesc}>Vui lòng chọn hoặc nhập lý do để hệ thống ghi nhận.</Text>
-            
+
             <TextInput
               style={styles.modalInput}
               multiline
@@ -404,7 +443,7 @@ export function OrderDetailScreen({ route, navigation }) {
               onChangeText={setFailReason}
               textAlignVertical="top"
             />
-            
+
             <View style={styles.modalActions}>
               <TouchableOpacity
                 style={[styles.modalBtn, styles.modalBtnConfirm, loadingAction && styles.primaryBtnDisabled]}
@@ -428,7 +467,7 @@ export function OrderDetailScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   loadingWrap: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  
+
   // Header
   header: {
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
@@ -446,7 +485,7 @@ const styles = StyleSheet.create({
   exceptionBtn: { padding: spacing.sm, width: 40, alignItems: 'center' },
 
   scrollContent: { padding: spacing.md, paddingBottom: spacing.xxl * 2 },
-  
+
   // Cards
   card: {
     backgroundColor: colors.surface,
@@ -459,13 +498,13 @@ const styles = StyleSheet.create({
   },
   cardSectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md, gap: 8 },
   sectionTitle: { ...typography.h4, color: colors.text, fontSize: 16 },
-  
+
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.lg },
   orderIdLabel: { fontSize: 12, color: colors.muted, marginBottom: 2 },
   orderId: { ...typography.h3, color: colors.text, fontSize: 20 },
   statusBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.sm },
   statusText: { color: colors.surface, fontSize: 12, fontWeight: '800' },
-  
+
   // Stepper
   stepperContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   stepItem: { alignItems: 'center', width: 60 },
@@ -477,7 +516,7 @@ const styles = StyleSheet.create({
   stepLabel: { fontSize: 10, color: colors.muted, textAlign: 'center', fontWeight: '600' },
   stepLabelActive: { color: colors.primary, fontWeight: '800' },
   stepLine: { flex: 1, height: 2, backgroundColor: colors.borderLight, marginHorizontal: -8, marginTop: -15 },
-  
+
   // Address
   addressContainer: { marginBottom: spacing.md },
   addressRow: { flexDirection: 'row', alignItems: 'flex-start' },
@@ -486,14 +525,14 @@ const styles = StyleSheet.create({
   addressLabel: { fontSize: 12, color: colors.muted, fontWeight: '600' },
   addressValue: { ...typography.bodyBold, color: colors.text, marginTop: 2 },
   addressLine: { width: 2, height: 24, backgroundColor: colors.border, marginLeft: 13, marginVertical: 4 },
-  
+
   mapActionsRow: { flexDirection: 'row', marginTop: spacing.sm },
   actionChip: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     paddingVertical: 10, borderRadius: radius.md, gap: 6,
   },
   actionChipText: { fontWeight: '800', fontSize: 13 },
-  
+
   // Customer
   customerRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bg, padding: spacing.md, borderRadius: radius.md },
   customerInfo: { flex: 1 },
@@ -503,7 +542,7 @@ const styles = StyleSheet.create({
     width: 44, height: 44, borderRadius: 22, backgroundColor: colors.success,
     alignItems: 'center', justifyContent: 'center', ...shadows.success,
   },
-  
+
   // Fees
   feeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: spacing.xs },
   feeLabel: { color: colors.textSecondary, fontSize: 14 },
@@ -511,10 +550,10 @@ const styles = StyleSheet.create({
   codLabel: { color: colors.text, fontWeight: '800', fontSize: 14 },
   codValue: { color: colors.danger, fontWeight: '900', fontSize: 20 },
   divider: { height: 1, backgroundColor: colors.borderLight, marginVertical: spacing.md, borderStyle: 'dashed' },
-  
+
   noteBox: { backgroundColor: colors.bg, padding: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.borderLight },
   noteText: { color: colors.textSecondary, fontStyle: 'italic', fontSize: 14, lineHeight: 20 },
-  
+
   // Footer
   footer: { padding: spacing.lg, backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.borderLight, ...shadows.lg },
   primaryBtn: {
@@ -524,7 +563,7 @@ const styles = StyleSheet.create({
   primaryBtnDisabled: { opacity: 0.5 },
   actionRow: { flexDirection: 'row', justifyContent: 'space-between' },
   btnText: { color: colors.surface, fontWeight: '900', fontSize: 14, letterSpacing: 0.5 },
-  
+
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   modalBox: { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: spacing.lg },

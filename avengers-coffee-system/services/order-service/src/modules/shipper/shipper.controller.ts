@@ -22,8 +22,12 @@ export class ShipperController {
   }
 
   @Get('all')
-  async getAllShippers(@Query('branch_code') branchCode?: string) {
-    return this.shipperService.getAllShippers(branchCode);
+  async getAllShippers(
+    @Query('branch_code') branchCode?: string,
+    @Query('status') status?: string,
+    @Query('q') searchKeyword?: string,
+  ) {
+    return this.shipperService.getAllShippers(branchCode, status, searchKeyword);
   }
 
   @Get('config')
@@ -66,20 +70,48 @@ export class ShipperController {
     return this.shipperService.handleExceptionAction(id, action, body?.manager_note);
   }
 
-  @Post()
-  async createShipper(@Body() body: any) {
-    return this.shipperService.createShipper(body);
+  // ============ COD REMITS (Admin list & confirm) ============
+
+  @Get('cod-remits')
+  async getCodRemits(
+    @Query('branch_code') branchCode?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.shipperService.getCodRemits(branchCode, status);
   }
 
-  // ============ AVAILABLE ORDERS POOL ============
+  @Post('cod-remits/:remitId/confirm')
+  async confirmCodRemit(
+    @Param('remitId') remitId: string,
+    @Body() body: { confirmed_by: string; action: 'CONFIRMED' | 'REJECTED' },
+  ) {
+    return this.shipperService.confirmCodRemit(remitId, body.confirmed_by, body.action);
+  }
+
+  // ============ AVAILABLE ORDERS POOL & ASSIGN ============
 
   /**
    * GET /shippers/available-orders?branch_code=MAC_DINH_CHI
    * Lấy danh sách đơn DANG_GIAO chưa có shipper → Shipper nhìn thấy và tự nhận
    */
+  /**
+   * GET /shippers/available-orders?branch_code=MAC_DINH_CHI&shipper_id=...
+   * Lấy danh sách đơn DANG_GIAO chưa có shipper thuộc cơ sở của shipper
+   */
   @Get('available-orders')
-  async getAvailableOrders(@Query('branch_code') branchCode?: string) {
-    return this.shipperService.getAvailableOrders(branchCode);
+  async getAvailableOrders(
+    @Query('branch_code') branchCode?: string,
+    @Query('shipper_id') shipperId?: string,
+  ) {
+    return this.shipperService.getAvailableOrders(branchCode, shipperId);
+  }
+
+  @Get(':shipperId/available-orders')
+  async getShipperAvailableOrders(
+    @Param('shipperId') shipperId: string,
+    @Query('branch_code') branchCode?: string,
+  ) {
+    return this.shipperService.getAvailableOrders(branchCode, shipperId);
   }
 
   /**
@@ -91,13 +123,52 @@ export class ShipperController {
     return this.shipperService.markOrderReadyForDelivery(orderId);
   }
 
-  // ============ MANAGER: Assign order manually ============
-
   @Post('assign-order')
   async assignOrderToShipper(
     @Body() body: { ma_don_hang: string; shipper_id: string; manager_id?: string },
   ) {
     return this.shipperService.assignOrderToShipper(body.ma_don_hang, body.shipper_id, body.manager_id || 'system');
+  }
+
+  // ============ SHIPPER CRUD ============
+
+  @Post()
+  async createShipper(@Body() body: any) {
+    return this.shipperService.createShipper(body);
+  }
+
+  @Get(':id')
+  async getShipperById(@Param('id') id: string) {
+    return this.shipperService.getShipperProfile(id);
+  }
+
+  @Patch(':id')
+  async updateShipper(
+    @Param('id') id: string,
+    @Body() body: any,
+  ) {
+    return this.shipperService.updateShipperInfo(id, body);
+  }
+
+  @Put(':id')
+  async updateShipperPut(
+    @Param('id') id: string,
+    @Body() body: any,
+  ) {
+    return this.shipperService.updateShipperInfo(id, body);
+  }
+
+  @Delete(':id')
+  async deleteShipper(@Param('id') id: string) {
+    return this.shipperService.deleteShipper(id);
+  }
+
+  @Post(':id/reset-account')
+  async resetShipperAccount(
+    @Param('id') id: string,
+    @Body() body: { password?: string },
+  ) {
+    return this.shipperService.resetAccount(id, body?.password);
   }
 
   @Post(':shipperId/deliveries')
@@ -256,15 +327,36 @@ export class ShipperController {
     return this.shipperService.getBatchOrders(shipperId);
   }
 
+  @Get(':shipperId/active-batch')
+  async getActiveBatch(@Param('shipperId') shipperId: string) {
+    return this.shipperService.getActiveBatch(shipperId);
+  }
+
+  @Post(':shipperId/batch-orders/create')
+  async createBatchOrders(
+    @Param('shipperId') shipperId: string,
+    @Body() body: { order_ids?: string[] },
+  ) {
+    const orderIds = body?.order_ids || [];
+    return this.shipperService.acceptBatchOrders(shipperId, orderIds);
+  }
+
   @Post(':shipperId/batch-orders/:batchId/accept')
   async acceptBatchOrders(
     @Param('shipperId') shipperId: string,
     @Param('batchId') batchId: string,
     @Body() body: { order_ids?: string[] },
   ) {
-    // Lấy order_ids từ body hoặc từ batchId parse
     const orderIds = body?.order_ids || [];
     return this.shipperService.acceptBatchOrders(shipperId, orderIds);
+  }
+
+  @Post(':shipperId/batch-orders/:batchId/cancel')
+  async cancelBatch(
+    @Param('shipperId') shipperId: string,
+    @Param('batchId') batchId: string,
+  ) {
+    return this.shipperService.cancelBatch(shipperId, batchId);
   }
 
   // ============ COD REMIT (Nộp tiền mặt về chi nhánh) ============
@@ -281,28 +373,5 @@ export class ShipperController {
     if (!body.branch_code) throw new BadRequestException('Vui lòng chọn cơ sở để nộp tiền');
     return this.shipperService.submitCodRemit(shipperId, body.amount || 0, body.branch_code, body.note);
   }
-
-  /**
-   * GET /shippers/cod-remits?branch_code=XXX&status=PENDING
-   * Admin xem danh sách phiếu nộp COD
-   */
-  @Get('cod-remits')
-  async getCodRemits(
-    @Query('branch_code') branchCode?: string,
-    @Query('status') status?: string,
-  ) {
-    return this.shipperService.getCodRemits(branchCode, status);
-  }
-
-  /**
-   * POST /shippers/cod-remits/:remitId/confirm
-   * Admin xác nhận hoặc từ chối phiếu nộp COD
-   */
-  @Post('cod-remits/:remitId/confirm')
-  async confirmCodRemit(
-    @Param('remitId') remitId: string,
-    @Body() body: { confirmed_by: string; action: 'CONFIRMED' | 'REJECTED' },
-  ) {
-    return this.shipperService.confirmCodRemit(remitId, body.confirmed_by, body.action);
-  }
 }
+

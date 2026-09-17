@@ -5,7 +5,7 @@ import { GiftCard } from './entities/gift-card.entity';
 import { PurchaseGiftCardDto, RedeemGiftCardDto } from './dto/gift-card.dto';
 import { GiftCardTheme } from './entities/gift-card-theme.entity';
 import { CustomerWalletService } from '../customer-wallet/customer-wallet.service';
-import { buildBrandedEmailHtml } from '../smtp/smtp.service';
+import { buildBrandedEmailHtml, SmtpService } from '../smtp/smtp.service';
 @Injectable()
 export class GiftCardService {
   private readonly logger = new Logger(GiftCardService.name);
@@ -16,6 +16,7 @@ export class GiftCardService {
     @InjectRepository(GiftCardTheme)
     private readonly themeRepo: Repository<GiftCardTheme>,
     private readonly walletService: CustomerWalletService,
+    private readonly smtpService: SmtpService,
   ) {}
 
   async onModuleInit() {
@@ -169,49 +170,15 @@ export class GiftCardService {
     };
   }
 
-  // Tiện ích gửi mail Ethereal (Miễn phí, không cần cấu hình tài khoản thật) hoặc Mail thật (nếu có cấu hình SMTP)
+  // Gửi email thẻ quà tặng E-Gift Card đồng bộ từ máy chủ SMTP cấu hình
   private async sendGiftCardEmail(card: GiftCard) {
     try {
-      let nodemailer: any;
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        nodemailer = require('nodemailer');
-      } catch (e) {
-        this.logger.warn('Nodemailer module is not installed, skipping email sending.');
+      if (!card.receiver_email || !card.receiver_email.includes('@')) {
+        this.logger.warn(`No valid receiver email for gift card ${card.code}, skipping.`);
         return null;
       }
-      let transporter;
-      let isDemo = false;
 
-      if (process.env.SMTP_HOST && process.env.SMTP_USER) {
-        // Gửi qua SMTP thật (Gmail, v.v...)
-        transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
-          port: Number(process.env.SMTP_PORT) || 587,
-          secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
-          auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-          },
-        });
-        this.logger.log('Using REAL SMTP to send email');
-      } else {
-        // Fallback: Dùng Ethereal để test (nó sẽ cấp cho một link web để xem email đã gửi)
-        isDemo = true;
-        const testAccount = await nodemailer.createTestAccount();
-        transporter = nodemailer.createTransport({
-          host: 'smtp.ethereal.email',
-          port: 587,
-          secure: false,
-          auth: {
-            user: testAccount.user,
-            pass: testAccount.pass,
-          },
-        });
-        this.logger.log('Using Ethereal (Demo) to send email');
-      }
-
-      // Tạo HTML template Pizza-Hut style cực xịn
+      // Tạo HTML template phong cách Avengers Coffee cực xịn
       const formattedValue = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(card.value);
       const clientBaseUrl = process.env.CUSTOMER_WEB_URL || process.env.WEB_CUSTOMER_BASE_URL || 'http://localhost:5173';
       const redeemUrl = `${clientBaseUrl}/?tab=wallet&code=${encodeURIComponent(card.code)}`;
@@ -261,21 +228,14 @@ export class GiftCardService {
         termsHtml: termsHtml,
       });
 
-      const info = await transporter.sendMail({
-        from: `"Avengers Coffee" <${process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@avengerscoffee.com'}>`,
+      const res = await this.smtpService.sendMail({
         to: card.receiver_email,
         subject: `[Avengers Coffee] Quà tặng ${formattedValue} từ ${card.sender_name}`,
         html: htmlContent,
       });
 
-      if (isDemo) {
-        const url = nodemailer.getTestMessageUrl(info);
-        this.logger.log(`Demo Email sent: ${url}`);
-        return url;
-      } else {
-        this.logger.log(`Real Email sent to: ${card.receiver_email}`);
-        return true; // Sent real email successfully, no preview URL
-      }
+      this.logger.log(`Gift Card email sent successfully to ${card.receiver_email}`);
+      return res.previewUrl || true;
     } catch (err) {
       this.logger.error('Email error:', err);
       return err.message || String(err);

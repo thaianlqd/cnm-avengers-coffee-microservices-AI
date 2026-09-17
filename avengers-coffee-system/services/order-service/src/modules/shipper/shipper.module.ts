@@ -12,8 +12,25 @@ import { DonHang } from '../thanh-toan/entities/don-hang.entity';
 import { ChiTietDonHang } from '../thanh-toan/entities/chi-tiet-don-hang.entity';
 import { DeliveryTracking } from './features_thaian/delivery-tracking.entity';
 
+import { NotificationModule } from '../notification/notification.module';
+import { InfrastructureModule } from '../../infrastructure/infrastructure.module';
+
 @Module({
-  imports: [TypeOrmModule.forFeature([Shipper, ShipperDelivery, ShipperWallet, ShipperSchedule, ShipperException, ShipperCodRemit, DonHang, ChiTietDonHang, DeliveryTracking])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Shipper,
+      ShipperDelivery,
+      ShipperWallet,
+      ShipperSchedule,
+      ShipperException,
+      ShipperCodRemit,
+      DonHang,
+      ChiTietDonHang,
+      DeliveryTracking,
+    ]),
+    NotificationModule,
+    InfrastructureModule,
+  ],
   providers: [ShipperService],
   controllers: [ShipperController],
   exports: [ShipperService],

@@ -2,9 +2,13 @@ import React, { useState, useEffect, useRef } from 'react'
 import { View, StyleSheet, TouchableOpacity, Text, SafeAreaView, Linking, Platform, Alert, ScrollView, Modal, Image, Animated } from 'react-native'
 import * as Location from 'expo-location'
 import { Ionicons } from '@expo/vector-icons'
+import { useQuery } from '@tanstack/react-query'
 import { colors, radius, spacing, shadows, typography } from '../theme'
 import { useShipper, globalState } from '../context/ShipperContext'
 import apiClient from '../lib/apiClient'
+import { formatBranchName, formatBranchFullTitle, formatBranchAddress, setGlobalBranchList } from '../lib/branchHelper'
+import { openGoogleMapsNavigation } from '../lib/navigationHelper'
+import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from '../lib/backgroundLocationManager'
 
 let MapView, Marker, Polyline
 if (Platform.OS !== 'web') {
@@ -30,39 +34,9 @@ if (Platform.OS !== 'web') {
   }
 }
 
-const getBranchInfo = (code) => {
-  // Toạ độ khớp chính xác với BRANCH_LOCATIONS trong backend thanh-toan.service.ts
-  const branches = {
-    'DN_INDOCHINA_RIVERSIDE': { address: 'Avengers Coffee - Indochina Riverside, Đà Nẵng', storeLoc: { latitude: 16.0717, longitude: 108.2241 } },
-    'DN_NGUYEN_VAN_THOAI':   { address: 'Avengers Coffee - Nguyễn Văn Thoại, Đà Nẵng', storeLoc: { latitude: 16.0543, longitude: 108.2435 } },
-    'DN_VTV8_BACH_DANG':     { address: 'Avengers Coffee - VTV8 Bạch Đằng, Đà Nẵng',   storeLoc: { latitude: 16.0645, longitude: 108.2230 } },
-    'HCM_DIEN_BIEN_PHU':    { address: 'Avengers Coffee - 220 Điện Biên Phủ, Q.3',     storeLoc: { latitude: 10.7836, longitude: 106.6896 } },
-    'HCM_LY_TU_TRONG':      { address: 'Avengers Coffee - Lý Tự Trọng, Q.1',           storeLoc: { latitude: 10.7745, longitude: 106.6983 } },
-    'HCM_TON_THAT_THIEP':   { address: 'Avengers Coffee - Tôn Thất Thiệp, Q.1',        storeLoc: { latitude: 10.7743, longitude: 106.7031 } },
-    'HN_DU_THUYEN':          { address: 'Avengers Coffee - Du Thuyền, Hà Nội',           storeLoc: { latitude: 21.0456, longitude: 105.8369 } },
-    'HN_LAM_VIEN_COMPLEX':  { address: 'Avengers Coffee - Làm Viên Complex, Hà Nội',   storeLoc: { latitude: 21.0401, longitude: 105.7904 } },
-    'HN_LINH_DAM_CT3':      { address: 'Avengers Coffee - Linh Đàm CT3, Hà Nội',       storeLoc: { latitude: 20.9634, longitude: 105.8306 } },
-  };
+const VIETMAP_API_KEY = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || 'dbdd3165b3cb0d85239a7f59f410a9fa925974c4a6d4c54b';
+const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN || '';
 
-  // Normalize code: thử cả dạng gốc và dạng uppercase + replace dashes
-  const normalized = (code || '').toUpperCase().replace(/-/g, '_');
-  const branch = branches[code] || branches[normalized];
-
-  if (branch) {
-    return {
-      address: branch.address,
-      storeLoc: branch.storeLoc,
-      destLoc: { latitude: branch.storeLoc.latitude + 0.003, longitude: branch.storeLoc.longitude + 0.003 },
-    };
-  }
-
-  // Default fallback: HCM Điện Biên Phủ
-  return {
-    address: `Avengers Coffee - ${code || 'Cửa hàng'}`,
-    storeLoc: { latitude: 10.7836, longitude: 106.6896 },
-    destLoc: { latitude: 10.7866, longitude: 106.6926 },
-  };
-};
 
 function formatETA(distanceKm) {
   const minutes = Math.round((distanceKm / 30) * 60)
@@ -82,9 +56,10 @@ function calcDistance(lat1, lon1, lat2, lon2) {
 
 function getManeuverText(step) {
   if (!step || !step.maneuver) return 'Tiếp tục di chuyển'
+  if (step.maneuver.instruction) return step.maneuver.instruction
   const { type, modifier } = step.maneuver
   const road = step.name || 'đường phía trước'
-  
+
   if (type === 'turn') {
     if (modifier?.includes('left')) return `↰ Rẽ trái vào ${road}`
     if (modifier?.includes('right')) return `↱ Rẽ phải vào ${road}`
@@ -92,6 +67,7 @@ function getManeuverText(step) {
   if (type === 'arrive') return `📍 Đã đến ${road}`
   return `↑ Đi tiếp trên ${road}`
 }
+
 
 function formatCoord(val) {
   if (val == null) return '---'
@@ -121,17 +97,17 @@ export function MapScreen({ route, navigation }) {
   const [location, setLocation] = useState(null)
   const [errorMsg, setErrorMsg] = useState(null)
   const [distance, setDistance] = useState(null)
-  
+
   const [routesToStore, setRoutesToStore] = useState([])
   const [routesToCustomer, setRoutesToCustomer] = useState([])
-  
+
   const [selectedRouteStoreIndex, setSelectedRouteStoreIndex] = useState(0)
   const [selectedRouteCustomerIndex, setSelectedRouteCustomerIndex] = useState(0)
-  
+
   const [currentStepText, setCurrentStepText] = useState('Đang tìm đường...')
   const [etaText, setEtaText] = useState('')
   const [nextManeuverLocation, setNextManeuverLocation] = useState(null)
-  
+
   const [podStep, setPodStep] = useState('idle')
   const [podImage, setPodImage] = useState(null)
   const [watermarkTime, setWatermarkTime] = useState('')
@@ -144,26 +120,66 @@ export function MapScreen({ route, navigation }) {
 
   const isSimulatingRef = useRef(false)
   const simulationInterval = useRef(null)
-  
+
   const activeStepsRef = useRef([])
   const currentStepIndexRef = useRef(0)
 
-  const branchCode = delivery?.order?.co_so_ma || delivery?.branch_code;
-  const branchInfo = getBranchInfo(branchCode);
-  
-  const storeLat = delivery?.tracking?.store_latitude 
-    ? Number(delivery.tracking.store_latitude) 
-    : branchInfo.storeLoc.latitude;
-  const storeLng = delivery?.tracking?.store_longitude 
-    ? Number(delivery.tracking.store_longitude) 
-    : branchInfo.storeLoc.longitude;
+  const { data: publicBranchPayload } = useQuery({
+    queryKey: ['public-branches'],
+    queryFn: async () => {
+      try {
+        const response = await apiClient.get('/users/branches/public')
+        const payload = response?.data || response || { items: [] }
+        setGlobalBranchList(payload)
+        return payload
+      } catch (error) {
+        return { items: [] }
+      }
+    },
+    staleTime: 10 * 60 * 1000,
+  })
 
-  const destLat = delivery?.tracking?.destination_latitude 
-    ? Number(delivery.tracking.destination_latitude) 
-    : (delivery?.delivery_latitude ? Number(delivery.delivery_latitude) : branchInfo.destLoc.latitude);
-  const destLng = delivery?.tracking?.destination_longitude 
-    ? Number(delivery.tracking.destination_longitude) 
-    : (delivery?.delivery_longitude ? Number(delivery.delivery_longitude) : branchInfo.destLoc.longitude);
+  const branchList = Array.isArray(publicBranchPayload?.items)
+    ? publicBranchPayload.items
+    : (Array.isArray(publicBranchPayload?.data) ? publicBranchPayload.data : (Array.isArray(publicBranchPayload) ? publicBranchPayload : []));
+
+  const branchCode = delivery?.order?.co_so_ma || delivery?.branch_code || shipper?.branch_code;
+  const normalizedCode = (branchCode || '').trim().toUpperCase();
+
+  const matchedBranch = branchList.find(b => {
+    const bCode = String(b.ma_chi_nhanh || b.co_so_ma || b.branch_code || b.id || '').trim().toUpperCase();
+    return bCode === normalizedCode || bCode.replace(/-/g, '_') === normalizedCode.replace(/-/g, '_');
+  });
+
+  const branchName = (delivery?.store_name && !delivery.store_name.includes('_'))
+    ? (delivery.store_name.toLowerCase().includes('avengers coffee') ? delivery.store_name : `Avengers Coffee - ${delivery.store_name}`)
+    : formatBranchFullTitle(branchCode, publicBranchPayload);
+
+  const branchAddress = (delivery?.store_address && !delivery.store_address.includes('_'))
+    ? delivery.store_address
+    : formatBranchAddress(branchCode, publicBranchPayload, delivery?.pickup_address);
+
+  const storeLat = delivery?.tracking?.store_latitude
+    ? Number(delivery.tracking.store_latitude)
+    : (matchedBranch?.vi_do ? Number(matchedBranch.vi_do) : 10.80734);
+  const storeLng = delivery?.tracking?.store_longitude
+    ? Number(delivery.tracking.store_longitude)
+    : (matchedBranch?.kinh_do ? Number(matchedBranch.kinh_do) : 106.717612);
+
+  const destLat = delivery?.tracking?.destination_latitude
+    ? Number(delivery.tracking.destination_latitude)
+    : (delivery?.delivery_latitude ? Number(delivery.delivery_latitude) : storeLat + 0.006);
+  const destLng = delivery?.tracking?.destination_longitude
+    ? Number(delivery.tracking.destination_longitude)
+    : (delivery?.delivery_longitude ? Number(delivery.delivery_longitude) : storeLng + 0.006);
+
+  const customerAddress = String(
+    delivery?.delivery_address ||
+    delivery?.dia_chi_giao_hang ||
+    delivery?.order?.dia_chi_giao_hang ||
+    delivery?.tracking?.delivery_address ||
+    ''
+  ).trim();
 
   const openPodModal = () => {
     setPodStep('camera')
@@ -199,93 +215,116 @@ export function MapScreen({ route, navigation }) {
 
   useEffect(() => {
     let sub = null
-    ;(async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync()
-      if (status !== 'granted') {
-        setErrorMsg('Cần quyền truy cập vị trí')
-        return
-      }
-      const initial = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })
-      setLocation(initial)
-      const d = calcDistance(initial.coords.latitude, initial.coords.longitude, destLat, destLng)
-      setDistance(d)
-      
-      const startLat = initial.coords.latitude;
-      const startLng = initial.coords.longitude;
-
-      try {
-        const resStore = await fetch(`http://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${storeLng},${storeLat}?alternatives=true&geometries=geojson&overview=full&steps=true`);
-        const dataStore = await resStore.json();
-        if (dataStore.code === 'Ok' && dataStore.routes) {
-          const parsedStore = dataStore.routes.map(r => ({
-            distance: r.distance / 1000,
-            duration: r.duration / 60,
-            coordinates: r.geometry.coordinates.map(c => ({ latitude: c[1], longitude: c[0] })),
-            steps: r.legs[0]?.steps || []
-          }));
-          setRoutesToStore(parsedStore);
-          if (delivery?.status === 'PICKING_UP' || delivery?.status === 'CONFIRMED') {
-            activeStepsRef.current = parsedStore[0]?.steps || [];
-            currentStepIndexRef.current = 0;
-            if (activeStepsRef.current.length > 0) {
-              setCurrentStepText(getManeuverText(activeStepsRef.current[0]));
-            }
-          }
+      ; (async () => {
+        const { status } = await Location.requestForegroundPermissionsAsync()
+        if (status !== 'granted') {
+          setErrorMsg('Cần quyền truy cập vị trí')
+          return
         }
-      } catch (err) {
-        console.warn('OSRM error (store):', err);
-      }
+        const initial = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })
+        setLocation(initial)
+        const d = calcDistance(initial.coords.latitude, initial.coords.longitude, destLat, destLng)
+        setDistance(d)
 
-      try {
-        const resCust = await fetch(`http://router.project-osrm.org/route/v1/driving/${storeLng},${storeLat};${destLng},${destLat}?alternatives=true&geometries=geojson&overview=full&steps=true`);
-        const dataCust = await resCust.json();
-        if (dataCust.code === 'Ok' && dataCust.routes) {
-          const parsedCust = dataCust.routes.map(r => ({
-            distance: r.distance / 1000,
-            duration: r.duration / 60,
-            coordinates: r.geometry.coordinates.map(c => ({ latitude: c[1], longitude: c[0] })),
-            steps: r.legs[0]?.steps || []
-          }));
-          setRoutesToCustomer(parsedCust);
-          if (parsedCust.length > 0) {
-            setDistance(parsedCust[0].distance);
-            setEtaText(formatETA(parsedCust[0].distance));
-            if (delivery?.status !== 'PICKING_UP' && delivery?.status !== 'CONFIRMED') {
-              activeStepsRef.current = parsedCust[0]?.steps || [];
+        const startLat = initial.coords.latitude;
+        const startLng = initial.coords.longitude;
+
+        // 1. Lộ trình từ vị trí Shipper -> Cửa hàng (Vietmap Motorcycle Route)
+        try {
+          const urlStore = `https://maps.vietmap.vn/api/route?api-version=1.1&apikey=${VIETMAP_API_KEY}&point=${startLat},${startLng}&point=${storeLat},${storeLng}&vehicle=motorcycle&points_encoded=false`;
+          const resStore = await fetch(urlStore);
+          const dataStore = await resStore.json();
+          if (dataStore.code === 'OK' && dataStore.paths) {
+            const parsedStore = dataStore.paths.map((p) => ({
+              distance: p.distance / 1000,
+              duration: p.time / 1000 / 60,
+              coordinates: (p.points?.coordinates || []).map((c) => ({ latitude: c[1], longitude: c[0] })),
+              steps: (p.instructions || []).map((ins) => ({
+                maneuver: {
+                  location: p.points?.coordinates?.[ins.interval?.[0] || 0] || [0, 0],
+                  instruction: ins.text,
+                },
+                name: ins.street_name,
+              })),
+            }));
+            setRoutesToStore(parsedStore);
+            if (delivery?.status === 'PICKING_UP' || delivery?.status === 'CONFIRMED') {
+              activeStepsRef.current = parsedStore[0]?.steps || [];
               currentStepIndexRef.current = 0;
               if (activeStepsRef.current.length > 0) {
                 setCurrentStepText(getManeuverText(activeStepsRef.current[0]));
               }
             }
           }
+        } catch (err) {
+          console.warn('Vietmap route error (store):', err);
         }
-      } catch (err) {
-        console.warn('OSRM error (customer):', err);
-      }
 
-      sub = await Location.watchPositionAsync(
-        { accuracy: Location.Accuracy.High, timeInterval: 10000, distanceInterval: 10 },
-        (newLoc) => {
-          if (isSimulatingRef.current) return;
-          setLocation(newLoc)
-          updateNavInstruction(newLoc.coords.latitude, newLoc.coords.longitude);
-
-          const newD = calcDistance(newLoc.coords.latitude, newLoc.coords.longitude, destLat, destLng)
-          setDistance(newD)
-          if (shipper?.id) {
-            apiClient.patch(`/shippers/${shipper.id}/location`, {
-              latitude: newLoc.coords.latitude,
-              longitude: newLoc.coords.longitude,
-            }).catch(() => {})
+        // 2. Lộ trình từ Cửa hàng -> Khách nhận hàng (Vietmap Motorcycle Route)
+        try {
+          const urlCust = `https://maps.vietmap.vn/api/route?api-version=1.1&apikey=${VIETMAP_API_KEY}&point=${storeLat},${storeLng}&point=${destLat},${destLng}&vehicle=motorcycle&points_encoded=false`;
+          const resCust = await fetch(urlCust);
+          const dataCust = await resCust.json();
+          if (dataCust.code === 'OK' && dataCust.paths) {
+            const parsedCust = dataCust.paths.map((p) => ({
+              distance: p.distance / 1000,
+              duration: p.time / 1000 / 60,
+              coordinates: (p.points?.coordinates || []).map((c) => ({ latitude: c[1], longitude: c[0] })),
+              steps: (p.instructions || []).map((ins) => ({
+                maneuver: {
+                  location: p.points?.coordinates?.[ins.interval?.[0] || 0] || [0, 0],
+                  instruction: ins.text,
+                },
+                name: ins.street_name,
+              })),
+            }));
+            setRoutesToCustomer(parsedCust);
+            if (parsedCust.length > 0) {
+              setDistance(parsedCust[0].distance);
+              setEtaText(formatETA(parsedCust[0].distance));
+              if (delivery?.status !== 'PICKING_UP' && delivery?.status !== 'CONFIRMED') {
+                activeStepsRef.current = parsedCust[0]?.steps || [];
+                currentStepIndexRef.current = 0;
+                if (activeStepsRef.current.length > 0) {
+                  setCurrentStepText(getManeuverText(activeStepsRef.current[0]));
+                }
+              }
+            }
           }
+        } catch (err) {
+          console.warn('Vietmap route error (customer):', err);
         }
-      )
-    })()
-    
-    return () => { 
+
+
+        sub = await Location.watchPositionAsync(
+          { accuracy: Location.Accuracy.High, timeInterval: 10000, distanceInterval: 10 },
+          (newLoc) => {
+            if (isSimulatingRef.current) return;
+            setLocation(newLoc)
+            updateNavInstruction(newLoc.coords.latitude, newLoc.coords.longitude);
+
+            const newD = calcDistance(newLoc.coords.latitude, newLoc.coords.longitude, destLat, destLng)
+            setDistance(newD)
+            if (shipper?.id) {
+              apiClient.patch(`/shippers/${shipper.id}/location`, {
+                latitude: newLoc.coords.latitude,
+                longitude: newLoc.coords.longitude,
+              }).catch(() => { })
+            }
+          }
+        )
+
+        // Tự động kích hoạt Background Location Tracking cho đơn hàng đang giao
+        if (shipper?.id) {
+          startBackgroundLocationTracking(shipper.id).catch(() => {});
+        }
+      })()
+
+    return () => {
       if (sub) sub.remove();
       if (simulationInterval.current) clearInterval(simulationInterval.current);
       globalState.isSimulating = false;
+      stopBackgroundLocationTracking().catch(() => {});
     }
   }, [])
 
@@ -295,7 +334,7 @@ export function MapScreen({ route, navigation }) {
 
     let minD = Infinity;
     let closestIdx = currentStepIndexRef.current;
-    
+
     for (let i = currentStepIndexRef.current; i < steps.length; i++) {
       const step = steps[i];
       if (step.maneuver && step.maneuver.location) {
@@ -308,12 +347,12 @@ export function MapScreen({ route, navigation }) {
     }
 
     if (minD < 0.05 && closestIdx + 1 < steps.length) {
-       closestIdx = closestIdx + 1;
+      closestIdx = closestIdx + 1;
     }
 
     currentStepIndexRef.current = closestIdx;
     setCurrentStepText(getManeuverText(steps[closestIdx]));
-    
+
     if (steps[closestIdx]?.maneuver?.location) {
       setNextManeuverLocation({
         latitude: steps[closestIdx].maneuver.location[1],
@@ -324,11 +363,11 @@ export function MapScreen({ route, navigation }) {
 
   const simulateMovement = (targetLat, targetLng) => {
     if (!shipper?.id || !location) return;
-    
+
     isSimulatingRef.current = true;
     globalState.isSimulating = true;
     if (simulationInterval.current) clearInterval(simulationInterval.current);
-    
+
     let pathCoords = [];
     if (targetLat === destLat && targetLng === destLng && routesToCustomer.length > 0) {
       pathCoords = routesToCustomer[selectedRouteCustomerIndex].coordinates;
@@ -352,32 +391,32 @@ export function MapScreen({ route, navigation }) {
     simulationInterval.current = setInterval(() => {
       currentStep++;
       const progress = currentStep / steps;
-      
+
       const totalSegments = pathCoords.length - 1;
       const exactIndex = progress * totalSegments;
       const lowerIndex = Math.floor(exactIndex);
       const upperIndex = Math.min(Math.ceil(exactIndex), totalSegments);
       const segmentProgress = exactIndex - lowerIndex;
-      
+
       const p1 = pathCoords[lowerIndex];
       const p2 = pathCoords[upperIndex];
-      
+
       const newLat = p1.latitude + (p2.latitude - p1.latitude) * segmentProgress;
       const newLng = p1.longitude + (p2.longitude - p1.longitude) * segmentProgress;
-      
+
       const newLoc = { coords: { latitude: newLat, longitude: newLng } };
       setLocation(newLoc);
       updateNavInstruction(newLat, newLng);
-      
-      if (currentStep % 15 === 0 || currentStep === steps) {
+
+      if (currentStep === 1 || currentStep % 5 === 0 || currentStep === steps) {
         apiClient.patch(`/shippers/${shipper.id}/location`, {
           latitude: newLat,
           longitude: newLng,
-        }).catch(() => {});
+        }).catch(() => { });
       }
-      
+
       setDistance(calcDistance(newLat, newLng, destLat, destLng));
-      
+
       if (currentStep >= steps) {
         clearInterval(simulationInterval.current);
         simulationInterval.current = null;
@@ -385,12 +424,25 @@ export function MapScreen({ route, navigation }) {
     }, intervalMs);
   };
 
-  const openExternalNav = () => {
-    const address = encodeURIComponent(delivery?.delivery_address || '')
-    const googleUrl = `https://maps.google.com/maps?daddr=${address}`
-    const appleUrl = `maps:?daddr=${address}`
-    const url = Platform.OS === 'ios' ? appleUrl : googleUrl
-    Linking.openURL(url).catch(() => Linking.openURL(googleUrl))
+  const openExternalNav = async () => {
+    // 1. Cập nhật vị trí tức thời lên server trước khi chuyển màn hình sang Google Maps
+    try {
+      const cur = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      if (cur?.coords && shipper?.id) {
+        apiClient.patch(`/shippers/${shipper.id}/location`, {
+          latitude: cur.coords.latitude,
+          longitude: cur.coords.longitude,
+        }).catch(() => {});
+      }
+    } catch (e) {}
+
+    // 2. Kích hoạt Background Location Tracking chạy ngầm
+    if (shipper?.id) {
+      startBackgroundLocationTracking(shipper.id).catch(() => {});
+    }
+
+    // 3. Mở Google Maps
+    openGoogleMapsNavigation(customerAddress, { latitude: destLat, longitude: destLng });
   }
 
   const callCustomer = () => {
@@ -440,7 +492,7 @@ export function MapScreen({ route, navigation }) {
 
   const submitCompleteDelivery = async () => {
     if (!shipper?.id || !delivery?.id) return;
-    
+
     setIsSubmitting(true);
     setPodStep('submitting');
     try {
@@ -455,8 +507,9 @@ export function MapScreen({ route, navigation }) {
           order_code: delivery?.ma_don_hang?.slice(0, 8).toUpperCase(),
         }
       });
-      
+
       setPodStep('done')
+      stopBackgroundLocationTracking().catch(() => {});
       Animated.spring(podSuccessAnim, { toValue: 1, useNativeDriver: true, tension: 50, friction: 6 }).start()
       setTimeout(() => {
         closePodModal();
@@ -490,7 +543,7 @@ export function MapScreen({ route, navigation }) {
             </View>
           </Marker>
 
-          <Marker coordinate={{ latitude: destLat, longitude: destLng }} title="Khách hàng" description={delivery?.delivery_address}>
+          <Marker coordinate={{ latitude: destLat, longitude: destLng }} title="Khách hàng" description={customerAddress || 'Địa chỉ khách hàng'}>
             <View style={styles.markerDest}>
               <Ionicons name="location" size={24} color={colors.surface} />
             </View>
@@ -499,7 +552,7 @@ export function MapScreen({ route, navigation }) {
           {location && (
             <Marker coordinate={{ latitude: location.coords.latitude, longitude: location.coords.longitude }} title="Shipper" zIndex={100}>
               <View style={styles.markerShipper}>
-                <Text style={{fontSize: 20}}>🛵</Text>
+                <Text style={{ fontSize: 20 }}>🛵</Text>
               </View>
             </Marker>
           )}
@@ -507,7 +560,7 @@ export function MapScreen({ route, navigation }) {
           {nextManeuverLocation && (
             <Marker coordinate={nextManeuverLocation} title="Điểm rẽ tiếp theo" zIndex={50}>
               <View style={{
-                width: 16, height: 16, borderRadius: 8, backgroundColor: '#ef4444', 
+                width: 16, height: 16, borderRadius: 8, backgroundColor: '#ef4444',
                 borderWidth: 2, borderColor: '#fff',
                 shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 2
               }} />
@@ -565,104 +618,154 @@ export function MapScreen({ route, navigation }) {
       <SafeAreaView style={styles.headerWrap} pointerEvents="box-none">
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
+            <Ionicons name="arrow-back" size={22} color={colors.text} />
           </TouchableOpacity>
           <View style={styles.headerInfo}>
             <Text style={styles.headerTitle}>Bản đồ điều hướng</Text>
-            <Text style={styles.headerSub}>#{delivery?.ma_don_hang?.slice(0, 8).toUpperCase()}</Text>
+            <Text style={styles.headerSub}>
+              #{(delivery?.ma_don_hang || delivery?.id || '').slice(0, 8).toUpperCase()}
+            </Text>
           </View>
-          <View style={{ width: 40 }} />
+          <TouchableOpacity
+            style={styles.headerRightBtn}
+            onPress={() => {
+              if (delivery?.customer_phone) callCustomer();
+              else openExternalNav();
+            }}
+          >
+            <Ionicons name="call-outline" size={20} color={colors.primary} />
+          </TouchableOpacity>
         </View>
 
         {currentStepText ? (
-          <View style={styles.navInstruction}>
-            <Text style={styles.navInstructionText}>{currentStepText}</Text>
-            {etaText ? <Text style={styles.navEtaText}>{etaText} • {distance?.toFixed(1)}km</Text> : null}
+          <View style={styles.navInstructionPill}>
+            <Ionicons name="navigate-circle" size={18} color="#38BDF8" style={{ marginRight: 6 }} />
+            <Text style={styles.navInstructionPillText} numberOfLines={1}>
+              {currentStepText}
+            </Text>
+            {distance !== null && (
+              <Text style={styles.navInstructionPillEta}>
+                • {distance.toFixed(1)} km
+              </Text>
+            )}
           </View>
         ) : null}
-        
-        <View style={styles.demoControls}>
-          <TouchableOpacity style={[styles.demoBtn, {backgroundColor: colors.primary}]} onPress={() => simulateMovement(storeLat, storeLng)}>
-             <Text style={styles.demoBtnText}>Tới Shop</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.demoBtn, {backgroundColor: colors.danger}]} onPress={() => simulateMovement(destLat, destLng)}>
-             <Text style={styles.demoBtnText}>Tới Khách</Text>
-          </TouchableOpacity>
-
-          {(delivery?.status === 'PICKING_UP' || delivery?.status === 'CONFIRMED') && (
-            <TouchableOpacity style={[styles.demoBtn, {backgroundColor: colors.success}]} onPress={async () => {
-              try {
-                await apiClient.post(`/shippers/${shipper.id}/deliveries/${delivery.id}/start`, {
-                  latitude: location?.coords?.latitude,
-                  longitude: location?.coords?.longitude
-                });
-                navigation.setParams({ delivery: { ...delivery, status: 'IN_TRANSIT' } });
-                Alert.alert('Thành công', 'Đã lấy hàng thành công!');
-              } catch (error) {
-                Alert.alert('Lỗi', error.response?.data?.message || 'Không thể cập nhật trạng thái');
-              }
-            }}>
-               <Text style={styles.demoBtnText}>Đã Lấy Hàng</Text>
-            </TouchableOpacity>
-          )}
-
-          {(delivery?.status === 'IN_TRANSIT' || delivery?.status === 'DANG_GIAO') && (
-            <TouchableOpacity style={[styles.demoBtn, {backgroundColor: colors.success}]} onPress={handleCompleteDelivery}>
-               <Text style={styles.demoBtnText}>Hoàn Thành</Text>
-            </TouchableOpacity>
-          )}
-
-          <TouchableOpacity style={[styles.demoBtn, {backgroundColor: '#6b7280'}]} onPress={async () => { 
-            isSimulatingRef.current = false; 
-            globalState.isSimulating = false;
-            if (simulationInterval.current) {
-              clearInterval(simulationInterval.current);
-              simulationInterval.current = null;
-            }
-            try {
-              const realLoc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-              setLocation(realLoc);
-              if (shipper?.id) {
-                apiClient.patch(`/shippers/${shipper.id}/location`, {
-                  latitude: realLoc.coords.latitude,
-                  longitude: realLoc.coords.longitude,
-                }).catch(() => {});
-              }
-            } catch (e) {
-              console.log("Could not get real location on cancel");
-            }
-          }}>
-             <Text style={styles.demoBtnText}>Hủy giả lập</Text>
-          </TouchableOpacity>
-        </View>
       </SafeAreaView>
 
-      <View style={styles.floatingActions} pointerEvents="box-none">
-        {delivery?.customer_phone && (
-          <TouchableOpacity style={[styles.floatingFab, {backgroundColor: colors.success}]} onPress={callCustomer}>
-            <Ionicons name="call" size={24} color="#fff" />
-          </TouchableOpacity>
-        )}
-        <TouchableOpacity style={[styles.floatingFab, {backgroundColor: '#3b82f6'}]} onPress={openExternalNav}>
-          <Ionicons name="navigate" size={24} color="#fff" />
-        </TouchableOpacity>
-      </View>
+      <ScrollView style={styles.footerPanel} contentContainerStyle={{ paddingBottom: spacing.xxl + 24 }} showsVerticalScrollIndicator={false}>
+        {/* THANH CHỈ DẪN ĐIỀU HƯỚNG CHI TIẾT (ĐƯỢC ĐƯA XUỐNG DƯỚI) */}
+        {currentStepText ? (
+          <View style={styles.navInstructionCard}>
+            <View style={styles.navInstructionIconWrap}>
+              <Ionicons name="navigate" size={22} color="#fff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.navInstructionTitle}>{currentStepText}</Text>
+              {etaText ? (
+                <Text style={styles.navInstructionSub}>{etaText} • Cách {distance?.toFixed(1)} km</Text>
+              ) : null}
+            </View>
+          </View>
+        ) : null}
 
-      <ScrollView style={styles.footerPanel} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
+        {/* CỤM NÚT ĐIỀU KHIỂN MÔ PHỎNG & TRẠNG THÁI (ĐƯỢC ĐƯA XUỐNG DƯỚI) */}
+        <View style={styles.controlSection}>
+          <Text style={styles.controlSectionTitle}>ĐIỀU HƯỚNG VÀ MÔ PHỎNG VỊ TRÍ</Text>
+          <View style={styles.demoButtonsGrid}>
+            <TouchableOpacity
+              style={[styles.simBtn, { backgroundColor: '#2563EB' }]}
+              onPress={() => simulateMovement(storeLat, storeLng)}
+            >
+              <Ionicons name="storefront-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
+              <Text style={styles.simBtnText}>Mô phỏng tới Quán</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.simBtn, { backgroundColor: '#7C3AED' }]}
+              onPress={() => simulateMovement(destLat, destLng)}
+            >
+              <Ionicons name="person-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
+              <Text style={styles.simBtnText}>Mô phỏng tới Khách</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Nút hành động đơn hàng */}
+          <View style={{ marginTop: 8 }}>
+            {(delivery?.status === 'PICKING_UP' || delivery?.status === 'CONFIRMED') && (
+              <TouchableOpacity
+                style={[styles.actionStatusBtn, { backgroundColor: colors.success }]}
+                onPress={async () => {
+                  try {
+                    await apiClient.post(`/shippers/${shipper.id}/deliveries/${delivery.id}/start`, {
+                      latitude: location?.coords?.latitude,
+                      longitude: location?.coords?.longitude,
+                    });
+                    navigation.setParams({ delivery: { ...delivery, status: 'IN_TRANSIT' } });
+                    Alert.alert('Thành công', 'Đã lấy hàng và bắt đầu giao hàng!');
+                  } catch (error) {
+                    Alert.alert('Lỗi', error.response?.data?.message || 'Không thể cập nhật trạng thái');
+                  }
+                }}
+              >
+                <Ionicons name="checkmark-circle-outline" size={20} color="#fff" style={{ marginRight: 6 }} />
+                <Text style={styles.actionStatusBtnText}>XÁC NHẬN ĐÃ LẤY HÀNG</Text>
+              </TouchableOpacity>
+            )}
+
+            {(delivery?.status === 'IN_TRANSIT' || delivery?.status === 'DANG_GIAO') && (
+              <TouchableOpacity
+                style={[styles.actionStatusBtn, { backgroundColor: colors.success }]}
+                onPress={handleCompleteDelivery}
+              >
+                <Ionicons name="shield-checkmark-outline" size={20} color="#fff" style={{ marginRight: 6 }} />
+                <Text style={styles.actionStatusBtnText}>HOÀN THÀNH GIAO HÀNG (CHỤP ẢNH POD)</Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={[styles.simCancelBtn, { marginTop: 8 }]}
+              onPress={async () => {
+                isSimulatingRef.current = false;
+                globalState.isSimulating = false;
+                if (simulationInterval.current) {
+                  clearInterval(simulationInterval.current);
+                  simulationInterval.current = null;
+                }
+                try {
+                  const realLoc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+                  setLocation(realLoc);
+                  if (shipper?.id) {
+                    apiClient.patch(`/shippers/${shipper.id}/location`, {
+                      latitude: realLoc.coords.latitude,
+                      longitude: realLoc.coords.longitude,
+                    }).catch(() => { });
+                  }
+                } catch (e) {
+                  console.log("Could not get real location on cancel");
+                }
+              }}
+            >
+              <Ionicons name="stop-circle-outline" size={18} color={colors.danger} style={{ marginRight: 6 }} />
+              <Text style={styles.simCancelBtnText}>Dừng mô phỏng GPS</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* CHỌN TUYẾN ĐƯỜNG NẾU CÓ NHIỀU TUYẾN */}
         {routesToStore.length > 1 && (
-          <View style={{ marginBottom: spacing.md }}>
-            <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#3b82f6', marginBottom: 4 }}>
-              Chọn tuyến tới Shop (Lấy hàng):
+          <View style={{ marginBottom: spacing.sm, marginTop: 4 }}>
+            <Text style={styles.routeSectionLabel}>
+              Chọn tuyến tới Quán (Lấy hàng):
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
               {routesToStore.map((r, i) => (
-                <TouchableOpacity 
-                  key={i} 
-                  style={[styles.routeBtn, selectedRouteStoreIndex === i && { backgroundColor: '#3b82f6', borderColor: '#3b82f6' }]}
+                <TouchableOpacity
+                  key={i}
+                  style={[styles.routeBtn, selectedRouteStoreIndex === i && { backgroundColor: '#2563EB', borderColor: '#2563EB' }]}
                   onPress={() => setSelectedRouteStoreIndex(i)}
                 >
-                  <Text style={[styles.routeBtnText, selectedRouteStoreIndex === i && {color: '#fff'}]}>
-                    Tuyến {i+1} ({Math.round(r.duration)}p)
+                  <Text style={[styles.routeBtnText, selectedRouteStoreIndex === i && { color: '#fff' }]}>
+                    Tuyến {i + 1} ({Math.round(r.duration)} phút)
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -671,22 +774,22 @@ export function MapScreen({ route, navigation }) {
         )}
 
         {routesToCustomer.length > 1 && (
-          <View style={{ marginBottom: spacing.md }}>
-            <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.textSecondary, marginBottom: 4 }}>
-              Chọn tuyến tới Khách Hàng:
+          <View style={{ marginBottom: spacing.sm }}>
+            <Text style={styles.routeSectionLabel}>
+              Chọn tuyến tới Khách hàng:
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
               {routesToCustomer.map((r, i) => (
-                <TouchableOpacity 
-                  key={i} 
+                <TouchableOpacity
+                  key={i}
                   style={[styles.routeBtn, selectedRouteCustomerIndex === i && styles.routeBtnSelected]}
                   onPress={() => {
                     setSelectedRouteCustomerIndex(i);
                     setDistance(r.distance);
                   }}
                 >
-                  <Text style={[styles.routeBtnText, selectedRouteCustomerIndex === i && {color: '#fff'}]}>
-                    Tuyến {i+1} ({Math.round(r.duration)}p)
+                  <Text style={[styles.routeBtnText, selectedRouteCustomerIndex === i && { color: '#fff' }]}>
+                    Tuyến {i + 1} ({Math.round(r.duration)} phút)
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -694,42 +797,64 @@ export function MapScreen({ route, navigation }) {
           </View>
         )}
 
+        {/* THẺ QUÃNG ĐƯỜNG VÀ THỜI GIAN */}
         {distance !== null && (
           <View style={styles.etaRow}>
             <View style={styles.etaItem}>
-              <Ionicons name="navigate" size={18} color={colors.primary} />
+              <Ionicons name="navigate-circle-outline" size={22} color="#2563EB" />
               <Text style={styles.etaValue}>{distance.toFixed(1)} km</Text>
               <Text style={styles.etaLabel}>Quãng đường</Text>
             </View>
             <View style={styles.etaDivider} />
             <View style={styles.etaItem}>
-              <Ionicons name="time-outline" size={18} color={colors.primary} />
+              <Ionicons name="time-outline" size={22} color="#059669" />
               <Text style={styles.etaValue}>{formatETA(distance)}</Text>
               <Text style={styles.etaLabel}>Thời gian dự kiến</Text>
             </View>
           </View>
         )}
 
-        <View style={styles.addressBox}>
-          <Ionicons name="location" size={22} color={colors.danger} />
-          <View style={styles.addressContent}>
-            <Text style={styles.addressLabel}>Giao đến:</Text>
-            <Text style={styles.addressValue} numberOfLines={2}>
-              {delivery?.delivery_address || 'Địa chỉ khách hàng'}
-            </Text>
+        {/* CHI TIẾT TUYẾN ĐƯỜNG ĐIỂM LẤY VÀ ĐIỂM GIAO */}
+        <View style={styles.routeDetailBox}>
+          <View style={styles.routePointRow}>
+            <View style={[styles.pointIconWrap, { backgroundColor: '#ECFDF5' }]}>
+              <Ionicons name="storefront" size={16} color="#059669" />
+            </View>
+            <View style={{ flex: 1, marginLeft: 10 }}>
+              <Text style={styles.pointLabel}>Điểm lấy hàng:</Text>
+              <Text style={styles.pointTitle}>{branchName}</Text>
+              <Text style={styles.pointSub} numberOfLines={2}>{branchAddress}</Text>
+            </View>
+          </View>
+
+          <View style={styles.pointConnectLine} />
+
+          <View style={styles.routePointRow}>
+            <View style={[styles.pointIconWrap, { backgroundColor: '#FEF2F2' }]}>
+              <Ionicons name="location" size={16} color="#DC2626" />
+            </View>
+            <View style={{ flex: 1, marginLeft: 10 }}>
+              <Text style={styles.pointLabel}>Giao đến:</Text>
+              <Text style={styles.pointTitle}>{delivery?.customer_name || 'Khách nhận hàng'}</Text>
+              <Text style={styles.pointSub} numberOfLines={2}>
+                {customerAddress || 'Địa chỉ khách hàng'}
+              </Text>
+            </View>
           </View>
         </View>
 
         {errorMsg && <Text style={styles.errText}>{errorMsg}</Text>}
 
+        {/* HÀNG NÚT DƯỚI CÙNG (NÚT MỞ GOOGLE MAPS XANH DƯƠNG THÂN THIỆN) */}
         <View style={styles.actionBtns}>
-          <TouchableOpacity style={[styles.fab, { flex: 1, marginRight: 8 }]} onPress={openExternalNav}>
-            <Ionicons name="navigate-outline" size={18} color="#fff" />
+          <TouchableOpacity style={[styles.fab, { flex: 1, backgroundColor: '#2563EB', marginRight: 8 }]} onPress={openExternalNav}>
+            <Ionicons name="map-outline" size={20} color="#fff" />
             <Text style={styles.fabText}>Mở Google Maps</Text>
           </TouchableOpacity>
           {delivery?.customer_phone && (
-            <TouchableOpacity style={[styles.fab, { backgroundColor: colors.success, width: 48 }]} onPress={callCustomer}>
-              <Ionicons name="call" size={20} color="#fff" />
+            <TouchableOpacity style={[styles.fab, { backgroundColor: colors.success, paddingHorizontal: 16 }]} onPress={callCustomer}>
+              <Ionicons name="call" size={20} color="#fff" style={{ marginRight: 6 }} />
+              <Text style={styles.fabText}>Gọi Khách</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -905,62 +1030,125 @@ export function MapScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: '#f9fafb' },
   map: { width: '100%', height: '100%' },
-  headerWrap: { position: 'absolute', top: 0, left: 0, right: 0 },
+  headerWrap: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 50 },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: colors.surface, padding: spacing.sm, margin: spacing.md,
-    borderRadius: radius.lg, ...shadows.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)', paddingVertical: 10, paddingHorizontal: 14,
+    marginHorizontal: spacing.md, marginTop: spacing.sm,
+    borderRadius: 20, ...shadows.md,
+    borderWidth: 1, borderColor: 'rgba(243, 244, 246, 0.8)',
   },
-  demoControls: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginHorizontal: spacing.md, flexWrap: 'wrap' },
-  demoBtn: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, ...shadows.sm },
-  demoBtnText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
-  backBtn: { padding: spacing.sm },
-  headerInfo: { alignItems: 'center' },
-  headerTitle: { ...typography.bodyBold, color: colors.text },
-  headerSub: { ...typography.caption, color: colors.primary },
+  backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' },
+  headerInfo: { alignItems: 'center', flex: 1 },
+  headerTitle: { ...typography.bodyBold, color: colors.text, fontSize: 15 },
+  headerSub: { ...typography.caption, color: colors.primary, fontWeight: '700', fontSize: 11 },
+  headerRightBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center' },
+
+  navInstructionPill: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.88)',
+    marginTop: 8, paddingVertical: 7, paddingHorizontal: 14,
+    borderRadius: 20, alignSelf: 'center', maxWidth: '90%',
+    ...shadows.sm,
+  },
+  navInstructionPillText: { color: '#F8FAFC', fontSize: 12, fontWeight: '700', flexShrink: 1 },
+  navInstructionPillEta: { color: '#38BDF8', fontSize: 12, fontWeight: '800', marginLeft: 4 },
+
   markerStore: { backgroundColor: colors.primary, padding: 8, borderRadius: 20, borderWidth: 2, borderColor: colors.surface, ...shadows.sm },
   markerDest: { backgroundColor: colors.danger, padding: 6, borderRadius: 20, borderWidth: 2, borderColor: colors.surface, ...shadows.sm },
   markerShipper: { backgroundColor: 'white', padding: 2, borderRadius: 25, borderWidth: 2, borderColor: '#4F46E5', ...shadows.md },
+
   footerPanel: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: colors.surface, padding: spacing.lg, paddingBottom: spacing.xxl,
-    borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, ...shadows.lg,
+    maxHeight: '54%',
+    backgroundColor: colors.surface, paddingHorizontal: spacing.md, paddingTop: spacing.md,
+    borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    ...shadows.lg,
+    borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)',
   },
-  etaRow: { flexDirection: 'row', backgroundColor: colors.bg, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md, alignItems: 'center' },
-  etaItem: { flex: 1, alignItems: 'center' },
-  etaValue: { ...typography.h4, color: colors.text, marginTop: 4 },
-  etaLabel: { ...typography.caption, color: colors.muted },
-  etaDivider: { width: 1, height: 40, backgroundColor: colors.borderLight },
-  addressBox: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: spacing.md },
-  addressContent: { marginLeft: spacing.md, flex: 1 },
-  addressLabel: { ...typography.caption, color: colors.textSecondary },
-  addressValue: { ...typography.bodyBold, color: colors.text, marginTop: 4 },
-  errText: { color: colors.danger, fontSize: 12, marginBottom: spacing.sm },
-  actionBtns: { flexDirection: 'row', alignItems: 'center' },
-  fab: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radius.lg, gap: 8, ...shadows.sm },
-  fabText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+
+  navInstructionCard: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#1E1B4B',
+    padding: 12, borderRadius: 16, marginBottom: 12,
+    ...shadows.md,
+  },
+  navInstructionIconWrap: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: '#3730A3',
+    alignItems: 'center', justifyContent: 'center',
+    marginRight: 10,
+  },
+  navInstructionTitle: { color: '#fff', fontSize: 14, fontWeight: '800' },
+  navInstructionSub: { color: '#93C5FD', fontSize: 12, fontWeight: '600', marginTop: 2 },
+
+  controlSection: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 18, padding: 12,
+    marginBottom: 12,
+    borderWidth: 1, borderColor: '#E2E8F0',
+  },
+  controlSectionTitle: { fontSize: 11, fontWeight: '800', color: colors.textSecondary, letterSpacing: 0.5, marginBottom: 8 },
+  demoButtonsGrid: { flexDirection: 'row', gap: 8 },
+  simBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 10, borderRadius: 12, ...shadows.sm,
+  },
+  simBtnText: { color: '#fff', fontSize: 12, fontWeight: '800' },
+
+  actionStatusBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 12, borderRadius: 14, ...shadows.sm,
+  },
+  actionStatusBtnText: { color: '#fff', fontSize: 13, fontWeight: '900', letterSpacing: 0.3 },
+
+  simCancelBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 9, borderRadius: 12,
+    backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FECACA',
+  },
+  simCancelBtnText: { color: colors.danger, fontSize: 12, fontWeight: '700' },
+
+  routeSectionLabel: { fontSize: 12, fontWeight: '800', color: colors.text, marginBottom: 6 },
   routeBtn: {
     paddingVertical: 6, paddingHorizontal: 12,
-    borderRadius: 16, backgroundColor: colors.bg,
-    borderWidth: 1, borderColor: colors.border,
+    borderRadius: 14, backgroundColor: '#F1F5F9',
+    borderWidth: 1, borderColor: '#CBD5E1',
   },
-  routeBtnSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
-  routeBtnText: { fontSize: 12, fontWeight: 'bold', color: colors.textSecondary },
-  navInstruction: {
-    backgroundColor: colors.primary, marginHorizontal: spacing.md,
-    marginTop: spacing.sm, padding: spacing.md,
-    borderRadius: radius.lg, ...shadows.md, alignItems: 'center',
+  routeBtnSelected: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
+  routeBtnText: { fontSize: 12, fontWeight: '700', color: colors.textSecondary },
+
+  etaRow: {
+    flexDirection: 'row', backgroundColor: '#F8FAFC',
+    borderRadius: 16, padding: 10, marginBottom: 12,
+    alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0',
   },
-  navInstructionText: { color: '#fff', fontSize: 18, fontWeight: 'bold', textAlign: 'center' },
-  navEtaText: { color: '#dbeafe', fontSize: 14, marginTop: 4 },
-  floatingActions: { position: 'absolute', right: spacing.md, bottom: 250, gap: spacing.md },
-  floatingFab: {
-    width: 50, height: 50, borderRadius: 25,
-    justifyContent: 'center', alignItems: 'center',
-    ...shadows.lg, borderWidth: 2, borderColor: '#fff',
+  etaItem: { flex: 1, alignItems: 'center' },
+  etaValue: { ...typography.h4, color: colors.text, fontSize: 17, marginTop: 2 },
+  etaLabel: { ...typography.caption, color: colors.muted, fontSize: 11 },
+  etaDivider: { width: 1, height: 32, backgroundColor: '#E2E8F0' },
+
+  routeDetailBox: {
+    backgroundColor: '#fff', borderRadius: 16,
+    padding: 12, marginBottom: 12,
+    borderWidth: 1, borderColor: '#E5E7EB',
   },
+  routePointRow: { flexDirection: 'row', alignItems: 'flex-start' },
+  pointIconWrap: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  pointLabel: { fontSize: 10, fontWeight: '800', color: colors.muted, textTransform: 'uppercase' },
+  pointTitle: { fontSize: 13, fontWeight: '800', color: colors.text, marginTop: 1 },
+  pointSub: { fontSize: 12, color: colors.textSecondary, marginTop: 2, lineHeight: 16 },
+  pointConnectLine: { width: 2, height: 16, backgroundColor: '#E5E7EB', marginLeft: 13, marginVertical: 4 },
+
+  errText: { color: colors.danger, fontSize: 12, marginBottom: spacing.sm },
+  actionBtns: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+  fab: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 12, borderRadius: 14, gap: 8, ...shadows.sm,
+  },
+  fabText: { color: '#fff', fontWeight: '800', fontSize: 14 },
 
   // ─── POD Modal Styles ──────────────────────────────────────────
   podOverlay: {

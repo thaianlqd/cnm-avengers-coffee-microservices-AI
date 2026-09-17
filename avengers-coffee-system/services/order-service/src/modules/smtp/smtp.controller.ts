@@ -58,4 +58,25 @@ export class SmtpController {
 
     return this.smtpService.sendTestEmail(dto.to_email, customConfig);
   }
+
+  @Post('send')
+  async sendGenericMail(
+    @Body()
+    dto: {
+      to: string;
+      subject: string;
+      html: string;
+      text?: string;
+      from_name?: string;
+      from_email?: string;
+    },
+  ) {
+    return this.smtpService.sendMail(dto);
+  }
+
+  @Get('internal-config')
+  async getInternalConfig() {
+    return this.smtpService.getInternalConfig();
+  }
 }
+
