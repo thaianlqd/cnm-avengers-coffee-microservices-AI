@@ -2004,6 +2004,8 @@ function AppContent() {
             ) : (activeTab === 'tra-cuu-don' || activeTab === 'tracking') ? (
               <OrderLookupPage
                 initialCode={trackingOrderId || ''}
+                user={user}
+                onOpenOrderHistory={() => setIsOrderHistoryOpen(true)}
                 onBack={() => {
                   setActiveTab('order');
                   window.scrollTo({ top: 0, behavior: 'smooth' });

@@ -32,6 +32,11 @@ export const colors = {
   card: '#FFFFFF',
   darkBg: '#1A1A2E',
   headerBg: '#E31A23',       // Red header
+  background: {
+    default: '#F5F5F7',
+    paper: '#FFFFFF',
+    surface: '#FFFFFF',
+  },
 
   // Text
   text: '#1A1A2E',

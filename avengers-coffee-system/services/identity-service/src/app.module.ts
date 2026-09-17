@@ -15,6 +15,7 @@ import { MembershipConfig } from './modules/user/membership-config.entity';
 import { KhuVuc } from './modules/user/khu-vuc.entity';
 import { UserModule } from './modules/user/user.module';
 import { FranchiseModule } from './modules/franchise/franchise.module';
+import { EmailModule } from './modules/email/email.module';
 import { ComboNguyenLieu } from './modules/franchise/entities/combo-nguyen-lieu.entity';
 import { HoSoDangKy } from './modules/franchise/entities/ho-so-dang-ky.entity';
 import { Kiosk } from './modules/franchise/entities/kiosk.entity';
@@ -73,6 +74,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
     }),
     UserModule,
     FranchiseModule,
+    EmailModule,
   ],
   providers: [
     {

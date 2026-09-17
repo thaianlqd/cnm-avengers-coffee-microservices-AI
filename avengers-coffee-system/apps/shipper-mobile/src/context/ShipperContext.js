@@ -20,11 +20,22 @@ export function ShipperProvider({ children }) {
         setShipper(session.shipper)
         setToken(session.token)
         await setAuthToken(session.token)
+        setHydrated(true)
+        // Refresh fresh shipper profile in background to get latest branch_code
+        try {
+          const fresh = await apiClient.get(`/shippers/${session.shipper.id}/profile`).catch(() => null)
+          if (fresh && (fresh.id || fresh.username)) {
+            setShipper(fresh)
+            await saveShipperSession(fresh, session.token)
+          }
+        } catch (e) {
+          console.warn('Failed to sync latest profile:', e?.message || e)
+        }
       } else {
         await clearShipperSession()
         await clearAuthToken()
+        setHydrated(true)
       }
-      setHydrated(true)
     })()
   }, [])
 

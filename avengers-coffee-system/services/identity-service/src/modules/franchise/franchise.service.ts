@@ -17,6 +17,7 @@ import { WalletTransaction } from '../user/wallet-transaction.entity';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import nodemailer from 'nodemailer';
+import { MailSenderService } from '../email/mail-sender.service';
 
 @Injectable()
 export class FranchiseService {
@@ -61,51 +62,22 @@ export class FranchiseService {
     private thuChiRepo: Repository<ThuChi>,
 
     private dataSource: DataSource,
+    private readonly mailSender: MailSenderService,
   ) {}
 
   // ─────────────────────────────────────────────
   // Email helper
   // ─────────────────────────────────────────────
 
-  private async getMailTransporter() {
-    const host = String(process.env.SMTP_HOST || '').trim();
-    const user = String(process.env.SMTP_USER || '').trim();
-    const pass = String(process.env.SMTP_PASS || '').trim();
-    if (host && user && pass) {
-      const port = Number(process.env.SMTP_PORT || 587);
-      return {
-        isDemo: false,
-        transporter: nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } })
-      };
-    }
-    
-    // Fallback Ethereal
-    const testAccount = await nodemailer.createTestAccount();
-    return {
-      isDemo: true,
-      transporter: nodemailer.createTransport({
-        host: 'smtp.ethereal.email',
-        port: 587,
-        secure: false,
-        auth: { user: testAccount.user, pass: testAccount.pass },
-      })
-    };
-  }
-
   private async sendMail(to: string, subject: string, html: string) {
     try {
-      const { transporter, isDemo } = await this.getMailTransporter();
-      const from = String(process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@avengerscoffee.vn').trim();
-      
-      const info = await transporter.sendMail({ from, to, subject, html });
-      
-      if (isDemo) {
-        console.log(`[franchise-mail][ETHEREAL] Gửi demo thành công đến: ${to}`);
-        console.log(`[franchise-mail][ETHEREAL] => XEM EMAIL TẠI ĐÂY: ${nodemailer.getTestMessageUrl(info)}`);
+      const res = await this.mailSender.sendMail({ to, subject, html });
+      if (res.previewUrl) {
+        console.log(`[franchise-mail][DEMO] => XEM EMAIL TẠI ĐÂY: ${res.previewUrl}`);
       } else {
         console.log(`[franchise-mail][REAL] Gửi mail thành công đến: ${to}`);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('[franchise-mail] Lỗi gửi email:', e.message);
     }
   }

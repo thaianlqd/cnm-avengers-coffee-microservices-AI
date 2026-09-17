@@ -10,6 +10,7 @@ import { useShipper } from '../context/ShipperContext'
 import apiClient from '../lib/apiClient'
 import { colors, radius, spacing, shadows, typography } from '../theme'
 import { formatCurrency, formatDateTime } from '../lib/shipperData'
+import { formatBranchName, setGlobalBranchList } from '../lib/branchHelper'
 
 const TX_TYPE_CONFIG = {
   INCOME:   { icon: 'arrow-down-circle', color: colors.success, bg: colors.successBg, label: 'Phí ship' },
@@ -116,15 +117,23 @@ export function WalletScreen({ navigation }) {
 
   // Public branches to map branch codes to names
   const { data: publicBranchPayload } = useQuery({
-    queryKey: ['publicBranches'],
-    queryFn: async () => apiClient.get('/users/branches/public')
+    queryKey: ['public-branches'],
+    queryFn: async () => {
+      try {
+        const res = await apiClient.get('/users/branches/public')
+        const payload = res?.data || res || { items: [] }
+        setGlobalBranchList(payload)
+        return payload
+      } catch (e) {
+        return { items: [] }
+      }
+    },
+    staleTime: 10 * 60 * 1000,
   })
 
   const getBranchName = (code) => {
     if (code === 'LEGACY_COD') return 'Tiền nợ cũ (Chưa phân loại)'
-    if (!publicBranchPayload?.items) return `Cơ sở: ${code}`
-    const b = publicBranchPayload.items.find(x => (x.ma_chi_nhanh || x.co_so_ma || x.branch_code) === code)
-    return b ? (b.ten_chi_nhanh || b.ten_co_so || b.name) : `Cơ sở: ${code}`
+    return formatBranchName(code, publicBranchPayload)
   }
 
   const remitMutation = useMutation({

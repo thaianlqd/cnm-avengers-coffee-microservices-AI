@@ -54,6 +54,9 @@ export class Shipper {
   @Column({ type: 'varchar', nullable: true })
   vehicle_plate: string | null;
 
+  @Column({ type: 'varchar', nullable: true, default: '123456' })
+  password?: string | null;
+
   @CreateDateColumn()
   created_at: Date;
 

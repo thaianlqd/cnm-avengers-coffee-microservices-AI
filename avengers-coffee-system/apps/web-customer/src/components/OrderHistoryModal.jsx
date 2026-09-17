@@ -677,7 +677,10 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
 
               {!loading && isError ? (
                 <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-semibold text-red-700">
-                  {error?.response?.data?.message || error?.message || 'Có lỗi khi tải lịch sử đơn hàng'}
+                  {String(error?.response?.data?.message || error?.message || 'Có lỗi khi tải lịch sử đơn hàng')
+                    .replace(/^[A-Za-z0-9_]+Exception:\s*/i, '')
+                    .replace(/^[A-Za-z0-9_]+Error:\s*/i, '')
+                    .trim()}
                 </div>
               ) : null}
 

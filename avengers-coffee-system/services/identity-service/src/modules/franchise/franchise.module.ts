@@ -15,9 +15,11 @@ import { AuditLog } from './entities/audit-log.entity';
 import { ThuChi } from './entities/thu-chi.entity';
 import { User } from '../user/user.entity';
 import { WalletTransaction } from '../user/wallet-transaction.entity';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
+    EmailModule,
     TypeOrmModule.forFeature([
       ComboNguyenLieu,
       HoSoDangKy,

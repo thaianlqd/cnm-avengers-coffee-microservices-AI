@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
@@ -11,7 +10,10 @@ import {
   Platform,
   Linking,
   Alert,
+  Modal,
+  Image,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -20,6 +22,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import { useShipper } from '../context/ShipperContext'
 import apiClient from '../lib/apiClient'
+import { openGoogleMapsNavigation } from '../lib/navigationHelper'
 import { colors, radius, spacing, shadows, typography } from '../theme'
 import { formatCurrency } from '../lib/shipperData'
 
@@ -34,6 +37,9 @@ if (Platform.OS !== 'web') {
     AnimatedRegion = maps.AnimatedRegion
   } catch (e) {}
 }
+
+const VIETMAP_API_KEY = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || 'dbdd3165b3cb0d85239a7f59f410a9fa925974c4a6d4c54b';
+const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN || '';
 
 // ─── Haversine distance (km) ───────────────────────────────────────
 function haversine(lat1, lon1, lat2, lon2) {
@@ -103,31 +109,85 @@ function totalRouteDistance(orderedPoints) {
 // Màu sắc cho từng chặng đường trên bản đồ
 const ROUTE_COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981']
 
-  export function BatchRouteScreen({ route, navigation }) {
-    const { batch, deliveries: deliveriesParam, storeLat, storeLng, storeName, shopLat: routeShopLat, shopLng: routeShopLng, shopName: routeShopName } = route.params || {}
+function formatCoord(val) {
+  if (val == null) return '---'
+  return Number(val).toFixed(5)
+}
+
+function formatWatermarkTime() {
+  const now = new Date()
+  const hh = String(now.getHours()).padStart(2, '0')
+  const mm = String(now.getMinutes()).padStart(2, '0')
+  const dd = String(now.getDate()).padStart(2, '0')
+  const mo = String(now.getMonth() + 1).padStart(2, '0')
+  const yy = now.getFullYear()
+  return `${hh}:${mm} ${dd}/${mo}/${yy}`
+}
+
+export function BatchRouteScreen({ route, navigation }) {
+  const { batch, deliveries: deliveriesParam, storeLat, storeLng, storeName, shopLat: routeShopLat, shopLng: routeShopLng, shopName: routeShopName } = route.params || {}
+
+  const deliveries = typeof deliveriesParam === 'string' ? JSON.parse(deliveriesParam) : (deliveriesParam || batch?.deliveries || [])
+  const shopLat = storeLat || routeShopLat || 10.7834 // District 3 Default
+  const shopLng = storeLng || routeShopLng || 106.6802 // District 3 Default
+  const actualStoreName = storeName || routeShopName || 'Avengers Coffee - Điểm lấy hàng'
+
+  const [shipperLocation, setShipperLocation] = useState(null)
+  const [optimizedRoute, setOptimizedRoute] = useState([])
+  const [naiveDistance, setNaiveDistance] = useState(0)
+  const [optimizedDistance, setOptimizedDistance] = useState(0)
+  const [routeSegments, setRouteSegments] = useState([])
+  const [isLoadingRoutes, setIsLoadingRoutes] = useState(true)
+  const [selectedStop, setSelectedStop] = useState(null)
   
-    const deliveries = typeof deliveriesParam === 'string' ? JSON.parse(deliveriesParam) : (deliveriesParam || batch?.deliveries || [])
-    const shopLat = storeLat || routeShopLat || 10.7834 // District 3 Default
-    const shopLng = storeLng || routeShopLng || 106.6802 // District 3 Default
-    const actualStoreName = storeName || routeShopName || 'Avengers Coffee - Điểm lấy hàng'
-  
-    const [shipperLocation, setShipperLocation] = useState(null)
-    const [optimizedRoute, setOptimizedRoute] = useState([])
-    const [naiveDistance, setNaiveDistance] = useState(0)
-    const [optimizedDistance, setOptimizedDistance] = useState(0)
-    const [routeSegments, setRouteSegments] = useState([])
-    const [isLoadingRoutes, setIsLoadingRoutes] = useState(true)
-    const [selectedStop, setSelectedStop] = useState(null)
-    
-    const { shipper } = useShipper()
-    const queryClient = useQueryClient()
-    const [cameraPermission, requestCameraPermission] = useCameraPermissions()
-    const [showCamera, setShowCamera] = useState(false)
-    const cameraRef = useRef(null)
+  const { shipper } = useShipper()
+  const queryClient = useQueryClient()
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions()
+  const cameraRef = useRef(null)
+
+  // Proof of Delivery (P.O.D) State - Chuẩn quy trình như đơn lẻ
+  const [podStep, setPodStep] = useState('idle') // 'idle' | 'camera' | 'preview' | 'submitting' | 'done'
+  const [podImage, setPodImage] = useState(null)
+  const [watermarkTime, setWatermarkTime] = useState('')
+  const [pendingTargetPoint, setPendingTargetPoint] = useState(null)
+  const [pendingNextIdx, setPendingNextIdx] = useState(null)
+  const podScaleAnim = useRef(new Animated.Value(0)).current
+  const podSuccessAnim = useRef(new Animated.Value(0)).current
+
+  const openPodModal = (targetPoint, nextIdx) => {
+    setPendingTargetPoint(targetPoint)
+    setPendingNextIdx(nextIdx)
+    setWatermarkTime(formatWatermarkTime())
+    setPodStep('camera')
+    if (!cameraPermission?.granted && requestCameraPermission) {
+      requestCameraPermission().catch(() => {})
+    }
+    Animated.spring(podScaleAnim, { toValue: 1, useNativeDriver: true, tension: 60, friction: 8 }).start()
+  }
+
+  const closePodModal = () => {
+    Animated.timing(podScaleAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => {
+      setPodStep('idle')
+      setPodImage(null)
+      setPendingTargetPoint(null)
+      setPendingNextIdx(null)
+    })
+  }
   
     // Interactive Simulation State
     const [currentStepIndex, setCurrentStepIndex] = useState(0)
     const mapRef = useRef(null)
+
+    const unifiedRouteCoordinates = React.useMemo(() => {
+      const coords = []
+      routeSegments.forEach(seg => {
+        if (seg.toIdx <= currentStepIndex) return
+        if (seg.coordinates && seg.coordinates.length > 0) {
+          coords.push(...seg.coordinates)
+        }
+      })
+      return coords
+    }, [routeSegments, currentStepIndex])
     
     const [isAnimating, setIsAnimating] = useState(false)
     const shipperCoord = useRef(AnimatedRegion ? new AnimatedRegion({
@@ -271,23 +331,25 @@ const ROUTE_COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981']
           }
 
           try {
-            const url = `https://router.project-osrm.org/route/v1/driving/${from.lng},${from.lat};${to.lng},${to.lat}?geometries=geojson&overview=full`
-            const res = await fetchWithTimeout(url, 2500)
-            const data = await res.json()
-            if (data.code === 'Ok' && data.routes?.length > 0) {
+            const url = `https://maps.vietmap.vn/api/route?api-version=1.1&apikey=${VIETMAP_API_KEY}&point=${from.lat},${from.lng}&point=${to.lat},${to.lng}&vehicle=motorcycle&points_encoded=false`;
+            const res = await fetchWithTimeout(url, 3500);
+            const data = await res.json();
+            const path = data.paths?.[0];
+            if (data.code === 'OK' && path?.points?.coordinates) {
               segments.push({
                 fromIdx: i, toIdx: i + 1,
-                coordinates: data.routes[0].geometry.coordinates.map(c => ({ latitude: c[1], longitude: c[0] })),
-                distanceKm: data.routes[0].distance / 1000,
-                durationMin: data.routes[0].duration / 60,
-              })
+                coordinates: path.points.coordinates.map(c => ({ latitude: c[1], longitude: c[0] })),
+                distanceKm: path.distance / 1000,
+                durationMin: path.time / 1000 / 60,
+              });
             } else {
-              segments.push(fallbackSegment)
+              segments.push(fallbackSegment);
             }
           } catch (e) {
-            console.log('OSRM fetch failed or timeout, using fallback')
-            segments.push(fallbackSegment)
+            console.log('Vietmap route fetch failed or timeout, using fallback');
+            segments.push(fallbackSegment);
           }
+
         }
 
         if (!cancelled) {
@@ -319,8 +381,7 @@ const ROUTE_COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981']
   const lngDelta = allLngs.length > 1 ? (Math.max(...allLngs) - Math.min(...allLngs)) * 1.8 + 0.015 : 0.05
 
   const openGoogleMaps = (point) => {
-    const addr = encodeURIComponent(point.address || '')
-    Linking.openURL(`https://maps.google.com/maps?daddr=${addr}`)
+    openGoogleMapsNavigation(point.address, { latitude: point.lat, longitude: point.lng });
   }
 
   const handleNextStep = () => {
@@ -392,61 +453,93 @@ const ROUTE_COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981']
   const arriveAtTarget = (nextIdx, targetPoint) => {
     if (targetPoint.type === 'shop') {
       setCurrentStepIndex(nextIdx)
-      Alert.alert('📦 Đã lấy hàng', 'Tài xế đã lấy hàng thành công tại Quán.')
+      Alert.alert('Đã lấy hàng', 'Tài xế đã lấy hàng thành công tại điểm lấy hàng.')
     } else {
-      // Đây là điểm giao hàng khách -> Mở Camera xác thực
-      if (!cameraPermission?.granted) {
-        requestCameraPermission().then(res => {
-          if (res.granted) setShowCamera(true)
-          else {
-            Alert.alert('Lỗi quyền', 'Cần quyền Camera để chụp ảnh xác thực giao hàng!')
-            setCurrentStepIndex(nextIdx)
-          }
-        })
-      } else {
-        setShowCamera(true)
-      }
+      // Đây là điểm giao hàng khách -> Mở Camera xác thực P.O.D chuẩn giống đơn lẻ
+      openPodModal(targetPoint, nextIdx)
     }
   }
 
   const handleTakePhoto = async () => {
-    if (cameraRef.current) {
-      try {
-        // Chụp ảnh nén 50%
-        const photo = await cameraRef.current.takePictureAsync({ quality: 0.5 })
-        setShowCamera(false)
-        
-        const nextIdx = currentStepIndex + 1
-        const targetPoint = optimizedRoute[nextIdx]
-        const realDeliveryId = targetPoint.delivery?.id || targetPoint.id
-        
-        // Gọi API backend hoàn thành đơn hàng THẬT
-        updateStatusMutation.mutate(
-          { 
-            deliveryId: realDeliveryId, 
-            action: 'complete', 
-            payload: { proof_image_url: 'https://avengers-coffee-demo.com/proof.jpg', is_batched: true } // Gắn cờ đơn ghép
-          },
-          {
-            onSuccess: async () => {
-              // Lưu vào bộ nhớ tạm để UI Lịch sử đọc được ngay cả khi backend chưa restart
-              try {
-                const existing = await AsyncStorage.getItem('localBatchedMap')
-                const map = existing ? JSON.parse(existing) : {}
-                map[realDeliveryId] = true
-                const orderCode = targetPoint.delivery?.ma_don_hang
-                if (orderCode) map[orderCode] = true
-                await AsyncStorage.setItem('localBatchedMap', JSON.stringify(map))
-              } catch (e) {}
-              
-              setCurrentStepIndex(nextIdx)
-              Alert.alert('✅ Giao thành công', `Đã giao xong ${targetPoint.label}! Đơn hàng đã được đánh dấu Hoàn thành thực tế trên hệ thống.`)
-            }
-          }
-        )
-      } catch (e) {
-        Alert.alert('Lỗi Camera', 'Không thể chụp ảnh xác thực.')
+    if (!cameraRef.current) {
+      handleDemoPhoto()
+      return
+    }
+    try {
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.8,
+        base64: false,
+        skipProcessing: false,
+      })
+      if (photo?.uri) {
+        setPodImage(photo.uri)
+        setPodStep('preview')
+      } else {
+        handleDemoPhoto()
       }
+    } catch (err) {
+      Alert.alert('Lỗi máy ảnh', 'Không thể chụp ảnh lúc này. Bạn có thể chọn ảnh mẫu để tiếp tục.', [
+        { text: 'Dùng ảnh mẫu', onPress: handleDemoPhoto },
+        { text: 'Thử lại', style: 'cancel' }
+      ])
+    }
+  }
+
+  const handleDemoPhoto = () => {
+    setPodImage('https://images.unsplash.com/photo-1610632380989-7f09b1a64f8a?w=600&q=80')
+    setWatermarkTime(formatWatermarkTime())
+    setPodStep('preview')
+  }
+
+  const submitCompleteBatchDelivery = async () => {
+    if (!pendingTargetPoint || pendingNextIdx == null) return
+
+    const realDeliveryId = pendingTargetPoint.delivery?.id || pendingTargetPoint.id
+    const pointLat = pendingTargetPoint.lat || shipperLocation?.latitude
+    const pointLng = pendingTargetPoint.lng || shipperLocation?.longitude
+    const code = pendingTargetPoint.orderCode || pendingTargetPoint.delivery?.ma_don_hang?.slice(0, 8).toUpperCase() || 'GH'
+
+    setPodStep('submitting')
+
+    try {
+      await updateStatusMutation.mutateAsync({
+        deliveryId: realDeliveryId,
+        action: 'complete',
+        payload: {
+          latitude: shipperLocation?.latitude || pointLat,
+          longitude: shipperLocation?.longitude || pointLng,
+          proof_image_url: podImage || 'https://avengers-coffee-demo.com/proof.jpg',
+          is_batched: true,
+          proof_metadata: {
+            timestamp: watermarkTime,
+            gps_lat: formatCoord(shipperLocation?.latitude || pointLat),
+            gps_lng: formatCoord(shipperLocation?.longitude || pointLng),
+            order_code: code,
+          }
+        }
+      })
+
+      // Lưu vào bộ nhớ tạm localBatchedMap
+      try {
+        const existing = await AsyncStorage.getItem('localBatchedMap')
+        const map = existing ? JSON.parse(existing) : {}
+        map[realDeliveryId] = true
+        const orderCode = pendingTargetPoint.delivery?.ma_don_hang
+        if (orderCode) map[orderCode] = true
+        await AsyncStorage.setItem('localBatchedMap', JSON.stringify(map))
+      } catch (e) {}
+
+      setPodStep('done')
+      Animated.spring(podSuccessAnim, { toValue: 1, useNativeDriver: true, tension: 50, friction: 6 }).start()
+
+      setTimeout(() => {
+        const nextIdx = pendingNextIdx
+        setCurrentStepIndex(nextIdx)
+        closePodModal()
+      }, 1800)
+    } catch (err) {
+      setPodStep('preview')
+      Alert.alert('Lỗi', err?.response?.data?.message || 'Không thể cập nhật trạng thái đơn hàng.')
     }
   }
   const handleCompleteAll = async () => {
@@ -564,6 +657,8 @@ const ROUTE_COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981']
               )
             }
 
+            const deliveryNumber = idx - 1
+
             return (
               <Marker
                 key={point.id}
@@ -575,37 +670,41 @@ const ROUTE_COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981']
               >
                 <View style={[
                   styles.routeMarker,
-                  isShop ? styles.routeMarkerShop : { backgroundColor: ROUTE_COLORS[(idx - 1) % ROUTE_COLORS.length] },
+                  isShop && styles.routeMarkerShop,
+                  !isShop && styles.routeMarkerDelivery,
+                  isCurrentTarget && styles.routeMarkerTarget,
                   selectedStop === idx && styles.routeMarkerSelected,
-                  isCompleted && { backgroundColor: '#B0B0B0', opacity: 0.7 } // Mờ đi nếu đã qua
+                  isCompleted && styles.routeMarkerCompleted,
                 ]}>
                   {isShop ? (
                     <Ionicons name="storefront" size={14} color="#fff" />
                   ) : (
-                    <Text style={styles.routeMarkerText}>{idx - 1}</Text>
+                    <Text style={styles.routeMarkerText}>{deliveryNumber > 0 ? deliveryNumber : 1}</Text>
                   )}
                 </View>
               </Marker>
             )
           })}
 
-          {/* Đường đi từng chặng - màu khác nhau */}
-          {Polyline && routeSegments.map((seg, idx) => {
-            const isCompleted = seg.toIdx <= currentStepIndex
-            const isCurrent = seg.fromIdx === currentStepIndex
-            
-            if (isCompleted) return null // Ẩn đường đã đi qua
-            
-            return (
+          {/* Một lộ trình liên tục duy nhất tối ưu nhất */}
+          {Polyline && unifiedRouteCoordinates.length > 1 && (
+            <>
+              {/* Viền ngoài xanh đậm tạo độ tương phản cao trên bản đồ */}
               <Polyline
-                key={`route-${idx}`}
-                coordinates={seg.coordinates}
-                strokeColor={ROUTE_COLORS[idx % ROUTE_COLORS.length]}
-                strokeWidth={isCurrent ? 6 : 4}
-                zIndex={isCurrent ? 50 : 10}
+                coordinates={unifiedRouteCoordinates}
+                strokeColor="#1E3A8A"
+                strokeWidth={7}
+                zIndex={40}
               />
-            )
-          })}
+              {/* Tuyến đường chính màu xanh dương sáng rõ nét */}
+              <Polyline
+                coordinates={unifiedRouteCoordinates}
+                strokeColor="#2563EB"
+                strokeWidth={4.5}
+                zIndex={41}
+              />
+            </>
+          )}
         </MapView>
       ) : (
         <View style={styles.mapPlaceholder}>
@@ -619,49 +718,28 @@ const ROUTE_COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981']
       {/* ─── Panel dưới ─────────────────────────────────────────── */}
       <Animated.View style={[styles.bottomPanel, { transform: [{ translateY: slideAnim }], opacity: opacityAnim }]}>
 
-        {/* Header */}
-        <LinearGradient colors={colors.gradientRed} style={styles.panelHeader}>
-          <SafeAreaView>
-            <View style={styles.panelHeaderRow}>
-              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.panelBackBtn}>
-                <Ionicons name="arrow-back" size={22} color="#fff" />
-              </TouchableOpacity>
-              <View style={styles.panelHeaderCenter}>
-                <Text style={styles.panelTitle}>🧠 Lộ Trình Tối Ưu</Text>
-                <Text style={styles.panelSubtitle}>
-                  {optimizedRoute.filter(p => p.type === 'delivery').length} điểm giao • Thuật toán AI
-                </Text>
-              </View>
-              <View style={{ width: 40 }} />
+        {/* Header hiện đại, thanh thoát */}
+        <View style={styles.panelHeaderClean}>
+          <View style={styles.dragHandle} />
+          <View style={styles.panelHeaderRowClean}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.panelBackBtnClean}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="arrow-back" size={20} color={colors.text} />
+            </TouchableOpacity>
+            <View style={styles.panelHeaderCenterClean}>
+              <Text style={styles.panelTitleClean}>Lộ Trình Giao Hàng</Text>
+              <Text style={styles.panelSubtitleClean}>
+                {optimizedRoute.filter(p => p.type === 'delivery').length} điểm giao • Tuyến đường tối ưu
+              </Text>
             </View>
-          </SafeAreaView>
-        </LinearGradient>
+            <View style={{ width: 36 }} />
+          </View>
+        </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-
-          {/* Banner tiết kiệm km */}
-          {naiveDistance > 0 && (
-            <View style={styles.savingsBanner}>
-              <View style={styles.savingsLeft}>
-                <View style={styles.savingsIconWrap}>
-                  <Ionicons name="trending-down" size={22} color={colors.success} />
-                </View>
-                <View style={{ marginLeft: spacing.sm, flex: 1 }}>
-                  <Text style={styles.savingsTitle}>
-                    {savedKm > 0.05
-                      ? `AI tiết kiệm ~${savedKm.toFixed(1)} km cho bạn!`
-                      : '✅ Thứ tự giao đã tối ưu sẵn!'}
-                  </Text>
-                  <Text style={styles.savingsSubtitle}>
-                    Thứ tự gốc: {naiveDistance.toFixed(1)} km → Tối ưu: {optimizedDistance.toFixed(1)} km
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.aiBadge}>
-                <Text style={styles.aiBadgeText}>AI</Text>
-              </View>
-            </View>
-          )}
 
           {/* Thống kê tổng hợp */}
           <View style={styles.statsCard}>
@@ -687,7 +765,7 @@ const ROUTE_COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981']
           </View>
 
           {/* Danh sách điểm theo thứ tự */}
-          <Text style={styles.sectionTitle}>Thứ tự giao đề xuất</Text>
+          <Text style={styles.sectionTitle}>Thứ tự giao hàng</Text>
 
           {isLoadingRoutes ? (
             <View style={styles.loadingRow}>
@@ -702,23 +780,24 @@ const ROUTE_COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981']
                 const segToPrev = routeSegments[idx - 1]
                 const isShop = point.type === 'shop'
                 const isSelected = selectedStop === idx
-                const isCompleted = idx <= currentStepIndex // Đã đi qua
-                const isCurrentTarget = idx === currentStepIndex + 1 // Đang đi tới
+                const isCompleted = idx < currentStepIndex
+                const isCurrentTarget = idx === currentStepIndex + 1
+                const deliveryNumber = idx - 1
                 
-                const dotColor = isShop ? colors.accent : ROUTE_COLORS[(idx - 1) % ROUTE_COLORS.length]
+                const dotColor = isShop ? colors.success : (isCompleted ? '#9CA3AF' : '#2563EB')
 
                 return (
                   <View key={point.id} style={[styles.stopWrapper, isCompleted && { opacity: 0.5 }]}>
                     {/* Connector */}
                     {idx < optimizedRoute.length - 1 && (
-                      <View style={[styles.connector, { backgroundColor: ROUTE_COLORS[idx % ROUTE_COLORS.length] + '80' }]} />
+                      <View style={[styles.connector, { backgroundColor: '#E2E8F0' }]} />
                     )}
 
                     <TouchableOpacity
                       style={[
                         styles.stopCard, 
                         isSelected && { borderColor: dotColor, borderWidth: 2 },
-                        isCurrentTarget && { borderColor: colors.primary, borderWidth: 1, backgroundColor: '#FFF5F5' } // Highlight chặng đang đi tới
+                        isCurrentTarget && { borderColor: colors.primary, borderWidth: 1.5, backgroundColor: '#FFF7ED' }
                       ]}
                       onPress={() => setSelectedStop(isSelected ? null : idx)}
                       activeOpacity={0.85}
@@ -728,7 +807,7 @@ const ROUTE_COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981']
                         {isShop ? (
                           <Ionicons name="storefront" size={15} color="#fff" />
                         ) : (
-                          <Text style={styles.stopBadgeNum}>{idx}</Text>
+                          <Text style={styles.stopBadgeNum}>{deliveryNumber > 0 ? deliveryNumber : 1}</Text>
                         )}
                       </View>
 
@@ -736,7 +815,7 @@ const ROUTE_COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981']
                         <View style={styles.stopTopRow}>
                           <View style={styles.stopLabelWrap}>
                             <Text style={styles.stopLabel}>
-                              {isShop ? `📦 Lấy hàng tại ${point.address}` : point.label}
+                              {isShop ? `Lấy hàng tại ${point.address}` : point.label}
                             </Text>
                             {!isShop && (
                               <Text style={styles.stopOrderCode}>Đơn #{point.orderCode}</Text>
@@ -752,8 +831,8 @@ const ROUTE_COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981']
                         {/* Khoảng cách từ điểm trước */}
                         {segToPrev && (
                           <View style={styles.stopDistRow}>
-                            <View style={[styles.distDot, { backgroundColor: ROUTE_COLORS[(idx - 1) % ROUTE_COLORS.length] }]} />
-                            <Text style={[styles.stopDist, { color: ROUTE_COLORS[(idx - 1) % ROUTE_COLORS.length] }]}>
+                            <Ionicons name="navigate-outline" size={13} color="#64748B" style={{ marginRight: 4 }} />
+                            <Text style={styles.stopDist}>
                               {segToPrev.distanceKm.toFixed(1)} km •{' '}
                               {segToPrev.durationMin > 0
                                 ? `~${Math.round(segToPrev.durationMin)} phút`
@@ -776,11 +855,8 @@ const ROUTE_COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981']
                               <TouchableOpacity
                                 style={[styles.stopActionBtn, { backgroundColor: colors.successBg, borderColor: colors.success + '50' }]}
                                 onPress={() => {
-                                  Alert.alert(
-                                    'Chi tiết đơn (Demo)',
-                                    'Bạn đang xem chế độ Demo Ghép tuyến.\n\nHãy Nhận đơn này ở ngoài màn hình chính để xem chi tiết thực tế!',
-                                    [{ text: 'Đã hiểu' }]
-                                  )
+                                  const dId = point.delivery?.id || point.delivery?.ma_don_hang || point.id
+                                  navigation.navigate('OrderDetail', { deliveryId: dId })
                                 }}
                               >
                                 <Ionicons name="receipt-outline" size={15} color={colors.success} />
@@ -804,34 +880,17 @@ const ROUTE_COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981']
               })}
             </View>
           )}
-
-          {/* Chú thích màu */}
-          {!isLoadingRoutes && routeSegments.length > 0 && (
-            <View style={styles.legend}>
-              <Text style={styles.legendTitle}>Màu sắc các chặng đường</Text>
-              <View style={styles.legendItems}>
-                {routeSegments.map((seg, idx) => (
-                  <View key={idx} style={styles.legendItem}>
-                    <View style={[styles.legendLine, { backgroundColor: ROUTE_COLORS[idx % ROUTE_COLORS.length] }]} />
-                    <Text style={styles.legendText}>
-                      Chặng {idx + 1}: {seg.distanceKm.toFixed(1)}km
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
         </ScrollView>
 
         {/* CTA Button Động */}
         <View style={styles.ctaContainer}>
           <TouchableOpacity style={styles.ctaBtn} onPress={handleNextStep} activeOpacity={0.85}>
-            <LinearGradient colors={colors.gradientRed} style={styles.ctaGradient}>
+            <LinearGradient colors={['#16A34A', '#15803D']} style={styles.ctaGradient}>
               <Ionicons name={ctaIcon} size={26} color="#fff" />
               <View style={{ flex: 1, marginLeft: spacing.sm }}>
                 <Text style={styles.ctaTitle}>{ctaTitle}</Text>
                 {optimizedRoute[currentStepIndex + 1] && (
-                  <Text style={styles.ctaSub}>Bấm để mô phỏng hoàn thành chặng này</Text>
+                  <Text style={styles.ctaSub}>Nhấn để xác nhận hoàn thành điểm dừng</Text>
                 )}
               </View>
               <Ionicons name="chevron-forward" size={22} color="rgba(255,255,255,0.7)" />
@@ -845,46 +904,197 @@ const ROUTE_COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981']
               disabled={isAnimating || updateStatusMutation.isPending}
             >
               <Text style={{ color: colors.primary, fontWeight: 'bold', fontSize: 15 }}>
-                🚀 Hoàn thành tất cả (Demo)
+                Hoàn thành tất cả các đơn
               </Text>
             </TouchableOpacity>
           )}
         </View>
       </Animated.View>
 
-      {/* ─── Camera Overlay ─────────────────────────────────────────────── */}
-      {showCamera && (
-        <View style={[StyleSheet.absoluteFill, { zIndex: 9999, backgroundColor: '#000' }]}>
-          <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back">
-            <View style={{ flex: 1, justifyContent: 'space-between', padding: 20, backgroundColor: 'transparent' }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: Platform.OS === 'ios' ? 40 : 20 }}>
-                <TouchableOpacity onPress={() => setShowCamera(false)} style={{ padding: 10, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 20 }}>
-                  <Ionicons name="close" size={28} color="#fff" />
-                </TouchableOpacity>
-              </View>
-              <View style={{ alignItems: 'center', marginBottom: 40 }}>
-                <TouchableOpacity
-                  onPress={handleTakePhoto}
-                  disabled={updateStatusMutation.isPending}
-                  style={{
-                    width: 76, height: 76, borderRadius: 38,
-                    backgroundColor: 'rgba(255,255,255,0.3)',
-                    justifyContent: 'center', alignItems: 'center',
-                  }}
-                >
-                  <View style={{
-                    width: 60, height: 60, borderRadius: 30, backgroundColor: '#fff',
-                    justifyContent: 'center', alignItems: 'center'
-                  }}>
-                    {updateStatusMutation.isPending && <ActivityIndicator color={colors.primary} size="large" />}
+      {/* ─── Proof of Delivery (P.O.D) Modal Chuẩn Giống Đơn Lẻ ─── */}
+      <Modal visible={podStep !== 'idle'} transparent animationType="fade" statusBarTranslucent>
+        <View style={styles.podOverlay}>
+          <Animated.View style={[styles.podContainer, { transform: [{ scale: podScaleAnim }] }]}>
+            {podStep === 'camera' && (
+              <>
+                <View style={styles.podHeader}>
+                  <View style={styles.podHeaderLeft}>
+                    <View style={styles.podIconBadge}>
+                      <Ionicons name="camera" size={20} color="#fff" />
+                    </View>
+                    <View>
+                      <Text style={styles.podTitle}>Chụp ảnh bằng chứng</Text>
+                      <Text style={styles.podSubtitle}>
+                        {pendingTargetPoint?.label || 'Điểm giao'} • Đơn #{pendingTargetPoint?.orderCode || ''}
+                      </Text>
+                    </View>
                   </View>
-                </TouchableOpacity>
-                <Text style={{ color: '#fff', marginTop: 10, fontWeight: 'bold' }}>Chụp ảnh gói hàng</Text>
+                  <TouchableOpacity onPress={closePodModal} style={styles.podCloseBtn}>
+                    <Ionicons name="close" size={22} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+
+                {CameraView && cameraPermission?.granted ? (
+                  <View style={styles.cameraContainer}>
+                    <CameraView ref={cameraRef} style={styles.cameraView} facing="back">
+                      <View style={styles.cameraOverlay}>
+                        <View style={styles.scanFrame}>
+                          <View style={[styles.corner, styles.cornerTL]} />
+                          <View style={[styles.corner, styles.cornerTR]} />
+                          <View style={[styles.corner, styles.cornerBL]} />
+                          <View style={[styles.corner, styles.cornerBR]} />
+                        </View>
+                        <Text style={styles.cameraHint}>Hướng camera vào hàng đã giao</Text>
+                      </View>
+                    </CameraView>
+                  </View>
+                ) : (
+                  <View style={styles.cameraPlaceholder}>
+                    <Ionicons name="camera-outline" size={56} color={colors.muted} />
+                    <Text style={styles.cameraPlaceholderText}>
+                      {!cameraPermission?.granted ? 'Camera chưa được cấp quyền' : 'Camera không khả dụng'}
+                    </Text>
+                    {!cameraPermission?.granted && (
+                      <TouchableOpacity 
+                        style={{ marginTop: 8, paddingHorizontal: 14, paddingVertical: 6, backgroundColor: colors.primaryBg, borderRadius: 8 }}
+                        onPress={() => requestCameraPermission()}
+                      >
+                        <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }}>Cấp quyền Camera</Text>
+                      </TouchableOpacity>
+                    )}
+                    <Text style={styles.cameraPlaceholderSub}>Hoặc chọn "Ảnh Demo" để tiếp tục</Text>
+                  </View>
+                )}
+
+                <View style={styles.watermarkPreviewRow}>
+                  <Ionicons name="location" size={14} color={colors.primary} />
+                  <Text style={styles.watermarkPreviewText} numberOfLines={1}>
+                    GPS: {formatCoord(shipperLocation?.latitude || pendingTargetPoint?.lat)}°N, {formatCoord(shipperLocation?.longitude || pendingTargetPoint?.lng)}°E  •  {watermarkTime}
+                  </Text>
+                </View>
+
+                <View style={styles.podCameraActions}>
+                  {CameraView && cameraPermission?.granted ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 20, width: '100%' }}>
+                      <TouchableOpacity style={styles.captureBtn} onPress={handleTakePhoto}>
+                        <View style={styles.captureInner} />
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.demoPhotoSmallBtn} onPress={handleDemoPhoto}>
+                        <Ionicons name="images-outline" size={18} color={colors.textSecondary} />
+                        <Text style={styles.demoPhotoSmallText}>Ảnh mẫu</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity style={styles.demoPhotoBtn} onPress={handleDemoPhoto}>
+                      <Ionicons name="images-outline" size={20} color="#fff" />
+                      <Text style={styles.demoPhotoBtnText}>Ảnh Demo (Test)</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </>
+            )}
+
+            {podStep === 'preview' && (
+              <>
+                <View style={styles.podHeader}>
+                  <View style={styles.podHeaderLeft}>
+                    <View style={[styles.podIconBadge, { backgroundColor: '#8b5cf6' }]}>
+                      <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                    </View>
+                    <View>
+                      <Text style={styles.podTitle}>Xác nhận ảnh bằng chứng</Text>
+                      <Text style={styles.podSubtitle}>Kiểm tra ảnh trước khi gửi</Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity onPress={() => setPodStep('camera')} style={styles.podCloseBtn}>
+                    <Ionicons name="refresh" size={22} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.watermarkedImageContainer}>
+                  <Image source={{ uri: podImage }} style={styles.podPreviewImage} resizeMode="cover" />
+
+                  <View style={styles.watermarkOverlay}>
+                    <View style={styles.watermarkHeader}>
+                      <Ionicons name="shield-checkmark" size={12} color="#fff" />
+                      <Text style={styles.watermarkBrand}>AVENGERS COFFEE DELIVERY</Text>
+                    </View>
+                    <View style={styles.watermarkFooter}>
+                      <View style={styles.watermarkRow}>
+                        <Ionicons name="location" size={11} color="#fbbf24" />
+                        <Text style={styles.watermarkGPS}>
+                          {formatCoord(shipperLocation?.latitude || pendingTargetPoint?.lat)}°N, {formatCoord(shipperLocation?.longitude || pendingTargetPoint?.lng)}°E
+                        </Text>
+                      </View>
+                      <View style={styles.watermarkRow}>
+                        <Ionicons name="time" size={11} color="#fbbf24" />
+                        <Text style={styles.watermarkTime}>{watermarkTime}</Text>
+                      </View>
+                      <View style={styles.watermarkRow}>
+                        <Ionicons name="receipt" size={11} color="#fbbf24" />
+                        <Text style={styles.watermarkOrder}>Đơn #{pendingTargetPoint?.orderCode || ''}</Text>
+                      </View>
+                      <View style={[styles.watermarkRow, { marginTop: 3 }]}>
+                        <View style={styles.watermarkBadge}>
+                          <Text style={styles.watermarkBadgeText}>✓ GIAO THÀNH CÔNG</Text>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.podInfoBanner}>
+                  <Ionicons name="information-circle" size={16} color={colors.info} />
+                  <Text style={styles.podInfoText}>
+                    Ảnh và tọa độ GPS sẽ được lưu làm bằng chứng giao hàng. Không thể chỉnh sửa sau khi xác nhận.
+                  </Text>
+                </View>
+
+                <View style={styles.podPreviewActions}>
+                  <TouchableOpacity style={styles.retakeBtn} onPress={() => setPodStep('camera')}>
+                    <Ionicons name="camera-reverse-outline" size={18} color={colors.textSecondary} />
+                    <Text style={styles.retakeBtnText}>Chụp lại</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.confirmDeliveryBtn} onPress={submitCompleteBatchDelivery}>
+                    <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                    <Text style={styles.confirmDeliveryBtnText}>Xác nhận Giao Xong</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+
+            {podStep === 'submitting' && (
+              <View style={styles.podCenterState}>
+                <View style={styles.podSpinnerWrap}>
+                  <ActivityIndicator size="large" color={colors.primary} />
+                </View>
+                <Text style={styles.podStateTitle}>Đang xử lý...</Text>
+                <Text style={styles.podStateSubtitle}>Đang cập nhật trạng thái đơn hàng</Text>
               </View>
-            </View>
-          </CameraView>
+            )}
+
+            {podStep === 'done' && (
+              <View style={styles.podCenterState}>
+                <Animated.View style={[styles.podSuccessCircle, { transform: [{ scale: podSuccessAnim }] }]}>
+                  <Ionicons name="checkmark-circle" size={80} color={colors.success} />
+                </Animated.View>
+                <Text style={styles.podStateTitle}>Giao hàng thành công!</Text>
+                <Text style={styles.podStateSubtitle}>Đã hoàn thành điểm giao #{pendingTargetPoint?.orderCode || ''}</Text>
+                <View style={styles.podDoneInfoRow}>
+                  <Ionicons name="location" size={14} color={colors.muted} />
+                  <Text style={styles.podDoneInfoText}>
+                    {formatCoord(shipperLocation?.latitude || pendingTargetPoint?.lat)}°N, {formatCoord(shipperLocation?.longitude || pendingTargetPoint?.lng)}°E
+                  </Text>
+                </View>
+                <View style={styles.podDoneInfoRow}>
+                  <Ionicons name="time" size={14} color={colors.muted} />
+                  <Text style={styles.podDoneInfoText}>{watermarkTime}</Text>
+                </View>
+              </View>
+            )}
+          </Animated.View>
         </View>
-      )}
+      </Modal>
     </View>
   )
 }
@@ -897,54 +1107,74 @@ const styles = StyleSheet.create({
   mapPlaceholder: { flex: 1, backgroundColor: '#e5e7eb', alignItems: 'center', justifyContent: 'center' },
   mapPlaceholderText: { color: colors.muted, marginTop: 12, fontSize: 14 },
 
-  markerShipper: { backgroundColor: '#fff', padding: 3, borderRadius: 22, borderWidth: 2, borderColor: '#4F46E5', ...shadows.md },
+  markerShipper: { backgroundColor: '#fff', padding: 3, borderRadius: 22, borderWidth: 2, borderColor: '#2563EB', ...shadows.md },
   routeMarker: {
-    width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primary,
+    width: 32, height: 32, borderRadius: 16, backgroundColor: '#2563EB',
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 2, borderColor: '#fff', ...shadows.sm,
   },
-  routeMarkerShop: { backgroundColor: colors.accent, width: 36, height: 36, borderRadius: 18 },
-  routeMarkerSelected: { transform: [{ scale: 1.3 }] },
-  routeMarkerText: { color: '#fff', fontWeight: '900', fontSize: 14 },
+  routeMarkerDelivery: { backgroundColor: '#2563EB' },
+  routeMarkerShop: { backgroundColor: '#16A34A', width: 36, height: 36, borderRadius: 18 },
+  routeMarkerTarget: { borderWidth: 3, borderColor: '#FB923C', transform: [{ scale: 1.18 }], ...shadows.md },
+  routeMarkerCompleted: { backgroundColor: '#9CA3AF', opacity: 0.7 },
+  routeMarkerSelected: { transform: [{ scale: 1.25 }] },
+  routeMarkerText: { color: '#fff', fontWeight: '900', fontSize: 13 },
 
   // Bottom Panel
   bottomPanel: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    maxHeight: '70%',
-    backgroundColor: colors.bg,
-    borderTopLeftRadius: radius.xxl, borderTopRightRadius: radius.xxl,
+    maxHeight: '65%',
+    backgroundColor: '#F8FAFC',
+    borderTopLeftRadius: 24, borderTopRightRadius: 24,
     overflow: 'hidden', ...shadows.lg,
+    borderTopWidth: 1, borderColor: '#E2E8F0',
   },
-  panelHeader: { borderTopLeftRadius: radius.xxl, borderTopRightRadius: radius.xxl },
-  panelHeaderRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: spacing.md, paddingTop: spacing.sm, paddingBottom: spacing.md,
+  panelHeaderClean: {
+    backgroundColor: '#FFFFFF',
+    paddingTop: 8,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    alignItems: 'center',
   },
-  panelBackBtn: { padding: spacing.xs },
-  panelHeaderCenter: { alignItems: 'center' },
-  panelTitle: { color: '#fff', fontWeight: '900', fontSize: 17 },
-  panelSubtitle: { color: 'rgba(255,255,255,0.8)', fontSize: 11, marginTop: 2 },
-
-  // Savings Banner
-  savingsBanner: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: colors.successBg, margin: spacing.md,
-    borderRadius: radius.lg, padding: spacing.md,
-    borderWidth: 1, borderColor: colors.success + '40',
+  dragHandle: {
+    width: 38,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#CBD5E1',
+    marginBottom: 8,
   },
-  savingsLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  savingsIconWrap: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center',
-    ...shadows.xs,
+  panelHeaderRowClean: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: spacing.md,
   },
-  savingsTitle: { color: colors.success, fontWeight: '800', fontSize: 14 },
-  savingsSubtitle: { color: colors.textSecondary, fontSize: 11, marginTop: 2 },
-  aiBadge: {
-    backgroundColor: colors.success, paddingHorizontal: 10, paddingVertical: 5,
-    borderRadius: radius.full,
+  panelBackBtnClean: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  aiBadgeText: { color: '#fff', fontWeight: '900', fontSize: 12, letterSpacing: 1 },
+  panelHeaderCenterClean: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  panelTitleClean: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: 0.2,
+  },
+  panelSubtitleClean: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+    fontWeight: '500',
+  },
 
   // Stats Card
   statsCard: {
@@ -1032,4 +1262,134 @@ const styles = StyleSheet.create({
   },
   ctaTitle: { color: '#fff', fontWeight: '900', fontSize: 16 },
   ctaSub: { color: 'rgba(255,255,255,0.75)', fontSize: 12, marginTop: 2 },
+
+  // ─── POD Modal Styles ──────────────────────────────────────────
+  podOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.75)',
+    justifyContent: 'center', alignItems: 'center',
+    paddingHorizontal: spacing.md,
+  },
+  podContainer: {
+    backgroundColor: colors.surface, borderRadius: radius.xl,
+    width: '100%', maxWidth: 420, overflow: 'hidden', ...shadows.lg,
+  },
+  podHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    padding: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.borderLight,
+  },
+  podHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  podIconBadge: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: colors.primary,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  podTitle: { ...typography.bodyBold, color: colors.text, fontSize: 16 },
+  podSubtitle: { ...typography.caption, color: colors.textSecondary, marginTop: 1 },
+  podCloseBtn: { padding: spacing.xs },
+
+  // Camera
+  cameraContainer: { height: 280, margin: spacing.md, borderRadius: radius.lg, overflow: 'hidden' },
+  cameraView: { flex: 1 },
+  cameraOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  scanFrame: { width: 200, height: 200, position: 'relative' },
+  corner: { position: 'absolute', width: 24, height: 24, borderColor: '#fff', borderWidth: 3 },
+  cornerTL: { top: 0, left: 0, borderBottomWidth: 0, borderRightWidth: 0, borderTopLeftRadius: 4 },
+  cornerTR: { top: 0, right: 0, borderBottomWidth: 0, borderLeftWidth: 0, borderTopRightRadius: 4 },
+  cornerBL: { bottom: 0, left: 0, borderTopWidth: 0, borderRightWidth: 0, borderBottomLeftRadius: 4 },
+  cornerBR: { bottom: 0, right: 0, borderTopWidth: 0, borderLeftWidth: 0, borderBottomRightRadius: 4 },
+  cameraHint: {
+    color: '#fff', fontSize: 12, fontWeight: '600',
+    marginTop: 16, textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
+  },
+  cameraPlaceholder: {
+    height: 220, margin: spacing.md, borderRadius: radius.lg,
+    backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: colors.border, borderStyle: 'dashed',
+  },
+  cameraPlaceholderText: { color: colors.textSecondary, fontWeight: '600', fontSize: 15, marginTop: 12 },
+  cameraPlaceholderSub: { color: colors.muted, fontSize: 12, marginTop: 4 },
+
+  watermarkPreviewRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
+    backgroundColor: colors.primaryBg, marginHorizontal: spacing.md,
+    borderRadius: radius.md, marginBottom: spacing.sm,
+  },
+  watermarkPreviewText: { flex: 1, color: colors.primary, fontSize: 11, fontWeight: '600' },
+
+  podCameraActions: { paddingHorizontal: spacing.md, paddingBottom: spacing.lg, alignItems: 'center' },
+  captureBtn: {
+    width: 72, height: 72, borderRadius: 36, backgroundColor: '#fff',
+    borderWidth: 4, borderColor: colors.primary,
+    alignItems: 'center', justifyContent: 'center', ...shadows.primary,
+  },
+  captureInner: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.primary },
+  demoPhotoSmallBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingVertical: 10, paddingHorizontal: 14,
+    borderRadius: radius.md, backgroundColor: colors.bg,
+    borderWidth: 1, borderColor: colors.border,
+  },
+  demoPhotoSmallText: { fontSize: 13, color: colors.textSecondary, fontWeight: '600' },
+  demoPhotoBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#8b5cf6', paddingVertical: 14, paddingHorizontal: 32,
+    borderRadius: radius.xl, ...shadows.sm,
+  },
+  demoPhotoBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+
+  // Preview + Watermark
+  watermarkedImageContainer: {
+    margin: spacing.md, borderRadius: radius.lg,
+    overflow: 'hidden', position: 'relative',
+  },
+  podPreviewImage: { width: '100%', height: 220 },
+  watermarkOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'space-between' },
+  watermarkHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: 'rgba(227, 26, 35, 0.88)',
+    paddingHorizontal: 10, paddingVertical: 6,
+  },
+  watermarkBrand: { color: '#fff', fontSize: 11, fontWeight: '900', letterSpacing: 0.5 },
+  watermarkFooter: { backgroundColor: 'rgba(0,0,0,0.75)', paddingHorizontal: 10, paddingVertical: 8 },
+  watermarkRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2 },
+  watermarkGPS: {
+    color: '#fff', fontSize: 11, fontWeight: '700',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  watermarkTime: { color: '#fff', fontSize: 11, fontWeight: '700' },
+  watermarkOrder: { color: '#fbbf24', fontSize: 11, fontWeight: '900' },
+  watermarkBadge: { backgroundColor: colors.success, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
+  watermarkBadgeText: { color: '#fff', fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
+
+  podInfoBanner: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
+    backgroundColor: colors.infoBg, marginHorizontal: spacing.md,
+    borderRadius: radius.md, padding: spacing.sm, marginBottom: spacing.sm,
+  },
+  podInfoText: { flex: 1, color: colors.info, fontSize: 11, lineHeight: 16 },
+
+  podPreviewActions: { flexDirection: 'row', gap: 10, padding: spacing.md, paddingTop: 0 },
+  retakeBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border,
+    paddingVertical: 14, borderRadius: radius.lg,
+  },
+  retakeBtnText: { color: colors.textSecondary, fontWeight: '700', fontSize: 14 },
+  confirmDeliveryBtn: {
+    flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: colors.success, paddingVertical: 14,
+    borderRadius: radius.lg, ...shadows.success,
+  },
+  confirmDeliveryBtnText: { color: '#fff', fontWeight: '900', fontSize: 15 },
+
+  // Submitting & Done states
+  podCenterState: { padding: spacing.xl, alignItems: 'center' },
+  podSpinnerWrap: { marginBottom: spacing.md },
+  podSuccessCircle: { marginBottom: spacing.md },
+  podStateTitle: { ...typography.h4, color: colors.text, textAlign: 'center', marginBottom: spacing.xs },
+  podStateSubtitle: { ...typography.body, color: colors.textSecondary, textAlign: 'center', marginBottom: spacing.md },
+  podDoneInfoRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  podDoneInfoText: { color: colors.muted, fontSize: 12 },
 })
