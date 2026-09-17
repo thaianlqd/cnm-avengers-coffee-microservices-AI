@@ -41,8 +41,8 @@ export default function DeliveryModeSelector({ selectedMode, onChange }) {
         <div 
           className="absolute top-1.5 bottom-1.5 bg-white rounded-[12px] shadow-sm border border-[#c41230]/20 transition-all duration-300 ease-out z-0"
           style={{
-            width: `calc(33.333% - 6px)`,
-            left: `calc(${modes.findIndex(m => m.id === selectedMode) * 33.333}% + 3px)`
+            width: `calc(${100 / modes.length}% - 6px)`,
+            left: `calc(${modes.findIndex(m => m.id === selectedMode) * (100 / modes.length)}% + 3px)`
           }}
         />
       </div>

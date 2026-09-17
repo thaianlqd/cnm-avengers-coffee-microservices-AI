@@ -25,7 +25,7 @@ type KhoiTaoThanhToanDto = {
   ghi_chu?: string;
   ma_voucher?: string;
   branch_code?: string;
-  delivery_mode?: 'GIAO_TAN_NOI' | 'LAY_TAI_QUAN' | 'DUNG_TAI_CHO';
+  delivery_mode?: 'GIAO_TAN_NOI' | 'LAY_TAI_QUAN' | 'DUNG_TAI_CHO' | 'KIOSK';
   delivery_method?: 'INTERNAL' | 'LALAMOVE';
   destination_latitude?: number;
   destination_longitude?: number;
@@ -34,6 +34,8 @@ type KhoiTaoThanhToanDto = {
   guest_phone?: string;
   session_id?: string;
   ten_khach_hang?: string;
+  // Nhượng quyền kiosk
+  ma_kiosk?: string;
 };
 
 type TaoDonTaiQuayDto = {
@@ -1651,8 +1653,14 @@ export class ThanhToanService {
   }
 
   async khoiTaoThanhToan(maNguoiDung: string, dto: KhoiTaoThanhToanDto, ipAddr = '127.0.0.1') {
-    if (!dto.dia_chi_giao_hang?.trim()) {
+    const isKiosk = dto.delivery_mode === 'KIOSK';
+
+    // Với KIOSK: địa chỉ giao hàng không bắt buộc (mua tại chỗ)
+    if (!isKiosk && !dto.dia_chi_giao_hang?.trim()) {
       throw new BadRequestException('dia_chi_giao_hang la bat buoc');
+    }
+    if (isKiosk && !dto.ma_kiosk?.trim()) {
+      throw new BadRequestException('ma_kiosk la bat buoc khi dat hang qua kiosk nhuong quyen');
     }
 
     const isGuest = !maNguoiDung || maNguoiDung === 'anonymous' || maNguoiDung === 'guest' || maNguoiDung.startsWith('anon-');
@@ -1662,9 +1670,29 @@ export class ThanhToanService {
       }
     }
 
-    const gioHang = await this.cartRepo.find({ where: { ma_nguoi_dung: maNguoiDung } });
+    let gioHang = await this.cartRepo.find({ where: { ma_nguoi_dung: maNguoiDung } });
     if (!gioHang.length) {
       throw new BadRequestException('Gio hang trong, khong the thanh toan');
+    }
+
+    // ── KIOSK: Override giá từ bảng franchise.gia_san_pham_kiosk (backend verify, chống hack) ──
+    if (isKiosk && dto.ma_kiosk) {
+      const maKiosk = dto.ma_kiosk.trim();
+      // Lấy giá kiosk cho tất cả sản phẩm trong giỏ
+      const maSanPhamList = gioHang.map(i => Number(i.ma_san_pham));
+      const kioskPrices: Array<{ ma_san_pham: number; gia_kiosk: number }> = await this.donHangRepo.manager.query(
+        `SELECT ma_san_pham, gia_kiosk FROM franchise.gia_san_pham_kiosk
+         WHERE ma_kiosk = $1 AND ma_san_pham = ANY($2::int[])`,
+        [maKiosk, maSanPhamList],
+      );
+      const kioskPriceMap = new Map(kioskPrices.map(p => [p.ma_san_pham, Number(p.gia_kiosk)]));
+      // Override giá trong gioHang bằng giá kiosk (an toàn phía backend)
+      gioHang = gioHang.map(item => {
+        const kioskPrice = kioskPriceMap.get(Number(item.ma_san_pham));
+        return kioskPrice !== undefined
+          ? { ...item, gia_ban: kioskPrice as any }
+          : item;
+      });
     }
 
     const tongTienGoc = gioHang.reduce((sum, item) => sum + Number(item.gia_ban) * item.so_luong, 0);
@@ -1679,13 +1707,35 @@ export class ThanhToanService {
       maVoucherApDung = voucherResult.voucher.ma_voucher;
     }
     const tongTien = Math.max(0, tongTienGoc - soTienGiam);
-    const nearestInfo = await this.xacDinhCoSoGanNhatTheoDiaChi(
-      dto.dia_chi_giao_hang,
-      dto.branch_code?.trim(),
-      dto.destination_latitude,
-      dto.destination_longitude,
-    );
-    const branchCode = nearestInfo.branchCode;
+    // Khách hàng App/Web:
+    let nearestInfo: any = null;
+    let branchCode: string;
+
+    if (dto.delivery_mode === 'GIAO_TAN_NOI') {
+      // Giao tận nơi (Ship): Bắt buộc tìm cửa hàng chính gần nhất
+      nearestInfo = await this.xacDinhCoSoGanNhatTheoDiaChi(
+        dto.dia_chi_giao_hang,
+        dto.branch_code?.trim(),
+        dto.destination_latitude,
+        dto.destination_longitude,
+      );
+      branchCode = nearestInfo.branchCode;
+    } else {
+      // Đến lấy (Pickup): Dùng mã cửa hàng khách đã chọn (chỉ cửa hàng chính)
+      if (dto.branch_code?.trim()) {
+        branchCode = this.normalizeBranchCode(dto.branch_code);
+      } else {
+        // Fallback
+        nearestInfo = await this.xacDinhCoSoGanNhatTheoDiaChi(
+          dto.dia_chi_giao_hang,
+          dto.branch_code?.trim(),
+          dto.destination_latitude,
+          dto.destination_longitude,
+        );
+        branchCode = nearestInfo.branchCode;
+      }
+    }
+
 
     const trangThaiThanhToanBanDau = dto.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG'
       ? 'CHO_THANH_TOAN_KHI_NHAN_HANG'
@@ -1929,6 +1979,7 @@ export class ThanhToanService {
     }>;
     ghi_chu?: string;
     dia_chi_giao_hang?: string;
+    co_so_ma?: string;
   }) {
     const maNguoiDung = payload.ma_nguoi_dung || 'GUEST';
     const items = payload.chi_tiet_don_hang || [];
@@ -1937,7 +1988,7 @@ export class ThanhToanService {
     }
     const tongTien = items.reduce((sum, item) => sum + Number(item.gia_ban || 0) * Number(item.so_luong || 1), 0);
     const maDonHang = crypto.randomUUID();
-    const branchCode = 'CN_Q1';
+    const branchCode = payload.co_so_ma || 'CN_Q1';
 
     const donHang = await this.donHangRepo.save(
       this.donHangRepo.create({

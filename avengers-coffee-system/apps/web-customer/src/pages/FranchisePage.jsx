@@ -1,5 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../lib/apiClient';
+import BranchReviewModal from '../components/BranchReviewModal';
+import { MagnifyingGlassIcon, XMarkIcon, MapPinIcon, StarIcon as StarOutline } from '@heroicons/react/24/outline';
+import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 
 const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`;
 
@@ -179,6 +183,7 @@ const getStatusBadge = (stt) => {
 };
 
 export default function FranchisePage({ onNavigate }) {
+  const queryClient = useQueryClient();
   const [form, setForm] = useState(DEFAULT_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
@@ -197,6 +202,71 @@ export default function FranchisePage({ onNavigate }) {
   const [selectedKiosk, setSelectedKiosk] = useState(null);
   const [isLoadingKiosks, setIsLoadingKiosks] = useState(true);
   const [errorMsg, setErrorMsg] = useState(null);
+
+  // State cho Tìm kiếm và Đánh giá Kiosk
+  const [searchKiosk, setSearchKiosk] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [isViewReviewModalOpen, setIsViewReviewModalOpen] = useState(false);
+  const [viewKiosk, setViewKiosk] = useState(null);
+  const [viewReviewsData, setViewReviewsData] = useState([]);
+  const [isLoadingViewReviews, setIsLoadingViewReviews] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchInputRef = useRef(null);
+
+  // Lấy dữ liệu rating từ API chung với Stores
+  const { data: branchStatsPayload } = useQuery({
+    queryKey: ['branch-reviews-stats'],
+    queryFn: async () => {
+      const res = await apiClient.get('/branch-reviews/stats');
+      return res.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const branchStats = useMemo(() => {
+    return Array.isArray(branchStatsPayload) ? branchStatsPayload : (branchStatsPayload?.data || []);
+  }, [branchStatsPayload]);
+
+  // Gắn rating vào kiosks
+  const kiosksWithRating = useMemo(() => {
+    return kiosks.map(k => {
+      const stats = branchStats.find(s => s.ma_chi_nhanh === k.ma_kiosk) 
+                 || branchStats.find(s => s.ma_chi_nhanh === k.id) 
+                 || branchStats.find(s => s.ma_chi_nhanh === k.ma_chi_nhanh);
+      return {
+        ...k,
+        rating: stats?.diem_trung_binh || 5.0,
+        reviewCount: stats?.tong_luot_danh_gia || 0,
+        color: "bg-blue-500",
+      };
+    });
+  }, [kiosks, branchStats]);
+
+  const filteredKiosks = useMemo(() => {
+    return kiosksWithRating.filter(k => {
+      if (selectedCity && selectedCity !== '') {
+        const kioskCity = (k.thanh_pho || '').replace(/^Thành phố\s+/i, '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const filterCity = selectedCity.replace(/^Thành phố\s+/i, '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if (kioskCity !== filterCity) return false;
+      }
+      if (!searchKiosk) return true;
+      const query = searchKiosk.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const name = (k.ten_kiosk || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const address = (k.dia_chi || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      return name.includes(query) || address.includes(query);
+    });
+  }, [kiosksWithRating, searchKiosk, selectedCity]);
+
+  // Các thành phố duy nhất từ danh sách kiosks để làm bộ lọc (bỏ chữ Thành phố)
+  const availableCities = useMemo(() => {
+    const cities = new Set(
+      kiosks
+        .map(k => k.thanh_pho ? k.thanh_pho.replace(/^Thành phố\s+/i, '').trim() : '')
+        .filter(Boolean)
+    );
+    return Array.from(cities).sort();
+  }, [kiosks]);
 
   useEffect(() => {
     fetch('/provinces.json')
@@ -228,36 +298,57 @@ export default function FranchisePage({ onNavigate }) {
     setWards(selected ? selected.wards : []);
   };
 
+  const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setResult(null);
     try {
-      // Geocode địa chỉ sang tọa độ
+      // Geocode địa chỉ sang tọa độ bằng VietMap
       let vi_do = null;
       let kinh_do = null;
-      let addressObj = null;
-      try {
-        const fullAddress = `${form.dia_chi_mat_bang}, ${form.phuong_xa}, ${form.thanh_pho}`;
-        const geocodeRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(fullAddress)}`);
-        const geocodeData = await geocodeRes.json();
-        if (geocodeData && geocodeData.length > 0) {
-          vi_do = parseFloat(geocodeData[0].lat);
-          kinh_do = parseFloat(geocodeData[0].lon);
-          addressObj = geocodeData[0].address || {};
+      const apiKey = import.meta.env.VITE_VIETMAP_API_KEY;
+      
+      if (apiKey) {
+        try {
+          const fullAddress = `${form.dia_chi_mat_bang}, ${form.phuong_xa}, ${form.thanh_pho}`;
+          const geocodeRes = await fetch(`https://maps.vietmap.vn/api/search/v3?api-version=1.1&apikey=${apiKey}&text=${encodeURIComponent(fullAddress)}`);
+          const geocodeData = await geocodeRes.json();
+          if (geocodeData && geocodeData.length > 0) {
+            vi_do = parseFloat(geocodeData[0].lat);
+            kinh_do = parseFloat(geocodeData[0].lng); // Vietmap dùng lng thay vì lon
+          }
+        } catch (geocodeErr) {
+          console.warn('Geocoding VietMap failed:', geocodeErr);
         }
-      } catch (geocodeErr) {
-        console.warn('Geocoding failed:', geocodeErr);
       }
 
       if (!vi_do || !kinh_do) {
-        // NOTE: Tạm thời bỏ qua lỗi geocoding, cho phép gửi không có tọa độ
-        console.warn('Geocoding thất bại, tiếp tục gửi hồ sơ không có tọa độ.');
+        console.warn('Geocoding thất bại, không tìm thấy tọa độ.');
+      } else {
+        // Validation 500m: Kiểm tra xem có kiosk nào gần trong vòng 500m không
+        const isTooClose = kiosks.some(k => {
+          if (k.vi_do && k.kinh_do) {
+            const dist = getDistanceFromLatLonInKm(vi_do, kinh_do, parseFloat(k.vi_do), parseFloat(k.kinh_do));
+            return dist < 0.5; // 0.5 km = 500m
+          }
+          return false;
+        });
+
+        if (isTooClose) {
+          throw new Error('Địa điểm này cách một chi nhánh hoặc Kiosk hiện tại dưới 500m. Vui lòng chọn vị trí khác để đảm bảo đặc quyền khu vực!');
+        }
       }
-
-      // NOTE: Tạm thời tắt kiểm tra tính nhất quán địa lý
-      // if (addressObj && form.phuong_xa) { ... }
-
 
       const submitData = { ...form, vi_do, kinh_do };
       const response = await apiClient.post(`/franchise/dang-ky`, submitData);
@@ -697,7 +788,7 @@ export default function FranchisePage({ onNavigate }) {
 
       {/* ── BẢN ĐỒ HỆ THỐNG CỬA HÀNG ───────────────────────── */}
       <section style={{ padding: '72px 24px', maxWidth: 1120, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 44 }}>
+        <div style={{ textAlign: 'center', marginBottom: 30 }}>
           <div
             style={{
               display: 'inline-block',
@@ -717,11 +808,138 @@ export default function FranchisePage({ onNavigate }) {
           <h2 style={{ fontSize: 34, fontWeight: 900, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>Mạng Lưới Kiosk Avengers</h2>
         </div>
 
+        {/* Thanh Filter (Top Bar) giống Stores */}
+        <div style={{ 
+          background: '#ffffff', 
+          padding: '16px 24px', 
+          borderRadius: 16, 
+          boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+          border: '1px solid #e2e8f0',
+          marginBottom: 24,
+          display: 'flex',
+          gap: 16,
+          flexWrap: 'wrap',
+          alignItems: 'center'
+        }}>
+          {/* Lọc Thành phố */}
+          <div style={{ flex: '1 1 200px', position: 'relative' }}>
+            <select
+              value={selectedCity}
+              onChange={(e) => {
+                setSelectedCity(e.target.value);
+                setSearchKiosk('');
+              }}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                borderRadius: 12,
+                border: '1.5px solid #cbd5e1',
+                outline: 'none',
+                fontSize: 14,
+                color: '#334155',
+                appearance: 'none',
+                background: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748b%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E") no-repeat right 16px center',
+                backgroundSize: '10px'
+              }}
+            >
+              <option value="">Tất cả Thành phố</option>
+              {availableCities.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Ô Tìm kiếm với Autocomplete */}
+          <div style={{ flex: '3 1 400px', position: 'relative' }} ref={searchInputRef}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              border: '1.5px solid #cbd5e1',
+              borderRadius: 12,
+              padding: '10px 16px',
+              background: '#ffffff'
+            }}>
+              <MagnifyingGlassIcon style={{ width: 20, height: 20, color: '#64748b', marginRight: 10 }} />
+              <input 
+                type="text"
+                placeholder="Tìm kiếm Kiosk (Tên đường, phường, cửa hàng)..."
+                value={searchKiosk}
+                onChange={(e) => {
+                  setSearchKiosk(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                style={{ flex: 1, border: 'none', outline: 'none', fontSize: 14 }}
+              />
+              {searchKiosk && (
+                <XMarkIcon 
+                  style={{ width: 18, height: 18, color: '#94a3b8', cursor: 'pointer' }}
+                  onClick={() => {
+                    setSearchKiosk('');
+                    setShowSuggestions(false);
+                  }}
+                />
+              )}
+            </div>
+
+            {/* Suggestions Dropdown */}
+            {showSuggestions && searchKiosk && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                marginTop: 8,
+                background: '#ffffff',
+                borderRadius: 12,
+                boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                border: '1px solid #e2e8f0',
+                zIndex: 50,
+                maxHeight: 320,
+                overflowY: 'auto'
+              }}>
+                {filteredKiosks.length > 0 ? (
+                  filteredKiosks.map(k => (
+                    <div 
+                      key={k.id}
+                      onClick={() => {
+                        setSelectedKiosk(k);
+                        setShowSuggestions(false);
+                      }}
+                      style={{
+                        padding: '14px 16px',
+                        borderBottom: '1px solid #f1f5f9',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 12,
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <MapPinIcon style={{ width: 18, height: 18, color: '#8f1b23', marginTop: 2, flexShrink: 0 }} />
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{k.ten_kiosk}</div>
+                        <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>{k.dia_chi}, {k.phuong_xa}, {k.thanh_pho}</div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div style={{ padding: '24px', textAlign: 'center', color: '#64748b', fontSize: 14 }}>
+                    Không tìm thấy Kiosk nào phù hợp
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
-            height: 520,
+            height: 560,
             background: '#ffffff',
             borderRadius: 20,
             overflow: 'hidden',
@@ -731,8 +949,14 @@ export default function FranchisePage({ onNavigate }) {
         >
           <div style={{ display: 'flex', height: '100%' }}>
             {/* Danh sách cửa hàng */}
-            <div style={{ width: 360, overflowY: 'auto', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-              {kiosks.map((kiosk) => {
+            <div style={{ width: 360, overflowY: 'auto', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', flexShrink: 0, background: '#f8fafc' }}>
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#ffffff', position: 'sticky', top: 0, zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#334155' }}>
+                  Tìm được <span style={{ color: '#8f1b23' }}>{filteredKiosks.length}</span> Kiosk
+                </span>
+              </div>
+
+              {filteredKiosks.map((kiosk) => {
                 const isSelected = selectedKiosk?.id === kiosk.id;
                 return (
                   <div
@@ -747,13 +971,68 @@ export default function FranchisePage({ onNavigate }) {
                       transition: 'all 0.2s ease',
                     }}
                   >
-                    <div style={{ fontWeight: 800, fontSize: 15, color: isSelected ? '#8f1b23' : '#0f172a', marginBottom: 4 }}>{kiosk.ten_kiosk}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 12 }}>
+                      <div style={{ fontWeight: 800, fontSize: 15, color: isSelected ? '#8f1b23' : '#0f172a', lineHeight: 1.4 }}>{kiosk.ten_kiosk}</div>
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 4, 
+                        background: '#fffbeb', 
+                        padding: '4px 8px', 
+                        borderRadius: 8,
+                        border: '1px solid #fef3c7',
+                        flexShrink: 0
+                      }}>
+                        <StarSolid style={{ width: 14, height: 14, color: '#fbbf24' }} />
+                        <span style={{ fontSize: 12, fontWeight: 800, color: '#92400e' }}>
+                          {kiosk.reviewCount > 0 
+                            ? <>{Number(kiosk.rating).toFixed(1)} <span style={{ fontWeight: 600, color: '#d97706' }}>({kiosk.reviewCount})</span></> 
+                            : <span style={{ fontWeight: 600, color: '#d97706' }}>Chưa có đánh giá</span>}
+                        </span>
+                      </div>
+                    </div>
                     <div style={{ fontSize: 13, color: '#475569', marginBottom: 8, lineHeight: 1.5 }}>
-                      {kiosk.dia_chi}, {kiosk.phuong_xa}, {kiosk.thanh_pho}
+                      <span style={{ fontWeight: 700, color: '#1e293b' }}>{kiosk.ma_kiosk}</span> • {kiosk.dia_chi}, {kiosk.phuong_xa}, {kiosk.thanh_pho}
                     </div>
                     <div style={{ display: 'inline-block', padding: '3px 10px', background: '#fce7e8', color: '#b22830', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>
                       {formatKioskType(kiosk.loai_kiosk)}
                     </div>
+                    {isSelected && (
+                      <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(188, 40, 48, 0.2)', display: 'flex', gap: 10 }}>
+                        <button 
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            setViewKiosk(kiosk);
+                            setIsViewReviewModalOpen(true);
+                            setIsLoadingViewReviews(true);
+                            try {
+                              const res = await apiClient.get(`/branch-reviews/branch/${kiosk.ma_kiosk}`);
+                              setViewReviewsData(res.data?.items || []);
+                            } catch(err) {
+                              setViewReviewsData([]);
+                            } finally {
+                              setIsLoadingViewReviews(false);
+                            }
+                          }}
+                          style={{ flex: 1, padding: '10px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 12, cursor: 'pointer', transition: 'background 0.2s' }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = '#d97706'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = '#f59e0b'}
+                        >
+                          XEM ĐÁNH GIÁ
+                        </button>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsReviewModalOpen(true);
+                          }}
+                          style={{ flex: 1, padding: '10px', background: '#8f1b23', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 12, cursor: 'pointer', transition: 'background 0.2s' }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = '#73141a'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = '#8f1b23'}
+                        >
+                          ĐÁNH GIÁ CHI NHÁNH NÀY
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -762,7 +1041,7 @@ export default function FranchisePage({ onNavigate }) {
 
               {errorMsg && <div style={{ padding: 24, textAlign: 'center', color: '#dc2626', fontSize: 14 }}>{errorMsg}</div>}
 
-              {!isLoadingKiosks && !errorMsg && kiosks.length === 0 && (
+              {!isLoadingKiosks && !errorMsg && filteredKiosks.length === 0 && (
                 <div style={{ padding: 36, textAlign: 'center', color: '#64748b', fontSize: 14, lineHeight: 1.6 }}>
                   Hệ thống đang cập nhật danh sách cửa hàng.
                   <br />
@@ -789,8 +1068,21 @@ export default function FranchisePage({ onNavigate }) {
             </div>
           </div>
         </div>
-      </section>
 
+        {/* Phần đánh giá Kiosk & Sản phẩm (Đã di chuyển nút đánh giá lên thẻ Kiosk) */}
+        {selectedKiosk && (
+          <div style={{ marginTop: 32, padding: 24, background: '#ffffff', borderRadius: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20 }}>
+            <div>
+              <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', margin: '0 0 12px' }}>
+                Kiosk: {selectedKiosk.ten_kiosk}
+              </h3>
+              <p style={{ color: '#64748b', fontSize: 14, margin: 0, maxWidth: 600, lineHeight: 1.6 }}>
+                Tại Kiosk, chúng tôi cam kết mang đến đồ uống chất lượng với không gian vệ sinh sạch sẽ, đáp ứng nhu cầu thưởng thức cà phê tiện lợi của bạn mỗi ngày. Hãy nhấp vào <strong>ĐÁNH GIÁ CHI NHÁNH NÀY</strong> ở danh sách bên trên nếu bạn muốn để lại phản hồi cho chúng tôi!
+              </p>
+            </div>
+          </div>
+        )}
+      </section>
       {/* ── BIỂU MẪU ĐĂNG KÝ ───────────────────────────────── */}
       <section id="dang-ky" style={{ padding: '72px 24px', background: '#f8fafc' }}>
         <div style={{ maxWidth: 740, margin: '0 auto' }}>
@@ -1393,6 +1685,77 @@ export default function FranchisePage({ onNavigate }) {
                 })}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {selectedKiosk && (
+        <BranchReviewModal
+          isOpen={isReviewModalOpen}
+          onClose={() => setIsReviewModalOpen(false)}
+          branchData={{
+            ...selectedKiosk,
+            id: selectedKiosk.id,
+            code: selectedKiosk.ma_kiosk,
+            name: `${selectedKiosk.ten_kiosk} (${selectedKiosk.ma_kiosk})`,
+            address: `${selectedKiosk.dia_chi}, ${selectedKiosk.phuong_xa}, ${selectedKiosk.thanh_pho}`,
+          }}
+          onSuccess={() => {
+            alert('Cảm ơn bạn đã đánh giá cửa hàng!');
+            setIsReviewModalOpen(false);
+            queryClient.invalidateQueries(['branch-reviews-stats']);
+          }}
+        />
+      )}
+
+      {/* Modal Xem Đánh Giá */}
+      {isViewReviewModalOpen && viewKiosk && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999, padding: '1rem' }}>
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', width: '100%', maxWidth: '600px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden' }}>
+            <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <StarSolid style={{ width: 18, height: 18, color: '#eab308' }} /> Đánh Giá Khách Hàng - {viewKiosk.ten_kiosk} ({viewKiosk.ma_kiosk})
+              </h3>
+              <button type="button" onClick={() => setIsViewReviewModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                <XMarkIcon style={{ width: 24, height: 24 }} />
+              </button>
+            </div>
+            
+            <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
+              {isLoadingViewReviews ? (
+                <div style={{ textAlign: 'center', color: '#64748b', fontSize: '0.875rem' }}>Đang tải danh sách đánh giá...</div>
+              ) : viewReviewsData.length === 0 ? (
+                <div style={{ textAlign: 'center', color: '#64748b', fontSize: '0.875rem' }}>Kiosk này chưa có đánh giá nào.</div>
+              ) : (
+                <>
+                  <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: '600', color: '#92400e' }}>Đánh giá trung bình:</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <strong style={{ fontSize: '1.1rem', color: '#b45309' }}>{Number(viewKiosk.rating).toFixed(1)} / 5.0</strong>
+                      <span style={{ fontSize: '0.85rem', color: '#d97706' }}>({viewKiosk.reviewCount} đánh giá)</span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {viewReviewsData.map((rv, idx) => (
+                    <div key={idx} style={{ padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '8px', backgroundColor: '#f8fafc' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                        <strong style={{ fontSize: '0.9rem', color: '#0f172a' }}>{rv.ten_nguoi_dung || 'Khách hàng ẩn danh'}</strong>
+                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{new Date(rv.ngay_tao).toLocaleDateString('vi-VN')}</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '4px', marginBottom: '0.5rem' }}>
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          i < (rv.diem_tong_quan || 5)
+                            ? <StarSolid key={i} style={{ width: 14, height: 14, color: '#facc15' }} />
+                            : <StarOutline key={i} style={{ width: 14, height: 14, color: '#cbd5e1' }} />
+                        ))}
+                      </div>
+                      {rv.nhan_xet && <div style={{ fontSize: '0.85rem', color: '#334155', fontStyle: 'italic' }}>"{rv.nhan_xet}"</div>}
+                    </div>
+                  ))}
+                </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}

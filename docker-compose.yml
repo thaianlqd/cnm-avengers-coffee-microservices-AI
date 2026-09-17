@@ -89,6 +89,8 @@ services:
       PGSSLMODE: ${PGSSLMODE:-require}
       NODE_TLS_REJECT_UNAUTHORIZED: ${NODE_TLS_REJECT_UNAUTHORIZED:-0}
       DB_SCHEMA: ${IDENTITY_DB_SCHEMA:-identity}
+      LOCATIONIQ_API_KEY: ${LOCATIONIQ_API_KEY:-}
+      VIETMAP_API_KEY: ${VIETMAP_API_KEY:-}
     expose:
       - "${IDENTITY_PORT:-3001}"
     networks:
@@ -295,9 +297,14 @@ services:
       DB_NAME: ${DB_NAME:-avengers_coffee}
       PGSSLMODE: ${PGSSLMODE:-require}
       AI_PORT: ${AI_PORT:-8000}
+      JWT_SECRET: ${JWT_SECRET:-avengers-jwt-secret}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-avengers-internal-token}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      LOCATIONIQ_API_KEY: ${LOCATIONIQ_API_KEY:-}
+      VIETMAP_API_KEY: ${VIETMAP_API_KEY:-}
     expose:
       - "${AI_PORT:-8000}"
     ports:

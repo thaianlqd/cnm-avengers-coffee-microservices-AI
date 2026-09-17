@@ -13,7 +13,7 @@ export class ReviewController {
   @Post('products/:productId/reviews')
   async taoReview(
     @Param('productId') productId: string,
-    @Body() body: { maNguoiDung: string; soSao: number; binhLuan?: string; maDonHang?: string },
+    @Body() body: { maNguoiDung: string; soSao: number; binhLuan?: string; maDonHang?: string; maKiosk?: string },
   ) {
     return this.reviewService.taoReview({
       maSanPham: productId,
@@ -21,13 +21,18 @@ export class ReviewController {
       soSao: body.soSao,
       binhLuan: body.binhLuan,
       maDonHang: body.maDonHang,
+      maKiosk: body.maKiosk,
     });
   }
 
   // GET /products/:productId/reviews
+  // Hỗ trợ thêm query ?ma_kiosk=KSK-016 để lọc theo kiosk nhượng quyền
   @Get('products/:productId/reviews')
-  async layDanhGiaSanPham(@Param('productId') productId: string) {
-    return this.reviewService.layDanhGiaSanPham(productId);
+  async layDanhGiaSanPham(
+    @Param('productId') productId: string,
+    @Query('ma_kiosk') maKiosk?: string,
+  ) {
+    return this.reviewService.layDanhGiaSanPham(productId, maKiosk);
   }
 
   // GET /products/:productId/reviews/my-review/:userId

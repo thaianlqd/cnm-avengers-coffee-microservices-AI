@@ -14,9 +14,12 @@ import {
   DollarSign,
   Printer,
   X,
+  Star,
+  MessageSquare,
   PlayCircle,
   PauseCircle,
-  PowerOff
+  PowerOff,
+  Trash2
 } from 'lucide-react'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
 import { getAdminAccessToken } from '../../../lib/adminFetch'
@@ -46,6 +49,46 @@ export function AdminKioskManagementPanel({ session }) {
   const [statusFilter, setStatusFilter] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [contractModal, setContractModal] = useState(null)
+  const [reviewModal, setReviewModal] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [reviewStats, setReviewStats] = useState({ avg: 0, total: 0 });
+
+  const openReviewModal = async (kiosk) => {
+    setReviewModal(kiosk);
+    setLoadingReviews(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/branch-reviews/branch/${kiosk.ma_kiosk}`);
+      if (res.ok) {
+        const data = await res.json();
+        setReviews(data.items || []);
+        setReviewStats({ avg: data.diem_trung_binh || 0, total: data.tong_luot_danh_gia || 0 });
+      } else {
+        setReviews([]);
+        setReviewStats({ avg: 0, total: 0 });
+      }
+    } catch (err) {
+      setReviews([]);
+      setReviewStats({ avg: 0, total: 0 });
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
+  const deleteReview = async (reviewId) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa đánh giá này không?")) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/branch-reviews/${reviewId}`, { method: 'DELETE' });
+      if (res.ok) {
+        // Refresh
+        openReviewModal(reviewModal);
+      } else {
+        alert("Có lỗi khi xóa đánh giá!");
+      }
+    } catch (err) {
+      alert("Lỗi kết nối khi xóa đánh giá.");
+    }
+  }
 
   const loadKiosks = async () => {
     try {
@@ -349,7 +392,7 @@ export function AdminKioskManagementPanel({ session }) {
               </div>
 
                 {/* Card Actions Footer */}
-                <div style={{ padding: '0.75rem 1.15rem', backgroundColor: '#f8fafc', borderTop: '1px solid #f1f5f9', display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
+                <div style={{ padding: '0.75rem 1.15rem', backgroundColor: '#f8fafc', borderTop: '1px solid #f1f5f9', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.5rem' }}>
                   {k.trang_thai === 'CHO_KY_HOP_DONG' && (
                     <button
                       type="button"
@@ -449,6 +492,16 @@ export function AdminKioskManagementPanel({ session }) {
                     </button>
                   )}
 
+                  {k.xep_hang && (
+                    <button
+                      type="button"
+                      onClick={() => openReviewModal(k)}
+                      style={{ height: '32px', padding: '0 0.75rem', borderRadius: '6px', border: '1px solid #fde047', backgroundColor: '#fef9c3', color: '#854d0e', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                    >
+                      <Star size={14} /> Xem Đánh Giá
+                    </button>
+                  )}
+
                   {k.trang_thai === 'TAM_DUNG' && (
                     <button
                       type="button"
@@ -491,6 +544,33 @@ export function AdminKioskManagementPanel({ session }) {
                       Đóng Kiosk
                     </button>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!window.confirm('CẢNH BÁO: Kiosk này sẽ bị XÓA VĨNH VIỄN khỏi hệ thống. Hành động này không thể hoàn tác. Bạn có chắc chắn?')) return
+                      try {
+                        const token = getAdminAccessToken() || session?.token
+                        const res = await fetch(`${API_BASE_URL}/franchise/kiosk/${k.id}`, {
+                          method: 'DELETE',
+                          headers: {
+                            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                          }
+                        })
+                        if (!res.ok) {
+                          const err = await res.json().catch(() => ({}))
+                          throw new Error(err.message || 'Xóa Kiosk thất bại')
+                        }
+                        alert('✅ Đã xóa Kiosk thành công!')
+                        loadKiosks()
+                      } catch (err) {
+                        alert('Lỗi: ' + err.message)
+                      }
+                    }}
+                    style={{ height: '32px', padding: '0 0.75rem', borderRadius: '6px', border: '1px solid #dc2626', backgroundColor: '#dc2626', color: '#ffffff', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                  >
+                    <Trash2 size={14} /> Xóa Kiosk
+                  </button>
                 </div>
               </div>
             ))}
@@ -632,6 +712,57 @@ export function AdminKioskManagementPanel({ session }) {
               >
                 <Printer size={15} /> In / Lưu Hợp Đồng
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* REVIEWS MODAL */}
+      {reviewModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999, padding: '1rem' }}>
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', width: '100%', maxWidth: '600px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden' }}>
+            <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <MessageSquare size={18} color="#eab308" /> Đánh Giá Khách Hàng - {reviewModal.ten_kiosk} ({reviewModal.ma_kiosk})
+              </h3>
+              <button type="button" onClick={() => setReviewModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
+              {loadingReviews ? (
+                <div style={{ textAlign: 'center', color: '#64748b', fontSize: '0.875rem' }}>Đang tải danh sách đánh giá...</div>
+              ) : reviews.length === 0 ? (
+                <div style={{ textAlign: 'center', color: '#64748b', fontSize: '0.875rem' }}>Kiosk này chưa có đánh giá nào.</div>
+              ) : (
+                <>
+                  <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: '600', color: '#92400e' }}>Đánh giá trung bình:</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <strong style={{ fontSize: '1.1rem', color: '#b45309' }}>{reviewStats.avg} / 5.0</strong>
+                      <span style={{ fontSize: '0.85rem', color: '#d97706' }}>({reviewStats.total} đánh giá)</span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {reviews.map((rv, idx) => (
+                      <div key={idx} style={{ padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '8px', backgroundColor: '#f8fafc', position: 'relative' }}>
+                        <button onClick={() => deleteReview(rv.id)} style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '4px', padding: '0.2rem 0.5rem', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 'bold' }}>Xóa</button>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', paddingRight: '3rem' }}>
+                          <strong style={{ fontSize: '0.9rem', color: '#0f172a' }}>{rv.ten_nguoi_dung || 'Khách hàng ẩn danh'}</strong>
+                          <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{new Date(rv.ngay_tao).toLocaleDateString('vi-VN')}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '4px', marginBottom: '0.5rem' }}>
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star key={i} size={14} style={{ fill: i < (rv.diem_tong_quan || 5) ? '#facc15' : 'transparent', color: i < (rv.diem_tong_quan || 5) ? '#facc15' : '#cbd5e1' }} />
+                          ))}
+                        </div>
+                        {rv.nhan_xet && <div style={{ fontSize: '0.85rem', color: '#334155', fontStyle: 'italic' }}>"{rv.nhan_xet}"</div>}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

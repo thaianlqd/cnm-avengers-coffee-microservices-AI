@@ -205,7 +205,6 @@ export function FranchiseStaffPortal({ session, onLogout }) {
     }
   }, [])
 
-  // ─── TAB 1: POS STATES & HANDLERS ───
   const [rawMenuItems, setRawMenuItems] = useState([])
   const [menuLoading, setMenuLoading] = useState(false)
   const [menuSearch, setMenuSearch] = useState('')
@@ -213,6 +212,15 @@ export function FranchiseStaffPortal({ session, onLogout }) {
   const [posViewMode, setPosViewMode] = useState('grid') // 'grid' | 'compact'
   const [posPage, setPosPage] = useState(1)
   const ITEMS_PER_PAGE = 12
+  const [kioskPrices, setKioskPrices] = useState([])
+
+  useEffect(() => {
+    if (!kioskCode) return;
+    fetch(`${API_BASE_URL}/orders/kiosk-prices?ma_kiosk=${kioskCode}`)
+      .then(r => r.json())
+      .then(data => setKioskPrices(Array.isArray(data?.items) ? data.items : []))
+      .catch(e => console.error('Lỗi tải giá kiosk:', e))
+  }, [kioskCode])
 
   const [cart, setCart] = useState([])
   const [paymentMethod, setPaymentMethod] = useState('TIEN_MAT')
@@ -314,8 +322,11 @@ export function FranchiseStaffPortal({ session, onLogout }) {
       }
 
       return true
+    }).map((item) => {
+      const kp = kioskPrices.find(p => Number(p.ma_san_pham) === Number(item.ma_san_pham));
+      return kp ? { ...item, gia_ban: kp.gia_kiosk } : item;
     })
-  }, [rawMenuItems, currentPackageType])
+  }, [rawMenuItems, currentPackageType, kioskPrices])
 
   // Reset trang về 1 khi người dùng đổi từ khóa tìm kiếm hoặc đổi danh mục
   useEffect(() => {

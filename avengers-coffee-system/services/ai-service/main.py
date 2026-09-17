@@ -16,13 +16,13 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 # Import tu cac file service
-from cf_service import CollaborativeFilterModel
-from db import get_db_engine
-from forecast_service import DemandForecastModel
-from ai_persistence import ensure_ai_storage, log_inference, safe_schema_name, upsert_model_registry
+from src.ml.cf_service import CollaborativeFilterModel
+from src.common.db import get_db_engine
+from src.ml.forecast_service import DemandForecastModel
+from src.common.ai_persistence import ensure_ai_storage, log_inference, safe_schema_name, upsert_model_registry
 
 # Groq: primary AI (chat + STT), Gemini: fallback
-from groq_service import (
+from src.common.groq_service import (
     groq_is_available,
     groq_chat,
     groq_transcribe_audio,
@@ -46,6 +46,7 @@ def _safe_schema_name(value: Optional[str], default: str) -> str:
 IDENTITY_SCHEMA = _safe_schema_name(os.getenv("IDENTITY_SCHEMA"), "identity")
 MENU_SCHEMA = _safe_schema_name(os.getenv("MENU_SCHEMA"), "menu")
 ORDER_SCHEMA = _safe_schema_name(os.getenv("ORDER_SCHEMA"), "orders")
+FRANCHISE_SCHEMA = _safe_schema_name(os.getenv("FRANCHISE_SCHEMA"), "franchise")
 AI_SCHEMA = safe_schema_name(os.getenv("AI_SCHEMA"), "ai")
 
 _base_context_cache: Dict[str, Any] = {"expires_at": datetime.min, "value": None}
@@ -58,6 +59,7 @@ _gemini_block_until: datetime = datetime.min
 # Khoi tao model toan cuc
 cf_model = CollaborativeFilterModel()
 fc_model = DemandForecastModel()
+forecast_model = fc_model
 
 CF_AUTO_RETRAIN_MINUTES = max(10, int(os.getenv("CF_AUTO_RETRAIN_MINUTES", "60")))
 CF_RETRAIN_QUEUE_COOLDOWN_SECONDS = max(30, int(os.getenv("CF_RETRAIN_QUEUE_COOLDOWN_SECONDS", "120")))
@@ -271,7 +273,7 @@ def _normalize_branch_filter(branch_code: Optional[str]) -> Optional[str]:
 
 def _to_price(value: Any) -> str:
     try:
-        return f"{float(value):,.0f}"
+        return f"{float(value):,.0f}".replace(",", ".")
     except Exception:
         return "0"
 
@@ -320,15 +322,40 @@ def _build_base_business_context() -> Dict[str, Any]:
         LIMIT 6
     """
     branches_sql = f"""
+        WITH ratings AS (
+            SELECT ma_chi_nhanh, ROUND(AVG(diem_tong_quan), 1) as diem_trung_binh, COUNT(*) as tong_luot_danh_gia
+            FROM {ORDER_SCHEMA}.danh_gia_chi_nhanh
+            WHERE trang_thai = 'APPROVED'
+            GROUP BY ma_chi_nhanh
+        ),
+        branches_and_kiosks AS (
+            SELECT
+                cn.ma_chi_nhanh AS id_chi_nhanh,
+                cn.ten_chi_nhanh AS ten,
+                cn.dia_chi,
+                'CHI_NHANH_CHINH' as loai
+            FROM {IDENTITY_SCHEMA}.chi_nhanh cn
+            WHERE cn.trang_thai = 'ACTIVE'
+            UNION ALL
+            SELECT
+                k.ma_kiosk AS id_chi_nhanh,
+                k.ten_kiosk AS ten,
+                k.dia_chi,
+                k.loai_kiosk as loai
+            FROM {FRANCHISE_SCHEMA}.kiosk k
+            WHERE k.trang_thai = 'DANG_HOAT_DONG'
+        )
         SELECT
-            cn.ma_chi_nhanh,
-            cn.ten_chi_nhanh,
-            cn.dia_chi,
-            cn.so_dien_thoai
-        FROM {IDENTITY_SCHEMA}.chi_nhanh cn
-        WHERE cn.trang_thai = 'ACTIVE'
-        ORDER BY cn.ten_chi_nhanh ASC
-        LIMIT 8
+            b.id_chi_nhanh as ma_chi_nhanh,
+            b.ten as ten_chi_nhanh,
+            b.dia_chi,
+            b.loai,
+            COALESCE(r.diem_trung_binh, 0) as diem_trung_binh,
+            COALESCE(r.tong_luot_danh_gia, 0) as tong_luot_danh_gia
+        FROM branches_and_kiosks b
+        LEFT JOIN ratings r ON b.id_chi_nhanh = r.ma_chi_nhanh
+        ORDER BY r.diem_trung_binh DESC NULLS LAST
+        LIMIT 20
     """
     variations_sql = f"""
         SELECT
@@ -426,7 +453,8 @@ def _render_context_for_prompt(base_context: Dict[str, Any], recent_orders: List
         tag_text = f" [{' '.join(tags)}]" if tags else ""
         category = p.get("ten_danh_muc") or "Khac"
         price_val = float(p.get("gia_ban") or 0)
-        price_text = f"{price_val:,.0f} VND" if price_val > 0 else "Gia thay doi theo Size"
+        price_str = f"{price_val:,.0f}".replace(",", ".")
+        price_text = f"{price_str} VND" if price_val > 0 else "Gia thay doi theo Size"
         
         # Build variations text
         pid = p.get("ma_san_pham")
@@ -467,10 +495,11 @@ def _render_context_for_prompt(base_context: Dict[str, Any], recent_orders: List
             value_text = f"tang {km.get('ten_san_pham_tang') or 'qua tang'}"
         promo_lines.append(f"- {km.get('ma_khuyen_mai')}: {km.get('ten_khuyen_mai')} ({value_text})")
 
-    branch_lines = [
-        f"- {b.get('ten_chi_nhanh')}: {b.get('dia_chi') or 'Dang cap nhat dia chi'}"
-        for b in base_context.get("branches", [])[:5]
-    ]
+    branch_lines = []
+    for b in base_context.get("branches", [])[:20]:
+        loai_text = "Cửa hàng chính" if b.get('loai') == "CHI_NHANH_CHINH" else "Kiosk"
+        rating_text = f"{b.get('diem_trung_binh')} sao ({b.get('tong_luot_danh_gia')} lượt)" if b.get('tong_luot_danh_gia', 0) > 0 else "Chưa có đánh giá"
+        branch_lines.append(f"- [{loai_text}] {b.get('ten_chi_nhanh')}: {b.get('dia_chi') or 'Đang cập nhật địa chỉ'} - Đánh giá: {rating_text}")
 
     order_lines = [
         f"- Don {o.get('ma_don_hang')}: {_to_price(o.get('tong_tien'))} VND, order={o.get('trang_thai_don_hang')}, payment={o.get('trang_thai_thanh_toan')}"
@@ -619,7 +648,7 @@ def _build_local_chat_fallback(content: str, user_name: str, base_context: Dict[
 
 
 def _call_gemini_chat(gemini_api_key: str, system_text: str, user_text: str, max_output_tokens: int = 650) -> Dict[str, Any]:
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={gemini_api_key}"
     payload = {
         "system_instruction": {"parts": [{"text": system_text}]},
         "contents": [{"role": "user", "parts": [{"text": user_text}]}],
@@ -694,7 +723,7 @@ def agent_chat(body: AgentChatRequest):
       - Gửi POST với session_id (user_id hoặc anon_id), message, history
       - Nếu nhận checkout_payload != null → hiển thị popup xác nhận đơn
     """
-    from agent_service import run_agent
+    from src.agents.agent_service import run_agent
 
     history = [{"role": m.role, "content": m.content} for m in (body.history or [])]
     result = run_agent(
@@ -713,16 +742,91 @@ def agent_chat(body: AgentChatRequest):
 @app.get("/ai/agent/cart/{session_id}")
 def get_agent_cart(session_id: str):
     """Lấy giỏ hàng hiện tại của session (dùng để debug hoặc hiển thị ở Frontend)."""
-    import cart_manager
+    from src.common import cart_manager
     return cart_manager.get_cart(session_id)
 
 
 @app.delete("/ai/agent/cart/{session_id}")
 def clear_agent_cart(session_id: str):
-    """Xoá giỏ hàng của session (sau khi tạo đơn thành công)."""
-    import cart_manager
+    """Xoá giỏ hàng của session (sau khi tạo đơn thành công hoặc khi Làm mới chat)."""
+    from src.common import cart_manager
     cart_manager.clear_cart(session_id)
+    
+    # Sync with main order-service cart to fully reset
+    from src.function_calling.helpers import _get_service_jwt, _require_valid_session
+    import requests, logging
+    
+    valid_uid = _require_valid_session(session_id)
+    if valid_uid:
+        try:
+            token = _get_service_jwt(valid_uid)
+            order_service_url = os.getenv("ORDER_SERVICE_URL", "http://order-service:3005")
+            try:
+                requests.delete(
+                    f"{order_service_url}/cart/clear/{valid_uid}",
+                    headers={"Authorization": f"Bearer {token}"},
+                    timeout=5
+                )
+            except requests.exceptions.ConnectionError:
+                fallback_url = "http://host.docker.internal:3005"
+                requests.delete(
+                    f"{fallback_url}/cart/clear/{valid_uid}",
+                    headers={"Authorization": f"Bearer {token}"},
+                    timeout=5
+                )
+        except Exception as e:
+            logging.getLogger(__name__).error(f"[CartSync] Failed to clear main cart on reset: {e}")
+
     return {"status": "ok", "message": f"Đã xoá giỏ hàng cho session {session_id}"}
+
+
+class CheckoutRequest(BaseModel):
+    session_id: str
+    payment_method: str = "THANH_TOAN_KHI_NHAN_HANG"
+    delivery_type: str = "DELIVERY"
+
+
+@app.post("/ai/cart/checkout")
+def api_cart_checkout(body: CheckoutRequest):
+    """
+    Endpoint Single Source of Truth để chốt đơn hàng từ Frontend UI.
+    """
+    from src.common.checkout_service import finalize_checkout
+    return finalize_checkout(
+        session_id=body.session_id,
+        payment_method=body.payment_method,
+        delivery_type=body.delivery_type
+    )
+
+
+@app.get("/")
+def read_root():
+    return {"message": "Avengers AI Service is running!"}
+
+
+@app.post("/admin/reload-rag")
+def reload_rag():
+    """Reload the RAG knowledge base without restarting the container."""
+    from src.rag.rag_service import get_rag_service
+    rag = get_rag_service()
+    rag.load()
+    return {"status": "ok", "message": "RAG knowledge base reloaded successfully."}
+
+
+@app.get("/debug-branches")
+def debug_branches():
+    from sqlalchemy import text
+    from src.common.db import _get_engine
+    import decimal
+    with _get_engine().connect() as conn:
+        res = conn.execute(text("SELECT ten_chi_nhanh, vi_do, kinh_do FROM identity.chi_nhanh WHERE vi_do IS NOT NULL AND kinh_do IS NOT NULL")).mappings().all()
+        out = []
+        for r in res:
+            d = dict(r)
+            for k,v in d.items():
+                if isinstance(v, decimal.Decimal): d[k] = float(v)
+            out.append(d)
+        return out
 
 
 @app.get("/ai/model/stats")
@@ -1095,7 +1199,7 @@ def get_behavior_insights(branch_code: str = "ALL", limit: int = 6, days: int = 
         raise HTTPException(status_code=500, detail=f"Khong the tai du lieu hanh vi mua sam: {exc}") from exc
 
 def _enrich_chat_cards(content: str, reply: str, base_context: Dict[str, Any], recent_orders: List[Dict[str, Any]]) -> Dict[str, Any]:
-    text_check = (content + " " + reply).lower()
+    text_check = content.lower()
     cards: Dict[str, Any] = {}
 
     if any(k in text_check for k in ["chi nhanh", "cua hang", "dia chi", "gan day", "o dau", "tim cua", "store", "branch"]):
@@ -1137,8 +1241,12 @@ def _groq_primary_chat_reply(
     context_text = _render_context_for_prompt(base_context, recent_orders)
 
     system_prompt = (
-        "Ban la nhan vien tu van AI thong minh cua Avengers Coffee, rat than thien va chuyen nghiep. "
-        "Su dung du lieu he thong (menu, khuyen mai, chi nhanh) de tu van chinh xac. "
+        "Ban la tro ly ao Avengers Coffee. Ngan gon, nhiet tinh. "
+        "Chi dung du lieu he thong cung cap de tra loi (menu, chi nhanh, kiosk, don hang, ...). "
+        "Khong du doan menu/chi nhanh/kiosk ngoai du lieu. "
+        "TUYET DOI KHONG tu bia ra cac goi nhuong quyen hay bat ky thong tin nao khong co trong DU LIEU HE THONG. "
+        "Neu khach hoi ve chi nhanh hay Kiosk, CHI duoc phep ke ten nhung diem ban co trong DU LIEU HE THONG ben duoi. "
+        "Neu khach hoi ve chinh sach, thong tin nhan su, hay van de nam ngoai du lieu, tra loi la ban chua the ho tro vao luc nay. "
         "QUAN TRONG VE DINH DANG: Khi gioi thieu danh sach san pham, chi nhanh, khuyen mai hoac don hang, hay tra loi ngan gon, than thien (1-2 cau mo dau/goi y) va KHONG liet ke thu cong thanh danh sach gach dau dong dai thong tin dia chi/gia, vi he thong se tu dong hien thi cac The UI tuong tac (Product Card, Store Card, Voucher Card) cho khach hang. "
         "Neu khach hoi chung chung hoac 'gi cung duoc', hay chu dong goi y 1-2 mon Best Seller. "
         "Neu khach yeu cau liet ke mot danh muc cu the (vd: ca phe, tra sua), ban PHAI loc dung Danh muc trong DU LIEU HE THONG. "
@@ -1251,9 +1359,9 @@ async def ai_chat(request: Request):
 
         system_text = (
             "Ban la nhan vien tu van cua Avengers Coffee. "
-            "Su dung du lieu he thong de tu van menu, gia, khuyen mai, chi nhanh va tinh trang don. "
+            "Su dung du lieu he thong de tu van menu, gia, khuyen mai, chi nhanh, kiosk va tinh trang don. "
             "Neu du lieu khong co, noi ro la chua du thong tin va de nghi cach kiem tra tiep. "
-            "Khong du doan vuot qua du lieu duoc cung cap. "
+            "Khong du doan vuot qua du lieu duoc cung cap. TUYET DOI KHONG tu bia ra cac goi nhuong quyen. "
             f"LUON ket thuc cau tra loi bang token {_AI_END_TOKEN} o CUOI CUNG."
         )
         first_user_text = f"{context_text}\n\n{user_prompt}"
