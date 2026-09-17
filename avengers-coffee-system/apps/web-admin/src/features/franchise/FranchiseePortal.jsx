@@ -48,6 +48,8 @@ import {
   Sun,
   Sunset,
   Moon,
+  Star,
+  MessageSquare
 } from 'lucide-react'
 import { PosRefundVoidModal } from '../staff-dashboard/features_thaian/PosRefundVoidModal'
 
@@ -327,6 +329,48 @@ export function FranchiseePortal({ session, onLogout }) {
   const [msg, setMsg] = useState(null)
   const [orderForm, setOrderForm] = useState({ kiosk_id: '', combo_id: '', so_luong: 1, phuong_thuc_thanh_toan: 'CONG_NO' })
   const [ordering, setOrdering] = useState(false)
+
+  // Review Modal State
+  const [reviewModal, setReviewModal] = useState(null)
+  const [reviews, setReviews] = useState([])
+  const [reviewStats, setReviewStats] = useState({ avg: 0, total: 0 })
+  const [loadingReviews, setLoadingReviews] = useState(false)
+
+  const openReviewModal = async (kiosk) => {
+    setReviewModal(kiosk)
+    setLoadingReviews(true)
+    try {
+      const res = await fetch(`${API_BASE_URL}/branch-reviews/branch/${kiosk.ma_kiosk}`)
+      if (res.ok) {
+        const data = await res.json()
+        setReviews(data.items || [])
+        setReviewStats({ avg: data.diem_trung_binh || 0, total: data.tong_luot_danh_gia || 0 })
+      } else {
+        setReviews([])
+        setReviewStats({ avg: 0, total: 0 })
+      }
+    } catch (err) {
+      setReviews([])
+      setReviewStats({ avg: 0, total: 0 })
+    } finally {
+      setLoadingReviews(false)
+    }
+  }
+
+  const deleteReview = async (reviewId) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa đánh giá này không?")) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/branch-reviews/${reviewId}`, { method: 'DELETE' });
+      if (res.ok) {
+        // Refresh
+        openReviewModal(reviewModal);
+      } else {
+        alert("Có lỗi khi xóa đánh giá!");
+      }
+    } catch (err) {
+      alert("Lỗi kết nối khi xóa đánh giá.");
+    }
+  }
 
   // ★ KIOSK CONTEXT
   const [activeKioskId, setActiveKioskId] = useState('')
@@ -1618,6 +1662,12 @@ export function FranchiseePortal({ session, onLogout }) {
                                       📍 {k.dia_chi}
                                     </div>
                                     <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                                      <button onClick={() => openReviewModal(k)} style={{
+                                        padding: '6px 10px', borderRadius: 6, border: '1px solid #fde047', background: '#fef9c3',
+                                        color: '#854d0e', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
+                                      }}>
+                                        <Star size={14} /> Đánh giá
+                                      </button>
                                       <button onClick={() => { switchKiosk(k.id); setTab('kiosk_shifts'); }} style={{
                                         padding: '6px 10px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#fff',
                                         color: '#334155', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
@@ -4988,6 +5038,56 @@ export function FranchiseePortal({ session, onLogout }) {
             onConfirmRefundVoid={handleRefundVoidPos}
             processing={voidSubmitting}
           />
+        )}
+        {/* REVIEWS MODAL */}
+        {reviewModal && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999, padding: '1rem' }}>
+            <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', width: '100%', maxWidth: '600px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden' }}>
+              <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
+                <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                  <MessageSquare size={18} color="#eab308" /> Đánh Giá Khách Hàng - {reviewModal.ten_kiosk} ({reviewModal.ma_kiosk})
+                </h3>
+                <button type="button" onClick={() => setReviewModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
+                {loadingReviews ? (
+                  <div style={{ textAlign: 'center', color: '#64748b', fontSize: '0.875rem' }}>Đang tải danh sách đánh giá...</div>
+                ) : reviews.length === 0 ? (
+                  <div style={{ textAlign: 'center', color: '#64748b', fontSize: '0.875rem' }}>Kiosk này chưa có đánh giá nào.</div>
+                ) : (
+                  <>
+                    <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: '600', color: '#92400e' }}>Đánh giá trung bình:</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <strong style={{ fontSize: '1.1rem', color: '#b45309' }}>{reviewStats.avg} / 5.0</strong>
+                        <span style={{ fontSize: '0.85rem', color: '#d97706' }}>({reviewStats.total} đánh giá)</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      {reviews.map((rv, idx) => (
+                        <div key={idx} style={{ padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '8px', backgroundColor: '#f8fafc', position: 'relative' }}>
+                          <button onClick={() => deleteReview(rv.id)} style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '4px', padding: '0.2rem 0.5rem', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 'bold' }}>Xóa</button>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', paddingRight: '3rem' }}>
+                            <strong style={{ fontSize: '0.9rem', color: '#0f172a' }}>{rv.ten_nguoi_dung || 'Khách hàng ẩn danh'}</strong>
+                            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{new Date(rv.ngay_tao).toLocaleDateString('vi-VN')}</span>
+                          </div>
+                          <div style={{ display: 'flex', gap: '4px', marginBottom: '0.5rem' }}>
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star key={i} size={14} fill={i < (rv.diem_tong_quan || 5) ? '#facc15' : 'transparent'} color={i < (rv.diem_tong_quan || 5) ? '#facc15' : '#cbd5e1'} />
+                            ))}
+                          </div>
+                          {rv.nhan_xet && <div style={{ fontSize: '0.85rem', color: '#334155', fontStyle: 'italic' }}>"{rv.nhan_xet}"</div>}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         )}
 
       </div>

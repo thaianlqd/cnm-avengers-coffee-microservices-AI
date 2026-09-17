@@ -40,20 +40,23 @@ QUY TẮC BẮT BUỘC:
 [QUAN TRỌNG NHẤT VỀ TRA CỨU]: 
 - NẾU tool search_knowledge_base trả về kết quả hợp lệ (status="ok"): BẠN PHẢI dựa vào thông tin đó để trả lời tự nhiên. Tuyệt đối không tự suy diễn thêm thành phần hay hương vị ngoài dữ liệu được cung cấp.
 - CHỈ KHI tool trả về rỗng (status="not_found"): BẠN BẮT BUỘC PHẢI DỪNG LẠI và trả lời ĐÚNG NGUYÊN VĂN câu sau: "Hiện mình chưa có thông tin mô tả chi tiết cho món này, bạn có thể xem trực tiếp trên trang sản phẩm hoặc hỏi nhân viên nhé". KHÔNG xin lỗi, KHÔNG giải thích thêm.
-7. Khi khách hỏi gợi ý món ngon hoặc bán chạy: gọi tool get_recommendations (mặc định criteria="hot"). NẾU khách hỏi món "đánh giá cao", "5 sao", phải truyền criteria="rating".
+7. Khi khách hỏi gợi ý món ngon hoặc bán chạy: gọi tool get_recommendations (mặc định criteria="hot"). NẾU khách hỏi món "đánh giá cao", "5 sao", phải truyền criteria="rating". Tương tự, nếu khách hỏi chi nhánh hoặc kiosk nào được đánh giá cao, BẠN BẮT BUỘC gọi tool get_top_rated_stores. Khách có thể hỏi "kiosk nhượng quyền đánh giá cao", lúc này dùng get_top_rated_stores chứ KHÔNG dùng search_knowledge_base. Nếu khách yêu cầu xem/đọc NỘI DUNG bình luận, đánh giá, nhận xét của một chi nhánh/kiosk cụ thể (hoặc các chi nhánh vừa liệt kê), BẠN BẮT BUỘC gọi tool get_store_reviews (truyền tên chi nhánh/kiosk vào).
 8. Khi khách hỏi ĐÁNH GIÁ (review) về một món CỤ THỂ (ví dụ: "Americano Mơ đánh giá sao"): BẮT BUỘC phải gọi trực tiếp `get_product_insights` với tham số `product_name` là tên món đó (ví dụ "Americano Mơ"). NẾU tool báo chưa có đánh giá, BẠN PHẢI TRẢ LỜI THẲNG THẮN VÀ TRUNG THỰC cho khách biết là chưa có đánh giá nào, TUYỆT ĐỐI KHÔNG nói vòng vo hay lảng tránh sang chuyện khác.
 9. KHÔNG cam kết hoàn tiền, giảm giá hay điều chỉnh giá ngoài những gì hệ thống cho phép.
-10. Khi gợi ý thêm món (Upsell), TUYỆT ĐỐI KHÔNG tự ý bịa ra topping cho đồ ăn (ví dụ: cấm gợi ý thêm hạt sen, trân châu, socola... vào bánh mì, bánh ngọt). Topping chỉ dành cho đồ uống nếu món đó thực sự có. Chỉ báo giá thực tế lấy từ hệ thống chứ không tự bịa khuyến mãi.
+10. Khi gợi ý thêm món (Upsell), TUYỆT ĐỐI KHÔNG tự ý bịa ra topping cho đồ ăn (ví dụ: cấm gợi ý thêm hạt sen, trân châu, socola... vào bánh mì, bánh ngọt). Topping chỉ dành cho đồ uống nếu món đó thực sự có. Chỉ báo giá thực tế lấy từ hệ thống chứ không tự bịa khuyến mãi. TUYỆT ĐỐI KHÔNG tự bịa ra các gói nhượng quyền (franchise).
 11. BẢO MẬT: TUYỆT ĐỐI KHÔNG tiết lộ tên các công cụ (tools) nội bộ cho khách. Việc gọi tool là nhiệm vụ ngầm của bạn.
 12. QUY TRÌNH CHỐT ĐƠN (QUAN TRỌNG):
-    - Khi khách bảo "chốt đơn" hoặc muốn đặt hàng LẦN ĐẦU, HÃY gọi `request_checkout` để TÓM TẮT đơn hàng. KHÔNG TỰ Ý ĐẶT.
+    - Khi khách bảo "chốt đơn" hoặc muốn đặt hàng, TRƯỚC TIÊN hãy hỏi khách phương thức thanh toán (Tiền mặt/VNPay/Chuyển khoản/Ví) và hình thức giao hàng (Giao tận nơi/Mang đi/Tại chỗ) nếu chưa biết.
+    - Sau khi khách chọn xong, HÃY gọi `request_checkout` để TÓM TẮT đơn hàng. KHÔNG TỰ Ý ĐẶT TRƯỚC KHI TÓM TẮT.
     - [TỐI QUAN TRỌNG] Nếu bạn VỪA tóm tắt đơn hàng (request_checkout) và khách phản hồi "ĐỒNG Ý", "XÁC NHẬN", "OK", "CHỐT"... => BẠN BẮT BUỘC PHẢI GỌI NGAY TOOL `confirm_checkout` ĐỂ HỆ THỐNG TẠO ĐƠN HÀNG THẬT.
     - TUYỆT ĐỐI KHÔNG TỰ BỊA RA MÃ ĐƠN HÀNG (như ORD-...) nếu chưa gọi `confirm_checkout`. Chỉ báo thành công khi tool trả về kết quả.
     - KHÔNG YÊU CẦU khách phải thao tác bấm nút trên màn hình. Bạn tự lo hoàn tất đơn hàng bằng tool `confirm_checkout`.
 13. Khi khách yêu cầu hủy/sửa đơn, gọi `get_order_history` tìm mã đơn. Nếu khách CHƯA xác nhận, gọi `cancel_order` hoặc `update_order` với `is_confirmed=False` và BÁO KHÁCH. NẾU KHÁCH ĐÃ NHẮN "ĐỒNG Ý" hoặc xác nhận hủy, BẮT BUỘC gọi với `is_confirmed=True` để thực thi. KHÔNG gọi ask_branch.
 14. Khi tư vấn quán gần nhất từ tool `find_nearest_branch`, BẢT BUỘC phải đọc đúng số km (`khoang_cach_km`) mà tool trả về (ví dụ "cách bạn khoảng 2.3km"). TUYỆT ĐỐI KHÔNG tự bịa khoảng cách hay làm tròn sai lệch. Nếu tool có trả về warning "Chi nhánh gần nhất cũng cách tới...", HÃY báo rõ là khu vực của khách không có chi nhánh, và các gợi ý này khá xa.
-15. NẾU MỘT TOOL BÁO LỖI (status="error") thì HÃY BÁO LỖI ĐÓ CHO KHÁCH, TUYỆT ĐỐI KHÔNG GỌI LẠI TOOL ĐÓ NỮA VÀ DỪNG LẠI NGAY.
-16. [QUAN TRỌNG NHẤT VỀ ĐẶT HÀNG] NẾU khách muốn đặt món nhưng chưa nói rõ Kích cỡ, Lượng đá, Độ ngọt, BẠN TUYỆT ĐỐI KHÔNG ĐƯỢC HỎI KHÁCH VỘI! Bạn PHẢI GỌI TOOL `get_product_options` TRƯỚC TIÊN để kiểm tra xem món đó có tùy chọn hay không.
+15. NẾU KHÁCH YÊU CẦU SO SÁNH khoảng cách giữa các chi nhánh CỤ THỂ (ví dụ: "giữa 2 chi nhánh này cái nào gần tôi hơn", "chọn 1 trong 2 chi nhánh trên"), BẠN BẮT BUỘC PHẢI TRUYỀN tên các chi nhánh đó vào tham số `target_branches` của tool `find_nearest_branch`. TUYỆT ĐỐI KHÔNG ĐỂ TRỐNG tham số này khi khách yêu cầu so sánh.
+16. NẾU MỘT TOOL BÁO LỖI (status="error") thì HÃY BÁO LỖI ĐÓ CHO KHÁCH, TUYỆT ĐỐI KHÔNG GỌI LẠI TOOL ĐÓ NỮA VÀ DỪNG LẠI NGAY.
+17. [QUAN TRỌNG NHẤT VỀ LẤY ĐỊA CHỈ TỪ HỒ SƠ]: NẾU khách bảo "địa chỉ ở hồ sơ", "lấy địa chỉ của tôi", "trong hồ sơ có", BẠN BẮT BUỘC phải gọi tool `get_user_profile`. Khi tool trả về danh sách địa chỉ (ví dụ: `- Nhà riêng: ...`), BẠN BẮT BUỘC PHẢI SỬ DỤNG ĐỊA CHỈ ĐÓ để truyền vào tool `find_nearest_branch`. TUYỆT ĐỐI KHÔNG BAO GIỜ được nói là "không thể truy cập thông tin địa chỉ từ hồ sơ". Địa chỉ CÓ TỒN TẠI trong kết quả của tool, hãy đọc kỹ! LƯU Ý: Nếu câu trước đó khách yêu cầu CHỌN 1 TRONG CÁC CHI NHÁNH, bạn BẮT BUỘC phải truyền CẢ địa chỉ hồ sơ VÀ `target_branches` vào tool `find_nearest_branch` trong cùng 1 lần gọi.
+18. [QUAN TRỌNG NHẤT VỀ ĐẶT HÀNG] NẾU khách muốn đặt món nhưng chưa nói rõ Kích cỡ, Lượng đá, Độ ngọt, BẠN TUYỆT ĐỐI KHÔNG ĐƯỢC HỎI KHÁCH VỘI! Bạn PHẢI GỌI TOOL `get_product_options` TRƯỚC TIÊN để kiểm tra xem món đó có tùy chọn hay không.
     - NẾU kết quả trả về là KHÔNG CÓ TÙY CHỌN, bạn KHÔNG ĐƯỢC hỏi khách về size/đá/đường, mà hãy tiến hành gọi `check_price_and_stock` và `add_to_cart` luôn.
     - NẾU kết quả trả về CÓ tùy chọn, bạn MỚI ĐƯỢC PHÉP hỏi khách, và BẮT BUỘC PHẢI DÙNG CHÍNH XÁC Y HỆT những nhãn tùy chọn mà tool trả về (TUYỆT ĐỐI KHÔNG tự bịa ra các size như Nhỏ/Vừa/Lớn hay S/M/L nếu tool không có).
     - Gom tất cả yêu cầu về đá, đường, topping vào tham số `note` khi gọi `add_to_cart`.
@@ -145,7 +148,6 @@ def run_agent(
             "error": "missing_input",
         }
 
-    # ── [Phase 3] Lớp 1: Guardrails — Kiểm tra Input ─────────────────────────
     is_safe, block_reason = guardrails.check_input(user_message, session_id)
     if not is_safe:
         safe_reply = guardrails.get_block_reply(block_reason or "")
@@ -159,6 +161,58 @@ def run_agent(
             "tool_calls_log": [],
             "error": f"blocked:{block_reason}",
         }
+
+    # ── [NEW] INTERCEPT: Khách xác nhận chốt đơn ─────────────────────────────
+    user_msg_lower = user_message.strip().lower()
+    confirm_keywords = ["đồng ý", "xác nhận", "ok", "oke", "chốt", "đặt đi", "tiến hành", "okela", "chốt đơn"]
+    # Kiểm tra xem user_msg có trùng hoặc bắt đầu bằng keyword không
+    is_confirming = any(user_msg_lower == kw or user_msg_lower.startswith(kw + " ") or user_msg_lower.startswith(kw + "!") for kw in confirm_keywords)
+    
+    if is_confirming and history:
+        last_assistant_msg = next((h["content"] for h in reversed(history) if h.get("role") == "assistant"), "")
+        if "Khách cần xác nhận trước khi tôi tiến hành đặt" in last_assistant_msg:
+            logger.info("[AgentService] Intercepted checkout confirmation from user: '%s'", user_message)
+            from src.function_calling.tools.cart_tools import execute_confirm_checkout
+            
+            checkout_res = execute_confirm_checkout(session_id)
+            if checkout_res.get("status") == "success":
+                order_id = checkout_res.get("order_id", "Không rõ")
+                total = checkout_res.get("total_price", 0)
+                reply = f"🎉 Đặt hàng thành công! Mã đơn hàng của bạn là: **{order_id}**.\nTổng cộng: {total:,.0f}đ. Cảm ơn bạn đã ủng hộ!".replace(',', '.')
+            else:
+                reply = f"❌ Rất tiếc, quá trình tạo đơn hàng thất bại: {checkout_res.get('message', 'Lỗi không xác định')}."
+            
+            return {
+                "reply": reply,
+                "checkout_payload": None,
+                "tool_calls_log": [{"tool": "confirm_checkout", "result": checkout_res}],
+                "error": None,
+            }
+            
+        elif "xác nhận hủy" in last_assistant_msg.lower():
+            logger.info("[AgentService] Intercepted cancel_order confirmation from user: '%s'", user_message)
+            from src.function_calling.tools.order_tools import execute_cancel_order
+            import re
+            
+            # Extract order_id from text: "hủy đơn hàng {order_id} không"
+            match = re.search(r"đơn hàng ([\w\-]+) không", last_assistant_msg.lower())
+            if not match:
+                match = re.search(r"([\w\-]{36})", last_assistant_msg)
+                
+            if match:
+                order_id = match.group(1)
+                cancel_res = execute_cancel_order(session_id, order_id, is_confirmed=True)
+                if cancel_res.get("status") == "success":
+                    reply = f"✅ Đơn hàng **{order_id}** đã được hủy thành công."
+                else:
+                    reply = f"❌ Rất tiếc, không thể hủy đơn hàng: {cancel_res.get('message', 'Lỗi không xác định')}."
+                    
+                return {
+                    "reply": reply,
+                    "checkout_payload": None,
+                    "tool_calls_log": [{"tool": "cancel_order", "result": cancel_res}],
+                    "error": None,
+                }
 
     # ── Build messages (bao gồm RAG context nếu cần) ──────────────────────────
     messages = _build_messages(
@@ -184,6 +238,10 @@ def run_agent(
                 "[AgentService] Output was modified by guardrails: session=%s", session_id
             )
         result["reply"] = safe_reply
+    elif not result.get("reply") and not result.get("error"):
+        # LLM generated empty reply
+        result["reply"] = "Xin lỗi, hiện tại hệ thống AI đang bị quá tải hoặc gặp sự cố phản hồi. Vui lòng thử lại sau ít phút."
+        result["error"] = "empty_reply"
 
     logger.info(
         "[AgentService] session=%s tools_called=%d checkout=%s error=%s",
@@ -191,5 +249,9 @@ def run_agent(
         len(result.get("tool_calls_log", [])),
         "yes" if result.get("checkout_payload") else "no",
         result.get("error"),
+    )
+    logger.info(
+        "[AgentService] FINAL REPLY TEXT: %s",
+        result.get("reply")
     )
     return result

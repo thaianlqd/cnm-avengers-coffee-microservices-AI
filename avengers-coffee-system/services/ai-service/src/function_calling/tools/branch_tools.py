@@ -36,14 +36,27 @@ def execute_ask_branch() -> Dict[str, Any]:
         with engine.connect() as conn:
             rows = conn.execute(text(
                 f"""
-                SELECT c.ma_chi_nhanh, c.ten_chi_nhanh, c.dia_chi,
-                       ROUND(COALESCE(AVG(d.diem_tong_quan), 0)::numeric, 1)::float as avg_rating,
-                       COUNT(d.id) as total_reviews
-                FROM {identity_schema}.chi_nhanh c
-                LEFT JOIN {order_schema}.danh_gia_chi_nhanh d ON c.ma_chi_nhanh::text = d.ma_chi_nhanh::text
-                WHERE c.trang_thai = 'ACTIVE'
-                GROUP BY c.ma_chi_nhanh, c.ten_chi_nhanh, c.dia_chi
-                ORDER BY avg_rating DESC, c.ten_chi_nhanh ASC LIMIT 3
+                WITH ratings AS (
+                    SELECT ma_chi_nhanh, ROUND(AVG(diem_tong_quan), 1) as avg_rating, COUNT(*) as total_reviews
+                    FROM {order_schema}.danh_gia_chi_nhanh
+                    WHERE trang_thai = 'APPROVED'
+                    GROUP BY ma_chi_nhanh
+                ),
+                branches_and_kiosks AS (
+                    SELECT ma_chi_nhanh, ten_chi_nhanh, dia_chi, 'CHI_NHANH_CHINH' as loai
+                    FROM {identity_schema}.chi_nhanh
+                    WHERE trang_thai = 'ACTIVE'
+                    UNION ALL
+                    SELECT ma_kiosk as ma_chi_nhanh, ten_kiosk as ten_chi_nhanh, dia_chi, loai_kiosk as loai
+                    FROM franchise.kiosk
+                    WHERE trang_thai = 'DANG_HOAT_DONG'
+                )
+                SELECT b.ma_chi_nhanh, b.ten_chi_nhanh, b.dia_chi, b.loai,
+                       COALESCE(r.avg_rating, 0)::float as avg_rating,
+                       COALESCE(r.total_reviews, 0)::int as total_reviews
+                FROM branches_and_kiosks b
+                LEFT JOIN ratings r ON b.ma_chi_nhanh = r.ma_chi_nhanh
+                ORDER BY r.avg_rating DESC NULLS LAST, b.ten_chi_nhanh ASC LIMIT 3
                 """
             )).mappings().all()
         branches = [_clean_dict(dict(r)) for r in rows]
@@ -60,7 +73,7 @@ TOOL_FIND_NEAREST_BRANCH = {
     "type": "function",
     "function": {
         "name": "find_nearest_branch",
-        "description": "Tìm kiếm chi nhánh (cửa hàng cà phê) gần nhất. Nếu khách hỏi 'gần tôi' hoặc không nói rõ địa điểm, hãy ĐỂ TRỐNG tham số location (location='') để hệ thống tự động lấy địa chỉ mặc định của khách. KHÔNG dùng tool này để trả lời câu hỏi 'địa chỉ của tôi ở đâu' (hãy dùng get_user_profile).",
+        "description": "Tìm kiếm chi nhánh (cửa hàng cà phê) gần nhất. Nếu khách yêu cầu tìm chi nhánh gần nhất trong số một vài chi nhánh cụ thể (ví dụ: 'trong 2 chi nhánh này cái nào gần tôi hơn?'), BẮT BUỘC phải truyền tên các chi nhánh đó vào tham số target_branches. Nếu khách hỏi 'gần tôi' hoặc không nói rõ địa điểm, hãy ĐỂ TRỐNG tham số location.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -68,13 +81,18 @@ TOOL_FIND_NEAREST_BRANCH = {
                     "type": "string",
                     "description": "Địa điểm Quận, Huyện, hoặc Thành phố (ví dụ: 'Hải Châu', 'Quận 1'). Để trống nếu muốn tìm theo địa chỉ của khách."
                 },
+                "target_branches": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "BẮT BUỘC SỬ DỤNG nếu khách yêu cầu tìm chi nhánh gần nhất TRONG SỐ các chi nhánh cụ thể (ví dụ: 'trong 2 chi nhánh này'). Truyền tên hoặc mã các chi nhánh đó vào mảng này (ví dụ: ['Kiosk Avengers', 'Highlands Indochina'])."
+                }
             },
             "required": [],
         },
     },
 }
 
-def execute_find_nearest_branch(location: str = "", session_id: str = "") -> Dict[str, Any]:
+def execute_find_nearest_branch(location: str = "", session_id: str = "", target_branches: list = None) -> Dict[str, Any]:
     """Tìm chi nhánh gần nhất dựa trên geocoding và khoảng cách Haversine."""
     try:
         hours_check = _check_business_hours()
@@ -139,13 +157,26 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "") -> Dic
                     conn.commit()
 
             query = f"""
-                SELECT c.ma_chi_nhanh, c.ten_chi_nhanh, c.dia_chi, c.vi_do, c.kinh_do,
-                       ROUND(COALESCE(AVG(d.diem_tong_quan), 0)::numeric, 1)::float as avg_rating,
-                       COUNT(d.id) as total_reviews
-                FROM {identity_schema}.chi_nhanh c
-                LEFT JOIN {order_schema}.danh_gia_chi_nhanh d ON c.ma_chi_nhanh::text = d.ma_chi_nhanh::text
-                WHERE c.trang_thai = 'ACTIVE' AND c.vi_do IS NOT NULL AND c.kinh_do IS NOT NULL
-                GROUP BY c.ma_chi_nhanh, c.ten_chi_nhanh, c.dia_chi, c.vi_do, c.kinh_do
+                WITH ratings AS (
+                    SELECT ma_chi_nhanh, ROUND(AVG(diem_tong_quan), 1) as avg_rating, COUNT(*) as total_reviews
+                    FROM {order_schema}.danh_gia_chi_nhanh
+                    WHERE trang_thai = 'APPROVED'
+                    GROUP BY ma_chi_nhanh
+                ),
+                branches_and_kiosks AS (
+                    SELECT ma_chi_nhanh, ten_chi_nhanh, dia_chi, vi_do, kinh_do, 'CHI_NHANH_CHINH' as loai
+                    FROM {identity_schema}.chi_nhanh
+                    WHERE trang_thai = 'ACTIVE' AND vi_do IS NOT NULL AND kinh_do IS NOT NULL
+                    UNION ALL
+                    SELECT ma_kiosk as ma_chi_nhanh, ten_kiosk as ten_chi_nhanh, dia_chi, vi_do, kinh_do, loai_kiosk as loai
+                    FROM franchise.kiosk
+                    WHERE trang_thai = 'DANG_HOAT_DONG' AND vi_do IS NOT NULL AND kinh_do IS NOT NULL
+                )
+                SELECT b.ma_chi_nhanh, b.ten_chi_nhanh, b.dia_chi, b.vi_do, b.kinh_do, b.loai,
+                       COALESCE(r.avg_rating, 0)::float as avg_rating,
+                       COALESCE(r.total_reviews, 0)::int as total_reviews
+                FROM branches_and_kiosks b
+                LEFT JOIN ratings r ON b.ma_chi_nhanh = r.ma_chi_nhanh
             """
             rows = conn.execute(text(query)).mappings().all()
 
@@ -157,6 +188,16 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "") -> Dic
 
             branches = []
             for r in rows:
+                if target_branches:
+                    # Kiểm tra xem tên hoặc mã chi nhánh có khớp với bất kỳ từ khoá nào trong target_branches không
+                    match = False
+                    for tb in target_branches:
+                        if tb.lower() in r["ten_chi_nhanh"].lower() or tb.lower() in r["ma_chi_nhanh"].lower():
+                            match = True
+                            break
+                    if not match:
+                        continue
+                        
                 dist = haversine_distance(user_lat, user_lon, float(r["vi_do"]), float(r["kinh_do"]))
                 branch_dict = _clean_dict(dict(r))
                 branch_dict["khoang_cach_km"] = round(dist, 1)
@@ -167,7 +208,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "") -> Dic
 
             nearest_dist = top_branches[0]["khoang_cach_km"]
             
-            msg = f"Dựa vào địa chỉ của khách ({target_address}), đây là top 3 chi nhánh gần nhất. BẮT BUỘC: Bạn PHẢI đọc TÊN CỤ THỂ của chi nhánh và BÁO SỐ KM (khoang_cach_km) kèm chữ '(đường chim bay)' cho khách."
+            msg = f"Dựa vào địa chỉ của khách ({target_address}), đây là chi nhánh gần nhất. BẮT BUỘC: Bạn PHẢI đọc TÊN CỤ THỂ của chi nhánh và BÁO SỐ KM (khoang_cach_km) kèm chữ '(đường chim bay)' cho khách."
             
             if nearest_dist > 15:
                 msg += f" WARNING: Chi nhánh gần nhất cũng cách tới {nearest_dist}km. Hãy báo rõ cho khách là khu vực của khách khá xa các chi nhánh hiện tại."
@@ -236,7 +277,179 @@ def execute_set_session_branch(session_id: str, branch_id: str, branch_name: str
                 "message": f"Đã ghi nhận chi nhánh: {real_branch_name}. Bây giờ có thể tra cứu giá và tồn kho.",
             }
         
+        # Nếu chưa ra, tìm trong Kiosk
+        row_kiosk = conn.execute(
+            text(f"SELECT ma_kiosk, ten_kiosk FROM franchise.kiosk WHERE ma_kiosk = :bid OR ten_kiosk ILIKE :bname LIMIT 1"),
+            {"bid": branch_id, "bname": f"%{branch_id}%"}
+        ).fetchone()
+        
+        if not row_kiosk and branch_name:
+            row_kiosk = conn.execute(
+                text(f"SELECT ma_kiosk, ten_kiosk FROM franchise.kiosk WHERE ten_kiosk ILIKE :bname LIMIT 1"),
+                {"bname": f"%{branch_name}%"}
+            ).fetchone()
+            
+        if row_kiosk:
+            real_branch_id = str(row_kiosk[0])
+            real_branch_name = str(row_kiosk[1])
+            cart_manager.set_branch(session_id, real_branch_id, real_branch_name)
+            return {
+                "status": "ok",
+                "message": f"Đã ghi nhận kiosk: {real_branch_name}. Bây giờ có thể tra cứu giá và tồn kho.",
+            }
+        
     return {
         "status": "error",
-        "message": f"Không tìm thấy chi nhánh nào khớp với '{branch_id}' hay '{branch_name}'. Bạn có thể gọi lại ask_branch hoặc báo lại cho khách.",
+        "message": f"Không tìm thấy chi nhánh/kiosk nào khớp với '{branch_id}' hay '{branch_name}'. Bạn có thể gọi lại ask_branch hoặc báo lại cho khách.",
     }
+
+
+TOOL_GET_TOP_RATED_STORES = {
+    "type": "function",
+    "function": {
+        "name": "get_top_rated_stores",
+        "description": "Gọi tool này khi khách yêu cầu xem các chi nhánh hoặc kiosk được đánh giá cao.",
+        "parameters": {
+            "type": "object",
+            "properties": {},
+        },
+    },
+}
+
+def execute_get_top_rated_stores() -> Dict[str, Any]:
+    try:
+        engine = _get_engine()
+        import os
+        identity_schema = os.getenv("IDENTITY_SCHEMA", "identity")
+        order_schema = os.getenv("ORDER_SCHEMA", "orders")
+        
+        with engine.connect() as conn:
+            rows = conn.execute(text(
+                f"""
+                WITH ratings AS (
+                    SELECT ma_chi_nhanh, ROUND(AVG(diem_tong_quan), 1) as avg_rating, COUNT(*) as total_reviews
+                    FROM {order_schema}.danh_gia_chi_nhanh
+                    WHERE trang_thai = 'APPROVED'
+                    GROUP BY ma_chi_nhanh
+                ),
+                branches_and_kiosks AS (
+                    SELECT ma_chi_nhanh, ten_chi_nhanh, dia_chi, 'CHI_NHANH_CHINH' as loai
+                    FROM {identity_schema}.chi_nhanh
+                    WHERE trang_thai = 'ACTIVE'
+                    UNION ALL
+                    SELECT ma_kiosk as ma_chi_nhanh, ten_kiosk as ten_chi_nhanh, dia_chi, loai_kiosk as loai
+                    FROM franchise.kiosk
+                    WHERE trang_thai = 'DANG_HOAT_DONG'
+                )
+                SELECT b.ma_chi_nhanh, b.ten_chi_nhanh, b.dia_chi, b.loai,
+                       COALESCE(r.avg_rating, 0)::float as avg_rating,
+                       COALESCE(r.total_reviews, 0)::int as total_reviews
+                FROM branches_and_kiosks b
+                JOIN ratings r ON b.ma_chi_nhanh = r.ma_chi_nhanh
+                WHERE r.avg_rating >= 4.0
+                ORDER BY r.avg_rating DESC, r.total_reviews DESC LIMIT 5
+                """
+            )).mappings().all()
+            
+        stores = [_clean_dict(dict(r)) for r in rows]
+        if not stores:
+            return {
+                "status": "ok",
+                "stores": [],
+                "message": "Hiện chưa có chi nhánh hoặc kiosk nào nhận được đánh giá cao trong hệ thống.",
+            }
+            
+        return {
+            "status": "ok",
+            "stores": stores,
+            "message": "Trả về danh sách các điểm bán được đánh giá cao nhất. Hãy tóm tắt ngắn gọn tên chi nhánh/kiosk, số sao, và địa chỉ cho khách.",
+        }
+    except Exception as e:
+        logger.warning("[AgentTools] get_top_rated_stores error: %s", e)
+        return {"status": "error", "message": "Không thể tra cứu danh sách chi nhánh được đánh giá cao lúc này."}
+
+
+TOOL_GET_STORE_REVIEWS = {
+    "type": "function",
+    "function": {
+        "name": "get_store_reviews",
+        "description": "Gọi tool này khi khách yêu cầu đọc nội dung các bình luận, đánh giá, nhận xét thực tế về một chi nhánh hoặc kiosk cụ thể.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "branch_id": {
+                    "type": "string",
+                    "description": "Mã chi nhánh/kiosk (ví dụ: 'KSK-016', 'DN_INDOCHINA_RIVERSIDE') hoặc tên chi nhánh nếu không biết mã.",
+                },
+            },
+            "required": ["branch_id"],
+        },
+    },
+}
+
+def execute_get_store_reviews(branch_id: str) -> Dict[str, Any]:
+    try:
+        engine = _get_engine()
+        import os
+        identity_schema = os.getenv("IDENTITY_SCHEMA", "identity")
+        order_schema = os.getenv("ORDER_SCHEMA", "orders")
+        
+        with engine.connect() as conn:
+            # Tìm chính xác mã chi nhánh hoặc tìm gần đúng theo tên (kể cả trong kiosk)
+            query_branch = f"""
+                SELECT ma_chi_nhanh as ma, ten_chi_nhanh as ten FROM {identity_schema}.chi_nhanh 
+                WHERE ma_chi_nhanh = :bid OR ten_chi_nhanh ILIKE :bname
+                UNION ALL
+                SELECT ma_kiosk as ma, ten_kiosk as ten FROM franchise.kiosk
+                WHERE ma_kiosk = :bid OR ten_kiosk ILIKE :bname
+                LIMIT 1
+            """
+            row = conn.execute(text(query_branch), {"bid": branch_id, "bname": f"%{branch_id}%"}).fetchone()
+            
+            if not row:
+                return {
+                    "status": "not_found",
+                    "message": f"Không tìm thấy chi nhánh/kiosk nào khớp với tên/mã '{branch_id}'. Vui lòng yêu cầu khách làm rõ tên chi nhánh."
+                }
+                
+            real_branch_id = str(row[0])
+            real_branch_name = str(row[1])
+            
+            # Lấy các bình luận mới nhất
+            query_reviews = f"""
+                SELECT p.ho_ten, d.diem_tong_quan, d.nhan_xet, d.ngay_tao
+                FROM {order_schema}.danh_gia_chi_nhanh d
+                LEFT JOIN {identity_schema}.nguoi_dung p ON d.ma_nguoi_dung = p.ma_nguoi_dung::text
+                WHERE d.ma_chi_nhanh = :bid AND d.trang_thai = 'APPROVED' AND d.nhan_xet IS NOT NULL AND d.nhan_xet != ''
+                ORDER BY d.ngay_tao DESC LIMIT 5
+            """
+            reviews_rows = conn.execute(text(query_reviews), {"bid": real_branch_id}).mappings().all()
+            
+            reviews = []
+            for r in reviews_rows:
+                reviews.append({
+                    "user": r["ho_ten"] or "Khách hàng ẩn danh",
+                    "rating": float(r["diem_tong_quan"]) if r["diem_tong_quan"] else 0,
+                    "comment": str(r["nhan_xet"]),
+                    "date": str(r["ngay_tao"]) if r["ngay_tao"] else ""
+                })
+                
+            if not reviews:
+                return {
+                    "status": "ok",
+                    "branch_name": real_branch_name,
+                    "reviews": [],
+                    "message": f"Chi nhánh '{real_branch_name}' hiện chưa có lời bình luận/nhận xét bằng chữ nào từ khách hàng."
+                }
+                
+            return {
+                "status": "ok",
+                "branch_name": real_branch_name,
+                "reviews": reviews,
+                "message": f"Dưới đây là các bình luận thực tế của khách hàng về chi nhánh '{real_branch_name}'. Hãy trích dẫn một vài nhận xét tiêu biểu cho khách xem."
+            }
+    except Exception as e:
+        logger.warning("[AgentTools] get_store_reviews error: %s", e)
+        return {"status": "error", "message": "Không thể tra cứu bình luận lúc này."}
+
+

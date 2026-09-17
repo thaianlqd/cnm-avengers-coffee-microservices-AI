@@ -230,6 +230,13 @@ export class FranchiseController {
     return this.franchiseService.capNhatTrangThaiKiosk(id, body.trang_thai);
   }
 
+  // ─── Xóa Kiosk Vĩnh Viễn ───────────────────────────
+  @Roles('ADMIN')
+  @Delete('kiosk/:id')
+  async xoaKiosk(@Param('id') id: string) {
+    return this.franchiseService.xoaKiosk(id);
+  }
+
   // ─── Xử lý nợ quá hạn (Cron demo) ────────────────
   @Roles('ADMIN', 'ACCOUNTANT')
   @Post('cron/xu-ly-no-qua-han')
