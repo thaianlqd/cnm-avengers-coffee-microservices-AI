@@ -16,13 +16,13 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 # Import tu cac file service
-from cf_service import CollaborativeFilterModel
-from db import get_db_engine
-from forecast_service import DemandForecastModel
-from ai_persistence import ensure_ai_storage, log_inference, safe_schema_name, upsert_model_registry
+from src.ml.cf_service import CollaborativeFilterModel
+from src.common.db import get_db_engine
+from src.ml.forecast_service import DemandForecastModel
+from src.common.ai_persistence import ensure_ai_storage, log_inference, safe_schema_name, upsert_model_registry
 
 # Groq: primary AI (chat + STT), Gemini: fallback
-from groq_service import (
+from src.common.groq_service import (
     groq_is_available,
     groq_chat,
     groq_transcribe_audio,
@@ -58,6 +58,7 @@ _gemini_block_until: datetime = datetime.min
 # Khoi tao model toan cuc
 cf_model = CollaborativeFilterModel()
 fc_model = DemandForecastModel()
+forecast_model = fc_model
 
 CF_AUTO_RETRAIN_MINUTES = max(10, int(os.getenv("CF_AUTO_RETRAIN_MINUTES", "60")))
 CF_RETRAIN_QUEUE_COOLDOWN_SECONDS = max(30, int(os.getenv("CF_RETRAIN_QUEUE_COOLDOWN_SECONDS", "120")))
@@ -271,7 +272,7 @@ def _normalize_branch_filter(branch_code: Optional[str]) -> Optional[str]:
 
 def _to_price(value: Any) -> str:
     try:
-        return f"{float(value):,.0f}"
+        return f"{float(value):,.0f}".replace(",", ".")
     except Exception:
         return "0"
 
@@ -426,7 +427,8 @@ def _render_context_for_prompt(base_context: Dict[str, Any], recent_orders: List
         tag_text = f" [{' '.join(tags)}]" if tags else ""
         category = p.get("ten_danh_muc") or "Khac"
         price_val = float(p.get("gia_ban") or 0)
-        price_text = f"{price_val:,.0f} VND" if price_val > 0 else "Gia thay doi theo Size"
+        price_str = f"{price_val:,.0f}".replace(",", ".")
+        price_text = f"{price_str} VND" if price_val > 0 else "Gia thay doi theo Size"
         
         # Build variations text
         pid = p.get("ma_san_pham")
@@ -619,7 +621,7 @@ def _build_local_chat_fallback(content: str, user_name: str, base_context: Dict[
 
 
 def _call_gemini_chat(gemini_api_key: str, system_text: str, user_text: str, max_output_tokens: int = 650) -> Dict[str, Any]:
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={gemini_api_key}"
     payload = {
         "system_instruction": {"parts": [{"text": system_text}]},
         "contents": [{"role": "user", "parts": [{"text": user_text}]}],
@@ -694,7 +696,7 @@ def agent_chat(body: AgentChatRequest):
       - Gửi POST với session_id (user_id hoặc anon_id), message, history
       - Nếu nhận checkout_payload != null → hiển thị popup xác nhận đơn
     """
-    from agent_service import run_agent
+    from src.agents.agent_service import run_agent
 
     history = [{"role": m.role, "content": m.content} for m in (body.history or [])]
     result = run_agent(
@@ -713,16 +715,35 @@ def agent_chat(body: AgentChatRequest):
 @app.get("/ai/agent/cart/{session_id}")
 def get_agent_cart(session_id: str):
     """Lấy giỏ hàng hiện tại của session (dùng để debug hoặc hiển thị ở Frontend)."""
-    import cart_manager
+    from src.common import cart_manager
     return cart_manager.get_cart(session_id)
 
 
 @app.delete("/ai/agent/cart/{session_id}")
 def clear_agent_cart(session_id: str):
     """Xoá giỏ hàng của session (sau khi tạo đơn thành công)."""
-    import cart_manager
+    from src.common import cart_manager
     cart_manager.clear_cart(session_id)
     return {"status": "ok", "message": f"Đã xoá giỏ hàng cho session {session_id}"}
+
+
+class CheckoutRequest(BaseModel):
+    session_id: str
+    payment_method: str = "THANH_TOAN_KHI_NHAN_HANG"
+    delivery_type: str = "DELIVERY"
+
+
+@app.post("/ai/cart/checkout")
+def api_cart_checkout(body: CheckoutRequest):
+    """
+    Endpoint Single Source of Truth để chốt đơn hàng từ Frontend UI.
+    """
+    from src.common.checkout_service import finalize_checkout
+    return finalize_checkout(
+        session_id=body.session_id,
+        payment_method=body.payment_method,
+        delivery_type=body.delivery_type
+    )
 
 
 @app.get("/")
@@ -730,10 +751,19 @@ def read_root():
     return {"message": "Avengers AI Service is running!"}
 
 
+@app.post("/admin/reload-rag")
+def reload_rag():
+    """Reload the RAG knowledge base without restarting the container."""
+    from src.rag.rag_service import get_rag_service
+    rag = get_rag_service()
+    rag.load()
+    return {"status": "ok", "message": "RAG knowledge base reloaded successfully."}
+
+
 @app.get("/debug-branches")
 def debug_branches():
     from sqlalchemy import text
-    from db import _get_engine
+    from src.common.db import _get_engine
     import decimal
     with _get_engine().connect() as conn:
         res = conn.execute(text("SELECT ten_chi_nhanh, vi_do, kinh_do FROM identity.chi_nhanh WHERE vi_do IS NOT NULL AND kinh_do IS NOT NULL")).mappings().all()

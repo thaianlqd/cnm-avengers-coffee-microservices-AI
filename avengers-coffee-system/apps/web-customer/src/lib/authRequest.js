@@ -20,8 +20,8 @@ export function getAuthBaseUrls() {
   const apiUrl = normalizeBaseUrl(import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`);
   const fallbackUrls = [
     apiUrl,
-    'http://localhost:3001',
-    'http://localhost:3000',
+    'http://127.0.0.1:3001',
+    'http://127.0.0.1:3000',
   ];
 
   return uniqueUrls([
