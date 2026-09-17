@@ -228,36 +228,57 @@ export default function FranchisePage({ onNavigate }) {
     setWards(selected ? selected.wards : []);
   };
 
+  const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setResult(null);
     try {
-      // Geocode địa chỉ sang tọa độ
+      // Geocode địa chỉ sang tọa độ bằng VietMap
       let vi_do = null;
       let kinh_do = null;
-      let addressObj = null;
-      try {
-        const fullAddress = `${form.dia_chi_mat_bang}, ${form.phuong_xa}, ${form.thanh_pho}`;
-        const geocodeRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(fullAddress)}`);
-        const geocodeData = await geocodeRes.json();
-        if (geocodeData && geocodeData.length > 0) {
-          vi_do = parseFloat(geocodeData[0].lat);
-          kinh_do = parseFloat(geocodeData[0].lon);
-          addressObj = geocodeData[0].address || {};
+      const apiKey = import.meta.env.VITE_VIETMAP_API_KEY;
+      
+      if (apiKey) {
+        try {
+          const fullAddress = `${form.dia_chi_mat_bang}, ${form.phuong_xa}, ${form.thanh_pho}`;
+          const geocodeRes = await fetch(`https://maps.vietmap.vn/api/search/v3?api-version=1.1&apikey=${apiKey}&text=${encodeURIComponent(fullAddress)}`);
+          const geocodeData = await geocodeRes.json();
+          if (geocodeData && geocodeData.length > 0) {
+            vi_do = parseFloat(geocodeData[0].lat);
+            kinh_do = parseFloat(geocodeData[0].lng); // Vietmap dùng lng thay vì lon
+          }
+        } catch (geocodeErr) {
+          console.warn('Geocoding VietMap failed:', geocodeErr);
         }
-      } catch (geocodeErr) {
-        console.warn('Geocoding failed:', geocodeErr);
       }
 
       if (!vi_do || !kinh_do) {
-        // NOTE: Tạm thời bỏ qua lỗi geocoding, cho phép gửi không có tọa độ
-        console.warn('Geocoding thất bại, tiếp tục gửi hồ sơ không có tọa độ.');
+        console.warn('Geocoding thất bại, không tìm thấy tọa độ.');
+      } else {
+        // Validation 500m: Kiểm tra xem có kiosk nào gần trong vòng 500m không
+        const isTooClose = kiosks.some(k => {
+          if (k.vi_do && k.kinh_do) {
+            const dist = getDistanceFromLatLonInKm(vi_do, kinh_do, parseFloat(k.vi_do), parseFloat(k.kinh_do));
+            return dist < 0.5; // 0.5 km = 500m
+          }
+          return false;
+        });
+
+        if (isTooClose) {
+          throw new Error('Địa điểm này cách một chi nhánh hoặc Kiosk hiện tại dưới 500m. Vui lòng chọn vị trí khác để đảm bảo đặc quyền khu vực!');
+        }
       }
-
-      // NOTE: Tạm thời tắt kiểm tra tính nhất quán địa lý
-      // if (addressObj && form.phuong_xa) { ... }
-
 
       const submitData = { ...form, vi_do, kinh_do };
       const response = await apiClient.post(`/franchise/dang-ky`, submitData);
@@ -789,8 +810,23 @@ export default function FranchisePage({ onNavigate }) {
             </div>
           </div>
         </div>
-      </section>
 
+        {/* Phần đánh giá Kiosk & Sản phẩm */}
+        {selectedKiosk && (
+          <div style={{ marginTop: 32, padding: 24, background: '#ffffff', borderRadius: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
+            <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', margin: '0 0 16px' }}>Đánh giá Kiosk: {selectedKiosk.ten_kiosk}</h3>
+            <p style={{ color: '#64748b', fontSize: 14, marginBottom: 20 }}>Đánh giá chi nhánh và các sản phẩm nhượng quyền tại kiosk này (Tính năng đang được cập nhật giao diện hiển thị chi tiết).</p>
+            <div style={{ display: 'flex', gap: 16 }}>
+              <button style={{ padding: '10px 20px', background: '#8f1b23', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>
+                Xem đánh giá cửa hàng
+              </button>
+              <button style={{ padding: '10px 20px', background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>
+                Xem đánh giá sản phẩm tại đây
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
       {/* ── BIỂU MẪU ĐĂNG KÝ ───────────────────────────────── */}
       <section id="dang-ky" style={{ padding: '72px 24px', background: '#f8fafc' }}>
         <div style={{ maxWidth: 740, margin: '0 auto' }}>

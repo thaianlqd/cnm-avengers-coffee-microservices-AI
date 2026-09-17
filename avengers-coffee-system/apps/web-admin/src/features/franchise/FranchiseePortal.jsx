@@ -389,7 +389,6 @@ export function FranchiseePortal({ session, onLogout }) {
   const [forceCloseReason, setForceCloseReason] = useState('Bàn giao ca / Ca trước quên chốt ca')
   const [shiftActionSubmitting, setShiftActionSubmitting] = useState(false)
 
-  // Menu & POS states
   const [menuItems, setMenuItems] = useState([])
   const [menuLoading, setMenuLoading] = useState(false)
   const [menuSearch, setMenuSearch] = useState('')
@@ -405,6 +404,7 @@ export function FranchiseePortal({ session, onLogout }) {
   const [posCashInput, setPosCashInput] = useState('')
   const [posViewMode, setPosViewMode] = useState('grid')
   const [posPage, setPosPage] = useState(1)
+  const [kioskPrices, setKioskPrices] = useState([])
 
   // POS Orders state & Refund/Void states (Thành An)
   const [posOrders, setPosOrders] = useState([])
@@ -1184,7 +1184,22 @@ export function FranchiseePortal({ session, onLogout }) {
     return { name: 'Gói Tiêu Chuẩn (Cố Định)', short: 'Tiêu Chuẩn', bg: '#eff6ff', color: '#1e40af', border: '#bfdbfe' }
   }, [activeKiosk])
 
-  const packageAllowedMenu = availableMenu // ALIAS for POS block compatibility
+  useEffect(() => {
+    if (!activeKioskId) return;
+    const kiosk = kiosks.find(k => k.id === activeKioskId);
+    if (!kiosk?.ma_kiosk) return;
+    fetch(`${API_BASE_URL}/orders/kiosk-prices?ma_kiosk=${kiosk.ma_kiosk}`)
+      .then(r => r.json())
+      .then(data => setKioskPrices(Array.isArray(data?.items) ? data.items : []))
+      .catch(e => console.error('Lỗi tải giá kiosk:', e))
+  }, [activeKioskId, kiosks])
+
+  const packageAllowedMenu = useMemo(() => {
+    return availableMenu.map(item => {
+      const kp = kioskPrices.find(p => Number(p.ma_san_pham) === Number(item.ma_san_pham));
+      return kp ? { ...item, gia_ban: kp.gia_kiosk } : item;
+    });
+  }, [availableMenu, kioskPrices])
 
   const filteredProducts = useMemo(() => {
     let list = packageAllowedMenu
