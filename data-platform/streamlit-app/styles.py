@@ -5,445 +5,475 @@ import plotly.graph_objects as go
 def inject_styles():
     st.markdown("""
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+  /* ─── Google Fonts ─────────────────────────────── */
+  @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap');
 
+  /* ─── Design Tokens (Be-inspired) ─────────────── */
+  :root {
+    --bg-page:       #F7F8FA;
+    --bg-surface:    #FFFFFF;
+    --bg-elevated:   #FFFFFF;
+    --bg-subtle:     #F0F2F5;
+    --border:        #E4E6EB;
+    --border-hover:  #C8CACD;
+    --text-primary:  #0D0D0D;
+    --text-secondary:#5A5E6B;
+    --text-muted:    #9095A1;
+    --accent:        #B91C1C;
+    --accent-light:  #FEF2F2;
+    --accent-hover:  #991B1B;
+    --green:         #00B37D;
+    --green-light:   #E6F9F4;
+    --amber:         #F59E0B;
+    --amber-light:   #FFFBEB;
+    --blue:          #2563EB;
+    --blue-light:    #EFF6FF;
+    --radius-sm:     8px;
+    --radius-md:     12px;
+    --radius-lg:     16px;
+    --shadow-sm:     0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md:     0 4px 16px rgba(0,0,0,0.08);
+    --shadow-lg:     0 8px 32px rgba(0,0,0,0.12);
+  }
+
+  /* ─── Base Reset ───────────────────────────────── */
   html, body, [class*="css"] {
-      font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    -webkit-font-smoothing: antialiased !important;
   }
 
-  /* ══════════════════════════════════════════════
-     DARK MODE ENTERPRISE — Toàn cục
-     ══════════════════════════════════════════════ */
+  /* ─── App Background ───────────────────────────── */
   [data-testid="stAppViewContainer"] {
-      background: #0D0D1A !important;
+    background: var(--bg-page) !important;
   }
-  [data-testid="stMain"] { background: transparent !important; }
+  [data-testid="stMain"] {
+    background: transparent !important;
+  }
+  .main .block-container {
+    padding-top: 1.5rem !important;
+    padding-bottom: 2rem !important;
+    max-width: 1200px !important;
+  }
 
-  /* ── Sidebar ── */
+  /* ─── Sidebar ──────────────────────────────────── */
   [data-testid="stSidebar"] {
-      background: #10101F !important;
-      border-right: 1px solid #1E1E3A !important;
+    background: var(--bg-surface) !important;
+    border-right: 1px solid var(--border) !important;
+    box-shadow: var(--shadow-sm) !important;
   }
   [data-testid="stSidebar"] * {
-      color: #C0C0D8 !important;
-      font-family: 'Inter', sans-serif !important;
+    color: var(--text-secondary) !important;
+    font-family: 'Be Vietnam Pro', sans-serif !important;
   }
-  [data-testid="stSidebarNav"] {
-      display: none !important;
-  }
-  [data-testid="stSidebar"] h1,
-  [data-testid="stSidebar"] h2,
-  [data-testid="stSidebar"] h3,
+  [data-testid="stSidebarNav"] { display: none !important; }
   [data-testid="stSidebar"] h4 {
-      color: #FFFFFF !important;
+    color: var(--text-muted) !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    letter-spacing: 1.5px !important;
+    text-transform: uppercase !important;
   }
 
-  /* ── Metric Cards ── */
-  [data-testid="metric-container"] {
-      background: #1A1A2E !important;
-      border: 1px solid #2A2A4A !important;
-      border-radius: 12px !important;
-      padding: 20px 24px !important;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-      position: relative !important;
-      overflow: hidden !important;
+  /* Sidebar page links */
+  [data-testid="stPageLink"] {
+    border-radius: var(--radius-sm) !important;
+    transition: all 0.15s ease !important;
+    margin-bottom: 2px !important;
   }
-  [data-testid="metric-container"]::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #FF4757, #FFA502, #2ED573);
-      border-radius: 12px 12px 0 0;
+  [data-testid="stPageLink"]:hover {
+    background: var(--bg-subtle) !important;
+  }
+  [data-testid="stPageLink"][aria-current="page"] {
+    background: var(--accent-light) !important;
+    border-left: 3px solid var(--accent) !important;
+  }
+  [data-testid="stPageLink"][aria-current="page"] * {
+    color: var(--accent) !important;
+    font-weight: 700 !important;
+  }
+
+  /* ─── Metric Cards ─────────────────────────────── */
+  [data-testid="metric-container"] {
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-md) !important;
+    padding: 20px 22px !important;
+    box-shadow: var(--shadow-sm) !important;
+    transition: box-shadow 0.2s ease, transform 0.2s ease !important;
   }
   [data-testid="metric-container"]:hover {
-      transform: translateY(-3px) !important;
-      box-shadow: 0 12px 28px rgba(0,0,0,0.5) !important;
-      border-color: #3A3A5A !important;
+    box-shadow: var(--shadow-md) !important;
+    transform: translateY(-2px) !important;
+  }
+  [data-testid="metric-container"]::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent) 0%, #FF6B35 100%);
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
   }
   [data-testid="stMetricLabel"] {
-      color: #7C7CA0 !important;
-      font-size: 11px !important;
-      font-weight: 700 !important;
-      text-transform: uppercase !important;
-      letter-spacing: 1.2px !important;
+    color: var(--text-muted) !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
   }
   [data-testid="stMetricValue"] {
-      color: #FFFFFF !important;
-      font-size: 28px !important;
-      font-weight: 800 !important;
-      letter-spacing: -0.5px !important;
+    color: var(--text-primary) !important;
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.5px !important;
   }
-  [data-testid="stMetricDelta"] {
-      font-size: 12px !important;
-      font-weight: 700 !important;
-  }
+  [data-testid="stMetricDelta"] { font-size: 12px !important; font-weight: 600 !important; }
 
-  /* ── Segmented Control / Pill Tabs ── */
+  /* ─── Tabs ──────────────────────────────────────── */
   [data-baseweb="tab-list"] {
-      background: #10101F !important;
-      border-radius: 12px !important;
-      padding: 5px !important;
-      gap: 4px !important;
-      border: 1px solid #1E1E3A !important;
+    background: var(--bg-subtle) !important;
+    border-radius: var(--radius-md) !important;
+    padding: 4px !important;
+    gap: 2px !important;
+    border: 1px solid var(--border) !important;
   }
   [data-baseweb="tab"] {
-      color: #7C7CA0 !important;
-      font-weight: 600 !important;
-      font-size: 13px !important;
-      border-radius: 8px !important;
-      transition: all 0.2s ease !important;
-      padding: 9px 16px !important;
-      border: 1px solid transparent !important;
+    color: var(--text-secondary) !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    border-radius: var(--radius-sm) !important;
+    transition: all 0.15s ease !important;
+    padding: 8px 18px !important;
+    border: none !important;
+    background: transparent !important;
   }
   [data-baseweb="tab"]:hover {
-      color: #C0C0D8 !important;
-      background: #1A1A2E !important;
+    background: rgba(0,0,0,0.04) !important;
+    color: var(--text-primary) !important;
   }
   [aria-selected="true"] {
-      background: linear-gradient(135deg, #FF4757 0%, #C0392B 100%) !important;
-      color: #FFFFFF !important;
-      border-radius: 8px !important;
-      box-shadow: 0 4px 14px rgba(255,71,87,0.35) !important;
-      border: 1px solid rgba(255,71,87,0.5) !important;
+    background: var(--bg-surface) !important;
+    color: var(--accent) !important;
+    box-shadow: var(--shadow-sm) !important;
+    border-radius: var(--radius-sm) !important;
   }
   [aria-selected="true"] * {
-      color: #FFFFFF !important;
-      font-weight: 800 !important;
+    color: var(--accent) !important;
+    font-weight: 800 !important;
+  }
+  [data-testid="stTabContent"] {
+    padding-top: 20px !important;
   }
 
-  /* ── Action Buttons ── */
+  /* ─── Buttons ───────────────────────────────────── */
   .stButton > button {
-      border-radius: 10px !important;
-      font-weight: 700 !important;
-      font-size: 13px !important;
-      padding: 9px 20px !important;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-      font-family: 'Inter', sans-serif !important;
-      border: 1px solid #2A2A4A !important;
-      background: #1A1A2E !important;
-      color: #C0C0D8 !important;
+    border-radius: var(--radius-sm) !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    padding: 9px 18px !important;
+    transition: all 0.15s ease !important;
+    font-family: 'Be Vietnam Pro', sans-serif !important;
+    border: 1px solid var(--border) !important;
+    background: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+    box-shadow: var(--shadow-sm) !important;
   }
   .stButton > button:hover {
-      border-color: #FF4757 !important;
-      color: #FFFFFF !important;
-      transform: translateY(-1px) !important;
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+    box-shadow: 0 2px 8px rgba(232,0,61,0.15) !important;
+    transform: translateY(-1px) !important;
   }
   .stButton > button[kind="primary"] {
-      background: linear-gradient(135deg, #FF4757 0%, #C0392B 100%) !important;
-      color: #FFFFFF !important;
-      border: none !important;
-      box-shadow: 0 4px 14px rgba(255,71,87,0.3) !important;
+    background: var(--accent) !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(232,0,61,0.25) !important;
   }
   .stButton > button[kind="primary"]:hover {
-      transform: translateY(-2px) !important;
-      box-shadow: 0 6px 20px rgba(255,71,87,0.45) !important;
+    background: var(--accent-hover) !important;
+    box-shadow: 0 6px 20px rgba(232,0,61,0.35) !important;
+    transform: translateY(-1px) !important;
   }
 
-  /* ── Typography & Headings ── */
-  h1 { color: #FFFFFF !important; font-weight: 800 !important; font-size: 30px !important; letter-spacing: -0.5px; }
-  h2 { color: #E0E0F0 !important; font-size: 22px !important; font-weight: 800 !important; margin-bottom: 16px !important; }
-  h3 { color: #C0C0D8 !important; font-size: 18px !important; font-weight: 700 !important; }
-  h4 { color: #A0A0C0 !important; font-weight: 600 !important; }
-  p, li, span { color: #A0A0C0; font-size: 15px; }
-
-  /* ── Status Pills & Badges ── */
-  .status-ok   { background: rgba(46,213,115,0.15); color:#2ED573; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:6px; border:1px solid rgba(46,213,115,0.35); }
-  .status-warn { background: rgba(255,165,2,0.15); color:#FFA502; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:6px; border:1px solid rgba(255,165,2,0.35); }
-  .status-err  { background: rgba(255,71,87,0.15); color:#FF4757; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:6px; border:1px solid rgba(255,71,87,0.35); }
-
-  /* ── DataFrames ── */
-  [data-testid="stDataFrame"] {
-      border-radius: 12px !important;
-      overflow: hidden !important;
-      border: 1px solid #2A2A4A !important;
-      background: #1A1A2E !important;
-  }
-
-  /* ── Expanders & Cards ── */
-  [data-testid="stExpander"] {
-      background: #1A1A2E;
-      border: 1px solid #2A2A4A;
-      border-radius: 12px;
-  }
-
-  /* ── Inputs & Selects ── */
+  /* ─── Inputs ────────────────────────────────────── */
   [data-testid="stSelectbox"] > div > div,
   [data-testid="stTextInput"] > div > div,
-  [data-testid="stMultiSelect"] > div > div {
-      background: #1A1A2E !important;
-      border: 1px solid #2A2A4A !important;
-      border-radius: 10px !important;
-      color: #C0C0D8 !important;
+  [data-testid="stMultiSelect"] > div > div,
+  [data-testid="stTextArea"] > div > div {
+    background: var(--bg-surface) !important;
+    border: 1.5px solid var(--border) !important;
+    border-radius: var(--radius-sm) !important;
+    color: var(--text-primary) !important;
+    box-shadow: var(--shadow-sm) !important;
+    transition: border-color 0.15s ease !important;
   }
-  .stTextInput input, .stSelectbox select {
-      color: #C0C0D8 !important;
-      background: #1A1A2E !important;
+  [data-testid="stSelectbox"] > div > div:focus-within,
+  [data-testid="stTextInput"] > div > div:focus-within,
+  [data-testid="stMultiSelect"] > div > div:focus-within,
+  [data-testid="stTextArea"] > div > div:focus-within {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px rgba(232,0,61,0.08) !important;
+  }
+  .stTextInput input, .stSelectbox select, textarea {
+    color: var(--text-primary) !important;
+    background: var(--bg-surface) !important;
+    font-family: 'Be Vietnam Pro', sans-serif !important;
+  }
+  label, [data-testid="stWidgetLabel"] {
+    color: var(--text-secondary) !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
   }
 
-  /* ── Section Cards (Legacy) ── */
-  .section-card {
-      background: #1A1A2E;
-      border: 1px solid #2A2A4A;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 16px;
+  /* ─── DataFrames ─────────────────────────────────── */
+  [data-testid="stDataFrame"] {
+    border-radius: var(--radius-md) !important;
+    overflow: hidden !important;
+    border: 1px solid var(--border) !important;
+    background: var(--bg-surface) !important;
+    box-shadow: var(--shadow-sm) !important;
   }
+
+  /* ─── Expanders ──────────────────────────────────── */
+  [data-testid="stExpander"] {
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-md) !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+  [data-testid="stExpander"] summary {
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+  }
+
+  /* ─── Alerts ─────────────────────────────────────── */
+  [data-testid="stAlert"] {
+    border-radius: var(--radius-md) !important;
+    border-left-width: 4px !important;
+    font-size: 13px !important;
+  }
+
+  /* ─── Typography ─────────────────────────────────── */
+  h1 { color: var(--text-primary) !important; font-weight: 900 !important; font-size: 30px !important; letter-spacing: -0.8px !important; }
+  h2 { color: var(--text-primary) !important; font-size: 22px !important; font-weight: 800 !important; margin-bottom: 12px !important; letter-spacing: -0.3px !important; }
+  h3 { color: var(--text-primary) !important; font-size: 17px !important; font-weight: 700 !important; }
+  h4 { color: var(--text-secondary) !important; font-weight: 600 !important; font-size: 14px !important; }
+  p, li, span { color: var(--text-secondary) !important; font-size: 14px !important; }
+
+  /* ─── Section Divider ─────────────────────────────── */
+  hr {
+    border: none !important;
+    border-top: 1px solid var(--border) !important;
+    margin: 20px 0 !important;
+  }
+
+  /* ─── Custom Components ───────────────────────────── */
+
+  /* Card component */
+  .be-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px 22px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+  .be-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-hover);
+  }
+  .be-card-title {
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    margin-bottom: 8px;
+  }
+  .be-metric {
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+  .be-sub {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: 5px;
+  }
+
+  /* Section header */
+  .be-section-header {
+    color: var(--text-primary);
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+    margin-bottom: 4px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .be-section-sub {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+
+  /* Badge pills */
+  .badge-red    { background: var(--accent-light); color: var(--accent); padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; border: 1px solid rgba(232,0,61,0.2); white-space: nowrap; }
+  .badge-green  { background: var(--green-light);  color: var(--green);  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; border: 1px solid rgba(0,179,125,0.2); white-space: nowrap; }
+  .badge-amber  { background: var(--amber-light);  color: var(--amber);  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; border: 1px solid rgba(245,158,11,0.2); white-space: nowrap; }
+  .badge-blue   { background: var(--blue-light);   color: var(--blue);   padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; border: 1px solid rgba(37,99,235,0.2); white-space: nowrap; }
+
+  /* Status pills */
+  .status-ok   { background: var(--green-light); color: var(--green); padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(0,179,125,0.2); }
+  .status-warn { background: var(--amber-light); color: var(--amber); padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(245,158,11,0.2); }
+  .status-err  { background: var(--accent-light);color: var(--accent);padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(232,0,61,0.2); }
+
+  /* Progress bars */
+  .pb-wrap     { margin-bottom: 12px; }
+  .pb-label    { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; color: var(--text-secondary); font-weight: 600; }
+  .pb-track    { background: var(--bg-subtle); border-radius: 6px; height: 7px; overflow: hidden; border: 1px solid var(--border); }
+  .pb-fill     { height: 100%; border-radius: 6px; transition: width 0.4s cubic-bezier(0.4,0,0.2,1); }
+
+  /* Alert banner */
+  .alert-banner {
+    background: var(--accent-light);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 12px 16px;
+    margin: 10px 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+  .alert-banner b { color: var(--accent); }
+
+  /* Sidebar pills */
+  .sidebar-status-pill {
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    margin: 8px 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+  }
+  .sidebar-status-pill.success { background: var(--green-light); border-left: 3px solid var(--green); }
+  .sidebar-status-pill.info    { background: var(--blue-light);  border-left: 3px solid var(--blue);  }
+  .sidebar-status-pill.warning { background: var(--amber-light); border-left: 3px solid var(--amber); }
+  .sidebar-status-pill.error   { background: var(--accent-light);border-left: 3px solid var(--accent);}
+
+  /* Section title (legacy compat) */
   .section-title {
-      color: #1E293B;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 800;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
+  .section-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .dk-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 18px 20px; margin-bottom: 12px; transition: border-color 0.2s ease, box-shadow 0.2s ease; box-shadow: var(--shadow-sm); }
+  .dk-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-md); }
+  .dk-card-title { color: var(--text-muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; margin-bottom: 6px; }
+  .dk-metric { font-size: 32px; font-weight: 900; letter-spacing: -1px; color: var(--text-primary); line-height: 1; }
+  .dk-sub { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
+  .dk-section-header { color: var(--text-primary); font-size: 17px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .dk-section-sub { color: var(--text-muted); font-size: 12px; margin-bottom: 14px; }
+  .neon-red    { color: var(--accent); font-weight: 700; }
+  .neon-yellow { color: var(--amber); font-weight: 700; }
+  .neon-green  { color: var(--green); font-weight: 700; }
+  .neon-blue   { color: var(--blue); font-weight: 700; }
 
+  /* ─── Hide Streamlit chrome ───────────────────────── */
+  [data-testid="stHeader"] {
+    background: transparent !important;
+    border-bottom: none !important;
+    display: none !important;
+  }
   #MainMenu { visibility: hidden; }
   footer { visibility: hidden; }
   [data-testid="stToolbar"] { display: none; }
-
-  /* ══════════════════════════════════════════════
-     DARK MODE — Enterprise Tab Components
-     dk-card, dk-section-header, pb-*, badge-*, neon-*, alert-banner
-     ══════════════════════════════════════════════ */
-
-  /* ── Dark Cards ── */
-  .dk-card {
-      background: #1A1A2E;
-      border: 1px solid #2A2A4A;
-      border-radius: 14px;
-      padding: 18px 20px;
-      margin-bottom: 12px;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  }
-  .dk-card:hover {
-      border-color: #3A3A5A;
-      box-shadow: 0 6px 24px rgba(0,0,0,0.35);
-  }
-  .dk-card-title {
-      color: #7C7CA0;
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.4px;
-      margin-bottom: 6px;
-  }
-  .dk-metric {
-      font-size: 36px;
-      font-weight: 900;
-      letter-spacing: -1px;
-      line-height: 1;
-  }
-  .dk-sub {
-      color: #7C7CA0;
-      font-size: 12px;
-      margin-top: 4px;
-  }
-
-  /* ── Section Headers ── */
-  .dk-section-header {
-      color: #E0E0F0;
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing: -0.3px;
-      margin-bottom: 6px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #1E1E3A;
-  }
-  .dk-section-sub {
-      color: #7C7CA0;
-      font-size: 12px;
-      margin-bottom: 14px;
-  }
-
-  /* ── Progress Bars (pb-*) ── */
-  .pb-wrap {
-      margin-bottom: 14px;
-  }
-  .pb-label {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 5px;
-      font-size: 13px;
-      color: #C0C0D8;
-      font-weight: 600;
-  }
-  .pb-track {
-      background: #12122A;
-      border-radius: 6px;
-      height: 8px;
-      overflow: hidden;
-      border: 1px solid #1E1E3A;
-  }
-  .pb-fill {
-      height: 100%;
-      border-radius: 6px;
-      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* ── Badges ── */
-  .badge-red {
-      background: rgba(255,71,87,0.15);
-      color: #FF4757;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-      border: 1px solid rgba(255,71,87,0.35);
-      white-space: nowrap;
-  }
-  .badge-yellow {
-      background: rgba(255,165,2,0.15);
-      color: #FFA502;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-      border: 1px solid rgba(255,165,2,0.35);
-      white-space: nowrap;
-  }
-  .badge-green {
-      background: rgba(46,213,115,0.15);
-      color: #2ED573;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-      border: 1px solid rgba(46,213,115,0.35);
-      white-space: nowrap;
-  }
-
-  /* ── Neon Text Helpers ── */
-  .neon-red    { color: #FF4757; font-weight: 700; }
-  .neon-yellow { color: #FFA502; font-weight: 700; }
-  .neon-green  { color: #2ED573; font-weight: 700; }
-  .neon-blue   { color: #1E90FF; font-weight: 700; }
-
-  /* ── Alert Banner ── */
-  .alert-banner {
-      background: rgba(255,71,87,0.08);
-      border-left: 3px solid #FF4757;
-      border-radius: 0 10px 10px 0;
-      padding: 12px 16px;
-      margin: 10px 0;
-      font-size: 13px;
-      color: #C0C0D8;
-      line-height: 1.6;
-  }
-  .alert-banner b { color: #FF4757; }
-  .alert-banner code {
-      background: rgba(255,255,255,0.08);
-      padding: 1px 6px;
-      border-radius: 4px;
-      font-size: 12px;
-      color: #E0E0F0;
-  }
-
-  /* Custom Sidebar Status Pills */
-  .sidebar-status-pill {
-      border-radius: 10px;
-      padding: 12px 16px;
-      margin: 10px 0;
-      font-size: 13px;
-      color: #C0C0D8;
-      line-height: 1.5;
-      font-family: 'Inter', sans-serif;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-  }
-  .sidebar-status-pill.success {
-      background: rgba(46,213,115,0.08);
-      border-left: 3px solid #2ED573;
-  }
-  .sidebar-status-pill.info {
-      background: rgba(30,144,255,0.08);
-      border-left: 3px solid #1E90FF;
-  }
-  .sidebar-status-pill.warning {
-      background: rgba(255,165,2,0.08);
-      border-left: 3px solid #FFA502;
-  }
-  .sidebar-status-pill.error {
-      background: rgba(255,71,87,0.08);
-      border-left: 3px solid #FF4757;
-  }
+  [data-testid="stDecoration"] { display: none; }
 </style>
 """, unsafe_allow_html=True)
 
 
 def init_plotly_template():
-    """Tạo Plotly template 'avengers_dark' và set làm mặc định"""
-    dark_template = go.layout.Template()
-    
-    # Nền trong suốt
-    dark_template.layout.paper_bgcolor = "rgba(0,0,0,0)"
-    dark_template.layout.plot_bgcolor = "rgba(0,0,0,0)"
-    
-    # Font chữ
-    dark_template.layout.font.color = "#C0C0D8"
-    dark_template.layout.font.family = "Inter, sans-serif"
-    
-    # Lưới và trục
+    """Plotly template: white/light matching Be-style design"""
+    t = go.layout.Template()
+
+    t.layout.paper_bgcolor = "rgba(0,0,0,0)"
+    t.layout.plot_bgcolor  = "#F7F8FA"
+
+    t.layout.font = dict(color="#5A5E6B", family="Be Vietnam Pro, Inter, sans-serif", size=12)
+
     axis_style = dict(
-        gridcolor="#2A2A3E",
-        zerolinecolor="#3A3A5A",
-        linecolor="#2A2A3E",
-        tickfont=dict(color="#7C7CA0", size=11)
+        gridcolor="#E4E6EB",
+        zerolinecolor="#C8CACD",
+        linecolor="#E4E6EB",
+        tickfont=dict(color="#9095A1", size=11),
+        showgrid=True,
     )
-    dark_template.layout.xaxis = axis_style
-    dark_template.layout.yaxis = axis_style
-    
-    # Legend
-    dark_template.layout.legend = dict(
-        title=dict(text=""),
+    t.layout.xaxis = axis_style
+    t.layout.yaxis = axis_style
+
+    t.layout.legend = dict(
         orientation="h",
-        yanchor="bottom",
-        y=1.02,
-        xanchor="right",
-        x=1,
-        font=dict(color="#C0C0D8", size=12),
-        bgcolor="rgba(26,26,46,0.9)",
-        bordercolor="#2A2A4A",
-        borderwidth=1
+        yanchor="bottom", y=1.02,
+        xanchor="right", x=1,
+        font=dict(color="#5A5E6B", size=11),
+        bgcolor="rgba(255,255,255,0.9)",
+        bordercolor="#E4E6EB",
+        borderwidth=1,
     )
-    
-    # Colorway mặc định (cho các biểu đồ)
-    dark_template.layout.colorway = ["#FF4757", "#2ED573", "#1E90FF", "#FFA502", "#8B5CF6", "#EC4899"]
-    
-    # Set default
-    pio.templates["avengers_dark"] = dark_template
-    pio.templates.default = "avengers_dark"
+
+    # Be-inspired palette: accent red + supporting colors
+    t.layout.colorway = [
+        "#E8003D", "#2563EB", "#00B37D", "#F59E0B",
+        "#8B5CF6", "#EC4899", "#06B6D4", "#64748B",
+    ]
+    t.layout.margin = dict(l=16, r=16, t=48, b=16)
+
+    pio.templates["be_light"] = t
+    pio.templates.default = "be_light"
 
 
 def render_status_badge(text, status_type="info"):
-    """
-    Render custom HTML badge thay thế cho st.info / st.success.
-    status_type: 'success', 'info', 'warning', 'error'
-    """
-    icons = {
-        "success": "✅",
-        "info": "ℹ️",
-        "warning": "⚠️",
-        "error": "❌"
-    }
-    icon = icons.get(status_type, "ℹ️")
+    icons = {"success": "●", "info": "●", "warning": "●", "error": "●"}
+    icon = icons.get(status_type, "●")
     st.markdown(f"""
     <div class="sidebar-status-pill {status_type}">
-      <span style="font-size:16px;">{icon}</span>
-      <div>{text}</div>
+      <span style="font-size:10px;">{icon}</span>
+      <div style="font-size:12px;">{text}</div>
     </div>
     """, unsafe_allow_html=True)
 
+
 def apply_layout(fig, height=360, **extra):
-    """Wrapper function to replace old apply_layout. Uses global template."""
     kw = {}
     if height:
         kw["height"] = height
     kw.update(extra)
     fig.update_layout(**kw)
     return fig
+
 
 PLOTLY_LAYOUT = {}

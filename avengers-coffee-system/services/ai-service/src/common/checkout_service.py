@@ -11,17 +11,26 @@ logger = logging.getLogger(__name__)
 def finalize_checkout(
     session_id: str, 
     payment_method: str = "THANH_TOAN_KHI_NHAN_HANG", 
-    delivery_type: str = "DELIVERY"
+    delivery_type: str = "DELIVERY",
+    delivery_address: str = None,
 ) -> Dict[str, Any]:
     """
     Xử lý chung luồng chốt đơn (được gọi từ cả Chat Tool và UI Endpoint).
     Đảm bảo Idempotency: khóa giỏ hàng trong lúc xử lý, và xóa giỏ nếu tạo đơn thành công.
     """
-    valid_uid = _require_valid_session(session_id)
+    customer_session_id = str(session_id).split(":conversation:", 1)[0]
+    cart_session_id = session_id
+    valid_uid = _require_valid_session(customer_session_id)
     if not valid_uid:
         return {"status": "error", "message": "Bạn chưa đăng nhập. Vui lòng đăng nhập để đặt hàng."}
 
-    cart = cart_manager.get_cart(session_id)
+    supported_payments = {"THANH_TOAN_KHI_NHAN_HANG", "VNPAY", "NGAN_HANG_QR", "VI_DIEN_TU"}
+    if payment_method not in supported_payments:
+        return {"status": "unsupported_payment", "message": "Phương thức thanh toán không hợp lệ."}
+    if delivery_type not in {"GIAO_TAN_NOI", "MANG_DI", "TAI_CHO"}:
+        return {"status": "invalid_delivery_type", "message": "Hình thức nhận hàng không hợp lệ. Vui lòng xác nhận lại."}
+
+    cart = cart_manager.get_cart(cart_session_id)
     
     # 1. Kiểm tra giỏ hàng rỗng
     if cart.get("is_empty"):
@@ -39,19 +48,7 @@ def finalize_checkout(
         return {"status": "processing", "message": "Đơn hàng của bạn đang được xử lý, vui lòng đợi trong giây lát..."}
 
     try:
-        cart_manager.set_is_checking_out(session_id, True)
-
-        # Chuyển đổi định dạng item để gửi qua Order Service
-        items = []
-        for i in cart["items"]:
-            note_str = ", ".join(filter(None, [f"Size {i['size']}" if i.get("size") else "", i.get("note")]))
-            items.append({
-                "ma_san_pham": int(i["product_id"]) if str(i["product_id"]).isdigit() else 0,
-                "ten_san_pham": i["product_name"],
-                "so_luong": i["quantity"],
-                "gia_ban": i["unit_price"],
-                "ghi_chu": note_str
-            })
+        cart_manager.set_is_checking_out(cart_session_id, True)
 
         order_service_url = os.getenv("ORDER_SERVICE_URL", "http://order-service:3005")
         token = _get_service_jwt(valid_uid)
@@ -60,52 +57,83 @@ def finalize_checkout(
         if delivery_type in ["MANG_DI", "TAI_CHO"]:
             dia_chi = "Nhận tại: " + cart.get("branch_name", "Cửa hàng")
         else:
-            dia_chi = "Giao đến địa chỉ mặc định của khách"
-            try:
-                engine = _get_engine()
-                identity_schema = os.getenv("IDENTITY_SCHEMA", "identity")
-                with engine.connect() as conn:
-                    addr = conn.execute(text(
-                        f"SELECT dia_chi_day_du FROM {identity_schema}.dia_chi_giao_hang WHERE ma_nguoi_dung = :uid ORDER BY mac_dinh DESC LIMIT 1"
-                    ), {"uid": valid_uid}).fetchone()
-                    if addr and addr[0]:
-                        dia_chi = addr[0]
-            except Exception as e:
-                logger.warning("[CheckoutService] Error getting user address: %s", e)
+            dia_chi = str(delivery_address or "").strip()
+            if not dia_chi:
+                cart_manager.set_is_checking_out(cart_session_id, False)
+                return {"status": "missing_delivery_address", "message": "Thiếu địa chỉ giao hàng đã được khách xác nhận."}
+
+        canonical_delivery_type = {
+            "GIAO_TAN_NOI": "GIAO_TAN_NOI",
+            "MANG_DI": "LAY_TAI_QUAN",
+            "TAI_CHO": "DUNG_TAI_CHO",
+        }[delivery_type]
+
+        prefs = cart_manager.get_checkout_prefs(cart_session_id)
+        voucher_code = str(prefs.get("voucher_code") or "").strip().upper() or None
+        discount_amount = float(prefs.get("discount_amount") or 0)
 
         payload = {
-            "ma_nguoi_dung": valid_uid,
             "phuong_thuc_thanh_toan": payment_method,
-            "loai_don_hang": delivery_type,
-            "chi_tiet_don_hang": items,
+            "delivery_mode": canonical_delivery_type,
             "ghi_chu": "AI Chat Order",
-            "co_so_ma": cart.get("branch_id"),
+            "branch_code": cart.get("branch_id"),
             "dia_chi_giao_hang": dia_chi,
+            "session_id": customer_session_id,
         }
+        if voucher_code:
+            payload["ma_voucher"] = voucher_code
 
-        # Gọi qua Order Service
+        # Use the same checkout application service as the customer web. It
+        # reads the authoritative cart, revalidates voucher and calculates the
+        # order total instead of trusting prices supplied by the AI.
         logger.info("[CheckoutService] Sending order for session %s to %s", session_id, order_service_url)
-        resp = requests.post(f"{order_service_url}/orders", headers=headers, json=payload, timeout=10)
+        resp = requests.post(
+            f"{order_service_url}/customers/{valid_uid}/thanh-toan/khoi-tao",
+            headers=headers,
+            json=payload,
+            timeout=15,
+        )
         
         if resp.status_code in [200, 201]:
             resp_data = resp.json()
-            order_id = resp_data.get("don_hang", {}).get("ma_don_hang") or resp_data.get("ma_don_hang", "UNKNOWN")
+            order_id = (
+                resp_data.get("don_hang", {}).get("ma_don_hang")
+                or resp_data.get("ma_don_hang")
+            )
+            if not order_id:
+                # A 2xx response without a confirmed order identifier is ambiguous.
+                # Keep the cart so the customer can inspect/reconcile it safely.
+                cart_manager.set_is_checking_out(cart_session_id, False)
+                logger.error("[CheckoutService] Unexpected order response: %s", resp_data)
+                return {
+                    "status": "order_status_unknown",
+                    "message": "Hệ thống chưa xác nhận được mã đơn hàng. Giỏ hàng vẫn được giữ lại; vui lòng kiểm tra lịch sử đơn trước khi thử lại.",
+                }
             
             # Thành công -> Xóa giỏ hàng và gán last_order_id
-            cart_manager.clear_cart(session_id, order_id=str(order_id))
+            cart_manager.clear_cart(cart_session_id, order_id=str(order_id))
             
             return {
                 "status": "success",
                 "message": f"Đặt hàng thành công! Đơn hàng của bạn đang được chuẩn bị. (Mã đơn: {order_id})",
-                "order_id": str(order_id)
+                "order_id": str(order_id),
+                "total_price": float(
+                    resp_data.get("don_hang", {}).get("tong_tien")
+                    or resp_data.get("tong_tien")
+                    or cart.get("total_price", 0)
+                ),
+                "discount_amount": float(resp_data.get("don_hang", {}).get("so_tien_giam") or 0),
+                "payment_method": payment_method,
+                "redirect_url": resp_data.get("redirect_url"),
+                "payment_details": resp_data.get("payment_details"),
             }
         else:
             # Thất bại từ server -> Mở khóa giỏ hàng
-            cart_manager.set_is_checking_out(session_id, False)
+            cart_manager.set_is_checking_out(cart_session_id, False)
             logger.error("[CheckoutService] Order API failed: %s", resp.text)
             return {"status": "error", "message": f"Lỗi tạo đơn hàng: {resp.text}"}
 
     except Exception as e:
-        cart_manager.set_is_checking_out(session_id, False)
+        cart_manager.set_is_checking_out(cart_session_id, False)
         logger.exception("[CheckoutService] Exception in finalize_checkout: %s", e)
         return {"status": "error", "message": "Có lỗi hệ thống xảy ra khi xử lý đơn hàng."}

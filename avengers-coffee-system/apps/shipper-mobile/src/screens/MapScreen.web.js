@@ -17,7 +17,11 @@ export function MapScreen({ route, navigation }) {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const shipperMarkerRef = useRef(null);
+  const routeCoordsRef = useRef([]);
   const movementIntervalRef = useRef(null);
+
+  // Mock globalState để tương thích với app React Native
+  const globalState = { isSimulating: false };
   const [leafletLoaded, setLeafletLoaded] = useState(false);
 
   const { data: publicBranchPayload } = useQuery({
@@ -264,6 +268,8 @@ export function MapScreen({ route, navigation }) {
         const path = data.paths?.[0];
         if (path?.points?.coordinates) {
           const coords = path.points.coordinates.map(c => [c[1], c[0]]);
+          routeCoordsRef.current = coords.map(c => ({ latitude: c[0], longitude: c[1] }));
+          
           // Đường nền mờ (border effect)
           L.polyline(coords, { color: '#1E40AF', weight: 8, opacity: 0.3 }).addTo(map);
           // Đường chính màu xanh dương
@@ -284,6 +290,10 @@ export function MapScreen({ route, navigation }) {
         }
       } catch (e) {
         // Fallback: vẽ đường thẳng nét đứt
+        routeCoordsRef.current = [
+          { latitude: storeLocation.latitude, longitude: storeLocation.longitude },
+          { latitude: destinationLocation.latitude, longitude: destinationLocation.longitude }
+        ];
         L.polyline(
           [[storeLocation.latitude, storeLocation.longitude], [destinationLocation.latitude, destinationLocation.longitude]],
           { color: '#3B82F6', weight: 4, opacity: 0.7, dashArray: '10, 8' }
@@ -318,22 +328,43 @@ export function MapScreen({ route, navigation }) {
     if (!shipper?.id) return;
     if (movementIntervalRef.current) clearInterval(movementIntervalRef.current);
     
+    let pathCoords = [];
+    if (routeCoordsRef.current && routeCoordsRef.current.length > 0) {
+      if (targetLat === storeLocation.latitude && targetLng === storeLocation.longitude) {
+        // Going to store -> reverse route
+        pathCoords = [...routeCoordsRef.current].reverse();
+      } else {
+        // Going to destination -> forward route
+        pathCoords = [...routeCoordsRef.current];
+      }
+    } else {
+      pathCoords = [
+        { latitude: shipperLocation.latitude, longitude: shipperLocation.longitude },
+        { latitude: targetLat, longitude: targetLng }
+      ];
+    }
+    
     const steps = 75; 
-    const intervalMs = 200; // Trả lại tốc độ cũ (tổng 15s) để khớp với tốc độ polling 15s của khách hàng
+    const intervalMs = 200; // 75 * 200ms = 15s
     
     let currentStep = 0;
-    const startLat = shipperLocation.latitude;
-    const startLng = shipperLocation.longitude;
 
     movementIntervalRef.current = setInterval(() => {
       currentStep++;
       const progress = currentStep / steps;
-      const newLat = startLat + (targetLat - startLat) * progress;
-      const newLng = startLng + (targetLng - startLng) * progress;
+      
+      const totalSegments = pathCoords.length - 1;
+      const exactIndex = progress * totalSegments;
+      const lowerIndex = Math.floor(exactIndex);
+      const upperIndex = Math.min(Math.ceil(exactIndex), totalSegments);
+      const segmentProgress = exactIndex - lowerIndex;
+      
+      const newLat = pathCoords[lowerIndex].latitude + (pathCoords[upperIndex].latitude - pathCoords[lowerIndex].latitude) * segmentProgress;
+      const newLng = pathCoords[lowerIndex].longitude + (pathCoords[upperIndex].longitude - pathCoords[lowerIndex].longitude) * segmentProgress;
       
       setShipperLocation({ latitude: newLat, longitude: newLng });
       
-      // GỬI API UPDATE LÊN BACKEND NGAY BƯỚC 1 VÀ MỖI 5 BƯỚC (1 GIÂY) ĐỂ CLIENT NHẬN REALTIME
+      // GỬI API UPDATE LÊN BACKEND MỖI 1 GIÂY (5 steps = 1s)
       if (currentStep === 1 || currentStep % 5 === 0 || currentStep === steps) {
         apiClient.patch(`/shippers/${shipper.id}/location`, {
           latitude: newLat,

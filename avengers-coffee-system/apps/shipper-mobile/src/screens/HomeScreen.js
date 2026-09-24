@@ -469,7 +469,7 @@ export function HomeScreen({ navigation }) {
       )
     }
 
-    const availableToBatch = (deliveries || []).filter(d => !d._already_accepted)
+    const availableToBatch = (deliveries || []) // Bỏ lọc !d._already_accepted để cho phép ghép cả đơn "Đang giao"
     return (
       <ScrollView
         style={{ flex: 1 }}
@@ -495,9 +495,9 @@ export function HomeScreen({ navigation }) {
 
           {availableToBatch.length > 0 ? (
             <View style={styles.quickBatchBox}>
-              <Text style={styles.quickBatchTitle}>Đang có {availableToBatch.length} đơn hàng sẵn sàng ghép</Text>
+              <Text style={styles.quickBatchTitle}>Đang có {availableToBatch.length} đơn hàng có thể ghép</Text>
               <Text style={styles.quickBatchSubtitle}>
-                Chuyển qua tab "Nhận đơn", tick chọn các đơn hàng bạn muốn gom chuyến và nhấn nút "Ghép đơn".
+                Bạn có thể qua tab "Nhận đơn" hoặc "Đang giao", tick chọn các đơn hàng để gom chuyến và nhấn nút "GHÉP ĐƠN".
               </Text>
               <TouchableOpacity
                 style={styles.goToAvailableBtn}
@@ -669,6 +669,19 @@ export function HomeScreen({ navigation }) {
             </View>
           </View>
         </View>
+
+        {(item.chi_tiet || item.items) && (item.chi_tiet || item.items).length > 0 && (
+          <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+            <View style={{ backgroundColor: '#f8fafc', padding: 10, borderRadius: 8, borderStyle: 'dashed', borderWidth: 1, borderColor: '#cbd5e1' }}>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: '#64748b', marginBottom: 6 }}>CHI TIẾT MÓN ({(item.chi_tiet || item.items).reduce((sum, i) => sum + (i.so_luong || 1), 0)}):</Text>
+              {(item.chi_tiet || item.items).map((ct, idx) => (
+                <Text key={idx} style={{ fontSize: 13, color: '#334155', marginBottom: 2 }}>
+                  <Text style={{ fontWeight: '600' }}>{ct.so_luong || 1}x</Text> {ct.ten_san_pham} {ct.size || ct.kich_co ? `(Size ${ct.size || ct.kich_co})` : ''}
+                </Text>
+              ))}
+            </View>
+          </View>
+        )}
 
         <View style={styles.cardMeta}>
           <View style={styles.metaBox}>

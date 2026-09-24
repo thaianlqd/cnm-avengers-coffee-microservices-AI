@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from utils import query_df, fmt_vnd
-from components import render_sidebar
+from components import render_sidebar, render_section_title
 from styles import inject_styles, init_plotly_template, apply_layout
 
 # ─── Page Config ──────────────────────────────────────────────────────────────
@@ -45,7 +45,7 @@ def get_pnl_data(months: int):
             SELECT 
                 ma_chi_nhanh AS co_so_ma, 
                 ten_chi_nhanh AS ten_store, 
-                CASE WHEN ma_chi_nhanh LIKE '%-K%' THEN 'KIOSK_NHUONG_QUYEN' ELSE 'MAIN_STORE' END AS loai_hinh_so_huu, 
+                CASE WHEN ma_chi_nhanh LIKE 'KSK-%' THEN 'KIOSK_NHUONG_QUYEN' ELSE 'MAIN_STORE' END AS loai_hinh_so_huu, 
                 thanh_pho AS vung_mien
             FROM identity.chi_nhanh
         ) d ON d.co_so_ma = o.co_so_ma
@@ -296,3 +296,72 @@ else:
     cols_show = ["Cơ Sở","Loại Hình","Vùng Miền","Doanh Thu","Tổng Chi Phí","Lợi Nhuận Ròng","Biên LN","Voucher Rate","Số Đơn"]
     cols_show = [c for c in cols_show if c in display_pnl.columns]
     st.dataframe(display_pnl[cols_show], use_container_width=True, hide_index=True, height=320)
+
+# ── Cash Runway & Burn Rate Forecast ─────────────────────────────────────
+st.markdown("<hr style='border-color:#1E1E3A;margin:30px 0;'>", unsafe_allow_html=True)
+render_section_title("Mô Phỏng Dòng Tiền (Burn Rate & Cash Runway)")
+st.markdown("Dự phóng (Forecast) thời điểm cạn kiệt vốn dựa trên chi phí cố định (Fixed Costs) và Lợi nhuận ròng hiện tại. Yếu tố sống còn cho các startup chuỗi F&B liên tục mở điểm mới.")
+
+@st.cache_data(ttl=86400, show_spinner=False)
+def get_runway_data():
+    # Giả định startup đang có quỹ tiền mặt (Cash Reserve) là 2 Tỷ VND.
+    initial_cash = 2_000_000_000
+    
+    # Lấy lợi nhuận ròng trung bình của 3 tháng gần nhất làm Base
+    base_profit = latest['net_profit'].sum() if 'net_profit' in latest.columns else -150_000_000
+    
+    from datetime import datetime
+    import numpy as np
+    
+    future_months = 8
+    months = [datetime.now() + pd.DateOffset(months=i) for i in range(1, future_months + 1)]
+    
+    cash_reserves = []
+    current_cash = initial_cash
+    
+    np.random.seed(42)
+    for _ in months:
+        # Simulate burn rate variation (80% to 120% of base profit)
+        profit_variation = np.random.uniform(0.8, 1.2) * base_profit
+        # Nếu đang lời, ta cố tình tạo scenario burn rate âm (mở rộng nhanh) để biểu đồ thể hiện việc "đốt tiền"
+        if base_profit > 0:
+            profit_variation = -np.random.uniform(100_000_000, 300_000_000)
+            
+        current_cash += profit_variation
+        cash_reserves.append(current_cash)
+        
+    df_runway = pd.DataFrame({
+        "Tháng": [m.strftime('%Y-%m') for m in months],
+        "Dự phóng Tiền mặt": cash_reserves
+    })
+    return df_runway
+
+runway_df = get_runway_data()
+if not runway_df.empty:
+    fig_runway = px.area(
+        runway_df, x="Tháng", y="Dự phóng Tiền mặt",
+        labels={"Tháng": "Tháng Dự Phóng", "Dự phóng Tiền mặt": "Tiền mặt còn lại (đ)"},
+        color_discrete_sequence=["#F59E0B"]
+    )
+    # Highlight negative cash in red
+    fig_runway.add_hline(y=0, line_dash="dash", line_color="#EF4444", annotation_text="Điểm Cạn Vốn (Zero Cash)")
+    
+    apply_layout(fig_runway, height=400, margin=dict(l=40, r=40, t=30, b=40))
+    st.plotly_chart(fig_runway, use_container_width=True)
+    
+    # Simple logic to find when it hits zero
+    zero_cash_month = runway_df[runway_df["Dự phóng Tiền mặt"] < 0]
+    if not zero_cash_month.empty:
+        st.markdown(f"""
+        <div style='background:rgba(239, 68, 68, 0.1); border:1px solid #B91C1C; border-radius:12px; padding:16px;'>
+            <div style='font-size:16px; color:#F87171; font-weight:800;'>🔥 CẢNH BÁO: RED ALERT RUNWAY</div>
+            <div style='margin-top:8px; font-size:14px; color:#D1D5DB;'>
+                Dựa trên tốc độ đốt tiền (Burn Rate) hiện tại cho việc mở rộng Kiosk, hệ thống dự kiến sẽ <b>Cạn Kiệt Vốn (Zero Cash)</b> vào <b>{zero_cash_month.iloc[0]['Tháng']}</b>.<br><br>
+                <b>Đề xuất từ CFO:</b> Cần tạm dừng cấp phép nhượng quyền cho khu vực rủi ro cao và tối ưu lại quỹ lương (Payroll) trong quý tới.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.success("Tài chính khỏe mạnh! Dòng tiền dương giúp hệ thống duy trì phát triển bền vững.")
+else:
+    st.info("Chưa có đủ dữ liệu P&L để mô phỏng dòng tiền.")

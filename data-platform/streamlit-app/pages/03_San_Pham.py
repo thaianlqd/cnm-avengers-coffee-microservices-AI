@@ -47,19 +47,6 @@ def get_top_products():
         ORDER BY total_qty DESC
         LIMIT 15
     """)
-    if df.empty:
-        df = pd.DataFrame([
-            {"ma_san_pham": 1, "ten_san_pham": "Specialty Coffee Đá", "total_qty": 2391, "order_count": 1820, "total_revenue": 107595000, "avg_price": 45000},
-            {"ma_san_pham": 2, "ten_san_pham": "Butter Croissant", "total_qty": 2364, "order_count": 1750, "total_revenue": 82740000, "avg_price": 35000},
-            {"ma_san_pham": 3, "ten_san_pham": "Cà Phê Muối Avenger", "total_qty": 2329, "order_count": 1690, "total_revenue": 104805000, "avg_price": 45000},
-            {"ma_san_pham": 4, "ten_san_pham": "Trà Sữa Shan Nóng", "total_qty": 2316, "order_count": 1620, "total_revenue": 115800000, "avg_price": 50000},
-            {"ma_san_pham": 5, "ten_san_pham": "Mochi Kem Matcha", "total_qty": 2293, "order_count": 1580, "total_revenue": 68790000, "avg_price": 30000},
-            {"ma_san_pham": 6, "ten_san_pham": "Americano Phúc Bồn Tử", "total_qty": 2236, "order_count": 1510, "total_revenue": 100620000, "avg_price": 45000},
-            {"ma_san_pham": 7, "ten_san_pham": "Cappuccino Đá", "total_qty": 2207, "order_count": 1490, "total_revenue": 110350000, "avg_price": 50000},
-            {"ma_san_pham": 8, "ten_san_pham": "Trà Sen Vàng", "total_qty": 2150, "order_count": 1420, "total_revenue": 118250000, "avg_price": 55000},
-            {"ma_san_pham": 9, "ten_san_pham": "Phindi Hạnh Nhân", "total_qty": 1980, "order_count": 1350, "total_revenue": 89100000, "avg_price": 45000},
-            {"ma_san_pham": 10, "ten_san_pham": "Freeze Trà Xanh", "total_qty": 1820, "order_count": 1210, "total_revenue": 100100000, "avg_price": 55000},
-        ])
     return df
 
 products = get_top_products()
@@ -96,6 +83,91 @@ if not products.empty:
     st.dataframe(tbl, use_container_width=True, hide_index=True, height=360)
 else:
     st.info("Chưa có dữ liệu sản phẩm.")
+
+# ── Phân Tích Chuyên Sâu Sản Phẩm (Pareto & Scatter) ────────────────────
+st.markdown("<hr style='border-color:#2A2A3E; margin:20px 0;'>", unsafe_allow_html=True)
+render_section_title("Phân Tích Chuyên Sâu (Deep Dive Data Analyst)")
+
+c_pareto, c_scatter = st.columns(2, gap="large")
+
+with c_pareto:
+    st.markdown("#### Phân Tích ABC (Pareto 80/20) - Theo Doanh Thu")
+    if not products.empty and len(products) > 3:
+        # Sort and calculate cumulative percentage
+        from plotly.subplots import make_subplots
+        import plotly.graph_objects as go
+        
+        pareto_df = products.sort_values(by="total_revenue", ascending=False).copy()
+        pareto_df["cum_revenue"] = pareto_df["total_revenue"].cumsum()
+        total_rev = pareto_df["total_revenue"].sum()
+        pareto_df["cum_percentage"] = (pareto_df["cum_revenue"] / total_rev) * 100
+        
+        # Categorize A, B, C
+        def abc_class(pct):
+            if pct <= 80: return "A (80% DT)"
+            elif pct <= 95: return "B (15% DT)"
+            return "C (5% DT)"
+        pareto_df["Class"] = pareto_df["cum_percentage"].apply(abc_class)
+        
+        fig_pareto = make_subplots(specs=[[{"secondary_y": True}]])
+        
+        fig_pareto.add_trace(go.Bar(
+            x=pareto_df["display_name"], y=pareto_df["total_revenue"],
+            name="Doanh thu", marker_color="#2563EB"
+        ), secondary_y=False)
+        
+        fig_pareto.add_trace(go.Scatter(
+            x=pareto_df["display_name"], y=pareto_df["cum_percentage"],
+            name="Tích lũy (%)", mode="lines+markers",
+            line=dict(color="#FF4757", width=3)
+        ), secondary_y=True)
+        
+        # Add 80% reference line
+        fig_pareto.add_hline(y=80, line_dash="dash", line_color="#10B981", secondary_y=True, annotation_text="80% Doanh Thu")
+        
+        fig_pareto.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#C0C0D8", family="Inter"),
+            margin=dict(l=0, r=0, t=10, b=80),
+            height=380,
+            showlegend=False
+        )
+        fig_pareto.update_yaxes(title_text="Doanh thu (đ)", secondary_y=False, showgrid=False)
+        fig_pareto.update_yaxes(title_text="Tích lũy (%)", secondary_y=True, showgrid=True, gridcolor="#1E1E3A", range=[0, 105])
+        st.plotly_chart(fig_pareto, use_container_width=True)
+    else:
+        st.info("Cần nhiều dữ liệu sản phẩm hơn để phân tích Pareto.")
+
+with c_scatter:
+    st.markdown("#### Tương Quan: Giá bán & Lượng bán (Price Elasticity)")
+    if not products.empty and len(products) > 3:
+        fig_scatter = px.scatter(
+            products, x="avg_price", y="total_qty", size="total_revenue", color="display_name",
+            hover_name="ten_san_pham", size_max=40,
+            labels={"avg_price": "Giá bán trung bình (đ)", "total_qty": "Số lượng bán ra"}
+        )
+        # Add trendline to show general elasticity (usually negative)
+        try:
+            import statsmodels.api as sm
+            fig_scatter = px.scatter(
+                products, x="avg_price", y="total_qty", size="total_revenue", color="display_name",
+                hover_name="ten_san_pham", size_max=40, trendline="ols",
+                labels={"avg_price": "Giá bán trung bình (đ)", "total_qty": "Số lượng bán ra"}
+            )
+            # hide trendline traces from legend so it's not messy
+            for trace in fig_scatter.data:
+                if trace.mode == "lines":
+                    trace.line.color = "#FF4757"
+                    trace.line.dash = "dash"
+                    trace.showlegend = False
+        except ImportError:
+            pass # fallback if statsmodels not installed
+            
+        apply_layout(fig_scatter, height=380, margin=dict(l=40, r=20, t=10, b=40))
+        fig_scatter.update_layout(showlegend=False)
+        st.plotly_chart(fig_scatter, use_container_width=True)
+    else:
+        st.info("Cần nhiều dữ liệu sản phẩm hơn để phân tích Độ nhạy giá.")
 
 # AI Insight cho tab Sản phẩm
 if (ANTHROPIC_API_KEY_LOADED or GROQ_API_KEY_LOADED):

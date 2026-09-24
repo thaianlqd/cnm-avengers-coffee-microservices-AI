@@ -34,6 +34,11 @@ from .user_tools import (
 from .knowledge_tools import (
     TOOL_SEARCH_KNOWLEDGE_BASE, execute_search_knowledge_base
 )
+from .voucher_tools import (
+    TOOL_GET_APPLICABLE_VOUCHERS, execute_get_applicable_vouchers,
+    TOOL_APPLY_VOUCHER, execute_apply_voucher,
+    TOOL_REMOVE_VOUCHER, execute_remove_voucher,
+)
 
 ALL_TOOL_SCHEMAS: List[Dict[str, Any]] = [
     TOOL_ASK_BRANCH,
@@ -58,18 +63,21 @@ ALL_TOOL_SCHEMAS: List[Dict[str, Any]] = [
     TOOL_GET_USER_PREFERENCES,
     TOOL_GET_USER_PROFILE,
     TOOL_UPDATE_ORDER,
+    TOOL_GET_APPLICABLE_VOUCHERS,
+    TOOL_APPLY_VOUCHER,
+    TOOL_REMOVE_VOUCHER,
 ]
 
 # Dispatch map: tool_name -> executor function
 # Backend injection for session_id via lambda args, session_id
 TOOL_EXECUTORS = {
-    "ask_branch": lambda args, session_id: execute_ask_branch(),
+    "ask_branch": lambda args, session_id: execute_ask_branch(session_id=session_id),
     "find_nearest_branch": lambda args, session_id: execute_find_nearest_branch(session_id=session_id, **args),
     "set_session_branch": lambda args, session_id: execute_set_session_branch(session_id=session_id, **args),
     "get_top_rated_stores": lambda args, session_id: execute_get_top_rated_stores(**args),
     "get_store_reviews": lambda args, session_id: execute_get_store_reviews(**args),
     "get_product_options": lambda args, session_id: execute_get_product_options(**args),
-    "check_price_and_stock": lambda args, session_id: execute_check_price_and_stock(**args),
+    "check_price_and_stock": lambda args, session_id: execute_check_price_and_stock(session_id=session_id, **args),
     "get_product_insights": lambda args, session_id: execute_get_product_insights(**args),
     "add_to_cart": lambda args, session_id: execute_add_to_cart(session_id=session_id, **args),
     "get_cart": lambda args, session_id: execute_get_cart(session_id=session_id),
@@ -85,4 +93,7 @@ TOOL_EXECUTORS = {
     "update_order": lambda args, session_id: execute_update_order(session_id=session_id, **args),
     "get_user_preferences": lambda args, session_id: execute_get_user_preferences(session_id=session_id),
     "get_user_profile": lambda args, session_id: execute_get_user_profile(session_id=session_id),
+    "get_applicable_vouchers": lambda args, session_id: execute_get_applicable_vouchers(session_id=session_id),
+    "apply_voucher": lambda args, session_id: execute_apply_voucher(session_id=session_id, **args),
+    "remove_voucher": lambda args, session_id: execute_remove_voucher(session_id=session_id),
 }

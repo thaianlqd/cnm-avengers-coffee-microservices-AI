@@ -2,7 +2,8 @@ import logging
 from typing import Any, Dict
 from sqlalchemy import text
 from src.common import cart_manager
-from src.function_calling.helpers import _get_engine, _clean_dict, _check_business_hours
+from src.function_calling.helpers import _get_engine, _clean_dict, _check_business_hours, _require_valid_session
+from src.common.inventory_validation import validate_cart_at_branch
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +23,22 @@ TOOL_ASK_BRANCH = {
     },
 }
 
-def execute_ask_branch() -> Dict[str, Any]:
+def execute_ask_branch(session_id: str = "") -> Dict[str, Any]:
     """Lấy danh sách chi nhánh từ DB để LLM trình bày cho khách (có check giờ)."""
     try:
+        prefs = cart_manager.get_checkout_prefs(session_id) if session_id else {}
+        delivery_type = prefs.get("delivery_type")
+        if not delivery_type:
+            return {
+                "status": "branch_not_needed_yet",
+                "message": "Chưa đến bước chọn chi nhánh. Hãy tiếp tục gợi ý/chọn món, sau đó hỏi hình thức nhận hàng trước.",
+            }
+        if delivery_type == "GIAO_TAN_NOI":
+            return {
+                "status": "auto_branch_for_delivery",
+                "message": "Khách chọn giao tận nơi nên không hỏi khách chọn chi nhánh. Hãy lấy/xác nhận địa chỉ, gọi find_nearest_branch rồi tự set_session_branch.",
+            }
+
         hours_check = _check_business_hours()
         if hours_check:
             return hours_check
@@ -46,10 +60,6 @@ def execute_ask_branch() -> Dict[str, Any]:
                     SELECT ma_chi_nhanh, ten_chi_nhanh, dia_chi, 'CHI_NHANH_CHINH' as loai
                     FROM {identity_schema}.chi_nhanh
                     WHERE trang_thai = 'ACTIVE'
-                    UNION ALL
-                    SELECT ma_kiosk as ma_chi_nhanh, ten_kiosk as ten_chi_nhanh, dia_chi, loai_kiosk as loai
-                    FROM franchise.kiosk
-                    WHERE trang_thai = 'DANG_HOAT_DONG'
                 )
                 SELECT b.ma_chi_nhanh, b.ten_chi_nhanh, b.dia_chi, b.loai,
                        COALESCE(r.avg_rating, 0)::float as avg_rating,
@@ -68,6 +78,10 @@ def execute_ask_branch() -> Dict[str, Any]:
     except Exception as e:
         logger.warning("[AgentTools] ask_branch error: %s", e)
         return {"status": "error", "message": "Không thể lấy danh sách chi nhánh."}
+
+
+def _customer_session_id(session_id: str) -> str:
+    return str(session_id).split(":conversation:", 1)[0]
 
 TOOL_FIND_NEAREST_BRANCH = {
     "type": "function",
@@ -106,16 +120,23 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
 
         from utils.geo import geocode_address, haversine_distance
 
-        target_address = location.strip() if location else ""
+        prefs = cart_manager.get_checkout_prefs(session_id) if session_id else {}
+        target_address = location.strip() if location else str(prefs.get("location_address") or "").strip()
         user_lat, user_lon = None, None
 
         with engine.connect() as conn:
             from src.function_calling.helpers import _norm
             generic_words = {"toi", "gan", "day", "nao", "nhat", "nha", "dia", "chi", "mac", "dinh", "cua", "hien", "tai"}
             norm_loc = _norm(location).lower().replace(",", " ") if location else ""
-            is_generic = all(w in generic_words for w in norm_loc.split()) if norm_loc else True
+            is_generic = all(w in generic_words for w in norm_loc.split()) if norm_loc else not bool(target_address)
             
             if (not target_address or is_generic) and session_id:
+                valid_uid = _require_valid_session(_customer_session_id(session_id))
+                if not valid_uid:
+                    return {
+                        "status": "need_location",
+                        "message": "Bạn đang ở địa chỉ nào? Mình sẽ dùng địa chỉ đó chỉ để tìm cửa hàng gần nhất.",
+                    }
                 addr = conn.execute(text(
                     f"""
                     SELECT dia_chi_day_du, vi_do, kinh_do
@@ -123,13 +144,15 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                     WHERE ma_nguoi_dung::text = :uid AND mac_dinh = true
                     LIMIT 1
                     """
-                ), {"uid": session_id}).fetchone()
+                ), {"uid": valid_uid}).fetchone()
                 
                 if addr and addr[0]:
-                    target_address = addr[0]
-                    if addr[1] is not None and addr[2] is not None:
-                        user_lat = float(addr[1])
-                        user_lon = float(addr[2])
+                    cart_manager.set_checkout_context(session_id, suggested_address=str(addr[0]))
+                    return {
+                        "status": "need_address_confirmation",
+                        "suggested_address": str(addr[0]),
+                        "message": f"Mình thấy địa chỉ đã lưu là {addr[0]}. Bạn đang ở địa chỉ này hay muốn dùng một địa chỉ khác để tìm cửa hàng gần nhất?",
+                    }
 
             if not target_address:
                 return {
@@ -146,16 +169,6 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                     }
                 user_lat, user_lon = coords
                 
-                if session_id and not location:
-                    conn.execute(text(
-                        f"""
-                        UPDATE {identity_schema}.dia_chi_giao_hang 
-                        SET vi_do = :lat, kinh_do = :lng 
-                        WHERE ma_nguoi_dung::text = :uid AND mac_dinh = true
-                        """
-                    ), {"lat": user_lat, "lng": user_lon, "uid": session_id})
-                    conn.commit()
-
             query = f"""
                 WITH ratings AS (
                     SELECT ma_chi_nhanh, ROUND(AVG(diem_tong_quan), 1) as avg_rating, COUNT(*) as total_reviews
@@ -167,10 +180,6 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                     SELECT ma_chi_nhanh, ten_chi_nhanh, dia_chi, vi_do, kinh_do, 'CHI_NHANH_CHINH' as loai
                     FROM {identity_schema}.chi_nhanh
                     WHERE trang_thai = 'ACTIVE' AND vi_do IS NOT NULL AND kinh_do IS NOT NULL
-                    UNION ALL
-                    SELECT ma_kiosk as ma_chi_nhanh, ten_kiosk as ten_chi_nhanh, dia_chi, vi_do, kinh_do, loai_kiosk as loai
-                    FROM franchise.kiosk
-                    WHERE trang_thai = 'DANG_HOAT_DONG' AND vi_do IS NOT NULL AND kinh_do IS NOT NULL
                 )
                 SELECT b.ma_chi_nhanh, b.ten_chi_nhanh, b.dia_chi, b.vi_do, b.kinh_do, b.loai,
                        COALESCE(r.avg_rating, 0)::float as avg_rating,
@@ -204,7 +213,82 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                 branches.append(branch_dict)
 
             branches.sort(key=lambda x: x["khoang_cach_km"])
-            top_branches = branches[:3]
+            delivery_type = prefs.get("delivery_type")
+            cart = cart_manager.get_cart(session_id) if session_id else {"items": []}
+            inventory_schema = os.getenv("INVENTORY_SCHEMA", "inventory")
+            eligible_branches = []
+            annotated_branches = []
+            # Inventory validation is comparatively expensive. Validate the
+            # nearest candidates only; scanning every branch caused the chat
+            # request to exceed the frontend timeout and trigger stale fallback.
+            for item in branches[:12]:
+                cart_for_branch = dict(cart)
+                cart_for_branch["branch_id"] = item["ma_chi_nhanh"]
+                availability = validate_cart_at_branch(engine, cart_for_branch, inventory_schema)
+                conflicts = availability["unavailable"]
+                annotated = dict(item)
+                annotated["availability_status"] = (
+                    "unavailable" if availability["unavailable"]
+                    else "unknown" if availability["unverified"]
+                    else "available"
+                )
+                annotated["unavailable_products"] = conflicts
+                annotated["unverified_products"] = availability["unverified"]
+                annotated_branches.append(annotated)
+                if not availability["unavailable"]:
+                    eligible_branches.append(annotated)
+
+            # Delivery is assigned automatically only among branches that can
+            # fulfill every cart line. Pickup/dine-in shows nearby branches with
+            # exact conflicts, but a conflicting branch remains unselectable.
+            if delivery_type == "GIAO_TAN_NOI" and cart.get("items"):
+                top_branches = eligible_branches[:3]
+                if not top_branches:
+                    return {
+                        "status": "stock_conflict",
+                        "branches": annotated_branches[:3],
+                        "message": "Không có cửa hàng gần địa chỉ này đủ toàn bộ món trong giỏ. Đơn chưa được chốt; bạn có thể đổi món hoặc địa chỉ giao.",
+                    }
+            elif delivery_type in {"MANG_DI", "TAI_CHO"} and cart.get("items"):
+                if not eligible_branches:
+                    return {
+                        "status": "no_available_branch",
+                        "branches": annotated_branches[:3],
+                        "message": "Không có cửa hàng gần đó còn đủ toàn bộ món trong giỏ. Mình chưa thể cho chốt; bạn có thể đổi món hoặc cho mình khu vực khác để tìm tiếp.",
+                    }
+                # Preserve the nearest list so customers can see why a very
+                # close branch cannot be chosen. Ensure the nearest valid
+                # alternative is also present even if the first three all
+                # have stock conflicts.
+                top_branches = annotated_branches[:3]
+                nearest_available = eligible_branches[0]
+                if not any(
+                    item["ma_chi_nhanh"] == nearest_available["ma_chi_nhanh"]
+                    for item in top_branches
+                ):
+                    top_branches.append(nearest_available)
+            else:
+                top_branches = annotated_branches[:3]
+
+            if not top_branches:
+                return {
+                    "status": "not_found",
+                    "message": "Không tìm thấy cửa hàng phù hợp trong danh sách cần so sánh.",
+                }
+
+            if delivery_type in {"MANG_DI", "TAI_CHO"} and not target_branches:
+                cart_manager.set_checkout_context(
+                    session_id,
+                    branch_candidates=[{
+                        "branch_id": item["ma_chi_nhanh"],
+                        "branch_name": item["ten_chi_nhanh"],
+                        "address": item.get("dia_chi"),
+                        "distance_km": item.get("khoang_cach_km"),
+                        "availability_status": item.get("availability_status"),
+                        "unavailable_products": item.get("unavailable_products") or [],
+                        "unverified_products": item.get("unverified_products") or [],
+                    } for item in top_branches],
+                )
 
             nearest_dist = top_branches[0]["khoang_cach_km"]
             
@@ -214,9 +298,12 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                 msg += f" WARNING: Chi nhánh gần nhất cũng cách tới {nearest_dist}km. Hãy báo rõ cho khách là khu vực của khách khá xa các chi nhánh hiện tại."
 
             return {
-                "status": "ok",
+                "status": "need_branch_selection" if delivery_type in {"MANG_DI", "TAI_CHO"} else "ok",
                 "branches": top_branches,
-                "message": msg
+                "message": (
+                    msg + " Khách dùng tại chỗ/mang đi nên hãy liệt kê các cửa hàng này và chờ khách chọn; không tự chọn cửa hàng gần nhất."
+                    if delivery_type in {"MANG_DI", "TAI_CHO"} else msg
+                )
             }
 
     except Exception as e:
@@ -249,10 +336,64 @@ TOOL_SET_SESSION_BRANCH = {
     },
 }
 
-def execute_set_session_branch(session_id: str, branch_id: str, branch_name: str) -> Dict[str, Any]:
+def execute_set_session_branch(
+    session_id: str,
+    branch_id: str,
+    branch_name: str,
+    customer_selected: bool = False,
+) -> Dict[str, Any]:
     engine = _get_engine()
     import os
     identity_schema = os.getenv("IDENTITY_SCHEMA", "identity")
+    inventory_schema = os.getenv("INVENTORY_SCHEMA", "inventory")
+
+    def save_and_validate(real_branch_id: str, real_branch_name: str, location_label: str) -> Dict[str, Any]:
+        prefs = cart_manager.get_checkout_prefs(session_id)
+        if (
+            prefs.get("delivery_type") in {"MANG_DI", "TAI_CHO"}
+            and prefs.get("branch_candidates")
+            and not customer_selected
+        ):
+            return {
+                "status": "branch_selection_required",
+                "branches": prefs["branch_candidates"],
+                "message": "Khách chưa chọn cửa hàng trong danh sách vừa gợi ý. Hãy liệt kê và chờ khách chọn; không tự chốt cửa hàng gần nhất.",
+            }
+        cart = cart_manager.get_cart(session_id)
+        cart_for_branch = dict(cart)
+        cart_for_branch["branch_id"] = real_branch_id
+        stock_result = validate_cart_at_branch(engine, cart_for_branch, inventory_schema)
+        unavailable = stock_result["unavailable"]
+
+        if unavailable:
+            cart_manager.set_stock_conflicts(session_id, unavailable)
+            return {
+                "status": "stock_conflict",
+                "branch_id": real_branch_id,
+                "branch_name": real_branch_name,
+                "unavailable_products": unavailable,
+                "message": (
+                    f"{location_label} {real_branch_name} tạm ngưng phục vụ các món sau: "
+                    f"{', '.join(unavailable)}. "
+                    "Hãy báo khách chọn điểm bán khác hoặc bỏ món đó ra khỏi giỏ; không được chốt đơn tại đây."
+                ),
+            }
+        cart_manager.set_branch(session_id, real_branch_id, real_branch_name)
+        cart_manager.set_stock_conflicts(session_id, [])
+        if stock_result["unverified"]:
+            message = (
+                f"Đã ghi nhận {location_label.lower()}: {real_branch_name}. "
+                "Không thấy dữ liệu tồn kho cho một số món nên chưa thể xác minh tại chi nhánh này; "
+                "hệ thống sẽ kiểm tra lại khi chốt đơn."
+            )
+        else:
+            message = f"Đã ghi nhận {location_label.lower()}: {real_branch_name}. Các món trong giỏ hiện còn hàng."
+        return {
+            "status": "ok",
+            "branch_id": real_branch_id,
+            "branch_name": real_branch_name,
+            "message": message,
+        }
     
     with engine.connect() as conn:
         # Tìm chính xác theo mã hoặc tìm tương đối theo tên
@@ -271,11 +412,7 @@ def execute_set_session_branch(session_id: str, branch_id: str, branch_name: str
         if row:
             real_branch_id = str(row[0])
             real_branch_name = str(row[1])
-            cart_manager.set_branch(session_id, real_branch_id, real_branch_name)
-            return {
-                "status": "ok",
-                "message": f"Đã ghi nhận chi nhánh: {real_branch_name}. Bây giờ có thể tra cứu giá và tồn kho.",
-            }
+            return save_and_validate(real_branch_id, real_branch_name, "Chi nhánh")
         
         # Nếu chưa ra, tìm trong Kiosk
         row_kiosk = conn.execute(
@@ -292,11 +429,7 @@ def execute_set_session_branch(session_id: str, branch_id: str, branch_name: str
         if row_kiosk:
             real_branch_id = str(row_kiosk[0])
             real_branch_name = str(row_kiosk[1])
-            cart_manager.set_branch(session_id, real_branch_id, real_branch_name)
-            return {
-                "status": "ok",
-                "message": f"Đã ghi nhận kiosk: {real_branch_name}. Bây giờ có thể tra cứu giá và tồn kho.",
-            }
+            return save_and_validate(real_branch_id, real_branch_name, "Kiosk")
         
     return {
         "status": "error",
@@ -308,7 +441,7 @@ TOOL_GET_TOP_RATED_STORES = {
     "type": "function",
     "function": {
         "name": "get_top_rated_stores",
-        "description": "Gọi tool này khi khách yêu cầu xem các chi nhánh hoặc kiosk được đánh giá cao.",
+        "description": "Gọi tool này CHỈ KHI khách yêu cầu xem danh sách các chi nhánh (cửa hàng/kiosk) được đánh giá cao. NẾU khách hỏi về 'món' (đồ ăn/thức uống) được đánh giá cao tại cửa hàng, tuyệt đối KHÔNG dùng tool này, mà hãy dùng get_recommendations.",
         "parameters": {
             "type": "object",
             "properties": {},
@@ -451,5 +584,3 @@ def execute_get_store_reviews(branch_id: str) -> Dict[str, Any]:
     except Exception as e:
         logger.warning("[AgentTools] get_store_reviews error: %s", e)
         return {"status": "error", "message": "Không thể tra cứu bình luận lúc này."}
-
-

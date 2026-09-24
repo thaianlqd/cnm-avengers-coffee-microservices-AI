@@ -63,7 +63,7 @@ PAYMENT_LABELS = {
 # ─── DB helpers ───────────────────────────────────────────────────────────────
 @st.cache_resource
 def get_engine():
-    url = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:5432/{DB_NAME}?sslmode={DB_SSLMODE}"
+    url = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode={DB_SSLMODE}"
     try:
         engine = sqlalchemy.create_engine(
             url,

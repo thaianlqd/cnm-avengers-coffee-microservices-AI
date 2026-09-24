@@ -74,7 +74,7 @@ services:
   # DATA LAKE — MinIO (S3-compatible)
   # =========================================
   minio:
-    image: minio/minio:latest
+    image: quay.io/minio/minio:latest
     container_name: avengers_minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
@@ -96,7 +96,7 @@ services:
 
   # MinIO bucket initialization
   minio-init:
-    image: minio/mc:latest
+    image: quay.io/minio/mc:latest
     container_name: avengers_minio_init
     restart: "no"
     depends_on:

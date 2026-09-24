@@ -70,7 +70,7 @@ def get_kiosk_health(months: int):
                     NULL::float AS latitude, 
                     NULL::float AS longitude
                 FROM identity.chi_nhanh
-                WHERE ma_chi_nhanh LIKE '%-K%'
+                WHERE ma_chi_nhanh LIKE 'KSK-%'
             ) d ON d.co_so_ma = o.co_so_ma
             WHERE o.ngay_tao >= NOW() - INTERVAL '{months} months'
             GROUP BY o.co_so_ma, d.ten_store, d.loai_hinh_so_huu, d.vung_mien,
@@ -374,9 +374,53 @@ else:
         # ── Dual-axis: Phí NQ (HQ nhìn) vs LN thực (Vận hành nhìn) ──
         st.markdown('<div class="dk-section-header" style="font-size:14px;margin-top:0;">"Điểm Mù Kế Toán" — Biểu Đồ Hai Trục</div>', unsafe_allow_html=True)
         sel_kiosk = kiosk_df.iloc[sel_i]
+        kiosk_id = sel_kiosk["co_so_ma"]
 
-        # Placeholder for real dual-axis chart
-        st.info("Biểu đồ lịch sử 6 tháng đang được cập nhật dữ liệu thật.")
+        @st.cache_data(ttl=86400, show_spinner=False)
+        def get_kiosk_history(co_so_ma: str):
+            return query_df(f"""
+                SELECT 
+                    TO_CHAR(date_trunc('month', ngay_tao), 'MM/YYYY') AS thang,
+                    date_trunc('month', ngay_tao) AS sort_date,
+                    SUM(tong_tien) AS revenue,
+                    SUM(so_tien_giam) AS voucher
+                FROM orders.don_hang 
+                WHERE co_so_ma = '{co_so_ma}'
+                  AND ngay_tao >= NOW() - INTERVAL '6 months'
+                  AND trang_thai_don_hang = 'HOAN_THANH'
+                GROUP BY date_trunc('month', ngay_tao)
+                ORDER BY sort_date ASC
+            """)
+
+        hist_df = get_kiosk_history(kiosk_id)
+        if not hist_df.empty:
+            hist_df["phi_nq"] = hist_df["revenue"] * 0.07
+            hist_df["cogs"] = hist_df["revenue"] * 0.42
+            hist_df["loi_nhuan_thuc"] = hist_df["revenue"] - hist_df["cogs"] - hist_df["voucher"] - hist_df["phi_nq"]
+            
+            fig_dual = make_subplots(specs=[[{"secondary_y": True}]])
+            fig_dual.add_trace(go.Bar(
+                x=hist_df["thang"], y=hist_df["phi_nq"],
+                name="Phí NQ (7% DT)", marker_color="#2563EB", opacity=0.8
+            ), secondary_y=False)
+            fig_dual.add_trace(go.Scatter(
+                x=hist_df["thang"], y=hist_df["loi_nhuan_thuc"],
+                name="Lợi nhuận Kiosk", mode="lines+markers",
+                line=dict(color="#FF4757", width=3), marker=dict(size=8)
+            ), secondary_y=True)
+            
+            fig_dual.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(color="#C0C0D8", family="Inter"),
+                margin=dict(l=0, r=0, t=10, b=0),
+                height=260,
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+            )
+            fig_dual.update_yaxes(title_text="Phí NQ (VNĐ)", secondary_y=False, showgrid=False)
+            fig_dual.update_yaxes(title_text="LN Thực (VNĐ)", secondary_y=True, showgrid=True, gridcolor="#1E1E3A")
+            st.plotly_chart(fig_dual, use_container_width=True)
+        else:
+            st.info("Kiosk này chưa có đủ lịch sử dữ liệu.")
         # ── Quadrant: Kiosk health landscape ──
         st.markdown('<div class="dk-section-header" style="font-size:14px;margin-top:0;">🎯 Quadrant — Phân Loại Kiosk</div>', unsafe_allow_html=True)
 

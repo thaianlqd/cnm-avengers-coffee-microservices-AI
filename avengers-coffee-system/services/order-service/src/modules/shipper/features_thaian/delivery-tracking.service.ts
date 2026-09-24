@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import * as crypto from 'crypto';
 import { DeliveryTracking } from './delivery-tracking.entity';
 import { ShipperDelivery } from '../entities/shipper-delivery.entity';
@@ -324,6 +324,58 @@ export class DeliveryTrackingService {
       }
     }
 
+    let batchInfo: any = null;
+    if (shipperDelivery?.shipper_id && shipperDelivery.is_batched && ['CONFIRMED', 'PICKING_UP', 'IN_TRANSIT'].includes(shipperDelivery.status)) {
+      const otherActiveDeliveries = await this.deliveryRepo.find({
+        where: { shipper_id: shipperDelivery.shipper_id, status: In(['CONFIRMED', 'PICKING_UP', 'IN_TRANSIT']) }
+      });
+      if (otherActiveDeliveries.length > 1) {
+        const otherOrderIds = otherActiveDeliveries.map(d => d.ma_don_hang).filter(id => id !== maDonHang);
+        const otherTrackings = await this.trackingRepo.find({
+          where: { ma_don_hang: In(otherOrderIds) }
+        });
+
+        // Resolve coords: nếu tracking thiếu coords thì geocode từ địa chỉ giao hàng
+        const resolvedDestinations: { latitude: number; longitude: number }[] = [];
+        for (const t of otherTrackings) {
+          if (t.destination_latitude && t.destination_longitude) {
+            resolvedDestinations.push({
+              latitude: Number(t.destination_latitude),
+              longitude: Number(t.destination_longitude)
+            });
+          } else if (t.delivery_address) {
+            // Geocode on-the-fly nếu tracking chưa có coords
+            try {
+              const geo = await this.geocodeDiaChiMapbox(t.delivery_address);
+              if (geo?.lat && geo?.lon) {
+                // Lưu lại để lần sau không cần geocode nữa
+                t.destination_latitude = geo.lat;
+                t.destination_longitude = geo.lon;
+                await this.trackingRepo.save(t).catch(() => {});
+                resolvedDestinations.push({ latitude: geo.lat, longitude: geo.lon });
+              }
+            } catch (err) { /* ignore */ }
+          }
+          // Fallback: dùng delivery_latitude từ shipper_delivery nếu vẫn không có
+          if (resolvedDestinations.length === 0) {
+            const otherDel = otherActiveDeliveries.find(d => d.ma_don_hang === t.ma_don_hang);
+            if (otherDel?.delivery_latitude && otherDel?.delivery_longitude) {
+              resolvedDestinations.push({
+                latitude: Number(otherDel.delivery_latitude),
+                longitude: Number(otherDel.delivery_longitude)
+              });
+            }
+          }
+        }
+
+        batchInfo = {
+          is_delivering_other: true,
+          total_batch_orders: otherActiveDeliveries.length,
+          other_destinations: resolvedDestinations,
+        };
+      }
+    }
+
     // 5. Nếu dùng Lalamove, thử lấy vị trí tài xế từ API
     let lalamoveInfo: any = null;
     if (tracking?.delivery_method === 'LALAMOVE' && tracking.lalamove_order_id) {
@@ -505,6 +557,7 @@ export class DeliveryTrackingService {
           delivery_note: shipperDelivery.delivery_note,
         }
         : null,
+      batch_info: batchInfo,
       lalamove: lalamoveInfo,
       timeline,
     };

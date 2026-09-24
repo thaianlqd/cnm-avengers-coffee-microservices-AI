@@ -749,7 +749,7 @@ export function AdminSystemConsole({
                   onMouseLeave={(e) => { if (activeTab !== 'shippers') e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
                   <Bike size={16} color={activeTab === 'shippers' ? '#2563eb' : '#64748b'} />
-                  <span>Quản lý giao hàng</span>
+                  <span>Quản lý shipper</span>
                 </button>
 
                 <button
@@ -779,18 +779,28 @@ export function AdminSystemConsole({
                 </button>
                 <button
                   type="button"
-                  className={activeTab === 'satellite_kiosks' ? 'nav-tab active' : 'nav-tab'}
                   onClick={() => setActiveTab('satellite_kiosks')}
-                  style={activeTab === 'satellite_kiosks' ? {
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
-                    color: '#ffffff',
-                    fontWeight: '700',
-                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
-                    borderRadius: '8px'
-                  } : {}}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    width: '100%',
+                    padding: '0.55rem 0.65rem',
+                    borderRadius: '8px',
+                    fontSize: '0.825rem',
+                    fontWeight: activeTab === 'satellite_kiosks' ? '700' : '500',
+                    color: activeTab === 'satellite_kiosks' ? '#2563eb' : '#475569',
+                    backgroundColor: activeTab === 'satellite_kiosks' ? '#eff6ff' : 'transparent',
+                    border: activeTab === 'satellite_kiosks' ? '1px solid #dbeafe' : '1px solid transparent',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => { if (activeTab !== 'satellite_kiosks') e.currentTarget.style.backgroundColor = '#f8fafc' }}
+                  onMouseLeave={(e) => { if (activeTab !== 'satellite_kiosks') e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
-                  <MapPin size={15} /> Điểm Bán Take-away
-
+                  <MapPin size={16} color={activeTab === 'satellite_kiosks' ? '#2563eb' : '#64748b'} />
+                  <span>Điểm Bán Take-away</span>
                 </button>
 
                 <button
@@ -964,7 +974,7 @@ export function AdminSystemConsole({
               'membership-config': { group: 'Khách hàng & CSKH', label: 'Thiết lập Membership' },
               'survey-manage': { group: 'Khách hàng & CSKH', label: 'Quản lý Khảo sát' },
               'branches': { group: 'Mạng lưới & Hệ thống', label: 'Quản lý chi nhánh' },
-              'shippers': { group: 'Mạng lưới & Hệ thống', label: 'Quản lý giao hàng' },
+              'shippers': { group: 'Mạng lưới & Hệ thống', label: 'Quản lý shipper' },
               'kiosks': { group: 'Mạng lưới & Hệ thống', label: 'Quản lý Kiosk' },
               'users': { group: 'Mạng lưới & Hệ thống', label: 'Quản lý người dùng' },
               'smtp': { group: 'Mạng lưới & Hệ thống', label: 'Cấu hình Email & SMTP' },

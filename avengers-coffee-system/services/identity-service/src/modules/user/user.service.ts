@@ -1232,6 +1232,12 @@ export class UserService implements OnModuleInit {
     if (user.vai_tro === 'ADMIN') {
       throw new BadRequestException('Khong the xoa tai khoan ADMIN he thong');
     }
+    // Cascade delete dependent records
+    await this.userRepo.query('DELETE FROM identity.vi_giao_dich WHERE ma_nguoi_dung = $1', [userId]);
+    await this.userRepo.query('DELETE FROM identity.dia_chi_giao_hang WHERE ma_nguoi_dung = $1', [userId]);
+    
+    // Xóa tất cả Kiosk nhượng quyền của đối tác này
+    await this.userRepo.query('DELETE FROM franchise.kiosk WHERE franchisee_id = $1', [userId]);
 
     await this.userRepo.remove(user);
     return { message: 'Xoa tai khoan thanh cong' };

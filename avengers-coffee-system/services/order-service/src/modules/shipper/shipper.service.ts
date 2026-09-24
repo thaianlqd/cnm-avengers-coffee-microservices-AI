@@ -529,6 +529,7 @@ export class ShipperService {
     if (orderIds.length > 0) {
       try {
         orders2 = await this.donHangRepo.createQueryBuilder('don')
+          .leftJoinAndSelect('don.chi_tiet', 'chi_tiet')
           .where('don.ma_don_hang IN (:...orderIds)', { orderIds })
           .getMany();
           
@@ -554,6 +555,7 @@ export class ShipperService {
         cod_amount: o?.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG' ? Number(o.tong_tien || 0) : 0,
         order_value: Number(o?.tong_tien || 0),
         co_so_ma: o?.co_so_ma,
+        chi_tiet: o?.chi_tiet || [],
         pickup_address: branchInfo.store_address,
         store_name: branchInfo.store_name,
         store_address: branchInfo.store_address,
@@ -1611,6 +1613,12 @@ export class ShipperService {
 
     if (this.redisCacheService) {
       await this.redisCacheService.setJson(`shipper:batch:${shipperId}`, batch, 86400).catch(() => {});
+    }
+
+    // Update is_batched = true for all deliveries in the batch
+    for (const d of activeDeliveries) {
+      d.is_batched = true;
+      await this.deliveryRepo.save(d);
     }
 
     return { active: true, batch };

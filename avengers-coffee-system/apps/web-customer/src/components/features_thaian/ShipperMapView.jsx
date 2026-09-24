@@ -21,6 +21,7 @@ export default function ShipperMapView({
   shipperLocation = null,
   storeLocation = null,
   destinationLocation = null,
+  otherDestinations = [],
   shipperName = 'Shipper',
   deliveryStatus = '',
   storeAddress = 'Avengers Coffee',
@@ -42,6 +43,9 @@ export default function ShipperMapView({
   const cachedRouteCustomer = useRef(null);
   const cachedStepsStore = useRef([]);
   const cachedStepsCustomer = useRef([]);
+  // Track whether current cachedRouteCustomer was built for batch or normal mode
+  // so we can invalidate when mode changes
+  const cachedRouteModeRef = useRef('normal'); // 'normal' | 'batch'
 
   const calcDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371;
@@ -238,6 +242,26 @@ export default function ShipperMapView({
     });
   };
 
+  // Status text & Popup HTML defined at component scope so multiple useEffects can access them
+  const statusText = 
+    deliveryStatus === 'IN_TRANSIT' || deliveryStatus === 'DANG_GIAO' ? 'Đang giao tận nơi' :
+    deliveryStatus === 'PICKING_UP' ? 'Đang lấy hàng tại quán' :
+    deliveryStatus === 'CONFIRMED' ? 'Đã tiếp nhận đơn hàng' :
+    deliveryStatus === 'DELIVERED' || deliveryStatus === 'HOAN_THANH' ? 'Giao hàng thành công' :
+    'Đang kết nối tài xế';
+
+  const shipperPopupHtml = `
+    <div style="font-family: inherit; min-width: 175px; padding: 2px 0;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
+        <span style="display: inline-flex; width: 24px; height: 24px; border-radius: 7px; background: linear-gradient(135deg, #6366F1, #4F46E5); align-items: center; justify-content: center; color: white; box-shadow: 0 2px 6px rgba(79,70,229,0.35);">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
+        </span>
+        <span style="font-size: 13px; font-weight: 800; color: #111827;">${shipperName}</span>
+      </div>
+      <p style="margin: 0; font-size: 11px; font-weight: 700; color: #4F46E5;">${statusText}</p>
+    </div>
+  `;
+
   // Update markers
   useEffect(() => {
     if (!mapRef.current || !leafletLoaded) return;
@@ -269,24 +293,7 @@ export default function ShipperMapView({
       </div>
     `;
 
-    const statusText = 
-      deliveryStatus === 'IN_TRANSIT' || deliveryStatus === 'DANG_GIAO' ? 'Đang giao tận nơi' :
-      deliveryStatus === 'PICKING_UP' ? 'Đang lấy hàng tại quán' :
-      deliveryStatus === 'CONFIRMED' ? 'Đã tiếp nhận đơn hàng' :
-      deliveryStatus === 'DELIVERED' || deliveryStatus === 'HOAN_THANH' ? 'Giao hàng thành công' :
-      'Đang kết nối tài xế';
 
-    const shipperPopupHtml = `
-      <div style="font-family: inherit; min-width: 175px; padding: 2px 0;">
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
-          <span style="display: inline-flex; width: 24px; height: 24px; border-radius: 7px; background: linear-gradient(135deg, #6366F1, #4F46E5); align-items: center; justify-content: center; color: white; box-shadow: 0 2px 6px rgba(79,70,229,0.35);">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
-          </span>
-          <span style="font-size: 13px; font-weight: 800; color: #111827;">${shipperName}</span>
-        </div>
-        <p style="margin: 0; font-size: 11px; font-weight: 700; color: #4F46E5;">${statusText}</p>
-      </div>
-    `;
 
     // Store marker
     if (storeLocation?.latitude && storeLocation?.longitude) {
@@ -320,22 +327,6 @@ export default function ShipperMapView({
       }
     }
 
-    // Shipper marker
-    if (shipperLocation?.latitude && shipperLocation?.longitude) {
-      if (shipperMarkerRef.current) {
-        shipperMarkerRef.current.setLatLng([shipperLocation.latitude, shipperLocation.longitude]);
-        shipperMarkerRef.current.setIcon(getIcon('shipper'));
-        shipperMarkerRef.current.setPopupContent(shipperPopupHtml);
-      } else {
-        shipperMarkerRef.current = L.marker(
-          [shipperLocation.latitude, shipperLocation.longitude],
-          { icon: getIcon('shipper') },
-        )
-          .addTo(map)
-          .bindPopup(shipperPopupHtml);
-      }
-    }
-
     // Vẽ route line
     const fetchAndDrawRoute = async () => {
       let totalDistance = 0;
@@ -343,95 +334,216 @@ export default function ShipperMapView({
       let allCoords = [];
       let activeSteps = [];
 
+      // TSP Helper Functions
+      const haversine = (lat1, lon1, lat2, lon2) => {
+        const R = 6371; 
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a =
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+          Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+      };
+
+      const nearestNeighborTSP = (points) => {
+        if (!points || points.length <= 1) return points;
+        const startPoint = points[0];
+        let unvisited = points.slice(1);
+        const optimized = [startPoint];
+
+        let current = startPoint;
+        while (unvisited.length > 0) {
+          let nearestIdx = 0;
+          let minDistance = Infinity;
+          for (let i = 0; i < unvisited.length; i++) {
+            const d = haversine(current.lat, current.lng, unvisited[i].lat, unvisited[i].lng);
+            if (d < minDistance) {
+              minDistance = d;
+              nearestIdx = i;
+            }
+          }
+          current = unvisited[nearestIdx];
+          optimized.push(current);
+          unvisited.splice(nearestIdx, 1);
+        }
+        return optimized;
+      };
+
       try {
         const VIETMAP_API_KEY = import.meta.env.VITE_VIETMAP_API_KEY || 'dbdd3165b3cb0d85239a7f59f410a9fa925974c4a6d4c54b';
 
-        // 1. Shipper -> Store (Lộ trình xe máy Vietmap)
-        if (storeLocation?.latitude && shipperLocation?.latitude) {
-          if (!cachedRouteStore.current) {
-            const url1 = `https://maps.vietmap.vn/api/route?api-version=1.1&apikey=${VIETMAP_API_KEY}&point=${shipperLocation.latitude},${shipperLocation.longitude}&point=${storeLocation.latitude},${storeLocation.longitude}&vehicle=motorcycle&points_encoded=false`;
-            const res1 = await fetch(url1);
-            const data1 = await res1.json();
-            const path1 = data1.paths?.[0];
-            if (path1?.points?.coordinates) {
-              cachedRouteStore.current = path1.points.coordinates.map((c) => [c[1], c[0]]);
-              cachedStepsStore.current = (path1.instructions || []).map((ins) => ({
+        const isBatch = otherDestinations && otherDestinations.length > 0;
+        const isPickingUp = deliveryStatus === 'PICKING_UP' || deliveryStatus === 'CONFIRMED';
+        const isDelivering = deliveryStatus === 'IN_TRANSIT' || deliveryStatus === 'DANG_GIAO';
+
+        // DEBUG: Xem data thực tế đang đến
+        console.log('[ShipperMap DEBUG]', {
+          isBatch,
+          isPickingUp,
+          isDelivering,
+          deliveryStatus,
+          otherDestinations,
+          shipperLocation,
+          storeLocation,
+          destinationLocation,
+        });
+
+        if (isBatch && (isDelivering || isPickingUp) && destinationLocation?.latitude) {
+          // ═══ CHẾ ĐỘ GHÉP ĐƠN ═══
+          // - Khi PICKING_UP: Vẽ từ Store → [các khách theo TSP] → Khách này
+          // - Khi IN_TRANSIT: Vẽ từ Shipper hiện tại → [các khách theo TSP] → Khách này
+          // Giống hệt với những gì shipper đang nhìn thấy trên app của họ
+          // Điểm xuất phát của TSP luôn luôn là Quán (Store), giống hệt như app Shipper.
+          // App shipper luôn tính TSP từ Quán -> Các điểm giao, và hiển thị toàn bộ lộ trình này.
+          const batchStartPoint = storeLocation?.latitude ? { lat: storeLocation.latitude, lng: storeLocation.longitude } : null;
+          // Nếu cache trước đây được build ở chế độ normal (Store→Customer) → xóa để build lại
+          if (cachedRouteCustomer.current && cachedRouteModeRef.current !== 'batch') {
+            cachedRouteCustomer.current = null;
+            cachedStepsCustomer.current = [];
+            // Xóa polyline cũ khỏi bản đồ
+            if (routeToCustomerRef.current) {
+              routeToCustomerRef.current.remove();
+              routeToCustomerRef.current = null;
+            }
+          }
+
+          if (!cachedRouteCustomer.current && batchStartPoint) {
+            const allStops = [
+              batchStartPoint, // Điểm đầu: shipper (khi đang giao) hoặc quán (khi đang lấy hàng)
+              ...otherDestinations.map(d => ({ lat: d.latitude, lng: d.longitude })),
+              { lat: destinationLocation.latitude, lng: destinationLocation.longitude }
+            ];
+            // Giữ batchStartPoint làm điểm đầu cố định, TSP sắp xếp các điểm còn lại
+            const orderedStops = nearestNeighborTSP(allStops);
+            const pointsParams = orderedStops.map(p => `point=${p.lat},${p.lng}`).join('&');
+
+            const urlBatch = `https://maps.vietmap.vn/api/route?api-version=1.1&apikey=${VIETMAP_API_KEY}&${pointsParams}&vehicle=motorcycle&points_encoded=false`;
+            const resBatch = await fetch(urlBatch);
+            const dataBatch = await resBatch.json();
+            const pathBatch = dataBatch.paths?.[0];
+            if (pathBatch?.points?.coordinates) {
+              cachedRouteCustomer.current = pathBatch.points.coordinates.map((c) => [c[1], c[0]]);
+              cachedStepsCustomer.current = (pathBatch.instructions || []).map((ins) => ({
                 maneuver: {
-                  location: path1.points.coordinates[ins.interval?.[0] || 0],
+                  location: pathBatch.points.coordinates[ins.interval?.[0] || 0],
                   instruction: ins.text,
                 },
                 name: ins.street_name,
               }));
-              totalDistance += path1.distance;
-              totalDuration += path1.time / 1000;
-            }
-          }
-
-          if (cachedRouteStore.current) {
-            const blueStyle = { 
-              color: '#2563EB', 
-              weight: 5,
-              opacity: 0.95,
-              lineJoin: 'round',
-              lineCap: 'round',
-            };
-            
-            if (routeToStoreRef.current) {
-              routeToStoreRef.current.setLatLngs(cachedRouteStore.current);
-              routeToStoreRef.current.setStyle(blueStyle);
-            } else {
-              routeToStoreRef.current = L.polyline(cachedRouteStore.current, blueStyle).addTo(map);
-            }
-            allCoords.push(...cachedRouteStore.current);
-
-            if (deliveryStatus === 'PICKING_UP' || deliveryStatus === 'CONFIRMED') {
-              activeSteps = cachedStepsStore.current;
-            }
-          }
-        }
-        
-        // 2. Store -> Customer (Lộ trình xe máy Vietmap)
-        if (storeLocation?.latitude && destinationLocation?.latitude) {
-          if (!cachedRouteCustomer.current) {
-            const url2 = `https://maps.vietmap.vn/api/route?api-version=1.1&apikey=${VIETMAP_API_KEY}&point=${storeLocation.latitude},${storeLocation.longitude}&point=${destinationLocation.latitude},${destinationLocation.longitude}&vehicle=motorcycle&points_encoded=false`;
-            const res2 = await fetch(url2);
-            const data2 = await res2.json();
-            const path2 = data2.paths?.[0];
-            if (path2?.points?.coordinates) {
-              cachedRouteCustomer.current = path2.points.coordinates.map((c) => [c[1], c[0]]);
-              cachedStepsCustomer.current = (path2.instructions || []).map((ins) => ({
-                maneuver: {
-                  location: path2.points.coordinates[ins.interval?.[0] || 0],
-                  instruction: ins.text,
-                },
-                name: ins.street_name,
-              }));
-              totalDistance += path2.distance;
-              totalDuration += path2.time / 1000;
+              totalDistance += pathBatch.distance;
+              totalDuration += pathBatch.time / 1000;
+              cachedRouteModeRef.current = 'batch'; // Đánh dấu cache này là batch mode
             }
           }
 
           if (cachedRouteCustomer.current) {
-            const customerRouteStyle = {
+            const batchRouteStyle = {
               color: '#2563EB',
               weight: 5,
               opacity: 0.95,
               lineJoin: 'round',
               lineCap: 'round',
             };
-
+            // Ẩn tuyến đường Shipper→Store (không còn cần thiết khi đang giao)
+            if (routeToStoreRef.current) {
+              routeToStoreRef.current.remove();
+              routeToStoreRef.current = null;
+            }
             if (routeToCustomerRef.current) {
               routeToCustomerRef.current.setLatLngs(cachedRouteCustomer.current);
-              routeToCustomerRef.current.setStyle(customerRouteStyle);
+              routeToCustomerRef.current.setStyle(batchRouteStyle);
             } else {
-              routeToCustomerRef.current = L.polyline(cachedRouteCustomer.current, customerRouteStyle).addTo(map);
+              routeToCustomerRef.current = L.polyline(cachedRouteCustomer.current, batchRouteStyle).addTo(map);
             }
-            
             allCoords.push(...cachedRouteCustomer.current);
-            
-            const isDelivering = deliveryStatus === 'IN_TRANSIT' || deliveryStatus === 'DANG_GIAO';
-            if (isDelivering) {
-              activeSteps = cachedStepsCustomer.current;
+            activeSteps = cachedStepsCustomer.current;
+          }
+        } else {
+          // ═══ CHẾ ĐỘ THƯỜNG (đơn lẻ, hoặc chưa giao) ═══
+
+          // 1. Shipper → Store (khi đang lấy hàng)
+          if (storeLocation?.latitude && shipperLocation?.latitude) {
+            if (!cachedRouteStore.current) {
+              const url1 = `https://maps.vietmap.vn/api/route?api-version=1.1&apikey=${VIETMAP_API_KEY}&point=${shipperLocation.latitude},${shipperLocation.longitude}&point=${storeLocation.latitude},${storeLocation.longitude}&vehicle=motorcycle&points_encoded=false`;
+              const res1 = await fetch(url1);
+              const data1 = await res1.json();
+              const path1 = data1.paths?.[0];
+              if (path1?.points?.coordinates) {
+                cachedRouteStore.current = path1.points.coordinates.map((c) => [c[1], c[0]]);
+                cachedStepsStore.current = (path1.instructions || []).map((ins) => ({
+                  maneuver: {
+                    location: path1.points.coordinates[ins.interval?.[0] || 0],
+                    instruction: ins.text,
+                  },
+                  name: ins.street_name,
+                }));
+                totalDistance += path1.distance;
+                totalDuration += path1.time / 1000;
+              }
+            }
+
+            if (cachedRouteStore.current) {
+              const blueStyle = {
+                color: '#2563EB',
+                weight: 5,
+                opacity: 0.95,
+                lineJoin: 'round',
+                lineCap: 'round',
+              };
+              if (routeToStoreRef.current) {
+                routeToStoreRef.current.setLatLngs(cachedRouteStore.current);
+                routeToStoreRef.current.setStyle(blueStyle);
+              } else {
+                routeToStoreRef.current = L.polyline(cachedRouteStore.current, blueStyle).addTo(map);
+              }
+              allCoords.push(...cachedRouteStore.current);
+              if (isPickingUp) {
+                activeSteps = cachedStepsStore.current;
+              }
+            }
+          }
+
+          // 2. Store → Customer (đơn lẻ)
+          if (storeLocation?.latitude && destinationLocation?.latitude) {
+            if (!cachedRouteCustomer.current) {
+              const url2 = `https://maps.vietmap.vn/api/route?api-version=1.1&apikey=${VIETMAP_API_KEY}&point=${storeLocation.latitude},${storeLocation.longitude}&point=${destinationLocation.latitude},${destinationLocation.longitude}&vehicle=motorcycle&points_encoded=false`;
+              const res2 = await fetch(url2);
+              const data2 = await res2.json();
+              const path2 = data2.paths?.[0];
+              if (path2?.points?.coordinates) {
+                cachedRouteCustomer.current = path2.points.coordinates.map((c) => [c[1], c[0]]);
+                cachedStepsCustomer.current = (path2.instructions || []).map((ins) => ({
+                  maneuver: {
+                    location: path2.points.coordinates[ins.interval?.[0] || 0],
+                    instruction: ins.text,
+                  },
+                  name: ins.street_name,
+                }));
+                totalDistance += path2.distance;
+                totalDuration += path2.time / 1000;
+              }
+            }
+
+            if (cachedRouteCustomer.current) {
+              const customerRouteStyle = {
+                color: '#2563EB',
+                weight: 5,
+                opacity: 0.95,
+                lineJoin: 'round',
+                lineCap: 'round',
+              };
+              if (routeToCustomerRef.current) {
+                routeToCustomerRef.current.setLatLngs(cachedRouteCustomer.current);
+                routeToCustomerRef.current.setStyle(customerRouteStyle);
+              } else {
+                routeToCustomerRef.current = L.polyline(cachedRouteCustomer.current, customerRouteStyle).addTo(map);
+              }
+              allCoords.push(...cachedRouteCustomer.current);
+              if (isDelivering) {
+                activeSteps = cachedStepsCustomer.current;
+              }
             }
           }
         }
@@ -489,7 +601,33 @@ export default function ShipperMapView({
     };
 
     fetchAndDrawRoute();
-  }, [shipperLocation, storeLocation, destinationLocation, leafletLoaded, shipperName, deliveryStatus, storeAddress]);
+  }, [shipperLocation, storeLocation, destinationLocation, otherDestinations, leafletLoaded, shipperName, deliveryStatus, storeAddress]);
+
+  // Update shipper marker smoothly when shipperLocation state changes
+  useEffect(() => {
+    const L = window._L || window.L;
+    if (!L) return;
+    
+    if (shipperLocation?.latitude && shipperLocation?.longitude && mapRef.current) {
+      if (shipperMarkerRef.current) {
+        shipperMarkerRef.current.setLatLng([shipperLocation.latitude, shipperLocation.longitude]);
+        shipperMarkerRef.current.setIcon(getIcon('shipper'));
+        shipperMarkerRef.current.setPopupContent(shipperPopupHtml);
+      } else {
+        shipperMarkerRef.current = L.marker(
+          [shipperLocation.latitude, shipperLocation.longitude],
+          { icon: getIcon('shipper') }
+        )
+          .addTo(mapRef.current)
+          .bindPopup(shipperPopupHtml);
+      }
+      
+      // Optionally pan map to follow shipper
+      if (mapRef.current) {
+        mapRef.current.panTo([shipperLocation.latitude, shipperLocation.longitude], { animate: true });
+      }
+    }
+  }, [shipperLocation, shipperPopupHtml]);
 
   return (
     <div className="relative rounded-2xl overflow-hidden border border-gray-200/80 shadow-lg">
@@ -671,6 +809,9 @@ export default function ShipperMapView({
         }
         .leaflet-container {
           font-family: inherit;
+        }
+        .leaflet-marker-icon.custom-map-marker {
+          transition: transform 1s linear;
         }
         .leaflet-popup-content-wrapper {
           border-radius: 16px !important;

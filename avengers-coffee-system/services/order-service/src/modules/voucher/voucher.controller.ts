@@ -62,4 +62,14 @@ export class VoucherController {
       so_tien_giam,
     };
   }
+
+  @Post('eligible')
+  async eligible(@Body() body: { tong_tien?: number; user_id?: string; has_toppings?: boolean; topping_price?: number }) {
+    return this.voucherService.layVoucherKhaDung(
+      Number(body.tong_tien || 0),
+      body.user_id,
+      body.has_toppings,
+      Number(body.topping_price || 0),
+    );
+  }
 }

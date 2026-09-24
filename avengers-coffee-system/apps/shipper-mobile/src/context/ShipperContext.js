@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react'
 import apiClient, { clearAuthToken, setAuthToken } from '../lib/apiClient'
 import { clearShipperSession, loadShipperSession, saveShipperSession } from '../lib/storage'
 
@@ -68,13 +68,13 @@ export function ShipperProvider({ children }) {
     await saveShipperSession(updatedShipper, token)
   }
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (!shipper?.id) return null
     const profile = await apiClient.get(`/shippers/${shipper.id}/profile`)
     setShipper(profile)
     await saveShipperSession(profile, token)
     return profile
-  }
+  }, [shipper?.id, token])
 
   const logout = async () => {
     setShipper(null)

@@ -36,24 +36,20 @@ st.markdown("""
 def get_franchise_kpis():
     return query_df("""
         SELECT
-            COUNT(DISTINCT co_so_ma) FILTER (
-                WHERE co_so_ma LIKE '%-K%'
-            ) AS total_kiosks,
-            COUNT(DISTINCT co_so_ma) FILTER (
-                WHERE co_so_ma NOT LIKE '%-K%'
-            ) AS total_main_stores,
+            (SELECT COUNT(*) FROM franchise.kiosk WHERE trang_thai = 'DANG_HOAT_DONG') AS total_kiosks,
+            (SELECT COUNT(*) FROM identity.chi_nhanh WHERE trang_thai = 'ACTIVE') AS total_main_stores,
             COALESCE(SUM(tong_tien) FILTER (
-                WHERE co_so_ma LIKE '%-K%'
+                WHERE co_so_ma LIKE 'KSK-%'
                   AND trang_thai_don_hang = 'HOAN_THANH'
                   AND ngay_tao >= NOW() - INTERVAL '30 days'
             ), 0) AS kiosk_revenue_30d,
             COALESCE(SUM(tong_tien) FILTER (
-                WHERE co_so_ma NOT LIKE '%-K%'
+                WHERE co_so_ma NOT LIKE 'KSK-%'
                   AND trang_thai_don_hang = 'HOAN_THANH'
                   AND ngay_tao >= NOW() - INTERVAL '30 days'
             ), 0) AS store_revenue_30d,
             COUNT(DISTINCT co_so_ma) FILTER (
-                WHERE co_so_ma LIKE '%-K%'
+                WHERE co_so_ma LIKE 'KSK-%'
                   AND trang_thai_don_hang = 'HOAN_THANH'
                   AND ngay_tao >= NOW() - INTERVAL '30 days'
             ) AS active_kiosks_30d
@@ -97,7 +93,7 @@ def get_kiosk_health():
             ) AS ty_suat_loi_nhuan_pct,
             ROUND(SUM(tong_tien) FILTER (WHERE trang_thai_don_hang = 'HOAN_THANH')::numeric * 0.07, 0) AS phi_nhuong_quyen
         FROM orders.don_hang
-        WHERE co_so_ma LIKE '%-K%'
+        WHERE co_so_ma LIKE 'KSK-%'
           AND ngay_tao >= NOW() - INTERVAL '30 days'
         GROUP BY co_so_ma
         HAVING COUNT(*) FILTER (WHERE trang_thai_don_hang = 'HOAN_THANH') > 0
@@ -149,7 +145,7 @@ with col_a:
                 COUNT(DISTINCT co_so_ma) AS so_kiosk,
                 ROUND(SUM(tong_tien) FILTER (WHERE trang_thai_don_hang = 'HOAN_THANH')::numeric, 0) AS doanh_thu
             FROM orders.don_hang
-            WHERE co_so_ma LIKE '%-K%'
+            WHERE co_so_ma LIKE 'KSK-%'
               AND ngay_tao >= NOW() - INTERVAL '30 days'
             GROUP BY SPLIT_PART(dia_chi_giao_hang, ', ', 2)
             ORDER BY doanh_thu DESC NULLS LAST
@@ -237,7 +233,7 @@ with col_b:
     def get_order_type_mix():
         return query_df("""
             SELECT
-                CASE WHEN co_so_ma LIKE '%-K%' THEN 'Kiosk (NQ)' ELSE 'Main Store' END AS loai_co_so,
+                CASE WHEN co_so_ma LIKE 'KSK-%' THEN 'Kiosk (NQ)' ELSE 'Main Store' END AS loai_co_so,
                 COALESCE(loai_don_hang, 'KHAC') AS loai_don,
                 COUNT(*) AS so_don,
                 ROUND(SUM(tong_tien)::numeric, 0) AS doanh_thu
@@ -274,7 +270,7 @@ def get_daily_kiosk_revenue():
             DATE(ngay_tao) AS ds,
             SUM(tong_tien) AS y
         FROM orders.don_hang
-        WHERE co_so_ma LIKE '%-K%'
+        WHERE co_so_ma LIKE 'KSK-%'
           AND trang_thai_don_hang = 'HOAN_THANH'
           AND ngay_tao >= NOW() - INTERVAL '90 days'
         GROUP BY DATE(ngay_tao)

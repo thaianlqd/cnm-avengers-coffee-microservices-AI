@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
 import { getAdminAccessToken, getAdminSession } from '../../../lib/adminFetch'
 import {
@@ -78,6 +78,117 @@ const BLANK_FORM = {
   username: '', password: '', full_name: '', email: '', phone_number: '',
   vehicle_type: 'MOTORBIKE', vehicle_plate: '', branch_code: '',
 }
+
+const SearchableBranchSelect = ({ branches, value, onChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedBranch = branches.find(b => (b.code || b.id) === value);
+  const filteredBranches = branches.filter(b => 
+    (b.name || b.code || '').toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div ref={wrapperRef} style={{ position: 'relative', width: '100%' }}>
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        style={{ 
+          padding: '0.5rem 0.75rem', 
+          borderRadius: '6px', 
+          border: '1px solid #cbd5e1', 
+          fontSize: '0.875rem', 
+          background: '#fff',
+          cursor: 'pointer',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}
+      >
+        <span>{selectedBranch ? (selectedBranch.name || selectedBranch.code) : 'Chọn chi nhánh phụ trách'}</span>
+        <span style={{ fontSize: '0.7rem', color: '#64748b' }}>▼</span>
+      </div>
+      
+      {isOpen && (
+        <div style={{ 
+          position: 'absolute', 
+          top: '100%', 
+          left: 0, 
+          right: 0, 
+          marginTop: '4px',
+          background: '#fff', 
+          border: '1px solid #cbd5e1', 
+          borderRadius: '6px', 
+          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+          zIndex: 50,
+          maxHeight: '250px',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          <div style={{ padding: '8px', borderBottom: '1px solid #e2e8f0' }}>
+            <input
+              autoFocus
+              type="text"
+              placeholder="Gõ để tìm kiếm chi nhánh..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.4rem 0.6rem',
+                border: '1px solid #cbd5e1',
+                borderRadius: '4px',
+                fontSize: '0.875rem',
+                outline: 'none',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+          <div style={{ overflowY: 'auto' }}>
+            <div 
+              onClick={() => { onChange(''); setIsOpen(false); setSearch(''); }}
+              style={{ padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.875rem', color: '#64748b' }}
+              onMouseEnter={e => e.target.style.background = '#f1f5f9'}
+              onMouseLeave={e => e.target.style.background = 'transparent'}
+            >
+              -- Bỏ chọn --
+            </div>
+            {filteredBranches.length > 0 ? filteredBranches.map(b => (
+              <div
+                key={b.code || b.id}
+                onClick={() => { onChange(b.code || b.id); setIsOpen(false); setSearch(''); }}
+                style={{ 
+                  padding: '0.5rem 0.75rem', 
+                  cursor: 'pointer', 
+                  fontSize: '0.875rem',
+                  background: value === (b.code || b.id) ? '#eff6ff' : 'transparent',
+                  color: value === (b.code || b.id) ? '#1d4ed8' : '#334155'
+                }}
+                onMouseEnter={e => { if (value !== (b.code || b.id)) e.target.style.background = '#f8fafc' }}
+                onMouseLeave={e => { if (value !== (b.code || b.id)) e.target.style.background = 'transparent' }}
+              >
+                {b.name || b.code}
+              </div>
+            )) : (
+              <div style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#94a3b8', textAlign: 'center' }}>
+                Không tìm thấy chi nhánh
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export function AdminShipperPanel({ branchOptions = [] }) {
   const [activeTab, setActiveTab] = useState('crud')
@@ -498,16 +609,11 @@ export function AdminShipperPanel({ branchOptions = [] }) {
 
               <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#475569' }}>Chi nhánh phụ trách</span>
-                <select
+                <SearchableBranchSelect
+                  branches={effectiveBranches}
                   value={form.branch_code}
-                  onChange={e => setForm(p => ({ ...p, branch_code: e.target.value }))}
-                  style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.875rem', background: '#fff' }}
-                >
-                  <option value="">Chọn chi nhánh phụ trách</option>
-                  {effectiveBranches.map(b => (
-                    <option key={b.code || b.id} value={b.code || b.id}>{b.name || b.code}</option>
-                  ))}
-                </select>
+                  onChange={val => setForm(p => ({ ...p, branch_code: val }))}
+                />
               </label>
             </div>
 

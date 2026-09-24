@@ -30,7 +30,8 @@ def _norm(s: str) -> str:
 def _require_valid_session(session_id: str) -> str:
     import uuid
     try:
-        uuid_obj = uuid.UUID(session_id)
+        customer_session_id = str(session_id or "").split(":conversation:", 1)[0]
+        uuid_obj = uuid.UUID(customer_session_id)
         return str(uuid_obj)
     except ValueError:
         return None

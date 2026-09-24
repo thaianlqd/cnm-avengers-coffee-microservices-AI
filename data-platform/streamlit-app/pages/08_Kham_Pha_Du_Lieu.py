@@ -10,12 +10,12 @@ from components import render_sidebar, render_section_title
 from styles import inject_styles, init_plotly_template, apply_layout, PLOTLY_LAYOUT
 
 # ─── Page Config ──────────────────────────────────────────────────────────────
-st.set_page_config(page_title="Phân Tích Chuyên Sâu", page_icon="🔬", layout="wide")
+st.set_page_config(page_title="Khám Phá Dữ Liệu", page_icon="🔬", layout="wide")
 inject_styles()
 init_plotly_template()
 render_sidebar()
 
-st.markdown("<h3 style='margin-bottom:16px; font-weight:800; color:#C0C0D8;'>Phân Tích Dữ Liệu Chuyên Sâu (Advanced Analytics)</h3>", unsafe_allow_html=True)
+st.markdown("<h3 style='margin-bottom:16px; font-weight:800; color:#C0C0D8;'>Khám Phá Dữ Liệu (Data Discovery)</h3>", unsafe_allow_html=True)
 st.caption("Ứng dụng thuật toán phân tích dữ liệu và AI để trích xuất quy luật kinh doanh.")
 
 # --- A3. RFM Segmentation ---
@@ -161,7 +161,7 @@ st.markdown("**Câu hỏi kinh doanh:** Khu vực nào và khung giờ nào ship
 def get_delivery_performance():
     df = query_df("""
         SELECT 
-            cn.quan_huyen as district,
+            cn.thanh_pho as district,
             EXTRACT(HOUR FROM d.ngay_tao) as hour_of_day,
             COUNT(*) as total_deliveries,
             AVG(EXTRACT(EPOCH FROM (v.delivered_at - v.picked_up_at))/60) as avg_delivery_time_mins
@@ -169,9 +169,8 @@ def get_delivery_performance():
         JOIN orders.don_hang d ON v.ma_don_hang::varchar = d.ma_don_hang::varchar
         JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
         WHERE v.delivered_at IS NOT NULL AND v.picked_up_at IS NOT NULL
-        GROUP BY cn.quan_huyen, EXTRACT(HOUR FROM d.ngay_tao)
+        GROUP BY cn.thanh_pho, EXTRACT(HOUR FROM d.ngay_tao)
     """)
-    # Mock data removed. Returns empty df if no data.
     return df
     
 deliv_df = get_delivery_performance()
@@ -383,3 +382,70 @@ if not weather_df.empty:
             </ul>
         </div>
         """, unsafe_allow_html=True)
+
+# --- A7. Fraud & Anomaly Detection ---
+st.markdown("<hr style='border-color:#2A2A3E; margin:30px 0;'>", unsafe_allow_html=True)
+st.markdown("<div class='section-title'>A7. Machine Learning: Phát hiện Đơn Hàng Bất Thường (Anomaly Detection)</div>", unsafe_allow_html=True)
+st.markdown("**Câu hỏi kinh doanh:** Có đơn hàng nào có giá trị lớn đột biến hoặc xảy ra vào khung giờ bất thường (nguy cơ Fraud/Bom hàng) không?")
+
+@st.cache_data(ttl=86400, show_spinner=False)
+def get_anomaly_data():
+    return query_df("""
+        SELECT 
+            ma_don_hang::text AS ma_don_hang,
+            tong_tien,
+            EXTRACT(HOUR FROM ngay_tao) AS order_hour,
+            ngay_tao
+        FROM orders.don_hang
+        WHERE trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO', 'DA_XAC_NHAN')
+        LIMIT 2000
+    """)
+
+anomaly_df = get_anomaly_data()
+if not anomaly_df.empty and len(anomaly_df) >= 10:
+    try:
+        from sklearn.ensemble import IsolationForest
+        import numpy as np
+        
+        # Features: Giá trị đơn hàng & Khung giờ
+        anomaly_df["tong_tien"] = pd.to_numeric(anomaly_df["tong_tien"], errors="coerce").fillna(0)
+        anomaly_df["order_hour"] = pd.to_numeric(anomaly_df["order_hour"], errors="coerce").fillna(0)
+        X = anomaly_df[["tong_tien", "order_hour"]]
+        
+        # Train Isolation Forest (Tỷ lệ ngoại lai giả định: 3%)
+        clf = IsolationForest(contamination=0.03, random_state=42)
+        anomaly_df['anomaly'] = clf.fit_predict(X)
+        anomaly_df['anomaly_label'] = np.where(anomaly_df['anomaly'] == -1, 'Bất thường (Anomaly)', 'Bình thường')
+        
+        fig_anomaly = px.scatter(
+            anomaly_df, x="order_hour", y="tong_tien", color="anomaly_label",
+            color_discrete_map={"Bình thường": "#2563EB", "Bất thường (Anomaly)": "#FF4757"},
+            hover_name="ma_don_hang",
+            labels={"order_hour": "Khung giờ đặt hàng (0-23h)", "tong_tien": "Giá trị đơn (đ)", "anomaly_label": "Phân loại AI"}
+        )
+        
+        fig_anomaly.update_traces(marker=dict(size=8, opacity=0.7, line=dict(width=1, color="DarkSlateGrey")))
+        apply_layout(fig_anomaly, height=450, margin=dict(l=40, r=40, t=30, b=40))
+        fig_anomaly.update_xaxes(dtick=2, range=[-1, 24])
+        
+        col_anom1, col_anom2 = st.columns([2, 1])
+        with col_anom1:
+            st.plotly_chart(fig_anomaly, use_container_width=True)
+        with col_anom2:
+            num_anomalies = len(anomaly_df[anomaly_df['anomaly'] == -1])
+            st.markdown(f"""
+            <div style='background:rgba(239, 68, 68, 0.1); border:1px solid #B91C1C; border-radius:12px; padding:16px;'>
+                <div style='font-size:16px; color:#F87171; font-weight:800;'>🚨 AI CẢNH BÁO: {num_anomalies} ĐƠN HÀNG</div>
+                <div style='margin-top:8px; font-size:14px; color:#D1D5DB;'>
+                    <b>Isolation Forest</b> phát hiện các đơn hàng có hành vi mua sắm khác biệt hoàn toàn với đám đông (Outliers).<br><br>
+                    <b>Đặc điểm nhận diện:</b><br>
+                    - Chấm <b>Đỏ</b> cách xa đám đông.<br>
+                    - Mua số lượng cực lớn vào giờ thấp điểm (VD: 1-4h sáng).<br><br>
+                    <b>Hành động:</b> Yêu cầu NV CSKH gọi điện xác nhận lại (OTP Voice) để chống rủi ro bom hàng.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+    except ImportError:
+        st.info("Thiếu thư viện scikit-learn để chạy mô hình AI.")
+else:
+    st.info("Chưa đủ số lượng đơn hàng (Cần >10 đơn) để huấn luyện mô hình Anomaly Detection.")
