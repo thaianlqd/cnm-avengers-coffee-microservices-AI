@@ -1417,19 +1417,42 @@ def _run_agent_impl(
 
     # Resolve a pending cancellation before looking for checkout confirmation.
     # This prevents "đồng ý" from a cancel preview creating an unrelated order.
-    if _is_plain_confirmation(user_message) and "xac nhan huy" in last_msg_lower:
-        match = re.search(r"don hang ([\w\-]+) khong", last_msg_lower)
-        if not match:
-            match = re.search(r"([\w\-]{36})", last_assistant_msg)
-        if match:
-            from src.function_calling.tools.order_tools import execute_cancel_order
-            order_id = match.group(1)
-            cancel_res = execute_cancel_order(session_id, order_id, is_confirmed=True)
-            reply = (f"✅ Đơn hàng **{order_id}** đã được hủy thành công."
-                     if cancel_res.get("status") == "success"
-                     else f"❌ Chưa thể hủy đơn hàng: {cancel_res.get('message', 'Lỗi không xác định')}.")
-            return {"reply": reply, "checkout_payload": None,
-                    "tool_calls_log": [{"tool": "cancel_order", "result": cancel_res}], "error": None}
+    if "xac nhan huy" in last_msg_lower:
+        import os
+        use_t1 = os.getenv("USE_T1_CONFIRM", "false").lower() == "true"
+        if use_t1:
+            pending = cart_manager.get_pending_action(session_id)
+            pending_type = pending.get("type") if pending else "confirm_cancel"
+            from src.agents.tier1 import classify_confirmation
+            classification = classify_confirmation(user_message, pending_type)
+            is_yes = (classification == "YES")
+            is_ambiguous = (classification == "AMBIGUOUS")
+        else:
+            is_yes = _is_plain_confirmation(user_message)
+            is_ambiguous = False
+
+        if is_ambiguous:
+            return {
+                "reply": "Bạn có xác nhận hủy đơn hay không? Vui lòng trả lời rõ 'có' hoặc 'không' nhé.",
+                "gate": "confirm_cancel_ambiguous",
+                "checkout_payload": None,
+                "tool_calls_log": [],
+                "error": None
+            }
+
+        if is_yes:
+            match = re.search(r"don hang ([\w\-]+) khong", last_msg_lower)
+            if not match:
+                match = re.search(r"([\w\-]{36})", last_assistant_msg)
+            if match:
+                from src.function_calling.tools.order_tools import execute_cancel_order
+                order_id = match.group(1)
+                cancel_res = execute_cancel_order(session_id, order_id, is_confirmed=True)
+                reply = (f"✅ Đơn hàng **{order_id}** đã được hủy thành công."
+                         if cancel_res.get("status") == "success"
+                         else f"❌ Chưa thể hủy đơn hàng: {cancel_res.get('message', 'Lỗi không xác định')}.")
+                return {"reply": reply, "gate": "confirm_cancel", "checkout_payload": None,
+                        "tool_calls_log": [{"tool": "cancel_order", "result": cancel_res}], "error": None}
 
     prefs = cart_manager.get_checkout_prefs(session_id)
 
@@ -1483,16 +1506,39 @@ def _run_agent_impl(
     # Confirmation is resolved from the server-side pending checkout state.
     # Frontend history is presentation data and may be truncated, reformatted or
     # omitted, so it must not decide whether a real checkout can proceed.
-    if _is_plain_confirmation(user_message) and prefs.get("summary_fingerprint"):
-        from src.function_calling.tools.cart_tools import execute_confirm_checkout
-        checkout_res = execute_confirm_checkout(session_id)
-        if checkout_res.get("status") in {"success", "already_processed"}:
-            order_id = checkout_res.get("order_id", "")
-            reply = f"🎉 Đặt hàng thành công! Mã đơn hàng của bạn là: **{order_id}**. Cảm ơn bạn đã ủng hộ!"
+    if prefs.get("summary_fingerprint"):
+        import os
+        use_t1 = os.getenv("USE_T1_CONFIRM", "false").lower() == "true"
+        if use_t1:
+            pending = cart_manager.get_pending_action(session_id)
+            pending_type = pending.get("type") if pending else "confirm_checkout"
+            from src.agents.tier1 import classify_confirmation
+            classification = classify_confirmation(user_message, pending_type)
+            is_yes = (classification == "YES")
+            is_ambiguous = (classification == "AMBIGUOUS")
         else:
-            reply = checkout_res.get("message", "Đơn hàng chưa được tạo. Bạn có thể kiểm tra lại giỏ hàng và thử lại.")
-        return {"reply": reply, "checkout_payload": None,
-                "tool_calls_log": [{"tool": "confirm_checkout", "result": checkout_res}], "error": None}
+            is_yes = _is_plain_confirmation(user_message)
+            is_ambiguous = False
+
+        if is_ambiguous:
+            return {
+                "reply": "Bạn có xác nhận chốt đơn hay không? Vui lòng trả lời rõ 'có' hoặc 'không' nhé.",
+                "gate": "confirm_checkout_ambiguous",
+                "checkout_payload": None,
+                "tool_calls_log": [],
+                "error": None
+            }
+
+        if is_yes:
+            from src.function_calling.tools.cart_tools import execute_confirm_checkout
+            checkout_res = execute_confirm_checkout(session_id)
+            if checkout_res.get("status") in {"success", "already_processed"}:
+                order_id = checkout_res.get("order_id", "")
+                reply = f"🎉 Đặt hàng thành công! Mã đơn hàng của bạn là: **{order_id}**. Cảm ơn bạn đã ủng hộ!"
+            else:
+                reply = checkout_res.get("message", "Đơn hàng chưa được tạo. Bạn có thể kiểm tra lại giỏ hàng và thử lại.")
+            return {"reply": reply, "gate": "confirm_checkout", "checkout_payload": None,
+                    "tool_calls_log": [{"tool": "confirm_checkout", "result": checkout_res}], "error": None}
 
     completed_pending = _complete_pending_products_from_options(session_id, user_message)
     if completed_pending:
