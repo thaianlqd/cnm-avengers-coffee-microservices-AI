@@ -5,6 +5,31 @@ import { apiClient } from '../lib/apiClient';
 // ─── Utilities & Formatters ──────────────────────────────────────────────────
 const fmtVND = (n) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
 const fmtTime = (v) => { if (!v) return ''; const d = new Date(v); return isNaN(d) ? '' : d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }); };
+const isCheckoutConfirmation = (value) => {
+  const raw = String(value || '');
+  const normalized = String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/đ/g, 'd')
+    .replace(/[!.,]+$/g, '')
+    .trim();
+  if (!normalized || raw.includes('?')) return false;
+  if (/\b(nhung|doi|them|bot|bo|sua|huy|khoan|chua|khong|dung lai|dung dat|dung chot)\b/.test(normalized)) return false;
+
+  const exact = new Set([
+    'dong y', 'dong y chot don', 'dong y dat hang',
+    'xac nhan', 'xac nhan dat hang', 'xac nhan chot don',
+    'ok', 'oke', 'okay', 'chot', 'chot don', 'dat di', 'dat luon',
+    'tien hanh', 'on roi', 'dung roi', 'chuan roi',
+  ]);
+  if (exact.has(normalized)) return true;
+
+  const hasAffirmation = /\b(dong y|xac nhan|ok|oke|okay|duoc roi|on roi|dung roi|chuan roi|yes)\b/.test(normalized);
+  const hasCheckoutAction = /\b(chot|chot don|dat hang|dat don|dat di|dat luon|tien hanh)\b/.test(normalized);
+  const hasImperative = /\b(di|luon|nhe|thoi)\b/.test(normalized);
+  return hasCheckoutAction && (hasAffirmation || hasImperative);
+};
 const fmtDateHeader = (v) => {
   if (!v) return '';
   const d = new Date(v);
@@ -18,7 +43,23 @@ const fmtDateHeader = (v) => {
 function getOrCreateAnonId() {
   const k = 'avengers_anon_chat_id';
   let id = sessionStorage.getItem(k);
-  if (!id) { id = `anon-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`; sessionStorage.setItem(k, id); }
+  if (!/^anon-[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id || '')) {
+    const cryptoApi = globalThis.crypto;
+    const uuid = cryptoApi?.randomUUID?.() || (() => {
+      if (!cryptoApi?.getRandomValues) return null;
+      const bytes = cryptoApi.getRandomValues(new Uint8Array(16));
+      bytes[6] = (bytes[6] & 0x0f) | 0x40;
+      bytes[8] = (bytes[8] & 0x3f) | 0x80;
+      const hex = [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+      return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+    })();
+    if (!uuid) throw new Error('Secure guest chat sessions require Web Crypto');
+    id = `anon-${uuid}`;
+    sessionStorage.setItem(k, id);
+    // Legacy anonymous IDs were not strong enough to authorize persisted state.
+    localStorage.removeItem(AI_SESSION_KEY);
+    sessionStorage.removeItem(AI_SESSION_KEY);
+  }
   return id;
 }
 
@@ -152,8 +193,36 @@ function StaffAvatar({ name, size = 32 }) {
 }
 
 // ─── Rich Card Components ─────────────────────────────────────────────────────
-function ProductCard({ p, onAdd }) {
+function ProductCard({ p, onAdd, resolvePrice }) {
   const [hover, setHover] = useState(false);
+  const seedPrice = Number(p.gia_ban ?? p.final_price ?? p.price);
+  const [canonicalPrice, setCanonicalPrice] = useState(Number.isFinite(seedPrice) && seedPrice > 0 ? seedPrice : null);
+  const [priceLoading, setPriceLoading] = useState(false);
+  const [priceUnavailable, setPriceUnavailable] = useState(false);
+  const productName = p.ten_san_pham || p.product_name || p.name;
+  useEffect(() => {
+    let active = true;
+    // Product cards normally come from the canonical menu cache. Avoid one
+    // price request per card (and per re-render); only resolve missing prices.
+    if (canonicalPrice != null || !productName || !resolvePrice) return () => { active = false; };
+    setPriceLoading(true);
+    resolvePrice(productName)
+      .then((result) => {
+        const product = (result?.products || []).find((item) =>
+          String(item.product_name || '').toLocaleLowerCase() === String(productName).toLocaleLowerCase()
+        ) || (result?.products || [])[0];
+        if (active && result?.status === 'ok' && product) {
+          setCanonicalPrice(Number(product.final_price));
+          setPriceUnavailable(false);
+        } else if (active) {
+          setPriceUnavailable(true);
+        }
+      })
+      .catch(() => { if (active) setPriceUnavailable(true); })
+      .finally(() => { if (active) setPriceLoading(false); });
+    return () => { active = false; };
+  }, [canonicalPrice, productName, resolvePrice]);
+  const displayProduct = canonicalPrice == null ? p : { ...p, gia_ban: canonicalPrice };
   return (
     <div
       style={{
@@ -172,16 +241,19 @@ function ProductCard({ p, onAdd }) {
         </div>
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#2D3748', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.ten_san_pham}</p>
-        <p style={{ margin: '3px 0 0', fontSize: '0.82rem', fontWeight: 800, color: '#F08080' }}>{fmtVND(p.gia_ban)}</p>
-        {p.danh_muc && <p style={{ margin: '2px 0 0', fontSize: '0.68rem', color: '#A0AEC0', fontWeight: 600 }}>{p.danh_muc}</p>}
+        <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#2D3748', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{productName}</p>
+        <p style={{ margin: '3px 0 0', fontSize: '0.82rem', fontWeight: 800, color: '#F08080' }}>
+          {canonicalPrice != null ? fmtVND(canonicalPrice) : priceLoading ? 'Đang kiểm tra giá…' : priceUnavailable ? 'Chưa xác minh được giá' : 'Đang tải giá…'}
+        </p>
+        {(p.danh_muc || p.category) && <p style={{ margin: '2px 0 0', fontSize: '0.68rem', color: '#A0AEC0', fontWeight: 600 }}>{p.danh_muc || p.category}</p>}
       </div>
       <button
-        onClick={(e) => { e.stopPropagation(); onAdd(p); }}
-        style={{ all: 'unset', cursor: 'pointer', width: 30, height: 30, borderRadius: '50%', background: '#F08080', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, alignSelf: 'center', fontWeight: 900, fontSize: '1.1rem', boxShadow: '0 2px 8px rgba(240,128,128,0.4)', transition: 'transform 0.1s' }}
+        disabled={canonicalPrice == null}
+        onClick={(e) => { e.stopPropagation(); onAdd({ ...displayProduct, gia_ban: canonicalPrice }); }}
+        style={{ all: 'unset', cursor: canonicalPrice == null ? 'not-allowed' : 'pointer', opacity: canonicalPrice == null ? 0.45 : 1, width: 30, height: 30, borderRadius: '50%', background: '#F08080', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, alignSelf: 'center', fontWeight: 900, fontSize: '1.1rem', boxShadow: '0 2px 8px rgba(240,128,128,0.4)', transition: 'transform 0.1s' }}
         onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.9)'; }}
         onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-        title="Thêm vào giỏ"
+        title={canonicalPrice == null ? 'Chưa xác minh được giá từ menu' : 'Thêm vào giỏ'}
       >+</button>
     </div>
   );
@@ -232,17 +304,17 @@ function StoreCard({ b }) {
   );
 }
 
-function PaymentCard() {
+function PaymentCard({ onChoose }) {
   const methods = [
-    { name: 'VNPAY', desc: 'ATM / Internet Banking / QR Code', color: '#1E40AF' },
-    { name: 'Ví MoMo / ZaloPay', desc: 'Thanh toán qua ví điện tử', color: '#A21CAF' },
-    { name: 'Ví Avengers', desc: 'Nạp ví nhận hoàn xu tới 10%', color: '#F08080' },
-    { name: 'Tiền mặt (COD)', desc: 'Thanh toán khi nhận hàng', color: '#16A34A' },
+    { name: 'VNPAY', text: 'Tôi chọn thanh toán VNPAY', desc: 'ATM / Internet Banking', color: '#1E40AF' },
+    { name: 'QR ngân hàng', text: 'Tôi chọn chuyển khoản QR ngân hàng', desc: 'Quét mã và chuyển khoản', color: '#A21CAF' },
+    { name: 'Ví Avengers', text: 'Tôi chọn Ví Avengers', desc: 'Thanh toán bằng số dư ví', color: '#F08080' },
+    { name: 'Tiền mặt (COD)', text: 'Tôi chọn thanh toán tiền mặt COD', desc: 'Thanh toán khi nhận hàng / tại quầy', color: '#16A34A' },
   ];
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {methods.map((m) => (
-        <div key={m.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', background: '#FFF', borderRadius: 10, border: '1px solid #FFEBEB' }}>
+        <button type="button" key={m.name} onClick={() => onChoose?.(m.text)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', background: '#FFF', borderRadius: 10, border: '1px solid #FFEBEB', cursor: 'pointer', textAlign: 'left' }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: m.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 900, color: m.color, flexShrink: 0 }}>
             💳
           </div>
@@ -250,7 +322,7 @@ function PaymentCard() {
             <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: 800, color: '#2D3748' }}>{m.name}</p>
             <p style={{ margin: '1px 0 0', fontSize: '0.66rem', color: '#718096' }}>{m.desc}</p>
           </div>
-        </div>
+        </button>
       ))}
     </div>
   );
@@ -308,7 +380,24 @@ function TypingBubble() {
 }
 
 const AI_SESSION_KEY = 'avengers_ai_chat_session';
+const AI_CONVERSATION_KEY = 'avengers_ai_conversation_id';
 const AI_SESSION_TTL = 60 * 60 * 1000; // 1 hour (3,600,000 ms)
+
+function newConversationId() {
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+    const value = Math.random() * 16 | 0;
+    return (char === 'x' ? value : (value & 0x3 | 0x8)).toString(16);
+  });
+}
+
+function loadConversationId() {
+  const existing = localStorage.getItem(AI_CONVERSATION_KEY);
+  if (existing) return existing;
+  const created = newConversationId();
+  localStorage.setItem(AI_CONVERSATION_KEY, created);
+  return created;
+}
 
 function loadAISession() {
   try {
@@ -386,6 +475,7 @@ export default function ChatWidget({ user, socketUrl }) {
   const [unread, setUnread] = useState(0);
   const [conversation, setConversation] = useState(null);
   const [pendingOrder, setPendingOrder] = useState(null);
+  const [aiConversationId, setAiConversationId] = useState(loadConversationId);
   const [orderConfirming, setOrderConfirming] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
   const [isListening, setIsListening] = useState(false);
@@ -427,7 +517,7 @@ export default function ChatWidget({ user, socketUrl }) {
       return Array.isArray(d?.items) ? d.items : Array.isArray(d) ? d : [];
     };
     await Promise.allSettled([
-      apiClient.get('/menu/san-pham').then((r) => { cache.current.products = safe(r).slice(0, 40); }).catch(() => {}),
+      apiClient.get('/menu/san-pham').then((r) => { cache.current.products = safe(r); }).catch(() => {}),
       apiClient.get('/users/branches/public').then((r) => { cache.current.branches = safe(r); }).catch(() => {}),
       uid ? apiClient.get(`/customers/${uid}/orders?limit=8`).then((r) => { cache.current.orders = safe(r); }).catch(() => {}) : Promise.resolve(),
       apiClient.get('/vouchers?trang_thai=ACTIVE&limit=12').then((r) => { cache.current.vouchers = safe(r); }).catch(() => {}),
@@ -527,17 +617,22 @@ export default function ChatWidget({ user, socketUrl }) {
   }, [user, addAIMsg, openStaffChat]);
 
   const handleResetChat = useCallback(async () => {
-    if (window.confirm('Bạn có muốn bắt đầu lại đoạn hội thoại AI mới không?')) {
+    if (window.confirm('Bắt đầu cuộc trò chuyện AI mới? Giỏ hàng của bạn sẽ được giữ nguyên.')) {
       localStorage.removeItem(AI_SESSION_KEY);
       sessionStorage.removeItem(AI_SESSION_KEY);
-      
-      // Đồng thời xoá luôn giỏ hàng của AI ở backend để tránh dồn món cũ
-      if (effectiveUserId) {
-        try {
-          await apiClient.delete(`/ai/agent/cart/${effectiveUserId}`);
-        } catch (err) {
-          console.warn("Không thể xoá giỏ hàng AI backend:", err);
-        }
+      const nextConversationId = newConversationId();
+      localStorage.setItem(AI_CONVERSATION_KEY, nextConversationId);
+      setAiConversationId(nextConversationId);
+
+      // Conversation-specific draft state must not bleed into a new thread.
+      // The customer/order-service cart is deliberately left untouched.
+      try {
+        await apiClient.post('/ai/agent/conversation/reset', {
+          session_id: effectiveUserId,
+          conversation_id: nextConversationId,
+        });
+      } catch (error) {
+        console.warn('[ChatWidget] Could not reset AI conversation draft state:', error);
       }
 
       const nameStr = user?.ho_ten || user?.hoTen ? ` ${user.ho_ten || user.hoTen}` : '';
@@ -551,7 +646,7 @@ export default function ChatWidget({ user, socketUrl }) {
       setPendingOrder(null);
       setReplyTo(null);
     }
-  }, [user]);
+  }, [user, effectiveUserId]);
 
   // Add item to cart
   const addToCart = useCallback(async (product) => {
@@ -562,7 +657,7 @@ export default function ChatWidget({ user, socketUrl }) {
       return;
     }
     try {
-      await apiClient.post('/cart', {
+      const response = await apiClient.post('/cart', {
         ma_nguoi_dung: userId,
         ma_san_pham: product.id || product.ma_san_pham,
         ten_san_pham: product.ten_san_pham,
@@ -571,7 +666,8 @@ export default function ChatWidget({ user, socketUrl }) {
         size: 'Nhỏ',
         so_luong: 1
       });
-      addAIMsg(`✅ Đã thêm **${product.ten_san_pham}** vào giỏ hàng! Giá: ${fmtVND(product.gia_ban)}`, {
+      const persisted = response?.data || response || {};
+      addAIMsg(`✅ Đã thêm **${persisted.ten_san_pham || product.ten_san_pham}** vào giỏ hàng! Giá: ${fmtVND(persisted.gia_ban ?? product.gia_ban)}`, {
         _quickReplies: [
           { id: 'more', label: 'Xem thêm menu', text: 'Gợi ý thêm menu' },
           { id: 'cart', label: 'Xem giỏ hàng', text: 'Xem giỏ hàng của tôi' },
@@ -593,22 +689,96 @@ export default function ChatWidget({ user, socketUrl }) {
 
     const agentRes = await apiClient.post('/ai/agent/chat', {
       session_id: effectiveUserId,
+      conversation_id: aiConversationId,
+      client_message_id: newConversationId(),
       message: text,
       history,
     });
 
     const d = agentRes?.data || agentRes;
+    if (d?.conversation_id && d.conversation_id !== aiConversationId) {
+      localStorage.setItem(AI_CONVERSATION_KEY, d.conversation_id);
+      setAiConversationId(d.conversation_id);
+    }
     return d;
-  }, [messages, effectiveUserId]);
+  }, [messages, effectiveUserId, aiConversationId]);
+
+  const fetchCanonicalProductPrice = useCallback(async (productName, quantity = 1, size = null) => {
+    const response = await apiClient.post('/ai/agent/product/price', {
+      session_id: effectiveUserId,
+      conversation_id: aiConversationId,
+      product_name: productName,
+      quantity,
+      size,
+    });
+    return response?.data || response;
+  }, [effectiveUserId, aiConversationId]);
+
+  // The popup button and a typed confirmation must execute the same checkout.
+  const confirmPendingOrder = useCallback(async () => {
+    if (!pendingOrder || orderConfirming) return;
+    setOrderConfirming(true);
+    try {
+      if (!pendingOrder.paymentMethod || !pendingOrder.deliveryType) {
+        throw new Error('Thiếu phương thức thanh toán hoặc hình thức nhận hàng. Hãy tạo lại bản tóm tắt đơn.');
+      }
+      const response = await apiClient.post(`/ai/cart/checkout?conversation_id=${encodeURIComponent(aiConversationId)}`, {
+        session_id: effectiveUserId,
+        payment_method: pendingOrder.paymentMethod,
+        delivery_type: pendingOrder.deliveryType,
+        delivery_address: pendingOrder.deliveryAddress,
+        action_id: pendingOrder.actionId,
+      });
+      const result = response?.data || response;
+      if (result?.status !== 'success' && result?.status !== 'already_processed') {
+        throw new Error(result?.message || 'Đơn hàng chưa được tạo.');
+      }
+
+      // Clearing is idempotent. Do it through the customer API as a fallback in
+      // case the AI service could create the order but could not sync the cart.
+      try {
+        await apiClient.delete(`/cart/clear/${effectiveUserId}`);
+      } catch (cartError) {
+        console.warn('[ChatWidget] Order created but customer cart clear failed:', cartError);
+      }
+      window.dispatchEvent(new CustomEvent('refresh-cart'));
+      window.dispatchEvent(new CustomEvent('refresh-orders'));
+      localStorage.removeItem(`avengers_ai_voucher_${effectiveUserId}`);
+      window.dispatchEvent(new CustomEvent('ai-voucher-removed'));
+
+      const orderId = result?.order_id ? ` Mã đơn: **${result.order_id}**.` : '';
+      const awaitsOnlinePayment = Boolean(result?.redirect_url || result?.payment_details?.qr_img_url);
+      addAIMsg(`${awaitsOnlinePayment ? '✅ Đơn hàng đã được tạo và đang chờ thanh toán.' : '🎉 Đơn hàng đã được ghi nhận.'}${orderId} Tổng cộng: **${fmtVND(pendingOrder.total)}**`, {
+        _paymentUrl: result?.redirect_url || result?.payment_details?.qr_img_url || null,
+        _paymentLabel: result?.redirect_url ? 'Tiếp tục thanh toán VNPAY' : result?.payment_details?.qr_img_url ? 'Mở mã QR thanh toán' : null,
+        _quickReplies: [{ id: 'orders', label: 'Xem đơn hàng', text: 'Xem đơn hàng của tôi' }],
+      });
+      setPendingOrder(null);
+      scrollBottom();
+    } catch (error) {
+      addAIMsg(error?.response?.data?.message || error?.message || 'Chưa thể hoàn tất đơn hàng. Giỏ của bạn vẫn được giữ lại để thử lại.');
+    } finally {
+      setOrderConfirming(false);
+    }
+  }, [pendingOrder, orderConfirming, effectiveUserId, aiConversationId, addAIMsg, scrollBottom]);
 
   // Direct AI API handler (primary: /ai/agent/chat, fallback: /ai/chat)
   const processAIMessage = useCallback(async (text) => {
     const textLower = text.toLowerCase();
 
+    if (pendingOrder && isCheckoutConfirmation(text)) {
+      await confirmPendingOrder();
+      return;
+    }
+
     // Check direct navigation commands
-    if (/(xem giỏ hàng|vào giỏ hàng|trang giỏ hàng)/.test(textLower)) {
+    if (!textLower.includes('thêm') && /(xem giỏ hàng|vào giỏ hàng|trang giỏ hàng|mở giỏ hàng)/.test(textLower)) {
       addAIMsg('🛒 Đang chuyển bạn đến trang giỏ hàng...');
-      setTimeout(() => { window.location.href = '/cart'; }, 600);
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('navigate-tab', { detail: { tab: 'cart' } }));
+        // Also update URL without reload if needed
+        window.history.pushState({}, '', '/?tab=cart');
+      }, 600);
       return;
     }
 
@@ -619,8 +789,32 @@ export default function ChatWidget({ user, socketUrl }) {
     try {
       const agentData = await callAgentAPI(text);
       const agentReply = agentData?.reply;
-      const checkoutPayload = agentData?.checkout_payload;
+          const checkoutPayload = agentData?.checkout_payload;
       const agentError = agentData?.error;
+
+      // If AI updated cart, refresh frontend cart context
+      if (agentData?.tool_calls_log && agentData.tool_calls_log.some(t => t.tool === 'add_to_cart' || t.tool === 'remove_from_cart' || t.tool === 'confirm_checkout')) {
+        window.dispatchEvent(new CustomEvent('refresh-cart'));
+      }
+      if ((agentData?.tool_calls_log || []).some((entry) =>
+        entry.tool === 'confirm_checkout' && ['success', 'already_processed'].includes(entry.result?.status)
+      )) {
+        window.dispatchEvent(new CustomEvent('refresh-orders'));
+        localStorage.removeItem(`avengers_ai_voucher_${effectiveUserId}`);
+        window.dispatchEvent(new CustomEvent('ai-voucher-removed'));
+      }
+      const voucherMutation = (agentData?.tool_calls_log || []).find((entry) =>
+        entry.tool === 'apply_voucher' && ['ok', 'already_applied'].includes(entry.result?.status)
+      );
+      if (voucherMutation?.result?.voucher_code) {
+        const voucherCode = String(voucherMutation.result.voucher_code).toUpperCase();
+        localStorage.setItem(`avengers_ai_voucher_${effectiveUserId}`, voucherCode);
+        window.dispatchEvent(new CustomEvent('ai-voucher-applied', { detail: { code: voucherCode } }));
+      }
+      if ((agentData?.tool_calls_log || []).some((entry) => entry.tool === 'remove_voucher' && entry.result?.status === 'ok')) {
+        localStorage.removeItem(`avengers_ai_voucher_${effectiveUserId}`);
+        window.dispatchEvent(new CustomEvent('ai-voucher-removed'));
+      }
 
       // Xử lý checkout_payload: Agent muốn xác nhận đơn hàng
       if (checkoutPayload && (checkoutPayload.order_summary || checkoutPayload.items)) {
@@ -636,9 +830,14 @@ export default function ChatWidget({ user, socketUrl }) {
             size: i.size,
             note: i.note,
           })),
-          total: summary.total_price,
+          subtotal: summary.total_price ?? summary.subtotal,
+          discount: summary.discount_amount || 0,
+          total: summary.final_total ?? summary.total_price ?? summary.subtotal,
           message: agentReply || `Tổng đơn: ${fmtVND(summary.total_price)} tại ${summary.branch_name}`,
-          paymentMethod: summary.payment_method || 'THANH_TOAN_KHI_NHAN_HANG',
+          paymentMethod: summary.payment_method,
+          deliveryType: summary.delivery_type,
+          deliveryAddress: summary.delivery_address,
+          actionId: summary.action_id,
           branch_id: summary.branch_id,
           branch_name: summary.branch_name,
         });
@@ -671,16 +870,20 @@ export default function ChatWidget({ user, socketUrl }) {
         const aiMentionedMenu = /(sản phẩm|đồ uống|menu|\bmón\b|\bsp\b|yêu thích|gợi ý)/.test(agentReply.toLowerCase());
         
         let recommendedProducts = [];
-        const recTool = toolCalls.find(t => t.tool === 'get_recommendations' || t.tool === 'check_price_and_stock');
-        if (recTool && recTool.result && recTool.result.products) {
-           const rp = recTool.result.products;
-           if (typeof rp === 'string') {
-              const names = rp.split(',').map(s => s.trim().toLowerCase());
-              recommendedProducts = cache.current.products.filter(p => names.some(n => p.ten_san_pham.toLowerCase().includes(n)));
-           } else if (Array.isArray(rp)) {
-              const names = rp.map(item => (item.product_name || item.name || '').toLowerCase());
-              recommendedProducts = cache.current.products.filter(p => names.some(n => p.ten_san_pham.toLowerCase().includes(n)));
-           }
+        const recTools = toolCalls.filter(t => t.tool === 'get_recommendations' || t.tool === 'check_price_and_stock');
+        let allProductNames = [];
+        for (const recTool of recTools) {
+          if (recTool && recTool.result && recTool.result.products) {
+             const rp = recTool.result.products;
+             if (typeof rp === 'string') {
+                allProductNames.push(...rp.split(',').map(s => s.trim().toLowerCase()));
+             } else if (Array.isArray(rp)) {
+                allProductNames.push(...rp.map(item => (item.product_name || item.name || '').toLowerCase()));
+             }
+          }
+        }
+        if (allProductNames.length > 0) {
+          recommendedProducts = cache.current.products.filter(p => allProductNames.some(n => p.ten_san_pham.toLowerCase().includes(n)));
         }
 
         if (userAskedMenu || aiMentionedMenu || recommendedProducts.length > 0) {
@@ -688,20 +891,21 @@ export default function ChatWidget({ user, socketUrl }) {
           const mentioned = cache.current.products.filter(p => replyLower.includes(p.ten_san_pham.toLowerCase()));
           
           if (recommendedProducts.length > 0) {
-            extras._products = recommendedProducts.slice(0, 6);
+            extras._products = recommendedProducts.slice(0, 12);
           } else if (mentioned.length > 0) {
-            extras._products = mentioned.slice(0, 6);
+            extras._products = mentioned.slice(0, 12);
           } else if (userAskedMenu) {
-            extras._products = cache.current.products.slice(0, 6);
+            extras._products = cache.current.products.slice(0, 12);
           }
         }
-        if (/(khuyến mãi|voucher|giảm giá|ưu đãi)/.test(textLower)) {
-          extras._vouchers = cache.current.vouchers.slice(0, 4);
+        const voucherTool = toolCalls.find(t => t.tool === 'get_applicable_vouchers');
+        if (voucherTool?.result?.status === 'ok' && Array.isArray(voucherTool.result.vouchers)) {
+          extras._vouchers = voucherTool.result.vouchers.slice(0, 4);
         }
         if (/(đơn hàng|đơn của tôi|trạng thái.*đơn)/.test(textLower)) {
           extras._orders = cache.current.orders.slice(0, 3);
         }
-        if (/(thanh toán|vnpay|zalopay|momo)/.test(textLower)) {
+        if (/(thanh toán|vnpay|zalopay|momo)/.test(agentReply.toLowerCase()) && !/(giỏ hàng.*trống|chưa có món|chọn món trước)/.test(agentReply.toLowerCase())) {
           extras._type = 'payment';
         }
 
@@ -715,7 +919,12 @@ export default function ChatWidget({ user, socketUrl }) {
         return;
       }
     } catch (agentErr) {
-      console.warn('[ChatWidget] Agent API failed, falling back to legacy /ai/chat:', agentErr?.message || agentErr);
+      console.warn('[ChatWidget] Agent API failed:', agentErr?.message || agentErr);
+      // Never hand a stateful cart/checkout turn to the legacy chatbot. It has
+      // no access to the current agent draft and may invent different items or
+      // locations after a timeout.
+      addAIMsg('Mình chưa xử lý xong yêu cầu do kết nối bị gián đoạn. Giỏ hàng chưa bị thay đổi; bạn vui lòng gửi lại tin nhắn này nhé.');
+      return;
     }
 
     // ── LUỒNG 2: Fallback về /ai/chat cũ ──────────────────────────────────────
@@ -775,7 +984,7 @@ export default function ChatWidget({ user, socketUrl }) {
         if ((resData.orders && resData.orders.length > 0) || /(đơn hàng|đơn của tôi|trạng thái.*đơn|theo dõi.*đơn|giao chưa)/.test(textLower) || /(đơn hàng)/.test(reply.toLowerCase())) {
           extras._orders = (resData.orders && resData.orders.length > 0) ? resData.orders : cache.current.orders.slice(0, 3);
         }
-        if (/(thanh toán|payment|vnpay|ví|momo|atm)/.test(textLower)) {
+        if (/(thanh toán|payment|vnpay|ví|momo|atm)/.test(reply.toLowerCase()) && !/(giỏ hàng.*trống|chưa có món|chọn món trước)/.test(reply.toLowerCase())) {
           extras._type = 'payment';
         }
         const hasCards = Boolean(extras._products || extras._stores || extras._vouchers || extras._orders);
@@ -801,7 +1010,7 @@ export default function ChatWidget({ user, socketUrl }) {
     addAIMsg('Xin lỗi, mình gặp gián đoạn kết nối ngắn. Bạn vui lòng thử lại câu hỏi nhé!', {
       _quickReplies: QUICK_ACTIONS.slice(0, 3),
     });
-  }, [messages, userName, effectiveUserId, replyTo, prefetchData, addAIMsg, callAgentAPI]);
+  }, [messages, userName, effectiveUserId, replyTo, pendingOrder, prefetchData, addAIMsg, callAgentAPI, confirmPendingOrder]);
 
 
   // Send message trigger
@@ -873,25 +1082,6 @@ export default function ChatWidget({ user, socketUrl }) {
     r.onresult = (e) => { const t = e.results[0][0].transcript; setIsListening(false); sendMessage(t); };
     r.start();
   }, [sendMessage]);
-
-  // Confirm pending order
-  const confirmOrder = useCallback(async () => {
-    if (!pendingOrder) return;
-    setOrderConfirming(true);
-    try {
-      await apiClient.post('/ai/cart/checkout', {
-        session_id: effectiveUserId,
-        payment_method: pendingOrder.paymentMethod || 'THANH_TOAN_KHI_NHAN_HANG',
-        delivery_type: 'DELIVERY'
-      });
-      addAIMsg(`🎉 Đặt hàng thành công! Tổng cộng: **${fmtVND(pendingOrder.total)}**\nĐơn hàng của bạn đang được chuẩn bị!`, {
-        _quickReplies: [{ id: 'orders', label: 'Xem đơn hàng', text: 'Xem đơn hàng của tôi' }],
-      });
-      setPendingOrder(null);
-      scrollBottom();
-    } catch { alert('Không thể đặt hàng. Vui lòng thử lại!'); }
-    finally { setOrderConfirming(false); }
-  }, [pendingOrder, effectiveUserId, addAIMsg, scrollBottom]);
 
   const activeMessages = chatMode === 'AI' ? messages : staffMessages;
 
@@ -1123,7 +1313,7 @@ export default function ChatWidget({ user, socketUrl }) {
                       {/* Rich Content Cards */}
                       {msg._products && msg._products.length > 0 && (
                         <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                          {msg._products.map((p, i) => <ProductCard key={i} p={p} onAdd={addToCart} />)}
+                          {msg._products.map((p, i) => <ProductCard key={i} p={p} onAdd={addToCart} resolvePrice={fetchCanonicalProductPrice} />)}
                         </div>
                       )}
                       {msg._orders && msg._orders.length > 0 && (
@@ -1137,7 +1327,12 @@ export default function ChatWidget({ user, socketUrl }) {
                         </div>
                       )}
                       {msg._type === 'payment' && (
-                        <div style={{ marginTop: 10 }}><PaymentCard /></div>
+                        <div style={{ marginTop: 10 }}><PaymentCard onChoose={sendMessage} /></div>
+                      )}
+                      {msg._paymentUrl && (
+                        <a href={msg._paymentUrl} target="_blank" rel="noreferrer" style={{ display: 'block', marginTop: 10, padding: '9px 12px', borderRadius: 10, background: '#B22830', color: '#FFF', textAlign: 'center', textDecoration: 'none', fontWeight: 800, fontSize: '0.76rem' }}>
+                          {msg._paymentLabel || 'Tiếp tục thanh toán'}
+                        </a>
                       )}
                       {msg._vouchers && msg._vouchers.length > 0 && (
                         <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -1182,7 +1377,7 @@ export default function ChatWidget({ user, socketUrl }) {
               </div>
               <div style={{ display: 'flex', gap: 8, padding: '0 14px 12px', justifyContent: 'flex-end' }}>
                 <button onClick={() => setPendingOrder(null)} style={{ all: 'unset', cursor: 'pointer', padding: '6px 16px', borderRadius: 20, background: '#EDF2F7', color: '#4A5568', fontWeight: 700, fontSize: '0.76rem' }}>Huỷ</button>
-                <button onClick={confirmOrder} disabled={orderConfirming} style={{ all: 'unset', cursor: orderConfirming ? 'not-allowed' : 'pointer', padding: '6px 18px', borderRadius: 20, background: 'linear-gradient(90deg,#F08080,#E55353)', color: '#FFF', fontWeight: 800, fontSize: '0.76rem', opacity: orderConfirming ? 0.75 : 1 }}>
+                <button onClick={confirmPendingOrder} disabled={orderConfirming} style={{ all: 'unset', cursor: orderConfirming ? 'not-allowed' : 'pointer', padding: '6px 18px', borderRadius: 20, background: 'linear-gradient(90deg,#F08080,#E55353)', color: '#FFF', fontWeight: 800, fontSize: '0.76rem', opacity: orderConfirming ? 0.75 : 1 }}>
                   {orderConfirming ? 'Đang đặt...' : '✅ Đặt ngay'}
                 </button>
               </div>

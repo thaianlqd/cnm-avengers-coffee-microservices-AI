@@ -124,6 +124,110 @@ with col_trend:
     else:
         st.info("Chưa có dữ liệu khách hàng mới.")
 
+# ── Mô hình RFM & Cohort ────────────────────────────────────────────────
+st.markdown("<hr style='border-color:#2A2A3E; margin:20px 0;'>", unsafe_allow_html=True)
+render_section_title("Phân Tích Chuyên Sâu (Deep Dive Data Analyst)")
+c_rfm, c_cohort = st.columns(2, gap="large")
+
+with c_rfm:
+    st.markdown("#### Khối 3D: Mô hình RFM Khách Hàng")
+    @st.cache_data(ttl=86400, show_spinner=False)
+    def get_rfm_data():
+        max_d = get_max_date()
+        return query_df(f"""
+            WITH raw_rfm AS (
+                SELECT 
+                    ma_nguoi_dung,
+                    MAX(ngay_tao)::date AS last_order,
+                    COUNT(ma_don_hang) AS frequency,
+                    SUM(tong_tien) AS monetary
+                FROM orders.don_hang
+                WHERE ma_nguoi_dung IS NOT NULL
+                  AND trang_thai_don_hang IN ('HOAN_THANH','DANG_GIAO')
+                GROUP BY ma_nguoi_dung
+            )
+            SELECT 
+                ma_nguoi_dung,
+                '{max_d}'::date - last_order AS recency,
+                frequency,
+                monetary
+            FROM raw_rfm
+        """)
+    rfm = get_rfm_data()
+    if not rfm.empty and len(rfm) >= 3:
+        # Xếp hạng đơn giản cho Recency (càng nhỏ càng tốt), Frequency & Monetary (càng to càng tốt)
+        rfm["R_Score"] = pd.qcut(rfm["recency"].rank(method="first"), q=3, labels=[3, 2, 1]).astype(int)
+        rfm["F_Score"] = pd.qcut(rfm["frequency"].rank(method="first"), q=3, labels=[1, 2, 3]).astype(int)
+        rfm["M_Score"] = pd.qcut(rfm["monetary"].rank(method="first"), q=3, labels=[1, 2, 3]).astype(int)
+        
+        def rfm_segment(row):
+            if row["R_Score"] >= 3 and row["F_Score"] >= 2 and row["M_Score"] >= 2: return "Champion"
+            if row["R_Score"] >= 2 and row["F_Score"] >= 2: return "Loyal"
+            if row["R_Score"] <= 1 and row["F_Score"] <= 1: return "Hibernating"
+            if row["R_Score"] <= 1 and row["F_Score"] >= 2: return "At Risk"
+            return "Potential"
+            
+        rfm["Segment"] = rfm.apply(rfm_segment, axis=1)
+        
+        fig_rfm = px.scatter_3d(
+            rfm, x="recency", y="frequency", z="monetary", color="Segment",
+            color_discrete_map={"Champion":"#10B981", "Loyal":"#2563EB", "Potential":"#F59E0B", "At Risk":"#EF4444", "Hibernating":"#6B7280"},
+            labels={"recency": "Ngày chưa mua (R)", "frequency": "Tần suất mua (F)", "monetary": "Chi tiêu (M)"}
+        )
+        fig_rfm.update_traces(marker=dict(size=5, opacity=0.8))
+        apply_layout(fig_rfm, height=450, margin=dict(l=0, r=0, t=0, b=0))
+        st.plotly_chart(fig_rfm, use_container_width=True)
+    else:
+        st.info("Chưa đủ dữ liệu (cần ít nhất 3 KH) để phân tích RFM.")
+
+with c_cohort:
+    st.markdown("#### Biểu Đồ Giữ Chân (Cohort Retention)")
+    @st.cache_data(ttl=86400, show_spinner=False)
+    def get_cohort_data():
+        max_d = get_max_date()
+        return query_df(f"""
+            WITH first_purchases AS (
+                SELECT ma_nguoi_dung, DATE_TRUNC('month', MIN(ngay_tao))::date AS cohort_month
+                FROM orders.don_hang
+                WHERE ma_nguoi_dung IS NOT NULL
+                GROUP BY ma_nguoi_dung
+            ),
+            user_purchases AS (
+                SELECT o.ma_nguoi_dung, DATE_TRUNC('month', o.ngay_tao)::date AS order_month, fp.cohort_month
+                FROM orders.don_hang o
+                JOIN first_purchases fp ON o.ma_nguoi_dung = fp.ma_nguoi_dung
+                WHERE o.ngay_tao >= '{max_d}'::date - INTERVAL '6 months'
+            )
+            SELECT 
+                cohort_month,
+                order_month,
+                COUNT(DISTINCT ma_nguoi_dung) AS active_users
+            FROM user_purchases
+            GROUP BY cohort_month, order_month
+        """)
+    cohort_df = get_cohort_data()
+    if not cohort_df.empty:
+        import numpy as np
+        # Convert index/columns to string for heatmap
+        cohort_df["cohort_month"] = pd.to_datetime(cohort_df["cohort_month"]).dt.strftime('%Y-%m')
+        cohort_df["order_month"] = pd.to_datetime(cohort_df["order_month"]).dt.strftime('%Y-%m')
+        
+        cohort_pivot = cohort_df.pivot(index='cohort_month', columns='order_month', values='active_users')
+        cohort_sizes = cohort_pivot.iloc[:, 0]
+        retention_matrix = cohort_pivot.divide(cohort_sizes, axis=0) * 100
+        
+        fig_cohort = px.imshow(
+            retention_matrix,
+            labels=dict(x="Tháng giao dịch", y="Tháng gia nhập", color="Tỷ lệ giữ chân (%)"),
+            color_continuous_scale="Teal",
+            aspect="auto",
+            text_auto=".1f"
+        )
+        apply_layout(fig_cohort, height=450, margin=dict(l=50, r=30, t=10, b=40))
+        st.plotly_chart(fig_cohort, use_container_width=True)
+    else:
+        st.info("Chưa có đủ dữ liệu lịch sử để vẽ Cohort.")
+
 # AI Insight
 if (ANTHROPIC_API_KEY_LOADED or GROQ_API_KEY_LOADED):
     if 'seg_detail' in locals() and not seg_detail.empty:

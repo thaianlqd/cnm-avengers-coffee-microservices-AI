@@ -149,6 +149,75 @@ export default function OrderPage({
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
   const [trackingOrderId, setTrackingOrderId] = useState(null);
   
+  // Flash Sale Timer Logic
+  const [timeLeft, setTimeLeft] = useState({ hours: 22, minutes: 9, seconds: 47 });
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        let { hours, minutes, seconds } = prev;
+        if (seconds > 0) seconds--;
+        else {
+          seconds = 59;
+          if (minutes > 0) minutes--;
+          else {
+            minutes = 59;
+            if (hours > 0) hours--;
+            else hours = 24;
+          }
+        }
+        return { hours, minutes, seconds };
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const flashSaleProducts = [
+    {
+      id: 1,
+      tag: "-16%",
+      img: "https://bizweb.dktcdn.net/thumb/large/100/487/455/products/banh-trung-thu-ca-phe-lava-1784082250814.png?v=1784082254223",
+      category: "BÁNH TRUNG THU",
+      name: "Bánh Trung Thu Cà Phê Lava",
+      price: "99.000đ",
+      oldPrice: "119.000đ",
+      sold: 260,
+      total: 300
+    },
+    {
+      id: 2,
+      tag: "-16%",
+      img: "https://bizweb.dktcdn.net/thumb/large/100/487/455/products/banh-trung-thu-matcha-1784082289723.png?v=1784082293030",
+      category: "BÁNH TRUNG THU",
+      name: "Bánh Trung Thu Matcha",
+      price: "99.000đ",
+      oldPrice: "119.000đ",
+      sold: 256,
+      total: 300
+    },
+    {
+      id: 3,
+      tag: "-16%",
+      img: "https://bizweb.dktcdn.net/thumb/large/100/487/455/products/banh-trung-thu-dau-xanh-1784082184234.png?v=1784082187197",
+      category: "BÁNH TRUNG THU",
+      name: "Bánh Trung Thu Đậu Xanh",
+      price: "99.000đ",
+      oldPrice: "119.000đ",
+      sold: 244,
+      total: 300
+    },
+    {
+      id: 4,
+      tag: "-14%",
+      img: "https://bizweb.dktcdn.net/thumb/large/100/487/455/products/banh-trung-thu-thap-cam-bat-buu-1784082355367.png?v=1784082358597",
+      category: "BÁNH TRUNG THU",
+      name: "Bánh Trung Thu Thập Cẩm Bát Bửu",
+      price: "119.000đ",
+      oldPrice: "139.000đ",
+      sold: 316,
+      total: 400
+    }
+  ];
+
   const [recentProducts, setRecentProducts] = useState([]);
   
   useEffect(() => {
@@ -241,6 +310,20 @@ export default function OrderPage({
     const kw = String(searchKeyword).trim().toLowerCase();
     return products.filter((p) => String(p.ten_san_pham || p.name || '').toLowerCase().includes(kw));
   }, [products, searchKeyword]);
+
+
+  const sortedMenuSections = useMemo(() => {
+    if (!menuSections) return [];
+    return [...menuSections].sort((a, b) => {
+      if (a.label == 'Bánh Trung Thu') return -1;
+      if (b.label == 'Bánh Trung Thu') return 1;
+      return 0;
+    });
+  }, [menuSections]);
+
+  const renderedSections = viewCategory === 'all' 
+    ? sortedMenuSections 
+    : sortedMenuSections.filter(s => String(s.id) === String(viewCategory));
 
   const isMenuAlwaysOpen = false;
 
@@ -931,9 +1014,89 @@ export default function OrderPage({
                   </div>
                 )}
 
+                {/* FLASH SALE SECTION (MOVED TO TOP) */}
+                {viewCategory === 'all' && (
+                  <div className="mb-10 w-full bg-[#fffcf5] border border-amber-200 rounded-2xl p-5 shadow-sm">
+                    <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+                      <div>
+                        <h2 className="text-2xl font-bold flex items-center gap-2 italic">
+                          <span className="text-[#f5a623]">⚡⚡</span> 
+                          FLASH SALE 
+                          <span className="text-[#f5a623]">⚡⚡</span>
+                        </h2>
+                        <p className="text-gray-500 text-[13px] mt-1">Sản phẩm sẽ trở về giá gốc khi hết giờ</p>
+                      </div>
+                      <div className="flex gap-2.5 md:ml-6 items-center">
+                        <div className="flex flex-col items-center justify-center w-10 h-10 border border-[#b22830] rounded-full text-[#b22830] bg-white">
+                          <span className="text-sm font-bold leading-none">{String(timeLeft.hours).padStart(2, '0')}</span>
+                          <span className="text-[8px] font-bold">Giờ</span>
+                        </div>
+                        <span className="text-[#b22830] font-bold mb-1">:</span>
+                        <div className="flex flex-col items-center justify-center w-10 h-10 border border-[#b22830] rounded-full text-[#b22830] bg-white">
+                          <span className="text-sm font-bold leading-none">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                          <span className="text-[8px] font-bold">Phút</span>
+                        </div>
+                        <span className="text-[#b22830] font-bold mb-1">:</span>
+                        <div className="flex flex-col items-center justify-center w-10 h-10 border border-[#b22830] rounded-full text-[#b22830] bg-white">
+                          <span className="text-sm font-bold leading-none">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                          <span className="text-[8px] font-bold">Giây</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-8">
+                      {flashSaleProducts.map((item) => (
+                        <div 
+                          key={item.id} 
+                          className="bg-white rounded-xl border border-gray-100 p-4 relative group cursor-pointer hover:shadow-lg transition-all duration-300 flex flex-col"
+                          onClick={() => {
+                            const dbProduct = products.find(p => p.ten_san_pham === item.name);
+                            if (dbProduct) {
+                              handleProductClick(dbProduct);
+                            }
+                          }}
+                        >
+                          <div className="absolute top-3 left-3 bg-[#b22830] text-white text-[11px] font-bold px-2 py-1 rounded-full z-10 shadow-sm">
+                            {item.tag}
+                          </div>
+                          <div className="relative aspect-square w-full overflow-hidden flex items-center justify-center mb-4">
+                            <img 
+                              src={item.img} 
+                              alt={item.name} 
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                            />
+                          </div>
+                          <div className="flex flex-col flex-1">
+                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 block">
+                              {item.category}
+                            </span>
+                            <h3 className="text-[14px] font-bold text-gray-800 line-clamp-2 mb-2 min-h-[40px] leading-snug">
+                              {item.name}
+                            </h3>
+                            <div className="mt-auto">
+                              <div className="flex items-end gap-2 mb-3">
+                                <span className="text-[#b22830] font-bold text-[16px] leading-none">{item.price}</span>
+                                <span className="text-gray-400 text-[12px] line-through leading-none mb-0.5">{item.oldPrice}</span>
+                              </div>
+                              <div className="w-full bg-[#fce4e4] rounded-full h-[18px] relative overflow-hidden flex items-center justify-center">
+                                <div 
+                                  className="absolute top-0 left-0 h-full bg-[#b22830] rounded-full transition-all duration-1000" 
+                                  style={{ width: `${(item.sold / item.total) * 100}%` }}
+                                ></div>
+                                <span className="relative z-10 text-[10px] text-white font-bold whitespace-nowrap">
+                                  {item.sold} sản phẩm đã bán
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Single Compact Unified Voucher Row Section */}
-                {(personalVouchers.length > 0 || publicVouchers.length > 0) && (
-                  <div className="mb-5 w-full bg-gradient-to-r from-red-50/60 via-amber-50/40 to-white rounded-2xl border border-gray-100 p-3 shadow-2xs">
+                {(personalVouchers.length > 0 || publicVouchers.length > 0) && (                  <div className="mb-5 w-full bg-gradient-to-r from-red-50/60 via-amber-50/40 to-white rounded-2xl border border-gray-100 p-3 shadow-2xs">
                     <div className="flex items-center justify-between mb-2 px-1">
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-lg bg-[#b22830]/10 flex items-center justify-center text-[#b22830]">
@@ -1109,9 +1272,6 @@ export default function OrderPage({
                     {/* Product Grids - All Category Sections rendered, Smooth Scroll to target */}
                     <div className="space-y-12">
                       {(() => {
-                        const renderedSections = viewCategory === 'all' 
-                          ? menuSections 
-                          : menuSections.filter(s => String(s.id) === String(viewCategory));
 
                         if (renderedSections.length === 0) {
                           return (

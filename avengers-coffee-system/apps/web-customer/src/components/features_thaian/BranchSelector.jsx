@@ -1,8 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MapPinIcon, ChevronDownIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
+import { MapPinIcon, ChevronDownIcon, CheckCircleIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
+
+const normalizeSearch = (value) => String(value || '')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .replace(/đ/g, 'd')
+  .toLowerCase();
 
 export default function BranchSelector({ branches, selectedBranch, onChange }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState('');
   const wrapperRef = useRef(null);
 
   // Đóng dropdown khi click ra ngoài
@@ -19,6 +26,23 @@ export default function BranchSelector({ branches, selectedBranch, onChange }) {
   const selected = branches?.find(
     b => (b.ma_chi_nhanh || b.co_so_ma || b.branch_code) === selectedBranch
   ) || branches?.[0];
+
+  const normalizedQuery = normalizeSearch(query.trim());
+  const filteredBranches = (branches || []).filter((branch) => {
+    if (!normalizedQuery) return true;
+    const searchable = [
+      branch.ten_chi_nhanh,
+      branch.ten_co_so,
+      branch.name,
+      branch.dia_chi,
+      branch.phuong_xa,
+      branch.quan_huyen,
+      branch.thanh_pho,
+      branch.ma_chi_nhanh,
+      branch.co_so_ma,
+    ].filter(Boolean).map(normalizeSearch).join(' ');
+    return searchable.includes(normalizedQuery);
+  });
 
   if (!branches || branches.length === 0) {
     return (
@@ -65,7 +89,21 @@ export default function BranchSelector({ branches, selectedBranch, onChange }) {
         <div
           className="absolute left-0 right-0 mt-2 max-h-[300px] overflow-y-auto rounded-xl bg-white border border-gray-200 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.25)] py-2 z-[9999]"
         >
-          {branches.map((branch) => {
+          <div className="sticky top-0 z-10 bg-white px-3 pb-2 border-b border-gray-100">
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                autoFocus
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                onClick={(event) => event.stopPropagation()}
+                placeholder="Tìm theo tên quán hoặc địa chỉ..."
+                className="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-xs font-semibold outline-none focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/10"
+              />
+            </div>
+          </div>
+
+          {filteredBranches.map((branch) => {
             const code = branch.ma_chi_nhanh || branch.co_so_ma || branch.branch_code;
             const name = branch.ten_chi_nhanh || branch.ten_co_so || branch.name || 'Chi nhánh hệ thống';
             const isSelected = selectedBranch === code;
@@ -77,6 +115,7 @@ export default function BranchSelector({ branches, selectedBranch, onChange }) {
                 onClick={(e) => {
                   e.stopPropagation();
                   onChange(code);
+                  setQuery('');
                   setIsOpen(false);
                 }}
                 className={`w-full flex items-start gap-3 px-4 py-2.5 transition-colors text-left hover:bg-[#faf7f4] ${
@@ -101,6 +140,11 @@ export default function BranchSelector({ branches, selectedBranch, onChange }) {
               </button>
             );
           })}
+          {filteredBranches.length === 0 && (
+            <p className="px-4 py-5 text-center text-xs font-semibold text-gray-500">
+              Không tìm thấy cửa hàng phù hợp.
+            </p>
+          )}
         </div>
       )}
     </div>

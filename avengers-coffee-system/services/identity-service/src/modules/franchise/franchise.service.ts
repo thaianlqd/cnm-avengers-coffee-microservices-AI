@@ -431,6 +431,21 @@ export class FranchiseService {
       }
     }
 
+    let vi_do = body.vi_do;
+    let kinh_do = body.kinh_do;
+
+    if (!vi_do || !kinh_do) {
+      const coords = await this.geocodeVietMap(`${body.dia_chi_mat_bang}, ${body.phuong_xa || ''}, ${body.thanh_pho || ''}`);
+      if (coords) {
+        vi_do = coords.lat;
+        kinh_do = coords.lng;
+      }
+    }
+
+    if (vi_do && kinh_do) {
+      await this.checkDistanceProtection(vi_do, kinh_do);
+    }
+
     const hoSo = this.hoSoRepo.create({
       ho_ten: body.ho_ten,
       email: body.email,
@@ -439,8 +454,8 @@ export class FranchiseService {
       phuong_xa: body.phuong_xa || null,
       thanh_pho: body.thanh_pho || null,
       dien_tich_m2: body.dien_tich_m2 || null,
-      vi_do: body.vi_do || null,
-      kinh_do: body.kinh_do || null,
+      vi_do: vi_do || null,
+      kinh_do: kinh_do || null,
       goi_kiosk: body.goi_kiosk,
       ghi_chu: body.ghi_chu || null,
       trang_thai: 'CHO_XEM_XET',
@@ -465,6 +480,21 @@ export class FranchiseService {
     }
     const user = userResult[0];
 
+    let vi_do = body.vi_do;
+    let kinh_do = body.kinh_do;
+
+    if (!vi_do || !kinh_do) {
+      const coords = await this.geocodeVietMap(`${body.dia_chi_mat_bang}, ${body.phuong_xa || ''}, ${body.thanh_pho || ''}`);
+      if (coords) {
+        vi_do = coords.lat;
+        kinh_do = coords.lng;
+      }
+    }
+
+    if (vi_do && kinh_do) {
+      await this.checkDistanceProtection(vi_do, kinh_do);
+    }
+
     const hoSo = this.hoSoRepo.create({
       ho_ten: user.ho_ten,
       email: user.email,
@@ -473,8 +503,8 @@ export class FranchiseService {
       phuong_xa: body.phuong_xa || null,
       thanh_pho: body.thanh_pho || null,
       dien_tich_m2: body.dien_tich_m2 || null,
-      vi_do: body.vi_do || null,
-      kinh_do: body.kinh_do || null,
+      vi_do: vi_do || null,
+      kinh_do: kinh_do || null,
       goi_kiosk: body.goi_kiosk,
       ghi_chu: body.ghi_chu || null,
       trang_thai: 'CHO_XEM_XET',
@@ -2065,6 +2095,70 @@ export class FranchiseService {
     await this.logAction(adminId, `TAO_PHIEU_${body.loai_phieu}`, `Tạo phiếu ${body.loai_phieu} số tiền ${body.so_tien}`);
 
     return { message: `Đã tạo phiếu ${body.loai_phieu === 'THU' ? 'thu' : 'chi'} thành công!`, data: phieu };
+  }
+
+  // ─── HELPER: VIETMAP GEOCODING & DISTANCE CHECK ───
+  private async geocodeVietMap(address: string): Promise<{ lat: number, lng: number } | null> {
+    try {
+      const apiKey = process.env.VIETMAP_API_KEY;
+      if (!apiKey) return null;
+      
+      const searchUrl = `https://maps.vietmap.vn/api/search/v3?apikey=${apiKey}&text=${encodeURIComponent(address)}`;
+      const searchRes = await fetch(searchUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      const searchData = await searchRes.json();
+      
+      if (searchData && searchData.length > 0 && searchData[0].ref_id) {
+        const placeUrl = `https://maps.vietmap.vn/api/place/v3?apikey=${apiKey}&refid=${searchData[0].ref_id}`;
+        const placeRes = await fetch(placeUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        const placeData = await placeRes.json();
+        
+        if (placeData && placeData.lat && placeData.lng) {
+          return { lat: placeData.lat, lng: placeData.lng };
+        }
+      }
+    } catch (error) {
+      console.error('[VietMap] Geocode error:', error);
+    }
+    return null;
+  }
+
+  private async checkDistanceProtection(lat: number, lng: number) {
+    const RADIUS_KM = 0.5; // 500 meters
+    
+    // Haversine formula macro
+    const haversine = `
+      (6371 * acos(
+        cos(radians($1)) * cos(radians(vi_do)) *
+        cos(radians(kinh_do) - radians($2)) +
+        sin(radians($1)) * sin(radians(vi_do))
+      ))
+    `;
+
+    // 1. Check existing franchise.kiosk
+    const kiosks = await this.dataSource.query(`
+      SELECT ma_kiosk, ten_kiosk, ${haversine} AS distance
+      FROM franchise.kiosk
+      WHERE trang_thai != 'NGUNG_HOAT_DONG' AND vi_do IS NOT NULL AND kinh_do IS NOT NULL
+      AND ${haversine} <= $3
+      LIMIT 1
+    `, [lat, lng, RADIUS_KM]);
+
+    if (kiosks && kiosks.length > 0) {
+      throw new BadRequestException(`Địa chỉ mặt bằng dự kiến vi phạm chính sách bán kính bảo vệ (< 500m) so với Kiosk nhượng quyền hiện tại (${kiosks[0].ten_kiosk}). Vui lòng chọn vị trí khác!`);
+    }
+
+    // 3. Check pending franchise.ho_so_dang_ky
+    const hosos = await this.dataSource.query(`
+      SELECT id, ho_ten, ${haversine} AS distance
+      FROM franchise.ho_so_dang_ky
+      WHERE trang_thai IN ('CHO_XEM_XET', 'DA_DUYET') AND vi_do IS NOT NULL AND kinh_do IS NOT NULL
+      AND ${haversine} <= $3
+      LIMIT 1
+    `, [lat, lng, RADIUS_KM]);
+
+    if (hosos && hosos.length > 0) {
+      throw new BadRequestException(`Địa chỉ mặt bằng dự kiến đã có đối tác khác (${hosos[0].ho_ten}) đăng ký và đang chờ duyệt trong bán kính 500m. Vui lòng chọn vị trí khác!`);
+    }
   }
 }
 

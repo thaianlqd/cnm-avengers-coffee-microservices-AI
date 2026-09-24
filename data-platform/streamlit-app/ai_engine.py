@@ -144,7 +144,7 @@ def call_groq(messages, tools=None):
         "Content-Type": "application/json"
     }
     payload = {
-        "model": "llama3-8b-8192",
+        "model": "groq/compound",
         "messages": messages,
         "temperature": 0.1,
     }

@@ -420,34 +420,56 @@ export function BatchRouteScreen({ route, navigation }) {
       shipperCoord.setValue({ latitude: coords[0].latitude, longitude: coords[0].longitude })
     }
 
-    const animateLoop = () => {
-      if (step >= coords.length) {
-        setIsAnimating(false)
-        arriveAtTarget(nextIdx, targetPoint)
-        return
+    // Sử dụng thuật toán nội suy cố định 15 giây (giống MapScreen của đơn lẻ)
+    const steps = 75;
+    const intervalMs = 200; // 75 * 200ms = 15s
+    let currentStep = 0;
+
+    const simulationInterval = setInterval(() => {
+      currentStep++;
+      const progress = currentStep / steps;
+
+      const totalSegments = coords.length - 1;
+      const exactIndex = progress * totalSegments;
+      const lowerIndex = Math.floor(exactIndex);
+      const upperIndex = Math.min(Math.ceil(exactIndex), totalSegments);
+      const segmentProgress = exactIndex - lowerIndex;
+
+      const p1 = coords[lowerIndex];
+      const p2 = coords[upperIndex];
+
+      const newLat = p1.latitude + (p2.latitude - p1.latitude) * segmentProgress;
+      const newLng = p1.longitude + (p2.longitude - p1.longitude) * segmentProgress;
+
+      if (shipperCoord) {
+        if (Platform.OS === 'ios' || Platform.OS === 'android') {
+          shipperCoord.timing({
+            latitude: newLat,
+            longitude: newLng,
+            duration: intervalMs,
+            useNativeDriver: false
+          }).start();
+        } else {
+          shipperCoord.setValue({ latitude: newLat, longitude: newLng });
+        }
       }
-      
-      const coord = coords[step]
-      if (shipperCoord && (Platform.OS === 'ios' || Platform.OS === 'android')) {
-        shipperCoord.timing({
-          latitude: coord.latitude,
-          longitude: coord.longitude,
-          duration: 150, // Điều chỉnh về 150ms để nhanh vừa phải (không siêu tốc, không rùa bò)
-          useNativeDriver: false
-        }).start(() => {
-          step++
-          animateLoop()
-        })
-      } else {
-        // Fallback for Web/Errors
-        setTimeout(() => {
-          step++
-          animateLoop()
-        }, 150)
+
+      // Phát realtime toạ độ giả lập để Khách hàng thấy chạy mượt mà
+      if (currentStep === 1 || currentStep % 5 === 0 || currentStep === steps) {
+        if (shipper?.id) {
+          apiClient.patch(`/shippers/${shipper.id}/location`, {
+            latitude: newLat,
+            longitude: newLng,
+          }).catch(() => {});
+        }
       }
-    }
-    
-    animateLoop()
+
+      if (currentStep >= steps) {
+        clearInterval(simulationInterval);
+        setIsAnimating(false);
+        arriveAtTarget(nextIdx, targetPoint);
+      }
+    }, intervalMs);
   }
 
   const arriveAtTarget = (nextIdx, targetPoint) => {

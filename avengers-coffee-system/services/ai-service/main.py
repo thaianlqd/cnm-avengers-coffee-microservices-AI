@@ -698,19 +698,55 @@ class AgentChatRequest(BaseModel):
     session_id: str
     message: str
     history: Optional[List[AgentChatMessage]] = None
+    conversation_id: Optional[str] = None
+    client_message_id: Optional[str] = None
 
 
 class AgentChatResponse(BaseModel):
     reply: str
+    conversation_id: Optional[str] = None
     checkout_payload: Optional[Dict[str, Any]] = None
     tool_calls_log: Optional[List[Dict[str, Any]]] = None
     error: Optional[str] = None
 
 
+class AgentConversationResetRequest(BaseModel):
+    session_id: str
+    conversation_id: str
+
+
+class ProductPriceLookupRequest(BaseModel):
+    session_id: str
+    product_name: str
+    quantity: int = 1
+    size: Optional[str] = None
+    conversation_id: Optional[str] = None
+
+
+@app.post("/ai/agent/product/price")
+def get_agent_product_price(body: ProductPriceLookupRequest, request: Request):
+    """Expose canonical catalog price lookup for the current AI conversation."""
+    from src.common.session_auth import authorize_session
+    from src.function_calling.tools.product_tools import execute_check_price_and_stock
+
+    from src.common import conversation_memory
+
+    session_id = body.session_id
+    authorize_session(session_id, request.headers.get("authorization"))
+    scoped = f"{session_id}:conversation:{conversation_memory.normalize_conversation_id(body.conversation_id)}"
+    return execute_check_price_and_stock(
+        product_name_query=body.product_name,
+        branch_id="Chưa chọn",
+        size=body.size,
+        quantity=body.quantity,
+        session_id=scoped,
+    )
+
+
 # ── Agent Chat Endpoint ──────────────────────────────────────────────────────
 
 @app.post("/ai/agent/chat", response_model=AgentChatResponse)
-def agent_chat(body: AgentChatRequest):
+def agent_chat(body: AgentChatRequest, request: Request):
     """
     Endpoint Agentic Chat với Function Calling (Bước 2+3 của RAG Roadmap).
 
@@ -724,31 +760,106 @@ def agent_chat(body: AgentChatRequest):
       - Nếu nhận checkout_payload != null → hiển thị popup xác nhận đơn
     """
     from src.agents.agent_service import run_agent
+    from src.common.session_auth import authorize_session
+    from src.common import conversation_memory
 
-    history = [{"role": m.role, "content": m.content} for m in (body.history or [])]
+    authorize_session(body.session_id, request.headers.get("authorization"))
+
+    conversation_id = conversation_memory.normalize_conversation_id(body.conversation_id)
+    scoped_session_id = f"{body.session_id}:conversation:{conversation_id}"
+    try:
+        cached = conversation_memory.get_cached_response(
+            conversation_id, body.session_id, body.client_message_id
+        )
+        if cached:
+            cached.pop("_response_session_id", None)
+            cached["conversation_id"] = conversation_id
+            return AgentChatResponse(**cached)
+        memory = conversation_memory.load(conversation_id, body.session_id)
+        history = memory.get("messages") or []
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="Cuộc trò chuyện không thuộc phiên hiện tại")
+    except Exception as exc:
+        logger.warning("Cannot load durable AI conversation: %s", exc)
+        history = []
+    if not history:
+        history = [{"role": m.role, "content": m.content} for m in (body.history or [])]
     result = run_agent(
-        session_id=body.session_id,
+        session_id=scoped_session_id,
         user_message=body.message,
         history=history,
     )
+    result["conversation_id"] = conversation_id
+    try:
+        from src.common import cart_manager
+        conversation_memory.save_exchange(
+            conversation_id=conversation_id,
+            session_id=body.session_id,
+            user_message=body.message,
+            result=result,
+            client_message_id=body.client_message_id,
+            state={
+                "cart": cart_manager.get_cart(scoped_session_id),
+                "checkout_prefs": cart_manager.get_checkout_prefs(scoped_session_id),
+            },
+            response_session_id=scoped_session_id,
+        )
+    except Exception as exc:
+        logger.warning("Cannot persist durable AI conversation: %s", exc)
     return AgentChatResponse(
         reply=result.get("reply", ""),
+        conversation_id=conversation_id,
         checkout_payload=result.get("checkout_payload"),
         tool_calls_log=result.get("tool_calls_log"),
         error=result.get("error"),
     )
 
 
+@app.post("/ai/agent/conversation/reset")
+def reset_agent_conversation(body: AgentConversationResetRequest, request: Request):
+    """Start a clean AI draft while preserving the customer cart and profile."""
+    from src.common.session_auth import authorize_session
+    from src.common import conversation_memory, cart_manager
+
+    authorize_session(body.session_id, request.headers.get("authorization"))
+    conversation_id = conversation_memory.normalize_conversation_id(body.conversation_id)
+    try:
+        memory = conversation_memory.load(conversation_id, body.session_id)
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="Cuộc trò chuyện không thuộc phiên hiện tại")
+    if memory.get("messages"):
+        raise HTTPException(status_code=409, detail="Cuộc trò chuyện mới không được bắt đầu từ một ID đã có lịch sử")
+
+    scoped_session_id = f"{body.session_id}:conversation:{conversation_id}"
+    prefs = cart_manager.reset_conversation_draft(scoped_session_id)
+    return {
+        "status": "ok",
+        "conversation_id": conversation_id,
+        "cart_preserved": True,
+        "cleared_draft_keys": [
+            "pending_products", "checkout_requested", "voucher_decided",
+            "voucher_offer_pending", "voucher_candidates", "summary_fingerprint",
+            "checkout_action_id", "branch_candidates", "suggested_address",
+            "location_address", "stock_conflicts",
+        ],
+    }
+
+
 @app.get("/ai/agent/cart/{session_id}")
-def get_agent_cart(session_id: str):
+def get_agent_cart(session_id: str, request: Request, conversation_id: Optional[str] = None):
     """Lấy giỏ hàng hiện tại của session (dùng để debug hoặc hiển thị ở Frontend)."""
+    from src.common.session_auth import authorize_session
+    authorize_session(session_id, request.headers.get("authorization"))
     from src.common import cart_manager
-    return cart_manager.get_cart(session_id)
+    scoped = f"{session_id}:conversation:{conversation_id}" if conversation_id else session_id
+    return cart_manager.get_cart(scoped)
 
 
 @app.delete("/ai/agent/cart/{session_id}")
-def clear_agent_cart(session_id: str):
+def clear_agent_cart(session_id: str, request: Request):
     """Xoá giỏ hàng của session (sau khi tạo đơn thành công hoặc khi Làm mới chat)."""
+    from src.common.session_auth import authorize_session
+    authorize_session(session_id, request.headers.get("authorization"))
     from src.common import cart_manager
     cart_manager.clear_cart(session_id)
     
@@ -782,20 +893,28 @@ def clear_agent_cart(session_id: str):
 
 class CheckoutRequest(BaseModel):
     session_id: str
-    payment_method: str = "THANH_TOAN_KHI_NHAN_HANG"
-    delivery_type: str = "DELIVERY"
+    payment_method: Optional[str] = None
+    delivery_type: Optional[str] = None
+    delivery_address: Optional[str] = None
+    action_id: Optional[str] = None
 
 
 @app.post("/ai/cart/checkout")
-def api_cart_checkout(body: CheckoutRequest):
+def api_cart_checkout(body: CheckoutRequest, request: Request):
     """
     Endpoint Single Source of Truth để chốt đơn hàng từ Frontend UI.
     """
-    from src.common.checkout_service import finalize_checkout
-    return finalize_checkout(
-        session_id=body.session_id,
+    from src.function_calling.tools.cart_tools import execute_confirm_checkout
+    from src.common.session_auth import authorize_session
+    authorize_session(body.session_id, request.headers.get("authorization"))
+    conversation_id = request.query_params.get("conversation_id")
+    session_scope = f"{body.session_id}:conversation:{conversation_id}" if conversation_id else body.session_id
+    return execute_confirm_checkout(
+        session_id=session_scope,
         payment_method=body.payment_method,
-        delivery_type=body.delivery_type
+        delivery_type=body.delivery_type,
+        delivery_address=body.delivery_address,
+        action_id=body.action_id,
     )
 
 

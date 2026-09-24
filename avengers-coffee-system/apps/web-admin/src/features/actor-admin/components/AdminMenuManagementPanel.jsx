@@ -474,7 +474,7 @@ function AdminMenuManagementPanelContent({
                       <th style={{ width: '15%' }}>Giá bán</th>
                       <th style={{ width: '14%' }}>Trạng thái</th>
                       <th style={{ width: '15%' }}>Nhãn đặc trưng</th>
-                      <th style={{ width: '15%' }} className="text-right">Thao tác</th>
+                      <th style={{ width: '15%', textAlign: 'center' }}>Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>

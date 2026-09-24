@@ -43,6 +43,7 @@ export default function StaffDeliveryPanel() {
   const [lalamoveLinks, setLalamoveLinks] = useState({});
   const [assignPickerOrderId, setAssignPickerOrderId] = useState(null);
   const [assigningOrderId, setAssigningOrderId] = useState(null);
+  const [assignedShipperInfo, setAssignedShipperInfo] = useState({});
 
   // COD Audit State
   const [codRemits, setCodRemits] = useState([]);
@@ -133,6 +134,29 @@ export default function StaffDeliveryPanel() {
       });
 
       setDeliveries(deliveryOrders);
+
+      // Fetch tracking info for DANG_GIAO orders to get assigned shipper
+      const dangGiaoOrders = deliveryOrders.filter((o) => String(o.trang_thai_don_hang || '').trim().toUpperCase() === 'DANG_GIAO');
+      const shipperMap = { ...assignedShipperInfo };
+      await Promise.all(dangGiaoOrders.map(async (o) => {
+        try {
+          const tRes = await fetch(`${API_BASE_URL}/shippers/delivery/tracking/${o.ma_don_hang}`);
+          if (tRes.ok) {
+            const tData = await tRes.json();
+            if (tData.shipper_id) {
+              shipperMap[o.ma_don_hang] = {
+                id: tData.shipper_id,
+                name: tData.shipper_name,
+                phone: tData.shipper_phone,
+                vehicle_plate: tData.vehicle_plate
+              };
+            }
+          }
+        } catch (e) {
+          console.warn('[fetchTracking] Error:', e);
+        }
+      }));
+      setAssignedShipperInfo(shipperMap);
     } catch (err) {
       console.error('[fetchDeliveries] Lỗi:', err);
     } finally {
@@ -634,7 +658,7 @@ export default function StaffDeliveryPanel() {
             </div>
             <div>
               <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '800', color: '#0F172A', letterSpacing: '-0.02em' }}>
-                Quản lý Giao Hàng & Đội Ngũ Tài Xế
+                Quản lý Shipper & Đội Ngũ Tài Xế
               </h1>
               <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.82rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <Store size={14} color="#64748B" />
@@ -1157,6 +1181,26 @@ export default function StaffDeliveryPanel() {
                               >
                                 Đưa vào kho để shipper tự nhận
                               </button>
+                            </div>
+                          ) : assignedShipperInfo[order.ma_don_hang] ? (
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.4rem',
+                              padding: '0.35rem 0.75rem',
+                              borderRadius: '8px',
+                              backgroundColor: '#F0FDF4',
+                              border: '1px solid #BBF7D0',
+                            }}>
+                              <Bike size={14} color="#15803D" />
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span style={{ fontSize: '0.78rem', fontWeight: '700', color: '#166534' }}>
+                                  Đang giao bởi: {assignedShipperInfo[order.ma_don_hang].name || assignedShipperInfo[order.ma_don_hang].id}
+                                </span>
+                                <span style={{ fontSize: '0.65rem', color: '#15803D' }}>
+                                  {assignedShipperInfo[order.ma_don_hang].phone} {assignedShipperInfo[order.ma_don_hang].vehicle_plate ? `• ${assignedShipperInfo[order.ma_don_hang].vehicle_plate}` : ''}
+                                </span>
+                              </div>
                             </div>
                           ) : (
                             <button

@@ -131,6 +131,7 @@ export const CartProvider = ({ children }) => {
     }
 
     const availableSizes = product.sizes || {};
+    const availableToppings = product.toppings || {};
     const sizeKeys = Object.keys(availableSizes);
     const defaultSize = sizeKeys.length > 0 ? sizeKeys[0] : (product.size || 'Nhỏ');
     const appliedSize = size || defaultSize;
@@ -382,6 +383,12 @@ export const CartProvider = ({ children }) => {
   const refreshCart = async () => {
     await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(activeUserId) });
   };
+
+  useEffect(() => {
+    const handler = () => refreshCart();
+    window.addEventListener('refresh-cart', handler);
+    return () => window.removeEventListener('refresh-cart', handler);
+  }, [activeUserId]);
 
   const cartCount = useMemo(() => cart.reduce((sum, i) => sum + i.so_luong, 0), [cart]);
 

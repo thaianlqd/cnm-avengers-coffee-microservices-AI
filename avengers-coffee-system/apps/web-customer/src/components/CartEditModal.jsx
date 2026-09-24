@@ -33,9 +33,18 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose, onSa
           } else {
             const keys = Object.keys(optionsObj);
             if (keys.length > 0) {
-              const isMulti = attrName.toLowerCase().includes('topping') || attrName.toLowerCase().includes('đồ kèm');
+              const attr = attrName.toLowerCase();
+              const isMulti = attr.includes('topping') || attr.includes('đồ kèm');
               if (isMulti) {
-                initial[attrName] = [];
+                initial[attrName] = cartItem.toppings || [];
+              } else if (attr.includes('kích thước') || attr.includes('kích cỡ') || attr.includes('size')) {
+                initial[attrName] = cartItem.size || keys[0];
+              } else if (attr.includes('lượng đá') || attr.includes('đá') || attr.includes('ice')) {
+                initial[attrName] = cartItem.luong_da || keys[0];
+              } else if (attr.includes('độ ngọt') || attr.includes('ngọt') || attr.includes('đường') || attr.includes('sugar')) {
+                initial[attrName] = cartItem.do_ngot || keys[0];
+              } else if (attr.includes('loại sữa') || attr.includes('sữa') || attr.includes('milk')) {
+                initial[attrName] = cartItem.loai_sua || keys[0];
               } else {
                 initial[attrName] = keys[0];
               }
@@ -142,7 +151,7 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose, onSa
   if (!isOpen || !product || !cartItem) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white w-full max-w-2xl max-h-[90vh] rounded-[24px] overflow-hidden shadow-2xl relative flex flex-col animate-in zoom-in duration-300">
         
         {/* Header */}

@@ -12,3 +12,4 @@ groq
 httpx<0.28.0
 python-multipart==0.0.9
 PyJWT==2.8.0
+pytest>=8.0.0

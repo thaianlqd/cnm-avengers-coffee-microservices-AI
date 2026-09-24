@@ -5,6 +5,32 @@ from src.function_calling.helpers import _get_engine, _require_valid_session
 
 logger = logging.getLogger(__name__)
 
+
+def _clean_profile_address(value: Any) -> str:
+    """Remove duplicated location suffixes from legacy profile addresses."""
+    parts = [part.strip() for part in str(value or "").split(",") if part.strip()]
+    if not parts:
+        return ""
+
+    def key(part: str) -> str:
+        import unicodedata
+        raw = unicodedata.normalize("NFD", part.lower())
+        return "".join(char for char in raw if unicodedata.category(char) != "Mn").replace("đ", "d")
+
+    # Some saved rows already contain ward/city and legacy readers appended
+    # the same ward/city once more. Collapse any adjacent repeated suffix block.
+    changed = True
+    while changed:
+        changed = False
+        for block_size in range(len(parts) // 2, 0, -1):
+            if [key(item) for item in parts[-2 * block_size:-block_size]] == [
+                key(item) for item in parts[-block_size:]
+            ]:
+                del parts[-block_size:]
+                changed = True
+                break
+    return ", ".join(parts)
+
 TOOL_GET_USER_PREFERENCES = {
     "type": "function",
     "function": {
@@ -19,7 +45,8 @@ TOOL_GET_USER_PREFERENCES = {
 
 def execute_get_user_preferences(session_id: str) -> Dict[str, Any]:
     try:
-        valid_uid = _require_valid_session(session_id)
+        customer_session_id = str(session_id).split(":conversation:", 1)[0]
+        valid_uid = _require_valid_session(customer_session_id)
         if not valid_uid:
             return {"status": "unauthorized", "message": "Khách ẩn danh, không có thói quen."}
 
@@ -77,7 +104,8 @@ TOOL_GET_USER_PROFILE = {
 
 def execute_get_user_profile(session_id: str) -> Dict[str, Any]:
     try:
-        valid_uid = _require_valid_session(session_id)
+        customer_session_id = str(session_id).split(":conversation:", 1)[0]
+        valid_uid = _require_valid_session(customer_session_id)
         if not valid_uid:
             return {"status": "unauthorized", "message": "Khách ẩn danh, không có thông tin cá nhân."}
 
@@ -92,7 +120,7 @@ def execute_get_user_profile(session_id: str) -> Dict[str, Any]:
                 FROM {identity_schema}.nguoi_dung
                 WHERE ma_nguoi_dung = :id
                 """
-            ), {"id": session_id}).fetchone()
+            ), {"id": valid_uid}).fetchone()
 
             if not user_info:
                 return {"status": "not_found", "message": "Không tìm thấy thông tin người dùng."}
@@ -107,8 +135,15 @@ def execute_get_user_profile(session_id: str) -> Dict[str, Any]:
             ), {"uid": valid_uid}).fetchall()
 
         address_list = []
+        structured_addresses = []
         for addr in addresses:
-            address_list.append(f"- {addr[0] or 'Địa chỉ'}: {addr[1]} {'(Mặc định)' if addr[2] else ''}")
+            full_address = _clean_profile_address(addr[1])
+            address_list.append(f"- {addr[0] or 'Địa chỉ'}: {full_address} {'(Mặc định)' if addr[2] else ''}")
+            structured_addresses.append({
+                "label": addr[0] or "Địa chỉ",
+                "full_address": full_address,
+                "is_default": bool(addr[2]),
+            })
             
         address_text = "\n".join(address_list) if address_list else "Chưa lưu địa chỉ nào."
 
@@ -118,6 +153,11 @@ def execute_get_user_profile(session_id: str) -> Dict[str, Any]:
             "email": user_info[1] or "Chưa cập nhật",
             "phone": user_info[2] or "Chưa cập nhật",
             "addresses": address_text,
+            "address_items": structured_addresses,
+            "default_address": next(
+                (item["full_address"] for item in structured_addresses if item["is_default"]),
+                structured_addresses[0]["full_address"] if structured_addresses else None,
+            ),
             "message": "Đây là thông tin của khách hàng. Hãy trả lời thân thiện dựa trên thông tin này."
         }
     except Exception as e:

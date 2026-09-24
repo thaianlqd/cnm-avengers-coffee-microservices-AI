@@ -198,16 +198,17 @@ export function AdminKioskManagementPanel({ session }) {
       <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center', backgroundColor: '#ffffff', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid #e2e8f0', flexWrap: 'wrap', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center', flex: 1, minWidth: '300px', flexWrap: 'wrap' }}>
           <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
-            <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
+            <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)' }} />
             <input
               type="text"
+              className="kiosk-search-input"
               placeholder="Tìm theo mã Kiosk, tên điểm kinh doanh hoặc địa chỉ..."
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value)
                 setCurrentPage(1)
               }}
-              style={{ width: '100%', paddingLeft: '2.25rem', height: '38px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.8125rem', backgroundColor: '#f8fafc', outline: 'none' }}
+              style={{ width: '100%', height: '38px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.8125rem', backgroundColor: '#f8fafc', outline: 'none' }}
             />
           </div>
 
