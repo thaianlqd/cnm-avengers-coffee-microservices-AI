@@ -58,18 +58,23 @@ def render_sidebar():
         
     with st.sidebar:
         st.markdown("""
-        <div style='text-align:center; padding: 20px 0 16px; background: linear-gradient(135deg, #1A1A2E 0%, #0D0D1A 100%); border-radius: 16px; border: 1px solid #2A2A3E; margin-bottom: 20px;'>
-          <div style='display: flex; justify-content: center; align-items: center; margin-bottom: 8px;'>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FF4757" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M17 8h1a4 4 0 1 1 0 8h-1"></path>
-              <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path>
-              <line x1="6" y1="2" x2="6" y2="4"></line>
-              <line x1="10" y1="2" x2="10" y2="4"></line>
-              <line x1="14" y1="2" x2="14" y2="4"></line>
-            </svg>
+        <div style='padding: 18px 4px 14px; margin-bottom: 16px; border-bottom: 1px solid #E4E6EB;'>
+          <div style='display:flex; align-items:center; gap:10px;'>
+            <div style='background:#B91C1C; border-radius:10px; width:36px; height:36px;
+                        display:flex; align-items:center; justify-content:center; flex-shrink:0;'>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 8h1a4 4 0 1 1 0 8h-1"></path>
+                <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path>
+                <line x1="6" y1="2" x2="6" y2="4"></line>
+                <line x1="10" y1="2" x2="10" y2="4"></line>
+                <line x1="14" y1="2" x2="14" y2="4"></line>
+              </svg>
+            </div>
+            <div>
+              <div style='font-size:15px; font-weight:900; color:#0D0D0D; letter-spacing:-0.3px; line-height:1.2;'>Avengers Coffee</div>
+              <div style='font-size:10px; color:#9095A1; font-weight:600; letter-spacing:1px; text-transform:uppercase;'>Data Platform & AI</div>
+            </div>
           </div>
-          <div style='font-size:18px; font-weight:900; color:#FF4757; letter-spacing:2px;'>AVENGERS COFFEE</div>
-          <div style='font-size:11px; color:#C0C0D8; letter-spacing:3px; margin-top:3px; font-weight:700;'>DATA PLATFORM & AI</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -79,23 +84,24 @@ def render_sidebar():
             ("pages/03_San_Pham.py", "Sản Phẩm", "☕"),
             ("pages/04_Khach_Hang.py", "Khách Hàng", "👥"),
             ("pages/05_Shipper_Giao_Hang.py", "Shipper Giao Hàng", "🛵"),
-            ("pages/06_Tri_Tue_Nhan_Tao.py", "Trí Tuệ Nhân Tạo", "🤖"),
+            ("pages/06_Tro_Ly_Ao_AI.py", "Trợ Lý Ảo AI", "🤖"),
             ("pages/07_Khau_Vi_So_Thich.py", "Khẩu Vị Sở Thích", "👅"),
-            ("pages/08_Phan_Tich_Chuyen_Sau.py", "Phân Tích Chuyên Sâu", "🔍"),
+            ("pages/08_Kham_Pha_Du_Lieu.py", "Khám Phá Dữ Liệu", "🔍"),
             ("pages/09_Kien_Truc_He_Thong.py", "Kiến Trúc Hệ Thống", "⚙️"),
             ("pages/10_Doi_Soat_Dong_Tien.py", "Cảnh Báo Rủi Ro", "💵"),
             ("pages/11_Suc_Khoe_Nhuong_Quyen.py", "Hiệu Quả Nhượng Quyền", "🏪"),
             ("pages/12_PnL_Cash_Runway.py", "Tài Chính & Lợi Nhuận", "📈"),
-            ("pages/13_Kiosk_Health_Map.py", "Bản Đồ Cửa Hàng", "🗺️")
+            ("pages/13_Kiosk_Health_Map.py", "Bản Đồ Cửa Hàng", "🗺️"),
+            ("pages/14_AI_Module_Builder.py", "AI Module Builder", None),
         ]
         
-        st.markdown("<h4 style='font-size:14px; text-transform:uppercase; letter-spacing:0.8px; color:#C0C0D8; margin-bottom:10px;'>Phân Tích</h4>", unsafe_allow_html=True)
+        st.markdown("<div style='font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#9095A1; margin-bottom:6px; padding-left:4px;'>Phân Tích</div>", unsafe_allow_html=True)
         for path, label, icon in pages_nav:
-            st.page_link(path, label=label, icon=icon)
+            st.page_link(path, label=label, icon=None)
             
-        st.markdown("<hr style='border-color:#2A2A3E; margin:16px 0'>", unsafe_allow_html=True)
+        st.markdown("<hr style='border-color:#E4E6EB; margin:14px 0'>", unsafe_allow_html=True)
 
-        st.markdown("<h4 style='font-size:14px; text-transform:uppercase; letter-spacing:0.8px; color:#C0C0D8; margin-bottom:10px;'>Trạng Thái Hệ Thống</h4>", unsafe_allow_html=True)
+        st.markdown("<div style='font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#9095A1; margin-bottom:6px; padding-left:4px;'>Trạng Thái Hệ Thống</div>", unsafe_allow_html=True)
         if _cached_pg_status():
             render_status_badge("PostgreSQL Hoạt động", "success")
         else:

@@ -19,6 +19,21 @@ export default function OrderTrackingPage({ id, onBack }) {
   // ETA & Distance
   const [routeInfo, setRouteInfo] = useState(null);
 
+  const [publicBranches, setPublicBranches] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    apiClient.get('/users/branches/public')
+      .then((res) => {
+        const items = Array.isArray(res.data?.items) ? res.data.items : (Array.isArray(res.data) ? res.data : []);
+        if (isMounted && items.length > 0) {
+          setPublicBranches(items);
+        }
+      })
+      .catch(() => {});
+    return () => { isMounted = false; };
+  }, []);
+
   const handleRateShipper = async () => {
     setSubmittingRating(true);
     try {
@@ -148,21 +163,6 @@ export default function OrderTrackingPage({ id, onBack }) {
   }
 
 
-  const [publicBranches, setPublicBranches] = useState([]);
-
-  useEffect(() => {
-    let isMounted = true;
-    apiClient.get('/users/branches/public')
-      .then((res) => {
-        const items = Array.isArray(res.data?.items) ? res.data.items : (Array.isArray(res.data) ? res.data : []);
-        if (isMounted && items.length > 0) {
-          setPublicBranches(items);
-        }
-      })
-      .catch(() => {});
-    return () => { isMounted = false; };
-  }, []);
-
   const getBranchInfo = (code) => {
     const codeStr = String(code || '').trim().toUpperCase();
     const codeNorm = codeStr.replace(/-/g, '_');
@@ -283,6 +283,21 @@ export default function OrderTrackingPage({ id, onBack }) {
           </div>
         )}
 
+        {/* Batch Info Warning */}
+        {trackingData?.batch_info?.is_delivering_other && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 flex gap-3 text-left shadow-sm">
+            <div className="text-amber-500 text-xl mt-0.5">⚠️</div>
+            <div>
+              <p className="font-bold text-amber-800 text-sm mb-1">
+                Shipper đang giao chuyến ghép ({trackingData.batch_info.total_batch_orders} đơn)
+              </p>
+              <p className="text-amber-700 text-xs leading-relaxed">
+                Tài xế đang giao một đơn hàng khác trên cùng lộ trình. Thời gian dự kiến có thể kéo dài thêm một chút, mong bạn thông cảm!
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Map Section */}
         {tracking?.delivery_mode === 'GIAO_TAN_NOI' && order?.trang_thai_don_hang !== 'HOAN_THANH' && (
           <div className="space-y-2">
@@ -305,6 +320,7 @@ export default function OrderTrackingPage({ id, onBack }) {
                   }
                   return destLoc;
                 })()}
+                otherDestinations={trackingData?.batch_info?.other_destinations || []}
                 shipperName={shipper?.full_name || 'Tài xế'}
                 deliveryStatus={order.trang_thai_don_hang}
                 storeAddress={branchInfo.address}

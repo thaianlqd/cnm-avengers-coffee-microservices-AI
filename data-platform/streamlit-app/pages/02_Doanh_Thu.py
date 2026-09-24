@@ -131,6 +131,78 @@ with col_right:
     else:
         st.info("Chưa có dữ liệu.")
 
+# ── Heatmap & Phân phối ──────────────────────────────────────────────────
+st.markdown("<hr style='border-color:#2A2A3E; margin:20px 0;'>", unsafe_allow_html=True)
+c_heat, c_hist = st.columns(2, gap="large")
+
+with c_heat:
+    render_section_title("Heatmap: Ngày Vàng & Giờ Vàng")
+    @st.cache_data(ttl=86400, show_spinner=False)
+    def get_heatmap_data():
+        max_d = get_max_date()
+        return query_df(f"""
+            SELECT 
+                EXTRACT(DOW FROM ngay_tao) AS dow,
+                EXTRACT(HOUR FROM ngay_tao) AS hour,
+                COUNT(*) AS order_count
+            FROM orders.don_hang
+            WHERE ngay_tao >= '{max_d}'::date - INTERVAL '30 days'
+            GROUP BY 1, 2
+        """)
+    hm_df = get_heatmap_data()
+    if not hm_df.empty:
+        # PostgreSQL DOW: 0 is Sunday, 1-6 is Monday-Saturday
+        dow_map = {1: "Thứ 2", 2: "Thứ 3", 3: "Thứ 4", 4: "Thứ 5", 5: "Thứ 6", 6: "Thứ 7", 0: "Chủ Nhật"}
+        hm_df["Ngày"] = hm_df["dow"].map(dow_map)
+        hm_df["Giờ"] = hm_df["hour"].astype(int)
+        
+        heatmap_matrix = hm_df.pivot(index="Ngày", columns="Giờ", values="order_count").fillna(0)
+        cat_order = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"]
+        # Only keep indices that exist in the dataframe to avoid reindex errors
+        existing_order = [d for d in cat_order if d in heatmap_matrix.index]
+        heatmap_matrix = heatmap_matrix.reindex(existing_order)
+        
+        fig_hm = px.imshow(
+            heatmap_matrix, 
+            labels=dict(x="Khung giờ", y="Ngày trong tuần", color="Lượng đơn"),
+            x=heatmap_matrix.columns, y=heatmap_matrix.index,
+            color_continuous_scale="YlOrRd",
+            aspect="auto"
+        )
+        apply_layout(fig_hm, height=360, margin=dict(l=60, r=40, t=30, b=40))
+        st.plotly_chart(fig_hm, use_container_width=True)
+    else:
+        st.info("Chưa có đủ dữ liệu để tạo Heatmap.")
+
+with c_hist:
+    render_section_title("Phân Phối Giá Trị Đơn Hàng (AOV)")
+    @st.cache_data(ttl=86400, show_spinner=False)
+    def get_order_values():
+        max_d = get_max_date()
+        return query_df(f"""
+            SELECT tong_tien 
+            FROM orders.don_hang
+            WHERE ngay_tao >= '{max_d}'::date - INTERVAL '30 days'
+              AND trang_thai_don_hang IN ('HOAN_THANH','DANG_GIAO')
+        """)
+    aov_df = get_order_values()
+    if not aov_df.empty and len(aov_df) > 1:
+        aov_df["tong_tien"] = pd.to_numeric(aov_df["tong_tien"], errors="coerce").fillna(0)
+        p95 = aov_df["tong_tien"].quantile(0.95)
+        filtered = aov_df[aov_df["tong_tien"] <= p95]
+        
+        fig_hist = px.histogram(
+            filtered, x="tong_tien", 
+            nbins=30, 
+            color_discrete_sequence=["#2563EB"],
+            labels={"tong_tien": "Giá trị đơn hàng (đ)"}
+        )
+        fig_hist.update_yaxes(title="Số lượng đơn")
+        apply_layout(fig_hist, height=360, margin=dict(l=40, r=40, t=30, b=40))
+        st.plotly_chart(fig_hist, use_container_width=True)
+    else:
+        st.info("Chưa có đủ dữ liệu đơn hàng.")
+
 # ── Wallet Transaction Section ────────────────────────
 st.markdown("<hr style='border-color:#2A2A3E; margin:20px 0;'>", unsafe_allow_html=True)
 render_section_title("Giao Dịch Ví Điện Tử")

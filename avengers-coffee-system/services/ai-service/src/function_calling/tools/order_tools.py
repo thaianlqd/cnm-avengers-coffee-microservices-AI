@@ -46,7 +46,7 @@ def execute_track_order_status(order_id: str, session_id: str) -> Dict[str, Any]
                 FROM {order_schema}.don_hang
                 WHERE ma_don_hang = :order_id AND ma_nguoi_dung = :session_id
                 """
-            ), {"order_id": order_id, "session_id": session_id}).mappings().fetchone()
+            ), {"order_id": order_id, "session_id": valid_uid}).mappings().fetchone()
 
         if not row:
             return {
@@ -101,7 +101,7 @@ def execute_get_order_history(session_id: str) -> Dict[str, Any]:
                 ORDER BY ngay_tao DESC
                 LIMIT 5
                 """
-            ), {"session_id": session_id}).mappings().all()
+            ), {"session_id": valid_uid}).mappings().all()
 
         if not rows:
             return {

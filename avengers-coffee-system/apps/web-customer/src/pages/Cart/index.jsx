@@ -546,7 +546,32 @@ export default function CartPage({
     setVoucherCode('');
     setVoucherResult(null);
     setVoucherError('');
+    if (maNguoiDung) localStorage.removeItem(`avengers_ai_voucher_${maNguoiDung}`);
   };
+
+  useEffect(() => {
+    if (!maNguoiDung) return undefined;
+    const storageKey = `avengers_ai_voucher_${maNguoiDung}`;
+    const applyFromChat = (event) => {
+      const code = String(event?.detail?.code || localStorage.getItem(storageKey) || '').trim().toUpperCase();
+      if (code && cart?.length) {
+        setVoucherCode(code);
+        apDungVoucher(code);
+      }
+    };
+    const removeFromChat = () => {
+      setVoucherCode('');
+      setVoucherResult(null);
+      setVoucherError('');
+    };
+    window.addEventListener('ai-voucher-applied', applyFromChat);
+    window.addEventListener('ai-voucher-removed', removeFromChat);
+    applyFromChat();
+    return () => {
+      window.removeEventListener('ai-voucher-applied', applyFromChat);
+      window.removeEventListener('ai-voucher-removed', removeFromChat);
+    };
+  }, [maNguoiDung, cart?.length, total]);
 
 
   useEffect(() => {

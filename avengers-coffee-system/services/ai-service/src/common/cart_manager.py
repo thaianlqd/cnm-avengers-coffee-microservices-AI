@@ -11,9 +11,11 @@ Lưu ý quan trọng về Scale:
   TODO: Đổi sang Redis trước khi scale lên production multi-worker.
 """
 import json
+import hashlib
 import logging
 import threading
 import time
+import uuid
 from typing import Any, Dict, List, Optional
 from sqlalchemy import text
 from src.common.db import get_db_engine
@@ -55,6 +57,34 @@ def _now() -> float:
     return time.time()
 
 
+def _parse_json_object(value: Any) -> Dict[str, Any]:
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+            return parsed if isinstance(parsed, dict) else {}
+        except (TypeError, ValueError):
+            return {}
+    return {}
+
+
+def _order_item_payload(item: Dict[str, Any]) -> Dict[str, Any]:
+    """Return only fields that can change the order represented by a cart line."""
+    return {
+        "product_id": str(item.get("product_id") or item.get("ma_san_pham") or ""),
+        "product_name": str(item.get("product_name") or item.get("ten_san_pham") or ""),
+        "quantity": max(1, int(item.get("quantity") or item.get("so_luong") or 1)),
+        "unit_price": float(item.get("unit_price") or item.get("gia_ban") or 0),
+        "size": item.get("size") or item.get("kich_co"),
+        "toppings": sorted(str(value) for value in (item.get("toppings") or [])),
+        "luong_da": item.get("luong_da") or None,
+        "do_ngot": item.get("do_ngot") or None,
+        "loai_sua": item.get("loai_sua") or None,
+        "note": item.get("note") or item.get("ghi_chu") or None,
+    }
+
+
 def _is_expired(session: Dict[str, Any]) -> bool:
     return (_now() - session.get("updated_at", 0)) > _SESSION_TTL_SECONDS
 
@@ -93,10 +123,15 @@ def _ensure_table_exists(engine) -> None:
                     branch_name VARCHAR NULL,
                     cart_items JSONB DEFAULT '[]',
                     is_checking_out BOOLEAN DEFAULT FALSE,
+                    checkout_prefs JSONB DEFAULT '{}'::jsonb,
                     last_order_id VARCHAR NULL,
                     created_at TIMESTAMP DEFAULT NOW(),
                     updated_at TIMESTAMP DEFAULT NOW()
                 )
+            '''))
+            conn.execute(text('''
+                ALTER TABLE ai_chat_sessions
+                ADD COLUMN IF NOT EXISTS checkout_prefs JSONB DEFAULT '{}'::jsonb
             '''))
         _db_initialized = True
 
@@ -110,14 +145,15 @@ def _sync_to_db(session_id: str, session: Dict[str, Any]) -> None:
             # Upsert
             sql = text('''
                 INSERT INTO ai_chat_sessions 
-                    (session_id, branch_id, branch_name, cart_items, is_checking_out, last_order_id, updated_at)
+                    (session_id, branch_id, branch_name, cart_items, is_checking_out, checkout_prefs, last_order_id, updated_at)
                 VALUES 
-                    (:session_id, :branch_id, :branch_name, :cart_items, :is_checking_out, :last_order_id, NOW())
+                    (:session_id, :branch_id, :branch_name, :cart_items, :is_checking_out, :checkout_prefs, :last_order_id, NOW())
                 ON CONFLICT (session_id) DO UPDATE SET
                     branch_id = EXCLUDED.branch_id,
                     branch_name = EXCLUDED.branch_name,
                     cart_items = EXCLUDED.cart_items,
                     is_checking_out = EXCLUDED.is_checking_out,
+                    checkout_prefs = EXCLUDED.checkout_prefs,
                     last_order_id = EXCLUDED.last_order_id,
                     updated_at = NOW()
             ''')
@@ -127,6 +163,7 @@ def _sync_to_db(session_id: str, session: Dict[str, Any]) -> None:
                 "branch_name": session.get("branch_name"),
                 "cart_items": json.dumps(session.get("items", [])),
                 "is_checking_out": session.get("is_checking_out", False),
+                "checkout_prefs": json.dumps(session.get("checkout_prefs", {})),
                 "last_order_id": session.get("last_order_id"),
             })
     except Exception as e:
@@ -139,7 +176,7 @@ def _load_from_db(session_id: str) -> Optional[Dict[str, Any]]:
         _ensure_table_exists(engine)
         
         with engine.connect() as conn:
-            sql = text('''SELECT branch_id, branch_name, cart_items, is_checking_out, last_order_id 
+            sql = text('''SELECT branch_id, branch_name, cart_items, is_checking_out, checkout_prefs, last_order_id
                           FROM ai_chat_sessions WHERE session_id = :session_id''')
             row = conn.execute(sql, {"session_id": session_id}).mappings().first()
             if row:
@@ -148,6 +185,7 @@ def _load_from_db(session_id: str) -> Optional[Dict[str, Any]]:
                     "branch_name": row.get("branch_name"),
                     "items": row.get("cart_items") if isinstance(row.get("cart_items"), list) else json.loads(row.get("cart_items") or "[]"),
                     "is_checking_out": row.get("is_checking_out", False),
+                    "checkout_prefs": _parse_json_object(row.get("checkout_prefs")),
                     "last_order_id": row.get("last_order_id"),
                     "created_at": _now(),
                     "updated_at": _now(),
@@ -174,6 +212,7 @@ def _get_or_create_session(session_id: str) -> Dict[str, Any]:
                 "created_at": _now(),
                 "updated_at": _now(),
                 "is_checking_out": False,
+                "checkout_prefs": {},
                 "last_order_id": None,
             }
     return _SESSION_CARTS[session_id]
@@ -202,8 +241,52 @@ def get_cart(session_id: str) -> Dict[str, Any]:
             "total_price": total,
             "is_empty": len(items) == 0,
             "is_checking_out": session.get("is_checking_out", False),
+            "checkout_prefs": dict(session.get("checkout_prefs") or {}),
             "last_order_id": session.get("last_order_id"),
         }
+
+
+def replace_items_from_order_cart(session_id: str, server_items: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Mirror the authoritative order-service cart into conversational state.
+
+    The AI copy is read-only presentation/checkpoint data. It must never be
+    merged additively because the order-service cart may already contain lines
+    created by the web UI or an earlier chat turn.
+    """
+    normalized: List[Dict[str, Any]] = []
+    for item in server_items or []:
+        normalized.append({
+            "line_id": item.get("id") or item.get("line_id"),
+            "product_id": str(item.get("ma_san_pham") or item.get("product_id") or ""),
+            "product_name": item.get("ten_san_pham") or item.get("product_name") or "Sản phẩm",
+            "quantity": max(1, int(item.get("so_luong") or item.get("quantity") or 1)),
+            "unit_price": float(item.get("gia_ban") or item.get("unit_price") or 0),
+            "size": item.get("size") or item.get("kich_co"),
+            "toppings": list(item.get("toppings") or []),
+            "luong_da": item.get("luong_da"),
+            "do_ngot": item.get("do_ngot"),
+            "loai_sua": item.get("loai_sua"),
+            "note": item.get("ghi_chu") or item.get("note"),
+        })
+    with _get_session_lock(session_id):
+        session = _get_or_create_session(session_id)
+        previous_fingerprint = json.dumps(
+            [_order_item_payload(item) for item in (session.get("items") or [])],
+            sort_keys=True,
+            ensure_ascii=False,
+        )
+        next_fingerprint = json.dumps(
+            [_order_item_payload(item) for item in normalized],
+            sort_keys=True,
+            ensure_ascii=False,
+        )
+        session["items"] = normalized
+        if previous_fingerprint != next_fingerprint:
+            prefs = dict(session.get("checkout_prefs") or {})
+            prefs.pop("summary_fingerprint", None)
+            session["checkout_prefs"] = prefs
+        _touch(session_id, session, sync_db=True)
+    return get_cart(session_id)
 
 
 def set_branch(session_id: str, branch_id: str, branch_name: str) -> None:
@@ -212,6 +295,10 @@ def set_branch(session_id: str, branch_id: str, branch_name: str) -> None:
         session = _get_or_create_session(session_id)
         session["branch_id"] = branch_id
         session["branch_name"] = branch_name
+        prefs = dict(session.get("checkout_prefs") or {})
+        prefs.pop("summary_fingerprint", None)
+        prefs.pop("branch_candidates", None)
+        session["checkout_prefs"] = prefs
         _touch(session_id, session, sync_db=True)
         logger.info("[CartManager] Session %s set branch: %s (%s)", session_id, branch_name, branch_id)
 
@@ -223,6 +310,20 @@ def get_branch(session_id: str) -> Optional[str]:
         return session.get("branch_id")
 
 
+def clear_branch(session_id: str) -> None:
+    """Forget an outlet whenever the customer changes fulfillment mode."""
+    with _get_session_lock(session_id):
+        session = _get_or_create_session(session_id)
+        session["branch_id"] = None
+        session["branch_name"] = None
+        prefs = dict(session.get("checkout_prefs") or {})
+        prefs.pop("branch_candidates", None)
+        prefs.pop("stock_conflicts", None)
+        prefs.pop("summary_fingerprint", None)
+        session["checkout_prefs"] = prefs
+        _touch(session_id, session, sync_db=True)
+
+
 def add_item(
     session_id: str,
     product_id: str,
@@ -230,6 +331,10 @@ def add_item(
     unit_price: float,
     quantity: int = 1,
     size: Optional[str] = None,
+    toppings: Optional[List[str]] = None,
+    luong_da: Optional[str] = None,
+    do_ngot: Optional[str] = None,
+    loai_sua: Optional[str] = None,
     note: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
@@ -243,13 +348,21 @@ def add_item(
 
         # Tìm item trùng (cùng sản phẩm và cùng size)
         existing = next(
-            (i for i in items if i["product_id"] == product_id and i.get("size") == size),
+            (
+                i for i in items
+                if i["product_id"] == product_id
+                and i.get("size") == size
+                and i.get("note") == note
+                and sorted(i.get("toppings") or []) == sorted(toppings or [])
+                and i.get("luong_da") == luong_da
+                and i.get("do_ngot") == do_ngot
+                and i.get("loai_sua") == loai_sua
+            ),
             None,
         )
         if existing:
             existing["quantity"] += max(1, int(quantity))
-            if note:
-                existing["note"] = note
+            existing["unit_price"] = float(unit_price)
         else:
             items.append({
                 "product_id": product_id,
@@ -257,8 +370,17 @@ def add_item(
                 "quantity": max(1, int(quantity)),
                 "unit_price": float(unit_price),
                 "size": size,
+                "toppings": list(toppings or []),
+                "luong_da": luong_da,
+                "do_ngot": do_ngot,
+                "loai_sua": loai_sua,
                 "note": note,
             })
+
+        # Keep explicit payment/fulfillment choices, but invalidate an old summary.
+        prefs = dict(session.get("checkout_prefs") or {})
+        prefs.pop("summary_fingerprint", None)
+        session["checkout_prefs"] = prefs
 
         _touch(session_id, session, sync_db=True)
         logger.info(
@@ -277,6 +399,10 @@ def remove_item(session_id: str, product_id: str, size: Optional[str] = None) ->
             i for i in session["items"]
             if not (i["product_id"] == product_id and i.get("size") == size)
         ]
+        if before != len(session["items"]):
+            prefs = dict(session.get("checkout_prefs") or {})
+            prefs.pop("summary_fingerprint", None)
+            session["checkout_prefs"] = prefs
         _touch(session_id, session, sync_db=True)
         removed = before - len(session["items"])
         logger.info("[CartManager] Session %s removed %d item(s) pid=%s", session_id, removed, product_id)
@@ -291,8 +417,14 @@ def clear_cart(session_id: str, order_id: Optional[str] = None) -> None:
         session["branch_id"] = None
         session["branch_name"] = None
         session["is_checking_out"] = False
+        previous_prefs = dict(session.get("checkout_prefs") or {})
+        session["checkout_prefs"] = {}
         if order_id:
             session["last_order_id"] = order_id
+            session["checkout_prefs"] = {
+                "completed_action_id": previous_prefs.get("checkout_action_id"),
+                "completed_order_id": str(order_id),
+            }
         _touch(session_id, session, sync_db=True)
         logger.info("[CartManager] Session %s cart cleared. Last order: %s", session_id, order_id)
 
@@ -303,21 +435,193 @@ def set_is_checking_out(session_id: str, is_checking_out: bool) -> None:
         session["is_checking_out"] = is_checking_out
         _touch(session_id, session, sync_db=True)
 
-def set_checkout_prefs(session_id: str, payment_method: str, delivery_type: str) -> None:
-    """Lưu tạm thời phương thức thanh toán và giao hàng khi Tóm tắt đơn hàng."""
+def set_checkout_prefs(
+    session_id: str,
+    payment_method: Optional[str] = None,
+    delivery_type: Optional[str] = None,
+    delivery_address: Optional[str] = None,
+) -> Dict[str, str]:
+    """Merge explicit checkout choices and persist them across worker restarts."""
     with _get_session_lock(session_id):
         session = _get_or_create_session(session_id)
-        session["checkout_prefs"] = {
-            "payment_method": payment_method,
-            "delivery_type": delivery_type
-        }
-        _touch(session_id, session, sync_db=False)
+        prefs = dict(session.get("checkout_prefs") or {})
+        changed = False
+        if payment_method is not None:
+            changed = changed or prefs.get("payment_method") != payment_method
+            prefs["payment_method"] = payment_method
+        if delivery_type is not None:
+            changed = changed or prefs.get("delivery_type") != delivery_type
+            prefs["delivery_type"] = delivery_type
+        if delivery_address is not None:
+            address = str(delivery_address).strip()
+            changed = changed or prefs.get("delivery_address") != address
+            prefs["delivery_address"] = address
+        if changed:
+            prefs.pop("summary_fingerprint", None)
+        session["checkout_prefs"] = prefs
+        _touch(session_id, session, sync_db=True)
+        return dict(prefs)
 
-def get_checkout_prefs(session_id: str) -> Optional[Dict[str, str]]:
+def set_checkout_context(session_id: str, **values: Any) -> Dict[str, Any]:
+    """Persist auxiliary checkout state without exposing it as an order field."""
+    with _get_session_lock(session_id):
+        session = _get_or_create_session(session_id)
+        prefs = dict(session.get("checkout_prefs") or {})
+        order_affecting_keys = {"voucher_code", "discount_amount"}
+        order_state_changed = False
+        for key, value in values.items():
+            old_value = prefs.get(key)
+            if value is None:
+                prefs.pop(key, None)
+            else:
+                prefs[key] = value
+            if key in order_affecting_keys and old_value != value:
+                order_state_changed = True
+        if order_state_changed:
+            prefs.pop("summary_fingerprint", None)
+        session["checkout_prefs"] = prefs
+        _touch(session_id, session, sync_db=True)
+        return dict(prefs)
+
+def get_checkout_prefs(session_id: str) -> Dict[str, Any]:
     """Lấy cấu hình thanh toán và giao hàng đã lưu tạm thời."""
     with _get_session_lock(session_id):
         session = _get_or_create_session(session_id)
-        return session.get("checkout_prefs")
+        return dict(session.get("checkout_prefs") or {})
+
+def reset_conversation_draft(session_id: str) -> Dict[str, Any]:
+    """Clear chat-only pending/check-out prompts without touching the real cart."""
+    with _get_session_lock(session_id):
+        session = _get_or_create_session(session_id)
+        prefs = dict(session.get("checkout_prefs") or {})
+        draft_keys = (
+            "pending_products", "checkout_requested", "voucher_decided",
+            "voucher_offer_pending", "voucher_candidates", "summary_fingerprint",
+            "checkout_action_id", "branch_candidates", "suggested_address",
+            "location_address", "stock_conflicts",
+        )
+        for key in draft_keys:
+            prefs.pop(key, None)
+        session["checkout_prefs"] = prefs
+        _touch(session_id, session, sync_db=True)
+        return dict(prefs)
+
+def set_pending_products(session_id: str, products: List[Dict[str, Any]], merge: bool = False) -> List[Dict[str, Any]]:
+    """Persist products selected from a recommendation until each reaches the cart."""
+    new_items = [
+        {
+            **item,
+            "product_name": str(item.get("product_name") or "").strip(),
+            "category": item.get("category"),
+            "quantity": max(1, int(item.get("quantity") or 1)),
+        }
+        for item in products
+        if str(item.get("product_name") or "").strip()
+    ]
+    with _get_session_lock(session_id):
+        session = _get_or_create_session(session_id)
+        prefs = dict(session.get("checkout_prefs") or {})
+        if merge:
+            existing = list(prefs.get("pending_products") or [])
+            existing_names = {str(i.get("product_name") or "").strip().casefold() for i in existing}
+            for item in new_items:
+                if str(item.get("product_name") or "").strip().casefold() not in existing_names:
+                    existing.append(item)
+            prefs["pending_products"] = existing
+            normalized = existing
+        else:
+            prefs["pending_products"] = new_items
+            normalized = new_items
+        prefs.pop("summary_fingerprint", None)
+        session["checkout_prefs"] = prefs
+        _touch(session_id, session, sync_db=True)
+    return normalized
+
+def mark_pending_product_added(session_id: str, product_name: str) -> None:
+    target = str(product_name or "").strip().casefold()
+    if not target:
+        return
+    import re
+    def _is_match(pending_name: str, added_name: str) -> bool:
+        p1 = pending_name.strip().casefold()
+        p2 = added_name.strip().casefold()
+        if p1 == p2:
+            return True
+        p1_clean = re.sub(r'^\d+\s*', '', p1)
+        p2_clean = re.sub(r'^\d+\s*', '', p2)
+        if p1_clean == p2_clean and p1_clean:
+            return True
+        if len(p1) >= 10 and len(p2) >= 10:
+            if p1 in p2 or p2 in p1:
+                return True
+        return False
+
+    with _get_session_lock(session_id):
+        session = _get_or_create_session(session_id)
+        prefs = dict(session.get("checkout_prefs") or {})
+        pending = list(prefs.get("pending_products") or [])
+        remaining = [
+            item for item in pending
+            if not _is_match(str(item.get("product_name") or ""), target)
+        ]
+        if len(remaining) == len(pending):
+            return
+        if remaining:
+            prefs["pending_products"] = remaining
+        else:
+            prefs.pop("pending_products", None)
+        prefs.pop("summary_fingerprint", None)
+        session["checkout_prefs"] = prefs
+        _touch(session_id, session, sync_db=True)
+
+def set_stock_conflicts(session_id: str, product_names: List[str]) -> None:
+    with _get_session_lock(session_id):
+        session = _get_or_create_session(session_id)
+        prefs = dict(session.get("checkout_prefs") or {})
+        if product_names:
+            prefs["stock_conflicts"] = [str(name) for name in product_names]
+        else:
+            prefs.pop("stock_conflicts", None)
+        prefs.pop("summary_fingerprint", None)
+        session["checkout_prefs"] = prefs
+        _touch(session_id, session, sync_db=True)
+
+def cart_fingerprint(session_id: str) -> str:
+    """Stable digest of order-affecting cart data for checkout preview validation."""
+    cart = get_cart(session_id)
+    payload = {
+        "branch_id": cart.get("branch_id"),
+        "checkout_prefs": {
+            key: value for key, value in cart.get("checkout_prefs", {}).items()
+            if key not in {
+                "summary_fingerprint", "pending_products", "branch_candidates",
+                "suggested_address", "location_address", "stock_conflicts",
+                "checkout_action_id", "checkout_action_expires_at",
+            }
+        },
+        "items": sorted(
+            [_order_item_payload(item) for item in cart.get("items", [])],
+            key=lambda item: (
+                str(item.get("product_id")),
+                str(item.get("size") or ""),
+                str(item.get("note") or ""),
+            ),
+        ),
+    }
+    encoded = json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+def mark_checkout_summary(session_id: str) -> Dict[str, str]:
+    fingerprint = cart_fingerprint(session_id)
+    with _get_session_lock(session_id):
+        session = _get_or_create_session(session_id)
+        prefs = dict(session.get("checkout_prefs") or {})
+        prefs["summary_fingerprint"] = fingerprint
+        prefs["checkout_action_id"] = str(uuid.uuid4())
+        prefs["checkout_action_expires_at"] = str(time.time() + 15 * 60)
+        session["checkout_prefs"] = prefs
+        _touch(session_id, session, sync_db=True)
+        return dict(prefs)
 
 def cart_summary_text(session_id: str) -> str:
     """Tạo chuỗi text tóm tắt giỏ hàng – dùng để nhét vào Prompt cho LLM nhớ context."""

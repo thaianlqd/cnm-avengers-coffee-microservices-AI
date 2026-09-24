@@ -93,8 +93,7 @@ export default function Header({
     { id: 'menu-intro', label: t('header.menu') || 'THỰC ĐƠN', dropdownTabId: 'menu-intro', icon: HomeIcon },
     { id: 'about', label: t('header.about') || 'VỀ CHÚNG TÔI', icon: InformationCircleIcon },
     { id: 'nhuong-quyen', label: 'NHƯỢNG QUYỀN', icon: BuildingStorefrontIcon },
-    { id: 'careers', label: t('header.careers') || 'NGHỀ NGHIỆP', icon: BriefcaseIcon },
-    { id: 'contact', label: t('header.support') || 'HỖ TRỢ', icon: ChatBubbleLeftEllipsisIcon },
+    { id: 'other-group', label: 'TUYỂN DỤNG & HỖ TRỢ', dropdownTabId: 'other-group', icon: ChatBubbleLeftEllipsisIcon },
   ];
 
   const rightNavItems = [
@@ -141,12 +140,12 @@ export default function Header({
                         ? 'bg-amber-400 text-amber-900 font-black shadow-xs'
                         : 'bg-amber-400/20 text-amber-200 hover:bg-amber-400/30 hover:text-amber-100 font-bold'
                       : isActive
-                        ? 'bg-white/20 text-white font-black shadow-xs'
-                        : 'text-white/85 hover:bg-white/10 hover:text-white font-bold'
+                        ? 'bg-white/20 text-white font-bold shadow-xs'
+                        : 'text-white/85 hover:bg-white/10 hover:text-white font-semibold'
                   }`}
                 >
-                  <Icon className="h-3.5 w-3.5 flex-shrink-0 opacity-90 hidden xl:block" />
-                  <span className="text-[10px] xl:text-[11.5px] uppercase tracking-wider whitespace-nowrap">
+                  <Icon className="h-4 w-4 flex-shrink-0 opacity-90 hidden xl:block" />
+                  <span className="text-[11px] xl:text-[12px] uppercase tracking-wider whitespace-nowrap">
 
                     {item.label}
                   </span>
@@ -205,6 +204,24 @@ export default function Header({
                     </div>
                   </div>
                 )}
+
+                {/* Dropdown Menu for TUYỂN DỤNG & HỖ TRỢ */}
+                {item.dropdownTabId === 'other-group' && (
+                  <div className="absolute left-0 top-[100%] mt-1 w-[200px] bg-white shadow-xl rounded-xl invisible opacity-0 -translate-y-2 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 z-[60] border border-gray-100 overflow-hidden">
+                    <ul className="flex flex-col py-1">
+                      <li>
+                        <button type="button" onClick={() => onTabChange?.('careers')} className="flex items-center gap-2 w-full text-left px-4 py-3 text-[13px] font-bold text-gray-700 hover:bg-red-50 hover:text-[#b22830] transition-colors">
+                          <BriefcaseIcon className="w-4 h-4" /> Nghề nghiệp
+                        </button>
+                      </li>
+                      <li>
+                        <button type="button" onClick={() => onTabChange?.('contact')} className="flex items-center gap-2 w-full text-left px-4 py-3 text-[13px] font-bold text-gray-700 hover:bg-red-50 hover:text-[#b22830] transition-colors">
+                          <ChatBubbleLeftEllipsisIcon className="w-4 h-4" /> Hỗ trợ khách hàng
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -241,12 +258,12 @@ export default function Header({
                   onClick={() => onTabChange?.(item.id)}
                   className={`relative flex items-center gap-1.5 px-1.5 py-1.5 rounded-xl transition-all duration-200 cursor-pointer ${
                   isActive
-                    ? 'bg-white/20 text-white font-black shadow-xs'
-                    : 'text-white/85 hover:bg-white/10 hover:text-white font-bold'
+                    ? 'bg-white/20 text-white font-bold shadow-xs'
+                    : 'text-white/85 hover:bg-white/10 hover:text-white font-semibold'
                 }`}
               >
                 <Icon className="h-4 w-4 flex-shrink-0 opacity-90 hidden xl:block" />
-                <span className="text-[11px] xl:text-[13px] uppercase tracking-wider whitespace-nowrap">
+                <span className="text-[11px] xl:text-[12px] uppercase tracking-wider whitespace-nowrap">
                   {item.label}
                 </span>
               </button>

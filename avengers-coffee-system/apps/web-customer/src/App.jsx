@@ -45,7 +45,7 @@ const FALLBACK_BANNER_URL = '/hc-assets/HCO_7825_AME__SUMMERDI_DC_BANNER_1920x92
 
 // Exact same banners from Highlands Coffee HTML file
 const HC_BANNER_SLIDES = [
-  '/hc-assets/HCO_7825_SUMMERDI_GAME___DC_BANNER_1920x926.jpg',
+  'https://www.highlandscoffee.com.vn/vnt_upload/news/08_2026/mooncake_catalog_01.png',
   '/hc-assets/HCO_7824_1000_STORE_DC_MWB.jpg',
   '/hc-assets/HCO_7825_SUMMERDI_DC_BANNER_1920x926.jpg',
   '/hc-assets/HCO_7825_AME__SUMMERDI_DC_BANNER_1920x926.jpg',
@@ -426,7 +426,7 @@ function HomeBannerSlider() {
       <img
         src={slides[currentSlide]}
         alt={`Banner ${currentSlide + 1}`}
-        className="w-full h-auto block hc-fade-in"
+        className="w-full aspect-[2/1] md:aspect-[1920/926] object-cover block hc-fade-in"
         onError={(e) => {
           e.currentTarget.src = FALLBACK_BANNER_URL;
         }}

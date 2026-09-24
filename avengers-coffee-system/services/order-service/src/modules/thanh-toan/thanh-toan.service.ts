@@ -69,6 +69,12 @@ type CapNhatDonHangDto = {
     gia_ban?: number;
     kich_co?: string;
     hinh_anh_url?: string;
+    toppings?: string[];
+    luong_da?: string;
+    do_ngot?: string;
+    loai_sua?: string;
+    ghi_chu?: string;
+    custom_attributes?: Record<string, any>;
   }>;
 };
 
@@ -259,6 +265,53 @@ export class ThanhToanService {
 
   private normalizeOrderStatus(status?: string | null) {
     return String(status || '').trim().toUpperCase();
+  }
+
+  /**
+   * Reject an explicitly suspended or insufficient stock record. A missing
+   * row means this product has not been configured at branch level yet, which
+   * matches the customer cart's inventory policy. This check is deliberately
+   * repeated immediately before the order write.
+   */
+  private async kiemTraTonKhoTruocKhiTaoDon(branchCode: string, gioHang: CartItem[]) {
+    const requiredByProduct = new Map<number, { quantity: number; name: string }>();
+    for (const item of gioHang) {
+      const productId = Number(item.ma_san_pham);
+      const current = requiredByProduct.get(productId) || {
+        quantity: 0,
+        name: item.ten_san_pham || `Sản phẩm ${productId}`,
+      };
+      current.quantity += Math.max(1, Number(item.so_luong) || 1);
+      requiredByProduct.set(productId, current);
+    }
+
+    const productIds = [...requiredByProduct.keys()].filter(Number.isFinite);
+    if (!branchCode || !productIds.length) {
+      throw new BadRequestException('Không thể xác minh tồn kho cho đơn hàng');
+    }
+
+    const rows: Array<{ ma_san_pham: number; so_luong_ton: number; dang_kinh_doanh: boolean }> =
+      await this.donHangRepo.manager.query(
+        `SELECT ma_san_pham, so_luong_ton, dang_kinh_doanh
+           FROM inventory.ton_kho_san_pham
+          WHERE co_so_ma = $1 AND ma_san_pham = ANY($2::int[])`,
+        [branchCode, productIds],
+      );
+    const stockByProduct = new Map(rows.map((row) => [Number(row.ma_san_pham), row]));
+    const blockers: string[] = [];
+    for (const [productId, required] of requiredByProduct.entries()) {
+      const stock = stockByProduct.get(productId);
+      // A missing inventory row means stock is not configured for this
+      // product/branch. Do not invent an out-of-stock state from missing data.
+      if (stock && (!stock.dang_kinh_doanh || Number(stock.so_luong_ton || 0) < required.quantity)) {
+        blockers.push(required.name);
+      }
+    }
+    if (blockers.length) {
+      throw new BadRequestException(
+        `Chi nhánh ${branchCode} không đủ tồn kho cho: ${blockers.join(', ')}`,
+      );
+    }
   }
 
   private guiSuKienDongBoNhanSu(
@@ -1736,6 +1789,11 @@ export class ThanhToanService {
       }
     }
 
+    // Franchise kiosks use their own stock workflow; the customer branch
+    // inventory table is authoritative only for web/app branch orders.
+    if (!isKiosk) {
+      await this.kiemTraTonKhoTruocKhiTaoDon(branchCode, gioHang);
+    }
 
     const trangThaiThanhToanBanDau = dto.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG'
       ? 'CHO_THANH_TOAN_KHI_NHAN_HANG'
@@ -1975,6 +2033,8 @@ export class ThanhToanService {
       toppings?: string[];
       luong_da?: string;
       do_ngot?: string;
+      loai_sua?: string;
+      custom_attributes?: Record<string, any>;
       item_ghi_chu?: string;
     }>;
     ghi_chu?: string;
@@ -1998,6 +2058,7 @@ export class ThanhToanService {
         tong_tien: tongTien,
         dia_chi_giao_hang: payload.dia_chi_giao_hang || 'Tại quán / Giao hàng AI',
         ghi_chu: payload.ghi_chu || 'Đặt qua AI',
+        loai_don_hang: payload.loai_don_hang || (payload as any).delivery_mode || null,
         phuong_thuc_thanh_toan: (payload.phuong_thuc_thanh_toan as any) || 'THANH_TOAN_KHI_NHAN_HANG',
         trang_thai_thanh_toan: 'CHO_THANH_TOAN_KHI_NHAN_HANG',
         trang_thai_don_hang: 'MOI_TAO',
@@ -2025,6 +2086,8 @@ export class ThanhToanService {
         toppings: item.toppings || [],
         luong_da: item.luong_da || null,
         do_ngot: item.do_ngot || null,
+        loai_sua: item.loai_sua || null,
+        custom_attributes: item.custom_attributes || {},
         ghi_chu: item.item_ghi_chu || item.ghi_chu || null,
       }),
     );
@@ -2923,7 +2986,9 @@ export class ThanhToanService {
       toppings?: string[];
       luong_da?: string | null;
       do_ngot?: string | null;
+      loai_sua?: string | null;
       ghi_chu?: string | null;
+      custom_attributes?: Record<string, any>;
     }> = [];
 
     if (suDungCheDoThayTheMon) {
@@ -2943,7 +3008,9 @@ export class ThanhToanService {
           toppings?: string[];
           luong_da?: string | null;
           do_ngot?: string | null;
+          loai_sua?: string | null;
           ghi_chu?: string | null;
+          custom_attributes?: Record<string, any>;
         }
       >();
 
@@ -2980,7 +3047,9 @@ export class ThanhToanService {
             toppings: (item as any)?.toppings || itemCu?.toppings || [],
             luong_da: (item as any)?.luong_da || itemCu?.luong_da || null,
             do_ngot: (item as any)?.do_ngot || itemCu?.do_ngot || null,
+            loai_sua: (item as any)?.loai_sua || itemCu?.loai_sua || null,
             ghi_chu: (item as any)?.ghi_chu || itemCu?.ghi_chu || null,
+            custom_attributes: (item as any)?.custom_attributes || itemCu?.custom_attributes || {},
           });
         }
       }
@@ -3007,7 +3076,9 @@ export class ThanhToanService {
               toppings: item.toppings || [],
               luong_da: item.luong_da || null,
               do_ngot: item.do_ngot || null,
+              loai_sua: item.loai_sua || null,
               ghi_chu: item.ghi_chu || null,
+              custom_attributes: item.custom_attributes || {},
             };
           }
 
@@ -3022,7 +3093,9 @@ export class ThanhToanService {
             toppings: item.toppings || [],
             luong_da: item.luong_da || null,
             do_ngot: item.do_ngot || null,
+            loai_sua: item.loai_sua || null,
             ghi_chu: item.ghi_chu || null,
+            custom_attributes: item.custom_attributes || {},
           };
         })
         .filter((item) => item.so_luong > 0);
@@ -3056,7 +3129,9 @@ export class ThanhToanService {
             toppings: (item as any).toppings || [],
             luong_da: (item as any).luong_da || null,
             do_ngot: (item as any).do_ngot || null,
+            loai_sua: (item as any).loai_sua || null,
             ghi_chu: (item as any).ghi_chu || null,
+            custom_attributes: (item as any).custom_attributes || {},
           }),
         );
         await chiTietRepo.save(chiTietMoi);

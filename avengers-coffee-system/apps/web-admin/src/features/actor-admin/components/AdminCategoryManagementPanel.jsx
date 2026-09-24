@@ -306,7 +306,7 @@ export function AdminCategoryManagementPanel({
                       <th style={{ width: '18%' }}>Cấp bậc</th>
                       <th style={{ width: '20%' }}>Danh mục cha</th>
                       <th style={{ width: '13%' }}>Số món liên kết</th>
-                      <th style={{ width: '12%' }} className="text-right">Thao tác</th>
+                      <th style={{ width: '12%', textAlign: 'center' }}>Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
