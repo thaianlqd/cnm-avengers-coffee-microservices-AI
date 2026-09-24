@@ -12,7 +12,6 @@ def t1_env_off(monkeypatch):
 def t1_env_on(monkeypatch):
     monkeypatch.setenv("USE_T1_CONFIRM", "true")
 
-@pytest.mark.skip(reason="confirm_cancel/confirm_checkout Tier1 thuộc giai đoạn 2+, chưa được duyệt/triển khai")
 def test_t1_integration_off(t1_env_off):
     # Cờ tắt: Hành vi y hệt trước đây
     session_id = "test-t1-off"
@@ -49,7 +48,6 @@ def test_t1_integration_on_bug_fix(t1_env_on):
         # Nếu T1 hoạt động đúng, nó sẽ trả NONE, không đi vào nhánh confirm_checkout
         assert res.get("gate") not in ["confirm_checkout", "confirm_checkout_ambiguous"]
 
-@pytest.mark.skip(reason="confirm_cancel/confirm_checkout Tier1 thuộc giai đoạn 2+, chưa được duyệt/triển khai")
 def test_t1_integration_on_ambiguous_cancel(t1_env_on):
     # Cờ BẬT: AMBIGUOUS dẫn tới hỏi lại, không tự thực thi hủy
     session_id = "test-t1-on-ambig-cancel"
@@ -63,7 +61,6 @@ def test_t1_integration_on_ambiguous_cancel(t1_env_on):
         # Đảm bảo không gọi tool hủy
         assert not mock_cancel.called
 
-@pytest.mark.skip(reason="confirm_cancel/confirm_checkout Tier1 thuộc giai đoạn 2+, chưa được duyệt/triển khai")
 def test_t1_integration_on_ambiguous_checkout(t1_env_on):
     # Cờ BẬT: AMBIGUOUS checkout
     session_id = "test-t1-on-ambig-checkout"
