@@ -289,6 +289,10 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                         "unverified_products": item.get("unverified_products") or [],
                     } for item in top_branches],
                 )
+                try:
+                    cart_manager.set_pending_action(session_id, "select_branch", {"count": len(top_branches)})
+                except Exception as e:
+                    logger.warning("[AgentTools] set_pending_action select_branch failed: %s", e)
 
             nearest_dist = top_branches[0]["khoang_cach_km"]
             

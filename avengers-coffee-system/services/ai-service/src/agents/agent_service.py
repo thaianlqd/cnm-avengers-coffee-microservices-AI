@@ -382,6 +382,11 @@ def _advance_checkout_if_ready(session_id: str, result: Dict[str, Any]) -> Dict[
                     for voucher in voucher_result["vouchers"][:4]
                 ],
             )
+            try:
+                cart_manager.set_pending_action(session_id, "select_voucher", {"count": len(voucher_result["vouchers"])})
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning("set_pending_action select_voucher failed: %s", e)
             lines = ["Giỏ hiện có các mã dùng được:"]
             for voucher in voucher_result["vouchers"][:4]:
                 discount = f"{float(voucher.get('so_tien_giam_du_kien') or 0):,.0f}".replace(",", ".")
@@ -389,6 +394,11 @@ def _advance_checkout_if_ready(session_id: str, result: Dict[str, Any]) -> Dict[
             lines.append("Bạn chọn mã nào, hay không dùng mã để mình chốt tóm tắt?")
             return {**result, "reply": "\n".join(lines), "tool_calls_log": logs}
         cart_manager.set_checkout_context(session_id, voucher_decided=True, voucher_offer_pending=None)
+        try:
+            cart_manager.clear_pending_action(session_id)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("clear_pending_action select_voucher (no_more_vouchers early) failed: %s", e)
 
     from src.function_calling.tools.cart_tools import execute_request_checkout
     cart_manager.set_checkout_context(session_id, checkout_requested=None)
@@ -468,6 +478,11 @@ def _resolve_pending_voucher_choice(session_id: str, message: str) -> Optional[D
         voucher_offer_pending=None,
         voucher_candidates=candidates,
     )
+    try:
+        cart_manager.clear_pending_action(session_id)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("clear_pending_action select_voucher (applied) failed: %s", e)
     result = {
         "reply": _checkout_choices_prompt(
             session_id,
@@ -518,6 +533,11 @@ def _handle_additional_product(session_id: str, product_query: str) -> Optional[
             "category": None,
             "options": {"groups": option_groups},
         }])
+        try:
+            cart_manager.set_pending_action(session_id, "fill_options", {})
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("set_pending_action fill_options failed: %s", e)
         options = "\n".join(f"- {name}: {', '.join(values)}" for name, values in option_groups.items())
         return {
             "reply": f"{found_name} có các tùy chọn:\n{options}\nBạn chọn giúp mình trước khi thêm vào giỏ nhé.",
@@ -655,6 +675,11 @@ def _resolve_pending_branch_choice(
     )
     if branch_result.get("status") == "ok":
         cart_manager.set_checkout_context(session_id, branch_candidates=None)
+        try:
+            cart_manager.clear_pending_action(session_id)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("clear_pending_action select_branch failed: %s", e)
     return {
         "reply": branch_result.get("message", "Mình chưa thể ghi nhận cửa hàng này."),
         "checkout_payload": None,
@@ -719,6 +744,11 @@ def _confirm_saved_location(
                 f"({item.get('khoang_cach_km')} km đường chim bay){availability}"
             )
         lines.append("Bạn chọn cửa hàng số mấy để mình kiểm tra tồn kho và chốt nơi phục vụ?")
+        try:
+            cart_manager.set_pending_action(session_id, "select_branch", {"count": len(branches)})
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("set_pending_action select_branch failed: %s", e)
         return {"reply": "\n".join(lines), "checkout_payload": None, "tool_calls_log": log, "error": None}
     if nearest.get("status") == "ok" and branches and prefs.get("delivery_type") == "GIAO_TAN_NOI":
         chosen = branches[0]
@@ -984,6 +1014,12 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
             remaining.append({**item, "selected_options": selected})
 
     cart_manager.set_pending_products(session_id, remaining)
+    if not remaining:
+        try:
+            cart_manager.clear_pending_action(session_id)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("clear_pending_action fill_options failed: %s", e)
     if not_ready:
         return {
             "reply": "Mình vẫn đang giữ các món bạn chọn. Cần hoàn tất thêm:\n- " + "\n- ".join(not_ready),
@@ -1004,6 +1040,11 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
         reply_lines.append(f"- {cart_item.get('product_name')} x{quantity}: {line_total_text}đ")
     reply_lines.append(f"Tổng giỏ hiện tại: {total}đ.")
     reply_lines.append("Bạn có muốn thêm món gì nữa không?")
+    try:
+        cart_manager.set_pending_action(session_id, "ask_more_items", {})
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("set_pending_action ask_more_items failed: %s", e)
     reply = "\n".join(reply_lines)
     return {"reply": reply, "checkout_payload": None, "tool_calls_log": logs, "error": None}
 
@@ -1050,7 +1091,7 @@ def _build_messages(
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
-def run_agent(
+def _run_agent_impl(
     session_id: str,
     user_message: str,
     history: Optional[List[Dict[str, str]]] = None,
@@ -1169,6 +1210,11 @@ def run_agent(
                         option_questions.append(f"- {product_name}: không có tùy chọn; dùng cấu hình mặc định của món.")
             if requested_to_buy:
                 cart_manager.set_pending_products(session_id, enriched_review_choices)
+                try:
+                    cart_manager.set_pending_action(session_id, "fill_options", {"count": len(enriched_review_choices)})
+                except Exception as e:
+                    import logging
+                    logging.getLogger(__name__).warning("set_pending_action fill_options failed: %s", e)
                 reply_lines.append("Mình cũng đã giữ lại đủ các món bạn chọn để đặt. Đây là toàn bộ tùy chọn:")
                 for choice, option_line in zip(enriched_review_choices, option_questions):
                     reply_lines.append(f"- {choice['product_name']}: {option_line}")
@@ -1216,6 +1262,11 @@ def run_agent(
         _normalize_chat_text(user_message),
     ))
     if no_more_items and not cart_manager.get_cart(session_id).get("is_empty"):
+        try:
+            cart_manager.clear_pending_action(session_id)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("clear_pending_action ask_more_items (no_more_items) failed: %s", e)
         current_voucher = cart_manager.get_checkout_prefs(session_id).get("voucher_code")
         if current_voucher:
             return {
@@ -1241,6 +1292,11 @@ def run_agent(
                     "discount_amount": item.get("discount_amount") or item.get("so_tien_giam_du_kien") or item.get("so_tien_giam"),
                 } for item in vouchers],
             )
+            try:
+                cart_manager.set_pending_action(session_id, "select_voucher", {"count": len(vouchers)})
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning("set_pending_action select_voucher failed: %s", e)
             lines = ["Mình giữ nguyên giỏ hàng hiện tại, không thêm món nào nữa.", "Các mã đang áp dụng được:"]
             for item in vouchers:
                 code = item.get("ma_voucher") or ""
@@ -1250,6 +1306,11 @@ def run_agent(
             lines.append("Bạn muốn áp dụng mã nào? Nếu chưa muốn dùng mã, cứ nói bỏ qua.")
             return {"reply": "\n".join(lines), "checkout_payload": None, "tool_calls_log": logs, "error": None}
         cart_manager.set_checkout_context(session_id, voucher_decided=True)
+        try:
+            cart_manager.clear_pending_action(session_id)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("clear_pending_action select_voucher (no_more_items) failed: %s", e)
         return {
             "reply": _checkout_choices_prompt(
                 session_id,
@@ -1267,6 +1328,11 @@ def run_agent(
         old_delivery = cart_manager.get_checkout_prefs(session_id).get("delivery_type")
         if choices.get("delivery_type") and choices["delivery_type"] != old_delivery:
             cart_manager.clear_branch(session_id)
+            try:
+                cart_manager.clear_pending_action(session_id)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning("clear_pending_action for changed delivery_type failed: %s", e)
         cart_manager.set_checkout_prefs(session_id, **choices)
 
     voucher_choice = _resolve_pending_voucher_choice(session_id, user_message)
@@ -1282,6 +1348,11 @@ def run_agent(
         }
 
     if _wants_checkout(user_message):
+        try:
+            cart_manager.clear_pending_action(session_id)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("clear_pending_action ask_more_items (wants_checkout) failed: %s", e)
         prefs_now = cart_manager.get_checkout_prefs(session_id)
         if not prefs_now.get("voucher_decided"):
             from src.function_calling.tools.voucher_tools import execute_get_applicable_vouchers
@@ -1293,6 +1364,11 @@ def run_agent(
                     voucher_offer_pending=True,
                     voucher_candidates=vouchers,
                 )
+                try:
+                    cart_manager.set_pending_action(session_id, "select_voucher", {"count": len(vouchers)})
+                except Exception as e:
+                    import logging
+                    logging.getLogger(__name__).warning("set_pending_action select_voucher (wants_checkout) failed: %s", e)
                 lines = ["Trước khi đặt hàng, bạn có các mã dùng được:"]
                 for voucher in vouchers[:4]:
                     discount = f"{float(voucher.get('so_tien_giam_du_kien') or 0):,.0f}".replace(",", ".")
@@ -1305,6 +1381,11 @@ def run_agent(
                     "error": None,
                 }
             cart_manager.set_checkout_context(session_id, voucher_decided=True)
+            try:
+                cart_manager.clear_pending_action(session_id)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning("clear_pending_action select_voucher (before checkout) failed: %s", e)
         missing_prompt = _checkout_choices_prompt(session_id)
         if missing_prompt:
             return {"reply": missing_prompt, "checkout_payload": None, "tool_calls_log": [], "error": None}
@@ -1461,6 +1542,11 @@ def run_agent(
                 reply_lines.append(f"- {label}: {item['product_name']} — {option_result.get('message') or 'chưa lấy được tùy chọn'}")
 
         cart_manager.set_pending_products(session_id, enriched_choices, merge=True)
+        try:
+            cart_manager.set_pending_action(session_id, "fill_options", {"count": len(enriched_choices)})
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("set_pending_action fill_options failed: %s", e)
 
         # Check if customer also requested cake/food recommendations.
         has_cake_request = bool(re.search(
@@ -1560,6 +1646,11 @@ def run_agent(
         and entry["result"].get("status") == "ok"
     ]
     if successful_adds:
+        try:
+            cart_manager.clear_pending_action(session_id)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("clear_pending_action ask_more_items (add_to_cart) failed: %s", e)
         lines = ["Mình đã thêm vào giỏ:"]
         for entry in successful_adds:
             args = entry.get("args") or {}
@@ -1624,3 +1715,5 @@ def run_agent(
         result["reply"] = _checkout_choices_prompt(session_id, result.get("reply") or "")
 
     return _advance_checkout_if_ready(session_id, result)
+
+run_agent = _run_agent_impl
