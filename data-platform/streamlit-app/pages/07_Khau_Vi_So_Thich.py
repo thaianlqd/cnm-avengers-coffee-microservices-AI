@@ -45,12 +45,12 @@ def get_branch_geo_list():
             cn.ma_chi_nhanh,
             cn.ten_chi_nhanh,
             COALESCE(cn.thanh_pho, 'Không xác định') AS thanh_pho,
-            COALESCE(cn.quan_huyen, 'Không xác định') AS quan_huyen
+            cn.thanh_pho AS quan_huyen
         FROM identity.chi_nhanh cn
         WHERE cn.trang_thai = 'ACTIVE'
           AND cn.thanh_pho IS NOT NULL
           AND cn.thanh_pho != 'Không xác định'
-        ORDER BY cn.thanh_pho, cn.quan_huyen, cn.ten_chi_nhanh
+        ORDER BY cn.thanh_pho, cn.ten_chi_nhanh
     """)
 
 branch_geo = get_branch_geo_list()
@@ -436,11 +436,12 @@ if not branch_matrix.empty and len(branch_matrix) >= 3:
     scaler = RobustScaler()
     X_scaled = scaler.fit_transform(X)
 
-    n_clusters = min(3, len(branch_matrix))
+    n_clusters = min(3, len(branch_matrix) - 1)
     kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
     branch_matrix["cluster"] = kmeans.fit_predict(X_scaled).astype(str)
     
-    sil_score = silhouette_score(X_scaled, branch_matrix["cluster"]) if n_clusters > 1 else 0
+    n_unique_labels = len(branch_matrix["cluster"].unique())
+    sil_score = silhouette_score(X_scaled, branch_matrix["cluster"]) if (1 < n_unique_labels < len(branch_matrix)) else 0
     if sil_score < 0.3:
         st.warning(f"Silhouette Score: **{sil_score:.2f}** (< 0.3). Các cụm chưa phân tách rõ ràng. Kết quả chỉ mang tính tham khảo.")
     else:

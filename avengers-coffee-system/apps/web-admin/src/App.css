@@ -12860,4 +12860,9 @@ svg.lucide *,
 .admin-pg-btn:disabled {
   opacity: 0.4 !important;
   cursor: not-allowed !important;
-}
+}
+.system-admin-panel .kiosk-search-input {
+  padding-left: 2.75rem !important;
+  box-sizing: border-box !important;
+}
+

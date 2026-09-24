@@ -1,0 +1,146 @@
+--- Bắt đầu phiên chat giả lập (Real User): 83addedd-d7c9-4149-b241-be77ff9fcf0c:conversation:e2e-2f067c55 ---
+--- Đã reset giỏ hàng mô phỏng trong phiên AI ---
+
+[KHÁCH HÀNG]: tôi muốn mua bánh và nước, hãy hiển thị ra các món.
+[AI AVENGERS]: Dưới đây là các món bánh và nước mà bạn có thể lựa chọn:
+
+**Bánh:**
+1. Bánh Trung Thu Cà Phê Lava - 99.000đ
+2. Bánh Trung Thu Thập Cẩm Bát Bửu - 119.000đ
+3. Bánh Chuối Phủ Hạt - 39.000đ
+4. Bánh Mì Que Bò Nấm Xốt Bơ - 22.000đ
+5. Bánh Mì Que Chà Bông Phô Mai Bơ Cay - 22.000đ
+
+**Nước:**
+1. 1 Lít Matcha Latte Tây Bắc - 95.000đ
+2. 1 Lít Matcha Latte Tây Bắc Sữa Yến Mạch - 105.000đ
+3. Bạc Xỉu - 39.000đ
+4. Bạc Xỉu Caramel Muối - 49.000đ
+5. Bạc Xỉu Foam Dừa - 49.000đ
+
+Bạn muốn chọn món nào?
+
+[KHÁCH HÀNG]: cho tôi đánh giá chi tiết về Bánh Trung Thu Cà Phê Lava nhé
+[AI AVENGERS]: Món Bánh Trung Thu Cà Phê Lava hiện chưa có đánh giá nào trên hệ thống.
+
+[KHÁCH HÀNG]: cho tôi bánh số 1 và nước số 1 nhé
+[AI AVENGERS]: Bánh Trung Thu Cà Phê Lava không có tùy chọn nào, bạn có thể đặt mặc định.
+
+Còn với 1 Lít Matcha Latte Tây Bắc, bạn cần chọn thêm các tùy chọn sau:
+
+1. **Topping** (chọn 1 hoặc nhiều):
+   - Hạt Sen
+   - Foam Dừa
+   - Trái Vải
+   - Sữa Tươi
+   - Sữa Đặc
+   - Shot Espresso
+   - Xốt Caramel
+   - Đào Miếng
+   - Sữa Yến Mạch
+   - Đài Hoa Hibiscus
+   - Trân châu trắng
+   - Thạch Sương Sáo
+   - Hạt Nổ Củ Năng
+   - Kem Phô Mai Macchiato
+   - Trân Châu Hoàng Kim
+   - Hạt Nổ Yến Mạch
+
+2. **Lượng đá**:
+   - Ít đá
+   - Đá riêng
+   - Bình thường
+
+3. **Độ ngọt**:
+   - Ít ngọt
+   - Thêm ngọt
+   - Không ngọt
+   - Bình thường
+
+Bạn muốn chọn những tùy chọn nào cho 1 Lít Matcha Latte Tây Bắc?
+
+[KHÁCH HÀNG]: tôi chọn ít đá, ít ngọt, topping trân châu trắng cho món nước nhé
+[AI AVENGERS]: Mình đã thêm vào giỏ:
+- Bánh Trung Thu Cà Phê Lava x1: 99.000đ/món
+- 1 Lít Matcha Latte Tây Bắc x1: 105.000đ/món
+Tổng giỏ hiện tại: 717.000đ.
+
+[KHÁCH HÀNG]: tôi không thêm gì nữa, cho vào giỏ hàng đi
+[AI AVENGERS]: Mình giữ nguyên giỏ hàng hiện tại, không thêm món nào nữa.
+Các mã đang áp dụng được:
+- QUà thăng hạng Kim Cương [Mã: UP_DM_PCPD] — giảm 50,000đ
+- Quà thăng hạng Vàng [Mã: UP_GD_RNWJ] — giảm 20,000đ
+- Quà thăng hạng Bạc [Mã: UP_SV_1JDX] — giảm 10,000đ
+Bạn muốn áp dụng mã nào? Nếu chưa muốn dùng mã, cứ nói bỏ qua.
+
+[KHÁCH HÀNG]: tôi có mã giảm giá nào không? áp dụng mã tốt nhất cho tôi
+[AI AVENGERS]: Mã giảm giá Quà thăng hạng Kim Cương đã được áp dụng thành công! 
+
+Tổng thanh toán sau khi giảm giá là 667.000đ. 
+
+Bạn muốn chọn hình thức nhận hàng (Giao tận nơi, Mang đi, hay Dùng tại chỗ)?
+
+[KHÁCH HÀNG]: áp dụng mã 1 cho tôi
+[AI AVENGERS]: Mã giảm giá Quà thăng hạng Kim Cương đã được áp dụng thành công! 
+
+Tổng thanh toán sau khi giảm giá là 667.000đ. 
+
+Bạn muốn chọn hình thức nhận hàng (Giao tận nơi, Mang đi, hay Dùng tại chỗ)?
+
+[KHÁCH HÀNG]: xác nhận lại giỏ hàng và giá cho tôi
+[AI AVENGERS]: Dưới đây là tóm tắt giỏ hàng của bạn:
+
+- Bánh Trung Thu Cà Phê Lava x1: 99.000đ
+- 1 Lít Matcha Latte Tây Bắc x1 (ít đá, ít ngọt, topping trân châu trắng): 105.000đ
+
+**Tổng: 204.000đ**
+**Giảm giá (Quà thăng hạng Kim Cương): -50.000đ**
+
+**Tổng thanh toán: 667.000đ**
+
+Bạn chọn hình thức nhận hàng nào (Giao tận nơi, Mang đi, hay Dùng tại chỗ)?
+
+[KHÁCH HÀNG]: tiến hành đặt hàng đi
+[AI AVENGERS]: Bạn chọn hình thức nhận hàng nào: Giao tận nơi, Mang đi, hay Dùng tại chỗ?
+
+[KHÁCH HÀNG]: tôi muốn lấy tại quán và thanh toán tiền mặt
+[AI AVENGERS]: Bạn đang ở địa chỉ nào để mình tìm chi nhánh gần nhất cho bạn? Nếu bạn muốn sử dụng địa chỉ đã lưu, hãy cho mình biết nhé!
+
+[KHÁCH HÀNG]: tôi đang ở quận Hải Châu, tìm chi nhánh gần đây cho tôi
+[AI AVENGERS]: Chi nhánh gần nhất với bạn là:
+
+**Highlands Coffee VTV8 Bạch Đằng**
+- Địa chỉ: 258 Bạch Đằng, Phường Phước Ninh, Quận Hải Châu, Đà Nẵng
+- Cách bạn khoảng 0.1km (đường chim bay)
+
+Bạn có muốn giao đến địa chỉ này không? Nếu đồng ý, mình sẽ chốt chi nhánh và tiến hành đặt hàng nhé!
+
+[KHÁCH HÀNG]: tôi chọn chi nhánh đầu tiên
+[AI AVENGERS]: Dưới đây là tóm tắt đơn hàng của bạn:
+
+- **Chi nhánh**: Highlands Coffee VTV8 Bạch Đằng
+- **Món**:
+  - 1 Lít Matcha Latte Tây Bắc x2 (Nhỏ, ít đá, ít ngọt, topping trân châu trắng): 210.000đ
+  - 1 Lít Matcha Latte Tây Bắc Sữa Yến Mạch x1 (Vừa, ít đá, ít ngọt, topping trân châu trắng): 210.000đ
+  - Bánh Trung Thu Cà Phê Lava x3 (Nhỏ): 297.000đ
+
+**Tổng: 717.000đ**
+**Giảm giá (Mã: UP_DM_PCPD): -50.000đ**
+**Tổng thanh toán: 667.000đ**
+
+Bạn có đồng ý xác nhận đặt hàng không?
+
+[KHÁCH HÀNG]: đồng ý chốt đơn
+[AI AVENGERS]: Tổng đơn hàng của bạn như sau:
+
+- **Chi nhánh**: Highlands Coffee VTV8 Bạch Đằng
+- **Món**:
+  - 1 Lít Matcha Latte Tây Bắc x2 (Nhỏ, ít đá, ít ngọt, topping trân châu trắng): 210.000đ
+  - 1 Lít Matcha Latte Tây Bắc Sữa Yến Mạch x1 (Vừa, ít đá, ít ngọt, topping trân châu trắng): 210.000đ
+  - Bánh Trung Thu Cà Phê Lava x3 (Nhỏ): 297.000đ
+
+**Tổng: 717.000đ**
+**Giảm giá (Mã: UP_DM_PCPD): -50.000đ**
+**Tổng thanh toán: 667.000đ**
+
+Bạn vui lòng xác nhận để mình tiến hành đặt hàng nhé!

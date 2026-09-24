@@ -117,6 +117,26 @@ function fmtMoney(value) {
   return `${Number(value || 0).toLocaleString('vi-VN')}đ`;
 }
 
+function parseLegacyItemOptions(item) {
+  const raw = String(item?.ghi_chu || item?.item_ghi_chu || '');
+  const normalized = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').toLowerCase();
+  const toppingMap = {
+    'hat sen': 'Hạt Sen', 'foam dua': 'Foam Dừa', 'trai vai': 'Trái Vải',
+    'sua tuoi': 'Sữa Tươi', 'sua dac': 'Sữa Đặc', 'shot espresso': 'Shot Espresso',
+    'xot caramel': 'Xốt Caramel', 'dao mieng': 'Đào Miếng', 'sua yen mach': 'Sữa Yến Mạch',
+    'dai hoa hibiscus': 'Đài Hoa Hibiscus', 'tran chau trang': 'Trân châu trắng',
+    'thach suong sao': 'Thạch Sương Sáo', 'hat no cu nang': 'Hạt Nổ Củ Năng',
+    'kem pho mai': 'Kem Phô Mai Macchiato', 'tran chau hoang kim': 'Trân Châu Hoàng Kim',
+    'hat no yen mach': 'Hạt Nổ Yến Mạch',
+  };
+  const toppings = Object.entries(toppingMap)
+    .filter(([key]) => normalized.includes(key))
+    .map(([, label]) => label);
+  const luongDa = normalized.includes('it da') ? 'Ít đá' : normalized.includes('da rieng') ? 'Đá riêng' : '';
+  const doNgot = normalized.includes('khong ngot') ? 'Không ngọt' : normalized.includes('it ngot') ? 'Ít ngọt' : normalized.includes('them ngot') ? 'Thêm ngọt' : '';
+  return { toppings, luongDa, doNgot };
+}
+
 function fmtBranch(branchCode, branches = []) {
   if (!branchCode) return 'Đang cập nhật';
   const branch = branches.find(b => b.ma_chi_nhanh === branchCode || b.co_so_ma === branchCode || b.branch_code === branchCode);
@@ -158,6 +178,25 @@ function renderOrderTypeTag(type, method, table) {
     );
   }
   return null;
+}
+
+function resolveOrderType(order) {
+  const rawType = String(order?.loai_don_hang || order?.delivery_mode || '').toUpperCase();
+  const aliases = {
+    DELIVERY: 'GIAO_TAN_NOI',
+    TAKEAWAY: 'LAY_TAI_QUAN',
+    MANG_DI: 'LAY_TAI_QUAN',
+    TAI_CHO: 'DUNG_TAI_CHO',
+  };
+  if (rawType) return aliases[rawType] || rawType;
+
+  // Compatibility for direct AI orders created before delivery mode was saved.
+  const address = String(order?.dia_chi_giao_hang || '').trim().toLowerCase();
+  if (!address) return null;
+  if (address.includes('nhận tại') || address.includes('khách lấy') || address.includes('tại quán')) {
+    return 'LAY_TAI_QUAN';
+  }
+  return 'GIAO_TAN_NOI';
 }
 
 function coTheHuyDon(order) {
@@ -356,22 +395,25 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
       diaChi: order.dia_chi_giao_hang || '',
       khungGio: order.khung_gio_giao || '',
       ghiChu: order.ghi_chu || '',
-      items: (order.chi_tiet || []).map((item) => ({
-        lineId: String(item.id || taoMaDongTam()),
-        id: item.id || null,
-        maSanPham: Number(item.ma_san_pham),
-        tenSanPham: item.ten_san_pham,
-        giaBan: Number(item.gia_ban || 0),
-        soLuong: Number(item.so_luong || 0),
-        kichCo: item.kich_co || 'Nhỏ',
-        hinhAnhUrl: item.hinh_anh_url || '',
-        toppings: item.toppings || [],
-        luongDa: item.luong_da || '',
-        doNgot: item.do_ngot || '',
-        ghiChu: item.ghi_chu || '',
-        loaiSua: item.loai_sua || '',
-        custom_attributes: item.custom_attributes || {},
-      })),
+      items: (order.chi_tiet || []).map((item) => {
+        const legacyOptions = parseLegacyItemOptions(item);
+        return {
+          lineId: String(item.id || taoMaDongTam()),
+          id: item.id || null,
+          maSanPham: Number(item.ma_san_pham),
+          tenSanPham: item.ten_san_pham,
+          giaBan: Number(item.gia_ban || 0),
+          soLuong: Number(item.so_luong || 0),
+          kichCo: item.kich_co || 'Nhỏ',
+          hinhAnhUrl: item.hinh_anh_url || '',
+          toppings: item.toppings?.length ? item.toppings : legacyOptions.toppings,
+          luongDa: item.luong_da || legacyOptions.luongDa,
+          doNgot: item.do_ngot || legacyOptions.doNgot,
+          ghiChu: item.ghi_chu || '',
+          loaiSua: item.loai_sua || '',
+          custom_attributes: item.custom_attributes || {},
+        };
+      }),
     });
   };
 
@@ -468,9 +510,9 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
       newItems[editingItemIndex] = {
         ...target,
         kichCo: newItem.size,
-        luongDa: newItem.luong_da,
-        doNgot: newItem.do_ngot,
-        loaiSua: newItem.loai_sua,
+        luongDa: newItem.luong_da ?? newItem.luongDa ?? '',
+        doNgot: newItem.do_ngot ?? newItem.doNgot ?? '',
+        loaiSua: newItem.loai_sua ?? newItem.loaiSua ?? '',
         toppings: newItem.toppings,
         custom_attributes: newItem.custom_attributes,
         giaBan: newItem.gia_ban,
@@ -705,7 +747,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                               <span className="text-xs font-mono font-black text-[#b22830] bg-red-50 border border-red-100 px-2 py-0.5 rounded-md">
                                 #{order.ma_don_hang}
                               </span>
-                              {renderOrderTypeTag(order.loai_don_hang, order.phuong_thuc_giao_hang, order.ma_ban)}
+                              {renderOrderTypeTag(resolveOrderType(order), order.phuong_thuc_giao_hang, order.ma_ban)}
                             </div>
                             <div className="mt-2 flex items-center gap-4 text-xs text-gray-500 font-medium flex-wrap">
                               <span>Cơ sở: <strong className="text-gray-800 font-semibold">{fmtBranch(order.co_so_ma, allBranches)}</strong></span>
@@ -842,6 +884,16 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                                 </button>
                               )}
 
+                              {coTheSuaDon(order) && (
+                                <button
+                                  type="button"
+                                  onClick={() => batDauSuaDon(order)}
+                                  className="w-full rounded-xl border border-sky-200 bg-sky-50 hover:bg-sky-100 py-2 text-xs font-bold uppercase tracking-wider text-sky-700 transition-colors cursor-pointer"
+                                >
+                                  Sửa Đơn Hàng
+                                </button>
+                              )}
+
                               {coTheHuyDon(order) && (
                                 <button
                                   type="button"
@@ -902,6 +954,132 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
             queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
           }}
         />
+      )}
+
+      {editOrderId && (
+        <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-3xl bg-white shadow-2xl border border-gray-100 flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <div>
+                <h3 className="text-lg font-black text-gray-900">Sửa đơn hàng</h3>
+                <p className="text-xs font-semibold text-gray-500 font-mono">#{editOrderId}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditOrderId(null)}
+                className="p-2 rounded-full hover:bg-gray-100 text-gray-500 cursor-pointer"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="space-y-1.5 md:col-span-2">
+                  <span className="text-xs font-extrabold text-gray-700 uppercase">Địa chỉ giao hàng</span>
+                  <input
+                    value={editForm.diaChi}
+                    onChange={(event) => setEditForm((prev) => ({ ...prev, diaChi: event.target.value }))}
+                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-sky-400"
+                  />
+                </label>
+                <label className="space-y-1.5">
+                  <span className="text-xs font-extrabold text-gray-700 uppercase">Khung giờ giao</span>
+                  <input
+                    value={editForm.khungGio}
+                    onChange={(event) => setEditForm((prev) => ({ ...prev, khungGio: event.target.value }))}
+                    placeholder="Ví dụ: 15:00 - 15:30"
+                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-sky-400"
+                  />
+                </label>
+                <label className="space-y-1.5">
+                  <span className="text-xs font-extrabold text-gray-700 uppercase">Ghi chú</span>
+                  <input
+                    value={editForm.ghiChu}
+                    onChange={(event) => setEditForm((prev) => ({ ...prev, ghiChu: event.target.value }))}
+                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-sky-400"
+                  />
+                </label>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-black text-gray-900 uppercase">Danh sách món</h4>
+                  <button
+                    type="button"
+                    onClick={themDongSuaDon}
+                    className="rounded-xl bg-sky-50 border border-sky-200 px-3 py-2 text-xs font-bold text-sky-700 hover:bg-sky-100 cursor-pointer"
+                  >
+                    + Thêm món
+                  </button>
+                </div>
+
+                {editForm.items.map((item, idx) => (
+                  <div key={item.lineId} className="rounded-2xl border border-gray-200 p-4 space-y-3">
+                    <div className="grid gap-3 md:grid-cols-[1fr_auto_auto] md:items-center">
+                      <select
+                        value={item.maSanPham}
+                        onChange={(event) => capNhatMonSuaDon(item.lineId, event.target.value)}
+                        className="min-w-0 rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold outline-none focus:border-sky-400"
+                      >
+                        {menuProducts.map((product) => (
+                          <option key={product.ma_san_pham} value={product.ma_san_pham}>
+                            {product.ten_san_pham} — {fmtMoney(product.gia_ban)}
+                          </option>
+                        ))}
+                      </select>
+
+                      <div className="inline-flex items-center rounded-xl border border-gray-200 overflow-hidden">
+                        <button type="button" onClick={() => capNhatSoLuongSuaDon(item.lineId, -1)} className="px-3 py-2 hover:bg-gray-100 cursor-pointer">−</button>
+                        <span className="min-w-9 text-center text-sm font-bold">{item.soLuong}</span>
+                        <button type="button" onClick={() => capNhatSoLuongSuaDon(item.lineId, 1)} className="px-3 py-2 hover:bg-gray-100 cursor-pointer">+</button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => xoaDongSuaDon(item.lineId)}
+                        className="rounded-xl border border-rose-200 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 cursor-pointer"
+                      >
+                        Xóa
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <span className="font-semibold text-gray-600">
+                        Size: {item.kichCo || 'Mặc định'} · SL: {item.soLuong} · {fmtMoney(item.giaBan * item.soLuong)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => moBangSuaTuyChon(idx, item)}
+                        className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 font-bold text-amber-800 hover:bg-amber-100 cursor-pointer"
+                      >
+                        Chỉnh tùy chọn
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
+              <button
+                type="button"
+                onClick={() => setEditOrderId(null)}
+                className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-bold text-gray-600 hover:bg-white cursor-pointer"
+              >
+                Đóng
+              </button>
+              <button
+                type="button"
+                onClick={luuSuaDon}
+                disabled={editOrderMutation.isPending}
+                className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-sky-700 disabled:opacity-50 cursor-pointer"
+              >
+                {editOrderMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {editingItemIndex !== null && editingProduct && (

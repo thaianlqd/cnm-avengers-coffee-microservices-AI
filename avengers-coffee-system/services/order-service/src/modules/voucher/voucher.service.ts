@@ -433,6 +433,58 @@ export class VoucherService {
     }
   }
 
+  async layVoucherKhaDung(tongTien: number, userId?: string, hasToppings?: boolean, toppingPrice?: number) {
+    let candidates: any[] = [];
+    try {
+      const response = await fetch(
+        `${this.IDENTITY_SERVICE_URL}/promotions/vouchers${userId ? `?user_id=${encodeURIComponent(userId)}` : ''}`,
+      );
+      if (response.ok) {
+        const payload: any = await response.json().catch(() => ({}));
+        candidates = Array.isArray(payload?.items) ? payload.items : [];
+      }
+    } catch (error) {
+      console.error('[layVoucherKhaDung] Cannot load candidate vouchers:', error);
+    }
+
+    if (!candidates.length) {
+      const publicList = await this.layDanhSachVoucher();
+      candidates = publicList.items || [];
+    }
+
+    const seen = new Set<string>();
+    const eligible: any[] = [];
+    const ineligible: any[] = [];
+    for (const item of candidates) {
+      const code = String(item.ma_khuyen_mai || item.ma_voucher || '').trim().toUpperCase();
+      if (!code || seen.has(code)) continue;
+      seen.add(code);
+      try {
+        const validation = await this.kiemTraVoucher(code, tongTien, userId, hasToppings, toppingPrice);
+        eligible.push({
+          ma_voucher: validation.voucher.ma_voucher,
+          ten_voucher: item.ten_khuyen_mai || item.ten_voucher || validation.voucher.mo_ta || code,
+          mo_ta: item.mo_ta || validation.voucher.mo_ta || '',
+          loai: validation.voucher.loai,
+          gia_tri: Number(validation.voucher.gia_tri || 0),
+          giam_toi_da: validation.voucher.giam_toi_da,
+          don_hang_toi_thieu: Number(validation.voucher.don_hang_toi_thieu || 0),
+          so_tien_giam_du_kien: Number(validation.so_tien_giam || 0),
+          eligible: true,
+        });
+      } catch (error: any) {
+        ineligible.push({
+          ma_voucher: code,
+          ten_voucher: item.ten_khuyen_mai || item.ten_voucher || code,
+          eligible: false,
+          reason: error?.message || 'Mã không áp dụng được cho giỏ hiện tại',
+        });
+      }
+    }
+    eligible.sort((a, b) => b.so_tien_giam_du_kien - a.so_tien_giam_du_kien);
+    return { total: eligible.length, items: eligible, ineligible };
+  }
+
   async layDanhSachVoucher() {
     const list = await this.voucherRepo.find({
       where: { trang_thai: 'ACTIVE', loai_phan_phoi: 'PUBLIC', hien_thi_cho_khach: true },

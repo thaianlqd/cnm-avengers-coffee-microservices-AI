@@ -16,6 +16,7 @@ export class ThanhToanController {
       dia_chi_giao_hang: string;
       khung_gio_giao?: string;
       ghi_chu?: string;
+      ma_voucher?: string;
       branch_code?: string;
       delivery_mode?: 'GIAO_TAN_NOI' | 'LAY_TAI_QUAN' | 'DUNG_TAI_CHO';
       delivery_method?: 'INTERNAL' | 'LALAMOVE';

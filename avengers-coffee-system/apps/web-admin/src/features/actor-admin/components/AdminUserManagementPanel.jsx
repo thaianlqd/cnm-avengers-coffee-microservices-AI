@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import {
   UserPlus,
   UsersIcon,
@@ -51,6 +51,123 @@ function Pagination({ pageData, onPageChange }) {
     </div>
   )
 }
+
+const SearchableBranchSelect = ({ branches, value, onChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedBranch = branches.find(b => (b.code || b.ma_chi_nhanh) === value);
+  const filteredBranches = branches.filter(b => 
+    (b.name || b.ten_chi_nhanh || b.code || b.ma_chi_nhanh || '').toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div ref={wrapperRef} style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        style={{ 
+          flex: 1,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          cursor: 'pointer',
+          fontSize: '0.875rem', 
+          fontSize: '0.875rem', 
+          color: '#0f172a', 
+          fontWeight: '500',
+          padding: '0'
+        }}
+      >
+        <span>
+          {selectedBranch 
+            ? `${selectedBranch.name || selectedBranch.ten_chi_nhanh} ${selectedBranch.thanh_pho ? `(${selectedBranch.thanh_pho})` : ''}` 
+            : '-- Áp dụng tất cả / Chưa gán --'}
+        </span>
+        <span style={{ fontSize: '0.7rem', color: '#64748b', marginLeft: '0.5rem' }}>▼</span>
+      </div>
+      
+      {isOpen && (
+        <div style={{ 
+          position: 'absolute', 
+          top: '100%', 
+          left: -40, 
+          right: -10, 
+          marginTop: '12px',
+          background: '#fff', 
+          border: '1px solid #cbd5e1', 
+          borderRadius: '6px', 
+          boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+          zIndex: 50,
+          maxHeight: '250px',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          <div style={{ padding: '8px', borderBottom: '1px solid #e2e8f0' }}>
+            <input
+              autoFocus
+              type="text"
+              placeholder="Gõ để tìm kiếm chi nhánh..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.5rem 0.75rem',
+                border: '1px solid #cbd5e1',
+                borderRadius: '4px',
+                fontSize: '0.875rem',
+                outline: 'none',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+          <div style={{ overflowY: 'auto' }}>
+            <div 
+              onClick={() => { onChange(''); setIsOpen(false); setSearch(''); }}
+              style={{ padding: '0.65rem 0.85rem', cursor: 'pointer', fontSize: '0.875rem', color: '#64748b', fontWeight: '500' }}
+              onMouseEnter={e => e.target.style.background = '#f1f5f9'}
+              onMouseLeave={e => e.target.style.background = 'transparent'}
+            >
+              -- Áp dụng tất cả / Chưa gán --
+            </div>
+            {filteredBranches.length > 0 ? filteredBranches.map(branch => (
+              <div
+                key={branch.code || branch.ma_chi_nhanh}
+                onClick={() => { onChange(branch.code || branch.ma_chi_nhanh); setIsOpen(false); setSearch(''); }}
+                style={{ 
+                  padding: '0.65rem 0.85rem', 
+                  cursor: 'pointer', 
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  background: value === (branch.code || branch.ma_chi_nhanh) ? '#eff6ff' : 'transparent',
+                  color: value === (branch.code || branch.ma_chi_nhanh) ? '#1d4ed8' : '#334155'
+                }}
+                onMouseEnter={e => { if (value !== (branch.code || branch.ma_chi_nhanh)) e.target.style.background = '#f8fafc' }}
+                onMouseLeave={e => { if (value !== (branch.code || branch.ma_chi_nhanh)) e.target.style.background = 'transparent' }}
+              >
+                {branch.name || branch.ten_chi_nhanh} {branch.thanh_pho ? `(${branch.thanh_pho})` : ''}
+              </div>
+            )) : (
+              <div style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#94a3b8', textAlign: 'center' }}>
+                Không tìm thấy chi nhánh
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export function AdminUserManagementPanel({
   userForm = {},
@@ -124,8 +241,8 @@ export function AdminUserManagementPanel({
     <section className="panel system-admin-panel" style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
       {/* USER EDIT / CREATE FORM CARD */}
-      <div ref={formRef} className="system-admin-card" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', boxShadow: '0 8px 24px -4px rgba(15, 23, 42, 0.06)', overflow: 'hidden' }}>
-        <div style={{ padding: '1.1rem 1.5rem', backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div ref={formRef} className="system-admin-card" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', boxShadow: '0 8px 24px -4px rgba(15, 23, 42, 0.06)' }}>
+        <div style={{ padding: '1.1rem 1.5rem', backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTopLeftRadius: '15px', borderTopRightRadius: '15px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: editingUserId ? '#eff6ff' : '#ecfdf5', color: editingUserId ? '#2563eb' : '#059669', border: editingUserId ? '1px solid #bfdbfe' : '1px solid #a7f3d0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {editingUserId ? <Edit3 size={20} /> : <UserPlus size={20} />}
@@ -230,7 +347,7 @@ export function AdminUserManagementPanel({
               <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                 <ShieldCheck size={16} color="#4f46e5" style={{ flexShrink: 0 }} />
                 <select
-                  style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', fontWeight: '600', cursor: 'pointer' }}
+                  style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', fontWeight: '500', cursor: 'pointer' }}
                   value={safeUserForm.vai_tro || 'STAFF'}
                   onChange={(e) => setUserForm((p) => ({ ...p, vai_tro: e.target.value }))}
                 >
@@ -244,45 +361,41 @@ export function AdminUserManagementPanel({
               </div>
             </div>
 
+            {/* Field: City Filter */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
+                Lọc theo Thành phố
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                <MapPin size={16} color="#64748b" style={{ flexShrink: 0 }} />
+                <select
+                  style={{ flex: 1, border: 'none', outline: 'none', fontSize: '0.875rem', color: '#0f172a', fontWeight: '500', background: 'transparent', cursor: 'pointer', minWidth: 0 }}
+                  value={selectedCityFilter}
+                  onChange={e => {
+                    setSelectedCityFilter(e.target.value);
+                    setUserForm((p) => ({ ...p, co_so_ma: '' })); // reset branch selection when city changes
+                  }}
+                >
+                  <option value="">-- Tất cả Thành phố --</option>
+                  {cityList.map(city => (
+                    <option key={city} value={city}>{city}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             {/* Field: Branch */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                 Chi nhánh làm việc
               </label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {/* Search / Filter input */}
-                <div style={{ display: 'flex', alignItems: 'center', height: '36px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.6rem', gap: '0.5rem' }}>
-                  <MapPin size={14} color="#64748b" style={{ flexShrink: 0 }} />
-                  <select
-                    style={{ flex: 1, border: 'none', outline: 'none', fontSize: '0.8rem', color: '#0f172a', fontWeight: '500', background: 'transparent', cursor: 'pointer' }}
-                    value={selectedCityFilter}
-                    onChange={e => {
-                      setSelectedCityFilter(e.target.value);
-                      setUserForm((p) => ({ ...p, co_so_ma: '' })); // reset branch selection when city changes
-                    }}
-                  >
-                    <option value="">-- Lọc theo tất cả Thành phố --</option>
-                    {cityList.map(city => (
-                      <option key={city} value={city}>{city}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
-                  <Store size={16} color="#64748b" style={{ flexShrink: 0 }} />
-                  <select
-                    style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', fontWeight: '600', cursor: 'pointer' }}
-                    value={safeUserForm.co_so_ma || ''}
-                    onChange={(e) => setUserForm((p) => ({ ...p, co_so_ma: e.target.value }))}
-                  >
-                    <option value="">-- Áp dụng tất cả / Chưa gán --</option>
-                    {filteredBranchOptions.map((branch) => (
-                      <option key={branch.code || branch.ma_chi_nhanh} value={branch.code || branch.ma_chi_nhanh}>
-                        {branch.name || branch.ten_chi_nhanh} {branch.thanh_pho ? `(${branch.thanh_pho})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                <Store size={16} color="#64748b" style={{ flexShrink: 0 }} />
+                <SearchableBranchSelect
+                  branches={filteredBranchOptions}
+                  value={safeUserForm.co_so_ma || ''}
+                  onChange={(val) => setUserForm((p) => ({ ...p, co_so_ma: val }))}
+                />
               </div>
             </div>
 
@@ -295,7 +408,7 @@ export function AdminUserManagementPanel({
                 <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                   <Activity size={16} color="#64748b" style={{ flexShrink: 0 }} />
                   <select
-                    style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', fontWeight: '600', cursor: 'pointer' }}
+                    style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', fontWeight: '500', cursor: 'pointer' }}
                     value={safeUserForm.trang_thai || 'ACTIVE'}
                     onChange={(e) => setUserForm((p) => ({ ...p, trang_thai: e.target.value }))}
                   >

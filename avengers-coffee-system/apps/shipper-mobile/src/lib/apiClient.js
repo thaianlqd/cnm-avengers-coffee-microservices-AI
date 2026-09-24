@@ -4,7 +4,7 @@ import { Platform, NativeModules } from 'react-native'
 
 export function getApiBaseUrl() {
   if (Platform.OS === 'web') {
-    return process.env.EXPO_PUBLIC_API_URL_WEB || 'http://localhost:3000'
+    return process.env.EXPO_PUBLIC_API_URL_WEB || process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'
   }
 
   // 1. Lấy IP máy dev trực tiếp từ scriptURL của Metro bundler

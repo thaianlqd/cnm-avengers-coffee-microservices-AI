@@ -378,7 +378,7 @@ function AdminPromotionManagementPanelContent({
                       <th style={{ width: '17%' }}>Thời gian áp dụng</th>
                       <th style={{ width: '13%' }}>Lượt sử dụng</th>
                       <th style={{ width: '12%' }}>Trạng thái</th>
-                      <th style={{ width: '10%' }} className="text-right">Thao tác</th>
+                      <th style={{ width: '10%', textAlign: 'center' }}>Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -493,7 +493,7 @@ function AdminPromotionManagementPanelContent({
                       <th style={{ width: '25%' }}>Ngữ cảnh phát tự động</th>
                       <th style={{ width: '20%' }}>Quy tắc giảm giá</th>
                       <th style={{ width: '15%' }}>Hạn sử dụng khi cấp</th>
-                      <th style={{ width: '15%' }} className="text-right">Thao tác</th>
+                      <th style={{ width: '15%', textAlign: 'center' }}>Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>

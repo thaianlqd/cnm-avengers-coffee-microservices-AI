@@ -6,12 +6,13 @@ from components import render_sidebar, render_section_title
 from styles import inject_styles, init_plotly_template
 
 # ─── Page Config ──────────────────────────────────────────────────────────────
-st.set_page_config(page_title="Trí Tuệ Nhân Tạo (AI)", page_icon="🤖", layout="wide")
+st.set_page_config(page_title="Trợ Lý Ảo AI", page_icon="🤖", layout="wide")
 inject_styles()
 init_plotly_template()
 render_sidebar()
 
-st.markdown("<h2 style='margin-bottom:24px; font-weight:800; color:#C0C0D8;'>Trung Tâm Trí Tuệ Nhân Tạo (AI Analytics)</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='margin-bottom:24px; font-weight:800; color:#C0C0D8;'>Trợ Lý Ảo AI Phân Tích Số Liệu</h2>", unsafe_allow_html=True)
+st.caption("Trò chuyện trực tiếp với AI để phân tích dữ liệu kinh doanh của hệ thống The Avengers Coffee.")
 
 try:
     from ai_engine import (
