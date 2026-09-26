@@ -25,10 +25,10 @@ from src.agents.tier1 import (
     ("huy banh", "confirm_cancel", "NONE"),
     
     # 3. "dung" đơn độc
-    ("đúng", "confirm_checkout", "AMBIGUOUS"),
-    ("đúng rồi", "confirm_checkout", "AMBIGUOUS"),
+    ("đúng", "confirm_checkout", "YES"),
+    ("đúng rồi", "confirm_checkout", "YES"),
     ("đúng vậy", "confirm_checkout", "NONE"), # "vay" is foreign
-    ("dung nha", "ask_more_items", "AMBIGUOUS"),
+    ("dung nha", "ask_more_items", "YES"),
     
     # 4. YES + filler ghép
     ("oke nha", "confirm_checkout", "YES"),

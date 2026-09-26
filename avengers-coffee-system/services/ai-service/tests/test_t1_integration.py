@@ -71,9 +71,8 @@ def test_t1_integration_on_ambiguous_checkout(t1_env_on):
     
     with patch("src.function_calling.tools.cart_tools.execute_confirm_checkout") as mock_checkout:
         res = _run_agent_impl(session_id, "đúng", history=[])
-        assert res.get("gate") == "confirm_checkout_ambiguous"
-        assert "xác nhận chốt đơn hay không" in res.get("reply", "")
-        assert not mock_checkout.called
+        assert res.get("gate") == "confirm_checkout"
+        mock_checkout.assert_called_once()
 
 def test_t1_integration_fill_options_lifecycle(t1_env_on):
     session_id = "test-t1-fill-options"
@@ -270,7 +269,7 @@ def test_t1_integration_select_voucher_clear_when_none_found_before_checkout(t1_
         mock_get_vouchers.assert_called_once()
         pending = cart_manager.get_pending_action(session_id)
         assert pending is None, "pending_action must be cleared when no vouchers found before checkout"
-        assert "phương thức thanh toán nhé" in result.get("reply", ""), "Must return missing_prompt from _is_plain_confirmation block (line 1407/1447)"
+        assert "phương thức thanh toán số mấy" in result.get("reply", "")
 
 def test_t1_integration_ask_more_items_lifecycle(t1_env_on):
     session_id = "test-t1-ask-more-items"

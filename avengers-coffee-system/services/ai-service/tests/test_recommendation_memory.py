@@ -169,9 +169,10 @@ def test_context_keeps_drink_ordinal_when_follow_up_focus_is_a_pizza():
         last_product_focus={"product_name": "Soft Pizza Chà Bông Trứng Cút", "category": "food"},
     )
     message, history = _contextualize_product_references(session, "oke cho tôi nước số 1 và bánh này nhé", [])
-    assert "bánh số 1" in message.lower()
-    assert "1 Lít Matcha Latte Tây Bắc" in history[-1]["content"]
-    assert "Soft Pizza Chà Bông Trứng Cút" in history[-1]["content"]
+    # Contextualization may replace a demonstrative with typed focus, but it
+    # must never manufacture a numbered assistant-history list for a write.
+    assert "Soft Pizza Chà Bông Trứng Cút" in message
+    assert history == []
 
 
 def test_check_price_and_stock_updates_last_product_focus(monkeypatch):
@@ -190,29 +191,24 @@ def test_check_price_and_stock_updates_last_product_focus(monkeypatch):
 
 
 def test_structured_resolver_handles_ordinal_and_demonstrative_directly(monkeypatch):
-    from src.agents.order_flow_graph import run_order_flow
-    from src.agents import agent_service
-    from src.function_calling.tools import cart_tools
+    from src.agents.order_flow_graph import _resolve_typed_references
 
     session = "structured-resolver-direct"
-    cart_manager.set_checkout_context(
-        session,
-        product_suggestion_snapshots={
-            "drink": [{"product_id": "D1", "product_name": "1 Lít Matcha Latte Tây Bắc", "category": "drink"}],
-            "food": [{"product_id": "F1", "product_name": "Bánh Trung Thu Cà Phê Lava", "category": "food"}],
+    cart_manager.set_active_list_context(
+        session, "PRODUCT", mode="GROUPED", groups={
+            "DRINK": [{"product_id": "D1", "product_name": "1 Lít Matcha Latte Tây Bắc", "category": "drink"}],
+            "FOOD": [{"product_id": "F1", "product_name": "Bánh Trung Thu Cà Phê Lava", "category": "food"}],
         },
-        last_product_focus={"product_id": "F2", "product_name": "Soft Pizza Chà Bông Trứng Cút", "category": "food"},
     )
-    monkeypatch.setattr(cart_tools, "sync_authoritative_cart", lambda _session: cart_manager.get_cart(_session))
-    seen = []
-    monkeypatch.setattr(agent_service, "_handle_additional_product", lambda _session, name: seen.append(name) or {
-        "reply": f"đã thêm {name}", "checkout_payload": None, "tool_calls_log": [], "error": None,
+    cart_manager.set_focus(session, {
+        "domain": "PRODUCT", "entity_id": "F2",
+        "label": "Soft Pizza Chà Bông Trứng Cút", "category": "food",
     })
-
-    result = run_order_flow(session, "oke vậy cho tôi nước số 1 và bánh này nhé")
-    assert seen == ["1 Lít Matcha Latte Tây Bắc", "Soft Pizza Chà Bông Trứng Cút"]
-    assert "đã thêm 1 Lít Matcha Latte Tây Bắc" in result["reply"]
-    assert "đã thêm Soft Pizza Chà Bông Trứng Cút" in result["reply"]
+    resolved = _resolve_typed_references(session, "oke vậy cho tôi nước số 1 và bánh này nhé")
+    assert resolved["status"] == "resolved"
+    assert [item["product_name"] for item in resolved["items"]] == [
+        "1 Lít Matcha Latte Tây Bắc", "Soft Pizza Chà Bông Trứng Cút",
+    ]
 
 
 def test_structured_resolver_does_not_map_on_category_mismatch():

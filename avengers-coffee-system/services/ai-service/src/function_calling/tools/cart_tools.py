@@ -529,6 +529,7 @@ def execute_update_cart_item(
     operation_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Atomically update one cart row and return the authoritative quote."""
+    import os
     from src.function_calling.helpers import _get_service_jwt, _require_valid_session
     valid_uid = _require_valid_session(_customer_session_id(session_id))
     if not valid_uid:
@@ -542,6 +543,36 @@ def execute_update_cart_item(
         session_id, "update_cart_line", operation_id,
     )
     try:
+        current_cart = sync_authoritative_cart(session_id)
+        prefs = cart_manager.get_checkout_prefs(session_id)
+        if current_cart.get("branch_id") and prefs.get("delivery_type"):
+            from src.common.inventory_validation import validate_cart_at_branch
+            from src.function_calling.helpers import _get_engine
+
+            candidate_items = []
+            found = False
+            for row in current_cart.get("items") or []:
+                if str(row.get("line_id") or row.get("cart_item_id") or row.get("id")) == str(cart_item_id):
+                    found = True
+                    candidate_items.append({**row, **payload})
+                else:
+                    candidate_items.append(dict(row))
+            if not found:
+                return {"status": "not_found", "message": "Không tìm thấy đúng dòng món cần cập nhật."}
+            candidate_cart = {**current_cart, "items": candidate_items}
+            stock_result = validate_cart_at_branch(
+                _get_engine(), candidate_cart, os.getenv("INVENTORY_SCHEMA", "inventory")
+            )
+            blockers = list(stock_result.get("unavailable") or []) + list(stock_result.get("unverified") or [])
+            if blockers:
+                cart_manager.set_stock_conflicts(
+                    session_id, blockers, list(stock_result.get("conflicts") or [])
+                )
+                return {
+                    "status": "stock_conflict",
+                    "message": "Cập nhật này không khả dụng tại chi nhánh đã chọn: " + ", ".join(blockers),
+                    "stock_conflicts": stock_result.get("conflicts") or [],
+                }
         headers = {"X-Cart-User-Id": str(valid_uid)}
         if resolved_operation_id:
             headers["X-Idempotency-Key"] = resolved_operation_id
@@ -550,6 +581,17 @@ def execute_update_cart_item(
         )
         response.raise_for_status()
         cart = sync_authoritative_cart(session_id)
+        if cart.get("branch_id") and prefs.get("delivery_type"):
+            from src.common.inventory_validation import validate_cart_at_branch
+            from src.function_calling.helpers import _get_engine
+            validated = validate_cart_at_branch(
+                _get_engine(), cart, os.getenv("INVENTORY_SCHEMA", "inventory")
+            )
+            cart_manager.set_stock_conflicts(
+                session_id,
+                list(validated.get("unavailable") or []) + list(validated.get("unverified") or []),
+                list(validated.get("conflicts") or []),
+            )
         quote = execute_get_cart_quote(session_id)
         return {
             "status": "ok", "message": "Đã cập nhật món trong giỏ.", "cart": cart,
@@ -620,6 +662,7 @@ def execute_get_cart(session_id: str) -> Dict[str, Any]:
 
 def execute_get_cart_quote(session_id: str) -> Dict[str, Any]:
     """Return one authoritative cart snapshot and its current voucher quote."""
+    import os
     try:
         cart = sync_authoritative_cart(session_id)
     except Exception as exc:
@@ -628,6 +671,27 @@ def execute_get_cart_quote(session_id: str) -> Dict[str, Any]:
         return {"status": "empty_cart", "message": "Giỏ hàng hiện đang trống.", "cart": cart}
 
     prefs = cart_manager.get_checkout_prefs(session_id)
+    if cart.get("branch_id") and prefs.get("delivery_type"):
+        try:
+            from src.common.inventory_validation import validate_cart_at_branch
+            from src.function_calling.helpers import _get_engine
+            stock_result = validate_cart_at_branch(
+                _get_engine(), cart, os.getenv("INVENTORY_SCHEMA", "inventory")
+            )
+            blockers = list(stock_result.get("unavailable") or []) + list(stock_result.get("unverified") or [])
+            if blockers:
+                cart_manager.set_stock_conflicts(
+                    session_id, blockers, list(stock_result.get("conflicts") or [])
+                )
+                return {
+                    "status": "stock_conflict",
+                    "message": "Giỏ có món không còn đáp ứng được tại chi nhánh đã chọn: " + ", ".join(blockers),
+                    "cart": cart,
+                    "stock_conflicts": stock_result.get("conflicts") or [],
+                }
+            cart_manager.set_stock_conflicts(session_id, [])
+        except Exception as exc:
+            return {"status": "error", "message": f"Chưa thể xác minh tồn kho: {exc}", "cart": cart}
     voucher_code = str(prefs.get("voucher_code") or "").strip().upper() or None
     try:
         quote = _quote_authoritative_cart(session_id, voucher_code)

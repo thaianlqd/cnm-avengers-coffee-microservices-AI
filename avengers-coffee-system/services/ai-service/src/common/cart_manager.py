@@ -526,6 +526,213 @@ def get_checkout_prefs(session_id: str) -> Dict[str, Any]:
         session = _get_or_create_session(session_id)
         return dict(session.get("checkout_prefs") or {})
 
+
+def set_active_list_context(
+    session_id: str,
+    domain: str,
+    *,
+    mode: str = "FLAT",
+    groups: Optional[Dict[str, List[Dict[str, Any]]]] = None,
+    items: Optional[List[Dict[str, Any]]] = None,
+    created_turn_id: Optional[str] = None,
+    list_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Replace the implicit ordinal namespace with one typed list.
+
+    Old lists are retained only for explicit historical references. A plain
+    ordinal always resolves against ``active_list_context``.
+    """
+    normalized_groups: Dict[str, List[Dict[str, Any]]] = {}
+    for group_name, values in (groups or {}).items():
+        normalized_groups[str(group_name).upper()] = [
+            {
+                **dict(value),
+                "ordinal": index,
+                "entity_id": str(
+                    value.get("entity_id")
+                    or value.get("product_id")
+                    or value.get("line_id")
+                    or value.get("branch_id")
+                    or value.get("ma_voucher")
+                    or value.get("value")
+                    or ""
+                ),
+                "label": str(
+                    value.get("label")
+                    or value.get("product_name")
+                    or value.get("branch_name")
+                    or value.get("ten_voucher")
+                    or value.get("value")
+                    or ""
+                ),
+            }
+            for index, value in enumerate(values, 1)
+        ]
+    normalized_items = [
+        {
+            **dict(value),
+            "ordinal": index,
+            "entity_id": str(
+                value.get("entity_id")
+                or value.get("product_id")
+                or value.get("line_id")
+                or value.get("branch_id")
+                or value.get("ma_voucher")
+                or value.get("value")
+                or ""
+            ),
+            "label": str(
+                value.get("label")
+                or value.get("product_name")
+                or value.get("branch_name")
+                or value.get("ten_voucher")
+                or value.get("value")
+                or ""
+            ),
+        }
+        for index, value in enumerate(items or [], 1)
+    ]
+    context = {
+        "list_id": str(list_id or uuid.uuid4()),
+        "domain": str(domain or "").upper(),
+        "created_turn_id": str(created_turn_id or uuid.uuid4()),
+        "mode": "GROUPED" if str(mode).upper() == "GROUPED" else "FLAT",
+        "groups": normalized_groups,
+        "items": normalized_items,
+    }
+    with _get_session_lock(session_id):
+        session = _get_or_create_session(session_id)
+        prefs = dict(session.get("checkout_prefs") or {})
+        previous = prefs.get("active_list_context")
+        if isinstance(previous, dict) and previous.get("list_id") != context["list_id"]:
+            recent = list(prefs.get("recent_list_contexts") or [])
+            recent = [previous, *[row for row in recent if row.get("list_id") != previous.get("list_id")]][:3]
+            prefs["recent_list_contexts"] = recent
+        prefs["active_list_context"] = context
+        session["checkout_prefs"] = prefs
+        _touch(session_id, session, sync_db=True)
+    return context
+
+
+def get_active_list_context(session_id: str) -> Optional[Dict[str, Any]]:
+    """Return typed list state, migrating one legacy snapshot when necessary."""
+    prefs = get_checkout_prefs(session_id)
+    current = prefs.get("active_list_context")
+    if isinstance(current, dict) and current.get("domain"):
+        return dict(current)
+
+    snapshots = dict(prefs.get("product_suggestion_snapshots") or {})
+    latest = list(prefs.get("last_product_suggestions") or [])
+    if latest:
+        return set_active_list_context(session_id, "PRODUCT", mode="FLAT", items=latest)
+    groups = {
+        name.upper(): list(values)
+        for name, values in snapshots.items()
+        if name in {"drink", "food"} and values
+    }
+    if groups:
+        return set_active_list_context(session_id, "PRODUCT", mode="GROUPED", groups=groups)
+    return None
+
+
+def set_focus(session_id: str, focus: Optional[Dict[str, Any]]) -> None:
+    normalized = None
+    if focus:
+        normalized = {
+            **dict(focus),
+            "domain": str(focus.get("domain") or "PRODUCT").upper(),
+            "entity_id": str(focus.get("entity_id") or focus.get("product_id") or ""),
+            "label": str(focus.get("label") or focus.get("product_name") or ""),
+            "turn_id": str(focus.get("turn_id") or uuid.uuid4()),
+        }
+    values: Dict[str, Any] = {"focus": normalized}
+    if normalized and normalized["domain"] == "PRODUCT":
+        values["last_product_focus"] = {
+            **dict(focus or {}),
+            "product_id": normalized["entity_id"],
+            "product_name": normalized["label"],
+        }
+    elif focus is None:
+        values["last_product_focus"] = None
+    set_checkout_context(session_id, **values)
+
+
+def get_focus(session_id: str, domain: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    prefs = get_checkout_prefs(session_id)
+    focus = prefs.get("focus")
+    if not isinstance(focus, dict):
+        legacy = prefs.get("last_product_focus")
+        if isinstance(legacy, dict):
+            set_focus(session_id, {**legacy, "domain": "PRODUCT"})
+            focus = get_checkout_prefs(session_id).get("focus")
+    if not isinstance(focus, dict):
+        return None
+    if domain and str(focus.get("domain") or "").upper() != str(domain).upper():
+        return None
+    return dict(focus)
+
+
+def set_resume_task(session_id: str, task: Optional[Dict[str, Any]]) -> None:
+    set_checkout_context(session_id, resume_task=dict(task) if task else None)
+
+
+def get_resume_task(session_id: str) -> Optional[Dict[str, Any]]:
+    task = get_checkout_prefs(session_id).get("resume_task")
+    return dict(task) if isinstance(task, dict) else None
+
+
+_PENDING_INTERACTION_TYPES = {
+    "ask_more_items": ("YES_NO", "CART", "ASK_MORE_ITEMS"),
+    "clear_cart": ("YES_NO", "CART", "CLEAR_CART"),
+    "confirm_checkout": ("YES_NO", "CHECKOUT", "CONFIRM_CHECKOUT"),
+    "select_voucher": ("SELECT_ONE", "VOUCHER", "SELECT_VOUCHER"),
+    "select_branch": ("SELECT_ONE", "BRANCH", "SELECT_BRANCH"),
+    "fill_options": ("SELECT_ONE", "PRODUCT", "FILL_OPTIONS"),
+    "edit_cart_item": ("FILL_FIELDS", "CART_LINE", "EDIT_CART_ITEM"),
+}
+
+
+def set_pending_interaction(
+    session_id: str,
+    *,
+    kind: str,
+    domain: str,
+    action: str,
+    context_id: Optional[str] = None,
+    created_turn_id: Optional[str] = None,
+    expires_in: int = 300,
+    data: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    interaction = {
+        "interaction_id": str(uuid.uuid4()),
+        "kind": str(kind).upper(),
+        "domain": str(domain).upper(),
+        "action": str(action).upper(),
+        "context_id": context_id,
+        "created_turn_id": str(created_turn_id or uuid.uuid4()),
+        "expires_at": _now() + max(1, int(expires_in)),
+        "data": dict(data or {}),
+    }
+    set_checkout_context(session_id, pending_interaction=interaction)
+    return interaction
+
+
+def get_pending_interaction(session_id: str) -> Optional[Dict[str, Any]]:
+    pending = get_checkout_prefs(session_id).get("pending_interaction")
+    if not isinstance(pending, dict):
+        return None
+    if float(pending.get("expires_at") or 0) <= _now():
+        clear_pending_interaction(session_id)
+        return None
+    return dict(pending)
+
+
+def clear_pending_interaction(session_id: str, interaction_id: Optional[str] = None) -> None:
+    pending = get_checkout_prefs(session_id).get("pending_interaction")
+    if interaction_id and isinstance(pending, dict) and pending.get("interaction_id") != interaction_id:
+        return
+    set_checkout_context(session_id, pending_interaction=None)
+
 def set_pending_action(session_id: str, action_type: str, params: Dict[str, Any]) -> None:
     import time
     try:
@@ -536,6 +743,19 @@ def set_pending_action(session_id: str, action_type: str, params: Dict[str, Any]
                 "type": action_type,
                 "params": params,
                 "expires_at": time.time() + 300,
+            }
+            kind, domain, action = _PENDING_INTERACTION_TYPES.get(
+                action_type, ("FREE_TEXT", "CART", str(action_type).upper())
+            )
+            prefs["pending_interaction"] = {
+                "interaction_id": str(uuid.uuid4()),
+                "kind": kind,
+                "domain": domain,
+                "action": action,
+                "context_id": str(params.get("context_id") or "") or None,
+                "created_turn_id": str(uuid.uuid4()),
+                "expires_at": time.time() + 300,
+                "data": dict(params or {}),
             }
             session["checkout_prefs"] = prefs
             _touch(session_id, session, sync_db=False)
@@ -568,8 +788,9 @@ def clear_pending_action(session_id: str) -> None:
         with _get_session_lock(session_id):
             session = _get_or_create_session(session_id)
             prefs = dict(session.get("checkout_prefs") or {})
-            if "pending_action" in prefs:
+            if "pending_action" in prefs or "pending_interaction" in prefs:
                 prefs.pop("pending_action", None)
+                prefs.pop("pending_interaction", None)
                 session["checkout_prefs"] = prefs
                 _touch(session_id, session, sync_db=False)
     except Exception as e:
@@ -586,6 +807,8 @@ def reset_conversation_draft(session_id: str) -> Dict[str, Any]:
             "voucher_offer_pending", "voucher_candidates", "summary_fingerprint",
             "checkout_action_id", "branch_candidates", "suggested_address",
             "location_address", "stock_conflicts", "pending_action",
+            "pending_interaction", "active_list_context", "recent_list_contexts",
+            "focus", "last_product_focus", "resume_task",
         )
         for key in draft_keys:
             prefs.pop(key, None)
@@ -598,9 +821,15 @@ def set_pending_products(session_id: str, products: List[Dict[str, Any]], merge:
     new_items = [
         {
             **item,
+            "pending_id": str(item.get("pending_id") or uuid.uuid4()),
             "product_name": str(item.get("product_name") or "").strip(),
+            "product_id": str(item.get("product_id") or item.get("entity_id") or ""),
             "category": item.get("category"),
             "quantity": max(1, int(item.get("quantity") or 1)),
+            "originating_list_id": item.get("originating_list_id")
+                or (get_active_list_context(session_id) or {}).get("list_id"),
+            "selected_options": dict(item.get("selected_options") or {}),
+            "missing_options": list(item.get("missing_options") or []),
         }
         for item in products
         if str(item.get("product_name") or "").strip()
@@ -610,16 +839,35 @@ def set_pending_products(session_id: str, products: List[Dict[str, Any]], merge:
         prefs = dict(session.get("checkout_prefs") or {})
         if merge:
             existing = list(prefs.get("pending_products") or [])
-            existing_names = {str(i.get("product_name") or "").strip().casefold() for i in existing}
+            def product_key(value: Dict[str, Any]) -> str:
+                product_id = str(value.get("product_id") or "").strip()
+                if product_id:
+                    return f"id:{product_id}"
+                return f"name:{str(value.get('product_name') or '').strip().casefold()}"
+
+            existing_keys = {product_key(i) for i in existing}
             for item in new_items:
-                if str(item.get("product_name") or "").strip().casefold() not in existing_names:
+                key = product_key(item)
+                if key not in existing_keys:
                     existing.append(item)
+                    existing_keys.add(key)
             prefs["pending_products"] = existing
             normalized = existing
         else:
             prefs["pending_products"] = new_items
             normalized = new_items
         prefs.pop("summary_fingerprint", None)
+        if normalized:
+            first = normalized[0]
+            prefs["resume_task"] = {
+                "type": "CONFIGURE_PRODUCT",
+                "product_id": str(first.get("product_id") or ""),
+                "pending_id": first.get("pending_id"),
+                "selected_values": dict(first.get("selected_options") or {}),
+                "missing_fields": list(first.get("missing_options") or []),
+            }
+        else:
+            prefs.pop("resume_task", None)
         session["checkout_prefs"] = prefs
         _touch(session_id, session, sync_db=True)
     return normalized
@@ -655,20 +903,35 @@ def mark_pending_product_added(session_id: str, product_name: str) -> None:
             return
         if remaining:
             prefs["pending_products"] = remaining
+            first = remaining[0]
+            prefs["resume_task"] = {
+                "type": "CONFIGURE_PRODUCT",
+                "product_id": str(first.get("product_id") or ""),
+                "pending_id": first.get("pending_id"),
+                "selected_values": dict(first.get("selected_options") or {}),
+                "missing_fields": list(first.get("missing_options") or []),
+            }
         else:
             prefs.pop("pending_products", None)
+            prefs.pop("resume_task", None)
         prefs.pop("summary_fingerprint", None)
         session["checkout_prefs"] = prefs
         _touch(session_id, session, sync_db=True)
 
-def set_stock_conflicts(session_id: str, product_names: List[str]) -> None:
+def set_stock_conflicts(
+    session_id: str,
+    product_names: List[str],
+    details: Optional[List[Dict[str, Any]]] = None,
+) -> None:
     with _get_session_lock(session_id):
         session = _get_or_create_session(session_id)
         prefs = dict(session.get("checkout_prefs") or {})
         if product_names:
             prefs["stock_conflicts"] = [str(name) for name in product_names]
+            prefs["stock_conflict_details"] = [dict(item) for item in (details or [])]
         else:
             prefs.pop("stock_conflicts", None)
+            prefs.pop("stock_conflict_details", None)
         prefs.pop("summary_fingerprint", None)
         session["checkout_prefs"] = prefs
         _touch(session_id, session, sync_db=True)
@@ -682,9 +945,13 @@ def cart_fingerprint(session_id: str) -> str:
             key: value for key, value in cart.get("checkout_prefs", {}).items()
             if key not in {
                 "summary_fingerprint", "pending_products", "branch_candidates",
-                "suggested_address", "location_address", "stock_conflicts",
+                "suggested_address", "location_address", "stock_conflicts", "stock_conflict_details",
                 "checkout_action_id", "checkout_action_expires_at",
                 "pending_action",
+                "pending_interaction", "active_list_context", "recent_list_contexts",
+                "focus", "last_product_focus", "resume_task",
+                "last_product_suggestions", "product_suggestion_snapshots",
+                "product_suggestion_mode",
             }
         },
         "items": sorted(

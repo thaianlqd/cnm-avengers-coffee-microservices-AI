@@ -361,7 +361,9 @@ def execute_set_session_branch(
 
         if unavailable or unverified:
             blockers = unavailable + unverified
-            cart_manager.set_stock_conflicts(session_id, blockers)
+            cart_manager.set_stock_conflicts(
+                session_id, blockers, list(stock_result.get("conflicts") or [])
+            )
             return {
                 "status": "stock_conflict",
                 "branch_id": real_branch_id,

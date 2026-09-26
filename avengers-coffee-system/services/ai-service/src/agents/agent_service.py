@@ -123,22 +123,46 @@ def _payment_methods_text() -> str:
 
 def _checkout_choices_prompt(session_id: str, prefix: str = "") -> str:
     prefs = cart_manager.get_checkout_prefs(session_id)
-    blocks: List[str] = []
     if not prefs.get("delivery_type"):
-        blocks.append(
-            "Hình thức nhận hàng:\n"
-            "1. Giao tận nơi\n2. Lấy tại quán\n3. Dùng tại chỗ"
+        choices = [
+            {"entity_id": "GIAO_TAN_NOI", "label": "Giao tận nơi", "value": "GIAO_TAN_NOI"},
+            {"entity_id": "MANG_DI", "label": "Lấy tại quán", "value": "MANG_DI"},
+            {"entity_id": "TAI_CHO", "label": "Dùng tại chỗ", "value": "TAI_CHO"},
+        ]
+        context = cart_manager.set_active_list_context(
+            session_id, "FULFILLMENT", items=choices
         )
-    if not prefs.get("payment_method"):
-        blocks.append(_payment_methods_text())
-    if not blocks:
+        cart_manager.set_pending_interaction(
+            session_id,
+            kind="SELECT_ONE",
+            domain="FULFILLMENT",
+            action="SELECT_FULFILLMENT",
+            context_id=context.get("list_id"),
+        )
+        return "\n\n".join(part for part in [
+            prefix.strip(),
+            "Hình thức nhận hàng:\n1. Giao tận nơi\n2. Lấy tại quán\n3. Dùng tại chỗ",
+            "Bạn chọn giúp mình hình thức nhận hàng số mấy nhé.",
+        ] if part)
+    if prefs.get("payment_method"):
         return prefix.strip()
-    question = "Bạn chọn giúp mình " + (
-        "hình thức nhận hàng và phương thức thanh toán nhé."
-        if len(blocks) == 2 else
-        ("hình thức nhận hàng nhé." if not prefs.get("delivery_type") else "phương thức thanh toán nhé.")
+    choices = [
+        {"entity_id": "VNPAY", "label": "VNPAY", "value": "VNPAY"},
+        {"entity_id": "NGAN_HANG_QR", "label": "Chuyển khoản QR ngân hàng", "value": "NGAN_HANG_QR"},
+        {"entity_id": "VI_DIEN_TU", "label": "Ví Avengers", "value": "VI_DIEN_TU"},
+        {"entity_id": "THANH_TOAN_KHI_NHAN_HANG", "label": "Tiền mặt (COD)", "value": "THANH_TOAN_KHI_NHAN_HANG"},
+    ]
+    context = cart_manager.set_active_list_context(session_id, "PAYMENT", items=choices)
+    cart_manager.set_pending_interaction(
+        session_id,
+        kind="SELECT_ONE",
+        domain="PAYMENT",
+        action="SELECT_PAYMENT",
+        context_id=context.get("list_id"),
     )
-    return "\n\n".join(part for part in [prefix.strip(), *blocks, question] if part)
+    return "\n\n".join(part for part in [
+        prefix.strip(), _payment_methods_text(), "Bạn chọn giúp mình phương thức thanh toán số mấy nhé.",
+    ] if part)
 
 
 def _format_cart_quote(session_id: str, quote_result: Dict[str, Any]) -> str:
@@ -960,21 +984,32 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
         options = item.get("options") or {}
         selected: Dict[str, Any] = dict(item.get("selected_options") or {})
         option_groups = options.get("groups") or {}
+        option_schema = list(options.get("schema") or [])
+        required_group_names = {
+            str(group.get("name") or "")
+            for group in option_schema
+            if group.get("required")
+        }
         missing_required = []
         for group_name, values in option_groups.items():
             values = [str(value) for value in values]
             group_norm = _normalize_chat_text(group_name)
             is_size = "size" in group_norm or "kich thuoc" in group_norm
+            is_required = (
+                group_name in required_group_names
+                if option_schema
+                else len(values) > 1 and not (use_defaults and not is_size)
+            )
             matches = [value for value in values if _normalize_chat_text(value) in normalized]
             if is_size and len(values) == 1:
                 matches = values
-            if is_size and len(values) > 1 and not matches:
-                missing_required.append(f"kích thước ({', '.join(values)})")
-            elif len(values) > 1 and not matches and not use_defaults:
-                if "topping" in group_norm and re.search(r"\b(khong topping|bo topping|khong them topping)\b", normalized):
-                    selected["toppings"] = []
-                else:
-                    missing_required.append(f"{group_name} ({', '.join(values)})")
+            if is_required and len(values) > 1 and not matches:
+                label = "kích thước" if is_size else group_name
+                missing_required.append(f"{label} ({', '.join(values)})")
+            elif "topping" in group_norm and re.search(
+                r"\b(khong topping|bo topping|khong them topping)\b", normalized
+            ):
+                selected["toppings"] = []
             if not matches:
                 continue
             if is_size:
@@ -990,7 +1025,11 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
 
         if missing_required:
             not_ready.append(f"{product_name}: chọn {', '.join(missing_required)}")
-            remaining.append({**item, "selected_options": selected})
+            remaining.append({
+                **item,
+                "selected_options": selected,
+                "missing_options": missing_required,
+            })
             continue
 
         prepared.append((item, product_name, selected))
@@ -1017,6 +1056,10 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
             size=selected.get("size"),
             quantity=max(1, int(item.get("quantity") or 1)),
             session_id=session_id,
+            toppings=selected.get("toppings") or [],
+            luong_da=selected.get("luong_da"),
+            do_ngot=selected.get("do_ngot"),
+            loai_sua=selected.get("loai_sua"),
         )
         logs.append({"tool": "check_price_and_stock", "args": {"product_name_query": product_name}, "result": price_result})
         products = price_result.get("products") or []

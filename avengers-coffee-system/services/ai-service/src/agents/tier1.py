@@ -42,12 +42,29 @@ def normalize_confirmation_text(text: str) -> str:
     text = re.sub(r'\bdat hang\b', 'dathang', text)
     text = re.sub(r'\bhet roi\b', 'hetroi', text)
     text = re.sub(r'\bxong roi\b', 'xongroi', text)
+    text = re.sub(r'\bdung roi\b', 'dungroi', text)
+    text = re.sub(r'\bduoc do\b', 'duoc', text)
+    text = re.sub(r'\blam di\b', 'lamdi', text)
+    text = re.sub(r'\bkhong can\b', 'khongcan', text)
+    text = re.sub(r'\bbo qua\b', 'boqua', text)
+    text = re.sub(r'\bkhong them nua\b', 'khongthemnua', text)
     
     return text
 
-BASE_YES = {"ok", "oke", "dongy", "xacnhan", "chot", "yes", "tieptuc"}
-BASE_NO = {"khong", "thoi", "no", "khoan", "ko", "hong", "hem"}
-BASE_FILLER = {"nha", "nhe", "di", "luon", "a", "voi", "ne", "oi", "roi"}
+BASE_YES = {
+    "ok", "oke", "dongy", "xacnhan", "chot", "yes", "tieptuc",
+    "u", "um", "uh", "uhm", "duoc", "dung", "dungroi", "lamdi",
+}
+BASE_NO = {
+    "khong", "thoi", "no", "khoan", "ko", "hong", "hem", "khoi",
+    "khongcan", "boqua", "dunglai", "khongthemnua",
+}
+BASE_FILLER = {"nha", "nhe", "di", "luon", "a", "voi", "ne", "oi", "roi", "do"}
+
+_YES_NO_PENDING_TYPES = {
+    "YES_NO", "ask_more_items", "clear_cart", "confirm_checkout",
+    "confirm_address", "confirm_cancel",
+}
 
 def classify_confirmation(text: str, pending_type: Optional[str]) -> Literal["YES", "NO", "AMBIGUOUS", "NONE"]:
     norm_text = normalize_confirmation_text(text)
@@ -65,20 +82,18 @@ def classify_confirmation(text: str, pending_type: Optional[str]) -> Literal["YE
     elif pending_type == "ask_more_items":
         no_set.update({"hetroi", "xongroi"})
         
-    # Check "huy" or "dung" alone (+fillers)
+    # Generic Vietnamese acknowledgements only have semantics when the
+    # pending interaction is explicitly YES_NO. They never choose an item.
+    is_yes_no = pending_type in _YES_NO_PENDING_TYPES
+
+    # Check "huy" alone (+fillers)
     only_huy = len(tokens) > 0 and all(t == "huy" or t in BASE_FILLER for t in tokens) and "huy" in tokens
-    only_dung = len(tokens) > 0 and all(t == "dung" or t in BASE_FILLER for t in tokens) and "dung" in tokens
     
     if only_huy:
         if not pending_type:
             return "NONE"
         if pending_type != "confirm_checkout":
             return "AMBIGUOUS"
-    if only_dung:
-        if not pending_type:
-            return "NONE"
-        return "AMBIGUOUS"
-        
     has_yes = False
     has_no = False
     has_foreign = False
@@ -100,13 +115,13 @@ def classify_confirmation(text: str, pending_type: Optional[str]) -> Literal["YE
         return "NONE"
         
     if has_yes:
-        if pending_type in {"select_voucher", "select_branch", "fill_options"}:
-            return "NONE"
-        if not pending_type:
+        if not is_yes_no:
             return "NONE"
         return "YES"
         
     if has_no:
+        # Declining a SELECT_ONE prompt is not a selection, but is still a
+        # meaningful negative response the caller may map to "skip/cancel".
         if not pending_type:
             return "NONE"
         return "NO"

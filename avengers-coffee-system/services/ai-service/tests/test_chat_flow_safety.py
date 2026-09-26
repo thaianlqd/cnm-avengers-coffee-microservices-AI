@@ -890,7 +890,8 @@ def test_best_voucher_is_selected_once_and_prompts_both_checkout_choices(monkeyp
     assert len(apply_logs) == 1
     assert apply_logs[0]["args"]["voucher_code"] == "BEST50"
     assert "Hình thức nhận hàng" in result["reply"]
-    assert "Phương thức thanh toán" in result["reply"]
+    assert "Phương thức thanh toán" not in result["reply"]
+    assert "hình thức nhận hàng số mấy" in result["reply"]
     assert not cart_manager.get_checkout_prefs(session).get("pending_products")
 
 
@@ -1190,6 +1191,12 @@ def test_drink_choice_with_cake_request_does_not_trigger_stale_branch(monkeypatc
     cart_manager.set_checkout_context(session, branch_candidates=[
         {"branch_id": "CN1", "branch_name": "Highlands Coffee D9 Tân Phú"}
     ])
+    cart_manager.set_active_list_context(session, "PRODUCT", items=[
+        {"entity_id": "D1", "product_id": "D1", "label": "Lít Matcha Latte Tây Bắc",
+         "product_name": "Lít Matcha Latte Tây Bắc", "category": "drink"},
+        {"entity_id": "D2", "product_id": "D2", "label": "Bạc Xỉu",
+         "product_name": "Bạc Xỉu", "category": "drink"},
+    ])
 
     monkeypatch.setattr(
         "src.function_calling.tools.product_tools.execute_get_product_options",
@@ -1216,5 +1223,7 @@ def test_drink_choice_with_cake_request_does_not_trigger_stale_branch(monkeypatc
     assert "Highlands Coffee D9 Tân Phú" not in res["reply"]
     assert "Đã ghi nhận chi nhánh" not in res["reply"]
     assert "Lít Matcha Latte Tây Bắc" in res["reply"]
-    assert "Bánh Trung Thu Cà Phê Lava" in res["reply"]
-    assert any(entry["tool"] == "get_recommendations" for entry in res["tool_calls_log"])
+    # The cake request is not a canonical product selection; it must not be
+    # guessed or staged from assistant history while the selected drink waits
+    # for its required size.
+    assert "Bánh Trung Thu Cà Phê Lava" not in res["reply"]

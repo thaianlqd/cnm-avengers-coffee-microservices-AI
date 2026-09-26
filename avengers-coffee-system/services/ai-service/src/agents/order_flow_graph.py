@@ -334,82 +334,189 @@ def _resolve_cart_line(cart: Dict[str, Any], message: str) -> tuple[Optional[Dic
     return None, "Mình cần biết đúng dòng món cần sửa vì giỏ có nhiều biến thể:\n" + numbered
 
 
-def _resolve_suggested_product(session_id: str, message: str) -> Optional[Dict[str, Any]]:
-    """Resolve an ordinal/name against the exact latest recommendation snapshot."""
-    suggestions = list(cart_manager.get_checkout_prefs(session_id).get("last_product_suggestions") or [])
-    if not suggestions:
+def _store_cart_line_choice(
+    session_id: str,
+    cart: Dict[str, Any],
+    action: str,
+    data: Optional[Dict[str, Any]] = None,
+) -> None:
+    items = list(cart.get("items") or [])
+    context = cart_manager.set_active_list_context(
+        session_id,
+        "CART_LINE",
+        items=[{
+            **item,
+            "entity_id": _cart_line_id(item),
+            "label": f"{item.get('product_name')} ({item.get('size') or 'mặc định'})",
+        } for item in items],
+    )
+    cart_manager.set_pending_interaction(
+        session_id,
+        kind="SELECT_ONE",
+        domain="CART_LINE",
+        action=action,
+        context_id=context.get("list_id"),
+        data=data or {},
+    )
+
+
+def _resolve_pending_cart_line_choice(
+    session_id: str,
+    cart: Dict[str, Any],
+    message: str,
+) -> Optional[Dict[str, Any]]:
+    interaction = cart_manager.get_pending_interaction(session_id) or {}
+    context = cart_manager.get_active_list_context(session_id) or {}
+    if interaction.get("domain") != "CART_LINE" or context.get("domain") != "CART_LINE":
         return None
+    match = re.search(r"\b(?:dong|mon)?\s*(?:so|thu|#)?\s*(\d+)\b", _norm(message))
+    if not match:
+        return None
+    index = int(match.group(1)) - 1
+    candidates = list(context.get("items") or [])
+    if not 0 <= index < len(candidates):
+        return None
+    line_id = str(candidates[index].get("entity_id") or "")
+    return next((item for item in cart.get("items") or [] if _cart_line_id(item) == line_id), None)
+
+
+def _resolve_suggested_product(session_id: str, message: str) -> Optional[Dict[str, Any]]:
+    """Resolve a product only from the typed active list."""
+    typed = _resolve_typed_references(session_id, message)
+    if typed.get("status") == "resolved" and len(typed.get("items") or []) == 1:
+        return typed["items"][0]
+    context = cart_manager.get_active_list_context(session_id) or {}
+    if context.get("domain") != "PRODUCT":
+        return None
+    suggestions = _list_context_items(context)
     text = _norm(message)
-    ordinal = re.search(r"\b(?:banh|mon|san pham)?\s*(?:so|thu|#)\s*(\d+)\b", text)
-    if ordinal:
-        position = int(ordinal.group(1)) - 1
-        if 0 <= position < len(suggestions):
-            return suggestions[position]
     exact = [row for row in suggestions if _norm(row.get("product_name")) in text]
     return exact[0] if len(exact) == 1 else None
 
 
-def _resolve_structured_references(session_id: str, message: str) -> Optional[List[Dict[str, Any]]]:
-    """Resolve ordinals and demonstratives from durable recommendation state.
+def _as_product_reference(item: Dict[str, Any], category: Optional[str] = None) -> Dict[str, Any]:
+    normalized = dict(item)
+    normalized["product_id"] = str(item.get("product_id") or item.get("entity_id") or "")
+    normalized["product_name"] = str(item.get("product_name") or item.get("label") or "")
+    if category:
+        normalized["category"] = category.lower()
+    elif str(normalized.get("category") or "").lower() not in {"drink", "food"}:
+        normalized["category"] = _map_db_category_to_bucket(normalized.get("product_name"))
+    return normalized
 
-    The returned product objects come directly from the snapshots written by
-    tool results. They are not reconstructed from assistant prose.
+
+def _list_context_items(context: Dict[str, Any]) -> List[Dict[str, Any]]:
+    if str(context.get("mode") or "FLAT").upper() == "GROUPED":
+        return [
+            _as_product_reference(item, group)
+            for group, values in (context.get("groups") or {}).items()
+            for item in values
+        ]
+    return [_as_product_reference(item) for item in context.get("items") or []]
+
+
+def _resolve_typed_references(session_id: str, message: str) -> Dict[str, Any]:
+    """Resolve product references from one typed ordinal namespace.
+
+    Assistant prose and raw chat history are deliberately excluded. A plain
+    ordinal in a grouped list must be unique across all groups; otherwise the
+    caller receives an ambiguity result and performs no mutation.
     """
     prefs = cart_manager.get_checkout_prefs(session_id)
-    snapshots = dict(prefs.get("product_suggestion_snapshots") or {})
-    latest = list(prefs.get("last_product_suggestions") or [])
-    suggestion_mode = str(prefs.get("product_suggestion_mode") or "flat")
-    focus = prefs.get("last_product_focus") or {}
+    context = cart_manager.get_active_list_context(session_id)
+    if re.search(r"\b(danh sach|list)\s+(?:truoc|cu)\b", _norm(message)):
+        recent = list(prefs.get("recent_list_contexts") or [])
+        context = recent[0] if recent else None
+    if not context:
+        return {"status": "unresolved", "domain": "PRODUCT", "items": []}
+    if str(context.get("domain") or "").upper() != "PRODUCT":
+        return {
+            "status": "domain_mismatch",
+            "domain": str(context.get("domain") or "").upper(),
+            "items": [],
+            "list_id": context.get("list_id"),
+        }
+
     text = _norm(message)
     resolved: List[Dict[str, Any]] = []
+    mode = str(context.get("mode") or "FLAT").upper()
+    groups = dict(context.get("groups") or {})
+    flat = _list_context_items(context)
+    explicit: List[tuple[str, int]] = []
+    for category, keyword in (("DRINK", r"(?:nuoc|do uong)"), ("FOOD", r"(?:banh|do an)")):
+        for match in re.finditer(rf"\b{keyword}\s*(?:thi\s*)?(?:so|thu|#)\s*(\d+)\b", text):
+            explicit.append((category, int(match.group(1))))
+    for category, ordinal in explicit:
+        candidate: Optional[Dict[str, Any]] = None
+        if mode == "GROUPED":
+            values = list(groups.get(category) or groups.get(category.lower()) or [])
+            if 0 < ordinal <= len(values):
+                candidate = _as_product_reference(values[ordinal - 1], category)
+        elif 0 < ordinal <= len(flat):
+            row = flat[ordinal - 1]
+            if str(row.get("category") or "").upper() == category:
+                candidate = row
+        if not candidate:
+            return {
+                "status": "unresolved",
+                "domain": "PRODUCT",
+                "items": [],
+                "list_id": context.get("list_id"),
+            }
+        resolved.append(candidate)
 
-    patterns = (
-        ("drink", r"(?:nuoc|do uong)"),
-        ("food", r"(?:banh|do an)"),
-    )
-    for category, keyword in patterns:
-        match = re.search(rf"\b{keyword}\s*(?:so|thu|#)\s*(\d+)\b", text)
-        candidates = list(snapshots.get(category) or [])
-        if match:
-            index = int(match.group(1)) - 1
-            # The renderer labels each category and restarts numbering under
-            # that heading. Its durable category snapshot therefore wins over
-            # a flattened list used only for backward-compatible “món số N”.
-            if suggestion_mode == "grouped" and 0 <= index < len(candidates):
-                resolved.append(candidates[index])
-                continue
-            # Prefer the exact latest displayed list when its numbered row has
-            # the requested type.  This handles a mixed Matcha result where
-            # "bánh số 3" refers to row 3, while preserving the older separate
-            # drink/food namespaces when the latest list belongs to one group.
-            if 0 <= index < len(latest):
-                latest_item = latest[index]
-                latest_category = str(latest_item.get("category") or "")
-                if latest_category not in {"drink", "food"}:
-                    # Older conversation snapshots stored a flat category
-                    # value such as "all".  Derive its bucket from the
-                    # canonical product name so an active conversation that
-                    # predates this deploy cannot send "bánh số 3" back to a
-                    # stale food list.
-                    latest_category = _map_db_category_to_bucket(
-                        latest_item.get("product_name") or latest_category
-                    )
-                if latest_category == category:
-                    resolved.append(latest_item)
-                    continue
-            if candidates and 0 <= index < len(candidates):
-                resolved.append(candidates[index])
+    if not explicit:
+        plain = re.search(r"\b(?:mon|san pham|sp)?\s*(?:so|thu|#)\s*(\d+)\b", text)
+        if plain:
+            ordinal = int(plain.group(1))
+            if mode == "GROUPED":
+                candidates = [
+                    _as_product_reference(values[ordinal - 1], group)
+                    for group, values in groups.items()
+                    if 0 < ordinal <= len(values)
+                ]
+                if len(candidates) != 1:
+                    return {
+                        "status": "ambiguous" if candidates else "unresolved",
+                        "domain": "PRODUCT",
+                        "items": candidates,
+                        "list_id": context.get("list_id"),
+                    }
+                resolved.extend(candidates)
+            elif 0 < ordinal <= len(flat):
+                resolved.append(flat[ordinal - 1])
+            else:
+                return {
+                    "status": "unresolved",
+                    "domain": "PRODUCT",
+                    "items": [],
+                    "list_id": context.get("list_id"),
+                }
 
     demonstrative = re.search(r"\b(banh|nuoc|mon|san pham)\s+(?:nay|do|kia)\b", text)
-    if demonstrative and focus.get("product_name"):
+    focus = cart_manager.get_focus(session_id, "PRODUCT") or {}
+    if demonstrative and focus.get("label"):
         ref_word = demonstrative.group(1)
         implied_category = (
             "food" if ref_word == "banh"
             else "drink" if ref_word == "nuoc"
-            else focus.get("category")
+            else str(focus.get("category") or "").lower()
         )
-        if implied_category == focus.get("category"):
-            resolved.append(focus)
+        focus_category = str(focus.get("category") or "").lower()
+        if implied_category == focus_category:
+            resolved.append(_as_product_reference(focus))
+        elif ref_word in {"banh", "nuoc"}:
+            return {
+                "status": "unresolved",
+                "domain": "PRODUCT",
+                "items": [],
+                "list_id": context.get("list_id"),
+            }
+
+    if not explicit and not resolved:
+        exact = [row for row in flat if _norm(row.get("product_name")) in text]
+        if len(exact) == 1:
+            resolved = exact
 
     unique: List[Dict[str, Any]] = []
     seen = set()
@@ -419,7 +526,17 @@ def _resolve_structured_references(session_id: str, message: str) -> Optional[Li
             continue
         seen.add(identity)
         unique.append(item)
-    return unique or None
+    return {
+        "status": "resolved" if unique else "not_applicable",
+        "domain": "PRODUCT",
+        "items": unique,
+        "list_id": context.get("list_id"),
+    }
+
+
+def _resolve_structured_references(session_id: str, message: str) -> Optional[List[Dict[str, Any]]]:
+    resolved = _resolve_typed_references(session_id, message)
+    return list(resolved.get("items") or []) if resolved.get("status") == "resolved" else None
 
 
 def _requested_ordinal_categories(message: str) -> set[str]:
@@ -436,31 +553,14 @@ def _requested_ordinal_categories(message: str) -> set[str]:
 def _resolve_all_category_ordinals(
     session_id: str, message: str, history: List[Dict[str, str]],
 ) -> Optional[List[Dict[str, Any]]]:
-    """Resolve every explicitly requested category before a cart write.
-
-    Recommendation calls sometimes emit separate logs and an older snapshot
-    can therefore contain one category only.  The compact canonical history is
-    the safe fallback, because it is still parsed into product names before
-    any write is attempted.  This prevents "nước số 1 và bánh số 1" from
-    silently becoming only one item.
-    """
+    """Resolve every explicitly requested category from structured state."""
+    del history  # Raw conversation prose is never an authority for cart writes.
     requested = _requested_ordinal_categories(message)
     structured = list(_resolve_structured_references(session_id, message) or [])
     present = {str(item.get("category") or "") for item in structured}
     if not requested or requested.issubset(present):
         return structured or None
-
-    from src.agents.agent_service import _resolve_numbered_product_choices
-
-    contextual_message, contextual_history = _contextualize_product_references(session_id, message, history)
-    fallback = _resolve_numbered_product_choices(contextual_message, contextual_history)
-    for item in fallback:
-        category = str(item.get("category") or "")
-        if category in requested and category not in present:
-            structured.append(item)
-            present.add(category)
-    # Do not return a partial set for an explicitly multi-category choice.
-    return structured if requested.issubset(present) else None
+    return None
 
 
 def _asks_unresolved_food_recommendation(message: str) -> bool:
@@ -477,38 +577,18 @@ def _asks_unresolved_food_recommendation(message: str) -> bool:
 def _contextualize_product_references(
     session_id: str, message: str, history: List[Dict[str, str]],
 ) -> tuple[str, List[Dict[str, str]]]:
-    """Supply a compact canonical menu for pronouns and category ordinals.
-
-    A pizza follow-up must not erase the earlier drink list. We keep snapshots
-    by category and turn "bánh này" into a concrete ordinal before the legacy
-    product configurator runs.
-    """
-    prefs = cart_manager.get_checkout_prefs(session_id)
-    snapshots = dict(prefs.get("product_suggestion_snapshots") or {})
-    focus = prefs.get("last_product_focus") or {}
-    if not snapshots and not focus:
-        return message, history
-    text = _norm(message)
-    has_category_ordinal = bool(re.search(r"\b(nuoc|do uong|banh|mon)\s*(?:so|thu|#)\s*\d+\b", text))
-    refers_to_focus = bool(re.search(r"\b(?:banh|mon|san pham)\s+(?:nay|do)\b", text))
-    if not has_category_ordinal and not refers_to_focus:
-        return message, history
+    """Replace a demonstrative with typed focus, never synthetic history."""
+    focus = cart_manager.get_focus(session_id, "PRODUCT") or {}
     rewritten = message
-    focus_name = str(focus.get("product_name") or "")
-    focus_category = str(focus.get("category") or "food")
-    if refers_to_focus and focus_name:
-        label = "bánh" if focus_category == "food" else "nước"
-        rewritten = re.sub(r"\b(?:bánh|món|sản phẩm)\s+(?:này|đó)\b", f"{label} số 1", rewritten, flags=re.IGNORECASE)
-    lines: List[str] = []
-    if snapshots.get("drink"):
-        lines.append("Nước:")
-        lines.extend(f"{index}. {item.get('product_name')}" for index, item in enumerate(snapshots["drink"], 1))
-    if snapshots.get("food"):
-        lines.append("Bánh:")
-        lines.extend(f"{index}. {item.get('product_name')}" for index, item in enumerate(snapshots["food"], 1))
-    if not lines:
-        return rewritten, history
-    return rewritten, [*history, {"role": "assistant", "content": "\n".join(lines)}]
+    focus_name = str(focus.get("label") or focus.get("product_name") or "")
+    if focus_name:
+        rewritten = re.sub(
+            r"\b(?:bánh|nước|món|sản phẩm)\s+(?:này|đó|kia)\b",
+            focus_name,
+            rewritten,
+            flags=re.IGNORECASE,
+        )
+    return rewritten, history
 
 
 def _cart_line_id(item: Dict[str, Any]) -> Optional[str]:
@@ -590,7 +670,23 @@ def _prepare_structured_products(
         option_result = execute_get_product_options(product_name)
         logs.append({"tool": "get_product_options", "args": {"product_name": product_name}, "result": option_result})
         groups = _parse_option_groups(option_result) if option_result.get("status") == "ok" else {}
-        pending_item = {**ref, "product_name": product_name, "options": {"groups": groups}}
+        option_schema = list(option_result.get("option_groups") or [])
+        required_names = {
+            str(group.get("name") or "")
+            for group in option_schema
+            if group.get("required")
+        }
+        missing_options = [
+            name for name, values in groups.items()
+            if name in required_names and len(values) > 1
+        ]
+        pending_item = {
+            **ref,
+            "product_id": str(ref.get("product_id") or option_result.get("product_id") or ""),
+            "product_name": product_name,
+            "options": {"groups": groups, "schema": option_schema},
+            "missing_options": missing_options,
+        }
         if operation_base:
             pending_item["operation_id"] = f"{operation_base}:add_cart_line:{index}"
         pending.append(pending_item)
@@ -598,12 +694,16 @@ def _prepare_structured_products(
         # A one-value group is a server default, not a question for the user.
         # This matters for mooncakes whose only option is size "Nhỏ": they can
         # be persisted immediately while preserving the requested quantity.
-        if any(len(values) > 1 for values in groups.values()):
+        if missing_options:
             needs_options = True
             for name, values in groups.items():
+                if name not in required_names:
+                    continue
                 reply_lines.append(f"  - {name}: {', '.join(str(value) for value in values)}")
 
-    cart_manager.set_pending_products(session_id, pending, merge=True)
+    # One explicit configuration command replaces an older draft. Multiple
+    # products selected in this same command remain one deterministic task.
+    cart_manager.set_pending_products(session_id, pending, merge=False)
     cart_manager.set_pending_action(session_id, "fill_options", {"count": len(pending)})
     if not needs_options:
         completed = _complete_pending_products_from_options(session_id, "theo mặc định")
@@ -887,6 +987,103 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
     )
     session_id, message, cart, intent = state["session_id"], state["user_message"], state["cart"], state["intent"]
     kind = intent.get("intent")
+    normalized_message = _norm(message)
+
+    pending_products = list(cart_manager.get_checkout_prefs(session_id).get("pending_products") or [])
+    abandons_draft = bool(re.search(r"\b(thoi|bo|khong lay|khoi)\b", normalized_message))
+    if pending_products and abandons_draft:
+        named = [
+            item for item in pending_products
+            if _norm(item.get("product_name")) in normalized_message
+        ]
+        demonstrative = bool(re.search(r"\b(ly|mon|banh|nuoc)?\s*(nay|do|kia)\b", normalized_message))
+        if len(named) == 1 or (len(pending_products) == 1 and demonstrative):
+            discarded = named[0] if named else pending_products[0]
+            discarded_id = str(discarded.get("pending_id") or "")
+            remaining = [
+                item for item in pending_products
+                if str(item.get("pending_id") or "") != discarded_id
+            ]
+            cart_manager.set_pending_products(session_id, remaining)
+            if not remaining:
+                cart_manager.clear_pending_action(session_id)
+            return {**state, "result": {
+                "reply": f"Mình đã bỏ bản nháp {discarded.get('product_name')} và chưa thay đổi giỏ hàng.",
+                "checkout_payload": None,
+                "tool_calls_log": [],
+                "error": None,
+            }}
+
+    interaction = cart_manager.get_pending_interaction(session_id) or {}
+    interaction_kind = str(interaction.get("kind") or "").upper()
+    short_reply = classify_confirmation(message, "YES_NO")
+    if interaction_kind in {"SELECT_ONE", "FILL_FIELDS"} and short_reply == "YES":
+        domain = str(interaction.get("domain") or "").upper()
+        prompts = {
+            "VOUCHER": "Bạn chọn rõ mã số mấy, mã tốt nhất, hoặc nói bỏ qua mã nhé.",
+            "BRANCH": "Bạn chọn rõ chi nhánh số mấy giúp mình nhé.",
+            "PAYMENT": "Bạn chọn rõ phương thức thanh toán số mấy giúp mình nhé.",
+            "FULFILLMENT": "Bạn chọn rõ hình thức nhận hàng số mấy giúp mình nhé.",
+            "PRODUCT": "Mình chưa thể tự chọn tùy chọn. Bạn chọn rõ size/tùy chọn mong muốn nhé.",
+            "CART_LINE": "Bạn chọn rõ dòng số mấy trong giỏ giúp mình nhé.",
+        }
+        return {**state, "result": {
+            "reply": prompts.get(domain, "Bạn chọn rõ một mục trong danh sách giúp mình nhé."),
+            "checkout_payload": None,
+            "tool_calls_log": [],
+            "error": None,
+        }}
+    if interaction_kind == "YES_NO" and str(interaction.get("action") or "").upper() == "ASK_MORE_ITEMS":
+        if short_reply == "YES":
+            cart_manager.clear_pending_interaction(session_id, interaction.get("interaction_id"))
+            cart_manager.clear_pending_action(session_id)
+            return {**state, "result": {
+                "reply": "Được, bạn muốn xem thêm đồ uống hay bánh?",
+                "checkout_payload": None,
+                "tool_calls_log": [],
+                "error": None,
+            }}
+        if short_reply == "NO":
+            cart_manager.clear_pending_interaction(session_id, interaction.get("interaction_id"))
+            cart_manager.clear_pending_action(session_id)
+            if not cart.get("is_empty"):
+                return {**state, "result": _offer_voucher_gate(
+                    session_id, "Mình giữ nguyên giỏ hàng hiện tại."
+                )}
+
+    selected_cart_line = _resolve_pending_cart_line_choice(session_id, cart, message)
+    if selected_cart_line:
+        pending_action = str(interaction.get("action") or "").upper()
+        action_map = {
+            "SET_QUANTITY": "SET_QUANTITY",
+            "REMOVE_CART_LINE": "REMOVE_ITEM",
+            "EDIT_CART_LINE": "EDIT_OPTIONS",
+        }
+        if pending_action in action_map:
+            kind = action_map[pending_action]
+            intent = {**intent, "intent": kind, **dict(interaction.get("data") or {})}
+            cart_manager.clear_pending_interaction(session_id, interaction.get("interaction_id"))
+
+    if interaction_kind == "SELECT_ONE" and str(interaction.get("domain") or "").upper() in {"FULFILLMENT", "PAYMENT"}:
+        context = cart_manager.get_active_list_context(session_id) or {}
+        ordinal = re.search(r"\b(?:so|thu|#)?\s*(\d+)\b", normalized_message)
+        candidates = list(context.get("items") or [])
+        if ordinal and context.get("domain") == interaction.get("domain"):
+            index = int(ordinal.group(1)) - 1
+            if 0 <= index < len(candidates):
+                selected = candidates[index]
+                message = str(selected.get("label") or selected.get("value") or "")
+                kind = str(interaction.get("action") or "").upper()
+                intent = {**intent, "intent": kind}
+                cart_manager.clear_pending_interaction(session_id, interaction.get("interaction_id"))
+            else:
+                return {**state, "result": {
+                    "reply": f"Danh sách hiện có {len(candidates)} lựa chọn; bạn chọn lại số hợp lệ nhé.",
+                    "checkout_payload": None,
+                    "tool_calls_log": [],
+                    "error": None,
+                }}
+
     cart_write_intents = {"ADD_ITEM", "SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS", "CLEAR_CART"}
     if kind in cart_write_intents and is_authenticated_cart_session(session_id) and not cart.get("authoritative"):
         return {**state, "result": {
@@ -929,6 +1126,34 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         if menu_result:
             return {**state, "result": menu_result}
     if kind == "ADD_ITEM":
+        typed_reference = _resolve_typed_references(session_id, message)
+        has_implicit_reference = bool(re.search(
+            r"\b(?:nuoc|do uong|banh|do an|mon|san pham|sp)?\s*(?:so|thu|#)\s*\d+\b"
+            r"|\b(?:banh|nuoc|mon|san pham)\s+(?:nay|do|kia)\b",
+            _norm(message),
+        ))
+        if has_implicit_reference and typed_reference.get("status") != "resolved":
+            if typed_reference.get("status") == "ambiguous":
+                clarification = (
+                    "Số này xuất hiện ở nhiều nhóm trong danh sách hiện tại. "
+                    "Bạn nói rõ ‘nước số …’ hoặc ‘bánh số …’ giúp mình nhé."
+                )
+            elif typed_reference.get("status") == "domain_mismatch":
+                clarification = (
+                    "Danh sách đang hoạt động không phải danh sách món. "
+                    "Bạn mở lại menu món cần chọn giúp mình nhé."
+                )
+            else:
+                clarification = (
+                    "Mình chưa xác định chắc món bạn đang chỉ trong danh sách hiện tại. "
+                    "Bạn nói tên món hoặc nhóm kèm số giúp mình nhé."
+                )
+            return {**state, "result": {
+                "reply": clarification,
+                "checkout_payload": None,
+                "tool_calls_log": [],
+                "error": None,
+            }}
         # Resolve every named ordinal before the generic single-product path.
         # `last_product_suggestions` contains one flat namespace and can point
         # to a cake; it must never make “nước số 1 và bánh số 1” add only cake.
@@ -961,8 +1186,11 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             cart_manager.set_checkout_context(session_id, flow_stage="CART_REVIEW")
             return {**state, "result": handled}
     if kind == "SET_QUANTITY":
-        item, error = _resolve_cart_line(cart, message)
+        item, error = (selected_cart_line, None) if selected_cart_line else _resolve_cart_line(cart, message)
         if error:
+            _store_cart_line_choice(
+                session_id, cart, "SET_QUANTITY", {"quantity": intent["quantity"]}
+            )
             return {**state, "result": {"reply": error, "checkout_payload": None, "tool_calls_log": [], "error": None}}
         changed = execute_update_cart_item(session_id, str(item.get("cart_item_id") or item.get("line_id")), {"quantity": intent["quantity"]})
         if changed.get("status") == "ok":
@@ -973,8 +1201,9 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             reply = changed.get("message", "Chưa thể cập nhật món.")
         return {**state, "result": {"reply": reply, "checkout_payload": None, "tool_calls_log": [{"tool": "update_cart_item", "result": changed}], "error": None}}
     if kind == "REMOVE_ITEM":
-        item, error = _resolve_cart_line(cart, message)
+        item, error = (selected_cart_line, None) if selected_cart_line else _resolve_cart_line(cart, message)
         if error:
+            _store_cart_line_choice(session_id, cart, "REMOVE_CART_LINE")
             return {**state, "result": {"reply": error, "checkout_payload": None, "tool_calls_log": [], "error": None}}
         line_id = str(item.get("cart_item_id") or item.get("line_id"))
         cart_manager.set_checkout_context(session_id, last_cart_focus=line_id)
@@ -993,8 +1222,9 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         item = next((row for row in (cart.get("items") or []) if _cart_line_id(row) == target_id), None)
         error = None
         if not item:
-            item, error = _resolve_cart_line(cart, message)
+            item, error = (selected_cart_line, None) if selected_cart_line else _resolve_cart_line(cart, message)
         if error:
+            _store_cart_line_choice(session_id, cart, "EDIT_CART_LINE")
             return {**state, "result": {"reply": error, "checkout_payload": None, "tool_calls_log": [], "error": None}}
         line_id = str(item.get("cart_item_id") or item.get("line_id"))
         cart_manager.set_checkout_context(session_id, last_cart_focus=line_id, flow_stage="CART_REVIEW")
@@ -1175,60 +1405,100 @@ def _render(state: OrderConversationState) -> OrderConversationState:
     branches: List[Dict[str, Any]] = []
     vouchers: List[Dict[str, Any]] = []
     products: List[Dict[str, Any]] = []
+    recommendation_entries: List[Dict[str, Any]] = []
     for entry in logs:
         value = entry.get("result") if isinstance(entry, dict) else {}
         branches.extend(value.get("branches", []))
         vouchers.extend(value.get("vouchers", []))
         products.extend(value.get("products", []))
         if entry.get("tool") == "get_recommendations" and value.get("status") == "ok" and value.get("products"):
-            # A new recommendation replaces the ordinal namespace. This is
-            # durable conversation state, so a customer can ask another
-            # question before saying "món số 4".
-            category = str((entry.get("args") or {}).get("category") or "all")
-            snapshot = [
-                {
-                    "product_id": item.get("product_id"),
-                    "product_name": item.get("product_name"),
-                    "category": (
-                        category if category in {"drink", "food"}
-                        else _map_db_category_to_bucket(item.get("category"))
-                    ),
-                }
-                for item in value["products"]
-            ]
-            existing = dict(cart_manager.get_checkout_prefs(state["session_id"]).get("product_suggestion_snapshots") or {})
-            existing[category] = snapshot
-            args = entry.get("args") or {}
-            context_index = int(args.get("list_context_index") or 0)
-            context_count = int(args.get("list_context_count") or 1)
-            prior_flat = list(cart_manager.get_checkout_prefs(state["session_id"]).get("last_product_suggestions") or [])
-            flat_snapshot = snapshot if context_index == 0 else [*prior_flat, *snapshot]
-            cart_manager.set_checkout_context(
-                state["session_id"],
-                last_product_suggestions=flat_snapshot,
-                product_suggestion_snapshots=existing,
-                product_suggestion_mode="grouped" if context_count > 1 else "flat",
-                last_product_focus=snapshot[-1] if snapshot else None,
-            )
+            recommendation_entries.append(entry)
         if entry.get("tool") == "check_price_and_stock" and isinstance(value, dict):
             if value.get("status") == "ok":
                 single_products = value.get("products") or []
                 if len(single_products) == 1:
                     item = single_products[0]
-                    cart_manager.set_checkout_context(
-                        state["session_id"],
-                        last_product_focus={
-                            "product_id": item.get("product_id"),
-                            "product_name": item.get("product_name"),
-                            "category": _map_db_category_to_bucket(item.get("category")),
-                        },
-                    )
+                    cart_manager.set_focus(state["session_id"], {
+                        "domain": "PRODUCT",
+                        "entity_id": item.get("product_id"),
+                        "label": item.get("product_name"),
+                        "product_id": item.get("product_id"),
+                        "product_name": item.get("product_name"),
+                        "category": _map_db_category_to_bucket(item.get("category")),
+                    })
         if entry.get("tool") == "add_to_cart" and isinstance(value, dict) and value.get("status") == "ok":
             _update_cart_focus_after_add(
                 state["session_id"],
                 {"tool_calls_log": [entry]},
                 {"product_name": (entry.get("args") or {}).get("product_name")},
             )
+    if recommendation_entries:
+        grouped = any(
+            int((entry.get("args") or {}).get("list_context_count") or 1) > 1
+            for entry in recommendation_entries
+        )
+        snapshots: Dict[str, List[Dict[str, Any]]] = {}
+        flat_snapshot: List[Dict[str, Any]] = []
+        for entry in recommendation_entries:
+            args = entry.get("args") or {}
+            category = str(args.get("category") or "all").lower()
+            snapshot = [
+                {
+                    "entity_id": str(item.get("product_id") or ""),
+                    "label": str(item.get("product_name") or ""),
+                    "product_id": item.get("product_id"),
+                    "product_name": item.get("product_name"),
+                    "category": (
+                        category if category in {"drink", "food"}
+                        else _map_db_category_to_bucket(item.get("category") or item.get("product_name"))
+                    ),
+                }
+                for item in (entry.get("result") or {}).get("products") or []
+            ]
+            flat_snapshot.extend(snapshot)
+            if grouped:
+                for item in snapshot:
+                    snapshots.setdefault(str(item["category"]).upper(), []).append(item)
+        cart_manager.set_active_list_context(
+            state["session_id"],
+            "PRODUCT",
+            mode="GROUPED" if grouped else "FLAT",
+            groups=snapshots if grouped else None,
+            items=None if grouped else flat_snapshot,
+        )
+        # Compatibility mirrors are current-turn adapters only. They never
+        # merge old lists and are not read by canonical write resolution.
+        cart_manager.set_checkout_context(
+            state["session_id"],
+            last_product_suggestions=flat_snapshot,
+            product_suggestion_snapshots={key.lower(): value for key, value in snapshots.items()},
+            product_suggestion_mode="grouped" if grouped else "flat",
+        )
+    if vouchers:
+        voucher_items = [
+            {
+                "entity_id": item.get("ma_voucher") or item.get("voucher_code"),
+                "label": item.get("ten_voucher") or item.get("ten_chuong_trinh") or item.get("ma_voucher"),
+                "ma_voucher": item.get("ma_voucher") or item.get("voucher_code"),
+            }
+            for item in vouchers[:4]
+            if item.get("ma_voucher") or item.get("voucher_code")
+        ]
+        if voucher_items:
+            cart_manager.set_active_list_context(state["session_id"], "VOUCHER", items=voucher_items)
+    if branches:
+        branch_items = [
+            {
+                "entity_id": item.get("branch_id") or item.get("ma_chi_nhanh"),
+                "label": item.get("branch_name") or item.get("ten_chi_nhanh"),
+                "branch_id": item.get("branch_id") or item.get("ma_chi_nhanh"),
+                "branch_name": item.get("branch_name") or item.get("ten_chi_nhanh"),
+            }
+            for item in branches[:5]
+            if item.get("branch_id") or item.get("ma_chi_nhanh")
+        ]
+        if branch_items:
+            cart_manager.set_active_list_context(state["session_id"], "BRANCH", items=branch_items)
     try:
         from src.function_calling.tools.cart_tools import sync_authoritative_cart
         canonical_cart = sync_authoritative_cart(state["session_id"])

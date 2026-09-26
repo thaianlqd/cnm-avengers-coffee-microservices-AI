@@ -59,7 +59,7 @@ def execute_get_product_options(product_name: str) -> Dict[str, Any]:
 
             opts = conn.execute(text(
                 f"""
-                SELECT tt.ten_thuoc_tinh, bt.gia_tri
+                SELECT tt.ten_thuoc_tinh, bt.gia_tri, bt.phu_thu
                 FROM {menu_schema}.bien_the_san_pham bt
                 JOIN {menu_schema}.thuoc_tinh tt ON bt.ma_thuoc_tinh = tt.ma_thuoc_tinh
                 WHERE bt.ma_san_pham::text = :pid
@@ -68,22 +68,46 @@ def execute_get_product_options(product_name: str) -> Dict[str, Any]:
             
             from collections import defaultdict
             options_dict = defaultdict(list)
+            surcharge_by_group = defaultdict(dict)
             for r in opts:
                 options_dict[r[0]].append(r[1])
+                surcharge_by_group[r[0]][r[1]] = float(r[2] or 0)
                 
             if not options_dict:
                 return {
                     "status": "ok", 
                     "product_name": found_name, 
                     "options": {},
+                    "option_groups": [],
                     "message": f"Sản phẩm {found_name} không có tùy chọn (size, đá, đường) nào. Cứ đặt mặc định."
                 }
                 
             opts_str = ", ".join([f"{k}: [{', '.join(v)}]" for k, v in options_dict.items()])
             return {
                 "status": "ok",
+                "product_id": product_id,
                 "product_name": found_name,
                 "options": {key: list(values) for key, values in options_dict.items()},
+                "option_groups": [
+                    {
+                        "name": str(name),
+                        "required": "size" in _norm(name) or "kich thuoc" in _norm(name),
+                        "min_select": 1 if ("size" in _norm(name) or "kich thuoc" in _norm(name)) else 0,
+                        "max_select": (
+                            len(values) if "topping" in _norm(name) else 1
+                        ),
+                        "allowed_values": [
+                            {
+                                "value": str(value),
+                                "surcharge": surcharge_by_group[name].get(value, 0.0),
+                                "available": True,
+                            }
+                            for value in values
+                        ],
+                    }
+                    for name, values in options_dict.items()
+                ],
+                "unavailable_options": [],
                 "message": f"BẮT BUỘC: Khi hỏi khách về tùy chọn của {found_name}, bạn CHỈ ĐƯỢC PHÉP dùng y hệt các nhãn này (không dịch, không đổi). Các tùy chọn là: {opts_str}"
             }
     except Exception as e:
@@ -246,24 +270,51 @@ def execute_check_price_and_stock(
             }
 
         size_price = None
-        if size and top:
+        option_surcharge = 0.0
+        selected_option_values = [
+            value for value in [size, *(toppings or []), luong_da, do_ngot, loai_sua]
+            if str(value or "").strip()
+        ]
+        if selected_option_values and top:
             try:
                 with engine.connect() as conn:
-                    r = conn.execute(text(
+                    variant_rows = conn.execute(text(
                         f"""
-                        SELECT bt.phu_thu
+                        SELECT tt.ten_thuoc_tinh, bt.gia_tri, bt.phu_thu
                         FROM {menu_schema}.bien_the_san_pham bt
                         JOIN {menu_schema}.thuoc_tinh tt ON bt.ma_thuoc_tinh = tt.ma_thuoc_tinh
                         WHERE bt.ma_san_pham = :pid
-                          AND UPPER(bt.gia_tri) = UPPER(:size)
-                          AND LOWER(tt.ten_thuoc_tinh) LIKE '%size%'
-                        LIMIT 1
                         """
-                    ), {"pid": top[0]["product_id"], "size": size}).fetchone()
-                    if r:
-                        size_price = float(r[0] or 0)
+                    ), {"pid": top[0]["product_id"]}).fetchall()
+                variants = [
+                    {
+                        "group": str(row[0]),
+                        "value": str(row[1]),
+                        "amount": float(row[2] or 0),
+                    }
+                    for row in variant_rows
+                ]
+                unavailable = [
+                    str(selected)
+                    for selected in selected_option_values
+                    if not any(_norm(row["value"]) == _norm(selected) for row in variants)
+                ]
+                if unavailable:
+                    return {
+                        "status": "option_unavailable",
+                        "availability_code": "OPTION_UNAVAILABLE",
+                        "unavailable_options": unavailable,
+                        "message": "Tùy chọn không còn hợp lệ: " + ", ".join(unavailable),
+                    }
+                for row in variants:
+                    if not any(_norm(row["value"]) == _norm(value) for value in selected_option_values):
+                        continue
+                    if "size" in _norm(row["group"]) or "kich thuoc" in _norm(row["group"]):
+                        size_price = row["amount"]
+                    else:
+                        option_surcharge += row["amount"]
             except Exception:
-                pass
+                logger.warning("[AgentTools] option validation failed", exc_info=True)
 
         inventory_schema = os.getenv("INVENTORY_SCHEMA", "inventory")
         prefs = cart_manager.get_checkout_prefs(session_id) if session_id else {}
@@ -275,8 +326,9 @@ def execute_check_price_and_stock(
             # bien_the_san_pham.phu_thu stores the complete selling price for
             # Size rows (for example Small=49k, Medium=55k, Large=59k).
             # Other attributes use it as a surcharge.
-            final_price = size_price if size_price is not None else base_price
+            final_price = (size_price if size_price is not None else base_price) + option_surcharge
             availability_status = "unknown"
+            availability_code = "UNKNOWN_BRANCH"
             in_stock = None
             stock_quantity = None
             if has_outlet and str(p["product_id"]).isdigit():
@@ -291,8 +343,22 @@ def execute_check_price_and_stock(
                     ), {"branch_id": branch_id, "product_id": int(p["product_id"])}).mappings().first()
                 if stock:
                     stock_quantity = int(stock["so_luong_ton"] or 0)
-                    in_stock = bool(stock["dang_kinh_doanh"]) and stock_quantity >= max(1, int(quantity or 1))
+                    requested_quantity = max(1, int(quantity or 1))
+                    in_stock = bool(stock["dang_kinh_doanh"]) and stock_quantity >= requested_quantity
                     availability_status = "available" if in_stock else "unavailable"
+                    if not bool(stock["dang_kinh_doanh"]):
+                        availability_code = "PRODUCT_DISABLED"
+                    elif stock_quantity <= 0:
+                        availability_code = "OUT_OF_STOCK"
+                    elif stock_quantity < requested_quantity:
+                        availability_code = "INSUFFICIENT_QUANTITY"
+                    else:
+                        availability_code = "AVAILABLE"
+                elif has_outlet:
+                    # Missing branch override inherits menu availability.
+                    availability_status = "available"
+                    availability_code = "AVAILABLE"
+                    in_stock = True
 
             results.append({
                 "product_id": p["product_id"],
@@ -300,10 +366,12 @@ def execute_check_price_and_stock(
                 "category": p.get("category"),
                 "base_price": base_price,
                 "size": size,
-                "size_surcharge": (final_price - base_price) if size_price is not None else 0.0,
+                "size_surcharge": (size_price - base_price) if size_price is not None else 0.0,
+                "option_surcharge": option_surcharge,
                 "final_price": final_price,
                 "in_stock": in_stock,
                 "availability_status": availability_status,
+                "availability_code": availability_code,
                 "stock_quantity": stock_quantity,
                 "branch_id": branch_id,
             })
