@@ -257,6 +257,7 @@ def replace_items_from_order_cart(session_id: str, server_items: List[Dict[str, 
     for item in server_items or []:
         normalized.append({
             "line_id": item.get("id") or item.get("line_id"),
+            "cart_item_id": item.get("id") or item.get("line_id"),
             "product_id": str(item.get("ma_san_pham") or item.get("product_id") or ""),
             "product_name": item.get("ten_san_pham") or item.get("product_name") or "Sản phẩm",
             "quantity": max(1, int(item.get("so_luong") or item.get("quantity") or 1)),
@@ -283,7 +284,16 @@ def replace_items_from_order_cart(session_id: str, server_items: List[Dict[str, 
         session["items"] = normalized
         if previous_fingerprint != next_fingerprint:
             prefs = dict(session.get("checkout_prefs") or {})
-            prefs.pop("summary_fingerprint", None)
+            # A server cart change invalidates every decision derived from the
+            # old lines.  Do not leave a stale voucher/branch/confirmation
+            # draft that could be submitted against a different cart.
+            for key in (
+                "summary_fingerprint", "checkout_action_id", "pending_action",
+                "branch_candidates", "stock_conflicts", "voucher_decided",
+                "voucher_offer_pending", "voucher_candidates", "voucher_code",
+                "discount_amount", "flow_stage",
+            ):
+                prefs.pop(key, None)
             session["checkout_prefs"] = prefs
         _touch(session_id, session, sync_db=True)
     return get_cart(session_id)
@@ -489,6 +499,56 @@ def get_checkout_prefs(session_id: str) -> Dict[str, Any]:
         session = _get_or_create_session(session_id)
         return dict(session.get("checkout_prefs") or {})
 
+def set_pending_action(session_id: str, action_type: str, params: Dict[str, Any]) -> None:
+    import time
+    try:
+        with _get_session_lock(session_id):
+            session = _get_or_create_session(session_id)
+            prefs = dict(session.get("checkout_prefs") or {})
+            prefs["pending_action"] = {
+                "type": action_type,
+                "params": params,
+                "expires_at": time.time() + 300,
+            }
+            session["checkout_prefs"] = prefs
+            _touch(session_id, session, sync_db=False)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("Failed to set_pending_action: %s", e)
+
+def get_pending_action(session_id: str) -> Optional[Dict[str, Any]]:
+    import time
+    try:
+        with _get_session_lock(session_id):
+            session = _get_or_create_session(session_id)
+            prefs = dict(session.get("checkout_prefs") or {})
+            pending = prefs.get("pending_action")
+            if pending:
+                if pending.get("expires_at", 0) > time.time():
+                    return pending
+                else:
+                    prefs.pop("pending_action", None)
+                    session["checkout_prefs"] = prefs
+                    _touch(session_id, session, sync_db=False)
+            return None
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("Failed to get_pending_action: %s", e)
+        return None
+
+def clear_pending_action(session_id: str) -> None:
+    try:
+        with _get_session_lock(session_id):
+            session = _get_or_create_session(session_id)
+            prefs = dict(session.get("checkout_prefs") or {})
+            if "pending_action" in prefs:
+                prefs.pop("pending_action", None)
+                session["checkout_prefs"] = prefs
+                _touch(session_id, session, sync_db=False)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("Failed to clear_pending_action: %s", e)
+
 def reset_conversation_draft(session_id: str) -> Dict[str, Any]:
     """Clear chat-only pending/check-out prompts without touching the real cart."""
     with _get_session_lock(session_id):
@@ -498,7 +558,7 @@ def reset_conversation_draft(session_id: str) -> Dict[str, Any]:
             "pending_products", "checkout_requested", "voucher_decided",
             "voucher_offer_pending", "voucher_candidates", "summary_fingerprint",
             "checkout_action_id", "branch_candidates", "suggested_address",
-            "location_address", "stock_conflicts",
+            "location_address", "stock_conflicts", "pending_action",
         )
         for key in draft_keys:
             prefs.pop(key, None)
@@ -597,6 +657,7 @@ def cart_fingerprint(session_id: str) -> str:
                 "summary_fingerprint", "pending_products", "branch_candidates",
                 "suggested_address", "location_address", "stock_conflicts",
                 "checkout_action_id", "checkout_action_expires_at",
+                "pending_action",
             }
         },
         "items": sorted(

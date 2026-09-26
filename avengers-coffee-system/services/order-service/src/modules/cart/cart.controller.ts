@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, Query, Req, UseGuards, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Delete, Query, Req, Headers, UseGuards, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 
@@ -30,9 +30,28 @@ export class CartController {
   }
 
   @Post()
-  async addToCart(@Body() dto: any, @Req() req: any) {
+  async addToCart(
+    @Body() dto: any,
+    @Headers('x-idempotency-key') headerOperationId: string | undefined,
+    @Req() req: any,
+  ) {
     this.assertOwner(req.user, String(dto?.ma_nguoi_dung || ''));
-    return this.cartService.themVaoGiỏ(dto);
+    return this.cartService.themVaoGiỏ(dto, headerOperationId || dto?.operation_id);
+  }
+
+  /**
+   * Canonical, absolute update for exactly one cart row.  The client must use
+   * the row id returned by GET /cart; product/size matching is ambiguous when
+   * a customer has two variants of the same product.
+   */
+  @Patch(':id')
+  async updateItem(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+    const itemId = Number(id);
+    if (!Number.isInteger(itemId) || itemId <= 0) {
+      throw new BadRequestException('Id giỏ hàng không hợp lệ');
+    }
+    const userId = req.user?.username === 'internal-service' ? undefined : String(req.user?.sub || '');
+    return this.cartService.capNhatMucGio(itemId, body || {}, userId);
   }
 
   @Delete('clear/:userId')

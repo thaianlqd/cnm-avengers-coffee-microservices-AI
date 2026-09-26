@@ -280,15 +280,27 @@ function OrderCard({ o }) {
 }
 
 function StoreCard({ b }) {
+  const status = b.availability_status;
+  const missing = b.unavailable_products || [];
+  const isAvailable = status === 'available';
+  const statusText = isAvailable
+    ? 'Còn đủ tất cả món trong giỏ'
+    : status === 'unavailable'
+      ? `Hết/thiếu: ${missing.join(', ') || 'một số món trong giỏ'}`
+      : status === 'unknown'
+        ? 'Chưa xác minh được tồn kho'
+        : null;
   return (
-    <div style={{ background: '#FFFFFF', borderRadius: 14, border: '1px solid #FFEBEB', padding: '11px 13px' }}>
+    <div style={{ background: '#FFFFFF', borderRadius: 14, border: `1px solid ${status === 'unavailable' ? '#FECACA' : '#FFEBEB'}`, padding: '11px 13px', opacity: status && !isAvailable ? 0.78 : 1 }}>
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8 }}>
         <div style={{ width: 34, height: 34, borderRadius: 10, background: '#FFF0F0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F08080" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#2D3748' }}>{b.ten_chi_nhanh}</p>
-          <p style={{ margin: '3px 0 0', fontSize: '0.7rem', color: '#718096', lineHeight: 1.4 }}>{b.dia_chi}</p>
+          <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#2D3748' }}>{b.ten_chi_nhanh || b.branch_name}</p>
+          <p style={{ margin: '3px 0 0', fontSize: '0.7rem', color: '#718096', lineHeight: 1.4 }}>{b.dia_chi || b.address}</p>
+          {b.khoang_cach_km != null && <p style={{ margin: '3px 0 0', fontSize: '0.68rem', color: '#718096' }}>{b.khoang_cach_km} km đường chim bay</p>}
+          {statusText && <p style={{ margin: '4px 0 0', fontSize: '0.68rem', color: isAvailable ? '#15803D' : '#DC2626', fontWeight: 800 }}>{statusText}</p>}
           {b.gio_mo_cua && <p style={{ margin: '3px 0 0', fontSize: '0.68rem', color: '#F08080', fontWeight: 700 }}>Giờ mở cửa: {b.gio_mo_cua} – {b.gio_dong_cua}</p>}
         </div>
       </div>
@@ -793,7 +805,7 @@ export default function ChatWidget({ user, socketUrl }) {
       const agentError = agentData?.error;
 
       // If AI updated cart, refresh frontend cart context
-      if (agentData?.tool_calls_log && agentData.tool_calls_log.some(t => t.tool === 'add_to_cart' || t.tool === 'remove_from_cart' || t.tool === 'confirm_checkout')) {
+      if (agentData?.tool_calls_log && agentData.tool_calls_log.some(t => ['add_to_cart', 'remove_from_cart', 'remove_cart_item', 'update_cart_item', 'clear_cart', 'confirm_checkout'].includes(t.tool))) {
         window.dispatchEvent(new CustomEvent('refresh-cart'));
       }
       if ((agentData?.tool_calls_log || []).some((entry) =>
@@ -845,71 +857,19 @@ export default function ChatWidget({ user, socketUrl }) {
         return;
       }
 
-      // Có reply hợp lệ từ Agent
+      // Có reply hợp lệ từ Agent. Render text first; the server supplies the
+      // exact IDs for optional cards. Never infer a product or branch by
+      // substring from prose because that rendered unrelated, unavailable
+      // stores as selectable cards.
       if (agentReply && !agentError?.startsWith('blocked:')) {
-        const extras = {};
-
-        // Enrich với UI cards dựa trên nội dung reply + câu hỏi
-        const toolCalls = agentData?.tool_calls_log || [];
-        const branchTool = toolCalls.find(t => t.tool === 'find_nearest_branch' || t.tool === 'ask_branch');
-        const hasProfileTool = toolCalls.some(t => t.tool === 'get_user_profile');
-
-        const askingReview = /(đánh giá|bình luận|nhận xét|review)/.test(textLower);
-
-        if (branchTool && branchTool.result && branchTool.result.branches) {
-          extras._stores = branchTool.result.branches.slice(0, 4);
-        } else if (!askingReview && (/(cửa hàng|chi nhánh|ở đâu|gần đây)/.test(textLower) && !hasProfileTool || /(chi nhánh)/.test(agentReply.toLowerCase()))) {
-          const replyLower = agentReply.toLowerCase();
-          const mentionedBranches = cache.current.branches.filter(b => b.ten_chi_nhanh && replyLower.includes(b.ten_chi_nhanh.toLowerCase()));
-          if (mentionedBranches.length > 0) {
-            extras._stores = mentionedBranches.slice(0, 4);
-          }
-        }
-        // 2. Menu / Sản phẩm
-        const userAskedMenu = /(thực đơn|menu|đồ uống|cà phê|trà|sữa|matcha|có gì ngon|gợi ý|bán chạy|\bsp\b|sản phẩm|yêu thích)/.test(textLower);
-        const aiMentionedMenu = /(sản phẩm|đồ uống|menu|\bmón\b|\bsp\b|yêu thích|gợi ý)/.test(agentReply.toLowerCase());
-        
-        let recommendedProducts = [];
-        const recTools = toolCalls.filter(t => t.tool === 'get_recommendations' || t.tool === 'check_price_and_stock');
-        let allProductNames = [];
-        for (const recTool of recTools) {
-          if (recTool && recTool.result && recTool.result.products) {
-             const rp = recTool.result.products;
-             if (typeof rp === 'string') {
-                allProductNames.push(...rp.split(',').map(s => s.trim().toLowerCase()));
-             } else if (Array.isArray(rp)) {
-                allProductNames.push(...rp.map(item => (item.product_name || item.name || '').toLowerCase()));
-             }
-          }
-        }
-        if (allProductNames.length > 0) {
-          recommendedProducts = cache.current.products.filter(p => allProductNames.some(n => p.ten_san_pham.toLowerCase().includes(n)));
-        }
-
-        if (userAskedMenu || aiMentionedMenu || recommendedProducts.length > 0) {
-          const replyLower = agentReply.toLowerCase();
-          const mentioned = cache.current.products.filter(p => replyLower.includes(p.ten_san_pham.toLowerCase()));
-          
-          if (recommendedProducts.length > 0) {
-            extras._products = recommendedProducts.slice(0, 12);
-          } else if (mentioned.length > 0) {
-            extras._products = mentioned.slice(0, 12);
-          } else if (userAskedMenu) {
-            extras._products = cache.current.products.slice(0, 12);
-          }
-        }
-        const voucherTool = toolCalls.find(t => t.tool === 'get_applicable_vouchers');
-        if (voucherTool?.result?.status === 'ok' && Array.isArray(voucherTool.result.vouchers)) {
-          extras._vouchers = voucherTool.result.vouchers.slice(0, 4);
-        }
-        if (/(đơn hàng|đơn của tôi|trạng thái.*đơn)/.test(textLower)) {
-          extras._orders = cache.current.orders.slice(0, 3);
-        }
-        if (/(thanh toán|vnpay|zalopay|momo)/.test(agentReply.toLowerCase()) && !/(giỏ hàng.*trống|chưa có món|chọn món trước)/.test(agentReply.toLowerCase())) {
-          extras._type = 'payment';
-        }
-
-        addAIMsg(agentReply, { ...extras, _quickReplies: QUICK_ACTIONS.slice(0, 3) });
+        const payload = agentData?.ui_payload || {};
+        const extras = {
+          _products: Array.isArray(payload.products) ? payload.products : [],
+          _stores: Array.isArray(payload.branches) ? payload.branches : [],
+          _vouchers: Array.isArray(payload.vouchers) ? payload.vouchers : [],
+          _quickReplies: QUICK_ACTIONS.slice(0, 3),
+        };
+        addAIMsg(agentReply, extras);
         return;
       }
 

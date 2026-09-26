@@ -18,7 +18,8 @@ from .cart_tools import (
     TOOL_GET_CART, execute_get_cart,
     TOOL_REQUEST_CHECKOUT, execute_request_checkout,
     TOOL_CONFIRM_CHECKOUT, execute_confirm_checkout,
-    TOOL_REMOVE_FROM_CART, execute_remove_from_cart
+    TOOL_REMOVE_FROM_CART, execute_remove_from_cart, execute_update_cart_item,
+    execute_remove_cart_item,
 )
 from .order_tools import (
     TOOL_TRACK_ORDER_STATUS, execute_track_order_status,
@@ -82,6 +83,8 @@ TOOL_EXECUTORS = {
     "add_to_cart": lambda args, session_id: execute_add_to_cart(session_id=session_id, **args),
     "get_cart": lambda args, session_id: execute_get_cart(session_id=session_id),
     "remove_from_cart": lambda args, session_id: execute_remove_from_cart(session_id=session_id, **args),
+    "update_cart_item": lambda args, session_id: execute_update_cart_item(session_id=session_id, **args),
+    "remove_cart_item": lambda args, session_id: execute_remove_cart_item(session_id=session_id, **args),
     "request_checkout": lambda args, session_id: execute_request_checkout(session_id=session_id, **args),
     "confirm_checkout": lambda args, session_id: execute_confirm_checkout(session_id=session_id, **args),
     "search_knowledge_base": lambda args, session_id: execute_search_knowledge_base(**args),

@@ -1182,7 +1182,7 @@ export default function CartPage({
                         {/* Nút xóa màu đỏ */}
                         <button
                           type="button"
-                          onClick={() => removeFromCart(item.ma_san_pham, item.size)}
+                          onClick={() => removeFromCart(item)}
                           className="text-gray-400 hover:text-red-600 transition-colors p-2 rounded-full hover:bg-red-50"
                           aria-label={`Xóa ${item.ten_san_pham}`}
                         >
@@ -1193,7 +1193,7 @@ export default function CartPage({
                         <div className="flex items-center justify-between bg-[#faf7f4] border border-gray-200 rounded-full py-1.5 px-3 w-[100px] sm:w-[110px] shadow-xs select-none">
                           <button
                             type="button"
-                            onClick={() => updateCartQuantity(item.ma_san_pham, item.size, -1)}
+                            onClick={() => updateCartQuantity(item, -1)}
                             className="w-7 h-7 rounded-full bg-white text-gray-600 hover:text-[#c41230] font-extrabold text-[15px] flex items-center justify-center shadow-xs transition-colors"
                           >
                             -
@@ -1203,7 +1203,7 @@ export default function CartPage({
                           </span>
                           <button
                             type="button"
-                            onClick={() => updateCartQuantity(item.ma_san_pham, item.size, 1)}
+                            onClick={() => updateCartQuantity(item, 1)}
                             className="w-7 h-7 rounded-full bg-white text-gray-600 hover:text-[#c41230] font-extrabold text-[15px] flex items-center justify-center shadow-xs transition-colors"
                           >
                             +
