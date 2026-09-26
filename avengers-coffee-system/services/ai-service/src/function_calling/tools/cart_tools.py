@@ -100,6 +100,12 @@ def _customer_session_id(session_id: str) -> str:
     return str(session_id).split(":conversation:", 1)[0]
 
 
+def is_authenticated_cart_session(session_id: str) -> bool:
+    """Whether this session has an Order Service cart that must be authoritative."""
+    from src.function_calling.helpers import _require_valid_session
+    return bool(_require_valid_session(_customer_session_id(session_id)))
+
+
 def _order_service_request(method: str, path: str, token: str, **kwargs):
     import os
     import requests
@@ -121,13 +127,29 @@ def sync_authoritative_cart(session_id: str) -> Dict[str, Any]:
     # customer-scoped. Resolve the owner from the namespace prefix.
     valid_uid = _require_valid_session(_customer_session_id(session_id))
     if not valid_uid:
-        return cart_manager.get_cart(session_id)
+        return {
+            **cart_manager.get_cart(session_id),
+            "authoritative": False,
+            "cart_sync_status": "guest_draft",
+        }
     token = _get_service_jwt(valid_uid)
     response = _order_service_request("GET", f"/cart/{valid_uid}", token)
     response.raise_for_status()
     payload = response.json()
-    items = payload if isinstance(payload, list) else payload.get("items", [])
-    return cart_manager.replace_items_from_order_cart(session_id, items)
+    # Array payloads are a temporary compatibility adapter for an older Order
+    # Service. Authenticated production traffic must receive the V5 envelope.
+    if isinstance(payload, list):
+        raise RuntimeError("Order Service returned legacy cart array without cart_version")
+    if not isinstance(payload, dict) or payload.get("cart_id") is None or payload.get("cart_version") is None:
+        raise RuntimeError("Order Service returned an invalid authoritative cart envelope")
+    cart = cart_manager.replace_items_from_order_cart(
+        session_id,
+        list(payload.get("items") or []),
+        cart_id=str(payload["cart_id"]),
+        cart_version=int(payload["cart_version"]),
+        user_id=str(payload.get("user_id") or valid_uid),
+    )
+    return {**cart, "authoritative": True, "cart_sync_status": "ok"}
 
 
 def _quote_authoritative_cart(session_id: str, voucher_code: Optional[str] = None) -> Optional[Dict[str, Any]]:
@@ -198,6 +220,7 @@ def execute_add_to_cart(
         raw = unicodedata.normalize("NFD", str(value or "").lower())
         return "".join(c for c in raw if unicodedata.category(c) != "Mn").replace("đ", "d")
 
+    valid_uid = _require_valid_session(_customer_session_id(session_id))
     # Backward compatibility: older prompts put all selections inside note.
     note_norm = norm(note)
     known_toppings = {
@@ -265,7 +288,13 @@ def execute_add_to_cart(
     # is mutated. This also covers products added after a checkout preview.
     try:
         current_cart = sync_authoritative_cart(session_id)
-    except Exception:
+    except Exception as exc:
+        if valid_uid:
+            return {
+                "status": "error",
+                "message": "Chưa thể xác minh giỏ hàng với Order Service. Món chưa được thêm; vui lòng thử lại.",
+                "error": str(exc),
+            }
         current_cart = cart_manager.get_cart(session_id)
     checkout_prefs = cart_manager.get_checkout_prefs(session_id)
     if current_cart.get("branch_id") and checkout_prefs.get("delivery_type"):
@@ -294,7 +323,6 @@ def execute_add_to_cart(
                 "unavailable_products": conflicts,
             }
 
-    valid_uid = _require_valid_session(_customer_session_id(session_id))
     server_row = None
     resolved_operation_id = _operation_id_for_current_turn(
         session_id, "add_cart_line", operation_id,
@@ -346,7 +374,12 @@ def execute_add_to_cart(
                     timeout=5
                 )
                 res.raise_for_status()
-            server_row = res.json()
+            mutation_result = res.json()
+            server_row = (
+                mutation_result.get("persisted_line")
+                if isinstance(mutation_result, dict)
+                else None
+            )
         except Exception as e:
             logging.getLogger(__name__).error(f"[CartSync] Failed to sync add_to_cart to main service: {e}")
             return {
@@ -401,6 +434,7 @@ def execute_add_to_cart(
         "message": f"Đã thêm {product_name} x{quantity} vào giỏ với giá {authoritative_price:,.0f}đ/món.",
         "unit_price": authoritative_price,
         "persisted_line": server_row,
+        "cart_version": (cart or {}).get("cart_version"),
         "operation_id": resolved_operation_id,
         "cart": cart,
     }
@@ -421,7 +455,12 @@ TOOL_REMOVE_FROM_CART = {
     },
 }
 
-def execute_remove_from_cart(session_id: str, product_id: str, size: Optional[str] = None) -> Dict[str, Any]:
+def execute_remove_from_cart(
+    session_id: str,
+    product_id: str,
+    size: Optional[str] = None,
+    operation_id: Optional[str] = None,
+) -> Dict[str, Any]:
     import os, requests, logging
     from src.function_calling.helpers import _get_service_jwt, _require_valid_session
     
@@ -431,6 +470,11 @@ def execute_remove_from_cart(session_id: str, product_id: str, size: Optional[st
             token = _get_service_jwt(valid_uid)
             base_url = os.getenv("ORDER_SERVICE_URL", "http://order-service:3005")
             headers = {"Authorization": f"Bearer {token}"}
+            resolved_operation_id = _operation_id_for_current_turn(
+                session_id, "remove_cart_product_legacy", operation_id,
+            )
+            if resolved_operation_id:
+                headers["X-Idempotency-Key"] = resolved_operation_id
             params = {"size": size} if size else None
             try:
                 response = requests.delete(
@@ -459,22 +503,42 @@ def execute_remove_from_cart(session_id: str, product_id: str, size: Optional[st
     }
 
 
-def execute_remove_cart_item(session_id: str, cart_item_id: str) -> Dict[str, Any]:
+def execute_remove_cart_item(
+    session_id: str,
+    cart_item_id: str,
+    operation_id: Optional[str] = None,
+) -> Dict[str, Any]:
     """Remove exactly one canonical cart line, never every matching variant."""
     from src.function_calling.helpers import _get_service_jwt, _require_valid_session
     valid_uid = _require_valid_session(_customer_session_id(session_id))
     if not valid_uid:
         return {"status": "error", "message": "Cần đăng nhập để cập nhật giỏ hàng."}
+    resolved_operation_id = _operation_id_for_current_turn(
+        session_id, "remove_cart_line", operation_id,
+    )
     try:
-        response = _order_service_request("DELETE", f"/cart/{int(cart_item_id)}", _get_service_jwt(valid_uid))
+        headers = {"X-Cart-User-Id": str(valid_uid)}
+        if resolved_operation_id:
+            headers["X-Idempotency-Key"] = resolved_operation_id
+        response = _order_service_request(
+            "DELETE", f"/cart/{int(cart_item_id)}", _get_service_jwt(valid_uid), headers=headers,
+        )
         response.raise_for_status()
         cart = sync_authoritative_cart(session_id)
-        return {"status": "ok", "message": "Đã xoá đúng món đã chọn khỏi giỏ.", "cart": cart}
+        return {
+            "status": "ok", "message": "Đã xoá đúng món đã chọn khỏi giỏ.", "cart": cart,
+            "cart_version": cart.get("cart_version"), "operation_id": resolved_operation_id,
+        }
     except Exception as exc:
         return {"status": "error", "message": f"Chưa thể xoá món: {exc}"}
 
 
-def execute_update_cart_item(session_id: str, cart_item_id: str, desired_state: Dict[str, Any]) -> Dict[str, Any]:
+def execute_update_cart_item(
+    session_id: str,
+    cart_item_id: str,
+    desired_state: Dict[str, Any],
+    operation_id: Optional[str] = None,
+) -> Dict[str, Any]:
     """Atomically update one cart row and return the authoritative quote."""
     from src.function_calling.helpers import _get_service_jwt, _require_valid_session
     valid_uid = _require_valid_session(_customer_session_id(session_id))
@@ -485,14 +549,55 @@ def execute_update_cart_item(session_id: str, cart_item_id: str, desired_state: 
         "luong_da", "do_ngot", "loai_sua", "custom_attributes",
     }
     payload = {key: value for key, value in (desired_state or {}).items() if key in allowed}
+    resolved_operation_id = _operation_id_for_current_turn(
+        session_id, "update_cart_line", operation_id,
+    )
     try:
-        response = _order_service_request("PATCH", f"/cart/{int(cart_item_id)}", _get_service_jwt(valid_uid), json=payload)
+        headers = {"X-Cart-User-Id": str(valid_uid)}
+        if resolved_operation_id:
+            headers["X-Idempotency-Key"] = resolved_operation_id
+        response = _order_service_request(
+            "PATCH", f"/cart/{int(cart_item_id)}", _get_service_jwt(valid_uid), json=payload, headers=headers,
+        )
         response.raise_for_status()
         cart = sync_authoritative_cart(session_id)
         quote = execute_get_cart_quote(session_id)
-        return {"status": "ok", "message": "Đã cập nhật món trong giỏ.", "cart": cart, "quote": quote.get("quote")}
+        return {
+            "status": "ok", "message": "Đã cập nhật món trong giỏ.", "cart": cart,
+            "quote": quote.get("quote"), "cart_version": cart.get("cart_version"),
+            "operation_id": resolved_operation_id,
+        }
     except Exception as exc:
         return {"status": "error", "message": f"Chưa thể cập nhật món: {exc}"}
+
+
+def execute_clear_cart(session_id: str, operation_id: Optional[str] = None) -> Dict[str, Any]:
+    """Clear the customer cart with a deterministic, retry-safe operation id."""
+    from src.function_calling.helpers import _get_service_jwt, _require_valid_session
+
+    valid_uid = _require_valid_session(_customer_session_id(session_id))
+    if not valid_uid:
+        return {"status": "error", "message": "Cần đăng nhập để xoá giỏ hàng."}
+    resolved_operation_id = _operation_id_for_current_turn(session_id, "clear_cart", operation_id)
+    try:
+        headers = {}
+        if resolved_operation_id:
+            headers["X-Idempotency-Key"] = resolved_operation_id
+        response = _order_service_request(
+            "DELETE", f"/cart/clear/{valid_uid}", _get_service_jwt(valid_uid), headers=headers,
+        )
+        response.raise_for_status()
+        cart = sync_authoritative_cart(session_id)
+        return {
+            "status": "ok", "message": "Đã xoá toàn bộ giỏ hàng.", "cart": cart,
+            "cart_version": cart.get("cart_version"), "operation_id": resolved_operation_id,
+        }
+    except Exception as exc:
+        return {
+            "status": "error",
+            "message": "Chưa thể xác nhận trạng thái giỏ với Order Service; mình không thay đổi bản sao cục bộ.",
+            "error": str(exc),
+        }
 
 TOOL_GET_CART = {
     "type": "function",
@@ -513,16 +618,14 @@ def execute_get_cart(session_id: str) -> Dict[str, Any]:
         cart = sync_authoritative_cart(session_id)
         return {"status": "ok", "cart": cart, "source": "order_service"}
     except Exception as exc:
-        cached = cart_manager.get_cart(session_id)
         if authenticated:
             return {
                 "status": "unavailable",
-                "message": "Chưa thể đọc giỏ hàng từ Order Service; dữ liệu hiển thị có thể cũ.",
-                "cart": cached,
-                "stale": True,
-                "source": "conversation_cache",
+                "message": "Chưa thể đọc giỏ hàng từ Order Service. Vui lòng thử lại; mình không dùng bản sao cũ để xác nhận giỏ.",
+                "source": "order_service",
                 "error": str(exc),
             }
+        cached = cart_manager.get_cart(session_id)
         return {"status": "ok", "cart": cached, "source": "guest_draft"}
 
 
