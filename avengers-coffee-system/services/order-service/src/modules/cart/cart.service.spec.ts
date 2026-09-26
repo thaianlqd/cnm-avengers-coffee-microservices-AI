@@ -1,4 +1,4 @@
-import { ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { CartService } from './cart.service';
 
 describe('CartService idempotent cart mutations', () => {
@@ -177,6 +177,38 @@ describe('CartService idempotent cart mutations', () => {
       cart_version: 1,
       already_processed: true,
     });
+  });
+
+  it('rejects negative ADD quantity without changing cart rows or cart_version', async () => {
+    const { service, rows, metadata } = createMetadataAwareService();
+    rows.push({
+      id: 8,
+      ma_nguoi_dung: 'customer-negative-add',
+      ma_san_pham: 120,
+      ten_san_pham: 'Cake',
+      so_luong: 2,
+      gia_ban: 29000,
+      size: 'Nhỏ',
+      toppings: [],
+      custom_attributes: {},
+    });
+    const before = rows.map((row) => ({ ...row }));
+
+    await expect(
+      service.themVaoGiỏ({
+        ma_nguoi_dung: 'customer-negative-add',
+        ma_san_pham: 120,
+        so_luong: -1,
+        size: 'Nhỏ',
+      }),
+    ).rejects.toMatchObject({
+      status: 400,
+      constructor: BadRequestException,
+    });
+
+    expect(rows).toEqual(before);
+    expect(rows.some((row) => row.so_luong < 0)).toBe(false);
+    expect(metadata.get('customer-negative-add')?.cart_version ?? 0).toBe(0);
   });
 
   it('serializes distinct ADD operation ids at the cart lock so Cake x1 becomes x3', async () => {
