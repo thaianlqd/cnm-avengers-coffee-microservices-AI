@@ -1689,7 +1689,7 @@ def _run_agent_impl(
     # above this implementation, so an ambiguous sentence cannot mutate an old
     # order or add an invented product.
     mutating_tools = {
-        "add_to_cart", "remove_from_cart", "update_cart_item", "remove_cart_item",
+        "add_to_cart", "update_cart_item", "remove_cart_item",
         "request_checkout", "confirm_checkout", "set_session_branch",
         "apply_voucher", "remove_voucher", "cancel_order", "update_order",
     }
