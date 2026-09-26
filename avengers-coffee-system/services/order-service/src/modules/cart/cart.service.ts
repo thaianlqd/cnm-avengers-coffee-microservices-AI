@@ -454,8 +454,10 @@ export class CartService {
   private async themVaoGiỏNoIdempotency(dto: any, manager?: any) {
     const cartRepo = manager ? manager.getRepository(CartItem) : this.cartRepo;
     const quantity = Number(dto?.so_luong ?? 1);
-    if (!Number.isInteger(quantity) || quantity === 0) {
-      throw new BadRequestException('So luong phai la so nguyen khac 0');
+    // ADD is never a decrement operation. Quantity changes (including a
+    // reduction) must use the canonical absolute PATCH cart-line path.
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      throw new BadRequestException('So luong phai la so nguyen lon hon 0');
     }
     const authoritative = await this.resolveAuthoritativeProduct(dto);
     const normalizedDto = {
