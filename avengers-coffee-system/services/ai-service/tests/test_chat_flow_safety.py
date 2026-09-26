@@ -654,6 +654,7 @@ def test_exact_cart_regression_browsing_matcha_never_replays_add_to_cart(monkeyp
     session = "customer-42:conversation:cart-regression"
     server_rows = []
     mutation_calls = []
+    server_version = [0]
     catalog = {
         "D1": {"product_id": "D1", "product_name": "Nước Một", "final_price": 31000, "category": "Đồ uống"},
         "D2": {"product_id": "D2", "product_name": "Nước Hai", "final_price": 39000, "category": "Đồ uống"},
@@ -662,7 +663,14 @@ def test_exact_cart_regression_browsing_matcha_never_replays_add_to_cart(monkeyp
     }
 
     def order_service_get(_session):
-        return cart_manager.replace_items_from_order_cart(session, list(server_rows))
+        mirrored = cart_manager.replace_items_from_order_cart(
+            session,
+            list(server_rows),
+            cart_id="user:customer-42",
+            cart_version=server_version[0],
+            user_id="customer-42",
+        )
+        return {**mirrored, "authoritative": True, "cart_sync_status": "ok"}
 
     def order_service_add(**kwargs):
         operation_id = kwargs.get("operation_id")
@@ -679,6 +687,7 @@ def test_exact_cart_regression_browsing_matcha_never_replays_add_to_cart(monkeyp
             "toppings": kwargs.get("toppings") or [],
         }
         server_rows.append(row)
+        server_version[0] += 1
         return {"status": "ok", "persisted_line": row, "cart": order_service_get(session)}
 
     def recommendations(**kwargs):
@@ -708,16 +717,22 @@ def test_exact_cart_regression_browsing_matcha_never_replays_add_to_cart(monkeyp
     assert [row["ma_san_pham"] for row in server_rows] == ["D2", "F1"]
     assert [row["so_luong"] for row in server_rows] == [1, 1]
     assert len(mutation_calls) == 2
-    assert mutation_calls[0].endswith(":add:0")
-    assert mutation_calls[1].endswith(":add:1")
+    assert mutation_calls[0].endswith(":add_cart_line:0")
+    assert mutation_calls[1].endswith(":add_cart_line:1")
     assert len([entry for entry in added["tool_calls_log"] if entry["tool"] == "add_to_cart"]) == 2
+    assert server_version[0] == 2
+    assert cart_manager.get_cart(session)["cart_version"] == 2
 
     fingerprint_before = tuple((row["id"], row["ma_san_pham"], row["so_luong"]) for row in server_rows)
-    browsed = run_order_flow(session, "xem các sản phẩm về Matcha", client_message_id="matcha-turn")
+    browsed = run_order_flow(session, "xem các sản phẩm về Matcha", client_message_id="matcha-turn-0")
+    for turn in range(1, 20):
+        run_order_flow(session, "xem các sản phẩm về Matcha", client_message_id=f"matcha-turn-{turn}")
     fingerprint_after = tuple((row["id"], row["ma_san_pham"], row["so_luong"]) for row in server_rows)
 
     assert fingerprint_after == fingerprint_before
     assert len(mutation_calls) == 2
+    assert server_version[0] == 2
+    assert cart_manager.get_cart(session)["cart_version"] == 2
     assert not any(entry["tool"] == "add_to_cart" for entry in browsed["tool_calls_log"])
     assert next(row for row in server_rows if row["ma_san_pham"] == "F1")["so_luong"] == 1
 

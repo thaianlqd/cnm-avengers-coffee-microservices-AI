@@ -852,48 +852,69 @@ def reset_agent_conversation(body: AgentConversationResetRequest, request: Reque
 
 @app.get("/ai/agent/cart/{session_id}")
 def get_agent_cart(session_id: str, request: Request, conversation_id: Optional[str] = None):
-    """Lấy giỏ hàng hiện tại của session (dùng để debug hoặc hiển thị ở Frontend)."""
+    """Return the current authoritative cart; guest sessions use a local draft."""
     from src.common.session_auth import authorize_session
     authorize_session(session_id, request.headers.get("authorization"))
     from src.common import cart_manager
     scoped = f"{session_id}:conversation:{conversation_id}" if conversation_id else session_id
-    return cart_manager.get_cart(scoped)
+    from src.function_calling.tools.cart_tools import is_authenticated_cart_session, sync_authoritative_cart
+
+    if not is_authenticated_cart_session(scoped):
+        return {
+            **cart_manager.get_cart(scoped),
+            "authoritative": False,
+            "cart_sync_status": "guest_draft",
+        }
+    try:
+        return sync_authoritative_cart(scoped)
+    except Exception as exc:
+        # Do not present a stale conversational snapshot as an Order Service
+        # fact. The caller can retry without being misled about its cart.
+        raise HTTPException(
+            status_code=503,
+            detail="Chưa thể lấy giỏ hàng từ Order Service. Vui lòng thử lại.",
+        ) from exc
 
 
 @app.delete("/ai/agent/cart/{session_id}")
 def clear_agent_cart(session_id: str, request: Request):
-    """Xoá giỏ hàng của session (sau khi tạo đơn thành công hoặc khi Làm mới chat)."""
+    """Clear the authoritative cart before changing the conversational mirror."""
     from src.common.session_auth import authorize_session
     authorize_session(session_id, request.headers.get("authorization"))
     from src.common import cart_manager
-    cart_manager.clear_cart(session_id)
-    
-    # Sync with main order-service cart to fully reset
+    from src.function_calling.tools.cart_tools import (
+        _customer_session_id,
+        _order_service_request,
+        is_authenticated_cart_session,
+        sync_authoritative_cart,
+    )
     from src.function_calling.helpers import _get_service_jwt, _require_valid_session
-    import requests, logging
-    
-    valid_uid = _require_valid_session(session_id)
-    if valid_uid:
-        try:
-            token = _get_service_jwt(valid_uid)
-            order_service_url = os.getenv("ORDER_SERVICE_URL", "http://order-service:3005")
-            try:
-                requests.delete(
-                    f"{order_service_url}/cart/clear/{valid_uid}",
-                    headers={"Authorization": f"Bearer {token}"},
-                    timeout=5
-                )
-            except requests.exceptions.ConnectionError:
-                fallback_url = "http://host.docker.internal:3005"
-                requests.delete(
-                    f"{fallback_url}/cart/clear/{valid_uid}",
-                    headers={"Authorization": f"Bearer {token}"},
-                    timeout=5
-                )
-        except Exception as e:
-            logging.getLogger(__name__).error(f"[CartSync] Failed to clear main cart on reset: {e}")
 
-    return {"status": "ok", "message": f"Đã xoá giỏ hàng cho session {session_id}"}
+    if not is_authenticated_cart_session(session_id):
+        cart_manager.clear_cart(session_id)
+        return {"status": "ok", "message": f"Đã xoá giỏ hàng cho session {session_id}", "authoritative": False}
+
+    valid_uid = _require_valid_session(_customer_session_id(session_id))
+    try:
+        headers = {}
+        operation_id = request.headers.get("x-idempotency-key")
+        if operation_id:
+            headers["X-Idempotency-Key"] = operation_id
+        response = _order_service_request(
+            "DELETE", f"/cart/clear/{valid_uid}", _get_service_jwt(valid_uid), headers=headers,
+        )
+        response.raise_for_status()
+        cart = sync_authoritative_cart(session_id)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Order Service chưa xác nhận xoá giỏ; giỏ cục bộ không thay đổi.",
+        ) from exc
+
+    return {
+        "status": "ok", "message": f"Đã xoá giỏ hàng cho session {session_id}",
+        "cart": cart, "authoritative": True, "operation_id": operation_id,
+    }
 
 
 class CheckoutRequest(BaseModel):
