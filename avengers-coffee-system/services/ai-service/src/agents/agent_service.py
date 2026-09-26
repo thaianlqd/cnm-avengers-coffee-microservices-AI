@@ -14,6 +14,7 @@ KHÔNG chứa business logic DB hoặc cart logic — những thứ đó nằm �
 agent_tools.py và cart_manager.py.
 """
 import logging
+import hashlib
 import re
 import unicodedata
 from typing import Any, Dict, List, Optional
@@ -452,8 +453,22 @@ def _resolve_pending_voucher_choice(session_id: str, message: str) -> Optional[D
     Voucher ordinals must never fall through to the product ordinal parser.
     """
     prefs = cart_manager.get_checkout_prefs(session_id)
-    candidates = list(prefs.get("voucher_candidates") or [])
+    interaction = cart_manager.get_pending_interaction(session_id) or {}
+    context = cart_manager.get_active_list_context(session_id) or {}
+    if interaction.get("domain") == "VOUCHER":
+        if context.get("domain") != "VOUCHER" or str(interaction.get("context_id") or "") != str(context.get("list_id") or ""):
+            cart_manager.clear_pending_interaction(session_id, interaction.get("interaction_id"))
+            return {"reply": "Danh sách mã giảm giá trước đã hết hiệu lực; mình sẽ kiểm tra lại mã áp dụng được.", "checkout_payload": None, "tool_calls_log": [], "error": None}
+        candidates = list(context.get("items") or [])
+    else:
+        # Legacy records can be displayed, but not selected by a bare ordinal.
+        candidates = list(prefs.get("voucher_candidates") or [])
     normalized = _normalize_chat_text(message)
+    if interaction.get("domain") != "VOUCHER" and re.search(r"\b(?:ma|voucher)\s*(?:so|thu|#)?\s*\d+\b", normalized):
+        return {
+            "reply": "Mình chưa có danh sách mã giảm giá đang hiệu lực để đối chiếu số này. Bạn yêu cầu xem lại mã hoặc nhập chính xác mã voucher nhé.",
+            "checkout_payload": None, "tool_calls_log": [], "error": None,
+        }
     asks_best = bool(re.search(r"\b(tot nhat|ma tot|voucher tot|ap dung.*tot)\b", normalized))
     explicit_voucher_choice = asks_best or bool(re.search(
         r"\b(?:ap dung|chon|dung)\s+(?:ma|voucher)|\b(?:ma|voucher)\s*(?:so|thu)\s*\d+\b",
@@ -510,11 +525,7 @@ def _resolve_pending_voucher_choice(session_id: str, message: str) -> Optional[D
         voucher_offer_pending=None,
         voucher_candidates=candidates,
     )
-    try:
-        cart_manager.clear_pending_action(session_id)
-    except Exception as e:
-        import logging
-        logging.getLogger(__name__).warning("clear_pending_action select_voucher (applied) failed: %s", e)
+    cart_manager.clear_pending_interaction(session_id, interaction.get("interaction_id"))
     result = {
         "reply": _checkout_choices_prompt(
             session_id,
@@ -642,7 +653,17 @@ def _resolve_pending_branch_choice(
     history: Optional[List[Dict[str, str]]] = None,
 ) -> Optional[Dict[str, Any]]:
     prefs = cart_manager.get_checkout_prefs(session_id)
-    candidates = prefs.get("branch_candidates") or []
+    interaction = cart_manager.get_pending_interaction(session_id) or {}
+    context = cart_manager.get_active_list_context(session_id) or {}
+    if interaction.get("domain") != "BRANCH" or context.get("domain") != "BRANCH":
+        return None
+    if str(interaction.get("context_id") or "") != str(context.get("list_id") or ""):
+        cart_manager.clear_pending_interaction(session_id, interaction.get("interaction_id"))
+        return {
+            "reply": "Danh sách chi nhánh trước đã hết hiệu lực. Bạn yêu cầu tìm lại chi nhánh gần bạn nhé.",
+            "checkout_payload": None, "tool_calls_log": [], "error": None,
+        }
+    candidates = list(context.get("items") or [])
     if not candidates:
         return None
     normalized = _normalize_chat_text(message)
@@ -651,14 +672,9 @@ def _resolve_pending_branch_choice(
     if re.search(r"\b(?:nuoc|do uong|banh|do an|mon|ly|phan|chai|size|da|duong|topping|thuc don|menu|tra|ca phe|matcha)\b", normalized):
         return None
 
-    last_assistant_msg = _last_assistant_content(history or [])
-    last_assistant_norm = _normalize_chat_text(last_assistant_msg)
-
-    # Check whether the assistant was prompting for branch selection
-    is_branch_prompt = any(
-        kw in last_assistant_norm
-        for kw in ["cua hang gan ban", "chon cua hang", "chon chi nhanh", "so may de minh", "cac cua hang", "chi nhanh"]
-    )
+    # The typed interaction, not previous assistant prose, authorizes this
+    # ordinal namespace.
+    is_branch_prompt = True
 
     chosen = None
     number_match = re.search(r"\b(?:cua hang|chi nhanh|quan|so|thu)\s*(\d+)\b", normalized)
@@ -745,7 +761,10 @@ def _confirm_saved_location(
     history: Optional[List[Dict[str, str]]] = None,
 ) -> Optional[Dict[str, Any]]:
     prefs = cart_manager.get_checkout_prefs(session_id)
-    suggested = str(prefs.get("suggested_address") or "").strip()
+    interaction = cart_manager.get_pending_interaction(session_id) or {}
+    if interaction.get("kind") != "YES_NO" or interaction.get("domain") != "ADDRESS" or interaction.get("action") != "CONFIRM_ADDRESS":
+        return None
+    suggested = str((interaction.get("data") or {}).get("address_snapshot") or prefs.get("suggested_address") or "").strip()
     if not suggested:
         return None
     normalized = _normalize_chat_text(message)
@@ -755,11 +774,6 @@ def _confirm_saved_location(
         r"\b(?:nuoc|do uong|banh|do an|mon|ly|phan|chai|size|it da|da rieng|luong da|duong|topping)\b",
         normalized,
     ):
-        return None
-
-    last_assistant_msg = _last_assistant_content(history or [])
-    last_assistant_norm = _normalize_chat_text(last_assistant_msg)
-    if not any(kw in last_assistant_norm for kw in ["dia chi da luu", "dang o dia chi", "dia chi nay hay", "dia chi cua ban"]):
         return None
 
     confirms = bool(re.search(
@@ -773,6 +787,7 @@ def _confirm_saved_location(
     if prefs.get("delivery_type") == "GIAO_TAN_NOI":
         cart_manager.set_checkout_prefs(session_id, delivery_address=suggested)
     cart_manager.set_checkout_context(session_id, **context)
+    cart_manager.clear_pending_interaction(session_id, interaction.get("interaction_id"))
 
     from src.function_calling.tools.branch_tools import (
         execute_find_nearest_branch,
@@ -802,11 +817,19 @@ def _confirm_saved_location(
             lines.append("Bạn chọn cửa hàng còn đủ món theo số (" + ", ".join(available_numbers) + ") để mình chốt nơi phục vụ nhé.")
         else:
             lines.append("Chưa có cửa hàng nào trong 5 nơi gần nhất đủ giỏ này. Bạn có thể đổi món hoặc cung cấp khu vực khác để mình tìm tiếp.")
-        try:
-            cart_manager.set_pending_action(session_id, "select_branch", {"count": len(branches)})
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).warning("set_pending_action select_branch failed: %s", e)
+        branch_items = [{
+            **dict(item),
+            "branch_id": str(item.get("branch_id") or item.get("ma_chi_nhanh") or ""),
+            "branch_name": str(item.get("branch_name") or item.get("ten_chi_nhanh") or ""),
+            "entity_id": str(item.get("branch_id") or item.get("ma_chi_nhanh") or ""),
+            "label": str(item.get("branch_name") or item.get("ten_chi_nhanh") or ""),
+        } for item in branches]
+        context = cart_manager.set_active_list_context(session_id, "BRANCH", items=branch_items)
+        cart_manager.set_checkout_context(session_id, branch_candidates=branch_items)
+        cart_manager.set_pending_interaction(
+            session_id, kind="SELECT_ONE", domain="BRANCH", action="SELECT_BRANCH",
+            context_id=context.get("list_id"), data={"count": len(branch_items)},
+        )
         return {"reply": "\n".join(lines), "checkout_payload": None, "tool_calls_log": log, "error": None}
     if nearest.get("status") == "ok" and branches and prefs.get("delivery_type") == "GIAO_TAN_NOI":
         chosen = branches[0]
@@ -960,10 +983,19 @@ def _parse_option_groups(option_result: Dict[str, Any]) -> Dict[str, List[str]]:
 
 
 def _complete_pending_products_from_options(session_id: str, message: str) -> Optional[Dict[str, Any]]:
-    """Add all selected pending products once their options are answered."""
+    """Complete exactly one typed product draft.
+
+    A configuration reply is scoped to the durable ``pending_id`` in the
+    PRODUCT/FILL_OPTIONS interaction.  In particular, words such as ``size
+    lớn`` in a read-only question about another product can never be sprayed
+    across every pending draft.
+    """
     prefs = cart_manager.get_checkout_prefs(session_id)
     pending = list(prefs.get("pending_products") or [])
     if not pending:
+        return None
+    interaction = cart_manager.get_pending_interaction(session_id)
+    if not interaction or interaction.get("domain") != "PRODUCT" or interaction.get("action") != "FILL_OPTIONS":
         return None
     normalized = _normalize_chat_text(message)
     option_terms = r"\b(size|nho|vua|lon|da|duong|ngot|sua|topping|hat|foam|tran chau|khong chon|mac dinh|theo cong thuc)\b"
@@ -974,44 +1006,31 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
     from src.function_calling.tools.cart_tools import execute_add_to_cart
 
     logs: List[Dict[str, Any]] = []
-    not_ready: List[str] = []
-    added: List[Dict[str, Any]] = []
-    remaining: List[Dict[str, Any]] = []
-    prepared: List[tuple] = []
     use_defaults = bool(re.search(r"\b(theo mac dinh|mac dinh|theo cong thuc|khong can chinh)\b", normalized))
-    for item in pending:
-        product_name = str(item.get("product_name") or "")
-        options = item.get("options") or {}
-        selected: Dict[str, Any] = dict(item.get("selected_options") or {})
-        option_groups = options.get("groups") or {}
-        option_schema = list(options.get("schema") or [])
-        required_group_names = {
-            str(group.get("name") or "")
-            for group in option_schema
-            if group.get("required")
-        }
-        missing_required = []
-        for group_name, values in option_groups.items():
-            values = [str(value) for value in values]
-            group_norm = _normalize_chat_text(group_name)
-            is_size = "size" in group_norm or "kich thuoc" in group_norm
-            is_required = (
-                group_name in required_group_names
-                if option_schema
-                else len(values) > 1 and not (use_defaults and not is_size)
-            )
-            matches = [value for value in values if _normalize_chat_text(value) in normalized]
-            if is_size and len(values) == 1:
-                matches = values
-            if is_required and len(values) > 1 and not matches:
-                label = "kích thước" if is_size else group_name
-                missing_required.append(f"{label} ({', '.join(values)})")
-            elif "topping" in group_norm and re.search(
-                r"\b(khong topping|bo topping|khong them topping)\b", normalized
-            ):
-                selected["toppings"] = []
-            if not matches:
-                continue
+    target_id = str((interaction.get("data") or {}).get("pending_id") or "")
+    item = next((row for row in pending if str(row.get("pending_id") or "") == target_id), pending[0])
+    product_name = str(item.get("product_name") or "")
+
+    # A named, different product plus a question is a read-only detour.  Keep
+    # the resume task intact and let the normal read route answer it.
+    if product_name and _normalize_chat_text(product_name) not in normalized and re.search(r"\b(co|gia|bao nhieu|review|danh gia|khong)\b", normalized):
+        return None
+
+    options = item.get("options") or {}
+    selected: Dict[str, Any] = dict(item.get("selected_options") or {})
+    option_groups = options.get("groups") or {}
+    required = {str(group.get("name") or "") for group in options.get("schema") or [] if group.get("required")}
+    missing: List[str] = []
+    for group_name, raw_values in option_groups.items():
+        values = [str(value) for value in raw_values]
+        group_norm = _normalize_chat_text(group_name)
+        is_size = "size" in group_norm or "kich thuoc" in group_norm
+        matches = [value for value in values if _normalize_chat_text(value) in normalized]
+        if is_size and len(values) == 1:
+            matches = values
+        if "topping" in group_norm and re.search(r"\b(khong topping|bo topping|khong them topping)\b", normalized):
+            selected["toppings"] = []
+        elif matches:
             if is_size:
                 selected["size"] = matches[0]
             elif "topping" in group_norm:
@@ -1022,109 +1041,44 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
                 selected["do_ngot"] = matches[0]
             elif "sua" in group_norm:
                 selected["loai_sua"] = matches[0]
-
-        if missing_required:
-            not_ready.append(f"{product_name}: chọn {', '.join(missing_required)}")
-            remaining.append({
-                **item,
-                "selected_options": selected,
-                "missing_options": missing_required,
-            })
-            continue
-
-        prepared.append((item, product_name, selected))
-
-    # Keep all selected products pending until every required option has been
-    # answered. This prevents adding only the easy line and silently dropping
-    # another selected product.
-    if not_ready:
-        cart_manager.set_pending_products(session_id, remaining + [
-            {**item, "selected_options": selected}
-            for item, _product_name, selected in prepared
-        ])
-        return {
-            "reply": "Mình vẫn đang giữ đủ các món bạn chọn. Cần chọn thêm:\n- " + "\n- ".join(not_ready),
-            "checkout_payload": None,
-            "tool_calls_log": [],
-            "error": None,
-        }
-
-    for item, product_name, selected in prepared:
-        price_result = execute_check_price_and_stock(
-            product_name_query=product_name,
-            branch_id="Chưa chọn",
-            size=selected.get("size"),
-            quantity=max(1, int(item.get("quantity") or 1)),
-            session_id=session_id,
-            toppings=selected.get("toppings") or [],
-            luong_da=selected.get("luong_da"),
-            do_ngot=selected.get("do_ngot"),
-            loai_sua=selected.get("loai_sua"),
+        is_required = group_name in required if required else len(values) > 1 and not (use_defaults and not is_size)
+        selected_value = (
+            selected.get("size") if is_size else
+            selected.get("toppings") if "topping" in group_norm else
+            selected.get("luong_da") if "da" in group_norm else
+            selected.get("do_ngot") if ("ngot" in group_norm or "duong" in group_norm) else
+            selected.get("loai_sua") if "sua" in group_norm else None
         )
-        logs.append({"tool": "check_price_and_stock", "args": {"product_name_query": product_name}, "result": price_result})
-        products = price_result.get("products") or []
-        exact = next(
-            (product for product in products if _normalize_chat_text(product.get("product_name")) == _normalize_chat_text(product_name)),
-            products[0] if len(products) == 1 else None,
-        )
-        if price_result.get("status") != "ok" or not exact:
-            not_ready.append(f"{product_name}: chưa lấy được giá chính xác")
-            remaining.append({**item, "selected_options": selected})
-            continue
-        add_result = execute_add_to_cart(
-            session_id=session_id,
-            product_id=str(exact["product_id"]),
-            product_name=str(exact["product_name"]),
-            unit_price=float(exact["final_price"]),
-            quantity=max(1, int(item.get("quantity") or 1)),
-            size=selected.get("size"),
-            toppings=selected.get("toppings") or [],
-            luong_da=selected.get("luong_da"),
-            do_ngot=selected.get("do_ngot"),
-            loai_sua=selected.get("loai_sua"),
-            operation_id=item.get("operation_id"),
-        )
-        logs.append({"tool": "add_to_cart", "args": {"product_name": product_name, "quantity": max(1, int(item.get("quantity") or 1)), **selected}, "result": add_result})
-        if add_result.get("status") == "ok":
-            added.append(add_result)
-        else:
-            not_ready.append(f"{product_name}: {add_result.get('message', 'chưa thêm được')}")
-            remaining.append({**item, "selected_options": selected})
+        if is_required and len(values) > 1 and not matches and not selected_value:
+            missing.append(f"{'kích thước' if is_size else group_name} ({', '.join(values)})")
 
-    cart_manager.set_pending_products(session_id, remaining)
-    if not remaining:
-        try:
-            cart_manager.clear_pending_action(session_id)
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).warning("clear_pending_action fill_options failed: %s", e)
-    if not_ready:
-        return {
-            "reply": "Mình vẫn đang giữ các món bạn chọn. Cần hoàn tất thêm:\n- " + "\n- ".join(not_ready),
-            "checkout_payload": None,
-            "tool_calls_log": logs,
-            "error": None,
-        }
-    if not added:
-        return None
+    updated = {**item, "selected_options": selected, "missing_options": missing}
+    rest = [row for row in pending if row is not item]
+    if missing:
+        cart_manager.set_pending_products(session_id, [updated, *rest])
+        cart_manager.set_pending_interaction(session_id, kind="FILL_FIELDS", domain="PRODUCT", action="FILL_OPTIONS", context_id=str(updated.get("pending_id")), data={"pending_id": updated.get("pending_id")})
+        return {"reply": f"{product_name} còn cần chọn: {', '.join(missing)}.", "checkout_payload": None, "tool_calls_log": [], "error": None}
 
-    latest_cart = added[-1].get("cart") or cart_manager.get_cart(session_id)
-    total = f"{float(latest_cart.get('total_price') or 0):,.0f}".replace(",", ".")
-    reply_lines = [f"Mình đã thêm đủ {len(added)} món bạn chọn vào giỏ.", "Giỏ hàng hiện tại:"]
-    for cart_item in latest_cart.get("items") or []:
-        quantity = int(cart_item.get("quantity") or 1)
-        line_total = float(cart_item.get("unit_price") or 0) * quantity
-        line_total_text = f"{line_total:,.0f}".replace(",", ".")
-        reply_lines.append(f"- {cart_item.get('product_name')} x{quantity}: {line_total_text}đ")
-    reply_lines.append(f"Tổng giỏ hiện tại: {total}đ.")
-    reply_lines.append("Bạn có muốn thêm món gì nữa không?")
-    try:
-        cart_manager.set_pending_action(session_id, "ask_more_items", {})
-    except Exception as e:
-        import logging
-        logging.getLogger(__name__).warning("set_pending_action ask_more_items failed: %s", e)
-    reply = "\n".join(reply_lines)
-    return {"reply": reply, "checkout_payload": None, "tool_calls_log": logs, "error": None}
+    price_result = execute_check_price_and_stock(product_name_query=product_name, branch_id="Chưa chọn", size=selected.get("size"), quantity=max(1, int(item.get("quantity") or 1)), session_id=session_id, toppings=selected.get("toppings") or [], luong_da=selected.get("luong_da"), do_ngot=selected.get("do_ngot"), loai_sua=selected.get("loai_sua"))
+    logs.append({"tool": "check_price_and_stock", "args": {"product_name_query": product_name}, "result": price_result})
+    products = price_result.get("products") or []
+    exact = next((product for product in products if _normalize_chat_text(product.get("product_name")) == _normalize_chat_text(product_name)), products[0] if len(products) == 1 else None)
+    if price_result.get("status") != "ok" or not exact:
+        cart_manager.set_pending_products(session_id, [updated, *rest])
+        return {"reply": f"{product_name}: chưa lấy được giá chính xác; mình vẫn giữ lựa chọn này.", "checkout_payload": None, "tool_calls_log": logs, "error": None}
+    added = execute_add_to_cart(session_id=session_id, product_id=str(exact["product_id"]), product_name=str(exact["product_name"]), unit_price=float(exact["final_price"]), quantity=max(1, int(item.get("quantity") or 1)), size=selected.get("size"), toppings=selected.get("toppings") or [], luong_da=selected.get("luong_da"), do_ngot=selected.get("do_ngot"), loai_sua=selected.get("loai_sua"), operation_id=item.get("operation_id"))
+    logs.append({"tool": "add_to_cart", "args": {"product_name": product_name, **selected}, "result": added})
+    if added.get("status") != "ok":
+        cart_manager.set_pending_products(session_id, [updated, *rest])
+        return {"reply": added.get("message", f"Chưa thể thêm {product_name}; mình vẫn giữ lựa chọn này."), "checkout_payload": None, "tool_calls_log": logs, "error": None}
+    cart_manager.mark_pending_product_added(session_id, pending_id=str(item.get("pending_id") or ""), product_id=str(item.get("product_id") or exact.get("product_id") or ""))
+    remaining = list(cart_manager.get_checkout_prefs(session_id).get("pending_products") or [])
+    if remaining:
+        next_item = remaining[0]
+        cart_manager.set_pending_interaction(session_id, kind="FILL_FIELDS", domain="PRODUCT", action="FILL_OPTIONS", context_id=str(next_item.get("pending_id")), data={"pending_id": next_item.get("pending_id")})
+        return {"reply": f"Đã thêm {product_name} x{max(1, int(item.get('quantity') or 1))}. Tiếp theo, bạn chọn tùy chọn cho {next_item.get('product_name')} nhé.", "checkout_payload": None, "tool_calls_log": logs, "error": None}
+    cart_manager.set_pending_interaction(session_id, kind="YES_NO", domain="CART", action="ASK_MORE_ITEMS", data={})
+    return {"reply": f"Đã thêm {product_name} x{max(1, int(item.get('quantity') or 1))} vào giỏ. Bạn có muốn thêm món gì nữa không?", "checkout_payload": None, "tool_calls_log": logs, "error": None}
 
 
 
@@ -1262,8 +1216,16 @@ def _run_agent_impl(
             ))
             option_questions = []
             enriched_review_choices = []
+            # History-derived products are explanatory only.  A purchase has
+            # to be resolved through the active typed PRODUCT list by the
+            # graph, never by parsing assistant prose.
             if requested_to_buy:
-                cart_manager.set_pending_products(session_id, review_choices, merge=True)
+                return {
+                    "reply": "Mình cần danh sách món hiện tại hoặc tên món cụ thể trước khi thêm vào giỏ; bạn chọn lại từ danh sách mới nhất nhé.",
+                    "checkout_payload": None,
+                    "tool_calls_log": [],
+                    "error": None,
+                }
             for choice in review_choices:
                 product_name = str(choice.get("product_name") or "").strip()
                 review = execute_get_product_insights(product_name)
@@ -1274,30 +1236,6 @@ def _run_agent_impl(
                 })
                 label = "Nước" if choice.get("category") == "drink" else "Bánh/đồ ăn"
                 reply_lines.append(f"- {label} — {product_name}: {review.get('message', 'Chưa có dữ liệu đánh giá.')}")
-                if requested_to_buy:
-                    options = execute_get_product_options(product_name)
-                    logs.append({"tool": "get_product_options", "args": {"product_name": product_name}, "result": options})
-                    option_groups = _parse_option_groups(options)
-                    enriched_review_choices.append({**choice, "options": {"groups": option_groups}})
-                    if option_groups:
-                        rendered = "; ".join(
-                            f"{name}: {', '.join(str(value) for value in values)}"
-                            for name, values in option_groups.items()
-                        )
-                        option_questions.append(f"- {product_name}: {rendered}")
-                    else:
-                        option_questions.append(f"- {product_name}: không có tùy chọn; dùng cấu hình mặc định của món.")
-            if requested_to_buy:
-                cart_manager.set_pending_products(session_id, enriched_review_choices)
-                try:
-                    cart_manager.set_pending_action(session_id, "fill_options", {"count": len(enriched_review_choices)})
-                except Exception as e:
-                    import logging
-                    logging.getLogger(__name__).warning("set_pending_action fill_options failed: %s", e)
-                reply_lines.append("Mình cũng đã giữ lại đủ các món bạn chọn để đặt. Đây là toàn bộ tùy chọn:")
-                for choice, option_line in zip(enriched_review_choices, option_questions):
-                    reply_lines.append(f"- {choice['product_name']}: {option_line}")
-                reply_lines.append("Bạn chọn các tùy chọn mong muốn; món nào không cần chỉnh thì ghi rõ ‘theo mặc định’ nhé.")
             return {
                 "reply": ("Đánh giá các món bạn hỏi:\n" if not requested_to_buy else "") + "\n".join(reply_lines),
                 "checkout_payload": None,
@@ -1371,11 +1309,12 @@ def _run_agent_impl(
                     "discount_amount": item.get("discount_amount") or item.get("so_tien_giam_du_kien") or item.get("so_tien_giam"),
                 } for item in vouchers],
             )
-            try:
-                cart_manager.set_pending_action(session_id, "select_voucher", {"count": len(vouchers)})
-            except Exception as e:
-                import logging
-                logging.getLogger(__name__).warning("set_pending_action select_voucher failed: %s", e)
+            cart_manager.set_selection_context(
+                session_id,
+                "VOUCHER",
+                "SELECT_VOUCHER",
+                list(cart_manager.get_checkout_prefs(session_id).get("voucher_candidates") or []),
+            )
             lines = ["Mình giữ nguyên giỏ hàng hiện tại, không thêm món nào nữa.", "Các mã đang áp dụng được:"]
             for item in vouchers:
                 code = item.get("ma_voucher") or ""
@@ -1557,6 +1496,14 @@ def _run_agent_impl(
             payment_line = "\n\n" + _payment_methods_text() + "\nBạn chọn giúp mình một phương thức nhé."
         if default_address:
             cart_manager.set_checkout_context(session_id, suggested_address=default_address)
+            cart_manager.set_pending_interaction(
+                session_id,
+                kind="YES_NO",
+                domain="ADDRESS",
+                action="CONFIRM_ADDRESS",
+                context_id="address:" + hashlib.sha256(default_address.encode("utf-8")).hexdigest(),
+                data={"address_snapshot": default_address},
+            )
             if choices["delivery_type"] == "GIAO_TAN_NOI":
                 question = f"Bạn có muốn giao đến địa chỉ đã lưu này không?\n{default_address}"
             else:
@@ -1629,93 +1576,17 @@ def _run_agent_impl(
         if handled:
             return handled
 
-    # Resolve ordinal references deterministically from the assistant's last
-    # numbered recommendation. This prevents the model from handling only the
-    # first item in requests such as "nước số 1 và bánh số 1".
+    # This legacy parser is intentionally retained for read-only explanation
+    # tests/backwards-compatible display only. It is never a business-write
+    # authority: canonical ordinal staging happens in order_flow_graph from
+    # active_list_context.
     resolved_choices = _resolve_numbered_product_choices(user_message, history or [])
     model_user_message = user_message
     if resolved_choices:
-        from src.function_calling.tools.product_tools import (
-            execute_get_product_options,
-            execute_get_recommendations,
-        )
-
-        user_norm = _normalize_chat_text(user_message)
-        option_logs = []
-        reply_lines = [f"Mình đã ghi nhận đủ {len(resolved_choices)} món bạn chọn:"]
-        needs_choice = False
-        enriched_choices = []
-        for item in resolved_choices:
-            option_result = execute_get_product_options(item["product_name"])
-            option_logs.append({
-                "tool": "get_product_options",
-                "args": {"product_name": item["product_name"]},
-                "result": option_result,
-            })
-            label = "Nước" if item["category"] == "drink" else "Bánh/đồ ăn"
-            option_groups = _parse_option_groups(option_result)
-            enriched = {**item, "options": {"groups": option_groups}}
-            enriched_choices.append(enriched)
-            if option_result.get("status") == "ok" and option_groups:
-                reply_lines.append(f"- {label}: {item['product_name']}")
-                for name, values in option_groups.items():
-                    reply_lines.append(f"  - {name}: {', '.join(values)}")
-                needs_choice = True
-            elif option_result.get("status") == "ok":
-                reply_lines.append(f"- {label}: {item['product_name']} — không có tùy chọn thêm")
-            else:
-                reply_lines.append(f"- {label}: {item['product_name']} — {option_result.get('message') or 'chưa lấy được tùy chọn'}")
-
-        cart_manager.set_pending_products(session_id, enriched_choices, merge=True)
-        try:
-            cart_manager.set_pending_action(session_id, "fill_options", {"count": len(enriched_choices)})
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).warning("set_pending_action fill_options failed: %s", e)
-
-        # Check if customer also requested cake/food recommendations.
-        has_cake_request = bool(re.search(
-            r"\b(?:them|cho|goi y|chon|muon|kem)\s*(?:\d+\s*)?(?:mon\s+)?(?:banh|do an)\b",
-            user_norm,
-        ))
-        has_resolved_food = any(item["category"] == "food" for item in resolved_choices)
-        if has_cake_request and not has_resolved_food:
-            rec_result = execute_get_recommendations(category="food", top_k=3)
-            option_logs.append({
-                "tool": "get_recommendations",
-                "args": {"category": "food", "top_k": 3},
-                "result": rec_result,
-            })
-            if rec_result.get("status") == "ok" and rec_result.get("recommendations"):
-                cakes = [c.strip() for c in rec_result["recommendations"].split(",") if c.strip()]
-                reply_lines.append("\nVề món bánh bạn muốn thêm, Avengers Coffee có các món ngon sau:")
-                for idx, cake_name in enumerate(cakes, 1):
-                    reply_lines.append(f"{idx}. {cake_name}")
-                reply_lines.append("\nMình đã giữ món nước bạn chọn. Bạn muốn chọn bánh nào? Sau đó mình sẽ thêm đủ các món cùng lúc.")
-                return {
-                    "reply": "\n".join(reply_lines),
-                    "checkout_payload": None,
-                    "tool_calls_log": option_logs,
-                    "error": None,
-                }
-
-        if needs_choice:
-            reply_lines.append("Mình đã giữ đủ các món bạn chọn. Hãy chọn các tùy chọn cần thiết cho từng món ở trên, hoặc nói ‘theo mặc định’ để dùng cấu hình món.")
-        else:
-            reply_lines.append("Các món này không có tùy chọn cần chọn. Mình sẽ dùng cấu hình mặc định của menu.")
-            completed = _complete_pending_products_from_options(session_id, "theo mặc định")
-            if completed:
-                completed["tool_calls_log"] = option_logs + completed.get("tool_calls_log", [])
-                return completed
-        if re.search(r"\b(size|nho|vua|lon|da|duong|ngot|sua|topping|hat sen|foam|mac dinh|theo cong thuc)\b", user_norm):
-            completed = _complete_pending_products_from_options(session_id, user_message)
-            if completed:
-                completed["tool_calls_log"] = option_logs + completed.get("tool_calls_log", [])
-                return completed
         return {
-            "reply": "\n".join(reply_lines),
+            "reply": "Danh sách hiển thị trước đó không còn là ngữ cảnh chọn món an toàn. Bạn xem lại danh sách hiện tại hoặc nói rõ tên món giúp mình nhé.",
             "checkout_payload": None,
-            "tool_calls_log": option_logs,
+            "tool_calls_log": [],
             "error": None,
         }
 

@@ -4,6 +4,7 @@ These tests intentionally exercise state/resolution helpers directly: they do
 not need an LLM, assistant prose, or a live Order Service to decide a write.
 """
 from src.agents.order_flow_graph import _resolve_typed_references
+from src.agents.agent_service import _complete_pending_products_from_options, _run_agent_impl
 from src.agents.tier1 import classify_confirmation
 from src.common import cart_manager
 
@@ -70,3 +71,46 @@ def test_confirmation_words_are_gated_by_yes_no_interaction_type():
     assert classify_confirmation("oke nhưng đổi sang QR", "YES_NO") == "NONE"
     assert classify_confirmation("không thêm nữa", "YES_NO") == "NO"
 
+
+def test_old_assistant_numbering_cannot_stage_a_cart_write(monkeypatch):
+    session = "v5-history-is-not-write-authority"
+    monkeypatch.setattr(
+        "src.function_calling.tools.cart_tools.sync_authoritative_cart",
+        lambda session_id: cart_manager.get_cart(session_id),
+    )
+    monkeypatch.setattr(
+        "src.agents.agent_service._resolve_numbered_product_choices",
+        lambda *_args: [{"product_name": "Món chỉ có trong history", "category": "drink"}],
+    )
+    version_before = cart_manager.get_cart(session).get("cart_version")
+    reply = _run_agent_impl(session, "thêm số 1", history=[{"role": "assistant", "content": "1. Món cũ"}])
+    assert "ngữ cảnh chọn món an toàn" in reply["reply"]
+    assert not cart_manager.get_checkout_prefs(session).get("pending_products")
+    assert cart_manager.get_cart(session).get("cart_version") == version_before
+
+
+def test_read_only_detour_does_not_consume_other_product_draft():
+    session = "v5-option-detour"
+    pending = cart_manager.set_pending_products(session, [{
+        "product_id": "M1", "product_name": "Matcha Latte",
+        "options": {"groups": {"Kích thước": ["Nhỏ", "Vừa", "Lớn"]}},
+    }])
+    cart_manager.set_pending_interaction(
+        session, kind="FILL_FIELDS", domain="PRODUCT", action="FILL_OPTIONS",
+        context_id=pending[0]["pending_id"], data={"pending_id": pending[0]["pending_id"]},
+    )
+    assert _complete_pending_products_from_options(session, "Bánh Tiramisu có size lớn không?") is None
+    stored = cart_manager.get_checkout_prefs(session)["pending_products"][0]
+    assert stored["pending_id"] == pending[0]["pending_id"]
+    assert stored["selected_options"] == {}
+
+
+def test_pending_draft_removal_uses_stable_id_not_similar_name():
+    session = "v5-stable-pending-removal"
+    pending = cart_manager.set_pending_products(session, [
+        {"product_id": "P1", "product_name": "Matcha Latte"},
+        {"product_id": "P2", "product_name": "Matcha Latte Dâu"},
+    ])
+    cart_manager.mark_pending_product_added(session, pending_id=pending[0]["pending_id"])
+    remaining = cart_manager.get_checkout_prefs(session)["pending_products"]
+    assert [item["product_id"] for item in remaining] == ["P2"]

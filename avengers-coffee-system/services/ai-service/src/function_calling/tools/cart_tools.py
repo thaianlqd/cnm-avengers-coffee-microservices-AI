@@ -801,10 +801,16 @@ def execute_request_checkout(
     delivery_type = requested_delivery or prefs.get("delivery_type")
     try:
         cart = sync_authoritative_cart(session_id)
-    except Exception:
-        # TODO(Batch checkout safety): authenticated checkout must block when
-        # authoritative cart sync fails instead of trusting this local mirror.
+    except Exception as exc:
+        if is_authenticated_cart_session(session_id):
+            return {
+                "status": "authoritative_cart_unavailable",
+                "message": "Chưa thể xác minh giỏ hàng với Order Service nên chưa thể tạo tóm tắt đặt hàng.",
+                "error": str(exc),
+            }
         cart = cart_manager.get_cart(session_id)
+    if is_authenticated_cart_session(session_id) and not cart.get("authoritative"):
+        return {"status": "authoritative_cart_unavailable", "message": "Giỏ hàng chưa có trạng thái xác thực để đặt hàng."}
     if cart["is_empty"]:
         return {
             "status": "empty_cart",
@@ -889,6 +895,20 @@ def execute_request_checkout(
     # Store checkout preferences for later confirmation
     cart_manager.set_checkout_prefs(session_id, payment_method, delivery_type)
     summary_state = cart_manager.mark_checkout_summary(session_id)
+    cart_manager.set_pending_interaction(
+        session_id,
+        kind="YES_NO",
+        domain="CHECKOUT",
+        action="CONFIRM_CHECKOUT",
+        context_id=str(summary_state.get("checkout_action_id") or ""),
+        data={
+            "action_id": summary_state.get("checkout_action_id"),
+            "cart_id": cart.get("cart_id"),
+            "cart_version": cart.get("cart_version"),
+            "payment_method": payment_method,
+            "delivery_type": delivery_type,
+        },
+    )
 
     total_str = f"{total:,.0f}".replace(",", ".")
     final_str = f"{final_total:,.0f}".replace(",", ".")
@@ -937,6 +957,8 @@ def execute_request_checkout(
             "delivery_address": delivery_address,
             "action_id": summary_state.get("checkout_action_id"),
             "expires_at": summary_state.get("checkout_action_expires_at"),
+            "cart_id": cart.get("cart_id"),
+            "cart_version": cart.get("cart_version"),
         },
         "message": summary_msg,
     }
@@ -980,9 +1002,13 @@ def execute_confirm_checkout(
     from src.common.checkout_service import finalize_checkout
 
     try:
-        sync_authoritative_cart(session_id)
-    except Exception:
-        pass
+        authoritative_cart = sync_authoritative_cart(session_id)
+    except Exception as exc:
+        if is_authenticated_cart_session(session_id):
+            return {"status": "authoritative_cart_unavailable", "message": "Không thể xác minh giỏ hàng trước khi tạo đơn; đơn chưa được tạo.", "error": str(exc)}
+        authoritative_cart = cart_manager.get_cart(session_id)
+    if is_authenticated_cart_session(session_id) and not authoritative_cart.get("authoritative"):
+        return {"status": "authoritative_cart_unavailable", "message": "Giỏ hàng chưa có trạng thái xác thực; đơn chưa được tạo."}
     # Lấy lại preferences đã lưu nếu có
     prefs = cart_manager.get_checkout_prefs(session_id)
     if (
@@ -1002,6 +1028,15 @@ def execute_confirm_checkout(
     expected_action_id = str(prefs.get("checkout_action_id") or "")
     if action_id is not None and str(action_id) != expected_action_id:
         return {"status": "stale_checkout", "message": "Yêu cầu xác nhận không khớp bản tóm tắt hiện tại. Vui lòng tạo lại bản tóm tắt."}
+    interaction = cart_manager.get_pending_interaction(session_id) or {}
+    if interaction.get("domain") != "CHECKOUT" or interaction.get("action") != "CONFIRM_CHECKOUT" or str(interaction.get("context_id") or "") != expected_action_id:
+        return {"status": "stale_checkout", "message": "Xác nhận checkout không còn hiệu lực. Vui lòng tạo lại tóm tắt."}
+    interaction_data = interaction.get("data") or {}
+    if (
+        str(interaction_data.get("cart_id") or "") != str(authoritative_cart.get("cart_id") or "")
+        or interaction_data.get("cart_version") != authoritative_cart.get("cart_version")
+    ):
+        return {"status": "stale_checkout", "message": "Giỏ hàng đã thay đổi sau khi tóm tắt. Cần tạo lại tóm tắt trước khi đặt."}
     try:
         action_expired = float(prefs.get("checkout_action_expires_at") or 0) < __import__("time").time()
     except (TypeError, ValueError):

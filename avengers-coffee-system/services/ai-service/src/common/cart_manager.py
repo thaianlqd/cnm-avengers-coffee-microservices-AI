@@ -635,6 +635,31 @@ def get_active_list_context(session_id: str) -> Optional[Dict[str, Any]]:
     return None
 
 
+def set_selection_context(
+    session_id: str,
+    domain: str,
+    action: str,
+    items: List[Dict[str, Any]],
+    *,
+    data: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Create one bound typed selection prompt.
+
+    Keeping the list replacement and interaction creation adjacent makes it
+    impossible for callers to accidentally bind a new SELECT_ONE prompt to an
+    old list id.
+    """
+    context = set_active_list_context(session_id, domain, items=items)
+    return set_pending_interaction(
+        session_id,
+        kind="SELECT_ONE",
+        domain=domain,
+        action=action,
+        context_id=context["list_id"],
+        data={**dict(data or {}), "count": len(items)},
+    )
+
+
 def set_focus(session_id: str, focus: Optional[Dict[str, Any]]) -> None:
     normalized = None
     if focus:
@@ -687,7 +712,7 @@ _PENDING_INTERACTION_TYPES = {
     "confirm_checkout": ("YES_NO", "CHECKOUT", "CONFIRM_CHECKOUT"),
     "select_voucher": ("SELECT_ONE", "VOUCHER", "SELECT_VOUCHER"),
     "select_branch": ("SELECT_ONE", "BRANCH", "SELECT_BRANCH"),
-    "fill_options": ("SELECT_ONE", "PRODUCT", "FILL_OPTIONS"),
+    "fill_options": ("FILL_FIELDS", "PRODUCT", "FILL_OPTIONS"),
     "edit_cart_item": ("FILL_FIELDS", "CART_LINE", "EDIT_CART_ITEM"),
 }
 
@@ -713,7 +738,21 @@ def set_pending_interaction(
         "expires_at": _now() + max(1, int(expires_in)),
         "data": dict(data or {}),
     }
-    set_checkout_context(session_id, pending_interaction=interaction)
+    # ``pending_interaction`` is the sole durable prompt state.  Keep the
+    # legacy shape as a read-compatibility projection only; both are written in
+    # the same transaction-like state update so a reload cannot resurrect a
+    # different prompt.
+    legacy = {
+        "type": str(action).lower(),
+        "params": dict(data or {}),
+        "expires_at": interaction["expires_at"],
+        "interaction_id": interaction["interaction_id"],
+    }
+    set_checkout_context(
+        session_id,
+        pending_interaction=interaction,
+        pending_action=legacy,
+    )
     return interaction
 
 
@@ -731,53 +770,42 @@ def clear_pending_interaction(session_id: str, interaction_id: Optional[str] = N
     pending = get_checkout_prefs(session_id).get("pending_interaction")
     if interaction_id and isinstance(pending, dict) and pending.get("interaction_id") != interaction_id:
         return
-    set_checkout_context(session_id, pending_interaction=None)
+    set_checkout_context(session_id, pending_interaction=None, pending_action=None)
 
 def set_pending_action(session_id: str, action_type: str, params: Dict[str, Any]) -> None:
-    import time
+    """Compatibility adapter for legacy callers.
+
+    New code must call :func:`set_pending_interaction`.  This adapter derives a
+    typed interaction and persists both representations atomically instead of
+    allowing ``pending_action`` to become an independent state machine.
+    """
     try:
-        with _get_session_lock(session_id):
-            session = _get_or_create_session(session_id)
-            prefs = dict(session.get("checkout_prefs") or {})
-            prefs["pending_action"] = {
-                "type": action_type,
-                "params": params,
-                "expires_at": time.time() + 300,
-            }
-            kind, domain, action = _PENDING_INTERACTION_TYPES.get(
-                action_type, ("FREE_TEXT", "CART", str(action_type).upper())
-            )
-            prefs["pending_interaction"] = {
-                "interaction_id": str(uuid.uuid4()),
-                "kind": kind,
-                "domain": domain,
-                "action": action,
-                "context_id": str(params.get("context_id") or "") or None,
-                "created_turn_id": str(uuid.uuid4()),
-                "expires_at": time.time() + 300,
-                "data": dict(params or {}),
-            }
-            session["checkout_prefs"] = prefs
-            _touch(session_id, session, sync_db=False)
+        kind, domain, action = _PENDING_INTERACTION_TYPES.get(
+            action_type, ("FREE_TEXT", "CART", str(action_type).upper())
+        )
+        set_pending_interaction(
+            session_id,
+            kind=kind,
+            domain=domain,
+            action=action,
+            context_id=str(params.get("context_id") or "") or None,
+            data={**dict(params or {}), "legacy_action_type": action_type},
+        )
     except Exception as e:
         import logging
         logging.getLogger(__name__).warning("Failed to set_pending_action: %s", e)
 
 def get_pending_action(session_id: str) -> Optional[Dict[str, Any]]:
-    import time
     try:
-        with _get_session_lock(session_id):
-            session = _get_or_create_session(session_id)
-            prefs = dict(session.get("checkout_prefs") or {})
-            pending = prefs.get("pending_action")
-            if pending:
-                if pending.get("expires_at", 0) > time.time():
-                    return pending
-                else:
-                    prefs.pop("pending_action", None)
-                    session["checkout_prefs"] = prefs
-                    _touch(session_id, session, sync_db=False)
+        interaction = get_pending_interaction(session_id)
+        if not interaction:
             return None
+        return {
+            "type": str(interaction.get("data", {}).get("legacy_action_type") or interaction.get("action") or "").lower(),
+            "params": dict(interaction.get("data") or {}),
+            "expires_at": interaction.get("expires_at"),
+            "interaction_id": interaction.get("interaction_id"),
+        }
     except Exception as e:
         import logging
         logging.getLogger(__name__).warning("Failed to get_pending_action: %s", e)
@@ -785,14 +813,7 @@ def get_pending_action(session_id: str) -> Optional[Dict[str, Any]]:
 
 def clear_pending_action(session_id: str) -> None:
     try:
-        with _get_session_lock(session_id):
-            session = _get_or_create_session(session_id)
-            prefs = dict(session.get("checkout_prefs") or {})
-            if "pending_action" in prefs or "pending_interaction" in prefs:
-                prefs.pop("pending_action", None)
-                prefs.pop("pending_interaction", None)
-                session["checkout_prefs"] = prefs
-                _touch(session_id, session, sync_db=False)
+        clear_pending_interaction(session_id)
     except Exception as e:
         import logging
         logging.getLogger(__name__).warning("Failed to clear_pending_action: %s", e)
@@ -872,9 +893,23 @@ def set_pending_products(session_id: str, products: List[Dict[str, Any]], merge:
         _touch(session_id, session, sync_db=True)
     return normalized
 
-def mark_pending_product_added(session_id: str, product_name: str) -> None:
+def mark_pending_product_added(
+    session_id: str,
+    product_name: Optional[str] = None,
+    *,
+    pending_id: Optional[str] = None,
+    product_id: Optional[str] = None,
+) -> None:
+    """Remove one completed draft by its stable identity.
+
+    Name matching remains only for pre-V5 records that genuinely lack both a
+    pending id and a product id; similar product names must never remove one
+    another from a current draft.
+    """
     target = str(product_name or "").strip().casefold()
-    if not target:
+    stable_pending_id = str(pending_id or "").strip()
+    stable_product_id = str(product_id or "").strip()
+    if not (target or stable_pending_id or stable_product_id):
         return
     import re
     def _is_match(pending_name: str, added_name: str) -> bool:
@@ -895,10 +930,19 @@ def mark_pending_product_added(session_id: str, product_name: str) -> None:
         session = _get_or_create_session(session_id)
         prefs = dict(session.get("checkout_prefs") or {})
         pending = list(prefs.get("pending_products") or [])
-        remaining = [
-            item for item in pending
-            if not _is_match(str(item.get("product_name") or ""), target)
-        ]
+        def _completed(item: Dict[str, Any]) -> bool:
+            item_pending_id = str(item.get("pending_id") or "").strip()
+            item_product_id = str(item.get("product_id") or "").strip()
+            if stable_pending_id:
+                return item_pending_id == stable_pending_id
+            if stable_product_id:
+                return item_product_id == stable_product_id
+            # Legacy fallback is deliberately restricted to legacy drafts.
+            return not item_pending_id and not item_product_id and _is_match(
+                str(item.get("product_name") or ""), target
+            )
+
+        remaining = [item for item in pending if not _completed(item)]
         if len(remaining) == len(pending):
             return
         if remaining:

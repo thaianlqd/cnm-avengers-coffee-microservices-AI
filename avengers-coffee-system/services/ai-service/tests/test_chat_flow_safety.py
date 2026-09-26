@@ -63,6 +63,7 @@ def test_first_branch_wording_is_resolved_as_explicit_customer_choice(monkeypatc
         {"branch_id": "BR-2", "branch_name": "Cửa hàng Hai"},
     ]
     cart_manager.set_checkout_context(session, branch_candidates=candidates)
+    cart_manager.set_selection_context(session, "BRANCH", "SELECT_BRANCH", candidates)
     captured = {}
 
     def fake_set_branch(session_id, branch_id, branch_name, customer_selected=False):
@@ -81,7 +82,7 @@ def test_first_branch_wording_is_resolved_as_explicit_customer_choice(monkeypatc
     result = agent_service._resolve_pending_branch_choice(
         session,
         "tôi chọn chi nhánh đầu tiên",
-        history=[{"role": "assistant", "content": "Các chi nhánh gần bạn:\n1. Cửa hàng Một\n2. Cửa hàng Hai"}],
+        history=[],
     )
 
     assert result["reply"] == "Đã chọn cửa hàng."
@@ -97,6 +98,7 @@ def test_unavailable_branch_choice_is_blocked_and_candidates_are_kept(monkeypatc
         {"branch_id": "BR-OK", "branch_name": "Cửa hàng còn món"},
     ]
     cart_manager.set_checkout_context(session, branch_candidates=candidates)
+    cart_manager.set_selection_context(session, "BRANCH", "SELECT_BRANCH", candidates)
     monkeypatch.setattr(
         "src.function_calling.tools.branch_tools.execute_set_session_branch",
         lambda *_args, **_kwargs: {
@@ -109,7 +111,7 @@ def test_unavailable_branch_choice_is_blocked_and_candidates_are_kept(monkeypatc
     result = agent_service._resolve_pending_branch_choice(
         session,
         "tôi chọn chi nhánh đầu tiên",
-        history=[{"role": "assistant", "content": "Các chi nhánh gần bạn:\n1. Cửa hàng đang hết món\n2. Cửa hàng còn món"}],
+        history=[],
     )
 
     assert "Bánh Trung Thu Matcha" in result["reply"]
@@ -122,6 +124,10 @@ def test_saved_address_confirmation_with_vietnamese_da_is_not_mistaken_for_ice(m
     cart_manager.set_checkout_context(
         session,
         suggested_address="42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh, Thành phố Hồ Chí Minh",
+    )
+    cart_manager.set_pending_interaction(
+        session, kind="YES_NO", domain="ADDRESS", action="CONFIRM_ADDRESS",
+        context_id="address:test", data={"address_snapshot": "42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh, Thành phố Hồ Chí Minh"},
     )
     monkeypatch.setattr(
         "src.function_calling.tools.branch_tools.execute_find_nearest_branch",
@@ -140,10 +146,7 @@ def test_saved_address_confirmation_with_vietnamese_da_is_not_mistaken_for_ice(m
     result = agent_service._confirm_saved_location(
         session,
         "đúng, dùng địa chỉ đã lưu",
-        history=[{
-            "role": "assistant",
-            "content": "Bạn đang ở địa chỉ đã lưu này hay muốn dùng địa chỉ khác để tìm cửa hàng gần nhất?",
-        }],
+        history=[],
     )
 
     assert result is not None
@@ -794,7 +797,7 @@ def test_numbered_product_reviews_do_not_select_or_add_products(monkeypatch):
     assert not cart_manager.get_checkout_prefs("session-numbered-reviews").get("pending_products")
 
 
-def test_combined_numbered_order_and_review_keeps_both_products_and_shows_options(monkeypatch):
+def test_combined_numbered_order_and_review_from_history_never_stages_a_write(monkeypatch):
     history = [{
         "role": "assistant",
         "content": (
@@ -826,13 +829,8 @@ def test_combined_numbered_order_and_review_keeps_both_products_and_shows_option
         history=history,
     )
 
-    assert len([entry for entry in result["tool_calls_log"] if entry["tool"] == "get_product_insights"]) == 2
-    assert "Lượng đá: Ít đá, Đá riêng" in result["reply"]
-    assert "Bánh Trung Thu Thập Cẩm Bát Bửu" in result["reply"]
-    pending = cart_manager.get_checkout_prefs("session-combined-review-order")["pending_products"]
-    assert [item["product_name"] for item in pending] == [
-        "1 Lít Matcha Latte Tây Bắc", "Bánh Trung Thu Thập Cẩm Bát Bửu"
-    ]
+    assert "danh sách món hiện tại" in result["reply"]
+    assert not cart_manager.get_checkout_prefs("session-combined-review-order").get("pending_products")
 
 
 def test_numbered_voucher_choice_never_falls_through_to_product_parser(monkeypatch):
@@ -844,6 +842,12 @@ def test_numbered_voucher_choice_never_falls_through_to_product_parser(monkeypat
             {"ma_voucher": "FIRST10", "ten_voucher": "Mã một"},
             {"ma_voucher": "SECOND20", "ten_voucher": "Mã hai"},
         ],
+    )
+    cart_manager.set_selection_context(
+        session,
+        "VOUCHER",
+        "SELECT_VOUCHER",
+        cart_manager.get_checkout_prefs(session)["voucher_candidates"],
     )
     monkeypatch.setattr(
         "src.function_calling.tools.cart_tools.sync_authoritative_cart",
@@ -1076,14 +1080,18 @@ def test_pickup_lists_five_nearest_and_marks_d9_matcha_unavailable(monkeypatch):
     assert len(cart_manager.get_checkout_prefs(session)["branch_candidates"]) == 5
 
 
-def test_pending_multi_product_options_are_remembered_and_added_together(monkeypatch):
+def test_pending_multi_product_options_are_scoped_and_completed_sequentially(monkeypatch):
     session = "session-complete-pending"
-    cart_manager.set_pending_products(session, [
+    pending = cart_manager.set_pending_products(session, [
         {"product_name": "Matcha", "category": "drink", "quantity": 1, "options": {"groups": {
             "Kích thước": ["Vừa"], "Topping": ["Hạt Sen", "Sữa Yến Mạch"], "Lượng đá": ["Ít đá", "Đá riêng"],
         }}},
         {"product_name": "Bánh Bát Bửu", "category": "food", "quantity": 1, "options": {"groups": {}}},
     ])
+    cart_manager.set_pending_interaction(
+        session, kind="FILL_FIELDS", domain="PRODUCT", action="FILL_OPTIONS",
+        context_id=pending[0]["pending_id"], data={"pending_id": pending[0]["pending_id"]},
+    )
     monkeypatch.setattr(
         "src.function_calling.tools.product_tools.execute_check_price_and_stock",
         lambda product_name_query, **_kwargs: {"status": "ok", "products": [{"product_id": "8" if product_name_query == "Matcha" else "9", "product_name": product_name_query, "final_price": 100000 if product_name_query == "Matcha" else 99000}]},
@@ -1102,9 +1110,12 @@ def test_pending_multi_product_options_are_remembered_and_added_together(monkeyp
     assert first_reply["tool_calls_log"] == []
     assert len(cart_manager.get_checkout_prefs(session)["pending_products"]) == 2
 
-    final_reply = agent_service._complete_pending_products_from_options(session, "ít đá và theo mặc định")
-    assert final_reply["reply"].startswith("Mình đã thêm đủ 2 món")
-    assert cart_manager.get_checkout_prefs(session).get("pending_products") == []
+    second_reply = agent_service._complete_pending_products_from_options(session, "ít đá")
+    assert "Đã thêm Matcha" in second_reply["reply"]
+    assert [item["product_name"] for item in cart_manager.get_checkout_prefs(session)["pending_products"]] == ["Bánh Bát Bửu"]
+    final_reply = agent_service._complete_pending_products_from_options(session, "theo mặc định")
+    assert "Đã thêm Bánh Bát Bửu" in final_reply["reply"]
+    assert not cart_manager.get_checkout_prefs(session).get("pending_products")
     assert [item["product_name"] for item in cart_manager.get_cart(session)["items"]] == ["Matcha", "Bánh Bát Bửu"]
 
 

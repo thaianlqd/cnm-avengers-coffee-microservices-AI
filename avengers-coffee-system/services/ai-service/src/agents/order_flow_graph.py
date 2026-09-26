@@ -369,6 +369,11 @@ def _resolve_pending_cart_line_choice(
     context = cart_manager.get_active_list_context(session_id) or {}
     if interaction.get("domain") != "CART_LINE" or context.get("domain") != "CART_LINE":
         return None
+    if str(interaction.get("context_id") or "") != str(context.get("list_id") or ""):
+        # A newer list replaced the old prompt.  Refuse an ordinal rather than
+        # applying it to whatever happens to be active now.
+        cart_manager.clear_pending_interaction(session_id, interaction.get("interaction_id"))
+        return None
     match = re.search(r"\b(?:dong|mon)?\s*(?:so|thu|#)?\s*(\d+)\b", _norm(message))
     if not match:
         return None
@@ -704,11 +709,28 @@ def _prepare_structured_products(
     # One explicit configuration command replaces an older draft. Multiple
     # products selected in this same command remain one deterministic task.
     cart_manager.set_pending_products(session_id, pending, merge=False)
-    cart_manager.set_pending_action(session_id, "fill_options", {"count": len(pending)})
+    first_pending = (cart_manager.get_checkout_prefs(session_id).get("pending_products") or [None])[0]
+    cart_manager.set_pending_interaction(
+        session_id,
+        kind="FILL_FIELDS",
+        domain="PRODUCT",
+        action="FILL_OPTIONS",
+        context_id=str((first_pending or {}).get("pending_id") or ""),
+        data={"pending_id": (first_pending or {}).get("pending_id"), "count": len(pending)},
+    )
     if not needs_options:
-        completed = _complete_pending_products_from_options(session_id, "theo mặc định")
+        completed = None
+        completion_logs: List[Dict[str, Any]] = []
+        # Defaults are already server-defined.  Completing several no-choice
+        # rows in one turn is safe because no user-supplied option is being
+        # shared between products.
+        while cart_manager.get_checkout_prefs(session_id).get("pending_products"):
+            completed = _complete_pending_products_from_options(session_id, "theo mặc định")
+            if not completed or completed.get("error"):
+                break
+            completion_logs.extend(completed.get("tool_calls_log") or [])
         if completed:
-            completed["tool_calls_log"] = logs + list(completed.get("tool_calls_log") or [])
+            completed["tool_calls_log"] = logs + completion_logs
             return completed
     reply_lines.append("Mình đang giữ đúng các món trên. Bạn chọn tùy chọn mong muốn; món không cần chỉnh thì nói ‘theo mặc định’ nhé.")
     return {"reply": "\n".join(reply_lines), "checkout_payload": None, "tool_calls_log": logs, "error": None}
@@ -864,7 +886,9 @@ def _offer_voucher_gate(session_id: str, lead: str = "Mình đã ghi nhận gi�
             voucher_candidates=candidates,
             flow_stage="VOUCHER",
         )
-        cart_manager.set_pending_action(session_id, "select_voucher", {"count": len(candidates)})
+        cart_manager.set_selection_context(
+            session_id, "VOUCHER", "SELECT_VOUCHER", candidates,
+        )
         lines = [lead, "Trước khi chọn cách nhận hàng và thanh toán, bạn có các mã phù hợp:"]
         for index, item in enumerate(candidates, 1):
             discount = f"{float(item.get('so_tien_giam_du_kien') or 0):,.0f}".replace(",", ".")
@@ -956,11 +980,12 @@ def _sync(state: OrderConversationState) -> OrderConversationState:
 
 
 def _understand(state: OrderConversationState) -> OrderConversationState:
-    pending = cart_manager.get_pending_action(state["session_id"])
-    intent = classify_order_intent(state["user_message"], (pending or {}).get("type"))
-    if (pending or {}).get("type") == "clear_cart" and re.search(r"\b(dong y|xac nhan|ok|oke)\b", _norm(state["user_message"])):
+    interaction = cart_manager.get_pending_interaction(state["session_id"])
+    pending_type = str((interaction or {}).get("action") or "").lower()
+    intent = classify_order_intent(state["user_message"], pending_type)
+    if pending_type == "clear_cart" and re.search(r"\b(dong y|xac nhan|ok|oke)\b", _norm(state["user_message"])):
         intent = {"intent": "CLEAR_CART", "confirmed": True}
-    if (pending or {}).get("type") == "edit_cart_item":
+    if pending_type == "edit_cart_item":
         if re.search(
             r"\b(size|nho|vua|lon|topping|toping|hat|foam|tran chau|sua|da|ngot|duong|mac dinh)\b",
             _norm(state["user_message"]),
@@ -1068,6 +1093,12 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         context = cart_manager.get_active_list_context(session_id) or {}
         ordinal = re.search(r"\b(?:so|thu|#)?\s*(\d+)\b", normalized_message)
         candidates = list(context.get("items") or [])
+        if str(interaction.get("context_id") or "") != str(context.get("list_id") or ""):
+            cart_manager.clear_pending_interaction(session_id, interaction.get("interaction_id"))
+            return {**state, "result": {
+                "reply": "Danh sách lựa chọn trước đã hết hiệu lực. Bạn xem lại danh sách hiện tại và chọn lại giúp mình nhé.",
+                "checkout_payload": None, "tool_calls_log": [], "error": None,
+            }}
         if ordinal and context.get("domain") == interaction.get("domain"):
             index = int(ordinal.group(1)) - 1
             if 0 <= index < len(candidates):
