@@ -222,12 +222,16 @@ def _search_menu_catalog(message: str) -> Optional[Dict[str, Any]]:
 
     labels = " hoặc ".join(spec["label"] for spec in specs)
     lines = [f"Mình tìm thấy các món phù hợp với {labels}:"]
-    # Every displayed category owns an independent ordinal namespace. Keeping
-    # it aligned with the structured snapshots means “nước số 2 và bánh số 1”
-    # resolves against exactly what the customer saw, not a flattened history.
+    # One visible namespace per coarse family.  A search may contain several
+    # FOOD specs (for example bánh mặn + bánh Matcha); never restart their
+    # displayed numbering because active_list_context merges them into FOOD.
+    displayed_ordinals: Dict[str, int] = {}
     for spec, products, _found in rendered_groups:
         lines.append(f"\n{spec['label']}:")
-        for index, product in enumerate(products, 1):
+        family = str(spec.get("category") or _map_db_category_to_bucket(spec.get("label"))).upper()
+        for product in products:
+            displayed_ordinals[family] = displayed_ordinals.get(family, 0) + 1
+            index = displayed_ordinals[family]
             price = f"{float(product.get('final_price') or 0):,.0f}".replace(",", ".")
             lines.append(f"{index}. {product.get('product_name')} - {price}đ")
     if missing:
@@ -1394,7 +1398,12 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
                 voucher_candidates=vouchers[:4],
                 flow_stage="VOUCHER",
             )
-            cart_manager.set_pending_action(session_id, "select_voucher", {"count": min(4, len(vouchers))})
+            cart_manager.set_selection_context(
+                session_id,
+                "VOUCHER",
+                "SELECT_VOUCHER",
+                vouchers[:4],
+            )
             # “áp mã tốt nhất” applies immediately after the authoritative list
             # has established what “best” means.
             if re.search(r"\b(tot nhat|ma tot|voucher tot)\b", _norm(message)):
@@ -1505,6 +1514,16 @@ def _render(state: OrderConversationState) -> OrderConversationState:
             product_suggestion_snapshots={key.lower(): value for key, value in snapshots.items()},
             product_suggestion_mode="grouped" if grouped else "flat",
         )
+    def has_bound_selection(domain: str) -> bool:
+        interaction = cart_manager.get_pending_interaction(state["session_id"]) or {}
+        context = cart_manager.get_active_list_context(state["session_id"]) or {}
+        return (
+            str(interaction.get("kind") or "").upper() == "SELECT_ONE"
+            and str(interaction.get("domain") or "").upper() == domain
+            and str(context.get("domain") or "").upper() == domain
+            and str(interaction.get("context_id") or "") == str(context.get("list_id") or "")
+        )
+
     if vouchers:
         voucher_items = [
             {
@@ -1515,7 +1534,7 @@ def _render(state: OrderConversationState) -> OrderConversationState:
             for item in vouchers[:4]
             if item.get("ma_voucher") or item.get("voucher_code")
         ]
-        if voucher_items:
+        if voucher_items and not has_bound_selection("VOUCHER"):
             cart_manager.set_active_list_context(state["session_id"], "VOUCHER", items=voucher_items)
     if branches:
         branch_items = [
@@ -1528,7 +1547,7 @@ def _render(state: OrderConversationState) -> OrderConversationState:
             for item in branches[:5]
             if item.get("branch_id") or item.get("ma_chi_nhanh")
         ]
-        if branch_items:
+        if branch_items and not has_bound_selection("BRANCH"):
             cart_manager.set_active_list_context(state["session_id"], "BRANCH", items=branch_items)
     try:
         from src.function_calling.tools.cart_tools import sync_authoritative_cart

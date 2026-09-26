@@ -130,16 +130,7 @@ def _checkout_choices_prompt(session_id: str, prefix: str = "") -> str:
             {"entity_id": "MANG_DI", "label": "Lấy tại quán", "value": "MANG_DI"},
             {"entity_id": "TAI_CHO", "label": "Dùng tại chỗ", "value": "TAI_CHO"},
         ]
-        context = cart_manager.set_active_list_context(
-            session_id, "FULFILLMENT", items=choices
-        )
-        cart_manager.set_pending_interaction(
-            session_id,
-            kind="SELECT_ONE",
-            domain="FULFILLMENT",
-            action="SELECT_FULFILLMENT",
-            context_id=context.get("list_id"),
-        )
+        cart_manager.set_selection_context(session_id, "FULFILLMENT", "SELECT_FULFILLMENT", choices)
         return "\n\n".join(part for part in [
             prefix.strip(),
             "Hình thức nhận hàng:\n1. Giao tận nơi\n2. Lấy tại quán\n3. Dùng tại chỗ",
@@ -153,14 +144,7 @@ def _checkout_choices_prompt(session_id: str, prefix: str = "") -> str:
         {"entity_id": "VI_DIEN_TU", "label": "Ví Avengers", "value": "VI_DIEN_TU"},
         {"entity_id": "THANH_TOAN_KHI_NHAN_HANG", "label": "Tiền mặt (COD)", "value": "THANH_TOAN_KHI_NHAN_HANG"},
     ]
-    context = cart_manager.set_active_list_context(session_id, "PAYMENT", items=choices)
-    cart_manager.set_pending_interaction(
-        session_id,
-        kind="SELECT_ONE",
-        domain="PAYMENT",
-        action="SELECT_PAYMENT",
-        context_id=context.get("list_id"),
-    )
+    cart_manager.set_selection_context(session_id, "PAYMENT", "SELECT_PAYMENT", choices)
     return "\n\n".join(part for part in [
         prefix.strip(), _payment_methods_text(), "Bạn chọn giúp mình phương thức thanh toán số mấy nhé.",
     ] if part)
@@ -415,11 +399,12 @@ def _advance_checkout_if_ready(session_id: str, result: Dict[str, Any]) -> Dict[
                     for voucher in voucher_result["vouchers"][:4]
                 ],
             )
-            try:
-                cart_manager.set_pending_action(session_id, "select_voucher", {"count": len(voucher_result["vouchers"])})
-            except Exception as e:
-                import logging
-                logging.getLogger(__name__).warning("set_pending_action select_voucher failed: %s", e)
+            cart_manager.set_selection_context(
+                session_id,
+                "VOUCHER",
+                "SELECT_VOUCHER",
+                list(cart_manager.get_checkout_prefs(session_id).get("voucher_candidates") or []),
+            )
             lines = ["Giỏ hiện có các mã dùng được:"]
             for voucher in voucher_result["vouchers"][:4]:
                 discount = f"{float(voucher.get('so_tien_giam_du_kien') or 0):,.0f}".replace(",", ".")
@@ -1382,11 +1367,12 @@ def _run_agent_impl(
                     voucher_offer_pending=True,
                     voucher_candidates=vouchers,
                 )
-                try:
-                    cart_manager.set_pending_action(session_id, "select_voucher", {"count": len(vouchers)})
-                except Exception as e:
-                    import logging
-                    logging.getLogger(__name__).warning("set_pending_action select_voucher (wants_checkout) failed: %s", e)
+                cart_manager.set_selection_context(
+                    session_id,
+                    "VOUCHER",
+                    "SELECT_VOUCHER",
+                    vouchers[:4],
+                )
                 lines = ["Trước khi đặt hàng, bạn có các mã dùng được:"]
                 for voucher in vouchers[:4]:
                     discount = f"{float(voucher.get('so_tien_giam_du_kien') or 0):,.0f}".replace(",", ".")
