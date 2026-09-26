@@ -208,36 +208,29 @@ export class CheckoutSafetyService {
     return repriced;
   }
 
-  private async validateStock(manager: EntityManager, branchCode: string, items: CartItem[], consume = false) {
-    const required = new Map<number, number>();
-    for (const item of items) required.set(item.ma_san_pham, (required.get(item.ma_san_pham) || 0) + Number(item.so_luong));
-    const ids = [...required.keys()];
-    const rows: Array<{ ma_san_pham: number; so_luong_ton: number; dang_kinh_doanh: boolean }> = await manager.query(
-      `SELECT ma_san_pham, so_luong_ton, dang_kinh_doanh
-       FROM inventory.ton_kho_san_pham WHERE co_so_ma = $1 AND ma_san_pham = ANY($2::int[])
-       FOR UPDATE`,
+  private async validateBranchAvailability(manager: EntityManager, branchCode: string, items: CartItem[]) {
+    const ids = [...new Set(items.map((item) => Number(item.ma_san_pham)))];
+    const rows: Array<{ ma_san_pham: number; dang_kinh_doanh: boolean }> = await manager.query(
+      `SELECT ma_san_pham, dang_kinh_doanh
+       FROM inventory.ton_kho_san_pham WHERE co_so_ma = $1 AND ma_san_pham = ANY($2::int[])`,
       [branchCode, ids],
     );
     const byProduct = new Map(rows.map((row) => [Number(row.ma_san_pham), row]));
-    const conflicts = items.filter((item) => {
-      const stock = byProduct.get(Number(item.ma_san_pham));
-      return !stock || !stock.dang_kinh_doanh || Number(stock.so_luong_ton) < (required.get(item.ma_san_pham) || 0);
-    }).map((item) => ({ line_id: item.id, product_id: item.ma_san_pham, product_name: item.ten_san_pham }));
+    const conflicts = items.flatMap((item) => {
+      const availability = byProduct.get(Number(item.ma_san_pham));
+      if (availability?.dang_kinh_doanh) return [];
+      return [{
+        line_id: item.id,
+        product_id: item.ma_san_pham,
+        product_name: item.ten_san_pham,
+        branch_id: branchCode,
+        availability_code: availability ? 'PRODUCT_DISABLED' : 'UNKNOWN_AVAILABILITY',
+      }];
+    });
     if (conflicts.length) {
-      throw new ConflictException({ code: 'STOCK_CONFLICT', conflicts, reason: 'UNKNOWN_OR_INSUFFICIENT_STOCK' });
-    }
-    if (consume) {
-      for (const [productId, quantity] of required) {
-        const result = await manager.query(
-          `UPDATE inventory.ton_kho_san_pham
-              SET so_luong_ton = so_luong_ton - $3
-            WHERE co_so_ma = $1 AND ma_san_pham = $2 AND so_luong_ton >= $3
-            RETURNING ma_san_pham`,
-          [branchCode, productId, quantity],
-        );
-        const updatedRows = Array.isArray(result?.[0]) ? result[0] : result;
-        if (!updatedRows?.length) throw new ConflictException({ code: 'STOCK_CONFLICT', product_id: productId });
-      }
+      throw new ConflictException({
+        code: 'BRANCH_AVAILABILITY_CONFLICT', conflicts, reason: 'PRODUCT_NOT_SELLABLE_AT_BRANCH',
+      });
     }
   }
 
@@ -285,7 +278,7 @@ export class CheckoutSafetyService {
       if (!items.length) throw new BadRequestException('Gio hang trong, khong the bao gia');
       const pricedItems = await this.repriceFromMenu(manager, items);
       const quote = await this.calculateQuote(userId, input, pricedItems, manager);
-      await this.validateStock(manager, quote.branch_code, pricedItems);
+      await this.validateBranchAvailability(manager, quote.branch_code, pricedItems);
       const quoteId = randomUUID();
       const actionId = randomUUID();
       const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
@@ -374,7 +367,7 @@ export class CheckoutSafetyService {
       if (this.hash(revalidatedQuote.items) !== this.hash(quoted.items) || Number(revalidatedQuote.final_total) !== Number(quoted.final_total)) {
         throw new ConflictException({ code: 'REQUOTE_REQUIRED', reason: 'PRICE_OR_OPTION_CHANGED' });
       }
-      await this.validateStock(manager, quoted.branch_code, pricedItems, true);
+      await this.validateBranchAvailability(manager, quoted.branch_code, pricedItems);
       // Re-evaluate voucher at commit time. External promotion services remain
       // authoritative for their own ledger; local order/cart writes stay atomic.
       if (quoted.voucher_code) {

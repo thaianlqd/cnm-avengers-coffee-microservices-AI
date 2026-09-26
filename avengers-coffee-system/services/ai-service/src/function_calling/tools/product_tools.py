@@ -322,33 +322,23 @@ def execute_check_price_and_stock(
             availability_status = "unknown"
             availability_code = "UNKNOWN_BRANCH"
             in_stock = None
-            stock_quantity = None
             if has_outlet and str(p["product_id"]).isdigit():
                 with engine.connect() as conn:
                     stock = conn.execute(text(
                         f"""
-                        SELECT so_luong_ton, dang_kinh_doanh
+                        SELECT dang_kinh_doanh
                         FROM {inventory_schema}.ton_kho_san_pham
                         WHERE co_so_ma = :branch_id AND ma_san_pham = :product_id
                         LIMIT 1
                         """
                     ), {"branch_id": branch_id, "product_id": int(p["product_id"])}).mappings().first()
                 if stock:
-                    stock_quantity = int(stock["so_luong_ton"] or 0)
-                    requested_quantity = max(1, int(quantity or 1))
-                    in_stock = bool(stock["dang_kinh_doanh"]) and stock_quantity >= requested_quantity
+                    in_stock = bool(stock["dang_kinh_doanh"])
                     availability_status = "available" if in_stock else "unavailable"
-                    if not bool(stock["dang_kinh_doanh"]):
-                        availability_code = "PRODUCT_DISABLED"
-                    elif stock_quantity <= 0:
-                        availability_code = "OUT_OF_STOCK"
-                    elif stock_quantity < requested_quantity:
-                        availability_code = "INSUFFICIENT_QUANTITY"
-                    else:
-                        availability_code = "AVAILABLE"
+                    availability_code = "AVAILABLE" if in_stock else "PRODUCT_DISABLED"
                 else:
                     availability_status = "unverified"
-                    availability_code = "UNVERIFIED_STOCK"
+                    availability_code = "UNKNOWN_AVAILABILITY"
                     in_stock = None
 
             results.append({
@@ -363,7 +353,6 @@ def execute_check_price_and_stock(
                 "in_stock": in_stock,
                 "availability_status": availability_status,
                 "availability_code": availability_code,
-                "stock_quantity": stock_quantity,
                 "branch_id": branch_id,
             })
 

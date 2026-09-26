@@ -904,7 +904,7 @@ def test_best_voucher_is_selected_once_and_prompts_both_checkout_choices(monkeyp
     assert not cart_manager.get_checkout_prefs(session).get("pending_products")
 
 
-def test_inventory_requires_a_row_and_enough_quantity():
+def test_inventory_requires_a_row_and_sellable_branch_flag():
     class FakeResult:
         def __init__(self, row):
             self.row = row
@@ -933,7 +933,7 @@ def test_inventory_requires_a_row_and_enough_quantity():
             return FakeConnection(self.rows)
 
     result = validate_items_at_branch(
-        FakeEngine({1: (1, True)}),
+        FakeEngine({1: (True,)}),
         "BR-1",
         [
             {"product_id": "1", "product_name": "Cà phê", "quantity": 2},
@@ -941,7 +941,7 @@ def test_inventory_requires_a_row_and_enough_quantity():
         ],
     )
 
-    assert result == {"unavailable": ["Cà phê"], "unverified": ["Bánh"]}
+    assert result == {"unavailable": [], "unverified": ["Bánh"]}
 
 
 def test_branch_selection_rejects_unknown_inventory_until_stock_is_confirmed(monkeypatch):

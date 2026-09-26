@@ -235,8 +235,8 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                 annotated["unavailable_products"] = conflicts
                 annotated["unverified_products"] = availability["unverified"]
                 annotated_branches.append(annotated)
-                # Missing override rows inherit normal menu availability.
-                # Explicit inactive/insufficient rows remain hard conflicts.
+                # Missing branch-product rows are unverified; only an explicit
+                # enabled row can authorize branch availability.
                 if not availability["unavailable"] and not availability["unverified"]:
                     eligible_branches.append(annotated)
 
@@ -249,7 +249,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                     return {
                         "status": "stock_conflict",
                         "branches": annotated_branches[:5],
-                        "message": "Không có cửa hàng gần địa chỉ này đủ toàn bộ món trong giỏ. Đơn chưa được chốt; bạn có thể đổi món hoặc địa chỉ giao.",
+                        "message": "Không có cửa hàng gần địa chỉ này đang phục vụ toàn bộ món trong giỏ. Đơn chưa được chốt; bạn có thể đổi món hoặc địa chỉ giao.",
                     }
             elif delivery_type in {"MANG_DI", "TAI_CHO"} and cart.get("items"):
                 # Pickup/dine-in needs an explainable nearest-five comparison:
@@ -294,7 +294,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                 "status": "need_branch_selection" if delivery_type in {"MANG_DI", "TAI_CHO"} else "ok",
                 "branches": top_branches,
                 "message": (
-                    msg + " Khách dùng tại chỗ/mang đi nên hãy liệt kê đủ tối đa 5 cửa hàng theo khoảng cách, ghi rõ cửa hàng còn đủ món và món nào bị thiếu; chỉ cửa hàng còn đủ món mới được chọn."
+                    msg + " Khách dùng tại chỗ/mang đi nên hãy liệt kê tối đa 5 cửa hàng theo khoảng cách, ghi rõ trạng thái Còn món/Tạm hết; chỉ cửa hàng đang phục vụ toàn bộ món mới được chọn."
                     if delivery_type in {"MANG_DI", "TAI_CHO"} else msg
                 )
             }
@@ -369,6 +369,7 @@ def execute_set_session_branch(
                 "branch_id": real_branch_id,
                 "branch_name": real_branch_name,
                 "unavailable_products": blockers,
+                "conflicts": list(stock_result.get("conflicts") or []),
                 "message": (
                     f"{location_label} {real_branch_name} tạm ngưng phục vụ các món sau: "
                     f"{', '.join(blockers)}. "

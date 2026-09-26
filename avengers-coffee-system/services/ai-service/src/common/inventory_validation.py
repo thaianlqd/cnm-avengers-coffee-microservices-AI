@@ -1,10 +1,10 @@
-"""Authoritative inventory checks used by branch selection and checkout.
+"""Authoritative branch-availability checks used by selection and checkout.
 
 Policy:
 - A selected branch needs an authoritative inventory row for each product.
 - Missing rows are unverified and cannot authorize checkout.
-- Products with a row must have enough quantity for the whole cart.
-- Quantities are aggregated by product before validation.
+- ``dang_kinh_doanh`` is the only availability authority for AI checkout.
+- ``so_luong_ton`` is operational data and is never used as sellable quantity.
 """
 from collections import defaultdict
 from typing import Any, Dict, Iterable, List, Optional
@@ -19,7 +19,7 @@ def validate_items_at_branch(
     inventory_schema: str = "inventory",
     include_details: bool = False,
 ) -> Dict[str, Any]:
-    """Return explicit stock conflicts and identifiers that cannot be checked."""
+    """Return explicit branch-availability conflicts."""
     names: Dict[str, str] = {}
     required_quantities: Dict[str, int] = defaultdict(int)
     for item in items:
@@ -33,8 +33,23 @@ def validate_items_at_branch(
     unverified: List[str] = []
     details: List[Dict[str, Any]] = []
 
-    if not branch_id or not required_quantities:
+    if not required_quantities:
         result: Dict[str, Any] = {"unavailable": unavailable, "unverified": unverified}
+        if include_details:
+            result["conflicts"] = details
+        return result
+
+    if not branch_id:
+        for product_id, required_quantity in required_quantities.items():
+            unverified.append(names[product_id])
+            details.append({
+                "product_id": product_id,
+                "product_name": names[product_id],
+                "required_quantity": required_quantity,
+                "branch_id": None,
+                "code": "UNKNOWN_BRANCH",
+            })
+        result = {"unavailable": unavailable, "unverified": unverified}
         if include_details:
             result["conflicts"] = details
         return result
@@ -43,10 +58,15 @@ def validate_items_at_branch(
         for product_id, required_quantity in required_quantities.items():
             if not product_id.isdigit():
                 unverified.append(names[product_id])
-                details.append({"product_id": product_id, "product_name": names[product_id], "code": "UNVERIFIED_STOCK"})
+                details.append({
+                    "product_id": product_id,
+                    "product_name": names[product_id],
+                    "branch_id": branch_id,
+                    "code": "UNKNOWN_AVAILABILITY",
+                })
                 continue
             row = conn.execute(text(f"""
-                SELECT so_luong_ton, dang_kinh_doanh
+                SELECT dang_kinh_doanh
                 FROM {inventory_schema}.ton_kho_san_pham
                 WHERE co_so_ma = :branch_id AND ma_san_pham = :product_id
                 LIMIT 1
@@ -60,23 +80,19 @@ def validate_items_at_branch(
                     "product_id": product_id,
                     "product_name": names[product_id],
                     "required_quantity": required_quantity,
-                    "code": "UNVERIFIED_STOCK",
+                    "branch_id": branch_id,
+                    "code": "UNKNOWN_AVAILABILITY",
                 })
                 continue
-            stock_quantity = int(row[0] or 0)
-            is_active = bool(row[1])
-            if not is_active or stock_quantity < required_quantity:
+            is_active = bool(row[0])
+            if not is_active:
                 unavailable.append(names[product_id])
                 details.append({
                     "product_id": product_id,
                     "product_name": names[product_id],
                     "required_quantity": required_quantity,
-                    "stock_quantity": stock_quantity,
-                    "code": (
-                        "PRODUCT_DISABLED" if not is_active
-                        else "OUT_OF_STOCK" if stock_quantity <= 0
-                        else "INSUFFICIENT_QUANTITY"
-                    ),
+                    "branch_id": branch_id,
+                    "code": "PRODUCT_DISABLED",
                 })
 
     result = {"unavailable": unavailable, "unverified": unverified}
@@ -108,5 +124,7 @@ def validate_cart_at_branch(
         if line_id is not None:
             line_ids_by_product[product_id].append(str(line_id))
     for detail in result.get("conflicts") or []:
-        detail["line_ids"] = line_ids_by_product.get(str(detail.get("product_id") or ""), [])
+        line_ids = line_ids_by_product.get(str(detail.get("product_id") or ""), [])
+        detail["line_ids"] = line_ids
+        detail["line_id"] = line_ids[0] if len(line_ids) == 1 else None
     return result

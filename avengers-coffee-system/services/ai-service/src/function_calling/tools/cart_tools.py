@@ -866,7 +866,7 @@ def execute_request_checkout(
     if stock_conflicts:
         return {
             "status": "stock_conflict",
-            "message": f"Chi nhánh đang chọn không đủ hàng cho: {', '.join(stock_conflicts)}. Hãy chọn chi nhánh khác trước khi tóm tắt đơn.",
+            "message": f"Chi nhánh đang chọn đang tạm ngưng phục vụ: {', '.join(stock_conflicts)}. Hãy chọn chi nhánh khác trước khi tóm tắt đơn.",
         }
     if not payment_method:
         return {"status": "need_payment", "message": "Chưa ghi nhận phương thức thanh toán. Hãy hỏi khách chọn phương thức trước khi tóm tắt."}
@@ -1139,7 +1139,7 @@ def execute_confirm_checkout(
     except (TypeError, ValueError):
         action_expired = True
     if action_expired:
-        return {"status": "checkout_expired", "message": "Bản tóm tắt đã hết hạn. Vui lòng kiểm tra giá và tồn kho lại trước khi đặt."}
+        return {"status": "checkout_expired", "message": "Bản tóm tắt đã hết hạn. Vui lòng kiểm tra lại giá và trạng thái phục vụ của cửa hàng trước khi đặt."}
     requested_payment, requested_delivery = _normalize_checkout_args(
         payment_method if payment_method is not None else prefs.get("payment_method"),
         delivery_type if delivery_type is not None else prefs.get("delivery_type"),
@@ -1171,7 +1171,7 @@ def execute_confirm_checkout(
         return {
             "status": "stock_conflict",
             "message": (
-                "Tồn kho vừa cập nhật: món bị tạm ngưng: "
+                "Trạng thái phục vụ vừa cập nhật: món đang tạm ngưng: "
                 f"{', '.join(stock_blockers)}. Đơn chưa được tạo; vui lòng chọn lại món hoặc cửa hàng."
             ),
         }

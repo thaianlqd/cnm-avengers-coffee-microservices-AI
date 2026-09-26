@@ -38,14 +38,19 @@ describe('CheckoutSafetyService authoritative quote', () => {
 
   it.each([
     ['missing row', []],
-    ['insufficient quantity', [{ ma_san_pham: 12, so_luong_ton: 1, dang_kinh_doanh: true }]],
     ['disabled row', [{ ma_san_pham: 12, so_luong_ton: 2, dang_kinh_doanh: false }]],
   ])('blocks %s without storing a quote', async (_name, rows) => {
     const { service, manager } = fixture(rows as any[]);
     await expect(service.createQuote('u1', input)).rejects.toMatchObject({
-      response: expect.objectContaining({ code: 'STOCK_CONFLICT' }),
+      response: expect.objectContaining({ code: 'BRANCH_AVAILABILITY_CONFLICT' }),
     });
     expect(manager.query.mock.calls.some(([sql]) => String(sql).includes('INSERT INTO "orders".checkout_quote'))).toBe(false);
+  });
+
+  it('allows an enabled branch row regardless of operational stock quantity', async () => {
+    const { service, manager } = fixture([{ ma_san_pham: 12, so_luong_ton: 0, dang_kinh_doanh: true }]);
+    await expect(service.createQuote('u1', input)).resolves.toMatchObject({ subtotal: 98000 });
+    expect(manager.query.mock.calls.some(([sql]) => String(sql).includes('SET so_luong_ton'))).toBe(false);
   });
 
   it.each(['OPTION_REQUIRED', 'OPTION_UNAVAILABLE'])('rejects %s from the shared option validator', async (reason) => {

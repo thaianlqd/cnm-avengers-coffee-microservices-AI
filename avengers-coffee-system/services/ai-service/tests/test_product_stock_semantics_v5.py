@@ -9,9 +9,9 @@ from src.function_calling.tools import product_tools
     [
         ("Chưa chọn", None, 1, "UNKNOWN_BRANCH", None),
         (None, None, 1, "UNKNOWN_BRANCH", None),
-        ("BR-1", None, 1, "UNVERIFIED_STOCK", None),
+        ("BR-1", None, 1, "UNKNOWN_AVAILABILITY", None),
         ("BR-1", {"so_luong_ton": 3, "dang_kinh_doanh": True}, 2, "AVAILABLE", True),
-        ("BR-1", {"so_luong_ton": 1, "dang_kinh_doanh": True}, 2, "INSUFFICIENT_QUANTITY", False),
+        ("BR-1", {"so_luong_ton": 0, "dang_kinh_doanh": True}, 20, "AVAILABLE", True),
         ("BR-1", {"so_luong_ton": 3, "dang_kinh_doanh": False}, 1, "PRODUCT_DISABLED", False),
     ],
 )

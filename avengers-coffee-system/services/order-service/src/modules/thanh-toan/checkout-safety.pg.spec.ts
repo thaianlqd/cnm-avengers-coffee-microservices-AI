@@ -18,7 +18,6 @@ run('strict checkout PostgreSQL concurrency contract', () => {
     await pool.query(`CREATE SCHEMA "${schema}"`);
     await pool.query(`CREATE TABLE "${schema}".cart_metadata (user_id text PRIMARY KEY, cart_version bigint NOT NULL)`);
     await pool.query(`CREATE TABLE "${schema}".cart_line (id integer PRIMARY KEY, user_id text NOT NULL)`);
-    await pool.query(`CREATE TABLE "${schema}".stock (product_id integer PRIMARY KEY, quantity integer NOT NULL)`);
     await pool.query(`CREATE TABLE "${schema}".checkout_operation (operation_id text PRIMARY KEY, request_hash text NOT NULL, result jsonb)`);
     await pool.query(`CREATE TABLE "${schema}".checkout_voucher_claim (order_id text, user_id text, voucher_code text, reconciled_at timestamptz,
       PRIMARY KEY (order_id, user_id, voucher_code))`);
@@ -60,30 +59,7 @@ run('strict checkout PostgreSQL concurrency contract', () => {
     }
   });
 
-  it('lets only one checkout consume the final stock unit', async () => {
-    await pool.query(`INSERT INTO "${schema}".stock VALUES (12, 1)`);
-    const first = await pool.connect();
-    const second = await pool.connect();
-    try {
-      await first.query('BEGIN'); await second.query('BEGIN');
-      const debit = `UPDATE "${schema}".stock SET quantity=quantity-1 WHERE product_id=12 AND quantity>=1 RETURNING product_id`;
-      const winner = await first.query(debit);
-      const loserPromise = second.query(debit);
-      await first.query('COMMIT');
-      const loser = await loserPromise;
-      await second.query('COMMIT');
-      expect(winner.rowCount).toBe(1);
-      expect(loser.rowCount).toBe(0);
-      const stock = await pool.query(`SELECT quantity FROM "${schema}".stock WHERE product_id=12`);
-      expect(stock.rows[0].quantity).toBe(0);
-    } finally {
-      await first.query('ROLLBACK').catch(() => undefined);
-      await second.query('ROLLBACK').catch(() => undefined);
-      first.release(); second.release();
-    }
-  });
-
-  it('rolls back order writes, stock, cart clear, and version together on failure', async () => {
+  it('rolls back order writes, cart clear, and version together on failure', async () => {
     await pool.query(`CREATE TABLE "${schema}".orders (id text PRIMARY KEY)`);
     await pool.query(`CREATE TABLE "${schema}".details (order_id text NOT NULL)`);
     await pool.query(`INSERT INTO "${schema}".cart_metadata VALUES ('u1', 7)`);
@@ -93,13 +69,11 @@ run('strict checkout PostgreSQL concurrency contract', () => {
       await client.query('BEGIN');
       await client.query(`INSERT INTO "${schema}".orders VALUES ('o-rollback')`);
       await client.query(`INSERT INTO "${schema}".details VALUES ('o-rollback')`);
-      await client.query(`UPDATE "${schema}".stock SET quantity=quantity-1 WHERE product_id=12`);
       await client.query(`DELETE FROM "${schema}".cart_line WHERE user_id='u1'`);
       await client.query(`UPDATE "${schema}".cart_metadata SET cart_version=cart_version+1 WHERE user_id='u1'`);
       await client.query('ROLLBACK');
       expect((await pool.query(`SELECT count(*)::int AS n FROM "${schema}".orders`)).rows[0].n).toBe(0);
       expect((await pool.query(`SELECT count(*)::int AS n FROM "${schema}".details`)).rows[0].n).toBe(0);
-      expect((await pool.query(`SELECT quantity FROM "${schema}".stock WHERE product_id=12`)).rows[0].quantity).toBe(0);
       expect((await pool.query(`SELECT count(*)::int AS n FROM "${schema}".cart_line`)).rows[0].n).toBe(1);
       expect((await pool.query(`SELECT cart_version FROM "${schema}".cart_metadata WHERE user_id='u1'`)).rows[0].cart_version).toBe('7');
     } finally { client.release(); }

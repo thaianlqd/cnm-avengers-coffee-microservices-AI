@@ -126,7 +126,7 @@ run('CheckoutSafetyService real PostgreSQL transaction', () => {
     expect(await dataSource.getRepository(ChiTietDonHang).count({ where: { ma_don_hang: first.order_id } })).toBe(1);
     expect(await dataSource.getRepository(DeliveryTracking).count({ where: { ma_don_hang: first.order_id } })).toBe(1);
     expect(await dataSource.getRepository(ThongBao).count({ where: { ma_nguoi_dung: userId } })).toBe(1);
-    expect((await dataSource.query(`SELECT so_luong_ton FROM inventory.ton_kho_san_pham WHERE co_so_ma=$1`, [branchCode]))[0].so_luong_ton).toBe(3);
+    expect((await dataSource.query(`SELECT so_luong_ton FROM inventory.ton_kho_san_pham WHERE co_so_ma=$1`, [branchCode]))[0].so_luong_ton).toBe(5);
     expect((await dataSource.query(`SELECT count(*)::int AS n FROM orders.checkout_outbox WHERE payload->>'orderId'=$1`, [first.order_id]))[0].n).toBe(2);
   });
 
@@ -141,11 +141,41 @@ run('CheckoutSafetyService real PostgreSQL transaction', () => {
     expect((await dataSource.query(`SELECT so_luong_ton FROM inventory.ton_kho_san_pham WHERE co_so_ma=$1`, [branchCode]))[0].so_luong_ton).toBe(5);
   });
 
-  it('rejects missing and insufficient inventory at quote time', async () => {
+  it('rejects missing availability, but ignores operational stock quantity', async () => {
     const missing = await seed(2, -1);
     const low = await seed(2, 1);
     await expect(service.createQuote(missing.userId, missing.input)).rejects.toThrow();
-    await expect(service.createQuote(low.userId, low.input)).rejects.toThrow();
+    await expect(service.createQuote(low.userId, low.input)).resolves.toMatchObject({ subtotal: 98000 });
+  });
+
+  it('rejects a disabled branch row with structured line conflict and preserves cart', async () => {
+    const disabled = await seed(2, 0);
+    await dataSource.query(`UPDATE inventory.ton_kho_san_pham SET dang_kinh_doanh=FALSE WHERE co_so_ma=$1`, [disabled.branchCode]);
+    await expect(service.createQuote(disabled.userId, disabled.input)).rejects.toMatchObject({
+      response: expect.objectContaining({
+        code: 'BRANCH_AVAILABILITY_CONFLICT',
+        conflicts: [expect.objectContaining({
+          product_id: 12, branch_id: disabled.branchCode, availability_code: 'PRODUCT_DISABLED',
+        })],
+      }),
+    });
+    expect(await dataSource.getRepository(CartItem).count({ where: { ma_nguoi_dung: disabled.userId } })).toBe(1);
+    expect((await dataSource.query(`SELECT cart_version FROM orders.cart_metadata WHERE user_id=$1`, [disabled.userId]))[0].cart_version).toBe('7');
+  });
+
+  it('revalidates every cart line when the checkout branch changes', async () => {
+    const selected = await seed(2, 0);
+    const disabledBranch = `BR-${++nextBranch}`;
+    await dataSource.query(`INSERT INTO inventory.ton_kho_san_pham VALUES ($1, 12, 999, FALSE)`, [disabledBranch]);
+    await expect(service.createQuote(selected.userId, { ...selected.input, branch_code: disabledBranch }))
+      .rejects.toMatchObject({
+        response: expect.objectContaining({
+          code: 'BRANCH_AVAILABILITY_CONFLICT',
+          conflicts: [expect.objectContaining({ branch_id: disabledBranch, line_id: expect.any(Number) })],
+        }),
+      });
+    expect(await dataSource.getRepository(CartItem).count({ where: { ma_nguoi_dung: selected.userId } })).toBe(1);
+    expect((await dataSource.query(`SELECT cart_version FROM orders.cart_metadata WHERE user_id=$1`, [selected.userId]))[0].cart_version).toBe('7');
   });
 
   it('rejects a direct cart line whose required size is invalid', async () => {
@@ -156,7 +186,7 @@ run('CheckoutSafetyService real PostgreSQL transaction', () => {
     });
   });
 
-  it('rejects stale cart version, disabled option, and stock changed after quote', async () => {
+  it('rejects stale cart version, disabled option, and branch availability changed after quote', async () => {
     const stale = await seed();
     const staleQuote = await service.createQuote(stale.userId, stale.input);
     await dataSource.query(`UPDATE orders.cart_metadata SET cart_version=8 WHERE user_id=$1`, [stale.userId]);
@@ -168,16 +198,19 @@ run('CheckoutSafetyService real PostgreSQL transaction', () => {
     await expect(service.confirmQuote(option.userId, { ...option.input, quote_id: optionQuote.quote_id, action_id: optionQuote.action_id }, randomUUID())).rejects.toThrow();
     await dataSource.query(`INSERT INTO menu.bien_the_san_pham VALUES (12, 1, 'Vừa', 49000)`);
 
-    const stock = await seed();
-    const stockQuote = await service.createQuote(stock.userId, stock.input);
-    await dataSource.query(`UPDATE inventory.ton_kho_san_pham SET so_luong_ton=0 WHERE co_so_ma=$1`, [stock.branchCode]);
-    await expect(service.confirmQuote(stock.userId, { ...stock.input, quote_id: stockQuote.quote_id, action_id: stockQuote.action_id }, randomUUID())).rejects.toThrow();
-    expect(await dataSource.getRepository(CartItem).count({ where: { ma_nguoi_dung: stock.userId } })).toBe(1);
-    expect((await dataSource.query(`SELECT cart_version FROM orders.cart_metadata WHERE user_id=$1`, [stock.userId]))[0].cart_version).toBe('7');
+    const availability = await seed();
+    const availabilityQuote = await service.createQuote(availability.userId, availability.input);
+    await dataSource.query(`UPDATE inventory.ton_kho_san_pham SET dang_kinh_doanh=FALSE WHERE co_so_ma=$1`, [availability.branchCode]);
+    await expect(service.confirmQuote(availability.userId, { ...availability.input, quote_id: availabilityQuote.quote_id,
+      action_id: availabilityQuote.action_id }, randomUUID())).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'BRANCH_AVAILABILITY_CONFLICT' }),
+    });
+    expect(await dataSource.getRepository(CartItem).count({ where: { ma_nguoi_dung: availability.userId } })).toBe(1);
+    expect((await dataSource.query(`SELECT cart_version FROM orders.cart_metadata WHERE user_id=$1`, [availability.userId]))[0].cart_version).toBe('7');
   });
 
   it.each(['don_hang', 'chi_tiet_don_hang', 'giao_dich_thanh_toan'])(
-    'rolls back cart, version, and stock when %s insert fails', async (table) => {
+    'rolls back cart and version while operational stock stays untouched when %s insert fails', async (table) => {
       const { userId, branchCode, input } = await seed();
       const quote = await service.createQuote(userId, input);
       await dataSource.query(`CREATE OR REPLACE FUNCTION orders.fail_checkout_test() RETURNS trigger LANGUAGE plpgsql AS $$
@@ -209,10 +242,10 @@ run('CheckoutSafetyService real PostgreSQL transaction', () => {
     expect(first.order_id).toBe(second.order_id);
     expect([first.already_processed, second.already_processed].sort()).toEqual([false, true]);
     expect(await dataSource.getRepository(DonHang).count({ where: { ma_nguoi_dung: userId } })).toBe(1);
-    expect((await dataSource.query(`SELECT so_luong_ton FROM inventory.ton_kho_san_pham WHERE co_so_ma=$1`, [branchCode]))[0].so_luong_ton).toBe(0);
+    expect((await dataSource.query(`SELECT so_luong_ton FROM inventory.ton_kho_san_pham WHERE co_so_ma=$1`, [branchCode]))[0].so_luong_ton).toBe(1);
   });
 
-  it('allows only one of two distinct carts to consume the final branch stock unit', async () => {
+  it('allows distinct carts for an enabled branch without competing for operational stock', async () => {
     const first = await seed(1, 1);
     const second = await seed(1, 1);
     const secondInput = { ...second.input, branch_code: first.branchCode };
@@ -224,13 +257,13 @@ run('CheckoutSafetyService real PostgreSQL transaction', () => {
       service.confirmQuote(second.userId, { ...secondInput, quote_id: secondQuote.quote_id,
         action_id: secondQuote.action_id }, randomUUID()),
     ]);
-    expect(results.filter((row) => row.status === 'fulfilled')).toHaveLength(1);
-    expect(results.filter((row) => row.status === 'rejected')).toHaveLength(1);
+    expect(results.filter((row) => row.status === 'fulfilled')).toHaveLength(2);
+    expect(results.filter((row) => row.status === 'rejected')).toHaveLength(0);
     expect((await dataSource.query(`SELECT so_luong_ton FROM inventory.ton_kho_san_pham WHERE co_so_ma=$1`,
-      [first.branchCode]))[0].so_luong_ton).toBe(0);
+      [first.branchCode]))[0].so_luong_ton).toBe(1);
     expect(await dataSource.getRepository(DonHang).count({ where: [
       { ma_nguoi_dung: first.userId }, { ma_nguoi_dung: second.userId },
-    ] })).toBe(1);
+    ] })).toBe(2);
   });
 
   it('rejects same idempotency key for changed payload or another user', async () => {
@@ -259,7 +292,7 @@ run('CheckoutSafetyService real PostgreSQL transaction', () => {
     await dataSource.query(`UPDATE orders.cart_metadata SET cart_version=8 WHERE user_id=$1`, [userId]);
     await expect(service.createQuote(userId, { ...withVoucher, expected_cart_version: 8 })).rejects.toThrow();
     expect((await dataSource.query(`SELECT count(*)::int AS n FROM orders.checkout_voucher_claim WHERE user_id=$1 AND reconciled_at IS NULL`, [userId]))[0].n).toBe(1);
-    expect((await dataSource.query(`SELECT so_luong_ton FROM inventory.ton_kho_san_pham WHERE co_so_ma=$1`, [branchCode]))[0].so_luong_ton).toBe(4);
+    expect((await dataSource.query(`SELECT so_luong_ton FROM inventory.ton_kho_san_pham WHERE co_so_ma=$1`, [branchCode]))[0].so_luong_ton).toBe(5);
   });
 
   it('revalidates voucher discount and increments a local PUBLIC voucher only once', async () => {
@@ -299,7 +332,7 @@ run('CheckoutSafetyService real PostgreSQL transaction', () => {
     }
   });
 
-  it('wallet insufficient balance leaves no order and does not consume stock', async () => {
+  it('wallet insufficient balance leaves no order and operational stock stays untouched', async () => {
     const { userId, branchCode, input } = await seed(1, 2);
     const walletInput = { ...input, phuong_thuc_thanh_toan: 'VI_DIEN_TU' };
     const quote = await service.createQuote(userId, walletInput);

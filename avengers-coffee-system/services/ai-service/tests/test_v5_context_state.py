@@ -3,7 +3,8 @@
 These tests intentionally exercise state/resolution helpers directly: they do
 not need an LLM, assistant prose, or a live Order Service to decide a write.
 """
-from src.agents.order_flow_graph import _dispatch_pending_yes_no, _resolve_typed_references
+from src.agents import agent_service
+from src.agents.order_flow_graph import _dispatch_pending_yes_no, _resolve_typed_references, run_order_flow
 from src.agents.agent_service import _complete_pending_products_from_options, _run_agent_impl
 from src.agents.tier1 import classify_confirmation
 from src.common import cart_manager
@@ -91,6 +92,90 @@ def test_yes_no_dispatcher_uses_durable_action_not_the_word_alone():
     assert cart_manager.get_pending_interaction(session)["action"] == "CLEAR_CART"
 
 
+def test_clear_cart_yes_executes_exactly_once(monkeypatch):
+    session = "v5-clear-cart-once"
+    cart_manager.add_item(session, "P1", "Matcha", 49000)
+    cart_manager.set_pending_interaction(
+        session, kind="YES_NO", domain="CART", action="CLEAR_CART", data={},
+    )
+    calls = []
+
+    def clear_once(_session_id):
+        calls.append(_session_id)
+        return {"status": "ok", "message": "Đã xoá giỏ."}
+
+    monkeypatch.setattr("src.function_calling.tools.cart_tools.execute_clear_cart", clear_once)
+    monkeypatch.setattr(agent_service, "groq_agent_chat", lambda **_kwargs: {
+        "reply": "Bạn muốn làm gì tiếp?", "tool_calls_log": [], "error": None,
+    })
+    run_order_flow(session, "ừ", client_message_id="clear-confirm-1")
+    run_order_flow(session, "ừ", client_message_id="clear-confirm-2")
+    assert calls == [session]
+
+
+def test_yes_no_address_no_checkout_and_material_payment_change(monkeypatch):
+    address_session = "v5-address-confirm"
+    cart_manager.set_pending_interaction(
+        address_session, kind="YES_NO", domain="ADDRESS", action="CONFIRM_ADDRESS",
+        context_id="address:1", data={"address_snapshot": "123 Đường A"},
+    )
+    # Use an explicit helper so the assertion captures the dispatcher argument.
+    def confirm_address(session_id, _message, confirmed=False):
+        if confirmed:
+            confirmed_calls.append(session_id)
+        return {"reply": "Đã xác nhận"}
+
+    confirmed_calls = []
+    monkeypatch.setattr(agent_service, "_confirm_saved_location", confirm_address)
+    monkeypatch.setattr(agent_service, "_advance_checkout_if_ready", lambda _session_id, result: result)
+    result = _dispatch_pending_yes_no(address_session, {"is_empty": False}, "ừ ừ")
+    assert result["reply"] == "Đã xác nhận"
+    assert confirmed_calls == [address_session]
+
+    checkout_session = "v5-checkout-no"
+    cart_manager.set_pending_interaction(
+        checkout_session, kind="YES_NO", domain="CHECKOUT", action="CONFIRM_CHECKOUT",
+        context_id="action:1", data={"action_id": "action:1"},
+    )
+    monkeypatch.setattr(
+        "src.function_calling.tools.cart_tools.execute_confirm_checkout",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("NO must not create an order")),
+    )
+    declined = _dispatch_pending_yes_no(checkout_session, {"is_empty": False}, "không")
+    assert "chưa đặt đơn" in declined["reply"]
+    assert cart_manager.get_pending_interaction(checkout_session) is None
+
+    change_session = "v5-checkout-payment-change"
+    cart_manager.set_checkout_context(
+        change_session, checkout_action_id="action:old", checkout_quote_id="quote:old",
+        checkout_action_expires_at="2099-01-01T00:00:00+00:00",
+    )
+    cart_manager.set_pending_interaction(
+        change_session, kind="YES_NO", domain="CHECKOUT", action="CONFIRM_CHECKOUT",
+        context_id="action:old", data={"action_id": "action:old"},
+    )
+    assert _dispatch_pending_yes_no(change_session, {"is_empty": False}, "oke nhưng đổi sang QR") is None
+    prefs = cart_manager.get_checkout_prefs(change_session)
+    assert prefs.get("checkout_action_id") is None
+    assert prefs.get("checkout_quote_id") is None
+    assert cart_manager.get_pending_interaction(change_session) is None
+
+
+def test_select_one_short_acknowledgements_reprompt_without_selection():
+    session = "v5-select-one-short-reply"
+    cart_manager.set_pending_interaction(
+        session, kind="SELECT_ONE", domain="VOUCHER", action="SELECT_VOUCHER", data={},
+    )
+    state = {
+        "session_id": session, "user_message": "oke", "cart": {"is_empty": False},
+        "intent": {"intent": "UNKNOWN"}, "history": [],
+    }
+    from src.agents.order_flow_graph import _resolve_pending_interaction
+    resolved = _resolve_pending_interaction(state)
+    assert "chọn rõ mã số mấy" in resolved["result"]["reply"]
+    assert cart_manager.get_pending_interaction(session)["action"] == "SELECT_VOUCHER"
+
+
 def test_old_assistant_numbering_cannot_stage_a_cart_write(monkeypatch):
     session = "v5-history-is-not-write-authority"
     monkeypatch.setattr(
@@ -122,6 +207,27 @@ def test_read_only_detour_does_not_consume_other_product_draft():
     stored = cart_manager.get_checkout_prefs(session)["pending_products"][0]
     assert stored["pending_id"] == pending[0]["pending_id"]
     assert stored["selected_options"] == {}
+
+
+def test_twelve_read_only_detours_preserve_resume_task_and_pending_id():
+    session = "v5-long-resume-detour"
+    pending = cart_manager.set_pending_products(session, [{
+        "product_id": "M1", "product_name": "Matcha Latte", "quantity": 1,
+        "selected_options": {"do_ngot": "50%"}, "missing_options": ["Kích thước"],
+        "options": {"groups": {"Kích thước": ["Nhỏ", "Vừa", "Lớn"]}},
+    }])
+    cart_manager.set_pending_interaction(
+        session, kind="FILL_FIELDS", domain="PRODUCT", action="FILL_OPTIONS",
+        context_id=pending[0]["pending_id"], data={"pending_id": pending[0]["pending_id"]},
+    )
+    for turn in range(12):
+        assert _complete_pending_products_from_options(
+            session, f"Bánh Tiramisu câu hỏi đọc-only số {turn}?",
+        ) is None
+    prefs = cart_manager.get_checkout_prefs(session)
+    assert prefs["pending_products"][0]["pending_id"] == pending[0]["pending_id"]
+    assert prefs["resume_task"]["product_id"] == "M1"
+    assert prefs["resume_task"]["selected_values"] == {"do_ngot": "50%"}
 
 
 def test_pending_draft_removal_uses_stable_id_not_similar_name():
