@@ -14,6 +14,7 @@ const userSchema = process.env.DB_SCHEMA || 'identity';
 /** Ghi nhận mỗi lần một user dùng một mã khuyến mãi */
 @Entity({ name: 'khuyen_mai_su_dung', schema: userSchema })
 @Index(['ma_khuyen_mai', 'ma_nguoi_dung'])
+@Index(['ma_khuyen_mai', 'ma_nguoi_dung', 'ma_don_hang'], { unique: true, where: '"ma_don_hang" IS NOT NULL' })
 export class PromotionUsage {
   @PrimaryGeneratedColumn()
   id: number;

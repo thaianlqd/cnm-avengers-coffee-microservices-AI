@@ -1052,6 +1052,13 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
         next_start = named_offsets[index + 1][0] if index + 1 < len(named_offsets) else len(normalized)
         clauses[pending_id] = normalized[start:next_start]
 
+    # A single durable draft is the one legitimate case where an unscoped
+    # answer such as "size vừa" can be applied.  With two or more drafts we
+    # returned above instead of guessing.  Keep this binding explicit so the
+    # code below never treats an empty clause as a configured product.
+    if not named_offsets and len(pending) == 1:
+        clauses[str(item.get("pending_id") or "")] = normalized
+
     # A named, different product plus a question is a read-only detour.  Keep
     # the resume task intact and let the normal read route answer it.
     if product_name and _normalize_chat_text(product_name) not in normalized and re.search(r"\b(co|gia|bao nhieu|review|danh gia|khong)\b", normalized):
@@ -1066,8 +1073,13 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
     selected: Dict[str, Any] = dict(updated.get("selected_options") or {})
     missing = list(updated.get("missing_options") or [])
     rest = [row for row in updated_pending if str(row.get("pending_id") or "") != str(updated.get("pending_id") or "")]
+    # Persist every explicitly-scoped clause before attempting the first
+    # price lookup/add.  In particular, a successful Matcha ADD must not
+    # discard Cold Brew's already-selected size/toppings.  The pending list
+    # is conversational state, while the cart write below remains backend
+    # authoritative and may fail independently.
+    cart_manager.set_pending_products(session_id, updated_pending)
     if missing:
-        cart_manager.set_pending_products(session_id, [updated, *rest])
         cart_manager.set_pending_interaction(session_id, kind="FILL_FIELDS", domain="PRODUCT", action="FILL_OPTIONS", context_id=str(updated.get("pending_id")), data={"pending_id": updated.get("pending_id")})
         return {"reply": f"{product_name} còn cần chọn: {', '.join(missing)}.", "checkout_payload": None, "tool_calls_log": [], "error": None}
 
@@ -1076,12 +1088,10 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
     products = price_result.get("products") or []
     exact = next((product for product in products if _normalize_chat_text(product.get("product_name")) == _normalize_chat_text(product_name)), products[0] if len(products) == 1 else None)
     if price_result.get("status") != "ok" or not exact:
-        cart_manager.set_pending_products(session_id, [updated, *rest])
         return {"reply": f"{product_name}: chưa lấy được giá chính xác; mình vẫn giữ lựa chọn này.", "checkout_payload": None, "tool_calls_log": logs, "error": None}
     added = execute_add_to_cart(session_id=session_id, product_id=str(exact["product_id"]), product_name=str(exact["product_name"]), unit_price=float(exact["final_price"]), quantity=max(1, int(item.get("quantity") or 1)), size=selected.get("size"), toppings=selected.get("toppings") or [], luong_da=selected.get("luong_da"), do_ngot=selected.get("do_ngot"), loai_sua=selected.get("loai_sua"), operation_id=item.get("operation_id"))
     logs.append({"tool": "add_to_cart", "args": {"product_name": product_name, **selected}, "result": added})
     if added.get("status") != "ok":
-        cart_manager.set_pending_products(session_id, [updated, *rest])
         return {"reply": added.get("message", f"Chưa thể thêm {product_name}; mình vẫn giữ lựa chọn này."), "checkout_payload": None, "tool_calls_log": logs, "error": None}
     cart_manager.mark_pending_product_added(session_id, pending_id=str(item.get("pending_id") or ""), product_id=str(item.get("product_id") or exact.get("product_id") or ""))
     remaining = list(cart_manager.get_checkout_prefs(session_id).get("pending_products") or [])

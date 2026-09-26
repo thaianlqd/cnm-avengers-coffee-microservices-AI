@@ -6,6 +6,7 @@ import { DonHang } from './entities/don-hang.entity';
 import { ChiTietDonHang } from './entities/chi-tiet-don-hang.entity';
 import { GiaoDichThanhToan } from './entities/giao-dich-thanh-toan.entity';
 import { VoucherService } from '../voucher/voucher.service';
+import { ProductConfigurationValidator } from '../cart/product-configuration-validator.service';
 
 type QuoteInput = {
   phuong_thuc_thanh_toan: 'VNPAY' | 'NGAN_HANG_QR' | 'VI_DIEN_TU' | 'THANH_TOAN_KHI_NHAN_HANG';
@@ -33,6 +34,7 @@ export class CheckoutSafetyService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly voucherService: VoucherService,
+    private readonly productConfigurationValidator: ProductConfigurationValidator = new ProductConfigurationValidator(),
   ) {}
 
   private schema() {
@@ -62,6 +64,18 @@ export class CheckoutSafetyService {
       user_id VARCHAR NOT NULL,
       request_hash TEXT NOT NULL,
       result JSONB NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`);
+    await this.dataSource.query(`CREATE TABLE IF NOT EXISTS "${schema}".checkout_outbox (
+      event_id UUID PRIMARY KEY,
+      event_key VARCHAR(300) NOT NULL UNIQUE,
+      event_type VARCHAR(80) NOT NULL,
+      payload JSONB NOT NULL,
+      attempts INTEGER NOT NULL DEFAULT 0,
+      available_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      delivered_at TIMESTAMPTZ NULL,
+      last_error TEXT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`);
@@ -149,60 +163,18 @@ export class CheckoutSafetyService {
           !Number.isInteger(Number(item.so_luong)) || Number(item.so_luong) < 1) {
         throw new ConflictException({ code: 'REQUOTE_REQUIRED', reason: 'INVALID_CART_LINE', line_id: item.id });
       }
-      const productRows = await manager.query(
-        `SELECT ma_san_pham, ten_san_pham, gia_ban, hinh_anh_url, trang_thai
-           FROM menu.san_pham WHERE ma_san_pham = $1 LIMIT 1`, [item.ma_san_pham],
-      );
-      const product = productRows[0];
-      if (!product || product.trang_thai === false) {
+      let authoritative;
+      try {
+        authoritative = await this.productConfigurationValidator.resolve(manager, item);
+      } catch (error) {
+        if (error instanceof ConflictException) {
+          const response: any = error.getResponse();
+          throw new ConflictException({ ...response, line_id: item.id });
+        }
         throw new ConflictException({ code: 'REQUOTE_REQUIRED', reason: 'PRODUCT_DISABLED', line_id: item.id });
       }
-      const variants: Array<{ ten_thuoc_tinh: string; gia_tri: string; phu_thu: number }> = await manager.query(
-        `SELECT tt.ten_thuoc_tinh, bt.gia_tri, bt.phu_thu
-           FROM menu.bien_the_san_pham bt JOIN menu.thuoc_tinh tt ON tt.ma_thuoc_tinh = bt.ma_thuoc_tinh
-          WHERE bt.ma_san_pham = $1`, [item.ma_san_pham],
-      );
-      const sizeRows = variants.filter((row) => /size|kich thuoc/.test(normalize(row.ten_thuoc_tinh)));
-      const selectedSize = normalize(item.size || 'Nhỏ');
-      const size = sizeRows.find((row) => normalize(row.gia_tri) === selectedSize);
-      if (sizeRows.length && !size) {
-        throw new ConflictException({ code: 'REQUOTE_REQUIRED', reason: 'OPTION_UNAVAILABLE', line_id: item.id, option: 'size' });
-      }
-      const selectedExtras = [
-        ...(item.toppings || []), item.loai_sua,
-        ...Object.values(item.custom_attributes || {}).flatMap((value: any) => Array.isArray(value) ? value : [value]),
-      ].map(normalize).filter(Boolean);
-      const variantExtras = variants.filter((row) => !sizeRows.includes(row));
-      // Ice and sugar normally have no surcharge, but where Menu defines
-      // their option group they remain authoritative choices and must be
-      // validated just as topping/milk/custom attributes are.
-      const selectedByGroup = [
-        { field: 'luong_da', value: normalize(item.luong_da), aliases: ['da', 'ice'] },
-        { field: 'do_ngot', value: normalize(item.do_ngot), aliases: ['ngot', 'duong', 'sugar'] },
-        { field: 'loai_sua', value: normalize(item.loai_sua), aliases: ['sua', 'milk'] },
-      ];
-      for (const selected of selectedByGroup) {
-        if (!selected.value) continue;
-        const rowsForGroup = variantExtras.filter((row) => {
-          const attribute = normalize(row.ten_thuoc_tinh);
-          return selected.aliases.some((alias) => attribute.includes(alias));
-        });
-        // Products without a Menu group keep their legacy free-form field;
-        // once a group exists, however, a stale value cannot pass checkout.
-        if (rowsForGroup.length && !rowsForGroup.some((row) => normalize(row.gia_tri) === selected.value)) {
-          throw new ConflictException({ code: 'REQUOTE_REQUIRED', reason: 'OPTION_UNAVAILABLE', line_id: item.id, option: selected.field });
-        }
-      }
-      for (const value of selectedExtras) {
-        if (!variantExtras.some((row) => normalize(row.gia_tri) === value)) {
-          throw new ConflictException({ code: 'REQUOTE_REQUIRED', reason: 'OPTION_UNAVAILABLE', line_id: item.id, option: value });
-        }
-      }
-      const unitPrice = Number(size?.phu_thu ?? product.gia_ban ?? 0) + variantExtras
-        .filter((row) => selectedExtras.includes(normalize(row.gia_tri)))
-        .reduce((sum, row) => sum + Number(row.phu_thu || 0), 0);
       repriced.push({
-        ...item, ten_san_pham: String(product.ten_san_pham), hinh_anh_url: String(product.hinh_anh_url || ''), gia_ban: unitPrice,
+        ...item, ten_san_pham: authoritative.productName, hinh_anh_url: authoritative.imageUrl, gia_ban: authoritative.unitPrice,
       });
     }
     return repriced;
@@ -408,9 +380,41 @@ export class CheckoutSafetyService {
         `UPDATE "${schema}".cart_metadata SET cart_version = cart_version + 1, updated_at = NOW()
          WHERE user_id = $1 RETURNING cart_id, cart_version`, [userId],
       );
-      const result = { status: 'success', order_id: order.ma_don_hang, quote_id: input.quote_id, cart_id: bumped[0].cart_id, cart_version: Number(bumped[0].cart_version) };
+      const paymentReference = `checkout:${input.quote_id}`;
+      const result = {
+        status: 'success', order_id: order.ma_don_hang, quote_id: input.quote_id,
+        action_id: input.action_id, cart_id: bumped[0].cart_id,
+        cart_version: Number(bumped[0].cart_version), subtotal: Number(quoted.subtotal),
+        discount_amount: Number(quoted.discount_amount), final_total: Number(quoted.final_total),
+        voucher_code: quoted.voucher_code || null, payment_method: quoted.payment_method,
+        payment_reference: paymentReference,
+        // External VNPAY/QR initiation stays in the legacy payment domain;
+        // return a stable reference rather than manufacture a second intent.
+        redirect_url: null, payment_details: null,
+      };
       await manager.query(`UPDATE "${schema}".checkout_quote SET consumed_at = NOW() WHERE quote_id = $1`, [input.quote_id]);
       await manager.query(`UPDATE "${schema}".checkout_operation SET result = $2::jsonb, updated_at = NOW() WHERE operation_id = $1`, [normalizedOperationId, JSON.stringify(result)]);
+      await manager.query(
+        `INSERT INTO "${schema}".checkout_outbox (event_id, event_key, event_type, payload)
+         VALUES ($1, $2, 'ORDER_CREATED', $3::jsonb)
+         ON CONFLICT (event_key) DO NOTHING`,
+        [randomUUID(), `order-created:${order.ma_don_hang}`, JSON.stringify({
+          orderId: order.ma_don_hang, userId, branchCode: quoted.branch_code,
+          totalAmount: Number(quoted.final_total), paymentMethod: quoted.payment_method,
+          status: order.trang_thai_don_hang,
+        })],
+      );
+      if (quoted.voucher_code) {
+        await manager.query(
+          `INSERT INTO "${schema}".checkout_outbox (event_id, event_key, event_type, payload)
+           VALUES ($1, $2, 'VOUCHER_USAGE_CONFIRM', $3::jsonb)
+           ON CONFLICT (event_key) DO NOTHING`,
+          [randomUUID(), `voucher-usage:${order.ma_don_hang}:${quoted.voucher_code}:${userId}`, JSON.stringify({
+            ma_khuyen_mai: quoted.voucher_code, user_id: userId,
+            ma_don_hang: order.ma_don_hang, so_tien_giam: Number(quoted.discount_amount),
+          })],
+        );
+      }
       return { ...result, already_processed: false };
     });
   }

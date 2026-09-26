@@ -2512,17 +2512,29 @@ export class UserService implements OnModuleInit {
     user_id?: string;
     ma_don_hang?: string | null;
     so_tien_giam?: number;
+    idempotency_key?: string;
   }) {
     const code = String(payload.ma_khuyen_mai || '').trim().toUpperCase();
     if (!code) throw new BadRequestException('ma_khuyen_mai la bat buoc');
 
+    const userId = String(payload.user_id || '').trim();
+    const orderId = String(payload.ma_don_hang || '').trim();
+    // ma_don_hang is the durable business idempotency identity supplied by
+    // checkout outbox. Check before incrementing the promotion counter.
+    if (orderId && userId) {
+      const existing = await this.promotionUsageRepo.findOne({
+        where: { ma_khuyen_mai: code, ma_nguoi_dung: userId, ma_don_hang: orderId },
+      });
+      if (existing) {
+        return { message: 'Da ghi nhan su dung khuyen mai', ma_khuyen_mai: code, already_processed: true };
+      }
+    }
     const p = await this.promotionRepo.findOne({ where: { ma_khuyen_mai: code } });
     if (p) {
       p.so_luong_da_dung = Number(p.so_luong_da_dung || 0) + 1;
       await this.promotionRepo.save(p);
     }
 
-    const userId = String(payload.user_id || '').trim();
     if (userId) {
       const usage = this.promotionUsageRepo.create({
         ma_khuyen_mai: code,

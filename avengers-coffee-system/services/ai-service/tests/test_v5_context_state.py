@@ -205,3 +205,69 @@ def test_multiple_pending_unscoped_option_requires_clarification():
     result = _complete_pending_products_from_options(session, "size vừa")
     assert "nói rõ" in result["reply"]
     assert all(not item["selected_options"] for item in cart_manager.get_checkout_prefs(session)["pending_products"])
+
+
+def test_successful_first_add_preserves_second_products_explicit_size(monkeypatch):
+    """Both named clauses are durable before the first backend ADD succeeds."""
+    session = "v5-options-successful-first-add"
+    pending = cart_manager.set_pending_products(session, [
+        {"product_id": "M1", "product_name": "Matcha Latte", "options": {"groups": {"Kích thước": ["Nhỏ", "Vừa", "Lớn"]}}},
+        {"product_id": "C1", "product_name": "Cold Brew", "options": {"groups": {"Kích thước": ["Nhỏ", "Vừa", "Lớn"]}}},
+    ])
+    cart_manager.set_pending_interaction(
+        session, kind="FILL_FIELDS", domain="PRODUCT", action="FILL_OPTIONS",
+        context_id=pending[0]["pending_id"], data={"pending_id": pending[0]["pending_id"]},
+    )
+    monkeypatch.setattr(
+        "src.function_calling.tools.product_tools.execute_check_price_and_stock",
+        lambda **kwargs: {"status": "ok", "products": [{
+            "product_id": kwargs["product_name_query"],
+            "product_name": kwargs["product_name_query"], "final_price": 49000,
+        }]},
+    )
+    added = []
+    monkeypatch.setattr(
+        "src.function_calling.tools.cart_tools.execute_add_to_cart",
+        lambda **kwargs: added.append(kwargs) or {"status": "ok"},
+    )
+
+    result = _complete_pending_products_from_options(
+        session, "Matcha Latte size lớn, Cold Brew size vừa",
+    )
+
+    assert added and added[0]["product_name"] == "Matcha Latte"
+    assert added[0]["size"] == "Lớn"
+    remaining = cart_manager.get_checkout_prefs(session)["pending_products"]
+    assert [row["product_id"] for row in remaining] == ["C1"]
+    assert remaining[0]["selected_options"]["size"] == "Vừa"
+    interaction = cart_manager.get_pending_interaction(session)
+    assert interaction["action"] == "FILL_OPTIONS"
+    assert interaction["data"]["pending_id"] == remaining[0]["pending_id"]
+
+
+def test_successful_first_add_preserves_second_products_explicit_toppings(monkeypatch):
+    session = "v5-toppings-successful-first-add"
+    pending = cart_manager.set_pending_products(session, [
+        {"product_id": "M1", "product_name": "Matcha Latte", "options": {"groups": {"Topping": ["Cheese foam", "Trân châu"]}}},
+        {"product_id": "C1", "product_name": "Cold Brew", "options": {"groups": {"Topping": ["Cheese foam", "Trân châu"]}}},
+    ])
+    cart_manager.set_pending_interaction(
+        session, kind="FILL_FIELDS", domain="PRODUCT", action="FILL_OPTIONS",
+        context_id=pending[0]["pending_id"], data={"pending_id": pending[0]["pending_id"]},
+    )
+    monkeypatch.setattr(
+        "src.function_calling.tools.product_tools.execute_check_price_and_stock",
+        lambda **kwargs: {"status": "ok", "products": [{
+            "product_id": kwargs["product_name_query"],
+            "product_name": kwargs["product_name_query"], "final_price": 49000,
+        }]},
+    )
+    monkeypatch.setattr("src.function_calling.tools.cart_tools.execute_add_to_cart", lambda **_kwargs: {"status": "ok"})
+
+    _complete_pending_products_from_options(
+        session, "Matcha Latte thêm cheese foam, Cold Brew thêm trân châu",
+    )
+
+    remaining = cart_manager.get_checkout_prefs(session)["pending_products"]
+    assert remaining[0]["product_id"] == "C1"
+    assert remaining[0]["selected_options"]["toppings"] == ["Trân châu"]

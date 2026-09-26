@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, ForbiddenException, Get, Param, Patch, Post, Query, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Delete, ForbiddenException, Get, Headers, Param, Patch, Post, Query, UnauthorizedException } from '@nestjs/common';
 import { AllowInternal, CurrentUser, Public, Roles } from '../../auth/auth.decorators';
 import type { AuthUser } from '../../auth/auth.types';
 import { UserService } from './user.service';
@@ -363,6 +363,7 @@ export class UserController {
   @AllowInternal()
   @Post('promotions/xac-nhan-su-dung')
   async xacNhanSuDungKhuyenMai(
+    @Headers('x-idempotency-key') idempotencyKey: string | undefined,
     @Body() body: { ma_khuyen_mai?: string; user_id?: string; ma_don_hang?: string; so_tien_giam?: number },
   ) {
     return this.userService.xacNhanSuDungKhuyenMai({
@@ -370,6 +371,7 @@ export class UserController {
       user_id: body.user_id || '',
       ma_don_hang: body.ma_don_hang || null,
       so_tien_giam: Number(body.so_tien_giam || 0),
+      idempotency_key: idempotencyKey,
     });
   }
 

@@ -11,7 +11,9 @@ import { KioskShiftSession } from './entities/kiosk-shift-session.entity';
 import { ThanhToanController, ThanhToanHeThongController, ThanhToanLegacyWebhookController } from './thanh-toan.controller';
 import { ThanhToanService } from './thanh-toan.service';
 import { CheckoutSafetyService } from './checkout-safety.service';
+import { CheckoutOutboxService } from './checkout-outbox.service';
 import { VoucherModule } from '../voucher/voucher.module';
+import { CartModule } from '../cart/cart.module';
 import { FeaturesThaianModule } from '../shipper/features_thaian/features_thaian.module';
 import { CustomerWalletModule } from '../customer-wallet/customer-wallet.module';
 import { SmtpModule } from '../smtp/smtp.module';
@@ -24,12 +26,13 @@ import { SurveyService } from '../../services/survey.service';
     TypeOrmModule.forFeature([CartItem, DonHang, ChiTietDonHang, GiaoDichThanhToan, CaDoiSoat, CaLamViecNhanVien, KioskShiftSession, SurveyResponse, SurveyForm]),
     NotificationModule,
     VoucherModule,
+    CartModule,
     FeaturesThaianModule,
     CustomerWalletModule,
     SmtpModule,
   ],
   controllers: [ThanhToanController, ThanhToanHeThongController, ThanhToanLegacyWebhookController],
-  providers: [ThanhToanService, CheckoutSafetyService, SurveyService],
+  providers: [ThanhToanService, CheckoutSafetyService, CheckoutOutboxService, SurveyService],
   exports: [ThanhToanService],
 })
 export class ThanhToanModule {}
