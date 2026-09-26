@@ -987,8 +987,6 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     interaction = cart_manager.get_pending_interaction(state["session_id"])
     pending_type = str((interaction or {}).get("action") or "").lower()
     intent = classify_order_intent(state["user_message"], pending_type)
-    if pending_type == "clear_cart" and re.search(r"\b(dong y|xac nhan|ok|oke)\b", _norm(state["user_message"])):
-        intent = {"intent": "CLEAR_CART", "confirmed": True}
     if pending_type == "edit_cart_item":
         if re.search(
             r"\b(size|nho|vua|lon|topping|toping|hat|foam|tran chau|sua|da|ngot|duong|mac dinh)\b",
@@ -1007,6 +1005,53 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         if _resolve_add_reference(state["session_id"], state["user_message"]):
             intent = {"intent": "ADD_ITEM", "quantity": _extract_add_quantity(state["user_message"])}
     return {**state, "intent": intent}
+
+
+def _dispatch_pending_yes_no(
+    session_id: str,
+    cart: Dict[str, Any],
+    message: str,
+) -> Optional[Dict[str, Any]]:
+    """Resolve the lexical YES/NO once, then dispatch by durable action.
+
+    The words ``ừ``/``oke`` have no business meaning on their own.  This
+    helper is deliberately the only graph-level path that turns them into a
+    cart or checkout action; the stored typed interaction supplies that
+    action.  ``None`` means this turn contains a material command (or is not
+    a confirmation) and must continue through normal deterministic routing.
+    """
+    interaction = cart_manager.get_pending_interaction(session_id) or {}
+    if str(interaction.get("kind") or "").upper() != "YES_NO":
+        return None
+    classification = classify_confirmation(message, "YES_NO")
+    if classification not in {"YES", "NO"}:
+        return None
+    action = str(interaction.get("action") or "").upper()
+    interaction_id = interaction.get("interaction_id")
+    if action == "ASK_MORE_ITEMS":
+        cart_manager.clear_pending_interaction(session_id, interaction_id)
+        if classification == "YES":
+            return {
+                "reply": "Được, bạn muốn xem thêm đồ uống hay bánh?",
+                "checkout_payload": None, "tool_calls_log": [], "error": None,
+            }
+        if not cart.get("is_empty"):
+            return _offer_voucher_gate(session_id, "Mình giữ nguyên giỏ hàng hiện tại.")
+        return {
+            "reply": "Mình giữ nguyên giỏ hàng hiện tại.",
+            "checkout_payload": None, "tool_calls_log": [], "error": None,
+        }
+    if action == "CLEAR_CART":
+        if classification == "NO":
+            cart_manager.clear_pending_interaction(session_id, interaction_id)
+            return {
+                "reply": "Được, mình giữ nguyên giỏ hàng.",
+                "checkout_payload": None, "tool_calls_log": [], "error": None,
+            }
+        # ``_execute`` owns the actual write; carry the exact interaction so
+        # it cannot be confused with a newly-created clear confirmation.
+        return {"_confirmed_clear_cart": True, "interaction": interaction}
+    return None
 
 
 def _execute(state: OrderConversationState) -> OrderConversationState:
@@ -1046,6 +1091,14 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
     interaction = cart_manager.get_pending_interaction(session_id) or {}
     interaction_kind = str(interaction.get("kind") or "").upper()
     short_reply = classify_confirmation(message, "YES_NO")
+    dispatched_confirmation = _dispatch_pending_yes_no(session_id, cart, message)
+    if dispatched_confirmation and not dispatched_confirmation.get("_confirmed_clear_cart"):
+        return {**state, "result": dispatched_confirmation}
+    if dispatched_confirmation and dispatched_confirmation.get("_confirmed_clear_cart"):
+        interaction = dict(dispatched_confirmation["interaction"])
+        interaction_kind = "YES_NO"
+        kind = "CLEAR_CART"
+        intent = {**intent, "intent": "CLEAR_CART", "confirmed": True}
     if interaction_kind in {"SELECT_ONE", "FILL_FIELDS"} and short_reply == "YES":
         domain = str(interaction.get("domain") or "").upper()
         prompts = {
@@ -1062,24 +1115,6 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             "tool_calls_log": [],
             "error": None,
         }}
-    if interaction_kind == "YES_NO" and str(interaction.get("action") or "").upper() == "ASK_MORE_ITEMS":
-        if short_reply == "YES":
-            cart_manager.clear_pending_interaction(session_id, interaction.get("interaction_id"))
-            cart_manager.clear_pending_action(session_id)
-            return {**state, "result": {
-                "reply": "Được, bạn muốn xem thêm đồ uống hay bánh?",
-                "checkout_payload": None,
-                "tool_calls_log": [],
-                "error": None,
-            }}
-        if short_reply == "NO":
-            cart_manager.clear_pending_interaction(session_id, interaction.get("interaction_id"))
-            cart_manager.clear_pending_action(session_id)
-            if not cart.get("is_empty"):
-                return {**state, "result": _offer_voucher_gate(
-                    session_id, "Mình giữ nguyên giỏ hàng hiện tại."
-                )}
-
     selected_cart_line = _resolve_pending_cart_line_choice(session_id, cart, message)
     if selected_cart_line:
         pending_action = str(interaction.get("action") or "").upper()
@@ -1290,13 +1325,12 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             reply = changed.get("message", "Chưa thể cập nhật tùy chọn món.")
         return {**state, "result": {"reply": reply, "checkout_payload": None, "tool_calls_log": logs, "error": None}}
     if kind == "CLEAR_CART":
-        pending = cart_manager.get_pending_action(session_id)
-        if (pending or {}).get("type") != "clear_cart" or not intent.get("confirmed"):
-            cart_manager.set_pending_action(session_id, "clear_cart", {})
+        if interaction_kind != "YES_NO" or str(interaction.get("action") or "").upper() != "CLEAR_CART" or not intent.get("confirmed"):
+            cart_manager.set_pending_interaction(session_id, kind="YES_NO", domain="CART", action="CLEAR_CART")
             return {**state, "result": {"reply": "Bạn có chắc muốn xoá toàn bộ giỏ hàng không? Hãy trả lời ‘đồng ý xoá giỏ’. ", "checkout_payload": None, "tool_calls_log": [], "error": None}}
         log = execute_clear_cart(session_id)
         if log.get("status") == "ok":
-            cart_manager.clear_pending_action(session_id)
+            cart_manager.clear_pending_interaction(session_id, interaction.get("interaction_id"))
         reply = log.get("message", "Chưa thể xoá giỏ hàng.")
         return {**state, "result": {"reply": reply, "checkout_payload": None, "tool_calls_log": [{"tool": "clear_cart", "result": log}], "error": None}}
     structured_refs = _resolve_all_category_ordinals(session_id, message, state.get("history") or [])

@@ -23,7 +23,11 @@ def test_t1_integration_off(t1_env_off):
     session["checkout_prefs"]["summary_fingerprint"] = "xyz"
     cart_manager._touch(session_id, session, sync_db=False)
     
-    # "oke" sẽ chạy qua _is_plain_confirmation (trả về True)
+    cart_manager.set_pending_interaction(
+        session_id, kind="YES_NO", domain="CHECKOUT", action="CONFIRM_CHECKOUT",
+        context_id="checkout:test", data={"action_id": "checkout:test"},
+    )
+    # "oke" only confirms the typed checkout interaction.
     with patch("src.function_calling.tools.cart_tools.execute_confirm_checkout") as mock_checkout:
         mock_checkout.return_value = {"status": "success", "order_id": "123"}
         res = _run_agent_impl(session_id, "oke", history=[])
@@ -39,6 +43,10 @@ def test_t1_integration_on_bug_fix(t1_env_on):
     session = cart_manager._get_or_create_session(session_id)
     session["checkout_prefs"]["summary_fingerprint"] = "xyz"
     cart_manager._touch(session_id, session, sync_db=False)
+    cart_manager.set_pending_interaction(
+        session_id, kind="YES_NO", domain="CHECKOUT", action="CONFIRM_CHECKOUT",
+        context_id="checkout:test", data={"action_id": "checkout:test"},
+    )
     cart_manager.set_pending_action(session_id, "fill_options", {})
     
     with patch("src.agents.agent_service.groq_agent_chat") as mock_groq:
@@ -68,6 +76,10 @@ def test_t1_integration_on_ambiguous_checkout(t1_env_on):
     session = cart_manager._get_or_create_session(session_id)
     session["checkout_prefs"]["summary_fingerprint"] = "xyz"
     cart_manager._touch(session_id, session, sync_db=False)
+    cart_manager.set_pending_interaction(
+        session_id, kind="YES_NO", domain="CHECKOUT", action="CONFIRM_CHECKOUT",
+        context_id="checkout:test", data={"action_id": "checkout:test"},
+    )
     
     with patch("src.function_calling.tools.cart_tools.execute_confirm_checkout") as mock_checkout:
         res = _run_agent_impl(session_id, "đúng", history=[])
@@ -225,7 +237,6 @@ def test_t1_integration_select_voucher_clear_when_none_found_early(t1_env_on):
     
     cart_manager.set_checkout_prefs(session_id, delivery_type="MANG_DI")
     cart_manager.set_checkout_context(session_id, voucher_decided=False)
-    cart_manager.set_pending_action(session_id, "select_voucher", {"count": 1})
     
     with patch("src.common.cart_manager.get_cart") as mock_get_cart, \
          patch("src.function_calling.tools.voucher_tools.execute_get_applicable_vouchers") as mock_get_vouchers, \
@@ -252,7 +263,6 @@ def test_t1_integration_select_voucher_clear_when_none_found_before_checkout(t1_
     
     cart_manager.set_checkout_prefs(session_id, delivery_type="MANG_DI")
     cart_manager.set_checkout_context(session_id, voucher_decided=False)
-    cart_manager.set_pending_action(session_id, "select_voucher", {"count": 1})
     
     with patch("src.common.cart_manager.get_cart") as mock_get_cart, \
          patch("src.function_calling.tools.voucher_tools.execute_get_applicable_vouchers") as mock_get_vouchers, \

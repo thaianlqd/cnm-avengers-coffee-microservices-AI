@@ -127,10 +127,29 @@ def finalize_checkout(
                     "message": "Hệ thống chưa xác nhận được mã đơn hàng. Giỏ hàng vẫn được giữ lại; vui lòng kiểm tra lịch sử đơn trước khi thử lại.",
                 }
             
-            # Thành công -> Xóa giỏ hàng và gán last_order_id
-            # The Order Service cleared the authoritative cart in the same
-            # transaction as the order write; only replace the local mirror.
-            cart_manager.clear_cart(cart_session_id, order_id=str(order_id))
+            # The Order Service clears the cart in its checkout transaction.
+            # Never fabricate an empty local mirror after an irreversible
+            # write: replace it from the canonical GET response instead.
+            cart_sync_status = "ok"
+            try:
+                from src.function_calling.tools.cart_tools import sync_authoritative_cart
+                refreshed = sync_authoritative_cart(cart_session_id)
+                if not refreshed.get("is_empty"):
+                    cart_sync_status = "unexpected_nonempty"
+            except Exception as sync_error:
+                logger.warning("[CheckoutService] order committed but cart resync failed: %s", sync_error)
+                cart_sync_status = "unavailable"
+            cart_manager.set_checkout_context(
+                cart_session_id,
+                completed_action_id=action_id,
+                completed_order_id=str(order_id),
+                checkout_requested=None,
+                summary_fingerprint=None,
+                checkout_quote_id=None,
+                checkout_action_id=None,
+                checkout_action_expires_at=None,
+            )
+            cart_manager.clear_pending_interaction(cart_session_id)
             
             return {
                 "status": "success",
@@ -146,6 +165,7 @@ def finalize_checkout(
                 "payment_method": payment_method,
                 "redirect_url": resp_data.get("redirect_url"),
                 "payment_details": resp_data.get("payment_details"),
+                "cart_sync_status": cart_sync_status,
             }
         else:
             # Thất bại từ server -> Mở khóa giỏ hàng

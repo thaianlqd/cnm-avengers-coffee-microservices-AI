@@ -752,20 +752,11 @@ def _confirm_saved_location(
     suggested = str((interaction.get("data") or {}).get("address_snapshot") or prefs.get("suggested_address") or "").strip()
     if not suggested:
         return None
-    normalized = _normalize_chat_text(message)
-
-    # Do not treat product choices or options as address confirmations
-    if re.search(
-        r"\b(?:nuoc|do uong|banh|do an|mon|ly|phan|chai|size|it da|da rieng|luong da|duong|topping)\b",
-        normalized,
-    ):
-        return None
-
-    confirms = bool(re.search(
-        r"\b(dung|dung roi|dia chi do|o do|dang o do|hien tai.*o do|dia chi da luu)\b",
-        normalized,
-    ))
-    if not confirms:
+    # Lexical acknowledgement is intentionally context-gated here.  The
+    # address snapshot/action comes exclusively from the typed interaction;
+    # an "ừ" outside this prompt cannot become an address selection.
+    from src.agents.tier1 import classify_confirmation
+    if classify_confirmation(message, "YES_NO") != "YES":
         return None
 
     context = {"suggested_address": None, "location_address": suggested}
@@ -967,6 +958,50 @@ def _parse_option_groups(option_result: Dict[str, Any]) -> Dict[str, List[str]]:
     return parsed
 
 
+def _apply_pending_option_clause(item: Dict[str, Any], clause: str, use_defaults: bool) -> Dict[str, Any]:
+    """Apply one product's explicitly-bound option clause to exactly one draft."""
+    options = item.get("options") or {}
+    selected: Dict[str, Any] = dict(item.get("selected_options") or {})
+    option_groups = options.get("groups") or {}
+    required = {
+        str(group.get("name") or "")
+        for group in options.get("schema") or []
+        if group.get("required")
+    }
+    missing: List[str] = []
+    for group_name, raw_values in option_groups.items():
+        values = [str(value) for value in raw_values]
+        group_norm = _normalize_chat_text(group_name)
+        is_size = "size" in group_norm or "kich thuoc" in group_norm
+        matches = [value for value in values if _normalize_chat_text(value) in clause]
+        if is_size and len(values) == 1:
+            matches = values
+        if "topping" in group_norm and re.search(r"\b(khong topping|bo topping|khong them topping)\b", clause):
+            selected["toppings"] = []
+        elif matches:
+            if is_size:
+                selected["size"] = matches[0]
+            elif "topping" in group_norm:
+                selected["toppings"] = matches
+            elif "da" in group_norm:
+                selected["luong_da"] = matches[0]
+            elif "ngot" in group_norm or "duong" in group_norm:
+                selected["do_ngot"] = matches[0]
+            elif "sua" in group_norm:
+                selected["loai_sua"] = matches[0]
+        is_required = group_name in required if required else len(values) > 1 and not (use_defaults and not is_size)
+        selected_value = (
+            selected.get("size") if is_size else
+            selected.get("toppings") if "topping" in group_norm else
+            selected.get("luong_da") if "da" in group_norm else
+            selected.get("do_ngot") if ("ngot" in group_norm or "duong" in group_norm) else
+            selected.get("loai_sua") if "sua" in group_norm else None
+        )
+        if is_required and len(values) > 1 and not matches and not selected_value:
+            missing.append(f"{'kích thước' if is_size else group_name} ({', '.join(values)})")
+    return {**item, "selected_options": selected, "missing_options": missing}
+
+
 def _complete_pending_products_from_options(session_id: str, message: str) -> Optional[Dict[str, Any]]:
     """Complete exactly one typed product draft.
 
@@ -996,11 +1031,9 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
     item = next((row for row in pending if str(row.get("pending_id") or "") == target_id), pending[0])
     product_name = str(item.get("product_name") or "")
 
-    # Bind option words to the named product clause before looking up any
-    # option value.  For example, ``Matcha size lớn, Latte size vừa`` must
-    # never let the Latte value complete the Matcha draft.  We intentionally
-    # complete only the interaction's pending_id in this turn; later drafts
-    # retain their own state and are prompted independently.
+    # Bind each option word to the product mention that starts its clause.
+    # A clause never includes text before its own product name, so the second
+    # product cannot consume an option belonging to the first product.
     named_offsets = []
     for pending_item in pending:
         candidate = _normalize_chat_text(pending_item.get("product_name"))
@@ -1009,60 +1042,30 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
             if match:
                 named_offsets.append((match.start(), match.end(), str(pending_item.get("pending_id") or "")))
     named_offsets.sort()
-    target_match_index = next((index for index, row in enumerate(named_offsets) if row[2] == str(item.get("pending_id") or "")), None)
-    if named_offsets and target_match_index is None:
-        # A customer explicitly configured another pending product. Do not
-        # borrow those values for the currently active draft.
-        return None
-    scoped_normalized = normalized
-    if target_match_index is not None:
-        previous_end = named_offsets[target_match_index - 1][1] if target_match_index else 0
-        next_start = named_offsets[target_match_index + 1][0] if target_match_index + 1 < len(named_offsets) else len(normalized)
-        scoped_normalized = normalized[previous_end:next_start]
+    if not named_offsets and len(pending) > 1:
+        return {
+            "reply": "Mình đang có nhiều món chờ chọn tùy chọn. Bạn nói rõ tùy chọn này cho món nào nhé.",
+            "checkout_payload": None, "tool_calls_log": [], "error": None,
+        }
+    clauses: Dict[str, str] = {}
+    for index, (start, _end, pending_id) in enumerate(named_offsets):
+        next_start = named_offsets[index + 1][0] if index + 1 < len(named_offsets) else len(normalized)
+        clauses[pending_id] = normalized[start:next_start]
 
     # A named, different product plus a question is a read-only detour.  Keep
     # the resume task intact and let the normal read route answer it.
     if product_name and _normalize_chat_text(product_name) not in normalized and re.search(r"\b(co|gia|bao nhieu|review|danh gia|khong)\b", normalized):
         return None
 
-    options = item.get("options") or {}
-    selected: Dict[str, Any] = dict(item.get("selected_options") or {})
-    option_groups = options.get("groups") or {}
-    required = {str(group.get("name") or "") for group in options.get("schema") or [] if group.get("required")}
-    missing: List[str] = []
-    for group_name, raw_values in option_groups.items():
-        values = [str(value) for value in raw_values]
-        group_norm = _normalize_chat_text(group_name)
-        is_size = "size" in group_norm or "kich thuoc" in group_norm
-        matches = [value for value in values if _normalize_chat_text(value) in scoped_normalized]
-        if is_size and len(values) == 1:
-            matches = values
-        if "topping" in group_norm and re.search(r"\b(khong topping|bo topping|khong them topping)\b", scoped_normalized):
-            selected["toppings"] = []
-        elif matches:
-            if is_size:
-                selected["size"] = matches[0]
-            elif "topping" in group_norm:
-                selected["toppings"] = matches
-            elif "da" in group_norm:
-                selected["luong_da"] = matches[0]
-            elif "ngot" in group_norm or "duong" in group_norm:
-                selected["do_ngot"] = matches[0]
-            elif "sua" in group_norm:
-                selected["loai_sua"] = matches[0]
-        is_required = group_name in required if required else len(values) > 1 and not (use_defaults and not is_size)
-        selected_value = (
-            selected.get("size") if is_size else
-            selected.get("toppings") if "topping" in group_norm else
-            selected.get("luong_da") if "da" in group_norm else
-            selected.get("do_ngot") if ("ngot" in group_norm or "duong" in group_norm) else
-            selected.get("loai_sua") if "sua" in group_norm else None
-        )
-        if is_required and len(values) > 1 and not matches and not selected_value:
-            missing.append(f"{'kích thước' if is_size else group_name} ({', '.join(values)})")
-
-    updated = {**item, "selected_options": selected, "missing_options": missing}
-    rest = [row for row in pending if row is not item]
+    updated_pending = [
+        _apply_pending_option_clause(row, clauses[str(row.get("pending_id") or "")], use_defaults)
+        if str(row.get("pending_id") or "") in clauses else row
+        for row in pending
+    ]
+    updated = next(row for row in updated_pending if str(row.get("pending_id") or "") == str(item.get("pending_id") or ""))
+    selected: Dict[str, Any] = dict(updated.get("selected_options") or {})
+    missing = list(updated.get("missing_options") or [])
+    rest = [row for row in updated_pending if str(row.get("pending_id") or "") != str(updated.get("pending_id") or "")]
     if missing:
         cart_manager.set_pending_products(session_id, [updated, *rest])
         cart_manager.set_pending_interaction(session_id, kind="FILL_FIELDS", domain="PRODUCT", action="FILL_OPTIONS", context_id=str(updated.get("pending_id")), data={"pending_id": updated.get("pending_id")})
@@ -1542,19 +1545,38 @@ def _run_agent_impl(
     # Confirmation is resolved from the server-side pending checkout state.
     # Frontend history is presentation data and may be truncated, reformatted or
     # omitted, so it must not decide whether a real checkout can proceed.
-    if prefs.get("summary_fingerprint"):
-        import os
-        use_t1 = os.getenv("USE_T1_CONFIRM", "false").lower() == "true"
-        if use_t1:
-            pending = cart_manager.get_pending_action(session_id)
-            pending_type = pending.get("type") if pending else "confirm_checkout"
-            from src.agents.tier1 import classify_confirmation
-            classification = classify_confirmation(user_message, pending_type)
-            is_yes = (classification == "YES")
-            is_ambiguous = (classification == "AMBIGUOUS")
-        else:
-            is_yes = _is_plain_confirmation(user_message)
-            is_ambiguous = False
+    checkout_interaction = cart_manager.get_pending_interaction(session_id) or {}
+    if (
+        prefs.get("summary_fingerprint")
+        and checkout_interaction.get("kind") == "YES_NO"
+        and checkout_interaction.get("domain") == "CHECKOUT"
+        and checkout_interaction.get("action") == "CONFIRM_CHECKOUT"
+    ):
+        # The typed interaction chooses the business action.  The lexical
+        # classifier only says yes/no; it must not infer checkout from prose.
+        from src.agents.tier1 import classify_confirmation
+        classification = classify_confirmation(user_message, "YES_NO")
+        is_yes = classification == "YES"
+        is_ambiguous = classification == "AMBIGUOUS"
+
+        # A real change request supersedes the old immutable quote.  In
+        # particular "oke nhưng đổi sang QR" must never confirm the old
+        # payment method before the normal choice resolver makes a new quote.
+        if classification == "NONE" and re.search(
+            r"\b(?:doi|chuyen|thay)\b.*\b(?:qr|vnpay|vi|cod|thanh toan)\b",
+            _normalize_chat_text(user_message),
+        ):
+            cart_manager.clear_pending_interaction(
+                session_id, checkout_interaction.get("interaction_id"),
+            )
+            cart_manager.set_checkout_context(
+                session_id,
+                checkout_action_id=None,
+                checkout_action_expires_at=None,
+                checkout_quote_id=None,
+            )
+            prefs = cart_manager.get_checkout_prefs(session_id)
+            is_yes = False
 
         if is_ambiguous:
             return {

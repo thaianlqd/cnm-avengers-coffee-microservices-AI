@@ -43,6 +43,10 @@ def normalize_confirmation_text(text: str) -> str:
     text = re.sub(r'\bhet roi\b', 'hetroi', text)
     text = re.sub(r'\bxong roi\b', 'xongroi', text)
     text = re.sub(r'\bdung roi\b', 'dungroi', text)
+    # These are address-specific acknowledgement phrases.  They are still
+    # merely lexical YES tokens and become meaningful only when a typed
+    # YES_NO/CONFIRM_ADDRESS interaction is active.
+    text = re.sub(r'\b(?:dung|su dung) dia chi (?:da lu|nay|do)\b', 'dung', text)
     text = re.sub(r'\bduoc do\b', 'duoc', text)
     text = re.sub(r'\blam di\b', 'lamdi', text)
     text = re.sub(r'\bkhong can\b', 'khongcan', text)

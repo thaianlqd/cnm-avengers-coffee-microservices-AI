@@ -8,7 +8,7 @@ import { GiaoDichThanhToan } from './entities/giao-dich-thanh-toan.entity';
 import { VoucherService } from '../voucher/voucher.service';
 
 type QuoteInput = {
-  phuong_thuc_thanh_toan: 'VNPAY' | 'NGAN_HANG_QR' | 'THANH_TOAN_KHI_NHAN_HANG';
+  phuong_thuc_thanh_toan: 'VNPAY' | 'NGAN_HANG_QR' | 'VI_DIEN_TU' | 'THANH_TOAN_KHI_NHAN_HANG';
   delivery_mode: 'GIAO_TAN_NOI' | 'LAY_TAI_QUAN' | 'DUNG_TAI_CHO';
   dia_chi_giao_hang?: string;
   branch_code: string;
@@ -79,6 +79,32 @@ export class CheckoutSafetyService {
     return createHash('sha256').update(this.stableJson(value)).digest('hex');
   }
 
+  private validateQuoteInput(input: QuoteInput) {
+    if (!input || typeof input !== 'object') throw new BadRequestException('Du lieu checkout khong hop le');
+    const payments = new Set(['VNPAY', 'NGAN_HANG_QR', 'VI_DIEN_TU', 'THANH_TOAN_KHI_NHAN_HANG']);
+    const deliveries = new Set(['GIAO_TAN_NOI', 'LAY_TAI_QUAN', 'DUNG_TAI_CHO']);
+    if (!payments.has(String(input.phuong_thuc_thanh_toan || ''))) throw new BadRequestException('phuong_thuc_thanh_toan khong hop le');
+    if (!deliveries.has(String(input.delivery_mode || ''))) throw new BadRequestException('delivery_mode khong hop le');
+    if (!String(input.branch_code || '').trim()) throw new BadRequestException('branch_code la bat buoc');
+    if (input.delivery_mode === 'GIAO_TAN_NOI' && !String(input.dia_chi_giao_hang || '').trim()) {
+      throw new BadRequestException('dia_chi_giao_hang la bat buoc');
+    }
+    if (input.expected_cart_version !== undefined && (!Number.isInteger(Number(input.expected_cart_version)) || Number(input.expected_cart_version) < 0)) {
+      throw new BadRequestException('expected_cart_version khong hop le');
+    }
+  }
+
+  private validateConfirmInput(input: ConfirmInput) {
+    this.validateQuoteInput(input);
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuid.test(String(input.quote_id || '')) || !uuid.test(String(input.action_id || ''))) {
+      throw new BadRequestException('quote_id/action_id khong hop le');
+    }
+    if (!Number.isInteger(Number(input.expected_cart_version)) || Number(input.expected_cart_version) < 0) {
+      throw new BadRequestException('expected_cart_version la bat buoc');
+    }
+  }
+
   private async lockCart(manager: EntityManager, userId: string) {
     const schema = this.schema();
     await manager.query(
@@ -114,22 +140,103 @@ export class CheckoutSafetyService {
     });
   }
 
-  private async validateStock(manager: EntityManager, branchCode: string, items: CartItem[]) {
+  /** Reprice from Menu inside the checkout transaction; cart row prices are never final authority. */
+  private async repriceFromMenu(manager: EntityManager, items: CartItem[]): Promise<CartItem[]> {
+    const repriced: CartItem[] = [];
+    const normalize = (value: any) => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/đ/g, 'd').trim();
+    for (const item of items) {
+      if (!Number.isInteger(Number(item.ma_san_pham)) || Number(item.ma_san_pham) <= 0 ||
+          !Number.isInteger(Number(item.so_luong)) || Number(item.so_luong) < 1) {
+        throw new ConflictException({ code: 'REQUOTE_REQUIRED', reason: 'INVALID_CART_LINE', line_id: item.id });
+      }
+      const productRows = await manager.query(
+        `SELECT ma_san_pham, ten_san_pham, gia_ban, hinh_anh_url, trang_thai
+           FROM menu.san_pham WHERE ma_san_pham = $1 LIMIT 1`, [item.ma_san_pham],
+      );
+      const product = productRows[0];
+      if (!product || product.trang_thai === false) {
+        throw new ConflictException({ code: 'REQUOTE_REQUIRED', reason: 'PRODUCT_DISABLED', line_id: item.id });
+      }
+      const variants: Array<{ ten_thuoc_tinh: string; gia_tri: string; phu_thu: number }> = await manager.query(
+        `SELECT tt.ten_thuoc_tinh, bt.gia_tri, bt.phu_thu
+           FROM menu.bien_the_san_pham bt JOIN menu.thuoc_tinh tt ON tt.ma_thuoc_tinh = bt.ma_thuoc_tinh
+          WHERE bt.ma_san_pham = $1`, [item.ma_san_pham],
+      );
+      const sizeRows = variants.filter((row) => /size|kich thuoc/.test(normalize(row.ten_thuoc_tinh)));
+      const selectedSize = normalize(item.size || 'Nhỏ');
+      const size = sizeRows.find((row) => normalize(row.gia_tri) === selectedSize);
+      if (sizeRows.length && !size) {
+        throw new ConflictException({ code: 'REQUOTE_REQUIRED', reason: 'OPTION_UNAVAILABLE', line_id: item.id, option: 'size' });
+      }
+      const selectedExtras = [
+        ...(item.toppings || []), item.loai_sua,
+        ...Object.values(item.custom_attributes || {}).flatMap((value: any) => Array.isArray(value) ? value : [value]),
+      ].map(normalize).filter(Boolean);
+      const variantExtras = variants.filter((row) => !sizeRows.includes(row));
+      // Ice and sugar normally have no surcharge, but where Menu defines
+      // their option group they remain authoritative choices and must be
+      // validated just as topping/milk/custom attributes are.
+      const selectedByGroup = [
+        { field: 'luong_da', value: normalize(item.luong_da), aliases: ['da', 'ice'] },
+        { field: 'do_ngot', value: normalize(item.do_ngot), aliases: ['ngot', 'duong', 'sugar'] },
+        { field: 'loai_sua', value: normalize(item.loai_sua), aliases: ['sua', 'milk'] },
+      ];
+      for (const selected of selectedByGroup) {
+        if (!selected.value) continue;
+        const rowsForGroup = variantExtras.filter((row) => {
+          const attribute = normalize(row.ten_thuoc_tinh);
+          return selected.aliases.some((alias) => attribute.includes(alias));
+        });
+        // Products without a Menu group keep their legacy free-form field;
+        // once a group exists, however, a stale value cannot pass checkout.
+        if (rowsForGroup.length && !rowsForGroup.some((row) => normalize(row.gia_tri) === selected.value)) {
+          throw new ConflictException({ code: 'REQUOTE_REQUIRED', reason: 'OPTION_UNAVAILABLE', line_id: item.id, option: selected.field });
+        }
+      }
+      for (const value of selectedExtras) {
+        if (!variantExtras.some((row) => normalize(row.gia_tri) === value)) {
+          throw new ConflictException({ code: 'REQUOTE_REQUIRED', reason: 'OPTION_UNAVAILABLE', line_id: item.id, option: value });
+        }
+      }
+      const unitPrice = Number(size?.phu_thu ?? product.gia_ban ?? 0) + variantExtras
+        .filter((row) => selectedExtras.includes(normalize(row.gia_tri)))
+        .reduce((sum, row) => sum + Number(row.phu_thu || 0), 0);
+      repriced.push({
+        ...item, ten_san_pham: String(product.ten_san_pham), hinh_anh_url: String(product.hinh_anh_url || ''), gia_ban: unitPrice,
+      });
+    }
+    return repriced;
+  }
+
+  private async validateStock(manager: EntityManager, branchCode: string, items: CartItem[], consume = false) {
     const required = new Map<number, number>();
     for (const item of items) required.set(item.ma_san_pham, (required.get(item.ma_san_pham) || 0) + Number(item.so_luong));
     const ids = [...required.keys()];
     const rows: Array<{ ma_san_pham: number; so_luong_ton: number; dang_kinh_doanh: boolean }> = await manager.query(
       `SELECT ma_san_pham, so_luong_ton, dang_kinh_doanh
-       FROM inventory.ton_kho_san_pham WHERE co_so_ma = $1 AND ma_san_pham = ANY($2::int[])`,
+       FROM inventory.ton_kho_san_pham WHERE co_so_ma = $1 AND ma_san_pham = ANY($2::int[])
+       FOR UPDATE`,
       [branchCode, ids],
     );
     const byProduct = new Map(rows.map((row) => [Number(row.ma_san_pham), row]));
     const conflicts = items.filter((item) => {
       const stock = byProduct.get(Number(item.ma_san_pham));
-      return stock && (!stock.dang_kinh_doanh || Number(stock.so_luong_ton) < (required.get(item.ma_san_pham) || 0));
+      return !stock || !stock.dang_kinh_doanh || Number(stock.so_luong_ton) < (required.get(item.ma_san_pham) || 0);
     }).map((item) => ({ line_id: item.id, product_id: item.ma_san_pham, product_name: item.ten_san_pham }));
     if (conflicts.length) {
-      throw new ConflictException({ code: 'STOCK_CONFLICT', conflicts });
+      throw new ConflictException({ code: 'STOCK_CONFLICT', conflicts, reason: 'UNKNOWN_OR_INSUFFICIENT_STOCK' });
+    }
+    if (consume) {
+      for (const [productId, quantity] of required) {
+        const result = await manager.query(
+          `UPDATE inventory.ton_kho_san_pham
+              SET so_luong_ton = so_luong_ton - $3
+            WHERE co_so_ma = $1 AND ma_san_pham = $2 AND so_luong_ton >= $3
+            RETURNING ma_san_pham`,
+          [branchCode, productId, quantity],
+        );
+        if (!result?.length) throw new ConflictException({ code: 'STOCK_CONFLICT', product_id: productId });
+      }
     }
   }
 
@@ -157,6 +264,7 @@ export class CheckoutSafetyService {
   }
 
   async createQuote(userId: string, input: QuoteInput) {
+    this.validateQuoteInput(input);
     await this.ensureTables();
     const result = await this.dataSource.transaction(async (manager) => {
       const metadata = await this.lockCart(manager, userId);
@@ -165,8 +273,9 @@ export class CheckoutSafetyService {
       }
       const items = await manager.getRepository(CartItem).find({ where: { ma_nguoi_dung: userId } });
       if (!items.length) throw new BadRequestException('Gio hang trong, khong the bao gia');
-      const quote = await this.calculateQuote(userId, input, items);
-      await this.validateStock(manager, quote.branch_code, items);
+      const pricedItems = await this.repriceFromMenu(manager, items);
+      const quote = await this.calculateQuote(userId, input, pricedItems);
+      await this.validateStock(manager, quote.branch_code, pricedItems);
       const quoteId = randomUUID();
       const actionId = randomUUID();
       const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
@@ -183,6 +292,7 @@ export class CheckoutSafetyService {
   }
 
   async confirmQuote(userId: string, input: ConfirmInput, operationId?: string) {
+    this.validateConfirmInput(input);
     const normalizedOperationId = String(operationId || '').trim();
     if (!normalizedOperationId || normalizedOperationId.length > 200) throw new BadRequestException('X-Idempotency-Key hop le la bat buoc');
     await this.ensureTables();
@@ -199,10 +309,32 @@ export class CheckoutSafetyService {
         if (operationRows[0].result == null) throw new ConflictException('Checkout dang duoc xu ly');
         return { ...(typeof operationRows[0].result === 'string' ? JSON.parse(operationRows[0].result) : operationRows[0].result), already_processed: true };
       }
-      await manager.query(
+      // The initial locked read is only an optimisation.  A client may reuse
+      // an operation id from another cart while its cart-metadata lock is not
+      // held, so the unique constraint remains the authority.  PostgreSQL
+      // waits for the winning transaction on this conflict; the second locked
+      // read below can therefore return its completed canonical result.
+      const inserted = await manager.query(
         `INSERT INTO "${schema}".checkout_operation (operation_id, user_id, request_hash)
-         VALUES ($1, $2, $3)`, [normalizedOperationId, userId, requestHash],
+         VALUES ($1, $2, $3)
+         ON CONFLICT (operation_id) DO NOTHING
+         RETURNING operation_id`, [normalizedOperationId, userId, requestHash],
       );
+      if (!inserted?.length) {
+        const racedRows = await manager.query(
+          `SELECT request_hash, result FROM "${schema}".checkout_operation WHERE operation_id = $1 FOR UPDATE`,
+          [normalizedOperationId],
+        );
+        const raced = racedRows[0];
+        if (!raced || raced.request_hash !== requestHash) {
+          throw new ConflictException('Idempotency key da duoc dung cho yeu cau khac');
+        }
+        if (raced.result == null) throw new ConflictException('Checkout dang duoc xu ly');
+        return {
+          ...(typeof raced.result === 'string' ? JSON.parse(raced.result) : raced.result),
+          already_processed: true,
+        };
+      }
       const quoteRows = await manager.query(
         `SELECT * FROM "${schema}".checkout_quote WHERE quote_id = $1 FOR UPDATE`, [input.quote_id],
       );
@@ -221,7 +353,12 @@ export class CheckoutSafetyService {
       const quoted = typeof quoteRow.quote === 'string' ? JSON.parse(quoteRow.quote) : quoteRow.quote;
       const items = await manager.getRepository(CartItem).find({ where: { ma_nguoi_dung: userId } });
       if (!items.length || this.hash(this.snapshot(items)) !== this.hash(quoted.items)) throw new ConflictException('Gio hang da thay doi; hay tao bao gia moi');
-      await this.validateStock(manager, quoted.branch_code, items);
+      const pricedItems = await this.repriceFromMenu(manager, items);
+      const revalidatedQuote = await this.calculateQuote(userId, quotedRequest, pricedItems);
+      if (this.hash(revalidatedQuote.items) !== this.hash(quoted.items) || Number(revalidatedQuote.final_total) !== Number(quoted.final_total)) {
+        throw new ConflictException({ code: 'REQUOTE_REQUIRED', reason: 'PRICE_OR_OPTION_CHANGED' });
+      }
+      await this.validateStock(manager, quoted.branch_code, pricedItems, true);
       // Re-evaluate voucher at commit time. External promotion services remain
       // authoritative for their own ledger; local order/cart writes stay atomic.
       if (quoted.voucher_code) {
@@ -239,7 +376,7 @@ export class CheckoutSafetyService {
           (voucher.han_su_dung && new Date(voucher.han_su_dung).getTime() < Date.now()) ||
           (voucher.tong_luot_dung != null && Number(voucher.luot_da_dung) >= Number(voucher.tong_luot_dung))
         )) throw new ConflictException('Voucher da thay doi; hay tao bao gia moi');
-        const refreshed = await this.calculateQuote(userId, { ...input, ma_voucher: quoted.voucher_code, branch_code: quoted.branch_code }, items);
+        const refreshed = await this.calculateQuote(userId, { ...quotedRequest, ma_voucher: quoted.voucher_code, branch_code: quoted.branch_code }, pricedItems);
         if (Number(refreshed.final_total) !== Number(quoted.final_total)) throw new ConflictException('Voucher da thay doi; hay tao bao gia moi');
         if (voucher) {
           await manager.query(`UPDATE "${schema}".voucher SET luot_da_dung = luot_da_dung + 1 WHERE ma_voucher = $1`, [quoted.voucher_code]);
@@ -254,7 +391,7 @@ export class CheckoutSafetyService {
         trang_thai_thanh_toan: quoted.payment_method === 'THANH_TOAN_KHI_NHAN_HANG' ? 'CHO_THANH_TOAN_KHI_NHAN_HANG' : 'CHO_XU_LY',
         trang_thai_don_hang: 'MOI_TAO', tien_thoi: 0, lich_su_trang_thai: [],
       }));
-      const details = items.map((item) => manager.getRepository(ChiTietDonHang).create({
+      const details = pricedItems.map((item) => manager.getRepository(ChiTietDonHang).create({
         ma_don_hang: order.ma_don_hang, ma_san_pham: item.ma_san_pham, ten_san_pham: item.ten_san_pham,
         gia_ban: Number(item.gia_ban), so_luong: item.so_luong, kich_co: item.size || 'Nhỏ', hinh_anh_url: item.hinh_anh_url,
         toppings: item.toppings || [], luong_da: item.luong_da || null, do_ngot: item.do_ngot || null,

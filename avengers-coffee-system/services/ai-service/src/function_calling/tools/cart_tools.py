@@ -960,6 +960,23 @@ def execute_request_checkout(
             "expires_at": str(time.time() + 15 * 60),
         }
 
+    # Authenticated customer-visible checkout data comes from the persisted
+    # strict quote, not the earlier cart-read quote used only as preflight.
+    if is_authenticated_cart_session(session_id):
+        summary_items = [dict(item) for item in server_quote.get("items") or []]
+        total = float(server_quote.get("subtotal") or 0)
+        discount_amount = float(server_quote.get("discount_amount") or 0)
+        final_total = float(server_quote.get("final_total") or max(0.0, total - discount_amount))
+        voucher_code = server_quote.get("voucher_code")
+        payment_method = server_quote.get("payment_method") or payment_method
+        delivery_address = server_quote.get("delivery_address") or delivery_address
+        cart = {
+            **cart,
+            "cart_id": server_quote.get("cart_id") or cart.get("cart_id"),
+            "cart_version": server_quote.get("cart_version") if server_quote.get("cart_version") is not None else cart.get("cart_version"),
+            "branch_id": server_quote.get("branch_code") or cart.get("branch_id"),
+        }
+
     # Store checkout preferences for later confirmation
     cart_manager.set_checkout_prefs(session_id, payment_method, delivery_type)
     summary_state = cart_manager.mark_checkout_summary(

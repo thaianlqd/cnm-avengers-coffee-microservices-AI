@@ -3,7 +3,7 @@
 These tests intentionally exercise state/resolution helpers directly: they do
 not need an LLM, assistant prose, or a live Order Service to decide a write.
 """
-from src.agents.order_flow_graph import _resolve_typed_references
+from src.agents.order_flow_graph import _dispatch_pending_yes_no, _resolve_typed_references
 from src.agents.agent_service import _complete_pending_products_from_options, _run_agent_impl
 from src.agents.tier1 import classify_confirmation
 from src.common import cart_manager
@@ -72,6 +72,25 @@ def test_confirmation_words_are_gated_by_yes_no_interaction_type():
     assert classify_confirmation("không thêm nữa", "YES_NO") == "NO"
 
 
+def test_yes_no_dispatcher_uses_durable_action_not_the_word_alone():
+    session = "v5-confirmation-dispatch"
+    cart_manager.set_pending_interaction(
+        session, kind="YES_NO", domain="CART", action="ASK_MORE_ITEMS", data={},
+    )
+    result = _dispatch_pending_yes_no(session, {"is_empty": False}, "ừ")
+    assert result["reply"].startswith("Được, bạn muốn xem thêm")
+    assert cart_manager.get_pending_interaction(session) is None
+
+    cart_manager.set_pending_interaction(
+        session, kind="YES_NO", domain="CART", action="CLEAR_CART", data={},
+    )
+    clear = _dispatch_pending_yes_no(session, {"is_empty": False}, "ừ ừ")
+    assert clear["_confirmed_clear_cart"] is True
+    # The dispatcher authorizes the stored action only; the write remains in
+    # the cart mutation node and cannot be triggered by a generic YES alone.
+    assert cart_manager.get_pending_interaction(session)["action"] == "CLEAR_CART"
+
+
 def test_old_assistant_numbering_cannot_stage_a_cart_write(monkeypatch):
     session = "v5-history-is-not-write-authority"
     monkeypatch.setattr(
@@ -116,7 +135,7 @@ def test_pending_draft_removal_uses_stable_id_not_similar_name():
     assert [item["product_id"] for item in remaining] == ["P2"]
 
 
-def test_multi_product_option_reply_is_scoped_to_active_pending_draft(monkeypatch):
+def test_multi_product_option_reply_binds_each_explicit_product_clause(monkeypatch):
     session = "v5-option-clause-scope"
     pending = cart_manager.set_pending_products(session, [
         {"product_id": "M1", "product_name": "Matcha Latte", "options": {"groups": {"Kích thước": ["Nhỏ", "Vừa", "Lớn"]}}},
@@ -136,4 +155,53 @@ def test_multi_product_option_reply_is_scoped_to_active_pending_draft(monkeypatc
     matcha = next(item for item in stored if item["product_id"] == "M1")
     cold_brew = next(item for item in stored if item["product_id"] == "C1")
     assert matcha["selected_options"]["size"] == "Lớn"
-    assert cold_brew["selected_options"] == {}
+    assert cold_brew["selected_options"]["size"] == "Vừa"
+
+
+def test_second_pending_product_never_consumes_first_products_option_clause(monkeypatch):
+    session = "v5-option-clause-second-product"
+    pending = cart_manager.set_pending_products(session, [
+        {
+            "product_id": "M1", "product_name": "Matcha Latte",
+            "options": {"groups": {"Kích thước": ["Nhỏ", "Vừa", "Lớn"], "Topping": ["Cheese foam", "Trân châu"]}},
+        },
+        {
+            "product_id": "C1", "product_name": "Cold Brew",
+            "options": {"groups": {"Kích thước": ["Nhỏ", "Vừa", "Lớn"], "Topping": ["Cheese foam", "Trân châu"]}},
+        },
+    ])
+    # The active task deliberately points to the second product: this was the
+    # previous boundary bug where Cold Brew read Matcha's earlier clause.
+    cart_manager.set_pending_interaction(
+        session, kind="FILL_FIELDS", domain="PRODUCT", action="FILL_OPTIONS",
+        context_id=pending[1]["pending_id"], data={"pending_id": pending[1]["pending_id"]},
+    )
+    monkeypatch.setattr(
+        "src.function_calling.tools.product_tools.execute_check_price_and_stock",
+        lambda **_kwargs: {"status": "error", "products": []},
+    )
+
+    _complete_pending_products_from_options(
+        session, "Matcha Latte size lớn thêm cheese foam, Cold Brew size vừa thêm trân châu",
+    )
+
+    stored = cart_manager.get_checkout_prefs(session)["pending_products"]
+    matcha = next(item for item in stored if item["product_id"] == "M1")
+    cold_brew = next(item for item in stored if item["product_id"] == "C1")
+    assert matcha["selected_options"] == {"size": "Lớn", "toppings": ["Cheese foam"]}
+    assert cold_brew["selected_options"] == {"size": "Vừa", "toppings": ["Trân châu"]}
+
+
+def test_multiple_pending_unscoped_option_requires_clarification():
+    session = "v5-option-unscoped-ambiguous"
+    pending = cart_manager.set_pending_products(session, [
+        {"product_id": "M1", "product_name": "Matcha", "options": {"groups": {"Kích thước": ["Nhỏ", "Vừa"]}}},
+        {"product_id": "C1", "product_name": "Cold Brew", "options": {"groups": {"Kích thước": ["Nhỏ", "Vừa"]}}},
+    ])
+    cart_manager.set_pending_interaction(
+        session, kind="FILL_FIELDS", domain="PRODUCT", action="FILL_OPTIONS",
+        context_id=pending[0]["pending_id"], data={"pending_id": pending[0]["pending_id"]},
+    )
+    result = _complete_pending_products_from_options(session, "size vừa")
+    assert "nói rõ" in result["reply"]
+    assert all(not item["selected_options"] for item in cart_manager.get_checkout_prefs(session)["pending_products"])
