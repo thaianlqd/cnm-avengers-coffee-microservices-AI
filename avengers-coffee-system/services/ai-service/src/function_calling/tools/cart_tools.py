@@ -168,6 +168,45 @@ def _quote_authoritative_cart(session_id: str, voucher_code: Optional[str] = Non
     response.raise_for_status()
     return response.json()
 
+
+def _create_authoritative_checkout_quote(
+    session_id: str,
+    *,
+    payment_method: str,
+    delivery_type: str,
+    delivery_address: Optional[str],
+    branch_code: str,
+    voucher_code: Optional[str],
+    cart_version: Any,
+) -> Dict[str, Any]:
+    """Create the persisted Order Service quote used by strict confirmation."""
+    from src.function_calling.helpers import _get_service_jwt, _require_valid_session
+
+    user_id = _require_valid_session(_customer_session_id(session_id))
+    if not user_id:
+        raise RuntimeError("Authenticated customer is required for checkout")
+    delivery_mode = {
+        "GIAO_TAN_NOI": "GIAO_TAN_NOI",
+        "MANG_DI": "LAY_TAI_QUAN",
+        "TAI_CHO": "DUNG_TAI_CHO",
+    }[delivery_type]
+    response = _order_service_request(
+        "POST",
+        f"/customers/{user_id}/thanh-toan/checkout-quote",
+        _get_service_jwt(user_id),
+        json={
+            "phuong_thuc_thanh_toan": payment_method,
+            "delivery_mode": delivery_mode,
+            "dia_chi_giao_hang": delivery_address,
+            "branch_code": branch_code,
+            "ma_voucher": voucher_code,
+            "expected_cart_version": cart_version,
+            "ghi_chu": "AI Chat Order",
+        },
+    )
+    response.raise_for_status()
+    return response.json()
+
 TOOL_ADD_TO_CART = {
     "type": "function",
     "function": {
@@ -892,9 +931,43 @@ def execute_request_checkout(
         discount_amount = float(prefs_fresh.get("discount_amount") or 0)
         final_total = max(0.0, total - discount_amount)
 
+    # Persist the canonical quote first.  A chat-only fingerprint remains a
+    # display guard, never the authority for an irreversible checkout write.
+    if is_authenticated_cart_session(session_id):
+        try:
+            server_quote = _create_authoritative_checkout_quote(
+                session_id,
+                payment_method=payment_method,
+                delivery_type=delivery_type,
+                delivery_address=delivery_address,
+                branch_code=str(cart["branch_id"]),
+                voucher_code=voucher_code,
+                cart_version=cart.get("cart_version"),
+            )
+        except Exception as exc:
+            return {
+                "status": "quote_error",
+                "message": f"Chưa thể tạo báo giá xác thực trên Order Service: {exc}. Đơn chưa được tóm tắt.",
+            }
+    else:
+        # Guests may preview a draft only. They cannot reach the strict order
+        # write, which requires an authenticated Order Service cart.
+        import time
+        import uuid
+        server_quote = {
+            "quote_id": None,
+            "action_id": str(uuid.uuid4()),
+            "expires_at": str(time.time() + 15 * 60),
+        }
+
     # Store checkout preferences for later confirmation
     cart_manager.set_checkout_prefs(session_id, payment_method, delivery_type)
-    summary_state = cart_manager.mark_checkout_summary(session_id)
+    summary_state = cart_manager.mark_checkout_summary(
+        session_id,
+        action_id=server_quote.get("action_id"),
+        expires_at=server_quote.get("expires_at"),
+        quote_id=server_quote.get("quote_id"),
+    )
     cart_manager.set_pending_interaction(
         session_id,
         kind="YES_NO",
@@ -905,6 +978,7 @@ def execute_request_checkout(
             "action_id": summary_state.get("checkout_action_id"),
             "cart_id": cart.get("cart_id"),
             "cart_version": cart.get("cart_version"),
+            "quote_id": server_quote.get("quote_id"),
             "payment_method": payment_method,
             "delivery_type": delivery_type,
         },
@@ -959,6 +1033,7 @@ def execute_request_checkout(
             "expires_at": summary_state.get("checkout_action_expires_at"),
             "cart_id": cart.get("cart_id"),
             "cart_version": cart.get("cart_version"),
+            "quote_id": server_quote.get("quote_id"),
         },
         "message": summary_msg,
     }
@@ -1038,7 +1113,12 @@ def execute_confirm_checkout(
     ):
         return {"status": "stale_checkout", "message": "Giỏ hàng đã thay đổi sau khi tóm tắt. Cần tạo lại tóm tắt trước khi đặt."}
     try:
-        action_expired = float(prefs.get("checkout_action_expires_at") or 0) < __import__("time").time()
+        raw_expiry = prefs.get("checkout_action_expires_at")
+        if isinstance(raw_expiry, str) and "T" in raw_expiry:
+            from datetime import datetime, timezone
+            action_expired = datetime.fromisoformat(raw_expiry.replace("Z", "+00:00")) <= datetime.now(timezone.utc)
+        else:
+            action_expired = float(raw_expiry or 0) < __import__("time").time()
     except (TypeError, ValueError):
         action_expired = True
     if action_expired:
@@ -1086,31 +1166,4 @@ def execute_confirm_checkout(
         delivery_address=prefs.get("delivery_address"),
     )
     
-    # Nếu tạo đơn thành công, xoá luôn main cart
-    if result.get("status") == "success":
-        import os, requests, logging
-        from src.function_calling.helpers import _get_service_jwt, _require_valid_session
-        valid_uid = _require_valid_session(_customer_session_id(session_id))
-        if valid_uid:
-            try:
-                token = _get_service_jwt(valid_uid)
-                order_service_url = os.getenv("ORDER_SERVICE_URL", "http://order-service:3005")
-                try:
-                    clear_response = requests.delete(
-                        f"{order_service_url}/cart/clear/{valid_uid}",
-                        headers={"Authorization": f"Bearer {token}"},
-                        timeout=5
-                    )
-                except requests.exceptions.ConnectionError:
-                    fallback_url = "http://host.docker.internal:3005"
-                    clear_response = requests.delete(
-                        f"{fallback_url}/cart/clear/{valid_uid}",
-                        headers={"Authorization": f"Bearer {token}"},
-                        timeout=5
-                    )
-                clear_response.raise_for_status()
-            except Exception as e:
-                logging.getLogger(__name__).error(f"[CartSync] Failed to clear main cart: {e}")
-                result["cart_sync_status"] = "error"
-                
     return result

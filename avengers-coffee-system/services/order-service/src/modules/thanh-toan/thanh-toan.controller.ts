@@ -1,10 +1,46 @@
-import { Body, Controller, Get, Headers, HttpCode, Param, Post, Query, Req, Res } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, Headers, HttpCode, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { ThanhToanService } from './thanh-toan.service';
+import { CheckoutSafetyService } from './checkout-safety.service';
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 
 @Controller('customers/:customerId/thanh-toan')
 export class ThanhToanController {
-  constructor(private readonly thanhToanService: ThanhToanService) {}
+  constructor(
+    private readonly thanhToanService: ThanhToanService,
+    private readonly checkoutSafetyService: CheckoutSafetyService,
+  ) {}
+
+  private assertStrictCheckoutOwner(req: any, customerId: string) {
+    if (req?.user?.username !== 'internal-service' && String(req?.user?.sub || '') !== String(customerId)) {
+      throw new ForbiddenException('Ban khong co quyen checkout cho gio hang nay');
+    }
+  }
+
+  /** Canonical V5 checkout quote. Legacy `khoi-tao` remains web compatible. */
+  @Post('checkout-quote')
+  @UseGuards(JwtAuthGuard)
+  checkoutQuote(
+    @Param('customerId') customerId: string,
+    @Body() payload: any,
+    @Req() req: any,
+  ) {
+    this.assertStrictCheckoutOwner(req, customerId);
+    return this.checkoutSafetyService.createQuote(customerId, payload);
+  }
+
+  /** Canonical V5 checkout confirmation: requires a server quote/action/key. */
+  @Post('checkout-confirm')
+  @UseGuards(JwtAuthGuard)
+  checkoutConfirm(
+    @Param('customerId') customerId: string,
+    @Headers('x-idempotency-key') operationId: string | undefined,
+    @Body() payload: any,
+    @Req() req: any,
+  ) {
+    this.assertStrictCheckoutOwner(req, customerId);
+    return this.checkoutSafetyService.confirmQuote(customerId, payload, operationId);
+  }
 
   @Post('khoi-tao')
   khoiTao(

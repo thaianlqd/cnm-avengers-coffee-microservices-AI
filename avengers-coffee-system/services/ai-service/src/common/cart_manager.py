@@ -1010,14 +1010,22 @@ def cart_fingerprint(session_id: str) -> str:
     encoded = json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
-def mark_checkout_summary(session_id: str) -> Dict[str, str]:
+def mark_checkout_summary(
+    session_id: str,
+    *,
+    action_id: Optional[str] = None,
+    expires_at: Optional[str] = None,
+    quote_id: Optional[str] = None,
+) -> Dict[str, str]:
     fingerprint = cart_fingerprint(session_id)
     with _get_session_lock(session_id):
         session = _get_or_create_session(session_id)
         prefs = dict(session.get("checkout_prefs") or {})
         prefs["summary_fingerprint"] = fingerprint
-        prefs["checkout_action_id"] = str(uuid.uuid4())
-        prefs["checkout_action_expires_at"] = str(time.time() + 15 * 60)
+        prefs["checkout_action_id"] = str(action_id or uuid.uuid4())
+        prefs["checkout_action_expires_at"] = str(expires_at or (time.time() + 15 * 60))
+        if quote_id:
+            prefs["checkout_quote_id"] = str(quote_id)
         session["checkout_prefs"] = prefs
         _touch(session_id, session, sync_db=True)
         return dict(prefs)

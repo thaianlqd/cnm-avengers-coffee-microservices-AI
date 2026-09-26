@@ -78,23 +78,19 @@ def test_t1_integration_fill_options_lifecycle(t1_env_on):
     session_id = "test-t1-fill-options"
     cart_manager.clear_pending_action(session_id)
     cart_manager.set_pending_products(session_id, [])
-    
-    # Bước 1: Khách yêu cầu món số 1
-    with patch("src.function_calling.tools.product_tools.execute_get_product_options") as mock_options:
-        mock_options.return_value = {
-            "status": "ok",
-            "product_name": "Cà Phê Sữa",
-            "options": {"Size": ["Vừa", "Lớn"], "Đá": ["Bình thường", "Ít đá"]}
-        }
-        with patch("src.agents.agent_service._resolve_numbered_product_choices") as mock_resolve:
-            mock_resolve.return_value = [{"product_name": "Cà Phê Sữa", "category": "drink"}]
-            # Cần mock _parse_option_groups nếu nó có parse
-            _run_agent_impl(session_id, "món số 1", history=[{"role": "assistant", "content": "1. Cà Phê Sữa"}])
-            
-            mock_resolve.assert_called_once()
-            pending = cart_manager.get_pending_action(session_id)
-            assert pending is not None, "pending_action must be set"
-            assert pending["type"] == "fill_options"
+    # The graph resolves the typed list and creates this durable draft.  This
+    # service-level lifecycle test starts at that boundary; assistant prose is
+    # intentionally not used as a write selector.
+    pending_items = cart_manager.set_pending_products(session_id, [{
+        "product_id": "P1", "product_name": "Cà Phê Sữa",
+        "options": {"groups": {"Size": ["Vừa", "Lớn"], "Đá": ["Bình thường", "Ít đá"]}},
+    }])
+    cart_manager.set_pending_interaction(
+        session_id, kind="FILL_FIELDS", domain="PRODUCT", action="FILL_OPTIONS",
+        context_id=pending_items[0]["pending_id"], data={"pending_id": pending_items[0]["pending_id"]},
+    )
+    pending = cart_manager.get_pending_action(session_id)
+    assert pending is not None and pending["type"] == "fill_options"
             
     # Bước 2: Khách cung cấp thông tin tùy chọn
     with patch("src.function_calling.tools.cart_tools.execute_add_to_cart") as mock_add, \
@@ -119,6 +115,10 @@ def test_t1_integration_select_branch_lifecycle(t1_env_on):
     
     cart_manager.set_checkout_prefs(session_id, delivery_type="MANG_DI")
     cart_manager.set_checkout_context(session_id, suggested_address="123 Duong A")
+    cart_manager.set_pending_interaction(
+        session_id, kind="YES_NO", domain="ADDRESS", action="CONFIRM_ADDRESS",
+        data={"address_snapshot": "123 Duong A"},
+    )
     
     with patch("src.common.cart_manager.get_cart") as mock_get_cart, \
          patch("src.function_calling.tools.branch_tools.execute_find_nearest_branch") as mock_find:
@@ -146,13 +146,10 @@ def test_t1_integration_select_branch_lifecycle(t1_env_on):
         mock_get_cart.return_value = {"is_empty": False, "branch_id": None, "branch_name": None, "total_price": 30000, "items": [{"product_name": "Cafe", "unit_price": 30000, "quantity": 1, "size": None}]}
         mock_set.return_value = {"status": "ok", "message": "Đã ghi nhận"}
         
-        cart_manager.set_checkout_context(
-            session_id,
-            branch_candidates=[
-                {"branch_id": "B1", "branch_name": "CN 1", "khoang_cach_km": 1.0},
-                {"branch_id": "B2", "branch_name": "CN 2", "khoang_cach_km": 2.0}
-            ]
-        )
+        cart_manager.set_selection_context(session_id, "BRANCH", "SELECT_BRANCH", [
+            {"branch_id": "B1", "branch_name": "CN 1", "label": "CN 1", "entity_id": "B1", "khoang_cach_km": 1.0},
+            {"branch_id": "B2", "branch_name": "CN 2", "label": "CN 2", "entity_id": "B2", "khoang_cach_km": 2.0},
+        ])
         _run_agent_impl(session_id, "cửa hàng số 1", history=[{"role": "assistant", "content": "chọn cửa hàng số mấy"}])
         
         mock_set.assert_called_once()
@@ -217,7 +214,10 @@ def test_t1_integration_select_voucher_lifecycle(t1_env_on):
         
         mock_apply.assert_called_once()
         pending_after = cart_manager.get_pending_action(session_id)
-        assert pending_after is None, "pending_action must be cleared"
+        # Applying voucher consumes exactly that SELECT_ONE interaction, then
+        # the checkout flow legitimately asks the next typed question.
+        assert pending_after is not None
+        assert pending_after["type"] == "select_fulfillment"
 
 def test_t1_integration_select_voucher_clear_when_none_found_early(t1_env_on):
     session_id = "test-t1-select-voucher-clear-early"
@@ -242,7 +242,8 @@ def test_t1_integration_select_voucher_clear_when_none_found_early(t1_env_on):
         
         mock_get_vouchers.assert_called()
         pending = cart_manager.get_pending_action(session_id)
-        assert pending is None, "pending_action must be cleared when no vouchers found"
+        assert pending is not None
+        assert pending["type"] == "select_payment"
         assert "Hiện không có mã giảm giá phù hợp" in result.get("reply", ""), "Must return text from no_more_items block (line 1346/1376)"
 
 def test_t1_integration_select_voucher_clear_when_none_found_before_checkout(t1_env_on):
@@ -268,7 +269,8 @@ def test_t1_integration_select_voucher_clear_when_none_found_before_checkout(t1_
         
         mock_get_vouchers.assert_called_once()
         pending = cart_manager.get_pending_action(session_id)
-        assert pending is None, "pending_action must be cleared when no vouchers found before checkout"
+        assert pending is not None
+        assert pending["type"] == "select_payment"
         assert "phương thức thanh toán số mấy" in result.get("reply", "")
 
 def test_t1_integration_ask_more_items_lifecycle(t1_env_on):
@@ -284,7 +286,8 @@ def test_t1_integration_ask_more_items_lifecycle(t1_env_on):
     assert pending is not None
     assert pending["type"] == "ask_more_items"
     
-    # 2. CLEAR qua LLM add_to_cart thành công
+    # 2. A conversational LLM fallback may not execute the advertised cart
+    # write. An explicit new command supersedes the stale ask-more prompt.
     with patch("src.agents.agent_service.groq_agent_chat") as mock_groq, \
          patch("src.function_calling.tools.cart_tools.execute_add_to_cart") as mock_add2:
         mock_add2.return_value = {"status": "ok", "cart": {"total_price": 60000, "items": []}}
@@ -294,18 +297,22 @@ def test_t1_integration_ask_more_items_lifecycle(t1_env_on):
             "error": None
         }
         res = _run_agent_impl(session_id, "thêm cafe", history=[])
-        assert cart_manager.get_pending_action(session_id) is None, "Phải clear khi add_to_cart qua LLM thành công"
+        assert not mock_add2.called, "read-only conversational fallback must not mutate cart"
+        pending_after_add = cart_manager.get_pending_action(session_id)
+        assert not pending_after_add or pending_after_add["type"] != "ask_more_items"
         
     # 3. SET lại và CLEAR qua no_more_items
     cart_manager.set_pending_action(session_id, "ask_more_items", {})
     with patch("src.agents.agent_service.groq_agent_chat") as mock_groq:
         mock_groq.return_value = {"reply": "LLM text", "tool_calls_log": [], "error": None}
         res2 = _run_agent_impl(session_id, "không thêm gì nữa", history=[])
-        assert cart_manager.get_pending_action(session_id) is None, "Phải clear khi khách từ chối thêm món"
+        pending_after_no = cart_manager.get_pending_action(session_id)
+        assert not pending_after_no or pending_after_no["type"] != "ask_more_items"
         
     # 4. SET lại và CLEAR qua checkout
     cart_manager.set_pending_action(session_id, "ask_more_items", {})
     with patch("src.agents.agent_service.groq_agent_chat") as mock_groq:
         mock_groq.return_value = {"reply": "LLM text", "tool_calls_log": [], "error": None}
         _run_agent_impl(session_id, "chốt đơn đi", history=[])
-        assert cart_manager.get_pending_action(session_id) is None, "Phải clear khi khách chốt đơn"
+        pending_after_checkout = cart_manager.get_pending_action(session_id)
+        assert not pending_after_checkout or pending_after_checkout["type"] != "ask_more_items"

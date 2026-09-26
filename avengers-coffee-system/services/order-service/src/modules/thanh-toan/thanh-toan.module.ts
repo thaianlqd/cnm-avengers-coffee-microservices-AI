@@ -10,6 +10,7 @@ import { CaLamViecNhanVien } from './entities/ca-lam-viec-nhan-vien.entity';
 import { KioskShiftSession } from './entities/kiosk-shift-session.entity';
 import { ThanhToanController, ThanhToanHeThongController, ThanhToanLegacyWebhookController } from './thanh-toan.controller';
 import { ThanhToanService } from './thanh-toan.service';
+import { CheckoutSafetyService } from './checkout-safety.service';
 import { VoucherModule } from '../voucher/voucher.module';
 import { FeaturesThaianModule } from '../shipper/features_thaian/features_thaian.module';
 import { CustomerWalletModule } from '../customer-wallet/customer-wallet.module';
@@ -28,7 +29,7 @@ import { SurveyService } from '../../services/survey.service';
     SmtpModule,
   ],
   controllers: [ThanhToanController, ThanhToanHeThongController, ThanhToanLegacyWebhookController],
-  providers: [ThanhToanService, SurveyService],
+  providers: [ThanhToanService, CheckoutSafetyService, SurveyService],
   exports: [ThanhToanService],
 })
 export class ThanhToanModule {}

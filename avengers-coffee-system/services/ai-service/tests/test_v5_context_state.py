@@ -114,3 +114,26 @@ def test_pending_draft_removal_uses_stable_id_not_similar_name():
     cart_manager.mark_pending_product_added(session, pending_id=pending[0]["pending_id"])
     remaining = cart_manager.get_checkout_prefs(session)["pending_products"]
     assert [item["product_id"] for item in remaining] == ["P2"]
+
+
+def test_multi_product_option_reply_is_scoped_to_active_pending_draft(monkeypatch):
+    session = "v5-option-clause-scope"
+    pending = cart_manager.set_pending_products(session, [
+        {"product_id": "M1", "product_name": "Matcha Latte", "options": {"groups": {"Kích thước": ["Nhỏ", "Vừa", "Lớn"]}}},
+        {"product_id": "C1", "product_name": "Cold Brew", "options": {"groups": {"Kích thước": ["Nhỏ", "Vừa", "Lớn"]}}},
+    ])
+    cart_manager.set_pending_interaction(
+        session, kind="FILL_FIELDS", domain="PRODUCT", action="FILL_OPTIONS",
+        context_id=pending[0]["pending_id"], data={"pending_id": pending[0]["pending_id"]},
+    )
+    # Stop before a cart write: this regression asserts option binding only.
+    monkeypatch.setattr(
+        "src.function_calling.tools.product_tools.execute_check_price_and_stock",
+        lambda **_kwargs: {"status": "error", "products": []},
+    )
+    _complete_pending_products_from_options(session, "Matcha Latte size lớn, Cold Brew size vừa")
+    stored = cart_manager.get_checkout_prefs(session)["pending_products"]
+    matcha = next(item for item in stored if item["product_id"] == "M1")
+    cold_brew = next(item for item in stored if item["product_id"] == "C1")
+    assert matcha["selected_options"]["size"] == "Lớn"
+    assert cold_brew["selected_options"] == {}

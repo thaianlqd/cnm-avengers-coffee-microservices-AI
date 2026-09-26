@@ -83,21 +83,38 @@ def finalize_checkout(
         if voucher_code:
             payload["ma_voucher"] = voucher_code
 
+        quote_id = str(prefs.get("checkout_quote_id") or "").strip()
+        action_id = str(prefs.get("checkout_action_id") or "").strip()
+        expected_cart_version = cart.get("cart_version")
+        if not quote_id or not action_id or expected_cart_version is None:
+            cart_manager.set_is_checking_out(cart_session_id, False)
+            return {
+                "status": "stale_checkout",
+                "message": "Thiếu báo giá xác thực. Vui lòng tạo lại tóm tắt trước khi đặt đơn.",
+            }
+        strict_payload = {
+            **payload,
+            "quote_id": quote_id,
+            "action_id": action_id,
+            "expected_cart_version": expected_cart_version,
+        }
+
         # Use the same checkout application service as the customer web. It
         # reads the authoritative cart, revalidates voucher and calculates the
         # order total instead of trusting prices supplied by the AI.
         logger.info("[CheckoutService] Sending order for session %s to %s", session_id, order_service_url)
         resp = requests.post(
-            f"{order_service_url}/customers/{valid_uid}/thanh-toan/khoi-tao",
-            headers=headers,
-            json=payload,
+            f"{order_service_url}/customers/{valid_uid}/thanh-toan/checkout-confirm",
+            headers={**headers, "X-Idempotency-Key": f"ai-checkout:{action_id}"},
+            json=strict_payload,
             timeout=15,
         )
         
         if resp.status_code in [200, 201]:
             resp_data = resp.json()
             order_id = (
-                resp_data.get("don_hang", {}).get("ma_don_hang")
+                resp_data.get("order_id")
+                or resp_data.get("don_hang", {}).get("ma_don_hang")
                 or resp_data.get("ma_don_hang")
             )
             if not order_id:
@@ -111,6 +128,8 @@ def finalize_checkout(
                 }
             
             # Thành công -> Xóa giỏ hàng và gán last_order_id
+            # The Order Service cleared the authoritative cart in the same
+            # transaction as the order write; only replace the local mirror.
             cart_manager.clear_cart(cart_session_id, order_id=str(order_id))
             
             return {
@@ -118,7 +137,8 @@ def finalize_checkout(
                 "message": f"Đặt hàng thành công! Đơn hàng của bạn đang được chuẩn bị. (Mã đơn: {order_id})",
                 "order_id": str(order_id),
                 "total_price": float(
-                    resp_data.get("don_hang", {}).get("tong_tien")
+                    resp_data.get("final_total")
+                    or resp_data.get("don_hang", {}).get("tong_tien")
                     or resp_data.get("tong_tien")
                     or cart.get("total_price", 0)
                 ),

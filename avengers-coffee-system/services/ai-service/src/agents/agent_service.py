@@ -996,6 +996,30 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
     item = next((row for row in pending if str(row.get("pending_id") or "") == target_id), pending[0])
     product_name = str(item.get("product_name") or "")
 
+    # Bind option words to the named product clause before looking up any
+    # option value.  For example, ``Matcha size lớn, Latte size vừa`` must
+    # never let the Latte value complete the Matcha draft.  We intentionally
+    # complete only the interaction's pending_id in this turn; later drafts
+    # retain their own state and are prompted independently.
+    named_offsets = []
+    for pending_item in pending:
+        candidate = _normalize_chat_text(pending_item.get("product_name"))
+        if candidate:
+            match = re.search(rf"\b{re.escape(candidate)}\b", normalized)
+            if match:
+                named_offsets.append((match.start(), match.end(), str(pending_item.get("pending_id") or "")))
+    named_offsets.sort()
+    target_match_index = next((index for index, row in enumerate(named_offsets) if row[2] == str(item.get("pending_id") or "")), None)
+    if named_offsets and target_match_index is None:
+        # A customer explicitly configured another pending product. Do not
+        # borrow those values for the currently active draft.
+        return None
+    scoped_normalized = normalized
+    if target_match_index is not None:
+        previous_end = named_offsets[target_match_index - 1][1] if target_match_index else 0
+        next_start = named_offsets[target_match_index + 1][0] if target_match_index + 1 < len(named_offsets) else len(normalized)
+        scoped_normalized = normalized[previous_end:next_start]
+
     # A named, different product plus a question is a read-only detour.  Keep
     # the resume task intact and let the normal read route answer it.
     if product_name and _normalize_chat_text(product_name) not in normalized and re.search(r"\b(co|gia|bao nhieu|review|danh gia|khong)\b", normalized):
@@ -1010,10 +1034,10 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
         values = [str(value) for value in raw_values]
         group_norm = _normalize_chat_text(group_name)
         is_size = "size" in group_norm or "kich thuoc" in group_norm
-        matches = [value for value in values if _normalize_chat_text(value) in normalized]
+        matches = [value for value in values if _normalize_chat_text(value) in scoped_normalized]
         if is_size and len(values) == 1:
             matches = values
-        if "topping" in group_norm and re.search(r"\b(khong topping|bo topping|khong them topping)\b", normalized):
+        if "topping" in group_norm and re.search(r"\b(khong topping|bo topping|khong them topping)\b", scoped_normalized):
             selected["toppings"] = []
         elif matches:
             if is_size:
