@@ -1,9 +1,8 @@
 """Authoritative inventory checks used by branch selection and checkout.
 
 Policy:
-- Inventory rows are branch-specific overrides. A missing row inherits the
-  product's normal menu availability at that branch.
-- Only explicit inactive/insufficient rows are unavailable.
+- A selected branch needs an authoritative inventory row for each product.
+- Missing rows are unverified and cannot authorize checkout.
 - Products with a row must have enough quantity for the whole cart.
 - Quantities are aggregated by product before validation.
 """
@@ -44,7 +43,7 @@ def validate_items_at_branch(
         for product_id, required_quantity in required_quantities.items():
             if not product_id.isdigit():
                 unverified.append(names[product_id])
-                details.append({"product_id": product_id, "product_name": names[product_id], "code": "UNKNOWN_BRANCH"})
+                details.append({"product_id": product_id, "product_name": names[product_id], "code": "UNVERIFIED_STOCK"})
                 continue
             row = conn.execute(text(f"""
                 SELECT so_luong_ton, dang_kinh_doanh
@@ -56,9 +55,13 @@ def validate_items_at_branch(
                 "product_id": int(product_id),
             }).fetchone()
             if row is None:
-                # The admin UI writes a row when a branch pauses a product or
-                # tracks a finite quantity. Most products have no override row;
-                # treating those as unknown made every ordinary branch fail.
+                unverified.append(names[product_id])
+                details.append({
+                    "product_id": product_id,
+                    "product_name": names[product_id],
+                    "required_quantity": required_quantity,
+                    "code": "UNVERIFIED_STOCK",
+                })
                 continue
             stock_quantity = int(row[0] or 0)
             is_active = bool(row[1])

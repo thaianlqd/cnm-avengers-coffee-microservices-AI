@@ -3,8 +3,8 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 /**
  * The Menu database exposes option values/surcharges through
  * menu.thuoc_tinh + menu.bien_the_san_pham.  It currently has no persisted
- * required/min/max columns, so this component cannot invent those rules; it
- * does strictly validate every group that Menu does define.  Both cart writes
+ * required/min/max columns. The existing product-options API defines one
+ * system rule: a size group requires exactly one selected size. Both cart writes
  * and strict checkout call this class so a cart line cannot be priced with
  * different semantics at quote/confirm time.
  */
@@ -37,7 +37,7 @@ export class ProductConfigurationValidator {
   /** Normalize canonical fields first, then retain only real custom groups. */
   private selectedByGroup(selection: any): Map<string, string[]> {
     const result = new Map<string, string[]>();
-    result.set('size', this.values(selection?.size || selection?.kich_co || 'Nhỏ'));
+    result.set('size', this.values(selection?.size ?? selection?.kich_co));
     result.set('toppings', this.values(selection?.toppings));
     result.set('ice', this.values(selection?.luong_da));
     result.set('sugar', this.values(selection?.do_ngot));
@@ -82,6 +82,9 @@ export class ProductConfigurationValidator {
     for (const [group, choices] of groups) {
       const requested = selected.get(group) || [];
       if (group === 'size') {
+        if (requested.length !== 1) {
+          throw new ConflictException({ code: 'REQUOTE_REQUIRED', reason: 'OPTION_REQUIRED', option: 'size' });
+        }
         const size = requested[0];
         const selectedVariant = choices.find((row) => this.normalize(row.gia_tri) === size);
         if (!selectedVariant) {
@@ -90,6 +93,9 @@ export class ProductConfigurationValidator {
         // Menu stores the completed price for a size, not a surcharge.
         unitPrice = Number(selectedVariant.phu_thu || 0);
         continue;
+      }
+      if (group !== 'toppings' && requested.length > 1) {
+        throw new ConflictException({ code: 'REQUOTE_REQUIRED', reason: 'OPTION_UNAVAILABLE', option: group });
       }
       for (const value of requested) {
         const selectedVariant = choices.find((row) => this.normalize(row.gia_tri) === value);
@@ -104,6 +110,9 @@ export class ProductConfigurationValidator {
     // option. Canonical ice/sugar/milk remain backwards-compatible free text
     // only if this product has no corresponding Menu group.
     for (const [group, requested] of selected) {
+      if (requested.length && group === 'toppings' && !groups.has(group)) {
+        throw new ConflictException({ code: 'REQUOTE_REQUIRED', reason: 'OPTION_UNAVAILABLE', option: group });
+      }
       if (requested.length && group.startsWith('custom:') && !groups.has(group)) {
         throw new ConflictException({ code: 'REQUOTE_REQUIRED', reason: 'OPTION_UNAVAILABLE', option: group });
       }

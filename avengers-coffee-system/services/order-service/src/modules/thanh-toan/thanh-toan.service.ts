@@ -1936,7 +1936,7 @@ export class ThanhToanService {
           loai: 'PAYMENT',
           du_lieu: { ma_don_hang: donHang.ma_don_hang, phuong_thuc_thanh_toan: 'VI_DIEN_TU' },
         }),
-        this.tichDiemLoyalty(maNguoiDung, tongTienGoc),
+        this.tichDiemLoyalty(maNguoiDung, tongTienGoc, donHang.ma_don_hang),
       ]);
 
       return {
@@ -1960,7 +1960,7 @@ export class ThanhToanService {
           du_lieu: { ma_don_hang: donHang.ma_don_hang, phuong_thuc_thanh_toan: 'THANH_TOAN_KHI_NHAN_HANG' },
         }),
         // COD: tích điểm ngay khi đặt hàng (điểm chờ xác nhận)
-        this.tichDiemLoyalty(maNguoiDung, tongTienGoc),
+        this.tichDiemLoyalty(maNguoiDung, tongTienGoc, donHang.ma_don_hang),
       ]);
       return {
         message: 'Da tao don hang COD thanh cong',
@@ -2234,7 +2234,7 @@ export class ThanhToanService {
               loai: 'PAYMENT',
               du_lieu: { ma_don_hang: donHang.ma_don_hang, trang_thai_thanh_toan: 'DA_THANH_TOAN' },
             }),
-            this.tichDiemLoyalty(donHang.ma_nguoi_dung, Number(donHang.tong_tien) + Number(donHang.so_tien_giam || 0)),
+            this.tichDiemLoyalty(donHang.ma_nguoi_dung, Number(donHang.tong_tien) + Number(donHang.so_tien_giam || 0), donHang.ma_don_hang),
           );
         }
         await Promise.all(promises);
@@ -2330,7 +2330,7 @@ export class ThanhToanService {
               loai: 'PAYMENT',
               du_lieu: { ma_don_hang: donHang.ma_don_hang, trang_thai_thanh_toan: 'DA_THANH_TOAN' },
             }),
-            this.tichDiemLoyalty(donHang.ma_nguoi_dung, Number(donHang.tong_tien) + Number(donHang.so_tien_giam || 0)),
+            this.tichDiemLoyalty(donHang.ma_nguoi_dung, Number(donHang.tong_tien) + Number(donHang.so_tien_giam || 0), donHang.ma_don_hang),
           );
         }
         await Promise.all(promises);
@@ -2938,6 +2938,35 @@ export class ThanhToanService {
   private taoQrNganHangDuPhong(tongTien: number, maThamChieu: string) {
     const amount = Math.round(tongTien);
     return `https://img.vietqr.io/image/${encodeURIComponent(this.SEPAY_BANK_CODE)}-${encodeURIComponent(this.SEPAY_ACCOUNT_NO)}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(maThamChieu)}`;
+  }
+
+  /** Pure presentation helpers shared with transactional strict checkout. */
+  buildStrictPaymentPresentation(input: {
+    method: 'VNPAY' | 'NGAN_HANG_QR' | 'VI_DIEN_TU' | 'THANH_TOAN_KHI_NHAN_HANG';
+    userId: string;
+    orderId: string;
+    amount: number;
+    reference: string;
+  }): { redirect_url: string | null; payment_details: Record<string, any> | null } {
+    if (input.method === 'VNPAY') {
+      return {
+        redirect_url: this.taoUrlVnpayThat(input.userId, input.orderId, input.amount, input.reference, '113.190.232.222'),
+        payment_details: null,
+      };
+    }
+    if (input.method === 'NGAN_HANG_QR') {
+      return {
+        redirect_url: null,
+        payment_details: {
+          ma_don_hang: input.orderId,
+          so_tien: input.amount,
+          ma_tham_chieu: input.reference,
+          qr_img_url: this.taoQrNganHang(input.amount, input.reference),
+          qr_fallback_url: this.taoQrNganHangDuPhong(input.amount, input.reference),
+        },
+      };
+    }
+    return { redirect_url: null, payment_details: null };
   }
 
   private trichXuatMaThamChieuQr(noiDung: string) {
@@ -3627,7 +3656,7 @@ export class ThanhToanService {
   }
 
   // Tích điểm loyalty cho user (fire-and-forget — không làm hỏng luồng thanh toán)
-  private async tichDiemLoyalty(maNguoiDung: string, tongTienGoc: number): Promise<void> {
+  private async tichDiemLoyalty(maNguoiDung: string, tongTienGoc: number, orderId?: string): Promise<void> {
     if (!maNguoiDung || maNguoiDung.startsWith('anon-')) return;
     const diem = Math.floor(tongTienGoc / 1000);
     if (diem <= 0) return;
@@ -3639,7 +3668,7 @@ export class ThanhToanService {
           'Content-Type': 'application/json',
           'x-internal-token': this.INTERNAL_SERVICE_TOKEN,
         },
-        body: JSON.stringify({ diem }),
+        body: JSON.stringify({ diem, order_id: orderId }),
         signal: AbortSignal.timeout(5000),
       });
     } catch {
@@ -4422,5 +4451,14 @@ export class ThanhToanService {
 
   async guiEmailXacNhanDonHang(donHang: DonHang, chiTiet: ChiTietDonHang[], trackingCode?: string) {
     return this.smtpService.sendOrderConfirmationEmail(donHang, chiTiet, trackingCode);
+  }
+
+  /** Retryable, post-commit effects for strict AI checkout. No cart/order write. */
+  async runStrictOrderFollowup(orderId: string) {
+    const order = await this.donHangRepo.findOne({ where: { ma_don_hang: orderId } });
+    if (!order) throw new Error(`Strict order ${orderId} not found`);
+    const details = await this.chiTietRepo.find({ where: { ma_don_hang: orderId } });
+    await this.invalidateOrderCaches(order.ma_nguoi_dung, order.co_so_ma);
+    await this.guiEmailXacNhanDonHang(order, details);
   }
 }

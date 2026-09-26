@@ -8,6 +8,7 @@ files once, in lexical order, with the target database credentials, for example:
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/20260926_cart_state_idempotency.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/20260927_checkout_safety.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/20260928_checkout_outbox.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/20260929_checkout_voucher_claim.sql
 ```
 
 `20260926_cart_state_idempotency.sql` is additive and preserves the temporary
@@ -20,3 +21,7 @@ The corresponding Identity Service migration
 also be applied before enabling strict checkout voucher reconciliation. It
 adds the remote order/voucher/user uniqueness guard used by the checkout
 outbox.
+
+Apply `../identity-service/migrations/20260929_loyalty_order_award.sql` next,
+before enabling strict checkout loyalty delivery. It gives each order one
+durable loyalty award even when the outbox retries after a lost response.

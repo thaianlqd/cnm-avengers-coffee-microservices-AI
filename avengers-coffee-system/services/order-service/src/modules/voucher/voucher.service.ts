@@ -5,6 +5,8 @@ import { Voucher } from './voucher.entity';
 
 type VoucherValidationResult = {
   so_tien_giam: number;
+  gioi_han_moi_nguoi: number;
+  luot_da_dung_user: number;
   voucher: {
     ma_voucher: string;
     mo_ta: string | null;
@@ -301,6 +303,7 @@ export class VoucherService {
         throw new BadRequestException('Ma voucher da het luot su dung');
       }
 
+      let usedCount = 0;
       if (userId) {
         try {
           const checkUserRes = await fetch(
@@ -311,17 +314,17 @@ export class VoucherService {
               },
             },
           );
-          if (checkUserRes.ok) {
-            const userData: any = await checkUserRes.json().catch(() => ({}));
-            const usedCount = Number(userData?.luot_da_dung || 0);
-            const limitPerUser = voucher.gioi_han_moi_nguoi || 1;
-            if (usedCount >= limitPerUser) {
-              throw new BadRequestException('Ban da dung het luot su dung voucher nay');
-            }
+          if (!checkUserRes.ok) throw new Error(`Identity usage response ${checkUserRes.status}`);
+          const userData: any = await checkUserRes.json();
+          usedCount = Number(userData?.luot_da_dung || 0);
+          const limitPerUser = voucher.gioi_han_moi_nguoi || 1;
+          if (usedCount >= limitPerUser) {
+            throw new BadRequestException('Ban da dung het luot su dung voucher nay');
           }
         } catch (err) {
           if (err instanceof BadRequestException) throw err;
           console.error('[kiemTraVoucher] Error checking user usage count:', err);
+          throw new BadRequestException('Chua the xac minh luot dung voucher; vui long thu lai');
         }
       }
 
@@ -357,6 +360,8 @@ export class VoucherService {
 
       return {
         so_tien_giam: soTienGiam,
+        gioi_han_moi_nguoi: Number(voucher.gioi_han_moi_nguoi || 1),
+        luot_da_dung_user: usedCount,
         voucher: {
           ma_voucher: voucher.ma_voucher,
           mo_ta: voucher.mo_ta || null,
@@ -392,6 +397,8 @@ export class VoucherService {
 
     return {
       so_tien_giam: Number(identityPayload?.so_tien_giam || 0),
+      gioi_han_moi_nguoi: Number(identityPayload?.gioi_han_moi_nguoi || 1),
+      luot_da_dung_user: Number(identityPayload?.luot_da_dung_user || 0),
       voucher: {
         ma_voucher: String(identityPayload?.ma_khuyen_mai || code),
         mo_ta: identityPayload?.ten_khuyen_mai || null,

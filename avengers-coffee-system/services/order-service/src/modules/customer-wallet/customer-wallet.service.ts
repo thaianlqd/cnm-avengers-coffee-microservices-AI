@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import * as crypto from 'crypto';
 import { CustomerWallet } from './entities/customer-wallet.entity';
 import { CustomerWalletTransaction } from './entities/customer-wallet-transaction.entity';
@@ -144,6 +144,26 @@ export class CustomerWalletService {
     await this.transactionRepo.save(transaction);
 
     return true;
+  }
+
+  /** Strict checkout's wallet debit shares its cart/order database transaction. */
+  async deductBalanceInTransaction(manager: EntityManager, customerId: string, amount: number, referenceId: string) {
+    if (!Number.isFinite(amount) || amount < 0) throw new BadRequestException('So tien thanh toan khong hop le');
+    const schema = process.env.DB_SCHEMA || 'orders';
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(schema)) throw new BadRequestException('DB_SCHEMA khong hop le');
+    const debited = await manager.query(
+      `UPDATE "${schema}".customer_wallet
+          SET balance = balance - $2, updated_at = NOW()
+        WHERE customer_id = $1 AND balance >= $2
+        RETURNING customer_id`, [customerId, amount],
+    );
+    const updatedRows = Array.isArray(debited?.[0]) ? debited[0] : debited;
+    if (!updatedRows?.length) throw new BadRequestException('So du vi dien tu khong du de thanh toan');
+    await manager.getRepository(CustomerWalletTransaction).save(
+      manager.getRepository(CustomerWalletTransaction).create({
+        customer_id: customerId, amount, type: 'PAYMENT', status: 'SUCCESS', reference_id: referenceId,
+      }),
+    );
   }
 
   async refundBalance(customerId: string, amount: number, referenceId: string) {

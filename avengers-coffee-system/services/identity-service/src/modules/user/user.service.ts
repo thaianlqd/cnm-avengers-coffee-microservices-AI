@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException, BadRequestException, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Branch } from './branch.entity';
 import { DeliveryAddress } from './delivery-address.entity';
 import { Promotion } from './promotion.entity';
@@ -58,6 +58,7 @@ export class UserService implements OnModuleInit {
     @InjectRepository(WalletTransaction)
     private walletTxRepo: Repository<WalletTransaction>,
     private readonly mailSender: MailSenderService,
+    private readonly dataSource: DataSource,
   ) {}
 
   private readonly ORDER_SERVICE_URL = process.env.ORDER_SERVICE_URL || 'http://order-service:3005';
@@ -2026,7 +2027,88 @@ export class UserService implements OnModuleInit {
     return { diem_moi: user.diem_loyalty, diem_kha_dung: user.diem_kha_dung, len_hang, hang_moi: hangSau.ma_hang };
   }
 
-  private async taoVoucherChaoMungLenHang(userId: string, maHang: string, tenHang: string) {
+  /** Strict-order loyalty: one award per order, even after outbox replay. */
+  async congDiemLoyaltyChoDonHang(maNguoiDung: string, diem: number, orderId: string) {
+    const userId = String(maNguoiDung || '').trim();
+    const durableOrderId = String(orderId || '').trim();
+    const basePoints = Math.floor(Number(diem));
+    if (!userId || !durableOrderId || !Number.isSafeInteger(basePoints) || basePoints <= 0) {
+      throw new BadRequestException('user_id, order_id va diem hop le la bat buoc');
+    }
+    const schema = process.env.DB_SCHEMA || 'identity';
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(schema)) throw new BadRequestException('DB_SCHEMA khong hop le');
+    const awarded = await this.dataSource.transaction(async (manager) => {
+      const users = await manager.query(
+        `SELECT ma_nguoi_dung, diem_loyalty, diem_kha_dung, tong_chi_tieu,
+                chi_tieu_thang_nay, thang_chi_tieu_gan_nhat
+           FROM "${schema}".nguoi_dung WHERE ma_nguoi_dung = $1 FOR UPDATE`, [userId],
+      );
+      const user = users[0];
+      if (!user) throw new NotFoundException('Khong tim thay nguoi dung de cong diem');
+      const inserted = await manager.query(
+        `INSERT INTO "${schema}".loyalty_order_award (order_id, user_id, base_points)
+         VALUES ($1, $2, $3) ON CONFLICT (order_id) DO NOTHING RETURNING order_id`,
+        [durableOrderId, userId, basePoints],
+      );
+      if (!inserted.length) {
+        const existing = (await manager.query(
+          `SELECT user_id, base_points, awarded_points, tier_before, tier_after, reward_processed_at
+             FROM "${schema}".loyalty_order_award WHERE order_id = $1`, [durableOrderId],
+        ))[0];
+        if (!existing || existing.user_id !== userId || Number(existing.base_points) !== basePoints) {
+          throw new BadRequestException('order_id da duoc dung cho loyalty khac');
+        }
+        return { already_processed: true, user, ...existing };
+      }
+      const month = new Date().toISOString().slice(0, 7);
+      const previousSpend = user.thang_chi_tieu_gan_nhat === month ? Number(user.chi_tieu_thang_nay || 0) : 0;
+      const previousPoints = Number(user.diem_loyalty || 0);
+      const tierBefore = this.tinhHangThanhVien(previousPoints, previousSpend);
+      const config = UserService.tierConfigCache || this.DEFAULT_TIER_CONFIG;
+      const tierConfig = config.find((item: any) => item.ma_hang === tierBefore.ma_hang);
+      const minimumSpend = Number(tierConfig?.chi_tieu_toi_thieu_thang || 0);
+      const privilegeActive = tierBefore.ma_hang === 'MEMBER' || previousSpend >= minimumSpend;
+      const multiplier = privilegeActive ? Number(tierConfig?.he_so_diem || 1) : 1;
+      const actualPoints = Math.floor(basePoints * multiplier);
+      const nextPoints = previousPoints + actualPoints;
+      const nextSpend = previousSpend + basePoints * 1000;
+      const tierAfter = this.tinhHangThanhVien(nextPoints, nextSpend);
+      await manager.query(
+        `UPDATE "${schema}".nguoi_dung
+            SET diem_loyalty = $2, diem_kha_dung = $3, tong_chi_tieu = $4,
+                chi_tieu_thang_nay = $5, thang_chi_tieu_gan_nhat = $6
+          WHERE ma_nguoi_dung = $1`,
+        [userId, nextPoints, Number(user.diem_kha_dung || 0) + actualPoints,
+          Number(user.tong_chi_tieu || 0) + basePoints * 1000, nextSpend, month],
+      );
+      await manager.query(
+        `UPDATE "${schema}".loyalty_order_award
+            SET awarded_points = $2, tier_before = $3, tier_after = $4,
+                reward_processed_at = CASE WHEN $5 THEN NOW() ELSE NULL END
+          WHERE order_id = $1`,
+        [durableOrderId, actualPoints, tierBefore.ma_hang, tierAfter.ma_hang,
+          tierBefore.ma_hang === tierAfter.ma_hang],
+      );
+      return { already_processed: false, user, awarded_points: actualPoints,
+        tier_before: tierBefore.ma_hang, tier_after: tierAfter.ma_hang,
+        reward_processed_at: tierBefore.ma_hang === tierAfter.ma_hang ? new Date() : null };
+    });
+    if (!awarded.reward_processed_at && awarded.tier_before !== awarded.tier_after) {
+      const tierConfig = (UserService.tierConfigCache || this.DEFAULT_TIER_CONFIG)
+        .find((item: any) => item.ma_hang === awarded.tier_after);
+      const tierLabel = String(tierConfig?.ten_hang || awarded.tier_after);
+      await this.taoVoucherChaoMungLenHang(userId, awarded.tier_after, tierLabel, durableOrderId);
+      await this.taoVoucherFreeshipTheoHang(userId, awarded.tier_after, tierLabel);
+      await this.dataSource.query(
+        `UPDATE "${schema}".loyalty_order_award SET reward_processed_at = NOW()
+          WHERE order_id = $1 AND reward_processed_at IS NULL`, [durableOrderId],
+      );
+    }
+    return { diem_cong: Number(awarded.awarded_points || 0),
+      already_processed: Boolean(awarded.already_processed), order_id: durableOrderId };
+  }
+
+  private async taoVoucherChaoMungLenHang(userId: string, maHang: string, tenHang: string, orderId?: string) {
     const config = UserService.tierConfigCache || this.DEFAULT_TIER_CONFIG;
     const tier = config.find((t) => t.ma_hang === maHang);
     const maVoucherMau = tier?.ma_voucher_thang_hang;
@@ -2041,7 +2123,9 @@ export class UserService implements OnModuleInit {
 
     const TIER_SHORT: Record<string, string> = { MEMBER: 'MB', SILVER: 'SV', GOLD: 'GD', DIAMOND: 'DM' };
     const shortTier = TIER_SHORT[maHang] || maHang;
-    const code = `UP_${shortTier}_${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    const code = orderId
+      ? `UP_${shortTier}_${createHash('sha256').update(orderId).digest('hex').slice(0, 12).toUpperCase()}`
+      : `UP_${shortTier}_${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
     try {
       const p = new Promotion();
@@ -2070,6 +2154,7 @@ export class UserService implements OnModuleInit {
       await this.promotionRepo.save(p);
     } catch (err) {
       console.error('[taoVoucherChaoMungLenHang] Error:', err);
+      if (orderId) throw err;
     }
   }
 
@@ -2447,8 +2532,9 @@ export class UserService implements OnModuleInit {
       );
     }
 
+    let usedCount = 0;
     if (userId) {
-      const usedCount = await this.promotionUsageRepo.count({
+      usedCount = await this.promotionUsageRepo.count({
         where: { ma_khuyen_mai: code, ma_nguoi_dung: userId },
       });
       if (usedCount >= (p.gioi_han_moi_nguoi || 1)) {
@@ -2490,6 +2576,8 @@ export class UserService implements OnModuleInit {
       so_tien_giam: soTienGiam,
       ten_san_pham_tang: p.ten_san_pham_tang,
       gia_tri: Number(p.gia_tri),
+      gioi_han_moi_nguoi: Number(p.gioi_han_moi_nguoi || 1),
+      luot_da_dung_user: usedCount,
     };
   }
 
@@ -2503,7 +2591,13 @@ export class UserService implements OnModuleInit {
     const count = await this.promotionUsageRepo.count({
       where: { ma_khuyen_mai: cleanCode, ma_nguoi_dung: cleanUserId },
     });
-    return { luot_da_dung: count };
+    const schema = process.env.DB_SCHEMA || 'identity';
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(schema)) throw new BadRequestException('DB_SCHEMA khong hop le');
+    const external = await this.dataSource.query(
+      `SELECT COUNT(*)::int AS count FROM "${schema}".external_voucher_usage
+        WHERE voucher_code = $1 AND user_id = $2`, [cleanCode, cleanUserId],
+    );
+    return { luot_da_dung: count + Number(external[0]?.count || 0) };
   }
 
   /** Internal: ghi nhận lượt dùng khuyến mãi sau khi tạo đơn thành công */
@@ -2519,37 +2613,50 @@ export class UserService implements OnModuleInit {
 
     const userId = String(payload.user_id || '').trim();
     const orderId = String(payload.ma_don_hang || '').trim();
-    // ma_don_hang is the durable business idempotency identity supplied by
-    // checkout outbox. Check before incrementing the promotion counter.
-    if (orderId && userId) {
-      const existing = await this.promotionUsageRepo.findOne({
-        where: { ma_khuyen_mai: code, ma_nguoi_dung: userId, ma_don_hang: orderId },
-      });
-      if (existing) {
+    if (!userId || !orderId) throw new BadRequestException('user_id va ma_don_hang la bat buoc');
+    const schema = process.env.DB_SCHEMA || 'identity';
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(schema)) throw new BadRequestException('DB_SCHEMA khong hop le');
+    return this.dataSource.transaction(async (manager) => {
+      // Lock the promotion before the usage insert/counter update. The unique
+      // business key protects duplicate delivery even across worker instances.
+      const promotion = await manager.query(
+        `SELECT ma_khuyen_mai FROM "${schema}".khuyen_mai WHERE ma_khuyen_mai = $1 FOR UPDATE`, [code],
+      );
+      if (!promotion.length) {
+        const insertedExternal = await manager.query(
+          `INSERT INTO "${schema}".external_voucher_usage
+             (voucher_code, user_id, order_id, discount_amount)
+           VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING order_id`,
+          [code, userId, orderId, Number(payload.so_tien_giam || 0)],
+        );
+        return {
+          message: 'Da ghi nhan su dung khuyen mai', ma_khuyen_mai: code,
+          already_processed: !insertedExternal.length,
+        };
+      }
+      const inserted = await manager.query(
+        `INSERT INTO "${schema}".khuyen_mai_su_dung
+           (ma_khuyen_mai, ma_nguoi_dung, ma_don_hang, so_tien_giam)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (ma_khuyen_mai, ma_nguoi_dung, ma_don_hang)
+           WHERE ma_don_hang IS NOT NULL DO NOTHING
+         RETURNING id`,
+        [code, userId, orderId, Number(payload.so_tien_giam || 0)],
+      );
+      if (!inserted.length) {
         return { message: 'Da ghi nhan su dung khuyen mai', ma_khuyen_mai: code, already_processed: true };
       }
-    }
-    const p = await this.promotionRepo.findOne({ where: { ma_khuyen_mai: code } });
-    if (p) {
-      p.so_luong_da_dung = Number(p.so_luong_da_dung || 0) + 1;
-      await this.promotionRepo.save(p);
-    }
-
-    if (userId) {
-      const usage = this.promotionUsageRepo.create({
-        ma_khuyen_mai: code,
-        ma_nguoi_dung: userId,
-        ma_don_hang: payload.ma_don_hang || null,
-        so_tien_giam: Number(payload.so_tien_giam || 0),
-      });
-      await this.promotionUsageRepo.save(usage);
-    }
-
-    return {
-      message: 'Da ghi nhan su dung khuyen mai',
-      ma_khuyen_mai: code,
-      so_luong_da_dung: p ? p.so_luong_da_dung : 1,
-    };
+      const updated = await manager.query(
+        `UPDATE "${schema}".khuyen_mai
+            SET so_luong_da_dung = so_luong_da_dung + 1
+          WHERE ma_khuyen_mai = $1 RETURNING so_luong_da_dung`, [code],
+      );
+      const updatedRow = (Array.isArray(updated?.[0]) ? updated[0] : updated)?.[0];
+      return {
+        message: 'Da ghi nhan su dung khuyen mai', ma_khuyen_mai: code,
+        so_luong_da_dung: Number(updatedRow.so_luong_da_dung), already_processed: false,
+      };
+    });
   }
 
   /** Internal: phát hành voucher khảo sát 20% đơn từ 100k, hạn dùng 3 ngày */

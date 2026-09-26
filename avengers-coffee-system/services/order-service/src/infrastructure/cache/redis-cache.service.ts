@@ -82,6 +82,26 @@ export class RedisCacheService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  /** Atomically deduplicate and apply the two order-created counters. */
+  async incrementOrderCreatedOnce(eventKey: string, ordersKey: string, revenueKey: string, amount: number) {
+    if (!this.client || !this.ready) return false;
+    const script = `
+      if redis.call('SET', KEYS[1], '1', 'NX') then
+        redis.call('INCRBYFLOAT', KEYS[2], 1)
+        redis.call('INCRBYFLOAT', KEYS[3], ARGV[1])
+        redis.call('EXPIRE', KEYS[2], 86400)
+        redis.call('EXPIRE', KEYS[3], 86400)
+        return 1
+      end
+      return 0`;
+    try {
+      return Number(await this.client.eval(script, 3, `analytics:seen:${eventKey}`, ordersKey, revenueKey, amount)) === 1;
+    } catch (err) {
+      console.warn('[Redis] order-created event dedupe failed:', err);
+      throw err;
+    }
+  }
+
   async delete(key: string) {
     if (!this.client || !this.ready) return;
     try {

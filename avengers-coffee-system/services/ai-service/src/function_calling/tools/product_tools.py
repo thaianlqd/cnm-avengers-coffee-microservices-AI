@@ -2,7 +2,6 @@ import logging
 from typing import Any, Dict, Optional
 from sqlalchemy import text
 from src.function_calling.helpers import _get_engine, _clean_dict, _norm
-from src.common import cart_manager
 
 logger = logging.getLogger(__name__)
 
@@ -160,11 +159,6 @@ def execute_check_price_and_stock(
     do_ngot: Optional[str] = None,
     loai_sua: Optional[str] = None,
 ) -> Dict[str, Any]:
-    if not branch_id:
-        return {
-            "status": "need_branch",
-            "message": "Chưa có thông tin chi nhánh. Hãy gọi ask_branch để hỏi khách chọn chi nhánh.",
-        }
     try:
         import os
         import re
@@ -317,9 +311,7 @@ def execute_check_price_and_stock(
                 logger.warning("[AgentTools] option validation failed", exc_info=True)
 
         inventory_schema = os.getenv("INVENTORY_SCHEMA", "inventory")
-        prefs = cart_manager.get_checkout_prefs(session_id) if session_id else {}
-        fulfillment_selected = bool(prefs.get("delivery_type"))
-        has_outlet = fulfillment_selected and branch_id.strip().lower() not in {"chưa chọn", "chua chon", "none", "null"}
+        has_outlet = bool(str(branch_id or "").strip()) and branch_id.strip().lower() not in {"chưa chọn", "chua chon", "none", "null"}
         results = []
         for p in top:
             base_price = float(p["gia_ban"] or 0)
@@ -354,11 +346,10 @@ def execute_check_price_and_stock(
                         availability_code = "INSUFFICIENT_QUANTITY"
                     else:
                         availability_code = "AVAILABLE"
-                elif has_outlet:
-                    # Missing branch override inherits menu availability.
-                    availability_status = "available"
-                    availability_code = "AVAILABLE"
-                    in_stock = True
+                else:
+                    availability_status = "unverified"
+                    availability_code = "UNVERIFIED_STOCK"
+                    in_stock = None
 
             results.append({
                 "product_id": p["product_id"],

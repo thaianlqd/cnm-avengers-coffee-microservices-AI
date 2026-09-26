@@ -41,6 +41,11 @@ class OrderConversationState(TypedDict, total=False):
     intent: Dict[str, Any]
     result: Dict[str, Any]
     conversation_state: str
+    resolved_message: str
+    resolved_intent: Dict[str, Any]
+    selected_cart_line: Optional[Dict[str, Any]]
+    resolved_interaction: Dict[str, Any]
+    resolved_interaction_kind: str
 
 
 def _norm(value: Any) -> str:
@@ -685,6 +690,13 @@ def _prepare_structured_products(
             for group in option_schema
             if group.get("required")
         }
+        # The Menu API's system rule is exactly one size whenever the size
+        # group exists. Older option payloads omit option_groups metadata;
+        # keep that rule identical to ProductConfigurationValidator.
+        required_names.update(
+            name for name in groups
+            if "size" in _norm(name) or "kich thuoc" in _norm(name)
+        )
         missing_options = [
             name for name, values in groups.items()
             if name in required_names and len(values) > 1
@@ -729,10 +741,20 @@ def _prepare_structured_products(
         # rows in one turn is safe because no user-supplied option is being
         # shared between products.
         while cart_manager.get_checkout_prefs(session_id).get("pending_products"):
-            completed = _complete_pending_products_from_options(session_id, "theo mặc định")
+            current = list(cart_manager.get_checkout_prefs(session_id).get("pending_products") or [])
+            # The completion helper intentionally refuses unscoped option
+            # answers when several drafts exist. Bind each server-default
+            # completion to its own durable product draft and stop if a write
+            # fails without consuming it; otherwise this loop can spin forever.
+            completed = _complete_pending_products_from_options(
+                session_id, f"{current[0].get('product_name') or ''} theo mặc định",
+            )
             if not completed or completed.get("error"):
                 break
             completion_logs.extend(completed.get("tool_calls_log") or [])
+            remaining = list(cart_manager.get_checkout_prefs(session_id).get("pending_products") or [])
+            if len(remaining) >= len(current):
+                break
         if completed:
             completed["tool_calls_log"] = logs + completion_logs
             return completed
@@ -1023,11 +1045,35 @@ def _dispatch_pending_yes_no(
     interaction = cart_manager.get_pending_interaction(session_id) or {}
     if str(interaction.get("kind") or "").upper() != "YES_NO":
         return None
-    classification = classify_confirmation(message, "YES_NO")
+    action = str(interaction.get("action") or "").upper()
+    classification = classify_confirmation(
+        message, "confirm_checkout" if action == "CONFIRM_CHECKOUT" else "YES_NO",
+    )
+    interaction_id = interaction.get("interaction_id")
+    if action == "CONFIRM_CHECKOUT" and classification == "NONE" and re.search(
+        r"\b(?:doi|chuyen|thay)\b.*\b(?:qr|vnpay|vi|cod|thanh toan)\b", _norm(message),
+    ):
+        # A payment change supersedes the immutable quote, even if the
+        # utterance starts with a lexical acknowledgement.
+        cart_manager.clear_pending_interaction(session_id, interaction_id)
+        cart_manager.set_checkout_context(
+            session_id, checkout_action_id=None,
+            checkout_action_expires_at=None, checkout_quote_id=None,
+        )
+        return None
+    if action == "ASK_MORE_ITEMS" and classification == "NONE" and re.search(
+        r"\b(?:them|xem|tim|cho toi|chot don|dat hang|thanh toan)\b", _norm(message),
+    ):
+        cart_manager.clear_pending_interaction(session_id, interaction_id)
+        return None
+    if classification == "AMBIGUOUS" and action == "CONFIRM_CHECKOUT":
+        return {
+            "reply": "Bạn có xác nhận chốt đơn hay không? Vui lòng trả lời rõ 'có' hoặc 'không' nhé.",
+            "gate": "confirm_checkout_ambiguous",
+            "checkout_payload": None, "tool_calls_log": [], "error": None,
+        }
     if classification not in {"YES", "NO"}:
         return None
-    action = str(interaction.get("action") or "").upper()
-    interaction_id = interaction.get("interaction_id")
     if action == "ASK_MORE_ITEMS":
         cart_manager.clear_pending_interaction(session_id, interaction_id)
         if classification == "YES":
@@ -1051,14 +1097,44 @@ def _dispatch_pending_yes_no(
         # ``_execute`` owns the actual write; carry the exact interaction so
         # it cannot be confused with a newly-created clear confirmation.
         return {"_confirmed_clear_cart": True, "interaction": interaction}
+    if action == "CONFIRM_ADDRESS":
+        from src.agents.agent_service import _advance_checkout_if_ready, _confirm_saved_location
+        if classification == "YES":
+            result = _confirm_saved_location(session_id, message, confirmed=True)
+            if result:
+                return _advance_checkout_if_ready(session_id, result)
+            return {"reply": "Địa chỉ đề xuất đã hết hiệu lực. Bạn nhập lại địa chỉ giúp mình nhé.",
+                    "checkout_payload": None, "tool_calls_log": [], "error": None}
+        cart_manager.clear_pending_interaction(session_id, interaction_id)
+        cart_manager.set_checkout_context(session_id, suggested_address=None)
+        return {"reply": "Bạn cho mình địa chỉ khác để tìm cửa hàng gần nhất nhé.",
+                "checkout_payload": None, "tool_calls_log": [], "error": None}
+    if action == "CONFIRM_CHECKOUT":
+        if classification == "NO":
+            cart_manager.clear_pending_interaction(session_id, interaction_id)
+            cart_manager.set_checkout_context(
+                session_id, checkout_action_id=None,
+                checkout_action_expires_at=None, checkout_quote_id=None,
+            )
+            return {"reply": "Mình chưa đặt đơn. Giỏ hàng vẫn được giữ nguyên.",
+                    "checkout_payload": None, "tool_calls_log": [], "error": None}
+        if not cart_manager.get_checkout_prefs(session_id).get("summary_fingerprint"):
+            return {"reply": "Bản tóm tắt đơn đã hết hiệu lực. Mình cần tạo lại báo giá trước khi chốt.",
+                    "checkout_payload": None, "tool_calls_log": [], "error": None}
+        from src.function_calling.tools.cart_tools import execute_confirm_checkout
+        checkout_res = execute_confirm_checkout(session_id)
+        if checkout_res.get("status") in {"success", "already_processed"}:
+            order_id = checkout_res.get("order_id", "")
+            reply = f"🎉 Đặt hàng thành công! Mã đơn hàng của bạn là: **{order_id}**. Cảm ơn bạn đã ủng hộ!"
+        else:
+            reply = checkout_res.get("message", "Đơn hàng chưa được tạo. Bạn có thể kiểm tra lại giỏ hàng và thử lại.")
+        return {"reply": reply, "gate": "confirm_checkout", "checkout_payload": None,
+                "tool_calls_log": [{"tool": "confirm_checkout", "result": checkout_res}], "error": None}
     return None
 
 
-def _execute(state: OrderConversationState) -> OrderConversationState:
-    from src.function_calling.tools.cart_tools import (
-        execute_clear_cart, execute_get_cart_quote, execute_remove_cart_item, execute_update_cart_item,
-        is_authenticated_cart_session,
-    )
+def _resolve_pending_interaction(state: OrderConversationState) -> OrderConversationState:
+    """Apply typed prompt/ordinal state before any business action runs."""
     session_id, message, cart, intent = state["session_id"], state["user_message"], state["cart"], state["intent"]
     kind = intent.get("intent")
     normalized_message = _norm(message)
@@ -1154,6 +1230,24 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
                     "error": None,
                 }}
 
+    return {
+        **state,
+        "resolved_message": message,
+        "resolved_intent": intent,
+        "selected_cart_line": selected_cart_line,
+        "resolved_interaction": interaction,
+        "resolved_interaction_kind": interaction_kind,
+    }
+
+
+def _policy_gate(state: OrderConversationState) -> OrderConversationState:
+    """Refuse authenticated cart writes without a fresh Order Service read."""
+    if state.get("result") is not None:
+        return state
+    from src.function_calling.tools.cart_tools import is_authenticated_cart_session
+    session_id, cart = state["session_id"], state["cart"]
+    intent = state.get("resolved_intent", state["intent"])
+    kind = intent.get("intent")
     cart_write_intents = {"ADD_ITEM", "SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS", "CLEAR_CART"}
     if kind in cart_write_intents and is_authenticated_cart_session(session_id) and not cart.get("authoritative"):
         return {**state, "result": {
@@ -1165,6 +1259,23 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             }],
             "error": None,
         }}
+    return state
+
+
+def _cart_action(state: OrderConversationState) -> OrderConversationState:
+    """Run deterministic product/cart actions only after reference resolution."""
+    if state.get("result") is not None:
+        return state
+    from src.function_calling.tools.cart_tools import (
+        execute_clear_cart, execute_get_cart_quote, execute_remove_cart_item, execute_update_cart_item,
+    )
+    session_id, cart = state["session_id"], state["cart"]
+    message = state.get("resolved_message", state["user_message"])
+    intent = state.get("resolved_intent", state["intent"])
+    kind = intent.get("intent")
+    interaction = state.get("resolved_interaction") or {}
+    interaction_kind = state.get("resolved_interaction_kind") or ""
+    selected_cart_line = state.get("selected_cart_line")
     # A numbered branch is a checkout choice, never a menu ordinal. Resolve
     # it before the legacy pending-product handler sees the same number.
     pending = cart_manager.get_pending_action(session_id) or {}
@@ -1384,6 +1495,18 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         if handled:
             _update_cart_focus_after_add(session_id, handled, suggested, before_ids)
             return {**state, "result": handled}
+    return state
+
+
+def _checkout_selection(state: OrderConversationState) -> OrderConversationState:
+    """Advance voucher and fulfillment choices without entering order write."""
+    if state.get("result") is not None:
+        return state
+    from src.function_calling.tools.cart_tools import execute_get_cart_quote
+    session_id, cart = state["session_id"], state["cart"]
+    message = state.get("resolved_message", state["user_message"])
+    intent = state.get("resolved_intent", state["intent"])
+    kind = intent.get("intent")
     if kind == "FINISH_CART":
         if cart.get("is_empty"):
             return {**state, "result": {
@@ -1461,6 +1584,15 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             "error": None,
         }}
 
+    return state
+
+
+def _read_only_fallback(state: OrderConversationState) -> OrderConversationState:
+    """Ground unresolved reads while keeping model writes disabled."""
+    if state.get("result") is not None:
+        return state
+    session_id = state["session_id"]
+    message = state.get("resolved_message", state["user_message"])
     existence = _answer_product_existence(session_id, message)
     if existence:
         return {**state, "result": existence}
@@ -1635,12 +1767,20 @@ def _build_graph():
     graph = StateGraph(OrderConversationState)
     graph.add_node("sync_cart", _sync)
     graph.add_node("understand_turn", _understand)
-    graph.add_node("execute_action", _execute)
+    graph.add_node("resolve_pending_interaction", _resolve_pending_interaction)
+    graph.add_node("policy_gate", _policy_gate)
+    graph.add_node("cart_action", _cart_action)
+    graph.add_node("checkout_selection", _checkout_selection)
+    graph.add_node("read_only_fallback", _read_only_fallback)
     graph.add_node("render_response", _render)
     graph.set_entry_point("sync_cart")
     graph.add_edge("sync_cart", "understand_turn")
-    graph.add_edge("understand_turn", "execute_action")
-    graph.add_edge("execute_action", "render_response")
+    graph.add_edge("understand_turn", "resolve_pending_interaction")
+    graph.add_edge("resolve_pending_interaction", "policy_gate")
+    graph.add_edge("policy_gate", "cart_action")
+    graph.add_edge("cart_action", "checkout_selection")
+    graph.add_edge("checkout_selection", "read_only_fallback")
+    graph.add_edge("read_only_fallback", "render_response")
     graph.add_edge("render_response", END)
     return graph.compile()
 

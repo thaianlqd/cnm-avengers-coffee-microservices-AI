@@ -744,6 +744,8 @@ def _confirm_saved_location(
     session_id: str,
     message: str,
     history: Optional[List[Dict[str, str]]] = None,
+    *,
+    confirmed: bool = False,
 ) -> Optional[Dict[str, Any]]:
     prefs = cart_manager.get_checkout_prefs(session_id)
     interaction = cart_manager.get_pending_interaction(session_id) or {}
@@ -756,7 +758,7 @@ def _confirm_saved_location(
     # address snapshot/action comes exclusively from the typed interaction;
     # an "ừ" outside this prompt cannot become an address selection.
     from src.agents.tier1 import classify_confirmation
-    if classify_confirmation(message, "YES_NO") != "YES":
+    if not confirmed and classify_confirmation(message, "YES_NO") != "YES":
         return None
 
     context = {"suggested_address": None, "location_address": suggested}
@@ -1200,6 +1202,14 @@ def _run_agent_impl(
         logger.warning("[AgentService] Cannot refresh authoritative cart: %s", exc)
         authoritative_cart = cart_manager.get_cart(session_id)
 
+    # The same typed YES_NO dispatcher serves both graph and direct service
+    # entry points. Resolve/supersede an old prompt before early checkout
+    # guards can return without clearing its interaction.
+    from src.agents.order_flow_graph import _dispatch_pending_yes_no
+    dispatched_confirmation = _dispatch_pending_yes_no(session_id, authoritative_cart, user_message)
+    if dispatched_confirmation and not dispatched_confirmation.get("_confirmed_clear_cart"):
+        return dispatched_confirmation
+
     if _wants_checkout(user_message) and authoritative_cart.get("is_empty"):
         return {
             "reply": "Hiện giỏ hàng đang trống. Bạn muốn chọn món trước không? Mình có thể gợi ý bánh và nước cho bạn.",
@@ -1544,69 +1554,9 @@ def _run_agent_impl(
             "error": None,
         }
 
-    saved_location_result = _confirm_saved_location(session_id, user_message, history=history)
-    if saved_location_result:
-        return _advance_checkout_if_ready(session_id, saved_location_result)
-
     branch_choice_result = _resolve_pending_branch_choice(session_id, user_message, history=history)
     if branch_choice_result:
         return _advance_checkout_if_ready(session_id, branch_choice_result)
-
-    # Confirmation is resolved from the server-side pending checkout state.
-    # Frontend history is presentation data and may be truncated, reformatted or
-    # omitted, so it must not decide whether a real checkout can proceed.
-    checkout_interaction = cart_manager.get_pending_interaction(session_id) or {}
-    if (
-        prefs.get("summary_fingerprint")
-        and checkout_interaction.get("kind") == "YES_NO"
-        and checkout_interaction.get("domain") == "CHECKOUT"
-        and checkout_interaction.get("action") == "CONFIRM_CHECKOUT"
-    ):
-        # The typed interaction chooses the business action.  The lexical
-        # classifier only says yes/no; it must not infer checkout from prose.
-        from src.agents.tier1 import classify_confirmation
-        classification = classify_confirmation(user_message, "YES_NO")
-        is_yes = classification == "YES"
-        is_ambiguous = classification == "AMBIGUOUS"
-
-        # A real change request supersedes the old immutable quote.  In
-        # particular "oke nhưng đổi sang QR" must never confirm the old
-        # payment method before the normal choice resolver makes a new quote.
-        if classification == "NONE" and re.search(
-            r"\b(?:doi|chuyen|thay)\b.*\b(?:qr|vnpay|vi|cod|thanh toan)\b",
-            _normalize_chat_text(user_message),
-        ):
-            cart_manager.clear_pending_interaction(
-                session_id, checkout_interaction.get("interaction_id"),
-            )
-            cart_manager.set_checkout_context(
-                session_id,
-                checkout_action_id=None,
-                checkout_action_expires_at=None,
-                checkout_quote_id=None,
-            )
-            prefs = cart_manager.get_checkout_prefs(session_id)
-            is_yes = False
-
-        if is_ambiguous:
-            return {
-                "reply": "Bạn có xác nhận chốt đơn hay không? Vui lòng trả lời rõ 'có' hoặc 'không' nhé.",
-                "gate": "confirm_checkout_ambiguous",
-                "checkout_payload": None,
-                "tool_calls_log": [],
-                "error": None
-            }
-
-        if is_yes:
-            from src.function_calling.tools.cart_tools import execute_confirm_checkout
-            checkout_res = execute_confirm_checkout(session_id)
-            if checkout_res.get("status") in {"success", "already_processed"}:
-                order_id = checkout_res.get("order_id", "")
-                reply = f"🎉 Đặt hàng thành công! Mã đơn hàng của bạn là: **{order_id}**. Cảm ơn bạn đã ủng hộ!"
-            else:
-                reply = checkout_res.get("message", "Đơn hàng chưa được tạo. Bạn có thể kiểm tra lại giỏ hàng và thử lại.")
-            return {"reply": reply, "gate": "confirm_checkout", "checkout_payload": None,
-                    "tool_calls_log": [{"tool": "confirm_checkout", "result": checkout_res}], "error": None}
 
     completed_pending = _complete_pending_products_from_options(session_id, user_message)
     if completed_pending:

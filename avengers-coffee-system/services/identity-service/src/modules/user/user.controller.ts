@@ -304,8 +304,11 @@ export class UserController {
   @Post('users/:userId/loyalty/cong-diem')
   async congDiem(
     @Param('userId') userId: string,
-    @Body() body: { diem?: number },
+    @Body() body: { diem?: number; order_id?: string },
   ) {
+    if (body.order_id) {
+      return this.userService.congDiemLoyaltyChoDonHang(userId, Number(body.diem || 0), body.order_id);
+    }
     return this.userService.congDiemLoyalty(userId, Number(body.diem || 0));
   }
 

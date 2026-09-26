@@ -52,6 +52,13 @@ export class RealtimeAnalyticsService implements OnModuleInit {
     const status = String(event.payload.status || event.payload.trang_thai_don_hang || '').toUpperCase();
 
     if (event.routingKey === 'order.created') {
+      const durableKey = String(event.payload.event_key || event.payload.event_id || '');
+      if (durableKey) {
+        await this.redisCacheService.incrementOrderCreatedOnce(
+          durableKey, `${prefix}:orders_created`, `${prefix}:revenue_gross`, totalAmount,
+        );
+        return;
+      }
       await Promise.all([
         this.redisCacheService.increment(`${prefix}:orders_created`, 1, 86400),
         this.redisCacheService.increment(`${prefix}:revenue_gross`, totalAmount, 86400),

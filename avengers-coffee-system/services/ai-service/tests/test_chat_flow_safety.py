@@ -703,6 +703,11 @@ def test_exact_cart_regression_browsing_matcha_never_replays_add_to_cart(monkeyp
     monkeypatch.setattr(cart_tools, "sync_authoritative_cart", order_service_get)
     monkeypatch.setattr(cart_tools, "execute_add_to_cart", order_service_add)
     monkeypatch.setattr(product_tools, "execute_get_recommendations", recommendations)
+    # This regression checks cart isolation, not an external chat provider.
+    # Keep the read-only fallback deterministic across all 20 browse turns.
+    monkeypatch.setattr(agent_service, "groq_agent_chat", lambda **_kwargs: {
+        "reply": "Thông tin sản phẩm Matcha.", "tool_calls_log": [], "error": None,
+    })
     monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name: {
         "status": "ok", "options": {"Kích thước": ["Nhỏ"]},
     })
@@ -936,9 +941,7 @@ def test_inventory_requires_a_row_and_enough_quantity():
         ],
     )
 
-    # Missing rows inherit normal menu availability; the explicit row still
-    # blocks because one unit cannot satisfy quantity two.
-    assert result == {"unavailable": ["Cà phê"], "unverified": []}
+    assert result == {"unavailable": ["Cà phê"], "unverified": ["Bánh"]}
 
 
 def test_branch_selection_rejects_unknown_inventory_until_stock_is_confirmed(monkeypatch):
@@ -1110,10 +1113,14 @@ def test_pending_multi_product_options_are_scoped_and_completed_sequentially(mon
     assert first_reply["tool_calls_log"] == []
     assert len(cart_manager.get_checkout_prefs(session)["pending_products"]) == 2
 
-    second_reply = agent_service._complete_pending_products_from_options(session, "ít đá")
+    # With two live drafts, an unscoped option must not guess which product
+    # it belongs to. Bind both follow-ups to the durable Matcha draft.
+    scoped_reply = agent_service._complete_pending_products_from_options(session, "Matcha topping hạt sen và sữa yến mạch")
+    assert scoped_reply["tool_calls_log"] == []
+    second_reply = agent_service._complete_pending_products_from_options(session, "Matcha ít đá")
     assert "Đã thêm Matcha" in second_reply["reply"]
     assert [item["product_name"] for item in cart_manager.get_checkout_prefs(session)["pending_products"]] == ["Bánh Bát Bửu"]
-    final_reply = agent_service._complete_pending_products_from_options(session, "theo mặc định")
+    final_reply = agent_service._complete_pending_products_from_options(session, "Bánh Bát Bửu theo mặc định")
     assert "Đã thêm Bánh Bát Bửu" in final_reply["reply"]
     assert not cart_manager.get_checkout_prefs(session).get("pending_products")
     assert [item["product_name"] for item in cart_manager.get_cart(session)["items"]] == ["Matcha", "Bánh Bát Bửu"]
@@ -1129,6 +1136,10 @@ def test_pending_checkout_confirmation_does_not_depend_on_frontend_history(monke
         delivery_type="MANG_DI",
     )
     cart_manager.mark_checkout_summary(session)
+    cart_manager.set_pending_interaction(
+        session, kind="YES_NO", domain="CHECKOUT", action="CONFIRM_CHECKOUT",
+        data={"action_id": cart_manager.get_checkout_prefs(session)["checkout_action_id"]},
+    )
 
     monkeypatch.setattr(
         "src.function_calling.tools.cart_tools.execute_confirm_checkout",

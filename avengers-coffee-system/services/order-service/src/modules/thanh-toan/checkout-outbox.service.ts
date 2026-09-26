@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { RabbitMqService } from '../../infrastructure/messaging/rabbitmq.service';
+import { ThanhToanService } from './thanh-toan.service';
 
 /** Delivers post-commit checkout effects. Business writes never wait on it. */
 @Injectable()
@@ -11,6 +12,7 @@ export class CheckoutOutboxService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly dataSource: DataSource,
     private readonly rabbitMqService: RabbitMqService,
+    private readonly thanhToanService: ThanhToanService,
   ) {}
 
   onModuleInit() {
@@ -34,8 +36,25 @@ export class CheckoutOutboxService implements OnModuleInit, OnModuleDestroy {
   async deliverPending(limit = 20) {
     const schema = this.schema();
     await this.dataSource.transaction(async (manager) => {
+      // Repair a crash between online-payment confirmation and loyalty
+      // scheduling. Strict orders are identified by their persisted checkout
+      // operation; COD/wallet qualify immediately, VNPAY/QR only once paid.
+      await manager.query(
+        `INSERT INTO "${schema}".checkout_outbox (event_id, event_key, event_type, payload)
+         SELECT gen_random_uuid(), 'loyalty-award:' || o.ma_don_hang::text,
+                'LOYALTY_AWARD',
+                jsonb_build_object('orderId', o.ma_don_hang, 'userId', o.ma_nguoi_dung,
+                  'points', FLOOR((o.tong_tien + COALESCE(o.so_tien_giam, 0)) / 1000)::int)
+           FROM "${schema}".checkout_operation op
+           JOIN "${schema}".don_hang o ON o.ma_don_hang::text = op.result->>'order_id'
+          WHERE op.result IS NOT NULL AND o.ma_nguoi_dung IS NOT NULL
+            AND o.tong_tien + COALESCE(o.so_tien_giam, 0) >= 1000
+            AND (o.phuong_thuc_thanh_toan = 'THANH_TOAN_KHI_NHAN_HANG'
+                 OR o.trang_thai_thanh_toan = 'DA_THANH_TOAN')
+         ON CONFLICT (event_key) DO NOTHING`,
+      );
       const events = await manager.query(
-        `SELECT event_id, event_type, payload, attempts
+        `SELECT event_id, event_key, event_type, payload, attempts, created_at
            FROM "${schema}".checkout_outbox
           WHERE delivered_at IS NULL AND available_at <= NOW()
           ORDER BY created_at
@@ -46,7 +65,13 @@ export class CheckoutOutboxService implements OnModuleInit, OnModuleDestroy {
         try {
           const payload = typeof event.payload === 'string' ? JSON.parse(event.payload) : event.payload;
           if (event.event_type === 'ORDER_CREATED') {
-            const published = await this.rabbitMqService.publish('order.created', payload);
+            // PostgreSQL and RabbitMQ cannot share a transaction. A crash
+            // after publish may replay this event, so consumers receive the
+            // same durable identity on every attempt.
+            const published = await this.rabbitMqService.publish('order.created', {
+              ...payload, event_id: String(event.event_id), event_key: String(event.event_key),
+              occurred_at: new Date(event.created_at).toISOString(),
+            });
             if (!published) throw new Error('RabbitMQ unavailable');
           } else if (event.event_type === 'VOUCHER_USAGE_CONFIRM') {
             const response = await fetch(`${process.env.IDENTITY_SERVICE_URL || 'http://identity-service:3001'}/promotions/xac-nhan-su-dung`, {
@@ -59,6 +84,28 @@ export class CheckoutOutboxService implements OnModuleInit, OnModuleDestroy {
               body: JSON.stringify(payload),
             });
             if (!response.ok) throw new Error(`identity voucher response ${response.status}`);
+            await manager.query(
+              `UPDATE "${schema}".checkout_voucher_claim
+                  SET reconciled_at = NOW()
+                WHERE order_id = $1 AND user_id = $2 AND voucher_code = $3`,
+              [payload.ma_don_hang, payload.user_id, payload.ma_khuyen_mai],
+            );
+          } else if (event.event_type === 'ORDER_FOLLOWUP') {
+            await this.thanhToanService.runStrictOrderFollowup(String(payload.orderId));
+          } else if (event.event_type === 'LOYALTY_AWARD') {
+            const response = await fetch(
+              `${process.env.IDENTITY_SERVICE_URL || 'http://identity-service:3001'}/users/${encodeURIComponent(String(payload.userId))}/loyalty/cong-diem`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-internal-token': process.env.INTERNAL_SERVICE_TOKEN || 'avengers-internal-token',
+                  'x-idempotency-key': String(event.event_id),
+                },
+                body: JSON.stringify({ diem: Number(payload.points), order_id: String(payload.orderId) }),
+              },
+            );
+            if (!response.ok) throw new Error(`identity loyalty response ${response.status}`);
           } else {
             throw new Error(`Unsupported checkout outbox event ${event.event_type}`);
           }

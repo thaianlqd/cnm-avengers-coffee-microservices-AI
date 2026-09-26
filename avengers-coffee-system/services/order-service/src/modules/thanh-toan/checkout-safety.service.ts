@@ -7,6 +7,10 @@ import { ChiTietDonHang } from './entities/chi-tiet-don-hang.entity';
 import { GiaoDichThanhToan } from './entities/giao-dich-thanh-toan.entity';
 import { VoucherService } from '../voucher/voucher.service';
 import { ProductConfigurationValidator } from '../cart/product-configuration-validator.service';
+import { ThanhToanService } from './thanh-toan.service';
+import { CustomerWalletService } from '../customer-wallet/customer-wallet.service';
+import { ThongBao } from '../notification/entities/thong-bao.entity';
+import { DeliveryTracking } from '../shipper/features_thaian/delivery-tracking.entity';
 
 type QuoteInput = {
   phuong_thuc_thanh_toan: 'VNPAY' | 'NGAN_HANG_QR' | 'VI_DIEN_TU' | 'THANH_TOAN_KHI_NHAN_HANG';
@@ -35,6 +39,8 @@ export class CheckoutSafetyService {
     private readonly dataSource: DataSource,
     private readonly voucherService: VoucherService,
     private readonly productConfigurationValidator: ProductConfigurationValidator = new ProductConfigurationValidator(),
+    private readonly thanhToanService?: ThanhToanService,
+    private readonly customerWalletService?: CustomerWalletService,
   ) {}
 
   private schema() {
@@ -78,6 +84,14 @@ export class CheckoutSafetyService {
       last_error TEXT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`);
+    await this.dataSource.query(`CREATE TABLE IF NOT EXISTS "${schema}".checkout_voucher_claim (
+      order_id VARCHAR NOT NULL,
+      user_id VARCHAR NOT NULL,
+      voucher_code VARCHAR(50) NOT NULL,
+      reconciled_at TIMESTAMPTZ NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (order_id, user_id, voucher_code)
     )`);
   }
 
@@ -154,6 +168,20 @@ export class CheckoutSafetyService {
     });
   }
 
+  private lineConfigurationSnapshot(items: any[]) {
+    return items.map((item) => ({
+      line_id: Number(item.line_id ?? item.id),
+      product_id: Number(item.product_id ?? item.ma_san_pham),
+      quantity: Number(item.quantity ?? item.so_luong),
+      size: item.size || '',
+      toppings: item.toppings || [],
+      luong_da: item.luong_da || '',
+      do_ngot: item.do_ngot || '',
+      loai_sua: item.loai_sua || '',
+      custom_attributes: item.custom_attributes || {},
+    })).sort((left, right) => left.line_id - right.line_id);
+  }
+
   /** Reprice from Menu inside the checkout transaction; cart row prices are never final authority. */
   private async repriceFromMenu(manager: EntityManager, items: CartItem[]): Promise<CartItem[]> {
     const repriced: CartItem[] = [];
@@ -207,12 +235,13 @@ export class CheckoutSafetyService {
             RETURNING ma_san_pham`,
           [branchCode, productId, quantity],
         );
-        if (!result?.length) throw new ConflictException({ code: 'STOCK_CONFLICT', product_id: productId });
+        const updatedRows = Array.isArray(result?.[0]) ? result[0] : result;
+        if (!updatedRows?.length) throw new ConflictException({ code: 'STOCK_CONFLICT', product_id: productId });
       }
     }
   }
 
-  private async calculateQuote(userId: string, input: QuoteInput, items: CartItem[]) {
+  private async calculateQuote(userId: string, input: QuoteInput, items: CartItem[], manager?: EntityManager) {
     if (!input.branch_code?.trim()) throw new BadRequestException('branch_code la bat buoc');
     if (input.delivery_mode === 'GIAO_TAN_NOI' && !input.dia_chi_giao_hang?.trim()) {
       throw new BadRequestException('dia_chi_giao_hang la bat buoc');
@@ -224,6 +253,15 @@ export class CheckoutSafetyService {
       const result = await this.voucherService.kiemTraVoucher(
         input.ma_voucher.trim(), subtotal, userId, items.some((item) => (item.toppings || []).length > 0),
       );
+      const pendingRows = manager ? await manager.query(
+        `SELECT COUNT(*)::int AS count FROM "${this.schema()}".checkout_voucher_claim
+          WHERE user_id = $1 AND voucher_code = $2 AND reconciled_at IS NULL`,
+        [userId, result.voucher.ma_voucher],
+      ) : [];
+      const pendingCount = Number(pendingRows[0]?.count || 0);
+      if (Number(result.luot_da_dung_user || 0) + pendingCount >= Number(result.gioi_han_moi_nguoi || 1)) {
+        throw new ConflictException({ code: 'REQUOTE_REQUIRED', reason: 'VOUCHER_USER_LIMIT' });
+      }
       discountAmount = Number(result.so_tien_giam || 0);
       voucherCode = result.voucher.ma_voucher;
     }
@@ -246,7 +284,7 @@ export class CheckoutSafetyService {
       const items = await manager.getRepository(CartItem).find({ where: { ma_nguoi_dung: userId } });
       if (!items.length) throw new BadRequestException('Gio hang trong, khong the bao gia');
       const pricedItems = await this.repriceFromMenu(manager, items);
-      const quote = await this.calculateQuote(userId, input, pricedItems);
+      const quote = await this.calculateQuote(userId, input, pricedItems, manager);
       await this.validateStock(manager, quote.branch_code, pricedItems);
       const quoteId = randomUUID();
       const actionId = randomUUID();
@@ -324,9 +362,15 @@ export class CheckoutSafetyService {
       }
       const quoted = typeof quoteRow.quote === 'string' ? JSON.parse(quoteRow.quote) : quoteRow.quote;
       const items = await manager.getRepository(CartItem).find({ where: { ma_nguoi_dung: userId } });
-      if (!items.length || this.hash(this.snapshot(items)) !== this.hash(quoted.items)) throw new ConflictException('Gio hang da thay doi; hay tao bao gia moi');
+      // A quote reprices from Menu without rewriting the cart row. Compare
+      // stable line identity/configuration here, then compare the repriced
+      // result below. Comparing raw cart unit_price to quote unit_price would
+      // reject a valid quote whenever Menu had changed since the cart ADD.
+      if (!items.length || this.hash(this.lineConfigurationSnapshot(items)) !== this.hash(this.lineConfigurationSnapshot(quoted.items))) {
+        throw new ConflictException('Gio hang da thay doi; hay tao bao gia moi');
+      }
       const pricedItems = await this.repriceFromMenu(manager, items);
-      const revalidatedQuote = await this.calculateQuote(userId, quotedRequest, pricedItems);
+      const revalidatedQuote = await this.calculateQuote(userId, quotedRequest, pricedItems, manager);
       if (this.hash(revalidatedQuote.items) !== this.hash(quoted.items) || Number(revalidatedQuote.final_total) !== Number(quoted.final_total)) {
         throw new ConflictException({ code: 'REQUOTE_REQUIRED', reason: 'PRICE_OR_OPTION_CHANGED' });
       }
@@ -348,20 +392,32 @@ export class CheckoutSafetyService {
           (voucher.han_su_dung && new Date(voucher.han_su_dung).getTime() < Date.now()) ||
           (voucher.tong_luot_dung != null && Number(voucher.luot_da_dung) >= Number(voucher.tong_luot_dung))
         )) throw new ConflictException('Voucher da thay doi; hay tao bao gia moi');
-        const refreshed = await this.calculateQuote(userId, { ...quotedRequest, ma_voucher: quoted.voucher_code, branch_code: quoted.branch_code }, pricedItems);
+        const refreshed = await this.calculateQuote(userId, { ...quotedRequest, ma_voucher: quoted.voucher_code, branch_code: quoted.branch_code }, pricedItems, manager);
         if (Number(refreshed.final_total) !== Number(quoted.final_total)) throw new ConflictException('Voucher da thay doi; hay tao bao gia moi');
         if (voucher) {
           await manager.query(`UPDATE "${schema}".voucher SET luot_da_dung = luot_da_dung + 1 WHERE ma_voucher = $1`, [quoted.voucher_code]);
         }
       }
+      const paymentReference = quoted.payment_method === 'VNPAY'
+        ? `${input.quote_id.replace(/-/g, '')}_AI`
+        : quoted.payment_method === 'NGAN_HANG_QR'
+          ? `QR-${input.quote_id}`
+          : quoted.payment_method === 'VI_DIEN_TU'
+            ? `WALLET-${input.quote_id}`
+            : `COD-${input.quote_id}`;
+      if (quoted.payment_method === 'VI_DIEN_TU') {
+        if (!this.customerWalletService) throw new ConflictException('Wallet service unavailable');
+        await this.customerWalletService.deductBalanceInTransaction(manager, userId, Number(quoted.final_total), paymentReference);
+      }
+      const walletPaid = quoted.payment_method === 'VI_DIEN_TU';
       const order = await manager.getRepository(DonHang).save(manager.getRepository(DonHang).create({
         ma_nguoi_dung: userId, co_so_ma: quoted.branch_code, tong_tien: quoted.final_total,
         ma_voucher: quoted.voucher_code, so_tien_giam: quoted.discount_amount,
         dia_chi_giao_hang: quoted.delivery_address || `Nhận tại: ${quoted.branch_code}`,
         ghi_chu: input.ghi_chu || 'AI Chat Order', loai_don_hang: quoted.delivery_mode,
         phuong_thuc_thanh_toan: quoted.payment_method,
-        trang_thai_thanh_toan: quoted.payment_method === 'THANH_TOAN_KHI_NHAN_HANG' ? 'CHO_THANH_TOAN_KHI_NHAN_HANG' : 'CHO_XU_LY',
-        trang_thai_don_hang: 'MOI_TAO', tien_thoi: 0, lich_su_trang_thai: [],
+        trang_thai_thanh_toan: walletPaid ? 'DA_THANH_TOAN' : quoted.payment_method === 'THANH_TOAN_KHI_NHAN_HANG' ? 'CHO_THANH_TOAN_KHI_NHAN_HANG' : 'CHO_XU_LY',
+        trang_thai_don_hang: walletPaid ? 'DA_XAC_NHAN' : 'MOI_TAO', tien_thoi: 0, lich_su_trang_thai: [],
       }));
       const details = pricedItems.map((item) => manager.getRepository(ChiTietDonHang).create({
         ma_don_hang: order.ma_don_hang, ma_san_pham: item.ma_san_pham, ten_san_pham: item.ten_san_pham,
@@ -370,27 +426,52 @@ export class CheckoutSafetyService {
         loai_sua: item.loai_sua || null, custom_attributes: item.custom_attributes || {},
       }));
       await manager.getRepository(ChiTietDonHang).save(details);
+      // These local effects share the order transaction. A failed checkout
+      // cannot leave an orphan notification/tracking row, and an operation
+      // replay returns before creating either row again.
+      await manager.getRepository(DeliveryTracking).save(manager.getRepository(DeliveryTracking).create({
+        ma_don_hang: order.ma_don_hang,
+        delivery_mode: quoted.delivery_mode,
+        delivery_method: null,
+        branch_code: quoted.branch_code,
+        delivery_address: quoted.delivery_address,
+        customer_phone: null,
+        tracking_code: null,
+      }));
+      await manager.getRepository(ThongBao).save(manager.getRepository(ThongBao).create({
+        ma_nguoi_dung: userId,
+        tieu_de: 'Don hang da duoc tao',
+        noi_dung: `Don #${order.ma_don_hang} da duoc tao thanh cong.`,
+        loai: 'ORDER',
+        da_doc: false,
+        du_lieu: { ma_don_hang: order.ma_don_hang, trang_thai_don_hang: order.trang_thai_don_hang },
+      }));
       await manager.getRepository(GiaoDichThanhToan).save(manager.getRepository(GiaoDichThanhToan).create({
         ma_don_hang: order.ma_don_hang, cong_thanh_toan: quoted.payment_method,
-        ma_tham_chieu: `checkout:${input.quote_id}`, so_tien: quoted.final_total,
-        trang_thai: quoted.payment_method === 'THANH_TOAN_KHI_NHAN_HANG' ? 'CHO_THU_TIEN' : 'CHO_THANH_TOAN',
+        ma_tham_chieu: paymentReference, so_tien: quoted.final_total,
+        trang_thai: walletPaid ? 'DA_THANH_TOAN' : quoted.payment_method === 'THANH_TOAN_KHI_NHAN_HANG' ? 'CHO_THU_TIEN' : 'CHO_THANH_TOAN',
       }));
       await manager.delete(CartItem, { ma_nguoi_dung: userId });
       const bumped = await manager.query(
         `UPDATE "${schema}".cart_metadata SET cart_version = cart_version + 1, updated_at = NOW()
          WHERE user_id = $1 RETURNING cart_id, cart_version`, [userId],
       );
-      const paymentReference = `checkout:${input.quote_id}`;
+      const bumpedRow = (Array.isArray(bumped?.[0]) ? bumped[0] : bumped)?.[0];
+      if (!bumpedRow) throw new ConflictException('Khong cap nhat duoc cart_version');
+      if (!this.thanhToanService) throw new ConflictException('Payment presentation service unavailable');
+      const paymentPresentation = this.thanhToanService.buildStrictPaymentPresentation({
+        method: quoted.payment_method, userId, orderId: order.ma_don_hang,
+        amount: Number(quoted.final_total), reference: paymentReference,
+      });
       const result = {
         status: 'success', order_id: order.ma_don_hang, quote_id: input.quote_id,
-        action_id: input.action_id, cart_id: bumped[0].cart_id,
-        cart_version: Number(bumped[0].cart_version), subtotal: Number(quoted.subtotal),
+        action_id: input.action_id, cart_id: bumpedRow.cart_id,
+        cart_version: Number(bumpedRow.cart_version), subtotal: Number(quoted.subtotal),
         discount_amount: Number(quoted.discount_amount), final_total: Number(quoted.final_total),
         voucher_code: quoted.voucher_code || null, payment_method: quoted.payment_method,
         payment_reference: paymentReference,
-        // External VNPAY/QR initiation stays in the legacy payment domain;
-        // return a stable reference rather than manufacture a second intent.
-        redirect_url: null, payment_details: null,
+        redirect_url: paymentPresentation.redirect_url,
+        payment_details: paymentPresentation.payment_details,
       };
       await manager.query(`UPDATE "${schema}".checkout_quote SET consumed_at = NOW() WHERE quote_id = $1`, [input.quote_id]);
       await manager.query(`UPDATE "${schema}".checkout_operation SET result = $2::jsonb, updated_at = NOW() WHERE operation_id = $1`, [normalizedOperationId, JSON.stringify(result)]);
@@ -404,7 +485,20 @@ export class CheckoutSafetyService {
           status: order.trang_thai_don_hang,
         })],
       );
+      await manager.query(
+        `INSERT INTO "${schema}".checkout_outbox (event_id, event_key, event_type, payload)
+         VALUES ($1, $2, 'ORDER_FOLLOWUP', $3::jsonb)
+         ON CONFLICT (event_key) DO NOTHING`,
+        [randomUUID(), `order-followup:${order.ma_don_hang}`, JSON.stringify({
+          orderId: order.ma_don_hang, userId, branchCode: quoted.branch_code,
+        })],
+      );
       if (quoted.voucher_code) {
+        await manager.query(
+          `INSERT INTO "${schema}".checkout_voucher_claim (order_id, user_id, voucher_code)
+           VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
+          [order.ma_don_hang, userId, quoted.voucher_code],
+        );
         await manager.query(
           `INSERT INTO "${schema}".checkout_outbox (event_id, event_key, event_type, payload)
            VALUES ($1, $2, 'VOUCHER_USAGE_CONFIRM', $3::jsonb)

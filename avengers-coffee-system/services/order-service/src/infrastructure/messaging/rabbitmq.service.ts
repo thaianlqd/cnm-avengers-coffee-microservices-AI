@@ -12,13 +12,13 @@ export class RabbitMqService implements OnModuleInit, OnModuleDestroy {
   private readonly exchangeName = process.env.RABBITMQ_EXCHANGE || 'avengers.domain.events';
   private readonly queueName = process.env.RABBITMQ_QUEUE || 'order-service.domain.events';
   private connection: amqp.ChannelModel | null = null;
-  private channel: amqp.Channel | null = null;
+  private channel: amqp.ConfirmChannel | null = null;
   private readonly handlers = new Set<(event: DomainEvent) => Promise<void> | void>();
 
   async onModuleInit() {
     try {
       this.connection = await amqp.connect(process.env.RABBITMQ_URL || 'amqp://localhost:5672');
-      this.channel = await this.connection.createChannel();
+      this.channel = await this.connection.createConfirmChannel();
       await this.channel.assertExchange(this.exchangeName, 'topic', { durable: true });
       const assertedQueue = await this.channel.assertQueue(this.queueName, { durable: true });
       await this.channel.bindQueue(assertedQueue.queue, this.exchangeName, 'order.*');
@@ -65,15 +65,19 @@ export class RabbitMqService implements OnModuleInit, OnModuleDestroy {
 
     const event: DomainEvent = {
       routingKey,
-      occurredAt: new Date().toISOString(),
+      occurredAt: String(payload.occurred_at || new Date().toISOString()),
       payload,
     };
 
-    return this.channel.publish(
+    this.channel.publish(
       this.exchangeName,
       routingKey,
       Buffer.from(JSON.stringify(event)),
       { contentType: 'application/json', persistent: true },
     );
+    // The boolean from publish() is only flow control, not broker delivery.
+    // Mark an outbox row delivered only after RabbitMQ confirms the publish.
+    await this.channel.waitForConfirms();
+    return true;
   }
 }

@@ -52,6 +52,7 @@ def normalize_confirmation_text(text: str) -> str:
     text = re.sub(r'\bkhong can\b', 'khongcan', text)
     text = re.sub(r'\bbo qua\b', 'boqua', text)
     text = re.sub(r'\bkhong them nua\b', 'khongthemnua', text)
+    text = re.sub(r'\bkhong them gi nua\b', 'khongthemnua', text)
     
     return text
 
@@ -74,6 +75,8 @@ def classify_confirmation(text: str, pending_type: Optional[str]) -> Literal["YE
     norm_text = normalize_confirmation_text(text)
     if not norm_text:
         return "NONE"
+    if pending_type == "confirm_checkout" and norm_text == "xacnhan dathang":
+        return "YES"
         
     tokens = norm_text.split()
     
@@ -233,7 +236,7 @@ def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict
     if re.search(r"\b(vnpay|cod|tien mat|ngan hang qr|chuyen khoan|vi avengers)\b", norm):
         return {"intent": "SELECT_PAYMENT"}
     if re.search(
-        r"\b(khong them|het roi|xong gio|hoan tat gio|tien hanh|thanh toan|chot gio|dat hang)\b"
+        r"\b(khong them|khongthemnua|het roi|xong gio|hoan tat gio|tien hanh|thanh toan|chot gio|dat hang)\b"
         r"|\b(nhu hien tai|gio hien tai)\b.*\b(duoc|ok|oke)\b",
         norm,
     ):

@@ -287,7 +287,7 @@ export class CartService {
        RETURNING user_id, cart_id, cart_version`,
       [userId],
     );
-    return rows[0];
+    return (Array.isArray(rows?.[0]) ? rows[0] : rows)?.[0];
   }
 
   private configurationSignature(item: any) {

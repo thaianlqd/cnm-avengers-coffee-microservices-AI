@@ -35,4 +35,11 @@ describe('ProductConfigurationValidator', () => {
       ma_san_pham: 12, size: 'Vừa', toppings: ['Sữa yến mạch'],
     })).rejects.toMatchObject({ response: expect.objectContaining({ code: 'REQUOTE_REQUIRED' }) });
   });
+
+  it('requires exactly one Menu size for direct cart writes and checkout quotes', async () => {
+    await expect(validator.resolve(queryable, { ma_san_pham: 12 }))
+      .rejects.toMatchObject({ response: expect.objectContaining({ reason: 'OPTION_REQUIRED' }) });
+    await expect(validator.resolve(queryable, { ma_san_pham: 12, size: 'Unknown' }))
+      .rejects.toMatchObject({ response: expect.objectContaining({ reason: 'OPTION_UNAVAILABLE' }) });
+  });
 });
