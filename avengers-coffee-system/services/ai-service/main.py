@@ -708,6 +708,8 @@ class AgentChatResponse(BaseModel):
     checkout_payload: Optional[Dict[str, Any]] = None
     tool_calls_log: Optional[List[Dict[str, Any]]] = None
     error: Optional[str] = None
+    conversation_state: Optional[str] = None
+    ui_payload: Optional[Dict[str, Any]] = None
 
 
 class AgentConversationResetRequest(BaseModel):
@@ -788,6 +790,7 @@ def agent_chat(body: AgentChatRequest, request: Request):
         session_id=scoped_session_id,
         user_message=body.message,
         history=history,
+        client_message_id=body.client_message_id,
     )
     result["conversation_id"] = conversation_id
     try:
@@ -812,6 +815,8 @@ def agent_chat(body: AgentChatRequest, request: Request):
         checkout_payload=result.get("checkout_payload"),
         tool_calls_log=result.get("tool_calls_log"),
         error=result.get("error"),
+        conversation_state=result.get("conversation_state"),
+        ui_payload=result.get("ui_payload"),
     )
 
 

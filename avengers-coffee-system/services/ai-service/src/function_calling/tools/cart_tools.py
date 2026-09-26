@@ -1,5 +1,52 @@
-from typing import Any, Dict, List, Optional
+from contextlib import contextmanager
+from contextvars import ContextVar
+import hashlib
+from typing import Any, Dict, Iterator, List, Optional
 from src.common import cart_manager
+
+
+# A cart operation is a business mutation, not an LLM tool-call id.  The
+# graph establishes this context from the client message id, which survives an
+# HTTP retry.  The counter is deterministic for a single turn and never comes
+# from model input.
+_MUTATION_OPERATION_CONTEXT: ContextVar[Optional[Dict[str, Any]]] = ContextVar(
+    "cart_mutation_operation_context", default=None
+)
+
+
+@contextmanager
+def mutation_operation_context(session_id: str, client_message_id: Optional[str]) -> Iterator[None]:
+    if not client_message_id:
+        yield
+        return
+    digest = hashlib.sha256(
+        f"{session_id}|{client_message_id}".encode("utf-8")
+    ).hexdigest()
+    token = _MUTATION_OPERATION_CONTEXT.set({
+        "session_id": session_id,
+        "base": digest,
+        "counts": {},
+    })
+    try:
+        yield
+    finally:
+        _MUTATION_OPERATION_CONTEXT.reset(token)
+
+
+def _operation_id_for_current_turn(
+    session_id: str,
+    operation_type: str,
+    explicit_operation_id: Optional[str] = None,
+) -> Optional[str]:
+    if explicit_operation_id:
+        return str(explicit_operation_id)
+    context = _MUTATION_OPERATION_CONTEXT.get()
+    if not context or context.get("session_id") != session_id:
+        return None
+    counts = context["counts"]
+    index = int(counts.get(operation_type, 0))
+    counts[operation_type] = index + 1
+    return f"ai:{context['base']}:{operation_type}:{index}"
 
 
 def _variant_unit_price(
@@ -139,6 +186,7 @@ def execute_add_to_cart(
     do_ngot: Optional[str] = None,
     loai_sua: Optional[str] = None,
     note: Optional[str] = None,
+    operation_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     # Sync with main order-service cart & get image
     import os, requests, logging
@@ -248,6 +296,9 @@ def execute_add_to_cart(
 
     valid_uid = _require_valid_session(_customer_session_id(session_id))
     server_row = None
+    resolved_operation_id = _operation_id_for_current_turn(
+        session_id, "add_cart_line", operation_id,
+    )
     if valid_uid:
         try:
             token = _get_service_jwt(valid_uid)
@@ -274,11 +325,14 @@ def execute_add_to_cart(
                     }.items() if value
                 },
             }
+            headers = {"Authorization": f"Bearer {token}"}
+            if resolved_operation_id:
+                headers["X-Idempotency-Key"] = resolved_operation_id
             try:
                 res = requests.post(
                     f"{order_service_url}/cart", 
                     json=payload, 
-                    headers={"Authorization": f"Bearer {token}"}, 
+                    headers=headers,
                     timeout=5
                 )
                 res.raise_for_status()
@@ -288,7 +342,7 @@ def execute_add_to_cart(
                 res = requests.post(
                     f"{fallback_url}/cart", 
                     json=payload, 
-                    headers={"Authorization": f"Bearer {token}"}, 
+                    headers=headers,
                     timeout=5
                 )
                 res.raise_for_status()
@@ -347,6 +401,7 @@ def execute_add_to_cart(
         "message": f"Đã thêm {product_name} x{quantity} vào giỏ với giá {authoritative_price:,.0f}đ/món.",
         "unit_price": authoritative_price,
         "persisted_line": server_row,
+        "operation_id": resolved_operation_id,
         "cart": cart,
     }
 
@@ -403,6 +458,42 @@ def execute_remove_from_cart(session_id: str, product_id: str, size: Optional[st
         "cart": cart,
     }
 
+
+def execute_remove_cart_item(session_id: str, cart_item_id: str) -> Dict[str, Any]:
+    """Remove exactly one canonical cart line, never every matching variant."""
+    from src.function_calling.helpers import _get_service_jwt, _require_valid_session
+    valid_uid = _require_valid_session(_customer_session_id(session_id))
+    if not valid_uid:
+        return {"status": "error", "message": "Cần đăng nhập để cập nhật giỏ hàng."}
+    try:
+        response = _order_service_request("DELETE", f"/cart/{int(cart_item_id)}", _get_service_jwt(valid_uid))
+        response.raise_for_status()
+        cart = sync_authoritative_cart(session_id)
+        return {"status": "ok", "message": "Đã xoá đúng món đã chọn khỏi giỏ.", "cart": cart}
+    except Exception as exc:
+        return {"status": "error", "message": f"Chưa thể xoá món: {exc}"}
+
+
+def execute_update_cart_item(session_id: str, cart_item_id: str, desired_state: Dict[str, Any]) -> Dict[str, Any]:
+    """Atomically update one cart row and return the authoritative quote."""
+    from src.function_calling.helpers import _get_service_jwt, _require_valid_session
+    valid_uid = _require_valid_session(_customer_session_id(session_id))
+    if not valid_uid:
+        return {"status": "error", "message": "Cần đăng nhập để cập nhật giỏ hàng."}
+    allowed = {
+        "product_id", "ma_san_pham", "quantity", "so_luong", "size", "toppings",
+        "luong_da", "do_ngot", "loai_sua", "custom_attributes",
+    }
+    payload = {key: value for key, value in (desired_state or {}).items() if key in allowed}
+    try:
+        response = _order_service_request("PATCH", f"/cart/{int(cart_item_id)}", _get_service_jwt(valid_uid), json=payload)
+        response.raise_for_status()
+        cart = sync_authoritative_cart(session_id)
+        quote = execute_get_cart_quote(session_id)
+        return {"status": "ok", "message": "Đã cập nhật món trong giỏ.", "cart": cart, "quote": quote.get("quote")}
+    except Exception as exc:
+        return {"status": "error", "message": f"Chưa thể cập nhật món: {exc}"}
+
 TOOL_GET_CART = {
     "type": "function",
     "function": {
@@ -416,10 +507,23 @@ TOOL_GET_CART = {
 }
 
 def execute_get_cart(session_id: str) -> Dict[str, Any]:
+    from src.function_calling.helpers import _require_valid_session
+    authenticated = _require_valid_session(_customer_session_id(session_id))
     try:
-        return sync_authoritative_cart(session_id)
-    except Exception:
-        return cart_manager.get_cart(session_id)
+        cart = sync_authoritative_cart(session_id)
+        return {"status": "ok", "cart": cart, "source": "order_service"}
+    except Exception as exc:
+        cached = cart_manager.get_cart(session_id)
+        if authenticated:
+            return {
+                "status": "unavailable",
+                "message": "Chưa thể đọc giỏ hàng từ Order Service; dữ liệu hiển thị có thể cũ.",
+                "cart": cached,
+                "stale": True,
+                "source": "conversation_cache",
+                "error": str(exc),
+            }
+        return {"status": "ok", "cart": cached, "source": "guest_draft"}
 
 
 def execute_get_cart_quote(session_id: str) -> Dict[str, Any]:
@@ -582,7 +686,7 @@ def execute_request_checkout(
     stock_result = validate_cart_at_branch(
         _get_engine(), cart, os.getenv("INVENTORY_SCHEMA", "inventory")
     )
-    stock_blockers = stock_result["unavailable"]
+    stock_blockers = stock_result["unavailable"] + stock_result["unverified"]
     if stock_blockers:
         cart_manager.set_stock_conflicts(session_id, stock_blockers)
         return {
@@ -771,7 +875,7 @@ def execute_confirm_checkout(
     stock_result = validate_cart_at_branch(
         _get_engine(), cart, os.getenv("INVENTORY_SCHEMA", "inventory")
     )
-    stock_blockers = stock_result["unavailable"]
+    stock_blockers = stock_result["unavailable"] + stock_result["unverified"]
     if stock_blockers:
         cart_manager.set_stock_conflicts(session_id, stock_blockers)
         return {
