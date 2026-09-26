@@ -678,7 +678,8 @@ export default function ChatWidget({ user, socketUrl }) {
         size: 'Nhỏ',
         so_luong: 1
       });
-      const persisted = response?.data || response || {};
+      const mutationCart = response?.data || response || {};
+      const persisted = mutationCart.persisted_line || mutationCart;
       addAIMsg(`✅ Đã thêm **${persisted.ten_san_pham || product.ten_san_pham}** vào giỏ hàng! Giá: ${fmtVND(persisted.gia_ban ?? product.gia_ban)}`, {
         _quickReplies: [
           { id: 'more', label: 'Xem thêm menu', text: 'Gợi ý thêm menu' },

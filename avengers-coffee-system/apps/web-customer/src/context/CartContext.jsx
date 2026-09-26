@@ -42,7 +42,9 @@ export const CartProvider = ({ children }) => {
     queryKey: queryKeys.cartByUser(activeUserId),
     queryFn: async () => {
       const response = await apiClient.get(`/cart/${activeUserId}`);
-      return response.data || [];
+      // V5 cart endpoint returns an envelope. Keep accepting arrays while an
+      // older deployment is rolling out so existing sessions do not break.
+      return response.data || { items: [] };
     },
     enabled: Boolean(activeUserId),
     staleTime: 15 * 1000,
@@ -50,7 +52,10 @@ export const CartProvider = ({ children }) => {
 
   useEffect(() => {
     setCart((previousCart) => {
-      const mappedFromServer = (serverCartData || []).map((item) => {
+      const serverItems = Array.isArray(serverCartData)
+        ? serverCartData
+        : (serverCartData?.items || []);
+      const mappedFromServer = serverItems.map((item) => {
         const existed = previousCart.find(
           (localItem) =>
             localItem.id === item.id ||
@@ -85,11 +90,11 @@ export const CartProvider = ({ children }) => {
   });
 
   const clearCart = async () => {
-    setCart([]);
     if (activeUserId) {
       await xoaToanBoGioMutation.mutateAsync(activeUserId);
       await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(activeUserId) });
     }
+    setCart([]);
   };
 
   const reorderItems = async (items) => {
