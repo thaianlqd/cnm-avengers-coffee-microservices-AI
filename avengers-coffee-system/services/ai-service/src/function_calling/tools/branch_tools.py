@@ -235,7 +235,9 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                 annotated["unavailable_products"] = conflicts
                 annotated["unverified_products"] = availability["unverified"]
                 annotated_branches.append(annotated)
-                if not availability["unavailable"]:
+                # Missing override rows inherit normal menu availability.
+                # Explicit inactive/insufficient rows remain hard conflicts.
+                if not availability["unavailable"] and not availability["unverified"]:
                     eligible_branches.append(annotated)
 
             # Delivery is assigned automatically only among branches that can
@@ -246,29 +248,16 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                 if not top_branches:
                     return {
                         "status": "stock_conflict",
-                        "branches": annotated_branches[:3],
+                        "branches": annotated_branches[:5],
                         "message": "Không có cửa hàng gần địa chỉ này đủ toàn bộ món trong giỏ. Đơn chưa được chốt; bạn có thể đổi món hoặc địa chỉ giao.",
                     }
             elif delivery_type in {"MANG_DI", "TAI_CHO"} and cart.get("items"):
-                if not eligible_branches:
-                    return {
-                        "status": "no_available_branch",
-                        "branches": annotated_branches[:3],
-                        "message": "Không có cửa hàng gần đó còn đủ toàn bộ món trong giỏ. Mình chưa thể cho chốt; bạn có thể đổi món hoặc cho mình khu vực khác để tìm tiếp.",
-                    }
-                # Preserve the nearest list so customers can see why a very
-                # close branch cannot be chosen. Ensure the nearest valid
-                # alternative is also present even if the first three all
-                # have stock conflicts.
-                top_branches = annotated_branches[:3]
-                nearest_available = eligible_branches[0]
-                if not any(
-                    item["ma_chi_nhanh"] == nearest_available["ma_chi_nhanh"]
-                    for item in top_branches
-                ):
-                    top_branches.append(nearest_available)
+                # Pickup/dine-in needs an explainable nearest-five comparison:
+                # keep distance order and annotate unavailable outlets instead
+                # of hiding them. Selection is rejected later for conflicts.
+                top_branches = annotated_branches[:5]
             else:
-                top_branches = annotated_branches[:3]
+                top_branches = annotated_branches[:5]
 
             if not top_branches:
                 return {
@@ -305,7 +294,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                 "status": "need_branch_selection" if delivery_type in {"MANG_DI", "TAI_CHO"} else "ok",
                 "branches": top_branches,
                 "message": (
-                    msg + " Khách dùng tại chỗ/mang đi nên hãy liệt kê các cửa hàng này và chờ khách chọn; không tự chọn cửa hàng gần nhất."
+                    msg + " Khách dùng tại chỗ/mang đi nên hãy liệt kê đủ tối đa 5 cửa hàng theo khoảng cách, ghi rõ cửa hàng còn đủ món và món nào bị thiếu; chỉ cửa hàng còn đủ món mới được chọn."
                     if delivery_type in {"MANG_DI", "TAI_CHO"} else msg
                 )
             }
@@ -368,30 +357,25 @@ def execute_set_session_branch(
         cart_for_branch["branch_id"] = real_branch_id
         stock_result = validate_cart_at_branch(engine, cart_for_branch, inventory_schema)
         unavailable = stock_result["unavailable"]
+        unverified = stock_result["unverified"]
 
-        if unavailable:
-            cart_manager.set_stock_conflicts(session_id, unavailable)
+        if unavailable or unverified:
+            blockers = unavailable + unverified
+            cart_manager.set_stock_conflicts(session_id, blockers)
             return {
                 "status": "stock_conflict",
                 "branch_id": real_branch_id,
                 "branch_name": real_branch_name,
-                "unavailable_products": unavailable,
+                "unavailable_products": blockers,
                 "message": (
                     f"{location_label} {real_branch_name} tạm ngưng phục vụ các món sau: "
-                    f"{', '.join(unavailable)}. "
+                    f"{', '.join(blockers)}. "
                     "Hãy báo khách chọn điểm bán khác hoặc bỏ món đó ra khỏi giỏ; không được chốt đơn tại đây."
                 ),
             }
         cart_manager.set_branch(session_id, real_branch_id, real_branch_name)
         cart_manager.set_stock_conflicts(session_id, [])
-        if stock_result["unverified"]:
-            message = (
-                f"Đã ghi nhận {location_label.lower()}: {real_branch_name}. "
-                "Không thấy dữ liệu tồn kho cho một số món nên chưa thể xác minh tại chi nhánh này; "
-                "hệ thống sẽ kiểm tra lại khi chốt đơn."
-            )
-        else:
-            message = f"Đã ghi nhận {location_label.lower()}: {real_branch_name}. Các món trong giỏ hiện còn hàng."
+        message = f"Đã ghi nhận {location_label.lower()}: {real_branch_name}. Các món trong giỏ hiện còn hàng."
         return {
             "status": "ok",
             "branch_id": real_branch_id,

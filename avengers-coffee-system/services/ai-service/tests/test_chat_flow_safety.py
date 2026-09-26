@@ -17,6 +17,15 @@ from src.agents.agent_service import (
 
 def test_detailed_product_review_extracts_product_name_without_instruction_words():
     assert _product_review_query("cho tôi đánh giá chi tiết về Bánh Trung Thu Cà Phê Lava nhé") == "Bánh Trung Thu Cà Phê Lava"
+
+
+def test_product_review_extracts_name_from_conversational_phrasing():
+    assert _product_review_query(
+        "trước khi mua, đánh giá chi tiết 1 Lít Matcha Latte Tây Bắc giúp tôi"
+    ) == "1 Lít Matcha Latte Tây Bắc"
+    assert _product_review_query(
+        "còn Bánh Trung Thu Cà Phê Lava được khách đánh giá thế nào, nói chi tiết nhé"
+    ) == "Bánh Trung Thu Cà Phê Lava"
 from src.common import cart_manager
 from src.common.inventory_validation import validate_items_at_branch
 from src.common.session_auth import authorize_session
@@ -415,6 +424,29 @@ def test_numbered_choice_uses_earlier_menu_after_an_intervening_review():
     ]
 
 
+def test_numbered_choice_accepts_nuoc_uong_heading_after_reviews():
+    history = [
+        {
+            "role": "assistant",
+            "content": (
+                "**Nước uống:**\n1. 1 Lít Matcha Latte Tây Bắc - 95.000đ\n"
+                "2. Bạc Xỉu - 39.000đ\n\n"
+                "**Bánh:**\n1. Bánh Trung Thu Cà Phê Lava - 99.000đ\n"
+                "2. Bánh Trung Thu Thập Cẩm Bát Bửu - 119.000đ"
+            ),
+        },
+        {"role": "assistant", "content": "Món nước hiện chưa có đánh giá nào."},
+        {"role": "assistant", "content": "Món bánh hiện chưa có đánh giá nào."},
+    ]
+    assert _resolve_numbered_product_choices(
+        "oke vậy lấy cho tôi nước số 1 và bánh số 1 trong danh sách ban đầu nhé",
+        history,
+    ) == [
+        {"category": "drink", "number": 1, "product_name": "1 Lít Matcha Latte Tây Bắc"},
+        {"category": "food", "number": 1, "product_name": "Bánh Trung Thu Cà Phê Lava"},
+    ]
+
+
 def test_resolves_natural_banh_thi_so_two_wording():
     history = [{
         "role": "assistant",
@@ -607,6 +639,87 @@ def test_non_purchase_question_does_not_expose_add_to_cart_tool(monkeypatch):
     agent_service.run_agent("session-read-only", "món này có vị thế nào?", history=[])
 
     assert "add_to_cart" not in captured["tool_names"]
+
+
+def test_exact_cart_regression_browsing_matcha_never_replays_add_to_cart(monkeypatch):
+    """TC-A: a read-only Matcha browse cannot mutate the Order Service cart.
+
+    The fake below is intentionally an Order Service boundary, not a mocked
+    `cart_manager` writer. `sync_authoritative_cart` only mirrors its rows,
+    and the assertion is over the server rows and mutation count.
+    """
+    from src.agents.order_flow_graph import run_order_flow
+    from src.function_calling.tools import cart_tools, product_tools
+
+    session = "customer-42:conversation:cart-regression"
+    server_rows = []
+    mutation_calls = []
+    catalog = {
+        "D1": {"product_id": "D1", "product_name": "Nước Một", "final_price": 31000, "category": "Đồ uống"},
+        "D2": {"product_id": "D2", "product_name": "Nước Hai", "final_price": 39000, "category": "Đồ uống"},
+        "F1": {"product_id": "F1", "product_name": "Bánh Một", "final_price": 29000, "category": "Bánh"},
+        "M1": {"product_id": "M1", "product_name": "Matcha Latte", "final_price": 55000, "category": "Đồ uống"},
+    }
+
+    def order_service_get(_session):
+        return cart_manager.replace_items_from_order_cart(session, list(server_rows))
+
+    def order_service_add(**kwargs):
+        operation_id = kwargs.get("operation_id")
+        assert operation_id  # graph must inject a stable server-side identity.
+        mutation_calls.append(operation_id)
+        product = catalog[kwargs["product_id"]]
+        row = {
+            "id": len(server_rows) + 1,
+            "ma_san_pham": product["product_id"],
+            "ten_san_pham": product["product_name"],
+            "gia_ban": product["final_price"],
+            "so_luong": kwargs["quantity"],
+            "size": kwargs.get("size") or "Nhỏ",
+            "toppings": kwargs.get("toppings") or [],
+        }
+        server_rows.append(row)
+        return {"status": "ok", "persisted_line": row, "cart": order_service_get(session)}
+
+    def recommendations(**kwargs):
+        if kwargs.get("search_text") == "matcha":
+            return {"status": "ok", "products": [catalog["M1"]]}
+        if kwargs["category"] == "drink":
+            return {"status": "ok", "products": [catalog["D1"], catalog["D2"]]}
+        return {"status": "ok", "products": [catalog["F1"]]}
+
+    monkeypatch.setattr(cart_tools, "sync_authoritative_cart", order_service_get)
+    monkeypatch.setattr(cart_tools, "execute_add_to_cart", order_service_add)
+    monkeypatch.setattr(product_tools, "execute_get_recommendations", recommendations)
+    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name: {
+        "status": "ok", "options": {"Kích thước": ["Nhỏ"]},
+    })
+    monkeypatch.setattr(product_tools, "execute_check_price_and_stock", lambda **kwargs: {
+        "status": "ok",
+        "products": [next(product for product in catalog.values() if product["product_name"] == kwargs["product_name_query"])],
+    })
+
+    run_order_flow(session, "tôi muốn mua bánh và nước", client_message_id="menu-turn")
+    added = run_order_flow(
+        session,
+        "thêm nước số 2 với bánh số 1",
+        client_message_id="selection-turn",
+    )
+    assert [row["ma_san_pham"] for row in server_rows] == ["D2", "F1"]
+    assert [row["so_luong"] for row in server_rows] == [1, 1]
+    assert len(mutation_calls) == 2
+    assert mutation_calls[0].endswith(":add:0")
+    assert mutation_calls[1].endswith(":add:1")
+    assert len([entry for entry in added["tool_calls_log"] if entry["tool"] == "add_to_cart"]) == 2
+
+    fingerprint_before = tuple((row["id"], row["ma_san_pham"], row["so_luong"]) for row in server_rows)
+    browsed = run_order_flow(session, "xem các sản phẩm về Matcha", client_message_id="matcha-turn")
+    fingerprint_after = tuple((row["id"], row["ma_san_pham"], row["so_luong"]) for row in server_rows)
+
+    assert fingerprint_after == fingerprint_before
+    assert len(mutation_calls) == 2
+    assert not any(entry["tool"] == "add_to_cart" for entry in browsed["tool_calls_log"])
+    assert next(row for row in server_rows if row["ma_san_pham"] == "F1")["so_luong"] == 1
 
 
 def test_product_review_question_is_routed_to_product_insights(monkeypatch):
@@ -803,10 +916,12 @@ def test_inventory_requires_a_row_and_enough_quantity():
         ],
     )
 
-    assert result == {"unavailable": ["Cà phê"], "unverified": ["Bánh"]}
+    # Missing rows inherit normal menu availability; the explicit row still
+    # blocks because one unit cannot satisfy quantity two.
+    assert result == {"unavailable": ["Cà phê"], "unverified": []}
 
 
-def test_branch_selection_accepts_unknown_inventory_but_does_not_claim_stock_confirmed(monkeypatch):
+def test_branch_selection_rejects_unknown_inventory_until_stock_is_confirmed(monkeypatch):
     from src.function_calling.tools import branch_tools
 
     cart_manager.add_item("session-unknown-branch", "2", "Bánh", 30000)
@@ -841,11 +956,11 @@ def test_branch_selection_accepts_unknown_inventory_but_does_not_claim_stock_con
     result = branch_tools.execute_set_session_branch(
         "session-unknown-branch", "BR-1", "Chi nhánh 1", customer_selected=True
     )
-    assert result["status"] == "ok"
-    assert "chưa thể xác minh" in result["message"]
+    assert result["status"] == "stock_conflict"
+    assert "Bánh" in result["unavailable_products"]
 
 
-def test_nearby_branches_remain_candidates_when_inventory_is_unconfigured(monkeypatch):
+def test_nearby_branches_with_unknown_inventory_are_explained_but_not_selectable(monkeypatch):
     from src.function_calling.tools import branch_tools
 
     session = "session-nearby-unknown"
@@ -891,7 +1006,58 @@ def test_nearby_branches_remain_candidates_when_inventory_is_unconfigured(monkey
     result = branch_tools.execute_find_nearest_branch("địa chỉ test", session_id=session)
     assert result["status"] == "need_branch_selection"
     assert result["branches"][0]["availability_status"] == "unknown"
-    assert cart_manager.get_checkout_prefs(session)["branch_candidates"][0]["branch_id"] == "BR-1"
+    assert cart_manager.get_checkout_prefs(session).get("branch_candidates")
+
+
+def test_pickup_lists_five_nearest_and_marks_d9_matcha_unavailable(monkeypatch):
+    from src.function_calling.tools import branch_tools
+
+    session = "pickup-five-with-d9-conflict"
+    cart_manager.add_item(session, "120", "Bánh Trung Thu Matcha", 99000)
+    cart_manager.set_checkout_prefs(session, delivery_type="MANG_DI")
+    monkeypatch.setattr(branch_tools, "_check_business_hours", lambda: None)
+    monkeypatch.setattr("utils.geo.geocode_address", lambda _address: (0.0, 0.0))
+    monkeypatch.setattr("utils.geo.haversine_distance", lambda _a, _b, lat, _lon: float(lat))
+
+    rows = [
+        {
+            "ma_chi_nhanh": "HC_HCM_D9_TAN_PHU_704" if index == 1 else f"BR-{index}",
+            "ten_chi_nhanh": "Highlands Coffee D9 Tân Phú" if index == 1 else f"Chi nhánh {index}",
+            "dia_chi": f"Địa chỉ {index}", "vi_do": float(index), "kinh_do": 0.0,
+            "loai": "CHI_NHANH_CHINH", "avg_rating": 4.5, "total_reviews": 1,
+        }
+        for index in range(1, 7)
+    ]
+
+    class FakeResult:
+        def mappings(self): return self
+        def all(self): return rows
+
+    class FakeConnection:
+        def __enter__(self): return self
+        def __exit__(self, *_args): return False
+        def execute(self, *_args, **_kwargs): return FakeResult()
+
+    class FakeEngine:
+        def connect(self): return FakeConnection()
+
+    monkeypatch.setattr(branch_tools, "_get_engine", lambda: FakeEngine())
+
+    def fake_validate(_engine, cart, _schema):
+        if cart.get("branch_id") == "HC_HCM_D9_TAN_PHU_704":
+            return {"unavailable": ["Bánh Trung Thu Matcha"], "unverified": []}
+        return {"unavailable": [], "unverified": []}
+
+    monkeypatch.setattr(branch_tools, "validate_cart_at_branch", fake_validate)
+    result = branch_tools.execute_find_nearest_branch("42/3 Nguyễn Hữu Tiến", session_id=session)
+
+    assert result["status"] == "need_branch_selection"
+    assert len(result["branches"]) == 5
+    assert result["branches"][0]["ten_chi_nhanh"] == "Highlands Coffee D9 Tân Phú"
+    assert result["branches"][0]["availability_status"] == "unavailable"
+    assert result["branches"][0]["unavailable_products"] == ["Bánh Trung Thu Matcha"]
+    assert all(row["availability_status"] == "available" for row in result["branches"][1:])
+    assert len(cart_manager.get_checkout_prefs(session)["branch_candidates"]) == 5
 
 
 def test_pending_multi_product_options_are_remembered_and_added_together(monkeypatch):

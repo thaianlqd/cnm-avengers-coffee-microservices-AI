@@ -1,7 +1,8 @@
 """Authoritative inventory checks used by branch selection and checkout.
 
 Policy:
-- Missing inventory rows remain unverified; absence is not proof of zero stock.
+- Inventory rows are branch-specific overrides. A missing row inherits the
+  product's normal menu availability at that branch.
 - Only explicit inactive/insufficient rows are unavailable.
 - Products with a row must have enough quantity for the whole cart.
 - Quantities are aggregated by product before validation.
@@ -18,7 +19,7 @@ def validate_items_at_branch(
     items: Iterable[Dict[str, Any]],
     inventory_schema: str = "inventory",
 ) -> Dict[str, List[str]]:
-    """Return confirmed unavailable products and products with no stock record."""
+    """Return explicit stock conflicts and identifiers that cannot be checked."""
     names: Dict[str, str] = {}
     required_quantities: Dict[str, int] = defaultdict(int)
     for item in items:
@@ -49,7 +50,9 @@ def validate_items_at_branch(
                 "product_id": int(product_id),
             }).fetchone()
             if row is None:
-                unverified.append(names[product_id])
+                # The admin UI writes a row when a branch pauses a product or
+                # tracks a finite quantity. Most products have no override row;
+                # treating those as unknown made every ordinary branch fail.
                 continue
             stock_quantity = int(row[0] or 0)
             is_active = bool(row[1])

@@ -5,13 +5,6 @@ import { queryKeys } from '../lib/queryKeys';
 
 const CartContext = createContext();
 
-const SIZE_PRICE_MAP = {
-  'Nhỏ': 0,
-  'Vừa': 6000,
-};
-
-const getAdditionalPriceBySize = (size) => SIZE_PRICE_MAP[size || 'Nhỏ'] || 0;
-
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
   const queryClient = useQueryClient();
@@ -231,146 +224,67 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const changeCartItemSize = async (maSanPham, currentSize, nextSize) => {
-    const normalizedCurrentSize = currentSize || 'Nhỏ';
-    const normalizedNextSize = nextSize || 'Nhỏ';
-
-    if (normalizedCurrentSize === normalizedNextSize) {
-      return;
-    }
-
-    const itemCanSua = cart.find(
-      (item) => item.ma_san_pham === maSanPham && (item.size || 'Nhỏ') === normalizedCurrentSize,
-    );
-
-    if (!itemCanSua) {
-      return;
-    }
-
-    const basePrice = Number(itemCanSua.gia_ban) - getAdditionalPriceBySize(normalizedCurrentSize);
-
-    await themVaoGioMutation.mutateAsync({
-      ma_nguoi_dung: itemCanSua.ma_nguoi_dung,
-      ma_san_pham: itemCanSua.ma_san_pham,
-      ten_san_pham: itemCanSua.ten_san_pham,
-      gia_ban: basePrice + getAdditionalPriceBySize(normalizedNextSize),
-      hinh_anh_url: itemCanSua.hinh_anh_url,
-      so_luong: itemCanSua.so_luong,
-      size: normalizedNextSize,
-      toppings: itemCanSua.toppings || [],
-      luong_da: itemCanSua.luong_da || '',
-      do_ngot: itemCanSua.do_ngot || '',
-      loai_sua: itemCanSua.loai_sua || '',
-      custom_attributes: itemCanSua.custom_attributes || {}
-    });
-
-    if (itemCanSua.id) {
-      await xoaKhoiGioMutation.mutateAsync(itemCanSua.id);
-    } else {
-      setCart((prev) =>
-        prev.filter(
-          (item) => !(item.ma_san_pham === maSanPham && (item.size || 'Nhỏ') === normalizedCurrentSize),
-        ),
-      );
-    }
-
+  const patchCartItem = async (item, patch) => {
+    if (!item?.id) throw new Error('Không tìm thấy mã dòng giỏ hàng. Vui lòng tải lại giỏ.');
+    await apiClient.patch(`/cart/${item.id}`, patch);
     await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(activeUserId) });
+    window.dispatchEvent(new CustomEvent('refresh-cart'));
   };
 
-  const removeFromCart = async (maSanPham, size) => {
-    const itemCanXoa = cart.find((i) => i.ma_san_pham === maSanPham && (!size || i.size === size));
-    if (!itemCanXoa) {
-      return;
-    }
+  const changeCartItemSize = async (itemOrProductId, currentSize, nextSize) => {
+    const item = typeof itemOrProductId === 'object'
+      ? itemOrProductId
+      : cart.find((row) => row.ma_san_pham === itemOrProductId && (row.size || 'Nhỏ') === (currentSize || 'Nhỏ'));
+    if (!item || (item.size || 'Nhỏ') === (nextSize || 'Nhỏ')) return;
+    await patchCartItem(item, { size: nextSize || 'Nhỏ' });
+  };
 
-    if (itemCanXoa.id) {
-      await xoaKhoiGioMutation.mutateAsync(itemCanXoa.id);
+  const removeFromCart = async (itemOrProductId, size) => {
+    const item = typeof itemOrProductId === 'object'
+      ? itemOrProductId
+      : cart.find((row) => row.ma_san_pham === itemOrProductId && (!size || row.size === size));
+    if (!item) return;
+    if (item.id) {
+      await xoaKhoiGioMutation.mutateAsync(item.id);
       await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(activeUserId) });
+      window.dispatchEvent(new CustomEvent('refresh-cart'));
       return;
     }
-
-    setCart((prev) => prev.filter((i) => !(i.ma_san_pham === maSanPham && i.size === size)));
+    setCart((previous) => previous.filter((row) => row !== item));
   };
 
   const updateCartItemOptions = async (oldItem, newOptions) => {
     if (!oldItem) return;
-
-    const newItem = {
-      ma_nguoi_dung: activeUserId || oldItem.ma_nguoi_dung,
-      ma_san_pham: oldItem.ma_san_pham,
-      ten_san_pham: oldItem.ten_san_pham,
-      gia_ban: Number(newOptions.gia_ban) || Number(oldItem.gia_ban) || 0,
-      hinh_anh_url: oldItem.hinh_anh_url,
-      so_luong: Number(oldItem.so_luong) || 1,
-      size: newOptions.size || 'Nhỏ',
-      toppings: newOptions.toppings || [],
-      topping_prices: newOptions.topping_prices || oldItem.topping_prices || [],
-      luong_da: newOptions.luongDa || '',
-      do_ngot: newOptions.doNgot || '',
-      loai_sua: newOptions.loaiSua || '',
-      custom_attributes: newOptions.custom_attributes || {}
-    };
-
     try {
-      if (oldItem.id) {
-        await xoaKhoiGioMutation.mutateAsync(oldItem.id);
-        await new Promise(resolve => setTimeout(resolve, 200)); // Tránh race condition ở database
-        await themVaoGioMutation.mutateAsync(newItem);
-      } else {
-        setCart((prev) => {
-          const next = prev.filter(i => i !== oldItem);
-          return [...next, newItem];
-        });
-      }
+      await patchCartItem(oldItem, {
+        product_id: newOptions.ma_san_pham || oldItem.ma_san_pham,
+        quantity: Number(oldItem.so_luong) || 1,
+        size: newOptions.size || oldItem.size || 'Nhỏ',
+        toppings: newOptions.toppings || [],
+        luong_da: newOptions.luongDa ?? oldItem.luong_da ?? '',
+        do_ngot: newOptions.doNgot ?? oldItem.do_ngot ?? '',
+        loai_sua: newOptions.loaiSua ?? oldItem.loai_sua ?? '',
+        custom_attributes: newOptions.custom_attributes || {},
+      });
     } catch (e) {
       console.error('Lỗi khi cập nhật món:', e);
-      alert('Không thể cập nhật món. Lỗi: ' + e.message);
-    } finally {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(activeUserId) });
+      alert('Không thể cập nhật món. ' + (e.message || 'Vui lòng thử lại.'));
     }
   };
 
-  const updateCartQuantity = async (maSanPham, size, delta) => {
-    const itemCanSua = cart.find((item) => item.ma_san_pham === maSanPham && (!size || item.size === size));
-    if (!itemCanSua) {
-      return;
-    }
-
-    const soLuongMoi = itemCanSua.so_luong + delta;
-    if (soLuongMoi <= 0) {
-      await removeFromCart(maSanPham, size);
-      return;
-    }
-
-    // Optimistically update local cart state immediately
-    setCart((prev) =>
-      prev.map((item) => {
-        if (item === itemCanSua || (item.ma_san_pham === maSanPham && (!size || item.size === size))) {
-          return { ...item, so_luong: item.so_luong + delta };
-        }
-        return item;
-      }),
-    );
-
+  const updateCartQuantity = async (itemOrProductId, sizeOrDelta, legacyDelta) => {
+    const directItem = typeof itemOrProductId === 'object';
+    const item = directItem
+      ? itemOrProductId
+      : cart.find((row) => row.ma_san_pham === itemOrProductId && (!sizeOrDelta || row.size === sizeOrDelta));
+    const delta = directItem ? sizeOrDelta : legacyDelta;
+    if (!item) return;
+    const quantity = Number(item.so_luong) + Number(delta);
+    if (quantity <= 0) return removeFromCart(item);
     try {
-      await themVaoGioMutation.mutateAsync({
-        ma_nguoi_dung: activeUserId || itemCanSua.ma_nguoi_dung,
-        ma_san_pham: itemCanSua.ma_san_pham,
-        ten_san_pham: itemCanSua.ten_san_pham,
-        gia_ban: itemCanSua.gia_ban,
-        hinh_anh_url: itemCanSua.hinh_anh_url,
-        so_luong: delta,
-        size: itemCanSua.size || 'Nhỏ',
-        toppings: itemCanSua.toppings || [],
-        luong_da: itemCanSua.luong_da || '',
-        do_ngot: itemCanSua.do_ngot || '',
-        loai_sua: itemCanSua.loai_sua || '',
-        custom_attributes: itemCanSua.custom_attributes || {},
-      });
+      await patchCartItem(item, { quantity });
     } catch (e) {
       console.error('Không thể đồng bộ số lượng giỏ hàng với máy chủ:', e);
-    } finally {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(activeUserId) });
     }
   };
 

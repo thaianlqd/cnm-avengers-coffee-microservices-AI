@@ -269,11 +269,15 @@ def _extract_additional_product_name(message: str) -> Optional[str]:
     """Extract an explicit product from requests such as 'mua thêm Bánh X nữa'."""
     if "topping" in _normalize_chat_text(message):
         return None
-    match = re.search(r"(?:mua\s+thêm|thêm\s+món)\s+(.+)$", str(message or ""), re.IGNORECASE)
+    match = re.search(
+        r"(?:mua\s+thêm|thêm\s+món|cho\s+(?:tôi|mình)\s+thêm|cho\s+thêm)\s+(.+)$",
+        str(message or ""),
+        re.IGNORECASE,
+    )
     if not match:
         return None
     name = re.sub(
-        r"\s+(?:nữa|với|đi|nhé|nha|cho\s+(?:mình|tôi))\s*[.!?]*$",
+        r"\s+(?:nữa|với|đi|nhé|nha|ấy|vào\s+giỏ(?:\s+hàng)?|cho\s+(?:mình|tôi))\s*[.!?]*$",
         "",
         match.group(1).strip(),
         flags=re.IGNORECASE,
@@ -320,16 +324,20 @@ def _product_review_query(message: str) -> Optional[str]:
         return None
     raw = str(message or "").strip()
     patterns = [
+        # Product name comes before the review verb in natural follow-ups such
+        # as "còn Bánh ... được khách đánh giá thế nào".  Keep this before the
+        # generic suffix pattern, otherwise it extracts "thế nào" as a name.
+        r"(?:^|[,;]\s*)(?:còn\s+)?(.+?)\s+(?:được\s+(?:khách\s+)?|khách\s+)(?:đánh giá|review|nhận xét)(?:\s+.*)?$",
         r"(?:sản phẩm|món)\s+(.+?)(?:\s+(?:được\s+)?(?:đánh giá|review|nhận xét|bao nhiêu sao).*)?$",
         r"(?:cho\s+(?:tôi|mình)\s+)?(?:đánh giá|review|nhận xét)\s+(?:chi tiết\s+)?(?:về|cho)\s+(.+)$",
-        r"(?:đánh giá|review|nhận xét)(?:\s+của)?(?:\s+sản phẩm|\s+món)?\s+(.+)$",
+        r"(?:đánh giá|review|nhận xét)(?:\s+chi tiết)?(?:\s+của)?(?:\s+sản phẩm|\s+món)?\s+(.+)$",
     ]
     for pattern in patterns:
         match = re.search(pattern, raw, re.IGNORECASE)
         if match:
             query = re.sub(r"[?.!]+$", "", match.group(1)).strip()
             query = re.sub(
-                r"\s+(?:thế\s+nào|ra\s+sao|như\s+thế\s+nào|đi|nhé|nha|vậy)$",
+                r"\s+(?:giúp\s+(?:tôi|mình)|thế\s+nào|ra\s+sao|như\s+thế\s+nào|đi|nhé|nha|vậy)$",
                 "",
                 query,
                 flags=re.IGNORECASE,
@@ -666,6 +674,25 @@ def _resolve_pending_branch_choice(
     if not chosen:
         return None
 
+    if chosen.get("availability_status") in {"unavailable", "unknown"}:
+        missing = list(chosen.get("unavailable_products") or [])
+        unverified = list(chosen.get("unverified_products") or [])
+        if missing:
+            reason = "đang thiếu: " + ", ".join(missing)
+        elif unverified:
+            reason = "chưa xác minh được tồn kho: " + ", ".join(unverified)
+        else:
+            reason = "chưa đủ toàn bộ món trong giỏ"
+        return {
+            "reply": (
+                f"{chosen.get('branch_name')} {reason}, nên mình chưa thể chọn cửa hàng này. "
+                "Bạn chọn một cửa hàng được ghi ‘còn đủ tất cả món’, hoặc đổi món trong giỏ nhé."
+            ),
+            "checkout_payload": None,
+            "tool_calls_log": [],
+            "error": None,
+        }
+
     from src.function_calling.tools.branch_tools import execute_set_session_branch
     branch_result = execute_set_session_branch(
         session_id,
@@ -733,17 +760,24 @@ def _confirm_saved_location(
     if nearest.get("status") == "need_branch_selection" and branches:
         lines = [f"Mình đã dùng địa chỉ đã lưu: {suggested}. Các cửa hàng gần bạn:"]
         for index, item in enumerate(branches, 1):
-            availability = ""
+            availability = " — còn đủ tất cả món"
             if item.get("availability_status") == "unavailable":
                 missing = ", ".join(item.get("unavailable_products") or [])
-                availability = f" — chưa đủ hàng: {missing}"
+                availability = f" — HẾT/THIẾU: {missing} (không thể chọn)"
             elif item.get("availability_status") == "unknown":
-                availability = " — hệ thống chưa có dữ liệu tồn kho cho một số món"
+                availability = " — chưa xác minh được tồn kho (không thể chọn)"
             lines.append(
                 f"{index}. {item['ten_chi_nhanh']} — {item.get('dia_chi') or 'chưa có địa chỉ'} "
                 f"({item.get('khoang_cach_km')} km đường chim bay){availability}"
             )
-        lines.append("Bạn chọn cửa hàng số mấy để mình kiểm tra tồn kho và chốt nơi phục vụ?")
+        available_numbers = [
+            str(index) for index, item in enumerate(branches, 1)
+            if item.get("availability_status") == "available"
+        ]
+        if available_numbers:
+            lines.append("Bạn chọn cửa hàng còn đủ món theo số (" + ", ".join(available_numbers) + ") để mình chốt nơi phục vụ nhé.")
+        else:
+            lines.append("Chưa có cửa hàng nào trong 5 nơi gần nhất đủ giỏ này. Bạn có thể đổi món hoặc cung cấp khu vực khác để mình tìm tiếp.")
         try:
             cart_manager.set_pending_action(session_id, "select_branch", {"count": len(branches)})
         except Exception as e:
@@ -824,7 +858,7 @@ def _resolve_numbered_product_choices(
         return []
 
     sections: Dict[str, Dict[int, str]] = {}
-    drink_headings = r"Nước|Đồ uống|Thức uống|Trà(?:\s+trái\s+cây)?|Cà phê|Sinh tố"
+    drink_headings = r"Nước(?:\s+uống)?|Đồ uống|Thức uống|Trà(?:\s+trái\s+cây)?|Cà phê|Sinh tố"
     food_headings = r"(?:Món\s+)?Bánh|Đồ ăn|Thức ăn|Món ăn"
     all_headings = rf"{drink_headings}|{food_headings}"
     def _clean_extracted_product_name(raw_name: str) -> str:
@@ -1005,6 +1039,7 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
             luong_da=selected.get("luong_da"),
             do_ngot=selected.get("do_ngot"),
             loai_sua=selected.get("loai_sua"),
+            operation_id=item.get("operation_id"),
         )
         logs.append({"tool": "add_to_cart", "args": {"product_name": product_name, "quantity": max(1, int(item.get("quantity") or 1)), **selected}, "result": add_result})
         if add_result.get("status") == "ok":
@@ -1096,6 +1131,7 @@ def _run_agent_impl(
     user_message: str,
     history: Optional[List[Dict[str, str]]] = None,
     max_tool_rounds: int = 10,
+    allow_model_mutations: bool = True,
 ) -> Dict[str, Any]:
     """
     Điểm vào chính của Agent. Được gọi từ FastAPI endpoint.
@@ -1648,12 +1684,19 @@ def _run_agent_impl(
     )
 
     # ── Gọi Groq Agent ────────────────────────────────────────────────────────
-    tools_for_turn = ALL_TOOL_SCHEMAS
-    if not _allows_cart_add(user_message, session_id):
-        tools_for_turn = [
-            schema for schema in ALL_TOOL_SCHEMAS
-            if schema.get("function", {}).get("name") != "add_to_cart"
-        ]
+    # Model tool calls are advisory/read-only.  Every cart, voucher, branch
+    # and order mutation is performed by the deterministic conversation graph
+    # above this implementation, so an ambiguous sentence cannot mutate an old
+    # order or add an invented product.
+    mutating_tools = {
+        "add_to_cart", "remove_from_cart", "update_cart_item", "remove_cart_item",
+        "request_checkout", "confirm_checkout", "set_session_branch",
+        "apply_voucher", "remove_voucher", "cancel_order", "update_order",
+    }
+    tools_for_turn = ALL_TOOL_SCHEMAS if allow_model_mutations else [
+        schema for schema in ALL_TOOL_SCHEMAS
+        if schema.get("function", {}).get("name") not in mutating_tools
+    ]
     result = groq_agent_chat(
         messages=messages,
         tools=tools_for_turn,
@@ -1762,4 +1805,18 @@ def _run_agent_impl(
 
     return _advance_checkout_if_ready(session_id, result)
 
-run_agent = _run_agent_impl
+def run_agent(
+    session_id: str,
+    user_message: str,
+    history: Optional[List[Dict[str, str]]] = None,
+    max_tool_rounds: int = 10,
+    client_message_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Public entrypoint: LangGraph owns transactional conversational turns."""
+    from src.agents.order_flow_graph import run_order_flow
+    return run_order_flow(
+        session_id,
+        user_message,
+        history=history,
+        client_message_id=client_message_id,
+    )
