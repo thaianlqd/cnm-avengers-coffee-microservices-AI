@@ -5,6 +5,7 @@ import pytest
 from src.common import cart_manager
 from src.function_calling import helpers
 from src.function_calling.tools import cart_tools
+from src.function_calling.tools import ALL_TOOL_SCHEMAS, TOOL_EXECUTORS
 
 
 class _Response:
@@ -152,3 +153,18 @@ def test_ai_line_mutations_send_stable_operation_ids_and_replace_authoritative_m
     assert writes[2][2]["X-Idempotency-Key"].endswith(":clear_cart:0")
     assert writes[0][2]["X-Cart-User-Id"] == "customer-v5"
     assert writes[1][2]["X-Cart-User-Id"] == "customer-v5"
+
+
+def test_conversational_ai_does_not_expose_legacy_product_remove():
+    tool_names = {
+        schema["function"]["name"]
+        for schema in ALL_TOOL_SCHEMAS
+        if schema.get("type") == "function"
+    }
+
+    assert "remove_from_cart" not in tool_names
+    assert "remove_from_cart" not in TOOL_EXECUTORS
+    # Deterministic OrderFlow owns writes and invokes this line-id executor;
+    # conversational fallback remains read-only and therefore has no remove
+    # mutation schema at all.
+    assert "remove_cart_item" in TOOL_EXECUTORS

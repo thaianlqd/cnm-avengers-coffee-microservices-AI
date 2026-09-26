@@ -439,28 +439,17 @@ def execute_add_to_cart(
         "cart": cart,
     }
 
-TOOL_REMOVE_FROM_CART = {
-    "type": "function",
-    "function": {
-        "name": "remove_from_cart",
-        "description": "Xoá hoàn toàn một sản phẩm khỏi giỏ hàng. Dùng khi khách đổi ý hoặc muốn huỷ món.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "product_id": {"type": "string", "description": "Mã sản phẩm cần xoá."},
-                "size": {"type": "string", "description": "Kích cỡ cần xoá (nếu có)."}
-            },
-            "required": ["product_id"]
-        },
-    },
-}
-
 def execute_remove_from_cart(
     session_id: str,
     product_id: str,
     size: Optional[str] = None,
     operation_id: Optional[str] = None,
 ) -> Dict[str, Any]:
+    """Deprecated frontend compatibility adapter; never register for AI tools.
+
+    This endpoint is product/size based and may remove multiple configured
+    lines. Canonical AI writes must use execute_remove_cart_item(line_id).
+    """
     import os, requests, logging
     from src.function_calling.helpers import _get_service_jwt, _require_valid_session
     
@@ -749,6 +738,8 @@ def execute_request_checkout(
     try:
         cart = sync_authoritative_cart(session_id)
     except Exception:
+        # TODO(Batch checkout safety): authenticated checkout must block when
+        # authoritative cart sync fails instead of trusting this local mirror.
         cart = cart_manager.get_cart(session_id)
     if cart["is_empty"]:
         return {

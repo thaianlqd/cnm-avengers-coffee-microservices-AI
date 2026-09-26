@@ -84,6 +84,11 @@ export class CartController {
       throw new BadRequestException('Id giỏ hàng không hợp lệ');
     }
     const userId = this.mutationOwner(req.user, internalCartUserId);
+    if (!userId) {
+      throw new BadRequestException(
+        'X-Cart-User-Id la bat buoc cho internal cart mutation',
+      );
+    }
     return this.cartService.capNhatMucGio(
       itemId,
       body || {},
@@ -110,6 +115,9 @@ export class CartController {
     @Headers('x-idempotency-key') operationId: string | undefined,
     @Req() req: any,
   ) {
+    // Deprecated compatibility adapter for existing web clients.  A
+    // product+size selector can match multiple option configurations; new
+    // clients and all AI writes must call DELETE /cart/:line_id instead.
     this.assertOwner(req.user, userId);
     const productIdNumber = Number(productId);
     if (!Number.isInteger(productIdNumber) || productIdNumber <= 0) {
@@ -131,6 +139,11 @@ export class CartController {
     @Req() req: any,
   ) {
     const userId = this.mutationOwner(req.user, internalCartUserId);
+    if (!userId) {
+      throw new BadRequestException(
+        'X-Cart-User-Id la bat buoc cho internal cart mutation',
+      );
+    }
     return this.cartService.xoaKhoiGiỏ(id, userId, operationId);
   }
 }
