@@ -501,7 +501,7 @@ def groq_agent_chat(
                 tool_hash = f"{tool_name}_{tool_args_str}"
                 # The same add call in one user turn is a duplicate, not a second
                 # quantity request. Cache it so model retries cannot double-add.
-                no_cache_tools = ["request_checkout", "remove_from_cart", "clear_cart", "set_session_branch"]
+                no_cache_tools = ["request_checkout", "remove_cart_item", "clear_cart", "set_session_branch"]
                 if tool_hash in turn_tool_cache and tool_name not in no_cache_tools:
                     logger.info("[Groq Agent] Cache Hit! Trả ngay kết quả tool đã gọi: %s", tool_hash)
                     result = turn_tool_cache[tool_hash]

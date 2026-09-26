@@ -122,12 +122,18 @@ export class CartService {
     operationType: string,
     operationId: string | undefined,
     payload: any,
-    mutate: (manager: any) => Promise<any>,
+    mutate: (manager: any, lockedMetadata: any) => Promise<any>,
   ) {
     const normalizedOperationId = String(operationId || '').trim();
     if (!normalizedOperationId) {
       await this.ensureCartMetadataTable();
-      return this.dataSource.transaction(mutate);
+      return this.dataSource.transaction(async (manager) => {
+        // Every authenticated cart write takes this lock first.  This is the
+        // lock order for ADD/UPDATE/REMOVE/CLEAR: metadata -> operation ->
+        // cart rows.  It serializes distinct operation ids for one cart too.
+        const lockedMetadata = await this.lockCartMetadata(manager, userId);
+        return mutate(manager, lockedMetadata);
+      });
     }
     if (normalizedOperationId.length > 200) {
       throw new BadRequestException('Idempotency key qua dai');
@@ -144,6 +150,10 @@ export class CartService {
       payload,
     );
     return this.dataSource.transaction(async (manager) => {
+      // Do not move this below the idempotency/cart-row reads: all mutation
+      // paths must acquire the per-cart lock in the same order to avoid lost
+      // updates and lock-order deadlocks.
+      const lockedMetadata = await this.lockCartMetadata(manager, userId);
       const existingRows = await manager.query(
         `SELECT request_hash, result FROM "${schema}".cart_mutation_operation WHERE operation_id = $1 FOR UPDATE`,
         [normalizedOperationId],
@@ -206,7 +216,7 @@ export class CartService {
         };
       }
 
-      const result = await mutate(manager);
+      const result = await mutate(manager, lockedMetadata);
       await manager.query(
         `UPDATE "${schema}".cart_mutation_operation SET result = $2::jsonb, updated_at = NOW() WHERE operation_id = $1`,
         [normalizedOperationId, JSON.stringify(result)],
@@ -258,9 +268,16 @@ export class CartService {
     return rows[0];
   }
 
-  private async bumpCartVersion(manager: any, userId: string) {
+  private async bumpCartVersion(
+    manager: any,
+    userId: string,
+    lockedMetadata?: any,
+  ) {
     const schema = this.cartSchema();
-    await this.lockCartMetadata(manager, userId);
+    // Mutations pass their already locked metadata row.  The fallback keeps
+    // this helper safe for future callers, but must not be used to acquire a
+    // cart lock late in a mutation.
+    if (!lockedMetadata) await this.lockCartMetadata(manager, userId);
     const rows = await manager.query(
       `UPDATE "${schema}".cart_metadata
        SET cart_version = cart_version + 1, updated_at = NOW()
@@ -355,8 +372,13 @@ export class CartService {
     userId: string,
     line?: CartItem | null,
     affected = 1,
+    lockedMetadata?: any,
   ) {
-    const metadata = await this.bumpCartVersion(manager, userId);
+    const metadata = await this.bumpCartVersion(
+      manager,
+      userId,
+      lockedMetadata,
+    );
     const cart = await this.cartEnvelope(userId, manager, metadata);
     return {
       ...cart,
@@ -484,12 +506,21 @@ export class CartService {
   }
 
   async themVaoGiỏ(dto: any, operationId?: string) {
+    const userId = String(dto?.ma_nguoi_dung || '');
+    if (!userId) throw new BadRequestException('ma_nguoi_dung la bat buoc');
     const normalizedOperationId = String(operationId || '').trim();
     if (!normalizedOperationId) {
       await this.ensureCartMetadataTable();
       return this.dataSource.transaction(async (manager) => {
+        const lockedMetadata = await this.lockCartMetadata(manager, userId);
         const line = await this.themVaoGiỏNoIdempotency(dto, manager);
-        return this.finalizedMutation(manager, String(dto.ma_nguoi_dung), line);
+        return this.finalizedMutation(
+          manager,
+          userId,
+          line,
+          1,
+          lockedMetadata,
+        );
       });
     }
     if (normalizedOperationId.length > 200) {
@@ -502,8 +533,10 @@ export class CartService {
     ]);
     const schema = this.cartSchema();
     const requestHash = this.mutationRequestHash(dto);
-    const userId = String(dto?.ma_nguoi_dung || '');
     return this.dataSource.transaction(async (manager) => {
+      // Keep ADD in the exact same metadata -> operation -> cart-row order as
+      // the generic mutation wrapper below.
+      const lockedMetadata = await this.lockCartMetadata(manager, userId);
       const existingRows = await manager.query(
         `SELECT request_hash, result FROM "${schema}".cart_mutation_operation WHERE operation_id = $1 FOR UPDATE`,
         [normalizedOperationId],
@@ -569,7 +602,13 @@ export class CartService {
         };
       }
       const line = await this.themVaoGiỏNoIdempotency(dto, manager);
-      const result = await this.finalizedMutation(manager, userId, line);
+      const result = await this.finalizedMutation(
+        manager,
+        userId,
+        line,
+        1,
+        lockedMetadata,
+      );
       await manager.query(
         `UPDATE "${schema}".cart_mutation_operation SET result = $2::jsonb, updated_at = NOW() WHERE operation_id = $1`,
         [normalizedOperationId, JSON.stringify(result)],
@@ -613,24 +652,27 @@ export class CartService {
   }
 
   async xoaKhoiGiỏ(id: number, maNguoiDung?: string, operationId?: string) {
-    const knownOwner = String(maNguoiDung || '');
-    const owner =
-      knownOwner ||
-      (await this.cartRepo.findOne({ where: { id } }))?.ma_nguoi_dung;
+    const owner = String(maNguoiDung || '');
     if (!owner)
-      throw new NotFoundException('Không tìm thấy món trong giỏ hàng');
+      throw new BadRequestException('ma_nguoi_dung la bat buoc cho cart mutation');
     return this.executeCartMutation(
       String(owner),
       'REMOVE_CART_LINE',
       operationId,
       { line_id: id },
-      async (manager) => {
+      async (manager, lockedMetadata) => {
         const source = await manager.findOne(CartItem, { where: { id } });
         if (!source || (maNguoiDung && source.ma_nguoi_dung !== maNguoiDung)) {
           throw new NotFoundException('Không tìm thấy món trong giỏ hàng');
         }
         await manager.remove(source);
-        return this.finalizedMutation(manager, source.ma_nguoi_dung, null);
+        return this.finalizedMutation(
+          manager,
+          source.ma_nguoi_dung,
+          null,
+          1,
+          lockedMetadata,
+        );
       },
     );
   }
@@ -646,12 +688,9 @@ export class CartService {
     maNguoiDung?: string,
     operationId?: string,
   ) {
-    const knownOwner = String(maNguoiDung || '');
-    const owner =
-      knownOwner ||
-      (await this.cartRepo.findOne({ where: { id } }))?.ma_nguoi_dung;
+    const owner = String(maNguoiDung || '');
     if (!owner)
-      throw new NotFoundException('Không tìm thấy món trong giỏ hàng');
+      throw new BadRequestException('ma_nguoi_dung la bat buoc cho cart mutation');
     const requestPayload = {
       line_id: id,
       product_id: dto?.product_id ?? dto?.ma_san_pham ?? null,
@@ -668,7 +707,7 @@ export class CartService {
       'UPDATE_CART_LINE',
       operationId,
       requestPayload,
-      async (manager) => {
+      async (manager, lockedMetadata) => {
         const source = await manager.findOne(CartItem, { where: { id } });
         if (!source || (maNguoiDung && source.ma_nguoi_dung !== maNguoiDung)) {
           throw new NotFoundException('Không tìm thấy món trong giỏ hàng');
@@ -720,6 +759,8 @@ export class CartService {
             manager,
             source.ma_nguoi_dung,
             duplicate,
+            1,
+            lockedMetadata,
           );
         }
         Object.assign(source, next, {
@@ -731,7 +772,13 @@ export class CartService {
           custom_attributes: desired.custom_attributes || {},
         });
         const saved = await manager.save(source);
-        return this.finalizedMutation(manager, source.ma_nguoi_dung, saved);
+        return this.finalizedMutation(
+          manager,
+          source.ma_nguoi_dung,
+          saved,
+          1,
+          lockedMetadata,
+        );
       },
     );
   }
@@ -742,14 +789,16 @@ export class CartService {
     size?: string,
     operationId?: string,
   ) {
-    // Legacy adapter only. Canonical callers must use DELETE /cart/:line_id
-    // because product+size cannot distinguish option variants.
+    // Deprecated legacy adapter only. Canonical callers must use DELETE
+    // /cart/:line_id because product+size can delete multiple option variants.
+    // Its broad matching remains for frontend compatibility and is deliberately
+    // not exposed to the canonical AI mutation flow.
     return this.executeCartMutation(
       maNguoiDung,
       'REMOVE_CART_PRODUCT_LEGACY',
       operationId,
       { product_id: maSanPham, size: size || null },
-      async (manager) => {
+      async (manager, lockedMetadata) => {
         const where: any = {
           ma_nguoi_dung: maNguoiDung,
           ma_san_pham: maSanPham,
@@ -760,7 +809,7 @@ export class CartService {
           const cart = await this.cartEnvelope(
             maNguoiDung,
             manager,
-            await this.lockCartMetadata(manager, maNguoiDung),
+            lockedMetadata,
           );
           return { ...cart, affected: 0, persisted_line: null };
         }
@@ -769,6 +818,7 @@ export class CartService {
           maNguoiDung,
           null,
           result.affected,
+          lockedMetadata,
         );
       },
     );
@@ -780,13 +830,13 @@ export class CartService {
       'CLEAR_CART',
       operationId,
       { user_id: ma_nguoi_dung },
-      async (manager) => {
+      async (manager, lockedMetadata) => {
         const result = await manager.delete(CartItem, { ma_nguoi_dung });
         if (!result.affected) {
           const cart = await this.cartEnvelope(
             ma_nguoi_dung,
             manager,
-            await this.lockCartMetadata(manager, ma_nguoi_dung),
+            lockedMetadata,
           );
           return { ...cart, affected: 0, persisted_line: null };
         }
@@ -795,6 +845,7 @@ export class CartService {
           ma_nguoi_dung,
           null,
           result.affected,
+          lockedMetadata,
         );
       },
     );

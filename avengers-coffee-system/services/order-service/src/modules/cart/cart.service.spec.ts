@@ -6,13 +6,18 @@ describe('CartService idempotent cart mutations', () => {
     const operations = new Map<string, any>();
     const metadata = new Map<string, any>();
     const rows: any[] = [];
+    const events: string[] = [];
     const repository = {
-      find: jest.fn(async () => rows),
+      find: jest.fn(async () => {
+        events.push('cart-read');
+        return rows;
+      }),
       create: jest.fn((row: any) => ({
         id: row.id || rows.length + 1,
         ...row,
       })),
       save: jest.fn(async (row: any) => {
+        events.push('cart-save');
         if (!rows.includes(row)) rows.push(row);
         return row;
       }),
@@ -77,19 +82,59 @@ describe('CartService idempotent cart mutations', () => {
       getRepository: jest.fn(() => repository),
       query,
       findOne: jest.fn(async (_entity: any, options: any) =>
-        rows.find((row) => row.id === options?.where?.id),
+        {
+          events.push('cart-read');
+          return rows.find((row) => row.id === options?.where?.id);
+        },
       ),
-      find: jest.fn(async () => rows),
+      find: jest.fn(async () => {
+        events.push('cart-read');
+        return rows;
+      }),
       save: jest.fn(async (row: any) => row),
       remove: jest.fn(async (row: any) => {
+        events.push('cart-remove');
         const index = rows.indexOf(row);
         if (index >= 0) rows.splice(index, 1);
       }),
-      delete: jest.fn(async () => ({ affected: 0 })),
+      delete: jest.fn(async () => {
+        events.push('cart-delete');
+        return { affected: 0 };
+      }),
     };
+    const cartLockTails = new Map<string, Promise<void>>();
     const dataSource: any = {
       query,
-      transaction: (callback: any) => callback(manager),
+      transaction: async (callback: any) => {
+        let releaseCartLock: (() => void) | undefined;
+        const transactionManager = {
+          ...manager,
+          query: async (sql: string, params: any[] = []) => {
+            if (
+              sql.includes('cart_metadata') &&
+              sql.includes('FOR UPDATE') &&
+              !releaseCartLock
+            ) {
+              const userId = String(params[0]);
+              const previous = cartLockTails.get(userId) || Promise.resolve();
+              let releaseCurrent!: () => void;
+              const current = new Promise<void>((resolve) => {
+                releaseCurrent = resolve;
+              });
+              cartLockTails.set(userId, previous.then(() => current));
+              await previous;
+              events.push(`cart-lock:${userId}`);
+              releaseCartLock = releaseCurrent;
+            }
+            return query(sql, params);
+          },
+        };
+        try {
+          return await callback(transactionManager);
+        } finally {
+          releaseCartLock?.();
+        }
+      },
     };
     return {
       service: new CartService(repository as any, dataSource, {} as any),
@@ -97,6 +142,7 @@ describe('CartService idempotent cart mutations', () => {
       metadata,
       rows,
       manager,
+      events,
     };
   };
 
@@ -131,6 +177,54 @@ describe('CartService idempotent cart mutations', () => {
       cart_version: 1,
       already_processed: true,
     });
+  });
+
+  it('serializes distinct ADD operation ids at the cart lock so Cake x1 becomes x3', async () => {
+    // This deterministic lock simulation verifies the required PostgreSQL
+    // `cart_metadata ... FOR UPDATE` ordering. TODO: repeat this exact race
+    // against a real PostgreSQL test container when Order Service gains DB
+    // integration-test infrastructure; this repository currently has none.
+    const { service, rows, metadata, events } = createMetadataAwareService();
+    rows.push({
+      id: 42,
+      ma_nguoi_dung: 'customer-concurrent',
+      ma_san_pham: 7,
+      ten_san_pham: 'Cake',
+      so_luong: 1,
+      gia_ban: 29000,
+      size: 'Nhỏ',
+      toppings: [],
+      custom_attributes: {},
+    });
+    (service as any).resolveAuthoritativeProduct = jest.fn(async () => ({
+      productId: 7,
+      productName: 'Cake',
+      imageUrl: '',
+      unitPrice: 29000,
+    }));
+    const add = {
+      ma_nguoi_dung: 'customer-concurrent',
+      ma_san_pham: 7,
+      so_luong: 1,
+      size: 'Nhỏ',
+      toppings: [],
+      custom_attributes: {},
+    };
+
+    const [first, second] = await Promise.all([
+      service.themVaoGiỏ(add, 'add-cake-a'),
+      service.themVaoGiỏ(add, 'add-cake-b'),
+    ]);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0].so_luong).toBe(3);
+    expect([first.cart_version, second.cart_version].sort()).toEqual([1, 2]);
+    expect(metadata.get('customer-concurrent').cart_version).toBe(2);
+    expect(events.filter((event) => event === 'cart-lock:customer-concurrent'))
+      .toHaveLength(2);
+    expect(events.indexOf('cart-read')).toBeGreaterThanOrEqual(
+      events.indexOf('cart-lock:customer-concurrent'),
+    );
   });
 
   it('rejects reusing an operation id for a different cart payload', async () => {
