@@ -81,6 +81,7 @@ def _order_item_payload(item: Dict[str, Any]) -> Dict[str, Any]:
         "luong_da": item.get("luong_da") or None,
         "do_ngot": item.get("do_ngot") or None,
         "loai_sua": item.get("loai_sua") or None,
+        "configuration_signature": item.get("configuration_signature") or None,
         "note": item.get("note") or item.get("ghi_chu") or None,
     }
 
@@ -232,12 +233,19 @@ def get_cart(session_id: str) -> Dict[str, Any]:
         session = _get_or_create_session(session_id)
         items = session["items"]
         total = sum(i["unit_price"] * i["quantity"] for i in items)
+        snapshot_meta = dict((session.get("checkout_prefs") or {}).get("cart_snapshot_meta") or {})
         return {
             "session_id": session_id,
+            "cart_id": snapshot_meta.get("cart_id"),
+            "cart_version": snapshot_meta.get("cart_version"),
+            "user_id": snapshot_meta.get("user_id"),
+            "authoritative": bool(snapshot_meta.get("authoritative", False)),
+            "cart_sync_status": snapshot_meta.get("sync_status", "local"),
             "branch_id": session["branch_id"],
             "branch_name": session["branch_name"],
             "items": items,
             "item_count": sum(i["quantity"] for i in items),
+            "subtotal": total,
             "total_price": total,
             "is_empty": len(items) == 0,
             "is_checking_out": session.get("is_checking_out", False),
@@ -246,7 +254,14 @@ def get_cart(session_id: str) -> Dict[str, Any]:
         }
 
 
-def replace_items_from_order_cart(session_id: str, server_items: List[Dict[str, Any]]) -> Dict[str, Any]:
+def replace_items_from_order_cart(
+    session_id: str,
+    server_items: List[Dict[str, Any]],
+    *,
+    cart_id: Optional[str] = None,
+    cart_version: Optional[int] = None,
+    user_id: Optional[str] = None,
+) -> Dict[str, Any]:
     """Mirror the authoritative order-service cart into conversational state.
 
     The AI copy is read-only presentation/checkpoint data. It must never be
@@ -256,12 +271,14 @@ def replace_items_from_order_cart(session_id: str, server_items: List[Dict[str, 
     normalized: List[Dict[str, Any]] = []
     for item in server_items or []:
         normalized.append({
-            "line_id": item.get("id") or item.get("line_id"),
-            "cart_item_id": item.get("id") or item.get("line_id"),
+            "line_id": item.get("line_id") or item.get("id"),
+            "cart_item_id": item.get("line_id") or item.get("id"),
             "product_id": str(item.get("ma_san_pham") or item.get("product_id") or ""),
             "product_name": item.get("ten_san_pham") or item.get("product_name") or "Sản phẩm",
             "quantity": max(1, int(item.get("so_luong") or item.get("quantity") or 1)),
             "unit_price": float(item.get("gia_ban") or item.get("unit_price") or 0),
+            "line_total": float(item.get("line_total") or 0),
+            "configuration_signature": item.get("configuration_signature"),
             "size": item.get("size") or item.get("kich_co"),
             "toppings": list(item.get("toppings") or []),
             "luong_da": item.get("luong_da"),
@@ -282,8 +299,16 @@ def replace_items_from_order_cart(session_id: str, server_items: List[Dict[str, 
             ensure_ascii=False,
         )
         session["items"] = normalized
+        prefs = dict(session.get("checkout_prefs") or {})
+        if cart_id is not None or cart_version is not None or user_id is not None:
+            prefs["cart_snapshot_meta"] = {
+                "cart_id": cart_id,
+                "cart_version": int(cart_version) if cart_version is not None else None,
+                "user_id": str(user_id) if user_id is not None else None,
+                "authoritative": True,
+                "sync_status": "ok",
+            }
         if previous_fingerprint != next_fingerprint:
-            prefs = dict(session.get("checkout_prefs") or {})
             # A server cart change invalidates every decision derived from the
             # old lines.  Do not leave a stale voucher/branch/confirmation
             # draft that could be submitted against a different cart.
@@ -294,6 +319,8 @@ def replace_items_from_order_cart(session_id: str, server_items: List[Dict[str, 
                 "discount_amount", "flow_stage",
             ):
                 prefs.pop(key, None)
+            session["checkout_prefs"] = prefs
+        else:
             session["checkout_prefs"] = prefs
         _touch(session_id, session, sync_db=True)
     return get_cart(session_id)

@@ -37,6 +37,7 @@ class OrderConversationState(TypedDict, total=False):
     history: List[Dict[str, str]]
     client_message_id: Optional[str]
     cart: Dict[str, Any]
+    cart_sync_status: str
     intent: Dict[str, Any]
     result: Dict[str, Any]
     conversation_state: str
@@ -591,7 +592,7 @@ def _prepare_structured_products(
         groups = _parse_option_groups(option_result) if option_result.get("status") == "ok" else {}
         pending_item = {**ref, "product_name": product_name, "options": {"groups": groups}}
         if operation_base:
-            pending_item["operation_id"] = f"{operation_base}:add:{index}"
+            pending_item["operation_id"] = f"{operation_base}:add_cart_line:{index}"
         pending.append(pending_item)
         reply_lines.append(f"- {product_name}")
         # A one-value group is a server default, not a question for the user.
@@ -833,12 +834,25 @@ def _resolve_cart_option_update(item: Dict[str, Any], message: str) -> tuple[Dic
 
 
 def _sync(state: OrderConversationState) -> OrderConversationState:
-    from src.function_calling.tools.cart_tools import sync_authoritative_cart
+    from src.function_calling.tools.cart_tools import is_authenticated_cart_session, sync_authoritative_cart
+    authenticated = is_authenticated_cart_session(state["session_id"])
     try:
         cart = sync_authoritative_cart(state["session_id"])
-    except Exception:
-        cart = cart_manager.get_cart(state["session_id"])
-    return {**state, "cart": cart}
+        if authenticated and not cart.get("authoritative"):
+            raise RuntimeError("authenticated cart sync was not authoritative")
+        return {**state, "cart": cart, "cart_sync_status": str(cart.get("cart_sync_status") or "ok")}
+    except Exception as exc:
+        # Preserve a cache only for diagnostic/UI context. It is never treated
+        # as truth and write nodes below explicitly refuse to mutate it.
+        cached = cart_manager.get_cart(state["session_id"])
+        cart = {
+            **cached,
+            "authoritative": False,
+            "cart_sync_status": "unavailable" if authenticated else "guest_draft",
+            "stale_snapshot": authenticated,
+            "sync_error": str(exc),
+        }
+        return {**state, "cart": cart, "cart_sync_status": cart["cart_sync_status"]}
 
 
 def _understand(state: OrderConversationState) -> OrderConversationState:
@@ -868,10 +882,22 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
 
 def _execute(state: OrderConversationState) -> OrderConversationState:
     from src.function_calling.tools.cart_tools import (
-        execute_get_cart_quote, execute_remove_cart_item, execute_update_cart_item,
+        execute_clear_cart, execute_get_cart_quote, execute_remove_cart_item, execute_update_cart_item,
+        is_authenticated_cart_session,
     )
     session_id, message, cart, intent = state["session_id"], state["user_message"], state["cart"], state["intent"]
     kind = intent.get("intent")
+    cart_write_intents = {"ADD_ITEM", "SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS", "CLEAR_CART"}
+    if kind in cart_write_intents and is_authenticated_cart_session(session_id) and not cart.get("authoritative"):
+        return {**state, "result": {
+            "reply": "Mình chưa thể xác minh giỏ hàng với Order Service nên chưa thực hiện thay đổi nào. Vui lòng thử lại sau.",
+            "checkout_payload": None,
+            "tool_calls_log": [{
+                "tool": "blocked_mutation",
+                "result": {"status": "blocked", "reason": "authoritative_cart_unavailable", "intent": kind},
+            }],
+            "error": None,
+        }}
     # A numbered branch is a checkout choice, never a menu ordinal. Resolve
     # it before the legacy pending-product handler sees the same number.
     pending = cart_manager.get_pending_action(session_id) or {}
@@ -1003,17 +1029,10 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         if (pending or {}).get("type") != "clear_cart" or not intent.get("confirmed"):
             cart_manager.set_pending_action(session_id, "clear_cart", {})
             return {**state, "result": {"reply": "Bạn có chắc muốn xoá toàn bộ giỏ hàng không? Hãy trả lời ‘đồng ý xoá giỏ’. ", "checkout_payload": None, "tool_calls_log": [], "error": None}}
-        from src.function_calling.tools.cart_tools import _customer_session_id, _order_service_request
-        from src.function_calling.helpers import _get_service_jwt, _require_valid_session
-        uid = _require_valid_session(_customer_session_id(session_id))
-        if not uid:
-            reply, log = "Cần đăng nhập để xoá giỏ hàng.", {"status": "error"}
-        else:
-            response = _order_service_request("DELETE", f"/cart/clear/{uid}", _get_service_jwt(uid))
-            response.raise_for_status()
+        log = execute_clear_cart(session_id)
+        if log.get("status") == "ok":
             cart_manager.clear_pending_action(session_id)
-            _sync(state)
-            reply, log = "Đã xoá toàn bộ giỏ hàng.", {"status": "ok"}
+        reply = log.get("message", "Chưa thể xoá giỏ hàng.")
         return {**state, "result": {"reply": reply, "checkout_payload": None, "tool_calls_log": [{"tool": "clear_cart", "result": log}], "error": None}}
     structured_refs = _resolve_all_category_ordinals(session_id, message, state.get("history") or [])
     # "nước số 1 với thêm một món bánh nữa" has one concrete selection and
@@ -1214,7 +1233,12 @@ def _render(state: OrderConversationState) -> OrderConversationState:
         from src.function_calling.tools.cart_tools import sync_authoritative_cart
         canonical_cart = sync_authoritative_cart(state["session_id"])
     except Exception:
-        canonical_cart = cart_manager.get_cart(state["session_id"])
+        canonical_cart = {
+            **dict(state.get("cart") or {}),
+            "authoritative": False,
+            "cart_sync_status": "unavailable",
+            "stale_snapshot": True,
+        }
     # A model/read-only path cannot truthfully claim that it changed the cart.
     # Mutation evidence is the successful write-tool result, never prose.
     reply_norm = _norm(result.get("reply"))

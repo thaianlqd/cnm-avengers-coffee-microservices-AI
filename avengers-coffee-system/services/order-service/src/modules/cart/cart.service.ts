@@ -1,4 +1,9 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { createHash } from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
@@ -17,8 +22,8 @@ export class CartService {
     return String(value || '')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
-      .replace(/đ/g, 'd')
       .toLowerCase()
+      .replace(/đ/g, 'd')
       .trim();
   }
 
@@ -31,9 +36,13 @@ export class CartService {
   }
 
   private stableJson(value: any): string {
-    if (Array.isArray(value)) return `[${value.map((entry) => this.stableJson(entry)).join(',')}]`;
+    if (Array.isArray(value))
+      return `[${value.map((entry) => this.stableJson(entry)).join(',')}]`;
     if (value && typeof value === 'object') {
-      return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${this.stableJson(value[key])}`).join(',')}}`;
+      return `{${Object.keys(value)
+        .sort()
+        .map((key) => `${JSON.stringify(key)}:${this.stableJson(value[key])}`)
+        .join(',')}}`;
     }
     return JSON.stringify(value ?? null);
   }
@@ -55,6 +64,22 @@ export class CartService {
     return createHash('sha256').update(canonicalRequest).digest('hex');
   }
 
+  private cartMutationRequestHash(
+    operationType: string,
+    userId: string,
+    payload: any,
+  ): string {
+    return createHash('sha256')
+      .update(
+        this.stableJson({
+          operation_type: operationType,
+          user_id: String(userId),
+          payload,
+        }),
+      )
+      .digest('hex');
+  }
+
   private async ensureMutationOperationTable() {
     const schema = this.cartSchema();
     await this.dataSource.query(`
@@ -64,9 +89,280 @@ export class CartService {
         operation_type VARCHAR(64) NOT NULL,
         request_hash TEXT NOT NULL,
         result JSONB NULL,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
+    await this.dataSource.query(
+      `ALTER TABLE "${schema}".cart_mutation_operation
+       ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
+    );
+  }
+
+  private async ensureCartMetadataTable() {
+    const schema = this.cartSchema();
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS "${schema}".cart_metadata (
+        user_id VARCHAR PRIMARY KEY,
+        cart_id VARCHAR(200) NOT NULL UNIQUE,
+        cart_version BIGINT NOT NULL DEFAULT 0,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+  }
+
+  /**
+   * Execute a mutation exactly once when the caller supplies an idempotency
+   * key.  The operation row and cart write share one database transaction, so
+   * a retry can only observe the stored canonical envelope, never a partially
+   * applied cart change.
+   */
+  private async executeCartMutation(
+    userId: string,
+    operationType: string,
+    operationId: string | undefined,
+    payload: any,
+    mutate: (manager: any) => Promise<any>,
+  ) {
+    const normalizedOperationId = String(operationId || '').trim();
+    if (!normalizedOperationId) {
+      await this.ensureCartMetadataTable();
+      return this.dataSource.transaction(mutate);
+    }
+    if (normalizedOperationId.length > 200) {
+      throw new BadRequestException('Idempotency key qua dai');
+    }
+
+    await Promise.all([
+      this.ensureMutationOperationTable(),
+      this.ensureCartMetadataTable(),
+    ]);
+    const schema = this.cartSchema();
+    const requestHash = this.cartMutationRequestHash(
+      operationType,
+      userId,
+      payload,
+    );
+    return this.dataSource.transaction(async (manager) => {
+      const existingRows = await manager.query(
+        `SELECT request_hash, result FROM "${schema}".cart_mutation_operation WHERE operation_id = $1 FOR UPDATE`,
+        [normalizedOperationId],
+      );
+      const existing = existingRows?.[0];
+      if (existing) {
+        if (existing.request_hash !== requestHash) {
+          throw new ConflictException(
+            'Idempotency key da duoc dung cho yeu cau khac',
+          );
+        }
+        if (existing.result == null) {
+          throw new ConflictException(
+            'Cart mutation with this id is still being processed',
+          );
+        }
+        const stored =
+          typeof existing.result === 'string'
+            ? JSON.parse(existing.result)
+            : existing.result;
+        return {
+          ...stored,
+          already_processed: true,
+          operation_id: normalizedOperationId,
+        };
+      }
+
+      const inserted = await manager.query(
+        `INSERT INTO "${schema}".cart_mutation_operation
+          (operation_id, user_id, operation_type, request_hash)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (operation_id) DO NOTHING
+         RETURNING operation_id`,
+        [normalizedOperationId, userId, operationType, requestHash],
+      );
+      if (!inserted?.length) {
+        const racedRows = await manager.query(
+          `SELECT request_hash, result FROM "${schema}".cart_mutation_operation WHERE operation_id = $1 FOR UPDATE`,
+          [normalizedOperationId],
+        );
+        const raced = racedRows?.[0];
+        if (!raced || raced.request_hash !== requestHash) {
+          throw new ConflictException(
+            'Idempotency key da duoc dung cho yeu cau khac',
+          );
+        }
+        if (raced.result == null) {
+          throw new ConflictException(
+            'Cart mutation with this id is still being processed',
+          );
+        }
+        const stored =
+          typeof raced.result === 'string'
+            ? JSON.parse(raced.result)
+            : raced.result;
+        return {
+          ...stored,
+          already_processed: true,
+          operation_id: normalizedOperationId,
+        };
+      }
+
+      const result = await mutate(manager);
+      await manager.query(
+        `UPDATE "${schema}".cart_mutation_operation SET result = $2::jsonb, updated_at = NOW() WHERE operation_id = $1`,
+        [normalizedOperationId, JSON.stringify(result)],
+      );
+      return {
+        ...result,
+        already_processed: false,
+        operation_id: normalizedOperationId,
+      };
+    });
+  }
+
+  private cartIdFor(userId: string) {
+    return `user:${userId}`;
+  }
+
+  private async lockCartMetadata(manager: any, userId: string) {
+    const schema = this.cartSchema();
+    await manager.query(
+      `INSERT INTO "${schema}".cart_metadata (user_id, cart_id)
+       VALUES ($1, $2)
+       ON CONFLICT (user_id) DO NOTHING`,
+      [userId, this.cartIdFor(userId)],
+    );
+    const rows = await manager.query(
+      `SELECT user_id, cart_id, cart_version
+       FROM "${schema}".cart_metadata
+       WHERE user_id = $1
+       FOR UPDATE`,
+      [userId],
+    );
+    return rows[0];
+  }
+
+  private async readCartMetadata(userId: string) {
+    await this.ensureCartMetadataTable();
+    const schema = this.cartSchema();
+    await this.dataSource.query(
+      `INSERT INTO "${schema}".cart_metadata (user_id, cart_id)
+       VALUES ($1, $2)
+       ON CONFLICT (user_id) DO NOTHING`,
+      [userId, this.cartIdFor(userId)],
+    );
+    const rows = await this.dataSource.query(
+      `SELECT user_id, cart_id, cart_version
+       FROM "${schema}".cart_metadata WHERE user_id = $1`,
+      [userId],
+    );
+    return rows[0];
+  }
+
+  private async bumpCartVersion(manager: any, userId: string) {
+    const schema = this.cartSchema();
+    await this.lockCartMetadata(manager, userId);
+    const rows = await manager.query(
+      `UPDATE "${schema}".cart_metadata
+       SET cart_version = cart_version + 1, updated_at = NOW()
+       WHERE user_id = $1
+       RETURNING user_id, cart_id, cart_version`,
+      [userId],
+    );
+    return rows[0];
+  }
+
+  private configurationSignature(item: any) {
+    const normalizeConfigurationValue = (value: any): any => {
+      if (Array.isArray(value)) {
+        return value
+          .map((entry) => normalizeConfigurationValue(entry))
+          .sort((left, right) =>
+            this.stableJson(left).localeCompare(this.stableJson(right)),
+          );
+      }
+      if (value && typeof value === 'object') {
+        return Object.keys(value)
+          .sort()
+          .reduce((result: Record<string, any>, key) => {
+            result[this.normalizeValue(key)] = normalizeConfigurationValue(
+              value[key],
+            );
+            return result;
+          }, {});
+      }
+      return typeof value === 'string'
+        ? this.normalizeValue(value)
+        : (value ?? null);
+    };
+    const canonical = this.stableJson({
+      product_id: Number(item.ma_san_pham ?? item.product_id),
+      size: normalizeConfigurationValue(item.size || item.kich_co || 'Nhỏ'),
+      toppings: normalizeConfigurationValue(item.toppings || []),
+      luong_da: normalizeConfigurationValue(item.luong_da || ''),
+      do_ngot: normalizeConfigurationValue(item.do_ngot || ''),
+      loai_sua: normalizeConfigurationValue(item.loai_sua || ''),
+      custom_attributes: normalizeConfigurationValue(
+        item.custom_attributes || {},
+      ),
+    });
+    return createHash('sha256').update(canonical).digest('hex');
+  }
+
+  private toCartLine(item: CartItem) {
+    const unitPrice = Number(item.gia_ban || 0);
+    const quantity = Number(item.so_luong || 0);
+    return {
+      line_id: item.id,
+      product_id: item.ma_san_pham,
+      product_name: item.ten_san_pham,
+      quantity,
+      size: item.size || 'Nhỏ',
+      toppings: item.toppings || [],
+      luong_da: item.luong_da || '',
+      do_ngot: item.do_ngot || '',
+      loai_sua: item.loai_sua || '',
+      custom_attributes: item.custom_attributes || {},
+      unit_price: unitPrice,
+      line_total: unitPrice * quantity,
+      configuration_signature: this.configurationSignature(item),
+      // Legacy aliases let existing web callers migrate incrementally.
+      id: item.id,
+      ma_san_pham: item.ma_san_pham,
+      ten_san_pham: item.ten_san_pham,
+      so_luong: quantity,
+      gia_ban: unitPrice,
+      hinh_anh_url: item.hinh_anh_url || '',
+    };
+  }
+
+  private async cartEnvelope(userId: string, manager?: any, metadata?: any) {
+    const cartRepo = manager ? manager.getRepository(CartItem) : this.cartRepo;
+    const rows = await cartRepo.find({ where: { ma_nguoi_dung: userId } });
+    const cartMeta = metadata || (await this.readCartMetadata(userId));
+    const items = rows.map((item) => this.toCartLine(item));
+    return {
+      cart_id: String(cartMeta.cart_id),
+      cart_version: Number(cartMeta.cart_version),
+      user_id: userId,
+      items,
+      item_count: items.reduce((sum, item) => sum + Number(item.quantity), 0),
+      subtotal: items.reduce((sum, item) => sum + Number(item.line_total), 0),
+    };
+  }
+
+  private async finalizedMutation(
+    manager: any,
+    userId: string,
+    line?: CartItem | null,
+    affected = 1,
+  ) {
+    const metadata = await this.bumpCartVersion(manager, userId);
+    const cart = await this.cartEnvelope(userId, manager, metadata);
+    return {
+      ...cart,
+      affected,
+      persisted_line: line ? this.toCartLine(line) : null,
+    };
   }
 
   private async resolveAuthoritativeProduct(dto: any) {
@@ -98,7 +394,9 @@ export class CartService {
       if (Array.isArray(value)) selectedValues.push(...value);
       else selectedValues.push(value);
     }
-    const selectedExtras = new Set(selectedValues.map((value) => this.normalizeValue(value)).filter(Boolean));
+    const selectedExtras = new Set(
+      selectedValues.map((value) => this.normalizeValue(value)).filter(Boolean),
+    );
     const selectedSize = this.normalizeValue(dto?.size);
     const normalizedVariants = (variantRows || []).map((row) => {
       const attribute = this.normalizeValue(row.ten_thuoc_tinh);
@@ -108,11 +406,14 @@ export class CartService {
         isSize: attribute.includes('size') || attribute.includes('kich thuoc'),
       };
     });
-    const sizeVariant = normalizedVariants.find((row) => row.isSize && selectedSize && row.value === selectedSize);
+    const sizeVariant = normalizedVariants.find(
+      (row) => row.isSize && selectedSize && row.value === selectedSize,
+    );
     // Size rows store the complete selling price. Other rows store a
     // surcharge. This mirrors the menu and AI pricing contract.
-    const unitPrice = (sizeVariant?.amount ?? Number(product.gia_ban || 0))
-      + normalizedVariants
+    const unitPrice =
+      (sizeVariant?.amount ?? Number(product.gia_ban || 0)) +
+      normalizedVariants
         .filter((row) => !row.isSize && selectedExtras.has(row.value))
         .reduce((sum, row) => sum + row.amount, 0);
 
@@ -125,7 +426,7 @@ export class CartService {
   }
 
   async layGiỏHàng(ma_nguoi_dung: string) {
-    return this.cartRepo.find({ where: { ma_nguoi_dung } });
+    return this.cartEnvelope(ma_nguoi_dung);
   }
 
   private async themVaoGiỏNoIdempotency(dto: any, manager?: any) {
@@ -144,40 +445,19 @@ export class CartService {
       so_luong: quantity,
     };
     const { ma_nguoi_dung, ma_san_pham, size } = normalizedDto;
-    if (!ma_nguoi_dung) throw new BadRequestException('ma_nguoi_dung la bat buoc');
+    if (!ma_nguoi_dung)
+      throw new BadRequestException('ma_nguoi_dung la bat buoc');
     const kichCo = size || 'Nhỏ';
-    
+
     // Find all items with same user and product
-    const items = await cartRepo.find({ where: { ma_nguoi_dung, ma_san_pham, size: kichCo } });
-    
-    let item = items.find(i => {
-      // Compare toppings
-      const t1 = [...(i.toppings || [])].sort().join(',');
-      const t2 = [...(normalizedDto.toppings || [])].sort().join(',');
-      if (t1 !== t2) return false;
-      
-      // Compare string fields
-      if ((i.luong_da || '') !== (normalizedDto.luong_da || '')) return false;
-      if ((i.do_ngot || '') !== (normalizedDto.do_ngot || '')) return false;
-      if ((i.loai_sua || '') !== (normalizedDto.loai_sua || '')) return false;
-      
-      // Compare custom_attributes
-      const aAttrs = i.custom_attributes || {};
-      const bAttrs = normalizedDto.custom_attributes || {};
-      const aKeys = Object.keys(aAttrs);
-      const bKeys = Object.keys(bAttrs);
-      if (aKeys.length !== bKeys.length) return false;
-      for (const key of aKeys) {
-        const valA = aAttrs[key];
-        const valB = bAttrs[key];
-        if (Array.isArray(valA) && Array.isArray(valB)) {
-          if ([...valA].sort().join(',') !== [...valB].sort().join(',')) return false;
-        } else if (valA !== valB) {
-          return false;
-        }
-      }
-      return true;
+    const items = await cartRepo.find({
+      where: { ma_nguoi_dung, ma_san_pham, size: kichCo },
     });
+
+    const mergeCandidate = { ...normalizedDto, size: kichCo };
+    const item = items.find((existing) =>
+      this.sameConfiguration(existing, mergeCandidate),
+    );
 
     if (item) {
       item.so_luong += quantity;
@@ -188,29 +468,38 @@ export class CartService {
       item.gia_ban = authoritative.unitPrice;
       return cartRepo.save(item);
     }
-    
-    return cartRepo.save(cartRepo.create({
-      ...normalizedDto,
-      hinh_anh_url: authoritative.imageUrl,
-      size: kichCo,
-      toppings: normalizedDto.toppings || [],
-      luong_da: normalizedDto.luong_da || '',
-      do_ngot: normalizedDto.do_ngot || '',
-      loai_sua: normalizedDto.loai_sua || '',
-      custom_attributes: normalizedDto.custom_attributes || {},
-    }));
+
+    return cartRepo.save(
+      cartRepo.create({
+        ...normalizedDto,
+        hinh_anh_url: authoritative.imageUrl,
+        size: kichCo,
+        toppings: normalizedDto.toppings || [],
+        luong_da: normalizedDto.luong_da || '',
+        do_ngot: normalizedDto.do_ngot || '',
+        loai_sua: normalizedDto.loai_sua || '',
+        custom_attributes: normalizedDto.custom_attributes || {},
+      }),
+    );
   }
 
   async themVaoGiỏ(dto: any, operationId?: string) {
     const normalizedOperationId = String(operationId || '').trim();
     if (!normalizedOperationId) {
-      return this.themVaoGiỏNoIdempotency(dto);
+      await this.ensureCartMetadataTable();
+      return this.dataSource.transaction(async (manager) => {
+        const line = await this.themVaoGiỏNoIdempotency(dto, manager);
+        return this.finalizedMutation(manager, String(dto.ma_nguoi_dung), line);
+      });
     }
     if (normalizedOperationId.length > 200) {
       throw new BadRequestException('Idempotency key qua dai');
     }
 
-    await this.ensureMutationOperationTable();
+    await Promise.all([
+      this.ensureMutationOperationTable(),
+      this.ensureCartMetadataTable(),
+    ]);
     const schema = this.cartSchema();
     const requestHash = this.mutationRequestHash(dto);
     const userId = String(dto?.ma_nguoi_dung || '');
@@ -222,13 +511,24 @@ export class CartService {
       const existing = existingRows?.[0];
       if (existing) {
         if (existing.request_hash !== requestHash) {
-          throw new ConflictException('Idempotency key da duoc dung cho yeu cau khac');
+          throw new ConflictException(
+            'Idempotency key da duoc dung cho yeu cau khac',
+          );
         }
         if (existing.result == null) {
-          throw new ConflictException('Cart mutation with this id is still being processed');
+          throw new ConflictException(
+            'Cart mutation with this id is still being processed',
+          );
         }
-        const stored = typeof existing.result === 'string' ? JSON.parse(existing.result) : existing.result;
-        return { ...stored, already_processed: true, operation_id: normalizedOperationId };
+        const stored =
+          typeof existing.result === 'string'
+            ? JSON.parse(existing.result)
+            : existing.result;
+        return {
+          ...stored,
+          already_processed: true,
+          operation_id: normalizedOperationId,
+        };
       }
 
       const inserted = await manager.query(
@@ -249,41 +549,62 @@ export class CartService {
         );
         const raced = racedRows?.[0];
         if (!raced || raced.request_hash !== requestHash) {
-          throw new ConflictException('Idempotency key da duoc dung cho yeu cau khac');
+          throw new ConflictException(
+            'Idempotency key da duoc dung cho yeu cau khac',
+          );
         }
         if (raced.result == null) {
-          throw new ConflictException('Cart mutation with this id is still being processed');
+          throw new ConflictException(
+            'Cart mutation with this id is still being processed',
+          );
         }
-        const stored = typeof raced.result === 'string' ? JSON.parse(raced.result) : raced.result;
-        return { ...stored, already_processed: true, operation_id: normalizedOperationId };
+        const stored =
+          typeof raced.result === 'string'
+            ? JSON.parse(raced.result)
+            : raced.result;
+        return {
+          ...stored,
+          already_processed: true,
+          operation_id: normalizedOperationId,
+        };
       }
-      const result = await this.themVaoGiỏNoIdempotency(dto, manager);
+      const line = await this.themVaoGiỏNoIdempotency(dto, manager);
+      const result = await this.finalizedMutation(manager, userId, line);
       await manager.query(
-        `UPDATE "${schema}".cart_mutation_operation SET result = $2::jsonb WHERE operation_id = $1`,
+        `UPDATE "${schema}".cart_mutation_operation SET result = $2::jsonb, updated_at = NOW() WHERE operation_id = $1`,
         [normalizedOperationId, JSON.stringify(result)],
       );
-      return { ...(result || {}), already_processed: false, operation_id: normalizedOperationId };
+      return {
+        ...(result || {}),
+        already_processed: false,
+        operation_id: normalizedOperationId,
+      };
     });
   }
 
   async quote(maNguoiDung: string, voucherCode?: string) {
-    const items = await this.layGiỏHàng(maNguoiDung);
-    const subtotal = items.reduce((sum, item) => sum + Number(item.gia_ban) * Number(item.so_luong), 0);
+    const cart = await this.layGiỏHàng(maNguoiDung);
+    const items = cart.items;
+    const subtotal = cart.subtotal;
     let discountAmount = 0;
     let appliedVoucher: string | null = null;
     if (voucherCode?.trim()) {
-      const hasToppings = items.some((item) => Array.isArray(item.toppings) && item.toppings.length > 0);
-      const result = await this.voucherService.kiemTraVoucher(voucherCode, subtotal, maNguoiDung, hasToppings);
+      const hasToppings = items.some(
+        (item) => Array.isArray(item.toppings) && item.toppings.length > 0,
+      );
+      const result = await this.voucherService.kiemTraVoucher(
+        voucherCode,
+        subtotal,
+        maNguoiDung,
+        hasToppings,
+      );
       discountAmount = Number(result.so_tien_giam || 0);
       appliedVoucher = result.voucher.ma_voucher;
     }
     return {
-      items: items.map((item) => ({
-        ...item,
-        unit_price: Number(item.gia_ban),
-        line_total: Number(item.gia_ban) * Number(item.so_luong),
-      })),
-      item_count: items.reduce((sum, item) => sum + Number(item.so_luong), 0),
+      ...cart,
+      items,
+      item_count: cart.item_count,
       subtotal,
       discount_amount: discountAmount,
       voucher_code: appliedVoucher,
@@ -291,83 +612,191 @@ export class CartService {
     };
   }
 
-  async xoaKhoiGiỏ(id: number, maNguoiDung?: string) {
-    const where: any = { id };
-    if (maNguoiDung) where.ma_nguoi_dung = maNguoiDung;
-    return this.cartRepo.delete(where);
+  async xoaKhoiGiỏ(id: number, maNguoiDung?: string, operationId?: string) {
+    const knownOwner = String(maNguoiDung || '');
+    const owner =
+      knownOwner ||
+      (await this.cartRepo.findOne({ where: { id } }))?.ma_nguoi_dung;
+    if (!owner)
+      throw new NotFoundException('Không tìm thấy món trong giỏ hàng');
+    return this.executeCartMutation(
+      String(owner),
+      'REMOVE_CART_LINE',
+      operationId,
+      { line_id: id },
+      async (manager) => {
+        const source = await manager.findOne(CartItem, { where: { id } });
+        if (!source || (maNguoiDung && source.ma_nguoi_dung !== maNguoiDung)) {
+          throw new NotFoundException('Không tìm thấy món trong giỏ hàng');
+        }
+        await manager.remove(source);
+        return this.finalizedMutation(manager, source.ma_nguoi_dung, null);
+      },
+    );
   }
 
   private sameConfiguration(a: any, b: any) {
-    const toppingsA = [...(a.toppings || [])].map(String).sort().join(',');
-    const toppingsB = [...(b.toppings || [])].map(String).sort().join(',');
-    if (toppingsA !== toppingsB) return false;
-    if ((a.luong_da || '') !== (b.luong_da || '')) return false;
-    if ((a.do_ngot || '') !== (b.do_ngot || '')) return false;
-    if ((a.loai_sua || '') !== (b.loai_sua || '')) return false;
-    return JSON.stringify(a.custom_attributes || {}) === JSON.stringify(b.custom_attributes || {});
+    return this.configurationSignature(a) === this.configurationSignature(b);
   }
 
   /** Update one row without the unsafe add-then-delete client dance. */
-  async capNhatMucGio(id: number, dto: any, maNguoiDung?: string) {
-    return this.dataSource.transaction(async (manager) => {
-      const source = await manager.findOne(CartItem, { where: { id } });
-      if (!source || (maNguoiDung && source.ma_nguoi_dung !== maNguoiDung)) {
-        throw new NotFoundException('Không tìm thấy món trong giỏ hàng');
-      }
+  async capNhatMucGio(
+    id: number,
+    dto: any,
+    maNguoiDung?: string,
+    operationId?: string,
+  ) {
+    const knownOwner = String(maNguoiDung || '');
+    const owner =
+      knownOwner ||
+      (await this.cartRepo.findOne({ where: { id } }))?.ma_nguoi_dung;
+    if (!owner)
+      throw new NotFoundException('Không tìm thấy món trong giỏ hàng');
+    const requestPayload = {
+      line_id: id,
+      product_id: dto?.product_id ?? dto?.ma_san_pham ?? null,
+      quantity: dto?.quantity ?? dto?.so_luong ?? null,
+      size: dto?.size ?? null,
+      toppings: dto?.toppings ?? null,
+      luong_da: dto?.luong_da ?? null,
+      do_ngot: dto?.do_ngot ?? null,
+      loai_sua: dto?.loai_sua ?? null,
+      custom_attributes: dto?.custom_attributes ?? null,
+    };
+    return this.executeCartMutation(
+      String(owner),
+      'UPDATE_CART_LINE',
+      operationId,
+      requestPayload,
+      async (manager) => {
+        const source = await manager.findOne(CartItem, { where: { id } });
+        if (!source || (maNguoiDung && source.ma_nguoi_dung !== maNguoiDung)) {
+          throw new NotFoundException('Không tìm thấy món trong giỏ hàng');
+        }
 
-      const quantity = Number(dto?.quantity ?? dto?.so_luong ?? source.so_luong);
-      if (!Number.isInteger(quantity) || quantity < 1) {
-        throw new BadRequestException('Số lượng phải là số nguyên lớn hơn 0');
-      }
-      const desired = {
-        ma_san_pham: dto?.product_id ?? dto?.ma_san_pham ?? source.ma_san_pham,
-        size: dto?.size ?? source.size ?? 'Nhỏ',
-        toppings: dto?.toppings ?? source.toppings ?? [],
-        luong_da: dto?.luong_da ?? source.luong_da ?? '',
-        do_ngot: dto?.do_ngot ?? source.do_ngot ?? '',
-        loai_sua: dto?.loai_sua ?? source.loai_sua ?? '',
-        custom_attributes: dto?.custom_attributes ?? source.custom_attributes ?? {},
-      };
-      const authoritative = await this.resolveAuthoritativeProduct(desired);
-      const next = {
-        ...desired,
-        ma_nguoi_dung: source.ma_nguoi_dung,
-        ten_san_pham: authoritative.productName,
-        gia_ban: authoritative.unitPrice,
-        hinh_anh_url: authoritative.imageUrl,
-        so_luong: quantity,
-      };
+        const quantity = Number(
+          dto?.quantity ?? dto?.so_luong ?? source.so_luong,
+        );
+        if (!Number.isInteger(quantity) || quantity < 1) {
+          throw new BadRequestException('Số lượng phải là số nguyên lớn hơn 0');
+        }
+        const desired = {
+          ma_san_pham:
+            dto?.product_id ?? dto?.ma_san_pham ?? source.ma_san_pham,
+          size: dto?.size ?? source.size ?? 'Nhỏ',
+          toppings: dto?.toppings ?? source.toppings ?? [],
+          luong_da: dto?.luong_da ?? source.luong_da ?? '',
+          do_ngot: dto?.do_ngot ?? source.do_ngot ?? '',
+          loai_sua: dto?.loai_sua ?? source.loai_sua ?? '',
+          custom_attributes:
+            dto?.custom_attributes ?? source.custom_attributes ?? {},
+        };
+        const authoritative = await this.resolveAuthoritativeProduct(desired);
+        const next = {
+          ...desired,
+          ma_nguoi_dung: source.ma_nguoi_dung,
+          ten_san_pham: authoritative.productName,
+          gia_ban: authoritative.unitPrice,
+          hinh_anh_url: authoritative.imageUrl,
+          so_luong: quantity,
+        };
 
-      const siblings = await manager.find(CartItem, {
-        where: { ma_nguoi_dung: source.ma_nguoi_dung, ma_san_pham: authoritative.productId, size: desired.size || 'Nhỏ' },
-      });
-      const duplicate = siblings.find((item) => item.id !== source.id && this.sameConfiguration(item, next));
-      if (duplicate) {
-        duplicate.so_luong = Number(duplicate.so_luong) + quantity;
-        duplicate.gia_ban = authoritative.unitPrice;
-        await manager.save(duplicate);
-        await manager.remove(source);
-        return duplicate;
-      }
-      Object.assign(source, next, {
-        size: desired.size || 'Nhỏ',
-        toppings: desired.toppings || [],
-        luong_da: desired.luong_da || '',
-        do_ngot: desired.do_ngot || '',
-        loai_sua: desired.loai_sua || '',
-        custom_attributes: desired.custom_attributes || {},
-      });
-      return manager.save(source);
-    });
+        const siblings = await manager.find(CartItem, {
+          where: {
+            ma_nguoi_dung: source.ma_nguoi_dung,
+            ma_san_pham: authoritative.productId,
+            size: desired.size || 'Nhỏ',
+          },
+        });
+        const duplicate = siblings.find(
+          (item) => item.id !== source.id && this.sameConfiguration(item, next),
+        );
+        if (duplicate) {
+          duplicate.so_luong = Number(duplicate.so_luong) + quantity;
+          duplicate.gia_ban = authoritative.unitPrice;
+          await manager.save(duplicate);
+          await manager.remove(source);
+          return this.finalizedMutation(
+            manager,
+            source.ma_nguoi_dung,
+            duplicate,
+          );
+        }
+        Object.assign(source, next, {
+          size: desired.size || 'Nhỏ',
+          toppings: desired.toppings || [],
+          luong_da: desired.luong_da || '',
+          do_ngot: desired.do_ngot || '',
+          loai_sua: desired.loai_sua || '',
+          custom_attributes: desired.custom_attributes || {},
+        });
+        const saved = await manager.save(source);
+        return this.finalizedMutation(manager, source.ma_nguoi_dung, saved);
+      },
+    );
   }
 
-  async xoaSanPhamKhoiGio(maNguoiDung: string, maSanPham: number, size?: string) {
-    const where: any = { ma_nguoi_dung: maNguoiDung, ma_san_pham: maSanPham };
-    if (size) where.size = size;
-    return this.cartRepo.delete(where);
+  async xoaSanPhamKhoiGio(
+    maNguoiDung: string,
+    maSanPham: number,
+    size?: string,
+    operationId?: string,
+  ) {
+    // Legacy adapter only. Canonical callers must use DELETE /cart/:line_id
+    // because product+size cannot distinguish option variants.
+    return this.executeCartMutation(
+      maNguoiDung,
+      'REMOVE_CART_PRODUCT_LEGACY',
+      operationId,
+      { product_id: maSanPham, size: size || null },
+      async (manager) => {
+        const where: any = {
+          ma_nguoi_dung: maNguoiDung,
+          ma_san_pham: maSanPham,
+        };
+        if (size) where.size = size;
+        const result = await manager.delete(CartItem, where);
+        if (!result.affected) {
+          const cart = await this.cartEnvelope(
+            maNguoiDung,
+            manager,
+            await this.lockCartMetadata(manager, maNguoiDung),
+          );
+          return { ...cart, affected: 0, persisted_line: null };
+        }
+        return this.finalizedMutation(
+          manager,
+          maNguoiDung,
+          null,
+          result.affected,
+        );
+      },
+    );
   }
 
-  async xoaToanBoGio(ma_nguoi_dung: string) {
-    return this.cartRepo.delete({ ma_nguoi_dung });
+  async xoaToanBoGio(ma_nguoi_dung: string, operationId?: string) {
+    return this.executeCartMutation(
+      ma_nguoi_dung,
+      'CLEAR_CART',
+      operationId,
+      { user_id: ma_nguoi_dung },
+      async (manager) => {
+        const result = await manager.delete(CartItem, { ma_nguoi_dung });
+        if (!result.affected) {
+          const cart = await this.cartEnvelope(
+            ma_nguoi_dung,
+            manager,
+            await this.lockCartMetadata(manager, ma_nguoi_dung),
+          );
+          return { ...cart, affected: 0, persisted_line: null };
+        }
+        return this.finalizedMutation(
+          manager,
+          ma_nguoi_dung,
+          null,
+          result.affected,
+        );
+      },
+    );
   }
 }
