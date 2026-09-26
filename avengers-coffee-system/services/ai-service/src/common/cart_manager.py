@@ -257,6 +257,7 @@ def replace_items_from_order_cart(session_id: str, server_items: List[Dict[str, 
     for item in server_items or []:
         normalized.append({
             "line_id": item.get("id") or item.get("line_id"),
+            "cart_item_id": item.get("id") or item.get("line_id"),
             "product_id": str(item.get("ma_san_pham") or item.get("product_id") or ""),
             "product_name": item.get("ten_san_pham") or item.get("product_name") or "Sản phẩm",
             "quantity": max(1, int(item.get("so_luong") or item.get("quantity") or 1)),
@@ -283,7 +284,16 @@ def replace_items_from_order_cart(session_id: str, server_items: List[Dict[str, 
         session["items"] = normalized
         if previous_fingerprint != next_fingerprint:
             prefs = dict(session.get("checkout_prefs") or {})
-            prefs.pop("summary_fingerprint", None)
+            # A server cart change invalidates every decision derived from the
+            # old lines.  Do not leave a stale voucher/branch/confirmation
+            # draft that could be submitted against a different cart.
+            for key in (
+                "summary_fingerprint", "checkout_action_id", "pending_action",
+                "branch_candidates", "stock_conflicts", "voucher_decided",
+                "voucher_offer_pending", "voucher_candidates", "voucher_code",
+                "discount_amount", "flow_stage",
+            ):
+                prefs.pop(key, None)
             session["checkout_prefs"] = prefs
         _touch(session_id, session, sync_db=True)
     return get_cart(session_id)

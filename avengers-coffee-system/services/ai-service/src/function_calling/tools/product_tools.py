@@ -460,15 +460,21 @@ def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "
         if category not in {"drink", "food", "all"}:
             return {"status": "error", "message": "Danh mục gợi ý không hợp lệ."}
 
-        # Category IDs differ between seed data and deployed databases.  Filter by
-        # the category's business name, and never let products without a category
-        # leak into a food/drink-specific recommendation.
-        category_join = f"LEFT JOIN {menu_schema}.danh_muc dm ON dm.ma_danh_muc = sp.ma_danh_muc"
+        # Category IDs differ between seed data and deployed databases.  A
+        # product can belong to a level-2 category such as "Matcha" while its
+        # food/drink meaning lives on the level-1 parent.  Search the complete
+        # category path rather than guessing from the customer wording or only
+        # inspecting the leaf label.
+        category_join = f"""
+            LEFT JOIN {menu_schema}.danh_muc dm ON dm.ma_danh_muc = sp.ma_danh_muc
+            LEFT JOIN {menu_schema}.danh_muc dm_cha ON dm_cha.ma_danh_muc = dm.ma_danh_muc_cha
+        """
+        category_path = "LOWER(COALESCE(dm.ten_danh_muc, '') || ' ' || COALESCE(dm_cha.ten_danh_muc, ''))"
         category_where = ""
         if category == "drink":
             category_where = """
                 AND (
-                    LOWER(COALESCE(dm.ten_danh_muc, '')) LIKE ANY (ARRAY[
+                    """ + category_path + """ LIKE ANY (ARRAY[
                         '%đồ uống%', '%do uong%', '%thức uống%', '%thuc uong%',
                         '%nước%', '%nuoc%', '%cà phê%', '%ca phe%', '%coffee%',
                         '%trà%', '%tra%', '%tea%', '%matcha%', '%sinh tố%', '%sinh to%', '%juice%'
@@ -478,9 +484,9 @@ def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "
         elif category == "food":
             category_where = """
                 AND (
-                    LOWER(COALESCE(dm.ten_danh_muc, '')) LIKE ANY (ARRAY[
+                    """ + category_path + """ LIKE ANY (ARRAY[
                         '%bánh%', '%banh%', '%đồ ăn%', '%do an%', '%thức ăn%',
-                        '%thuc an%', '%snack%', '%món ăn%', '%mon an%'
+                        '%thuc an%', '%snack%', '%món ăn%', '%mon an%', '%pizza%', '%pasta%'
                     ])
                 )
             """
@@ -490,7 +496,7 @@ def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "
         if str(search_text or "").strip():
             search_where = """
                 AND (
-                    LOWER(COALESCE(dm.ten_danh_muc, '')) LIKE :search_text
+                    """ + category_path + """ LIKE :search_text
                     OR LOWER(sp.ten_san_pham) LIKE :search_text
                 )
             """
