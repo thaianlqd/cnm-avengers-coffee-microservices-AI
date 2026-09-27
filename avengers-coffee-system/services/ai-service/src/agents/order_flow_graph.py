@@ -722,34 +722,31 @@ def _answer_product_existence(session_id: str, message: str) -> Optional[Dict[st
 
 def _offer_voucher_gate(session_id: str, lead: str = "Mình đã ghi nhận giỏ hàng đã hoàn tất.") -> Dict[str, Any]:
     """Voucher is a mandatory decision gate before fulfillment and payment."""
-    from src.agents.agent_service import _checkout_choices_prompt
+    from src.agents.agent_service import _cart_ready_reply
     from src.function_calling.tools.voucher_tools import execute_get_applicable_vouchers
 
-    # Reaching this gate means the customer explicitly finished the cart.
-    # Persist that fact so the later address/branch nodes can deterministically
-    # create one canonical checkout summary.  Without it, pickup/dine-in could
-    # set a valid branch but stop before request_checkout.
-    cart_manager.set_checkout_context(session_id, checkout_requested=True)
+    if cart_manager.get_checkout_prefs(session_id).get("pending_products"):
+        return {"reply": "Mình vẫn giữ đủ các món bạn đã chọn. Bạn hoàn tất tùy chọn món đang chờ trước khi xử lý voucher nhé.", "checkout_payload": None, "tool_calls_log": [], "error": None}
+    # Finishing the cart opens voucher selection, not checkout. A new explicit
+    # request after this decision is required to choose fulfillment/payment.
+    cart_manager.set_checkout_context(session_id, checkout_requested=None)
     prefs = cart_manager.get_checkout_prefs(session_id)
-    if prefs.get("voucher_code"):
-        cart_manager.set_checkout_context(session_id, voucher_decided=True, flow_stage="FULFILLMENT")
-        return {
-            "reply": _checkout_choices_prompt(session_id, f"{lead} Mã {prefs['voucher_code']} đang được áp dụng."),
-            "checkout_payload": None,
-            "tool_calls_log": [],
-            "error": None,
-        }
-    if prefs.get("voucher_decided"):
-        cart_manager.set_checkout_context(session_id, flow_stage="FULFILLMENT")
-        return {
-            "reply": _checkout_choices_prompt(session_id, lead),
-            "checkout_payload": None,
-            "tool_calls_log": [],
-            "error": None,
-        }
+    from src.function_calling.tools.cart_tools import execute_get_cart_quote
+    quote = execute_get_cart_quote(session_id)
+    if quote.get("status") != "ok":
+        return {"reply": quote.get("message", "Chưa xác minh được giỏ hàng."), "checkout_payload": None, "tool_calls_log": [{"tool": "get_cart_quote", "result": quote}], "error": None}
+    lead += "\n" + _format_quote(session_id, quote)
+    prefs = cart_manager.get_checkout_prefs(session_id)
+    if prefs.get("voucher_code") or prefs.get("voucher_decided"):
+        cart_manager.set_checkout_context(session_id, voucher_decided=True, flow_stage="CART_READY")
+        cart_manager.clear_pending_action(session_id)
+        return {"reply": _cart_ready_reply(lead), "checkout_payload": None,
+                "tool_calls_log": [{"tool": "get_cart_quote", "result": quote}], "error": None}
 
     listed = execute_get_applicable_vouchers(session_id)
     logs = [{"tool": "get_applicable_vouchers", "result": listed}]
+    if listed.get("status") == "error":
+        return {"reply": listed.get("message"), "checkout_payload": None, "tool_calls_log": logs, "error": None}
     vouchers = list(listed.get("vouchers") or [])
     if vouchers:
         candidates = [{
@@ -772,10 +769,10 @@ def _offer_voucher_gate(session_id: str, lead: str = "Mình đã ghi nhận gi�
         lines.append("Bạn chọn mã số mấy, chọn mã tốt nhất, hoặc nói bỏ qua mã nhé.")
         return {"reply": "\n".join(lines), "checkout_payload": None, "tool_calls_log": logs, "error": None}
 
-    cart_manager.set_checkout_context(session_id, voucher_decided=True, voucher_offer_pending=None, flow_stage="FULFILLMENT")
+    cart_manager.set_checkout_context(session_id, voucher_decided=True, voucher_offer_pending=None, flow_stage="CART_READY")
     cart_manager.clear_pending_action(session_id)
     return {
-        "reply": _checkout_choices_prompt(session_id, f"{lead} Hiện không có mã giảm giá phù hợp."),
+        "reply": _cart_ready_reply(f"{lead} Hiện không có mã giảm giá phù hợp."),
         "checkout_payload": None,
         "tool_calls_log": logs,
         "error": None,
@@ -858,6 +855,12 @@ def _sync(state: OrderConversationState) -> OrderConversationState:
 def _understand(state: OrderConversationState) -> OrderConversationState:
     pending = cart_manager.get_pending_action(state["session_id"])
     intent = classify_order_intent(state["user_message"], (pending or {}).get("type"))
+    from src.agents.agent_service import _is_plain_confirmation, _wants_checkout
+    prefs = cart_manager.get_checkout_prefs(state["session_id"])
+    if (prefs.get("summary_fingerprint") or prefs.get("checkout_submission")) and _is_plain_confirmation(state["user_message"]):
+        intent = {"intent": "CONFIRM_CHECKOUT"}
+    elif _wants_checkout(state["user_message"]):
+        intent = {"intent": "START_CHECKOUT"}
     if (pending or {}).get("type") == "clear_cart" and re.search(r"\b(dong y|xac nhan|ok|oke)\b", _norm(state["user_message"])):
         intent = {"intent": "CLEAR_CART", "confirmed": True}
     if (pending or {}).get("type") == "edit_cart_item":
@@ -888,7 +891,8 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
     session_id, message, cart, intent = state["session_id"], state["user_message"], state["cart"], state["intent"]
     kind = intent.get("intent")
     cart_write_intents = {"ADD_ITEM", "SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS", "CLEAR_CART"}
-    if kind in cart_write_intents and is_authenticated_cart_session(session_id) and not cart.get("authoritative"):
+    authoritative_intents = cart_write_intents | {"FINISH_CART", "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER", "CONFIRM_CHECKOUT"}
+    if kind in authoritative_intents and is_authenticated_cart_session(session_id) and not cart.get("authoritative"):
         return {**state, "result": {
             "reply": "Mình chưa thể xác minh giỏ hàng với Order Service nên chưa thực hiện thay đổi nào. Vui lòng thử lại sau.",
             "checkout_payload": None,
@@ -898,6 +902,15 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             }],
             "error": None,
         }}
+    # A voucher skip belongs to this gate even when its text routes as
+    # SELECT_VOUCHER. Do not relist vouchers or invoke the model for a skip.
+    prefs = cart_manager.get_checkout_prefs(session_id)
+    skip = bool(re.search(r"\b(khong dung|bo qua|khong can)\b.*\b(ma|voucher|giam gia)\b", _norm(message))) or (
+        prefs.get("voucher_offer_pending") and _norm(message).strip(" !.,") in {"khong can", "bo qua", "khong dung"}
+    )
+    if skip:
+        from src.agents.agent_service import _run_agent_impl
+        return {**state, "result": _run_agent_impl(session_id, message, history=state.get("history") or [], allow_model_mutations=False)}
     # A numbered branch is a checkout choice, never a menu ordinal. Resolve
     # it before the legacy pending-product handler sees the same number.
     pending = cart_manager.get_pending_action(session_id) or {}
@@ -1096,23 +1109,8 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         return {**state, "result": _offer_voucher_gate(session_id)}
     if kind in {"SELECT_FULFILLMENT", "SELECT_PAYMENT"} and not cart.get("is_empty"):
         prefs = cart_manager.get_checkout_prefs(session_id)
-        quote_check = execute_get_cart_quote(session_id)
-        applied_code = (quote_check.get("quote") or {}).get("voucher_code") or prefs.get("voucher_code")
-        if applied_code:
-            cart_manager.set_checkout_context(
-                session_id, voucher_code=applied_code, voucher_decided=True, voucher_offer_pending=None,
-            )
-        elif not prefs.get("voucher_decided"):
-            # Remember an early choice, but do not let it skip the voucher
-            # stage or expose checkout controls yet.
-            from src.agents.agent_service import _explicit_checkout_choices
-            choices = _explicit_checkout_choices(message)
-            if choices:
-                cart_manager.set_checkout_prefs(session_id, **choices)
-            return {**state, "result": _offer_voucher_gate(
-                session_id,
-                "Mình đã ghi nhớ lựa chọn nhận hàng/thanh toán của bạn. Giỏ vẫn cần hoàn tất bước ưu đãi.",
-            )}
+        if not prefs.get("voucher_decided") or not prefs.get("checkout_requested"):
+            return {**state, "result": _offer_voucher_gate(session_id)}
 
     if kind == "SELECT_VOUCHER" and not cart.get("is_empty"):
         # Voucher language must be handled before generic product/price
@@ -1273,7 +1271,12 @@ def _render(state: OrderConversationState) -> OrderConversationState:
             "Yêu cầu sửa giỏ chưa được ghi vì Order Service chưa xác nhận đúng dòng món. "
         )
         result["reply"] = prefix + "Mình giữ nguyên giỏ để tránh thay đổi nhầm.\n" + cart_text
-    result["ui_payload"] = {"cart": canonical_cart, "products": products[:12], "vouchers": vouchers[:4], "branches": branches[:5], "actions": []}
+    invalidated = cart_manager.get_checkout_prefs(state["session_id"]).get("voucher_invalidated")
+    if invalidated:
+        result["reply"] = str(result.get("reply") or "") + f"\nMã {invalidated} không còn đủ điều kiện cho giỏ hiện tại; mình đã bỏ giảm giá cũ."
+        logs.append({"tool": "remove_voucher", "result": {"status": "ok", "voucher_code": invalidated}})
+        cart_manager.set_checkout_context(state["session_id"], voucher_invalidated=None)
+    result["ui_payload"] = {"cart": canonical_cart, "products": products[:12], "vouchers": vouchers[:4] if prefs.get("voucher_offer_pending") and not result.get("checkout_payload") else [], "branches": branches[:5], "actions": []}
     return {**state, "result": result}
 
 

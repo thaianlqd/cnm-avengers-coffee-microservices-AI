@@ -8,6 +8,7 @@ import { createHash } from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { CartItem } from './cart.entity';
+import { quoteDeliveryFee } from './delivery-pricing';
 import { VoucherService } from '../voucher/voucher.service';
 
 @Injectable()
@@ -623,7 +624,7 @@ export class CartService {
     });
   }
 
-  async quote(maNguoiDung: string, voucherCode?: string) {
+  async quote(maNguoiDung: string, voucherCode?: string, deliveryMode?: string, deliveryMethod?: string) {
     const cart = await this.layGiỏHàng(maNguoiDung);
     const items = cart.items;
     const subtotal = cart.subtotal;
@@ -642,14 +643,16 @@ export class CartService {
       discountAmount = Number(result.so_tien_giam || 0);
       appliedVoucher = result.voucher.ma_voucher;
     }
+    const shipping = await quoteDeliveryFee(maNguoiDung, subtotal, deliveryMode, deliveryMethod);
     return {
       ...cart,
+      ...shipping,
       items,
       item_count: cart.item_count,
       subtotal,
       discount_amount: discountAmount,
       voucher_code: appliedVoucher,
-      final_total: Math.max(0, subtotal - discountAmount),
+      final_total: Math.max(0, subtotal - discountAmount) + shipping.delivery_fee,
     };
   }
 

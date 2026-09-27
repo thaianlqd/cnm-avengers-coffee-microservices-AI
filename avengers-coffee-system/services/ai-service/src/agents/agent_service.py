@@ -30,7 +30,7 @@ _AGENT_SYSTEM_PROMPT = """Bạn là trợ lý ảo của Avengers Coffee — m�
 Nhiệm vụ của bạn là tư vấn và hỗ trợ khách đặt đồ uống qua hội thoại.
 
 QUY TẮC BẮT BUỘC:
-1. KHÔNG hỏi chi nhánh khi khách mới đang xin gợi ý, chọn món hoặc chọn tùy chọn. Trình tự là chọn món → hỏi hình thức nhận → mới xác định chi nhánh:
+1. KHÔNG hỏi chi nhánh khi khách mới đang xin gợi ý, chọn món hoặc chọn tùy chọn. Trình tự là chọn món → giỏ hàng → voucher → khách tiếp tục → hình thức nhận/thanh toán → địa chỉ/chi nhánh:
    - Nếu khách muốn "đổi món", "sửa đơn", hoặc CHỈ HỎI XEM ĐƠN HÀNG, TUYỆT ĐỐI KHÔNG gọi ask_branch() mà hãy đi lấy mã đơn hàng.
    - PHẢI ưu tiên giải quyết yêu cầu chính của khách (ví dụ: gợi ý món ăn/nước uống bằng `get_recommendations`, hoặc tìm thông tin) TRƯỚC KHI hỏi thông tin chi nhánh.
    - Có thể kiểm tra giá và thêm món nháp với branch_id="Chưa chọn". Sau khi khách chọn hình thức nhận mới xác định chi nhánh và kiểm tra tồn kho thực tế.
@@ -57,13 +57,11 @@ QUY TẮC BẮT BUỘC:
         + Khi khách chọn món, ĐỐI VỚI ĐỒ UỐNG, BẠN BẮT BUỘC gọi `get_product_options` để liệt kê các tùy chọn (size, topping, lượng đá, độ ngọt...) và hỏi khách trước khi thêm vào giỏ. TUYỆT ĐỐI KHÔNG tự ý gán tùy chọn mặc định nếu chưa hỏi khách.
         + Sau khi khách đã chọn đủ tùy chọn, gọi `check_price_and_stock` và `add_to_cart` cho TỪNG MÓN. (Nếu có 2 món, gọi tool 2 lần riêng biệt, TUYỆT ĐỐI KHÔNG gộp chung). KHÔNG báo cáo đã thêm nếu chưa gọi tool thành công.
         + Khi đã thêm món vào giỏ, TUYỆT ĐỐI KHÔNG tự động nhảy sang hỏi Hình thức nhận hàng hay Phương thức thanh toán. CHỈ TÓM TẮT GIỎ HÀNG VÀ CHỜ KHÁCH YÊU CẦU ĐẶT HÀNG / THANH TOÁN (hoặc hỏi khách có muốn thêm món gì không). TUYỆT ĐỐI KHÔNG HỎI khách chọn chi nhánh trong BƯỚC 1.
-    - BƯỚC 2 (HÌNH THỨC NHẬN HÀNG): CHỈ KHI khách bảo "tiến hành đặt hàng", "thanh toán", "chốt đơn", BẠN MỚI BẮT ĐẦU hỏi khách chọn hình thức nhận hàng (Giao tận nơi, Mang đi, hay Dùng tại chỗ).
+    - BƯỚC 2 (GIỎ HÀNG & VOUCHER): Khi khách không thêm món nữa, lấy giỏ thật và kiểm tra voucher. Khách chọn mã hoặc bỏ qua; sau đó giỏ hoàn tất và CHỜ khách nói tiếp tục/đặt hàng. Không suy ra hình thức nhận hay thanh toán từ câu “không vậy oke rồi”.
+    - BƯỚC 2.1 (CHECKOUT): Chỉ sau voucher và yêu cầu tiếp tục, hỏi cả hình thức nhận (Giao tận nơi, Lấy tại quán, Dùng tại chỗ) và thanh toán (VNPAY, QR ngân hàng, Ví Avengers, COD). KHÔNG tự điền lựa chọn từ lịch sử hay mặc định. Khách mới chọn một phần thì hỏi phần còn thiếu.
     - BƯỚC 3 (ĐỊA CHỈ & CHI NHÁNH):
         + NẾU KHÁCH CHỌN GIAO TẬN NƠI: NGAY LẬP TỨC gọi `get_user_profile` lấy địa chỉ giao hàng. KHÔNG ĐƯỢC PHÉP HỎI KHÁCH CHI NHÁNH NÀO CẢ. Sau khi có địa chỉ, BẠN CHỈ ĐƯỢC HỎI: "Bạn có muốn giao đến địa chỉ [địa chỉ] không?". Nếu khách đồng ý, dùng địa chỉ đó gọi `find_nearest_branch` rồi NGAY LẬP TỨC gọi `set_session_branch` để chốt chi nhánh.
         + NẾU KHÁCH CHỌN MANG ĐI / TẠI CHỖ: Nếu hồ sơ có địa chỉ mặc định, hỏi tự nhiên "Bạn đang ở địa chỉ [địa chỉ đã lưu] hay một địa chỉ khác?". Nếu khách xác nhận thì dùng địa chỉ đó; nếu không thì nhận địa chỉ mới. Gọi `find_nearest_branch`, liệt kê các cửa hàng gần nhất và BẮT BUỘC chờ khách chọn một cửa hàng rồi mới gọi `set_session_branch`. Không tự chọn cửa hàng gần nhất hộ khách.
-    - BƯỚC 4 (MÃ GIẢM GIÁ & THANH TOÁN): 
-        + NẾU khách yêu cầu áp mã giảm giá, gọi `get_applicable_vouchers` để liệt kê, khách chọn thì gọi `apply_voucher`.
-        + Hỏi khách chọn phương thức thanh toán (VNPAY, QR ngân hàng, Ví Avengers, Tiền mặt/COD). Ghi nhận đúng lựa chọn của khách.
     - BƯỚC 5 (TÓM TẮT & CHỐT ĐƠN): Khi đã đủ Món, Hình thức nhận, Chi nhánh và Thanh toán, BẠN BẮT BUỘC phải gọi tool `request_checkout` (truyền ĐÚNG tham số `payment_method` và `delivery_type` khách đã chọn) để hệ thống tóm tắt đơn hàng thay bạn. NẾU khách thay đổi phương thức thanh toán hoặc giao hàng sau khi đã tóm tắt, BẠN BẮT BUỘC phải gọi LẠI `request_checkout` để cập nhật. Khi khách nói "Đồng ý/Chốt đơn" với bản tóm tắt CUỐI CÙNG, BẠN BẮT BUỘC phải gọi `confirm_checkout` để sinh mã đơn.
 13. Khi khách yêu cầu hủy/sửa đơn, gọi `get_order_history` tìm mã đơn. Nếu khách CHƯA xác nhận, gọi `cancel_order` hoặc `update_order` với `is_confirmed=False` và BÁO KHÁCH. NẾU KHÁCH ĐÃ NHẮN "ĐỒNG Ý" hoặc xác nhận hủy, BẮT BUỘC gọi với `is_confirmed=True` để thực thi. KHÔNG gọi ask_branch.
 14. Khi tư vấn quán gần nhất từ tool `find_nearest_branch`, BẢT BUỘC phải đọc đúng số km (`khoang_cach_km`) mà tool trả về (ví dụ "cách bạn khoảng 2.3km"). TUYỆT ĐỐI KHÔNG tự bịa khoảng cách hay làm tròn sai lệch. Nếu tool có trả về warning "Chi nhánh gần nhất cũng cách tới...", HÃY báo rõ là khu vực của khách không có chi nhánh, và các gợi ý này khá xa.
@@ -79,7 +77,7 @@ QUY TẮC BẮT BUỘC:
 22. “Món đang chờ hoàn tất” là các món khách đã chọn nhưng chưa vào giỏ. Khi khách trả lời tùy chọn cho một món, vẫn phải tiếp tục xử lý các món còn lại; không được quên hoặc tự loại chúng.
 23. Hệ thống hiện chưa có trường đặt giờ/giữ bàn. Nếu khách nói sẽ đến sau một khoảng thời gian hoặc vào một giờ cụ thể, phải nói rõ giới hạn này và hỏi khách muốn đặt ngay hay quay lại chốt gần giờ; không được âm thầm bỏ qua thời gian khách yêu cầu.
 24. [VOUCHER / MÃ GIẢM GIÁ]:
-    - TRƯỚC KHI gọi `request_checkout`, BẮT BUỘC gọi `get_applicable_vouchers` để kiểm tra xem có mã giảm giá nào áp dụng được không.
+    - TẠI GIAI ĐOẠN GIỎ HÀNG, TRƯỚC checkout, BẮT BUỘC gọi `get_applicable_vouchers` để kiểm tra xem có mã giảm giá nào áp dụng được không.
     - Nếu có mã khả dụng: liệt kê ngắn gọn (Tên [Mã: {{ma_voucher}}] + giảm dự kiến) và hỏi khách có muốn áp dụng không.
     - Nếu khách chọn mã hoặc tự nhập mã voucher: gọi `apply_voucher` với MÃ VOUCHER (`ma_voucher`), KHÔNG dùng tên voucher. Thực hiện TRƯỚC KHI gọi `request_checkout`.
     - Nếu khách muốn bỏ mã: gọi `remove_voucher`.
@@ -141,6 +139,10 @@ def _checkout_choices_prompt(session_id: str, prefix: str = "") -> str:
     return "\n\n".join(part for part in [prefix.strip(), *blocks, question] if part)
 
 
+def _cart_ready_reply(prefix: str = "") -> str:
+    return "\n\n".join(part for part in [prefix.strip(), "Giỏ hàng của bạn đã hoàn tất. Khi bạn muốn đặt hàng, hãy nói tiếp tục; mình sẽ hỏi cách nhận hàng và thanh toán."] if part)
+
+
 def _format_cart_quote(session_id: str, quote_result: Dict[str, Any]) -> str:
     quote = quote_result.get("quote") or {}
     items = quote.get("items") or quote_result.get("cart", {}).get("items") or []
@@ -174,7 +176,7 @@ def _format_cart_quote(session_id: str, quote_result: Dict[str, Any]) -> str:
     delivery_fee = float(quote.get("delivery_fee") or 0)
     if delivery_fee:
         lines.append(f"Phí giao hàng: {delivery_fee:,.0f}đ".replace(",", "."))
-    lines.append(f"Tổng thanh toán: {final_total + delivery_fee:,.0f}đ".replace(",", "."))
+    lines.append(f"Tổng thanh toán: {final_total:,.0f}đ".replace(",", "."))
     return "\n".join(lines)
 
 
@@ -202,7 +204,7 @@ def _explicit_checkout_choices(message: str) -> Dict[str, str]:
     delivery_map = {
         "GIAO_TAN_NOI": ("giao tan noi", "giao hang", "ship toi", "ship tan nha"),
         "MANG_DI": ("mang di", "den lay", "tu den lay", "lay tai quan", "nhan tai quan", "takeaway"),
-        "TAI_CHO": ("tai cho", "dung tai quan", "uong tai quan", "dine in"),
+        "TAI_CHO": ("tai cho", "dung tai cho", "dung tai quan", "uong tai quan", "dine in"),
     }
 
     if not question:
@@ -213,7 +215,7 @@ def _explicit_checkout_choices(message: str) -> Dict[str, str]:
             result["payment_method"] = "THANH_TOAN_KHI_NHAN_HANG"
         elif "vnpay" in text and not re.search(r"\b(?:khong|ko|dung dung)\s+(?:dung\s+)?vnpay\b", text):
             result["payment_method"] = "VNPAY"
-        elif ("ngan hang qr" in text or "chuyen khoan" in text) and not re.search(r"\b(?:khong|ko|dung dung)\s+(?:dung\s+)?(ngan hang|chuyen khoan)\b", text):
+        elif ("ngan hang qr" in text or "qr ngan hang" in text or text == "qr" or "chuyen khoan" in text) and not re.search(r"\b(?:khong|ko|dung dung)\s+(?:dung\s+)?(ngan hang|qr|chuyen khoan)\b", text):
             result["payment_method"] = "NGAN_HANG_QR"
         elif ("vi avengers" in text or "vi dien tu" in text) and not re.search(r"\b(?:khong|ko|dung dung)\s+(?:dung\s+)?vi\b", text):
             result["payment_method"] = "VI_DIEN_TU"
@@ -242,6 +244,7 @@ def _is_plain_confirmation(message: str) -> bool:
 
     exact_phrases = {
         "dong y", "dong y chot don", "dong y dat hang",
+        "oke xac nhan", "ok xac nhan", "okay xac nhan",
         "xac nhan", "xac nhan dat hang", "xac nhan chot don",
         "ok", "oke", "okay", "chot", "chot don", "dat di", "dat luon",
         "tien hanh", "on roi", "dung roi", "chuan roi",
@@ -297,7 +300,7 @@ def _future_fulfillment_request(message: str) -> Optional[str]:
 def _wants_checkout(message: str) -> bool:
     normalized = _normalize_chat_text(message)
     return bool(re.search(
-        r"\b(chot(?:\s+don)?|dat\s+(?:hang|don|luon|di)|thanh\s+toan|checkout|tien\s+hanh)\b",
+        r"\b(chot(?:\s+don)?|dat\s+(?:hang|don|luon|di)|thanh\s+toan|checkout|tien\s+hanh|tiep\s+tuc)\b",
         normalized,
     )) and not bool(re.search(r"\b(chua|khong|dung|khoan|dung lai|dung dat)\b", normalized))
 
@@ -374,42 +377,10 @@ def _advance_checkout_if_ready(session_id: str, result: Dict[str, Any]) -> Dict[
 
     logs = list(result.get("tool_calls_log") or [])
     if not prefs.get("voucher_decided"):
-        from src.function_calling.tools.voucher_tools import execute_get_applicable_vouchers
-        voucher_result = execute_get_applicable_vouchers(session_id)
-        logs.append({"tool": "get_applicable_vouchers", "result": voucher_result})
-        if voucher_result.get("status") == "ok" and voucher_result.get("vouchers"):
-            cart_manager.set_checkout_context(
-                session_id,
-                voucher_offer_pending=True,
-                voucher_candidates=[
-                    {
-                        "ma_voucher": voucher.get("ma_voucher"),
-                        "ten_voucher": voucher.get("ten_voucher"),
-                        "so_tien_giam_du_kien": voucher.get("so_tien_giam_du_kien"),
-                    }
-                    for voucher in voucher_result["vouchers"][:4]
-                ],
-            )
-            try:
-                cart_manager.set_pending_action(session_id, "select_voucher", {"count": len(voucher_result["vouchers"])})
-            except Exception as e:
-                import logging
-                logging.getLogger(__name__).warning("set_pending_action select_voucher failed: %s", e)
-            lines = ["Giỏ hiện có các mã dùng được:"]
-            for voucher in voucher_result["vouchers"][:4]:
-                discount = f"{float(voucher.get('so_tien_giam_du_kien') or 0):,.0f}".replace(",", ".")
-                lines.append(f"- {voucher.get('ten_voucher')} [Mã: {voucher.get('ma_voucher')}] — giảm dự kiến {discount}đ")
-            lines.append("Bạn chọn mã nào, hay không dùng mã để mình chốt tóm tắt?")
-            return {**result, "reply": "\n".join(lines), "tool_calls_log": logs}
-        cart_manager.set_checkout_context(session_id, voucher_decided=True, voucher_offer_pending=None)
-        try:
-            cart_manager.clear_pending_action(session_id)
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).warning("clear_pending_action select_voucher (no_more_vouchers early) failed: %s", e)
+        from src.agents.order_flow_graph import _offer_voucher_gate
+        return {**result, **_offer_voucher_gate(session_id)}
 
     from src.function_calling.tools.cart_tools import execute_request_checkout
-    cart_manager.set_checkout_context(session_id, checkout_requested=None)
     checkout = execute_request_checkout(session_id)
     logs.append({"tool": "request_checkout", "result": checkout})
     if checkout.get("status") == "require_confirmation":
@@ -485,6 +456,8 @@ def _resolve_pending_voucher_choice(session_id: str, message: str) -> Optional[D
         voucher_decided=True,
         voucher_offer_pending=None,
         voucher_candidates=candidates,
+        checkout_requested=None,
+        flow_stage="CART_READY",
     )
     try:
         cart_manager.clear_pending_action(session_id)
@@ -492,15 +465,12 @@ def _resolve_pending_voucher_choice(session_id: str, message: str) -> Optional[D
         import logging
         logging.getLogger(__name__).warning("clear_pending_action select_voucher (applied) failed: %s", e)
     result = {
-        "reply": _checkout_choices_prompt(
-            session_id,
-            applied.get("message", f"Đã áp dụng mã {code}."),
-        ),
+        "reply": _cart_ready_reply(applied.get("message", f"Đã áp dụng mã {code}.")),
         "checkout_payload": None,
         "tool_calls_log": logs,
         "error": None,
     }
-    return _advance_checkout_if_ready(session_id, result)
+    return result
 
 
 def _handle_additional_product(session_id: str, product_query: str) -> Optional[Dict[str, Any]]:
@@ -631,7 +601,7 @@ def _resolve_pending_branch_choice(
     last_assistant_norm = _normalize_chat_text(last_assistant_msg)
 
     # Check whether the assistant was prompting for branch selection
-    is_branch_prompt = any(
+    is_branch_prompt = (cart_manager.get_pending_action(session_id) or {}).get("type") == "select_branch" or any(
         kw in last_assistant_norm
         for kw in ["cua hang gan ban", "chon cua hang", "chon chi nhanh", "so may de minh", "cac cua hang", "chi nhanh"]
     )
@@ -721,7 +691,8 @@ def _confirm_saved_location(
     history: Optional[List[Dict[str, str]]] = None,
 ) -> Optional[Dict[str, Any]]:
     prefs = cart_manager.get_checkout_prefs(session_id)
-    suggested = str(prefs.get("suggested_address") or "").strip()
+    from src.function_calling.tools.user_tools import _clean_profile_address
+    suggested = _clean_profile_address(prefs.get("suggested_address"))
     if not suggested:
         return None
     normalized = _normalize_chat_text(message)
@@ -733,19 +704,14 @@ def _confirm_saved_location(
     ):
         return None
 
-    last_assistant_msg = _last_assistant_content(history or [])
-    last_assistant_norm = _normalize_chat_text(last_assistant_msg)
-    if not any(kw in last_assistant_norm for kw in ["dia chi da luu", "dang o dia chi", "dia chi nay hay", "dia chi cua ban"]):
-        return None
-
-    confirms = bool(re.search(
-        r"\b(dung|dung roi|dia chi do|o do|dang o do|hien tai.*o do|dia chi da luu)\b",
-        normalized,
+    confirms = _is_plain_confirmation(message) or bool(re.fullmatch(
+        r"(?:ok|oke|okay|dung|dung roi|giao)?[, ]*\s*(?:dung\s+)?(?:dia chi do|dia chi da luu|o do|dang o do)(?:\s+(?:di|nhe|nha))?",
+        normalized.strip(" !.,"),
     ))
     if not confirms:
         return None
 
-    context = {"suggested_address": None, "location_address": suggested}
+    context = {"suggested_address": None, "location_address": suggested, "address_confirmed": True}
     if prefs.get("delivery_type") == "GIAO_TAN_NOI":
         cart_manager.set_checkout_prefs(session_id, delivery_address=suggested)
     cart_manager.set_checkout_context(session_id, **context)
@@ -1181,7 +1147,91 @@ def _run_agent_impl(
         logger.warning("[AgentService] Cannot refresh authoritative cart: %s", exc)
         authoritative_cart = cart_manager.get_cart(session_id)
 
-    if _wants_checkout(user_message) and authoritative_cart.get("is_empty"):
+    last_assistant_msg = _last_assistant_content(history or [])
+    last_msg_lower = _normalize_chat_text(last_assistant_msg)
+
+    # Resolve a pending cancellation before looking for checkout confirmation.
+    # This prevents "đồng ý" from a cancel preview creating an unrelated order.
+    if "xac nhan huy" in last_msg_lower:
+        import os
+        use_t1 = os.getenv("USE_T1_CONFIRM", "false").lower() == "true"
+        if use_t1:
+            pending = cart_manager.get_pending_action(session_id)
+            pending_type = pending.get("type") if pending else "confirm_cancel"
+            from src.agents.tier1 import classify_confirmation
+            classification = classify_confirmation(user_message, pending_type)
+            is_yes = (classification == "YES")
+            is_ambiguous = (classification == "AMBIGUOUS")
+        else:
+            is_yes = _is_plain_confirmation(user_message)
+            is_ambiguous = False
+
+        if is_ambiguous:
+            return {
+                "reply": "Bạn có xác nhận hủy đơn hay không? Vui lòng trả lời rõ 'có' hoặc 'không' nhé.",
+                "gate": "confirm_cancel_ambiguous",
+                "checkout_payload": None,
+                "tool_calls_log": [],
+                "error": None
+            }
+
+        if is_yes:
+            match = re.search(r"don hang ([\w\-]+) khong", last_msg_lower)
+            if not match:
+                match = re.search(r"([\w\-]{36})", last_assistant_msg)
+            if match:
+                from src.function_calling.tools.order_tools import execute_cancel_order
+                order_id = match.group(1)
+                cancel_res = execute_cancel_order(session_id, order_id, is_confirmed=True)
+                reply = (f"✅ Đơn hàng **{order_id}** đã được hủy thành công."
+                         if cancel_res.get("status") == "success"
+                         else f"❌ Chưa thể hủy đơn hàng: {cancel_res.get('message', 'Lỗi không xác định')}.")
+                return {"reply": reply, "gate": "confirm_cancel", "checkout_payload": None,
+                        "tool_calls_log": [{"tool": "cancel_order", "result": cancel_res}], "error": None}
+
+    prefs = cart_manager.get_checkout_prefs(session_id)
+    # Confirmation is resolved from the server-side pending checkout state.
+    # Frontend history is presentation data and may be truncated, reformatted or
+    # omitted, so it must not decide whether a real checkout can proceed.
+    if prefs.get("summary_fingerprint") or prefs.get("checkout_submission"):
+        import os
+        use_t1 = os.getenv("USE_T1_CONFIRM", "false").lower() == "true"
+        if use_t1:
+            pending = cart_manager.get_pending_action(session_id)
+            pending_type = pending.get("type") if pending else "confirm_checkout"
+            from src.agents.tier1 import classify_confirmation
+            classification = classify_confirmation(user_message, pending_type)
+            is_yes = (classification == "YES")
+            is_ambiguous = (classification == "AMBIGUOUS")
+        else:
+            is_yes = _is_plain_confirmation(user_message)
+            is_ambiguous = False
+
+        if is_ambiguous:
+            return {
+                "reply": "Bạn có xác nhận chốt đơn hay không? Vui lòng trả lời rõ 'có' hoặc 'không' nhé.",
+                "gate": "confirm_checkout_ambiguous",
+                "checkout_payload": None,
+                "tool_calls_log": [],
+                "error": None
+            }
+
+        if is_yes:
+            from src.function_calling.tools.cart_tools import execute_confirm_checkout
+            checkout_res = execute_confirm_checkout(session_id)
+            if checkout_res.get("status") in {"success", "already_processed"}:
+                order_id = checkout_res.get("order_id", "")
+                reply = f"🎉 Đặt hàng thành công! Mã đơn hàng của bạn là: **{order_id}**. Cảm ơn bạn đã ủng hộ!"
+            else:
+                reply = checkout_res.get("message", "Đơn hàng chưa được tạo. Bạn có thể kiểm tra lại giỏ hàng và thử lại.")
+            return {"reply": reply, "gate": "confirm_checkout", "checkout_payload": None,
+                    "tool_calls_log": [{"tool": "confirm_checkout", "result": checkout_res}], "error": None}
+
+
+    if _wants_checkout(user_message) and authoritative_cart.get("is_empty") and not cart_manager.get_checkout_prefs(session_id).get("checkout_submission"):
+        pending = cart_manager.get_pending_action(session_id)
+        if pending and pending.get("type") == "ask_more_items":
+            cart_manager.clear_pending_action(session_id)
         return {
             "reply": "Hiện giỏ hàng đang trống. Bạn muốn chọn món trước không? Mình có thể gợi ý bánh và nước cho bạn.",
             "checkout_payload": None,
@@ -1193,7 +1243,10 @@ def _run_agent_impl(
         cart_manager.set_checkout_context(session_id, checkout_requested=True)
 
     user_norm = _normalize_chat_text(user_message)
-    voucher_skipped = bool(re.search(r"\b(khong dung|bo qua|khong can)\b.*\b(ma|voucher|giam gia)\b", user_norm))
+    prefs_now = cart_manager.get_checkout_prefs(session_id)
+    voucher_skipped = bool(re.search(r"\b(khong dung|bo qua|khong can)\b.*\b(ma|voucher|giam gia)\b", user_norm)) or (
+        prefs_now.get("voucher_offer_pending") and user_norm.strip(" !.,") in {"khong can", "bo qua", "khong dung"}
+    )
     if voucher_skipped:
         cart_manager.set_checkout_context(
             session_id,
@@ -1202,6 +1255,8 @@ def _run_agent_impl(
             voucher_candidates=None,
             voucher_code=None,
             discount_amount=None,
+            checkout_requested=None,
+            flow_stage="CART_READY",
         )
 
     if _has_product_review_intent(user_message):
@@ -1283,7 +1338,7 @@ def _run_agent_impl(
         if quote_result.get("status") != "ok":
             reply = quote_result.get("message", "Mình chưa thể kiểm tra giỏ hàng lúc này.")
         else:
-            reply = _checkout_choices_prompt(session_id, _format_cart_quote(session_id, quote_result))
+            reply = _format_cart_quote(session_id, quote_result)
         return {
             "reply": reply,
             "checkout_payload": None,
@@ -1291,79 +1346,51 @@ def _run_agent_impl(
             "error": None,
         }
 
-    # A clear "nothing else" response closes product selection. It must not be
-    # interpreted by the model as another add-to-cart request.
-    no_more_items = bool(re.search(
-        r"\b(khong them gi nua|khong can them gi|khong them mon nao|het roi)\b",
-        _normalize_chat_text(user_message),
-    ))
-    if no_more_items and not cart_manager.get_cart(session_id).get("is_empty"):
-        try:
-            cart_manager.clear_pending_action(session_id)
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).warning("clear_pending_action ask_more_items (no_more_items) failed: %s", e)
-        current_voucher = cart_manager.get_checkout_prefs(session_id).get("voucher_code")
-        if current_voucher:
-            return {
-                "reply": _checkout_choices_prompt(
-                    session_id,
-                    f"Mình giữ nguyên giỏ hàng hiện tại. Mã {current_voucher} vẫn đang được áp dụng.",
-                ),
-                "checkout_payload": None,
-                "tool_calls_log": [],
-                "error": None,
-            }
-        from src.function_calling.tools.voucher_tools import execute_get_applicable_vouchers
-        voucher_result = execute_get_applicable_vouchers(session_id)
-        logs = [{"tool": "get_applicable_vouchers", "result": voucher_result}]
-        vouchers = voucher_result.get("vouchers") or []
-        if voucher_result.get("status") == "ok" and vouchers:
-            cart_manager.set_checkout_context(
-                session_id,
-                voucher_offer_pending=True,
-                voucher_candidates=[{
-                    "ma_voucher": item.get("ma_voucher"),
-                    "ten_voucher": item.get("ten_voucher") or item.get("ten_chuong_trinh"),
-                    "discount_amount": item.get("discount_amount") or item.get("so_tien_giam_du_kien") or item.get("so_tien_giam"),
-                } for item in vouchers],
-            )
-            try:
-                cart_manager.set_pending_action(session_id, "select_voucher", {"count": len(vouchers)})
-            except Exception as e:
-                import logging
-                logging.getLogger(__name__).warning("set_pending_action select_voucher failed: %s", e)
-            lines = ["Mình giữ nguyên giỏ hàng hiện tại, không thêm món nào nữa.", "Các mã đang áp dụng được:"]
-            for item in vouchers:
-                code = item.get("ma_voucher") or ""
-                name = item.get("ten_voucher") or item.get("ten_chuong_trinh") or code
-                discount = item.get("discount_amount") or item.get("so_tien_giam_du_kien") or item.get("so_tien_giam")
-                lines.append(f"- {name} [Mã: {code}]" + (f" — giảm {discount:,.0f}đ" if isinstance(discount, (int, float)) else ""))
-            lines.append("Bạn muốn áp dụng mã nào? Nếu chưa muốn dùng mã, cứ nói bỏ qua.")
-            return {"reply": "\n".join(lines), "checkout_payload": None, "tool_calls_log": logs, "error": None}
-        cart_manager.set_checkout_context(session_id, voucher_decided=True)
-        try:
-            cart_manager.clear_pending_action(session_id)
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).warning("clear_pending_action select_voucher (no_more_items) failed: %s", e)
+    requested_time = _future_fulfillment_request(user_message)
+    selected_delivery = _explicit_checkout_choices(user_message).get("delivery_type") or cart_manager.get_checkout_prefs(session_id).get("delivery_type")
+    if requested_time and selected_delivery in {"MANG_DI", "TAI_CHO"}:
         return {
-            "reply": _checkout_choices_prompt(
-                session_id,
-                "Mình giữ nguyên giỏ hàng hiện tại. Hiện không có mã giảm giá phù hợp.",
+            "reply": (
+                "Mình đã ghi nhận hình thức nhận tại cửa hàng. Tuy nhiên hệ thống hiện chưa hỗ trợ "
+                "đặt giờ hoặc giữ bàn, nên mình không thể cam kết chuẩn bị đúng thời điểm bạn nêu. "
+                "Bạn muốn đặt ngay, hay quay lại chốt đơn gần giờ bạn đến?"
             ),
             "checkout_payload": None,
-            "tool_calls_log": logs,
+            "tool_calls_log": [],
             "error": None,
         }
 
-    # Keep explicit payment/delivery choices even when the customer mentions them
-    # before choosing any products. Questions do not count as a selection.
+    # A clear "nothing else" response closes product selection. It must not be
+    # interpreted by the model as another add-to-cart request.
+    no_more_items = bool(re.search(
+        r"\b(khong them|khong can them|het roi|thoi vay duoc roi|gio vay duoc roi|khong vay (?:ok|oke|okay) roi)\b",
+        user_norm,
+    ))
+    if no_more_items:
+        if (cart_manager.get_pending_action(session_id) or {}).get("type") == "ask_more_items":
+            cart_manager.clear_pending_action(session_id)
+        from src.agents.order_flow_graph import _offer_voucher_gate
+        if not cart_manager.get_cart(session_id).get("is_empty"):
+            return _offer_voucher_gate(session_id)
+        return {"reply": "Giỏ hàng hiện đang trống. Bạn chọn món trước khi hoàn tất giỏ nhé.", "checkout_payload": None, "tool_calls_log": [], "error": None}
+
+    # Accept explicit choices only after cart/voucher and checkout initiation.
+    # Questions do not count as a selection.
     choices = _explicit_checkout_choices(user_message)
+    if choices and not cart_manager.get_checkout_prefs(session_id).get("checkout_requested") and not cart_manager.get_checkout_prefs(session_id).get("summary_fingerprint"):
+        if choices.get("delivery_type") and choices["delivery_type"] != cart_manager.get_checkout_prefs(session_id).get("delivery_type"):
+            cart_manager.clear_branch(session_id)
+            if (cart_manager.get_pending_action(session_id) or {}).get("type") == "select_branch":
+                cart_manager.clear_pending_action(session_id)
+        if cart_manager.get_cart(session_id).get("is_empty"):
+            return {"reply": "Giỏ hàng hiện đang trống. Bạn chọn món trước khi đặt hàng nhé.", "checkout_payload": None, "tool_calls_log": [], "error": None}
+        from src.agents.order_flow_graph import _offer_voucher_gate
+        return _offer_voucher_gate(session_id)
     if choices:
         old_delivery = cart_manager.get_checkout_prefs(session_id).get("delivery_type")
         if choices.get("delivery_type") and choices["delivery_type"] != old_delivery:
             cart_manager.clear_branch(session_id)
+            cart_manager.set_checkout_context(session_id, location_address=None, suggested_address=None, address_confirmed=None, delivery_address=None)
             try:
                 cart_manager.clear_pending_action(session_id)
             except Exception as e:
@@ -1377,7 +1404,7 @@ def _run_agent_impl(
 
     if voucher_skipped:
         return {
-            "reply": _checkout_choices_prompt(session_id, "Mình sẽ không áp dụng mã giảm giá cho đơn này."),
+            "reply": _cart_ready_reply("Mình sẽ không áp dụng mã giảm giá cho giỏ này."),
             "checkout_payload": None,
             "tool_calls_log": [],
             "error": None,
@@ -1391,37 +1418,8 @@ def _run_agent_impl(
             logging.getLogger(__name__).warning("clear_pending_action ask_more_items (wants_checkout) failed: %s", e)
         prefs_now = cart_manager.get_checkout_prefs(session_id)
         if not prefs_now.get("voucher_decided"):
-            from src.function_calling.tools.voucher_tools import execute_get_applicable_vouchers
-            voucher_result = execute_get_applicable_vouchers(session_id)
-            vouchers = list(voucher_result.get("vouchers") or [])
-            if vouchers:
-                cart_manager.set_checkout_context(
-                    session_id,
-                    voucher_offer_pending=True,
-                    voucher_candidates=vouchers,
-                )
-                try:
-                    cart_manager.set_pending_action(session_id, "select_voucher", {"count": len(vouchers)})
-                except Exception as e:
-                    import logging
-                    logging.getLogger(__name__).warning("set_pending_action select_voucher (wants_checkout) failed: %s", e)
-                lines = ["Trước khi đặt hàng, bạn có các mã dùng được:"]
-                for voucher in vouchers[:4]:
-                    discount = f"{float(voucher.get('so_tien_giam_du_kien') or 0):,.0f}".replace(",", ".")
-                    lines.append(f"- {voucher.get('ten_voucher')} [Mã: {voucher.get('ma_voucher')}] — giảm {discount}đ")
-                lines.append("Bạn chọn mã nào, chọn mã tốt nhất, hoặc nói bỏ qua mã nhé.")
-                return {
-                    "reply": "\n".join(lines),
-                    "checkout_payload": None,
-                    "tool_calls_log": [{"tool": "get_applicable_vouchers", "result": voucher_result}],
-                    "error": None,
-                }
-            cart_manager.set_checkout_context(session_id, voucher_decided=True)
-            try:
-                cart_manager.clear_pending_action(session_id)
-            except Exception as e:
-                import logging
-                logging.getLogger(__name__).warning("clear_pending_action select_voucher (before checkout) failed: %s", e)
+            from src.agents.order_flow_graph import _offer_voucher_gate
+            return _offer_voucher_gate(session_id)
         missing_prompt = _checkout_choices_prompt(session_id)
         if missing_prompt:
             return {"reply": missing_prompt, "checkout_payload": None, "tool_calls_log": [], "error": None}
@@ -1434,61 +1432,11 @@ def _run_agent_impl(
             "error": None,
         }
 
-    requested_time = _future_fulfillment_request(user_message)
-    selected_delivery = choices.get("delivery_type") or cart_manager.get_checkout_prefs(session_id).get("delivery_type")
-    if requested_time and selected_delivery in {"MANG_DI", "TAI_CHO"}:
-        return {
-            "reply": (
-                "Mình đã ghi nhận hình thức nhận tại cửa hàng. Tuy nhiên hệ thống hiện chưa hỗ trợ "
-                "đặt giờ hoặc giữ bàn, nên mình không thể cam kết chuẩn bị đúng thời điểm bạn nêu. "
-                "Bạn muốn đặt ngay, hay quay lại chốt đơn gần giờ bạn đến?"
-            ),
-            "checkout_payload": None,
-            "tool_calls_log": [],
-            "error": None,
-        }
-
-    last_assistant_msg = _last_assistant_content(history or [])
-    last_msg_lower = _normalize_chat_text(last_assistant_msg)
-
-    # Resolve a pending cancellation before looking for checkout confirmation.
-    # This prevents "đồng ý" from a cancel preview creating an unrelated order.
-    if "xac nhan huy" in last_msg_lower:
-        import os
-        use_t1 = os.getenv("USE_T1_CONFIRM", "false").lower() == "true"
-        if use_t1:
-            pending = cart_manager.get_pending_action(session_id)
-            pending_type = pending.get("type") if pending else "confirm_cancel"
-            from src.agents.tier1 import classify_confirmation
-            classification = classify_confirmation(user_message, pending_type)
-            is_yes = (classification == "YES")
-            is_ambiguous = (classification == "AMBIGUOUS")
-        else:
-            is_yes = _is_plain_confirmation(user_message)
-            is_ambiguous = False
-
-        if is_ambiguous:
-            return {
-                "reply": "Bạn có xác nhận hủy đơn hay không? Vui lòng trả lời rõ 'có' hoặc 'không' nhé.",
-                "gate": "confirm_cancel_ambiguous",
-                "checkout_payload": None,
-                "tool_calls_log": [],
-                "error": None
-            }
-
-        if is_yes:
-            match = re.search(r"don hang ([\w\-]+) khong", last_msg_lower)
-            if not match:
-                match = re.search(r"([\w\-]{36})", last_assistant_msg)
-            if match:
-                from src.function_calling.tools.order_tools import execute_cancel_order
-                order_id = match.group(1)
-                cancel_res = execute_cancel_order(session_id, order_id, is_confirmed=True)
-                reply = (f"✅ Đơn hàng **{order_id}** đã được hủy thành công."
-                         if cancel_res.get("status") == "success"
-                         else f"❌ Chưa thể hủy đơn hàng: {cancel_res.get('message', 'Lỗi không xác định')}.")
-                return {"reply": reply, "gate": "confirm_cancel", "checkout_payload": None,
-                        "tool_calls_log": [{"tool": "cancel_order", "result": cancel_res}], "error": None}
+    if choices and cart_manager.get_checkout_prefs(session_id).get("checkout_requested"):
+        missing = _checkout_choices_prompt(session_id, "Mình đã ghi nhận lựa chọn của bạn.")
+        prefs_now = cart_manager.get_checkout_prefs(session_id)
+        if not prefs_now.get("payment_method") or not prefs_now.get("delivery_type"):
+            return {"reply": missing, "checkout_payload": None, "tool_calls_log": [], "error": None}
 
     prefs = cart_manager.get_checkout_prefs(session_id)
 
@@ -1497,24 +1445,43 @@ def _run_agent_impl(
     if cart.get("is_empty"):
         cart_manager.set_checkout_context(session_id, branch_candidates=None, suggested_address=None)
 
+    # An address supplied by the customer is already an explicit location
+    # choice. Reuse the saved-location resolver for branch/inventory rules.
+    location_stage = (prefs.get("checkout_requested") and prefs.get("delivery_type")
+                      and prefs.get("payment_method") and not cart.get("branch_id")
+                      and not prefs.get("pending_products") and not prefs.get("checkout_submission"))
+    if location_stage and re.search(r"\b\d+[\w/.-]*\s+[a-z]", user_norm) and not re.search(r"\b(size|topping|so luong|ma so|nuoc|banh)\b", user_norm):
+        from src.function_calling.tools.user_tools import _clean_profile_address
+        address = re.sub(r"^(?:địa chỉ(?: mới)?(?: là)?|tôi ở|mình ở|giao đến|giao tới)\s*[:：]?\s*", "", user_message.strip(), flags=re.IGNORECASE)
+        cart_manager.clear_branch(session_id)
+        cart_manager.set_checkout_context(session_id, suggested_address=_clean_profile_address(address))
+        resolved = _confirm_saved_location(session_id, "đúng địa chỉ đó")
+        if resolved:
+            return _advance_checkout_if_ready(session_id, resolved)
+
     # Start fulfillment deterministically as soon as the customer selects it.
     # This stores the exact full profile address instead of letting the model
     # shorten it to a ward/city and geocode the wrong place.
     if (
-        choices.get("delivery_type")
+        prefs.get("checkout_requested")
+        and not prefs.get("checkout_submission")
+        and prefs.get("delivery_type")
+        and prefs.get("payment_method")
+        and not prefs.get("location_address")
         and not cart.get("is_empty")
         and not cart.get("branch_id")
         and not prefs.get("suggested_address")
     ):
         from src.function_calling.tools.user_tools import execute_get_user_profile
         profile = execute_get_user_profile(session_id)
-        default_address = str(profile.get("default_address") or "").strip()
+        from src.function_calling.tools.user_tools import _clean_profile_address
+        default_address = _clean_profile_address(profile.get("default_address"))
         payment_line = ""
         if not cart_manager.get_checkout_prefs(session_id).get("payment_method"):
             payment_line = "\n\n" + _payment_methods_text() + "\nBạn chọn giúp mình một phương thức nhé."
         if default_address:
             cart_manager.set_checkout_context(session_id, suggested_address=default_address)
-            if choices["delivery_type"] == "GIAO_TAN_NOI":
+            if prefs["delivery_type"] == "GIAO_TAN_NOI":
                 question = f"Bạn có muốn giao đến địa chỉ đã lưu này không?\n{default_address}"
             else:
                 question = f"Bạn đang ở địa chỉ đã lưu này hay muốn dùng địa chỉ khác để tìm cửa hàng gần nhất?\n{default_address}"
@@ -1538,43 +1505,6 @@ def _run_agent_impl(
     branch_choice_result = _resolve_pending_branch_choice(session_id, user_message, history=history)
     if branch_choice_result:
         return _advance_checkout_if_ready(session_id, branch_choice_result)
-
-    # Confirmation is resolved from the server-side pending checkout state.
-    # Frontend history is presentation data and may be truncated, reformatted or
-    # omitted, so it must not decide whether a real checkout can proceed.
-    if prefs.get("summary_fingerprint"):
-        import os
-        use_t1 = os.getenv("USE_T1_CONFIRM", "false").lower() == "true"
-        if use_t1:
-            pending = cart_manager.get_pending_action(session_id)
-            pending_type = pending.get("type") if pending else "confirm_checkout"
-            from src.agents.tier1 import classify_confirmation
-            classification = classify_confirmation(user_message, pending_type)
-            is_yes = (classification == "YES")
-            is_ambiguous = (classification == "AMBIGUOUS")
-        else:
-            is_yes = _is_plain_confirmation(user_message)
-            is_ambiguous = False
-
-        if is_ambiguous:
-            return {
-                "reply": "Bạn có xác nhận chốt đơn hay không? Vui lòng trả lời rõ 'có' hoặc 'không' nhé.",
-                "gate": "confirm_checkout_ambiguous",
-                "checkout_payload": None,
-                "tool_calls_log": [],
-                "error": None
-            }
-
-        if is_yes:
-            from src.function_calling.tools.cart_tools import execute_confirm_checkout
-            checkout_res = execute_confirm_checkout(session_id)
-            if checkout_res.get("status") in {"success", "already_processed"}:
-                order_id = checkout_res.get("order_id", "")
-                reply = f"🎉 Đặt hàng thành công! Mã đơn hàng của bạn là: **{order_id}**. Cảm ơn bạn đã ủng hộ!"
-            else:
-                reply = checkout_res.get("message", "Đơn hàng chưa được tạo. Bạn có thể kiểm tra lại giỏ hàng và thử lại.")
-            return {"reply": reply, "gate": "confirm_checkout", "checkout_payload": None,
-                    "tool_calls_log": [{"tool": "confirm_checkout", "result": checkout_res}], "error": None}
 
     completed_pending = _complete_pending_products_from_options(session_id, user_message)
     if completed_pending:
@@ -1801,7 +1731,7 @@ def _run_agent_impl(
         cart_manager.set_checkout_context(
             session_id, voucher_decided=True, voucher_offer_pending=None
         )
-        result["reply"] = _checkout_choices_prompt(session_id, result.get("reply") or "")
+        result["reply"] = _cart_ready_reply(result.get("reply") or "")
 
     return _advance_checkout_if_ready(session_id, result)
 

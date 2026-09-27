@@ -19,6 +19,7 @@ const isCheckoutConfirmation = (value) => {
 
   const exact = new Set([
     'dong y', 'dong y chot don', 'dong y dat hang',
+    'oke xac nhan', 'ok xac nhan', 'okay xac nhan',
     'xac nhan', 'xac nhan dat hang', 'xac nhan chot don',
     'ok', 'oke', 'okay', 'chot', 'chot don', 'dat di', 'dat luon',
     'tien hanh', 'on roi', 'dung roi', 'chuan roi',
@@ -487,6 +488,7 @@ export default function ChatWidget({ user, socketUrl }) {
   const [unread, setUnread] = useState(0);
   const [conversation, setConversation] = useState(null);
   const [pendingOrder, setPendingOrder] = useState(null);
+  const confirmingOrderRef = useRef(false);
   const [aiConversationId, setAiConversationId] = useState(loadConversationId);
   const [orderConfirming, setOrderConfirming] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
@@ -727,9 +729,10 @@ export default function ChatWidget({ user, socketUrl }) {
     return response?.data || response;
   }, [effectiveUserId, aiConversationId]);
 
-  // The popup button and a typed confirmation must execute the same checkout.
+  // The inline button and a typed confirmation execute the same checkout.
   const confirmPendingOrder = useCallback(async () => {
-    if (!pendingOrder || orderConfirming) return;
+    if (!pendingOrder || confirmingOrderRef.current) return;
+    confirmingOrderRef.current = true;
     setOrderConfirming(true);
     try {
       if (!pendingOrder.paymentMethod || !pendingOrder.deliveryType) {
@@ -747,13 +750,7 @@ export default function ChatWidget({ user, socketUrl }) {
         throw new Error(result?.message || 'Đơn hàng chưa được tạo.');
       }
 
-      // Clearing is idempotent. Do it through the customer API as a fallback in
-      // case the AI service could create the order but could not sync the cart.
-      try {
-        await apiClient.delete(`/cart/clear/${effectiveUserId}`);
-      } catch (cartError) {
-        console.warn('[ChatWidget] Order created but customer cart clear failed:', cartError);
-      }
+      // Order Service clears the consumed cart; replay only refreshes the UI.
       window.dispatchEvent(new CustomEvent('refresh-cart'));
       window.dispatchEvent(new CustomEvent('refresh-orders'));
       localStorage.removeItem(`avengers_ai_voucher_${effectiveUserId}`);
@@ -761,7 +758,7 @@ export default function ChatWidget({ user, socketUrl }) {
 
       const orderId = result?.order_id ? ` Mã đơn: **${result.order_id}**.` : '';
       const awaitsOnlinePayment = Boolean(result?.redirect_url || result?.payment_details?.qr_img_url);
-      addAIMsg(`${awaitsOnlinePayment ? '✅ Đơn hàng đã được tạo và đang chờ thanh toán.' : '🎉 Đơn hàng đã được ghi nhận.'}${orderId} Tổng cộng: **${fmtVND(pendingOrder.total)}**`, {
+      addAIMsg(`${awaitsOnlinePayment ? '✅ Đơn hàng đã được tạo và đang chờ thanh toán.' : '🎉 Đơn hàng đã được ghi nhận.'}${orderId} Tổng cộng: **${fmtVND(result?.total_price ?? pendingOrder.total)}**`, {
         _paymentUrl: result?.redirect_url || result?.payment_details?.qr_img_url || null,
         _paymentLabel: result?.redirect_url ? 'Tiếp tục thanh toán VNPAY' : result?.payment_details?.qr_img_url ? 'Mở mã QR thanh toán' : null,
         _quickReplies: [{ id: 'orders', label: 'Xem đơn hàng', text: 'Xem đơn hàng của tôi' }],
@@ -771,6 +768,7 @@ export default function ChatWidget({ user, socketUrl }) {
     } catch (error) {
       addAIMsg(error?.response?.data?.message || error?.message || 'Chưa thể hoàn tất đơn hàng. Giỏ của bạn vẫn được giữ lại để thử lại.');
     } finally {
+      confirmingOrderRef.current = false;
       setOrderConfirming(false);
     }
   }, [pendingOrder, orderConfirming, effectiveUserId, aiConversationId, addAIMsg, scrollBottom]);
@@ -804,6 +802,12 @@ export default function ChatWidget({ user, socketUrl }) {
       const agentReply = agentData?.reply;
           const checkoutPayload = agentData?.checkout_payload;
       const agentError = agentData?.error;
+      const confirmed = (agentData?.tool_calls_log || []).some((entry) =>
+        entry.tool === 'confirm_checkout' && ['success', 'already_processed'].includes(entry.result?.status));
+      const serverCart = agentData?.ui_payload?.cart;
+      if (confirmed || (serverCart && !serverCart.checkout_prefs?.summary_fingerprint && !serverCart.checkout_prefs?.checkout_submission)) {
+        setPendingOrder(null);
+      }
 
       // If AI updated cart, refresh frontend cart context
       if (agentData?.tool_calls_log && agentData.tool_calls_log.some(t => ['add_to_cart', 'remove_from_cart', 'remove_cart_item', 'update_cart_item', 'clear_cart', 'confirm_checkout'].includes(t.tool))) {
@@ -867,7 +871,7 @@ export default function ChatWidget({ user, socketUrl }) {
         const extras = {
           _products: Array.isArray(payload.products) ? payload.products : [],
           _stores: Array.isArray(payload.branches) ? payload.branches : [],
-          _vouchers: Array.isArray(payload.vouchers) ? payload.vouchers : [],
+          _vouchers: !confirmed && Array.isArray(payload.vouchers) ? payload.vouchers : [],
           _quickReplies: QUICK_ACTIONS.slice(0, 3),
         };
         addAIMsg(agentReply, extras);
@@ -1313,37 +1317,20 @@ export default function ChatWidget({ user, socketUrl }) {
               );
             })}
 
+            {pendingOrder && (
+              <div style={{ padding: '10px 14px', background: '#FFF', borderRadius: 12, border: '1px solid #F0808050' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 800 }}>Tổng cộng: {fmtVND(pendingOrder.total)}</span>
+                  <button onClick={() => setPendingOrder(null)} disabled={orderConfirming} style={{ border: 0, borderRadius: 16, padding: '6px 10px', cursor: 'pointer' }}>Để sau</button>
+                  <button onClick={confirmPendingOrder} disabled={orderConfirming} style={{ border: 0, borderRadius: 16, padding: '6px 12px', background: '#b22830', color: '#FFF', cursor: 'pointer' }}>
+                    {orderConfirming ? 'Đang đặt...' : 'Xác nhận đặt hàng'}
+                  </button>
+                </div>
+              </div>
+            )}
             {isTyping && <TypingBubble />}
             <div ref={bottomRef} />
           </div>
-
-          {/* Pending Order Confirmation Bar */}
-          {pendingOrder && (
-            <div style={{ margin: '0 12px 8px', background: '#FFFFFF', borderRadius: 14, border: '1px solid #F0808050', boxShadow: '0 4px 16px rgba(240,128,128,0.15)', overflow: 'hidden' }}>
-              <div style={{ background: 'linear-gradient(90deg,#F08080,#E55353)', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ color: '#FFF', fontWeight: 800, fontSize: '0.76rem' }}>🛒 XÁC NHẬN ĐẶT HÀNG</span>
-              </div>
-              {pendingOrder.message && <p style={{ margin: '8px 14px 4px', fontSize: '0.8rem', fontWeight: 700, color: '#2D3748' }}>{pendingOrder.message}</p>}
-              <div style={{ padding: '4px 14px 8px' }}>
-                {pendingOrder.items.filter((i) => i.matched).map((item, idx) => (
-                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid #EDF2F7' }}>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 700 }}>x{item.quantity} {item.product_name}</span>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 900, color: '#F08080' }}>{fmtVND(item.subtotal || 0)}</span>
-                  </div>
-                ))}
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-                  <span style={{ fontWeight: 800, fontSize: '0.82rem' }}>Tổng cộng</span>
-                  <span style={{ fontWeight: 900, color: '#F08080', fontSize: '0.86rem' }}>{fmtVND(pendingOrder.total)}</span>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 8, padding: '0 14px 12px', justifyContent: 'flex-end' }}>
-                <button onClick={() => setPendingOrder(null)} style={{ all: 'unset', cursor: 'pointer', padding: '6px 16px', borderRadius: 20, background: '#EDF2F7', color: '#4A5568', fontWeight: 700, fontSize: '0.76rem' }}>Huỷ</button>
-                <button onClick={confirmPendingOrder} disabled={orderConfirming} style={{ all: 'unset', cursor: orderConfirming ? 'not-allowed' : 'pointer', padding: '6px 18px', borderRadius: 20, background: 'linear-gradient(90deg,#F08080,#E55353)', color: '#FFF', fontWeight: 800, fontSize: '0.76rem', opacity: orderConfirming ? 0.75 : 1 }}>
-                  {orderConfirming ? 'Đang đặt...' : '✅ Đặt ngay'}
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* Reply-to Bar */}
           {replyTo && (

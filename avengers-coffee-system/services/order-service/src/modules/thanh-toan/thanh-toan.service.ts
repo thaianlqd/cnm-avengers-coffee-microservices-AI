@@ -1,9 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, EntityManager, In, IsNull, Repository } from 'typeorm';
 import { RedisCacheService } from '../../infrastructure/cache/redis-cache.service';
 import { RabbitMqService } from '../../infrastructure/messaging/rabbitmq.service';
+import { quoteDeliveryFee } from '../cart/delivery-pricing';
 import { CartItem } from '../cart/cart.entity';
 import { NotificationService } from '../notification/notification.service';
 import { VoucherService } from '../voucher/voucher.service';
@@ -19,6 +20,8 @@ import { SurveyService } from '../../services/survey.service';
 import { SmtpService } from '../smtp/smtp.service';
 
 type KhoiTaoThanhToanDto = {
+  checkout_action_id?: string;
+  expected_final_total?: number;
   phuong_thuc_thanh_toan: 'VNPAY' | 'NGAN_HANG_QR' | 'THANH_TOAN_KHI_NHAN_HANG' | 'VI_DIEN_TU';
   dia_chi_giao_hang: string;
   khung_gio_giao?: string;
@@ -1706,6 +1709,46 @@ export class ThanhToanService {
   }
 
   async khoiTaoThanhToan(maNguoiDung: string, dto: KhoiTaoThanhToanDto, ipAddr = '127.0.0.1') {
+    if (!dto.checkout_action_id) return this.khoiTaoThanhToanMoi(maNguoiDung, dto, ipAddr);
+    if (!/^[0-9a-f-]{36}$/i.test(dto.checkout_action_id)) throw new BadRequestException('Checkout action khong hop le');
+    const digest = crypto.createHash('sha256').update(`${maNguoiDung}:${dto.checkout_action_id}`).digest('hex');
+    const orderId = `${digest.slice(0, 8)}-${digest.slice(8, 12)}-4${digest.slice(13, 16)}-8${digest.slice(17, 20)}-${digest.slice(20, 32)}`;
+    const runner = this.donHangRepo.manager.connection.createQueryRunner();
+    await runner.connect();
+    let locked = false;
+    try {
+      const lockResult = await runner.query('SELECT pg_try_advisory_lock(hashtext($1)) AS locked', [`checkout:${orderId}`]);
+      locked = lockResult[0]?.locked === true;
+      if (!locked) throw new ConflictException('Checkout dang duoc xu ly. Vui long thu lai cung yeu cau.');
+      const existing = await this.donHangRepo.findOne({ where: { ma_don_hang: orderId } });
+      if (existing) {
+        // The identity belongs to this customer/action. Replay payment details,
+        // never repeat wallet debit, voucher consumption, or order creation.
+        if (existing.phuong_thuc_thanh_toan !== dto.phuong_thuc_thanh_toan || existing.loai_don_hang !== dto.delivery_mode || existing.dia_chi_giao_hang !== dto.dia_chi_giao_hang) {
+          throw new ConflictException('Checkout action da duoc dung cho thong tin khac');
+        }
+        const transaction = await this.giaoDichRepo.findOne({ where: { ma_don_hang: orderId } });
+        if (!transaction || (dto.phuong_thuc_thanh_toan === 'VI_DIEN_TU' && existing.trang_thai_thanh_toan !== 'DA_THANH_TOAN')) {
+          throw new ConflictException('Don hang da duoc tao, can doi soat thanh toan. Khong tao don moi.');
+        }
+        const result: any = { don_hang: existing, giao_dich: transaction, already_processed: true };
+        if (dto.phuong_thuc_thanh_toan === 'VNPAY') {
+          result.redirect_url = this.taoUrlVnpayThat(maNguoiDung, orderId, Number(existing.tong_tien), transaction.ma_tham_chieu, this.chuanHoaIpVnpay(ipAddr));
+        } else if (dto.phuong_thuc_thanh_toan === 'NGAN_HANG_QR') {
+          result.payment_details = { ma_don_hang: orderId, so_tien: Number(existing.tong_tien), ma_tham_chieu: transaction.ma_tham_chieu,
+            qr_img_url: this.taoQrNganHang(Number(existing.tong_tien), transaction.ma_tham_chieu),
+            qr_fallback_url: this.taoQrNganHangDuPhong(Number(existing.tong_tien), transaction.ma_tham_chieu) };
+        }
+        return result;
+      }
+      return await this.khoiTaoThanhToanMoi(maNguoiDung, dto, ipAddr, orderId);
+    } finally {
+      try { if (locked) await runner.query('SELECT pg_advisory_unlock(hashtext($1))', [`checkout:${orderId}`]); }
+      finally { await runner.release(); }
+    }
+  }
+
+  private async khoiTaoThanhToanMoi(maNguoiDung: string, dto: KhoiTaoThanhToanDto, ipAddr: string, checkoutOrderId?: string) {
     const isKiosk = dto.delivery_mode === 'KIOSK';
 
     // Với KIOSK: địa chỉ giao hàng không bắt buộc (mua tại chỗ)
@@ -1759,7 +1802,11 @@ export class ThanhToanService {
       soTienGiam = voucherResult.so_tien_giam;
       maVoucherApDung = voucherResult.voucher.ma_voucher;
     }
-    const tongTien = Math.max(0, tongTienGoc - soTienGiam);
+    const shipping = await quoteDeliveryFee(maNguoiDung, tongTienGoc, dto.delivery_mode, dto.delivery_method);
+    const tongTien = Math.max(0, tongTienGoc - soTienGiam) + shipping.delivery_fee;
+    if (dto.expected_final_total !== undefined && Number(dto.expected_final_total) !== tongTien) {
+      throw new ConflictException('Tong tien da thay doi. Vui long xem lai tom tat don hang.');
+    }
     // Khách hàng App/Web:
     let nearestInfo: any = null;
     let branchCode: string;
@@ -1799,7 +1846,7 @@ export class ThanhToanService {
       ? 'CHO_THANH_TOAN_KHI_NHAN_HANG'
       : 'CHO_XU_LY';
 
-    const maDonHang = crypto.randomUUID();
+    const maDonHang = checkoutOrderId || crypto.randomUUID();
 
     // 1. Tạo đơn hàng
     const donHang = await this.donHangRepo.save(this.donHangRepo.create({
@@ -2234,7 +2281,7 @@ export class ThanhToanService {
               loai: 'PAYMENT',
               du_lieu: { ma_don_hang: donHang.ma_don_hang, trang_thai_thanh_toan: 'DA_THANH_TOAN' },
             }),
-            this.tichDiemLoyalty(donHang.ma_nguoi_dung, Number(donHang.tong_tien) + Number(donHang.so_tien_giam || 0)),
+            this.tichDiemLoyaltyDonHang(donHang),
           );
         }
         await Promise.all(promises);
@@ -2330,7 +2377,7 @@ export class ThanhToanService {
               loai: 'PAYMENT',
               du_lieu: { ma_don_hang: donHang.ma_don_hang, trang_thai_thanh_toan: 'DA_THANH_TOAN' },
             }),
-            this.tichDiemLoyalty(donHang.ma_nguoi_dung, Number(donHang.tong_tien) + Number(donHang.so_tien_giam || 0)),
+            this.tichDiemLoyaltyDonHang(donHang),
           );
         }
         await Promise.all(promises);
@@ -3624,6 +3671,19 @@ export class ThanhToanService {
     }
 
     return { message: 'Cap nhat trang thai thanh cong', order: updated };
+  }
+
+  // Online callbacks keep the existing points basis: item subtotal only.
+  // The paid total now also contains delivery, so it cannot reconstruct it.
+  private async tichDiemLoyaltyDonHang(donHang: DonHang): Promise<void> {
+    if (!donHang.ma_nguoi_dung) return;
+    try {
+      const items = await this.chiTietRepo.find({ where: { ma_don_hang: donHang.ma_don_hang } });
+      const subtotal = items.reduce((sum, item) => sum + Number(item.gia_ban) * Number(item.so_luong), 0);
+      await this.tichDiemLoyalty(donHang.ma_nguoi_dung, subtotal);
+    } catch {
+      // Keep loyalty failures independent of payment confirmation.
+    }
   }
 
   // Tích điểm loyalty cho user (fire-and-forget — không làm hỏng luồng thanh toán)
