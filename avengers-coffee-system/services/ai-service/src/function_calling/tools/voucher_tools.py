@@ -158,16 +158,6 @@ def execute_apply_voucher(session_id: str, voucher_code: str) -> Dict[str, Any]:
 
     code = str(voucher_code).strip().upper()
     prefs = cart_manager.get_checkout_prefs(session_id)
-    if str(prefs.get("voucher_code") or "").strip().upper() == code:
-        discount = float(prefs.get("discount_amount") or 0)
-        total = float(cart_manager.get_cart(session_id).get("total_price") or 0)
-        return {
-            "status": "already_applied",
-            "voucher_code": code,
-            "so_tien_giam": discount,
-            "final_total": max(0, total - discount),
-            "message": f"Mã {code} đã được áp dụng rồi; tổng tiền không thay đổi.",
-        }
     try:
         from src.function_calling.tools.cart_tools import sync_authoritative_cart
         cart = sync_authoritative_cart(session_id)
@@ -186,6 +176,7 @@ def execute_apply_voucher(session_id: str, voucher_code: str) -> Dict[str, Any]:
         "ma_voucher": code,
         "tong_tien": total,
         "user_id": valid_uid or "",
+        "has_toppings": any(bool(item.get("toppings")) for item in cart.get("items") or []),
     }
 
     try:
@@ -217,6 +208,8 @@ def execute_apply_voucher(session_id: str, voucher_code: str) -> Dict[str, Any]:
         session_id,
         voucher_code=code,
         discount_amount=so_tien_giam,
+        voucher_decided=True,
+        voucher_revalidation_required=None,
     )
 
     discount_str = f"{so_tien_giam:,.0f}".replace(",", ".")
@@ -227,8 +220,8 @@ def execute_apply_voucher(session_id: str, voucher_code: str) -> Dict[str, Any]:
         "so_tien_giam": so_tien_giam,
         "final_total": final_total,
         "message": (
-            f"Đã áp dụng mã {code}! Giảm {discount_str}đ — "
-            f"Tổng thanh toán còn lại: {final_str}đ."
+            f"Tạm tính: {total:,.0f}đ\nVoucher {code}: -{discount_str}đ\n"
+            f"Thành tiền hiện tại: {final_str}đ."
         ),
     }
 

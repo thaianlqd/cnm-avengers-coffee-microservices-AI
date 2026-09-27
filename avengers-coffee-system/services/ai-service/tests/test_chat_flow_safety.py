@@ -342,6 +342,7 @@ def test_checkout_quote_does_not_mutate_cart_or_invalidate_summary(monkeypatch):
         },
     )
 
+    cart_manager.set_checkout_context(session, voucher_decided=True)
     checkout = execute_request_checkout(session)
     assert checkout["status"] == "require_confirmation"
     assert checkout["order_summary"]["items"][0]["line_total"] == 105000
@@ -358,18 +359,22 @@ def test_checkout_quote_does_not_mutate_cart_or_invalidate_summary(monkeypatch):
     assert cart_manager.get_checkout_prefs(session).get("summary_fingerprint")
 
 
-def test_applying_same_voucher_is_idempotent(monkeypatch):
+def test_applying_same_voucher_revalidates_without_stacking_discount(monkeypatch):
     session = "session-voucher-idempotent"
     cart_manager.add_item(session, "1", "Coffee", 100000)
     cart_manager.set_checkout_context(session, voucher_code="SAVE10", discount_amount=10000)
-    monkeypatch.setattr(
-        "src.function_calling.tools.voucher_tools.requests.post",
-        lambda *_args, **_kwargs: pytest.fail("same voucher must not be validated twice"),
-    )
-
+    monkeypatch.setattr("src.function_calling.tools.cart_tools.sync_authoritative_cart", lambda sid: cart_manager.get_cart(sid))
+    from types import SimpleNamespace
+    calls = []
+    def validate(*args, **kwargs):
+        calls.append(kwargs["json"])
+        return SimpleNamespace(ok=True, json=lambda: {"so_tien_giam": 10000})
+    monkeypatch.setattr("src.function_calling.tools.voucher_tools.requests.post", validate)
     result = execute_apply_voucher(session, "save10")
-    assert result["status"] == "already_applied"
+    assert result["status"] == "ok"
     assert result["final_total"] == 90000
+    assert len(calls) == 1
+    assert cart_manager.get_checkout_prefs(session)["discount_amount"] == 10000
 
 
 def test_confirmation_phrase_must_be_plain_and_unambiguous():
@@ -865,7 +870,7 @@ def test_numbered_voucher_choice_never_falls_through_to_product_parser(monkeypat
     assert result["tool_calls_log"][0]["args"]["voucher_code"] == "SECOND20"
 
 
-def test_best_voucher_is_selected_once_and_prompts_both_checkout_choices(monkeypatch):
+def test_best_voucher_is_selected_once_and_waits_for_checkout_request(monkeypatch):
     session = "session-best-voucher"
     cart_manager.add_item(session, "1", "Coffee", 100000)
     cart_manager.set_checkout_context(
@@ -889,8 +894,10 @@ def test_best_voucher_is_selected_once_and_prompts_both_checkout_choices(monkeyp
     apply_logs = [entry for entry in result["tool_calls_log"] if entry.get("tool") == "apply_voucher"]
     assert len(apply_logs) == 1
     assert apply_logs[0]["args"]["voucher_code"] == "BEST50"
-    assert "Hình thức nhận hàng" in result["reply"]
-    assert "Phương thức thanh toán" in result["reply"]
+    assert "Giỏ hàng của bạn đã hoàn tất" in result["reply"]
+    assert "Hình thức nhận hàng" not in result["reply"]
+    assert "Phương thức thanh toán" not in result["reply"]
+    assert not cart_manager.get_checkout_prefs(session).get("checkout_requested")
     assert not cart_manager.get_checkout_prefs(session).get("pending_products")
 
 

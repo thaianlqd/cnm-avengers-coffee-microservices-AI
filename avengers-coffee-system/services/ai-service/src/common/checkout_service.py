@@ -9,9 +9,9 @@ from sqlalchemy import text
 logger = logging.getLogger(__name__)
 
 def finalize_checkout(
-    session_id: str, 
-    payment_method: str = "THANH_TOAN_KHI_NHAN_HANG", 
-    delivery_type: str = "DELIVERY",
+    session_id: str,
+    payment_method: str = None,
+    delivery_type: str = None,
     delivery_address: str = None,
 ) -> Dict[str, Any]:
     """
@@ -31,13 +31,15 @@ def finalize_checkout(
         return {"status": "invalid_delivery_type", "message": "Hình thức nhận hàng không hợp lệ. Vui lòng xác nhận lại."}
 
     cart = cart_manager.get_cart(cart_session_id)
-    
+    prefs = cart_manager.get_checkout_prefs(cart_session_id)
+    submission = prefs.get("checkout_submission")
+
     # 1. Kiểm tra giỏ hàng rỗng
-    if cart.get("is_empty"):
+    if cart.get("is_empty") and not submission:
         last_order = cart.get("last_order_id")
         if last_order:
             return {
-                "status": "already_processed", 
+                "status": "already_processed",
                 "message": f"Đơn hàng của bạn đã được đặt thành công trước đó (Mã đơn: {last_order}). Cảm ơn bạn!",
                 "order_id": last_order
             }
@@ -53,7 +55,7 @@ def finalize_checkout(
         order_service_url = os.getenv("ORDER_SERVICE_URL", "http://order-service:3005")
         token = _get_service_jwt(valid_uid)
         headers = {"Authorization": f"Bearer {token}"}
-        
+
         if delivery_type in ["MANG_DI", "TAI_CHO"]:
             dia_chi = "Nhận tại: " + cart.get("branch_name", "Cửa hàng")
         else:
@@ -79,9 +81,21 @@ def finalize_checkout(
             "branch_code": cart.get("branch_id"),
             "dia_chi_giao_hang": dia_chi,
             "session_id": customer_session_id,
+            "expected_final_total": (prefs.get("summary_amounts") or {}).get("final_total"),
         }
+        payload["checkout_action_id"] = prefs.get("checkout_action_id")
         if voucher_code:
             payload["ma_voucher"] = voucher_code
+        if submission:
+            payload = submission["payload"]
+        else:
+            if not payload["checkout_action_id"]:
+                return {"status": "no_pending_checkout", "message": "Thiếu bản tóm tắt đã xác nhận."}
+            # Persist the exact request before HTTP I/O. A timeout can retry only
+            # this action even if Order Service already emptied the real cart.
+            cart_manager.set_checkout_context(cart_session_id, checkout_submission={
+                "action_id": payload["checkout_action_id"], "payload": payload,
+            })
 
         # Use the same checkout application service as the customer web. It
         # reads the authoritative cart, revalidates voucher and calculates the
@@ -93,7 +107,7 @@ def finalize_checkout(
             json=payload,
             timeout=15,
         )
-        
+
         if resp.status_code in [200, 201]:
             resp_data = resp.json()
             order_id = (
@@ -109,27 +123,33 @@ def finalize_checkout(
                     "status": "order_status_unknown",
                     "message": "Hệ thống chưa xác nhận được mã đơn hàng. Giỏ hàng vẫn được giữ lại; vui lòng kiểm tra lịch sử đơn trước khi thử lại.",
                 }
-            
-            # Thành công -> Xóa giỏ hàng và gán last_order_id
-            cart_manager.clear_cart(cart_session_id, order_id=str(order_id))
-            
-            return {
-                "status": "success",
+
+            server_total = resp_data.get("don_hang", {}).get("tong_tien")
+            if server_total is None:
+                server_total = resp_data.get("tong_tien")
+            if server_total is None:
+                cart_manager.set_is_checking_out(cart_session_id, False)
+                return {"status": "order_status_unknown", "message": "Đơn đã được tiếp nhận nhưng chưa xác minh được tổng thanh toán. Vui lòng kiểm tra lại đơn."}
+
+            result = {
+                "status": "already_processed" if resp_data.get("already_processed") else "success",
                 "message": f"Đặt hàng thành công! Đơn hàng của bạn đang được chuẩn bị. (Mã đơn: {order_id})",
                 "order_id": str(order_id),
-                "total_price": float(
-                    resp_data.get("don_hang", {}).get("tong_tien")
-                    or resp_data.get("tong_tien")
-                    or cart.get("total_price", 0)
-                ),
+                "total_price": float(server_total),
                 "discount_amount": float(resp_data.get("don_hang", {}).get("so_tien_giam") or 0),
                 "payment_method": payment_method,
                 "redirect_url": resp_data.get("redirect_url"),
                 "payment_details": resp_data.get("payment_details"),
             }
+            cart_manager.clear_cart(cart_session_id, order_id=str(order_id), checkout_result=result)
+            return result
         else:
             # Thất bại từ server -> Mở khóa giỏ hàng
             cart_manager.set_is_checking_out(cart_session_id, False)
+            if resp.status_code in {400, 401, 403, 404, 422}:
+                cart_manager.set_checkout_context(cart_session_id, checkout_submission=None)
+            if resp.status_code == 409 and "Tong tien da thay doi" in resp.text:
+                cart_manager.set_checkout_context(cart_session_id, checkout_submission=None, summary_fingerprint=None, checkout_action_id=None)
             logger.error("[CheckoutService] Order API failed: %s", resp.text)
             return {"status": "error", "message": f"Lỗi tạo đơn hàng: {resp.text}"}
 

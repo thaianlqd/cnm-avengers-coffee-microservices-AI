@@ -1,6 +1,8 @@
 from contextlib import contextmanager
 from contextvars import ContextVar
 import hashlib
+import threading
+import requests
 from typing import Any, Dict, Iterator, List, Optional
 from src.common import cart_manager
 
@@ -149,10 +151,23 @@ def sync_authoritative_cart(session_id: str) -> Dict[str, Any]:
         cart_version=int(payload["cart_version"]),
         user_id=str(payload.get("user_id") or valid_uid),
     )
+    if cart_manager.get_checkout_prefs(session_id).get("voucher_revalidation_required"):
+        code = cart_manager.get_checkout_prefs(session_id).get("voucher_code")
+        try:
+            quote = _quote_authoritative_cart(session_id, code)
+        except requests.exceptions.HTTPError as exc:
+            if exc.response is None or exc.response.status_code not in {400, 404, 422}:
+                raise
+            cart_manager.set_checkout_context(session_id, voucher_code=None, discount_amount=None,
+                voucher_revalidation_required=None, voucher_decided=None, voucher_invalidated=code)
+        else:
+            cart_manager.set_checkout_context(session_id, voucher_code=quote.get("voucher_code"),
+                discount_amount=quote.get("discount_amount"), voucher_decided=True, voucher_revalidation_required=None)
+        cart = cart_manager.get_cart(session_id)
     return {**cart, "authoritative": True, "cart_sync_status": "ok"}
 
 
-def _quote_authoritative_cart(session_id: str, voucher_code: Optional[str] = None) -> Optional[Dict[str, Any]]:
+def _quote_authoritative_cart(session_id: str, voucher_code: Optional[str] = None, *, include_delivery: bool = False) -> Optional[Dict[str, Any]]:
     from src.function_calling.helpers import _get_service_jwt, _require_valid_session
 
     valid_uid = _require_valid_session(_customer_session_id(session_id))
@@ -163,7 +178,11 @@ def _quote_authoritative_cart(session_id: str, voucher_code: Optional[str] = Non
         "POST",
         f"/cart/{valid_uid}/quote",
         token,
-        json={"voucher_code": voucher_code},
+        json={"voucher_code": voucher_code, **({
+            "delivery_mode": {"MANG_DI": "LAY_TAI_QUAN", "TAI_CHO": "DUNG_TAI_CHO"}.get(
+                cart_manager.get_checkout_prefs(session_id).get("delivery_type"), cart_manager.get_checkout_prefs(session_id).get("delivery_type")),
+            "delivery_method": "INTERNAL",
+        } if include_delivery else {})},
     )
     response.raise_for_status()
     return response.json()
@@ -631,6 +650,16 @@ def execute_get_cart_quote(session_id: str) -> Dict[str, Any]:
     voucher_code = str(prefs.get("voucher_code") or "").strip().upper() or None
     try:
         quote = _quote_authoritative_cart(session_id, voucher_code)
+    except requests.exceptions.HTTPError as exc:
+        if voucher_code and exc.response is not None and exc.response.status_code in {400, 404, 422}:
+            cart_manager.set_checkout_context(session_id, voucher_code=None, discount_amount=None,
+                voucher_decided=None, voucher_invalidated=voucher_code, voucher_revalidation_required=None)
+            try:
+                quote = _quote_authoritative_cart(session_id)
+            except Exception as retry_exc:
+                return {"status": "error", "message": f"Chưa thể xác minh giá: {retry_exc}", "cart": cart}
+        else:
+            return {"status": "error", "message": f"Chưa thể xác minh giá và voucher: {exc}", "cart": cart}
     except Exception as exc:
         return {"status": "error", "message": f"Chưa thể xác minh giá và voucher: {exc}", "cart": cart}
     quote = quote or {
@@ -730,6 +759,8 @@ def execute_request_checkout(
         return {"status": "invalid_delivery_type", "message": "Hình thức nhận hàng chưa được hệ thống nhận diện. Hãy hỏi khách chọn lại."}
 
     prefs = cart_manager.get_checkout_prefs(session_id)
+    if prefs.get("checkout_submission"):
+        return {"status": "processing", "message": "Đơn đã gửi xử lý. Hãy xác nhận lại cùng đơn để lấy kết quả."}
     if delivery_address is not None:
         cart_manager.set_checkout_prefs(session_id, delivery_address=delivery_address)
         prefs = cart_manager.get_checkout_prefs(session_id)
@@ -737,10 +768,8 @@ def execute_request_checkout(
     delivery_type = requested_delivery or prefs.get("delivery_type")
     try:
         cart = sync_authoritative_cart(session_id)
-    except Exception:
-        # TODO(Batch checkout safety): authenticated checkout must block when
-        # authoritative cart sync fails instead of trusting this local mirror.
-        cart = cart_manager.get_cart(session_id)
+    except Exception as exc:
+        return {"status": "cart_sync_error", "message": f"Chưa xác minh được giỏ hàng: {exc}"}
     if cart["is_empty"]:
         return {
             "status": "empty_cart",
@@ -796,11 +825,13 @@ def execute_request_checkout(
     total = sum(float(i["unit_price"]) * int(i["quantity"]) for i in cart["items"])
 
     # Quote and voucher validation come from the same order-service contract
-    # used by the customer cart.
+    # used by the customer cart. Save explicit arguments before quoting so
+    # the quote uses the same fulfillment that appears in the summary.
+    cart_manager.set_checkout_prefs(session_id, payment_method, delivery_type)
     prefs_fresh = cart_manager.get_checkout_prefs(session_id)
     voucher_code = str(prefs_fresh.get("voucher_code") or "").strip().upper() or None
     try:
-        quote = _quote_authoritative_cart(session_id, voucher_code)
+        quote = _quote_authoritative_cart(session_id, voucher_code, include_delivery=True)
     except Exception as exc:
         return {
             "status": "quote_error",
@@ -822,8 +853,14 @@ def execute_request_checkout(
         discount_amount = float(prefs_fresh.get("discount_amount") or 0)
         final_total = max(0.0, total - discount_amount)
 
-    # Store checkout preferences for later confirmation
-    cart_manager.set_checkout_prefs(session_id, payment_method, delivery_type)
+    if not prefs_fresh.get("voucher_decided") or prefs_fresh.get("voucher_revalidation_required"):
+        return {"status": "need_voucher_decision", "message": "Giỏ cần hoàn tất lựa chọn voucher trước khi tóm tắt."}
+    delivery_fee = float((quote or {}).get("delivery_fee") or 0) if delivery_type == "GIAO_TAN_NOI" else 0
+    if delivery_type == "GIAO_TAN_NOI" and quote is None:
+        return {"status": "quote_error", "message": "Chưa xác minh được phí giao hàng từ Order Service."}
+
+    # Store the authoritative amounts for later confirmation.
+    cart_manager.set_checkout_context(session_id, summary_amounts={"subtotal": total, "discount_amount": discount_amount, "delivery_fee": delivery_fee, "final_total": final_total})
     summary_state = cart_manager.mark_checkout_summary(session_id)
 
     total_str = f"{total:,.0f}".replace(",", ".")
@@ -849,10 +886,12 @@ def execute_request_checkout(
     summary_lines.append(f"Tổng gốc: {total_str}đ")
     if voucher_code and discount_amount > 0:
         summary_lines.append(f"Giảm giá ({voucher_code}): -{discount_str}đ")
+    if delivery_type == "GIAO_TAN_NOI":
+        summary_lines.append(f"Phí giao hàng: {delivery_fee:,.0f}đ".replace(",", "."))
     summary_lines.append(f"Tổng thanh toán: {final_str}đ")
     summary_lines.append(f"Hình thức nhận: {delivery_type}")
     summary_lines.append(f"Thanh toán: {payment_method}")
-    if delivery_address:
+    if delivery_type == "GIAO_TAN_NOI" and delivery_address:
         summary_lines.append(f"Địa chỉ giao: {delivery_address}")
     summary_lines.append("Bạn xác nhận chốt đơn để mình tạo đơn hàng nhé.")
     summary_msg = "\n".join(summary_lines)
@@ -867,10 +906,11 @@ def execute_request_checkout(
             "total_price": total,
             "discount_amount": discount_amount,
             "final_total": final_total,
+            "delivery_fee": delivery_fee,
             "voucher_code": voucher_code,
             "payment_method": payment_method,
             "delivery_type": delivery_type,
-            "delivery_address": delivery_address,
+            "delivery_address": delivery_address if delivery_type == "GIAO_TAN_NOI" else None,
             "action_id": summary_state.get("checkout_action_id"),
             "expires_at": summary_state.get("checkout_action_expires_at"),
         },
@@ -906,7 +946,20 @@ TOOL_CONFIRM_CHECKOUT = {
     }
 }
 
-def execute_confirm_checkout(
+_CONFIRM_LOCKS: Dict[str, threading.Lock] = {}
+_CONFIRM_LOCKS_GUARD = threading.Lock()
+
+
+def execute_confirm_checkout(session_id: str, payment_method: Optional[str] = None,
+                             delivery_type: Optional[str] = None, delivery_address: Optional[str] = None,
+                             action_id: Optional[str] = None) -> Dict[str, Any]:
+    with _CONFIRM_LOCKS_GUARD:
+        lock = _CONFIRM_LOCKS.setdefault(session_id, threading.Lock())
+    with lock:
+        return _execute_confirm_checkout(session_id, payment_method, delivery_type, delivery_address, action_id)
+
+
+def _execute_confirm_checkout(
     session_id: str,
     payment_method: Optional[str] = None,
     delivery_type: Optional[str] = None,
@@ -918,7 +971,9 @@ def execute_confirm_checkout(
     try:
         sync_authoritative_cart(session_id)
     except Exception:
-        pass
+        previous = cart_manager.get_checkout_prefs(session_id)
+        if is_authenticated_cart_session(session_id) and not previous.get("checkout_submission") and not previous.get("completed_order_id"):
+            return {"status": "cart_sync_error", "message": "Chưa xác minh được giỏ hàng. Đơn chưa được tạo."}
     # Lấy lại preferences đã lưu nếu có
     prefs = cart_manager.get_checkout_prefs(session_id)
     if (
@@ -927,10 +982,16 @@ def execute_confirm_checkout(
         and prefs.get("completed_order_id")
     ):
         return {
+            **(prefs.get("completed_result") or {}),
             "status": "already_processed",
             "message": f"Đơn hàng đã được tạo trước đó (Mã đơn: {prefs['completed_order_id']}).",
             "order_id": str(prefs["completed_order_id"]),
         }
+    submission = prefs.get("checkout_submission")
+    if submission:
+        if action_id is not None and str(action_id) != str(submission.get("action_id")):
+            return {"status": "stale_checkout", "message": "Yêu cầu không khớp đơn đang xử lý."}
+        return finalize_checkout(session_id, prefs.get("payment_method"), prefs.get("delivery_type"), prefs.get("delivery_address"))
     if not prefs or not prefs.get("summary_fingerprint"):
         return {"status": "no_pending_checkout", "message": "Chưa có bản tóm tắt đơn hàng đang chờ xác nhận."}
     if prefs.get("summary_fingerprint") != cart_manager.cart_fingerprint(session_id):
@@ -961,6 +1022,15 @@ def execute_confirm_checkout(
     if not delivery_type:
         return {"status": "no_pending_checkout", "message": "Không tìm thấy hình thức nhận hàng đã xác nhận trong bản tóm tắt."}
 
+    if prefs.get("summary_amounts"):
+        try:
+            quote = _quote_authoritative_cart(session_id, prefs.get("voucher_code"), include_delivery=True)
+        except Exception:
+            return {"status": "quote_error", "message": "Giá hoặc voucher cần kiểm tra lại. Đơn chưa được tạo."}
+        if not quote or any(float(quote.get(key) or 0) != float(value) for key, value in prefs["summary_amounts"].items()):
+            cart_manager.set_checkout_context(session_id, summary_fingerprint=None)
+            return {"status": "stale_checkout", "message": "Giá/ưu đãi/phí giao hàng vừa thay đổi. Cần xem tóm tắt mới trước khi đặt."}
+
     # Recheck immediately before the irreversible order write as well.
     from src.common.inventory_validation import validate_cart_at_branch
     from src.function_calling.helpers import _get_engine
@@ -987,31 +1057,6 @@ def execute_confirm_checkout(
         delivery_address=prefs.get("delivery_address"),
     )
     
-    # Nếu tạo đơn thành công, xoá luôn main cart
-    if result.get("status") == "success":
-        import os, requests, logging
-        from src.function_calling.helpers import _get_service_jwt, _require_valid_session
-        valid_uid = _require_valid_session(_customer_session_id(session_id))
-        if valid_uid:
-            try:
-                token = _get_service_jwt(valid_uid)
-                order_service_url = os.getenv("ORDER_SERVICE_URL", "http://order-service:3005")
-                try:
-                    clear_response = requests.delete(
-                        f"{order_service_url}/cart/clear/{valid_uid}",
-                        headers={"Authorization": f"Bearer {token}"},
-                        timeout=5
-                    )
-                except requests.exceptions.ConnectionError:
-                    fallback_url = "http://host.docker.internal:3005"
-                    clear_response = requests.delete(
-                        f"{fallback_url}/cart/clear/{valid_uid}",
-                        headers={"Authorization": f"Bearer {token}"},
-                        timeout=5
-                    )
-                clear_response.raise_for_status()
-            except Exception as e:
-                logging.getLogger(__name__).error(f"[CartSync] Failed to clear main cart: {e}")
-                result["cart_sync_status"] = "error"
-                
+    # Order Service clears the consumed cart. A second DELETE here could
+    # remove new items added after the order was created.
     return result

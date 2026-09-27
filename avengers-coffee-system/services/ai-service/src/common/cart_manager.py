@@ -315,10 +315,13 @@ def replace_items_from_order_cart(
             for key in (
                 "summary_fingerprint", "checkout_action_id", "pending_action",
                 "branch_candidates", "stock_conflicts", "voucher_decided",
-                "voucher_offer_pending", "voucher_candidates", "voucher_code",
+                "voucher_offer_pending", "voucher_candidates",
                 "discount_amount", "flow_stage",
             ):
                 prefs.pop(key, None)
+            if prefs.get("voucher_code"):
+                prefs["voucher_revalidation_required"] = True
+            prefs.pop("checkout_requested", None)
             session["checkout_prefs"] = prefs
         else:
             session["checkout_prefs"] = prefs
@@ -446,7 +449,7 @@ def remove_item(session_id: str, product_id: str, size: Optional[str] = None) ->
     return get_cart(session_id)
 
 
-def clear_cart(session_id: str, order_id: Optional[str] = None) -> None:
+def clear_cart(session_id: str, order_id: Optional[str] = None, checkout_result: Optional[Dict[str, Any]] = None) -> None:
     """Xoá toàn bộ giỏ hàng của session (sau khi checkout thành công)."""
     with _get_session_lock(session_id):
         session = _get_or_create_session(session_id)
@@ -459,8 +462,9 @@ def clear_cart(session_id: str, order_id: Optional[str] = None) -> None:
         if order_id:
             session["last_order_id"] = order_id
             session["checkout_prefs"] = {
-                "completed_action_id": previous_prefs.get("checkout_action_id"),
+                "completed_action_id": previous_prefs.get("checkout_action_id") or (previous_prefs.get("checkout_submission") or {}).get("action_id"),
                 "completed_order_id": str(order_id),
+                "completed_result": checkout_result,
             }
         _touch(session_id, session, sync_db=True)
         logger.info("[CartManager] Session %s cart cleared. Last order: %s", session_id, order_id)
@@ -490,7 +494,8 @@ def set_checkout_prefs(
             changed = changed or prefs.get("delivery_type") != delivery_type
             prefs["delivery_type"] = delivery_type
         if delivery_address is not None:
-            address = str(delivery_address).strip()
+            from src.function_calling.tools.user_tools import _clean_profile_address
+            address = _clean_profile_address(delivery_address)
             changed = changed or prefs.get("delivery_address") != address
             prefs["delivery_address"] = address
         if changed:

@@ -76,7 +76,7 @@ export default function CartPage({
   
   const [deliveryMode, setDeliveryMode] = useState(() => {
     const storedTableId = sessionStorage.getItem('qr_tableId');
-    return storedTableId ? 'DUNG_TAI_CHO' : 'GIAO_TAN_NOI';
+    return storedTableId ? 'DUNG_TAI_CHO' : null;
   });
   const [selectedBranch, setSelectedBranch] = useState(() => {
     return sessionStorage.getItem('qr_storeId') || '';
@@ -211,7 +211,7 @@ export default function CartPage({
 
   const computedKhungGio = 'Giao ngay (15-30 phút)';
 
-  const [phuongThuc, setPhuongThuc] = useState('VNPAY');
+  const [phuongThuc, setPhuongThuc] = useState(null);
   const [addressForm, setAddressForm] = useState(() => ({ ...defaultAddressSelection, street: '' }));
   const [userCoordinates, setUserCoordinates] = useState(null);
   const [stockValidation, setStockValidation] = useState({
@@ -338,28 +338,42 @@ export default function CartPage({
   });
 
   const phiGiaoHangGoc = useMemo(() => {
-    if (deliveryMode !== 'GIAO_TAN_NOI') return 0;
+    if (step !== 2 || deliveryMode !== 'GIAO_TAN_NOI') return 0;
     if (deliveryMethod === 'LALAMOVE') return 25000;
     return 15000;
-  }, [deliveryMode, deliveryMethod]);
+  }, [step, deliveryMode, deliveryMethod]);
 
   const memberTierName = memData?.hang_hien_tai?.hang || 'Thành viên';
   const memberFreeshipVal = Number(memData?.quyen_loi_hien_tai?.freeship_value || 0);
   const memberFreeshipMinOrder = Number(memData?.quyen_loi_hien_tai?.freeship_min_order || 0);
 
   const isFreeshipEligible = useMemo(() => {
-    if (deliveryMode !== 'GIAO_TAN_NOI') return false;
+    if (step !== 2 || deliveryMode !== 'GIAO_TAN_NOI') return false;
     if (memberFreeshipVal <= 0) return false;
     if (memberFreeshipMinOrder > 0 && total < memberFreeshipMinOrder) return false;
     return true;
-  }, [deliveryMode, memberFreeshipVal, memberFreeshipMinOrder, total]);
+  }, [step, deliveryMode, memberFreeshipVal, memberFreeshipMinOrder, total]);
 
-  const giamPhiShipHanh = isFreeshipEligible ? Math.min(phiGiaoHangGoc, memberFreeshipVal) : 0;
-  const phiGiaoHangThucTe = Math.max(0, phiGiaoHangGoc - giamPhiShipHanh);
-
-  const discountAmount = voucherResult?.so_tien_giam || 0;
-  const tongTienSauGiamVoucher = Math.max(0, total - discountAmount);
-  const tongTienSauGiam = tongTienSauGiamVoucher + phiGiaoHangThucTe;
+  const quoteMode = step === 2 ? deliveryMode : null;
+  const { data: cartQuote, isFetching: isQuotingCart, error: cartQuoteError } = useQuery({
+    queryKey: ['cart-checkout-quote', maNguoiDung, JSON.stringify(cart), voucherResult?.ma_voucher || voucherResult?.ma_khuyen_mai, quoteMode, deliveryMethod],
+    queryFn: async () => {
+      const response = await apiClient.post(`/cart/${maNguoiDung}/quote`, {
+        voucher_code: voucherResult?.ma_voucher || voucherResult?.ma_khuyen_mai || undefined,
+        delivery_mode: quoteMode || undefined,
+        delivery_method: deliveryMethod,
+      });
+      return response.data;
+    },
+    enabled: Boolean(isLoggedInUser && cart.length && deliveryMode !== 'KIOSK'),
+    retry: false,
+  });
+  const giamPhiShipHanh = cartQuote?.delivery_fee_discount ?? (isFreeshipEligible ? Math.min(phiGiaoHangGoc, memberFreeshipVal) : 0);
+  const phiGiaoHangThucTe = step === 2 && deliveryMode === 'GIAO_TAN_NOI'
+    ? (cartQuote?.delivery_fee ?? Math.max(0, phiGiaoHangGoc - giamPhiShipHanh)) : 0;
+  const discountAmount = cartQuote?.discount_amount ?? (voucherResult?.so_tien_giam || 0);
+  const tongTienSauGiamVoucher = Math.max(0, (cartQuote?.subtotal ?? total) - discountAmount);
+  const tongTienSauGiam = cartQuote?.final_total ?? (tongTienSauGiamVoucher + phiGiaoHangThucTe);
   const cityOptions = useMemo(() => {
     const base = Object.keys(addressOptions || {});
     if (addressForm.city && !base.includes(addressForm.city)) {
@@ -481,6 +495,7 @@ export default function CartPage({
       return;
     }
     setIsCheckingVoucher(true);
+    setVoucherResult(null);
     setVoucherError('');
     try {
       const hasToppings = cart.some(item => item.toppings && item.toppings.length > 0);
@@ -770,6 +785,7 @@ export default function CartPage({
 
       const response = await apiClient.post(`/customers/${maNguoiDung}/thanh-toan/khoi-tao`, {
         phuong_thuc_giao: deliveryMode,
+        expected_final_total: cartQuote?.final_total,
         phuong_thuc_thanh_toan: phuongThuc,
         khung_gio_giao: computedKhungGio,
         phi_giao_hang: deliveryMode === 'GIAO_TAN_NOI' ? phiGiaoHangThucTe : 0,
@@ -821,6 +837,14 @@ export default function CartPage({
   }, [qrOrderStatus, queryClient, refreshCart, triggerAiRecommendationRefresh, qrOrderId]);
 
   const khoiTaoThanhToan = async () => {
+    if (!deliveryMode || !phuongThuc) {
+      setThongBao('Vui lòng chọn hình thức nhận hàng và phương thức thanh toán.');
+      return;
+    }
+    if (isLoggedInUser && deliveryMode !== 'KIOSK' && (isQuotingCart || cartQuoteError || !cartQuote)) {
+      setThongBao('Chưa xác minh được tổng tiền từ Order Service. Vui lòng thử lại.');
+      return;
+    }
     if (!cart.length) {
       setThongBao('Giỏ hàng đang trống. Vui lòng thêm sản phẩm trước khi thanh toán.');
       return;
@@ -1022,7 +1046,7 @@ export default function CartPage({
         </div>
 
         {/* FREESHIP & PRIVILEGE PROGRESS BAR */}
-        {deliveryMode === 'GIAO_TAN_NOI' && (
+        {step === 2 && deliveryMode === 'GIAO_TAN_NOI' && (
           <div className="mb-8 bg-gradient-to-r from-red-50 via-white to-red-50 text-[#b22830] rounded-[24px] p-5 sm:p-6 shadow-xs border border-red-200/80 relative overflow-hidden">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
               <div className="flex items-center gap-3.5">
@@ -1281,6 +1305,7 @@ export default function CartPage({
                   <DeliveryModeSelector selectedMode={deliveryMode} onChange={setDeliveryMode} />
                 </div>
 
+                {!deliveryMode && <p className="text-sm text-gray-600">Bạn chọn hình thức nhận hàng để tiếp tục nhé.</p>}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Cột trái form: Địa chỉ */}
                   <div className="space-y-4">
@@ -1290,7 +1315,7 @@ export default function CartPage({
                       </div>
                     )}
 
-                    {deliveryMode === 'GIAO_TAN_NOI' ? (
+                    {!deliveryMode ? null : deliveryMode === 'GIAO_TAN_NOI' ? (
                       <>
                         <h3 className="text-xs font-black uppercase text-[#c41230] tracking-widest">
                           Địa chỉ giao hàng
@@ -1657,7 +1682,7 @@ export default function CartPage({
                 {/* Tạm tính */}
                 <div className="flex justify-between items-center text-sm font-semibold text-gray-600">
                   <span>Tạm tính ({cart.reduce((s, i) => s + i.so_luong, 0)} món)</span>
-                  <span className="text-[#1a1a1a] font-extrabold">{total.toLocaleString('vi-VN')}đ</span>
+                  <span className="text-[#1a1a1a] font-extrabold">{(cartQuote?.subtotal ?? total).toLocaleString('vi-VN')}đ</span>
                 </div>
 
                 {/* Giảm giá voucher */}
@@ -1673,8 +1698,8 @@ export default function CartPage({
                   </div>
                 )}
 
-                {/* Phí giao hàng */}
-                <div className="flex flex-col gap-1">
+                {/* Phí giao hàng chỉ thuộc checkout sau khi chọn hình thức nhận. */}
+                {step === 2 && deliveryMode && <div className="flex flex-col gap-1">
                   <div className="flex justify-between items-center text-sm font-semibold text-gray-600">
                     <span>Phí giao hàng</span>
                     {deliveryMode !== 'GIAO_TAN_NOI' ? (
@@ -1710,7 +1735,7 @@ export default function CartPage({
                       )
                     )
                   )}
-                </div>
+                </div>}
 
                 <div className="h-px bg-gray-100 my-4" />
 
@@ -1939,7 +1964,7 @@ export default function CartPage({
 
                   <button
                     onClick={khoiTaoThanhToan}
-                    disabled={khoiTaoThanhToanMutation.isPending || (deliveryMode !== 'GIAO_TAN_NOI' && isAnyItemOutOfStock) || (deliveryMode === 'GIAO_TAN_NOI' && !stockValidation.canOrder)}
+                    disabled={!deliveryMode || !phuongThuc || (isLoggedInUser && deliveryMode !== 'KIOSK' && (isQuotingCart || cartQuoteError || !cartQuote)) || khoiTaoThanhToanMutation.isPending || (deliveryMode !== 'GIAO_TAN_NOI' && isAnyItemOutOfStock) || (deliveryMode === 'GIAO_TAN_NOI' && !stockValidation.canOrder)}
                     className="w-full mt-6 py-4 bg-[#c41230] hover:bg-[#a30f28] text-white rounded-full font-black uppercase text-xs sm:text-sm tracking-widest shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {khoiTaoThanhToanMutation.isPending ? (

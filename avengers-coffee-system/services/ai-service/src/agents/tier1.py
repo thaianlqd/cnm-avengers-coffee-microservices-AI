@@ -60,7 +60,7 @@ def classify_confirmation(text: str, pending_type: Optional[str]) -> Literal["YE
     no_set = set(BASE_NO)
     
     if pending_type == "confirm_checkout":
-        yes_set.update({"chotdon", "dathang"})
+        yes_set.update({"chotdon", "dathang", "dat"})
         no_set.add("huy")
     elif pending_type == "ask_more_items":
         no_set.update({"hetroi", "xongroi"})
@@ -206,6 +206,8 @@ def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict
         return {"intent": "CLEAR_CART"}
     if re.search(r"\b(xem|kiem tra|check|tom tat|xacnhan(?:\s+lai)?|xac nhan lai)\b.*\b(gio|gia)\b|\bkhong thay\b.*\btrong gio\b", norm):
         return {"intent": "VIEW_CART"}
+    if re.search(r"\b(tien hanh|thanh toan|dathang)\b", norm) and not re.search(r"\b(vnpay|cod|tien mat|ngan hang qr|chuyen khoan|vi avengers|giao tan noi|mang di|lay tai quan|dung tai cho)\b", norm):
+        return {"intent": "FINISH_CART"}
     # Concrete fulfillment/payment selections must win over the generic word
     # "thanh toán" below.  Otherwise "giao tận nơi và thanh toán COD" is
     # mistaken for FINISH_CART and the checkout menu is shown again.
@@ -214,7 +216,7 @@ def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict
     if re.search(r"\b(vnpay|cod|tien mat|ngan hang qr|chuyen khoan|vi avengers)\b", norm):
         return {"intent": "SELECT_PAYMENT"}
     if re.search(
-        r"\b(khong them|het roi|xong gio|hoan tat gio|tien hanh|thanh toan|chot gio|dat hang)\b"
+        r"\b(khong them|hetroi|xong gio|hoan tat gio|chot gio|thoi vay duoc roi|gio vay duoc roi|khong vay (?:ok|oke|okay) roi)\b"
         r"|\b(nhu hien tai|gio hien tai)\b.*\b(duoc|ok|oke)\b",
         norm,
     ):
