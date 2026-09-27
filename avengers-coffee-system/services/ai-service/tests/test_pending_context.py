@@ -8,7 +8,8 @@ from src.common import groq_service
 
 @pytest.mark.parametrize('pending, messages, expected', [
     ('ask_more_items', ['vậy oke rồi', 'thế được rồi', 'ổn rồi', 'vậy thôi', 'không cần thêm', 'chốt giỏ vậy đi', 'giỏ này được rồi', 'ừ thế nhé', 'không vậy oke rồi'], 'DONE'),
-    ('ask_more_items', ['có, cho tôi xem thêm bánh', 'mua thêm Bánh Matcha'], 'WANT_MORE'),
+    ('ask_more_items', ['có, cho tôi xem thêm bánh', 'xem menu matcha'], 'BROWSING_REQUEST'),
+    ('ask_more_items', ['muốn mua thêm', 'tôi muốn thêm món'], 'WANT_MORE_GENERIC'),
     ('select_voucher', ['áp cho tôi mã số 1 đi', 'lấy mã đầu tiên', 'dùng voucher thứ nhất'], 'SELECT_VOUCHER'),
     ('select_voucher', ['bỏ qua voucher', 'không cần'], 'SKIP_VOUCHER'),
     ('confirm_address', ['oke giao đến địa chỉ đó cho tôi đi', 'dùng địa chỉ đó đi', 'đúng chỗ đó', 'giao ở đó nhé', 'ừ địa chỉ vừa rồi', 'địa chỉ kia được', 'tôi bảo địa chỉ đó oke rồi'], 'CONFIRM_ADDRESS'),
@@ -36,9 +37,11 @@ def test_semantic_fallback_only_accepts_context_enum(monkeypatch, output, expect
         calls.append((system, json.loads(user), kwargs))
         return output
     monkeypatch.setattr(groq_service, 'groq_chat', complete)
-    original = 'Như vậy là đủ nhu cầu của mình.'
+    original = 'Nhu cầu của mình đã trọn vẹn.'
     assert classify_pending_reply(original, 'ask_more_items') == expected
-    assert calls[0][1] == {'pending_context': 'ask_more_items', 'answer': original}
+    assert calls[0][1] == {'pending_context': 'ask_more_items', 'answer': original, 'evidence': {
+        'has_resolved_product_target': False, 'has_resolved_ordinal': False, 'looks_like_catalog_query': False,
+    }}
     assert calls[0][2] == {'max_tokens': 60}
 
 

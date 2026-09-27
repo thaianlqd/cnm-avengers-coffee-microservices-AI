@@ -927,6 +927,89 @@ def _handle_pending_reply(state: OrderConversationState) -> Dict[str, Any]:
     return reply("Bạn muốn thêm món hay hoàn tất giỏ hiện tại?")
 
 
+def _load_active_product_targets() -> List[Dict[str, Any]]:
+    """Read identity only; generic shopping text is never an exact-price query."""
+    import os
+    from sqlalchemy import text
+    from src.function_calling.helpers import _get_engine
+
+    schema = os.getenv("MENU_SCHEMA", "menu")
+    try:
+        with _get_engine().connect() as conn:
+            rows = conn.execute(text(f"""
+                SELECT sp.ma_san_pham::text, sp.ten_san_pham, dm.ten_danh_muc
+                FROM {schema}.san_pham sp
+                LEFT JOIN {schema}.danh_muc dm ON dm.ma_danh_muc = sp.ma_danh_muc
+                WHERE sp.trang_thai = TRUE
+            """)).fetchall()
+        return [{"product_id": row[0], "product_name": row[1],
+                 "category": _map_db_category_to_bucket(row[2])} for row in rows]
+    except Exception:
+        return []
+
+
+def _resolve_ask_more_targets(session_id: str, message: str) -> List[Dict[str, Any]]:
+    """Accept tool-written references or canonical catalog identities, never a verb tail."""
+    message = re.sub(r"\s+", " ", message).strip()
+    refs = _resolve_structured_references(session_id, message) or []
+    requested = _requested_ordinal_categories(message)
+    if requested and not requested.issubset({ref.get("category") for ref in refs}):
+        return []
+    if not refs:
+        suggested = _resolve_suggested_product(session_id, message)
+        ordinal = re.search(r"\b(?:so|thu|#)\s*\d+\b", _norm(message))
+        name = _norm((suggested or {}).get("product_name")).strip()
+        if suggested and (ordinal or (name and re.search(r"(?<!\w)" + re.escape(name) + r"(?!\w)", _norm(message)))):
+            refs = [suggested]
+    refs = [ref for ref in refs if ref.get("product_id") and str(ref.get("product_name") or "").strip()]
+    if refs:
+        return refs
+    from src.agents.pending_context import has_shopping_topic
+    if not has_shopping_topic(message):
+        return []
+    normalized = _norm(message)
+    # A failed ordinal cannot be reinterpreted as a catalog product id/name.
+    if re.search(r"\b(?:so|thu|#)\s*\d+\b", normalized):
+        return []
+    matched = []
+    for product in _load_active_product_targets():
+        name = _norm(product.get("product_name")).strip()
+        pid = str(product.get("product_id") or "").strip()
+        named = name and re.search(r"(?<!\w)" + re.escape(name) + r"(?!\w)", normalized)
+        identified = pid and re.search(r"\b(?:product id|ma san pham|id)\s*[:#]?\s*" + re.escape(pid.lower()) + r"(?!\w)", normalized)
+        if pid and name and (named or identified):
+            matched.append(product)
+    # Prefer full names over their shorter catalog prefixes.
+    return [ref for ref in matched if not any(
+        ref is not other and _norm(ref["product_name"]) in _norm(other["product_name"])
+        and len(ref["product_name"]) < len(other["product_name"]) for other in matched
+    )]
+
+
+def _browse_ask_more(state: OrderConversationState) -> Dict[str, Any]:
+    """Use the existing catalog/provider with a strictly read-only tool boundary."""
+    result = _search_menu_catalog(state["user_message"])
+    if result:
+        return result
+    from src.agents.agent_service import _build_messages, groq_agent_chat
+    from src.function_calling.tools import ALL_TOOL_SCHEMAS, TOOL_EXECUTORS
+
+    allowed = {"get_recommendations", "get_product_insights"}
+    messages = _build_messages(session_id=state["session_id"], history=state.get("history") or [], user_message=state["user_message"])
+    messages.insert(1, {"role": "system", "content": (
+        "This turn is browsing only. Answer the original menu/product question using catalog tools. "
+        "Do not add items, look up exact prices from generic text, offer checkout, or claim cart changes."
+    )})
+    result = groq_agent_chat(messages=messages,
+        tools=[schema for schema in ALL_TOOL_SCHEMAS if schema.get("function", {}).get("name") in allowed],
+        tool_executors={name: executor for name, executor in TOOL_EXECUTORS.items() if name in allowed},
+        session_id=state["session_id"], max_tool_rounds=3, max_tokens=800)
+    result["checkout_payload"] = None
+    if not result.get("reply") or re.search(r"\b(tom tat don|tong thanh toan|xac nhan.*(?:dat|don)|chot don)\b", _norm(result["reply"])):
+        result["reply"] = "Bạn muốn xem thêm đồ uống hay bánh? Mình sẽ tìm món phù hợp trong menu."
+    return result
+
+
 def _understand(state: OrderConversationState) -> OrderConversationState:
     pending = cart_manager.get_pending_action(state["session_id"])
     intent = classify_order_intent(state["user_message"], (pending or {}).get("type"))
@@ -950,23 +1033,29 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         return {**state, "intent": intent}
     if not prefs.get("checkout_submission") and pending_type == "confirm_checkout" and intent.get("intent") == "ADD_ITEM":
         return {**state, "intent": intent}
-    if pending_type == "ask_more_items" and intent.get("intent") == "ADD_ITEM":
-        return {**state, "intent": {**intent, "pending_decision": "WANT_MORE"}}
+    if pending_type == "ask_more_items":
+        if intent.get("intent") == "VIEW_CART":
+            return {**state, "intent": intent}
+        from src.agents.pending_context import looks_like_catalog_query
+        refs = _resolve_ask_more_targets(state["session_id"], state["user_message"])
+        evidence = {"has_resolved_product_target": bool(refs),
+                    "has_resolved_ordinal": bool(refs and re.search(r"\b(?:so|thu|#)\s*\d+\b", _norm(state["user_message"]))),
+                    "looks_like_catalog_query": looks_like_catalog_query(state["user_message"])}
+        decision = classify_pending_reply(state["user_message"], pending_type, evidence)
+        if decision == "CONCRETE_ADD" and not refs:
+            decision = "WANT_MORE_GENERIC"
+        kind = {"DONE": "FINISH_CART", "CONCRETE_ADD": "ADD_ITEM",
+                "WANT_MORE_GENERIC": "BROWSING", "BROWSING_REQUEST": "BROWSING"}.get(decision, "PENDING_AMBIGUOUS")
+        return {**state, "intent": {"intent": kind, "pending_type": pending_type,
+                "pending_decision": decision, "resolved_products": refs,
+                "quantity": _extract_add_quantity(state["user_message"])}}
     if pending_type == "fill_options":
         return {**state, "intent": {"intent": "PENDING_AMBIGUOUS", "pending_type": pending_type}}
     if pending_type == "select_branch":
         return {**state, "intent": {"intent": "PENDING_BRANCH"}}
     decision = classify_pending_reply(state["user_message"], pending_type)
     if decision:
-        if pending_type == "ask_more_items":
-            if decision == "DONE":
-                return {**state, "intent": {"intent": "FINISH_CART"}}
-            if decision == "WANT_MORE":
-                next_intent = intent if intent.get("intent") in {"ADD_ITEM", "BROWSING"} else {"intent": "BROWSING"}
-                return {**state, "intent": {**next_intent, "pending_decision": "WANT_MORE"}}
-        else:
-            return {**state, "intent": {"intent": "PENDING_REPLY", "pending_type": pending_type, "decision": decision}}
-        return {**state, "intent": {"intent": "PENDING_AMBIGUOUS", "pending_type": pending_type}}
+        return {**state, "intent": {"intent": "PENDING_REPLY", "pending_type": pending_type, "decision": decision}}
     # A successful confirmation retry uses its completed action, even after
     # clearing the cart removed the pending summary.
     if prefs.get("completed_order_id") and re.search(r"\b(dong y|xac nhan|ok|oke|on roi|duoc roi)\b", _norm(state["user_message"])) and intent.get("intent") not in {"ADD_ITEM", "START_CHECKOUT", "FINISH_CART"}:
@@ -1032,8 +1121,26 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         }}
     if kind in {"PENDING_REPLY", "PENDING_AMBIGUOUS", "PENDING_BRANCH"}:
         return {**state, "result": _handle_pending_reply(state)}
-    if intent.get("pending_decision") == "WANT_MORE":
+    if intent.get("pending_type") == "ask_more_items":
+        decision = intent.get("pending_decision")
         cart_manager.clear_pending_action(session_id)
+        if decision == "DONE":
+            return {**state, "result": _offer_voucher_gate(session_id)}
+        if decision == "CONCRETE_ADD" and intent.get("resolved_products"):
+            refs = intent["resolved_products"]
+            if len(refs) == 1:
+                refs = [{**refs[0], "quantity": intent["quantity"]}]
+            prepared = _prepare_structured_products(session_id, refs, _turn_operation_base(state))
+            for ref in refs:
+                _update_cart_focus_after_add(session_id, prepared, ref)
+            cart_manager.set_checkout_context(session_id, flow_stage="CART_REVIEW")
+            return {**state, "result": prepared}
+        cart_manager.set_checkout_context(session_id, flow_stage="BROWSING")
+        result = _browse_ask_more(state) if decision == "BROWSING_REQUEST" else {
+            "reply": "Bạn muốn xem thêm đồ uống hay bánh? Mình sẽ tìm món phù hợp trong menu.",
+            "checkout_payload": None, "tool_calls_log": [], "error": None,
+        }
+        return {**state, "result": result}
     # A voucher skip belongs to this gate even when its text routes as
     # SELECT_VOUCHER. Do not relist vouchers or invoke the model for a skip.
     prefs = cart_manager.get_checkout_prefs(session_id)
