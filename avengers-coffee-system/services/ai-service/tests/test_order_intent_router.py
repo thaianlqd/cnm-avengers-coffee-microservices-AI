@@ -1,4 +1,21 @@
+import pytest
+
 from src.agents.tier1 import classify_order_intent
+
+
+@pytest.mark.parametrize('option', [
+    'size', 'nhỏ', 'vừa', 'lớn', 'topping', 'hạt', 'foam', 'đá',
+    'ngọt', 'đường', 'sữa', 'mặc định', 'trân châu', 'theo công thức',
+])
+def test_pending_option_vocabulary_takes_priority_over_add(option):
+    assert classify_order_intent(f'thêm {option} cho tôi', 'fill_options') == {
+        'intent': 'FILL_OPTIONS',
+    }
+
+
+@pytest.mark.parametrize('pending', [None, 'ask_more_items'])
+def test_option_guard_only_applies_while_filling_options(pending):
+    assert classify_order_intent('thêm món Bạc Xỉu size lớn', pending)['intent'] == 'ADD_ITEM'
 
 
 def test_cart_quantity_language_never_routes_to_existing_order():

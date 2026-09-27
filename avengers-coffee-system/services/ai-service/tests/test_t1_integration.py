@@ -286,7 +286,7 @@ def test_t1_integration_ask_more_items_lifecycle(t1_env_on):
     assert pending is not None
     assert pending["type"] == "ask_more_items"
     
-    # 2. CLEAR qua LLM add_to_cart thành công
+    # 2. A pending context must never delegate a cart write to the free agent.
     with patch("src.agents.agent_service.groq_agent_chat") as mock_groq, \
          patch("src.function_calling.tools.cart_tools.execute_add_to_cart") as mock_add2:
         mock_add2.return_value = {"status": "ok", "cart": {"total_price": 60000, "items": []}}
@@ -296,7 +296,10 @@ def test_t1_integration_ask_more_items_lifecycle(t1_env_on):
             "error": None
         }
         res = _run_agent_impl(session_id, "thêm cafe", history=[])
-        assert cart_manager.get_pending_action(session_id) is None, "Phải clear khi add_to_cart qua LLM thành công"
+        mock_groq.assert_not_called()
+        mock_add2.assert_not_called()
+        assert cart_manager.get_pending_action(session_id)["type"] == "ask_more_items"
+        assert not res.get("checkout_payload")
         
     # 3. SET lại và CLEAR qua no_more_items
     cart_manager.set_pending_action(session_id, "ask_more_items", {})

@@ -128,6 +128,13 @@ def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict
     """
     raw = str(text or "")
     norm = normalize_confirmation_text(raw)
+    # An option answer belongs to the pending products, even when it says
+    # "thêm topping" or also mentions checkout.
+    if pending_type == "fill_options" and re.search(
+        r"\b(size|nho|vua|lon|topping|toping|hat|foam|tran chau|da|ngot|duong|sua|mac dinh|theo cong thuc|khong chon)\b",
+        norm,
+    ):
+        return {"intent": "FILL_OPTIONS"}
     # "đánh giá" contains the word "giá" after normalization; it is a
     # product-review request, never a request to inspect the cart.
     if re.search(r"\b(danh gia|review|nhan xet)\b", norm):

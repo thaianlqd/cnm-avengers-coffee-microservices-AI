@@ -795,6 +795,8 @@ def execute_request_checkout(
     delivery_address = prefs.get("delivery_address")
     if delivery_type == "GIAO_TAN_NOI" and not delivery_address:
         return {"status": "need_delivery_address", "message": "Chưa có địa chỉ giao hàng được khách chọn. Hãy lấy địa chỉ hồ sơ hoặc hỏi khách nhập địa chỉ trước khi tóm tắt."}
+    if delivery_type == "GIAO_TAN_NOI" and not prefs.get("address_confirmed"):
+        return {"status": "need_delivery_address", "message": "Bạn xác nhận địa chỉ giao hàng trước khi xem tóm tắt nhé."}
     if not cart["branch_id"]:
         return {
             "status": "need_branch",
@@ -837,6 +839,8 @@ def execute_request_checkout(
             "status": "quote_error",
             "message": f"Chưa thể xác minh giá/mã giảm giá hiện tại: {exc}. Đơn chưa được tóm tắt.",
         }
+    if quote is None and is_authenticated_cart_session(session_id):
+        return {"status": "quote_error", "message": "Chưa nhận được giá authoritative từ Order Service. Đơn chưa được tóm tắt."}
     summary_items = [dict(item) for item in cart["items"]]
     if quote:
         total = float(quote.get("subtotal") or 0)
@@ -861,7 +865,9 @@ def execute_request_checkout(
 
     # Store the authoritative amounts for later confirmation.
     cart_manager.set_checkout_context(session_id, summary_amounts={"subtotal": total, "discount_amount": discount_amount, "delivery_fee": delivery_fee, "final_total": final_total})
+    cart_manager.set_checkout_context(session_id, flow_stage="SUMMARY")
     summary_state = cart_manager.mark_checkout_summary(session_id)
+    cart_manager.set_pending_action(session_id, "confirm_checkout", {})
 
     total_str = f"{total:,.0f}".replace(",", ".")
     final_str = f"{final_total:,.0f}".replace(",", ".")

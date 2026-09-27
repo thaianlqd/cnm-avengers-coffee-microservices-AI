@@ -7,6 +7,7 @@ writes are resolved by the nodes below against canonical ids.
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 import time
 import unicodedata
@@ -720,6 +721,12 @@ def _answer_product_existence(session_id: str, message: str) -> Optional[Dict[st
     }
 
 
+def _voucher_offer_snapshot(session_id: str) -> str:
+    cart = cart_manager.get_cart(session_id)
+    payload = {key: cart.get(key) for key in ("cart_id", "cart_version", "branch_id", "items")}
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+
+
 def _offer_voucher_gate(session_id: str, lead: str = "Mình đã ghi nhận giỏ hàng đã hoàn tất.") -> Dict[str, Any]:
     """Voucher is a mandatory decision gate before fulfillment and payment."""
     from src.agents.agent_service import _cart_ready_reply
@@ -759,6 +766,7 @@ def _offer_voucher_gate(session_id: str, lead: str = "Mình đã ghi nhận gi�
             session_id,
             voucher_offer_pending=True,
             voucher_candidates=candidates,
+            voucher_offer_snapshot=_voucher_offer_snapshot(session_id),
             flow_stage="VOUCHER",
         )
         cart_manager.set_pending_action(session_id, "select_voucher", {"count": len(candidates)})
@@ -852,9 +860,118 @@ def _sync(state: OrderConversationState) -> OrderConversationState:
         return {**state, "cart": cart, "cart_sync_status": cart["cart_sync_status"]}
 
 
+def _handle_pending_reply(state: OrderConversationState) -> Dict[str, Any]:
+    """Only deterministic handlers can advance a persisted pending decision."""
+    session_id, message, intent = state["session_id"], state["user_message"], state["intent"]
+    pending_type, decision = intent.get("pending_type"), intent.get("decision")
+    prefs = cart_manager.get_checkout_prefs(session_id)
+
+    def reply(text):
+        return {"reply": text, "checkout_payload": None, "tool_calls_log": [], "error": None}
+
+    if (pending_type == "confirm_address" or intent.get("intent") == "PENDING_BRANCH") and re.search(r"\b\d+[\w/.-]*\s+[a-z]", _norm(message)):
+        from src.agents.agent_service import _run_agent_impl
+        return _run_agent_impl(session_id, message, history=state.get("history") or [], allow_model_mutations=False)
+    if intent.get("intent") == "PENDING_BRANCH":
+        from src.agents.agent_service import _advance_checkout_if_ready, _resolve_pending_branch_choice
+        resolved = _resolve_pending_branch_choice(session_id, message, history=state.get("history") or [])
+        return _advance_checkout_if_ready(session_id, resolved) if resolved else reply("Bạn chọn cửa hàng theo số trong danh sách, hoặc cho mình địa chỉ mới nhé.")
+    if pending_type == "select_voucher":
+        if decision == "SKIP_VOUCHER":
+            from src.agents.agent_service import _cart_ready_reply
+            cart_manager.set_checkout_context(session_id, voucher_decided=True, voucher_offer_pending=None,
+                voucher_candidates=None, voucher_code=None, discount_amount=None, checkout_requested=None, flow_stage="CART_READY")
+            cart_manager.clear_pending_action(session_id)
+            return reply(_cart_ready_reply("Mình sẽ không áp dụng mã giảm giá cho giỏ này."))
+        if decision == "SELECT_VOUCHER":
+            from src.agents.agent_service import _resolve_pending_voucher_choice
+            resolved = _resolve_pending_voucher_choice(session_id, message)
+            if resolved:
+                return resolved
+            if not prefs.get("voucher_candidates"):
+                return _offer_voucher_gate(session_id)
+        return reply("Bạn chọn mã theo số trong danh sách, hoặc nói bỏ qua voucher nhé.")
+    if pending_type == "confirm_address":
+        if decision == "CHANGE_ADDRESS":
+            cart_manager.clear_branch(session_id)
+            cart_manager.set_checkout_context(session_id, suggested_address=None, location_address=None,
+                delivery_address=None, address_confirmed=None, address_change_requested=True)
+            cart_manager.clear_pending_action(session_id)
+            return reply("Bạn gửi địa chỉ mới muốn dùng nhé.")
+        if decision == "CONFIRM_ADDRESS":
+            from src.agents.agent_service import _advance_checkout_if_ready, _confirm_saved_location
+            cart_manager.clear_pending_action(session_id)
+            resolved = _confirm_saved_location(session_id, "đúng địa chỉ đó", history=state.get("history") or [])
+            if resolved:
+                return _advance_checkout_if_ready(session_id, resolved)
+        return reply("Bạn muốn dùng địa chỉ đã lưu hay đổi sang địa chỉ khác?")
+    if pending_type == "confirm_checkout":
+        if decision == "CONFIRM":
+            from src.function_calling.tools.cart_tools import execute_confirm_checkout
+            result = (execute_confirm_checkout(session_id, action_id=prefs.get("completed_action_id"))
+                      if prefs.get("completed_order_id") else execute_confirm_checkout(session_id))
+            text = result.get("message", "Đơn chưa được tạo. Bạn thử xác nhận lại nhé.")
+            if result.get("status") in {"success", "already_processed"}:
+                text = f"🎉 Đặt hàng thành công! Mã đơn hàng của bạn là: **{result.get('order_id', '')}**. Cảm ơn bạn đã ủng hộ!"
+            return {**reply(text), "gate": "confirm_checkout", "tool_calls_log": [{"tool": "confirm_checkout", "result": result}]}
+        if decision == "REJECT":
+            if prefs.get("checkout_submission"):
+                return reply("Đơn đã gửi xử lý. Bạn xác nhận lại để kiểm tra kết quả trước khi chỉnh sửa nhé.")
+            cart_manager.set_checkout_context(session_id, summary_fingerprint=None, checkout_action_id=None,
+                summary_amounts=None, checkout_requested=None, flow_stage="CART_READY")
+            cart_manager.clear_pending_action(session_id)
+            return reply("Mình chưa đặt đơn. Bạn muốn chỉnh món, voucher, cách nhận hàng hay thanh toán?")
+        return reply("Bạn muốn xác nhận đặt đơn này hay muốn chỉnh sửa?")
+    if pending_type == "fill_options":
+        return reply("Bạn chọn tùy chọn cho các món đang chờ trước nhé.")
+    return reply("Bạn muốn thêm món hay hoàn tất giỏ hiện tại?")
+
+
 def _understand(state: OrderConversationState) -> OrderConversationState:
     pending = cart_manager.get_pending_action(state["session_id"])
     intent = classify_order_intent(state["user_message"], (pending or {}).get("type"))
+    if intent.get("intent") == "FILL_OPTIONS":
+        return {**state, "intent": intent}
+    from src.agents.pending_context import classify_pending_reply
+    prefs = cart_manager.get_checkout_prefs(state["session_id"])
+    pending_type = (pending or {}).get("type")
+    if prefs.get("checkout_submission"):
+        pending_type = "confirm_checkout"
+    if not pending_type:
+        if prefs.get("summary_fingerprint") or prefs.get("checkout_submission"):
+            pending_type = "confirm_checkout"
+        elif prefs.get("voucher_offer_pending"):
+            pending_type = "select_voucher"
+        elif prefs.get("suggested_address") and prefs.get("checkout_requested"):
+            pending_type = "confirm_address"
+    # Explicit cart edits keep their existing deterministic handlers; the
+    # pending decision must not swallow a request to change the actual cart.
+    if not prefs.get("checkout_submission") and pending_type in {"ask_more_items", "select_voucher", "confirm_checkout"} and intent.get("intent") in {"SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS", "CLEAR_CART"}:
+        return {**state, "intent": intent}
+    if not prefs.get("checkout_submission") and pending_type == "confirm_checkout" and intent.get("intent") == "ADD_ITEM":
+        return {**state, "intent": intent}
+    if pending_type == "ask_more_items" and intent.get("intent") == "ADD_ITEM":
+        return {**state, "intent": {**intent, "pending_decision": "WANT_MORE"}}
+    if pending_type == "fill_options":
+        return {**state, "intent": {"intent": "PENDING_AMBIGUOUS", "pending_type": pending_type}}
+    if pending_type == "select_branch":
+        return {**state, "intent": {"intent": "PENDING_BRANCH"}}
+    decision = classify_pending_reply(state["user_message"], pending_type)
+    if decision:
+        if pending_type == "ask_more_items":
+            if decision == "DONE":
+                return {**state, "intent": {"intent": "FINISH_CART"}}
+            if decision == "WANT_MORE":
+                next_intent = intent if intent.get("intent") in {"ADD_ITEM", "BROWSING"} else {"intent": "BROWSING"}
+                return {**state, "intent": {**next_intent, "pending_decision": "WANT_MORE"}}
+        else:
+            return {**state, "intent": {"intent": "PENDING_REPLY", "pending_type": pending_type, "decision": decision}}
+        return {**state, "intent": {"intent": "PENDING_AMBIGUOUS", "pending_type": pending_type}}
+    # A successful confirmation retry uses its completed action, even after
+    # clearing the cart removed the pending summary.
+    if prefs.get("completed_order_id") and re.search(r"\b(dong y|xac nhan|ok|oke|on roi|duoc roi)\b", _norm(state["user_message"])) and intent.get("intent") not in {"ADD_ITEM", "START_CHECKOUT", "FINISH_CART"}:
+        if classify_pending_reply(state["user_message"], "confirm_checkout") == "CONFIRM":
+            return {**state, "intent": {"intent": "PENDING_REPLY", "pending_type": "confirm_checkout", "decision": "CONFIRM"}}
     from src.agents.agent_service import _is_plain_confirmation, _wants_checkout
     prefs = cart_manager.get_checkout_prefs(state["session_id"])
     if (prefs.get("summary_fingerprint") or prefs.get("checkout_submission")) and _is_plain_confirmation(state["user_message"]):
@@ -890,9 +1007,11 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
     )
     session_id, message, cart, intent = state["session_id"], state["user_message"], state["cart"], state["intent"]
     kind = intent.get("intent")
-    cart_write_intents = {"ADD_ITEM", "SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS", "CLEAR_CART"}
-    authoritative_intents = cart_write_intents | {"FINISH_CART", "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER", "CONFIRM_CHECKOUT"}
-    if kind in authoritative_intents and is_authenticated_cart_session(session_id) and not cart.get("authoritative"):
+    cart_write_intents = {"ADD_ITEM", "SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS", "CLEAR_CART", "FILL_OPTIONS"}
+    authoritative_intents = cart_write_intents | {"FINISH_CART", "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER", "CONFIRM_CHECKOUT", "PENDING_REPLY", "PENDING_BRANCH"}
+    prefs = cart_manager.get_checkout_prefs(session_id)
+    replay = intent.get("pending_type") == "confirm_checkout" and intent.get("decision") == "CONFIRM" and (prefs.get("checkout_submission") or prefs.get("completed_order_id"))
+    if kind in authoritative_intents and not replay and is_authenticated_cart_session(session_id) and not cart.get("authoritative"):
         return {**state, "result": {
             "reply": "Mình chưa thể xác minh giỏ hàng với Order Service nên chưa thực hiện thay đổi nào. Vui lòng thử lại sau.",
             "checkout_payload": None,
@@ -902,6 +1021,19 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             }],
             "error": None,
         }}
+    if kind == "FILL_OPTIONS":
+        from src.agents.agent_service import _complete_pending_products_from_options
+        completed = _complete_pending_products_from_options(session_id, message)
+        return {**state, "result": completed or {
+            "reply": "Bạn hãy chọn tùy chọn cho các món đang chờ trước nhé.",
+            "checkout_payload": None,
+            "tool_calls_log": [],
+            "error": None,
+        }}
+    if kind in {"PENDING_REPLY", "PENDING_AMBIGUOUS", "PENDING_BRANCH"}:
+        return {**state, "result": _handle_pending_reply(state)}
+    if intent.get("pending_decision") == "WANT_MORE":
+        cart_manager.clear_pending_action(session_id)
     # A voucher skip belongs to this gate even when its text routes as
     # SELECT_VOUCHER. Do not relist vouchers or invoke the model for a skip.
     prefs = cart_manager.get_checkout_prefs(session_id)
@@ -1129,6 +1261,7 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
                 session_id,
                 voucher_offer_pending=True,
                 voucher_candidates=vouchers[:4],
+                voucher_offer_snapshot=_voucher_offer_snapshot(session_id),
                 flow_stage="VOUCHER",
             )
             cart_manager.set_pending_action(session_id, "select_voucher", {"count": min(4, len(vouchers))})
@@ -1257,7 +1390,7 @@ def _render(state: OrderConversationState) -> OrderConversationState:
     # behind makes a later sentence like “thêm ngọt” look like a new product.
     if has_mutation_evidence and any(entry.get("tool") == "add_to_cart" for entry in logs) and not re.search(r"\b(chua|can hoan tat|khong the)\b", reply_norm):
         cart_manager.set_pending_products(state["session_id"], [])
-        cart_manager.clear_pending_action(state["session_id"])
+        cart_manager.set_pending_action(state["session_id"], "ask_more_items", {})
     if claims_cart_mutation and not has_mutation_evidence:
         try:
             from src.function_calling.tools.cart_tools import execute_get_cart_quote
