@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, EntityManager, In, IsNull, Repository } from 'typeorm';
@@ -1708,6 +1708,31 @@ export class ThanhToanService {
     };
   }
 
+  private checkoutSnapshotHash(dto: KhoiTaoThanhToanDto): string {
+    // Persist in the initial history entry so later tracking/order updates do
+    // not change the identity of the request. Client fees are deliberately ignored.
+    const snapshot = {
+      payment: dto.phuong_thuc_thanh_toan,
+      mode: dto.delivery_mode ?? null,
+      address: dto.dia_chi_giao_hang ?? null,
+      branch: dto.branch_code?.trim() || null,
+      voucher: dto.ma_voucher?.trim().toUpperCase() || null,
+      method: dto.delivery_method || 'INTERNAL',
+      expected_total: dto.expected_final_total === undefined ? null : Number(dto.expected_final_total),
+      note: dto.ghi_chu ?? null,
+      slot: dto.khung_gio_giao ?? null,
+      table: dto.table_number ?? null,
+      kiosk: dto.ma_kiosk?.trim() || null,
+      latitude: dto.destination_latitude ?? null,
+      longitude: dto.destination_longitude ?? null,
+      guest_email: dto.guest_email?.trim() || null,
+      guest_phone: dto.guest_phone?.trim() || null,
+      session: dto.session_id?.trim() || null,
+      customer_name: dto.ten_khach_hang ?? null,
+    };
+    return crypto.createHash('sha256').update(JSON.stringify(snapshot)).digest('hex');
+  }
+
   async khoiTaoThanhToan(maNguoiDung: string, dto: KhoiTaoThanhToanDto, ipAddr = '127.0.0.1') {
     if (!dto.checkout_action_id) return this.khoiTaoThanhToanMoi(maNguoiDung, dto, ipAddr);
     if (!/^[0-9a-f-]{36}$/i.test(dto.checkout_action_id)) throw new BadRequestException('Checkout action khong hop le');
@@ -1727,6 +1752,24 @@ export class ThanhToanService {
         if (existing.phuong_thuc_thanh_toan !== dto.phuong_thuc_thanh_toan || existing.loai_don_hang !== dto.delivery_mode || existing.dia_chi_giao_hang !== dto.dia_chi_giao_hang) {
           throw new ConflictException('Checkout action da duoc dung cho thong tin khac');
         }
+        const snapshotHash = existing.lich_su_trang_thai?.find(entry => entry.checkout_snapshot_hash)?.checkout_snapshot_hash;
+        if (snapshotHash) {
+          if (snapshotHash !== this.checkoutSnapshotHash(dto)) {
+            throw new ConflictException('Checkout action da duoc dung cho snapshot khac');
+          }
+        } else {
+          // Actions created before snapshot hashes were stored must also
+          // protect the business fields available on the order and tracking.
+          const [tracking] = await this.deliveryTrackingService.getTrackingsByOrderIds([orderId]);
+          if ((dto.branch_code && this.normalizeBranchCode(dto.branch_code.trim()) !== existing.co_so_ma)
+            || (dto.ma_voucher?.trim().toUpperCase() || null) !== (existing.ma_voucher || null)
+            || (dto.delivery_mode === 'GIAO_TAN_NOI' && (!tracking || tracking.delivery_method !== (dto.delivery_method || 'INTERNAL')))) {
+            throw new ConflictException('Checkout action da duoc dung cho snapshot khac');
+          }
+        }
+        if (dto.expected_final_total !== undefined && Number(dto.expected_final_total) !== Number(existing.tong_tien)) {
+          throw new ConflictException('Checkout action khong khop tong tien da luu');
+        }
         const transaction = await this.giaoDichRepo.findOne({ where: { ma_don_hang: orderId } });
         if (!transaction || (dto.phuong_thuc_thanh_toan === 'VI_DIEN_TU' && existing.trang_thai_thanh_toan !== 'DA_THANH_TOAN')) {
           throw new ConflictException('Don hang da duoc tao, can doi soat thanh toan. Khong tao don moi.');
@@ -1741,7 +1784,17 @@ export class ThanhToanService {
         }
         return result;
       }
-      return await this.khoiTaoThanhToanMoi(maNguoiDung, dto, ipAddr, orderId);
+      try {
+        return await this.khoiTaoThanhToanMoi(maNguoiDung, dto, ipAddr, orderId);
+      } catch (error) {
+        // Only permit a corrected request/new action when the server can prove
+        // this action did not create an order. Ambiguous errors retain its ID.
+        if (error instanceof HttpException && !await this.donHangRepo.findOne({ where: { ma_don_hang: orderId } })) {
+          const response = error.getResponse();
+          throw new HttpException({ ...(typeof response === 'string' ? { message:response } : response), checkout_not_created:true }, error.getStatus());
+        }
+        throw error;
+      }
     } finally {
       try { if (locked) await runner.query('SELECT pg_advisory_unlock(hashtext($1))', [`checkout:${orderId}`]); }
       finally { await runner.release(); }
@@ -1876,6 +1929,7 @@ export class ThanhToanService {
           trang_thai: 'MOI_TAO',
           thoi_gian: new Date().toISOString(),
           ghi_chu: 'Don hang vua duoc tao',
+          ...(dto.checkout_action_id ? { checkout_snapshot_hash: this.checkoutSnapshotHash(dto) } : {}),
         },
         {
           loai: 'PAYMENT',
@@ -1924,7 +1978,7 @@ export class ThanhToanService {
         destination_latitude: resolvedDestLat,
         destination_longitude: resolvedDestLng,
         is_guest: isGuest,
-      });
+      }, shipping.delivery_fee);
     }
 
     // Gửi email xác nhận đơn hàng kèm liên kết theo dõi (bất đồng bộ)
