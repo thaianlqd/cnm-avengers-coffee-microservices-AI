@@ -9,6 +9,7 @@ import {
   Query,
   Req,
   Headers,
+  HttpCode,
   UseGuards,
   ForbiddenException,
   BadRequestException,
@@ -44,6 +45,7 @@ export class CartController {
   }
 
   @Post(':userId/quote')
+  @HttpCode(200)
   async quoteCart(
     @Param('userId') userId: string,
     @Body() body: { voucher_code?: string; delivery_mode?: string; delivery_method?: string },

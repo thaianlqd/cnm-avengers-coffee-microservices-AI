@@ -543,7 +543,7 @@ def set_pending_action(session_id: str, action_type: str, params: Dict[str, Any]
                 "expires_at": time.time() + 300,
             }
             session["checkout_prefs"] = prefs
-            _touch(session_id, session, sync_db=False)
+            _touch(session_id, session, sync_db=True)
     except Exception as e:
         import logging
         logging.getLogger(__name__).warning("Failed to set_pending_action: %s", e)
@@ -576,7 +576,7 @@ def clear_pending_action(session_id: str) -> None:
             if "pending_action" in prefs:
                 prefs.pop("pending_action", None)
                 session["checkout_prefs"] = prefs
-                _touch(session_id, session, sync_db=False)
+                _touch(session_id, session, sync_db=True)
     except Exception as e:
         import logging
         logging.getLogger(__name__).warning("Failed to clear_pending_action: %s", e)

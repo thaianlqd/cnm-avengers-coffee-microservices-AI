@@ -3001,9 +3001,13 @@ export class UserService implements OnModuleInit {
       diem_kha_dung: user.diem_kha_dung || 0,
       tong_chi_tieu: Number(user.tong_chi_tieu || 0),
       chi_tieu_thang_nay: chiTieuThangNay,
-      chi_tieu_toi_thieu_thang: null,
-      con_thieu_thang_nay: null,
-      dat_dieu_kien_dac_quyen: false,
+      chi_tieu_toi_thieu_thang: chiTieuToiThieuThang,
+      con_thieu_thang_nay: conThieuThangNay,
+      dat_dieu_kien_dac_quyen: datDieuKienDacQuyen,
+      hang_hien_tai: hang,
+      quyen_loi_hien_tai: quyenLoi,
+      tat_ca_hang: tatCaHang,
+      voucher_ca_nhan: activePersonalVouchers,
     };
   }
   async capNhatNgaySinh(maNguoiDung: string, ngaySinh: string) {

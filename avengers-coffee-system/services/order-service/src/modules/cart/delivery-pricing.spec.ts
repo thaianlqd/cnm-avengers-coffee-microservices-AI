@@ -40,4 +40,23 @@ describe('authoritative delivery pricing', () => {
     global.fetch = jest.fn(async () => ({ ok: false })) as any;
     await expect(quoteDeliveryFee('user', 313000, 'GIAO_TAN_NOI')).rejects.toThrow('freeship');
   });
+  it.each([
+    ['GIAO_TAN_NOI', 0, 15000, 261400],
+    ['GIAO_TAN_NOI', 25000, 0, 246400],
+    ['LAY_TAI_QUAN', 0, 0, 246400],
+    ['DUNG_TAI_CHO', 0, 0, 246400],
+  ])('quote %s uses authoritative membership and voucher (benefit %s)', async (mode, benefit, fee, total) => {
+    membership(Number(benefit), 100000);
+    const voucher = { kiemTraVoucher: jest.fn(async () => ({ so_tien_giam: 61600, voucher: { ma_voucher: 'KS20_A' } })) };
+    const cart = new CartService({} as any, {} as any, voucher as any);
+    jest.spyOn(cart, 'layGiỏHàng').mockResolvedValue({ items: [], subtotal: 308000, item_count: 2 } as any);
+    const result = await cart.quote('user', 'KS20_A', String(mode));
+    expect(result.delivery_fee).toBe(fee);
+    expect(result.final_total).toBe(total);
+    expect(result.discount_amount).toBe(61600);
+  });
+  it('rejects a malformed membership 200 response instead of assuming a 15k fee', async () => {
+    global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ diem_loyalty: 11685 }) })) as any;
+    await expect(quoteDeliveryFee('user', 308000, 'GIAO_TAN_NOI')).rejects.toThrow('freeship');
+  });
 });

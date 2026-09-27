@@ -183,7 +183,13 @@ def test_timeout_retry_reuses_payload_even_after_server_cart_empty(monkeypatch):
     assert len(payloads) == 2
 
 
-def test_menu_two_products_options_then_cart_voucher_checkout_boundary(flow, monkeypatch):
+@pytest.mark.parametrize('option_message,expected_toppings,expected_sweetness', [
+    ('nước cho tôi topping hạt sen, foam dừa và ít đá, ít ngọt', ['Hạt sen', 'Foam dừa'], 'Ít ngọt'),
+    ('thêm topping hạt sen, foam dừa và ít đá, ít ngọt cho nước nhé', ['Hạt sen', 'Foam dừa'], 'Ít ngọt'),
+    ('lấy size vừa, topping hạt sen, foam dừa, ít đá, ít ngọt', ['Hạt sen', 'Foam dừa'], 'Ít ngọt'),
+    ('cho tôi topping hạt sen và sữa yến mạch, ít đá và thêm ngọt cho tôi nhé', ['Hạt sen', 'Sữa yến mạch'], 'Thêm ngọt'),
+])
+def test_menu_two_products_options_then_cart_voucher_checkout_boundary(flow, monkeypatch, option_message, expected_toppings, expected_sweetness):
     from src.function_calling.tools import product_tools
     monkeypatch.setattr(product_tools, 'execute_get_recommendations', lambda category, **k: {
         'status': 'ok', 'products': ([{'product_id': 'F1', 'product_name': 'Bánh Cà Phê', 'final_price': 113000}] if category == 'food' else [
@@ -191,7 +197,7 @@ def test_menu_two_products_options_then_cart_voucher_checkout_boundary(flow, mon
         ]),
     })
     monkeypatch.setattr(product_tools, 'execute_get_product_options', lambda name: {
-        'status': 'ok', 'product_name': name, 'options': ({'Kích thước': ['Vừa'], 'Topping': ['Hạt sen', 'Foam dừa'], 'Lượng đá': ['Ít đá', 'Bình thường'], 'Độ ngọt': ['Ít ngọt', 'Bình thường']} if name.startswith('Nước') else {}),
+        'status': 'ok', 'product_name': name, 'options': ({'Kích thước': ['Vừa'], 'Topping': ['Hạt sen', 'Foam dừa', 'Sữa yến mạch'], 'Lượng đá': ['Ít đá', 'Bình thường'], 'Độ ngọt': ['Ít ngọt', 'Thêm ngọt', 'Bình thường']} if name.startswith('Nước') else {}),
     })
     monkeypatch.setattr(product_tools, 'execute_check_price_and_stock', lambda product_name_query, **k: {
         'status': 'ok', 'products': [{'product_id': 'F1' if product_name_query.startswith('Bánh') else 'D3', 'product_name': product_name_query, 'final_price': 113000 if product_name_query.startswith('Bánh') else 200000}],
@@ -207,14 +213,15 @@ def test_menu_two_products_options_then_cart_voucher_checkout_boundary(flow, mon
     assert {item['product_name'] for item in pending} == {'Bánh Cà Phê', 'Nước 3'}
     assert 'Foam dừa' in selected['reply']
     assert not selected['checkout_payload']
-    options = turn(flow, 'nước cho tôi topping hạt sen, foam dừa và ít đá, ít ngọt')
+    options = turn(flow, option_message)
     assert not options['checkout_payload']
     cart = cart_manager.get_cart(flow)
     assert {item['product_name'] for item in cart['items']} == {'Bánh Cà Phê', 'Nước 3'}
     assert cart['subtotal'] == 313000
     drink = next(item for item in cart['items'] if item['product_name'] == 'Nước 3')
-    assert drink['toppings'] == ['Hạt sen', 'Foam dừa']
-    assert drink['luong_da'] == 'Ít đá' and drink['do_ngot'] == 'Ít ngọt'
+    assert drink['toppings'] == expected_toppings
+    assert drink['luong_da'] == 'Ít đá' and drink['do_ngot'] == expected_sweetness
+    assert not cart_manager.get_checkout_prefs(flow).get('pending_products')
     closed = turn(flow, 'không vậy oke rồi')
     assert 'SAVE20' in closed['reply']
     prefs = cart_manager.get_checkout_prefs(flow)
@@ -268,7 +275,159 @@ def test_checkout_receipt_honors_zero_server_total(monkeypatch):
 def test_summary_quotes_explicit_tool_arguments(flow, mode, expected):
     cart_manager.add_item(flow, '1', 'Nước', 313000)
     cart_manager.set_branch(flow, 'CN_1', 'Cửa hàng Một')
-    cart_manager.set_checkout_context(flow, voucher_decided=True)
+    cart_manager.set_checkout_context(flow, voucher_decided=True, address_confirmed=True)
     result = cart_tools.execute_request_checkout(flow, 'VNPAY', mode, ADDRESS)
     assert result['status'] == 'require_confirmation'
     assert result['order_summary']['final_total'] == expected
+
+
+@pytest.mark.parametrize('message', ['vậy oke rồi', 'thế được rồi', 'ừ thế nhé'])
+def test_pending_done_persists_real_voucher_gate(flow, message):
+    cart_manager.add_item(flow, '1', 'Nước', 308000)
+    cart_manager.set_pending_action(flow, 'ask_more_items', {})
+    result = turn(flow, message)
+    prefs = cart_manager.get_checkout_prefs(flow)
+    assert 'SAVE20' in result['reply']
+    assert prefs['voucher_offer_pending']
+    assert prefs['voucher_candidates'][0]['ma_voucher'] == 'SAVE20'
+    assert cart_manager.get_pending_action(flow)['type'] == 'select_voucher'
+    assert not prefs.get('checkout_requested')
+
+
+@pytest.mark.parametrize('message', ['áp cho tôi mã số 1 đi', 'lấy mã đầu tiên', 'dùng voucher thứ nhất'])
+def test_pending_voucher_applies_snapshot_first_try(flow, monkeypatch, message):
+    cart_manager.add_item(flow, '1', 'Nước', 308000)
+    cart_manager.set_checkout_context(flow, voucher_offer_pending=True, voucher_candidates=[
+        {'ma_voucher': 'KS20_A', 'ten_voucher': 'Mã A'}, {'ma_voucher': 'KS20_B', 'ten_voucher': 'Mã B'},
+    ])
+    cart_manager.set_pending_action(flow, 'select_voucher', {'count': 2})
+    monkeypatch.setattr(voucher_tools, 'execute_get_applicable_vouchers', lambda *a: pytest.fail('Must reuse the displayed snapshot'))
+    result = turn(flow, message)
+    prefs = cart_manager.get_checkout_prefs(flow)
+    assert result['tool_calls_log'][0]['args']['voucher_code'] == 'KS20_A'
+    assert prefs['voucher_code'] == 'KS20_A' and prefs['voucher_decided']
+    assert not prefs.get('voucher_offer_pending')
+    assert prefs['flow_stage'] == 'CART_READY'
+    assert not cart_manager.get_pending_action(flow)
+    assert '246400' in result['reply']
+
+
+def test_changed_cart_revalidates_voucher_list(flow, monkeypatch):
+    from src.agents.order_flow_graph import _offer_voucher_gate
+    cart_manager.add_item(flow, '1', 'Nước', 308000)
+    _offer_voucher_gate(flow)
+    cart_manager.add_item(flow, '2', 'Bánh', 10000)
+    listed = []
+    monkeypatch.setattr(voucher_tools, 'execute_get_applicable_vouchers', lambda *a: listed.append(True) or {
+        'status': 'ok', 'vouchers': [{'ma_voucher': 'NEW', 'ten_voucher': 'Mã mới'}],
+    })
+    result = turn(flow, 'áp mã số 1')
+    assert listed == [True]
+    assert 'NEW' in result['reply']
+    assert not any(row['tool'] == 'apply_voucher' for row in result['tool_calls_log'])
+
+
+def test_address_confirmation_builds_only_authoritative_final_summary(flow, monkeypatch):
+    cart_manager.add_item(flow, '1', 'Nước', 308000)
+    turn(flow, 'không thêm nữa')
+    turn(flow, 'áp mã số 1')
+    turn(flow, 'tiếp tục')
+    turn(flow, 'giao tận nơi và COD')
+    assert cart_manager.get_pending_action(flow)['type'] == 'confirm_address'
+    quote = cart_tools._quote_authoritative_cart
+    calls = []
+    def tracked_quote(sid, code=None, **kwargs):
+        calls.append((code, kwargs))
+        return quote(sid, code, **kwargs)
+    monkeypatch.setattr(cart_tools, '_quote_authoritative_cart', tracked_quote)
+    result = turn(flow, 'oke giao đến địa chỉ đó cho tôi đi')
+    prefs = cart_manager.get_checkout_prefs(flow)
+    assert prefs['address_confirmed'] and prefs['delivery_address'] == ADDRESS
+    assert calls == [('SAVE20', {'include_delivery': True})]
+    assert result['checkout_payload']['final_total'] == 261400
+    assert result['checkout_payload']['delivery_fee'] == 15000
+    assert prefs['summary_fingerprint'] == cart_manager.cart_fingerprint(flow)
+    assert cart_manager.get_pending_action(flow)['type'] == 'confirm_checkout'
+
+
+def test_natural_confirmation_timeout_reuses_same_checkout_action(flow, monkeypatch):
+    from src.common.checkout_service import finalize_checkout
+    cart_manager.add_item(flow, '1', 'Nước', 308000)
+    cart_manager.set_branch(flow, 'CN_1', 'Cửa hàng Một')
+    cart_manager.set_checkout_prefs(flow, 'VNPAY', 'MANG_DI')
+    cart_manager.set_checkout_context(flow, voucher_decided=True)
+    summary = cart_tools.execute_request_checkout(flow)
+    assert summary['status'] == 'require_confirmation'
+    monkeypatch.setattr('src.common.checkout_service._require_valid_session', lambda uid: 'customer')
+    monkeypatch.setattr('src.common.checkout_service._get_service_jwt', lambda uid: 'test-token')
+    monkeypatch.setattr('src.function_calling.tools.user_tools.execute_get_user_profile', lambda *a: pytest.fail('No exploratory tools on confirm'))
+    monkeypatch.setattr('src.function_calling.tools.branch_tools.execute_find_nearest_branch', lambda **k: pytest.fail('No exploratory tools on confirm'))
+    payloads = []
+    def post(*a, **k):
+        payloads.append(k['json'])
+        if len(payloads) == 1:
+            raise requests.Timeout('response lost after server created order')
+        return SimpleNamespace(status_code=200, json=lambda: {'already_processed': True,
+            'don_hang': {'ma_don_hang': 'ORDER_RETRY', 'tong_tien': 308000}})
+    monkeypatch.setattr('src.common.checkout_service.requests.post', post)
+    first = turn(flow, 'oke ổn rồi đồng ý nhé')
+    assert first['tool_calls_log'][0]['result']['status'] == 'error'
+    assert cart_manager.get_checkout_prefs(flow)['checkout_submission']
+    # Server cart is already emptied, but the persisted submission survives.
+    cart_manager.replace_items_from_order_cart(flow, [], cart_id='user:customer', cart_version=2, user_id='customer')
+    retry = turn(flow, 'đồng ý')
+    assert 'ORDER_RETRY' in retry['reply']
+    assert payloads[0] == payloads[1]
+    assert payloads[0]['checkout_action_id'] == summary['order_summary']['action_id']
+    assert 'ORDER_RETRY' in turn(flow, 'đồng ý')['reply']
+    assert len(payloads) == 2
+
+
+@pytest.mark.parametrize('pending', ['ask_more_items', 'select_voucher', 'confirm_address', 'select_branch', 'confirm_checkout', 'fill_options'])
+def test_ambiguous_pending_context_never_enters_free_agent(flow, monkeypatch, pending):
+    from src.common import groq_service
+    monkeypatch.setattr(groq_service, 'groq_chat', lambda *a, **k: '{"intent":"AMBIGUOUS"}')
+    cart_manager.add_item(flow, '1', 'Nước', 308000)
+    cart_manager.set_pending_action(flow, pending, {})
+    result = turn(flow, 'hmm...')
+    assert result['reply'] and not result['checkout_payload']
+    assert not result['tool_calls_log']
+
+
+def test_quote_failure_cannot_create_checkout_summary(flow, monkeypatch):
+    cart_manager.add_item(flow, '1', 'Nước', 308000)
+    cart_manager.set_branch(flow, 'CN_1', 'Cửa hàng Một')
+    cart_manager.set_checkout_prefs(flow, 'VNPAY', 'GIAO_TAN_NOI', ADDRESS)
+    cart_manager.set_checkout_context(flow, address_confirmed=True, voucher_decided=True)
+    monkeypatch.setattr(cart_tools, '_quote_authoritative_cart', lambda *a, **k: (_ for _ in ()).throw(requests.HTTPError('503')))
+    result = cart_tools.execute_request_checkout(flow)
+    assert result['status'] == 'quote_error'
+    assert not cart_manager.get_checkout_prefs(flow).get('summary_fingerprint')
+    assert (cart_manager.get_pending_action(flow) or {}).get('type') != 'confirm_checkout'
+
+
+def test_free_agent_cannot_render_a_fake_checkout_summary(flow, monkeypatch):
+    cart_manager.add_item(flow, '1', 'Nước', 308000)
+    monkeypatch.setattr(agent_service, '_build_messages', lambda **k: [])
+    def free_agent(**kwargs):
+        assert all(schema['function']['name'] != 'get_applicable_vouchers' for schema in kwargs['tools'])
+        return {'reply': 'Tóm tắt đơn hàng: Tổng thanh toán 1đ. Bạn có đồng ý với đơn hàng này không?',
+                'tool_calls_log': [], 'checkout_payload': None, 'error': None}
+    monkeypatch.setattr(agent_service, 'groq_agent_chat', free_agent)
+    result = agent_service._run_agent_impl(flow, 'cho tôi lời khuyên', history=[], allow_model_mutations=False)
+    assert 'Tổng thanh toán 1đ' not in result['reply']
+    assert 'SAVE20' in result['reply']
+    assert cart_manager.get_pending_action(flow)['type'] == 'select_voucher'
+    assert not cart_manager.get_checkout_prefs(flow).get('summary_fingerprint')
+
+
+def test_voucher_pending_state_survives_session_reload(flow):
+    cart_manager.add_item(flow, '1', 'Nước', 308000)
+    cart_manager.set_pending_action(flow, 'ask_more_items', {})
+    turn(flow, 'vậy oke rồi')
+    cart_manager._SESSION_CARTS.pop(flow)
+    assert cart_manager.get_pending_action(flow)['type'] == 'select_voucher'
+    assert cart_manager.get_checkout_prefs(flow)['voucher_candidates'][0]['ma_voucher'] == 'SAVE20'
+    cart_manager.clear_pending_action(flow)
+    cart_manager._SESSION_CARTS.pop(flow)
+    assert not cart_manager.get_pending_action(flow)

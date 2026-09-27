@@ -368,6 +368,7 @@ def _advance_checkout_if_ready(session_id: str, result: Dict[str, Any]) -> Dict[
     required = [prefs.get("payment_method"), prefs.get("delivery_type"), cart.get("branch_id")]
     if prefs.get("delivery_type") == "GIAO_TAN_NOI":
         required.append(prefs.get("delivery_address"))
+        required.append(prefs.get("address_confirmed"))
     if not all(required):
         return result
 
@@ -400,6 +401,11 @@ def _resolve_pending_voucher_choice(session_id: str, message: str) -> Optional[D
     """
     prefs = cart_manager.get_checkout_prefs(session_id)
     candidates = list(prefs.get("voucher_candidates") or [])
+    from src.agents.order_flow_graph import _offer_voucher_gate, _voucher_offer_snapshot
+    if candidates and prefs.get("voucher_offer_snapshot") and prefs["voucher_offer_snapshot"] != _voucher_offer_snapshot(session_id):
+        cart_manager.set_checkout_context(session_id, voucher_candidates=None, voucher_offer_pending=None,
+            voucher_decided=None, voucher_offer_snapshot=None)
+        return _offer_voucher_gate(session_id, "Giỏ đã thay đổi; mình kiểm tra lại các mã áp dụng được.")
     normalized = _normalize_chat_text(message)
     asks_best = bool(re.search(r"\b(tot nhat|ma tot|voucher tot|ap dung.*tot)\b", normalized))
     explicit_voucher_choice = asks_best or bool(re.search(
@@ -428,6 +434,13 @@ def _resolve_pending_voucher_choice(session_id: str, message: str) -> Optional[D
             }
         selected = candidates[index]
     elif not selected:
+        word_ordinal = re.search(r"\b(?:dau tien|(?:ma|voucher|thu)\s+(?:thu\s+)?(nhat|mot|hai|ba|tu))\b", normalized)
+        if word_ordinal:
+            index = {None: 0, "nhat": 0, "mot": 0, "hai": 1, "ba": 2, "tu": 3}[word_ordinal.group(1)]
+            if index >= len(candidates):
+                return {"reply": "Mã bạn chọn không có trong danh sách hiện tại.", "checkout_payload": None, "tool_calls_log": [], "error": None}
+            selected = candidates[index]
+    if not selected:
         selected = next(
             (
                 item for item in candidates
@@ -454,6 +467,7 @@ def _resolve_pending_voucher_choice(session_id: str, message: str) -> Optional[D
     cart_manager.set_checkout_context(
         session_id,
         voucher_decided=True,
+        voucher_code=code,
         voucher_offer_pending=None,
         voucher_candidates=candidates,
         checkout_requested=None,
@@ -715,6 +729,8 @@ def _confirm_saved_location(
     if prefs.get("delivery_type") == "GIAO_TAN_NOI":
         cart_manager.set_checkout_prefs(session_id, delivery_address=suggested)
     cart_manager.set_checkout_context(session_id, **context)
+    if (cart_manager.get_pending_action(session_id) or {}).get("type") == "confirm_address":
+        cart_manager.clear_pending_action(session_id)
 
     from src.function_calling.tools.branch_tools import (
         execute_find_nearest_branch,
@@ -1455,6 +1471,7 @@ def _run_agent_impl(
         address = re.sub(r"^(?:địa chỉ(?: mới)?(?: là)?|tôi ở|mình ở|giao đến|giao tới)\s*[:：]?\s*", "", user_message.strip(), flags=re.IGNORECASE)
         cart_manager.clear_branch(session_id)
         cart_manager.set_checkout_context(session_id, suggested_address=_clean_profile_address(address))
+        cart_manager.set_checkout_context(session_id, address_change_requested=None)
         resolved = _confirm_saved_location(session_id, "đúng địa chỉ đó")
         if resolved:
             return _advance_checkout_if_ready(session_id, resolved)
@@ -1471,6 +1488,7 @@ def _run_agent_impl(
         and not cart.get("is_empty")
         and not cart.get("branch_id")
         and not prefs.get("suggested_address")
+        and not prefs.get("address_change_requested")
     ):
         from src.function_calling.tools.user_tools import execute_get_user_profile
         profile = execute_get_user_profile(session_id)
@@ -1481,6 +1499,7 @@ def _run_agent_impl(
             payment_line = "\n\n" + _payment_methods_text() + "\nBạn chọn giúp mình một phương thức nhé."
         if default_address:
             cart_manager.set_checkout_context(session_id, suggested_address=default_address)
+            cart_manager.set_pending_action(session_id, "confirm_address", {})
             if prefs["delivery_type"] == "GIAO_TAN_NOI":
                 question = f"Bạn có muốn giao đến địa chỉ đã lưu này không?\n{default_address}"
             else:
@@ -1606,6 +1625,17 @@ def _run_agent_impl(
             "error": None,
         }
 
+    # A pending checkout decision can never become a free-agent tool loop.
+    prefs = cart_manager.get_checkout_prefs(session_id)
+    pending_type = (cart_manager.get_pending_action(session_id) or {}).get("type")
+    if prefs.get("checkout_requested") or pending_type in {
+        "ask_more_items", "select_voucher", "confirm_address", "select_branch", "confirm_checkout", "fill_options",
+    }:
+        text = _checkout_choices_prompt(session_id) if prefs.get("checkout_requested") else None
+        if not text:
+            text = "Bạn gửi địa chỉ muốn dùng nhé." if prefs.get("address_change_requested") else "Bạn cho mình biết lựa chọn cho bước đang chờ nhé."
+        return _advance_checkout_if_ready(session_id, {"reply": text, "checkout_payload": None, "tool_calls_log": [], "error": None})
+
     # ── Build messages (bao gồm RAG context nếu cần) ──────────────────────────
     messages = _build_messages(
         session_id=session_id,
@@ -1622,6 +1652,7 @@ def _run_agent_impl(
         "add_to_cart", "update_cart_item", "remove_cart_item",
         "request_checkout", "confirm_checkout", "set_session_branch",
         "apply_voucher", "remove_voucher", "cancel_order", "update_order",
+        "get_applicable_vouchers",
     }
     tools_for_turn = ALL_TOOL_SCHEMAS if allow_model_mutations else [
         schema for schema in ALL_TOOL_SCHEMAS
@@ -1635,6 +1666,16 @@ def _run_agent_impl(
         max_tool_rounds=max_tool_rounds,
         max_tokens=800,
     )
+    # A read-only model answer cannot create a checkout summary or voucher
+    # decision. The gate must persist its state before presenting that choice.
+    model_reply = _normalize_chat_text(result.get("reply") or "")
+    if result.get("checkout_payload") or re.search(
+        r"\b(tom tat don|tong thanh toan|dong y.*don hang|xac nhan.*(?:dat|don)|chot don)\b", model_reply,
+    ):
+        if not cart_manager.get_cart(session_id).get("is_empty"):
+            from src.agents.order_flow_graph import _offer_voucher_gate
+            return _offer_voucher_gate(session_id)
+        return {"reply": "Giỏ hàng đang trống. Bạn chọn món trước nhé.", "checkout_payload": None, "tool_calls_log": [], "error": None}
 
     # Never present a cart mutation as successful unless the corresponding
     # backend write actually succeeded in this turn.
