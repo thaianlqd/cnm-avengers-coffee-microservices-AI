@@ -1,5 +1,7 @@
 import * as crypto from 'crypto';
+import { BadRequestException } from '@nestjs/common';
 import { ThanhToanService } from './thanh-toan.service';
+import { DeliveryTrackingService } from '../shipper/features_thaian/delivery-tracking.service';
 
 describe('checkout amount across all payment paths', () => {
   const originalFetch = global.fetch;
@@ -16,7 +18,15 @@ describe('checkout amount across all payment paths', () => {
     s.giaoDichRepo = { create: (v: any) => v, save: jest.fn(async (v: any) => { transactions.set(v.ma_don_hang, v); return v; }), findOne: jest.fn(async ({where}: any) => transactions.get(where.ma_don_hang)) };
     s.voucherService = { kiemTraVoucher: jest.fn(async () => ({ so_tien_giam: 62600, voucher: { ma_voucher: 'SAVE20' } })), apDungVoucher: jest.fn() };
     s.notificationService = { taoThongBao: jest.fn() };
-    s.deliveryTrackingService = { createTracking: jest.fn(async () => ({ tracking_code: 'track' })) };
+    const trackings = new Map();
+    const tracking: any = Object.create(DeliveryTrackingService.prototype);
+    tracking.trackingRepo = { create: (v: any) => v, save: jest.fn(async (v: any) => { trackings.set(v.ma_don_hang, v); return v; }) };
+    tracking.logger = { log: jest.fn() };
+    tracking.getBranchDetail = jest.fn(async () => null);
+    tracking.geocodeDiaChiMapbox = jest.fn(async () => null);
+    tracking.getTrackingsByOrderIds = jest.fn(async (ids: string[]) => ids.map(id => trackings.get(id)).filter(Boolean));
+    jest.spyOn(tracking, 'createTracking');
+    s.deliveryTrackingService = tracking;
     s.customerWalletService = { deductBalance: jest.fn() };
     s.xacDinhCoSoGanNhatTheoDiaChi = jest.fn(async () => ({ branchCode: 'CN_1' }));
     s.normalizeBranchCode = (v: string) => v;
@@ -36,6 +46,7 @@ describe('checkout amount across all payment paths', () => {
     const result = await s.khoiTaoThanhToan('user', { phuong_thuc_thanh_toan: payment, delivery_mode: mode, branch_code: 'CN_1', dia_chi_giao_hang: '42/3 Nguyễn Hữu Tiến', ma_voucher: 'SAVE20', phi_giao_hang: 1, final_total: 1 });
     expect(Number(result.don_hang.tong_tien)).toBe(expected);
     expect(s.giaoDichRepo.save.mock.calls[0][0].so_tien).toBe(expected);
+    expect(s.deliveryTrackingService.trackingRepo.save.mock.calls[0][0].delivery_fee).toBe(mode === 'GIAO_TAN_NOI' ? 15000 : 0);
     if (payment === 'VI_DIEN_TU') expect(s.customerWalletService.deductBalance).toHaveBeenCalledWith('user', expected, 'ref');
     if (payment === 'VNPAY') expect(s.taoUrlVnpayThat.mock.calls[0][2]).toBe(expected);
     if (payment === 'NGAN_HANG_QR') expect(result.payment_details.so_tien).toBe(expected);
@@ -45,6 +56,47 @@ describe('checkout amount across all payment paths', () => {
     const result = await s.khoiTaoThanhToan('user', { phuong_thuc_thanh_toan: payment, delivery_mode: 'GIAO_TAN_NOI', dia_chi_giao_hang: 'Địa chỉ', ma_voucher: 'SAVE20' });
     expect(Number(result.don_hang.tong_tien)).toBe(250400);
     expect(s.giaoDichRepo.save.mock.calls[0][0].so_tien).toBe(250400);
+    expect(s.deliveryTrackingService.trackingRepo.save.mock.calls[0][0].delivery_fee).toBe(0);
+  });
+  it.each([
+    ['INTERNAL', 0, 15000], ['LALAMOVE', 0, 25000],
+    ['INTERNAL', 15000, 0], ['LALAMOVE', 25000, 0], ['LALAMOVE', 15000, 10000],
+  ])('%s persists authoritative fee with benefit %s', async (method, freeship, fee) => {
+    const {s} = service(Number(freeship));
+    const result = await s.khoiTaoThanhToan('user', { phuong_thuc_thanh_toan:'THANH_TOAN_KHI_NHAN_HANG', delivery_mode:'GIAO_TAN_NOI', delivery_method:method, dia_chi_giao_hang:'Địa chỉ', ma_voucher:'SAVE20', delivery_fee:999, phi_giao_hang:999 });
+    expect(s.deliveryTrackingService.trackingRepo.save.mock.calls[0][0].delivery_fee).toBe(fee);
+    expect(Number(result.don_hang.tong_tien)).toBe(250400 + Number(fee));
+  });
+  it.each([
+    {branch_code:'CN_2'}, {branch_code:undefined}, {ma_voucher:'SAVE10'}, {ma_voucher:undefined},
+    {delivery_method:'LALAMOVE'}, {expected_final_total:265401}, {expected_final_total:undefined},
+    {ghi_chu:'Ghi chú khác'}, {table_number:'B2'}, {destination_latitude:10},
+    {guest_phone:'0123456789'}, {phuong_thuc_thanh_toan:'VNPAY'},
+    {delivery_mode:'LAY_TAI_QUAN'}, {dia_chi_giao_hang:'Địa chỉ khác'},
+  ])('rejects replay with a changed business snapshot: %j', async changes => {
+    const {s} = service();
+    const dto = {checkout_action_id:'12345678-1234-4234-8234-123456789012', phuong_thuc_thanh_toan:'VI_DIEN_TU', delivery_mode:'GIAO_TAN_NOI', delivery_method:'INTERNAL', branch_code:'CN_1', dia_chi_giao_hang:'Địa chỉ', ma_voucher:'SAVE20', expected_final_total:265400};
+    await s.khoiTaoThanhToan('user', dto);
+    await expect(s.khoiTaoThanhToan('user', {...dto,...changes})).rejects.toThrow('Checkout action');
+    expect(s.chiTietRepo.save).toHaveBeenCalledTimes(1);
+    expect(s.customerWalletService.deductBalance).toHaveBeenCalledTimes(1);
+    expect(s.voucherService.apDungVoucher).toHaveBeenCalledTimes(1);
+  });
+  it.each([{branch_code:'CN_2'}, {ma_voucher:'SAVE10'}, {delivery_method:'LALAMOVE'}, {expected_final_total:1}])('protects legacy actions without persisted hashes: %j', async changes => {
+    const {s} = service();
+    const dto = {checkout_action_id:'12345678-1234-4234-8234-123456789012', phuong_thuc_thanh_toan:'VNPAY', delivery_mode:'GIAO_TAN_NOI', branch_code:'CN_1', dia_chi_giao_hang:'Địa chỉ', ma_voucher:'SAVE20', expected_final_total:265400};
+    const first = await s.khoiTaoThanhToan('user',dto);
+    delete first.don_hang.lich_su_trang_thai[0].checkout_snapshot_hash;
+    await expect(s.khoiTaoThanhToan('user',{...dto,...changes})).rejects.toThrow('Checkout action');
+    expect((await s.khoiTaoThanhToan('user',dto)).already_processed).toBe(true);
+    expect(s.chiTietRepo.save).toHaveBeenCalledTimes(1);
+  });
+  it.each(['LAY_TAI_QUAN','DUNG_TAI_CHO'])('protects delivery_method in the %s snapshot as well', async mode => {
+    const {s} = service();
+    const dto = {checkout_action_id:'12345678-1234-4234-8234-123456789012',phuong_thuc_thanh_toan:'VNPAY',delivery_mode:mode,delivery_method:'INTERNAL',branch_code:'CN_1',dia_chi_giao_hang:'Nhận tại quán',ma_voucher:'SAVE20',expected_final_total:250400};
+    await s.khoiTaoThanhToan('user',dto);
+    await expect(s.khoiTaoThanhToan('user',{...dto,delivery_method:'LALAMOVE'})).rejects.toThrow('snapshot khac');
+    expect(s.chiTietRepo.save).toHaveBeenCalledTimes(1);
   });
   it.each(payments)('%s replays the same summary after response timeout, with no second side effects', async payment => {
     const {s, runner} = service();
@@ -86,6 +138,37 @@ describe('checkout amount across all payment paths', () => {
     const {s} = service();
     await expect(s.khoiTaoThanhToan('user', { phuong_thuc_thanh_toan: 'VNPAY', delivery_mode: 'GIAO_TAN_NOI', dia_chi_giao_hang: 'Địa chỉ', expected_final_total: 1 })).rejects.toThrow('Tong tien');
     expect(s.donHangRepo.save).not.toHaveBeenCalled();
+  });
+  it('allows correction only when the failed action provably created no order', async () => {
+    const {s} = service();
+    s.voucherService.kiemTraVoucher.mockRejectedValue(new BadRequestException('Voucher không hợp lệ'));
+    const dto = {checkout_action_id:'12345678-1234-4234-8234-123456789012',phuong_thuc_thanh_toan:'VNPAY',delivery_mode:'GIAO_TAN_NOI',dia_chi_giao_hang:'Địa chỉ',ma_voucher:'INVALID'};
+    const error = await s.khoiTaoThanhToan('user',dto).catch((e: any) => e);
+    expect(error.getResponse().checkout_not_created).toBe(true);
+    expect(s.donHangRepo.save).not.toHaveBeenCalled();
+  });
+  it('never permits a new action when wallet failure happens after order creation', async () => {
+    const {s} = service();
+    s.customerWalletService.deductBalance.mockRejectedValue(new BadRequestException('Số dư không đủ'));
+    const dto = {checkout_action_id:'12345678-1234-4234-8234-123456789012',phuong_thuc_thanh_toan:'VI_DIEN_TU',delivery_mode:'GIAO_TAN_NOI',dia_chi_giao_hang:'Địa chỉ'};
+    const error = await s.khoiTaoThanhToan('user',dto).catch((e: any) => e);
+    expect(error.getResponse().checkout_not_created).toBeUndefined();
+    await expect(s.khoiTaoThanhToan('user',dto)).rejects.toThrow('doi soat');
+    expect(s.chiTietRepo.save).toHaveBeenCalledTimes(1);
+  });
+  it('replays a persisted snapshot after restart even if membership or tracking has changed', async () => {
+    const {s} = service();
+    const dto = {checkout_action_id:'12345678-1234-4234-8234-123456789012',phuong_thuc_thanh_toan:'VNPAY',delivery_mode:'GIAO_TAN_NOI',delivery_method:'INTERNAL',dia_chi_giao_hang:'Địa chỉ',ma_voucher:'SAVE20',expected_final_total:265400};
+    const first = await s.khoiTaoThanhToan('user',dto);
+    const [tracking] = await s.deliveryTrackingService.getTrackingsByOrderIds([first.don_hang.ma_don_hang]);
+    tracking.delivery_method = 'LALAMOVE';
+    global.fetch = jest.fn(async () => { throw new Error('Membership unavailable'); }) as any;
+    const restarted: any = Object.assign(Object.create(ThanhToanService.prototype),s);
+    const replay = await restarted.khoiTaoThanhToan('user',{...dto,delivery_method:undefined});
+    expect(replay.already_processed).toBe(true);
+    expect(Number(replay.don_hang.tong_tien)).toBe(265400);
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(s.cartRepo.find).toHaveBeenCalledTimes(1);
   });
   it.each(['VNPAY', 'NGAN_HANG_QR'])('%s callback validates the stored shipping-inclusive amount and keeps points on subtotal', async payment => {
     const {s} = service();

@@ -15,7 +15,7 @@ import {
   InformationCircleIcon
 } from '@heroicons/react/24/outline';
 import { useCart } from '../../context/CartContext';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/apiClient';
 import { queryKeys } from '../../lib/queryKeys';
@@ -81,6 +81,12 @@ export default function CartPage({
   const [selectedBranch, setSelectedBranch] = useState(() => {
     return sessionStorage.getItem('qr_storeId') || '';
   });
+  const checkoutRequestRef = useRef(null);
+  const checkoutBusyRef = useRef(false);
+  const handleDeliveryModeChange = (mode) => {
+    if (mode !== deliveryMode) setSelectedBranch('');
+    setDeliveryMode(mode);
+  };
 
   const { data: kioskPrices } = useQuery({
     queryKey: ['kiosk-prices', selectedBranch],
@@ -737,11 +743,6 @@ export default function CartPage({
             }
           }
         }
-      } else {
-        // Lấy tại quán / Dùng tại chỗ: Chỉ set mặc định nếu chưa có
-        if (!selectedBranch) {
-          setSelectedBranch(allBranches[0]?.ma_chi_nhanh || allBranches[0]?.co_so_ma || allBranches[0]?.branch_code || '');
-        }
       }
     }
   }, [publicBranchPayload, selectedBranch, addressForm.city, deliveryMode, userCoordinates]);
@@ -768,6 +769,26 @@ export default function CartPage({
     mutationFn: async () => {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       const customerName = user.ho_ten || user.hoTen || user.ten_dang_nhap || user.username || undefined;
+      const businessKey = JSON.stringify({
+        customer: maNguoiDung, deliveryMode, deliveryMethod, selectedBranch, phuongThuc,
+        address: deliveryMode === 'GIAO_TAN_NOI' ? diaChiDayDu : null,
+        note: ghiChu.trim(), voucher: voucherResult?.ma_voucher || voucherResult?.ma_khuyen_mai
+          || (!cart.length && checkoutRequestRef.current && !checkoutRequestRef.current.completed ? checkoutRequestRef.current.payload.ma_voucher : null) || null,
+        table: deliveryMode === 'DUNG_TAI_CHO' ? tableNumber : null,
+        email: isLoggedInUser ? (user.email || user.email_address) : guestEmail.trim(),
+        phone: isLoggedInUser ? (user.so_dien_thoai || user.phone || user.sdt) : guestPhone.trim(),
+        customerName, guestSessionId,
+      });
+      const cartKey = JSON.stringify(cart);
+      const previous = checkoutRequestRef.current;
+      if (previous && !previous.completed && (previous.businessKey !== businessKey || (cart.length && previous.cartKey !== cartKey))) {
+        throw new Error('Đơn trước đã gửi nhưng chưa nhận được kết quả. Vui lòng kiểm tra đơn đó trước khi thay đổi thông tin checkout.');
+      }
+      if (previous && previous.businessKey === businessKey && (previous.cartKey === cartKey || (!previous.completed && !cart.length))) {
+        const response = await apiClient.post(previous.path, previous.payload);
+        previous.completed = true;
+        return response.data;
+      }
 
       let targetLat = userCoordinates?.lat ? Number(userCoordinates.lat) : undefined;
       let targetLng = userCoordinates?.lng ? Number(userCoordinates.lng) : undefined;
@@ -783,7 +804,8 @@ export default function CartPage({
         } catch {}
       }
 
-      const response = await apiClient.post(`/customers/${maNguoiDung}/thanh-toan/khoi-tao`, {
+      const payload = {
+        checkout_action_id: crypto.randomUUID(),
         phuong_thuc_giao: deliveryMode,
         expected_final_total: cartQuote?.final_total,
         phuong_thuc_thanh_toan: phuongThuc,
@@ -805,7 +827,11 @@ export default function CartPage({
         guest_phone: (isLoggedInUser ? (user.so_dien_thoai || user.phone || user.sdt || undefined) : guestPhone.trim()) || undefined,
         session_id: guestSessionId,
         ten_khach_hang: isLoggedInUser ? customerName : (guestEmail.trim() || guestPhone.trim() || undefined),
-      });
+      };
+      const request = { businessKey, cartKey, path: `/customers/${maNguoiDung}/thanh-toan/khoi-tao`, payload, completed: false };
+      checkoutRequestRef.current = request;
+      const response = await apiClient.post(request.path, request.payload);
+      request.completed = true;
       return response.data;
     },
   });
@@ -836,17 +862,23 @@ export default function CartPage({
     }
   }, [qrOrderStatus, queryClient, refreshCart, triggerAiRecommendationRefresh, qrOrderId]);
 
+  const pendingCheckoutRetry = Boolean(checkoutRequestRef.current && !checkoutRequestRef.current.completed);
   const khoiTaoThanhToan = async () => {
+    if (checkoutBusyRef.current) return;
     if (!deliveryMode || !phuongThuc) {
       setThongBao('Vui lòng chọn hình thức nhận hàng và phương thức thanh toán.');
       return;
     }
-    if (isLoggedInUser && deliveryMode !== 'KIOSK' && (isQuotingCart || cartQuoteError || !cartQuote)) {
+    if (!pendingCheckoutRetry && isLoggedInUser && deliveryMode !== 'KIOSK' && (isQuotingCart || cartQuoteError || !cartQuote)) {
       setThongBao('Chưa xác minh được tổng tiền từ Order Service. Vui lòng thử lại.');
       return;
     }
-    if (!cart.length) {
+    if (!cart.length && !pendingCheckoutRetry) {
       setThongBao('Giỏ hàng đang trống. Vui lòng thêm sản phẩm trước khi thanh toán.');
+      return;
+    }
+    if ((deliveryMode === 'LAY_TAI_QUAN' || deliveryMode === 'DUNG_TAI_CHO') && !selectedBranch) {
+      setThongBao('Vui lòng chọn chi nhánh để nhận món trước khi thanh toán.');
       return;
     }
 
@@ -883,7 +915,7 @@ export default function CartPage({
       }
     }
 
-    if (deliveryMode === 'GIAO_TAN_NOI') {
+    if (deliveryMode === 'GIAO_TAN_NOI' && !pendingCheckoutRetry) {
       if (!stockValidation.canOrder) {
         setThongBao(stockValidation.message || 'Không thể đặt hàng do chi nhánh gần bạn đã hết món.');
         return;
@@ -907,6 +939,7 @@ export default function CartPage({
     setQrOrderId(null);
 
     try {
+      checkoutBusyRef.current = true;
       const data = await khoiTaoThanhToanMutation.mutateAsync();
 
       if (phuongThuc === 'VNPAY' && data.redirect_url) {
@@ -947,6 +980,12 @@ export default function CartPage({
             }, 0);
     } catch (error) {
       setThongBao(error?.response?.data?.message || error?.message || 'Có lỗi khi khởi tạo thanh toán');
+      if (error?.response?.data?.checkout_not_created === true) {
+        checkoutRequestRef.current = null;
+        queryClient.invalidateQueries({ queryKey:['cart-checkout-quote', maNguoiDung] });
+      }
+    } finally {
+      checkoutBusyRef.current = false;
     }
   };
 
@@ -1302,7 +1341,7 @@ export default function CartPage({
                 </h2>
                 
                 <div className="mb-6">
-                  <DeliveryModeSelector selectedMode={deliveryMode} onChange={setDeliveryMode} />
+                  <DeliveryModeSelector selectedMode={deliveryMode} onChange={handleDeliveryModeChange} />
                 </div>
 
                 {!deliveryMode && <p className="text-sm text-gray-600">Bạn chọn hình thức nhận hàng để tiếp tục nhé.</p>}
@@ -1964,7 +2003,7 @@ export default function CartPage({
 
                   <button
                     onClick={khoiTaoThanhToan}
-                    disabled={!deliveryMode || !phuongThuc || (isLoggedInUser && deliveryMode !== 'KIOSK' && (isQuotingCart || cartQuoteError || !cartQuote)) || khoiTaoThanhToanMutation.isPending || (deliveryMode !== 'GIAO_TAN_NOI' && isAnyItemOutOfStock) || (deliveryMode === 'GIAO_TAN_NOI' && !stockValidation.canOrder)}
+                    disabled={!deliveryMode || !phuongThuc || ((deliveryMode === 'LAY_TAI_QUAN' || deliveryMode === 'DUNG_TAI_CHO') && !selectedBranch) || (!pendingCheckoutRetry && ((isLoggedInUser && deliveryMode !== 'KIOSK' && (isQuotingCart || cartQuoteError || !cartQuote)) || (deliveryMode !== 'GIAO_TAN_NOI' && isAnyItemOutOfStock) || (deliveryMode === 'GIAO_TAN_NOI' && !stockValidation.canOrder))) || khoiTaoThanhToanMutation.isPending}
                     className="w-full mt-6 py-4 bg-[#c41230] hover:bg-[#a30f28] text-white rounded-full font-black uppercase text-xs sm:text-sm tracking-widest shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {khoiTaoThanhToanMutation.isPending ? (
@@ -1974,7 +2013,7 @@ export default function CartPage({
                       </>
                     ) : (
                       <>
-                        <span>Xác nhận &amp; Đặt hàng</span>
+                        <span>{pendingCheckoutRetry ? 'Thử lại đơn đã gửi' : 'Xác nhận & Đặt hàng'}</span>
                         <CheckIcon className="w-5 h-5 stroke-[3]" />
                       </>
                     )}
