@@ -16,15 +16,14 @@ test('product card click navigates by canonical product ID', () => {
   } finally { globalThis.CustomEvent = previous; }
 });
 
-test('plus button stops card navigation and adds only the canonical item', () => {
+test('plus button stops card navigation and sends only canonical identity', () => {
   let stopped = false;
   const additions = [];
   addChatProduct({ stopPropagation: () => { stopped = true; } }, item => additions.push(item),
-    { product_id: '42', product_name: 'Frappe Matcha', category: 'Frappe' }, 60000);
+    { product_id: '42', product_name: 'Frappe Matcha', category: 'Frappe' });
   assert.equal(stopped, true);
   assert.equal(additions.length, 1);
-  assert.deepEqual({ id: additions[0].ma_san_pham, name: additions[0].ten_san_pham, price: additions[0].gia_ban },
-    { id: '42', name: 'Frappe Matcha', price: 60000 });
+  assert.deepEqual(additions[0], { product_id: '42', product_name: 'Frappe Matcha' });
 });
 
 test('structured wallet option renders balance and disables insufficient funds', () => {
@@ -35,10 +34,9 @@ test('structured wallet option renders balance and disables insufficient funds',
   assert.equal(paymentCardRows([{ label: 'Ví Avengers', balance: 2063000, enabled: true }])[0].desc, 'Số dư: 2.063.000đ');
 });
 
-test('loading label reflects the current stage', () => {
-  assert.equal(chatLoadingLabel('BROWSING', false), 'Đang tìm món phù hợp...');
-  assert.equal(chatLoadingLabel('VOUCHER', false), 'Đang kiểm tra ưu đãi...');
-  assert.equal(chatLoadingLabel('SUMMARY', true), 'Đang xác nhận đơn hàng...');
+test('loading label uses only the current confirmation action', () => {
+  assert.equal(chatLoadingLabel(false), 'Mình đang xử lý yêu cầu của bạn...');
+  assert.equal(chatLoadingLabel(true), 'Đang xác nhận đơn hàng...');
 });
 
 test('successful wallet checkout invalidates the shared wallet query', async () => {

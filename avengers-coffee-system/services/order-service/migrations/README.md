@@ -17,3 +17,10 @@ history.
 PAYMENT references. Apply it before enabling the transactional wallet checkout
 path; inspect and reconcile duplicate PAYMENT references first if the index
 reports a conflict.
+
+`20260928_wallet_voucher_claim_outbox.sql` adds durable voucher delivery for
+wallet checkout. Apply it before deploying this checkout path. The order
+service retries pending claims on startup and every 30 seconds. Apply the
+Identity service `migrations/20260928_promotion_usage_order_unique.sql` first;
+its unique order key makes a retry after a lost response safe. Reconcile
+duplicate `ma_don_hang` claims before creating that index.

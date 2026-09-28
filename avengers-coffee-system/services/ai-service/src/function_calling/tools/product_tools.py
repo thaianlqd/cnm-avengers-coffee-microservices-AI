@@ -297,8 +297,11 @@ def execute_check_price_and_stock(
                     ), {"branch_id": branch_id, "product_id": int(p["product_id"])}).mappings().first()
                 if stock:
                     stock_quantity = int(stock["so_luong_ton"] or 0)
-                    in_stock = bool(stock["dang_kinh_doanh"]) and stock_quantity >= max(1, int(quantity or 1))
+                    in_stock = bool(stock["dang_kinh_doanh"])
                     availability_status = "available" if in_stock else "unavailable"
+                else:
+                    in_stock = True
+                    availability_status = "available"
 
             results.append({
                 "product_id": p["product_id"],

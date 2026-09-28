@@ -30,9 +30,19 @@ def _locality_parts(address: str) -> list[str]:
 
 def _matches_locality(requested: list[str], candidate: dict, place: dict) -> bool:
     fields = ('display', 'address', 'name', 'city', 'district', 'ward', 'province', 'formatted_address')
-    description = _fold_location(' '.join(str(source.get(key) or '') for source in (candidate, place) for key in fields))
-    description = re.sub(r'\bhcm\b', 'ho chi minh', description)
-    return bool(description) and all(part in description for part in requested)
+    from src.agents.location_parser import locality_matches
+    components = [str(source.get(key) or '') for source in (candidate, place) for key in fields]
+    place_admin = [str(place.get(key) or '') for key in ('district', 'ward', 'city', 'province') if place.get(key)]
+    if len(requested) == 1 and place_admin and not any(
+        locality_matches(component, requested[0]) for component in place_admin
+    ):
+        # Search suggestions can be mislabeled. The resolved place's
+        # administrative fields take precedence over its search snippet.
+        return False
+    return bool(components) and all(
+        any(locality_matches(component, part) for component in components)
+        for part in requested
+    )
 
 def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """

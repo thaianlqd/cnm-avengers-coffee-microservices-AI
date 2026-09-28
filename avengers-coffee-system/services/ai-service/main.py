@@ -700,6 +700,7 @@ class AgentChatRequest(BaseModel):
     history: Optional[List[AgentChatMessage]] = None
     conversation_id: Optional[str] = None
     client_message_id: Optional[str] = None
+    selected_product_id: Optional[str] = None
 
 
 class AgentChatResponse(BaseModel):
@@ -774,11 +775,18 @@ def agent_chat(body: AgentChatRequest, request: Request):
             conversation_id, body.session_id, body.client_message_id
         )
         if cached:
+            if (cached.get("_request_message", body.message) != body.message or
+                    cached.get("_selected_product_id") != body.selected_product_id):
+                raise HTTPException(status_code=409, detail="Mã lượt chat đã được dùng cho yêu cầu khác")
             cached.pop("_response_session_id", None)
+            cached.pop("_request_message", None)
+            cached.pop("_selected_product_id", None)
             cached["conversation_id"] = conversation_id
             return AgentChatResponse(**cached)
         memory = conversation_memory.load(conversation_id, body.session_id)
         history = memory.get("messages") or []
+    except HTTPException:
+        raise
     except PermissionError:
         raise HTTPException(status_code=403, detail="Cuộc trò chuyện không thuộc phiên hiện tại")
     except Exception as exc:
@@ -791,6 +799,7 @@ def agent_chat(body: AgentChatRequest, request: Request):
         user_message=body.message,
         history=history,
         client_message_id=body.client_message_id,
+        selected_product_id=body.selected_product_id,
     )
     result["conversation_id"] = conversation_id
     try:
@@ -810,6 +819,7 @@ def agent_chat(body: AgentChatRequest, request: Request):
                 "checkout_prefs": checkout_prefs,
             },
             response_session_id=scoped_session_id,
+            selected_product_id=body.selected_product_id,
         )
     except Exception as exc:
         logger.warning("Cannot persist durable AI conversation: %s", exc)

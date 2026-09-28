@@ -101,6 +101,7 @@ def save_exchange(
     client_message_id: Optional[str] = None,
     state: Optional[Dict[str, Any]] = None,
     response_session_id: Optional[str] = None,
+    selected_product_id: Optional[str] = None,
 ) -> None:
     _ensure_table()
     schema = _schema()
@@ -124,6 +125,8 @@ def save_exchange(
         if client_message_id:
             cached_result = dict(result)
             cached_result["_response_session_id"] = response_session_id or session_id
+            cached_result["_request_message"] = user_message
+            cached_result["_selected_product_id"] = selected_product_id
             responses[str(client_message_id)] = cached_result
             if len(responses) > 50:
                 for key in list(responses)[:-50]:

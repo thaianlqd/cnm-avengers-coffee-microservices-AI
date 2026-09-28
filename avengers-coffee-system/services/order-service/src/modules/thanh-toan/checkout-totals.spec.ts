@@ -37,7 +37,9 @@ describe('checkout amount across all payment paths', () => {
       }),
       delete: jest.fn(),
     };
-    s.customerWalletService = { withWalletPayment: jest.fn(async (_uid: string, _amount: number, _ref: string, write: any) => write(walletManager, 1793400)) };
+    s.customerWalletService = { withWalletPayment: jest.fn(async (_uid: string, _amount: number, _ref: string, write: any) => write(walletManager, 1793400)),
+      getWallet: jest.fn(async () => ({ wallet: { balance: 1793400 } })) };
+    s.walletVoucherClaims = { schedule: jest.fn(async () => undefined), processPending: jest.fn(async () => undefined) };
     s.walletManager = walletManager;
     s.xacDinhCoSoGanNhatTheoDiaChi = jest.fn(async () => ({ branchCode: 'CN_1' }));
     s.normalizeBranchCode = (v: string) => v;
@@ -93,7 +95,7 @@ describe('checkout amount across all payment paths', () => {
     await expect(s.khoiTaoThanhToan('user', {...dto,...changes})).rejects.toThrow('Checkout action');
     expect(s.walletManager.save).toHaveBeenCalledTimes(3);
     expect(s.customerWalletService.withWalletPayment).toHaveBeenCalledTimes(1);
-    expect(s.voucherService.apDungVoucher).toHaveBeenCalledTimes(1);
+    expect(s.walletVoucherClaims.schedule).toHaveBeenCalledTimes(1);
   });
   it.each([{branch_code:'CN_2'}, {ma_voucher:'SAVE10'}, {delivery_method:'LALAMOVE'}, {expected_final_total:1}])('protects legacy actions without persisted hashes: %j', async changes => {
     const {s} = service();
@@ -121,7 +123,11 @@ describe('checkout amount across all payment paths', () => {
     expect(replay.already_processed).toBe(true);
     if (payment === 'VI_DIEN_TU') expect(s.walletManager.save).toHaveBeenCalledTimes(3);
     else expect(s.chiTietRepo.save).toHaveBeenCalledTimes(1);
-    expect(s.voucherService.apDungVoucher).toHaveBeenCalledTimes(1);
+    if (payment === 'VI_DIEN_TU') {
+      expect(s.walletVoucherClaims.schedule).toHaveBeenCalledTimes(1);
+      expect(replay.wallet_balance_after).toBe(1793400);
+      expect(first.wallet_balance_after).toBe(1793400);
+    } else expect(s.voucherService.apDungVoucher).toHaveBeenCalledTimes(1);
     expect(s.deliveryTrackingService.createTracking).toHaveBeenCalledTimes(1);
     if (payment === 'VI_DIEN_TU') expect(s.customerWalletService.withWalletPayment).toHaveBeenCalledTimes(1);
     expect(runner.release).toHaveBeenCalledTimes(2);
@@ -170,6 +176,33 @@ describe('checkout amount across all payment paths', () => {
     expect(s.donHangRepo.save).not.toHaveBeenCalled();
     expect(s.walletManager.save).not.toHaveBeenCalled();
     expect(s.cartRepo.delete).not.toHaveBeenCalled();
+    expect(s.walletVoucherClaims.schedule).not.toHaveBeenCalled();
+  });
+  it('revalidates a wallet voucher under the wallet lock before writing the order', async () => {
+    const {s} = service();
+    s.voucherService.kiemTraVoucher
+      .mockResolvedValueOnce({ so_tien_giam: 62600, voucher: { ma_voucher: 'SAVE20' } })
+      .mockRejectedValueOnce(new BadRequestException('Voucher dang duoc ghi nhan cho don truoc'));
+    await expect(s.khoiTaoThanhToan('user', {
+      checkout_action_id:'12345678-1234-4234-8234-123456789012',
+      phuong_thuc_thanh_toan:'VI_DIEN_TU', delivery_mode:'GIAO_TAN_NOI',
+      dia_chi_giao_hang:'Địa chỉ', ma_voucher:'SAVE20',
+    })).rejects.toThrow('Voucher dang duoc ghi nhan');
+    expect(s.voucherService.kiemTraVoucher).toHaveBeenCalledTimes(2);
+    expect(s.walletManager.save).not.toHaveBeenCalled();
+    expect(s.walletManager.delete).not.toHaveBeenCalled();
+    expect(s.walletVoucherClaims.schedule).not.toHaveBeenCalled();
+  });
+  it('strict pre-create inventory checks only the branch serving flag', async () => {
+    const {s} = service();
+    const check = (cart: any[]) => (ThanhToanService.prototype as any).kiemTraTonKhoTruocKhiTaoDon.call(s, 'CN_1', cart);
+    const cart = [{ ma_san_pham: 1, ten_san_pham: 'Matcha', so_luong: 5 }];
+    s.donHangRepo.manager.query = jest.fn(async () => [{ ma_san_pham: 1, dang_kinh_doanh: true, so_luong_ton: 0 }]);
+    await expect(check(cart)).resolves.toBeUndefined();
+    s.donHangRepo.manager.query = jest.fn(async () => []);
+    await expect(check(cart)).resolves.toBeUndefined();
+    s.donHangRepo.manager.query = jest.fn(async () => [{ ma_san_pham: 1, dang_kinh_doanh: false, so_luong_ton: 999 }]);
+    await expect(check(cart)).rejects.toThrow('tạm ngưng');
   });
   it('replays a persisted snapshot after restart even if membership or tracking has changed', async () => {
     const {s} = service();

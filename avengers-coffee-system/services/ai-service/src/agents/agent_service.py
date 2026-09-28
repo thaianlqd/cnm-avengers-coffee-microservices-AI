@@ -1891,6 +1891,7 @@ def run_agent(
     history: Optional[List[Dict[str, str]]] = None,
     max_tool_rounds: int = 10,
     client_message_id: Optional[str] = None,
+    selected_product_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Public entrypoint: LangGraph owns transactional conversational turns."""
     from src.agents.order_flow_graph import run_order_flow
@@ -1899,4 +1900,5 @@ def run_agent(
         user_message,
         history=history,
         client_message_id=client_message_id,
+        selected_product_id=selected_product_id,
     )

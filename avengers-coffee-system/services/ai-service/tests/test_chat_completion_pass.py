@@ -2,7 +2,7 @@
 import uuid
 
 from src.agents import agent_service, order_flow_graph
-from src.agents.location_parser import parse_location
+from src.agents.location_parser import parse_location, locality_matches
 from src.common import cart_manager
 from src.function_calling.tools import branch_tools, cart_tools, product_tools
 from utils import geo
@@ -61,6 +61,54 @@ def test_area_question_parses_only_locality():
     assert parsed.kind == 'area' and parsed.value.lower() == 'phường gò vấp'
     assert parse_location('tìm quán gần phường Tây Thạnh').kind == 'branch_query'
     assert parse_location('giao tới Gò Vấp').kind != 'address'
+
+
+def test_locality_components_do_not_match_longer_names():
+    assert locality_matches('Đường 1, Phường An Phú, Quận Thủ Đức', 'P. An Phu')
+    assert not locality_matches('Đường 1, Phường An Phú Đông', 'phường An Phú')
+    assert locality_matches('Highlands D9 Tân Phú, Quận Tân Phú', 'Q. Tan Phu')
+    assert not locality_matches('Phường Tân Phú Trung', 'Tân Phú')
+
+
+def test_card_selection_uses_catalog_identity_and_asks_for_choices(monkeypatch):
+    session = 'card-options-' + uuid.uuid4().hex
+    monkeypatch.setattr(cart_tools, 'sync_authoritative_cart', lambda sid: cart_manager.get_cart(sid))
+    monkeypatch.setattr(order_flow_graph, '_load_active_product_targets', lambda: [
+        {'product_id': '7', 'product_name': 'Frappe Matcha', 'category': 'drink'}])
+    monkeypatch.setattr(product_tools, 'execute_get_product_options', lambda _name: {
+        'status': 'ok', 'product_id': '7', 'product_name': 'Frappe Matcha',
+        'options': {'Size': ['Vừa'], 'Đá': ['Ít', 'Nhiều'], 'Đường': ['Ít', 'Nhiều'], 'Topping': ['Không', 'Trân châu']},
+    })
+    mutations = []
+    monkeypatch.setattr(cart_tools, 'execute_add_to_cart', lambda **kwargs: mutations.append(kwargs))
+    result = order_flow_graph.run_order_flow(session, 'Thêm tên sai vào giỏ',
+        client_message_id='card-7', selected_product_id='7')
+    assert 'Đá' in result['reply'] and 'Topping' in result['reply']
+    assert not mutations
+    assert cart_manager.get_checkout_prefs(session)['pending_products'][0]['product_id'] == '7'
+
+
+def test_card_selection_without_choices_uses_same_safe_add_path(monkeypatch):
+    session = 'card-fixed-' + uuid.uuid4().hex
+    monkeypatch.setattr(cart_tools, 'sync_authoritative_cart', lambda sid: cart_manager.get_cart(sid))
+    monkeypatch.setattr(order_flow_graph, '_load_active_product_targets', lambda: [
+        {'product_id': '8', 'product_name': 'Bánh Matcha', 'category': 'food'}])
+    monkeypatch.setattr(product_tools, 'execute_get_product_options', lambda _name: {
+        'status': 'ok', 'product_id': '8', 'product_name': 'Bánh Matcha', 'options': {},
+    })
+    monkeypatch.setattr(product_tools, 'execute_check_price_and_stock', lambda **_kwargs: {
+        'status': 'ok', 'products': [{'product_id': '8', 'product_name': 'Bánh Matcha',
+                                   'final_price': 49000, 'in_stock': True}],
+    })
+    mutations = []
+    def add(**kwargs):
+        mutations.append(kwargs)
+        return {'status': 'ok', 'cart': {'total_price': 49000, 'branch_name': None},
+                'persisted_line': {'product_id': '8', 'product_name': 'Bánh Matcha'}}
+    monkeypatch.setattr(cart_tools, 'execute_add_to_cart', add)
+    order_flow_graph.run_order_flow(session, 'Thêm món sai vào giỏ',
+        client_message_id='card-8', selected_product_id='8')
+    assert len(mutations) == 1 and mutations[0]['product_id'] == '8'
 
 
 def test_pickup_area_uses_active_locality_branches_without_geocoding(monkeypatch):

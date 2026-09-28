@@ -18,6 +18,7 @@ import { GiaoDichThanhToan } from './entities/giao-dich-thanh-toan.entity';
 import { DeliveryTrackingService } from '../shipper/features_thaian/delivery-tracking.service';
 import { SurveyService } from '../../services/survey.service';
 import { SmtpService } from '../smtp/smtp.service';
+import { WalletVoucherClaimOutboxService } from './wallet-voucher-claim-outbox.service';
 
 type KhoiTaoThanhToanDto = {
   checkout_action_id?: string;
@@ -260,6 +261,7 @@ export class ThanhToanService {
     private readonly customerWalletService: CustomerWalletService,
     private readonly surveyService: SurveyService,
     private readonly smtpService: SmtpService,
+    private readonly walletVoucherClaims: WalletVoucherClaimOutboxService,
   ) { }
 
   private normalizeBranchCode(branchCode?: string) {
@@ -271,21 +273,16 @@ export class ThanhToanService {
   }
 
   /**
-   * Reject an explicitly suspended or insufficient stock record. A missing
+   * Reject an explicitly suspended stock record. A missing
    * row means this product has not been configured at branch level yet, which
    * matches the customer cart's inventory policy. This check is deliberately
    * repeated immediately before the order write.
    */
   private async kiemTraTonKhoTruocKhiTaoDon(branchCode: string, gioHang: CartItem[]) {
-    const requiredByProduct = new Map<number, { quantity: number; name: string }>();
+    const requiredByProduct = new Map<number, string>();
     for (const item of gioHang) {
       const productId = Number(item.ma_san_pham);
-      const current = requiredByProduct.get(productId) || {
-        quantity: 0,
-        name: item.ten_san_pham || `Sản phẩm ${productId}`,
-      };
-      current.quantity += Math.max(1, Number(item.so_luong) || 1);
-      requiredByProduct.set(productId, current);
+      requiredByProduct.set(productId, item.ten_san_pham || `Sản phẩm ${productId}`);
     }
 
     const productIds = [...requiredByProduct.keys()].filter(Number.isFinite);
@@ -293,26 +290,26 @@ export class ThanhToanService {
       throw new BadRequestException('Không thể xác minh tồn kho cho đơn hàng');
     }
 
-    const rows: Array<{ ma_san_pham: number; so_luong_ton: number; dang_kinh_doanh: boolean }> =
+    const rows: Array<{ ma_san_pham: number; dang_kinh_doanh: boolean }> =
       await this.donHangRepo.manager.query(
-        `SELECT ma_san_pham, so_luong_ton, dang_kinh_doanh
+        `SELECT ma_san_pham, dang_kinh_doanh
            FROM inventory.ton_kho_san_pham
           WHERE co_so_ma = $1 AND ma_san_pham = ANY($2::int[])`,
         [branchCode, productIds],
       );
     const stockByProduct = new Map(rows.map((row) => [Number(row.ma_san_pham), row]));
     const blockers: string[] = [];
-    for (const [productId, required] of requiredByProduct.entries()) {
+    for (const [productId, name] of requiredByProduct.entries()) {
       const stock = stockByProduct.get(productId);
       // A missing inventory row means stock is not configured for this
       // product/branch. Do not invent an out-of-stock state from missing data.
-      if (stock && (!stock.dang_kinh_doanh || Number(stock.so_luong_ton || 0) < required.quantity)) {
-        blockers.push(required.name);
+      if (stock && !stock.dang_kinh_doanh) {
+        blockers.push(name);
       }
     }
     if (blockers.length) {
       throw new BadRequestException(
-        `Chi nhánh ${branchCode} không đủ tồn kho cho: ${blockers.join(', ')}`,
+        `Chi nhánh ${branchCode} tạm ngưng phục vụ: ${blockers.join(', ')}`,
       );
     }
   }
@@ -1775,6 +1772,10 @@ export class ThanhToanService {
           throw new ConflictException('Don hang da duoc tao, can doi soat thanh toan. Khong tao don moi.');
         }
         const result: any = { don_hang: existing, giao_dich: transaction, already_processed: true };
+        if (dto.phuong_thuc_thanh_toan === 'VI_DIEN_TU') {
+          const wallet = await this.customerWalletService.getWallet(maNguoiDung);
+          result.wallet_balance_after = Number(wallet.wallet.balance);
+        }
         if (dto.phuong_thuc_thanh_toan === 'VNPAY') {
           result.redirect_url = this.taoUrlVnpayThat(maNguoiDung, orderId, Number(existing.tong_tien), transaction.ma_tham_chieu, this.chuanHoaIpVnpay(ipAddr));
         } else if (dto.phuong_thuc_thanh_toan === 'NGAN_HANG_QR') {
@@ -2109,6 +2110,18 @@ export class ThanhToanService {
     const maThamChieu = `WALLET-${maDonHang}`;
     const { donHang, chiTiet, giaoDich, walletBalanceAfter } = await this.customerWalletService.withWalletPayment(
       maNguoiDung, tongTien, maThamChieu, async (manager, balanceAfter) => {
+        // The wallet row lock serializes this customer's wallet checkouts.
+        // Revalidate under that lock so another action cannot reuse a voucher
+        // between the first quote and its durable claim.
+        if (maVoucherApDung) {
+          const current = await this.voucherService.kiemTraVoucher(
+            maVoucherApDung, tongTienGoc, maNguoiDung,
+            gioHang.some(item => Array.isArray(item.toppings) && item.toppings.length > 0),
+          );
+          if (current.voucher.ma_voucher !== maVoucherApDung || current.so_tien_giam !== soTienGiam) {
+            throw new ConflictException('Voucher da thay doi, vui long xem lai tom tat don hang');
+          }
+        }
         const donHang = await manager.save(DonHang, this.donHangRepo.create({
           ma_don_hang: maDonHang,
           ma_nguoi_dung: maNguoiDung,
@@ -2159,10 +2172,17 @@ export class ThanhToanService {
           trang_thai: 'DA_THANH_TOAN',
         }));
         await manager.delete(CartItem, { ma_nguoi_dung: maNguoiDung });
+        if (maVoucherApDung) {
+          await this.walletVoucherClaims.schedule(manager, {
+            order_id: maDonHang, customer_id: maNguoiDung,
+            voucher_code: maVoucherApDung, discount_amount: soTienGiam,
+          });
+        }
         return { donHang, chiTiet, giaoDich, walletBalanceAfter: balanceAfter };
       },
     );
 
+    if (maVoucherApDung) void this.walletVoucherClaims.processPending();
     let createdTracking: any = null;
     try {
       if (dto.delivery_mode) {
@@ -2199,7 +2219,6 @@ export class ThanhToanService {
         du_lieu: { ma_don_hang: maDonHang, phuong_thuc_thanh_toan: 'VI_DIEN_TU' },
       }),
     ];
-    if (maVoucherApDung) followups.push(this.voucherService.apDungVoucher(maVoucherApDung, maNguoiDung, soTienGiam, maDonHang));
     const followupResults = await Promise.allSettled(followups);
     for (const outcome of followupResults) {
       if (outcome.status === 'rejected') console.error('[WALLET CHECKOUT FOLLOWUP ERROR]', outcome.reason);

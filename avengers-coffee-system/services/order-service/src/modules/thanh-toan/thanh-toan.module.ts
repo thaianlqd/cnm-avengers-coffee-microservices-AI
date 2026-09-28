@@ -17,6 +17,7 @@ import { SmtpModule } from '../smtp/smtp.module';
 import { SurveyResponse } from '../../entities/survey-response.entity';
 import { SurveyForm } from '../../entities/survey-form.entity';
 import { SurveyService } from '../../services/survey.service';
+import { WalletVoucherClaimOutboxService } from './wallet-voucher-claim-outbox.service';
 
 @Module({
   imports: [
@@ -28,7 +29,7 @@ import { SurveyService } from '../../services/survey.service';
     SmtpModule,
   ],
   controllers: [ThanhToanController, ThanhToanHeThongController, ThanhToanLegacyWebhookController],
-  providers: [ThanhToanService, SurveyService],
+  providers: [ThanhToanService, SurveyService, WalletVoucherClaimOutboxService],
   exports: [ThanhToanService],
 })
 export class ThanhToanModule {}

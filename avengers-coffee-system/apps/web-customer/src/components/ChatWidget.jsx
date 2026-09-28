@@ -227,7 +227,6 @@ function ProductCard({ p, onAdd, resolvePrice }) {
       .finally(() => { if (active) setPriceLoading(false); });
     return () => { active = false; };
   }, [canonicalPrice, productName, resolvePrice]);
-  const displayProduct = canonicalPrice == null ? p : { ...p, gia_ban: canonicalPrice };
   return (
     <div
       role={productId == null ? undefined : 'button'}
@@ -259,7 +258,7 @@ function ProductCard({ p, onAdd, resolvePrice }) {
       </div>
       <button
         disabled={canonicalPrice == null}
-        onClick={(e) => addChatProduct(e, onAdd, displayProduct, canonicalPrice)}
+        onClick={(e) => addChatProduct(e, onAdd, p)}
         style={{ all: 'unset', cursor: canonicalPrice == null ? 'not-allowed' : 'pointer', opacity: canonicalPrice == null ? 0.45 : 1, width: 30, height: 30, borderRadius: '50%', background: '#F08080', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, alignSelf: 'center', fontWeight: 900, fontSize: '1.1rem', boxShadow: '0 2px 8px rgba(240,128,128,0.4)', transition: 'transform 0.1s' }}
         onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.9)'; }}
         onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
@@ -496,7 +495,6 @@ export default function ChatWidget({ user, socketUrl }) {
   const [sending, setSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [loadingLabel, setLoadingLabel] = useState('Mình đang xử lý yêu cầu của bạn...');
-  const [conversationState, setConversationState] = useState(null);
   const [loading, setLoading] = useState(false);
   const [unread, setUnread] = useState(0);
   const [conversation, setConversation] = useState(null);
@@ -678,39 +676,8 @@ export default function ChatWidget({ user, socketUrl }) {
   }, [user, effectiveUserId]);
 
   // Add item to cart
-  const addToCart = useCallback(async (product) => {
-    if (!userId) {
-      addAIMsg('Bạn cần đăng nhập để thêm vào giỏ hàng nhé! [Đăng nhập ngay](/login)', {
-        _quickReplies: [{ id: 'login', label: 'Đăng nhập', text: 'Tôi muốn đăng nhập' }]
-      });
-      return;
-    }
-    try {
-      const response = await apiClient.post('/cart', {
-        ma_nguoi_dung: userId,
-        ma_san_pham: product.id || product.ma_san_pham,
-        ten_san_pham: product.ten_san_pham,
-        gia_ban: product.gia_ban,
-        hinh_anh_url: product.hinh_anh_url,
-        size: 'Nhỏ',
-        so_luong: 1
-      });
-      const mutationCart = response?.data || response || {};
-      const persisted = mutationCart.persisted_line || mutationCart;
-      addAIMsg(`✅ Đã thêm **${persisted.ten_san_pham || product.ten_san_pham}** vào giỏ hàng! Giá: ${fmtVND(persisted.gia_ban ?? product.gia_ban)}`, {
-        _quickReplies: [
-          { id: 'more', label: 'Xem thêm menu', text: 'Gợi ý thêm menu' },
-          { id: 'cart', label: 'Xem giỏ hàng', text: 'Xem giỏ hàng của tôi' },
-        ],
-      });
-    } catch {
-      addAIMsg('😢 Không thể thêm sản phẩm vào giỏ. Vui lòng thử lại!');
-    }
-    scrollBottom();
-  }, [userId, addAIMsg, scrollBottom]);
-
   // ── Agent API call (Phase 2+3: RAG + Guardrails + Tool Calling) ─────────────
-  const callAgentAPI = useCallback(async (text) => {
+  const callAgentAPI = useCallback(async (text, selectedProductId) => {
     // Build history as [{role, content}] for the Agent endpoint
     const history = messages.slice(-8).map((m) => ({
       role: m.vai_tro_nguoi_gui === 'CUSTOMER' ? 'user' : 'assistant',
@@ -718,15 +685,16 @@ export default function ChatWidget({ user, socketUrl }) {
     })).filter((m) => m.content);
 
     const previousTurn = pendingAgentTurnRef.current;
-    const turn = previousTurn?.text === text && previousTurn?.sessionId === effectiveUserId && previousTurn?.conversationId === aiConversationId
+    const turn = previousTurn?.text === text && previousTurn?.selectedProductId === selectedProductId && previousTurn?.sessionId === effectiveUserId && previousTurn?.conversationId === aiConversationId
       ? previousTurn
-      : { text, sessionId: effectiveUserId, conversationId: aiConversationId, id: newConversationId() };
+      : { text, selectedProductId, sessionId: effectiveUserId, conversationId: aiConversationId, id: newConversationId() };
     pendingAgentTurnRef.current = turn;
     const agentRes = await apiClient.post('/ai/agent/chat', {
       session_id: effectiveUserId,
       conversation_id: aiConversationId,
       client_message_id: turn.id,
       message: text,
+      selected_product_id: selectedProductId || null,
       history,
     });
 
@@ -798,7 +766,7 @@ export default function ChatWidget({ user, socketUrl }) {
   }, [pendingOrder, orderConfirming, effectiveUserId, aiConversationId, addAIMsg, scrollBottom, walletUserId, queryClient]);
 
   // Direct AI API handler (primary: /ai/agent/chat, fallback: /ai/chat)
-  const processAIMessage = useCallback(async (text) => {
+  const processAIMessage = useCallback(async (text, selectedProductId) => {
     const textLower = text.toLowerCase();
 
     if (pendingOrder && isCheckoutConfirmation(text)) {
@@ -822,8 +790,7 @@ export default function ChatWidget({ user, socketUrl }) {
 
     // ── LUỒNG 1: Gọi AI Agent mới (RAG + Guardrails + Tool Calling) ──────────
     try {
-      const agentData = await callAgentAPI(text);
-      setConversationState(agentData?.conversation_state || null);
+      const agentData = await callAgentAPI(text, selectedProductId);
       const agentReply = agentData?.reply;
           const checkoutPayload = agentData?.checkout_payload;
       const agentError = agentData?.error;
@@ -1013,7 +980,7 @@ export default function ChatWidget({ user, socketUrl }) {
 
 
   // Send message trigger
-  const sendMessage = useCallback(async (overrideText) => {
+  const sendMessage = useCallback(async (overrideText, selectedProductId) => {
     const text = (overrideText !== undefined ? String(overrideText) : inputText).trim();
     if (!text || sending) return;
     setSending(true);
@@ -1023,9 +990,9 @@ export default function ChatWidget({ user, socketUrl }) {
       if (overrideText === undefined) setInputText('');
       scrollBottom();
       setIsTyping(true);
-      setLoadingLabel(chatLoadingLabel(conversationState, Boolean(pendingOrder)));
+      setLoadingLabel(chatLoadingLabel(Boolean(pendingOrder && isCheckoutConfirmation(text))));
       try {
-        await processAIMessage(text);
+        await processAIMessage(text, selectedProductId);
       } finally {
         setIsTyping(false);
         setSending(false);
@@ -1068,7 +1035,12 @@ export default function ChatWidget({ user, socketUrl }) {
         setSending(false);
       }
     }
-  }, [inputText, sending, chatMode, conversation, replyTo, effectiveUserId, userName, addUserMsg, scrollBottom, processAIMessage, pendingOrder, conversationState]);
+  }, [inputText, sending, chatMode, conversation, replyTo, effectiveUserId, userName, addUserMsg, scrollBottom, processAIMessage, pendingOrder]);
+
+  const addCardProduct = useCallback((product) => {
+    if (!product.product_id || !product.product_name) return;
+    sendMessage(`Thêm ${product.product_name} vào giỏ`, String(product.product_id));
+  }, [sendMessage]);
 
   // Voice speech-to-text
   const startVoice = useCallback(() => {
@@ -1313,7 +1285,7 @@ export default function ChatWidget({ user, socketUrl }) {
                       {/* Rich Content Cards */}
                       {msg._products && msg._products.length > 0 && (
                         <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 328, overflowY: 'auto' }}>
-                          {msg._products.map((p, i) => <ProductCard key={i} p={p} onAdd={addToCart} resolvePrice={fetchCanonicalProductPrice} />)}
+                          {msg._products.map((p, i) => <ProductCard key={i} p={p} onAdd={addCardProduct} resolvePrice={fetchCanonicalProductPrice} />)}
                         </div>
                       )}
                       {msg._orders && msg._orders.length > 0 && (
