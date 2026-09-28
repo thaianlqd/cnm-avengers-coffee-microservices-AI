@@ -338,7 +338,7 @@ def execute_add_to_cart(
                     hinh_anh_url = r[0] or ""
                     authoritative_price = float(r[1] or unit_price)
 
-            extra_values = [value for value in [*selected_toppings, loai_sua] if value]
+            extra_values = [value for value in [*selected_toppings, luong_da, do_ngot, loai_sua] if value]
             if str(real_product_id).isdigit():
                 variant_rows = conn.execute(text(f"""
                     SELECT tt.ten_thuoc_tinh, bt.gia_tri, bt.phu_thu

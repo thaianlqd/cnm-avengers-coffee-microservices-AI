@@ -714,7 +714,7 @@ def _prepare_structured_products(
     This is required for an empty cart: the legacy `_handle_additional_product`
     intentionally only handles additions to an existing cart.
     """
-    from src.agents.agent_service import _complete_pending_products_from_options, _parse_option_groups
+    from src.agents.agent_service import _complete_pending_products_from_options, _parse_option_groups, _pending_option_item
     from src.function_calling.tools.product_tools import execute_get_product_options
 
     pending: List[Dict[str, Any]] = []
@@ -734,7 +734,7 @@ def _prepare_structured_products(
             return {"reply": "Mình chưa xác minh được tùy chọn của món đã chọn. Giỏ hàng chưa thay đổi; bạn chọn lại món nhé.",
                     "checkout_payload": None, "tool_calls_log": logs, "error": None}
         groups = _parse_option_groups(option_result) if option_result.get("status") == "ok" else {}
-        pending_item = {**ref, "product_name": product_name, "options": {"groups": groups}}
+        pending_item = _pending_option_item({**ref, "product_name": product_name}, option_result)
         if operation_base:
             pending_item["operation_id"] = f"{operation_base}:add_cart_line:{index}"
         pending.append(pending_item)
@@ -758,7 +758,13 @@ def _prepare_structured_products(
         if completed:
             completed["tool_calls_log"] = logs + list(completed.get("tool_calls_log") or [])
             return completed
-    reply_lines.append("Mình đang giữ đúng các món trên. Bạn chọn tùy chọn mong muốn; món không cần chỉnh thì nói ‘theo mặc định’ nhé.")
+    from src.agents.option_state import option_field
+    optional_topping = any(
+        option_field(group.get("name")) == "toppings" and not group.get("required")
+        for item in pending for group in item.get("option_schema") or []
+    )
+    reply_lines.append("Mình đang giữ đúng các món trên. Bạn có thể chọn tùy chọn muốn thay đổi; các mục không cần chỉnh thì nói ‘theo mặc định’."
+                       + (" Topping không bắt buộc." if optional_topping else ""))
     return {"reply": "\n".join(reply_lines), "checkout_payload": None, "tool_calls_log": logs, "error": None}
 
 
@@ -1469,6 +1475,14 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
             cart_manager.clear_pending_action(state["session_id"])
     if intent.get("intent") == "FILL_OPTIONS":
         return {**state, "intent": intent}
+    if (pending or {}).get("type") == "fill_options" and intent.get("intent") not in {
+        "CLEAR_CART", "REMOVE_ITEM", "SET_QUANTITY", "VIEW_CART", "START_CHECKOUT",
+        "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER",
+    }:
+        from src.agents.option_state import mentions_pending_option_value
+        if mentions_pending_option_value(state["user_message"],
+                                         cart_manager.get_checkout_prefs(state["session_id"]).get("pending_products") or []):
+            return {**state, "intent": {"intent": "FILL_OPTIONS"}}
     from src.agents.location_parser import parse_location
     location = parse_location(state["user_message"])
     from src.agents.pending_context import classify_pending_reply

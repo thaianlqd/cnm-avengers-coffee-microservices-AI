@@ -14,7 +14,6 @@ KHÔNG chứa business logic DB hoặc cart logic — những thứ đó nằm �
 agent_tools.py và cart_manager.py.
 """
 import logging
-import html
 import re
 import unicodedata
 from typing import Any, Dict, List, Optional
@@ -569,12 +568,11 @@ def _handle_additional_product(session_id: str, product_query: str) -> Optional[
         product_id = matches[0]["product_id"]
     option_groups = option_result.get("options") or _parse_option_groups(option_result)
     if option_groups:
-        cart_manager.set_pending_products(session_id, [{
+        cart_manager.set_pending_products(session_id, [_pending_option_item({
             "product_id": product_id,
             "product_name": found_name,
             "category": None,
-            "options": {"groups": option_groups},
-        }])
+        }, option_result)])
         try:
             cart_manager.set_pending_action(session_id, "fill_options", {})
         except Exception as e:
@@ -1000,6 +998,13 @@ def _parse_option_groups(option_result: Dict[str, Any]) -> Dict[str, List[str]]:
     return parsed
 
 
+def _pending_option_item(item: Dict[str, Any], option_result: Dict[str, Any]) -> Dict[str, Any]:
+    from src.agents.option_state import option_schema_from_result
+    groups = _parse_option_groups(option_result)
+    return {**item, "options": {"groups": groups},
+            "option_schema": option_schema_from_result({**option_result, "options": groups})}
+
+
 def _complete_pending_products_from_options(session_id: str, message: str) -> Optional[Dict[str, Any]]:
     """Add all selected pending products once their options are answered."""
     prefs = cart_manager.get_checkout_prefs(session_id)
@@ -1012,68 +1017,102 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
         return {"reply": "Mình cần bạn chọn lại món từ menu để xác minh đúng sản phẩm trước khi thêm vào giỏ.",
                 "checkout_payload": None, "tool_calls_log": [], "error": None}
     normalized = _normalize_chat_text(message)
-    option_terms = r"\b(size|nho|vua|lon|da|duong|ngot|sua|topping|hat|foam|tran chau|khong chon|mac dinh|theo cong thuc)\b"
-    if not re.search(option_terms, normalized):
+    option_terms = r"\b(size|nho|vua|lon|da|duong|ngot|sua|topping|hat|foam|tran chau|khong chon|mac dinh|theo cong thuc|khong can chinh|khong can chon them|giu nguyen)\b"
+    from src.agents.option_state import mentions_pending_option_value
+    if not re.search(option_terms, normalized) and not mentions_pending_option_value(message, pending):
         return None
 
     from src.function_calling.tools.product_tools import execute_check_price_and_stock
     from src.function_calling.tools.cart_tools import execute_add_to_cart
+    from src.agents.option_state import option_field, option_schema_from_result, resolve_option_default
 
     logs: List[Dict[str, Any]] = []
     not_ready: List[str] = []
     added: List[Dict[str, Any]] = []
     remaining: List[Dict[str, Any]] = []
     prepared: List[tuple] = []
-    use_defaults = bool(re.search(r"\b(theo mac dinh|mac dinh|theo cong thuc|khong can chinh)\b", normalized))
+    optional_open: List[str] = []
+    use_defaults = bool(re.search(
+        r"\b(mac dinh|theo cong thuc|khong can chinh|khong can chon them|giu nguyen mac dinh)\b", normalized
+    ))
     for item in pending:
         product_name = str(item.get("product_name") or "")
         options = item.get("options") or {}
         selected: Dict[str, Any] = dict(item.get("selected_options") or {})
-        option_groups = options.get("groups") or {}
+        option_schema = item.get("option_schema") or option_schema_from_result({"options": options.get("groups") or {}})
         missing_required = []
-        for group_name, values in option_groups.items():
-            values = [" ".join(html.unescape(str(value)).replace("\xa0", " ").split()) for value in values]
-            group_norm = _normalize_chat_text(group_name)
-            is_size = "size" in group_norm or "kich thuoc" in group_norm
-            matches = [value for value in values if _normalize_chat_text(value) in normalized]
-            if len(values) == 1:
-                matches = values
-            if is_size and len(values) > 1 and not matches:
-                missing_required.append(f"kích thước ({', '.join(values)})")
-            elif "topping" in group_norm and re.search(r"\b(khong topping|bo topping|khong them topping)\b", normalized):
-                selected["toppings"] = []
-            elif len(values) > 1 and not matches and not use_defaults:
-                missing_required.append(f"{group_name} ({', '.join(values)})")
-            if not matches:
+        invalid_requested = []
+        unset_optional = []
+        for group in option_schema:
+            name = str(group.get("name") or "")
+            values = list(group.get("values") or [])
+            field = option_field(name)
+            if not field:
+                if group.get("required"):
+                    missing_required.append(f"{name} ({', '.join(values)})")
                 continue
-            if is_size:
-                selected["size"] = matches[0]
-            elif "topping" in group_norm:
-                selected["toppings"] = matches
-            elif "da" in group_norm:
-                selected["luong_da"] = matches[0]
-            elif "ngot" in group_norm or "duong" in group_norm:
-                selected["do_ngot"] = matches[0]
-            elif "sua" in group_norm:
-                selected["loai_sua"] = matches[0]
+            matches = [value for value in values if re.search(
+                r"(?<!\w)" + re.escape(_normalize_chat_text(value)) + r"(?!\w)", normalized
+            )]
+            cleared_toppings = field == "toppings" and re.search(
+                r"\b(khong topping|bo topping|khong them topping)\b", normalized
+            )
+            explicit_group = {
+                "size": r"\b(size|kich thuoc|kich co)\b",
+                "toppings": r"\b(topping|toping|do kem)\b",
+                "luong_da": r"\b(luong da|da|ice)\b",
+                "do_ngot": r"\b(do ngot|ngot|duong|sweet)\b",
+                "loai_sua": r"\b(loai sua|milk)\b",
+            }[field]
+            invalid_group = bool(re.search(explicit_group, normalized) and not matches and not cleared_toppings)
+            if invalid_group:
+                invalid_requested.append(f"{name} ({', '.join(values)})")
+            if cleared_toppings:
+                selected[field] = []
+            elif field == "toppings" and matches:
+                previous = list(selected.get(field) or [])
+                selected[field] = list(dict.fromkeys(
+                    previous + matches if re.search(r"\b(them|nua)\b", normalized) else matches
+                ))
+            elif matches:
+                selected[field] = matches[0]
+            elif field not in selected and group.get("fixed") and field != "toppings":
+                selected[field] = values if group.get("multiple") else values[0]
 
-        if missing_required:
+            if field not in selected and use_defaults and not invalid_group:
+                default = resolve_option_default(group)
+                if default is not None:
+                    selected[field] = default
+            resolved = field in selected and (not group.get("required") or bool(selected[field]))
+            if not resolved:
+                label = f"{name} ({', '.join(values)})"
+                if group.get("required"):
+                    missing_required.append(label)
+                else:
+                    unset_optional.append(name)
+
+        if invalid_requested:
+            not_ready.append(f"{product_name}: tùy chọn chưa khớp menu; chọn {', '.join(invalid_requested)}")
+        elif missing_required:
             not_ready.append(f"{product_name}: chọn {', '.join(missing_required)}")
-            remaining.append({**item, "selected_options": selected})
-            continue
-
-        prepared.append((item, product_name, selected))
+        elif unset_optional and not use_defaults:
+            optional_open.append(product_name)
+        prepared.append(({**item, "option_schema": option_schema}, product_name, selected))
 
     # Keep all selected products pending until every required option has been
     # answered. This prevents adding only the easy line and silently dropping
     # another selected product.
-    if not_ready:
-        cart_manager.set_pending_products(session_id, remaining + [
+    if not_ready or optional_open:
+        cart_manager.set_pending_products(session_id, [
             {**item, "selected_options": selected}
             for item, _product_name, selected in prepared
         ])
+        if not_ready:
+            reply = "Mình đã ghi nhận các lựa chọn trước đó. Còn cần chọn:\n- " + "\n- ".join(not_ready)
+        else:
+            reply = "Mình đã ghi nhận lựa chọn của bạn. Các tùy chọn còn lại có thể để mặc định. Bạn muốn chỉnh thêm hay nói ‘theo mặc định’ để thêm món?"
         return {
-            "reply": "Mình vẫn đang giữ đủ các món bạn chọn. Cần chọn thêm:\n- " + "\n- ".join(not_ready),
+            "reply": reply,
             "checkout_payload": None,
             "tool_calls_log": [],
             "error": None,
@@ -1084,6 +1123,10 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
             product_name_query=product_name,
             branch_id="Chưa chọn",
             size=selected.get("size"),
+            toppings=selected.get("toppings") or [],
+            luong_da=selected.get("luong_da"),
+            do_ngot=selected.get("do_ngot"),
+            loai_sua=selected.get("loai_sua"),
             quantity=max(1, int(item.get("quantity") or 1)),
             session_id=session_id,
         )
@@ -1395,7 +1438,7 @@ def _run_agent_impl(
                     options = execute_get_product_options(product_name)
                     logs.append({"tool": "get_product_options", "args": {"product_name": product_name}, "result": options})
                     option_groups = _parse_option_groups(options)
-                    enriched_review_choices.append({**choice, "options": {"groups": option_groups}})
+                    enriched_review_choices.append(_pending_option_item(choice, options))
                     if option_groups:
                         rendered = "; ".join(
                             f"{name}: {', '.join(str(value) for value in values)}"
@@ -1691,7 +1734,7 @@ def _run_agent_impl(
             })
             label = "Nước" if item["category"] == "drink" else "Bánh/đồ ăn"
             option_groups = _parse_option_groups(option_result)
-            enriched = {**item, "options": {"groups": option_groups}}
+            enriched = _pending_option_item(item, option_result)
             enriched_choices.append(enriched)
             if option_result.get("status") == "ok" and option_groups:
                 reply_lines.append(f"- {label}: {item['product_name']}")
