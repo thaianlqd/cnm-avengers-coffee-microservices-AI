@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import type { StringValue } from 'ms';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Client } from 'pg';
+import { assertProductionSecrets, secretWithDevDefault } from './config/runtime-secrets';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
 import { Branch } from './modules/user/branch.entity';
@@ -32,6 +33,7 @@ import { ThuChi } from './modules/franchise/entities/thu-chi.entity';
 import { WalletTransaction } from './modules/user/wallet-transaction.entity';
 
 const identitySchema = process.env.DB_SCHEMA || 'identity';
+assertProductionSecrets(['JWT_SECRET', 'INTERNAL_SERVICE_TOKEN', 'VNPAY_TMN_CODE', 'VNPAY_HASH_SECRET']);
 const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
 
 @Module({
@@ -68,7 +70,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
     }),
     JwtModule.register({
       global: true,
-      secret: process.env.JWT_SECRET || 'avengers-jwt-secret',
+      secret: secretWithDevDefault('JWT_SECRET', 'test-only-jwt-secret'),
       signOptions: {
         expiresIn: jwtExpiresIn,
       },

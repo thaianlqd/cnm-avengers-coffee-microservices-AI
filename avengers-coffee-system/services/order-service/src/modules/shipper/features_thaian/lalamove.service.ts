@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as crypto from 'crypto';
+import { secretWithDevDefault } from '../../../config/runtime-secrets';
 
 /**
  * LalamoveService - Tích hợp Lalamove API v3 (Sandbox).
@@ -9,16 +10,16 @@ import * as crypto from 'crypto';
  * đổi lại `market` thành 'VN' và `language` trong getQuotation thành 'vi_VN'.
  *
  * Base URL:   https://rest.sandbox.lalamove.com
- * API Key:    pk_test_00c1e4c9e28b2ceed7f4277cc01a9fbe
- * API Secret: sk_test_/KMBha1uWJamsdwYqLLoKGRKzI0TIp9uWVc3la7hpRK8jM89Noq0lzBKaoZMrtGH
+ * Credentials come from environment variables. Development defaults are
+ * sandbox-only and production fails fast when either value is missing.
  */
 @Injectable()
 export class LalamoveService {
   private readonly logger = new Logger(LalamoveService.name);
 
   private readonly baseUrl = 'https://rest.sandbox.lalamove.com';
-  private readonly apiKey = process.env.LALAMOVE_API_KEY || 'pk_test_00c1e4c9e28b2ceed7f4277cc01a9fbe';
-  private readonly apiSecret = process.env.LALAMOVE_API_SECRET || 'sk_test_/KMBha1uWJamsdwYqLLoKGRKzI0TIp9uWVc3la7hpRK8jM89Noq0lzBKaoZMrtGH';
+  private readonly apiKey = secretWithDevDefault('LALAMOVE_API_KEY', 'sandbox-key-not-for-production');
+  private readonly apiSecret = secretWithDevDefault('LALAMOVE_API_SECRET', 'sandbox-secret-not-for-production');
   private readonly market = 'VN';
 
   // ─────────────────────────── HMAC Auth ───────────────────────────

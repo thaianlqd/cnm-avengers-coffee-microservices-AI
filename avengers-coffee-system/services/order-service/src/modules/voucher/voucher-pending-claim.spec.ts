@@ -14,7 +14,7 @@ describe('voucher validation while a paid wallet claim is pending', () => {
       .rejects.toThrow(BadRequestException);
     expect(service.voucherRepo.findOne).not.toHaveBeenCalled();
     expect(service.voucherRepo.manager.query).toHaveBeenCalledWith(
-      expect.stringContaining("status = 'PENDING'"), ['customer-1', 'SAVE20'],
+      expect.stringContaining("status IN ('PENDING', 'WAITING_PAYMENT')"), ['customer-1', 'SAVE20'],
     );
   });
   it('fails closed when per-user usage cannot be verified', async () => {

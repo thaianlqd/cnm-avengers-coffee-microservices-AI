@@ -1,4 +1,5 @@
 import { BadRequestException, ServiceUnavailableException } from '@nestjs/common';
+import { secretWithDevDefault } from '../../config/runtime-secrets';
 
 // Shared by cart quotes and every payment path. Never read a client-supplied fee.
 export async function quoteDeliveryFee(userId: string, subtotal: number, mode?: string, method?: string) {
@@ -16,7 +17,7 @@ export async function quoteDeliveryFee(userId: string, subtotal: number, mode?: 
     try {
       const url = process.env.IDENTITY_SERVICE_URL || 'http://identity-service:3001';
       const response = await fetch(`${url}/users/${encodeURIComponent(userId)}/membership`, {
-        headers: { 'x-internal-token': process.env.INTERNAL_SERVICE_TOKEN || 'avengers-internal-token' },
+        headers: { 'x-internal-token': secretWithDevDefault('INTERNAL_SERVICE_TOKEN', 'test-only-internal-service-token') },
         signal: AbortSignal.timeout(5000),
       });
       if (!response.ok) throw new Error(`Membership HTTP ${response.status}`);

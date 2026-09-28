@@ -5,6 +5,7 @@ import re
 import datetime
 import jwt
 from typing import Dict, Any
+from src.common.runtime_config import secret_with_dev_default
 
 def _get_engine():
     from src.common.db import get_db_engine
@@ -38,7 +39,7 @@ def _require_valid_session(session_id: str) -> str:
 
 def _get_service_jwt(session_id: str) -> str:
     # Use the shared internal token instead of generating a JWT to bypass cross-environment secret issues
-    return os.environ.get("INTERNAL_SERVICE_TOKEN", "avengers-internal-token")
+    return secret_with_dev_default("INTERNAL_SERVICE_TOKEN", "test-only-internal-service-token")
 
 def _check_business_hours() -> Dict[str, str]:
     now_vn = datetime.datetime.utcnow() + datetime.timedelta(hours=7)

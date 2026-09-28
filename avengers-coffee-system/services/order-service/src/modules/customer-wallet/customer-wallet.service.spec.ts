@@ -75,4 +75,52 @@ describe('wallet PAYMENT atomicity and idempotency', () => {
     expect(getBalance()).toBe(1793400);
     expect(getLedger()).toHaveLength(1);
   });
+
+  it('credits one top-up once across concurrent success callbacks', async () => {
+    const topup: any = { id: 'topup-1', customer_id: 'customer', amount: 50000, type: 'TOP_UP', status: 'PENDING' };
+    const wallet: any = { customer_id: 'customer', balance: 100000 };
+    let queue = Promise.resolve();
+    const manager: any = {
+      query: jest.fn(async () => []),
+      getRepository: (entity: any) => entity === CustomerWalletTransaction
+        ? { findOne: jest.fn(async () => topup) }
+        : { findOne: jest.fn(async () => wallet) },
+      save: jest.fn(async (_entity: any, row: any) => row),
+    };
+    const walletRepo: any = { manager: { transaction: (work: any) => {
+      const run = queue.then(() => work(manager));
+      queue = run.then(() => undefined, () => undefined);
+      return run;
+    } } };
+    const service = new CustomerWalletService(walletRepo, {} as any);
+    const results = await Promise.all([
+      service.processTopUpSuccess('WT_topup-1'),
+      service.processTopUpSuccess('WT_topup-1'),
+    ]);
+    expect(results).toEqual([true, true]);
+    expect(wallet.balance).toBe(150000);
+    expect(topup.status).toBe('SUCCESS');
+  });
+
+  it('credits one refund once for a repeated reference', async () => {
+    const wallet: any = { customer_id: 'customer', balance: 100000 };
+    let inserted = false;
+    const manager: any = {
+      query: jest.fn(async (sql: string) => {
+        if (sql.includes('customer_wallet_transaction')) {
+          if (inserted) return [];
+          inserted = true;
+          return [{ id: 'refund-1' }];
+        }
+        return [];
+      }),
+      getRepository: () => ({ findOne: jest.fn(async () => wallet) }),
+      save: jest.fn(async (_entity: any, row: any) => row),
+    };
+    const walletRepo: any = { manager: { transaction: (work: any) => work(manager) } };
+    const service = new CustomerWalletService(walletRepo, {} as any);
+    await service.refundBalance('customer', 25000, 'ORDER-1');
+    await service.refundBalance('customer', 25000, 'ORDER-1');
+    expect(wallet.balance).toBe(125000);
+  });
 });

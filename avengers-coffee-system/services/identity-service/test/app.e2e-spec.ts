@@ -12,6 +12,9 @@ process.env.DB_PASSWORD = process.env.DB_PASSWORD || '123';
 process.env.DB_NAME = process.env.DB_NAME || 'avengers_coffee';
 process.env.DB_SCHEMA = process.env.DB_SCHEMA || `identity_ci_${Date.now()}`;
 
+const { assertIsolatedE2EDatabase } = require('../../../test-utils/e2e-db-safety');
+assertIsolatedE2EDatabase('identity');
+
 const { AppModule } = require('./../src/app.module');
 
 describe('Identity API (e2e)', () => {
@@ -79,15 +82,15 @@ describe('Identity API (e2e)', () => {
     const body = { ma_khuyen_mai: 'LOCAL_CI_VOUCHER', user_id: 'ci-customer',
       ma_don_hang: orderId, so_tien_giam: 20000 };
     const first = await request(app.getHttpServer()).post('/promotions/xac-nhan-su-dung')
-      .set('x-internal-token', process.env.INTERNAL_SERVICE_TOKEN || 'avengers-internal-token')
+      .set('x-internal-token', process.env.INTERNAL_SERVICE_TOKEN || 'test-only-internal-service-token')
       .send(body).expect(201);
     const replay = await request(app.getHttpServer()).post('/promotions/xac-nhan-su-dung')
-      .set('x-internal-token', process.env.INTERNAL_SERVICE_TOKEN || 'avengers-internal-token')
+      .set('x-internal-token', process.env.INTERNAL_SERVICE_TOKEN || 'test-only-internal-service-token')
       .send(body).expect(201);
     expect(first.body.already_processed).toBe(false);
     expect(replay.body.already_processed).toBe(true);
     const count = await request(app.getHttpServer()).get('/promotions/luot-dung-user')
-      .set('x-internal-token', process.env.INTERNAL_SERVICE_TOKEN || 'avengers-internal-token')
+      .set('x-internal-token', process.env.INTERNAL_SERVICE_TOKEN || 'test-only-internal-service-token')
       .query({ code: body.ma_khuyen_mai, user_id: body.user_id }).expect(200);
     expect(count.body.luot_da_dung).toBe(1);
   });

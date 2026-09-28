@@ -9,6 +9,10 @@ process.env.DB_PORT = process.env.DB_PORT || '5432';
 process.env.DB_USER = process.env.DB_USER || 'admin';
 process.env.DB_PASSWORD = process.env.DB_PASSWORD || '123';
 process.env.DB_NAME = process.env.DB_NAME || 'avengers_coffee';
+process.env.DB_SCHEMA = process.env.DB_SCHEMA || `news_ci_${Date.now()}`;
+
+const { assertIsolatedE2EDatabase } = require('../../../test-utils/e2e-db-safety');
+assertIsolatedE2EDatabase('news');
 
 const { AppModule } = require('./../src/app.module');
 

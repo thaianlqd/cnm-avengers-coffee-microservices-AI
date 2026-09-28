@@ -15,9 +15,16 @@ describe('checkout amount across all payment paths', () => {
     const transactions = new Map();
     s.cartRepo = { find: jest.fn(async () => [{ ma_san_pham: 1, ten_san_pham: 'Nước + bánh', gia_ban: 313000, so_luong: 1 }]), delete: jest.fn() };
     const runner = { connect: jest.fn(), query: jest.fn(async () => [{locked:true}]), release: jest.fn() };
-    s.donHangRepo = { create: (v: any) => v, save: jest.fn(async (v: any) => { orders.set(v.ma_don_hang, v); return v; }), findOne: jest.fn(async ({where}: any) => orders.get(where.ma_don_hang)), manager: { connection: { createQueryRunner: () => runner } } };
-    s.chiTietRepo = { create: (v: any) => v, save: jest.fn() };
+    const rootManager: any = { connection: { createQueryRunner: () => runner }, query: jest.fn(async () => []) };
+    s.donHangRepo = { create: (v: any) => v, save: jest.fn(async (v: any) => { orders.set(v.ma_don_hang, v); return v; }), findOne: jest.fn(async ({where}: any) => orders.get(where.ma_don_hang)), manager: rootManager };
+    s.chiTietRepo = { create: (v: any) => v, save: jest.fn(async (v: any) => v) };
     s.giaoDichRepo = { create: (v: any) => v, save: jest.fn(async (v: any) => { transactions.set(v.ma_don_hang, v); return v; }), findOne: jest.fn(async ({where}: any) => transactions.get(where.ma_don_hang)) };
+    rootManager.save = jest.fn(async (entity: any, value: any) => {
+      if (entity === DonHang) return s.donHangRepo.save(value);
+      if (entity === GiaoDichThanhToan) return s.giaoDichRepo.save(value);
+      return s.chiTietRepo.save(value);
+    });
+    rootManager.transaction = (work: any) => work(rootManager);
     s.voucherService = { kiemTraVoucher: jest.fn(async () => ({ so_tien_giam: 62600, voucher: { ma_voucher: 'SAVE20' } })), apDungVoucher: jest.fn() };
     s.notificationService = { taoThongBao: jest.fn() };
     const trackings = new Map();
@@ -39,7 +46,13 @@ describe('checkout amount across all payment paths', () => {
     };
     s.customerWalletService = { withWalletPayment: jest.fn(async (_uid: string, _amount: number, _ref: string, write: any) => write(walletManager, 1793400)),
       getWallet: jest.fn(async () => ({ wallet: { balance: 1793400 } })) };
-    s.walletVoucherClaims = { schedule: jest.fn(async () => undefined), processPending: jest.fn(async () => undefined) };
+    s.walletVoucherClaims = {
+      assertReady: jest.fn(async () => undefined),
+      schedule: jest.fn(async () => undefined),
+      markReady: jest.fn(async () => undefined),
+      cancelWaiting: jest.fn(async () => undefined),
+      processPending: jest.fn(async () => undefined),
+    };
     s.walletManager = walletManager;
     s.xacDinhCoSoGanNhatTheoDiaChi = jest.fn(async () => ({ branchCode: 'CN_1' }));
     s.normalizeBranchCode = (v: string) => v;
@@ -124,10 +137,10 @@ describe('checkout amount across all payment paths', () => {
     if (payment === 'VI_DIEN_TU') expect(s.walletManager.save).toHaveBeenCalledTimes(3);
     else expect(s.chiTietRepo.save).toHaveBeenCalledTimes(1);
     if (payment === 'VI_DIEN_TU') {
-      expect(s.walletVoucherClaims.schedule).toHaveBeenCalledTimes(1);
+      expect(s.walletVoucherClaims.schedule).toHaveBeenCalledTimes(2);
       expect(replay.wallet_balance_after).toBe(1793400);
       expect(first.wallet_balance_after).toBe(1793400);
-    } else expect(s.voucherService.apDungVoucher).toHaveBeenCalledTimes(1);
+    } else expect(s.walletVoucherClaims.schedule).toHaveBeenCalledTimes(2);
     expect(s.deliveryTrackingService.createTracking).toHaveBeenCalledTimes(1);
     if (payment === 'VI_DIEN_TU') expect(s.customerWalletService.withWalletPayment).toHaveBeenCalledTimes(1);
     expect(runner.release).toHaveBeenCalledTimes(2);
@@ -152,7 +165,7 @@ describe('checkout amount across all payment paths', () => {
     expect(replay.already_processed).toBe(true);
     expect(runner.release).toHaveBeenCalledTimes(3);
     expect(s.chiTietRepo.save).toHaveBeenCalledTimes(1);
-    expect(s.voucherService.apDungVoucher).toHaveBeenCalledTimes(1);
+    expect(s.walletVoucherClaims.schedule).toHaveBeenCalledTimes(2);
   });
   it('rejects changed totals before any order write', async () => {
     const {s} = service();

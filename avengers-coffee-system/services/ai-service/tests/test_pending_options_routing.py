@@ -56,3 +56,14 @@ def test_pending_options_keep_authoritative_cart_write_guard(monkeypatch):
     result = order_flow_graph._execute(order_flow_graph._understand(state))['result']
     assert result['tool_calls_log'][0]['result']['reason'] == 'authoritative_cart_unavailable'
     assert cart_manager.get_pending_action(session)['type'] == 'fill_options'
+
+
+def test_explicit_clear_cart_overrides_pending_option_context():
+    session = 'pending-options-clear-override'
+    cart_manager.set_pending_action(session, 'fill_options', {})
+    state = order_flow_graph._understand({
+        'session_id': session,
+        'user_message': 'xóa toàn bộ giỏ hàng',
+        'cart': cart_manager.get_cart(session),
+    })
+    assert state['intent']['intent'] == 'CLEAR_CART'

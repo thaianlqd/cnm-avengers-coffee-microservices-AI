@@ -111,7 +111,7 @@ def test_card_selection_without_choices_uses_same_safe_add_path(monkeypatch):
     assert len(mutations) == 1 and mutations[0]['product_id'] == '8'
 
 
-def test_pickup_area_uses_active_locality_branches_without_geocoding(monkeypatch):
+def test_pickup_area_prioritizes_exact_locality_and_supplements_nearby(monkeypatch):
     session = 'branch-area-' + uuid.uuid4().hex
     cart_manager.set_checkout_context(session, delivery_type='MANG_DI')
     rows = [
@@ -131,12 +131,12 @@ def test_pickup_area_uses_active_locality_branches_without_geocoding(monkeypatch
     monkeypatch.setattr(branch_tools, '_get_engine', lambda: Engine())
     monkeypatch.setattr(branch_tools, '_check_business_hours', lambda: None)
     monkeypatch.setattr(branch_tools, 'validate_cart_at_branch', lambda *_args: {'unavailable': [], 'unverified': []})
-    monkeypatch.setattr(geo, 'geocode_address', lambda _address: (_ for _ in ()).throw(AssertionError('untrusted geocode')))
+    monkeypatch.setattr(geo, 'geocode_address', lambda _address: (10.8, 106.7))
     result = branch_tools.execute_find_nearest_branch(location='phường Gò Vấp', session_id=session)
     assert result['status'] == 'need_branch_selection'
-    assert [item['ma_chi_nhanh'] for item in result['branches']] == ['GV2', 'GV1']
-    assert all(item['khoang_cach_km'] is None for item in result['branches'])
-    assert len(cart_manager.get_checkout_prefs(session)['branch_candidates']) == 2
+    assert [item['ma_chi_nhanh'] for item in result['branches']] == ['GV2', 'GV1', 'TD1']
+    assert all(item['khoang_cach_km'] == 0 for item in result['branches'])
+    assert len(cart_manager.get_checkout_prefs(session)['branch_candidates']) == 3
 
 
 def test_new_go_vap_area_owns_checkout_turn_not_saved_address_or_products(monkeypatch):

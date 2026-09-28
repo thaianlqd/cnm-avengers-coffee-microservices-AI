@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Reflector } from '@nestjs/core';
 import { ALLOW_INTERNAL_KEY, IS_PUBLIC_KEY } from './auth.decorators';
 import type { AuthUser } from './auth.types';
+import { secretWithDevDefault } from '../config/runtime-secrets';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -63,7 +64,7 @@ export class JwtAuthGuard implements CanActivate {
   }
 
   private hasValidInternalToken(headerValue?: string | string[]) {
-    const expected = process.env.INTERNAL_SERVICE_TOKEN || 'avengers-internal-token';
+    const expected = secretWithDevDefault('INTERNAL_SERVICE_TOKEN', 'test-only-internal-service-token');
     const actual = Array.isArray(headerValue) ? headerValue[0] : headerValue;
     return Boolean(actual && actual === expected);
   }

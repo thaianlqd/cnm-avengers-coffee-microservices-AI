@@ -14,6 +14,7 @@ KHÔNG chứa business logic DB hoặc cart logic — những thứ đó nằm �
 agent_tools.py và cart_manager.py.
 """
 import logging
+import html
 import re
 import unicodedata
 from typing import Any, Dict, List, Optional
@@ -1014,19 +1015,18 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
         option_groups = options.get("groups") or {}
         missing_required = []
         for group_name, values in option_groups.items():
-            values = [str(value) for value in values]
+            values = [" ".join(html.unescape(str(value)).replace("\xa0", " ").split()) for value in values]
             group_norm = _normalize_chat_text(group_name)
             is_size = "size" in group_norm or "kich thuoc" in group_norm
             matches = [value for value in values if _normalize_chat_text(value) in normalized]
-            if is_size and len(values) == 1:
+            if len(values) == 1:
                 matches = values
             if is_size and len(values) > 1 and not matches:
                 missing_required.append(f"kích thước ({', '.join(values)})")
+            elif "topping" in group_norm and re.search(r"\b(khong topping|bo topping|khong them topping)\b", normalized):
+                selected["toppings"] = []
             elif len(values) > 1 and not matches and not use_defaults:
-                if "topping" in group_norm and re.search(r"\b(khong topping|bo topping|khong them topping)\b", normalized):
-                    selected["toppings"] = []
-                else:
-                    missing_required.append(f"{group_name} ({', '.join(values)})")
+                missing_required.append(f"{group_name} ({', '.join(values)})")
             if not matches:
                 continue
             if is_size:

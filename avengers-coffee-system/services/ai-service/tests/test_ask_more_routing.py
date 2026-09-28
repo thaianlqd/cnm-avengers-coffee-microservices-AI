@@ -30,7 +30,8 @@ BROWSING = ['bên bạn có bán món gì matcha không', 'có đồ uống matc
             'cho tôi xem thêm trà', 'gợi ý món bán chạy', 'menu đồ uống có gì',
             'tham khảo bánh ăn sáng', 'xem Americano Classic', 'có Americano Classic không?']
 CONCRETE = [
-    ('thêm Americano Classic', 'A1'), ('lấy bánh số 3', 'B3'),
+    # Global row 3 is a food item, so the global index wins before food-local 3.
+    ('thêm Americano Classic', 'A1'), ('lấy bánh số 3', 'B1'),
     ('cho tôi Matcha Latte Đào Dưa Lưới', 'M1'), ('mua Bánh Tiramisu', 'B2'),
     ('chọn nước số 1', 'A1'), ('thêm món số 2', 'M1'),
     ('lấy Bánh Croissant Bơ nhé', 'B1'), ('cho tôi bánh này', 'B3'),

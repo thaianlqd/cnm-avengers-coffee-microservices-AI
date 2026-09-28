@@ -13,6 +13,9 @@ process.env.DB_NAME = process.env.DB_NAME || 'avengers_coffee';
 process.env.DB_SCHEMA = process.env.DB_SCHEMA || `order_ci_${Date.now()}`;
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'avengers-jwt-secret';
 
+const { assertIsolatedE2EDatabase } = require('../../../test-utils/e2e-db-safety');
+assertIsolatedE2EDatabase('order');
+
 const { AppModule } = require('./../src/app.module');
 
 describe('Order API (e2e)', () => {
@@ -39,6 +42,7 @@ describe('Order API (e2e)', () => {
       discount_amount numeric(15,2) NOT NULL, status varchar(20) NOT NULL DEFAULT 'PENDING',
       attempts integer NOT NULL DEFAULT 0, next_attempt_at timestamptz NOT NULL DEFAULT now(),
       created_at timestamptz NOT NULL DEFAULT now(), completed_at timestamptz
+      , last_error text, error_code varchar(50), updated_at timestamptz NOT NULL DEFAULT now(), dead_at timestamptz
     )`);
 
     app = moduleFixture.createNestApplication();

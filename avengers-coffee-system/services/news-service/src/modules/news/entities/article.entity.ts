@@ -6,7 +6,9 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ schema: 'news', name: 'articles' })
+const newsSchema = process.env.DB_SCHEMA || 'news';
+
+@Entity({ schema: newsSchema, name: 'articles' })
 export class Article {
   @PrimaryGeneratedColumn('uuid')
   id: string;

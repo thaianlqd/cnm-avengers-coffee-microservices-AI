@@ -1,4 +1,7 @@
-from src.agents.order_flow_graph import run_order_flow, _resolve_cart_line, _update_cart_focus_after_add
+from src.agents.order_flow_graph import (
+    run_order_flow, _resolve_cart_line, _update_cart_focus_after_add,
+    _store_cart_line_choice, _resolve_pending_cart_line,
+)
 from src.common import cart_manager
 
 
@@ -39,7 +42,7 @@ def test_last_cart_focus_set_after_adding_item(monkeypatch):
     assert cart_manager.get_checkout_prefs(session).get("last_cart_focus") == "77"
 
 
-def test_resolve_cart_line_uses_focus_when_multiple_variants():
+def test_resolve_cart_line_requires_variant_choice_even_when_family_was_focused():
     session = "multi-variant-focus"
     _seed_variants(session)
     cart = cart_manager.get_cart(session)
@@ -49,9 +52,41 @@ def test_resolve_cart_line_uses_focus_when_multiple_variants():
 
     cart_manager.set_checkout_context(session, last_cart_focus="102")
     item, error = _resolve_cart_line(cart_manager.get_cart(session), "đổi topping trà sữa")
-    assert error is None
-    assert item["size"] == "L"
-    assert str(item["cart_item_id"]) == "102"
+    assert item is None
+    assert "nhiều biến thể" in error
+
+    item, error = _resolve_cart_line(cart_manager.get_cart(session), "đổi topping món này")
+    assert error is None and str(item["cart_item_id"]) == "102"
+
+
+def test_ambiguous_cart_operation_keeps_typed_line_snapshot_and_resumes_by_ordinal():
+    session = "typed-cart-line-choice"
+    _seed_variants(session)
+    cart = cart_manager.get_cart(session)
+    candidates = [row for row in cart["items"] if row["product_name"] == "Trà Sữa"]
+    prompt = _store_cart_line_choice(session, "SET_QUANTITY", 3, candidates)
+    pending = cart_manager.get_pending_action(session)
+
+    assert "1. Trà Sữa (M)" in prompt and "2. Trà Sữa (L)" in prompt
+    assert pending["params"]["operation"] == "SET_QUANTITY"
+    assert pending["params"]["requested_value"] == 3
+    assert pending["params"]["candidate_line_ids"] == ["101", "102"]
+    resumed = _resolve_pending_cart_line(session, "dòng số 2", cart)
+    assert resumed["operation"] == "SET_QUANTITY"
+    assert resumed["requested_value"] == 3
+    assert str(resumed["row"]["cart_item_id"]) == "102"
+
+
+def test_cart_family_disambiguation_lists_only_matching_variants():
+    session = "cart-family-candidates"
+    _seed_variants(session)
+    cart_manager.replace_items_from_order_cart(session, [
+        *cart_manager.get_cart(session)["items"],
+        {"id": 103, "ma_san_pham": "P2", "ten_san_pham": "Bánh Matcha", "gia_ban": 49000, "so_luong": 1},
+    ])
+    cart = cart_manager.get_cart(session)
+    item, error = _resolve_cart_line(cart, "xóa trà sữa")
+    assert item is None and "Bánh Matcha" not in error
 
 
 def test_edit_options_intent_asks_which_change_not_silent_llm_fallback(monkeypatch):
