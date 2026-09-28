@@ -286,6 +286,15 @@ export class VoucherService {
 
   async kiemTraVoucher(maVoucher: string, tongTien: number, userId?: string, hasToppings?: boolean, toppingPrice?: number): Promise<VoucherValidationResult> {
     const code = maVoucher.trim().toUpperCase();
+    if (userId) {
+      const schema = process.env.DB_SCHEMA || 'orders';
+      const pending = await this.voucherRepo.manager.query(
+        `SELECT 1 FROM ${schema}.wallet_voucher_claim_outbox
+         WHERE customer_id = $1 AND voucher_code = $2 AND status = 'PENDING' LIMIT 1`,
+        [userId, code],
+      );
+      if (pending.length) throw new BadRequestException('Voucher dang duoc ghi nhan cho don truoc, vui long thu lai sau');
+    }
     const voucher = await this.voucherRepo.findOne({ where: { ma_voucher: code, trang_thai: 'ACTIVE' } });
 
     if (voucher && (voucher.loai_phan_phoi === 'PUBLIC' || !voucher.loai_phan_phoi)) {
@@ -318,10 +327,13 @@ export class VoucherService {
             if (usedCount >= limitPerUser) {
               throw new BadRequestException('Ban da dung het luot su dung voucher nay');
             }
+          } else {
+            throw new BadRequestException('Chua the xac minh luot su dung voucher');
           }
         } catch (err) {
           if (err instanceof BadRequestException) throw err;
           console.error('[kiemTraVoucher] Error checking user usage count:', err);
+          throw new BadRequestException('Chua the xac minh luot su dung voucher');
         }
       }
 
@@ -431,6 +443,18 @@ export class VoucherService {
         console.error('[apDungVoucher] Cannot record voucher usage in identity-service:', payload?.message);
       }
     }
+  }
+
+  /** Wallet outbox delivery. A failed Identity response must remain retryable. */
+  async claimIdentityVoucher(maVoucher: string, userId: string, soTienGiam: number, maDonHang: string): Promise<void> {
+    const response = await fetch(`${this.IDENTITY_SERVICE_URL}/promotions/xac-nhan-su-dung`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-internal-token': this.INTERNAL_SERVICE_TOKEN },
+      body: JSON.stringify({ ma_khuyen_mai: maVoucher, user_id: userId,
+        ma_don_hang: maDonHang, so_tien_giam: soTienGiam }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`Identity voucher claim failed: HTTP ${response.status}`);
   }
 
   async layVoucherKhaDung(tongTien: number, userId?: string, hasToppings?: boolean, toppingPrice?: number) {

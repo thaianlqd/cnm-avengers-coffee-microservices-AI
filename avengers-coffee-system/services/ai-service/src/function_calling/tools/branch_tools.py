@@ -165,17 +165,16 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
             locality_rows = []
             area_only = not re.match(r"^\d+[A-Za-z]?(?:[/.-]\d+[A-Za-z]?)?\s", target_address)
             if area_only and delivery_type != "GIAO_TAN_NOI" and not target_branches:
-                from src.agents.location_parser import normalize
+                from src.agents.location_parser import locality_matches, normalize
                 area = normalize(target_address.split(",", 1)[0])
-                area = re.sub(r"^(?:phuong|quan|huyen|xa|tinh|thanh pho|tp)\.?\s+", "", area)
                 if len(area) >= 4:
                     active = conn.execute(text(f"""
                         SELECT ma_chi_nhanh, ten_chi_nhanh, dia_chi, vi_do, kinh_do
                         FROM {identity_schema}.chi_nhanh
                         WHERE trang_thai = 'ACTIVE'
                     """)).mappings().all()
-                    locality_rows = [row for row in active if area in normalize(
-                        f"{row['ten_chi_nhanh']} {row['dia_chi'] or ''}")]
+                    locality_rows = [row for row in active if locality_matches(
+                        f"{row['ten_chi_nhanh']}, {row['dia_chi'] or ''}", target_address)]
 
             if not locality_rows and (user_lat is None or user_lon is None):
                 coords = geocode_address(target_address)

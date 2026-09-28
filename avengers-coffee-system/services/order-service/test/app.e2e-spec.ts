@@ -3,6 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { JwtService } from '@nestjs/jwt';
+import { DataSource } from 'typeorm';
 
 process.env.DB_HOST = process.env.DB_HOST || 'localhost';
 process.env.DB_PORT = process.env.DB_PORT || '5433';
@@ -25,6 +26,20 @@ describe('Order API (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
+
+    const dataSource = moduleFixture.get(DataSource);
+    for (const schema of new Set(dataSource.entityMetadatas.map(meta => meta.schema).filter(Boolean))) {
+      await dataSource.query(`CREATE SCHEMA IF NOT EXISTS ${dataSource.driver.escape(schema!)}`);
+    }
+    await dataSource.synchronize();
+    // SQL-managed checkout outbox is deliberately absent from TypeORM sync.
+    // Create it only in this isolated e2e schema before module startup.
+    await dataSource.query(`CREATE TABLE ${dataSource.driver.escape(process.env.DB_SCHEMA || 'orders')}.wallet_voucher_claim_outbox (
+      order_id uuid PRIMARY KEY, customer_id varchar NOT NULL, voucher_code varchar(50) NOT NULL,
+      discount_amount numeric(15,2) NOT NULL, status varchar(20) NOT NULL DEFAULT 'PENDING',
+      attempts integer NOT NULL DEFAULT 0, next_attempt_at timestamptz NOT NULL DEFAULT now(),
+      created_at timestamptz NOT NULL DEFAULT now(), completed_at timestamptz
+    )`);
 
     app = moduleFixture.createNestApplication();
     await app.init();

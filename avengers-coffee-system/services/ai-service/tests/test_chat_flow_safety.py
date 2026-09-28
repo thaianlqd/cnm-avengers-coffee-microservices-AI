@@ -930,7 +930,7 @@ def test_inventory_requires_a_row_and_enough_quantity():
             return FakeConnection(self.rows)
 
     result = validate_items_at_branch(
-        FakeEngine({1: (1, True)}),
+        FakeEngine({1: (True,)}),
         "BR-1",
         [
             {"product_id": "1", "product_name": "Cà phê", "quantity": 2},
@@ -938,9 +938,11 @@ def test_inventory_requires_a_row_and_enough_quantity():
         ],
     )
 
-    # Missing rows inherit normal menu availability; the explicit row still
-    # blocks because one unit cannot satisfy quantity two.
-    assert result == {"unavailable": ["Cà phê"], "unverified": []}
+    # Quantity is not an availability signal for chat checkout.
+    assert result == {"unavailable": [], "unverified": []}
+    paused = validate_items_at_branch(FakeEngine({1: (False,)}), "BR-1",
+        [{"product_id": "1", "product_name": "Cà phê", "quantity": 1}])
+    assert paused == {"unavailable": ["Cà phê"], "unverified": []}
 
 
 def test_branch_selection_rejects_unknown_inventory_until_stock_is_confirmed(monkeypatch):

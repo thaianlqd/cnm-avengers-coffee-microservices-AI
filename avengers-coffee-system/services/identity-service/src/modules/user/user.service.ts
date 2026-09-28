@@ -6,6 +6,7 @@ import { Branch } from './branch.entity';
 import { DeliveryAddress } from './delivery-address.entity';
 import { Promotion } from './promotion.entity';
 import { PromotionUsage } from './promotion-usage.entity';
+import { OrderVoucherClaim } from './order-voucher-claim.entity';
 import { User } from './user.entity';
 import { MembershipConfig } from './membership-config.entity';
 import { KhuVuc } from './khu-vuc.entity';
@@ -2448,7 +2449,10 @@ export class UserService implements OnModuleInit {
     }
 
     if (userId) {
-      const usedCount = await this.promotionUsageRepo.count({
+      const previousCount = await this.promotionUsageRepo.count({
+        where: { ma_khuyen_mai: code, ma_nguoi_dung: userId },
+      });
+      const usedCount = previousCount + await this.promotionUsageRepo.manager.count(OrderVoucherClaim, {
         where: { ma_khuyen_mai: code, ma_nguoi_dung: userId },
       });
       if (usedCount >= (p.gioi_han_moi_nguoi || 1)) {
@@ -2500,10 +2504,13 @@ export class UserService implements OnModuleInit {
     if (!cleanCode || !cleanUserId) {
       return { luot_da_dung: 0 };
     }
-    const count = await this.promotionUsageRepo.count({
+    const previousCount = await this.promotionUsageRepo.count({
       where: { ma_khuyen_mai: cleanCode, ma_nguoi_dung: cleanUserId },
     });
-    return { luot_da_dung: count };
+    const newCount = await this.promotionUsageRepo.manager.count(OrderVoucherClaim, {
+      where: { ma_khuyen_mai: cleanCode, ma_nguoi_dung: cleanUserId },
+    });
+    return { luot_da_dung: previousCount + newCount };
   }
 
   /** Internal: ghi nhận lượt dùng khuyến mãi sau khi tạo đơn thành công */
@@ -2515,14 +2522,35 @@ export class UserService implements OnModuleInit {
   }) {
     const code = String(payload.ma_khuyen_mai || '').trim().toUpperCase();
     if (!code) throw new BadRequestException('ma_khuyen_mai la bat buoc');
-
-    const p = await this.promotionRepo.findOne({ where: { ma_khuyen_mai: code } });
-    if (p) {
-      p.so_luong_da_dung = Number(p.so_luong_da_dung || 0) + 1;
-      await this.promotionRepo.save(p);
-    }
-
     const userId = String(payload.user_id || '').trim();
+    const orderId = String(payload.ma_don_hang || '').trim();
+    if (userId && orderId) {
+      return this.promotionUsageRepo.manager.transaction(async manager => {
+        const legacy = await manager.findOne(PromotionUsage, { where: { ma_don_hang: orderId } });
+        if (legacy) {
+          if (legacy.ma_khuyen_mai !== code || legacy.ma_nguoi_dung !== userId) {
+            throw new BadRequestException('Don hang da su dung voucher khac');
+          }
+          return { message: 'Da ghi nhan su dung khuyen mai', ma_khuyen_mai: code, already_processed: true };
+        }
+        const inserted = await manager.createQueryBuilder()
+          .insert().into(OrderVoucherClaim)
+          .values({ ma_khuyen_mai: code, ma_nguoi_dung: userId,
+            ma_don_hang: orderId, so_tien_giam: Number(payload.so_tien_giam || 0) })
+          .orIgnore().returning('ma_don_hang').execute();
+        if (!inserted.raw.length) {
+          const existing = await manager.findOne(OrderVoucherClaim, { where: { ma_don_hang: orderId } });
+          if (!existing || existing.ma_khuyen_mai !== code || existing.ma_nguoi_dung !== userId) {
+            throw new BadRequestException('Don hang da su dung voucher khac');
+          }
+          return { message: 'Da ghi nhan su dung khuyen mai', ma_khuyen_mai: code, already_processed: true };
+        }
+        await manager.increment(Promotion, { ma_khuyen_mai: code }, 'so_luong_da_dung', 1);
+        return { message: 'Da ghi nhan su dung khuyen mai', ma_khuyen_mai: code, already_processed: false };
+      });
+    }
+    const p = await this.promotionRepo.findOne({ where: { ma_khuyen_mai: code } });
+    if (p) await this.promotionRepo.increment({ ma_khuyen_mai: code }, 'so_luong_da_dung', 1);
     if (userId) {
       const usage = this.promotionUsageRepo.create({
         ma_khuyen_mai: code,
@@ -2536,7 +2564,7 @@ export class UserService implements OnModuleInit {
     return {
       message: 'Da ghi nhan su dung khuyen mai',
       ma_khuyen_mai: code,
-      so_luong_da_dung: p ? p.so_luong_da_dung : 1,
+      so_luong_da_dung: p ? Number(p.so_luong_da_dung || 0) + 1 : 1,
     };
   }
 

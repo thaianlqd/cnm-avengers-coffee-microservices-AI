@@ -11,6 +11,24 @@ def normalize(value: str) -> str:
     return re.sub(r"\s+", " ", "".join(c for c in raw if unicodedata.category(c) != "Mn").replace("đ", "d")).strip()
 
 
+def locality_matches(address: str, requested: str) -> bool:
+    """Match a complete administrative component, including P./Q. aliases."""
+    prefix = r"^(?:phuong|xa|quan|huyen|tinh|thanh pho|tp|p|q|h)\.?\s+"
+    area = re.sub(prefix, "", normalize(requested.split(",", 1)[0])).strip()
+    if not area:
+        return False
+    for component in str(address or "").split(","):
+        value = normalize(component)
+        bare = re.sub(prefix, "", value).strip()
+        if bare == area or value == area:
+            return True
+        # Store names can carry a brand/code before the locality. The locality
+        # must still end the name; "An Phú Đông" cannot match "An Phú".
+        if re.search(r"(?:^|\s)" + re.escape(area) + r"$", bare):
+            return True
+    return False
+
+
 @dataclass(frozen=True)
 class Location:
     kind: str

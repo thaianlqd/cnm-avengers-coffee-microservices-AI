@@ -37,6 +37,7 @@ class OrderConversationState(TypedDict, total=False):
     user_message: str
     history: List[Dict[str, str]]
     client_message_id: Optional[str]
+    selected_product_id: Optional[str]
     cart: Dict[str, Any]
     cart_sync_status: str
     intent: Dict[str, Any]
@@ -1233,6 +1234,15 @@ def _browse_ask_more(state: OrderConversationState) -> Dict[str, Any]:
 
 
 def _understand(state: OrderConversationState) -> OrderConversationState:
+    selected_id = str(state.get("selected_product_id") or "").strip()
+    if selected_id:
+        # The card supplies an identity hint, never business data. Resolve it
+        # again against the active catalog before the normal options flow.
+        canonical = next((product for product in _load_active_product_targets()
+                          if str(product["product_id"]) == selected_id), None)
+        if not canonical:
+            return {**state, "intent": {"intent": "PRODUCT_CLARIFY"}}
+        return {**state, "intent": {"intent": "ADD_ITEM", "resolved_products": [canonical], "quantity": 1}}
     staged = list(cart_manager.get_checkout_prefs(state["session_id"]).get("pending_products") or [])
     if staged and any(not str(item.get("product_id") or "").strip() for item in staged):
         valid = cart_manager.set_pending_products(state["session_id"], staged)
@@ -1859,6 +1869,7 @@ def run_order_flow(
     user_message: str,
     history: Optional[List[Dict[str, str]]] = None,
     client_message_id: Optional[str] = None,
+    selected_product_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     # A lost HTTP response must replay the completed business turn. The
     # conversation table caches responses too; this session cache covers the
@@ -1867,7 +1878,7 @@ def run_order_flow(
         from copy import deepcopy
         previous = (cart_manager.get_checkout_prefs(session_id).get("processed_order_turns") or {}).get(str(client_message_id))
         if previous:
-            if previous.get("message") != user_message:
+            if previous.get("message") != user_message or previous.get("selected_product_id") != selected_product_id:
                 return {"reply": "Mã lượt chat đã được dùng cho một tin nhắn khác.",
                         "checkout_payload": None, "tool_calls_log": [], "error": "client_message_id_conflict"}
             return deepcopy(previous["result"])
@@ -1876,6 +1887,7 @@ def run_order_flow(
         "user_message": user_message,
         "history": history or [],
         "client_message_id": client_message_id,
+        "selected_product_id": selected_product_id,
     }
     started_at = time.monotonic()
     before = cart_manager.get_cart(session_id)
@@ -1900,6 +1912,7 @@ def run_order_flow(
         turns = dict(cart_manager.get_checkout_prefs(session_id).get("processed_order_turns") or {})
         turns[str(client_message_id)] = {
             "message": user_message,
+            "selected_product_id": selected_product_id,
             "result": response_result,
         }
         if len(turns) > 20:
