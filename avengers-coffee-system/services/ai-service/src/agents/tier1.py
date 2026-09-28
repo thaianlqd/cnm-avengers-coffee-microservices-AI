@@ -2,6 +2,7 @@ import re
 import time
 from typing import Optional, Dict, Any
 from typing import Literal
+from src.agents.payment_intent import wallet_payment_evidence
 
 _DIACRITICS = {
     'a': 'áàảãạăắằẳẵặâấầẩẫậ',
@@ -139,6 +140,9 @@ def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict
     # product-review request, never a request to inspect the cart.
     if re.search(r"\b(danh gia|review|nhan xet)\b", norm):
         return {"intent": "BROWSING"}
+    # The verb "lấy" in "lấy tại quán" selects fulfillment, not a product.
+    if re.search(r"\b(giao tan noi|mang di|lay tai quan|dung tai cho|uong tai quan)\b", norm):
+        return {"intent": "SELECT_FULFILLMENT"}
     cart_words = bool(re.search(r"\b(gio|giohang|mon|topping|toping|size|so luong|sl|da|ngot)\b", norm))
     order_words = bool(re.search(r"\b(don hang|madon|ma don|don da dat|lich su)\b", norm))
     quantity = re.search(r"(?:so luong|sl|ve|con)\s*(?:la|lai)?\s*(\d+)", norm)
@@ -237,7 +241,7 @@ def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict
         return {"intent": "VIEW_CART"}
     if re.search(r"\b(?:ap\s+dung|ma\s+(?:giam|voucher|so\s*\d+)|voucher|dung\s+(?:ma|voucher|so\s*\d+))\b", norm):
         return {"intent": "SELECT_VOUCHER"}
-    if re.search(r"\b(vnpay|cod|tien mat|ngan hang|qr|vi)\b", norm):
+    if re.search(r"\b(vnpay|cod|tien mat|ngan hang|qr)\b", norm) or wallet_payment_evidence(norm):
         return {"intent": "SELECT_PAYMENT"}
     if order_words and not cart_words:
         if re.search(r"\b(huy)\b", norm): return {"intent": "CANCEL_EXISTING_ORDER"}

@@ -23,6 +23,7 @@ from src.common import cart_manager
 from src.function_calling.tools import ALL_TOOL_SCHEMAS, TOOL_EXECUTORS
 from src.common.groq_service import groq_agent_chat
 from src.agents import guardrails
+from src.agents.payment_intent import wallet_payment_evidence
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +66,7 @@ QUY TẮC BẮT BUỘC:
         + NẾU KHÁCH CHỌN MANG ĐI / TẠI CHỖ: Nếu hồ sơ có địa chỉ mặc định, hỏi tự nhiên "Bạn đang ở địa chỉ [địa chỉ đã lưu] hay một địa chỉ khác?". Nếu khách xác nhận thì dùng địa chỉ đó; nếu không thì nhận địa chỉ mới. Gọi `find_nearest_branch`, liệt kê các cửa hàng gần nhất và BẮT BUỘC chờ khách chọn một cửa hàng rồi mới gọi `set_session_branch`. Không tự chọn cửa hàng gần nhất hộ khách.
     - BƯỚC 5 (TÓM TẮT & CHỐT ĐƠN): Khi đã đủ Món, Hình thức nhận, Chi nhánh và Thanh toán, BẠN BẮT BUỘC phải gọi tool `request_checkout` (truyền ĐÚNG tham số `payment_method` và `delivery_type` khách đã chọn) để hệ thống tóm tắt đơn hàng thay bạn. NẾU khách thay đổi phương thức thanh toán hoặc giao hàng sau khi đã tóm tắt, BẠN BẮT BUỘC phải gọi LẠI `request_checkout` để cập nhật. Khi khách nói "Đồng ý/Chốt đơn" với bản tóm tắt CUỐI CÙNG, BẠN BẮT BUỘC phải gọi `confirm_checkout` để sinh mã đơn.
 13. Khi khách yêu cầu hủy/sửa đơn, gọi `get_order_history` tìm mã đơn. Nếu khách CHƯA xác nhận, gọi `cancel_order` hoặc `update_order` với `is_confirmed=False` và BÁO KHÁCH. NẾU KHÁCH ĐÃ NHẮN "ĐỒNG Ý" hoặc xác nhận hủy, BẮT BUỘC gọi với `is_confirmed=True` để thực thi. KHÔNG gọi ask_branch.
-14. Khi tư vấn quán gần nhất từ tool `find_nearest_branch`, BẢT BUỘC phải đọc đúng số km (`khoang_cach_km`) mà tool trả về (ví dụ "cách bạn khoảng 2.3km"). TUYỆT ĐỐI KHÔNG tự bịa khoảng cách hay làm tròn sai lệch. Nếu tool có trả về warning "Chi nhánh gần nhất cũng cách tới...", HÃY báo rõ là khu vực của khách không có chi nhánh, và các gợi ý này khá xa.
+14. Khi tư vấn quán gần nhất từ tool `find_nearest_branch`, chỉ nói "cách bạn" nếu `distance_basis=geocoded_user`. Nếu `distance_basis=area_centroid`, ghi rõ "ước tính theo khu vực"; không coi tâm khu vực là tọa độ khách. Không tự bịa khoảng cách hay làm tròn sai lệch.
 15. NẾU KHÁCH YÊU CẦU SO SÁNH khoảng cách giữa các chi nhánh CỤ THỂ (ví dụ: "giữa 2 chi nhánh này cái nào gần tôi hơn", "chọn 1 trong 2 chi nhánh trên"), BẠN BẮT BUỘC PHẢI TRUYỀN tên các chi nhánh đó vào tham số `target_branches` của tool `find_nearest_branch`. TUYỆT ĐỐI KHÔNG ĐỂ TRỐNG tham số này khi khách yêu cầu so sánh.
 16. NẾU MỘT TOOL BÁO LỖI (status="error") thì HÃY BÁO LỖI ĐÓ CHO KHÁCH, TUYỆT ĐỐI KHÔNG GỌI LẠI TOOL ĐÓ NỮA VÀ DỪNG LẠI NGAY.
 17. [QUAN TRỌNG VỀ TÌM CHI NHÁNH]: Nếu khách yêu cầu tìm chi nhánh (để uống tại quán/mang đi) mà CHƯA CUNG CẤP ĐỊA CHỈ, dùng địa chỉ hồ sơ như một GỢI Ý và hỏi khách có đang ở đó không; không mặc định vị trí hiện tại của khách. Nếu khách nhập địa chỉ mới, truyền đúng địa chỉ đó vào `find_nearest_branch`. Nếu bản đồ không xác định được địa chỉ, yêu cầu khách bổ sung số nhà/đường/phường/quận; không tự chọn một tọa độ gần đúng.
@@ -242,7 +243,7 @@ def _explicit_checkout_choices(message: str) -> Dict[str, str]:
             result["payment_method"] = "VNPAY"
         elif ("ngan hang qr" in text or "qr ngan hang" in text or text == "qr" or "chuyen khoan" in text) and not re.search(r"\b(?:khong|ko|dung dung)\s+(?:dung\s+)?(ngan hang|qr|chuyen khoan)\b", text):
             result["payment_method"] = "NGAN_HANG_QR"
-        elif re.search(r"\bvi(?:\s+(?:avengers|dien tu))?\b", text) and not re.search(r"\b(?:khong|ko|dung dung)\s+(?:dung\s+)?vi\b", text):
+        elif wallet_payment_evidence(text) and not re.search(r"\b(?:khong|ko|dung dung)\s+(?:dung\s+)?vi\b", text):
             result["payment_method"] = "VI_DIEN_TU"
 
         delivery_candidates = []
@@ -801,7 +802,9 @@ def _confirm_saved_location(
                 availability = f" — HẾT/THIẾU: {missing} (không thể chọn)"
             elif item.get("availability_status") == "unknown":
                 availability = " — chưa xác minh được tồn kho (không thể chọn)"
-            distance = (f" ({item['khoang_cach_km']} km đường chim bay)"
+            distance = (f" (ước tính theo khu vực: {item['khoang_cach_km']} km)"
+                        if item.get("distance_estimated") and item.get("khoang_cach_km") is not None else
+                        f" ({item['khoang_cach_km']} km đường chim bay)"
                         if item.get("khoang_cach_km") is not None else "")
             lines.append(
                 f"{index}. {item['ten_chi_nhanh']} — {item.get('dia_chi') or 'chưa có địa chỉ'}"

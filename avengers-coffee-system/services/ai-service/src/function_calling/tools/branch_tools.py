@@ -124,6 +124,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
         prefs = cart_manager.get_checkout_prefs(session_id) if session_id else {}
         target_address = location.strip() if location else str(prefs.get("location_address") or "").strip()
         user_lat, user_lon = None, None
+        distance_basis = "unavailable"
 
         with engine.connect() as conn:
             from src.function_calling.helpers import _norm
@@ -193,6 +194,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                         if positioned:
                             user_lat = sum(float(row["vi_do"]) for row in positioned) / len(positioned)
                             user_lon = sum(float(row["kinh_do"]) for row in positioned) / len(positioned)
+                            distance_basis = "area_centroid"
                             logger.info("[AgentTools] Geocoder unavailable; ranking around exact locality branches")
                         else:
                             logger.info("[AgentTools] Exact locality found without coordinates; returning exact matches only")
@@ -203,6 +205,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                         }
                 else:
                     user_lat, user_lon = coords
+                    distance_basis = "geocoded_user"
                 
             query = f"""
                 WITH ratings AS (
@@ -252,6 +255,8 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                 dist = haversine_distance(user_lat, user_lon, float(r["vi_do"]), float(r["kinh_do"])) if user_lat is not None and user_lon is not None and r["vi_do"] is not None and r["kinh_do"] is not None else None
                 branch_dict = _clean_dict(dict(r))
                 branch_dict["khoang_cach_km"] = round(dist, 1) if dist is not None else None
+                branch_dict["distance_basis"] = distance_basis
+                branch_dict["distance_estimated"] = distance_basis == "area_centroid"
                 branch_dict["exact_area_match"] = str(r["ma_chi_nhanh"]) in locality_ids
                 branches.append(branch_dict)
 
@@ -320,6 +325,8 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                         "branch_name": item["ten_chi_nhanh"],
                         "address": item.get("dia_chi"),
                         "distance_km": item.get("khoang_cach_km"),
+                        "distance_basis": item.get("distance_basis"),
+                        "distance_estimated": item.get("distance_estimated"),
                         "availability_status": item.get("availability_status"),
                         "unavailable_products": item.get("unavailable_products") or [],
                         "unverified_products": item.get("unverified_products") or [],
@@ -334,10 +341,14 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
             
             msg = (f"Các cửa hàng có địa chỉ thuộc khu vực {target_address}; chưa có tọa độ khách đáng tin nên không tính khoảng cách."
                    if nearest_dist is None else
-                   f"Dựa vào địa chỉ của khách ({target_address}), đây là chi nhánh gần nhất. BẮT BUỘC: Bạn PHẢI đọc TÊN CỤ THỂ của chi nhánh và BÁO SỐ KM (khoang_cach_km) kèm chữ '(đường chim bay)' cho khách.")
+                   f"Khoảng cách chỉ ước tính theo khu vực {target_address}, không phải khoảng cách từ vị trí của khách."
+                   if distance_basis == "area_centroid" else
+                   f"Dựa vào vị trí đã xác định của khách ({target_address}), đây là chi nhánh gần nhất. Có thể báo số km đường chim bay.")
             
             if nearest_dist is not None and nearest_dist > 15:
-                msg += f" WARNING: Chi nhánh gần nhất cũng cách tới {nearest_dist}km. Hãy báo rõ cho khách là khu vực của khách khá xa các chi nhánh hiện tại."
+                msg += (f" Chi nhánh gần nhất ước tính cách tâm khu vực khoảng {nearest_dist}km."
+                        if distance_basis == "area_centroid" else
+                        f" Chi nhánh gần nhất cách vị trí đã xác định khoảng {nearest_dist}km.")
 
             return {
                 "status": "need_branch_selection" if delivery_type in {"MANG_DI", "TAI_CHO"} else "ok",

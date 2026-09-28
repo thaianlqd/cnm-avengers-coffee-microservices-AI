@@ -7,6 +7,95 @@ from src.common import cart_manager
 
 logger = logging.getLogger(__name__)
 
+# Menu currently has no scope/type column. Its category hierarchy is the
+# canonical classification source; keep root/leaf mapping in this one place.
+_DRINK_ROOTS = ("Cà Phê", "Trà", "Thức Uống Đá Xay")
+_FOOD_ROOTS = ("Bánh & Đồ Ăn",)
+
+TOOL_FILTER_CATALOG = {
+    "type": "function",
+    "function": {
+        "name": "filter_catalog",
+        "description": "Filter actual Menu products by sellable scope and SQL price bounds; never use knowledge search for shopping constraints.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "category": {"type": "string", "enum": ["all", "drink", "food"]},
+                "sellable_scope": {"type": "string", "enum": ["normal", "topping"]},
+                "min_price": {"type": "number"},
+                "min_price_inclusive": {"type": "boolean"},
+                "max_price": {"type": "number"},
+                "max_price_inclusive": {"type": "boolean"},
+                "search_text": {"type": "string"},
+                "sort_by": {"type": "string", "enum": ["price_asc", "price_desc"]},
+                "limit": {"type": "integer"},
+            },
+        },
+    },
+}
+
+
+def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal",
+                           min_price: Optional[float] = None, min_price_inclusive: bool = True,
+                           max_price: Optional[float] = None, max_price_inclusive: bool = True,
+                           search_text: Optional[str] = None, sort_by: str = "price_asc",
+                           limit: int = 16) -> Dict[str, Any]:
+    import os
+    if category not in {"all", "drink", "food"} or sellable_scope not in {"normal", "topping"}:
+        return {"status": "error", "message": "Bộ lọc danh mục không hợp lệ."}
+    menu_schema = os.getenv("MENU_SCHEMA", "menu")
+    root_names = (_DRINK_ROOTS + _FOOD_ROOTS if category == "all" else
+                  _DRINK_ROOTS if category == "drink" else _FOOD_ROOTS)
+    params: Dict[str, Any] = {"roots": list(root_names), "limit": max(1, min(50, int(limit or 16)))}
+    predicates = ["sp.trang_thai = TRUE"]
+    if sellable_scope == "topping":
+        predicates.append("LOWER(dm.ten_danh_muc) = 'topping'")
+    else:
+        predicates.append("roots.root_name = ANY(:roots)")
+    if min_price is not None:
+        predicates.append("sp.gia_ban " + (">=" if min_price_inclusive else ">") + " :min_price")
+        params["min_price"] = float(min_price)
+    if max_price is not None:
+        predicates.append("sp.gia_ban " + ("<=" if max_price_inclusive else "<") + " :max_price")
+        params["max_price"] = float(max_price)
+    if search_text:
+        predicates.append("(LOWER(sp.ten_san_pham) LIKE :search_text OR LOWER(dm.ten_danh_muc) LIKE :search_text)")
+        params["search_text"] = "%" + str(search_text).strip().lower() + "%"
+    order = "DESC" if sort_by == "price_desc" else "ASC"
+    try:
+        with _get_engine().connect() as conn:
+            rows = conn.execute(text(f"""
+                WITH RECURSIVE ancestors AS (
+                    SELECT ma_danh_muc AS leaf_id, ma_danh_muc_cha, ten_danh_muc, 0 AS depth
+                    FROM {menu_schema}.danh_muc
+                    UNION ALL
+                    SELECT a.leaf_id, parent.ma_danh_muc_cha, parent.ten_danh_muc, a.depth + 1
+                    FROM ancestors a JOIN {menu_schema}.danh_muc parent
+                      ON parent.ma_danh_muc = a.ma_danh_muc_cha
+                    WHERE a.depth < 8
+                ), roots AS (
+                    SELECT DISTINCT ON (leaf_id) leaf_id, ten_danh_muc AS root_name
+                    FROM ancestors WHERE ma_danh_muc_cha IS NULL ORDER BY leaf_id, depth DESC
+                )
+                SELECT sp.ma_san_pham::text AS product_id, sp.ten_san_pham AS product_name,
+                       sp.gia_ban AS final_price, dm.ten_danh_muc AS category,
+                       roots.root_name AS parent_category,
+                       CASE WHEN roots.root_name = ANY(:drink_roots) THEN 'drink'
+                            WHEN roots.root_name = ANY(:food_roots) THEN 'food'
+                            ELSE 'unknown' END AS menu_bucket
+                FROM {menu_schema}.san_pham sp
+                JOIN {menu_schema}.danh_muc dm ON dm.ma_danh_muc = sp.ma_danh_muc
+                JOIN roots ON roots.leaf_id = dm.ma_danh_muc
+                WHERE {' AND '.join(predicates)}
+                ORDER BY sp.gia_ban {order}, sp.ten_san_pham ASC
+                LIMIT :limit
+            """), {**params, "drink_roots": list(_DRINK_ROOTS), "food_roots": list(_FOOD_ROOTS)}).mappings().all()
+        return {"status": "ok" if rows else "not_found",
+                "products": [_clean_dict(dict(row)) for row in rows]}
+    except Exception as error:
+        logger.warning("catalog filter failed: %s", type(error).__name__)
+        return {"status": "error", "message": "Chưa thể tra cứu menu lúc này."}
+
 TOOL_GET_PRODUCT_OPTIONS = {
     "type": "function",
     "function": {

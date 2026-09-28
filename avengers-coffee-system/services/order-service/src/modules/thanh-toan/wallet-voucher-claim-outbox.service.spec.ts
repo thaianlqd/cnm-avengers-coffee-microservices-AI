@@ -40,7 +40,7 @@ describe('durable wallet voucher claim delivery', () => {
         if (sql.includes('attempts = attempts')) return [{
           order_id: 'order-2', customer_id: 'user-2', voucher_code: 'BAD', discount_amount: 1, attempts: 1,
         }];
-        if (sql.includes('last_error')) updates.push(params);
+        if (sql.includes('SET status = $2::varchar')) updates.push(params);
         return [];
       }),
       transaction: async (write: any) => write(manager),
@@ -65,11 +65,41 @@ describe('durable wallet voucher claim delivery', () => {
   });
 
   it('does not invent a claim from TypeORM empty UPDATE metadata', async () => {
-    const manager: any = { query: jest.fn(async () => [[], 0]) };
-    const voucher: any = { claimIdentityVoucher: jest.fn() };
-    const service = new WalletVoucherClaimOutboxService({ manager } as any, voucher);
+    const manager = { query: jest.fn(() => Promise.resolve([[], 0])) };
+    const voucher = { claimIdentityVoucher: jest.fn() };
+    const service = new WalletVoucherClaimOutboxService(
+      { manager } as unknown as ConstructorParameters<
+        typeof WalletVoucherClaimOutboxService
+      >[0],
+      voucher as unknown as ConstructorParameters<
+        typeof WalletVoucherClaimOutboxService
+      >[1],
+    );
     await service.processPending();
     expect(voucher.claimIdentityVoucher).not.toHaveBeenCalled();
-    expect(manager.query).toHaveBeenCalledTimes(1);
+    expect(manager.query).toHaveBeenCalledTimes(2);
+  });
+
+  it('expires an unpaid hold without changing a paid claim and can resume a late successful payment', async () => {
+    const sql: string[] = [];
+    const query = jest.fn((statement: string) => {
+      sql.push(statement);
+      return Promise.resolve([[], 0] as [unknown[], number]);
+    });
+    const manager = { query };
+    const service = new WalletVoucherClaimOutboxService(
+      { manager } as unknown as ConstructorParameters<
+        typeof WalletVoucherClaimOutboxService
+      >[0],
+      {} as ConstructorParameters<typeof WalletVoucherClaimOutboxService>[1],
+    );
+    await service.processPending();
+    expect(sql[0]).toContain("status = 'EXPIRED'");
+    expect(sql[0]).toContain("payment.trang_thai = 'THANH_CONG'");
+    expect(sql[0]).toContain(
+      "order_row.trang_thai_thanh_toan = 'DA_THANH_TOAN'",
+    );
+    await service.markReady('order-1');
+    expect(sql[2]).toContain("status IN ('WAITING_PAYMENT', 'EXPIRED')");
   });
 });
