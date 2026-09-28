@@ -352,6 +352,25 @@ def _resolve_suggested_product(session_id: str, message: str) -> Optional[Dict[s
     return exact[0] if len(exact) == 1 else None
 
 
+def _unresolved_product_reference(session_id: str, message: str) -> bool:
+    """A demonstrative after a list is not evidence for its final row."""
+    prefs = cart_manager.get_checkout_prefs(session_id)
+    if len(prefs.get("last_product_suggestions") or []) < 2 or prefs.get("last_product_focus"):
+        return False
+    if not re.search(r"\b(?:mon|cai|san pham|banh|nuoc)\s+(?:do|nay|kia)\b", _norm(message)):
+        return False
+    return not (_resolve_suggested_product(session_id, message) or _resolve_structured_references(session_id, message))
+
+
+def _focus_product(session_id: str, product: Dict[str, Any]) -> None:
+    if product.get("product_id") and product.get("product_name"):
+        cart_manager.set_checkout_context(session_id, last_product_focus={
+            "product_id": product["product_id"],
+            "product_name": product["product_name"],
+            "category": product.get("category"),
+        })
+
+
 def _resolve_structured_references(session_id: str, message: str) -> Optional[List[Dict[str, Any]]]:
     """Resolve ordinals and demonstratives from durable recommendation state.
 
@@ -614,6 +633,10 @@ def _prepare_structured_products(
             for name, values in groups.items():
                 reply_lines.append(f"  - {name}: {', '.join(str(value) for value in values)}")
 
+    if len(pending) == 1:
+        _focus_product(session_id, pending[0])
+    elif pending:
+        cart_manager.set_checkout_context(session_id, last_product_focus=None)
     cart_manager.set_pending_products(session_id, pending, merge=True)
     cart_manager.set_pending_action(session_id, "fill_options", {"count": len(pending)})
     if not needs_options:
@@ -975,13 +998,16 @@ def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
     def reply(message, logs=None):
         return {"reply": message, "checkout_payload": None, "tool_calls_log": logs or [], "error": None}
 
+    if prefs.get("checkout_submission"):
+        return reply("Đơn đang được gửi xử lý. Bạn xác nhận lại để kiểm tra kết quả trước khi đổi địa chỉ nhé.")
     if prefs.get("delivery_type") == "GIAO_TAN_NOI" and parsed.kind == "area" and prefs.get("partial_delivery_address"):
         parsed = parse_location(f"{prefs['partial_delivery_address']}, {parsed.value}")
     if parsed.kind == "address" and prefs.get("delivery_type") == "GIAO_TAN_NOI" and parsed.missing:
         cart_manager.clear_branch(session_id)
         cart_manager.set_checkout_context(session_id, suggested_address=None,
             partial_delivery_address=parsed.value, branch_candidates=None,
-            address_confirmed=None, delivery_address=None)
+            address_confirmed=None, delivery_address=None,
+            summary_amounts=None, checkout_action_id=None, checkout_action_expires_at=None)
         return reply(f"Mình đã nhận được {parsed.value}. Bạn cho mình thêm {', '.join(parsed.missing)} để xác định chính xác địa chỉ giao nhé.")
     if prefs.get("checkout_requested") and prefs.get("delivery_type") == "GIAO_TAN_NOI" and parsed.kind != "address":
         return reply("Để giao tận nơi, bạn cho mình số nhà, tên đường, phường/xã, quận/huyện và tỉnh/thành phố nhé.")
@@ -998,7 +1024,8 @@ def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
         cart_manager.clear_branch(session_id)
         cart_manager.set_checkout_context(session_id, branch_candidates=None, suggested_address=location,
             location_address=None, address_confirmed=None, delivery_address=None,
-            address_change_requested=None, partial_delivery_address=None)
+            address_change_requested=None, partial_delivery_address=None,
+            summary_amounts=None, checkout_action_id=None, checkout_action_expires_at=None)
         result = _confirm_saved_location(session_id, "đúng địa chỉ đó", history=state.get("history") or [])
         return _advance_checkout_if_ready(session_id, result) if result else reply("Mình chưa xác định được vị trí. Bạn bổ sung quận/huyện và tỉnh/thành phố nhé.")
 
@@ -1203,6 +1230,8 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         and (prefs.get("checkout_requested") or pending_type == "confirm_address")
     ):
         return {**state, "intent": {"intent": "LOCATION_QUERY", "location_kind": location.kind}}
+    if _unresolved_product_reference(state["session_id"], state["user_message"]):
+        return {**state, "intent": {"intent": "PRODUCT_CLARIFY"}}
     # Explicit cart edits keep their existing deterministic handlers; the
     # pending decision must not swallow a request to change the actual cart.
     if not prefs.get("checkout_submission") and pending_type in {"ask_more_items", "select_voucher", "confirm_checkout"} and intent.get("intent") in {"SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS", "CLEAR_CART"}:
@@ -1310,6 +1339,9 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         }}
     if kind == "LOCATION_QUERY":
         return {**state, "result": _handle_location_request(state)}
+    if kind == "PRODUCT_CLARIFY":
+        return {**state, "result": {"reply": "Bạn đang hỏi món nào trong danh sách? Bạn chọn số hoặc nói tên món nhé.",
+                                   "checkout_payload": None, "tool_calls_log": [], "error": None}}
     if kind in {"PENDING_REPLY", "PENDING_AMBIGUOUS", "PENDING_BRANCH"}:
         return {**state, "result": _handle_pending_reply(state)}
     if intent.get("resume_shopping"):
@@ -1365,6 +1397,9 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
     # generic add branch consumes the first number.
     from src.agents.agent_service import _has_product_review_intent
     if _has_product_review_intent(message):
+        reference = _resolve_suggested_product(session_id, message)
+        if reference:
+            _focus_product(session_id, reference)
         contextual_message, contextual_history = _contextualize_product_references(
             session_id, message, state.get("history") or [],
         )
@@ -1605,7 +1640,7 @@ def _render(state: OrderConversationState) -> OrderConversationState:
         cart_manager.set_checkout_context(
             state["session_id"], last_product_suggestions=snapshot,
             product_suggestion_snapshots={}, product_suggestion_mode="flat",
-            last_product_focus=snapshot[-1] if snapshot else None,
+            last_product_focus=snapshot[0] if len(snapshot) == 1 else None,
         )
         products = displayed
         if displayed:
@@ -1713,6 +1748,45 @@ def _build_graph():
 _GRAPH = _build_graph() if StateGraph else None
 
 
+def _sanitize_replay_result(result: Dict[str, Any]) -> Dict[str, Any]:
+    """Retain the user-visible response and UI effects, not diagnostic payloads."""
+    compact = {key: result.get(key) for key in ("reply", "checkout_payload", "error", "conversation_state")}
+    if result.get("gate"):
+        compact["gate"] = result["gate"]
+    card_fields = {
+        "products": (12, ("product_id", "product_name", "ten_san_pham", "category", "danh_muc", "final_price", "gia_ban", "hinh_anh_url")),
+        "branches": (5, ("ma_chi_nhanh", "branch_id", "ten_chi_nhanh", "branch_name", "dia_chi", "address", "khoang_cach_km", "availability_status", "unavailable_products", "gio_mo_cua", "gio_dong_cua")),
+        "vouchers": (4, ("ma_voucher", "ma_khuyen_mai", "code", "ten_voucher", "ten_khuyen_mai", "name", "title", "loai_khuyen_mai", "loai_giam_gia", "loai", "gia_tri", "gia_tri_giam", "discount_value", "gia_tri_don_toi_thieu")),
+    }
+    ui = result.get("ui_payload") or {}
+    if ui:
+        compact_ui = {}
+        for name, (limit, keys) in card_fields.items():
+            if ui.get(name):
+                compact_ui[name] = [{key: row[key] for key in keys if key in row}
+                                    for row in ui[name][:limit] if isinstance(row, dict)]
+        cart = ui.get("cart") or {}
+        if cart:
+            prefs = cart.get("checkout_prefs") or {}
+            compact_ui["cart"] = {"checkout_prefs": {
+                key: prefs[key] for key in ("summary_fingerprint", "checkout_submission") if key in prefs
+            }}
+        if compact_ui:
+            compact["ui_payload"] = compact_ui
+    # ChatWidget uses these status-only events to refresh the cart/orders and
+    # update its voucher badge. No tool arguments or backend cart copies belong
+    # in durable replay metadata.
+    ui_effects = {"add_to_cart", "remove_from_cart", "remove_cart_item", "update_cart_item",
+                  "clear_cart", "confirm_checkout", "apply_voucher", "remove_voucher"}
+    compact["tool_calls_log"] = [
+        {"tool": entry["tool"], "result": {key: value[key] for key in ("status", "voucher_code") if key in value}}
+        for entry in result.get("tool_calls_log") or []
+        if isinstance(entry, dict) and entry.get("tool") in ui_effects
+        for value in [entry.get("result") or {}] if isinstance(value, dict)
+    ]
+    return json.loads(json.dumps(compact, ensure_ascii=False, default=str))
+
+
 def run_order_flow(
     session_id: str,
     user_message: str,
@@ -1754,11 +1828,12 @@ def run_order_flow(
             routed_intent = completed.get("intent") or {}
             result = completed.get("result") or {"reply": "Mình chưa xử lý được yêu cầu này.", "error": "empty_graph_result"}
     model_fallback_used = bool(result.pop("_model_fallback", False))
+    response_result = _sanitize_replay_result(result) if client_message_id else result
     if client_message_id:
         turns = dict(cart_manager.get_checkout_prefs(session_id).get("processed_order_turns") or {})
         turns[str(client_message_id)] = {
             "message": user_message,
-            "result": json.loads(json.dumps(result, ensure_ascii=False, default=str)),
+            "result": response_result,
         }
         if len(turns) > 20:
             for key in list(turns)[:-20]:
@@ -1766,12 +1841,15 @@ def run_order_flow(
         cart_manager.set_checkout_context(session_id, processed_order_turns=turns)
     try:
         from src.common.turn_log import log_turn_async
-        from src.agents.location_parser import parse_location
+        from src.agents.location_parser import normalize, parse_location
         route_kind = str(routed_intent.get("intent") or "MODEL_FALLBACK")
         parsed_location = parse_location(user_message)
         location_category = ({"address": "literal_address", "area": "location_hint"}.get(parsed_location.kind, parsed_location.kind))
         if parsed_location.kind == "address" and before_prefs.get("delivery_type") == "GIAO_TAN_NOI" and parsed_location.missing:
             location_category = "insufficient_delivery_address"
+        location_value = normalize(parsed_location.value)
+        if parsed_location.kind == "address":
+            location_value = re.sub(r"^\d{1,5}[a-z]?(?:[/.-]\d{1,5}[a-z]?)?[^,]*", "[street]", location_value)
         tool_names = [str(entry.get("tool")) for entry in result.get("tool_calls_log") or []
                       if isinstance(entry, dict) and entry.get("tool")]
         log_turn_async(
@@ -1786,6 +1864,7 @@ def run_order_flow(
                 "semantic_intent": routed_intent.get("semantic_intent") or route_kind,
                 "route_owner": "model_read_only" if model_fallback_used else "location" if route_kind in {"LOCATION_QUERY", "PENDING_BRANCH"} else "order_flow",
                 "location_category": location_category,
+                "location_value": location_value if route_kind in {"LOCATION_QUERY", "PENDING_BRANCH"} else "",
                 "model_fallback": model_fallback_used,
                 "tool_names": tool_names,
             },
@@ -1797,4 +1876,4 @@ def run_order_flow(
     except Exception:
         # Observability is never allowed to alter a customer turn.
         pass
-    return result
+    return response_result

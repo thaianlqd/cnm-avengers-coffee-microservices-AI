@@ -25,6 +25,15 @@ _PREFIX = re.compile(
 )
 _STORE = re.compile(r"\b(?:quán|cửa\s+hàng|chi\s+nhánh|kiosk)\b", re.IGNORECASE)
 _NEAR = re.compile(r"\b(?:gần|ở|tại|quanh|khu\s+vực)\b", re.IGNORECASE)
+_STORE_QUERY = re.compile(
+    r"\b(?:gần|tìm|ở|địa\s+chỉ|nào|quanh|khu(?:\s+vực)?|bên)\b|"
+    r"\b(?:có|còn)\b.*\b(?:quán|cửa\s+hàng|chi\s+nhánh|kiosk)\b",
+    re.IGNORECASE,
+)
+_NAMED_STORE_AT_AREA = re.compile(
+    r"^(?:[A-ZĐ][\wÀ-ỹ-]+(?:\s+[A-ZĐ][\wÀ-ỹ-]+){0,3})\s+ở\s+(?P<area>.+)$"
+)
+_PRODUCT_TOPIC = re.compile(r"\b(?:bánh|nước|trà|cà\s+phê|món|topping|size)\b", re.IGNORECASE)
 _HOUSE = re.compile(r"^\d{1,5}[A-Za-z]?(?:[/.-]\d{1,5}[A-Za-z]?)?\s+\S+", re.UNICODE)
 _ADMIN = (
     (r"\bphuong\b|\bp\s*\.", "phường"),
@@ -57,17 +66,22 @@ def parse_location(message: str) -> Location:
     raw = str(message or "").strip(" \t\r\n.!?")
     if not raw:
         return Location("none")
-    store = bool(_STORE.search(raw)) and bool(re.search(
-        r"\b(?:gần|tìm|ở đâu|địa chỉ|nào|quanh|khu vực)\b", raw, re.IGNORECASE
-    ))
+    area_intro = bool(_PREFIX.match(raw)) or bool(re.match(r"^(?:gần|ở|tại|quanh|khu\s+vực)\b", raw, re.IGNORECASE))
+    named_store = _NAMED_STORE_AT_AREA.match(raw)
+    if named_store and _PRODUCT_TOPIC.search(raw[:named_store.start("area")]):
+        named_store = None
+    store = (bool(_STORE.search(raw)) and bool(_STORE_QUERY.search(raw))) or bool(named_store)
     if store:
         # Store words are the request, not part of the geocoding address.
-        raw = re.sub(r"^.*?\b(?:quán|cửa\s+hàng|chi\s+nhánh|kiosk)\b\s*(?:nào)?\s*", "", raw, flags=re.IGNORECASE)
-        raw = re.sub(r"^(?:có\s+)?(?:địa\s+chỉ\s+)?(?:nào\s+)?", "", raw, flags=re.IGNORECASE)
+        if named_store and not _STORE.search(raw):
+            raw = named_store.group("area")
+        else:
+            raw = re.sub(r"^.*?\b(?:quán|cửa\s+hàng|chi\s+nhánh|kiosk)\b\s*(?:nào)?\s*", "", raw, flags=re.IGNORECASE)
+            raw = re.sub(r"^(?:có\s+)?(?:địa\s+chỉ\s+)?(?:nào\s+)?", "", raw, flags=re.IGNORECASE)
     else:
         raw = _PREFIX.sub("", raw)
-    raw = re.sub(r"^(?:gần|ở|tại|quanh|khu\s+vực|địa\s+chỉ\s+này)\s*", "", raw, flags=re.IGNORECASE)
-    raw = re.sub(r"\s+(?:đi|nhé|nha|giúp\s+(?:tôi|mình))$", "", raw, flags=re.IGNORECASE).strip(" ,")
+    raw = re.sub(r"^(?:gần|ở|tại|quanh|khu(?:\s+vực)?|bên|địa\s+chỉ\s+này)\s*", "", raw, flags=re.IGNORECASE)
+    raw = re.sub(r"\s+(?:có\s+không|không|ko|k|đi|nhé|nha|giúp\s+(?:tôi|mình))$", "", raw, flags=re.IGNORECASE).strip(" ,")
     parts = [_admin_component(part.strip()) for part in raw.split(",") if part.strip()]
     value = ", ".join(parts)
     if _HOUSE.match(parts[0]) if parts else False:
@@ -77,8 +91,8 @@ def parse_location(message: str) -> Location:
         return Location("address", value, _missing_delivery(parts))
     if store:
         return Location("branch_query", "" if normalize(value) in {"day", "gan day", "nao", ""} else value)
-    if re.search(r"\b(?:phuong|xa|quan|huyen|thanh pho|tinh|khu vuc)\b", normalize(value)) or (
-        _NEAR.search(message) and len(value.split()) >= 2
+    if re.search(r"\b(?:phường|phuong|xã|quận|huyện|huyen|thành phố|thanh pho|tỉnh|tinh|khu vực|khu vuc)\b", value, re.IGNORECASE) or (
+        area_intro and len(value.split()) >= 2
     ) or re.search(r"^(?:đường|phố|hẻm|ngõ)\s+\S+", value, re.IGNORECASE):
         return Location("area", value)
     return Location("none")

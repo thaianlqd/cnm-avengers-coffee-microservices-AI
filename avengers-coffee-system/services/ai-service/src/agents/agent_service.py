@@ -764,21 +764,26 @@ def _confirm_saved_location(
     if not confirms:
         return None
 
-    context = {"suggested_address": None, "location_address": suggested, "address_confirmed": True}
-    if prefs.get("delivery_type") == "GIAO_TAN_NOI":
-        cart_manager.set_checkout_prefs(session_id, delivery_address=suggested)
-    cart_manager.set_checkout_context(session_id, **context)
-    if (cart_manager.get_pending_action(session_id) or {}).get("type") == "confirm_address":
-        cart_manager.clear_pending_action(session_id)
-
     from src.function_calling.tools.branch_tools import (
         execute_find_nearest_branch,
         execute_set_session_branch,
     )
+    # The suggestion is only a candidate. An old branch, delivery address and
+    # summary cannot survive a location change, but no address is confirmed
+    # until geocoding and the appropriate branch resolution succeed.
+    cart_manager.clear_branch(session_id)
+    cart_manager.set_checkout_context(session_id, location_address=None,
+        address_confirmed=None, delivery_address=None, branch_candidates=None,
+        summary_amounts=None, checkout_action_id=None,
+        checkout_action_expires_at=None)
     nearest = execute_find_nearest_branch(location=suggested, session_id=session_id)
     log = [{"tool": "find_nearest_branch", "result": nearest}]
     branches = nearest.get("branches") or []
     if nearest.get("status") == "need_branch_selection" and branches:
+        cart_manager.set_checkout_context(session_id, suggested_address=None,
+            location_address=suggested, address_confirmed=None, delivery_address=None)
+        if (cart_manager.get_pending_action(session_id) or {}).get("type") == "confirm_address":
+            cart_manager.clear_pending_action(session_id)
         lines = [f"Mình đã dùng địa chỉ đã lưu: {suggested}. Các cửa hàng gần bạn:"]
         for index, item in enumerate(branches, 1):
             availability = " — còn đủ tất cả món"
@@ -814,6 +819,12 @@ def _confirm_saved_location(
             customer_selected=True,
         )
         log.append({"tool": "set_session_branch", "result": selected})
+        if selected.get("status") == "ok":
+            cart_manager.set_checkout_prefs(session_id, delivery_address=suggested)
+            cart_manager.set_checkout_context(session_id, suggested_address=None,
+                location_address=suggested, address_confirmed=True)
+            if (cart_manager.get_pending_action(session_id) or {}).get("type") == "confirm_address":
+                cart_manager.clear_pending_action(session_id)
         return {
             "reply": selected.get("message", "Mình chưa thể xác định cửa hàng phục vụ địa chỉ này."),
             "checkout_payload": None,
@@ -822,7 +833,7 @@ def _confirm_saved_location(
         }
     if nearest.get("status") == "not_found":
         return {
-            "reply": "Mình chưa xác định được vị trí này trên bản đồ. Bạn bổ sung phường/quận và tỉnh/thành phố để mình tìm cửa hàng chính xác nhé.",
+            "reply": "Mình chưa xác định được địa chỉ này trên bản đồ. Bạn kiểm tra lại số nhà/tên đường hoặc bổ sung phường, quận và tỉnh/thành phố nhé.",
             "checkout_payload": None, "tool_calls_log": log, "error": None,
         }
     return {
