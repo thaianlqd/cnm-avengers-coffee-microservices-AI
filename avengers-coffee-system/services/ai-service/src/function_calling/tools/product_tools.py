@@ -1,5 +1,6 @@
 import logging
 import html
+import unicodedata
 from typing import Any, Dict, Optional
 from sqlalchemy import text
 from src.function_calling.helpers import _get_engine, _clean_dict, _norm
@@ -11,6 +12,11 @@ logger = logging.getLogger(__name__)
 # canonical classification source; keep root/leaf mapping in this one place.
 _DRINK_ROOTS = ("Cà Phê", "Trà", "Thức Uống Đá Xay")
 _FOOD_ROOTS = ("Bánh & Đồ Ăn",)
+
+
+def _catalog_name_key(value: str) -> str:
+    normalized = unicodedata.normalize("NFD", str(value or "").lower())
+    return "".join(char for char in normalized if unicodedata.category(char) != "Mn").replace("đ", "d")
 
 TOOL_FILTER_CATALOG = {
     "type": "function",
@@ -59,16 +65,14 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
     if max_price is not None:
         predicates.append("sp.gia_ban " + ("<=" if max_price_inclusive else "<") + " :max_price")
         params["max_price"] = float(max_price)
-    if search_text:
-        terms = [term for term in str(search_text).strip().lower().split() if term]
-        for index, term in enumerate(terms):
-            key = f"search_term_{index}"
-            predicates.append(f"(LOWER(sp.ten_san_pham) LIKE :{key} OR LOWER(dm.ten_danh_muc) LIKE :{key} OR LOWER(roots.root_name) LIKE :{key})")
-            params[key] = "%" + term + "%"
+    terms = _catalog_name_key(search_text).split() if search_text else []
     order = "DESC" if sort_by == "price_desc" else "ASC"
     try:
+        products = []
+        page_size = 256 if terms else params["limit"]
+        offset = 0
         with _get_engine().connect() as conn:
-            rows = conn.execute(text(f"""
+            query = text(f"""
                 WITH RECURSIVE ancestors AS (
                     SELECT ma_danh_muc AS leaf_id, ma_danh_muc_cha, ten_danh_muc, 0 AS depth
                     FROM {menu_schema}.danh_muc
@@ -94,10 +98,24 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
                 JOIN roots ON roots.leaf_id = dm.ma_danh_muc
                 WHERE {' AND '.join(predicates)}
                 ORDER BY sp.gia_ban {order}, sp.ten_san_pham ASC
-                LIMIT :limit
-            """), {**params, "drink_roots": list(_DRINK_ROOTS), "food_roots": list(_FOOD_ROOTS)}).mappings().all()
-        return {"status": "ok" if rows else "not_found",
-                "products": [_clean_dict(dict(row)) for row in rows]}
+                LIMIT :page_size OFFSET :page_offset
+            """)
+            while True:
+                rows = conn.execute(query, {**params, "drink_roots": list(_DRINK_ROOTS),
+                    "food_roots": list(_FOOD_ROOTS), "page_size": page_size,
+                    "page_offset": offset}).mappings().all()
+                for row in rows:
+                    product = _clean_dict(dict(row))
+                    haystack = " ".join(_catalog_name_key(product.get(field)) for field in
+                                        ("product_name", "category", "parent_category"))
+                    if not terms or all(term in haystack for term in terms):
+                        products.append(product)
+                        if len(products) >= params["limit"]:
+                            break
+                if len(products) >= params["limit"] or len(rows) < page_size:
+                    break
+                offset += page_size
+        return {"status": "ok" if products else "not_found", "products": products[:params["limit"]]}
     except Exception as error:
         logger.warning("catalog filter failed: %s", type(error).__name__)
         return {"status": "error", "message": "Chưa thể tra cứu menu lúc này."}

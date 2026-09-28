@@ -114,23 +114,16 @@ def _build_session_context(session_id: str) -> str:
 
 
 def _payment_methods_text() -> str:
-    return (
-        "Phương thức thanh toán:\n"
-        "1. VNPAY — ATM / Internet Banking\n"
-        "2. Chuyển khoản QR ngân hàng\n"
-        "3. Ví Avengers\n"
-        "4. Tiền mặt (COD)"
-    )
+    from src.agents.checkout_choices import PAYMENT_LABELS, numbered_checkout_labels
+    return "Phương thức thanh toán:\n" + numbered_checkout_labels(PAYMENT_LABELS)
 
 
 def _checkout_choices_prompt(session_id: str, prefix: str = "") -> str:
     prefs = cart_manager.get_checkout_prefs(session_id)
     blocks: List[str] = []
     if not prefs.get("delivery_type"):
-        blocks.append(
-            "Hình thức nhận hàng:\n"
-            "1. Giao tận nơi\n2. Lấy tại quán\n3. Dùng tại chỗ"
-        )
+        from src.agents.checkout_choices import FULFILLMENT_LABELS, numbered_checkout_labels
+        blocks.append("Hình thức nhận hàng:\n" + numbered_checkout_labels(FULFILLMENT_LABELS))
     if not prefs.get("payment_method"):
         payment_text = _payment_methods_text()
         from src.function_calling.tools.cart_tools import execute_get_cart_quote, get_wallet_payment_options
@@ -144,7 +137,17 @@ def _checkout_choices_prompt(session_id: str, prefix: str = "") -> str:
             payment_text += f"\n{wallet['reason']}"
         blocks.append(payment_text)
     if not blocks:
+        from src.agents.checkout_choices import CHECKOUT_CHOICE_TYPES
+        if (cart_manager.get_pending_action(session_id) or {}).get("type") in CHECKOUT_CHOICE_TYPES:
+            cart_manager.clear_pending_action(session_id)
         return prefix.strip()
+    from src.agents.checkout_choices import FULFILLMENT_OPTIONS, PAYMENT_OPTIONS
+    pending_type = ("select_checkout_choices" if len(blocks) == 2 else
+                    "select_fulfillment" if not prefs.get("delivery_type") else "select_payment")
+    cart_manager.set_pending_action(session_id, pending_type, {
+        "fulfillment_options": list(FULFILLMENT_OPTIONS) if not prefs.get("delivery_type") else [],
+        "payment_options": list(PAYMENT_OPTIONS) if not prefs.get("payment_method") else [],
+    })
     question = "Bạn chọn giúp mình " + (
         "hình thức nhận hàng và phương thức thanh toán nhé."
         if len(blocks) == 2 else
@@ -228,7 +231,6 @@ def _explicit_checkout_choices(message: str) -> Dict[str, str]:
     question = text.endswith("?") or bool(re.search(r"\b(co|duoc|phai)\b.*\b(khong|ko)\s*$", text))
 
     cash_terms = ("tien mat", "cod", "cash", "thanh toan khi nhan hang")
-    wallet_terms = ("vnpay", "ngan hang qr", "chuyen khoan", "vi dien tu", "vi avengers")
     delivery_map = {
         "GIAO_TAN_NOI": ("giao tan noi", "giao hang", "ship toi", "ship tan nha"),
         "MANG_DI": ("mang di", "den lay", "tu den lay", "lay tai quan", "nhan tai quan", "takeaway"),
@@ -243,7 +245,9 @@ def _explicit_checkout_choices(message: str) -> Dict[str, str]:
             result["payment_method"] = "THANH_TOAN_KHI_NHAN_HANG"
         elif "vnpay" in text and not re.search(r"\b(?:khong|ko|dung dung)\s+(?:dung\s+)?vnpay\b", text):
             result["payment_method"] = "VNPAY"
-        elif ("ngan hang qr" in text or "qr ngan hang" in text or text == "qr" or "chuyen khoan" in text) and not re.search(r"\b(?:khong|ko|dung dung)\s+(?:dung\s+)?(ngan hang|qr|chuyen khoan)\b", text):
+        elif re.search(r"\b(qr|chuyen khoan)\b", text) and not re.search(
+            r"\b(?:khong|ko|dung dung)\s+(?:(?:muon|chon|dung|thanh toan|tra|bang|qua)\s+)*(?:ma\s+)?(?:ngan hang\s+)?(?:qr|chuyen khoan)\b", text,
+        ) and not re.search(r"\bneu\b[^,.!?]*\bqr\b", text):
             result["payment_method"] = "NGAN_HANG_QR"
         elif wallet_payment_evidence(text):
             result["payment_method"] = "VI_DIEN_TU"

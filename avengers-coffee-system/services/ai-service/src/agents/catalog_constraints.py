@@ -31,24 +31,27 @@ def _amount(number: str, unit: Optional[str]) -> int:
 
 def parse_catalog_constraints(message: str) -> Optional[Dict[str, Any]]:
     text = _normalize(message)
-    if re.search(r"\b(?:them|mua|lay|chon|xoa|bo|sua|doi|chinh|tang|giam|thanh toan|dat hang|chot|danh gia|review|nhan xet)\b", text):
+    if re.search(r"\b(?:them|lay|chon|xoa|bo|sua|doi|chinh|tang|giam|thanh toan|dat hang|chot|danh gia|review|nhan xet)\b", text):
         return None
     if re.search(r"\b(?:mon|banh|nuoc|do uong|san pham)\s*(?:so|thu|#)\s*\d+\b", text):
         return None
-    shopping = re.search(r"\b(mon|san pham|sp|banh|do uong|nuoc|thuc uong|topping|menu|thuc don|co gi|cai gi|loai)\b", text)
+    shopping = re.search(r"\b(mon|san pham|sp|banh|do uong|nuoc|thuc uong|topping|menu|thuc don|co gi|cai gi|loai|ca phe|tra|matcha|americano)\b", text)
     price_word = re.search(r"\b(duoi|tren|khong qua|toi da|it nhat|tu|khoang|re nhat|dat nhat)\b", text)
     if not shopping:
         return None
+    if "mua" in text.split() and not price_word:
+        return None
     if not price_word and re.search(r"\b(?:hoac|hay)\b", text):
         return None
-    if not price_word and not re.search(r"\bco\s+mon\b.*\bnao\b", text):
+    if not price_word and not (re.search(r"\bco\s+mon\b.*\bnao\b", text) or
+                               re.fullmatch(r"(?:banh|ca phe|tra|matcha|americano|topping)\s+[\w\s]+", text)):
         return None
     if not price_word and re.search(r"\bbanh trung thu\b", text):
         return None
 
     scope = "topping" if re.search(r"\btopping\b", text) else "normal"
     category = ("food" if re.search(r"\b(banh|do an)\b", text) else
-                "drink" if re.search(r"\b(do uong|nuoc|thuc uong)\b", text) else "all")
+                "drink" if re.search(r"\b(do uong|nuoc|thuc uong|ca phe|tra|americano)\b", text) else "all")
     result: Dict[str, Any] = {
         "category": category, "sellable_scope": scope,
         "sort_by": "price_asc" if "re nhat" in text else "price_desc" if "dat nhat" in text else "price_asc",
