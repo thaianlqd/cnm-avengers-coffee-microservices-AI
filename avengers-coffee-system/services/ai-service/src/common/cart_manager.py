@@ -419,7 +419,13 @@ def add_item(
 
         # Keep explicit payment/fulfillment choices, but invalidate an old summary.
         prefs = dict(session.get("checkout_prefs") or {})
-        prefs.pop("summary_fingerprint", None)
+        for key in ("summary_fingerprint", "checkout_action_id", "summary_amounts",
+                    "checkout_requested", "voucher_decided", "voucher_offer_pending",
+                    "voucher_candidates", "voucher_offer_snapshot", "pending_action"):
+            prefs.pop(key, None)
+        prefs["flow_stage"] = "CART_REVIEW"
+        if prefs.get("voucher_code"):
+            prefs["voucher_revalidation_required"] = True
         session["checkout_prefs"] = prefs
 
         _touch(session_id, session, sync_db=True)
@@ -608,13 +614,14 @@ def set_pending_products(session_id: str, products: List[Dict[str, Any]], merge:
             "quantity": max(1, int(item.get("quantity") or 1)),
         }
         for item in products
-        if str(item.get("product_name") or "").strip()
+        if str(item.get("product_name") or "").strip() and str(item.get("product_id") or "").strip()
     ]
     with _get_session_lock(session_id):
         session = _get_or_create_session(session_id)
         prefs = dict(session.get("checkout_prefs") or {})
         if merge:
-            existing = list(prefs.get("pending_products") or [])
+            existing = [item for item in prefs.get("pending_products") or []
+                        if str(item.get("product_id") or "").strip()]
             existing_names = {str(i.get("product_name") or "").strip().casefold() for i in existing}
             for item in new_items:
                 if str(item.get("product_name") or "").strip().casefold() not in existing_names:

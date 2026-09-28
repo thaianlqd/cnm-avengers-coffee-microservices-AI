@@ -74,6 +74,7 @@ def execute_get_product_options(product_name: str) -> Dict[str, Any]:
             if not options_dict:
                 return {
                     "status": "ok", 
+                    "product_id": product_id,
                     "product_name": found_name, 
                     "options": {},
                     "message": f"Sản phẩm {found_name} không có tùy chọn (size, đá, đường) nào. Cứ đặt mặc định."
@@ -82,6 +83,7 @@ def execute_get_product_options(product_name: str) -> Dict[str, Any]:
             opts_str = ", ".join([f"{k}: [{', '.join(v)}]" for k, v in options_dict.items()])
             return {
                 "status": "ok",
+                "product_id": product_id,
                 "product_name": found_name,
                 "options": {key: list(values) for key, values in options_dict.items()},
                 "message": f"BẮT BUỘC: Khi hỏi khách về tùy chọn của {found_name}, bạn CHỈ ĐƯỢC PHÉP dùng y hệt các nhãn này (không dịch, không đổi). Các tùy chọn là: {opts_str}"
