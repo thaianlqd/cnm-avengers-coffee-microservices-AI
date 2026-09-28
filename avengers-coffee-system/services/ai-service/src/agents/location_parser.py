@@ -83,6 +83,30 @@ _ADMIN = (
     (r"\btinh\b", "tỉnh"),
 )
 
+_SAVED_ADDRESS_REFERENCE = re.compile(
+    r"\b(?:dia chi (?:do|nay|tren|kia|vua (?:noi|roi)|da luu|(?:trong )?ho so)|"
+    r"(?:o|cho) do|cho nay)\b"
+)
+
+
+def _reference_kind(message: str) -> str | None:
+    """Classify deictic address language before it can become a map query."""
+    text = normalize(message)
+    if not text:
+        return None
+    reference = _SAVED_ADDRESS_REFERENCE.search(text)
+    if not reference:
+        if re.search(r"\b(?:dia chi|cho|o)\b[^.!?]*\bkhac\b", text):
+            return "change_reference"
+        return None
+    if re.search(r"\b(?:khong phai|khong dung|khong lay|doi|thay)\b", text) or re.search(
+        r"\b(?:dia chi|cho|o)\b[^.!?]*\bkhac\b", text
+    ):
+        return "change_reference"
+    if "?" in message or re.search(r"\b(?:la gi|la dia chi nao|o dau|dau|dia chi nao)\b", text):
+        return "reference_question"
+    return "reference"
+
 
 def _admin_component(component: str) -> str:
     # Expand only at a comma-delimited component start, never inside a street.
@@ -105,6 +129,18 @@ def parse_location(message: str) -> Location:
     raw = str(message or "").strip(" \t\r\n.!?")
     if not raw:
         return Location("none")
+    # A new numbered street address wins even if the customer first rejects
+    # or mentions the old address in the same sentence.
+    explicit_address = re.search(r"(?<!\w)\d{1,5}[A-Za-z]?(?:[/.-]\d{1,5}[A-Za-z]?)?\s+\S+", raw)
+    if explicit_address:
+        candidate = raw[explicit_address.start():]
+        if _HOUSE.match(candidate) and not set(normalize(candidate.split(",", 1)[0]).split()[1:]) <= {
+            "di", "nhe", "nha", "giup", "toi", "minh", "chon", "lay", "so", "thu"
+        }:
+            raw = candidate
+    reference_kind = _reference_kind(raw + ("?" if "?" in str(message or "") else ""))
+    if reference_kind:
+        return Location(reference_kind, "saved_address" if reference_kind != "change_reference" else "")
     # A comma may introduce the store question after the actual locality.
     # Keep only the location clause; never send the conversational request to
     # the map provider as if it were a street name.

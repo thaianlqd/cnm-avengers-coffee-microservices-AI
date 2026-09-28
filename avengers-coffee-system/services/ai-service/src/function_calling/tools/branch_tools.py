@@ -110,6 +110,11 @@ TOOL_FIND_NEAREST_BRANCH = {
 def execute_find_nearest_branch(location: str = "", session_id: str = "", target_branches: list = None) -> Dict[str, Any]:
     """Tìm chi nhánh gần nhất dựa trên geocoding và khoảng cách Haversine."""
     try:
+        from src.agents.location_parser import parse_location
+        candidate = location or (cart_manager.get_checkout_prefs(session_id).get("location_address") if session_id else "")
+        if parse_location(candidate or "").kind in {"reference", "reference_question", "change_reference"}:
+            return {"status": "need_location", "message":
+                    "Mình chưa có địa chỉ nào đang được tham chiếu. Bạn cho mình khu vực hoặc địa chỉ nhé."}
         hours_check = _check_business_hours()
         if hours_check:
             return hours_check

@@ -1080,7 +1080,6 @@ def _handle_pending_reply(state: OrderConversationState) -> Dict[str, Any]:
             return reply("Bạn gửi địa chỉ mới muốn dùng nhé.")
         if decision == "CONFIRM_ADDRESS":
             from src.agents.agent_service import _advance_checkout_if_ready, _confirm_saved_location
-            cart_manager.clear_pending_action(session_id)
             resolved = _confirm_saved_location(session_id, "đúng địa chỉ đó", history=state.get("history") or [])
             if resolved:
                 return _advance_checkout_if_ready(session_id, resolved)
@@ -1107,6 +1106,44 @@ def _handle_pending_reply(state: OrderConversationState) -> Dict[str, Any]:
     return reply("Bạn muốn thêm món hay hoàn tất giỏ hiện tại?")
 
 
+def _handle_location_reference(state: OrderConversationState, kind: str) -> Dict[str, Any]:
+    """The saved-address context owns deictic turns; no placeholder is geocoded."""
+    from src.agents.agent_service import _advance_checkout_if_ready, _confirm_saved_location
+    from src.function_calling.tools.user_tools import _clean_profile_address
+
+    session_id = state["session_id"]
+    prefs = cart_manager.get_checkout_prefs(session_id)
+    if prefs.get("checkout_submission"):
+        return {"reply": "Đơn đang được gửi xử lý. Bạn xác nhận lại để kiểm tra kết quả trước khi đổi địa chỉ nhé.",
+                "checkout_payload": None, "tool_calls_log": [], "error": None}
+    suggested = _clean_profile_address(prefs.get("suggested_address"))
+    active = bool(prefs.get("checkout_requested") and suggested and
+                  not (state.get("cart") or cart_manager.get_cart(session_id)).get("branch_id"))
+    def reply(message):
+        return {"reply": message, "checkout_payload": None, "tool_calls_log": [], "error": None}
+
+    if kind == "reference_question":
+        return reply(f"Địa chỉ đang được đề xuất là: {suggested}" if active else
+                     "Mình chưa có địa chỉ nào đang được tham chiếu. Bạn cho mình khu vực hoặc địa chỉ nhé.")
+    if kind == "change_reference":
+        if not active:
+            return reply("Mình chưa có địa chỉ nào đang được tham chiếu. Bạn cho mình khu vực hoặc địa chỉ nhé.")
+        cart_manager.clear_branch(session_id)
+        cart_manager.set_checkout_context(session_id, suggested_address=None, location_address=None,
+            delivery_address=None, address_confirmed=None, branch_candidates=None,
+            address_change_requested=True, partial_delivery_address=None,
+            summary_amounts=None, checkout_action_id=None, checkout_action_expires_at=None)
+        if (cart_manager.get_pending_action(session_id) or {}).get("type") == "confirm_address":
+            cart_manager.clear_pending_action(session_id)
+        return reply("Bạn gửi địa chỉ giao đầy đủ mới nhé." if prefs.get("delivery_type") == "GIAO_TAN_NOI" else
+                     "Bạn cho mình khu vực hoặc địa chỉ mới để tìm cửa hàng gần nhất nhé.")
+    if not active:
+        return reply("Mình chưa có địa chỉ nào đang được tham chiếu. Bạn cho mình khu vực hoặc địa chỉ nhé.")
+    resolved = _confirm_saved_location(session_id, "đúng địa chỉ đó", history=state.get("history") or [])
+    return _advance_checkout_if_ready(session_id, resolved) if resolved else reply(
+        "Mình chưa xác định được địa chỉ đã lưu. Bạn thử lại hoặc cho mình khu vực khác nhé.")
+
+
 def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
     """Keep location and store turns inside the deterministic branch boundary."""
     from src.agents.location_parser import parse_location
@@ -1115,6 +1152,8 @@ def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
 
     session_id = state["session_id"]
     parsed = parse_location(state["user_message"])
+    if parsed.kind in {"reference", "reference_question", "change_reference"}:
+        return _handle_location_reference(state, parsed.kind)
     prefs = cart_manager.get_checkout_prefs(session_id)
     logger.debug("routing route=LOCATION_QUERY target_source=location location_kind=%s", parsed.kind)
 
@@ -1454,6 +1493,8 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     # replace it; all other location turns route before shopping/model logic.
     if pending_type == "select_branch":
         return {**state, "intent": {"intent": "PENDING_BRANCH", "location_kind": location.kind}}
+    if location.kind in {"reference", "reference_question", "change_reference"}:
+        return {**state, "intent": {"intent": "LOCATION_REFERENCE", "location_kind": location.kind}}
     if location.kind == "branch_query" or (
         location.kind in {"address", "area"}
         and (prefs.get("checkout_requested") or pending_type == "confirm_address")
@@ -1563,7 +1604,7 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         logger.debug("routing route=%s operation=%s target_source=%s", kind, kind,
                      intent.get("target_source") or "resolver")
     cart_write_intents = {"ADD_ITEM", "SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS", "CLEAR_CART", "FILL_OPTIONS"}
-    authoritative_intents = cart_write_intents | {"FINISH_CART", "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER", "CONFIRM_CHECKOUT", "PENDING_REPLY", "PENDING_BRANCH", "PENDING_CART_LINE", "PENDING_CHECKOUT_CHOICE", "REVIEW_CHECKOUT_SUMMARY"}
+    authoritative_intents = cart_write_intents | {"FINISH_CART", "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER", "CONFIRM_CHECKOUT", "PENDING_REPLY", "PENDING_BRANCH", "PENDING_CART_LINE", "PENDING_CHECKOUT_CHOICE", "REVIEW_CHECKOUT_SUMMARY", "LOCATION_REFERENCE"}
     prefs = cart_manager.get_checkout_prefs(session_id)
     replay = intent.get("pending_type") == "confirm_checkout" and intent.get("decision") == "CONFIRM" and (prefs.get("checkout_submission") or prefs.get("completed_order_id"))
     if kind in authoritative_intents and not replay and is_authenticated_cart_session(session_id) and not cart.get("authoritative"):
@@ -1597,6 +1638,8 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
                                    "tool_calls_log": [{"tool": "request_checkout", "result": checkout}], "error": None}}
     if kind == "LOCATION_QUERY":
         return {**state, "result": _handle_location_request(state)}
+    if kind == "LOCATION_REFERENCE":
+        return {**state, "result": _handle_location_reference(state, intent["location_kind"])}
     if kind == "PRODUCT_CLARIFY":
         return {**state, "result": {"reply": "Bạn đang hỏi món nào trong danh sách? Bạn chọn số hoặc nói tên món nhé.",
                                    "checkout_payload": None, "tool_calls_log": [], "error": None}}
