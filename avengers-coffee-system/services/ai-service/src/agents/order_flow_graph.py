@@ -236,6 +236,7 @@ def _search_menu_catalog(message: str) -> Optional[Dict[str, Any]]:
         "checkout_payload": None,
         "tool_calls_log": logs,
         "displayed_products": merged,
+        "missing_menu_groups": missing,
         "error": None,
     }
 
@@ -895,10 +896,15 @@ def _handle_pending_reply(state: OrderConversationState) -> Dict[str, Any]:
         resolved = _resolve_pending_branch_choice(session_id, message, history=state.get("history") or [])
         if resolved:
             return _advance_checkout_if_ready(session_id, resolved)
-        if _literal_address_from_message(message):
+        from src.agents.location_parser import parse_location
+        location = parse_location(message)
+        if location.kind in {"address", "area"} or (
+            location.kind == "branch_query" and location.value
+            and not re.search(r"\b(?:số|thứ)\s*\d+\b", message, re.IGNORECASE)
+        ):
             cart_manager.clear_branch(session_id)
             cart_manager.clear_pending_action(session_id)
-            return _run_agent_impl(session_id, message, history=state.get("history") or [], allow_model_mutations=False)
+            return _handle_location_request(state)
         count = len(prefs.get("branch_candidates") or [])
         return reply(f"Bạn chọn cửa hàng theo số từ 1 đến {count}, hoặc gửi địa chỉ mới có số nhà, tên đường và khu vực nhé.")
     if pending_type == "confirm_address":
@@ -954,6 +960,61 @@ def _handle_pending_reply(state: OrderConversationState) -> Dict[str, Any]:
     if pending_type == "fill_options":
         return reply("Bạn chọn tùy chọn cho các món đang chờ trước nhé.")
     return reply("Bạn muốn thêm món hay hoàn tất giỏ hiện tại?")
+
+
+def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
+    """Keep location and store turns inside the deterministic branch boundary."""
+    from src.agents.location_parser import parse_location
+    from src.agents.agent_service import _advance_checkout_if_ready, _confirm_saved_location
+    from src.function_calling.tools.branch_tools import execute_find_nearest_branch
+
+    session_id = state["session_id"]
+    parsed = parse_location(state["user_message"])
+    prefs = cart_manager.get_checkout_prefs(session_id)
+
+    def reply(message, logs=None):
+        return {"reply": message, "checkout_payload": None, "tool_calls_log": logs or [], "error": None}
+
+    if prefs.get("delivery_type") == "GIAO_TAN_NOI" and parsed.kind == "area" and prefs.get("partial_delivery_address"):
+        parsed = parse_location(f"{prefs['partial_delivery_address']}, {parsed.value}")
+    if parsed.kind == "address" and prefs.get("delivery_type") == "GIAO_TAN_NOI" and parsed.missing:
+        cart_manager.clear_branch(session_id)
+        cart_manager.set_checkout_context(session_id, suggested_address=None,
+            partial_delivery_address=parsed.value, branch_candidates=None,
+            address_confirmed=None, delivery_address=None)
+        return reply(f"Mình đã nhận được {parsed.value}. Bạn cho mình thêm {', '.join(parsed.missing)} để xác định chính xác địa chỉ giao nhé.")
+    if prefs.get("checkout_requested") and prefs.get("delivery_type") == "GIAO_TAN_NOI" and parsed.kind != "address":
+        return reply("Để giao tận nơi, bạn cho mình số nhà, tên đường, phường/xã, quận/huyện và tỉnh/thành phố nhé.")
+
+    location = parsed.value or prefs.get("location_address") or ""
+    if not location and prefs.get("suggested_address"):
+        return reply(f"Bạn đang ở địa chỉ đã lưu {prefs['suggested_address']} hay muốn dùng địa chỉ khác để tìm cửa hàng?")
+    if not location:
+        return reply("Bạn cho mình biết phường/quận và tỉnh/thành phố đang ở để tìm cửa hàng gần nhất nhé.")
+
+    if prefs.get("checkout_requested"):
+        # A new location in a saved-address prompt replaces that suggestion in
+        # the same turn; the existing resolver still owns inventory and branch rules.
+        cart_manager.clear_branch(session_id)
+        cart_manager.set_checkout_context(session_id, branch_candidates=None, suggested_address=location,
+            location_address=None, address_confirmed=None, delivery_address=None,
+            address_change_requested=None, partial_delivery_address=None)
+        result = _confirm_saved_location(session_id, "đúng địa chỉ đó", history=state.get("history") or [])
+        return _advance_checkout_if_ready(session_id, result) if result else reply("Mình chưa xác định được vị trí. Bạn bổ sung quận/huyện và tỉnh/thành phố nhé.")
+
+    # An informational lookup must not write branch candidates into a previous
+    # cart draft simply because it still has an old fulfillment preference.
+    found = execute_find_nearest_branch(location=location, session_id="")
+    logs = [{"tool": "find_nearest_branch", "result": found}]
+    branches = found.get("branches") or []
+    if branches:
+        lines = [f"Các cửa hàng gần {location}:"]
+        for index, branch in enumerate(branches[:5], 1):
+            lines.append(f"{index}. {branch.get('ten_chi_nhanh')} — {branch.get('dia_chi') or 'chưa có địa chỉ'} ({branch.get('khoang_cach_km')} km đường chim bay)")
+        return reply("\n".join(lines), logs)
+    if found.get("status") == "not_found":
+        return reply("Mình chưa xác định được khu vực này trên bản đồ. Bạn cho mình thêm quận/huyện và tỉnh/thành phố nhé.", logs)
+    return reply(found.get("message") or "Mình chưa tìm được cửa hàng lúc này. Bạn thử lại nhé.", logs)
 
 
 def _load_active_product_targets() -> List[Dict[str, Any]]:
@@ -1113,6 +1174,8 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     intent = classify_order_intent(state["user_message"], (pending or {}).get("type"))
     if intent.get("intent") == "FILL_OPTIONS":
         return {**state, "intent": intent}
+    from src.agents.location_parser import parse_location
+    location = parse_location(state["user_message"])
     from src.agents.pending_context import classify_pending_reply
     prefs = cart_manager.get_checkout_prefs(state["session_id"])
     pending_type = (pending or {}).get("type")
@@ -1131,6 +1194,15 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
             pending_type = "select_voucher"
         elif prefs.get("suggested_address") and prefs.get("checkout_requested"):
             pending_type = "confirm_address"
+    # Branch ordinals own their pending list. A genuine new address can still
+    # replace it; all other location turns route before shopping/model logic.
+    if pending_type == "select_branch":
+        return {**state, "intent": {"intent": "PENDING_BRANCH", "location_kind": location.kind}}
+    if location.kind == "branch_query" or (
+        location.kind in {"address", "area"}
+        and (prefs.get("checkout_requested") or pending_type == "confirm_address")
+    ):
+        return {**state, "intent": {"intent": "LOCATION_QUERY", "location_kind": location.kind}}
     # Explicit cart edits keep their existing deterministic handlers; the
     # pending decision must not swallow a request to change the actual cart.
     if not prefs.get("checkout_submission") and pending_type in {"ask_more_items", "select_voucher", "confirm_checkout"} and intent.get("intent") in {"SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS", "CLEAR_CART"}:
@@ -1169,8 +1241,6 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
             return {**state, "intent": {**shopping, "resume_shopping": True}}
     if pending_type == "fill_options":
         return {**state, "intent": {"intent": "PENDING_AMBIGUOUS", "pending_type": pending_type}}
-    if pending_type == "select_branch":
-        return {**state, "intent": {"intent": "PENDING_BRANCH"}}
     decision = classify_pending_reply(state["user_message"], pending_type)
     if decision:
         return {**state, "intent": {"intent": "PENDING_REPLY", "pending_type": pending_type, "decision": decision}}
@@ -1238,6 +1308,8 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             "tool_calls_log": [],
             "error": None,
         }}
+    if kind == "LOCATION_QUERY":
+        return {**state, "result": _handle_location_request(state)}
     if kind in {"PENDING_REPLY", "PENDING_AMBIGUOUS", "PENDING_BRANCH"}:
         return {**state, "result": _handle_pending_reply(state)}
     if intent.get("resume_shopping"):
@@ -1522,6 +1594,9 @@ def _render(state: OrderConversationState) -> OrderConversationState:
             displayed.append(item)
             if len(displayed) == 12:
                 break
+        if { _map_db_category_to_bucket(item.get("category")) for item in displayed } == {"food", "drink"}:
+            displayed = [item for bucket in ("food", "drink") for item in displayed
+                         if _map_db_category_to_bucket(item.get("category")) == bucket]
         snapshot = [{"product_id": item["product_id"],
                      "product_name": item.get("product_name"),
                      "category": _map_db_category_to_bucket(item.get("category")),
@@ -1535,9 +1610,30 @@ def _render(state: OrderConversationState) -> OrderConversationState:
         products = displayed
         if displayed:
             lines = ["Món chưa được thêm vào giỏ. Mình tìm thấy các món sau:"]
+            mixed = {item["category"] for item in snapshot} == {"food", "drink"}
+            current_bucket = None
             for index, item in enumerate(displayed, 1):
+                bucket = _map_db_category_to_bucket(item.get("category"))
+                if mixed and bucket != current_bucket:
+                    lines.append("\nBánh & đồ ăn:" if bucket == "food" else "\nĐồ uống:")
+                    current_bucket = bucket
                 price = f"{float(item.get('final_price') or 0):,.0f}".replace(",", ".")
                 lines.append(f"{index}. {item.get('product_name')} - {price}đ")
+            notes = []
+            for entry in logs:
+                if entry.get("tool") != "get_recommendations":
+                    continue
+                value = entry.get("result") or {}
+                source = value.get("source")
+                if source == "hot" and (entry.get("args") or {}).get("criteria") == "rating":
+                    notes.append("Chưa có món được đánh giá đủ dữ liệu; đây là các món bán chạy thay thế.")
+                elif source == "alphabet":
+                    notes.append("Các món này chưa có lượt mua hoặc đánh giá nổi bật; đây là món hiện có trong menu.")
+                elif "Lưu ý: Chỉ tìm thấy" in str(value.get("recommendations") or ""):
+                    notes.append("Chỉ tìm thấy một số món phù hợp với yêu cầu.")
+            lines.extend(dict.fromkeys(notes))
+            if result.get("missing_menu_groups"):
+                lines.append("Chưa tìm thấy kết quả riêng cho: " + ", ".join(result["missing_menu_groups"]) + ".")
             lines.append("Bạn muốn chọn món số mấy hoặc nói tên món nhé.")
             result["reply"] = "\n".join(lines)
     if price_focus:
@@ -1648,12 +1744,16 @@ def run_order_flow(
     # scoped context to derive deterministic operation ids; it is deliberately
     # not exposed to the model.
     from src.function_calling.tools.cart_tools import mutation_operation_context
+    routed_intent: Dict[str, Any] = {}
     with mutation_operation_context(session_id, client_message_id):
         if _GRAPH is None:
             from src.agents.agent_service import _run_agent_impl
             result = _run_agent_impl(session_id, user_message, history=history or [], allow_model_mutations=False)
         else:
-            result = _GRAPH.invoke(initial).get("result") or {"reply": "Mình chưa xử lý được yêu cầu này.", "error": "empty_graph_result"}
+            completed = _GRAPH.invoke(initial)
+            routed_intent = completed.get("intent") or {}
+            result = completed.get("result") or {"reply": "Mình chưa xử lý được yêu cầu này.", "error": "empty_graph_result"}
+    model_fallback_used = bool(result.pop("_model_fallback", False))
     if client_message_id:
         turns = dict(cart_manager.get_checkout_prefs(session_id).get("processed_order_turns") or {})
         turns[str(client_message_id)] = {
@@ -1666,6 +1766,14 @@ def run_order_flow(
         cart_manager.set_checkout_context(session_id, processed_order_turns=turns)
     try:
         from src.common.turn_log import log_turn_async
+        from src.agents.location_parser import parse_location
+        route_kind = str(routed_intent.get("intent") or "MODEL_FALLBACK")
+        parsed_location = parse_location(user_message)
+        location_category = ({"address": "literal_address", "area": "location_hint"}.get(parsed_location.kind, parsed_location.kind))
+        if parsed_location.kind == "address" and before_prefs.get("delivery_type") == "GIAO_TAN_NOI" and parsed_location.missing:
+            location_category = "insufficient_delivery_address"
+        tool_names = [str(entry.get("tool")) for entry in result.get("tool_calls_log") or []
+                      if isinstance(entry, dict) and entry.get("tool")]
         log_turn_async(
             session_id=session_id,
             user_message=user_message,
@@ -1674,7 +1782,12 @@ def run_order_flow(
                 "cart_fingerprint": before_fingerprint,
                 "item_count": before.get("item_count", 0),
                 "stage": before_prefs.get("flow_stage", "BROWSING"),
-                "pending_action": (before_prefs.get("pending_action") or {}).get("type"),
+                "pending_type": (before_prefs.get("pending_action") or {}).get("type"),
+                "semantic_intent": routed_intent.get("semantic_intent") or route_kind,
+                "route_owner": "model_read_only" if model_fallback_used else "location" if route_kind in {"LOCATION_QUERY", "PENDING_BRANCH"} else "order_flow",
+                "location_category": location_category,
+                "model_fallback": model_fallback_used,
+                "tool_names": tool_names,
             },
             gate_name=str(result.get("conversation_state") or "CART_REVIEW"),
             result=result,
