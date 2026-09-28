@@ -677,11 +677,14 @@ def set_stock_conflicts(session_id: str, product_names: List[str]) -> None:
     with _get_session_lock(session_id):
         session = _get_or_create_session(session_id)
         prefs = dict(session.get("checkout_prefs") or {})
+        previous = list(prefs.get("stock_conflicts") or [])
+        current = [str(name) for name in product_names]
         if product_names:
-            prefs["stock_conflicts"] = [str(name) for name in product_names]
+            prefs["stock_conflicts"] = current
         else:
             prefs.pop("stock_conflicts", None)
-        prefs.pop("summary_fingerprint", None)
+        if previous != current:
+            prefs.pop("summary_fingerprint", None)
         session["checkout_prefs"] = prefs
         _touch(session_id, session, sync_db=True)
 
@@ -710,14 +713,18 @@ def cart_fingerprint(session_id: str) -> str:
     encoded = json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
-def mark_checkout_summary(session_id: str) -> Dict[str, str]:
+def mark_checkout_summary(session_id: str, reuse_existing: bool = False) -> Dict[str, str]:
     fingerprint = cart_fingerprint(session_id)
     with _get_session_lock(session_id):
         session = _get_or_create_session(session_id)
         prefs = dict(session.get("checkout_prefs") or {})
+        reuse = (reuse_existing and prefs.get("summary_fingerprint") == fingerprint
+                 and prefs.get("checkout_action_id")
+                 and float(prefs.get("checkout_action_expires_at") or 0) > time.time())
         prefs["summary_fingerprint"] = fingerprint
-        prefs["checkout_action_id"] = str(uuid.uuid4())
-        prefs["checkout_action_expires_at"] = str(time.time() + 15 * 60)
+        if not reuse:
+            prefs["checkout_action_id"] = str(uuid.uuid4())
+            prefs["checkout_action_expires_at"] = str(time.time() + 15 * 60)
         session["checkout_prefs"] = prefs
         _touch(session_id, session, sync_db=True)
         return dict(prefs)

@@ -1371,15 +1371,40 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
             return {**state, "intent": {"intent": "PRODUCT_CLARIFY"}}
         return {**state, "intent": {"intent": "ADD_ITEM", "resolved_products": [canonical], "quantity": 1}}
     active_pending = cart_manager.get_pending_action(state["session_id"])
-    catalog_constraints = None if active_pending else parse_catalog_constraints(state["user_message"])
+    catalog_constraints = (None if active_pending and active_pending.get("type") != "ask_more_items"
+                           else parse_catalog_constraints(state["user_message"]))
     if catalog_constraints:
-        return {**state, "intent": {"intent": "BROWSING", "catalog_constraints": catalog_constraints}}
+        pending_catalog = active_pending and active_pending.get("type") == "ask_more_items"
+        return {**state, "intent": {"intent": "BROWSING", "catalog_constraints": catalog_constraints,
+                                   **({"pending_type": "ask_more_items", "pending_decision": "BROWSING_REQUEST"}
+                                      if pending_catalog else {})}}
     staged = list(cart_manager.get_checkout_prefs(state["session_id"]).get("pending_products") or [])
     if staged and any(not str(item.get("product_id") or "").strip() for item in staged):
         valid = cart_manager.set_pending_products(state["session_id"], staged)
         if not valid and (cart_manager.get_pending_action(state["session_id"]) or {}).get("type") == "fill_options":
             cart_manager.clear_pending_action(state["session_id"])
     pending = cart_manager.get_pending_action(state["session_id"])
+    from src.agents.checkout_choices import CHECKOUT_CHOICE_TYPES, FULFILLMENT_OPTIONS, PAYMENT_OPTIONS, pending_checkout_choice
+    pending_type = (pending or {}).get("type")
+    prefs_before = cart_manager.get_checkout_prefs(state["session_id"])
+    if not pending_type and prefs_before.get("checkout_requested") and not prefs_before.get("checkout_submission"):
+        missing_delivery = not prefs_before.get("delivery_type")
+        missing_payment = not prefs_before.get("payment_method")
+        if missing_delivery or missing_payment:
+            pending_type = ("select_checkout_choices" if missing_delivery and missing_payment else
+                            "select_fulfillment" if missing_delivery else "select_payment")
+            cart_manager.set_pending_action(state["session_id"], pending_type, {
+                "fulfillment_options": list(FULFILLMENT_OPTIONS) if missing_delivery else [],
+                "payment_options": list(PAYMENT_OPTIONS) if missing_payment else [],
+            })
+            pending = cart_manager.get_pending_action(state["session_id"])
+    if pending_type in CHECKOUT_CHOICE_TYPES:
+        checkout_patch = pending_checkout_choice(pending_type, state["user_message"])
+        if checkout_patch is not None:
+            if checkout_patch:
+                return {**state, "intent": {"intent": "SELECT_PAYMENT" if "payment_method" in checkout_patch else "SELECT_FULFILLMENT",
+                                          "target_kind": "NONE", "checkout_patch": checkout_patch}}
+            return {**state, "intent": {"intent": "PENDING_CHECKOUT_CHOICE", "pending_type": pending_type}}
     intent = classify_order_intent(state["user_message"], (pending or {}).get("type"))
     plain_intent = classify_order_intent(state["user_message"], None)
     if (pending or {}).get("type") and plain_intent.get("intent") in {
@@ -1469,6 +1494,9 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
             return {**state, "intent": {"intent": "PENDING_REPLY", "pending_type": pending_type,
                                         "decision": voucher_decision}}
     if pending_type == "confirm_checkout":
+        from src.agents.pending_context import is_continue_turn
+        if is_continue_turn(state["user_message"]) and not prefs.get("checkout_submission"):
+            return {**state, "intent": {"intent": "REVIEW_CHECKOUT_SUMMARY", "target_kind": "NONE"}}
         checkout_decision = classify_pending_reply(state["user_message"], pending_type)
         if checkout_decision == "CONFIRM":
             return {**state, "intent": {"intent": "PENDING_REPLY", "pending_type": pending_type,
@@ -1524,6 +1552,7 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
 
 
 def _execute(state: OrderConversationState) -> OrderConversationState:
+    from src.agents.checkout_choices import CHECKOUT_CHOICE_TYPES
     from src.function_calling.tools.cart_tools import (
         execute_clear_cart, execute_get_cart_quote, execute_remove_cart_item, execute_update_cart_item,
         is_authenticated_cart_session,
@@ -1534,7 +1563,7 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         logger.debug("routing route=%s operation=%s target_source=%s", kind, kind,
                      intent.get("target_source") or "resolver")
     cart_write_intents = {"ADD_ITEM", "SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS", "CLEAR_CART", "FILL_OPTIONS"}
-    authoritative_intents = cart_write_intents | {"FINISH_CART", "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER", "CONFIRM_CHECKOUT", "PENDING_REPLY", "PENDING_BRANCH", "PENDING_CART_LINE"}
+    authoritative_intents = cart_write_intents | {"FINISH_CART", "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER", "CONFIRM_CHECKOUT", "PENDING_REPLY", "PENDING_BRANCH", "PENDING_CART_LINE", "PENDING_CHECKOUT_CHOICE", "REVIEW_CHECKOUT_SUMMARY"}
     prefs = cart_manager.get_checkout_prefs(session_id)
     replay = intent.get("pending_type") == "confirm_checkout" and intent.get("decision") == "CONFIRM" and (prefs.get("checkout_submission") or prefs.get("completed_order_id"))
     if kind in authoritative_intents and not replay and is_authenticated_cart_session(session_id) and not cart.get("authoritative"):
@@ -1556,6 +1585,16 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             "tool_calls_log": [],
             "error": None,
         }}
+    if kind == "PENDING_CHECKOUT_CHOICE":
+        from src.agents.agent_service import _checkout_choices_prompt
+        return {**state, "result": {"reply": _checkout_choices_prompt(session_id, "Mình chưa rõ số bạn chọn thuộc danh sách nào, hoặc số đó không hợp lệ."),
+                                   "checkout_payload": None, "tool_calls_log": [], "error": None}}
+    if kind == "REVIEW_CHECKOUT_SUMMARY":
+        from src.function_calling.tools.cart_tools import execute_request_checkout
+        checkout = execute_request_checkout(session_id, reuse_summary=True)
+        return {**state, "result": {"reply": checkout.get("message", "Bạn kiểm tra lại đơn hàng nhé."),
+                                   "checkout_payload": checkout.get("order_summary") if checkout.get("status") == "require_confirmation" else None,
+                                   "tool_calls_log": [{"tool": "request_checkout", "result": checkout}], "error": None}}
     if kind == "LOCATION_QUERY":
         return {**state, "result": _handle_location_request(state)}
     if kind == "PRODUCT_CLARIFY":
@@ -1840,8 +1879,18 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         if patch:
             cart_manager.set_checkout_prefs(session_id, **patch)
         prefs = cart_manager.get_checkout_prefs(session_id)
+        if prefs.get("delivery_type") and prefs.get("payment_method") and (
+            (cart_manager.get_pending_action(session_id) or {}).get("type") in CHECKOUT_CHOICE_TYPES
+        ):
+            cart_manager.clear_pending_action(session_id)
         if not prefs.get("voucher_decided") or not prefs.get("checkout_requested"):
             return {**state, "result": _offer_voucher_gate(session_id)}
+        # The choice is already persisted. Do not replay the customer's bare
+        # ordinal into the legacy recommendation resolver.
+        from src.agents.agent_service import _run_agent_impl
+        from src.agents.checkout_choices import checkout_continuation_message
+        return {**state, "result": _run_agent_impl(session_id, checkout_continuation_message(prefs),
+                                                    history=[], allow_model_mutations=False)}
 
     if kind == "SELECT_VOUCHER" and not cart.get("is_empty"):
         # Voucher language must be handled before generic product/price

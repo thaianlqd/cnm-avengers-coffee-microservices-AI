@@ -810,6 +810,7 @@ def execute_request_checkout(
     payment_method: Optional[str] = None,
     delivery_type: Optional[str] = None,
     delivery_address: Optional[str] = None,
+    reuse_summary: bool = False,
 ) -> Dict[str, Any]:
     requested_payment, requested_delivery = _normalize_checkout_args(payment_method, delivery_type)
     if payment_method and not requested_payment:
@@ -935,7 +936,7 @@ def execute_request_checkout(
     # Store the authoritative amounts for later confirmation.
     cart_manager.set_checkout_context(session_id, summary_amounts={"subtotal": total, "discount_amount": discount_amount, "delivery_fee": delivery_fee, "final_total": final_total})
     cart_manager.set_checkout_context(session_id, flow_stage="SUMMARY")
-    summary_state = cart_manager.mark_checkout_summary(session_id)
+    summary_state = cart_manager.mark_checkout_summary(session_id, reuse_existing=reuse_summary)
     cart_manager.set_pending_action(session_id, "confirm_checkout", {})
 
     total_str = f"{total:,.0f}".replace(",", ".")
@@ -968,7 +969,11 @@ def execute_request_checkout(
     summary_lines.append(f"Thanh toán: {payment_method}")
     if delivery_type == "GIAO_TAN_NOI" and delivery_address:
         summary_lines.append(f"Địa chỉ giao: {delivery_address}")
-    summary_lines.append("Bạn xác nhận chốt đơn để mình tạo đơn hàng nhé.")
+    summary_lines.append(
+        "Nếu thông tin trên đúng, bạn xác nhận đặt đơn để mình tạo mã QR thanh toán nhé."
+        if payment_method == "NGAN_HANG_QR" else
+        "Bạn xác nhận chốt đơn để mình tạo đơn hàng nhé."
+    )
     summary_msg = "\n".join(summary_lines)
 
     return {

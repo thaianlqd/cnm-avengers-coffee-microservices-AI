@@ -109,6 +109,70 @@ def test_checkout_smoke_all_fulfillment_modes(flow, monkeypatch, mode, choice, e
     assert len(calls) == 1
 
 
+def test_exact_cart_continue_to_qr_checkout_context(flow, monkeypatch):
+    cart_manager.add_item(flow, '1', 'Matcha', 100000)
+    cart_manager.set_pending_action(flow, 'ask_more_items', {})
+    voucher = turn(flow, 'tiếp tục')
+    assert 'SAVE20' in voucher['reply']
+    assert cart_manager.get_pending_action(flow)['type'] == 'select_voucher'
+    turn(flow, 'áp mã số 1')
+    choices = turn(flow, 'tiếp tục')
+    assert 'Hình thức nhận hàng' in choices['reply']
+    assert cart_manager.get_pending_action(flow)['type'] == 'select_checkout_choices'
+    location = turn(flow, 'cho tôi lấy tại quán và thanh toán qua mã QR nhé')
+    prefs = cart_manager.get_checkout_prefs(flow)
+    assert prefs['delivery_type'] == 'MANG_DI'
+    assert prefs['payment_method'] == 'NGAN_HANG_QR'
+    assert not prefs.get('pending_products')
+    assert ADDRESS in location['reply']
+    turn(flow, 'ok địa chỉ đó đi')
+    cart_manager.set_checkout_context(flow, branch_candidates=[{
+        'branch_id': 'CN_1', 'branch_name': 'Cửa hàng Một', 'availability_status': 'available'}])
+    summary = turn(flow, 'cửa hàng 1 đi')
+    assert summary['checkout_payload']['payment_method'] == 'NGAN_HANG_QR'
+    assert 'SAVE20' in summary['reply']
+    assert 'QR' in summary['reply']
+    assert 'mã QR' in summary['reply']
+    assert cart_manager.get_pending_action(flow)['type'] == 'confirm_checkout'
+    continued = turn(flow, 'tiếp tục')
+    assert continued['checkout_payload'], continued
+    assert continued['checkout_payload']['action_id'] == summary['checkout_payload']['action_id']
+    assert 'Tóm tắt đơn hàng' in continued['reply']
+    calls = []
+    def finalize(**kwargs):
+        calls.append(kwargs)
+        cart_manager.clear_cart(flow, order_id='ORDER_QR')
+        return {'status': 'success', 'order_id': 'ORDER_QR', 'payment_details': {
+            'ma_don_hang': 'ORDER_QR', 'so_tien': 80000, 'ma_tham_chieu': 'QR-ORDER_QR',
+            'qr_img_url': 'https://example.test/qr.png', 'qr_fallback_url': 'https://example.test/qr-fallback'}}
+    monkeypatch.setattr('src.common.checkout_service.finalize_checkout', finalize)
+    assert len(calls) == 0
+    confirmed = turn(flow, 'xác nhận')
+    assert len(calls) == 1 and calls[0]['payment_method'] == 'NGAN_HANG_QR'
+    assert confirmed['tool_calls_log'][0]['result']['payment_details']['ma_tham_chieu'] == 'QR-ORDER_QR'
+
+
+def test_payment_prompt_ordinal_cannot_open_old_matcha_options(flow, monkeypatch):
+    from src.function_calling.tools import product_tools
+    cart_manager.add_item(flow, '1', 'Matcha', 100000)
+    turn(flow, 'không thêm nữa')
+    turn(flow, 'bỏ qua voucher')
+    turn(flow, 'tiếp tục')
+    payment_prompt = turn(flow, 'lấy tại quán')
+    assert 'Phương thức thanh toán' in payment_prompt['reply']
+    assert cart_manager.get_pending_action(flow)['type'] == 'select_payment'
+    cart_manager.set_checkout_context(flow, last_product_suggestions=[
+        {'product_id': 'P1', 'product_name': 'Americano', 'category': 'drink'},
+        {'product_id': 'P2', 'product_name': 'Bánh Trung Thu Matcha', 'category': 'food'}])
+    monkeypatch.setattr(product_tools, 'execute_get_product_options',
+                        lambda *_: pytest.fail('checkout ordinal requested product options'))
+    chosen = turn(flow, 'số 2 ấy bạn ơi')
+    prefs = cart_manager.get_checkout_prefs(flow)
+    assert prefs['payment_method'] == 'NGAN_HANG_QR'
+    assert not prefs.get('pending_products')
+    assert ADDRESS in chosen['reply']
+
+
 def test_summary_client_message_replay_metadata_does_not_stale_confirm(flow, monkeypatch):
     cart_manager.add_item(flow, '1', 'Nước', 313000)
     turn(flow, 'không vậy oke rồi')

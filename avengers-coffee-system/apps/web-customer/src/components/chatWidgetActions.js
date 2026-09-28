@@ -63,7 +63,22 @@ export async function pollQrPaymentStatus(client, userId, orderId) {
   return qrPaymentState(response?.data || response);
 }
 
-export function latestPendingQrPayment(messages) {
+export function qrPaymentFromCheckout(result, pendingOrder, userId) {
+  if (pendingOrder?.paymentMethod !== 'NGAN_HANG_QR') return null;
+  const details = result?.payment_details || {};
+  const orderId = details.ma_don_hang || result?.order_id;
+  if (!orderId || !userId) return null;
+  return {
+    orderId, userId,
+    amount: details.so_tien ?? result?.total_price ?? pendingOrder.total,
+    reference: details.ma_tham_chieu || null,
+    qrImgUrl: details.qr_img_url || null,
+    qrFallbackUrl: details.qr_fallback_url || null,
+  };
+}
+
+export function latestPendingQrPayment(messages, userId) {
   const latest = [...(messages || [])].reverse().find((message) => message._qrPayment || message._qrPaymentResolved);
-  return latest?._qrPayment || null;
+  const payment = latest?._qrPayment || null;
+  return payment && (!userId || payment.userId === userId) ? payment : null;
 }

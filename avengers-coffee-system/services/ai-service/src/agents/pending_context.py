@@ -59,6 +59,11 @@ def _semantic_fallback(message: str, pending_type: str, evidence: Optional[dict]
 _SHOPPING_FILLERS = set("toi minh ban ben quan cua cho voi ve la thi di nhe nha a oi gi nao do thu cai mon vai mot it them nua muon can con mua lay chon xem tim goi y co khong ko ban hien thi duoc roi tiep tuc san pham".split())
 
 
+def is_continue_turn(message: str) -> bool:
+    text = re.sub(r"\s+", " ", _remove_diacritics(message)).strip()
+    return bool(re.fullmatch(r"(?:duoc roi )?(?:vay )?(?:tiep tuc|tiep di|qua buoc tiep theo)(?: nhe| nha| di| ban oi)?[.!]?", text))
+
+
 def has_shopping_topic(message: str) -> bool:
     tokens = set(re.findall(r"\w+", _remove_diacritics(message)))
     return bool(tokens - _SHOPPING_FILLERS)
@@ -77,6 +82,8 @@ def _classify_ask_more(message: str, evidence: dict) -> str:
     query = evidence.get("looks_like_catalog_query") or looks_like_catalog_query(message)
     if query:
         return "BROWSING_REQUEST"
+    if is_continue_turn(message):
+        return "DONE"
     if not text:
         return "AMBIGUOUS"
     negative = bool(re.search(r"\b(khong|ko|chua)\b", text)) or bool(re.search(r"\b(đừng|dừng)\b", message.lower()))

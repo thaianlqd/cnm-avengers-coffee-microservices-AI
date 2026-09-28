@@ -41,7 +41,7 @@ def test_short_cake_matcha_query_is_food_search_not_exact_product_guess(monkeypa
     session = "short-cake-matcha-query"
     calls = []
     monkeypatch.setattr(cart_tools, "sync_authoritative_cart", lambda value: cart_manager.get_cart(value))
-    monkeypatch.setattr(product_tools, "execute_get_recommendations", lambda **kwargs: (
+    monkeypatch.setattr(product_tools, "execute_filter_catalog", lambda **kwargs: (
         calls.append(kwargs) or {
             "status": "ok",
             "products": [{
@@ -54,7 +54,7 @@ def test_short_cake_matcha_query_is_food_search_not_exact_product_guess(monkeypa
     result = run_order_flow(session, "bánh matcha")
     assert calls[0]["category"] == "food"
     assert calls[0]["search_text"] == "matcha"
-    assert "Bánh Trung Thu Matcha" in result["reply"]
+    assert result["ui_payload"]["products"][0]["product_name"] == "Bánh Trung Thu Matcha"
 
 
 def test_view_cake_menu_uses_food_category_without_free_text_guess(monkeypatch):

@@ -4,7 +4,7 @@ import {
   openChatProductDetail, addChatProduct, branchDistanceLabel, paymentCardRows,
   chatLoadingLabel, refreshWalletAfterCheckout, structuredLegacyCards,
   qrPaymentState,
-  pollQrPaymentStatus, latestPendingQrPayment,
+  pollQrPaymentStatus, latestPendingQrPayment, qrPaymentFromCheckout,
 } from './chatWidgetActions.js';
 
 test('product card click navigates by canonical product ID', () => {
@@ -92,4 +92,25 @@ test('reopening chat restores only unresolved QR payment', () => {
   const qr = { orderId: 'order-1', qrUrl: 'https://example.test/qr.png' };
   assert.deepEqual(latestPendingQrPayment([{ _qrPayment: qr }]), qr);
   assert.equal(latestPendingQrPayment([{ _qrPayment: qr }, { _qrPaymentResolved: 'order-1' }]), null);
+});
+
+test('QR checkout card uses server amount/reference and keeps missing image controlled', () => {
+  const pending = { paymentMethod: 'NGAN_HANG_QR', total: 100000 };
+  assert.deepEqual(qrPaymentFromCheckout({ order_id: 'O1', total_price: 93750,
+    payment_details: { ma_don_hang: 'O1', so_tien: 93750, ma_tham_chieu: 'QR-1',
+      qr_img_url: 'https://example.test/qr.png', qr_fallback_url: 'https://example.test/fallback' } }, pending, 'U1'), {
+    orderId: 'O1', userId: 'U1', amount: 93750, reference: 'QR-1',
+    qrImgUrl: 'https://example.test/qr.png', qrFallbackUrl: 'https://example.test/fallback',
+  });
+  assert.deepEqual(qrPaymentFromCheckout({ order_id: 'O2', total_price: 100000 }, pending, 'U1'), {
+    orderId: 'O2', userId: 'U1', amount: 100000, reference: null, qrImgUrl: null, qrFallbackUrl: null,
+  });
+  assert.equal(qrPaymentFromCheckout({ order_id: 'O1' }, { paymentMethod: 'VNPAY' }, 'U1'), null);
+});
+
+test('reset/reopen watcher is scoped to the same customer and unresolved order', () => {
+  const qr = { orderId: 'O1', userId: 'U1', qrImgUrl: 'https://example.test/qr.png' };
+  assert.deepEqual(latestPendingQrPayment([{ _qrPayment: qr }], 'U1'), qr);
+  assert.equal(latestPendingQrPayment([{ _qrPayment: qr }], 'U2'), null);
+  assert.equal(latestPendingQrPayment([{ _qrPayment: qr }, { _qrPaymentResolved: 'O1' }], 'U1'), null);
 });
