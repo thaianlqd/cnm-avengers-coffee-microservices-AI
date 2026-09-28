@@ -109,6 +109,26 @@ def test_checkout_smoke_all_fulfillment_modes(flow, monkeypatch, mode, choice, e
     assert len(calls) == 1
 
 
+def test_summary_client_message_replay_metadata_does_not_stale_confirm(flow, monkeypatch):
+    cart_manager.add_item(flow, '1', 'Nước', 313000)
+    turn(flow, 'không vậy oke rồi')
+    turn(flow, 'bỏ qua voucher')
+    turn(flow, 'tiếp tục đi')
+    turn(flow, 'lấy tại quán và COD')
+    turn(flow, 'ok địa chỉ đó đi')
+    cart_manager.set_checkout_context(flow, branch_candidates=[{
+        'branch_id': 'CN_1', 'branch_name': 'Cửa hàng Một', 'availability_status': 'available'}])
+    summary = agent_service.run_agent(flow, 'chọn chi nhánh số 1', client_message_id='summary-turn')
+    assert summary['checkout_payload']['final_total'] == 313000
+    prefs = cart_manager.get_checkout_prefs(flow)
+    assert prefs['processed_order_turns']['summary-turn']['message'] == 'chọn chi nhánh số 1'
+    assert prefs['summary_fingerprint'] == cart_manager.cart_fingerprint(flow)
+    monkeypatch.setattr('src.common.checkout_service.finalize_checkout', lambda **kwargs: {
+        'status': 'success', 'order_id': 'ORDER_REPLAY'})
+    confirmed = turn(flow, 'oke xác nhận')
+    assert 'ORDER_REPLAY' in confirmed['reply']
+
+
 @pytest.mark.parametrize('text', ['oke xác nhận', 'ok xác nhận', 'xác nhận', 'xác nhận chốt đơn', 'đồng ý', 'đồng ý chốt đơn', 'chốt đơn', 'đặt luôn'])
 def test_confirmation_phrases(text):
     assert agent_service._is_plain_confirmation(text)

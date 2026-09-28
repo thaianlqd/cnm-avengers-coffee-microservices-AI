@@ -691,13 +691,12 @@ def cart_fingerprint(session_id: str) -> str:
     payload = {
         "branch_id": cart.get("branch_id"),
         "checkout_prefs": {
-            key: value for key, value in cart.get("checkout_prefs", {}).items()
-            if key not in {
-                "summary_fingerprint", "pending_products", "branch_candidates",
-                "suggested_address", "location_address", "stock_conflicts",
-                "checkout_action_id", "checkout_action_expires_at",
-                "pending_action",
-            }
+            key: cart.get("checkout_prefs", {}).get(key)
+            for key in (
+                "payment_method", "delivery_type", "delivery_method",
+                "delivery_address", "voucher_code", "discount_amount",
+                "summary_amounts",
+            )
         },
         "items": sorted(
             [_order_item_payload(item) for item in cart.get("items", [])],

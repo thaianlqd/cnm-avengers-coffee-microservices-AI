@@ -84,6 +84,8 @@ QUY TẮC BẮT BUỘC:
     - Trong tóm tắt đơn, luôn hiển thị: tổng gốc, số giảm (nếu có) và tổng thanh toán cuối cùng.
     - TUYỆT ĐỐI KHÔNG tự bịa ra mã giảm giá hay số tiền giảm.
 
+25. Câu hỏi cửa hàng/chi nhánh/vị trí không phải câu hỏi menu. Trong checkout, giữ ngữ cảnh checkout trừ khi khách nói rõ muốn quay lại chọn món. Không bịa địa chỉ, chi nhánh hoặc kết quả bản đồ; nếu không tìm được, hỏi phần vị trí còn thiếu. Với giao tận nơi cần đủ số nhà/đường, phường/xã, quận/huyện và tỉnh/thành phố trước khi chốt. Câu hỏi danh mục như “có bánh mặn không” là xem menu; chỉ chọn món khi đã nhận diện được sản phẩm cụ thể.
+
 THÔNG TIN PHIÊN HIỆN TẠI:
 {session_context}"""
 
@@ -195,46 +197,16 @@ def _normalize_chat_text(value: str) -> str:
 
 def _literal_address_from_message(message: str) -> Optional[str]:
     """Return an explicit street address, never a numbered branch selection."""
-    prefix = re.match(
-        r"^(?:(?:tôi|mình)(?: đang)? ở|đổi địa chỉ sang|đổi sang địa chỉ|"
-        r"địa chỉ(?: mới)?(?: là)?|giao (?:đến|tới))\s*[:：]?\s*",
-        str(message or "").strip(), flags=re.IGNORECASE,
-    )
-    address = str(message or "").strip()
-    if prefix:
-        address = address[prefix.end():].strip()
-    normalized = _normalize_chat_text(address)
-    street, separator, locality = normalized.partition(",")
-    if not separator:
-        district = re.search(r"\s+(?=(?:quan|phuong|thanh pho|tp|thi xa|huyen|thu duc)\b)", street)
-        if district:
-            street, locality = street[:district.start()], street[district.end():]
-    street_match = re.fullmatch(
-        r"\d{1,5}(?:[/.-]\d{1,5})?\s+(?:(?:duong|pho|hem|ngo)\s+)?"
-        r"(?P<name>[a-z]+(?:\s+[a-z]+){1,5})", street.strip(),
-    )
-    if not street_match or set(street_match.group("name").split()) & {
-        "di", "nhe", "nha", "giup", "toi", "minh", "chon", "lay", "so", "thu",
-    }:
-        return None
-    if not prefix and not re.search(r"\b(?:quan|phuong|thanh pho|tp|thi xa|huyen|thu duc)\b", locality):
-        return None
-    from src.function_calling.tools.user_tools import _clean_profile_address
-    return _clean_profile_address(address)
+    from src.agents.location_parser import parse_location
+    parsed = parse_location(message)
+    return parsed.value if parsed.kind == "address" else None
 
 
 def _deliverable_address_from_message(message: str) -> Optional[str]:
     """Require a street and the administrative locality for home delivery."""
-    address = _literal_address_from_message(message)
-    if not address:
-        return None
-    normalized = _normalize_chat_text(address)
-    if not all(re.search(pattern, normalized) for pattern in (
-        r"\b(?:phuong|xa)\b", r"\b(?:quan|huyen|thi xa|thanh pho thu duc)\b",
-        r"\b(?:tp\.?\s*|thanh pho|tinh)\s*[a-z]",
-    )):
-        return None
-    return address
+    from src.agents.location_parser import parse_location
+    parsed = parse_location(message)
+    return parsed.value if parsed.kind == "address" and not parsed.missing else None
 
 
 def _explicit_checkout_choices(message: str) -> Dict[str, str]:
@@ -847,6 +819,11 @@ def _confirm_saved_location(
             "checkout_payload": None,
             "tool_calls_log": log,
             "error": None,
+        }
+    if nearest.get("status") == "not_found":
+        return {
+            "reply": "Mình chưa xác định được vị trí này trên bản đồ. Bạn bổ sung phường/quận và tỉnh/thành phố để mình tìm cửa hàng chính xác nhé.",
+            "checkout_payload": None, "tool_calls_log": log, "error": None,
         }
     return {
         "reply": nearest.get("message", "Mình chưa xác định được cửa hàng gần địa chỉ này."),
@@ -1552,6 +1529,17 @@ def _run_agent_impl(
             return {"reply": f"Bạn chọn cửa hàng theo số từ 1 đến {count}, hoặc gửi địa chỉ mới có số nhà, tên đường và khu vực nhé.",
                     "checkout_payload": None, "tool_calls_log": [], "error": None}
 
+    from src.agents.location_parser import parse_location
+    parsed_location = parse_location(user_message)
+    if (parsed_location.kind == "branch_query" and not choices) or (
+        parsed_location.kind in {"address", "area"}
+        and prefs.get("checkout_requested") and prefs.get("delivery_type")
+        and prefs.get("payment_method") and not choices
+    ):
+        from src.agents.order_flow_graph import _handle_location_request
+        return _handle_location_request({"session_id": session_id, "user_message": user_message,
+                                         "history": history or []})
+
     # An address supplied by the customer is already an explicit location
     # choice. Reuse the saved-location resolver for branch/inventory rules.
     location_stage = (prefs.get("checkout_requested") and prefs.get("delivery_type")
@@ -1765,6 +1753,7 @@ def _run_agent_impl(
         max_tool_rounds=max_tool_rounds,
         max_tokens=800,
     )
+    result["_model_fallback"] = True
     # A read-only model answer cannot create a checkout summary or voucher
     # decision. The gate must persist its state before presenting that choice.
     model_reply = _normalize_chat_text(result.get("reply") or "")
