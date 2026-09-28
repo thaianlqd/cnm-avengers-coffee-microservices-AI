@@ -27,6 +27,12 @@ describe('late QR payment voucher settlement', () => {
       giaoDichRepo: {
         findOne: jest.fn().mockResolvedValue(transaction),
         save: jest.fn().mockResolvedValue(transaction),
+        update: jest.fn((_where: unknown, patch: Record<string, unknown>) => {
+          if (transaction.trang_thai === 'THANH_CONG')
+            return Promise.resolve({ affected: 0 });
+          Object.assign(transaction, patch);
+          return Promise.resolve({ affected: 1 });
+        }),
       },
       donHangRepo: { findOne: jest.fn().mockResolvedValue(order) },
       walletVoucherClaims: { markReady, processPending: claimWorker },
@@ -68,19 +74,38 @@ describe('late QR payment voucher settlement', () => {
     expect(statuses).toHaveLength(1);
   });
 
-  it('confirms a payment only after the voucher claim is ready', async () => {
-    const { service, statuses, markReady, claimWorker } = setup(true);
-    await service.xuLyWebhookSepay(
-      { transferType: 'in', content: 'QRORDER1', transferAmount: 90000 },
-      {},
-      '',
-    );
+  it('confirms a payment once after the voucher claim is ready, including duplicate webhook delivery', async () => {
+    const { service, statuses, markReady, claimWorker, notify } = setup(true);
+    const callback = {
+      transferType: 'in',
+      content: 'QRORDER1',
+      transferAmount: 90000,
+    };
+    await service.xuLyWebhookSepay(callback, {}, '');
+    await service.xuLyWebhookSepay(callback, {}, '');
     expect(markReady).toHaveBeenCalledTimes(1);
     expect(statuses[0]).toMatchObject({
       trang_thai_thanh_toan: 'DA_THANH_TOAN',
       trang_thai_don_hang: 'DA_XAC_NHAN',
     });
     expect(claimWorker).toHaveBeenCalledTimes(1);
+    expect(statuses).toHaveLength(1);
+    expect(notify).toHaveBeenCalledTimes(1);
+  });
+
+  it('claims a QR transaction once when duplicate webhooks arrive concurrently', async () => {
+    const { service, statuses, notify } = setup(true);
+    const callback = {
+      transferType: 'in',
+      content: 'QRORDER1',
+      transferAmount: 90000,
+    };
+    await Promise.all([
+      service.xuLyWebhookSepay(callback, {}, ''),
+      service.xuLyWebhookSepay(callback, {}, ''),
+    ]);
+    expect(statuses).toHaveLength(1);
+    expect(notify).toHaveBeenCalledTimes(1);
   });
 
   it('keeps a late VNPAY paid order in reconciliation and deduplicates callback', async () => {

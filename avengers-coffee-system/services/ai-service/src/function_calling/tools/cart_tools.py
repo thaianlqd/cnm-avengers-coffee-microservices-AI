@@ -208,13 +208,43 @@ def get_wallet_payment_options(session_id: str, final_total: Optional[float] = N
             balance = float((response.json().get("wallet") or {}).get("balance") or 0)
             wallet["balance"] = balance
             wallet["insufficient"] = final_total is not None and balance < final_total
-            wallet["enabled"] = not wallet["insufficient"]
+            wallet["enabled"] = final_total is not None and not wallet["insufficient"]
             if wallet["insufficient"]:
                 wallet["reason"] = f"Số dư {balance:,.0f}đ; cần {final_total:,.0f}đ để thanh toán".replace(",", ".")
+            elif final_total is None:
+                wallet["reason"] = "Chưa xác minh được tổng thanh toán của giỏ"
         except Exception:
             wallet["reason"] = "Chưa xác minh được số dư ví, vui lòng thử lại"
     options.append(wallet)
     return {"payment_options": options, "wallet_balance": wallet["balance"]}
+
+
+def validate_wallet_selection(session_id: str) -> Optional[Dict[str, Any]]:
+    """Reject a wallet choice unless fresh Order quote and wallet cover it."""
+    quote = execute_get_cart_quote(session_id)
+    if quote.get("status") != "ok":
+        return {"reply": quote.get("message") or "Chưa xác minh được tổng đơn hàng. Bạn thử lại nhé.",
+                "checkout_payload": None, "tool_calls_log": [], "error": None}
+    raw_total = (quote.get("quote") or {}).get("final_total")
+    try:
+        total = float(raw_total)
+    except (TypeError, ValueError):
+        total = 0
+    if total <= 0:
+        return {"reply": "Chưa xác minh được tổng thanh toán của giỏ. Bạn thử lại nhé.",
+                "checkout_payload": None, "tool_calls_log": [], "error": None}
+    wallet = get_wallet_payment_options(session_id, total)["payment_options"][-1]
+    if wallet.get("enabled"):
+        return None
+    balance = wallet.get("balance")
+    if balance is None:
+        message = wallet.get("reason") or "Chưa xác minh được số dư ví. Bạn thử lại nhé."
+    else:
+        money = lambda amount: f"{amount:,.0f}".replace(",", ".") + "đ"
+        message = (f"Ví Avengers hiện có {money(balance)}, trong khi đơn cần {money(total)}. "
+                   f"Bạn còn thiếu {money(max(0, total - balance))}. "
+                   "Bạn có thể nạp thêm tiền hoặc chọn QR/VNPAY/COD.")
+    return {"reply": message, "checkout_payload": None, "tool_calls_log": [], "error": None}
 
 TOOL_ADD_TO_CART = {
     "type": "function",

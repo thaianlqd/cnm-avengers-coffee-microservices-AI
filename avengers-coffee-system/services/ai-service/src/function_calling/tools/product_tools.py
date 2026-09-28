@@ -60,8 +60,11 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
         predicates.append("sp.gia_ban " + ("<=" if max_price_inclusive else "<") + " :max_price")
         params["max_price"] = float(max_price)
     if search_text:
-        predicates.append("(LOWER(sp.ten_san_pham) LIKE :search_text OR LOWER(dm.ten_danh_muc) LIKE :search_text)")
-        params["search_text"] = "%" + str(search_text).strip().lower() + "%"
+        terms = [term for term in str(search_text).strip().lower().split() if term]
+        for index, term in enumerate(terms):
+            key = f"search_term_{index}"
+            predicates.append(f"(LOWER(sp.ten_san_pham) LIKE :{key} OR LOWER(dm.ten_danh_muc) LIKE :{key} OR LOWER(roots.root_name) LIKE :{key})")
+            params[key] = "%" + term + "%"
     order = "DESC" if sort_by == "price_desc" else "ASC"
     try:
         with _get_engine().connect() as conn:

@@ -7,6 +7,7 @@ import { DataSource } from 'typeorm';
 import { randomUUID } from 'crypto';
 import { VoucherService } from '../src/modules/voucher/voucher.service';
 import { WalletVoucherClaimOutboxService } from '../src/modules/thanh-toan/wallet-voucher-claim-outbox.service';
+import { ThanhToanService } from '../src/modules/thanh-toan/thanh-toan.service';
 
 process.env.DB_HOST = process.env.DB_HOST || 'localhost';
 process.env.DB_PORT = process.env.DB_PORT || '5433';
@@ -304,5 +305,56 @@ describe('Order API (e2e)', () => {
       [heldOrderId],
     );
     expect(row.status).toBe('DONE');
+  });
+
+  it('keeps QR pending until a matching webhook, then confirms only once', async () => {
+    const schema = dataSource.driver.escape(process.env.DB_SCHEMA || 'orders');
+    const qrOrderId = randomUUID();
+    const reference = `QR${Date.now()}`;
+    await dataSource.query(
+      `INSERT INTO ${schema}.don_hang
+       (ma_don_hang, ma_nguoi_dung, tong_tien, dia_chi_giao_hang, phuong_thuc_thanh_toan)
+       VALUES ($1, $2, 90000, 'CI pickup', 'NGAN_HANG_QR')`,
+      [qrOrderId, customerId],
+    );
+    await dataSource.query(
+      `INSERT INTO ${schema}.giao_dich_thanh_toan
+       (ma_don_hang, cong_thanh_toan, ma_tham_chieu, so_tien)
+       VALUES ($1, 'NGAN_HANG_QR', $2, 90000)`,
+      [qrOrderId, reference],
+    );
+
+    const payment = app.get(ThanhToanService);
+    const publish = jest.spyOn(payment['rabbitMqService'], 'publish').mockResolvedValue(undefined);
+    const notify = jest.spyOn(payment['notificationService'], 'taoThongBao').mockResolvedValue(undefined);
+    const points = jest.spyOn(payment, 'tichDiemLoyaltyDonHang').mockResolvedValue(undefined);
+    const invalidate = jest.spyOn(payment, 'invalidateOrderCaches').mockResolvedValue(undefined);
+    const staffNotice = jest.spyOn(payment, 'guiThongBaoDonHangChoNhanSuChiNhanh').mockResolvedValue(undefined);
+    const email = jest.spyOn(payment['smtpService'], 'sendOrderStatusUpdateEmail').mockResolvedValue(undefined);
+    const status = () => request(app.getHttpServer())
+      .get(`/customers/${customerId}/thanh-toan/don-hang/${qrOrderId}/trang-thai`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .expect(200);
+    const paymentStatus = async () => ((await status()).body as { trang_thai_thanh_toan: string }).trang_thai_thanh_toan;
+    try {
+      expect(await paymentStatus()).toBe('CHO_THANH_TOAN');
+      const webhook = (amount: number) => request(app.getHttpServer())
+        .post('/customers/thanh-toan/he-thong/sepay/webhook')
+        .send({ transferType: 'in', content: reference, transferAmount: amount });
+      await webhook(89000).expect(200);
+      expect(await paymentStatus()).toBe('CHO_THANH_TOAN');
+      await Promise.all([webhook(90000).expect(200), webhook(90000).expect(200)]);
+      expect(await paymentStatus()).toBe('DA_THANH_TOAN');
+      expect(notify).toHaveBeenCalledTimes(1);
+      expect(points).toHaveBeenCalledTimes(1);
+      expect(publish).toHaveBeenCalledTimes(2);
+    } finally {
+      publish.mockRestore();
+      notify.mockRestore();
+      points.mockRestore();
+      invalidate.mockRestore();
+      staffNotice.mockRestore();
+      email.mockRestore();
+    }
   });
 });

@@ -23,7 +23,7 @@ except ImportError:  # pragma: no cover
 
 from src.agents.tier1 import classify_confirmation, classify_order_intent
 from src.agents.payment_intent import wallet_payment_evidence
-from src.agents.catalog_constraints import parse_catalog_constraints
+from src.agents.catalog_constraints import extract_catalog_search_text, parse_catalog_constraints
 from src.common import cart_manager
 
 logger = logging.getLogger(__name__)
@@ -117,6 +117,7 @@ def _menu_search_specs(message: str) -> List[Dict[str, str]]:
         return []
 
     parts = [part.strip() for part in re.split(r"\b(?:hoac|hay)\b", text) if part.strip()]
+    raw_parts = [part.strip() for part in re.split(r"\b(?:hoặc|hoac|hay)\b", message, flags=re.IGNORECASE) if part.strip()]
     overall_food = bool(re.search(r"\b(banh|do an|thuc an|pizza|pasta)\b", text))
     overall_drink = bool(re.search(r"\b(nuoc|do uong|thuc uong|ca phe|tra)\b", text))
     # "bánh và nước" represents two real menu branches.  Without this split
@@ -125,7 +126,8 @@ def _menu_search_specs(message: str) -> List[Dict[str, str]]:
         parts = ["banh", "nuoc"]
     specs: List[Dict[str, str]] = []
 
-    for part in parts or [text]:
+    for part_index, part in enumerate(parts or [text]):
+        original_part = raw_parts[part_index] if len(raw_parts) == len(parts) else part
         has_food = bool(re.search(r"\b(banh|do an|thuc an|pizza|pasta)\b", part))
         has_drink = bool(re.search(r"\b(nuoc|do uong|thuc uong|ca phe|tra)\b", part))
         # In "bánh mặn hoặc matcha", the second alternative inherits food.
@@ -157,8 +159,10 @@ def _menu_search_specs(message: str) -> List[Dict[str, str]]:
         elif re.search(r"\bpizza\b|\bpasta\b", part):
             category, search_text, label = "food", "Pizza", "Pizza & Pasta"
         elif category == "food":
+            search_text = extract_catalog_search_text(original_part) or None
             label = "Menu bánh và đồ ăn"
         elif category == "drink":
+            search_text = extract_catalog_search_text(original_part) or None
             label = "Menu nước"
         else:
             continue
@@ -279,7 +283,7 @@ _CART_REFERENCE_STOPWORDS = {
     "cho", "toi", "minh", "ban", "giup", "nhe", "nha", "voi", "di", "thoi",
     "so", "thu", "luong", "sl", "la", "ve", "con", "lai", "cai", "ly", "phan",
     "trong", "gio", "hang", "them", "mua", "lay", "chon", "sua", "doi", "chinh",
-    "topping", "toping", "size", "da", "ngot", "thanh", "va",
+    "topping", "toping", "size", "da", "ngot", "thanh", "va", "len", "tang", "de", "oi", "y",
 }
 
 
@@ -317,12 +321,15 @@ def _cart_rows_named_in_message(cart: Dict[str, Any], message: str) -> List[Dict
         ratio = overlap / max(1, len(product_tokens))
         # Two meaningful tokens identify a family phrase. Keep every matching
         # variant so the caller can ask only about the relevant cart lines.
-        if overlap >= 2 and ratio >= 0.4:
+        if overlap >= 2 or (overlap == 1 and "trong gio" in text
+                                                 and len(message_tokens - {"mon", "banh", "nuoc"}) == 1):
             scored.append((overlap, ratio, row))
     if not scored:
         return []
     best_overlap = max(value[0] for value in scored)
     overlap_winners = [value for value in scored if value[0] == best_overlap]
+    if best_overlap == 1:
+        return [value[2] for value in overlap_winners]
     best_ratio = max(value[1] for value in overlap_winners)
     return [value[2] for value in overlap_winners if value[1] == best_ratio]
 
@@ -392,24 +399,41 @@ def _resolve_cart_line(cart: Dict[str, Any], message: str) -> tuple[Optional[Dic
     items = list(cart.get("items") or [])
     text = _norm(message)
     matches = _cart_rows_named_in_message(cart, message)
+    id_match = re.search(r"\b(?:line_id|cart_item_id|dòng|dong)\s*[:#]?\s*([\w-]+)\b", message, re.IGNORECASE)
+    explicit_id = [row for row in items if id_match and _cart_line_id(row) == id_match.group(1)]
+    if len(explicit_id) == 1:
+        logger.debug("routing route=CART_MUTATION target_source=cart_id candidate_count=1")
+        return explicit_id[0], None
     if len(matches) == 1:
+        logger.debug("routing route=CART_MUTATION target_source=cart_name candidate_count=1")
         return matches[0], None
+    if not matches and re.search(r"\btrong gio\b", text):
+        category = "food" if re.search(r"\b(?:banh|do an)\b", text) else "drink" if re.search(r"\b(?:nuoc|do uong)\b", text) else None
+        if category:
+            matches = [row for row in items if _map_db_category_to_bucket(row.get("category") or row.get("product_name")) == category]
+            if len(matches) == 1:
+                logger.debug("routing route=CART_MUTATION target_source=cart_category candidate_count=1")
+                return matches[0], None
     focus = (cart.get("checkout_prefs") or {}).get("last_cart_focus")
     if not items:
         return None, "Giỏ hàng đang trống. Bạn muốn chọn món nào trước?"
     # A single row or focused row is safe only for a genuine generic/pronoun
     # reference.  Do not let a different named product mutate it accidentally.
     generic_reference = bool(re.search(
-        r"\b(mon|san pham|cai)\s*(nay|do|kia)\b|\b(no|mon vua chon)\b|\b(so luong|topping|toping|size|da|ngot)\b",
+        r"\b(mon|san pham|cai)\s*(nay|do|kia)\b|\b(no|mon vua chon)\b",
         text,
     ))
-    if len(items) == 1 and (not _cart_rows_named_in_message(cart, message) or generic_reference):
+    remaining_words = {word for word in re.findall(r"[a-z]+", text)
+                       if word not in _CART_REFERENCE_STOPWORDS and word not in {"mon", "san", "pham", "theo", "toi", "luon", "muon", "tang", "giam"}}
+    if len(items) == 1 and (generic_reference or not remaining_words):
         return items[0], None
     if focus and generic_reference and not matches:
         focus_matches = [row for row in items if str(row.get("cart_item_id") or row.get("line_id")) == str(focus)]
         if len(focus_matches) == 1:
+            logger.debug("routing route=CART_MUTATION target_source=cart_focus candidate_count=1")
             return focus_matches[0], None
     choices = matches or items
+    logger.debug("routing route=CART_MUTATION target_source=unresolved candidate_count=%d", len(choices))
     numbered = "\n".join(f"{index + 1}. {row.get('product_name')} ({row.get('size') or 'mặc định'})" for index, row in enumerate(choices))
     return None, "Mình cần biết đúng dòng món cần sửa vì giỏ có nhiều biến thể:\n" + numbered
 
@@ -420,7 +444,8 @@ def _resolve_suggested_product(session_id: str, message: str) -> Optional[Dict[s
     if not suggestions:
         return None
     text = _norm(message)
-    ordinal = re.search(r"\b(?:(?:banh|nuoc|do uong|mon|san pham)\s+(?:(?:so|thu|#)\s*)?|(?:so|thu|#)\s*)(\d+)\b", text)
+    product_clause = re.split(r"\b(?:so luong|sl)\b|\bx\s*\d+\b", text, maxsplit=1)[0]
+    ordinal = re.search(r"\b(?:(?:banh|nuoc|do uong|mon|san pham)\s+(?:(?:[a-z]{1,3}|#)\s+)?|(?:so|thu|#)\s*)(\d+)\b", product_clause)
     if ordinal:
         position = int(ordinal.group(1)) - 1
         if 0 <= position < len(suggestions):
@@ -1091,6 +1116,7 @@ def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
     session_id = state["session_id"]
     parsed = parse_location(state["user_message"])
     prefs = cart_manager.get_checkout_prefs(session_id)
+    logger.debug("routing route=LOCATION_QUERY target_source=location location_kind=%s", parsed.kind)
 
     def reply(message, logs=None):
         return {"reply": message, "checkout_payload": None, "tool_calls_log": logs or [], "error": None}
@@ -1174,7 +1200,8 @@ def _resolve_ask_more_targets(session_id: str, message: str) -> List[Dict[str, A
         return []
     if not refs:
         suggested = _resolve_suggested_product(session_id, message)
-        ordinal = re.search(r"\b(?:so|thu|#)\s*\d+\b", _norm(message))
+        product_clause = re.split(r"\b(?:so luong|sl)\b", _norm(message), maxsplit=1)[0]
+        ordinal = re.search(r"\b(?:so|thu|#)\s*\d+\b|\b(?:mon|banh|nuoc|do uong|san pham)\s+(?:(?:[a-z]{1,3}|#)\s+)?\d+\b", product_clause)
         name = _norm((suggested or {}).get("product_name")).strip()
         if suggested and (ordinal or (name and re.search(r"(?<!\w)" + re.escape(name) + r"(?!\w)", _norm(message)))):
             refs = [suggested]
@@ -1198,13 +1225,16 @@ def _resolve_ask_more_targets(session_id: str, message: str) -> List[Dict[str, A
         return []
     refs = [ref for ref in refs if ref.get("product_id") and str(ref.get("product_name") or "").strip()]
     if refs:
+        if re.search(r"\b(?:so|thu|#)\s*\d+\b|\b(?:mon|banh|nuoc)\s+[a-z]{1,3}\s+\d+\b", _norm(message)):
+            logger.debug("routing route=ADD_ITEM operation=ADD target_source=recommendation_ordinal candidate_count=%d", len(refs))
         return refs
     from src.agents.pending_context import has_shopping_topic
     if not has_shopping_topic(message):
         return []
     normalized = _norm(message)
     # A failed ordinal cannot be reinterpreted as a catalog product id/name.
-    if re.search(r"\b(?:so|thu|#)\s*\d+\b", normalized):
+    product_clause = re.split(r"\b(?:so luong|sl)\b", normalized, maxsplit=1)[0]
+    if re.search(r"\b(?:so|thu|#)\s*\d+\b|\b(?:mon|banh|nuoc|do uong|san pham)\s+(?:(?:[a-z]{1,3}|#)\s+)?\d+\b", product_clause):
         return []
     matched = []
     for product in _load_active_product_targets():
@@ -1297,6 +1327,17 @@ def _shopping_decision(state: OrderConversationState, tier1_intent: Dict[str, An
 
 def _browse_ask_more(state: OrderConversationState) -> Dict[str, Any]:
     """Use the existing catalog/provider with a strictly read-only tool boundary."""
+    constraints = parse_catalog_constraints(state["user_message"])
+    if constraints:
+        from src.function_calling.tools.product_tools import execute_filter_catalog
+        from src.agents.catalog_constraints import describe_catalog_constraint
+        found = execute_filter_catalog(**constraints)
+        relation = describe_catalog_constraint(constraints)
+        group = "topping" if constraints["sellable_scope"] == "topping" else "món"
+        return {"reply": found.get("message") if found.get("status") == "error" else
+                f"Hiện không có {group} nào {relation}." if found.get("status") == "not_found" else
+                "Mình tìm thấy các món phù hợp trong menu:",
+                "checkout_payload": None, "tool_calls_log": [{"tool": "filter_catalog", "args": constraints, "result": found}], "error": None}
     result = _search_menu_catalog(state["user_message"])
     if result:
         return result
@@ -1329,7 +1370,8 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         if not canonical:
             return {**state, "intent": {"intent": "PRODUCT_CLARIFY"}}
         return {**state, "intent": {"intent": "ADD_ITEM", "resolved_products": [canonical], "quantity": 1}}
-    catalog_constraints = parse_catalog_constraints(state["user_message"])
+    active_pending = cart_manager.get_pending_action(state["session_id"])
+    catalog_constraints = None if active_pending else parse_catalog_constraints(state["user_message"])
     if catalog_constraints:
         return {**state, "intent": {"intent": "BROWSING", "catalog_constraints": catalog_constraints}}
     staged = list(cart_manager.get_checkout_prefs(state["session_id"]).get("pending_products") or [])
@@ -1392,6 +1434,10 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         and (prefs.get("checkout_requested") or pending_type == "confirm_address")
     ):
         return {**state, "intent": {"intent": "LOCATION_QUERY", "location_kind": location.kind}}
+    if intent.get("intent") == "BROWSING" and not re.search(r"\b(?:co|xem|tim|goi y|menu|gia|the nao|khong)\b", _norm(state["user_message"])):
+        named_rows = _cart_rows_named_in_message(state.get("cart") or {}, state["user_message"])
+        if len(named_rows) == 1:
+            return {**state, "intent": {"intent": "CART_TARGET_CLARIFY", "cart_row": named_rows[0]}}
     if _unresolved_product_reference(state["session_id"], state["user_message"]):
         return {**state, "intent": {"intent": "PRODUCT_CLARIFY"}}
     # Explicit cart edits keep their existing deterministic handlers; the
@@ -1484,6 +1530,9 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
     )
     session_id, message, cart, intent = state["session_id"], state["user_message"], state["cart"], state["intent"]
     kind = intent.get("intent")
+    if kind in {"SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS", "ADD_ITEM"}:
+        logger.debug("routing route=%s operation=%s target_source=%s", kind, kind,
+                     intent.get("target_source") or "resolver")
     cart_write_intents = {"ADD_ITEM", "SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS", "CLEAR_CART", "FILL_OPTIONS"}
     authoritative_intents = cart_write_intents | {"FINISH_CART", "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER", "CONFIRM_CHECKOUT", "PENDING_REPLY", "PENDING_BRANCH", "PENDING_CART_LINE"}
     prefs = cart_manager.get_checkout_prefs(session_id)
@@ -1511,6 +1560,11 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         return {**state, "result": _handle_location_request(state)}
     if kind == "PRODUCT_CLARIFY":
         return {**state, "result": {"reply": "Bạn đang hỏi món nào trong danh sách? Bạn chọn số hoặc nói tên món nhé.",
+                                   "checkout_payload": None, "tool_calls_log": [], "error": None}}
+    if kind == "CART_TARGET_CLARIFY":
+        row = intent["cart_row"]
+        logger.debug("routing route=CART_TARGET_CLARIFY operation=NONE target_source=cart_name candidate_count=1")
+        return {**state, "result": {"reply": f"Mình đã xác định được {row.get('product_name')} trong giỏ. Bạn muốn sửa số lượng/tùy chọn, xoá món, thêm một phần nữa, hay giữ nguyên?",
                                    "checkout_payload": None, "tool_calls_log": [], "error": None}}
     if kind == "PENDING_CART_LINE":
         resolved = intent.get("resolved_pending") or {}
@@ -1555,6 +1609,7 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
                                               flow_stage="CART_REVIEW")
             quote = execute_get_cart_quote(session_id)
             reply_text = lead + ("\n" + _format_quote(session_id, quote) if quote.get("status") == "ok" else "")
+            reply_text += "\nBạn muốn thêm món, sửa/xoá món hay hoàn tất giỏ?"
         else:
             reply_text = changed.get("message", "Chưa thể cập nhật giỏ hàng.")
         return {**state, "result": {"reply": reply_text, "checkout_payload": None,
@@ -1629,9 +1684,11 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         reply = quote.get("message") if quote.get("status") != "ok" else _format_quote(session_id, quote)
         return {**state, "result": {"reply": reply, "checkout_payload": None, "tool_calls_log": [{"tool": "get_cart_quote", "result": quote}], "error": None}}
     if kind == "BROWSING":
-        if intent.get("catalog_constraints"):
+        browsing_constraints = intent.get("catalog_constraints") or parse_catalog_constraints(message)
+        if browsing_constraints:
+            logger.debug("routing route=BROWSING target_source=metadata_filter constraint_type=%s", browsing_constraints.get("constraint_type"))
             from src.function_calling.tools.product_tools import execute_filter_catalog
-            constraints = intent["catalog_constraints"]
+            constraints = browsing_constraints
             found = execute_filter_catalog(**constraints)
             from src.agents.catalog_constraints import describe_catalog_constraint
             group = "topping" if constraints["sellable_scope"] == "topping" else "món"
@@ -1698,6 +1755,7 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             cart_manager.set_checkout_context(session_id, last_cart_focus=None, flow_stage="CART_REVIEW")
             quote = execute_get_cart_quote(session_id)
             reply += "\n" + (_format_quote(session_id, quote) if quote.get("status") == "ok" else "Giỏ hàng hiện trống.")
+            reply += "\nBạn muốn thêm món, sửa/xoá món hay hoàn tất giỏ?" if quote.get("status") == "ok" else "\nBạn muốn xem menu món nào?"
         return {**state, "result": {"reply": reply, "checkout_payload": None, "tool_calls_log": [{"tool": "remove_cart_item", "result": removed}], "error": None}}
     if kind == "EDIT_OPTIONS":
         # A follow-up such as "thêm ngọt" contains an add verb but belongs to
@@ -1765,6 +1823,15 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         if not patch:
             from src.agents.agent_service import _explicit_checkout_choices
             patch = _explicit_checkout_choices(message)
+        if patch.get("payment_method") == "VI_DIEN_TU":
+            from src.function_calling.tools.cart_tools import validate_wallet_selection
+            rejected = validate_wallet_selection(session_id)
+            logger.debug("routing route=SELECT_PAYMENT operation=SELECT target_source=payment payment_state=%s",
+                         "insufficient" if rejected else "eligible")
+            if rejected:
+                if patch.get("delivery_type"):
+                    cart_manager.set_checkout_prefs(session_id, delivery_type=patch["delivery_type"])
+                return {**state, "result": rejected}
         previous_delivery = prefs.get("delivery_type")
         if patch.get("delivery_type") and patch["delivery_type"] != previous_delivery:
             cart_manager.clear_branch(session_id)
@@ -2018,9 +2085,13 @@ def _render(state: OrderConversationState) -> OrderConversationState:
            and wallet_payment_evidence(_norm(state.get("user_message"))))
     show_payment_choices = not prefs.get("payment_method") or payment_change_requested
     if show_payment_choices and (prefs.get("checkout_requested") or prefs.get("flow_stage") == "PAYMENT"):
-        from src.function_calling.tools.cart_tools import get_wallet_payment_options
-        amounts = prefs.get("summary_amounts") or {}
-        payment_ui = get_wallet_payment_options(state["session_id"], amounts.get("final_total"))
+        from src.function_calling.tools.cart_tools import execute_get_cart_quote, get_wallet_payment_options
+        current_quote = execute_get_cart_quote(state["session_id"])
+        current_total = ((current_quote.get("quote") or {}).get("final_total")
+                         if current_quote.get("status") == "ok" else None)
+        if current_total is not None and float(current_total) <= 0:
+            current_total = None
+        payment_ui = get_wallet_payment_options(state["session_id"], current_total)
     if show_payment_choices and result.get("payment_options"):
         payment_ui["payment_options"] = result["payment_options"]
     result["ui_payload"] = {"cart": canonical_cart, "products": products[:16], "vouchers": vouchers[:4] if prefs.get("voucher_offer_pending") and not result.get("checkout_payload") else [], "branches": branches[:5], "actions": [], **payment_ui}

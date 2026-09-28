@@ -49,6 +49,7 @@ def test_combined_pickup_and_wallet_choice_survives_area_turn(monkeypatch):
     cart_manager.add_item(session, 'P1', 'Cà phê', 35000)
     cart_manager.set_checkout_context(session, checkout_requested=True, voucher_decided=True)
     monkeypatch.setattr(cart_tools, 'sync_authoritative_cart', lambda sid: cart_manager.get_cart(sid))
+    monkeypatch.setattr(cart_tools, 'validate_wallet_selection', lambda sid: None)
     monkeypatch.setattr(agent_service, '_run_agent_impl', lambda *_args, **_kwargs: {
         'reply': 'Mình đã ghi nhận lựa chọn.', 'tool_calls_log': [], 'checkout_payload': None,
     })

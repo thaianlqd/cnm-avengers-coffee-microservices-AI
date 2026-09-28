@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, EntityManager, In, IsNull, Repository } from 'typeorm';
+import { Brackets, EntityManager, In, Not, Repository } from 'typeorm';
 import { RedisCacheService } from '../../infrastructure/cache/redis-cache.service';
 import { RabbitMqService } from '../../infrastructure/messaging/rabbitmq.service';
 import { quoteDeliveryFee } from '../cart/delivery-pricing';
@@ -2578,10 +2578,23 @@ export class ThanhToanService {
       const voucherReady =
         !paidOrder?.ma_voucher ||
         (await this.walletVoucherClaims.markReady(giaoDich.ma_don_hang));
+      // A read-only status check above cannot serialize simultaneous webhook
+      // deliveries. Claim this transaction with one conditional database write
+      // before order/loyalty/notification side effects.
+      const claimed = await this.giaoDichRepo.update(
+        {
+          ma_tham_chieu: giaoDich.ma_tham_chieu,
+          cong_thanh_toan: 'NGAN_HANG_QR',
+          trang_thai: Not('THANH_CONG'),
+        },
+        {
+          trang_thai: 'THANH_CONG',
+          ma_giao_dich_cong: payload.referenceCode ?? null,
+          du_lieu_tho: rawBody?.slice(0, 4000) ?? null,
+        },
+      );
+      if (!claimed.affected) return { success: true };
       giaoDich.trang_thai = 'THANH_CONG';
-      giaoDich.ma_giao_dich_cong = payload.referenceCode ?? null;
-      giaoDich.du_lieu_tho = rawBody?.slice(0, 4000) ?? null;
-      await this.giaoDichRepo.save(giaoDich);
       if (!voucherReady) {
         await this.capNhatTrangThaiDonHangHeThong(giaoDich.ma_don_hang, {
           trang_thai_thanh_toan: 'CAN_DOI_SOAT',
