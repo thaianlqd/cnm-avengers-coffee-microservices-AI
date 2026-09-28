@@ -572,9 +572,8 @@ export default function CartPage({
 
   useEffect(() => {
     if (!maNguoiDung) return undefined;
-    const storageKey = `avengers_ai_voucher_${maNguoiDung}`;
     const applyFromChat = (event) => {
-      const code = String(event?.detail?.code || localStorage.getItem(storageKey) || '').trim().toUpperCase();
+      const code = String(event?.detail?.code || '').trim().toUpperCase();
       if (code && cart?.length) {
         setVoucherCode(code);
         apDungVoucher(code);
@@ -587,7 +586,6 @@ export default function CartPage({
     };
     window.addEventListener('ai-voucher-applied', applyFromChat);
     window.addEventListener('ai-voucher-removed', removeFromChat);
-    applyFromChat();
     return () => {
       window.removeEventListener('ai-voucher-applied', applyFromChat);
       window.removeEventListener('ai-voucher-removed', removeFromChat);

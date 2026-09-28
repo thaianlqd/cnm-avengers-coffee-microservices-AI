@@ -223,6 +223,20 @@ def _literal_address_from_message(message: str) -> Optional[str]:
     return _clean_profile_address(address)
 
 
+def _deliverable_address_from_message(message: str) -> Optional[str]:
+    """Require a street and the administrative locality for home delivery."""
+    address = _literal_address_from_message(message)
+    if not address:
+        return None
+    normalized = _normalize_chat_text(address)
+    if not all(re.search(pattern, normalized) for pattern in (
+        r"\b(?:phuong|xa)\b", r"\b(?:quan|huyen|thi xa|thanh pho thu duc)\b",
+        r"\b(?:tp\.?\s*|thanh pho|tinh)\s*[a-z]",
+    )):
+        return None
+    return address
+
+
 def _explicit_checkout_choices(message: str) -> Dict[str, str]:
     """Capture clear choices early; questions and negated choices are not selections."""
     text = _normalize_chat_text(message)
@@ -548,9 +562,27 @@ def _handle_additional_product(session_id: str, product_query: str) -> Optional[
         }
 
     found_name = str(option_result.get("product_name") or product_query)
+    # This legacy path must not turn a verb tail or a fuzzy first match into a
+    # pending product. The graph's canonical resolver handles genuine adds.
+    if _normalize_chat_text(found_name) != _normalize_chat_text(product_query):
+        return {"reply": "Mình chưa xác định được món cụ thể trong menu. Bạn chọn tên món hoặc số trong danh sách nhé.",
+                "checkout_payload": None, "tool_calls_log": log, "error": None}
+    verified_price = None
+    product_id = option_result.get("product_id")
+    if not product_id:
+        verified_price = execute_check_price_and_stock(
+            found_name, branch_id=str(cart.get("branch_id") or "Chưa chọn"), session_id=session_id,
+        )
+        matches = [item for item in verified_price.get("products") or []
+                   if item.get("product_id") and _normalize_chat_text(item.get("product_name")) == _normalize_chat_text(found_name)]
+        if len(matches) != 1:
+            return {"reply": "Mình chưa xác minh được món cụ thể trong menu. Giỏ hàng chưa thay đổi.",
+                    "checkout_payload": None, "tool_calls_log": log + [{"tool": "check_price_and_stock", "result": verified_price}], "error": None}
+        product_id = matches[0]["product_id"]
     option_groups = option_result.get("options") or _parse_option_groups(option_result)
     if option_groups:
         cart_manager.set_pending_products(session_id, [{
+            "product_id": product_id,
             "product_name": found_name,
             "category": None,
             "options": {"groups": option_groups},
@@ -568,7 +600,7 @@ def _handle_additional_product(session_id: str, product_query: str) -> Optional[
             "error": None,
         }
 
-    price_result = execute_check_price_and_stock(
+    price_result = verified_price or execute_check_price_and_stock(
         found_name,
         branch_id=str(cart.get("branch_id") or "Chưa chọn"),
         session_id=session_id,
@@ -580,8 +612,9 @@ def _handle_additional_product(session_id: str, product_query: str) -> Optional[
     })
     products = price_result.get("products") or []
     exact = next(
-        (item for item in products if _normalize_chat_text(item.get("product_name")) == _normalize_chat_text(found_name)),
-        products[0] if len(products) == 1 else None,
+        (item for item in products if str(item.get("product_id") or "") == str(product_id)
+         and _normalize_chat_text(item.get("product_name")) == _normalize_chat_text(found_name)),
+        None,
     )
     if price_result.get("status") != "ok" or not exact:
         return {
@@ -957,6 +990,11 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
     pending = list(prefs.get("pending_products") or [])
     if not pending:
         return None
+    if any(not str(item.get("product_id") or "").strip() for item in pending):
+        cart_manager.set_pending_products(session_id, [])
+        cart_manager.clear_pending_action(session_id)
+        return {"reply": "Mình cần bạn chọn lại món từ menu để xác minh đúng sản phẩm trước khi thêm vào giỏ.",
+                "checkout_payload": None, "tool_calls_log": [], "error": None}
     normalized = _normalize_chat_text(message)
     option_terms = r"\b(size|nho|vua|lon|da|duong|ngot|sua|topping|hat|foam|tran chau|khong chon|mac dinh|theo cong thuc)\b"
     if not re.search(option_terms, normalized):
@@ -1037,8 +1075,10 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
         logs.append({"tool": "check_price_and_stock", "args": {"product_name_query": product_name}, "result": price_result})
         products = price_result.get("products") or []
         exact = next(
-            (product for product in products if _normalize_chat_text(product.get("product_name")) == _normalize_chat_text(product_name)),
-            products[0] if len(products) == 1 else None,
+            (product for product in products
+             if str(product.get("product_id") or "") == str(item.get("product_id") or "")
+             and _normalize_chat_text(product.get("product_name")) == _normalize_chat_text(product_name)),
+            None,
         )
         if price_result.get("status") != "ok" or not exact:
             not_ready.append(f"{product_name}: chưa lấy được giá chính xác")
@@ -1350,7 +1390,10 @@ def _run_agent_impl(
                     else:
                         option_questions.append(f"- {product_name}: không có tùy chọn; dùng cấu hình mặc định của món.")
             if requested_to_buy:
-                cart_manager.set_pending_products(session_id, enriched_review_choices)
+                persisted_choices = cart_manager.set_pending_products(session_id, enriched_review_choices)
+                if not persisted_choices:
+                    return {"reply": "Mình có thể xem đánh giá, nhưng bạn hãy chọn món từ danh sách menu mới để mình xác minh đúng sản phẩm trước khi thêm vào giỏ.",
+                            "checkout_payload": None, "tool_calls_log": logs, "error": None}
                 try:
                     cart_manager.set_pending_action(session_id, "fill_options", {"count": len(enriched_review_choices)})
                 except Exception as e:
@@ -1514,7 +1557,13 @@ def _run_agent_impl(
     location_stage = (prefs.get("checkout_requested") and prefs.get("delivery_type")
                       and prefs.get("payment_method") and not cart.get("branch_id")
                       and not prefs.get("pending_products") and not prefs.get("checkout_submission"))
-    address = _literal_address_from_message(user_message) if location_stage else None
+    if location_stage and prefs.get("delivery_type") == "GIAO_TAN_NOI" and not choices:
+        address = _deliverable_address_from_message(user_message)
+        if not address and not prefs.get("suggested_address"):
+            return {"reply": "Để giao tận nơi, bạn vui lòng gửi địa chỉ cụ thể gồm số nhà, tên đường, phường/xã, quận/huyện và tỉnh/thành phố nhé.",
+                    "checkout_payload": None, "tool_calls_log": [], "error": None}
+    else:
+        address = _literal_address_from_message(user_message) if location_stage else None
     if address:
         cart_manager.clear_branch(session_id)
         cart_manager.set_checkout_context(session_id, suggested_address=address)
@@ -1619,7 +1668,10 @@ def _run_agent_impl(
             else:
                 reply_lines.append(f"- {label}: {item['product_name']} — {option_result.get('message') or 'chưa lấy được tùy chọn'}")
 
-        cart_manager.set_pending_products(session_id, enriched_choices, merge=True)
+        persisted_choices = cart_manager.set_pending_products(session_id, enriched_choices, merge=True)
+        if not persisted_choices:
+            return {"reply": "Mình cần bạn chọn món từ danh sách menu hiện tại để xác minh đúng sản phẩm trước khi thêm vào giỏ.",
+                    "checkout_payload": None, "tool_calls_log": option_logs, "error": None}
         try:
             cart_manager.set_pending_action(session_id, "fill_options", {"count": len(enriched_choices)})
         except Exception as e:

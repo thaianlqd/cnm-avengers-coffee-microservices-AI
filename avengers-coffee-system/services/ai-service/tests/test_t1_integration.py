@@ -88,7 +88,7 @@ def test_t1_integration_fill_options_lifecycle(t1_env_on):
             "options": {"Size": ["Vừa", "Lớn"], "Đá": ["Bình thường", "Ít đá"]}
         }
         with patch("src.agents.agent_service._resolve_numbered_product_choices") as mock_resolve:
-            mock_resolve.return_value = [{"product_name": "Cà Phê Sữa", "category": "drink"}]
+            mock_resolve.return_value = [{"product_id": "P1", "product_name": "Cà Phê Sữa", "category": "drink"}]
             # Cần mock _parse_option_groups nếu nó có parse
             _run_agent_impl(session_id, "món số 1", history=[{"role": "assistant", "content": "1. Cà Phê Sữa"}])
             

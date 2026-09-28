@@ -795,6 +795,10 @@ def agent_chat(body: AgentChatRequest, request: Request):
     result["conversation_id"] = conversation_id
     try:
         from src.common import cart_manager
+        checkout_prefs = cart_manager.get_checkout_prefs(scoped_session_id)
+        checkout_prefs.pop("processed_order_turns", None)
+        cart_snapshot = cart_manager.get_cart(scoped_session_id)
+        cart_snapshot["checkout_prefs"] = checkout_prefs
         conversation_memory.save_exchange(
             conversation_id=conversation_id,
             session_id=body.session_id,
@@ -802,8 +806,8 @@ def agent_chat(body: AgentChatRequest, request: Request):
             result=result,
             client_message_id=body.client_message_id,
             state={
-                "cart": cart_manager.get_cart(scoped_session_id),
-                "checkout_prefs": cart_manager.get_checkout_prefs(scoped_session_id),
+                "cart": cart_snapshot,
+                "checkout_prefs": checkout_prefs,
             },
             response_session_id=scoped_session_id,
         )

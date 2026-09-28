@@ -506,6 +506,7 @@ export default function ChatWidget({ user, socketUrl }) {
 
   // Data cache & prefetch
   const cache = useRef({ products: [], branches: [], orders: [], vouchers: [], loaded: false });
+  const pendingAgentTurnRef = useRef(null);
 
   const userId = user?.id || user?.ma_nguoi_dung || user?.maNguoiDung || null;
   const userName = user?.ho_ten || user?.hoTen || user?.email || 'Khách';
@@ -702,15 +703,21 @@ export default function ChatWidget({ user, socketUrl }) {
       content: m.noi_dung || '',
     })).filter((m) => m.content);
 
+    const previousTurn = pendingAgentTurnRef.current;
+    const turn = previousTurn?.text === text && previousTurn?.sessionId === effectiveUserId && previousTurn?.conversationId === aiConversationId
+      ? previousTurn
+      : { text, sessionId: effectiveUserId, conversationId: aiConversationId, id: newConversationId() };
+    pendingAgentTurnRef.current = turn;
     const agentRes = await apiClient.post('/ai/agent/chat', {
       session_id: effectiveUserId,
       conversation_id: aiConversationId,
-      client_message_id: newConversationId(),
+      client_message_id: turn.id,
       message: text,
       history,
     });
 
     const d = agentRes?.data || agentRes;
+    pendingAgentTurnRef.current = null;
     if (d?.conversation_id && d.conversation_id !== aiConversationId) {
       localStorage.setItem(AI_CONVERSATION_KEY, d.conversation_id);
       setAiConversationId(d.conversation_id);
@@ -888,7 +895,7 @@ export default function ChatWidget({ user, socketUrl }) {
       // Never hand a stateful cart/checkout turn to the legacy chatbot. It has
       // no access to the current agent draft and may invent different items or
       // locations after a timeout.
-      addAIMsg('Mình chưa xử lý xong yêu cầu do kết nối bị gián đoạn. Giỏ hàng chưa bị thay đổi; bạn vui lòng gửi lại tin nhắn này nhé.');
+      addAIMsg('Kết nối bị gián đoạn nên mình chưa nhận được kết quả. Bạn gửi lại đúng tin nhắn này để mình kiểm tra cùng lượt xử lý nhé.');
       return;
     }
 

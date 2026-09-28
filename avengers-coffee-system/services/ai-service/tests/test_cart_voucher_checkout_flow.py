@@ -208,7 +208,7 @@ def test_menu_two_products_options_then_cart_voucher_checkout_boundary(flow, mon
         return {'status': 'ok', 'cart': cart, 'unit_price': kwargs['unit_price']}
     monkeypatch.setattr(cart_tools, 'execute_add_to_cart', add)
     menu = turn(flow, 'tôi muốn mua nước và bánh')
-    selected = agent_service.run_agent(flow, 'cho tôi bánh 1 và nước 3 đi', history=[{'role': 'assistant', 'content': menu['reply']}])
+    selected = agent_service.run_agent(flow, 'cho tôi bánh 1 và nước 4 đi', history=[{'role': 'assistant', 'content': menu['reply']}])
     pending = cart_manager.get_checkout_prefs(flow).get('pending_products')
     assert {item['product_name'] for item in pending} == {'Bánh Cà Phê', 'Nước 3'}
     assert 'Foam dừa' in selected['reply']

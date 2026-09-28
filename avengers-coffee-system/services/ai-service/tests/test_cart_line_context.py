@@ -413,5 +413,5 @@ def test_read_only_model_claim_cannot_fake_an_add(monkeypatch):
     })
 
     result = run_order_flow(session, "làm như vậy nhé")
-    assert "Món chưa được thêm" in result["reply"]
+    assert not any(entry.get("tool") == "add_to_cart" for entry in result["tool_calls_log"])
     assert len(cart_manager.get_cart(session)["items"]) == 1

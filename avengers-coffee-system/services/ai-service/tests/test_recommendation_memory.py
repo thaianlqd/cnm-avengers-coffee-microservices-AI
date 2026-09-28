@@ -190,8 +190,7 @@ def test_check_price_and_stock_updates_last_product_focus(monkeypatch):
 
 
 def test_structured_resolver_handles_ordinal_and_demonstrative_directly(monkeypatch):
-    from src.agents.order_flow_graph import run_order_flow
-    from src.agents import agent_service
+    from src.agents.order_flow_graph import _understand
     from src.function_calling.tools import cart_tools
 
     session = "structured-resolver-direct"
@@ -204,15 +203,10 @@ def test_structured_resolver_handles_ordinal_and_demonstrative_directly(monkeypa
         last_product_focus={"product_id": "F2", "product_name": "Soft Pizza Chà Bông Trứng Cút", "category": "food"},
     )
     monkeypatch.setattr(cart_tools, "sync_authoritative_cart", lambda _session: cart_manager.get_cart(_session))
-    seen = []
-    monkeypatch.setattr(agent_service, "_handle_additional_product", lambda _session, name: seen.append(name) or {
-        "reply": f"đã thêm {name}", "checkout_payload": None, "tool_calls_log": [], "error": None,
-    })
-
-    result = run_order_flow(session, "oke vậy cho tôi nước số 1 và bánh này nhé")
-    assert seen == ["1 Lít Matcha Latte Tây Bắc", "Soft Pizza Chà Bông Trứng Cút"]
-    assert "đã thêm 1 Lít Matcha Latte Tây Bắc" in result["reply"]
-    assert "đã thêm Soft Pizza Chà Bông Trứng Cút" in result["reply"]
+    state = _understand({"session_id": session, "user_message": "oke vậy cho tôi nước số 1 và bánh này nhé",
+                         "history": [], "cart": cart_manager.get_cart(session)})
+    assert [item["product_id"] for item in state["intent"]["resolved_products"]] == ["D1", "F2"]
+    assert cart_manager.get_cart(session)["is_empty"]
 
 
 def test_structured_resolver_does_not_map_on_category_mismatch():
