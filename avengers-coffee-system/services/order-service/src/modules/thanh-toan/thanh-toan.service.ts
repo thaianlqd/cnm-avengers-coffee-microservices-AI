@@ -1901,6 +1901,14 @@ export class ThanhToanService {
 
     const maDonHang = checkoutOrderId || crypto.randomUUID();
 
+    if (dto.phuong_thuc_thanh_toan === 'VI_DIEN_TU') {
+      if (isGuest) throw new BadRequestException('Dang nhap de thanh toan bang Vi Avengers');
+      return this.khoiTaoThanhToanVi(maNguoiDung, dto, gioHang, {
+        maDonHang, branchCode, tongTienGoc, tongTien, soTienGiam,
+        maVoucherApDung, shippingFee: shipping.delivery_fee, nearestInfo,
+      });
+    }
+
     // 1. Tạo đơn hàng
     const donHang = await this.donHangRepo.save(this.donHangRepo.create({
       ma_don_hang: maDonHang,
@@ -2019,36 +2027,6 @@ export class ThanhToanService {
     await this.publishOrderCreatedEvent(donHang);
 
     // 4. Xử lý logic từng phương thức
-    if (dto.phuong_thuc_thanh_toan === 'VI_DIEN_TU') {
-      await this.customerWalletService.deductBalance(maNguoiDung, tongTien, maThamChieu);
-
-      donHang.trang_thai_thanh_toan = 'DA_THANH_TOAN';
-      donHang.trang_thai_don_hang = 'DA_XAC_NHAN';
-      await this.donHangRepo.save(donHang);
-
-      giaoDich.trang_thai = 'DA_THANH_TOAN';
-      await this.giaoDichRepo.save(giaoDich);
-
-      await Promise.all([
-        this.notificationService.taoThongBao({
-          ma_nguoi_dung: maNguoiDung,
-          tieu_de: 'Thanh toan vi dien tu thanh cong',
-          noi_dung: `Don #${donHang.ma_don_hang} da duoc thanh toan bang vi dien tu.`,
-          loai: 'PAYMENT',
-          du_lieu: { ma_don_hang: donHang.ma_don_hang, phuong_thuc_thanh_toan: 'VI_DIEN_TU' },
-        }),
-        this.tichDiemLoyalty(maNguoiDung, tongTienGoc),
-      ]);
-
-      return {
-        message: 'Thanh toan vi dien tu thanh cong',
-        don_hang: donHang,
-        giao_dich: giaoDich,
-        tracking_code: createdTracking?.tracking_code || null,
-        is_guest: isGuest,
-      };
-    }
-
     if (dto.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG') {
       await Promise.all([
         this.notificationService.taoThongBao({
@@ -2116,6 +2094,120 @@ export class ThanhToanService {
         qr_img_url: this.taoQrNganHang(tongTien, maThamChieu),
         qr_fallback_url: this.taoQrNganHangDuPhong(tongTien, maThamChieu),
       },
+    };
+  }
+
+  private async khoiTaoThanhToanVi(maNguoiDung: string, dto: KhoiTaoThanhToanDto, gioHang: CartItem[], details: {
+    maDonHang: string; branchCode: string; tongTienGoc: number; tongTien: number;
+    soTienGiam: number; maVoucherApDung: string | null; shippingFee: number; nearestInfo: any;
+  }) {
+    const { maDonHang, branchCode, tongTienGoc, tongTien, soTienGiam,
+      maVoucherApDung, shippingFee, nearestInfo } = details;
+    // The stable order UUID is also the stable wallet PAYMENT reference. The
+    // wallet row lock, debit, PAYMENT ledger row, order and cart clear commit
+    // together or roll back together.
+    const maThamChieu = `WALLET-${maDonHang}`;
+    const { donHang, chiTiet, giaoDich, walletBalanceAfter } = await this.customerWalletService.withWalletPayment(
+      maNguoiDung, tongTien, maThamChieu, async (manager, balanceAfter) => {
+        const donHang = await manager.save(DonHang, this.donHangRepo.create({
+          ma_don_hang: maDonHang,
+          ma_nguoi_dung: maNguoiDung,
+          guest_email: dto.guest_email?.trim() || null,
+          guest_phone: dto.guest_phone?.trim() || null,
+          session_id: dto.session_id?.trim() || null,
+          co_so_ma: branchCode,
+          tong_tien: tongTien,
+          ma_voucher: maVoucherApDung,
+          so_tien_giam: soTienGiam,
+          dia_chi_giao_hang: dto.dia_chi_giao_hang,
+          khung_gio_giao: dto.khung_gio_giao ?? null,
+          ghi_chu: dto.ghi_chu ?? null,
+          loai_don_hang: dto.delivery_mode ?? null,
+          ma_ban: dto.table_number ?? null,
+          ten_khach_hang: dto.ten_khach_hang ?? 'Khách hàng',
+          phuong_thuc_thanh_toan: 'VI_DIEN_TU',
+          trang_thai_thanh_toan: 'DA_THANH_TOAN',
+          trang_thai_don_hang: 'DA_XAC_NHAN',
+          tien_khach_dua: null,
+          tien_thoi: 0,
+          lich_su_trang_thai: [
+            { loai: 'ORDER', trang_thai: 'DA_XAC_NHAN', thoi_gian: new Date().toISOString(),
+              ghi_chu: 'Don hang da thanh toan bang vi',
+              ...(dto.checkout_action_id ? { checkout_snapshot_hash: this.checkoutSnapshotHash(dto) } : {}) },
+            { loai: 'PAYMENT', trang_thai: 'DA_THANH_TOAN', thoi_gian: new Date().toISOString(),
+              ghi_chu: 'Phuong thuc thanh toan: VI_DIEN_TU' },
+          ],
+        }));
+        const chiTiet = await manager.save(ChiTietDonHang, gioHang.map(item => this.chiTietRepo.create({
+          ma_don_hang: maDonHang,
+          ma_san_pham: item.ma_san_pham,
+          ten_san_pham: item.ten_san_pham,
+          gia_ban: Number(item.gia_ban),
+          so_luong: item.so_luong,
+          kich_co: item.size || 'Nhỏ',
+          hinh_anh_url: item.hinh_anh_url,
+          toppings: item.toppings || [],
+          luong_da: item.luong_da || null,
+          do_ngot: item.do_ngot || null,
+          ghi_chu: item.custom_attributes?.ghi_chu || null,
+        })));
+        const giaoDich = await manager.save(GiaoDichThanhToan, this.giaoDichRepo.create({
+          ma_don_hang: maDonHang,
+          cong_thanh_toan: 'VI_DIEN_TU',
+          ma_tham_chieu: maThamChieu,
+          so_tien: tongTien,
+          trang_thai: 'DA_THANH_TOAN',
+        }));
+        await manager.delete(CartItem, { ma_nguoi_dung: maNguoiDung });
+        return { donHang, chiTiet, giaoDich, walletBalanceAfter: balanceAfter };
+      },
+    );
+
+    let createdTracking: any = null;
+    try {
+      if (dto.delivery_mode) {
+        createdTracking = await this.deliveryTrackingService.createTracking({
+          ma_don_hang: maDonHang,
+          delivery_mode: dto.delivery_mode,
+          delivery_method: dto.delivery_method,
+          branch_code: branchCode,
+          table_number: dto.table_number,
+          delivery_address: dto.dia_chi_giao_hang,
+          customer_phone: maNguoiDung,
+          store_latitude: nearestInfo?.branchLat,
+          store_longitude: nearestInfo?.branchLon,
+          destination_latitude: nearestInfo?.customerLat ?? dto.destination_latitude,
+          destination_longitude: nearestInfo?.customerLon ?? dto.destination_longitude,
+          is_guest: false,
+        }, shippingFee);
+      }
+    } catch (error) {
+      // The core payment already committed. The retry will return the same
+      // paid order; never debit again to repair an optional tracking failure.
+      console.error('[WALLET TRACKING ERROR]', error);
+    }
+    const followups = [
+      this.invalidateOrderCaches(maNguoiDung, branchCode),
+      this.publishOrderCreatedEvent(donHang),
+      this.tichDiemLoyalty(maNguoiDung, tongTienGoc),
+      this.guiEmailXacNhanDonHang(donHang, chiTiet, createdTracking?.tracking_code),
+      this.notificationService.taoThongBao({
+        ma_nguoi_dung: maNguoiDung,
+        tieu_de: 'Thanh toan vi dien tu thanh cong',
+        noi_dung: `Don #${maDonHang} da duoc thanh toan bang vi dien tu.`,
+        loai: 'PAYMENT',
+        du_lieu: { ma_don_hang: maDonHang, phuong_thuc_thanh_toan: 'VI_DIEN_TU' },
+      }),
+    ];
+    if (maVoucherApDung) followups.push(this.voucherService.apDungVoucher(maVoucherApDung, maNguoiDung, soTienGiam, maDonHang));
+    const followupResults = await Promise.allSettled(followups);
+    for (const outcome of followupResults) {
+      if (outcome.status === 'rejected') console.error('[WALLET CHECKOUT FOLLOWUP ERROR]', outcome.reason);
+    }
+    return {
+      message: 'Thanh toan vi dien tu thanh cong', don_hang: donHang, giao_dich: giaoDich,
+      tracking_code: createdTracking?.tracking_code || null, is_guest: false,
+      wallet_balance_after: walletBalanceAfter,
     };
   }
 

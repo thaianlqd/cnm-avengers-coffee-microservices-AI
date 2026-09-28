@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import * as crypto from 'crypto';
 import { CustomerWallet } from './entities/customer-wallet.entity';
 import { CustomerWalletTransaction } from './entities/customer-wallet-transaction.entity';
@@ -126,24 +126,41 @@ export class CustomerWalletService {
   }
 
   async deductBalance(customerId: string, amount: number, referenceId: string) {
-    const wallet = await this.walletRepo.findOne({ where: { customer_id: customerId } });
-    if (!wallet || Number(wallet.balance) < amount) {
-      throw new BadRequestException('So du vi dien tu khong du de thanh toan');
+    return this.withWalletPayment(customerId, amount, referenceId, async () => true, true);
+  }
+
+  async withWalletPayment<T>(customerId: string, amount: number, referenceId: string,
+    writeOrder: (manager: EntityManager, balanceAfter: number) => Promise<T>, allowReplay = false): Promise<T> {
+    if (!customerId || !Number.isFinite(amount) || amount < 0 || !referenceId) {
+      throw new BadRequestException('Thong tin thanh toan vi khong hop le');
     }
-
-    wallet.balance = Number(wallet.balance) - amount;
-    await this.walletRepo.save(wallet);
-
-    const transaction = this.transactionRepo.create({
-      customer_id: customerId,
-      amount: amount,
-      type: 'PAYMENT',
-      status: 'SUCCESS',
-      reference_id: referenceId,
+    return this.walletRepo.manager.transaction(async manager => {
+      const wallet = await manager.getRepository(CustomerWallet).findOne({
+        where: { customer_id: customerId }, lock: { mode: 'pessimistic_write' },
+      });
+      const paymentRepo = manager.getRepository(CustomerWalletTransaction);
+      const existing = await paymentRepo.findOne({
+        where: { customer_id: customerId, type: 'PAYMENT', reference_id: referenceId },
+      });
+      if (existing) {
+        if (existing.status !== 'SUCCESS' || Number(existing.amount) !== amount) {
+          throw new BadRequestException('Ma tham chieu vi da duoc su dung cho giao dich khac');
+        }
+        if (allowReplay) return true as T;
+        // An order writer must never run twice for a consumed reference.
+        throw new BadRequestException('Giao dich vi da duoc xu ly; hay truy van don hang cu');
+      }
+      if (!wallet || Number(wallet.balance) < amount) {
+        throw new BadRequestException('So du vi dien tu khong du de thanh toan');
+      }
+      const balanceAfter = Number(wallet.balance) - amount;
+      wallet.balance = balanceAfter;
+      await manager.save(CustomerWallet, wallet);
+      await paymentRepo.save(paymentRepo.create({
+        customer_id: customerId, amount, type: 'PAYMENT', status: 'SUCCESS', reference_id: referenceId,
+      }));
+      return writeOrder(manager, balanceAfter);
     });
-    await this.transactionRepo.save(transaction);
-
-    return true;
   }
 
   async refundBalance(customerId: string, amount: number, referenceId: string) {

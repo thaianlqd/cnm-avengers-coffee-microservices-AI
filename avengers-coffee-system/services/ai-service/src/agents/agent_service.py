@@ -130,7 +130,15 @@ def _checkout_choices_prompt(session_id: str, prefix: str = "") -> str:
             "1. Giao tận nơi\n2. Lấy tại quán\n3. Dùng tại chỗ"
         )
     if not prefs.get("payment_method"):
-        blocks.append(_payment_methods_text())
+        payment_text = _payment_methods_text()
+        from src.function_calling.tools.cart_tools import get_wallet_payment_options
+        wallet = get_wallet_payment_options(session_id)["payment_options"][-1]
+        if wallet.get("balance") is not None:
+            balance = f"{wallet['balance']:,.0f}".replace(",", ".")
+            payment_text += f"\nVí Avengers — Số dư: {balance}đ"
+        elif wallet.get("reason"):
+            payment_text += f"\n{wallet['reason']}"
+        blocks.append(payment_text)
     if not blocks:
         return prefix.strip()
     question = "Bạn chọn giúp mình " + (
@@ -233,7 +241,7 @@ def _explicit_checkout_choices(message: str) -> Dict[str, str]:
             result["payment_method"] = "VNPAY"
         elif ("ngan hang qr" in text or "qr ngan hang" in text or text == "qr" or "chuyen khoan" in text) and not re.search(r"\b(?:khong|ko|dung dung)\s+(?:dung\s+)?(ngan hang|qr|chuyen khoan)\b", text):
             result["payment_method"] = "NGAN_HANG_QR"
-        elif ("vi avengers" in text or "vi dien tu" in text) and not re.search(r"\b(?:khong|ko|dung dung)\s+(?:dung\s+)?vi\b", text):
+        elif re.search(r"\bvi(?:\s+(?:avengers|dien tu))?\b", text) and not re.search(r"\b(?:khong|ko|dung dung)\s+(?:dung\s+)?vi\b", text):
             result["payment_method"] = "VI_DIEN_TU"
 
         delivery_candidates = []
@@ -792,9 +800,11 @@ def _confirm_saved_location(
                 availability = f" — HẾT/THIẾU: {missing} (không thể chọn)"
             elif item.get("availability_status") == "unknown":
                 availability = " — chưa xác minh được tồn kho (không thể chọn)"
+            distance = (f" ({item['khoang_cach_km']} km đường chim bay)"
+                        if item.get("khoang_cach_km") is not None else "")
             lines.append(
-                f"{index}. {item['ten_chi_nhanh']} — {item.get('dia_chi') or 'chưa có địa chỉ'} "
-                f"({item.get('khoang_cach_km')} km đường chim bay){availability}"
+                f"{index}. {item['ten_chi_nhanh']} — {item.get('dia_chi') or 'chưa có địa chỉ'}"
+                f"{distance}{availability}"
             )
         available_numbers = [
             str(index) for index, item in enumerate(branches, 1)

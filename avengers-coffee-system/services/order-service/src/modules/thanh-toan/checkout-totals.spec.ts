@@ -2,6 +2,8 @@ import * as crypto from 'crypto';
 import { BadRequestException } from '@nestjs/common';
 import { ThanhToanService } from './thanh-toan.service';
 import { DeliveryTrackingService } from '../shipper/features_thaian/delivery-tracking.service';
+import { DonHang } from './entities/don-hang.entity';
+import { GiaoDichThanhToan } from './entities/giao-dich-thanh-toan.entity';
 
 describe('checkout amount across all payment paths', () => {
   const originalFetch = global.fetch;
@@ -27,7 +29,16 @@ describe('checkout amount across all payment paths', () => {
     tracking.getTrackingsByOrderIds = jest.fn(async (ids: string[]) => ids.map(id => trackings.get(id)).filter(Boolean));
     jest.spyOn(tracking, 'createTracking');
     s.deliveryTrackingService = tracking;
-    s.customerWalletService = { deductBalance: jest.fn() };
+    const walletManager = {
+      save: jest.fn(async (entity: any, value: any) => {
+        if (entity === DonHang) orders.set(value.ma_don_hang, value);
+        if (entity === GiaoDichThanhToan) transactions.set(value.ma_don_hang, value);
+        return value;
+      }),
+      delete: jest.fn(),
+    };
+    s.customerWalletService = { withWalletPayment: jest.fn(async (_uid: string, _amount: number, _ref: string, write: any) => write(walletManager, 1793400)) };
+    s.walletManager = walletManager;
     s.xacDinhCoSoGanNhatTheoDiaChi = jest.fn(async () => ({ branchCode: 'CN_1' }));
     s.normalizeBranchCode = (v: string) => v;
     s.kiemTraTonKhoTruocKhiTaoDon = jest.fn();
@@ -45,9 +56,10 @@ describe('checkout amount across all payment paths', () => {
     const expected = mode === 'GIAO_TAN_NOI' ? 265400 : 250400;
     const result = await s.khoiTaoThanhToan('user', { phuong_thuc_thanh_toan: payment, delivery_mode: mode, branch_code: 'CN_1', dia_chi_giao_hang: '42/3 Nguyễn Hữu Tiến', ma_voucher: 'SAVE20', phi_giao_hang: 1, final_total: 1 });
     expect(Number(result.don_hang.tong_tien)).toBe(expected);
-    expect(s.giaoDichRepo.save.mock.calls[0][0].so_tien).toBe(expected);
+    const savedPayment = payment === 'VI_DIEN_TU' ? s.walletManager.save.mock.calls.find(([entity]: any[]) => entity === GiaoDichThanhToan)?.[1] : s.giaoDichRepo.save.mock.calls[0][0];
+    expect(savedPayment.so_tien).toBe(expected);
     expect(s.deliveryTrackingService.trackingRepo.save.mock.calls[0][0].delivery_fee).toBe(mode === 'GIAO_TAN_NOI' ? 15000 : 0);
-    if (payment === 'VI_DIEN_TU') expect(s.customerWalletService.deductBalance).toHaveBeenCalledWith('user', expected, 'ref');
+    if (payment === 'VI_DIEN_TU') expect(s.customerWalletService.withWalletPayment).toHaveBeenCalledWith('user', expected, expect.stringMatching(/^WALLET-/), expect.any(Function));
     if (payment === 'VNPAY') expect(s.taoUrlVnpayThat.mock.calls[0][2]).toBe(expected);
     if (payment === 'NGAN_HANG_QR') expect(result.payment_details.so_tien).toBe(expected);
   });
@@ -55,7 +67,8 @@ describe('checkout amount across all payment paths', () => {
     const {s} = service(15000);
     const result = await s.khoiTaoThanhToan('user', { phuong_thuc_thanh_toan: payment, delivery_mode: 'GIAO_TAN_NOI', dia_chi_giao_hang: 'Địa chỉ', ma_voucher: 'SAVE20' });
     expect(Number(result.don_hang.tong_tien)).toBe(250400);
-    expect(s.giaoDichRepo.save.mock.calls[0][0].so_tien).toBe(250400);
+    const savedPayment = payment === 'VI_DIEN_TU' ? s.walletManager.save.mock.calls.find(([entity]: any[]) => entity === GiaoDichThanhToan)?.[1] : s.giaoDichRepo.save.mock.calls[0][0];
+    expect(savedPayment.so_tien).toBe(250400);
     expect(s.deliveryTrackingService.trackingRepo.save.mock.calls[0][0].delivery_fee).toBe(0);
   });
   it.each([
@@ -78,8 +91,8 @@ describe('checkout amount across all payment paths', () => {
     const dto = {checkout_action_id:'12345678-1234-4234-8234-123456789012', phuong_thuc_thanh_toan:'VI_DIEN_TU', delivery_mode:'GIAO_TAN_NOI', delivery_method:'INTERNAL', branch_code:'CN_1', dia_chi_giao_hang:'Địa chỉ', ma_voucher:'SAVE20', expected_final_total:265400};
     await s.khoiTaoThanhToan('user', dto);
     await expect(s.khoiTaoThanhToan('user', {...dto,...changes})).rejects.toThrow('Checkout action');
-    expect(s.chiTietRepo.save).toHaveBeenCalledTimes(1);
-    expect(s.customerWalletService.deductBalance).toHaveBeenCalledTimes(1);
+    expect(s.walletManager.save).toHaveBeenCalledTimes(3);
+    expect(s.customerWalletService.withWalletPayment).toHaveBeenCalledTimes(1);
     expect(s.voucherService.apDungVoucher).toHaveBeenCalledTimes(1);
   });
   it.each([{branch_code:'CN_2'}, {ma_voucher:'SAVE10'}, {delivery_method:'LALAMOVE'}, {expected_final_total:1}])('protects legacy actions without persisted hashes: %j', async changes => {
@@ -106,10 +119,11 @@ describe('checkout amount across all payment paths', () => {
     const replay = await s.khoiTaoThanhToan('user', dto);
     expect(replay.don_hang.ma_don_hang).toBe(first.don_hang.ma_don_hang);
     expect(replay.already_processed).toBe(true);
-    expect(s.chiTietRepo.save).toHaveBeenCalledTimes(1);
+    if (payment === 'VI_DIEN_TU') expect(s.walletManager.save).toHaveBeenCalledTimes(3);
+    else expect(s.chiTietRepo.save).toHaveBeenCalledTimes(1);
     expect(s.voucherService.apDungVoucher).toHaveBeenCalledTimes(1);
     expect(s.deliveryTrackingService.createTracking).toHaveBeenCalledTimes(1);
-    if (payment === 'VI_DIEN_TU') expect(s.customerWalletService.deductBalance).toHaveBeenCalledTimes(1);
+    if (payment === 'VI_DIEN_TU') expect(s.customerWalletService.withWalletPayment).toHaveBeenCalledTimes(1);
     expect(runner.release).toHaveBeenCalledTimes(2);
   });
   it('serializes concurrent requests for one checkout action', async () => {
@@ -147,14 +161,15 @@ describe('checkout amount across all payment paths', () => {
     expect(error.getResponse().checkout_not_created).toBe(true);
     expect(s.donHangRepo.save).not.toHaveBeenCalled();
   });
-  it('never permits a new action when wallet failure happens after order creation', async () => {
+  it('insufficient wallet never writes order or clears cart', async () => {
     const {s} = service();
-    s.customerWalletService.deductBalance.mockRejectedValue(new BadRequestException('Số dư không đủ'));
+    s.customerWalletService.withWalletPayment.mockRejectedValue(new BadRequestException('Số dư không đủ'));
     const dto = {checkout_action_id:'12345678-1234-4234-8234-123456789012',phuong_thuc_thanh_toan:'VI_DIEN_TU',delivery_mode:'GIAO_TAN_NOI',dia_chi_giao_hang:'Địa chỉ'};
     const error = await s.khoiTaoThanhToan('user',dto).catch((e: any) => e);
-    expect(error.getResponse().checkout_not_created).toBeUndefined();
-    await expect(s.khoiTaoThanhToan('user',dto)).rejects.toThrow('doi soat');
-    expect(s.chiTietRepo.save).toHaveBeenCalledTimes(1);
+    expect(error.getResponse().checkout_not_created).toBe(true);
+    expect(s.donHangRepo.save).not.toHaveBeenCalled();
+    expect(s.walletManager.save).not.toHaveBeenCalled();
+    expect(s.cartRepo.delete).not.toHaveBeenCalled();
   });
   it('replays a persisted snapshot after restart even if membership or tracking has changed', async () => {
     const {s} = service();

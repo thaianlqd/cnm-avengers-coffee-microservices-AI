@@ -140,6 +140,7 @@ def finalize_checkout(
                 "payment_method": payment_method,
                 "redirect_url": resp_data.get("redirect_url"),
                 "payment_details": resp_data.get("payment_details"),
+                "wallet_balance_after": resp_data.get("wallet_balance_after"),
             }
             cart_manager.clear_cart(cart_session_id, order_id=str(order_id), checkout_result=result)
             return result
