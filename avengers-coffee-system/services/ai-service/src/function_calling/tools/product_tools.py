@@ -156,7 +156,8 @@ def execute_get_product_options(product_name: str) -> Dict[str, Any]:
         with engine.connect() as conn:
             row = conn.execute(text(
                 f"""
-                SELECT ma_san_pham::text, ten_san_pham
+                SELECT ma_san_pham::text, ten_san_pham, bien_the, sizes,
+                       toppings, luong_da, do_ngot, loai_sua
                 FROM {menu_schema}.san_pham
                 WHERE trang_thai = TRUE 
                   AND {conditions}
@@ -170,6 +171,10 @@ def execute_get_product_options(product_name: str) -> Dict[str, Any]:
                 
             product_id = row[0]
             found_name = row[1]
+            product_data = dict(zip(
+                ("bien_the", "sizes", "toppings", "luong_da", "do_ngot", "loai_sua"),
+                list(row)[2:],
+            ))
 
             opts = conn.execute(text(
                 f"""
@@ -177,6 +182,7 @@ def execute_get_product_options(product_name: str) -> Dict[str, Any]:
                 FROM {menu_schema}.bien_the_san_pham bt
                 JOIN {menu_schema}.thuoc_tinh tt ON bt.ma_thuoc_tinh = tt.ma_thuoc_tinh
                 WHERE bt.ma_san_pham::text = :pid
+                ORDER BY bt.id
                 """
             ), {"pid": product_id}).fetchall()
             
@@ -198,7 +204,8 @@ def execute_get_product_options(product_name: str) -> Dict[str, Any]:
                 }
                 
             opts_str = ", ".join([f"{k}: [{', '.join(v)}]" for k, v in options_dict.items()])
-            return {
+            from src.agents.option_state import option_schema_from_result, option_field
+            result = {
                 "status": "ok",
                 "product_id": product_id,
                 "product_name": found_name,
@@ -207,14 +214,16 @@ def execute_get_product_options(product_name: str) -> Dict[str, Any]:
                     {
                         "name": key,
                         "values": list(values),
-                        "required": "size" in _norm(key) or "kich thuoc" in _norm(key),
-                        "multiple": "topping" in _norm(key),
+                        "required": option_field(key) == "size",
+                        "multiple": option_field(key) == "toppings",
                         "fixed": len(values) == 1,
                     }
                     for key, values in options_dict.items()
                 ],
                 "message": f"BẮT BUỘC: Khi hỏi khách về tùy chọn của {found_name}, bạn CHỈ ĐƯỢC PHÉP dùng y hệt các nhãn này (không dịch, không đổi). Các tùy chọn là: {opts_str}"
             }
+            result["option_groups"] = option_schema_from_result({**result, "product_data": product_data})
+            return result
     except Exception as e:
         logger.warning("[AgentTools] get_product_options error: %s", e)
         return {"status": "error", "message": "Không thể lấy tùy chọn sản phẩm."}
@@ -378,26 +387,6 @@ def execute_check_price_and_stock(
                 "message": f"Không tìm thấy sản phẩm nào khớp với '{product_name_query}' trong hệ thống.",
             }
 
-        size_price = None
-        if size and top:
-            try:
-                with engine.connect() as conn:
-                    r = conn.execute(text(
-                        f"""
-                        SELECT bt.phu_thu
-                        FROM {menu_schema}.bien_the_san_pham bt
-                        JOIN {menu_schema}.thuoc_tinh tt ON bt.ma_thuoc_tinh = tt.ma_thuoc_tinh
-                        WHERE bt.ma_san_pham = :pid
-                          AND UPPER(bt.gia_tri) = UPPER(:size)
-                          AND LOWER(tt.ten_thuoc_tinh) LIKE '%size%'
-                        LIMIT 1
-                        """
-                    ), {"pid": top[0]["product_id"], "size": size}).fetchone()
-                    if r:
-                        size_price = float(r[0] or 0)
-            except Exception:
-                pass
-
         inventory_schema = os.getenv("INVENTORY_SCHEMA", "inventory")
         prefs = cart_manager.get_checkout_prefs(session_id) if session_id else {}
         fulfillment_selected = bool(prefs.get("delivery_type"))
@@ -405,10 +394,18 @@ def execute_check_price_and_stock(
         results = []
         for p in top:
             base_price = float(p["gia_ban"] or 0)
-            # bien_the_san_pham.phu_thu stores the complete selling price for
-            # Size rows (for example Small=49k, Medium=55k, Large=59k).
-            # Other attributes use it as a surcharge.
-            final_price = size_price if size_price is not None else base_price
+            from src.function_calling.tools.cart_tools import _variant_unit_price
+            extra_values = [value for value in [*(toppings or []), luong_da, do_ngot, loai_sua] if value]
+            variant_rows = []
+            if size or extra_values:
+                with engine.connect() as conn:
+                    variant_rows = conn.execute(text(f"""
+                        SELECT tt.ten_thuoc_tinh, bt.gia_tri, bt.phu_thu
+                        FROM {menu_schema}.bien_the_san_pham bt
+                        JOIN {menu_schema}.thuoc_tinh tt ON bt.ma_thuoc_tinh = tt.ma_thuoc_tinh
+                        WHERE bt.ma_san_pham::text = :pid
+                    """), {"pid": str(p["product_id"])}).fetchall()
+            final_price = _variant_unit_price(base_price, variant_rows, size, extra_values)
             availability_status = "unknown"
             in_stock = None
             stock_quantity = None
@@ -437,7 +434,9 @@ def execute_check_price_and_stock(
                 "parent_category": p.get("parent_category"),
                 "base_price": base_price,
                 "size": size,
-                "size_surcharge": (final_price - base_price) if size_price is not None else 0.0,
+                "size_surcharge": next((float(row[2] or 0) - base_price for row in variant_rows
+                                        if ("size" in _norm(row[0]) or "kich thuoc" in _norm(row[0]))
+                                        and _norm(row[1]) == _norm(size)), 0.0),
                 "final_price": final_price,
                 "in_stock": in_stock,
                 "availability_status": availability_status,

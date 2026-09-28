@@ -132,7 +132,7 @@ def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict
     # An option answer belongs to the pending products, even when it says
     # "thêm topping" or also mentions checkout.
     if pending_type == "fill_options" and re.search(
-        r"\b(size|nho|vua|lon|topping|toping|hat|foam|tran chau|da|ngot|duong|sua|mac dinh|theo cong thuc|khong chon)\b",
+        r"\b(size|nho|vua|lon|topping|toping|hat|foam|tran chau|da|ngot|duong|sua|mac dinh|theo cong thuc|khong chon|khong can chinh|khong can chon them)\b",
         norm,
     ):
         return {"intent": "FILL_OPTIONS"}
