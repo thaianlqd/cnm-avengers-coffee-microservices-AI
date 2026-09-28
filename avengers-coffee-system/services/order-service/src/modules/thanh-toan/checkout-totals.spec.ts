@@ -235,6 +235,7 @@ describe('checkout amount across all payment paths', () => {
     const {s} = service();
     const transaction: any = {ma_don_hang:'order',so_tien:265400,trang_thai:'CHO_THANH_TOAN'};
     s.giaoDichRepo.findOne.mockResolvedValue(transaction);
+    s.giaoDichRepo.update = jest.fn(async (_where: any, patch: any) => { Object.assign(transaction, patch); return {affected: 1}; });
     s.donHangRepo.findOne.mockResolvedValue({ma_don_hang:'order',ma_nguoi_dung:'user',tong_tien:265400,so_tien_giam:62600});
     s.chiTietRepo.find = jest.fn(async () => [{gia_ban:313000,so_luong:1}]);
     s.capNhatTrangThaiDonHangHeThong = jest.fn();

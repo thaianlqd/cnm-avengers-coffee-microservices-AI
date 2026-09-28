@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
 import { apiClient } from '../lib/apiClient';
-import { openChatProductDetail, addChatProduct, branchDistanceLabel, paymentCardRows, chatLoadingLabel, refreshWalletAfterCheckout, structuredLegacyCards } from './chatWidgetActions';
+import { openChatProductDetail, addChatProduct, branchDistanceLabel, paymentCardRows, chatLoadingLabel, refreshWalletAfterCheckout, structuredLegacyCards, pollQrPaymentStatus, latestPendingQrPayment } from './chatWidgetActions';
 
 // ─── Utilities & Formatters ──────────────────────────────────────────────────
 const fmtVND = (n) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
@@ -499,6 +499,9 @@ export default function ChatWidget({ user, socketUrl }) {
   const [unread, setUnread] = useState(0);
   const [conversation, setConversation] = useState(null);
   const [pendingOrder, setPendingOrder] = useState(null);
+  const [pendingQrPayment, setPendingQrPayment] = useState(() => {
+    return latestPendingQrPayment(loadAISession());
+  });
   const confirmingOrderRef = useRef(false);
   const [aiConversationId, setAiConversationId] = useState(loadConversationId);
   const [orderConfirming, setOrderConfirming] = useState(false);
@@ -525,9 +528,6 @@ export default function ChatWidget({ user, socketUrl }) {
   const anonId = useRef(getOrCreateAnonId());
   const effectiveUserId = userId || anonId.current;
   
-  console.log("ChatWidget debug - user object:", user);
-  console.log("ChatWidget debug - effectiveUserId:", effectiveUserId);
-
   useEffect(() => {
     if (messages.length > 0) {
       saveAISession(messages);
@@ -567,6 +567,37 @@ export default function ChatWidget({ user, socketUrl }) {
     setMessages((prev) => [...prev, msg]);
     return msg;
   }, []);
+
+  useEffect(() => {
+    if (!pendingQrPayment?.orderId || !walletUserId) return undefined;
+    let active = true;
+    let busy = false;
+    const checkStatus = async () => {
+      if (busy || !active) return;
+      busy = true;
+      try {
+        const status = await pollQrPaymentStatus(apiClient, walletUserId, pendingQrPayment.orderId);
+        if (!active) return;
+        if (status === 'pending') return;
+        setPendingQrPayment(null);
+        if (status === 'paid') {
+          addAIMsg(`✅ Thanh toán QR thành công. Đơn #${pendingQrPayment.orderId} đã được xác nhận.`, { _qrPaymentResolved: pendingQrPayment.orderId });
+          window.dispatchEvent(new CustomEvent('refresh-orders'));
+          window.dispatchEvent(new CustomEvent('refresh-cart'));
+          window.dispatchEvent(new CustomEvent('ai-voucher-removed'));
+          window.dispatchEvent(new CustomEvent('checkout-success', { detail: { orderId: pendingQrPayment.orderId } }));
+        } else if (status === 'review') {
+          addAIMsg(`Ngân hàng đã ghi nhận chuyển khoản cho đơn #${pendingQrPayment.orderId}, nhưng đơn đang chờ đối soát. Bạn xem trạng thái đơn hàng hoặc liên hệ hỗ trợ nhé.`, { _qrPaymentResolved: pendingQrPayment.orderId });
+        } else {
+          addAIMsg(`Thanh toán QR cho đơn #${pendingQrPayment.orderId} đã dừng hoặc không thành công. Bạn xem trạng thái đơn hàng để chọn cách thanh toán tiếp nhé.`, { _qrPaymentResolved: pendingQrPayment.orderId });
+        }
+      } catch { /* Retain pending state and retry the canonical endpoint. */ }
+      finally { busy = false; }
+    };
+    checkStatus();
+    const timer = window.setInterval(checkStatus, 3000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [pendingQrPayment, walletUserId, addAIMsg]);
 
   const addUserMsg = useCallback((noi_dung) => {
     const msg = buildMsg({ vai_tro_nguoi_gui: 'CUSTOMER', ten_nguoi_gui: userName, noi_dung });
@@ -747,14 +778,20 @@ export default function ChatWidget({ user, socketUrl }) {
       window.dispatchEvent(new CustomEvent('ai-voucher-removed'));
 
       const orderId = result?.order_id ? ` Mã đơn: **${result.order_id}**.` : '';
-      const awaitsOnlinePayment = Boolean(result?.redirect_url || result?.payment_details?.qr_img_url);
+      const awaitsOnlinePayment = Boolean(result?.redirect_url || result?.payment_details?.qr_img_url || result?.payment_details?.qr_fallback_url);
       const walletLine = pendingOrder.paymentMethod === 'VI_DIEN_TU'
         ? `\n**Đã thanh toán bằng Ví Avengers:** ${fmtVND(result?.total_price ?? pendingOrder.total)}${result?.wallet_balance_after != null ? `\n**Số dư còn lại:** ${fmtVND(result.wallet_balance_after)}` : ''}` : '';
-      addAIMsg(`${awaitsOnlinePayment ? '✅ Đơn hàng đã được tạo và đang chờ thanh toán.' : '🎉 Đơn hàng đã được ghi nhận.'}${orderId} Tổng cộng: **${fmtVND(result?.total_price ?? pendingOrder.total)}**${walletLine}`, {
-        _paymentUrl: result?.redirect_url || result?.payment_details?.qr_img_url || null,
-        _paymentLabel: result?.redirect_url ? 'Tiếp tục thanh toán VNPAY' : result?.payment_details?.qr_img_url ? 'Mở mã QR thanh toán' : null,
+      const qrDetails = result?.payment_details;
+      const qrPayment = pendingOrder.paymentMethod === 'NGAN_HANG_QR' && qrDetails?.ma_don_hang
+        ? { orderId: qrDetails.ma_don_hang, amount: qrDetails.so_tien,
+          reference: qrDetails.ma_tham_chieu, qrUrl: qrDetails.qr_img_url || qrDetails.qr_fallback_url } : null;
+      addAIMsg(`${awaitsOnlinePayment ? 'Đơn hàng đã được tạo và đang chờ thanh toán.' : '🎉 Đơn hàng đã được ghi nhận.'}${orderId} Tổng cộng: **${fmtVND(result?.total_price ?? pendingOrder.total)}**${walletLine}`, {
+        _paymentUrl: result?.redirect_url || null,
+        _paymentLabel: result?.redirect_url ? 'Tiếp tục thanh toán VNPAY' : null,
+        _qrPayment: qrPayment,
         _quickReplies: [{ id: 'orders', label: 'Xem đơn hàng', text: 'Xem đơn hàng của tôi' }],
       });
+      if (qrPayment) setPendingQrPayment(qrPayment);
       setPendingOrder(null);
       scrollBottom();
     } catch (error) {
@@ -1277,6 +1314,15 @@ export default function ChatWidget({ user, socketUrl }) {
                         <a href={msg._paymentUrl} target="_blank" rel="noreferrer" style={{ display: 'block', marginTop: 10, padding: '9px 12px', borderRadius: 10, background: '#B22830', color: '#FFF', textAlign: 'center', textDecoration: 'none', fontWeight: 800, fontSize: '0.76rem' }}>
                           {msg._paymentLabel || 'Tiếp tục thanh toán'}
                         </a>
+                      )}
+                      {msg._qrPayment?.qrUrl && (
+                        <div style={{ marginTop: 10, padding: 10, border: '1px solid #E2E8F0', borderRadius: 10, textAlign: 'center' }}>
+                          <img src={msg._qrPayment.qrUrl} alt="Mã QR thanh toán ngân hàng" style={{ display: 'block', width: 220, maxWidth: '100%', margin: '0 auto 8px' }} />
+                          <div>Số tiền: {fmtVND(msg._qrPayment.amount)}</div>
+                          <div>Mã tham chiếu: {msg._qrPayment.reference}</div>
+                          <div>{pendingQrPayment?.orderId === msg._qrPayment.orderId ? 'Đang chờ thanh toán...' : 'Xem trạng thái thanh toán ở tin nhắn mới nhất hoặc trang đơn hàng.'}</div>
+                          <a href={msg._qrPayment.qrUrl} target="_blank" rel="noreferrer">Mở ảnh QR</a>
+                        </div>
                       )}
                       {msg._vouchers && msg._vouchers.length > 0 && (
                         <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>

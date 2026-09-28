@@ -49,3 +49,21 @@ export async function refreshWalletAfterCheckout(queryClient, userId, paymentMet
     await queryClient.invalidateQueries({ queryKey: ['userWallet', userId] });
   }
 }
+
+export function qrPaymentState(status) {
+  if (status?.trang_thai_thanh_toan === 'DA_THANH_TOAN') return 'paid';
+  if (status?.trang_thai_thanh_toan === 'CAN_DOI_SOAT') return 'review';
+  if (['THAT_BAI', 'DA_HUY', 'HET_HAN'].includes(status?.trang_thai_thanh_toan)
+      || ['DA_HUY', 'HET_HAN'].includes(status?.trang_thai)) return 'failed';
+  return 'pending';
+}
+
+export async function pollQrPaymentStatus(client, userId, orderId) {
+  const response = await client.get(`/customers/${encodeURIComponent(userId)}/thanh-toan/don-hang/${encodeURIComponent(orderId)}/trang-thai`);
+  return qrPaymentState(response?.data || response);
+}
+
+export function latestPendingQrPayment(messages) {
+  const latest = [...(messages || [])].reverse().find((message) => message._qrPayment || message._qrPaymentResolved);
+  return latest?._qrPayment || null;
+}

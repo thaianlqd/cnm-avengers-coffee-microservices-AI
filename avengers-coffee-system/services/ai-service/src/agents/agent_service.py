@@ -133,8 +133,10 @@ def _checkout_choices_prompt(session_id: str, prefix: str = "") -> str:
         )
     if not prefs.get("payment_method"):
         payment_text = _payment_methods_text()
-        from src.function_calling.tools.cart_tools import get_wallet_payment_options
-        wallet = get_wallet_payment_options(session_id)["payment_options"][-1]
+        from src.function_calling.tools.cart_tools import execute_get_cart_quote, get_wallet_payment_options
+        quote = execute_get_cart_quote(session_id)
+        total = ((quote.get("quote") or {}).get("final_total") if quote.get("status") == "ok" else None)
+        wallet = get_wallet_payment_options(session_id, total)["payment_options"][-1]
         if wallet.get("balance") is not None:
             balance = f"{wallet['balance']:,.0f}".replace(",", ".")
             payment_text += f"\nVí Avengers — Số dư: {balance}đ"
@@ -1131,7 +1133,7 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
         line_total_text = f"{line_total:,.0f}".replace(",", ".")
         reply_lines.append(f"- {cart_item.get('product_name')} x{quantity}: {line_total_text}đ")
     reply_lines.append(f"Tổng giỏ hiện tại: {total}đ.")
-    reply_lines.append("Bạn có muốn thêm món gì nữa không?")
+    reply_lines.append("Bạn muốn thêm món, sửa/xoá món hay hoàn tất giỏ?")
     try:
         cart_manager.set_pending_action(session_id, "ask_more_items", {})
     except Exception as e:
@@ -1471,6 +1473,11 @@ def _run_agent_impl(
     # Accept explicit choices only after cart/voucher and checkout initiation.
     # Questions do not count as a selection.
     choices = _explicit_checkout_choices(user_message)
+    if choices.get("payment_method") == "VI_DIEN_TU":
+        from src.function_calling.tools.cart_tools import validate_wallet_selection
+        rejected = validate_wallet_selection(session_id)
+        if rejected:
+            return rejected
     if choices and not cart_manager.get_checkout_prefs(session_id).get("checkout_requested") and not cart_manager.get_checkout_prefs(session_id).get("summary_fingerprint"):
         if choices.get("delivery_type") and choices["delivery_type"] != cart_manager.get_checkout_prefs(session_id).get("delivery_type"):
             cart_manager.clear_branch(session_id)

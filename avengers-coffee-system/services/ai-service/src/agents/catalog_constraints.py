@@ -5,6 +5,18 @@ from typing import Any, Dict, Optional
 
 
 _MONEY = r"(\d{1,3}(?:[.,]\d{3})+|\d+)(?:\s*(k|nghin|ngan))?"
+_QUERY_STOP = set("ben ban co mon san pham sp banh do uong nuoc thuc topping menu thuc don gi cai loai nao khong ko duoi tren khong qua toi da it nhat tu den khoang re dat nhat hon nho lon may cac nhung cho minh xem tim voi gia tien trong tam o day di nhe nha oi a ve muon mua dat".split())
+
+
+def _search_terms(message: str) -> str:
+    words = re.findall(r"[\wÀ-ỹ]+", str(message or "").lower(), re.UNICODE)
+    # Preserve accents for the canonical PostgreSQL name/category comparison.
+    return " ".join(word for word in words if _normalize(word) not in _QUERY_STOP
+                    and not word.isdigit() and not re.fullmatch(r"\d+k", word))
+
+
+def extract_catalog_search_text(message: str) -> str:
+    return _search_terms(message)
 
 
 def _normalize(value: str) -> str:
@@ -19,9 +31,19 @@ def _amount(number: str, unit: Optional[str]) -> int:
 
 def parse_catalog_constraints(message: str) -> Optional[Dict[str, Any]]:
     text = _normalize(message)
+    if re.search(r"\b(?:them|mua|lay|chon|xoa|bo|sua|doi|chinh|tang|giam|thanh toan|dat hang|chot|danh gia|review|nhan xet)\b", text):
+        return None
+    if re.search(r"\b(?:mon|banh|nuoc|do uong|san pham)\s*(?:so|thu|#)\s*\d+\b", text):
+        return None
     shopping = re.search(r"\b(mon|san pham|sp|banh|do uong|nuoc|thuc uong|topping|menu|thuc don|co gi|cai gi|loai)\b", text)
     price_word = re.search(r"\b(duoi|tren|khong qua|toi da|it nhat|tu|khoang|re nhat|dat nhat)\b", text)
-    if not price_word or not shopping:
+    if not shopping:
+        return None
+    if not price_word and re.search(r"\b(?:hoac|hay)\b", text):
+        return None
+    if not price_word and not re.search(r"\bco\s+mon\b.*\bnao\b", text):
+        return None
+    if not price_word and re.search(r"\bbanh trung thu\b", text):
         return None
 
     scope = "topping" if re.search(r"\btopping\b", text) else "normal"
@@ -33,6 +55,11 @@ def parse_catalog_constraints(message: str) -> Optional[Dict[str, Any]]:
         "limit": 1 if re.search(r"\b(?:mon|loai|cai)\s+(?:re|dat)\s+nhat\b", text)
                    and not re.search(r"\b(?:cac|nhung|may)\s+(?:mon|loai|cai)\b", text) else 16,
     }
+    keyword = _search_terms(message)
+    if keyword:
+        result["search_text"] = keyword
+    if not price_word:
+        return {**result, "constraint_type": "KEYWORD"} if keyword else None
     range_match = re.search(r"\btu\s+" + _MONEY + r"\s+den\s+" + _MONEY, text)
     if range_match:
         result["constraint_type"] = "RANGE"
@@ -70,13 +97,15 @@ def parse_catalog_constraints(message: str) -> Optional[Dict[str, Any]]:
 def describe_catalog_constraint(constraints: Dict[str, Any]) -> str:
     """Describe the customer's price request without inferring wording from bounds."""
     money = lambda value: f"{int(value):,}".replace(",", ".") + "đ"
+    keyword = str(constraints.get("search_text") or "").strip()
+    prefix = f'liên quan "{keyword}" ' if keyword else ""
     kind = constraints.get("constraint_type")
     if kind in {"LT", "LTE", "GT", "GTE"}:
         relation = {"LT": "dưới", "LTE": "không quá", "GT": "trên", "GTE": "từ"}[kind]
         bound = constraints.get("max_price") if kind in {"LT", "LTE"} else constraints.get("min_price")
-        return f"{relation} {money(bound)}"
+        return f"{prefix}{relation} {money(bound)}"
     if kind == "RANGE":
-        return f"từ {money(constraints['min_price'])} đến {money(constraints['max_price'])}"
+        return f"{prefix}từ {money(constraints['min_price'])} đến {money(constraints['max_price'])}"
     if kind == "APPROX":
-        return f"khoảng {money(constraints['approx_price'])}"
-    return {"CHEAPEST": "rẻ nhất", "MOST_EXPENSIVE": "đắt nhất"}.get(kind, "phù hợp")
+        return f"{prefix}khoảng {money(constraints['approx_price'])}"
+    return prefix + {"CHEAPEST": "rẻ nhất", "MOST_EXPENSIVE": "đắt nhất"}.get(kind, "phù hợp")

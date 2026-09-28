@@ -122,7 +122,8 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
         from utils.geo import geocode_address, haversine_distance
 
         prefs = cart_manager.get_checkout_prefs(session_id) if session_id else {}
-        target_address = location.strip() if location else str(prefs.get("location_address") or "").strip()
+        from src.agents.location_parser import clean_location_clause
+        target_address = clean_location_clause(location if location else str(prefs.get("location_address") or ""))
         user_lat, user_lon = None, None
         distance_basis = "unavailable"
 
@@ -173,7 +174,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
             locality_ids = set()
             area_only = not re.match(r"^\d+[A-Za-z]?(?:[/.-]\d+[A-Za-z]?)?\s", target_address)
             if area_only and delivery_type != "GIAO_TAN_NOI" and not target_branches:
-                from src.agents.location_parser import locality_matches, normalize
+                from src.agents.location_parser import locality_matches, normalize, infer_city_from_addresses
                 area = normalize(target_address.split(",", 1)[0])
                 if len(area) >= 4:
                     active = conn.execute(text(f"""
@@ -184,6 +185,14 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                     locality_rows = [row for row in active if locality_matches(
                         f"{row['ten_chi_nhanh']}, {row['dia_chi'] or ''}", target_address)]
                     locality_ids = {str(row["ma_chi_nhanh"]) for row in locality_rows}
+                    if locality_rows and not re.search(r"\b(?:thành phố|tp\.?|tỉnh)\b", target_address, re.IGNORECASE):
+                        city, ambiguous = infer_city_from_addresses(
+                            target_address, [str(row["dia_chi"] or "") for row in locality_rows])
+                        if ambiguous:
+                            return {"status": "need_city", "message":
+                                    f"Mình nhận ra khu vực {target_address}, nhưng cần thêm tỉnh/thành phố để chọn đúng cửa hàng. Bạn không cần gửi số nhà vì đang lấy tại quán."}
+                        if city:
+                            target_address = f"{target_address}, {city}"
 
             if user_lat is None or user_lon is None:
                 coords = geocode_address(target_address)

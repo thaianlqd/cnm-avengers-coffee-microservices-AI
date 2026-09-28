@@ -3,6 +3,8 @@ import test from 'node:test';
 import {
   openChatProductDetail, addChatProduct, branchDistanceLabel, paymentCardRows,
   chatLoadingLabel, refreshWalletAfterCheckout, structuredLegacyCards,
+  qrPaymentState,
+  pollQrPaymentStatus, latestPendingQrPayment,
 } from './chatWidgetActions.js';
 
 test('product card click navigates by canonical product ID', () => {
@@ -64,4 +66,30 @@ test('successful wallet checkout invalidates the shared wallet query', async () 
   await refreshWalletAfterCheckout(queryClient, 'customer-id', 'VI_DIEN_TU');
   await refreshWalletAfterCheckout(queryClient, 'customer-id', 'VNPAY');
   assert.deepEqual(queries, [{ queryKey: ['userWallet', 'customer-id'] }]);
+});
+
+test('QR state advances only from canonical server payment status', () => {
+  assert.equal(qrPaymentState({ trang_thai_thanh_toan: 'CHO_THANH_TOAN' }), 'pending');
+  assert.equal(qrPaymentState({ scanned: true }), 'pending');
+  assert.equal(qrPaymentState({ trang_thai_thanh_toan: 'DA_THANH_TOAN' }), 'paid');
+  assert.equal(qrPaymentState({ trang_thai_thanh_toan: 'THAT_BAI' }), 'failed');
+  assert.equal(qrPaymentState({ trang_thai: 'DA_HUY' }), 'failed');
+  assert.equal(qrPaymentState({ trang_thai_thanh_toan: 'CAN_DOI_SOAT' }), 'review');
+});
+
+test('QR polling calls the existing authenticated order status endpoint', async () => {
+  const calls = [];
+  const client = { get: async (path) => {
+    calls.push(path);
+    return { data: { trang_thai_thanh_toan: calls.length === 1 ? 'CHO_THANH_TOAN' : 'DA_THANH_TOAN' } };
+  } };
+  assert.equal(await pollQrPaymentStatus(client, 'user-1', 'order-1'), 'pending');
+  assert.equal(await pollQrPaymentStatus(client, 'user-1', 'order-1'), 'paid');
+  assert.deepEqual(calls, Array(2).fill('/customers/user-1/thanh-toan/don-hang/order-1/trang-thai'));
+});
+
+test('reopening chat restores only unresolved QR payment', () => {
+  const qr = { orderId: 'order-1', qrUrl: 'https://example.test/qr.png' };
+  assert.deepEqual(latestPendingQrPayment([{ _qrPayment: qr }]), qr);
+  assert.equal(latestPendingQrPayment([{ _qrPayment: qr }, { _qrPaymentResolved: 'order-1' }]), null);
 });

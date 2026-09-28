@@ -11,6 +11,17 @@ def normalize(value: str) -> str:
     return re.sub(r"\s+", " ", "".join(c for c in raw if unicodedata.category(c) != "Mn").replace("đ", "d")).strip()
 
 
+_DISCOURSE_SUFFIX = re.compile(
+    r"(?:[,\s.!?]+(?:á\s+bạn|ạ\s+bạn|bạn\s+ơi|nha\s+bạn|nhé\s+bạn|giúp\s+mình\s+với|á|ạ|nhé|nha|đi))+$",
+    re.IGNORECASE,
+)
+
+
+def clean_location_clause(value: str) -> str:
+    """Remove trailing chat particles without altering an administrative name."""
+    return _DISCOURSE_SUFFIX.sub("", str(value or "").strip()).strip(" ,.!?\t\r\n")
+
+
 def locality_matches(address: str, requested: str) -> bool:
     """Match a complete administrative component, including P./Q. aliases."""
     prefix = r"^(?:phuong|xa|quan|huyen|tinh|thanh pho|tp|p|q|h)\.?\s+"
@@ -23,6 +34,20 @@ def locality_matches(address: str, requested: str) -> bool:
         if bare == area or value == area:
             return True
     return False
+
+
+def infer_city_from_addresses(requested: str, addresses: list[str]) -> tuple[str | None, bool]:
+    """Return a city only when exact locality matches agree on one city."""
+    cities: dict[str, str] = {}
+    for address in addresses:
+        if not locality_matches(address, requested):
+            continue
+        for component in str(address or "").split(","):
+            city = component.strip()
+            if re.match(r"^(?:thành phố|tp\.?|tỉnh)\s+", city, re.IGNORECASE):
+                key = re.sub(r"^(?:thanh pho|tp\.?|tinh)\s+", "", normalize(city))
+                cities[key] = city
+    return (next(iter(cities.values())), False) if len(cities) == 1 else (None, len(cities) > 1)
 
 
 @dataclass(frozen=True)
@@ -99,7 +124,8 @@ def parse_location(message: str) -> Location:
     else:
         raw = _PREFIX.sub("", raw)
     raw = re.sub(r"^(?:gần|ở|tại|quanh|khu(?:\s+vực)?|bên|địa\s+chỉ\s+này)\s*", "", raw, flags=re.IGNORECASE)
-    raw = re.sub(r"\s+(?:có\s+không|không|ko|k|đi|nhé|nha|giúp\s+(?:tôi|mình))$", "", raw, flags=re.IGNORECASE).strip(" ,")
+    raw = re.sub(r"\s+(?:có\s+không|không|ko|k|giúp\s+(?:tôi|mình))$", "", raw, flags=re.IGNORECASE).strip(" ,")
+    raw = clean_location_clause(raw)
     parts = [_admin_component(part.strip()) for part in raw.split(",") if part.strip()]
     value = ", ".join(parts)
     if _HOUSE.match(parts[0]) if parts else False:

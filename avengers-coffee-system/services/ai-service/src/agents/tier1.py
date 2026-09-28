@@ -145,14 +145,15 @@ def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict
         return {"intent": "SELECT_FULFILLMENT"}
     cart_words = bool(re.search(r"\b(gio|giohang|mon|topping|toping|size|so luong|sl|da|ngot)\b", norm))
     order_words = bool(re.search(r"\b(don hang|madon|ma don|don da dat|lich su)\b", norm))
-    quantity = re.search(r"(?:so luong|sl|ve|con)\s*(?:la|lai)?\s*(\d+)", norm)
+    quantity = re.search(r"(?:so luong|sl|ve|con|len|thanh|de)\s*(?:la|lai)?\s*(\d+)", norm)
+    absolute_change = bool(re.search(r"\b(?:len|thanh|de|con|tang len|doi|sua|chinh)\b.*\b\d+\s*(?:cai|ly|phan|mon)?\b", norm))
     add_quantity = (
         re.search(r"(?:so luong|sl)\s*(?:la)?\s*(\d+)", norm)
         or re.search(r"\b(\d+)\s*(?:cai|ly|phan|mon)\b", norm)
         or re.search(r"\bthem\s+(\d+)\b", norm)
     )
     ordinal_selection = bool(re.search(
-        r"\b(?:nuoc|do uong|banh|do an|mon|san pham|sp)\s*(?:so|thu|#)\s*\d+\b",
+        r"\b(?:nuoc|do uong|banh|do an|mon|san pham|sp)\s*(?:[a-z]{1,3}\s*)?\d+\b",
         norm,
     ))
     selection_request = bool(re.search(r"\b(?:cho toi|chon|lay|them|mua|dat)\b", norm))
@@ -181,6 +182,10 @@ def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict
             "intent": "ADD_ITEM",
             "quantity": int(add_quantity.group(1)) if add_quantity else 1,
         }
+    if absolute_change and not ordinal_selection and not order_words:
+        amount = quantity or add_quantity
+        if amount:
+            return {"intent": "SET_QUANTITY", "quantity": int(amount.group(1))}
     # Addition must win over quantity editing.  In Vietnamese, customers often
     # say “thêm món này, số lượng 2”; treating that as SET_QUANTITY mutates the
     # previously focused cart row instead of adding the referenced product.
