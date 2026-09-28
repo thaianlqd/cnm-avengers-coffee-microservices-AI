@@ -39,7 +39,8 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
                            min_price: Optional[float] = None, min_price_inclusive: bool = True,
                            max_price: Optional[float] = None, max_price_inclusive: bool = True,
                            search_text: Optional[str] = None, sort_by: str = "price_asc",
-                           limit: int = 16) -> Dict[str, Any]:
+                           limit: int = 16, constraint_type: Optional[str] = None,
+                           approx_price: Optional[int] = None) -> Dict[str, Any]:
     import os
     if category not in {"all", "drink", "food"} or sellable_scope not in {"normal", "topping"}:
         return {"status": "error", "message": "Bộ lọc danh mục không hợp lệ."}
@@ -78,9 +79,11 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
                     FROM ancestors WHERE ma_danh_muc_cha IS NULL ORDER BY leaf_id, depth DESC
                 )
                 SELECT sp.ma_san_pham::text AS product_id, sp.ten_san_pham AS product_name,
+                       sp.hinh_anh_url,
                        sp.gia_ban AS final_price, dm.ten_danh_muc AS category,
                        roots.root_name AS parent_category,
-                       CASE WHEN roots.root_name = ANY(:drink_roots) THEN 'drink'
+                       CASE WHEN LOWER(dm.ten_danh_muc) = 'topping' THEN 'topping'
+                            WHEN roots.root_name = ANY(:drink_roots) THEN 'drink'
                             WHEN roots.root_name = ANY(:food_roots) THEN 'food'
                             ELSE 'unknown' END AS menu_bucket
                 FROM {menu_schema}.san_pham sp

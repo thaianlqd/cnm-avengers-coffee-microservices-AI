@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
 import { apiClient } from '../lib/apiClient';
-import { openChatProductDetail, addChatProduct, paymentCardRows, chatLoadingLabel, refreshWalletAfterCheckout, structuredLegacyCards } from './chatWidgetActions';
+import { openChatProductDetail, addChatProduct, branchDistanceLabel, paymentCardRows, chatLoadingLabel, refreshWalletAfterCheckout, structuredLegacyCards } from './chatWidgetActions';
 
 // ─── Utilities & Formatters ──────────────────────────────────────────────────
 const fmtVND = (n) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
@@ -242,7 +242,7 @@ function ProductCard({ p, onAdd, resolvePrice }) {
       onMouseLeave={() => setHover(false)}
     >
       {p.hinh_anh_url ? (
-        <img src={p.hinh_anh_url} alt={p.ten_san_pham} style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10, flexShrink: 0, border: '1px solid #FFEBEB' }} />
+        <img src={p.hinh_anh_url} alt={productName} style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10, flexShrink: 0, border: '1px solid #FFEBEB' }} />
       ) : (
         <div style={{ width: 52, height: 52, borderRadius: 10, flexShrink: 0, background: '#FFF0F0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F08080" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
@@ -308,7 +308,7 @@ function StoreCard({ b }) {
         <div style={{ flex: 1 }}>
           <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#2D3748' }}>{b.ten_chi_nhanh || b.branch_name}</p>
           <p style={{ margin: '3px 0 0', fontSize: '0.7rem', color: '#718096', lineHeight: 1.4 }}>{b.dia_chi || b.address}</p>
-          {b.khoang_cach_km != null && <p style={{ margin: '3px 0 0', fontSize: '0.68rem', color: '#718096' }}>{b.khoang_cach_km} km đường chim bay</p>}
+          {branchDistanceLabel(b) && <p style={{ margin: '3px 0 0', fontSize: '0.68rem', color: '#718096' }}>{branchDistanceLabel(b)}</p>}
           {statusText && <p style={{ margin: '4px 0 0', fontSize: '0.68rem', color: isAvailable ? '#15803D' : '#DC2626', fontWeight: 800 }}>{statusText}</p>}
           {b.gio_mo_cua && <p style={{ margin: '3px 0 0', fontSize: '0.68rem', color: '#F08080', fontWeight: 700 }}>Giờ mở cửa: {b.gio_mo_cua} – {b.gio_dong_cua}</p>}
         </div>

@@ -196,14 +196,20 @@ describe('Order API (e2e)', () => {
     }
   });
 
-  it('expires an abandoned payment hold and releases its voucher reservation', async () => {
+  it('expires an abandoned hold and safely reacquires a still available voucher once', async () => {
     const schema = dataSource.driver.escape(process.env.DB_SCHEMA || 'orders');
     const heldOrderId = randomUUID();
+    const code = `CI_LATE_${Date.now()}`;
+    await dataSource.query(
+      `INSERT INTO ${schema}.voucher (ma_voucher, gia_tri, loai_phan_phoi, luot_da_dung, tong_luot_dung)
+       VALUES ($1, 10000, 'PUBLIC', 0, 1)`,
+      [code],
+    );
     await dataSource.query(
       `INSERT INTO ${schema}.wallet_voucher_claim_outbox
        (order_id, customer_id, voucher_code, discount_amount, status, created_at)
-       VALUES ($1, $2, 'CI_HOLD', 10000, 'WAITING_PAYMENT', now() - interval '40 minutes')`,
-      [heldOrderId, customerId],
+       VALUES ($1, $2, $3, 10000, 'WAITING_PAYMENT', now() - interval '40 minutes')`,
+      [heldOrderId, customerId, code],
     );
     const outbox = app.get(WalletVoucherClaimOutboxService);
     await outbox.processPending();
@@ -212,11 +218,91 @@ describe('Order API (e2e)', () => {
       [heldOrderId],
     );
     expect(expiredRows[0].status).toBe('EXPIRED');
-    await outbox.markReady(heldOrderId);
+    const claim = jest
+      .spyOn(app.get(VoucherService), 'claimIdentityVoucher')
+      .mockResolvedValue(undefined);
+    try {
+      expect(await outbox.markReady(heldOrderId)).toBe(true);
+      expect(await outbox.markReady(heldOrderId)).toBe(true);
+      await outbox.processPending();
+      expect(claim).toHaveBeenCalledTimes(1);
+    } finally {
+      claim.mockRestore();
+    }
     const resumedRows = await dataSource.query<Array<{ status: string }>>(
       `SELECT status FROM ${schema}.wallet_voucher_claim_outbox WHERE order_id = $1`,
       [heldOrderId],
     );
-    expect(resumedRows[0].status).toBe('PENDING');
+    expect(resumedRows[0].status).toBe('DONE');
+    const [voucher] = await dataSource.query<Array<{ luot_da_dung: number }>>(
+      `SELECT luot_da_dung FROM ${schema}.voucher WHERE ma_voucher = $1`,
+      [code],
+    );
+    expect(voucher.luot_da_dung).toBe(1);
+  });
+
+  it('does not revive an expired hold after another order used the last voucher', async () => {
+    const schema = dataSource.driver.escape(process.env.DB_SCHEMA || 'orders');
+    const heldOrderId = randomUUID();
+    const code = `CI_SPENT_${Date.now()}`;
+    await dataSource.query(
+      `INSERT INTO ${schema}.voucher (ma_voucher, gia_tri, loai_phan_phoi, luot_da_dung, tong_luot_dung)
+       VALUES ($1, 10000, 'PUBLIC', 1, 1)`,
+      [code],
+    );
+    await dataSource.query(
+      `INSERT INTO ${schema}.wallet_voucher_claim_outbox
+       (order_id, customer_id, voucher_code, discount_amount, status, created_at)
+       VALUES ($1, $2, $3, 10000, 'EXPIRED', now() - interval '40 minutes')`,
+      [heldOrderId, customerId, code],
+    );
+    const outbox = app.get(WalletVoucherClaimOutboxService);
+    const claim = jest.spyOn(app.get(VoucherService), 'claimIdentityVoucher');
+    try {
+      expect(await outbox.markReady(heldOrderId)).toBe(false);
+      expect(await outbox.markReady(heldOrderId)).toBe(false);
+      expect(claim).not.toHaveBeenCalled();
+    } finally {
+      claim.mockRestore();
+    }
+    const [row] = await dataSource.query<Array<{ status: string }>>(
+      `SELECT status FROM ${schema}.wallet_voucher_claim_outbox WHERE order_id = $1`,
+      [heldOrderId],
+    );
+    expect(row.status).toBe('NEEDS_RECONCILIATION');
+  });
+
+  it('promotes a fresh payment hold and the worker claims it once', async () => {
+    const schema = dataSource.driver.escape(process.env.DB_SCHEMA || 'orders');
+    const heldOrderId = randomUUID();
+    const code = `CI_FRESH_${Date.now()}`;
+    await dataSource.query(
+      `INSERT INTO ${schema}.voucher (ma_voucher, gia_tri, loai_phan_phoi, luot_da_dung)
+       VALUES ($1, 10000, 'PUBLIC', 0)`,
+      [code],
+    );
+    await dataSource.query(
+      `INSERT INTO ${schema}.wallet_voucher_claim_outbox
+       (order_id, customer_id, voucher_code, discount_amount, status)
+       VALUES ($1, $2, $3, 10000, 'WAITING_PAYMENT')`,
+      [heldOrderId, customerId, code],
+    );
+    const outbox = app.get(WalletVoucherClaimOutboxService);
+    const claim = jest
+      .spyOn(app.get(VoucherService), 'claimIdentityVoucher')
+      .mockResolvedValue(undefined);
+    try {
+      expect(await outbox.markReady(heldOrderId)).toBe(true);
+      await outbox.processPending();
+      await outbox.processPending();
+      expect(claim).toHaveBeenCalledTimes(1);
+    } finally {
+      claim.mockRestore();
+    }
+    const [row] = await dataSource.query<Array<{ status: string }>>(
+      `SELECT status FROM ${schema}.wallet_voucher_claim_outbox WHERE order_id = $1`,
+      [heldOrderId],
+    );
+    expect(row.status).toBe('DONE');
   });
 });

@@ -2447,11 +2447,6 @@ export class ThanhToanService {
     const giaoDich = await this.giaoDichRepo.findOne({ where: { ma_tham_chieu: query.vnp_TxnRef } });
     if (!giaoDich) return { RspCode: '01', Message: 'Order not found' };
     if (giaoDich.trang_thai === 'THANH_CONG') {
-      const paidOrder = await this.donHangRepo.findOne({ where: { ma_don_hang: giaoDich.ma_don_hang } });
-      if (paidOrder?.ma_voucher) {
-        await this.walletVoucherClaims.markReady(giaoDich.ma_don_hang);
-        void this.walletVoucherClaims.processPending();
-      }
       return { RspCode: '02', Message: 'Order already confirmed' };
     }
 
@@ -2460,7 +2455,26 @@ export class ThanhToanService {
     if (soTienVnpay !== soTienHeThong) return { RspCode: '04', Message: 'Invalid amount' };
 
     if (query.vnp_ResponseCode === '00') {
+      const paidOrder = await this.donHangRepo.findOne({
+        where: { ma_don_hang: giaoDich.ma_don_hang },
+      });
+      const voucherReady =
+        !paidOrder?.ma_voucher ||
+        (await this.walletVoucherClaims.markReady(giaoDich.ma_don_hang));
       giaoDich.trang_thai = 'THANH_CONG';
+      if (!voucherReady) {
+        await this.capNhatTrangThaiDonHangHeThong(giaoDich.ma_don_hang, {
+          trang_thai_thanh_toan: 'CAN_DOI_SOAT',
+          trang_thai_don_hang: 'CHO_XU_LY',
+          ghi_chu:
+            'Thanh toan den muon; voucher can doi soat truoc khi xac nhan don',
+        });
+        await this.giaoDichRepo.save(giaoDich);
+        return {
+          RspCode: '00',
+          Message: 'Payment received; voucher reconciliation required',
+        };
+      }
       await this.capNhatTrangThaiDonHangHeThong(giaoDich.ma_don_hang, {
         trang_thai_thanh_toan: 'DA_THANH_TOAN',
         trang_thai_don_hang: 'DA_XAC_NHAN',
@@ -2468,10 +2482,7 @@ export class ThanhToanService {
       });
       const donHang = await this.donHangRepo.findOne({ where: { ma_don_hang: giaoDich.ma_don_hang } });
       if (donHang) {
-        if (donHang.ma_voucher) {
-          await this.walletVoucherClaims.markReady(donHang.ma_don_hang);
-          void this.walletVoucherClaims.processPending();
-        }
+        if (donHang.ma_voucher) void this.walletVoucherClaims.processPending();
         const promises: Promise<any>[] = [];
         if (donHang.ma_nguoi_dung) {
           promises.push(
@@ -2557,19 +2568,29 @@ export class ThanhToanService {
     }
     if (!giaoDich) return { success: true };
     if (giaoDich.trang_thai === 'THANH_CONG') {
-      const paidOrder = await this.donHangRepo.findOne({ where: { ma_don_hang: giaoDich.ma_don_hang } });
-      if (paidOrder?.ma_voucher) {
-        await this.walletVoucherClaims.markReady(giaoDich.ma_don_hang);
-        void this.walletVoucherClaims.processPending();
-      }
       return { success: true };
     }
 
     if (Number(giaoDich.so_tien) === Number(payload.transferAmount)) {
+      const paidOrder = await this.donHangRepo.findOne({
+        where: { ma_don_hang: giaoDich.ma_don_hang },
+      });
+      const voucherReady =
+        !paidOrder?.ma_voucher ||
+        (await this.walletVoucherClaims.markReady(giaoDich.ma_don_hang));
       giaoDich.trang_thai = 'THANH_CONG';
       giaoDich.ma_giao_dich_cong = payload.referenceCode ?? null;
       giaoDich.du_lieu_tho = rawBody?.slice(0, 4000) ?? null;
       await this.giaoDichRepo.save(giaoDich);
+      if (!voucherReady) {
+        await this.capNhatTrangThaiDonHangHeThong(giaoDich.ma_don_hang, {
+          trang_thai_thanh_toan: 'CAN_DOI_SOAT',
+          trang_thai_don_hang: 'CHO_XU_LY',
+          ghi_chu:
+            'Thanh toan den muon; voucher can doi soat truoc khi xac nhan don',
+        });
+        return { success: true, reconciliation_required: true };
+      }
       await this.capNhatTrangThaiDonHangHeThong(giaoDich.ma_don_hang, {
         trang_thai_thanh_toan: 'DA_THANH_TOAN',
         trang_thai_don_hang: 'DA_XAC_NHAN',
@@ -2577,10 +2598,7 @@ export class ThanhToanService {
       });
       const donHang = await this.donHangRepo.findOne({ where: { ma_don_hang: giaoDich.ma_don_hang } });
       if (donHang) {
-        if (donHang.ma_voucher) {
-          await this.walletVoucherClaims.markReady(donHang.ma_don_hang);
-          void this.walletVoucherClaims.processPending();
-        }
+        if (donHang.ma_voucher) void this.walletVoucherClaims.processPending();
         const promises: Promise<any>[] = [];
         if (donHang.ma_nguoi_dung) {
           promises.push(

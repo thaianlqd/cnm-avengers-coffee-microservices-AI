@@ -11,6 +11,13 @@ export function addChatProduct(event, onAdd, product) {
   });
 }
 
+export function branchDistanceLabel(branch) {
+  if (branch?.khoang_cach_km == null) return null;
+  return branch.distance_estimated || branch.distance_basis === 'area_centroid'
+    ? `${branch.khoang_cach_km} km đường chim bay, ước tính theo khu vực`
+    : `${branch.khoang_cach_km} km đường chim bay`;
+}
+
 export function paymentCardRows(options) {
   return options.map((option) => ({
     name: option.label,
