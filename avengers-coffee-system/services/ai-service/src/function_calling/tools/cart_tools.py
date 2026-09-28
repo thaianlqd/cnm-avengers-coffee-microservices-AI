@@ -187,6 +187,35 @@ def _quote_authoritative_cart(session_id: str, voucher_code: Optional[str] = Non
     response.raise_for_status()
     return response.json()
 
+
+def get_wallet_payment_options(session_id: str, final_total: Optional[float] = None) -> Dict[str, Any]:
+    """Read the canonical Order Service wallet; no conversational balance cache."""
+    from src.function_calling.helpers import _get_service_jwt, _require_valid_session
+    uid = _require_valid_session(_customer_session_id(session_id))
+    options = [
+        {"code": "VNPAY", "label": "VNPAY", "enabled": True},
+        {"code": "NGAN_HANG_QR", "label": "Chuyển khoản QR", "enabled": True},
+        {"code": "THANH_TOAN_KHI_NHAN_HANG", "label": "Tiền mặt (COD)", "enabled": True},
+    ]
+    wallet = {"code": "VI_DIEN_TU", "label": "Ví Avengers", "enabled": False,
+              "insufficient": False, "balance": None}
+    if not uid:
+        wallet["reason"] = "Đăng nhập để dùng Ví Avengers"
+    else:
+        try:
+            response = _order_service_request("GET", f"/customers/{uid}/wallet", _get_service_jwt(uid))
+            response.raise_for_status()
+            balance = float((response.json().get("wallet") or {}).get("balance") or 0)
+            wallet["balance"] = balance
+            wallet["insufficient"] = final_total is not None and balance < final_total
+            wallet["enabled"] = not wallet["insufficient"]
+            if wallet["insufficient"]:
+                wallet["reason"] = f"Số dư {balance:,.0f}đ; cần {final_total:,.0f}đ để thanh toán".replace(",", ".")
+        except Exception:
+            wallet["reason"] = "Chưa xác minh được số dư ví, vui lòng thử lại"
+    options.append(wallet)
+    return {"payment_options": options, "wallet_balance": wallet["balance"]}
+
 TOOL_ADD_TO_CART = {
     "type": "function",
     "function": {
@@ -862,6 +891,16 @@ def execute_request_checkout(
     delivery_fee = float((quote or {}).get("delivery_fee") or 0) if delivery_type == "GIAO_TAN_NOI" else 0
     if delivery_type == "GIAO_TAN_NOI" and quote is None:
         return {"status": "quote_error", "message": "Chưa xác minh được phí giao hàng từ Order Service."}
+
+    if payment_method == "VI_DIEN_TU":
+        payment_options = get_wallet_payment_options(session_id, final_total)["payment_options"]
+        wallet = payment_options[-1]
+        if not wallet["enabled"]:
+            cart_manager.set_checkout_context(session_id, payment_method=None)
+            return {"status": "insufficient_wallet", "message": (
+                wallet.get("reason") or "Ví Avengers chưa sẵn sàng thanh toán."
+            ) + " Bạn chọn phương thức thanh toán khác nhé.",
+                "payment_options": payment_options}
 
     # Store the authoritative amounts for later confirmation.
     cart_manager.set_checkout_context(session_id, summary_amounts={"subtotal": total, "discount_amount": discount_amount, "delivery_fee": delivery_fee, "final_total": final_total})

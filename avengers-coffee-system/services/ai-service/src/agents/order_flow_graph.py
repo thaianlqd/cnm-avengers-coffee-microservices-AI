@@ -49,15 +49,15 @@ def _norm(value: Any) -> str:
     return "".join(c for c in raw if unicodedata.category(c) != "Mn").replace("đ", "d")
 
 
-def _map_db_category_to_bucket(raw_category: Any) -> str:
-    normalized = _norm(raw_category)
+def _map_db_category_to_bucket(raw_category: Any, parent_category: Any = None) -> str:
+    normalized = _norm(parent_category or raw_category)
     if normalized in {"food", "drink"}:
         return normalized
     if any(_norm(keyword) in normalized for keyword in _FOOD_KEYWORDS):
         return "food"
     if any(_norm(keyword) in normalized for keyword in _DRINK_KEYWORDS):
         return "drink"
-    return "food"
+    return "unknown"
 
 
 def _menu_search_specs(message: str) -> List[Dict[str, str]]:
@@ -175,18 +175,23 @@ def _search_menu_catalog(message: str) -> Optional[Dict[str, Any]]:
 
     merged: List[Dict[str, Any]] = []
     seen: set[str] = set()
+    bucket_counts: Dict[str, int] = {}
     missing: List[str] = []
     query_debug: List[Dict[str, Any]] = []
     rendered_groups: List[tuple[Dict[str, str], List[Dict[str, Any]], Dict[str, Any]]] = []
     for spec in specs:
-        top_k = 10 if not spec.get("search_text") else 6
+        top_k = 8 if len(specs) > 1 else (10 if not spec.get("search_text") else 8)
         found = execute_get_recommendations(
             category=spec["category"],
             search_text=spec.get("search_text"),
             top_k=top_k,
         )
         query_debug.append({**spec, "status": found.get("status")})
-        products = list(found.get("products") or []) if found.get("status") == "ok" else []
+        products = [
+            {**product, "menu_bucket": (spec["category"] if spec["category"] in {"food", "drink"}
+                else _map_db_category_to_bucket(product.get("category"), product.get("parent_category")))}
+            for product in (found.get("products") or [])[:top_k]
+        ] if found.get("status") == "ok" else []
         if not products:
             missing.append(spec["label"])
             continue
@@ -195,10 +200,14 @@ def _search_menu_catalog(message: str) -> Optional[Dict[str, Any]]:
             identity = str(product.get("product_id") or "").strip() or _norm(product.get("product_name"))
             if not identity or identity in seen:
                 continue
+            bucket = product["menu_bucket"]
+            if bucket_counts.get(bucket, 0) >= 8:
+                continue
             seen.add(identity)
             merged.append(product)
+            bucket_counts[bucket] = bucket_counts.get(bucket, 0) + 1
 
-    merged = merged[:12]
+    merged = merged[:16]
     result = {
         "status": "ok" if merged else "not_found",
         "products": merged,
@@ -389,8 +398,9 @@ def _resolve_structured_references(session_id: str, message: str) -> Optional[Li
         ("drink", r"(?:nuoc|do uong)"),
         ("food", r"(?:banh|do an)"),
     )
-    for category, keyword in patterns:
-        match = re.search(rf"\b{keyword}\s*(?:(?:so|thu|#)\s*)?(\d+)\b", text)
+    ordinal_matches = sorted((match.start(), category, match) for category, keyword in patterns
+                             if (match := re.search(rf"\b{keyword}\s*(?:(?:so|thu|#)\s*)?(\d+)\b", text)))
+    for _position, category, match in ordinal_matches:
         candidates = list(snapshots.get(category) or [])
         if match:
             index = int(match.group(1)) - 1
@@ -1037,7 +1047,9 @@ def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
     if branches:
         lines = [f"Các cửa hàng gần {location}:"]
         for index, branch in enumerate(branches[:5], 1):
-            lines.append(f"{index}. {branch.get('ten_chi_nhanh')} — {branch.get('dia_chi') or 'chưa có địa chỉ'} ({branch.get('khoang_cach_km')} km đường chim bay)")
+            distance = (f" ({branch['khoang_cach_km']} km đường chim bay)"
+                        if branch.get("khoang_cach_km") is not None else "")
+            lines.append(f"{index}. {branch.get('ten_chi_nhanh')} — {branch.get('dia_chi') or 'chưa có địa chỉ'}{distance}")
         return reply("\n".join(lines), logs)
     if found.get("status") == "not_found":
         return reply("Mình chưa xác định được khu vực này trên bản đồ. Bạn cho mình thêm quận/huyện và tỉnh/thành phố nhé.", logs)
@@ -1054,13 +1066,14 @@ def _load_active_product_targets() -> List[Dict[str, Any]]:
     try:
         with _get_engine().connect() as conn:
             rows = conn.execute(text(f"""
-                SELECT sp.ma_san_pham::text, sp.ten_san_pham, dm.ten_danh_muc
+                SELECT sp.ma_san_pham::text, sp.ten_san_pham, dm.ten_danh_muc, parent.ten_danh_muc
                 FROM {schema}.san_pham sp
                 LEFT JOIN {schema}.danh_muc dm ON dm.ma_danh_muc = sp.ma_danh_muc
+                LEFT JOIN {schema}.danh_muc parent ON parent.ma_danh_muc = dm.ma_danh_muc_cha
                 WHERE sp.trang_thai = TRUE
             """)).fetchall()
         return [{"product_id": row[0], "product_name": row[1],
-                 "category": _map_db_category_to_bucket(row[2])} for row in rows]
+                 "category": _map_db_category_to_bucket(row[2], row[3])} for row in rows]
     except Exception:
         return []
 
@@ -1121,6 +1134,31 @@ def _resolve_ask_more_targets(session_id: str, message: str) -> List[Dict[str, A
     )]
 
 
+def _resolve_focused_add_target(session_id: str, message: str) -> Optional[Dict[str, Any]]:
+    """Resolve an elliptical add only against a previously focused canonical item."""
+    focus = cart_manager.get_checkout_prefs(session_id).get("last_product_focus") or {}
+    if not focus.get("product_id") or not focus.get("product_name"):
+        return None
+    text = _norm(message)
+    action = re.search(r"\b(?:them|lay|mua|chon|dat)\b", text)
+    if not action or re.search(r"\b(?:xem|goi y|tim)\s+them\b", text):
+        return None
+    if re.search(r"\bđồ\b", message.lower()):
+        return None
+    tail = text[action.end():]
+    refers_back = bool(re.search(r"\b(?:luon|nay|kia|vua noi|vua xem)\b|\bvao gio\b", tail)
+                       or re.search(r"\bđó\b", message.lower()))
+    if not refers_back:
+        return None
+    remaining = re.sub(
+        r"\b(?:luon|mon|cai|san pham|nay|do|kia|vua|noi|xem|vao|gio|cho|toi|minh|di|nhe|nha|voi|a|oi|the|vay|cung|duoc|oke|ok|roi)\b",
+        " ", tail,
+    )
+    if remaining.strip():
+        return None
+    return focus
+
+
 def _category_search_message(message: str) -> Optional[str]:
     """Locate a menu family within a shopping sentence; use the existing catalog parser."""
     if _menu_search_specs(message):
@@ -1140,6 +1178,9 @@ def _shopping_decision(state: OrderConversationState, tier1_intent: Dict[str, An
     from src.agents.pending_context import classify_pending_reply, looks_like_catalog_query
     message, session_id = state["user_message"], state["session_id"]
     refs = _resolve_ask_more_targets(session_id, message)
+    if not refs:
+        focused = _resolve_focused_add_target(session_id, message)
+        refs = [focused] if focused else []
     category_query = _category_search_message(message)
     question = bool(re.search(r"\b(?:co|xem|tim|goi y|menu|thuc don)\b", _norm(message)))
     if category_query and (question or not refs):
@@ -1241,6 +1282,9 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
             return {**state, "intent": intent}
         from src.agents.pending_context import looks_like_catalog_query
         refs = _resolve_ask_more_targets(state["session_id"], state["user_message"])
+        if not refs:
+            focused = _resolve_focused_add_target(state["session_id"], state["user_message"])
+            refs = [focused] if focused else []
         evidence = {"has_resolved_product_target": bool(refs),
                     "has_resolved_ordinal": bool(refs and re.search(r"\b(?:so|thu|#)\s*\d+\b", _norm(state["user_message"]))),
                     "looks_like_catalog_query": looks_like_catalog_query(state["user_message"])}
@@ -1594,7 +1638,9 @@ def _render(state: OrderConversationState) -> OrderConversationState:
         vouchers.extend(value.get("vouchers", []))
         if entry.get("tool") == "get_recommendations":
             category = str((entry.get("args") or {}).get("category") or "")
-            recommendation_products.extend({**item, "category": item.get("category") or category}
+            recommendation_products.extend({**item,
+                "menu_bucket": item.get("menu_bucket") or (category if category in {"food", "drink"}
+                    else _map_db_category_to_bucket(item.get("category"), item.get("parent_category")))}
                                            for item in value.get("products", []))
         else:
             products.extend(value.get("products", []))
@@ -1606,7 +1652,7 @@ def _render(state: OrderConversationState) -> OrderConversationState:
                     price_focus = {
                         "product_id": item.get("product_id"),
                         "product_name": item.get("product_name"),
-                        "category": _map_db_category_to_bucket(item.get("category")),
+                        "category": _map_db_category_to_bucket(item.get("category"), item.get("parent_category")),
                     }
                     cart_manager.set_checkout_context(
                         state["session_id"],
@@ -1621,22 +1667,30 @@ def _render(state: OrderConversationState) -> OrderConversationState:
     if recommendation_products:
         displayed: List[Dict[str, Any]] = []
         seen_ids: set[str] = set()
+        displayed_counts: Dict[str, int] = {}
         for item in recommendation_products:
             product_id = str(item.get("product_id") or "").strip()
             if not product_id or product_id in seen_ids:
                 continue
+            bucket = item.get("menu_bucket") or "unknown"
+            if displayed_counts.get(bucket, 0) >= 8:
+                continue
             seen_ids.add(product_id)
             displayed.append(item)
-            if len(displayed) == 12:
+            displayed_counts[bucket] = displayed_counts.get(bucket, 0) + 1
+            if len(displayed) == 16:
                 break
-        if { _map_db_category_to_bucket(item.get("category")) for item in displayed } == {"food", "drink"}:
-            displayed = [item for bucket in ("food", "drink") for item in displayed
-                         if _map_db_category_to_bucket(item.get("category")) == bucket]
+        if {item.get("menu_bucket") for item in displayed} >= {"food", "drink"}:
+            displayed = [item for bucket in ("food", "drink", "unknown") for item in displayed
+                         if item.get("menu_bucket") == bucket]
         snapshot = [{"product_id": item["product_id"],
                      "product_name": item.get("product_name"),
-                     "category": _map_db_category_to_bucket(item.get("category")),
+                     "category": item.get("menu_bucket") or "unknown",
+                     "menu_bucket": item.get("menu_bucket") or "unknown",
                      "final_price": item.get("final_price")}
                     for item in displayed]
+        for index, item in enumerate(displayed, 1):
+            item["display_index"] = index
         cart_manager.set_checkout_context(
             state["session_id"], last_product_suggestions=snapshot,
             product_suggestion_snapshots={}, product_suggestion_mode="flat",
@@ -1645,12 +1699,13 @@ def _render(state: OrderConversationState) -> OrderConversationState:
         products = displayed
         if displayed:
             lines = ["Món chưa được thêm vào giỏ. Mình tìm thấy các món sau:"]
-            mixed = {item["category"] for item in snapshot} == {"food", "drink"}
+            mixed = {item["category"] for item in snapshot} >= {"food", "drink"}
             current_bucket = None
             for index, item in enumerate(displayed, 1):
-                bucket = _map_db_category_to_bucket(item.get("category"))
+                bucket = item.get("menu_bucket") or "unknown"
                 if mixed and bucket != current_bucket:
-                    lines.append("\nBánh & đồ ăn:" if bucket == "food" else "\nĐồ uống:")
+                    lines.append({"food": "\n**Bánh & đồ ăn:**", "drink": "\n**Đồ uống:**",
+                                  "unknown": "\n**Các món khác:**"}[bucket])
                     current_bucket = bucket
                 price = f"{float(item.get('final_price') or 0):,.0f}".replace(",", ".")
                 lines.append(f"{index}. {item.get('product_name')} - {price}đ")
@@ -1727,7 +1782,14 @@ def _render(state: OrderConversationState) -> OrderConversationState:
         result["reply"] = str(result.get("reply") or "") + f"\nMã {invalidated} không còn đủ điều kiện cho giỏ hiện tại; mình đã bỏ giảm giá cũ."
         logs.append({"tool": "remove_voucher", "result": {"status": "ok", "voucher_code": invalidated}})
         cart_manager.set_checkout_context(state["session_id"], voucher_invalidated=None)
-    result["ui_payload"] = {"cart": canonical_cart, "products": products[:12], "vouchers": vouchers[:4] if prefs.get("voucher_offer_pending") and not result.get("checkout_payload") else [], "branches": branches[:5], "actions": []}
+    payment_ui: Dict[str, Any] = {}
+    if prefs.get("checkout_requested") or prefs.get("flow_stage") in {"PAYMENT", "SUMMARY"} or result.get("checkout_payload"):
+        from src.function_calling.tools.cart_tools import get_wallet_payment_options
+        amounts = prefs.get("summary_amounts") or {}
+        payment_ui = get_wallet_payment_options(state["session_id"], amounts.get("final_total"))
+    if result.get("payment_options"):
+        payment_ui["payment_options"] = result["payment_options"]
+    result["ui_payload"] = {"cart": canonical_cart, "products": products[:16], "vouchers": vouchers[:4] if prefs.get("voucher_offer_pending") and not result.get("checkout_payload") else [], "branches": branches[:5], "actions": [], **payment_ui}
     return {**state, "result": result}
 
 
@@ -1754,7 +1816,7 @@ def _sanitize_replay_result(result: Dict[str, Any]) -> Dict[str, Any]:
     if result.get("gate"):
         compact["gate"] = result["gate"]
     card_fields = {
-        "products": (12, ("product_id", "product_name", "ten_san_pham", "category", "danh_muc", "final_price", "gia_ban", "hinh_anh_url")),
+        "products": (16, ("product_id", "product_name", "ten_san_pham", "category", "menu_bucket", "display_index", "danh_muc", "final_price", "gia_ban", "hinh_anh_url")),
         "branches": (5, ("ma_chi_nhanh", "branch_id", "ten_chi_nhanh", "branch_name", "dia_chi", "address", "khoang_cach_km", "availability_status", "unavailable_products", "gio_mo_cua", "gio_dong_cua")),
         "vouchers": (4, ("ma_voucher", "ma_khuyen_mai", "code", "ten_voucher", "ten_khuyen_mai", "name", "title", "loai_khuyen_mai", "loai_giam_gia", "loai", "gia_tri", "gia_tri_giam", "discount_value", "gia_tri_don_toi_thieu")),
     }
@@ -1765,6 +1827,11 @@ def _sanitize_replay_result(result: Dict[str, Any]) -> Dict[str, Any]:
             if ui.get(name):
                 compact_ui[name] = [{key: row[key] for key in keys if key in row}
                                     for row in ui[name][:limit] if isinstance(row, dict)]
+        if isinstance(ui.get("payment_options"), list):
+            compact_ui["payment_options"] = [{key: row[key] for key in ("code", "label", "balance", "enabled", "insufficient", "reason") if key in row}
+                                             for row in ui["payment_options"][:4] if isinstance(row, dict)]
+        if ui.get("wallet_balance") is not None:
+            compact_ui["wallet_balance"] = ui["wallet_balance"]
         cart = ui.get("cart") or {}
         if cart:
             prefs = cart.get("checkout_prefs") or {}

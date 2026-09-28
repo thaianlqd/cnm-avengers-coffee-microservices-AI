@@ -12,3 +12,8 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/20260926_cart_state_idempo
 Batch-1 runtime tables if they already exist. The runtime bootstrap remains only
 as a rollout compatibility safeguard; this directory is the canonical schema
 history.
+
+`20260928_wallet_payment_reference.sql` adds a partial unique index for wallet
+PAYMENT references. Apply it before enabling the transactional wallet checkout
+path; inspect and reconcile duplicate PAYMENT references first if the index
+reports a conflict.

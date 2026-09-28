@@ -163,9 +163,11 @@ def execute_check_price_and_stock(
                         sp.ten_san_pham,
                         sp.gia_ban,
                         sp.trang_thai AS is_active,
-                        dm.ten_danh_muc AS category
+                        dm.ten_danh_muc AS category,
+                        dm_cha.ten_danh_muc AS parent_category
                     FROM {menu_schema}.san_pham sp
                     LEFT JOIN {menu_schema}.danh_muc dm ON dm.ma_danh_muc = sp.ma_danh_muc
+                    LEFT JOIN {menu_schema}.danh_muc dm_cha ON dm_cha.ma_danh_muc = dm.ma_danh_muc_cha
                     WHERE sp.trang_thai = TRUE 
                       AND {conditions}
                     ORDER BY sp.la_hot DESC, sp.ten_san_pham ASC
@@ -200,9 +202,11 @@ def execute_check_price_and_stock(
                     f"""
                     SELECT sp.ma_san_pham::text AS product_id, sp.ten_san_pham,
                            sp.gia_ban, sp.trang_thai AS is_active,
-                           dm.ten_danh_muc AS category
+                           dm.ten_danh_muc AS category,
+                           dm_cha.ten_danh_muc AS parent_category
                     FROM {menu_schema}.san_pham sp
                     LEFT JOIN {menu_schema}.danh_muc dm ON dm.ma_danh_muc = sp.ma_danh_muc
+                    LEFT JOIN {menu_schema}.danh_muc dm_cha ON dm_cha.ma_danh_muc = dm.ma_danh_muc_cha
                     WHERE sp.trang_thai = TRUE AND {retry_conditions}
                     ORDER BY sp.la_hot DESC, sp.ten_san_pham ASC
                     LIMIT 10
@@ -300,6 +304,7 @@ def execute_check_price_and_stock(
                 "product_id": p["product_id"],
                 "product_name": p["ten_san_pham"],
                 "category": p.get("category"),
+                "parent_category": p.get("parent_category"),
                 "base_price": base_price,
                 "size": size,
                 "size_surcharge": (final_price - base_price) if size_price is not None else 0.0,
@@ -614,9 +619,10 @@ def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "
                        sp.ten_san_pham AS product_name,
                        sp.gia_ban AS final_price,
                        sp.hinh_anh_url,
-                       dm.ten_danh_muc AS category
+                       dm.ten_danh_muc AS category,
+                       dm_cha.ten_danh_muc AS parent_category
                 FROM {menu_schema}.san_pham sp
-                LEFT JOIN {menu_schema}.danh_muc dm ON dm.ma_danh_muc = sp.ma_danh_muc
+                {category_join}
                 WHERE sp.ten_san_pham = ANY(:product_names)
             """), {"product_names": products}).mappings().all()
         product_by_name = {row["product_name"]: _clean_dict(dict(row)) for row in product_rows}

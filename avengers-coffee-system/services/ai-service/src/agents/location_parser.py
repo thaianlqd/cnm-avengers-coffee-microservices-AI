@@ -66,6 +66,10 @@ def parse_location(message: str) -> Location:
     raw = str(message or "").strip(" \t\r\n.!?")
     if not raw:
         return Location("none")
+    # A comma may introduce the store question after the actual locality.
+    # Keep only the location clause; never send the conversational request to
+    # the map provider as if it were a street name.
+    raw = re.split(r",\s*(?=(?:có|tìm|quán|cửa\s+hàng|chi\s+nhánh|địa\s+chỉ)\b)", raw, maxsplit=1, flags=re.IGNORECASE)[0]
     area_intro = bool(_PREFIX.match(raw)) or bool(re.match(r"^(?:gần|ở|tại|quanh|khu\s+vực)\b", raw, re.IGNORECASE))
     named_store = _NAMED_STORE_AT_AREA.match(raw)
     if named_store and _PRODUCT_TOPIC.search(raw[:named_store.start("area")]):

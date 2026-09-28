@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
 import { apiClient } from '../lib/apiClient';
+import { openChatProductDetail, addChatProduct, paymentCardRows, chatLoadingLabel, refreshWalletAfterCheckout } from './chatWidgetActions';
 
 // ─── Utilities & Formatters ──────────────────────────────────────────────────
 const fmtVND = (n) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
@@ -201,6 +203,8 @@ function ProductCard({ p, onAdd, resolvePrice }) {
   const [priceLoading, setPriceLoading] = useState(false);
   const [priceUnavailable, setPriceUnavailable] = useState(false);
   const productName = p.ten_san_pham || p.product_name || p.name;
+  const productId = p.product_id || p.ma_san_pham || p.id;
+  const openDetail = () => openChatProductDetail(productId);
   useEffect(() => {
     let active = true;
     // Product cards normally come from the canonical menu cache. Avoid one
@@ -226,6 +230,10 @@ function ProductCard({ p, onAdd, resolvePrice }) {
   const displayProduct = canonicalPrice == null ? p : { ...p, gia_ban: canonicalPrice };
   return (
     <div
+      role={productId == null ? undefined : 'button'}
+      tabIndex={productId == null ? undefined : 0}
+      onClick={openDetail}
+      onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openDetail(); } }}
       style={{
         display: 'flex', gap: 10, padding: '10px 12px',
         background: hover ? '#FFF8F8' : '#FFFFFF', borderRadius: 14,
@@ -242,15 +250,16 @@ function ProductCard({ p, onAdd, resolvePrice }) {
         </div>
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#2D3748', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{productName}</p>
+        <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#2D3748', lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{p.display_index ? `${p.display_index}. ` : ''}{productName}</p>
         <p style={{ margin: '3px 0 0', fontSize: '0.82rem', fontWeight: 800, color: '#F08080' }}>
           {canonicalPrice != null ? fmtVND(canonicalPrice) : priceLoading ? 'Đang kiểm tra giá…' : priceUnavailable ? 'Chưa xác minh được giá' : 'Đang tải giá…'}
         </p>
         {(p.danh_muc || p.category) && <p style={{ margin: '2px 0 0', fontSize: '0.68rem', color: '#A0AEC0', fontWeight: 600 }}>{p.danh_muc || p.category}</p>}
+        {productId != null && <span style={{ fontSize: '0.66rem', color: '#B22830' }}>Xem chi tiết →</span>}
       </div>
       <button
         disabled={canonicalPrice == null}
-        onClick={(e) => { e.stopPropagation(); onAdd({ ...displayProduct, gia_ban: canonicalPrice }); }}
+        onClick={(e) => addChatProduct(e, onAdd, displayProduct, canonicalPrice)}
         style={{ all: 'unset', cursor: canonicalPrice == null ? 'not-allowed' : 'pointer', opacity: canonicalPrice == null ? 0.45 : 1, width: 30, height: 30, borderRadius: '50%', background: '#F08080', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, alignSelf: 'center', fontWeight: 900, fontSize: '1.1rem', boxShadow: '0 2px 8px rgba(240,128,128,0.4)', transition: 'transform 0.1s' }}
         onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.9)'; }}
         onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
@@ -317,7 +326,7 @@ function StoreCard({ b }) {
   );
 }
 
-function PaymentCard({ onChoose }) {
+function PaymentCard({ onChoose, options }) {
   const methods = [
     { name: 'VNPAY', text: 'Tôi chọn thanh toán VNPAY', desc: 'ATM / Internet Banking', color: '#1E40AF' },
     { name: 'QR ngân hàng', text: 'Tôi chọn chuyển khoản QR ngân hàng', desc: 'Quét mã và chuyển khoản', color: '#A21CAF' },
@@ -326,8 +335,8 @@ function PaymentCard({ onChoose }) {
   ];
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      {methods.map((m) => (
-        <button type="button" key={m.name} onClick={() => onChoose?.(m.text)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', background: '#FFF', borderRadius: 10, border: '1px solid #FFEBEB', cursor: 'pointer', textAlign: 'left' }}>
+      {(options?.length ? paymentCardRows(options) : methods).map((m) => (
+        <button type="button" key={m.name} onClick={() => onChoose?.(m.text)} disabled={m.enabled === false} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', background: '#FFF', borderRadius: 10, border: '1px solid #FFEBEB', cursor: m.enabled === false ? 'not-allowed' : 'pointer', opacity: m.enabled === false ? 0.55 : 1, textAlign: 'left' }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: m.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 900, color: m.color, flexShrink: 0 }}>
             💳
           </div>
@@ -372,11 +381,11 @@ function VoucherCard({ v }) {
 }
 
 // ─── Typing Animation ────────────────────────────────────────────────────────
-function TypingBubble() {
+function TypingBubble({ label = 'Mình đang xử lý yêu cầu của bạn...' }) {
   return (
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, padding: '4px 0', animation: 'fadeIn 0.2s ease' }}>
       <AIAvatar size={28} />
-      <div style={{
+      <div role="status" aria-live="polite" style={{
         position: 'relative',
         background: '#FFFFFF', border: '1px solid #FFE3E3',
         borderRadius: '16px 16px 16px 4px',
@@ -384,6 +393,7 @@ function TypingBubble() {
         boxShadow: '0 2px 8px rgba(240,128,128,0.1)'
       }}>
         <div style={{ position: 'absolute', bottom: 0, left: -6, width: 0, height: 0, borderRight: '8px solid #FFFFFF', borderTop: '8px solid transparent' }} />
+        <span style={{ fontSize: '0.75rem', color: '#4A5568' }}>{label}</span>
         {[0, 200, 400].map((d) => (
           <div key={d} style={{ width: 6, height: 6, borderRadius: '50%', background: '#F08080', animation: `typingDot 1.2s ${d}ms infinite ease-in-out` }} />
         ))}
@@ -471,6 +481,7 @@ function isStaffChatMessage(msg) {
 
 // ─── Main Chat Widget Component ───────────────────────────────────────────────
 export default function ChatWidget({ user, socketUrl }) {
+  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [chatMode, setChatMode] = useState('AI');
   const [messages, setMessages] = useState(() => {
@@ -484,6 +495,8 @@ export default function ChatWidget({ user, socketUrl }) {
   const setInputText = chatMode === 'AI' ? setAiInputText : setStaffInputText;
   const [sending, setSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [loadingLabel, setLoadingLabel] = useState('Mình đang xử lý yêu cầu của bạn...');
+  const [conversationState, setConversationState] = useState(null);
   const [loading, setLoading] = useState(false);
   const [unread, setUnread] = useState(0);
   const [conversation, setConversation] = useState(null);
@@ -509,6 +522,7 @@ export default function ChatWidget({ user, socketUrl }) {
   const pendingAgentTurnRef = useRef(null);
 
   const userId = user?.id || user?.ma_nguoi_dung || user?.maNguoiDung || null;
+  const walletUserId = user?.ma_nguoi_dung || user?.maNguoiDung || user?.id || null;
   const userName = user?.ho_ten || user?.hoTen || user?.email || 'Khách';
   const anonId = useRef(getOrCreateAnonId());
   const effectiveUserId = userId || anonId.current;
@@ -760,12 +774,15 @@ export default function ChatWidget({ user, socketUrl }) {
       // Order Service clears the consumed cart; replay only refreshes the UI.
       window.dispatchEvent(new CustomEvent('refresh-cart'));
       window.dispatchEvent(new CustomEvent('refresh-orders'));
+      await refreshWalletAfterCheckout(queryClient, walletUserId, pendingOrder.paymentMethod).catch(() => undefined);
       localStorage.removeItem(`avengers_ai_voucher_${effectiveUserId}`);
       window.dispatchEvent(new CustomEvent('ai-voucher-removed'));
 
       const orderId = result?.order_id ? ` Mã đơn: **${result.order_id}**.` : '';
       const awaitsOnlinePayment = Boolean(result?.redirect_url || result?.payment_details?.qr_img_url);
-      addAIMsg(`${awaitsOnlinePayment ? '✅ Đơn hàng đã được tạo và đang chờ thanh toán.' : '🎉 Đơn hàng đã được ghi nhận.'}${orderId} Tổng cộng: **${fmtVND(result?.total_price ?? pendingOrder.total)}**`, {
+      const walletLine = pendingOrder.paymentMethod === 'VI_DIEN_TU'
+        ? `\n**Đã thanh toán bằng Ví Avengers:** ${fmtVND(result?.total_price ?? pendingOrder.total)}${result?.wallet_balance_after != null ? `\n**Số dư còn lại:** ${fmtVND(result.wallet_balance_after)}` : ''}` : '';
+      addAIMsg(`${awaitsOnlinePayment ? '✅ Đơn hàng đã được tạo và đang chờ thanh toán.' : '🎉 Đơn hàng đã được ghi nhận.'}${orderId} Tổng cộng: **${fmtVND(result?.total_price ?? pendingOrder.total)}**${walletLine}`, {
         _paymentUrl: result?.redirect_url || result?.payment_details?.qr_img_url || null,
         _paymentLabel: result?.redirect_url ? 'Tiếp tục thanh toán VNPAY' : result?.payment_details?.qr_img_url ? 'Mở mã QR thanh toán' : null,
         _quickReplies: [{ id: 'orders', label: 'Xem đơn hàng', text: 'Xem đơn hàng của tôi' }],
@@ -778,7 +795,7 @@ export default function ChatWidget({ user, socketUrl }) {
       confirmingOrderRef.current = false;
       setOrderConfirming(false);
     }
-  }, [pendingOrder, orderConfirming, effectiveUserId, aiConversationId, addAIMsg, scrollBottom]);
+  }, [pendingOrder, orderConfirming, effectiveUserId, aiConversationId, addAIMsg, scrollBottom, walletUserId, queryClient]);
 
   // Direct AI API handler (primary: /ai/agent/chat, fallback: /ai/chat)
   const processAIMessage = useCallback(async (text) => {
@@ -806,6 +823,7 @@ export default function ChatWidget({ user, socketUrl }) {
     // ── LUỒNG 1: Gọi AI Agent mới (RAG + Guardrails + Tool Calling) ──────────
     try {
       const agentData = await callAgentAPI(text);
+      setConversationState(agentData?.conversation_state || null);
       const agentReply = agentData?.reply;
           const checkoutPayload = agentData?.checkout_payload;
       const agentError = agentData?.error;
@@ -824,6 +842,7 @@ export default function ChatWidget({ user, socketUrl }) {
         entry.tool === 'confirm_checkout' && ['success', 'already_processed'].includes(entry.result?.status)
       )) {
         window.dispatchEvent(new CustomEvent('refresh-orders'));
+        if (walletUserId) queryClient.invalidateQueries({ queryKey: ['userWallet', walletUserId] }).catch(() => undefined);
         localStorage.removeItem(`avengers_ai_voucher_${effectiveUserId}`);
         window.dispatchEvent(new CustomEvent('ai-voucher-removed'));
       }
@@ -865,7 +884,10 @@ export default function ChatWidget({ user, socketUrl }) {
           branch_id: summary.branch_id,
           branch_name: summary.branch_name,
         });
-        if (agentReply) addAIMsg(agentReply, { _quickReplies: [] });
+        if (agentReply) addAIMsg(agentReply, {
+          _quickReplies: [],
+          _paymentOptions: Array.isArray(agentData?.ui_payload?.payment_options) ? agentData.ui_payload.payment_options : [],
+        });
         return;
       }
 
@@ -875,10 +897,15 @@ export default function ChatWidget({ user, socketUrl }) {
       // stores as selectable cards.
       if (agentReply && !agentError?.startsWith('blocked:')) {
         const payload = agentData?.ui_payload || {};
+        const catalogById = new Map(cache.current.products.map((item) => [String(item.ma_san_pham || item.id), item]));
         const extras = {
-          _products: Array.isArray(payload.products) ? payload.products : [],
+          _products: Array.isArray(payload.products) ? payload.products.map((item) => ({
+            ...item,
+            hinh_anh_url: item.hinh_anh_url || catalogById.get(String(item.product_id || item.ma_san_pham))?.hinh_anh_url,
+          })) : [],
           _stores: Array.isArray(payload.branches) ? payload.branches : [],
           _vouchers: !confirmed && Array.isArray(payload.vouchers) ? payload.vouchers : [],
+          _paymentOptions: Array.isArray(payload.payment_options) ? payload.payment_options : [],
           _quickReplies: QUICK_ACTIONS.slice(0, 3),
         };
         addAIMsg(agentReply, extras);
@@ -982,7 +1009,7 @@ export default function ChatWidget({ user, socketUrl }) {
     addAIMsg('Xin lỗi, mình gặp gián đoạn kết nối ngắn. Bạn vui lòng thử lại câu hỏi nhé!', {
       _quickReplies: QUICK_ACTIONS.slice(0, 3),
     });
-  }, [messages, userName, effectiveUserId, replyTo, pendingOrder, prefetchData, addAIMsg, callAgentAPI, confirmPendingOrder]);
+  }, [messages, userName, effectiveUserId, replyTo, pendingOrder, prefetchData, addAIMsg, callAgentAPI, confirmPendingOrder, walletUserId, queryClient]);
 
 
   // Send message trigger
@@ -996,6 +1023,7 @@ export default function ChatWidget({ user, socketUrl }) {
       if (overrideText === undefined) setInputText('');
       scrollBottom();
       setIsTyping(true);
+      setLoadingLabel(chatLoadingLabel(conversationState, Boolean(pendingOrder)));
       try {
         await processAIMessage(text);
       } finally {
@@ -1040,7 +1068,7 @@ export default function ChatWidget({ user, socketUrl }) {
         setSending(false);
       }
     }
-  }, [inputText, sending, chatMode, conversation, replyTo, effectiveUserId, userName, addUserMsg, scrollBottom, processAIMessage]);
+  }, [inputText, sending, chatMode, conversation, replyTo, effectiveUserId, userName, addUserMsg, scrollBottom, processAIMessage, pendingOrder, conversationState]);
 
   // Voice speech-to-text
   const startVoice = useCallback(() => {
@@ -1284,7 +1312,7 @@ export default function ChatWidget({ user, socketUrl }) {
 
                       {/* Rich Content Cards */}
                       {msg._products && msg._products.length > 0 && (
-                        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 328, overflowY: 'auto' }}>
                           {msg._products.map((p, i) => <ProductCard key={i} p={p} onAdd={addToCart} resolvePrice={fetchCanonicalProductPrice} />)}
                         </div>
                       )}
@@ -1300,6 +1328,9 @@ export default function ChatWidget({ user, socketUrl }) {
                       )}
                       {msg._type === 'payment' && (
                         <div style={{ marginTop: 10 }}><PaymentCard onChoose={sendMessage} /></div>
+                      )}
+                      {msg._paymentOptions?.length > 0 && (
+                        <div style={{ marginTop: 10 }}><PaymentCard onChoose={sendMessage} options={msg._paymentOptions} /></div>
                       )}
                       {msg._paymentUrl && (
                         <a href={msg._paymentUrl} target="_blank" rel="noreferrer" style={{ display: 'block', marginTop: 10, padding: '9px 12px', borderRadius: 10, background: '#B22830', color: '#FFF', textAlign: 'center', textDecoration: 'none', fontWeight: 800, fontSize: '0.76rem' }}>
@@ -1335,7 +1366,7 @@ export default function ChatWidget({ user, socketUrl }) {
                 </div>
               </div>
             )}
-            {isTyping && <TypingBubble />}
+            {isTyping && <TypingBubble label={loadingLabel} />}
             <div ref={bottomRef} />
           </div>
 

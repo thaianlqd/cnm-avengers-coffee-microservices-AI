@@ -499,6 +499,7 @@ function AppContent() {
 
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedProductForPage, setSelectedProductForPage] = useState(null);
+  const [pendingChatProductId, setPendingChatProductId] = useState(null);
   const handleOpenProductPage = (product) => {
     setSelectedProductForPage(product);
     setActiveTab('product-detail');
@@ -536,16 +537,6 @@ function AppContent() {
   const isLoggedIn = !!userId;
   const aiTargetUserId = userId || 'anon-popular';
   const socketUrl = import.meta.env.VITE_SOCKET_URL || `http://${window.location.hostname}:3005`;
-
-  // ── Navigate from sub-pages via custom event ────────────────────────────────
-  useEffect(() => {
-    const handler = (e) => {
-      const tab = e?.detail?.tab;
-      if (tab) setActiveTab(tab);
-    };
-    window.addEventListener('navigate-tab', handler);
-    return () => window.removeEventListener('navigate-tab', handler);
-  }, []);
 
   const handleCloseOrderHistory = () => {
     setIsOrderHistoryOpen(false);
@@ -691,6 +682,28 @@ function AppContent() {
   });
 
   // ── Sync activeTab and selectedProductForPage to URL Query Params ──
+  useEffect(() => {
+    const handler = (event) => {
+      const { tab, productId } = event?.detail || {};
+      if (tab === 'product-detail' && productId) {
+        const product = products.find((item) => String(item.ma_san_pham || item.id || item.maSanPham) === String(productId));
+        if (product) handleOpenProductPage(product);
+        else setPendingChatProductId(productId);
+        return;
+      }
+      if (tab) setActiveTab(tab);
+    };
+    window.addEventListener('navigate-tab', handler);
+    return () => window.removeEventListener('navigate-tab', handler);
+  }, [products]);
+
+  useEffect(() => {
+    if (!pendingChatProductId || !products.length) return;
+    const product = products.find((item) => String(item.ma_san_pham || item.id || item.maSanPham) === String(pendingChatProductId));
+    if (product) handleOpenProductPage(product);
+    setPendingChatProductId(null);
+  }, [pendingChatProductId, products]);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const currentTab = params.get('tab') || 'home';
@@ -2278,4 +2291,3 @@ export default function App() {
     </CartProvider>
   );
 }
-
