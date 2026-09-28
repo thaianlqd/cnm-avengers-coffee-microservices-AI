@@ -7,6 +7,16 @@ import { DonHang } from './entities/don-hang.entity';
 type Claim = { order_id: string; customer_id: string; voucher_code: string; discount_amount: number };
 type StoredClaim = Claim & { attempts: number };
 
+// TypeORM returns UPDATE results as [returningRows, affectedCount] on Postgres.
+// Unit fakes may return returningRows directly.
+function returnedUpdateRows<T>(result: unknown): T[] {
+  if (!Array.isArray(result)) return [];
+  if (result.length === 2 && Array.isArray(result[0]) && typeof result[1] === 'number') {
+    return result[0] as T[];
+  }
+  return result as T[];
+}
+
 @Injectable()
 export class WalletVoucherClaimOutboxService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(WalletVoucherClaimOutboxService.name);
@@ -93,7 +103,7 @@ export class WalletVoucherClaimOutboxService implements OnModuleInit, OnModuleDe
     if (this.running) return;
     this.running = true;
     try {
-      const claims: StoredClaim[] = await this.orders.manager.query(
+      const claims = returnedUpdateRows<StoredClaim>(await this.orders.manager.query(
         `UPDATE ${this.schema}.wallet_voucher_claim_outbox SET
            attempts = attempts + 1,
            updated_at = now()
@@ -102,18 +112,18 @@ export class WalletVoucherClaimOutboxService implements OnModuleInit, OnModuleDe
            WHERE status = 'PENDING' AND next_attempt_at <= now()
            ORDER BY next_attempt_at FOR UPDATE SKIP LOCKED LIMIT 10
          ) RETURNING order_id, customer_id, voucher_code, discount_amount, attempts`,
-      );
+      ));
       for (const claim of claims) {
         try {
           await this.vouchers.claimIdentityVoucher(claim.voucher_code, claim.customer_id,
             Number(claim.discount_amount), claim.order_id);
           await this.orders.manager.transaction(async manager => {
-            const finished = await manager.query(
+            const finished = returnedUpdateRows<{ order_id: string }>(await manager.query(
               `UPDATE ${this.schema}.wallet_voucher_claim_outbox
                SET status = 'DONE', completed_at = now(), updated_at = now(), last_error = NULL, error_code = NULL
                WHERE order_id = $1 AND status = 'PENDING' RETURNING order_id`,
               [claim.order_id],
-            );
+            ));
             if (finished.length) {
               await manager.query(
                 `UPDATE ${this.schema}.voucher SET luot_da_dung = luot_da_dung + 1
@@ -133,7 +143,7 @@ export class WalletVoucherClaimOutboxService implements OnModuleInit, OnModuleDe
             `UPDATE ${this.schema}.wallet_voucher_claim_outbox
              SET status = $2::varchar, last_error = $3, error_code = $4, updated_at = now(),
                  dead_at = CASE WHEN $2::varchar = 'DEAD' THEN now() ELSE dead_at END,
-                 next_attempt_at = CASE WHEN $2::varchar = 'PENDING' THEN now() + ($5 * interval '1 second') ELSE next_attempt_at END
+                 next_attempt_at = CASE WHEN $2::varchar = 'PENDING' THEN now() + ($5::integer * interval '1 second') ELSE next_attempt_at END
              WHERE order_id = $1`,
             [claim.order_id, status, safeMessage, httpStatus ? String(httpStatus) : 'NETWORK', delaySeconds],
           );

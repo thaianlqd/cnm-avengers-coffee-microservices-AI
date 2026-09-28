@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
 import { apiClient } from '../lib/apiClient';
-import { openChatProductDetail, addChatProduct, paymentCardRows, chatLoadingLabel, refreshWalletAfterCheckout } from './chatWidgetActions';
+import { openChatProductDetail, addChatProduct, paymentCardRows, chatLoadingLabel, refreshWalletAfterCheckout, structuredLegacyCards } from './chatWidgetActions';
 
 // ─── Utilities & Formatters ──────────────────────────────────────────────────
 const fmtVND = (n) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
@@ -921,13 +921,7 @@ export default function ChatWidget({ user, socketUrl }) {
       let reply = resData?.reply || resData?.message;
 
       if (reply) {
-        const extras = {
-          ...(Array.isArray(resData.products) && resData.products.length ? { _products: resData.products.slice(0, 6) } : {}),
-          ...(Array.isArray(resData.stores) && resData.stores.length ? { _stores: resData.stores.slice(0, 5) } : {}),
-          ...(Array.isArray(resData.vouchers) && resData.vouchers.length ? { _vouchers: resData.vouchers.slice(0, 4) } : {}),
-          ...(Array.isArray(resData.orders) && resData.orders.length ? { _orders: resData.orders.slice(0, 3) } : {}),
-          ...(Array.isArray(resData.payment_options) && resData.payment_options.length ? { _paymentOptions: resData.payment_options } : {}),
-        };
+        const extras = structuredLegacyCards(resData);
         const hasCards = Boolean(extras._products || extras._stores || extras._vouchers || extras._orders);
         if (hasCards) {
           const lines = reply.split('\n');

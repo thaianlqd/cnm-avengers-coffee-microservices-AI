@@ -32,4 +32,5 @@ references. Apply it immediately after the two 20260928 scripts. Runtime
 returns `VOUCHER_CLAIM_OUTBOX_NOT_READY` with HTTP 503 for voucher checkout
 until both outbox migrations are present. Inspect duplicate REFUND rows by
 `(customer_id, reference_id)` before applying if historical callbacks may have
-credited the same refund more than once.
+credited the same refund more than once. A REFUND `reference_id` identifies
+one refund event; separate partial refunds need separate event references.

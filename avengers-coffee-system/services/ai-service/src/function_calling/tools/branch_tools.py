@@ -130,6 +130,12 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
             generic_words = {"toi", "gan", "day", "nao", "nhat", "nha", "dia", "chi", "mac", "dinh", "cua", "hien", "tai"}
             norm_loc = _norm(location).lower().replace(",", " ") if location else ""
             is_generic = all(w in generic_words for w in norm_loc.split()) if norm_loc else not bool(target_address)
+
+            if (not target_address or is_generic) and prefs.get("delivery_type") in {"MANG_DI", "TAI_CHO"}:
+                return {
+                    "status": "need_location",
+                    "message": "Bạn muốn tìm quán ở khu vực/phường/quận nào?",
+                }
             
             if (not target_address or is_generic) and session_id:
                 valid_uid = _require_valid_session(_customer_session_id(session_id))
@@ -182,7 +188,14 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                 coords = geocode_address(target_address)
                 if not coords:
                     if locality_rows:
-                        logger.info("[AgentTools] Exact locality found but geocoder unavailable; returning exact matches only")
+                        positioned = [row for row in locality_rows
+                                      if row["vi_do"] is not None and row["kinh_do"] is not None]
+                        if positioned:
+                            user_lat = sum(float(row["vi_do"]) for row in positioned) / len(positioned)
+                            user_lon = sum(float(row["kinh_do"]) for row in positioned) / len(positioned)
+                            logger.info("[AgentTools] Geocoder unavailable; ranking around exact locality branches")
+                        else:
+                            logger.info("[AgentTools] Exact locality found without coordinates; returning exact matches only")
                     else:
                         return {
                             "status": "not_found",

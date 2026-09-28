@@ -4,6 +4,9 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { JwtService } from '@nestjs/jwt';
 import { DataSource } from 'typeorm';
+import { randomUUID } from 'crypto';
+import { VoucherService } from '../src/modules/voucher/voucher.service';
+import { WalletVoucherClaimOutboxService } from '../src/modules/thanh-toan/wallet-voucher-claim-outbox.service';
 
 process.env.DB_HOST = process.env.DB_HOST || 'localhost';
 process.env.DB_PORT = process.env.DB_PORT || '5433';
@@ -20,6 +23,7 @@ const { AppModule } = require('./../src/app.module');
 
 describe('Order API (e2e)', () => {
   let app: INestApplication<App>;
+  let dataSource: DataSource;
   let jwtService: JwtService;
   const customerId = `ci-customer-${Date.now()}`;
   let orderId: string;
@@ -30,7 +34,7 @@ describe('Order API (e2e)', () => {
       imports: [AppModule],
     }).compile();
 
-    const dataSource = moduleFixture.get(DataSource);
+    dataSource = moduleFixture.get(DataSource);
     for (const schema of new Set(dataSource.entityMetadatas.map(meta => meta.schema).filter(Boolean))) {
       await dataSource.query(`CREATE SCHEMA IF NOT EXISTS ${dataSource.driver.escape(schema!)}`);
     }
@@ -114,5 +118,81 @@ describe('Order API (e2e)', () => {
 
     expect(response.body?.total).toBeDefined();
     expect(Array.isArray(response.body?.orders)).toBe(true);
+  });
+
+  it('keeps V5 cart_version and idempotency stable with real PostgreSQL UPDATE results', async () => {
+    const v5Customer = `ci-v5-${Date.now()}`;
+    const v5Token = jwtService.sign({ sub: v5Customer, role: 'CUSTOMER' });
+    const schema = dataSource.driver.escape(process.env.DB_SCHEMA || 'orders');
+    await dataSource.query(
+      `INSERT INTO ${schema}.gio_hang (ma_nguoi_dung, ma_san_pham, ten_san_pham, gia_ban, so_luong)
+       VALUES ($1, 1, 'CI Product', 49000, 1)`,
+      [v5Customer],
+    );
+    const actionId = randomUUID();
+    const clear = () => request(app.getHttpServer())
+      .delete(`/cart/clear/${v5Customer}`)
+      .set('Authorization', `Bearer ${v5Token}`)
+      .set('x-idempotency-key', actionId);
+    const first = await clear().expect(200);
+    expect(first.body).toMatchObject({ cart_version: 1, affected: 1, already_processed: false });
+    const replay = await clear().expect(200);
+    expect(replay.body).toMatchObject({ cart_version: 1, already_processed: true });
+    const read = await request(app.getHttpServer())
+      .get(`/cart/${v5Customer}`)
+      .set('Authorization', `Bearer ${v5Token}`)
+      .expect(200);
+    expect(read.body).toMatchObject({ cart_version: 1, items: [] });
+  });
+
+  it('retries a voucher claim and increments public usage once with real PostgreSQL UPDATE results', async () => {
+    const schema = dataSource.driver.escape(process.env.DB_SCHEMA || 'orders');
+    const orderId = randomUUID();
+    const code = `CI_RETRY_${Date.now()}`;
+    await dataSource.query(
+      `INSERT INTO ${schema}.voucher (ma_voucher, gia_tri, loai_phan_phoi, luot_da_dung)
+       VALUES ($1, 10000, 'PUBLIC', 0)`,
+      [code],
+    );
+    await dataSource.query(
+      `INSERT INTO ${schema}.wallet_voucher_claim_outbox
+       (order_id, customer_id, voucher_code, discount_amount)
+       VALUES ($1, $2, $3, 10000)`,
+      [orderId, customerId, code],
+    );
+
+    const vouchers = app.get(VoucherService);
+    const outbox = app.get(WalletVoucherClaimOutboxService);
+    const claim = jest.spyOn(vouchers, 'claimIdentityVoucher')
+      .mockRejectedValueOnce(new Error('Identity temporarily unavailable'))
+      .mockResolvedValue(undefined);
+    try {
+      await outbox.processPending();
+      const [pending] = await dataSource.query(
+        `SELECT status, attempts FROM ${schema}.wallet_voucher_claim_outbox WHERE order_id = $1`,
+        [orderId],
+      );
+      expect(pending).toMatchObject({ status: 'PENDING', attempts: 1 });
+
+      await dataSource.query(
+        `UPDATE ${schema}.wallet_voucher_claim_outbox SET next_attempt_at = now() WHERE order_id = $1`,
+        [orderId],
+      );
+      await outbox.processPending();
+      const [done] = await dataSource.query(
+        `SELECT status, attempts FROM ${schema}.wallet_voucher_claim_outbox WHERE order_id = $1`,
+        [orderId],
+      );
+      expect(done).toMatchObject({ status: 'DONE', attempts: 2 });
+      await outbox.processPending();
+      expect(claim).toHaveBeenCalledTimes(2);
+      const [voucher] = await dataSource.query(
+        `SELECT luot_da_dung FROM ${schema}.voucher WHERE ma_voucher = $1`,
+        [code],
+      );
+      expect(voucher.luot_da_dung).toBe(1);
+    } finally {
+      claim.mockRestore();
+    }
   });
 });

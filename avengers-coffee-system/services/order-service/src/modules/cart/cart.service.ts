@@ -279,14 +279,20 @@ export class CartService {
     // this helper safe for future callers, but must not be used to acquire a
     // cart lock late in a mutation.
     if (!lockedMetadata) await this.lockCartMetadata(manager, userId);
-    const rows = await manager.query(
+    const rows = (await manager.query(
       `UPDATE "${schema}".cart_metadata
        SET cart_version = cart_version + 1, updated_at = NOW()
        WHERE user_id = $1
        RETURNING user_id, cart_id, cart_version`,
       [userId],
-    );
-    return rows[0];
+    )) as Array<{ user_id: string; cart_id: string; cart_version: number }>
+      | [Array<{ user_id: string; cart_id: string; cart_version: number }>, number];
+    // TypeORM/Postgres returns UPDATE as [returningRows, affectedCount].
+    // Test managers can return the row array directly.
+    const returned = Array.isArray(rows[0]) && typeof rows[1] === 'number'
+      ? rows[0] as Array<{ user_id: string; cart_id: string; cart_version: number }>
+      : rows as Array<{ user_id: string; cart_id: string; cart_version: number }>;
+    return returned[0];
   }
 
   private configurationSignature(item: any) {

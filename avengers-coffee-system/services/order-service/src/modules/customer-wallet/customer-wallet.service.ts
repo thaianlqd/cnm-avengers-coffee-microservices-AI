@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import * as crypto from 'crypto';
@@ -171,6 +171,8 @@ export class CustomerWalletService {
   }
 
   async refundBalance(customerId: string, amount: number, referenceId: string) {
+    // referenceId identifies one refund event. Callers issuing separate
+    // partial refunds must give each event a distinct reference.
     if (!customerId || !referenceId || !Number.isFinite(amount) || amount <= 0) {
       throw new BadRequestException('Thong tin hoan tien vi khong hop le');
     }
@@ -184,7 +186,17 @@ export class CustomerWalletService {
          DO NOTHING RETURNING id`,
         [customerId, amount, referenceId],
       );
-      if (!inserted.length) return true;
+      if (!inserted.length) {
+        const existing = (await manager.query(
+          `SELECT amount, status FROM ${schema}.customer_wallet_transaction
+           WHERE customer_id = $1 AND reference_id = $2 AND type = 'REFUND' LIMIT 1`,
+          [customerId, referenceId],
+        )) as Array<{ amount: string | number; status: string }>;
+        if (!existing.length || existing[0].status !== 'SUCCESS' || Number(existing[0].amount) !== amount) {
+          throw new ConflictException('Ma tham chieu hoan tien da duoc su dung cho giao dich khac');
+        }
+        return true;
+      }
       await manager.query(
         `INSERT INTO ${schema}.customer_wallet (customer_id, balance)
          VALUES ($1, 0) ON CONFLICT (customer_id) DO NOTHING`,
