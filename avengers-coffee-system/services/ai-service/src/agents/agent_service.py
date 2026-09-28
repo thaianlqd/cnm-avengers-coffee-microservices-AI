@@ -773,12 +773,20 @@ def _confirm_saved_location(
     ):
         return None
 
-    confirms = _is_plain_confirmation(message) or bool(re.fullmatch(
-        r"(?:ok|oke|okay|dung|dung roi|giao)?[, ]*\s*(?:dung\s+)?(?:dia chi do|dia chi da luu|o do|dang o do)(?:\s+(?:di|nhe|nha))?",
-        normalized.strip(" !.,"),
-    ))
+    from src.agents.location_parser import parse_location
+    confirms = _is_plain_confirmation(message) or parse_location(message).kind == "reference"
     if not confirms:
         return None
+
+    if prefs.get("delivery_type") == "GIAO_TAN_NOI":
+        parsed_suggested = parse_location(suggested)
+        if parsed_suggested.kind != "address":
+            return {"reply": "Địa chỉ đã lưu chưa có số nhà và tên đường. Bạn cho mình địa chỉ giao đầy đủ nhé.",
+                    "checkout_payload": None, "tool_calls_log": [], "error": None}
+        if parsed_suggested.missing:
+            cart_manager.set_checkout_context(session_id, partial_delivery_address=suggested)
+            return {"reply": f"Địa chỉ đã lưu còn thiếu {', '.join(parsed_suggested.missing)}. Bạn bổ sung phần này để giao hàng nhé.",
+                    "checkout_payload": None, "tool_calls_log": [], "error": None}
 
     from src.function_calling.tools.branch_tools import (
         execute_find_nearest_branch,
@@ -1566,6 +1574,10 @@ def _run_agent_impl(
 
     from src.agents.location_parser import parse_location
     parsed_location = parse_location(user_message)
+    if parsed_location.kind in {"reference", "reference_question", "change_reference"}:
+        from src.agents.order_flow_graph import _handle_location_reference
+        return _handle_location_reference({"session_id": session_id, "user_message": user_message,
+                                           "history": history or [], "cart": cart}, parsed_location.kind)
     if (parsed_location.kind == "branch_query" and not choices) or (
         parsed_location.kind in {"address", "area"}
         and prefs.get("checkout_requested") and prefs.get("delivery_type")

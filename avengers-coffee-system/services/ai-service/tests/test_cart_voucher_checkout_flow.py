@@ -9,7 +9,7 @@ from src.agents import agent_service
 from src.common import cart_manager
 from src.function_calling.tools import cart_tools, voucher_tools
 
-ADDRESS = '42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh, Thành phố Hồ Chí Minh'
+ADDRESS = '42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh, Quận Tân Phú, Thành phố Hồ Chí Minh'
 
 
 @pytest.fixture
@@ -37,7 +37,7 @@ def flow(monkeypatch):
         return {'status': 'ok', 'voucher_code': code, 'message': f"Tạm tính: {q['subtotal']:.0f}đ\nVoucher {code}: -{q['discount_amount']:.0f}đ\nThành tiền hiện tại: {q['final_total']:.0f}đ"}
 
     monkeypatch.setattr(voucher_tools, 'execute_apply_voucher', apply)
-    monkeypatch.setattr('src.function_calling.tools.user_tools.execute_get_user_profile', lambda sid: {'default_address': ADDRESS + ', Phường Tây Thạnh, Thành phố Hồ Chí Minh'})
+    monkeypatch.setattr('src.function_calling.tools.user_tools.execute_get_user_profile', lambda sid: {'default_address': ADDRESS})
     monkeypatch.setattr('src.function_calling.tools.branch_tools.execute_find_nearest_branch', lambda **k: {'status': 'ok' if cart_manager.get_checkout_prefs(session).get('delivery_type') == 'GIAO_TAN_NOI' else 'need_branch_selection', 'branches': [{'ma_chi_nhanh': 'CN_1', 'ten_chi_nhanh': 'Cửa hàng Một', 'dia_chi': 'Địa chỉ cửa hàng', 'khoang_cach_km': 1, 'availability_status': 'available'}]})
 
     def branch(sid, branch_id, branch_name, **k):

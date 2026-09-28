@@ -7,6 +7,10 @@ import unicodedata
 from typing import Optional, Tuple
 
 logger = logging.getLogger(__name__)
+# httpx INFO records include the complete request URL and its apikey query
+# parameter. Provider calls are logged below without URL or credentials.
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 
 def _fold_location(value: str) -> str:
@@ -72,6 +76,10 @@ def geocode_address(address: str) -> Optional[Tuple[float, float]]:
     """
     if not address or not address.strip():
         return None
+    from src.agents.location_parser import parse_location
+    if parse_location(address).kind in {"reference", "reference_question", "change_reference"}:
+        logger.warning("[Geo] Skipped unresolved address reference")
+        return None
         
     api_key = os.getenv("VIETMAP_API_KEY")
     if not api_key:
@@ -114,5 +122,5 @@ def geocode_address(address: str) -> Optional[Tuple[float, float]]:
             return None
             
     except Exception as e:
-        logger.error("[Geo] Lỗi khi gọi Vietmap API cho '%s': %s", address, e)
+        logger.error("[Geo] provider=VietMap operation=geocode error=%s", type(e).__name__)
         return None
