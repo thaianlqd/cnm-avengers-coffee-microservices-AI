@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  openChatProductDetail, addChatProduct, paymentCardRows,
+  openChatProductDetail, addChatProduct, branchDistanceLabel, paymentCardRows,
   chatLoadingLabel, refreshWalletAfterCheckout, structuredLegacyCards,
 } from './chatWidgetActions.js';
 
@@ -24,6 +24,13 @@ test('plus button stops card navigation and sends only canonical identity', () =
   assert.equal(stopped, true);
   assert.equal(additions.length, 1);
   assert.deepEqual(additions[0], { product_id: '42', product_name: 'Frappe Matcha' });
+});
+
+test('branch distance marks area-centroid estimates', () => {
+  assert.equal(branchDistanceLabel({ khoang_cach_km: 2.5, distance_basis: 'area_centroid' }),
+    '2.5 km đường chim bay, ước tính theo khu vực');
+  assert.equal(branchDistanceLabel({ khoang_cach_km: 2.5, distance_basis: 'geocoded_user' }),
+    '2.5 km đường chim bay');
 });
 
 test('structured wallet option renders balance and disables insufficient funds', () => {

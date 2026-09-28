@@ -1633,16 +1633,11 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             from src.function_calling.tools.product_tools import execute_filter_catalog
             constraints = intent["catalog_constraints"]
             found = execute_filter_catalog(**constraints)
-            amount = constraints.get("max_price") or constraints.get("min_price")
-            price = f"{float(amount or 0):,.0f}".replace(",", ".")
+            from src.agents.catalog_constraints import describe_catalog_constraint
             group = "topping" if constraints["sellable_scope"] == "topping" else "món"
-            relation = ("dưới" if constraints.get("max_price") is not None
-                        and not constraints.get("max_price_inclusive") else
-                        "không quá" if constraints.get("max_price") is not None else
-                        "trên" if constraints.get("min_price") is not None
-                        and not constraints.get("min_price_inclusive") else "từ")
+            relation = describe_catalog_constraint(constraints)
             reply = (found.get("message") if found.get("status") == "error" else
-                     f"Hiện không có {group} nào {relation} {price}đ." if found.get("status") == "not_found" else
+                     f"Hiện không có {group} nào {relation}." if found.get("status") == "not_found" else
                      "Mình tìm thấy các món phù hợp trong menu:")
             return {**state, "result": {
                 "reply": reply, "checkout_payload": None,
@@ -1878,6 +1873,7 @@ def _render(state: OrderConversationState) -> OrderConversationState:
                 {"product_name": (entry.get("args") or {}).get("product_name")},
             )
     if recommendation_products:
+        filtered_catalog = any(entry.get("tool") == "filter_catalog" for entry in logs)
         displayed: List[Dict[str, Any]] = []
         seen_ids: set[str] = set()
         displayed_counts: Dict[str, int] = {}
@@ -1886,7 +1882,7 @@ def _render(state: OrderConversationState) -> OrderConversationState:
             if not product_id or product_id in seen_ids:
                 continue
             bucket = item.get("menu_bucket") or "unknown"
-            if displayed_counts.get(bucket, 0) >= 8:
+            if displayed_counts.get(bucket, 0) >= (16 if filtered_catalog else 8):
                 continue
             seen_ids.add(product_id)
             displayed.append(item)
@@ -1894,7 +1890,7 @@ def _render(state: OrderConversationState) -> OrderConversationState:
             if len(displayed) == 16:
                 break
         if {item.get("menu_bucket") for item in displayed} >= {"food", "drink"}:
-            displayed = [item for bucket in ("food", "drink", "unknown") for item in displayed
+            displayed = [item for bucket in ("food", "drink", "topping", "unknown") for item in displayed
                          if item.get("menu_bucket") == bucket]
         group_counts: Dict[str, int] = {}
         snapshot = []
@@ -1937,7 +1933,7 @@ def _render(state: OrderConversationState) -> OrderConversationState:
                 bucket = item.get("menu_bucket") or "unknown"
                 if mixed and bucket != current_bucket:
                     lines.append({"food": "\n**Bánh & đồ ăn:**", "drink": "\n**Đồ uống:**",
-                                  "unknown": "\n**Các món khác:**"}[bucket])
+                                  "topping": "\n**Topping:**", "unknown": "\n**Các món khác:**"}[bucket])
                     current_bucket = bucket
                 price = f"{float(item.get('final_price') or 0):,.0f}".replace(",", ".")
                 lines.append(f"{index}. {item.get('product_name')} - {price}đ")
@@ -2054,8 +2050,8 @@ def _sanitize_replay_result(result: Dict[str, Any]) -> Dict[str, Any]:
     if result.get("gate"):
         compact["gate"] = result["gate"]
     card_fields = {
-        "products": (16, ("product_id", "product_name", "ten_san_pham", "category", "menu_bucket", "display_index", "danh_muc", "final_price", "gia_ban", "hinh_anh_url")),
-        "branches": (5, ("ma_chi_nhanh", "branch_id", "ten_chi_nhanh", "branch_name", "dia_chi", "address", "khoang_cach_km", "availability_status", "unavailable_products", "gio_mo_cua", "gio_dong_cua")),
+        "products": (16, ("product_id", "product_name", "ten_san_pham", "category", "menu_bucket", "display_index", "global_display_index", "group_display_index", "group", "danh_muc", "final_price", "gia_ban", "hinh_anh_url")),
+        "branches": (5, ("ma_chi_nhanh", "branch_id", "ten_chi_nhanh", "branch_name", "dia_chi", "address", "khoang_cach_km", "distance_basis", "distance_estimated", "availability_status", "unavailable_products", "gio_mo_cua", "gio_dong_cua")),
         "vouchers": (4, ("ma_voucher", "ma_khuyen_mai", "code", "ten_voucher", "ten_khuyen_mai", "name", "title", "loai_khuyen_mai", "loai_giam_gia", "loai", "gia_tri", "gia_tri_giam", "discount_value", "gia_tri_don_toi_thieu")),
     }
     ui = result.get("ui_payload") or {}

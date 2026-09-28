@@ -243,7 +243,7 @@ def _explicit_checkout_choices(message: str) -> Dict[str, str]:
             result["payment_method"] = "VNPAY"
         elif ("ngan hang qr" in text or "qr ngan hang" in text or text == "qr" or "chuyen khoan" in text) and not re.search(r"\b(?:khong|ko|dung dung)\s+(?:dung\s+)?(ngan hang|qr|chuyen khoan)\b", text):
             result["payment_method"] = "NGAN_HANG_QR"
-        elif wallet_payment_evidence(text) and not re.search(r"\b(?:khong|ko|dung dung)\s+(?:dung\s+)?vi\b", text):
+        elif wallet_payment_evidence(text):
             result["payment_method"] = "VI_DIEN_TU"
 
         delivery_candidates = []

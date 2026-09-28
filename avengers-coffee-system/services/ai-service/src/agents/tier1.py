@@ -2,7 +2,7 @@ import re
 import time
 from typing import Optional, Dict, Any
 from typing import Literal
-from src.agents.payment_intent import wallet_payment_evidence
+from src.agents.payment_intent import resolve_wallet_payment_intent
 
 _DIACRITICS = {
     'a': 'áàảãạăắằẳẵặâấầẩẫậ',
@@ -217,7 +217,7 @@ def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict
         return {"intent": "CLEAR_CART"}
     if re.search(r"\b(xem|kiem tra|check|tom tat|xacnhan(?:\s+lai)?|xac nhan lai)\b.*\b(gio|gia)\b|\bkhong thay\b.*\btrong gio\b", norm):
         return {"intent": "VIEW_CART"}
-    if re.search(r"\b(tien hanh|thanh toan|dathang)\b", norm) and not re.search(r"\b(vnpay|cod|tien mat|ngan hang qr|chuyen khoan|vi avengers|giao tan noi|mang di|lay tai quan|dung tai cho)\b", norm):
+    if re.search(r"\b(tien hanh|thanh toan|dathang)\b", norm) and resolve_wallet_payment_intent(norm) is None and not re.search(r"\b(vnpay|cod|tien mat|ngan hang qr|chuyen khoan|giao tan noi|mang di|lay tai quan|dung tai cho)\b", norm):
         return {"intent": "FINISH_CART"}
     # Concrete fulfillment/payment selections must win over the generic word
     # "thanh toán" below.  Otherwise "giao tận nơi và thanh toán COD" is
@@ -241,7 +241,7 @@ def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict
         return {"intent": "VIEW_CART"}
     if re.search(r"\b(?:ap\s+dung|ma\s+(?:giam|voucher|so\s*\d+)|voucher|dung\s+(?:ma|voucher|so\s*\d+))\b", norm):
         return {"intent": "SELECT_VOUCHER"}
-    if re.search(r"\b(vnpay|cod|tien mat|ngan hang|qr)\b", norm) or wallet_payment_evidence(norm):
+    if re.search(r"\b(vnpay|cod|tien mat|ngan hang|qr)\b", norm) or resolve_wallet_payment_intent(norm) is not None:
         return {"intent": "SELECT_PAYMENT"}
     if order_words and not cart_words:
         if re.search(r"\b(huy)\b", norm): return {"intent": "CANCEL_EXISTING_ORDER"}

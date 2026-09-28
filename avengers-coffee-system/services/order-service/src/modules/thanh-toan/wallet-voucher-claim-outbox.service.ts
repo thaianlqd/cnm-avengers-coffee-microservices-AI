@@ -66,14 +66,128 @@ export class WalletVoucherClaimOutboxService implements OnModuleInit, OnModuleDe
     }
   }
 
-  async markReady(orderId: string): Promise<void> {
+  /** Returns false when a late paid order needs manual reconciliation. */
+  async markReady(orderId: string): Promise<boolean> {
     try {
-      await this.orders.manager.query(
-        `UPDATE ${this.schema}.wallet_voucher_claim_outbox
-         SET status = 'PENDING', next_attempt_at = now(), updated_at = now()
-         WHERE order_id = $1 AND status IN ('WAITING_PAYMENT', 'EXPIRED')`,
-        [orderId],
-      );
+      return await this.orders.manager.transaction(async (manager) => {
+        const [claim] = await manager.query<
+          Array<Claim & { status: string; created_at: Date }>
+        >(
+          `SELECT order_id, customer_id, voucher_code, discount_amount, status, created_at
+           FROM ${this.schema}.wallet_voucher_claim_outbox WHERE order_id = $1 FOR UPDATE`,
+          [orderId],
+        );
+        if (!claim) return false;
+        if (claim.status === 'DONE' || claim.status === 'PENDING') return true;
+        const fresh =
+          claim.status === 'WAITING_PAYMENT' &&
+          Date.now() - new Date(claim.created_at).getTime() <
+            voucherPaymentHoldTtlMinutes() * 60000;
+        if (fresh) {
+          await manager.query(
+            `UPDATE ${this.schema}.wallet_voucher_claim_outbox
+             SET status = 'PENDING', next_attempt_at = now(), updated_at = now()
+             WHERE order_id = $1 AND status = 'WAITING_PAYMENT'`,
+            [orderId],
+          );
+          return true;
+        }
+        if (!['EXPIRED', 'WAITING_PAYMENT'].includes(claim.status))
+          return false;
+        // The unpaid reservation has elapsed. Check local public capacity and
+        // atomically claim Identity before confirming the discounted order.
+        const [local] = await manager.query<
+          Array<{
+            trang_thai: string;
+            loai_phan_phoi: string;
+            tong_luot_dung: number | null;
+            luot_da_dung: number;
+            gioi_han_moi_nguoi: number | null;
+            han_su_dung: Date | null;
+          }>
+        >(
+          `SELECT trang_thai, loai_phan_phoi, tong_luot_dung, luot_da_dung,
+                  gioi_han_moi_nguoi, han_su_dung
+           FROM ${this.schema}.voucher WHERE ma_voucher = $1 FOR UPDATE`,
+          [claim.voucher_code],
+        );
+        let available = true;
+        if (
+          local &&
+          (local.loai_phan_phoi === 'PUBLIC' || !local.loai_phan_phoi)
+        ) {
+          const [usage] = await manager.query<
+            Array<{
+              uses: string;
+              outstanding: string;
+              user_outstanding: string;
+            }>
+          >(
+            `SELECT count(*) FILTER (WHERE customer_id = $1 AND status = 'DONE')::text AS uses,
+                    count(*) FILTER (WHERE status = 'PENDING' OR
+                      (status = 'WAITING_PAYMENT' AND created_at > now() - ($4::integer * interval '1 minute')))::text AS outstanding,
+                    count(*) FILTER (WHERE customer_id = $1 AND (status = 'PENDING' OR
+                      (status = 'WAITING_PAYMENT' AND created_at > now() - ($4::integer * interval '1 minute'))))::text AS user_outstanding
+             FROM ${this.schema}.wallet_voucher_claim_outbox
+             WHERE voucher_code = $2 AND order_id <> $3`,
+            [
+              claim.customer_id,
+              claim.voucher_code,
+              claim.order_id,
+              voucherPaymentHoldTtlMinutes(),
+            ],
+          );
+          available =
+            local.trang_thai === 'ACTIVE' &&
+            (!local.han_su_dung || new Date(local.han_su_dung) >= new Date()) &&
+            (local.tong_luot_dung === null ||
+              Number(local.luot_da_dung) + Number(usage?.outstanding || 0) <
+                Number(local.tong_luot_dung)) &&
+            Number(usage?.uses || 0) + Number(usage?.user_outstanding || 0) <
+              Number(local.gioi_han_moi_nguoi || 1);
+        }
+        if (available) {
+          try {
+            await this.vouchers.claimIdentityVoucher(
+              claim.voucher_code,
+              claim.customer_id,
+              Number(claim.discount_amount),
+              claim.order_id,
+            );
+          } catch {
+            available = false;
+            this.logger.warn(
+              `Late voucher claim requires reconciliation for order ${orderId}`,
+            );
+          }
+        }
+        if (!available) {
+          await manager.query(
+            `UPDATE ${this.schema}.wallet_voucher_claim_outbox
+             SET status = 'NEEDS_RECONCILIATION', last_error = 'Late payment requires voucher reconciliation', updated_at = now()
+             WHERE order_id = $1`,
+            [orderId],
+          );
+          return false;
+        }
+        await manager.query(
+          `UPDATE ${this.schema}.wallet_voucher_claim_outbox
+           SET status = 'DONE', completed_at = now(), updated_at = now(), last_error = NULL
+           WHERE order_id = $1`,
+          [orderId],
+        );
+        if (
+          local &&
+          (local.loai_phan_phoi === 'PUBLIC' || !local.loai_phan_phoi)
+        ) {
+          await manager.query(
+            `UPDATE ${this.schema}.voucher SET luot_da_dung = luot_da_dung + 1
+             WHERE ma_voucher = $1`,
+            [claim.voucher_code],
+          );
+        }
+        return true;
+      });
     } catch (error) {
       this.unavailable(error);
     }

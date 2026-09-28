@@ -9,9 +9,7 @@ import * as crypto from 'crypto';
 /**
  * LalamoveService - Tích hợp Lalamove API v3 (Sandbox).
  *
- * ⚠️ ĐANG TẠM THỜI TEST BẰNG MARKET HK (vì tài khoản sandbox hiện tại
- * chỉ được Lalamove kích hoạt cho HK). Khi được cấp key/quyền VN,
- * đổi lại `market` thành 'VN' và `language` trong getQuotation thành 'vi_VN'.
+ * Sandbox adapter currently requests the VN market with vi_VN quotations.
  *
  * Base URL:   https://rest.sandbox.lalamove.com
  * The provider is optional. Core ordering can run without its credentials.

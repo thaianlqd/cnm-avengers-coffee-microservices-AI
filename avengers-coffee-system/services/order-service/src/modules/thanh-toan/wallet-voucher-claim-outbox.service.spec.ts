@@ -80,13 +80,44 @@ describe('durable wallet voucher claim delivery', () => {
     expect(manager.query).toHaveBeenCalledTimes(2);
   });
 
-  it('expires an unpaid hold without changing a paid claim and can resume a late successful payment', async () => {
+  it('expires an unpaid hold without changing a paid claim and never blindly revives expiry', async () => {
     const sql: string[] = [];
     const query = jest.fn((statement: string) => {
       sql.push(statement);
+      if (statement.includes('FROM orders.voucher'))
+        return Promise.resolve([
+          {
+            trang_thai: 'ACTIVE',
+            loai_phan_phoi: 'PUBLIC',
+            tong_luot_dung: 1,
+            luot_da_dung: 1,
+            gioi_han_moi_nguoi: 1,
+            han_su_dung: null,
+          },
+        ]);
+      if (
+        statement.includes(
+          'FROM orders.wallet_voucher_claim_outbox WHERE order_id = $1 FOR UPDATE',
+        )
+      )
+        return Promise.resolve([
+          {
+            order_id: 'order-1',
+            customer_id: 'user-1',
+            voucher_code: 'SAVE20',
+            discount_amount: 10000,
+            status: 'EXPIRED',
+            created_at: new Date(0),
+          },
+        ]);
       return Promise.resolve([[], 0] as [unknown[], number]);
     });
-    const manager = { query };
+    const manager = {
+      query,
+      transaction: async (
+        work: (manager: { query: typeof query }) => Promise<boolean>,
+      ) => work(manager),
+    };
     const service = new WalletVoucherClaimOutboxService(
       { manager } as unknown as ConstructorParameters<
         typeof WalletVoucherClaimOutboxService
@@ -99,7 +130,17 @@ describe('durable wallet voucher claim delivery', () => {
     expect(sql[0]).toContain(
       "order_row.trang_thai_thanh_toan = 'DA_THANH_TOAN'",
     );
-    await service.markReady('order-1');
-    expect(sql[2]).toContain("status IN ('WAITING_PAYMENT', 'EXPIRED')");
+    const markReadyStart = sql.length;
+    expect(await service.markReady('order-1')).toBe(false);
+    expect(
+      sql
+        .slice(markReadyStart)
+        .some((statement) => statement.includes("SET status = 'PENDING'")),
+    ).toBe(false);
+    expect(
+      sql
+        .slice(markReadyStart)
+        .some((statement) => statement.includes('NEEDS_RECONCILIATION')),
+    ).toBe(true);
   });
 });

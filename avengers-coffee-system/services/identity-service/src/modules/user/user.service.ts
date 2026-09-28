@@ -2533,6 +2533,55 @@ export class UserService implements OnModuleInit {
           }
           return { message: 'Da ghi nhan su dung khuyen mai', ma_khuyen_mai: code, already_processed: true };
         }
+        const priorClaim = await manager.findOne(OrderVoucherClaim, {
+          where: { ma_don_hang: orderId },
+        });
+        if (priorClaim) {
+          if (
+            priorClaim.ma_khuyen_mai !== code ||
+            priorClaim.ma_nguoi_dung !== userId
+          ) {
+            throw new BadRequestException('Don hang da su dung voucher khac');
+          }
+          return {
+            message: 'Da ghi nhan su dung khuyen mai',
+            ma_khuyen_mai: code,
+            already_processed: true,
+          };
+        }
+        // Serialize claims of the same Identity promotion so capacity and
+        // per-user limits are checked at the actual claim point.
+        const promotion = await manager.findOne(Promotion, {
+          where: { ma_khuyen_mai: code },
+          lock: { mode: 'pessimistic_write' },
+        });
+        if (promotion) {
+          const now = new Date();
+          if (
+            promotion.trang_thai !== 'ACTIVE' ||
+            (promotion.ngay_bat_dau &&
+              new Date(promotion.ngay_bat_dau) > now) ||
+            (promotion.ngay_ket_thuc &&
+              new Date(promotion.ngay_ket_thuc) < now) ||
+            (promotion.so_luong_toi_da > 0 &&
+              promotion.so_luong_da_dung >= promotion.so_luong_toi_da) ||
+            (promotion.ma_nguoi_dung && promotion.ma_nguoi_dung !== userId)
+          ) {
+            throw new BadRequestException('Ma khuyen mai khong con kha dung');
+          }
+          const priorUses =
+            (await manager.count(PromotionUsage, {
+              where: { ma_khuyen_mai: code, ma_nguoi_dung: userId },
+            })) +
+            (await manager.count(OrderVoucherClaim, {
+              where: { ma_khuyen_mai: code, ma_nguoi_dung: userId },
+            }));
+          if (priorUses >= (promotion.gioi_han_moi_nguoi || 1)) {
+            throw new BadRequestException(
+              'Ban da dung het luot su dung ma khuyen mai nay',
+            );
+          }
+        }
         const inserted = await manager.createQueryBuilder()
           .insert().into(OrderVoucherClaim)
           .values({ ma_khuyen_mai: code, ma_nguoi_dung: userId,
