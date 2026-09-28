@@ -3,6 +3,7 @@ from src.agents.order_flow_graph import (
     _store_cart_line_choice, _resolve_pending_cart_line,
 )
 from src.common import cart_manager
+import pytest
 
 
 def _seed_variants(session: str):
@@ -75,6 +76,35 @@ def test_ambiguous_cart_operation_keeps_typed_line_snapshot_and_resumes_by_ordin
     assert resumed["operation"] == "SET_QUANTITY"
     assert resumed["requested_value"] == 3
     assert str(resumed["row"]["cart_item_id"]) == "102"
+
+
+@pytest.mark.parametrize('operation,patch,expected_tool,expected_reply', [
+    ('REMOVE', {}, 'remove_cart_item', 'Đã xoá đúng dòng món'),
+    ('EDIT_OPTIONS', {'toppings': ['Hạt Sen']}, 'update_cart_item', 'Đã cập nhật tùy chọn'),
+])
+def test_pending_cart_choice_resumes_remove_or_option_patch(monkeypatch, operation, patch, expected_tool, expected_reply):
+    from src.function_calling.tools import cart_tools
+
+    session = f'typed-{operation.lower()}'
+    _seed_variants(session)
+    cart = cart_manager.get_cart(session)
+    candidates = [row for row in cart['items'] if row['product_name'] == 'Trà Sữa']
+    _store_cart_line_choice(session, operation, patch or 'đổi topping', candidates, patch=patch)
+    monkeypatch.setattr(cart_tools, 'sync_authoritative_cart', lambda _sid: cart)
+    changed = []
+    monkeypatch.setattr(cart_tools, 'execute_remove_cart_item',
+                        lambda _sid, line_id: changed.append(('remove', line_id)) or {'status': 'ok'})
+    monkeypatch.setattr(cart_tools, 'execute_update_cart_item',
+                        lambda _sid, line_id, desired: changed.append(('patch', line_id, desired)) or {'status': 'ok'})
+    monkeypatch.setattr(cart_tools, 'execute_get_cart_quote', lambda _sid: {'status': 'ok', 'quote': {'subtotal': 84000}})
+
+    result = run_order_flow(session, 'số 2')
+    assert expected_reply in result['reply']
+    assert [entry['tool'] for entry in result['tool_calls_log']] == [expected_tool]
+    assert changed[0][1] == '102'
+    if operation == 'EDIT_OPTIONS':
+        assert changed[0][2] == patch
+    assert cart_manager.get_pending_action(session) is None
 
 
 def test_cart_family_disambiguation_lists_only_matching_variants():

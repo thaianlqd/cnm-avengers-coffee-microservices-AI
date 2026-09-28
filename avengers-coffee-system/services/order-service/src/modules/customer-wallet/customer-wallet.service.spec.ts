@@ -104,14 +104,16 @@ describe('wallet PAYMENT atomicity and idempotency', () => {
 
   it('credits one refund once for a repeated reference', async () => {
     const wallet: any = { customer_id: 'customer', balance: 100000 };
-    let inserted = false;
+    const refunds = new Map<string, number>();
     const manager: any = {
-      query: jest.fn(async (sql: string) => {
-        if (sql.includes('customer_wallet_transaction')) {
-          if (inserted) return [];
-          inserted = true;
-          return [{ id: 'refund-1' }];
+      query: jest.fn(async (sql: string, params: any[]) => {
+        if (sql.includes('INSERT INTO') && sql.includes('customer_wallet_transaction')) {
+          if (refunds.has(params[2])) return [];
+          refunds.set(params[2], params[1]);
+          return [{ id: `refund-${refunds.size}` }];
         }
+        if (sql.includes('SELECT amount, status')) return refunds.has(params[1])
+          ? [{ amount: refunds.get(params[1]), status: 'SUCCESS' }] : [];
         return [];
       }),
       getRepository: () => ({ findOne: jest.fn(async () => wallet) }),
@@ -122,5 +124,9 @@ describe('wallet PAYMENT atomicity and idempotency', () => {
     await service.refundBalance('customer', 25000, 'ORDER-1');
     await service.refundBalance('customer', 25000, 'ORDER-1');
     expect(wallet.balance).toBe(125000);
+    await expect(service.refundBalance('customer', 5000, 'ORDER-1')).rejects.toThrow('Ma tham chieu hoan tien');
+    await service.refundBalance('customer', 5000, 'ORDER-1-PARTIAL-2');
+    expect(wallet.balance).toBe(130000);
+    expect(refunds.size).toBe(2);
   });
 });

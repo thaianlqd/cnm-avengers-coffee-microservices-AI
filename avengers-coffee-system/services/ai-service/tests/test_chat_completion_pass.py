@@ -1,5 +1,6 @@
 """Menu, contextual target, locality and wallet option regressions."""
 import uuid
+import pytest
 
 from src.agents import agent_service, order_flow_graph
 from src.agents.location_parser import parse_location, locality_matches
@@ -111,7 +112,8 @@ def test_card_selection_without_choices_uses_same_safe_add_path(monkeypatch):
     assert len(mutations) == 1 and mutations[0]['product_id'] == '8'
 
 
-def test_pickup_area_prioritizes_exact_locality_and_supplements_nearby(monkeypatch):
+@pytest.mark.parametrize('coords', [(10.8, 106.7), None])
+def test_pickup_area_prioritizes_exact_locality_and_supplements_nearby(monkeypatch, coords):
     session = 'branch-area-' + uuid.uuid4().hex
     cart_manager.set_checkout_context(session, delivery_type='MANG_DI')
     rows = [
@@ -131,12 +133,28 @@ def test_pickup_area_prioritizes_exact_locality_and_supplements_nearby(monkeypat
     monkeypatch.setattr(branch_tools, '_get_engine', lambda: Engine())
     monkeypatch.setattr(branch_tools, '_check_business_hours', lambda: None)
     monkeypatch.setattr(branch_tools, 'validate_cart_at_branch', lambda *_args: {'unavailable': [], 'unverified': []})
-    monkeypatch.setattr(geo, 'geocode_address', lambda _address: (10.8, 106.7))
+    monkeypatch.setattr(geo, 'geocode_address', lambda _address: coords)
     result = branch_tools.execute_find_nearest_branch(location='phường Gò Vấp', session_id=session)
     assert result['status'] == 'need_branch_selection'
     assert [item['ma_chi_nhanh'] for item in result['branches']] == ['GV2', 'GV1', 'TD1']
     assert all(item['khoang_cach_km'] == 0 for item in result['branches'])
     assert len(cart_manager.get_checkout_prefs(session)['branch_candidates']) == 3
+
+
+def test_pickup_without_area_asks_for_area_instead_of_saved_delivery_address(monkeypatch):
+    session = 'pickup-no-area-' + uuid.uuid4().hex
+    cart_manager.set_checkout_context(session, delivery_type='MANG_DI')
+    class Connection:
+        def __enter__(self): return self
+        def __exit__(self, *_args): pass
+        def execute(self, *_args): pytest.fail('saved delivery address must not be loaded')
+    class Engine:
+        def connect(self): return Connection()
+    monkeypatch.setattr(branch_tools, '_get_engine', lambda: Engine())
+    monkeypatch.setattr(branch_tools, '_check_business_hours', lambda: None)
+    result = branch_tools.execute_find_nearest_branch(session_id=session)
+    assert result['status'] == 'need_location'
+    assert 'khu vực/phường/quận' in result['message']
 
 
 def test_new_go_vap_area_owns_checkout_turn_not_saved_address_or_products(monkeypatch):

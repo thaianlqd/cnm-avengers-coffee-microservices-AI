@@ -1980,11 +1980,16 @@ def _render(state: OrderConversationState) -> OrderConversationState:
         logs.append({"tool": "remove_voucher", "result": {"status": "ok", "voucher_code": invalidated}})
         cart_manager.set_checkout_context(state["session_id"], voucher_invalidated=None)
     payment_ui: Dict[str, Any] = {}
-    if prefs.get("checkout_requested") or prefs.get("flow_stage") in {"PAYMENT", "SUMMARY"} or result.get("checkout_payload"):
+    payment_change_requested = bool(re.search(
+        r"\b(?:doi|thay|chon lai)\b.*\b(?:phuong thuc thanh toan|thanh toan|vnpay|cod|qr|vi)\b",
+        _norm(state.get("user_message")),
+    ))
+    show_payment_choices = not prefs.get("payment_method") or payment_change_requested
+    if show_payment_choices and (prefs.get("checkout_requested") or prefs.get("flow_stage") == "PAYMENT"):
         from src.function_calling.tools.cart_tools import get_wallet_payment_options
         amounts = prefs.get("summary_amounts") or {}
         payment_ui = get_wallet_payment_options(state["session_id"], amounts.get("final_total"))
-    if result.get("payment_options"):
+    if show_payment_choices and result.get("payment_options"):
         payment_ui["payment_options"] = result["payment_options"]
     result["ui_payload"] = {"cart": canonical_cart, "products": products[:16], "vouchers": vouchers[:4] if prefs.get("voucher_offer_pending") and not result.get("checkout_payload") else [], "branches": branches[:5], "actions": [], **payment_ui}
     return {**state, "result": result}

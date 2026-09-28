@@ -21,6 +21,17 @@ export function paymentCardRows(options) {
   }));
 }
 
+export function structuredLegacyCards(response) {
+  const data = response || {};
+  return {
+    ...(Array.isArray(data.products) && data.products.length ? { _products: data.products.slice(0, 6) } : {}),
+    ...(Array.isArray(data.stores) && data.stores.length ? { _stores: data.stores.slice(0, 5) } : {}),
+    ...(Array.isArray(data.vouchers) && data.vouchers.length ? { _vouchers: data.vouchers.slice(0, 4) } : {}),
+    ...(Array.isArray(data.orders) && data.orders.length ? { _orders: data.orders.slice(0, 3) } : {}),
+    ...(Array.isArray(data.payment_options) && data.payment_options.length ? { _paymentOptions: data.payment_options } : {}),
+  };
+}
+
 export function chatLoadingLabel(confirming) {
   if (confirming) return 'Đang xác nhận đơn hàng...';
   return 'Mình đang xử lý yêu cầu của bạn...';

@@ -9,8 +9,10 @@ describe('durable wallet voucher claim delivery', () => {
     const manager: any = {
       query: jest.fn(async (sql: string, params?: any[]) => {
         if (sql.includes('INSERT INTO')) { scheduled = claim; return []; }
-        if (sql.includes('attempts = attempts')) return scheduled && !done ? [{ ...scheduled, attempts: voucher.claimIdentityVoucher.mock.calls.length + 1 }] : [];
-        if (sql.includes("status = 'DONE'")) { if (done) return []; done = true; return [{ order_id: claim.order_id }]; }
+        if (sql.includes('attempts = attempts')) return scheduled && !done
+          ? [[{ ...scheduled, attempts: voucher.claimIdentityVoucher.mock.calls.length + 1 }], 1]
+          : [[], 0];
+        if (sql.includes("status = 'DONE'")) { if (done) return [[], 0]; done = true; return [[{ order_id: claim.order_id }], 1]; }
         if (sql.includes('UPDATE orders.voucher')) { localUses++; return []; }
         return [];
       }),
@@ -60,5 +62,14 @@ describe('durable wallet voucher claim delivery', () => {
     await expect(service.assertReady()).rejects.toMatchObject({
       response: expect.objectContaining({ code: 'VOUCHER_CLAIM_OUTBOX_NOT_READY' }),
     });
+  });
+
+  it('does not invent a claim from TypeORM empty UPDATE metadata', async () => {
+    const manager: any = { query: jest.fn(async () => [[], 0]) };
+    const voucher: any = { claimIdentityVoucher: jest.fn() };
+    const service = new WalletVoucherClaimOutboxService({ manager } as any, voucher);
+    await service.processPending();
+    expect(voucher.claimIdentityVoucher).not.toHaveBeenCalled();
+    expect(manager.query).toHaveBeenCalledTimes(1);
   });
 });

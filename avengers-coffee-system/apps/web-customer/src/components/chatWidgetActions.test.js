@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   openChatProductDetail, addChatProduct, paymentCardRows,
-  chatLoadingLabel, refreshWalletAfterCheckout,
+  chatLoadingLabel, refreshWalletAfterCheckout, structuredLegacyCards,
 } from './chatWidgetActions.js';
 
 test('product card click navigates by canonical product ID', () => {
@@ -32,6 +32,18 @@ test('structured wallet option renders balance and disables insufficient funds',
   assert.equal(rows[0].enabled, false);
   assert.equal(rows[0].desc, 'Số dư không đủ');
   assert.equal(paymentCardRows([{ label: 'Ví Avengers', balance: 2063000, enabled: true }])[0].desc, 'Số dư: 2.063.000đ');
+});
+
+test('legacy chat cards come only from structured fields in the current response', () => {
+  assert.deepEqual(structuredLegacyCards({ reply: 'Xem menu, voucher và thanh toán qua ví nhé' }), {});
+  assert.deepEqual(structuredLegacyCards({
+    reply: 'Đã chọn ví',
+    products: [{ product_id: 'P1' }],
+    payment_options: [{ code: 'VI_DIEN_TU' }],
+  }), {
+    _products: [{ product_id: 'P1' }],
+    _paymentOptions: [{ code: 'VI_DIEN_TU' }],
+  });
 });
 
 test('loading label uses only the current confirmation action', () => {

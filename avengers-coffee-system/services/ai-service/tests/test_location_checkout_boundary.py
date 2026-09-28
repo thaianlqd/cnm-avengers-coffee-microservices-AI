@@ -44,6 +44,31 @@ def test_pickup_new_location_owns_turn(monkeypatch, message, expected):
     assert not {entry["tool"] for entry in result["tool_calls_log"]} & {"get_recommendations", "get_product_insights", "get_product_options"}
 
 
+def test_combined_pickup_and_wallet_choice_survives_area_turn(monkeypatch):
+    session = 'combined-choice-' + uuid.uuid4().hex
+    cart_manager.add_item(session, 'P1', 'Cà phê', 35000)
+    cart_manager.set_checkout_context(session, checkout_requested=True, voucher_decided=True)
+    monkeypatch.setattr(cart_tools, 'sync_authoritative_cart', lambda sid: cart_manager.get_cart(sid))
+    monkeypatch.setattr(agent_service, '_run_agent_impl', lambda *_args, **_kwargs: {
+        'reply': 'Mình đã ghi nhận lựa chọn.', 'tool_calls_log': [], 'checkout_payload': None,
+    })
+    first = order_flow_graph.run_order_flow(session, 'lấy tại quán và thanh toán bằng ví nhé')
+    prefs = cart_manager.get_checkout_prefs(session)
+    assert prefs['delivery_type'] == 'MANG_DI'
+    assert prefs['payment_method'] == 'VI_DIEN_TU'
+    assert not first.get('ui_payload', {}).get('payment_options')
+
+    seen = []
+    monkeypatch.setattr(branch_tools, 'execute_find_nearest_branch', lambda location, session_id: seen.append(location) or {
+        'status': 'need_branch_selection',
+        'branches': [{'ma_chi_nhanh': 'B1', 'ten_chi_nhanh': 'Quán Một', 'availability_status': 'available'}],
+    })
+    second = order_flow_graph.run_order_flow(session, 'tôi ở phường Tây Thạnh')
+    assert seen == ['phường Tây Thạnh']
+    assert cart_manager.get_checkout_prefs(session)['payment_method'] == 'VI_DIEN_TU'
+    assert not second.get('ui_payload', {}).get('payment_options')
+
+
 def test_partial_delivery_address_asks_for_missing_fields_without_geocoding(monkeypatch):
     session = _session(monkeypatch, delivery_type="GIAO_TAN_NOI")
     monkeypatch.setattr(branch_tools, "execute_find_nearest_branch", lambda **kw: pytest.fail("partial delivery geocoded"))
