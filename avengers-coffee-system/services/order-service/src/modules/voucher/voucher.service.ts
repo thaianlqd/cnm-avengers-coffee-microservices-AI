@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Voucher } from './voucher.entity';
 import { secretWithDevDefault } from '../../config/runtime-secrets';
+import { voucherPaymentHoldTtlMinutes } from '../thanh-toan/voucher-payment-hold';
 
 type VoucherValidationResult = {
   so_tien_giam: number;
@@ -295,8 +296,10 @@ export class VoucherService {
         pending = await this.voucherRepo.manager.query(
           `SELECT 1 FROM ${schema}.wallet_voucher_claim_outbox
            WHERE customer_id = $1 AND voucher_code = $2
-             AND status IN ('PENDING', 'WAITING_PAYMENT') LIMIT 1`,
-          [userId, code],
+             AND (status = 'PENDING' OR (status = 'WAITING_PAYMENT'
+               AND created_at > now() - ($3::integer * interval '1 minute')))
+           LIMIT 1`,
+          [userId, code, voucherPaymentHoldTtlMinutes()],
         );
       } catch (error: any) {
         if (error?.code === '42P01') {

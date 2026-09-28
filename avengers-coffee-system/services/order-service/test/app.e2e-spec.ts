@@ -195,4 +195,28 @@ describe('Order API (e2e)', () => {
       claim.mockRestore();
     }
   });
+
+  it('expires an abandoned payment hold and releases its voucher reservation', async () => {
+    const schema = dataSource.driver.escape(process.env.DB_SCHEMA || 'orders');
+    const heldOrderId = randomUUID();
+    await dataSource.query(
+      `INSERT INTO ${schema}.wallet_voucher_claim_outbox
+       (order_id, customer_id, voucher_code, discount_amount, status, created_at)
+       VALUES ($1, $2, 'CI_HOLD', 10000, 'WAITING_PAYMENT', now() - interval '40 minutes')`,
+      [heldOrderId, customerId],
+    );
+    const outbox = app.get(WalletVoucherClaimOutboxService);
+    await outbox.processPending();
+    const expiredRows = await dataSource.query<Array<{ status: string }>>(
+      `SELECT status FROM ${schema}.wallet_voucher_claim_outbox WHERE order_id = $1`,
+      [heldOrderId],
+    );
+    expect(expiredRows[0].status).toBe('EXPIRED');
+    await outbox.markReady(heldOrderId);
+    const resumedRows = await dataSource.query<Array<{ status: string }>>(
+      `SELECT status FROM ${schema}.wallet_voucher_claim_outbox WHERE order_id = $1`,
+      [heldOrderId],
+    );
+    expect(resumedRows[0].status).toBe('PENDING');
+  });
 });

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { VoucherService } from '../voucher/voucher.service';
 import { DonHang } from './entities/don-hang.entity';
+import { voucherPaymentHoldTtlMinutes } from './voucher-payment-hold';
 
 type Claim = { order_id: string; customer_id: string; voucher_code: string; discount_amount: number };
 type StoredClaim = Claim & { attempts: number };
@@ -70,7 +71,7 @@ export class WalletVoucherClaimOutboxService implements OnModuleInit, OnModuleDe
       await this.orders.manager.query(
         `UPDATE ${this.schema}.wallet_voucher_claim_outbox
          SET status = 'PENDING', next_attempt_at = now(), updated_at = now()
-         WHERE order_id = $1 AND status = 'WAITING_PAYMENT'`,
+         WHERE order_id = $1 AND status IN ('WAITING_PAYMENT', 'EXPIRED')`,
         [orderId],
       );
     } catch (error) {
@@ -103,6 +104,21 @@ export class WalletVoucherClaimOutboxService implements OnModuleInit, OnModuleDe
     if (this.running) return;
     this.running = true;
     try {
+      await this.orders.manager.query(
+        `UPDATE ${this.schema}.wallet_voucher_claim_outbox AS claim
+         SET status = 'EXPIRED', last_error = 'Payment hold expired', updated_at = now()
+         WHERE claim.status = 'WAITING_PAYMENT'
+           AND claim.created_at <= now() - ($1::integer * interval '1 minute')
+           AND NOT EXISTS (
+             SELECT 1 FROM ${this.schema}.giao_dich_thanh_toan AS payment
+             WHERE payment.ma_don_hang = claim.order_id AND payment.trang_thai = 'THANH_CONG'
+           )
+           AND NOT EXISTS (
+             SELECT 1 FROM ${this.schema}.don_hang AS order_row
+             WHERE order_row.ma_don_hang = claim.order_id AND order_row.trang_thai_thanh_toan = 'DA_THANH_TOAN'
+           )`,
+        [voucherPaymentHoldTtlMinutes()],
+      );
       const claims = returnedUpdateRows<StoredClaim>(await this.orders.manager.query(
         `UPDATE ${this.schema}.wallet_voucher_claim_outbox SET
            attempts = attempts + 1,

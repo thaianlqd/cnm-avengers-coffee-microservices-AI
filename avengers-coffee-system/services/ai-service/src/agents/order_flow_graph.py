@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import html
 import json
+import logging
 import re
 import time
 import unicodedata
@@ -21,7 +22,11 @@ except ImportError:  # pragma: no cover
     END = "__end__"
 
 from src.agents.tier1 import classify_confirmation, classify_order_intent
+from src.agents.payment_intent import wallet_payment_evidence
+from src.agents.catalog_constraints import parse_catalog_constraints
 from src.common import cart_manager
+
+logger = logging.getLogger(__name__)
 
 
 _FOOD_KEYWORDS = (
@@ -974,15 +979,22 @@ def _sync(state: OrderConversationState) -> OrderConversationState:
             raise RuntimeError("authenticated cart sync was not authoritative")
         return {**state, "cart": cart, "cart_sync_status": str(cart.get("cart_sync_status") or "ok")}
     except Exception as exc:
+        status = getattr(getattr(exc, "response", None), "status_code", None)
+        sync_status = "unavailable" if authenticated else "guest_draft"
+        logger.warning(
+            "authoritative cart sync failed type=%s http_status=%s service=order-service "
+            "path=/cart/<customer> cart_sync_status=%s",
+            type(exc).__name__, status, sync_status,
+        )
         # Preserve a cache only for diagnostic/UI context. It is never treated
         # as truth and write nodes below explicitly refuse to mutate it.
         cached = cart_manager.get_cart(state["session_id"])
         cart = {
             **cached,
             "authoritative": False,
-            "cart_sync_status": "unavailable" if authenticated else "guest_draft",
+            "cart_sync_status": sync_status,
             "stale_snapshot": authenticated,
-            "sync_error": str(exc),
+            "sync_error": type(exc).__name__,
         }
         return {**state, "cart": cart, "cart_sync_status": cart["cart_sync_status"]}
 
@@ -1317,6 +1329,9 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         if not canonical:
             return {**state, "intent": {"intent": "PRODUCT_CLARIFY"}}
         return {**state, "intent": {"intent": "ADD_ITEM", "resolved_products": [canonical], "quantity": 1}}
+    catalog_constraints = parse_catalog_constraints(state["user_message"])
+    if catalog_constraints:
+        return {**state, "intent": {"intent": "BROWSING", "catalog_constraints": catalog_constraints}}
     staged = list(cart_manager.get_checkout_prefs(state["session_id"]).get("pending_products") or [])
     if staged and any(not str(item.get("product_id") or "").strip() for item in staged):
         valid = cart_manager.set_pending_products(state["session_id"], staged)
@@ -1614,6 +1629,26 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         reply = quote.get("message") if quote.get("status") != "ok" else _format_quote(session_id, quote)
         return {**state, "result": {"reply": reply, "checkout_payload": None, "tool_calls_log": [{"tool": "get_cart_quote", "result": quote}], "error": None}}
     if kind == "BROWSING":
+        if intent.get("catalog_constraints"):
+            from src.function_calling.tools.product_tools import execute_filter_catalog
+            constraints = intent["catalog_constraints"]
+            found = execute_filter_catalog(**constraints)
+            amount = constraints.get("max_price") or constraints.get("min_price")
+            price = f"{float(amount or 0):,.0f}".replace(",", ".")
+            group = "topping" if constraints["sellable_scope"] == "topping" else "món"
+            relation = ("dưới" if constraints.get("max_price") is not None
+                        and not constraints.get("max_price_inclusive") else
+                        "không quá" if constraints.get("max_price") is not None else
+                        "trên" if constraints.get("min_price") is not None
+                        and not constraints.get("min_price_inclusive") else "từ")
+            reply = (found.get("message") if found.get("status") == "error" else
+                     f"Hiện không có {group} nào {relation} {price}đ." if found.get("status") == "not_found" else
+                     "Mình tìm thấy các món phù hợp trong menu:")
+            return {**state, "result": {
+                "reply": reply, "checkout_payload": None,
+                "tool_calls_log": [{"tool": "filter_catalog", "args": constraints, "result": found}],
+                "error": None,
+            }}
         # Resolve category aliases and OR alternatives with catalog data. The
         # entire customer sentence must never become one exact product name.
         menu_result = _search_menu_catalog(intent.get("category_query") or message)
@@ -1814,7 +1849,7 @@ def _render(state: OrderConversationState) -> OrderConversationState:
         value = entry.get("result") if isinstance(entry, dict) else {}
         branches.extend(value.get("branches", []))
         vouchers.extend(value.get("vouchers", []))
-        if entry.get("tool") == "get_recommendations":
+        if entry.get("tool") in {"get_recommendations", "filter_catalog"}:
             category = str((entry.get("args") or {}).get("category") or "")
             recommendation_products.extend({**item,
                 "menu_bucket": item.get("menu_bucket") or (category if category in {"food", "drink"}
@@ -1981,9 +2016,10 @@ def _render(state: OrderConversationState) -> OrderConversationState:
         cart_manager.set_checkout_context(state["session_id"], voucher_invalidated=None)
     payment_ui: Dict[str, Any] = {}
     payment_change_requested = bool(re.search(
-        r"\b(?:doi|thay|chon lai)\b.*\b(?:phuong thuc thanh toan|thanh toan|vnpay|cod|qr|vi)\b",
+        r"\b(?:doi|thay|chon lai)\b.*\b(?:phuong thuc thanh toan|thanh toan|vnpay|cod|qr)\b",
         _norm(state.get("user_message")),
-    ))
+    )) or (bool(re.search(r"\b(?:doi|thay|chon lai)\b", _norm(state.get("user_message"))))
+           and wallet_payment_evidence(_norm(state.get("user_message"))))
     show_payment_choices = not prefs.get("payment_method") or payment_change_requested
     if show_payment_choices and (prefs.get("checkout_requested") or prefs.get("flow_stage") == "PAYMENT"):
         from src.function_calling.tools.cart_tools import get_wallet_payment_options

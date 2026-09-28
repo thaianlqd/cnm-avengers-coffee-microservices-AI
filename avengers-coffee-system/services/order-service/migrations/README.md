@@ -34,3 +34,8 @@ until both outbox migrations are present. Inspect duplicate REFUND rows by
 `(customer_id, reference_id)` before applying if historical callbacks may have
 credited the same refund more than once. A REFUND `reference_id` identifies
 one refund event; separate partial refunds need separate event references.
+
+Unpaid `WAITING_PAYMENT` claims expire after `VOUCHER_PAYMENT_HOLD_TTL_MINUTES`
+(default 30). This uses the existing `created_at` and `status` columns, so no
+new migration is needed. A later confirmed payment moves an expired claim back
+to `PENDING` for idempotent delivery; monitor late settlements after hold expiry.

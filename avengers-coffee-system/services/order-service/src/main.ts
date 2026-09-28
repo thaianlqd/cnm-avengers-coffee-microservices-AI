@@ -1,15 +1,35 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Catch, ExceptionFilter, ArgumentsHost } from '@nestjs/common';
+import {
+  Catch,
+  ExceptionFilter,
+  ArgumentsHost,
+  HttpException,
+} from '@nestjs/common';
 
 @Catch()
 class GlobalExceptionFilter implements ExceptionFilter {
-  catch(exception: any, host: ArgumentsHost) {
-    console.error('[EXCEPTION]', new Date().toISOString(), String(exception?.stack || exception));
+  catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
-    const response = ctx.getResponse();
-    const status = exception?.getStatus ? exception.getStatus() : 500;
-    response.status(status).json({ message: String(exception), stack: exception?.stack });
+    const response = ctx.getResponse<{
+      status: (statusCode: number) => { json: (body: unknown) => void };
+    }>();
+    const status =
+      exception instanceof HttpException ? exception.getStatus() : 500;
+    console.error(
+      '[EXCEPTION]',
+      new Date().toISOString(),
+      exception instanceof Error ? exception.name : 'Error',
+      status,
+    );
+    if (exception instanceof HttpException) {
+      const detail = exception.getResponse();
+      response
+        .status(status)
+        .json(typeof detail === 'object' ? detail : { message: detail });
+      return;
+    }
+    response.status(500).json({ message: 'Internal server error' });
   }
 }
 
@@ -31,4 +51,4 @@ async function bootstrap() {
     process.exit(1);
   }
 }
-bootstrap();
+void bootstrap();

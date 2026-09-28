@@ -138,6 +138,13 @@ def test_pickup_area_prioritizes_exact_locality_and_supplements_nearby(monkeypat
     assert result['status'] == 'need_branch_selection'
     assert [item['ma_chi_nhanh'] for item in result['branches']] == ['GV2', 'GV1', 'TD1']
     assert all(item['khoang_cach_km'] == 0 for item in result['branches'])
+    expected_basis = 'geocoded_user' if coords else 'area_centroid'
+    assert all(item['distance_basis'] == expected_basis for item in result['branches'])
+    assert all(item['distance_estimated'] is (coords is None) for item in result['branches'])
+    if coords is None:
+        assert 'ước tính theo khu vực' in result['message']
+    else:
+        assert 'vị trí đã xác định' in result['message']
     assert len(cart_manager.get_checkout_prefs(session)['branch_candidates']) == 3
 
 
