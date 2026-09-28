@@ -11,6 +11,9 @@ process.env.DB_PASSWORD = process.env.DB_PASSWORD || '123';
 process.env.DB_NAME = process.env.DB_NAME || 'avengers_coffee';
 process.env.DB_SCHEMA = process.env.DB_SCHEMA || `menu_ci_${Date.now()}`;
 
+const { assertIsolatedE2EDatabase } = require('../../../test-utils/e2e-db-safety');
+assertIsolatedE2EDatabase('menu');
+
 const { AppModule } = require('./../src/app.module');
 
 describe('Menu API (e2e)', () => {

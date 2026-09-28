@@ -7,6 +7,7 @@ writes are resolved by the nodes below against canonical ids.
 from __future__ import annotations
 
 import hashlib
+import html
 import json
 import re
 import time
@@ -277,6 +278,10 @@ _CART_REFERENCE_STOPWORDS = {
 }
 
 
+def _clean_option_text(value: Any) -> str:
+    return re.sub(r"\s+", " ", html.unescape(str(value or "")).replace("\xa0", " ")).strip()
+
+
 def _cart_rows_named_in_message(cart: Dict[str, Any], message: str) -> List[Dict[str, Any]]:
     """Return only cart rows whose product name is evidenced by the message.
 
@@ -305,7 +310,9 @@ def _cart_rows_named_in_message(cart: Dict[str, Any], message: str) -> List[Dict
         }
         overlap = len(product_tokens & message_tokens)
         ratio = overlap / max(1, len(product_tokens))
-        if overlap >= 2 and ratio >= 0.5:
+        # Two meaningful tokens identify a family phrase. Keep every matching
+        # variant so the caller can ask only about the relevant cart lines.
+        if overlap >= 2 and ratio >= 0.4:
             scored.append((overlap, ratio, row))
     if not scored:
         return []
@@ -315,6 +322,67 @@ def _cart_rows_named_in_message(cart: Dict[str, Any], message: str) -> List[Dict
     return [value[2] for value in overlap_winners if value[1] == best_ratio]
 
 
+def _cart_line_snapshot(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    snapshot: List[Dict[str, Any]] = []
+    for index, row in enumerate(rows, 1):
+        line_id = _cart_line_id(row)
+        if not line_id:
+            continue
+        options = [row.get("size"), *(row.get("toppings") or []), row.get("luong_da"), row.get("do_ngot"), row.get("loai_sua")]
+        snapshot.append({
+            "display_index": index,
+            "line_id": line_id,
+            "product_name": row.get("product_name") or "Sản phẩm",
+            "variant": ", ".join(_clean_option_text(value) for value in options if _clean_option_text(value)) or "mặc định",
+        })
+    return snapshot
+
+
+def _store_cart_line_choice(
+    session_id: str,
+    operation: str,
+    requested_value: Any,
+    rows: List[Dict[str, Any]],
+    patch: Optional[Dict[str, Any]] = None,
+) -> str:
+    snapshot = _cart_line_snapshot(rows)
+    cart_manager.set_pending_action(session_id, "cart_line_choice", {
+        "operation": operation,
+        "requested_value": requested_value,
+        "candidate_line_ids": [item["line_id"] for item in snapshot],
+        "display_snapshot": snapshot,
+        "patch": patch or {},
+    })
+    lines = ["Mình cần biết đúng dòng món cần thao tác:"]
+    lines.extend(f"{item['display_index']}. {item['product_name']} ({item['variant']})" for item in snapshot)
+    lines.append("Bạn chọn số dòng nhé.")
+    return "\n".join(lines)
+
+
+def _resolve_pending_cart_line(session_id: str, message: str, cart: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    pending = cart_manager.get_pending_action(session_id) or {}
+    if pending.get("type") != "cart_line_choice":
+        return None
+    params = pending.get("params") or pending.get("data") or {}
+    snapshot = list(params.get("display_snapshot") or [])
+    text = _norm(message)
+    match = re.search(r"\b(?:dong|mon|so|thu|#)?\s*(\d+)\b", text)
+    selected = None
+    if match:
+        selected = next((item for item in snapshot if int(item.get("display_index") or 0) == int(match.group(1))), None)
+    if not selected:
+        named = [item for item in snapshot if _norm(item.get("product_name")) in text]
+        if len(named) == 1:
+            selected = named[0]
+    if not selected:
+        return None
+    row = next((item for item in cart.get("items") or [] if _cart_line_id(item) == str(selected.get("line_id"))), None)
+    if not row:
+        cart_manager.clear_pending_action(session_id)
+        return {"stale": True}
+    return {"row": row, **params}
+
+
 def _resolve_cart_line(cart: Dict[str, Any], message: str) -> tuple[Optional[Dict[str, Any]], Optional[str]]:
     items = list(cart.get("items") or [])
     text = _norm(message)
@@ -322,10 +390,6 @@ def _resolve_cart_line(cart: Dict[str, Any], message: str) -> tuple[Optional[Dic
     if len(matches) == 1:
         return matches[0], None
     focus = (cart.get("checkout_prefs") or {}).get("last_cart_focus")
-    if focus and matches:
-        focus_matches = [row for row in matches if str(row.get("cart_item_id") or row.get("line_id")) == str(focus)]
-        if len(focus_matches) == 1:
-            return focus_matches[0], None
     if not items:
         return None, "Giỏ hàng đang trống. Bạn muốn chọn món nào trước?"
     # A single row or focused row is safe only for a genuine generic/pronoun
@@ -336,11 +400,12 @@ def _resolve_cart_line(cart: Dict[str, Any], message: str) -> tuple[Optional[Dic
     ))
     if len(items) == 1 and (not _cart_rows_named_in_message(cart, message) or generic_reference):
         return items[0], None
-    if focus and generic_reference:
+    if focus and generic_reference and not matches:
         focus_matches = [row for row in items if str(row.get("cart_item_id") or row.get("line_id")) == str(focus)]
         if len(focus_matches) == 1:
             return focus_matches[0], None
-    numbered = "\n".join(f"{index + 1}. {row.get('product_name')} ({row.get('size') or 'mặc định'})" for index, row in enumerate(items))
+    choices = matches or items
+    numbered = "\n".join(f"{index + 1}. {row.get('product_name')} ({row.get('size') or 'mặc định'})" for index, row in enumerate(choices))
     return None, "Mình cần biết đúng dòng món cần sửa vì giỏ có nhiều biến thể:\n" + numbered
 
 
@@ -358,6 +423,16 @@ def _resolve_suggested_product(session_id: str, message: str) -> Optional[Dict[s
             requested = _requested_ordinal_categories(message)
             if not requested or candidate.get("category") in requested:
                 return candidate
+        requested = _requested_ordinal_categories(message)
+        if len(requested) == 1:
+            group = next(iter(requested))
+            candidates = list((cart_manager.get_checkout_prefs(session_id).get("product_suggestion_snapshots") or {}).get(group) or [])
+            local = next((item for item in candidates
+                          if int(item.get("group_display_index") or 0) == position + 1), None)
+            if local:
+                return local
+            if 0 <= position < len(candidates):
+                return candidates[position]
     exact = [row for row in suggestions if _norm(row.get("product_name")) in text]
     return exact[0] if len(exact) == 1 else None
 
@@ -405,16 +480,9 @@ def _resolve_structured_references(session_id: str, message: str) -> Optional[Li
         candidates = list(snapshots.get(category) or [])
         if match:
             index = int(match.group(1)) - 1
-            # The renderer labels each category and restarts numbering under
-            # that heading. Its durable category snapshot therefore wins over
-            # a flattened list used only for backward-compatible “món số N”.
-            if suggestion_mode == "grouped" and 0 <= index < len(candidates):
-                resolved.append(candidates[index])
-                continue
-            # Prefer the exact latest displayed list when its numbered row has
-            # the requested type.  This handles a mixed Matcha result where
-            # "bánh số 3" refers to row 3, while preserving the older separate
-            # drink/food namespaces when the latest list belongs to one group.
+            # A qualified ordinal first means the visible global number when
+            # that row belongs to the requested group. Otherwise it means the
+            # local number within that group.
             if 0 <= index < len(latest):
                 latest_item = latest[index]
                 latest_category = str(latest_item.get("category") or "")
@@ -430,7 +498,12 @@ def _resolve_structured_references(session_id: str, message: str) -> Optional[Li
                 if latest_category == category:
                     resolved.append(latest_item)
                     continue
-            if not latest and candidates and 0 <= index < len(candidates):
+            local = next((item for item in candidates
+                          if int(item.get("group_display_index") or 0) == index + 1), None)
+            if local:
+                resolved.append(local)
+                continue
+            if candidates and 0 <= index < len(candidates):
                 resolved.append(candidates[index])
 
     demonstrative = re.search(r"\b(banh|nuoc|mon|san pham)\s+(?:nay|do|kia)\b", text)
@@ -851,7 +924,8 @@ def _resolve_cart_option_update(item: Dict[str, Any], message: str) -> tuple[Dic
     changes: Dict[str, Any] = {}
     for group_name, values in groups.items():
         group = _norm(group_name)
-        matches = [str(value) for value in values if _norm(value) and _norm(value) in text]
+        matches = [_clean_option_text(value) for value in values
+                   if _norm(_clean_option_text(value)) and _norm(_clean_option_text(value)) in text]
         if "topping" in group:
             if re.search(r"\b(khong topping|bo topping|xoa topping|khong them topping)\b", text):
                 changes["toppings"] = []
@@ -1250,6 +1324,28 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
             cart_manager.clear_pending_action(state["session_id"])
     pending = cart_manager.get_pending_action(state["session_id"])
     intent = classify_order_intent(state["user_message"], (pending or {}).get("type"))
+    plain_intent = classify_order_intent(state["user_message"], None)
+    if (pending or {}).get("type") and plain_intent.get("intent") in {
+        "CLEAR_CART", "REMOVE_ITEM", "SET_QUANTITY", "VIEW_CART",
+        "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER",
+    }:
+        intent = plain_intent
+    if intent.get("intent") in {"SELECT_FULFILLMENT", "SELECT_PAYMENT"}:
+        from src.agents.agent_service import _explicit_checkout_choices
+        intent = {**intent, "checkout_patch": _explicit_checkout_choices(state["user_message"])}
+    if (pending or {}).get("type") == "cart_line_choice":
+        # A pending line choice is context. Explicit new commands supersede it;
+        # an ordinal/name-only reply resumes the stored operation.
+        resumed = _resolve_pending_cart_line(state["session_id"], state["user_message"], state.get("cart") or {})
+        if resumed and intent.get("intent") not in {
+            "SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS", "CLEAR_CART", "START_CHECKOUT",
+            "SELECT_FULFILLMENT", "SELECT_PAYMENT", "ADD_ITEM", "BROWSING", "LOCATION_QUERY",
+        }:
+            return {**state, "intent": {"intent": "PENDING_CART_LINE", "resolved_pending": resumed}}
+        if resumed and re.fullmatch(r"\s*(?:(?:dòng|món|số|thứ|#)\s*)?\d+\s*[.!]?\s*", state["user_message"], re.IGNORECASE):
+            return {**state, "intent": {"intent": "PENDING_CART_LINE", "resolved_pending": resumed}}
+        if intent.get("intent") not in {"UNKNOWN", "PENDING_REPLY"}:
+            cart_manager.clear_pending_action(state["session_id"])
     if intent.get("intent") == "FILL_OPTIONS":
         return {**state, "intent": intent}
     from src.agents.location_parser import parse_location
@@ -1262,7 +1358,7 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         choices = _explicit_checkout_choices(state["user_message"])
         if choices:
             return {**state, "intent": {"intent": "SELECT_FULFILLMENT" if choices.get("delivery_type") else "SELECT_PAYMENT",
-                                        "target_kind": "NONE"}}
+                                        "target_kind": "NONE", "checkout_patch": choices}}
     if prefs.get("checkout_submission"):
         pending_type = "confirm_checkout"
     if not pending_type:
@@ -1323,6 +1419,11 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         if shopping and shopping["intent"] in {"ADD_ITEM", "BROWSING", "SHOPPING_GENERIC", "SHOPPING_CLARIFY"}:
             return {**state, "intent": {**shopping, "resume_shopping": True}}
     if pending_type == "fill_options":
+        if intent.get("intent") in {
+            "CLEAR_CART", "REMOVE_ITEM", "SET_QUANTITY", "VIEW_CART",
+            "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER",
+        }:
+            return {**state, "intent": intent}
         return {**state, "intent": {"intent": "PENDING_AMBIGUOUS", "pending_type": pending_type}}
     decision = classify_pending_reply(state["user_message"], pending_type)
     if decision:
@@ -1369,7 +1470,7 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
     session_id, message, cart, intent = state["session_id"], state["user_message"], state["cart"], state["intent"]
     kind = intent.get("intent")
     cart_write_intents = {"ADD_ITEM", "SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS", "CLEAR_CART", "FILL_OPTIONS"}
-    authoritative_intents = cart_write_intents | {"FINISH_CART", "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER", "CONFIRM_CHECKOUT", "PENDING_REPLY", "PENDING_BRANCH"}
+    authoritative_intents = cart_write_intents | {"FINISH_CART", "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER", "CONFIRM_CHECKOUT", "PENDING_REPLY", "PENDING_BRANCH", "PENDING_CART_LINE"}
     prefs = cart_manager.get_checkout_prefs(session_id)
     replay = intent.get("pending_type") == "confirm_checkout" and intent.get("decision") == "CONFIRM" and (prefs.get("checkout_submission") or prefs.get("completed_order_id"))
     if kind in authoritative_intents and not replay and is_authenticated_cart_session(session_id) and not cart.get("authoritative"):
@@ -1396,6 +1497,53 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
     if kind == "PRODUCT_CLARIFY":
         return {**state, "result": {"reply": "Bạn đang hỏi món nào trong danh sách? Bạn chọn số hoặc nói tên món nhé.",
                                    "checkout_payload": None, "tool_calls_log": [], "error": None}}
+    if kind == "PENDING_CART_LINE":
+        resolved = intent.get("resolved_pending") or {}
+        if resolved.get("stale"):
+            return {**state, "result": {"reply": "Dòng món đó không còn trong giỏ. Bạn xem lại giỏ rồi chọn lại nhé.",
+                "checkout_payload": None, "tool_calls_log": [], "error": None}}
+        item = resolved.get("row") or {}
+        line_id = _cart_line_id(item)
+        operation = resolved.get("operation")
+        if not line_id:
+            return {**state, "result": {"reply": "Mình chưa xác định được dòng món. Bạn xem lại giỏ nhé.",
+                "checkout_payload": None, "tool_calls_log": [], "error": None}}
+        logs: List[Dict[str, Any]] = []
+        if operation == "SET_QUANTITY":
+            changed = execute_update_cart_item(session_id, line_id, {"quantity": int(resolved.get("requested_value") or 1)})
+            logs.append({"tool": "update_cart_item", "result": changed})
+            lead = "Đã cập nhật số lượng. Giỏ hàng mới:"
+        elif operation == "REMOVE":
+            changed = execute_remove_cart_item(session_id, line_id)
+            logs.append({"tool": "remove_cart_item", "result": changed})
+            lead = "Đã xoá đúng dòng món. Giỏ hàng mới:"
+        elif operation == "EDIT_OPTIONS":
+            patch = dict(resolved.get("patch") or {})
+            if not patch:
+                desired, option_result = _resolve_cart_option_update(item, str(resolved.get("requested_value") or ""))
+                logs.append({"tool": "get_product_options", "result": option_result})
+                patch = desired
+            if not patch:
+                cart_manager.set_pending_action(session_id, "edit_cart_item", {"cart_item_id": line_id})
+                return {**state, "result": {"reply": f"Bạn muốn đổi tùy chọn nào cho {item.get('product_name')}?",
+                    "checkout_payload": None, "tool_calls_log": logs, "error": None}}
+            changed = execute_update_cart_item(session_id, line_id, patch)
+            logs.append({"tool": "update_cart_item", "result": changed})
+            lead = f"Đã cập nhật tùy chọn cho {item.get('product_name')}. Giỏ hàng mới:"
+        else:
+            cart_manager.clear_pending_action(session_id)
+            return {**state, "result": {"reply": "Thao tác chờ không còn hợp lệ. Bạn thử lại nhé.",
+                "checkout_payload": None, "tool_calls_log": [], "error": None}}
+        if changed.get("status") == "ok":
+            cart_manager.clear_pending_action(session_id)
+            cart_manager.set_checkout_context(session_id, last_cart_focus=None if operation == "REMOVE" else line_id,
+                                              flow_stage="CART_REVIEW")
+            quote = execute_get_cart_quote(session_id)
+            reply_text = lead + ("\n" + _format_quote(session_id, quote) if quote.get("status") == "ok" else "")
+        else:
+            reply_text = changed.get("message", "Chưa thể cập nhật giỏ hàng.")
+        return {**state, "result": {"reply": reply_text, "checkout_payload": None,
+            "tool_calls_log": logs, "error": None}}
     if kind in {"PENDING_REPLY", "PENDING_AMBIGUOUS", "PENDING_BRANCH"}:
         return {**state, "result": _handle_pending_reply(state)}
     if intent.get("resume_shopping"):
@@ -1491,8 +1639,11 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         cart_manager.set_checkout_context(session_id, flow_stage="CART_REVIEW")
         return {**state, "result": prepared}
     if kind == "SET_QUANTITY":
+        matches = _cart_rows_named_in_message(cart, message)
         item, error = _resolve_cart_line(cart, message)
         if error:
+            if len(matches) > 1:
+                error = _store_cart_line_choice(session_id, "SET_QUANTITY", intent["quantity"], matches)
             return {**state, "result": {"reply": error, "checkout_payload": None, "tool_calls_log": [], "error": None}}
         changed = execute_update_cart_item(session_id, str(item.get("cart_item_id") or item.get("line_id")), {"quantity": intent["quantity"]})
         if changed.get("status") == "ok":
@@ -1503,8 +1654,11 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             reply = changed.get("message", "Chưa thể cập nhật món.")
         return {**state, "result": {"reply": reply, "checkout_payload": None, "tool_calls_log": [{"tool": "update_cart_item", "result": changed}], "error": None}}
     if kind == "REMOVE_ITEM":
+        matches = _cart_rows_named_in_message(cart, message)
         item, error = _resolve_cart_line(cart, message)
         if error:
+            if len(matches) > 1:
+                error = _store_cart_line_choice(session_id, "REMOVE", None, matches)
             return {**state, "result": {"reply": error, "checkout_payload": None, "tool_calls_log": [], "error": None}}
         line_id = str(item.get("cart_item_id") or item.get("line_id"))
         cart_manager.set_checkout_context(session_id, last_cart_focus=line_id)
@@ -1523,8 +1677,11 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         item = next((row for row in (cart.get("items") or []) if _cart_line_id(row) == target_id), None)
         error = None
         if not item:
+            matches = _cart_rows_named_in_message(cart, message)
             item, error = _resolve_cart_line(cart, message)
         if error:
+            if len(matches) > 1:
+                error = _store_cart_line_choice(session_id, "EDIT_OPTIONS", message, matches)
             return {**state, "result": {"reply": error, "checkout_payload": None, "tool_calls_log": [], "error": None}}
         line_id = str(item.get("cart_item_id") or item.get("line_id"))
         cart_manager.set_checkout_context(session_id, last_cart_focus=line_id, flow_stage="CART_REVIEW")
@@ -1574,6 +1731,17 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             }}
         return {**state, "result": _offer_voucher_gate(session_id)}
     if kind in {"SELECT_FULFILLMENT", "SELECT_PAYMENT"} and not cart.get("is_empty"):
+        patch = dict(intent.get("checkout_patch") or {})
+        if not patch:
+            from src.agents.agent_service import _explicit_checkout_choices
+            patch = _explicit_checkout_choices(message)
+        previous_delivery = prefs.get("delivery_type")
+        if patch.get("delivery_type") and patch["delivery_type"] != previous_delivery:
+            cart_manager.clear_branch(session_id)
+            cart_manager.set_checkout_context(session_id, location_address=None, suggested_address=None,
+                address_confirmed=None, delivery_address=None, branch_candidates=None)
+        if patch:
+            cart_manager.set_checkout_prefs(session_id, **patch)
         prefs = cart_manager.get_checkout_prefs(session_id)
         if not prefs.get("voucher_decided") or not prefs.get("checkout_requested"):
             return {**state, "result": _offer_voucher_gate(session_id)}
@@ -1693,17 +1861,36 @@ def _render(state: OrderConversationState) -> OrderConversationState:
         if {item.get("menu_bucket") for item in displayed} >= {"food", "drink"}:
             displayed = [item for bucket in ("food", "drink", "unknown") for item in displayed
                          if item.get("menu_bucket") == bucket]
-        snapshot = [{"product_id": item["product_id"],
-                     "product_name": item.get("product_name"),
-                     "category": item.get("menu_bucket") or "unknown",
-                     "menu_bucket": item.get("menu_bucket") or "unknown",
-                     "final_price": item.get("final_price")}
-                    for item in displayed]
+        group_counts: Dict[str, int] = {}
+        snapshot = []
+        for global_index, item in enumerate(displayed, 1):
+            group = item.get("menu_bucket") or "unknown"
+            group_counts[group] = group_counts.get(group, 0) + 1
+            snapshot.append({
+                "product_id": item["product_id"],
+                "product_name": item.get("product_name"),
+                "category": group,
+                "menu_bucket": group,
+                "group": group,
+                "global_display_index": global_index,
+                "group_display_index": group_counts[group],
+                "final_price": item.get("final_price"),
+            })
         for index, item in enumerate(displayed, 1):
             item["display_index"] = index
+            item["global_display_index"] = index
+            matching = next((row for row in snapshot if row["product_id"] == str(item.get("product_id"))), None)
+            if matching:
+                item["group"] = matching["group"]
+                item["group_display_index"] = matching["group_display_index"]
+        grouped_snapshots = {
+            group: [item for item in snapshot if item["group"] == group]
+            for group in {item["group"] for item in snapshot}
+        }
         cart_manager.set_checkout_context(
             state["session_id"], last_product_suggestions=snapshot,
-            product_suggestion_snapshots={}, product_suggestion_mode="flat",
+            product_suggestion_snapshots=grouped_snapshots,
+            product_suggestion_mode="grouped" if len(grouped_snapshots) > 1 else "flat",
             last_product_focus=snapshot[0] if len(snapshot) == 1 else None,
         )
         products = displayed

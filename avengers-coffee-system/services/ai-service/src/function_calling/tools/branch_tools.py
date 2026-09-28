@@ -163,6 +163,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
 
             delivery_type = prefs.get("delivery_type")
             locality_rows = []
+            locality_ids = set()
             area_only = not re.match(r"^\d+[A-Za-z]?(?:[/.-]\d+[A-Za-z]?)?\s", target_address)
             if area_only and delivery_type != "GIAO_TAN_NOI" and not target_branches:
                 from src.agents.location_parser import locality_matches, normalize
@@ -175,15 +176,20 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                     """)).mappings().all()
                     locality_rows = [row for row in active if locality_matches(
                         f"{row['ten_chi_nhanh']}, {row['dia_chi'] or ''}", target_address)]
+                    locality_ids = {str(row["ma_chi_nhanh"]) for row in locality_rows}
 
-            if not locality_rows and (user_lat is None or user_lon is None):
+            if user_lat is None or user_lon is None:
                 coords = geocode_address(target_address)
                 if not coords:
-                    return {
-                        "status": "not_found",
-                        "message": f"Mình chưa xác định chính xác khu vực {target_address} trên bản đồ. Bạn cho mình thêm quận/thành phố hoặc địa chỉ cụ thể hơn nhé."
-                    }
-                user_lat, user_lon = coords
+                    if locality_rows:
+                        logger.info("[AgentTools] Exact locality found but geocoder unavailable; returning exact matches only")
+                    else:
+                        return {
+                            "status": "not_found",
+                            "message": f"Mình chưa xác định chính xác khu vực {target_address} trên bản đồ. Bạn cho mình thêm quận/thành phố hoặc địa chỉ cụ thể hơn nhé."
+                        }
+                else:
+                    user_lat, user_lon = coords
                 
             query = f"""
                 WITH ratings AS (
@@ -203,7 +209,14 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                 FROM branches_and_kiosks b
                 LEFT JOIN ratings r ON b.ma_chi_nhanh = r.ma_chi_nhanh
             """
-            rows = locality_rows or conn.execute(text(query)).mappings().all()
+            all_rows = conn.execute(text(query)).mappings().all()
+            # Exact administrative-component matches lead the list; nearby
+            # branches supplement them instead of being discarded.
+            rows = (
+                locality_rows + [row for row in all_rows if str(row["ma_chi_nhanh"]) not in locality_ids]
+                if user_lat is not None and user_lon is not None
+                else locality_rows
+            )
 
             if not rows:
                 return {
@@ -226,9 +239,15 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                 dist = haversine_distance(user_lat, user_lon, float(r["vi_do"]), float(r["kinh_do"])) if user_lat is not None and user_lon is not None and r["vi_do"] is not None and r["kinh_do"] is not None else None
                 branch_dict = _clean_dict(dict(r))
                 branch_dict["khoang_cach_km"] = round(dist, 1) if dist is not None else None
+                branch_dict["exact_area_match"] = str(r["ma_chi_nhanh"]) in locality_ids
                 branches.append(branch_dict)
 
-            branches.sort(key=lambda x: (x["khoang_cach_km"] is None, x["khoang_cach_km"] or 0, x["ten_chi_nhanh"]))
+            branches.sort(key=lambda x: (
+                not x.get("exact_area_match"),
+                x["khoang_cach_km"] is None,
+                x["khoang_cach_km"] or 0,
+                x["ten_chi_nhanh"],
+            ))
             cart = cart_manager.get_cart(session_id) if session_id else {"items": []}
             inventory_schema = os.getenv("INVENTORY_SCHEMA", "inventory")
             eligible_branches = []

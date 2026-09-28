@@ -22,10 +22,6 @@ def locality_matches(address: str, requested: str) -> bool:
         bare = re.sub(prefix, "", value).strip()
         if bare == area or value == area:
             return True
-        # Store names can carry a brand/code before the locality. The locality
-        # must still end the name; "An Phú Đông" cannot match "An Phú".
-        if re.search(r"(?:^|\s)" + re.escape(area) + r"$", bare):
-            return True
     return False
 
 

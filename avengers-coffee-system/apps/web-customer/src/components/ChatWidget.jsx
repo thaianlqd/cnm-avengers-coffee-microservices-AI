@@ -921,38 +921,13 @@ export default function ChatWidget({ user, socketUrl }) {
       let reply = resData?.reply || resData?.message;
 
       if (reply) {
-        const extras = {};
-        if ((resData.stores && resData.stores.length > 0) || /(cửa hàng|chi nhánh|ở đâu|gần đây|tìm cửa)/.test(textLower) || /(cửa hàng|chi nhánh)/.test(reply.toLowerCase())) {
-          extras._stores = (resData.stores && resData.stores.length > 0) ? resData.stores : cache.current.branches.slice(0, 4);
-        }
-        if ((resData.products && resData.products.length > 0) || /(thực đơn|menu|đồ uống|cà phê|phê|trà|sữa|đồ ăn|bánh|matcha|latte|có gì ngon|\bmón\b|xem menu|đặt)/.test(textLower) || /(sản phẩm|đồ uống|menu|\bmón\b|matcha|latte)/.test(reply.toLowerCase())) {
-          const userAsked = /(thực đơn|menu|đồ uống|cà phê|phê|trà|sữa|đồ ăn|bánh|matcha|latte|có gì ngon|\bmón\b|xem menu|đặt)/.test(textLower);
-          let prods = (resData.products && resData.products.length > 0) ? resData.products : cache.current.products;
-          const searchKeys = ['matcha', 'latte', 'americano', 'trà sữa', 'bánh', 'cà phê', 'phin', 'espresso', 'cold brew', 'trà'];
-          const matchedKey = searchKeys.find((k) => textLower.includes(k) || reply.toLowerCase().includes(k));
-          let filtered = [];
-          if (matchedKey && prods.length > 0) {
-            filtered = prods.filter((p) => (p.ten_san_pham || '').toLowerCase().includes(matchedKey) || (p.ten_danh_muc || p.danh_muc || '').toLowerCase().includes(matchedKey));
-            if (filtered.length > 0) prods = filtered;
-          }
-          
-          if (resData.products && resData.products.length > 0) {
-            extras._products = prods.slice(0, 6);
-          } else if (filtered.length > 0) {
-            extras._products = filtered.slice(0, 6);
-          } else if (userAsked) {
-            extras._products = prods.slice(0, 6);
-          }
-        }
-        if ((resData.vouchers && resData.vouchers.length > 0) || /(khuyến mãi|voucher|giảm giá|ưu đãi|mã)/.test(textLower) || /(voucher|khuyến mãi|ưu đãi)/.test(reply.toLowerCase())) {
-          extras._vouchers = (resData.vouchers && resData.vouchers.length > 0) ? resData.vouchers : cache.current.vouchers.slice(0, 4);
-        }
-        if ((resData.orders && resData.orders.length > 0) || /(đơn hàng|đơn của tôi|trạng thái.*đơn|theo dõi.*đơn|giao chưa)/.test(textLower) || /(đơn hàng)/.test(reply.toLowerCase())) {
-          extras._orders = (resData.orders && resData.orders.length > 0) ? resData.orders : cache.current.orders.slice(0, 3);
-        }
-        if (/(thanh toán|payment|vnpay|ví|momo|atm)/.test(reply.toLowerCase()) && !/(giỏ hàng.*trống|chưa có món|chọn món trước)/.test(reply.toLowerCase())) {
-          extras._type = 'payment';
-        }
+        const extras = {
+          ...(Array.isArray(resData.products) && resData.products.length ? { _products: resData.products.slice(0, 6) } : {}),
+          ...(Array.isArray(resData.stores) && resData.stores.length ? { _stores: resData.stores.slice(0, 5) } : {}),
+          ...(Array.isArray(resData.vouchers) && resData.vouchers.length ? { _vouchers: resData.vouchers.slice(0, 4) } : {}),
+          ...(Array.isArray(resData.orders) && resData.orders.length ? { _orders: resData.orders.slice(0, 3) } : {}),
+          ...(Array.isArray(resData.payment_options) && resData.payment_options.length ? { _paymentOptions: resData.payment_options } : {}),
+        };
         const hasCards = Boolean(extras._products || extras._stores || extras._vouchers || extras._orders);
         if (hasCards) {
           const lines = reply.split('\n');

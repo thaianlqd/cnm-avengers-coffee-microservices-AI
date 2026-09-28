@@ -1,4 +1,5 @@
 import logging
+import html
 from typing import Any, Dict, Optional
 from sqlalchemy import text
 from src.function_calling.helpers import _get_engine, _clean_dict, _norm
@@ -69,7 +70,10 @@ def execute_get_product_options(product_name: str) -> Dict[str, Any]:
             from collections import defaultdict
             options_dict = defaultdict(list)
             for r in opts:
-                options_dict[r[0]].append(r[1])
+                group = " ".join(html.unescape(str(r[0] or "")).replace("\xa0", " ").split())
+                value = " ".join(html.unescape(str(r[1] or "")).replace("\xa0", " ").split())
+                if group and value and value not in options_dict[group]:
+                    options_dict[group].append(value)
                 
             if not options_dict:
                 return {
@@ -86,6 +90,16 @@ def execute_get_product_options(product_name: str) -> Dict[str, Any]:
                 "product_id": product_id,
                 "product_name": found_name,
                 "options": {key: list(values) for key, values in options_dict.items()},
+                "option_groups": [
+                    {
+                        "name": key,
+                        "values": list(values),
+                        "required": "size" in _norm(key) or "kich thuoc" in _norm(key),
+                        "multiple": "topping" in _norm(key),
+                        "fixed": len(values) == 1,
+                    }
+                    for key, values in options_dict.items()
+                ],
                 "message": f"BẮT BUỘC: Khi hỏi khách về tùy chọn của {found_name}, bạn CHỈ ĐƯỢC PHÉP dùng y hệt các nhãn này (không dịch, không đổi). Các tùy chọn là: {opts_str}"
             }
     except Exception as e:

@@ -68,7 +68,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: ${IDENTITY_PORT:-3001}
-      JWT_SECRET: ${JWT_SECRET:-avengers-jwt-secret}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
@@ -79,7 +79,9 @@ services:
       RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-}
       FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
       FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
-      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-avengers-internal-token}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN}
+      VNPAY_TMN_CODE: ${VNPAY_TMN_CODE:?Set VNPAY_TMN_CODE}
+      VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:?Set VNPAY_HASH_SECRET}
       ORDER_SERVICE_URL: http://order-service:${ORDER_PORT:-3005}
       DB_HOST: ${DB_HOST:-postgres-db}
       DB_PORT: ${DB_PORT:-5432}
@@ -174,8 +176,8 @@ services:
     environment:
       NODE_ENV: production
       PORT: ${ORDER_PORT:-3005}
-      JWT_SECRET: ${JWT_SECRET:-avengers-jwt-secret}
-      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-avengers-internal-token}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN}
       DB_HOST: ${DB_HOST:-postgres-db}
       DB_PORT: ${DB_PORT:-5432}
       DB_USER: ${DB_USER:-admin}
@@ -192,8 +194,8 @@ services:
       PAYMENT_RETURN_BASE_URL: ${PAYMENT_RETURN_BASE_URL:-http://localhost:3000}
       WEB_CUSTOMER_BASE_URL: ${WEB_CUSTOMER_BASE_URL:-http://localhost:5173}
       VNPAY_URL: ${VNPAY_URL:-https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
-      VNPAY_TMN_CODE: ${VNPAY_TMN_CODE:-MEBLXEDU}
-      VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:-T718SPDGIGQSKGM98VCSNAF70M9X93MC}
+      VNPAY_TMN_CODE: ${VNPAY_TMN_CODE:?Set VNPAY_TMN_CODE}
+      VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:?Set VNPAY_HASH_SECRET}
       SEPAY_WEBHOOK_SECRET: ${SEPAY_WEBHOOK_SECRET:-changeme-sepay-secret}
       SEPAY_BANK_CODE: ${SEPAY_BANK_CODE:-MBBank}
       SEPAY_ACCOUNT_NO: ${SEPAY_ACCOUNT_NO:-025452790502}
@@ -290,6 +292,7 @@ services:
     init: true
     restart: unless-stopped
     environment:
+      ENVIRONMENT: production
       DB_HOST: ${DB_HOST:-postgres-db}
       DB_PORT: ${DB_PORT:-5432}
       DB_USER: ${DB_USER:-admin}
@@ -297,8 +300,8 @@ services:
       DB_NAME: ${DB_NAME:-avengers_coffee}
       PGSSLMODE: ${PGSSLMODE:-require}
       AI_PORT: ${AI_PORT:-8000}
-      JWT_SECRET: ${JWT_SECRET:-avengers-jwt-secret}
-      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-avengers-internal-token}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}

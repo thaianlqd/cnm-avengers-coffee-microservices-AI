@@ -220,6 +220,27 @@ def test_structured_resolver_does_not_map_on_category_mismatch():
     assert _resolve_structured_references(session, "cho tôi nước này") is None
 
 
+def test_group_qualified_ordinal_prefers_matching_global_then_local_index():
+    from src.agents.order_flow_graph import _resolve_structured_references
+
+    session = "global-then-local-ordinal"
+    latest = [
+        {"product_id": "F1", "product_name": "Bánh Một", "category": "food", "global_display_index": 1, "group_display_index": 1},
+        {"product_id": "D1", "product_name": "Nước Một", "category": "drink", "global_display_index": 2, "group_display_index": 1},
+        {"product_id": "D2", "product_name": "Nước Hai", "category": "drink", "global_display_index": 3, "group_display_index": 2},
+    ]
+    cart_manager.set_checkout_context(session,
+        last_product_suggestions=latest,
+        product_suggestion_mode="grouped",
+        product_suggestion_snapshots={
+            "food": [latest[0]],
+            "drink": [latest[1], latest[2]],
+        },
+    )
+    assert _resolve_structured_references(session, "nước số 2")[0]["product_id"] == "D1"
+    assert _resolve_structured_references(session, "bánh số 1")[0]["product_id"] == "F1"
+
+
 def test_structured_resolver_falls_back_to_none_when_state_missing():
     from src.agents.order_flow_graph import _resolve_structured_references
 
