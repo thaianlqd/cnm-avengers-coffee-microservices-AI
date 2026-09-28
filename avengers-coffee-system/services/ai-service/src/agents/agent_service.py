@@ -193,6 +193,36 @@ def _normalize_chat_text(value: str) -> str:
     return re.sub(r"\s+", " ", without_marks.replace("đ", "d")).strip()
 
 
+def _literal_address_from_message(message: str) -> Optional[str]:
+    """Return an explicit street address, never a numbered branch selection."""
+    prefix = re.match(
+        r"^(?:(?:tôi|mình)(?: đang)? ở|đổi địa chỉ sang|đổi sang địa chỉ|"
+        r"địa chỉ(?: mới)?(?: là)?|giao (?:đến|tới))\s*[:：]?\s*",
+        str(message or "").strip(), flags=re.IGNORECASE,
+    )
+    address = str(message or "").strip()
+    if prefix:
+        address = address[prefix.end():].strip()
+    normalized = _normalize_chat_text(address)
+    street, separator, locality = normalized.partition(",")
+    if not separator:
+        district = re.search(r"\s+(?=(?:quan|phuong|thanh pho|tp|thi xa|huyen|thu duc)\b)", street)
+        if district:
+            street, locality = street[:district.start()], street[district.end():]
+    street_match = re.fullmatch(
+        r"\d{1,5}(?:[/.-]\d{1,5})?\s+(?:(?:duong|pho|hem|ngo)\s+)?"
+        r"(?P<name>[a-z]+(?:\s+[a-z]+){1,5})", street.strip(),
+    )
+    if not street_match or set(street_match.group("name").split()) & {
+        "di", "nhe", "nha", "giup", "toi", "minh", "chon", "lay", "so", "thu",
+    }:
+        return None
+    if not prefix and not re.search(r"\b(?:quan|phuong|thanh pho|tp|thi xa|huyen|thu duc)\b", locality):
+        return None
+    from src.function_calling.tools.user_tools import _clean_profile_address
+    return _clean_profile_address(address)
+
+
 def _explicit_checkout_choices(message: str) -> Dict[str, str]:
     """Capture clear choices early; questions and negated choices are not selections."""
     text = _normalize_chat_text(message)
@@ -621,33 +651,37 @@ def _resolve_pending_branch_choice(
     )
 
     chosen = None
-    number_match = re.search(r"\b(?:cua hang|chi nhanh|quan|so|thu)\s*(\d+)\b", normalized)
+    number_match = re.search(r"\b(?:cua hang|chi nhanh|dia chi|cho|so|thu)\s*(?:(?:so|thu)\s*)?(\d+)\b", normalized)
     if number_match:
-        is_explicit_branch_word = bool(re.search(r"\b(?:cua hang|chi nhanh|quan)\s*(\d+)\b", normalized))
+        is_explicit_branch_word = bool(re.search(r"\b(?:cua hang|chi nhanh)\s*(\d+)\b", normalized))
         if is_explicit_branch_word or is_branch_prompt:
             index = int(number_match.group(1)) - 1
             if 0 <= index < len(candidates):
                 chosen = candidates[index]
 
+    # Keep the accented noun "quán" available without confusing it with
+    # "Quận 5" in a literal address after diacritic normalization.
+    if not chosen and is_branch_prompt:
+        shop_number = re.search(r"\bquán\s*(?:số|thứ)?\s*(\d+)\b", message, re.IGNORECASE)
+        if shop_number and 1 <= int(shop_number.group(1)) <= len(candidates):
+            chosen = candidates[int(shop_number.group(1)) - 1]
+
     # Natural Vietnamese ordinal choices are common after the numbered branch
     # list. Resolve them here so they cannot fall through to the model and call
     # set_session_branch without the explicit-customer-selection flag.
     if not chosen and is_branch_prompt:
-        ordinal_patterns = (
-            (0, r"\b(?:dau tien|thu nhat|so mot|so 1|thu 1)\b"),
-            (1, r"\b(?:thu hai|so hai|so 2|thu 2)\b"),
-            (2, r"\b(?:thu ba|so ba|so 3|thu 3)\b"),
-        )
-        for index, pattern in ordinal_patterns:
-            if re.search(pattern, normalized) and index < len(candidates):
-                chosen = candidates[index]
-                break
+        ordinal_words = {"nhat": 1, "mot": 1, "hai": 2, "ba": 3, "tu": 4, "bon": 4, "nam": 5}
+        word_match = re.search(r"\b(?:so|thu)\s+(nhat|mot|hai|ba|tu|bon|nam)\b", normalized)
+        position = (1 if re.search(r"\bdau tien\b", normalized) else
+                    ordinal_words.get(word_match.group(1)) if word_match else None)
+        if position and position <= len(candidates):
+            chosen = candidates[position - 1]
 
     if not chosen and is_branch_prompt:
         chosen = next(
             (
                 item for item in candidates
-                if _normalize_chat_text(item.get("branch_name")) in normalized
+                if (item.get("branch_name") and _normalize_chat_text(item["branch_name"]) in normalized)
                 or (
                     bool(str(item.get("branch_id") or "").strip())
                     and str(item.get("branch_id")).lower() in str(message or "").lower()
@@ -1461,16 +1495,29 @@ def _run_agent_impl(
     if cart.get("is_empty"):
         cart_manager.set_checkout_context(session_id, branch_candidates=None, suggested_address=None)
 
+    # A pending branch list owns numbered replies. Resolve it before looking
+    # for a new location, even when the customer calls a branch an "address".
+    if (cart_manager.get_pending_action(session_id) or {}).get("type") == "select_branch":
+        selected = _resolve_pending_branch_choice(session_id, user_message, history=history)
+        if selected:
+            return _advance_checkout_if_ready(session_id, selected)
+        if _literal_address_from_message(user_message):
+            cart_manager.clear_branch(session_id)
+            cart_manager.clear_pending_action(session_id)
+        else:
+            count = len(prefs.get("branch_candidates") or [])
+            return {"reply": f"Bạn chọn cửa hàng theo số từ 1 đến {count}, hoặc gửi địa chỉ mới có số nhà, tên đường và khu vực nhé.",
+                    "checkout_payload": None, "tool_calls_log": [], "error": None}
+
     # An address supplied by the customer is already an explicit location
     # choice. Reuse the saved-location resolver for branch/inventory rules.
     location_stage = (prefs.get("checkout_requested") and prefs.get("delivery_type")
                       and prefs.get("payment_method") and not cart.get("branch_id")
                       and not prefs.get("pending_products") and not prefs.get("checkout_submission"))
-    if location_stage and re.search(r"\b\d+[\w/.-]*\s+[a-z]", user_norm) and not re.search(r"\b(size|topping|so luong|ma so|nuoc|banh)\b", user_norm):
-        from src.function_calling.tools.user_tools import _clean_profile_address
-        address = re.sub(r"^(?:địa chỉ(?: mới)?(?: là)?|tôi ở|mình ở|giao đến|giao tới)\s*[:：]?\s*", "", user_message.strip(), flags=re.IGNORECASE)
+    address = _literal_address_from_message(user_message) if location_stage else None
+    if address:
         cart_manager.clear_branch(session_id)
-        cart_manager.set_checkout_context(session_id, suggested_address=_clean_profile_address(address))
+        cart_manager.set_checkout_context(session_id, suggested_address=address)
         cart_manager.set_checkout_context(session_id, address_change_requested=None)
         resolved = _confirm_saved_location(session_id, "đúng địa chỉ đó")
         if resolved:

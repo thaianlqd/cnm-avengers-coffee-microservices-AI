@@ -869,13 +869,24 @@ def _handle_pending_reply(state: OrderConversationState) -> Dict[str, Any]:
     def reply(text):
         return {"reply": text, "checkout_payload": None, "tool_calls_log": [], "error": None}
 
-    if (pending_type == "confirm_address" or intent.get("intent") == "PENDING_BRANCH") and re.search(r"\b\d+[\w/.-]*\s+[a-z]", _norm(message)):
-        from src.agents.agent_service import _run_agent_impl
-        return _run_agent_impl(session_id, message, history=state.get("history") or [], allow_model_mutations=False)
     if intent.get("intent") == "PENDING_BRANCH":
-        from src.agents.agent_service import _advance_checkout_if_ready, _resolve_pending_branch_choice
+        from src.agents.agent_service import (
+            _advance_checkout_if_ready, _literal_address_from_message,
+            _resolve_pending_branch_choice, _run_agent_impl,
+        )
         resolved = _resolve_pending_branch_choice(session_id, message, history=state.get("history") or [])
-        return _advance_checkout_if_ready(session_id, resolved) if resolved else reply("Bạn chọn cửa hàng theo số trong danh sách, hoặc cho mình địa chỉ mới nhé.")
+        if resolved:
+            return _advance_checkout_if_ready(session_id, resolved)
+        if _literal_address_from_message(message):
+            cart_manager.clear_branch(session_id)
+            cart_manager.clear_pending_action(session_id)
+            return _run_agent_impl(session_id, message, history=state.get("history") or [], allow_model_mutations=False)
+        count = len(prefs.get("branch_candidates") or [])
+        return reply(f"Bạn chọn cửa hàng theo số từ 1 đến {count}, hoặc gửi địa chỉ mới có số nhà, tên đường và khu vực nhé.")
+    if pending_type == "confirm_address":
+        from src.agents.agent_service import _literal_address_from_message, _run_agent_impl
+        if _literal_address_from_message(message):
+            return _run_agent_impl(session_id, message, history=state.get("history") or [], allow_model_mutations=False)
     if pending_type == "select_voucher":
         if decision == "SKIP_VOUCHER":
             from src.agents.agent_service import _cart_ready_reply
