@@ -4,6 +4,7 @@ from __future__ import annotations
 import re
 import unicodedata
 from dataclasses import dataclass
+from typing import Any, Dict
 
 
 def normalize(value: str) -> str:
@@ -81,6 +82,43 @@ class Location:
     kind: str
     value: str = ""
     missing: tuple[str, ...] = ()
+
+
+def _canonical_city(value: str) -> str:
+    folded = normalize(value).replace(".", "")
+    if re.fullmatch(r"(?:(?:thanh pho|tp)\s*)?(?:hcm|ho chi minh)(?:\s+(?:ay|a|nhe|nha|ban oi))*", folded):
+        return "Thành phố Hồ Chí Minh"
+    return _admin_component(clean_location_clause(value).strip())
+
+
+def merge_store_location(previous: Dict[str, Any] | None, fragment: str) -> Dict[str, Any]:
+    """Merge pickup/dine-in administrative slots without touching delivery state."""
+    current = dict(previous or {})
+    cleaned = re.sub(
+        r"^\s*(?:(?:không|ko)\s*[,;]?\s*|(?:đổi|thay)(?:\s+khu vực)?\s+sang\s+)",
+        "", str(fragment or ""), flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(r"\s+(?:cơ|ấy|á|ạ|nhé|nha)(?:\s+bạn\s+ơi)?\s*$", "", cleaned, flags=re.IGNORECASE)
+    parsed = parse_location(cleaned)
+    value = parsed.value if parsed.kind in {"area", "address", "branch_query"} else clean_location_clause(cleaned)
+    parts = [_admin_component(part.strip()) for part in value.split(",") if part.strip()]
+    city = next((part for part in parts if re.match(
+        r"^(?:thành phố|tp\.?|tỉnh)\s+", part, re.IGNORECASE)), None)
+    if not city and len(parts) == 1 and normalize(parts[0]).replace(".", "") in {
+        "hcm", "tp hcm", "tphcm", "ho chi minh", "thanh pho hcm", "thanh pho ho chi minh",
+    }:
+        city = parts[0]
+    locality_parts = [part for part in parts if part != city]
+    if city:
+        current["city"] = _canonical_city(city)
+    if locality_parts:
+        current["locality"] = canonical_address(", ".join(locality_parts))
+    current["source"] = "explicit_user"
+    current["status"] = "complete" if current.get("locality") and current.get("city") else "partial"
+    current["value"] = canonical_address(", ".join(
+        part for part in (current.get("locality"), current.get("city")) if part
+    ))
+    return current
 
 
 _PREFIX = re.compile(
@@ -246,6 +284,10 @@ def checkout_location(message: str, delivery_type: str | None, awaiting_location
         return parsed
     if delivery_type == "GIAO_TAN_NOI":
         return parsed if awaiting_location and parsed.kind == "area" else Location("none")
+    # When the whole reply is already a valid administrative location, commas
+    # separate its components; they are not conversational clause boundaries.
+    if awaiting_location and parsed.kind == "area" and parsed.value:
+        return parsed
     # A fulfillment/payment sentence may include a separate explicit location
     # clause. Parse that clause with the same structural parser.
     clauses = re.split(r"[,;]\s*|\b(?=(?:tôi|mình)(?:\s+đang)?\s+ở\b)", str(message or ""), flags=re.IGNORECASE)

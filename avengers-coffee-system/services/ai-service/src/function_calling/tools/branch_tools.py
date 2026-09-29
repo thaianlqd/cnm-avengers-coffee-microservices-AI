@@ -169,7 +169,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                         city, ambiguous = infer_city_from_addresses(
                             target_address, [str(row["dia_chi"] or "") for row in locality_rows])
                         if ambiguous:
-                            return {"status": "need_city", "message":
+                            return {"status": "need_city", "normalized_location": target_address, "message":
                                     f"Mình nhận ra khu vực {target_address}, nhưng cần thêm tỉnh/thành phố để chọn đúng cửa hàng. Bạn không cần gửi số nhà vì đang lấy tại quán."}
                         if city:
                             target_address = f"{target_address}, {city}"
@@ -255,6 +255,8 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                 x["khoang_cach_km"] or 0,
                 x["ten_chi_nhanh"],
             ))
+            logger.debug("[BranchSearch] location_basis=%s exact_match_count=%d geocode_basis=%s",
+                         "exact_locality" if locality_rows else "geocode", len(locality_rows), distance_basis)
             cart = cart_manager.get_cart(session_id) if session_id else {"items": []}
             inventory_schema = os.getenv("INVENTORY_SCHEMA", "inventory")
             eligible_branches = []
@@ -342,6 +344,8 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
             return {
                 "status": "need_branch_selection" if delivery_type in {"MANG_DI", "TAI_CHO"} else "ok",
                 "branches": top_branches,
+                "normalized_location": target_address,
+                "location_basis": "exact_locality" if locality_rows else distance_basis,
                 "message": (
                     msg + " Khách dùng tại chỗ/mang đi nên hãy liệt kê tối đa 5 cửa hàng trong khu vực, ghi rõ cửa hàng còn đủ món và món nào bị thiếu; chỉ cửa hàng còn đủ món mới được chọn."
                     if delivery_type in {"MANG_DI", "TAI_CHO"} else msg

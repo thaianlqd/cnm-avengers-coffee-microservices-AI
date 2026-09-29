@@ -267,6 +267,23 @@ def _explicit_checkout_choices(message: str) -> Dict[str, str]:
     return result
 
 
+def _checkout_choice_conflict(message: str) -> Optional[str]:
+    """Return the slot name when one turn selects contradictory values."""
+    text = _normalize_chat_text(message)
+    payment_hits = sum(bool(re.search(pattern, text)) for pattern in (
+        r"\b(?:cod|tien mat|thanh toan khi nhan hang)\b",
+        r"\bvnpay\b",
+        r"\b(?:qr|chuyen khoan)\b",
+        r"\b(?:vi avengers|vi dien tu)\b",
+    ))
+    fulfillment_hits = sum(bool(re.search(pattern, text)) for pattern in (
+        r"\b(?:giao tan noi|giao hang|ship tan nha)\b",
+        r"\b(?:mang di|lay tai quan|den lay|takeaway)\b",
+        r"\b(?:dung tai cho|tai cho|uong tai quan|dine in)\b",
+    ))
+    return "payment" if payment_hits > 1 else "fulfillment" if fulfillment_hits > 1 else None
+
+
 def _is_plain_confirmation(message: str) -> bool:
     text = _normalize_chat_text(message).strip(" !.,")
     if not text or "?" in str(message or ""):
@@ -816,6 +833,11 @@ def _confirm_saved_location(
         checkout_action_expires_at=None)
     nearest = execute_find_nearest_branch(location=suggested, session_id=session_id)
     log = [{"tool": "find_nearest_branch", "result": nearest}]
+    if prefs.get("location_source") == "explicit_user" and nearest.get("normalized_location"):
+        from src.agents.location_parser import merge_store_location
+        merged_store = merge_store_location(prefs.get("store_location"), nearest["normalized_location"])
+        cart_manager.set_checkout_context(session_id, store_location=merged_store,
+                                          location_pending=merged_store.get("status") == "partial")
     branches = nearest.get("branches") or []
     if nearest.get("status") == "need_branch_selection" and branches and prefs.get("delivery_type") == "GIAO_TAN_NOI":
         return {"reply": "Mình chưa tự xác định được chi nhánh phục vụ địa chỉ giao này. Bạn kiểm tra lại địa chỉ hoặc thử lại nhé.",
@@ -825,7 +847,10 @@ def _confirm_saved_location(
             location_address=suggested, address_confirmed=None, delivery_address=None)
         if (cart_manager.get_pending_action(session_id) or {}).get("type") == "confirm_address":
             cart_manager.clear_pending_action(session_id)
-        lines = [f"Mình đã dùng địa chỉ đã lưu: {suggested}. Các cửa hàng gần bạn:"]
+        source = prefs.get("location_source") or "profile_saved"
+        location_lead = (f"Mình đã dùng khu vực bạn vừa cung cấp: {suggested}." if source == "explicit_user"
+                         else f"Mình đã dùng địa chỉ đã lưu: {suggested}.")
+        lines = [location_lead + " Các cửa hàng gần bạn:"]
         for index, item in enumerate(branches, 1):
             availability = " — còn đủ tất cả món"
             if item.get("availability_status") == "unavailable":
@@ -1037,6 +1062,16 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
         cart_manager.clear_pending_action(session_id)
         return {"reply": "Mình cần bạn chọn lại món từ menu để xác minh đúng sản phẩm trước khi thêm vào giỏ.",
                 "checkout_payload": None, "tool_calls_log": [], "error": None}
+    from src.agents.option_state import pending_product_quantity
+    resolved_quantity, quantity_ambiguous = pending_product_quantity(message, len(pending))
+    if quantity_ambiguous:
+        return {
+            "reply": "Mình đang giữ nhiều món. Bạn cho biết món nào lấy số lượng này, hoặc nói ‘mỗi món’ nhé.",
+            "checkout_payload": None, "tool_calls_log": [], "error": None,
+        }
+    if resolved_quantity is not None:
+        pending = [{**item, "quantity": resolved_quantity} for item in pending]
+        cart_manager.set_pending_products(session_id, pending)
     # A pending cart write owns its operation identity before network I/O. This
     # survives a lost response and prevents a later paraphrase from generating
     # a second logical add.
@@ -1053,7 +1088,7 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
     option_terms = r"\b(size|nho|vua|lon|da|duong|ngot|sua|topping|hat|foam|tran chau|khong chon|mac dinh|theo cong thuc|khong can chinh|khong can chon them|giu nguyen)\b"
     from src.agents.option_state import mentions_pending_option_value
     has_unknown_mutation = any(item.get("mutation_status") == "outcome_unknown" for item in pending)
-    if (not has_unknown_mutation and not re.search(option_terms, normalized)
+    if (not has_unknown_mutation and resolved_quantity is None and not re.search(option_terms, normalized)
             and not mentions_pending_option_value(message, pending)):
         return None
 
@@ -1613,7 +1648,11 @@ def _run_agent_impl(
         old_delivery = cart_manager.get_checkout_prefs(session_id).get("delivery_type")
         if choices.get("delivery_type") and choices["delivery_type"] != old_delivery:
             cart_manager.clear_branch(session_id)
-            cart_manager.set_checkout_context(session_id, location_address=None, suggested_address=None, address_confirmed=None, delivery_address=None)
+            cart_manager.set_checkout_context(
+                session_id, location_address=None, suggested_address=None,
+                address_confirmed=None, delivery_address=None,
+                store_location=None, location_source=None,
+            )
             try:
                 cart_manager.clear_pending_action(session_id)
             except Exception as e:
@@ -1707,7 +1746,7 @@ def _run_agent_impl(
         address = _literal_address_from_message(user_message) if location_stage else None
     if address:
         cart_manager.clear_branch(session_id)
-        cart_manager.set_checkout_context(session_id, suggested_address=address)
+        cart_manager.set_checkout_context(session_id, suggested_address=address, location_source="explicit_user")
         cart_manager.set_checkout_context(session_id, address_change_requested=None)
         resolved = _confirm_saved_location(session_id, "đúng địa chỉ đó")
         if resolved:
@@ -1742,14 +1781,15 @@ def _run_agent_impl(
         if default_address:
             if len(candidates) > 1:
                 cart_manager.set_checkout_context(session_id, suggested_address=default_address,
-                    profile_address_candidates=candidates, location_pending=None)
+                    location_source="profile_saved", profile_address_candidates=candidates, location_pending=None)
                 cart_manager.set_pending_action(session_id, "select_profile_address", {"count": len(candidates)})
                 question = "Bạn muốn dùng địa chỉ nào " + ("để giao hàng?" if prefs["delivery_type"] == "GIAO_TAN_NOI" else "để tìm cửa hàng gần nhất?")
                 question += "\n" + "\n".join(f"{index}. {item['label']} — {item['full_address']}" +
                     (" (mặc định)" if item["is_default"] else "") for index, item in enumerate(candidates, 1))
                 question += "\nBạn chọn số, tên địa chỉ, địa chỉ mặc định hoặc địa chỉ khác nhé."
             else:
-                cart_manager.set_checkout_context(session_id, suggested_address=default_address, location_pending=None)
+                cart_manager.set_checkout_context(session_id, suggested_address=default_address,
+                    location_source="profile_saved", location_pending=None)
                 cart_manager.set_pending_action(session_id, "confirm_address", {})
                 if prefs["delivery_type"] == "GIAO_TAN_NOI":
                     question = f"Bạn có muốn giao đến địa chỉ đã lưu này không?\n{default_address}"
