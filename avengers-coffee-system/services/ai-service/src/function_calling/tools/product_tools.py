@@ -138,11 +138,25 @@ TOOL_GET_PRODUCT_OPTIONS = {
     }
 }
 
+
+class CanonicalProductOptionRef(str):
+    """String-compatible product reference that also carries canonical ID."""
+
+    def __new__(cls, product_name: str, product_id: str):
+        value = super().__new__(cls, product_name)
+        value.product_id = str(product_id)
+        return value
+
 def execute_get_product_options(product_name: str = "", product_id: Optional[str] = None) -> Dict[str, Any]:
     try:
         engine = _get_engine()
         import os
         menu_schema = os.getenv("MENU_SCHEMA", "menu")
+
+        # Cart edit callers use a string-compatible reference so legacy tool
+        # adapters still see the display name while this provider queries by
+        # the authoritative product ID.
+        product_id = product_id or getattr(product_name, "product_id", None)
 
         if product_id is not None:
             conditions = "ma_san_pham::text = :product_id"
