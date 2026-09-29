@@ -92,10 +92,21 @@ def test_invalid_ordinal_asks_for_valid_range_without_geocoding(branch_selection
     session, candidates, calls = branch_selection
     monkeypatch.setattr(branch_tools, "execute_find_nearest_branch", lambda **kwargs: pytest.fail("No new address"))
     result = order_flow_graph.run_order_flow(session, message)
-    assert "1 đến 5" in result["reply"]
+    assert "Cửa hàng 1" in result["reply"] and "Cửa hàng 5" in result["reply"]
+    assert "chọn số hoặc tên cửa hàng" in result["reply"]
     assert calls == []
     assert cart_manager.get_checkout_prefs(session)["branch_candidates"] == candidates
     assert cart_manager.get_checkout_prefs(session)["location_address"] == HCM_ADDRESS
+    assert cart_manager.get_pending_action(session)["type"] == "select_branch"
+
+
+def test_ambiguous_branch_reference_replays_candidates_without_mutation(branch_selection, monkeypatch):
+    session, candidates, calls = branch_selection
+    monkeypatch.setattr(branch_tools, "execute_find_nearest_branch", lambda **kwargs: pytest.fail("No geocoding"))
+    result = order_flow_graph.run_order_flow(session, "lấy chỗ kia đi")
+    assert calls == []
+    assert "Cửa hàng 1" in result["reply"] and "Cửa hàng 5" in result["reply"]
+    assert cart_manager.get_checkout_prefs(session)["branch_candidates"] == candidates
     assert cart_manager.get_pending_action(session)["type"] == "select_branch"
 
 

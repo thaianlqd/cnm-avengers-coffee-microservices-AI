@@ -15,7 +15,8 @@ from src.common import groq_service
     ('confirm_address', ['oke giao đến địa chỉ đó cho tôi đi', 'dùng địa chỉ đó đi', 'đúng chỗ đó', 'giao ở đó nhé', 'ừ địa chỉ vừa rồi', 'địa chỉ kia được', 'tôi bảo địa chỉ đó oke rồi'], 'CONFIRM_ADDRESS'),
     ('confirm_address', ['đổi địa chỉ', 'không, địa chỉ khác'], 'CHANGE_ADDRESS'),
     ('confirm_checkout', ['oke ổn rồi đồng ý nhé', 'đồng ý', 'oke', 'ừ được rồi', 'đúng rồi', 'chốt đi', 'đặt luôn đi', 'ổn rồi', 'ý là tôi đồng ý chốt đơn rồi đấy'], 'CONFIRM'),
-    ('confirm_checkout', ['chưa đặt', 'không đồng ý', 'khoan, tôi muốn sửa', 'đừng đặt', 'dừng'], 'REJECT'),
+    ('confirm_checkout', ['chưa đặt', 'không đồng ý', 'đừng đặt', 'dừng'], 'REJECT'),
+    ('confirm_checkout', ['khoan, tôi muốn sửa', 'dạ nhưng đổi địa chỉ', 'đổi phương thức thanh toán'], 'CHANGE'),
 ])
 def test_clear_pending_semantics_need_no_model(monkeypatch, pending, messages, expected):
     monkeypatch.setattr(groq_service, 'groq_chat', lambda *a, **k: pytest.fail('Clear pending reply must be deterministic'))

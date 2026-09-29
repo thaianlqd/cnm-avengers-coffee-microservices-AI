@@ -930,6 +930,37 @@ def _voucher_offer_snapshot(session_id: str) -> str:
     return hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
 
 
+def _voucher_command(message: str) -> Optional[Dict[str, str]]:
+    """Parse voucher action and an exact customer supplied code, if present."""
+    raw = str(message or "")
+    folded = _norm(raw)
+    if (re.search(r"\b(?:xoa|bo|go)\b.*\b(?:ma|voucher|giam gia)\b|\bkhong dung (?:ma|voucher) nua\b", folded)
+            and not re.search(r"\bbo qua\b", folded)):
+        return {"intent": "REMOVE_VOUCHER"}
+    replacement = re.search(
+        r"\b(?:đổi|thay)\s+(?:sang\s+)?(?:mã|voucher)\s+([A-Za-z0-9][A-Za-z0-9_-]{2,})\b",
+        raw, re.IGNORECASE,
+    )
+    if replacement:
+        return {"intent": "REPLACE_VOUCHER", "voucher_code": replacement.group(1).upper()}
+    application = re.search(
+        r"\b(?:áp|dùng|sử dụng)\s+(?:mã|voucher)\s+([A-Za-z0-9][A-Za-z0-9_-]{2,})\b",
+        raw, re.IGNORECASE,
+    )
+    if application:
+        return {"intent": "APPLY_VOUCHER", "voucher_code": application.group(1).upper()}
+    # The voucher noun may be omitted only when the following token has code
+    # shape. This accepts "áp ABC20" without treating "áp dụng ngay" as a code.
+    short_application = re.search(
+        r"\b(?:áp|dùng)\s+([A-Za-z0-9][A-Za-z0-9_-]{2,})\b", raw, re.IGNORECASE,
+    )
+    if short_application:
+        candidate = short_application.group(1)
+        if any(char.isdigit() or char in "_-" for char in candidate) or candidate == candidate.upper():
+            return {"intent": "APPLY_VOUCHER", "voucher_code": candidate.upper()}
+    return None
+
+
 def _offer_voucher_gate(session_id: str, lead: str = "Mình đã ghi nhận giỏ hàng đã hoàn tất.") -> Dict[str, Any]:
     """Voucher is a mandatory decision gate before fulfillment and payment."""
     from src.agents.agent_service import _cart_ready_reply
@@ -1094,7 +1125,7 @@ def _handle_pending_reply(state: OrderConversationState) -> Dict[str, Any]:
 
     if intent.get("intent") == "PENDING_BRANCH":
         from src.agents.agent_service import (
-            _advance_checkout_if_ready, _literal_address_from_message,
+            _advance_checkout_if_ready, _branch_choice_prompt, _literal_address_from_message,
             _resolve_pending_branch_choice, _run_agent_impl,
         )
         resolved = _resolve_pending_branch_choice(session_id, message, history=state.get("history") or [])
@@ -1109,13 +1140,19 @@ def _handle_pending_reply(state: OrderConversationState) -> Dict[str, Any]:
             cart_manager.clear_branch(session_id)
             cart_manager.clear_pending_action(session_id)
             return _handle_location_request(state)
-        count = len(prefs.get("branch_candidates") or [])
-        return reply(f"Bạn chọn cửa hàng theo số từ 1 đến {count}, hoặc gửi địa chỉ mới có số nhà, tên đường và khu vực nhé.")
+        return reply(_branch_choice_prompt(session_id))
     if pending_type == "confirm_address":
         from src.agents.agent_service import _literal_address_from_message, _run_agent_impl
         if _literal_address_from_message(message):
             return _run_agent_impl(session_id, message, history=state.get("history") or [], allow_model_mutations=False)
     if pending_type == "select_voucher":
+        if decision == "REMOVE_VOUCHER":
+            from src.function_calling.tools.voucher_tools import execute_remove_voucher
+            removed = execute_remove_voucher(session_id)
+            if removed.get("status") == "ok":
+                cart_manager.clear_pending_action(session_id)
+            return {**reply(removed.get("message", "Chưa thể bỏ mã giảm giá; bạn thử lại nhé.")),
+                    "tool_calls_log": [{"tool": "remove_voucher", "result": removed}]}
         if decision == "SKIP_VOUCHER":
             from src.agents.agent_service import _cart_ready_reply
             cart_manager.set_checkout_context(session_id, voucher_decided=True, voucher_offer_pending=None,
@@ -1152,6 +1189,35 @@ def _handle_pending_reply(state: OrderConversationState) -> Dict[str, Any]:
             if result.get("status") in {"success", "already_processed"}:
                 text = f"🎉 Đặt hàng thành công! Mã đơn hàng của bạn là: **{result.get('order_id', '')}**. Cảm ơn bạn đã ủng hộ!"
             return {**reply(text), "gate": "confirm_checkout", "tool_calls_log": [{"tool": "confirm_checkout", "result": result}]}
+        if decision == "CHANGE":
+            if prefs.get("checkout_submission"):
+                return reply("Đơn đã gửi xử lý. Bạn xác nhận lại cùng lượt để kiểm tra kết quả trước khi chỉnh sửa nhé.")
+            folded = _norm(message)
+            clear = {"summary_fingerprint": None, "checkout_action_id": None,
+                     "summary_amounts": None, "checkout_submission": None}
+            if re.search(r"\b(?:payment|thanh toan|vnpay|cod|qr|tien mat|vi)\b", folded):
+                cart_manager.set_checkout_context(session_id, **clear)
+                cart_manager.set_checkout_prefs(session_id, payment_method="")
+                cart_manager.set_pending_action(session_id, "select_payment", {})
+                from src.agents.agent_service import _checkout_choices_prompt
+                return reply(_checkout_choices_prompt(session_id, "Mình giữ các phần khác và sẽ đổi phương thức thanh toán."))
+            if re.search(r"\b(?:dia chi|noi giao|cho giao)\b", folded):
+                cart_manager.clear_branch(session_id)
+                cart_manager.set_checkout_context(session_id, **clear, suggested_address=None,
+                    location_address=None, delivery_address=None, address_confirmed=None,
+                    address_change_requested=True, location_pending=True)
+                cart_manager.clear_pending_action(session_id)
+                prompt = ("Bạn gửi địa chỉ giao đầy đủ mới nhé." if prefs.get("delivery_type") == "GIAO_TAN_NOI"
+                          else "Bạn cho mình khu vực/phường/quận mới để tìm cửa hàng nhé.")
+                return reply(prompt)
+            if re.search(r"\b(?:ma|voucher|giam gia)\b", folded):
+                cart_manager.set_checkout_context(session_id, **clear, voucher_decided=None,
+                    voucher_offer_pending=None)
+                cart_manager.clear_pending_action(session_id)
+                return _offer_voucher_gate(session_id, "Mình giữ giỏ và các lựa chọn khác; mình kiểm tra lại voucher.")
+            cart_manager.set_checkout_context(session_id, **clear, checkout_requested=None, flow_stage="CART_REVIEW")
+            cart_manager.clear_pending_action(session_id)
+            return reply("Mình chưa đặt đơn. Bạn cho mình biết món hoặc phần nào cần chỉnh nhé.")
         if decision == "REJECT":
             if prefs.get("checkout_submission"):
                 return reply("Đơn đã gửi xử lý. Bạn xác nhận lại để kiểm tra kết quả trước khi chỉnh sửa nhé.")
@@ -1555,11 +1621,26 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         if checkout_patch:
             return {**state, "intent": {"intent": "SELECT_FULFILLMENT" if "delivery_type" in checkout_patch else "SELECT_PAYMENT",
                                        "target_kind": "NONE", "checkout_patch": checkout_patch}}
+        preview_intent = classify_order_intent(state["user_message"], None)
+        if preview_intent.get("intent") == "PAYMENT_INFO":
+            return {**state, "intent": preview_intent}
+        from src.agents.pending_context import looks_like_catalog_query
+        if preview_intent.get("intent") not in {
+            "ADD_ITEM", "VIEW_CART", "CLEAR_CART", "REMOVE_ITEM", "SET_QUANTITY", "EDIT_OPTIONS",
+        } and not looks_like_catalog_query(state["user_message"]):
+            return {**state, "intent": {"intent": "PENDING_CHECKOUT_CHOICE", "pending_type": pending_type}}
     intent = classify_order_intent(state["user_message"], (pending or {}).get("type"))
     plain_intent = classify_order_intent(state["user_message"], None)
+    voucher_command = _voucher_command(state["user_message"])
+    if voucher_command:
+        intent = voucher_command
+        plain_intent = voucher_command
+    if intent.get("intent") == "PAYMENT_INFO":
+        return {**state, "intent": intent}
     if (pending or {}).get("type") and plain_intent.get("intent") in {
         "CLEAR_CART", "REMOVE_ITEM", "SET_QUANTITY", "VIEW_CART",
         "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER",
+        "APPLY_VOUCHER", "REMOVE_VOUCHER", "REPLACE_VOUCHER", "PAYMENT_INFO",
     }:
         intent = plain_intent
     if intent.get("intent") in {"SELECT_FULFILLMENT", "SELECT_PAYMENT"}:
@@ -1695,7 +1776,7 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
                 "quantity": _extract_add_quantity(state["user_message"])}}
     if pending_type == "select_voucher" and not _category_search_message(state["user_message"]):
         voucher_decision = classify_pending_reply(state["user_message"], pending_type)
-        if voucher_decision in {"SELECT_VOUCHER", "SKIP_VOUCHER"}:
+        if voucher_decision in {"SELECT_VOUCHER", "SKIP_VOUCHER", "REMOVE_VOUCHER"}:
             return {**state, "intent": {"intent": "PENDING_REPLY", "pending_type": pending_type,
                                         "decision": voucher_decision}}
     if pending_type == "confirm_checkout":
@@ -1703,7 +1784,9 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         if is_continue_turn(state["user_message"]) and not prefs.get("checkout_submission"):
             return {**state, "intent": {"intent": "REVIEW_CHECKOUT_SUMMARY", "target_kind": "NONE"}}
         checkout_decision = classify_pending_reply(state["user_message"], pending_type)
-        if checkout_decision == "CONFIRM":
+        if checkout_decision == "CONFIRM" or (
+            checkout_decision in {"REJECT", "CHANGE"} and intent.get("intent") not in {"ADD_ITEM", "BROWSING"}
+        ):
             return {**state, "intent": {"intent": "PENDING_REPLY", "pending_type": pending_type,
                                         "decision": checkout_decision}}
     # Pending decisions are context. A clear shopping request can change course
@@ -1731,7 +1814,7 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     prefs = cart_manager.get_checkout_prefs(state["session_id"])
     if (prefs.get("summary_fingerprint") or prefs.get("checkout_submission")) and _is_plain_confirmation(state["user_message"]):
         intent = {"intent": "CONFIRM_CHECKOUT"}
-    elif _wants_checkout(state["user_message"]):
+    elif intent.get("intent") != "PAYMENT_INFO" and _wants_checkout(state["user_message"]):
         intent = {"intent": "START_CHECKOUT"}
     if (pending or {}).get("type") == "clear_cart" and re.search(r"\b(dong y|xac nhan|ok|oke)\b", _norm(state["user_message"])):
         intent = {"intent": "CLEAR_CART", "confirmed": True}
@@ -1768,9 +1851,18 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         logger.debug("routing route=%s operation=%s target_source=%s", kind, kind,
                      intent.get("target_source") or "resolver")
     cart_write_intents = {"ADD_ITEM", "SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS", "CLEAR_CART", "FILL_OPTIONS"}
-    authoritative_intents = cart_write_intents | {"FINISH_CART", "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER", "CONFIRM_CHECKOUT", "PENDING_REPLY", "PENDING_BRANCH", "PENDING_CART_LINE", "PENDING_CHECKOUT_CHOICE", "REVIEW_CHECKOUT_SUMMARY", "LOCATION_REFERENCE"}
+    authoritative_intents = cart_write_intents | {"FINISH_CART", "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER", "APPLY_VOUCHER", "REMOVE_VOUCHER", "REPLACE_VOUCHER", "CONFIRM_CHECKOUT", "PENDING_REPLY", "PENDING_BRANCH", "PENDING_CART_LINE", "PENDING_CHECKOUT_CHOICE", "REVIEW_CHECKOUT_SUMMARY", "LOCATION_REFERENCE"}
     prefs = cart_manager.get_checkout_prefs(session_id)
     replay = intent.get("pending_type") == "confirm_checkout" and intent.get("decision") == "CONFIRM" and (prefs.get("checkout_submission") or prefs.get("completed_order_id"))
+    customer_session_id = str(session_id).split(":conversation:", 1)[0]
+    real_guest = bool(re.fullmatch(r"anon-[0-9a-fA-F-]{36}", customer_session_id))
+    if real_guest and kind in authoritative_intents and kind != "PAYMENT_INFO":
+        return {**state, "result": {
+            "reply": "Bạn vui lòng đăng nhập trước khi thêm món hoặc bắt đầu đặt hàng. Mình vẫn có thể giúp bạn xem menu, giá, cửa hàng và các phương thức thanh toán.",
+            "checkout_payload": None,
+            "tool_calls_log": [{"tool": "authentication_gate", "result": {"status": "login_required"}}],
+            "error": None,
+        }}
     if kind in authoritative_intents and not replay and is_authenticated_cart_session(session_id) and not cart.get("authoritative"):
         return {**state, "result": {
             "reply": "Mình chưa thể xác minh giỏ hàng với Order Service nên chưa thực hiện thay đổi nào. Vui lòng thử lại sau.",
@@ -1790,6 +1882,17 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             "tool_calls_log": [],
             "error": None,
         }}
+    if kind == "PAYMENT_INFO":
+        from src.function_calling.tools.cart_tools import get_wallet_payment_options
+        capabilities = get_wallet_payment_options(session_id, None)
+        options = capabilities.get("payment_options") or []
+        lines = ["Avengers Coffee hiện hỗ trợ:"] + [f"- {row.get('label') or row.get('code')}" for row in options]
+        wallet = next((row for row in options if row.get("code") == "VI_DIEN_TU"), {})
+        if wallet.get("reason"):
+            lines.append(f"Lưu ý về Ví Avengers: {wallet['reason']}.")
+        return {**state, "result": {"reply": "\n".join(lines), "checkout_payload": None,
+                                    "tool_calls_log": [{"tool": "payment_capabilities", "result": capabilities}],
+                                    "error": None}}
     if kind == "PENDING_CHECKOUT_CHOICE":
         from src.agents.agent_service import _checkout_choices_prompt
         return {**state, "result": {"reply": _checkout_choices_prompt(session_id, "Mình chưa rõ số bạn chọn thuộc danh sách nào, hoặc số đó không hợp lệ."),
@@ -2133,6 +2236,25 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
                 "error": None,
             }}
         return {**state, "result": _offer_voucher_gate(session_id)}
+    if kind in {"APPLY_VOUCHER", "REPLACE_VOUCHER", "REMOVE_VOUCHER"}:
+        from src.function_calling.tools.voucher_tools import execute_apply_voucher, execute_remove_voucher
+        if kind == "REMOVE_VOUCHER":
+            changed = execute_remove_voucher(session_id)
+            tool = "remove_voucher"
+        else:
+            code = str(intent.get("voucher_code") or "").strip().upper()
+            changed = execute_apply_voucher(session_id, code)
+            tool = "apply_voucher"
+        if changed.get("status") == "ok":
+            cart_manager.set_checkout_context(session_id, voucher_decided=True,
+                voucher_offer_pending=None, checkout_requested=None, flow_stage="CART_READY")
+            cart_manager.clear_pending_action(session_id)
+            from src.agents.agent_service import _cart_ready_reply
+            reply_text = _cart_ready_reply(changed.get("message", "Đã cập nhật voucher."))
+        else:
+            reply_text = changed.get("message", "Chưa thể cập nhật voucher; mã hiện tại vẫn được giữ nguyên.")
+        return {**state, "result": {"reply": reply_text, "checkout_payload": None,
+            "tool_calls_log": [{"tool": tool, "result": changed}], "error": None}}
     if kind in {"SELECT_FULFILLMENT", "SELECT_PAYMENT"} and not cart.get("is_empty"):
         patch = dict(intent.get("checkout_patch") or {})
         if not patch:
