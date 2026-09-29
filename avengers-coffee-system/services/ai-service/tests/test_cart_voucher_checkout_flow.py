@@ -152,6 +152,61 @@ def test_exact_cart_continue_to_qr_checkout_context(flow, monkeypatch):
     assert confirmed['tool_calls_log'][0]['result']['payment_details']['ma_tham_chieu'] == 'QR-ORDER_QR'
 
 
+def test_reported_pickup_qr_choice_and_three_lost_response_retries(flow, monkeypatch):
+    cart_manager.add_item(flow, '1', 'Nước', 194000)
+    turn(flow, 'không thêm nữa')
+    turn(flow, 'áp mã số 1')
+    turn(flow, 'tiếp tục')
+    assert cart_manager.get_pending_action(flow)['type'] == 'select_checkout_choices'
+
+    profile_calls = []
+    from src.function_calling.tools import user_tools
+    original_profile = user_tools.execute_get_user_profile
+    def profile(session):
+        profile_calls.append(session)
+        return original_profile(session)
+    monkeypatch.setattr(user_tools, 'execute_get_user_profile', profile)
+
+    message = 'cho tôi lấy tại quán và chuyển khoản qr nhé'
+    first = agent_service.run_agent(flow, message, client_message_id='lost-turn')
+    prefs = cart_manager.get_checkout_prefs(flow)
+    assert (prefs['delivery_type'], prefs['payment_method']) == ('MANG_DI', 'NGAN_HANG_QR')
+    assert ADDRESS in first['reply']
+    assert 'Bạn cho mình biết lựa chọn' not in first['reply']
+    assert cart_manager.get_pending_action(flow)['type'] == 'confirm_address'
+    for _ in range(2):
+        assert agent_service.run_agent(flow, message, client_message_id='lost-turn') == first
+    assert len(profile_calls) == 1
+    assert len(cart_manager.get_checkout_prefs(flow)['processed_order_turns']) == 1
+    assert cart_manager.get_pending_action(flow)['type'] == 'confirm_address'
+
+    # Identical text with a new ID is a new turn, never a text-based replay.
+    agent_service.run_agent(flow, message, client_message_id='new-turn')
+    assert 'new-turn' in cart_manager.get_checkout_prefs(flow)['processed_order_turns']
+    branch_choice = turn(flow, 'ok địa chỉ đó đi')
+    assert cart_manager.get_pending_action(flow)['type'] == 'select_branch'
+    assert 'cửa hàng' in branch_choice['reply'].lower()
+
+
+@pytest.mark.parametrize('choices', [
+    ('cho tôi lấy tại quán', 'chuyển khoản qr nhé'),
+    ('chuyển khoản qr nhé', 'cho tôi lấy tại quán'),
+])
+def test_checkout_choices_merge_across_turns(flow, choices):
+    cart_manager.add_item(flow, '1', 'Nước', 194000)
+    turn(flow, 'không thêm nữa')
+    turn(flow, 'bỏ qua voucher')
+    turn(flow, 'tiếp tục')
+    first = turn(flow, choices[0])
+    prefs = cart_manager.get_checkout_prefs(flow)
+    assert bool(prefs.get('delivery_type')) != bool(prefs.get('payment_method'))
+    assert 'Hình thức nhận hàng' in first['reply'] or 'Phương thức thanh toán' in first['reply']
+    second = turn(flow, choices[1])
+    prefs = cart_manager.get_checkout_prefs(flow)
+    assert (prefs['delivery_type'], prefs['payment_method']) == ('MANG_DI', 'NGAN_HANG_QR')
+    assert ADDRESS in second['reply']
+
+
 def test_payment_prompt_ordinal_cannot_open_old_matcha_options(flow, monkeypatch):
     from src.function_calling.tools import product_tools
     cart_manager.add_item(flow, '1', 'Matcha', 100000)
