@@ -173,7 +173,8 @@ def test_geocoder_not_found_asks_for_specific_locality(monkeypatch):
         "status": "not_found", "message": "Không tìm thấy vị trí."})
     result = order_flow_graph.run_order_flow(session, "tôi ở Tây Thạnh")
     assert "bản đồ" in result["reply"]
-    assert "phường/xã" in result["reply"] and "tỉnh" in result["reply"]
+    assert "phường/quận" in result["reply"] and "tỉnh" in result["reply"]
+    assert "số nhà" not in result["reply"] and "tên đường" not in result["reply"]
     assert not cart_manager.get_checkout_prefs(session).get("pending_products")
 
 

@@ -697,24 +697,29 @@ export default function ChatWidget({ user, socketUrl }) {
 
   const handleResetChat = useCallback(async () => {
     if (window.confirm('Bắt đầu cuộc trò chuyện AI mới? Giỏ hàng của bạn sẽ được giữ nguyên.')) {
-      localStorage.removeItem(AI_SESSION_KEY);
-      sessionStorage.removeItem(AI_SESSION_KEY);
       const nextConversationId = newConversationId();
-      localStorage.setItem(AI_CONVERSATION_KEY, nextConversationId);
-      setAiConversationId(nextConversationId);
-      pendingAgentTurnRef.current = null;
-      sessionStorage.removeItem(PENDING_AGENT_TURN_KEY);
-
       // Conversation-specific draft state must not bleed into a new thread.
       // The customer/order-service cart is deliberately left untouched.
       try {
         await apiClient.post('/ai/agent/conversation/reset', {
           session_id: effectiveUserId,
           conversation_id: nextConversationId,
+          previous_conversation_id: aiConversationId,
         });
       } catch (error) {
         console.warn('[ChatWidget] Could not reset AI conversation draft state:', error);
+        const code = error?.response?.data?.detail?.code;
+        addAIMsg(code === 'TURN_IN_PROGRESS' || code === 'TURN_OUTCOME_UNKNOWN'
+          ? 'Lượt chat trước chưa hoàn tất. Bạn gửi lại đúng tin nhắn đó để kiểm tra kết quả trước khi tạo cuộc trò chuyện mới.'
+          : 'Mình chưa thể tạo cuộc trò chuyện mới lúc này. Bạn thử lại nhé.');
+        return;
       }
+      localStorage.removeItem(AI_SESSION_KEY);
+      sessionStorage.removeItem(AI_SESSION_KEY);
+      localStorage.setItem(AI_CONVERSATION_KEY, nextConversationId);
+      setAiConversationId(nextConversationId);
+      pendingAgentTurnRef.current = null;
+      sessionStorage.removeItem(PENDING_AGENT_TURN_KEY);
 
       const nameStr = user?.ho_ten || user?.hoTen ? ` ${user.ho_ten || user.hoTen}` : '';
       const msg = buildMsg({ 
@@ -733,7 +738,7 @@ export default function ChatWidget({ user, socketUrl }) {
       setPendingOrder(null);
       setReplyTo(null);
     }
-  }, [user, effectiveUserId, pendingQrPayment]);
+  }, [user, effectiveUserId, pendingQrPayment, aiConversationId, addAIMsg]);
 
   // Add item to cart
   // ── Agent API call (Phase 2+3: RAG + Guardrails + Tool Calling) ─────────────
@@ -744,19 +749,31 @@ export default function ChatWidget({ user, socketUrl }) {
       content: m.noi_dung || '',
     })).filter((m) => m.content);
 
-    const turn = selectAgentTurn(pendingAgentTurnRef.current, {
+    const previousTurn = pendingAgentTurnRef.current;
+    const turn = selectAgentTurn(previousTurn, {
       text, selectedProductId, sessionId: effectiveUserId, conversationId: aiConversationId,
     }, newConversationId);
     pendingAgentTurnRef.current = turn;
     sessionStorage.setItem(PENDING_AGENT_TURN_KEY, JSON.stringify(turn));
-    const agentRes = await apiClient.post('/ai/agent/chat', {
-      session_id: effectiveUserId,
-      conversation_id: aiConversationId,
-      client_message_id: turn.id,
-      message: text,
-      selected_product_id: selectedProductId || null,
-      history,
-    });
+    let agentRes;
+    try {
+      agentRes = await apiClient.post('/ai/agent/chat', {
+        session_id: effectiveUserId,
+        conversation_id: aiConversationId,
+        client_message_id: turn.id,
+        message: text,
+        selected_product_id: selectedProductId || null,
+        history,
+      });
+    } catch (error) {
+      const code = error?.response?.data?.detail?.code;
+      if (previousTurn && previousTurn.id !== turn.id &&
+          (code === 'TURN_IN_PROGRESS' || code === 'TURN_OUTCOME_UNKNOWN')) {
+        pendingAgentTurnRef.current = previousTurn;
+        sessionStorage.setItem(PENDING_AGENT_TURN_KEY, JSON.stringify(previousTurn));
+      }
+      throw error;
+    }
 
     const d = agentRes?.data || agentRes;
     if (d?.conversation_id && d.conversation_id !== aiConversationId) {
@@ -965,6 +982,7 @@ export default function ChatWidget({ user, socketUrl }) {
     } catch (agentErr) {
       const status = agentErr?.response?.status;
       const failure = agentTurnFailure(phase, status);
+      const turnCode = agentErr?.response?.data?.detail?.code;
       console.error('[ChatWidget] Agent turn failed', {
         conversation_id: aiConversationId,
         client_message_id: pendingAgentTurnRef.current?.id,
@@ -975,7 +993,10 @@ export default function ChatWidget({ user, socketUrl }) {
       // Never hand a stateful cart/checkout turn to the legacy chatbot. It has
       // no access to the current agent draft and may invent different items or
       // locations after a timeout.
-      addAIMsg(failure.message, { _agentRetryError: pendingAgentTurnRef.current?.id });
+      const blockedByPrevious = turnCode === 'TURN_IN_PROGRESS' || turnCode === 'TURN_OUTCOME_UNKNOWN';
+      addAIMsg(blockedByPrevious
+        ? 'Lượt chat trước chưa hoàn tất. Bạn gửi lại đúng tin nhắn trước để kiểm tra kết quả rồi hãy gửi tin mới.'
+        : failure.message, { _agentRetryError: pendingAgentTurnRef.current?.id });
       return;
     }
 

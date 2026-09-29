@@ -123,6 +123,12 @@ def claim_turn(conversation_id: str, session_id: str, client_message_id: str,
                 return {"status": "conflict"}
             return {"status": previous.get("_turn_status") if previous.get("_turn_status") in UNRESOLVED_STATUSES else "completed",
                     "response": dict(previous)}
+        blocking = next(((turn_id, record) for turn_id, record in responses.items()
+                         if isinstance(record, dict) and record.get("_turn_status") in UNRESOLVED_STATUSES), None)
+        if blocking:
+            turn_id, record = blocking
+            return {"status": "blocked_by_turn", "blocking_turn_id": turn_id,
+                    "blocking_status": record["_turn_status"]}
         responses[str(client_message_id)] = {
             "_turn_status": IN_PROGRESS, "_request_message": message,
             "_selected_product_id": selected_product_id, "_claimed_at": time.time(),
@@ -134,6 +140,15 @@ def claim_turn(conversation_id: str, session_id: str, client_message_id: str,
         '''), {"conversation_id": conversation_id,
                "responses": json.dumps(responses, ensure_ascii=False)})
         return {"status": "claimed", "history": list(row["messages"] or [])}
+
+
+def unresolved_turn(conversation_id: str, session_id: str) -> Optional[Dict[str, str]]:
+    """Inspect the old conversation before a reset can change its identity."""
+    record = load(conversation_id, session_id)
+    for turn_id, response in record["processed_responses"].items():
+        if isinstance(response, dict) and response.get("_turn_status") in UNRESOLVED_STATUSES:
+            return {"turn_id": turn_id, "status": response["_turn_status"]}
+    return None
 
 
 def mark_outcome_unknown(conversation_id: str, session_id: str, client_message_id: str,

@@ -235,3 +235,41 @@ def parse_location(message: str) -> Location:
     ) or re.search(r"^(?:đường|phố|hẻm|ngõ)\s+\S+", value, re.IGNORECASE):
         return Location("area", value)
     return Location("none")
+
+
+def checkout_location(message: str, delivery_type: str | None, awaiting_location: bool = False) -> Location:
+    """Extract a location from a checkout turn without widening global parsing."""
+    if re.match(r"^\s*(?:số|thứ|#)\s*\d+\b", str(message or ""), re.IGNORECASE):
+        return Location("none")
+    parsed = parse_location(message)
+    if parsed.kind == "address":
+        return parsed
+    if delivery_type == "GIAO_TAN_NOI":
+        return parsed if awaiting_location and parsed.kind == "area" else Location("none")
+    # A fulfillment/payment sentence may include a separate explicit location
+    # clause. Parse that clause with the same structural parser.
+    clauses = re.split(r"[,;]\s*|\b(?=(?:tôi|mình)(?:\s+đang)?\s+ở\b)", str(message or ""), flags=re.IGNORECASE)
+    for clause in reversed(clauses):
+        candidate = parse_location(clause.strip())
+        if candidate.kind in {"area", "address"} and candidate.value:
+            return candidate
+    if parsed.kind == "area" and parsed.value:
+        return parsed
+    if parsed.kind == "branch_query" and parsed.value and not re.search(
+        r"\b(?:qr|cod|chuyen khoan|lay tai quan|dung tai cho)\b", normalize(parsed.value)):
+        return parsed
+    if not awaiting_location:
+        return Location("none")
+    short = clean_location_clause(message)
+    if not re.fullmatch(r"[^\W\d_]+(?:\s+[^\W\d_]+){1,2}", short, re.UNICODE):
+        return Location("none")
+    folded = normalize(short)
+    if _PRODUCT_TOPIC.search(short) or set(folded.split()) & {
+        "them", "mua", "lay", "banh", "nuoc", "cod", "size", "so", "thu", "chuyen", "khoan",
+    }:
+        return Location("none")
+    # Bare names need Vietnamese locality evidence; otherwise a product name
+    # such as an English menu item is ambiguous.
+    if short.lower() == normalize(short):
+        return Location("none")
+    return parse_location("ở " + short)

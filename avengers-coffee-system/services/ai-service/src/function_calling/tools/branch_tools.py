@@ -3,7 +3,7 @@ import re
 from typing import Any, Dict
 from sqlalchemy import text
 from src.common import cart_manager
-from src.function_calling.helpers import _get_engine, _clean_dict, _check_business_hours, _require_valid_session
+from src.function_calling.helpers import _get_engine, _clean_dict, _check_business_hours
 from src.common.inventory_validation import validate_cart_at_branch
 
 logger = logging.getLogger(__name__)
@@ -81,9 +81,6 @@ def execute_ask_branch(session_id: str = "") -> Dict[str, Any]:
         return {"status": "error", "message": "Không thể lấy danh sách chi nhánh."}
 
 
-def _customer_session_id(session_id: str) -> str:
-    return str(session_id).split(":conversation:", 1)[0]
-
 TOOL_FIND_NEAREST_BRANCH = {
     "type": "function",
     "function": {
@@ -144,34 +141,12 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                     "message": "Bạn muốn tìm quán ở khu vực/phường/quận nào?",
                 }
             
-            if (not target_address or is_generic) and session_id:
-                valid_uid = _require_valid_session(_customer_session_id(session_id))
-                if not valid_uid:
-                    return {
-                        "status": "need_location",
-                        "message": "Bạn đang ở địa chỉ nào? Mình sẽ dùng địa chỉ đó chỉ để tìm cửa hàng gần nhất.",
-                    }
-                addr = conn.execute(text(
-                    f"""
-                    SELECT dia_chi_day_du, vi_do, kinh_do
-                    FROM {identity_schema}.dia_chi_giao_hang 
-                    WHERE ma_nguoi_dung::text = :uid AND mac_dinh = true
-                    LIMIT 1
-                    """
-                ), {"uid": valid_uid}).fetchone()
-                
-                if addr and addr[0]:
-                    cart_manager.set_checkout_context(session_id, suggested_address=str(addr[0]))
-                    return {
-                        "status": "need_address_confirmation",
-                        "suggested_address": str(addr[0]),
-                        "message": f"Mình thấy địa chỉ đã lưu là {addr[0]}. Bạn đang ở địa chỉ này hay muốn dùng một địa chỉ khác để tìm cửa hàng gần nhất?",
-                    }
-
             if not target_address:
                 return {
                     "status": "need_location",
-                    "message": "Hệ thống AI hiện chưa được cấp quyền truy cập GPS của khách hàng, và bạn chưa có địa chỉ mặc định. Hãy hỏi khách hàng đang ở địa chỉ nào để tìm chi nhánh gần nhất."
+                    "message": "Bạn cho mình địa chỉ giao đầy đủ để tìm chi nhánh phục vụ nhé."
+                    if prefs.get("delivery_type") == "GIAO_TAN_NOI" else
+                    "Bạn cho mình khu vực/phường/quận để tìm cửa hàng gần nhất nhé."
                 }
 
             delivery_type = prefs.get("delivery_type")
