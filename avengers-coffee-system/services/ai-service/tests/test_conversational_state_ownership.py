@@ -32,7 +32,7 @@ def test_hot_weather_offer_persists_typed_recommendation_expectation(monkeypatch
 
 @pytest.mark.parametrize("reply", ["oke", "được", "gợi ý đi", "dạ được", "ừ xem thử"])
 def test_short_affirmation_uses_stored_recommendation_category(monkeypatch, reply):
-    from src.function_calling.tools import cart_tools
+    from src.function_calling.tools import cart_tools, product_tools
 
     session = "owned-recommendation-accept-" + str(abs(hash(reply)))
     _reset(session)
@@ -41,15 +41,16 @@ def test_short_affirmation_uses_stored_recommendation_category(monkeypatch, repl
     })
     monkeypatch.setattr(cart_tools, "sync_authoritative_cart", lambda sid: cart_manager.get_cart(sid))
     calls = []
-    monkeypatch.setattr(order_flow_graph, "_search_menu_catalog", lambda message: calls.append(message) or {
-        "reply": "Danh sách nước", "checkout_payload": None, "tool_calls_log": [], "error": None,
+    monkeypatch.setattr(product_tools, "execute_get_recommendations", lambda **kwargs: calls.append(kwargs) or {
+        "status": "ok", "products": [{"product_id": "D1", "product_name": "Danh sách nước",
+                                          "category": "Cà Phê", "final_price": 39000}],
     })
     monkeypatch.setattr(agent_service, "_run_agent_impl",
                         lambda *_args, **_kwargs: pytest.fail("generic LLM must not own offer reply"))
 
     result = run_order_flow(session, reply)
-    assert result["reply"] == "Danh sách nước"
-    assert calls and "nước" in calls[0]
+    assert "Danh sách nước" in result["reply"]
+    assert calls == [{"category": "drink", "search_text": None, "top_k": 10}]
     assert cart_manager.get_pending_action(session) is None
 
 

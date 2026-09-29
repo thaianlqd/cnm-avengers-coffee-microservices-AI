@@ -37,7 +37,7 @@ FOOD_OPTIONS = {
 def _setup(monkeypatch, food=False):
     session = "option-state-" + uuid.uuid4().hex
     names = {DRINK: DRINK_OPTIONS, FOOD: FOOD_OPTIONS}
-    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda name: names[name])
+    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda name=None, **_kwargs: names[name])
     price_calls, add_calls = [], []
 
     def price(product_name_query, **kwargs):

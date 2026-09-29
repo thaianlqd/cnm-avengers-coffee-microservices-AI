@@ -17,7 +17,7 @@ def _pending_drink(monkeypatch):
     cart_manager.set_checkout_context(session, last_product_suggestions=food + drink,
         product_suggestion_snapshots={'food': food, 'drink': drink})
     monkeypatch.setattr(cart_tools, 'sync_authoritative_cart', lambda sid: cart_manager.get_cart(sid))
-    monkeypatch.setattr(product_tools, 'execute_get_product_options', lambda name: {
+    monkeypatch.setattr(product_tools, 'execute_get_product_options', lambda name=None, **_kwargs: {
         'status': 'ok', 'product_name': name, 'options': {'Size': ['Nhỏ', 'Vừa']}})
     order_flow_graph.run_order_flow(session, 'cho tôi bánh số và nước số 10')
     assert cart_manager.get_checkout_prefs(session)['pending_product_reference'] == ['food']
@@ -136,7 +136,7 @@ def test_mixed_incomplete_reference_keeps_valid_choice(monkeypatch, message, mis
     cart_manager.set_checkout_context(session, last_product_suggestions=food + drink,
         product_suggestion_snapshots={'food': food, 'drink': drink})
     monkeypatch.setattr(cart_tools, 'sync_authoritative_cart', lambda sid: cart_manager.get_cart(sid))
-    monkeypatch.setattr(product_tools, 'execute_get_product_options', lambda name: {
+    monkeypatch.setattr(product_tools, 'execute_get_product_options', lambda name=None, **_kwargs: {
         'status': 'ok', 'product_name': name, 'options': {'Size': ['Nhỏ', 'Vừa']}})
     monkeypatch.setattr(cart_tools, 'execute_add_to_cart', lambda **kwargs: pytest.fail('cart written before missing ordinal'))
 

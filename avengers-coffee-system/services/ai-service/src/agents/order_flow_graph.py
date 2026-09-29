@@ -181,9 +181,18 @@ def _menu_search_specs(message: str) -> List[Dict[str, str]]:
     return specs
 
 
-def _search_menu_catalog(message: str) -> Optional[Dict[str, Any]]:
+def _search_menu_catalog(message: str = "", *, category: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """Search each requested menu branch and merge exact products by id."""
-    specs = _menu_search_specs(message)
+    if category:
+        if category not in {"drink", "food", "all"}:
+            return None
+        specs = [{
+            "category": category,
+            "label": ("Menu nước" if category == "drink" else
+                      "Menu bánh và đồ ăn" if category == "food" else "thực đơn"),
+        }]
+    else:
+        specs = _menu_search_specs(message)
     if not specs:
         return None
 
@@ -450,25 +459,9 @@ def _resolve_suggested_product(session_id: str, message: str) -> Optional[Dict[s
     if not suggestions:
         return None
     text = _norm(message)
-    product_clause = re.split(r"\b(?:so luong|sl)\b|\bx\s*\d+\b", text, maxsplit=1)[0]
-    ordinal = re.search(r"\b(?:(?:banh|nuoc|do uong|mon|san pham)\s+(?:(?:[a-z]{1,3}|#)\s+)?|(?:so|thu|#)\s*)(\d+)\b", product_clause)
-    if ordinal:
-        position = int(ordinal.group(1)) - 1
-        if 0 <= position < len(suggestions):
-            candidate = suggestions[position]
-            requested = _requested_ordinal_categories(message)
-            if not requested or candidate.get("category") in requested:
-                return candidate
-        requested = _requested_ordinal_categories(message)
-        if len(requested) == 1:
-            group = next(iter(requested))
-            candidates = list((cart_manager.get_checkout_prefs(session_id).get("product_suggestion_snapshots") or {}).get(group) or [])
-            local = next((item for item in candidates
-                          if int(item.get("group_display_index") or 0) == position + 1), None)
-            if local:
-                return local
-            if 0 <= position < len(candidates):
-                return candidates[position]
+    ordinal_refs, invalid, requested = _resolve_product_ordinals(session_id, message)
+    if requested:
+        return ordinal_refs[0] if not invalid and len(ordinal_refs) == 1 else None
     exact = [row for row in suggestions if _norm(row.get("product_name")) in text]
     return exact[0] if len(exact) == 1 else None
 
@@ -492,6 +485,83 @@ def _focus_product(session_id: str, product: Dict[str, Any]) -> None:
         })
 
 
+_PRODUCT_ORDINAL = re.compile(
+    r"\b(?P<namespace>do uong|nuoc|do an|banh|san pham|mon)\s*"
+    r"(?:(?:[a-z]{1,3}|#)\s*)?(?P<index>\d+)\b"
+)
+_PRODUCT_ORDINAL_CONTINUATION = re.compile(
+    r"\s*(?:va|voi|,|&)\s*(?:(?:so|thu|#)\s*)?(?P<index>\d+)\b"
+)
+
+
+def _resolve_product_ordinals(
+    session_id: str, message: str,
+) -> tuple[List[Dict[str, Any]], List[int], int]:
+    """Resolve every explicit ordinal from the latest canonical UI snapshot."""
+    prefs = cart_manager.get_checkout_prefs(session_id)
+    latest = list(prefs.get("last_product_suggestions") or [])
+    snapshots = dict(prefs.get("product_suggestion_snapshots") or {})
+    text = _norm(message)
+    named_matches = list(_PRODUCT_ORDINAL.finditer(text))
+    matches: List[tuple[str, int]] = []
+    for position, match in enumerate(named_matches):
+        namespace = match.group("namespace")
+        matches.append((namespace, int(match.group("index"))))
+
+        # A namespace may be stated once for a coordinated ordinal list:
+        # "nước số 4 và số 5". Only accept a bare continuation directly
+        # connected to the preceding explicit namespace; standalone numbers
+        # remain outside ordinal parsing.
+        next_named_start = (named_matches[position + 1].start()
+                            if position + 1 < len(named_matches) else len(text))
+        continuation_start = match.end()
+        while continuation_start < next_named_start:
+            continuation = _PRODUCT_ORDINAL_CONTINUATION.match(text, continuation_start)
+            if not continuation or continuation.end() > next_named_start:
+                break
+            matches.append((namespace, int(continuation.group("index"))))
+            continuation_start = continuation.end()
+    resolved: List[Dict[str, Any]] = []
+    invalid: List[int] = []
+    for namespace, ordinal in matches:
+        index = ordinal - 1
+        category = ("drink" if namespace in {"nuoc", "do uong"} else
+                    "food" if namespace in {"banh", "do an"} else None)
+        candidate = None
+        if 0 <= index < len(latest):
+            visible = latest[index]
+            visible_category = str(visible.get("category") or visible.get("menu_bucket") or "")
+            if visible_category not in {"drink", "food"}:
+                visible_category = _map_db_category_to_bucket(
+                    visible.get("product_name") or visible_category,
+                    visible.get("parent_category"),
+                )
+            if category is None or visible_category == category:
+                candidate = visible
+        if candidate is None and category:
+            category_rows = list(snapshots.get(category) or [])
+            candidate = next((item for item in category_rows
+                              if int(item.get("group_display_index") or 0) == ordinal), None)
+            if candidate is None and 0 <= index < len(category_rows):
+                candidate = category_rows[index]
+        if candidate is None:
+            invalid.append(ordinal)
+        else:
+            resolved.append(candidate)
+
+    unique: List[Dict[str, Any]] = []
+    seen = set()
+    for item in resolved:
+        identity = str(item.get("product_id") or "").strip() or _norm(item.get("product_name"))
+        if identity and identity not in seen:
+            seen.add(identity)
+            unique.append(item)
+    if matches:
+        logger.debug("[OrdinalResolver] snapshot_size=%d requested_indices=%s resolved_count=%d",
+                     len(latest), [ordinal for _namespace, ordinal in matches], len(unique))
+    return unique, invalid, len(matches)
+
+
 def _resolve_structured_references(session_id: str, message: str) -> Optional[List[Dict[str, Any]]]:
     """Resolve ordinals and demonstratives from durable recommendation state.
 
@@ -499,48 +569,11 @@ def _resolve_structured_references(session_id: str, message: str) -> Optional[Li
     tool results. They are not reconstructed from assistant prose.
     """
     prefs = cart_manager.get_checkout_prefs(session_id)
-    snapshots = dict(prefs.get("product_suggestion_snapshots") or {})
-    latest = list(prefs.get("last_product_suggestions") or [])
-    suggestion_mode = str(prefs.get("product_suggestion_mode") or "flat")
     focus = prefs.get("last_product_focus") or {}
     text = _norm(message)
-    resolved: List[Dict[str, Any]] = []
-
-    patterns = (
-        ("drink", r"(?:nuoc|do uong)"),
-        ("food", r"(?:banh|do an)"),
-    )
-    ordinal_matches = sorted((match.start(), category, match) for category, keyword in patterns
-                             if (match := re.search(rf"\b{keyword}\s*(?:(?:so|thu|#)\s*)?(\d+)\b", text)))
-    for _position, category, match in ordinal_matches:
-        candidates = list(snapshots.get(category) or [])
-        if match:
-            index = int(match.group(1)) - 1
-            # A qualified ordinal first means the visible global number when
-            # that row belongs to the requested group. Otherwise it means the
-            # local number within that group.
-            if 0 <= index < len(latest):
-                latest_item = latest[index]
-                latest_category = str(latest_item.get("category") or "")
-                if latest_category not in {"drink", "food"}:
-                    # Older conversation snapshots stored a flat category
-                    # value such as "all".  Derive its bucket from the
-                    # canonical product name so an active conversation that
-                    # predates this deploy cannot send "bánh số 3" back to a
-                    # stale food list.
-                    latest_category = _map_db_category_to_bucket(
-                        latest_item.get("product_name") or latest_category
-                    )
-                if latest_category == category:
-                    resolved.append(latest_item)
-                    continue
-            local = next((item for item in candidates
-                          if int(item.get("group_display_index") or 0) == index + 1), None)
-            if local:
-                resolved.append(local)
-                continue
-            if candidates and 0 <= index < len(candidates):
-                resolved.append(candidates[index])
+    resolved, invalid, requested = _resolve_product_ordinals(session_id, message)
+    if requested and invalid:
+        return None
 
     demonstrative = re.search(r"\b(banh|nuoc|mon|san pham)\s+(?:nay|do|kia)\b", text)
     if demonstrative and focus.get("product_name"):
@@ -773,8 +806,10 @@ def _prepare_structured_products(
             return {"reply": "Mình chưa xác định được món trong menu. Bạn chọn lại tên hoặc số món nhé.",
                     "checkout_payload": None, "tool_calls_log": logs, "error": "product_reference_unresolved"}
         product_name = str(ref.get("product_name") or "").strip()
-        option_result = execute_get_product_options(product_name)
-        logs.append({"tool": "get_product_options", "args": {"product_name": product_name}, "result": option_result})
+        option_result = execute_get_product_options(product_name, product_id=str(ref["product_id"]))
+        logs.append({"tool": "get_product_options",
+                     "args": {"product_id": str(ref["product_id"]), "product_name": product_name},
+                     "result": option_result})
         if option_result.get("status") != "ok" or (
             option_result.get("product_id") and str(option_result["product_id"]) != str(ref["product_id"])
         ):
@@ -1056,6 +1091,39 @@ def _resolve_cart_option_update(item: Dict[str, Any], message: str) -> tuple[Dic
                    )]
         if "topping" in group:
             current = list(item.get("toppings") or [])
+            # An explicit topping list is atomic. Do not silently keep only
+            # its valid subset and PATCH a state the customer did not request.
+            raw_clause = re.search(
+                r"\b(?:topping|toping|do kem)\b(?P<values>[^,;.]*)",
+                message,
+                flags=re.IGNORECASE,
+            )
+            # A product reference such as "đổi topping trà sữa" is not an
+            # option value. Run strict list validation only after the normal
+            # matcher has found at least one actual topping label.
+            if raw_clause and matches:
+                requested_values = re.sub(
+                    r"^\s*(?:la|là|thanh|thành|gom|gồm)\s*", "",
+                    raw_clause.group("values"), flags=re.IGNORECASE,
+                )
+                assignment = re.split(r"\b(?:thanh|thành|sang)\b", requested_values,
+                                      flags=re.IGNORECASE)
+                if len(assignment) > 1:
+                    requested_values = assignment[-1]
+                candidates = [
+                    re.sub(r"\s+(?:nhe|nhé|a|ạ|di|đi|ban|bạn|b)\s*$", "", candidate,
+                           flags=re.IGNORECASE).strip()
+                    for candidate in re.split(r"\s+(?:va|và|voi|với)\s+", requested_values)
+                ]
+                allowed = {_norm(_clean_option_text(value)) for value in values}
+                invalid = [candidate for candidate in candidates
+                           if candidate and _norm(candidate) not in allowed]
+                if invalid:
+                    return {}, {**option_result, "validation_error": {
+                        "field": group_name,
+                        "invalid_values": invalid,
+                        "allowed_values": [_clean_option_text(value) for value in values],
+                    }}
             clause_match = re.search(r"\b(?:topping|toping|do kem)\b[^,;]*", text)
             if clause_match:
                 clause_start = max(text.rfind(",", 0, clause_match.start()), text.rfind(";", 0, clause_match.start())) + 1
@@ -1101,6 +1169,17 @@ def _resolve_cart_option_update(item: Dict[str, Any], message: str) -> tuple[Dic
         }.items() if value not in (None, "", [])
     }
     return desired, option_result
+
+
+def _option_validation_reply(item: Dict[str, Any], option_result: Dict[str, Any]) -> Optional[str]:
+    error = option_result.get("validation_error") or {}
+    if not error:
+        return None
+    invalid = ", ".join(map(str, error.get("invalid_values") or []))
+    allowed = ", ".join(map(str, error.get("allowed_values") or []))
+    return (f"{error.get('field') or 'Tùy chọn'} {invalid} không áp dụng cho "
+            f"{item.get('product_name')}. Giỏ hàng chưa thay đổi. "
+            f"Các lựa chọn hợp lệ: {allowed}.")
 
 
 def _sync(state: OrderConversationState) -> OrderConversationState:
@@ -1564,7 +1643,8 @@ def _shopping_decision(state: OrderConversationState, tier1_intent: Dict[str, An
 
 def _recommendation_offer_decision(message: str) -> str:
     """Resolve a short reply only inside a typed recommendation offer."""
-    text = _norm(message)
+    from src.agents.tier1 import normalize_confirmation_text
+    text = normalize_confirmation_text(message)
     if re.search(r"\b(?:khong|thoi|bo qua|khong can|de sau)\b", text):
         return "DECLINE"
     affirmative = bool(re.search(r"\b(?:ok|oke|duoc|da|u|uh|dong y|xem thu)\b", text))
@@ -1858,15 +1938,20 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         and (prefs.get("checkout_requested") or pending_type == "confirm_address")
     ):
         return {**state, "intent": {"intent": "LOCATION_QUERY", "location_kind": location.kind}}
-    # A visible product ordinal is a structural selection even when the user
-    # omits an add verb (for example “món số 4”). Its identity still comes
-    # exclusively from the latest canonical recommendation snapshot.
-    ordinal_product = (_resolve_suggested_product(state["session_id"], state["user_message"])
-                       if intent.get("intent") == "UNKNOWN" and not pending_type else None)
-    if ordinal_product:
+    # Visible product ordinals come only from the canonical snapshot. Resolve
+    # the complete requested batch before preparing any product or cart write.
+    ordinal_products, invalid_ordinals, ordinal_count = _resolve_product_ordinals(
+        state["session_id"], state["user_message"])
+    from src.agents.agent_service import _has_product_review_intent
+    ordinal_review = _has_product_review_intent(state["user_message"])
+    if ordinal_count and invalid_ordinals and not pending_type and not ordinal_review:
+        return {**state, "intent": {"intent": "PRODUCT_ORDINAL_INVALID",
+                                    "invalid_ordinals": invalid_ordinals}}
+    if ordinal_count and ordinal_products and not pending_type and not ordinal_review:
+        structured_products = _resolve_structured_references(
+            state["session_id"], state["user_message"])
         return {**state, "intent": {"intent": "ADD_ITEM", "target_kind": "PRODUCT",
-                                    "product_name": ordinal_product.get("product_name"),
-                                    "resolved_products": [ordinal_product],
+                                    "resolved_products": structured_products or ordinal_products,
                                     "quantity": _extract_add_quantity(state["user_message"])}}
     if intent.get("intent") in {"BROWSING", "UNKNOWN"} and not re.search(r"\b(?:co|xem|tim|goi y|menu|gia|the nao|khong)\b", _norm(state["user_message"])):
         named_rows = _cart_rows_named_in_message(state.get("cart") or {}, state["user_message"])
@@ -2075,6 +2160,12 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
     if kind == "PRODUCT_CLARIFY":
         return {**state, "result": {"reply": "Bạn đang hỏi món nào trong danh sách? Bạn chọn số hoặc nói tên món nhé.",
                                    "checkout_payload": None, "tool_calls_log": [], "error": None}}
+    if kind == "PRODUCT_ORDINAL_INVALID":
+        invalid = ", ".join(f"#{value}" for value in intent.get("invalid_ordinals") or [])
+        return {**state, "result": {
+            "reply": f"Số món {invalid} nằm ngoài danh sách đang hiển thị. Bạn chọn lại số trong danh sách nhé.",
+            "checkout_payload": None, "tool_calls_log": [], "error": None,
+        }}
     if kind == "CART_TARGET_CLARIFY":
         row = intent["cart_row"]
         logger.debug("routing route=CART_TARGET_CLARIFY operation=NONE target_source=cart_name candidate_count=1")
@@ -2112,8 +2203,8 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
     if kind == "RECOMMENDATION_OFFER_ACCEPT":
         category = intent.get("category") or "all"
         cart_manager.clear_pending_action(session_id)
-        query = "gợi ý nước" if category == "drink" else "gợi ý bánh" if category == "food" else "gợi ý món"
-        result = _search_menu_catalog(query)
+        logger.debug("[RecommendationOffer] category=%s execution=structured_provider search_text=none", category)
+        result = _search_menu_catalog(category=category)
         return {**state, "result": result or {"reply": "Mình chưa tìm thấy món phù hợp lúc này.",
             "checkout_payload": None, "tool_calls_log": [], "error": None}}
     if kind == "RECOMMENDATION_OFFER_DECLINE":
@@ -2168,7 +2259,8 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
                     "requested_option_text": resolved.get("requested_value"),
                     "requested_patch": {}, "missing": "option_value",
                 })
-                return {**state, "result": {"reply": f"Bạn muốn đổi tùy chọn nào cho {item.get('product_name')}?",
+                reply = _option_validation_reply(item, option_result) or f"Bạn muốn đổi tùy chọn nào cho {item.get('product_name')}?"
+                return {**state, "result": {"reply": reply,
                     "checkout_payload": None, "tool_calls_log": logs, "error": None}}
             changed = execute_update_cart_item(session_id, line_id, patch)
             logs.append({"tool": "update_cart_item", "result": changed})
@@ -2419,7 +2511,7 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
                 f"{name}: {', '.join(str(value) for value in values)}"
                 for name, values in groups.items()
             )
-            reply = (
+            reply = _option_validation_reply(item, option_result) or (
                 f"Bạn muốn đổi gì cho {item.get('product_name')} "
                 f"(size hiện tại: {item.get('size') or 'mặc định'})?"
                 + (f" Các lựa chọn hợp lệ: {rendered}." if rendered else "")

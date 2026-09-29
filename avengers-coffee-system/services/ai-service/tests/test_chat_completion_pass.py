@@ -76,7 +76,7 @@ def test_card_selection_uses_catalog_identity_and_asks_for_choices(monkeypatch):
     monkeypatch.setattr(cart_tools, 'sync_authoritative_cart', lambda sid: cart_manager.get_cart(sid))
     monkeypatch.setattr(order_flow_graph, '_load_active_product_targets', lambda: [
         {'product_id': '7', 'product_name': 'Frappe Matcha', 'category': 'drink'}])
-    monkeypatch.setattr(product_tools, 'execute_get_product_options', lambda _name: {
+    monkeypatch.setattr(product_tools, 'execute_get_product_options', lambda _name=None, **_kwargs: {
         'status': 'ok', 'product_id': '7', 'product_name': 'Frappe Matcha',
         'options': {'Size': ['Vừa'], 'Đá': ['Ít', 'Nhiều'], 'Đường': ['Ít', 'Nhiều'], 'Topping': ['Không', 'Trân châu']},
     })
@@ -94,7 +94,7 @@ def test_card_selection_without_choices_uses_same_safe_add_path(monkeypatch):
     monkeypatch.setattr(cart_tools, 'sync_authoritative_cart', lambda sid: cart_manager.get_cart(sid))
     monkeypatch.setattr(order_flow_graph, '_load_active_product_targets', lambda: [
         {'product_id': '8', 'product_name': 'Bánh Matcha', 'category': 'food'}])
-    monkeypatch.setattr(product_tools, 'execute_get_product_options', lambda _name: {
+    monkeypatch.setattr(product_tools, 'execute_get_product_options', lambda _name=None, **_kwargs: {
         'status': 'ok', 'product_id': '8', 'product_name': 'Bánh Matcha', 'options': {},
     })
     monkeypatch.setattr(product_tools, 'execute_check_price_and_stock', lambda **_kwargs: {

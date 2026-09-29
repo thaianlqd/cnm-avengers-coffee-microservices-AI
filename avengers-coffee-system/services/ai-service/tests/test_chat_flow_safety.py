@@ -545,7 +545,7 @@ def test_additional_no_option_product_is_written_before_bot_claims_success(monke
 
     monkeypatch.setattr(
         "src.function_calling.tools.product_tools.execute_get_product_options",
-        lambda _name: {
+        lambda _name=None, **_kwargs: {
             "status": "ok",
             "product_name": "Bánh Trung Thu Matcha",
             "message": "Sản phẩm Bánh Trung Thu Matcha không có tùy chọn nào. Cứ đặt mặc định.",
@@ -709,7 +709,7 @@ def test_exact_cart_regression_browsing_matcha_never_replays_add_to_cart(monkeyp
     monkeypatch.setattr(cart_tools, "sync_authoritative_cart", order_service_get)
     monkeypatch.setattr(cart_tools, "execute_add_to_cart", order_service_add)
     monkeypatch.setattr(product_tools, "execute_get_recommendations", recommendations)
-    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name: {
+    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name=None, **_kwargs: {
         "status": "ok", "options": {"Kích thước": ["Nhỏ"]},
     })
     monkeypatch.setattr(product_tools, "execute_check_price_and_stock", lambda **kwargs: {
@@ -821,7 +821,7 @@ def test_combined_numbered_order_and_review_keeps_both_products_and_shows_option
     )
     monkeypatch.setattr(
         "src.function_calling.tools.product_tools.execute_get_product_options",
-        lambda name: {
+        lambda name=None, **_kwargs: {
             "status": "ok",
             "product_name": name,
             "options": {"Kích thước": ["Vừa"], "Topping": ["Hạt Sen", "Sữa Yến Mạch"], "Lượng đá": ["Ít đá", "Đá riêng"], "Độ ngọt": ["Ít ngọt", "Không ngọt"]},
@@ -1202,7 +1202,7 @@ def test_drink_choice_with_cake_request_does_not_trigger_stale_branch(monkeypatc
 
     monkeypatch.setattr(
         "src.function_calling.tools.product_tools.execute_get_product_options",
-        lambda _name: {
+        lambda _name=None, **_kwargs: {
             "status": "ok",
             "product_name": "Lít Matcha Latte Tây Bắc",
             "message": "Các tùy chọn là: Kích thước: [Vừa, Lớn]",

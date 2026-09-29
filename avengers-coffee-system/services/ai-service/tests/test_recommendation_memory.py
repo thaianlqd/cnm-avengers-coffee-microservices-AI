@@ -134,7 +134,7 @@ def test_graph_adds_the_latest_numbered_suggestion_not_a_free_text_guess(monkeyp
         {"product_id": "121", "product_name": "Bánh Trung Thu Đậu Xanh", "category": "food"},
     ])
     monkeypatch.setattr(cart_tools, "sync_authoritative_cart", lambda _session: cart_manager.get_cart(_session))
-    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name: {
+    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name=None, **_kwargs: {
         "status": "ok", "product_name": "Bánh Trung Thu Matcha", "options": {},
     })
     monkeypatch.setattr(product_tools, "execute_check_price_and_stock", lambda **_kwargs: {
@@ -322,7 +322,7 @@ def test_structured_resolver_keeps_all_exact_products_when_cart_is_empty(monkeyp
     )
     monkeypatch.setattr(cart_tools, "sync_authoritative_cart", lambda _session: cart_manager.get_cart(_session))
     monkeypatch.setattr(agent_service, "_handle_additional_product", lambda _session, _name: None)
-    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda name: {
+    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda name=None, **_kwargs: {
         "status": "ok",
         "product_name": name,
         "options": {"Kích thước": ["Nhỏ", "Lớn"]},

@@ -354,7 +354,7 @@ def test_menu_two_products_options_then_cart_voucher_checkout_boundary(flow, mon
             {'product_id': f'D{i}', 'product_name': f'Nước {i}', 'final_price': 200000} for i in range(1, 4)
         ]),
     })
-    monkeypatch.setattr(product_tools, 'execute_get_product_options', lambda name: {
+    monkeypatch.setattr(product_tools, 'execute_get_product_options', lambda name=None, **_kwargs: {
         'status': 'ok', 'product_name': name, 'options': ({'Kích thước': ['Vừa'], 'Topping': ['Hạt sen', 'Foam dừa', 'Sữa yến mạch'], 'Lượng đá': ['Ít đá', 'Bình thường'], 'Độ ngọt': ['Ít ngọt', 'Thêm ngọt', 'Bình thường']} if name.startswith('Nước') else {}),
     })
     monkeypatch.setattr(product_tools, 'execute_check_price_and_stock', lambda product_name_query, **k: {
@@ -425,7 +425,7 @@ def test_owned_conversation_runs_recommendation_quantity_edit_and_pickup_to_summ
     monkeypatch.setattr(product_tools, 'execute_get_recommendations', lambda category, **_k: {
         'status': 'ok', 'products': [cake] if category == 'food' else drinks})
 
-    def options(name):
+    def options(name=None, **_kwargs):
         return ({'status': 'ok', 'product_id': 'D4', 'product_name': name, 'options': {
             'Kích thước': ['Vừa', 'Lớn'], 'Topping': ['Hạt Sen', 'Trái Vải'],
             'Lượng đá': ['Ít đá', 'Bình thường'], 'Độ ngọt': ['Ít ngọt', 'Thêm ngọt'],
