@@ -101,7 +101,7 @@ def _menu_search_specs(message: str) -> List[Dict[str, str]]:
         text,
     ))
     broad_family_request = bool(re.search(
-        r"\b(?:muon|can|thich)?\s*(?:mua|dat)\s+(?:mon\s+)?(?:banh|do an|nuoc|do uong)\b",
+        r"\b(?:muon|can|thich)?\s*(?:mua|dat)\s+(?:mon\s+)?(?:banh|do an|nuoc|do uong|ca phe|tra)\b",
         text,
     )) and not has_menu_ordinal
     if not broad_family_request and re.search(
@@ -111,11 +111,12 @@ def _menu_search_specs(message: str) -> List[Dict[str, str]]:
         return []
 
     explores_menu = bool(re.search(
-        r"\b(co|xem|menu|goi y|hien thi|tim|tham khao|mon gi|mon nao|ban gi)\b",
+        r"\b(co|xem|menu|goi y|hien thi|tim|tham khao|mon gi|mon nao|ban gi)\b|"
+        r"\bban\b.+\b(?:gi|nao|khong)\b",
         text,
     ))
     compact_query = len(text.split()) <= 6 and bool(re.search(
-        r"\b(banh|do an|nuoc|do uong|ca phe|tra|matcha|pizza|pasta)\b",
+        r"\b(banh|do an|nuoc|do uong|ca phe|tra|matcha|americano|cold brew|espresso|latte|frappe|pizza|pasta)\b",
         text,
     ))
     if not explores_menu and not compact_query:
@@ -124,7 +125,10 @@ def _menu_search_specs(message: str) -> List[Dict[str, str]]:
     parts = [part.strip() for part in re.split(r"\b(?:hoac|hay)\b", text) if part.strip()]
     raw_parts = [part.strip() for part in re.split(r"\b(?:hoặc|hoac|hay)\b", message, flags=re.IGNORECASE) if part.strip()]
     overall_food = bool(re.search(r"\b(banh|do an|thuc an|pizza|pasta)\b", text))
-    overall_drink = bool(re.search(r"\b(nuoc|do uong|thuc uong|ca phe|tra)\b", text))
+    overall_drink = bool(re.search(
+        r"\b(nuoc|do uong|thuc uong|ca phe|tra|americano|cold brew|espresso|latte|frappe)\b",
+        text,
+    ))
     # "bánh và nước" represents two real menu branches.  Without this split
     # the food keyword wins merely because it appears first in the sentence.
     if len(parts) == 1 and overall_food and overall_drink:
@@ -134,7 +138,10 @@ def _menu_search_specs(message: str) -> List[Dict[str, str]]:
     for part_index, part in enumerate(parts or [text]):
         original_part = raw_parts[part_index] if len(raw_parts) == len(parts) else part
         has_food = bool(re.search(r"\b(banh|do an|thuc an|pizza|pasta)\b", part))
-        has_drink = bool(re.search(r"\b(nuoc|do uong|thuc uong|ca phe|tra)\b", part))
+        has_drink = bool(re.search(
+            r"\b(nuoc|do uong|thuc uong|ca phe|tra|americano|cold brew|espresso|latte|frappe)\b",
+            part,
+        ))
         # In "bánh mặn hoặc matcha", the second alternative inherits food.
         if not has_food and not has_drink and "matcha" in part:
             has_food = overall_food and not overall_drink
@@ -161,6 +168,20 @@ def _menu_search_specs(message: str) -> List[Dict[str, str]]:
             # "bánh matcha" only returns food; plain "matcha" may return both.
             category = "food" if has_food else "drink" if has_drink else "all"
             search_text, label = "matcha", "Bánh Matcha" if category == "food" else "Matcha"
+        elif re.search(r"\bca phe\b", part):
+            category = "drink"
+            search_text = extract_catalog_search_text(original_part) or "Cà Phê"
+            label = "Cà phê"
+        elif re.search(r"\btra\b", part):
+            category = "drink"
+            search_text = extract_catalog_search_text(original_part) or "Trà"
+            label = "Trà"
+        elif re.search(r"\b(americano|cold brew|espresso|latte|frappe)\b", part):
+            category = "drink"
+            search_text = extract_catalog_search_text(original_part) or re.search(
+                r"\b(americano|cold brew|espresso|latte|frappe)\b", part,
+            ).group(1)
+            label = search_text.title()
         elif re.search(r"\bpizza\b|\bpasta\b", part):
             category, search_text, label = "food", "Pizza", "Pizza & Pasta"
         elif category == "food":
@@ -453,17 +474,41 @@ def _resolve_cart_line(cart: Dict[str, Any], message: str) -> tuple[Optional[Dic
     return None, "Mình cần biết đúng dòng món cần sửa vì giỏ có nhiều biến thể:\n" + numbered
 
 
+def _message_names_suggested_product(message: str, product_name: str) -> bool:
+    """Match a complete title or a meaningful title phrase from a shown item.
+
+    Customers routinely omit a trailing brand word (for example, they say
+    "cà phê muối" after seeing "Cà Phê Muối Avenger").  A two-word fragment
+    can still be a menu family, so abbreviated matching requires at least
+    three consecutive title words.  The caller also requires one unique
+    matching snapshot item before it can become a cart target.
+    """
+    text = _norm(message)
+    title = _norm(product_name).strip()
+    if not title:
+        return False
+    if re.search(r"(?<!\w)" + re.escape(title) + r"(?!\w)", text):
+        return True
+    tokens = re.findall(r"\w+", title)
+    for size in range(len(tokens) - 1, 2, -1):
+        for start in range(0, len(tokens) - size + 1):
+            phrase = " ".join(tokens[start:start + size])
+            if re.search(r"(?<!\w)" + re.escape(phrase) + r"(?!\w)", text):
+                return True
+    return False
+
+
 def _resolve_suggested_product(session_id: str, message: str) -> Optional[Dict[str, Any]]:
-    """Resolve an ordinal/name against the exact latest recommendation snapshot."""
+    """Resolve an ordinal or uniquely named item from the latest snapshot."""
     suggestions = list(cart_manager.get_checkout_prefs(session_id).get("last_product_suggestions") or [])
     if not suggestions:
         return None
-    text = _norm(message)
     ordinal_refs, invalid, requested = _resolve_product_ordinals(session_id, message)
     if requested:
         return ordinal_refs[0] if not invalid and len(ordinal_refs) == 1 else None
-    exact = [row for row in suggestions if _norm(row.get("product_name")) in text]
-    return exact[0] if len(exact) == 1 else None
+    named = [row for row in suggestions
+             if _message_names_suggested_product(message, str(row.get("product_name") or ""))]
+    return named[0] if len(named) == 1 else None
 
 
 def _unresolved_product_reference(session_id: str, message: str) -> bool:
@@ -883,7 +928,17 @@ def _extract_add_quantity(message: str) -> int:
         or re.search(r"\b(\d+)\s*(?:cai|ly|phan|mon)\b", text)
         or re.search(r"\bthem\s+(\d+)\b", text)
     )
-    return max(1, int(match.group(1))) if match else 1
+    if match:
+        return max(1, int(match.group(1)))
+    word_match = re.search(
+        r"\b(mot|hai|ba|bon|tu|nam|sau|bay|tam|chin|muoi)\s*(?:cai|ly|phan|mon)\b",
+        text,
+    )
+    word_values = {
+        "mot": 1, "hai": 2, "ba": 3, "bon": 4, "tu": 4, "nam": 5,
+        "sau": 6, "bay": 7, "tam": 8, "chin": 9, "muoi": 10,
+    }
+    return word_values[word_match.group(1)] if word_match else 1
 
 
 def _turn_operation_base(state: OrderConversationState) -> Optional[str]:
@@ -1534,8 +1589,8 @@ def _resolve_ask_more_targets(session_id: str, message: str) -> List[Dict[str, A
         suggested = _resolve_suggested_product(session_id, message)
         product_clause = re.split(r"\b(?:so luong|sl)\b", _norm(message), maxsplit=1)[0]
         ordinal = re.search(r"\b(?:so|thu|#)\s*\d+\b|\b(?:mon|banh|nuoc|do uong|san pham)\s+(?:(?:[a-z]{1,3}|#)\s+)?\d+\b", product_clause)
-        name = _norm((suggested or {}).get("product_name")).strip()
-        if suggested and (ordinal or (name and re.search(r"(?<!\w)" + re.escape(name) + r"(?!\w)", _norm(message)))):
+        if suggested and (ordinal or _message_names_suggested_product(
+                message, str(suggested.get("product_name") or ""))):
             refs = [suggested]
     if not refs and not requested:
         prefs = cart_manager.get_checkout_prefs(session_id)
@@ -1622,6 +1677,43 @@ def _category_search_message(message: str) -> Optional[str]:
     return candidate if _menu_search_specs(candidate) else None
 
 
+def _is_direct_product_selection(message: str, refs: List[Dict[str, Any]]) -> bool:
+    """Recognize selection language around a canonical product from the latest list."""
+    text = _norm(message)
+    if not refs or not text:
+        return False
+    if re.search(
+        r"\b(?:xem|tim|goi y|review|danh gia|nhan xet|gia|bao nhieu|vi|ngon|"
+        r"thanh phan|topping|size|the nao)\b|\bco\b.*\b(?:khong|nao|gi)\b",
+        text,
+    ):
+        return False
+    if re.search(
+        r"\b(?:khong lay|khong mua|khong them|bo|xoa|huy|sua|doi|chinh|cap nhat)\b",
+        text,
+    ):
+        return False
+    if re.search(r"\b(?:them|mua|lay|chon|dat)\b|\bcho\s+(?:toi|minh)\b", text):
+        return True
+    if re.search(
+        r"(?<!\w)-?\d+\s*(?:cai|ly|phan|mon)\b|"
+        r"\b(?:mot|hai|ba|bon|tu|nam|sau|bay|tam|chin|muoi)\s*(?:cai|ly|phan|mon)\b|"
+        r"\b(?:so luong|sl)\b",
+        text,
+    ):
+        return True
+
+    # The UI explicitly accepts a bare name. Allow only title words and
+    # conversational fillers so a descriptive statement cannot mutate cart.
+    title_words = {
+        word for ref in refs for word in re.findall(r"\w+", _norm(ref.get("product_name")))
+    }
+    message_words = set(re.findall(r"\w+", text))
+    fillers = set("mon cai ly phan di nhe nha nhen ban b oi a voi cho toi minh".split())
+    meaningful = message_words - fillers
+    return bool(meaningful) and meaningful.issubset(title_words)
+
+
 def _shopping_decision(state: OrderConversationState, tier1_intent: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """One evidence-based shopping route for pending and ordinary turns."""
     from src.agents.pending_context import classify_pending_reply, looks_like_catalog_query
@@ -1639,7 +1731,8 @@ def _shopping_decision(state: OrderConversationState, tier1_intent: Dict[str, An
                 "has_resolved_ordinal": bool(refs and re.search(r"\b(?:so|thu|#)\s*\d+\b", _norm(message))),
                 "looks_like_catalog_query": looks_like_catalog_query(message)}
     decision = classify_pending_reply(message, "ask_more_items", evidence)
-    if refs and tier1_intent.get("intent") == "ADD_ITEM" and decision != "BROWSING_REQUEST":
+    if refs and (tier1_intent.get("intent") == "ADD_ITEM" or _is_direct_product_selection(message, refs)) \
+            and decision != "BROWSING_REQUEST":
         decision = "CONCRETE_ADD"
     if decision == "CONCRETE_ADD" and refs:
         return {"intent": "ADD_ITEM", "semantic_intent": "ADD_CONCRETE_PRODUCT",
@@ -1751,7 +1844,9 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     # Transaction language is arbitrated before catalog parsing. A missed
     # mutation grammar must never be reinterpreted as a product search.
     transaction_turn = has_transaction_evidence(state["user_message"])
-    catalog_constraints = (None if transaction_turn or (
+    initial_refs = _resolve_ask_more_targets(state["session_id"], state["user_message"])
+    direct_product_selection = _is_direct_product_selection(state["user_message"], initial_refs)
+    catalog_constraints = (None if transaction_turn or direct_product_selection or (
         active_pending and active_pending.get("type") != "ask_more_items"
     ) else parse_catalog_constraints(state["user_message"]))
     if catalog_constraints:
@@ -1980,7 +2075,9 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         return {**state, "intent": {"intent": "ADD_ITEM", "target_kind": "PRODUCT",
                                     "resolved_products": structured_products or ordinal_products,
                                     "quantity": _extract_add_quantity(state["user_message"])}}
-    if intent.get("intent") in {"BROWSING", "UNKNOWN"} and not re.search(r"\b(?:co|xem|tim|goi y|menu|gia|the nao|khong)\b", _norm(state["user_message"])):
+    direct_snapshot_refs = _resolve_ask_more_targets(state["session_id"], state["user_message"])
+    direct_snapshot_selection = _is_direct_product_selection(state["user_message"], direct_snapshot_refs)
+    if intent.get("intent") in {"BROWSING", "UNKNOWN"} and not direct_snapshot_selection and not re.search(r"\b(?:co|xem|tim|goi y|menu|gia|the nao|khong)\b", _norm(state["user_message"])):
         named_rows = _cart_rows_named_in_message(state.get("cart") or {}, state["user_message"])
         if len(named_rows) == 1:
             return {**state, "intent": {"intent": "CART_TARGET_CLARIFY", "cart_row": named_rows[0]}}
@@ -2002,6 +2099,8 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
                     "has_resolved_ordinal": bool(refs and re.search(r"\b(?:so|thu|#)\s*\d+\b", _norm(state["user_message"]))),
                     "looks_like_catalog_query": looks_like_catalog_query(state["user_message"])}
         decision = classify_pending_reply(state["user_message"], pending_type, evidence)
+        if refs and _is_direct_product_selection(state["user_message"], refs) and decision != "BROWSING_REQUEST":
+            decision = "CONCRETE_ADD"
         if decision == "CONCRETE_ADD" and not refs:
             decision = "WANT_MORE_GENERIC"
         kind = {"DONE": "FINISH_CART", "CONCRETE_ADD": "ADD_ITEM",
@@ -2027,7 +2126,7 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     # Pending decisions are context. A clear shopping request can change course
     # without answering the old voucher/summary question.
     if pending_type in {"select_voucher", "confirm_checkout"} and not prefs.get("checkout_submission"):
-        shopping = _shopping_decision(state, intent) if intent.get("intent") in {"ADD_ITEM", "BROWSING"} else None
+        shopping = _shopping_decision(state, intent) if intent.get("intent") in {"ADD_ITEM", "BROWSING", "UNKNOWN"} else None
         if shopping and shopping["intent"] in {"ADD_ITEM", "BROWSING", "SHOPPING_GENERIC", "SHOPPING_CLARIFY"}:
             return {**state, "intent": {**shopping, "resume_shopping": True}}
     if pending_type == "fill_options":
@@ -2080,7 +2179,7 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     # A correction such as “ý tôi là Bánh Matcha 2 cái” continues the latest
     # concrete product discussion. It is an add, never a quantity edit of the
     # previously focused cart line.
-    if intent.get("intent") in {"ADD_ITEM", "BROWSING"}:
+    if intent.get("intent") in {"ADD_ITEM", "BROWSING", "UNKNOWN"}:
         shopping = _shopping_decision(state, intent)
         if shopping:
             intent = shopping
