@@ -8,6 +8,7 @@ from src.common.cart_manager import (
     get_cart,
     set_checkout_prefs
 )
+from src.common import cart_manager
 
 def test_set_get_clear_pending_action():
     session_id = "test-pending-session-1"
@@ -69,3 +70,15 @@ def test_reset_conversation_draft_clears_pending_action():
     reset_conversation_draft(session_id)
     
     assert get_pending_action(session_id) is None
+
+
+def test_reset_conversation_draft_clears_product_reference_but_keeps_business_choices():
+    session_id = "test-pending-reference-reset"
+    cart_manager.set_checkout_context(session_id, pending_product_reference=["food"],
+        pending_products=[{"product_id": "D10", "product_name": "Nước 10"}],
+        delivery_type="GIAO_TAN_NOI", payment_method="COD")
+    remaining = reset_conversation_draft(session_id)
+    assert "pending_product_reference" not in remaining
+    assert "pending_products" not in remaining
+    assert remaining["delivery_type"] == "GIAO_TAN_NOI"
+    assert remaining["payment_method"] == "COD"

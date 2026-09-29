@@ -3,7 +3,7 @@ import logging
 import os
 import re
 import requests
-from time import perf_counter, monotonic, sleep
+from time import perf_counter, monotonic, sleep, time
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
@@ -785,12 +785,14 @@ def agent_chat(body: AgentChatRequest, request: Request):
             if claim["status"] == "conflict":
                 raise HTTPException(status_code=409, detail="Mã lượt chat đã được dùng cho yêu cầu khác")
             if claim["status"] == "completed":
-                logger.info("[AgentTurn] conversation_id=%s client_message_id=%s phase=replay cache_hit=true",
+                logger.info("[AgentTurn] conversation_id=%s client_message_id=%s phase=completed_replay cache_hit=true",
                             conversation_id, body.client_message_id)
                 return replay(claim["response"])
-            if claim["status"] == conversation_memory.IN_PROGRESS:
+            if claim["status"] in conversation_memory.UNRESOLVED_STATUSES:
+                logger.info("[AgentTurn] conversation_id=%s client_message_id=%s phase=%s",
+                            conversation_id, body.client_message_id, claim["status"])
                 deadline = monotonic() + TURN_CLAIM_WAIT_SECONDS
-                while monotonic() < deadline:
+                while claim["status"] == conversation_memory.IN_PROGRESS and monotonic() < deadline:
                     sleep(0.05)
                     claim = conversation_memory.claim_turn(conversation_id, body.session_id,
                         body.client_message_id, body.message, body.selected_product_id)
@@ -812,12 +814,25 @@ def agent_chat(body: AgentChatRequest, request: Request):
                         user_message=body.message, result=recovered, client_message_id=body.client_message_id,
                         response_session_id=scoped_session_id,
                         selected_product_id=body.selected_product_id)
-                    logger.info("[AgentTurn] conversation_id=%s client_message_id=%s phase=durable_recovery cache_hit=true",
+                    logger.info("[AgentTurn] conversation_id=%s client_message_id=%s phase=business_replay cache_hit=true",
                                 conversation_id, body.client_message_id)
                     return replay(recovered)
-                logger.warning("[AgentTurn] conversation_id=%s client_message_id=%s phase=in_progress_reconciliation_required",
-                               conversation_id, body.client_message_id)
+                claimed_at = (claim.get("response") or {}).get("_claimed_at") or 0
+                if (claim["status"] == conversation_memory.IN_PROGRESS and
+                        time() - claimed_at >= conversation_memory.STALE_CLAIM_SECONDS):
+                    conversation_memory.mark_outcome_unknown(conversation_id, body.session_id,
+                        body.client_message_id, "stale_claim")
+                    logger.warning("[AgentTurn] conversation_id=%s client_message_id=%s phase=outcome_unknown",
+                                   conversation_id, body.client_message_id)
+                elif claim["status"] == conversation_memory.IN_PROGRESS:
+                    logger.info("[AgentTurn] conversation_id=%s client_message_id=%s phase=in_progress",
+                                conversation_id, body.client_message_id)
+                else:
+                    logger.warning("[AgentTurn] conversation_id=%s client_message_id=%s phase=outcome_unknown",
+                                   conversation_id, body.client_message_id)
                 raise HTTPException(status_code=503, detail="Lượt chat đang chờ đối soát; chưa thể xử lý lại an toàn")
+            logger.info("[AgentTurn] conversation_id=%s client_message_id=%s phase=claim",
+                        conversation_id, body.client_message_id)
             history = claim.get("history") or []
         else:
             memory = conversation_memory.load(conversation_id, body.session_id)
@@ -833,20 +848,52 @@ def agent_chat(body: AgentChatRequest, request: Request):
     if not history:
         history = [{"role": m.role, "content": m.content} for m in (body.history or [])]
     from src.common import cart_manager
-    pending_before = (cart_manager.get_pending_action(scoped_session_id) or {}).get("type")
-    result = run_agent(
-        session_id=scoped_session_id,
-        user_message=body.message,
-        history=history,
-        client_message_id=body.client_message_id,
-        selected_product_id=body.selected_product_id,
-    )
+    try:
+        pending_before = (cart_manager.get_pending_action(scoped_session_id) or {}).get("type")
+        result = run_agent(
+            session_id=scoped_session_id,
+            user_message=body.message,
+            history=history,
+            client_message_id=body.client_message_id,
+            selected_product_id=body.selected_product_id,
+        )
+    except Exception as exc:
+        logger.warning("[AgentTurn] conversation_id=%s client_message_id=%s phase=graph_failed error=%s",
+                       conversation_id, body.client_message_id, type(exc).__name__)
+        if body.client_message_id:
+            try:
+                durable = cart_manager.load_durable_processed_turn(scoped_session_id, body.client_message_id)
+                if durable and durable.get("message") == body.message and durable.get("selected_product_id") == body.selected_product_id:
+                    recovered = dict(durable["result"])
+                    conversation_memory.save_exchange(conversation_id=conversation_id, session_id=body.session_id,
+                        user_message=body.message, result=recovered, client_message_id=body.client_message_id,
+                        response_session_id=scoped_session_id, selected_product_id=body.selected_product_id)
+                    logger.info("[AgentTurn] conversation_id=%s client_message_id=%s phase=business_replay",
+                                conversation_id, body.client_message_id)
+                    return replay(recovered)
+                conversation_memory.mark_outcome_unknown(conversation_id, body.session_id,
+                    body.client_message_id, "graph_failed")
+                logger.warning("[AgentTurn] conversation_id=%s client_message_id=%s phase=outcome_unknown",
+                               conversation_id, body.client_message_id)
+            except Exception as recovery_exc:
+                logger.warning("[AgentTurn] conversation_id=%s client_message_id=%s phase=outcome_unknown_write_failed error=%s",
+                               conversation_id, body.client_message_id, type(recovery_exc).__name__)
+        raise HTTPException(status_code=503, detail="Lượt chat chưa xác định kết quả; cần đối soát trước khi thử lại")
     result["conversation_id"] = conversation_id
     prefs_after = cart_manager.get_checkout_prefs(scoped_session_id)
     pending_after = (cart_manager.get_pending_action(scoped_session_id) or {}).get("type")
     logger.debug("[AgentTurn] conversation_id=%s client_message_id=%s phase=processed cache_hit=false pending_before=%s pending_after=%s fulfillment=%s payment=%s result=%s",
                  conversation_id, body.client_message_id, pending_before, pending_after,
                  prefs_after.get("delivery_type"), prefs_after.get("payment_method"), result.get("error") or "ok")
+    if body.client_message_id:
+        try:
+            from src.agents.order_flow_graph import _sanitize_replay_result
+            record = {"message": body.message, "selected_product_id": body.selected_product_id,
+                      "result": _sanitize_replay_result(result)}
+            cart_manager.persist_processed_turn_durable(scoped_session_id, body.client_message_id, record)
+        except Exception as exc:
+            logger.warning("[AgentTurn] conversation_id=%s client_message_id=%s phase=durable_write_failed error=%s",
+                           conversation_id, body.client_message_id, type(exc).__name__)
     try:
         checkout_prefs = cart_manager.get_checkout_prefs(scoped_session_id)
         checkout_prefs.pop("processed_order_turns", None)
@@ -868,7 +915,16 @@ def agent_chat(body: AgentChatRequest, request: Request):
     except Exception as exc:
         logger.warning("[AgentTurn] conversation_id=%s client_message_id=%s phase=cache_save_failed error=%s",
                        conversation_id, body.client_message_id, type(exc).__name__)
+        if body.client_message_id:
+            try:
+                conversation_memory.mark_outcome_unknown(conversation_id, body.session_id,
+                    body.client_message_id, "completion_write_failed")
+            except Exception as mark_exc:
+                logger.warning("[AgentTurn] conversation_id=%s client_message_id=%s phase=outcome_unknown_write_failed error=%s",
+                               conversation_id, body.client_message_id, type(mark_exc).__name__)
         raise HTTPException(status_code=503, detail="Lượt chat đã xử lý nhưng chưa lưu được phản hồi; hãy thử lại cùng lượt")
+    logger.info("[AgentTurn] conversation_id=%s client_message_id=%s phase=completed",
+                conversation_id, body.client_message_id)
     return AgentChatResponse(
         reply=result.get("reply", ""),
         conversation_id=conversation_id,
@@ -902,7 +958,7 @@ def reset_agent_conversation(body: AgentConversationResetRequest, request: Reque
         "conversation_id": conversation_id,
         "cart_preserved": True,
         "cleared_draft_keys": [
-            "pending_products", "checkout_requested", "voucher_decided",
+            "pending_products", "pending_product_reference", "checkout_requested", "voucher_decided",
             "voucher_offer_pending", "voucher_candidates", "summary_fingerprint",
             "checkout_action_id", "branch_candidates", "suggested_address",
             "location_address", "stock_conflicts",

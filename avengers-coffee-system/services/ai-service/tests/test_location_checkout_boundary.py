@@ -128,7 +128,12 @@ def test_structural_address_parser_and_branch_number():
     assert parse_location("Cà phê muối ở Tân Phú có không?").kind == "none"
     assert parse_location("lấy tại quán và COD").kind == "none"
     assert complete_partial_delivery_address("42/3 Nguyễn Hữu Tiến, Thành phố Hồ Chí Minh", "nước số 9") is None
+    assert complete_partial_delivery_address("42/3 Nguyễn Hữu Tiến, Thành phố Hồ Chí Minh", "thêm bánh") is None
+    assert complete_partial_delivery_address("42/3 Nguyễn Hữu Tiến, Thành phố Hồ Chí Minh", "COD") is None
+    assert complete_partial_delivery_address("42/3 Nguyễn Hữu Tiến, Thành phố Hồ Chí Minh", "10") is None
     assert complete_partial_delivery_address("42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh", "Tân Phú") is None
+    assert parse_location("42/3 Nguyễn Hữu Tiến, Thành phố Hồ Chí Minh, Quận Tân Phú, Phường Tây Thạnh").value == (
+        "42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh, Quận Tân Phú, Thành phố Hồ Chí Minh")
 
 
 @pytest.mark.parametrize("partial,follow_up,expected", [
@@ -139,9 +144,15 @@ def test_structural_address_parser_and_branch_number():
     ("42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh", "Thành phố Hồ Chí Minh",
      "42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh, Thành phố Hồ Chí Minh"),
     ("42/3 Nguyễn Hữu Tiến, Thành phố Hồ Chí Minh", "Tây Thạnh",
-     "42/3 Nguyễn Hữu Tiến, Thành phố Hồ Chí Minh, Phường Tây Thạnh"),
+     "42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh, Thành phố Hồ Chí Minh"),
     ("42/3 Nguyễn Hữu Tiến, Thành phố Hồ Chí Minh", "Phường Tây Thạnh",
-     "42/3 Nguyễn Hữu Tiến, Thành phố Hồ Chí Minh, Phường Tây Thạnh"),
+     "42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh, Thành phố Hồ Chí Minh"),
+    ("42/3 Nguyễn Hữu Tiến, Thành phố Hồ Chí Minh", "tây thạnh",
+     "42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh, Thành phố Hồ Chí Minh"),
+    ("42/3 Nguyễn Hữu Tiến, Thành phố Hồ Chí Minh", "phường tây thạnh",
+     "42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh, Thành phố Hồ Chí Minh"),
+    ("42/3 Nguyễn Hữu Tiến, Quận Tân Phú, Thành phố Hồ Chí Minh", "tây thạnh",
+     "42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh, Quận Tân Phú, Thành phố Hồ Chí Minh"),
 ])
 def test_missing_single_delivery_field_accepts_short_follow_up(monkeypatch, partial, follow_up, expected):
     session = _session(monkeypatch, delivery_type="GIAO_TAN_NOI")

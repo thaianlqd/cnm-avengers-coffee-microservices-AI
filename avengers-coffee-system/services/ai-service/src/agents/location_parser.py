@@ -21,6 +21,19 @@ def canonical_address(value: str) -> str:
         if duplicate is None:
             break
         del parts[-duplicate:]
+    if len(parts) > 2:
+        def rank(part: str) -> int | None:
+            folded = normalize(part)
+            if re.match(r"^(?:phuong|xa|p\.)\s+", folded):
+                return 0
+            if re.match(r"^(?:quan|huyen|thi xa|q\.|h\.)\s+", folded):
+                return 1
+            if re.match(r"^(?:thanh pho|tinh|tp\.)\s+", folded):
+                return 2
+            return None
+        # Reorder only fully identified administrative components.
+        if all(rank(part) is not None for part in parts[1:]):
+            parts = parts[:1] + sorted(parts[1:], key=rank)
     return ", ".join(parts)
 
 
@@ -152,11 +165,18 @@ def complete_partial_delivery_address(partial: str, fragment: str) -> Location |
         elif not re.match(r"^(?:thành phố|tỉnh|tp\.?)\s+\S+", value, re.IGNORECASE):
             return None
     elif previous.missing[0] == "phường/xã":
-        if not re.match(r"^(?:phường|xã|p\.)\s+\S+", value, re.IGNORECASE):
-            # A short proper locality name can answer a ward-only question.
-            if not re.fullmatch(r"[A-ZĐÀ-Ỹ][\wÀ-ỹ-]*(?:\s+[A-ZĐÀ-Ỹ][\wÀ-ỹ-]*){1,2}", value):
+        explicit = re.match(r"^(phường|xã|p\.)\s+(.+)$", value, re.IGNORECASE)
+        if explicit:
+            locality = explicit.group(2)
+            value = ("Xã" if normalize(explicit.group(1)) == "xa" else "Phường") + " " + locality.title()
+        else:
+            # A short locality name can answer a ward-only question; shopping
+            # commands and bare numeric wards remain ambiguous.
+            if not re.fullmatch(r"[^\W\d_]+(?:[-\s]+[^\W\d_]+){1,2}", value, re.UNICODE):
                 return None
-            value = "Phường " + value
+            if set(folded.split()) & {"banh", "nuoc", "them", "lay", "mua", "can", "bo", "thoi", "giao", "cod", "size", "so", "thu", "doi", "sang", "khong"}:
+                return None
+            value = "Phường " + value.title()
     else:
         return None
     result = parse_location(f"{previous.value}, {value}")

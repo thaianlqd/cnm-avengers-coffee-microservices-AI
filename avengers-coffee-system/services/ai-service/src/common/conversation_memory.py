@@ -15,6 +15,9 @@ from src.function_calling.helpers import _get_engine
 _INIT_LOCK = threading.Lock()
 _INITIALIZED = False
 IN_PROGRESS = "in_progress"
+OUTCOME_UNKNOWN = "outcome_unknown"
+UNRESOLVED_STATUSES = {IN_PROGRESS, OUTCOME_UNKNOWN}
+STALE_CLAIM_SECONDS = 30.0
 
 
 def _schema() -> str:
@@ -92,7 +95,7 @@ def get_cached_response(conversation_id: str, session_id: str, client_message_id
         return None
     record = load(conversation_id, session_id)
     cached = record["processed_responses"].get(str(client_message_id))
-    return dict(cached) if isinstance(cached, dict) and cached.get("_turn_status") != IN_PROGRESS else None
+    return dict(cached) if isinstance(cached, dict) and cached.get("_turn_status") not in UNRESOLVED_STATUSES else None
 
 
 def claim_turn(conversation_id: str, session_id: str, client_message_id: str,
@@ -118,7 +121,7 @@ def claim_turn(conversation_id: str, session_id: str, client_message_id: str,
             if (previous.get("_request_message") != message or
                     previous.get("_selected_product_id") != selected_product_id):
                 return {"status": "conflict"}
-            return {"status": IN_PROGRESS if previous.get("_turn_status") == IN_PROGRESS else "completed",
+            return {"status": previous.get("_turn_status") if previous.get("_turn_status") in UNRESOLVED_STATUSES else "completed",
                     "response": dict(previous)}
         responses[str(client_message_id)] = {
             "_turn_status": IN_PROGRESS, "_request_message": message,
@@ -131,6 +134,34 @@ def claim_turn(conversation_id: str, session_id: str, client_message_id: str,
         '''), {"conversation_id": conversation_id,
                "responses": json.dumps(responses, ensure_ascii=False)})
         return {"status": "claimed", "history": list(row["messages"] or [])}
+
+
+def mark_outcome_unknown(conversation_id: str, session_id: str, client_message_id: str,
+                         phase: str) -> bool:
+    """Record a failed or stale claimed turn without releasing its identity."""
+    _ensure_table()
+    schema = _schema()
+    with _get_engine().begin() as conn:
+        row = conn.execute(text(f'''
+            SELECT session_id, processed_responses FROM "{schema}".chat_ai_conversation
+            WHERE conversation_id = :conversation_id FOR UPDATE
+        '''), {"conversation_id": conversation_id}).mappings().first()
+        if not row or str(row["session_id"]) != str(session_id):
+            raise PermissionError("Conversation does not belong to this session")
+        responses = dict(row["processed_responses"] or {})
+        previous = responses.get(str(client_message_id))
+        if not isinstance(previous, dict) or previous.get("_turn_status") not in UNRESOLVED_STATUSES:
+            return False
+        responses[str(client_message_id)] = {**previous, "_turn_status": OUTCOME_UNKNOWN,
+                                             "_failed_at": previous.get("_failed_at") or time.time(),
+                                             "_failure_phase": previous.get("_failure_phase") or phase}
+        conn.execute(text(f'''
+            UPDATE "{schema}".chat_ai_conversation
+            SET processed_responses = CAST(:responses AS jsonb), updated_at = NOW()
+            WHERE conversation_id = :conversation_id
+        '''), {"conversation_id": conversation_id,
+               "responses": json.dumps(responses, ensure_ascii=False)})
+        return True
 
 
 def save_exchange(
@@ -164,7 +195,7 @@ def save_exchange(
         responses = dict(row["processed_responses"] or {}) if row else {}
         if client_message_id:
             previous = responses.get(str(client_message_id))
-            if previous and previous.get("_turn_status") != IN_PROGRESS:
+            if previous and previous.get("_turn_status") not in UNRESOLVED_STATUSES:
                 if (previous.get("_request_message") != user_message or
                         previous.get("_selected_product_id") != selected_product_id):
                     raise ValueError("client_message_id_conflict")
@@ -173,13 +204,17 @@ def save_exchange(
             cached_result["_response_session_id"] = response_session_id or session_id
             cached_result["_request_message"] = user_message
             cached_result["_selected_product_id"] = selected_product_id
+            cached_result["_completed_at"] = time.time()
             responses[str(client_message_id)] = cached_result
             if len(responses) > 50:
-                for key in list(responses):
-                    if len(responses) <= 50:
-                        break
-                    if key != str(client_message_id) and responses[key].get("_turn_status") != IN_PROGRESS:
-                        responses.pop(key, None)
+                completed = sorted(
+                    (key for key, value in responses.items()
+                     if key != str(client_message_id) and isinstance(value, dict)
+                     and value.get("_turn_status") not in UNRESOLVED_STATUSES),
+                    key=lambda key: (float(responses[key].get("_completed_at") or responses[key].get("_claimed_at") or 0), key),
+                )
+                for key in completed[:max(0, len(responses) - 50)]:
+                    responses.pop(key, None)
         params = {
             "conversation_id": conversation_id,
             "session_id": session_id,
