@@ -359,15 +359,34 @@ def replace_items_from_order_cart(
             }
         if previous_fingerprint != next_fingerprint:
             # A server cart change invalidates every decision derived from the
-            # old lines.  Do not leave a stale voucher/branch/confirmation
-            # draft that could be submitted against a different cart.
+            # old lines. Conversational input collection is different: an
+            # in-flight option/add operation still owns its stable operation
+            # id and must survive until replay proves its outcome.
+            active_pending = prefs.get("pending_action") or {}
+            pending_products = list(prefs.get("pending_products") or [])
+            preserve_fill_options = bool(
+                pending_products and active_pending.get("type") == "fill_options"
+            )
             for key in (
-                "summary_fingerprint", "checkout_action_id", "pending_action",
+                "summary_fingerprint", "checkout_action_id", "summary_amounts",
+                "checkout_action_expires_at",
                 "branch_candidates", "stock_conflicts", "voucher_decided",
                 "voucher_offer_pending", "voucher_candidates",
                 "discount_amount", "flow_stage",
             ):
                 prefs.pop(key, None)
+            if preserve_fill_options:
+                prefs["pending_action"] = active_pending
+            elif pending_products and not active_pending:
+                # Repair the only safe owner for staged products. A conflicting
+                # live pending action is handled by its own state transition.
+                prefs["pending_action"] = {
+                    "type": "fill_options",
+                    "params": {"count": len(pending_products)},
+                    "expires_at": time.time() + 300,
+                }
+            else:
+                prefs.pop("pending_action", None)
             if prefs.get("voucher_code"):
                 prefs["voucher_revalidation_required"] = True
             prefs.pop("checkout_requested", None)

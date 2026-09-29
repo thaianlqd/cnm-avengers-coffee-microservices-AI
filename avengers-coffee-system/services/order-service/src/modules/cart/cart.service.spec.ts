@@ -143,6 +143,7 @@ describe('CartService idempotent cart mutations', () => {
       rows,
       manager,
       events,
+      query,
     };
   };
 
@@ -171,12 +172,30 @@ describe('CartService idempotent cart mutations', () => {
       cart_id: 'user:customer-1',
       cart_version: 1,
       already_processed: false,
+      operation_id: 'conversation:add:0',
+      items: expect.any(Array),
     });
     expect(retry).toMatchObject({
       cart_id: 'user:customer-1',
       cart_version: 1,
       already_processed: true,
+      operation_id: 'conversation:add:0',
+      items: expect.any(Array),
     });
+  });
+
+  it('initializes cart mutation schema once per service lifecycle', async () => {
+    const { service, query } = createMetadataAwareService();
+    (service as any).themVaoGiỏNoIdempotency = jest.fn(async () => ({ id: 701 }));
+    const dto = { ma_nguoi_dung: 'schema-once', ma_san_pham: 120, so_luong: 1 };
+
+    await service.themVaoGiỏ(dto, 'schema-operation-1');
+    await service.themVaoGiỏ(dto, 'schema-operation-2');
+
+    const ddl = query.mock.calls.map(([sql]) => String(sql)).filter((sql) =>
+      sql.includes('CREATE TABLE IF NOT EXISTS') || sql.includes('ALTER TABLE'));
+    expect(ddl.filter((sql) => sql.includes('cart_mutation_operation'))).toHaveLength(2);
+    expect(ddl.filter((sql) => sql.includes('cart_metadata'))).toHaveLength(1);
   });
 
   it('rejects negative ADD quantity without changing cart rows or cart_version', async () => {
@@ -261,9 +280,10 @@ describe('CartService idempotent cart mutations', () => {
 
   it('rejects reusing an operation id for a different cart payload', async () => {
     const { service } = createMetadataAwareService();
-    (service as any).themVaoGiỏNoIdempotency = jest.fn(async () => ({
+    const write = jest.fn(async () => ({
       id: 701,
     }));
+    (service as any).themVaoGiỏNoIdempotency = write;
 
     await service.themVaoGiỏ(
       { ma_nguoi_dung: 'customer-1', ma_san_pham: 120, so_luong: 1 },
@@ -274,7 +294,11 @@ describe('CartService idempotent cart mutations', () => {
         { ma_nguoi_dung: 'customer-1', ma_san_pham: 120, so_luong: 2 },
         'same-key',
       ),
-    ).rejects.toBeInstanceOf(ConflictException);
+    ).rejects.toMatchObject({
+      constructor: ConflictException,
+      response: expect.objectContaining({ code: 'CART_MUTATION_IDEMPOTENCY_CONFLICT' }),
+    });
+    expect(write).toHaveBeenCalledTimes(1);
   });
 
   it('returns a versioned canonical envelope and does not increment on reads', async () => {

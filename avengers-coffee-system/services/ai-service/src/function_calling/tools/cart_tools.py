@@ -1,7 +1,10 @@
 from contextlib import contextmanager
 from contextvars import ContextVar
 import hashlib
+import logging
 import threading
+import time
+import uuid
 import requests
 from typing import Any, Dict, Iterator, List, Optional
 from src.common import cart_manager
@@ -129,6 +132,94 @@ def _mirror_mutation_envelope(session_id: str, payload: Any, user_id: str) -> Op
         session_id, list(payload.get("items") or []), cart_id=str(payload["cart_id"]),
         cart_version=int(payload["cart_version"]), user_id=str(payload.get("user_id") or user_id),
     )
+
+
+def _post_add_cart_with_reconciliation(
+    url: str,
+    fallback_url: str,
+    payload: Dict[str, Any],
+    headers: Dict[str, str],
+    operation_id: str,
+) -> Dict[str, Any]:
+    """POST once and allow one replay with the exact same operation identity."""
+    logger = logging.getLogger(__name__)
+    started = time.perf_counter()
+    endpoint = url
+    uncertain = False
+    last_error: Optional[BaseException] = None
+    for attempt in range(2):
+        try:
+            response = requests.post(endpoint, json=payload, headers=headers, timeout=5)
+            status_code = int(getattr(response, "status_code", 200) or 200)
+            if status_code >= 400:
+                body = {}
+                try:
+                    body = response.json()
+                except Exception:
+                    pass
+                code = body.get("code") if isinstance(body, dict) else None
+                message = body.get("message") if isinstance(body, dict) else None
+                elapsed = int((time.perf_counter() - started) * 1000)
+                if status_code >= 500 or code == "CART_MUTATION_IN_PROGRESS":
+                    logger.warning("[CartMutation] type=ADD_CART_LINE operation_id=%s elapsed_ms=%d http_status=%d status=outcome_unknown",
+                                   operation_id, elapsed, status_code)
+                    return {"status": "outcome_unknown", "operation_id": operation_id,
+                            "mutation_type": "ADD_CART_LINE", "code": code,
+                            "message": "Mình chưa xác nhận được kết quả cập nhật giỏ hàng. Mình đang giữ yêu cầu này và sẽ đối soát trước khi thêm lần nữa."}
+                logger.info("[CartMutation] type=ADD_CART_LINE operation_id=%s elapsed_ms=%d http_status=%d status=known_failure",
+                            operation_id, elapsed, status_code)
+                return {"status": "known_failure", "operation_id": operation_id,
+                        "mutation_type": "ADD_CART_LINE", "code": code,
+                        "message": str(message or "Order Service từ chối cập nhật giỏ hàng.")}
+            uncertain = True
+            result = response.json()
+            uncertain = False
+            elapsed = int((time.perf_counter() - started) * 1000)
+            logger.info("[CartMutation] type=ADD_CART_LINE operation_id=%s elapsed_ms=%d http_status=%d status=%s",
+                        operation_id, elapsed, status_code,
+                        "replayed" if isinstance(result, dict) and result.get("already_processed") else "ok")
+            return {"status": "ok", "result": result, "operation_id": operation_id}
+        except requests.exceptions.ConnectTimeout as exc:
+            elapsed = int((time.perf_counter() - started) * 1000)
+            logger.warning("[CartMutation] type=ADD_CART_LINE operation_id=%s elapsed_ms=%d status=unavailable error=ConnectTimeout",
+                           operation_id, elapsed)
+            return {"status": "unavailable", "operation_id": operation_id,
+                    "mutation_type": "ADD_CART_LINE",
+                    "message": "Chưa kết nối được Order Service nên yêu cầu thêm món chưa được gửi. Mình vẫn giữ món và tùy chọn để bạn tiếp tục."}
+        except requests.exceptions.ReadTimeout as exc:
+            uncertain = True
+            last_error = exc
+            # A read timeout happens after the request may have reached the
+            # server. Replay exactly once against the same endpoint/key.
+            continue
+        except requests.exceptions.ConnectionError as exc:
+            uncertain = True
+            last_error = exc
+            # A reset can happen after a commit. The compatibility endpoint is
+            # safe because it receives the same idempotency key and payload.
+            endpoint = fallback_url
+            continue
+        except requests.exceptions.HTTPError as exc:
+            last_error = exc
+            break
+        except Exception as exc:
+            last_error = exc
+            break
+
+    elapsed = int((time.perf_counter() - started) * 1000)
+    status = "outcome_unknown" if uncertain else "unavailable"
+    logger.warning("[CartMutation] type=ADD_CART_LINE operation_id=%s elapsed_ms=%d status=%s error=%s",
+                   operation_id, elapsed, status, type(last_error).__name__ if last_error else "Unknown")
+    return {
+        "status": status,
+        "operation_id": operation_id,
+        "mutation_type": "ADD_CART_LINE",
+        "message": (
+            "Mình chưa xác nhận được kết quả cập nhật giỏ hàng. Mình đang giữ yêu cầu thêm món và sẽ kiểm tra lại trước khi thực hiện thêm lần nữa."
+            if uncertain else
+            "Chưa thể kết nối Order Service. Mình vẫn giữ món và tùy chọn để bạn tiếp tục."
+        ),
+    }
 
 
 def sync_authoritative_cart(session_id: str) -> Dict[str, Any]:
@@ -414,7 +505,7 @@ def execute_add_to_cart(
     server_row = None
     resolved_operation_id = _operation_id_for_current_turn(
         session_id, "add_cart_line", operation_id,
-    )
+    ) or f"ai:{uuid.uuid4().hex}:add_cart_line:0"
     if valid_uid:
         try:
             token = _get_service_jwt(valid_uid)
@@ -442,27 +533,14 @@ def execute_add_to_cart(
                 },
             }
             headers = {"Authorization": f"Bearer {token}"}
-            if resolved_operation_id:
-                headers["X-Idempotency-Key"] = resolved_operation_id
-            try:
-                res = requests.post(
-                    f"{order_service_url}/cart", 
-                    json=payload, 
-                    headers=headers,
-                    timeout=5
-                )
-                res.raise_for_status()
-            except requests.exceptions.ConnectionError:
-                # Fallback to host.docker.internal if order-service runs on host
-                fallback_url = "http://host.docker.internal:3005"
-                res = requests.post(
-                    f"{fallback_url}/cart", 
-                    json=payload, 
-                    headers=headers,
-                    timeout=5
-                )
-                res.raise_for_status()
-            mutation_result = res.json()
+            headers["X-Idempotency-Key"] = resolved_operation_id
+            posted = _post_add_cart_with_reconciliation(
+                f"{order_service_url}/cart", "http://host.docker.internal:3005/cart",
+                payload, headers, resolved_operation_id,
+            )
+            if posted.get("status") != "ok":
+                return posted
+            mutation_result = posted["result"]
             server_row = (
                 mutation_result.get("persisted_line")
                 if isinstance(mutation_result, dict)
@@ -471,8 +549,10 @@ def execute_add_to_cart(
         except Exception as e:
             logging.getLogger(__name__).error(f"[CartSync] Failed to sync add_to_cart to main service: {e}")
             return {
-                "status": "error",
-                "message": "Chưa thể đồng bộ giỏ hàng. Món chưa được xác nhận là đã thêm; vui lòng thử lại.",
+                "status": "unavailable",
+                "operation_id": resolved_operation_id,
+                "mutation_type": "ADD_CART_LINE",
+                "message": "Chưa thể chuẩn bị cập nhật giỏ hàng. Mình vẫn giữ món và tùy chọn để bạn tiếp tục.",
             }
         # The mutation response already contains the committed cart/version.
         # A follow-up GET is only a compatibility fallback for older servers.
@@ -517,6 +597,7 @@ def execute_add_to_cart(
         "persisted_line": server_row,
         "cart_version": (cart or {}).get("cart_version"),
         "operation_id": resolved_operation_id,
+        "already_processed": bool(isinstance(mutation_result, dict) and mutation_result.get("already_processed")) if valid_uid else False,
         "cart": cart,
     }
 
