@@ -810,9 +810,17 @@ def _prepare_structured_products(
         logs.append({"tool": "get_product_options",
                      "args": {"product_id": str(ref["product_id"]), "product_name": product_name},
                      "result": option_result})
-        if option_result.get("status") != "ok" or (
-            option_result.get("product_id") and str(option_result["product_id"]) != str(ref["product_id"])
-        ):
+        if option_result.get("status") != "ok":
+            if option_result.get("status") != "not_found":
+                _focus_product(session_id, ref)
+                return {
+                    "reply": "Mình đã xác định đúng món nhưng hiện chưa lấy được tùy chọn của món này. Giỏ chưa thay đổi. Bạn có thể thử lại.",
+                    "checkout_payload": None, "tool_calls_log": logs,
+                    "error": "option_metadata_unavailable",
+                }
+            return {"reply": "Mình chưa xác minh được tùy chọn của món đã chọn. Giỏ hàng chưa thay đổi; bạn chọn lại món nhé.",
+                    "checkout_payload": None, "tool_calls_log": logs, "error": "product_reference_unresolved"}
+        if option_result.get("product_id") and str(option_result["product_id"]) != str(ref["product_id"]):
             return {"reply": "Mình chưa xác minh được tùy chọn của món đã chọn. Giỏ hàng chưa thay đổi; bạn chọn lại món nhé.",
                     "checkout_payload": None, "tool_calls_log": logs, "error": "product_reference_unresolved"}
         groups = _parse_option_groups(option_result) if option_result.get("status") == "ok" else {}
@@ -1077,9 +1085,21 @@ def _offer_voucher_gate(session_id: str, lead: str = "Mình đã ghi nhận gi�
 def _resolve_cart_option_update(item: Dict[str, Any], message: str) -> tuple[Dict[str, Any], Dict[str, Any]]:
     """Validate requested option values and build an absolute cart-row state."""
     from src.agents.agent_service import _parse_option_groups
-    from src.function_calling.tools.product_tools import execute_get_product_options
+    from src.function_calling.tools.product_tools import CanonicalProductOptionRef, execute_get_product_options
 
-    option_result = execute_get_product_options(str(item.get("product_name") or ""))
+    product_name = str(item.get("product_name") or "")
+    product_id = str(item.get("product_id") or "").strip()
+    if product_id:
+        option_result = execute_get_product_options(CanonicalProductOptionRef(product_name, product_id))
+    else:
+        option_result = execute_get_product_options(product_name)
+    if (option_result.get("status") == "ok" and product_id
+            and option_result.get("product_id")
+            and str(option_result["product_id"]) != product_id):
+        return {}, {**option_result, "identity_error": {
+            "expected_product_id": product_id,
+            "actual_product_id": str(option_result["product_id"]),
+        }}
     groups = _parse_option_groups(option_result) if option_result.get("status") == "ok" else {}
     text = _norm(message)
     changes: Dict[str, Any] = {}
@@ -1172,6 +1192,13 @@ def _resolve_cart_option_update(item: Dict[str, Any], message: str) -> tuple[Dic
 
 
 def _option_validation_reply(item: Dict[str, Any], option_result: Dict[str, Any]) -> Optional[str]:
+    if option_result.get("identity_error"):
+        return (f"Mình chưa xác minh được tùy chọn đúng cho {item.get('product_name')}. "
+                "Giỏ hàng chưa thay đổi. Bạn có thể thử lại.")
+    if option_result.get("status") not in {None, "ok", "not_found"}:
+        return (f"Bạn muốn đổi gì cho {item.get('product_name')}? "
+                f"Mình đã xác định đúng món nhưng hiện chưa lấy được tùy chọn. "
+                "Giỏ hàng chưa thay đổi. Bạn có thể thử lại.")
     error = option_result.get("validation_error") or {}
     if not error:
         return None
@@ -2068,6 +2095,14 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
     )
     session_id, message, cart, intent = state["session_id"], state["user_message"], state["cart"], state["intent"]
     kind = intent.get("intent")
+    if kind in {"ADD_ITEM", "PRODUCT_REFERENCE_PARTIAL", "SET_QUANTITY"}:
+        from src.agents.option_state import quantity_request_error
+        invalid_quantity = quantity_request_error(message)
+        if invalid_quantity:
+            return {**state, "result": {
+                "reply": invalid_quantity + " Giỏ hàng chưa thay đổi.",
+                "checkout_payload": None, "tool_calls_log": [], "error": None,
+            }}
     if kind in {"SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS", "ADD_ITEM"}:
         logger.debug("routing route=%s operation=%s target_source=%s", kind, kind,
                      intent.get("target_source") or "resolver")
@@ -2240,7 +2275,13 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
                 "checkout_payload": None, "tool_calls_log": [], "error": None}}
         logs: List[Dict[str, Any]] = []
         if operation == "SET_QUANTITY":
-            changed = execute_update_cart_item(session_id, line_id, {"quantity": int(resolved.get("requested_value") or 1)})
+            requested_quantity = int(resolved.get("requested_value") or 0)
+            if requested_quantity <= 0:
+                return {**state, "result": {
+                    "reply": "Số lượng phải lớn hơn 0. Nếu bạn muốn bỏ món, hãy nói xóa/bỏ món. Giỏ hàng chưa thay đổi.",
+                    "checkout_payload": None, "tool_calls_log": [], "error": None,
+                }}
+            changed = execute_update_cart_item(session_id, line_id, {"quantity": requested_quantity})
             logs.append({"tool": "update_cart_item", "result": changed})
             lead = "Đã cập nhật số lượng. Giỏ hàng mới:"
         elif operation == "REMOVE":

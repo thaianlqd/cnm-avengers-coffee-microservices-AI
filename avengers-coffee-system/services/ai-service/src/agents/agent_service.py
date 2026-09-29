@@ -1062,11 +1062,17 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
         cart_manager.clear_pending_action(session_id)
         return {"reply": "Mình cần bạn chọn lại món từ menu để xác minh đúng sản phẩm trước khi thêm vào giỏ.",
                 "checkout_payload": None, "tool_calls_log": [], "error": None}
-    from src.agents.option_state import pending_product_quantity
+    from src.agents.option_state import pending_product_quantity, quantity_request_error
     resolved_quantity, quantity_ambiguous = pending_product_quantity(message, len(pending))
     if quantity_ambiguous:
         return {
             "reply": "Mình đang giữ nhiều món. Bạn cho biết món nào lấy số lượng này, hoặc nói ‘mỗi món’ nhé.",
+            "checkout_payload": None, "tool_calls_log": [], "error": None,
+        }
+    invalid_quantity = quantity_request_error(message)
+    if invalid_quantity:
+        return {
+            "reply": invalid_quantity + " Mình vẫn giữ các lựa chọn đang chờ.",
             "checkout_payload": None, "tool_calls_log": [], "error": None,
         }
     if resolved_quantity is not None:
@@ -1094,7 +1100,10 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
 
     from src.function_calling.tools.product_tools import execute_check_price_and_stock
     from src.function_calling.tools.cart_tools import execute_add_to_cart
-    from src.agents.option_state import option_field, option_schema_from_result, resolve_option_default
+    from src.agents.option_state import (
+        option_field, option_schema_from_result, resolve_option_default,
+        validate_explicit_multi_value_group,
+    )
 
     logs: List[Dict[str, Any]] = []
     not_ready: List[str] = []
@@ -1137,6 +1146,19 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
                 "loai_sua": r"\b(loai sua|milk)\b",
             }[field]
             invalid_group = bool(not reconciliation_only and re.search(explicit_group, normalized) and not matches and not cleared_toppings)
+            complete_validation = (
+                None if reconciliation_only or cleared_toppings
+                else validate_explicit_multi_value_group(message, group)
+            )
+            if complete_validation and complete_validation["invalid_values"]:
+                invalid = ", ".join(complete_validation["invalid_values"])
+                allowed = ", ".join(complete_validation["allowed_values"])
+                invalid_requested.append(
+                    f"{name}: {invalid} không áp dụng; lựa chọn hợp lệ: {allowed}"
+                )
+                # Reject the whole requested group. Independent valid fields
+                # from this turn are still collected below/above.
+                continue
             if invalid_group:
                 invalid_requested.append(f"{name} ({', '.join(values)})")
             if cleared_toppings:

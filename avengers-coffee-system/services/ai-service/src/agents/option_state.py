@@ -94,22 +94,80 @@ def mentions_pending_option_value(message: str, pending: List[Dict[str, Any]]) -
                     return True
     return False
 
+
+def validate_explicit_multi_value_group(message: str, group: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Validate the complete explicit value list for a multi-select group.
+
+    Matching only known values is insufficient for a request such as
+    ``Hạt Sen và Foam Dừa``: retaining Hạt Sen while dropping Foam Dừa would
+    turn one customer request into a different cart mutation.
+    """
+    if not group.get("multiple") or option_field(group.get("name", "")) != "toppings":
+        return None
+    clause = re.search(
+        r"\b(?:topping|toping|đồ\s+kèm|do\s+kem)\b(?P<values>[^,;.]*)",
+        message,
+        flags=re.IGNORECASE,
+    )
+    if not clause or re.search(r"\b(?:không|khong)\s+(?:topping|toping)|\b(?:bỏ|bo)\s+(?:topping|toping)\b",
+                               message, flags=re.IGNORECASE):
+        return None
+    requested = re.sub(
+        r"^\s*(?:(?:là|la|thành|thanh|gồm|gom|chọn|chon)\s+)", "",
+        clause.group("values"), flags=re.IGNORECASE,
+    )
+    requested = re.sub(
+        r"\s+(?:(?:theo\s+mặc\s+định|theo\s+mac\s+dinh)|nhé|nhe|ạ|a|đi|di|bạn|ban|b|thôi|thoi)\s*$",
+        "", requested, flags=re.IGNORECASE,
+    ).strip()
+    if not requested:
+        return None
+    candidates = [part.strip() for part in re.split(
+        r"\s+(?:và|va|với|voi)\s+", requested, flags=re.IGNORECASE,
+    ) if part.strip()]
+    allowed_by_key = {_norm(value): value for value in group.get("values") or []}
+    valid = [allowed_by_key[_norm(value)] for value in candidates if _norm(value) in allowed_by_key]
+    invalid = [value for value in candidates if _norm(value) not in allowed_by_key]
+    return {
+        "field": str(group.get("name") or "Topping"),
+        "requested_values": candidates,
+        "valid_values": list(dict.fromkeys(valid)),
+        "invalid_values": invalid,
+        "allowed_values": list(group.get("values") or []),
+    }
+
 def pending_product_quantity(message: str, pending_count: int) -> Tuple[Optional[int], bool]:
     """Extract quantity only inside the pending-product namespace.
 
     Returns ``(quantity, ambiguous)``. Unit-bearing quantities cannot be
     confused with product/branch/voucher ordinals or street numbers.
     """
-    from src.agents.tier1 import normalize_confirmation_text
-
-    text = normalize_confirmation_text(message)
+    # Keep a leading minus sign. The generic confirmation normalizer removes
+    # punctuation and would turn ``-2 ly`` into a positive quantity.
+    text = _norm(message)
     match = (
-        re.search(r"\b(?:so luong|sl)\s*(?:la)?\s*(\d+)\b", text)
-        or re.search(r"\b(?:lay|cho(?: toi)?)\s+(\d+)\s*(?:cai|ly|phan)\b", text)
-        or re.search(r"\b(\d+)\s*(?:cai|ly|phan)\b", text)
+        re.search(r"\b(?:so luong|sl)\s*(?:la)?\s*(-?\d+)\b", text)
+        or re.search(r"\b(?:lay|cho(?: toi)?)\s+(-?\d+)\s*(?:cai|ly|phan)\b", text)
+        or re.search(r"(?<!\w)(-?\d+)\s*(?:cai|ly|phan)\b", text)
     )
     if not match:
         return None, False
-    quantity = max(1, int(match.group(1)))
+    quantity = int(match.group(1))
     applies_to_all = bool(re.search(r"\b(?:moi mon|moi loai|tat ca)\b", text))
     return quantity, pending_count > 1 and not applies_to_all
+
+
+def quantity_request_error(message: str) -> Optional[str]:
+    """Return a customer-facing error for an explicit invalid quantity."""
+    quantity, _ambiguous = pending_product_quantity(message, 1)
+    text = _norm(message)
+    explicit_quantity = bool(re.search(r"\b(?:so luong|sl)\b", text))
+    # Cart edits often place the target name between “số lượng” and the new
+    # number ("số lượng Matcha ... về 2"). In that form, the last number is
+    # the requested quantity; earlier numbers may belong to the product name.
+    if quantity is None and explicit_quantity:
+        numbers = re.findall(r"(?<!\w)-?\d+", text)
+        quantity = int(numbers[-1]) if numbers else None
+    if (quantity is not None and quantity <= 0) or (explicit_quantity and quantity is None):
+        return "Số lượng phải lớn hơn 0. Nếu bạn muốn bỏ món, hãy nói xóa/bỏ món."
+    return None
