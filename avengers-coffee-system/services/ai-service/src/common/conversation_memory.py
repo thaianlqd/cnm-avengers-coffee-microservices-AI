@@ -3,6 +3,7 @@
 import json
 import os
 import threading
+import time
 import uuid
 from typing import Any, Dict, List, Optional
 
@@ -13,6 +14,7 @@ from src.function_calling.helpers import _get_engine
 
 _INIT_LOCK = threading.Lock()
 _INITIALIZED = False
+IN_PROGRESS = "in_progress"
 
 
 def _schema() -> str:
@@ -90,7 +92,45 @@ def get_cached_response(conversation_id: str, session_id: str, client_message_id
         return None
     record = load(conversation_id, session_id)
     cached = record["processed_responses"].get(str(client_message_id))
-    return dict(cached) if isinstance(cached, dict) else None
+    return dict(cached) if isinstance(cached, dict) and cached.get("_turn_status") != IN_PROGRESS else None
+
+
+def claim_turn(conversation_id: str, session_id: str, client_message_id: str,
+               message: str, selected_product_id: Optional[str]) -> Dict[str, Any]:
+    """Atomically reserve one logical turn in the existing conversation row."""
+    _ensure_table()
+    schema = _schema()
+    with _get_engine().begin() as conn:
+        conn.execute(text(f'''
+            INSERT INTO "{schema}".chat_ai_conversation (conversation_id, session_id)
+            VALUES (:conversation_id, :session_id) ON CONFLICT (conversation_id) DO NOTHING
+        '''), {"conversation_id": conversation_id, "session_id": session_id})
+        row = conn.execute(text(f'''
+            SELECT session_id, messages, state, processed_responses
+            FROM "{schema}".chat_ai_conversation
+            WHERE conversation_id = :conversation_id FOR UPDATE
+        '''), {"conversation_id": conversation_id}).mappings().first()
+        if str(row["session_id"]) != str(session_id):
+            raise PermissionError("Conversation does not belong to this session")
+        responses = dict(row["processed_responses"] or {})
+        previous = responses.get(str(client_message_id))
+        if previous:
+            if (previous.get("_request_message") != message or
+                    previous.get("_selected_product_id") != selected_product_id):
+                return {"status": "conflict"}
+            return {"status": IN_PROGRESS if previous.get("_turn_status") == IN_PROGRESS else "completed",
+                    "response": dict(previous)}
+        responses[str(client_message_id)] = {
+            "_turn_status": IN_PROGRESS, "_request_message": message,
+            "_selected_product_id": selected_product_id, "_claimed_at": time.time(),
+        }
+        conn.execute(text(f'''
+            UPDATE "{schema}".chat_ai_conversation
+            SET processed_responses = CAST(:responses AS jsonb), updated_at = NOW()
+            WHERE conversation_id = :conversation_id
+        '''), {"conversation_id": conversation_id,
+               "responses": json.dumps(responses, ensure_ascii=False)})
+        return {"status": "claimed", "history": list(row["messages"] or [])}
 
 
 def save_exchange(
@@ -108,7 +148,7 @@ def save_exchange(
     engine = _get_engine()
     with engine.begin() as conn:
         row = conn.execute(text(f'''
-            SELECT session_id, messages, processed_responses
+            SELECT session_id, messages, state, processed_responses
             FROM "{schema}".chat_ai_conversation
             WHERE conversation_id = :conversation_id
             FOR UPDATE
@@ -123,19 +163,28 @@ def save_exchange(
         messages = messages[-100:]
         responses = dict(row["processed_responses"] or {}) if row else {}
         if client_message_id:
+            previous = responses.get(str(client_message_id))
+            if previous and previous.get("_turn_status") != IN_PROGRESS:
+                if (previous.get("_request_message") != user_message or
+                        previous.get("_selected_product_id") != selected_product_id):
+                    raise ValueError("client_message_id_conflict")
+                return  # A competing recovery already committed this exchange.
             cached_result = dict(result)
             cached_result["_response_session_id"] = response_session_id or session_id
             cached_result["_request_message"] = user_message
             cached_result["_selected_product_id"] = selected_product_id
             responses[str(client_message_id)] = cached_result
             if len(responses) > 50:
-                for key in list(responses)[:-50]:
-                    responses.pop(key, None)
+                for key in list(responses):
+                    if len(responses) <= 50:
+                        break
+                    if key != str(client_message_id) and responses[key].get("_turn_status") != IN_PROGRESS:
+                        responses.pop(key, None)
         params = {
             "conversation_id": conversation_id,
             "session_id": session_id,
             "messages": json.dumps(messages, ensure_ascii=False),
-            "state": json.dumps(state or {}, ensure_ascii=False, default=str),
+            "state": json.dumps(state if state is not None else dict(row["state"] or {}) if row else {}, ensure_ascii=False, default=str),
             "responses": json.dumps(responses, ensure_ascii=False, default=str),
         }
         conn.execute(text(f'''

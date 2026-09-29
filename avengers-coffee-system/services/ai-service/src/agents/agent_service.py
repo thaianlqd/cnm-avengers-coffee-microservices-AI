@@ -85,7 +85,7 @@ QUY TẮC BẮT BUỘC:
     - Trong tóm tắt đơn, luôn hiển thị: tổng gốc, số giảm (nếu có) và tổng thanh toán cuối cùng.
     - TUYỆT ĐỐI KHÔNG tự bịa ra mã giảm giá hay số tiền giảm.
 
-25. Câu hỏi cửa hàng/chi nhánh/vị trí không phải câu hỏi menu. Trong checkout, giữ ngữ cảnh checkout trừ khi khách nói rõ muốn quay lại chọn món. Không bịa địa chỉ, chi nhánh hoặc kết quả bản đồ; nếu không tìm được, hỏi phần vị trí còn thiếu. Với giao tận nơi cần đủ số nhà/đường, phường/xã, quận/huyện và tỉnh/thành phố trước khi chốt. Câu hỏi danh mục như “có bánh mặn không” là xem menu; chỉ chọn món khi đã nhận diện được sản phẩm cụ thể.
+25. Câu hỏi cửa hàng/chi nhánh/vị trí không phải câu hỏi menu. Trong checkout, giữ ngữ cảnh checkout trừ khi khách nói rõ muốn quay lại chọn món. Không bịa địa chỉ, chi nhánh hoặc kết quả bản đồ; nếu không tìm được, hỏi phần vị trí còn thiếu. Với giao tận nơi cần đủ số nhà/đường, phường/xã và tỉnh/thành phố trước khi chốt; quận/huyện là tùy chọn. Câu hỏi danh mục như “có bánh mặn không” là xem menu; chỉ chọn món khi đã nhận diện được sản phẩm cụ thể.
 
 THÔNG TIN PHIÊN HIỆN TẠI:
 {session_context}"""
@@ -801,6 +801,9 @@ def _confirm_saved_location(
     nearest = execute_find_nearest_branch(location=suggested, session_id=session_id)
     log = [{"tool": "find_nearest_branch", "result": nearest}]
     branches = nearest.get("branches") or []
+    if nearest.get("status") == "need_branch_selection" and branches and prefs.get("delivery_type") == "GIAO_TAN_NOI":
+        return {"reply": "Mình chưa tự xác định được chi nhánh phục vụ địa chỉ giao này. Bạn kiểm tra lại địa chỉ hoặc thử lại nhé.",
+                "checkout_payload": None, "tool_calls_log": log, "error": None}
     if nearest.get("status") == "need_branch_selection" and branches:
         cart_manager.set_checkout_context(session_id, suggested_address=None,
             location_address=suggested, address_confirmed=None, delivery_address=None)
@@ -859,7 +862,7 @@ def _confirm_saved_location(
         }
     if nearest.get("status") == "not_found":
         return {
-            "reply": "Mình chưa xác định được địa chỉ này trên bản đồ. Bạn kiểm tra lại số nhà/tên đường hoặc bổ sung phường, quận và tỉnh/thành phố nhé.",
+            "reply": "Mình chưa xác định được địa chỉ này trên bản đồ. Bạn kiểm tra lại số nhà, tên đường, phường/xã và tỉnh/thành phố nhé.",
             "checkout_payload": None, "tool_calls_log": log, "error": None,
         }
     return {
@@ -1638,7 +1641,7 @@ def _run_agent_impl(
     if location_stage and prefs.get("delivery_type") == "GIAO_TAN_NOI" and not choices:
         address = _deliverable_address_from_message(user_message)
         if not address and not prefs.get("suggested_address"):
-            return {"reply": "Để giao tận nơi, bạn vui lòng gửi địa chỉ cụ thể gồm số nhà, tên đường, phường/xã, quận/huyện và tỉnh/thành phố nhé.",
+            return {"reply": "Để giao tận nơi, bạn vui lòng gửi địa chỉ cụ thể gồm số nhà, tên đường, phường/xã và tỉnh/thành phố nhé.",
                     "checkout_payload": None, "tool_calls_log": [], "error": None}
     else:
         address = _literal_address_from_message(user_message) if location_stage else None

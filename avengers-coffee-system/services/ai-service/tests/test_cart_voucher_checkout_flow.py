@@ -10,6 +10,7 @@ from src.common import cart_manager
 from src.function_calling.tools import cart_tools, voucher_tools
 
 ADDRESS = '42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh, Quận Tân Phú, Thành phố Hồ Chí Minh'
+CURRENT_ADDRESS = '42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh, Thành phố Hồ Chí Minh'
 
 
 @pytest.fixture
@@ -150,6 +151,24 @@ def test_exact_cart_continue_to_qr_checkout_context(flow, monkeypatch):
     confirmed = turn(flow, 'xác nhận')
     assert len(calls) == 1 and calls[0]['payment_method'] == 'NGAN_HANG_QR'
     assert confirmed['tool_calls_log'][0]['result']['payment_details']['ma_tham_chieu'] == 'QR-ORDER_QR'
+
+
+def test_delivery_saved_address_without_district_reaches_summary(flow, monkeypatch):
+    from src.function_calling.tools import user_tools
+    monkeypatch.setattr(user_tools, 'execute_get_user_profile',
+                        lambda _sid: {'default_address': CURRENT_ADDRESS})
+    cart_manager.add_item(flow, '1', 'Nước', 194000)
+    turn(flow, 'không thêm nữa')
+    turn(flow, 'áp mã số 1')
+    turn(flow, 'tiếp tục')
+    prompt = turn(flow, 'giao tận nơi và COD cho tôi')
+    assert CURRENT_ADDRESS in prompt['reply']
+    summary = turn(flow, 'oke địa chỉ đấy luôn đi')
+    prefs = cart_manager.get_checkout_prefs(flow)
+    assert prefs['delivery_address'] == CURRENT_ADDRESS and prefs['address_confirmed'] is True
+    assert cart_manager.get_branch(flow) == 'CN_1'
+    assert summary['checkout_payload'] and summary['checkout_payload']['delivery_address'] == CURRENT_ADDRESS
+    assert 'quận/huyện' not in summary['reply']
 
 
 def test_reported_pickup_qr_choice_and_three_lost_response_retries(flow, monkeypatch):

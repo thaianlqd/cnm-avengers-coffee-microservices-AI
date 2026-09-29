@@ -569,6 +569,16 @@ def _requested_ordinal_categories(message: str) -> set[str]:
     return requested
 
 
+def _incomplete_ordinal_categories(message: str) -> set[str]:
+    """Find an explicit category ordinal whose number was omitted."""
+    text = _norm(message)
+    missing = set()
+    for category, names in (("food", r"banh|do an"), ("drink", r"nuoc|do uong")):
+        if re.search(rf"\b(?:{names})\s*(?:thi\s*)?(?:so|thu|#)\s*(?=$|va\b|[,;.!?])", text):
+            missing.add(category)
+    return missing
+
+
 def _resolve_all_category_ordinals(
     session_id: str, message: str, history: List[Dict[str, str]],
 ) -> Optional[List[Dict[str, Any]]]:
@@ -708,6 +718,7 @@ def _prepare_structured_products(
     session_id: str,
     refs: List[Dict[str, Any]],
     operation_base: Optional[str] = None,
+    hold_for_missing_reference: bool = False,
 ) -> Dict[str, Any]:
     """Prepare exact referenced products when the legacy add helper cannot run.
 
@@ -724,7 +735,7 @@ def _prepare_structured_products(
     for index, ref in enumerate(refs):
         if not ref.get("product_id") or not ref.get("product_name"):
             return {"reply": "Mình chưa xác định được món trong menu. Bạn chọn lại tên hoặc số món nhé.",
-                    "checkout_payload": None, "tool_calls_log": logs, "error": None}
+                    "checkout_payload": None, "tool_calls_log": logs, "error": "product_reference_unresolved"}
         product_name = str(ref.get("product_name") or "").strip()
         option_result = execute_get_product_options(product_name)
         logs.append({"tool": "get_product_options", "args": {"product_name": product_name}, "result": option_result})
@@ -732,7 +743,7 @@ def _prepare_structured_products(
             option_result.get("product_id") and str(option_result["product_id"]) != str(ref["product_id"])
         ):
             return {"reply": "Mình chưa xác minh được tùy chọn của món đã chọn. Giỏ hàng chưa thay đổi; bạn chọn lại món nhé.",
-                    "checkout_payload": None, "tool_calls_log": logs, "error": None}
+                    "checkout_payload": None, "tool_calls_log": logs, "error": "product_reference_unresolved"}
         groups = _parse_option_groups(option_result) if option_result.get("status") == "ok" else {}
         pending_item = _pending_option_item({**ref, "product_name": product_name}, option_result)
         if operation_base:
@@ -751,9 +762,21 @@ def _prepare_structured_products(
         _focus_product(session_id, pending[0])
     elif pending:
         cart_manager.set_checkout_context(session_id, last_product_focus=None)
-    cart_manager.set_pending_products(session_id, pending, merge=True)
+    all_pending = cart_manager.set_pending_products(session_id, pending, merge=True)
     cart_manager.set_pending_action(session_id, "fill_options", {"count": len(pending)})
-    if not needs_options:
+    if len(all_pending) > len(pending):
+        reply_lines = [f"Mình đang giữ đủ {len(all_pending)} món bạn chọn:"]
+        for item in all_pending:
+            reply_lines.append(f"- {item['product_name']}")
+            for group in item.get("option_schema") or []:
+                values = group.get("values") or []
+                if len(values) > 1:
+                    reply_lines.append(f"  - {group['name']}: {', '.join(map(str, values))}")
+    needs_options = needs_options or any(
+        len(group.get("values") or []) > 1
+        for item in all_pending for group in item.get("option_schema") or []
+    )
+    if not needs_options and not hold_for_missing_reference:
         completed = _complete_pending_products_from_options(session_id, "theo mặc định")
         if completed:
             completed["tool_calls_log"] = logs + list(completed.get("tool_calls_log") or [])
@@ -761,7 +784,7 @@ def _prepare_structured_products(
     from src.agents.option_state import option_field
     optional_topping = any(
         option_field(group.get("name")) == "toppings" and not group.get("required")
-        for item in pending for group in item.get("option_schema") or []
+        for item in all_pending for group in item.get("option_schema") or []
     )
     reply_lines.append("Mình đang giữ đúng các món trên. Bạn có thể chọn tùy chọn muốn thay đổi; các mục không cần chỉnh thì nói ‘theo mặc định’."
                        + (" Topping không bắt buộc." if optional_topping else ""))
@@ -1152,7 +1175,7 @@ def _handle_location_reference(state: OrderConversationState, kind: str) -> Dict
 
 def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
     """Keep location and store turns inside the deterministic branch boundary."""
-    from src.agents.location_parser import parse_location
+    from src.agents.location_parser import parse_location, complete_partial_delivery_address
     from src.agents.agent_service import _advance_checkout_if_ready, _confirm_saved_location
     from src.function_calling.tools.branch_tools import execute_find_nearest_branch
 
@@ -1168,8 +1191,12 @@ def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
 
     if prefs.get("checkout_submission"):
         return reply("Đơn đang được gửi xử lý. Bạn xác nhận lại để kiểm tra kết quả trước khi đổi địa chỉ nhé.")
-    if prefs.get("delivery_type") == "GIAO_TAN_NOI" and parsed.kind == "area" and prefs.get("partial_delivery_address"):
-        parsed = parse_location(f"{prefs['partial_delivery_address']}, {parsed.value}")
+    if prefs.get("delivery_type") == "GIAO_TAN_NOI" and prefs.get("partial_delivery_address"):
+        completed = complete_partial_delivery_address(prefs["partial_delivery_address"], state["user_message"])
+        if completed:
+            parsed = completed
+        elif parsed.kind == "area":
+            parsed = parse_location(f"{prefs['partial_delivery_address']}, {parsed.value}")
     if parsed.kind == "address" and prefs.get("delivery_type") == "GIAO_TAN_NOI" and parsed.missing:
         cart_manager.clear_branch(session_id)
         cart_manager.set_checkout_context(session_id, suggested_address=None,
@@ -1178,7 +1205,9 @@ def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
             summary_amounts=None, checkout_action_id=None, checkout_action_expires_at=None)
         return reply(f"Mình đã nhận được {parsed.value}. Bạn cho mình thêm {', '.join(parsed.missing)} để xác định chính xác địa chỉ giao nhé.")
     if prefs.get("checkout_requested") and prefs.get("delivery_type") == "GIAO_TAN_NOI" and parsed.kind != "address":
-        return reply("Để giao tận nơi, bạn cho mình số nhà, tên đường, phường/xã, quận/huyện và tỉnh/thành phố nhé.")
+        missing = parse_location(prefs.get("partial_delivery_address") or "").missing
+        return reply("Bạn bổ sung " + ", ".join(missing) + " cho địa chỉ giao nhé." if missing else
+                     "Để giao tận nơi, bạn cho mình số nhà, tên đường, phường/xã và tỉnh/thành phố nhé.")
 
     location = parsed.value or prefs.get("location_address") or ""
     if not location and prefs.get("suggested_address"):
@@ -1195,7 +1224,7 @@ def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
             address_change_requested=None, partial_delivery_address=None,
             summary_amounts=None, checkout_action_id=None, checkout_action_expires_at=None)
         result = _confirm_saved_location(session_id, "đúng địa chỉ đó", history=state.get("history") or [])
-        return _advance_checkout_if_ready(session_id, result) if result else reply("Mình chưa xác định được vị trí. Bạn bổ sung quận/huyện và tỉnh/thành phố nhé.")
+        return _advance_checkout_if_ready(session_id, result) if result else reply("Mình chưa xác định được vị trí trên bản đồ. Bạn kiểm tra lại số nhà, tên đường, phường/xã và tỉnh/thành phố nhé.")
 
     # An informational lookup must not write branch candidates into a previous
     # cart draft simply because it still has an old fulfillment preference.
@@ -1210,7 +1239,7 @@ def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
             lines.append(f"{index}. {branch.get('ten_chi_nhanh')} — {branch.get('dia_chi') or 'chưa có địa chỉ'}{distance}")
         return reply("\n".join(lines), logs)
     if found.get("status") == "not_found":
-        return reply("Mình chưa xác định được khu vực này trên bản đồ. Bạn cho mình thêm quận/huyện và tỉnh/thành phố nhé.", logs)
+        return reply("Mình chưa xác định được khu vực này trên bản đồ. Bạn kiểm tra lại phường/xã và tỉnh/thành phố nhé.", logs)
     return reply(found.get("message") or "Mình chưa tìm được cửa hàng lúc này. Bạn thử lại nhé.", logs)
 
 
@@ -1490,10 +1519,26 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         if mentions_pending_option_value(state["user_message"],
                                          cart_manager.get_checkout_prefs(state["session_id"]).get("pending_products") or []):
             return {**state, "intent": {"intent": "FILL_OPTIONS"}}
-    from src.agents.location_parser import parse_location
+    from src.agents.location_parser import parse_location, complete_partial_delivery_address
     location = parse_location(state["user_message"])
     from src.agents.pending_context import classify_pending_reply
     prefs = cart_manager.get_checkout_prefs(state["session_id"])
+    if (prefs.get("delivery_type") == "GIAO_TAN_NOI" and prefs.get("partial_delivery_address")
+            and complete_partial_delivery_address(prefs["partial_delivery_address"], state["user_message"])):
+        return {**state, "intent": {"intent": "LOCATION_QUERY", "location_kind": "address"}}
+    incomplete = _incomplete_ordinal_categories(state["user_message"])
+    pending_reference = set(prefs.get("pending_product_reference") or [])
+    if incomplete or pending_reference:
+        reference_message = state["user_message"]
+        if len(pending_reference) == 1 and re.fullmatch(r"\s*(?:số|thứ|#)?\s*\d+\s*[.!]?\s*", reference_message, re.IGNORECASE):
+            category = next(iter(pending_reference))
+            reference_message = ("bánh số " if category == "food" else "nước số ") + re.search(r"\d+", reference_message).group()
+        refs = _resolve_all_category_ordinals(state["session_id"], reference_message, state.get("history") or []) or []
+        resolved_categories = {ref.get("category") for ref in refs if ref.get("product_id")}
+        still_missing = (pending_reference | incomplete) - resolved_categories
+        if incomplete or pending_reference:
+            return {**state, "intent": {"intent": "PRODUCT_REFERENCE_PARTIAL",
+                                        "resolved_products": refs, "missing_categories": sorted(still_missing)}}
     pending_type = (pending or {}).get("type")
     if prefs.get("checkout_requested") and not prefs.get("checkout_submission"):
         from src.agents.agent_service import _explicit_checkout_choices
@@ -1827,6 +1872,24 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         for ref in refs:
             _update_cart_focus_after_add(session_id, prepared, ref)
         cart_manager.set_checkout_context(session_id, flow_stage="CART_REVIEW")
+        return {**state, "result": prepared}
+    if kind == "PRODUCT_REFERENCE_PARTIAL":
+        missing = list(intent.get("missing_categories") or [])
+        refs = [ref for ref in intent.get("resolved_products") or []
+                if ref.get("product_id") and ref.get("product_name")]
+        if refs:
+            prepared = _prepare_structured_products(session_id, refs, _turn_operation_base(state),
+                                                    hold_for_missing_reference=bool(missing))
+        else:
+            prepared = {"reply": "", "checkout_payload": None, "tool_calls_log": [], "error": None}
+        if missing or not prepared.get("error"):
+            cart_manager.set_checkout_context(session_id, pending_product_reference=missing or None)
+        if missing:
+            names = " và ".join("bánh" if category == "food" else "nước" for category in missing)
+            held = list(cart_manager.get_checkout_prefs(session_id).get("pending_products") or [])
+            kept = ", ".join(f"{item.get('category') == 'food' and 'bánh' or 'nước'} số {item.get('display_index') or item.get('number')}"
+                             for item in held if item.get("number") or item.get("display_index"))
+            prepared["reply"] = (f"Mình đã nhận {kept}. " if kept else "") + f"Còn {names} bạn muốn số mấy?"
         return {**state, "result": prepared}
     if kind == "SET_QUANTITY":
         matches = _cart_rows_named_in_message(cart, message)

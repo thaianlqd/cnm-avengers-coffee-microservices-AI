@@ -11,6 +11,19 @@ def normalize(value: str) -> str:
     return re.sub(r"\s+", " ", "".join(c for c in raw if unicodedata.category(c) != "Mn").replace("đ", "d")).strip()
 
 
+def canonical_address(value: str) -> str:
+    """Collapse repeated comma-delimited suffixes from any location source."""
+    parts = [part.strip() for part in str(value or "").split(",") if part.strip()]
+    while parts:
+        duplicate = next((size for size in range(len(parts) // 2, 0, -1)
+                          if [normalize(p) for p in parts[-2 * size:-size]] ==
+                          [normalize(p) for p in parts[-size:]]), None)
+        if duplicate is None:
+            break
+        del parts[-duplicate:]
+    return ", ".join(parts)
+
+
 _DISCOURSE_SUFFIX = re.compile(
     r"(?:[,\s.!?]+(?:á\s+bạn|ạ\s+bạn|bạn\s+ơi|nha\s+bạn|nhé\s+bạn|giúp\s+mình\s+với|á|ạ|nhé|nha|đi))+$",
     re.IGNORECASE,
@@ -118,11 +131,36 @@ def _missing_delivery(parts: list[str]) -> tuple[str, ...]:
     locality = [normalize(part) for part in parts[1:]]
     missing = []
     for pattern, label in ((r"\b(phuong|xa)\b", "phường/xã"),
-                           (r"\b(quan|huyen|thi xa)\b", "quận/huyện"),
                            (r"\b(thanh pho|tinh)\b", "tỉnh/thành phố")):
         if not any(re.search(pattern, part) for part in locality):
             missing.append(label)
     return tuple(missing)
+
+
+def complete_partial_delivery_address(partial: str, fragment: str) -> Location | None:
+    """Use a short reply only when one known delivery field is missing."""
+    previous = parse_location(partial)
+    if previous.kind != "address" or len(previous.missing) != 1:
+        return None
+    value = clean_location_clause(fragment)
+    folded = normalize(value).replace(".", "")
+    if "," in value or not value or len(value) > 60:
+        return None
+    if previous.missing[0] == "tỉnh/thành phố":
+        if folded in {"ho chi minh", "tp hcm", "tphcm", "hcm"}:
+            value = "Thành phố Hồ Chí Minh"
+        elif not re.match(r"^(?:thành phố|tỉnh|tp\.?)\s+\S+", value, re.IGNORECASE):
+            return None
+    elif previous.missing[0] == "phường/xã":
+        if not re.match(r"^(?:phường|xã|p\.)\s+\S+", value, re.IGNORECASE):
+            # A short proper locality name can answer a ward-only question.
+            if not re.fullmatch(r"[A-ZĐÀ-Ỹ][\wÀ-ỹ-]*(?:\s+[A-ZĐÀ-Ỹ][\wÀ-ỹ-]*){1,2}", value):
+                return None
+            value = "Phường " + value
+    else:
+        return None
+    result = parse_location(f"{previous.value}, {value}")
+    return result if result.kind == "address" and not result.missing else None
 
 
 def parse_location(message: str) -> Location:
@@ -163,7 +201,8 @@ def parse_location(message: str) -> Location:
     raw = re.sub(r"\s+(?:có\s+không|không|ko|k|giúp\s+(?:tôi|mình))$", "", raw, flags=re.IGNORECASE).strip(" ,")
     raw = clean_location_clause(raw)
     parts = [_admin_component(part.strip()) for part in raw.split(",") if part.strip()]
-    value = ", ".join(parts)
+    value = canonical_address(", ".join(parts))
+    parts = value.split(", ") if value else []
     if _HOUSE.match(parts[0]) if parts else False:
         street_tail = normalize(re.sub(r"^\d{1,5}[A-Za-z]?(?:[/.-]\d{1,5}[A-Za-z]?)?\s+", "", parts[0]))
         if not street_tail or set(street_tail.split()) <= {"di", "nhe", "nha", "giup", "toi", "minh", "chon", "lay", "so", "thu"}:

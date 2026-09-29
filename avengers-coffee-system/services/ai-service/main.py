@@ -3,7 +3,7 @@ import logging
 import os
 import re
 import requests
-from time import perf_counter
+from time import perf_counter, monotonic, sleep
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
@@ -32,6 +32,7 @@ from src.common.groq_service import (
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
+TURN_CLAIM_WAIT_SECONDS = 5.0
 
 
 def _safe_schema_name(value: Optional[str], default: str) -> str:
@@ -772,23 +773,55 @@ def agent_chat(body: AgentChatRequest, request: Request):
     scoped_session_id = f"{body.session_id}:conversation:{conversation_id}"
     logger.debug("[AgentTurn] conversation_id=%s client_message_id=%s phase=request_received",
                  conversation_id, body.client_message_id)
+    def replay(cached):
+        clean = {key: value for key, value in cached.items() if not key.startswith("_")}
+        clean["conversation_id"] = conversation_id
+        return AgentChatResponse(**clean)
+
     try:
-        cached = conversation_memory.get_cached_response(
-            conversation_id, body.session_id, body.client_message_id
-        )
-        if cached:
-            logger.info("[AgentTurn] conversation_id=%s client_message_id=%s phase=replay cache_hit=true",
-                        conversation_id, body.client_message_id)
-            if (cached.get("_request_message", body.message) != body.message or
-                    cached.get("_selected_product_id") != body.selected_product_id):
+        if body.client_message_id:
+            claim = conversation_memory.claim_turn(conversation_id, body.session_id,
+                body.client_message_id, body.message, body.selected_product_id)
+            if claim["status"] == "conflict":
                 raise HTTPException(status_code=409, detail="Mã lượt chat đã được dùng cho yêu cầu khác")
-            cached.pop("_response_session_id", None)
-            cached.pop("_request_message", None)
-            cached.pop("_selected_product_id", None)
-            cached["conversation_id"] = conversation_id
-            return AgentChatResponse(**cached)
-        memory = conversation_memory.load(conversation_id, body.session_id)
-        history = memory.get("messages") or []
+            if claim["status"] == "completed":
+                logger.info("[AgentTurn] conversation_id=%s client_message_id=%s phase=replay cache_hit=true",
+                            conversation_id, body.client_message_id)
+                return replay(claim["response"])
+            if claim["status"] == conversation_memory.IN_PROGRESS:
+                deadline = monotonic() + TURN_CLAIM_WAIT_SECONDS
+                while monotonic() < deadline:
+                    sleep(0.05)
+                    claim = conversation_memory.claim_turn(conversation_id, body.session_id,
+                        body.client_message_id, body.message, body.selected_product_id)
+                    if claim["status"] == "completed":
+                        logger.info("[AgentTurn] conversation_id=%s client_message_id=%s phase=replay cache_hit=true",
+                                    conversation_id, body.client_message_id)
+                        return replay(claim["response"])
+                    if claim["status"] == "conflict":
+                        raise HTTPException(status_code=409, detail="Mã lượt chat đã được dùng cho yêu cầu khác")
+                from src.common import cart_manager
+                durable = cart_manager.load_durable_processed_turn(scoped_session_id, body.client_message_id)
+                if durable:
+                    if (durable.get("message") != body.message or
+                            durable.get("selected_product_id") != body.selected_product_id):
+                        raise HTTPException(status_code=409, detail="Mã lượt chat đã được dùng cho yêu cầu khác")
+                    recovered = dict(durable["result"])
+                    recovered["conversation_id"] = conversation_id
+                    conversation_memory.save_exchange(conversation_id=conversation_id, session_id=body.session_id,
+                        user_message=body.message, result=recovered, client_message_id=body.client_message_id,
+                        response_session_id=scoped_session_id,
+                        selected_product_id=body.selected_product_id)
+                    logger.info("[AgentTurn] conversation_id=%s client_message_id=%s phase=durable_recovery cache_hit=true",
+                                conversation_id, body.client_message_id)
+                    return replay(recovered)
+                logger.warning("[AgentTurn] conversation_id=%s client_message_id=%s phase=in_progress_reconciliation_required",
+                               conversation_id, body.client_message_id)
+                raise HTTPException(status_code=503, detail="Lượt chat đang chờ đối soát; chưa thể xử lý lại an toàn")
+            history = claim.get("history") or []
+        else:
+            memory = conversation_memory.load(conversation_id, body.session_id)
+            history = memory.get("messages") or []
     except HTTPException:
         raise
     except PermissionError:
@@ -835,6 +868,7 @@ def agent_chat(body: AgentChatRequest, request: Request):
     except Exception as exc:
         logger.warning("[AgentTurn] conversation_id=%s client_message_id=%s phase=cache_save_failed error=%s",
                        conversation_id, body.client_message_id, type(exc).__name__)
+        raise HTTPException(status_code=503, detail="Lượt chat đã xử lý nhưng chưa lưu được phản hồi; hãy thử lại cùng lượt")
     return AgentChatResponse(
         reply=result.get("reply", ""),
         conversation_id=conversation_id,

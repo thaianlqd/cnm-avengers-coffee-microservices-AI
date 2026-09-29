@@ -109,14 +109,33 @@ def test_explicit_new_full_address_overrides_saved_reference(monkeypatch, messag
     assert "Quán Một" in result["reply"]
 
 
-def test_delivery_saved_address_asks_only_for_missing_district(monkeypatch):
+def test_delivery_saved_address_without_district_auto_selects_branch(monkeypatch):
     session = _checkout(monkeypatch, delivery="GIAO_TAN_NOI")
-    monkeypatch.setattr(branch_tools, "execute_find_nearest_branch", lambda **_kw: pytest.fail("incomplete delivery address geocoded"))
-    result = order_flow_graph.run_order_flow(session, "giao địa chỉ đó")
-    assert "quận/huyện" in result["reply"]
-    assert "số nhà" not in result["reply"]
-    assert cart_manager.get_checkout_prefs(session)["suggested_address"] == SAVED
-    assert not cart_manager.get_checkout_prefs(session).get("address_confirmed")
+    seen = []
+    monkeypatch.setattr(branch_tools, "execute_find_nearest_branch", lambda location, session_id: seen.append(location) or {
+        "status": "ok", "branches": [{"ma_chi_nhanh": "B1", "ten_chi_nhanh": "Quán Một"}]})
+    def select(sid, branch_id, branch_name, **_kwargs):
+        cart_manager.set_branch(sid, branch_id, branch_name)
+        return {"status": "ok", "message": "Đã chọn cửa hàng"}
+    monkeypatch.setattr(branch_tools, "execute_set_session_branch", select)
+    monkeypatch.setattr(agent_service, "_advance_checkout_if_ready", lambda _sid, result: result)
+    result = order_flow_graph.run_order_flow(session, "oke địa chỉ đấy luôn đi")
+    assert seen == [SAVED]
+    assert any(entry["tool"] == "set_session_branch" for entry in result["tool_calls_log"])
+    assert "quận/huyện" not in result["reply"]
+    prefs = cart_manager.get_checkout_prefs(session)
+    assert prefs["delivery_address"] == SAVED and prefs["address_confirmed"] is True
+    assert cart_manager.get_branch(session) == "B1"
+
+
+def test_delivery_never_prompts_customer_to_select_branch(monkeypatch):
+    session = _checkout(monkeypatch, delivery="GIAO_TAN_NOI")
+    monkeypatch.setattr(branch_tools, "execute_find_nearest_branch", lambda **_kw: {
+        "status": "need_branch_selection", "branches": [{"ma_chi_nhanh": "B1", "ten_chi_nhanh": "Quán Một"}]})
+    monkeypatch.setattr(branch_tools, "execute_set_session_branch", lambda *_a, **_k: pytest.fail("unresolved branch selected"))
+    result = order_flow_graph.run_order_flow(session, "oke địa chỉ đấy luôn đi")
+    assert "chọn cửa hàng" not in result["reply"]
+    assert (cart_manager.get_pending_action(session) or {}).get("type") != "select_branch"
 
 
 def test_complete_saved_delivery_address_uses_canonical_value(monkeypatch):
