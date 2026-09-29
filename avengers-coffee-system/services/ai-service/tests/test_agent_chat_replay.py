@@ -42,6 +42,11 @@ def _boundary(monkeypatch, *, fail_save=False, durable=None, fail_durable=False)
                     return {'status': 'conflict'}
                 return {'status': previous.get('_turn_status') if previous.get('_turn_status') in {'in_progress', 'outcome_unknown'} else 'completed',
                         'response': dict(previous)}
+            blocking = next(((key, value) for key, value in responses.items()
+                             if value.get('_turn_status') in {'in_progress', 'outcome_unknown'}), None)
+            if blocking:
+                return {'status': 'blocked_by_turn', 'blocking_turn_id': blocking[0],
+                        'blocking_status': blocking[1]['_turn_status']}
             responses[turn] = {'_turn_status': 'in_progress', '_request_message': message,
                                '_selected_product_id': product, '_claimed_at': time.time()}
             return {'status': 'claimed', 'history': list(messages)}
@@ -72,6 +77,9 @@ def _boundary(monkeypatch, *, fail_save=False, durable=None, fail_durable=False)
     monkeypatch.setattr(conversation_memory, 'mark_outcome_unknown', mark_unknown)
     monkeypatch.setattr(conversation_memory, 'save_exchange', save_exchange)
     monkeypatch.setattr(conversation_memory, 'load', lambda *_: {'messages': list(messages)})
+    monkeypatch.setattr(conversation_memory, 'unresolved_turn', lambda *_:
+                        next(({'turn_id': key, 'status': value['_turn_status']} for key, value in responses.items()
+                              if value.get('_turn_status') in {'in_progress', 'outcome_unknown'}), None))
 
     def run_agent(**kwargs):
         calls.append(kwargs['client_message_id'])
@@ -141,6 +149,49 @@ def test_in_progress_turn_rejects_different_payload(monkeypatch):
         release.set()
         first.result(timeout=3)
     assert calls == ['turn-1'] and len(messages) == 2
+
+
+def test_different_ids_concurrent_wait_for_previous_completion(monkeypatch):
+    from src.agents import agent_service
+    send, calls, messages, _responses = _boundary(monkeypatch)
+    entered, release = threading.Event(), threading.Event()
+    original = agent_service.run_agent
+    def delayed(**kwargs):
+        if kwargs['client_message_id'] == 'turn-A':
+            entered.set()
+            assert release.wait(timeout=3)
+        return original(**kwargs)
+    monkeypatch.setattr(agent_service, 'run_agent', delayed)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        first = pool.submit(send, 'turn-A')
+        assert entered.wait(timeout=3)
+        with pytest.raises(HTTPException) as busy:
+            send('turn-B')
+        assert busy.value.status_code == 409
+        assert busy.value.detail['code'] == 'TURN_IN_PROGRESS'
+        assert busy.value.detail['blocking_turn_id'] == 'turn-A'
+        release.set()
+        first.result(timeout=3)
+    send('turn-B')
+    assert calls == ['turn-A', 'turn-B'] and len(messages) == 4
+
+
+def test_unknown_previous_turn_blocks_new_id_and_reset(monkeypatch):
+    import main
+    from src.common import session_auth
+    send, calls, messages, responses = _boundary(monkeypatch, fail_durable=True)
+    responses['turn-A'] = {'_turn_status': 'outcome_unknown', '_request_message': 'old',
+                           '_selected_product_id': None}
+    with pytest.raises(HTTPException) as blocked:
+        send('turn-B')
+    assert blocked.value.detail['code'] == 'TURN_OUTCOME_UNKNOWN'
+    assert not calls and not messages
+    monkeypatch.setattr(session_auth, 'authorize_session', lambda *_: None)
+    with pytest.raises(HTTPException) as reset:
+        main.reset_agent_conversation(main.AgentConversationResetRequest(
+            session_id='customer', conversation_id=str(uuid.uuid4()),
+            previous_conversation_id=str(uuid.uuid4())), Request({'type': 'http', 'headers': []}))
+    assert reset.value.detail['code'] == 'TURN_OUTCOME_UNKNOWN'
 
 
 def test_failed_completion_write_recovers_only_from_durable_business_result(monkeypatch):
@@ -230,29 +281,51 @@ def test_stale_claim_becomes_outcome_unknown_without_rerunning(monkeypatch):
 def test_strict_business_replay_write_requires_transaction_ack(monkeypatch):
     from src.common import cart_manager
     transactions = []
+    stored = {'old': {'result': {'reply': 'old'}, '_completed_at': 1}}
     class Connection:
         def __enter__(self): return self
         def __exit__(self, kind, *_):
             if kind is None:
                 transactions.append('committed')
         def execute(self, sql, params):
-            assert 'ON CONFLICT (session_id)' in str(sql)
-            assert params['turn_id'] == 'T'
-            assert json.loads(params['record'])['result']['reply'] == 'done'
-            transactions.append('written')
+            statement = str(sql)
+            if 'ON CONFLICT (session_id)' in statement:
+                transactions.append('inserted')
+            elif 'FOR UPDATE' in statement:
+                transactions.append('locked')
+                return type('Result', (), {'mappings': lambda self: self,
+                                          'first': lambda self: {'turns': stored}})()
+            else:
+                assert 'jsonb_set' in statement
+                turns = json.loads(params['turns'])
+                assert turns['T']['result']['reply'] == 'done'
+                assert turns['T']['_completed_at'] > 1
+                assert turns['old'] == stored['old']
+                transactions.append('written')
     class Engine:
         def begin(self): return Connection()
     monkeypatch.setattr(cart_manager, '_ensure_table_exists', lambda *_: None)
     monkeypatch.setattr(cart_manager, 'get_db_engine', lambda: Engine())
     record = {'message': 'same', 'selected_product_id': None, 'result': {'reply': 'done'}}
     cart_manager.persist_processed_turn_durable('session', 'T', record)
-    assert transactions == ['written', 'committed']
+    assert transactions == ['inserted', 'locked', 'written', 'committed']
 
     class FailedEngine:
         def begin(self): raise RuntimeError('database unavailable')
     monkeypatch.setattr(cart_manager, 'get_db_engine', lambda: FailedEngine())
     with pytest.raises(RuntimeError, match='database unavailable'):
         cart_manager.persist_processed_turn_durable('session', 'T', record)
+
+
+def test_durable_replay_retention_is_timestamp_based_and_preserves_unresolved():
+    from src.common import cart_manager
+    turns = {f'turn-{index}': {'_completed_at': index} for index in range(30, 0, -1)}
+    turns['unknown'] = {'_turn_status': 'outcome_unknown', '_claimed_at': 1}
+    turns['running'] = {'_turn_status': 'in_progress', '_claimed_at': 2}
+    remaining = cart_manager.prune_processed_turns(turns)
+    assert len(remaining) == 22
+    assert {'turn-30', 'turn-11', 'unknown', 'running'} <= set(remaining)
+    assert 'turn-10' not in remaining and 'turn-1' not in remaining
 
 
 def test_response_retention_uses_timestamps_and_preserves_unresolved(monkeypatch):

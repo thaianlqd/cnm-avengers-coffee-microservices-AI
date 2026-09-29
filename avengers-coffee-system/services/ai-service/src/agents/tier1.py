@@ -209,7 +209,7 @@ def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict
     # "toàn bộ giỏ" in a read-only summary request must never be treated as
     # the verb "bỏ".  Require an explicit cart/item removal construction.
     if re.search(r"\b(?:xoa|huy)\b.*\b(gio|mon|san pham)\b|\bbo\b.*\b(?:mon|san pham|cai|gio hang)\b", norm):
-        return {"intent": "CLEAR_CART" if re.search(r"\b(tat ca|ca gio|gio hang)\b", norm) else "REMOVE_ITEM"}
+        return {"intent": "CLEAR_CART" if re.search(r"\b(tat ca|ca gio|gio hang)\b|\b(?:xoa|huy)\s+gio\b", norm) else "REMOVE_ITEM"}
     # Natural change-of-mind phrases still need an explicit product/object
     # reference. This avoids treating filler such as "thôi để lát chọn sau"
     # as a destructive cart action.

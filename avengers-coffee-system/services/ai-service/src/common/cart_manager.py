@@ -209,25 +209,40 @@ def load_durable_processed_turn(session_id: str, client_message_id: str) -> Opti
     return dict(turn) if isinstance(turn, dict) else None
 
 
+def prune_processed_turns(turns: Dict[str, Any], max_completed: int = 20) -> Dict[str, Any]:
+    """Bound completed replay records; never discard unresolved turn evidence."""
+    unresolved = {key: value for key, value in turns.items() if isinstance(value, dict)
+                  and value.get("_turn_status") in {"in_progress", "outcome_unknown"}}
+    completed = [(key, value) for key, value in turns.items() if key not in unresolved]
+    completed.sort(key=lambda item: (float(item[1].get("_completed_at") or 0)
+                                    if isinstance(item[1], dict) else 0, item[0]), reverse=True)
+    return {**unresolved, **dict(completed[:max_completed])}
+
+
 def persist_processed_turn_durable(session_id: str, client_message_id: str, record: Dict[str, Any]) -> None:
     """Commit replay evidence independently of the best-effort cart snapshot write."""
     engine = get_db_engine()
     _ensure_table_exists(engine)
     with engine.begin() as conn:
         conn.execute(text('''
-            INSERT INTO ai_chat_sessions (session_id, checkout_prefs)
-            VALUES (:session_id, jsonb_build_object('processed_order_turns',
-                    jsonb_build_object(:turn_id, CAST(:record AS jsonb))))
-            ON CONFLICT (session_id) DO UPDATE SET
-                checkout_prefs = jsonb_set(
-                    COALESCE(ai_chat_sessions.checkout_prefs, '{}'::jsonb),
-                    '{processed_order_turns}',
-                    COALESCE(ai_chat_sessions.checkout_prefs->'processed_order_turns', '{}'::jsonb)
-                        || jsonb_build_object(:turn_id, CAST(:record AS jsonb)),
-                    true),
+            INSERT INTO ai_chat_sessions (session_id) VALUES (:session_id)
+            ON CONFLICT (session_id) DO NOTHING
+        '''), {"session_id": session_id})
+        row = conn.execute(text('''
+            SELECT checkout_prefs->'processed_order_turns' AS turns
+            FROM ai_chat_sessions WHERE session_id = :session_id FOR UPDATE
+        '''), {"session_id": session_id}).mappings().first()
+        turns = _parse_json_object(row["turns"] if row else None)
+        turns[str(client_message_id)] = {**record, "_completed_at": _now()}
+        turns = prune_processed_turns(turns)
+        conn.execute(text('''
+            UPDATE ai_chat_sessions SET
+                checkout_prefs = jsonb_set(COALESCE(checkout_prefs, '{}'::jsonb),
+                    '{processed_order_turns}', CAST(:turns AS jsonb), true),
                 updated_at = NOW()
-        '''), {"session_id": session_id, "turn_id": str(client_message_id),
-               "record": json.dumps(record, ensure_ascii=False, default=str)})
+            WHERE session_id = :session_id
+        '''), {"session_id": session_id,
+               "turns": json.dumps(turns, ensure_ascii=False, default=str)})
 
 def _get_or_create_session(session_id: str) -> Dict[str, Any]:
     # LƯU Ý: Hàm này phải được gọi bên TRONG context manager của `_get_session_lock(session_id)`
@@ -631,6 +646,9 @@ def reset_conversation_draft(session_id: str) -> Dict[str, Any]:
             "voucher_offer_pending", "voucher_candidates", "summary_fingerprint",
             "checkout_action_id", "branch_candidates", "suggested_address",
             "location_address", "stock_conflicts", "pending_action",
+            "partial_delivery_address", "address_change_requested",
+            "profile_address_candidates", "location_pending", "last_product_focus",
+            "summary_amounts", "checkout_action_expires_at",
         )
         for key in draft_keys:
             prefs.pop(key, None)

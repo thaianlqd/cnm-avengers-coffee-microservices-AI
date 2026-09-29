@@ -717,6 +717,7 @@ class AgentChatResponse(BaseModel):
 class AgentConversationResetRequest(BaseModel):
     session_id: str
     conversation_id: str
+    previous_conversation_id: str
 
 
 class ProductPriceLookupRequest(BaseModel):
@@ -769,6 +770,9 @@ def agent_chat(body: AgentChatRequest, request: Request):
 
     authorize_session(body.session_id, request.headers.get("authorization"))
 
+    if not body.client_message_id:
+        raise HTTPException(status_code=400, detail={"code": "TURN_ID_REQUIRED", "message": "Thiếu mã lượt chat"})
+
     conversation_id = conversation_memory.normalize_conversation_id(body.conversation_id)
     scoped_session_id = f"{body.session_id}:conversation:{conversation_id}"
     logger.debug("[AgentTurn] conversation_id=%s client_message_id=%s phase=request_received",
@@ -783,7 +787,16 @@ def agent_chat(body: AgentChatRequest, request: Request):
             claim = conversation_memory.claim_turn(conversation_id, body.session_id,
                 body.client_message_id, body.message, body.selected_product_id)
             if claim["status"] == "conflict":
-                raise HTTPException(status_code=409, detail="Mã lượt chat đã được dùng cho yêu cầu khác")
+                raise HTTPException(status_code=409, detail={"code": "TURN_ID_CONFLICT", "message": "Mã lượt chat đã được dùng cho yêu cầu khác"})
+            if claim["status"] == "blocked_by_turn":
+                blocking_id = claim["blocking_turn_id"]
+                blocking_status = claim["blocking_status"]
+                code = "TURN_IN_PROGRESS" if blocking_status == conversation_memory.IN_PROGRESS else "TURN_OUTCOME_UNKNOWN"
+                logger.warning("[AgentTurn] conversation_id=%s client_message_id=%s phase=blocked blocking_turn_id=%s blocking_status=%s",
+                               conversation_id, body.client_message_id, blocking_id, blocking_status)
+                raise HTTPException(status_code=409, detail={"code": code, "message":
+                    "Lượt chat trước chưa xử lý xong. Bạn thử lại đúng tin nhắn đó trước khi gửi tin mới.",
+                    "blocking_turn_id": blocking_id})
             if claim["status"] == "completed":
                 logger.info("[AgentTurn] conversation_id=%s client_message_id=%s phase=completed_replay cache_hit=true",
                             conversation_id, body.client_message_id)
@@ -801,13 +814,13 @@ def agent_chat(body: AgentChatRequest, request: Request):
                                     conversation_id, body.client_message_id)
                         return replay(claim["response"])
                     if claim["status"] == "conflict":
-                        raise HTTPException(status_code=409, detail="Mã lượt chat đã được dùng cho yêu cầu khác")
+                        raise HTTPException(status_code=409, detail={"code": "TURN_ID_CONFLICT", "message": "Mã lượt chat đã được dùng cho yêu cầu khác"})
                 from src.common import cart_manager
                 durable = cart_manager.load_durable_processed_turn(scoped_session_id, body.client_message_id)
                 if durable:
                     if (durable.get("message") != body.message or
                             durable.get("selected_product_id") != body.selected_product_id):
-                        raise HTTPException(status_code=409, detail="Mã lượt chat đã được dùng cho yêu cầu khác")
+                        raise HTTPException(status_code=409, detail={"code": "TURN_ID_CONFLICT", "message": "Mã lượt chat đã được dùng cho yêu cầu khác"})
                     recovered = dict(durable["result"])
                     recovered["conversation_id"] = conversation_id
                     conversation_memory.save_exchange(conversation_id=conversation_id, session_id=body.session_id,
@@ -830,7 +843,8 @@ def agent_chat(body: AgentChatRequest, request: Request):
                 else:
                     logger.warning("[AgentTurn] conversation_id=%s client_message_id=%s phase=outcome_unknown",
                                    conversation_id, body.client_message_id)
-                raise HTTPException(status_code=503, detail="Lượt chat đang chờ đối soát; chưa thể xử lý lại an toàn")
+                raise HTTPException(status_code=503, detail={"code": "TURN_RECONCILIATION_REQUIRED" if claim["status"] == conversation_memory.OUTCOME_UNKNOWN else "TURN_IN_PROGRESS",
+                    "message": "Lượt chat đang chờ đối soát; chưa thể xử lý lại an toàn"})
             logger.info("[AgentTurn] conversation_id=%s client_message_id=%s phase=claim",
                         conversation_id, body.client_message_id)
             history = claim.get("history") or []
@@ -878,7 +892,7 @@ def agent_chat(body: AgentChatRequest, request: Request):
             except Exception as recovery_exc:
                 logger.warning("[AgentTurn] conversation_id=%s client_message_id=%s phase=outcome_unknown_write_failed error=%s",
                                conversation_id, body.client_message_id, type(recovery_exc).__name__)
-        raise HTTPException(status_code=503, detail="Lượt chat chưa xác định kết quả; cần đối soát trước khi thử lại")
+        raise HTTPException(status_code=503, detail={"code": "TURN_RECONCILIATION_REQUIRED", "message": "Lượt chat chưa xác định kết quả; cần đối soát trước khi thử lại"})
     result["conversation_id"] = conversation_id
     prefs_after = cart_manager.get_checkout_prefs(scoped_session_id)
     pending_after = (cart_manager.get_pending_action(scoped_session_id) or {}).get("type")
@@ -922,7 +936,7 @@ def agent_chat(body: AgentChatRequest, request: Request):
             except Exception as mark_exc:
                 logger.warning("[AgentTurn] conversation_id=%s client_message_id=%s phase=outcome_unknown_write_failed error=%s",
                                conversation_id, body.client_message_id, type(mark_exc).__name__)
-        raise HTTPException(status_code=503, detail="Lượt chat đã xử lý nhưng chưa lưu được phản hồi; hãy thử lại cùng lượt")
+        raise HTTPException(status_code=503, detail={"code": "TURN_RECONCILIATION_REQUIRED", "message": "Lượt chat đã xử lý nhưng chưa lưu được phản hồi; hãy thử lại cùng lượt"})
     logger.info("[AgentTurn] conversation_id=%s client_message_id=%s phase=completed",
                 conversation_id, body.client_message_id)
     return AgentChatResponse(
@@ -944,8 +958,20 @@ def reset_agent_conversation(body: AgentConversationResetRequest, request: Reque
 
     authorize_session(body.session_id, request.headers.get("authorization"))
     conversation_id = conversation_memory.normalize_conversation_id(body.conversation_id)
+    previous_conversation_id = conversation_memory.normalize_conversation_id(body.previous_conversation_id)
+    if previous_conversation_id == conversation_id:
+        raise HTTPException(status_code=409, detail={"code": "RESET_SAME_CONVERSATION", "message": "Cần một mã cuộc trò chuyện mới"})
     try:
+        blocking = conversation_memory.unresolved_turn(previous_conversation_id, body.session_id)
+        if blocking:
+            logger.warning("[AgentTurn] conversation_id=%s phase=reset_blocked blocking_turn_id=%s blocking_status=%s",
+                           previous_conversation_id, blocking["turn_id"], blocking["status"])
+            raise HTTPException(status_code=409, detail={"code": "TURN_OUTCOME_UNKNOWN" if blocking["status"] == conversation_memory.OUTCOME_UNKNOWN else "TURN_IN_PROGRESS",
+                "message": "Hãy hoàn tất hoặc đối soát lượt chat trước khi bắt đầu cuộc trò chuyện mới.",
+                "blocking_turn_id": blocking["turn_id"]})
         memory = conversation_memory.load(conversation_id, body.session_id)
+    except HTTPException:
+        raise
     except PermissionError:
         raise HTTPException(status_code=403, detail="Cuộc trò chuyện không thuộc phiên hiện tại")
     if memory.get("messages"):
@@ -961,7 +987,9 @@ def reset_agent_conversation(body: AgentConversationResetRequest, request: Reque
             "pending_products", "pending_product_reference", "checkout_requested", "voucher_decided",
             "voucher_offer_pending", "voucher_candidates", "summary_fingerprint",
             "checkout_action_id", "branch_candidates", "suggested_address",
-            "location_address", "stock_conflicts",
+            "location_address", "stock_conflicts", "partial_delivery_address",
+            "address_change_requested", "profile_address_candidates", "location_pending", "last_product_focus",
+            "summary_amounts", "checkout_action_expires_at",
         ],
     }
 

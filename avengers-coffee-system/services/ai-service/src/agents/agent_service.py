@@ -248,7 +248,7 @@ def _explicit_checkout_choices(message: str) -> Dict[str, str]:
             r"\b(?:khong|ko|dung dung)\s+(?:(?:muon|chon|dung|thanh toan|tra|bang|qua)\s+)*(?:ma\s+)?(?:ngan hang\s+)?(?:qr|chuyen khoan)\b", text,
         ) and not re.search(r"\bneu\b[^,.!?]*\bqr\b", text):
             result["payment_method"] = "NGAN_HANG_QR"
-        elif wallet_payment_evidence(text):
+        elif wallet_payment_evidence(text) or re.search(r"\bvà\s+ví\b", message, re.IGNORECASE):
             result["payment_method"] = "VI_DIEN_TU"
 
         delivery_candidates = []
@@ -862,7 +862,9 @@ def _confirm_saved_location(
         }
     if nearest.get("status") == "not_found":
         return {
-            "reply": "Mình chưa xác định được địa chỉ này trên bản đồ. Bạn kiểm tra lại số nhà, tên đường, phường/xã và tỉnh/thành phố nhé.",
+            "reply": ("Mình chưa xác định được địa chỉ này trên bản đồ. Bạn kiểm tra lại số nhà, tên đường, phường/xã và tỉnh/thành phố nhé."
+                      if prefs.get("delivery_type") == "GIAO_TAN_NOI" else
+                      "Mình chưa xác định chính xác khu vực này trên bản đồ. Bạn cho mình thêm phường/quận hoặc tỉnh/thành phố nhé."),
             "checkout_payload": None, "tool_calls_log": log, "error": None,
         }
     return {
@@ -1640,9 +1642,6 @@ def _run_agent_impl(
                       and not prefs.get("pending_products") and not prefs.get("checkout_submission"))
     if location_stage and prefs.get("delivery_type") == "GIAO_TAN_NOI" and not choices:
         address = _deliverable_address_from_message(user_message)
-        if not address and not prefs.get("suggested_address"):
-            return {"reply": "Để giao tận nơi, bạn vui lòng gửi địa chỉ cụ thể gồm số nhà, tên đường, phường/xã và tỉnh/thành phố nhé.",
-                    "checkout_payload": None, "tool_calls_log": [], "error": None}
     else:
         address = _literal_address_from_message(user_message) if location_stage else None
     if address:
@@ -1670,25 +1669,42 @@ def _run_agent_impl(
         from src.function_calling.tools.user_tools import execute_get_user_profile
         profile = execute_get_user_profile(session_id)
         from src.function_calling.tools.user_tools import _clean_profile_address
-        default_address = _clean_profile_address(profile.get("default_address"))
+        candidates = [{"label": str(item.get("label") or "Địa chỉ"),
+                       "full_address": _clean_profile_address(item.get("full_address")),
+                       "is_default": bool(item.get("is_default"))}
+                      for item in profile.get("address_items") or [] if item.get("full_address")]
+        candidates.sort(key=lambda item: not item["is_default"])
+        default_address = candidates[0]["full_address"] if candidates else _clean_profile_address(profile.get("default_address"))
         payment_line = ""
         if not cart_manager.get_checkout_prefs(session_id).get("payment_method"):
             payment_line = "\n\n" + _payment_methods_text() + "\nBạn chọn giúp mình một phương thức nhé."
         if default_address:
-            cart_manager.set_checkout_context(session_id, suggested_address=default_address)
-            cart_manager.set_pending_action(session_id, "confirm_address", {})
-            if prefs["delivery_type"] == "GIAO_TAN_NOI":
-                question = f"Bạn có muốn giao đến địa chỉ đã lưu này không?\n{default_address}"
+            if len(candidates) > 1:
+                cart_manager.set_checkout_context(session_id, suggested_address=default_address,
+                    profile_address_candidates=candidates, location_pending=None)
+                cart_manager.set_pending_action(session_id, "select_profile_address", {"count": len(candidates)})
+                question = "Bạn muốn dùng địa chỉ nào " + ("để giao hàng?" if prefs["delivery_type"] == "GIAO_TAN_NOI" else "để tìm cửa hàng gần nhất?")
+                question += "\n" + "\n".join(f"{index}. {item['label']} — {item['full_address']}" +
+                    (" (mặc định)" if item["is_default"] else "") for index, item in enumerate(candidates, 1))
+                question += "\nBạn chọn số, tên địa chỉ, địa chỉ mặc định hoặc địa chỉ khác nhé."
             else:
-                question = f"Bạn đang ở địa chỉ đã lưu này hay muốn dùng địa chỉ khác để tìm cửa hàng gần nhất?\n{default_address}"
+                cart_manager.set_checkout_context(session_id, suggested_address=default_address, location_pending=None)
+                cart_manager.set_pending_action(session_id, "confirm_address", {})
+                if prefs["delivery_type"] == "GIAO_TAN_NOI":
+                    question = f"Bạn có muốn giao đến địa chỉ đã lưu này không?\n{default_address}"
+                else:
+                    question = f"Bạn đang ở địa chỉ đã lưu này hay muốn dùng địa chỉ khác để tìm cửa hàng gần nhất?\n{default_address}"
             return {
                 "reply": question + payment_line,
                 "checkout_payload": None,
                 "tool_calls_log": [{"tool": "get_user_profile", "result": profile}],
                 "error": None,
             }
+        cart_manager.set_checkout_context(session_id, location_pending=True)
         return {
-            "reply": "Bạn đang ở địa chỉ nào để mình tìm cửa hàng gần nhất?" + payment_line,
+            "reply": ("Bạn cho mình địa chỉ giao gồm số nhà, tên đường, phường/xã và tỉnh/thành phố nhé."
+                      if prefs["delivery_type"] == "GIAO_TAN_NOI" else
+                      "Bạn đang ở khu vực/phường/quận nào để mình tìm cửa hàng gần nhất?") + payment_line,
             "checkout_payload": None,
             "tool_calls_log": [{"tool": "get_user_profile", "result": profile}],
             "error": None,

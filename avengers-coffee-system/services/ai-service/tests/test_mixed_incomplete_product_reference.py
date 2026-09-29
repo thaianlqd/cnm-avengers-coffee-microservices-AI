@@ -83,6 +83,45 @@ def test_checkout_gate_releases_missing_reference_after_cancel(monkeypatch):
     assert cart_tools.execute_request_checkout(session)['status'] != 'pending_products'
 
 
+def test_pending_reference_does_not_swallow_cart_view_or_clear(monkeypatch):
+    session = _pending_drink(monkeypatch)
+    cart_manager.add_item(session, 'EXISTING', 'Món trong giỏ', 35000)
+    monkeypatch.setattr(cart_tools, 'execute_get_cart_quote', lambda sid: {
+        'status': 'ok', 'cart': cart_manager.get_cart(sid), 'quote': {'total': 35000}})
+    viewed = order_flow_graph.run_order_flow(session, 'xem giỏ')
+    assert any(log['tool'] == 'get_cart_quote' for log in viewed['tool_calls_log'])
+    assert 'chưa được thêm' in viewed['reply']
+    prefs = cart_manager.get_checkout_prefs(session)
+    assert prefs['pending_product_reference'] == ['food']
+    assert [item['product_id'] for item in prefs['pending_products']] == ['D10']
+
+    asked = order_flow_graph.run_order_flow(session, 'xóa giỏ')
+    assert 'đồng ý xoá giỏ' in asked['reply']
+    assert cart_manager.get_pending_action(session)['type'] == 'clear_cart'
+    def clear(sid):
+        cart_manager.clear_cart(sid)
+        return {'status': 'ok', 'message': 'Đã xoá toàn bộ giỏ hàng.'}
+    monkeypatch.setattr(cart_tools, 'execute_clear_cart', clear)
+    confirmed = order_flow_graph.run_order_flow(session, 'đồng ý xoá giỏ')
+    assert any(log['tool'] == 'clear_cart' and log['result']['status'] == 'ok'
+               for log in confirmed['tool_calls_log'])
+    assert cart_manager.get_cart(session)['is_empty']
+    after = cart_manager.get_checkout_prefs(session)
+    assert not after.get('pending_product_reference') and not after.get('pending_products')
+    assert cart_manager.get_pending_action(session) is None
+
+
+def test_pending_reference_preserves_draft_during_explicit_cart_edit(monkeypatch):
+    session = _pending_drink(monkeypatch)
+    cart_manager.add_item(session, 'EXISTING', 'Món trong giỏ', 35000)
+    monkeypatch.setattr(cart_tools, 'execute_get_cart_quote', lambda sid: {
+        'status': 'ok', 'cart': cart_manager.get_cart(sid), 'quote': {'total': 35000}})
+    # The authoritative cart handler may ask for an exact cart row; the draft remains.
+    result = order_flow_graph.run_order_flow(session, 'xoá món trong giỏ')
+    assert 'bánh số mấy' not in result['reply']
+    assert cart_manager.get_checkout_prefs(session)['pending_product_reference'] == ['food']
+
+
 @pytest.mark.parametrize('message,missing,valid', [
     ('cho tôi bánh số và nước số 10', 'food', 'D10'),
     ('nước số và bánh số 3', 'drink', 'F3'),
