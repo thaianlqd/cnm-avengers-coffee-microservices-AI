@@ -21,7 +21,12 @@ except ImportError:  # pragma: no cover
     StateGraph = None
     END = "__end__"
 
-from src.agents.tier1 import classify_confirmation, classify_order_intent
+from src.agents.tier1 import (
+    classify_confirmation,
+    classify_order_intent,
+    has_cart_edit_action,
+    has_transaction_evidence,
+)
 from src.agents.payment_intent import wallet_payment_evidence
 from src.agents.catalog_constraints import extract_catalog_search_text, parse_catalog_constraints
 from src.common import cart_manager
@@ -425,7 +430,8 @@ def _resolve_cart_line(cart: Dict[str, Any], message: str) -> tuple[Optional[Dic
     ))
     remaining_words = {word for word in re.findall(r"[a-z]+", text)
                        if word not in _CART_REFERENCE_STOPWORDS and word not in {"mon", "san", "pham", "theo", "toi", "luon", "muon", "tang", "giam"}}
-    if len(items) == 1 and (generic_reference or not remaining_words):
+    if len(items) == 1 and (generic_reference or not remaining_words or has_cart_edit_action(message)):
+        logger.debug("routing route=CART_MUTATION target_source=unique_cart_line candidate_count=1")
         return items[0], None
     if focus and generic_reference and not matches:
         focus_matches = [row for row in items if str(row.get("cart_item_id") or row.get("line_id")) == str(focus)]
@@ -1045,12 +1051,17 @@ def _resolve_cart_option_update(item: Dict[str, Any], message: str) -> tuple[Dic
     for group_name, values in groups.items():
         group = _norm(group_name)
         matches = [_clean_option_text(value) for value in values
-                   if _norm(_clean_option_text(value)) and _norm(_clean_option_text(value)) in text]
+                   if _norm(_clean_option_text(value)) and re.search(
+                       r"(?<!\w)" + re.escape(_norm(_clean_option_text(value))) + r"(?!\w)", text
+                   )]
         if "topping" in group:
             if re.search(r"\b(khong topping|bo topping|xoa topping|khong them topping)\b", text):
                 changes["toppings"] = []
             elif matches:
-                changes["toppings"] = matches
+                current = list(item.get("toppings") or [])
+                changes["toppings"] = list(dict.fromkeys(
+                    current + matches if re.search(r"\bthem\b", text) else matches
+                ))
         elif ("size" in group or "kich thuoc" in group) and matches:
             changes["size"] = matches[0]
         elif "da" in group and matches:
@@ -1544,8 +1555,10 @@ def _browse_ask_more(state: OrderConversationState) -> Dict[str, Any]:
     allowed = {"get_recommendations", "get_product_insights"}
     messages = _build_messages(session_id=state["session_id"], history=state.get("history") or [], user_message=state["user_message"])
     messages.insert(1, {"role": "system", "content": (
-        "This turn is browsing only. Answer the original menu/product question using catalog tools. "
-        "Do not add items, look up exact prices from generic text, offer checkout, or claim cart changes."
+        "This turn is READ ONLY. Answer only the original menu/product information question using catalog tools. "
+        "Never claim or promise that you changed or will change a cart, voucher, checkout, branch, or order. "
+        "Do not add/remove/update items, offer checkout, or present a business write as pending. "
+        "If the message requests a transaction, ask the customer to state the cart action plainly."
     )})
     result = groq_agent_chat(messages=messages,
         tools=[schema for schema in ALL_TOOL_SCHEMAS if schema.get("function", {}).get("name") in allowed],
@@ -1589,8 +1602,12 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
             return {**state, "intent": {"intent": "PRODUCT_CLARIFY"}}
         return {**state, "intent": {"intent": "ADD_ITEM", "resolved_products": [canonical], "quantity": 1}}
     active_pending = cart_manager.get_pending_action(state["session_id"])
-    catalog_constraints = (None if active_pending and active_pending.get("type") != "ask_more_items"
-                           else parse_catalog_constraints(state["user_message"]))
+    # Transaction language is arbitrated before catalog parsing. A missed
+    # mutation grammar must never be reinterpreted as a product search.
+    transaction_turn = has_transaction_evidence(state["user_message"])
+    catalog_constraints = (None if transaction_turn or (
+        active_pending and active_pending.get("type") != "ask_more_items"
+    ) else parse_catalog_constraints(state["user_message"]))
     if catalog_constraints:
         if cart_manager.get_checkout_prefs(state["session_id"]).get("pending_product_reference"):
             _close_pending_reference_batch(state["session_id"])
@@ -1652,6 +1669,15 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
             return {**state, "intent": {"intent": "PENDING_CHECKOUT_CHOICE", "pending_type": pending_type}}
     intent = classify_order_intent(state["user_message"], (pending or {}).get("type"))
     plain_intent = classify_order_intent(state["user_message"], None)
+    logger.debug(
+        "[OrderRouter] stage=%s pending=%s intent=%s source=%s",
+        prefs_before.get("flow_stage") or "BROWSING",
+        (pending or {}).get("type") or "none",
+        intent.get("intent"),
+        "structural_transaction" if transaction_turn else "positive_read_or_general",
+    )
+    if (pending or {}).get("type") == "fill_options" and intent.get("intent") == "FILL_OPTIONS":
+        return {**state, "intent": intent}
     voucher_command = _voucher_command(state["user_message"])
     if voucher_command:
         intent = voucher_command
@@ -1661,7 +1687,7 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     if (pending or {}).get("type") and plain_intent.get("intent") in {
         "CLEAR_CART", "REMOVE_ITEM", "SET_QUANTITY", "VIEW_CART",
         "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER",
-        "APPLY_VOUCHER", "REMOVE_VOUCHER", "REPLACE_VOUCHER", "PAYMENT_INFO",
+        "APPLY_VOUCHER", "REMOVE_VOUCHER", "REPLACE_VOUCHER", "PAYMENT_INFO", "EDIT_OPTIONS",
     }:
         intent = plain_intent
     if intent.get("intent") in {"SELECT_FULFILLMENT", "SELECT_PAYMENT"}:
@@ -1766,7 +1792,7 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         and (prefs.get("checkout_requested") or pending_type == "confirm_address")
     ):
         return {**state, "intent": {"intent": "LOCATION_QUERY", "location_kind": location.kind}}
-    if intent.get("intent") == "BROWSING" and not re.search(r"\b(?:co|xem|tim|goi y|menu|gia|the nao|khong)\b", _norm(state["user_message"])):
+    if intent.get("intent") in {"BROWSING", "UNKNOWN"} and not re.search(r"\b(?:co|xem|tim|goi y|menu|gia|the nao|khong)\b", _norm(state["user_message"])):
         named_rows = _cart_rows_named_in_message(state.get("cart") or {}, state["user_message"])
         if len(named_rows) == 1:
             return {**state, "intent": {"intent": "CART_TARGET_CLARIFY", "cart_row": named_rows[0]}}
@@ -1840,15 +1866,28 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     if (pending or {}).get("type") == "clear_cart" and re.search(r"\b(dong y|xac nhan|ok|oke)\b", _norm(state["user_message"])):
         intent = {"intent": "CLEAR_CART", "confirmed": True}
     if (pending or {}).get("type") == "edit_cart_item":
-        if re.search(
+        params = (pending.get("params") or pending.get("data") or {})
+        resume_edit = bool(re.search(
+            r"\b(cap nhat|lam|tien hanh|sua)\b.*\b(di|nhe|luon)?\b",
+            _norm(state["user_message"]),
+        ))
+        if has_cart_edit_action(state["user_message"]) or re.search(
             r"\b(size|nho|vua|lon|topping|toping|hat|foam|tran chau|sua|da|ngot|duong|mac dinh)\b",
             _norm(state["user_message"]),
-        ):
-            intent = {"intent": "EDIT_OPTIONS"}
+        ) or (resume_edit and (params.get("requested_patch") or params.get("requested_option_text"))):
+            intent = {"intent": "EDIT_OPTIONS", "resume_pending_edit": resume_edit}
+        elif plain_intent.get("intent") in {
+            "ADD_ITEM", "REMOVE_ITEM", "CLEAR_CART", "SET_QUANTITY", "FINISH_CART",
+            "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER",
+            "APPLY_VOUCHER", "REMOVE_VOUCHER", "REPLACE_VOUCHER",
+        }:
+            # An explicit action in another business domain safely supersedes
+            # the unfinished edit. Read-only/unknown turns leave it intact.
+            cart_manager.clear_pending_action(state["session_id"])
     # “đổi tùy chọn của <món>” is an edit request even before the customer
     # names a particular topping.  Tier1 intentionally cannot infer this from
     # the generic phrase alone, while the graph can safely resolve its cart row.
-    if re.search(r"\b(doi|thay)\b.*\b(tuy chon|option|size|topping|toping|da|ngot|sua)\b", _norm(state["user_message"])):
+    if has_cart_edit_action(state["user_message"]):
         intent = {"intent": "EDIT_OPTIONS"}
     # A correction such as “ý tôi là Bánh Matcha 2 cái” continues the latest
     # concrete product discussion. It is an add, never a quantity edit of the
@@ -1960,6 +1999,35 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         logger.debug("routing route=CART_TARGET_CLARIFY operation=NONE target_source=cart_name candidate_count=1")
         return {**state, "result": {"reply": f"Mình đã xác định được {row.get('product_name')} trong giỏ. Bạn muốn sửa số lượng/tùy chọn, xoá món, thêm một phần nữa, hay giữ nguyên?",
                                    "checkout_payload": None, "tool_calls_log": [], "error": None}}
+    if kind == "TRANSACTION_AMBIGUOUS":
+        text = _norm(message)
+        cart_edit_words = bool(re.search(r"\b(sua|chinh|dieu chinh|cap nhat|doi|thay)\b", text))
+        rows = list(cart.get("items") or [])
+        if cart_edit_words and rows:
+            if len(rows) == 1:
+                line_id = _cart_line_id(rows[0])
+                cart_manager.set_pending_action(session_id, "edit_cart_item", {
+                    "operation": "EDIT_OPTIONS", "cart_item_id": line_id,
+                    "requested_option_text": None, "requested_patch": {}, "missing": "option",
+                })
+                reply = (f"Mình đang sửa {rows[0].get('product_name')}. "
+                         "Bạn muốn đổi size, topping, đá, độ ngọt hay sữa?")
+            else:
+                reply = _store_cart_line_choice(session_id, "EDIT_OPTIONS", "", rows)
+            return {**state, "result": {"reply": reply, "checkout_payload": None,
+                                         "tool_calls_log": [], "error": None}}
+        return {**state, "result": {
+            "reply": "Mình chưa rõ thao tác bạn muốn thực hiện. Bạn nói rõ món hoặc phần cần cập nhật nhé.",
+            "checkout_payload": None, "tool_calls_log": [], "error": None,
+        }}
+    if kind == "UNKNOWN":
+        stage = str(prefs.get("flow_stage") or "")
+        if stage == "CART_REVIEW" and not cart.get("is_empty"):
+            reply = "Mình chưa rõ bạn muốn thêm món, sửa/xoá món trong giỏ hay hoàn tất giỏ. Bạn nói giúp mình thao tác muốn làm nhé."
+        else:
+            reply = "Mình chưa hiểu yêu cầu. Bạn có thể nói rõ muốn xem menu, chọn món hay thao tác với giỏ hàng nhé."
+        return {**state, "result": {"reply": reply, "checkout_payload": None,
+                                     "tool_calls_log": [], "error": None}}
     if kind == "PENDING_CART_LINE":
         resolved = intent.get("resolved_pending") or {}
         if resolved.get("stale"):
@@ -1987,7 +2055,11 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
                 logs.append({"tool": "get_product_options", "result": option_result})
                 patch = desired
             if not patch:
-                cart_manager.set_pending_action(session_id, "edit_cart_item", {"cart_item_id": line_id})
+                cart_manager.set_pending_action(session_id, "edit_cart_item", {
+                    "operation": "EDIT_OPTIONS", "cart_item_id": line_id,
+                    "requested_option_text": resolved.get("requested_value"),
+                    "requested_patch": {}, "missing": "option_value",
+                })
                 return {**state, "result": {"reply": f"Bạn muốn đổi tùy chọn nào cho {item.get('product_name')}?",
                     "checkout_payload": None, "tool_calls_log": logs, "error": None}}
             changed = execute_update_cart_item(session_id, line_id, patch)
@@ -2006,6 +2078,12 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             reply_text += "\nBạn muốn thêm món, sửa/xoá món hay hoàn tất giỏ?"
         else:
             reply_text = changed.get("message", "Chưa thể cập nhật giỏ hàng.")
+            if operation == "EDIT_OPTIONS":
+                cart_manager.set_pending_action(session_id, "edit_cart_item", {
+                    "operation": "EDIT_OPTIONS", "cart_item_id": line_id,
+                    "requested_option_text": resolved.get("requested_value"),
+                    "requested_patch": patch, "missing": "retry",
+                })
         return {**state, "result": {"reply": reply_text, "checkout_payload": None,
             "tool_calls_log": logs, "error": None}}
     if kind in {"PENDING_REPLY", "PENDING_AMBIGUOUS", "PENDING_BRANCH"}:
@@ -2198,7 +2276,8 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         # A follow-up such as "thêm ngọt" contains an add verb but belongs to
         # the cart row that was explicitly selected one turn earlier.
         pending = cart_manager.get_pending_action(session_id) or {}
-        target_id = str(((pending.get("params") or pending.get("data") or {}).get("cart_item_id")) or "")
+        pending_params = pending.get("params") or pending.get("data") or {}
+        target_id = str((pending_params.get("cart_item_id")) or "")
         item = next((row for row in (cart.get("items") or []) if _cart_line_id(row) == target_id), None)
         error = None
         if not item:
@@ -2210,10 +2289,23 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             return {**state, "result": {"reply": error, "checkout_payload": None, "tool_calls_log": [], "error": None}}
         line_id = str(item.get("cart_item_id") or item.get("line_id"))
         cart_manager.set_checkout_context(session_id, last_cart_focus=line_id, flow_stage="CART_REVIEW")
-        desired, option_result = _resolve_cart_option_update(item, message)
-        option_log = {"tool": "get_product_options", "args": {"product_name": item.get("product_name")}, "result": option_result}
+        requested_text = message
+        desired = dict(pending_params.get("requested_patch") or {}) if intent.get("resume_pending_edit") else {}
+        if intent.get("resume_pending_edit") and pending_params.get("requested_option_text"):
+            requested_text = str(pending_params["requested_option_text"])
+        option_logs: List[Dict[str, Any]] = []
+        if desired:
+            option_result = {"status": "ok", "options": {}}
+        else:
+            desired, option_result = _resolve_cart_option_update(item, requested_text)
+            option_logs.append({"tool": "get_product_options", "args": {
+                "product_name": item.get("product_name")}, "result": option_result})
         if not desired:
-            cart_manager.set_pending_action(session_id, "edit_cart_item", {"cart_item_id": line_id})
+            cart_manager.set_pending_action(session_id, "edit_cart_item", {
+                "operation": "EDIT_OPTIONS", "cart_item_id": line_id,
+                "requested_option_text": requested_text if requested_text != message or has_cart_edit_action(message) else None,
+                "requested_patch": {}, "missing": "option_value",
+            })
             groups = option_result.get("options") or {}
             rendered = "; ".join(
                 f"{name}: {', '.join(str(value) for value in values)}"
@@ -2224,9 +2316,9 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
                 f"(size hiện tại: {item.get('size') or 'mặc định'})?"
                 + (f" Các lựa chọn hợp lệ: {rendered}." if rendered else "")
             )
-            return {**state, "result": {"reply": reply, "checkout_payload": None, "tool_calls_log": [option_log], "error": None}}
+            return {**state, "result": {"reply": reply, "checkout_payload": None, "tool_calls_log": option_logs, "error": None}}
         changed = execute_update_cart_item(session_id, line_id, desired)
-        logs = [option_log, {"tool": "update_cart_item", "args": {"cart_item_id": line_id, "desired_state": desired}, "result": changed}]
+        logs = option_logs + [{"tool": "update_cart_item", "args": {"cart_item_id": line_id, "desired_state": desired}, "result": changed}]
         if changed.get("status") == "ok":
             cart_manager.clear_pending_action(session_id)
             cart_manager.set_checkout_context(session_id, last_cart_focus=line_id, flow_stage="CART_REVIEW")
@@ -2235,6 +2327,10 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             reply += "\nBạn muốn thêm, sửa, xoá món hay hoàn tất giỏ?"
         else:
             reply = changed.get("message", "Chưa thể cập nhật tùy chọn món.")
+            cart_manager.set_pending_action(session_id, "edit_cart_item", {
+                "operation": "EDIT_OPTIONS", "cart_item_id": line_id,
+                "requested_option_text": requested_text, "requested_patch": desired, "missing": "retry",
+            })
         return {**state, "result": {"reply": reply, "checkout_payload": None, "tool_calls_log": logs, "error": None}}
     if kind == "CLEAR_CART":
         pending = cart_manager.get_pending_action(session_id)
@@ -2518,6 +2614,11 @@ def _render(state: OrderConversationState) -> OrderConversationState:
         r"\bda\s+(?:dieu chinh|cap nhat|xoa|bo|thay doi)\b.*\b(?:gio|gio hang|mon|so luong|topping|size)\b",
         reply_norm,
     ))
+    promises_cart_mutation = bool(re.search(
+        r"\b(?:minh|toi)\s+(?:se|dang)\s+(?:tien hanh\s+)?(?:sua|cap nhat|them|xoa|bo|thay doi)\b"
+        r".*\b(?:gio|gio hang|mon|so luong|topping|size)\b",
+        reply_norm,
+    ))
     mutation_tools = {"add_to_cart", "update_cart_item", "remove_cart_item", "clear_cart"}
     has_mutation_evidence = any(
         isinstance(entry, dict)
@@ -2531,7 +2632,9 @@ def _render(state: OrderConversationState) -> OrderConversationState:
     if has_mutation_evidence and any(entry.get("tool") == "add_to_cart" for entry in logs) and not re.search(r"\b(chua|can hoan tat|khong the)\b", reply_norm):
         cart_manager.set_pending_products(state["session_id"], [])
         cart_manager.set_pending_action(state["session_id"], "ask_more_items", {})
-    if claims_cart_mutation and not has_mutation_evidence:
+    typed_pending = cart_manager.get_pending_action(state["session_id"]) or {}
+    owns_pending_mutation = typed_pending.get("type") in {"edit_cart_item", "cart_line_choice", "fill_options", "clear_cart"}
+    if (claims_cart_mutation and not has_mutation_evidence) or (promises_cart_mutation and not owns_pending_mutation):
         try:
             from src.function_calling.tools.cart_tools import execute_get_cart_quote
             quote = execute_get_cart_quote(state["session_id"])

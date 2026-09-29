@@ -50,6 +50,77 @@ BASE_YES = {"ok", "oke", "dongy", "xacnhan", "chot", "yes", "tieptuc"}
 BASE_NO = {"khong", "thoi", "no", "khoan", "ko", "hong", "hem"}
 BASE_FILLER = {"nha", "nhe", "di", "luon", "a", "voi", "ne", "oi", "roi"}
 
+
+def has_positive_browsing_evidence(text: str) -> bool:
+    """Return true only for an explicitly read-only catalog/product request."""
+    norm = normalize_confirmation_text(text)
+    if re.search(r"\b(voucher|ma giam gia|ap dung ma|bo ma)\b", norm):
+        return False
+    read_action = bool(re.search(
+        r"\b(xem|tim|goi y|tu van|hien thi|cho biet|review|danh gia|so sanh|menu)\b",
+        norm,
+    ))
+    read_question = bool(re.search(
+        r"\b(co|gia|vi|topping|toping|size|thanh phan)\b.*\b(gi|nao|bao nhieu|the nao|khong)\b",
+        norm,
+    ))
+    catalog_object = bool(re.search(
+        r"\b(menu|mon|san pham|banh|nuoc|do uong|ca phe|coffee|tra|matcha|topping|toping|size|gia|vi)\b",
+        norm,
+    ))
+    return catalog_object and (read_action or read_question)
+
+
+def has_option_evidence(text: str) -> bool:
+    raw = str(text or "").lower()
+    norm = normalize_confirmation_text(text)
+    return bool(re.search(
+        r"\b(size|kich thuoc|kich co|nho|vua|lon|topping|toping|do kem|da|ngot|duong|loai sua|milk)\b",
+        norm,
+    )) or "sữa" in raw
+
+
+def has_cart_edit_action(text: str) -> bool:
+    """Recognize composable cart-option edit shapes, independent of menu values."""
+    raw = str(text or "")
+    norm = normalize_confirmation_text(raw)
+    raw_lower = raw.lower()
+    unaccented_sua = bool(re.search(r"\bsua\b", norm)) and "sữa" not in raw_lower
+    explicit_edit = unaccented_sua or bool(re.search(r"\b(chinh|dieu chinh|cap nhat|doi|thay)\b", norm))
+    new_product_add = bool(re.search(r"\bthem\s+(?:cho\s+toi\s+)?(?:mon|san pham|banh|nuoc|do uong)\b", norm))
+    option_adjustment = (
+        bool(re.search(r"\b(bot|bo|them|cho)\b", norm))
+        and has_option_evidence(raw)
+        and not new_product_add
+    )
+    existing_item_add = bool(
+        re.search(r"\bthem\b", norm)
+        and re.search(r"\bthem\b.+\b(?:vao|cho)\s+mon\b|\bmon\b.*\bthem\b", norm)
+    )
+    transformation = bool(re.search(r"\bcho\b.+\b(?:thanh|them)\b", norm)) and has_option_evidence(raw)
+    return (explicit_edit and has_option_evidence(raw)) or option_adjustment or existing_item_add or transformation
+
+
+def has_transaction_evidence(text: str) -> bool:
+    """Detect business-action language so it cannot fall through to browsing."""
+    norm = normalize_confirmation_text(text)
+    if has_positive_browsing_evidence(norm):
+        return False
+    if has_cart_edit_action(norm):
+        return True
+    return bool(re.search(
+        r"\b(sua|chinh|dieu chinh|cap nhat|xoa|huy|bo|doi|thay|them|mua|dat|chot|thanh toan|giao|lay tai quan|ap dung)\b",
+        norm,
+    ))
+
+
+def _is_general_chat(text: str) -> bool:
+    norm = normalize_confirmation_text(text)
+    return bool(re.search(
+        r"\b(xin chao|chao|hello|hi|cam on|thank|hom nay|troi|nong|lanh|khoe|tam biet)\b",
+        norm,
+    )) or norm in {"ok", "oke", "uh", "u", "duoc", "hay qua"} or bool(re.search(r"\bxu ly\b", norm))
+
 def classify_confirmation(text: str, pending_type: Optional[str]) -> Literal["YES", "NO", "AMBIGUOUS", "NONE"]:
     norm_text = normalize_confirmation_text(text)
     if not norm_text:
@@ -168,6 +239,14 @@ def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict
         r"\b(xem|goi y|hien thi|tim|cho biet)\b.*\b(them|cac mon|mon nao)\b",
         norm,
     ))
+    # Read-only wording owns shared option nouns. For example, "xem topping"
+    # asks about metadata while "đổi topping" requests a cart mutation.
+    if has_positive_browsing_evidence(raw):
+        return {"intent": "BROWSING"}
+    # Resolve option edits before the generic add/remove verbs. Vietnamese
+    # commonly says "thêm ngọt" or "bỏ topping" for an existing cart row.
+    if has_cart_edit_action(raw):
+        return {"intent": "EDIT_OPTIONS"}
     # "Tôi muốn mua bánh và nước" is a request to browse two menu families,
     # not an attempt to add an unnamed product.  Keep it on the deterministic
     # catalog path so the next turn can safely use category ordinals.
@@ -254,8 +333,6 @@ def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict
         norm,
     ):
         return {"intent": "FINISH_CART"}
-    if re.search(r"\b(thay|doi)\b.*\b(size|topping|toping|da|ngot|sua|mon)\b", norm):
-        return {"intent": "EDIT_OPTIONS"}
     # "đúng" normalizes to "dung".  A bare "dùng/đúng" is not voucher
     # intent, especially in requests such as "hiển thị đúng các món Matcha".
     # Require a voucher object or the complete action phrase instead.
@@ -271,4 +348,8 @@ def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict
         return {"intent": "ORDER_HISTORY"}
     if classify_confirmation(raw, pending_type) == "YES":
         return {"intent": "CONFIRM_CHECKOUT"}
-    return {"intent": "BROWSING"}
+    if _is_general_chat(raw):
+        return {"intent": "GENERAL_CHAT"}
+    if has_transaction_evidence(raw):
+        return {"intent": "TRANSACTION_AMBIGUOUS"}
+    return {"intent": "UNKNOWN"}
