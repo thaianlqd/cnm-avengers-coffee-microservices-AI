@@ -29,6 +29,7 @@ from src.agents.tier1 import (
 )
 from src.agents.payment_intent import wallet_payment_evidence
 from src.agents.catalog_constraints import extract_catalog_search_text, parse_catalog_constraints
+from src.agents.shopping_language import interpret_shopping, is_family_only, shopping_quantity
 from src.common import cart_manager
 
 logger = logging.getLogger(__name__)
@@ -82,6 +83,20 @@ def _menu_search_specs(message: str) -> List[Dict[str, str]]:
     text = _norm(message)
     if not text:
         return []
+
+    # Simple family questions share the shopping interpreter's category and
+    # canonical search term. Keep the existing branch splitter below for
+    # compound alternatives and mixed food/drink requests.
+    family_meaning = interpret_shopping(message)
+    if (family_meaning.act == "BROWSE_FAMILY"
+            and not re.search(r"\b(?:hoac|hay|va|voi)\b", text)
+            and family_meaning.category
+            and is_family_only(message, family_meaning.family)):
+        spec = {"category": family_meaning.category,
+                "label": family_meaning.label or "thực đơn"}
+        if family_meaning.search_text:
+            spec["search_text"] = family_meaning.search_text
+        return [spec]
 
     # A full mooncake name in an existence question is a concrete product
     # lookup. Let `_answer_product_existence` handle it and establish focus;
@@ -474,30 +489,6 @@ def _resolve_cart_line(cart: Dict[str, Any], message: str) -> tuple[Optional[Dic
     return None, "Mình cần biết đúng dòng món cần sửa vì giỏ có nhiều biến thể:\n" + numbered
 
 
-def _message_names_suggested_product(message: str, product_name: str) -> bool:
-    """Match a complete title or a meaningful title phrase from a shown item.
-
-    Customers routinely omit a trailing brand word (for example, they say
-    "cà phê muối" after seeing "Cà Phê Muối Avenger").  A two-word fragment
-    can still be a menu family, so abbreviated matching requires at least
-    three consecutive title words.  The caller also requires one unique
-    matching snapshot item before it can become a cart target.
-    """
-    text = _norm(message)
-    title = _norm(product_name).strip()
-    if not title:
-        return False
-    if re.search(r"(?<!\w)" + re.escape(title) + r"(?!\w)", text):
-        return True
-    tokens = re.findall(r"\w+", title)
-    for size in range(len(tokens) - 1, 2, -1):
-        for start in range(0, len(tokens) - size + 1):
-            phrase = " ".join(tokens[start:start + size])
-            if re.search(r"(?<!\w)" + re.escape(phrase) + r"(?!\w)", text):
-                return True
-    return False
-
-
 def _resolve_suggested_product(session_id: str, message: str) -> Optional[Dict[str, Any]]:
     """Resolve an ordinal or uniquely named item from the latest snapshot."""
     suggestions = list(cart_manager.get_checkout_prefs(session_id).get("last_product_suggestions") or [])
@@ -506,9 +497,8 @@ def _resolve_suggested_product(session_id: str, message: str) -> Optional[Dict[s
     ordinal_refs, invalid, requested = _resolve_product_ordinals(session_id, message)
     if requested:
         return ordinal_refs[0] if not invalid and len(ordinal_refs) == 1 else None
-    named = [row for row in suggestions
-             if _message_names_suggested_product(message, str(row.get("product_name") or ""))]
-    return named[0] if len(named) == 1 else None
+    meaning = interpret_shopping(message, snapshot=suggestions)
+    return meaning.targets[0] if len(meaning.targets) == 1 else None
 
 
 def _unresolved_product_reference(session_id: str, message: str) -> bool:
@@ -922,23 +912,7 @@ def _prepare_structured_products(
 
 
 def _extract_add_quantity(message: str) -> int:
-    text = _norm(message)
-    match = (
-        re.search(r"(?:so luong|sl)\s*(?:la)?\s*(\d+)", text)
-        or re.search(r"\b(\d+)\s*(?:cai|ly|phan|mon)\b", text)
-        or re.search(r"\bthem\s+(\d+)\b", text)
-    )
-    if match:
-        return max(1, int(match.group(1)))
-    word_match = re.search(
-        r"\b(mot|hai|ba|bon|tu|nam|sau|bay|tam|chin|muoi)\s*(?:cai|ly|phan|mon)\b",
-        text,
-    )
-    word_values = {
-        "mot": 1, "hai": 2, "ba": 3, "bon": 4, "tu": 4, "nam": 5,
-        "sau": 6, "bay": 7, "tam": 8, "chin": 9, "muoi": 10,
-    }
-    return word_values[word_match.group(1)] if word_match else 1
+    return shopping_quantity(message)
 
 
 def _turn_operation_base(state: OrderConversationState) -> Optional[str]:
@@ -1556,6 +1530,10 @@ def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
     return reply(found.get("message") or "Mình chưa tìm được cửa hàng lúc này. Bạn thử lại nhé.", logs)
 
 
+class _UnavailableProductTargets(list):
+    """Empty identity result caused by a provider failure, not an empty menu."""
+
+
 def _load_active_product_targets() -> List[Dict[str, Any]]:
     """Read identity only; generic shopping text is never an exact-price query."""
     import os
@@ -1575,67 +1553,68 @@ def _load_active_product_targets() -> List[Dict[str, Any]]:
         return [{"product_id": row[0], "product_name": row[1],
                  "category": _map_db_category_to_bucket(row[2], row[3])} for row in rows]
     except Exception:
-        return []
+        return _UnavailableProductTargets()
 
 
-def _resolve_ask_more_targets(session_id: str, message: str) -> List[Dict[str, Any]]:
-    """Accept tool-written references or canonical catalog identities, never a verb tail."""
-    message = re.sub(r"\s+", " ", message).strip()
-    refs = _resolve_structured_references(session_id, message) or []
-    requested = _requested_ordinal_categories(message)
-    if requested and not requested.issubset({ref.get("category") for ref in refs}):
+def _resolve_ask_more_targets(session_id: str, message: str,
+                              interpretation_out: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    """Resolve canonical targets using the single shopping language contract."""
+    prefs = cart_manager.get_checkout_prefs(session_id)
+    ordinals, invalid, requested = _resolve_product_ordinals(session_id, message)
+    if requested and invalid:
         return []
-    if not refs:
-        suggested = _resolve_suggested_product(session_id, message)
-        product_clause = re.split(r"\b(?:so luong|sl)\b", _norm(message), maxsplit=1)[0]
-        ordinal = re.search(r"\b(?:so|thu|#)\s*\d+\b|\b(?:mon|banh|nuoc|do uong|san pham)\s+(?:(?:[a-z]{1,3}|#)\s+)?\d+\b", product_clause)
-        if suggested and (ordinal or _message_names_suggested_product(
-                message, str(suggested.get("product_name") or ""))):
-            refs = [suggested]
-    if not refs and not requested:
-        prefs = cart_manager.get_checkout_prefs(session_id)
-        named_snapshot = [item for rows in (prefs.get("product_suggestion_snapshots") or {}).values()
-                          for item in rows if item.get("product_id") and item.get("product_name")
-                          and re.search(r"(?<!\w)" + re.escape(_norm(item["product_name"])) + r"(?!\w)", _norm(message))]
-        if len({str(item["product_id"]) for item in named_snapshot}) == 1:
-            refs = [named_snapshot[0]]
-        if not refs:
-            focus = prefs.get("last_product_focus") or {}
-            normalized = _norm(message)
-            add_followup = re.search(r"\b(?:them|lay)\s+cho\s+(?:toi|minh)\b", normalized)
-            if add_followup and focus.get("product_id") and focus.get("product_name"):
-                tail = normalized[add_followup.end():]
-                tail = re.sub(r"\b(?:di|nhe|nha|voi|vao|gio|hang|so luong|sl|cai|ly|phan)\b|\d+", " ", tail)
-                if not tail.strip():
-                    refs = [focus]
-    if requested and not requested.issubset({ref.get("category") for ref in refs}):
+    structured = _resolve_structured_references(session_id, message) or []
+    snapshot = list(prefs.get("last_product_suggestions") or [])
+    seen_snapshot_ids = {str(row.get("product_id")) for row in snapshot}
+    for rows in (prefs.get("product_suggestion_snapshots") or {}).values():
+        for row in rows:
+            identity = str(row.get("product_id") or "")
+            if identity and identity not in seen_snapshot_ids:
+                snapshot.append(row)
+                seen_snapshot_ids.add(identity)
+    meaning = interpret_shopping(message, snapshot=snapshot,
+                                 ordinal_targets=structured or ordinals,
+                                 ordinal_requested=bool(requested), ordinal_invalid=bool(invalid),
+                                 focus=structured[0] if len(structured) == 1 else None)
+    if interpretation_out is not None:
+        interpretation_out["meaning"] = meaning
+    if meaning.targets:
+        return list(meaning.targets)
+    if meaning.ambiguity or requested:
         return []
-    refs = [ref for ref in refs if ref.get("product_id") and str(ref.get("product_name") or "").strip()]
-    if refs:
-        if re.search(r"\b(?:so|thu|#)\s*\d+\b|\b(?:mon|banh|nuoc)\s+[a-z]{1,3}\s+\d+\b", _norm(message)):
-            logger.debug("routing route=ADD_ITEM operation=ADD target_source=recommendation_ordinal candidate_count=%d", len(refs))
-        return refs
-    from src.agents.pending_context import has_shopping_topic
-    if not has_shopping_topic(message):
-        return []
+    # A focused elliptical continuation remains owned by the existing pending
+    # context. It must not turn a new family question into an implicit add.
+    focus = prefs.get("last_product_focus") or {}
     normalized = _norm(message)
-    # A failed ordinal cannot be reinterpreted as a catalog product id/name.
-    product_clause = re.split(r"\b(?:so luong|sl)\b", normalized, maxsplit=1)[0]
-    if re.search(r"\b(?:so|thu|#)\s*\d+\b|\b(?:mon|banh|nuoc|do uong|san pham)\s+(?:(?:[a-z]{1,3}|#)\s+)?\d+\b", product_clause):
+    add_followup = re.search(r"\b(?:them|lay)\s+cho\s+(?:toi|minh)\b", normalized)
+    if add_followup and focus.get("product_id") and focus.get("product_name"):
+        tail = normalized[add_followup.end():]
+        tail = re.sub(r"\b(?:di|nhe|nha|voi|vao|gio|hang|so luong|sl|cai|ly|phan)\b|\d+", " ", tail)
+        if not tail.strip():
+            return [focus]
+    from src.agents.pending_context import has_shopping_topic
+    bare_family = (meaning.act == "BROWSE_FAMILY" and
+                   is_family_only(message, meaning.family))
+    if bare_family or meaning.act == "NOT_APPLICABLE" or not has_shopping_topic(message):
         return []
-    matched = []
-    for product in _load_active_product_targets():
-        name = _norm(product.get("product_name")).strip()
-        pid = str(product.get("product_id") or "").strip()
-        named = name and re.search(r"(?<!\w)" + re.escape(name) + r"(?!\w)", normalized)
-        identified = pid and re.search(r"\b(?:product id|ma san pham|id)\s*[:#]?\s*" + re.escape(pid.lower()) + r"(?!\w)", normalized)
-        if pid and name and (named or identified):
-            matched.append(product)
-    # Prefer full names over their shorter catalog prefixes.
-    return [ref for ref in matched if not any(
-        ref is not other and _norm(ref["product_name"]) in _norm(other["product_name"])
-        and len(ref["product_name"]) < len(other["product_name"]) for other in matched
-    )]
+    # Only identity rows enter this pure resolver. No price or write decision
+    # is inferred from the catalog lookup.
+    active_catalog = _load_active_product_targets()
+    if isinstance(active_catalog, _UnavailableProductTargets):
+        if interpretation_out is not None:
+            interpretation_out["catalog_unavailable"] = True
+        return []
+    explicit_id = re.search(r"\b(?:product id|mã sản phẩm|ma san pham|id)\s*[:#]?\s*([\w-]+)\b",
+                            message, re.IGNORECASE)
+    if explicit_id:
+        matches = [row for row in active_catalog
+                   if str(row.get("product_id") or "") == explicit_id[1]]
+        return matches if len(matches) == 1 else []
+    catalog_meaning = interpret_shopping(message, snapshot=snapshot,
+                                         active_catalog=active_catalog)
+    if interpretation_out is not None:
+        interpretation_out["meaning"] = catalog_meaning
+    return list(catalog_meaning.targets)
 
 
 def _resolve_focused_add_target(session_id: str, message: str) -> Optional[Dict[str, Any]]:
@@ -1667,6 +1646,9 @@ def _category_search_message(message: str) -> Optional[str]:
     """Locate a menu family within a shopping sentence; use the existing catalog parser."""
     if _menu_search_specs(message):
         return message
+    meaning = interpret_shopping(message)
+    if meaning.act == "BROWSE_FAMILY" and is_family_only(message, meaning.family):
+        return message
     normalized = _norm(message)
     if not re.search(r"\b(?:them|mua|lay|chon)\b", normalized):
         return None
@@ -1679,51 +1661,43 @@ def _category_search_message(message: str) -> Optional[str]:
 
 def _is_direct_product_selection(message: str, refs: List[Dict[str, Any]]) -> bool:
     """Recognize selection language around a canonical product from the latest list."""
-    text = _norm(message)
-    if not refs or not text:
-        return False
-    if re.search(
-        r"\b(?:xem|tim|goi y|review|danh gia|nhan xet|gia|bao nhieu|vi|ngon|"
-        r"thanh phan|topping|size|the nao)\b|\bco\b.*\b(?:khong|nao|gi)\b",
-        text,
-    ):
-        return False
-    if re.search(
-        r"\b(?:khong lay|khong mua|khong them|bo|xoa|huy|sua|doi|chinh|cap nhat)\b",
-        text,
-    ):
-        return False
-    if re.search(r"\b(?:them|mua|lay|chon|dat)\b|\bcho\s+(?:toi|minh)\b", text):
-        return True
-    if re.search(
-        r"(?<!\w)-?\d+\s*(?:cai|ly|phan|mon)\b|"
-        r"\b(?:mot|hai|ba|bon|tu|nam|sau|bay|tam|chin|muoi)\s*(?:cai|ly|phan|mon)\b|"
-        r"\b(?:so luong|sl)\b",
-        text,
-    ):
-        return True
-
-    # The UI explicitly accepts a bare name. Allow only title words and
-    # conversational fillers so a descriptive statement cannot mutate cart.
-    title_words = {
-        word for ref in refs for word in re.findall(r"\w+", _norm(ref.get("product_name")))
-    }
-    message_words = set(re.findall(r"\w+", text))
-    fillers = set("mon cai ly phan di nhe nha nhen ban b oi a voi cho toi minh".split())
-    meaningful = message_words - fillers
-    return bool(meaningful) and meaningful.issubset(title_words)
+    return bool(refs) and interpret_shopping(message, snapshot=refs).act == "ADD_ITEM"
 
 
-def _shopping_decision(state: OrderConversationState, tier1_intent: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def _shopping_decision(state: OrderConversationState, tier1_intent: Dict[str, Any],
+                       refs: Optional[List[Dict[str, Any]]] = None,
+                       interpretation: Optional[Any] = None,
+                       catalog_unavailable: bool = False) -> Optional[Dict[str, Any]]:
     """One evidence-based shopping route for pending and ordinary turns."""
     from src.agents.pending_context import classify_pending_reply, looks_like_catalog_query
     message, session_id = state["user_message"], state["session_id"]
-    refs = _resolve_ask_more_targets(session_id, message)
+    prefs = cart_manager.get_checkout_prefs(session_id)
+    meaning = interpretation or interpret_shopping(
+        message, snapshot=prefs.get("last_product_suggestions") or [])
+    logger.debug("[ShoppingUnderstand] act=%s entity_type=%s entity_source=%s candidate_count=%d "
+                 "quantity=%d category=%s family=%s read_only=%s",
+                 meaning.act, meaning.entity_type, meaning.reference_source,
+                 len(meaning.targets or meaning.ambiguity), meaning.quantity,
+                 meaning.category, meaning.family, meaning.read_only)
+    refs = refs if refs is not None else _resolve_ask_more_targets(session_id, message)
     if not refs:
         focused = _resolve_focused_add_target(session_id, message)
         refs = [focused] if focused else []
     category_query = _category_search_message(message)
     question = bool(re.search(r"\b(?:co|xem|tim|goi y|menu|thuc don)\b", _norm(message)))
+    if meaning.act == "AMBIGUOUS" and meaning.ambiguity:
+        return {"intent": "SHOPPING_CLARIFY", "semantic_intent": "AMBIGUOUS",
+                "target_kind": "PRODUCT", "candidate_products": list(meaning.ambiguity)}
+    if (catalog_unavailable and not refs and meaning.act == "UNKNOWN" and not question
+            and not re.search(r"\b(?:va|voi|hoac|hay)\b", _norm(message))
+            and re.search(r"\b(?:mua|lay|them|dat)\b|\bcho\s+(?:toi|minh)\b", _norm(message))):
+        return {"intent": "SHOPPING_UNAVAILABLE", "semantic_intent": "CATALOG_UNAVAILABLE",
+                "target_kind": "NONE"}
+    if (not refs and meaning.act == "UNKNOWN" and category_query and not question
+            and not re.search(r"\b(?:va|voi|hoac|hay)\b", _norm(message))
+            and re.search(r"\b(?:mua|lay|them|dat)\b|\bcho\s+(?:toi|minh)\b", _norm(message))):
+        return {"intent": "SHOPPING_CLARIFY", "semantic_intent": "UNKNOWN_PRODUCT",
+                "target_kind": "NONE"}
     if category_query and (question or not refs):
         return {"intent": "BROWSING", "semantic_intent": "BROWSE_CATEGORY",
                 "target_kind": "CATEGORY", "category_query": category_query}
@@ -1844,7 +1818,9 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     # Transaction language is arbitrated before catalog parsing. A missed
     # mutation grammar must never be reinterpreted as a product search.
     transaction_turn = has_transaction_evidence(state["user_message"])
-    initial_refs = _resolve_ask_more_targets(state["session_id"], state["user_message"])
+    shopping_interpretation: Dict[str, Any] = {}
+    initial_refs = _resolve_ask_more_targets(
+        state["session_id"], state["user_message"], shopping_interpretation)
     direct_product_selection = _is_direct_product_selection(state["user_message"], initial_refs)
     catalog_constraints = (None if transaction_turn or direct_product_selection or (
         active_pending and active_pending.get("type") != "ask_more_items"
@@ -2069,13 +2045,17 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     if ordinal_count and invalid_ordinals and not pending_type and not ordinal_review:
         return {**state, "intent": {"intent": "PRODUCT_ORDINAL_INVALID",
                                     "invalid_ordinals": invalid_ordinals}}
-    if ordinal_count and ordinal_products and not pending_type and not ordinal_review:
+    ordinal_meaning = interpret_shopping(
+        state["user_message"], ordinal_targets=ordinal_products,
+        ordinal_requested=bool(ordinal_count), ordinal_invalid=bool(invalid_ordinals))
+    if (ordinal_count and ordinal_products and not pending_type and not ordinal_review
+            and ordinal_meaning.act == "ADD_ITEM"):
         structured_products = _resolve_structured_references(
             state["session_id"], state["user_message"])
         return {**state, "intent": {"intent": "ADD_ITEM", "target_kind": "PRODUCT",
                                     "resolved_products": structured_products or ordinal_products,
                                     "quantity": _extract_add_quantity(state["user_message"])}}
-    direct_snapshot_refs = _resolve_ask_more_targets(state["session_id"], state["user_message"])
+    direct_snapshot_refs = initial_refs
     direct_snapshot_selection = _is_direct_product_selection(state["user_message"], direct_snapshot_refs)
     if intent.get("intent") in {"BROWSING", "UNKNOWN"} and not direct_snapshot_selection and not re.search(r"\b(?:co|xem|tim|goi y|menu|gia|the nao|khong)\b", _norm(state["user_message"])):
         named_rows = _cart_rows_named_in_message(state.get("cart") or {}, state["user_message"])
@@ -2090,8 +2070,14 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     if pending_type == "ask_more_items":
         if intent.get("intent") == "VIEW_CART":
             return {**state, "intent": intent}
+        pending_meaning = shopping_interpretation.get("meaning") or interpret_shopping(
+            state["user_message"], snapshot=prefs.get("last_product_suggestions") or [])
+        if pending_meaning.ambiguity:
+            return {**state, "intent": {"intent": "SHOPPING_CLARIFY",
+                "semantic_intent": "AMBIGUOUS", "target_kind": "PRODUCT",
+                "candidate_products": list(pending_meaning.ambiguity)}}
         from src.agents.pending_context import looks_like_catalog_query
-        refs = _resolve_ask_more_targets(state["session_id"], state["user_message"])
+        refs = direct_snapshot_refs
         if not refs:
             focused = _resolve_focused_add_target(state["session_id"], state["user_message"])
             refs = [focused] if focused else []
@@ -2126,7 +2112,8 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     # Pending decisions are context. A clear shopping request can change course
     # without answering the old voucher/summary question.
     if pending_type in {"select_voucher", "confirm_checkout"} and not prefs.get("checkout_submission"):
-        shopping = _shopping_decision(state, intent) if intent.get("intent") in {"ADD_ITEM", "BROWSING", "UNKNOWN"} else None
+        shopping = _shopping_decision(state, intent, direct_snapshot_refs,
+            shopping_interpretation.get("meaning"), bool(shopping_interpretation.get("catalog_unavailable"))) if intent.get("intent") in {"ADD_ITEM", "BROWSING", "UNKNOWN"} else None
         if shopping and shopping["intent"] in {"ADD_ITEM", "BROWSING", "SHOPPING_GENERIC", "SHOPPING_CLARIFY"}:
             return {**state, "intent": {**shopping, "resume_shopping": True}}
     if pending_type == "fill_options":
@@ -2180,7 +2167,8 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     # concrete product discussion. It is an add, never a quantity edit of the
     # previously focused cart line.
     if intent.get("intent") in {"ADD_ITEM", "BROWSING", "UNKNOWN"}:
-        shopping = _shopping_decision(state, intent)
+        shopping = _shopping_decision(state, intent, direct_snapshot_refs,
+            shopping_interpretation.get("meaning"), bool(shopping_interpretation.get("catalog_unavailable")))
         if shopping:
             intent = shopping
     return {**state, "intent": intent}
@@ -2433,10 +2421,17 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         cart_manager.set_checkout_context(session_id, summary_fingerprint=None,
             checkout_action_id=None, summary_amounts=None, checkout_requested=None,
             flow_stage="BROWSING")
+    if kind == "SHOPPING_UNAVAILABLE":
+        return {**state, "result": {"reply": "Mình chưa tra được danh mục món lúc này. Bạn thử lại sau ít phút nhé.",
+                                   "checkout_payload": None, "tool_calls_log": [], "error": None}}
     if kind in {"SHOPPING_GENERIC", "SHOPPING_CLARIFY"}:
         message_text = ("Bạn muốn xem thêm bánh hay đồ uống? Mình sẽ đưa menu để bạn chọn món cụ thể."
                         if kind == "SHOPPING_GENERIC" else
                         "Mình chưa xác định được món cụ thể. Bạn cho mình tên món hoặc chọn số trong danh sách nhé.")
+        candidates = intent.get("candidate_products") or []
+        if kind == "SHOPPING_CLARIFY" and candidates:
+            message_text = "Mình thấy nhiều món phù hợp. Bạn chọn đúng món giúp mình nhé:\n" + "\n".join(
+                f"{index}. {row['product_name']}" for index, row in enumerate(candidates, 1))
         return {**state, "result": {"reply": message_text, "checkout_payload": None,
                                    "tool_calls_log": [], "error": None}}
     if intent.get("pending_type") == "ask_more_items":
