@@ -13,6 +13,9 @@ import { VoucherService } from '../voucher/voucher.service';
 
 @Injectable()
 export class CartService {
+  private mutationOperationSchemaReady?: Promise<void>;
+  private cartMetadataSchemaReady?: Promise<void>;
+
   constructor(
     @InjectRepository(CartItem) private cartRepo: Repository<CartItem>,
     private readonly dataSource: DataSource,
@@ -82,34 +85,50 @@ export class CartService {
   }
 
   private async ensureMutationOperationTable() {
-    const schema = this.cartSchema();
-    await this.dataSource.query(`
-      CREATE TABLE IF NOT EXISTS "${schema}".cart_mutation_operation (
-        operation_id VARCHAR(200) PRIMARY KEY,
-        user_id VARCHAR NOT NULL,
-        operation_type VARCHAR(64) NOT NULL,
-        request_hash TEXT NOT NULL,
-        result JSONB NULL,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `);
-    await this.dataSource.query(
-      `ALTER TABLE "${schema}".cart_mutation_operation
-       ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
-    );
+    if (!this.mutationOperationSchemaReady) {
+      const schema = this.cartSchema();
+      const initialization = (async () => {
+        await this.dataSource.query(`
+          CREATE TABLE IF NOT EXISTS "${schema}".cart_mutation_operation (
+            operation_id VARCHAR(200) PRIMARY KEY,
+            user_id VARCHAR NOT NULL,
+            operation_type VARCHAR(64) NOT NULL,
+            request_hash TEXT NOT NULL,
+            result JSONB NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+          )
+        `);
+        await this.dataSource.query(
+          `ALTER TABLE "${schema}".cart_mutation_operation
+           ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
+        );
+      })();
+      this.mutationOperationSchemaReady = initialization.catch((error) => {
+        this.mutationOperationSchemaReady = undefined;
+        throw error;
+      });
+    }
+    return this.mutationOperationSchemaReady;
   }
 
   private async ensureCartMetadataTable() {
-    const schema = this.cartSchema();
-    await this.dataSource.query(`
-      CREATE TABLE IF NOT EXISTS "${schema}".cart_metadata (
-        user_id VARCHAR PRIMARY KEY,
-        cart_id VARCHAR(200) NOT NULL UNIQUE,
-        cart_version BIGINT NOT NULL DEFAULT 0,
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `);
+    if (!this.cartMetadataSchemaReady) {
+      const schema = this.cartSchema();
+      const initialization = this.dataSource.query(`
+        CREATE TABLE IF NOT EXISTS "${schema}".cart_metadata (
+          user_id VARCHAR PRIMARY KEY,
+          cart_id VARCHAR(200) NOT NULL UNIQUE,
+          cart_version BIGINT NOT NULL DEFAULT 0,
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `).then(() => undefined);
+      this.cartMetadataSchemaReady = initialization.catch((error) => {
+        this.cartMetadataSchemaReady = undefined;
+        throw error;
+      });
+    }
+    return this.cartMetadataSchemaReady;
   }
 
   /**
@@ -162,14 +181,10 @@ export class CartService {
       const existing = existingRows?.[0];
       if (existing) {
         if (existing.request_hash !== requestHash) {
-          throw new ConflictException(
-            'Idempotency key da duoc dung cho yeu cau khac',
-          );
+          throw new ConflictException({ code: 'CART_MUTATION_IDEMPOTENCY_CONFLICT', message: 'Idempotency key da duoc dung cho yeu cau khac' });
         }
         if (existing.result == null) {
-          throw new ConflictException(
-            'Cart mutation with this id is still being processed',
-          );
+          throw new ConflictException({ code: 'CART_MUTATION_IN_PROGRESS', message: 'Cart mutation with this id is still being processed' });
         }
         const stored =
           typeof existing.result === 'string'
@@ -197,14 +212,10 @@ export class CartService {
         );
         const raced = racedRows?.[0];
         if (!raced || raced.request_hash !== requestHash) {
-          throw new ConflictException(
-            'Idempotency key da duoc dung cho yeu cau khac',
-          );
+          throw new ConflictException({ code: 'CART_MUTATION_IDEMPOTENCY_CONFLICT', message: 'Idempotency key da duoc dung cho yeu cau khac' });
         }
         if (raced.result == null) {
-          throw new ConflictException(
-            'Cart mutation with this id is still being processed',
-          );
+          throw new ConflictException({ code: 'CART_MUTATION_IN_PROGRESS', message: 'Cart mutation with this id is still being processed' });
         }
         const stored =
           typeof raced.result === 'string'
@@ -553,14 +564,10 @@ export class CartService {
       const existing = existingRows?.[0];
       if (existing) {
         if (existing.request_hash !== requestHash) {
-          throw new ConflictException(
-            'Idempotency key da duoc dung cho yeu cau khac',
-          );
+          throw new ConflictException({ code: 'CART_MUTATION_IDEMPOTENCY_CONFLICT', message: 'Idempotency key da duoc dung cho yeu cau khac' });
         }
         if (existing.result == null) {
-          throw new ConflictException(
-            'Cart mutation with this id is still being processed',
-          );
+          throw new ConflictException({ code: 'CART_MUTATION_IN_PROGRESS', message: 'Cart mutation with this id is still being processed' });
         }
         const stored =
           typeof existing.result === 'string'
@@ -591,14 +598,10 @@ export class CartService {
         );
         const raced = racedRows?.[0];
         if (!raced || raced.request_hash !== requestHash) {
-          throw new ConflictException(
-            'Idempotency key da duoc dung cho yeu cau khac',
-          );
+          throw new ConflictException({ code: 'CART_MUTATION_IDEMPOTENCY_CONFLICT', message: 'Idempotency key da duoc dung cho yeu cau khac' });
         }
         if (raced.result == null) {
-          throw new ConflictException(
-            'Cart mutation with this id is still being processed',
-          );
+          throw new ConflictException({ code: 'CART_MUTATION_IN_PROGRESS', message: 'Cart mutation with this id is still being processed' });
         }
         const stored =
           typeof raced.result === 'string'

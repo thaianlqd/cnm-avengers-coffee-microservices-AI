@@ -16,6 +16,7 @@ agent_tools.py và cart_manager.py.
 import logging
 import re
 import unicodedata
+import uuid
 from typing import Any, Dict, List, Optional
 
 from src.common import cart_manager
@@ -1036,10 +1037,24 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
         cart_manager.clear_pending_action(session_id)
         return {"reply": "Mình cần bạn chọn lại món từ menu để xác minh đúng sản phẩm trước khi thêm vào giỏ.",
                 "checkout_payload": None, "tool_calls_log": [], "error": None}
+    # A pending cart write owns its operation identity before network I/O. This
+    # survives a lost response and prevents a later paraphrase from generating
+    # a second logical add.
+    identities_added = False
+    for item in pending:
+        if not item.get("operation_id"):
+            item["operation_id"] = f"ai:pending:{uuid.uuid4().hex}:add_cart_line:0"
+            identities_added = True
+    if identities_added:
+        cart_manager.set_pending_products(session_id, pending)
+    if not (cart_manager.get_pending_action(session_id) or {}).get("type"):
+        cart_manager.set_pending_action(session_id, "fill_options", {"count": len(pending)})
     normalized = _normalize_chat_text(message)
     option_terms = r"\b(size|nho|vua|lon|da|duong|ngot|sua|topping|hat|foam|tran chau|khong chon|mac dinh|theo cong thuc|khong can chinh|khong can chon them|giu nguyen)\b"
     from src.agents.option_state import mentions_pending_option_value
-    if not re.search(option_terms, normalized) and not mentions_pending_option_value(message, pending):
+    has_unknown_mutation = any(item.get("mutation_status") == "outcome_unknown" for item in pending)
+    if (not has_unknown_mutation and not re.search(option_terms, normalized)
+            and not mentions_pending_option_value(message, pending)):
         return None
 
     from src.function_calling.tools.product_tools import execute_check_price_and_stock
@@ -1052,6 +1067,7 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
     remaining: List[Dict[str, Any]] = []
     prepared: List[tuple] = []
     optional_open: List[str] = []
+    outcome_unknown: List[str] = []
     use_defaults = bool(re.search(
         r"\b(mac dinh|theo cong thuc|khong can chinh|khong can chon them|giu nguyen mac dinh)\b", normalized
     ))
@@ -1059,6 +1075,7 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
         product_name = str(item.get("product_name") or "")
         options = item.get("options") or {}
         selected: Dict[str, Any] = dict(item.get("selected_options") or {})
+        reconciliation_only = item.get("mutation_status") == "outcome_unknown"
         option_schema = item.get("option_schema") or option_schema_from_result({"options": options.get("groups") or {}})
         missing_required = []
         invalid_requested = []
@@ -1071,10 +1088,10 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
                 if group.get("required"):
                     missing_required.append(f"{name} ({', '.join(values)})")
                 continue
-            matches = [value for value in values if re.search(
+            matches = [] if reconciliation_only else [value for value in values if re.search(
                 r"(?<!\w)" + re.escape(_normalize_chat_text(value)) + r"(?!\w)", normalized
             )]
-            cleared_toppings = field == "toppings" and re.search(
+            cleared_toppings = not reconciliation_only and field == "toppings" and re.search(
                 r"\b(khong topping|bo topping|khong them topping)\b", normalized
             )
             explicit_group = {
@@ -1084,7 +1101,7 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
                 "do_ngot": r"\b(do ngot|ngot|duong|sweet)\b",
                 "loai_sua": r"\b(loai sua|milk)\b",
             }[field]
-            invalid_group = bool(re.search(explicit_group, normalized) and not matches and not cleared_toppings)
+            invalid_group = bool(not reconciliation_only and re.search(explicit_group, normalized) and not matches and not cleared_toppings)
             if invalid_group:
                 invalid_requested.append(f"{name} ({', '.join(values)})")
             if cleared_toppings:
@@ -1138,6 +1155,17 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
             "error": None,
         }
 
+    # Persist the exact configuration before the first POST. A process/network
+    # failure can therefore replay the same payload and operation on a later
+    # turn without reinterpreting the customer's words.
+    prepared = [
+        ({**item, "selected_options": selected,
+          "mutation_status": item.get("mutation_status") or "not_started"}, product_name, selected)
+        for item, product_name, selected in prepared
+    ]
+    cart_manager.set_pending_products(session_id, [item for item, _name, _selected in prepared])
+    cart_manager.set_pending_action(session_id, "fill_options", {"count": len(prepared)})
+
     for item, product_name, selected in prepared:
         price_result = execute_check_price_and_stock(
             product_name_query=product_name,
@@ -1179,8 +1207,15 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
         if add_result.get("status") == "ok":
             added.append(add_result)
         else:
-            not_ready.append(f"{product_name}: {add_result.get('message', 'chưa thêm được')}")
-            remaining.append({**item, "selected_options": selected})
+            mutation_status = add_result.get("status")
+            kept = {**item, "selected_options": selected,
+                    "operation_id": add_result.get("operation_id") or item.get("operation_id"),
+                    "mutation_status": mutation_status}
+            remaining.append(kept)
+            if mutation_status == "outcome_unknown":
+                outcome_unknown.append(product_name)
+            else:
+                not_ready.append(f"{product_name}: {add_result.get('message', 'chưa thêm được')}")
 
     cart_manager.set_pending_products(session_id, remaining)
     if not remaining:
@@ -1189,6 +1224,18 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
         except Exception as e:
             import logging
             logging.getLogger(__name__).warning("clear_pending_action fill_options failed: %s", e)
+    else:
+        cart_manager.set_pending_action(session_id, "fill_options", {"count": len(remaining),
+                                        "reconciliation": bool(outcome_unknown)})
+    if outcome_unknown:
+        return {
+            "reply": "Mình chưa xác nhận được kết quả cập nhật giỏ hàng. Mình vẫn giữ yêu cầu thêm "
+                     + ", ".join(outcome_unknown)
+                     + " và sẽ đối soát cùng thao tác trước khi thực hiện thêm lần nữa.",
+            "checkout_payload": None,
+            "tool_calls_log": logs,
+            "error": None,
+        }
     if not_ready:
         return {
             "reply": "Mình vẫn đang giữ các món bạn chọn. Cần hoàn tất thêm:\n- " + "\n- ".join(not_ready),

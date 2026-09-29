@@ -1558,6 +1558,27 @@ def _browse_ask_more(state: OrderConversationState) -> Dict[str, Any]:
 
 
 def _understand(state: OrderConversationState) -> OrderConversationState:
+    prefs_at_entry = cart_manager.get_checkout_prefs(state["session_id"])
+    staged_at_entry = list(prefs_at_entry.get("pending_products") or [])
+    pending_at_entry = cart_manager.get_pending_action(state["session_id"])
+    if pending_at_entry and pending_at_entry.get("type") == "fill_options" and not staged_at_entry:
+        cart_manager.clear_pending_action(state["session_id"])
+        return {**state, "intent": {"intent": "PENDING_AMBIGUOUS",
+                                    "pending_type": "fill_options", "repaired_orphan": True}}
+    if staged_at_entry and not pending_at_entry:
+        # Repair an older/orphaned checkpoint conservatively. Staged products
+        # have only one deterministic owner; no unrelated live pending action
+        # is overwritten here.
+        cart_manager.set_pending_action(state["session_id"], "fill_options", {
+            "count": len(staged_at_entry),
+            "reconciliation": any(item.get("mutation_status") == "outcome_unknown"
+                                  for item in staged_at_entry),
+        })
+        pending_at_entry = cart_manager.get_pending_action(state["session_id"])
+    if any(item.get("mutation_status") == "outcome_unknown" for item in staged_at_entry):
+        # Reconcile the persisted operation before interpreting this turn as a
+        # fresh add, browse request, or generic LLM question.
+        return {**state, "intent": {"intent": "FILL_OPTIONS", "reconciliation": True}}
     selected_id = str(state.get("selected_product_id") or "").strip()
     if selected_id:
         # The card supplies an identity hint, never business data. Resolve it
