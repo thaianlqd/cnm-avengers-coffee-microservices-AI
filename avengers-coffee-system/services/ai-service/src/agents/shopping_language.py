@@ -55,22 +55,25 @@ class ShoppingInterpretation:
     search_text: Optional[str] = None
     label: Optional[str] = None
     quantity: int = 1
+    quantity_valid: bool = True
     reference_source: Optional[str] = None
     ambiguity: Tuple[Product, ...] = ()
 
 
 def shopping_quantity(message: str) -> int:
     """One quantity interpretation for new shopping selections only."""
-    text = normalize_shopping(message)
-    number = r"(\d+|mot|hai|ba|bon|tu|nam|sau|bay|tam|chin|muoi)"
+    raw = unicodedata.normalize("NFD", str(message or "").casefold())
+    plain = "".join(char for char in raw if unicodedata.category(char) != "Mn").replace("đ", "d")
+    text = re.sub(r"\s+", " ", re.sub(r"[^\w#-]+", " ", plain)).strip()
+    number = r"(-?\d+|mot|hai|ba|bon|tu|nam|sau|bay|tam|chin|muoi)"
     match = (re.search(r"\b(?:so luong|sl)\s*(?:la\s*)?" + number + r"\b", text)
-             or re.search(r"\b" + number + r"\s*(?:cai|ly|phan|mon)\b", text)
+             or re.search(r"(?<!\w)" + number + r"\s*(?:cai|ly|phan|mon)\b", text)
              or re.search(r"\bthem\s+" + number + r"\b", text))
     if not match:
         return 1
     words = dict(zip("mot hai ba bon tu nam sau bay tam chin muoi".split(),
                      (1, 2, 3, 4, 4, 5, 6, 7, 8, 9, 10)))
-    return max(1, int(match[1]) if match[1].isdigit() else words[match[1]])
+    return int(match[1]) if re.fullmatch(r"-?\d+", match[1]) else words[match[1]]
 
 
 def _family(text: str) -> Optional[tuple[str, str, Optional[str], str]]:
@@ -127,7 +130,7 @@ def is_family_only(message: str, family_name: Optional[str]) -> bool:
     """Recognize a family plus speech frame, with no unaccounted product words."""
     if not family_name:
         return False
-    text = normalize_shopping(message)
+    text = re.sub(r"\bdat hang\b", "dat", normalize_shopping(message))
     phrases = next((row[4] for row in _FAMILIES if row[0] == family_name), ())
     for phrase in sorted(phrases, key=len, reverse=True):
         remainder, count = re.subn(r"\b" + re.escape(phrase) + r"\b", " ", text, count=1)
@@ -164,17 +167,20 @@ def interpret_shopping(
 ) -> ShoppingInterpretation:
     text = normalize_shopping(raw_text)
     quantity = shopping_quantity(raw_text)
-    base = {"raw_text": raw_text, "normalized_text": text, "quantity": quantity}
+    base = {"raw_text": raw_text, "normalized_text": text,
+            "quantity": quantity, "quantity_valid": quantity > 0}
     if not text:
         return ShoppingInterpretation(**base)
     if re.search(
-        r"\b(?:voucher|ma giam gia|thanh toan|checkout|chot don|dat hang|"
+        r"\b(?:voucher|ma giam gia|thanh toan|checkout|chot don|dat don|"
         r"giao hang|lay tai quan|chi nhanh|dia chi|lich su don|don hang|"
         r"xoa mon|bo mon|sua topping|doi so luong|tang so luong|giam so luong)\b",
         text,
     ):
         return ShoppingInterpretation(**base, act="NOT_APPLICABLE")
-    negative = bool(re.search(r"\b(?:khong\s+(?:lay|mua|them|chon)|dung\s+(?:them|mua|lay)|bo|huy)\b", text))
+    negative = bool(re.search(
+        r"\b(?:khong\s+(?:lay|mua|them|chon)|dung\s+(?:them|mua|lay)|"
+        r"bo\s+(?:mon|cai|san pham|qua|topping|size)|huy)\b", text))
     info = bool(re.search(r"\b(?:gia|bao nhieu|review|danh gia|nhan xet|ngon|vi|topping|size|thanh phan|the nao)\b", text)
                 or re.search(r"\bco\b.*\b(?:khong|nao|gi)\b", text)
                 or re.search(r"\b(?:xem|tim|goi y|menu|thuc don)\b", text))
@@ -228,4 +234,6 @@ def interpret_shopping(
             return ShoppingInterpretation(**base, act="BROWSE_FAMILY", entity_type=(
                 "CATEGORY" if family_name in {"food", "drink"} else "PRODUCT_FAMILY"),
                 category=category, family=family_name, search_text=search, label=label)
+    if re.search(r"\bdat hang\b", text):
+        return ShoppingInterpretation(**base, act="NOT_APPLICABLE")
     return ShoppingInterpretation(**base)

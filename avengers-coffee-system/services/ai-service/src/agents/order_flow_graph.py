@@ -84,6 +84,24 @@ def _menu_search_specs(message: str) -> List[Dict[str, str]]:
     if not text:
         return []
 
+    # Resolve two explicit drink families independently. The existing branch
+    # splitter already owns mixed food/drink and "hoặc/hay" requests.
+    joined = re.split(r"\b(?:va|voi)\b", text)
+    if len(joined) == 2:
+        families = [interpret_shopping(part.strip()) for part in joined]
+        if all(row.act == "BROWSE_FAMILY" and row.search_text
+               and is_family_only(part.strip(), row.family)
+               for part, row in zip(joined, families)):
+            specs: List[Dict[str, str]] = []
+            seen = set()
+            for row in families:
+                key = (row.category, _norm(row.search_text))
+                if key not in seen:
+                    seen.add(key)
+                    specs.append({"category": row.category, "label": row.label or "thực đơn",
+                                  "search_text": row.search_text})
+            return specs
+
     # Simple family questions share the shopping interpreter's category and
     # canonical search term. Keep the existing branch splitter below for
     # compound alternatives and mixed food/drink requests.
@@ -2133,6 +2151,27 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
             return {**state, "intent": {"intent": "PENDING_REPLY", "pending_type": "confirm_checkout", "decision": "CONFIRM"}}
     from src.agents.agent_service import _is_plain_confirmation, _wants_checkout
     prefs = cart_manager.get_checkout_prefs(state["session_id"])
+    # A normalized product word can resemble a transaction verb. A unique
+    # canonical selection with shopping ADD evidence resolves that ambiguity.
+    shopping_meaning = shopping_interpretation.get("meaning")
+    if (not pending_type and intent.get("intent") == "TRANSACTION_AMBIGUOUS"
+            and shopping_meaning and shopping_meaning.act == "ADD_ITEM"
+            and len(shopping_meaning.targets) == 1 and len(initial_refs) == 1):
+        return {**state, "intent": {"intent": "ADD_ITEM",
+            "resolved_products": list(shopping_meaning.targets), "quantity": shopping_meaning.quantity}}
+    # A named product after "đặt hàng" is a shopping selection. Bare order
+    # wording and turns owned by a pending checkout stay with checkout.
+    order_meaning = shopping_interpretation.get("meaning")
+    if not pending_type and re.search(r"\bdat hang\b", _norm(state["user_message"])) and order_meaning:
+        if order_meaning.act == "ADD_ITEM" and order_meaning.targets:
+            return {**state, "intent": {"intent": "ADD_ITEM",
+                "resolved_products": list(order_meaning.targets), "quantity": order_meaning.quantity}}
+        if order_meaning.act == "BROWSE_FAMILY":
+            return {**state, "intent": {"intent": "BROWSING",
+                "category_query": state["user_message"]}}
+        if order_meaning.act == "AMBIGUOUS" and order_meaning.ambiguity:
+            return {**state, "intent": {"intent": "SHOPPING_CLARIFY",
+                "candidate_products": list(order_meaning.ambiguity)}}
     if (prefs.get("summary_fingerprint") or prefs.get("checkout_submission")) and _is_plain_confirmation(state["user_message"]):
         intent = {"intent": "CONFIRM_CHECKOUT"}
     elif intent.get("intent") != "PAYMENT_INFO" and _wants_checkout(state["user_message"]):
