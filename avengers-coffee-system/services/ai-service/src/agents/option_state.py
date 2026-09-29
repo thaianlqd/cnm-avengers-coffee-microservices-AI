@@ -2,7 +2,7 @@
 import html
 import re
 import unicodedata
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 
 def _norm(value: Any) -> str:
@@ -93,3 +93,23 @@ def mentions_pending_option_value(message: str, pending: List[Dict[str, Any]]) -
                 if re.search(r"(?<!\w)" + re.escape(_norm(value)) + r"(?!\w)", text):
                     return True
     return False
+
+def pending_product_quantity(message: str, pending_count: int) -> Tuple[Optional[int], bool]:
+    """Extract quantity only inside the pending-product namespace.
+
+    Returns ``(quantity, ambiguous)``. Unit-bearing quantities cannot be
+    confused with product/branch/voucher ordinals or street numbers.
+    """
+    from src.agents.tier1 import normalize_confirmation_text
+
+    text = normalize_confirmation_text(message)
+    match = (
+        re.search(r"\b(?:so luong|sl)\s*(?:la)?\s*(\d+)\b", text)
+        or re.search(r"\b(?:lay|cho(?: toi)?)\s+(\d+)\s*(?:cai|ly|phan)\b", text)
+        or re.search(r"\b(\d+)\s*(?:cai|ly|phan)\b", text)
+    )
+    if not match:
+        return None, False
+    quantity = max(1, int(match.group(1)))
+    applies_to_all = bool(re.search(r"\b(?:moi mon|moi loai|tat ca)\b", text))
+    return quantity, pending_count > 1 and not applies_to_all

@@ -239,14 +239,14 @@ def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict
         r"\b(xem|goi y|hien thi|tim|cho biet)\b.*\b(them|cac mon|mon nao)\b",
         norm,
     ))
-    # Read-only wording owns shared option nouns. For example, "xem topping"
-    # asks about metadata while "đổi topping" requests a cart mutation.
-    if has_positive_browsing_evidence(raw):
-        return {"intent": "BROWSING"}
     # Resolve option edits before the generic add/remove verbs. Vietnamese
     # commonly says "thêm ngọt" or "bỏ topping" for an existing cart row.
     if has_cart_edit_action(raw):
         return {"intent": "EDIT_OPTIONS"}
+    # Read-only wording owns shared option nouns only after an explicit edit
+    # shape has been ruled out. A polite "... được không?" stays an action.
+    if has_positive_browsing_evidence(raw):
+        return {"intent": "BROWSING"}
     # "Tôi muốn mua bánh và nước" is a request to browse two menu families,
     # not an attempt to add an unnamed product.  Keep it on the deterministic
     # catalog path so the next turn can safely use category ordinals.

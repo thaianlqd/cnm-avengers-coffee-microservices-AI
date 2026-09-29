@@ -403,6 +403,111 @@ def test_menu_two_products_options_then_cart_voucher_checkout_boundary(flow, mon
     assert len(calls) == 1
 
 
+def test_owned_conversation_runs_recommendation_quantity_edit_and_pickup_to_summary(flow, monkeypatch):
+    """One controlled transcript proves state ownership across the whole BPM."""
+    from src.function_calling.tools import branch_tools, product_tools
+
+    original_read_path = agent_service._run_agent_impl
+    def controlled_read_path(session_id, message, *args, **kwargs):
+        if 'trời nóng' in message:
+            return {'reply': 'Trời nóng thật.', 'checkout_payload': None,
+                    'tool_calls_log': [], 'error': None}
+        return original_read_path(session_id, message, *args, **kwargs)
+    monkeypatch.setattr(agent_service, '_run_agent_impl', controlled_read_path)
+
+    drinks = [
+        {'product_id': f'D{i}', 'product_name': f'Nước {i}', 'final_price': 40000 + i * 1000,
+         'category': 'Americano'} for i in range(1, 4)
+    ] + [{'product_id': 'D4', 'product_name': 'Americano Chanh Leo', 'final_price': 49000,
+          'category': 'Americano'}]
+    cake = {'product_id': 'F1', 'product_name': 'Bánh Cà Phê', 'final_price': 39000,
+            'category': 'Bánh Mặn'}
+    monkeypatch.setattr(product_tools, 'execute_get_recommendations', lambda category, **_k: {
+        'status': 'ok', 'products': [cake] if category == 'food' else drinks})
+
+    def options(name):
+        return ({'status': 'ok', 'product_id': 'D4', 'product_name': name, 'options': {
+            'Kích thước': ['Vừa', 'Lớn'], 'Topping': ['Hạt Sen', 'Trái Vải'],
+            'Lượng đá': ['Ít đá', 'Bình thường'], 'Độ ngọt': ['Ít ngọt', 'Thêm ngọt'],
+        }} if name == 'Americano Chanh Leo' else
+                {'status': 'ok', 'product_id': 'F1', 'product_name': name, 'options': {}})
+    monkeypatch.setattr(product_tools, 'execute_get_product_options', options)
+    monkeypatch.setattr(product_tools, 'execute_check_price_and_stock', lambda product_name_query, **_k: {
+        'status': 'ok', 'products': [cake if product_name_query == 'Bánh Cà Phê' else drinks[-1]]})
+
+    adds = []
+    def add(**kwargs):
+        kwargs.pop('operation_id', None)
+        adds.append(dict(kwargs))
+        cart = cart_manager.add_item(**kwargs)
+        persisted = next(item for item in cart['items'] if item['product_id'] == kwargs['product_id'])
+        return {'status': 'ok', 'cart': cart, 'persisted_line': persisted,
+                'unit_price': kwargs['unit_price']}
+    monkeypatch.setattr(cart_tools, 'execute_add_to_cart', add)
+
+    edits = []
+    monkeypatch.setattr(cart_tools, 'execute_update_cart_item',
+                        lambda sid, line, desired, **_k: edits.append((line, desired)) or {
+                            'status': 'ok', 'cart': cart_manager.get_cart(sid),
+                            'quote': {'subtotal': cart_manager.get_cart(sid)['subtotal'],
+                                      'discount_amount': 0,
+                                      'final_total': cart_manager.get_cart(sid)['subtotal']}})
+
+    offered = turn(flow, 'hôm nay trời nóng quá')
+    assert 'gợi ý' in offered['reply'].lower()
+    assert cart_manager.get_pending_action(flow)['type'] == 'offer_recommendation'
+    recommended = turn(flow, 'oke')
+    assert '4. Americano Chanh Leo' in recommended['reply']
+    selected = turn(flow, 'món số 4 đi bạn')
+    pending_selection = cart_manager.get_pending_action(flow)
+    assert pending_selection and pending_selection['type'] == 'fill_options', selected
+    completed = turn(flow, 'theo mặc định, cho tôi 2 ly nhé')
+    assert len(adds) == 1 and adds[0]['product_id'] == 'D4' and adds[0]['quantity'] == 2
+
+    turn(flow, 'đổi topping thành Hạt Sen và Trái Vải, thêm ngọt')
+    assert edits and edits[-1][1]['quantity'] == 2
+    assert edits[-1][1]['toppings'] == ['Hạt Sen', 'Trái Vải']
+    assert edits[-1][1]['do_ngot'] == 'Thêm ngọt'
+
+    turn(flow, 'cho xem bánh đi')
+    turn(flow, 'món số 1')
+    assert [call['product_id'] for call in adds] == ['D4', 'F1']
+
+    finished = turn(flow, 'không thêm nữa')
+    assert cart_manager.get_pending_action(flow)['type'] == 'select_voucher', finished
+    voucher = turn(flow, 'áp mã số 1')
+    continued = turn(flow, 'tiếp tục')
+    checkout_pending = cart_manager.get_pending_action(flow)
+    assert checkout_pending and checkout_pending['type'] == 'select_checkout_choices', (voucher, continued)
+
+    branch_locations = []
+    def find_branch(location, session_id):
+        branch_locations.append(location)
+        if 'Hồ Chí Minh' not in location:
+            return {'status': 'need_city', 'normalized_location': location,
+                    'message': 'Mình đã giữ Gò Vấp; bạn cho mình thêm tỉnh/thành phố nhé.'}
+        candidates = [{'branch_id': 'GV1', 'branch_name': 'Cửa hàng Gò Vấp',
+                       'ma_chi_nhanh': 'GV1', 'ten_chi_nhanh': 'Cửa hàng Gò Vấp',
+                       'dia_chi': 'Quang Trung, Quận Gò Vấp, Thành phố Hồ Chí Minh',
+                       'availability_status': 'available'}]
+        cart_manager.set_checkout_context(session_id, branch_candidates=candidates)
+        return {'status': 'need_branch_selection', 'normalized_location': location,
+                'location_basis': 'exact_locality', 'branches': candidates}
+    monkeypatch.setattr(branch_tools, 'execute_find_nearest_branch', find_branch)
+
+    partial = turn(flow, 'lấy tại quán và QR, tôi đang ở phường Gò Vấp')
+    assert 'đã giữ Gò Vấp' in partial['reply']
+    choices = cart_manager.get_checkout_prefs(flow)
+    assert (choices['delivery_type'], choices['payment_method']) == ('MANG_DI', 'NGAN_HANG_QR')
+    candidates = turn(flow, 'TP HCM ấy bạn ơi')
+    assert 'Cửa hàng Gò Vấp' in candidates['reply']
+    assert 'Gò Vấp' in branch_locations[-1] and 'Hồ Chí Minh' in branch_locations[-1]
+    summary = turn(flow, 'cửa hàng số 1')
+    assert summary['checkout_payload']
+    assert summary['checkout_payload']['payment_method'] == 'NGAN_HANG_QR'
+    assert cart_manager.get_pending_action(flow)['type'] == 'confirm_checkout'
+
+
 @pytest.mark.parametrize('t1', ['true', 'false'])
 @pytest.mark.parametrize('text', ['oke xác nhận', 'ok xác nhận', 'xác nhận', 'xác nhận chốt đơn', 'đồng ý', 'đồng ý chốt đơn', 'chốt đơn', 'đặt luôn'])
 def test_typed_confirmation_uses_pending_action(flow, monkeypatch, t1, text):

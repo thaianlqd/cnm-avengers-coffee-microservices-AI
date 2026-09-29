@@ -922,7 +922,7 @@ def _answer_product_existence(session_id: str, message: str) -> Optional[Dict[st
     return {
         "reply": (
             f"Có {exact.get('product_name')} trong thực đơn, giá hiện tại {price}đ. "
-            "Món chưa được thêm vào giỏ. Bạn có muốn thêm món này không?"
+            "Món chưa được thêm vào giỏ. Nếu muốn thêm, bạn cho mình số lượng nhé."
         ),
         "checkout_payload": None,
         "tool_calls_log": [log],
@@ -1055,13 +1055,20 @@ def _resolve_cart_option_update(item: Dict[str, Any], message: str) -> tuple[Dic
                        r"(?<!\w)" + re.escape(_norm(_clean_option_text(value))) + r"(?!\w)", text
                    )]
         if "topping" in group:
-            if re.search(r"\b(khong topping|bo topping|xoa topping|khong them topping)\b", text):
-                changes["toppings"] = []
+            current = list(item.get("toppings") or [])
+            clause_match = re.search(r"\b(?:topping|toping|do kem)\b[^,;]*", text)
+            if clause_match:
+                clause_start = max(text.rfind(",", 0, clause_match.start()), text.rfind(";", 0, clause_match.start())) + 1
+                topping_clause = text[clause_start:clause_match.end()]
+            else:
+                topping_clause = text
+            remove_action = bool(re.search(r"\b(?:bo|xoa|khong lay|khong them)\b", topping_clause))
+            add_action = bool(re.search(r"\b(?:them|nua)\b", topping_clause))
+            if remove_action:
+                normalized_matches = {_norm(value) for value in matches}
+                changes["toppings"] = [value for value in current if _norm(value) not in normalized_matches] if matches else []
             elif matches:
-                current = list(item.get("toppings") or [])
-                changes["toppings"] = list(dict.fromkeys(
-                    current + matches if re.search(r"\bthem\b", text) else matches
-                ))
+                changes["toppings"] = list(dict.fromkeys(current + matches if add_action else matches))
         elif ("size" in group or "kich thuoc" in group) and matches:
             changes["size"] = matches[0]
         elif "da" in group and matches:
@@ -1182,7 +1189,8 @@ def _handle_pending_reply(state: OrderConversationState) -> Dict[str, Any]:
         if decision == "CHANGE_ADDRESS":
             cart_manager.clear_branch(session_id)
             cart_manager.set_checkout_context(session_id, suggested_address=None, location_address=None,
-                delivery_address=None, address_confirmed=None, address_change_requested=True)
+                delivery_address=None, address_confirmed=None, address_change_requested=True,
+                store_location=None, location_source=None)
             cart_manager.clear_pending_action(session_id)
             return reply("Bạn gửi địa chỉ mới muốn dùng nhé.")
         if decision == "CONFIRM_ADDRESS":
@@ -1216,7 +1224,8 @@ def _handle_pending_reply(state: OrderConversationState) -> Dict[str, Any]:
                 cart_manager.clear_branch(session_id)
                 cart_manager.set_checkout_context(session_id, **clear, suggested_address=None,
                     location_address=None, delivery_address=None, address_confirmed=None,
-                    address_change_requested=True, location_pending=True)
+                    address_change_requested=True, location_pending=True,
+                    store_location=None, location_source=None)
                 cart_manager.clear_pending_action(session_id)
                 prompt = ("Bạn gửi địa chỉ giao đầy đủ mới nhé." if prefs.get("delivery_type") == "GIAO_TAN_NOI"
                           else "Bạn cho mình khu vực/phường/quận mới để tìm cửa hàng nhé.")
@@ -1284,7 +1293,8 @@ def _handle_location_reference(state: OrderConversationState, kind: str) -> Dict
         cart_manager.set_checkout_context(session_id, suggested_address=None, location_address=None,
             delivery_address=None, address_confirmed=None, branch_candidates=None,
             address_change_requested=True, partial_delivery_address=None,
-            profile_address_candidates=None, location_pending=True,
+            profile_address_candidates=None, location_pending=True, store_location=None,
+            location_source=None,
             summary_amounts=None, checkout_action_id=None, checkout_action_expires_at=None)
         if (cart_manager.get_pending_action(session_id) or {}).get("type") == "confirm_address":
             cart_manager.clear_pending_action(session_id)
@@ -1299,14 +1309,17 @@ def _handle_location_reference(state: OrderConversationState, kind: str) -> Dict
 
 def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
     """Keep location and store turns inside the deterministic branch boundary."""
-    from src.agents.location_parser import parse_location, checkout_location, complete_partial_delivery_address
+    from src.agents.location_parser import (
+        parse_location, checkout_location, complete_partial_delivery_address, merge_store_location,
+    )
     from src.agents.agent_service import _advance_checkout_if_ready, _confirm_saved_location
     from src.function_calling.tools.branch_tools import execute_find_nearest_branch
 
     session_id = state["session_id"]
     prefs = cart_manager.get_checkout_prefs(session_id)
     parsed = (state.get("location_override") or checkout_location(state["user_message"], prefs.get("delivery_type"),
-              bool(prefs.get("location_pending") or prefs.get("address_change_requested") or prefs.get("partial_delivery_address")))
+              bool(prefs.get("location_pending") or prefs.get("address_change_requested") or prefs.get("partial_delivery_address")
+                   or prefs.get("store_location") or (cart_manager.get_pending_action(session_id) or {}).get("type") == "collect_store_location"))
               if prefs.get("checkout_requested") else parse_location(state["user_message"]))
     if parsed.kind in {"reference", "reference_question", "change_reference"}:
         return _handle_location_reference(state, parsed.kind)
@@ -1321,6 +1334,21 @@ def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
 
     if prefs.get("checkout_submission"):
         return reply("Đơn đang được gửi xử lý. Bạn xác nhận lại để kiểm tra kết quả trước khi đổi địa chỉ nhé.")
+    if prefs.get("checkout_requested") and prefs.get("delivery_type") in {"MANG_DI", "TAI_CHO"}:
+        merged = merge_store_location(prefs.get("store_location"), parsed.value or state["user_message"])
+        if merged.get("value"):
+            merged_parsed = parse_location(merged["value"])
+            parsed = merged_parsed if merged_parsed.kind in {"area", "address"} else type(parsed)("area", merged["value"])
+            cart_manager.set_checkout_context(
+                session_id, store_location=merged, location_source="explicit_user",
+                location_pending=merged.get("status") == "partial",
+            )
+            if merged.get("status") == "partial":
+                cart_manager.set_pending_action(session_id, "collect_store_location", {
+                    "missing": "city" if merged.get("locality") and not merged.get("city") else "locality",
+                })
+            logger.debug("[LocationState] fulfillment=%s source=explicit_user status=%s has_locality=%s has_city=%s",
+                         prefs.get("delivery_type"), merged.get("status"), bool(merged.get("locality")), bool(merged.get("city")))
     if prefs.get("delivery_type") == "GIAO_TAN_NOI" and prefs.get("partial_delivery_address"):
         completed = complete_partial_delivery_address(prefs["partial_delivery_address"], state["user_message"])
         if completed:
@@ -1350,9 +1378,10 @@ def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
         # the same turn; the existing resolver still owns inventory and branch rules.
         cart_manager.clear_branch(session_id)
         cart_manager.set_checkout_context(session_id, branch_candidates=None, suggested_address=location,
+            location_source="explicit_user",
             location_address=None, address_confirmed=None, delivery_address=None,
             address_change_requested=None, partial_delivery_address=None,
-            profile_address_candidates=None, location_pending=None,
+            profile_address_candidates=None,
             summary_amounts=None, checkout_action_id=None, checkout_action_expires_at=None)
         result = _confirm_saved_location(session_id, "đúng địa chỉ đó", history=state.get("history") or [])
         return _advance_checkout_if_ready(session_id, result) if result else reply(
@@ -1533,6 +1562,16 @@ def _shopping_decision(state: OrderConversationState, tier1_intent: Dict[str, An
     return None
 
 
+def _recommendation_offer_decision(message: str) -> str:
+    """Resolve a short reply only inside a typed recommendation offer."""
+    text = _norm(message)
+    if re.search(r"\b(?:khong|thoi|bo qua|khong can|de sau)\b", text):
+        return "DECLINE"
+    affirmative = bool(re.search(r"\b(?:ok|oke|duoc|da|u|uh|dong y|xem thu)\b", text))
+    request = bool(re.search(r"\b(?:goi y|xem thu|xem di)\b", text))
+    return "AFFIRM" if affirmative or request else "UNKNOWN"
+
+
 def _browse_ask_more(state: OrderConversationState) -> Dict[str, Any]:
     """Use the existing catalog/provider with a strictly read-only tool boundary."""
     constraints = parse_catalog_constraints(state["user_message"])
@@ -1624,6 +1663,22 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     from src.agents.checkout_choices import CHECKOUT_CHOICE_TYPES, FULFILLMENT_OPTIONS, PAYMENT_OPTIONS, pending_checkout_choice
     pending_type = (pending or {}).get("type")
     prefs_before = cart_manager.get_checkout_prefs(state["session_id"])
+    if (pending or {}).get("type") == "offer_recommendation":
+        params = pending.get("params") or pending.get("data") or {}
+        explicit = classify_order_intent(state["user_message"], None)
+        decision = _recommendation_offer_decision(state["user_message"])
+        if decision == "AFFIRM":
+            logger.debug("[DialogueState] pending=offer_recommendation decision=AFFIRM action=RECOMMEND category=%s",
+                         params.get("category") or "all")
+            return {**state, "intent": {"intent": "RECOMMENDATION_OFFER_ACCEPT",
+                "category": params.get("category") or "all"}}
+        if decision == "DECLINE":
+            return {**state, "intent": {"intent": "RECOMMENDATION_OFFER_DECLINE"}}
+        if explicit.get("intent") == "BROWSING":
+            cart_manager.clear_pending_action(state["session_id"])
+        else:
+            return {**state, "intent": {"intent": "PENDING_RECOMMENDATION_OFFER",
+                "category": params.get("category") or "all"}}
     profile_candidates = list(prefs_before.get("profile_address_candidates") or [])
     if profile_candidates and prefs_before.get("checkout_requested"):
         choice = _profile_address_choice(state["user_message"], profile_candidates)
@@ -1654,7 +1709,10 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
             return {**state, "intent": {"intent": "PENDING_CHECKOUT_CHOICE", "pending_type": pending_type}}
         # Text choices belong to the same pending gate as numbered choices.
         # Resolve both fields before general intent and catalog routing.
-        from src.agents.agent_service import _explicit_checkout_choices
+        from src.agents.agent_service import _checkout_choice_conflict, _explicit_checkout_choices
+        conflict = _checkout_choice_conflict(state["user_message"])
+        if conflict:
+            return {**state, "intent": {"intent": "CHECKOUT_CHOICE_CONFLICT", "slot": conflict}}
         checkout_patch = _explicit_checkout_choices(state["user_message"])
         if checkout_patch:
             return {**state, "intent": {"intent": "SELECT_FULFILLMENT" if "delivery_type" in checkout_patch else "SELECT_PAYMENT",
@@ -1718,6 +1776,11 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     location = parse_location(state["user_message"])
     from src.agents.pending_context import classify_pending_reply
     prefs = cart_manager.get_checkout_prefs(state["session_id"])
+    if pending_type == "collect_store_location":
+        hinted = checkout_location(state["user_message"], prefs.get("delivery_type"), True)
+        if hinted.kind in {"area", "address", "branch_query"} and hinted.value:
+            return {**state, "intent": {"intent": "LOCATION_QUERY", "location_kind": hinted.kind}}
+        return {**state, "intent": {"intent": "PENDING_AMBIGUOUS", "pending_type": pending_type}}
     if (prefs.get("checkout_requested") and prefs.get("delivery_type") in {"MANG_DI", "TAI_CHO"}
             and (prefs.get("location_pending") or prefs.get("address_change_requested"))):
         hinted = checkout_location(state["user_message"], prefs["delivery_type"], True)
@@ -1767,7 +1830,10 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         return {**state, "intent": intent}
     pending_type = (pending or {}).get("type")
     if prefs.get("checkout_requested") and not prefs.get("checkout_submission"):
-        from src.agents.agent_service import _explicit_checkout_choices
+        from src.agents.agent_service import _checkout_choice_conflict, _explicit_checkout_choices
+        conflict = _checkout_choice_conflict(state["user_message"])
+        if conflict:
+            return {**state, "intent": {"intent": "CHECKOUT_CHOICE_CONFLICT", "slot": conflict}}
         choices = _explicit_checkout_choices(state["user_message"])
         if choices:
             return {**state, "intent": {"intent": "SELECT_FULFILLMENT" if choices.get("delivery_type") else "SELECT_PAYMENT",
@@ -1792,6 +1858,16 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         and (prefs.get("checkout_requested") or pending_type == "confirm_address")
     ):
         return {**state, "intent": {"intent": "LOCATION_QUERY", "location_kind": location.kind}}
+    # A visible product ordinal is a structural selection even when the user
+    # omits an add verb (for example “món số 4”). Its identity still comes
+    # exclusively from the latest canonical recommendation snapshot.
+    ordinal_product = (_resolve_suggested_product(state["session_id"], state["user_message"])
+                       if intent.get("intent") == "UNKNOWN" and not pending_type else None)
+    if ordinal_product:
+        return {**state, "intent": {"intent": "ADD_ITEM", "target_kind": "PRODUCT",
+                                    "product_name": ordinal_product.get("product_name"),
+                                    "resolved_products": [ordinal_product],
+                                    "quantity": _extract_add_quantity(state["user_message"])}}
     if intent.get("intent") in {"BROWSING", "UNKNOWN"} and not re.search(r"\b(?:co|xem|tim|goi y|menu|gia|the nao|khong)\b", _norm(state["user_message"])):
         named_rows = _cart_rows_named_in_message(state.get("cart") or {}, state["user_message"])
         if len(named_rows) == 1:
@@ -1957,6 +2033,10 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         from src.agents.agent_service import _checkout_choices_prompt
         return {**state, "result": {"reply": _checkout_choices_prompt(session_id, "Mình chưa rõ số bạn chọn thuộc danh sách nào, hoặc số đó không hợp lệ."),
                                    "checkout_payload": None, "tool_calls_log": [], "error": None}}
+    if kind == "CHECKOUT_CHOICE_CONFLICT":
+        subject = "phương thức thanh toán" if intent.get("slot") == "payment" else "hình thức nhận hàng"
+        return {**state, "result": {"reply": f"Mình thấy bạn chọn nhiều {subject} khác nhau. Bạn chọn lại một phương án nhé.",
+                                   "checkout_payload": None, "tool_calls_log": [], "error": None}}
     if kind == "REVIEW_CHECKOUT_SUMMARY":
         from src.function_calling.tools.cart_tools import execute_request_checkout
         checkout = execute_request_checkout(session_id, reuse_summary=True)
@@ -1972,7 +2052,8 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             cart_manager.set_checkout_context(session_id, profile_address_candidates=None,
                 suggested_address=None, location_pending=True, address_change_requested=True,
                 location_address=None, branch_candidates=None, address_confirmed=None,
-                delivery_address=None, partial_delivery_address=None)
+                delivery_address=None, partial_delivery_address=None,
+                store_location=None, location_source=None)
             cart_manager.clear_pending_action(session_id)
             prompt = ("Bạn gửi địa chỉ giao gồm số nhà, tên đường, phường/xã và tỉnh/thành phố nhé."
                       if prefs.get("delivery_type") == "GIAO_TAN_NOI" else
@@ -1980,7 +2061,7 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             return {**state, "result": {"reply": prompt, "checkout_payload": None, "tool_calls_log": [], "error": None}}
         if choice.get("address"):
             cart_manager.set_checkout_context(session_id, suggested_address=choice["address"],
-                profile_address_candidates=None, location_pending=None)
+                location_source="profile_saved", profile_address_candidates=None, location_pending=None)
             cart_manager.clear_pending_action(session_id)
             from src.agents.agent_service import _confirm_saved_location, _advance_checkout_if_ready
             resolved = _confirm_saved_location(session_id, "đúng địa chỉ đó", history=state.get("history") or [])
@@ -2028,6 +2109,33 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             reply = "Mình chưa hiểu yêu cầu. Bạn có thể nói rõ muốn xem menu, chọn món hay thao tác với giỏ hàng nhé."
         return {**state, "result": {"reply": reply, "checkout_payload": None,
                                      "tool_calls_log": [], "error": None}}
+    if kind == "RECOMMENDATION_OFFER_ACCEPT":
+        category = intent.get("category") or "all"
+        cart_manager.clear_pending_action(session_id)
+        query = "gợi ý nước" if category == "drink" else "gợi ý bánh" if category == "food" else "gợi ý món"
+        result = _search_menu_catalog(query)
+        return {**state, "result": result or {"reply": "Mình chưa tìm thấy món phù hợp lúc này.",
+            "checkout_payload": None, "tool_calls_log": [], "error": None}}
+    if kind == "RECOMMENDATION_OFFER_DECLINE":
+        cart_manager.clear_pending_action(session_id)
+        return {**state, "result": {"reply": "Được nhé. Khi nào muốn xem menu bạn cứ nói mình.",
+            "checkout_payload": None, "tool_calls_log": [], "error": None}}
+    if kind == "PENDING_RECOMMENDATION_OFFER":
+        label = "đồ uống" if intent.get("category") == "drink" else "bánh" if intent.get("category") == "food" else "món"
+        return {**state, "result": {"reply": f"Mình đang chờ bạn xác nhận có muốn xem gợi ý {label} không.",
+            "checkout_payload": None, "tool_calls_log": [], "error": None}}
+    if kind == "GENERAL_CHAT" and re.search(r"\b(?:troi|thoi tiet)\b.*\b(?:nong|oi|lanh)\b|\b(?:nong|khat)\b", _norm(message)):
+        cart_manager.set_pending_action(session_id, "offer_recommendation", {
+            "domain": "PRODUCT_DISCOVERY", "action": "RECOMMEND", "category": "drink",
+        })
+        logger.debug("[DialogueState] stage=GENERAL_CHAT pending=offer_recommendation action=RECOMMEND category=drink")
+        from src.agents.agent_service import _run_agent_impl
+        conversational = _run_agent_impl(session_id, message, history=state.get("history") or [], allow_model_mutations=False)
+        if re.search(r"\b(?:se|dang)\s+(?:tien hanh\s+)?(?:sua|cap nhat|them|xoa|bo)\b.*\b(?:gio|mon)\b",
+                     _norm(conversational.get("reply"))):
+            return {**state, "result": conversational}
+        return {**state, "result": {"reply": "Thời tiết như vậy khá dễ mệt. Bạn có muốn mình gợi ý một số đồ uống phù hợp không?",
+            "checkout_payload": None, "tool_calls_log": [], "error": None}}
     if kind == "PENDING_CART_LINE":
         resolved = intent.get("resolved_pending") or {}
         if resolved.get("stale"):
@@ -2390,7 +2498,8 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         if patch.get("delivery_type") and patch["delivery_type"] != previous_delivery:
             cart_manager.clear_branch(session_id)
             cart_manager.set_checkout_context(session_id, location_address=None, suggested_address=None,
-                address_confirmed=None, delivery_address=None, branch_candidates=None)
+                address_confirmed=None, delivery_address=None, branch_candidates=None,
+                store_location=None, location_source=None)
         if patch:
             cart_manager.set_checkout_prefs(session_id, **patch)
         prefs = cart_manager.get_checkout_prefs(session_id)
@@ -2647,6 +2756,21 @@ def _render(state: OrderConversationState) -> OrderConversationState:
             "Yêu cầu sửa giỏ chưa được ghi vì Order Service chưa xác nhận đúng dòng món. "
         )
         result["reply"] = prefix + "Mình giữ nguyên giỏ để tránh thay đổi nhầm.\n" + cart_text
+    # A yes/no business offer is itself dialogue state. Generic prose may be
+    # friendly, but it cannot create an actionable next turn without a typed
+    # owner that defines what an affirmative answer means.
+    if not typed_pending and not logs:
+        rendered_reply = str(result.get("reply") or "")
+        rendered_norm = _norm(rendered_reply)
+        unowned_offer = bool(re.search(
+            r"\b(?:ban|anh|chi)\s+co\s+muon\b[^?\n]*(?:goi y|them mon|chon mon|thanh toan|dat hang)",
+            rendered_norm,
+        ))
+        if unowned_offer:
+            kept = [line.strip() for line in rendered_reply.splitlines()
+                    if not re.search(r"\b(?:bạn|anh|chị)\s+có\s+muốn\b", line, re.IGNORECASE)]
+            kept.append("Khi cần, bạn có thể yêu cầu mình xem menu hoặc gợi ý món phù hợp.")
+            result["reply"] = "\n".join(line for line in kept if line)
     invalidated = cart_manager.get_checkout_prefs(state["session_id"]).get("voucher_invalidated")
     if invalidated:
         result["reply"] = str(result.get("reply") or "") + f"\nMã {invalidated} không còn đủ điều kiện cho giỏ hiện tại; mình đã bỏ giảm giá cũ."

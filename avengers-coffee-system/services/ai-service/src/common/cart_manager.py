@@ -667,6 +667,7 @@ def reset_conversation_draft(session_id: str) -> Dict[str, Any]:
             "location_address", "stock_conflicts", "pending_action",
             "partial_delivery_address", "address_change_requested",
             "profile_address_candidates", "location_pending", "last_product_focus",
+            "store_location", "location_source",
             "summary_amounts", "checkout_action_expires_at",
         )
         for key in draft_keys:
