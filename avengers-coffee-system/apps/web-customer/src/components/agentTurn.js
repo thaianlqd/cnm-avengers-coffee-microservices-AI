@@ -1,26 +1,34 @@
 // A failed agent turn survives a widget remount or page reload in this tab.
 export const PENDING_AGENT_TURN_KEY = 'avengers_ai_pending_agent_turn';
+export const AGENT_TURN_RETRY_TTL_MS = 15 * 60 * 1000;
 
-export function readPendingAgentTurn(storage) {
+export function readPendingAgentTurn(storage, now = Date.now()) {
   try {
-    return JSON.parse(storage.getItem(PENDING_AGENT_TURN_KEY) || 'null');
+    const turn = JSON.parse(storage.getItem(PENDING_AGENT_TURN_KEY) || 'null');
+    if (turn && (!Number.isFinite(turn.createdAt) || now - turn.createdAt > AGENT_TURN_RETRY_TTL_MS || now < turn.createdAt)) {
+      storage.removeItem(PENDING_AGENT_TURN_KEY);
+      return null;
+    }
+    return turn;
   } catch {
     return null;
   }
 }
 
-export function matchesAgentTurn(previous, request) {
+export function matchesAgentTurn(previous, request, now = Date.now()) {
   const selectedProductId = request.selectedProductId || null;
-  return previous?.text === request.text &&
+  return Number.isFinite(previous?.createdAt) && now >= previous.createdAt &&
+      now - previous.createdAt <= AGENT_TURN_RETRY_TTL_MS &&
+      previous.text === request.text &&
       (previous.selectedProductId || null) === selectedProductId &&
       previous.sessionId === request.sessionId &&
       previous.conversationId === request.conversationId;
 }
 
-export function selectAgentTurn(previous, request, createId) {
+export function selectAgentTurn(previous, request, createId, now = Date.now()) {
   const selectedProductId = request.selectedProductId || null;
-  if (matchesAgentTurn(previous, request)) return previous;
-  return { ...request, selectedProductId, id: createId() };
+  if (matchesAgentTurn(previous, request, now)) return previous;
+  return { ...request, selectedProductId, id: createId(), createdAt: now };
 }
 
 export function clearCompletedAgentTurn(storage, turn) {

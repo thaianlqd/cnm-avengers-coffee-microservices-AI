@@ -195,6 +195,19 @@ def _load_from_db(session_id: str) -> Optional[Dict[str, Any]]:
         logger.error(f"[CartManager] Load DB error for session {session_id}: {e}")
     return None
 
+
+def load_durable_processed_turn(session_id: str, client_message_id: str) -> Optional[Dict[str, Any]]:
+    """Read replay evidence from PostgreSQL, never the process-local cart cache."""
+    engine = get_db_engine()
+    _ensure_table_exists(engine)
+    with engine.connect() as conn:
+        row = conn.execute(text('''
+            SELECT checkout_prefs FROM ai_chat_sessions WHERE session_id = :session_id
+        '''), {"session_id": session_id}).mappings().first()
+    prefs = _parse_json_object(row["checkout_prefs"]) if row else {}
+    turn = (prefs.get("processed_order_turns") or {}).get(str(client_message_id))
+    return dict(turn) if isinstance(turn, dict) else None
+
 def _get_or_create_session(session_id: str) -> Dict[str, Any]:
     # LƯU Ý: Hàm này phải được gọi bên TRONG context manager của `_get_session_lock(session_id)`
     _evict_expired()

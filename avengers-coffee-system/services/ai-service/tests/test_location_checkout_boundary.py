@@ -74,7 +74,7 @@ def test_partial_delivery_address_asks_for_missing_fields_without_geocoding(monk
     session = _session(monkeypatch, delivery_type="GIAO_TAN_NOI")
     monkeypatch.setattr(branch_tools, "execute_find_nearest_branch", lambda **kw: pytest.fail("partial delivery geocoded"))
     result = order_flow_graph.run_order_flow(session, "tôi đang ở 87C Tân Thắng, P. Sơn Kỳ, Tân Phú")
-    assert "quận/huyện" in result["reply"] and "tỉnh/thành phố" in result["reply"]
+    assert "quận/huyện" not in result["reply"] and "tỉnh/thành phố" in result["reply"]
     assert cart_manager.get_checkout_prefs(session).get("partial_delivery_address") == "87C Tân Thắng, Phường Sơn Kỳ, Tân Phú"
 
 
@@ -88,7 +88,7 @@ def test_delivery_missing_locality_can_be_supplied_next_turn(monkeypatch):
     monkeypatch.setattr(branch_tools, "execute_set_session_branch", lambda *args, **kwargs: {"status": "ok", "message": "Đã chọn chi nhánh"})
     monkeypatch.setattr(agent_service, "_advance_checkout_if_ready", lambda sid, result: result)
     first = order_flow_graph.run_order_flow(session, "tôi ở 87C Tân Thắng, P. Sơn Kỳ, Tân Phú")
-    assert "quận/huyện" in first["reply"]
+    assert "tỉnh/thành phố" in first["reply"] and "quận/huyện" not in first["reply"]
     second = order_flow_graph.run_order_flow(session, "Quận Tân Phú, TP.HCM")
     assert seen == ["87C Tân Thắng, Phường Sơn Kỳ, Tân Phú, Quận Tân Phú, Thành phố HCM"]
     assert "Đã chọn chi nhánh" in second["reply"]
@@ -111,6 +111,13 @@ def test_store_lookup_outside_checkout_is_read_only(monkeypatch):
 
 
 def test_structural_address_parser_and_branch_number():
+    from src.agents.location_parser import complete_partial_delivery_address
+    current = parse_location("42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh, Thành phố Hồ Chí Minh")
+    assert current.kind == "address" and current.missing == ()
+    assert parse_location("42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh").missing == ("tỉnh/thành phố",)
+    assert parse_location("42/3 Nguyễn Hữu Tiến, Thành phố Hồ Chí Minh").missing == ("phường/xã",)
+    assert parse_location("42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh, Quận Tân Phú, Thành phố Hồ Chí Minh").missing == ()
+    assert parse_location("42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh, Thành phố Hồ Chí Minh, Phường Tây Thạnh, Thành phố Hồ Chí Minh").value == current.value
     assert parse_location("12/5A Đường 3 Tháng 2, P. 10, Q. 10, TP.HCM").missing == ()
     assert parse_location("12A Đường 3 Tháng 2, P. 10, Q. 10, TP.HCM").kind == "address"
     assert parse_location("71 Đường D9, P. Sơn Kỳ").kind == "address"
@@ -120,6 +127,33 @@ def test_structural_address_parser_and_branch_number():
     assert parse_location("Bánh Matcha ở Tân Phú có không?").kind == "none"
     assert parse_location("Cà phê muối ở Tân Phú có không?").kind == "none"
     assert parse_location("lấy tại quán và COD").kind == "none"
+    assert complete_partial_delivery_address("42/3 Nguyễn Hữu Tiến, Thành phố Hồ Chí Minh", "nước số 9") is None
+    assert complete_partial_delivery_address("42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh", "Tân Phú") is None
+
+
+@pytest.mark.parametrize("partial,follow_up,expected", [
+    ("42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh", "Hồ Chí Minh",
+     "42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh, Thành phố Hồ Chí Minh"),
+    ("42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh", "TP.HCM",
+     "42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh, Thành phố Hồ Chí Minh"),
+    ("42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh", "Thành phố Hồ Chí Minh",
+     "42/3 Nguyễn Hữu Tiến, Phường Tây Thạnh, Thành phố Hồ Chí Minh"),
+    ("42/3 Nguyễn Hữu Tiến, Thành phố Hồ Chí Minh", "Tây Thạnh",
+     "42/3 Nguyễn Hữu Tiến, Thành phố Hồ Chí Minh, Phường Tây Thạnh"),
+    ("42/3 Nguyễn Hữu Tiến, Thành phố Hồ Chí Minh", "Phường Tây Thạnh",
+     "42/3 Nguyễn Hữu Tiến, Thành phố Hồ Chí Minh, Phường Tây Thạnh"),
+])
+def test_missing_single_delivery_field_accepts_short_follow_up(monkeypatch, partial, follow_up, expected):
+    session = _session(monkeypatch, delivery_type="GIAO_TAN_NOI")
+    cart_manager.set_checkout_context(session, partial_delivery_address=partial)
+    seen = []
+    monkeypatch.setattr(branch_tools, "execute_find_nearest_branch", lambda location, session_id: seen.append(location) or {
+        "status": "ok", "branches": [{"ma_chi_nhanh": "B1", "ten_chi_nhanh": "Quán Một"}]})
+    monkeypatch.setattr(branch_tools, "execute_set_session_branch", lambda *args, **kwargs: {"status": "ok", "message": "Đã chọn"})
+    monkeypatch.setattr(agent_service, "_advance_checkout_if_ready", lambda _sid, result: result)
+    order_flow_graph.run_order_flow(session, follow_up)
+    assert seen == [expected]
+    assert cart_manager.get_checkout_prefs(session)["delivery_address"] == expected
 
 
 def test_geocoder_not_found_asks_for_specific_locality(monkeypatch):
@@ -128,7 +162,7 @@ def test_geocoder_not_found_asks_for_specific_locality(monkeypatch):
         "status": "not_found", "message": "Không tìm thấy vị trí."})
     result = order_flow_graph.run_order_flow(session, "tôi ở Tây Thạnh")
     assert "bản đồ" in result["reply"]
-    assert "quận" in result["reply"] and "tỉnh" in result["reply"]
+    assert "phường/xã" in result["reply"] and "tỉnh" in result["reply"]
     assert not cart_manager.get_checkout_prefs(session).get("pending_products")
 
 

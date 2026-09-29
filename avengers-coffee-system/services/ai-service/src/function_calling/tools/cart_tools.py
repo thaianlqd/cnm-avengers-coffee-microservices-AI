@@ -836,6 +836,10 @@ def execute_request_checkout(
             "message": "Giỏ hàng đang trống. Vui lòng thêm sản phẩm trước khi đặt hàng.",
         }
     pending_products = (cart.get("checkout_prefs") or {}).get("pending_products") or []
+    missing_reference = (cart.get("checkout_prefs") or {}).get("pending_product_reference") or []
+    if missing_reference:
+        labels = ", ".join("bánh" if category == "food" else "nước" for category in missing_reference)
+        return {"status": "pending_products", "message": f"Bạn còn chưa chọn số món {labels}. Hãy hoàn tất lựa chọn trước khi tóm tắt đơn."}
     if pending_products:
         pending_names = ", ".join(str(item.get("product_name")) for item in pending_products)
         return {

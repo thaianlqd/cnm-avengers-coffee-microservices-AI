@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { PENDING_AGENT_TURN_KEY, readPendingAgentTurn, matchesAgentTurn, selectAgentTurn, clearCompletedAgentTurn, agentTurnFailure } from './agentTurn.js';
+import { PENDING_AGENT_TURN_KEY, AGENT_TURN_RETRY_TTL_MS, readPendingAgentTurn, matchesAgentTurn, selectAgentTurn, clearCompletedAgentTurn, agentTurnFailure } from './agentTurn.js';
 
 function storage() {
   const values = new Map();
@@ -34,6 +34,17 @@ test('only an exact request identity reuses a failed turn', () => {
     { conversationId: 'other' }, { selectedProductId: 'product' }]) {
     assert.equal(selectAgentTurn(first, { ...request, ...changed }, () => 'new').id, 'new');
   }
+});
+
+test('retry identity expires after its bounded age', () => {
+  const store = storage();
+  const request = { text: 'same text', selectedProductId: null, sessionId: 's', conversationId: 'c' };
+  const first = selectAgentTurn(null, request, () => 'old', 1000);
+  assert.equal(selectAgentTurn(first, request, () => 'unused', 1000 + AGENT_TURN_RETRY_TTL_MS).id, 'old');
+  assert.equal(selectAgentTurn(first, request, () => 'new', 1001 + AGENT_TURN_RETRY_TTL_MS).id, 'new');
+  store.setItem(PENDING_AGENT_TURN_KEY, JSON.stringify(first));
+  assert.equal(readPendingAgentTurn(store, 1001 + AGENT_TURN_RETRY_TTL_MS), null);
+  assert.equal(store.getItem(PENDING_AGENT_TURN_KEY), null);
 });
 
 test('successful HTTP followed by client processing failure is identified correctly', () => {
