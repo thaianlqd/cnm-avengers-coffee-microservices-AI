@@ -1064,19 +1064,35 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
                 "checkout_payload": None, "tool_calls_log": [], "error": None}
     from src.agents.option_state import pending_product_quantity, quantity_request_error
     resolved_quantity, quantity_ambiguous = pending_product_quantity(message, len(pending))
-    if quantity_ambiguous:
-        return {
-            "reply": "Mình đang giữ nhiều món. Bạn cho biết món nào lấy số lượng này, hoặc nói ‘mỗi món’ nhé.",
-            "checkout_payload": None, "tool_calls_log": [], "error": None,
-        }
     invalid_quantity = quantity_request_error(message)
     if invalid_quantity:
         return {
             "reply": invalid_quantity + " Mình vẫn giữ các lựa chọn đang chờ.",
             "checkout_payload": None, "tool_calls_log": [], "error": None,
         }
+    if quantity_ambiguous:
+        return {
+            "reply": "Mình đang giữ nhiều món. Bạn cho biết món nào lấy số lượng này, hoặc nói ‘mỗi món’ nhé.",
+            "checkout_payload": None, "tool_calls_log": [], "error": None,
+        }
     if resolved_quantity is not None:
         pending = [{**item, "quantity": resolved_quantity} for item in pending]
+        cart_manager.set_pending_products(session_id, pending)
+    normalized_pending = []
+    for item in pending:
+        raw_quantity = item.get("quantity")
+        try:
+            quantity = 1 if raw_quantity is None else int(raw_quantity)
+        except (TypeError, ValueError):
+            quantity = 0
+        if quantity <= 0:
+            return {
+                "reply": "Số lượng đang lưu không hợp lệ và phải lớn hơn 0. Mình vẫn giữ món để bạn nhập lại số lượng.",
+                "checkout_payload": None, "tool_calls_log": [], "error": None,
+            }
+        normalized_pending.append({**item, "quantity": quantity})
+    if normalized_pending != pending:
+        pending = normalized_pending
         cart_manager.set_pending_products(session_id, pending)
     # A pending cart write owns its operation identity before network I/O. This
     # survives a lost response and prevents a later paraphrase from generating
@@ -1124,6 +1140,30 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
         missing_required = []
         invalid_requested = []
         unset_optional = []
+        group_markers = {
+            "size": r"\b(size|kich thuoc|kich co)\b",
+            "toppings": r"\b(topping|toping|do kem)\b",
+            "luong_da": r"\b(luong da|da|ice)\b",
+            "do_ngot": r"\b(do ngot|ngot|duong|sweet)\b",
+            "loai_sua": r"\b(loai sua|milk)\b",
+        }
+        explicit_fields = {field for field, pattern in group_markers.items()
+                           if re.search(pattern, normalized)}
+        value_owners: Dict[str, List[tuple]] = {}
+        for candidate_group in option_schema:
+            candidate_field = option_field(candidate_group.get("name", ""))
+            if not candidate_field or candidate_field in selected:
+                continue
+            for value in candidate_group.get("values") or []:
+                key = _normalize_chat_text(value)
+                if key and re.search(r"(?<!\w)" + re.escape(key) + r"(?!\w)", normalized):
+                    value_owners.setdefault(key, []).append(
+                        (candidate_field, str(candidate_group.get("name") or candidate_field), str(value))
+                    )
+        ambiguous_values = {
+            key: owners for key, owners in value_owners.items()
+            if len({owner[0] for owner in owners}) > 1 and not explicit_fields
+        }
         for group in option_schema:
             name = str(group.get("name") or "")
             values = list(group.get("values") or [])
@@ -1134,22 +1174,22 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
                 continue
             matches = [] if reconciliation_only else [value for value in values if re.search(
                 r"(?<!\w)" + re.escape(_normalize_chat_text(value)) + r"(?!\w)", normalized
-            )]
+            ) and _normalize_chat_text(value) not in ambiguous_values
+                and (not explicit_fields or _normalize_chat_text(value) not in value_owners
+                     or field in explicit_fields)]
             cleared_toppings = not reconciliation_only and field == "toppings" and re.search(
                 r"\b(khong topping|bo topping|khong them topping)\b", normalized
             )
-            explicit_group = {
-                "size": r"\b(size|kich thuoc|kich co)\b",
-                "toppings": r"\b(topping|toping|do kem)\b",
-                "luong_da": r"\b(luong da|da|ice)\b",
-                "do_ngot": r"\b(do ngot|ngot|duong|sweet)\b",
-                "loai_sua": r"\b(loai sua|milk)\b",
-            }[field]
+            explicit_group = group_markers[field]
             invalid_group = bool(not reconciliation_only and re.search(explicit_group, normalized) and not matches and not cleared_toppings)
             complete_validation = (
                 None if reconciliation_only or cleared_toppings
-                else validate_explicit_multi_value_group(message, group)
+                else validate_explicit_multi_value_group(
+                    message, group, option_schema=option_schema, allow_implicit=True,
+                )
             )
+            if field == "toppings" and matches and not re.search(explicit_group, normalized) and not complete_validation:
+                matches = []
             if complete_validation and complete_validation["invalid_values"]:
                 invalid = ", ".join(complete_validation["invalid_values"])
                 allowed = ", ".join(complete_validation["allowed_values"])
@@ -1185,6 +1225,14 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
                 else:
                     unset_optional.append(name)
 
+        if ambiguous_values:
+            for owners in ambiguous_values.values():
+                labels = list(dict.fromkeys(owner[1] for owner in owners))
+                value = owners[0][2]
+                invalid_requested.append(
+                    f"‘{value}’ chưa rõ thuộc {', '.join(labels)}; bạn nói rõ nhóm muốn chọn"
+                )
+
         if invalid_requested:
             not_ready.append(f"{product_name}: tùy chọn chưa khớp menu; chọn {', '.join(invalid_requested)}")
         elif missing_required:
@@ -1202,7 +1250,8 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
             for item, _product_name, selected in prepared
         ])
         if not_ready:
-            reply = "Mình đã ghi nhận các lựa chọn trước đó. Còn cần chọn:\n- " + "\n- ".join(not_ready)
+            reply = ("Mình đã ghi nhận các lựa chọn trước đó. Giỏ hàng chưa thay đổi. "
+                     "Còn cần chọn:\n- " + "\n- ".join(not_ready))
         else:
             reply = "Mình đã ghi nhận lựa chọn của bạn. Các tùy chọn còn lại có thể để mặc định. Bạn muốn chỉnh thêm hay nói ‘theo mặc định’ để thêm món?"
         return {
@@ -1224,6 +1273,7 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
     cart_manager.set_pending_action(session_id, "fill_options", {"count": len(prepared)})
 
     for item, product_name, selected in prepared:
+        quantity = int(item["quantity"])
         price_result = execute_check_price_and_stock(
             product_name_query=product_name,
             branch_id="Chưa chọn",
@@ -1232,7 +1282,7 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
             luong_da=selected.get("luong_da"),
             do_ngot=selected.get("do_ngot"),
             loai_sua=selected.get("loai_sua"),
-            quantity=max(1, int(item.get("quantity") or 1)),
+            quantity=quantity,
             session_id=session_id,
         )
         logs.append({"tool": "check_price_and_stock", "args": {"product_name_query": product_name}, "result": price_result})
@@ -1252,7 +1302,7 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
             product_id=str(exact["product_id"]),
             product_name=str(exact["product_name"]),
             unit_price=float(exact["final_price"]),
-            quantity=max(1, int(item.get("quantity") or 1)),
+            quantity=quantity,
             size=selected.get("size"),
             toppings=selected.get("toppings") or [],
             luong_da=selected.get("luong_da"),
@@ -1260,7 +1310,7 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
             loai_sua=selected.get("loai_sua"),
             operation_id=item.get("operation_id"),
         )
-        logs.append({"tool": "add_to_cart", "args": {"product_name": product_name, "quantity": max(1, int(item.get("quantity") or 1)), **selected}, "result": add_result})
+        logs.append({"tool": "add_to_cart", "args": {"product_name": product_name, "quantity": quantity, **selected}, "result": add_result})
         if add_result.get("status") == "ok":
             added.append(add_result)
         else:

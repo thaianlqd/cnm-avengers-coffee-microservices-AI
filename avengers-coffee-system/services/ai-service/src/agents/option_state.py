@@ -95,8 +95,13 @@ def mentions_pending_option_value(message: str, pending: List[Dict[str, Any]]) -
     return False
 
 
-def validate_explicit_multi_value_group(message: str, group: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    """Validate the complete explicit value list for a multi-select group.
+def validate_explicit_multi_value_group(
+    message: str,
+    group: Dict[str, Any],
+    option_schema: Optional[List[Dict[str, Any]]] = None,
+    allow_implicit: bool = False,
+) -> Optional[Dict[str, Any]]:
+    """Validate the complete requested value list for a multi-select group.
 
     Matching only known values is insufficient for a request such as
     ``Hạt Sen và Foam Dừa``: retaining Hạt Sen while dropping Foam Dừa would
@@ -104,30 +109,69 @@ def validate_explicit_multi_value_group(message: str, group: Dict[str, Any]) -> 
     """
     if not group.get("multiple") or option_field(group.get("name", "")) != "toppings":
         return None
-    clause = re.search(
-        r"\b(?:topping|toping|đồ\s+kèm|do\s+kem)\b(?P<values>[^,;.]*)",
-        message,
-        flags=re.IGNORECASE,
-    )
-    if not clause or re.search(r"\b(?:không|khong)\s+(?:topping|toping)|\b(?:bỏ|bo)\s+(?:topping|toping)\b",
-                               message, flags=re.IGNORECASE):
+    if re.search(r"\b(?:không|khong)\s+(?:topping|toping)|\b(?:bỏ|bo)\s+(?:topping|toping)\b",
+                 message, flags=re.IGNORECASE):
         return None
+    marker = re.search(r"\b(?:topping|toping|đồ\s+kèm|do\s+kem)\b", message, flags=re.IGNORECASE)
+    allowed_by_key = {_norm(value): value for value in group.get("values") or []}
+    if marker:
+        requested = message[marker.end():]
+    elif allow_implicit and any(re.search(
+        r"(?<!\w)" + re.escape(key) + r"(?!\w)", _norm(message)
+    ) for key in allowed_by_key):
+        requested = message
+    else:
+        return None
+
+    # A semicolon or sentence terminator always closes this option clause.
+    requested = re.split(r"[;.]", requested, maxsplit=1)[0]
     requested = re.sub(
         r"^\s*(?:(?:là|la|thành|thanh|gồm|gom|chọn|chon)\s+)", "",
-        clause.group("values"), flags=re.IGNORECASE,
+        requested, flags=re.IGNORECASE,
     )
-    requested = re.sub(
-        r"\s+(?:(?:theo\s+mặc\s+định|theo\s+mac\s+dinh)|nhé|nhe|ạ|a|đi|di|bạn|ban|b|thôi|thoi)\s*$",
-        "", requested, flags=re.IGNORECASE,
-    ).strip()
+    assignment = re.split(r"\b(?:thành|thanh|sang)\b", requested, flags=re.IGNORECASE)
+    if len(assignment) > 1:
+        requested = assignment[-1]
+    requested = requested.strip()
     if not requested:
         return None
-    candidates = [part.strip() for part in re.split(
-        r"\s+(?:và|va|với|voi)\s+", requested, flags=re.IGNORECASE,
-    ) if part.strip()]
-    allowed_by_key = {_norm(value): value for value in group.get("values") or []}
+
+    other_values = set()
+    other_markers = []
+    for other in option_schema or []:
+        other_field = option_field(other.get("name", ""))
+        if not other_field or other_field == "toppings":
+            continue
+        other_values.update(_norm(value) for value in other.get("values") or [])
+        other_markers.append(_norm(other.get("name", "")))
+    other_markers.extend(["size", "kich thuoc", "kich co", "luong da", "da", "ice",
+                          "do ngot", "ngot", "duong", "sweet", "loai sua", "milk"])
+
+    candidates = []
+    for raw in re.split(r"\s*(?:,|&|\+)\s*|\s+(?:và|va|với|voi)\s+", requested,
+                        flags=re.IGNORECASE):
+        candidate = re.sub(
+            r"\s+(?:(?:theo\s+mặc\s+định|theo\s+mac\s+dinh)|nhé|nhe|ạ|a|đi|di|bạn|ban|b|thôi|thoi|nữa|nua)\s*$",
+            "", raw, flags=re.IGNORECASE,
+        ).strip()
+        if not marker:
+            candidate = re.sub(r"^\s*(?:thêm|them|chọn|chon)\s+", "", candidate,
+                               flags=re.IGNORECASE).strip()
+        key = _norm(candidate)
+        if not key:
+            continue
+        belongs_to_other_group = key in other_values and key not in allowed_by_key
+        starts_other_group = any(re.search(r"(?<!\w)" + re.escape(name) + r"(?!\w)", key)
+                                 for name in other_markers if name)
+        if candidates and (belongs_to_other_group or starts_other_group):
+            break
+        candidates.append(candidate)
+    if not candidates:
+        return None
     valid = [allowed_by_key[_norm(value)] for value in candidates if _norm(value) in allowed_by_key]
     invalid = [value for value in candidates if _norm(value) not in allowed_by_key]
+    if not marker and not valid:
+        return None
     return {
         "field": str(group.get("name") or "Topping"),
         "requested_values": candidates,

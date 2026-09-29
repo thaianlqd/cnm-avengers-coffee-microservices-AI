@@ -812,7 +812,13 @@ def _prepare_structured_products(
                      "result": option_result})
         if option_result.get("status") != "ok":
             if option_result.get("status") != "not_found":
-                _focus_product(session_id, ref)
+                cart_manager.set_checkout_context(session_id, last_product_focus={
+                    "product_id": ref["product_id"],
+                    "product_name": product_name,
+                    "category": ref.get("category"),
+                    "quantity": int(ref.get("quantity") or 1),
+                    "option_retry_pending": True,
+                })
                 return {
                     "reply": "Mình đã xác định đúng món nhưng hiện chưa lấy được tùy chọn của món này. Giỏ chưa thay đổi. Bạn có thể thử lại.",
                     "checkout_payload": None, "tool_calls_log": logs,
@@ -1085,6 +1091,7 @@ def _offer_voucher_gate(session_id: str, lead: str = "Mình đã ghi nhận gi�
 def _resolve_cart_option_update(item: Dict[str, Any], message: str) -> tuple[Dict[str, Any], Dict[str, Any]]:
     """Validate requested option values and build an absolute cart-row state."""
     from src.agents.agent_service import _parse_option_groups
+    from src.agents.option_state import validate_explicit_multi_value_group
     from src.function_calling.tools.product_tools import CanonicalProductOptionRef, execute_get_product_options
 
     product_name = str(item.get("product_name") or "")
@@ -1101,6 +1108,11 @@ def _resolve_cart_option_update(item: Dict[str, Any], message: str) -> tuple[Dic
             "actual_product_id": str(option_result["product_id"]),
         }}
     groups = _parse_option_groups(option_result) if option_result.get("status") == "ok" else {}
+    option_schema = [
+        {"name": name, "values": [_clean_option_text(value) for value in values],
+         "multiple": "topping" in _norm(name)}
+        for name, values in groups.items()
+    ]
     text = _norm(message)
     changes: Dict[str, Any] = {}
     for group_name, values in groups.items():
@@ -1113,37 +1125,14 @@ def _resolve_cart_option_update(item: Dict[str, Any], message: str) -> tuple[Dic
             current = list(item.get("toppings") or [])
             # An explicit topping list is atomic. Do not silently keep only
             # its valid subset and PATCH a state the customer did not request.
-            raw_clause = re.search(
-                r"\b(?:topping|toping|do kem)\b(?P<values>[^,;.]*)",
+            validation = (validate_explicit_multi_value_group(
                 message,
-                flags=re.IGNORECASE,
-            )
-            # A product reference such as "đổi topping trà sữa" is not an
-            # option value. Run strict list validation only after the normal
-            # matcher has found at least one actual topping label.
-            if raw_clause and matches:
-                requested_values = re.sub(
-                    r"^\s*(?:la|là|thanh|thành|gom|gồm)\s*", "",
-                    raw_clause.group("values"), flags=re.IGNORECASE,
-                )
-                assignment = re.split(r"\b(?:thanh|thành|sang)\b", requested_values,
-                                      flags=re.IGNORECASE)
-                if len(assignment) > 1:
-                    requested_values = assignment[-1]
-                candidates = [
-                    re.sub(r"\s+(?:nhe|nhé|a|ạ|di|đi|ban|bạn|b)\s*$", "", candidate,
-                           flags=re.IGNORECASE).strip()
-                    for candidate in re.split(r"\s+(?:va|và|voi|với)\s+", requested_values)
-                ]
-                allowed = {_norm(_clean_option_text(value)) for value in values}
-                invalid = [candidate for candidate in candidates
-                           if candidate and _norm(candidate) not in allowed]
-                if invalid:
-                    return {}, {**option_result, "validation_error": {
-                        "field": group_name,
-                        "invalid_values": invalid,
-                        "allowed_values": [_clean_option_text(value) for value in values],
-                    }}
+                {"name": group_name, "values": [_clean_option_text(value) for value in values],
+                 "multiple": True},
+                option_schema=option_schema,
+            ) if matches else None)
+            if validation and validation["invalid_values"]:
+                return {}, {**option_result, "validation_error": validation}
             clause_match = re.search(r"\b(?:topping|toping|do kem)\b[^,;]*", text)
             if clause_match:
                 clause_start = max(text.rfind(",", 0, clause_match.start()), text.rfind(";", 0, clause_match.start())) + 1
@@ -1718,6 +1707,17 @@ def _browse_ask_more(state: OrderConversationState) -> Dict[str, Any]:
 
 def _understand(state: OrderConversationState) -> OrderConversationState:
     prefs_at_entry = cart_manager.get_checkout_prefs(state["session_id"])
+    retry_focus = prefs_at_entry.get("last_product_focus") or {}
+    if retry_focus.get("option_retry_pending") and re.search(
+        r"\b(?:thu lai|lam lai|kiem tra lai|tiep tuc)\b", _norm(state["user_message"])
+    ):
+        return {**state, "intent": {"intent": "ADD_ITEM", "resolved_products": [{
+            "product_id": retry_focus["product_id"],
+            "product_name": retry_focus["product_name"],
+            "category": retry_focus.get("category"),
+            "quantity": int(retry_focus.get("quantity") or 1),
+        }], "quantity": int(retry_focus.get("quantity") or 1),
+            "target_source": "option_metadata_retry"}}
     staged_at_entry = list(prefs_at_entry.get("pending_products") or [])
     pending_at_entry = cart_manager.get_pending_action(state["session_id"])
     if pending_at_entry and pending_at_entry.get("type") == "fill_options" and not staged_at_entry:
