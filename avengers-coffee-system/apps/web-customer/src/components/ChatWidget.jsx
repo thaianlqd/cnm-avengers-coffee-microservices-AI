@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
 import { apiClient } from '../lib/apiClient';
 import { openChatProductDetail, addChatProduct, branchDistanceLabel, paymentCardRows, chatLoadingLabel, refreshWalletAfterCheckout, structuredLegacyCards, pollQrPaymentStatus, latestPendingQrPayment, qrPaymentFromCheckout } from './chatWidgetActions';
+import { PENDING_AGENT_TURN_KEY, readPendingAgentTurn, matchesAgentTurn, selectAgentTurn, clearCompletedAgentTurn, agentTurnFailure } from './agentTurn';
 
 // ─── Utilities & Formatters ──────────────────────────────────────────────────
 const fmtVND = (n) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
@@ -539,7 +540,7 @@ export default function ChatWidget({ user, socketUrl }) {
 
   // Data cache & prefetch
   const cache = useRef({ products: [], branches: [], orders: [], vouchers: [], loaded: false });
-  const pendingAgentTurnRef = useRef(null);
+  const pendingAgentTurnRef = useRef(readPendingAgentTurn(sessionStorage));
 
   const userId = user?.id || user?.ma_nguoi_dung || user?.maNguoiDung || null;
   const walletUserId = user?.ma_nguoi_dung || user?.maNguoiDung || user?.id || null;
@@ -701,6 +702,8 @@ export default function ChatWidget({ user, socketUrl }) {
       const nextConversationId = newConversationId();
       localStorage.setItem(AI_CONVERSATION_KEY, nextConversationId);
       setAiConversationId(nextConversationId);
+      pendingAgentTurnRef.current = null;
+      sessionStorage.removeItem(PENDING_AGENT_TURN_KEY);
 
       // Conversation-specific draft state must not bleed into a new thread.
       // The customer/order-service cart is deliberately left untouched.
@@ -741,11 +744,11 @@ export default function ChatWidget({ user, socketUrl }) {
       content: m.noi_dung || '',
     })).filter((m) => m.content);
 
-    const previousTurn = pendingAgentTurnRef.current;
-    const turn = previousTurn?.text === text && previousTurn?.selectedProductId === selectedProductId && previousTurn?.sessionId === effectiveUserId && previousTurn?.conversationId === aiConversationId
-      ? previousTurn
-      : { text, selectedProductId, sessionId: effectiveUserId, conversationId: aiConversationId, id: newConversationId() };
+    const turn = selectAgentTurn(pendingAgentTurnRef.current, {
+      text, selectedProductId, sessionId: effectiveUserId, conversationId: aiConversationId,
+    }, newConversationId);
     pendingAgentTurnRef.current = turn;
+    sessionStorage.setItem(PENDING_AGENT_TURN_KEY, JSON.stringify(turn));
     const agentRes = await apiClient.post('/ai/agent/chat', {
       session_id: effectiveUserId,
       conversation_id: aiConversationId,
@@ -756,12 +759,11 @@ export default function ChatWidget({ user, socketUrl }) {
     });
 
     const d = agentRes?.data || agentRes;
-    pendingAgentTurnRef.current = null;
     if (d?.conversation_id && d.conversation_id !== aiConversationId) {
       localStorage.setItem(AI_CONVERSATION_KEY, d.conversation_id);
       setAiConversationId(d.conversation_id);
     }
-    return d;
+    return { data: d, turn };
   }, [messages, effectiveUserId, aiConversationId]);
 
   const fetchCanonicalProductPrice = useCallback(async (productName, quantity = 1, size = null) => {
@@ -849,8 +851,18 @@ export default function ChatWidget({ user, socketUrl }) {
     await prefetchData();
 
     // ── LUỒNG 1: Gọi AI Agent mới (RAG + Guardrails + Tool Calling) ──────────
+    let phase = 'request';
+    let completedTurn;
+    const finishTurn = () => {
+      clearCompletedAgentTurn(sessionStorage, completedTurn);
+      if (pendingAgentTurnRef.current?.id === completedTurn?.id) pendingAgentTurnRef.current = null;
+    };
     try {
-      const agentData = await callAgentAPI(text, selectedProductId);
+      const response = await callAgentAPI(text, selectedProductId);
+      completedTurn = response.turn;
+      phase = 'response_processing';
+      const agentData = response.data;
+      if (!agentData || typeof agentData.reply !== 'string') throw new Error('Invalid agent response');
       const agentReply = agentData?.reply;
           const checkoutPayload = agentData?.checkout_payload;
       const agentError = agentData?.error;
@@ -915,6 +927,7 @@ export default function ChatWidget({ user, socketUrl }) {
           _quickReplies: [],
           _paymentOptions: Array.isArray(agentData?.ui_payload?.payment_options) ? agentData.ui_payload.payment_options : [],
         });
+        finishTurn();
         return;
       }
 
@@ -936,20 +949,33 @@ export default function ChatWidget({ user, socketUrl }) {
           _quickReplies: QUICK_ACTIONS.slice(0, 3),
         };
         addAIMsg(agentReply, extras);
+        finishTurn();
         return;
       }
 
       // Nếu Agent bị guardrail block, agentReply đã là safe fallback reply
       if (agentReply && agentError?.startsWith('blocked:')) {
         addAIMsg(agentReply);
+        finishTurn();
         return;
       }
+      // A complete 2xx response with no displayable reply is a client/server
+      // contract error, never a reason to run the legacy agent on this turn.
+      throw new Error('Agent response has no displayable reply');
     } catch (agentErr) {
-      console.warn('[ChatWidget] Agent API failed:', agentErr?.message || agentErr);
+      const status = agentErr?.response?.status;
+      const failure = agentTurnFailure(phase, status);
+      console.error('[ChatWidget] Agent turn failed', {
+        conversation_id: aiConversationId,
+        client_message_id: pendingAgentTurnRef.current?.id,
+        phase: failure.phase,
+        status: status || null,
+        error: agentErr?.message || String(agentErr),
+      });
       // Never hand a stateful cart/checkout turn to the legacy chatbot. It has
       // no access to the current agent draft and may invent different items or
       // locations after a timeout.
-      addAIMsg('Kết nối bị gián đoạn nên mình chưa nhận được kết quả. Bạn gửi lại đúng tin nhắn này để mình kiểm tra cùng lượt xử lý nhé.');
+      addAIMsg(failure.message, { _agentRetryError: pendingAgentTurnRef.current?.id });
       return;
     }
 
@@ -1015,7 +1041,16 @@ export default function ChatWidget({ user, socketUrl }) {
     setSending(true);
 
     if (chatMode === 'AI') {
-      addUserMsg(text);
+      const retry = matchesAgentTurn(pendingAgentTurnRef.current, {
+        text, selectedProductId, sessionId: effectiveUserId, conversationId: aiConversationId,
+      });
+      if (retry) {
+        const failedId = pendingAgentTurnRef.current.id;
+        setMessages((prev) => prev.filter((message) => message._agentRetryError !== failedId));
+        if (!messages.some((message) => message.vai_tro_nguoi_gui === 'CUSTOMER' && message.noi_dung === text)) addUserMsg(text);
+      } else {
+        addUserMsg(text);
+      }
       if (overrideText === undefined) setInputText('');
       scrollBottom();
       setIsTyping(true);
@@ -1064,7 +1099,7 @@ export default function ChatWidget({ user, socketUrl }) {
         setSending(false);
       }
     }
-  }, [inputText, sending, chatMode, conversation, replyTo, effectiveUserId, userName, addUserMsg, scrollBottom, processAIMessage, pendingOrder]);
+  }, [inputText, sending, chatMode, conversation, replyTo, effectiveUserId, aiConversationId, messages, userName, addUserMsg, scrollBottom, processAIMessage, pendingOrder]);
 
   const addCardProduct = useCallback((product) => {
     if (!product.product_id || !product.product_name) return;

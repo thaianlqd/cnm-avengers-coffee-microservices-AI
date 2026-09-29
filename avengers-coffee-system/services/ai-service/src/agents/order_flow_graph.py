@@ -1450,6 +1450,13 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
                 return {**state, "intent": {"intent": "SELECT_PAYMENT" if "payment_method" in checkout_patch else "SELECT_FULFILLMENT",
                                           "target_kind": "NONE", "checkout_patch": checkout_patch}}
             return {**state, "intent": {"intent": "PENDING_CHECKOUT_CHOICE", "pending_type": pending_type}}
+        # Text choices belong to the same pending gate as numbered choices.
+        # Resolve both fields before general intent and catalog routing.
+        from src.agents.agent_service import _explicit_checkout_choices
+        checkout_patch = _explicit_checkout_choices(state["user_message"])
+        if checkout_patch:
+            return {**state, "intent": {"intent": "SELECT_FULFILLMENT" if "delivery_type" in checkout_patch else "SELECT_PAYMENT",
+                                       "target_kind": "NONE", "checkout_patch": checkout_patch}}
     intent = classify_order_intent(state["user_message"], (pending or {}).get("type"))
     plain_intent = classify_order_intent(state["user_message"], None)
     if (pending or {}).get("type") and plain_intent.get("intent") in {
@@ -2282,6 +2289,8 @@ def run_order_flow(
             if previous.get("message") != user_message or previous.get("selected_product_id") != selected_product_id:
                 return {"reply": "Mã lượt chat đã được dùng cho một tin nhắn khác.",
                         "checkout_payload": None, "tool_calls_log": [], "error": "client_message_id_conflict"}
+            logger.info("[AgentTurn] client_message_id=%s phase=business_replay cache_hit=true",
+                        client_message_id)
             return deepcopy(previous["result"])
     initial: OrderConversationState = {
         "session_id": session_id,

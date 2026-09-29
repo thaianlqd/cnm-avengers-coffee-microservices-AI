@@ -83,6 +83,21 @@ def test_qr_questions_and_negation_do_not_select(message):
 def test_combined_checkout_phrase_stores_both_in_one_patch():
     assert agent_service._explicit_checkout_choices("cho tôi lấy tại quán và thanh toán qua mã QR nhé") == {
         "delivery_type": "MANG_DI", "payment_method": "NGAN_HANG_QR"}
+    assert agent_service._explicit_checkout_choices("cho tôi lấy tại quán và chuyển khoản qr nhé") == {
+        "delivery_type": "MANG_DI", "payment_method": "NGAN_HANG_QR"}
+
+
+@pytest.mark.parametrize('phrase,field,expected', [
+    ('giao tận nơi', 'delivery_type', 'GIAO_TAN_NOI'),
+    ('lấy tại quán', 'delivery_type', 'MANG_DI'),
+    ('dùng tại chỗ', 'delivery_type', 'TAI_CHO'),
+    ('VNPAY', 'payment_method', 'VNPAY'),
+    ('chuyển khoản QR', 'payment_method', 'NGAN_HANG_QR'),
+    ('ví Avengers', 'payment_method', 'VI_DIEN_TU'),
+    ('tiền mặt COD', 'payment_method', 'THANH_TOAN_KHI_NHAN_HANG'),
+])
+def test_checkout_choice_methods_remain_supported(phrase, field, expected):
+    assert agent_service._explicit_checkout_choices(phrase)[field] == expected
 
 
 @pytest.mark.parametrize("message,expected", [

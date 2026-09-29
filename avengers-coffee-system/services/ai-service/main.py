@@ -770,11 +770,15 @@ def agent_chat(body: AgentChatRequest, request: Request):
 
     conversation_id = conversation_memory.normalize_conversation_id(body.conversation_id)
     scoped_session_id = f"{body.session_id}:conversation:{conversation_id}"
+    logger.debug("[AgentTurn] conversation_id=%s client_message_id=%s phase=request_received",
+                 conversation_id, body.client_message_id)
     try:
         cached = conversation_memory.get_cached_response(
             conversation_id, body.session_id, body.client_message_id
         )
         if cached:
+            logger.info("[AgentTurn] conversation_id=%s client_message_id=%s phase=replay cache_hit=true",
+                        conversation_id, body.client_message_id)
             if (cached.get("_request_message", body.message) != body.message or
                     cached.get("_selected_product_id") != body.selected_product_id):
                 raise HTTPException(status_code=409, detail="Mã lượt chat đã được dùng cho yêu cầu khác")
@@ -790,10 +794,13 @@ def agent_chat(body: AgentChatRequest, request: Request):
     except PermissionError:
         raise HTTPException(status_code=403, detail="Cuộc trò chuyện không thuộc phiên hiện tại")
     except Exception as exc:
-        logger.warning("Cannot load durable AI conversation: %s", exc)
-        history = []
+        logger.warning("[AgentTurn] conversation_id=%s client_message_id=%s phase=cache_load_failed error=%s",
+                       conversation_id, body.client_message_id, type(exc).__name__)
+        raise HTTPException(status_code=503, detail="Chưa thể kiểm tra trạng thái lượt chat")
     if not history:
         history = [{"role": m.role, "content": m.content} for m in (body.history or [])]
+    from src.common import cart_manager
+    pending_before = (cart_manager.get_pending_action(scoped_session_id) or {}).get("type")
     result = run_agent(
         session_id=scoped_session_id,
         user_message=body.message,
@@ -802,8 +809,12 @@ def agent_chat(body: AgentChatRequest, request: Request):
         selected_product_id=body.selected_product_id,
     )
     result["conversation_id"] = conversation_id
+    prefs_after = cart_manager.get_checkout_prefs(scoped_session_id)
+    pending_after = (cart_manager.get_pending_action(scoped_session_id) or {}).get("type")
+    logger.debug("[AgentTurn] conversation_id=%s client_message_id=%s phase=processed cache_hit=false pending_before=%s pending_after=%s fulfillment=%s payment=%s result=%s",
+                 conversation_id, body.client_message_id, pending_before, pending_after,
+                 prefs_after.get("delivery_type"), prefs_after.get("payment_method"), result.get("error") or "ok")
     try:
-        from src.common import cart_manager
         checkout_prefs = cart_manager.get_checkout_prefs(scoped_session_id)
         checkout_prefs.pop("processed_order_turns", None)
         cart_snapshot = cart_manager.get_cart(scoped_session_id)
@@ -822,7 +833,8 @@ def agent_chat(body: AgentChatRequest, request: Request):
             selected_product_id=body.selected_product_id,
         )
     except Exception as exc:
-        logger.warning("Cannot persist durable AI conversation: %s", exc)
+        logger.warning("[AgentTurn] conversation_id=%s client_message_id=%s phase=cache_save_failed error=%s",
+                       conversation_id, body.client_message_id, type(exc).__name__)
     return AgentChatResponse(
         reply=result.get("reply", ""),
         conversation_id=conversation_id,
