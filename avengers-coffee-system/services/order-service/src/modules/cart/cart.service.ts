@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { createHash } from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,8 +14,7 @@ import { VoucherService } from '../voucher/voucher.service';
 
 @Injectable()
 export class CartService {
-  private mutationOperationSchemaReady?: Promise<void>;
-  private cartMetadataSchemaReady?: Promise<void>;
+  private cartMutationSchemaReady?: Promise<void>;
 
   constructor(
     @InjectRepository(CartItem) private cartRepo: Repository<CartItem>,
@@ -84,51 +84,38 @@ export class CartService {
       .digest('hex');
   }
 
-  private async ensureMutationOperationTable() {
-    if (!this.mutationOperationSchemaReady) {
+  private async ensureCartMutationSchema() {
+    if (!this.cartMutationSchemaReady) {
       const schema = this.cartSchema();
-      const initialization = (async () => {
-        await this.dataSource.query(`
-          CREATE TABLE IF NOT EXISTS "${schema}".cart_mutation_operation (
-            operation_id VARCHAR(200) PRIMARY KEY,
-            user_id VARCHAR NOT NULL,
-            operation_type VARCHAR(64) NOT NULL,
-            request_hash TEXT NOT NULL,
-            result JSONB NULL,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-          )
-        `);
-        await this.dataSource.query(
-          `ALTER TABLE "${schema}".cart_mutation_operation
-           ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
-        );
-      })();
-      this.mutationOperationSchemaReady = initialization.catch((error) => {
-        this.mutationOperationSchemaReady = undefined;
+      const initialization = this.dataSource.query(
+        `SELECT to_regclass($1) AS cart_metadata,
+                to_regclass($2) AS cart_mutation_operation`,
+        [`${schema}.cart_metadata`, `${schema}.cart_mutation_operation`],
+      ).then((rows: Array<{ cart_metadata?: string; cart_mutation_operation?: string }>) => {
+        const ready = rows?.[0];
+        if (!ready?.cart_metadata || !ready?.cart_mutation_operation) {
+          throw new ServiceUnavailableException(
+            'Cart mutation schema chưa được migrate. Hãy áp dụng migration 20260926_cart_state_idempotency.sql.',
+          );
+        }
+      });
+      this.cartMutationSchemaReady = initialization.catch((error) => {
+        this.cartMutationSchemaReady = undefined;
         throw error;
       });
     }
-    return this.mutationOperationSchemaReady;
+    return this.cartMutationSchemaReady;
+  }
+
+  // Cart mutation tables are deployed by migrations. Runtime writes must not
+  // issue DDL because a remote pooler can hold the customer request long
+  // enough for the AI caller to time out after the eventual commit.
+  private async ensureMutationOperationTable() {
+    return this.ensureCartMutationSchema();
   }
 
   private async ensureCartMetadataTable() {
-    if (!this.cartMetadataSchemaReady) {
-      const schema = this.cartSchema();
-      const initialization = this.dataSource.query(`
-        CREATE TABLE IF NOT EXISTS "${schema}".cart_metadata (
-          user_id VARCHAR PRIMARY KEY,
-          cart_id VARCHAR(200) NOT NULL UNIQUE,
-          cart_version BIGINT NOT NULL DEFAULT 0,
-          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )
-      `).then(() => undefined);
-      this.cartMetadataSchemaReady = initialization.catch((error) => {
-        this.cartMetadataSchemaReady = undefined;
-        throw error;
-      });
-    }
-    return this.cartMetadataSchemaReady;
+    return this.ensureCartMutationSchema();
   }
 
   /**

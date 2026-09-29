@@ -24,11 +24,12 @@ describe('CartService idempotent cart mutations', () => {
     };
     const query = jest.fn(async (sql: string, params: any[] = []) => {
       const isUpdate = sql.trimStart().startsWith('UPDATE');
-      if (
-        sql.includes('CREATE TABLE IF NOT EXISTS') ||
-        sql.includes('ALTER TABLE')
-      )
-        return [];
+      if (sql.includes('to_regclass')) {
+        return [{
+          cart_metadata: 'orders.cart_metadata',
+          cart_mutation_operation: 'orders.cart_mutation_operation',
+        }];
+      }
       if (sql.includes('SELECT request_hash, result')) {
         const row = operations.get(params[0]);
         return row
@@ -184,7 +185,7 @@ describe('CartService idempotent cart mutations', () => {
     });
   });
 
-  it('initializes cart mutation schema once per service lifecycle', async () => {
+  it('checks cart mutation schema once per service lifecycle without runtime DDL', async () => {
     const { service, query } = createMetadataAwareService();
     (service as any).themVaoGiỏNoIdempotency = jest.fn(async () => ({ id: 701 }));
     const dto = { ma_nguoi_dung: 'schema-once', ma_san_pham: 120, so_luong: 1 };
@@ -192,10 +193,11 @@ describe('CartService idempotent cart mutations', () => {
     await service.themVaoGiỏ(dto, 'schema-operation-1');
     await service.themVaoGiỏ(dto, 'schema-operation-2');
 
-    const ddl = query.mock.calls.map(([sql]) => String(sql)).filter((sql) =>
-      sql.includes('CREATE TABLE IF NOT EXISTS') || sql.includes('ALTER TABLE'));
-    expect(ddl.filter((sql) => sql.includes('cart_mutation_operation'))).toHaveLength(2);
-    expect(ddl.filter((sql) => sql.includes('cart_metadata'))).toHaveLength(1);
+    const schemaChecks = query.mock.calls.map(([sql]) => String(sql))
+      .filter((sql) => sql.includes('to_regclass'));
+    expect(schemaChecks).toHaveLength(1);
+    expect(query.mock.calls.map(([sql]) => String(sql)).some((sql) =>
+      sql.includes('CREATE TABLE IF NOT EXISTS') || sql.includes('ALTER TABLE'))).toBe(false);
   });
 
   it('rejects negative ADD quantity without changing cart rows or cart_version', async () => {

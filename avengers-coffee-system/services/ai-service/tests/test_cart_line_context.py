@@ -152,7 +152,7 @@ def test_edit_options_follow_up_patches_the_focused_cart_line(monkeypatch):
         "toppings": ["Hạt Sen"],
     }])
     monkeypatch.setattr(cart_tools, "sync_authoritative_cart", lambda _session: cart_manager.get_cart(_session))
-    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name: {
+    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name, **_kwargs: {
         "status": "ok",
         "options": {"Topping": ["Hạt Sen", "Trân châu trắng"]},
     })
@@ -220,7 +220,7 @@ def test_long_cart_conversation_add_more_then_change_quantity_and_topping(monkey
     })
     monkeypatch.setattr(cart_tools, "sync_authoritative_cart", lambda _session: cart_manager.get_cart(_session))
 
-    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name: {
+    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name, **_kwargs: {
         "status": "ok", "product_name": "Bánh Trung Thu Matcha", "options": {"Kích thước": ["Nhỏ"]},
     })
     monkeypatch.setattr(product_tools, "execute_check_price_and_stock", lambda **_kwargs: {
@@ -279,7 +279,7 @@ def test_long_cart_conversation_add_more_then_change_quantity_and_topping(monkey
     assert any(row["tool"] == "update_cart_item" for row in quantity["tool_calls_log"])
     assert next(row for row in cart_manager.get_cart(session)["items"] if row["cart_item_id"] == 3)["quantity"] == 2
 
-    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name: {
+    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name, **_kwargs: {
         "status": "ok",
         "options": {"Topping": ["Trân châu trắng", "Hạt Sen", "Foam Dừa"]},
     })
@@ -304,7 +304,7 @@ def test_real_transcript_add_two_matcha_cakes_does_not_increment_bat_buu(monkeyp
         "food": [{"product_id": "120", "product_name": "Bánh Trung Thu Matcha", "category": "food"}],
     })
     monkeypatch.setattr(cart_tools, "sync_authoritative_cart", lambda _session: cart_manager.get_cart(_session))
-    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name: {
+    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name, **_kwargs: {
         "status": "ok", "product_name": "Bánh Trung Thu Matcha", "options": {"Kích thước": ["Nhỏ"]},
     })
     monkeypatch.setattr(product_tools, "execute_check_price_and_stock", lambda **_kwargs: {
@@ -361,7 +361,7 @@ def test_real_transcript_banh_so_three_adds_latest_matcha_not_existing_lava(monk
         ],
     )
     monkeypatch.setattr(cart_tools, "sync_authoritative_cart", lambda _session: cart_manager.get_cart(_session))
-    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name: {
+    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name, **_kwargs: {
         "status": "ok", "product_name": "Bánh Trung Thu Matcha", "options": {"Kích thước": ["Nhỏ"]},
     })
     monkeypatch.setattr(product_tools, "execute_check_price_and_stock", lambda **_kwargs: {

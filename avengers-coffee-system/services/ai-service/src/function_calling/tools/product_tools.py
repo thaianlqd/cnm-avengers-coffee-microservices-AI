@@ -138,20 +138,23 @@ TOOL_GET_PRODUCT_OPTIONS = {
     }
 }
 
-def execute_get_product_options(product_name: str) -> Dict[str, Any]:
+def execute_get_product_options(product_name: str = "", product_id: Optional[str] = None) -> Dict[str, Any]:
     try:
         engine = _get_engine()
         import os
-        import re
         menu_schema = os.getenv("MENU_SCHEMA", "menu")
 
-        query_norm = product_name.lower()
-        words = [w for w in query_norm.split() if len(w) > 1]
-        if not words:
-            return {"status": "error", "message": "Tên sản phẩm không hợp lệ."}
-        
-        conditions = " AND ".join([f"LOWER(ten_san_pham) LIKE :w_{i}" for i in range(len(words))])
-        params = {f"w_{i}": f"%{w}%" for i, w in enumerate(words)}
+        if product_id is not None:
+            conditions = "ma_san_pham::text = :product_id"
+            params = {"product_id": str(product_id)}
+            logger.debug("[ProductOptions] lookup=product_id requested_id=%s", product_id)
+        else:
+            query_norm = product_name.lower()
+            words = [w for w in query_norm.split() if len(w) > 1]
+            if not words:
+                return {"status": "error", "message": "Tên sản phẩm không hợp lệ."}
+            conditions = " AND ".join([f"LOWER(ten_san_pham) LIKE :w_{i}" for i in range(len(words))])
+            params = {f"w_{i}": f"%{w}%" for i, w in enumerate(words)}
         
         with engine.connect() as conn:
             row = conn.execute(text(
@@ -171,6 +174,8 @@ def execute_get_product_options(product_name: str) -> Dict[str, Any]:
                 
             product_id = row[0]
             found_name = row[1]
+            logger.debug("[ProductOptions] lookup=%s resolved_id=%s",
+                         "product_id" if "product_id" in params else "product_name", product_id)
             product_data = dict(zip(
                 ("bien_the", "sizes", "toppings", "luong_da", "do_ngot", "loai_sua"),
                 list(row)[2:],

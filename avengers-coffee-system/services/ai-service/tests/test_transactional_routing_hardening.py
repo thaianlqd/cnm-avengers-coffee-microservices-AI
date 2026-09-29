@@ -235,6 +235,23 @@ def test_invalid_option_value_does_not_write_and_keeps_exact_target(monkeypatch)
     assert not any(entry["tool"] == "update_cart_item" for entry in result["tool_calls_log"])
 
 
+def test_mixed_valid_and_invalid_toppings_reject_the_entire_cart_patch(monkeypatch):
+    session = "mixed-invalid-topping-edit"
+    _seed(session, [{"id": 72, "ma_san_pham": "A", "ten_san_pham": "Americano Phúc Bồn Tử",
+                     "gia_ban": 75000, "so_luong": 1, "size": "Lớn", "toppings": []}])
+    _install_cart_fakes(monkeypatch, session, {"Topping": ["Hạt Sen", "Trái Vải"]})
+    from src.function_calling.tools import cart_tools
+    monkeypatch.setattr(cart_tools, "execute_update_cart_item",
+                        lambda *_args, **_kwargs: pytest.fail("mixed invalid topping must not write"))
+
+    result = run_order_flow(session, "món nước tôi muốn thêm topping hạt sen và foam dừa")
+
+    assert "foam dừa" in result["reply"].lower()
+    assert "Giỏ hàng chưa thay đổi" in result["reply"]
+    assert cart_manager.get_cart(session)["items"][0].get("toppings") == []
+    assert not any(entry["tool"] == "update_cart_item" for entry in result["tool_calls_log"])
+
+
 def test_pending_edit_survives_read_only_turn_but_explicit_other_action_supersedes_it():
     session = "pending-edit-precedence"
     _seed(session, [{"id": 81, "ma_san_pham": "A", "ten_san_pham": "Americano",

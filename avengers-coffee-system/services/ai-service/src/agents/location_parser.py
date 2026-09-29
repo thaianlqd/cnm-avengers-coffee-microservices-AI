@@ -51,14 +51,25 @@ def clean_location_clause(value: str) -> str:
 
 def locality_matches(address: str, requested: str) -> bool:
     """Match a complete administrative component, including P./Q. aliases."""
-    prefix = r"^(?:phuong|xa|quan|huyen|tinh|thanh pho|tp|p|q|h)\.?\s+"
-    area = re.sub(prefix, "", normalize(requested.split(",", 1)[0])).strip()
+    prefix = r"^(?P<level>phuong|xa|quan|huyen|tinh|thanh pho|tp|p|q|h)\.?\s+"
+    level_aliases = {"p": "phuong", "q": "quan", "h": "huyen", "tp": "thanh pho"}
+
+    def identity(value: str) -> tuple[str | None, str]:
+        folded = normalize(value).strip()
+        match = re.match(prefix, folded)
+        if not match:
+            return None, folded
+        level = level_aliases.get(match.group("level"), match.group("level"))
+        return level, folded[match.end():].strip()
+
+    requested_level, area = identity(requested.split(",", 1)[0])
     if not area:
         return False
     for component in str(address or "").split(","):
-        value = normalize(component)
-        bare = re.sub(prefix, "", value).strip()
-        if bare == area or value == area:
+        component_level, bare = identity(component)
+        if bare == area and (
+            requested_level is None or component_level is None or component_level == requested_level
+        ):
             return True
     return False
 

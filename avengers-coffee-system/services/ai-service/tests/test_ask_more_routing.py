@@ -124,7 +124,7 @@ def test_concrete_add_uses_resolver_evidence_and_existing_options(shopping, monk
     refs = state['intent']['resolved_products']
     assert len(refs) == 1 and refs[0]['product_id'] == pid
     calls = []
-    monkeypatch.setattr(product_tools, 'execute_get_product_options', lambda name: {
+    monkeypatch.setattr(product_tools, 'execute_get_product_options', lambda name, **_kwargs: {
         'status': 'ok', 'product_name': name, 'options': {},
     })
     def price(product_name_query, **kwargs):
