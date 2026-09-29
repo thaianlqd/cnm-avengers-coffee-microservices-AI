@@ -579,6 +579,35 @@ def _incomplete_ordinal_categories(message: str) -> set[str]:
     return missing
 
 
+def _pending_reference_action(message: str, missing: set[str], refs: List[Dict[str, Any]]) -> str | None:
+    """Classify an explicit change to the unfinished selection batch."""
+    words = _norm(message)
+    if re.search(r"\b(?:bo|huy|khong lay|khong can)\s+(?:ca hai|het|tat ca)\b", words):
+        return "abandon"
+    names = {"food": r"banh|do an", "drink": r"nuoc|do uong"}
+    canceled = any(
+        re.search(rf"\b(?:khong\s+(?:lay|can|muon)|bo|huy)\s+(?:{names[category]})\b", words)
+        for category in missing
+    )
+    other = "drink" if missing == {"food"} else "food" if missing == {"drink"} else None
+    if other and re.search(rf"\bchi\s+(?:lay|muon|can)?\s*(?:{names[other]})\b|\b(?:{names[other]})\s+thoi\b", words):
+        canceled = True
+    if re.search(r"\b(?:doi sang|thay bang|chuyen sang)\b", words) and refs:
+        return "replace"
+    if canceled:
+        return "cancel"
+    if refs and not any(ref.get("category") in missing for ref in refs):
+        return "replace"
+    return None
+
+
+def _close_pending_reference_batch(session_id: str) -> None:
+    """Discard an unfinished selection draft when shopping changes direction."""
+    cart_manager.set_checkout_context(session_id, pending_product_reference=None, last_product_focus=None)
+    cart_manager.set_pending_products(session_id, [])
+    cart_manager.clear_pending_action(session_id)
+
+
 def _resolve_all_category_ordinals(
     session_id: str, message: str, history: List[Dict[str, str]],
 ) -> Optional[List[Dict[str, Any]]]:
@@ -719,6 +748,7 @@ def _prepare_structured_products(
     refs: List[Dict[str, Any]],
     operation_base: Optional[str] = None,
     hold_for_missing_reference: bool = False,
+    merge_pending: bool = True,
 ) -> Dict[str, Any]:
     """Prepare exact referenced products when the legacy add helper cannot run.
 
@@ -762,7 +792,7 @@ def _prepare_structured_products(
         _focus_product(session_id, pending[0])
     elif pending:
         cart_manager.set_checkout_context(session_id, last_product_focus=None)
-    all_pending = cart_manager.set_pending_products(session_id, pending, merge=True)
+    all_pending = cart_manager.set_pending_products(session_id, pending, merge=merge_pending)
     cart_manager.set_pending_action(session_id, "fill_options", {"count": len(pending)})
     if len(all_pending) > len(pending):
         reply_lines = [f"Mình đang giữ đủ {len(all_pending)} món bạn chọn:"]
@@ -1448,6 +1478,8 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     catalog_constraints = (None if active_pending and active_pending.get("type") != "ask_more_items"
                            else parse_catalog_constraints(state["user_message"]))
     if catalog_constraints:
+        if cart_manager.get_checkout_prefs(state["session_id"]).get("pending_product_reference"):
+            _close_pending_reference_batch(state["session_id"])
         pending_catalog = active_pending and active_pending.get("type") == "ask_more_items"
         return {**state, "intent": {"intent": "BROWSING", "catalog_constraints": catalog_constraints,
                                    **({"pending_type": "ask_more_items", "pending_decision": "BROWSING_REQUEST"}
@@ -1509,14 +1541,12 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
             return {**state, "intent": {"intent": "PENDING_CART_LINE", "resolved_pending": resumed}}
         if intent.get("intent") not in {"UNKNOWN", "PENDING_REPLY"}:
             cart_manager.clear_pending_action(state["session_id"])
-    if intent.get("intent") == "FILL_OPTIONS":
-        return {**state, "intent": intent}
     if (pending or {}).get("type") == "fill_options" and intent.get("intent") not in {
         "CLEAR_CART", "REMOVE_ITEM", "SET_QUANTITY", "VIEW_CART", "START_CHECKOUT",
         "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER",
     }:
         from src.agents.option_state import mentions_pending_option_value
-        if mentions_pending_option_value(state["user_message"],
+        if not prefs_before.get("pending_product_reference") and mentions_pending_option_value(state["user_message"],
                                          cart_manager.get_checkout_prefs(state["session_id"]).get("pending_products") or []):
             return {**state, "intent": {"intent": "FILL_OPTIONS"}}
     from src.agents.location_parser import parse_location, complete_partial_delivery_address
@@ -1534,11 +1564,29 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
             category = next(iter(pending_reference))
             reference_message = ("bánh số " if category == "food" else "nước số ") + re.search(r"\d+", reference_message).group()
         refs = _resolve_all_category_ordinals(state["session_id"], reference_message, state.get("history") or []) or []
+        if pending_reference:
+            action = _pending_reference_action(state["user_message"], pending_reference, refs)
+            if action == "cancel" and refs:
+                staged_ids = {str(item.get("product_id")) for item in prefs.get("pending_products") or []}
+                if any(str(ref.get("product_id")) not in staged_ids for ref in refs):
+                    action = "replace"
+            if action in {"cancel", "abandon"}:
+                return {**state, "intent": {"intent": "PRODUCT_REFERENCE_CANCEL", "abandon": action == "abandon"}}
+            if action == "replace":
+                return {**state, "intent": {"intent": "PRODUCT_REFERENCE_PARTIAL",
+                                            "resolved_products": refs, "missing_categories": [], "replace_batch": True}}
+            if not incomplete and not refs and plain_intent.get("intent") in {"ADD_ITEM", "BROWSING"}:
+                _close_pending_reference_batch(state["session_id"])
+                pending_reference = set()
+                pending = None
+                intent = plain_intent
         resolved_categories = {ref.get("category") for ref in refs if ref.get("product_id")}
         still_missing = (pending_reference | incomplete) - resolved_categories
         if incomplete or pending_reference:
             return {**state, "intent": {"intent": "PRODUCT_REFERENCE_PARTIAL",
                                         "resolved_products": refs, "missing_categories": sorted(still_missing)}}
+    if intent.get("intent") == "FILL_OPTIONS":
+        return {**state, "intent": intent}
     pending_type = (pending or {}).get("type")
     if prefs.get("checkout_requested") and not prefs.get("checkout_submission"):
         from src.agents.agent_service import _explicit_checkout_choices
@@ -1879,7 +1927,8 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
                 if ref.get("product_id") and ref.get("product_name")]
         if refs:
             prepared = _prepare_structured_products(session_id, refs, _turn_operation_base(state),
-                                                    hold_for_missing_reference=bool(missing))
+                                                    hold_for_missing_reference=bool(missing),
+                                                    merge_pending=not intent.get("replace_batch"))
         else:
             prepared = {"reply": "", "checkout_payload": None, "tool_calls_log": [], "error": None}
         if missing or not prepared.get("error"):
@@ -1891,6 +1940,28 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
                              for item in held if item.get("number") or item.get("display_index"))
             prepared["reply"] = (f"Mình đã nhận {kept}. " if kept else "") + f"Còn {names} bạn muốn số mấy?"
         return {**state, "result": prepared}
+    if kind == "PRODUCT_REFERENCE_CANCEL":
+        if intent.get("abandon"):
+            _close_pending_reference_batch(session_id)
+            return {**state, "result": {"reply": "Mình không giữ các lựa chọn món đang chờ nữa. Bạn muốn xem menu hay chọn món khác?",
+                                       "checkout_payload": None, "tool_calls_log": [], "error": None}}
+        cart_manager.set_checkout_context(session_id, pending_product_reference=None, last_product_focus=None)
+        staged = list(cart_manager.get_checkout_prefs(session_id).get("pending_products") or [])
+        if not staged:
+            cart_manager.clear_pending_action(session_id)
+            reply = "Mình không còn giữ món chưa chọn số. Bạn muốn chọn món nào khác?"
+            return {**state, "result": {"reply": reply, "checkout_payload": None, "tool_calls_log": [], "error": None}}
+        cart_manager.set_pending_action(session_id, "fill_options", {"count": len(staged)})
+        lines = ["Mình bỏ món chưa chọn số và giữ món bạn đã chọn:"]
+        for item in staged:
+            lines.append(f"- {item['product_name']}")
+            for group in item.get("option_schema") or []:
+                values = group.get("values") or []
+                if len(values) > 1:
+                    lines.append(f"  - {group['name']}: {', '.join(map(str, values))}")
+        lines.append("Bạn chọn tùy chọn cho món này, hoặc nói ‘theo mặc định’ nhé.")
+        return {**state, "result": {"reply": "\n".join(lines), "checkout_payload": None,
+                                   "tool_calls_log": [], "error": None}}
     if kind == "SET_QUANTITY":
         matches = _cart_rows_named_in_message(cart, message)
         item, error = _resolve_cart_line(cart, message)

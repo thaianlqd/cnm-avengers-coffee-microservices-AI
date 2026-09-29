@@ -208,6 +208,27 @@ def load_durable_processed_turn(session_id: str, client_message_id: str) -> Opti
     turn = (prefs.get("processed_order_turns") or {}).get(str(client_message_id))
     return dict(turn) if isinstance(turn, dict) else None
 
+
+def persist_processed_turn_durable(session_id: str, client_message_id: str, record: Dict[str, Any]) -> None:
+    """Commit replay evidence independently of the best-effort cart snapshot write."""
+    engine = get_db_engine()
+    _ensure_table_exists(engine)
+    with engine.begin() as conn:
+        conn.execute(text('''
+            INSERT INTO ai_chat_sessions (session_id, checkout_prefs)
+            VALUES (:session_id, jsonb_build_object('processed_order_turns',
+                    jsonb_build_object(:turn_id, CAST(:record AS jsonb))))
+            ON CONFLICT (session_id) DO UPDATE SET
+                checkout_prefs = jsonb_set(
+                    COALESCE(ai_chat_sessions.checkout_prefs, '{}'::jsonb),
+                    '{processed_order_turns}',
+                    COALESCE(ai_chat_sessions.checkout_prefs->'processed_order_turns', '{}'::jsonb)
+                        || jsonb_build_object(:turn_id, CAST(:record AS jsonb)),
+                    true),
+                updated_at = NOW()
+        '''), {"session_id": session_id, "turn_id": str(client_message_id),
+               "record": json.dumps(record, ensure_ascii=False, default=str)})
+
 def _get_or_create_session(session_id: str) -> Dict[str, Any]:
     # LƯU Ý: Hàm này phải được gọi bên TRONG context manager của `_get_session_lock(session_id)`
     _evict_expired()
@@ -606,7 +627,7 @@ def reset_conversation_draft(session_id: str) -> Dict[str, Any]:
         session = _get_or_create_session(session_id)
         prefs = dict(session.get("checkout_prefs") or {})
         draft_keys = (
-            "pending_products", "checkout_requested", "voucher_decided",
+            "pending_products", "pending_product_reference", "checkout_requested", "voucher_decided",
             "voucher_offer_pending", "voucher_candidates", "summary_fingerprint",
             "checkout_action_id", "branch_candidates", "suggested_address",
             "location_address", "stock_conflicts", "pending_action",

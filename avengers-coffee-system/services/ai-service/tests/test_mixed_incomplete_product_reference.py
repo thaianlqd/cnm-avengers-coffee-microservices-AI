@@ -8,6 +8,81 @@ from src.common import cart_manager
 from src.function_calling.tools import cart_tools, product_tools
 
 
+def _pending_drink(monkeypatch):
+    session = 'mixed-cancel-' + uuid.uuid4().hex
+    food = [{'product_id': f'F{i}', 'product_name': f'Bánh {i}', 'category': 'food',
+             'display_index': i} for i in range(1, 9)]
+    drink = [{'product_id': f'D{i}', 'product_name': f'Nước {i}', 'category': 'drink',
+              'display_index': i} for i in range(9, 16)]
+    cart_manager.set_checkout_context(session, last_product_suggestions=food + drink,
+        product_suggestion_snapshots={'food': food, 'drink': drink})
+    monkeypatch.setattr(cart_tools, 'sync_authoritative_cart', lambda sid: cart_manager.get_cart(sid))
+    monkeypatch.setattr(product_tools, 'execute_get_product_options', lambda name: {
+        'status': 'ok', 'product_name': name, 'options': {'Size': ['Nhỏ', 'Vừa']}})
+    order_flow_graph.run_order_flow(session, 'cho tôi bánh số và nước số 10')
+    assert cart_manager.get_checkout_prefs(session)['pending_product_reference'] == ['food']
+    return session
+
+
+@pytest.mark.parametrize('reply', [
+    'thôi không lấy bánh nữa', 'không lấy bánh nữa', 'bỏ bánh đi',
+    'thôi chỉ lấy nước số 10', 'nước thôi', 'không cần bánh',
+    'thôi không lấy bánh nữa, chỉ lấy nước thôi',
+])
+def test_cancel_missing_reference_keeps_valid_drink_and_resumes_options(monkeypatch, reply):
+    session = _pending_drink(monkeypatch)
+    result = order_flow_graph.run_order_flow(session, reply)
+    prefs = cart_manager.get_checkout_prefs(session)
+    assert not prefs.get('pending_product_reference')
+    assert [item['product_id'] for item in prefs['pending_products']] == ['D10']
+    assert 'Size' in result['reply'] and 'bánh số mấy' not in result['reply']
+    assert cart_manager.get_pending_action(session)['type'] == 'fill_options'
+
+
+def test_abandon_entire_incomplete_batch_without_cart_mutation(monkeypatch):
+    session = _pending_drink(monkeypatch)
+    monkeypatch.setattr(cart_tools, 'execute_add_to_cart', lambda **_: pytest.fail('unexpected cart mutation'))
+    result = order_flow_graph.run_order_flow(session, 'thôi bỏ cả hai')
+    prefs = cart_manager.get_checkout_prefs(session)
+    assert not prefs.get('pending_product_reference')
+    assert not prefs.get('pending_products')
+    assert cart_manager.get_pending_action(session) is None
+    assert 'không giữ' in result['reply']
+
+
+@pytest.mark.parametrize('reply', ['thôi đổi sang nước số 11', 'thôi chỉ lấy nước số 11', 'nước số 11'])
+def test_independent_explicit_selection_replaces_unfinished_batch(monkeypatch, reply):
+    session = _pending_drink(monkeypatch)
+    result = order_flow_graph.run_order_flow(session, reply)
+    prefs = cart_manager.get_checkout_prefs(session)
+    assert not prefs.get('pending_product_reference')
+    assert [item['product_id'] for item in prefs['pending_products']] == ['D11']
+    assert 'Nước 11' in result['reply']
+
+
+def test_unrelated_menu_request_closes_unfinished_batch(monkeypatch):
+    session = _pending_drink(monkeypatch)
+    monkeypatch.setattr(cart_tools, 'execute_add_to_cart', lambda **_: pytest.fail('unexpected cart mutation'))
+    result = order_flow_graph.run_order_flow(session, 'xem menu nước')
+    prefs = cart_manager.get_checkout_prefs(session)
+    assert not prefs.get('pending_product_reference')
+    assert not prefs.get('pending_products')
+    assert 'bánh số mấy' not in result['reply']
+
+
+def test_checkout_gate_releases_missing_reference_after_cancel(monkeypatch):
+    session = _pending_drink(monkeypatch)
+    def cart(_sid):
+        return {'is_empty': False, 'items': [{'product_id': 'D10'}], 'branch_id': None,
+                'checkout_prefs': cart_manager.get_checkout_prefs(session)}
+    monkeypatch.setattr(cart_tools, 'sync_authoritative_cart', cart)
+    assert 'bánh' in cart_tools.execute_request_checkout(session)['message']
+    order_flow_graph.run_order_flow(session, 'không cần bánh')
+    assert 'bánh' not in cart_tools.execute_request_checkout(session)['message']
+    cart_manager.set_pending_products(session, [])  # The remaining drink options have been completed.
+    assert cart_tools.execute_request_checkout(session)['status'] != 'pending_products'
+
+
 @pytest.mark.parametrize('message,missing,valid', [
     ('cho tôi bánh số và nước số 10', 'food', 'D10'),
     ('nước số và bánh số 3', 'drink', 'F3'),
