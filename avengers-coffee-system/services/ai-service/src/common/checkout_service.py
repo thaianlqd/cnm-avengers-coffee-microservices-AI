@@ -8,6 +8,20 @@ from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 
+
+def _checkout_error(resp) -> tuple[str, str, bool]:
+    """Return structured business code/message and no-order evidence."""
+    try:
+        body = resp.json()
+    except Exception:
+        body = {}
+    if not isinstance(body, dict):
+        body = {}
+    message = body.get("message")
+    if isinstance(message, list):
+        message = "; ".join(map(str, message))
+    return str(body.get("code") or "CHECKOUT_FAILED"), str(message or "Không thể tạo đơn hàng."), bool(body.get("checkout_not_created"))
+
 def finalize_checkout(
     session_id: str,
     payment_method: str = None,
@@ -90,6 +104,7 @@ def finalize_checkout(
             payload = submission["payload"]
         else:
             if not payload["checkout_action_id"]:
+                cart_manager.set_is_checking_out(cart_session_id, False)
                 return {"status": "no_pending_checkout", "message": "Thiếu bản tóm tắt đã xác nhận."}
             # Persist the exact request before HTTP I/O. A timeout can retry only
             # this action even if Order Service already emptied the real cart.
@@ -147,13 +162,24 @@ def finalize_checkout(
         else:
             # Thất bại từ server -> Mở khóa giỏ hàng
             cart_manager.set_is_checking_out(cart_session_id, False)
-            if resp.status_code in {400, 401, 403, 404, 422}:
+            code, message, checkout_not_created = _checkout_error(resp)
+            if checkout_not_created or resp.status_code in {400, 401, 403, 404, 422}:
                 cart_manager.set_checkout_context(cart_session_id, checkout_submission=None)
-            if resp.status_code == 409 and "Tong tien da thay doi" in resp.text:
-                cart_manager.set_checkout_context(cart_session_id, checkout_submission=None, summary_fingerprint=None, checkout_action_id=None)
+            stale_codes = {"CHECKOUT_TOTAL_CHANGED", "CHECKOUT_SNAPSHOT_CHANGED", "CHECKOUT_ACTION_TOTAL_MISMATCH"}
+            if resp.status_code == 409 and code in stale_codes and checkout_not_created:
+                cart_manager.set_checkout_context(cart_session_id, checkout_submission=None,
+                    summary_fingerprint=None, checkout_action_id=None, summary_amounts=None)
             logger.error("[CheckoutService] Order API failed: %s", resp.text)
-            return {"status": "error", "message": f"Lỗi tạo đơn hàng: {resp.text}"}
+            return {"status": "checkout_conflict" if resp.status_code == 409 else "error",
+                    "code": code, "message": message, "checkout_not_created": checkout_not_created}
 
+    except (requests.Timeout, requests.ConnectionError) as e:
+        cart_manager.set_is_checking_out(cart_session_id, False)
+        logger.warning("[CheckoutService] Outcome unknown for action %s: %s",
+                       (cart_manager.get_checkout_prefs(cart_session_id).get("checkout_submission") or {}).get("action_id"),
+                       type(e).__name__)
+        return {"status": "error", "code": "CHECKOUT_OUTCOME_UNKNOWN", "outcome_unknown": True,
+                "message": "Chưa xác định được kết quả tạo đơn. Hãy xác nhận lại cùng đơn để hệ thống đối soát; không tạo yêu cầu mới."}
     except Exception as e:
         cart_manager.set_is_checking_out(cart_session_id, False)
         logger.exception("[CheckoutService] Exception in finalize_checkout: %s", e)

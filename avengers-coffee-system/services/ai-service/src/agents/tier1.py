@@ -129,6 +129,13 @@ def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict
     """
     raw = str(text or "")
     norm = normalize_confirmation_text(raw)
+    payment_topic = bool(re.search(
+        r"\b(?:phuong thuc|cach|kieu)\s+thanh toan\b|\bthanh toan\b.*\b(?:ho tro|nao|gi|duoc khong)\b|"
+        r"\bco\b.*\bthanh toan\b.*\bkhong\b|\bco\s+(?:ho tro\s+)?(?:vnpay|cod|tien mat|qr|vi(?: avengers)?)\s+khong\b",
+        norm,
+    ))
+    if payment_topic:
+        return {"intent": "PAYMENT_INFO"}
     # An option answer belongs to the pending products, even when it says
     # "thêm topping" or also mentions checkout.
     if pending_type == "fill_options" and re.search(
@@ -210,11 +217,21 @@ def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict
     # the verb "bỏ".  Require an explicit cart/item removal construction.
     if re.search(r"\b(?:xoa|huy)\b.*\b(gio|mon|san pham)\b|\bbo\b.*\b(?:mon|san pham|cai|gio hang)\b", norm):
         return {"intent": "CLEAR_CART" if re.search(r"\b(tat ca|ca gio|gio hang)\b|\b(?:xoa|huy)\s+gio\b", norm) else "REMOVE_ITEM"}
+    # Unaccented product names can legitimately end in "bo" (for example
+    # "Bánh Croissant Bơ").  Treat "bo" as a verb only when it starts the
+    # command (or follows the speaker pronoun); "xoa" remains unambiguous.
+    if (re.search(r"\bxoa\b", norm) or re.search(r"(?:^|\b(?:toi|minh)\s+)bo\b", norm)) and not re.search(
+        r"\bbo qua\b|\b(?:xoa|bo)\b.*\b(?:ma|voucher|giam gia|dia chi|buoc)\b",
+        norm,
+    ):
+        return {"intent": "REMOVE_ITEM"}
     # Natural change-of-mind phrases still need an explicit product/object
     # reference. This avoids treating filler such as "thôi để lát chọn sau"
     # as a destructive cart action.
     if (
         re.search(r"\b(?:khong lay|bo)\b.*\b(?:sp|san pham|mon|cai|banh|nuoc)\b.*\b(?:nua|di)\b", norm)
+        or (re.search(r"\bkhong lay\b.+\bnua\b", norm)
+            and not re.search(r"\b(?:dia chi|voucher|ma giam gia|buoc)\b", norm))
         or re.search(r"\bthoi\b.*\b(?:mon|sp|san pham|cai|banh|nuoc)\b.*\b(?:nay|do|kia)\b", norm)
     ):
         return {"intent": "REMOVE_ITEM"}

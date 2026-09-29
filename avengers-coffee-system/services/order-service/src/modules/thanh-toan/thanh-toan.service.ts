@@ -1743,18 +1743,18 @@ export class ThanhToanService {
     try {
       const lockResult = await runner.query('SELECT pg_try_advisory_lock(hashtext($1)) AS locked', [`checkout:${orderId}`]);
       locked = lockResult[0]?.locked === true;
-      if (!locked) throw new ConflictException('Checkout dang duoc xu ly. Vui long thu lai cung yeu cau.');
+      if (!locked) throw new ConflictException({ code: 'CHECKOUT_IN_PROGRESS', message: 'Checkout dang duoc xu ly. Vui long thu lai cung yeu cau.' });
       const existing = await this.donHangRepo.findOne({ where: { ma_don_hang: orderId } });
       if (existing) {
         // The identity belongs to this customer/action. Replay payment details,
         // never repeat wallet debit, voucher consumption, or order creation.
         if (existing.phuong_thuc_thanh_toan !== dto.phuong_thuc_thanh_toan || existing.loai_don_hang !== dto.delivery_mode || existing.dia_chi_giao_hang !== dto.dia_chi_giao_hang) {
-          throw new ConflictException('Checkout action da duoc dung cho thong tin khac');
+          throw new ConflictException({ code: 'CHECKOUT_ACTION_CONFLICT', message: 'Checkout action da duoc dung cho thong tin khac' });
         }
         const snapshotHash = existing.lich_su_trang_thai?.find(entry => entry.checkout_snapshot_hash)?.checkout_snapshot_hash;
         if (snapshotHash) {
           if (snapshotHash !== this.checkoutSnapshotHash(dto)) {
-            throw new ConflictException('Checkout action da duoc dung cho snapshot khac');
+            throw new ConflictException({ code: 'CHECKOUT_SNAPSHOT_CHANGED', message: 'Checkout action da duoc dung cho snapshot khac' });
           }
         } else {
           // Actions created before snapshot hashes were stored must also
@@ -1763,15 +1763,15 @@ export class ThanhToanService {
           if ((dto.branch_code && this.normalizeBranchCode(dto.branch_code.trim()) !== existing.co_so_ma)
             || (dto.ma_voucher?.trim().toUpperCase() || null) !== (existing.ma_voucher || null)
             || (dto.delivery_mode === 'GIAO_TAN_NOI' && (!tracking || tracking.delivery_method !== (dto.delivery_method || 'INTERNAL')))) {
-            throw new ConflictException('Checkout action da duoc dung cho snapshot khac');
+            throw new ConflictException({ code: 'CHECKOUT_SNAPSHOT_CHANGED', message: 'Checkout action da duoc dung cho snapshot khac' });
           }
         }
         if (dto.expected_final_total !== undefined && Number(dto.expected_final_total) !== Number(existing.tong_tien)) {
-          throw new ConflictException('Checkout action khong khop tong tien da luu');
+          throw new ConflictException({ code: 'CHECKOUT_ACTION_TOTAL_MISMATCH', message: 'Checkout action khong khop tong tien da luu' });
         }
         const transaction = await this.giaoDichRepo.findOne({ where: { ma_don_hang: orderId } });
         if (!transaction || (dto.phuong_thuc_thanh_toan === 'VI_DIEN_TU' && existing.trang_thai_thanh_toan !== 'DA_THANH_TOAN')) {
-          throw new ConflictException('Don hang da duoc tao, can doi soat thanh toan. Khong tao don moi.');
+          throw new ConflictException({ code: 'CHECKOUT_RECONCILIATION_REQUIRED', message: 'Don hang da duoc tao, can doi soat thanh toan. Khong tao don moi.' });
         }
         if (existing.ma_voucher) {
           await this.walletVoucherClaims.schedule(this.donHangRepo.manager, {
@@ -1873,7 +1873,7 @@ export class ThanhToanService {
     const shipping = await quoteDeliveryFee(maNguoiDung, tongTienGoc, dto.delivery_mode, dto.delivery_method);
     const tongTien = Math.max(0, tongTienGoc - soTienGiam) + shipping.delivery_fee;
     if (dto.expected_final_total !== undefined && Number(dto.expected_final_total) !== tongTien) {
-      throw new ConflictException('Tong tien da thay doi. Vui long xem lai tom tat don hang.');
+      throw new ConflictException({ code: 'CHECKOUT_TOTAL_CHANGED', message: 'Tong tien da thay doi. Vui long xem lai tom tat don hang.' });
     }
     // Khách hàng App/Web:
     let nearestInfo: any = null;
@@ -2144,7 +2144,7 @@ export class ThanhToanService {
             gioHang.some(item => Array.isArray(item.toppings) && item.toppings.length > 0),
           );
           if (current.voucher.ma_voucher !== maVoucherApDung || current.so_tien_giam !== soTienGiam) {
-            throw new ConflictException('Voucher da thay doi, vui long xem lai tom tat don hang');
+            throw new ConflictException({ code: 'CHECKOUT_SNAPSHOT_CHANGED', message: 'Voucher da thay doi, vui long xem lai tom tat don hang' });
           }
         }
         const donHang = await manager.save(DonHang, this.donHangRepo.create({

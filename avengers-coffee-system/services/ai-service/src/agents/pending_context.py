@@ -7,9 +7,9 @@ from src.agents.tier1 import _remove_diacritics
 
 ALLOWED = {
     "ask_more_items": {"DONE", "WANT_MORE_GENERIC", "BROWSING_REQUEST", "CONCRETE_ADD", "AMBIGUOUS"},
-    "select_voucher": {"SELECT_VOUCHER", "SKIP_VOUCHER", "AMBIGUOUS"},
+    "select_voucher": {"SELECT_VOUCHER", "SKIP_VOUCHER", "REMOVE_VOUCHER", "AMBIGUOUS"},
     "confirm_address": {"CONFIRM_ADDRESS", "CHANGE_ADDRESS", "AMBIGUOUS"},
-    "confirm_checkout": {"CONFIRM", "REJECT", "AMBIGUOUS"},
+    "confirm_checkout": {"CONFIRM", "REJECT", "CHANGE", "AMBIGUOUS"},
 }
 DESCRIPTIONS = {
     "ask_more_items": (
@@ -114,16 +114,18 @@ def classify_pending_reply(message: str, pending_type: str, evidence: Optional[d
     if pending_type == "ask_more_items":
         return _classify_ask_more(message, evidence or {})
     text = re.sub(r"\s+", " ", _remove_diacritics(str(message or ""))).strip()
-    if not text or "?" in text or re.search(r"\b(neu|gia su|co the|phai khong|bao nhieu|tai sao|khi nao|the nao|ra sao|hay|hoac)\b", text):
+    if not text or "?" in text or re.search(r"\b(neu|gia su|co the|phai khong|bao nhieu|tai sao|khi nao|the nao|ra sao|hay|hoac|chac)\b", text):
         return "AMBIGUOUS"
     negative = bool(re.search(r"\b(khong|ko|chua|khoan|huy|dung lai|dung dat)\b", text)) or bool(
         re.search(r"\b(đừng|dừng)\b", str(message or "").lower())
     )
     change = bool(re.search(r"\b(doi|sua|chinh|thay|khac)\b", text))
-    affirmative = bool(re.search(r"\b(ok(?:e|ay)?|dong y|xac nhan|duoc|on|dung|chuan|yes|u|uh|vang)\b", text))
+    affirmative = bool(re.search(r"\b(ok(?:e|ay)?|dong y|xac nhan|duoc|on|dung|chuan|yes|u|uh|vang|da)\b", text))
     if pending_type == "select_voucher":
         if re.search(r"\b(bo qua|khong (?:dung|can|ap)|khong lay)\b", text):
             return "SKIP_VOUCHER"
+        if re.search(r"\b(?:xoa|bo|go)\b.*\b(?:ma|voucher|giam gia)\b|\bkhong dung (?:ma|voucher) nua\b", text):
+            return "REMOVE_VOUCHER"
         if not negative and re.search(r"\b(ap|dung|lay|chon|ma|voucher|so|thu|dau tien|tot nhat)\b", text):
             return "SELECT_VOUCHER"
     elif pending_type == "confirm_address":
@@ -133,7 +135,9 @@ def classify_pending_reply(message: str, pending_type: str, evidence: Optional[d
         if affirmative or (reference and re.search(r"\b(giao|dung|dia chi|cho|o)\b", text)):
             return "CONFIRM_ADDRESS"
     elif pending_type == "confirm_checkout":
-        if negative or change or re.search(r"\b(bo|them|bot)\b", text):
+        if change or re.search(r"\b(bo|them|bot)\b", text):
+            return "CHANGE"
+        if negative:
             return "REJECT"
         if affirmative or re.search(r"\b(chot|dat)\b.*\b(di|luon|don|hang)\b", text):
             return "CONFIRM"

@@ -752,6 +752,21 @@ def _resolve_pending_branch_choice(
     }
 
 
+def _branch_choice_prompt(session_id: str) -> str:
+    """Re-show the persisted branch snapshot without changing the selection."""
+    candidates = cart_manager.get_checkout_prefs(session_id).get("branch_candidates") or []
+    rows = []
+    for index, branch in enumerate(candidates, 1):
+        name = branch.get("branch_name") or branch.get("ten_chi_nhanh") or branch.get("name") or "Cửa hàng"
+        address = branch.get("address") or branch.get("dia_chi")
+        rows.append(f"{index}. {name}" + (f" — {address}" if address else ""))
+    listed = "\n".join(rows)
+    prefix = "Mình chưa xác định được cửa hàng bạn chọn."
+    if listed:
+        prefix += f"\n{listed}"
+    return f"{prefix}\nBạn chọn số hoặc tên cửa hàng nhé."
+
+
 def _confirm_saved_location(
     session_id: str,
     message: str,
@@ -1616,8 +1631,7 @@ def _run_agent_impl(
             cart_manager.clear_branch(session_id)
             cart_manager.clear_pending_action(session_id)
         else:
-            count = len(prefs.get("branch_candidates") or [])
-            return {"reply": f"Bạn chọn cửa hàng theo số từ 1 đến {count}, hoặc gửi địa chỉ mới có số nhà, tên đường và khu vực nhé.",
+            return {"reply": _branch_choice_prompt(session_id),
                     "checkout_payload": None, "tool_calls_log": [], "error": None}
 
     from src.agents.location_parser import parse_location

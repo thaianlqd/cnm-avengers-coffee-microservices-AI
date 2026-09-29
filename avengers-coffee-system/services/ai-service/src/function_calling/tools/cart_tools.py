@@ -121,6 +121,16 @@ def _order_service_request(method: str, path: str, token: str, **kwargs):
         return requests.request(method, f"http://host.docker.internal:3005{path}", headers=headers, timeout=7, **kwargs)
 
 
+def _mirror_mutation_envelope(session_id: str, payload: Any, user_id: str) -> Optional[Dict[str, Any]]:
+    """Mirror the committed mutation response without requiring a second GET."""
+    if not isinstance(payload, dict) or payload.get("cart_id") is None or payload.get("cart_version") is None:
+        return None
+    return cart_manager.replace_items_from_order_cart(
+        session_id, list(payload.get("items") or []), cart_id=str(payload["cart_id"]),
+        cart_version=int(payload["cart_version"]), user_id=str(payload.get("user_id") or user_id),
+    )
+
+
 def sync_authoritative_cart(session_id: str) -> Dict[str, Any]:
     """Refresh the conversational mirror from the customer cart."""
     from src.function_calling.helpers import _get_service_jwt, _require_valid_session
@@ -464,10 +474,12 @@ def execute_add_to_cart(
                 "status": "error",
                 "message": "Chưa thể đồng bộ giỏ hàng. Món chưa được xác nhận là đã thêm; vui lòng thử lại.",
             }
-        # Persist authoritative cart contents and selected fulfillment branch
-        # in this conversation namespace without altering the user cart.
+        # The mutation response already contains the committed cart/version.
+        # A follow-up GET is only a compatibility fallback for older servers.
         try:
-            cart = sync_authoritative_cart(session_id)
+            cart = _mirror_mutation_envelope(session_id, mutation_result, valid_uid)
+            if cart is None:
+                cart = sync_authoritative_cart(session_id)
             current_cart = cart_manager.get_cart(session_id)
             if current_cart.get("branch_id"):
                 cart_manager.set_branch(session_id, current_cart["branch_id"], current_cart.get("branch_name") or "")
@@ -481,16 +493,7 @@ def execute_add_to_cart(
     # Mirror the exact persisted cart instead of independently incrementing an
     # AI-owned copy. This prevents quantity drift when the web cart already had
     # the same product/options line.
-    if valid_uid:
-        try:
-            cart = sync_authoritative_cart(session_id)
-        except Exception as exc:
-            logging.getLogger(__name__).error("[CartSync] Cannot refresh authoritative cart: %s", exc)
-            return {
-                "status": "error",
-                "message": "Món đã được ghi nhận nhưng chưa thể đối chiếu giỏ hàng. Vui lòng tải lại giỏ trước khi tiếp tục.",
-            }
-    else:
+    if not valid_uid:
         cart = cart_manager.add_item(
             session_id=session_id,
             product_id=real_product_id,
@@ -591,7 +594,8 @@ def execute_remove_cart_item(
             "DELETE", f"/cart/{int(cart_item_id)}", _get_service_jwt(valid_uid), headers=headers,
         )
         response.raise_for_status()
-        cart = sync_authoritative_cart(session_id)
+        mutation_result = response.json()
+        cart = _mirror_mutation_envelope(session_id, mutation_result, valid_uid) or sync_authoritative_cart(session_id)
         return {
             "status": "ok", "message": "Đã xoá đúng món đã chọn khỏi giỏ.", "cart": cart,
             "cart_version": cart.get("cart_version"), "operation_id": resolved_operation_id,
@@ -627,7 +631,8 @@ def execute_update_cart_item(
             "PATCH", f"/cart/{int(cart_item_id)}", _get_service_jwt(valid_uid), json=payload, headers=headers,
         )
         response.raise_for_status()
-        cart = sync_authoritative_cart(session_id)
+        mutation_result = response.json()
+        cart = _mirror_mutation_envelope(session_id, mutation_result, valid_uid) or sync_authoritative_cart(session_id)
         quote = execute_get_cart_quote(session_id)
         return {
             "status": "ok", "message": "Đã cập nhật món trong giỏ.", "cart": cart,
@@ -654,7 +659,8 @@ def execute_clear_cart(session_id: str, operation_id: Optional[str] = None) -> D
             "DELETE", f"/cart/clear/{valid_uid}", _get_service_jwt(valid_uid), headers=headers,
         )
         response.raise_for_status()
-        cart = sync_authoritative_cart(session_id)
+        mutation_result = response.json()
+        cart = _mirror_mutation_envelope(session_id, mutation_result, valid_uid) or sync_authoritative_cart(session_id)
         return {
             "status": "ok", "message": "Đã xoá toàn bộ giỏ hàng.", "cart": cart,
             "cart_version": cart.get("cart_version"), "operation_id": resolved_operation_id,
