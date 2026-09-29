@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 
 
 _MONEY = r"(\d{1,3}(?:[.,]\d{3})+|\d+)(?:\s*(k|nghin|ngan))?"
-_QUERY_STOP = set("ben ban co mon san pham sp banh do uong nuoc thuc topping menu thuc don gi cai loai nao khong ko duoi tren khong qua toi da it nhat tu den khoang re dat nhat hon nho lon may cac nhung cho minh xem tim voi gia tien trong tam o day di nhe nha oi a ve muon mua dat".split())
+_QUERY_STOP = set("ben ban quan co mon san pham sp banh do uong nuoc thuc topping menu thuc don gi cai loai nao khong ko duoi tren khong qua toi da it nhat tu den khoang re dat nhat hon nho lon may cac nhung cho minh xem tim voi gia tien trong tam o day di nhe nha oi a ve muon mua dat the vay nhi ne ha hen duoc ngon hot".split())
 
 
 def _search_terms(message: str) -> str:

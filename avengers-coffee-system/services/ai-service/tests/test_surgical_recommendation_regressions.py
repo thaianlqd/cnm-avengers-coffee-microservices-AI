@@ -83,6 +83,62 @@ def test_explicit_menu_water_flow_still_works_after_offer_fix(monkeypatch):
     assert "Americano" in result["reply"]
 
 
+def test_buy_coffee_opens_the_coffee_menu_with_the_original_catalog_term(monkeypatch):
+    """"Mua cà phê" is a menu-family request, never an unresolved add."""
+    session = "surgical-buy-coffee"
+    _reset(session)
+    monkeypatch.setattr(cart_tools, "sync_authoritative_cart", lambda sid: cart_manager.get_cart(sid))
+    calls = []
+    monkeypatch.setattr(product_tools, "execute_get_recommendations", lambda **kwargs: calls.append(kwargs) or {
+        "status": "ok", "products": [{
+            "product_id": "coffee-1", "product_name": "Americano Classic",
+            "category": "Cà Phê", "final_price": 55000,
+        }]})
+
+    result = order_flow_graph.run_order_flow(session, "tôi muốn mua cà phê")
+
+    assert calls == [{"category": "drink", "search_text": "cà phê", "top_k": 8}]
+    assert "Americano Classic" in result["reply"]
+    assert "chưa tìm thấy" not in result["reply"].lower()
+
+
+@pytest.mark.parametrize("message,expected", [
+    ("bên bạn bán cà phê gì thế", {"category": "drink", "label": "Cà phê", "search_text": "cà phê"}),
+    ("bên bạn bán cà phê gì vậy nhỉ", {"category": "drink", "label": "Cà phê", "search_text": "cà phê"}),
+    ("bên bạn bán cà phê được không", {"category": "drink", "label": "Cà phê", "search_text": "cà phê"}),
+    ("quán bán trà gì vậy", {"category": "drink", "label": "Trà", "search_text": "trà"}),
+    ("bên bạn bán bánh gì thế", {"category": "food", "label": "Menu bánh và đồ ăn"}),
+    ("bên mình có loại americano nào", {"category": "drink", "label": "Americano", "search_text": "americano"}),
+    ("bên bạn bán americano gì vậy nhỉ", {"category": "drink", "label": "Americano", "search_text": "americano"}),
+])
+def test_natural_what_do_you_sell_questions_keep_the_requested_menu_family(message, expected):
+    assert order_flow_graph._menu_search_specs(message) == [expected]
+
+
+@pytest.mark.parametrize("message", [
+    "bên bạn bán cà phê gì thế",
+    "bên bạn bán cà phê gì vậy nhỉ",
+    "bên bạn bán cà phê được không",
+])
+def test_what_coffee_do_you_sell_never_falls_back_to_generic_drinks(monkeypatch, message):
+    session = "surgical-natural-coffee-question"
+    _reset(session)
+    monkeypatch.setattr(cart_tools, "sync_authoritative_cart", lambda sid: cart_manager.get_cart(sid))
+    calls = []
+    monkeypatch.setattr(product_tools, "execute_get_recommendations", lambda **kwargs: calls.append(kwargs) or {
+        "status": "ok", "products": [{
+            "product_id": "coffee-1", "product_name": "Americano Classic",
+            "category": "Cà Phê", "final_price": 55000,
+        }],
+    })
+
+    result = order_flow_graph.run_order_flow(session, message)
+
+    assert calls == [{"category": "drink", "search_text": "cà phê", "top_k": 8}]
+    assert "Americano Classic" in result["reply"]
+    assert "Matcha" not in result["reply"]
+
+
 @pytest.mark.parametrize("message,expected", [
     ("món số 1 và món số 8", ["D1", "D8"]),
     ("nước số 1 và nước số 8", ["D1", "D8"]),
@@ -119,6 +175,95 @@ def test_multi_ordinal_duplicate_reference_is_deduplicated():
     _drink_snapshot(session)
     refs = order_flow_graph._resolve_structured_references(session, "món số 1 và món số 1")
     assert [item["product_id"] for item in refs] == ["D1"]
+
+
+def test_named_abbreviation_from_recommendation_snapshot_is_a_concrete_add():
+    """A trailing brand word must not force a known product back to menu browse."""
+    session = "surgical-named-abbreviation"
+    _reset(session)
+    product = {
+        "product_id": "coffee-salt", "product_name": "Cà Phê Muối Avenger",
+        "category": "drink", "menu_bucket": "drink", "display_index": 1,
+    }
+    cart_manager.set_checkout_context(
+        session, last_product_suggestions=[product],
+        product_suggestion_snapshots={"drink": [product]},
+    )
+
+    state = order_flow_graph._understand({
+        "session_id": session,
+        "user_message": "cho tôi mua cà phê muối đi 2 ly nhé bạn",
+        "history": [], "cart": {"items": [], "is_empty": True},
+    })
+
+    assert state["intent"]["intent"] == "ADD_ITEM"
+    assert state["intent"]["quantity"] == 2
+    assert state["intent"]["resolved_products"] == [product]
+
+
+@pytest.mark.parametrize("message,quantity", [
+    ("cho tôi cà phê muối đi 2 ly nhé b", 2),
+    ("cho mình cà phê muối 2 ly", 2),
+    ("cà phê muối 2 ly nhé", 2),
+    ("2 ly cà phê muối nhé", 2),
+    ("làm cho tôi 2 ly cà phê muối", 2),
+    ("cho tôi hai ly cà phê muối", 2),
+    ("ba ly cà phê muối nhé", 3),
+    ("cà phê muối nhé", 1),
+])
+def test_shown_product_name_selection_does_not_require_an_add_verb(message, quantity):
+    session = "surgical-natural-selection-" + str(abs(hash(message)))
+    _reset(session)
+    product = {
+        "product_id": "coffee-salt", "product_name": "Cà Phê Muối Avenger",
+        "category": "drink", "menu_bucket": "drink", "display_index": 1,
+    }
+    cart_manager.set_checkout_context(
+        session, last_product_suggestions=[product],
+        product_suggestion_snapshots={"drink": [product]},
+    )
+
+    state = order_flow_graph._understand({
+        "session_id": session, "user_message": message, "history": [],
+        "cart": {"items": [], "is_empty": True},
+    })
+
+    assert state["intent"]["intent"] == "ADD_ITEM"
+    assert state["intent"]["quantity"] == quantity
+    assert state["intent"]["resolved_products"] == [product]
+
+
+@pytest.mark.parametrize("message", [
+    "cà phê muối có ngon không",
+    "giá cà phê muối bao nhiêu",
+    "review cà phê muối đi",
+    "không lấy cà phê muối",
+])
+def test_shown_product_information_or_negative_turn_is_never_an_implicit_add(message):
+    session = "surgical-natural-non-selection-" + str(abs(hash(message)))
+    _reset(session)
+    product = {"product_id": "coffee-salt", "product_name": "Cà Phê Muối Avenger", "category": "drink"}
+    cart_manager.set_checkout_context(session, last_product_suggestions=[product])
+
+    state = order_flow_graph._understand({
+        "session_id": session, "user_message": message, "history": [],
+        "cart": {"items": [], "is_empty": True},
+    })
+
+    assert state["intent"]["intent"] != "ADD_ITEM"
+
+
+def test_suggested_title_abbreviation_must_be_specific_and_unique():
+    session = "surgical-ambiguous-abbreviation"
+    _reset(session)
+    products = [
+        {"product_id": "salt-a", "product_name": "Cà Phê Muối Avenger", "category": "drink"},
+        {"product_id": "salt-b", "product_name": "Cà Phê Muối Đặc Biệt", "category": "drink"},
+    ]
+    cart_manager.set_checkout_context(session, last_product_suggestions=products)
+
+    assert order_flow_graph._resolve_suggested_product(session, "mua cà phê") is None
+    assert order_flow_graph._resolve_suggested_product(session, "mua cà phê muối") is None
 
 
 def test_multi_ordinal_invalid_index_does_not_partially_write(monkeypatch):
