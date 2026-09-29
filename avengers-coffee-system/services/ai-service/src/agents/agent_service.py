@@ -1953,7 +1953,7 @@ def _run_agent_impl(
         )
         if not successful_add:
             result["reply"] = (
-                "Mình chưa ghi được món đó vào giỏ nên chưa thể xác nhận là đã thêm. "
+                "Món đó chưa được thêm vào giỏ vì chưa có xác nhận ghi thành công. "
                 "Bạn cho mình thử lại tên món hoặc tùy chọn nhé."
             )
 
