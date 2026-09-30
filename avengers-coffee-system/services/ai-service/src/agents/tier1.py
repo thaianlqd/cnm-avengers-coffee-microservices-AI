@@ -191,6 +191,18 @@ def is_pending_expired(expires_at: float, now: Optional[float] = None) -> bool:
     return now >= expires_at
 
 
+def has_finish_cart_evidence(text: str) -> bool:
+    """Recognize natural closure language; callers must prove cart-stage ownership."""
+    norm = normalize_confirmation_text(str(text or ""))
+    return bool(re.fullmatch(
+        r"(?:ok|oke|okay)?\s*(?:vay\s+)?(?:"
+        r"hoan\s+tat(?:\s+gio(?:\s+hang)?)?|"
+        r"chot\s+(?:phan\s+)?gio|xong(?:\s+roi)?|xongroi|the\s+la\s+xong|vay\s+duoc\s+roi|duoc\s+roi"
+        r")(?:\s+(?:a|b|ban|oi|nha|nhe|di))*",
+        norm,
+    ))
+
+
 def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict[str, Any]:
     """Cheap Vietnamese intent router used before an LLM sees a turn.
 

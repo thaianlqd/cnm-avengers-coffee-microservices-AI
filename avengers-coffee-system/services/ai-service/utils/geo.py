@@ -63,6 +63,7 @@ class LocationResolution:
     resolution_basis: Optional[str] = None
     candidate_error_count: int = 0
     candidates: Tuple[dict, ...] = ()
+    provider_ref_id: Optional[str] = None
 
 
 _ADMIN_PREFIX = re.compile(
@@ -317,6 +318,24 @@ def resolve_location(query: str, kind: str = "admin_area",
                     preview for candidate, place in accepted
                     if (preview := _candidate_descriptor(candidate, place, match_type, True))
                 ])
+                if len(previews) == 1:
+                    selected_ref = str(previews[0].get("provider_ref_id") or "")
+                    candidate, place = next(
+                        ((candidate, place) for candidate, place in accepted
+                         if str(candidate.get("ref_id") or "") == selected_ref),
+                        accepted[0],
+                    )
+                    admin = {key: values[0] for key, values in _admin_fields(place).items() if values}
+                    logger.info("[LocationResolve] kind=%s provider_candidates=%d accepted=%d rejected=%d status=ok basis=provider_place_deduplicated",
+                                match_type, count, len(accepted), rejected)
+                    return LocationResolution(
+                        status="ok", lat=float(place["lat"]), lng=float(place["lng"]), match_type=match_type,
+                        normalized_label=_label(candidate, place), administrative_components=admin,
+                        provider_candidate_count=count, rejected_candidate_count=rejected,
+                        resolution_basis="provider_place_deduplicated",
+                        candidate_error_count=candidate_errors,
+                        provider_ref_id=str(candidate.get("ref_id") or "") or None,
+                    )
                 logger.info("[LocationResolve] kind=%s provider_candidates=%d accepted=%d rejected=%d status=ambiguous",
                             match_type, count, len(accepted), rejected)
                 return LocationResolution("ambiguous", match_type=match_type,
@@ -348,6 +367,7 @@ def resolve_location(query: str, kind: str = "admin_area",
                 normalized_label=_label(candidate, place), administrative_components=admin,
                 provider_candidate_count=count, rejected_candidate_count=rejected,
                 resolution_basis="provider_place", candidate_error_count=candidate_errors,
+                provider_ref_id=str(candidate.get("ref_id") or "") or None,
             )
     except Exception as exc:
         logger.error("[LocationResolve] kind=%s status=provider_error error=%s", match_type, type(exc).__name__)

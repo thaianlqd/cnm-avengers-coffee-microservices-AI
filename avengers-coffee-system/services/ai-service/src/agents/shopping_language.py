@@ -208,7 +208,10 @@ def interpret_shopping(
             # A selection-shaped turn first resolves a unique fragment inside
             # the visible snapshot. Explicit menu/info language still owns the
             # broad family browse contract.
-            if family_bare and not (origin == "snapshot" and selection_style and not info):
+            family_selection = bool(
+                family_bare and origin == "snapshot" and selection_style and not info
+            )
+            if family_bare and not family_selection:
                 continue
             aliases = _product_matches(text, rows, exact=False)
             if aliases:
@@ -217,6 +220,24 @@ def interpret_shopping(
                 else:
                     ambiguity = aliases
                 break
+            # Some narrow families are one token long, so the alias resolver
+            # intentionally cannot construct a two-token title fragment. Use
+            # the same visible snapshot and category, never a catalog guess.
+            if (family_selection and family
+                    and family[0] not in {"coffee", "tea", "food", "drink", "pizza", "pasta"}):
+                family_phrase = normalize_shopping(family[2] or family[3])
+                family_rows = _unique_products([
+                    row for row in rows
+                    if (family[1] == "all" or str(row.get("category") or "") == family[1])
+                    and re.search(r"\b" + re.escape(family_phrase) + r"\b",
+                                  normalize_shopping(row.get("product_name")))
+                ])
+                if len(family_rows) == 1:
+                    targets, source, entity = family_rows, "snapshot_alias", "PRODUCT"
+                elif family_rows:
+                    ambiguity = family_rows
+                if targets or ambiguity:
+                    break
     if negative:
         return ShoppingInterpretation(**base, act="NEGATE_PRODUCT", entity_type=entity,
                                       targets=targets, reference_source=source, ambiguity=ambiguity)

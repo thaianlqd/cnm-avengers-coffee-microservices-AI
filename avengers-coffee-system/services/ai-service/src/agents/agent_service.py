@@ -456,11 +456,13 @@ def _resolve_pending_voucher_choice(session_id: str, message: str) -> Optional[D
             voucher_decided=None, voucher_offer_snapshot=None)
         return _offer_voucher_gate(session_id, "Giỏ đã thay đổi; mình kiểm tra lại các mã áp dụng được.")
     normalized = _normalize_chat_text(message)
+    from src.agents.selection_language import parse_selection_reference
+    reference = parse_selection_reference(message, active_namespace="VOUCHER")
     asks_best = bool(re.search(r"\b(tot nhat|ma tot|voucher tot|ap dung.*tot)\b", normalized))
     explicit_voucher_choice = asks_best or bool(re.search(
         r"\b(?:ap dung|chon|dung)\s+(?:ma|voucher)|\b(?:ma|voucher)\s*(?:so|thu)\s*\d+\b",
         normalized,
-    ))
+    )) or (reference.requested and reference.namespace == "VOUCHER")
     if not candidates and asks_best:
         from src.function_calling.tools.voucher_tools import execute_get_applicable_vouchers
         listed = execute_get_applicable_vouchers(session_id)
@@ -471,9 +473,8 @@ def _resolve_pending_voucher_choice(session_id: str, message: str) -> Optional[D
         return None
 
     selected = candidates[0] if asks_best else None
-    ordinal = re.search(r"\b(?:(?:ma|voucher)\s*(?:(?:so|thu)\s*)?|(?:so|thu)\s*)(\d+)\b", normalized)
-    if ordinal:
-        index = int(ordinal.group(1)) - 1
+    if reference.requested and reference.namespace in {None, "VOUCHER"}:
+        index = reference.ordinals[0] - 1
         if index < 0 or index >= len(candidates):
             return {
                 "reply": f"Danh sách hiện có {len(candidates)} mã; bạn chọn lại số từ 1 đến {len(candidates)} nhé.",
@@ -483,12 +484,7 @@ def _resolve_pending_voucher_choice(session_id: str, message: str) -> Optional[D
             }
         selected = candidates[index]
     elif not selected:
-        word_ordinal = re.search(r"\b(?:dau tien|(?:ma|voucher|thu)\s+(?:thu\s+)?(nhat|mot|hai|ba|tu))\b", normalized)
-        if word_ordinal:
-            index = {None: 0, "nhat": 0, "mot": 0, "hai": 1, "ba": 2, "tu": 3}[word_ordinal.group(1)]
-            if index >= len(candidates):
-                return {"reply": "Mã bạn chọn không có trong danh sách hiện tại.", "checkout_payload": None, "tool_calls_log": [], "error": None}
-            selected = candidates[index]
+        selected = None
     if not selected:
         selected = next(
             (
@@ -688,31 +684,12 @@ def _resolve_pending_branch_choice(
     )
 
     chosen = None
-    number_match = re.search(r"\b(?:cua hang|chi nhanh|dia chi|cho|so|thu)\s*(?:(?:so|thu)\s*)?(\d+)\b", normalized)
-    if number_match:
-        is_explicit_branch_word = bool(re.search(r"\b(?:cua hang|chi nhanh)\s*(\d+)\b", normalized))
-        if is_explicit_branch_word or is_branch_prompt:
-            index = int(number_match.group(1)) - 1
-            if 0 <= index < len(candidates):
-                chosen = candidates[index]
-
-    # Keep the accented noun "quán" available without confusing it with
-    # "Quận 5" in a literal address after diacritic normalization.
-    if not chosen and is_branch_prompt:
-        shop_number = re.search(r"\bquán\s*(?:số|thứ)?\s*(\d+)\b", message, re.IGNORECASE)
-        if shop_number and 1 <= int(shop_number.group(1)) <= len(candidates):
-            chosen = candidates[int(shop_number.group(1)) - 1]
-
-    # Natural Vietnamese ordinal choices are common after the numbered branch
-    # list. Resolve them here so they cannot fall through to the model and call
-    # set_session_branch without the explicit-customer-selection flag.
-    if not chosen and is_branch_prompt:
-        ordinal_words = {"nhat": 1, "mot": 1, "hai": 2, "ba": 3, "tu": 4, "bon": 4, "nam": 5}
-        word_match = re.search(r"\b(?:so|thu)\s+(nhat|mot|hai|ba|tu|bon|nam)\b", normalized)
-        position = (1 if re.search(r"\bdau tien\b", normalized) else
-                    ordinal_words.get(word_match.group(1)) if word_match else None)
-        if position and position <= len(candidates):
-            chosen = candidates[position - 1]
+    from src.agents.selection_language import parse_selection_reference
+    reference = parse_selection_reference(message, active_namespace="BRANCH")
+    if (is_branch_prompt and reference.requested
+            and reference.namespace in {None, "BRANCH", "LOCATION_CANDIDATE"}
+            and 1 <= reference.ordinals[0] <= len(candidates)):
+        chosen = candidates[reference.ordinals[0] - 1]
 
     if not chosen and is_branch_prompt:
         chosen = next(

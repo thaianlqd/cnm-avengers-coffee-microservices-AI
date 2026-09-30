@@ -37,6 +37,7 @@ CONCRETE = [
     ('lấy Bánh Croissant Bơ nhé', 'B1'), ('cho tôi bánh này', 'B3'),
     ('thêm sản phẩm id: A1', 'A1'),
     ('them  AMERICANO   CLASSIC', 'A1'),
+    ('thêm Americano', 'A1'),
 ]
 
 
@@ -172,7 +173,7 @@ def test_novel_semantic_paraphrase_routes_enum_but_cannot_invent_target(shopping
 
 
 @pytest.mark.parametrize('raw', ['thêm món', 'mua đồ', 'lấy cái gì đó', 'cho tôi sản phẩm không tồn tại',
-                               'thêm Americano', 'lấy bánh số 99', 'lấy nước số 1 và bánh số 99'])
+                               'lấy bánh số 99', 'lấy nước số 1 và bánh số 99'])
 def test_even_model_concrete_enum_cannot_bypass_failed_resolution(shopping, monkeypatch, raw):
     monkeypatch.setattr(groq_service, 'groq_chat', lambda *a, **k: '{"intent":"CONCRETE_ADD"}')
     before = cart_contents(shopping)
