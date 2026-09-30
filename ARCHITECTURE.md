@@ -676,7 +676,7 @@ Trong giai đoạn tiếp theo, hệ thống nâng cấp toàn diện tầng Dat
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                      LAYER 7 — VISUALIZATION & AI SERVING
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     Apache Superset (BI Executive)  |  Streamlit Analytics Dashboard (:8501)
+     Apache Superset (BI Executive)  |  Modern Analytics Web Portal (:8501)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 

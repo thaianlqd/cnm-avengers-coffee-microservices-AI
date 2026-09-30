@@ -84,7 +84,7 @@ def main():
         logger.warning("No orders data found in Bronze. Skipping Silver.")
         return
 
-    # Clean Orders
+    # 1. Clean Orders
     orders = orders.copy()
     if "ngay_tao" in orders.columns:
         orders["ngay_tao"] = pd.to_datetime(orders["ngay_tao"], errors="coerce")
@@ -96,11 +96,16 @@ def main():
     orders["_processed_at"] = datetime.now().isoformat()
     upload_parquet(s3, orders, SILVER_BUCKET, f"{today}/orders_clean/{ts}.parquet")
 
-    # Enriched Orders (join with items) — uses gia_ban
+    # 2. Clean Items & Enriched Orders
     if items is not None and "ma_don_hang" in items.columns:
-        items["so_luong"] = pd.to_numeric(items.get("so_luong", 0), errors="coerce").fillna(0)
+        items = items.copy()
+        items["so_luong"] = pd.to_numeric(items.get("so_luong", 0), errors="coerce").fillna(0).astype(int)
         items["gia_ban"]  = pd.to_numeric(items.get("gia_ban", 0), errors="coerce").fillna(0)
         items["line_total"] = items["so_luong"] * items["gia_ban"]
+        items["kich_co"] = items["kich_co"].fillna("Standard") if "kich_co" in items.columns else "Standard"
+        items["_processed_at"] = datetime.now().isoformat()
+        upload_parquet(s3, items, SILVER_BUCKET, f"{today}/items_clean/{ts}.parquet")
+
         items_summary = items.groupby("ma_don_hang").agg(
             total_items=("so_luong", "sum"),
             line_total=("line_total", "sum"),
@@ -108,7 +113,7 @@ def main():
         enriched = orders.merge(items_summary, on="ma_don_hang", how="left")
         upload_parquet(s3, enriched, SILVER_BUCKET, f"{today}/orders_enriched/{ts}.parquet")
 
-    # Delivery metrics
+    # 3. Clean Delivery metrics
     if deliveries is not None:
         d = deliveries.copy()
         for col in ["assigned_at", "picked_up_at", "delivered_at"]:
@@ -120,6 +125,36 @@ def main():
             ).round(2)
         d["_processed_at"] = datetime.now().isoformat()
         upload_parquet(s3, d, SILVER_BUCKET, f"{today}/deliveries_clean/{ts}.parquet")
+
+    # 4. Clean Wallet Transactions (if present in Bronze)
+    wallet_tx = get_latest_df(s3, "wallet_transactions")
+    if wallet_tx is not None:
+        try:
+            w = wallet_tx.copy()
+            if "amount" in w.columns:
+                w["amount"] = pd.to_numeric(w["amount"], errors="coerce").fillna(0)
+            if "created_at" in w.columns:
+                w["created_at"] = pd.to_datetime(w["created_at"], errors="coerce")
+            w["_processed_at"] = datetime.now().isoformat()
+            upload_parquet(s3, w, SILVER_BUCKET, f"{today}/wallet_transactions_clean/{ts}.parquet")
+        except Exception as e:
+            logger.warning(f"Error processing wallet transactions in Silver: {e}")
+
+    # 5. Clean Delivery Tracking (if present in Bronze)
+    deliv_track = get_latest_df(s3, "delivery_tracking")
+    if deliv_track is not None:
+        try:
+            dt = deliv_track.copy()
+            if "delivery_fee" in dt.columns:
+                dt["delivery_fee"] = pd.to_numeric(dt["delivery_fee"], errors="coerce").fillna(0)
+            if "estimated_minutes" in dt.columns:
+                dt["estimated_minutes"] = pd.to_numeric(dt["estimated_minutes"], errors="coerce").fillna(0)
+            if "created_at" in dt.columns:
+                dt["created_at"] = pd.to_datetime(dt["created_at"], errors="coerce")
+            dt["_processed_at"] = datetime.now().isoformat()
+            upload_parquet(s3, dt, SILVER_BUCKET, f"{today}/delivery_tracking_clean/{ts}.parquet")
+        except Exception as e:
+            logger.warning(f"Error processing delivery tracking in Silver: {e}")
 
     logger.info("=== Silver Layer Done ===")
 

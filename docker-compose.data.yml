@@ -1,5 +1,61 @@
 services:
   # =========================================
+  # ANALYTICS DATABASE — PostgreSQL riêng cho Data Platform
+  # =========================================
+  postgres-analytics:
+    image: postgres:16
+    container_name: avengers_analytics_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: analytics
+      POSTGRES_PASSWORD: analytics123
+      POSTGRES_DB: analytics
+    ports:
+      - "5434:5432"
+    volumes:
+      - avengers_analytics_data:/var/lib/postgresql/data
+      - ./data-platform/init-db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U analytics -d analytics"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - data-network
+
+  # =========================================
+  # DATA SYNC — ETL từ Supabase → postgres-analytics
+  # Tự động phát hiện và sync TOÀN BỘ bảng
+  # =========================================
+  data-sync:
+    build:
+      context: ./data-platform/data-sync
+    container_name: avengers_data_sync
+    restart: unless-stopped
+    depends_on:
+      postgres-analytics:
+        condition: service_healthy
+    environment:
+      # Source: Supabase (production)
+      SOURCE_DB_HOST: ${DB_HOST:-aws-0-ap-southeast-1.pooler.supabase.com}
+      SOURCE_DB_PORT: ${DB_PORT:-6543}
+      SOURCE_DB_USER: ${DB_USER:-postgres.seneuycwihbyqjdtcdvu}
+      SOURCE_DB_PASSWORD: ${DB_PASSWORD:-afSMTJmSkNwOEmAT}
+      SOURCE_DB_NAME: ${DB_NAME:-postgres}
+      SOURCE_DB_SSLMODE: ${PGSSLMODE:-require}
+      # Target: postgres-analytics (local)
+      TARGET_DB_HOST: postgres-analytics
+      TARGET_DB_PORT: 5432
+      TARGET_DB_USER: analytics
+      TARGET_DB_PASSWORD: analytics123
+      TARGET_DB_NAME: analytics
+      # Sync config
+      SYNC_INTERVAL_SECONDS: 300
+      SYNC_SCHEMAS: "orders,identity,menu,inventory,news,ai"
+    networks:
+      - data-network
+
+  # =========================================
   # EVENT STREAMING — Zookeeper + Kafka (Confluent, stable)
   # =========================================
   zookeeper:
@@ -15,7 +71,6 @@ services:
       - avengers_zk_log:/var/lib/zookeeper/log
     networks:
       - data-network
-
 
   kafka:
     image: confluentinc/cp-kafka:7.4.0
@@ -74,7 +129,7 @@ services:
   # DATA LAKE — MinIO (S3-compatible)
   # =========================================
   minio:
-    image: quay.io/minio/minio:latest
+    image: minio/minio:latest
     container_name: avengers_minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
@@ -96,7 +151,7 @@ services:
 
   # MinIO bucket initialization
   minio-init:
-    image: quay.io/minio/mc:latest
+    image: minio/mc:latest
     container_name: avengers_minio_init
     restart: "no"
     depends_on:
@@ -115,7 +170,7 @@ services:
       - data-network
 
   # =========================================
-  # EVENT PRODUCER — reads PG, publishes to Kafka
+  # EVENT PRODUCER — reads analytics DB, publishes to Kafka
   # =========================================
   kafka-producer:
     build:
@@ -125,18 +180,54 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+      postgres-analytics:
+        condition: service_healthy
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      DB_HOST: ${DB_HOST:-postgres-db}
-      DB_PORT: ${DB_PORT:-5432}
-      DB_USER: ${DB_USER:-admin}
-      DB_PASSWORD: ${DB_PASSWORD:-123}
-      DB_NAME: ${DB_NAME:-avengers_coffee}
+      DB_HOST: postgres-analytics
+      DB_PORT: 5432
+      DB_USER: analytics
+      DB_PASSWORD: analytics123
+      DB_NAME: analytics
+      DB_SSLMODE: disable
       POLL_INTERVAL_SECONDS: 60
     volumes:
       - ./data-platform/kafka-producer:/app
     networks:
-      - avengers-network
+      - data-network
+
+  # =========================================
+  # EVENT CONSUMER — reads Kafka topics, ingests to Bronze Lake & Real-time table
+  # =========================================
+  kafka-consumer:
+    build:
+      context: ./data-platform/kafka-consumer
+    container_name: avengers_kafka_consumer
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres-analytics:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_GROUP_ID: avengers-bronze-consumer
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      DB_HOST: postgres-analytics
+      DB_PORT: 5432
+      DB_USER: analytics
+      DB_PASSWORD: analytics123
+      DB_NAME: analytics
+      DB_SSLMODE: disable
+      BATCH_SIZE: 50
+      FLUSH_INTERVAL_SECONDS: 15
+    volumes:
+      - ./data-platform/kafka-consumer:/app
+    networks:
       - data-network
 
   # =========================================
@@ -150,19 +241,21 @@ services:
     depends_on:
       minio:
         condition: service_healthy
+      postgres-analytics:
+        condition: service_healthy
     environment:
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
-      DB_HOST: ${DB_HOST:-postgres-db}
-      DB_PORT: ${DB_PORT:-5432}
-      DB_USER: ${DB_USER:-admin}
-      DB_PASSWORD: ${DB_PASSWORD:-123}
-      DB_NAME: ${DB_NAME:-avengers_coffee}
+      DB_HOST: postgres-analytics
+      DB_PORT: 5432
+      DB_USER: analytics
+      DB_PASSWORD: analytics123
+      DB_NAME: analytics
+      DB_SSLMODE: disable
     volumes:
       - ./data-platform/spark-jobs:/opt/spark-jobs
     networks:
-      - avengers-network
       - data-network
 
   # =========================================
@@ -178,6 +271,8 @@ services:
     depends_on:
       minio:
         condition: service_healthy
+      postgres-analytics:
+        condition: service_healthy
     environment:
       AIRFLOW__CORE__EXECUTOR: SequentialExecutor
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
@@ -190,11 +285,12 @@ services:
       AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL: 60
       AIRFLOW_ADMIN_USER: admin
       AIRFLOW_ADMIN_PASSWORD: admin123
-      DB_HOST: ${DB_HOST:-postgres-db}
-      DB_PORT: ${DB_PORT:-5432}
-      DB_USER: ${DB_USER:-admin}
-      DB_PASSWORD: ${DB_PASSWORD:-123}
-      DB_NAME: ${DB_NAME:-avengers_coffee}
+      DB_HOST: postgres-analytics
+      DB_PORT: 5432
+      DB_USER: analytics
+      DB_PASSWORD: analytics123
+      DB_NAME: analytics
+      DB_SSLMODE: disable
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
@@ -205,57 +301,48 @@ services:
       - ./data-platform/spark-jobs:/opt/airflow/spark-jobs
       - avengers_airflow_data:/opt/airflow
     networks:
-      - avengers-network
       - data-network
 
   # =========================================
-  # VISUALIZATION — Streamlit Analytics Dashboard
+  # VISUALIZATION — Modern React + FastAPI Analytics Portal
   # =========================================
-  streamlit:
+  web-ui:
     build:
-      context: ./data-platform/streamlit-app
-    container_name: avengers_streamlit
+      context: ./data-platform/web-ui
+    container_name: avengers_analytics_web
     restart: unless-stopped
     depends_on:
+      postgres-analytics:
+        condition: service_healthy
       minio:
         condition: service_healthy
     environment:
-      # ── Database (Local Postgres) ──────────────────────
-      DB_HOST: ${DB_HOST:-postgres-db}
-      DB_PORT: ${DB_PORT:-5432}
-      DB_USER: ${DB_USER:-admin}
-      DB_PASSWORD: ${DB_PASSWORD:-123456}
-      DB_NAME: ${DB_NAME:-postgres}
+      # ── Database (Analytics DB riêng) ──────────────────
+      DB_HOST: postgres-analytics
+      DB_PORT: 5432
+      DB_USER: analytics
+      DB_PASSWORD: analytics123
+      DB_NAME: analytics
       DB_SSLMODE: disable
       # ── MinIO / Kafka ─────────────────────────────────
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
-      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      # ── Streamlit server ──────────────────────────────
-      STREAMLIT_SERVER_HEADLESS: "true"
-      STREAMLIT_SERVER_PORT: 8501
-      STREAMLIT_SERVER_RUN_ON_SAVE: "true"
-      STREAMLIT_SERVER_ENABLE_CORS: "false"
-      STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION: "false"
-      # ── Theme DARK (Enterprise Dashboard) ────────────────
-      STREAMLIT_THEME_BASE: "dark"
-      STREAMLIT_THEME_PRIMARY_COLOR: "#FF4757"
-      STREAMLIT_THEME_BACKGROUND_COLOR: "#0D0D1A"
-      STREAMLIT_THEME_SECONDARY_BACKGROUND_COLOR: "#1A1A2E"
-      STREAMLIT_THEME_TEXT_COLOR: "#C0C0D8"
       # ── AI Analytics ──────────────────────────────────
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       GROQ_API_KEY: ${GROQ_API_KEY}
-    volumes:
-      - ./data-platform/streamlit-app:/app
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
     ports:
       - "8501:8501"
+    volumes:
+      - ./data-platform/web-ui/dist:/app/dist
+      - ./data-platform/web-ui/server:/app/server
     networks:
-      - avengers-network
       - data-network
 
+
 volumes:
+  avengers_analytics_data:
   avengers_zk_data:
   avengers_zk_log:
   avengers_kafka_data:
@@ -265,6 +352,3 @@ volumes:
 networks:
   data-network:
     driver: bridge
-  avengers-network:
-    external: true
-    name: cnm-avengers-coffee-microservices-ai_avengers-network
