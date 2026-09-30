@@ -1493,7 +1493,9 @@ def _handle_pending_reply(state: OrderConversationState) -> Dict[str, Any]:
             return reply(_cart_ready_reply("Mình sẽ không áp dụng mã giảm giá cho giỏ này."))
         if decision == "SELECT_VOUCHER":
             from src.agents.agent_service import _resolve_pending_voucher_choice
-            resolved = _resolve_pending_voucher_choice(session_id, message)
+            voucher_message = ("số " + re.search(r"\d+", message).group()
+                               if re.fullmatch(r"\s*\d+\s*[.!]?\s*", message) else message)
+            resolved = _resolve_pending_voucher_choice(session_id, voucher_message)
             if resolved:
                 return resolved
             if not prefs.get("voucher_candidates"):
@@ -2056,29 +2058,35 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         explicit_location = checkout_location(
             state["user_message"], prefs_at_entry.get("delivery_type"), True,
         )
-        strong_intents = {
-            "BROWSING", "ADD_ITEM", "VIEW_CART", "CLEAR_CART", "REMOVE_ITEM", "SET_QUANTITY",
+        read_only_intents = {"BROWSING", "VIEW_CART", "PAYMENT_INFO"}
+        transactional_intents = {
+            "ADD_ITEM", "CLEAR_CART", "REMOVE_ITEM", "SET_QUANTITY",
             "EDIT_OPTIONS", "FINISH_CART", "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT",
-            "SELECT_VOUCHER", "APPLY_VOUCHER", "REMOVE_VOUCHER", "REPLACE_VOUCHER", "PAYMENT_INFO",
+            "SELECT_VOUCHER", "APPLY_VOUCHER", "REMOVE_VOUCHER", "REPLACE_VOUCHER",
         }
-        if explicit.get("intent") in strong_intents:
-            if explicit.get("intent") not in {"BROWSING", "VIEW_CART", "PAYMENT_INFO"}:
-                cart_manager.clear_pending_action(state["session_id"])
+        if explicit.get("intent") in read_only_intents:
             return {**state, "intent": explicit}
-        if explicit_location.kind in {"area", "address", "poi"}:
+        if explicit.get("intent") in transactional_intents:
+            # Tier-1 proves supersession but is not always execution-ready.
+            # Clear only this owner, then let the normal pipeline attach
+            # canonical products, voucher codes, checkout patches and targets.
+            cart_manager.clear_pending_action(state["session_id"])
+            active_pending = None
+        elif explicit_location.kind in {"area", "address", "poi"}:
             cart_manager.clear_pending_action(state["session_id"])
             return {**state, "intent": {"intent": "LOCATION_QUERY",
                                         "location_kind": explicit_location.kind}}
-        decision = classify_pending_reply(
-            state["user_message"], "confirm_prior_location_for_checkout",
-        )
-        params = active_pending.get("params") or active_pending.get("data") or {}
-        logger.debug("[ConversationResume] pending=confirm_prior_location_for_checkout decision=%s", decision)
-        if decision == "CONFIRM":
-            return {**state, "intent": {"intent": "PRIOR_LOCATION_REUSE_CONFIRM", "params": params}}
-        if decision == "DECLINE":
-            return {**state, "intent": {"intent": "PRIOR_LOCATION_REUSE_DECLINE"}}
-        return {**state, "intent": {"intent": "PENDING_PRIOR_LOCATION_REUSE", "params": params}}
+        else:
+            decision = classify_pending_reply(
+                state["user_message"], "confirm_prior_location_for_checkout",
+            )
+            params = active_pending.get("params") or active_pending.get("data") or {}
+            logger.debug("[ConversationResume] pending=confirm_prior_location_for_checkout decision=%s", decision)
+            if decision == "CONFIRM":
+                return {**state, "intent": {"intent": "PRIOR_LOCATION_REUSE_CONFIRM", "params": params}}
+            if decision == "DECLINE":
+                return {**state, "intent": {"intent": "PRIOR_LOCATION_REUSE_DECLINE"}}
+            return {**state, "intent": {"intent": "PENDING_PRIOR_LOCATION_REUSE", "params": params}}
     if (active_pending or {}).get("type") == "offer_branch_search":
         from src.agents.location_parser import parse_location
         from src.agents.pending_context import classify_pending_reply
@@ -2419,7 +2427,9 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
                 "pending_decision": decision, "resolved_products": refs,
                 "quantity": _extract_add_quantity(state["user_message"])}}
     if pending_type == "select_voucher" and not _category_search_message(state["user_message"]):
-        voucher_decision = classify_pending_reply(state["user_message"], pending_type)
+        bare_voucher_ordinal = bool(re.fullmatch(r"\s*\d+\s*[.!]?\s*", state["user_message"]))
+        voucher_decision = ("SELECT_VOUCHER" if bare_voucher_ordinal
+                            else classify_pending_reply(state["user_message"], pending_type))
         if voucher_decision in {"SELECT_VOUCHER", "SKIP_VOUCHER", "REMOVE_VOUCHER"}:
             return {**state, "intent": {"intent": "PENDING_REPLY", "pending_type": pending_type,
                                         "decision": voucher_decision}}
@@ -3526,15 +3536,17 @@ def _render(state: OrderConversationState) -> OrderConversationState:
         "branch_search": {"offer_branch_search", "confirm_prior_location_for_checkout"},
         "recommendation": {"offer_recommendation"},
         "voucher": {"select_voucher"},
-        "checkout": {"select_checkout_choices", "select_fulfillment", "select_payment", "confirm_checkout"},
-        "cart": {"ask_more_items", "fill_options", "edit_cart_item", "cart_line_choice", "cart_edit_clarification"},
+        "checkout_progress": {"select_checkout_choices", "select_fulfillment", "select_payment"},
+        "checkout_confirmation": {"confirm_checkout"},
+        "add_more": {"ask_more_items"},
     }
 
     def business_offer_action(line: str) -> Optional[str]:
         normalized = _norm(line)
         opt_in = bool(re.search(
             r"\b(?:co\s+(?:muon|can)|neu\s+(?:(?:ban|anh|chi)\s+)?(?:muon|can)|"
-            r"co\s+the\b.*\bneu\s+(?:(?:ban|anh|chi)\s+)?(?:muon|can))\b",
+            r"co\s+the\b.*\bneu\s+(?:(?:ban|anh|chi)\s+)?(?:muon|can)|"
+            r"(?:ban|anh|chi)\s+muon\s+(?:minh|toi))\b",
             normalized,
         ))
         if not opt_in:
@@ -3545,10 +3557,12 @@ def _render(state: OrderConversationState) -> OrderConversationState:
             return "recommendation"
         if re.search(r"\bap\s+(?:ma|voucher)\b", normalized):
             return "voucher"
-        if re.search(r"\b(?:tiep tuc\s+thanh toan|thanh toan|xac nhan\s+(?:don|dat)|dat hang|chot don)\b", normalized):
-            return "checkout"
+        if re.search(r"\b(?:xac nhan\s+(?:don|dat)|dat hang|chot don)\b", normalized):
+            return "checkout_confirmation"
+        if re.search(r"\b(?:tiep tuc\s+thanh toan|thanh toan)\b", normalized):
+            return "checkout_progress"
         if re.search(r"\b(?:them mon|chon mon)\b", normalized):
-            return "cart"
+            return "add_more"
         return None
 
     def is_unowned_business_offer(line: str) -> bool:
