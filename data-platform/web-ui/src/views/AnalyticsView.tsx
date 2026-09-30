@@ -40,6 +40,10 @@ export const AnalyticsView: React.FC = () => {
 
   // ─── AI ASSISTANT MODULE BUILDER STATE ───
   const [aiPrompt, setAiPrompt] = useState('');
+  const [aiContext, setAiContext] = useState('');
+  const [aiTimeRange, setAiTimeRange] = useState('auto');
+  const [aiDomain, setAiDomain] = useState('auto');
+  const [aiStatus, setAiStatus] = useState<any | null>(null);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [generatedReport, setGeneratedReport] = useState<any | null>(null);
   const [showSqlCode, setShowSqlCode] = useState(false);
@@ -82,24 +86,34 @@ export const AnalyticsView: React.FC = () => {
       const response = await fetch('/api/ai/generate-executive-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: promptToSend }),
+        body: JSON.stringify({
+          prompt: promptToSend,
+          context: aiContext.trim(),
+          time_range: { mode: aiTimeRange, start: null, end: null },
+          domain: aiDomain,
+        }),
       });
       if (!response.ok) {
         throw new Error('Lỗi phản hồi từ máy chủ AI');
       }
       const data = await response.json();
       setGeneratedReport(data);
-      showToast('Khởi tạo module phân tích thành công!', 'success');
+      if (data.status === 'needs_clarification') {
+        showToast('Trợ lý cần bạn làm rõ yêu cầu phân tích', 'info');
+      } else {
+        showToast('Khởi tạo module phân tích thành công!', 'success');
+      }
     } catch (err: any) {
       console.error('Lỗi sinh báo cáo AI:', err);
-      showToast('Đang chạy ở chế độ dự phòng thông minh', 'info');
+      setGeneratedReport(null);
+      showToast(err.message || 'Không thể tạo module phân tích', 'error');
     } finally {
       setIsGeneratingAi(false);
     }
   };
 
   const handleSaveAiReport = async () => {
-    if (!generatedReport) return;
+    if (!generatedReport || generatedReport.status !== 'success') return;
     try {
       const payload = {
         title: generatedReport.title || 'Báo cáo Phân tích AI Tùy biến',
@@ -107,11 +121,26 @@ export const AnalyticsView: React.FC = () => {
         category: 'ai_module',
         query_type: 'sql',
         sql_query: generatedReport.sql_query || 'SELECT 1;',
-        visualization_type: 'area',
+        visualization_type: generatedReport.visualizations?.trend || 'area',
         x_key: 'date',
         y_key: 'revenue',
         ai_summary: Array.isArray(generatedReport.ai_insights) ? generatedReport.ai_insights.join(' | ') : '',
         created_by: 'Trợ lý AI Data Platform',
+        module_config: {
+          prompt: generatedReport.prompt,
+          context: generatedReport.context,
+          interpreted_request: generatedReport.interpreted_request,
+          assumptions: generatedReport.assumptions,
+          sql: generatedReport.sql,
+          visualizations: generatedReport.visualizations,
+          metadata_used: generatedReport.metadata_used,
+          executive_summary: generatedReport.executive_summary,
+          ai_insights: generatedReport.ai_insights,
+          recommendations: generatedReport.recommendations,
+          evidence: generatedReport.evidence,
+          provider: generatedReport.provider,
+          created_at: generatedReport.created_at,
+        },
       };
       const res = await fetch('/api/reports/saved', {
         method: 'POST',
@@ -121,10 +150,11 @@ export const AnalyticsView: React.FC = () => {
       if (res.ok) {
         showToast('Đã lưu module phân tích vào kho báo cáo hệ thống!', 'success');
       } else {
-        showToast('Đã lưu cấu hình module vào bộ nhớ', 'success');
+        const error = await res.json().catch(() => ({}));
+        showToast(error.detail || 'Không thể lưu module phân tích', 'error');
       }
     } catch (err) {
-      showToast('Đã lưu cấu hình module phân tích', 'success');
+      showToast('Không thể kết nối để lưu module phân tích', 'error');
     }
   };
 
@@ -142,6 +172,14 @@ export const AnalyticsView: React.FC = () => {
     fetchCustomers();
     fetchProducts();
   }, [fetchMarts, fetchStores, fetchCustomers, fetchProducts]);
+
+  useEffect(() => {
+    if (activeTab !== 'ai_assistant') return;
+    fetch('/api/ai/status')
+      .then((res) => res.ok ? res.json() : Promise.reject(new Error('status unavailable')))
+      .then(setAiStatus)
+      .catch(() => setAiStatus({ status: 'unavailable', providers: {} }));
+  }, [activeTab]);
 
   // Common Palette
   const palette = ['#059669', '#0284c7', '#d97706', '#dc2626', '#8b5cf6', '#64748b'];
@@ -1197,9 +1235,21 @@ export const AnalyticsView: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center self-start sm:self-auto">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
-                AI Data Engine Sẵn sàng
+              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border flex items-center self-start sm:self-auto ${
+                aiStatus?.status === 'ready'
+                  ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                  : aiStatus?.status === 'degraded'
+                    ? 'text-amber-700 bg-amber-50 border-amber-200'
+                    : 'text-slate-600 bg-slate-50 border-slate-200'
+              }`}>
+                <span className={`w-2 h-2 rounded-full mr-1.5 ${
+                  aiStatus?.status === 'ready' ? 'bg-emerald-500 animate-pulse' : aiStatus?.status === 'degraded' ? 'bg-amber-500' : 'bg-slate-400'
+                }`}></span>
+                {aiStatus?.status === 'ready'
+                  ? 'AI Data Engine Ready'
+                  : aiStatus?.status === 'degraded'
+                    ? (Object.values(aiStatus?.providers || {}).some((p: any) => p?.configured) ? 'AI Data Engine Degraded' : 'AI chưa cấu hình — dùng dự phòng')
+                    : 'AI Data Engine Not configured'}
               </span>
             </div>
 
@@ -1229,14 +1279,58 @@ export const AnalyticsView: React.FC = () => {
 
             {/* Custom Prompt Input */}
             <div className="space-y-3">
+              <label className="text-xs font-semibold text-slate-700 block">Yêu cầu phân tích</label>
               <div className="relative">
                 <textarea
                   value={aiPrompt}
                   onChange={(e) => setAiPrompt(e.target.value)}
-                  placeholder="Ví dụ: Phân tích cơ cấu doanh thu theo các nhóm thực đơn và thống kê danh sách đồ uống bán chạy nhất..."
+                  placeholder="VD: Phân tích các món bán chạy nhất"
                   rows={3}
                   className="w-full text-xs p-3.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-emerald-600 focus:bg-white transition-all text-slate-800 font-medium resize-none"
                 />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-700 mb-2 block">Mục tiêu / ngữ cảnh phân tích <span className="font-normal text-slate-400">(không bắt buộc)</span></label>
+                <textarea
+                  value={aiContext}
+                  onChange={(e) => setAiContext(e.target.value)}
+                  placeholder="VD: Tôi muốn biết món nào nên ưu tiên đẩy bán, so sánh theo doanh thu và số lượng, tập trung 30 ngày gần nhất."
+                  rows={2}
+                  className="w-full text-xs p-3.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-emerald-600 focus:bg-white transition-all text-slate-800 resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 mb-2 block">Khoảng thời gian</label>
+                  <select
+                    value={aiTimeRange}
+                    onChange={(e) => setAiTimeRange(e.target.value)}
+                    className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-emerald-600"
+                  >
+                    <option value="auto">Tự động hiểu từ câu hỏi</option>
+                    <option value="today">Hôm nay</option>
+                    <option value="7d">7 ngày</option>
+                    <option value="30d">30 ngày</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 mb-2 block">Phạm vi</label>
+                  <select
+                    value={aiDomain}
+                    onChange={(e) => setAiDomain(e.target.value)}
+                    className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-emerald-600"
+                  >
+                    <option value="auto">Tự động</option>
+                    <option value="orders">Doanh thu</option>
+                    <option value="stores">Cửa hàng</option>
+                    <option value="products">Sản phẩm</option>
+                    <option value="customers">Khách hàng</option>
+                    <option value="payments">Thanh toán</option>
+                    <option value="delivery">Giao hàng</option>
+                  </select>
+                </div>
               </div>
 
               <div className="flex items-center justify-between">
@@ -1274,8 +1368,22 @@ export const AnalyticsView: React.FC = () => {
             </div>
           )}
 
+          {!isGeneratingAi && generatedReport?.status === 'needs_clarification' && (
+            <div className="bg-amber-50 rounded-xl border border-amber-200 p-5 shadow-sm">
+              <div className="text-xs font-bold text-amber-800 uppercase tracking-wider">Cần làm rõ yêu cầu</div>
+              <p className="text-sm font-semibold text-slate-800 mt-2">{generatedReport.clarification_question}</p>
+              <p className="text-xs text-slate-600 mt-1">{generatedReport.interpreted_request}</p>
+              <button
+                onClick={() => document.querySelector<HTMLTextAreaElement>('textarea')?.focus()}
+                className="mt-3 px-3 py-1.5 text-xs font-semibold text-amber-800 bg-white border border-amber-300 rounded-lg hover:bg-amber-100"
+              >
+                Bổ sung yêu cầu
+              </button>
+            </div>
+          )}
+
           {/* Generated Module Result */}
-          {!isGeneratingAi && generatedReport && (
+          {!isGeneratingAi && generatedReport?.status === 'success' && (
             <div className="space-y-6">
               {/* Module Header Bar */}
               <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -1313,14 +1421,42 @@ export const AnalyticsView: React.FC = () => {
                 </div>
               </div>
 
+              <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">AI hiểu yêu cầu</div>
+                  <p className="text-xs text-slate-700 mt-1.5 leading-relaxed">{generatedReport.interpreted_request}</p>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Giả định</div>
+                  {generatedReport.assumptions?.length ? (
+                    <ul className="text-xs text-slate-700 mt-1.5 space-y-1 list-disc list-inside">
+                      {generatedReport.assumptions.map((item: string, idx: number) => <li key={idx}>{item}</li>)}
+                    </ul>
+                  ) : <p className="text-xs text-slate-500 mt-1.5">Không có giả định bổ sung.</p>}
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Nguồn dữ liệu & mô hình</div>
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {(generatedReport.metadata_used?.tables || []).map((table: string) => (
+                      <span key={table} className="text-[10px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5">{table}</span>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-2">{generatedReport.model_used}</p>
+                </div>
+              </div>
+
               {/* SQL Viewer if expanded */}
-              {showSqlCode && generatedReport.sql_query && (
+              {showSqlCode && (generatedReport.sql || generatedReport.sql_query) && (
                 <div className="bg-slate-900 rounded-xl p-4 text-slate-200 font-mono text-xs overflow-x-auto border border-slate-800 shadow-sm">
                   <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800">
                     <span className="text-slate-400 text-[11px]">CÂU LỆNH SQL ĐƯỢC TỰ ĐỘNG SINH & THỰC THI</span>
                     <button
                       onClick={() => {
-                        navigator.clipboard.writeText(generatedReport.sql_query);
+                        navigator.clipboard.writeText(
+                          generatedReport.sql
+                            ? Object.entries(generatedReport.sql).map(([name, sql]) => `-- ${name}\n${sql}`).join('\n\n')
+                            : generatedReport.sql_query
+                        );
                         showToast('Đã sao chép câu lệnh SQL vào clipboard', 'success');
                       }}
                       className="text-[10px] text-emerald-400 hover:underline cursor-pointer"
@@ -1328,7 +1464,12 @@ export const AnalyticsView: React.FC = () => {
                       Sao chép SQL
                     </button>
                   </div>
-                  <pre className="text-emerald-300 whitespace-pre-wrap">{generatedReport.sql_query}</pre>
+                  {generatedReport.sql ? Object.entries(generatedReport.sql).map(([name, sql]) => (
+                    <div key={name} className="mb-4 last:mb-0">
+                      <div className="text-sky-300 uppercase mb-1">-- {name}</div>
+                      <pre className="text-emerald-300 whitespace-pre-wrap">{String(sql)}</pre>
+                    </div>
+                  )) : <pre className="text-emerald-300 whitespace-pre-wrap">{generatedReport.sql_query}</pre>}
                 </div>
               )}
 
@@ -1339,6 +1480,9 @@ export const AnalyticsView: React.FC = () => {
                     <SparklesIcon className="w-4 h-4 text-emerald-600 mr-2" />
                     Đánh giá chuyên sâu & Khuyến nghị điều hành từ AI
                   </h4>
+                  {generatedReport.executive_summary && (
+                    <p className="text-sm text-slate-700 font-medium mb-4 leading-relaxed">{generatedReport.executive_summary}</p>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {generatedReport.ai_insights.map((insight: string, idx: number) => {
                       const colors = [
@@ -1359,6 +1503,14 @@ export const AnalyticsView: React.FC = () => {
                       );
                     })}
                   </div>
+                  {generatedReport.recommendations?.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-slate-100">
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Khuyến nghị</div>
+                      <ul className="text-xs text-slate-700 space-y-1 list-disc list-inside">
+                        {generatedReport.recommendations.map((item: string, idx: number) => <li key={idx}>{item}</li>)}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1374,7 +1526,9 @@ export const AnalyticsView: React.FC = () => {
                       <span className="text-xs font-semibold text-slate-500">đ</span>
                     </div>
                     <div className="text-xs text-emerald-600 font-medium mt-1">
-                      {generatedReport.kpis.revenue_growth ? `+${generatedReport.kpis.revenue_growth}% so với kỳ trước` : 'Chỉ số thực tế'}
+                      {generatedReport.kpis.revenue_growth !== null && generatedReport.kpis.revenue_growth !== undefined
+                        ? `${Number(generatedReport.kpis.revenue_growth) > 0 ? '+' : ''}${generatedReport.kpis.revenue_growth}% so với kỳ trước`
+                        : 'Chưa có kỳ so sánh'}
                     </div>
                   </div>
 
@@ -1386,7 +1540,9 @@ export const AnalyticsView: React.FC = () => {
                       {Number(generatedReport.kpis.orders || 0).toLocaleString('vi-VN')} đơn
                     </div>
                     <div className="text-xs text-sky-600 font-medium mt-1">
-                      {generatedReport.kpis.orders_growth ? `+${generatedReport.kpis.orders_growth}% tăng trưởng` : 'Dữ liệu giao dịch'}
+                      {generatedReport.kpis.orders_growth !== null && generatedReport.kpis.orders_growth !== undefined
+                        ? `${Number(generatedReport.kpis.orders_growth) > 0 ? '+' : ''}${generatedReport.kpis.orders_growth}% so với kỳ trước`
+                        : 'Chưa có kỳ so sánh'}
                     </div>
                   </div>
 
@@ -1395,7 +1551,9 @@ export const AnalyticsView: React.FC = () => {
                       Giá trị đơn trung bình
                     </div>
                     <div className="text-lg sm:text-xl font-bold text-slate-800 mt-1">
-                      {Number(generatedReport.kpis.aov || 0).toLocaleString('vi-VN')} đ
+                      {generatedReport.kpis.aov === null || generatedReport.kpis.aov === undefined
+                        ? '—'
+                        : `${Number(generatedReport.kpis.aov).toLocaleString('vi-VN')} đ`}
                     </div>
                     <div className="text-xs text-slate-400 font-medium mt-1">
                       Mức chi trả bình quân mỗi giao dịch
@@ -1407,7 +1565,9 @@ export const AnalyticsView: React.FC = () => {
                       Tỷ lệ hoàn thành đơn
                     </div>
                     <div className="text-lg sm:text-xl font-bold text-emerald-600 mt-1">
-                      {Number(generatedReport.kpis.completion_rate ?? 0)}%
+                      {generatedReport.kpis.completion_rate === null || generatedReport.kpis.completion_rate === undefined
+                        ? '—'
+                        : `${Number(generatedReport.kpis.completion_rate)}%`}
                     </div>
                     <div className="text-xs text-emerald-600 font-medium mt-1">
                       Đạt tiêu chuẩn vận hành
@@ -1559,4 +1719,3 @@ export const AnalyticsView: React.FC = () => {
     </div>
   );
 };
-

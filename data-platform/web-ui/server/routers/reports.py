@@ -1,9 +1,10 @@
-import time
 import uuid
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Query
+from psycopg2.extras import Json
 from db import get_db_conn
 from common import SavedReportCreate, ReportExportLogCreate
+from services.sql_service import SqlSafetyError, QueryExecutionError, execute_read_only
 
 router = APIRouter(prefix="/api/reports", tags=["Reports Management"])
 
@@ -31,7 +32,7 @@ def list_saved_reports(
                     SELECT 
                         id, title, description, category, query_type,
                         sql_query, visualization_type, x_key, y_key,
-                        ai_summary, created_by,
+                        ai_summary, created_by, module_config,
                         TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI') AS created_at,
                         TO_CHAR(updated_at, 'YYYY-MM-DD HH24:MI') AS updated_at
                     FROM analytics.saved_reports
@@ -54,8 +55,8 @@ def create_saved_report(payload: SavedReportCreate):
                 cur.execute("""
                     INSERT INTO analytics.saved_reports (
                         id, title, description, category, query_type, sql_query,
-                        visualization_type, x_key, y_key, ai_summary, created_by
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        visualization_type, x_key, y_key, ai_summary, created_by, module_config
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id, title, created_at;
                 """, (
                     report_id,
@@ -68,7 +69,8 @@ def create_saved_report(payload: SavedReportCreate):
                     payload.x_key,
                     payload.y_key,
                     payload.ai_summary,
-                    payload.created_by or "Chuyên viên phân tích"
+                    payload.created_by or "Chuyên viên phân tích",
+                    Json(payload.module_config) if payload.module_config is not None else None,
                 ))
                 created = cur.fetchone()
                 conn.commit()
@@ -86,7 +88,7 @@ def get_saved_report(report_id: str):
                     SELECT 
                         id, title, description, category, query_type,
                         sql_query, visualization_type, x_key, y_key,
-                        ai_summary, created_by,
+                        ai_summary, created_by, module_config,
                         TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI') AS created_at,
                         TO_CHAR(updated_at, 'YYYY-MM-DD HH24:MI') AS updated_at
                     FROM analytics.saved_reports
@@ -137,32 +139,24 @@ def run_saved_report(report_id: str):
                     raise HTTPException(status_code=404, detail="Không tìm thấy báo cáo yêu cầu")
 
                 sql = report["sql_query"]
-                # Safety check: read-only
-                lower_sql = sql.lower()
-                for kw in ["insert ", "update ", "delete ", "drop ", "truncate ", "alter ", "create "]:
-                    if kw in lower_sql:
-                        raise HTTPException(status_code=400, detail="Chỉ cho phép thực thi câu lệnh SELECT đọc dữ liệu")
-
-                start_time = time.time()
-                cur.execute(sql)
-                rows = [dict(r) for r in cur.fetchall()]
-                exec_time_ms = round((time.time() - start_time) * 1000, 2)
-                columns = [desc[0] for desc in cur.description] if cur.description else []
-
-                return {
-                    "report_id": report["id"],
-                    "title": report["title"],
-                    "visualization_type": report["visualization_type"],
-                    "x_key": report["x_key"],
-                    "y_key": report["y_key"],
-                    "ai_summary": report["ai_summary"],
-                    "rows": rows,
-                    "columns": columns,
-                    "total_rows": len(rows),
-                    "execution_time_ms": exec_time_ms
-                }
+        result = execute_read_only(sql, row_limit=500)
+        return {
+            "report_id": report["id"],
+            "title": report["title"],
+            "visualization_type": report["visualization_type"],
+            "x_key": report["x_key"],
+            "y_key": report["y_key"],
+            "ai_summary": report["ai_summary"],
+            "rows": result["rows"],
+            "columns": result["columns"],
+            "total_rows": result["count"],
+            "truncated": result["truncated"],
+            "execution_time_ms": result["duration_ms"]
+        }
     except HTTPException:
         raise
+    except (SqlSafetyError, QueryExecutionError) as e:
+        raise HTTPException(status_code=400, detail=f"Lỗi thực thi báo cáo: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi thực thi báo cáo: {str(e)}")
 
@@ -172,25 +166,16 @@ def preview_report_query(payload: dict):
     sql = payload.get("sql_query", "").strip()
     if not sql:
         raise HTTPException(status_code=400, detail="Vui lòng cung cấp câu lệnh truy vấn dữ liệu")
-    lower_sql = sql.lower()
-    for kw in ["insert ", "update ", "delete ", "drop ", "truncate ", "alter ", "create "]:
-        if kw in lower_sql:
-            raise HTTPException(status_code=400, detail="Chỉ cho phép thực thi câu lệnh SELECT đọc dữ liệu")
     try:
-        with get_db_conn() as conn:
-            with conn.cursor() as cur:
-                start_time = time.time()
-                cur.execute(sql)
-                rows = [dict(r) for r in cur.fetchall()]
-                exec_time_ms = round((time.time() - start_time) * 1000, 2)
-                columns = [desc[0] for desc in cur.description] if cur.description else []
-                return {
-                    "rows": rows,
-                    "columns": columns,
-                    "total_rows": len(rows),
-                    "execution_time_ms": exec_time_ms
-                }
-    except Exception as e:
+        result = execute_read_only(sql, row_limit=500)
+        return {
+            "rows": result["rows"],
+            "columns": result["columns"],
+            "total_rows": result["count"],
+            "truncated": result["truncated"],
+            "execution_time_ms": result["duration_ms"]
+        }
+    except (SqlSafetyError, QueryExecutionError) as e:
         raise HTTPException(status_code=400, detail=f"Lỗi truy vấn dữ liệu: {str(e)}")
 
 

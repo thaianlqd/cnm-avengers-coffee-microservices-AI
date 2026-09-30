@@ -88,6 +88,10 @@ def init_warehouse_views():
                         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """)
+                cur.execute("""
+                    ALTER TABLE analytics.saved_reports
+                    ADD COLUMN IF NOT EXISTS module_config JSONB;
+                """)
 
                 # 3. Report Export & Audit Logs Table
                 cur.execute("""

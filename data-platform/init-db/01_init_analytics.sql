@@ -66,3 +66,7 @@ CREATE TABLE IF NOT EXISTS public.saved_modules (
 );
 CREATE INDEX IF NOT EXISTS idx_saved_modules_active ON public.saved_modules(is_active);
 
+-- Full configuration for AI-generated reports. Existing rows remain valid with NULL.
+CREATE SCHEMA IF NOT EXISTS analytics;
+ALTER TABLE IF EXISTS analytics.saved_reports
+    ADD COLUMN IF NOT EXISTS module_config JSONB;
