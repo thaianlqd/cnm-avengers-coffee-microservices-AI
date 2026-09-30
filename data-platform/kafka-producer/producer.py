@@ -79,12 +79,14 @@ def ensure_topics(producer: KafkaProducer):
 
 
 def get_db_conn():
-    return psycopg2.connect(
+    conn = psycopg2.connect(
         host=DB_HOST, port=DB_PORT, user=DB_USER,
         password=DB_PASSWORD, dbname=DB_NAME,
         cursor_factory=psycopg2.extras.RealDictCursor,
-        sslmode='require'
+        sslmode=os.getenv('DB_SSLMODE', 'disable')
     )
+    conn.autocommit = True
+    return conn
 
 
 def fetch_and_publish(producer: KafkaProducer, conn):
