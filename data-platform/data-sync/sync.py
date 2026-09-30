@@ -182,6 +182,17 @@ def adapt_value(val):
     return val
 
 
+def map_postgres_type(data_type, udt_name):
+    type_map = {
+        "int2": "SMALLINT", "int4": "INTEGER", "int8": "BIGINT",
+        "numeric": "NUMERIC", "float4": "REAL", "float8": "DOUBLE PRECISION",
+        "bool": "BOOLEAN", "uuid": "UUID", "text": "TEXT", "varchar": "TEXT",
+        "bpchar": "TEXT", "timestamp": "TIMESTAMP", "timestamptz": "TIMESTAMPTZ",
+        "date": "DATE", "jsonb": "JSONB", "json": "JSON", "bytea": "BYTEA",
+    }
+    return "TEXT[]" if data_type == "ARRAY" else type_map.get(udt_name, "TEXT")
+
+
 def create_table_from_source(source_conn, target_conn, schema, table):
     """Tạo bảng trong target với cấu trúc giống source."""
     columns = get_table_columns(source_conn, schema, table)
@@ -197,17 +208,7 @@ def create_table_from_source(source_conn, target_conn, schema, table):
     col_defs = []
     for col_name, data_type, udt_name, is_nullable, col_default in columns:
         # Map data type
-        type_map = {
-            "int2": "SMALLINT", "int4": "INTEGER", "int8": "BIGINT",
-            "numeric": "NUMERIC", "float4": "REAL", "float8": "DOUBLE PRECISION",
-            "bool": "BOOLEAN", "uuid": "UUID",
-            "text": "TEXT", "varchar": "TEXT", "bpchar": "TEXT",
-            "timestamp": "TIMESTAMP", "timestamptz": "TIMESTAMPTZ",
-            "date": "DATE", "jsonb": "JSONB", "json": "JSON", "bytea": "BYTEA",
-        }
-        pg_type = type_map.get(udt_name, "TEXT")
-        if data_type == "ARRAY":
-            pg_type = "TEXT[]"
+        pg_type = map_postgres_type(data_type, udt_name)
 
         nullable = "" if is_nullable == "YES" else " NOT NULL"
         # Escape column name properly
@@ -226,8 +227,27 @@ def create_table_from_source(source_conn, target_conn, schema, table):
     create_sql = f'CREATE TABLE {schema}."{table}" ({cols_sql}{pk_clause})'
 
     with target_conn.cursor() as cur:
-        cur.execute(f'DROP TABLE IF EXISTS {schema}."{table}" CASCADE')
         cur.execute(create_sql)
+    target_conn.commit()
+
+
+def ensure_target_table(source_conn, target_conn, schema, table):
+    """Create missing copies and add newly discovered columns without dropping dependent Gold views."""
+    if not table_exists_in_target(target_conn, schema, table):
+        create_table_from_source(source_conn, target_conn, schema, table)
+        return
+
+    source_columns = get_table_columns(source_conn, schema, table)
+    target_columns = {row[0]: row for row in get_table_columns(target_conn, schema, table)}
+    with target_conn.cursor() as cur:
+        for col_name, data_type, udt_name, _is_nullable, _default in source_columns:
+            if col_name in target_columns:
+                continue
+            safe_col = col_name.replace('"', '""')
+            pg_type = map_postgres_type(data_type, udt_name)
+            # New columns start nullable so existing warehouse rows never block a sync.
+            cur.execute(f'ALTER TABLE {schema}."{table}" ADD COLUMN "{safe_col}" {pg_type}')
+            logger.info(f"  {schema}.{table}: added new column {col_name} ({pg_type})")
     target_conn.commit()
 
 
@@ -240,17 +260,17 @@ def sync_table_full(source_conn, target_conn, schema, table):
         src_cur.execute(f'SELECT * FROM {schema}."{table}"')
         rows = src_cur.fetchall()
 
+    ensure_target_table(source_conn, target_conn, schema, table)
+    with target_conn.cursor() as cur:
+        # TRUNCATE preserves dependent views; DROP ... CASCADE previously deleted Gold objects.
+        cur.execute(f'TRUNCATE TABLE {schema}."{table}"')
+    target_conn.commit()
+
     if not rows:
-        # Vẫn tạo bảng dù rỗng
-        try:
-            create_table_from_source(source_conn, target_conn, schema, table)
-        except Exception:
-            pass
+        duration_ms = int((time.time() - start_time) * 1000)
+        update_sync_metadata(target_conn, schema, table, 0, duration_ms, "full")
         logger.info(f"  {schema}.{table}: 0 rows (bang rong)")
         return 0
-
-    # Tạo lại bảng trong target
-    create_table_from_source(source_conn, target_conn, schema, table)
 
     # Insert dữ liệu
     columns = list(rows[0].keys())

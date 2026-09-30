@@ -1,8 +1,7 @@
-import re
-import time
 from fastapi import APIRouter, HTTPException
 from db import get_db_conn
 from common import SqlQueryRequest
+from services.sql_service import SqlSafetyError, QueryExecutionError, execute_read_only
 
 router = APIRouter(prefix="/api", tags=["SQL & Warehouse Explorer"])
 
@@ -88,33 +87,15 @@ def get_warehouse_tables():
 
 @router.post("/query")
 def run_custom_query(req: SqlQueryRequest):
-    clean_sql = req.sql.strip()
-    upper_sql = clean_sql.upper()
-
-    # Strictly read-only SELECT or WITH
-    if not (upper_sql.startswith("SELECT") or upper_sql.startswith("WITH")):
-        raise HTTPException(status_code=400, detail="Chỉ cho phép câu lệnh truy vấn đọc dữ liệu (SELECT hoặc WITH).")
-
-    forbidden = ["INSERT", "UPDATE", "DELETE", "DROP", "ALTER", "TRUNCATE", "GRANT", "REVOKE", "EXECUTE"]
-    for keyword in forbidden:
-        if re.search(r'\b' + keyword + r'\b', upper_sql):
-            raise HTTPException(status_code=400, detail=f"Không được phép chứa thao tác nguy hiểm '{keyword}'.")
-
-    start_time = time.time()
     try:
-        with get_db_conn() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SET search_path TO gold, orders, menu, identity, inventory, analytics, public;")
-                cur.execute(clean_sql)
-                rows = cur.fetchall()
-                duration = int((time.time() - start_time) * 1000)
-                columns = [desc[0] for desc in cur.description] if cur.description else []
-                return {
-                    "columns": columns,
-                    "data": [dict(r) for r in rows],
-                    "count": len(rows),
-                    "duration_ms": duration,
-                    "target_layer": "Data Warehouse (gold)"
-                }
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Lỗi SQL: {str(e)}")
+        result = execute_read_only(req.sql, row_limit=500)
+        return {
+            "columns": result["columns"],
+            "data": result["rows"],
+            "count": result["count"],
+            "truncated": result["truncated"],
+            "duration_ms": result["duration_ms"],
+            "target_layer": "Data Warehouse (postgres-analytics)"
+        }
+    except (SqlSafetyError, QueryExecutionError) as exc:
+        raise HTTPException(status_code=400, detail=f"Lỗi SQL: {str(exc)}")
