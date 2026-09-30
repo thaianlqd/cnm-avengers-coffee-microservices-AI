@@ -121,11 +121,13 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
         identity_schema = os.getenv("IDENTITY_SCHEMA", "identity")
         order_schema = os.getenv("ORDER_SCHEMA", "orders")
 
-        from utils.geo import geocode_address, haversine_distance
+        from utils.geo import geocode_address, haversine_distance, resolve_location
 
         prefs = cart_manager.get_checkout_prefs(session_id) if session_id else {}
         from src.agents.location_parser import clean_location_clause
         target_address = clean_location_clause(location if location else str(prefs.get("location_address") or ""))
+        parsed_location = parse_location(target_address)
+        location_kind = parsed_location.kind
         user_lat, user_lon = None, None
         distance_basis = "unavailable"
 
@@ -152,7 +154,8 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
             delivery_type = prefs.get("delivery_type")
             locality_rows = []
             locality_ids = set()
-            area_only = not re.match(r"^\d+[A-Za-z]?(?:[/.-]\d+[A-Za-z]?)?\s", target_address)
+            area_only = location_kind in {"area", "branch_query", "none"} and not re.match(
+                r"^\d+[A-Za-z]?(?:[/.-]\d+[A-Za-z]?)?\s", target_address)
             if area_only and delivery_type != "GIAO_TAN_NOI" and not target_branches:
                 from src.agents.location_parser import locality_matches, normalize, infer_city_from_addresses
                 area = normalize(target_address.split(",", 1)[0])
@@ -175,7 +178,34 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                             target_address = f"{target_address}, {city}"
 
             if user_lat is None or user_lon is None:
-                coords = geocode_address(target_address)
+                resolution = None
+                structured_address = location_kind == "address" and "," in target_address
+                if location_kind == "poi" or structured_address:
+                    resolution = resolve_location(
+                        target_address, location_kind, getattr(parsed_location, "admin_hints", ()))
+                    coords = ((resolution.lat, resolution.lng) if resolution.status == "ok" else None)
+                    if resolution.status == "ambiguous":
+                        return {
+                            "status": "ambiguous", "normalized_location": target_address,
+                            "message": "Mình tìm thấy nhiều địa điểm phù hợp. Bạn cho mình thêm phường/quận hoặc thành phố nhé.",
+                        }
+                    if resolution.status == "provider_error":
+                        return {
+                            "status": "provider_error", "normalized_location": target_address,
+                            "message": "Mình chưa thể kiểm tra bản đồ lúc này. Vị trí bạn vừa nhập vẫn được giữ; bạn có thể thử lại.",
+                        }
+                    if resolution.status == "not_found":
+                        return {
+                            "status": "not_found", "normalized_location": target_address,
+                            "message": "Mình chưa tìm thấy địa điểm này trên bản đồ. Bạn kiểm tra lại tên hoặc cho mình thêm khu vực nhé.",
+                        }
+                    if resolution.status == "rejected":
+                        return {
+                            "status": "rejected", "normalized_location": target_address,
+                            "message": "Mình tìm thấy kết quả nhưng chưa khớp khu vực bạn cung cấp. Bạn cho mình thêm phường/quận hoặc kiểm tra lại thành phố nhé.",
+                        }
+                else:
+                    coords = geocode_address(target_address)
                 if not coords:
                     if locality_rows:
                         positioned = [row for row in locality_rows
@@ -194,7 +224,11 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                         }
                 else:
                     user_lat, user_lon = coords
-                    distance_basis = "geocoded_user"
+                    distance_basis = (
+                        "poi_resolved" if location_kind == "poi" else
+                        "address_resolved" if location_kind == "address" else
+                        "geocoded_user"
+                    )
                 
             query = f"""
                 WITH ratings AS (

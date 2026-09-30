@@ -4,6 +4,7 @@ import httpx
 import logging
 import re
 import unicodedata
+from dataclasses import dataclass
 from typing import Optional, Tuple
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,202 @@ def _matches_locality(requested: list[str], candidate: dict, place: dict) -> boo
         for part in requested
     )
 
+
+@dataclass(frozen=True)
+class LocationResolution:
+    status: str
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    match_type: Optional[str] = None
+    normalized_label: Optional[str] = None
+    administrative_components: Optional[dict] = None
+    provider_candidate_count: int = 0
+    rejected_candidate_count: int = 0
+    resolution_basis: Optional[str] = None
+
+
+_ADMIN_PREFIX = re.compile(
+    r"^(?P<level>phuong|xa|quan|huyen|tinh|thanh pho|tp|p|q|h)\.?\s+",
+    re.IGNORECASE,
+)
+_LEVEL_ALIASES = {"p": "phuong", "q": "quan", "h": "huyen", "tp": "thanh pho"}
+
+
+def _admin_identity(value: str) -> tuple[Optional[str], str]:
+    folded = re.sub(r"[^a-z0-9\s]", " ", _fold_location(value))
+    folded = re.sub(r"\s+", " ", folded).strip()
+    match = _ADMIN_PREFIX.match(folded)
+    if not match:
+        return None, folded
+    return _LEVEL_ALIASES.get(match.group("level"), match.group("level")), folded[match.end():].strip()
+
+
+def _initialism(value: str) -> str:
+    return "".join(token[0] for token in re.findall(r"[a-z0-9]+", value) if token)
+
+
+def _name_equivalent(requested: str, canonical: str) -> bool:
+    _, requested_name = _admin_identity(requested)
+    _, canonical_name = _admin_identity(canonical)
+    if not requested_name or not canonical_name:
+        return False
+    if requested_name == canonical_name:
+        return True
+    compact = requested_name.replace(" ", "")
+    return len(compact) >= 2 and compact.isalnum() and compact == _initialism(canonical_name)
+
+
+def _admin_fields(place: dict) -> dict[str, list[str]]:
+    return {
+        "ward": [str(place.get(key) or "") for key in ("ward", "commune") if place.get(key)],
+        "district": [str(place.get(key) or "") for key in ("district",) if place.get(key)],
+        "city": [str(place.get(key) or "") for key in ("city", "province") if place.get(key)],
+    }
+
+
+def _admin_hint_matches(hint: str, place: dict) -> bool:
+    level, _ = _admin_identity(hint)
+    fields = _admin_fields(place)
+    if level in {"phuong", "xa"}:
+        candidates = fields["ward"]
+    elif level in {"quan", "huyen"}:
+        candidates = fields["district"]
+    elif level in {"thanh pho", "tinh"}:
+        candidates = fields["city"]
+    else:
+        candidates = [value for values in fields.values() for value in values]
+    return any(_name_equivalent(hint, candidate) for candidate in candidates)
+
+
+def _poi_core(query: str) -> str:
+    value = re.sub(
+        r"(?:,|\s)\s*(?:thành\s+phố|tỉnh|quận|huyện|phường|xã|tp\.?|q\.?|h\.?|p\.?)\s+[^,]+$",
+        "", str(query or "").strip(), flags=re.IGNORECASE,
+    )
+    return re.sub(r"^(?:(?:tôi|mình)(?:\s+đang)?\s+ở|ở|tại|gần)\s+", "", value, flags=re.IGNORECASE).strip(" ,")
+
+
+def _poi_name_matches(query: str, candidate: dict, place: dict) -> bool:
+    requested = re.sub(r"[^a-z0-9\s]", " ", _fold_location(_poi_core(query)))
+    requested = re.sub(r"\s+", " ", requested).strip()
+    if len(requested) < 4:
+        return False
+    names = [str(source.get(key) or "") for source in (place, candidate)
+             for key in ("name", "display") if source.get(key)]
+    for name in names:
+        folded = re.sub(r"[^a-z0-9\s]", " ", _fold_location(name))
+        folded = re.sub(r"\s+", " ", folded).strip()
+        if requested == folded or requested in folded:
+            return True
+        requested_tokens = set(requested.split())
+        candidate_tokens = set(folded.split())
+        if len(requested_tokens) >= 3 and requested_tokens <= candidate_tokens:
+            return True
+    return False
+
+
+def _address_matches(query: str, candidate: dict, place: dict) -> bool:
+    parts = [part.strip() for part in str(query or "").split(",") if part.strip()]
+    if not parts:
+        return False
+    street = re.sub(r"^\d+[A-Za-z]?(?:[/.-]\d+[A-Za-z]?)?\s+", "", parts[0]).strip()
+    street_folded = _fold_location(street)
+    street_sources = " ".join(str(source.get(key) or "") for source in (place, candidate)
+                              for key in ("street", "address", "formatted_address", "display", "name"))
+    if not street_folded or street_folded not in _fold_location(street_sources):
+        return False
+    admin_values = [value for values in _admin_fields(place).values() for value in values]
+    for component in parts[1:]:
+        if not any(_name_equivalent(component, canonical) for canonical in admin_values):
+            return False
+    return True
+
+
+def _label(candidate: dict, place: dict) -> Optional[str]:
+    for source in (place, candidate):
+        for key in ("display", "formatted_address", "name", "address"):
+            if source.get(key):
+                return str(source[key])
+    return None
+
+
+def resolve_location(query: str, kind: str = "admin_area",
+                     admin_hints: tuple[str, ...] = ()) -> LocationResolution:
+    """Resolve a typed location without conflating provider and validator failures."""
+    match_type = {"area": "admin_area", "branch_query": "admin_area"}.get(kind, kind)
+    if match_type not in {"admin_area", "address", "poi"}:
+        match_type = "admin_area"
+    api_key = os.getenv("VIETMAP_API_KEY")
+    if not query or not str(query).strip():
+        return LocationResolution("not_found", match_type=match_type)
+    if not api_key:
+        logger.error("[LocationResolve] kind=%s status=provider_error reason=missing_api_key", match_type)
+        return LocationResolution("provider_error", match_type=match_type)
+    try:
+        with httpx.Client(timeout=10.0) as client:
+            response = client.get("https://maps.vietmap.vn/api/search/v3",
+                                  params={"apikey": api_key, "text": str(query).strip()})
+            response.raise_for_status()
+            candidates = response.json()
+            candidates = candidates if isinstance(candidates, list) else []
+            if not candidates:
+                logger.info("[LocationResolve] kind=%s provider_candidates=0 accepted=0 rejected=0 status=not_found",
+                            match_type)
+                return LocationResolution("not_found", match_type=match_type)
+
+            accepted = []
+            rejected = 0
+            requested_locality = _locality_parts(query)
+            for candidate in candidates[:8]:
+                ref_id = candidate.get("ref_id")
+                if not ref_id:
+                    rejected += 1
+                    continue
+                place_response = client.get("https://maps.vietmap.vn/api/place/v3",
+                                            params={"apikey": api_key, "refid": ref_id})
+                place_response.raise_for_status()
+                place = place_response.json()
+                if not isinstance(place, dict):
+                    rejected += 1
+                    continue
+                coords = place.get("lat"), place.get("lng")
+                hints_ok = all(_admin_hint_matches(hint, place) for hint in admin_hints)
+                if match_type == "poi":
+                    matches = _poi_name_matches(query, candidate, place) and hints_ok
+                elif match_type == "address":
+                    matches = _address_matches(query, candidate, place) and hints_ok
+                else:
+                    matches = _matches_locality(requested_locality, candidate, place)
+                if matches and None not in coords:
+                    accepted.append((candidate, place))
+                else:
+                    rejected += 1
+
+            count = len(candidates)
+            if len(accepted) > 1:
+                logger.info("[LocationResolve] kind=%s provider_candidates=%d accepted=%d rejected=%d status=ambiguous",
+                            match_type, count, len(accepted), rejected)
+                return LocationResolution("ambiguous", match_type=match_type,
+                                          provider_candidate_count=count,
+                                          rejected_candidate_count=rejected)
+            if not accepted:
+                logger.info("[LocationResolve] kind=%s provider_candidates=%d accepted=0 rejected=%d status=rejected",
+                            match_type, count, rejected)
+                return LocationResolution("rejected", match_type=match_type,
+                                          provider_candidate_count=count,
+                                          rejected_candidate_count=rejected)
+            candidate, place = accepted[0]
+            admin = {key: values[0] for key, values in _admin_fields(place).items() if values}
+            logger.info("[LocationResolve] kind=%s provider_candidates=%d accepted=1 rejected=%d status=ok basis=provider_place",
+                        match_type, count, rejected)
+            return LocationResolution(
+                "ok", float(place["lat"]), float(place["lng"]), match_type,
+                _label(candidate, place), admin, count, rejected, "provider_place",
+            )
+    except Exception as exc:
+        logger.error("[LocationResolve] kind=%s status=provider_error error=%s", match_type, type(exc).__name__)
+        return LocationResolution("provider_error", match_type=match_type)
+
 def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """
     Calculate the great circle distance between two points 
@@ -81,46 +278,9 @@ def geocode_address(address: str) -> Optional[Tuple[float, float]]:
         logger.warning("[Geo] Skipped unresolved address reference")
         return None
         
-    api_key = os.getenv("VIETMAP_API_KEY")
-    if not api_key:
-        logger.error("[Geo] Missing VIETMAP_API_KEY in environment variables.")
-        return None
-        
-    try:
-        search_url = "https://maps.vietmap.vn/api/search/v3"
-        search_params = {
-            "apikey": api_key,
-            "text": address.strip()
-        }
-        
-        with httpx.Client(timeout=10.0) as client:
-            # Bước 1: Gọi search API lấy ref_id
-            search_resp = client.get(search_url, params=search_params)
-            search_resp.raise_for_status()
-            search_data = search_resp.json()
-            
-            if isinstance(search_data, list) and len(search_data) > 0:
-                requested = _locality_parts(address)
-                for candidate in search_data[:8]:
-                    ref_id = candidate.get("ref_id")
-                    if not ref_id:
-                        continue
-                    # Bước 2: Gọi place API lấy lat/lng từ ref_id
-                    place_url = "https://maps.vietmap.vn/api/place/v3"
-                    place_params = {
-                        "apikey": api_key,
-                        "refid": ref_id
-                    }
-                    place_resp = client.get(place_url, params=place_params)
-                    place_resp.raise_for_status()
-                    place_data = place_resp.json()
-                    
-                    if place_data and _matches_locality(requested, candidate, place_data) and place_data.get("lat") is not None and place_data.get("lng") is not None:
-                        return float(place_data["lat"]), float(place_data["lng"])
-            
-            logger.warning("[Geo] Geocode trả về 0 kết quả cho địa chỉ: %s", address)
-            return None
-            
-    except Exception as e:
-        logger.error("[Geo] provider=VietMap operation=geocode error=%s", type(e).__name__)
-        return None
+    parsed = parse_location(address)
+    kind = parsed.kind if parsed.kind in {"area", "address", "poi", "branch_query"} else (
+        "address" if re.match(r"^\d+[A-Za-z]?(?:[/.-]\d+[A-Za-z]?)?\s", address.strip()) else "area"
+    )
+    result = resolve_location(address, kind, getattr(parsed, "admin_hints", ()))
+    return (result.lat, result.lng) if result.status == "ok" else None

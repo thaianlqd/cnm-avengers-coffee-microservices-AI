@@ -10,6 +10,7 @@ ALLOWED = {
     "select_voucher": {"SELECT_VOUCHER", "SKIP_VOUCHER", "REMOVE_VOUCHER", "AMBIGUOUS"},
     "confirm_address": {"CONFIRM_ADDRESS", "CHANGE_ADDRESS", "AMBIGUOUS"},
     "confirm_checkout": {"CONFIRM", "REJECT", "CHANGE", "AMBIGUOUS"},
+    "cart_edit_clarification": {"KEEP_CURRENT", "AMBIGUOUS"},
 }
 DESCRIPTIONS = {
     "ask_more_items": (
@@ -22,6 +23,10 @@ DESCRIPTIONS = {
     "select_voucher": "Customer was shown a stored voucher list. Select a voucher, skip vouchers, or clarify.",
     "confirm_address": "Customer was asked whether to use the suggested saved address. Confirm that address or request another address.",
     "confirm_checkout": "Customer was shown a real checkout summary and asked to confirm placing this order. Distinguish explicit agreement, rejection/change, and unclear replies.",
+    "cart_edit_clarification": (
+        "A requested cart option was invalid and the customer was asked to choose a valid value. "
+        "KEEP_CURRENT means cancel this edit and retain the current cart line; otherwise AMBIGUOUS."
+    ),
 }
 
 
@@ -121,6 +126,16 @@ def classify_pending_reply(message: str, pending_type: str, evidence: Optional[d
     )
     change = bool(re.search(r"\b(doi|sua|chinh|thay|khac)\b", text))
     affirmative = bool(re.search(r"\b(ok(?:e|ay)?|dong y|xac nhan|duoc|on|dung|chuan|yes|u|uh|vang|da)\b", text))
+    if pending_type == "cart_edit_clarification":
+        keep = bool(re.search(r"\b(?:giu|de)\b.*\b(?:nguyen|vay|hien tai)\b", text))
+        abandon = bool(re.search(r"\b(?:khong|ko)\b.*\b(?:sua|chinh|doi)\b.*\bnua\b", text))
+        short_stop = bool(re.fullmatch(
+            r"(?:(?:a|u|uh) )?(?:vay )?(?:(?:duoc|on|ok|oke) roi|thoi)(?: (?:vay|di|nhe|nha|ban))?",
+            text,
+        ))
+        if keep or abandon or short_stop:
+            return "KEEP_CURRENT"
+        return "AMBIGUOUS"
     if pending_type == "select_voucher":
         if re.search(r"\b(bo qua|khong (?:dung|can|ap)|khong lay)\b", text):
             return "SKIP_VOUCHER"

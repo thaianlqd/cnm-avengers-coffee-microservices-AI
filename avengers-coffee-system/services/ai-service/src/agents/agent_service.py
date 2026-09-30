@@ -902,6 +902,9 @@ def _confirm_saved_location(
             "error": None,
         }
     if nearest.get("status") == "not_found":
+        if parse_location(suggested).kind == "poi" and nearest.get("message"):
+            return {"reply": nearest["message"], "checkout_payload": None,
+                    "tool_calls_log": log, "error": None}
         return {
             "reply": ("Mình chưa xác định được địa chỉ này trên bản đồ. Bạn kiểm tra lại số nhà, tên đường, phường/xã và tỉnh/thành phố nhé."
                       if prefs.get("delivery_type") == "GIAO_TAN_NOI" else
