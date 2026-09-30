@@ -4,6 +4,7 @@ import { io } from 'socket.io-client';
 import { apiClient } from '../lib/apiClient';
 import { openChatProductDetail, addChatProduct, branchDistanceLabel, paymentCardRows, chatLoadingLabel, refreshWalletAfterCheckout, structuredLegacyCards, pollQrPaymentStatus, latestPendingQrPayment, qrPaymentFromCheckout } from './chatWidgetActions';
 import { PENDING_AGENT_TURN_KEY, readPendingAgentTurn, matchesAgentTurn, selectAgentTurn, clearCompletedAgentTurn, agentTurnFailure } from './agentTurn';
+import { CheckCircleIcon, CheckIcon } from '@heroicons/react/24/solid';
 
 // ─── Utilities & Formatters ──────────────────────────────────────────────────
 const fmtVND = (n) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
@@ -380,20 +381,155 @@ function VoucherCard({ v }) {
   );
 }
 
-function QrPaymentCard({ payment, pending }) {
+function QrPaymentCard({ payment, pending, isPaid }) {
   const [imageFailed, setImageFailed] = useState(false);
   const imageUrl = payment.qrImgUrl || payment.qrUrl;
   const fallbackUrl = payment.qrFallbackUrl || (payment.qrUrl !== imageUrl ? payment.qrUrl : null);
+
+  if (isPaid) {
+    return (
+      <div style={{
+        marginTop: 12,
+        padding: 16,
+        background: 'linear-gradient(180deg, #F0FDF4 0%, #FFFFFF 100%)',
+        border: '2px solid #10B981',
+        borderRadius: 16,
+        textAlign: 'center',
+        boxShadow: '0 4px 12px rgba(16, 185, 129, 0.15)'
+      }}>
+        <div style={{
+          width: 44,
+          height: 44,
+          background: '#10B981',
+          color: '#FFFFFF',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 8px auto',
+          boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)'
+        }}>
+          <CheckIcon style={{ width: 24, height: 24, strokeWidth: 3 }} />
+        </div>
+        <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#065F46', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+          Giao Dịch Hoàn Tất
+        </div>
+        <div style={{ fontSize: '0.92rem', fontWeight: 900, color: '#047857', marginTop: 2 }}>
+          ĐÃ THANH TOÁN QR THÀNH CÔNG!
+        </div>
+        <div style={{ fontSize: '0.74rem', color: '#4B5563', margin: '4px 0 10px 0' }}>
+          Đơn <strong>#{payment.orderId}</strong> đã được xác nhận tự động qua SePay.
+        </div>
+        <div style={{
+          background: '#FFFFFF',
+          padding: '10px 12px',
+          borderRadius: 12,
+          border: '1px solid #E5E7EB',
+          fontSize: '0.74rem',
+          textAlign: 'left',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 4
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ color: '#6B7280' }}>Mã tham chiếu:</span>
+            <span style={{ fontWeight: 700, color: '#1F2937', fontFamily: 'monospace' }}>{payment.reference || 'QR-' + payment.orderId}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ color: '#6B7280' }}>Số tiền đã nhận:</span>
+            <span style={{ fontWeight: 800, color: '#059669' }}>{fmtVND(payment.amount)}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ color: '#6B7280' }}>Trạng thái đơn:</span>
+            <span style={{ fontWeight: 700, color: '#047857' }}>🟢 Đã xác nhận & Đang pha chế</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ marginTop: 10, padding: 10, border: '1px solid #E2E8F0', borderRadius: 10, textAlign: 'center' }}>
-      <strong>Chuyển khoản QR — Đơn #{payment.orderId}</strong>
-      {imageUrl && !imageFailed && <img src={imageUrl} alt="Mã QR thanh toán ngân hàng" onError={() => setImageFailed(true)} style={{ display: 'block', width: 220, maxWidth: '100%', margin: '8px auto' }} />}
-      {imageFailed && <div>{fallbackUrl ? 'Ảnh QR chưa tải được. Bạn có thể mở mã bằng liên kết bên dưới.' : 'Ảnh QR chưa tải được. Bạn xem trạng thái trong Đơn hàng.'}</div>}
-      {!imageUrl && !fallbackUrl && <div>Đơn đã tạo nhưng chưa lấy được mã QR. Bạn có thể thử tải lại trạng thái thanh toán.</div>}
-      <div>Số tiền: {fmtVND(payment.amount)}</div>
-      <div>Mã tham chiếu: {payment.reference || 'Đang cập nhật'}</div>
-      <div>{pending ? 'Đang chờ thanh toán...' : 'Xem trạng thái thanh toán ở tin nhắn mới nhất hoặc trang đơn hàng.'}</div>
-      {(imageFailed ? fallbackUrl : imageUrl || fallbackUrl) && <a href={imageFailed ? fallbackUrl : imageUrl || fallbackUrl} target="_blank" rel="noreferrer">Mở mã QR</a>}
+    <div style={{
+      marginTop: 12,
+      padding: 14,
+      background: '#FFFFFF',
+      border: '1px solid #E5E7EB',
+      borderRadius: 16,
+      textAlign: 'center',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+    }}>
+      <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1F2937', marginBottom: 2 }}>
+        Quét mã QR để thanh toán đơn #{payment.orderId}
+      </div>
+      <div style={{ fontSize: '0.72rem', color: '#6B7280', marginBottom: 8 }}>
+        Chuyển khoản qua ngân hàng bằng mã VietQR / SePay
+      </div>
+      {imageUrl && !imageFailed && (
+        <div style={{ padding: 6, display: 'inline-block', background: '#FFFFFF', borderRadius: 12, border: '1px solid #E5E7EB' }}>
+          <img
+            src={imageUrl}
+            alt="Mã QR thanh toán ngân hàng"
+            onError={() => {
+              if (fallbackUrl && imageUrl !== fallbackUrl) {
+                setImageFailed(true);
+              }
+            }}
+            style={{ display: 'block', width: 190, height: 190, maxWidth: '100%', margin: '0 auto', borderRadius: 8 }}
+          />
+        </div>
+      )}
+      {imageFailed && fallbackUrl && (
+        <div style={{ padding: 6, display: 'inline-block', background: '#FFFFFF', borderRadius: 12, border: '1px solid #E5E7EB' }}>
+          <img
+            src={fallbackUrl}
+            alt="Mã QR thanh toán ngân hàng"
+            style={{ display: 'block', width: 190, height: 190, maxWidth: '100%', margin: '0 auto', borderRadius: 8 }}
+          />
+        </div>
+      )}
+      {!imageUrl && !fallbackUrl && (
+        <div style={{ fontSize: '0.72rem', color: '#EF4444', margin: '8px 0' }}>
+          Chưa lấy được mã QR. Bạn có thể mở chi tiết trong mục Đơn hàng.
+        </div>
+      )}
+
+      <div style={{
+        marginTop: 8,
+        background: '#F9FAFB',
+        padding: '8px 12px',
+        borderRadius: 10,
+        fontSize: '0.72rem',
+        textAlign: 'left',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 3
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span style={{ color: '#6B7280' }}>Mã tham chiếu:</span>
+          <span style={{ fontWeight: 700, color: '#111827', fontFamily: 'monospace' }}>{payment.reference || 'Đang cập nhật'}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span style={{ color: '#6B7280' }}>Số tiền cần chuyển:</span>
+          <span style={{ fontWeight: 800, color: '#DC2626' }}>{fmtVND(payment.amount)}</span>
+        </div>
+      </div>
+
+      <div style={{
+        marginTop: 8,
+        padding: '6px 10px',
+        background: '#ECFDF5',
+        borderRadius: 8,
+        fontSize: '0.72rem',
+        color: '#065F46',
+        fontWeight: 600,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6
+      }}>
+        <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981', animation: 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite' }} />
+        <span>Hệ thống đang tự động xác thực thanh toán qua SePay...</span>
+      </div>
     </div>
   );
 }
@@ -522,6 +658,7 @@ export default function ChatWidget({ user, socketUrl }) {
     const currentUserId = user?.ma_nguoi_dung || user?.maNguoiDung || user?.id || getOrCreateAnonId();
     return latestPendingQrPayment(loadAISession(), currentUserId);
   });
+  const [paidQrOrders, setPaidQrOrders] = useState(() => new Set());
   const confirmingOrderRef = useRef(false);
   const [aiConversationId, setAiConversationId] = useState(loadConversationId);
   const [orderConfirming, setOrderConfirming] = useState(false);
@@ -600,17 +737,19 @@ export default function ChatWidget({ user, socketUrl }) {
         const status = await pollQrPaymentStatus(apiClient, paymentUserId, pendingQrPayment.orderId);
         if (!active) return;
         if (status === 'pending') return;
+        const resolvedOrderId = pendingQrPayment.orderId;
         setPendingQrPayment(null);
         if (status === 'paid') {
-          addAIMsg(`✅ Thanh toán QR thành công. Đơn #${pendingQrPayment.orderId} đã được xác nhận.`, { _qrPaymentResolved: pendingQrPayment.orderId });
+          setPaidQrOrders((prev) => new Set([...prev, resolvedOrderId]));
+          addAIMsg(`🎉 Tuyệt vời! Hệ thống đã nhận được thanh toán QR cho đơn #${resolvedOrderId}. Đơn hàng đã được xác nhận thành công và cửa hàng đang tiến hành pha chế cho bạn nhé!`, { _qrPaymentResolved: resolvedOrderId });
           window.dispatchEvent(new CustomEvent('refresh-orders'));
           window.dispatchEvent(new CustomEvent('refresh-cart'));
           window.dispatchEvent(new CustomEvent('ai-voucher-removed'));
-          window.dispatchEvent(new CustomEvent('checkout-success', { detail: { orderId: pendingQrPayment.orderId } }));
+          window.dispatchEvent(new CustomEvent('checkout-success', { detail: { orderId: resolvedOrderId } }));
         } else if (status === 'review') {
-          addAIMsg(`Ngân hàng đã ghi nhận chuyển khoản cho đơn #${pendingQrPayment.orderId}, nhưng đơn đang chờ đối soát. Bạn xem trạng thái đơn hàng hoặc liên hệ hỗ trợ nhé.`, { _qrPaymentResolved: pendingQrPayment.orderId });
+          addAIMsg(`Ngân hàng đã ghi nhận chuyển khoản cho đơn #${resolvedOrderId}, nhưng đơn đang chờ đối soát. Bạn xem trạng thái đơn hàng hoặc liên hệ hỗ trợ nhé.`, { _qrPaymentResolved: resolvedOrderId });
         } else {
-          addAIMsg(`Thanh toán QR cho đơn #${pendingQrPayment.orderId} đã dừng hoặc không thành công. Bạn xem trạng thái đơn hàng để chọn cách thanh toán tiếp nhé.`, { _qrPaymentResolved: pendingQrPayment.orderId });
+          addAIMsg(`Thanh toán QR cho đơn #${resolvedOrderId} đã dừng hoặc không thành công. Bạn xem trạng thái đơn hàng để chọn cách thanh toán tiếp nhé.`, { _qrPaymentResolved: resolvedOrderId });
         }
       } catch { /* Retain pending state and retry the canonical endpoint. */ }
       finally { busy = false; }
@@ -824,10 +963,14 @@ export default function ChatWidget({ user, socketUrl }) {
 
       const orderId = result?.order_id ? ` Mã đơn: **${result.order_id}**.` : '';
       const awaitsOnlinePayment = Boolean(result?.redirect_url || pendingOrder.paymentMethod === 'NGAN_HANG_QR');
+      const isQr = pendingOrder.paymentMethod === 'NGAN_HANG_QR';
       const walletLine = pendingOrder.paymentMethod === 'VI_DIEN_TU'
         ? `\n**Đã thanh toán bằng Ví Avengers:** ${fmtVND(result?.total_price ?? pendingOrder.total)}${result?.wallet_balance_after != null ? `\n**Số dư còn lại:** ${fmtVND(result.wallet_balance_after)}` : ''}` : '';
       const qrPayment = qrPaymentFromCheckout(result, pendingOrder, walletUserId || effectiveUserId);
-      addAIMsg(`${awaitsOnlinePayment ? 'Đơn hàng đã được tạo và đang chờ thanh toán.' : '🎉 Đơn hàng đã được ghi nhận.'}${orderId} Tổng cộng: **${fmtVND(result?.total_price ?? pendingOrder.total)}**${walletLine}`, {
+      const checkoutLeadText = isQr
+        ? `Mã đơn: **${result.order_id}**. Bạn vui lòng quét mã QR chuyển khoản bên dưới để thanh toán nhé. Sau khi hệ thống nhận được tiền, đơn hàng sẽ tự động được xác nhận ngay!`
+        : (awaitsOnlinePayment ? 'Đơn hàng đã được tạo và đang chờ thanh toán.' : '🎉 Đơn hàng đã được ghi nhận.');
+      addAIMsg(`${checkoutLeadText}${!isQr ? orderId : ''} Tổng cộng: **${fmtVND(result?.total_price ?? pendingOrder.total)}**${walletLine}`, {
         _paymentUrl: result?.redirect_url || null,
         _paymentLabel: result?.redirect_url ? 'Tiếp tục thanh toán VNPAY' : null,
         _qrPayment: qrPayment,
@@ -955,6 +1098,19 @@ export default function ChatWidget({ user, socketUrl }) {
       if (agentReply && !agentError?.startsWith('blocked:')) {
         const payload = agentData?.ui_payload || {};
         const catalogById = new Map(cache.current.products.map((item) => [String(item.ma_san_pham || item.id), item]));
+        const confirmCheckoutEntry = (agentData?.tool_calls_log || []).find(
+          (t) => t.tool === 'confirm_checkout' && ['success', 'already_processed'].includes(t.result?.status)
+        );
+        let textQrPayment = null;
+        if (confirmCheckoutEntry?.result?.payment_method === 'NGAN_HANG_QR' || payload.qr_payment) {
+          textQrPayment = qrPaymentFromCheckout(
+            confirmCheckoutEntry?.result || { payment_details: payload.qr_payment },
+            { paymentMethod: 'NGAN_HANG_QR', total: confirmCheckoutEntry?.result?.total_price },
+            walletUserId || effectiveUserId
+          );
+          if (textQrPayment) setPendingQrPayment(textQrPayment);
+        }
+
         const extras = {
           _products: Array.isArray(payload.products) ? payload.products.map((item) => ({
             ...item,
@@ -963,6 +1119,7 @@ export default function ChatWidget({ user, socketUrl }) {
           _stores: Array.isArray(payload.branches) ? payload.branches : [],
           _vouchers: !confirmed && Array.isArray(payload.vouchers) ? payload.vouchers : [],
           _paymentOptions: Array.isArray(payload.payment_options) ? payload.payment_options : [],
+          _qrPayment: textQrPayment,
           _quickReplies: QUICK_ACTIONS.slice(0, 3),
         };
         addAIMsg(agentReply, extras);
@@ -1394,7 +1551,13 @@ export default function ChatWidget({ user, socketUrl }) {
                           {msg._paymentLabel || 'Tiếp tục thanh toán'}
                         </a>
                       )}
-                      {msg._qrPayment && <QrPaymentCard payment={msg._qrPayment} pending={pendingQrPayment?.orderId === msg._qrPayment.orderId} />}
+                      {msg._qrPayment && (
+                        <QrPaymentCard
+                          payment={msg._qrPayment}
+                          pending={pendingQrPayment?.orderId === msg._qrPayment.orderId}
+                          isPaid={paidQrOrders.has(msg._qrPayment.orderId) || msg._qrPaymentResolved === msg._qrPayment.orderId}
+                        />
+                      )}
                       {msg._vouchers && msg._vouchers.length > 0 && (
                         <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
                           {msg._vouchers.map((v, i) => <VoucherCard key={i} v={v} />)}

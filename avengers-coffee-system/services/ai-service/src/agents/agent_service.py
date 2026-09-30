@@ -1543,10 +1543,15 @@ def _run_agent_impl(
             checkout_res = execute_confirm_checkout(session_id)
             if checkout_res.get("status") in {"success", "already_processed"}:
                 order_id = checkout_res.get("order_id", "")
-                reply = f"🎉 Đặt hàng thành công! Mã đơn hàng của bạn là: **{order_id}**. Cảm ơn bạn đã ủng hộ!"
+                if checkout_res.get("payment_method") == "NGAN_HANG_QR" or checkout_res.get("payment_details"):
+                    reply = f"Mã đơn hàng của bạn là: **{order_id}**. Bạn vui lòng quét mã QR chuyển khoản bên dưới để hoàn tất thanh toán nhé. Sau khi hệ thống nhận được tiền, đơn hàng sẽ tự động được xác nhận ngay!"
+                else:
+                    reply = f"🎉 Đặt hàng thành công! Mã đơn hàng của bạn là: **{order_id}**. Cảm ơn bạn đã ủng hộ!"
             else:
                 reply = checkout_res.get("message", "Đơn hàng chưa được tạo. Bạn có thể kiểm tra lại giỏ hàng và thử lại.")
+            ui_payload = {"qr_payment": checkout_res.get("payment_details")} if checkout_res.get("payment_details") else {}
             return {"reply": reply, "gate": "confirm_checkout", "checkout_payload": None,
+                    "ui_payload": ui_payload,
                     "tool_calls_log": [{"tool": "confirm_checkout", "result": checkout_res}], "error": None}
 
 

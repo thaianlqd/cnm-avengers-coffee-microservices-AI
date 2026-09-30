@@ -146,9 +146,14 @@ def finalize_checkout(
                 cart_manager.set_is_checking_out(cart_session_id, False)
                 return {"status": "order_status_unknown", "message": "Đơn đã được tiếp nhận nhưng chưa xác minh được tổng thanh toán. Vui lòng kiểm tra lại đơn."}
 
+            if payment_method == "NGAN_HANG_QR":
+                order_msg = f"Đơn hàng #{order_id} đã được tạo và đang chờ thanh toán QR. Bạn vui lòng quét mã bên dưới để thanh toán nhé."
+            else:
+                order_msg = f"Đặt hàng thành công! Đơn hàng của bạn đang được chuẩn bị. (Mã đơn: {order_id})"
+
             result = {
                 "status": "already_processed" if resp_data.get("already_processed") else "success",
-                "message": f"Đặt hàng thành công! Đơn hàng của bạn đang được chuẩn bị. (Mã đơn: {order_id})",
+                "message": order_msg,
                 "order_id": str(order_id),
                 "total_price": float(server_total),
                 "discount_amount": float(resp_data.get("don_hang", {}).get("so_tien_giam") or 0),

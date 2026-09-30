@@ -1417,8 +1417,13 @@ def _handle_pending_reply(state: OrderConversationState) -> Dict[str, Any]:
                       if prefs.get("completed_order_id") else execute_confirm_checkout(session_id))
             text = result.get("message", "Đơn chưa được tạo. Bạn thử xác nhận lại nhé.")
             if result.get("status") in {"success", "already_processed"}:
-                text = f"🎉 Đặt hàng thành công! Mã đơn hàng của bạn là: **{result.get('order_id', '')}**. Cảm ơn bạn đã ủng hộ!"
-            return {**reply(text), "gate": "confirm_checkout", "tool_calls_log": [{"tool": "confirm_checkout", "result": result}]}
+                order_id = result.get('order_id', '')
+                if result.get("payment_method") == "NGAN_HANG_QR" or result.get("payment_details"):
+                    text = f"Mã đơn hàng của bạn là: **{order_id}**. Bạn vui lòng quét mã QR chuyển khoản bên dưới để hoàn tất thanh toán nhé. Sau khi hệ thống nhận được tiền, đơn hàng sẽ tự động được xác nhận ngay!"
+                else:
+                    text = f"🎉 Đặt hàng thành công! Mã đơn hàng của bạn là: **{order_id}**. Cảm ơn bạn đã ủng hộ!"
+            ui_payload = {"qr_payment": result.get("payment_details")} if result.get("payment_details") else {}
+            return {**reply(text), "gate": "confirm_checkout", "ui_payload": ui_payload, "tool_calls_log": [{"tool": "confirm_checkout", "result": result}]}
         if decision == "CHANGE":
             if prefs.get("checkout_submission"):
                 return reply("Đơn đã gửi xử lý. Bạn xác nhận lại cùng lượt để kiểm tra kết quả trước khi chỉnh sửa nhé.")
