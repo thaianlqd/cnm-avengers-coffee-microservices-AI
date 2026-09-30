@@ -9,9 +9,15 @@ from fastapi import APIRouter, HTTPException
 
 from common import AiSummarizeRequest, AiTextToReportRequest
 from services.llm_service import call_llm, provider_configuration
-from services.metadata_service import cache_status, get_combined_metadata, get_local_metadata, sql_references_sensitive_columns
+from services.metadata_service import (
+    cache_status,
+    get_combined_metadata,
+    get_local_metadata,
+    sanitize_result_rows,
+    sql_references_sensitive_columns,
+)
 from services.semantic_service import semantic_service
-from services.sql_service import QueryExecutionError, SqlSafetyError, execute_read_only
+from services.sql_service import QueryExecutionError, SqlSafetyError, execute_read_only, validate_ai_query_scope
 
 
 router = APIRouter(prefix="/api/ai", tags=["AI Data Assistant"])
@@ -79,8 +85,8 @@ def _deterministic_plan(resolution: Dict[str, Any], time_info: Dict[str, Any]) -
     time_filter = time_info["sql"].format(alias="d")
     label = time_info["label"]
     common_trend = f"""
-        SELECT d.ngay_tao::date::text AS date, COUNT(*) AS orders,
-               COALESCE(SUM(d.tong_tien), 0) AS revenue
+        SELECT d.ngay_tao::date::text AS label,
+               COALESCE(SUM(d.tong_tien), 0) AS value
         FROM orders.don_hang d
         WHERE {time_filter} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
         GROUP BY d.ngay_tao::date ORDER BY d.ngay_tao::date
@@ -167,8 +173,8 @@ def _deterministic_plan(resolution: Dict[str, Any], time_info: Dict[str, Any]) -
                 GROUP BY EXTRACT(HOUR FROM d.ngay_tao) ORDER BY "Số Đơn" DESC
             """,
             "trend_sql": f"""
-                SELECT LPAD(EXTRACT(HOUR FROM d.ngay_tao)::int::text, 2, '0') || ':00' AS date,
-                       COUNT(*) AS revenue
+                SELECT LPAD(EXTRACT(HOUR FROM d.ngay_tao)::int::text, 2, '0') || ':00' AS label,
+                       COUNT(*) AS value
                 FROM orders.don_hang d
                 WHERE {time_filter} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
                 GROUP BY EXTRACT(HOUR FROM d.ngay_tao) ORDER BY EXTRACT(HOUR FROM d.ngay_tao)
@@ -235,7 +241,7 @@ def _deterministic_plan(resolution: Dict[str, Any], time_info: Dict[str, Any]) -
                 FROM customer_orders GROUP BY 1 ORDER BY "Số Hội Viên" DESC
             """,
             "trend_sql": f"""
-                SELECT d.ngay_tao::date::text AS date, COUNT(DISTINCT d.ma_nguoi_dung) AS revenue
+                SELECT d.ngay_tao::date::text AS label, COUNT(DISTINCT d.ma_nguoi_dung) AS value
                 FROM orders.don_hang d
                 WHERE d.ma_nguoi_dung IS NOT NULL AND {time_filter}
                   AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
@@ -263,7 +269,12 @@ def _deterministic_plan(resolution: Dict[str, Any], time_info: Dict[str, Any]) -
                 FROM orders.shipper_delivery sd JOIN orders.don_hang d ON sd.ma_don_hang = d.ma_don_hang
                 WHERE {time_filter} GROUP BY sd.status ORDER BY "Số Lượt Giao" DESC
             """,
-            "trend_sql": common_trend,
+            "trend_sql": f"""
+                SELECT d.ngay_tao::date::text AS label, COUNT(*) AS value
+                FROM orders.shipper_delivery sd JOIN orders.don_hang d ON sd.ma_don_hang = d.ma_don_hang
+                WHERE {time_filter}
+                GROUP BY d.ngay_tao::date ORDER BY d.ngay_tao::date
+            """,
             "breakdown_sql": f"""
                 SELECT sd.status AS name, COUNT(*) AS value
                 FROM orders.shipper_delivery sd JOIN orders.don_hang d ON sd.ma_don_hang = d.ma_don_hang
@@ -300,6 +311,58 @@ def _deterministic_plan(resolution: Dict[str, Any], time_info: Dict[str, Any]) -
     }
 
 
+CHART_SEMANTICS: Dict[str, Dict[str, Dict[str, str]]] = {
+    "product_performance": {
+        "trend": {"metric": "product_revenue", "unit": "VNĐ", "chart_type": "area", "title": "Doanh thu sản phẩm theo thời gian", "x_label": "Ngày", "y_label": "Doanh thu"},
+        "breakdown": {"metric": "product_revenue", "unit": "VNĐ", "chart_type": "donut", "title": "Cơ cấu doanh thu theo danh mục", "x_label": "Danh mục", "y_label": "Doanh thu"},
+    },
+    "store_performance": {
+        "trend": {"metric": "store_revenue", "unit": "VNĐ", "chart_type": "area", "title": "Doanh thu chi nhánh theo thời gian", "x_label": "Ngày", "y_label": "Doanh thu"},
+        "breakdown": {"metric": "store_revenue", "unit": "VNĐ", "chart_type": "bar", "title": "Doanh thu theo khu vực", "x_label": "Khu vực", "y_label": "Doanh thu"},
+    },
+    "hourly_payment_patterns": {
+        "trend": {"metric": "hourly_orders", "unit": "đơn", "chart_type": "bar", "title": "Số đơn theo khung giờ", "x_label": "Giờ", "y_label": "Số đơn"},
+        "breakdown": {"metric": "payment_count", "unit": "đơn", "chart_type": "donut", "title": "Cơ cấu đơn theo phương thức thanh toán", "x_label": "Phương thức", "y_label": "Số đơn"},
+    },
+    "payment_performance": {
+        "trend": {"metric": "payment_revenue", "unit": "VNĐ", "chart_type": "area", "title": "Doanh thu thanh toán theo thời gian", "x_label": "Ngày", "y_label": "Doanh thu"},
+        "breakdown": {"metric": "payment_revenue", "unit": "VNĐ", "chart_type": "donut", "title": "Cơ cấu doanh thu theo phương thức thanh toán", "x_label": "Phương thức", "y_label": "Doanh thu"},
+    },
+    "customer_repeat_behavior": {
+        "trend": {"metric": "customer_count", "unit": "khách", "chart_type": "area", "title": "Số khách theo thời gian", "x_label": "Ngày", "y_label": "Số khách"},
+        "breakdown": {"metric": "customer_count", "unit": "hội viên", "chart_type": "donut", "title": "Cơ cấu hội viên theo tần suất mua", "x_label": "Nhóm hội viên", "y_label": "Số hội viên"},
+    },
+    "delivery_performance": {
+        "trend": {"metric": "delivery_count", "unit": "lượt giao", "chart_type": "area", "title": "Số lượt giao theo thời gian", "x_label": "Ngày", "y_label": "Số lượt giao"},
+        "breakdown": {"metric": "delivery_count", "unit": "lượt giao", "chart_type": "donut", "title": "Cơ cấu lượt giao theo trạng thái", "x_label": "Trạng thái", "y_label": "Số lượt giao"},
+    },
+    "revenue_overview": {
+        "trend": {"metric": "revenue", "unit": "VNĐ", "chart_type": "area", "title": "Doanh thu theo thời gian", "x_label": "Ngày", "y_label": "Doanh thu"},
+        "breakdown": {"metric": "revenue", "unit": "VNĐ", "chart_type": "donut", "title": "Cơ cấu doanh thu theo phương thức thanh toán", "x_label": "Phương thức", "y_label": "Doanh thu"},
+    },
+}
+
+
+def _chart_metadata(plan: Dict[str, Any], fallback: Dict[str, Any]) -> Dict[str, Dict[str, str]]:
+    intent = fallback["intent"]
+    metadata = {key: dict(value) for key, value in CHART_SEMANTICS[intent].items()}
+    requested = plan.get("visualizations") if isinstance(plan.get("visualizations"), dict) else {}
+    for key in ("trend", "breakdown"):
+        value = requested.get(key)
+        chart_type = value.get("chart_type") if isinstance(value, dict) else value
+        allowed = {"area", "bar"} if key == "trend" else {"bar", "donut"}
+        if chart_type in allowed:
+            metadata[key]["chart_type"] = chart_type
+    return metadata
+
+
+def _query_policy(metadata_context: Dict[str, Any]) -> Dict[str, set[str]]:
+    return {
+        table["qualified_name"]: {column["name"] for column in table.get("columns", [])}
+        for table in metadata_context.get("physical_metadata", [])
+    }
+
+
 def _planner_prompt(payload: AiTextToReportRequest, resolution: Dict[str, Any], time_info: Dict[str, Any], context: Dict[str, Any]) -> str:
     return f"""
 Yêu cầu: {payload.prompt}
@@ -316,9 +379,9 @@ joins (array), needs_clarification (boolean), clarification_question (string ho�
 main_sql, trend_sql, breakdown_sql, kpi_sql, visualizations.
 
 Mỗi SQL phải là một SELECT hoặc WITH...SELECT PostgreSQL chỉ đọc. main_sql tối đa 20 dòng;
-trend_sql trả nhãn `date` và số `revenue`; breakdown_sql trả `name` và `value`;
+trend_sql và breakdown_sql đều trả nhãn `label`/`name` và số `value`;
 kpi_sql trả total_orders, total_revenue, aov, completion_rate. Áp dụng đúng khoảng thời gian và quy tắc doanh thu.
-Không xuất cột PII và không tạo số liệu giả.
+visualizations chỉ định chart type cho trend và breakdown. Không xuất cột PII, không dùng SELECT * và không tạo số liệu giả.
 """
 
 
@@ -355,6 +418,7 @@ def _execute_plan(plan: Dict[str, Any], fallback: Dict[str, Any], metadata_conte
     results: Dict[str, Dict[str, Any]] = {}
     sql_used: Dict[str, str] = {}
     repair_models: List[Dict[str, Any]] = []
+    query_policy = _query_policy(metadata_context)
     for name in ("main", "trend", "breakdown", "kpi"):
         key = f"{name}_sql"
         sql = str(plan.get(key) or fallback[key]).strip()
@@ -362,7 +426,10 @@ def _execute_plan(plan: Dict[str, Any], fallback: Dict[str, Any], metadata_conte
         try:
             if sql_references_sensitive_columns(sql):
                 raise SqlSafetyError("SQL AI tham chiếu cột nhạy cảm không được phép.")
+            validate_ai_query_scope(sql, query_policy)
             results[name] = execute_read_only(sql, row_limit=limit)
+            results[name]["rows"] = sanitize_result_rows(results[name]["rows"])
+            results[name]["columns"] = [column for column in results[name]["columns"] if column in results[name]["rows"][0]] if results[name]["rows"] else results[name]["columns"]
             sql_used[name] = results[name]["sql"]
             continue
         except (SqlSafetyError, QueryExecutionError) as error:
@@ -373,7 +440,10 @@ def _execute_plan(plan: Dict[str, Any], fallback: Dict[str, Any], metadata_conte
                 try:
                     if sql_references_sensitive_columns(corrected):
                         raise SqlSafetyError("SQL sửa lại vẫn tham chiếu cột nhạy cảm.")
+                    validate_ai_query_scope(corrected, query_policy)
                     results[name] = execute_read_only(corrected, row_limit=limit)
+                    results[name]["rows"] = sanitize_result_rows(results[name]["rows"])
+                    results[name]["columns"] = [column for column in results[name]["columns"] if column in results[name]["rows"][0]] if results[name]["rows"] else results[name]["columns"]
                     sql_used[name] = results[name]["sql"]
                     continue
                 except (SqlSafetyError, QueryExecutionError) as repaired_error:
@@ -381,7 +451,10 @@ def _execute_plan(plan: Dict[str, Any], fallback: Dict[str, Any], metadata_conte
             if sql.strip() != fallback[key].strip():
                 if sql_references_sensitive_columns(fallback[key]):
                     raise SqlSafetyError("Mẫu SQL dự phòng tham chiếu cột nhạy cảm.")
+                validate_ai_query_scope(fallback[key], query_policy)
                 results[name] = execute_read_only(fallback[key], row_limit=limit)
+                results[name]["rows"] = sanitize_result_rows(results[name]["rows"])
+                results[name]["columns"] = [column for column in results[name]["columns"] if column in results[name]["rows"][0]] if results[name]["rows"] else results[name]["columns"]
                 sql_used[name] = results[name]["sql"]
             else:
                 raise
@@ -400,7 +473,7 @@ def _numeric(row: Dict[str, Any], keys: List[str]) -> Optional[float]:
 
 
 def _normalize_results(results: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
-    main_rows = results["main"]["rows"]
+    main_rows = sanitize_result_rows(results["main"]["rows"])
     kpi_row = results["kpi"]["rows"][0] if results["kpi"]["rows"] else {}
     kpis = {
         "revenue": _numeric(kpi_row, ["total_revenue", "revenue"]),
@@ -411,12 +484,12 @@ def _normalize_results(results: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
         "completion_rate": _numeric(kpi_row, ["completion_rate"]),
     }
     trend = []
-    for row in results["trend"]["rows"]:
+    for row in sanitize_result_rows(results["trend"]["rows"]):
         label = row.get("date") or row.get("hour") or row.get("label") or ""
         value = _numeric(row, ["revenue", "value", "orders", "order_count"]) or 0
-        trend.append({"date": str(label), "revenue": value})
+        trend.append({"label": str(label), "value": value})
     breakdown = []
-    for row in results["breakdown"]["rows"]:
+    for row in sanitize_result_rows(results["breakdown"]["rows"]):
         label = row.get("name") or row.get("label") or next(iter(row.values()), "Mục")
         value = _numeric(row, ["value", "revenue", "count", "order_count"]) or 0
         breakdown.append({"name": str(label), "value": value})
@@ -532,6 +605,7 @@ def generate_executive_report(payload: AiTextToReportRequest):
     except (SqlSafetyError, QueryExecutionError) as exc:
         raise HTTPException(status_code=400, detail=f"Không thể thực thi kế hoạch SQL an toàn: {str(exc)}")
     normalized = _normalize_results(results)
+    chart_metadata = _chart_metadata(plan, fallback_plan)
     evidence_payload = {
         "kpis": normalized["kpis"],
         "table_sample": normalized["table_rows"][:8],
@@ -580,8 +654,10 @@ def generate_executive_report(payload: AiTextToReportRequest):
         "model_used": provider_label,
         "kpis": normalized["kpis"],
         "trend_chart": normalized["trend"],
-        "donut_chart": normalized["breakdown"],
-        "bar_chart": normalized["breakdown"],
+        "breakdown_chart": normalized["breakdown"],
+        "donut_chart": normalized["breakdown"] if chart_metadata["breakdown"]["chart_type"] == "donut" else [],
+        "bar_chart": normalized["breakdown"] if chart_metadata["breakdown"]["chart_type"] == "bar" else [],
+        "chart_metadata": chart_metadata,
         "table_data": {
             "title": f"Dữ liệu trích xuất: {plan.get('title') or fallback_plan['title']}",
             "columns": normalized["table_columns"],
@@ -594,7 +670,11 @@ def generate_executive_report(payload: AiTextToReportRequest):
         "evidence": synthesis_data.get("evidence") or deterministic["evidence"],
         "sql": sql_used,
         "sql_query": sql_used["main"],
-        "visualizations": plan.get("visualizations") or fallback_plan["visualizations"],
+        "visualizations": {
+            "trend": chart_metadata["trend"]["chart_type"],
+            "breakdown": chart_metadata["breakdown"]["chart_type"],
+            "table": fallback_plan["visualizations"]["table"],
+        },
         "created_at": datetime.now().astimezone().isoformat(),
     }
 

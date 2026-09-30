@@ -2,6 +2,7 @@ import os
 import re
 import threading
 import time
+from copy import deepcopy
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional
 
@@ -41,6 +42,23 @@ def is_sensitive_column(name: str) -> bool:
 def sql_references_sensitive_columns(sql: str) -> bool:
     lowered = (sql or "").lower()
     return any(re.search(rf'(?<![a-z0-9_])"?{re.escape(name)}"?(?![a-z0-9_])', lowered) for name in PII_EXACT)
+
+
+def _sanitize_value(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: _sanitize_value(nested)
+            for key, nested in value.items()
+            if not is_sensitive_column(str(key))
+        }
+    if isinstance(value, list):
+        return [_sanitize_value(item) for item in value]
+    return value
+
+
+def sanitize_result_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Defense in depth before query evidence crosses the LLM boundary."""
+    return [_sanitize_value(row) for row in rows]
 
 
 def _source_configured() -> bool:
@@ -262,6 +280,7 @@ def get_source_metadata(force: bool = False) -> Dict[str, Any]:
 
 def get_combined_metadata(include_source: bool = True) -> Dict[str, Any]:
     local = get_local_metadata()
+    combined = deepcopy(local)
     source = None
     source_error = None
     if include_source and _source_configured():
@@ -272,7 +291,7 @@ def get_combined_metadata(include_source: bool = True) -> Dict[str, Any]:
 
     # The warehouse is authoritative for queryable objects. Source metadata only
     # enriches relationships that data-sync did not preserve.
-    table_map = local["table_map"]
+    table_map = combined["table_map"]
     recovered = []
     if source:
         for source_table in source["tables"]:
@@ -290,7 +309,7 @@ def get_combined_metadata(include_source: bool = True) -> Dict[str, Any]:
                     local_table["relationships"].append(enriched)
                     recovered.append({"table": source_table["qualified_name"], **enriched})
 
-    return {**local, "source_ready": source is not None, "source_error": source_error, "recovered_relationships": recovered}
+    return {**combined, "source_ready": source is not None, "source_error": source_error, "recovered_relationships": recovered}
 
 
 def cache_status() -> Dict[str, Any]:
