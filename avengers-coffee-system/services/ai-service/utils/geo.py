@@ -61,6 +61,7 @@ class LocationResolution:
     provider_candidate_count: int = 0
     rejected_candidate_count: int = 0
     resolution_basis: Optional[str] = None
+    candidate_error_count: int = 0
 
 
 _ADMIN_PREFIX = re.compile(
@@ -147,12 +148,27 @@ def _address_matches(query: str, candidate: dict, place: dict) -> bool:
     parts = [part.strip() for part in str(query or "").split(",") if part.strip()]
     if not parts:
         return False
-    street = re.sub(r"^\d+[A-Za-z]?(?:[/.-]\d+[A-Za-z]?)?\s+", "", parts[0]).strip()
+    house_pattern = re.compile(r"^(\d{1,5}[A-Za-z]?(?:[/.-]\d{1,5}[A-Za-z]?)?)\s+", re.IGNORECASE)
+    requested_house = house_pattern.match(parts[0])
+    street = house_pattern.sub("", parts[0]).strip()
     street_folded = _fold_location(street)
     street_sources = " ".join(str(source.get(key) or "") for source in (place, candidate)
                               for key in ("street", "address", "formatted_address", "display", "name"))
     if not street_folded or street_folded not in _fold_location(street_sources):
         return False
+    if requested_house:
+        # Search snippets can echo the query even when place detail disagrees,
+        # so exact-address confidence comes only from resolved place evidence.
+        provider_houses = []
+        for key in ("house_number", "address", "formatted_address", "display", "name"):
+            value = str(place.get(key) or "").strip()
+            match = house_pattern.match(value)
+            if match:
+                provider_houses.append(match.group(1))
+        normalize_house = lambda value: re.sub(r"[^0-9a-z/.-]", "", _fold_location(value))
+        requested_number = normalize_house(requested_house.group(1))
+        if not provider_houses or requested_number not in {normalize_house(value) for value in provider_houses}:
+            return False
     admin_values = [value for values in _admin_fields(place).values() for value in values]
     for component in parts[1:]:
         if not any(_name_equivalent(component, canonical) for canonical in admin_values):
@@ -194,19 +210,28 @@ def resolve_location(query: str, kind: str = "admin_area",
 
             accepted = []
             rejected = 0
+            candidate_errors = 0
+            successful_details = 0
             requested_locality = _locality_parts(query)
             for candidate in candidates[:8]:
                 ref_id = candidate.get("ref_id")
                 if not ref_id:
                     rejected += 1
                     continue
-                place_response = client.get("https://maps.vietmap.vn/api/place/v3",
-                                            params={"apikey": api_key, "refid": ref_id})
-                place_response.raise_for_status()
-                place = place_response.json()
-                if not isinstance(place, dict):
-                    rejected += 1
+                try:
+                    place_response = client.get("https://maps.vietmap.vn/api/place/v3",
+                                                params={"apikey": api_key, "refid": ref_id})
+                    place_response.raise_for_status()
+                    place = place_response.json()
+                except Exception as exc:
+                    candidate_errors += 1
+                    logger.warning("[LocationResolveCandidate] kind=%s status=detail_error error=%s",
+                                   match_type, type(exc).__name__)
                     continue
+                if not isinstance(place, dict):
+                    candidate_errors += 1
+                    continue
+                successful_details += 1
                 coords = place.get("lat"), place.get("lng")
                 hints_ok = all(_admin_hint_matches(hint, place) for hint in admin_hints)
                 if match_type == "poi":
@@ -226,20 +251,31 @@ def resolve_location(query: str, kind: str = "admin_area",
                             match_type, count, len(accepted), rejected)
                 return LocationResolution("ambiguous", match_type=match_type,
                                           provider_candidate_count=count,
-                                          rejected_candidate_count=rejected)
+                                          rejected_candidate_count=rejected,
+                                          candidate_error_count=candidate_errors)
             if not accepted:
+                if candidate_errors and not successful_details:
+                    logger.error("[LocationResolve] kind=%s provider_candidates=%d accepted=0 rejected=%d candidate_errors=%d status=provider_error",
+                                 match_type, count, rejected, candidate_errors)
+                    return LocationResolution("provider_error", match_type=match_type,
+                                              provider_candidate_count=count,
+                                              rejected_candidate_count=rejected,
+                                              candidate_error_count=candidate_errors)
                 logger.info("[LocationResolve] kind=%s provider_candidates=%d accepted=0 rejected=%d status=rejected",
                             match_type, count, rejected)
                 return LocationResolution("rejected", match_type=match_type,
                                           provider_candidate_count=count,
-                                          rejected_candidate_count=rejected)
+                                          rejected_candidate_count=rejected,
+                                          candidate_error_count=candidate_errors)
             candidate, place = accepted[0]
             admin = {key: values[0] for key, values in _admin_fields(place).items() if values}
             logger.info("[LocationResolve] kind=%s provider_candidates=%d accepted=1 rejected=%d status=ok basis=provider_place",
                         match_type, count, rejected)
             return LocationResolution(
-                "ok", float(place["lat"]), float(place["lng"]), match_type,
-                _label(candidate, place), admin, count, rejected, "provider_place",
+                status="ok", lat=float(place["lat"]), lng=float(place["lng"]), match_type=match_type,
+                normalized_label=_label(candidate, place), administrative_components=admin,
+                provider_candidate_count=count, rejected_candidate_count=rejected,
+                resolution_basis="provider_place", candidate_error_count=candidate_errors,
             )
     except Exception as exc:
         logger.error("[LocationResolve] kind=%s status=provider_error error=%s", match_type, type(exc).__name__)

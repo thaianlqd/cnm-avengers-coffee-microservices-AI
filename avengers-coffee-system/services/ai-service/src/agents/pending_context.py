@@ -11,6 +11,7 @@ ALLOWED = {
     "confirm_address": {"CONFIRM_ADDRESS", "CHANGE_ADDRESS", "AMBIGUOUS"},
     "confirm_checkout": {"CONFIRM", "REJECT", "CHANGE", "AMBIGUOUS"},
     "cart_edit_clarification": {"KEEP_CURRENT", "AMBIGUOUS"},
+    "offer_branch_search": {"CONFIRM", "DECLINE", "AMBIGUOUS"},
 }
 DESCRIPTIONS = {
     "ask_more_items": (
@@ -26,6 +27,11 @@ DESCRIPTIONS = {
     "cart_edit_clarification": (
         "A requested cart option was invalid and the customer was asked to choose a valid value. "
         "KEEP_CURRENT means cancel this edit and retain the current cart line; otherwise AMBIGUOUS."
+    ),
+    "offer_branch_search": (
+        "Customer was asked whether to search for branches near one stored read-only location. "
+        "CONFIRM means yes or a direct instruction to perform that search. DECLINE means no or later. "
+        "Do not reinterpret the reply as product recommendation or any order mutation."
     ),
 }
 
@@ -121,6 +127,22 @@ def classify_pending_reply(message: str, pending_type: str, evidence: Optional[d
     text = re.sub(r"\s+", " ", _remove_diacritics(str(message or ""))).strip()
     if not text or "?" in text or re.search(r"\b(neu|gia su|co the|phai khong|bao nhieu|tai sao|khi nao|the nao|ra sao|hay|hoac|chac)\b", text):
         return "AMBIGUOUS"
+    if pending_type == "offer_branch_search":
+        from src.agents.tier1 import normalize_confirmation_text
+        text = normalize_confirmation_text(message)
+        # This is finite dialogue grammar, not a sentence list: a branch offer
+        # accepts confirmation tokens or a bare FIND action plus social fillers.
+        tokens = set(text.split())
+        fillers = {"ban", "toi", "minh", "giup", "di", "nhe", "nha", "oi", "a", "voi", "sau", "can"}
+        negative_tokens = {"khong", "ko", "thoi", "no"}
+        if tokens & negative_tokens or re.search(r"\bde\s+sau\b", text):
+            return "DECLINE"
+        affirmative_tokens = {"co", "ok", "oke", "duoc", "u", "uh", "vang", "yes"}
+        action_tokens = {"tim"}
+        if ((tokens & affirmative_tokens) and tokens <= affirmative_tokens | fillers
+                or (tokens & action_tokens) and tokens <= action_tokens | fillers):
+            return "CONFIRM"
+        return _semantic_fallback(message, pending_type)
     negative = bool(re.search(r"\b(khong|ko|chua|khoan|huy|dung lai|dung dat)\b", text)) or bool(
         re.search(r"\b(đừng|dừng)\b", str(message or "").lower())
     )

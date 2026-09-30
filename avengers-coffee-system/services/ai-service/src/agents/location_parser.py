@@ -115,19 +115,21 @@ def _has_poi_structure(value: str) -> bool:
 
 def _explicit_admin_hints(value: str) -> tuple[str, ...]:
     """Extract only explicitly level-marked admin evidence from a query."""
-    pattern = re.compile(
-        r"(?<!\w)(?:thành\s+phố|tỉnh|quận|huyện|phường|xã|tp\.?|q\.?|h\.?|p\.?)\s+[^,]+$",
+    marker = re.compile(
+        r"(?<!\w)(?:thành\s+phố|tỉnh|quận|huyện|phường|xã|tp\.?|q\.?|h\.?|p\.?)\s+",
         re.IGNORECASE,
     )
     hints = []
-    for component in [part.strip() for part in str(value or "").split(",") if part.strip()]:
-        match = pattern.search(component)
-        if match:
-            hints.append(_admin_component(match.group(0).strip()))
-    if not hints:
-        match = pattern.search(str(value or "").strip())
-        if match:
-            hints.append(_admin_component(match.group(0).strip()))
+    raw = str(value or "")
+    matches = list(marker.finditer(raw))
+    for index, match in enumerate(matches):
+        boundary = matches[index + 1].start() if index + 1 < len(matches) else len(raw)
+        comma = raw.find(",", match.end(), boundary)
+        if comma >= 0:
+            boundary = comma
+        hint = raw[match.start():boundary].strip(" ,")
+        if hint:
+            hints.append(_admin_component(hint))
     unique = []
     seen = set()
     for hint in hints:
