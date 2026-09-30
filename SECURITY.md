@@ -22,8 +22,7 @@ This document identifies security concerns in the Avengers Coffee microservices 
 ### 2. **Hardcoded VNPay Test Credentials**
 - **Location**: `docker-compose.yml` (line 162)
 - **Issue**: 
-  - `VNPAY_HASH_SECRET: T718SPDGIGQSKGM98VCSNAF70M9X93MC` (test key exposed)
-  - `VNPAY_TMN_CODE: MEBLXEDU` (test merchant code)
+  - A VNPay sandbox hash secret and merchant code were previously committed; rotate them and provide replacements through environment variables.
 - **Risk**: Anyone can forge VNPay payment callbacks
 - **Fix**:
   1. Remove from compose file

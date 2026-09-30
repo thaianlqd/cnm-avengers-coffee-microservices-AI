@@ -1,15 +1,16 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import * as crypto from 'crypto';
 import { CustomerWallet } from './entities/customer-wallet.entity';
 import { CustomerWalletTransaction } from './entities/customer-wallet-transaction.entity';
+import { secretWithDevDefault } from '../../config/runtime-secrets';
 
 @Injectable()
 export class CustomerWalletService {
   private readonly logger = new Logger(CustomerWalletService.name);
-  private readonly VNP_TMN_CODE = process.env.VNPAY_TMN_CODE || process.env.VNP_TMN_CODE || 'MEBLXEDU';
-  private readonly VNP_HASH_SECRET = process.env.VNPAY_HASH_SECRET || process.env.VNP_HASH_SECRET || 'T718SPDGIGQSKGM98VCSNAF70M9X93MC';
+  private readonly VNP_TMN_CODE = secretWithDevDefault('VNPAY_TMN_CODE', 'test-vnpay-terminal');
+  private readonly VNP_HASH_SECRET = secretWithDevDefault('VNPAY_HASH_SECRET', 'test-only-vnpay-signing-secret');
   private readonly VNP_URL = process.env.VNPAY_URL || process.env.VNP_URL || 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html';
   private readonly VNP_RETURN_BASE_URL = process.env.PAYMENT_RETURN_BASE_URL || process.env.VNP_RETURN_BASE_URL || 'http://localhost:3000';
 
@@ -18,7 +19,8 @@ export class CustomerWalletService {
     private readonly walletRepo: Repository<CustomerWallet>,
     @InjectRepository(CustomerWalletTransaction)
     private readonly transactionRepo: Repository<CustomerWalletTransaction>,
-  ) {}
+  ) {
+  }
 
   async getWallet(customerId: string) {
     if (!customerId || customerId === 'anonymous') throw new BadRequestException('Khach hang khong hop le');
@@ -103,67 +105,110 @@ export class CustomerWalletService {
 
   async processTopUpSuccess(txnRef: string) {
     const txId = txnRef.replace('WT_', '');
-    const transaction = await this.transactionRepo.findOne({ where: { id: txId } });
-    if (!transaction) {
-      this.logger.error(`Khong tim thay giao dich nap tien ${txnRef}`);
-      return false;
-    }
+    return this.walletRepo.manager.transaction(async manager => {
+      const txRepo = manager.getRepository(CustomerWalletTransaction);
+      const transaction = await txRepo.findOne({ where: { id: txId }, lock: { mode: 'pessimistic_write' } });
+      if (!transaction || transaction.type !== 'TOP_UP') {
+        this.logger.error(`Khong tim thay giao dich nap tien ${txnRef}`);
+        return false;
+      }
+      if (transaction.status === 'SUCCESS') return true;
 
-    if (transaction.status === 'SUCCESS') {
-      return true; // Already processed
-    }
-
-    transaction.status = 'SUCCESS';
-    await this.transactionRepo.save(transaction);
-
-    let wallet = await this.walletRepo.findOne({ where: { customer_id: transaction.customer_id } });
-    if (!wallet) {
-      wallet = this.walletRepo.create({ customer_id: transaction.customer_id, balance: 0 });
-    }
-    wallet.balance = Number(wallet.balance) + Number(transaction.amount);
-    await this.walletRepo.save(wallet);
-    return true;
+      const schema = process.env.DB_SCHEMA || 'orders';
+      await manager.query(
+        `INSERT INTO ${schema}.customer_wallet (customer_id, balance)
+         VALUES ($1, 0) ON CONFLICT (customer_id) DO NOTHING`,
+        [transaction.customer_id],
+      );
+      const wallet = await manager.getRepository(CustomerWallet).findOne({
+        where: { customer_id: transaction.customer_id }, lock: { mode: 'pessimistic_write' },
+      });
+      if (!wallet) throw new BadRequestException('Khong the khoi tao vi khach hang');
+      wallet.balance = Number(wallet.balance) + Number(transaction.amount);
+      await manager.save(CustomerWallet, wallet);
+      transaction.status = 'SUCCESS';
+      await manager.save(CustomerWalletTransaction, transaction);
+      return true;
+    });
   }
 
   async deductBalance(customerId: string, amount: number, referenceId: string) {
-    const wallet = await this.walletRepo.findOne({ where: { customer_id: customerId } });
-    if (!wallet || Number(wallet.balance) < amount) {
-      throw new BadRequestException('So du vi dien tu khong du de thanh toan');
+    return this.withWalletPayment(customerId, amount, referenceId, async () => true, true);
+  }
+
+  async withWalletPayment<T>(customerId: string, amount: number, referenceId: string,
+    writeOrder: (manager: EntityManager, balanceAfter: number) => Promise<T>, allowReplay = false): Promise<T> {
+    if (!customerId || !Number.isFinite(amount) || amount < 0 || !referenceId) {
+      throw new BadRequestException('Thong tin thanh toan vi khong hop le');
     }
-
-    wallet.balance = Number(wallet.balance) - amount;
-    await this.walletRepo.save(wallet);
-
-    const transaction = this.transactionRepo.create({
-      customer_id: customerId,
-      amount: amount,
-      type: 'PAYMENT',
-      status: 'SUCCESS',
-      reference_id: referenceId,
+    return this.walletRepo.manager.transaction(async manager => {
+      const wallet = await manager.getRepository(CustomerWallet).findOne({
+        where: { customer_id: customerId }, lock: { mode: 'pessimistic_write' },
+      });
+      const paymentRepo = manager.getRepository(CustomerWalletTransaction);
+      const existing = await paymentRepo.findOne({
+        where: { customer_id: customerId, type: 'PAYMENT', reference_id: referenceId },
+      });
+      if (existing) {
+        if (existing.status !== 'SUCCESS' || Number(existing.amount) !== amount) {
+          throw new BadRequestException('Ma tham chieu vi da duoc su dung cho giao dich khac');
+        }
+        if (allowReplay) return true as T;
+        // An order writer must never run twice for a consumed reference.
+        throw new BadRequestException('Giao dich vi da duoc xu ly; hay truy van don hang cu');
+      }
+      if (!wallet || Number(wallet.balance) < amount) {
+        throw new BadRequestException('So du vi dien tu khong du de thanh toan');
+      }
+      const balanceAfter = Number(wallet.balance) - amount;
+      wallet.balance = balanceAfter;
+      await manager.save(CustomerWallet, wallet);
+      await paymentRepo.save(paymentRepo.create({
+        customer_id: customerId, amount, type: 'PAYMENT', status: 'SUCCESS', reference_id: referenceId,
+      }));
+      return writeOrder(manager, balanceAfter);
     });
-    await this.transactionRepo.save(transaction);
-
-    return true;
   }
 
   async refundBalance(customerId: string, amount: number, referenceId: string) {
-    let wallet = await this.walletRepo.findOne({ where: { customer_id: customerId } });
-    if (!wallet) {
-      wallet = this.walletRepo.create({ customer_id: customerId, balance: 0 });
+    // referenceId identifies one refund event. Callers issuing separate
+    // partial refunds must give each event a distinct reference.
+    if (!customerId || !referenceId || !Number.isFinite(amount) || amount <= 0) {
+      throw new BadRequestException('Thong tin hoan tien vi khong hop le');
     }
-
-    wallet.balance = Number(wallet.balance) + amount;
-    await this.walletRepo.save(wallet);
-
-    const transaction = this.transactionRepo.create({
-      customer_id: customerId,
-      amount: amount,
-      type: 'REFUND',
-      status: 'SUCCESS',
-      reference_id: referenceId,
+    return this.walletRepo.manager.transaction(async manager => {
+      const schema = process.env.DB_SCHEMA || 'orders';
+      const inserted = await manager.query(
+        `INSERT INTO ${schema}.customer_wallet_transaction
+         (customer_id, amount, type, status, reference_id)
+         VALUES ($1, $2, 'REFUND', 'SUCCESS', $3)
+         ON CONFLICT (customer_id, reference_id) WHERE type = 'REFUND' AND reference_id IS NOT NULL
+         DO NOTHING RETURNING id`,
+        [customerId, amount, referenceId],
+      );
+      if (!inserted.length) {
+        const existing = (await manager.query(
+          `SELECT amount, status FROM ${schema}.customer_wallet_transaction
+           WHERE customer_id = $1 AND reference_id = $2 AND type = 'REFUND' LIMIT 1`,
+          [customerId, referenceId],
+        )) as Array<{ amount: string | number; status: string }>;
+        if (!existing.length || existing[0].status !== 'SUCCESS' || Number(existing[0].amount) !== amount) {
+          throw new ConflictException('Ma tham chieu hoan tien da duoc su dung cho giao dich khac');
+        }
+        return true;
+      }
+      await manager.query(
+        `INSERT INTO ${schema}.customer_wallet (customer_id, balance)
+         VALUES ($1, 0) ON CONFLICT (customer_id) DO NOTHING`,
+        [customerId],
+      );
+      const wallet = await manager.getRepository(CustomerWallet).findOne({
+        where: { customer_id: customerId }, lock: { mode: 'pessimistic_write' },
+      });
+      if (!wallet) throw new BadRequestException('Khong the khoi tao vi khach hang');
+      wallet.balance = Number(wallet.balance) + amount;
+      await manager.save(CustomerWallet, wallet);
+      return true;
     });
-    await this.transactionRepo.save(transaction);
-
-    return true;
   }
 }

@@ -1,5 +1,9 @@
 name: CI Kiem Thu API
 
+env:
+  NODE_ENV: test
+  E2E_DB_SAFE: '1'
+
 on:
   push:
     branches:
@@ -43,6 +47,9 @@ jobs:
 
       - name: Cai thu vien
         run: npm ci
+
+      - name: Kiem tra hang rao database E2E
+        run: node --test ../../test-utils/e2e-db-safety.test.js
 
       - name: Chay e2e API menu
         env:

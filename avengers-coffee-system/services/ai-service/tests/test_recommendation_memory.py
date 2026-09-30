@@ -41,7 +41,7 @@ def test_short_cake_matcha_query_is_food_search_not_exact_product_guess(monkeypa
     session = "short-cake-matcha-query"
     calls = []
     monkeypatch.setattr(cart_tools, "sync_authoritative_cart", lambda value: cart_manager.get_cart(value))
-    monkeypatch.setattr(product_tools, "execute_get_recommendations", lambda **kwargs: (
+    monkeypatch.setattr(product_tools, "execute_filter_catalog", lambda **kwargs: (
         calls.append(kwargs) or {
             "status": "ok",
             "products": [{
@@ -54,7 +54,7 @@ def test_short_cake_matcha_query_is_food_search_not_exact_product_guess(monkeypa
     result = run_order_flow(session, "bánh matcha")
     assert calls[0]["category"] == "food"
     assert calls[0]["search_text"] == "matcha"
-    assert "Bánh Trung Thu Matcha" in result["reply"]
+    assert result["ui_payload"]["products"][0]["product_name"] == "Bánh Trung Thu Matcha"
 
 
 def test_view_cake_menu_uses_food_category_without_free_text_guess(monkeypatch):
@@ -134,7 +134,7 @@ def test_graph_adds_the_latest_numbered_suggestion_not_a_free_text_guess(monkeyp
         {"product_id": "121", "product_name": "Bánh Trung Thu Đậu Xanh", "category": "food"},
     ])
     monkeypatch.setattr(cart_tools, "sync_authoritative_cart", lambda _session: cart_manager.get_cart(_session))
-    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name: {
+    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name=None, **_kwargs: {
         "status": "ok", "product_name": "Bánh Trung Thu Matcha", "options": {},
     })
     monkeypatch.setattr(product_tools, "execute_check_price_and_stock", lambda **_kwargs: {
@@ -190,8 +190,7 @@ def test_check_price_and_stock_updates_last_product_focus(monkeypatch):
 
 
 def test_structured_resolver_handles_ordinal_and_demonstrative_directly(monkeypatch):
-    from src.agents.order_flow_graph import run_order_flow
-    from src.agents import agent_service
+    from src.agents.order_flow_graph import _understand
     from src.function_calling.tools import cart_tools
 
     session = "structured-resolver-direct"
@@ -204,15 +203,10 @@ def test_structured_resolver_handles_ordinal_and_demonstrative_directly(monkeypa
         last_product_focus={"product_id": "F2", "product_name": "Soft Pizza Chà Bông Trứng Cút", "category": "food"},
     )
     monkeypatch.setattr(cart_tools, "sync_authoritative_cart", lambda _session: cart_manager.get_cart(_session))
-    seen = []
-    monkeypatch.setattr(agent_service, "_handle_additional_product", lambda _session, name: seen.append(name) or {
-        "reply": f"đã thêm {name}", "checkout_payload": None, "tool_calls_log": [], "error": None,
-    })
-
-    result = run_order_flow(session, "oke vậy cho tôi nước số 1 và bánh này nhé")
-    assert seen == ["1 Lít Matcha Latte Tây Bắc", "Soft Pizza Chà Bông Trứng Cút"]
-    assert "đã thêm 1 Lít Matcha Latte Tây Bắc" in result["reply"]
-    assert "đã thêm Soft Pizza Chà Bông Trứng Cút" in result["reply"]
+    state = _understand({"session_id": session, "user_message": "oke vậy cho tôi nước số 1 và bánh này nhé",
+                         "history": [], "cart": cart_manager.get_cart(session)})
+    assert [item["product_id"] for item in state["intent"]["resolved_products"]] == ["D1", "F2"]
+    assert cart_manager.get_cart(session)["is_empty"]
 
 
 def test_structured_resolver_does_not_map_on_category_mismatch():
@@ -224,6 +218,27 @@ def test_structured_resolver_does_not_map_on_category_mismatch():
         last_product_focus={"product_id": "F1", "product_name": "Bánh Trung Thu", "category": "food"},
     )
     assert _resolve_structured_references(session, "cho tôi nước này") is None
+
+
+def test_group_qualified_ordinal_prefers_matching_global_then_local_index():
+    from src.agents.order_flow_graph import _resolve_structured_references
+
+    session = "global-then-local-ordinal"
+    latest = [
+        {"product_id": "F1", "product_name": "Bánh Một", "category": "food", "global_display_index": 1, "group_display_index": 1},
+        {"product_id": "D1", "product_name": "Nước Một", "category": "drink", "global_display_index": 2, "group_display_index": 1},
+        {"product_id": "D2", "product_name": "Nước Hai", "category": "drink", "global_display_index": 3, "group_display_index": 2},
+    ]
+    cart_manager.set_checkout_context(session,
+        last_product_suggestions=latest,
+        product_suggestion_mode="grouped",
+        product_suggestion_snapshots={
+            "food": [latest[0]],
+            "drink": [latest[1], latest[2]],
+        },
+    )
+    assert _resolve_structured_references(session, "nước số 2")[0]["product_id"] == "D1"
+    assert _resolve_structured_references(session, "bánh số 1")[0]["product_id"] == "F1"
 
 
 def test_structured_resolver_falls_back_to_none_when_state_missing():
@@ -307,7 +322,7 @@ def test_structured_resolver_keeps_all_exact_products_when_cart_is_empty(monkeyp
     )
     monkeypatch.setattr(cart_tools, "sync_authoritative_cart", lambda _session: cart_manager.get_cart(_session))
     monkeypatch.setattr(agent_service, "_handle_additional_product", lambda _session, _name: None)
-    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda name: {
+    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda name=None, **_kwargs: {
         "status": "ok",
         "product_name": name,
         "options": {"Kích thước": ["Nhỏ", "Lớn"]},

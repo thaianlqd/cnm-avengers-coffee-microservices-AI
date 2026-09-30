@@ -15,7 +15,7 @@ import {
   InformationCircleIcon
 } from '@heroicons/react/24/outline';
 import { useCart } from '../../context/CartContext';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/apiClient';
 import { queryKeys } from '../../lib/queryKeys';
@@ -76,11 +76,17 @@ export default function CartPage({
   
   const [deliveryMode, setDeliveryMode] = useState(() => {
     const storedTableId = sessionStorage.getItem('qr_tableId');
-    return storedTableId ? 'DUNG_TAI_CHO' : 'GIAO_TAN_NOI';
+    return storedTableId ? 'DUNG_TAI_CHO' : null;
   });
   const [selectedBranch, setSelectedBranch] = useState(() => {
     return sessionStorage.getItem('qr_storeId') || '';
   });
+  const checkoutRequestRef = useRef(null);
+  const checkoutBusyRef = useRef(false);
+  const handleDeliveryModeChange = (mode) => {
+    if (mode !== deliveryMode) setSelectedBranch('');
+    setDeliveryMode(mode);
+  };
 
   const { data: kioskPrices } = useQuery({
     queryKey: ['kiosk-prices', selectedBranch],
@@ -211,7 +217,7 @@ export default function CartPage({
 
   const computedKhungGio = 'Giao ngay (15-30 phút)';
 
-  const [phuongThuc, setPhuongThuc] = useState('VNPAY');
+  const [phuongThuc, setPhuongThuc] = useState(null);
   const [addressForm, setAddressForm] = useState(() => ({ ...defaultAddressSelection, street: '' }));
   const [userCoordinates, setUserCoordinates] = useState(null);
   const [stockValidation, setStockValidation] = useState({
@@ -338,28 +344,42 @@ export default function CartPage({
   });
 
   const phiGiaoHangGoc = useMemo(() => {
-    if (deliveryMode !== 'GIAO_TAN_NOI') return 0;
+    if (step !== 2 || deliveryMode !== 'GIAO_TAN_NOI') return 0;
     if (deliveryMethod === 'LALAMOVE') return 25000;
     return 15000;
-  }, [deliveryMode, deliveryMethod]);
+  }, [step, deliveryMode, deliveryMethod]);
 
   const memberTierName = memData?.hang_hien_tai?.hang || 'Thành viên';
   const memberFreeshipVal = Number(memData?.quyen_loi_hien_tai?.freeship_value || 0);
   const memberFreeshipMinOrder = Number(memData?.quyen_loi_hien_tai?.freeship_min_order || 0);
 
   const isFreeshipEligible = useMemo(() => {
-    if (deliveryMode !== 'GIAO_TAN_NOI') return false;
+    if (step !== 2 || deliveryMode !== 'GIAO_TAN_NOI') return false;
     if (memberFreeshipVal <= 0) return false;
     if (memberFreeshipMinOrder > 0 && total < memberFreeshipMinOrder) return false;
     return true;
-  }, [deliveryMode, memberFreeshipVal, memberFreeshipMinOrder, total]);
+  }, [step, deliveryMode, memberFreeshipVal, memberFreeshipMinOrder, total]);
 
-  const giamPhiShipHanh = isFreeshipEligible ? Math.min(phiGiaoHangGoc, memberFreeshipVal) : 0;
-  const phiGiaoHangThucTe = Math.max(0, phiGiaoHangGoc - giamPhiShipHanh);
-
-  const discountAmount = voucherResult?.so_tien_giam || 0;
-  const tongTienSauGiamVoucher = Math.max(0, total - discountAmount);
-  const tongTienSauGiam = tongTienSauGiamVoucher + phiGiaoHangThucTe;
+  const quoteMode = step === 2 ? deliveryMode : null;
+  const { data: cartQuote, isFetching: isQuotingCart, error: cartQuoteError } = useQuery({
+    queryKey: ['cart-checkout-quote', maNguoiDung, JSON.stringify(cart), voucherResult?.ma_voucher || voucherResult?.ma_khuyen_mai, quoteMode, deliveryMethod],
+    queryFn: async () => {
+      const response = await apiClient.post(`/cart/${maNguoiDung}/quote`, {
+        voucher_code: voucherResult?.ma_voucher || voucherResult?.ma_khuyen_mai || undefined,
+        delivery_mode: quoteMode || undefined,
+        delivery_method: deliveryMethod,
+      });
+      return response.data;
+    },
+    enabled: Boolean(isLoggedInUser && cart.length && deliveryMode !== 'KIOSK'),
+    retry: false,
+  });
+  const giamPhiShipHanh = cartQuote?.delivery_fee_discount ?? (isFreeshipEligible ? Math.min(phiGiaoHangGoc, memberFreeshipVal) : 0);
+  const phiGiaoHangThucTe = step === 2 && deliveryMode === 'GIAO_TAN_NOI'
+    ? (cartQuote?.delivery_fee ?? Math.max(0, phiGiaoHangGoc - giamPhiShipHanh)) : 0;
+  const discountAmount = cartQuote?.discount_amount ?? (voucherResult?.so_tien_giam || 0);
+  const tongTienSauGiamVoucher = Math.max(0, (cartQuote?.subtotal ?? total) - discountAmount);
+  const tongTienSauGiam = cartQuote?.final_total ?? (tongTienSauGiamVoucher + phiGiaoHangThucTe);
   const cityOptions = useMemo(() => {
     const base = Object.keys(addressOptions || {});
     if (addressForm.city && !base.includes(addressForm.city)) {
@@ -481,6 +501,7 @@ export default function CartPage({
       return;
     }
     setIsCheckingVoucher(true);
+    setVoucherResult(null);
     setVoucherError('');
     try {
       const hasToppings = cart.some(item => item.toppings && item.toppings.length > 0);
@@ -551,9 +572,8 @@ export default function CartPage({
 
   useEffect(() => {
     if (!maNguoiDung) return undefined;
-    const storageKey = `avengers_ai_voucher_${maNguoiDung}`;
     const applyFromChat = (event) => {
-      const code = String(event?.detail?.code || localStorage.getItem(storageKey) || '').trim().toUpperCase();
+      const code = String(event?.detail?.code || '').trim().toUpperCase();
       if (code && cart?.length) {
         setVoucherCode(code);
         apDungVoucher(code);
@@ -566,7 +586,6 @@ export default function CartPage({
     };
     window.addEventListener('ai-voucher-applied', applyFromChat);
     window.addEventListener('ai-voucher-removed', removeFromChat);
-    applyFromChat();
     return () => {
       window.removeEventListener('ai-voucher-applied', applyFromChat);
       window.removeEventListener('ai-voucher-removed', removeFromChat);
@@ -722,11 +741,6 @@ export default function CartPage({
             }
           }
         }
-      } else {
-        // Lấy tại quán / Dùng tại chỗ: Chỉ set mặc định nếu chưa có
-        if (!selectedBranch) {
-          setSelectedBranch(allBranches[0]?.ma_chi_nhanh || allBranches[0]?.co_so_ma || allBranches[0]?.branch_code || '');
-        }
       }
     }
   }, [publicBranchPayload, selectedBranch, addressForm.city, deliveryMode, userCoordinates]);
@@ -753,6 +767,26 @@ export default function CartPage({
     mutationFn: async () => {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       const customerName = user.ho_ten || user.hoTen || user.ten_dang_nhap || user.username || undefined;
+      const businessKey = JSON.stringify({
+        customer: maNguoiDung, deliveryMode, deliveryMethod, selectedBranch, phuongThuc,
+        address: deliveryMode === 'GIAO_TAN_NOI' ? diaChiDayDu : null,
+        note: ghiChu.trim(), voucher: voucherResult?.ma_voucher || voucherResult?.ma_khuyen_mai
+          || (!cart.length && checkoutRequestRef.current && !checkoutRequestRef.current.completed ? checkoutRequestRef.current.payload.ma_voucher : null) || null,
+        table: deliveryMode === 'DUNG_TAI_CHO' ? tableNumber : null,
+        email: isLoggedInUser ? (user.email || user.email_address) : guestEmail.trim(),
+        phone: isLoggedInUser ? (user.so_dien_thoai || user.phone || user.sdt) : guestPhone.trim(),
+        customerName, guestSessionId,
+      });
+      const cartKey = JSON.stringify(cart);
+      const previous = checkoutRequestRef.current;
+      if (previous && !previous.completed && (previous.businessKey !== businessKey || (cart.length && previous.cartKey !== cartKey))) {
+        throw new Error('Đơn trước đã gửi nhưng chưa nhận được kết quả. Vui lòng kiểm tra đơn đó trước khi thay đổi thông tin checkout.');
+      }
+      if (previous && previous.businessKey === businessKey && (previous.cartKey === cartKey || (!previous.completed && !cart.length))) {
+        const response = await apiClient.post(previous.path, previous.payload);
+        previous.completed = true;
+        return response.data;
+      }
 
       let targetLat = userCoordinates?.lat ? Number(userCoordinates.lat) : undefined;
       let targetLng = userCoordinates?.lng ? Number(userCoordinates.lng) : undefined;
@@ -768,8 +802,10 @@ export default function CartPage({
         } catch {}
       }
 
-      const response = await apiClient.post(`/customers/${maNguoiDung}/thanh-toan/khoi-tao`, {
+      const payload = {
+        checkout_action_id: crypto.randomUUID(),
         phuong_thuc_giao: deliveryMode,
+        expected_final_total: cartQuote?.final_total,
         phuong_thuc_thanh_toan: phuongThuc,
         khung_gio_giao: computedKhungGio,
         phi_giao_hang: deliveryMode === 'GIAO_TAN_NOI' ? phiGiaoHangThucTe : 0,
@@ -789,7 +825,11 @@ export default function CartPage({
         guest_phone: (isLoggedInUser ? (user.so_dien_thoai || user.phone || user.sdt || undefined) : guestPhone.trim()) || undefined,
         session_id: guestSessionId,
         ten_khach_hang: isLoggedInUser ? customerName : (guestEmail.trim() || guestPhone.trim() || undefined),
-      });
+      };
+      const request = { businessKey, cartKey, path: `/customers/${maNguoiDung}/thanh-toan/khoi-tao`, payload, completed: false };
+      checkoutRequestRef.current = request;
+      const response = await apiClient.post(request.path, request.payload);
+      request.completed = true;
       return response.data;
     },
   });
@@ -820,9 +860,23 @@ export default function CartPage({
     }
   }, [qrOrderStatus, queryClient, refreshCart, triggerAiRecommendationRefresh, qrOrderId]);
 
+  const pendingCheckoutRetry = Boolean(checkoutRequestRef.current && !checkoutRequestRef.current.completed);
   const khoiTaoThanhToan = async () => {
-    if (!cart.length) {
+    if (checkoutBusyRef.current) return;
+    if (!deliveryMode || !phuongThuc) {
+      setThongBao('Vui lòng chọn hình thức nhận hàng và phương thức thanh toán.');
+      return;
+    }
+    if (!pendingCheckoutRetry && isLoggedInUser && deliveryMode !== 'KIOSK' && (isQuotingCart || cartQuoteError || !cartQuote)) {
+      setThongBao('Chưa xác minh được tổng tiền từ Order Service. Vui lòng thử lại.');
+      return;
+    }
+    if (!cart.length && !pendingCheckoutRetry) {
       setThongBao('Giỏ hàng đang trống. Vui lòng thêm sản phẩm trước khi thanh toán.');
+      return;
+    }
+    if ((deliveryMode === 'LAY_TAI_QUAN' || deliveryMode === 'DUNG_TAI_CHO') && !selectedBranch) {
+      setThongBao('Vui lòng chọn chi nhánh để nhận món trước khi thanh toán.');
       return;
     }
 
@@ -859,7 +913,7 @@ export default function CartPage({
       }
     }
 
-    if (deliveryMode === 'GIAO_TAN_NOI') {
+    if (deliveryMode === 'GIAO_TAN_NOI' && !pendingCheckoutRetry) {
       if (!stockValidation.canOrder) {
         setThongBao(stockValidation.message || 'Không thể đặt hàng do chi nhánh gần bạn đã hết món.');
         return;
@@ -883,6 +937,7 @@ export default function CartPage({
     setQrOrderId(null);
 
     try {
+      checkoutBusyRef.current = true;
       const data = await khoiTaoThanhToanMutation.mutateAsync();
 
       if (phuongThuc === 'VNPAY' && data.redirect_url) {
@@ -923,6 +978,12 @@ export default function CartPage({
             }, 0);
     } catch (error) {
       setThongBao(error?.response?.data?.message || error?.message || 'Có lỗi khi khởi tạo thanh toán');
+      if (error?.response?.data?.checkout_not_created === true) {
+        checkoutRequestRef.current = null;
+        queryClient.invalidateQueries({ queryKey:['cart-checkout-quote', maNguoiDung] });
+      }
+    } finally {
+      checkoutBusyRef.current = false;
     }
   };
 
@@ -1022,7 +1083,7 @@ export default function CartPage({
         </div>
 
         {/* FREESHIP & PRIVILEGE PROGRESS BAR */}
-        {deliveryMode === 'GIAO_TAN_NOI' && (
+        {step === 2 && deliveryMode === 'GIAO_TAN_NOI' && (
           <div className="mb-8 bg-gradient-to-r from-red-50 via-white to-red-50 text-[#b22830] rounded-[24px] p-5 sm:p-6 shadow-xs border border-red-200/80 relative overflow-hidden">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
               <div className="flex items-center gap-3.5">
@@ -1278,9 +1339,10 @@ export default function CartPage({
                 </h2>
                 
                 <div className="mb-6">
-                  <DeliveryModeSelector selectedMode={deliveryMode} onChange={setDeliveryMode} />
+                  <DeliveryModeSelector selectedMode={deliveryMode} onChange={handleDeliveryModeChange} />
                 </div>
 
+                {!deliveryMode && <p className="text-sm text-gray-600">Bạn chọn hình thức nhận hàng để tiếp tục nhé.</p>}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Cột trái form: Địa chỉ */}
                   <div className="space-y-4">
@@ -1290,7 +1352,7 @@ export default function CartPage({
                       </div>
                     )}
 
-                    {deliveryMode === 'GIAO_TAN_NOI' ? (
+                    {!deliveryMode ? null : deliveryMode === 'GIAO_TAN_NOI' ? (
                       <>
                         <h3 className="text-xs font-black uppercase text-[#c41230] tracking-widest">
                           Địa chỉ giao hàng
@@ -1657,7 +1719,7 @@ export default function CartPage({
                 {/* Tạm tính */}
                 <div className="flex justify-between items-center text-sm font-semibold text-gray-600">
                   <span>Tạm tính ({cart.reduce((s, i) => s + i.so_luong, 0)} món)</span>
-                  <span className="text-[#1a1a1a] font-extrabold">{total.toLocaleString('vi-VN')}đ</span>
+                  <span className="text-[#1a1a1a] font-extrabold">{(cartQuote?.subtotal ?? total).toLocaleString('vi-VN')}đ</span>
                 </div>
 
                 {/* Giảm giá voucher */}
@@ -1673,8 +1735,8 @@ export default function CartPage({
                   </div>
                 )}
 
-                {/* Phí giao hàng */}
-                <div className="flex flex-col gap-1">
+                {/* Phí giao hàng chỉ thuộc checkout sau khi chọn hình thức nhận. */}
+                {step === 2 && deliveryMode && <div className="flex flex-col gap-1">
                   <div className="flex justify-between items-center text-sm font-semibold text-gray-600">
                     <span>Phí giao hàng</span>
                     {deliveryMode !== 'GIAO_TAN_NOI' ? (
@@ -1710,7 +1772,7 @@ export default function CartPage({
                       )
                     )
                   )}
-                </div>
+                </div>}
 
                 <div className="h-px bg-gray-100 my-4" />
 
@@ -1939,7 +2001,7 @@ export default function CartPage({
 
                   <button
                     onClick={khoiTaoThanhToan}
-                    disabled={khoiTaoThanhToanMutation.isPending || (deliveryMode !== 'GIAO_TAN_NOI' && isAnyItemOutOfStock) || (deliveryMode === 'GIAO_TAN_NOI' && !stockValidation.canOrder)}
+                    disabled={!deliveryMode || !phuongThuc || ((deliveryMode === 'LAY_TAI_QUAN' || deliveryMode === 'DUNG_TAI_CHO') && !selectedBranch) || (!pendingCheckoutRetry && ((isLoggedInUser && deliveryMode !== 'KIOSK' && (isQuotingCart || cartQuoteError || !cartQuote)) || (deliveryMode !== 'GIAO_TAN_NOI' && isAnyItemOutOfStock) || (deliveryMode === 'GIAO_TAN_NOI' && !stockValidation.canOrder))) || khoiTaoThanhToanMutation.isPending}
                     className="w-full mt-6 py-4 bg-[#c41230] hover:bg-[#a30f28] text-white rounded-full font-black uppercase text-xs sm:text-sm tracking-widest shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {khoiTaoThanhToanMutation.isPending ? (
@@ -1949,7 +2011,7 @@ export default function CartPage({
                       </>
                     ) : (
                       <>
-                        <span>Xác nhận &amp; Đặt hàng</span>
+                        <span>{pendingCheckoutRetry ? 'Thử lại đơn đã gửi' : 'Xác nhận & Đặt hàng'}</span>
                         <CheckIcon className="w-5 h-5 stroke-[3]" />
                       </>
                     )}

@@ -82,6 +82,7 @@ export class DonHang {
     trang_thai: string;
     thoi_gian: string;
     ghi_chu?: string;
+    checkout_snapshot_hash?: string;
   }>;
 
   @CreateDateColumn()

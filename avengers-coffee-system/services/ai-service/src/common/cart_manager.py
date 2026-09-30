@@ -195,6 +195,55 @@ def _load_from_db(session_id: str) -> Optional[Dict[str, Any]]:
         logger.error(f"[CartManager] Load DB error for session {session_id}: {e}")
     return None
 
+
+def load_durable_processed_turn(session_id: str, client_message_id: str) -> Optional[Dict[str, Any]]:
+    """Read replay evidence from PostgreSQL, never the process-local cart cache."""
+    engine = get_db_engine()
+    _ensure_table_exists(engine)
+    with engine.connect() as conn:
+        row = conn.execute(text('''
+            SELECT checkout_prefs FROM ai_chat_sessions WHERE session_id = :session_id
+        '''), {"session_id": session_id}).mappings().first()
+    prefs = _parse_json_object(row["checkout_prefs"]) if row else {}
+    turn = (prefs.get("processed_order_turns") or {}).get(str(client_message_id))
+    return dict(turn) if isinstance(turn, dict) else None
+
+
+def prune_processed_turns(turns: Dict[str, Any], max_completed: int = 20) -> Dict[str, Any]:
+    """Bound completed replay records; never discard unresolved turn evidence."""
+    unresolved = {key: value for key, value in turns.items() if isinstance(value, dict)
+                  and value.get("_turn_status") in {"in_progress", "outcome_unknown"}}
+    completed = [(key, value) for key, value in turns.items() if key not in unresolved]
+    completed.sort(key=lambda item: (float(item[1].get("_completed_at") or 0)
+                                    if isinstance(item[1], dict) else 0, item[0]), reverse=True)
+    return {**unresolved, **dict(completed[:max_completed])}
+
+
+def persist_processed_turn_durable(session_id: str, client_message_id: str, record: Dict[str, Any]) -> None:
+    """Commit replay evidence independently of the best-effort cart snapshot write."""
+    engine = get_db_engine()
+    _ensure_table_exists(engine)
+    with engine.begin() as conn:
+        conn.execute(text('''
+            INSERT INTO ai_chat_sessions (session_id) VALUES (:session_id)
+            ON CONFLICT (session_id) DO NOTHING
+        '''), {"session_id": session_id})
+        row = conn.execute(text('''
+            SELECT checkout_prefs->'processed_order_turns' AS turns
+            FROM ai_chat_sessions WHERE session_id = :session_id FOR UPDATE
+        '''), {"session_id": session_id}).mappings().first()
+        turns = _parse_json_object(row["turns"] if row else None)
+        turns[str(client_message_id)] = {**record, "_completed_at": _now()}
+        turns = prune_processed_turns(turns)
+        conn.execute(text('''
+            UPDATE ai_chat_sessions SET
+                checkout_prefs = jsonb_set(COALESCE(checkout_prefs, '{}'::jsonb),
+                    '{processed_order_turns}', CAST(:turns AS jsonb), true),
+                updated_at = NOW()
+            WHERE session_id = :session_id
+        '''), {"session_id": session_id,
+               "turns": json.dumps(turns, ensure_ascii=False, default=str)})
+
 def _get_or_create_session(session_id: str) -> Dict[str, Any]:
     # LƯU Ý: Hàm này phải được gọi bên TRONG context manager của `_get_session_lock(session_id)`
     _evict_expired()
@@ -310,15 +359,37 @@ def replace_items_from_order_cart(
             }
         if previous_fingerprint != next_fingerprint:
             # A server cart change invalidates every decision derived from the
-            # old lines.  Do not leave a stale voucher/branch/confirmation
-            # draft that could be submitted against a different cart.
+            # old lines. Conversational input collection is different: an
+            # in-flight option/add operation still owns its stable operation
+            # id and must survive until replay proves its outcome.
+            active_pending = prefs.get("pending_action") or {}
+            pending_products = list(prefs.get("pending_products") or [])
+            preserve_fill_options = bool(
+                pending_products and active_pending.get("type") == "fill_options"
+            )
             for key in (
-                "summary_fingerprint", "checkout_action_id", "pending_action",
+                "summary_fingerprint", "checkout_action_id", "summary_amounts",
+                "checkout_action_expires_at",
                 "branch_candidates", "stock_conflicts", "voucher_decided",
-                "voucher_offer_pending", "voucher_candidates", "voucher_code",
+                "voucher_offer_pending", "voucher_candidates",
                 "discount_amount", "flow_stage",
             ):
                 prefs.pop(key, None)
+            if preserve_fill_options:
+                prefs["pending_action"] = active_pending
+            elif pending_products and not active_pending:
+                # Repair the only safe owner for staged products. A conflicting
+                # live pending action is handled by its own state transition.
+                prefs["pending_action"] = {
+                    "type": "fill_options",
+                    "params": {"count": len(pending_products)},
+                    "expires_at": time.time() + 300,
+                }
+            else:
+                prefs.pop("pending_action", None)
+            if prefs.get("voucher_code"):
+                prefs["voucher_revalidation_required"] = True
+            prefs.pop("checkout_requested", None)
             session["checkout_prefs"] = prefs
         else:
             session["checkout_prefs"] = prefs
@@ -416,7 +487,13 @@ def add_item(
 
         # Keep explicit payment/fulfillment choices, but invalidate an old summary.
         prefs = dict(session.get("checkout_prefs") or {})
-        prefs.pop("summary_fingerprint", None)
+        for key in ("summary_fingerprint", "checkout_action_id", "summary_amounts",
+                    "checkout_requested", "voucher_decided", "voucher_offer_pending",
+                    "voucher_candidates", "voucher_offer_snapshot", "pending_action"):
+            prefs.pop(key, None)
+        prefs["flow_stage"] = "CART_REVIEW"
+        if prefs.get("voucher_code"):
+            prefs["voucher_revalidation_required"] = True
         session["checkout_prefs"] = prefs
 
         _touch(session_id, session, sync_db=True)
@@ -446,7 +523,7 @@ def remove_item(session_id: str, product_id: str, size: Optional[str] = None) ->
     return get_cart(session_id)
 
 
-def clear_cart(session_id: str, order_id: Optional[str] = None) -> None:
+def clear_cart(session_id: str, order_id: Optional[str] = None, checkout_result: Optional[Dict[str, Any]] = None) -> None:
     """Xoá toàn bộ giỏ hàng của session (sau khi checkout thành công)."""
     with _get_session_lock(session_id):
         session = _get_or_create_session(session_id)
@@ -459,8 +536,9 @@ def clear_cart(session_id: str, order_id: Optional[str] = None) -> None:
         if order_id:
             session["last_order_id"] = order_id
             session["checkout_prefs"] = {
-                "completed_action_id": previous_prefs.get("checkout_action_id"),
+                "completed_action_id": previous_prefs.get("checkout_action_id") or (previous_prefs.get("checkout_submission") or {}).get("action_id"),
                 "completed_order_id": str(order_id),
+                "completed_result": checkout_result,
             }
         _touch(session_id, session, sync_db=True)
         logger.info("[CartManager] Session %s cart cleared. Last order: %s", session_id, order_id)
@@ -490,7 +568,8 @@ def set_checkout_prefs(
             changed = changed or prefs.get("delivery_type") != delivery_type
             prefs["delivery_type"] = delivery_type
         if delivery_address is not None:
-            address = str(delivery_address).strip()
+            from src.function_calling.tools.user_tools import _clean_profile_address
+            address = _clean_profile_address(delivery_address)
             changed = changed or prefs.get("delivery_address") != address
             prefs["delivery_address"] = address
         if changed:
@@ -538,7 +617,7 @@ def set_pending_action(session_id: str, action_type: str, params: Dict[str, Any]
                 "expires_at": time.time() + 300,
             }
             session["checkout_prefs"] = prefs
-            _touch(session_id, session, sync_db=False)
+            _touch(session_id, session, sync_db=True)
     except Exception as e:
         import logging
         logging.getLogger(__name__).warning("Failed to set_pending_action: %s", e)
@@ -571,7 +650,7 @@ def clear_pending_action(session_id: str) -> None:
             if "pending_action" in prefs:
                 prefs.pop("pending_action", None)
                 session["checkout_prefs"] = prefs
-                _touch(session_id, session, sync_db=False)
+                _touch(session_id, session, sync_db=True)
     except Exception as e:
         import logging
         logging.getLogger(__name__).warning("Failed to clear_pending_action: %s", e)
@@ -582,10 +661,14 @@ def reset_conversation_draft(session_id: str) -> Dict[str, Any]:
         session = _get_or_create_session(session_id)
         prefs = dict(session.get("checkout_prefs") or {})
         draft_keys = (
-            "pending_products", "checkout_requested", "voucher_decided",
+            "pending_products", "pending_product_reference", "checkout_requested", "voucher_decided",
             "voucher_offer_pending", "voucher_candidates", "summary_fingerprint",
             "checkout_action_id", "branch_candidates", "suggested_address",
             "location_address", "stock_conflicts", "pending_action",
+            "partial_delivery_address", "address_change_requested",
+            "profile_address_candidates", "location_pending", "last_product_focus",
+            "store_location", "location_source",
+            "summary_amounts", "checkout_action_expires_at",
         )
         for key in draft_keys:
             prefs.pop(key, None)
@@ -603,13 +686,14 @@ def set_pending_products(session_id: str, products: List[Dict[str, Any]], merge:
             "quantity": max(1, int(item.get("quantity") or 1)),
         }
         for item in products
-        if str(item.get("product_name") or "").strip()
+        if str(item.get("product_name") or "").strip() and str(item.get("product_id") or "").strip()
     ]
     with _get_session_lock(session_id):
         session = _get_or_create_session(session_id)
         prefs = dict(session.get("checkout_prefs") or {})
         if merge:
-            existing = list(prefs.get("pending_products") or [])
+            existing = [item for item in prefs.get("pending_products") or []
+                        if str(item.get("product_id") or "").strip()]
             existing_names = {str(i.get("product_name") or "").strip().casefold() for i in existing}
             for item in new_items:
                 if str(item.get("product_name") or "").strip().casefold() not in existing_names:
@@ -665,11 +749,14 @@ def set_stock_conflicts(session_id: str, product_names: List[str]) -> None:
     with _get_session_lock(session_id):
         session = _get_or_create_session(session_id)
         prefs = dict(session.get("checkout_prefs") or {})
+        previous = list(prefs.get("stock_conflicts") or [])
+        current = [str(name) for name in product_names]
         if product_names:
-            prefs["stock_conflicts"] = [str(name) for name in product_names]
+            prefs["stock_conflicts"] = current
         else:
             prefs.pop("stock_conflicts", None)
-        prefs.pop("summary_fingerprint", None)
+        if previous != current:
+            prefs.pop("summary_fingerprint", None)
         session["checkout_prefs"] = prefs
         _touch(session_id, session, sync_db=True)
 
@@ -679,13 +766,12 @@ def cart_fingerprint(session_id: str) -> str:
     payload = {
         "branch_id": cart.get("branch_id"),
         "checkout_prefs": {
-            key: value for key, value in cart.get("checkout_prefs", {}).items()
-            if key not in {
-                "summary_fingerprint", "pending_products", "branch_candidates",
-                "suggested_address", "location_address", "stock_conflicts",
-                "checkout_action_id", "checkout_action_expires_at",
-                "pending_action",
-            }
+            key: cart.get("checkout_prefs", {}).get(key)
+            for key in (
+                "payment_method", "delivery_type", "delivery_method",
+                "delivery_address", "voucher_code", "discount_amount",
+                "summary_amounts",
+            )
         },
         "items": sorted(
             [_order_item_payload(item) for item in cart.get("items", [])],
@@ -699,14 +785,18 @@ def cart_fingerprint(session_id: str) -> str:
     encoded = json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
-def mark_checkout_summary(session_id: str) -> Dict[str, str]:
+def mark_checkout_summary(session_id: str, reuse_existing: bool = False) -> Dict[str, str]:
     fingerprint = cart_fingerprint(session_id)
     with _get_session_lock(session_id):
         session = _get_or_create_session(session_id)
         prefs = dict(session.get("checkout_prefs") or {})
+        reuse = (reuse_existing and prefs.get("summary_fingerprint") == fingerprint
+                 and prefs.get("checkout_action_id")
+                 and float(prefs.get("checkout_action_expires_at") or 0) > time.time())
         prefs["summary_fingerprint"] = fingerprint
-        prefs["checkout_action_id"] = str(uuid.uuid4())
-        prefs["checkout_action_expires_at"] = str(time.time() + 15 * 60)
+        if not reuse:
+            prefs["checkout_action_id"] = str(uuid.uuid4())
+            prefs["checkout_action_expires_at"] = str(time.time() + 15 * 60)
         session["checkout_prefs"] = prefs
         _touch(session_id, session, sync_db=True)
         return dict(prefs)

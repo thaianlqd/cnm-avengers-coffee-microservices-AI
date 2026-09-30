@@ -1,8 +1,9 @@
 import logging
+import re
 from typing import Any, Dict
 from sqlalchemy import text
 from src.common import cart_manager
-from src.function_calling.helpers import _get_engine, _clean_dict, _check_business_hours, _require_valid_session
+from src.function_calling.helpers import _get_engine, _clean_dict, _check_business_hours
 from src.common.inventory_validation import validate_cart_at_branch
 
 logger = logging.getLogger(__name__)
@@ -80,9 +81,6 @@ def execute_ask_branch(session_id: str = "") -> Dict[str, Any]:
         return {"status": "error", "message": "Không thể lấy danh sách chi nhánh."}
 
 
-def _customer_session_id(session_id: str) -> str:
-    return str(session_id).split(":conversation:", 1)[0]
-
 TOOL_FIND_NEAREST_BRANCH = {
     "type": "function",
     "function": {
@@ -109,6 +107,11 @@ TOOL_FIND_NEAREST_BRANCH = {
 def execute_find_nearest_branch(location: str = "", session_id: str = "", target_branches: list = None) -> Dict[str, Any]:
     """Tìm chi nhánh gần nhất dựa trên geocoding và khoảng cách Haversine."""
     try:
+        from src.agents.location_parser import parse_location
+        candidate = location or (cart_manager.get_checkout_prefs(session_id).get("location_address") if session_id else "")
+        if parse_location(candidate or "").kind in {"reference", "reference_question", "change_reference"}:
+            return {"status": "need_location", "message":
+                    "Mình chưa có địa chỉ nào đang được tham chiếu. Bạn cho mình khu vực hoặc địa chỉ nhé."}
         hours_check = _check_business_hours()
         if hours_check:
             return hours_check
@@ -121,53 +124,77 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
         from utils.geo import geocode_address, haversine_distance
 
         prefs = cart_manager.get_checkout_prefs(session_id) if session_id else {}
-        target_address = location.strip() if location else str(prefs.get("location_address") or "").strip()
+        from src.agents.location_parser import clean_location_clause
+        target_address = clean_location_clause(location if location else str(prefs.get("location_address") or ""))
         user_lat, user_lon = None, None
+        distance_basis = "unavailable"
 
         with engine.connect() as conn:
             from src.function_calling.helpers import _norm
             generic_words = {"toi", "gan", "day", "nao", "nhat", "nha", "dia", "chi", "mac", "dinh", "cua", "hien", "tai"}
             norm_loc = _norm(location).lower().replace(",", " ") if location else ""
             is_generic = all(w in generic_words for w in norm_loc.split()) if norm_loc else not bool(target_address)
-            
-            if (not target_address or is_generic) and session_id:
-                valid_uid = _require_valid_session(_customer_session_id(session_id))
-                if not valid_uid:
-                    return {
-                        "status": "need_location",
-                        "message": "Bạn đang ở địa chỉ nào? Mình sẽ dùng địa chỉ đó chỉ để tìm cửa hàng gần nhất.",
-                    }
-                addr = conn.execute(text(
-                    f"""
-                    SELECT dia_chi_day_du, vi_do, kinh_do
-                    FROM {identity_schema}.dia_chi_giao_hang 
-                    WHERE ma_nguoi_dung::text = :uid AND mac_dinh = true
-                    LIMIT 1
-                    """
-                ), {"uid": valid_uid}).fetchone()
-                
-                if addr and addr[0]:
-                    cart_manager.set_checkout_context(session_id, suggested_address=str(addr[0]))
-                    return {
-                        "status": "need_address_confirmation",
-                        "suggested_address": str(addr[0]),
-                        "message": f"Mình thấy địa chỉ đã lưu là {addr[0]}. Bạn đang ở địa chỉ này hay muốn dùng một địa chỉ khác để tìm cửa hàng gần nhất?",
-                    }
 
+            if (not target_address or is_generic) and prefs.get("delivery_type") in {"MANG_DI", "TAI_CHO"}:
+                return {
+                    "status": "need_location",
+                    "message": "Bạn muốn tìm quán ở khu vực/phường/quận nào?",
+                }
+            
             if not target_address:
                 return {
                     "status": "need_location",
-                    "message": "Hệ thống AI hiện chưa được cấp quyền truy cập GPS của khách hàng, và bạn chưa có địa chỉ mặc định. Hãy hỏi khách hàng đang ở địa chỉ nào để tìm chi nhánh gần nhất."
+                    "message": "Bạn cho mình địa chỉ giao đầy đủ để tìm chi nhánh phục vụ nhé."
+                    if prefs.get("delivery_type") == "GIAO_TAN_NOI" else
+                    "Bạn cho mình khu vực/phường/quận để tìm cửa hàng gần nhất nhé."
                 }
+
+            delivery_type = prefs.get("delivery_type")
+            locality_rows = []
+            locality_ids = set()
+            area_only = not re.match(r"^\d+[A-Za-z]?(?:[/.-]\d+[A-Za-z]?)?\s", target_address)
+            if area_only and delivery_type != "GIAO_TAN_NOI" and not target_branches:
+                from src.agents.location_parser import locality_matches, normalize, infer_city_from_addresses
+                area = normalize(target_address.split(",", 1)[0])
+                if len(area) >= 4:
+                    active = conn.execute(text(f"""
+                        SELECT ma_chi_nhanh, ten_chi_nhanh, dia_chi, vi_do, kinh_do
+                        FROM {identity_schema}.chi_nhanh
+                        WHERE trang_thai = 'ACTIVE'
+                    """)).mappings().all()
+                    locality_rows = [row for row in active if locality_matches(
+                        f"{row['ten_chi_nhanh']}, {row['dia_chi'] or ''}", target_address)]
+                    locality_ids = {str(row["ma_chi_nhanh"]) for row in locality_rows}
+                    if locality_rows and not re.search(r"\b(?:thành phố|tp\.?|tỉnh)\b", target_address, re.IGNORECASE):
+                        city, ambiguous = infer_city_from_addresses(
+                            target_address, [str(row["dia_chi"] or "") for row in locality_rows])
+                        if ambiguous:
+                            return {"status": "need_city", "normalized_location": target_address, "message":
+                                    f"Mình nhận ra khu vực {target_address}, nhưng cần thêm tỉnh/thành phố để chọn đúng cửa hàng. Bạn không cần gửi số nhà vì đang lấy tại quán."}
+                        if city:
+                            target_address = f"{target_address}, {city}"
 
             if user_lat is None or user_lon is None:
                 coords = geocode_address(target_address)
                 if not coords:
-                    return {
-                        "status": "not_found",
-                        "message": f"Rất tiếc, hệ thống bản đồ không thể xác định được vị trí của '{target_address}'. Bạn có thể cung cấp địa chỉ cụ thể hơn không?"
-                    }
-                user_lat, user_lon = coords
+                    if locality_rows:
+                        positioned = [row for row in locality_rows
+                                      if row["vi_do"] is not None and row["kinh_do"] is not None]
+                        if positioned:
+                            user_lat = sum(float(row["vi_do"]) for row in positioned) / len(positioned)
+                            user_lon = sum(float(row["kinh_do"]) for row in positioned) / len(positioned)
+                            distance_basis = "area_centroid"
+                            logger.info("[AgentTools] Geocoder unavailable; ranking around exact locality branches")
+                        else:
+                            logger.info("[AgentTools] Exact locality found without coordinates; returning exact matches only")
+                    else:
+                        return {
+                            "status": "not_found",
+                            "message": f"Mình chưa xác định chính xác khu vực {target_address} trên bản đồ. Bạn cho mình thêm quận/thành phố hoặc địa chỉ cụ thể hơn nhé."
+                        }
+                else:
+                    user_lat, user_lon = coords
+                    distance_basis = "geocoded_user"
                 
             query = f"""
                 WITH ratings AS (
@@ -187,7 +214,14 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                 FROM branches_and_kiosks b
                 LEFT JOIN ratings r ON b.ma_chi_nhanh = r.ma_chi_nhanh
             """
-            rows = conn.execute(text(query)).mappings().all()
+            all_rows = conn.execute(text(query)).mappings().all()
+            # Exact administrative-component matches lead the list; nearby
+            # branches supplement them instead of being discarded.
+            rows = (
+                locality_rows + [row for row in all_rows if str(row["ma_chi_nhanh"]) not in locality_ids]
+                if user_lat is not None and user_lon is not None
+                else locality_rows
+            )
 
             if not rows:
                 return {
@@ -207,13 +241,22 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                     if not match:
                         continue
                         
-                dist = haversine_distance(user_lat, user_lon, float(r["vi_do"]), float(r["kinh_do"]))
+                dist = haversine_distance(user_lat, user_lon, float(r["vi_do"]), float(r["kinh_do"])) if user_lat is not None and user_lon is not None and r["vi_do"] is not None and r["kinh_do"] is not None else None
                 branch_dict = _clean_dict(dict(r))
-                branch_dict["khoang_cach_km"] = round(dist, 1)
+                branch_dict["khoang_cach_km"] = round(dist, 1) if dist is not None else None
+                branch_dict["distance_basis"] = distance_basis
+                branch_dict["distance_estimated"] = distance_basis == "area_centroid"
+                branch_dict["exact_area_match"] = str(r["ma_chi_nhanh"]) in locality_ids
                 branches.append(branch_dict)
 
-            branches.sort(key=lambda x: x["khoang_cach_km"])
-            delivery_type = prefs.get("delivery_type")
+            branches.sort(key=lambda x: (
+                not x.get("exact_area_match"),
+                x["khoang_cach_km"] is None,
+                x["khoang_cach_km"] or 0,
+                x["ten_chi_nhanh"],
+            ))
+            logger.debug("[BranchSearch] location_basis=%s exact_match_count=%d geocode_basis=%s",
+                         "exact_locality" if locality_rows else "geocode", len(locality_rows), distance_basis)
             cart = cart_manager.get_cart(session_id) if session_id else {"items": []}
             inventory_schema = os.getenv("INVENTORY_SCHEMA", "inventory")
             eligible_branches = []
@@ -273,6 +316,8 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                         "branch_name": item["ten_chi_nhanh"],
                         "address": item.get("dia_chi"),
                         "distance_km": item.get("khoang_cach_km"),
+                        "distance_basis": item.get("distance_basis"),
+                        "distance_estimated": item.get("distance_estimated"),
                         "availability_status": item.get("availability_status"),
                         "unavailable_products": item.get("unavailable_products") or [],
                         "unverified_products": item.get("unverified_products") or [],
@@ -285,16 +330,24 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
 
             nearest_dist = top_branches[0]["khoang_cach_km"]
             
-            msg = f"Dựa vào địa chỉ của khách ({target_address}), đây là chi nhánh gần nhất. BẮT BUỘC: Bạn PHẢI đọc TÊN CỤ THỂ của chi nhánh và BÁO SỐ KM (khoang_cach_km) kèm chữ '(đường chim bay)' cho khách."
+            msg = (f"Các cửa hàng có địa chỉ thuộc khu vực {target_address}; chưa có tọa độ khách đáng tin nên không tính khoảng cách."
+                   if nearest_dist is None else
+                   f"Khoảng cách chỉ ước tính theo khu vực {target_address}, không phải khoảng cách từ vị trí của khách."
+                   if distance_basis == "area_centroid" else
+                   f"Dựa vào vị trí đã xác định của khách ({target_address}), đây là chi nhánh gần nhất. Có thể báo số km đường chim bay.")
             
-            if nearest_dist > 15:
-                msg += f" WARNING: Chi nhánh gần nhất cũng cách tới {nearest_dist}km. Hãy báo rõ cho khách là khu vực của khách khá xa các chi nhánh hiện tại."
+            if nearest_dist is not None and nearest_dist > 15:
+                msg += (f" Chi nhánh gần nhất ước tính cách tâm khu vực khoảng {nearest_dist}km."
+                        if distance_basis == "area_centroid" else
+                        f" Chi nhánh gần nhất cách vị trí đã xác định khoảng {nearest_dist}km.")
 
             return {
                 "status": "need_branch_selection" if delivery_type in {"MANG_DI", "TAI_CHO"} else "ok",
                 "branches": top_branches,
+                "normalized_location": target_address,
+                "location_basis": "exact_locality" if locality_rows else distance_basis,
                 "message": (
-                    msg + " Khách dùng tại chỗ/mang đi nên hãy liệt kê đủ tối đa 5 cửa hàng theo khoảng cách, ghi rõ cửa hàng còn đủ món và món nào bị thiếu; chỉ cửa hàng còn đủ món mới được chọn."
+                    msg + " Khách dùng tại chỗ/mang đi nên hãy liệt kê tối đa 5 cửa hàng trong khu vực, ghi rõ cửa hàng còn đủ món và món nào bị thiếu; chỉ cửa hàng còn đủ món mới được chọn."
                     if delivery_type in {"MANG_DI", "TAI_CHO"} else msg
                 )
             }

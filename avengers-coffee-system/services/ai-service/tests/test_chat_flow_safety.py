@@ -266,7 +266,7 @@ def test_new_conversation_state_namespace_does_not_inherit_pending_products():
 
     old_session = _conversation_scope_session_id("user-1", "conversation-old")
     new_session = _conversation_scope_session_id("user-1", "conversation-new")
-    cart_manager.set_pending_products(old_session, [{"product_name": "Bánh cũ"}])
+    cart_manager.set_pending_products(old_session, [{"product_id": "old", "product_name": "Bánh cũ"}])
 
     assert cart_manager.get_checkout_prefs(new_session).get("pending_products") in (None, [])
     assert cart_manager.get_checkout_prefs(old_session)["pending_products"][0]["product_name"] == "Bánh cũ"
@@ -342,6 +342,7 @@ def test_checkout_quote_does_not_mutate_cart_or_invalidate_summary(monkeypatch):
         },
     )
 
+    cart_manager.set_checkout_context(session, voucher_decided=True)
     checkout = execute_request_checkout(session)
     assert checkout["status"] == "require_confirmation"
     assert checkout["order_summary"]["items"][0]["line_total"] == 105000
@@ -358,18 +359,22 @@ def test_checkout_quote_does_not_mutate_cart_or_invalidate_summary(monkeypatch):
     assert cart_manager.get_checkout_prefs(session).get("summary_fingerprint")
 
 
-def test_applying_same_voucher_is_idempotent(monkeypatch):
+def test_applying_same_voucher_revalidates_without_stacking_discount(monkeypatch):
     session = "session-voucher-idempotent"
     cart_manager.add_item(session, "1", "Coffee", 100000)
     cart_manager.set_checkout_context(session, voucher_code="SAVE10", discount_amount=10000)
-    monkeypatch.setattr(
-        "src.function_calling.tools.voucher_tools.requests.post",
-        lambda *_args, **_kwargs: pytest.fail("same voucher must not be validated twice"),
-    )
-
+    monkeypatch.setattr("src.function_calling.tools.cart_tools.sync_authoritative_cart", lambda sid: cart_manager.get_cart(sid))
+    from types import SimpleNamespace
+    calls = []
+    def validate(*args, **kwargs):
+        calls.append(kwargs["json"])
+        return SimpleNamespace(ok=True, json=lambda: {"so_tien_giam": 10000})
+    monkeypatch.setattr("src.function_calling.tools.voucher_tools.requests.post", validate)
     result = execute_apply_voucher(session, "save10")
-    assert result["status"] == "already_applied"
+    assert result["status"] == "ok"
     assert result["final_total"] == 90000
+    assert len(calls) == 1
+    assert cart_manager.get_checkout_prefs(session)["discount_amount"] == 10000
 
 
 def test_confirmation_phrase_must_be_plain_and_unambiguous():
@@ -527,6 +532,7 @@ def test_future_dine_in_time_is_not_silently_discarded(monkeypatch):
 
 
 def test_additional_no_option_product_is_written_before_bot_claims_success(monkeypatch):
+    from src.agents import order_flow_graph
     session = "session-additional-product"
     cart_manager.add_item(session, "1", "Bánh cũ", 119000)
     cart_manager.set_branch(session, "BR-1", "Cửa hàng 1")
@@ -539,12 +545,15 @@ def test_additional_no_option_product_is_written_before_bot_claims_success(monke
 
     monkeypatch.setattr(
         "src.function_calling.tools.product_tools.execute_get_product_options",
-        lambda _name: {
+        lambda _name=None, **_kwargs: {
             "status": "ok",
             "product_name": "Bánh Trung Thu Matcha",
             "message": "Sản phẩm Bánh Trung Thu Matcha không có tùy chọn nào. Cứ đặt mặc định.",
         },
     )
+    monkeypatch.setattr(order_flow_graph, "_load_active_product_targets", lambda: [
+        {"product_id": "2", "product_name": "Bánh Trung Thu Matcha", "category": "food"},
+    ])
     monkeypatch.setattr(
         "src.function_calling.tools.product_tools.execute_check_price_and_stock",
         lambda *_args, **_kwargs: {
@@ -618,7 +627,7 @@ def test_bot_cannot_claim_cart_add_without_successful_write(monkeypatch):
 
     result = agent_service.run_agent("session-false-add", "xử lý món đó giúp tôi", history=[])
 
-    assert "chưa ghi được" in result["reply"].lower()
+    assert "chưa được thêm" in result["reply"].lower()
 
 
 def test_non_purchase_question_does_not_expose_add_to_cart_tool(monkeypatch):
@@ -700,7 +709,7 @@ def test_exact_cart_regression_browsing_matcha_never_replays_add_to_cart(monkeyp
     monkeypatch.setattr(cart_tools, "sync_authoritative_cart", order_service_get)
     monkeypatch.setattr(cart_tools, "execute_add_to_cart", order_service_add)
     monkeypatch.setattr(product_tools, "execute_get_recommendations", recommendations)
-    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name: {
+    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name=None, **_kwargs: {
         "status": "ok", "options": {"Kích thước": ["Nhỏ"]},
     })
     monkeypatch.setattr(product_tools, "execute_check_price_and_stock", lambda **kwargs: {
@@ -711,7 +720,7 @@ def test_exact_cart_regression_browsing_matcha_never_replays_add_to_cart(monkeyp
     run_order_flow(session, "tôi muốn mua bánh và nước", client_message_id="menu-turn")
     added = run_order_flow(
         session,
-        "thêm nước số 2 với bánh số 1",
+        "thêm nước số 3 với bánh số 1",
         client_message_id="selection-turn",
     )
     assert [row["ma_san_pham"] for row in server_rows] == ["D2", "F1"]
@@ -812,7 +821,7 @@ def test_combined_numbered_order_and_review_keeps_both_products_and_shows_option
     )
     monkeypatch.setattr(
         "src.function_calling.tools.product_tools.execute_get_product_options",
-        lambda name: {
+        lambda name=None, **_kwargs: {
             "status": "ok",
             "product_name": name,
             "options": {"Kích thước": ["Vừa"], "Topping": ["Hạt Sen", "Sữa Yến Mạch"], "Lượng đá": ["Ít đá", "Đá riêng"], "Độ ngọt": ["Ít ngọt", "Không ngọt"]},
@@ -827,12 +836,8 @@ def test_combined_numbered_order_and_review_keeps_both_products_and_shows_option
     )
 
     assert len([entry for entry in result["tool_calls_log"] if entry["tool"] == "get_product_insights"]) == 2
-    assert "Lượng đá: Ít đá, Đá riêng" in result["reply"]
-    assert "Bánh Trung Thu Thập Cẩm Bát Bửu" in result["reply"]
-    pending = cart_manager.get_checkout_prefs("session-combined-review-order")["pending_products"]
-    assert [item["product_name"] for item in pending] == [
-        "1 Lít Matcha Latte Tây Bắc", "Bánh Trung Thu Thập Cẩm Bát Bửu"
-    ]
+    assert "xác minh đúng sản phẩm" in result["reply"]
+    assert not cart_manager.get_checkout_prefs("session-combined-review-order").get("pending_products")
 
 
 def test_numbered_voucher_choice_never_falls_through_to_product_parser(monkeypatch):
@@ -865,7 +870,7 @@ def test_numbered_voucher_choice_never_falls_through_to_product_parser(monkeypat
     assert result["tool_calls_log"][0]["args"]["voucher_code"] == "SECOND20"
 
 
-def test_best_voucher_is_selected_once_and_prompts_both_checkout_choices(monkeypatch):
+def test_best_voucher_is_selected_once_and_waits_for_checkout_request(monkeypatch):
     session = "session-best-voucher"
     cart_manager.add_item(session, "1", "Coffee", 100000)
     cart_manager.set_checkout_context(
@@ -889,8 +894,10 @@ def test_best_voucher_is_selected_once_and_prompts_both_checkout_choices(monkeyp
     apply_logs = [entry for entry in result["tool_calls_log"] if entry.get("tool") == "apply_voucher"]
     assert len(apply_logs) == 1
     assert apply_logs[0]["args"]["voucher_code"] == "BEST50"
-    assert "Hình thức nhận hàng" in result["reply"]
-    assert "Phương thức thanh toán" in result["reply"]
+    assert "Giỏ hàng của bạn đã hoàn tất" in result["reply"]
+    assert "Hình thức nhận hàng" not in result["reply"]
+    assert "Phương thức thanh toán" not in result["reply"]
+    assert not cart_manager.get_checkout_prefs(session).get("checkout_requested")
     assert not cart_manager.get_checkout_prefs(session).get("pending_products")
 
 
@@ -923,7 +930,7 @@ def test_inventory_requires_a_row_and_enough_quantity():
             return FakeConnection(self.rows)
 
     result = validate_items_at_branch(
-        FakeEngine({1: (1, True)}),
+        FakeEngine({1: (True,)}),
         "BR-1",
         [
             {"product_id": "1", "product_name": "Cà phê", "quantity": 2},
@@ -931,9 +938,11 @@ def test_inventory_requires_a_row_and_enough_quantity():
         ],
     )
 
-    # Missing rows inherit normal menu availability; the explicit row still
-    # blocks because one unit cannot satisfy quantity two.
-    assert result == {"unavailable": ["Cà phê"], "unverified": []}
+    # Quantity is not an availability signal for chat checkout.
+    assert result == {"unavailable": [], "unverified": []}
+    paused = validate_items_at_branch(FakeEngine({1: (False,)}), "BR-1",
+        [{"product_id": "1", "product_name": "Cà phê", "quantity": 1}])
+    assert paused == {"unavailable": ["Cà phê"], "unverified": []}
 
 
 def test_branch_selection_rejects_unknown_inventory_until_stock_is_confirmed(monkeypatch):
@@ -1078,10 +1087,10 @@ def test_pickup_lists_five_nearest_and_marks_d9_matcha_unavailable(monkeypatch):
 def test_pending_multi_product_options_are_remembered_and_added_together(monkeypatch):
     session = "session-complete-pending"
     cart_manager.set_pending_products(session, [
-        {"product_name": "Matcha", "category": "drink", "quantity": 1, "options": {"groups": {
+        {"product_id": "8", "product_name": "Matcha", "category": "drink", "quantity": 1, "options": {"groups": {
             "Kích thước": ["Vừa"], "Topping": ["Hạt Sen", "Sữa Yến Mạch"], "Lượng đá": ["Ít đá", "Đá riêng"],
         }}},
-        {"product_name": "Bánh Bát Bửu", "category": "food", "quantity": 1, "options": {"groups": {}}},
+        {"product_id": "9", "product_name": "Bánh Bát Bửu", "category": "food", "quantity": 1, "options": {"groups": {}}},
     ])
     monkeypatch.setattr(
         "src.function_calling.tools.product_tools.execute_check_price_and_stock",
@@ -1193,7 +1202,7 @@ def test_drink_choice_with_cake_request_does_not_trigger_stale_branch(monkeypatc
 
     monkeypatch.setattr(
         "src.function_calling.tools.product_tools.execute_get_product_options",
-        lambda _name: {
+        lambda _name=None, **_kwargs: {
             "status": "ok",
             "product_name": "Lít Matcha Latte Tây Bắc",
             "message": "Các tùy chọn là: Kích thước: [Vừa, Lớn]",
@@ -1215,6 +1224,5 @@ def test_drink_choice_with_cake_request_does_not_trigger_stale_branch(monkeypatc
 
     assert "Highlands Coffee D9 Tân Phú" not in res["reply"]
     assert "Đã ghi nhận chi nhánh" not in res["reply"]
-    assert "Lít Matcha Latte Tây Bắc" in res["reply"]
-    assert "Bánh Trung Thu Cà Phê Lava" in res["reply"]
-    assert any(entry["tool"] == "get_recommendations" for entry in res["tool_calls_log"])
+    assert not cart_manager.get_checkout_prefs(session).get("pending_products")
+    assert not any(entry["tool"] == "add_to_cart" for entry in res["tool_calls_log"])

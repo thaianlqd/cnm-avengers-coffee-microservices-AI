@@ -4,12 +4,14 @@ import { JwtModule } from '@nestjs/jwt';
 import type { StringValue } from 'ms';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Client } from 'pg';
+import { assertProductionSecrets, secretWithDevDefault } from './config/runtime-secrets';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
 import { Branch } from './modules/user/branch.entity';
 import { DeliveryAddress } from './modules/user/delivery-address.entity';
 import { Promotion } from './modules/user/promotion.entity';
 import { PromotionUsage } from './modules/user/promotion-usage.entity';
+import { OrderVoucherClaim } from './modules/user/order-voucher-claim.entity';
 import { User } from './modules/user/user.entity';
 import { MembershipConfig } from './modules/user/membership-config.entity';
 import { KhuVuc } from './modules/user/khu-vuc.entity';
@@ -31,6 +33,7 @@ import { ThuChi } from './modules/franchise/entities/thu-chi.entity';
 import { WalletTransaction } from './modules/user/wallet-transaction.entity';
 
 const identitySchema = process.env.DB_SCHEMA || 'identity';
+assertProductionSecrets(['JWT_SECRET', 'INTERNAL_SERVICE_TOKEN', 'VNPAY_TMN_CODE', 'VNPAY_HASH_SECRET']);
 const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
 
 @Module({
@@ -54,7 +57,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
           database,
           ssl: sslConfig,
           schema: identitySchema,
-          entities: [User, DeliveryAddress, Branch, Promotion, PromotionUsage, MembershipConfig, ComboNguyenLieu, HoSoDangKy, Kiosk, HopDongNhuongQuyen, DonMuaCombo, CongNo, RoyaltyHangThang, KetQuaDoiSoat, BienBanViPham, AuditLog, KhuVuc, ThuChi, WalletTransaction],
+          entities: [User, DeliveryAddress, Branch, Promotion, PromotionUsage, OrderVoucherClaim, MembershipConfig, ComboNguyenLieu, HoSoDangKy, Kiosk, HopDongNhuongQuyen, DonMuaCombo, CongNo, RoyaltyHangThang, KetQuaDoiSoat, BienBanViPham, AuditLog, KhuVuc, ThuChi, WalletTransaction],
           extra: {
             max: 2,
             connectionTimeoutMillis: 10000,
@@ -67,7 +70,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
     }),
     JwtModule.register({
       global: true,
-      secret: process.env.JWT_SECRET || 'avengers-jwt-secret',
+      secret: secretWithDevDefault('JWT_SECRET', 'test-only-jwt-secret'),
       signOptions: {
         expiresIn: jwtExpiresIn,
       },

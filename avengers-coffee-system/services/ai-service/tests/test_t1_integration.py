@@ -88,7 +88,7 @@ def test_t1_integration_fill_options_lifecycle(t1_env_on):
             "options": {"Size": ["Vừa", "Lớn"], "Đá": ["Bình thường", "Ít đá"]}
         }
         with patch("src.agents.agent_service._resolve_numbered_product_choices") as mock_resolve:
-            mock_resolve.return_value = [{"product_name": "Cà Phê Sữa", "category": "drink"}]
+            mock_resolve.return_value = [{"product_id": "P1", "product_name": "Cà Phê Sữa", "category": "drink"}]
             # Cần mock _parse_option_groups nếu nó có parse
             _run_agent_impl(session_id, "món số 1", history=[{"role": "assistant", "content": "1. Cà Phê Sữa"}])
             
@@ -270,7 +270,8 @@ def test_t1_integration_select_voucher_clear_when_none_found_before_checkout(t1_
         mock_get_vouchers.assert_called_once()
         pending = cart_manager.get_pending_action(session_id)
         assert pending is None, "pending_action must be cleared when no vouchers found before checkout"
-        assert "phương thức thanh toán nhé" in result.get("reply", ""), "Must return missing_prompt from _is_plain_confirmation block (line 1407/1447)"
+        assert "Giỏ hàng của bạn đã hoàn tất" in result.get("reply", "")
+        assert not cart_manager.get_checkout_prefs(session_id).get("checkout_requested")
 
 def test_t1_integration_ask_more_items_lifecycle(t1_env_on):
     session_id = "test-t1-ask-more-items"
@@ -285,7 +286,7 @@ def test_t1_integration_ask_more_items_lifecycle(t1_env_on):
     assert pending is not None
     assert pending["type"] == "ask_more_items"
     
-    # 2. CLEAR qua LLM add_to_cart thành công
+    # 2. A pending context must never delegate a cart write to the free agent.
     with patch("src.agents.agent_service.groq_agent_chat") as mock_groq, \
          patch("src.function_calling.tools.cart_tools.execute_add_to_cart") as mock_add2:
         mock_add2.return_value = {"status": "ok", "cart": {"total_price": 60000, "items": []}}
@@ -295,7 +296,10 @@ def test_t1_integration_ask_more_items_lifecycle(t1_env_on):
             "error": None
         }
         res = _run_agent_impl(session_id, "thêm cafe", history=[])
-        assert cart_manager.get_pending_action(session_id) is None, "Phải clear khi add_to_cart qua LLM thành công"
+        mock_groq.assert_not_called()
+        mock_add2.assert_not_called()
+        assert cart_manager.get_pending_action(session_id)["type"] == "ask_more_items"
+        assert not res.get("checkout_payload")
         
     # 3. SET lại và CLEAR qua no_more_items
     cart_manager.set_pending_action(session_id, "ask_more_items", {})

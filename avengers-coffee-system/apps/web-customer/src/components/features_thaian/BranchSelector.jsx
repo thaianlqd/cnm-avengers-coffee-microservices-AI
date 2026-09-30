@@ -25,7 +25,7 @@ export default function BranchSelector({ branches, selectedBranch, onChange }) {
 
   const selected = branches?.find(
     b => (b.ma_chi_nhanh || b.co_so_ma || b.branch_code) === selectedBranch
-  ) || branches?.[0];
+  );
 
   const normalizedQuery = normalizeSearch(query.trim());
   const filteredBranches = (branches || []).filter((branch) => {

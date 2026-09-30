@@ -18,6 +18,7 @@ import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import { MailSenderService } from '../email/mail-sender.service';
+import { secretWithDevDefault } from '../../config/runtime-secrets';
 
 @Injectable()
 export class FranchiseService {
@@ -1059,8 +1060,8 @@ export class FranchiseService {
   }
 
   taoVnPayUrl(maDonHang: string, soTien: number, ipAddr: string = '127.0.0.1') {
-    const tmnCode = process.env.VNPAY_TMN_CODE || 'MEBLXEDU';
-    const secretKey = process.env.VNPAY_HASH_SECRET || 'T718SPDGIGQSKGM98VCSNAF70M9X93MC';
+    const tmnCode = secretWithDevDefault('VNPAY_TMN_CODE', 'test-vnpay-terminal');
+    const secretKey = secretWithDevDefault('VNPAY_HASH_SECRET', 'test-only-vnpay-signing-secret');
     const vnpUrl = process.env.VNPAY_URL || 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html';
     const returnUrl = (process.env.IDENTITY_SERVICE_URL || 'http://localhost:3001') + '/franchise/vnpay/return';
 
@@ -1097,7 +1098,7 @@ export class FranchiseService {
   }
 
   async ketQuaVnpay(query: Record<string, string>) {
-    const secretKey = process.env.VNPAY_HASH_SECRET || 'T718SPDGIGQSKGM98VCSNAF70M9X93MC';
+    const secretKey = secretWithDevDefault('VNPAY_HASH_SECRET', 'test-only-vnpay-signing-secret');
     const vnp_SecureHash = query['vnp_SecureHash'];
     delete query['vnp_SecureHash'];
     delete query['vnp_SecureHashType'];
@@ -2161,5 +2162,3 @@ export class FranchiseService {
     }
   }
 }
-
-
