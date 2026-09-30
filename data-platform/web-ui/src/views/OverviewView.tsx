@@ -43,18 +43,11 @@ export const OverviewView: React.FC = () => {
 
   // 1. Time-series data for Area Chart from real revenue daily
   const revenueDaily = marts?.revenue_daily || [];
-  const revenueTimeSeries = revenueDaily.length > 0 
-    ? revenueDaily.slice(-10).map((r: any) => ({
-        label: String(r.date).slice(-5).replace('/', '-'),
-        value: Number(r.revenue) || 0,
-        secondaryValue: (Number(r.revenue) || 0) * 0.9,
-      }))
-    : [
-        { label: '01-09', value: 171000000, secondaryValue: 150000000 },
-        { label: '10-09', value: 175000000, secondaryValue: 160000000 },
-        { label: '20-09', value: 180000000, secondaryValue: 165000000 },
-        { label: '30-09', value: 172000000, secondaryValue: 155000000 },
-      ];
+  const revenueTimeSeries = revenueDaily.map((r: any) => ({
+    label: String(r.date).slice(-5).replace('/', '-'),
+    value: Number(r.revenue) || 0,
+    secondaryValue: (Number(r.revenue) || 0) * 0.9,
+  }));
 
   // 2. Donut slices: Real Category Sales from marts (Support both Parent groups & Sub-categories)
   const palette = ['#059669', '#0284c7', '#d97706', '#8b5cf6', '#dc2626', '#0d9488', '#ea580c'];
@@ -248,7 +241,7 @@ export const OverviewView: React.FC = () => {
               <p className="text-[11px] text-slate-400 mt-0.5">Biểu đồ đường biểu diễn biến động doanh số 10 ngày gần nhất</p>
             </div>
             <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200 self-start sm:self-auto">
-              Tăng trưởng ổn định
+              {revenueTimeSeries.length > 0 ? 'Tăng trưởng ổn định' : 'Chưa phát sinh giao dịch'}
             </span>
           </div>
           <div className="flex-1 w-full pt-1">
@@ -294,11 +287,11 @@ export const OverviewView: React.FC = () => {
               <DonutChart 
                 data={categorySlices} 
                 centerLabel="Tổng DT" 
-                centerValue={`${(totalRevenue / 1000000000).toFixed(2)}B`} 
+                centerValue={totalRevenue >= 1000000000 ? `${(totalRevenue / 1000000000).toFixed(2)}B` : totalRevenue > 0 ? `${(totalRevenue / 1000000).toFixed(1)}M` : '0 đ'} 
                 size={160} 
               />
             ) : (
-              <div className="text-xs text-slate-400 text-center py-8">Đang cập nhật danh mục...</div>
+              <div className="text-xs text-slate-400 text-center py-8">Chưa có dữ liệu danh mục trong kỳ</div>
             )}
           </div>
         </div>

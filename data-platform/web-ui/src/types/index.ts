@@ -1,6 +1,7 @@
 export type ViewTab = 
   | 'overview' 
   | 'analytics' 
+  | 'ai_assistant'
   | 'explorer' 
   | 'stores' 
   | 'customers' 
@@ -11,8 +12,7 @@ export type AnalyticsSubTab =
   | 'revenue' 
   | 'stores' 
   | 'customers' 
-  | 'products' 
-  | 'ai_assistant';
+  | 'products';
 
 
 export interface WarehouseMetrics {

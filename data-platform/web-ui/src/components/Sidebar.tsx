@@ -54,25 +54,12 @@ export const Sidebar: React.FC = () => {
       <nav className="flex-1 px-2.5 py-3 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isAiTab = item.id === 'ai_assistant';
-          const isActive = isAiTab 
-            ? activeTab === 'analytics' && analyticsSubTab === 'ai_assistant'
-            : activeTab === item.id && (!isAiTab && (item.id !== 'analytics' || analyticsSubTab !== 'ai_assistant'));
+          const isActive = activeTab === item.id;
           
           return (
             <button
               key={item.id}
-              onClick={() => {
-                if (isAiTab) {
-                  setActiveTab('analytics');
-                  setAnalyticsSubTab('ai_assistant');
-                } else {
-                  setActiveTab(item.id as ViewTab);
-                  if (item.id === 'analytics' && analyticsSubTab === 'ai_assistant') {
-                    setAnalyticsSubTab('revenue');
-                  }
-                }
-              }}
+              onClick={() => setActiveTab(item.id as ViewTab)}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-colors cursor-pointer ${
                 isActive
                   ? 'bg-emerald-600 text-white font-semibold shadow-sm'

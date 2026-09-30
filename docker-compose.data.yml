@@ -3,7 +3,7 @@ services:
   # ANALYTICS DATABASE — PostgreSQL riêng cho Data Platform
   # =========================================
   postgres-analytics:
-    image: postgres:16
+    image: pgvector/pgvector:pg16
     container_name: avengers_analytics_db
     restart: unless-stopped
     environment:

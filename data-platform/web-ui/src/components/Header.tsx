@@ -19,6 +19,7 @@ export const Header: React.FC = () => {
     switch (activeTab) {
       case 'overview': return 'Tổng quan';
       case 'analytics': return 'Báo cáo và Phân tích';
+      case 'ai_assistant': return 'Trợ lý AI Phân tích Dữ liệu';
       case 'explorer': return 'Khám phá dữ liệu';
       case 'system': return 'Quản trị hệ thống';
       default: return 'Bảng điều khiển';

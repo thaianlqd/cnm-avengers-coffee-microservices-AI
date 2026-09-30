@@ -7,9 +7,10 @@ import { EventDetailModal } from './components/EventDetailModal';
 import { PipelineLogModal } from './components/PipelineLogModal';
 import { TablePreviewModal } from './components/TablePreviewModal';
 
-// 4 Primary Views matching the updated clean navigation
+// 5 Primary Views matching the updated clean navigation
 import { OverviewView } from './views/OverviewView';
 import { AnalyticsView } from './views/AnalyticsView';
+import { AiAssistantView } from './views/AiAssistantView';
 import { DataExplorerView } from './views/DataExplorerView';
 import { SystemAdminView } from './views/SystemAdminView';
 
@@ -35,6 +36,8 @@ export const App: React.FC = () => {
         return <OverviewView />;
       case 'analytics':
         return <AnalyticsView />;
+      case 'ai_assistant':
+        return <AiAssistantView />;
       case 'explorer':
         return <DataExplorerView />;
       case 'system':

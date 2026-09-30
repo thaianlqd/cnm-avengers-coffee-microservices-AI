@@ -5,73 +5,11 @@ import datetime
 from decimal import Decimal
 from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, HTTPException
-from db import get_db_conn, GEMINI_API_KEY, GROQ_API_KEY, ANTHROPIC_API_KEY
+from psycopg2.extras import RealDictCursor
+from db import get_db_conn, GEMINI_API_KEY, GROQ_API_KEY
 from common import AiTextToReportRequest, AiSummarizeRequest
 
 router = APIRouter(prefix="/api/ai", tags=["AI Data Assistant"])
-
-DATABASE_SCHEMA_CONTEXT = """
-You are an expert Data Architect & Business Intelligence Analyst for Avengers Coffee (BeanSync) chain data warehouse.
-The real PostgreSQL analytics warehouse contains the following schemas and tables:
-1. orders.don_hang (
-     ma_don_hang UUID PRIMARY KEY,
-     ngay_tao TIMESTAMP WITH TIME ZONE,
-     co_so_ma VARCHAR(50) REFERENCES identity.chi_nhanh(ma_chi_nhanh),
-     ma_nguoi_dung TEXT,
-     ten_khach_hang VARCHAR(255),
-     guest_phone VARCHAR(50),
-     guest_email VARCHAR(255),
-     tong_tien NUMERIC,
-     trang_thai_don_hang VARCHAR(50) ['HOAN_THANH', 'DANG_GIAO', 'DA_HUY'],
-     phuong_thuc_thanh_toan VARCHAR(50) ['TIEN_MAT', 'MOMO', 'VNPAY', 'NGAN_HANG_QR', 'CHUYEN_KHOAN'],
-     loai_don_hang VARCHAR(50) ['TAI_QUAY', 'MANG_DI', 'GIAO_TAN_NOI']
-   )
-2. orders.chi_tiet_don_hang (
-     ma_chi_tiet BIGINT PRIMARY KEY,
-     ma_don_hang UUID REFERENCES orders.don_hang,
-     ma_san_pham VARCHAR(50) REFERENCES menu.san_pham(ma_san_pham),
-     ten_san_pham VARCHAR(255),
-     so_luong INT,
-     gia_ban NUMERIC
-   )
-3. menu.san_pham (
-     ma_san_pham VARCHAR(50) PRIMARY KEY,
-     ten_san_pham VARCHAR(255),
-     ma_danh_muc VARCHAR(50) REFERENCES menu.danh_muc,
-     gia_ban NUMERIC
-   )
-4. menu.danh_muc (
-     ma_danh_muc VARCHAR(50) PRIMARY KEY,
-     ten_danh_muc VARCHAR(255),
-     ma_danh_muc_cha VARCHAR(50)
-   )
-5. identity.chi_nhanh (
-     ma_chi_nhanh VARCHAR(50) PRIMARY KEY,
-     ten_chi_nhanh VARCHAR(255),
-     thanh_pho VARCHAR(100),
-     dia_chi TEXT,
-     trang_thai VARCHAR(20) ['ACTIVE', 'INACTIVE']
-   )
-6. identity.nguoi_dung (
-     ma_nguoi_dung UUID PRIMARY KEY,
-     ho_ten VARCHAR(255),
-     so_dien_thoai VARCHAR(20),
-     email VARCHAR(255),
-     diem_loyalty INT,
-     vai_tro VARCHAR(50)
-   )
-7. gold.revenue_daily (date DATE, total_orders INT, revenue NUMERIC)
-8. gold.top_products (ma_san_pham VARCHAR, ten_san_pham VARCHAR, total_quantity INT, total_revenue NUMERIC)
-9. gold.customer_segments (segment VARCHAR, count INT, avg_ltv NUMERIC)
-10. gold.stores_overview (store_code VARCHAR, store_name VARCHAR, city VARCHAR, total_orders INT, total_revenue NUMERIC, aov NUMERIC)
-
-STRICT RULES FOR SQL GENERATION:
-1. ONLY generate safe read-only SELECT statements. Never generate UPDATE, DELETE, DROP, ALTER, INSERT.
-2. For dates: CURRENT_DATE is the current date. When user asks about today ("hôm nay"), query `DATE(d.ngay_tao) = CURRENT_DATE`.
-3. When calculating revenue, filter by `trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')` unless analyzing cancellations.
-4. Always use COALESCE(..., 0) for sums and calculations.
-5. Limit the table query to at most 20 rows.
-"""
 
 
 def json_serial(obj):
@@ -83,13 +21,34 @@ def json_serial(obj):
     return str(obj)
 
 
+def get_gemini_embedding(text: str) -> List[float]:
+    """Generates 768-dim semantic embedding via gemini-embedding-001."""
+    if not GEMINI_API_KEY or not text.strip():
+        return [0.0] * 768
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key={GEMINI_API_KEY}"
+    payload = {
+        "content": {"parts": [{"text": text[:3000]}]},
+        "outputDimensionality": 768,
+    }
+    try:
+        res = requests.post(url, json=payload, timeout=10)
+        if res.status_code == 200:
+            return res.json().get("embedding", {}).get("values", [0.0] * 768)
+        else:
+            print(f"Embedding API error {res.status_code}: {res.text[:150]}")
+            return [0.0] * 768
+    except Exception as e:
+        print(f"Embedding request exception: {e}")
+        return [0.0] * 768
+
+
 def call_gemini_api(prompt_text: str, system_instruction: str = "") -> Optional[Dict[str, Any]]:
     """Calls real Google Gemini API using GEMINI_API_KEY from environment."""
     if not GEMINI_API_KEY:
-        print("GEMINI_API_KEY is not configured in environment.")
         return None
 
-    models_to_try = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.5-flash-lite"]
+    models_to_try = ["gemini-2.5-flash", "gemini-flash-latest"]
     for model in models_to_try:
         try:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
@@ -101,11 +60,10 @@ def call_gemini_api(prompt_text: str, system_instruction: str = "") -> Optional[
                     "responseMimeType": "application/json"
                 }
             }
-            res = requests.post(url, json=payload, timeout=12)
+            res = requests.post(url, json=payload, timeout=15)
             if res.ok:
                 resp_json = res.json()
                 raw_text = resp_json["candidates"][0]["content"]["parts"][0]["text"].strip()
-                # Remove possible markdown fences if any
                 if raw_text.startswith("```json"):
                     raw_text = raw_text[7:]
                 if raw_text.startswith("```"):
@@ -123,29 +81,33 @@ def call_gemini_api(prompt_text: str, system_instruction: str = "") -> Optional[
 
 
 def call_groq_api(prompt_text: str, system_instruction: str = "") -> Optional[Dict[str, Any]]:
-    """Calls Groq API as backup if Gemini is unavailable."""
+    """Calls Groq API with ultra-fast models openai/gpt-oss-120b and qwen/qwen3.8-27b."""
     if not GROQ_API_KEY:
         return None
 
-    models = ["llama-3.1-8b-instant", "llama3-70b-8192", "mixtral-8x7b-32768"]
+    models = ["openai/gpt-oss-120b", "qwen/qwen3.8-27b"]
     for m in models:
         try:
             url = "https://api.groq.com/openai/v1/chat/completions"
             headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
+            messages = []
+            if system_instruction:
+                messages.append({"role": "system", "content": system_instruction})
+            messages.append({"role": "user", "content": prompt_text})
+
             payload = {
                 "model": m,
-                "messages": [
-                    {"role": "system", "content": system_instruction},
-                    {"role": "user", "content": prompt_text}
-                ],
+                "messages": messages,
                 "response_format": {"type": "json_object"},
-                "temperature": 0.2
+                "temperature": 0.15
             }
-            res = requests.post(url, json=payload, headers=headers, timeout=10)
+            res = requests.post(url, json=payload, headers=headers, timeout=12)
             if res.ok:
                 resp_json = res.json()
                 raw_text = resp_json["choices"][0]["message"]["content"]
                 return json.loads(raw_text)
+            else:
+                print(f"Groq {m} returned {res.status_code}: {res.text[:120]}")
         except Exception as e:
             print(f"Groq {m} error: {e}")
             continue
@@ -161,157 +123,110 @@ def call_llm(prompt_text: str, system_instruction: str = "") -> Optional[Dict[st
     return call_groq_api(prompt_text, system_instruction)
 
 
+def retrieve_semantic_context(user_prompt: str) -> Dict[str, Any]:
+    """
+    RAG over Schema Catalog and Foreign Key Relationships using PostgreSQL pgvector.
+    Retrieves the actual tables, columns, grain, and join clauses dynamically.
+    """
+    vec = get_gemini_embedding(user_prompt)
+    retrieved = {
+        "tables_markdown": [],
+        "table_list": [],
+        "join_clauses": []
+    }
+
+    try:
+        with get_db_conn() as conn:
+            with conn.cursor() as cur:
+                # 1. Retrieve top 4 most relevant tables by cosine distance
+                cur.execute("""
+                    SELECT schema_name, table_name, domain_name, summary_markdown,
+                           1 - (embedding <=> %s::vector) AS similarity
+                    FROM ai_agent.schema_catalog
+                    ORDER BY embedding <=> %s::vector ASC
+                    LIMIT 4;
+                """, (vec, vec))
+                rows = cur.fetchall()
+                for r in rows:
+                    full_name = f"{r['schema_name']}.{r['table_name']}"
+                    retrieved["table_list"].append(full_name)
+                    retrieved["tables_markdown"].append(r["summary_markdown"])
+
+                # 2. Retrieve verified join paths
+                if retrieved["table_list"]:
+                    cur.execute("""
+                        SELECT join_clause, business_context 
+                        FROM ai_agent.table_relationships 
+                        WHERE from_table = ANY(%s) OR to_table = ANY(%s);
+                    """, (retrieved["table_list"], retrieved["table_list"]))
+                    joins = cur.fetchall()
+                    for j in joins:
+                        retrieved["join_clauses"].append(f"- {j['join_clause']} ({j['business_context']})")
+
+    except Exception as e:
+        print(f"Lỗi truy vấn Vector DB Schema Catalog: {e}")
+
+    return retrieved
+
+
+def format_schema_context(retrieved: Dict[str, Any]) -> str:
+    """Formats retrieved tables, columns, and foreign key relationships into prompt."""
+    lines = ["=== KHO DỮ LIỆU VÀ CẤU TRÚC BẢNG (SEMANTIC DATA CATALOG TỪ VECTOR DB) ==="]
+    lines.extend(retrieved.get("tables_markdown", []))
+
+    if retrieved.get("join_clauses"):
+        lines.append("\n=== CÁC ĐƯỜNG DẪN LIÊN KẾT BẢNG CHUẨN (JOIN CLAUSES BẮT BUỘC DÙNG) ===")
+        lines.extend(retrieved["join_clauses"])
+
+    lines.append("""
+=== QUY TẮC SQL POSTGRESQL CHUẨN XÁC ===
+1. CHỈ sinh câu lệnh SELECT an toàn (tuyệt đối không dùng UPDATE, DELETE, INSERT, DROP, ALTER).
+2. Khi người dùng hỏi hôm nay ('hôm nay' / 'today'), sử dụng `DATE(ngay_tao) = CURRENT_DATE`.
+3. Khi người dùng hỏi 7 ngày qua, sử dụng `ngay_tao >= CURRENT_DATE - INTERVAL '6 days'`.
+4. Khi người dùng hỏi 30 ngày qua, sử dụng `ngay_tao >= CURRENT_DATE - INTERVAL '29 days'`.
+5. Đơn hàng hoàn tất hợp lệ: `trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')`.
+6. Tên bí danh cột: BẮT BUỘC bọc trong nháy kép tiếng Việt có dấu (ví dụ: AS "Tên Sản Phẩm", AS "Doanh Thu (VNĐ)").
+7. QUY TẮC ĐẶC BIỆT CHO 2 BIỂU ĐỒ:
+   - trend_sql: BẮT BUỘC trả về 2 cột: `date` (chuỗi ngày 'YYYY-MM-DD' hoặc giờ 'HH:00') và `revenue` (số tiền hoặc số lượng). Có thể truy vấn từ `gold.revenue_daily` hoặc `orders.don_hang`.
+   - breakdown_sql: BẮT BUỘC trả về 2 cột: `name` (tên danh mục, tên món, hoặc kênh thanh toán) và `value` (số tiền hoặc số lượng).
+""")
+    return "\n".join(lines)
+
+
 @router.post("/generate-executive-report")
 def generate_executive_report(payload: AiTextToReportRequest):
     user_prompt = payload.prompt.strip() if payload.prompt else "Báo cáo tổng quan hiệu suất và doanh thu toàn chuỗi"
-    p_lower = user_prompt.lower()
+    start_time = time.time()
 
-    # Step 1: Prompt real LLM to generate the analytical plan & safe PostgreSQL SQL
-    planner_prompt = f"""
-Analyze this user request: "{user_prompt}"
+    # Step 1: Semantic Context Retrieval from PostgreSQL Vector DB
+    retrieved = retrieve_semantic_context(user_prompt)
+    schema_prompt = format_schema_context(retrieved)
 
-Generate a JSON object with:
-{{
-  "title": "Clean, professional Vietnamese title (no emojis, no programming symbols like underscores)",
-  "description": "Short 1-line Vietnamese description of this analytical perspective",
-  "main_sql": "SELECT ... FROM ... (Valid PostgreSQL query to populate a data table, max 15 rows. Use Vietnamese column aliases with double quotes e.g. AS \\"Tên Sản Phẩm\\")",
-  "trend_sql": "SELECT ... (Time series query for a line/area chart, e.g. date or hour as 'date', revenue as 'revenue', max 30 rows)",
-  "breakdown_sql": "SELECT ... (Category, store or method breakdown for donut/bar chart, returns 'name' and 'value', max 6 rows)",
-  "kpi_sql": "SELECT COUNT(*) as total_orders, COALESCE(SUM(tong_tien), 0) as total_revenue, ROUND(AVG(tong_tien), 0) as aov, ROUND(100.0 * COUNT(*) FILTER (WHERE trang_thai_don_hang = 'HOAN_THANH') / NULLIF(COUNT(*), 0), 1) as completion_rate FROM orders.don_hang WHERE ... (Matching the time window of the request)"
-}}
+    # Step 2: Agent Planning & Text-to-SQL with Self-Healing Loop
+    planner_instruction = f"""
+Bạn là Chuyên gia Kiến trúc Dữ liệu và Phân tích Trí tuệ Nhân tạo cho Data Warehouse của Avengers Coffee BeanSync.
+Nhiệm vụ: Phân tích yêu cầu nghiệp vụ của người dùng, sử dụng các bảng, mối quan hệ JOIN và cấu trúc cột được cung cấp dưới đây để sinh kế hoạch phân tích và các câu truy vấn PostgreSQL chuẩn xác.
 
-IMPORTANT:
-- If user asks about 'hôm nay' (today), use `DATE(ngay_tao) = CURRENT_DATE`.
-- If user asks about '7 ngày' (7 days), use `ngay_tao >= CURRENT_DATE - INTERVAL '6 days'`.
-- If user asks about '30 ngày' (30 days), use `ngay_tao >= CURRENT_DATE - INTERVAL '29 days'`.
-- If user does not specify, default to the last 30 days (`ngay_tao >= CURRENT_DATE - INTERVAL '29 days'`).
+{schema_prompt}
 """
 
-    plan = call_llm(planner_prompt, DATABASE_SCHEMA_CONTEXT)
+    generation_prompt = f"""
+Yêu cầu phân tích: "{user_prompt}"
 
-    # Fallback plan if LLM failed
-    if not plan or not isinstance(plan, dict) or "main_sql" not in plan:
-        print("LLM planning returned invalid JSON, applying resilient SQL template")
-        if any(w in p_lower for w in ["sản phẩm", "thực đơn", "món", "menu", "bán chạy"]):
-            plan = {
-                "title": "Báo cáo Cơ cấu Thực đơn và Sản phẩm Bán chạy",
-                "description": "Phân tích doanh số và lượng tiêu thụ theo nhóm đồ uống chủ lực.",
-                "main_sql": """
-                    SELECT 
-                        sp.ma_san_pham AS "Mã SP",
-                        sp.ten_san_pham AS "Tên Sản Phẩm",
-                        COALESCE(dm.ten_danh_muc, 'Cà phê') AS "Danh Mục",
-                        SUM(ct.so_luong) AS "Số Lượng Đã Bán",
-                        ROUND(AVG(ct.gia_ban), 0) AS "Đơn Giá (VNĐ)",
-                        COALESCE(SUM(ct.so_luong * ct.gia_ban), 0) AS "Doanh Thu (VNĐ)"
-                    FROM orders.chi_tiet_don_hang ct
-                    JOIN orders.don_hang d ON ct.ma_don_hang = d.ma_don_hang
-                    JOIN menu.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham
-                    LEFT JOIN menu.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc
-                    WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
-                    GROUP BY sp.ma_san_pham, sp.ten_san_pham, dm.ten_danh_muc
-                    ORDER BY "Doanh Thu (VNĐ)" DESC
-                    LIMIT 15;
-                """,
-                "trend_sql": """
-                    SELECT d.ngay_tao::date::text AS date, COALESCE(SUM(d.tong_tien), 0) AS revenue
-                    FROM orders.don_hang d
-                    WHERE d.ngay_tao >= CURRENT_DATE - INTERVAL '29 days' AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
-                    GROUP BY d.ngay_tao::date ORDER BY date ASC;
-                """,
-                "breakdown_sql": """
-                    SELECT COALESCE(dm.ten_danh_muc, 'Khác') AS name, COALESCE(SUM(ct.so_luong * ct.gia_ban), 0) AS value
-                    FROM orders.chi_tiet_don_hang ct
-                    JOIN orders.don_hang d ON ct.ma_don_hang = d.ma_don_hang
-                    JOIN menu.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham
-                    LEFT JOIN menu.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc
-                    WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
-                    GROUP BY name ORDER BY value DESC LIMIT 6;
-                """,
-                "kpi_sql": """
-                    SELECT COUNT(*) AS total_orders, COALESCE(SUM(tong_tien), 0) AS total_revenue, ROUND(AVG(tong_tien), 0) AS aov, ROUND(100.0 * COUNT(*) FILTER (WHERE trang_thai_don_hang = 'HOAN_THANH') / NULLIF(COUNT(*), 0), 1) AS completion_rate
-                    FROM orders.don_hang WHERE ngay_tao >= CURRENT_DATE - INTERVAL '29 days' AND trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO');
-                """
-            }
-        elif any(w in p_lower for w in ["hôm nay", "ngay hom nay", "today"]):
-            plan = {
-                "title": f"Báo cáo Diễn biến Kinh doanh Hôm nay ({time.strftime('%d/%m/%Y')})",
-                "description": "Thống kê số liệu phát sinh thực tế trong ngày tại các cửa hàng toàn chuỗi.",
-                "main_sql": """
-                    SELECT 
-                        d.ma_don_hang::text AS "Mã Đơn",
-                        LPAD(EXTRACT(HOUR FROM d.ngay_tao)::text, 2, '0') || ':' || LPAD(EXTRACT(MINUTE FROM d.ngay_tao)::text, 2, '0') AS "Giờ Đặt",
-                        COALESCE(cn.ten_chi_nhanh, d.co_so_ma) AS "Điểm Bán",
-                        d.tong_tien AS "Tổng Tiền (VNĐ)",
-                        d.phuong_thuc_thanh_toan AS "Hình Thức",
-                        d.trang_thai_don_hang AS "Trạng Thái"
-                    FROM orders.don_hang d
-                    LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
-                    WHERE DATE(d.ngay_tao) = CURRENT_DATE
-                    ORDER BY d.ngay_tao DESC
-                    LIMIT 15;
-                """,
-                "trend_sql": """
-                    SELECT LPAD(EXTRACT(HOUR FROM d.ngay_tao)::text, 2, '0') || ':00' AS date, COALESCE(SUM(d.tong_tien), 0) AS revenue
-                    FROM orders.don_hang d
-                    WHERE DATE(d.ngay_tao) = CURRENT_DATE AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
-                    GROUP BY EXTRACT(HOUR FROM d.ngay_tao) ORDER BY EXTRACT(HOUR FROM d.ngay_tao) ASC;
-                """,
-                "breakdown_sql": """
-                    SELECT COALESCE(cn.thanh_pho, 'Chưa xác định') AS name, COALESCE(SUM(d.tong_tien), 0) AS value
-                    FROM orders.don_hang d
-                    LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
-                    WHERE DATE(d.ngay_tao) = CURRENT_DATE AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
-                    GROUP BY name ORDER BY value DESC LIMIT 6;
-                """,
-                "kpi_sql": """
-                    SELECT COUNT(*) AS total_orders, COALESCE(SUM(tong_tien), 0) AS total_revenue, ROUND(AVG(tong_tien), 0) AS aov, ROUND(100.0 * COUNT(*) FILTER (WHERE trang_thai_don_hang = 'HOAN_THANH') / NULLIF(COUNT(*), 0), 1) AS completion_rate
-                    FROM orders.don_hang WHERE DATE(ngay_tao) = CURRENT_DATE;
-                """
-            }
-        else:
-            plan = {
-                "title": f"Báo cáo Điều hành Kinh doanh: {user_prompt}",
-                "description": "Số liệu tổng hợp thực tế từ kho dữ liệu phân tích Avengers Coffee.",
-                "main_sql": """
-                    SELECT 
-                        ngay_tao::date::text AS "Ngày Bán Hàng",
-                        COUNT(*) AS "Số Đơn Hoàn Thành",
-                        COALESCE(SUM(tong_tien), 0) AS "Doanh Thu (VNĐ)",
-                        ROUND(AVG(tong_tien), 0) AS "AOV (VNĐ)"
-                    FROM orders.don_hang
-                    WHERE ngay_tao >= CURRENT_DATE - INTERVAL '29 days' AND trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
-                    GROUP BY ngay_tao::date
-                    ORDER BY "Ngày Bán Hàng" DESC
-                    LIMIT 15;
-                """,
-                "trend_sql": """
-                    SELECT ngay_tao::date::text AS date, COALESCE(SUM(tong_tien), 0) AS revenue
-                    FROM orders.don_hang
-                    WHERE ngay_tao >= CURRENT_DATE - INTERVAL '29 days' AND trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
-                    GROUP BY ngay_tao::date ORDER BY date ASC;
-                """,
-                "breakdown_sql": """
-                    SELECT 
-                        CASE phuong_thuc_thanh_toan
-                            WHEN 'TIEN_MAT' THEN 'Tiền mặt'
-                            WHEN 'MOMO' THEN 'Ví MoMo'
-                            WHEN 'VNPAY' THEN 'Cổng VNPay'
-                            WHEN 'NGAN_HANG_QR' THEN 'Chuyển khoản QR'
-                            ELSE 'Khác'
-                        END AS name,
-                        COALESCE(SUM(tong_tien), 0) AS value
-                    FROM orders.don_hang
-                    WHERE ngay_tao >= CURRENT_DATE - INTERVAL '29 days' AND trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
-                    GROUP BY name ORDER BY value DESC LIMIT 6;
-                """,
-                "kpi_sql": """
-                    SELECT COUNT(*) AS total_orders, COALESCE(SUM(tong_tien), 0) AS total_revenue, ROUND(AVG(tong_tien), 0) AS aov, ROUND(100.0 * COUNT(*) FILTER (WHERE trang_thai_don_hang = 'HOAN_THANH') / NULLIF(COUNT(*), 0), 1) AS completion_rate
-                    FROM orders.don_hang WHERE ngay_tao >= CURRENT_DATE - INTERVAL '29 days' AND trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO');
-                """
-            }
+Hãy sinh đối tượng JSON với cấu trúc:
+{{
+  "title": "Tiêu đề tiếng Việt chuyên nghiệp, ngắn gọn (không dùng emoji, không dùng ký tự lạ)",
+  "description": "Mô tả mục tiêu phân tích trong 1 câu ngắn",
+  "main_sql": "SELECT ... FROM ... (Truy vấn bảng chi tiết, LIMIT 15, bí danh tiếng Việt trong nháy kép)",
+  "trend_sql": "SELECT ... AS date, ... AS revenue FROM ... (Truy vấn chuỗi thời gian, trả về 2 cột date và revenue, tối đa 30 điểm)",
+  "breakdown_sql": "SELECT ... AS name, ... AS value FROM ... (Truy vấn cơ cấu phân bổ, trả về 2 cột name và value, LIMIT 6)",
+  "kpi_sql": "SELECT COUNT(*) as total_orders, COALESCE(SUM(tong_tien), 0) as total_revenue, ROUND(AVG(tong_tien), 0) as aov, ROUND(100.0 * COUNT(*) FILTER (WHERE trang_thai_don_hang = 'HOAN_THANH') / NULLIF(COUNT(*), 0), 1) as completion_rate FROM orders.don_hang WHERE ... (Khớp đúng khoảng thời gian của câu hỏi)"
+}}
+"""
 
-    # Step 2: Execute SQL queries on real PostgreSQL database
+    plan = call_llm(generation_prompt, planner_instruction)
+
+    # Step 3: Execution and Self-Healing Loop
     table_rows = []
     table_cols = []
     trend_data = []
@@ -324,71 +239,153 @@ IMPORTANT:
         "aov": 0.0,
         "completion_rate": 0.0
     }
-    executed_sql = plan.get("main_sql", "").strip()
+    
+    execution_status = "SUCCESS"
+    attempts = 1
+    last_error = ""
+    executed_sql = ""
 
-    try:
-        with get_db_conn() as conn:
-            with conn.cursor() as cur:
-                # 2.1 Main Table SQL
-                if executed_sql:
-                    try:
+    if not plan or not isinstance(plan, dict):
+        raise HTTPException(status_code=500, detail="Không thể khởi tạo kế hoạch phân tích từ mô hình AI.")
+
+    max_healing_retries = 2
+    for attempt_idx in range(max_healing_retries + 1):
+        attempts = attempt_idx + 1
+        executed_sql = plan.get("main_sql", "").strip()
+        trend_sql = plan.get("trend_sql", "").strip()
+        breakdown_sql = plan.get("breakdown_sql", "").strip()
+        kpi_sql = plan.get("kpi_sql", "").strip()
+
+        has_error = False
+        error_msg = ""
+
+        try:
+            with get_db_conn() as conn:
+                with conn.cursor() as cur:
+                    # Execute Main Table SQL
+                    if executed_sql:
                         cur.execute(executed_sql)
                         raw_rows = cur.fetchall()
                         if raw_rows:
                             table_rows = [dict(r) for r in raw_rows]
                             table_cols = list(table_rows[0].keys())
-                    except Exception as err:
-                        print(f"Error executing LLM main_sql: {err}")
-                        conn.rollback()
 
-                # 2.2 Trend SQL
-                trend_sql = plan.get("trend_sql", "").strip()
-                if trend_sql:
-                    try:
-                        cur.execute(trend_sql)
-                        trend_data = [{"date": str(r.get("date") or ""), "revenue": float(r.get("revenue") or r.get("value") or 0)} for r in cur.fetchall()]
-                    except Exception as err:
-                        print(f"Error executing trend_sql: {err}")
-                        conn.rollback()
+                    # Execute Trend SQL
+                    if trend_sql:
+                        try:
+                            cur.execute(trend_sql)
+                            t_rows = cur.fetchall()
+                            if t_rows:
+                                trend_data = []
+                                for r in t_rows:
+                                    r_dict = dict(r)
+                                    d_val = r_dict.get("date") or r_dict.get("ngay") or list(r_dict.values())[0]
+                                    v_val = r_dict.get("revenue") or r_dict.get("doanh_thu") or (list(r_dict.values())[1] if len(r_dict) > 1 else 0)
+                                    trend_data.append({"date": str(d_val), "revenue": float(v_val or 0)})
+                        except Exception as t_err:
+                            print(f"Lỗi trend_sql: {t_err}")
 
-                # 2.3 Breakdown SQL (Donut / Bar)
-                breakdown_sql = plan.get("breakdown_sql", "").strip()
-                if breakdown_sql:
-                    try:
-                        cur.execute(breakdown_sql)
-                        breakdown_data = [{"name": str(r.get("name") or "Mục"), "value": float(r.get("value") or 0)} for r in cur.fetchall()]
-                    except Exception as err:
-                        print(f"Error executing breakdown_sql: {err}")
-                        conn.rollback()
+                    # Execute Breakdown SQL
+                    if breakdown_sql:
+                        try:
+                            cur.execute(breakdown_sql)
+                            b_rows = cur.fetchall()
+                            if b_rows:
+                                breakdown_data = []
+                                for r in b_rows:
+                                    r_dict = dict(r)
+                                    n_val = r_dict.get("name") or r_dict.get("ten") or list(r_dict.values())[0]
+                                    v_val = r_dict.get("value") or r_dict.get("gia_tri") or (list(r_dict.values())[1] if len(r_dict) > 1 else 0)
+                                    breakdown_data.append({"name": str(n_val or "Khác"), "value": float(v_val or 0)})
+                        except Exception as b_err:
+                            print(f"Lỗi breakdown_sql: {b_err}")
 
-                # 2.4 Real KPIs
-                kpi_sql = plan.get("kpi_sql", "").strip()
-                if kpi_sql:
-                    try:
-                        cur.execute(kpi_sql)
-                        k_row = cur.fetchone()
-                        if k_row:
-                            rev = float(k_row.get("total_revenue") or 0.0)
-                            ords = int(k_row.get("total_orders") or 0)
-                            aov_v = float(k_row.get("aov") or 0.0)
-                            comp_v = float(k_row.get("completion_rate") or 0.0)
-                            kpi_dict["revenue"] = rev
-                            kpi_dict["orders"] = ords
-                            kpi_dict["aov"] = aov_v
-                            kpi_dict["completion_rate"] = comp_v
-                    except Exception as err:
-                        print(f"Error executing kpi_sql: {err}")
-                        conn.rollback()
+                    # Execute KPI SQL
+                    if kpi_sql:
+                        try:
+                            cur.execute(kpi_sql)
+                            k_row = cur.fetchone()
+                            if k_row:
+                                kpi_dict["revenue"] = float(k_row.get("total_revenue") or 0.0)
+                                kpi_dict["orders"] = int(k_row.get("total_orders") or 0)
+                                kpi_dict["aov"] = float(k_row.get("aov") or 0.0)
+                                kpi_dict["completion_rate"] = float(k_row.get("completion_rate") or 0.0)
+                        except Exception as k_err:
+                            print(f"Lỗi kpi_sql: {k_err}")
 
-    except Exception as e:
-        print(f"Database connection error: {e}")
+        except Exception as sql_err:
+            has_error = True
+            error_msg = str(sql_err)
+            last_error = error_msg
+            print(f"Self-Healing: SQL Execution attempt {attempts} failed: {error_msg}")
+
+        # If executed cleanly without main table error, break
+        if not has_error and table_rows:
+            if attempt_idx > 0:
+                execution_status = "HEALED"
+            break
+
+        # If failed and retries remain, ask LLM to heal
+        if attempt_idx < max_healing_retries:
+            healing_prompt = f"""
+Câu lệnh SQL trước đó thực thi trên PostgreSQL bị lỗi:
+LỖI CỤ THỂ: {error_msg}
+
+CÂU LỆNH BỊ LỖI:
+{executed_sql}
+
+CÁC BẢNG VÀ CỘT HỢP LỆ TRONG DATABASE:
+{schema_prompt}
+
+Hãy sửa lại câu lệnh SQL để khắc phục lỗi trên và trả về JSON:
+{{
+  "title": "{plan.get('title', 'Báo cáo Phân tích')}",
+  "description": "{plan.get('description', '')}",
+  "main_sql": "SELECT ... (đã sửa lỗi)",
+  "trend_sql": "{trend_sql}",
+  "breakdown_sql": "{breakdown_sql}",
+  "kpi_sql": "{kpi_sql}"
+}}
+"""
+            healed_plan = call_llm(healing_prompt, "Bạn là chuyên gia sửa lỗi SQL PostgreSQL. Hãy sửa lỗi truy vấn chính xác.")
+            if healed_plan and isinstance(healed_plan, dict) and "main_sql" in healed_plan:
+                plan = healed_plan
+        else:
+            execution_status = "FAILED"
+
+    # Step 3.1: Guarantee Charts Have Real Data (No Empty UI)
+    try:
+        with get_db_conn() as conn:
+            with conn.cursor() as cur:
+                # If trend chart is empty, fetch real 30-day trend from gold.revenue_daily
+                if not trend_data:
+                    cur.execute("SELECT date, revenue FROM gold.revenue_daily ORDER BY date ASC LIMIT 30;")
+                    trend_data = [{"date": str(r["date"]), "revenue": float(r["revenue"] or 0)} for r in cur.fetchall()]
+
+                # If breakdown chart is empty, derive from top products or table_rows
+                if not breakdown_data and table_rows:
+                    text_col = None
+                    num_col = None
+                    for c in table_cols:
+                        if not text_col and any(isinstance(r.get(c), str) for r in table_rows):
+                            text_col = c
+                        if not num_col and any(isinstance(r.get(c), (int, float, Decimal)) for r in table_rows):
+                            num_col = c
+                    if text_col and num_col:
+                        breakdown_data = [{"name": str(r.get(text_col) or "Khác"), "value": float(r.get(num_col) or 0)} for r in table_rows[:5]]
+
+                if not breakdown_data:
+                    cur.execute("SELECT ten_san_pham as name, total_revenue as value FROM gold.top_products ORDER BY total_revenue DESC LIMIT 5;")
+                    breakdown_data = [{"name": str(r["name"]), "value": float(r["value"] or 0)} for r in cur.fetchall()]
+    except Exception as chart_err:
+        print(f"Error ensuring chart data: {chart_err}")
 
     # Fallback KPIs from table rows if kpi_dict is 0 but table has data
     if kpi_dict["revenue"] == 0 and table_rows:
         sum_rev = 0
         for r in table_rows:
             for k, v in r.items():
-                if "tiền" in k.lower() or "doanh thu" in k.lower() or "revenue" in k.lower():
+                if any(x in k.lower() for x in ["tiền", "doanh thu", "revenue", "tổng"]):
                     if isinstance(v, (int, float, Decimal)):
                         sum_rev += float(v)
         if sum_rev > 0:
@@ -397,38 +394,34 @@ IMPORTANT:
             kpi_dict["aov"] = round(sum_rev / len(table_rows))
             kpi_dict["completion_rate"] = 100.0
 
-    # Step 3: Pass REAL query results back to Gemini 2.5 Flash for genuine analysis
-    serialized_results = json.dumps(table_rows[:10], ensure_ascii=False, default=json_serial)
-    summary_data = {
-        "kpis": kpi_dict,
-        "sample_rows": table_rows[:8],
-        "breakdown": breakdown_data[:5],
-        "time_trend_points": len(trend_data)
-    }
-
+    # Step 4: Dynamic Executive Synthesis (Strictly grounded in real database rows)
     synthesis_prompt = f"""
-Bạn là Chuyên gia Trưởng Phân tích Dữ liệu (Lead Business Intelligence Analyst) của chuỗi Avengers Coffee BeanSync.
-Yêu cầu phân tích của người dùng: "{user_prompt}"
+Bạn là Chuyên gia Trưởng Phân tích Dữ liệu chuỗi Avengers Coffee.
+Yêu cầu phân tích: "{user_prompt}"
 Tiêu đề báo cáo: "{plan.get('title')}"
 
-DỮ LIỆU TRUY VẤN THỰC TẾ 100% TỪ DATABASE POSTGRESQL:
-{json.dumps(summary_data, ensure_ascii=False, default=json_serial)}
+DỮ LIỆU THỰC TẾ TRÍCH XUẤT TỪ DATABASE POSTGRESQL (TỐI ĐA 8 DÒNG):
+{json.dumps(table_rows[:8], ensure_ascii=False, default=json_serial)}
 
-Hãy trả về JSON:
+CHỈ SỐ TỔNG HỢP:
+- Doanh thu: {kpi_dict['revenue']:,.0f} VNĐ
+- Tổng đơn hàng: {kpi_dict['orders']}
+- AOV: {kpi_dict['aov']:,.0f} VNĐ
+- Tỷ lệ hoàn thành: {kpi_dict['completion_rate']}%
+
+QUY TẮC BẮT BUỘC ĐỂ TRÁNH BỊA SỐ LIỆU:
+1. Bạn CHỈ ĐƯỢC PHÉP phân tích, so sánh và nhắc đến các tên sản phẩm, tên cửa hàng và các con số CÓ MẶT TRONG DỮ LIỆU THẬT Ở TRÊN.
+2. TUYỆT ĐỐI KHÔNG tự nghĩ ra bất kỳ tên món ăn (ví dụ: bánh Croissant, bánh mì nếu không có trong dữ liệu), chi nhánh hay số tiền nào khác.
+3. Nếu doanh thu = 0 và số đơn = 0 (ví dụ khi chọn hôm nay), hãy nêu rõ sự thật là cơ sở dữ liệu chưa ghi nhận giao dịch phát sinh.
+4. Trả về đúng định dạng JSON:
 {{
-  "executive_summary": "Tóm tắt bức tranh kinh doanh trong 1-2 câu súc tích",
+  "executive_summary": "1-2 câu tóm tắt chính xác bức tranh kinh doanh",
   "ai_insights": [
-    "Nhận định 1 (ngắn gọn, chuẩn xác dựa vào số liệu thật)",
-    "Nhận định 2 (ngắn gọn, chuẩn xác dựa vào số liệu thật)",
-    "Khuyến nghị thực thi vận hành/kinh doanh cụ thể"
+    "Nhận định 1 (chỉ trích dẫn số liệu thật ở trên)",
+    "Nhận định 2 (đánh giá tỷ trọng/xu hướng dựa trên số liệu thật)",
+    "Khuyến nghị hành động cụ thể"
   ]
 }}
-
-LƯU Ý CỰC KỲ QUAN TRỌNG:
-1. TUYỆT ĐỐI KHÔNG BỊA SỐ LIỆU.
-2. Nếu hôm nay chưa có đơn (doanh thu = 0, số đơn = 0), hãy nêu rõ sự thật là ngày hôm nay chưa phát sinh giao dịch nào trên hệ thống, và đưa ra khuyến nghị kiểm tra thiết bị POS/ca làm việc.
-3. Nếu có dữ liệu thực tế (ví dụ 30 ngày qua có hàng ngàn đơn), hãy phân tích chính xác dựa trên các con số trong kết quả truy vấn.
-4. Trình bày bằng tiếng Việt chuyên nghiệp, chuẩn mực, không dùng emoji trong câu.
 """
 
     insights_result = call_llm(synthesis_prompt)
@@ -451,11 +444,24 @@ LƯU Ý CỰC KỲ QUAN TRỌNG:
             ]
             exec_summary = f"Hiệu suất kinh doanh toàn chuỗi đạt {kpi_dict['revenue']:,.0f} VNĐ doanh thu với tỷ lệ hoàn tất đơn {kpi_dict['completion_rate']}%."
 
+    duration_ms = int((time.time() - start_time) * 1000)
+
+    # Step 5: Log execution to ai_agent.query_logs
+    try:
+        with get_db_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO ai_agent.query_logs 
+                    (user_prompt, generated_sql, execution_status, execution_time_ms, error_message)
+                    VALUES (%s, %s, %s, %s, %s);
+                """, (user_prompt, executed_sql, execution_status, duration_ms, last_error))
+    except Exception as log_err:
+        print(f"Lỗi ghi log query: {log_err}")
+
     return {
         "prompt": user_prompt,
         "title": plan.get("title") or "Báo cáo Phân tích AI Tùy biến",
         "description": plan.get("description") or "Phân tích số liệu thực tế từ kho dữ liệu Analytics",
-        "model_used": "Google Gemini 2.5 Flash",
         "created_at": "Hôm nay, " + time.strftime("%H:%M %d/%m/%Y"),
         "kpis": kpi_dict,
         "trend_chart": trend_data,
