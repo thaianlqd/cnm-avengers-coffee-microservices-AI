@@ -18,6 +18,7 @@ import {
   SparklesIcon
 } from '../components/Icons';
 import { AnalyticsSubTab } from '../types';
+import { resolveAiChartPresentation } from '../utils/aiChartConfig.mjs';
 
 export const AnalyticsView: React.FC = () => {
   const { 
@@ -48,6 +49,9 @@ export const AnalyticsView: React.FC = () => {
   const [generatedReport, setGeneratedReport] = useState<any | null>(null);
   const [showSqlCode, setShowSqlCode] = useState(false);
   const [tableSearch, setTableSearch] = useState('');
+  const aiChartPresentation = resolveAiChartPresentation(generatedReport?.chart_metadata);
+  const aiBreakdownData = generatedReport?.breakdown_chart ||
+    (aiChartPresentation.breakdown.type === 'bar' ? generatedReport?.bar_chart : generatedReport?.donut_chart) || [];
 
   const aiPromptTemplates = [
     {
@@ -122,8 +126,8 @@ export const AnalyticsView: React.FC = () => {
         query_type: 'sql',
         sql_query: generatedReport.sql_query || 'SELECT 1;',
         visualization_type: generatedReport.visualizations?.trend || 'area',
-        x_key: 'date',
-        y_key: 'revenue',
+        x_key: 'label',
+        y_key: 'value',
         ai_summary: Array.isArray(generatedReport.ai_insights) ? generatedReport.ai_insights.join(' | ') : '',
         created_by: 'Trợ lý AI Data Platform',
         module_config: {
@@ -1583,9 +1587,11 @@ export const AnalyticsView: React.FC = () => {
                   <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
                     <div>
                       <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                        Xu hướng biến động theo thời gian
+                        {aiChartPresentation.trend.title}
                       </h4>
-                      <p className="text-[11px] text-slate-400 mt-0.5">Biểu đồ đường thời gian thực từ dữ liệu truy vấn</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        {aiChartPresentation.trend.type === 'bar' ? 'Biểu đồ cột' : 'Biểu đồ đường'} từ dữ liệu truy vấn
+                      </p>
                     </div>
                     <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
                       Thời gian thực
@@ -1593,14 +1599,25 @@ export const AnalyticsView: React.FC = () => {
                   </div>
                   <div className="flex-1 w-full pt-1">
                     {generatedReport.trend_chart && generatedReport.trend_chart.length > 0 ? (
-                      <SmoothAreaChart
-                        data={generatedReport.trend_chart.map((t: any) => ({
-                          label: String(t.date || '').slice(-5).replace('/', '-'),
-                          value: Number(t.revenue || t.value || 0),
-                        }))}
-                        height={240}
-                        valueSuffix=" đ"
-                      />
+                      aiChartPresentation.trend.type === 'bar' ? (
+                        <BarChart
+                          data={generatedReport.trend_chart.map((t: any) => ({
+                            label: String(t.label || t.date || '').slice(-5).replace('/', '-'),
+                            value: Number(t.value ?? t.revenue ?? 0),
+                          }))}
+                          height={240}
+                          valueSuffix={aiChartPresentation.trend.suffix}
+                        />
+                      ) : (
+                        <SmoothAreaChart
+                          data={generatedReport.trend_chart.map((t: any) => ({
+                            label: String(t.label || t.date || '').slice(-5).replace('/', '-'),
+                            value: Number(t.value ?? t.revenue ?? 0),
+                          }))}
+                          height={240}
+                          valueSuffix={aiChartPresentation.trend.suffix}
+                        />
+                      )
                     ) : (
                       <div className="text-xs text-slate-400 text-center py-16">Không có dữ liệu xu hướng thời gian</div>
                     )}
@@ -1612,31 +1629,31 @@ export const AnalyticsView: React.FC = () => {
                   <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
                     <div>
                       <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                        Cơ cấu phân bổ danh mục & sản phẩm
+                        {aiChartPresentation.breakdown.title}
                       </h4>
                       <p className="text-[11px] text-slate-400 mt-0.5">Tỷ trọng đóng góp trong module phân tích</p>
                     </div>
                   </div>
                   <div className="my-auto py-2">
-                    {generatedReport.donut_chart && generatedReport.donut_chart.length > 0 ? (
+                    {aiBreakdownData.length > 0 && aiChartPresentation.breakdown.type === 'donut' ? (
                       <DonutChart
-                        data={generatedReport.donut_chart.map((d: any, idx: number) => ({
+                        data={aiBreakdownData.map((d: any, idx: number) => ({
                           label: d.name || d.label || 'Mục',
                           value: Number(d.value || 0),
                           color: palette[idx % palette.length],
                         }))}
                         centerLabel="Cơ cấu"
-                        centerValue="100%"
+                        valueSuffix={aiChartPresentation.breakdown.suffix}
                         size={155}
                       />
-                    ) : generatedReport.bar_chart && generatedReport.bar_chart.length > 0 ? (
+                    ) : aiBreakdownData.length > 0 && aiChartPresentation.breakdown.type === 'bar' ? (
                       <BarChart
-                        data={generatedReport.bar_chart.slice(0, 5).map((b: any) => ({
+                        data={aiBreakdownData.slice(0, 5).map((b: any) => ({
                           label: b.name || b.label || 'Mục',
-                          value: Math.round(Number(b.value || 0) / 1000000),
+                          value: Number(b.value || 0),
                         }))}
                         height={210}
-                        valueSuffix="Tr"
+                        valueSuffix={aiChartPresentation.breakdown.suffix}
                       />
                     ) : (
                       <div className="text-xs text-slate-400 text-center py-16">Không có dữ liệu cơ cấu</div>

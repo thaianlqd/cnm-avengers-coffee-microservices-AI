@@ -261,35 +261,34 @@ def sync_table_full(source_conn, target_conn, schema, table):
         rows = src_cur.fetchall()
 
     ensure_target_table(source_conn, target_conn, schema, table)
-    with target_conn.cursor() as cur:
-        # TRUNCATE preserves dependent views; DROP ... CASCADE previously deleted Gold objects.
-        cur.execute(f'TRUNCATE TABLE {schema}."{table}"')
-    target_conn.commit()
+    try:
+        with target_conn.cursor() as cur:
+            # TRUNCATE and every replacement INSERT deliberately share one transaction.
+            cur.execute(f'TRUNCATE TABLE {schema}."{table}"')
+            if rows:
+                columns = list(rows[0].keys())
+                col_list = ", ".join([f'"{c}"' for c in columns])
+                placeholders = ", ".join(["%s"] * len(columns))
+                insert_sql = f'INSERT INTO {schema}."{table}" ({col_list}) VALUES ({placeholders})'
+                batch = []
+                for row in rows:
+                    batch.append([adapt_value(row[c]) for c in columns])
+                    if len(batch) >= BATCH_SIZE:
+                        psycopg2.extras.execute_batch(cur, insert_sql, batch, page_size=500)
+                        batch = []
+                if batch:
+                    psycopg2.extras.execute_batch(cur, insert_sql, batch, page_size=500)
+        target_conn.commit()
+    except Exception:
+        # PostgreSQL rolls TRUNCATE back as well, preserving the previous snapshot.
+        target_conn.rollback()
+        raise
 
     if not rows:
         duration_ms = int((time.time() - start_time) * 1000)
         update_sync_metadata(target_conn, schema, table, 0, duration_ms, "full")
         logger.info(f"  {schema}.{table}: 0 rows (bang rong)")
         return 0
-
-    # Insert dữ liệu
-    columns = list(rows[0].keys())
-    col_list = ", ".join([f'"{c}"' for c in columns])
-    placeholders = ", ".join(["%s"] * len(columns))
-    insert_sql = f'INSERT INTO {schema}."{table}" ({col_list}) VALUES ({placeholders})'
-
-    with target_conn.cursor() as cur:
-        batch = []
-        for row in rows:
-            values = [adapt_value(row[c]) for c in columns]
-            batch.append(values)
-            if len(batch) >= BATCH_SIZE:
-                psycopg2.extras.execute_batch(cur, insert_sql, batch, page_size=500)
-                batch = []
-        if batch:
-            psycopg2.extras.execute_batch(cur, insert_sql, batch, page_size=500)
-
-    target_conn.commit()
 
     duration_ms = int((time.time() - start_time) * 1000)
     logger.info(f"  {schema}.{table}: {len(rows)} rows ({duration_ms}ms)")
@@ -302,6 +301,9 @@ def sync_table_full(source_conn, target_conn, schema, table):
 def sync_table_incremental(source_conn, target_conn, schema, table, ts_col, last_sync):
     """Incremental sync: chỉ copy dữ liệu mới/cập nhật."""
     start_time = time.time()
+
+    # Evolve the target first so a new source column can be inserted in this cycle.
+    ensure_target_table(source_conn, target_conn, schema, table)
 
     # Đọc dữ liệu mới từ source
     with source_conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as src_cur:

@@ -2,11 +2,11 @@ import unittest
 from unittest.mock import patch
 
 from common import AiTextToReportRequest, SavedReportCreate
-from routers.ai import _deterministic_plan, _looks_destructive, _time_selection
+from routers.ai import _chart_metadata, _deterministic_plan, _looks_destructive, _time_selection
 from services.llm_service import _parse_json, call_llm
-from services.metadata_service import get_local_metadata, sql_references_sensitive_columns
+from services.metadata_service import get_combined_metadata, get_local_metadata, sanitize_result_rows, sql_references_sensitive_columns
 from services.semantic_service import semantic_service
-from services.sql_service import SqlSafetyError, validate_read_only_sql
+from services.sql_service import SqlSafetyError, validate_ai_query_scope, validate_read_only_sql
 
 
 class MetadataAndSemanticTests(unittest.TestCase):
@@ -59,6 +59,11 @@ class MetadataAndSemanticTests(unittest.TestCase):
 
 
 class SqlSafetyTests(unittest.TestCase):
+    policy = {
+        "identity.nguoi_dung": {"ma_nguoi_dung", "diem_loyalty"},
+        "orders.don_hang": {"ma_don_hang", "tong_tien", "trang_thai_don_hang"},
+    }
+
     def test_accepts_select_and_cte(self):
         self.assertEqual(validate_read_only_sql("SELECT 1;"), "SELECT 1")
         self.assertTrue(validate_read_only_sql("WITH x AS (SELECT 1 AS n) SELECT n FROM x").startswith("WITH"))
@@ -73,6 +78,90 @@ class SqlSafetyTests(unittest.TestCase):
         for sql in bad_sql:
             with self.subTest(sql=sql), self.assertRaises(SqlSafetyError):
                 validate_read_only_sql(sql)
+
+    def test_ai_rejects_select_star(self):
+        for sql in (
+            "SELECT * FROM identity.nguoi_dung",
+            "SELECT nd.* FROM identity.nguoi_dung nd",
+        ):
+            with self.subTest(sql=sql), self.assertRaisesRegex(SqlSafetyError, r"SELECT \*"):
+                validate_ai_query_scope(sql, self.policy)
+
+    def test_ai_rejects_explicit_email_phone_and_password(self):
+        for column in ("email", "phone", "password"):
+            sql = f"SELECT nd.{column} FROM identity.nguoi_dung nd"
+            with self.subTest(column=column), self.assertRaises(SqlSafetyError):
+                validate_ai_query_scope(sql, self.policy)
+
+    def test_ai_rejects_table_outside_resolved_metadata(self):
+        for sql in (
+            "SELECT sp.ma_san_pham FROM menu.san_pham sp",
+            "SELECT d.ma_don_hang FROM orders.don_hang d, menu.san_pham sp",
+        ):
+            with self.subTest(sql=sql), self.assertRaises(SqlSafetyError):
+                validate_ai_query_scope(sql, self.policy)
+
+    def test_ai_accepts_safe_aggregate_query(self):
+        sql = "SELECT COUNT(*) AS order_count, SUM(d.tong_tien) AS revenue FROM orders.don_hang d"
+        self.assertEqual(validate_ai_query_scope(sql, self.policy), sql)
+
+    def test_ai_accepts_extract_from_safe_column(self):
+        sql = "SELECT EXTRACT(HOUR FROM d.ma_don_hang) AS hour, COUNT(*) AS orders FROM orders.don_hang d GROUP BY 1"
+        self.assertEqual(validate_ai_query_scope(sql, self.policy), sql)
+
+    def test_result_rows_are_sanitized_before_llm_evidence(self):
+        rows = [{
+            "segment": "VIP", "email": "secret@example.test", "phone": "0900", "count": 2,
+            "details": {"password_hash": "secret", "safe": "ok"},
+        }]
+        self.assertEqual(sanitize_result_rows(rows), [{"segment": "VIP", "count": 2, "details": {"safe": "ok"}}])
+
+
+class MetadataCacheTests(unittest.TestCase):
+    def test_combined_metadata_does_not_mutate_cached_local_relationships(self):
+        local_table = {
+            "qualified_name": "orders.don_hang",
+            "relationships": [],
+            "columns": [],
+        }
+        local = {"tables": [local_table], "table_map": {"orders.don_hang": local_table}, "table_count": 1}
+        source = {
+            "tables": [{
+                "qualified_name": "orders.don_hang",
+                "relationships": [{"from_column": "store_id", "to_table": "identity.chi_nhanh", "to_column": "id"}],
+            }]
+        }
+        with patch("services.metadata_service.get_local_metadata", return_value=local), \
+             patch("services.metadata_service._source_configured", return_value=True), \
+             patch("services.metadata_service.get_source_metadata", return_value=source):
+            first = get_combined_metadata()
+            second = get_combined_metadata()
+
+        self.assertEqual(local_table["relationships"], [])
+        self.assertEqual(len(first["recovered_relationships"]), 1)
+        self.assertEqual(first["recovered_relationships"], second["recovered_relationships"])
+
+
+class ChartSemanticsTests(unittest.TestCase):
+    def test_domain_chart_types_metrics_and_units(self):
+        cases = {
+            "products": ("product_revenue", "VNĐ", "donut"),
+            "stores": ("store_revenue", "VNĐ", "bar"),
+            "payments": ("payment_revenue", "VNĐ", "donut"),
+            "customers": ("customer_count", "khách", "donut"),
+            "hourly": ("hourly_orders", "đơn", "donut"),
+            "delivery": ("delivery_count", "lượt giao", "donut"),
+        }
+        request = AiTextToReportRequest(prompt="Phân tích doanh thu")
+        time_info = _time_selection(request)
+        for entity, (metric, unit, breakdown_type) in cases.items():
+            with self.subTest(entity=entity):
+                fallback = _deterministic_plan({"entity_ids": [entity]}, time_info)
+                metadata = _chart_metadata(fallback, fallback)
+                self.assertEqual(metadata["trend"]["metric"], metric)
+                self.assertEqual(metadata["trend"]["unit"], unit)
+                self.assertEqual(metadata["breakdown"]["chart_type"], breakdown_type)
+                self.assertNotEqual(metadata["breakdown"]["title"], "Cơ cấu phân bổ danh mục & sản phẩm")
 
 
 class RequestAndProviderTests(unittest.TestCase):
