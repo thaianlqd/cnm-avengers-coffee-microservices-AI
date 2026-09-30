@@ -57,6 +57,21 @@ class OrderConversationState(TypedDict, total=False):
     conversation_state: str
 
 
+class CatalogQuerySpec(TypedDict, total=False):
+    category: str
+    family: str
+    search_text: str
+    label: str
+    order: int
+    source: str
+
+
+class CatalogQueryPlan(TypedDict):
+    specs: List[CatalogQuerySpec]
+    read_only: bool
+    source: str
+
+
 def _norm(value: Any) -> str:
     raw = unicodedata.normalize("NFD", str(value or "").lower())
     return "".join(c for c in raw if unicodedata.category(c) != "Mn").replace("đ", "d")
@@ -107,7 +122,6 @@ def _menu_search_specs(message: str) -> List[Dict[str, str]]:
     # compound alternatives and mixed food/drink requests.
     family_meaning = interpret_shopping(message)
     if (family_meaning.act == "BROWSE_FAMILY"
-            and not re.search(r"\b(?:hoac|hay|va|voi)\b", text)
             and family_meaning.category
             and is_family_only(message, family_meaning.family)):
         spec = {"category": family_meaning.category,
@@ -235,56 +249,103 @@ def _menu_search_specs(message: str) -> List[Dict[str, str]]:
     return specs
 
 
-def _search_menu_catalog(message: str = "", *, category: Optional[str] = None) -> Optional[Dict[str, Any]]:
-    """Search each requested menu branch and merge exact products by id."""
+def _catalog_query_plan(message: str = "", *, category: Optional[str] = None) -> CatalogQueryPlan:
+    """Create one canonical, read-only catalog plan from resolved shopping meaning."""
     if category:
         if category not in {"drink", "food", "all"}:
-            return None
-        specs = [{
+            return {"specs": [], "read_only": True, "source": "category"}
+        raw_specs: List[Dict[str, str]] = [{
             "category": category,
             "label": ("Menu nước" if category == "drink" else
                       "Menu bánh và đồ ăn" if category == "food" else "thực đơn"),
         }]
+        source = "category"
     else:
-        specs = _menu_search_specs(message)
+        meaning = interpret_shopping(message)
+        if meaning.act == "BROWSE_FAMILY" and meaning.category:
+            raw_specs = [{"category": meaning.category, "label": meaning.label or "thực đơn"}]
+            if meaning.search_text:
+                raw_specs[0]["search_text"] = meaning.search_text
+        else:
+            raw_specs = _menu_search_specs(message)
+        source = "shopping_semantics"
+
+    canonical_families = {
+        "ca phe": "coffee", "tra": "tea", "americano": "americano",
+        "cold brew": "cold_brew", "espresso": "espresso", "frappe": "frappe",
+        "latte": "latte", "matcha": "matcha", "banh man": "savory_cake",
+        "banh ngot": "sweet_cake", "banh trung thu": "moon_cake", "pizza": "pizza",
+    }
+    specs: List[CatalogQuerySpec] = []
+    for index, raw_spec in enumerate(raw_specs):
+        spec: CatalogQuerySpec = {**raw_spec, "order": index, "source": source}
+        search_key = _norm(raw_spec.get("search_text") or "")
+        family = canonical_families.get(search_key)
+        if not family and not search_key and raw_spec.get("category") in {"food", "drink"}:
+            family = raw_spec["category"]
+        if family:
+            spec["family"] = family
+        specs.append(spec)
+    return {"specs": specs, "read_only": True, "source": source}
+
+
+def _search_menu_catalog(message: str = "", *, category: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    """Search each requested menu branch and merge exact products by id."""
+    plan = _catalog_query_plan(message, category=category)
+    specs = plan["specs"]
     if not specs:
         return None
 
     from src.function_calling.tools.product_tools import execute_get_recommendations
 
+    logger.info("[CatalogQueryPlan] groups=%d families=%s search_texts=%s",
+                len(specs), ",".join(spec.get("family") or "-" for spec in specs),
+                [spec.get("search_text") for spec in specs])
     merged: List[Dict[str, Any]] = []
     seen: set[str] = set()
-    bucket_counts: Dict[str, int] = {}
     missing: List[str] = []
     query_debug: List[Dict[str, Any]] = []
     rendered_groups: List[tuple[Dict[str, str], List[Dict[str, Any]], Dict[str, Any]]] = []
-    for spec in specs:
-        top_k = 8 if len(specs) > 1 else (10 if not spec.get("search_text") else 8)
+    per_group_limit = 8 if len(specs) <= 2 else max(1, 16 // len(specs))
+    for group_index, spec in enumerate(specs):
+        top_k = 16 if len(specs) > 1 else (10 if not spec.get("search_text") else 8)
         found = execute_get_recommendations(
             category=spec["category"],
             search_text=spec.get("search_text"),
             top_k=top_k,
         )
-        query_debug.append({**spec, "status": found.get("status")})
-        products = [
-            {**product, "menu_bucket": (spec["category"] if spec["category"] in {"food", "drink"}
+        raw_products = [
+            {**product,
+             "catalog_group_index": group_index,
+             "catalog_group_family": spec.get("family"),
+             "catalog_group_label": spec["label"],
+             "menu_bucket": (spec["category"] if spec["category"] in {"food", "drink"}
                 else _map_db_category_to_bucket(product.get("category"), product.get("parent_category")))}
-            for product in (found.get("products") or [])[:top_k]
+            for product in (found.get("products") or [])
         ] if found.get("status") == "ok" else []
-        if not products:
+        if not raw_products:
             missing.append(spec["label"])
+            query_debug.append({**spec, "status": found.get("status"),
+                                "raw_count": 0, "rendered_count": 0})
+            logger.info("[CatalogQueryResult] group=%s status=%s raw_count=0 rendered_count=0",
+                        spec.get("family") or spec["label"], found.get("status"))
             continue
-        rendered_groups.append((spec, products, found))
-        for product in products:
+        group_products: List[Dict[str, Any]] = []
+        for product in raw_products:
             identity = str(product.get("product_id") or "").strip() or _norm(product.get("product_name"))
             if not identity or identity in seen:
                 continue
-            bucket = product["menu_bucket"]
-            if bucket_counts.get(bucket, 0) >= 8:
-                continue
             seen.add(identity)
             merged.append(product)
-            bucket_counts[bucket] = bucket_counts.get(bucket, 0) + 1
+            group_products.append(product)
+            if len(group_products) >= per_group_limit or len(merged) >= 16:
+                break
+        rendered_groups.append((spec, group_products, found))
+        query_debug.append({**spec, "status": found.get("status"),
+                            "raw_count": len(raw_products), "rendered_count": len(group_products)})
+        logger.info("[CatalogQueryResult] group=%s status=%s raw_count=%d rendered_count=%d",
+                    spec.get("family") or spec["label"], found.get("status"),
+                    len(raw_products), len(group_products))
 
     merged = merged[:16]
     result = {
@@ -2205,9 +2266,11 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     # A correction such as “ý tôi là Bánh Matcha 2 cái” continues the latest
     # concrete product discussion. It is an add, never a quantity edit of the
     # previously focused cart line.
-    if intent.get("intent") in {"ADD_ITEM", "BROWSING", "UNKNOWN"}:
+    resolved_shopping_meaning = shopping_interpretation.get("meaning")
+    if (intent.get("intent") in {"ADD_ITEM", "BROWSING", "UNKNOWN"}
+            or (resolved_shopping_meaning and resolved_shopping_meaning.act == "BROWSE_FAMILY")):
         shopping = _shopping_decision(state, intent, direct_snapshot_refs,
-            shopping_interpretation.get("meaning"), bool(shopping_interpretation.get("catalog_unavailable")))
+            resolved_shopping_meaning, bool(shopping_interpretation.get("catalog_unavailable")))
         if shopping:
             intent = shopping
     return {**state, "intent": intent}
@@ -2886,17 +2949,19 @@ def _render(state: OrderConversationState) -> OrderConversationState:
         filtered_catalog = any(entry.get("tool") == "filter_catalog" for entry in logs)
         displayed: List[Dict[str, Any]] = []
         seen_ids: set[str] = set()
-        displayed_counts: Dict[str, int] = {}
+        displayed_counts: Dict[tuple[str, Any], int] = {}
         for item in recommendation_products:
             product_id = str(item.get("product_id") or "").strip()
             if not product_id or product_id in seen_ids:
                 continue
             bucket = item.get("menu_bucket") or "unknown"
-            if displayed_counts.get(bucket, 0) >= (16 if filtered_catalog else 8):
+            group_key = ("catalog", item["catalog_group_index"]) if "catalog_group_index" in item else (
+                "bucket", bucket)
+            if displayed_counts.get(group_key, 0) >= (16 if filtered_catalog else 8):
                 continue
             seen_ids.add(product_id)
             displayed.append(item)
-            displayed_counts[bucket] = displayed_counts.get(bucket, 0) + 1
+            displayed_counts[group_key] = displayed_counts.get(group_key, 0) + 1
             if len(displayed) == 16:
                 break
         if {item.get("menu_bucket") for item in displayed} >= {"food", "drink"}:
