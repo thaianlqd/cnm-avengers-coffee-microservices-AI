@@ -318,6 +318,8 @@ def _has_implicit_comma_join(sql: str, allowed_tables: Set[str]) -> bool:
     return False
 
 
+
+
 def validate_ai_query_scope(sql: str, allowed_tables: Mapping[str, Set[str]]) -> str:
     """Apply the resolver's table and safe-column policy to AI-authored SQL."""
     clean = validate_read_only_sql(sql)
