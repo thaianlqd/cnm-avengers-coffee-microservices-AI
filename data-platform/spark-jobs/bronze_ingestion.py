@@ -93,7 +93,19 @@ QUERIES = {
             assigned_at, picked_up_at, delivered_at
         FROM orders.shipper_delivery
     """,
+    "wallet_transactions": """
+        SELECT
+            id::text, customer_id::text, type, amount, status, created_at
+        FROM orders.customer_wallet_transaction
+    """,
+    "delivery_tracking": """
+        SELECT
+            id::text, ma_don_hang::text, delivery_method, delivery_mode,
+            lalamove_status, delivery_fee, estimated_minutes, branch_code, created_at
+        FROM orders.delivery_tracking
+    """,
 }
+
 
 
 def main():
