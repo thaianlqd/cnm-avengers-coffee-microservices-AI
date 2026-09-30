@@ -19,7 +19,8 @@ def normalize_shopping(value: Any) -> str:
     """Normalize customer language only; never apply this to business IDs."""
     raw = unicodedata.normalize("NFD", str(value or "").casefold())
     plain = "".join(char for char in raw if unicodedata.category(char) != "Mn").replace("đ", "d")
-    return re.sub(r"\s+", " ", re.sub(r"[^\w#]+", " ", plain)).strip()
+    text = re.sub(r"\s+", " ", re.sub(r"[^\w#]+", " ", plain)).strip()
+    return re.sub(r"\b(?:k|ko)\b", "khong", text)
 
 
 _FAMILIES = (
@@ -40,6 +41,7 @@ _FAMILIES = (
     ("drink", "drink", None, "Menu nước", ("nuoc", "do uong", "thuc uong")),
 )
 _FAMILY_PHRASES = frozenset(phrase for row in _FAMILIES for phrase in row[4])
+_DISCOURSE_FRAME_WORDS = frozenset("hello hi alo e xin chao hien tai bay gio".split())
 
 
 @dataclass(frozen=True)
@@ -140,7 +142,7 @@ def is_family_only(message: str, family_name: Optional[str]) -> bool:
         # content word (e.g. "muối", "kem dừa") makes it a product query.
         frame = set("ben ban minh toi quan o day co ban muon can mua dat lay them cho lam xem tim "
                     "menu thuc don gi nao loai mon cac nhung duoc khong di nhe nha ne nhi "
-                    "the vay a oi b hen".split())
+                    "the vay a oi b hen voi".split()) | _DISCOURSE_FRAME_WORDS
         if set(remainder.split()).issubset(frame):
             return True
     return False

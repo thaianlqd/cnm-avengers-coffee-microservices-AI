@@ -14,6 +14,27 @@ _DRINK_ROOTS = ("Cà Phê", "Trà", "Thức Uống Đá Xay")
 _FOOD_ROOTS = ("Bánh & Đồ Ăn",)
 
 
+def _category_hierarchy_cte(menu_schema: str) -> str:
+    """Authoritative full category ancestry shared by catalog read providers."""
+    return f"""
+        WITH RECURSIVE ancestors AS (
+            SELECT ma_danh_muc AS leaf_id, ma_danh_muc_cha, ten_danh_muc, 0 AS depth
+            FROM {menu_schema}.danh_muc
+            UNION ALL
+            SELECT a.leaf_id, parent.ma_danh_muc_cha, parent.ten_danh_muc, a.depth + 1
+            FROM ancestors a JOIN {menu_schema}.danh_muc parent
+              ON parent.ma_danh_muc = a.ma_danh_muc_cha
+            WHERE a.depth < 8
+        ), category_paths AS (
+            SELECT leaf_id,
+                   STRING_AGG(LOWER(ten_danh_muc), ' ' ORDER BY depth) AS category_path,
+                   (ARRAY_AGG(ten_danh_muc ORDER BY depth DESC))[1] AS root_name
+            FROM ancestors
+            GROUP BY leaf_id
+        )
+    """
+
+
 def _catalog_name_key(value: str) -> str:
     normalized = unicodedata.normalize("NFD", str(value or "").lower())
     return "".join(char for char in normalized if unicodedata.category(char) != "Mn").replace("đ", "d")
@@ -58,7 +79,7 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
     if sellable_scope == "topping":
         predicates.append("LOWER(dm.ten_danh_muc) = 'topping'")
     else:
-        predicates.append("roots.root_name = ANY(:roots)")
+        predicates.append("paths.root_name = ANY(:roots)")
     if min_price is not None:
         predicates.append("sp.gia_ban " + (">=" if min_price_inclusive else ">") + " :min_price")
         params["min_price"] = float(min_price)
@@ -73,29 +94,18 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
         offset = 0
         with _get_engine().connect() as conn:
             query = text(f"""
-                WITH RECURSIVE ancestors AS (
-                    SELECT ma_danh_muc AS leaf_id, ma_danh_muc_cha, ten_danh_muc, 0 AS depth
-                    FROM {menu_schema}.danh_muc
-                    UNION ALL
-                    SELECT a.leaf_id, parent.ma_danh_muc_cha, parent.ten_danh_muc, a.depth + 1
-                    FROM ancestors a JOIN {menu_schema}.danh_muc parent
-                      ON parent.ma_danh_muc = a.ma_danh_muc_cha
-                    WHERE a.depth < 8
-                ), roots AS (
-                    SELECT DISTINCT ON (leaf_id) leaf_id, ten_danh_muc AS root_name
-                    FROM ancestors WHERE ma_danh_muc_cha IS NULL ORDER BY leaf_id, depth DESC
-                )
+                {_category_hierarchy_cte(menu_schema)}
                 SELECT sp.ma_san_pham::text AS product_id, sp.ten_san_pham AS product_name,
                        sp.hinh_anh_url,
                        sp.gia_ban AS final_price, dm.ten_danh_muc AS category,
-                       roots.root_name AS parent_category,
+                       paths.root_name AS parent_category,
                        CASE WHEN LOWER(dm.ten_danh_muc) = 'topping' THEN 'topping'
-                            WHEN roots.root_name = ANY(:drink_roots) THEN 'drink'
-                            WHEN roots.root_name = ANY(:food_roots) THEN 'food'
+                            WHEN paths.root_name = ANY(:drink_roots) THEN 'drink'
+                            WHEN paths.root_name = ANY(:food_roots) THEN 'food'
                             ELSE 'unknown' END AS menu_bucket
                 FROM {menu_schema}.san_pham sp
                 JOIN {menu_schema}.danh_muc dm ON dm.ma_danh_muc = sp.ma_danh_muc
-                JOIN roots ON roots.leaf_id = dm.ma_danh_muc
+                JOIN category_paths paths ON paths.leaf_id = dm.ma_danh_muc
                 WHERE {' AND '.join(predicates)}
                 ORDER BY sp.gia_ban {order}, sp.ten_san_pham ASC
                 LIMIT :page_size OFFSET :page_offset
@@ -615,36 +625,22 @@ def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "
         if category not in {"drink", "food", "all"}:
             return {"status": "error", "message": "Danh mục gợi ý không hợp lệ."}
 
-        # Category IDs differ between seed data and deployed databases.  A
-        # product can belong to a level-2 category such as "Matcha" while its
-        # food/drink meaning lives on the level-1 parent.  Search the complete
-        # category path rather than guessing from the customer wording or only
-        # inspecting the leaf label.
+        # Category IDs differ between seed data and deployed databases. Reuse
+        # the same recursive ancestry contract as execute_filter_catalog.
+        category_cte = _category_hierarchy_cte(menu_schema)
         category_join = f"""
             LEFT JOIN {menu_schema}.danh_muc dm ON dm.ma_danh_muc = sp.ma_danh_muc
-            LEFT JOIN {menu_schema}.danh_muc dm_cha ON dm_cha.ma_danh_muc = dm.ma_danh_muc_cha
+            JOIN category_paths paths ON paths.leaf_id = sp.ma_danh_muc
         """
-        category_path = "LOWER(COALESCE(dm.ten_danh_muc, '') || ' ' || COALESCE(dm_cha.ten_danh_muc, ''))"
+        category_path = "COALESCE(paths.category_path, '')"
         category_where = ""
+        category_params: Dict[str, Any] = {}
         if category == "drink":
-            category_where = """
-                AND (
-                    """ + category_path + """ LIKE ANY (ARRAY[
-                        '%đồ uống%', '%do uong%', '%thức uống%', '%thuc uong%',
-                        '%nước%', '%nuoc%', '%cà phê%', '%ca phe%', '%coffee%',
-                        '%trà%', '%tra%', '%tea%', '%matcha%', '%sinh tố%', '%sinh to%', '%juice%'
-                    ])
-                )
-            """
+            category_where = " AND paths.root_name = ANY(:category_roots)"
+            category_params["category_roots"] = list(_DRINK_ROOTS)
         elif category == "food":
-            category_where = """
-                AND (
-                    """ + category_path + """ LIKE ANY (ARRAY[
-                        '%bánh%', '%banh%', '%đồ ăn%', '%do an%', '%thức ăn%',
-                        '%thuc an%', '%snack%', '%món ăn%', '%mon an%', '%pizza%', '%pasta%'
-                    ])
-                )
-            """
+            category_where = " AND paths.root_name = ANY(:category_roots)"
+            category_params["category_roots"] = list(_FOOD_ROOTS)
 
         search_where = ""
         search_params: Dict[str, Any] = {}
@@ -660,6 +656,7 @@ def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "
         def get_by_rating():
             with engine.connect() as conn:
                 rows = conn.execute(text(f"""
+                    {category_cte}
                     SELECT sp.ten_san_pham, COALESCE(AVG(dg.so_sao), 0) as avg_rating
                     FROM {menu_schema}.san_pham sp
                     {category_join}
@@ -668,7 +665,7 @@ def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "
                     GROUP BY sp.ma_san_pham, sp.ten_san_pham
                     ORDER BY avg_rating DESC, sp.ten_san_pham ASC
                     LIMIT :top_k
-                """), {"top_k": top_k, **search_params}).mappings().all()
+                """), {"top_k": top_k, **category_params, **search_params}).mappings().all()
                 return [r["ten_san_pham"] for r in rows]
 
         def get_by_hot():
@@ -679,48 +676,52 @@ def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "
             else:
                 with engine.connect() as conn:
                     rows = conn.execute(text(f"""
+                        {category_cte}
                         SELECT sp.ten_san_pham
                         FROM {menu_schema}.san_pham sp
                         {category_join}
                         WHERE sp.trang_thai = TRUE {category_where} {search_where}
                         ORDER BY sp.la_hot DESC, sp.ten_san_pham ASC
                         LIMIT :top_k
-                    """), {"top_k": top_k, **search_params}).mappings().all()
+                    """), {"top_k": top_k, **category_params, **search_params}).mappings().all()
                     return [r["ten_san_pham"] for r in rows]
 
         def get_all_alphabet():
             with engine.connect() as conn:
                 rows = conn.execute(text(f"""
+                    {category_cte}
                     SELECT sp.ten_san_pham
                     FROM {menu_schema}.san_pham sp
                     {category_join}
                     WHERE sp.trang_thai = TRUE {category_where} {search_where}
                     ORDER BY sp.ten_san_pham ASC
-                """), search_params).mappings().all()
+                """), {**category_params, **search_params}).mappings().all()
                 return [r["ten_san_pham"] for r in rows]
 
         def get_by_price_desc():
             with engine.connect() as conn:
                 rows = conn.execute(text(f"""
+                    {category_cte}
                     SELECT sp.ten_san_pham
                     FROM {menu_schema}.san_pham sp
                     {category_join}
                     WHERE sp.trang_thai = TRUE {category_where} {search_where}
                     ORDER BY sp.gia_ban DESC, sp.ten_san_pham ASC
                     LIMIT :top_k
-                """), {"top_k": top_k, **search_params}).mappings().all()
+                """), {"top_k": top_k, **category_params, **search_params}).mappings().all()
                 return [r["ten_san_pham"] for r in rows]
 
         def get_by_price_asc():
             with engine.connect() as conn:
                 rows = conn.execute(text(f"""
+                    {category_cte}
                     SELECT sp.ten_san_pham
                     FROM {menu_schema}.san_pham sp
                     {category_join}
                     WHERE sp.trang_thai = TRUE {category_where} {search_where}
                     ORDER BY sp.gia_ban ASC, sp.ten_san_pham ASC
                     LIMIT :top_k
-                """), {"top_k": top_k, **search_params}).mappings().all()
+                """), {"top_k": top_k, **category_params, **search_params}).mappings().all()
                 return [r["ten_san_pham"] for r in rows]
 
         # Lớp 1
@@ -763,12 +764,13 @@ def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "
 
         with engine.connect() as conn:
             product_rows = conn.execute(text(f"""
+                {category_cte}
                 SELECT sp.ma_san_pham::text AS product_id,
                        sp.ten_san_pham AS product_name,
                        sp.gia_ban AS final_price,
                        sp.hinh_anh_url,
                        dm.ten_danh_muc AS category,
-                       dm_cha.ten_danh_muc AS parent_category
+                       paths.root_name AS parent_category
                 FROM {menu_schema}.san_pham sp
                 {category_join}
                 WHERE sp.ten_san_pham = ANY(:product_names)
