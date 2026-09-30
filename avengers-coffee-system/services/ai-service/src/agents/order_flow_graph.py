@@ -1628,6 +1628,50 @@ def _handle_location_reference(state: OrderConversationState, kind: str) -> Dict
         "Mình chưa xác định được địa chỉ đã lưu. Bạn thử lại hoặc cho mình khu vực khác nhé.")
 
 
+def _location_candidate_choice(message: str, candidates: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Resolve only the explicit location-candidate namespace."""
+    text = re.sub(r"\s+", " ", _norm(message)).strip(" .,!?")
+    if re.search(r"\b(?:mon|banh|nuoc|san pham|cua hang|chi nhanh|voucher|ma giam gia)\b", text):
+        return {"other_namespace": True}
+    ordinal = None
+    number = re.fullmatch(
+        r"(?:(?:dung\s+)?(?:dia diem|cai)\s*)?(?:(?:so|thu)\s*)?(\d+)", text,
+    ) or re.search(r"\b(?:dia diem|cai)\s+(?:so|thu)\s*(\d+)\b", text)
+    if number:
+        ordinal = int(number.group(1))
+    elif re.search(r"\b(?:dia diem|cai)\s+(?:dau tien|thu nhat)\b", text):
+        ordinal = 1
+    if ordinal is not None:
+        return ({"candidate": candidates[ordinal - 1], "ordinal": ordinal}
+                if 1 <= ordinal <= len(candidates) else {"invalid_ordinal": ordinal})
+    matched = []
+    for candidate in candidates:
+        labels = [candidate.get("normalized_label"), candidate.get("display_address")]
+        if any(label and re.search(r"(?<!\w)" + re.escape(_norm(label)) + r"(?!\w)", text)
+               for label in labels):
+            matched.append(candidate)
+    return {"candidate": matched[0]} if len(matched) == 1 else {}
+
+
+def _location_candidate_result(session_id: str, result: Dict[str, Any], *, query: str,
+                               kind: str, transactional: bool) -> bool:
+    """Persist bounded ambiguity evidence as one typed pending owner."""
+    nearest = next((entry.get("result") or {} for entry in reversed(result.get("tool_calls_log") or [])
+                    if entry.get("tool") == "find_nearest_branch"), {})
+    candidates = list(nearest.get("location_candidates") or [])[:5]
+    if nearest.get("status") not in {"ambiguous", "rejected"} or not candidates:
+        return False
+    cart_manager.set_checkout_context(session_id, location_candidate_snapshot={
+        "query": query, "kind": kind, "transactional": bool(transactional),
+        "candidates": candidates,
+    })
+    cart_manager.set_pending_action(session_id, "select_location_candidate", {
+        "count": len(candidates), "status": nearest.get("status"),
+    })
+    logger.info("[LocationCandidate] decision=clarify candidate_snapshot=%d", len(candidates))
+    return True
+
+
 def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
     """Keep location and store turns inside the deterministic branch boundary."""
     from src.agents.location_parser import (
@@ -1669,6 +1713,25 @@ def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
 
     if prefs.get("checkout_submission") and transactional_location:
         return reply("Đơn đang được gửi xử lý. Bạn xác nhận lại để kiểm tra kết quả trước khi đổi địa chỉ nhé.")
+    pending_now = cart_manager.get_pending_action(session_id) or {}
+    explicit_new_location = bool(parsed.kind in {"area", "address", "poi"} and parsed.value)
+    if (transactional_location and explicit_new_location
+            and (prefs.get("suggested_address") or prefs.get("profile_address_candidates")
+                 or pending_now.get("type") == "confirm_address")):
+        # The customer answered the saved-address question with a new place.
+        # Remove only that proposal owner before normal location resolution.
+        cart_manager.clear_branch(session_id)
+        cart_manager.set_checkout_context(
+            session_id, suggested_address=None, profile_address_candidates=None,
+            address_confirmed=None, address_change_requested=True,
+            location_address=None, delivery_address=None, branch_candidates=None,
+            location_source="explicit_user",
+            summary_amounts=None, checkout_action_id=None,
+            checkout_action_expires_at=None,
+        )
+        if pending_now.get("type") == "confirm_address":
+            cart_manager.clear_pending_action(session_id)
+        prefs = cart_manager.get_checkout_prefs(session_id)
     if transactional_location and prefs.get("delivery_type") in {"MANG_DI", "TAI_CHO"}:
         merged = merge_store_location(prefs.get("store_location"), parsed.value or state["user_message"])
         if merged.get("value"):
@@ -1727,6 +1790,24 @@ def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
             profile_address_candidates=None,
             summary_amounts=None, checkout_action_id=None, checkout_action_expires_at=None)
         result = _confirm_saved_location(session_id, "đúng địa chỉ đó", history=state.get("history") or [])
+        if result:
+            nearest = next((entry.get("result") or {} for entry in reversed(result.get("tool_calls_log") or [])
+                            if entry.get("tool") == "find_nearest_branch"), {})
+            if nearest.get("status") in {"ambiguous", "rejected", "not_found", "provider_error"}:
+                # ``suggested_address`` was only a resolver bridge for this new
+                # explicit location; it must never recreate confirm_address.
+                cart_manager.set_checkout_context(
+                    session_id, suggested_address=None, profile_address_candidates=None,
+                    address_confirmed=None, address_change_requested=True,
+                    location_address=None, delivery_address=None,
+                    location_pending=True, location_source="explicit_user",
+                )
+                if (cart_manager.get_pending_action(session_id) or {}).get("type") == "confirm_address":
+                    cart_manager.clear_pending_action(session_id)
+            if _location_candidate_result(
+                session_id, result, query=location, kind=parsed.kind, transactional=True,
+            ):
+                return result
         return _advance_checkout_if_ready(session_id, result) if result else reply(
             "Mình chưa xác định được vị trí trên bản đồ. Bạn kiểm tra lại số nhà, tên đường, phường/xã và tỉnh/thành phố nhé."
             if prefs.get("delivery_type") == "GIAO_TAN_NOI" else
@@ -1746,8 +1827,16 @@ def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
             "source": "explicit_user",
             "status": "retained",
         })
-    found = execute_find_nearest_branch(location=location, session_id="")
+    branch_args = {"location": location, "session_id": ""}
+    if state.get("resolved_location_candidate"):
+        branch_args["resolved_location"] = state["resolved_location_candidate"]
+    found = execute_find_nearest_branch(**branch_args)
     logs = [{"tool": "find_nearest_branch", "result": found}]
+    candidate_result = reply(found.get("message") or "Bạn chọn một địa điểm trong danh sách nhé.", logs)
+    if _location_candidate_result(
+        session_id, candidate_result, query=location, kind=parsed.kind, transactional=False,
+    ):
+        return candidate_result
     branches = found.get("branches") or []
     if branches:
         cart_manager.set_checkout_context(session_id, last_branch_discovery_candidates=[
@@ -1923,7 +2012,8 @@ def _shopping_decision(state: OrderConversationState, tier1_intent: Dict[str, An
     question = bool(re.search(r"\b(?:co|xem|tim|goi y|menu|thuc don)\b", _norm(message)))
     if meaning.act == "AMBIGUOUS" and meaning.ambiguity:
         return {"intent": "SHOPPING_CLARIFY", "semantic_intent": "AMBIGUOUS",
-                "target_kind": "PRODUCT", "candidate_products": list(meaning.ambiguity)}
+                "target_kind": "PRODUCT", "candidate_products": list(meaning.ambiguity),
+                "family": meaning.family, "search_text": meaning.search_text, "label": meaning.label}
     if (catalog_unavailable and not refs and meaning.act == "UNKNOWN" and not question
             and not re.search(r"\b(?:va|voi|hoac|hay)\b", _norm(message))
             and re.search(r"\b(?:mua|lay|them|dat)\b|\bcho\s+(?:toi|minh)\b", _norm(message))):
@@ -2051,6 +2141,44 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
             return {**state, "intent": {"intent": "PRODUCT_CLARIFY"}}
         return {**state, "intent": {"intent": "ADD_ITEM", "resolved_products": [canonical], "quantity": 1}}
     active_pending = cart_manager.get_pending_action(state["session_id"])
+    if (active_pending or {}).get("type") == "shopping_scope_clarification":
+        params = active_pending.get("params") or active_pending.get("data") or {}
+        candidates = list(params.get("candidate_products") or [])
+        text = _norm(state["user_message"])
+        if re.fullmatch(r"\s*(?:thoi|bo qua|khong can)\s*[.!]?\s*", text):
+            return {**state, "intent": {"intent": "SHOPPING_SCOPE_CANCEL"}}
+        if re.search(r"\b(?:xem them|xem cac loai|xem menu|menu)\b", text):
+            cart_manager.clear_pending_action(state["session_id"])
+            query = "xem " + str(params.get("label") or params.get("search_text") or "menu")
+            return {**state, "intent": {"intent": "BROWSING", "category_query": query}}
+        meaning = interpret_shopping(state["user_message"], snapshot=candidates)
+        selection_followup = bool(re.search(
+            r"\b(?:mua|lay|them|chon|dat)\b|\b(?:cho|lam)\s+(?:toi|minh)\b", text,
+        ))
+        if len(meaning.targets) == 1 and (meaning.act == "ADD_ITEM" or selection_followup):
+            cart_manager.clear_pending_action(state["session_id"])
+            return {**state, "intent": {"intent": "ADD_ITEM",
+                "resolved_products": list(meaning.targets), "quantity": meaning.quantity}}
+        focus = prefs_at_entry.get("last_product_focus") or {}
+        focused = next((row for row in candidates
+                        if str(row.get("product_id")) == str(focus.get("product_id"))), None)
+        if focused and re.search(r"\b(?:mon|cai|san pham)\s+(?:do|vua roi|vua xem)\b", text):
+            cart_manager.clear_pending_action(state["session_id"])
+            return {**state, "intent": {"intent": "ADD_ITEM",
+                "resolved_products": [focused], "quantity": 1}}
+        explicit = classify_order_intent(state["user_message"], None)
+        from src.agents.location_parser import parse_location
+        explicit_location = parse_location(state["user_message"])
+        if explicit.get("intent") in {
+            "ADD_ITEM", "BROWSING",
+            "VIEW_CART", "CLEAR_CART", "REMOVE_ITEM", "SET_QUANTITY", "EDIT_OPTIONS",
+            "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "PAYMENT_INFO",
+        } or (explicit_location.kind in {"area", "address", "poi"} and explicit_location.value):
+            cart_manager.clear_pending_action(state["session_id"])
+            active_pending = None
+        else:
+            return {**state, "intent": {"intent": "PENDING_SHOPPING_SCOPE",
+                "candidate_products": candidates, "label": params.get("label")}}
     if (active_pending or {}).get("type") == "confirm_prior_location_for_checkout":
         from src.agents.location_parser import checkout_location
         from src.agents.pending_context import classify_pending_reply
@@ -2113,6 +2241,89 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
             if decision == "DECLINE":
                 return {**state, "intent": {"intent": "BRANCH_OFFER_DECLINE"}}
             return {**state, "intent": {"intent": "PENDING_BRANCH_OFFER", "params": params}}
+    if (active_pending or {}).get("type") == "select_location_candidate":
+        from src.agents.location_parser import parse_location
+        snapshot = prefs_at_entry.get("location_candidate_snapshot") or {}
+        candidates = list(snapshot.get("candidates") or [])
+        explicit = classify_order_intent(state["user_message"], None)
+        meaning = interpret_shopping(
+            state["user_message"], snapshot=prefs_at_entry.get("last_product_suggestions") or [],
+        )
+        if explicit.get("intent") == "PAYMENT_INFO":
+            return {**state, "intent": explicit}
+        shopping_intents = {
+            "ADD_ITEM", "BROWSING", "VIEW_CART", "CLEAR_CART", "REMOVE_ITEM",
+            "SET_QUANTITY", "EDIT_OPTIONS",
+        }
+        shopping_turn = (explicit.get("intent") in shopping_intents
+                         or meaning.act in {"ADD_ITEM", "BROWSE_FAMILY", "AMBIGUOUS"})
+        choice = _location_candidate_choice(state["user_message"], candidates)
+        if shopping_turn or choice.get("other_namespace"):
+            cart_manager.clear_pending_action(state["session_id"])
+            active_pending = None
+        elif choice.get("candidate"):
+            return {**state, "intent": {"intent": "LOCATION_CANDIDATE_SELECT",
+                "candidate": choice["candidate"], "ordinal": choice.get("ordinal"),
+                "location_snapshot": snapshot}}
+        elif choice.get("invalid_ordinal") is not None:
+            return {**state, "intent": {"intent": "LOCATION_CANDIDATE_INVALID",
+                "ordinal": choice["invalid_ordinal"], "candidate_count": len(candidates)}}
+        else:
+            explicit_location = parse_location(state["user_message"])
+            if explicit_location.kind in {"area", "address", "poi"} and explicit_location.value:
+                cart_manager.clear_pending_action(state["session_id"])
+                cart_manager.set_checkout_context(
+                    state["session_id"], location_candidate_snapshot=None,
+                    selected_location_candidate=None,
+                )
+                return {**state, "intent": {"intent": "LOCATION_QUERY",
+                    "location_kind": explicit_location.kind}}
+            return {**state, "intent": {"intent": "PENDING_LOCATION_CANDIDATE",
+                "candidate_count": len(candidates)}}
+
+    # A saved-address/location owner governs short answers, not an explicit
+    # shopping or cart command in a new domain.
+    profile_owner = bool(
+        prefs_at_entry.get("checkout_requested") and prefs_at_entry.get("profile_address_candidates")
+    )
+    location_owner = (active_pending or {}).get("type") in {"confirm_address", "collect_store_location"}
+    if location_owner or profile_owner:
+        explicit = classify_order_intent(state["user_message"], None)
+        meaning = interpret_shopping(
+            state["user_message"], snapshot=prefs_at_entry.get("last_product_suggestions") or [],
+        )
+        if explicit.get("intent") == "PAYMENT_INFO":
+            return {**state, "intent": explicit}
+        if explicit.get("intent") in {
+            "VIEW_CART", "CLEAR_CART", "REMOVE_ITEM", "SET_QUANTITY", "EDIT_OPTIONS",
+        }:
+            if location_owner:
+                cart_manager.clear_pending_action(state["session_id"])
+            return {**state, "intent": explicit}
+        if explicit.get("intent") in {"ADD_ITEM", "BROWSING"} and meaning.act == "UNKNOWN":
+            if location_owner:
+                cart_manager.clear_pending_action(state["session_id"])
+            return {**state, "intent": (
+                {**explicit, "category_query": state["user_message"]}
+                if explicit.get("intent") == "BROWSING" else
+                {"intent": "SHOPPING_CLARIFY", "semantic_intent": "UNKNOWN_PRODUCT"}
+            )}
+        if meaning.act == "ADD_ITEM" and meaning.targets:
+            if location_owner:
+                cart_manager.clear_pending_action(state["session_id"])
+            return {**state, "intent": {"intent": "ADD_ITEM",
+                "resolved_products": list(meaning.targets), "quantity": meaning.quantity}}
+        if meaning.act == "AMBIGUOUS" and meaning.ambiguity:
+            if location_owner:
+                cart_manager.clear_pending_action(state["session_id"])
+            return {**state, "intent": {"intent": "SHOPPING_CLARIFY",
+                "semantic_intent": "AMBIGUOUS", "candidate_products": list(meaning.ambiguity),
+                "family": meaning.family, "search_text": meaning.search_text, "label": meaning.label}}
+        if meaning.act == "BROWSE_FAMILY":
+            if location_owner:
+                cart_manager.clear_pending_action(state["session_id"])
+            return {**state, "intent": {"intent": "BROWSING",
+                "semantic_intent": "BROWSE_FAMILY", "category_query": state["user_message"]}}
     # Transaction language is arbitrated before catalog parsing. A missed
     # mutation grammar must never be reinterpreted as a product search.
     transaction_turn = has_transaction_evidence(state["user_message"])
@@ -2407,7 +2618,9 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         if pending_meaning.ambiguity:
             return {**state, "intent": {"intent": "SHOPPING_CLARIFY",
                 "semantic_intent": "AMBIGUOUS", "target_kind": "PRODUCT",
-                "candidate_products": list(pending_meaning.ambiguity)}}
+                "candidate_products": list(pending_meaning.ambiguity),
+                "family": pending_meaning.family, "search_text": pending_meaning.search_text,
+                "label": pending_meaning.label}}
         from src.agents.pending_context import looks_like_catalog_query
         refs = direct_snapshot_refs
         if not refs:
@@ -2497,7 +2710,9 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
                 "category_query": state["user_message"]}}
         if order_meaning.act == "AMBIGUOUS" and order_meaning.ambiguity:
             return {**state, "intent": {"intent": "SHOPPING_CLARIFY",
-                "candidate_products": list(order_meaning.ambiguity)}}
+                "candidate_products": list(order_meaning.ambiguity),
+                "family": order_meaning.family, "search_text": order_meaning.search_text,
+                "label": order_meaning.label}}
     if (prefs.get("summary_fingerprint") or prefs.get("checkout_submission")) and _is_plain_confirmation(state["user_message"]):
         intent = {"intent": "CONFIRM_CHECKOUT"}
     elif intent.get("intent") != "PAYMENT_INFO" and _wants_checkout(state["user_message"]):
@@ -2561,7 +2776,7 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         logger.debug("routing route=%s operation=%s target_source=%s", kind, kind,
                      intent.get("target_source") or "resolver")
     cart_write_intents = {"ADD_ITEM", "SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS", "CLEAR_CART", "FILL_OPTIONS"}
-    authoritative_intents = cart_write_intents | {"FINISH_CART", "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER", "APPLY_VOUCHER", "REMOVE_VOUCHER", "REPLACE_VOUCHER", "CONFIRM_CHECKOUT", "PENDING_REPLY", "PENDING_BRANCH", "PENDING_CART_LINE", "PENDING_CHECKOUT_CHOICE", "REVIEW_CHECKOUT_SUMMARY", "LOCATION_REFERENCE", "PRIOR_LOCATION_REUSE_CONFIRM"}
+    authoritative_intents = cart_write_intents | {"FINISH_CART", "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER", "APPLY_VOUCHER", "REMOVE_VOUCHER", "REPLACE_VOUCHER", "CONFIRM_CHECKOUT", "PENDING_REPLY", "PENDING_BRANCH", "PENDING_CART_LINE", "PENDING_CHECKOUT_CHOICE", "REVIEW_CHECKOUT_SUMMARY", "LOCATION_REFERENCE", "LOCATION_CANDIDATE_SELECT", "PRIOR_LOCATION_REUSE_CONFIRM"}
     prefs = cart_manager.get_checkout_prefs(session_id)
     replay = intent.get("pending_type") == "confirm_checkout" and intent.get("decision") == "CONFIRM" and (prefs.get("checkout_submission") or prefs.get("completed_order_id"))
     customer_session_id = str(session_id).split(":conversation:", 1)[0]
@@ -2728,6 +2943,52 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         return {**state, "result": {"reply": checkout.get("message", "Bạn kiểm tra lại đơn hàng nhé."),
                                    "checkout_payload": checkout.get("order_summary") if checkout.get("status") == "require_confirmation" else None,
                                    "tool_calls_log": [{"tool": "request_checkout", "result": checkout}], "error": None}}
+    if kind == "LOCATION_CANDIDATE_INVALID":
+        count = int(intent.get("candidate_count") or 0)
+        ordinal = int(intent.get("ordinal") or 0)
+        return {**state, "result": {
+            "reply": f"Danh sách địa điểm có {count} lựa chọn nên không có địa điểm số {ordinal}. Bạn chọn lại số địa điểm nhé.",
+            "checkout_payload": None, "tool_calls_log": [], "error": None,
+        }}
+    if kind == "PENDING_LOCATION_CANDIDATE":
+        snapshot = cart_manager.get_checkout_prefs(session_id).get("location_candidate_snapshot") or {}
+        candidates = list(snapshot.get("candidates") or [])
+        lines = ["Mình đang chờ bạn chọn một địa điểm trong danh sách:"]
+        lines.extend(
+            f"{index}. {row.get('normalized_label') or 'Địa điểm'}"
+            + (f" — {row['display_address']}" if row.get("display_address")
+               and row.get("display_address") != row.get("normalized_label") else "")
+            for index, row in enumerate(candidates, 1)
+        )
+        lines.append("Bạn chọn số hoặc nói đúng tên địa điểm nhé.")
+        return {**state, "result": {"reply": "\n".join(lines), "checkout_payload": None,
+                                     "tool_calls_log": [], "error": None}}
+    if kind == "LOCATION_CANDIDATE_SELECT":
+        from src.agents.location_parser import Location
+        candidate = dict(intent.get("candidate") or {})
+        snapshot = intent.get("location_snapshot") or {}
+        label = str(candidate.get("normalized_label") or candidate.get("display_address") or "").strip()
+        cart_manager.clear_pending_action(session_id)
+        cart_manager.set_checkout_context(
+            session_id, location_candidate_snapshot=None,
+            selected_location_candidate=candidate,
+        )
+        logger.info("[LocationCandidate] decision=select ordinal=%s source=provider",
+                    intent.get("ordinal") or "label")
+        resumed = {
+            **state,
+            "force_read_only_location": not bool(snapshot.get("transactional")),
+            "resolved_location_candidate": candidate,
+            "location_override": Location(
+                str(snapshot.get("kind") or "poi"), label,
+                admin_hints=tuple((candidate.get("admin_components") or {}).values()),
+            ),
+        }
+        try:
+            selected = _handle_location_request(resumed)
+        finally:
+            cart_manager.set_checkout_context(session_id, selected_location_candidate=None)
+        return {**state, "result": selected}
     if kind == "LOCATION_QUERY":
         location_state = ({**state, "force_read_only_location": True}
                           if intent.get("read_only_interrupt") else state)
@@ -2927,14 +3188,34 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
     if kind == "SHOPPING_UNAVAILABLE":
         return {**state, "result": {"reply": "Mình chưa tra được danh mục món lúc này. Bạn thử lại sau ít phút nhé.",
                                    "checkout_payload": None, "tool_calls_log": [], "error": None}}
+    if kind == "SHOPPING_SCOPE_CANCEL":
+        cart_manager.clear_pending_action(session_id)
+        return {**state, "result": {"reply": "Được nhé, mình đã bỏ lựa chọn món đang chờ.",
+                                     "checkout_payload": None, "tool_calls_log": [], "error": None}}
+    if kind == "PENDING_SHOPPING_SCOPE":
+        label = intent.get("label") or "nhóm món này"
+        return {**state, "result": {"reply": (
+            f"Bạn muốn chọn một món vừa xem hay xem thêm menu {label}? "
+            "Bạn có thể nói đúng tên món hoặc nói ‘xem thêm’."
+        ), "checkout_payload": None, "tool_calls_log": [], "error": None}}
     if kind in {"SHOPPING_GENERIC", "SHOPPING_CLARIFY"}:
         message_text = ("Bạn muốn xem thêm bánh hay đồ uống? Mình sẽ đưa menu để bạn chọn món cụ thể."
                         if kind == "SHOPPING_GENERIC" else
                         "Mình chưa xác định được món cụ thể. Bạn cho mình tên món hoặc chọn số trong danh sách nhé.")
         candidates = intent.get("candidate_products") or []
         if kind == "SHOPPING_CLARIFY" and candidates:
-            message_text = "Mình thấy nhiều món phù hợp. Bạn chọn đúng món giúp mình nhé:\n" + "\n".join(
-                f"{index}. {row['product_name']}" for index, row in enumerate(candidates, 1))
+            cart_manager.set_pending_action(session_id, "shopping_scope_clarification", {
+                "candidate_products": [{
+                    key: row.get(key) for key in ("product_id", "product_name", "category")
+                } for row in candidates[:8]],
+                "family": intent.get("family"), "search_text": intent.get("search_text"),
+                "label": intent.get("label"),
+            })
+            family_label = intent.get("label") or "nhóm món này"
+            message_text = "Mình thấy nhiều món phù hợp:\n" + "\n".join(
+                f"{index}. {row['product_name']}" for index, row in enumerate(candidates, 1)
+            ) + (f"\nBạn muốn chọn một món vừa xem hay xem thêm menu {family_label}?"
+                 if intent.get("family") else "\nBạn chọn đúng món giúp mình nhé.")
         return {**state, "result": {"reply": message_text, "checkout_payload": None,
                                    "tool_calls_log": [], "error": None}}
     if intent.get("pending_type") == "ask_more_items":

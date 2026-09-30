@@ -104,7 +104,8 @@ TOOL_FIND_NEAREST_BRANCH = {
     },
 }
 
-def execute_find_nearest_branch(location: str = "", session_id: str = "", target_branches: list = None) -> Dict[str, Any]:
+def execute_find_nearest_branch(location: str = "", session_id: str = "", target_branches: list = None,
+                                resolved_location: dict = None) -> Dict[str, Any]:
     """Tìm chi nhánh gần nhất dựa trên geocoding và khoảng cách Haversine."""
     try:
         from src.agents.location_parser import parse_location
@@ -130,6 +131,23 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
         location_kind = parsed_location.kind
         user_lat, user_lon = None, None
         distance_basis = "unavailable"
+        selected_location = resolved_location or (
+            prefs.get("selected_location_candidate") if session_id else None
+        )
+        if isinstance(selected_location, dict):
+            try:
+                user_lat = float(selected_location["lat"])
+                user_lon = float(selected_location["lng"])
+            except (KeyError, TypeError, ValueError):
+                selected_location = None
+                user_lat, user_lon = None, None
+            else:
+                target_address = str(
+                    selected_location.get("normalized_label")
+                    or selected_location.get("display_address") or target_address
+                ).strip()
+                location_kind = "poi"
+                distance_basis = "provider_candidate"
 
         with engine.connect() as conn:
             from src.function_calling.helpers import _norm
@@ -154,7 +172,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
             delivery_type = prefs.get("delivery_type")
             locality_rows = []
             locality_ids = set()
-            area_only = location_kind in {"area", "branch_query", "none"} and not re.match(
+            area_only = not selected_location and location_kind in {"area", "branch_query", "none"} and not re.match(
                 r"^\d+[A-Za-z]?(?:[/.-]\d+[A-Za-z]?)?\s", target_address)
             if area_only and delivery_type != "GIAO_TAN_NOI" and not target_branches:
                 from src.agents.location_parser import locality_matches, normalize, infer_city_from_addresses
@@ -185,9 +203,19 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                         target_address, location_kind, getattr(parsed_location, "admin_hints", ()))
                     coords = ((resolution.lat, resolution.lng) if resolution.status == "ok" else None)
                     if resolution.status == "ambiguous":
+                        location_candidates = list(getattr(resolution, "candidates", ()) or ())
+                        listed = "\n".join(
+                            f"{index}. {row.get('normalized_label') or 'Địa điểm'}"
+                            + (f" — {row['display_address']}" if row.get("display_address")
+                               and row.get("display_address") != row.get("normalized_label") else "")
+                            for index, row in enumerate(location_candidates, 1)
+                        )
                         return {
                             "status": "ambiguous", "normalized_location": target_address,
-                            "message": "Mình tìm thấy nhiều địa điểm phù hợp. Bạn cho mình thêm phường/quận hoặc thành phố nhé.",
+                            "location_candidates": location_candidates,
+                            "message": ("Mình tìm thấy vài địa điểm phù hợp:\n" + listed
+                                        + "\nBạn đang ở địa điểm số mấy?" if listed else
+                                        "Mình tìm thấy nhiều địa điểm phù hợp. Bạn cho mình thêm phường/quận hoặc thành phố nhé."),
                         }
                     if resolution.status == "provider_error":
                         return {
@@ -200,9 +228,19 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                             "message": "Mình chưa tìm thấy địa điểm này trên bản đồ. Bạn kiểm tra lại tên hoặc cho mình thêm khu vực nhé.",
                         }
                     if resolution.status == "rejected":
+                        location_candidates = list(getattr(resolution, "candidates", ()) or ())
+                        listed = "\n".join(
+                            f"{index}. {row.get('normalized_label') or 'Địa điểm'}"
+                            + (f" — {row['display_address']}" if row.get("display_address")
+                               and row.get("display_address") != row.get("normalized_label") else "")
+                            for index, row in enumerate(location_candidates, 1)
+                        )
                         return {
                             "status": "rejected", "normalized_location": target_address,
-                            "message": "Mình tìm thấy kết quả nhưng chưa khớp khu vực bạn cung cấp. Bạn cho mình thêm phường/quận hoặc kiểm tra lại thành phố nhé.",
+                            "location_candidates": location_candidates,
+                            "message": ("Mình tìm thấy một số địa điểm tên gần giống, nhưng khu vực chưa khớp hoàn toàn:\n"
+                                        + listed + "\nBạn có phải một trong các địa điểm này không?" if listed else
+                                        "Mình tìm thấy kết quả nhưng chưa khớp khu vực bạn cung cấp. Bạn cho mình thêm phường/quận hoặc kiểm tra lại thành phố nhé."),
                         }
                 else:
                     coords = geocode_address(target_address)
@@ -379,6 +417,9 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                 "status": "need_branch_selection" if delivery_type in {"MANG_DI", "TAI_CHO"} else "ok",
                 "branches": top_branches,
                 "normalized_location": target_address,
+                "location_provider_ref_id": (
+                    selected_location.get("provider_ref_id") if selected_location else None
+                ),
                 "location_basis": "exact_locality" if locality_rows else distance_basis,
                 "message": (
                     msg + " Khách dùng tại chỗ/mang đi nên hãy liệt kê tối đa 5 cửa hàng trong khu vực, ghi rõ cửa hàng còn đủ món và món nào bị thiếu; chỉ cửa hàng còn đủ món mới được chọn."

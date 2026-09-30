@@ -62,6 +62,7 @@ class LocationResolution:
     rejected_candidate_count: int = 0
     resolution_basis: Optional[str] = None
     candidate_error_count: int = 0
+    candidates: Tuple[dict, ...] = ()
 
 
 _ADMIN_PREFIX = re.compile(
@@ -184,6 +185,63 @@ def _label(candidate: dict, place: dict) -> Optional[str]:
     return None
 
 
+def _candidate_descriptor(candidate: dict, place: dict, match_type: str,
+                          accepted: bool) -> Optional[dict]:
+    """Keep only bounded, provider-derived fields needed for a user choice."""
+    lat, lng = place.get("lat"), place.get("lng")
+    if lat is None or lng is None:
+        return None
+    name = next((str(source.get("name")) for source in (place, candidate)
+                 if source.get("name")), None)
+    display = next((str(source.get(key)) for source in (place, candidate)
+                    for key in ("formatted_address", "display", "address")
+                    if source.get(key)), None)
+    label = name or display or _label(candidate, place)
+    if not label:
+        return None
+    admin = {key: values[0] for key, values in _admin_fields(place).items() if values}
+    return {
+        "provider_ref_id": str(candidate.get("ref_id") or ""),
+        "normalized_label": label,
+        "display_address": display,
+        "admin_components": admin,
+        "lat": float(lat),
+        "lng": float(lng),
+        "match_basis": f"{match_type}_name" if match_type == "poi" else match_type,
+        "accepted": bool(accepted),
+    }
+
+
+def _bounded_candidates(rows: list[dict], limit: int = 5) -> Tuple[dict, ...]:
+    result = []
+    seen = set()
+    for row in rows:
+        key = (
+            _fold_location(row.get("normalized_label") or ""),
+            _fold_location(row.get("display_address") or ""),
+            round(float(row["lat"]), 6), round(float(row["lng"]), 6),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(row)
+        if len(result) >= limit:
+            break
+    return tuple(result)
+
+
+def _address_core_matches(query: str, candidate: dict, place: dict) -> bool:
+    """Recognize a relevant address preview without weakening full validation."""
+    first = next((part.strip() for part in str(query or "").split(",") if part.strip()), "")
+    house_pattern = re.compile(r"^(\d{1,5}[A-Za-z]?(?:[/.-]\d{1,5}[A-Za-z]?)?)\s+", re.IGNORECASE)
+    street = house_pattern.sub("", first).strip()
+    if not street:
+        return False
+    evidence = " ".join(str(source.get(key) or "") for source in (place, candidate)
+                        for key in ("street", "address", "formatted_address", "display", "name"))
+    return _fold_location(street) in _fold_location(evidence)
+
+
 def resolve_location(query: str, kind: str = "admin_area",
                      admin_hints: tuple[str, ...] = ()) -> LocationResolution:
     """Resolve a typed location without conflating provider and validator failures."""
@@ -209,6 +267,7 @@ def resolve_location(query: str, kind: str = "admin_area",
                 return LocationResolution("not_found", match_type=match_type)
 
             accepted = []
+            rejected_previews = []
             rejected = 0
             candidate_errors = 0
             successful_details = 0
@@ -235,24 +294,36 @@ def resolve_location(query: str, kind: str = "admin_area",
                 coords = place.get("lat"), place.get("lng")
                 hints_ok = all(_admin_hint_matches(hint, place) for hint in admin_hints)
                 if match_type == "poi":
-                    matches = _poi_name_matches(query, candidate, place) and hints_ok
+                    semantic_match = _poi_name_matches(query, candidate, place)
+                    matches = semantic_match and hints_ok
                 elif match_type == "address":
+                    semantic_match = _address_core_matches(query, candidate, place)
                     matches = _address_matches(query, candidate, place) and hints_ok
                 else:
+                    semantic_match = False
                     matches = _matches_locality(requested_locality, candidate, place)
                 if matches and None not in coords:
                     accepted.append((candidate, place))
                 else:
                     rejected += 1
+                    if semantic_match:
+                        preview = _candidate_descriptor(candidate, place, match_type, False)
+                        if preview:
+                            rejected_previews.append(preview)
 
             count = len(candidates)
             if len(accepted) > 1:
+                previews = _bounded_candidates([
+                    preview for candidate, place in accepted
+                    if (preview := _candidate_descriptor(candidate, place, match_type, True))
+                ])
                 logger.info("[LocationResolve] kind=%s provider_candidates=%d accepted=%d rejected=%d status=ambiguous",
                             match_type, count, len(accepted), rejected)
                 return LocationResolution("ambiguous", match_type=match_type,
                                           provider_candidate_count=count,
                                           rejected_candidate_count=rejected,
-                                          candidate_error_count=candidate_errors)
+                                          candidate_error_count=candidate_errors,
+                                          candidates=previews)
             if not accepted:
                 if candidate_errors and not successful_details:
                     logger.error("[LocationResolve] kind=%s provider_candidates=%d accepted=0 rejected=%d candidate_errors=%d status=provider_error",
@@ -266,7 +337,8 @@ def resolve_location(query: str, kind: str = "admin_area",
                 return LocationResolution("rejected", match_type=match_type,
                                           provider_candidate_count=count,
                                           rejected_candidate_count=rejected,
-                                          candidate_error_count=candidate_errors)
+                                          candidate_error_count=candidate_errors,
+                                          candidates=_bounded_candidates(rejected_previews))
             candidate, place = accepted[0]
             admin = {key: values[0] for key, values in _admin_fields(place).items() if values}
             logger.info("[LocationResolve] kind=%s provider_candidates=%d accepted=1 rejected=%d status=ok basis=provider_place",

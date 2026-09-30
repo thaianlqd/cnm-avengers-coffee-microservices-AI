@@ -41,7 +41,9 @@ _FAMILIES = (
     ("drink", "drink", None, "Menu nước", ("nuoc", "do uong", "thuc uong")),
 )
 _FAMILY_PHRASES = frozenset(phrase for row in _FAMILIES for phrase in row[4])
-_DISCOURSE_FRAME_WORDS = frozenset("hello hi alo e xin chao hien tai bay gio".split())
+_DISCOURSE_FRAME_WORDS = frozenset(
+    "hello hi alo e xin chao hien tai bay gio a quen nay khoan nhan tien truoc da minh".split()
+)
 
 
 @dataclass(frozen=True)
@@ -186,6 +188,9 @@ def interpret_shopping(
     info = bool(re.search(r"\b(?:gia|bao nhieu|review|danh gia|nhan xet|ngon|vi|topping|size|thanh phan|the nao)\b", text)
                 or re.search(r"\bco\b.*\b(?:khong|nao|gi)\b", text)
                 or re.search(r"\b(?:xem|tim|goi y|menu|thuc don)\b", text))
+    selection_style = bool(re.search(
+        r"\b(?:mua|lay|them|chon|dat)\b|\b(?:cho|lam)\s+(?:toi|minh)\b", text,
+    ))
     family = _family(text)
     family_bare = is_family_only(raw_text, family[0] if family else None)
     if ordinal_requested:
@@ -200,7 +205,10 @@ def interpret_shopping(
             if exact:
                 targets, source, entity = exact, origin + "_exact", "PRODUCT"
                 break
-            if family_bare:
+            # A selection-shaped turn first resolves a unique fragment inside
+            # the visible snapshot. Explicit menu/info language still owns the
+            # broad family browse contract.
+            if family_bare and not (origin == "snapshot" and selection_style and not info):
                 continue
             aliases = _product_matches(text, rows, exact=False)
             if aliases:
@@ -217,7 +225,11 @@ def interpret_shopping(
                                       targets=targets, reference_source=source)
     if ambiguity:
         return ShoppingInterpretation(**base, act="AMBIGUOUS", entity_type="PRODUCT",
-                                      ambiguity=ambiguity)
+                                      ambiguity=ambiguity,
+                                      category=family[1] if family else None,
+                                      family=family[0] if family else None,
+                                      search_text=family[2] if family else None,
+                                      label=family[3] if family else None)
     if targets and _selects_target(text, targets, source):
         return ShoppingInterpretation(**base, act="ADD_ITEM", read_only=False,
                                       entity_type=entity, targets=targets, reference_source=source)
