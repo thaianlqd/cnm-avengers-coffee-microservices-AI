@@ -22,7 +22,6 @@ services:
       retries: 5
     networks:
       - data-network
-
   # =========================================
   # DATA SYNC — ETL từ Supabase → postgres-analytics
   # Tự động phát hiện và sync TOÀN BỘ bảng
@@ -54,12 +53,12 @@ services:
       SYNC_SCHEMAS: "orders,identity,menu,inventory,news,ai"
     networks:
       - data-network
-
   # =========================================
   # EVENT STREAMING — Zookeeper + Kafka (Confluent, stable)
   # =========================================
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
+    platform: linux/amd64
     container_name: avengers_zookeeper
     restart: unless-stopped
     environment:
@@ -71,9 +70,9 @@ services:
       - avengers_zk_log:/var/lib/zookeeper/log
     networks:
       - data-network
-
   kafka:
     image: confluentinc/cp-kafka:7.4.0
+    platform: linux/amd64
     container_name: avengers_kafka
     restart: unless-stopped
     depends_on:
@@ -100,12 +99,15 @@ services:
     networks:
       - data-network
     healthcheck:
-      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
-      interval: 30s
+      test:
+        [
+          "CMD-SHELL",
+          "/usr/bin/kafka-topics --bootstrap-server localhost:9092 --list >/dev/null 2>&1 || exit 1"
+        ]
+      interval: 10s
       timeout: 10s
-      retries: 5
-      start_period: 90s
-
+      retries: 12
+      start_period: 60s
   # Kafka Web UI — tắt profile để tiết kiệm tài nguyên
   # Bật khi cần: docker compose -f docker-compose.data.yml --profile tools up -d kafka-ui
   kafka-ui:
@@ -124,18 +126,49 @@ services:
       - "8082:8080"
     networks:
       - data-network
-
   # =========================================
   # DATA LAKE — MinIO (S3-compatible)
+  # Cross-platform: build local image for host architecture
+  # (arm64 on Apple Silicon, amd64 on Windows/Intel)
   # =========================================
   minio:
-    image: minio/minio:latest
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM golang:1.24-alpine AS builder
+        RUN apk add --no-cache git ca-certificates
+        ENV CGO_ENABLED=0
+        RUN mkdir -p /out \
+            && GOBIN=/out go install github.com/minio/minio@RELEASE.2025-10-15T17-29-55Z \
+            && GOBIN=/out go install github.com/minio/mc@RELEASE.2025-08-13T08-35-41Z
+
+        FROM alpine:3.20
+        RUN apk add --no-cache ca-certificates curl
+        COPY --from=builder /out/minio /usr/local/bin/minio
+        COPY --from=builder /out/mc /usr/local/bin/mc
+        RUN chmod +x /usr/local/bin/minio /usr/local/bin/mc
+        EXPOSE 9000 9001
+        VOLUME ["/data"]
     container_name: avengers_minio
     restart: unless-stopped
-    command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        minio server /data --console-address ":9001" &
+        MINIO_PID=$$!
+        until curl -fsS http://127.0.0.1:9000/minio/health/live >/dev/null; do
+          sleep 1
+        done
+        mc alias set local http://127.0.0.1:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"
+        mc mb --ignore-existing local/avengers-bronze
+        mc mb --ignore-existing local/avengers-silver
+        mc mb --ignore-existing local/avengers-gold
+        mc mb --ignore-existing local/avengers-models
+        wait $$MINIO_PID
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -145,29 +178,10 @@ services:
       - data-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
-  # MinIO bucket initialization
-  minio-init:
-    image: minio/mc:latest
-    container_name: avengers_minio_init
-    restart: "no"
-    depends_on:
-      minio:
-        condition: service_healthy
-    entrypoint: >
-      /bin/sh -c "
-      /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin123;
-      /usr/bin/mc mb --ignore-existing myminio/avengers-bronze;
-      /usr/bin/mc mb --ignore-existing myminio/avengers-silver;
-      /usr/bin/mc mb --ignore-existing myminio/avengers-gold;
-      /usr/bin/mc mb --ignore-existing myminio/avengers-models;
-      echo '=== MinIO buckets created: Bronze / Silver / Gold / Models ===';
-      "
-    networks:
-      - data-network
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
 
   # =========================================
   # EVENT PRODUCER — reads analytics DB, publishes to Kafka
@@ -195,7 +209,6 @@ services:
       - ./data-platform/kafka-producer:/app
     networks:
       - data-network
-
   # =========================================
   # EVENT CONSUMER — reads Kafka topics, ingests to Bronze Lake & Real-time table
   # =========================================
@@ -229,7 +242,6 @@ services:
       - ./data-platform/kafka-consumer:/app
     networks:
       - data-network
-
   # =========================================
   # SPARK JOBS — Bronze → Silver → Gold (Python local mode)
   # =========================================
@@ -257,7 +269,6 @@ services:
       - ./data-platform/spark-jobs:/opt/spark-jobs
     networks:
       - data-network
-
   # =========================================
   # ORCHESTRATION — Apache Airflow (chỉ bật khi cần)
   # Bật: docker compose -f docker-compose.data.yml --profile tools up -d airflow
@@ -302,7 +313,6 @@ services:
       - avengers_airflow_data:/opt/airflow
     networks:
       - data-network
-
   # =========================================
   # VISUALIZATION — Modern React + FastAPI Analytics Portal
   # =========================================
@@ -332,15 +342,23 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       GROQ_API_KEY: ${GROQ_API_KEY}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
+      # Optional source access is metadata-only; analytical SQL always uses postgres-analytics.
+      SOURCE_DB_HOST: ${DB_HOST:-aws-0-ap-southeast-1.pooler.supabase.com}
+      SOURCE_DB_PORT: ${DB_PORT:-6543}
+      SOURCE_DB_USER: ${DB_USER:-postgres.seneuycwihbyqjdtcdvu}
+      SOURCE_DB_PASSWORD: ${DB_PASSWORD:-afSMTJmSkNwOEmAT}
+      SOURCE_DB_NAME: ${DB_NAME:-postgres}
+      SOURCE_DB_SSLMODE: ${PGSSLMODE:-require}
     ports:
       - "8501:8501"
-    volumes:
-      - ./data-platform/web-ui/dist:/app/dist
-      - ./data-platform/web-ui/server:/app/server
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8501/ >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     networks:
       - data-network
-
-
 volumes:
   avengers_analytics_data:
   avengers_zk_data:
@@ -348,7 +366,6 @@ volumes:
   avengers_kafka_data:
   avengers_minio_data:
   avengers_airflow_data:
-
 networks:
   data-network:
     driver: bridge

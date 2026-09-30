@@ -375,6 +375,8 @@ def groq_agent_chat(
     checkout_payload = None
     current_messages = list(messages)
     turn_tool_cache = {}
+    force_tools_disabled = False
+    repeated_tool_result = None
 
     # Resolve model một lần duy nhất cho cả cuộc hội thoại (cached sau lần đầu)
     model = _resolve_chat_model(client)
@@ -411,7 +413,7 @@ def groq_agent_chat(
                     "max_tokens": max_tokens,
                     "temperature": 0.35,
                 }
-                if tools:
+                if tools and not force_tools_disabled:
                     kwargs["tools"] = tools
                     kwargs["tool_choice"] = "auto"
     
@@ -469,6 +471,14 @@ def groq_agent_chat(
 
         # ── Case 1: Groq muốn gọi Tool ────────────────────────────────────
         if assistant_msg.tool_calls:
+            if force_tools_disabled:
+                message = (repeated_tool_result or {}).get("message") if isinstance(repeated_tool_result, dict) else None
+                return {
+                    "reply": str(message or "Mình đã có kết quả tra cứu ở trên nhưng chưa thể diễn đạt thêm lúc này."),
+                    "tool_calls_log": tool_calls_log,
+                    "checkout_payload": checkout_payload,
+                    "error": "repeated_tool_call",
+                }
             # Thêm assistant message (chứa tool_calls) vào lịch sử
             current_messages.append({
                 "role": "assistant",
@@ -487,6 +497,7 @@ def groq_agent_chat(
             })
 
             # Thực thi từng tool call
+            repeated_signature = False
             for tc in assistant_msg.tool_calls:
                 tool_name = tc.function.name
                 try:
@@ -497,14 +508,17 @@ def groq_agent_chat(
                     tool_args_str = "{}"
                     tool_args = {}
 
-                # Chống lặp tool: kiểm tra hash cache
-                tool_hash = f"{tool_name}_{tool_args_str}"
-                # The same add call in one user turn is a duplicate, not a second
-                # quantity request. Cache it so model retries cannot double-add.
-                no_cache_tools = ["request_checkout", "remove_from_cart", "clear_cart", "set_session_branch"]
-                if tool_hash in turn_tool_cache and tool_name not in no_cache_tools:
-                    logger.info("[Groq Agent] Cache Hit! Trả ngay kết quả tool đã gọi: %s", tool_hash)
+                # Canonical args make whitespace/key order irrelevant. Once a
+                # result has been supplied, an identical signature has no new
+                # information and gets one final tools-disabled completion.
+                canonical_args = _json.dumps(tool_args, ensure_ascii=False, sort_keys=True,
+                                             separators=(",", ":"))
+                tool_hash = f"{tool_name}|{canonical_args}"
+                if tool_hash in turn_tool_cache:
+                    logger.info("[Groq Agent] Repeated tool signature; forcing final completion: %s", tool_hash)
                     result = turn_tool_cache[tool_hash]
+                    repeated_signature = True
+                    repeated_tool_result = result
                 else:
                     logger.info("[Groq Agent] Tool call round=%d: %s args=%s", round_idx, tool_name, tool_args)
                     # Dispatch đến executor. Checkout confirmation is only
@@ -545,6 +559,12 @@ def groq_agent_chat(
                     "content": _json.dumps(result, ensure_ascii=False),
                 })
 
+            if repeated_signature:
+                force_tools_disabled = True
+                current_messages.append({
+                    "role": "system",
+                    "content": "Use the tool results already provided and answer the user now. Do not request another tool.",
+                })
             # Tiếp tục vòng lặp để Groq đọc kết quả tool
             continue
 

@@ -1,38 +1,69 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import * as crypto from 'crypto';
 
 /**
  * LalamoveService - Tích hợp Lalamove API v3 (Sandbox).
  *
- * ⚠️ ĐANG TẠM THỜI TEST BẰNG MARKET HK (vì tài khoản sandbox hiện tại
- * chỉ được Lalamove kích hoạt cho HK). Khi được cấp key/quyền VN,
- * đổi lại `market` thành 'VN' và `language` trong getQuotation thành 'vi_VN'.
+ * Sandbox adapter currently requests the VN market with vi_VN quotations.
  *
  * Base URL:   https://rest.sandbox.lalamove.com
- * API Key:    pk_test_00c1e4c9e28b2ceed7f4277cc01a9fbe
- * API Secret: sk_test_/KMBha1uWJamsdwYqLLoKGRKzI0TIp9uWVc3la7hpRK8jM89Noq0lzBKaoZMrtGH
+ * The provider is optional. Core ordering can run without its credentials.
  */
 @Injectable()
 export class LalamoveService {
   private readonly logger = new Logger(LalamoveService.name);
 
   private readonly baseUrl = 'https://rest.sandbox.lalamove.com';
-  private readonly apiKey = process.env.LALAMOVE_API_KEY || 'pk_test_00c1e4c9e28b2ceed7f4277cc01a9fbe';
-  private readonly apiSecret = process.env.LALAMOVE_API_SECRET || 'sk_test_/KMBha1uWJamsdwYqLLoKGRKzI0TIp9uWVc3la7hpRK8jM89Noq0lzBKaoZMrtGH';
   private readonly market = 'VN';
+
+  isEnabled(): boolean {
+    return (
+      String(process.env.LALAMOVE_ENABLED || 'false')
+        .trim()
+        .toLowerCase() === 'true'
+    );
+  }
+
+  assertAvailable(): void {
+    this.credentials();
+  }
+
+  private credentials(): { apiKey: string; apiSecret: string } {
+    if (!this.isEnabled()) {
+      throw new ServiceUnavailableException({
+        code: 'LALAMOVE_DISABLED',
+        message: 'Lalamove is disabled.',
+      });
+    }
+    const apiKey = String(process.env.LALAMOVE_API_KEY || '').trim();
+    const apiSecret = String(process.env.LALAMOVE_API_SECRET || '').trim();
+    if (!apiKey || !apiSecret) {
+      throw new ServiceUnavailableException({
+        code: 'LALAMOVE_CONFIGURATION_MISSING',
+        message: 'Lalamove provider credentials are not configured.',
+      });
+    }
+    return { apiKey, apiSecret };
+  }
 
   // ─────────────────────────── HMAC Auth ───────────────────────────
 
   private generateSignature(method: string, path: string, body: string): { token: string; epoch: string } {
+    const { apiKey, apiSecret } = this.credentials();
     const epoch = Date.now().toString();
     const rawSignature = `${epoch}\r\n${method}\r\n${path}\r\n\r\n${body}`;
 
     const signature = crypto
-      .createHmac('sha256', this.apiSecret)
+      .createHmac('sha256', apiSecret)
       .update(rawSignature)
       .digest('hex');
 
-    const token = `hmac ${this.apiKey}:${epoch}:${signature}`;
+    const token = `hmac ${apiKey}:${epoch}:${signature}`;
     return { token, epoch };
   }
 
@@ -81,10 +112,14 @@ export class LalamoveService {
   }
 
   async testCities(testMarket: string) {
+    const { apiKey, apiSecret } = this.credentials();
     const epoch = Date.now().toString();
     const rawSignature = `${epoch}\r\nGET\r\n/v3/cities\r\n\r\n`;
-    const signature = crypto.createHmac('sha256', this.apiSecret).update(rawSignature).digest('hex');
-    const token = `hmac ${this.apiKey}:${epoch}:${signature}`;
+    const signature = crypto
+      .createHmac('sha256', apiSecret)
+      .update(rawSignature)
+      .digest('hex');
+    const token = `hmac ${apiKey}:${epoch}:${signature}`;
 
     const response = await fetch(`${this.baseUrl}/v3/cities`, {
       method: 'GET',
@@ -228,6 +263,7 @@ export class LalamoveService {
     try {
       return await this.callApi('GET', `/v3/orders/${orderId}/drivers/${driverId}/location`);
     } catch (error) {
+      if (error instanceof HttpException) throw error;
       this.logger.warn(`Cannot get Lalamove driver location: ${error.message}`);
       return null;
     }

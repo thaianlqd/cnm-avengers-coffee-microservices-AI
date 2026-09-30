@@ -43,3 +43,4 @@ pnpm-debug.log*
 
 # Local database backups / dumps
 # SQL files are kept in repo so teammates can restore and run the project quickly.
+db_metadata.txt

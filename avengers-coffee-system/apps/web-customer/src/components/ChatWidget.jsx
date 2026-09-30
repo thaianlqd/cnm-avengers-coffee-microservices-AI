@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
 import { apiClient } from '../lib/apiClient';
+import { openChatProductDetail, addChatProduct, branchDistanceLabel, paymentCardRows, chatLoadingLabel, refreshWalletAfterCheckout, structuredLegacyCards, pollQrPaymentStatus, latestPendingQrPayment, qrPaymentFromCheckout } from './chatWidgetActions';
+import { PENDING_AGENT_TURN_KEY, readPendingAgentTurn, matchesAgentTurn, selectAgentTurn, clearCompletedAgentTurn, agentTurnFailure } from './agentTurn';
 
 // ─── Utilities & Formatters ──────────────────────────────────────────────────
 const fmtVND = (n) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
@@ -19,6 +22,7 @@ const isCheckoutConfirmation = (value) => {
 
   const exact = new Set([
     'dong y', 'dong y chot don', 'dong y dat hang',
+    'oke xac nhan', 'ok xac nhan', 'okay xac nhan',
     'xac nhan', 'xac nhan dat hang', 'xac nhan chot don',
     'ok', 'oke', 'okay', 'chot', 'chot don', 'dat di', 'dat luon',
     'tien hanh', 'on roi', 'dung roi', 'chuan roi',
@@ -200,6 +204,8 @@ function ProductCard({ p, onAdd, resolvePrice }) {
   const [priceLoading, setPriceLoading] = useState(false);
   const [priceUnavailable, setPriceUnavailable] = useState(false);
   const productName = p.ten_san_pham || p.product_name || p.name;
+  const productId = p.product_id || p.ma_san_pham || p.id;
+  const openDetail = () => openChatProductDetail(productId);
   useEffect(() => {
     let active = true;
     // Product cards normally come from the canonical menu cache. Avoid one
@@ -222,9 +228,12 @@ function ProductCard({ p, onAdd, resolvePrice }) {
       .finally(() => { if (active) setPriceLoading(false); });
     return () => { active = false; };
   }, [canonicalPrice, productName, resolvePrice]);
-  const displayProduct = canonicalPrice == null ? p : { ...p, gia_ban: canonicalPrice };
   return (
     <div
+      role={productId == null ? undefined : 'button'}
+      tabIndex={productId == null ? undefined : 0}
+      onClick={openDetail}
+      onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openDetail(); } }}
       style={{
         display: 'flex', gap: 10, padding: '10px 12px',
         background: hover ? '#FFF8F8' : '#FFFFFF', borderRadius: 14,
@@ -234,22 +243,23 @@ function ProductCard({ p, onAdd, resolvePrice }) {
       onMouseLeave={() => setHover(false)}
     >
       {p.hinh_anh_url ? (
-        <img src={p.hinh_anh_url} alt={p.ten_san_pham} style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10, flexShrink: 0, border: '1px solid #FFEBEB' }} />
+        <img src={p.hinh_anh_url} alt={productName} style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10, flexShrink: 0, border: '1px solid #FFEBEB' }} />
       ) : (
         <div style={{ width: 52, height: 52, borderRadius: 10, flexShrink: 0, background: '#FFF0F0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F08080" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
         </div>
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#2D3748', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{productName}</p>
+        <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#2D3748', lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{p.display_index ? `${p.display_index}. ` : ''}{productName}</p>
         <p style={{ margin: '3px 0 0', fontSize: '0.82rem', fontWeight: 800, color: '#F08080' }}>
           {canonicalPrice != null ? fmtVND(canonicalPrice) : priceLoading ? 'Đang kiểm tra giá…' : priceUnavailable ? 'Chưa xác minh được giá' : 'Đang tải giá…'}
         </p>
         {(p.danh_muc || p.category) && <p style={{ margin: '2px 0 0', fontSize: '0.68rem', color: '#A0AEC0', fontWeight: 600 }}>{p.danh_muc || p.category}</p>}
+        {productId != null && <span style={{ fontSize: '0.66rem', color: '#B22830' }}>Xem chi tiết →</span>}
       </div>
       <button
         disabled={canonicalPrice == null}
-        onClick={(e) => { e.stopPropagation(); onAdd({ ...displayProduct, gia_ban: canonicalPrice }); }}
+        onClick={(e) => addChatProduct(e, onAdd, p)}
         style={{ all: 'unset', cursor: canonicalPrice == null ? 'not-allowed' : 'pointer', opacity: canonicalPrice == null ? 0.45 : 1, width: 30, height: 30, borderRadius: '50%', background: '#F08080', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, alignSelf: 'center', fontWeight: 900, fontSize: '1.1rem', boxShadow: '0 2px 8px rgba(240,128,128,0.4)', transition: 'transform 0.1s' }}
         onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.9)'; }}
         onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
@@ -280,15 +290,27 @@ function OrderCard({ o }) {
 }
 
 function StoreCard({ b }) {
+  const status = b.availability_status;
+  const missing = b.unavailable_products || [];
+  const isAvailable = status === 'available';
+  const statusText = isAvailable
+    ? 'Còn đủ tất cả món trong giỏ'
+    : status === 'unavailable'
+      ? `Hết/thiếu: ${missing.join(', ') || 'một số món trong giỏ'}`
+      : status === 'unknown'
+        ? 'Chưa xác minh được tồn kho'
+        : null;
   return (
-    <div style={{ background: '#FFFFFF', borderRadius: 14, border: '1px solid #FFEBEB', padding: '11px 13px' }}>
+    <div style={{ background: '#FFFFFF', borderRadius: 14, border: `1px solid ${status === 'unavailable' ? '#FECACA' : '#FFEBEB'}`, padding: '11px 13px', opacity: status && !isAvailable ? 0.78 : 1 }}>
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8 }}>
         <div style={{ width: 34, height: 34, borderRadius: 10, background: '#FFF0F0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F08080" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#2D3748' }}>{b.ten_chi_nhanh}</p>
-          <p style={{ margin: '3px 0 0', fontSize: '0.7rem', color: '#718096', lineHeight: 1.4 }}>{b.dia_chi}</p>
+          <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#2D3748' }}>{b.ten_chi_nhanh || b.branch_name}</p>
+          <p style={{ margin: '3px 0 0', fontSize: '0.7rem', color: '#718096', lineHeight: 1.4 }}>{b.dia_chi || b.address}</p>
+          {branchDistanceLabel(b) && <p style={{ margin: '3px 0 0', fontSize: '0.68rem', color: '#718096' }}>{branchDistanceLabel(b)}</p>}
+          {statusText && <p style={{ margin: '4px 0 0', fontSize: '0.68rem', color: isAvailable ? '#15803D' : '#DC2626', fontWeight: 800 }}>{statusText}</p>}
           {b.gio_mo_cua && <p style={{ margin: '3px 0 0', fontSize: '0.68rem', color: '#F08080', fontWeight: 700 }}>Giờ mở cửa: {b.gio_mo_cua} – {b.gio_dong_cua}</p>}
         </div>
       </div>
@@ -304,7 +326,7 @@ function StoreCard({ b }) {
   );
 }
 
-function PaymentCard({ onChoose }) {
+function PaymentCard({ onChoose, options }) {
   const methods = [
     { name: 'VNPAY', text: 'Tôi chọn thanh toán VNPAY', desc: 'ATM / Internet Banking', color: '#1E40AF' },
     { name: 'QR ngân hàng', text: 'Tôi chọn chuyển khoản QR ngân hàng', desc: 'Quét mã và chuyển khoản', color: '#A21CAF' },
@@ -313,8 +335,8 @@ function PaymentCard({ onChoose }) {
   ];
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      {methods.map((m) => (
-        <button type="button" key={m.name} onClick={() => onChoose?.(m.text)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', background: '#FFF', borderRadius: 10, border: '1px solid #FFEBEB', cursor: 'pointer', textAlign: 'left' }}>
+      {(options?.length ? paymentCardRows(options) : methods).map((m) => (
+        <button type="button" key={m.name} onClick={() => onChoose?.(m.text)} disabled={m.enabled === false} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', background: '#FFF', borderRadius: 10, border: '1px solid #FFEBEB', cursor: m.enabled === false ? 'not-allowed' : 'pointer', opacity: m.enabled === false ? 0.55 : 1, textAlign: 'left' }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: m.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 900, color: m.color, flexShrink: 0 }}>
             💳
           </div>
@@ -358,12 +380,30 @@ function VoucherCard({ v }) {
   );
 }
 
+function QrPaymentCard({ payment, pending }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const imageUrl = payment.qrImgUrl || payment.qrUrl;
+  const fallbackUrl = payment.qrFallbackUrl || (payment.qrUrl !== imageUrl ? payment.qrUrl : null);
+  return (
+    <div style={{ marginTop: 10, padding: 10, border: '1px solid #E2E8F0', borderRadius: 10, textAlign: 'center' }}>
+      <strong>Chuyển khoản QR — Đơn #{payment.orderId}</strong>
+      {imageUrl && !imageFailed && <img src={imageUrl} alt="Mã QR thanh toán ngân hàng" onError={() => setImageFailed(true)} style={{ display: 'block', width: 220, maxWidth: '100%', margin: '8px auto' }} />}
+      {imageFailed && <div>{fallbackUrl ? 'Ảnh QR chưa tải được. Bạn có thể mở mã bằng liên kết bên dưới.' : 'Ảnh QR chưa tải được. Bạn xem trạng thái trong Đơn hàng.'}</div>}
+      {!imageUrl && !fallbackUrl && <div>Đơn đã tạo nhưng chưa lấy được mã QR. Bạn có thể thử tải lại trạng thái thanh toán.</div>}
+      <div>Số tiền: {fmtVND(payment.amount)}</div>
+      <div>Mã tham chiếu: {payment.reference || 'Đang cập nhật'}</div>
+      <div>{pending ? 'Đang chờ thanh toán...' : 'Xem trạng thái thanh toán ở tin nhắn mới nhất hoặc trang đơn hàng.'}</div>
+      {(imageFailed ? fallbackUrl : imageUrl || fallbackUrl) && <a href={imageFailed ? fallbackUrl : imageUrl || fallbackUrl} target="_blank" rel="noreferrer">Mở mã QR</a>}
+    </div>
+  );
+}
+
 // ─── Typing Animation ────────────────────────────────────────────────────────
-function TypingBubble() {
+function TypingBubble({ label = 'Mình đang xử lý yêu cầu của bạn...' }) {
   return (
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, padding: '4px 0', animation: 'fadeIn 0.2s ease' }}>
       <AIAvatar size={28} />
-      <div style={{
+      <div role="status" aria-live="polite" style={{
         position: 'relative',
         background: '#FFFFFF', border: '1px solid #FFE3E3',
         borderRadius: '16px 16px 16px 4px',
@@ -371,6 +411,7 @@ function TypingBubble() {
         boxShadow: '0 2px 8px rgba(240,128,128,0.1)'
       }}>
         <div style={{ position: 'absolute', bottom: 0, left: -6, width: 0, height: 0, borderRight: '8px solid #FFFFFF', borderTop: '8px solid transparent' }} />
+        <span style={{ fontSize: '0.75rem', color: '#4A5568' }}>{label}</span>
         {[0, 200, 400].map((d) => (
           <div key={d} style={{ width: 6, height: 6, borderRadius: '50%', background: '#F08080', animation: `typingDot 1.2s ${d}ms infinite ease-in-out` }} />
         ))}
@@ -458,6 +499,7 @@ function isStaffChatMessage(msg) {
 
 // ─── Main Chat Widget Component ───────────────────────────────────────────────
 export default function ChatWidget({ user, socketUrl }) {
+  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [chatMode, setChatMode] = useState('AI');
   const [messages, setMessages] = useState(() => {
@@ -471,10 +513,16 @@ export default function ChatWidget({ user, socketUrl }) {
   const setInputText = chatMode === 'AI' ? setAiInputText : setStaffInputText;
   const [sending, setSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [loadingLabel, setLoadingLabel] = useState('Mình đang xử lý yêu cầu của bạn...');
   const [loading, setLoading] = useState(false);
   const [unread, setUnread] = useState(0);
   const [conversation, setConversation] = useState(null);
   const [pendingOrder, setPendingOrder] = useState(null);
+  const [pendingQrPayment, setPendingQrPayment] = useState(() => {
+    const currentUserId = user?.ma_nguoi_dung || user?.maNguoiDung || user?.id || getOrCreateAnonId();
+    return latestPendingQrPayment(loadAISession(), currentUserId);
+  });
+  const confirmingOrderRef = useRef(false);
   const [aiConversationId, setAiConversationId] = useState(loadConversationId);
   const [orderConfirming, setOrderConfirming] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
@@ -492,15 +540,14 @@ export default function ChatWidget({ user, socketUrl }) {
 
   // Data cache & prefetch
   const cache = useRef({ products: [], branches: [], orders: [], vouchers: [], loaded: false });
+  const pendingAgentTurnRef = useRef(readPendingAgentTurn(sessionStorage));
 
   const userId = user?.id || user?.ma_nguoi_dung || user?.maNguoiDung || null;
+  const walletUserId = user?.ma_nguoi_dung || user?.maNguoiDung || user?.id || null;
   const userName = user?.ho_ten || user?.hoTen || user?.email || 'Khách';
   const anonId = useRef(getOrCreateAnonId());
   const effectiveUserId = userId || anonId.current;
   
-  console.log("ChatWidget debug - user object:", user);
-  console.log("ChatWidget debug - effectiveUserId:", effectiveUserId);
-
   useEffect(() => {
     if (messages.length > 0) {
       saveAISession(messages);
@@ -540,6 +587,38 @@ export default function ChatWidget({ user, socketUrl }) {
     setMessages((prev) => [...prev, msg]);
     return msg;
   }, []);
+
+  useEffect(() => {
+    const paymentUserId = walletUserId || effectiveUserId;
+    if (!pendingQrPayment?.orderId || pendingQrPayment.userId !== paymentUserId) return undefined;
+    let active = true;
+    let busy = false;
+    const checkStatus = async () => {
+      if (busy || !active) return;
+      busy = true;
+      try {
+        const status = await pollQrPaymentStatus(apiClient, paymentUserId, pendingQrPayment.orderId);
+        if (!active) return;
+        if (status === 'pending') return;
+        setPendingQrPayment(null);
+        if (status === 'paid') {
+          addAIMsg(`✅ Thanh toán QR thành công. Đơn #${pendingQrPayment.orderId} đã được xác nhận.`, { _qrPaymentResolved: pendingQrPayment.orderId });
+          window.dispatchEvent(new CustomEvent('refresh-orders'));
+          window.dispatchEvent(new CustomEvent('refresh-cart'));
+          window.dispatchEvent(new CustomEvent('ai-voucher-removed'));
+          window.dispatchEvent(new CustomEvent('checkout-success', { detail: { orderId: pendingQrPayment.orderId } }));
+        } else if (status === 'review') {
+          addAIMsg(`Ngân hàng đã ghi nhận chuyển khoản cho đơn #${pendingQrPayment.orderId}, nhưng đơn đang chờ đối soát. Bạn xem trạng thái đơn hàng hoặc liên hệ hỗ trợ nhé.`, { _qrPaymentResolved: pendingQrPayment.orderId });
+        } else {
+          addAIMsg(`Thanh toán QR cho đơn #${pendingQrPayment.orderId} đã dừng hoặc không thành công. Bạn xem trạng thái đơn hàng để chọn cách thanh toán tiếp nhé.`, { _qrPaymentResolved: pendingQrPayment.orderId });
+        }
+      } catch { /* Retain pending state and retry the canonical endpoint. */ }
+      finally { busy = false; }
+    };
+    checkStatus();
+    const timer = window.setInterval(checkStatus, 3000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [pendingQrPayment, walletUserId, effectiveUserId, addAIMsg]);
 
   const addUserMsg = useCallback((noi_dung) => {
     const msg = buildMsg({ vai_tro_nguoi_gui: 'CUSTOMER', ten_nguoi_gui: userName, noi_dung });
@@ -618,22 +697,29 @@ export default function ChatWidget({ user, socketUrl }) {
 
   const handleResetChat = useCallback(async () => {
     if (window.confirm('Bắt đầu cuộc trò chuyện AI mới? Giỏ hàng của bạn sẽ được giữ nguyên.')) {
-      localStorage.removeItem(AI_SESSION_KEY);
-      sessionStorage.removeItem(AI_SESSION_KEY);
       const nextConversationId = newConversationId();
-      localStorage.setItem(AI_CONVERSATION_KEY, nextConversationId);
-      setAiConversationId(nextConversationId);
-
       // Conversation-specific draft state must not bleed into a new thread.
       // The customer/order-service cart is deliberately left untouched.
       try {
         await apiClient.post('/ai/agent/conversation/reset', {
           session_id: effectiveUserId,
           conversation_id: nextConversationId,
+          previous_conversation_id: aiConversationId,
         });
       } catch (error) {
         console.warn('[ChatWidget] Could not reset AI conversation draft state:', error);
+        const code = error?.response?.data?.detail?.code;
+        addAIMsg(code === 'TURN_IN_PROGRESS' || code === 'TURN_OUTCOME_UNKNOWN'
+          ? 'Lượt chat trước chưa hoàn tất. Bạn gửi lại đúng tin nhắn đó để kiểm tra kết quả trước khi tạo cuộc trò chuyện mới.'
+          : 'Mình chưa thể tạo cuộc trò chuyện mới lúc này. Bạn thử lại nhé.');
+        return;
       }
+      localStorage.removeItem(AI_SESSION_KEY);
+      sessionStorage.removeItem(AI_SESSION_KEY);
+      localStorage.setItem(AI_CONVERSATION_KEY, nextConversationId);
+      setAiConversationId(nextConversationId);
+      pendingAgentTurnRef.current = null;
+      sessionStorage.removeItem(PENDING_AGENT_TURN_KEY);
 
       const nameStr = user?.ho_ten || user?.hoTen ? ` ${user.ho_ten || user.hoTen}` : '';
       const msg = buildMsg({ 
@@ -642,65 +728,59 @@ export default function ChatWidget({ user, socketUrl }) {
         noi_dung: `Xin chào${nameStr}! 👋 Mình là Trợ lý AI của Avengers Coffee.\n\nHôm nay mình có thể hỗ trợ gì cho bạn?`, 
         _quickReplies: QUICK_ACTIONS.slice(0, 4) 
       });
-      setMessages([msg]);
+      // Keep the unpaid order visible while conversation draft state resets.
+      const pendingCard = pendingQrPayment ? buildMsg({
+        vai_tro_nguoi_gui: 'AI', ten_nguoi_gui: 'Trợ lý AI',
+        noi_dung: `Đơn #${pendingQrPayment.orderId} vẫn đang chờ thanh toán QR. Mình sẽ tiếp tục kiểm tra trạng thái đơn.`,
+        _qrPayment: pendingQrPayment,
+      }) : null;
+      setMessages(pendingCard ? [msg, pendingCard] : [msg]);
       setPendingOrder(null);
       setReplyTo(null);
     }
-  }, [user, effectiveUserId]);
+  }, [user, effectiveUserId, pendingQrPayment, aiConversationId, addAIMsg]);
 
   // Add item to cart
-  const addToCart = useCallback(async (product) => {
-    if (!userId) {
-      addAIMsg('Bạn cần đăng nhập để thêm vào giỏ hàng nhé! [Đăng nhập ngay](/login)', {
-        _quickReplies: [{ id: 'login', label: 'Đăng nhập', text: 'Tôi muốn đăng nhập' }]
-      });
-      return;
-    }
-    try {
-      const response = await apiClient.post('/cart', {
-        ma_nguoi_dung: userId,
-        ma_san_pham: product.id || product.ma_san_pham,
-        ten_san_pham: product.ten_san_pham,
-        gia_ban: product.gia_ban,
-        hinh_anh_url: product.hinh_anh_url,
-        size: 'Nhỏ',
-        so_luong: 1
-      });
-      const persisted = response?.data || response || {};
-      addAIMsg(`✅ Đã thêm **${persisted.ten_san_pham || product.ten_san_pham}** vào giỏ hàng! Giá: ${fmtVND(persisted.gia_ban ?? product.gia_ban)}`, {
-        _quickReplies: [
-          { id: 'more', label: 'Xem thêm menu', text: 'Gợi ý thêm menu' },
-          { id: 'cart', label: 'Xem giỏ hàng', text: 'Xem giỏ hàng của tôi' },
-        ],
-      });
-    } catch {
-      addAIMsg('😢 Không thể thêm sản phẩm vào giỏ. Vui lòng thử lại!');
-    }
-    scrollBottom();
-  }, [userId, addAIMsg, scrollBottom]);
-
   // ── Agent API call (Phase 2+3: RAG + Guardrails + Tool Calling) ─────────────
-  const callAgentAPI = useCallback(async (text) => {
+  const callAgentAPI = useCallback(async (text, selectedProductId) => {
     // Build history as [{role, content}] for the Agent endpoint
     const history = messages.slice(-8).map((m) => ({
       role: m.vai_tro_nguoi_gui === 'CUSTOMER' ? 'user' : 'assistant',
       content: m.noi_dung || '',
     })).filter((m) => m.content);
 
-    const agentRes = await apiClient.post('/ai/agent/chat', {
-      session_id: effectiveUserId,
-      conversation_id: aiConversationId,
-      client_message_id: newConversationId(),
-      message: text,
-      history,
-    });
+    const previousTurn = pendingAgentTurnRef.current;
+    const turn = selectAgentTurn(previousTurn, {
+      text, selectedProductId, sessionId: effectiveUserId, conversationId: aiConversationId,
+    }, newConversationId);
+    pendingAgentTurnRef.current = turn;
+    sessionStorage.setItem(PENDING_AGENT_TURN_KEY, JSON.stringify(turn));
+    let agentRes;
+    try {
+      agentRes = await apiClient.post('/ai/agent/chat', {
+        session_id: effectiveUserId,
+        conversation_id: aiConversationId,
+        client_message_id: turn.id,
+        message: text,
+        selected_product_id: selectedProductId || null,
+        history,
+      });
+    } catch (error) {
+      const code = error?.response?.data?.detail?.code;
+      if (previousTurn && previousTurn.id !== turn.id &&
+          (code === 'TURN_IN_PROGRESS' || code === 'TURN_OUTCOME_UNKNOWN')) {
+        pendingAgentTurnRef.current = previousTurn;
+        sessionStorage.setItem(PENDING_AGENT_TURN_KEY, JSON.stringify(previousTurn));
+      }
+      throw error;
+    }
 
     const d = agentRes?.data || agentRes;
     if (d?.conversation_id && d.conversation_id !== aiConversationId) {
       localStorage.setItem(AI_CONVERSATION_KEY, d.conversation_id);
       setAiConversationId(d.conversation_id);
     }
-    return d;
+    return { data: d, turn };
   }, [messages, effectiveUserId, aiConversationId]);
 
   const fetchCanonicalProductPrice = useCallback(async (productName, quantity = 1, size = null) => {
@@ -714,9 +794,10 @@ export default function ChatWidget({ user, socketUrl }) {
     return response?.data || response;
   }, [effectiveUserId, aiConversationId]);
 
-  // The popup button and a typed confirmation must execute the same checkout.
+  // The inline button and a typed confirmation execute the same checkout.
   const confirmPendingOrder = useCallback(async () => {
-    if (!pendingOrder || orderConfirming) return;
+    if (!pendingOrder || confirmingOrderRef.current) return;
+    confirmingOrderRef.current = true;
     setOrderConfirming(true);
     try {
       if (!pendingOrder.paymentMethod || !pendingOrder.deliveryType) {
@@ -734,36 +815,37 @@ export default function ChatWidget({ user, socketUrl }) {
         throw new Error(result?.message || 'Đơn hàng chưa được tạo.');
       }
 
-      // Clearing is idempotent. Do it through the customer API as a fallback in
-      // case the AI service could create the order but could not sync the cart.
-      try {
-        await apiClient.delete(`/cart/clear/${effectiveUserId}`);
-      } catch (cartError) {
-        console.warn('[ChatWidget] Order created but customer cart clear failed:', cartError);
-      }
+      // Order Service clears the consumed cart; replay only refreshes the UI.
       window.dispatchEvent(new CustomEvent('refresh-cart'));
       window.dispatchEvent(new CustomEvent('refresh-orders'));
+      await refreshWalletAfterCheckout(queryClient, walletUserId, pendingOrder.paymentMethod).catch(() => undefined);
       localStorage.removeItem(`avengers_ai_voucher_${effectiveUserId}`);
       window.dispatchEvent(new CustomEvent('ai-voucher-removed'));
 
       const orderId = result?.order_id ? ` Mã đơn: **${result.order_id}**.` : '';
-      const awaitsOnlinePayment = Boolean(result?.redirect_url || result?.payment_details?.qr_img_url);
-      addAIMsg(`${awaitsOnlinePayment ? '✅ Đơn hàng đã được tạo và đang chờ thanh toán.' : '🎉 Đơn hàng đã được ghi nhận.'}${orderId} Tổng cộng: **${fmtVND(pendingOrder.total)}**`, {
-        _paymentUrl: result?.redirect_url || result?.payment_details?.qr_img_url || null,
-        _paymentLabel: result?.redirect_url ? 'Tiếp tục thanh toán VNPAY' : result?.payment_details?.qr_img_url ? 'Mở mã QR thanh toán' : null,
+      const awaitsOnlinePayment = Boolean(result?.redirect_url || pendingOrder.paymentMethod === 'NGAN_HANG_QR');
+      const walletLine = pendingOrder.paymentMethod === 'VI_DIEN_TU'
+        ? `\n**Đã thanh toán bằng Ví Avengers:** ${fmtVND(result?.total_price ?? pendingOrder.total)}${result?.wallet_balance_after != null ? `\n**Số dư còn lại:** ${fmtVND(result.wallet_balance_after)}` : ''}` : '';
+      const qrPayment = qrPaymentFromCheckout(result, pendingOrder, walletUserId || effectiveUserId);
+      addAIMsg(`${awaitsOnlinePayment ? 'Đơn hàng đã được tạo và đang chờ thanh toán.' : '🎉 Đơn hàng đã được ghi nhận.'}${orderId} Tổng cộng: **${fmtVND(result?.total_price ?? pendingOrder.total)}**${walletLine}`, {
+        _paymentUrl: result?.redirect_url || null,
+        _paymentLabel: result?.redirect_url ? 'Tiếp tục thanh toán VNPAY' : null,
+        _qrPayment: qrPayment,
         _quickReplies: [{ id: 'orders', label: 'Xem đơn hàng', text: 'Xem đơn hàng của tôi' }],
       });
+      if (qrPayment) setPendingQrPayment(qrPayment);
       setPendingOrder(null);
       scrollBottom();
     } catch (error) {
       addAIMsg(error?.response?.data?.message || error?.message || 'Chưa thể hoàn tất đơn hàng. Giỏ của bạn vẫn được giữ lại để thử lại.');
     } finally {
+      confirmingOrderRef.current = false;
       setOrderConfirming(false);
     }
-  }, [pendingOrder, orderConfirming, effectiveUserId, aiConversationId, addAIMsg, scrollBottom]);
+  }, [pendingOrder, orderConfirming, effectiveUserId, aiConversationId, addAIMsg, scrollBottom, walletUserId, queryClient]);
 
   // Direct AI API handler (primary: /ai/agent/chat, fallback: /ai/chat)
-  const processAIMessage = useCallback(async (text) => {
+  const processAIMessage = useCallback(async (text, selectedProductId) => {
     const textLower = text.toLowerCase();
 
     if (pendingOrder && isCheckoutConfirmation(text)) {
@@ -786,20 +868,37 @@ export default function ChatWidget({ user, socketUrl }) {
     await prefetchData();
 
     // ── LUỒNG 1: Gọi AI Agent mới (RAG + Guardrails + Tool Calling) ──────────
+    let phase = 'request';
+    let completedTurn;
+    const finishTurn = () => {
+      clearCompletedAgentTurn(sessionStorage, completedTurn);
+      if (pendingAgentTurnRef.current?.id === completedTurn?.id) pendingAgentTurnRef.current = null;
+    };
     try {
-      const agentData = await callAgentAPI(text);
+      const response = await callAgentAPI(text, selectedProductId);
+      completedTurn = response.turn;
+      phase = 'response_processing';
+      const agentData = response.data;
+      if (!agentData || typeof agentData.reply !== 'string') throw new Error('Invalid agent response');
       const agentReply = agentData?.reply;
           const checkoutPayload = agentData?.checkout_payload;
       const agentError = agentData?.error;
+      const confirmed = (agentData?.tool_calls_log || []).some((entry) =>
+        entry.tool === 'confirm_checkout' && ['success', 'already_processed'].includes(entry.result?.status));
+      const serverCart = agentData?.ui_payload?.cart;
+      if (confirmed || (serverCart && !serverCart.checkout_prefs?.summary_fingerprint && !serverCart.checkout_prefs?.checkout_submission)) {
+        setPendingOrder(null);
+      }
 
       // If AI updated cart, refresh frontend cart context
-      if (agentData?.tool_calls_log && agentData.tool_calls_log.some(t => t.tool === 'add_to_cart' || t.tool === 'remove_from_cart' || t.tool === 'confirm_checkout')) {
+      if (agentData?.tool_calls_log && agentData.tool_calls_log.some(t => ['add_to_cart', 'remove_from_cart', 'remove_cart_item', 'update_cart_item', 'clear_cart', 'confirm_checkout'].includes(t.tool))) {
         window.dispatchEvent(new CustomEvent('refresh-cart'));
       }
       if ((agentData?.tool_calls_log || []).some((entry) =>
         entry.tool === 'confirm_checkout' && ['success', 'already_processed'].includes(entry.result?.status)
       )) {
         window.dispatchEvent(new CustomEvent('refresh-orders'));
+        if (walletUserId) queryClient.invalidateQueries({ queryKey: ['userWallet', walletUserId] }).catch(() => undefined);
         localStorage.removeItem(`avengers_ai_voucher_${effectiveUserId}`);
         window.dispatchEvent(new CustomEvent('ai-voucher-removed'));
       }
@@ -841,89 +940,63 @@ export default function ChatWidget({ user, socketUrl }) {
           branch_id: summary.branch_id,
           branch_name: summary.branch_name,
         });
-        if (agentReply) addAIMsg(agentReply, { _quickReplies: [] });
+        if (agentReply) addAIMsg(agentReply, {
+          _quickReplies: [],
+          _paymentOptions: Array.isArray(agentData?.ui_payload?.payment_options) ? agentData.ui_payload.payment_options : [],
+        });
+        finishTurn();
         return;
       }
 
-      // Có reply hợp lệ từ Agent
+      // Có reply hợp lệ từ Agent. Render text first; the server supplies the
+      // exact IDs for optional cards. Never infer a product or branch by
+      // substring from prose because that rendered unrelated, unavailable
+      // stores as selectable cards.
       if (agentReply && !agentError?.startsWith('blocked:')) {
-        const extras = {};
-
-        // Enrich với UI cards dựa trên nội dung reply + câu hỏi
-        const toolCalls = agentData?.tool_calls_log || [];
-        const branchTool = toolCalls.find(t => t.tool === 'find_nearest_branch' || t.tool === 'ask_branch');
-        const hasProfileTool = toolCalls.some(t => t.tool === 'get_user_profile');
-
-        const askingReview = /(đánh giá|bình luận|nhận xét|review)/.test(textLower);
-
-        if (branchTool && branchTool.result && branchTool.result.branches) {
-          extras._stores = branchTool.result.branches.slice(0, 4);
-        } else if (!askingReview && (/(cửa hàng|chi nhánh|ở đâu|gần đây)/.test(textLower) && !hasProfileTool || /(chi nhánh)/.test(agentReply.toLowerCase()))) {
-          const replyLower = agentReply.toLowerCase();
-          const mentionedBranches = cache.current.branches.filter(b => b.ten_chi_nhanh && replyLower.includes(b.ten_chi_nhanh.toLowerCase()));
-          if (mentionedBranches.length > 0) {
-            extras._stores = mentionedBranches.slice(0, 4);
-          }
-        }
-        // 2. Menu / Sản phẩm
-        const userAskedMenu = /(thực đơn|menu|đồ uống|cà phê|trà|sữa|matcha|có gì ngon|gợi ý|bán chạy|\bsp\b|sản phẩm|yêu thích)/.test(textLower);
-        const aiMentionedMenu = /(sản phẩm|đồ uống|menu|\bmón\b|\bsp\b|yêu thích|gợi ý)/.test(agentReply.toLowerCase());
-        
-        let recommendedProducts = [];
-        const recTools = toolCalls.filter(t => t.tool === 'get_recommendations' || t.tool === 'check_price_and_stock');
-        let allProductNames = [];
-        for (const recTool of recTools) {
-          if (recTool && recTool.result && recTool.result.products) {
-             const rp = recTool.result.products;
-             if (typeof rp === 'string') {
-                allProductNames.push(...rp.split(',').map(s => s.trim().toLowerCase()));
-             } else if (Array.isArray(rp)) {
-                allProductNames.push(...rp.map(item => (item.product_name || item.name || '').toLowerCase()));
-             }
-          }
-        }
-        if (allProductNames.length > 0) {
-          recommendedProducts = cache.current.products.filter(p => allProductNames.some(n => p.ten_san_pham.toLowerCase().includes(n)));
-        }
-
-        if (userAskedMenu || aiMentionedMenu || recommendedProducts.length > 0) {
-          const replyLower = agentReply.toLowerCase();
-          const mentioned = cache.current.products.filter(p => replyLower.includes(p.ten_san_pham.toLowerCase()));
-          
-          if (recommendedProducts.length > 0) {
-            extras._products = recommendedProducts.slice(0, 12);
-          } else if (mentioned.length > 0) {
-            extras._products = mentioned.slice(0, 12);
-          } else if (userAskedMenu) {
-            extras._products = cache.current.products.slice(0, 12);
-          }
-        }
-        const voucherTool = toolCalls.find(t => t.tool === 'get_applicable_vouchers');
-        if (voucherTool?.result?.status === 'ok' && Array.isArray(voucherTool.result.vouchers)) {
-          extras._vouchers = voucherTool.result.vouchers.slice(0, 4);
-        }
-        if (/(đơn hàng|đơn của tôi|trạng thái.*đơn)/.test(textLower)) {
-          extras._orders = cache.current.orders.slice(0, 3);
-        }
-        if (/(thanh toán|vnpay|zalopay|momo)/.test(agentReply.toLowerCase()) && !/(giỏ hàng.*trống|chưa có món|chọn món trước)/.test(agentReply.toLowerCase())) {
-          extras._type = 'payment';
-        }
-
-        addAIMsg(agentReply, { ...extras, _quickReplies: QUICK_ACTIONS.slice(0, 3) });
+        const payload = agentData?.ui_payload || {};
+        const catalogById = new Map(cache.current.products.map((item) => [String(item.ma_san_pham || item.id), item]));
+        const extras = {
+          _products: Array.isArray(payload.products) ? payload.products.map((item) => ({
+            ...item,
+            hinh_anh_url: item.hinh_anh_url || catalogById.get(String(item.product_id || item.ma_san_pham))?.hinh_anh_url,
+          })) : [],
+          _stores: Array.isArray(payload.branches) ? payload.branches : [],
+          _vouchers: !confirmed && Array.isArray(payload.vouchers) ? payload.vouchers : [],
+          _paymentOptions: Array.isArray(payload.payment_options) ? payload.payment_options : [],
+          _quickReplies: QUICK_ACTIONS.slice(0, 3),
+        };
+        addAIMsg(agentReply, extras);
+        finishTurn();
         return;
       }
 
       // Nếu Agent bị guardrail block, agentReply đã là safe fallback reply
       if (agentReply && agentError?.startsWith('blocked:')) {
         addAIMsg(agentReply);
+        finishTurn();
         return;
       }
+      // A complete 2xx response with no displayable reply is a client/server
+      // contract error, never a reason to run the legacy agent on this turn.
+      throw new Error('Agent response has no displayable reply');
     } catch (agentErr) {
-      console.warn('[ChatWidget] Agent API failed:', agentErr?.message || agentErr);
+      const status = agentErr?.response?.status;
+      const failure = agentTurnFailure(phase, status);
+      const turnCode = agentErr?.response?.data?.detail?.code;
+      console.error('[ChatWidget] Agent turn failed', {
+        conversation_id: aiConversationId,
+        client_message_id: pendingAgentTurnRef.current?.id,
+        phase: failure.phase,
+        status: status || null,
+        error: agentErr?.message || String(agentErr),
+      });
       // Never hand a stateful cart/checkout turn to the legacy chatbot. It has
       // no access to the current agent draft and may invent different items or
       // locations after a timeout.
-      addAIMsg('Mình chưa xử lý xong yêu cầu do kết nối bị gián đoạn. Giỏ hàng chưa bị thay đổi; bạn vui lòng gửi lại tin nhắn này nhé.');
+      const blockedByPrevious = turnCode === 'TURN_IN_PROGRESS' || turnCode === 'TURN_OUTCOME_UNKNOWN';
+      addAIMsg(blockedByPrevious
+        ? 'Lượt chat trước chưa hoàn tất. Bạn gửi lại đúng tin nhắn trước để kiểm tra kết quả rồi hãy gửi tin mới.'
+        : failure.message, { _agentRetryError: pendingAgentTurnRef.current?.id });
       return;
     }
 
@@ -955,38 +1028,7 @@ export default function ChatWidget({ user, socketUrl }) {
       let reply = resData?.reply || resData?.message;
 
       if (reply) {
-        const extras = {};
-        if ((resData.stores && resData.stores.length > 0) || /(cửa hàng|chi nhánh|ở đâu|gần đây|tìm cửa)/.test(textLower) || /(cửa hàng|chi nhánh)/.test(reply.toLowerCase())) {
-          extras._stores = (resData.stores && resData.stores.length > 0) ? resData.stores : cache.current.branches.slice(0, 4);
-        }
-        if ((resData.products && resData.products.length > 0) || /(thực đơn|menu|đồ uống|cà phê|phê|trà|sữa|đồ ăn|bánh|matcha|latte|có gì ngon|\bmón\b|xem menu|đặt)/.test(textLower) || /(sản phẩm|đồ uống|menu|\bmón\b|matcha|latte)/.test(reply.toLowerCase())) {
-          const userAsked = /(thực đơn|menu|đồ uống|cà phê|phê|trà|sữa|đồ ăn|bánh|matcha|latte|có gì ngon|\bmón\b|xem menu|đặt)/.test(textLower);
-          let prods = (resData.products && resData.products.length > 0) ? resData.products : cache.current.products;
-          const searchKeys = ['matcha', 'latte', 'americano', 'trà sữa', 'bánh', 'cà phê', 'phin', 'espresso', 'cold brew', 'trà'];
-          const matchedKey = searchKeys.find((k) => textLower.includes(k) || reply.toLowerCase().includes(k));
-          let filtered = [];
-          if (matchedKey && prods.length > 0) {
-            filtered = prods.filter((p) => (p.ten_san_pham || '').toLowerCase().includes(matchedKey) || (p.ten_danh_muc || p.danh_muc || '').toLowerCase().includes(matchedKey));
-            if (filtered.length > 0) prods = filtered;
-          }
-          
-          if (resData.products && resData.products.length > 0) {
-            extras._products = prods.slice(0, 6);
-          } else if (filtered.length > 0) {
-            extras._products = filtered.slice(0, 6);
-          } else if (userAsked) {
-            extras._products = prods.slice(0, 6);
-          }
-        }
-        if ((resData.vouchers && resData.vouchers.length > 0) || /(khuyến mãi|voucher|giảm giá|ưu đãi|mã)/.test(textLower) || /(voucher|khuyến mãi|ưu đãi)/.test(reply.toLowerCase())) {
-          extras._vouchers = (resData.vouchers && resData.vouchers.length > 0) ? resData.vouchers : cache.current.vouchers.slice(0, 4);
-        }
-        if ((resData.orders && resData.orders.length > 0) || /(đơn hàng|đơn của tôi|trạng thái.*đơn|theo dõi.*đơn|giao chưa)/.test(textLower) || /(đơn hàng)/.test(reply.toLowerCase())) {
-          extras._orders = (resData.orders && resData.orders.length > 0) ? resData.orders : cache.current.orders.slice(0, 3);
-        }
-        if (/(thanh toán|payment|vnpay|ví|momo|atm)/.test(reply.toLowerCase()) && !/(giỏ hàng.*trống|chưa có món|chọn món trước)/.test(reply.toLowerCase())) {
-          extras._type = 'payment';
-        }
+        const extras = structuredLegacyCards(resData);
         const hasCards = Boolean(extras._products || extras._stores || extras._vouchers || extras._orders);
         if (hasCards) {
           const lines = reply.split('\n');
@@ -1010,22 +1052,32 @@ export default function ChatWidget({ user, socketUrl }) {
     addAIMsg('Xin lỗi, mình gặp gián đoạn kết nối ngắn. Bạn vui lòng thử lại câu hỏi nhé!', {
       _quickReplies: QUICK_ACTIONS.slice(0, 3),
     });
-  }, [messages, userName, effectiveUserId, replyTo, pendingOrder, prefetchData, addAIMsg, callAgentAPI, confirmPendingOrder]);
+  }, [messages, userName, effectiveUserId, replyTo, pendingOrder, prefetchData, addAIMsg, callAgentAPI, confirmPendingOrder, walletUserId, queryClient]);
 
 
   // Send message trigger
-  const sendMessage = useCallback(async (overrideText) => {
+  const sendMessage = useCallback(async (overrideText, selectedProductId) => {
     const text = (overrideText !== undefined ? String(overrideText) : inputText).trim();
     if (!text || sending) return;
     setSending(true);
 
     if (chatMode === 'AI') {
-      addUserMsg(text);
+      const retry = matchesAgentTurn(pendingAgentTurnRef.current, {
+        text, selectedProductId, sessionId: effectiveUserId, conversationId: aiConversationId,
+      });
+      if (retry) {
+        const failedId = pendingAgentTurnRef.current.id;
+        setMessages((prev) => prev.filter((message) => message._agentRetryError !== failedId));
+        if (!messages.some((message) => message.vai_tro_nguoi_gui === 'CUSTOMER' && message.noi_dung === text)) addUserMsg(text);
+      } else {
+        addUserMsg(text);
+      }
       if (overrideText === undefined) setInputText('');
       scrollBottom();
       setIsTyping(true);
+      setLoadingLabel(chatLoadingLabel(Boolean(pendingOrder && isCheckoutConfirmation(text))));
       try {
-        await processAIMessage(text);
+        await processAIMessage(text, selectedProductId);
       } finally {
         setIsTyping(false);
         setSending(false);
@@ -1068,7 +1120,12 @@ export default function ChatWidget({ user, socketUrl }) {
         setSending(false);
       }
     }
-  }, [inputText, sending, chatMode, conversation, replyTo, effectiveUserId, userName, addUserMsg, scrollBottom, processAIMessage]);
+  }, [inputText, sending, chatMode, conversation, replyTo, effectiveUserId, aiConversationId, messages, userName, addUserMsg, scrollBottom, processAIMessage, pendingOrder]);
+
+  const addCardProduct = useCallback((product) => {
+    if (!product.product_id || !product.product_name) return;
+    sendMessage(`Thêm ${product.product_name} vào giỏ`, String(product.product_id));
+  }, [sendMessage]);
 
   // Voice speech-to-text
   const startVoice = useCallback(() => {
@@ -1312,8 +1369,8 @@ export default function ChatWidget({ user, socketUrl }) {
 
                       {/* Rich Content Cards */}
                       {msg._products && msg._products.length > 0 && (
-                        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                          {msg._products.map((p, i) => <ProductCard key={i} p={p} onAdd={addToCart} resolvePrice={fetchCanonicalProductPrice} />)}
+                        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 328, overflowY: 'auto' }}>
+                          {msg._products.map((p, i) => <ProductCard key={i} p={p} onAdd={addCardProduct} resolvePrice={fetchCanonicalProductPrice} />)}
                         </div>
                       )}
                       {msg._orders && msg._orders.length > 0 && (
@@ -1329,11 +1386,15 @@ export default function ChatWidget({ user, socketUrl }) {
                       {msg._type === 'payment' && (
                         <div style={{ marginTop: 10 }}><PaymentCard onChoose={sendMessage} /></div>
                       )}
+                      {msg._paymentOptions?.length > 0 && (
+                        <div style={{ marginTop: 10 }}><PaymentCard onChoose={sendMessage} options={msg._paymentOptions} /></div>
+                      )}
                       {msg._paymentUrl && (
                         <a href={msg._paymentUrl} target="_blank" rel="noreferrer" style={{ display: 'block', marginTop: 10, padding: '9px 12px', borderRadius: 10, background: '#B22830', color: '#FFF', textAlign: 'center', textDecoration: 'none', fontWeight: 800, fontSize: '0.76rem' }}>
                           {msg._paymentLabel || 'Tiếp tục thanh toán'}
                         </a>
                       )}
+                      {msg._qrPayment && <QrPaymentCard payment={msg._qrPayment} pending={pendingQrPayment?.orderId === msg._qrPayment.orderId} />}
                       {msg._vouchers && msg._vouchers.length > 0 && (
                         <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
                           {msg._vouchers.map((v, i) => <VoucherCard key={i} v={v} />)}
@@ -1352,37 +1413,20 @@ export default function ChatWidget({ user, socketUrl }) {
               );
             })}
 
-            {isTyping && <TypingBubble />}
-            <div ref={bottomRef} />
-          </div>
-
-          {/* Pending Order Confirmation Bar */}
-          {pendingOrder && (
-            <div style={{ margin: '0 12px 8px', background: '#FFFFFF', borderRadius: 14, border: '1px solid #F0808050', boxShadow: '0 4px 16px rgba(240,128,128,0.15)', overflow: 'hidden' }}>
-              <div style={{ background: 'linear-gradient(90deg,#F08080,#E55353)', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ color: '#FFF', fontWeight: 800, fontSize: '0.76rem' }}>🛒 XÁC NHẬN ĐẶT HÀNG</span>
-              </div>
-              {pendingOrder.message && <p style={{ margin: '8px 14px 4px', fontSize: '0.8rem', fontWeight: 700, color: '#2D3748' }}>{pendingOrder.message}</p>}
-              <div style={{ padding: '4px 14px 8px' }}>
-                {pendingOrder.items.filter((i) => i.matched).map((item, idx) => (
-                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid #EDF2F7' }}>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 700 }}>x{item.quantity} {item.product_name}</span>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 900, color: '#F08080' }}>{fmtVND(item.subtotal || 0)}</span>
-                  </div>
-                ))}
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-                  <span style={{ fontWeight: 800, fontSize: '0.82rem' }}>Tổng cộng</span>
-                  <span style={{ fontWeight: 900, color: '#F08080', fontSize: '0.86rem' }}>{fmtVND(pendingOrder.total)}</span>
+            {pendingOrder && (
+              <div style={{ padding: '10px 14px', background: '#FFF', borderRadius: 12, border: '1px solid #F0808050' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 800 }}>Tổng cộng: {fmtVND(pendingOrder.total)}</span>
+                  <button onClick={() => setPendingOrder(null)} disabled={orderConfirming} style={{ border: 0, borderRadius: 16, padding: '6px 10px', cursor: 'pointer' }}>Để sau</button>
+                  <button onClick={confirmPendingOrder} disabled={orderConfirming} style={{ border: 0, borderRadius: 16, padding: '6px 12px', background: '#b22830', color: '#FFF', cursor: 'pointer' }}>
+                    {orderConfirming ? 'Đang đặt...' : 'Xác nhận đặt hàng'}
+                  </button>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 8, padding: '0 14px 12px', justifyContent: 'flex-end' }}>
-                <button onClick={() => setPendingOrder(null)} style={{ all: 'unset', cursor: 'pointer', padding: '6px 16px', borderRadius: 20, background: '#EDF2F7', color: '#4A5568', fontWeight: 700, fontSize: '0.76rem' }}>Huỷ</button>
-                <button onClick={confirmPendingOrder} disabled={orderConfirming} style={{ all: 'unset', cursor: orderConfirming ? 'not-allowed' : 'pointer', padding: '6px 18px', borderRadius: 20, background: 'linear-gradient(90deg,#F08080,#E55353)', color: '#FFF', fontWeight: 800, fontSize: '0.76rem', opacity: orderConfirming ? 0.75 : 1 }}>
-                  {orderConfirming ? 'Đang đặt...' : '✅ Đặt ngay'}
-                </button>
-              </div>
-            </div>
-          )}
+            )}
+            {isTyping && <TypingBubble label={loadingLabel} />}
+            <div ref={bottomRef} />
+          </div>
 
           {/* Reply-to Bar */}
           {replyTo && (

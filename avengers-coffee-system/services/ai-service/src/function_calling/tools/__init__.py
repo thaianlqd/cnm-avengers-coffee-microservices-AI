@@ -11,14 +11,15 @@ from .product_tools import (
     TOOL_GET_PRODUCT_OPTIONS, execute_get_product_options,
     TOOL_CHECK_PRICE_AND_STOCK, execute_check_price_and_stock,
     TOOL_GET_PRODUCT_INSIGHTS, execute_get_product_insights,
-    TOOL_GET_RECOMMENDATIONS, execute_get_recommendations
+    TOOL_GET_RECOMMENDATIONS, execute_get_recommendations,
+    TOOL_FILTER_CATALOG, execute_filter_catalog,
 )
 from .cart_tools import (
     TOOL_ADD_TO_CART, execute_add_to_cart,
     TOOL_GET_CART, execute_get_cart,
     TOOL_REQUEST_CHECKOUT, execute_request_checkout,
     TOOL_CONFIRM_CHECKOUT, execute_confirm_checkout,
-    TOOL_REMOVE_FROM_CART, execute_remove_from_cart
+    execute_update_cart_item, execute_remove_cart_item,
 )
 from .order_tools import (
     TOOL_TRACK_ORDER_STATUS, execute_track_order_status,
@@ -51,11 +52,11 @@ ALL_TOOL_SCHEMAS: List[Dict[str, Any]] = [
     TOOL_GET_PRODUCT_INSIGHTS,
     TOOL_ADD_TO_CART,
     TOOL_GET_CART,
-    TOOL_REMOVE_FROM_CART,
     TOOL_REQUEST_CHECKOUT,
     TOOL_CONFIRM_CHECKOUT,
     TOOL_SEARCH_KNOWLEDGE_BASE,
     TOOL_GET_RECOMMENDATIONS,
+    TOOL_FILTER_CATALOG,
     TOOL_TRACK_ORDER_STATUS,
     TOOL_GET_ORDER_HISTORY,
     TOOL_GET_ORDER_DETAILS,
@@ -81,11 +82,13 @@ TOOL_EXECUTORS = {
     "get_product_insights": lambda args, session_id: execute_get_product_insights(**args),
     "add_to_cart": lambda args, session_id: execute_add_to_cart(session_id=session_id, **args),
     "get_cart": lambda args, session_id: execute_get_cart(session_id=session_id),
-    "remove_from_cart": lambda args, session_id: execute_remove_from_cart(session_id=session_id, **args),
+    "update_cart_item": lambda args, session_id: execute_update_cart_item(session_id=session_id, **args),
+    "remove_cart_item": lambda args, session_id: execute_remove_cart_item(session_id=session_id, **args),
     "request_checkout": lambda args, session_id: execute_request_checkout(session_id=session_id, **args),
     "confirm_checkout": lambda args, session_id: execute_confirm_checkout(session_id=session_id, **args),
     "search_knowledge_base": lambda args, session_id: execute_search_knowledge_base(**args),
     "get_recommendations": lambda args, session_id: execute_get_recommendations(**args),
+    "filter_catalog": lambda args, session_id: execute_filter_catalog(**args),
     "track_order_status": lambda args, session_id: execute_track_order_status(session_id=session_id, **args),
     "get_order_history": lambda args, session_id: execute_get_order_history(session_id=session_id),
     "get_order_details": lambda args, session_id: execute_get_order_details(session_id=session_id, **args),

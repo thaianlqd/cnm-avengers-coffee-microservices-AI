@@ -4,6 +4,7 @@ from typing import Optional
 
 import jwt
 from fastapi import HTTPException
+from src.common.runtime_config import secret_with_dev_default
 
 
 _ANON_SESSION_RE = re.compile(
@@ -32,7 +33,7 @@ def authorize_session(session_id: str, authorization: Optional[str]) -> Optional
     if not token:
         raise HTTPException(status_code=401, detail="Invalid access token")
 
-    secret = __import__("os").environ.get("JWT_SECRET", "avengers-jwt-secret")
+    secret = secret_with_dev_default("JWT_SECRET", "test-only-jwt-secret")
     try:
         claims = jwt.decode(token, secret, algorithms=["HS256"])
     except jwt.PyJWTError as exc:

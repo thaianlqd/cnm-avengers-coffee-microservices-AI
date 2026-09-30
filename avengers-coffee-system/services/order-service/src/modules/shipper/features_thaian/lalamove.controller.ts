@@ -23,6 +23,7 @@ export class LalamoveController {
       const hkCities = await this.lalamoveService.testCities('HK');
       return { success: true, vn: vnCities, hk: hkCities };
     } catch (error: any) {
+      if (error instanceof HttpException) throw error;
       return { success: false, message: error.message };
     }
   }
@@ -33,6 +34,7 @@ export class LalamoveController {
       const result = await this.lalamoveService.testQuotationHK();
       return { success: true, data: result };
     } catch (error: any) {
+      if (error instanceof HttpException) throw error;
       return { success: false, message: error.message };
     }
   }
@@ -43,6 +45,7 @@ export class LalamoveController {
    */
   @Get('webhook')
   pingWebhook() {
+    this.lalamoveService.assertAvailable();
     return 'Lalamove Webhook is reachable!';
   }
 
@@ -52,7 +55,8 @@ export class LalamoveController {
    */
   @Post('webhook')
   async handleWebhook(@Body() payload: any) {
-    this.logger.log(`Received Lalamove Webhook: ${JSON.stringify(payload)}`);
+    this.lalamoveService.assertAvailable();
+    this.logger.log('Received Lalamove webhook');
     try {
       await this.deliveryTrackingService.handleLalamoveWebhook(payload);
       return { success: true };
@@ -79,7 +83,7 @@ export class LalamoveController {
       );
       return { success: true, data: result };
     } catch (error: any) {
-      console.error(error);
+      if (error instanceof HttpException) throw error;
       throw new HttpException(error.message || 'Lỗi khi lấy báo giá Lalamove', HttpStatus.BAD_REQUEST);
     }
   }

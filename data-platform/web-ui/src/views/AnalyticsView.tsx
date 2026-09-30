@@ -17,6 +17,7 @@ import {
   DatabaseIcon
 } from '../components/Icons';
 import { AnalyticsSubTab } from '../types';
+import { resolveAiChartPresentation } from '../utils/aiChartConfig.mjs';
 
 export const AnalyticsView: React.FC = () => {
   const { 
@@ -50,6 +51,14 @@ export const AnalyticsView: React.FC = () => {
     fetchCustomers();
     fetchProducts();
   }, [fetchMarts, fetchStores, fetchCustomers, fetchProducts]);
+
+  useEffect(() => {
+    if (activeTab !== 'ai_assistant') return;
+    fetch('/api/ai/status')
+      .then((res) => res.ok ? res.json() : Promise.reject(new Error('status unavailable')))
+      .then(setAiStatus)
+      .catch(() => setAiStatus({ status: 'unavailable', providers: {} }));
+  }, [activeTab]);
 
   // Common Palette
   const palette = ['#059669', '#0284c7', '#d97706', '#dc2626', '#8b5cf6', '#64748b'];

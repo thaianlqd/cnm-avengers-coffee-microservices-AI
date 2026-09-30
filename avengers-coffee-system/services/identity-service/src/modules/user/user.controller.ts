@@ -414,6 +414,7 @@ export class UserController {
   // ═══════════════════════════════════════════════════════
 
   @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER', 'FRANCHISEE')
+  @AllowInternal()
   @Get('users/:userId/membership')
   async layThongTinMembership(@Param('userId') userId: string, @CurrentUser() currentUser: AuthUser | null) {
     this.ensureSelfOrAdmin(currentUser, userId);

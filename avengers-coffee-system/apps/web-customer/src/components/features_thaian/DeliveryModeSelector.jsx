@@ -38,15 +38,15 @@ export default function DeliveryModeSelector({ selectedMode, onChange }) {
           );
         })}
         {/* Animated background pill */}
-        <div 
+        {selectedMode && <div
           className="absolute top-1.5 bottom-1.5 bg-white rounded-[12px] shadow-sm border border-[#c41230]/20 transition-all duration-300 ease-out z-0"
           style={{
             width: `calc(${100 / modes.length}% - 6px)`,
             left: `calc(${modes.findIndex(m => m.id === selectedMode) * (100 / modes.length)}% + 3px)`
           }}
-        />
+        />}
       </div>
-      
+
       <div className="mt-2.5 px-3 pb-0.5 text-center text-xs font-semibold text-gray-500 min-h-[20px] transition-all flex items-center justify-center">
         <span>{modes.find(m => m.id === selectedMode)?.desc}</span>
       </div>

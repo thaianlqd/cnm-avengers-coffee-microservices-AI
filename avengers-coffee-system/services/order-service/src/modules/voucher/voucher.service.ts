@@ -1,7 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Voucher } from './voucher.entity';
+import { secretWithDevDefault } from '../../config/runtime-secrets';
+import { voucherPaymentHoldTtlMinutes } from '../thanh-toan/voucher-payment-hold';
 
 type VoucherValidationResult = {
   so_tien_giam: number;
@@ -19,12 +21,13 @@ type VoucherValidationResult = {
 @Injectable()
 export class VoucherService {
   private readonly IDENTITY_SERVICE_URL = process.env.IDENTITY_SERVICE_URL || 'http://identity-service:3001';
-  private readonly INTERNAL_SERVICE_TOKEN = process.env.INTERNAL_SERVICE_TOKEN || 'avengers-internal-token';
+  private readonly INTERNAL_SERVICE_TOKEN = secretWithDevDefault('INTERNAL_SERVICE_TOKEN', 'test-only-internal-service-token');
 
   constructor(
     @InjectRepository(Voucher)
     private readonly voucherRepo: Repository<Voucher>,
-  ) {}
+  ) {
+  }
 
   private mapVoucherToAdminItem(v: Voucher) {
     const now = new Date();
@@ -286,6 +289,29 @@ export class VoucherService {
 
   async kiemTraVoucher(maVoucher: string, tongTien: number, userId?: string, hasToppings?: boolean, toppingPrice?: number): Promise<VoucherValidationResult> {
     const code = maVoucher.trim().toUpperCase();
+    if (userId) {
+      const schema = process.env.DB_SCHEMA || 'orders';
+      let pending: any[];
+      try {
+        pending = await this.voucherRepo.manager.query(
+          `SELECT 1 FROM ${schema}.wallet_voucher_claim_outbox
+           WHERE customer_id = $1 AND voucher_code = $2
+             AND (status = 'PENDING' OR (status = 'WAITING_PAYMENT'
+               AND created_at > now() - ($3::integer * interval '1 minute')))
+           LIMIT 1`,
+          [userId, code, voucherPaymentHoldTtlMinutes()],
+        );
+      } catch (error: any) {
+        if (error?.code === '42P01') {
+          throw new ServiceUnavailableException({
+            code: 'VOUCHER_CLAIM_OUTBOX_NOT_READY',
+            message: 'Voucher checkout is temporarily unavailable until the required database migration is applied.',
+          });
+        }
+        throw error;
+      }
+      if (pending.length) throw new BadRequestException('Voucher dang duoc ghi nhan cho don truoc, vui long thu lai sau');
+    }
     const voucher = await this.voucherRepo.findOne({ where: { ma_voucher: code, trang_thai: 'ACTIVE' } });
 
     if (voucher && (voucher.loai_phan_phoi === 'PUBLIC' || !voucher.loai_phan_phoi)) {
@@ -318,10 +344,13 @@ export class VoucherService {
             if (usedCount >= limitPerUser) {
               throw new BadRequestException('Ban da dung het luot su dung voucher nay');
             }
+          } else {
+            throw new BadRequestException('Chua the xac minh luot su dung voucher');
           }
         } catch (err) {
           if (err instanceof BadRequestException) throw err;
           console.error('[kiemTraVoucher] Error checking user usage count:', err);
+          throw new BadRequestException('Chua the xac minh luot su dung voucher');
         }
       }
 
@@ -433,6 +462,22 @@ export class VoucherService {
     }
   }
 
+  /** Wallet outbox delivery. A failed Identity response must remain retryable. */
+  async claimIdentityVoucher(maVoucher: string, userId: string, soTienGiam: number, maDonHang: string): Promise<void> {
+    const response = await fetch(`${this.IDENTITY_SERVICE_URL}/promotions/xac-nhan-su-dung`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-internal-token': this.INTERNAL_SERVICE_TOKEN },
+      body: JSON.stringify({ ma_khuyen_mai: maVoucher, user_id: userId,
+        ma_don_hang: maDonHang, so_tien_giam: soTienGiam }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) {
+      const error: any = new Error(`Identity voucher claim failed: HTTP ${response.status}`);
+      error.status = response.status;
+      throw error;
+    }
+  }
+
   async layVoucherKhaDung(tongTien: number, userId?: string, hasToppings?: boolean, toppingPrice?: number) {
     let candidates: any[] = [];
     try {
@@ -447,10 +492,8 @@ export class VoucherService {
       console.error('[layVoucherKhaDung] Cannot load candidate vouchers:', error);
     }
 
-    if (!candidates.length) {
-      const publicList = await this.layDanhSachVoucher();
-      candidates = publicList.items || [];
-    }
+    const publicList = await this.layDanhSachVoucher();
+    candidates = [...candidates, ...(publicList.items || [])];
 
     const seen = new Set<string>();
     const eligible: any[] = [];

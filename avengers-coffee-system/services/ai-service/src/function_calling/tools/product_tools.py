@@ -1,10 +1,134 @@
 import logging
+import html
+import unicodedata
 from typing import Any, Dict, Optional
 from sqlalchemy import text
 from src.function_calling.helpers import _get_engine, _clean_dict, _norm
 from src.common import cart_manager
 
 logger = logging.getLogger(__name__)
+
+# Menu currently has no scope/type column. Its category hierarchy is the
+# canonical classification source; keep root/leaf mapping in this one place.
+_DRINK_ROOTS = ("Cà Phê", "Trà", "Thức Uống Đá Xay")
+_FOOD_ROOTS = ("Bánh & Đồ Ăn",)
+
+
+def _category_hierarchy_cte(menu_schema: str) -> str:
+    """Authoritative full category ancestry shared by catalog read providers."""
+    return f"""
+        WITH RECURSIVE ancestors AS (
+            SELECT ma_danh_muc AS leaf_id, ma_danh_muc_cha, ten_danh_muc, 0 AS depth
+            FROM {menu_schema}.danh_muc
+            UNION ALL
+            SELECT a.leaf_id, parent.ma_danh_muc_cha, parent.ten_danh_muc, a.depth + 1
+            FROM ancestors a JOIN {menu_schema}.danh_muc parent
+              ON parent.ma_danh_muc = a.ma_danh_muc_cha
+            WHERE a.depth < 8
+        ), category_paths AS (
+            SELECT leaf_id,
+                   STRING_AGG(LOWER(ten_danh_muc), ' ' ORDER BY depth) AS category_path,
+                   (ARRAY_AGG(ten_danh_muc ORDER BY depth DESC))[1] AS root_name
+            FROM ancestors
+            GROUP BY leaf_id
+        )
+    """
+
+
+def _catalog_name_key(value: str) -> str:
+    normalized = unicodedata.normalize("NFD", str(value or "").lower())
+    return "".join(char for char in normalized if unicodedata.category(char) != "Mn").replace("đ", "d")
+
+TOOL_FILTER_CATALOG = {
+    "type": "function",
+    "function": {
+        "name": "filter_catalog",
+        "description": "Filter actual Menu products by sellable scope and SQL price bounds; never use knowledge search for shopping constraints.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "category": {"type": "string", "enum": ["all", "drink", "food"]},
+                "sellable_scope": {"type": "string", "enum": ["normal", "topping"]},
+                "min_price": {"type": "number"},
+                "min_price_inclusive": {"type": "boolean"},
+                "max_price": {"type": "number"},
+                "max_price_inclusive": {"type": "boolean"},
+                "search_text": {"type": "string"},
+                "sort_by": {"type": "string", "enum": ["price_asc", "price_desc"]},
+                "limit": {"type": "integer"},
+            },
+        },
+    },
+}
+
+
+def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal",
+                           min_price: Optional[float] = None, min_price_inclusive: bool = True,
+                           max_price: Optional[float] = None, max_price_inclusive: bool = True,
+                           search_text: Optional[str] = None, sort_by: str = "price_asc",
+                           limit: int = 16, constraint_type: Optional[str] = None,
+                           approx_price: Optional[int] = None) -> Dict[str, Any]:
+    import os
+    if category not in {"all", "drink", "food"} or sellable_scope not in {"normal", "topping"}:
+        return {"status": "error", "message": "Bộ lọc danh mục không hợp lệ."}
+    menu_schema = os.getenv("MENU_SCHEMA", "menu")
+    root_names = (_DRINK_ROOTS + _FOOD_ROOTS if category == "all" else
+                  _DRINK_ROOTS if category == "drink" else _FOOD_ROOTS)
+    params: Dict[str, Any] = {"roots": list(root_names), "limit": max(1, min(50, int(limit or 16)))}
+    predicates = ["sp.trang_thai = TRUE"]
+    if sellable_scope == "topping":
+        predicates.append("LOWER(dm.ten_danh_muc) = 'topping'")
+    else:
+        predicates.append("paths.root_name = ANY(:roots)")
+    if min_price is not None:
+        predicates.append("sp.gia_ban " + (">=" if min_price_inclusive else ">") + " :min_price")
+        params["min_price"] = float(min_price)
+    if max_price is not None:
+        predicates.append("sp.gia_ban " + ("<=" if max_price_inclusive else "<") + " :max_price")
+        params["max_price"] = float(max_price)
+    terms = _catalog_name_key(search_text).split() if search_text else []
+    order = "DESC" if sort_by == "price_desc" else "ASC"
+    try:
+        products = []
+        page_size = 256 if terms else params["limit"]
+        offset = 0
+        with _get_engine().connect() as conn:
+            query = text(f"""
+                {_category_hierarchy_cte(menu_schema)}
+                SELECT sp.ma_san_pham::text AS product_id, sp.ten_san_pham AS product_name,
+                       sp.hinh_anh_url,
+                       sp.gia_ban AS final_price, dm.ten_danh_muc AS category,
+                       paths.root_name AS parent_category,
+                       CASE WHEN LOWER(dm.ten_danh_muc) = 'topping' THEN 'topping'
+                            WHEN paths.root_name = ANY(:drink_roots) THEN 'drink'
+                            WHEN paths.root_name = ANY(:food_roots) THEN 'food'
+                            ELSE 'unknown' END AS menu_bucket
+                FROM {menu_schema}.san_pham sp
+                JOIN {menu_schema}.danh_muc dm ON dm.ma_danh_muc = sp.ma_danh_muc
+                JOIN category_paths paths ON paths.leaf_id = dm.ma_danh_muc
+                WHERE {' AND '.join(predicates)}
+                ORDER BY sp.gia_ban {order}, sp.ten_san_pham ASC
+                LIMIT :page_size OFFSET :page_offset
+            """)
+            while True:
+                rows = conn.execute(query, {**params, "drink_roots": list(_DRINK_ROOTS),
+                    "food_roots": list(_FOOD_ROOTS), "page_size": page_size,
+                    "page_offset": offset}).mappings().all()
+                for row in rows:
+                    product = _clean_dict(dict(row))
+                    haystack = " ".join(_catalog_name_key(product.get(field)) for field in
+                                        ("product_name", "category", "parent_category"))
+                    if not terms or all(term in haystack for term in terms):
+                        products.append(product)
+                        if len(products) >= params["limit"]:
+                            break
+                if len(products) >= params["limit"] or len(rows) < page_size:
+                    break
+                offset += page_size
+        return {"status": "ok" if products else "not_found", "products": products[:params["limit"]]}
+    except Exception as error:
+        logger.warning("catalog filter failed: %s", type(error).__name__)
+        return {"status": "error", "message": "Chưa thể tra cứu menu lúc này."}
 
 TOOL_GET_PRODUCT_OPTIONS = {
     "type": "function",
@@ -24,25 +148,43 @@ TOOL_GET_PRODUCT_OPTIONS = {
     }
 }
 
-def execute_get_product_options(product_name: str) -> Dict[str, Any]:
+
+class CanonicalProductOptionRef(str):
+    """String-compatible product reference that also carries canonical ID."""
+
+    def __new__(cls, product_name: str, product_id: str):
+        value = super().__new__(cls, product_name)
+        value.product_id = str(product_id)
+        return value
+
+def execute_get_product_options(product_name: str = "", product_id: Optional[str] = None) -> Dict[str, Any]:
     try:
         engine = _get_engine()
         import os
-        import re
         menu_schema = os.getenv("MENU_SCHEMA", "menu")
 
-        query_norm = product_name.lower()
-        words = [w for w in query_norm.split() if len(w) > 1]
-        if not words:
-            return {"status": "error", "message": "Tên sản phẩm không hợp lệ."}
-        
-        conditions = " AND ".join([f"LOWER(ten_san_pham) LIKE :w_{i}" for i in range(len(words))])
-        params = {f"w_{i}": f"%{w}%" for i, w in enumerate(words)}
+        # Cart edit callers use a string-compatible reference so legacy tool
+        # adapters still see the display name while this provider queries by
+        # the authoritative product ID.
+        product_id = product_id or getattr(product_name, "product_id", None)
+
+        if product_id is not None:
+            conditions = "ma_san_pham::text = :product_id"
+            params = {"product_id": str(product_id)}
+            logger.debug("[ProductOptions] lookup=product_id requested_id=%s", product_id)
+        else:
+            query_norm = product_name.lower()
+            words = [w for w in query_norm.split() if len(w) > 1]
+            if not words:
+                return {"status": "error", "message": "Tên sản phẩm không hợp lệ."}
+            conditions = " AND ".join([f"LOWER(ten_san_pham) LIKE :w_{i}" for i in range(len(words))])
+            params = {f"w_{i}": f"%{w}%" for i, w in enumerate(words)}
         
         with engine.connect() as conn:
             row = conn.execute(text(
                 f"""
-                SELECT ma_san_pham::text, ten_san_pham
+                SELECT ma_san_pham::text, ten_san_pham, bien_the, sizes,
+                       toppings, luong_da, do_ngot, loai_sua
                 FROM {menu_schema}.san_pham
                 WHERE trang_thai = TRUE 
                   AND {conditions}
@@ -56,6 +198,12 @@ def execute_get_product_options(product_name: str) -> Dict[str, Any]:
                 
             product_id = row[0]
             found_name = row[1]
+            logger.debug("[ProductOptions] lookup=%s resolved_id=%s",
+                         "product_id" if "product_id" in params else "product_name", product_id)
+            product_data = dict(zip(
+                ("bien_the", "sizes", "toppings", "luong_da", "do_ngot", "loai_sua"),
+                list(row)[2:],
+            ))
 
             opts = conn.execute(text(
                 f"""
@@ -63,29 +211,48 @@ def execute_get_product_options(product_name: str) -> Dict[str, Any]:
                 FROM {menu_schema}.bien_the_san_pham bt
                 JOIN {menu_schema}.thuoc_tinh tt ON bt.ma_thuoc_tinh = tt.ma_thuoc_tinh
                 WHERE bt.ma_san_pham::text = :pid
+                ORDER BY bt.id
                 """
             ), {"pid": product_id}).fetchall()
             
             from collections import defaultdict
             options_dict = defaultdict(list)
             for r in opts:
-                options_dict[r[0]].append(r[1])
+                group = " ".join(html.unescape(str(r[0] or "")).replace("\xa0", " ").split())
+                value = " ".join(html.unescape(str(r[1] or "")).replace("\xa0", " ").split())
+                if group and value and value not in options_dict[group]:
+                    options_dict[group].append(value)
                 
             if not options_dict:
                 return {
                     "status": "ok", 
+                    "product_id": product_id,
                     "product_name": found_name, 
                     "options": {},
                     "message": f"Sản phẩm {found_name} không có tùy chọn (size, đá, đường) nào. Cứ đặt mặc định."
                 }
                 
             opts_str = ", ".join([f"{k}: [{', '.join(v)}]" for k, v in options_dict.items()])
-            return {
+            from src.agents.option_state import option_schema_from_result, option_field
+            result = {
                 "status": "ok",
+                "product_id": product_id,
                 "product_name": found_name,
                 "options": {key: list(values) for key, values in options_dict.items()},
+                "option_groups": [
+                    {
+                        "name": key,
+                        "values": list(values),
+                        "required": option_field(key) == "size",
+                        "multiple": option_field(key) == "toppings",
+                        "fixed": len(values) == 1,
+                    }
+                    for key, values in options_dict.items()
+                ],
                 "message": f"BẮT BUỘC: Khi hỏi khách về tùy chọn của {found_name}, bạn CHỈ ĐƯỢC PHÉP dùng y hệt các nhãn này (không dịch, không đổi). Các tùy chọn là: {opts_str}"
             }
+            result["option_groups"] = option_schema_from_result({**result, "product_data": product_data})
+            return result
     except Exception as e:
         logger.warning("[AgentTools] get_product_options error: %s", e)
         return {"status": "error", "message": "Không thể lấy tùy chọn sản phẩm."}
@@ -161,9 +328,11 @@ def execute_check_price_and_stock(
                         sp.ten_san_pham,
                         sp.gia_ban,
                         sp.trang_thai AS is_active,
-                        dm.ten_danh_muc AS category
+                        dm.ten_danh_muc AS category,
+                        dm_cha.ten_danh_muc AS parent_category
                     FROM {menu_schema}.san_pham sp
                     LEFT JOIN {menu_schema}.danh_muc dm ON dm.ma_danh_muc = sp.ma_danh_muc
+                    LEFT JOIN {menu_schema}.danh_muc dm_cha ON dm_cha.ma_danh_muc = dm.ma_danh_muc_cha
                     WHERE sp.trang_thai = TRUE 
                       AND {conditions}
                     ORDER BY sp.la_hot DESC, sp.ten_san_pham ASC
@@ -198,9 +367,11 @@ def execute_check_price_and_stock(
                     f"""
                     SELECT sp.ma_san_pham::text AS product_id, sp.ten_san_pham,
                            sp.gia_ban, sp.trang_thai AS is_active,
-                           dm.ten_danh_muc AS category
+                           dm.ten_danh_muc AS category,
+                           dm_cha.ten_danh_muc AS parent_category
                     FROM {menu_schema}.san_pham sp
                     LEFT JOIN {menu_schema}.danh_muc dm ON dm.ma_danh_muc = sp.ma_danh_muc
+                    LEFT JOIN {menu_schema}.danh_muc dm_cha ON dm_cha.ma_danh_muc = dm.ma_danh_muc_cha
                     WHERE sp.trang_thai = TRUE AND {retry_conditions}
                     ORDER BY sp.la_hot DESC, sp.ten_san_pham ASC
                     LIMIT 10
@@ -245,26 +416,6 @@ def execute_check_price_and_stock(
                 "message": f"Không tìm thấy sản phẩm nào khớp với '{product_name_query}' trong hệ thống.",
             }
 
-        size_price = None
-        if size and top:
-            try:
-                with engine.connect() as conn:
-                    r = conn.execute(text(
-                        f"""
-                        SELECT bt.phu_thu
-                        FROM {menu_schema}.bien_the_san_pham bt
-                        JOIN {menu_schema}.thuoc_tinh tt ON bt.ma_thuoc_tinh = tt.ma_thuoc_tinh
-                        WHERE bt.ma_san_pham = :pid
-                          AND UPPER(bt.gia_tri) = UPPER(:size)
-                          AND LOWER(tt.ten_thuoc_tinh) LIKE '%size%'
-                        LIMIT 1
-                        """
-                    ), {"pid": top[0]["product_id"], "size": size}).fetchone()
-                    if r:
-                        size_price = float(r[0] or 0)
-            except Exception:
-                pass
-
         inventory_schema = os.getenv("INVENTORY_SCHEMA", "inventory")
         prefs = cart_manager.get_checkout_prefs(session_id) if session_id else {}
         fulfillment_selected = bool(prefs.get("delivery_type"))
@@ -272,10 +423,18 @@ def execute_check_price_and_stock(
         results = []
         for p in top:
             base_price = float(p["gia_ban"] or 0)
-            # bien_the_san_pham.phu_thu stores the complete selling price for
-            # Size rows (for example Small=49k, Medium=55k, Large=59k).
-            # Other attributes use it as a surcharge.
-            final_price = size_price if size_price is not None else base_price
+            from src.function_calling.tools.cart_tools import _variant_unit_price
+            extra_values = [value for value in [*(toppings or []), luong_da, do_ngot, loai_sua] if value]
+            variant_rows = []
+            if size or extra_values:
+                with engine.connect() as conn:
+                    variant_rows = conn.execute(text(f"""
+                        SELECT tt.ten_thuoc_tinh, bt.gia_tri, bt.phu_thu
+                        FROM {menu_schema}.bien_the_san_pham bt
+                        JOIN {menu_schema}.thuoc_tinh tt ON bt.ma_thuoc_tinh = tt.ma_thuoc_tinh
+                        WHERE bt.ma_san_pham::text = :pid
+                    """), {"pid": str(p["product_id"])}).fetchall()
+            final_price = _variant_unit_price(base_price, variant_rows, size, extra_values)
             availability_status = "unknown"
             in_stock = None
             stock_quantity = None
@@ -291,16 +450,22 @@ def execute_check_price_and_stock(
                     ), {"branch_id": branch_id, "product_id": int(p["product_id"])}).mappings().first()
                 if stock:
                     stock_quantity = int(stock["so_luong_ton"] or 0)
-                    in_stock = bool(stock["dang_kinh_doanh"]) and stock_quantity >= max(1, int(quantity or 1))
+                    in_stock = bool(stock["dang_kinh_doanh"])
                     availability_status = "available" if in_stock else "unavailable"
+                else:
+                    in_stock = True
+                    availability_status = "available"
 
             results.append({
                 "product_id": p["product_id"],
                 "product_name": p["ten_san_pham"],
                 "category": p.get("category"),
+                "parent_category": p.get("parent_category"),
                 "base_price": base_price,
                 "size": size,
-                "size_surcharge": (final_price - base_price) if size_price is not None else 0.0,
+                "size_surcharge": next((float(row[2] or 0) - base_price for row in variant_rows
+                                        if ("size" in _norm(row[0]) or "kich thuoc" in _norm(row[0]))
+                                        and _norm(row[1]) == _norm(size)), 0.0),
                 "final_price": final_price,
                 "in_stock": in_stock,
                 "availability_status": availability_status,
@@ -460,37 +625,29 @@ def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "
         if category not in {"drink", "food", "all"}:
             return {"status": "error", "message": "Danh mục gợi ý không hợp lệ."}
 
-        # Category IDs differ between seed data and deployed databases.  Filter by
-        # the category's business name, and never let products without a category
-        # leak into a food/drink-specific recommendation.
-        category_join = f"LEFT JOIN {menu_schema}.danh_muc dm ON dm.ma_danh_muc = sp.ma_danh_muc"
+        # Category IDs differ between seed data and deployed databases. Reuse
+        # the same recursive ancestry contract as execute_filter_catalog.
+        category_cte = _category_hierarchy_cte(menu_schema)
+        category_join = f"""
+            LEFT JOIN {menu_schema}.danh_muc dm ON dm.ma_danh_muc = sp.ma_danh_muc
+            JOIN category_paths paths ON paths.leaf_id = sp.ma_danh_muc
+        """
+        category_path = "COALESCE(paths.category_path, '')"
         category_where = ""
+        category_params: Dict[str, Any] = {}
         if category == "drink":
-            category_where = """
-                AND (
-                    LOWER(COALESCE(dm.ten_danh_muc, '')) LIKE ANY (ARRAY[
-                        '%đồ uống%', '%do uong%', '%thức uống%', '%thuc uong%',
-                        '%nước%', '%nuoc%', '%cà phê%', '%ca phe%', '%coffee%',
-                        '%trà%', '%tra%', '%tea%', '%matcha%', '%sinh tố%', '%sinh to%', '%juice%'
-                    ])
-                )
-            """
+            category_where = " AND paths.root_name = ANY(:category_roots)"
+            category_params["category_roots"] = list(_DRINK_ROOTS)
         elif category == "food":
-            category_where = """
-                AND (
-                    LOWER(COALESCE(dm.ten_danh_muc, '')) LIKE ANY (ARRAY[
-                        '%bánh%', '%banh%', '%đồ ăn%', '%do an%', '%thức ăn%',
-                        '%thuc an%', '%snack%', '%món ăn%', '%mon an%'
-                    ])
-                )
-            """
+            category_where = " AND paths.root_name = ANY(:category_roots)"
+            category_params["category_roots"] = list(_FOOD_ROOTS)
 
         search_where = ""
         search_params: Dict[str, Any] = {}
         if str(search_text or "").strip():
             search_where = """
                 AND (
-                    LOWER(COALESCE(dm.ten_danh_muc, '')) LIKE :search_text
+                    """ + category_path + """ LIKE :search_text
                     OR LOWER(sp.ten_san_pham) LIKE :search_text
                 )
             """
@@ -499,6 +656,7 @@ def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "
         def get_by_rating():
             with engine.connect() as conn:
                 rows = conn.execute(text(f"""
+                    {category_cte}
                     SELECT sp.ten_san_pham, COALESCE(AVG(dg.so_sao), 0) as avg_rating
                     FROM {menu_schema}.san_pham sp
                     {category_join}
@@ -507,7 +665,7 @@ def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "
                     GROUP BY sp.ma_san_pham, sp.ten_san_pham
                     ORDER BY avg_rating DESC, sp.ten_san_pham ASC
                     LIMIT :top_k
-                """), {"top_k": top_k, **search_params}).mappings().all()
+                """), {"top_k": top_k, **category_params, **search_params}).mappings().all()
                 return [r["ten_san_pham"] for r in rows]
 
         def get_by_hot():
@@ -518,48 +676,52 @@ def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "
             else:
                 with engine.connect() as conn:
                     rows = conn.execute(text(f"""
+                        {category_cte}
                         SELECT sp.ten_san_pham
                         FROM {menu_schema}.san_pham sp
                         {category_join}
                         WHERE sp.trang_thai = TRUE {category_where} {search_where}
                         ORDER BY sp.la_hot DESC, sp.ten_san_pham ASC
                         LIMIT :top_k
-                    """), {"top_k": top_k, **search_params}).mappings().all()
+                    """), {"top_k": top_k, **category_params, **search_params}).mappings().all()
                     return [r["ten_san_pham"] for r in rows]
 
         def get_all_alphabet():
             with engine.connect() as conn:
                 rows = conn.execute(text(f"""
+                    {category_cte}
                     SELECT sp.ten_san_pham
                     FROM {menu_schema}.san_pham sp
                     {category_join}
                     WHERE sp.trang_thai = TRUE {category_where} {search_where}
                     ORDER BY sp.ten_san_pham ASC
-                """), search_params).mappings().all()
+                """), {**category_params, **search_params}).mappings().all()
                 return [r["ten_san_pham"] for r in rows]
 
         def get_by_price_desc():
             with engine.connect() as conn:
                 rows = conn.execute(text(f"""
+                    {category_cte}
                     SELECT sp.ten_san_pham
                     FROM {menu_schema}.san_pham sp
                     {category_join}
                     WHERE sp.trang_thai = TRUE {category_where} {search_where}
                     ORDER BY sp.gia_ban DESC, sp.ten_san_pham ASC
                     LIMIT :top_k
-                """), {"top_k": top_k, **search_params}).mappings().all()
+                """), {"top_k": top_k, **category_params, **search_params}).mappings().all()
                 return [r["ten_san_pham"] for r in rows]
 
         def get_by_price_asc():
             with engine.connect() as conn:
                 rows = conn.execute(text(f"""
+                    {category_cte}
                     SELECT sp.ten_san_pham
                     FROM {menu_schema}.san_pham sp
                     {category_join}
                     WHERE sp.trang_thai = TRUE {category_where} {search_where}
                     ORDER BY sp.gia_ban ASC, sp.ten_san_pham ASC
                     LIMIT :top_k
-                """), {"top_k": top_k, **search_params}).mappings().all()
+                """), {"top_k": top_k, **category_params, **search_params}).mappings().all()
                 return [r["ten_san_pham"] for r in rows]
 
         # Lớp 1
@@ -602,13 +764,15 @@ def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "
 
         with engine.connect() as conn:
             product_rows = conn.execute(text(f"""
+                {category_cte}
                 SELECT sp.ma_san_pham::text AS product_id,
                        sp.ten_san_pham AS product_name,
                        sp.gia_ban AS final_price,
                        sp.hinh_anh_url,
-                       dm.ten_danh_muc AS category
+                       dm.ten_danh_muc AS category,
+                       paths.root_name AS parent_category
                 FROM {menu_schema}.san_pham sp
-                LEFT JOIN {menu_schema}.danh_muc dm ON dm.ma_danh_muc = sp.ma_danh_muc
+                {category_join}
                 WHERE sp.ten_san_pham = ANY(:product_names)
             """), {"product_names": products}).mappings().all()
         product_by_name = {row["product_name"]: _clean_dict(dict(row)) for row in product_rows}
