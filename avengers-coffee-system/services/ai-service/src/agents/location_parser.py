@@ -202,6 +202,7 @@ def merge_store_location(previous: Dict[str, Any] | None, fragment: str) -> Dict
 _PREFIX = re.compile(
     r"^(?:(?:không|ko)[,\s]+)?(?:(?:tôi|mình)(?:\s+đang)?\s+ở|"
     r"(?:toi|minh)(?:\s+dang)?\s+o|dia\s+chi(?:\s+cua)?(?:\s+(?:toi|minh))?\s+(?:o|la)|"
+    r"địa\s+chỉ(?:\s+của)?(?:\s+(?:tôi|mình))?\s+(?:ở|là)|"
     r"(?:đổi|thay)(?:\s+địa\s+chỉ)?\s+sang|địa\s+chỉ(?:\s+mới)?(?:\s+là)?|"
     r"giao\s+(?:đến|tới|qua))\s*[:：]?\s*", re.IGNORECASE,
 )

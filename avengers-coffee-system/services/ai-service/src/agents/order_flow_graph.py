@@ -2050,7 +2050,25 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         return {**state, "intent": {"intent": "ADD_ITEM", "resolved_products": [canonical], "quantity": 1}}
     active_pending = cart_manager.get_pending_action(state["session_id"])
     if (active_pending or {}).get("type") == "confirm_prior_location_for_checkout":
+        from src.agents.location_parser import checkout_location
         from src.agents.pending_context import classify_pending_reply
+        explicit = classify_order_intent(state["user_message"], None)
+        explicit_location = checkout_location(
+            state["user_message"], prefs_at_entry.get("delivery_type"), True,
+        )
+        strong_intents = {
+            "BROWSING", "ADD_ITEM", "VIEW_CART", "CLEAR_CART", "REMOVE_ITEM", "SET_QUANTITY",
+            "EDIT_OPTIONS", "FINISH_CART", "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT",
+            "SELECT_VOUCHER", "APPLY_VOUCHER", "REMOVE_VOUCHER", "REPLACE_VOUCHER", "PAYMENT_INFO",
+        }
+        if explicit.get("intent") in strong_intents:
+            if explicit.get("intent") not in {"BROWSING", "VIEW_CART", "PAYMENT_INFO"}:
+                cart_manager.clear_pending_action(state["session_id"])
+            return {**state, "intent": explicit}
+        if explicit_location.kind in {"area", "address", "poi"}:
+            cart_manager.clear_pending_action(state["session_id"])
+            return {**state, "intent": {"intent": "LOCATION_QUERY",
+                                        "location_kind": explicit_location.kind}}
         decision = classify_pending_reply(
             state["user_message"], "confirm_prior_location_for_checkout",
         )
@@ -2320,7 +2338,7 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
             "intent": "READ_ONLY_BRANCH_FOLLOWUP", "ordinal": branch_ordinal,
             "branch_candidates": branch_snapshot,
         }}
-    if bare_ordinal and branch_snapshot:
+    if bare_ordinal and branch_snapshot and not pending_type:
         if prefs.get("last_product_suggestions"):
             return {**state, "intent": {"intent": "ORDINAL_CONTEXT_CLARIFY"}}
         return {**state, "intent": {
@@ -3502,29 +3520,47 @@ def _render(state: OrderConversationState) -> OrderConversationState:
     # A yes/no business offer is itself dialogue state. Generic prose may be
     # friendly, but it cannot create an actionable next turn without a typed
     # owner that defines what an affirmative answer means.
-    if not typed_pending:
-        rendered_reply = str(result.get("reply") or "")
-        def is_unowned_business_offer(line: str) -> bool:
-            normalized = _norm(line)
-            opt_in = bool(re.search(
-                r"\b(?:co\s+(?:muon|can)|neu\s+(?:(?:ban|anh|chi)\s+)?(?:muon|can)|"
-                r"co\s+the\b.*\bneu\s+(?:(?:ban|anh|chi)\s+)?(?:muon|can))\b",
-                normalized,
-            ))
-            business_action = bool(re.search(
-                r"\b(?:goi y|de xuat|them mon|chon mon|ap\s+(?:ma|voucher)|tiep tuc\s+thanh toan|"
-                r"thanh toan|xac nhan\s+(?:don|dat)|dat hang|chot don|"
-                r"tim\s+(?:quan|cua hang|chi nhanh|kiosk)|(?:quan|cua hang|chi nhanh|kiosk)\s+gan)\b",
-                normalized,
-            ))
-            return opt_in and business_action
+    rendered_reply = str(result.get("reply") or "")
+    pending_type = typed_pending.get("type")
+    cta_owners = {
+        "branch_search": {"offer_branch_search", "confirm_prior_location_for_checkout"},
+        "recommendation": {"offer_recommendation"},
+        "voucher": {"select_voucher"},
+        "checkout": {"select_checkout_choices", "select_fulfillment", "select_payment", "confirm_checkout"},
+        "cart": {"ask_more_items", "fill_options", "edit_cart_item", "cart_line_choice", "cart_edit_clarification"},
+    }
 
-        unowned_offer = any(is_unowned_business_offer(line) for line in rendered_reply.splitlines())
-        if unowned_offer:
-            kept = [line.strip() for line in rendered_reply.splitlines()
-                    if not is_unowned_business_offer(line)]
-            kept.append("Khi cần, bạn có thể yêu cầu mình xem menu, gợi ý món hoặc tra cứu cửa hàng.")
-            result["reply"] = "\n".join(line for line in kept if line)
+    def business_offer_action(line: str) -> Optional[str]:
+        normalized = _norm(line)
+        opt_in = bool(re.search(
+            r"\b(?:co\s+(?:muon|can)|neu\s+(?:(?:ban|anh|chi)\s+)?(?:muon|can)|"
+            r"co\s+the\b.*\bneu\s+(?:(?:ban|anh|chi)\s+)?(?:muon|can))\b",
+            normalized,
+        ))
+        if not opt_in:
+            return None
+        if re.search(r"\b(?:tim\s+(?:quan|cua hang|chi nhanh|kiosk)|(?:quan|cua hang|chi nhanh|kiosk)\s+gan)\b", normalized):
+            return "branch_search"
+        if re.search(r"\b(?:goi y|de xuat)\b", normalized):
+            return "recommendation"
+        if re.search(r"\bap\s+(?:ma|voucher)\b", normalized):
+            return "voucher"
+        if re.search(r"\b(?:tiep tuc\s+thanh toan|thanh toan|xac nhan\s+(?:don|dat)|dat hang|chot don)\b", normalized):
+            return "checkout"
+        if re.search(r"\b(?:them mon|chon mon)\b", normalized):
+            return "cart"
+        return None
+
+    def is_unowned_business_offer(line: str) -> bool:
+        action = business_offer_action(line)
+        return bool(action and pending_type not in cta_owners[action])
+
+    unowned_offer = any(is_unowned_business_offer(line) for line in rendered_reply.splitlines())
+    if unowned_offer:
+        kept = [line.strip() for line in rendered_reply.splitlines()
+                if not is_unowned_business_offer(line)]
+        kept.append("Khi cần, bạn có thể yêu cầu mình xem menu, gợi ý món hoặc tra cứu cửa hàng.")
+        result["reply"] = "\n".join(line for line in kept if line)
     invalidated = cart_manager.get_checkout_prefs(state["session_id"]).get("voucher_invalidated")
     if invalidated:
         result["reply"] = str(result.get("reply") or "") + f"\nMã {invalidated} không còn đủ điều kiện cho giỏ hiện tại; mình đã bỏ giảm giá cũ."

@@ -202,7 +202,8 @@ def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict
     norm = normalize_confirmation_text(raw)
     payment_topic = bool(re.search(
         r"\b(?:phuong thuc|cach|kieu)\s+thanh toan\b|\bthanh toan\b.*\b(?:ho tro|nao|gi|duoc khong)\b|"
-        r"\bco\b.*\bthanh toan\b.*\bkhong\b|\bco\s+(?:ho tro\s+)?(?:vnpay|cod|tien mat|qr|vi(?: avengers)?)\s+khong\b",
+        r"\bco\b.*\bthanh toan\b.*\bkhong\b|\bco\s+(?:ho tro\s+)?(?:vnpay|cod|tien mat|qr|vi(?: avengers)?)\s+khong\b|"
+        r"\b(?:vnpay|cod|qr|vi avengers)\b.*\b(?:la gi|hoat dong the nao)\b",
         norm,
     ))
     if payment_topic:
