@@ -6,6 +6,14 @@ export type ViewTab =
   | 'stores' 
   | 'customers' 
   | 'products' 
+  | 'data_management'
+  | 'warehouse'
+  | 'query_history'
+  | 'sql_editor'
+  | 'notebooks'
+  | 'ml_ai'
+  | 'users'
+  | 'roles'
   | 'system';
 
 export type AnalyticsSubTab = 
