@@ -209,7 +209,7 @@ curl http://localhost:3000/ai/recommend/user_123
 
 1. **AI Models**: Require real order data to train. Use `seed-behavior-data.ps1` to populate.
 2. **Gemini API**: Set `GEMINI_API_KEY` in `.env` or AI chat won't work.
-3. **Payment Testing**: Use VNPay sandbox (VNPAY_TMN_CODE=MEBLXEDU is test code).
+3. **Payment Testing**: Supply a dedicated VNPay sandbox merchant code and hash secret through environment variables.
 4. **WebSocket**: Order Service broadcasts via Socket.io to rooms like `user_123`.
 5. **Database**: All services share one Postgres instance with isolated schemas.
 

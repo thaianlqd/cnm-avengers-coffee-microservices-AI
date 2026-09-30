@@ -3,11 +3,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { SurveyForm } from '../entities/survey-form.entity';
 import { SurveyResponse } from '../entities/survey-response.entity';
+import { secretWithDevDefault } from '../config/runtime-secrets';
 
 @Injectable()
 export class SurveyService {
   private readonly IDENTITY_SERVICE_URL = process.env.IDENTITY_SERVICE_URL || 'http://identity-service:3001';
-  private readonly INTERNAL_SERVICE_TOKEN = process.env.INTERNAL_SERVICE_TOKEN || 'avengers-internal-token';
+  private readonly INTERNAL_SERVICE_TOKEN = secretWithDevDefault('INTERNAL_SERVICE_TOKEN', 'test-only-internal-service-token');
 
   constructor(
     @InjectRepository(SurveyForm)

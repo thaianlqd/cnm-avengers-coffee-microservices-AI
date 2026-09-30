@@ -96,3 +96,11 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+# Voucher claim migration
+
+Apply `migrations/20260928_promotion_usage_order_unique.sql` manually before
+enabling wallet voucher claim retries in Order Service. It creates a unique
+legacy order key and the new `order_voucher_claim` table, which accepts PUBLIC
+vouchers issued by Order Service without requiring an Identity promotion row.
+Check and reconcile any existing duplicate non-null `ma_don_hang` values
+first. Application startup does not apply this migration.

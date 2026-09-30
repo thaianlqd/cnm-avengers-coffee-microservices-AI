@@ -12,6 +12,8 @@ export class ThanhToanController {
     @Req() req: Request,
     @Body()
     payload: {
+      checkout_action_id?: string;
+      expected_final_total?: number;
       phuong_thuc_thanh_toan: 'VNPAY' | 'NGAN_HANG_QR' | 'THANH_TOAN_KHI_NHAN_HANG' | 'VI_DIEN_TU';
       dia_chi_giao_hang: string;
       khung_gio_giao?: string;

@@ -152,7 +152,7 @@ export class DeliveryTrackingService {
     destination_latitude?: number;
     destination_longitude?: number;
     is_guest?: boolean;
-  }): Promise<DeliveryTracking> {
+  }, authoritativeDeliveryFee?: number): Promise<DeliveryTracking> {
     // Chỉ tạo tracking code ngắn (AC-XXXXX) cho khách vãng lai
     const trackingCode = input.is_guest
       ? `AC-${crypto.randomBytes(3).toString('hex').toUpperCase().slice(0, 5)}`
@@ -190,6 +190,7 @@ export class DeliveryTrackingService {
       ma_don_hang: input.ma_don_hang,
       delivery_mode: input.delivery_mode,
       delivery_method: input.delivery_mode === 'GIAO_TAN_NOI' ? (input.delivery_method || 'INTERNAL') : null,
+      delivery_fee: input.delivery_mode === 'GIAO_TAN_NOI' ? (authoritativeDeliveryFee ?? null) : 0,
       branch_code: input.branch_code || null,
       table_number: input.table_number || null,
       pickup_time: input.pickup_time || null,

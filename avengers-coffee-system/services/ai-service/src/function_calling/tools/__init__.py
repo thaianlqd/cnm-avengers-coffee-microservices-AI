@@ -11,7 +11,8 @@ from .product_tools import (
     TOOL_GET_PRODUCT_OPTIONS, execute_get_product_options,
     TOOL_CHECK_PRICE_AND_STOCK, execute_check_price_and_stock,
     TOOL_GET_PRODUCT_INSIGHTS, execute_get_product_insights,
-    TOOL_GET_RECOMMENDATIONS, execute_get_recommendations
+    TOOL_GET_RECOMMENDATIONS, execute_get_recommendations,
+    TOOL_FILTER_CATALOG, execute_filter_catalog,
 )
 from .cart_tools import (
     TOOL_ADD_TO_CART, execute_add_to_cart,
@@ -55,6 +56,7 @@ ALL_TOOL_SCHEMAS: List[Dict[str, Any]] = [
     TOOL_CONFIRM_CHECKOUT,
     TOOL_SEARCH_KNOWLEDGE_BASE,
     TOOL_GET_RECOMMENDATIONS,
+    TOOL_FILTER_CATALOG,
     TOOL_TRACK_ORDER_STATUS,
     TOOL_GET_ORDER_HISTORY,
     TOOL_GET_ORDER_DETAILS,
@@ -86,6 +88,7 @@ TOOL_EXECUTORS = {
     "confirm_checkout": lambda args, session_id: execute_confirm_checkout(session_id=session_id, **args),
     "search_knowledge_base": lambda args, session_id: execute_search_knowledge_base(**args),
     "get_recommendations": lambda args, session_id: execute_get_recommendations(**args),
+    "filter_catalog": lambda args, session_id: execute_filter_catalog(**args),
     "track_order_status": lambda args, session_id: execute_track_order_status(session_id=session_id, **args),
     "get_order_history": lambda args, session_id: execute_get_order_history(session_id=session_id),
     "get_order_details": lambda args, session_id: execute_get_order_details(session_id=session_id, **args),

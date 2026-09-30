@@ -1,5 +1,9 @@
-from src.agents.order_flow_graph import run_order_flow, _resolve_cart_line, _update_cart_focus_after_add
+from src.agents.order_flow_graph import (
+    run_order_flow, _resolve_cart_line, _update_cart_focus_after_add,
+    _store_cart_line_choice, _resolve_pending_cart_line,
+)
 from src.common import cart_manager
+import pytest
 
 
 def _seed_variants(session: str):
@@ -39,7 +43,7 @@ def test_last_cart_focus_set_after_adding_item(monkeypatch):
     assert cart_manager.get_checkout_prefs(session).get("last_cart_focus") == "77"
 
 
-def test_resolve_cart_line_uses_focus_when_multiple_variants():
+def test_resolve_cart_line_requires_variant_choice_even_when_family_was_focused():
     session = "multi-variant-focus"
     _seed_variants(session)
     cart = cart_manager.get_cart(session)
@@ -49,9 +53,70 @@ def test_resolve_cart_line_uses_focus_when_multiple_variants():
 
     cart_manager.set_checkout_context(session, last_cart_focus="102")
     item, error = _resolve_cart_line(cart_manager.get_cart(session), "đổi topping trà sữa")
-    assert error is None
-    assert item["size"] == "L"
-    assert str(item["cart_item_id"]) == "102"
+    assert item is None
+    assert "nhiều biến thể" in error
+
+    item, error = _resolve_cart_line(cart_manager.get_cart(session), "đổi topping món này")
+    assert error is None and str(item["cart_item_id"]) == "102"
+
+
+def test_ambiguous_cart_operation_keeps_typed_line_snapshot_and_resumes_by_ordinal():
+    session = "typed-cart-line-choice"
+    _seed_variants(session)
+    cart = cart_manager.get_cart(session)
+    candidates = [row for row in cart["items"] if row["product_name"] == "Trà Sữa"]
+    prompt = _store_cart_line_choice(session, "SET_QUANTITY", 3, candidates)
+    pending = cart_manager.get_pending_action(session)
+
+    assert "1. Trà Sữa (M)" in prompt and "2. Trà Sữa (L)" in prompt
+    assert pending["params"]["operation"] == "SET_QUANTITY"
+    assert pending["params"]["requested_value"] == 3
+    assert pending["params"]["candidate_line_ids"] == ["101", "102"]
+    resumed = _resolve_pending_cart_line(session, "dòng số 2", cart)
+    assert resumed["operation"] == "SET_QUANTITY"
+    assert resumed["requested_value"] == 3
+    assert str(resumed["row"]["cart_item_id"]) == "102"
+
+
+@pytest.mark.parametrize('operation,patch,expected_tool,expected_reply', [
+    ('REMOVE', {}, 'remove_cart_item', 'Đã xoá đúng dòng món'),
+    ('EDIT_OPTIONS', {'toppings': ['Hạt Sen']}, 'update_cart_item', 'Đã cập nhật tùy chọn'),
+])
+def test_pending_cart_choice_resumes_remove_or_option_patch(monkeypatch, operation, patch, expected_tool, expected_reply):
+    from src.function_calling.tools import cart_tools
+
+    session = f'typed-{operation.lower()}'
+    _seed_variants(session)
+    cart = cart_manager.get_cart(session)
+    candidates = [row for row in cart['items'] if row['product_name'] == 'Trà Sữa']
+    _store_cart_line_choice(session, operation, patch or 'đổi topping', candidates, patch=patch)
+    monkeypatch.setattr(cart_tools, 'sync_authoritative_cart', lambda _sid: cart)
+    changed = []
+    monkeypatch.setattr(cart_tools, 'execute_remove_cart_item',
+                        lambda _sid, line_id: changed.append(('remove', line_id)) or {'status': 'ok'})
+    monkeypatch.setattr(cart_tools, 'execute_update_cart_item',
+                        lambda _sid, line_id, desired: changed.append(('patch', line_id, desired)) or {'status': 'ok'})
+    monkeypatch.setattr(cart_tools, 'execute_get_cart_quote', lambda _sid: {'status': 'ok', 'quote': {'subtotal': 84000}})
+
+    result = run_order_flow(session, 'số 2')
+    assert expected_reply in result['reply']
+    assert [entry['tool'] for entry in result['tool_calls_log']] == [expected_tool]
+    assert changed[0][1] == '102'
+    if operation == 'EDIT_OPTIONS':
+        assert changed[0][2] == patch
+    assert cart_manager.get_pending_action(session) is None
+
+
+def test_cart_family_disambiguation_lists_only_matching_variants():
+    session = "cart-family-candidates"
+    _seed_variants(session)
+    cart_manager.replace_items_from_order_cart(session, [
+        *cart_manager.get_cart(session)["items"],
+        {"id": 103, "ma_san_pham": "P2", "ten_san_pham": "Bánh Matcha", "gia_ban": 49000, "so_luong": 1},
+    ])
+    cart = cart_manager.get_cart(session)
+    item, error = _resolve_cart_line(cart, "xóa trà sữa")
+    assert item is None and "Bánh Matcha" not in error
 
 
 def test_edit_options_intent_asks_which_change_not_silent_llm_fallback(monkeypatch):
@@ -87,7 +152,7 @@ def test_edit_options_follow_up_patches_the_focused_cart_line(monkeypatch):
         "toppings": ["Hạt Sen"],
     }])
     monkeypatch.setattr(cart_tools, "sync_authoritative_cart", lambda _session: cart_manager.get_cart(_session))
-    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name: {
+    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name, **_kwargs: {
         "status": "ok",
         "options": {"Topping": ["Hạt Sen", "Trân châu trắng"]},
     })
@@ -155,7 +220,7 @@ def test_long_cart_conversation_add_more_then_change_quantity_and_topping(monkey
     })
     monkeypatch.setattr(cart_tools, "sync_authoritative_cart", lambda _session: cart_manager.get_cart(_session))
 
-    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name: {
+    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name, **_kwargs: {
         "status": "ok", "product_name": "Bánh Trung Thu Matcha", "options": {"Kích thước": ["Nhỏ"]},
     })
     monkeypatch.setattr(product_tools, "execute_check_price_and_stock", lambda **_kwargs: {
@@ -214,7 +279,7 @@ def test_long_cart_conversation_add_more_then_change_quantity_and_topping(monkey
     assert any(row["tool"] == "update_cart_item" for row in quantity["tool_calls_log"])
     assert next(row for row in cart_manager.get_cart(session)["items"] if row["cart_item_id"] == 3)["quantity"] == 2
 
-    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name: {
+    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name, **_kwargs: {
         "status": "ok",
         "options": {"Topping": ["Trân châu trắng", "Hạt Sen", "Foam Dừa"]},
     })
@@ -239,7 +304,7 @@ def test_real_transcript_add_two_matcha_cakes_does_not_increment_bat_buu(monkeyp
         "food": [{"product_id": "120", "product_name": "Bánh Trung Thu Matcha", "category": "food"}],
     })
     monkeypatch.setattr(cart_tools, "sync_authoritative_cart", lambda _session: cart_manager.get_cart(_session))
-    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name: {
+    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name, **_kwargs: {
         "status": "ok", "product_name": "Bánh Trung Thu Matcha", "options": {"Kích thước": ["Nhỏ"]},
     })
     monkeypatch.setattr(product_tools, "execute_check_price_and_stock", lambda **_kwargs: {
@@ -296,7 +361,7 @@ def test_real_transcript_banh_so_three_adds_latest_matcha_not_existing_lava(monk
         ],
     )
     monkeypatch.setattr(cart_tools, "sync_authoritative_cart", lambda _session: cart_manager.get_cart(_session))
-    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name: {
+    monkeypatch.setattr(product_tools, "execute_get_product_options", lambda _name, **_kwargs: {
         "status": "ok", "product_name": "Bánh Trung Thu Matcha", "options": {"Kích thước": ["Nhỏ"]},
     })
     monkeypatch.setattr(product_tools, "execute_check_price_and_stock", lambda **_kwargs: {
@@ -413,5 +478,5 @@ def test_read_only_model_claim_cannot_fake_an_add(monkeypatch):
     })
 
     result = run_order_flow(session, "làm như vậy nhé")
-    assert "Món chưa được thêm" in result["reply"]
+    assert not any(entry.get("tool") == "add_to_cart" for entry in result["tool_calls_log"])
     assert len(cart_manager.get_cart(session)["items"]) == 1

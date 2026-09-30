@@ -1,6 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { AuthUser } from './auth.types';
+import { secretWithDevDefault } from '../config/runtime-secrets';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -13,7 +14,7 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Thieu access token');
     }
 
-    const internalToken = process.env.INTERNAL_SERVICE_TOKEN || 'avengers-internal-token';
+    const internalToken = secretWithDevDefault('INTERNAL_SERVICE_TOKEN', 'test-only-internal-service-token');
     if (authHeader === internalToken) {
       request.user = {
         sub: request.params?.customerId || 'internal-service',

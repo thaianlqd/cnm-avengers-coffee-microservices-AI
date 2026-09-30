@@ -7,29 +7,8 @@ logger = logging.getLogger(__name__)
 
 
 def _clean_profile_address(value: Any) -> str:
-    """Remove duplicated location suffixes from legacy profile addresses."""
-    parts = [part.strip() for part in str(value or "").split(",") if part.strip()]
-    if not parts:
-        return ""
-
-    def key(part: str) -> str:
-        import unicodedata
-        raw = unicodedata.normalize("NFD", part.lower())
-        return "".join(char for char in raw if unicodedata.category(char) != "Mn").replace("đ", "d")
-
-    # Some saved rows already contain ward/city and legacy readers appended
-    # the same ward/city once more. Collapse any adjacent repeated suffix block.
-    changed = True
-    while changed:
-        changed = False
-        for block_size in range(len(parts) // 2, 0, -1):
-            if [key(item) for item in parts[-2 * block_size:-block_size]] == [
-                key(item) for item in parts[-block_size:]
-            ]:
-                del parts[-block_size:]
-                changed = True
-                break
-    return ", ".join(parts)
+    from src.agents.location_parser import canonical_address
+    return canonical_address(value)
 
 TOOL_GET_USER_PREFERENCES = {
     "type": "function",

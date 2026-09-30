@@ -3,15 +3,19 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { createHash } from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { CartItem } from './cart.entity';
+import { quoteDeliveryFee } from './delivery-pricing';
 import { VoucherService } from '../voucher/voucher.service';
 
 @Injectable()
 export class CartService {
+  private cartMutationSchemaReady?: Promise<void>;
+
   constructor(
     @InjectRepository(CartItem) private cartRepo: Repository<CartItem>,
     private readonly dataSource: DataSource,
@@ -80,35 +84,38 @@ export class CartService {
       .digest('hex');
   }
 
+  private async ensureCartMutationSchema() {
+    if (!this.cartMutationSchemaReady) {
+      const schema = this.cartSchema();
+      const initialization = this.dataSource.query(
+        `SELECT to_regclass($1) AS cart_metadata,
+                to_regclass($2) AS cart_mutation_operation`,
+        [`${schema}.cart_metadata`, `${schema}.cart_mutation_operation`],
+      ).then((rows: Array<{ cart_metadata?: string; cart_mutation_operation?: string }>) => {
+        const ready = rows?.[0];
+        if (!ready?.cart_metadata || !ready?.cart_mutation_operation) {
+          throw new ServiceUnavailableException(
+            'Cart mutation schema chưa được migrate. Hãy áp dụng migration 20260926_cart_state_idempotency.sql.',
+          );
+        }
+      });
+      this.cartMutationSchemaReady = initialization.catch((error) => {
+        this.cartMutationSchemaReady = undefined;
+        throw error;
+      });
+    }
+    return this.cartMutationSchemaReady;
+  }
+
+  // Cart mutation tables are deployed by migrations. Runtime writes must not
+  // issue DDL because a remote pooler can hold the customer request long
+  // enough for the AI caller to time out after the eventual commit.
   private async ensureMutationOperationTable() {
-    const schema = this.cartSchema();
-    await this.dataSource.query(`
-      CREATE TABLE IF NOT EXISTS "${schema}".cart_mutation_operation (
-        operation_id VARCHAR(200) PRIMARY KEY,
-        user_id VARCHAR NOT NULL,
-        operation_type VARCHAR(64) NOT NULL,
-        request_hash TEXT NOT NULL,
-        result JSONB NULL,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `);
-    await this.dataSource.query(
-      `ALTER TABLE "${schema}".cart_mutation_operation
-       ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
-    );
+    return this.ensureCartMutationSchema();
   }
 
   private async ensureCartMetadataTable() {
-    const schema = this.cartSchema();
-    await this.dataSource.query(`
-      CREATE TABLE IF NOT EXISTS "${schema}".cart_metadata (
-        user_id VARCHAR PRIMARY KEY,
-        cart_id VARCHAR(200) NOT NULL UNIQUE,
-        cart_version BIGINT NOT NULL DEFAULT 0,
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `);
+    return this.ensureCartMutationSchema();
   }
 
   /**
@@ -161,14 +168,10 @@ export class CartService {
       const existing = existingRows?.[0];
       if (existing) {
         if (existing.request_hash !== requestHash) {
-          throw new ConflictException(
-            'Idempotency key da duoc dung cho yeu cau khac',
-          );
+          throw new ConflictException({ code: 'CART_MUTATION_IDEMPOTENCY_CONFLICT', message: 'Idempotency key da duoc dung cho yeu cau khac' });
         }
         if (existing.result == null) {
-          throw new ConflictException(
-            'Cart mutation with this id is still being processed',
-          );
+          throw new ConflictException({ code: 'CART_MUTATION_IN_PROGRESS', message: 'Cart mutation with this id is still being processed' });
         }
         const stored =
           typeof existing.result === 'string'
@@ -196,14 +199,10 @@ export class CartService {
         );
         const raced = racedRows?.[0];
         if (!raced || raced.request_hash !== requestHash) {
-          throw new ConflictException(
-            'Idempotency key da duoc dung cho yeu cau khac',
-          );
+          throw new ConflictException({ code: 'CART_MUTATION_IDEMPOTENCY_CONFLICT', message: 'Idempotency key da duoc dung cho yeu cau khac' });
         }
         if (raced.result == null) {
-          throw new ConflictException(
-            'Cart mutation with this id is still being processed',
-          );
+          throw new ConflictException({ code: 'CART_MUTATION_IN_PROGRESS', message: 'Cart mutation with this id is still being processed' });
         }
         const stored =
           typeof raced.result === 'string'
@@ -278,14 +277,20 @@ export class CartService {
     // this helper safe for future callers, but must not be used to acquire a
     // cart lock late in a mutation.
     if (!lockedMetadata) await this.lockCartMetadata(manager, userId);
-    const rows = await manager.query(
+    const rows = (await manager.query(
       `UPDATE "${schema}".cart_metadata
        SET cart_version = cart_version + 1, updated_at = NOW()
        WHERE user_id = $1
        RETURNING user_id, cart_id, cart_version`,
       [userId],
-    );
-    return rows[0];
+    )) as Array<{ user_id: string; cart_id: string; cart_version: number }>
+      | [Array<{ user_id: string; cart_id: string; cart_version: number }>, number];
+    // TypeORM/Postgres returns UPDATE as [returningRows, affectedCount].
+    // Test managers can return the row array directly.
+    const returned = Array.isArray(rows[0]) && typeof rows[1] === 'number'
+      ? rows[0] as Array<{ user_id: string; cart_id: string; cart_version: number }>
+      : rows as Array<{ user_id: string; cart_id: string; cart_version: number }>;
+    return returned[0];
   }
 
   private configurationSignature(item: any) {
@@ -546,14 +551,10 @@ export class CartService {
       const existing = existingRows?.[0];
       if (existing) {
         if (existing.request_hash !== requestHash) {
-          throw new ConflictException(
-            'Idempotency key da duoc dung cho yeu cau khac',
-          );
+          throw new ConflictException({ code: 'CART_MUTATION_IDEMPOTENCY_CONFLICT', message: 'Idempotency key da duoc dung cho yeu cau khac' });
         }
         if (existing.result == null) {
-          throw new ConflictException(
-            'Cart mutation with this id is still being processed',
-          );
+          throw new ConflictException({ code: 'CART_MUTATION_IN_PROGRESS', message: 'Cart mutation with this id is still being processed' });
         }
         const stored =
           typeof existing.result === 'string'
@@ -584,14 +585,10 @@ export class CartService {
         );
         const raced = racedRows?.[0];
         if (!raced || raced.request_hash !== requestHash) {
-          throw new ConflictException(
-            'Idempotency key da duoc dung cho yeu cau khac',
-          );
+          throw new ConflictException({ code: 'CART_MUTATION_IDEMPOTENCY_CONFLICT', message: 'Idempotency key da duoc dung cho yeu cau khac' });
         }
         if (raced.result == null) {
-          throw new ConflictException(
-            'Cart mutation with this id is still being processed',
-          );
+          throw new ConflictException({ code: 'CART_MUTATION_IN_PROGRESS', message: 'Cart mutation with this id is still being processed' });
         }
         const stored =
           typeof raced.result === 'string'
@@ -623,7 +620,7 @@ export class CartService {
     });
   }
 
-  async quote(maNguoiDung: string, voucherCode?: string) {
+  async quote(maNguoiDung: string, voucherCode?: string, deliveryMode?: string, deliveryMethod?: string) {
     const cart = await this.layGiỏHàng(maNguoiDung);
     const items = cart.items;
     const subtotal = cart.subtotal;
@@ -642,14 +639,16 @@ export class CartService {
       discountAmount = Number(result.so_tien_giam || 0);
       appliedVoucher = result.voucher.ma_voucher;
     }
+    const shipping = await quoteDeliveryFee(maNguoiDung, subtotal, deliveryMode, deliveryMethod);
     return {
       ...cart,
+      ...shipping,
       items,
       item_count: cart.item_count,
       subtotal,
       discount_amount: discountAmount,
       voucher_code: appliedVoucher,
-      final_total: Math.max(0, subtotal - discountAmount),
+      final_total: Math.max(0, subtotal - discountAmount) + shipping.delivery_fee,
     };
   }
 

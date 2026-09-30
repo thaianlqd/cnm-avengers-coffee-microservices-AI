@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Client } from 'pg';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { assertProductionSecrets, secretWithDevDefault } from './config/runtime-secrets';
 import { InfrastructureModule } from './infrastructure/infrastructure.module';
 import { CartModule } from './modules/cart/cart.module';
 import { CartItem } from './modules/cart/cart.entity';
@@ -33,6 +34,7 @@ import { FavoriteModule } from './modules/favorite/favorite.module';
 import { FavoriteItem } from './modules/favorite/entities/favorite-item.entity';
 import { ShipperModule } from './modules/shipper/shipper.module';
 import { Shipper } from './modules/shipper/entities/shipper.entity';
+
 import { ShipperDelivery } from './modules/shipper/entities/shipper-delivery.entity';
 import { ShipperWallet } from './modules/shipper/entities/shipper-wallet.entity';
 import { ShipperSchedule } from './modules/shipper/entities/shipper-schedule.entity';
@@ -55,12 +57,13 @@ import { SmtpModule } from './modules/smtp/smtp.module';
 
 const orderSchema = process.env.DB_SCHEMA || 'orders';
 const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
+assertProductionSecrets(['JWT_SECRET', 'INTERNAL_SERVICE_TOKEN', 'VNPAY_TMN_CODE', 'VNPAY_HASH_SECRET']);
 
 @Module({
   imports: [
     JwtModule.register({
       global: true,
-      secret: process.env.JWT_SECRET || 'avengers-jwt-secret',
+      secret: secretWithDevDefault('JWT_SECRET', 'test-only-jwt-secret'),
       signOptions: {
         expiresIn: jwtExpiresIn,
       },

@@ -84,10 +84,15 @@ TOOL_REMOVE_VOUCHER = {
 def execute_get_applicable_vouchers(session_id: str) -> Dict[str, Any]:
     """Lấy danh sách voucher áp dụng được theo tổng giỏ hàng."""
     # Cart state is conversation-scoped; only voucher eligibility is user-scoped.
+    from src.function_calling.tools.cart_tools import is_authenticated_cart_session, sync_authoritative_cart
+    authenticated = is_authenticated_cart_session(session_id)
     try:
-        from src.function_calling.tools.cart_tools import sync_authoritative_cart
         cart = sync_authoritative_cart(session_id)
-    except Exception:
+    except Exception as exc:
+        if authenticated:
+            return {"status": "error", "message":
+                    "Chưa thể xác minh giỏ hàng với Order Service nên mình chưa kiểm tra voucher. Bạn thử lại nhé.",
+                    "error": type(exc).__name__}
         cart = cart_manager.get_cart(session_id)
     if cart.get("is_empty"):
         return {
@@ -158,20 +163,15 @@ def execute_apply_voucher(session_id: str, voucher_code: str) -> Dict[str, Any]:
 
     code = str(voucher_code).strip().upper()
     prefs = cart_manager.get_checkout_prefs(session_id)
-    if str(prefs.get("voucher_code") or "").strip().upper() == code:
-        discount = float(prefs.get("discount_amount") or 0)
-        total = float(cart_manager.get_cart(session_id).get("total_price") or 0)
-        return {
-            "status": "already_applied",
-            "voucher_code": code,
-            "so_tien_giam": discount,
-            "final_total": max(0, total - discount),
-            "message": f"Mã {code} đã được áp dụng rồi; tổng tiền không thay đổi.",
-        }
+    from src.function_calling.tools.cart_tools import is_authenticated_cart_session, sync_authoritative_cart
+    authenticated = is_authenticated_cart_session(session_id)
     try:
-        from src.function_calling.tools.cart_tools import sync_authoritative_cart
         cart = sync_authoritative_cart(session_id)
-    except Exception:
+    except Exception as exc:
+        if authenticated:
+            return {"status": "error", "message":
+                    "Chưa thể xác minh giỏ hàng với Order Service nên mã chưa được áp dụng. Bạn thử lại nhé.",
+                    "error": type(exc).__name__}
         cart = cart_manager.get_cart(session_id)
     if cart.get("is_empty"):
         return {"status": "empty_cart", "message": "Giỏ hàng đang trống."}
@@ -186,6 +186,7 @@ def execute_apply_voucher(session_id: str, voucher_code: str) -> Dict[str, Any]:
         "ma_voucher": code,
         "tong_tien": total,
         "user_id": valid_uid or "",
+        "has_toppings": any(bool(item.get("toppings")) for item in cart.get("items") or []),
     }
 
     try:
@@ -217,6 +218,8 @@ def execute_apply_voucher(session_id: str, voucher_code: str) -> Dict[str, Any]:
         session_id,
         voucher_code=code,
         discount_amount=so_tien_giam,
+        voucher_decided=True,
+        voucher_revalidation_required=None,
     )
 
     discount_str = f"{so_tien_giam:,.0f}".replace(",", ".")
@@ -227,24 +230,46 @@ def execute_apply_voucher(session_id: str, voucher_code: str) -> Dict[str, Any]:
         "so_tien_giam": so_tien_giam,
         "final_total": final_total,
         "message": (
-            f"Đã áp dụng mã {code}! Giảm {discount_str}đ — "
-            f"Tổng thanh toán còn lại: {final_str}đ."
+            f"Tạm tính: {total:,.0f}đ\nVoucher {code}: -{discount_str}đ\n"
+            f"Thành tiền hiện tại: {final_str}đ."
         ),
     }
 
 
 def execute_remove_voucher(session_id: str) -> Dict[str, Any]:
-    """Xóa voucher đang áp dụng khỏi session."""
+    """Remove a voucher only after an authoritative no-voucher quote succeeds."""
     prefs = cart_manager.get_checkout_prefs(session_id)
     if not prefs.get("voucher_code"):
         return {"status": "ok", "message": "Không có mã giảm giá nào đang được áp dụng."}
+
+    from src.function_calling.tools.cart_tools import (
+        _quote_authoritative_cart, is_authenticated_cart_session, sync_authoritative_cart,
+    )
+    if not is_authenticated_cart_session(session_id):
+        return {"status": "error", "message": "Bạn cần đăng nhập để thay đổi voucher của giỏ hàng."}
+    try:
+        sync_authoritative_cart(session_id)
+        quote = _quote_authoritative_cart(session_id, None)
+        if not isinstance(quote, dict) or quote.get("final_total") is None:
+            raise RuntimeError("invalid no-voucher quote")
+    except Exception as exc:
+        logger.warning("[VoucherTools] remove voucher reconciliation failed: %s", type(exc).__name__)
+        return {"status": "error", "message":
+                "Chưa thể xác minh tổng tiền sau khi bỏ mã. Mã hiện tại vẫn được giữ nguyên; bạn thử lại nhé."}
 
     cart_manager.set_checkout_context(
         session_id,
         voucher_code=None,
         discount_amount=None,
+        voucher_decided=True,
+        voucher_revalidation_required=None,
+        summary_fingerprint=None,
+        checkout_action_id=None,
+        summary_amounts=None,
+        checkout_submission=None,
     )
     return {
         "status": "ok",
-        "message": "Đã xóa mã giảm giá khỏi đơn hàng.",
+        "quote": quote,
+        "message": "Đã bỏ mã giảm giá và xác minh lại tổng tiền của giỏ hàng.",
     }

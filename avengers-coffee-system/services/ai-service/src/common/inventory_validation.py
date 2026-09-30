@@ -1,13 +1,4 @@
-"""Authoritative inventory checks used by branch selection and checkout.
-
-Policy:
-- Inventory rows are branch-specific overrides. A missing row inherits the
-  product's normal menu availability at that branch.
-- Only explicit inactive/insufficient rows are unavailable.
-- Products with a row must have enough quantity for the whole cart.
-- Quantities are aggregated by product before validation.
-"""
-from collections import defaultdict
+"""Branch availability overrides used by chat and strict checkout."""
 from typing import Any, Dict, Iterable, List, Optional
 
 from sqlalchemy import text
@@ -19,29 +10,29 @@ def validate_items_at_branch(
     items: Iterable[Dict[str, Any]],
     inventory_schema: str = "inventory",
 ) -> Dict[str, List[str]]:
-    """Return explicit stock conflicts and identifiers that cannot be checked."""
+    """Return paused products and identifiers that cannot be checked."""
     names: Dict[str, str] = {}
-    required_quantities: Dict[str, int] = defaultdict(int)
+    product_ids: set[str] = set()
     for item in items:
         product_id = str(item.get("product_id") or "").strip()
         product_name = str(item.get("product_name") or product_id or "Sản phẩm")
         names[product_id] = product_name
         if product_id:
-            required_quantities[product_id] += max(1, int(item.get("quantity") or item.get("so_luong") or 1))
+            product_ids.add(product_id)
 
     unavailable: List[str] = []
     unverified: List[str] = []
 
-    if not branch_id or not required_quantities:
+    if not branch_id or not product_ids:
         return {"unavailable": unavailable, "unverified": unverified}
 
     with engine.connect() as conn:
-        for product_id, required_quantity in required_quantities.items():
+        for product_id in product_ids:
             if not product_id.isdigit():
                 unverified.append(names[product_id])
                 continue
             row = conn.execute(text(f"""
-                SELECT so_luong_ton, dang_kinh_doanh
+                SELECT dang_kinh_doanh
                 FROM {inventory_schema}.ton_kho_san_pham
                 WHERE co_so_ma = :branch_id AND ma_san_pham = :product_id
                 LIMIT 1
@@ -54,9 +45,7 @@ def validate_items_at_branch(
                 # tracks a finite quantity. Most products have no override row;
                 # treating those as unknown made every ordinary branch fail.
                 continue
-            stock_quantity = int(row[0] or 0)
-            is_active = bool(row[1])
-            if not is_active or stock_quantity < required_quantity:
+            if not bool(row[0]):
                 unavailable.append(names[product_id])
 
     return {"unavailable": unavailable, "unverified": unverified}

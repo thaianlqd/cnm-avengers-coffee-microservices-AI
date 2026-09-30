@@ -9,6 +9,7 @@ import {
   Query,
   Req,
   Headers,
+  HttpCode,
   UseGuards,
   ForbiddenException,
   BadRequestException,
@@ -44,13 +45,14 @@ export class CartController {
   }
 
   @Post(':userId/quote')
+  @HttpCode(200)
   async quoteCart(
     @Param('userId') userId: string,
-    @Body() body: { voucher_code?: string },
+    @Body() body: { voucher_code?: string; delivery_mode?: string; delivery_method?: string },
     @Req() req: any,
   ) {
     this.assertOwner(req.user, userId);
-    return this.cartService.quote(userId, body?.voucher_code);
+    return this.cartService.quote(userId, body?.voucher_code, body?.delivery_mode, body?.delivery_method);
   }
 
   @Post()
