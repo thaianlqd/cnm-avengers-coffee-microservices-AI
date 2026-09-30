@@ -60,7 +60,7 @@ Trong giai đoạn tiếp theo, nhóm có kế hoạch xây dựng một tầng 
                         LAYER 7 — VISUALIZATION & AI SERVING
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
          • Apache Superset: BI Dashboard chiến lược dành cho Ban Lãnh Đạo (CEO/C-Level)
-         • Streamlit AI Analytics (:8501): Dashboard chuyên sâu theo dõi real-time & ML
+         • Modern Analytics Web Portal (:8501): Dashboard chuyên sâu theo dõi real-time & ML
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -79,7 +79,7 @@ Trong giai đoạn tiếp theo, nhóm có kế hoạch xây dựng một tầng 
 - **Tại sao cần Trino**: Delta Lake lưu trữ dữ liệu dưới dạng file Parquet phân tán trên MinIO/S3 — không thể query trực tiếp bằng SQL truyền thống một cách nhanh chóng.
 - **Sức mạnh của Trino**:
   - Trino là Distributed SQL Engine cho phép viết câu lệnh SQL ANSI chuẩn chạy song song trên hàng trăm triệu dòng lịch sử chỉ trong **1–2 giây**.
-  - Kết nối trực tiếp với Apache Superset và Streamlit mà không cần sao chép hay nạp ngược dữ liệu về database quan hệ.
+  - Kết nối trực tiếp với Apache Superset và Modern Analytics Web Portal mà không cần sao chép hay nạp ngược dữ liệu về database quan hệ.
 
 ### 2.3. AI Feature Store & MLflow Lifecycle Management
 - **AI Feature Store (Feast)**:

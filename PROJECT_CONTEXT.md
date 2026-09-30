@@ -14,7 +14,7 @@
 | **API Gateway** | NestJS 10, `http-proxy-middleware`, Axios, CORS |
 | **Backend Microservices** | NestJS (TypeScript), TypeORM, Class-Validator, Node.js 20+ |
 | **AI / ML Service** | Python 3.11, FastAPI, Scikit-learn, Pandas, Prophet, NumPy, Gemini API, Groq API |
-| **Data Platform** | Apache Kafka, Apache Spark (PySpark), Apache Airflow, MinIO (S3 Lakehouse), Trino, Streamlit |
+| **Data Platform** | Apache Kafka, Apache Spark (PySpark), Apache Airflow, MinIO (S3 Lakehouse), Trino, Modern React Web UI |
 | **Database** | PostgreSQL 16 (Multi-Schema: `identity`, `menu`, `inventory`, `orders`, `news`, `ai`) |
 | **Cache & Realtime** | Redis 7 (Alpine), RabbitMQ 3 (Management), Socket.io (WebSocket) |
 | **Payment Gateways** | VNPay (Sandbox / HMAC-SHA512), SePay (Bank Transfer Webhook), COD, Ví thành viên, Gift Card |
@@ -44,7 +44,7 @@ c:\Users\admin\hk1-2026\cnm-avengers-coffee-microservices-AI\
 ├── SETUP.md                            # Cẩm nang cài đặt và chạy ứng dụng từng bước
 ├── SHIPPER-INTEGRATION.md              # Đặc tả tích hợp hệ thống điều phối Shipper
 ├── docker-compose.yml                  # Khởi chạy toàn bộ hệ thống Microservices & Frontend
-├── docker-compose.data.yml             # Khởi chạy tầng Modern Data Platform (Kafka, Spark, Airflow, MinIO, Streamlit)
+├── docker-compose.data.yml             # Khởi chạy tầng Modern Data Platform (Kafka, Spark, Airflow, MinIO, Web UI)
 │
 ├── avengers-coffee-system/             # ── THƯ MỤC CHÍNH CỦA ỨNG DỤNG ──────────────────────────────
 │   ├── api-gateway/                    # API Gateway định tuyến tập trung
@@ -170,9 +170,9 @@ c:\Users\admin\hk1-2026\cnm-avengers-coffee-microservices-AI\
 │   │   └── gold_aggregation.py         # Tính toán KPIs, RFM segmentation, CLV vào `avengers-gold`
 │   ├── airflow/                        # Trình điều phối luồng dữ liệu tự động (Port 8083)
 │   │   └── dags/daily_pipeline_dag.py  # DAG chạy định kỳ Bronze -> Silver -> Gold -> Retrain AI
-│   ├── streamlit-app/                  # Bảng điều khiển phân tích BI & AI nâng cao (Port 8501)
-│   │   ├── app.py                      # UI Streamlit biểu đồ doanh thu, dự báo, hành vi, bản đồ chi nhánh
-│   │   └── ai_engine.py                # Phân tích insight AI với LLM (Claude / Groq)
+│   ├── web-ui/                         # Cổng phân tích BI & AI nâng cao (React + FastAPI) (Port 8501)
+│   │   ├── src/                        # Modern React UI (Overview, SQL Studio, AI Builder, Data Catalog)
+│   │   └── server/                     # FastAPI backend phục vụ API truy vấn & AI Engine
 │   └── seed_data.py                    # Script tạo dữ liệu giả lập cho Data Platform
 │
 ├── dashboard/                          # Mockup thiết kế & screenshot giao diện mẫu
@@ -367,7 +367,7 @@ Hệ thống tích hợp một **Modern Data Platform** hoàn chỉnh theo tiêu
 [Layer 6: Orchestrate]  Apache Airflow (:8083) DAGs điều phối tự động
                                     │
                                     ▼
-[Layer 7: Analytics]    Streamlit BI Dashboard (:8501) & Executive AI Insights
+[Layer 7: Analytics]    Modern React Analytics Web Portal (:8501) & Executive AI Insights
 ```
 
 ---
@@ -508,15 +508,15 @@ docker compose logs -f order-service
 docker compose logs -f ai-service
 ```
 
-### 2. Khởi động Tầng Data Platform (Kafka, Spark, Airflow, MinIO, Streamlit)
+### 2. Khởi động Tầng Data Platform (Kafka, Spark, Airflow, MinIO, Web UI)
 ```powershell
-# Khởi động cụm Data Lakehouse, Kafka, Streamlit
+# Khởi động cụm Data Lakehouse, Kafka, Analytics Web UI
 docker compose -f docker-compose.data.yml up -d
 
 # Khởi động kèm công cụ quản trị (Kafka-UI, Airflow Webserver)
 docker compose -f docker-compose.data.yml --profile tools up -d
 
-# Truy cập Streamlit Analytics Dashboard
+# Truy cập Modern Analytics Web Portal
 # http://localhost:8501
 ```
 
@@ -546,7 +546,7 @@ docker compose -f docker-compose.data.yml --profile tools up -d
 | **Web Admin** | `5174` | Giao diện quản trị |
 | **Web Shipper** | `5175` | Giao diện tài xế |
 | **Shipper Launcher** | `5176` | Cổng chuyển tiếp shipper |
-| **Streamlit BI** | `8501` | Analytics & AI Dashboard |
+| **Analytics Web Portal** | `8501` | Modern React + FastAPI Analytics & AI Portal |
 | **MinIO Console** | `9001` | Quản trị Lakehouse Object Storage |
 | **RabbitMQ UI** | `15672` | Quản trị hàng đợi tin nhắn |
 | **Airflow UI** | `8083` | Quản trị luồng ETL DAG |
