@@ -201,6 +201,7 @@ def merge_store_location(previous: Dict[str, Any] | None, fragment: str) -> Dict
 
 _PREFIX = re.compile(
     r"^(?:(?:không|ko)[,\s]+)?(?:(?:tôi|mình)(?:\s+đang)?\s+ở|"
+    r"(?:toi|minh)(?:\s+dang)?\s+o|dia\s+chi(?:\s+cua)?(?:\s+(?:toi|minh))?\s+(?:o|la)|"
     r"(?:đổi|thay)(?:\s+địa\s+chỉ)?\s+sang|địa\s+chỉ(?:\s+mới)?(?:\s+là)?|"
     r"giao\s+(?:đến|tới|qua))\s*[:：]?\s*", re.IGNORECASE,
 )
@@ -346,7 +347,7 @@ def parse_location(message: str) -> Location:
         return Location("address", value, _missing_delivery(parts), _explicit_admin_hints(value))
     if store:
         return Location("branch_query", "" if normalize(value) in {"day", "gan day", "nao", ""} else value)
-    if re.search(r"\b(?:phường|phuong|xã|quận|huyện|huyen|thành phố|thanh pho|tỉnh|tinh|khu vực|khu vuc)\b", value, re.IGNORECASE) or (
+    if re.search(r"\b(?:phường|phuong|xã|quận|quan|huyện|huyen|thành phố|thanh pho|tỉnh|tinh|khu vực|khu vuc)\b", value, re.IGNORECASE) or (
         area_intro and len(value.split()) >= 2
     ) or re.search(r"^(?:đường|phố|hẻm|ngõ)\s+\S+", value, re.IGNORECASE):
         if _has_poi_structure(value):

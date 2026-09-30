@@ -12,6 +12,7 @@ ALLOWED = {
     "confirm_checkout": {"CONFIRM", "REJECT", "CHANGE", "AMBIGUOUS"},
     "cart_edit_clarification": {"KEEP_CURRENT", "AMBIGUOUS"},
     "offer_branch_search": {"CONFIRM", "DECLINE", "AMBIGUOUS"},
+    "confirm_prior_location_for_checkout": {"CONFIRM", "DECLINE", "AMBIGUOUS"},
 }
 DESCRIPTIONS = {
     "ask_more_items": (
@@ -32,6 +33,10 @@ DESCRIPTIONS = {
         "Customer was asked whether to search for branches near one stored read-only location. "
         "CONFIRM means yes or a direct instruction to perform that search. DECLINE means no or later. "
         "Do not reinterpret the reply as product recommendation or any order mutation."
+    ),
+    "confirm_prior_location_for_checkout": (
+        "Customer was asked whether to reuse a retained read-only location for pickup or dine-in checkout. "
+        "CONFIRM means use that exact location. DECLINE means collect a different location."
     ),
 }
 
@@ -127,9 +132,17 @@ def classify_pending_reply(message: str, pending_type: str, evidence: Optional[d
     text = re.sub(r"\s+", " ", _remove_diacritics(str(message or ""))).strip()
     if not text or "?" in text or re.search(r"\b(neu|gia su|co the|phai khong|bao nhieu|tai sao|khi nao|the nao|ra sao|hay|hoac|chac)\b", text):
         return "AMBIGUOUS"
-    if pending_type == "offer_branch_search":
+    if pending_type in {"offer_branch_search", "confirm_prior_location_for_checkout"}:
         from src.agents.tier1 import normalize_confirmation_text
         text = normalize_confirmation_text(message)
+        if pending_type == "confirm_prior_location_for_checkout":
+            if re.search(r"\b(?:khong|ko)\b|\b(?:dia chi|vi tri|cho)\s+khac\b", text):
+                return "DECLINE"
+            if re.search(r"\b(?:dung|lay|su dung)\b.*\b(?:vi tri|dia chi|cho)?\s*(?:do|nay|vua roi)\b", text):
+                return "CONFIRM"
+            if re.fullmatch(r"(?:co|ok|oke|duoc|u|uh|vang|yes|dung roi)(?:\s+(?:nhe|nha|ban|a|di))*", text):
+                return "CONFIRM"
+            return "AMBIGUOUS"
         # This is finite dialogue grammar, not a sentence list: a branch offer
         # accepts confirmation tokens or a bare FIND action plus social fillers.
         tokens = set(text.split())

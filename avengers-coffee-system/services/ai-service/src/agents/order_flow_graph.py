@@ -1160,12 +1160,44 @@ def _is_voucher_info_query(message: str) -> bool:
     ) and not bool(re.search(r"\b(ap|dung|su dung|xoa|bo|go|doi|thay)\b", text))
 
 
+def _is_unaccented_store_discovery(message: str) -> bool:
+    """Treat ambiguous unaccented ``quan`` as a store only with find/near grammar."""
+    raw = str(message or "").lower()
+    text = _norm(raw)
+    ambiguous_store = bool(re.search(r"\bquan\b", raw)) and not bool(
+        re.search(r"\b(?:quán|quận)\b", raw)
+    )
+    return ambiguous_store and bool(re.search(r"\btim\b", text)) and bool(
+        re.search(r"\b(?:gan|quanh|o dau|nao)\b", text)
+    )
+
+
 def _is_branch_discovery_request(message: str) -> bool:
-    """Recognize the branch-search domain independently of its location slot."""
-    text = _norm(message)
-    store = bool(re.search(r"\b(quan|cua hang|chi nhanh|kiosk)\b", text))
+    """Recognize store discovery without folding district ``quận`` into ``quán``."""
+    raw = str(message or "").lower()
+    text = _norm(raw)
+    store = bool(re.search(
+        r"\b(?:quán|cửa\s+hàng|cua\s+hang|chi\s+nhánh|chi\s+nhanh|kiosk)\b", raw,
+    ))
     discovery = bool(re.search(r"\b(tim|gan|quanh|o dau|dia chi|nao|co)\b", text))
-    return store and discovery
+    return (store and discovery) or _is_unaccented_store_discovery(message)
+
+
+def _read_only_branch_ordinal(message: str) -> tuple[Optional[int], bool, bool]:
+    """Return (ordinal, explicit branch namespace, bare ordinal)."""
+    raw = str(message or "").lower().strip()
+    text = _norm(raw)
+    explicit_store = bool(re.search(r"\bquán\b", raw)) or bool(re.search(
+        r"\b(?:cua hang|chi nhanh|kiosk)\b", text,
+    ))
+    if explicit_store:
+        match = re.search(
+            r"\b(?:quan|cua hang|chi nhanh|kiosk)\s*(?:(?:so|thu|#)\s*)?(\d+)\b", text,
+        )
+        if match:
+            return int(match.group(1)), True, False
+    bare = re.fullmatch(r"\s*(?:so|thu|#)\s*(\d+)\s*[.!]?\s*", text)
+    return (int(bare.group(1)), False, True) if bare else (None, False, False)
 
 
 def _is_deictic_location(value: str) -> bool:
@@ -1618,6 +1650,10 @@ def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
         ))
     else:
         parsed = parse_location(state["user_message"])
+    if outside_branch_request and _is_unaccented_store_discovery(state["user_message"]):
+        # In this narrow grammar ``quan`` means quán; "gần đây" is deictic,
+        # never a literal map query and may reuse only the retained read-only fact.
+        parsed = type(parsed)("branch_query", "")
     if parsed.kind in {"reference", "reference_question", "change_reference"} and not outside_branch_request:
         return _handle_location_reference(state, parsed.kind)
     if parsed.kind == "none":
@@ -1668,7 +1704,9 @@ def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
     read_only_fact = prefs.get("last_resolved_location") or {}
     location = parsed.value or (prefs.get("location_address") if transactional_location else "") or ""
     if not transactional_location and (
-        parsed.kind in {"reference", "reference_question"} or _is_deictic_location(location)
+        parsed.kind in {"reference", "reference_question"}
+        or (parsed.kind == "branch_query" and not location)
+        or _is_deictic_location(location)
     ):
         location = str(read_only_fact.get("value") or read_only_fact.get("raw") or "")
     if transactional_location and not location and prefs.get("suggested_address"):
@@ -2011,6 +2049,18 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
             return {**state, "intent": {"intent": "PRODUCT_CLARIFY"}}
         return {**state, "intent": {"intent": "ADD_ITEM", "resolved_products": [canonical], "quantity": 1}}
     active_pending = cart_manager.get_pending_action(state["session_id"])
+    if (active_pending or {}).get("type") == "confirm_prior_location_for_checkout":
+        from src.agents.pending_context import classify_pending_reply
+        decision = classify_pending_reply(
+            state["user_message"], "confirm_prior_location_for_checkout",
+        )
+        params = active_pending.get("params") or active_pending.get("data") or {}
+        logger.debug("[ConversationResume] pending=confirm_prior_location_for_checkout decision=%s", decision)
+        if decision == "CONFIRM":
+            return {**state, "intent": {"intent": "PRIOR_LOCATION_REUSE_CONFIRM", "params": params}}
+        if decision == "DECLINE":
+            return {**state, "intent": {"intent": "PRIOR_LOCATION_REUSE_DECLINE"}}
+        return {**state, "intent": {"intent": "PENDING_PRIOR_LOCATION_REUSE", "params": params}}
     if (active_pending or {}).get("type") == "offer_branch_search":
         from src.agents.location_parser import parse_location
         from src.agents.pending_context import classify_pending_reply
@@ -2261,6 +2311,22 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     # replace it; all other location turns route before shopping/model logic.
     if pending_type == "select_branch":
         return {**state, "intent": {"intent": "PENDING_BRANCH", "location_kind": location.kind}}
+    branch_ordinal, explicit_branch_ordinal, bare_ordinal = _read_only_branch_ordinal(
+        state["user_message"]
+    )
+    branch_snapshot = list(prefs.get("last_branch_discovery_candidates") or [])
+    if explicit_branch_ordinal and branch_snapshot:
+        return {**state, "intent": {
+            "intent": "READ_ONLY_BRANCH_FOLLOWUP", "ordinal": branch_ordinal,
+            "branch_candidates": branch_snapshot,
+        }}
+    if bare_ordinal and branch_snapshot:
+        if prefs.get("last_product_suggestions"):
+            return {**state, "intent": {"intent": "ORDINAL_CONTEXT_CLARIFY"}}
+        return {**state, "intent": {
+            "intent": "READ_ONLY_BRANCH_FOLLOWUP", "ordinal": branch_ordinal,
+            "branch_candidates": branch_snapshot,
+        }}
     if _is_branch_discovery_request(state["user_message"]) or location.kind == "branch_query" or (
         location.kind in {"address", "area", "poi"}
         and (prefs.get("checkout_requested") or pending_type == "confirm_address")
@@ -2467,7 +2533,7 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         logger.debug("routing route=%s operation=%s target_source=%s", kind, kind,
                      intent.get("target_source") or "resolver")
     cart_write_intents = {"ADD_ITEM", "SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS", "CLEAR_CART", "FILL_OPTIONS"}
-    authoritative_intents = cart_write_intents | {"FINISH_CART", "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER", "APPLY_VOUCHER", "REMOVE_VOUCHER", "REPLACE_VOUCHER", "CONFIRM_CHECKOUT", "PENDING_REPLY", "PENDING_BRANCH", "PENDING_CART_LINE", "PENDING_CHECKOUT_CHOICE", "REVIEW_CHECKOUT_SUMMARY", "LOCATION_REFERENCE"}
+    authoritative_intents = cart_write_intents | {"FINISH_CART", "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER", "APPLY_VOUCHER", "REMOVE_VOUCHER", "REPLACE_VOUCHER", "CONFIRM_CHECKOUT", "PENDING_REPLY", "PENDING_BRANCH", "PENDING_CART_LINE", "PENDING_CHECKOUT_CHOICE", "REVIEW_CHECKOUT_SUMMARY", "LOCATION_REFERENCE", "PRIOR_LOCATION_REUSE_CONFIRM"}
     prefs = cart_manager.get_checkout_prefs(session_id)
     replay = intent.get("pending_type") == "confirm_checkout" and intent.get("decision") == "CONFIRM" and (prefs.get("checkout_submission") or prefs.get("completed_order_id"))
     customer_session_id = str(session_id).split(":conversation:", 1)[0]
@@ -2537,6 +2603,49 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
     if kind == "PENDING_BRANCH_OFFER":
         return {**state, "result": {"reply": "Mình đang chờ bạn xác nhận có muốn tìm cửa hàng gần vị trí vừa cung cấp không.",
                                      "checkout_payload": None, "tool_calls_log": [], "error": None}}
+    if kind == "PRIOR_LOCATION_REUSE_CONFIRM":
+        from src.agents.location_parser import Location
+        params = intent.get("params") or {}
+        location = str(params.get("location") or "").strip()
+        cart_manager.clear_pending_action(session_id)
+        if not location:
+            cart_manager.set_checkout_context(session_id, location_pending=True)
+            return {**state, "result": {
+                "reply": "Bạn cho mình khu vực hoặc vị trí để tìm cửa hàng gần nhất nhé.",
+                "checkout_payload": None, "tool_calls_log": [], "error": None,
+            }}
+        resumed = {**state, "location_override": Location(
+            str(params.get("location_kind") or "area"), location,
+            admin_hints=tuple(params.get("admin_hints") or ()),
+        )}
+        resolved = _handle_location_request(resumed)
+        # The real branch tool persists this snapshot. Preserve the same
+        # contract for alternate providers/test doubles that return candidates
+        # without a storage side effect.
+        if ((cart_manager.get_pending_action(session_id) or {}).get("type") == "select_branch"
+                and not cart_manager.get_checkout_prefs(session_id).get("branch_candidates")):
+            candidate_log = next((entry for entry in resolved.get("tool_calls_log") or []
+                                  if entry.get("tool") == "find_nearest_branch"), {})
+            candidates = list((candidate_log.get("result") or {}).get("branches") or [])
+            if candidates:
+                cart_manager.set_checkout_context(session_id, branch_candidates=candidates)
+        return {**state, "result": resolved}
+    if kind == "PRIOR_LOCATION_REUSE_DECLINE":
+        cart_manager.clear_pending_action(session_id)
+        cart_manager.set_checkout_context(
+            session_id, location_pending=True, address_change_requested=True,
+        )
+        return {**state, "result": {
+            "reply": "Được nhé. Bạn cho mình khu vực/phường/quận hoặc vị trí khác để tìm cửa hàng gần nhất.",
+            "checkout_payload": None, "tool_calls_log": [], "error": None,
+        }}
+    if kind == "PENDING_PRIOR_LOCATION_REUSE":
+        params = intent.get("params") or {}
+        location = str(params.get("location") or "vị trí vừa cung cấp")
+        return {**state, "result": {
+            "reply": f"Mình đang chờ bạn xác nhận có dùng {location} để tìm cửa hàng cho đơn này không.",
+            "checkout_payload": None, "tool_calls_log": [], "error": None,
+        }}
     if kind == "VOUCHER_INFO":
         voucher_reply = (
             "Voucher áp dụng phụ thuộc vào các món và giá trị giỏ hàng. "
@@ -2629,6 +2738,29 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         invalid = ", ".join(f"#{value}" for value in intent.get("invalid_ordinals") or [])
         return {**state, "result": {
             "reply": f"Số món {invalid} nằm ngoài danh sách đang hiển thị. Bạn chọn lại số trong danh sách nhé.",
+            "checkout_payload": None, "tool_calls_log": [], "error": None,
+        }}
+    if kind == "READ_ONLY_BRANCH_FOLLOWUP":
+        candidates = list(intent.get("branch_candidates") or [])
+        ordinal = int(intent.get("ordinal") or 0)
+        if not 1 <= ordinal <= len(candidates):
+            return {**state, "result": {
+                "reply": f"Danh sách gần nhất có {len(candidates)} cửa hàng nên không có cửa hàng số {ordinal}. Bạn chọn lại số nhé.",
+                "checkout_payload": None, "tool_calls_log": [], "error": None,
+            }}
+        branch = candidates[ordinal - 1]
+        cart_manager.set_checkout_context(session_id, last_branch_focus=branch)
+        name = branch.get("ten_chi_nhanh") or branch.get("branch_name") or f"Cửa hàng {ordinal}"
+        address = branch.get("dia_chi") or branch.get("address") or "chưa có địa chỉ"
+        distance = (f" Khoảng cách ước tính: {branch['khoang_cach_km']} km."
+                    if branch.get("khoang_cach_km") is not None else "")
+        return {**state, "result": {
+            "reply": f"{name} — {address}.{distance}",
+            "checkout_payload": None, "tool_calls_log": [], "error": None,
+        }}
+    if kind == "ORDINAL_CONTEXT_CLARIFY":
+        return {**state, "result": {
+            "reply": "Bạn muốn chọn món số 1 hay xem cửa hàng số 1? Bạn nói rõ ‘món số 1’ hoặc ‘cửa hàng số 1’ nhé.",
             "checkout_payload": None, "tool_calls_log": [], "error": None,
         }}
     if kind == "CART_TARGET_CLARIFY":
@@ -3094,6 +3226,32 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         explicit_location = checkout_location(message, prefs.get("delivery_type"))
         if explicit_location.kind in {"area", "address"}:
             return {**state, "result": _handle_location_request({**state, "location_override": explicit_location})}
+        prior_location = prefs.get("last_resolved_location") or {}
+        can_offer_prior_location = (
+            prefs.get("checkout_requested")
+            and prefs.get("delivery_type") in {"MANG_DI", "TAI_CHO"}
+            and prefs.get("payment_method")
+            and not cart_manager.get_branch(session_id)
+            and not prefs.get("store_location")
+            and not prefs.get("location_address")
+            and not prefs.get("suggested_address")
+            and prior_location.get("source") == "explicit_user"
+            and prior_location.get("status") == "retained"
+            and str(prior_location.get("value") or prior_location.get("raw") or "").strip()
+        )
+        if can_offer_prior_location:
+            location = str(prior_location.get("value") or prior_location.get("raw")).strip()
+            cart_manager.set_pending_action(session_id, "confirm_prior_location_for_checkout", {
+                "domain": "CHECKOUT_LOCATION", "action": "REUSE_PRIOR_LOCATION",
+                "location": location,
+                "location_kind": prior_location.get("kind") or "area",
+                "admin_hints": list(prior_location.get("admin_hints") or []),
+                "source": "explicit_user",
+            })
+            return {**state, "result": {
+                "reply": f"Bạn có muốn dùng vị trí {location} để tìm cửa hàng cho đơn này không?",
+                "checkout_payload": None, "tool_calls_log": [], "error": None,
+            }}
         # The choice is already persisted. Do not replay the customer's bare
         # ordinal into the legacy recommendation resolver.
         from src.agents.agent_service import _run_agent_impl
@@ -3344,17 +3502,27 @@ def _render(state: OrderConversationState) -> OrderConversationState:
     # A yes/no business offer is itself dialogue state. Generic prose may be
     # friendly, but it cannot create an actionable next turn without a typed
     # owner that defines what an affirmative answer means.
-    if not typed_pending and not logs:
+    if not typed_pending:
         rendered_reply = str(result.get("reply") or "")
-        rendered_norm = _norm(rendered_reply)
-        unowned_offer = bool(re.search(
-            r"\b(?:ban|anh|chi)\s+co\s+muon\b[^?\n]*(?:goi y|them mon|chon mon|thanh toan|dat hang|"
-            r"tim\s+(?:quan|cua hang|chi nhanh)|(?:quan|cua hang|chi nhanh)\s+gan)",
-            rendered_norm,
-        ))
+        def is_unowned_business_offer(line: str) -> bool:
+            normalized = _norm(line)
+            opt_in = bool(re.search(
+                r"\b(?:co\s+(?:muon|can)|neu\s+(?:(?:ban|anh|chi)\s+)?(?:muon|can)|"
+                r"co\s+the\b.*\bneu\s+(?:(?:ban|anh|chi)\s+)?(?:muon|can))\b",
+                normalized,
+            ))
+            business_action = bool(re.search(
+                r"\b(?:goi y|de xuat|them mon|chon mon|ap\s+(?:ma|voucher)|tiep tuc\s+thanh toan|"
+                r"thanh toan|xac nhan\s+(?:don|dat)|dat hang|chot don|"
+                r"tim\s+(?:quan|cua hang|chi nhanh|kiosk)|(?:quan|cua hang|chi nhanh|kiosk)\s+gan)\b",
+                normalized,
+            ))
+            return opt_in and business_action
+
+        unowned_offer = any(is_unowned_business_offer(line) for line in rendered_reply.splitlines())
         if unowned_offer:
             kept = [line.strip() for line in rendered_reply.splitlines()
-                    if not re.search(r"\b(?:bạn|anh|chị)\s+có\s+muốn\b", line, re.IGNORECASE)]
+                    if not is_unowned_business_offer(line)]
             kept.append("Khi cần, bạn có thể yêu cầu mình xem menu, gợi ý món hoặc tra cứu cửa hàng.")
             result["reply"] = "\n".join(line for line in kept if line)
     invalidated = cart_manager.get_checkout_prefs(state["session_id"]).get("voucher_invalidated")
