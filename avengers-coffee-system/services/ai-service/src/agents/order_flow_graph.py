@@ -533,6 +533,14 @@ def _resolve_cart_line(cart: Dict[str, Any], message: str) -> tuple[Optional[Dic
     if len(explicit_id) == 1:
         logger.debug("routing route=CART_MUTATION target_source=cart_id candidate_count=1")
         return explicit_id[0], None
+    # During an explicit option edit, "món thứ 2" names the cart line in the
+    # current cart namespace. It must not be deferred to an older menu list.
+    cart_ordinal = re.search(r"\b(?:dong|mon)\s+(?:(?:so|thu)\s*)?(\d+)\b", text)
+    if cart_ordinal and has_cart_edit_action(message):
+        index = int(cart_ordinal.group(1))
+        if 1 <= index <= len(items):
+            logger.debug("routing route=CART_MUTATION target_source=cart_ordinal candidate_count=1")
+            return items[index - 1], None
     if len(matches) == 1:
         logger.debug("routing route=CART_MUTATION target_source=cart_name candidate_count=1")
         return matches[0], None
@@ -2721,8 +2729,11 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
             matches = _cart_rows_named_in_message(cart, message)
             item, error = _resolve_cart_line(cart, message)
         if error:
-            if len(matches) > 1:
-                error = _store_cart_line_choice(session_id, "EDIT_OPTIONS", message, matches)
+            candidates = matches if len(matches) > 1 else (
+                list(cart.get("items") or []) if has_cart_edit_action(message)
+                and len(cart.get("items") or []) > 1 else [])
+            if len(candidates) > 1:
+                error = _store_cart_line_choice(session_id, "EDIT_OPTIONS", message, candidates)
             return {**state, "result": {"reply": error, "checkout_payload": None, "tool_calls_log": [], "error": None}}
         line_id = str(item.get("cart_item_id") or item.get("line_id"))
         cart_manager.set_checkout_context(session_id, last_cart_focus=line_id, flow_stage="CART_REVIEW")

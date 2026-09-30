@@ -236,6 +236,7 @@ interface DonutChartProps {
   data: DonutSlice[];
   centerLabel?: string;
   centerValue?: string;
+  valueSuffix?: string;
   size?: number;
 }
 
@@ -243,6 +244,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({
   data,
   centerLabel = 'Tổng',
   centerValue = '',
+  valueSuffix = '',
   size = 180,
 }) => {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
@@ -312,8 +314,8 @@ export const DonutChart: React.FC<DonutChartProps> = ({
           </span>
           <span className="text-base font-extrabold text-slate-800">
             {hoverIndex !== null
-              ? `${((data[hoverIndex].value / total) * 100).toFixed(1)}%`
-              : centerValue || total.toLocaleString('vi-VN')}
+              ? `${data[hoverIndex].value.toLocaleString('vi-VN')}${valueSuffix}`
+              : centerValue || `${total.toLocaleString('vi-VN')}${valueSuffix}`}
           </span>
         </div>
       </div>

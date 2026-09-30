@@ -1,5 +1,5 @@
-from typing import Optional, List, Dict, Any
-from datetime import datetime, timedelta
+from typing import Optional, List, Dict, Any, Literal
+from datetime import date, datetime, timedelta
 from pydantic import BaseModel
 
 
@@ -22,6 +22,7 @@ class SavedReportCreate(BaseModel):
     y_key: Optional[str] = None
     ai_summary: Optional[str] = None
     created_by: Optional[str] = "Chuyên viên phân tích"
+    module_config: Optional[Dict[str, Any]] = None
 
 
 class ReportExportLogCreate(BaseModel):
@@ -33,9 +34,19 @@ class ReportExportLogCreate(BaseModel):
     user_name: Optional[str] = "Chuyên viên phân tích"
 
 
+class AiTimeRange(BaseModel):
+    mode: Literal["auto", "today", "7d", "30d", "custom"] = "auto"
+    start: Optional[date] = None
+    end: Optional[date] = None
+
+
 class AiTextToReportRequest(BaseModel):
     prompt: str
-    date_range: Optional[str] = "30days"
+    context: Optional[str] = ""
+    time_range: Optional[AiTimeRange] = None
+    domain: Optional[Literal["auto", "orders", "stores", "products", "customers", "payments", "delivery"]] = "auto"
+    # Legacy filters remain accepted for older clients.
+    date_range: Optional[str] = None
     branch: Optional[str] = "all"
 
 

@@ -1,0 +1,137 @@
+{
+  "version": 1,
+  "business_rules": [
+    "Doanh thu hợp lệ mặc định chỉ gồm đơn HOAN_THANH và DANG_GIAO, trừ khi yêu cầu phân tích hủy đơn hoặc trạng thái.",
+    "AOV bằng doanh thu hợp lệ chia cho số đơn hợp lệ.",
+    "orders.don_hang.ngay_tao là thời điểm sự kiện đơn hàng.",
+    "Không đưa dữ liệu định danh cá nhân hoặc giá trị mẫu PII vào ngữ cảnh LLM."
+  ],
+  "entities": [
+    {
+      "id": "orders",
+      "business_name": "Đơn hàng và doanh thu",
+      "role": "fact",
+      "description": "Giao dịch đặt hàng và các chỉ số doanh thu toàn hệ thống.",
+      "synonyms": ["đơn hàng", "giao dịch", "hóa đơn", "order", "doanh thu", "doanh số", "aov", "tăng trưởng"],
+      "tables": ["orders.don_hang", "gold.revenue_daily", "gold.kpi_summary", "gold.order_status_distribution"],
+      "time_column": "orders.don_hang.ngay_tao",
+      "dimensions": ["ngay_tao", "trang_thai_don_hang", "loai_don_hang", "co_so_ma"],
+      "metrics": {
+        "revenue": {"business_name": "Doanh thu", "expression": "SUM(tong_tien)", "synonyms": ["doanh thu", "doanh số", "sales"]},
+        "order_count": {"business_name": "Số đơn", "expression": "COUNT(*)", "synonyms": ["số đơn", "đơn hàng"]},
+        "aov": {"business_name": "Giá trị đơn trung bình", "expression": "SUM(tong_tien) / NULLIF(COUNT(*), 0)", "synonyms": ["aov", "giá trị đơn trung bình"]}
+      }
+    },
+    {
+      "id": "order_items",
+      "business_name": "Chi tiết đơn hàng",
+      "role": "fact_detail",
+      "description": "Các dòng sản phẩm trong từng đơn, gồm số lượng, giá bán và tùy chọn.",
+      "synonyms": ["chi tiết đơn", "số lượng bán", "ly bán", "món trong đơn", "order item"],
+      "tables": ["orders.chi_tiet_don_hang", "orders.don_hang"],
+      "dimensions": ["ma_san_pham", "ten_san_pham", "kich_co"],
+      "metrics": {
+        "quantity_sold": {"business_name": "Số lượng bán", "expression": "SUM(so_luong)", "synonyms": ["số lượng", "bán chạy", "ly bán"]},
+        "item_revenue": {"business_name": "Doanh thu sản phẩm", "expression": "SUM(so_luong * gia_ban)", "synonyms": ["doanh thu món"]}
+      },
+      "relationships": [
+        {"from": "orders.chi_tiet_don_hang.ma_don_hang", "to": "orders.don_hang.ma_don_hang", "source": "physical"}
+      ]
+    },
+    {
+      "id": "products",
+      "business_name": "Sản phẩm và thực đơn",
+      "role": "dimension",
+      "description": "Danh mục món, phân loại thực đơn và hiệu suất bán sản phẩm.",
+      "synonyms": ["món", "sản phẩm", "menu", "thực đơn", "đồ uống", "bánh", "bán chạy", "danh mục"],
+      "tables": ["gold.top_products", "orders.chi_tiet_don_hang", "menu.san_pham", "menu.danh_muc", "orders.don_hang"],
+      "dimensions": ["ten_san_pham", "ten_danh_muc", "kich_co"],
+      "metrics": {
+        "quantity_sold": {"business_name": "Số lượng bán", "expression": "SUM(so_luong)", "synonyms": ["bán chạy", "số lượng"]},
+        "product_revenue": {"business_name": "Doanh thu sản phẩm", "expression": "SUM(so_luong * gia_ban)", "synonyms": ["doanh thu món"]}
+      },
+      "relationships": [
+        {"from": "orders.chi_tiet_don_hang.ma_san_pham", "to": "menu.san_pham.ma_san_pham", "source": "semantic_inferred"},
+        {"from": "menu.san_pham.ma_danh_muc", "to": "menu.danh_muc.ma_danh_muc", "source": "physical"}
+      ]
+    },
+    {
+      "id": "stores",
+      "business_name": "Chi nhánh và điểm bán",
+      "role": "dimension",
+      "description": "Thông tin chi nhánh và hiệu suất doanh thu theo điểm bán.",
+      "synonyms": ["chi nhánh", "cửa hàng", "điểm bán", "cơ sở", "store", "thành phố", "hiệu suất chi nhánh"],
+      "tables": ["gold.stores_overview", "identity.chi_nhanh", "orders.don_hang"],
+      "dimensions": ["store_name", "city", "co_so_ma"],
+      "metrics": {
+        "store_revenue": {"business_name": "Doanh thu chi nhánh", "expression": "SUM(tong_tien)", "synonyms": ["doanh thu chi nhánh"]},
+        "store_aov": {"business_name": "AOV chi nhánh", "expression": "AVG(tong_tien)", "synonyms": ["aov"]}
+      },
+      "relationships": [
+        {"from": "orders.don_hang.co_so_ma", "to": "identity.chi_nhanh.ma_chi_nhanh", "source": "semantic_inferred"}
+      ]
+    },
+    {
+      "id": "customers",
+      "business_name": "Khách hàng và hội viên",
+      "role": "dimension",
+      "description": "Phân khúc hội viên, loyalty và hành vi mua lặp lại ở mức tổng hợp.",
+      "synonyms": ["khách hàng", "hội viên", "loyalty", "thành viên", "mua lặp lại", "tái mua", "rfm", "customer"],
+      "tables": ["gold.customer_segments", "orders.don_hang", "identity.nguoi_dung", "identity.membership_config"],
+      "dimensions": ["segment", "diem_loyalty", "vai_tro"],
+      "metrics": {
+        "customer_count": {"business_name": "Số khách", "expression": "COUNT(DISTINCT ma_nguoi_dung)", "synonyms": ["số khách", "hội viên"]},
+        "repeat_rate": {"business_name": "Tỷ lệ mua lặp lại", "expression": "Khách có từ 2 đơn / tổng khách", "synonyms": ["mua lặp lại", "tái mua"]},
+        "lifetime_value": {"business_name": "Giá trị vòng đời", "expression": "SUM(tong_tien) theo khách", "synonyms": ["ltv", "chi tiêu"]}
+      },
+      "relationships": [
+        {"from": "orders.don_hang.ma_nguoi_dung", "to": "identity.nguoi_dung.ma_nguoi_dung", "source": "semantic_inferred"}
+      ]
+    },
+    {
+      "id": "payments",
+      "business_name": "Thanh toán",
+      "role": "fact_detail",
+      "description": "Cơ cấu phương thức, cổng và trạng thái thanh toán.",
+      "synonyms": ["thanh toán", "momo", "vnpay", "qr", "tiền mặt", "chuyển khoản", "payment"],
+      "tables": ["gold.payment_methods_distribution", "orders.don_hang", "orders.giao_dich_thanh_toan"],
+      "dimensions": ["phuong_thuc_thanh_toan", "cong_thanh_toan", "trang_thai_thanh_toan"],
+      "metrics": {
+        "payment_count": {"business_name": "Số giao dịch", "expression": "COUNT(*)", "synonyms": ["số giao dịch"]},
+        "payment_revenue": {"business_name": "Doanh thu theo thanh toán", "expression": "SUM(tong_tien)", "synonyms": ["doanh thu"]}
+      },
+      "relationships": [
+        {"from": "orders.giao_dich_thanh_toan.ma_don_hang", "to": "orders.don_hang.ma_don_hang", "source": "physical"}
+      ]
+    },
+    {
+      "id": "hourly",
+      "business_name": "Khung giờ bán hàng",
+      "role": "derived",
+      "description": "Mật độ đơn và doanh thu theo giờ phát sinh đơn.",
+      "synonyms": ["khung giờ", "giờ cao điểm", "đông nhất", "theo giờ", "cao điểm"],
+      "tables": ["orders.don_hang"],
+      "dimensions": ["EXTRACT(HOUR FROM ngay_tao)"],
+      "metrics": {
+        "hourly_orders": {"business_name": "Số đơn theo giờ", "expression": "COUNT(*)", "synonyms": ["đông nhất"]}
+      }
+    },
+    {
+      "id": "delivery",
+      "business_name": "Giao hàng và shipper",
+      "role": "fact_detail",
+      "description": "Hiệu suất tài xế, trạng thái giao và thời gian giao hàng.",
+      "synonyms": ["giao hàng", "shipper", "tài xế", "delivery", "thời gian giao", "giao thành công"],
+      "tables": ["gold.shipper_performance", "orders.shipper_delivery", "orders.delivery_tracking", "orders.shipper", "orders.don_hang"],
+      "dimensions": ["status", "delivery_mode", "delivery_method"],
+      "metrics": {
+        "delivery_count": {"business_name": "Số lượt giao", "expression": "COUNT(*)", "synonyms": ["lượt giao"]},
+        "delivery_time": {"business_name": "Thời gian giao trung bình", "expression": "AVG(delivered_at - assigned_at)", "synonyms": ["thời gian giao"]},
+        "delivery_success_rate": {"business_name": "Tỷ lệ giao thành công", "expression": "giao thành công / tổng lượt giao", "synonyms": ["tỷ lệ thành công"]}
+      },
+      "relationships": [
+        {"from": "orders.shipper_delivery.ma_don_hang", "to": "orders.don_hang.ma_don_hang", "source": "semantic_inferred"}
+      ]
+    }
+  ]
+}

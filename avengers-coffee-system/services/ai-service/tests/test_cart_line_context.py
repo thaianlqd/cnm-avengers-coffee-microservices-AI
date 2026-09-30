@@ -1,6 +1,6 @@
 from src.agents.order_flow_graph import (
     run_order_flow, _resolve_cart_line, _update_cart_focus_after_add,
-    _store_cart_line_choice, _resolve_pending_cart_line,
+    _store_cart_line_choice, _resolve_pending_cart_line, _understand,
 )
 from src.common import cart_manager
 import pytest
@@ -76,6 +76,68 @@ def test_ambiguous_cart_operation_keeps_typed_line_snapshot_and_resumes_by_ordin
     assert resumed["operation"] == "SET_QUANTITY"
     assert resumed["requested_value"] == 3
     assert str(resumed["row"]["cart_item_id"]) == "102"
+
+
+@pytest.mark.parametrize("reply", ["món thứ 2 á", "món số 2 nha", "dòng 2", "số 2"])
+def test_pending_cart_choice_owns_natural_ordinal_over_visible_menu_snapshot(reply):
+    """A cart disambiguation reply must never select the old menu's ordinal."""
+    session = "cart-choice-menu-collision-" + str(abs(hash(reply)))
+    _seed_variants(session)
+    cart = cart_manager.get_cart(session)
+    cart_manager.set_checkout_context(session, last_product_suggestions=[
+        {"product_id": "menu-1", "product_name": "Americano Chanh Leo", "category": "drink"},
+        {"product_id": "menu-2", "product_name": "Americano Classic", "category": "drink"},
+    ])
+    _store_cart_line_choice(session, "EDIT_OPTIONS", "topping Hạt Sen", cart["items"])
+
+    intent = _understand({"session_id": session, "user_message": reply, "history": [], "cart": cart})["intent"]
+
+    assert intent["intent"] == "PENDING_CART_LINE"
+    assert intent["resolved_pending"]["operation"] == "EDIT_OPTIONS"
+    assert str(intent["resolved_pending"]["row"]["cart_item_id"]) == "102"
+
+
+def test_generic_multi_line_edit_persists_choice_before_follow_up_ordinal(monkeypatch):
+    """A prompt that asks for a cart line must retain that cart context."""
+    from src.function_calling.tools import cart_tools
+
+    session = "generic-cart-edit-then-ordinal"
+    _seed_variants(session)
+    cart_manager.set_checkout_context(session, last_product_suggestions=[
+        {"product_id": "menu-1", "product_name": "Americano Chanh Leo", "category": "drink"},
+        {"product_id": "menu-2", "product_name": "Americano Classic", "category": "drink"},
+    ])
+    monkeypatch.setattr(cart_tools, "sync_authoritative_cart", lambda _sid: cart_manager.get_cart(_sid))
+    monkeypatch.setattr(cart_tools, "execute_update_cart_item",
+                        lambda **_kwargs: pytest.fail("line choice must precede cart write"))
+
+    first = run_order_flow(session, "sửa topping trong giỏ thành Hạt Sen")
+    pending = cart_manager.get_pending_action(session)
+
+    assert "1. Trà Sữa (M)" in first["reply"] and "2. Trà Sữa (L)" in first["reply"]
+    assert pending["type"] == "cart_line_choice"
+    assert pending["params"]["operation"] == "EDIT_OPTIONS"
+    follow_up = _understand({"session_id": session, "user_message": "món thứ 2 á",
+                              "history": [], "cart": cart_manager.get_cart(session)})["intent"]
+    assert follow_up["intent"] == "PENDING_CART_LINE"
+    assert str(follow_up["resolved_pending"]["row"]["cart_item_id"]) == "102"
+
+
+@pytest.mark.parametrize("message", [
+    "sửa topping món thứ 2 thành Hạt Sen",
+    "sủa topping món số 2 thành Hạt Sen",
+])
+def test_explicit_cart_edit_ordinal_selects_cart_line_before_menu_snapshot(message):
+    session = "direct-cart-edit-ordinal-" + str(abs(hash(message)))
+    _seed_variants(session)
+    cart_manager.set_checkout_context(session, last_product_suggestions=[
+        {"product_id": "menu-2", "product_name": "Americano Chanh Leo", "category": "drink"},
+    ])
+
+    row, error = _resolve_cart_line(cart_manager.get_cart(session), message)
+
+    assert error is None
+    assert str(row["cart_item_id"]) == "102"
 
 
 @pytest.mark.parametrize('operation,patch,expected_tool,expected_reply', [

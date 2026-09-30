@@ -1,473 +1,691 @@
 import json
-import time
-import requests
-import datetime
+import logging
+import re
+from datetime import date, datetime
 from decimal import Decimal
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+
 from fastapi import APIRouter, HTTPException
-from db import get_db_conn, GEMINI_API_KEY, GROQ_API_KEY, ANTHROPIC_API_KEY
-from common import AiTextToReportRequest, AiSummarizeRequest
+
+from common import AiSummarizeRequest, AiTextToReportRequest
+from services.llm_service import call_llm, provider_configuration
+from services.metadata_service import (
+    cache_status,
+    get_combined_metadata,
+    get_local_metadata,
+    sanitize_result_rows,
+    sql_references_sensitive_columns,
+)
+from services.semantic_service import semantic_service
+from services.sql_service import QueryExecutionError, SqlSafetyError, execute_read_only, validate_ai_query_scope
+
 
 router = APIRouter(prefix="/api/ai", tags=["AI Data Assistant"])
+logger = logging.getLogger("ai-analytics")
 
-DATABASE_SCHEMA_CONTEXT = """
-You are an expert Data Architect & Business Intelligence Analyst for Avengers Coffee (BeanSync) chain data warehouse.
-The real PostgreSQL analytics warehouse contains the following schemas and tables:
-1. orders.don_hang (
-     ma_don_hang UUID PRIMARY KEY,
-     ngay_tao TIMESTAMP WITH TIME ZONE,
-     co_so_ma VARCHAR(50) REFERENCES identity.chi_nhanh(ma_chi_nhanh),
-     ma_nguoi_dung TEXT,
-     ten_khach_hang VARCHAR(255),
-     guest_phone VARCHAR(50),
-     guest_email VARCHAR(255),
-     tong_tien NUMERIC,
-     trang_thai_don_hang VARCHAR(50) ['HOAN_THANH', 'DANG_GIAO', 'DA_HUY'],
-     phuong_thuc_thanh_toan VARCHAR(50) ['TIEN_MAT', 'MOMO', 'VNPAY', 'NGAN_HANG_QR', 'CHUYEN_KHOAN'],
-     loai_don_hang VARCHAR(50) ['TAI_QUAY', 'MANG_DI', 'GIAO_TAN_NOI']
-   )
-2. orders.chi_tiet_don_hang (
-     ma_chi_tiet BIGINT PRIMARY KEY,
-     ma_don_hang UUID REFERENCES orders.don_hang,
-     ma_san_pham VARCHAR(50) REFERENCES menu.san_pham(ma_san_pham),
-     ten_san_pham VARCHAR(255),
-     so_luong INT,
-     gia_ban NUMERIC
-   )
-3. menu.san_pham (
-     ma_san_pham VARCHAR(50) PRIMARY KEY,
-     ten_san_pham VARCHAR(255),
-     ma_danh_muc VARCHAR(50) REFERENCES menu.danh_muc,
-     gia_ban NUMERIC
-   )
-4. menu.danh_muc (
-     ma_danh_muc VARCHAR(50) PRIMARY KEY,
-     ten_danh_muc VARCHAR(255),
-     ma_danh_muc_cha VARCHAR(50)
-   )
-5. identity.chi_nhanh (
-     ma_chi_nhanh VARCHAR(50) PRIMARY KEY,
-     ten_chi_nhanh VARCHAR(255),
-     thanh_pho VARCHAR(100),
-     dia_chi TEXT,
-     trang_thai VARCHAR(20) ['ACTIVE', 'INACTIVE']
-   )
-6. identity.nguoi_dung (
-     ma_nguoi_dung UUID PRIMARY KEY,
-     ho_ten VARCHAR(255),
-     so_dien_thoai VARCHAR(20),
-     email VARCHAR(255),
-     diem_loyalty INT,
-     vai_tro VARCHAR(50)
-   )
-7. gold.revenue_daily (date DATE, total_orders INT, revenue NUMERIC)
-8. gold.top_products (ma_san_pham VARCHAR, ten_san_pham VARCHAR, total_quantity INT, total_revenue NUMERIC)
-9. gold.customer_segments (segment VARCHAR, count INT, avg_ltv NUMERIC)
-10. gold.stores_overview (store_code VARCHAR, store_name VARCHAR, city VARCHAR, total_orders INT, total_revenue NUMERIC, aov NUMERIC)
 
-STRICT RULES FOR SQL GENERATION:
-1. ONLY generate safe read-only SELECT statements. Never generate UPDATE, DELETE, DROP, ALTER, INSERT.
-2. For dates: CURRENT_DATE is the current date. When user asks about today ("hôm nay"), query `DATE(d.ngay_tao) = CURRENT_DATE`.
-3. When calculating revenue, filter by `trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')` unless analyzing cancellations.
-4. Always use COALESCE(..., 0) for sums and calculations.
-5. Limit the table query to at most 20 rows.
+def json_serial(value: Any) -> Any:
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    if isinstance(value, Decimal):
+        return float(value)
+    return str(value)
+
+
+def _time_selection(payload: AiTextToReportRequest) -> Dict[str, Any]:
+    text = (payload.prompt or "").lower()
+    assumptions: List[str] = []
+    requested = payload.time_range
+    mode = requested.mode if requested else "auto"
+    if mode == "auto":
+        if any(term in text for term in ("hôm nay", "hom nay", "today")):
+            mode = "today"
+        elif re.search(r"\b7\s*(ngày|ngay|days?)\b", text):
+            mode = "7d"
+        elif re.search(r"\b30\s*(ngày|ngay|days?)\b", text):
+            mode = "30d"
+        elif payload.date_range in {"today", "7days", "30days"}:
+            mode = {"today": "today", "7days": "7d", "30days": "30d"}[payload.date_range]
+        else:
+            mode = "30d"
+            assumptions.append("Không có thời gian được chỉ định nên sử dụng 30 ngày gần nhất.")
+
+    if mode == "today":
+        return {"mode": mode, "sql": "{alias}.ngay_tao::date = CURRENT_DATE", "label": "hôm nay", "assumptions": assumptions}
+    if mode == "7d":
+        return {"mode": mode, "sql": "{alias}.ngay_tao::date >= CURRENT_DATE - INTERVAL '6 days' AND {alias}.ngay_tao::date <= CURRENT_DATE", "label": "7 ngày gần nhất", "assumptions": assumptions}
+    if mode == "custom":
+        if not requested or not requested.start or not requested.end:
+            raise HTTPException(status_code=422, detail="Khoảng thời gian tùy chỉnh cần cả ngày bắt đầu và ngày kết thúc.")
+        if requested.start > requested.end:
+            raise HTTPException(status_code=422, detail="Ngày bắt đầu không được sau ngày kết thúc.")
+        return {
+            "mode": mode,
+            "sql": f"{{alias}}.ngay_tao::date BETWEEN DATE '{requested.start.isoformat()}' AND DATE '{requested.end.isoformat()}'",
+            "label": f"{requested.start.strftime('%d/%m/%Y')}–{requested.end.strftime('%d/%m/%Y')}",
+            "assumptions": assumptions,
+        }
+    return {"mode": "30d", "sql": "{alias}.ngay_tao::date >= CURRENT_DATE - INTERVAL '29 days' AND {alias}.ngay_tao::date <= CURRENT_DATE", "label": "30 ngày gần nhất", "assumptions": assumptions}
+
+
+def _base_kpi_sql(time_filter: str) -> str:
+    return f"""
+        SELECT COUNT(*) AS total_orders,
+               COALESCE(SUM(d.tong_tien), 0) AS total_revenue,
+               ROUND(COALESCE(AVG(d.tong_tien), 0), 0) AS aov,
+               ROUND(100.0 * COUNT(*) FILTER (WHERE d.trang_thai_don_hang = 'HOAN_THANH')
+                     / NULLIF(COUNT(*), 0), 1) AS completion_rate
+        FROM orders.don_hang d
+        WHERE {time_filter} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+    """
+
+
+def _deterministic_plan(resolution: Dict[str, Any], time_info: Dict[str, Any]) -> Dict[str, Any]:
+    entity_ids = resolution["entity_ids"]
+    time_filter = time_info["sql"].format(alias="d")
+    label = time_info["label"]
+    common_trend = f"""
+        SELECT d.ngay_tao::date::text AS label,
+               COALESCE(SUM(d.tong_tien), 0) AS value
+        FROM orders.don_hang d
+        WHERE {time_filter} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+        GROUP BY d.ngay_tao::date ORDER BY d.ngay_tao::date
+    """
+
+    if "products" in entity_ids or "order_items" in entity_ids:
+        return {
+            "intent": "product_performance",
+            "title": f"Hiệu suất Sản phẩm và Cơ cấu Thực đơn — {label}",
+            "description": "Xếp hạng món theo số lượng và doanh thu trên các đơn hợp lệ.",
+            "metrics": ["quantity_sold", "product_revenue"],
+            "dimensions": ["product", "category"],
+            "main_sql": f"""
+                SELECT sp.ma_san_pham AS "Mã SP", sp.ten_san_pham AS "Tên Sản Phẩm",
+                       COALESCE(dm.ten_danh_muc, 'Khác') AS "Danh Mục",
+                       SUM(ct.so_luong) AS "Số Lượng Đã Bán",
+                       COALESCE(SUM(ct.so_luong * ct.gia_ban), 0) AS "Doanh Thu (VNĐ)"
+                FROM orders.chi_tiet_don_hang ct
+                JOIN orders.don_hang d ON ct.ma_don_hang = d.ma_don_hang
+                LEFT JOIN menu.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham
+                LEFT JOIN menu.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc
+                WHERE {time_filter} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                GROUP BY sp.ma_san_pham, sp.ten_san_pham, dm.ten_danh_muc
+                ORDER BY "Số Lượng Đã Bán" DESC, "Doanh Thu (VNĐ)" DESC LIMIT 20
+            """,
+            "trend_sql": common_trend,
+            "breakdown_sql": f"""
+                SELECT COALESCE(dm.ten_danh_muc, 'Khác') AS name,
+                       COALESCE(SUM(ct.so_luong * ct.gia_ban), 0) AS value
+                FROM orders.chi_tiet_don_hang ct
+                JOIN orders.don_hang d ON ct.ma_don_hang = d.ma_don_hang
+                LEFT JOIN menu.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham
+                LEFT JOIN menu.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc
+                WHERE {time_filter} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                GROUP BY dm.ten_danh_muc ORDER BY value DESC LIMIT 8
+            """,
+            "kpi_sql": _base_kpi_sql(time_filter),
+            "visualizations": {"trend": "area", "breakdown": "donut", "table": "ranking"},
+        }
+
+    if "stores" in entity_ids:
+        return {
+            "intent": "store_performance",
+            "title": f"Hiệu suất Chi nhánh — {label}",
+            "description": "So sánh doanh thu, số đơn và AOV của từng điểm bán.",
+            "metrics": ["store_revenue", "store_aov", "order_count"],
+            "dimensions": ["store", "city"],
+            "main_sql": f"""
+                SELECT COALESCE(cn.ten_chi_nhanh, d.co_so_ma) AS "Chi Nhánh",
+                       COALESCE(cn.thanh_pho, 'Chưa xác định') AS "Thành Phố",
+                       COUNT(*) AS "Số Đơn", COALESCE(SUM(d.tong_tien), 0) AS "Doanh Thu (VNĐ)",
+                       ROUND(AVG(d.tong_tien), 0) AS "AOV (VNĐ)"
+                FROM orders.don_hang d
+                LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
+                WHERE {time_filter} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                GROUP BY d.co_so_ma, cn.ten_chi_nhanh, cn.thanh_pho
+                ORDER BY "Doanh Thu (VNĐ)" ASC, "AOV (VNĐ)" DESC LIMIT 20
+            """,
+            "trend_sql": common_trend,
+            "breakdown_sql": f"""
+                SELECT COALESCE(cn.thanh_pho, 'Chưa xác định') AS name,
+                       COALESCE(SUM(d.tong_tien), 0) AS value
+                FROM orders.don_hang d LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
+                WHERE {time_filter} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                GROUP BY cn.thanh_pho ORDER BY value DESC LIMIT 8
+            """,
+            "kpi_sql": _base_kpi_sql(time_filter),
+            "visualizations": {"trend": "area", "breakdown": "bar", "table": "comparison"},
+        }
+
+    if "hourly" in entity_ids:
+        return {
+            "intent": "hourly_payment_patterns",
+            "title": f"Khung giờ Cao điểm và Thanh toán — {label}",
+            "description": "Mật độ giao dịch theo giờ và cơ cấu hình thức thanh toán.",
+            "metrics": ["hourly_orders", "payment_count", "payment_revenue"],
+            "dimensions": ["hour", "payment_method"],
+            "main_sql": f"""
+                SELECT EXTRACT(HOUR FROM d.ngay_tao)::int AS "Giờ",
+                       COUNT(*) AS "Số Đơn", COALESCE(SUM(d.tong_tien), 0) AS "Doanh Thu (VNĐ)",
+                       ROUND(AVG(d.tong_tien), 0) AS "AOV (VNĐ)"
+                FROM orders.don_hang d
+                WHERE {time_filter} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                GROUP BY EXTRACT(HOUR FROM d.ngay_tao) ORDER BY "Số Đơn" DESC
+            """,
+            "trend_sql": f"""
+                SELECT LPAD(EXTRACT(HOUR FROM d.ngay_tao)::int::text, 2, '0') || ':00' AS label,
+                       COUNT(*) AS value
+                FROM orders.don_hang d
+                WHERE {time_filter} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                GROUP BY EXTRACT(HOUR FROM d.ngay_tao) ORDER BY EXTRACT(HOUR FROM d.ngay_tao)
+            """,
+            "breakdown_sql": f"""
+                SELECT COALESCE(d.phuong_thuc_thanh_toan, 'Chưa xác định') AS name, COUNT(*) AS value
+                FROM orders.don_hang d
+                WHERE {time_filter} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                GROUP BY d.phuong_thuc_thanh_toan ORDER BY value DESC LIMIT 8
+            """,
+            "kpi_sql": _base_kpi_sql(time_filter),
+            "visualizations": {"trend": "bar", "breakdown": "donut", "table": "ranking"},
+        }
+
+    if "payments" in entity_ids:
+        return {
+            "intent": "payment_performance",
+            "title": f"Cơ cấu Thanh toán — {label}",
+            "description": "Phân tích số giao dịch và doanh thu theo hình thức thanh toán.",
+            "metrics": ["payment_count", "payment_revenue"],
+            "dimensions": ["payment_method"],
+            "main_sql": f"""
+                SELECT COALESCE(d.phuong_thuc_thanh_toan, 'Chưa xác định') AS "Phương Thức",
+                       COUNT(*) AS "Số Giao Dịch", COALESCE(SUM(d.tong_tien), 0) AS "Doanh Thu (VNĐ)"
+                FROM orders.don_hang d
+                WHERE {time_filter} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                GROUP BY d.phuong_thuc_thanh_toan ORDER BY "Doanh Thu (VNĐ)" DESC
+            """,
+            "trend_sql": common_trend,
+            "breakdown_sql": f"""
+                SELECT COALESCE(d.phuong_thuc_thanh_toan, 'Chưa xác định') AS name,
+                       COALESCE(SUM(d.tong_tien), 0) AS value
+                FROM orders.don_hang d
+                WHERE {time_filter} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                GROUP BY d.phuong_thuc_thanh_toan ORDER BY value DESC
+            """,
+            "kpi_sql": _base_kpi_sql(time_filter),
+            "visualizations": {"trend": "area", "breakdown": "donut", "table": "comparison"},
+        }
+
+    if "customers" in entity_ids:
+        customer_cte = f"""
+            WITH customer_orders AS (
+                SELECT d.ma_nguoi_dung, COUNT(*) AS order_count,
+                       COALESCE(SUM(d.tong_tien), 0) AS lifetime_value
+                FROM orders.don_hang d
+                WHERE d.ma_nguoi_dung IS NOT NULL AND {time_filter}
+                  AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                GROUP BY d.ma_nguoi_dung
+            )
+        """
+        return {
+            "intent": "customer_repeat_behavior",
+            "title": f"Hội viên và Mức độ Mua lặp lại — {label}",
+            "description": "Phân tích hành vi hội viên ở mức tổng hợp, không xuất dữ liệu định danh cá nhân.",
+            "metrics": ["customer_count", "repeat_rate", "lifetime_value"],
+            "dimensions": ["purchase_frequency_segment"],
+            "main_sql": customer_cte + """
+                SELECT CASE WHEN order_count = 1 THEN 'Mua 1 lần'
+                            WHEN order_count BETWEEN 2 AND 3 THEN 'Mua 2–3 lần'
+                            ELSE 'Mua từ 4 lần' END AS "Nhóm Tần Suất",
+                       COUNT(*) AS "Số Hội Viên", ROUND(AVG(order_count), 1) AS "Số Đơn TB",
+                       ROUND(AVG(lifetime_value), 0) AS "Chi Tiêu TB (VNĐ)"
+                FROM customer_orders GROUP BY 1 ORDER BY "Số Hội Viên" DESC
+            """,
+            "trend_sql": f"""
+                SELECT d.ngay_tao::date::text AS label, COUNT(DISTINCT d.ma_nguoi_dung) AS value
+                FROM orders.don_hang d
+                WHERE d.ma_nguoi_dung IS NOT NULL AND {time_filter}
+                  AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                GROUP BY d.ngay_tao::date ORDER BY d.ngay_tao::date
+            """,
+            "breakdown_sql": customer_cte + """
+                SELECT CASE WHEN order_count >= 2 THEN 'Mua lặp lại' ELSE 'Mua 1 lần' END AS name,
+                       COUNT(*) AS value FROM customer_orders GROUP BY 1 ORDER BY value DESC
+            """,
+            "kpi_sql": _base_kpi_sql(time_filter),
+            "visualizations": {"trend": "area", "breakdown": "donut", "table": "segments"},
+        }
+
+    if "delivery" in entity_ids:
+        return {
+            "intent": "delivery_performance",
+            "title": f"Hiệu suất Giao hàng — {label}",
+            "description": "Đánh giá khối lượng, tỷ lệ hoàn tất và thời gian giao hàng.",
+            "metrics": ["delivery_count", "delivery_time", "delivery_success_rate"],
+            "dimensions": ["delivery_status"],
+            "main_sql": f"""
+                SELECT sd.status AS "Trạng Thái", COUNT(*) AS "Số Lượt Giao",
+                       ROUND(AVG(EXTRACT(EPOCH FROM (sd.delivered_at - sd.assigned_at)) / 60.0), 1) AS "Phút Giao TB",
+                       COALESCE(SUM(sd.delivery_fee), 0) AS "Phí Giao (VNĐ)"
+                FROM orders.shipper_delivery sd JOIN orders.don_hang d ON sd.ma_don_hang = d.ma_don_hang
+                WHERE {time_filter} GROUP BY sd.status ORDER BY "Số Lượt Giao" DESC
+            """,
+            "trend_sql": f"""
+                SELECT d.ngay_tao::date::text AS label, COUNT(*) AS value
+                FROM orders.shipper_delivery sd JOIN orders.don_hang d ON sd.ma_don_hang = d.ma_don_hang
+                WHERE {time_filter}
+                GROUP BY d.ngay_tao::date ORDER BY d.ngay_tao::date
+            """,
+            "breakdown_sql": f"""
+                SELECT sd.status AS name, COUNT(*) AS value
+                FROM orders.shipper_delivery sd JOIN orders.don_hang d ON sd.ma_don_hang = d.ma_don_hang
+                WHERE {time_filter} GROUP BY sd.status ORDER BY value DESC
+            """,
+            "kpi_sql": _base_kpi_sql(time_filter),
+            "visualizations": {"trend": "area", "breakdown": "donut", "table": "comparison"},
+        }
+
+    return {
+        "intent": "revenue_overview",
+        "title": f"Tổng quan Doanh thu — {label}",
+        "description": "Tổng hợp doanh thu, số đơn và AOV từ các giao dịch hợp lệ.",
+        "metrics": ["revenue", "order_count", "aov"],
+        "dimensions": ["date", "payment_method"],
+        "main_sql": f"""
+            SELECT d.ngay_tao::date::text AS "Ngày", COUNT(*) AS "Số Đơn",
+                   COALESCE(SUM(d.tong_tien), 0) AS "Doanh Thu (VNĐ)",
+                   ROUND(AVG(d.tong_tien), 0) AS "AOV (VNĐ)"
+            FROM orders.don_hang d
+            WHERE {time_filter} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+            GROUP BY d.ngay_tao::date ORDER BY d.ngay_tao::date DESC LIMIT 30
+        """,
+        "trend_sql": common_trend,
+        "breakdown_sql": f"""
+            SELECT COALESCE(d.phuong_thuc_thanh_toan, 'Chưa xác định') AS name,
+                   COALESCE(SUM(d.tong_tien), 0) AS value
+            FROM orders.don_hang d
+            WHERE {time_filter} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+            GROUP BY d.phuong_thuc_thanh_toan ORDER BY value DESC LIMIT 8
+        """,
+        "kpi_sql": _base_kpi_sql(time_filter),
+        "visualizations": {"trend": "area", "breakdown": "donut", "table": "timeseries"},
+    }
+
+
+CHART_SEMANTICS: Dict[str, Dict[str, Dict[str, str]]] = {
+    "product_performance": {
+        "trend": {"metric": "product_revenue", "unit": "VNĐ", "chart_type": "area", "title": "Doanh thu sản phẩm theo thời gian", "x_label": "Ngày", "y_label": "Doanh thu"},
+        "breakdown": {"metric": "product_revenue", "unit": "VNĐ", "chart_type": "donut", "title": "Cơ cấu doanh thu theo danh mục", "x_label": "Danh mục", "y_label": "Doanh thu"},
+    },
+    "store_performance": {
+        "trend": {"metric": "store_revenue", "unit": "VNĐ", "chart_type": "area", "title": "Doanh thu chi nhánh theo thời gian", "x_label": "Ngày", "y_label": "Doanh thu"},
+        "breakdown": {"metric": "store_revenue", "unit": "VNĐ", "chart_type": "bar", "title": "Doanh thu theo khu vực", "x_label": "Khu vực", "y_label": "Doanh thu"},
+    },
+    "hourly_payment_patterns": {
+        "trend": {"metric": "hourly_orders", "unit": "đơn", "chart_type": "bar", "title": "Số đơn theo khung giờ", "x_label": "Giờ", "y_label": "Số đơn"},
+        "breakdown": {"metric": "payment_count", "unit": "đơn", "chart_type": "donut", "title": "Cơ cấu đơn theo phương thức thanh toán", "x_label": "Phương thức", "y_label": "Số đơn"},
+    },
+    "payment_performance": {
+        "trend": {"metric": "payment_revenue", "unit": "VNĐ", "chart_type": "area", "title": "Doanh thu thanh toán theo thời gian", "x_label": "Ngày", "y_label": "Doanh thu"},
+        "breakdown": {"metric": "payment_revenue", "unit": "VNĐ", "chart_type": "donut", "title": "Cơ cấu doanh thu theo phương thức thanh toán", "x_label": "Phương thức", "y_label": "Doanh thu"},
+    },
+    "customer_repeat_behavior": {
+        "trend": {"metric": "customer_count", "unit": "khách", "chart_type": "area", "title": "Số khách theo thời gian", "x_label": "Ngày", "y_label": "Số khách"},
+        "breakdown": {"metric": "customer_count", "unit": "hội viên", "chart_type": "donut", "title": "Cơ cấu hội viên theo tần suất mua", "x_label": "Nhóm hội viên", "y_label": "Số hội viên"},
+    },
+    "delivery_performance": {
+        "trend": {"metric": "delivery_count", "unit": "lượt giao", "chart_type": "area", "title": "Số lượt giao theo thời gian", "x_label": "Ngày", "y_label": "Số lượt giao"},
+        "breakdown": {"metric": "delivery_count", "unit": "lượt giao", "chart_type": "donut", "title": "Cơ cấu lượt giao theo trạng thái", "x_label": "Trạng thái", "y_label": "Số lượt giao"},
+    },
+    "revenue_overview": {
+        "trend": {"metric": "revenue", "unit": "VNĐ", "chart_type": "area", "title": "Doanh thu theo thời gian", "x_label": "Ngày", "y_label": "Doanh thu"},
+        "breakdown": {"metric": "revenue", "unit": "VNĐ", "chart_type": "donut", "title": "Cơ cấu doanh thu theo phương thức thanh toán", "x_label": "Phương thức", "y_label": "Doanh thu"},
+    },
+}
+
+
+def _chart_metadata(plan: Dict[str, Any], fallback: Dict[str, Any]) -> Dict[str, Dict[str, str]]:
+    intent = fallback["intent"]
+    metadata = {key: dict(value) for key, value in CHART_SEMANTICS[intent].items()}
+    requested = plan.get("visualizations") if isinstance(plan.get("visualizations"), dict) else {}
+    for key in ("trend", "breakdown"):
+        value = requested.get(key)
+        chart_type = value.get("chart_type") if isinstance(value, dict) else value
+        allowed = {"area", "bar"} if key == "trend" else {"bar", "donut"}
+        if chart_type in allowed:
+            metadata[key]["chart_type"] = chart_type
+    return metadata
+
+
+def _query_policy(metadata_context: Dict[str, Any]) -> Dict[str, set[str]]:
+    return {
+        table["qualified_name"]: {column["name"] for column in table.get("columns", [])}
+        for table in metadata_context.get("physical_metadata", [])
+    }
+
+
+def _planner_prompt(payload: AiTextToReportRequest, resolution: Dict[str, Any], time_info: Dict[str, Any], context: Dict[str, Any]) -> str:
+    return f"""
+Yêu cầu: {payload.prompt}
+Ngữ cảnh người dùng: {payload.context or '(không có)'}
+Khoảng thời gian đã chuẩn hóa: {time_info['label']}
+Miền nghiệp vụ đã phân giải: {', '.join(resolution['entity_ids'])}
+
+Chỉ sử dụng metadata liên quan dưới đây, không suy đoán cột hoặc quan hệ khác:
+{json.dumps(context, ensure_ascii=False, default=json_serial)}
+
+Trả về đúng một JSON object có các trường:
+intent, interpreted_request, assumptions (array), metrics (array), dimensions (array), tables (array),
+joins (array), needs_clarification (boolean), clarification_question (string hoặc null), title, description,
+main_sql, trend_sql, breakdown_sql, kpi_sql, visualizations.
+
+Mỗi SQL phải là một SELECT hoặc WITH...SELECT PostgreSQL chỉ đọc. main_sql tối đa 20 dòng;
+trend_sql và breakdown_sql đều trả nhãn `label`/`name` và số `value`;
+kpi_sql trả total_orders, total_revenue, aov, completion_rate. Áp dụng đúng khoảng thời gian và quy tắc doanh thu.
+visualizations chỉ định chart type cho trend và breakdown. Không xuất cột PII, không dùng SELECT * và không tạo số liệu giả.
 """
 
 
-def json_serial(obj):
-    """JSON serializer for objects not serializable by default json code"""
-    if isinstance(obj, (datetime.date, datetime.datetime)):
-        return obj.isoformat()
-    if isinstance(obj, Decimal):
-        return float(obj)
-    return str(obj)
+def _valid_plan(data: Any) -> bool:
+    return isinstance(data, dict) and all(isinstance(data.get(key), str) and data[key].strip() for key in ("main_sql", "trend_sql", "breakdown_sql", "kpi_sql"))
 
 
-def call_gemini_api(prompt_text: str, system_instruction: str = "") -> Optional[Dict[str, Any]]:
-    """Calls real Google Gemini API using GEMINI_API_KEY from environment."""
-    if not GEMINI_API_KEY:
-        print("GEMINI_API_KEY is not configured in environment.")
-        return None
+def _looks_destructive(prompt: str) -> bool:
+    return bool(re.search(
+        r"\b(drop|delete|update|insert|alter|truncate|grant|revoke|copy|create|merge|vacuum|refresh)\b",
+        (prompt or "").lower(),
+    ))
 
-    models_to_try = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.5-flash-lite"]
-    for model in models_to_try:
+
+def _repair_sql(name: str, sql: str, error: Exception, metadata_context: Dict[str, Any]) -> Tuple[Optional[str], Optional[Dict[str, Any]]]:
+    logger.warning("AI SQL failed query=%s attempt=0 error=%s sql=%s", name, type(error).__name__, sql)
+    repair = call_llm(
+        json.dumps({
+            "task": f"Sửa duy nhất SQL {name}. Trả JSON {{\"corrected_sql\": \"...\"}}.",
+            "failing_sql": sql,
+            "postgres_error": str(error)[:800],
+            "relevant_metadata": metadata_context,
+        }, ensure_ascii=False, default=json_serial),
+        "Bạn sửa PostgreSQL analytics. Chỉ trả JSON và chỉ tạo một SELECT hoặc WITH...SELECT an toàn.",
+    )
+    corrected = repair and repair.get("data", {}).get("corrected_sql")
+    if isinstance(corrected, str) and corrected.strip():
+        logger.warning("AI SQL repair query=%s attempt=1 repaired_sql=%s", name, corrected)
+        return corrected, repair
+    return None, repair
+
+
+def _execute_plan(plan: Dict[str, Any], fallback: Dict[str, Any], metadata_context: Dict[str, Any]) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, str], List[Dict[str, Any]]]:
+    results: Dict[str, Dict[str, Any]] = {}
+    sql_used: Dict[str, str] = {}
+    repair_models: List[Dict[str, Any]] = []
+    query_policy = _query_policy(metadata_context)
+    for name in ("main", "trend", "breakdown", "kpi"):
+        key = f"{name}_sql"
+        sql = str(plan.get(key) or fallback[key]).strip()
+        limit = 100 if name == "main" else (2 if name == "kpi" else 60)
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
-            full_prompt = f"{system_instruction}\n\n{prompt_text}" if system_instruction else prompt_text
-            payload = {
-                "contents": [{"parts": [{"text": full_prompt}]}],
-                "generationConfig": {
-                    "temperature": 0.15,
-                    "responseMimeType": "application/json"
-                }
-            }
-            res = requests.post(url, json=payload, timeout=12)
-            if res.ok:
-                resp_json = res.json()
-                raw_text = resp_json["candidates"][0]["content"]["parts"][0]["text"].strip()
-                # Remove possible markdown fences if any
-                if raw_text.startswith("```json"):
-                    raw_text = raw_text[7:]
-                if raw_text.startswith("```"):
-                    raw_text = raw_text[3:]
-                if raw_text.endswith("```"):
-                    raw_text = raw_text[:-3]
-                return json.loads(raw_text.strip())
+            if sql_references_sensitive_columns(sql):
+                raise SqlSafetyError("SQL AI tham chiếu cột nhạy cảm không được phép.")
+            validate_ai_query_scope(sql, query_policy)
+            results[name] = execute_read_only(sql, row_limit=limit)
+            results[name]["rows"] = sanitize_result_rows(results[name]["rows"])
+            results[name]["columns"] = [column for column in results[name]["columns"] if column in results[name]["rows"][0]] if results[name]["rows"] else results[name]["columns"]
+            sql_used[name] = results[name]["sql"]
+            continue
+        except (SqlSafetyError, QueryExecutionError) as error:
+            corrected, repair = _repair_sql(name, sql, error, metadata_context)
+            if repair:
+                repair_models.append({key: repair[key] for key in ("provider", "model", "latency_ms")})
+            if corrected:
+                try:
+                    if sql_references_sensitive_columns(corrected):
+                        raise SqlSafetyError("SQL sửa lại vẫn tham chiếu cột nhạy cảm.")
+                    validate_ai_query_scope(corrected, query_policy)
+                    results[name] = execute_read_only(corrected, row_limit=limit)
+                    results[name]["rows"] = sanitize_result_rows(results[name]["rows"])
+                    results[name]["columns"] = [column for column in results[name]["columns"] if column in results[name]["rows"][0]] if results[name]["rows"] else results[name]["columns"]
+                    sql_used[name] = results[name]["sql"]
+                    continue
+                except (SqlSafetyError, QueryExecutionError) as repaired_error:
+                    logger.warning("AI SQL failed query=%s attempt=1 error=%s", name, type(repaired_error).__name__)
+            if sql.strip() != fallback[key].strip():
+                if sql_references_sensitive_columns(fallback[key]):
+                    raise SqlSafetyError("Mẫu SQL dự phòng tham chiếu cột nhạy cảm.")
+                validate_ai_query_scope(fallback[key], query_policy)
+                results[name] = execute_read_only(fallback[key], row_limit=limit)
+                results[name]["rows"] = sanitize_result_rows(results[name]["rows"])
+                results[name]["columns"] = [column for column in results[name]["columns"] if column in results[name]["rows"][0]] if results[name]["rows"] else results[name]["columns"]
+                sql_used[name] = results[name]["sql"]
             else:
-                print(f"Gemini {model} returned status {res.status_code}: {res.text[:200]}")
-        except Exception as e:
-            print(f"Error calling Gemini {model}: {e}")
-            continue
+                raise
+    return results, sql_used, repair_models
 
+
+def _numeric(row: Dict[str, Any], keys: List[str]) -> Optional[float]:
+    for key in keys:
+        value = row.get(key)
+        if value is not None:
+            try:
+                return float(value)
+            except (TypeError, ValueError):
+                pass
     return None
 
 
-def call_groq_api(prompt_text: str, system_instruction: str = "") -> Optional[Dict[str, Any]]:
-    """Calls Groq API as backup if Gemini is unavailable."""
-    if not GROQ_API_KEY:
-        return None
+def _normalize_results(results: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+    main_rows = sanitize_result_rows(results["main"]["rows"])
+    kpi_row = results["kpi"]["rows"][0] if results["kpi"]["rows"] else {}
+    kpis = {
+        "revenue": _numeric(kpi_row, ["total_revenue", "revenue"]),
+        "revenue_growth": None,
+        "orders": int(_numeric(kpi_row, ["total_orders", "orders"]) or 0),
+        "orders_growth": None,
+        "aov": _numeric(kpi_row, ["aov"]),
+        "completion_rate": _numeric(kpi_row, ["completion_rate"]),
+    }
+    trend = []
+    for row in sanitize_result_rows(results["trend"]["rows"]):
+        label = row.get("date") or row.get("hour") or row.get("label") or ""
+        value = _numeric(row, ["revenue", "value", "orders", "order_count"]) or 0
+        trend.append({"label": str(label), "value": value})
+    breakdown = []
+    for row in sanitize_result_rows(results["breakdown"]["rows"]):
+        label = row.get("name") or row.get("label") or next(iter(row.values()), "Mục")
+        value = _numeric(row, ["value", "revenue", "count", "order_count"]) or 0
+        breakdown.append({"name": str(label), "value": value})
+    return {
+        "kpis": kpis,
+        "trend": trend,
+        "breakdown": breakdown,
+        "table_rows": main_rows,
+        "table_columns": results["main"]["columns"],
+        "row_counts": {name: result["count"] for name, result in results.items()},
+    }
 
-    models = ["llama-3.1-8b-instant", "llama3-70b-8192", "mixtral-8x7b-32768"]
-    for m in models:
-        try:
-            url = "https://api.groq.com/openai/v1/chat/completions"
-            headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
-            payload = {
-                "model": m,
-                "messages": [
-                    {"role": "system", "content": system_instruction},
-                    {"role": "user", "content": prompt_text}
-                ],
-                "response_format": {"type": "json_object"},
-                "temperature": 0.2
-            }
-            res = requests.post(url, json=payload, headers=headers, timeout=10)
-            if res.ok:
-                resp_json = res.json()
-                raw_text = resp_json["choices"][0]["message"]["content"]
-                return json.loads(raw_text)
-        except Exception as e:
-            print(f"Groq {m} error: {e}")
-            continue
 
-    return None
+def _deterministic_synthesis(normalized: Dict[str, Any], time_label: str) -> Dict[str, Any]:
+    kpis = normalized["kpis"]
+    revenue = kpis["revenue"]
+    orders = kpis["orders"]
+    aov = kpis["aov"]
+    if orders == 0:
+        summary = f"Kho dữ liệu không ghi nhận giao dịch hợp lệ trong {time_label}."
+        insights = [
+            "Không có đủ giao dịch để kết luận về xu hướng kinh doanh trong khoảng đã chọn.",
+            "Chỉ số tăng trưởng không được tính vì chưa có truy vấn kỳ so sánh.",
+        ]
+        recommendations = ["Kiểm tra trạng thái đồng bộ dữ liệu hoặc mở rộng khoảng thời gian phân tích."]
+    else:
+        summary = f"Kho dữ liệu ghi nhận {orders:,} đơn hợp lệ với doanh thu {float(revenue or 0):,.0f} VNĐ trong {time_label}."
+        insights = [
+            f"Giá trị đơn trung bình đo được là {float(aov or 0):,.0f} VNĐ.",
+            f"Kết quả chi tiết gồm {normalized['row_counts']['main']} dòng tổng hợp từ truy vấn thực tế.",
+        ]
+        recommendations = ["Ưu tiên kiểm tra các nhóm đứng đầu và cuối bảng chi tiết trước khi điều chỉnh vận hành."]
+    evidence = [
+        {"statement": "Số đơn hợp lệ trong phạm vi phân tích", "metric": "order_count", "value": orders},
+        {"statement": "Doanh thu hợp lệ trong phạm vi phân tích", "metric": "revenue", "value": revenue},
+        {"statement": "Giá trị đơn trung bình", "metric": "aov", "value": aov},
+    ]
+    return {"executive_summary": summary, "ai_insights": insights, "recommendations": recommendations, "evidence": evidence}
 
 
-def call_llm(prompt_text: str, system_instruction: str = "") -> Optional[Dict[str, Any]]:
-    """Primary router: attempts Gemini 2.5 Flash first, then Groq."""
-    result = call_gemini_api(prompt_text, system_instruction)
-    if result:
-        return result
-    return call_groq_api(prompt_text, system_instruction)
+@router.get("/status")
+def ai_status():
+    providers = provider_configuration()
+    try:
+        local = get_local_metadata()
+        meta = cache_status()
+        meta.update({"local_ready": True, "tables": local["table_count"], "semantic_entities": semantic_service.entity_count})
+    except Exception as exc:
+        meta = {"local_ready": False, "source_ready": False, "last_refresh": None, "tables": 0, "semantic_entities": semantic_service.entity_count, "error": type(exc).__name__}
+    configured = any(item["configured"] for item in providers.values())
+    status = "ready" if meta["local_ready"] and configured else ("degraded" if meta["local_ready"] else "unavailable")
+    return {"status": status, "providers": providers, "metadata": meta}
 
 
 @router.post("/generate-executive-report")
 def generate_executive_report(payload: AiTextToReportRequest):
-    user_prompt = payload.prompt.strip() if payload.prompt else "Báo cáo tổng quan hiệu suất và doanh thu toàn chuỗi"
-    p_lower = user_prompt.lower()
-
-    # Step 1: Prompt real LLM to generate the analytical plan & safe PostgreSQL SQL
-    planner_prompt = f"""
-Analyze this user request: "{user_prompt}"
-
-Generate a JSON object with:
-{{
-  "title": "Clean, professional Vietnamese title (no emojis, no programming symbols like underscores)",
-  "description": "Short 1-line Vietnamese description of this analytical perspective",
-  "main_sql": "SELECT ... FROM ... (Valid PostgreSQL query to populate a data table, max 15 rows. Use Vietnamese column aliases with double quotes e.g. AS \\"Tên Sản Phẩm\\")",
-  "trend_sql": "SELECT ... (Time series query for a line/area chart, e.g. date or hour as 'date', revenue as 'revenue', max 30 rows)",
-  "breakdown_sql": "SELECT ... (Category, store or method breakdown for donut/bar chart, returns 'name' and 'value', max 6 rows)",
-  "kpi_sql": "SELECT COUNT(*) as total_orders, COALESCE(SUM(tong_tien), 0) as total_revenue, ROUND(AVG(tong_tien), 0) as aov, ROUND(100.0 * COUNT(*) FILTER (WHERE trang_thai_don_hang = 'HOAN_THANH') / NULLIF(COUNT(*), 0), 1) as completion_rate FROM orders.don_hang WHERE ... (Matching the time window of the request)"
-}}
-
-IMPORTANT:
-- If user asks about 'hôm nay' (today), use `DATE(ngay_tao) = CURRENT_DATE`.
-- If user asks about '7 ngày' (7 days), use `ngay_tao >= CURRENT_DATE - INTERVAL '6 days'`.
-- If user asks about '30 ngày' (30 days), use `ngay_tao >= CURRENT_DATE - INTERVAL '29 days'`.
-- If user does not specify, default to the last 30 days (`ngay_tao >= CURRENT_DATE - INTERVAL '29 days'`).
-"""
-
-    plan = call_llm(planner_prompt, DATABASE_SCHEMA_CONTEXT)
-
-    # Fallback plan if LLM failed
-    if not plan or not isinstance(plan, dict) or "main_sql" not in plan:
-        print("LLM planning returned invalid JSON, applying resilient SQL template")
-        if any(w in p_lower for w in ["sản phẩm", "thực đơn", "món", "menu", "bán chạy"]):
-            plan = {
-                "title": "Báo cáo Cơ cấu Thực đơn và Sản phẩm Bán chạy",
-                "description": "Phân tích doanh số và lượng tiêu thụ theo nhóm đồ uống chủ lực.",
-                "main_sql": """
-                    SELECT 
-                        sp.ma_san_pham AS "Mã SP",
-                        sp.ten_san_pham AS "Tên Sản Phẩm",
-                        COALESCE(dm.ten_danh_muc, 'Cà phê') AS "Danh Mục",
-                        SUM(ct.so_luong) AS "Số Lượng Đã Bán",
-                        ROUND(AVG(ct.gia_ban), 0) AS "Đơn Giá (VNĐ)",
-                        COALESCE(SUM(ct.so_luong * ct.gia_ban), 0) AS "Doanh Thu (VNĐ)"
-                    FROM orders.chi_tiet_don_hang ct
-                    JOIN orders.don_hang d ON ct.ma_don_hang = d.ma_don_hang
-                    JOIN menu.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham
-                    LEFT JOIN menu.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc
-                    WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
-                    GROUP BY sp.ma_san_pham, sp.ten_san_pham, dm.ten_danh_muc
-                    ORDER BY "Doanh Thu (VNĐ)" DESC
-                    LIMIT 15;
-                """,
-                "trend_sql": """
-                    SELECT d.ngay_tao::date::text AS date, COALESCE(SUM(d.tong_tien), 0) AS revenue
-                    FROM orders.don_hang d
-                    WHERE d.ngay_tao >= CURRENT_DATE - INTERVAL '29 days' AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
-                    GROUP BY d.ngay_tao::date ORDER BY date ASC;
-                """,
-                "breakdown_sql": """
-                    SELECT COALESCE(dm.ten_danh_muc, 'Khác') AS name, COALESCE(SUM(ct.so_luong * ct.gia_ban), 0) AS value
-                    FROM orders.chi_tiet_don_hang ct
-                    JOIN orders.don_hang d ON ct.ma_don_hang = d.ma_don_hang
-                    JOIN menu.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham
-                    LEFT JOIN menu.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc
-                    WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
-                    GROUP BY name ORDER BY value DESC LIMIT 6;
-                """,
-                "kpi_sql": """
-                    SELECT COUNT(*) AS total_orders, COALESCE(SUM(tong_tien), 0) AS total_revenue, ROUND(AVG(tong_tien), 0) AS aov, ROUND(100.0 * COUNT(*) FILTER (WHERE trang_thai_don_hang = 'HOAN_THANH') / NULLIF(COUNT(*), 0), 1) AS completion_rate
-                    FROM orders.don_hang WHERE ngay_tao >= CURRENT_DATE - INTERVAL '29 days' AND trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO');
-                """
-            }
-        elif any(w in p_lower for w in ["hôm nay", "ngay hom nay", "today"]):
-            plan = {
-                "title": f"Báo cáo Diễn biến Kinh doanh Hôm nay ({time.strftime('%d/%m/%Y')})",
-                "description": "Thống kê số liệu phát sinh thực tế trong ngày tại các cửa hàng toàn chuỗi.",
-                "main_sql": """
-                    SELECT 
-                        d.ma_don_hang::text AS "Mã Đơn",
-                        LPAD(EXTRACT(HOUR FROM d.ngay_tao)::text, 2, '0') || ':' || LPAD(EXTRACT(MINUTE FROM d.ngay_tao)::text, 2, '0') AS "Giờ Đặt",
-                        COALESCE(cn.ten_chi_nhanh, d.co_so_ma) AS "Điểm Bán",
-                        d.tong_tien AS "Tổng Tiền (VNĐ)",
-                        d.phuong_thuc_thanh_toan AS "Hình Thức",
-                        d.trang_thai_don_hang AS "Trạng Thái"
-                    FROM orders.don_hang d
-                    LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
-                    WHERE DATE(d.ngay_tao) = CURRENT_DATE
-                    ORDER BY d.ngay_tao DESC
-                    LIMIT 15;
-                """,
-                "trend_sql": """
-                    SELECT LPAD(EXTRACT(HOUR FROM d.ngay_tao)::text, 2, '0') || ':00' AS date, COALESCE(SUM(d.tong_tien), 0) AS revenue
-                    FROM orders.don_hang d
-                    WHERE DATE(d.ngay_tao) = CURRENT_DATE AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
-                    GROUP BY EXTRACT(HOUR FROM d.ngay_tao) ORDER BY EXTRACT(HOUR FROM d.ngay_tao) ASC;
-                """,
-                "breakdown_sql": """
-                    SELECT COALESCE(cn.thanh_pho, 'Chưa xác định') AS name, COALESCE(SUM(d.tong_tien), 0) AS value
-                    FROM orders.don_hang d
-                    LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
-                    WHERE DATE(d.ngay_tao) = CURRENT_DATE AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
-                    GROUP BY name ORDER BY value DESC LIMIT 6;
-                """,
-                "kpi_sql": """
-                    SELECT COUNT(*) AS total_orders, COALESCE(SUM(tong_tien), 0) AS total_revenue, ROUND(AVG(tong_tien), 0) AS aov, ROUND(100.0 * COUNT(*) FILTER (WHERE trang_thai_don_hang = 'HOAN_THANH') / NULLIF(COUNT(*), 0), 1) AS completion_rate
-                    FROM orders.don_hang WHERE DATE(ngay_tao) = CURRENT_DATE;
-                """
-            }
-        else:
-            plan = {
-                "title": f"Báo cáo Điều hành Kinh doanh: {user_prompt}",
-                "description": "Số liệu tổng hợp thực tế từ kho dữ liệu phân tích Avengers Coffee.",
-                "main_sql": """
-                    SELECT 
-                        ngay_tao::date::text AS "Ngày Bán Hàng",
-                        COUNT(*) AS "Số Đơn Hoàn Thành",
-                        COALESCE(SUM(tong_tien), 0) AS "Doanh Thu (VNĐ)",
-                        ROUND(AVG(tong_tien), 0) AS "AOV (VNĐ)"
-                    FROM orders.don_hang
-                    WHERE ngay_tao >= CURRENT_DATE - INTERVAL '29 days' AND trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
-                    GROUP BY ngay_tao::date
-                    ORDER BY "Ngày Bán Hàng" DESC
-                    LIMIT 15;
-                """,
-                "trend_sql": """
-                    SELECT ngay_tao::date::text AS date, COALESCE(SUM(tong_tien), 0) AS revenue
-                    FROM orders.don_hang
-                    WHERE ngay_tao >= CURRENT_DATE - INTERVAL '29 days' AND trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
-                    GROUP BY ngay_tao::date ORDER BY date ASC;
-                """,
-                "breakdown_sql": """
-                    SELECT 
-                        CASE phuong_thuc_thanh_toan
-                            WHEN 'TIEN_MAT' THEN 'Tiền mặt'
-                            WHEN 'MOMO' THEN 'Ví MoMo'
-                            WHEN 'VNPAY' THEN 'Cổng VNPay'
-                            WHEN 'NGAN_HANG_QR' THEN 'Chuyển khoản QR'
-                            ELSE 'Khác'
-                        END AS name,
-                        COALESCE(SUM(tong_tien), 0) AS value
-                    FROM orders.don_hang
-                    WHERE ngay_tao >= CURRENT_DATE - INTERVAL '29 days' AND trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
-                    GROUP BY name ORDER BY value DESC LIMIT 6;
-                """,
-                "kpi_sql": """
-                    SELECT COUNT(*) AS total_orders, COALESCE(SUM(tong_tien), 0) AS total_revenue, ROUND(AVG(tong_tien), 0) AS aov, ROUND(100.0 * COUNT(*) FILTER (WHERE trang_thai_don_hang = 'HOAN_THANH') / NULLIF(COUNT(*), 0), 1) AS completion_rate
-                    FROM orders.don_hang WHERE ngay_tao >= CURRENT_DATE - INTERVAL '29 days' AND trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO');
-                """
-            }
-
-    # Step 2: Execute SQL queries on real PostgreSQL database
-    table_rows = []
-    table_cols = []
-    trend_data = []
-    breakdown_data = []
-    kpi_dict = {
-        "revenue": 0.0,
-        "revenue_growth": 0.0,
-        "orders": 0,
-        "orders_growth": 0.0,
-        "aov": 0.0,
-        "completion_rate": 0.0
-    }
-    executed_sql = plan.get("main_sql", "").strip()
+    user_prompt = (payload.prompt or "").strip()
+    if not user_prompt:
+        raise HTTPException(status_code=422, detail="Yêu cầu phân tích không được để trống.")
+    context_text = (payload.context or "").strip()
+    domain = payload.domain or "auto"
+    if _looks_destructive(user_prompt):
+        return {
+            "status": "needs_clarification",
+            "prompt": user_prompt,
+            "context": context_text,
+            "interpreted_request": "Yêu cầu có chứa thao tác thay đổi dữ liệu, trong khi trợ lý chỉ được phép phân tích chỉ đọc.",
+            "assumptions": [],
+            "clarification_question": "Bạn hãy diễn đạt lại mục tiêu dưới dạng câu hỏi phân tích dữ liệu chỉ đọc.",
+        }
+    if semantic_service.is_vague(user_prompt, context_text, domain):
+        return {
+            "status": "needs_clarification",
+            "prompt": user_prompt,
+            "context": context_text,
+            "interpreted_request": "Yêu cầu chưa xác định đủ miền phân tích.",
+            "assumptions": [],
+            "clarification_question": "Bạn muốn tập trung vào doanh thu, sản phẩm, cửa hàng, khách hàng, thanh toán hay giao hàng?",
+        }
 
     try:
-        with get_db_conn() as conn:
-            with conn.cursor() as cur:
-                # 2.1 Main Table SQL
-                if executed_sql:
-                    try:
-                        cur.execute(executed_sql)
-                        raw_rows = cur.fetchall()
-                        if raw_rows:
-                            table_rows = [dict(r) for r in raw_rows]
-                            table_cols = list(table_rows[0].keys())
-                    except Exception as err:
-                        print(f"Error executing LLM main_sql: {err}")
-                        conn.rollback()
+        metadata = get_combined_metadata(include_source=True)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Không thể đọc metadata kho phân tích: {type(exc).__name__}")
+    resolution = semantic_service.resolve(user_prompt, context_text, domain, metadata)
+    metadata_context = semantic_service.llm_context(resolution, metadata)
+    time_info = _time_selection(payload)
+    fallback_plan = _deterministic_plan(resolution, time_info)
 
-                # 2.2 Trend SQL
-                trend_sql = plan.get("trend_sql", "").strip()
-                if trend_sql:
-                    try:
-                        cur.execute(trend_sql)
-                        trend_data = [{"date": str(r.get("date") or ""), "revenue": float(r.get("revenue") or r.get("value") or 0)} for r in cur.fetchall()]
-                    except Exception as err:
-                        print(f"Error executing trend_sql: {err}")
-                        conn.rollback()
+    planner_call = call_llm(
+        _planner_prompt(payload, resolution, time_info, metadata_context),
+        "Bạn là bộ lập kế hoạch BI. Chỉ dùng metadata được cung cấp và trả JSON hợp lệ.",
+    )
+    plan_data = planner_call.get("data") if planner_call else None
+    if isinstance(plan_data, dict) and plan_data.get("needs_clarification"):
+        return {
+            "status": "needs_clarification",
+            "prompt": user_prompt,
+            "context": context_text,
+            "interpreted_request": plan_data.get("interpreted_request") or user_prompt,
+            "assumptions": time_info["assumptions"] + list(plan_data.get("assumptions") or []),
+            "clarification_question": plan_data.get("clarification_question") or "Bạn muốn làm rõ trọng tâm phân tích nào?",
+        }
+    plan = plan_data if _valid_plan(plan_data) else fallback_plan
+    planner_meta = (
+        {key: planner_call[key] for key in ("provider", "model", "latency_ms")}
+        if planner_call and _valid_plan(plan_data)
+        else {"provider": "deterministic", "model": "semantic-sql-templates-v1", "latency_ms": 0}
+    )
 
-                # 2.3 Breakdown SQL (Donut / Bar)
-                breakdown_sql = plan.get("breakdown_sql", "").strip()
-                if breakdown_sql:
-                    try:
-                        cur.execute(breakdown_sql)
-                        breakdown_data = [{"name": str(r.get("name") or "Mục"), "value": float(r.get("value") or 0)} for r in cur.fetchall()]
-                    except Exception as err:
-                        print(f"Error executing breakdown_sql: {err}")
-                        conn.rollback()
-
-                # 2.4 Real KPIs
-                kpi_sql = plan.get("kpi_sql", "").strip()
-                if kpi_sql:
-                    try:
-                        cur.execute(kpi_sql)
-                        k_row = cur.fetchone()
-                        if k_row:
-                            rev = float(k_row.get("total_revenue") or 0.0)
-                            ords = int(k_row.get("total_orders") or 0)
-                            aov_v = float(k_row.get("aov") or 0.0)
-                            comp_v = float(k_row.get("completion_rate") or 0.0)
-                            kpi_dict["revenue"] = rev
-                            kpi_dict["orders"] = ords
-                            kpi_dict["aov"] = aov_v
-                            kpi_dict["completion_rate"] = comp_v
-                    except Exception as err:
-                        print(f"Error executing kpi_sql: {err}")
-                        conn.rollback()
-
-    except Exception as e:
-        print(f"Database connection error: {e}")
-
-    # Fallback KPIs from table rows if kpi_dict is 0 but table has data
-    if kpi_dict["revenue"] == 0 and table_rows:
-        sum_rev = 0
-        for r in table_rows:
-            for k, v in r.items():
-                if "tiền" in k.lower() or "doanh thu" in k.lower() or "revenue" in k.lower():
-                    if isinstance(v, (int, float, Decimal)):
-                        sum_rev += float(v)
-        if sum_rev > 0:
-            kpi_dict["revenue"] = sum_rev
-            kpi_dict["orders"] = len(table_rows)
-            kpi_dict["aov"] = round(sum_rev / len(table_rows))
-            kpi_dict["completion_rate"] = 100.0
-
-    # Step 3: Pass REAL query results back to Gemini 2.5 Flash for genuine analysis
-    serialized_results = json.dumps(table_rows[:10], ensure_ascii=False, default=json_serial)
-    summary_data = {
-        "kpis": kpi_dict,
-        "sample_rows": table_rows[:8],
-        "breakdown": breakdown_data[:5],
-        "time_trend_points": len(trend_data)
+    try:
+        results, sql_used, repair_models = _execute_plan(plan, fallback_plan, metadata_context)
+    except (SqlSafetyError, QueryExecutionError) as exc:
+        raise HTTPException(status_code=400, detail=f"Không thể thực thi kế hoạch SQL an toàn: {str(exc)}")
+    normalized = _normalize_results(results)
+    chart_metadata = _chart_metadata(plan, fallback_plan)
+    evidence_payload = {
+        "kpis": normalized["kpis"],
+        "table_sample": normalized["table_rows"][:8],
+        "trend": normalized["trend"][:30],
+        "breakdown": normalized["breakdown"][:10],
+        "row_counts": normalized["row_counts"],
     }
-
-    synthesis_prompt = f"""
-Bạn là Chuyên gia Trưởng Phân tích Dữ liệu (Lead Business Intelligence Analyst) của chuỗi Avengers Coffee BeanSync.
-Yêu cầu phân tích của người dùng: "{user_prompt}"
-Tiêu đề báo cáo: "{plan.get('title')}"
-
-DỮ LIỆU TRUY VẤN THỰC TẾ 100% TỪ DATABASE POSTGRESQL:
-{json.dumps(summary_data, ensure_ascii=False, default=json_serial)}
-
-Hãy trả về JSON:
-{{
-  "executive_summary": "Tóm tắt bức tranh kinh doanh trong 1-2 câu súc tích",
-  "ai_insights": [
-    "Nhận định 1 (ngắn gọn, chuẩn xác dựa vào số liệu thật)",
-    "Nhận định 2 (ngắn gọn, chuẩn xác dựa vào số liệu thật)",
-    "Khuyến nghị thực thi vận hành/kinh doanh cụ thể"
-  ]
-}}
-
-LƯU Ý CỰC KỲ QUAN TRỌNG:
-1. TUYỆT ĐỐI KHÔNG BỊA SỐ LIỆU.
-2. Nếu hôm nay chưa có đơn (doanh thu = 0, số đơn = 0), hãy nêu rõ sự thật là ngày hôm nay chưa phát sinh giao dịch nào trên hệ thống, và đưa ra khuyến nghị kiểm tra thiết bị POS/ca làm việc.
-3. Nếu có dữ liệu thực tế (ví dụ 30 ngày qua có hàng ngàn đơn), hãy phân tích chính xác dựa trên các con số trong kết quả truy vấn.
-4. Trình bày bằng tiếng Việt chuyên nghiệp, chuẩn mực, không dùng emoji trong câu.
-"""
-
-    insights_result = call_llm(synthesis_prompt)
-    if insights_result and isinstance(insights_result, dict) and "ai_insights" in insights_result:
-        insights = insights_result.get("ai_insights", [])
-        exec_summary = insights_result.get("executive_summary", "")
+    synthesis_call = call_llm(
+        json.dumps({
+            "request": user_prompt,
+            "interpreted_request": plan.get("interpreted_request") or fallback_plan["description"],
+            "evidence": evidence_payload,
+            "instruction": "Chỉ nêu kết luận được chứng minh bởi evidence. Không nói tăng trưởng nếu không có kỳ so sánh. Trả executive_summary, ai_insights[], recommendations[], evidence[].",
+        }, ensure_ascii=False, default=json_serial),
+        "Bạn là chuyên gia BI. Chỉ trả JSON tiếng Việt, tuyệt đối không bịa số liệu.",
+    )
+    deterministic = _deterministic_synthesis(normalized, time_info["label"])
+    synthesis_data = synthesis_call.get("data") if synthesis_call else None
+    if not isinstance(synthesis_data, dict) or not isinstance(synthesis_data.get("ai_insights"), list):
+        synthesis_data = deterministic
+        synthesis_meta = {"provider": "deterministic", "model": "grounded-summary-v1", "latency_ms": 0}
     else:
-        if kpi_dict["revenue"] == 0 and kpi_dict["orders"] == 0:
-            insights = [
-                "Hệ thống cơ sở dữ liệu ghi nhận chưa phát sinh đơn hàng hoặc doanh thu nào trong khoảng thời gian đã chọn.",
-                "Toàn bộ các chỉ số vận hành AOV và tỷ lệ hoàn thành tạm thời ở mức 0 do chưa có giao dịch hợp lệ.",
-                "Khuyến nghị: Rà soát trạng thái đồng bộ dữ liệu POS tại các chi nhánh hoặc mở rộng bộ lọc thời gian sang 7 ngày hoặc 30 ngày qua để theo dõi xu hướng lũy kế."
-            ]
-            exec_summary = "Chưa có giao dịch phát sinh trong khoảng thời gian được chọn theo số liệu thực tế từ cơ sở dữ liệu."
-        else:
-            insights = [
-                f"Tổng doanh thu ghi nhận thực tế từ hệ thống đạt {kpi_dict['revenue']:,.0f} VNĐ với {kpi_dict['orders']:,} giao dịch.",
-                f"Giá trị trung bình trên mỗi hóa đơn (AOV) duy trì ở mức {kpi_dict['aov']:,.0f} VNĐ với tỷ lệ hoàn tất đơn đạt {kpi_dict['completion_rate']}%.",
-                "Khuyến nghị: Tiếp tục duy trì hiệu suất vận hành tại các điểm bán chủ lực và đẩy mạnh nhóm sản phẩm có tốc độ quay vòng cao."
-            ]
-            exec_summary = f"Hiệu suất kinh doanh toàn chuỗi đạt {kpi_dict['revenue']:,.0f} VNĐ doanh thu với tỷ lệ hoàn tất đơn {kpi_dict['completion_rate']}%."
+        synthesis_meta = {key: synthesis_call[key] for key in ("provider", "model", "latency_ms")}
+        synthesis_data["evidence"] = deterministic["evidence"]
+        synthesis_data.setdefault("recommendations", [])
 
+    assumptions = time_info["assumptions"] + list(plan.get("assumptions") or [])
+    assumptions = list(dict.fromkeys(str(item) for item in assumptions if item))
+    interpreted = plan.get("interpreted_request") or f"{fallback_plan['description']} Phạm vi {time_info['label']}."
+    provider_label = f"{synthesis_meta['provider']} / {synthesis_meta['model']}"
     return {
+        "status": "success",
         "prompt": user_prompt,
-        "title": plan.get("title") or "Báo cáo Phân tích AI Tùy biến",
-        "description": plan.get("description") or "Phân tích số liệu thực tế từ kho dữ liệu Analytics",
-        "model_used": "Google Gemini 2.5 Flash",
-        "created_at": "Hôm nay, " + time.strftime("%H:%M %d/%m/%Y"),
-        "kpis": kpi_dict,
-        "trend_chart": trend_data,
-        "donut_chart": breakdown_data,
-        "bar_chart": breakdown_data,
-        "table_data": {
-            "title": f"Dữ liệu trích xuất: {plan.get('title')}",
-            "columns": table_cols if table_cols else ["Thông tin", "Giá trị"],
-            "rows": table_rows,
-            "total_rows": len(table_rows)
+        "context": context_text,
+        "interpreted_request": interpreted,
+        "title": plan.get("title") or fallback_plan["title"],
+        "description": plan.get("description") or fallback_plan["description"],
+        "assumptions": assumptions,
+        "metadata_used": {
+            "tables": resolution["tables"],
+            "metrics": plan.get("metrics") or resolution["metrics"],
+            "dimensions": plan.get("dimensions") or resolution["dimensions"],
+            "source_relationships_recovered": len(metadata.get("recovered_relationships", [])),
         },
-        "ai_insights": insights,
-        "executive_summary": exec_summary,
-        "sql_query": executed_sql
+        "provider": {"planner": planner_meta, "synthesis": synthesis_meta, "repairs": repair_models},
+        "model_used": provider_label,
+        "kpis": normalized["kpis"],
+        "trend_chart": normalized["trend"],
+        "breakdown_chart": normalized["breakdown"],
+        "donut_chart": normalized["breakdown"] if chart_metadata["breakdown"]["chart_type"] == "donut" else [],
+        "bar_chart": normalized["breakdown"] if chart_metadata["breakdown"]["chart_type"] == "bar" else [],
+        "chart_metadata": chart_metadata,
+        "table_data": {
+            "title": f"Dữ liệu trích xuất: {plan.get('title') or fallback_plan['title']}",
+            "columns": normalized["table_columns"],
+            "rows": normalized["table_rows"],
+            "total_rows": normalized["row_counts"]["main"],
+        },
+        "executive_summary": synthesis_data.get("executive_summary") or deterministic["executive_summary"],
+        "ai_insights": synthesis_data.get("ai_insights") or deterministic["ai_insights"],
+        "recommendations": synthesis_data.get("recommendations") or deterministic["recommendations"],
+        "evidence": synthesis_data.get("evidence") or deterministic["evidence"],
+        "sql": sql_used,
+        "sql_query": sql_used["main"],
+        "visualizations": {
+            "trend": chart_metadata["trend"]["chart_type"],
+            "breakdown": chart_metadata["breakdown"]["chart_type"],
+            "table": fallback_plan["visualizations"]["table"],
+        },
+        "created_at": datetime.now().astimezone().isoformat(),
     }
+
+
+@router.post("/summarize")
+def summarize_report(payload: AiSummarizeRequest):
+    compact = {"title": payload.report_title, "columns": payload.columns, "rows": (payload.data or [])[:20]}
+    response = call_llm(
+        json.dumps(compact, ensure_ascii=False, default=json_serial),
+        "Tóm tắt dữ liệu được cung cấp bằng tiếng Việt. Trả JSON có executive_summary và ai_insights. Không bịa số liệu.",
+    )
+    if response:
+        return {**response["data"], "provider": {key: response[key] for key in ("provider", "model", "latency_ms")}}
+    return {"executive_summary": "Không có nhà cung cấp LLM; dữ liệu vẫn có thể xem trực tiếp.", "ai_insights": [], "provider": {"provider": "deterministic", "model": "none", "latency_ms": 0}}
