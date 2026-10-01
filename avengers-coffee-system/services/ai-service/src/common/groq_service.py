@@ -109,7 +109,7 @@ class GeminiCompletions:
     def create(self, model, messages, tools=None, tool_choice="auto", max_tokens=2048, temperature=0.1, response_format=None):
         import requests
         payload = {
-            "model": "gemini-3.6-flash",
+            "model": model,
             "messages": messages,
             "max_tokens": max_tokens,
             "temperature": temperature
@@ -144,7 +144,7 @@ class OpenAICompletions:
     def create(self, model, messages, tools=None, tool_choice="auto", max_tokens=1000, temperature=0.1, response_format=None):
         import requests
         payload = {
-            "model": "gpt-4o-mini",
+            "model": model,
             "messages": messages,
             "max_tokens": max_tokens,
             "temperature": temperature
@@ -236,6 +236,37 @@ def switch_groq_client():
 
 def groq_is_available() -> bool:
     return _get_groq_client() is not None
+
+
+def _client_provider(client) -> str:
+    base = str(getattr(client, "base_url", "")).lower()
+    if "generativelanguage" in base:
+        return "gemini"
+    if "api.openai.com" in base:
+        return "openai"
+    if "openrouter" in base:
+        return "openrouter"
+    if "cerebras" in base:
+        return "cerebras"
+    if "groq" in base:
+        return "groq"
+    return "unknown"
+
+
+def _agent_client_sequence(preferred: str):
+    """Return a deliberate provider-first chain without changing legacy order."""
+    _get_groq_client()  # Lazy initialization of the existing shared clients.
+    clients = list(_llm_clients)
+    if preferred == "openrouter" and not any(_client_provider(c) == preferred for c in clients):
+        key = os.getenv("OPENROUTER_API_KEY", "").strip()
+        if key and "your_openrouter" not in key:
+            clients.insert(0, OpenRouterClient(key))
+    if preferred == "auto":
+        return clients
+    selected = [client for client in clients if _client_provider(client) == preferred]
+    # Compatible providers are outage fallbacks only. An unconfigured preferred
+    # provider fails explicitly rather than making quality policy accidental.
+    return selected + [client for client in clients if client not in selected] if selected else []
 
 # Danh sách model fallback cứng (dùng khi không gọi được models.list())
 GROQ_MODELS_FALLBACK = [
@@ -352,6 +383,8 @@ def groq_agent_chat(
     metrics: Optional[Dict[str, Any]] = None,
     context_char_limit: Optional[int] = None,
     final_response_validator=None,
+    agent_provider: Optional[str] = None,
+    agent_model: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Agentic chat loop với Groq Function Calling.
@@ -380,19 +413,33 @@ def groq_agent_chat(
         }
     """
     global _selected_chat_model
-    client = _get_groq_client()
+    requested_provider = (agent_provider or "").strip().lower()
+    if requested_provider and requested_provider not in {"auto", "gemini", "openai", "groq", "openrouter", "cerebras"}:
+        return {"reply": "", "tool_calls_log": [], "checkout_payload": None,
+                "error": "Unsupported agent provider."}
+    agent_clients = _agent_client_sequence(requested_provider) if requested_provider else None
+    client = (agent_clients[0] if agent_clients else None) if agent_clients is not None else _get_groq_client()
     if client is None:
-        return {"reply": "", "tool_calls_log": [], "checkout_payload": None, "error": "Groq client unavailable"}
+        return {"reply": "", "tool_calls_log": [], "checkout_payload": None,
+                "error": "Configured agent provider unavailable" if requested_provider else "Groq client unavailable"}
 
     tool_calls_log = []
     checkout_payload = None
     current_messages = list(messages)
     turn_tool_cache = {}
     force_tools_disabled = False
+    force_tool_required = False
+    required_repair_tool = None
     repeated_tool_result = None
 
     # Resolve model một lần duy nhất cho cả cuộc hội thoại (cached sau lần đầu)
-    model = _resolve_chat_model(client)
+    def model_for(selected_client):
+        if agent_model and (not requested_provider or requested_provider == "auto"
+                            or _client_provider(selected_client) == requested_provider):
+            return agent_model
+        return _resolve_chat_model(selected_client)
+
+    model = model_for(client)
     if model is None:
         return {
             "reply": "",
@@ -412,15 +459,17 @@ def groq_agent_chat(
         # ── Retry qua các Client nếu gặp lỗi ──
         success = False
         last_err = ""
-        for retry_idx in range(len(_llm_clients)):
-            client = _get_groq_client()
+        retry_clients = agent_clients if agent_clients is not None else [None] * max(1, len(_llm_clients))
+        for retry_idx, configured_client in enumerate(retry_clients):
+            client = configured_client or _get_groq_client()
             if client is None:
                 break
                 
-            model = _resolve_chat_model(client)
+            model = model_for(client)
             if model is None:
                 logger.warning("[Groq Agent] Model None for current client, switching...")
-                switch_groq_client()
+                if agent_clients is None:
+                    switch_groq_client()
                 continue
                 
             try:
@@ -433,7 +482,7 @@ def groq_agent_chat(
                 }
                 if tools and not force_tools_disabled:
                     kwargs["tools"] = tools
-                    kwargs["tool_choice"] = "auto"
+                    kwargs["tool_choice"] = "required" if force_tool_required else "auto"
                 if guarded and final_response_validator:
                     kwargs["response_format"] = {"type": "json_object"}
                 if metrics is not None:
@@ -458,7 +507,8 @@ def groq_agent_chat(
                         _banned_models_until[model] = time.time() + 60
                         _selected_chat_model = None
                         logger.warning("[Groq Agent] Model %s TPM limit reached (413), banning for 60s.", model)
-                        switch_groq_client()
+                        if agent_clients is None:
+                            switch_groq_client()
                         continue
                         
                     logger.warning("[Groq Agent] Payload too large (413). Stripping history to prevent failure.")
@@ -482,7 +532,8 @@ def groq_agent_chat(
                     _selected_chat_model = None
                     logger.warning("[Groq Agent] Model %s doesn't support tools, banning for 1 day.", model)
                     
-                switch_groq_client()
+                if agent_clients is None:
+                    switch_groq_client()
                 continue
                 
         if not success or not resp:
@@ -500,12 +551,14 @@ def groq_agent_chat(
             metrics['input_tokens'] = metrics.get('input_tokens', 0) + (usage_value('prompt_tokens') or 0)
             metrics['output_tokens'] = metrics.get('output_tokens', 0) + (usage_value('completion_tokens') or 0)
             metrics.update(model=getattr(resp, 'model', None) or model,
-                provider=str(getattr(client, 'base_url', type(client).__name__)),
+                provider=_client_provider(client),
                 request_count=metrics.get('request_count', 0)+1)
             metrics['llm_latency_ms'] = metrics.get('llm_latency_ms', 0) + round((time.perf_counter()-t0)*1000, 2)
 
         # ── Case 1: Groq muốn gọi Tool ────────────────────────────────────
         if assistant_msg.tool_calls:
+            required_repair_round = force_tool_required
+            force_tool_required = False
             if metrics is not None:
                 metrics['tool_round_count'] = metrics.get('tool_round_count', 0) + 1
             if force_tools_disabled:
@@ -535,6 +588,8 @@ def groq_agent_chat(
 
             # Thực thi từng tool call
             repeated_signature = False
+            recoverable_write_denial = False
+            successful_required_repair = False
             for tc in assistant_msg.tool_calls:
                 if guarded and len(tool_calls_log) >= max_tool_rounds * 4:
                     return {"reply": "", "tool_calls_log": tool_calls_log,
@@ -593,6 +648,19 @@ def groq_agent_chat(
                     turn_tool_cache[tool_hash] = result
 
                 tool_calls_log.append({"tool": tool_name, "args": tool_args, "round": round_idx, "result": result})
+                if (guarded and isinstance(result, dict) and result.get("status") in {
+                        "unknown_product_reference", "cart_reference_conflict",
+                        "pending_quantity_conflict", "cart_quantity_conflict",
+                        "checkout_choice_conflict", "conflicting_cart_operations"}):
+                    recoverable_write_denial = True
+                    if result.get("status") == "conflicting_cart_operations":
+                        required_repair_tool = result.get("active_operation") or required_repair_tool or tool_name
+                    else:
+                        required_repair_tool = tool_name
+                if (required_repair_round and tool_name == required_repair_tool
+                        and isinstance(result, dict)
+                        and result.get("status") in {"ok", "already_processed"}):
+                    successful_required_repair = True
 
                 # Bắt tín hiệu checkout (Guardrail)
                 if tool_name == "request_checkout" and isinstance(result, dict):
@@ -609,10 +677,49 @@ def groq_agent_chat(
                 })
 
             if repeated_signature:
-                force_tools_disabled = True
+                force_tools_disabled = not required_repair_round
+                force_tool_required = required_repair_round
                 current_messages.append({
                     "role": "system",
-                    "content": "Use the tool results already provided and answer the user now. Do not request another tool.",
+                    "content": ("That read has already been performed. Correct the previously denied write using its "
+                                "structured recovery fields; do not repeat the read."
+                                if required_repair_round else
+                                "Use the tool results already provided and answer the user now. Do not request another tool."),
+                })
+            elif recoverable_write_denial:
+                # A safety denial is actionable protocol feedback, not a
+                # customer-facing outcome. Require the next response to repair
+                # the same write immediately so a prose attempt does not waste
+                # a tool-loop round. Exact recovery fields are in the tool
+                # result directly above; the gateway still revalidates them.
+                force_tool_required = True
+                current_messages.append({
+                    "role": "system",
+                    "content": ("The requested write was denied by server safety evidence. "
+                                "Retry the same operation now using the exact structured recovery fields. "
+                                "Do not switch operation types and do not answer with prose yet."),
+                })
+            elif successful_required_repair:
+                # The gateway accepted the corrected operation. Do not let the
+                # model mutate another target or repeat the write while it is
+                # merely composing the customer-facing response.
+                force_tools_disabled = True
+                required_repair_tool = None
+                current_messages.append({
+                    "role": "system",
+                    "content": ("The required correction succeeded. Answer the user now from the supplied result. "
+                                "Do not call another tool in this turn."),
+                })
+            elif required_repair_tool:
+                # A harmless read does not satisfy a pending write repair.
+                # Keep the loop constrained until the originally denied
+                # operation succeeds or the bounded tool budget is exhausted.
+                force_tool_required = True
+                current_messages.append({
+                    "role": "system",
+                    "content": (f"The required {required_repair_tool} correction is still pending. "
+                                "Call that operation now using the structured recovery fields; "
+                                "do not answer with prose yet."),
                 })
             # Tiếp tục vòng lặp để Groq đọc kết quả tool
             continue
@@ -622,6 +729,7 @@ def groq_agent_chat(
         issue = final_response_validator(reply_text) if final_response_validator else None
         if issue:
             if round_idx < max_tool_rounds and not force_tools_disabled:
+                force_tool_required = str(issue).startswith('TOOL_REQUIRED:')
                 current_messages.append({'role': 'system', 'content': issue})
                 continue
             return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,

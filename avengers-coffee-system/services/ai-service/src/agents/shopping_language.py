@@ -90,8 +90,8 @@ class ShoppingInterpretation:
     ambiguity: Tuple[Product, ...] = ()
 
 
-def shopping_quantity(message: str) -> int:
-    """One quantity interpretation for new shopping selections only."""
+def explicit_shopping_quantity(message: str) -> Optional[int]:
+    """Explicit unit-bearing quantity, for narrow mutation safety checks."""
     raw = unicodedata.normalize("NFD", str(message or "").casefold())
     plain = "".join(char for char in raw if unicodedata.category(char) != "Mn").replace("đ", "d")
     text = re.sub(r"\s+", " ", re.sub(r"[^\w#-]+", " ", plain)).strip()
@@ -100,10 +100,16 @@ def shopping_quantity(message: str) -> int:
              or re.search(r"(?<!\w)" + number + r"\s*(?:cai|ly|phan|mon)\b", text)
              or re.search(r"\bthem\s+" + number + r"\b", text))
     if not match:
-        return 1
+        return None
     words = dict(zip("mot hai ba bon tu nam sau bay tam chin muoi".split(),
                      (1, 2, 3, 4, 4, 5, 6, 7, 8, 9, 10)))
     return int(match[1]) if re.fullmatch(r"-?\d+", match[1]) else words[match[1]]
+
+
+def shopping_quantity(message: str) -> int:
+    """One quantity interpretation for new shopping selections only."""
+    quantity = explicit_shopping_quantity(message)
+    return 1 if quantity is None else quantity
 
 
 def _family(text: str) -> Optional[tuple[str, str, Optional[str], str]]:
@@ -120,6 +126,12 @@ def _family(text: str) -> Optional[tuple[str, str, Optional[str], str]]:
     if family == "matcha" and re.search(r"\b(?:nuoc|do uong|tra)\b", text):
         return "matcha", "drink", "matcha", "Matcha"
     return family, category, search, label
+
+
+def requested_product_category(message: str) -> Optional[str]:
+    """Return only a category explicitly evidenced by the current message."""
+    family = _family(normalize_shopping(message))
+    return family[1] if family and family[1] in {'drink', 'food'} else None
 
 
 def _unique_products(rows: Sequence[Product]) -> Tuple[Product, ...]:

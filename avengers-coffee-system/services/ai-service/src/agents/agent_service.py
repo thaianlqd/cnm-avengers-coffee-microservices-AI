@@ -2178,6 +2178,8 @@ def run_agent(
 ) -> Dict[str, Any]:
     """Choose one orchestrator before a turn; never fall back after a write."""
     import os
+    # Deployments select a mode explicitly. Keep the unconfigured library
+    # fallback compatible for direct callers and rollback-oriented unit tests.
     mode = os.getenv('AI_CHAT_ORCHESTRATOR_MODE', 'legacy').strip().lower()
     if mode not in {'legacy', 'llm_tools', 'shadow'}:
         raise ValueError('Invalid AI_CHAT_ORCHESTRATOR_MODE')

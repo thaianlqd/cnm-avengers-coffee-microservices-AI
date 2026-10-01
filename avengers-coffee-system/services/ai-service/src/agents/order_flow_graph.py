@@ -4457,7 +4457,13 @@ def _render(state: OrderConversationState) -> OrderConversationState:
         kept.append("Khi cần, bạn có thể yêu cầu mình xem menu, gợi ý món hoặc tra cứu cửa hàng.")
         result["reply"] = "\n".join(line for line in kept if line)
     invalidated = cart_manager.get_checkout_prefs(state["session_id"]).get("voucher_invalidated")
-    if invalidated:
+    intent_name = str((state.get("intent") or {}).get("intent") or "")
+    notice_tools = {"add_to_cart", "update_cart_item", "remove_cart_item", "get_cart",
+                    "get_cart_quote", "get_applicable_vouchers", "apply_voucher",
+                    "remove_voucher", "request_checkout", "confirm_checkout"}
+    notice_relevant = (any(owner in intent_name for owner in ("CART", "VOUCHER", "CHECKOUT"))
+                       or any(entry.get("tool") in notice_tools for entry in logs if isinstance(entry, dict)))
+    if invalidated and notice_relevant:
         result["reply"] = str(result.get("reply") or "") + f"\nMã {invalidated} không còn đủ điều kiện cho giỏ hiện tại; mình đã bỏ giảm giá cũ."
         cart_manager.set_checkout_context(state["session_id"], voucher_invalidated=None)
     payment_ui: Dict[str, Any] = {}

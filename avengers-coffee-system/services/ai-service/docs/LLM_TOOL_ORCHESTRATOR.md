@@ -1,6 +1,6 @@
 # LLM tool orchestration for customer ordering
 
-The existing public endpoint and Web payload contract stay in place. The mode is selected before a turn in `agent_service.run_agent`. Deployments default to `legacy`; local acceptance explicitly uses `llm_tools`.
+The existing public endpoint and Web payload contract stay in place. The mode is selected before a turn in `agent_service.run_agent`. Normal Compose development/demo startup defaults to `llm_tools`; `legacy` remains an explicit rollback mode. Direct library callers with no deployment configuration retain the legacy fallback for compatibility.
 
 ## Actual call paths
 
@@ -16,13 +16,13 @@ The gateway is the only executor map supplied to the new loop. It validates stri
 - `llm_tools`: model chooses capabilities and arguments; guarded tools execute. There is no automatic fallback to the graph after a write.
 - `shadow`: one bounded diagnostic proposal round with every executor blocked, no Redis save, no session writes. The legacy graph alone produces the customer response. This is a proposal diagnostic, not a second full tool simulation; it still incurs provider cost.
 
-Local activation (AI only):
+Normal local activation (AI only):
 
 ```sh
-AI_CHAT_ORCHESTRATOR_MODE=llm_tools docker compose up -d --no-deps --build ai-service
+docker compose up -d --no-deps --build ai-service
 ```
 
-Rollback uses the same command with `AI_CHAT_ORCHESTRATOR_MODE=legacy`. A rebuild has no source bind mount; always verify runtime source identity after edits.
+Compose defaults to `AI_AGENT_PROVIDER=openai` and `AI_AGENT_MODEL=gpt-4o-mini`. Override both explicitly for another compatible configured provider/model. Rollback uses the same command with `AI_CHAT_ORCHESTRATOR_MODE=legacy`; `shadow` remains available for diagnostics. A rebuild has no source bind mount; always verify runtime source identity after edits.
 
 ## Conversation hints and budgets
 
@@ -38,7 +38,7 @@ Provider usage, model, context/schema/history/memory size, latency, tool rounds,
 
 Menu/options and price providers, Order/cart, voucher, inventory, identity/geo and wallet tools retain authority. No service schema, RAG storage, frontend or Order implementation is rewritten. Tool schemas exclude client-controlled session/user IDs, prices, resolved coordinates and ownership flags.
 
-Writes require authentication, a client turn ID, current verified cart where applicable, exact canonical target and relevant business prerequisites. Stable operation IDs use existing mutation context and Order reconciliation. Repeated signatures within a turn execute once. Durable HTTP claims and processed-turn records handle retries/concurrency; Redis is not an idempotency store. Unknown write outcomes propagate to the HTTP reconciliation boundary, with no TypeError executor retry or graph fallback.
+Writes require authentication, a client turn ID, current verified cart where applicable, exact canonical target and relevant business prerequisites. Explicit cart ordinals/names are independently checked against the proposed line. A denied write must be repaired as the same operation; a different cart mutation is rejected. Once a required repair succeeds, the provider receives a tools-disabled completion round so it cannot mutate another target while composing prose. Stable operation IDs use existing mutation context and Order reconciliation. Repeated signatures within a turn execute once. Durable HTTP claims and processed-turn records handle retries/concurrency; Redis is not an idempotency store. Unknown write outcomes propagate to the HTTP reconciliation boundary, with no TypeError executor retry or graph fallback.
 
 Branch commitment requires a candidate shown before the current turn plus fresh cart availability verification. Location candidates retain provider coordinates; selected full delivery addresses are promoted through the existing deterministic location adapter without geocoding again. An updated product cannot also be added in the same turn. Incomplete product selections are draft state until valid options and provider price are resolved.
 
@@ -48,7 +48,7 @@ Checkout requires a nonempty current cart, no incomplete products, completed vou
 
 RAG retains its existing static/slow knowledge filters and canonical product resolution. Dynamic price, stock, voucher, payment and order data belong to their services. Unknown/missing evidence stays insufficient. Ingredient/allergen safeguards remain strict. Retrieved instructions are untrusted.
 
-The model returns an internal envelope; only validated natural text is public. Knowledge responses conservatively retain complete approved evidence (including qualifiers) and compound price responses append actual provider facts. This initial evidence strategy is less flexible than unconstrained paraphrasing. Unsupported currency claims, tool names, protocol JSON and unsupported mutation claims fall back to tool facts. The server generates cards, cart and checkout artifacts. Replay/authentication internals are stripped recursively from public results.
+The model returns an internal envelope; only validated natural text is public. Normal static knowledge may use a natural paraphrase only when the response cites the complete approved evidence and visibly overlaps it. Ingredient/allergen and failed-grounding cases retain conservative evidence text. Compound price responses append actual provider facts. Unsupported currency claims, tool names, protocol JSON and unsupported mutation claims fall back to tool facts. A pending final summary must be re-rendered through `request_checkout`; cart lines plus a quote cannot substitute for its canonical confirmation UI. The server generates cards, cart and checkout artifacts. Replay/authentication internals are stripped recursively from public results.
 
 ## Scope and capability audit
 

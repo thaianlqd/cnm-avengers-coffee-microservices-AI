@@ -3,6 +3,7 @@ from copy import deepcopy
 import hashlib
 import json
 import logging
+import re
 import time
 
 from src.agents.agent_context import business_state
@@ -11,6 +12,8 @@ from src.agents.tool_capabilities import CAPABILITIES, tool_schemas, validate_ar
 from src.common import cart_manager
 from src.function_calling.tools import TOOL_EXECUTORS
 from src.function_calling.tools import cart_tools, product_tools, branch_tools, voucher_tools
+from src.rag.authority import knowledge_route
+from src.rag.documents import normalize_text
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +37,8 @@ class GuardedToolGateway:
         self.entry_action = (context['business'].get('checkout') or {}).get('checkout_action_id')
         self.options = {}
         self.updated_products = set()
+        self.denied_cart_operation = None
+        self.request_route = knowledge_route(user_message)
         self.entry_branches = {str(r.get('branch_id') or r.get('ma_chi_nhanh')) for r in artifacts.visible.get('branches', [])}
         self.handlers = {name: getattr(self, '_'+name) for name in (
             'get_product_options', 'add_to_cart', 'update_cart_item', 'remove_cart_item', 'finish_cart',
@@ -78,7 +83,15 @@ class GuardedToolGateway:
             else:
                 handler = self.handlers.get(name)
                 try:
-                    result = handler(args) if handler else self._read(name, args)
+                    cart_mutations = {'add_to_cart', 'update_cart_item', 'remove_cart_item'}
+                    if name in cart_mutations and self.denied_cart_operation not in {None, name}:
+                        result = denied('conflicting_cart_operations',
+                            active_operation=self.denied_cart_operation, proposed_operation=name)
+                    else:
+                        result = handler(args) if handler else self._read(name, args)
+                        if (name in cart_mutations
+                                and result.get('status') not in {'ok', 'already_processed', 'needs_options'}):
+                            self.denied_cart_operation = name
                 except MutationOutcomeUnknown:
                     raise
                 except Exception as exc:
@@ -103,9 +116,41 @@ class GuardedToolGateway:
 
     def _read(self, name, args):
         args = dict(args)
+        if name == 'get_product_insights':
+            if self.request_route.get('owner') in {'rag', 'price', 'inventory', 'recommendation'}:
+                return denied('wrong_authority', requested_authority=self.request_route.get('owner'),
+                    allowed_tools=['get_product_description', 'search_knowledge_base']
+                    if self.request_route.get('owner') == 'rag' else ['filter_catalog', 'get_recommendations']
+                    if self.request_route.get('owner') == 'recommendation' else ['check_price_and_stock'])
+            proposed = normalize_text(args.get('product_name'))
+            known = list(self.artifacts.visible.get('products') or []) + self.context['business']['cart']['items']
+            focus = self.artifacts.focus.get('product') or self.context.get('focus', {}).get('product')
+            if focus:
+                known.append(focus)
+            exact = [row for row in known if normalize_text(row.get('product_name')) == proposed]
+            if not exact:
+                resolved = TOOL_EXECUTORS['filter_catalog'](
+                    {'category': 'all', 'search_text': args.get('product_name', ''), 'limit': 16}, self.session_id)
+                exact = [row for row in resolved.get('products', [])
+                         if normalize_text(row.get('product_name')) == proposed]
+            identities = {str(row.get('product_id')) for row in exact if row.get('product_id')}
+            if len(identities) != 1:
+                return denied('requires_product', reference=args.get('product_name'),
+                    recovery='Resolve one exact catalog product before requesting reviews.')
+            args['product_name'] = exact[0]['product_name']
         if name == 'get_recommendations':
             args['user_id'] = None  # No permanent preference inference in this BPM.
         if name in {'filter_catalog', 'get_recommendations'}:
+            # The model may carry a category from an older turn.  The current
+            # customer text is independent evidence for only this broad scope;
+            # it does not choose products or bypass the catalog provider.
+            from src.agents.shopping_language import requested_product_category
+            requested_category = requested_product_category(self.user_message)
+            proposed_category = args.get('category')
+            if proposed_category in {'drink', 'food'} and requested_category and proposed_category != requested_category:
+                args['category'] = requested_category
+            elif requested_category is None and proposed_category in {'drink', 'food'}:
+                args['category'] = 'all'
             key = 'limit' if name == 'filter_catalog' else 'top_k'
             args[key] = max(1, min(16, int(args.get(key, 5))))
         if name == 'find_nearest_branch':
@@ -140,7 +185,9 @@ class GuardedToolGateway:
     def _get_product_options(self, args):
         # Exact DB identity is safe even when Redis is absent; never resolve by
         # a model-supplied display name or trust a Redis option schema.
-        result = product_tools.execute_get_product_options(product_id=args['product_id'])
+        result = self.options.get(args['product_id'])
+        if result is None:
+            result = product_tools.execute_get_product_options(product_id=args['product_id'])
         if result.get('status') == 'ok' and str(result.get('product_id')) == args['product_id']:
             self.options[args['product_id']] = result
             self.artifacts.focus['product'] = {'product_id': args['product_id'],
@@ -156,7 +203,13 @@ class GuardedToolGateway:
             staged = next((row for row in self.context['business'].get('pending_products', [])
                            if str(row.get('product_id')) == product_id), {})
             values = {**{k: staged[k] for k in ('size', 'toppings', 'luong_da', 'do_ngot', 'loai_sua') if k in staged}, **values}
-            quantity = quantity if quantity is not None else staged.get('quantity', 1)
+            from src.agents.shopping_language import explicit_shopping_quantity
+            explicit_quantity = explicit_shopping_quantity(self.user_message)
+            expected_quantity = explicit_quantity if explicit_quantity is not None else staged.get('quantity', 1)
+            if staged and quantity is not None and int(quantity) != int(expected_quantity):
+                return None, denied('pending_quantity_conflict', expected_quantity=int(expected_quantity),
+                    recovery='Preserve the staged quantity unless the current message explicitly changes it.')
+            quantity = expected_quantity if staged else (quantity if quantity is not None else 1)
         groups, output, missing = option_schema_from_result(result), {}, []
         by_field = {option_field(g['name']): g for g in groups if option_field(g['name'])}
         for field, value in values.items():
@@ -203,7 +256,16 @@ class GuardedToolGateway:
         if args['product_id'] in self.updated_products:
             return denied('conflicting_cart_operations')
         if not self._product(args['product_id']):
-            return denied('unknown_product_reference')
+            # A full product name in the current message is stronger evidence
+            # than an old visible snapshot.  Resolve the proposed opaque ID
+            # through the canonical option provider and require an exact name
+            # match before allowing the normal option/price gates to continue.
+            resolved = self._get_product_options({'product_id': args['product_id']})
+            name = normalize_text(resolved.get('product_name')) if resolved.get('status') == 'ok' else ''
+            message = normalize_text(self.user_message)
+            if not name or not re.search(r'\b' + re.escape(name) + r'\b', message):
+                return denied('unknown_product_reference',
+                    recovery='Resolve a current canonical product or use an exact product name from the customer message.')
         values = {k: v for k, v in args.items() if k in {'size', 'toppings', 'luong_da', 'do_ngot', 'loai_sua'}}
         product, error = self._configured_product(args['product_id'], values, args.get('use_defaults', False), quantity=args.get('quantity'))
         if error:
@@ -229,13 +291,60 @@ class GuardedToolGateway:
         return next((r for r in self.context['business']['cart']['items']
                      if str(r.get('cart_item_id') or r.get('line_id')) == line_id), None)
 
+    def _cart_target_error(self, line):
+        """Independently validate explicit ordinal/name evidence before writes."""
+        from src.agents.selection_language import parse_selection_reference
+        reference = parse_selection_reference(self.user_message)
+        explicit_ordinal = None
+        if reference.requested and reference.namespace == 'CART_LINE':
+            if len(reference.ordinals) != 1:
+                return denied('ambiguous_cart_target')
+            explicit_ordinal = reference.ordinals[0]
+            if int(line.get('display_index') or 0) != explicit_ordinal:
+                expected = next((row for row in self.context['business']['cart']['items']
+                                 if int(row.get('display_index') or 0) == explicit_ordinal), None)
+                return denied('cart_reference_conflict', customer_ordinal=explicit_ordinal,
+                    proposed_ordinal=line.get('display_index'),
+                    expected_cart_item_id=str(expected.get('cart_item_id') or expected.get('line_id')) if expected else None,
+                    expected_product_name=expected.get('product_name') if expected else None)
+        cart_lines = self.context['business']['cart']['items']
+        named = [row for row in cart_lines if row.get('product_name')
+                 and normalize_text(row['product_name']) in normalize_text(self.user_message)]
+        named_products = {str(row.get('product_id')) for row in named}
+        if len(named_products) == 1:
+            named_product = next(iter(named_products))
+            if str(line.get('product_id')) != named_product:
+                return denied('cart_reference_conflict', customer_product_id=named_product,
+                    proposed_product_id=str(line.get('product_id')))
+            same_product = [row for row in cart_lines if str(row.get('product_id')) == named_product]
+            if len(same_product) > 1 and explicit_ordinal is None:
+                return denied('ambiguous_cart_target', candidates=[{
+                    'cart_item_id': str(row.get('cart_item_id') or row.get('line_id')),
+                    'display_index': row.get('display_index'), 'product_name': row.get('product_name')}
+                    for row in same_product])
+        return None
+
     def _update_cart_item(self, args):
         line = self._cart_line(args['cart_item_id'])
         if not line or not args['desired_state']:
             return denied('unknown_cart_line')
+        target_error = self._cart_target_error(line)
+        if target_error:
+            return target_error
         if args.get('cart_line_ordinal') and line.get('display_index') != args['cart_line_ordinal']:
-            return denied('cart_reference_conflict')
+            expected = next((row for row in self.context['business']['cart']['items']
+                             if int(row.get('display_index') or 0) == args['cart_line_ordinal']), None)
+            return denied('cart_reference_conflict', proposed_ordinal=line.get('display_index'),
+                expected_cart_item_id=str(expected.get('cart_item_id') or expected.get('line_id')) if expected else None,
+                expected_product_name=expected.get('product_name') if expected else None)
         patch = args['desired_state']
+        if 'quantity' in patch and args.get('cart_line_ordinal'):
+            from src.agents.shopping_language import explicit_shopping_quantity
+            expected_quantity = explicit_shopping_quantity(self.user_message)
+            if expected_quantity is not None and int(patch['quantity']) != expected_quantity:
+                return denied('cart_quantity_conflict', expected_quantity=expected_quantity,
+                    proposed_quantity=int(patch['quantity']),
+                    recovery='Use the explicit absolute quantity from the current customer message.')
         if all(line.get(key) == value for key, value in patch.items()):
             return {'status': 'already_processed', 'cart': cart_manager.get_cart(self.session_id), 'changed': False}
         values = {k: v for k, v in patch.items() if k != 'quantity'}
@@ -254,8 +363,15 @@ class GuardedToolGateway:
         line = self._cart_line(args['cart_item_id'])
         if not line:
             return denied('unknown_cart_line')
+        target_error = self._cart_target_error(line)
+        if target_error:
+            return target_error
         if args.get('cart_line_ordinal') and line.get('display_index') != args['cart_line_ordinal']:
-            return denied('cart_reference_conflict')
+            expected = next((row for row in self.context['business']['cart']['items']
+                             if int(row.get('display_index') or 0) == args['cart_line_ordinal']), None)
+            return denied('cart_reference_conflict', proposed_ordinal=line.get('display_index'),
+                expected_cart_item_id=str(expected.get('cart_item_id') or expected.get('line_id')) if expected else None,
+                expected_product_name=expected.get('product_name') if expected else None)
         result = self._write('remove_cart_item', args, lambda: cart_tools.execute_remove_cart_item(
             self.session_id, args['cart_item_id'], operation_id=self._operation_id('remove_cart_item', args)))
         if result.get('status') == 'ok':
@@ -347,6 +463,15 @@ class GuardedToolGateway:
     def _set_checkout_choices(self, args):
         if not args:
             return denied('missing_choice')
+        # Reuse the established deterministic parser only as independent safety
+        # evidence for explicit choices. The model still owns intent/planning.
+        from src.agents.agent_service import _explicit_checkout_choices
+        explicit = _explicit_checkout_choices(self.user_message)
+        conflicts = {key: {'expected': value, 'proposed': args.get(key)}
+                     for key, value in explicit.items() if args.get(key) and args[key] != value}
+        if conflicts:
+            return denied('checkout_choice_conflict', conflicts=conflicts,
+                recovery='Use the explicit current-turn checkout choice.')
         if args.get('payment_method') == 'VI_DIEN_TU':
             wallet_error = cart_tools.validate_wallet_selection(self.session_id)
             if wallet_error:
@@ -445,6 +570,10 @@ class GuardedToolGateway:
         return self._write('confirm_checkout', args, lambda: cart_tools.execute_confirm_checkout(self.session_id, action_id=args['action_id']))
 
     def _get_product_description(self, args):
+        if self.request_route.get('owner') in {'price', 'inventory', 'review'}:
+            return denied('wrong_authority', requested_authority=self.request_route.get('owner'),
+                allowed_tools=['get_product_insights'] if self.request_route.get('owner') == 'review'
+                else ['check_price_and_stock'])
         product = self._product(args['product_id'])
         if not product:
             return denied('unknown_product_reference')
@@ -454,6 +583,10 @@ class GuardedToolGateway:
     def _search_knowledge_base(self, args):
         from src.function_calling.tools.knowledge_tools import execute_search_knowledge_base
         args = dict(args)
+        if self.request_route.get('owner') in {'price', 'inventory', 'review'}:
+            return denied('wrong_authority', requested_authority=self.request_route.get('owner'),
+                allowed_tools=['get_product_insights'] if self.request_route.get('owner') == 'review'
+                else ['check_price_and_stock'])
         entity_id = args.get('entity_id')
         product = self._product(entity_id) if entity_id else None
         if entity_id and not product:

@@ -3,6 +3,7 @@ import hashlib
 import json
 import re
 from src.agents.agent_memory import compact, snapshot, safe_text
+from src.rag.documents import normalize_text
 
 SUCCESS = {'ok', 'require_confirmation', 'already_processed', 'need_branch_selection', 'ambiguous'}
 RAG_TOOLS = {'search_knowledge_base', 'get_product_description'}
@@ -27,7 +28,7 @@ def candidate_id(row):
 
 
 class ToolArtifacts:
-    def __init__(self, memory, knowledge_question=None):
+    def __init__(self, memory, knowledge_question=None, context=None):
         # Existing knowledge authority is an output safety boundary for
         # ingredient/allergen claims, even if the model proposes a wrong read.
         from src.rag.authority import knowledge_route
@@ -36,6 +37,10 @@ class ToolArtifacts:
         self.knowledge_question = knowledge_question or ''
         self.visible = dict(memory.get('visible_snapshots') or {})
         self.focus = dict(memory.get('focus') or {})
+        pending_products = ((context or {}).get('business') or {}).get('pending_products') or []
+        self.has_canonical_product = bool(self.focus.get('product') or len(pending_products) == 1)
+        pending = ((context or {}).get('business') or {}).get('pending') or {}
+        self.has_pending_confirmation = pending.get('type') == 'confirm_checkout'
         self.logs = []
         self.ui = {'products': [], 'vouchers': [], 'branches': [], 'actions': []}
         self.checkout = None
@@ -114,6 +119,12 @@ class ToolArtifacts:
             return '\n'.join(lines)
         for row in reversed(self.logs):
             result = row['result']
+            if row['tool'] == 'get_product_insights' and result.get('status') == 'ok':
+                name, rating = result.get('product_name'), result.get('rating')
+                if name and rating is not None:
+                    return f"{name} hiện có điểm đánh giá {rating}/5 từ dữ liệu khách hàng."
+        for row in reversed(self.logs):
+            result = row['result']
             cart = result.get('cart') or {}
             if result.get('status') in {'ok', 'already_processed'} and cart.get('items'):
                 items = [f"{r['product_name']} x{r['quantity']}" for r in cart['items']
@@ -131,11 +142,45 @@ class ToolArtifacts:
         if not isinstance(envelope, dict) or not isinstance(envelope.get('reply'), str):
             return 'Return the required JSON envelope with a string reply.'
         if not self.logs and envelope.get('response_kind') not in {'social', 'clarification'}:
-            return 'There is no current tool evidence. Call the appropriate capability for consultation or action. History is not factual authority.'
+            return ('TOOL_REQUIRED: There is no current tool evidence. You MUST call the appropriate capability now. '
+                    'For product discovery use filter_catalog/get_recommendations; for a fact use its authority. History is not factual authority.')
+        if (not self.logs and envelope.get('response_kind') == 'clarification'
+                and self.safety_facet and self.has_canonical_product):
+            return ('TOOL_REQUIRED: One canonical product is already established. Use get_product_description '
+                    'or search_knowledge_base for this static product facet instead of asking which product.')
+        denied_statuses = {'wrong_authority', 'requires_product', 'unknown_product_reference'}
+        if (envelope.get('response_kind') and self.logs
+                and all(row['result'].get('status') in denied_statuses for row in self.logs)):
+            return ('TOOL_REQUIRED: The proposed authority/target was denied. Call a capability from the structured '
+                    'recovery information, or ask one clarification when no safe canonical target exists.')
+        from src.agents.tool_capabilities import WRITES
+        successful_writes = {row['tool'] for row in self.logs
+            if row['tool'] in WRITES and row['result'].get('status') in {'ok', 'already_processed'}}
+        successful_tools = {row['tool'] for row in self.logs
+            if row['result'].get('status') in SUCCESS}
+        if (self.has_pending_confirmation
+                and {'get_cart', 'get_cart_quote'} <= successful_tools
+                and 'request_checkout' not in successful_tools):
+            return ('TOOL_REQUIRED: Cart lines and a quote do not render the canonical confirmation UI. '
+                    'Call request_checkout with reuse_summary=true to show the pending order summary again.')
+        recoverable_write_denials = {'unknown_product_reference', 'cart_reference_conflict',
+            'pending_quantity_conflict', 'cart_quantity_conflict', 'checkout_choice_conflict',
+            'conflicting_cart_operations'}
+        unresolved_denials = []
+        for row in self.logs:
+            result = row['result']
+            if row['tool'] not in WRITES or result.get('status') not in recoverable_write_denials:
+                continue
+            expected_tool = (result.get('active_operation')
+                             if result.get('status') == 'conflicting_cart_operations' else row['tool'])
+            if expected_tool not in successful_writes:
+                unresolved_denials.append(expected_tool)
+        if envelope.get('response_kind') and unresolved_denials:
+            return ('TOOL_REQUIRED: A requested write was denied by independent safety evidence. '
+                    'Correct the canonical target/arguments from the structured result and retry the unresolved operation: '
+                    + ', '.join(sorted(set(unresolved_denials))) + '.')
         if self.logs and all(row['result'].get('status') == 'invalid_arguments' for row in self.logs):
             return 'The tool arguments failed schema validation. Correct them using required_fields and allowed_fields from the result, then call the appropriate capability.'
-        if envelope.get('evidence_quotes') and not any(row['tool'] in RAG_TOOLS for row in self.logs):
-            return 'Knowledge evidence must come from RAG documents, not review ratings. Call get_product_description or search_knowledge_base for the knowledge question.'
         return None
 
     def validate_reply(self, raw):
@@ -150,7 +195,6 @@ class ToolArtifacts:
             return self.factual_fallback()
         if self.safety_facet in {'ingredient', 'allergen'}:
             from src.function_calling.tools.knowledge_tools import INSUFFICIENT_MESSAGE
-            from src.rag.documents import normalize_text
             evidence = [row['result'] for row in self.logs if row['tool'] in RAG_TOOLS]
             docs = [doc for result in evidence for doc in result.get('results', [])]
             if self.safety_facet == 'allergen':
@@ -190,9 +234,19 @@ class ToolArtifacts:
                     quotes = []
                     break
                 quotes.append(quote)
+            valid_grounding = bool(quotes)
             if not quotes:
                 quotes = [d['content'] for d in list(docs.values())[:2]]
-            reply = 'Theo tài liệu hiện có:\n' + '\n'.join(quotes)
+            evidence_words = {word for quote in quotes for word in normalize_text(quote).split()
+                              if len(word) >= 3 and word not in {'theo', 'hien', 'thong', 'tin', 'khach', 'hang'}}
+            reply_words = set(normalize_text(reply).split())
+            natural_grounding_visible = bool(evidence_words & reply_words)
+            # Normal static knowledge may use a cited natural paraphrase when
+            # its customer-facing text visibly overlaps the approved evidence.
+            # Safety facets, invalid citations and generic filler keep exact text.
+            if (not valid_grounding or not natural_grounding_visible
+                    or self.safety_facet in {'ingredient', 'allergen'}):
+                reply = 'Theo tài liệu hiện có:\n' + '\n'.join(quotes)
             # A compound consultation may also request current price. Preserve
             # the approved knowledge qualifiers and append only provider facts.
             prices = [r for row in self.logs if row['tool'] == 'check_price_and_stock'
@@ -202,10 +256,10 @@ class ToolArtifacts:
                      for r in prices if r.get('product_name') and r.get('final_price') is not None]
             if facts:
                 reply += '\nGiá hiện tại:\n' + '\n'.join(facts)
-        successful = {r['tool'] for r in self.logs if r['result'].get('status') in {'ok', 'already_processed'}}
+        successful = {r['tool'] for r in self.logs
+                      if r['result'].get('status') in {'ok', 'already_processed', 'require_confirmation'}}
         if any(name not in successful for name in claims):
             return self.factual_fallback()
-        from src.rag.documents import normalize_text
         normalized = normalize_text(reply)
         # Output claims require evidence for that specific business operation.
         # These checks validate response claims; they never route user language.

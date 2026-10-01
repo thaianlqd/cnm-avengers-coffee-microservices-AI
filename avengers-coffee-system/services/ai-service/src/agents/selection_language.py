@@ -25,7 +25,7 @@ PRODUCT_REFERENCE_CATEGORIES = {
     "do uong": "drink", "thuc uong": "drink", "nuoc": "drink",
     "do an": "food", "banh": "food", "san pham": None, "mon": None,
 }
-_CART_LINE_PATTERN = r"dong|(?:mon|san\s+pham)\s+trong\s+gio(?:\s+hang)?"
+_CART_LINE_PATTERN = r"dong|ly|(?:mon|san\s+pham)\s+trong\s+gio(?:\s+hang)?"
 _NAMESPACE_PATTERNS = (
     ("PAYMENT", r"phuong\s+thuc\s+thanh\s+toan|cach\s+thanh\s+toan|thanh\s+toan"),
     ("FULFILLMENT", r"hinh\s+thuc\s+nhan\s+hang|cach\s+nhan\s+hang"),
@@ -147,6 +147,17 @@ def parse_selection_reference(
         else:
             values.append(_ordinal(match.group("number")))
             spans.append((namespace_match.end() + match.start(), namespace_match.end() + match.end()))
+
+        # Accent folding makes Vietnamese “đầu” (first) and “đâu” (where/not)
+        # identical.  Accept the short ordinal only for an explicitly accented
+        # cart-line noun, so voucher refusals ending in “đâu” stay negative.
+        if (not values and namespace == "CART_LINE"
+                and re.search(r"(?<!\w)(?:ly|dòng)\s+đầu(?!\w)", original)):
+            short_first = re.match(r"\s*dau\b", after)
+            if short_first:
+                values.append(1)
+                spans.append((namespace_match.end() + short_first.start(),
+                              namespace_match.end() + short_first.end()))
 
     if not values:
         first = re.search(

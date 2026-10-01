@@ -77,6 +77,14 @@ def redis_client():
         socket_connect_timeout=0.3, socket_timeout=0.3)
 
 
+def redis_available():
+    """Cheap, non-sensitive readiness probe used by startup and health."""
+    try:
+        return bool(redis_client().ping())
+    except Exception:
+        return False
+
+
 class ConversationMemory:
     def __init__(self, client=None):
         self.client = client
