@@ -10,6 +10,7 @@ class SelectionReference:
     requested: bool = False
     ordinals: Tuple[int, ...] = ()
     namespace: Optional[str] = None
+    operation_semantics: str = "UNKNOWN"
 
 
 _WORD_ORDINALS = {
@@ -62,6 +63,31 @@ def _address_like_tail(text: str, end: int, namespace: Optional[str]) -> bool:
     return bool(tail and tail not in _TAIL_FILLERS)
 
 
+def _operation_semantics(text: str, namespace: Optional[str]) -> str:
+    """Classify what the customer wants to do with a numbered reference.
+
+    This is deliberately domain-light: namespaces identify the object, while a
+    small composable verb/question grammar separates reading, selecting and
+    mutating.  Callers still own all business validation and state transitions.
+    """
+    if re.search(
+        r"\b(?:la\s+gi|bao\s+nhieu|thong\s+tin|review|danh\s+gia|nhan\s+xet|"
+        r"the\s+nao|gia(?:\s+bao\s+nhieu)?|giam\s+bao\s+nhieu)\b",
+        text,
+    ):
+        return "INFO_REFERENCE"
+    if re.search(r"\b(?:xoa|bo|go|doi|sua|chinh|cap\s+nhat|tang|giam)\b", text):
+        return "MUTATE_REFERENCE"
+    if namespace == "VOUCHER" and re.search(r"\b(?:ap|dung|su\s+dung)\b", text):
+        return "MUTATE_REFERENCE"
+    if re.search(
+        r"\b(?:chon|lay|mua|them|dat)\b|\b(?:cho|lam)\s+(?:toi|minh)\b",
+        text,
+    ):
+        return "SELECT_REFERENCE"
+    return "UNKNOWN"
+
+
 def parse_selection_reference(
     message: str,
     *,
@@ -84,6 +110,7 @@ def parse_selection_reference(
     if not text:
         return SelectionReference()
     namespace, namespace_match = _namespace(text)
+    operation_semantics = _operation_semantics(text, namespace)
 
     spans = []
     values = []
@@ -119,9 +146,9 @@ def parse_selection_reference(
             spans.append(bare.span())
 
     if not values:
-        return SelectionReference(namespace=namespace)
+        return SelectionReference(namespace=namespace, operation_semantics=operation_semantics)
     if _address_like_tail(text, spans[0][1], namespace):
-        return SelectionReference(namespace=namespace)
+        return SelectionReference(namespace=namespace, operation_semantics=operation_semantics)
 
     if allow_multiple:
         cursor = spans[-1][1]
@@ -135,4 +162,4 @@ def parse_selection_reference(
             values.append(_ordinal(continuation.group("number")))
             cursor += continuation.end()
 
-    return SelectionReference(True, tuple(values), namespace)
+    return SelectionReference(True, tuple(values), namespace, operation_semantics)

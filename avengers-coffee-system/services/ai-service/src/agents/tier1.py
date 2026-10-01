@@ -74,10 +74,17 @@ def has_positive_browsing_evidence(text: str) -> bool:
 def has_option_evidence(text: str) -> bool:
     raw = str(text or "").lower()
     norm = normalize_confirmation_text(text)
-    return bool(re.search(
-        r"\b(size|kich thuoc|kich co|nho|vua|lon|topping|toping|do kem|da|ngot|duong|loai sua|milk)\b",
+    named_option = bool(re.search(
+        r"\b(size|kich thuoc|kich co|nho|vua|lon|topping|toping|do kem|ngot|duong|loai sua|milk)\b",
         norm,
-    )) or "sữa" in raw
+    ))
+    # Accent folding makes past-tense “đã” collide with the ice noun “đá”.
+    # Accept unaccented ice only in an option-shaped phrase, not from a lone
+    # grammatical “đã” in sentences such as “tôi đã xong giỏ”.
+    ice_option = "đá" in raw or bool(re.search(
+        r"\b(?:luong da|it da|nhieu da|khong da|da rieng|da binh thuong)\b", norm,
+    ))
+    return named_option or ice_option or "sữa" in raw
 
 
 def has_cart_edit_action(text: str) -> bool:

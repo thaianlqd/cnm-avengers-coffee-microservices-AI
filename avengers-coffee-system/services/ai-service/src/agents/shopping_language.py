@@ -109,12 +109,15 @@ def _unique_products(rows: Sequence[Product]) -> Tuple[Product, ...]:
 
 def _product_matches(text: str, products: Sequence[Product], *, exact: bool) -> Tuple[Product, ...]:
     matches = []
+    exact_spans = []
     for product in _unique_products(products):
         title = normalize_shopping(product.get("product_name"))
         if not title:
             continue
-        if re.search(r"\b" + re.escape(title) + r"\b", text):
+        title_spans = [match.span() for match in re.finditer(r"\b" + re.escape(title) + r"\b", text)]
+        if title_spans:
             matches.append(product)
+            exact_spans.append((product, title, title_spans))
             continue
         if exact:
             continue
@@ -127,6 +130,23 @@ def _product_matches(text: str, products: Sequence[Product], *, exact: bool) -> 
                    for start in range(len(tokens) - size + 1)):
                 matches.append(product)
                 break
+    if exact and len(exact_spans) > 1:
+        # A canonical full name can contain another canonical name (for example
+        # a capacity-prefixed product and its regular-size sibling).  Keep the
+        # shorter product only when it also appears in its own non-overlapping
+        # clause; an overlapping substring is not a second customer selection.
+        kept = []
+        for product, title, spans in exact_spans:
+            independent = any(not any(
+                other_title != title
+                and len(other_title) > len(title)
+                and other_start <= start and end <= other_end
+                for _other, other_title, other_spans in exact_spans
+                for other_start, other_end in other_spans
+            ) for start, end in spans)
+            if independent:
+                kept.append(product)
+        matches = kept
     return _unique_products(matches)
 
 
@@ -144,7 +164,7 @@ def is_family_only(message: str, family_name: Optional[str]) -> bool:
         # content word (e.g. "muối", "kem dừa") makes it a product query.
         frame = set("ben ban minh toi quan o day co ban muon can mua dat lay them cho lam xem tim "
                     "menu thuc don gi nao loai mon cac nhung duoc khong di nhe nha ne nhi "
-                    "the vay a oi b hen voi".split()) | _DISCOURSE_FRAME_WORDS
+                    "the vay a oi b hen voi dang hien".split()) | _DISCOURSE_FRAME_WORDS
         if set(remainder.split()).issubset(frame):
             return True
     return False

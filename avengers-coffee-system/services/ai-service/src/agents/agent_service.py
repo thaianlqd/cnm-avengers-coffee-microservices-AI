@@ -766,6 +766,7 @@ def _confirm_saved_location(
     session_id: str,
     message: str,
     history: Optional[List[Dict[str, str]]] = None,
+    resolved_location: Optional[Dict[str, Any]] = None,
 ) -> Optional[Dict[str, Any]]:
     prefs = cart_manager.get_checkout_prefs(session_id)
     from src.function_calling.tools.user_tools import _clean_profile_address
@@ -808,7 +809,10 @@ def _confirm_saved_location(
         address_confirmed=None, delivery_address=None, branch_candidates=None,
         summary_amounts=None, checkout_action_id=None,
         checkout_action_expires_at=None)
-    nearest = execute_find_nearest_branch(location=suggested, session_id=session_id)
+    nearest = execute_find_nearest_branch(
+        location=suggested, session_id=session_id,
+        **({"resolved_location": resolved_location} if resolved_location else {}),
+    )
     log = [{"tool": "find_nearest_branch", "result": nearest}]
     if prefs.get("location_source") == "explicit_user" and nearest.get("normalized_location"):
         from src.agents.location_parser import merge_store_location

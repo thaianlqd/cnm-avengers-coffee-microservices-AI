@@ -228,7 +228,7 @@ _ADMIN = (
 )
 
 _SAVED_ADDRESS_REFERENCE = re.compile(
-    r"\b(?:dia chi (?:do|nay|tren|kia|vua (?:noi|roi)|da luu|(?:trong )?ho so)|"
+    r"\b(?:dia chi (?:do|nay|tren|kia|vua (?:noi|roi)|da luu|(?:trong )?(?:ho so|tai khoan))|"
     r"(?:o|cho) do|cho nay)\b"
 )
 
