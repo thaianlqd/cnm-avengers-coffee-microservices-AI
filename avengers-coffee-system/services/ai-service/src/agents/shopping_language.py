@@ -23,6 +23,32 @@ def normalize_shopping(value: Any) -> str:
     return re.sub(r"\b(?:k|ko)\b", "khong", text)
 
 
+def without_targetless_future_clause(message: str) -> str:
+    """Keep the current request when a purpose/future clause has no target.
+
+    A named product, ordinal, option or deictic target leaves the clause intact.
+    This is discourse structure, independent of catalog and location identities.
+    """
+    for boundary in re.finditer(r'[,;]|\s+(?=(?:để|de|rồi|roi|lát|lat|tí|ti|chút|chut)\b)',
+                                message, re.IGNORECASE):
+        tail = normalize_shopping(message[boundary.end():])
+        if not re.search(r'\b(?:de|roi|lat|ti|chut)\b', tail):
+            continue
+        if re.fullmatch(r'(?:(?:de|roi)\s+)?(?:(?:toi|minh)\s+)?'
+                        r'(?:(?:lat(?: nua)?|ti|chut(?: nua)?)\s+)?'
+                        r'(?:(?:toi|minh)\s+)?(?:muon\s+)?(?:chon|mua|lay|them|dat)'
+                        r'(?:\s+(?:do|mon|hang))?(?:\s+(?:nha|nhe|a))?', tail):
+            return message[:boundary.start()].rstrip(' ,;')
+    return message
+
+
+def is_deictic_selection(message: str) -> bool:
+    """A deictic target plus directive particle is positive selection evidence."""
+    return '?' not in message and bool(re.fullmatch(
+        r'(?:mon|cai|banh|nuoc|san pham)\s+(?:nay|do|kia)\s+(?:di|nhe|nha)(?:\s+luon)?',
+        normalize_shopping(message)))
+
+
 _FAMILIES = (
     ("moon_cake", "food", "Bánh Trung Thu", "Bánh Trung Thu", ("banh trung thu",)),
     ("savory_cake", "food", "Bánh Mặn", "Bánh mặn", ("banh man",)),
@@ -154,7 +180,7 @@ def is_family_only(message: str, family_name: Optional[str]) -> bool:
     """Recognize a family plus speech frame, with no unaccounted product words."""
     if not family_name:
         return False
-    text = re.sub(r"\bdat hang\b", "dat", normalize_shopping(message))
+    text = re.sub(r"\bdat hang\b", "dat", normalize_shopping(without_targetless_future_clause(message)))
     phrases = next((row[4] for row in _FAMILIES if row[0] == family_name), ())
     for phrase in sorted(phrases, key=len, reverse=True):
         remainder, count = re.subn(r"\b" + re.escape(phrase) + r"\b", " ", text, count=1)

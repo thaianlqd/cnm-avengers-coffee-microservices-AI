@@ -1236,11 +1236,13 @@ def _is_standalone_location_statement(message: str, kind: str) -> bool:
     checkout. Outside checkout, a quantity such as ``2 ly cà phê`` must not be
     promoted into conversation location context.
     """
-    if has_positive_browsing_evidence(message) or has_transaction_evidence(message):
+    from src.agents.shopping_language import without_targetless_future_clause
+    current = without_targetless_future_clause(message)
+    if has_positive_browsing_evidence(current) or has_transaction_evidence(current):
         return False
-    text = _norm(message)
+    text = _norm(current)
     location_intro = bool(re.search(
-        r"^\s*(?:(?:toi|minh)(?:\s+dang)?\s+o|o|tai|gan|dia chi(?:\s+moi)?(?:\s+la)?)\b",
+        r"^\s*(?:(?:toi|minh)(?:\s+dang)?\s+o|dang o|o|tai|gan|dia chi(?:\s+moi)?(?:\s+la)?)\b",
         text,
     ))
     admin_evidence = bool(re.search(
@@ -2042,6 +2044,9 @@ def _resolve_focused_add_target(session_id: str, message: str) -> Optional[Dict[
     focus = cart_manager.get_checkout_prefs(session_id).get("last_product_focus") or {}
     if not focus.get("product_id") or not focus.get("product_name"):
         return None
+    from src.agents.shopping_language import is_deictic_selection
+    if is_deictic_selection(message):
+        return focus
     text = _norm(message)
     action = re.search(r"\b(?:them|lay|mua|chon|dat)\b", text)
     if not action or re.search(r"\b(?:xem|goi y|tim)\s+them\b", text):
@@ -2081,7 +2086,9 @@ def _category_search_message(message: str) -> Optional[str]:
 
 def _is_direct_product_selection(message: str, refs: List[Dict[str, Any]]) -> bool:
     """Recognize selection language around a canonical product from the latest list."""
-    return bool(refs) and interpret_shopping(message, snapshot=refs).act == "ADD_ITEM"
+    from src.agents.shopping_language import is_deictic_selection
+    return bool(refs) and (interpret_shopping(message, snapshot=refs).act == "ADD_ITEM"
+                           or len(refs) == 1 and is_deictic_selection(message))
 
 
 def _shopping_decision(state: OrderConversationState, tier1_intent: Dict[str, Any],
@@ -2201,6 +2208,20 @@ def _browse_ask_more(state: OrderConversationState) -> Dict[str, Any]:
 
 def _understand(state: OrderConversationState) -> OrderConversationState:
     prefs_at_entry = cart_manager.get_checkout_prefs(state["session_id"])
+    # Short observational questions use the same canonical context as RAG.
+    # Resolve before card selection or pending-option interpretation can consume them.
+    from src.rag.authority import knowledge_route
+    from src.rag.product_context import resolve_product_context
+    read_owner = knowledge_route(state["user_message"])["owner"]
+    if read_owner in {"review", "price", "inventory"}:
+        product = resolve_product_context(state["user_message"], state["session_id"],
+                                          state.get("selected_product_id"))
+        if product or state.get("selected_product_id"):
+            return {**state, "intent": {
+                "intent": "PRODUCT_REVIEW" if read_owner == "review" else "PRODUCT_INFO",
+                "products": [product] if product else [],
+                "info_owner": read_owner, "preserve_primary_pending": True,
+            }}
     retry_focus = prefs_at_entry.get("last_product_focus") or {}
     if retry_focus.get("option_retry_pending") and re.search(
         r"\b(?:thu lai|lam lai|kiem tra lai|tiep tuc)\b", _norm(state["user_message"])
@@ -2233,7 +2254,10 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         # fresh add, browse request, or generic LLM question.
         return {**state, "intent": {"intent": "FILL_OPTIONS", "reconciliation": True}}
     selected_id = str(state.get("selected_product_id") or "").strip()
-    if selected_id:
+    from src.agents.shopping_language import is_deictic_selection
+    card_add = (classify_order_intent(state["user_message"], None).get("intent") == "ADD_ITEM"
+                or is_deictic_selection(state["user_message"]))
+    if selected_id and card_add:
         # The card supplies an identity hint, never business data. Resolve it
         # again against the active catalog before the normal options flow.
         canonical = next((product for product in _load_active_product_targets()
@@ -3245,11 +3269,13 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         logs = []
         for row in rows:
             price = row.get("final_price") or row.get("price") or row.get("gia_ban")
-            if price is None:
+            inventory_info = intent.get("info_owner") == "inventory"
+            if price is None or inventory_info:
                 from src.function_calling.tools.product_tools import execute_check_price_and_stock
                 checked = execute_check_price_and_stock(
                     product_name_query=str(row.get("product_name") or ""),
-                    branch_id="Chưa chọn", session_id=session_id,
+                    branch_id=(cart.get("branch_id") or "Chưa chọn") if inventory_info else "Chưa chọn",
+                    session_id=session_id,
                 )
                 logs.append({"tool": "check_price_and_stock", "args": {
                     "product_name_query": row.get("product_name")}, "result": checked})
@@ -3258,6 +3284,18 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
                               if _norm(item.get("product_name")) == _norm(row.get("product_name"))),
                              products[0] if len(products) == 1 else None)
                 price = (exact or {}).get("final_price") or (exact or {}).get("price")
+                if inventory_info:
+                    availability = ((exact or {}).get("availability_status")
+                                    if checked.get("status") == "ok" and
+                                    str((exact or {}).get("product_id")) == str(row.get("product_id"))
+                                    else None)
+                    if availability in {"available", "unavailable"}:
+                        lines.append(f"{row.get('product_name')}: " +
+                                     ("còn hàng tại điểm bán đã chọn." if availability == "available"
+                                      else "hiện không có hàng tại điểm bán đã chọn."))
+                    else:
+                        lines.append(f"Mình chưa xác minh được tồn kho của {row.get('product_name')} tại điểm bán.")
+                    continue
             if price is None:
                 lines.append(f"Mình chưa xác minh được giá hiện tại của {row.get('product_name')}.")
             else:
@@ -4016,6 +4054,10 @@ def _render(state: OrderConversationState) -> OrderConversationState:
     result = dict(state.get("result") or {})
     prefs = cart_manager.get_checkout_prefs(state["session_id"])
     result["conversation_state"] = prefs.get("flow_stage") or ("VOUCHER" if prefs.get("voucher_offer_pending") else "CART_REVIEW")
+    if ((state.get("intent") or {}).get("preserve_primary_pending")
+            and (state.get("intent") or {}).get("intent") in {"PRODUCT_REVIEW", "PRODUCT_INFO"}):
+        # These service reads must not rewrite focus/snapshots or resume checkout.
+        return {**state, "result": result}
     logs = result.get("tool_calls_log") or []
     branches: List[Dict[str, Any]] = []
     vouchers: List[Dict[str, Any]] = []

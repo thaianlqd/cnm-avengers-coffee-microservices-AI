@@ -64,7 +64,7 @@ def grounded_answer(query, result):
 
 
 def try_knowledge_consultation(session_id, user_message, selected_product_id=None):
-    if selected_product_id or knowledge_route(user_message)['owner'] != 'rag':
+    if knowledge_route(user_message)['owner'] != 'rag':
         return None
     # Existing deterministic selection evidence also wins in mixed messages.
     from src.agents.tier1 import classify_order_intent
@@ -79,7 +79,7 @@ def try_knowledge_consultation(session_id, user_message, selected_product_id=Non
         from src.agents.option_state import mentions_pending_option_value
         for clause in re.split(r'[,;.!?]|\b(?:và|va|rồi|roi)\b', user_message.lower()):
             text = normalize_text(clause)
-            if not re.search(r'\b(?:gi|the nao|khong|co|thanh phan|nguyen lieu)\b', text) and (
+            if not re.search(r'\b(?:gi|sao|ntn|the nao|khong|co|thanh phan|nguyen lieu)\b', text) and (
                 re.search(r'\bsize\s+\S+|^(?:it|nhieu)\s+(?:da|duong|ngot)|^(?:sua|topping)\s+\S+', text)
                 or mentions_pending_option_value(clause, prefs.get('pending_products') or [])
             ):
@@ -89,7 +89,8 @@ def try_knowledge_consultation(session_id, user_message, selected_product_id=Non
     if not safe:
         return {'reply': guardrails.get_block_reply(reason or ''), 'checkout_payload': None,
                 'tool_calls_log': [], 'error': f'blocked:{reason}'}
-    result = execute_search_knowledge_base(user_message, session_id=session_id)
+    result = execute_search_knowledge_base(user_message, session_id=session_id,
+        selected_product_id=selected_product_id)
     reply, _ = guardrails.check_output(grounded_answer(user_message, result))
     return {'reply': reply, 'checkout_payload': None, 'error': None,
             'route_owner': 'knowledge',

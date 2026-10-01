@@ -206,7 +206,7 @@ def merge_store_location(previous: Dict[str, Any] | None, fragment: str) -> Dict
 
 _PREFIX = re.compile(
     r"^(?:(?:không|ko)[,\s]+)?(?:(?:tôi|mình)(?:\s+đang)?\s+ở|"
-    r"(?:toi|minh)(?:\s+dang)?\s+o|dia\s+chi(?:\s+cua)?(?:\s+(?:toi|minh))?\s+(?:o|la)|"
+    r"(?:toi|minh)(?:\s+dang)?\s+o|(?:đang\s+ở|dang\s+o)|dia\s+chi(?:\s+cua)?(?:\s+(?:toi|minh))?\s+(?:o|la)|"
     r"địa\s+chỉ(?:\s+của)?(?:\s+(?:tôi|mình))?\s+(?:ở|là)|"
     r"(?:đổi|thay)(?:\s+địa\s+chỉ)?\s+sang|địa\s+chỉ(?:\s+mới)?(?:\s+là)?|"
     r"giao\s+(?:đến|tới|qua))\s*[:：]?\s*", re.IGNORECASE,
@@ -307,7 +307,8 @@ def complete_partial_delivery_address(partial: str, fragment: str) -> Location |
 
 
 def parse_location(message: str) -> Location:
-    raw = str(message or "").strip(" \t\r\n.!?")
+    from src.agents.shopping_language import without_targetless_future_clause
+    raw = without_targetless_future_clause(str(message or "")).strip(" \t\r\n.!?")
     if not raw:
         return Location("none")
     # A new numbered street address wins even if the customer first rejects
