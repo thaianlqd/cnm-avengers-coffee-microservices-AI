@@ -105,6 +105,35 @@ def _admin_fields(place: dict) -> dict[str, list[str]]:
     }
 
 
+def _admin_constraints(query: str, admin_hints: tuple[str, ...] = ()) -> dict[str, tuple[str, ...]]:
+    """Return explicit administrative constraints grouped by semantic level."""
+    source = list(admin_hints) or [part.strip() for part in str(query or "").split(",")]
+    constraints: dict[str, list[str]] = {"ward": [], "district": [], "city": []}
+    for component in source:
+        level, name = _admin_identity(component)
+        if not name:
+            continue
+        field = (
+            "ward" if level in {"phuong", "xa"} else
+            "district" if level in {"quan", "huyen"} else
+            "city" if level in {"thanh pho", "tinh"} else
+            None
+        )
+        if field and component not in constraints[field]:
+            constraints[field].append(component)
+    return {field: tuple(values) for field, values in constraints.items() if values}
+
+
+def _admin_constraints_match(constraints: dict[str, tuple[str, ...]], place: dict) -> bool:
+    """Require place-detail evidence for every explicit admin component."""
+    fields = _admin_fields(place)
+    return all(
+        any(_name_equivalent(requested, candidate) for candidate in fields.get(field, []))
+        for field, requested_values in constraints.items()
+        for requested in requested_values
+    )
+
+
 def _admin_hint_matches(hint: str, place: dict) -> bool:
     level, _ = _admin_identity(hint)
     fields = _admin_fields(place)
@@ -273,6 +302,7 @@ def resolve_location(query: str, kind: str = "admin_area",
             candidate_errors = 0
             successful_details = 0
             requested_locality = _locality_parts(query)
+            admin_constraints = _admin_constraints(query, admin_hints)
             for candidate in candidates[:8]:
                 ref_id = candidate.get("ref_id")
                 if not ref_id:
@@ -302,7 +332,11 @@ def resolve_location(query: str, kind: str = "admin_area",
                     matches = _address_matches(query, candidate, place) and hints_ok
                 else:
                     semantic_match = False
-                    matches = _matches_locality(requested_locality, candidate, place)
+                    matches = (
+                        _admin_constraints_match(admin_constraints, place)
+                        if admin_constraints else
+                        _matches_locality(requested_locality, candidate, place)
+                    )
                 if matches and None not in coords:
                     accepted.append((candidate, place))
                 else:

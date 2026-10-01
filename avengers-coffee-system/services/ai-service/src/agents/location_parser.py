@@ -151,8 +151,13 @@ def merge_store_location(previous: Dict[str, Any] | None, fragment: str) -> Dict
     """Merge pickup/dine-in administrative slots without touching delivery state."""
     current = dict(previous or {})
     cleaned = re.sub(
-        r"^\s*(?:(?:không|ko)\s*[,;]?\s*|(?:đổi|thay)(?:\s+khu vực)?\s+sang\s+)",
+        r"^\s*(?:(?:không|ko)\s+(?:(?:dùng|lấy)\s+)?(?:địa\s+chỉ|chỗ)\s+(?:cũ|đó|này)\s*[,;]?\s*|"
+        r"(?:không|ko)\s*[,;]?\s*|(?:đổi|thay)(?:\s+khu vực)?\s+sang\s+)",
         "", str(fragment or ""), flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(
+        r"^\s*(?:(?:tôi|mình)(?:\s+đang)?\s+ở|ở|tại|khu\s+vực)\s+",
+        "", cleaned, flags=re.IGNORECASE,
     )
     cleaned = re.sub(r"\s+(?:cơ|ấy|á|ạ|nhé|nha)(?:\s+bạn\s+ơi)?\s*$", "", cleaned, flags=re.IGNORECASE)
     parsed = parse_location(cleaned)
@@ -347,13 +352,15 @@ def parse_location(message: str) -> Location:
             return Location("none")
         return Location("address", value, _missing_delivery(parts), _explicit_admin_hints(value))
     if store:
-        return Location("branch_query", "" if normalize(value) in {"day", "gan day", "nao", ""} else value)
+        branch_value = "" if normalize(value) in {"day", "gan day", "nao", ""} else value
+        return Location("branch_query", branch_value,
+                        admin_hints=_explicit_admin_hints(branch_value))
     if re.search(r"\b(?:phường|phuong|xã|quận|quan|huyện|huyen|thành phố|thanh pho|tỉnh|tinh|khu vực|khu vuc)\b", value, re.IGNORECASE) or (
         area_intro and len(value.split()) >= 2
     ) or re.search(r"^(?:đường|phố|hẻm|ngõ)\s+\S+", value, re.IGNORECASE):
         if _has_poi_structure(value):
             return Location("poi", value, admin_hints=_explicit_admin_hints(value))
-        return Location("area", value)
+        return Location("area", value, admin_hints=_explicit_admin_hints(value))
     if _has_poi_structure(value):
         return Location("poi", value, admin_hints=_explicit_admin_hints(value))
     return Location("none")

@@ -1101,7 +1101,8 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
     from src.function_calling.tools.product_tools import execute_check_price_and_stock
     from src.function_calling.tools.cart_tools import execute_add_to_cart
     from src.agents.option_state import (
-        option_field, option_schema_from_result, resolve_option_default,
+        default_option_fields, option_field, option_schema_from_result, resolve_option_default,
+        uses_global_option_defaults,
         validate_explicit_multi_value_group,
     )
 
@@ -1112,9 +1113,8 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
     prepared: List[tuple] = []
     optional_open: List[str] = []
     outcome_unknown: List[str] = []
-    use_defaults = bool(re.search(
-        r"\b(mac dinh|theo cong thuc|khong can chinh|khong can chon them|giu nguyen mac dinh)\b", normalized
-    ))
+    field_defaults = default_option_fields(message)
+    use_defaults = uses_global_option_defaults(message)
     for item in pending:
         product_name = str(item.get("product_name") or "")
         options = item.get("options") or {}
@@ -1165,7 +1165,13 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
                 r"\b(khong topping|bo topping|khong them topping)\b", normalized
             )
             explicit_group = group_markers[field]
-            invalid_group = bool(not reconciliation_only and re.search(explicit_group, normalized) and not matches and not cleared_toppings)
+            invalid_group = bool(
+                not reconciliation_only
+                and re.search(explicit_group, normalized)
+                and not matches
+                and not cleared_toppings
+                and field not in field_defaults
+            )
             complete_validation = (
                 None if reconciliation_only or cleared_toppings
                 else validate_explicit_multi_value_group(
@@ -1197,7 +1203,7 @@ def _complete_pending_products_from_options(session_id: str, message: str) -> Op
             elif field not in selected and group.get("fixed") and field != "toppings":
                 selected[field] = values if group.get("multiple") else values[0]
 
-            if field not in selected and use_defaults and not invalid_group:
+            if field not in selected and (use_defaults or field in field_defaults) and not invalid_group:
                 default = resolve_option_default(group)
                 if default is not None:
                     selected[field] = default

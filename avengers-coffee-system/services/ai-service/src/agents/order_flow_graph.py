@@ -1327,7 +1327,10 @@ def _offer_voucher_gate(session_id: str, lead: str = "Mình đã ghi nhận gi�
 def _resolve_cart_option_update(item: Dict[str, Any], message: str) -> tuple[Dict[str, Any], Dict[str, Any]]:
     """Validate requested option values and build an absolute cart-row state."""
     from src.agents.agent_service import _parse_option_groups
-    from src.agents.option_state import validate_explicit_multi_value_group
+    from src.agents.option_state import (
+        default_option_fields, option_field, option_schema_from_result,
+        resolve_option_default, validate_explicit_multi_value_group,
+    )
     from src.function_calling.tools.product_tools import CanonicalProductOptionRef, execute_get_product_options
 
     product_name = str(item.get("product_name") or "")
@@ -1344,19 +1347,28 @@ def _resolve_cart_option_update(item: Dict[str, Any], message: str) -> tuple[Dic
             "actual_product_id": str(option_result["product_id"]),
         }}
     groups = _parse_option_groups(option_result) if option_result.get("status") == "ok" else {}
-    option_schema = [
-        {"name": name, "values": [_clean_option_text(value) for value in values],
-         "multiple": "topping" in _norm(name)}
-        for name, values in groups.items()
-    ]
+    option_schema = option_schema_from_result(option_result) if option_result.get("status") == "ok" else []
+    schema_by_name = {_norm(group.get("name")): group for group in option_schema}
     text = _norm(message)
+    field_defaults = default_option_fields(message)
     changes: Dict[str, Any] = {}
     for group_name, values in groups.items():
         group = _norm(group_name)
+        schema_group = schema_by_name.get(group) or {
+            "name": group_name,
+            "values": [_clean_option_text(value) for value in values],
+            "multiple": "topping" in group,
+        }
+        field = option_field(group_name)
         matches = [_clean_option_text(value) for value in values
                    if _norm(_clean_option_text(value)) and re.search(
                        r"(?<!\w)" + re.escape(_norm(_clean_option_text(value))) + r"(?!\w)", text
                    )]
+        if field in field_defaults and not matches:
+            default = resolve_option_default(schema_group, option_result.get("product_data"))
+            if default is not None:
+                changes[field] = default
+                continue
         if "topping" in group:
             current = list(item.get("toppings") or [])
             # An explicit topping list is atomic. Do not silently keep only
@@ -2098,7 +2110,10 @@ def _shopping_decision(state: OrderConversationState, tier1_intent: Dict[str, An
                 "target_kind": "PRODUCT", "candidate_products": list(meaning.ambiguity),
                 "family": meaning.family, "search_text": meaning.search_text, "label": meaning.label}
     if meaning.act == "PRODUCT_INFO" and meaning.targets:
-        return {"intent": "PRODUCT_INFO", "semantic_intent": "PRODUCT_INFO",
+        from src.agents.agent_service import _has_product_review_intent
+        read_intent = ("PRODUCT_REVIEW" if _has_product_review_intent(message)
+                       else "PRODUCT_INFO")
+        return {"intent": read_intent, "semantic_intent": read_intent,
                 "target_kind": "PRODUCT", "products": list(meaning.targets)}
     if (catalog_unavailable and not refs and meaning.act == "UNKNOWN" and not question
             and not re.search(r"\b(?:va|voi|hoac|hay)\b", _norm(message))
@@ -2358,7 +2373,10 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
             return {**state, "intent": {**explicit, **({"ordinal": reference.ordinals[0]}
                 if reference.requested and reference.namespace == "PAYMENT" else {})}}
         if meaning.act == "PRODUCT_INFO" and meaning.targets:
-            return {**state, "intent": {"intent": "PRODUCT_INFO",
+            from src.agents.agent_service import _has_product_review_intent
+            read_intent = ("PRODUCT_REVIEW" if _has_product_review_intent(state["user_message"])
+                           else "PRODUCT_INFO")
+            return {**state, "intent": {"intent": read_intent,
                 "products": list(meaning.targets), "preserve_primary_pending": True}}
         if explicit.get("intent") in {"SELECT_FULFILLMENT", "SELECT_PAYMENT"}:
             if explicit.get("intent") == "SELECT_FULFILLMENT":
@@ -2724,7 +2742,8 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         state["user_message"], ordinal_targets=ordinal_products,
         ordinal_requested=bool(ordinal_count), ordinal_invalid=bool(invalid_ordinals))
     if ordinal_count and ordinal_products and ordinal_meaning.act == "PRODUCT_INFO":
-        return {**state, "intent": {"intent": "PRODUCT_INFO", "target_kind": "PRODUCT",
+        read_intent = "PRODUCT_REVIEW" if ordinal_review else "PRODUCT_INFO"
+        return {**state, "intent": {"intent": read_intent, "target_kind": "PRODUCT",
                                     "products": ordinal_products}}
     if (ordinal_count and ordinal_products and not pending_type and not ordinal_review
             and ordinal_meaning.act == "ADD_ITEM"):
@@ -2799,6 +2818,14 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         if shopping and shopping["intent"] in {"ADD_ITEM", "BROWSING", "SHOPPING_GENERIC", "SHOPPING_CLARIFY"}:
             return {**state, "intent": {**shopping, "resume_shopping": True}}
     if pending_type == "fill_options":
+        pending_meaning = shopping_interpretation.get("meaning")
+        from src.agents.agent_service import _has_product_review_intent
+        if (pending_meaning and pending_meaning.act == "PRODUCT_INFO"
+                and pending_meaning.targets
+                and _has_product_review_intent(state["user_message"])):
+            return {**state, "intent": {"intent": "PRODUCT_REVIEW",
+                "products": list(pending_meaning.targets),
+                "preserve_primary_pending": True}}
         if intent.get("intent") in {
             "CLEAR_CART", "REMOVE_ITEM", "SET_QUANTITY", "VIEW_CART",
             "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER",
@@ -3146,6 +3173,24 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         return {**state, "result": {"reply": "\n".join(lines), "checkout_payload": None,
                                     "tool_calls_log": [{"tool": "payment_capabilities", "result": capabilities}],
                                     "error": None}}
+    if kind == "PRODUCT_REVIEW":
+        from src.function_calling.tools.product_tools import execute_get_product_insights
+        rows = list(intent.get("products") or [])
+        if not rows:
+            return {**state, "result": {"reply": "Bạn muốn xem đánh giá của món nào?",
+                "checkout_payload": None, "tool_calls_log": [], "error": None}}
+        lines = []
+        logs = []
+        for row in rows:
+            product_name = str(row.get("product_name") or "").strip()
+            insight = execute_get_product_insights(product_name)
+            logs.append({"tool": "get_product_insights",
+                         "args": {"product_name": product_name}, "result": insight})
+            lines.append(insight.get("message") or
+                         f"Mình chưa lấy được dữ liệu đánh giá đã xác minh của {product_name} lúc này.")
+        return {**state, "result": {"reply": "\n".join(lines),
+                                     "checkout_payload": None,
+                                     "tool_calls_log": logs, "error": None}}
     if kind == "PRODUCT_INFO":
         rows = list(intent.get("products") or [])
         if not rows:
