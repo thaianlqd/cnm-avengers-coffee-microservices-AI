@@ -920,6 +920,8 @@ def test_inventory_requires_a_row_and_enough_quantity():
             return False
 
         def execute(self, _statement, params):
+            if "menu.san_pham" in str(_statement):
+                return FakeResult((True,))
             return FakeResult(self.rows.get(params["product_id"]))
 
     class FakeEngine:
@@ -981,7 +983,8 @@ def test_branch_selection_rejects_unknown_inventory_until_stock_is_confirmed(mon
         "session-unknown-branch", "BR-1", "Chi nhánh 1", customer_selected=True
     )
     assert result["status"] == "stock_conflict"
-    assert "Bánh" in result["unavailable_products"]
+    assert result["unavailable_products"] == []
+    assert result["unverified_products"] == ["Bánh"]
 
 
 def test_nearby_branches_with_unknown_inventory_are_explained_but_not_selectable(monkeypatch):

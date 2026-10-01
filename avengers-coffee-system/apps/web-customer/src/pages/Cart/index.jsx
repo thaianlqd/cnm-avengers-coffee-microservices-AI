@@ -27,6 +27,7 @@ import DeliveryMethodPicker from '../../components/features_thaian/DeliveryMetho
 import BranchSelector from '../../components/features_thaian/BranchSelector';
 import AddressAutocompleteInput from '../../components/features_thaian/AddressAutocompleteInput';
 import NearbyBranchChecker from '../../components/features_thaian/NearbyBranchChecker';
+import { evaluateBranchAvailability, inventoryRows } from '../../lib/branchAvailability';
 import { geocodeAddress } from '../../lib/geocodingService';
 
 const AVAILABLE_SIZES = ['Nhỏ', 'Vừa'];
@@ -144,14 +145,10 @@ export default function CartPage({
     staleTime: 5 * 1000,
   });
 
-  const isAnyItemOutOfStock = useMemo(() => {
-    if (!inventoryData || deliveryMode === 'GIAO_TAN_NOI') return false;
-    const arr = Array.isArray(inventoryData) ? inventoryData : (inventoryData.items || []);
-    return cart.some(item => {
-      const invItem = arr.find(i => String(i.ma_san_pham) === String(item.ma_san_pham));
-      return invItem && (invItem.dang_kinh_doanh === false || invItem.dang_kinh_doanh === 0 || invItem.dang_kinh_doanh === 'false');
-    });
-  }, [cart, inventoryData, deliveryMode]);
+  const selectedBranchAvailability = useMemo(() => evaluateBranchAvailability(
+    cart, products, inventoryRows(inventoryData)), [cart, products, inventoryData]);
+  const isAnyItemOutOfStock = ['LAY_TAI_QUAN', 'DUNG_TAI_CHO'].includes(deliveryMode) && selectedBranch
+    && !selectedBranchAvailability.is_fully_available;
 
   const { data: publicBranchPayload } = useQuery({
     queryKey: ['public-branches'],
@@ -221,7 +218,7 @@ export default function CartPage({
   const [addressForm, setAddressForm] = useState(() => ({ ...defaultAddressSelection, street: '' }));
   const [userCoordinates, setUserCoordinates] = useState(null);
   const [stockValidation, setStockValidation] = useState({
-    canOrder: true,
+    canOrder: false,
     hasCoordinates: false,
     hasNearbyBranch: true,
     reason: '',
@@ -935,6 +932,29 @@ export default function CartPage({
     }
 
 
+    if (!pendingCheckoutRetry && deliveryMode !== 'KIOSK') {
+      checkoutBusyRef.current = true;
+      try {
+        const [inventoryResponse, menuResponse] = await Promise.all([
+          apiClient.get(`/inventory/items?branch_code=${selectedBranch}`),
+          apiClient.get('/menu/san-pham'),
+        ]);
+        const availability = evaluateBranchAvailability(cart,
+          Array.isArray(menuResponse.data) ? menuResponse.data : [], inventoryRows(inventoryResponse.data));
+        if (!availability.is_fully_available) {
+          checkoutBusyRef.current = false;
+          setThongBao(availability.unverified_products.length
+            ? 'Chưa xác minh được tình trạng món tại cửa hàng. Vui lòng thử lại.'
+            : `Cửa hàng đang tạm ngưng: ${availability.unavailable_products.map(item => item.product_name).join(', ')}.`);
+          return;
+        }
+      } catch {
+        checkoutBusyRef.current = false;
+        setThongBao('Chưa xác minh được tình trạng món tại cửa hàng. Vui lòng thử lại.');
+        return;
+      }
+    }
+
     setThongBao('');
     setQrData(null);
     setQrImageUrl('');
@@ -1154,8 +1174,8 @@ export default function CartPage({
                   </div>
                 ) : (
                   cart.map((item, idx) => {
-                    const inventoryItem = inventoryData?.find(i => String(i.ma_san_pham) === String(item.ma_san_pham));
-                    const isOutOfStock = deliveryMode !== 'GIAO_TAN_NOI' && inventoryData && inventoryItem && inventoryItem.dang_kinh_doanh === false;
+                    const isOutOfStock = deliveryMode !== 'GIAO_TAN_NOI' && selectedBranchAvailability.unavailable_products
+                      .some(product => product.product_id === String(item.ma_san_pham));
 
                     return (
                     <div 
@@ -1469,6 +1489,7 @@ export default function CartPage({
                           branches={publicBranchPayload?.items || []}
                           userCoordinates={userCoordinates}
                           cart={cart}
+                          products={products}
                           selectedBranch={selectedBranch}
                           onSelectBranch={setSelectedBranch}
                           onStockStatusChange={setStockValidation}
@@ -1990,6 +2011,12 @@ export default function CartPage({
                 </button>
               ) : (
                 <>
+                  {['LAY_TAI_QUAN', 'DUNG_TAI_CHO'].includes(deliveryMode) && selectedBranch
+                    && selectedBranchAvailability.unverified_products.length > 0 && (
+                    <p className="mt-4 text-xs text-amber-700">
+                      Chưa xác minh được tình trạng món tại cửa hàng. Vui lòng thử lại.
+                    </p>
+                  )}
                   {deliveryMode === 'GIAO_TAN_NOI' && !stockValidation.canOrder && stockValidation.message && (
                     <div className="mt-4 p-3 rounded-2xl bg-red-50 border border-red-200 text-center">
                       <p className="text-xs font-bold text-red-700">

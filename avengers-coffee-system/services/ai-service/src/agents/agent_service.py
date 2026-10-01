@@ -461,7 +461,8 @@ def _advance_checkout_if_ready(session_id: str, result: Dict[str, Any]) -> Dict[
     return {**result, "reply": checkout.get("message", result.get("reply", "")), "tool_calls_log": logs}
 
 
-def _resolve_pending_voucher_choice(session_id: str, message: str) -> Optional[Dict[str, Any]]:
+def _resolve_pending_voucher_choice(session_id: str, message: str,
+                                   reference_out: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
     """Resolve “mã số 2” against the last server-stored voucher offer.
 
     Voucher ordinals must never fall through to the product ordinal parser.
@@ -517,6 +518,9 @@ def _resolve_pending_voucher_choice(session_id: str, message: str) -> Optional[D
 
     from src.function_calling.tools.voucher_tools import execute_apply_voucher
     code = str(selected.get("ma_voucher") or "").strip().upper()
+    if reference_out is not None:
+        reference_out.update(semantic_operation="APPLY_VOUCHER", reference_namespace="VOUCHER",
+                             reference_source="voucher_candidates")
     applied = execute_apply_voucher(session_id, code)
     logs = [{"tool": "apply_voucher", "args": {"voucher_code": code}, "result": applied}]
     if applied.get("status") not in {"ok", "already_applied"}:

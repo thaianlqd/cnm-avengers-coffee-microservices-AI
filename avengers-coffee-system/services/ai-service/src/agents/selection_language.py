@@ -21,6 +21,10 @@ _WORD_ORDINALS = {
 }
 _NUMBER_TOKEN = r"\d+|mot|nhat|hai|ba|bon|tu|nam|sau|bay|tam|chin|muoi"
 _NUMBER = r"(?P<number>" + _NUMBER_TOKEN + r")"
+PRODUCT_REFERENCE_CATEGORIES = {
+    "do uong": "drink", "thuc uong": "drink", "nuoc": "drink",
+    "do an": "food", "banh": "food", "san pham": None, "mon": None,
+}
 _NAMESPACE_PATTERNS = (
     ("PAYMENT", r"phuong\s+thuc\s+thanh\s+toan|cach\s+thanh\s+toan|thanh\s+toan"),
     ("FULFILLMENT", r"hinh\s+thuc\s+nhan\s+hang|cach\s+nhan\s+hang"),
@@ -28,7 +32,8 @@ _NAMESPACE_PATTERNS = (
     ("BRANCH", r"chi\s+nhanh|cua\s+hang|kiosk"),
     ("VOUCHER", r"ma\s+giam\s+gia|voucher|ma"),
     ("CART_LINE", r"dong"),
-    ("PRODUCT", r"do\s+uong|thuc\s+uong|nuoc|do\s+an|banh|san\s+pham|mon"),
+    ("PRODUCT", "|".join(re.escape(label).replace(r"\ ", r"\s+")
+                          for label in PRODUCT_REFERENCE_CATEGORIES)),
 )
 _TAIL_FILLERS = {
     "", "a", "ah", "nha", "nhe", "di", "do", "voi", "giup", "giup toi",
@@ -44,6 +49,16 @@ def _fold(value: str) -> str:
 
 def _ordinal(value: str) -> int:
     return int(value) if value.isdigit() else _WORD_ORDINALS[value]
+
+
+def product_reference_category(label: str) -> Optional[str]:
+    """Use the parser's PRODUCT alias vocabulary for grouped snapshots."""
+    return PRODUCT_REFERENCE_CATEGORIES.get(_fold(label))
+
+
+def product_category_pattern(category: str) -> str:
+    return "|".join(re.escape(label).replace(r"\ ", r"\s+")
+                    for label, bucket in PRODUCT_REFERENCE_CATEGORIES.items() if bucket == category)
 
 
 def _namespace(text: str) -> Tuple[Optional[str], Optional[re.Match]]:

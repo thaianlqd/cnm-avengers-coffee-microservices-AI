@@ -7,6 +7,7 @@ from src.function_calling.helpers import _get_engine, _clean_dict, _check_busine
 from src.common.inventory_validation import validate_cart_at_branch
 
 logger = logging.getLogger(__name__)
+MAX_DELIVERY_RADIUS_KM = 5.0  # Existing customer delivery radius.
 
 TOOL_ASK_BRANCH = {
     "type": "function",
@@ -314,6 +315,8 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                         continue
                         
                 dist = haversine_distance(user_lat, user_lon, float(r["vi_do"]), float(r["kinh_do"])) if user_lat is not None and user_lon is not None and r["vi_do"] is not None and r["kinh_do"] is not None else None
+                if delivery_type == "GIAO_TAN_NOI" and (dist is None or dist > MAX_DELIVERY_RADIUS_KM):
+                    continue
                 branch_dict = _clean_dict(dict(r))
                 branch_dict["khoang_cach_km"] = round(dist, 1) if dist is not None else None
                 branch_dict["distance_basis"] = distance_basis
@@ -349,9 +352,18 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                 )
                 annotated["unavailable_products"] = conflicts
                 annotated["unverified_products"] = availability["unverified"]
+                blockers = set(conflicts + availability["unverified"])
+                annotated["available_products"] = availability.get("available", list(dict.fromkeys(
+                    row.get("product_name") or row.get("product_id") or "Sản phẩm"
+                    for row in cart.get("items") or []
+                    if (row.get("product_name") or row.get("product_id") or "Sản phẩm") not in blockers
+                )))
+                annotated["product_availability"] = availability.get("product_statuses") or []
+                annotated["is_fully_available"] = not blockers
                 annotated_branches.append(annotated)
                 # Missing override rows inherit normal menu availability.
-                # Explicit inactive/insufficient rows remain hard conflicts.
+                # Explicit disabled products remain hard conflicts; quantity
+                # does not determine customer sellability.
                 if not availability["unavailable"] and not availability["unverified"]:
                     eligible_branches.append(annotated)
 
@@ -416,6 +428,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
             return {
                 "status": "need_branch_selection" if delivery_type in {"MANG_DI", "TAI_CHO"} else "ok",
                 "branches": top_branches,
+                "availability_branches": annotated_branches if delivery_type == "GIAO_TAN_NOI" else top_branches,
                 "normalized_location": target_address,
                 "location_provider_ref_id": (
                     selected_location.get("provider_ref_id") if selected_location else None
@@ -494,11 +507,13 @@ def execute_set_session_branch(
                 "status": "stock_conflict",
                 "branch_id": real_branch_id,
                 "branch_name": real_branch_name,
-                "unavailable_products": blockers,
+                "unavailable_products": unavailable,
+                "unverified_products": unverified,
                 "message": (
-                    f"{location_label} {real_branch_name} tạm ngưng phục vụ các món sau: "
-                    f"{', '.join(blockers)}. "
-                    "Hãy báo khách chọn điểm bán khác hoặc bỏ món đó ra khỏi giỏ; không được chốt đơn tại đây."
+                    f"{location_label} {real_branch_name}: "
+                    + (f"Tạm ngưng: {', '.join(unavailable)}. " if unavailable else "")
+                    + (f"Chưa xác minh: {', '.join(unverified)}. " if unverified else "")
+                    + "Hãy báo khách chọn điểm bán khác hoặc bỏ món đó ra khỏi giỏ; không được chốt đơn tại đây."
                 ),
             }
         cart_manager.set_branch(session_id, real_branch_id, real_branch_name)

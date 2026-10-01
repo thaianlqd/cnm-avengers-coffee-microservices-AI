@@ -6,12 +6,12 @@ import {
   MapPinIcon, 
   ClockIcon,
   ArrowPathIcon,
-  XCircleIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   SparklesIcon
 } from '@heroicons/react/24/solid';
 import { apiClient } from '../../lib/apiClient';
+import { evaluateBranchAvailability, inventoryRows, closestCompatibleBranch } from '../../lib/branchAvailability';
 import { 
   calculateDistanceKm, 
   resolveBranchCoordinates, 
@@ -22,6 +22,7 @@ export default function NearbyBranchChecker({
   branches = [],
   userCoordinates = null,
   cart = [],
+  products = [],
   selectedBranch = '',
   onSelectBranch,
   onStockStatusChange,
@@ -89,10 +90,9 @@ export default function NearbyBranchChecker({
         const code = b.ma_chi_nhanh || b.co_so_ma || b.branch_code;
         try {
           const res = await apiClient.get(`/inventory/items?branch_code=${code}`);
-          const items = Array.isArray(res?.data) ? res.data : res?.data?.items || [];
-          invMap[code] = items;
+          invMap[code] = inventoryRows(res?.data);
         } catch {
-          invMap[code] = [];
+          invMap[code] = null;
         }
       });
 
@@ -113,30 +113,19 @@ export default function NearbyBranchChecker({
 
     return nearbyBranches.map(b => {
       const code = b.ma_chi_nhanh || b.co_so_ma || b.branch_code;
-      const invItems = branchInventories[code] || [];
-
-      // Kiểm tra từng món trong giỏ hàng
-      const missingItems = [];
-      cart.forEach(cartItem => {
-        const found = invItems.find(
-          inv => String(inv.ma_san_pham) === String(cartItem.ma_san_pham)
-        );
-        // Nếu có khai báo tồn kho và dang_kinh_doanh = false hoặc so_luong_ton <= 0
-        if (found && (found.dang_kinh_doanh === false || found.dang_kinh_doanh === 'false' || (found.so_luong_ton !== undefined && Number(found.so_luong_ton) <= 0))) {
-          missingItems.push(cartItem.ten_san_pham || cartItem.name || `Sản phẩm #${cartItem.ma_san_pham}`);
-        }
-      });
-
-      const isFullyAvailable = missingItems.length === 0;
+      const availability = evaluateBranchAvailability(cart, products,
+        isLoadingInventory ? null : branchInventories[code]);
+      const missingItems = availability.unavailable_products.map(item => item.product_name);
 
       return {
         ...b,
         code,
-        isFullyAvailable,
+        ...availability,
+        isFullyAvailable: availability.is_fully_available,
         missingItems,
       };
     });
-  }, [nearbyBranches, branchInventories, cart]);
+  }, [nearbyBranches, branchInventories, cart, products, isLoadingInventory]);
 
   // Chi nhánh khả dụng (còn đủ món)
   const availableBranches = useMemo(() => {
@@ -173,8 +162,9 @@ export default function NearbyBranchChecker({
         onStockStatusChange({
           hasCoordinates: false,
           hasNearbyBranch: true,
-          canOrder: true,
-          reason: '',
+          canOrder: false,
+          reason: 'AVAILABILITY_UNVERIFIED',
+          message: 'Chưa xác minh được cửa hàng phục vụ địa chỉ này.',
           nearbyCount: 0,
         });
       }
@@ -196,7 +186,8 @@ export default function NearbyBranchChecker({
     }
 
     if (availableBranches.length === 0) {
-      // Có chi nhánh trong 5km nhưng tất cả đều hết món
+      const unverified = evaluatedBranches.some(b => b.unverified_products.length > 0);
+      // No nearby branch has a verified, fully compatible cart.
       const allMissing = Array.from(
         new Set(evaluatedBranches.flatMap(b => b.missingItems))
       );
@@ -205,8 +196,9 @@ export default function NearbyBranchChecker({
           hasCoordinates: true,
           hasNearbyBranch: true,
           canOrder: false,
-          reason: 'OUT_OF_STOCK_NEARBY',
-          message: 'Món đang chọn hiện tại hết hàng ở các chi nhánh gần bạn (bán kính 5km), vui lòng chọn món khác.',
+          reason: unverified ? 'AVAILABILITY_UNVERIFIED' : 'OUT_OF_STOCK_NEARBY',
+          message: unverified ? 'Chưa xác minh được tình trạng món tại cửa hàng. Vui lòng thử lại.'
+            : 'Các cửa hàng gần bạn đang tạm ngưng một số món trong giỏ. Vui lòng đổi món hoặc địa chỉ.',
           missingItems: allMissing,
           nearbyCount: nearbyBranches.length,
         });
@@ -217,9 +209,8 @@ export default function NearbyBranchChecker({
     // Tự động chọn chi nhánh gần nhất còn đủ món:
     // 1. Nếu người dùng chưa bấm chọn thủ công -> Luôn chọn chi nhánh gần nhất (availableBranches[0])
     // 2. Nếu người dùng đã chọn thủ công nhưng chi nhánh đó không còn hợp lệ -> Trả về chi nhánh gần nhất
-    const isManualValid = userManuallySelectedRef.current && availableBranches.some(b => b.code === selectedBranch);
-    if (!isManualValid && availableBranches.length > 0) {
-      const closestBranchCode = availableBranches[0].code;
+    const closestBranchCode = closestCompatibleBranch(evaluatedBranches, selectedBranch, userManuallySelectedRef.current);
+    if (closestBranchCode) {
       if (selectedBranch !== closestBranchCode) {
         onSelectBranch(closestBranchCode);
       }
@@ -229,7 +220,7 @@ export default function NearbyBranchChecker({
       onStockStatusChange({
         hasCoordinates: true,
         hasNearbyBranch: true,
-        canOrder: true,
+        canOrder: availableBranches.some(b => b.code === selectedBranch),
         reason: '',
         availableBranches,
         nearbyCount: nearbyBranches.length,
@@ -270,37 +261,13 @@ export default function NearbyBranchChecker({
             👉 Vui lòng đổi địa chỉ nhận hoặc chọn hình thức <strong>Lấy tại quán</strong>.
           </div>
         </div>
-      ) : availableBranches.length === 0 ? (
-        /* TRƯỜNG HỢP 2: CÓ CHI NHÁNH TRONG 5KM NHƯNG TẤT CẢ ĐỀU HẾT MÓN */
-        <div className="rounded-xl border border-red-200 bg-red-50 p-3.5 text-red-900 shadow-xs space-y-2 animate-fadeIn">
-          <div className="flex items-center gap-1.5 font-bold text-xs text-red-700">
-            <XCircleIcon className="w-4 h-4 text-red-600 flex-shrink-0" />
-            <span>Món đang chọn hiện tại hết hàng ở các chi nhánh gần bạn</span>
-          </div>
-          <p className="text-xs text-red-800 leading-relaxed">
-            Các chi nhánh trong bán kính 5km ({nearbyBranches.map(b => b.ten_chi_nhanh).slice(0, 2).join(', ')}) hiện không còn đủ món trong giỏ hàng.
-          </p>
-          {evaluatedBranches.some(b => b.missingItems.length > 0) && (
-            <div className="bg-white p-2 rounded-lg border border-red-100 text-[11px] space-y-0.5">
-              <span className="font-bold text-red-800">Món đang tạm hết hàng:</span>
-              <ul className="list-disc pl-4 space-y-0.5 text-red-700">
-                {Array.from(new Set(evaluatedBranches.flatMap(b => b.missingItems))).map((item, idx) => (
-                  <li key={idx}><strong>{item}</strong></li>
-                ))}
-              </ul>
-            </div>
-          )}
-          <p className="text-[11px] font-bold text-red-600">
-            👉 Vui lòng đổi món khác hoặc đổi địa chỉ giao hàng.
-          </p>
-        </div>
       ) : (
-        /* TRƯỜNG HỢP 3: CÓ CHI NHÁNH TRONG 5KM CÒN ĐỦ MÓN */
+        /* Explain every nearby branch, including partial and unverified carts. */
         <div className="space-y-2 bg-[#faf7f5] p-2.5 rounded-2xl border border-gray-200/80">
           {/* KHỐI RIÊNG ĐỘC LẬP ĐỂ CUỘN TỰ DO - KHÔNG LÀM TRANG DÀI RA */}
           <div className="max-h-[240px] overflow-y-auto pr-1 space-y-2 scroll-smooth">
             {displayedBranches.map((branch) => {
-              const isSelected = selectedBranch === branch.code;
+              const isSelected = selectedBranch === branch.code && branch.isFullyAvailable;
               const isAvailable = branch.isFullyAvailable;
 
               return (
@@ -309,6 +276,7 @@ export default function NearbyBranchChecker({
                   type="button"
                   disabled={!isAvailable}
                   onClick={() => {
+                    if (!isAvailable) return;
                     userManuallySelectedRef.current = true;
                     onSelectBranch(branch.code);
                   }}
@@ -334,7 +302,7 @@ export default function NearbyBranchChecker({
                         </span>
                       ) : (
                         <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-md border border-red-200 shrink-0">
-                          Tạm hết
+                          {branch.unverified_products.length ? 'Chưa xác minh' : 'Tạm ngưng'}
                         </span>
                       )}
                     </div>
@@ -347,9 +315,19 @@ export default function NearbyBranchChecker({
                         <span>Chi nhánh tiếp nhận đơn</span>
                       </p>
                     )}
+                    {branch.available_products.length > 0 && (
+                      <p className="text-[10px] text-emerald-700">
+                        {isAvailable ? 'Còn đủ các món trong giỏ' : `Còn: ${branch.available_products.map(item => item.product_name).join(', ')}`}
+                      </p>
+                    )}
                     {!isAvailable && branch.missingItems.length > 0 && (
                       <p className="text-[10px] font-bold text-red-600 truncate">
-                        Hết: {branch.missingItems.join(', ')}
+                        Tạm ngưng: {branch.missingItems.join(', ')}
+                      </p>
+                    )}
+                    {branch.unverified_products.length > 0 && (
+                      <p className="text-[10px] text-amber-700">
+                        Chưa xác minh: {branch.unverified_products.map(item => item.product_name).join(', ')}
                       </p>
                     )}
                   </div>

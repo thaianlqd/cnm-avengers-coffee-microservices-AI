@@ -32,7 +32,7 @@ from src.agents.tier1 import (
 from src.agents.payment_intent import wallet_payment_evidence
 from src.agents.catalog_constraints import extract_catalog_search_text, parse_catalog_constraints
 from src.agents.shopping_language import interpret_shopping, is_family_only, shopping_quantity
-from src.agents.selection_language import parse_selection_reference
+from src.agents.selection_language import parse_selection_reference, product_reference_category, product_category_pattern
 from src.common import cart_manager
 
 logger = logging.getLogger(__name__)
@@ -638,11 +638,16 @@ def _unresolved_product_reference(session_id: str, message: str) -> bool:
     return not (_resolve_suggested_product(session_id, message) or _resolve_structured_references(session_id, message))
 
 
-def _focus_product(session_id: str, product: Dict[str, Any]) -> None:
+def _focus_product(session_id: str, product: Dict[str, Any], *, read_only: bool = False) -> None:
     if product.get("product_id") and product.get("product_name"):
         identity = {"product_id": product["product_id"], "product_name": product["product_name"],
                     "category": product.get("category")}
-        if cart_manager.get_checkout_prefs(session_id).get("last_product_focus") != identity:
+        current = cart_manager.get_checkout_prefs(session_id).get("last_product_focus") or {}
+        if read_only and str(current.get("product_id")) == str(identity["product_id"]):
+            # Identity reads must preserve an outstanding option-provider retry.
+            # Selection/configuration still clears that retry through its existing path.
+            identity = {**current, **identity}
+        if current != identity:
             cart_manager.set_checkout_context(session_id, last_product_focus=identity)
 
 
@@ -671,8 +676,7 @@ def _resolve_product_ordinals(
     invalid: List[int] = []
     for namespace, ordinal in matches:
         index = ordinal - 1
-        category = ("drink" if namespace in {"nuoc", "do uong"} else
-                    "food" if namespace in {"banh", "do an"} else None)
+        category = product_reference_category(namespace)
         candidate = None
         if 0 <= index < len(latest):
             visible = latest[index]
@@ -747,10 +751,10 @@ def _requested_ordinal_categories(message: str) -> set[str]:
     """Return only explicitly named ordinal namespaces in a customer turn."""
     text = _norm(message)
     requested: set[str] = set()
-    if re.search(r"\b(?:nuoc|do uong)\s*(?:thi\s*)?(?:(?:so|thu|#)\s*)?\d+\b", text):
-        requested.add("drink")
-    if re.search(r"\b(?:banh|do an)\s*(?:thi\s*)?(?:(?:so|thu|#)\s*)?\d+\b", text):
-        requested.add("food")
+    for category in ("drink", "food"):
+        names = product_category_pattern(category)
+        if re.search(rf"\b(?:{names})\s*(?:thi\s*)?(?:(?:so|thu|#)\s*)?\d+\b", text):
+            requested.add(category)
     return requested
 
 
@@ -758,7 +762,8 @@ def _incomplete_ordinal_categories(message: str) -> set[str]:
     """Find an explicit category ordinal whose number was omitted."""
     text = _norm(message)
     missing = set()
-    for category, names in (("food", r"banh|do an"), ("drink", r"nuoc|do uong")):
+    for category in ("food", "drink"):
+        names = product_category_pattern(category)
         if re.search(rf"\b(?:{names})\s*(?:thi\s*)?(?:so|thu|#)\s*(?=$|va\b|[,;.!?])", text):
             missing.add(category)
     return missing
@@ -769,7 +774,7 @@ def _pending_reference_action(message: str, missing: set[str], refs: List[Dict[s
     words = _norm(message)
     if re.search(r"\b(?:bo|huy|khong lay|khong can)\s+(?:ca hai|het|tat ca)\b", words):
         return "abandon"
-    names = {"food": r"banh|do an", "drink": r"nuoc|do uong"}
+    names = {category: product_category_pattern(category) for category in ("food", "drink")}
     canceled = any(
         re.search(rf"\b(?:khong\s+(?:lay|can|muon)|bo|huy)\s+(?:{names[category]})\b", words)
         for category in missing
@@ -3647,7 +3652,7 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
     if _has_product_review_intent(message):
         reference = _resolve_suggested_product(session_id, message)
         if reference:
-            _focus_product(session_id, reference)
+            _focus_product(session_id, reference, read_only=True)
         contextual_message, contextual_history = _contextualize_product_references(
             session_id, message, state.get("history") or [],
         )
@@ -3999,7 +4004,12 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         # Voucher language must be handled before generic product/price
         # parsing: “mã giảm giá nào” contains “giá” but is never a product.
         from src.agents.agent_service import _resolve_pending_voucher_choice
-        resolved = _resolve_pending_voucher_choice(session_id, message)
+        reference = {}
+        resolved = _resolve_pending_voucher_choice(session_id, message, reference_out=reference)
+        if reference:
+            intent.update(pending_decision=reference["semantic_operation"],
+                          reference_namespace=reference["reference_namespace"],
+                          reference_source=reference["reference_source"])
         if resolved:
             return {**state, "result": resolved}
 
@@ -4053,9 +4063,14 @@ def _render(state: OrderConversationState) -> OrderConversationState:
     result = dict(state.get("result") or {})
     prefs = cart_manager.get_checkout_prefs(state["session_id"])
     result["conversation_state"] = prefs.get("flow_stage") or ("VOUCHER" if prefs.get("voucher_offer_pending") else "CART_REVIEW")
+    read_intent = state.get("intent") or {}
+    if read_intent.get("intent") in {"PRODUCT_REVIEW", "PRODUCT_INFO"}:
+        # Canonical identity memory is independent of the transactional owner.
+        products = read_intent.get("products") or []
+        if len(products) == 1 and products[0].get("product_id") and products[0].get("product_name"):
+            _focus_product(state["session_id"], products[0], read_only=True)
     if ((state.get("intent") or {}).get("preserve_primary_pending")
             and (state.get("intent") or {}).get("intent") in {"PRODUCT_REVIEW", "PRODUCT_INFO"}):
-        # These service reads must not rewrite focus/snapshots or resume checkout.
         return {**state, "result": result}
     logs = result.get("tool_calls_log") or []
     branches: List[Dict[str, Any]] = []
@@ -4378,7 +4393,7 @@ def _sanitize_replay_result(result: Dict[str, Any]) -> Dict[str, Any]:
         compact["gate"] = result["gate"]
     card_fields = {
         "products": (16, ("product_id", "product_name", "ten_san_pham", "category", "menu_bucket", "display_index", "global_display_index", "group_display_index", "group", "danh_muc", "final_price", "gia_ban", "hinh_anh_url")),
-        "branches": (5, ("ma_chi_nhanh", "branch_id", "ten_chi_nhanh", "branch_name", "dia_chi", "address", "khoang_cach_km", "distance_basis", "distance_estimated", "availability_status", "unavailable_products", "gio_mo_cua", "gio_dong_cua")),
+        "branches": (5, ("ma_chi_nhanh", "branch_id", "ten_chi_nhanh", "branch_name", "dia_chi", "address", "khoang_cach_km", "distance_basis", "distance_estimated", "availability_status", "available_products", "unavailable_products", "unverified_products", "is_fully_available", "gio_mo_cua", "gio_dong_cua")),
         "vouchers": (4, ("ma_voucher", "ma_khuyen_mai", "code", "ten_voucher", "ten_khuyen_mai", "name", "title", "loai_khuyen_mai", "loai_giam_gia", "loai", "gia_tri", "gia_tri_giam", "discount_value", "gia_tri_don_toi_thieu")),
     }
     ui = result.get("ui_payload") or {}
@@ -4413,6 +4428,26 @@ def _sanitize_replay_result(result: Dict[str, Any]) -> Dict[str, Any]:
         for value in [entry.get("result") or {}] if isinstance(value, dict)
     ]
     return json.loads(json.dumps(compact, ensure_ascii=False, default=str))
+
+
+def _mutation_authorized_by_route(intent, pending_type=None):
+    """Route authorization precedes tool results; successful writes are evidence."""
+    kind = intent.get("intent")
+    owner = intent.get("pending_type") or pending_type
+    decision = intent.get("decision") or intent.get("pending_decision")
+    if kind == "PENDING_REPLY":
+        return ((owner == "select_voucher" and decision in {"SELECT_VOUCHER", "APPLY", "REMOVE_VOUCHER"})
+                or (owner == "confirm_checkout" and decision in {"CONFIRM", "YES"}))
+    if kind == "PENDING_CART_LINE":
+        resolved = intent.get("resolved_pending") or {}
+        return bool(not resolved.get("stale") and resolved.get("row") and
+                    resolved.get("operation") in {"SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS"})
+    if kind == "SELECT_VOUCHER":
+        return decision == "APPLY_VOUCHER"
+    if kind in {"PRODUCT_REVIEW", "PRODUCT_INFO", "PENDING_AMBIGUOUS"}:
+        return False
+    return kind in {"ADD_ITEM", "FILL_OPTIONS", "SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS",
+                    "CLEAR_CART", "CONFIRM_CHECKOUT", "APPLY_VOUCHER", "REMOVE_VOUCHER", "REPLACE_VOUCHER"}
 
 
 def _log_decision_provenance(session_id, decision, result):
@@ -4462,13 +4497,13 @@ def run_order_flow(
         reference = consultation.pop("_canonical_reference", {})
         product = reference.get("product")
         if product:
-            _focus_product(session_id, product)
+            _focus_product(session_id, product, read_only=True)
         _log_decision_provenance(session_id, {
             "authority_owner": "rag", "reference_namespace": "PRODUCT" if product else None,
             "reference_source": reference.get("reference_source"),
             "resolved_product_ids": [str(product["product_id"])] if product else [],
             "semantic_operation": "PRODUCT_DESCRIPTION" if product else "KNOWLEDGE_CONSULTATION",
-            "mutation_allowed": False,
+            "mutation_allowed": False, "mutation_authorized_by_route": False,
         }, consultation)
         return consultation
     initial: OrderConversationState = {
@@ -4501,13 +4536,16 @@ def run_order_flow(
     decision_trace = _log_decision_provenance(session_id, {
         "authority_owner": routed_intent.get("info_owner") or "order_flow",
         "active_pending_type": (before_prefs.get("pending_action") or {}).get("type"),
-        "reference_namespace": "PRODUCT" if products else None,
+        "reference_namespace": routed_intent.get("reference_namespace") or ("PRODUCT" if products else
+            "VOUCHER" if routed_intent.get("pending_type") == "select_voucher" else None),
         "reference_source": (routed_intent.get("reference_source") or routed_intent.get("target_source") or
                              ("pending_products" if kind == "FILL_OPTIONS" else None)),
         "resolved_product_ids": [str(row["product_id"]) for row in products if row.get("product_id")],
-        "semantic_operation": routed_intent.get("pending_decision") or kind,
-        "mutation_allowed": kind in {"ADD_ITEM", "FILL_OPTIONS", "SET_QUANTITY", "REMOVE_ITEM",
-                                     "EDIT_OPTIONS", "CLEAR_CART", "CONFIRM_CHECKOUT"},
+        "semantic_operation": routed_intent.get("decision") or routed_intent.get("pending_decision") or kind,
+        "mutation_authorized_by_route": _mutation_authorized_by_route(routed_intent,
+            (before_prefs.get("pending_action") or {}).get("type")),
+        "mutation_allowed": _mutation_authorized_by_route(routed_intent,
+            (before_prefs.get("pending_action") or {}).get("type")),
     }, result)
     model_fallback_used = bool(result.pop("_model_fallback", False))
     response_result = _sanitize_replay_result(result) if client_message_id else result

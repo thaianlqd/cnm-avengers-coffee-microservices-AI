@@ -133,7 +133,8 @@ def test_review_and_price(runtime, monkeypatch, query, tool, context):
         selected_product_id=runtime[0]['product_id'] if context == 'selected' else None)
     assert [entry['tool'] for entry in result['tool_calls_log']] == [tool]
     assert ('chưa có đánh giá' if tool == 'get_product_insights' else '42.000đ') in result['reply']
-    assert cart_manager._SESSION_CARTS[sid] == before
+    assert_business_state_unchanged(sid, before)
+    assert cart_manager.get_checkout_prefs(sid)['last_product_focus'] == runtime[0]
 
 
 @pytest.mark.parametrize('query,owner', [

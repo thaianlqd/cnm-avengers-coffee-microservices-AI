@@ -29,8 +29,12 @@ await build({entryPoints:['src/pages/Cart/index.jsx'], bundle:true, platform:'no
       export const useMutation=({mutationFn})=>{globalThis.checkoutFixture.mutationFn=mutationFn; return {mutateAsync:mutationFn};};
       export const useQuery=({queryKey})=>{const f=globalThis.checkoutFixture; if(queryKey[0]==='cart-checkout-quote')return {data:f.quote};
       if(queryKey[0]==='public-branches')return {data:{items:f.branches||[]}};
+      if(queryKey[0]==='inventory')return {data:f.inventory===undefined?[]:f.inventory};
       if(String(queryKey).includes('membership'))return {data:{quyen_loi_hien_tai:{freeship_value:f.freeship||0,freeship_min_order:0}}};return {};};`,
-    api:'export const apiClient={post:(...args)=>globalThis.checkoutFixture.post(...args)};',component:'export default function Stub(){return null;}',geo:'export const geocodeAddress=async()=>null;',
+    api:`export const apiClient={post:(...args)=>globalThis.checkoutFixture.post(...args),get:async path=>{
+      const f=globalThis.checkoutFixture; if(f.availabilityFailure)throw new Error('inventory unavailable');
+      return {data:path.startsWith('/inventory')?(f.inventory||[]):f.items.map(item=>({...item,trang_thai:f.active!==false}))};
+    }};`,component:'export default function Stub(){return null;}',geo:'export const geocodeAddress=async()=>null;',
   }[path],loader:'js'}));
 }}]});
 const runtime=require('react/jsx-runtime');
@@ -46,7 +50,7 @@ try{
   const React=require('react'); const {renderToStaticMarkup}=require('react-dom/server');
   globalThis.sessionStorage={getItem:()=>null}; globalThis.localStorage={getItem:()=>null};
   globalThis.window={location:{}};
-  const render=f=>{globalThis.checkoutFixture=f;f.refs||=[];f.effects=[];f.updates=[];f.invalidations=[];delete require.cache[output];return renderToStaticMarkup(React.createElement(require(output).default,{maNguoiDung:'user'}));};
+  const render=f=>{globalThis.checkoutFixture=f;f.refs||=[];f.effects=[];f.updates=[];f.invalidations=[];delete require.cache[output];return renderToStaticMarkup(React.createElement(require(output).default,{maNguoiDung:'user',products:f.items.map(item=>({...item,trang_thai:f.active!==false}))}));};
   const items=[{id:1,ma_san_pham:1,ten_san_pham:'Nước',gia_ban:313000,so_luong:1,toppings:[]}];
   const quote=(fee=0)=>({subtotal:313000,discount_amount:62600,final_total:250400+fee,delivery_fee:fee});
   const cases=[
@@ -105,6 +109,19 @@ try{
   render(rejected);await rejected.checkoutButton.onClick();rejected.branch='CN_2';render(rejected);await rejected.checkoutButton.onClick();
   assert.notEqual(corrected[0].checkout_action_id,corrected[1].checkout_action_id,'a corrected action is permitted only after no-order proof');
   console.log('PASS Web action reuse after timeout/empty cart; changed snapshot blocked; safe correction');
+  for(const failure of ['inactive','disabled','unknown']){
+    const writes=[];
+    const f={step:2,mode:'LAY_TAI_QUAN',branch:'CN_1',payment:'VNPAY',items,quote:quote(),
+      active:failure!=='inactive',inventory:failure==='disabled'?[{ma_san_pham:1,dang_kinh_doanh:false}]:[],
+      availabilityFailure:failure==='unknown',post:async(...args)=>writes.push(args)};
+    render(f);await f.checkoutButton.onClick();
+    assert.equal(writes.length,0,failure+' cannot checkout');
+    assert.ok(f.updates.some(([slot,value])=>slot===11&&String(value).includes(failure==='unknown'?'xác minh':'tạm ngưng')));
+  }
+  console.log('PASS selected branch blocks global inactive, disabled override and failed availability');
+  const unverified={step:2,mode:'DUNG_TAI_CHO',branch:'CN_1',payment:'COD',items,quote:quote(),inventory:null};
+  assert.ok(render(unverified).includes('Chưa xác minh'));
+  assert.equal(Boolean(unverified.checkoutButton.disabled),true);
   const widget=readFileSync('src/components/ChatWidget.jsx','utf8');
   const predicate=widget.slice(widget.indexOf('const isCheckoutConfirmation = '),widget.indexOf('const fmtDateHeader = '));
   const confirmation=new Function(`${predicate}; return isCheckoutConfirmation;`)();

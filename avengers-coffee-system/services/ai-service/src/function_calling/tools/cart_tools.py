@@ -968,7 +968,7 @@ def execute_request_checkout(
         return {
             "status": "stock_conflict",
             "message": (
-                f"Cửa hàng {cart.get('branch_name') or cart['branch_id']} tạm ngưng phục vụ món: "
+                f"Cửa hàng {cart.get('branch_name') or cart['branch_id']}: món tạm ngưng hoặc chưa xác minh: "
                 f"{', '.join(stock_blockers)}. "
                 "Hãy chọn cửa hàng khác hoặc đổi món trước khi tóm tắt đơn."
             ),
@@ -1216,7 +1216,7 @@ def _execute_confirm_checkout(
         return {
             "status": "stock_conflict",
             "message": (
-                "Tồn kho vừa cập nhật: món bị tạm ngưng: "
+                "Tình trạng món vừa cập nhật: tạm ngưng hoặc chưa xác minh: "
                 f"{', '.join(stock_blockers)}. Đơn chưa được tạo; vui lòng chọn lại món hoặc cửa hàng."
             ),
         }
