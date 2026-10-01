@@ -172,6 +172,14 @@ def classify_pending_reply(message: str, pending_type: str, evidence: Optional[d
             return "KEEP_CURRENT"
         return "AMBIGUOUS"
     if pending_type == "select_voucher":
+        # Negative head + voucher object + social particles is a complete refusal.
+        # Anchor the whole reply so questions, qualifiers and other actions cannot match.
+        if re.fullmatch(
+            r"(?:(?:da|toi|minh)\s+)*(?:khong|ko|k|khoi|thoi)\s+"
+            r"(?:ma(?:\s+giam\s+gia)?|voucher)(?:\s+(?:dau|nhe|nha|a|ban|oi|di))*[.!]*",
+            text,
+        ):
+            return "SKIP_VOUCHER"
         if re.search(r"\b(bo qua|khong (?:dung|can|ap)|khong lay)\b", text):
             return "SKIP_VOUCHER"
         if re.search(r"\b(?:xoa|bo|go)\b.*\b(?:ma|voucher|giam gia)\b|\bkhong dung (?:ma|voucher) nua\b", text):
