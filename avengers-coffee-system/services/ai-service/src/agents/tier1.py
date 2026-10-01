@@ -201,10 +201,13 @@ def is_pending_expired(expires_at: float, now: Optional[float] = None) -> bool:
 def has_finish_cart_evidence(text: str) -> bool:
     """Recognize natural closure language; callers must prove cart-stage ownership."""
     norm = normalize_confirmation_text(str(text or ""))
+    norm = re.sub(r"\bdc\b", "duoc", norm)
     return bool(re.fullmatch(
-        r"(?:ok|oke|okay)?\s*(?:vay\s+)?(?:"
-        r"hoan\s+tat(?:\s+gio(?:\s+hang)?)?|"
-        r"chot\s+(?:phan\s+)?gio|xong(?:\s+roi)?|xongroi|the\s+la\s+xong|vay\s+duoc\s+roi|duoc\s+roi"
+        r"(?:ok|oke|okay)?\s*(?:"
+        r"(?:vay\s+)?(?:hoan\s+tat(?:\s+gio(?:\s+hang)?)?|chot\s+(?:phan\s+)?gio)|"
+        r"(?:vay\s+|the\s+la\s+)?(?:xong(?:\s+roi)?|xongroi)|"
+        r"(?:(?:vay|the(?:\s+la)?)\s+)?(?:duoc|on)\s+roi|"
+        r"(?:vay|the)\s+thoi|khong\s+(?:can\s+)?them(?:\s+gi)?\s+nua"
         r")(?:\s+(?:a|b|ban|oi|nha|nhe|di))*",
         norm,
     ))

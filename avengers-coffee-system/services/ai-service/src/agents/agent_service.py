@@ -708,6 +708,9 @@ def _resolve_pending_branch_choice(
     chosen = None
     from src.agents.selection_language import parse_selection_reference
     reference = parse_selection_reference(message, active_namespace="BRANCH")
+    if reference.requested and (reference.namespace not in {None, "BRANCH", "LOCATION_CANDIDATE"}
+                               or reference.operation_semantics in {"INFO_REFERENCE", "NEGATE_REFERENCE"}):
+        return None
     if (is_branch_prompt and reference.requested
             and reference.namespace in {None, "BRANCH", "LOCATION_CANDIDATE"}
             and 1 <= reference.ordinals[0] <= len(candidates)):
@@ -728,7 +731,7 @@ def _resolve_pending_branch_choice(
     if not chosen:
         return None
 
-    if chosen.get("availability_status") in {"unavailable", "unknown"}:
+    if str(chosen.get("availability_status") or "").lower() in {"unavailable", "unknown", "unverified"}:
         missing = list(chosen.get("unavailable_products") or [])
         unverified = list(chosen.get("unverified_products") or [])
         if missing:
@@ -755,7 +758,8 @@ def _resolve_pending_branch_choice(
         customer_selected=True,
     )
     if branch_result.get("status") == "ok":
-        cart_manager.set_checkout_context(session_id, branch_candidates=None)
+        cart_manager.set_checkout_context(session_id, branch_candidates=None,
+                                         location_pending=None, address_change_requested=None)
         try:
             cart_manager.clear_pending_action(session_id)
         except Exception as e:
@@ -847,7 +851,8 @@ def _confirm_saved_location(
                 "checkout_payload": None, "tool_calls_log": log, "error": None}
     if nearest.get("status") == "need_branch_selection" and branches:
         cart_manager.set_checkout_context(session_id, suggested_address=None,
-            location_address=suggested, address_confirmed=None, delivery_address=None)
+            location_address=suggested, address_confirmed=None, delivery_address=None,
+            location_pending=None, address_change_requested=None)
         if (cart_manager.get_pending_action(session_id) or {}).get("type") == "confirm_address":
             cart_manager.clear_pending_action(session_id)
         source = prefs.get("location_source") or "profile_saved"

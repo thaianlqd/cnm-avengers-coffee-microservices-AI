@@ -547,6 +547,65 @@ def _resolve_pending_cart_line(session_id: str, message: str, cart: Dict[str, An
     return {"row": row, **params}
 
 
+def _cart_target_continuation(state: OrderConversationState, pending: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Resume only evidence about the exact cart line we asked to clarify."""
+    params = pending.get("params") or pending.get("data") or {}
+    if pending.get("type") != "cart_edit_clarification" or params.get("clarification_type") != "cart_target":
+        return None
+    message, session_id = state["user_message"], state["session_id"]
+    text = _norm(message).strip(" .!?")
+    row = next((item for item in (state.get("cart") or {}).get("items") or []
+                if _cart_line_id(item) == str(params.get("cart_item_id"))
+                and str(item.get("product_id")) == str(params.get("product_id"))), None)
+    if not row:
+        cart_manager.clear_pending_action(session_id)
+        return {"intent": "PENDING_CART_LINE", "resolved_pending": {"stale": True}}
+    number = r"(?:\d+|mot|hai|ba|bon|tu|nam|sau|bay|tam|chin|muoi)"
+    quantity = re.fullmatch(
+        r"(?:(?:cho|de)\s+(?:(?:toi|minh)\s+)?|(?:so luong|sl)\s*(?:la\s*)?)?"
+        + number + r"(?:\s+(?:cai|ly|phan|mon))?(?:\s+(?:a|ban|oi|nha|nhe|di))*", text,
+    )
+    # _norm retains signs; a negative number must never become positive.
+    if quantity:
+        value = re.search(number, text).group()
+        words = dict(zip('mot hai ba bon tu nam sau bay tam chin muoi'.split(),
+                         (1, 2, 3, 4, 4, 5, 6, 7, 8, 9, 10)))
+        requested = int(value) if value.isdigit() else words[value]
+        return {"intent": "PENDING_CART_LINE", "resolved_pending": {
+            "row": row, "operation": "SET_QUANTITY", "requested_value": requested}}
+    if re.fullmatch(r"(?:(?:cho|de)\s+(?:(?:toi|minh)\s+)?|(?:so luong|sl)\s*)?"
+                    r"[-\d\s]+(?:hay|hoac|va)?[-\d\s]*(?:cai|ly|phan|mon)?", text):
+        return {"intent": "PENDING_AMBIGUOUS", "pending_type": "cart_edit_clarification"}
+    if re.fullmatch(r"(?:xoa|bo)\s+(?:no|mon\s+(?:nay|do)|cai\s+(?:nay|do))(?:\s+(?:di|nhe|nha))*", text):
+        return {"intent": "PENDING_CART_LINE", "resolved_pending": {"row": row, "operation": "REMOVE"}}
+    explicit_reference = parse_selection_reference(message)
+    if (has_cart_edit_action(message) and not explicit_reference.requested
+            and not _cart_rows_named_in_message(state.get("cart") or {}, message)):
+        return {"intent": "PENDING_CART_LINE", "resolved_pending": {
+            "row": row, "operation": "EDIT_OPTIONS", "requested_value": message}}
+    from src.agents.pending_context import classify_pending_reply
+    if classify_pending_reply(message, "cart_edit_clarification") == "KEEP_CURRENT":
+        return {"intent": "PENDING_REPLY", "pending_type": "cart_edit_clarification", "decision": "KEEP_CURRENT"}
+    if has_finish_cart_evidence(message) and not re.search(r"\bgio\b", text):
+        return {"intent": "PENDING_AMBIGUOUS", "pending_type": "cart_edit_clarification"}
+    from src.agents.location_parser import parse_location
+    from src.agents.agent_service import _wants_checkout
+    explicit = classify_order_intent(message, None)
+    location = parse_location(message)
+    if explicit.get("intent") in {
+        "BROWSING", "ADD_ITEM", "VIEW_CART", "CLEAR_CART", "REMOVE_ITEM", "SET_QUANTITY", "EDIT_OPTIONS",
+        "FINISH_CART", "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER",
+        "APPLY_VOUCHER", "REMOVE_VOUCHER", "REPLACE_VOUCHER",
+    } or _voucher_command(message) or _wants_checkout(message) or (
+        location.kind in {"area", "address", "poi"} and location.value
+    ):
+        cart_manager.clear_pending_action(session_id)
+        return None
+    if has_positive_browsing_evidence(message) or explicit.get("intent") in {"PRODUCT_INFO", "PRODUCT_REVIEW", "PAYMENT_INFO"}:
+        return None
+    return {"intent": "PENDING_AMBIGUOUS", "pending_type": "cart_edit_clarification"}
+
+
 def _resolve_cart_line(cart: Dict[str, Any], message: str) -> tuple[Optional[Dict[str, Any]], Optional[str]]:
     items = list(cart.get("items") or [])
     text = _norm(message)
@@ -1482,7 +1541,12 @@ def _handle_pending_reply(state: OrderConversationState) -> Dict[str, Any]:
         )
         resolved = _resolve_pending_branch_choice(session_id, message, history=state.get("history") or [])
         if resolved:
-            return _advance_checkout_if_ready(session_id, resolved)
+            if (cart_manager.get_branch(session_id)
+                    and (cart_manager.get_pending_action(session_id) or {}).get("type") != "select_branch"):
+                return _advance_checkout_if_ready(session_id, resolved)
+            return resolved
+        if intent.get("branch_reference"):
+            return reply(_branch_choice_prompt(session_id))
         from src.agents.location_parser import parse_location
         location = parse_location(message)
         if location.kind in {"address", "area", "poi"} or (
@@ -1501,6 +1565,8 @@ def _handle_pending_reply(state: OrderConversationState) -> Dict[str, Any]:
         cart_manager.clear_pending_action(session_id)
         cart_manager.set_checkout_context(session_id, flow_stage="CART_REVIEW")
         return reply("Được nhé, mình giữ món như hiện tại. Bạn muốn thêm món hay hoàn tất giỏ?")
+    if pending_type == "cart_edit_clarification":
+        return reply("Bạn muốn đặt số lượng bao nhiêu cho món vừa xác định, đổi tùy chọn, xoá món hay giữ nguyên?")
     if pending_type == "select_voucher":
         if decision == "REMOVE_VOUCHER":
             from src.function_calling.tools.voucher_tools import execute_remove_voucher
@@ -1519,7 +1585,12 @@ def _handle_pending_reply(state: OrderConversationState) -> Dict[str, Any]:
             from src.agents.agent_service import _resolve_pending_voucher_choice
             voucher_message = ("số " + re.search(r"\d+", message).group()
                                if re.fullmatch(r"\s*\d+\s*[.!]?\s*", message) else message)
-            resolved = _resolve_pending_voucher_choice(session_id, voucher_message)
+            reference = {}
+            resolved = _resolve_pending_voucher_choice(session_id, voucher_message, reference_out=reference)
+            if reference:
+                intent.update(decision=reference["semantic_operation"],
+                              reference_namespace=reference["reference_namespace"],
+                              reference_source=reference["reference_source"])
             if resolved:
                 return resolved
             if not prefs.get("voucher_candidates"):
@@ -2197,6 +2268,22 @@ def _browse_ask_more(state: OrderConversationState) -> Dict[str, Any]:
 
 def _understand(state: OrderConversationState) -> OrderConversationState:
     prefs_at_entry = cart_manager.get_checkout_prefs(state["session_id"])
+    pending_at_entry = cart_manager.get_pending_action(state["session_id"]) or {}
+    # A persisted branch list owns branch references before location hints or
+    # catalog parsing can reinterpret its numbers. Literal new locations still
+    # enter the existing location transition below.
+    if pending_at_entry.get("type") == "select_branch":
+        reference = parse_selection_reference(state["user_message"], active_namespace="BRANCH")
+        if reference.requested and reference.namespace in {None, "BRANCH", "LOCATION_CANDIDATE"}:
+            if reference.operation_semantics == "INFO_REFERENCE":
+                return {**state, "intent": {"intent": "READ_ONLY_BRANCH_FOLLOWUP",
+                    "ordinal": reference.ordinals[0],
+                    "branch_candidates": list(prefs_at_entry.get("branch_candidates") or []),
+                    "preserve_primary_pending": True}}
+            return {**state, "intent": {"intent": "PENDING_BRANCH", "branch_reference": True}}
+    target_reply = _cart_target_continuation(state, pending_at_entry)
+    if target_reply is not None:
+        return {**state, "intent": target_reply}
     # Short observational questions use the same canonical context as RAG.
     # Resolve before card selection or pending-option interpretation can consume them.
     from src.rag.authority import knowledge_route
@@ -2583,6 +2670,10 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     plain_intent = classify_order_intent(state["user_message"], None)
     if (prefs_before.get("flow_stage") in {"CART_REVIEW", "CART_READY"}
             and not (state.get("cart") or {}).get("is_empty")
+            and pending_type in {None, "ask_more_items"}
+            and not prefs_before.get("pending_products")
+            and not prefs_before.get("pending_product_reference")
+            and not prefs_before.get("checkout_submission")
             and has_finish_cart_evidence(state["user_message"])):
         intent = {"intent": "FINISH_CART"}
         plain_intent = intent
@@ -2655,7 +2746,7 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         if hinted.kind in {"area", "address", "poi", "branch_query"} and hinted.value:
             return {**state, "intent": {"intent": "LOCATION_QUERY", "location_kind": hinted.kind}}
         return {**state, "intent": {"intent": "PENDING_AMBIGUOUS", "pending_type": pending_type}}
-    if (prefs.get("checkout_requested") and prefs.get("delivery_type") in {"MANG_DI", "TAI_CHO"}
+    if (pending_type != "select_branch" and prefs.get("checkout_requested") and prefs.get("delivery_type") in {"MANG_DI", "TAI_CHO"}
             and (prefs.get("location_pending") or prefs.get("address_change_requested"))):
         hinted = checkout_location(state["user_message"], prefs["delivery_type"], True)
         if hinted.kind in {"area", "address", "poi"}:
@@ -3433,8 +3524,17 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
                        else branch.get("distance_km"))
         distance = (f" Khoảng cách ước tính: {distance_km} km."
                     if distance_km is not None else "")
+        availability = ""
+        if re.search(r"\b(?:con|du|het|thieu|ton kho)\b", _norm(message)):
+            status = str(branch.get("availability_status") or "").lower()
+            if status == "available":
+                availability = " Còn đủ tất cả món trong giỏ theo danh sách vừa tra."
+            elif status == "unavailable":
+                availability = " Thiếu món: " + ", ".join(branch.get("unavailable_products") or ["chưa đủ món trong giỏ"]) + "."
+            else:
+                availability = " Chưa xác minh được tồn kho; chưa thể chọn cửa hàng này."
         return {**state, "result": {
-            "reply": f"{name} — {address}.{distance}",
+            "reply": f"{name} — {address}.{distance}{availability}",
             "checkout_payload": None, "tool_calls_log": [], "error": None,
         }}
     if kind == "ORDINAL_CONTEXT_CLARIFY":
@@ -3444,6 +3544,13 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         }}
     if kind == "CART_TARGET_CLARIFY":
         row = intent["cart_row"]
+        if _cart_line_id(row):
+            cart_manager.set_pending_action(session_id, "cart_edit_clarification", {
+                "clarification_type": "cart_target", "cart_item_id": _cart_line_id(row),
+                "product_id": row.get("product_id"), "product_name": row.get("product_name"),
+                "current_quantity": row.get("quantity"),
+                "options": {key: row.get(key) for key in ("size", "toppings", "luong_da", "do_ngot", "loai_sua")},
+            })
         logger.debug("routing route=CART_TARGET_CLARIFY operation=NONE target_source=cart_name candidate_count=1")
         return {**state, "result": {"reply": f"Mình đã xác định được {row.get('product_name')} trong giỏ. Bạn muốn sửa số lượng/tùy chọn, xoá món, thêm một phần nữa, hay giữ nguyên?",
                                    "checkout_payload": None, "tool_calls_log": [], "error": None}}
@@ -4436,12 +4543,12 @@ def _mutation_authorized_by_route(intent, pending_type=None):
     owner = intent.get("pending_type") or pending_type
     decision = intent.get("decision") or intent.get("pending_decision")
     if kind == "PENDING_REPLY":
-        return ((owner == "select_voucher" and decision in {"SELECT_VOUCHER", "APPLY", "REMOVE_VOUCHER"})
+        return ((owner == "select_voucher" and decision in {"SELECT_VOUCHER", "APPLY", "APPLY_VOUCHER", "REMOVE_VOUCHER"})
                 or (owner == "confirm_checkout" and decision in {"CONFIRM", "YES"}))
     if kind == "PENDING_CART_LINE":
         resolved = intent.get("resolved_pending") or {}
         return bool(not resolved.get("stale") and resolved.get("row") and
-                    resolved.get("operation") in {"SET_QUANTITY", "REMOVE_ITEM", "EDIT_OPTIONS"})
+                    resolved.get("operation") in {"SET_QUANTITY", "REMOVE", "REMOVE_ITEM", "EDIT_OPTIONS"})
     if kind == "SELECT_VOUCHER":
         return decision == "APPLY_VOUCHER"
     if kind in {"PRODUCT_REVIEW", "PRODUCT_INFO", "PENDING_AMBIGUOUS"}:
