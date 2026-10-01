@@ -35,7 +35,7 @@ def positive_request_text(query):
     """
     clauses = []
     for clause in re.split(r'[,;.!?]|\b(?:và|va|nhưng|nhung)\b', query.lower()):
-        text = normalize_text(clause)
+        text = re.sub(r"\bbn\b", "bao nhieu", normalize_text(clause))
         text = re.sub(r'\b(?:(?:khong|chua)\s+(?:can|hoi|noi|kiem tra)|'
                       r'dung\s+(?:noi|hoi|kiem tra))\b.*$', '', text)
         clauses.append(text.strip())

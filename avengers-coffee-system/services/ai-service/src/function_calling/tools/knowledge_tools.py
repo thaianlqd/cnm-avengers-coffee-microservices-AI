@@ -27,7 +27,7 @@ TOOL_SEARCH_KNOWLEDGE_BASE = {
 
 
 def execute_search_knowledge_base(query, domain=None, entity_type=None, entity_id=None, source=None, session_id=None,
-                                  selected_product_id=None):
+                                  selected_product_id=None, reference_out=None):
     route = knowledge_route(query)
     if route['owner'] not in {'rag', 'conversation'}:
         return {'status': 'authority_required', 'owner': route['owner'], 'results': [],
@@ -39,7 +39,7 @@ def execute_search_knowledge_base(query, domain=None, entity_type=None, entity_i
                'source': source, 'authority': 'knowledge'}
     if route.get('facet') or domain in PRODUCT_DOMAINS or entity_type == 'product':
         from src.rag.product_context import resolve_product_context
-        product = resolve_product_context(query, session_id, selected_product_id)
+        product = resolve_product_context(query, session_id, selected_product_id, reference_out)
         if product:
             canonical_id = str(product['product_id'])
             if entity_id is not None and str(entity_id) != canonical_id:

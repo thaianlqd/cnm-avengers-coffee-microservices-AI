@@ -75,6 +75,18 @@ def forbid_writes(monkeypatch):
                         Mock(side_effect=AssertionError('order creation')))
 
 
+def assert_business_state_unchanged(sid, before):
+    # New contract: only canonical conversational identity may change on a
+    # product consultation. Preserve every business field and pending owner.
+    after = deepcopy(cart_manager._SESSION_CARTS[sid])
+    after['checkout_prefs'].pop('last_product_focus', None)
+    expected = deepcopy(before)
+    expected['checkout_prefs'].pop('last_product_focus', None)
+    after.pop('updated_at', None)
+    expected.pop('updated_at', None)
+    assert after == expected
+
+
 @pytest.mark.parametrize('query', [
     'Americano Mơ vị sao?', 'Americano Mơ ngon k?', 'Americano Mơ như nào?',
     'món này vị sao?', 'món này có gì đặc biệt?', 'có sữa k?', 'thành phần?',
@@ -96,7 +108,9 @@ def test_static_description(runtime, monkeypatch, query, context):
         expected = runtime[1] if 'Butter' in query else runtime[0]
         assert evidence['status'] == 'ok'
         assert {d['entity_id'] for d in evidence['results']} == {expected['product_id']}
-    assert cart_manager._SESSION_CARTS[sid] == before
+    assert_business_state_unchanged(sid, before)
+    expected_focus = runtime[1] if 'Butter' in query else runtime[0]
+    assert cart_manager.get_checkout_prefs(sid)['last_product_focus'] == expected_focus
 
 
 @pytest.mark.parametrize('query,tool', [
@@ -187,7 +201,7 @@ def test_same_options_resume_after_three_consultations(runtime, monkeypatch):
     for query in ('món này vị sao?', 'món này review sao?', 'bao nhiêu?'):
         result = order_flow_graph.run_order_flow(sid, query)
         assert result['reply']
-        assert cart_manager._SESSION_CARTS[sid] == before
+        assert_business_state_unchanged(sid, before)
     calls = []
     monkeypatch.setattr(agent_service, '_complete_pending_products_from_options',
         lambda session, text: calls.append((session, text)) or {
@@ -251,7 +265,8 @@ def test_explicit_product_namespace_overrides_hint(runtime, monkeypatch, query):
     forbid_writes(monkeypatch)
     result = order_flow_graph.run_order_flow(sid, query, selected_product_id=runtime[0]['product_id'])
     assert {row['entity_id'] for row in result['tool_calls_log'][0]['result']['results']} == {runtime[1]['product_id']}
-    assert cart_manager._SESSION_CARTS[sid] == before
+    assert_business_state_unchanged(sid, before)
+    assert cart_manager.get_checkout_prefs(sid)['last_product_focus'] == runtime[1]
 
 
 @pytest.mark.parametrize('query', ['cho tôi món số 2', 'lấy bánh số 1',
@@ -328,4 +343,5 @@ def test_exclusions_keep_entity_filtered_knowledge(runtime, monkeypatch, query):
     evidence = result['tool_calls_log'][0]['result']
     assert evidence['status'] == 'ok'
     assert {row['entity_id'] for row in evidence['results']} == {runtime[0]['product_id']}
-    assert cart_manager._SESSION_CARTS[sid] == before
+    assert_business_state_unchanged(sid, before)
+    assert cart_manager.get_checkout_prefs(sid)['last_product_focus'] == runtime[0]

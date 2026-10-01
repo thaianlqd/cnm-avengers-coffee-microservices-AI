@@ -640,49 +640,33 @@ def _unresolved_product_reference(session_id: str, message: str) -> bool:
 
 def _focus_product(session_id: str, product: Dict[str, Any]) -> None:
     if product.get("product_id") and product.get("product_name"):
-        cart_manager.set_checkout_context(session_id, last_product_focus={
-            "product_id": product["product_id"],
-            "product_name": product["product_name"],
-            "category": product.get("category"),
-        })
-
-
-_PRODUCT_ORDINAL = re.compile(
-    r"\b(?P<namespace>do uong|nuoc|do an|banh|san pham|mon)\s*"
-    r"(?:(?:[a-z]{1,3}|#)\s*)?(?P<index>\d+)\b"
-)
-_PRODUCT_ORDINAL_CONTINUATION = re.compile(
-    r"\s*(?:va|voi|,|&)\s*(?:(?:so|thu|#)\s*)?(?P<index>\d+)\b"
-)
+        identity = {"product_id": product["product_id"], "product_name": product["product_name"],
+                    "category": product.get("category")}
+        if cart_manager.get_checkout_prefs(session_id).get("last_product_focus") != identity:
+            cart_manager.set_checkout_context(session_id, last_product_focus=identity)
 
 
 def _resolve_product_ordinals(
     session_id: str, message: str,
 ) -> tuple[List[Dict[str, Any]], List[int], int]:
-    """Resolve every explicit ordinal from the latest canonical UI snapshot."""
+    """Resolve shared numbered references against canonical product snapshots."""
     prefs = cart_manager.get_checkout_prefs(session_id)
     latest = list(prefs.get("last_product_suggestions") or [])
     snapshots = dict(prefs.get("product_suggestion_snapshots") or {})
-    text = _norm(message)
-    named_matches = list(_PRODUCT_ORDINAL.finditer(text))
-    matches: List[tuple[str, int]] = []
-    for position, match in enumerate(named_matches):
-        namespace = match.group("namespace")
-        matches.append((namespace, int(match.group("index"))))
-
-        # A namespace may be stated once for a coordinated ordinal list:
-        # "nước số 4 và số 5". Only accept a bare continuation directly
-        # connected to the preceding explicit namespace; standalone numbers
-        # remain outside ordinal parsing.
-        next_named_start = (named_matches[position + 1].start()
-                            if position + 1 < len(named_matches) else len(text))
-        continuation_start = match.end()
-        while continuation_start < next_named_start:
-            continuation = _PRODUCT_ORDINAL_CONTINUATION.match(text, continuation_start)
-            if not continuation or continuation.end() > next_named_start:
-                break
-            matches.append((namespace, int(continuation.group("index"))))
-            continuation_start = continuation.end()
+    pending_type = (prefs.get("pending_action") or {}).get("type")
+    # An unlabelled selection must have a product UI owner. Stale catalog
+    # snapshots cannot steal voucher/payment/branch/location/cart-line choices.
+    product_active = bool(latest) and not prefs.get("last_branch_discovery_candidates") and pending_type in {
+        None, "ask_more_items", "shopping_scope_clarification",
+    }
+    reference = parse_selection_reference(
+        message, active_namespace="PRODUCT" if product_active else None, allow_multiple=True,
+    )
+    if (not reference.requested or reference.namespace not in {None, "PRODUCT"}
+            or (reference.namespace is None and (
+                not product_active or reference.operation_semantics != "SELECT_REFERENCE"))):
+        return [], [], 0
+    matches = list(zip(reference.ordinal_labels, reference.ordinals))
     resolved: List[Dict[str, Any]] = []
     invalid: List[int] = []
     for namespace, ordinal in matches:
@@ -2214,13 +2198,17 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     from src.rag.product_context import resolve_product_context
     read_owner = knowledge_route(state["user_message"])["owner"]
     if read_owner in {"review", "price", "inventory"}:
+        reference = {}
         product = resolve_product_context(state["user_message"], state["session_id"],
-                                          state.get("selected_product_id"))
-        if product or state.get("selected_product_id"):
+                                          state.get("selected_product_id"), reference)
+        if product or state.get("selected_product_id") or prefs_at_entry.get("last_product_focus"):
+            # A known focus cannot authorize substituting another identity.
+            # Unresolved references clarify through the current read handler.
             return {**state, "intent": {
                 "intent": "PRODUCT_REVIEW" if read_owner == "review" else "PRODUCT_INFO",
                 "products": [product] if product else [],
                 "info_owner": read_owner, "preserve_primary_pending": True,
+                "reference_source": reference.get("reference_source"),
             }}
     retry_focus = prefs_at_entry.get("last_product_focus") or {}
     if retry_focus.get("option_retry_pending") and re.search(
@@ -2253,6 +2241,16 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
         # Reconcile the persisted operation before interpreting this turn as a
         # fresh add, browse request, or generic LLM question.
         return {**state, "intent": {"intent": "FILL_OPTIONS", "reconciliation": True}}
+    if staged_at_entry and (pending_at_entry or {}).get("type") == "fill_options":
+        from src.agents.option_state import uses_global_option_defaults
+        default_frame = set(re.sub(r"\d+", " ", _norm(state["user_message"])).split())
+        # Only a whole staged-batch confirmation takes this shortcut. New
+        # product names and mixed commands retain the existing interpretation.
+        batch_frame = set("toi minh cho giup ban lay chon mon san pham cai ly phan vua nay do roi "
+                          "theo mac dinh het tat ca con lai nha nhe di a oi voi cong thuc "
+                          "khong can chinh them giu nguyen".split())
+        if uses_global_option_defaults(state["user_message"]) and default_frame <= batch_frame:
+            return {**state, "intent": {"intent": "FILL_OPTIONS"}}
     selected_id = str(state.get("selected_product_id") or "").strip()
     from src.agents.shopping_language import is_deictic_selection
     card_add = (classify_order_intent(state["user_message"], None).get("intent") == "ADD_ITEM"
@@ -2801,7 +2799,8 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
             state["session_id"], state["user_message"])
         return {**state, "intent": {"intent": "ADD_ITEM", "target_kind": "PRODUCT",
                                     "resolved_products": structured_products or ordinal_products,
-                                    "quantity": _extract_add_quantity(state["user_message"])}}
+                                    "quantity": _extract_add_quantity(state["user_message"]),
+                                    "reference_source": "product_snapshot_ordinal"}}
     direct_snapshot_refs = initial_refs
     direct_snapshot_selection = _is_direct_product_selection(state["user_message"], direct_snapshot_refs)
     if intent.get("intent") in {"BROWSING", "UNKNOWN"} and not direct_snapshot_selection and not re.search(r"\b(?:co|xem|tim|goi y|menu|gia|the nao|khong)\b", _norm(state["user_message"])):
@@ -4064,6 +4063,7 @@ def _render(state: OrderConversationState) -> OrderConversationState:
     products: List[Dict[str, Any]] = []
     recommendation_products: List[Dict[str, Any]] = []
     price_focus: Optional[Dict[str, Any]] = None
+    price_identities: Dict[str, Dict[str, Any]] = {}
     for entry in logs:
         value = entry.get("result") if isinstance(entry, dict) else {}
         branches.extend(value.get("branches", []))
@@ -4078,24 +4078,23 @@ def _render(state: OrderConversationState) -> OrderConversationState:
             products.extend(value.get("products", []))
         if entry.get("tool") == "check_price_and_stock" and isinstance(value, dict):
             if value.get("status") == "ok":
-                single_products = value.get("products") or []
-                if len(single_products) == 1:
-                    item = single_products[0]
-                    price_focus = {
-                        "product_id": item.get("product_id"),
-                        "product_name": item.get("product_name"),
-                        "category": _map_db_category_to_bucket(item.get("category"), item.get("parent_category")),
-                    }
-                    cart_manager.set_checkout_context(
-                        state["session_id"],
-                        last_product_focus=price_focus,
-                    )
+                for item in value.get("products") or []:
+                    if item.get("product_id") and item.get("product_name"):
+                        price_identities[str(item["product_id"])] = {
+                            "product_id": item["product_id"], "product_name": item["product_name"],
+                            "category": _map_db_category_to_bucket(item.get("category"), item.get("parent_category")),
+                        }
         if entry.get("tool") == "add_to_cart" and isinstance(value, dict) and value.get("status") == "ok":
             _update_cart_focus_after_add(
                 state["session_id"],
                 {"tool_calls_log": [entry]},
                 {"product_name": (entry.get("args") or {}).get("product_name")},
             )
+    if len(price_identities) == 1:
+        price_focus = next(iter(price_identities.values()))
+    elif len(price_identities) > 1:
+        # Per-product price reads during a multi-add are not a single selection.
+        cart_manager.set_checkout_context(state["session_id"], last_product_focus=None)
     if recommendation_products:
         filtered_catalog = any(entry.get("tool") == "filter_catalog" for entry in logs)
         displayed: List[Dict[str, Any]] = []
@@ -4416,6 +4415,25 @@ def _sanitize_replay_result(result: Dict[str, Any]) -> Dict[str, Any]:
     return json.loads(json.dumps(compact, ensure_ascii=False, default=str))
 
 
+def _log_decision_provenance(session_id, decision, result):
+    """Inspect routing evidence, never model reasoning or customer-facing text."""
+    tools = [entry for entry in result.get("tool_calls_log") or [] if isinstance(entry, dict)]
+    writes = {"add_to_cart", "update_cart_item", "remove_cart_item", "clear_cart",
+              "apply_voucher", "remove_voucher", "confirm_checkout"}
+    trace = {
+        "active_pending_type": (cart_manager.get_checkout_prefs(session_id).get("pending_action") or {}).get("type"),
+        **decision,
+        "provider_tools": [entry.get("tool") for entry in tools],
+        "mutation_evidence_present": any(entry.get("tool") in writes and
+            (entry.get("result") or {}).get("status") in {"ok", "success"} for entry in tools),
+    }
+    try:
+        logger.info("[AgentTurn] decision_provenance=%s", json.dumps(trace, ensure_ascii=False))
+    except Exception:
+        pass  # Observability must never fail a business turn.
+    return trace
+
+
 def run_order_flow(
     session_id: str,
     user_message: str,
@@ -4441,6 +4459,17 @@ def run_order_flow(
     from src.agents.knowledge_consultation import try_knowledge_consultation
     consultation = try_knowledge_consultation(session_id, user_message, selected_product_id)
     if consultation is not None:
+        reference = consultation.pop("_canonical_reference", {})
+        product = reference.get("product")
+        if product:
+            _focus_product(session_id, product)
+        _log_decision_provenance(session_id, {
+            "authority_owner": "rag", "reference_namespace": "PRODUCT" if product else None,
+            "reference_source": reference.get("reference_source"),
+            "resolved_product_ids": [str(product["product_id"])] if product else [],
+            "semantic_operation": "PRODUCT_DESCRIPTION" if product else "KNOWLEDGE_CONSULTATION",
+            "mutation_allowed": False,
+        }, consultation)
         return consultation
     initial: OrderConversationState = {
         "session_id": session_id,
@@ -4466,6 +4495,20 @@ def run_order_flow(
             completed = _GRAPH.invoke(initial)
             routed_intent = completed.get("intent") or {}
             result = completed.get("result") or {"reply": "Mình chưa xử lý được yêu cầu này.", "error": "empty_graph_result"}
+    kind = routed_intent.get("intent") or "MODEL_FALLBACK"
+    products = (routed_intent.get("products") or routed_intent.get("resolved_products") or
+                (before_prefs.get("pending_products") if kind == "FILL_OPTIONS" else []) or [])
+    decision_trace = _log_decision_provenance(session_id, {
+        "authority_owner": routed_intent.get("info_owner") or "order_flow",
+        "active_pending_type": (before_prefs.get("pending_action") or {}).get("type"),
+        "reference_namespace": "PRODUCT" if products else None,
+        "reference_source": (routed_intent.get("reference_source") or routed_intent.get("target_source") or
+                             ("pending_products" if kind == "FILL_OPTIONS" else None)),
+        "resolved_product_ids": [str(row["product_id"]) for row in products if row.get("product_id")],
+        "semantic_operation": routed_intent.get("pending_decision") or kind,
+        "mutation_allowed": kind in {"ADD_ITEM", "FILL_OPTIONS", "SET_QUANTITY", "REMOVE_ITEM",
+                                     "EDIT_OPTIONS", "CLEAR_CART", "CONFIRM_CHECKOUT"},
+    }, result)
     model_fallback_used = bool(result.pop("_model_fallback", False))
     response_result = _sanitize_replay_result(result) if client_message_id else result
     if client_message_id:
@@ -4495,6 +4538,7 @@ def run_order_flow(
             user_message=user_message,
             history=history or [],
             state_before={
+                "decision_provenance": decision_trace,
                 "cart_fingerprint": before_fingerprint,
                 "item_count": before.get("item_count", 0),
                 "stage": before_prefs.get("flow_stage", "BROWSING"),

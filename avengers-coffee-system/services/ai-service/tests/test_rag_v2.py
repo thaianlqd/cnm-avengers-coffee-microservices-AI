@@ -137,7 +137,11 @@ def test_side_question_preserves_entire_business_state(service, monkeypatch, pen
     result = order_flow_graph.run_order_flow(session, 'món này có vị gì?', client_message_id='readonly-1')
     assert result['route_owner'] == 'knowledge' and not result['checkout_payload']
     assert 'cam chua' in result['reply']
-    assert cart_manager._SESSION_CARTS[session] == before
+    # Focus is conversational identity; all business state remains frozen.
+    from test_natural_knowledge_routing import assert_business_state_unchanged
+    assert_business_state_unchanged(session, before)
+    assert cart_manager.get_checkout_prefs(session)['last_product_focus'] == {
+        'product_id': 'p1', 'product_name': 'Trà Cam', 'category': None}
 
 
 @pytest.mark.parametrize('answer', ['size L đi bạn', 'L đi bạn'])

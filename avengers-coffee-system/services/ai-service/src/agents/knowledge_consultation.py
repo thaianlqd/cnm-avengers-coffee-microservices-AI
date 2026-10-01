@@ -1,4 +1,4 @@
-"""Observational side-question lane. No tool loop, graph execution, or state setters."""
+"""Observational side-question lane; canonical reference metadata is orchestration-only."""
 import json
 import re
 from src.rag.authority import knowledge_route
@@ -89,9 +89,10 @@ def try_knowledge_consultation(session_id, user_message, selected_product_id=Non
     if not safe:
         return {'reply': guardrails.get_block_reply(reason or ''), 'checkout_payload': None,
                 'tool_calls_log': [], 'error': f'blocked:{reason}'}
+    reference = {}
     result = execute_search_knowledge_base(user_message, session_id=session_id,
-        selected_product_id=selected_product_id)
+        selected_product_id=selected_product_id, reference_out=reference)
     reply, _ = guardrails.check_output(grounded_answer(user_message, result))
     return {'reply': reply, 'checkout_payload': None, 'error': None,
-            'route_owner': 'knowledge',
+            'route_owner': 'knowledge', '_canonical_reference': reference,
             'tool_calls_log': [{'tool': 'search_knowledge_base', 'args': {}, 'result': result}]}

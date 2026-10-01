@@ -11,6 +11,8 @@ class SelectionReference:
     ordinals: Tuple[int, ...] = ()
     namespace: Optional[str] = None
     operation_semantics: str = "UNKNOWN"
+    # Product category labels retain the existing grouped snapshot contract.
+    ordinal_labels: Tuple[str, ...] = ()
 
 
 _WORD_ORDINALS = {
@@ -77,6 +79,8 @@ def _operation_semantics(text: str, namespace: Optional[str]) -> str:
         text,
     ):
         return "INFO_REFERENCE"
+    if re.search(r"\b(?:khong|ko|k|dung|chua)\s+(?:chon|lay|mua|them|dat)\b", text):
+        return "NEGATE_REFERENCE"
     if re.search(r"\b(?:xoa|bo|go|doi|sua|chinh|cap\s+nhat|tang|giam)\b", text):
         return "MUTATE_REFERENCE"
     if namespace == "VOUCHER" and re.search(r"\b(?:ap|dung|su\s+dung)\b", text):
@@ -117,7 +121,8 @@ def parse_selection_reference(
     values = []
     if namespace_match:
         after = text[namespace_match.end():]
-        match = re.match(r"\s*(?:(?:so|thu|#)\s*)?" + _NUMBER + r"\b", after)
+        marker = r"(?:so|thu|#|[a-z]{1,3}(?=\s+\d))" if namespace == "PRODUCT" else r"(?:so|thu|#)"
+        match = re.match(r"\s*(?:" + marker + r"\s*)?" + _NUMBER + r"\b", after)
         if not match:
             match = re.match(r"\s*(?:dau\s+tien|thu\s+nhat)\b", after)
             if match:
@@ -146,21 +151,57 @@ def parse_selection_reference(
             values.append(_ordinal(raw) if raw else 1)
             spans.append(bare.span())
 
+    if not values and active_namespace and operation_semantics == "SELECT_REFERENCE":
+        # A positive verb can introduce an unlabelled number in an active UI
+        # namespace. Require the number immediately after that verb/personal object.
+        selected = re.match(
+            r"(?:(?:toi|minh)\s+)?(?:chon|lay|mua|them|dat|cho\s+(?:toi|minh))\s+"
+            r"(?:(?:so|thu|#)\s*)?" + _NUMBER + r"\b", text)
+        if selected:
+            values.append(_ordinal(selected.group("number")))
+            spans.append(selected.span())
+
     if not values:
         return SelectionReference(namespace=namespace, operation_semantics=operation_semantics)
     if _address_like_tail(text, spans[0][1], namespace):
         return SelectionReference(namespace=namespace, operation_semantics=operation_semantics)
 
+    preceding = [match for _name, pattern in _NAMESPACE_PATTERNS
+                 for match in re.finditer(r"(?<!\w)(?:" + pattern + r")(?!\w)", text)
+                 if match.end() <= spans[0][1]]
+    labels = [max(preceding, key=lambda match: match.end()).group() if preceding else ""]
     if allow_multiple:
         cursor = spans[-1][1]
+        namespace_pattern = "|".join(pattern for _name, pattern in _NAMESPACE_PATTERNS)
         while True:
             continuation = re.match(
-                r"\s*(?:va|voi|,|&)\s*(?:(?:so|thu|#)\s*)?" + _NUMBER + r"\b",
+                r"\s*(?:va|voi|,|&)\s*(?:(?P<label>" + namespace_pattern + r")\s*)?"
+                r"(?:(?:so|thu|#)\s*)?" + _NUMBER + r"\b",
                 text[cursor:],
             )
             if not continuation:
                 break
             values.append(_ordinal(continuation.group("number")))
+            labels.append(continuation.group("label") or labels[-1])
             cursor += continuation.end()
 
-    return SelectionReference(True, tuple(values), namespace, operation_semantics)
+        # A bare product list must be wholly selection-shaped, never a street
+        # address, quantity clause, negative reply, or another owner's number.
+        if not labels[0] and active_namespace == "PRODUCT":
+            tail = text[cursor:].strip(" ,.!?")
+            if operation_semantics != "SELECT_REFERENCE" or tail not in _TAIL_FILLERS:
+                return SelectionReference(operation_semantics=operation_semantics)
+        explicit_namespaces = {
+            name for name, pattern in _NAMESPACE_PATTERNS
+            if re.search(r"(?<!\w)(?:" + pattern + r")(?!\w)", text)
+        }
+        if len(explicit_namespaces) > 1:
+            namespace = "MIXED"
+        # A labelled, coordinated product list is itself a positive selection
+        # when no question, mutation, or negation qualifies it.
+        if (namespace == "PRODUCT" and operation_semantics == "UNKNOWN"
+                and not re.search(r"\b(?:khong|ko|k|dung|chua)\b", text)
+                and text[cursor:].strip(" ,.!?") in _TAIL_FILLERS):
+            operation_semantics = "SELECT_REFERENCE"
+
+    return SelectionReference(True, tuple(values), namespace, operation_semantics, tuple(labels))
