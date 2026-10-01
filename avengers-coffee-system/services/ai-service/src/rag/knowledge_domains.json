@@ -1,0 +1,90 @@
+{
+  "KNOWLEDGE_TOPICS": {
+    "refund": [
+      "hoàn tiền",
+      "đổi trả",
+      "refund",
+      "hoàn trả"
+    ],
+    "privacy": [
+      "bảo mật",
+      "privacy",
+      "dữ liệu cá nhân"
+    ],
+    "membership": [
+      "tích điểm",
+      "hội viên",
+      "loyalty",
+      "membership",
+      "thành viên"
+    ],
+    "brand": [
+      "giá trị cốt lõi",
+      "sứ mệnh",
+      "tầm nhìn",
+      "thương hiệu"
+    ],
+    "company": [
+      "câu chuyện thương hiệu",
+      "giới thiệu công ty",
+      "lịch sử"
+    ],
+    "contact": [
+      "liên hệ",
+      "hotline",
+      "email",
+      "chăm sóc khách hàng"
+    ],
+    "careers": [
+      "tuyển dụng",
+      "việc làm",
+      "careers"
+    ],
+    "franchise": [
+      "nhượng quyền",
+      "franchise"
+    ],
+    "gift_card": [
+      "thẻ quà tặng",
+      "gift card",
+      "giftcard"
+    ],
+    "faq": [
+      "câu hỏi thường gặp",
+      "faq",
+      "dinh dưỡng"
+    ],
+    "ordering_policy": [
+      "chính sách đặt hàng",
+      "quy trình đặt hàng"
+    ],
+    "promotion_policy": [
+      "chính sách khuyến mãi",
+      "nguyên tắc voucher"
+    ]
+  },
+  "PRODUCT_FACETS": {
+    "taste": [
+      "hương vị",
+      "vị gì",
+      "vị như",
+      "có vị",
+      "vị chua",
+      "chua nhiều",
+      "mô tả"
+    ],
+    "ingredient": [
+      "thành phần",
+      "nguyên liệu",
+      "caffein",
+      "caffeine",
+      "có sữa",
+      "chứa sữa"
+    ],
+    "allergen": [
+      "dị ứng",
+      "allergen",
+      "an toàn cho"
+    ]
+  }
+}

@@ -4394,6 +4394,12 @@ def run_order_flow(
             logger.info("[AgentTurn] client_message_id=%s phase=business_replay cache_hit=true",
                         client_message_id)
             return deepcopy(previous["result"])
+    # Read-only consultation returns before pending owners/transactional state
+    # are interpreted. Explicit selections and mixed business commands retain BPM ownership.
+    from src.agents.knowledge_consultation import try_knowledge_consultation
+    consultation = try_knowledge_consultation(session_id, user_message, selected_product_id)
+    if consultation is not None:
+        return consultation
     initial: OrderConversationState = {
         "session_id": session_id,
         "user_message": user_message,

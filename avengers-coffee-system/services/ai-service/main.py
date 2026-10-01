@@ -1098,8 +1098,7 @@ def reload_rag():
     """Reload the RAG knowledge base without restarting the container."""
     from src.rag.rag_service import get_rag_service
     rag = get_rag_service()
-    rag.load()
-    return {"status": "ok", "message": "RAG knowledge base reloaded successfully."}
+    return rag.load()
 
 
 @app.get("/debug-branches")

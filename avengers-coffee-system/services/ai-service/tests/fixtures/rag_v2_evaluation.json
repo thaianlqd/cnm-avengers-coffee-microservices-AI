@@ -1,0 +1,622 @@
+[
+  {
+    "id": "q01",
+    "query": "Chính sách hoàn tiền thế nào?",
+    "expected_owner": "rag",
+    "expected_domain": "refund",
+    "allowed_top_k": [
+      "ordering_policy_003"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q02",
+    "query": "chinh sach hoan tien",
+    "expected_owner": "rag",
+    "expected_domain": "refund",
+    "allowed_top_k": [
+      "ordering_policy_003"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q03",
+    "query": "Nếu thức uống bị hư hỏng khi vận chuyển thì chính sách đổi trả ra sao?",
+    "expected_owner": "rag",
+    "expected_domain": "refund",
+    "allowed_top_k": [
+      "ordering_policy_003"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "evaluation"
+  },
+  {
+    "id": "q04",
+    "query": "Tôi muốn biết thủ tục hoàn trả sản phẩm",
+    "expected_owner": "rag",
+    "expected_domain": "refund",
+    "allowed_top_k": [
+      "ordering_policy_003"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q05",
+    "query": "refund",
+    "expected_owner": "rag",
+    "expected_domain": "refund",
+    "allowed_top_k": [
+      "ordering_policy_003"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q06",
+    "query": "Chính sách bảo mật của quán là gì?",
+    "expected_owner": "rag",
+    "expected_domain": "privacy",
+    "allowed_top_k": [
+      "policy_privacy_001"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "evaluation"
+  },
+  {
+    "id": "q07",
+    "query": "bao mat",
+    "expected_owner": "rag",
+    "expected_domain": "privacy",
+    "allowed_top_k": [
+      "policy_privacy_001"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q08",
+    "query": "Dữ liệu cá nhân được bảo vệ như thế nào?",
+    "expected_owner": "rag",
+    "expected_domain": "privacy",
+    "allowed_top_k": [
+      "policy_privacy_001"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q09",
+    "query": "privacy policy",
+    "expected_owner": "rag",
+    "expected_domain": "privacy",
+    "allowed_top_k": [
+      "policy_privacy_001"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "evaluation"
+  },
+  {
+    "id": "q10",
+    "query": "Tôi được tích điểm thế nào?",
+    "expected_owner": "rag",
+    "expected_domain": "membership",
+    "allowed_top_k": [
+      "membership_001"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q11",
+    "query": "hoi vien",
+    "expected_owner": "rag",
+    "expected_domain": "membership",
+    "allowed_top_k": [
+      "membership_001"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q12",
+    "query": "Chương trình loyalty hoạt động ra sao?",
+    "expected_owner": "rag",
+    "expected_domain": "membership",
+    "allowed_top_k": [
+      "membership_001"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "evaluation"
+  },
+  {
+    "id": "q13",
+    "query": "membership",
+    "expected_owner": "rag",
+    "expected_domain": "membership",
+    "allowed_top_k": [
+      "membership_001"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q14",
+    "query": "Giá trị cốt lõi của thương hiệu là gì?",
+    "expected_owner": "rag",
+    "expected_domain": "brand",
+    "allowed_top_k": [
+      "brand_001"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q15",
+    "query": "su menh",
+    "expected_owner": "rag",
+    "expected_domain": "brand",
+    "allowed_top_k": [
+      "brand_001"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "evaluation"
+  },
+  {
+    "id": "q16",
+    "query": "Tầm nhìn chiến lược là gì?",
+    "expected_owner": "rag",
+    "expected_domain": "brand",
+    "allowed_top_k": [
+      "brand_002"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q17",
+    "query": "Câu chuyện thương hiệu bắt đầu thế nào?",
+    "expected_owner": "rag",
+    "expected_domain": "company",
+    "allowed_top_k": [
+      "company_about"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q18",
+    "query": "gioi thieu cong ty",
+    "expected_owner": "rag",
+    "expected_domain": "company",
+    "allowed_top_k": [
+      "company_about"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "evaluation"
+  },
+  {
+    "id": "q19",
+    "query": "Liên hệ quán bằng cách nào?",
+    "expected_owner": "rag",
+    "expected_domain": "contact",
+    "allowed_top_k": [
+      "contact_001"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q20",
+    "query": "hotline",
+    "expected_owner": "rag",
+    "expected_domain": "contact",
+    "allowed_top_k": [
+      "contact_001"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q21",
+    "query": "email chăm sóc khách hàng",
+    "expected_owner": "rag",
+    "expected_domain": "contact",
+    "allowed_top_k": [
+      "contact_001"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "evaluation"
+  },
+  {
+    "id": "q22",
+    "query": "Có thông tin nhượng quyền không?",
+    "expected_owner": "rag",
+    "expected_domain": "franchise",
+    "allowed_top_k": [
+      "company_franchise"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q23",
+    "query": "franchise",
+    "expected_owner": "rag",
+    "expected_domain": "franchise",
+    "allowed_top_k": [
+      "company_franchise"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q24",
+    "query": "tuyen dung",
+    "expected_owner": "rag",
+    "expected_domain": "careers",
+    "allowed_top_k": [
+      "company_careers"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "evaluation"
+  },
+  {
+    "id": "q25",
+    "query": "Thẻ quà tặng dùng ra sao?",
+    "expected_owner": "rag",
+    "expected_domain": "gift_card",
+    "allowed_top_k": [
+      "gift_card_001"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q26",
+    "query": "gift card",
+    "expected_owner": "rag",
+    "expected_domain": "gift_card",
+    "allowed_top_k": [
+      "gift_card_001"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q27",
+    "query": "FAQ về dinh dưỡng",
+    "expected_owner": "rag",
+    "expected_domain": "faq",
+    "allowed_top_k": [
+      "faq_general_001"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "evaluation"
+  },
+  {
+    "id": "q28",
+    "query": "Chính sách đặt hàng chung là gì?",
+    "expected_owner": "rag",
+    "expected_domain": "ordering_policy",
+    "allowed_top_k": [
+      "ordering_policy_001"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q29",
+    "query": "nguyên tắc voucher là gì?",
+    "expected_owner": "rag",
+    "expected_domain": "promotion_policy",
+    "allowed_top_k": [
+      "promotion_policy_001"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q30",
+    "query": "Trà Cam có vị gì?",
+    "expected_owner": "rag",
+    "expected_domain": "product_description",
+    "allowed_top_k": [
+      "product_eval-101"
+    ],
+    "entity_id": "eval-101",
+    "expected_not_found": false,
+    "split": "evaluation"
+  },
+  {
+    "id": "q31",
+    "query": "tra cam co vi gi",
+    "expected_owner": "rag",
+    "expected_domain": "product_description",
+    "allowed_top_k": [
+      "product_eval-101"
+    ],
+    "entity_id": "eval-101",
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q32",
+    "query": "Tôi đang cân nhắc một thức uống và muốn biết Trà Cam có hương vị như thế nào?",
+    "expected_owner": "rag",
+    "expected_domain": "product_description",
+    "allowed_top_k": [
+      "product_eval-101"
+    ],
+    "entity_id": "eval-101",
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q33",
+    "query": "Bánh Sữa có thành phần gì?",
+    "expected_owner": "rag",
+    "expected_domain": "product_description",
+    "allowed_top_k": [
+      "product_eval-102"
+    ],
+    "entity_id": "eval-102",
+    "expected_not_found": false,
+    "split": "evaluation"
+  },
+  {
+    "id": "q34",
+    "query": "Bánh Sữa có sữa không?",
+    "expected_owner": "rag",
+    "expected_domain": "product_description",
+    "allowed_top_k": [
+      "product_eval-102"
+    ],
+    "entity_id": "eval-102",
+    "expected_not_found": false,
+    "split": "calibration"
+  },
+  {
+    "id": "q35",
+    "query": "Trà có vị gì?",
+    "expected_owner": "rag",
+    "expected_domain": "product_description",
+    "allowed_top_k": [],
+    "entity_id": null,
+    "expected_not_found": true,
+    "split": "calibration"
+  },
+  {
+    "id": "q36",
+    "query": "chinh sach hoan tiennn ???",
+    "expected_owner": "rag",
+    "expected_domain": "refund",
+    "allowed_top_k": [
+      "ordering_policy_003"
+    ],
+    "entity_id": null,
+    "expected_not_found": false,
+    "split": "evaluation"
+  },
+  {
+    "id": "q37",
+    "query": "Món này hiện giá bao nhiêu?",
+    "expected_owner": "price",
+    "expected_domain": null,
+    "allowed_top_k": [],
+    "entity_id": null,
+    "expected_not_found": true,
+    "split": "calibration"
+  },
+  {
+    "id": "q38",
+    "query": "Món này còn hàng không?",
+    "expected_owner": "inventory",
+    "expected_domain": null,
+    "allowed_top_k": [],
+    "entity_id": null,
+    "expected_not_found": true,
+    "split": "calibration"
+  },
+  {
+    "id": "q39",
+    "query": "Chi nhánh nào còn món này?",
+    "expected_owner": "inventory",
+    "expected_domain": null,
+    "allowed_top_k": [],
+    "entity_id": null,
+    "expected_not_found": true,
+    "split": "evaluation"
+  },
+  {
+    "id": "q40",
+    "query": "Voucher nào áp được đơn này?",
+    "expected_owner": "voucher",
+    "expected_domain": null,
+    "allowed_top_k": [],
+    "entity_id": null,
+    "expected_not_found": true,
+    "split": "calibration"
+  },
+  {
+    "id": "q41",
+    "query": "Mã ABC giảm bao nhiêu?",
+    "expected_owner": "voucher",
+    "expected_domain": null,
+    "allowed_top_k": [],
+    "entity_id": null,
+    "expected_not_found": true,
+    "split": "calibration"
+  },
+  {
+    "id": "q42",
+    "query": "Phí giao hàng hiện tại bao nhiêu?",
+    "expected_owner": "price",
+    "expected_domain": null,
+    "allowed_top_k": [],
+    "entity_id": null,
+    "expected_not_found": true,
+    "split": "evaluation"
+  },
+  {
+    "id": "q43",
+    "query": "Tổng tiền hiện tại bao nhiêu?",
+    "expected_owner": "price",
+    "expected_domain": null,
+    "allowed_top_k": [],
+    "entity_id": null,
+    "expected_not_found": true,
+    "split": "calibration"
+  },
+  {
+    "id": "q44",
+    "query": "Hiện thanh toán bằng Momo được không?",
+    "expected_owner": "payment",
+    "expected_domain": null,
+    "allowed_top_k": [],
+    "entity_id": null,
+    "expected_not_found": true,
+    "split": "calibration"
+  },
+  {
+    "id": "q45",
+    "query": "Tôi đã thanh toán chưa?",
+    "expected_owner": "payment",
+    "expected_domain": null,
+    "allowed_top_k": [],
+    "entity_id": null,
+    "expected_not_found": true,
+    "split": "evaluation"
+  },
+  {
+    "id": "q46",
+    "query": "Đơn của tôi đang ở đâu?",
+    "expected_owner": "order",
+    "expected_domain": null,
+    "allowed_top_k": [],
+    "entity_id": null,
+    "expected_not_found": true,
+    "split": "calibration"
+  },
+  {
+    "id": "q47",
+    "query": "Giỏ hàng của tôi có gì?",
+    "expected_owner": "cart",
+    "expected_domain": null,
+    "allowed_top_k": [],
+    "entity_id": null,
+    "expected_not_found": true,
+    "split": "calibration"
+  },
+  {
+    "id": "q48",
+    "query": "Chi nhánh nào gần tôi?",
+    "expected_owner": "branch",
+    "expected_domain": null,
+    "allowed_top_k": [],
+    "entity_id": null,
+    "expected_not_found": true,
+    "split": "evaluation"
+  },
+  {
+    "id": "q49",
+    "query": "Gợi ý tôi món mát",
+    "expected_owner": "recommendation",
+    "expected_domain": null,
+    "allowed_top_k": [],
+    "entity_id": null,
+    "expected_not_found": true,
+    "split": "calibration"
+  },
+  {
+    "id": "q50",
+    "query": "Cho xem trà trái cây",
+    "expected_owner": "recommendation",
+    "expected_domain": null,
+    "allowed_top_k": [],
+    "entity_id": null,
+    "expected_not_found": true,
+    "split": "calibration"
+  },
+  {
+    "id": "q51",
+    "query": "quasar astrophysics",
+    "expected_owner": "conversation",
+    "expected_domain": null,
+    "allowed_top_k": [],
+    "entity_id": null,
+    "expected_not_found": true,
+    "split": "evaluation"
+  },
+  {
+    "id": "q52",
+    "query": "Ai thắng World Cup?",
+    "expected_owner": "conversation",
+    "expected_domain": null,
+    "allowed_top_k": [],
+    "entity_id": null,
+    "expected_not_found": true,
+    "split": "calibration"
+  },
+  {
+    "id": "q53",
+    "query": "Dự báo chứng khoán hôm nay",
+    "expected_owner": "conversation",
+    "expected_domain": null,
+    "allowed_top_k": [],
+    "entity_id": null,
+    "expected_not_found": true,
+    "split": "calibration"
+  },
+  {
+    "id": "q54",
+    "query": "Nhiệt độ Sao Hỏa",
+    "expected_owner": "conversation",
+    "expected_domain": null,
+    "allowed_top_k": [],
+    "entity_id": null,
+    "expected_not_found": true,
+    "split": "evaluation"
+  },
+  {
+    "id": "q55",
+    "query": "quantum entanglement",
+    "expected_owner": "conversation",
+    "expected_domain": null,
+    "allowed_top_k": [],
+    "entity_id": null,
+    "expected_not_found": true,
+    "split": "calibration"
+  }
+]
