@@ -48,12 +48,14 @@ class FakeChoice:
 class FakeResponse:
     def __init__(self, d):
         self.choices = [FakeChoice(c) for c in d.get("choices", [])]
+        self.usage = d.get("usage") or {}
+        self.model = d.get("model")
 
 class OpenRouterCompletions:
     def __init__(self, api_key):
         self.api_key = api_key
         
-    def create(self, model, messages, tools=None, tool_choice="auto", max_tokens=2048, temperature=0.1):
+    def create(self, model, messages, tools=None, tool_choice="auto", max_tokens=2048, temperature=0.1, response_format=None):
         import requests
         payload = {
             "model": model,
@@ -61,6 +63,8 @@ class OpenRouterCompletions:
             "max_tokens": max_tokens,
             "temperature": temperature
         }
+        if response_format:
+            payload["response_format"] = response_format
         if tools:
             payload["tools"] = tools
             payload["tool_choice"] = tool_choice
@@ -79,7 +83,7 @@ class OpenRouterCompletions:
         last_resp = None
         for fallback_model in fallback_models:
             payload["model"] = fallback_model
-            resp = requests.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers)
+            resp = requests.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers, timeout=30)
             if resp.ok:
                 return FakeResponse(resp.json())
             last_resp = resp
@@ -102,7 +106,7 @@ class GeminiCompletions:
     def __init__(self, api_key):
         self.api_key = api_key
         
-    def create(self, model, messages, tools=None, tool_choice="auto", max_tokens=2048, temperature=0.1):
+    def create(self, model, messages, tools=None, tool_choice="auto", max_tokens=2048, temperature=0.1, response_format=None):
         import requests
         payload = {
             "model": "gemini-3.6-flash",
@@ -110,6 +114,8 @@ class GeminiCompletions:
             "max_tokens": max_tokens,
             "temperature": temperature
         }
+        if response_format:
+            payload["response_format"] = response_format
         if tools:
             payload["tools"] = tools
             payload["tool_choice"] = tool_choice
@@ -117,7 +123,7 @@ class GeminiCompletions:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
-        resp = requests.post("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", json=payload, headers=headers)
+        resp = requests.post("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", json=payload, headers=headers, timeout=30)
         if resp.ok:
             return FakeResponse(resp.json())
         raise Exception(f"Gemini API error {resp.status_code}: {resp.text}")
@@ -135,7 +141,7 @@ class OpenAICompletions:
     def __init__(self, api_key):
         self.api_key = api_key
         
-    def create(self, model, messages, tools=None, tool_choice="auto", max_tokens=1000, temperature=0.1):
+    def create(self, model, messages, tools=None, tool_choice="auto", max_tokens=1000, temperature=0.1, response_format=None):
         import requests
         payload = {
             "model": "gpt-4o-mini",
@@ -143,6 +149,8 @@ class OpenAICompletions:
             "max_tokens": max_tokens,
             "temperature": temperature
         }
+        if response_format:
+            payload["response_format"] = response_format
         if tools:
             payload["tools"] = tools
             payload["tool_choice"] = tool_choice
@@ -150,7 +158,7 @@ class OpenAICompletions:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
-        resp = requests.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers)
+        resp = requests.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers, timeout=30)
         if resp.ok:
             return FakeResponse(resp.json())
         raise Exception(f"OpenAI API error {resp.status_code}: {resp.text}")
@@ -339,6 +347,11 @@ def groq_agent_chat(
     session_id: str = "",
     max_tool_rounds: int = 10,
     max_tokens: int = 400,
+    guarded: bool = False,
+    tool_result_formatter=None,
+    metrics: Optional[Dict[str, Any]] = None,
+    context_char_limit: Optional[int] = None,
+    final_response_validator=None,
 ) -> Dict[str, Any]:
     """
     Agentic chat loop với Groq Function Calling.
@@ -390,6 +403,11 @@ def groq_agent_chat(
 
     for round_idx in range(max_tool_rounds + 1):
         resp = None
+        if guarded and round_idx == max_tool_rounds:
+            force_tools_disabled = True
+        if context_char_limit and sum(len(str(m.get('content') or '')) for m in current_messages) > context_char_limit:
+            return {"reply": "", "tool_calls_log": tool_calls_log, "checkout_payload": checkout_payload,
+                    "error": "context_budget_exceeded"}
         
         # ── Retry qua các Client nếu gặp lỗi ──
         success = False
@@ -416,6 +434,10 @@ def groq_agent_chat(
                 if tools and not force_tools_disabled:
                     kwargs["tools"] = tools
                     kwargs["tool_choice"] = "auto"
+                if guarded and final_response_validator:
+                    kwargs["response_format"] = {"type": "json_object"}
+                if metrics is not None:
+                    metrics['provider_attempt_count'] = metrics.get('provider_attempt_count', 0) + 1
     
                 resp = client.chat.completions.create(**kwargs)
                 success = True
@@ -425,7 +447,10 @@ def groq_agent_chat(
                 t1 = time.perf_counter()
                 err = str(e)
                 last_err = err
-                logger.warning("[Groq Agent] API error round=%d retry=%d (took %.2fs): %s", round_idx, retry_idx, t1 - t0, err[:120])
+                if metrics is not None:
+                    metrics['provider_failure_count'] = metrics.get('provider_failure_count', 0) + 1
+                    metrics['failed_provider_latency_ms'] = metrics.get('failed_provider_latency_ms', 0) + round((t1-t0)*1000, 2)
+                logger.warning("[Groq Agent] API error round=%d retry=%d (took %.2fs): %s", round_idx, retry_idx, t1 - t0, type(e).__name__ if guarded else err[:120])
                 
                 if "413" in err or "too large" in err.lower():
                     if "tokens per minute" in err.lower() or "tpm" in err.lower():
@@ -462,15 +487,27 @@ def groq_agent_chat(
                 
         if not success or not resp:
             # Nếu chạy hết các client mà vẫn lỗi (hoặc mất mạng)
-            logger.error("[Groq Agent] All clients failed in round=%d. Last error: %s", round_idx, last_err)
+            logger.error("[Groq Agent] All clients failed in round=%d. Last error: %s", round_idx, 'provider_unavailable' if guarded else last_err)
             return {"reply": "Hệ thống đang quá tải hoặc hết token, vui lòng thử lại sau ít phút.", "tool_calls_log": tool_calls_log, "checkout_payload": checkout_payload,
                     "error": "rate_limit" if ("rate_limit" in last_err.lower() or "429" in last_err or "402" in last_err) else "All LLM clients failed."}
 
         choice = resp.choices[0]
         assistant_msg = choice.message
+        if metrics is not None:
+            usage = getattr(resp, 'usage', None) or {}
+            def usage_value(key):
+                return usage.get(key, 0) if isinstance(usage, dict) else getattr(usage, key, 0)
+            metrics['input_tokens'] = metrics.get('input_tokens', 0) + (usage_value('prompt_tokens') or 0)
+            metrics['output_tokens'] = metrics.get('output_tokens', 0) + (usage_value('completion_tokens') or 0)
+            metrics.update(model=getattr(resp, 'model', None) or model,
+                provider=str(getattr(client, 'base_url', type(client).__name__)),
+                request_count=metrics.get('request_count', 0)+1)
+            metrics['llm_latency_ms'] = metrics.get('llm_latency_ms', 0) + round((time.perf_counter()-t0)*1000, 2)
 
         # ── Case 1: Groq muốn gọi Tool ────────────────────────────────────
         if assistant_msg.tool_calls:
+            if metrics is not None:
+                metrics['tool_round_count'] = metrics.get('tool_round_count', 0) + 1
             if force_tools_disabled:
                 message = (repeated_tool_result or {}).get("message") if isinstance(repeated_tool_result, dict) else None
                 return {
@@ -499,14 +536,20 @@ def groq_agent_chat(
             # Thực thi từng tool call
             repeated_signature = False
             for tc in assistant_msg.tool_calls:
+                if guarded and len(tool_calls_log) >= max_tool_rounds * 4:
+                    return {"reply": "", "tool_calls_log": tool_calls_log,
+                            "checkout_payload": checkout_payload, "error": "tool_call_budget_exceeded"}
                 tool_name = tc.function.name
                 try:
                     import json as _json
                     tool_args_str = tc.function.arguments or "{}"
                     tool_args = _json.loads(tool_args_str)
                 except Exception:
+                    if guarded:
+                        tool_args = None
+                    else:
+                        tool_args = {}
                     tool_args_str = "{}"
-                    tool_args = {}
 
                 # Canonical args make whitespace/key order irrelevant. Once a
                 # result has been supplied, an identical signature has no new
@@ -515,28 +558,34 @@ def groq_agent_chat(
                                              separators=(",", ":"))
                 tool_hash = f"{tool_name}|{canonical_args}"
                 if tool_hash in turn_tool_cache:
-                    logger.info("[Groq Agent] Repeated tool signature; forcing final completion: %s", tool_hash)
+                    logger.info("[Groq Agent] Repeated tool signature; forcing final completion: %s", tool_name if guarded else tool_hash)
                     result = turn_tool_cache[tool_hash]
                     repeated_signature = True
                     repeated_tool_result = result
                 else:
-                    logger.info("[Groq Agent] Tool call round=%d: %s args=%s", round_idx, tool_name, tool_args)
+                    logger.info("[Groq Agent] Tool call round=%d: %s args=%s", round_idx, tool_name,
+                                sorted(tool_args) if guarded and isinstance(tool_args, dict) else "invalid" if guarded else tool_args)
                     # Dispatch đến executor. Checkout confirmation is only
                     # available through the server-side pending-action gate.
                     executor = (tool_executors or {}).get(tool_name)
-                    if tool_name == "confirm_checkout":
+                    if tool_name == "confirm_checkout" and not guarded:
                         result = {
                             "status": "confirmation_required",
                             "message": "Chỉ backend được thực thi đơn sau khi xác nhận khớp bản tóm tắt đang chờ.",
                         }
                     elif executor:
-                        try:
+                        if guarded:
+                            # No TypeError retry: an exception may happen after
+                            # a committed write. Gateway errors must propagate.
+                            result = executor(tool_args, session_id)
+                        else:
                             try:
-                                result = executor(tool_args, session_id)
-                            except TypeError:
-                                result = executor(tool_args)
-                        except Exception as ex:
-                            result = {"status": "error", "message": str(ex)}
+                                try:
+                                    result = executor(tool_args, session_id)
+                                except TypeError:
+                                    result = executor(tool_args)
+                            except Exception as ex:
+                                result = {"status": "error", "message": str(ex)}
                     else:
                         result = {"status": "error", "message": f"Tool '{tool_name}' không tồn tại."}
 
@@ -556,7 +605,7 @@ def groq_agent_chat(
                     "role": "tool",
                     "tool_call_id": tc.id,
                     "name": tc.function.name,
-                    "content": _json.dumps(result, ensure_ascii=False),
+                    "content": _json.dumps(tool_result_formatter(result) if tool_result_formatter else result, ensure_ascii=False),
                 })
 
             if repeated_signature:
@@ -570,6 +619,13 @@ def groq_agent_chat(
 
         # ── Case 2: Groq trả về text → kết thúc ──────────────────────────
         reply_text = (assistant_msg.content or "").strip()
+        issue = final_response_validator(reply_text) if final_response_validator else None
+        if issue:
+            if round_idx < max_tool_rounds and not force_tools_disabled:
+                current_messages.append({'role': 'system', 'content': issue})
+                continue
+            return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
+                    'error': 'response_evidence_required'}
         logger.info("[Groq Agent] Final reply after %d tool rounds, len=%d", round_idx, len(reply_text))
         return {
             "reply": reply_text,

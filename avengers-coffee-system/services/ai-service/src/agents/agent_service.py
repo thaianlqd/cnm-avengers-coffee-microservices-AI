@@ -2176,7 +2176,19 @@ def run_agent(
     client_message_id: Optional[str] = None,
     selected_product_id: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Public entrypoint: LangGraph owns transactional conversational turns."""
+    """Choose one orchestrator before a turn; never fall back after a write."""
+    import os
+    mode = os.getenv('AI_CHAT_ORCHESTRATOR_MODE', 'legacy').strip().lower()
+    if mode not in {'legacy', 'llm_tools', 'shadow'}:
+        raise ValueError('Invalid AI_CHAT_ORCHESTRATOR_MODE')
+    if mode in {'llm_tools', 'shadow'}:
+        from src.agents.llm_tool_orchestrator import run_llm_tool_turn
+        if mode == 'llm_tools':
+            return run_llm_tool_turn(session_id, user_message, history, client_message_id, selected_product_id)
+        try:
+            run_llm_tool_turn(session_id, user_message, history, client_message_id, selected_product_id, shadow=True)
+        except Exception as exc:
+            logger.warning('[ShadowTurn] error_type=%s', type(exc).__name__)
     from src.agents.order_flow_graph import run_order_flow
     return run_order_flow(
         session_id,

@@ -979,6 +979,10 @@ def reset_agent_conversation(body: AgentConversationResetRequest, request: Reque
 
     scoped_session_id = f"{body.session_id}:conversation:{conversation_id}"
     prefs = cart_manager.reset_conversation_draft(scoped_session_id)
+    from src.agents.agent_memory import ConversationMemory
+    redis_memory = ConversationMemory()
+    redis_memory.reset(f"{body.session_id}:conversation:{previous_conversation_id}")
+    redis_memory.reset(scoped_session_id)
     return {
         "status": "ok",
         "conversation_id": conversation_id,
