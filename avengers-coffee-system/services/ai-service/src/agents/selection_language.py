@@ -25,15 +25,16 @@ PRODUCT_REFERENCE_CATEGORIES = {
     "do uong": "drink", "thuc uong": "drink", "nuoc": "drink",
     "do an": "food", "banh": "food", "san pham": None, "mon": None,
 }
+_CART_LINE_PATTERN = r"dong|(?:mon|san\s+pham)\s+trong\s+gio(?:\s+hang)?"
 _NAMESPACE_PATTERNS = (
     ("PAYMENT", r"phuong\s+thuc\s+thanh\s+toan|cach\s+thanh\s+toan|thanh\s+toan"),
     ("FULFILLMENT", r"hinh\s+thuc\s+nhan\s+hang|cach\s+nhan\s+hang"),
     ("LOCATION_CANDIDATE", r"dia\s+diem|dia\s+chi|vi\s+tri"),
     ("BRANCH", r"chi\s+nhanh|cua\s+hang|kiosk"),
     ("VOUCHER", r"ma\s+giam\s+gia|voucher|ma"),
-    ("CART_LINE", r"dong"),
-    ("PRODUCT", "|".join(re.escape(label).replace(r"\ ", r"\s+")
-                          for label in PRODUCT_REFERENCE_CATEGORIES)),
+    ("CART_LINE", _CART_LINE_PATTERN),
+    ("PRODUCT", r"(?!(?:" + _CART_LINE_PATTERN + r")\b)(?:" + "|".join(
+        re.escape(label).replace(r"\ ", r"\s+") for label in PRODUCT_REFERENCE_CATEGORIES) + r")"),
 )
 _TAIL_FILLERS = {
     "", "a", "ah", "nha", "nhe", "di", "do", "voi", "giup", "giup toi",

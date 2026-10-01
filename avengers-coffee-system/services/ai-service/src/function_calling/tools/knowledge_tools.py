@@ -39,7 +39,10 @@ def execute_search_knowledge_base(query, domain=None, entity_type=None, entity_i
                'source': source, 'authority': 'knowledge'}
     if route.get('facet') or domain in PRODUCT_DOMAINS or entity_type == 'product':
         from src.rag.product_context import resolve_product_context
-        product = resolve_product_context(query, session_id, selected_product_id, reference_out)
+        # Consultation may already have resolved this canonical context. The
+        # orchestration-only output metadata is never a model tool argument.
+        product = (reference_out or {}).get('product') or resolve_product_context(
+            query, session_id, selected_product_id, reference_out)
         if product:
             canonical_id = str(product['product_id'])
             if entity_id is not None and str(entity_id) != canonical_id:

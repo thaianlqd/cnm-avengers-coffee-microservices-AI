@@ -24,6 +24,7 @@ except ImportError:  # pragma: no cover
 from src.agents.tier1 import (
     classify_confirmation,
     classify_order_intent,
+    cart_line_quantity_intent,
     has_cart_edit_action,
     has_finish_cart_evidence,
     has_positive_browsing_evidence,
@@ -606,13 +607,13 @@ def _cart_target_continuation(state: OrderConversationState, pending: Dict[str, 
     return {"intent": "PENDING_AMBIGUOUS", "pending_type": "cart_edit_clarification"}
 
 
-def _resolve_cart_line(cart: Dict[str, Any], message: str) -> tuple[Optional[Dict[str, Any]], Optional[str]]:
+def _resolve_cart_line(cart: Dict[str, Any], message: str, cart_line_ordinal: Optional[int] = None) -> tuple[Optional[Dict[str, Any]], Optional[str]]:
     items = list(cart.get("items") or [])
     text = _norm(message)
     matches = _cart_rows_named_in_message(cart, message)
     reference = parse_selection_reference(message)
-    if reference.requested and reference.namespace == "CART_LINE":
-        index = reference.ordinals[0]
+    if cart_line_ordinal is not None or (reference.requested and reference.namespace == "CART_LINE"):
+        index = cart_line_ordinal if cart_line_ordinal is not None else reference.ordinals[0]
         if 1 <= index <= len(items):
             logger.debug("routing route=CART_MUTATION target_source=cart_line_ordinal candidate_count=1")
             return items[index - 1], None
@@ -2284,6 +2285,10 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     target_reply = _cart_target_continuation(state, pending_at_entry)
     if target_reply is not None:
         return {**state, "intent": target_reply}
+    cart_quantity = cart_line_quantity_intent(state["user_message"])
+    if (cart_quantity and not prefs_at_entry.get("pending_products")
+            and not prefs_at_entry.get("pending_product_reference")):
+        return {**state, "intent": cart_quantity}
     # Short observational questions use the same canonical context as RAG.
     # Resolve before card selection or pending-option interpretation can consume them.
     from src.rag.authority import knowledge_route
@@ -3858,7 +3863,7 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
                                    "tool_calls_log": [], "error": None}}
     if kind == "SET_QUANTITY":
         matches = _cart_rows_named_in_message(cart, message)
-        item, error = _resolve_cart_line(cart, message)
+        item, error = _resolve_cart_line(cart, message, cart_line_ordinal=intent.get("cart_line_ordinal"))
         if error:
             if len(matches) > 1:
                 error = _store_cart_line_choice(session_id, "SET_QUANTITY", intent["quantity"], matches)
@@ -4641,7 +4646,7 @@ def run_order_flow(
     products = (routed_intent.get("products") or routed_intent.get("resolved_products") or
                 (before_prefs.get("pending_products") if kind == "FILL_OPTIONS" else []) or [])
     decision_trace = _log_decision_provenance(session_id, {
-        "authority_owner": routed_intent.get("info_owner") or "order_flow",
+        "authority_owner": routed_intent.get("info_owner") or ("catalog" if kind == "BROWSING" else "order_flow"),
         "active_pending_type": (before_prefs.get("pending_action") or {}).get("type"),
         "reference_namespace": routed_intent.get("reference_namespace") or ("PRODUCT" if products else
             "VOUCHER" if routed_intent.get("pending_type") == "select_voucher" else None),

@@ -51,10 +51,10 @@ def resolve_product_context(query, session_id=None, selected_product_id=None, re
     # confuse an unknown name containing e.g. "trà/tồn/tại" with "kiểm tra",
     # "tồn kho", and "hiện tại", and silently reuse the old identity.
     frame = re.sub(r"\b(?:huong vi|thanh phan|nguyen lieu|danh gia|nhan xet|bao nhieu|"
-                   r"hien tai|con hang|het hang|ton kho|kiem tra)\b", " ", reference_text)
+                   r"hien tai|con hang|het hang|ton kho|kiem tra|mo ta|dac diem|dac trung|diem noi bat)\b", " ", reference_text)
     elliptical = set(frame.split()) <= set(
         'vi huong sao the nao nhu ngon k ko khong co gi dac biet sua '
-        'caffein caffeine duoc review khach tien gia hoi toi minh chi ban b ntn an nha nhe a oi va'.split())
+        'caffein caffeine duoc review khach tien gia hoi toi minh chi ban b ntn an uong hay noi bat di nha nhe a oi va'.split())
     if not elliptical:
         return None
     if staged:

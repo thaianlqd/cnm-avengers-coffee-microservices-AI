@@ -64,7 +64,8 @@ def grounded_answer(query, result):
 
 
 def try_knowledge_consultation(session_id, user_message, selected_product_id=None):
-    if knowledge_route(user_message)['owner'] != 'rag':
+    route = knowledge_route(user_message)
+    if route['owner'] != 'rag':
         return None
     # Existing deterministic selection evidence also wins in mixed messages.
     from src.agents.tier1 import classify_order_intent
@@ -90,6 +91,21 @@ def try_knowledge_consultation(session_id, user_message, selected_product_id=Non
         return {'reply': guardrails.get_block_reply(reason or ''), 'checkout_payload': None,
                 'tool_calls_log': [], 'error': f'blocked:{reason}'}
     reference = {}
+    if route.get('domain') == 'product_description':
+        from src.rag.product_context import resolve_product_context
+        product = resolve_product_context(user_message, session_id, selected_product_id, reference)
+        if not product:
+            from src.agents.selection_language import PRODUCT_REFERENCE_CATEGORIES
+            from src.agents.order_flow_graph import _menu_search_specs
+            specs = _menu_search_specs(user_message)
+            labels = list(PRODUCT_REFERENCE_CATEGORIES) + [normalize_text(spec[key])
+                for spec in specs for key in ('label', 'search_text') if spec.get(key)]
+            categories = '|'.join(re.escape(label) for label in labels)
+            # Category + indefinite object asks for candidates, not a facet of
+            # an unresolved product. Explicit names were resolved above first.
+            if re.search(r'\b(?:' + categories + r')\s+(?:gi|nao)\b', normalize_text(user_message)):
+                if specs:
+                    return None
     result = execute_search_knowledge_base(user_message, session_id=session_id,
         selected_product_id=selected_product_id, reference_out=reference)
     reply, _ = guardrails.check_output(grounded_answer(user_message, result))

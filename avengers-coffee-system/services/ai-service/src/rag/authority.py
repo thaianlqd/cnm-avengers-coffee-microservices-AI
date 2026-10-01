@@ -52,7 +52,9 @@ def product_facet(query):
         if any(contains_term(text, term) for term in terms):
             return facet
     if re.search(r'\b(?:vi\s+(?:sao|the nao|nhu|gi)|ngon\s+(?:k|ko|khong)|'
-                 r'nhu nao|co gi dac biet|an sao)\b', text):
+                 r'nhu nao|co gi (?:hay|dac biet|noi bat)|'
+                 r'(?:an|uong)\s+(?:sao|the nao|nhu the nao)|'
+                 r'vi\s+(?:mon|banh|nuoc|san pham)\s+(?:nay|do|kia)\s+(?:sao|the nao))\b', text):
         return 'taste'
     return None
 
