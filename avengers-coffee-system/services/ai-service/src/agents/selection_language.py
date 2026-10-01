@@ -72,7 +72,8 @@ def _operation_semantics(text: str, namespace: Optional[str]) -> str:
     """
     if re.search(
         r"\b(?:la\s+gi|bao\s+nhieu|thong\s+tin|review|danh\s+gia|nhan\s+xet|"
-        r"the\s+nao|gia(?:\s+bao\s+nhieu)?|giam\s+bao\s+nhieu)\b",
+        r"the\s+nao|gia(?:\s+bao\s+nhieu)?|giam\s+bao\s+nhieu|o\s+dau|"
+        r"bao\s+xa|cach\b[^,.!?]*\bbao\s+xa|con\s+(?:mon|hang)|chua\s+chon|chi\s+hoi)\b",
         text,
     ):
         return "INFO_REFERENCE"

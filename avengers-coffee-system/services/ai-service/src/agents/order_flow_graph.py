@@ -2694,9 +2694,35 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
             pending_type = "select_voucher"
         elif prefs.get("suggested_address") and prefs.get("checkout_requested"):
             pending_type = "confirm_address"
-    # Branch ordinals own their pending list. A genuine new address can still
-    # replace it; all other location turns route before shopping/model logic.
+    # Branch ordinals own their pending list, but an explicit read-only
+    # reference may inspect the snapshot without consuming that owner.
     if pending_type == "select_branch":
+        active_branch_reference = parse_selection_reference(
+            state["user_message"], active_namespace="BRANCH",
+        )
+        if (active_branch_reference.requested
+                and active_branch_reference.namespace == "BRANCH"
+                and active_branch_reference.operation_semantics == "INFO_REFERENCE"):
+            return {**state, "intent": {
+                "intent": "READ_ONLY_BRANCH_FOLLOWUP",
+                "ordinal": active_branch_reference.ordinals[0],
+                "branch_candidates": list(prefs.get("branch_candidates") or []),
+                "preserve_primary_pending": True,
+            }}
+        if (active_branch_reference.requested
+                and active_branch_reference.namespace == "PRODUCT"
+                and active_branch_reference.operation_semantics == "INFO_REFERENCE"):
+            ordinal_products, invalid_ordinals, _count = _resolve_product_ordinals(
+                state["session_id"], state["user_message"],
+            )
+            if ordinal_products and not invalid_ordinals:
+                from src.agents.agent_service import _has_product_review_intent
+                read_intent = ("PRODUCT_REVIEW" if _has_product_review_intent(state["user_message"])
+                               else "PRODUCT_INFO")
+                return {**state, "intent": {
+                    "intent": read_intent, "target_kind": "PRODUCT",
+                    "products": ordinal_products, "preserve_primary_pending": True,
+                }}
         return {**state, "intent": {"intent": "PENDING_BRANCH", "location_kind": location.kind}}
     branch_ordinal, explicit_branch_ordinal, bare_ordinal = _read_only_branch_ordinal(
         state["user_message"]
@@ -2820,12 +2846,31 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
     if pending_type == "fill_options":
         pending_meaning = shopping_interpretation.get("meaning")
         from src.agents.agent_service import _has_product_review_intent
-        if (pending_meaning and pending_meaning.act == "PRODUCT_INFO"
-                and pending_meaning.targets
-                and _has_product_review_intent(state["user_message"])):
-            return {**state, "intent": {"intent": "PRODUCT_REVIEW",
-                "products": list(pending_meaning.targets),
-                "preserve_primary_pending": True}}
+        review_interrupt = _has_product_review_intent(state["user_message"])
+        price_interrupt = bool(re.search(
+            r"\b(?:gia\s+(?:hien\s+tai|bao\s+nhieu)|bao\s+nhieu\s+tien|hoi\s+gia)\b",
+            _norm(state["user_message"]),
+        )) and not review_interrupt
+        read_only_targets = list(pending_meaning.targets) if (
+            pending_meaning and pending_meaning.act == "PRODUCT_INFO"
+        ) else []
+        staged_products = list(prefs.get("pending_products") or [])
+        if (review_interrupt or price_interrupt) and not read_only_targets:
+            text = _norm(state["user_message"])
+            named = [row for row in staged_products
+                     if _norm(row.get("product_name"))
+                     and re.search(r"(?<!\w)" + re.escape(_norm(row["product_name"])) + r"(?!\w)", text)]
+            deictic = bool(re.search(r"\b(?:mon|san pham|cai)\s+(?:nay|do|kia)\b", text))
+            if len(named) == 1:
+                read_only_targets = named
+            elif deictic and len(staged_products) == 1:
+                read_only_targets = staged_products
+        if read_only_targets and (review_interrupt or price_interrupt):
+            return {**state, "intent": {
+                "intent": "PRODUCT_REVIEW" if review_interrupt else "PRODUCT_INFO",
+                "products": read_only_targets,
+                "preserve_primary_pending": True,
+            }}
         if intent.get("intent") in {
             "CLEAR_CART", "REMOVE_ITEM", "SET_QUANTITY", "VIEW_CART",
             "START_CHECKOUT", "SELECT_FULFILLMENT", "SELECT_PAYMENT", "SELECT_VOUCHER",
@@ -3341,8 +3386,11 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
         cart_manager.set_checkout_context(session_id, last_branch_focus=branch)
         name = branch.get("ten_chi_nhanh") or branch.get("branch_name") or f"Cửa hàng {ordinal}"
         address = branch.get("dia_chi") or branch.get("address") or "chưa có địa chỉ"
-        distance = (f" Khoảng cách ước tính: {branch['khoang_cach_km']} km."
-                    if branch.get("khoang_cach_km") is not None else "")
+        distance_km = (branch.get("khoang_cach_km")
+                       if branch.get("khoang_cach_km") is not None
+                       else branch.get("distance_km"))
+        distance = (f" Khoảng cách ước tính: {distance_km} km."
+                    if distance_km is not None else "")
         return {**state, "result": {
             "reply": f"{name} — {address}.{distance}",
             "checkout_payload": None, "tool_calls_log": [], "error": None,
@@ -3826,11 +3874,15 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
                 return {**state, "result": rejected}
         previous_delivery = prefs.get("delivery_type")
         delivery_changed = bool(patch.get("delivery_type") and patch["delivery_type"] != previous_delivery)
+        location_pending_type = (cart_manager.get_pending_action(session_id) or {}).get("type")
         incompatible_location_owner = bool(
             previous_delivery in {"MANG_DI", "TAI_CHO"}
-            and ((cart_manager.get_pending_action(session_id) or {}).get("type") == "select_location_candidate"
+            and (location_pending_type in {"collect_store_location", "select_location_candidate", "select_branch"}
                  or prefs.get("location_candidate_snapshot")
-                 or prefs.get("selected_location_candidate"))
+                 or prefs.get("selected_location_candidate")
+                 or prefs.get("store_location")
+                 or prefs.get("branch_candidates")
+                 or cart_manager.get_branch(session_id))
         )
         if delivery_changed:
             cart_manager.clear_branch(session_id)
@@ -3842,7 +3894,7 @@ def _execute(state: OrderConversationState) -> OrderConversationState:
                 checkout_action_expires_at=None,
                 location_pending=True if incompatible_location_owner and patch["delivery_type"] == "GIAO_TAN_NOI" else None,
                 address_change_requested=True if incompatible_location_owner and patch["delivery_type"] == "GIAO_TAN_NOI" else None)
-            if (cart_manager.get_pending_action(session_id) or {}).get("type") == "select_location_candidate":
+            if location_pending_type in {"collect_store_location", "select_location_candidate", "select_branch"}:
                 cart_manager.clear_pending_action(session_id)
         if patch:
             cart_manager.set_checkout_prefs(session_id, **patch)
@@ -4088,6 +4140,47 @@ def _render(state: OrderConversationState) -> OrderConversationState:
                 lines.append("Hiện chưa tra cứu được nhóm: " + ", ".join(result["unavailable_menu_groups"]) + "; bạn có thể thử lại.")
             lines.append("Bạn muốn chọn món số mấy hoặc nói tên món nhé.")
             result["reply"] = "\n".join(lines)
+    elif products:
+        # Every canonical product card exposed by the UI owns the same typed
+        # 1..N snapshot contract, including an exact search with one result.
+        displayed = []
+        seen_ids: set[str] = set()
+        for item in products:
+            product_id = str(item.get("product_id") or item.get("ma_san_pham") or "").strip()
+            product_name = item.get("product_name") or item.get("ten_san_pham")
+            if not product_id or not product_name or product_id in seen_ids:
+                continue
+            seen_ids.add(product_id)
+            displayed.append(item)
+            if len(displayed) == 16:
+                break
+        snapshot = []
+        for index, item in enumerate(displayed, 1):
+            group = _map_db_category_to_bucket(item.get("category"), item.get("parent_category"))
+            item["display_index"] = index
+            item["global_display_index"] = index
+            snapshot.append({
+                "product_id": str(item.get("product_id") or item.get("ma_san_pham")),
+                "product_name": item.get("product_name") or item.get("ten_san_pham"),
+                "category": group,
+                "menu_bucket": group,
+                "group": group,
+                "global_display_index": index,
+                "group_display_index": index,
+                "final_price": item.get("final_price") or item.get("price") or item.get("gia_ban"),
+            })
+        if snapshot:
+            grouped_snapshots = {
+                group: [item for item in snapshot if item["group"] == group]
+                for group in {item["group"] for item in snapshot}
+            }
+            cart_manager.set_checkout_context(
+                state["session_id"], last_product_suggestions=snapshot,
+                product_suggestion_snapshots=grouped_snapshots,
+                product_suggestion_mode="grouped" if len(grouped_snapshots) > 1 else "flat",
+                last_product_focus=snapshot[0] if len(snapshot) == 1 else None,
+            )
+            products = displayed
     if price_focus:
         cart_manager.set_checkout_context(state["session_id"], last_product_focus=price_focus)
     try:

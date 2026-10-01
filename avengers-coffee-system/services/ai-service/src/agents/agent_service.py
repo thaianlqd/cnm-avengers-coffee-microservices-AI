@@ -276,11 +276,28 @@ def _checkout_choice_conflict(message: str) -> Optional[str]:
         r"\b(?:qr|chuyen khoan)\b",
         r"\b(?:vi avengers|vi dien tu)\b",
     ))
-    fulfillment_hits = sum(bool(re.search(pattern, text)) for pattern in (
-        r"\b(?:giao tan noi|giao hang|ship tan nha)\b",
-        r"\b(?:mang di|lay tai quan|den lay|takeaway)\b",
-        r"\b(?:dung tai cho|tai cho|uong tai quan|dine in)\b",
-    ))
+    fulfillment_patterns = {
+        "GIAO_TAN_NOI": r"\b(?:giao tan noi|giao hang|ship tan nha)\b",
+        "MANG_DI": r"\b(?:mang di|lay tai quan|den lay|takeaway)\b",
+        "TAI_CHO": r"\b(?:dung tai cho|tai cho|uong tai quan|dine in)\b",
+    }
+    affirmed_fulfillment = set()
+    for value, pattern in fulfillment_patterns.items():
+        for match in re.finditer(pattern, text):
+            prefix = text[max(0, match.start() - 32):match.start()]
+            suffix = text[match.end():match.end() + 24]
+            negated = bool(re.search(
+                r"\b(?:(?:thoi\s+)?(?:khong|ko)(?:\s+phai)?|bo)\b[^,;.!?]{0,20}$",
+                prefix,
+            ))
+            correction_source = bool(
+                re.search(r"\b(?:doi\s+tu|thay)\b[^,;.!?]{0,20}$", prefix)
+                and re.search(r"^\s*(?:nua\s*)?(?:,\s*)?(?:sang|bang)\b", suffix)
+            )
+            no_longer = bool(re.search(r"^\s+nua\b", suffix))
+            if not (negated or correction_source or no_longer):
+                affirmed_fulfillment.add(value)
+    fulfillment_hits = len(affirmed_fulfillment)
     return "payment" if payment_hits > 1 else "fulfillment" if fulfillment_hits > 1 else None
 
 
