@@ -12,30 +12,25 @@ export const CustomersView: React.FC = () => {
   }, [fetchCustomers]);
 
   const kpi = customersData?.kpi || {
-    total_orders: 21124,
-    total_registered: 18,
-    total_customers: 7,
-    identified_orders: 26,
-    anonymous_orders: 21098,
-    new_customers: 7,
-    repeat_customers: 2,
-    repeat_orders: 21,
-    avg_frequency: 3.7,
+    total_orders: 0,
+    total_registered: 0,
+    total_customers: 0,
+    identified_orders: 0,
+    anonymous_orders: 0,
+    new_customers: 0,
+    repeat_customers: 0,
+    repeat_orders: 0,
+    avg_frequency: 0,
   };
 
-  const membershipTiers = customersData?.membership_tiers || [
-    { tier: 'Hạng Kim Cương', name: 'Hạng Kim Cương', key: 'Kim Cương', count: 2, value: 2, pct: 10.0, avg_spending: 8320175, color: '#06B6D4' },
-    { tier: 'Hạng Vàng', name: 'Hạng Vàng', key: 'Vàng', count: 1, value: 1, pct: 5.0, avg_spending: 650000, color: '#F59E0B' },
-    { tier: 'Hạng Bạc', name: 'Hạng Bạc', key: 'Bạc', count: 1, value: 1, pct: 5.0, avg_spending: 250000, color: '#64748B' },
-    { tier: 'Hạng Đồng', name: 'Hạng Đồng', key: 'Đồng', count: 17, value: 17, pct: 85.0, avg_spending: 5117, color: '#B45309' },
-  ];
+  const membershipTiers = customersData?.membership_tiers || [];
 
   const topCustomers = customersData?.top_customers || [];
   const behavior = customersData?.behavior || {
-    delivery_orders: 5408,
-    store_orders: 15716,
-    avg_order_value: 247968,
-    payment_methods_used: 6,
+    delivery_orders: 0,
+    store_orders: 0,
+    avg_order_value: 0,
+    payment_methods_used: 0,
   };
 
   // Donut slices for membership tiers
@@ -55,10 +50,14 @@ export const CustomersView: React.FC = () => {
   const totalMembers = membershipTiers.reduce((s: number, t: any) => s + Number(t.count || 0), 0);
 
   // Channel slices: Dine-in / Take-away vs Delivery from behavior
-  const channelSlices = [
-    { label: 'Tại quán và Mang đi', value: Number(behavior.store_orders || 15716), color: '#059669' },
-    { label: 'Giao hàng tận nơi', value: Number(behavior.delivery_orders || 5408), color: '#0284c7' },
-  ];
+  const storeOrders = Number(behavior.store_orders || 0);
+  const deliveryOrders = Number(behavior.delivery_orders || 0);
+  const channelSlices = (storeOrders + deliveryOrders > 0)
+    ? [
+        { label: 'Tại quán và Mang đi', value: storeOrders, color: '#059669' },
+        { label: 'Giao hàng tận nơi', value: deliveryOrders, color: '#0284c7' },
+      ]
+    : [];
 
   // Spending per tier bar
   const tierSpendingBars = membershipTiers.map((t: any) => ({
@@ -115,13 +114,13 @@ export const CustomersView: React.FC = () => {
       {/* SUBTAB 1: TỔNG QUAN KHÁCH HÀNG */}
       {activeSubTab === 'overview' && (
         <>
-          {/* 4 Real KPI Cards from Database (Tuned typography) */}
+          {/* 4 Real KPI Cards from Database */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">
                 Tổng đơn hàng phát sinh
               </div>
-              <div className="text-lg sm:text-xl font-bold text-slate-800 mt-1 whitespace-nowrap">
+              <div className="text-lg sm:text-xl font-semibold text-slate-900 mt-1 whitespace-nowrap">
                 {Number(kpi.total_orders || 0).toLocaleString('vi-VN')}
               </div>
               <div className="text-xs text-emerald-600 font-medium mt-1 truncate">
@@ -129,11 +128,11 @@ export const CustomersView: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">
                 Hội viên đăng ký tài khoản
               </div>
-              <div className="text-lg sm:text-xl font-bold text-slate-800 mt-1 whitespace-nowrap">
+              <div className="text-lg sm:text-xl font-semibold text-slate-900 mt-1 whitespace-nowrap">
                 {kpi.total_registered} thành viên
               </div>
               <div className="text-xs text-sky-600 font-medium mt-1 truncate">
@@ -141,11 +140,11 @@ export const CustomersView: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">
                 Đơn hàng từ khách quen
               </div>
-              <div className="text-lg sm:text-xl font-bold text-slate-800 mt-1 whitespace-nowrap">
+              <div className="text-lg sm:text-xl font-semibold text-slate-900 mt-1 whitespace-nowrap">
                 {kpi.repeat_orders} đơn
               </div>
               <div className="text-xs text-emerald-600 font-medium mt-1 truncate">
@@ -153,11 +152,11 @@ export const CustomersView: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">
                 Tần suất mua TB của hội viên
               </div>
-              <div className="text-lg sm:text-xl font-bold text-slate-800 mt-1 whitespace-nowrap">
+              <div className="text-lg sm:text-xl font-semibold text-slate-900 mt-1 whitespace-nowrap">
                 {kpi.avg_frequency} lần / hội viên
               </div>
               <div className="text-xs text-emerald-600 font-medium mt-1 truncate">
@@ -169,9 +168,9 @@ export const CustomersView: React.FC = () => {
           {/* Middle Row: Donut Membership + Top Spenders from Database (Matched h-[340px]) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
             {/* Left: Phân khúc hội viên Donut */}
-            <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between h-[340px]">
+            <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs flex flex-col justify-between h-[340px]">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                <h3 className="text-sm font-semibold text-slate-800">
                   Cơ cấu hạng hội viên
                 </h3>
                 <span className="text-[11px] text-slate-400 font-mono">{totalMembers} hội viên</span>
@@ -188,9 +187,9 @@ export const CustomersView: React.FC = () => {
             </div>
 
             {/* Right: Top khách hàng chi tiêu nhiều nhất */}
-            <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-[340px] overflow-hidden">
+            <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200/90 shadow-xs flex flex-col h-[340px] overflow-hidden">
               <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
-                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                <h3 className="text-sm font-semibold text-slate-800">
                   Top khách hàng chi tiêu cao nhất (Database orders)
                 </h3>
                 <span className="text-[11px] text-slate-400 font-mono">{topCustomers.length} khách</span>
@@ -229,30 +228,30 @@ export const CustomersView: React.FC = () => {
 
           {/* Bottom Row: 4 Metric Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] text-slate-400 uppercase font-semibold">Đơn tại quán và mang đi</div>
-              <div className="text-xl font-bold text-slate-800 mt-1">
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">Đơn tại quán và mang đi</div>
+              <div className="text-xl font-semibold text-slate-900 mt-1">
                 {Number(behavior.store_orders || 0).toLocaleString('vi-VN')} đơn
               </div>
               <div className="text-[11px] text-emerald-600 mt-0.5">Chiếm 74.4% tổng lượng đơn</div>
             </div>
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] text-slate-400 uppercase font-semibold">Đơn giao tận nơi</div>
-              <div className="text-xl font-bold text-slate-800 mt-1">
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">Đơn giao tận nơi</div>
+              <div className="text-xl font-semibold text-slate-900 mt-1">
                 {Number(behavior.delivery_orders || 0).toLocaleString('vi-VN')} đơn
               </div>
               <div className="text-[11px] text-sky-600 mt-0.5">Chiếm 25.6% qua dịch vụ giao</div>
             </div>
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] text-slate-400 uppercase font-semibold">Giá trị đơn TB (AOV)</div>
-              <div className="text-xl font-bold text-emerald-700 mt-1">
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">Giá trị đơn TB (AOV)</div>
+              <div className="text-xl font-semibold text-emerald-600 mt-1">
                 {Number(behavior.avg_order_value || 0).toLocaleString('vi-VN')} đ
               </div>
               <div className="text-[11px] text-slate-400 mt-0.5">Toàn bộ giỏ hàng</div>
             </div>
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] text-slate-400 uppercase font-semibold">Phương thức thanh toán</div>
-              <div className="text-xl font-bold text-slate-800 mt-1">
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">Phương thức thanh toán</div>
+              <div className="text-xl font-semibold text-slate-900 mt-1">
                 {behavior.payment_methods_used} kênh
               </div>
               <div className="text-[11px] text-slate-400 mt-0.5">QR, Ví điện tử, Thẻ, Tiền mặt</div>
@@ -287,19 +286,19 @@ export const CustomersView: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-            <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+            <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <h3 className="text-sm font-semibold text-slate-800 mb-2">
                 Tổng chi tiêu đóng góp theo hạng hội viên (Triệu VNĐ)
               </h3>
               <BarChart data={tierSpendingBars} height={200} valueSuffix="Tr" />
             </div>
 
-            <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between">
-              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+            <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs flex flex-col justify-between">
+              <h3 className="text-sm font-semibold text-slate-800 mb-2">
                 Cơ cấu số lượng hội viên
               </h3>
               <div className="my-auto py-2">
-                <DonutChart data={customerSlices} centerLabel="Hội viên" centerValue={`${totalMembers}`} size={150} />
+                <DonutChart data={customerSlices} centerLabel="Hội viên" centerValue={`${totalMembers}`} size={135} />
               </div>
             </div>
           </div>
@@ -310,43 +309,43 @@ export const CustomersView: React.FC = () => {
       {activeSubTab === 'behavior' && (
         <div className="space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Đơn hàng tại quầy</div>
-              <div className="text-xl font-bold text-slate-800 mt-1">
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">Đơn hàng tại quầy</div>
+              <div className="text-xl font-semibold text-slate-900 mt-1">
                 {Number(behavior.store_orders || 0).toLocaleString('vi-VN')}
               </div>
-              <div className="text-xs text-emerald-600 font-semibold mt-1">Khách dùng tại chỗ và mang đi</div>
+              <div className="text-xs text-emerald-600 font-medium mt-1">Khách dùng tại chỗ và mang đi</div>
             </div>
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Đơn giao tận nơi</div>
-              <div className="text-xl font-bold text-slate-800 mt-1">
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">Đơn giao tận nơi</div>
+              <div className="text-xl font-semibold text-slate-900 mt-1">
                 {Number(behavior.delivery_orders || 0).toLocaleString('vi-VN')}
               </div>
-              <div className="text-xs text-sky-600 font-semibold mt-1">Khách đặt giao hàng online</div>
+              <div className="text-xs text-sky-600 font-medium mt-1">Khách đặt giao hàng online</div>
             </div>
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">AOV toàn hệ thống</div>
-              <div className="text-xl font-bold text-emerald-700 mt-1">
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">AOV toàn hệ thống</div>
+              <div className="text-xl font-semibold text-emerald-600 mt-1">
                 {Number(behavior.avg_order_value || 0).toLocaleString('vi-VN')} đ
               </div>
-              <div className="text-xs text-emerald-600 font-semibold mt-1">Trung bình mỗi giao dịch</div>
+              <div className="text-xs text-emerald-600 font-medium mt-1">Trung bình mỗi giao dịch</div>
             </div>
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Kênh thanh toán</div>
-              <div className="text-xl font-bold text-slate-800 mt-1">
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">Kênh thanh toán</div>
+              <div className="text-xl font-semibold text-slate-900 mt-1">
                 {behavior.payment_methods_used} hình thức
               </div>
-              <div className="text-xs text-slate-400 font-medium mt-1">Đa dạng kênh thanh toán số</div>
+              <div className="text-xs text-slate-400 font-normal mt-1">Đa dạng kênh thanh toán số</div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-            <div className="lg:col-span-6 bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between">
-              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+            <div className="lg:col-span-6 bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs flex flex-col justify-between">
+              <h3 className="text-sm font-semibold text-slate-800 mb-2">
                 Tỷ trọng kênh bán (Tại quán vs Giao hàng)
               </h3>
               <div className="my-auto py-2">
-                <DonutChart data={channelSlices} centerLabel="Kênh" centerValue="2 Kênh" size={160} />
+                <DonutChart data={channelSlices} centerLabel="Kênh" centerValue="2 Kênh" size={135} />
               </div>
             </div>
 

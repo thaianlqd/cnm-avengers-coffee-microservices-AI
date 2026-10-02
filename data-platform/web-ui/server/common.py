@@ -58,23 +58,39 @@ class AiSummarizeRequest(BaseModel):
 
 def get_filter_clauses(cur, date_range: str, branch: str, order_alias: str = "d"):
     ref_date = datetime.now().date()
+    range_str = (date_range or "30days").lower().strip()
 
-    if date_range == "today":
+    if range_str in ("today", "1day", "1d"):
         date_cond = f"{order_alias}.ngay_tao::date = CURRENT_DATE"
         date_params = []
         prev_date_cond = f"{order_alias}.ngay_tao::date = CURRENT_DATE - INTERVAL '1 day'"
         prev_date_params = []
-    elif date_range == "7days":
+    elif range_str in ("7days", "7d", "week"):
         date_cond = f"{order_alias}.ngay_tao::date >= CURRENT_DATE - INTERVAL '6 days' AND {order_alias}.ngay_tao::date <= CURRENT_DATE"
         date_params = []
         prev_date_cond = f"{order_alias}.ngay_tao::date >= CURRENT_DATE - INTERVAL '13 days' AND {order_alias}.ngay_tao::date < CURRENT_DATE - INTERVAL '6 days'"
         prev_date_params = []
-    elif date_range == "30days":
+    elif range_str in ("14days", "14d", "2weeks"):
+        date_cond = f"{order_alias}.ngay_tao::date >= CURRENT_DATE - INTERVAL '13 days' AND {order_alias}.ngay_tao::date <= CURRENT_DATE"
+        date_params = []
+        prev_date_cond = f"{order_alias}.ngay_tao::date >= CURRENT_DATE - INTERVAL '27 days' AND {order_alias}.ngay_tao::date < CURRENT_DATE - INTERVAL '13 days'"
+        prev_date_params = []
+    elif range_str in ("30days", "30d", "month"):
         date_cond = f"{order_alias}.ngay_tao::date >= CURRENT_DATE - INTERVAL '29 days' AND {order_alias}.ngay_tao::date <= CURRENT_DATE"
         date_params = []
         prev_date_cond = f"{order_alias}.ngay_tao::date >= CURRENT_DATE - INTERVAL '59 days' AND {order_alias}.ngay_tao::date < CURRENT_DATE - INTERVAL '29 days'"
         prev_date_params = []
-    else:  # all
+    elif range_str in ("90days", "90d", "quarter"):
+        date_cond = f"{order_alias}.ngay_tao::date >= CURRENT_DATE - INTERVAL '89 days' AND {order_alias}.ngay_tao::date <= CURRENT_DATE"
+        date_params = []
+        prev_date_cond = f"{order_alias}.ngay_tao::date >= CURRENT_DATE - INTERVAL '179 days' AND {order_alias}.ngay_tao::date < CURRENT_DATE - INTERVAL '89 days'"
+        prev_date_params = []
+    elif range_str in ("all", "ytd", "year"):
+        date_cond = f"{order_alias}.ngay_tao::date >= '2026-01-01' AND {order_alias}.ngay_tao::date <= CURRENT_DATE"
+        date_params = []
+        prev_date_cond = f"{order_alias}.ngay_tao::date >= '2025-01-01' AND {order_alias}.ngay_tao::date <= '2025-12-31'"
+        prev_date_params = []
+    else:  # all-time fallback
         date_cond = "1=1"
         date_params = []
         prev_date_cond = "1=1"

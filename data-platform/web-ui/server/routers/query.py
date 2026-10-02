@@ -6,12 +6,136 @@ from services.sql_service import SqlSafetyError, QueryExecutionError, execute_re
 router = APIRouter(prefix="/api", tags=["SQL & Warehouse Explorer"])
 
 
+TABLE_METADATA = {
+    # ── Bán hàng & Đơn hàng (Silver Detailed)
+    "silver.don_hang": {
+        "display_name": "Đơn hàng (Giao dịch)",
+        "category": "Bán hàng & Đơn hàng",
+        "layer": "Tầng Silver (Chi tiết)",
+        "description": "Dữ liệu đơn hàng chi tiết đã làm sạch: mã đơn, giá trị, hình thức thanh toán, cơ sở và trạng thái."
+    },
+    "silver.chi_tiet_don_hang": {
+        "display_name": "Chi tiết món trong đơn",
+        "category": "Bán hàng & Đơn hàng",
+        "layer": "Tầng Silver (Chi tiết)",
+        "description": "Chi tiết từng món nước: tên món, kích cỡ, đá, đường, topping, đơn giá và thành tiền."
+    },
+    "silver.giao_dich_thanh_toan": {
+        "display_name": "Giao dịch thanh toán",
+        "category": "Bán hàng & Đơn hàng",
+        "layer": "Tầng Silver (Chi tiết)",
+        "description": "Lịch sử thanh toán đơn hàng qua cổng trực tuyến hoặc thu ngân tại quầy."
+    },
+
+    # ── Thực đơn & Sản phẩm (Silver Detailed)
+    "silver.san_pham": {
+        "display_name": "Sản phẩm & Đồ uống",
+        "category": "Thực đơn & Sản phẩm",
+        "layer": "Tầng Silver (Chi tiết)",
+        "description": "Danh mục sản phẩm cà phê, đồ uống, giá niêm yết, tên nhóm thực đơn và trạng thái món."
+    },
+    "silver.danh_muc": {
+        "display_name": "Nhóm thực đơn",
+        "category": "Thực đơn & Sản phẩm",
+        "layer": "Tầng Silver (Chi tiết)",
+        "description": "Phân loại các nhóm đồ uống chính như Cà phê máy, Cà phê phin, Trà trái cây, Bánh ngọt."
+    },
+
+    # ── Khách hàng & Thành viên (Silver Detailed)
+    "silver.nguoi_dung": {
+        "display_name": "Khách hàng & Hội viên",
+        "category": "Khách hàng & Hội viên",
+        "layer": "Tầng Silver (Chi tiết)",
+        "description": "Hồ sơ người dùng: số điện thoại, điểm thưởng Beans, tổng chi tiêu tích lũy và ngày tham gia."
+    },
+
+    # ── Chi nhánh & Vận hành (Silver Detailed)
+    "silver.chi_nhanh": {
+        "display_name": "Hệ thống Chi nhánh",
+        "category": "Chi nhánh & Vận hành",
+        "layer": "Tầng Silver (Chi tiết)",
+        "description": "Mạng lưới cửa hàng: tên quán, địa chỉ, tỉnh/thành phố, số điện thoại và giờ mở cửa."
+    },
+    "silver.shipper": {
+        "display_name": "Đội ngũ tài xế giao hàng",
+        "category": "Chi nhánh & Vận hành",
+        "layer": "Tầng Silver (Chi tiết)",
+        "description": "Danh sách tài xế giao hàng: họ tên, số điện thoại, biển số xe, tổng chuyến giao và điểm đánh giá."
+    },
+    "silver.ton_kho_san_pham": {
+        "display_name": "Tồn kho nguyên vật liệu",
+        "category": "Chi nhánh & Vận hành",
+        "layer": "Tầng Silver (Chi tiết)",
+        "description": "Số lượng tồn kho, định mức nguyên vật liệu dự trữ tại các chi nhánh cửa hàng."
+    },
+    "silver.khuyen_mai": {
+        "display_name": "Chương trình khuyến mãi & Voucher",
+        "category": "Bán hàng & Khuyến mãi",
+        "layer": "Tầng Silver (Chi tiết)",
+        "description": "Danh mục chương trình khuyến mãi, voucher giảm giá, mức giảm, trạng thái áp dụng."
+    },
+    "silver.voucher": {
+        "display_name": "Kho mã Voucher ưu đãi",
+        "category": "Bán hàng & Khuyến mãi",
+        "layer": "Tầng Silver (Chi tiết)",
+        "description": "Mã voucher, loại chiết khấu %, giảm cố định và số lượt sử dụng."
+    },
+    "silver.danh_gia_san_pham": {
+        "display_name": "Đánh giá chất lượng món uống",
+        "category": "Trải nghiệm & Khách hàng",
+        "layer": "Tầng Silver (Chi tiết)",
+        "description": "Số sao đánh giá (1-5 sao), bình luận và phản hồi của khách hàng về từng món nước."
+    },
+    "silver.danh_gia_chi_nhanh": {
+        "display_name": "Đánh giá chất lượng chi nhánh",
+        "category": "Chi nhánh & Vận hành",
+        "layer": "Tầng Silver (Chi tiết)",
+        "description": "Điểm đánh giá phục vụ, không gian và nhận xét của khách tại từng cửa hàng."
+    },
+    "silver.ca_lam_viec_nhan_vien": {
+        "display_name": "Ca làm việc & Chấm công",
+        "category": "Nhân sự & Vận hành",
+        "layer": "Tầng Silver (Chi tiết)",
+        "description": "Lịch phân ca, chấm công check-in/out, trạng thái đi đúng giờ, đi trễ của nhân sự."
+    },
+    "silver.ca_doi_soat": {
+        "display_name": "Đối soát ca thu ngân",
+        "category": "Tài chính & Thu quỹ",
+        "layer": "Tầng Silver (Chi tiết)",
+        "description": "Số liệu kết ca thu ngân, tiền đầu ca/cuối ca, tiền mặt thực tế vs hệ thống và chênh lệch quỹ."
+    },
+    "silver.yeu_thich_san_pham": {
+        "display_name": "Món uống yêu thích (Wishlist)",
+        "category": "Thực đơn & Sản phẩm",
+        "layer": "Tầng Silver (Chi tiết)",
+        "description": "Dữ liệu khách hàng lưu món uống yêu thích và quan tâm trên ứng dụng."
+    },
+    "silver.khao_sat_phan_hoi": {
+        "display_name": "Khảo sát ý kiến khách hàng",
+        "category": "Trải nghiệm & Khách hàng",
+        "layer": "Tầng Silver (Chi tiết)",
+        "description": "Phản hồi câu hỏi khảo sát dịch vụ và trạng thái nhận voucher tri ân của khách."
+    },
+    "silver.bien_the_san_pham": {
+        "display_name": "Biến thể sản phẩm (Size & Thuộc tính)",
+        "category": "Thực đơn & Sản phẩm",
+        "layer": "Tầng Silver (Chi tiết)",
+        "description": "Biến thể kích cỡ (S/M/L), độ ngọt, đá và phụ thu tương ứng của từng món."
+    },
+    "silver.khu_vuc": {
+        "display_name": "Khu vực địa lý chi nhánh",
+        "category": "Chi nhánh & Vận hành",
+        "layer": "Tầng Silver (Chi tiết)",
+        "description": "Phân vùng địa lý và quản lý cụm chi nhánh cửa hàng."
+    },
+}
+
+
 @router.get("/warehouse/tables")
 def get_warehouse_tables():
     try:
         with get_db_conn() as conn:
             with conn.cursor() as cur:
-                # Query all active schema tables across Silver Entities, Gold Marts, and Bronze Stream
                 cur.execute("""
                     SELECT 
                         c.table_schema,
@@ -20,84 +144,33 @@ def get_warehouse_tables():
                         c.data_type,
                         c.ordinal_position
                     FROM information_schema.columns c
-                    WHERE c.table_schema IN ('orders', 'menu', 'identity', 'inventory', 'gold', 'public')
-                    ORDER BY 
-                        CASE c.table_schema
-                            WHEN 'orders' THEN 1
-                            WHEN 'menu' THEN 2
-                            WHEN 'identity' THEN 3
-                            WHEN 'inventory' THEN 4
-                            WHEN 'gold' THEN 5
-                            ELSE 6
-                        END,
-                        c.table_name, 
-                        c.ordinal_position;
+                    WHERE c.table_schema = 'silver'
+                    ORDER BY c.table_name, c.ordinal_position;
                 """)
                 rows = cur.fetchall()
 
-                # Comprehensive entity & table metadata descriptions
-                table_descriptions = {
-                    # Core Cleaned Entities (Silver Fact & Dimension Layer)
-                    "orders.don_hang": "Fact - Giao dịch đơn hàng toàn hệ thống (mã đơn, ngày tạo, tổng tiền, phương thức, trạng thái, cơ sở)",
-                    "orders.chi_tiet_don_hang": "Fact - Chi tiết từng món trong đơn hàng (sản phẩm, số lượng, giá bán, thành tiền)",
-                    "orders.giao_dich_thanh_toan": "Fact - Lịch sử giao dịch thanh toán (phương thức, mã giao dịch, số tiền, trạng thái)",
-                    "orders.voucher": "Dimension - Danh mục mã giảm giá, voucher khuyến mãi, điều kiện áp dụng",
-                    "orders.shipper": "Dimension - Danh sách tài xế giao hàng, phương tiện và thông tin vận chuyển",
-                    "orders.shipper_delivery": "Fact - Lịch sử các chuyến giao nhận đơn hàng, thời gian và địa chỉ giao",
-                    "orders.customer_wallet": "Fact/Dimension - Ví tiền điện tử và điểm tích lũy của khách hàng",
-                    "orders.danh_gia_san_pham": "Fact - Phản hồi và điểm đánh giá của khách hàng về sản phẩm",
-                    "orders.danh_gia_chi_nhanh": "Fact - Đánh giá chất lượng dịch vụ của từng cửa hàng",
-                    
-                    "menu.san_pham": "Dimension - Danh mục sản phẩm (mã món, tên món, giá niêm yết, danh mục ngành hàng)",
-                    "menu.danh_muc": "Dimension - Phân loại ngành hàng (Cà phê, Trà, Bánh & Đồ ăn nhẹ, Đá xay...)",
-                    "menu.bien_the_san_pham": "Dimension - Biến thể kích cỡ (Size S, M, L) và giá bán tương ứng",
-                    "menu.thuoc_tinh": "Dimension - Thuộc tính món (độ ngọt, lượng đá, topping đi kèm)",
-                    
-                    "identity.chi_nhanh": "Dimension - Danh sách chuỗi cửa hàng / kiosk (mã chi nhánh, tên, địa chỉ, thành phố, trạng thái)",
-                    "identity.nguoi_dung": "Dimension - Tài khoản khách hàng, nhân viên và người quản lý",
-                    "identity.membership_config": "Dimension - Cấu hình cấp bậc thành viên (Đồng, Bạc, Vàng, Kim Cương)",
-                    "identity.khu_vuc": "Dimension - Khu vực địa lý và thị trường kinh doanh chuỗi",
-                    "identity.dia_chi_giao_hang": "Dimension - Sổ địa chỉ nhận hàng của khách hàng",
-                    
-                    "inventory.ton_kho_san_pham": "Fact - Tồn kho nguyên vật liệu và sản phẩm theo từng chi nhánh",
-                    
-                    # Data Marts (Gold Layer: Pre-aggregated for fast BI)
-                    "gold.revenue_daily": "Data Mart - Tổng hợp doanh thu và số đơn hàng theo từng ngày (tối ưu vẽ biểu đồ)",
-                    "gold.top_products": "Data Mart - Xếp hạng sản phẩm bán chạy nhất và doanh thu từng món",
-                    "gold.stores_overview": "Data Mart - Tổng quan hiệu suất kinh doanh, doanh thu và AOV từng cửa hàng",
-                    "gold.customer_segments": "Data Mart - Phân khúc khách hàng theo mô hình RFM và giá trị vòng đời (LTV)",
-                    "gold.branch_taste_profile": "Data Mart - Phân tích khẩu vị, kích cỡ và xu hướng đặt món theo chi nhánh",
-                    "gold.payment_methods_distribution": "Data Mart - Thống kê tỷ trọng và doanh thu theo hình thức thanh toán",
-                    "gold.order_status_distribution": "Data Mart - Phân bổ tỷ lệ trạng thái hoàn thành và giao hàng",
-                    "gold.shipper_performance": "Data Mart - Đánh giá hiệu suất, thời gian giao và tỷ lệ thành công của tài xế",
-                    "gold.menu_overview": "Data Mart - Bảng thực đơn tích lũy phục vụ phân tích menu",
-                    "gold.kpi_summary": "Data Mart - Các chỉ số tổng quan điều hành toàn chuỗi",
-                    
-                    # Bronze Layer (Raw Streaming)
-                    "public.realtime_events": "Bronze - Sự kiện streaming thời gian thực từ Kafka (đơn hàng mới, chuyển trạng thái)"
-                }
-
                 tables_dict = {}
                 for r in rows:
-                    schema = r["table_schema"]
+                    s_name = r["table_schema"]
                     t_name = r["table_name"]
-                    full_name = f"{schema}.{t_name}"
+                    full_name = f"{s_name}.{t_name}"
+
+                    meta = TABLE_METADATA.get(full_name, {
+                        "display_name": t_name.replace("_", " ").title(),
+                        "category": "Dữ liệu vận hành",
+                        "layer": "Tầng Silver (Chi tiết)",
+                        "description": f"Bảng dữ liệu {t_name}"
+                    })
 
                     if full_name not in tables_dict:
-                        # Determine layer category
-                        if schema in ('orders', 'menu', 'identity', 'inventory'):
-                            layer_label = "Silver (Thực thể sạch)"
-                        elif schema == 'gold':
-                            layer_label = "Gold (Data Mart)"
-                        else:
-                            layer_label = "Bronze (Dữ liệu thô)"
-
                         tables_dict[full_name] = {
                             "name": full_name,
                             "table_name": t_name,
-                            "schema": schema,
-                            "layer": layer_label,
-                            "description": table_descriptions.get(full_name, f"Bảng dữ liệu thực thể {full_name}"),
+                            "schema": s_name,
+                            "display_name": meta["display_name"],
+                            "category": meta["category"],
+                            "layer": meta["layer"],
+                            "description": meta["description"],
                             "columns": []
                         }
                     tables_dict[full_name]["columns"].append({
@@ -107,31 +180,47 @@ def get_warehouse_tables():
 
                 sample_queries = [
                     {
-                        "title": "Truy vấn đơn hàng chi tiết (Orders JOIN Chi tiết đơn JOIN Cửa hàng)",
-                        "sql": "SELECT \n    d.ma_don_hang,\n    d.ngay_tao,\n    cn.ten_chi_nhanh,\n    ct.ten_san_pham,\n    ct.so_luong,\n    ct.gia_ban,\n    (ct.so_luong * ct.gia_ban) AS thanh_tien\nFROM orders.don_hang d\nJOIN orders.chi_tiet_don_hang ct ON d.ma_don_hang = ct.ma_don_hang\nLEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh\nORDER BY d.ngay_tao DESC\nLIMIT 20;"
+                        "title": "20 đơn hàng mới nhất và hình thức thanh toán",
+                        "sql": "SELECT ma_don_hang, tong_tien, phuong_thuc_thanh_toan, trang_thai_don_hang, ngay_tao\nFROM silver.don_hang\nORDER BY ngay_tao DESC\nLIMIT 20;"
                     },
                     {
-                        "title": "Doanh số thực tế theo nhóm sản phẩm từ bảng dữ liệu gốc",
-                        "sql": "SELECT \n    COALESCE(dm.ten_danh_muc, 'Khác') AS danh_muc,\n    COUNT(DISTINCT d.ma_don_hang) AS so_don,\n    SUM(ct.so_luong) AS tong_ly_ban,\n    SUM(ct.so_luong * ct.gia_ban) AS tong_doanh_thu\nFROM orders.chi_tiet_don_hang ct\nJOIN orders.don_hang d ON ct.ma_don_hang = d.ma_don_hang\nJOIN menu.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham\nLEFT JOIN menu.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc\nGROUP BY dm.ten_danh_muc\nORDER BY tong_doanh_thu DESC;"
+                        "title": "Top món bán chạy và doanh thu từ chi tiết đơn hàng",
+                        "sql": "SELECT ten_san_pham, kich_co, COUNT(*) AS so_lan_goi, SUM(so_luong) AS tong_ly_ban, SUM(thanh_tien) AS tong_tien\nFROM silver.chi_tiet_don_hang\nGROUP BY ten_san_pham, kich_co\nORDER BY tong_ly_ban DESC\nLIMIT 15;"
                     },
                     {
-                        "title": "Xếp hạng khách hàng chi tiêu nhiều nhất (Customer LTV)",
-                        "sql": "SELECT \n    COALESCE(u.ho_ten, d.ten_khach_hang, 'Khách hàng') AS ten_khach_hang,\n    COUNT(d.ma_don_hang) AS so_don_da_mua,\n    SUM(d.tong_tien) AS tong_chi_tieu,\n    ROUND(AVG(d.tong_tien), 0) AS chi_tieu_trung_binh\nFROM orders.don_hang d\nLEFT JOIN identity.nguoi_dung u ON d.ma_nguoi_dung = u.ma_nguoi_dung\nWHERE d.trang_thai_don_hang = 'HOAN_THANH'\nGROUP BY u.ho_ten, d.ten_khach_hang\nORDER BY tong_chi_tieu DESC\nLIMIT 15;"
+                        "title": "Khách hàng thân thiết có điểm tích lũy Beans cao nhất",
+                        "sql": "SELECT ho_ten, so_dien_thoai, email, diem_loyalty, tong_chi_tieu, ngay_tao\nFROM silver.nguoi_dung\nORDER BY diem_loyalty DESC\nLIMIT 20;"
                     },
                     {
-                        "title": "Top 10 cửa hàng có doanh thu cao nhất toàn chuỗi",
-                        "sql": "SELECT \n    cn.ma_chi_nhanh,\n    cn.ten_chi_nhanh,\n    cn.thanh_pho,\n    COUNT(d.ma_don_hang) AS tong_don,\n    COALESCE(SUM(d.tong_tien), 0) AS tong_doanh_thu\nFROM identity.chi_nhanh cn\nLEFT JOIN orders.don_hang d ON cn.ma_chi_nhanh = d.co_so_ma\nGROUP BY cn.ma_chi_nhanh, cn.ten_chi_nhanh, cn.thanh_pho\nORDER BY tong_doanh_thu DESC\nLIMIT 10;"
+                        "title": "Danh sách thực đơn sản phẩm đồ uống và giá bán",
+                        "sql": "SELECT ma_san_pham, ten_san_pham, ten_danh_muc, gia_ban, trang_thai\nFROM silver.san_pham\nORDER BY ma_san_pham ASC;"
                     },
                     {
-                        "title": "Truy vấn từ Data Mart tổng hợp (Gold - Tối ưu tốc độ cao)",
-                        "sql": "SELECT date, total_orders, revenue\nFROM gold.revenue_daily\nORDER BY date DESC\nLIMIT 14;"
+                        "title": "Hiệu suất tài xế giao hàng và điểm đánh giá",
+                        "sql": "SELECT ho_ten, so_dien_thoai, bien_so_xe, loai_xe, tong_chuyen_giao, diem_danh_gia\nFROM silver.shipper\nORDER BY tong_chuyen_giao DESC;"
+                    },
+                    {
+                        "title": "Mạng lưới chi nhánh cửa hàng đang hoạt động",
+                        "sql": "SELECT ma_chi_nhanh, ten_chi_nhanh, thanh_pho, dia_chi, so_dien_thoai, trang_thai\nFROM silver.chi_nhanh\nORDER BY thanh_pho, ten_chi_nhanh;"
                     }
                 ]
 
+                # Sort tables logically: Bán hàng -> Thực đơn -> Khách hàng -> Chi nhánh
+                category_order = {
+                    "Bán hàng & Đơn hàng": 1,
+                    "Thực đơn & Sản phẩm": 2,
+                    "Khách hàng & Hội viên": 3,
+                    "Chi nhánh & Vận hành": 4,
+                }
+                sorted_tables = sorted(
+                    tables_dict.values(),
+                    key=lambda t: (category_order.get(t.get("category"), 99), t.get("display_name", ""))
+                )
+
                 return {
-                    "warehouse": "Avengers Coffee Enterprise Data Warehouse",
-                    "schema": "multi-layer (silver entities + gold marts + bronze)",
-                    "tables": list(tables_dict.values()),
+                    "warehouse": "Avengers Analytics Lakehouse",
+                    "schema": "silver",
+                    "tables": sorted_tables,
                     "sample_queries": sample_queries
                 }
     except Exception as e:

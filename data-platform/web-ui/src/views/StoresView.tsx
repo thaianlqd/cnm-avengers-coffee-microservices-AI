@@ -18,10 +18,10 @@ export const StoresView: React.FC = () => {
   }, [fetchStores, fetchMarts]);
 
   const summary = storesData?.summary || {
-    total_stores: 100,
-    active_stores: 100,
+    total_stores: 0,
+    active_stores: 0,
     maintenance_stores: 0,
-    avg_revenue_per_store: 52380800,
+    avg_revenue_per_store: 0,
   };
 
   const rawStores = storesData?.stores || [];
@@ -30,9 +30,9 @@ export const StoresView: React.FC = () => {
 
   // Top store name
   const topStore = topStores[0] || rawStores[0] || {
-    store_name: 'Kiosk Avengers Đà Nẵng 104',
-    total_revenue: 103391000,
-    total_orders: 454,
+    store_name: 'Chưa có dữ liệu',
+    total_revenue: 0,
+    total_orders: 0,
   };
 
   // Top stores bars (Triệu VNĐ)
@@ -57,24 +57,12 @@ export const StoresView: React.FC = () => {
     value: Math.round(Number(c.revenue) / 1000000),
   }));
 
-  // Hourly order traffic from real marts.hourly_sales or fallback
+  // Hourly order traffic from real marts.hourly_sales
   const rawHourly = marts?.hourly_sales || [];
-  const hourlyStoreOrders = rawHourly.length > 0
-    ? rawHourly.map((h: any) => ({
-        label: `${String(h.hour).padStart(2, '0')}h`,
-        value: Number(h.orders || h.count || 0),
-      }))
-    : [
-        { label: '07h', value: 340 },
-        { label: '08h', value: 1250 },
-        { label: '09h', value: 980 },
-        { label: '11h', value: 890 },
-        { label: '12h', value: 1420 },
-        { label: '14h', value: 650 },
-        { label: '16h', value: 820 },
-        { label: '18h', value: 1150 },
-        { label: '20h', value: 720 },
-      ];
+  const hourlyStoreOrders = rawHourly.map((h: any) => ({
+    label: `${String(h.hour).padStart(2, '0')}h`,
+    value: Number(h.orders || h.order_count || h.count || 0),
+  }));
 
   // Distinct cities for filter dropdown
   const uniqueCities = Array.from(new Set(rawStores.map((s: any) => s.city).filter(Boolean)));
@@ -142,13 +130,13 @@ export const StoresView: React.FC = () => {
       {/* SUBTAB 1: TỔNG QUAN HIỆU SUẤT */}
       {activeSubTab === 'overview' && (
         <>
-          {/* 4 KPI Cards from Database (Tuned typography) */}
+          {/* 4 KPI Cards from Database */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">
                 Tổng số điểm bán
               </div>
-              <div className="text-lg sm:text-xl font-bold text-slate-800 mt-1 whitespace-nowrap">
+              <div className="text-lg sm:text-xl font-semibold text-slate-900 mt-1 whitespace-nowrap">
                 {summary.total_stores} chi nhánh
               </div>
               <div className="text-xs text-emerald-600 font-medium mt-1 truncate">
@@ -156,24 +144,24 @@ export const StoresView: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">
                 Doanh thu TB mỗi điểm bán
               </div>
-              <div className="text-lg sm:text-xl font-bold text-slate-800 mt-1 flex items-baseline gap-1 whitespace-nowrap">
+              <div className="text-lg sm:text-xl font-semibold text-slate-900 mt-1 flex items-baseline gap-1 whitespace-nowrap">
                 <span>{Number(summary.avg_revenue_per_store || 0).toLocaleString('vi-VN')}</span>
-                <span className="text-xs font-semibold text-slate-500">đ</span>
+                <span className="text-xs font-medium text-slate-500">đ</span>
               </div>
               <div className="text-xs text-emerald-600 font-medium mt-1 truncate">
                 Số liệu thực tế kỳ phân tích
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">
                 Điểm bán doanh thu cao nhất
               </div>
-              <div className="text-base sm:text-lg font-bold text-slate-800 mt-1 truncate" title={topStore.store_name}>
+              <div className="text-base sm:text-lg font-semibold text-slate-900 mt-1 truncate" title={topStore.store_name}>
                 {topStore.store_name}
               </div>
               <div className="text-xs text-emerald-700 font-medium mt-1 truncate">
@@ -181,13 +169,13 @@ export const StoresView: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">
                 Giá trị đơn trung bình (AOV)
               </div>
-              <div className="text-lg sm:text-xl font-bold text-slate-800 mt-1 flex items-baseline gap-1 whitespace-nowrap">
+              <div className="text-lg sm:text-xl font-semibold text-slate-900 mt-1 flex items-baseline gap-1 whitespace-nowrap">
                 <span>{Number(topStore.aov ?? 0).toLocaleString('vi-VN')}</span>
-                <span className="text-xs font-semibold text-slate-500">đ</span>
+                <span className="text-xs font-medium text-slate-500">đ</span>
               </div>
               <div className="text-xs text-emerald-600 font-medium mt-1 truncate">
                 Trung bình toàn chuỗi điểm bán
@@ -197,9 +185,9 @@ export const StoresView: React.FC = () => {
 
           {/* Charts Row: Revenue Comparison Bar + Region Share Donut (Matched h-[320px]) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-            <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between h-[320px]">
+            <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs flex flex-col justify-between h-[320px]">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                <h3 className="text-sm font-semibold text-slate-800">
                   So sánh doanh thu Top điểm bán (Triệu VNĐ)
                 </h3>
                 <span className="text-[11px] text-slate-400 font-mono">Dữ liệu database</span>
@@ -213,9 +201,9 @@ export const StoresView: React.FC = () => {
               </div>
             </div>
 
-            <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between h-[320px]">
+            <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs flex flex-col justify-between h-[320px]">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                <h3 className="text-sm font-semibold text-slate-800">
                   Tỷ trọng doanh thu theo thành phố
                 </h3>
                 <span className="text-[11px] text-slate-400 font-mono">{activeCities.length} tỉnh thành</span>
@@ -379,19 +367,19 @@ export const StoresView: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-            <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+            <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <h3 className="text-sm font-semibold text-slate-800 mb-2">
                 So sánh doanh thu giữa các tỉnh thành (Triệu VNĐ)
               </h3>
               <BarChart data={regionComparisonBars} height={200} valueSuffix="Tr" />
             </div>
 
-            <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between">
-              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+            <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs flex flex-col justify-between">
+              <h3 className="text-sm font-semibold text-slate-800 mb-2">
                 Cơ cấu thị phần theo địa phương
               </h3>
               <div className="my-auto py-2">
-                <DonutChart data={regionSlices} centerLabel="Tổng DT" centerValue={`${(totalCityRevenue / 1000000000).toFixed(2)}B`} size={150} />
+                <DonutChart data={regionSlices} centerLabel="Tổng DT" centerValue={`${(totalCityRevenue / 1000000000).toFixed(2)}B`} size={135} />
               </div>
             </div>
           </div>
@@ -438,31 +426,31 @@ export const StoresView: React.FC = () => {
       {activeSubTab === 'hours' && (
         <div className="space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Khung giờ cao điểm</div>
-              <div className="text-xl font-bold text-slate-800 mt-1">11:00 - 13:00</div>
-              <div className="text-xs text-emerald-600 font-semibold mt-1">Lượng đơn trưa văn phòng</div>
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">Khung giờ cao điểm</div>
+              <div className="text-xl font-semibold text-slate-900 mt-1">11:00 - 13:00</div>
+              <div className="text-xs text-emerald-600 font-medium mt-1">Lượng đơn trưa văn phòng</div>
             </div>
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Khung giờ buổi sáng</div>
-              <div className="text-xl font-bold text-slate-800 mt-1">08:00 - 09:30</div>
-              <div className="text-xs text-emerald-600 font-semibold mt-1">Cà phê mang đi và ăn sáng</div>
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">Khung giờ buổi sáng</div>
+              <div className="text-xl font-semibold text-slate-900 mt-1">08:00 - 09:30</div>
+              <div className="text-xs text-emerald-600 font-medium mt-1">Cà phê mang đi và ăn sáng</div>
             </div>
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Thời gian giao TB</div>
-              <div className="text-xl font-bold text-emerald-700 mt-1">18.4 phút</div>
-              <div className="text-xs text-slate-400 font-medium mt-1">Từ xác nhận đến giao thành công</div>
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">Thời gian giao TB</div>
+              <div className="text-xl font-semibold text-emerald-600 mt-1">18.4 phút</div>
+              <div className="text-xs text-slate-400 font-normal mt-1">Từ xác nhận đến giao thành công</div>
             </div>
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tỷ lệ hủy đơn</div>
-              <div className="text-xl font-bold text-slate-800 mt-1">1.2%</div>
-              <div className="text-xs text-emerald-600 font-semibold mt-1">Mức kiểm soát rủi ro tốt</div>
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">Tỷ lệ hủy đơn</div>
+              <div className="text-xl font-semibold text-slate-900 mt-1">1.2%</div>
+              <div className="text-xs text-emerald-600 font-medium mt-1">Mức kiểm soát rủi ro tốt</div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+          <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+              <h3 className="text-sm font-semibold text-slate-800">
                 Phân bố số lượng đơn hàng theo khung giờ hoạt động toàn chuỗi (Marts)
               </h3>
               <span className="text-[11px] text-slate-400 font-mono">Đơn vị: Đơn hàng</span>

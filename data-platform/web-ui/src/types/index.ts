@@ -1,26 +1,21 @@
 export type ViewTab = 
   | 'overview' 
   | 'analytics' 
-  | 'ai_assistant'
   | 'explorer' 
   | 'stores' 
   | 'customers' 
   | 'products' 
-  | 'data_management'
-  | 'warehouse'
-  | 'query_history'
-  | 'sql_editor'
-  | 'notebooks'
-  | 'ml_ai'
-  | 'users'
-  | 'roles'
-  | 'system';
+  | 'system'
+  | 'ai_assistant'
+  | 'saved_reports';
 
 export type AnalyticsSubTab = 
   | 'revenue' 
   | 'stores' 
   | 'customers' 
-  | 'products';
+  | 'products' 
+  | 'ai_assistant'
+  | 'saved_reports';
 
 
 export interface WarehouseMetrics {
@@ -53,6 +48,9 @@ export interface TableMetadata {
   table_name: string;
   schema: string;
   description: string;
+  display_name?: string;
+  category?: string;
+  layer?: string;
   columns: TableColumn[];
 }
 

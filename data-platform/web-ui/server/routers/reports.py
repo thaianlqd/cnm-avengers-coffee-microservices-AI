@@ -1,12 +1,31 @@
 import uuid
+import unicodedata
+import urllib.parse
+from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from psycopg2.extras import Json
 from db import get_db_conn
 from common import SavedReportCreate, ReportExportLogCreate
 from services.sql_service import SqlSafetyError, QueryExecutionError, execute_read_only
+from services.docx_service import generate_report_docx
 
 router = APIRouter(prefix="/api/reports", tags=["Reports Management"])
+
+
+def _make_content_disposition(title: str, timestamp: bool = False) -> str:
+    nfkd = unicodedata.normalize('NFKD', title)
+    ascii_clean = nfkd.encode('ASCII', 'ignore').decode('ASCII')
+    safe_ascii = "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in ascii_clean).strip("_")
+    safe_ascii = safe_ascii[:40] if safe_ascii else "Bao_Cao_AI"
+    
+    time_str = f"_{datetime.now().strftime('%Y%m%d_%H%M%S')}" if timestamp else ""
+    ascii_filename = f"{safe_ascii}{time_str}.docx"
+    utf8_raw = f"{title[:40]}{time_str}.docx"
+    utf8_encoded = urllib.parse.quote(utf8_raw)
+    
+    return f'attachment; filename="{ascii_filename}"; filename*=UTF-8\'\'{utf8_encoded}'
 
 
 @router.get("/saved")
@@ -223,3 +242,86 @@ def log_report_export(payload: ReportExportLogCreate):
                 return {"status": "success", "id": log_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi ghi nhật ký: {str(e)}")
+
+
+@router.post("/export-docx")
+def export_report_docx(payload: dict):
+    report_data = payload.get("report_data") or payload
+    if not report_data:
+        raise HTTPException(status_code=400, detail="Không có dữ liệu báo cáo để xuất file DOCX")
+    
+    title = report_data.get("title") or "Bao_Cao_Phan_Tich_AI"
+    content_disposition = _make_content_disposition(title, timestamp=True)
+
+    save_to_db = payload.get("save_to_db", True)
+    if save_to_db:
+        try:
+            report_id = f"rpt_{uuid.uuid4().hex[:12]}"
+            with get_db_conn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO analytics.saved_reports (
+                            id, title, description, category, query_type, sql_query,
+                            visualization_type, x_key, y_key, ai_summary, created_by, module_config
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT (id) DO NOTHING;
+                    """, (
+                        report_id,
+                        title[:250],
+                        report_data.get("description", "")[:500],
+                        "ai_report",
+                        "sql",
+                        report_data.get("sql_query") or "SELECT 1;",
+                        report_data.get("visualizations", {}).get("trend", "area"),
+                        "label",
+                        "value",
+                        report_data.get("executive_summary") or "",
+                        "Trợ lý AI Data Platform",
+                        Json(report_data)
+                    ))
+                    conn.commit()
+        except Exception as e:
+            pass
+
+    buffer = generate_report_docx(report_data)
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": content_disposition}
+    )
+
+
+@router.get("/saved/{report_id}/download-docx")
+def download_saved_report_docx(report_id: str):
+    try:
+        with get_db_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT id, title, description, ai_summary, module_config
+                    FROM analytics.saved_reports
+                    WHERE id = %s;
+                """, (report_id,))
+                row = cur.fetchone()
+                if not row:
+                    raise HTTPException(status_code=404, detail="Không tìm thấy báo cáo yêu cầu")
+                
+                report = dict(row)
+                report_data = report.get("module_config") or {
+                    "title": report["title"],
+                    "description": report["description"],
+                    "executive_summary": report["ai_summary"]
+                }
+                
+                title = report["title"] or "Bao_Cao_Phan_Tich_AI"
+                content_disposition = _make_content_disposition(title, timestamp=False)
+
+                buffer = generate_report_docx(report_data)
+                return StreamingResponse(
+                    buffer,
+                    media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    headers={"Content-Disposition": content_disposition}
+                )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi xuất báo cáo DOCX: {str(e)}")

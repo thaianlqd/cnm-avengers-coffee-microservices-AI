@@ -37,6 +37,7 @@ def init_warehouse_views():
         with get_db_conn() as conn:
             with conn.cursor() as cur:
                 # 1. Standard Warehouse Views
+                cur.execute("CREATE SCHEMA IF NOT EXISTS gold;")
                 cur.execute("""
                     CREATE OR REPLACE VIEW gold.stores_overview AS
                     SELECT
@@ -62,14 +63,278 @@ def init_warehouse_views():
                         sp.ten_san_pham AS product_name,
                         COALESCE(dm.ten_danh_muc, 'Cà phê') AS category_name,
                         sp.gia_ban AS price,
-                        COALESCE(tp.total_quantity, 0) AS total_sold,
-                        COALESCE(tp.total_revenue, 0) AS total_revenue
+                        COALESCE(SUM(ct.so_luong), 0) AS total_sold,
+                        COALESCE(SUM(ct.so_luong * ct.gia_ban), 0) AS total_revenue
                     FROM menu.san_pham sp
                     LEFT JOIN menu.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc
-                    LEFT JOIN gold.top_products tp ON sp.ma_san_pham = tp.ma_san_pham;
+                    LEFT JOIN orders.chi_tiet_don_hang ct ON sp.ma_san_pham = ct.ma_san_pham
+                    GROUP BY sp.ma_san_pham, sp.ten_san_pham, dm.ten_danh_muc, sp.gia_ban;
                 """)
 
-                # 2. Saved Reports Table
+                # 2. Silver Schema & Clean Granular Views (For Data Explorer)
+                cur.execute("CREATE SCHEMA IF NOT EXISTS silver;")
+                cur.execute("""
+                    CREATE OR REPLACE VIEW silver.don_hang AS
+                    SELECT 
+                        ma_don_hang,
+                        ma_nguoi_dung,
+                        co_so_ma,
+                        tong_tien,
+                        phuong_thuc_thanh_toan,
+                        trang_thai_thanh_toan,
+                        trang_thai_don_hang,
+                        loai_don_hang,
+                        ma_voucher,
+                        so_tien_giam,
+                        ten_khach_hang,
+                        dia_chi_giao_hang,
+                        ngay_tao,
+                        ngay_cap_nhat
+                    FROM orders.don_hang;
+                """)
+                cur.execute("""
+                    CREATE OR REPLACE VIEW silver.chi_tiet_don_hang AS
+                    SELECT 
+                        ct.id,
+                        ct.ma_don_hang,
+                        ct.ma_san_pham,
+                        ct.ten_san_pham,
+                        ct.gia_ban,
+                        ct.so_luong,
+                        ct.kich_co,
+                        ct.luong_da,
+                        ct.do_ngot,
+                        ct.toppings,
+                        (ct.gia_ban * ct.so_luong) AS thanh_tien
+                    FROM orders.chi_tiet_don_hang ct;
+                """)
+                cur.execute("""
+                    CREATE OR REPLACE VIEW silver.san_pham AS
+                    SELECT 
+                        sp.ma_san_pham,
+                        sp.ten_san_pham,
+                        sp.gia_ban,
+                        sp.gia_niem_yet,
+                        sp.trang_thai,
+                        sp.ma_danh_muc,
+                        COALESCE(dm.ten_danh_muc, 'Khác') AS ten_danh_muc,
+                        sp.la_hot,
+                        sp.la_moi
+                    FROM menu.san_pham sp
+                    LEFT JOIN menu.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc;
+                """)
+                cur.execute("""
+                    CREATE OR REPLACE VIEW silver.danh_muc AS
+                    SELECT 
+                        ma_danh_muc,
+                        ten_danh_muc,
+                        hinh_anh_icon,
+                        ma_danh_muc_cha,
+                        cap_bac
+                    FROM menu.danh_muc;
+                """)
+                cur.execute("""
+                    CREATE OR REPLACE VIEW silver.nguoi_dung AS
+                    SELECT 
+                        ma_nguoi_dung,
+                        ho_ten,
+                        so_dien_thoai,
+                        email,
+                        vai_tro,
+                        trang_thai,
+                        diem_loyalty,
+                        tong_chi_tieu,
+                        ngay_tao
+                    FROM identity.nguoi_dung;
+                """)
+                cur.execute("""
+                    CREATE OR REPLACE VIEW silver.chi_nhanh AS
+                    SELECT 
+                        ma_chi_nhanh,
+                        ten_chi_nhanh,
+                        dia_chi,
+                        thanh_pho,
+                        so_dien_thoai,
+                        trang_thai,
+                        loai_diem_ban,
+                        gio_mo_cua,
+                        gio_dong_cua
+                    FROM identity.chi_nhanh;
+                """)
+                cur.execute("""
+                    CREATE OR REPLACE VIEW silver.giao_dich_thanh_toan AS
+                    SELECT 
+                        ma_giao_dich,
+                        ma_don_hang,
+                        cong_thanh_toan,
+                        so_tien,
+                        trang_thai,
+                        ngay_tao
+                    FROM orders.giao_dich_thanh_toan;
+                """)
+                cur.execute("""
+                    CREATE OR REPLACE VIEW silver.shipper AS
+                    SELECT 
+                        id AS ma_shipper,
+                        full_name AS ho_ten,
+                        phone AS so_dien_thoai,
+                        vehicle_plate AS bien_so_xe,
+                        status AS trang_thai,
+                        vehicle_type AS loai_xe,
+                        total_deliveries AS tong_chuyen_giao,
+                        rating AS diem_danh_gia
+                    FROM orders.shipper;
+                """)
+                cur.execute("""
+                    CREATE OR REPLACE VIEW silver.ton_kho_san_pham AS
+                    SELECT 
+                        tk.id,
+                        tk.co_so_ma,
+                        tk.ma_san_pham,
+                        sp.ten_san_pham,
+                        tk.so_luong_ton,
+                        tk.muc_canh_bao,
+                        tk.dang_kinh_doanh,
+                        tk.cap_nhat_luc
+                    FROM inventory.ton_kho_san_pham tk
+                    LEFT JOIN menu.san_pham sp ON tk.ma_san_pham = sp.ma_san_pham;
+                """)
+                cur.execute("""
+                    CREATE OR REPLACE VIEW silver.khuyen_mai AS
+                    SELECT 
+                        COALESCE(v.ma_voucher, km.ma_khuyen_mai) AS ma_khuyen_mai,
+                        COALESCE(km.ten_khuyen_mai, v.ten_voucher, v.ma_voucher, km.ma_khuyen_mai) AS ten_khuyen_mai,
+                        COALESCE(km.mo_ta, v.mo_ta) AS mo_ta,
+                        COALESCE(km.loai_khuyen_mai, v.loai) AS loai_khuyen_mai,
+                        COALESCE(km.gia_tri, v.gia_tri, 0) AS gia_tri,
+                        COALESCE(km.giam_toi_da, v.giam_toi_da, 0) AS giam_toi_da,
+                        COALESCE(km.gia_tri_don_toi_thieu, v.don_hang_toi_thieu, 0) AS don_hang_toi_thieu,
+                        COALESCE(km.so_luong_da_dung, v.luot_da_dung, 0) AS luot_da_dung,
+                        COALESCE(km.trang_thai, v.trang_thai, 'ACTIVE') AS trang_thai,
+                        COALESCE(v.ngay_bat_dau, km.ngay_bat_dau) AS ngay_bat_dau,
+                        COALESCE(v.han_su_dung, km.ngay_ket_thuc) AS ngay_ket_thuc
+                    FROM orders.voucher v
+                    FULL OUTER JOIN identity.khuyen_mai km ON v.ma_voucher = km.ma_khuyen_mai;
+                """)
+                cur.execute("""
+                    CREATE OR REPLACE VIEW silver.voucher AS
+                    SELECT * FROM silver.khuyen_mai;
+                """)
+                cur.execute("""
+                    CREATE OR REPLACE VIEW silver.danh_gia_san_pham AS
+                    SELECT 
+                        dg.id,
+                        dg.ma_san_pham,
+                        COALESCE(sp.ten_san_pham, dg.ma_san_pham) AS ten_san_pham,
+                        dg.ma_nguoi_dung,
+                        dg.so_sao,
+                        dg.binh_luan,
+                        dg.ma_don_hang,
+                        dg.ngay_tao,
+                        dg.phan_hoi_quan_ly
+                    FROM orders.danh_gia_san_pham dg
+                    LEFT JOIN menu.san_pham sp ON dg.ma_san_pham = sp.ma_san_pham::text;
+                """)
+                cur.execute("""
+                    CREATE OR REPLACE VIEW silver.danh_gia_chi_nhanh AS
+                    SELECT 
+                        dg.id,
+                        dg.ma_chi_nhanh,
+                        COALESCE(cn.ten_chi_nhanh, dg.ten_chi_nhanh, dg.ma_chi_nhanh) AS ten_chi_nhanh,
+                        dg.ma_nguoi_dung,
+                        dg.diem_tong_quan AS so_sao,
+                        dg.nhan_xet,
+                        dg.ma_don_hang,
+                        dg.ngay_tao
+                    FROM orders.danh_gia_chi_nhanh dg
+                    LEFT JOIN identity.chi_nhanh cn ON dg.ma_chi_nhanh = cn.ma_chi_nhanh;
+                """)
+                cur.execute("""
+                    CREATE OR REPLACE VIEW silver.ca_lam_viec_nhan_vien AS
+                    SELECT 
+                        ma_ca_lam_viec,
+                        staff_name,
+                        staff_username,
+                        ngay_lam_viec,
+                        ten_ca,
+                        gio_bat_dau,
+                        gio_ket_thuc,
+                        trang_thai_cham_cong,
+                        check_in_at,
+                        check_out_at,
+                        co_so_ma,
+                        note
+                    FROM orders.ca_lam_viec_nhan_vien;
+                """)
+                cur.execute("""
+                    CREATE OR REPLACE VIEW silver.ca_doi_soat AS
+                    SELECT 
+                        ma_ca,
+                        co_so_ma,
+                        ten_nhan_vien,
+                        thoi_gian_bat_dau,
+                        thoi_gian_ket_thuc,
+                        tien_dau_ca,
+                        tien_cuoi_ca,
+                        tien_mat_he_thong,
+                        doanh_thu_he_thong,
+                        tien_mat_ky_vong,
+                        chenh_lech,
+                        tong_don,
+                        tong_don_tien_mat,
+                        trang_thai_phe_duyet,
+                        ghi_chu,
+                        ngay_tao
+                    FROM orders.ca_doi_soat;
+                """)
+                cur.execute("""
+                    CREATE OR REPLACE VIEW silver.yeu_thich_san_pham AS
+                    SELECT 
+                        yt.id,
+                        yt.ma_nguoi_dung,
+                        yt.ma_san_pham,
+                        COALESCE(sp.ten_san_pham, yt.ten_san_pham) AS ten_san_pham,
+                        COALESCE(sp.gia_ban, yt.gia_ban) AS gia_ban,
+                        yt.danh_muc,
+                        yt.ngay_tao
+                    FROM orders.yeu_thich_san_pham yt
+                    LEFT JOIN menu.san_pham sp ON yt.ma_san_pham = sp.ma_san_pham::text;
+                """)
+                cur.execute("""
+                    CREATE OR REPLACE VIEW silver.khao_sat_phan_hoi AS
+                    SELECT 
+                        id,
+                        ma_bieu_mau,
+                        ma_nguoi_dung,
+                        ma_don_hang,
+                        co_so_ma,
+                        tra_loi,
+                        trang_thai_voucher,
+                        ngay_tao
+                    FROM orders.khao_sat_phan_hoi;
+                """)
+                cur.execute("""
+                    CREATE OR REPLACE VIEW silver.bien_the_san_pham AS
+                    SELECT 
+                        bt.id,
+                        bt.ma_san_pham,
+                        sp.ten_san_pham,
+                        bt.ma_thuoc_tinh,
+                        bt.gia_tri,
+                        bt.phu_thu
+                    FROM menu.bien_the_san_pham bt
+                    LEFT JOIN menu.san_pham sp ON bt.ma_san_pham = sp.ma_san_pham;
+                """)
+                cur.execute("""
+                    CREATE OR REPLACE VIEW silver.khu_vuc AS
+                    SELECT 
+                        ma_khu_vuc,
+                        ten_khu_vuc,
+                        mo_ta
+                    FROM identity.khu_vuc;
+                """)
+
+                # 3. Saved Reports Table
                 cur.execute("CREATE SCHEMA IF NOT EXISTS analytics;")
                 cur.execute("""
                     CREATE TABLE IF NOT EXISTS analytics.saved_reports (
@@ -106,99 +371,6 @@ def init_warehouse_views():
                         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """)
-
-                # 4. Seed default saved reports if table is empty
-                cur.execute("SELECT COUNT(*) AS cnt FROM analytics.saved_reports;")
-                report_count = cur.fetchone()["cnt"]
-                if report_count == 0:
-                    seed_reports = [
-                        (
-                            "rpt_revenue_by_store",
-                            "Doanh thu thuần theo Chi nhánh",
-                            "Xếp hạng hiệu quả kinh doanh và số lượng đơn hoàn thành của từng điểm bán toàn chuỗi.",
-                            "stores",
-                            "sql",
-                            "SELECT cn.ten_chi_nhanh AS store_name, COUNT(o.ma_don_hang) AS total_orders, COALESCE(SUM(o.tong_tien), 0) AS total_revenue FROM identity.chi_nhanh cn LEFT JOIN orders.don_hang o ON cn.ma_chi_nhanh = o.co_so_ma AND o.trang_thai_don_hang = 'HOAN_THANH' GROUP BY cn.ten_chi_nhanh ORDER BY total_revenue DESC LIMIT 15;",
-                            "bar",
-                            "store_name",
-                            "total_revenue",
-                            "Chi nhánh Quận 1 và Quận 3 đang dẫn đầu chuỗi với hơn 45% tổng doanh thu đóng góp.",
-                            "Hệ thống phân tích"
-                        ),
-                        (
-                            "rpt_top_products_sold",
-                            "Top 10 Sản phẩm bán chạy nhất",
-                            "Thống kê số lượng ly bán ra và doanh số thu về của các món đồ uống chủ lực.",
-                            "products",
-                            "sql",
-                            "SELECT sp.ten_san_pham AS product_name, COALESCE(SUM(ct.so_luong), 0) AS total_qty, COALESCE(SUM(ct.so_luong * ct.gia_ban), 0) AS total_revenue FROM orders.chi_tiet_don_hang ct JOIN menu.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham JOIN orders.don_hang o ON ct.ma_don_hang = o.ma_don_hang WHERE o.trang_thai_don_hang = 'HOAN_THANH' GROUP BY sp.ten_san_pham ORDER BY total_qty DESC LIMIT 10;",
-                            "bar",
-                            "product_name",
-                            "total_qty",
-                            "Cà phê Muối và Cà phê Sữa Đá tiếp tục chiếm tỷ trọng tiêu thụ áp đảo trong danh mục nước.",
-                            "Hệ thống phân tích"
-                        ),
-                        (
-                            "rpt_daily_trend",
-                            "Xu hướng doanh thu theo ngày",
-                            "Diễn biến doanh thu và lượng giao dịch theo thời gian 30 ngày gần nhất.",
-                            "sales",
-                            "sql",
-                            "SELECT d.ngay_tao::date::text AS order_date, COUNT(d.ma_don_hang) AS total_orders, COALESCE(SUM(d.tong_tien), 0) AS total_revenue FROM orders.don_hang d WHERE d.trang_thai_don_hang = 'HOAN_THANH' GROUP BY d.ngay_tao::date ORDER BY d.ngay_tao::date DESC LIMIT 30;",
-                            "area",
-                            "order_date",
-                            "total_revenue",
-                            "Doanh thu đạt đỉnh đều đặn vào các ngày thứ Sáu và thứ Bảy cuối tuần.",
-                            "Hệ thống phân tích"
-                        ),
-                        (
-                            "rpt_payment_distribution",
-                            "Cơ cấu phương thức thanh toán",
-                            "Tỷ trọng giao dịch giữa Chuyển khoản QR, Ví điện tử MoMo, VNPay và Tiền mặt.",
-                            "sales",
-                            "sql",
-                            "SELECT CASE WHEN phuong_thuc_thanh_toan IN ('NGAN_HANG_QR', 'CHUYEN_KHOAN') THEN 'Chuyển khoản QR' WHEN phuong_thuc_thanh_toan = 'VNPAY' THEN 'Ví VNPay' WHEN phuong_thuc_thanh_toan = 'MOMO' THEN 'Ví MoMo' ELSE 'Tiền mặt' END AS payment_channel, COUNT(ma_don_hang) AS order_count, COALESCE(SUM(tong_tien), 0) AS total_amount FROM orders.don_hang WHERE trang_thai_don_hang = 'HOAN_THANH' GROUP BY payment_channel ORDER BY total_amount DESC;",
-                            "donut",
-                            "payment_channel",
-                            "total_amount",
-                            "Thanh toán không tiền mặt (QR và Ví điện tử) chiếm hơn 78% tổng doanh thu toàn chuỗi.",
-                            "Hệ thống phân tích"
-                        ),
-                        (
-                            "rpt_rfm_customers",
-                            "Phân khúc khách hàng trung thành",
-                            "Quy mô số lượng khách và giá trị chi tiêu trọn đời theo từng nhóm hành vi.",
-                            "customers",
-                            "sql",
-                            "SELECT segment AS customer_segment, count AS customer_count, avg_ltv AS average_spending FROM gold.customer_segments ORDER BY customer_count DESC;",
-                            "donut",
-                            "customer_segment",
-                            "customer_count",
-                            "Nhóm khách hàng thân thiết đóng góp 62% doanh thu định kỳ của toàn hệ thống.",
-                            "Hệ thống phân tích"
-                        )
-                    ]
-                    cur.executemany("""
-                        INSERT INTO analytics.saved_reports (
-                            id, title, description, category, query_type, sql_query,
-                            visualization_type, x_key, y_key, ai_summary, created_by
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
-                    """, seed_reports)
-
-                # 5. Seed default audit logs if empty
-                cur.execute("SELECT COUNT(*) AS cnt FROM analytics.report_export_logs;")
-                log_count = cur.fetchone()["cnt"]
-                if log_count == 0:
-                    seed_logs = [
-                        ("log_1", "Doanh thu thuần theo Chi nhánh", "CSV", 15, "3.2 KB", "Thành công", "Nguyễn Văn An"),
-                        ("log_2", "Top 10 Sản phẩm bán chạy nhất", "Excel", 10, "12.8 KB", "Thành công", "Trần Thị Mai"),
-                        ("log_3", "Xu hướng doanh thu theo ngày", "PDF", 30, "154.0 KB", "Thành công", "Lê Hoàng Quân")
-                    ]
-                    cur.executemany("""
-                        INSERT INTO analytics.report_export_logs (
-                            id, report_title, format, row_count, file_size, status, user_name
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s);
-                    """, seed_logs)
 
                 conn.commit()
     except Exception as e:

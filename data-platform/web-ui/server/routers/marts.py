@@ -197,25 +197,25 @@ def get_all_marts(
                 order_status = [dict(r) for r in cur.fetchall()]
 
                 # 6. Customer segments RFM
-                try:
+                customer_segments = []
+                cur.execute("SELECT to_regclass('gold.customer_segments') IS NOT NULL AS tbl_exists;")
+                if cur.fetchone()["tbl_exists"]:
                     cur.execute("SELECT segment, count, avg_ltv FROM gold.customer_segments ORDER BY count DESC;")
                     customer_segments = [dict(r) for r in cur.fetchall()]
-                except Exception:
-                    customer_segments = []
 
                 # 7. Shipper performance
-                try:
+                shipper_perf = []
+                cur.execute("SELECT to_regclass('gold.shipper_performance') IS NOT NULL AS tbl_exists;")
+                if cur.fetchone()["tbl_exists"]:
                     cur.execute("SELECT shipper_id::text, total_deliveries, completed, failed, avg_delivery_min, success_rate FROM gold.shipper_performance ORDER BY completed DESC;")
                     shipper_perf = [dict(r) for r in cur.fetchall()]
-                except Exception:
-                    shipper_perf = []
 
                 # 8. Branch taste sample
-                try:
+                taste_sample = []
+                cur.execute("SELECT to_regclass('gold.branch_taste_profile') IS NOT NULL AS tbl_exists;")
+                if cur.fetchone()["tbl_exists"]:
                     cur.execute("SELECT branch_code, ten_san_pham, size_variant, order_count, total_qty, avg_order_value FROM gold.branch_taste_profile ORDER BY total_qty DESC LIMIT 20;")
                     taste_sample = [dict(r) for r in cur.fetchall()]
-                except Exception:
-                    taste_sample = []
 
                 # 9. Hourly sales patterns
                 hourly_sql = f"""
@@ -232,6 +232,31 @@ def get_all_marts(
                 """
                 cur.execute(hourly_sql, date_params + branch_params)
                 hourly_sales = [dict(r) for r in cur.fetchall()]
+
+                # 9.1 Weekday sales patterns
+                weekday_sql = f"""
+                    SELECT 
+                        EXTRACT(ISODOW FROM d.ngay_tao)::int AS dow,
+                        COUNT(*) AS order_count,
+                        COALESCE(SUM(d.tong_tien), 0) AS revenue
+                    FROM orders.don_hang d
+                    LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
+                    WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                      AND {date_cond} AND {branch_cond}
+                    GROUP BY dow
+                    ORDER BY dow;
+                """
+                cur.execute(weekday_sql, date_params + branch_params)
+                dow_map = {1: 'Thứ 2', 2: 'Thứ 3', 3: 'Thứ 4', 4: 'Thứ 5', 5: 'Thứ 6', 6: 'Thứ 7', 7: 'Chủ nhật'}
+                weekday_dict = {r["dow"]: r for r in cur.fetchall()}
+                weekday_sales = [
+                    {
+                        "label": dow_map[d],
+                        "value": int(weekday_dict.get(d, {}).get("order_count") or 0),
+                        "revenue": float(weekday_dict.get(d, {}).get("revenue") or 0)
+                    }
+                    for d in range(1, 8)
+                ]
 
                 # 10. All Detailed Category sales breakdown (full categories, not collapsed to 3)
                 category_sql = f"""
@@ -318,6 +343,29 @@ def get_all_marts(
                 cur.execute(top_branches_sql, date_params + branch_params)
                 top_branches = [dict(r) for r in cur.fetchall()]
 
+                # 12. Recent sales for dashboard
+                recent_sales_sql = f"""
+                    SELECT 
+                        TO_CHAR(d.ngay_tao, 'DD/MM/YYYY HH24:MI') AS order_time,
+                        COALESCE(cn.ten_chi_nhanh, d.co_so_ma, 'Cửa hàng') AS store_name,
+                        COALESCE(ct.ten_san_pham, 'Cà phê') AS product_name,
+                        COALESCE(ct.so_luong, 1) AS quantity,
+                        COALESCE(ct.so_luong * ct.gia_ban, d.tong_tien, 0) AS total_amount
+                    FROM orders.don_hang d
+                    LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
+                    LEFT JOIN LATERAL (
+                        SELECT ten_san_pham, so_luong, gia_ban 
+                        FROM orders.chi_tiet_don_hang 
+                        WHERE ma_don_hang = d.ma_don_hang 
+                        LIMIT 1
+                    ) ct ON true
+                    WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                    ORDER BY d.ngay_tao DESC
+                    LIMIT 5;
+                """
+                cur.execute(recent_sales_sql)
+                recent_sales = [dict(r) for r in cur.fetchall()]
+
                 return {
                     "kpi": kpi_dict,
                     "revenue_daily": revenue_trend,
@@ -328,11 +376,13 @@ def get_all_marts(
                     "shipper_performance": shipper_perf,
                     "branch_taste": taste_sample,
                     "hourly_sales": hourly_sales,
+                    "weekday_sales": weekday_sales,
                     "category_sales": category_sales,
                     "parent_category_sales": parent_category_sales,
                     "sub_category_sales": sub_category_sales,
                     "all_categories": all_catalog_categories,
                     "top_branches": top_branches,
+                    "recent_sales": recent_sales,
                     "filters_applied": {
                         "date_range": date_range,
                         "branch": branch,

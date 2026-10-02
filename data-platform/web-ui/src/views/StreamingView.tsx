@@ -68,7 +68,7 @@ export const StreamingView: React.FC = () => {
       <div className="bg-white rounded-xl border border-slate-200 px-5 py-3.5 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center space-x-2">
           <h2 className="text-base font-bold text-slate-800">
-            Giám sát Thời gian thực và Kafka Streaming
+            Giám sát Realtime & Kafka Streaming
           </h2>
           <span className="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold border border-emerald-200">
             3 Topics

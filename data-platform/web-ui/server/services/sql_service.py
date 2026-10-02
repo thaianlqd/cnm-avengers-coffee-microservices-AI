@@ -385,8 +385,11 @@ def validate_ai_query_scope(sql: str, allowed_tables: Mapping[str, Set[str]]) ->
             remainder = re.sub(rf'{identifier}\s*\.\s*{identifier}', ' ', remainder)
             remainder = re.sub(r'::\s*[A-Za-z_][A-Za-z0-9_]*(?:\s*\[\s*\])?', ' ', remainder)
             remainder = re.sub(rf'\b{identifier}\s*(?=\()', ' ', remainder)
-            for token in re.findall(r'\b[A-Za-z_][A-Za-z0-9_$]*\b', remainder):
+            for match in re.finditer(rf'{identifier}', remainder):
+                token = match.group(0)
                 normalized = _identifier(token)
+                if not normalized:
+                    continue
                 if normalized.upper() in SQL_WORDS or normalized in ctes or normalized in aliases:
                     continue
                 if normalized in safe_columns or normalized in output_aliases:
