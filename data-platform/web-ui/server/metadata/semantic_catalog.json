@@ -1,137 +1,2459 @@
 {
-  "version": 1,
+  "version": 5,
+  "description": "Semantic Knowledge Catalog & Comprehensive Data Dictionary cho Avengers Coffee AI — Toàn bộ CSDL Tầng Silver (19 bảng/view)",
+  "silver_tables": {
+    "silver.don_hang": {
+      "business_name": "Đơn hàng chi tiết và doanh thu",
+      "description": "Bảng lưu thông tin giao dịch đơn hàng toàn hệ thống Avengers Coffee. Bao gồm mã đơn, mã khách hàng, mã cơ sở quán, tổng tiền thanh toán, phương thức thanh toán, trạng thái đơn, hình thức nhận hàng (loai_don_hang), mã voucher khuyến mãi, số tiền giảm giá và thời gian đặt hàng.",
+      "primary_key": [
+        "ma_don_hang"
+      ],
+      "joins": [
+        {
+          "to_table": "silver.chi_tiet_don_hang",
+          "on": "silver.don_hang.ma_don_hang = silver.chi_tiet_don_hang.ma_don_hang"
+        },
+        {
+          "to_table": "silver.chi_nhanh",
+          "on": "silver.don_hang.co_so_ma = silver.chi_nhanh.ma_chi_nhanh"
+        },
+        {
+          "to_table": "silver.nguoi_dung",
+          "on": "silver.don_hang.ma_nguoi_dung = silver.nguoi_dung.ma_nguoi_dung"
+        },
+        {
+          "to_table": "silver.khuyen_mai",
+          "on": "silver.don_hang.ma_voucher = silver.khuyen_mai.ma_khuyen_mai"
+        },
+        {
+          "to_table": "silver.giao_dich_thanh_toan",
+          "on": "silver.don_hang.ma_don_hang = silver.giao_dich_thanh_toan.ma_don_hang"
+        }
+      ],
+      "columns": {
+        "ma_don_hang": {
+          "type": "uuid",
+          "description": "Mã định danh duy nhất của đơn hàng"
+        },
+        "ma_nguoi_dung": {
+          "type": "text",
+          "description": "Mã tài khoản khách hàng đặt đơn (UUID/Text). Null nếu khách vãng lai."
+        },
+        "co_so_ma": {
+          "type": "text",
+          "description": "Mã chi nhánh cửa hàng phục vụ đơn (ví dụ: 'HCM_DIEN_BIEN_PHU', 'HC_HN_FIVE_STAR_KIM_GIAN_99')"
+        },
+        "tong_tien": {
+          "type": "numeric",
+          "description": "Tổng tiền thanh toán sau giảm giá (VNĐ). Doanh thu chuẩn chỉ tính trên các đơn có trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')."
+        },
+        "phuong_thuc_thanh_toan": {
+          "type": "text",
+          "description": "Hình thức thanh toán: 'TIEN_MAT', 'THANH_TOAN_KHI_NHAN_HANG', 'MOMO', 'VNPAY', 'ZALOPAY'"
+        },
+        "trang_thai_thanh_toan": {
+          "type": "text",
+          "description": "Trạng thái thanh toán: 'DA_THANH_TOAN', 'CHO_THANH_TOAN', 'CHO_THU_TIEN'"
+        },
+        "trang_thai_don_hang": {
+          "type": "text",
+          "description": "Trạng thái đơn: 'MOI_TAO', 'DANG_XU_LY', 'DANG_GIAO', 'HOAN_THANH', 'DA_HUY'"
+        },
+        "loai_don_hang": {
+          "type": "text",
+          "description": "HÌNH THỨC PHỤC VỤ / NHẬN HÀNG: 'MANG_DI' (Khách mua mang đi), 'GIAO_TAN_NOI' (Đơn giao tận nơi), 'DUNG_TAI_CHO' (Khách ngồi uống tại quán). CỘT NÀY TUYỆT ĐỐI KHÔNG PHẢI LÀ CHƯƠNG TRÌNH KHUYẾN MÃI HOẶC VOUCHER!"
+        },
+        "ma_voucher": {
+          "type": "text",
+          "description": "Mã voucher / khuyến mãi được áp dụng (ví dụ: 'KS20_...', 'UP_...', 'DONG2026'). IS NOT NULL khi có áp dụng ưu đãi."
+        },
+        "so_tien_giam": {
+          "type": "numeric",
+          "description": "Số tiền được giảm giá trực tiếp từ khuyến mãi / voucher trên đơn hàng (VNĐ)"
+        },
+        "ten_khach_hang": {
+          "type": "text",
+          "description": "Tên hoặc email khách đặt hàng"
+        },
+        "dia_chi_giao_hang": {
+          "type": "text",
+          "description": "Địa chỉ nhận hàng (cho đơn giao tận nơi)"
+        },
+        "ngay_tao": {
+          "type": "timestamp without time zone",
+          "description": "Thời điểm tạo đơn hàng (Timestamp), mốc thời gian chuẩn phân tích"
+        },
+        "ngay_cap_nhat": {
+          "type": "timestamp without time zone",
+          "description": "Thời điểm cập nhật đơn hàng gần nhất"
+        }
+      }
+    },
+    "silver.chi_tiet_don_hang": {
+      "business_name": "Chi tiết từng món trong đơn",
+      "description": "Bảng lưu từng dòng món uống / thức ăn trong từng đơn hàng: món gì, số lượng ly, đơn giá, kích cỡ (size), đá, đường, topping và thành tiền.",
+      "primary_key": [
+        "id"
+      ],
+      "joins": [
+        {
+          "to_table": "silver.don_hang",
+          "on": "silver.chi_tiet_don_hang.ma_don_hang = silver.don_hang.ma_don_hang"
+        },
+        {
+          "to_table": "silver.san_pham",
+          "on": "silver.chi_tiet_don_hang.ma_san_pham = silver.san_pham.ma_san_pham"
+        }
+      ],
+      "columns": {
+        "id": {
+          "type": "integer",
+          "description": "ID định danh duy nhất của dòng món"
+        },
+        "ma_don_hang": {
+          "type": "uuid",
+          "description": "Mã đơn hàng, liên kết với silver.don_hang.ma_don_hang"
+        },
+        "ma_san_pham": {
+          "type": "integer",
+          "description": "Mã sản phẩm, liên kết với silver.san_pham.ma_san_pham"
+        },
+        "ten_san_pham": {
+          "type": "text",
+          "description": "Tên món đồ uống / bánh ngọt"
+        },
+        "gia_ban": {
+          "type": "numeric",
+          "description": "Đơn giá của món tại thời điểm đặt (VNĐ)"
+        },
+        "so_luong": {
+          "type": "integer",
+          "description": "Số lượng ly / món được gọi"
+        },
+        "kich_co": {
+          "type": "text",
+          "description": "Kích cỡ món: 'Nhỏ', 'Vừa', 'Lớn'"
+        },
+        "luong_da": {
+          "type": "text",
+          "description": "Mức đá yêu cầu (ví dụ: '100% Đá', '50% Đá', 'Không Đá')"
+        },
+        "do_ngot": {
+          "type": "text",
+          "description": "Mức đường (độ ngọt) yêu cầu (ví dụ: '100% Đường', '50% Đường', 'Ít Đường')"
+        },
+        "toppings": {
+          "type": "jsonb",
+          "description": "Danh sách các loại topping chọn thêm kèm theo món (dạng mảng JSON)"
+        },
+        "thanh_tien": {
+          "type": "numeric",
+          "description": "Thành tiền của dòng món = so_luong * gia_ban + toppings (VNĐ)"
+        }
+      }
+    },
+    "silver.san_pham": {
+      "business_name": "Thực đơn món đồ uống và sản phẩm",
+      "description": "Danh mục sản phẩm trong menu chuỗi Avengers Coffee: tên món, giá bán, giá niêm yết, mã danh mục, cờ món bán chạy (la_hot), cờ món mới (la_moi).",
+      "primary_key": [
+        "ma_san_pham"
+      ],
+      "joins": [
+        {
+          "to_table": "silver.danh_muc",
+          "on": "silver.san_pham.ma_danh_muc = silver.danh_muc.ma_danh_muc"
+        },
+        {
+          "to_table": "silver.chi_tiet_don_hang",
+          "on": "silver.san_pham.ma_san_pham = silver.chi_tiet_don_hang.ma_san_pham"
+        },
+        {
+          "to_table": "silver.bien_the_san_pham",
+          "on": "silver.san_pham.ma_san_pham = silver.bien_the_san_pham.ma_san_pham"
+        },
+        {
+          "to_table": "silver.ton_kho_san_pham",
+          "on": "silver.san_pham.ma_san_pham = silver.ton_kho_san_pham.ma_san_pham"
+        }
+      ],
+      "columns": {
+        "ma_san_pham": {
+          "type": "integer",
+          "description": "Mã định danh sản phẩm (Integer)"
+        },
+        "ten_san_pham": {
+          "type": "text",
+          "description": "Tên món đồ uống hoặc thức ăn"
+        },
+        "gia_ban": {
+          "type": "numeric",
+          "description": "Giá bán hiện tại niêm yết (VNĐ)"
+        },
+        "gia_niem_yet": {
+          "type": "numeric",
+          "description": "Giá gốc trước khuyến mãi (nếu có)"
+        },
+        "trang_thai": {
+          "type": "boolean",
+          "description": "Trạng thái kinh doanh (true = đang bán, false = tạm ngưng)"
+        },
+        "ma_danh_muc": {
+          "type": "integer",
+          "description": "Mã danh mục, liên kết với silver.danh_muc.ma_danh_muc"
+        },
+        "ten_danh_muc": {
+          "type": "text",
+          "description": "Tên nhóm danh mục (ví dụ: 'Americano', 'Trà', 'Cà Phê Muối',...)"
+        },
+        "la_hot": {
+          "type": "boolean",
+          "description": "Cờ món bán chạy nổi bật (Hot Item)"
+        },
+        "la_moi": {
+          "type": "boolean",
+          "description": "Cờ món mới ra mắt (New Item)"
+        }
+      }
+    },
+    "silver.danh_muc": {
+      "business_name": "Danh mục phân loại thực đơn",
+      "description": "Các nhóm danh mục đồ uống và thức ăn của thương hiệu (Cà phê, Trà, Đá xay, Bánh ngọt,...).",
+      "primary_key": [
+        "ma_danh_muc"
+      ],
+      "joins": [
+        {
+          "to_table": "silver.san_pham",
+          "on": "silver.danh_muc.ma_danh_muc = silver.san_pham.ma_danh_muc"
+        }
+      ],
+      "columns": {
+        "ma_danh_muc": {
+          "type": "integer",
+          "description": "Mã định danh danh mục"
+        },
+        "ten_danh_muc": {
+          "type": "text",
+          "description": "Tên danh mục thực đơn"
+        },
+        "hinh_anh_icon": {
+          "type": "text",
+          "description": "URL biểu tượng của danh mục"
+        },
+        "ma_danh_muc_cha": {
+          "type": "integer",
+          "description": "Mã danh mục cha nếu có phân cấp"
+        },
+        "cap_bac": {
+          "type": "integer",
+          "description": "Cấp bậc phân cấp (1 = nhóm chính, 2 = nhóm con)"
+        }
+      }
+    },
+    "silver.bien_the_san_pham": {
+      "business_name": "Biến thể món (Size & Phụ thu)",
+      "description": "Các tùy chọn biến thể kích cỡ (Size Lớn, Vừa, Nhỏ) và số tiền phụ thu tương ứng cho từng món.",
+      "primary_key": [
+        "id"
+      ],
+      "joins": [
+        {
+          "to_table": "silver.san_pham",
+          "on": "silver.bien_the_san_pham.ma_san_pham = silver.san_pham.ma_san_pham"
+        }
+      ],
+      "columns": {
+        "id": {
+          "type": "integer",
+          "description": "ID biến thể"
+        },
+        "ma_san_pham": {
+          "type": "integer",
+          "description": "Mã sản phẩm, liên kết với silver.san_pham.ma_san_pham"
+        },
+        "ten_san_pham": {
+          "type": "text",
+          "description": "Tên sản phẩm"
+        },
+        "ma_thuoc_tinh": {
+          "type": "integer",
+          "description": "Mã loại thuộc tính biến thể"
+        },
+        "gia_tri": {
+          "type": "text",
+          "description": "Giá trị kích cỡ hoặc thuộc tính (ví dụ: 'Lớn', 'Vừa', 'Nhỏ')"
+        },
+        "phu_thu": {
+          "type": "numeric",
+          "description": "Số tiền phụ thu thêm cho biến thể (VNĐ)"
+        }
+      }
+    },
+    "silver.chi_nhanh": {
+      "business_name": "Mạng lưới chi nhánh cửa hàng",
+      "description": "Hệ thống các cửa hàng và điểm bán của Avengers Coffee trên toàn quốc: tên quán, địa chỉ, tỉnh/thành phố, số điện thoại, loại điểm bán, giờ mở cửa/đóng cửa và trạng thái.",
+      "primary_key": [
+        "ma_chi_nhanh"
+      ],
+      "joins": [
+        {
+          "to_table": "silver.don_hang",
+          "on": "silver.chi_nhanh.ma_chi_nhanh = silver.don_hang.co_so_ma"
+        },
+        {
+          "to_table": "silver.danh_gia_chi_nhanh",
+          "on": "silver.chi_nhanh.ma_chi_nhanh = silver.danh_gia_chi_nhanh.ma_chi_nhanh"
+        },
+        {
+          "to_table": "silver.ca_lam_viec_nhan_vien",
+          "on": "silver.chi_nhanh.ma_chi_nhanh = silver.ca_lam_viec_nhan_vien.co_so_ma"
+        },
+        {
+          "to_table": "silver.ca_doi_soat",
+          "on": "silver.chi_nhanh.ma_chi_nhanh = silver.ca_doi_soat.co_so_ma"
+        },
+        {
+          "to_table": "silver.ton_kho_san_pham",
+          "on": "silver.chi_nhanh.ma_chi_nhanh = silver.ton_kho_san_pham.co_so_ma"
+        }
+      ],
+      "columns": {
+        "ma_chi_nhanh": {
+          "type": "text",
+          "description": "Mã định danh chi nhánh (ví dụ: 'HCM_DIEN_BIEN_PHU', 'HC_HN_FIVE_STAR_KIM_GIAN_99', 'DN_INDOCHINA_RIVERSIDE')"
+        },
+        "ten_chi_nhanh": {
+          "type": "text",
+          "description": "Tên hiển thị của cửa hàng (ví dụ: 'Five Star Kim Giang', 'Điện Biên Phủ')"
+        },
+        "dia_chi": {
+          "type": "text",
+          "description": "Địa chỉ cụ thể của quán"
+        },
+        "thanh_pho": {
+          "type": "text",
+          "description": "Tên tỉnh/thành phố chuẩn tiếng Việt có dấu: 'Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Cần Thơ', 'Hải Phòng', 'Nghệ An', 'Bắc Ninh', 'Lâm Đồng', 'Bình Dương', 'Đồng Nai'. Khi người dùng hỏi TP.HCM/HCM/Sài Gòn phải dùng thanh_pho ILIKE '%Hồ Chí Minh%'."
+        },
+        "so_dien_thoai": {
+          "type": "text",
+          "description": "Hotline liên hệ cửa hàng"
+        },
+        "trang_thai": {
+          "type": "text",
+          "description": "Trạng thái: 'ACTIVE' (đang mở bán), 'MAINTENANCE' (bảo trì)"
+        },
+        "loai_diem_ban": {
+          "type": "text",
+          "description": "Phân loại cửa hàng: 'CHI_NHANH_CHINH', 'KIOT', 'FLAGSHIP'"
+        },
+        "gio_mo_cua": {
+          "type": "text",
+          "description": "Giờ mở cửa hàng ngày"
+        },
+        "gio_dong_cua": {
+          "type": "text",
+          "description": "Giờ đóng cửa hàng ngày"
+        }
+      }
+    },
+    "silver.khu_vuc": {
+      "business_name": "Phân vùng địa lý và khu vực kinh doanh",
+      "description": "Các vùng thị trường kinh doanh (HCM Trung Tâm, Hà Nội Trung Tâm, Đà Nẵng Ven Biển,...).",
+      "primary_key": [
+        "ma_khu_vuc"
+      ],
+      "columns": {
+        "ma_khu_vuc": {
+          "type": "text",
+          "description": "Mã phân vùng (ví dụ: 'KV-HCM-TT')"
+        },
+        "ten_khu_vuc": {
+          "type": "text",
+          "description": "Tên khu vực (ví dụ: 'HCM Trung Tâm', 'Hà Nội Trung Tâm')"
+        },
+        "mo_ta": {
+          "type": "text",
+          "description": "Mô tả phạm vi quản lý và đặc điểm vùng"
+        }
+      }
+    },
+    "silver.khuyen_mai": {
+      "business_name": "Chương trình khuyến mãi và Voucher giảm giá",
+      "description": "BẢNG CHƯƠNG TRÌNH KHUYẾN MÃI VÀ VOUCHER: Quản lý toàn bộ chiến dịch ưu đãi của thương hiệu. Bao gồm mã khuyến mãi, tên chương trình ('Voucher khảo sát 20%', 'Quà thăng hạng Bạc', 'Quà thăng hạng Kim Cương', 'Quà sinh nhật', 'khuyến mãi mùa đông'), loại khuyến mãi (phần trăm / tiền cố định), giá trị ưu đãi, giảm tối đa, đơn hàng tối thiểu, lượt đã sử dụng và thời gian hiệu lực.",
+      "primary_key": [
+        "ma_khuyen_mai"
+      ],
+      "joins": [
+        {
+          "to_table": "silver.don_hang",
+          "on": "silver.khuyen_mai.ma_khuyen_mai = silver.don_hang.ma_voucher"
+        }
+      ],
+      "columns": {
+        "ma_khuyen_mai": {
+          "type": "text",
+          "description": "Mã code khuyến mãi / voucher (ví dụ: 'KS20_...', 'UP_...', 'DONG2026'). Khớp với silver.don_hang.ma_voucher."
+        },
+        "ten_khuyen_mai": {
+          "type": "text",
+          "description": "Tên đầy đủ của chương trình ưu đãi (ví dụ: 'Voucher khảo sát 20%', 'Quà thăng hạng Bạc', 'Quà thăng hạng Kim Cương', 'Quà thăng hạng Vàng', 'Quà sinh nhật', 'khuyến mãi mùa đông')"
+        },
+        "mo_ta": {
+          "type": "text",
+          "description": "Mô tả chi tiết thể lệ chương trình"
+        },
+        "loai_khuyen_mai": {
+          "type": "text",
+          "description": "Loại giảm giá: 'PERCENT' (giảm theo %), 'FIXED' (giảm tiền mặt cố định), 'FREE_TOPPING' (tặng topping)"
+        },
+        "gia_tri": {
+          "type": "numeric",
+          "description": "Giá trị ưu đãi (% giảm hoặc số tiền cố định VNĐ)"
+        },
+        "giam_toi_da": {
+          "type": "numeric",
+          "description": "Số tiền giảm tối đa cho phép trên một đơn (VNĐ)"
+        },
+        "don_hang_toi_thieu": {
+          "type": "numeric",
+          "description": "Giá trị đơn hàng tối thiểu để áp dụng voucher (VNĐ)"
+        },
+        "luot_da_dung": {
+          "type": "integer",
+          "description": "Tổng số lượt khách đã sử dụng voucher này"
+        },
+        "trang_thai": {
+          "type": "text",
+          "description": "Trạng thái voucher: 'ACTIVE' (đang chạy), 'EXPIRED' (hết hạn), 'INACTIVE' (tạm ngừng)"
+        },
+        "ngay_bat_dau": {
+          "type": "timestamp with time zone",
+          "description": "Thời gian bắt đầu chiến dịch"
+        },
+        "ngay_ket_thuc": {
+          "type": "timestamp with time zone",
+          "description": "Thời gian kết thúc chiến dịch"
+        }
+      }
+    },
+    "silver.voucher": {
+      "business_name": "Voucher ưu đãi (Alias của silver.khuyen_mai)",
+      "description": "Bảng bí danh (Alias view) trỏ đến silver.khuyen_mai, đảm bảo tính tương thích khi truy vấn tìm kiếm mã voucher hoặc mã giảm giá.",
+      "primary_key": [
+        "ma_khuyen_mai"
+      ],
+      "joins": [
+        {
+          "to_table": "silver.don_hang",
+          "on": "silver.voucher.ma_khuyen_mai = silver.don_hang.ma_voucher"
+        }
+      ],
+      "columns": {
+        "ma_khuyen_mai": {
+          "type": "text",
+          "description": "Mã code voucher (khớp với silver.don_hang.ma_voucher)"
+        },
+        "ten_khuyen_mai": {
+          "type": "text",
+          "description": "Tên chương trình voucher ưu đãi"
+        },
+        "mo_ta": {
+          "type": "text",
+          "description": "Mô tả chi tiết điều kiện áp dụng"
+        },
+        "loai_khuyen_mai": {
+          "type": "text",
+          "description": "Loại ưu đãi: 'PERCENT', 'FIXED', 'FREE_TOPPING'"
+        },
+        "gia_tri": {
+          "type": "numeric",
+          "description": "Giá trị giảm (% hoặc tiền VNĐ)"
+        },
+        "giam_toi_da": {
+          "type": "numeric",
+          "description": "Số tiền giảm tối đa (VNĐ)"
+        },
+        "don_hang_toi_thieu": {
+          "type": "numeric",
+          "description": "Đơn hàng tối thiểu (VNĐ)"
+        },
+        "luot_da_dung": {
+          "type": "integer",
+          "description": "Lượt đã áp dụng"
+        },
+        "trang_thai": {
+          "type": "text",
+          "description": "Trạng thái: 'ACTIVE', 'EXPIRED', 'INACTIVE'"
+        },
+        "ngay_bat_dau": {
+          "type": "timestamp with time zone",
+          "description": "Thời gian bắt đầu"
+        },
+        "ngay_ket_thuc": {
+          "type": "timestamp with time zone",
+          "description": "Thời gian kết thúc"
+        }
+      }
+    },
+    "silver.nguoi_dung": {
+      "business_name": "Khách hàng và hội viên thân thiết",
+      "description": "Hồ sơ người dùng và hội viên tích điểm Avengers Coffee: họ tên, số điện thoại, email, vai trò (CUSTOMER, ADMIN, STAFF), điểm thưởng Beans tích lũy và tổng chi tiêu trọn đời.",
+      "primary_key": [
+        "ma_nguoi_dung"
+      ],
+      "joins": [
+        {
+          "to_table": "silver.don_hang",
+          "on": "silver.nguoi_dung.ma_nguoi_dung = silver.don_hang.ma_nguoi_dung"
+        },
+        {
+          "to_table": "silver.yeu_thich_san_pham",
+          "on": "silver.nguoi_dung.ma_nguoi_dung::text = silver.yeu_thich_san_pham.ma_nguoi_dung"
+        }
+      ],
+      "columns": {
+        "ma_nguoi_dung": {
+          "type": "uuid",
+          "description": "Mã tài khoản người dùng (UUID)"
+        },
+        "ho_ten": {
+          "type": "text",
+          "description": "Họ và tên khách hàng / nhân sự"
+        },
+        "so_dien_thoai": {
+          "type": "text",
+          "description": "Số điện thoại đăng ký"
+        },
+        "email": {
+          "type": "text",
+          "description": "Email người dùng"
+        },
+        "vai_tro": {
+          "type": "text",
+          "description": "Vai trò hệ thống: 'CUSTOMER', 'ADMIN', 'STAFF', 'MANAGER'"
+        },
+        "trang_thai": {
+          "type": "text",
+          "description": "Trạng thái tài khoản: 'ACTIVE', 'INACTIVE'"
+        },
+        "diem_loyalty": {
+          "type": "integer",
+          "description": "Điểm thưởng Beans tích lũy của khách hàng thân thiết"
+        },
+        "tong_chi_tieu": {
+          "type": "numeric",
+          "description": "Tổng chi tiêu tích lũy trọn đời của khách hàng (VNĐ)"
+        },
+        "ngay_tao": {
+          "type": "timestamp without time zone",
+          "description": "Thời điểm đăng ký tài khoản"
+        }
+      }
+    },
+    "silver.giao_dich_thanh_toan": {
+      "business_name": "Giao dịch qua cổng thanh toán",
+      "description": "Nhật ký thanh toán từng đơn hàng qua các cổng MoMo, VNPay, ZaloPay, Tiền mặt: mã giao dịch, số tiền, trạng thái thành công/chờ thu và ngày giờ giao dịch.",
+      "primary_key": [
+        "ma_giao_dich"
+      ],
+      "joins": [
+        {
+          "to_table": "silver.don_hang",
+          "on": "silver.giao_dich_thanh_toan.ma_don_hang = silver.don_hang.ma_don_hang"
+        }
+      ],
+      "columns": {
+        "ma_giao_dich": {
+          "type": "integer",
+          "description": "Mã định danh giao dịch"
+        },
+        "ma_don_hang": {
+          "type": "uuid",
+          "description": "Mã đơn hàng liên kết (UUID)"
+        },
+        "cong_thanh_toan": {
+          "type": "text",
+          "description": "Cổng / hình thức thanh toán: 'MOMO', 'VNPAY', 'ZALOPAY', 'TIEN_MAT', 'THANH_TOAN_KHI_NHAN_HANG'"
+        },
+        "so_tien": {
+          "type": "numeric",
+          "description": "Số tiền giao dịch thực tế (VNĐ)"
+        },
+        "trang_thai": {
+          "type": "text",
+          "description": "Trạng thái: 'THANH_CONG', 'CHO_THU_TIEN', 'THAT_BAI'"
+        },
+        "ngay_tao": {
+          "type": "timestamp without time zone",
+          "description": "Thời điểm phát sinh giao dịch thanh toán"
+        }
+      }
+    },
+    "silver.shipper": {
+      "business_name": "Đội ngũ tài xế và hiệu suất giao hàng",
+      "description": "Thông tin và chỉ số hiệu suất của tài xế shipper: họ tên, số điện thoại, biển số xe, loại phương tiện xe máy/ô tô, tổng số chuyến đơn giao thành công, điểm sao uy tín trung bình.",
+      "primary_key": [
+        "ma_shipper"
+      ],
+      "columns": {
+        "ma_shipper": {
+          "type": "uuid",
+          "description": "Mã định danh tài xế (UUID)"
+        },
+        "ho_ten": {
+          "type": "text",
+          "description": "Họ và tên tài xế giao nhận"
+        },
+        "so_dien_thoai": {
+          "type": "text",
+          "description": "Số điện thoại tài xế"
+        },
+        "bien_so_xe": {
+          "type": "text",
+          "description": "Biển số xe giao hàng"
+        },
+        "trang_thai": {
+          "type": "text",
+          "description": "Trạng thái làm việc: 'ACTIVE' (đang chạy), 'INACTIVE' (nghỉ việc)"
+        },
+        "loai_xe": {
+          "type": "text",
+          "description": "Loại phương tiện: 'MOTORBIKE' (xe máy), 'CAR' (ô tô)"
+        },
+        "tong_chuyen_giao": {
+          "type": "integer",
+          "description": "Tổng số chuyến đơn đã giao hoàn thành"
+        },
+        "diem_danh_gia": {
+          "type": "numeric",
+          "description": "Điểm sao đánh giá chất lượng giao hàng (1 - 5 sao)"
+        }
+      }
+    },
+    "silver.ton_kho_san_pham": {
+      "business_name": "Tồn kho sản phẩm tại từng chi nhánh",
+      "description": "Số lượng tồn kho thực tế của từng món tại từng cơ sở cửa hàng, định mức tối thiểu cảnh báo hết hàng và trạng thái kinh doanh tại quán.",
+      "primary_key": [
+        "id"
+      ],
+      "joins": [
+        {
+          "to_table": "silver.chi_nhanh",
+          "on": "silver.ton_kho_san_pham.co_so_ma = silver.chi_nhanh.ma_chi_nhanh"
+        },
+        {
+          "to_table": "silver.san_pham",
+          "on": "silver.ton_kho_san_pham.ma_san_pham = silver.san_pham.ma_san_pham"
+        }
+      ],
+      "columns": {
+        "id": {
+          "type": "integer",
+          "description": "ID bản ghi tồn kho"
+        },
+        "co_so_ma": {
+          "type": "text",
+          "description": "Mã chi nhánh cửa hàng, liên kết với silver.chi_nhanh.ma_chi_nhanh"
+        },
+        "ma_san_pham": {
+          "type": "integer",
+          "description": "Mã sản phẩm, liên kết với silver.san_pham.ma_san_pham"
+        },
+        "ten_san_pham": {
+          "type": "text",
+          "description": "Tên món / sản phẩm"
+        },
+        "so_luong_ton": {
+          "type": "integer",
+          "description": "Số lượng đơn vị còn tồn trong kho"
+        },
+        "muc_canh_bao": {
+          "type": "integer",
+          "description": "Định mức tối thiểu cảnh báo cần nhập thêm (nếu so_luong_ton <= muc_canh_bao là sắp hết hàng)"
+        },
+        "dang_kinh_doanh": {
+          "type": "boolean",
+          "description": "Chi nhánh còn kinh doanh món này không (true/false)"
+        },
+        "cap_nhat_luc": {
+          "type": "timestamp without time zone",
+          "description": "Thời điểm kiểm kê cập nhật gần nhất"
+        }
+      }
+    },
+    "silver.danh_gia_san_pham": {
+      "business_name": "Đánh giá chất lượng sản phẩm từ khách hàng",
+      "description": "Phản hồi đánh giá số sao (1 đến 5 sao) và bình luận trải nghiệm món uống từ khách hàng sau khi mua hàng.",
+      "primary_key": [
+        "id"
+      ],
+      "joins": [
+        {
+          "to_table": "silver.san_pham",
+          "on": "silver.danh_gia_san_pham.ma_san_pham = silver.san_pham.ma_san_pham::text"
+        },
+        {
+          "to_table": "silver.nguoi_dung",
+          "on": "silver.danh_gia_san_pham.ma_nguoi_dung = silver.nguoi_dung.ma_nguoi_dung"
+        },
+        {
+          "to_table": "silver.don_hang",
+          "on": "silver.danh_gia_san_pham.ma_don_hang = silver.don_hang.ma_don_hang"
+        }
+      ],
+      "columns": {
+        "id": {
+          "type": "integer",
+          "description": "ID bản ghi đánh giá món"
+        },
+        "ma_san_pham": {
+          "type": "text",
+          "description": "Mã sản phẩm được đánh giá (Text, khớp với silver.san_pham.ma_san_pham::text)"
+        },
+        "ten_san_pham": {
+          "type": "text",
+          "description": "Tên món đồ uống"
+        },
+        "ma_nguoi_dung": {
+          "type": "uuid",
+          "description": "Mã khách hàng gửi đánh giá (UUID)"
+        },
+        "so_sao": {
+          "type": "integer",
+          "description": "Điểm đánh giá số sao (1 - 5 sao)"
+        },
+        "binh_luan": {
+          "type": "text",
+          "description": "Lời nhận xét chi tiết của khách về độ ngon, hương vị, độ ngọt"
+        },
+        "ma_don_hang": {
+          "type": "uuid",
+          "description": "Mã đơn hàng liên quan (UUID)"
+        },
+        "ngay_tao": {
+          "type": "timestamp without time zone",
+          "description": "Thời điểm khách gửi đánh giá"
+        },
+        "phan_hoi_quan_ly": {
+          "type": "text",
+          "description": "Phản hồi giải đáp của bộ phận quản lý thực đơn"
+        }
+      }
+    },
+    "silver.danh_gia_chi_nhanh": {
+      "business_name": "Đánh giá chất lượng dịch vụ chi nhánh",
+      "description": "Điểm số sao và nhận xét của khách hàng về dịch vụ, thái độ nhân viên, vệ sinh và không gian của từng chi nhánh quán.",
+      "primary_key": [
+        "id"
+      ],
+      "joins": [
+        {
+          "to_table": "silver.chi_nhanh",
+          "on": "silver.danh_gia_chi_nhanh.ma_chi_nhanh = silver.chi_nhanh.ma_chi_nhanh"
+        }
+      ],
+      "columns": {
+        "id": {
+          "type": "integer",
+          "description": "ID bản ghi đánh giá cơ sở"
+        },
+        "ma_chi_nhanh": {
+          "type": "text",
+          "description": "Mã chi nhánh quán, liên kết với silver.chi_nhanh.ma_chi_nhanh"
+        },
+        "ten_chi_nhanh": {
+          "type": "text",
+          "description": "Tên chi nhánh cửa hàng"
+        },
+        "ma_nguoi_dung": {
+          "type": "text",
+          "description": "Mã khách hàng gửi nhận xét"
+        },
+        "so_sao": {
+          "type": "integer",
+          "description": "Điểm phục vụ số sao (1 - 5 sao)"
+        },
+        "nhan_xet": {
+          "type": "text",
+          "description": "Nội dung nhận xét về không gian, chỗ ngồi, wifi, thái độ phục vụ"
+        },
+        "ma_don_hang": {
+          "type": "text",
+          "description": "Mã đơn hàng liên quan (nếu có)"
+        },
+        "ngay_tao": {
+          "type": "timestamp without time zone",
+          "description": "Thời điểm gửi đánh giá"
+        }
+      }
+    },
+    "silver.ca_lam_viec_nhan_vien": {
+      "business_name": "Ca làm việc và chấm công nhân sự",
+      "description": "Lịch phân ca và dữ liệu chấm công thực tế của nhân viên theo chi nhánh: tên nhân viên, ngày làm việc, ca sáng/chiều/tối, trạng thái chấm công đúng giờ, đi trễ, về sớm, vắng mặt, giờ check-in và check-out.",
+      "primary_key": [
+        "ma_ca_lam_viec"
+      ],
+      "joins": [
+        {
+          "to_table": "silver.chi_nhanh",
+          "on": "silver.ca_lam_viec_nhan_vien.co_so_ma = silver.chi_nhanh.ma_chi_nhanh"
+        }
+      ],
+      "columns": {
+        "ma_ca_lam_viec": {
+          "type": "uuid",
+          "description": "Mã định danh ca làm việc (UUID)"
+        },
+        "staff_name": {
+          "type": "text",
+          "description": "Họ và tên nhân viên làm việc"
+        },
+        "staff_username": {
+          "type": "text",
+          "description": "Tên tài khoản / mã nhân sự"
+        },
+        "ngay_lam_viec": {
+          "type": "date",
+          "description": "Ngày làm việc theo lịch (Date)"
+        },
+        "ten_ca": {
+          "type": "text",
+          "description": "Tên ca: 'Ca sang', 'Ca chieu', 'Ca toi', 'Ca full'"
+        },
+        "gio_bat_dau": {
+          "type": "text",
+          "description": "Giờ bắt đầu ca theo lịch (ví dụ: '07:00', '12:00')"
+        },
+        "gio_ket_thuc": {
+          "type": "text",
+          "description": "Giờ kết thúc ca theo lịch (ví dụ: '12:00', '17:00')"
+        },
+        "trang_thai_cham_cong": {
+          "type": "text",
+          "description": "Trạng thái chấm công: 'DUNG_GIO' (đúng giờ), 'DI_TRE' (đi trễ), 'VE_SOM' (về sớm), 'VANG_MAT' (vắng mặt), 'ASSIGNED' (đã phân ca)"
+        },
+        "check_in_at": {
+          "type": "timestamp with time zone",
+          "description": "Thời gian quét mã check-in thực tế"
+        },
+        "check_out_at": {
+          "type": "timestamp with time zone",
+          "description": "Thời gian quét mã check-out thực tế"
+        },
+        "co_so_ma": {
+          "type": "text",
+          "description": "Mã chi nhánh nơi làm việc, liên kết với silver.chi_nhanh.ma_chi_nhanh"
+        },
+        "note": {
+          "type": "text",
+          "description": "Ghi chú giải trình hoặc bàn giao ca"
+        }
+      }
+    },
+    "silver.ca_doi_soat": {
+      "business_name": "Đối soát kết ca thu ngân và chênh lệch tiền két",
+      "description": "Báo cáo kiểm đếm tiền mặt kết ca thu ngân: tên nhân viên, chi nhánh, tiền đầu ca, tiền thực tế cuối ca, doanh thu tiền mặt hệ thống ghi nhận, chênh lệch tiền thừa/thiếu, tổng số đơn và trạng thái duyệt.",
+      "primary_key": [
+        "ma_ca"
+      ],
+      "joins": [
+        {
+          "to_table": "silver.chi_nhanh",
+          "on": "silver.ca_doi_soat.co_so_ma = silver.chi_nhanh.ma_chi_nhanh"
+        }
+      ],
+      "columns": {
+        "ma_ca": {
+          "type": "uuid",
+          "description": "Mã phiên đối soát ca thu ngân (UUID)"
+        },
+        "co_so_ma": {
+          "type": "text",
+          "description": "Mã chi nhánh thực hiện đối soát, liên kết với silver.chi_nhanh.ma_chi_nhanh"
+        },
+        "ten_nhan_vien": {
+          "type": "text",
+          "description": "Tên thu ngân phụ trách két"
+        },
+        "thoi_gian_bat_dau": {
+          "type": "timestamp with time zone",
+          "description": "Thời điểm mở ca làm việc"
+        },
+        "thoi_gian_ket_thuc": {
+          "type": "timestamp with time zone",
+          "description": "Thời điểm đóng ca kiểm két"
+        },
+        "tien_dau_ca": {
+          "type": "numeric",
+          "description": "Tiền mặt đầu ca dùng để thối (VNĐ)"
+        },
+        "tien_cuoi_ca": {
+          "type": "numeric",
+          "description": "Tổng tiền mặt thực tế kiểm đếm lúc kết ca (VNĐ)"
+        },
+        "tien_mat_he_thong": {
+          "type": "numeric",
+          "description": "Doanh thu tiền mặt ghi nhận trên phần mềm POS (VNĐ)"
+        },
+        "doanh_thu_he_thong": {
+          "type": "numeric",
+          "description": "Tổng doanh thu toàn bộ phương thức trong ca (VNĐ)"
+        },
+        "tien_mat_ky_vong": {
+          "type": "numeric",
+          "description": "Tiền mặt lý thuyết phải có = tien_dau_ca + tien_mat_he_thong (VNĐ)"
+        },
+        "chenh_lech": {
+          "type": "numeric",
+          "description": "Chênh lệch tiền mặt = tien_cuoi_ca - tien_mat_ky_vong (VNĐ). < 0 là thiếu tiền két, > 0 là thừa tiền."
+        },
+        "tong_don": {
+          "type": "integer",
+          "description": "Tổng số đơn hàng thực hiện trong ca"
+        },
+        "tong_don_tien_mat": {
+          "type": "integer",
+          "description": "Số đơn thanh toán bằng tiền mặt"
+        },
+        "trang_thai_phe_duyet": {
+          "type": "text",
+          "description": "Trạng thái phê duyệt: 'DA_PHE_DUYET', 'CHO_DUYET', 'CAN_GIAI_TRINH'"
+        },
+        "ghi_chu": {
+          "type": "text",
+          "description": "Giải trình lý do chênh lệch hoặc tình huống phát sinh"
+        },
+        "ngay_tao": {
+          "type": "timestamp without time zone",
+          "description": "Thời điểm lập biên bản đối soát ca"
+        }
+      }
+    },
+    "silver.khao_sat_phan_hoi": {
+      "business_name": "Khảo sát ý kiến và phản hồi khách hàng",
+      "description": "Dữ liệu ý kiến đóng góp của khách hàng qua biểu mẫu khảo sát trải nghiệm dịch vụ: chi nhánh được đánh giá, dữ liệu câu hỏi và câu trả lời (JSONB), mã voucher tri ân được cấp và thời gian.",
+      "primary_key": [
+        "id"
+      ],
+      "joins": [
+        {
+          "to_table": "silver.chi_nhanh",
+          "on": "silver.khao_sat_phan_hoi.co_so_ma = silver.chi_nhanh.ma_chi_nhanh"
+        }
+      ],
+      "columns": {
+        "id": {
+          "type": "integer",
+          "description": "ID bản ghi phản hồi khảo sát"
+        },
+        "ma_bieu_mau": {
+          "type": "integer",
+          "description": "Mã biểu mẫu khảo sát"
+        },
+        "ma_nguoi_dung": {
+          "type": "text",
+          "description": "Mã khách hàng tham gia trả lời"
+        },
+        "ma_don_hang": {
+          "type": "text",
+          "description": "Mã đơn hàng được khảo sát"
+        },
+        "co_so_ma": {
+          "type": "text",
+          "description": "Mã chi nhánh được khách khảo sát, liên kết với silver.chi_nhanh.ma_chi_nhanh"
+        },
+        "tra_loi": {
+          "type": "jsonb",
+          "description": "Mảng JSON chứa các câu hỏi và câu trả lời khảo sát dịch vụ"
+        },
+        "trang_thai_voucher": {
+          "type": "text",
+          "description": "Trạng thái cấp voucher tri ân hoàn thành khảo sát"
+        },
+        "ngay_tao": {
+          "type": "timestamp without time zone",
+          "description": "Thời điểm gửi câu trả lời khảo sát"
+        }
+      }
+    },
+    "silver.yeu_thich_san_pham": {
+      "business_name": "Món uống yêu thích (Wishlist khách hàng)",
+      "description": "Dữ liệu khách hàng thả tim, lưu món đồ uống yêu thích (Wishlist) trên ứng dụng: mã khách hàng, mã món, tên món, giá bán, danh mục đồ uống và thời gian yêu thích.",
+      "primary_key": [
+        "id"
+      ],
+      "joins": [
+        {
+          "to_table": "silver.san_pham",
+          "on": "silver.yeu_thich_san_pham.ma_san_pham = silver.san_pham.ma_san_pham::text"
+        },
+        {
+          "to_table": "silver.nguoi_dung",
+          "on": "silver.yeu_thich_san_pham.ma_nguoi_dung = silver.nguoi_dung.ma_nguoi_dung::text"
+        }
+      ],
+      "columns": {
+        "id": {
+          "type": "integer",
+          "description": "ID bản ghi yêu thích"
+        },
+        "ma_nguoi_dung": {
+          "type": "text",
+          "description": "Mã khách hàng thả tim món, liên kết với silver.nguoi_dung.ma_nguoi_dung"
+        },
+        "ma_san_pham": {
+          "type": "text",
+          "description": "Mã món đồ uống, liên kết với silver.san_pham.ma_san_pham::text"
+        },
+        "ten_san_pham": {
+          "type": "text",
+          "description": "Tên món được khách bấm yêu thích"
+        },
+        "gia_ban": {
+          "type": "numeric",
+          "description": "Giá bán hiện hành của món (VNĐ)"
+        },
+        "danh_muc": {
+          "type": "text",
+          "description": "Tên danh mục món đồ uống"
+        },
+        "ngay_tao": {
+          "type": "timestamp without time zone",
+          "description": "Thời điểm khách hàng bấm yêu thích món"
+        }
+      }
+    }
+  },
   "business_rules": [
-    "Doanh thu hợp lệ mặc định chỉ gồm đơn HOAN_THANH và DANG_GIAO, trừ khi yêu cầu phân tích hủy đơn hoặc trạng thái.",
-    "AOV bằng doanh thu hợp lệ chia cho số đơn hợp lệ.",
-    "orders.don_hang.ngay_tao là thời điểm sự kiện đơn hàng.",
-    "Không đưa dữ liệu định danh cá nhân hoặc giá trị mẫu PII vào ngữ cảnh LLM."
+    "Toàn bộ truy vấn AI phân tích số liệu hệ thống phải thực hiện trên tầng Silver (schema 'silver.*'). Tuyệt đối không dùng bảng raw ở các schema identity, menu, orders,...",
+    "Doanh thu hợp lệ mặc định chỉ tính các đơn có trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO').",
+    "Khi phân tích hủy đơn hoặc sự cố đơn hàng, lọc theo trang_thai_don_hang = 'DA_HUY'.",
+    "AOV (Average Order Value) = SUM(tong_tien) / NULLIF(COUNT(ma_don_hang), 0) trên các đơn hợp lệ.",
+    "silver.don_hang.ngay_tao là mốc thời gian chuẩn xác của sự kiện đặt hàng.",
+    "Quan hệ JOIN chuẩn: silver.chi_tiet_don_hang.ma_don_hang = silver.don_hang.ma_don_hang.",
+    "Quan hệ JOIN sản phẩm: silver.chi_tiet_don_hang.ma_san_pham = silver.san_pham.ma_san_pham.",
+    "Quan hệ JOIN danh mục: silver.san_pham.ma_danh_muc = silver.danh_muc.ma_danh_muc.",
+    "Quan hệ JOIN chi nhánh: silver.don_hang.co_so_ma = silver.chi_nhanh.ma_chi_nhanh.",
+    "Quan hệ JOIN khách hàng: silver.don_hang.ma_nguoi_dung = silver.nguoi_dung.ma_nguoi_dung.",
+    "Quan hệ JOIN khuyến mãi / voucher: silver.don_hang.ma_voucher = silver.khuyen_mai.ma_khuyen_mai (hoặc silver.voucher).",
+    "Quan hệ JOIN đánh giá sản phẩm: silver.danh_gia_san_pham.ma_san_pham = silver.san_pham.ma_san_pham::text.",
+    "Quan hệ JOIN đánh giá chi nhánh: silver.danh_gia_chi_nhanh.ma_chi_nhanh = silver.chi_nhanh.ma_chi_nhanh.",
+    "Quan hệ JOIN ca làm việc: silver.ca_lam_viec_nhan_vien.co_so_ma = silver.chi_nhanh.ma_chi_nhanh.",
+    "Quan hệ JOIN đối soát ca thu ngân: silver.ca_doi_soat.co_so_ma = silver.chi_nhanh.ma_chi_nhanh.",
+    "Quan hệ JOIN tồn kho: silver.ton_kho_san_pham.ma_san_pham = silver.san_pham.ma_san_pham AND silver.ton_kho_san_pham.co_so_ma = silver.chi_nhanh.ma_chi_nhanh.",
+    "Không đưa dữ liệu nhạy cảm PII (mật khẩu, access token) vào kết quả phân tích.",
+    "Tên thành phố trong bảng silver.chi_nhanh: Cột thanh_pho lưu tên đầy đủ tiếng Việt có dấu. Khi người dùng hỏi TP.HCM, TPHCM, HCM, Sài Gòn thì BẮT BUỘC dùng cn.thanh_pho ILIKE '%Hồ Chí Minh%' (hoặc cn.thanh_pho = 'Hồ Chí Minh'). Tuyệt đối không dùng cn.thanh_pho = 'TP.HCM'. Tương tự: Hà Nội dùng cn.thanh_pho = 'Hà Nội', Đà Nẵng dùng cn.thanh_pho = 'Đà Nẵng'.",
+    "QUY TẮC PHÂN BIỆT HÌNH THỨC NHẬN HÀNG VÀ CHƯƠNG TRÌNH KHUYẾN MÃI: Cột `silver.don_hang.loai_don_hang` CHỈ mang 3 giá trị hình thức phục vụ: 'MANG_DI' (Khách mang đi), 'GIAO_TAN_NOI' (Đơn giao tận nơi), 'DUNG_TAI_CHO' (Khách dùng tại bàn quán). Cột này TUYỆT ĐỐI KHÔNG PHẢI là chương trình khuyến mãi hay voucher.",
+    "QUY TẮC PHÂN TÍCH CHƯƠNG TRÌNH KHUYẾN MÃI / VOUCHER: Khi người dùng hỏi về Khuyến mãi, Mã giảm giá, Voucher, Ưu đãi, Quà tặng -> BẮT BUỘC JOIN `silver.don_hang d JOIN silver.khuyen_mai km ON d.ma_voucher = km.ma_khuyen_mai`, lấy tên chương trình `km.ten_khuyen_mai` và số tiền giảm `d.so_tien_giam`, lọc điều kiện `d.ma_voucher IS NOT NULL`.",
+    "Khi người dùng hỏi lọc theo thành phố (ví dụ: Hà Nội, TP.HCM, Cần Thơ, Đà Nẵng,...), BẮT BUỘC JOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh và WHERE cn.thanh_pho = ...",
+    "Khi người dùng hỏi đa thành phố hoặc so sánh 2 thành phố (ví dụ: Top 5 Hà Nội và Top 3 Cần Thơ), BẮT BUỘC dùng CTE với ROW_NUMBER() OVER (PARTITION BY cn.thanh_pho ORDER BY ...) hoặc UNION ALL để trả lời đầy đủ từng nhóm trong cùng một bảng",
+    "Khi người dùng yêu cầu Top N cụ thể (Top 3, Top 5, Top 10), BẮT BUỘC áp dụng đúng LIMIT N tương ứng, KHÔNG dùng mặc định LIMIT 20",
+    "Doanh thu và sản lượng chuẩn CHỈ tính trên các đơn có trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')",
+    "Tất cả cột số tiền hiển thị cần làm tròn số nguyên ROUND(..., 0) và đặt alias tiếng Việt rõ nghĩa",
+    "Khi phân tích voucher khuyến mãi, BẮT BUỘC JOIN silver.khuyen_mai km ON d.ma_voucher = km.ma_khuyen_mai và lọc d.ma_voucher IS NOT NULL"
   ],
+  "enums": {
+    "silver.don_hang.trang_thai_don_hang": [
+      "HOAN_THANH",
+      "DANG_GIAO",
+      "CHO_THANH_TOAN",
+      "DA_XAC_NHAN",
+      "MOI_TAO",
+      "DA_HUY"
+    ],
+    "silver.don_hang.phuong_thuc_thanh_toan": [
+      "TIEN_MAT",
+      "NGAN_HANG_QR",
+      "THE_NGAN_HANG",
+      "CHUYEN_KHOAN",
+      "THANH_TOAN_KHI_NHAN_HANG",
+      "VI_DIEN_TU",
+      "VNPAY"
+    ],
+    "silver.don_hang.loai_don_hang": [
+      "TAI_CHO",
+      "DUNG_TAI_CHO",
+      "LAY_TAI_QUAN",
+      "MANG_DI",
+      "GIAO_TAN_NOI"
+    ],
+    "silver.khuyen_mai.loai_khuyen_mai": [
+      "PERCENT",
+      "FIXED",
+      "FREE_TOPPING"
+    ],
+    "silver.khuyen_mai.trang_thai": [
+      "ACTIVE",
+      "EXPIRED",
+      "INACTIVE"
+    ],
+    "silver.chi_tiet_don_hang.kich_co": [
+      "Nhỏ",
+      "Vừa",
+      "Lớn"
+    ],
+    "silver.chi_nhanh.trang_thai": [
+      "ACTIVE",
+      "MAINTENANCE"
+    ],
+    "silver.chi_nhanh.thanh_pho": [
+      "Hồ Chí Minh",
+      "Hà Nội",
+      "Đà Nẵng",
+      "Cần Thơ",
+      "Hải Phòng",
+      "Nghệ An",
+      "Bắc Ninh",
+      "Lâm Đồng",
+      "Bình Dương",
+      "Đồng Nai"
+    ],
+    "silver.ca_lam_viec_nhan_vien.trang_thai_cham_cong": [
+      "DUNG_GIO",
+      "DI_TRE",
+      "VE_SOM",
+      "VANG_MAT",
+      "ASSIGNED"
+    ],
+    "silver.ca_doi_soat.trang_thai_phe_duyet": [
+      "DA_PHE_DUYET",
+      "CHO_DUYET",
+      "CAN_GIAI_TRINH"
+    ],
+    "silver.danh_gia_san_pham.so_sao": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "silver.danh_gia_chi_nhanh.so_sao": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ]
+  },
   "entities": [
     {
       "id": "orders",
       "business_name": "Đơn hàng và doanh thu",
       "role": "fact",
-      "description": "Giao dịch đặt hàng và các chỉ số doanh thu toàn hệ thống.",
-      "synonyms": ["đơn hàng", "giao dịch", "hóa đơn", "order", "doanh thu", "doanh số", "aov", "tăng trưởng"],
-      "tables": ["orders.don_hang", "gold.revenue_daily", "gold.kpi_summary", "gold.order_status_distribution"],
-      "time_column": "orders.don_hang.ngay_tao",
-      "dimensions": ["ngay_tao", "trang_thai_don_hang", "loai_don_hang", "co_so_ma"],
+      "description": "Giao dịch đặt hàng chi tiết và các chỉ số doanh số toàn hệ thống. Cột loai_don_hang chỉ là hình thức phục vụ (MANG_DI, GIAO_TAN_NOI, DUNG_TAI_CHO).",
+      "synonyms": [
+        "đơn hàng",
+        "don hang",
+        "giao dịch",
+        "giao dich",
+        "hóa đơn",
+        "hoa don",
+        "order",
+        "doanh thu",
+        "doanh so",
+        "doanh số",
+        "aov",
+        "tăng trưởng",
+        "buôn bán",
+        "bán hàng",
+        "thu nhập"
+      ],
+      "tables": [
+        "silver.don_hang"
+      ],
+      "time_column": "silver.don_hang.ngay_tao",
+      "dimensions": [
+        "ngay_tao",
+        "trang_thai_don_hang",
+        "loai_don_hang",
+        "co_so_ma",
+        "phuong_thuc_thanh_toan",
+        "ma_voucher",
+        "so_tien_giam"
+      ],
       "metrics": {
-        "revenue": {"business_name": "Doanh thu", "expression": "SUM(tong_tien)", "synonyms": ["doanh thu", "doanh số", "sales"]},
-        "order_count": {"business_name": "Số đơn", "expression": "COUNT(*)", "synonyms": ["số đơn", "đơn hàng"]},
-        "aov": {"business_name": "Giá trị đơn trung bình", "expression": "SUM(tong_tien) / NULLIF(COUNT(*), 0)", "synonyms": ["aov", "giá trị đơn trung bình"]}
+        "revenue": {
+          "business_name": "Doanh thu",
+          "expression": "SUM(tong_tien)",
+          "synonyms": [
+            "doanh thu",
+            "doanh số",
+            "sales",
+            "tiền bán"
+          ]
+        },
+        "order_count": {
+          "business_name": "Số lượng đơn",
+          "expression": "COUNT(*)",
+          "synonyms": [
+            "số đơn",
+            "đơn hàng"
+          ]
+        },
+        "aov": {
+          "business_name": "Giá trị đơn trung bình",
+          "expression": "SUM(tong_tien) / NULLIF(COUNT(*), 0)",
+          "synonyms": [
+            "aov",
+            "trung bình đơn"
+          ]
+        }
       }
     },
     {
-      "id": "order_items",
-      "business_name": "Chi tiết đơn hàng",
-      "role": "fact_detail",
-      "description": "Các dòng sản phẩm trong từng đơn, gồm số lượng, giá bán và tùy chọn.",
-      "synonyms": ["chi tiết đơn", "số lượng bán", "ly bán", "món trong đơn", "order item"],
-      "tables": ["orders.chi_tiet_don_hang", "orders.don_hang"],
-      "dimensions": ["ma_san_pham", "ten_san_pham", "kich_co"],
+      "id": "promotions",
+      "business_name": "Chương trình khuyến mãi và Voucher",
+      "role": "dimension",
+      "description": "Các chương trình khuyến mãi, voucher giảm giá, mã ưu đãi, voucher khảo sát, quà thăng hạng và hiệu quả sử dụng voucher trong đơn hàng.",
+      "synonyms": [
+        "khuyến mãi",
+        "khuyen mai",
+        "chương trình khuyến mãi",
+        "chuong trinh khuyen mai",
+        "voucher",
+        "mã giảm giá",
+        "ma giam gia",
+        "ưu đãi",
+        "uu dai",
+        "coupon",
+        "discount",
+        "quà tặng",
+        "qua tang",
+        "quà thăng hạng",
+        "qua thang hang",
+        "voucher khảo sát",
+        "giảm giá",
+        "giam gia",
+        "tiền giảm",
+        "tien giam",
+        "số tiền giảm",
+        "so tien giam",
+        "chương trình ưu đãi",
+        "áp dụng voucher",
+        "hiệu quả khuyến mãi"
+      ],
+      "tables": [
+        "silver.khuyen_mai",
+        "silver.voucher",
+        "silver.don_hang"
+      ],
+      "dimensions": [
+        "ten_khuyen_mai",
+        "ma_khuyen_mai",
+        "loai_khuyen_mai",
+        "trang_thai"
+      ],
       "metrics": {
-        "quantity_sold": {"business_name": "Số lượng bán", "expression": "SUM(so_luong)", "synonyms": ["số lượng", "bán chạy", "ly bán"]},
-        "item_revenue": {"business_name": "Doanh thu sản phẩm", "expression": "SUM(so_luong * gia_ban)", "synonyms": ["doanh thu món"]}
+        "voucher_revenue": {
+          "business_name": "Doanh thu đơn có khuyến mãi",
+          "expression": "SUM(d.tong_tien)",
+          "synonyms": [
+            "doanh thu voucher",
+            "doanh số khuyến mãi"
+          ]
+        },
+        "discount_amount": {
+          "business_name": "Tổng tiền đã giảm giá",
+          "expression": "SUM(d.so_tien_giam)",
+          "synonyms": [
+            "tiền giảm",
+            "giảm giá",
+            "chiết khấu"
+          ]
+        },
+        "voucher_order_count": {
+          "business_name": "Số đơn áp dụng khuyến mãi",
+          "expression": "COUNT(d.ma_don_hang)",
+          "synonyms": [
+            "số đơn dùng voucher",
+            "lượt dùng"
+          ]
+        }
       },
       "relationships": [
-        {"from": "orders.chi_tiet_don_hang.ma_don_hang", "to": "orders.don_hang.ma_don_hang", "source": "physical"}
+        {
+          "from": "silver.don_hang.ma_voucher",
+          "to": "silver.khuyen_mai.ma_khuyen_mai",
+          "source": "physical"
+        },
+        {
+          "from": "silver.don_hang.ma_voucher",
+          "to": "silver.voucher.ma_khuyen_mai",
+          "source": "physical"
+        }
+      ]
+    },
+    {
+      "id": "order_items",
+      "business_name": "Chi tiết món trong đơn",
+      "role": "fact_detail",
+      "description": "Từng dòng món uống trong đơn: số lượng, đơn giá, thành tiền, kích cỡ, đá, đường, topping.",
+      "synonyms": [
+        "chi tiết đơn",
+        "chi tiet don",
+        "món gọi",
+        "mon goi",
+        "ly bán",
+        "ly ban",
+        "món trong đơn",
+        "order item",
+        "topping",
+        "đá",
+        "đường",
+        "size",
+        "kích cỡ"
+      ],
+      "tables": [
+        "silver.chi_tiet_don_hang",
+        "silver.don_hang"
+      ],
+      "dimensions": [
+        "ten_san_pham",
+        "kich_co",
+        "luong_da",
+        "do_ngot"
+      ],
+      "metrics": {
+        "quantity_sold": {
+          "business_name": "Số lượng ly bán",
+          "expression": "SUM(so_luong)",
+          "synonyms": [
+            "số lượng",
+            "ly bán",
+            "sản lượng"
+          ]
+        },
+        "item_revenue": {
+          "business_name": "Doanh thu món",
+          "expression": "SUM(thanh_tien)",
+          "synonyms": [
+            "doanh thu món",
+            "tiền món"
+          ]
+        }
+      },
+      "relationships": [
+        {
+          "from": "silver.chi_tiet_don_hang.ma_don_hang",
+          "to": "silver.don_hang.ma_don_hang",
+          "source": "physical"
+        }
       ]
     },
     {
       "id": "products",
       "business_name": "Sản phẩm và thực đơn",
       "role": "dimension",
-      "description": "Danh mục món, phân loại thực đơn và hiệu suất bán sản phẩm.",
-      "synonyms": ["món", "sản phẩm", "menu", "thực đơn", "đồ uống", "bánh", "bán chạy", "danh mục"],
-      "tables": ["gold.top_products", "orders.chi_tiet_don_hang", "menu.san_pham", "menu.danh_muc", "orders.don_hang"],
-      "dimensions": ["ten_san_pham", "ten_danh_muc", "kich_co"],
+      "description": "Danh mục sản phẩm, phân loại thức uống, biến thể size/độ ngọt/đá, giá niêm yết và hiệu suất tiêu thụ.",
+      "synonyms": [
+        "món",
+        "mon",
+        "sản phẩm",
+        "san pham",
+        "menu",
+        "thực đơn",
+        "thuc don",
+        "đồ uống",
+        "do uong",
+        "cà phê",
+        "ca phe",
+        "trà",
+        "tra",
+        "bánh",
+        "banh",
+        "bán chạy",
+        "món hot",
+        "danh mục",
+        "danh muc",
+        "ưa chuộng",
+        "chuộng nhất",
+        "biến thể món"
+      ],
+      "tables": [
+        "silver.san_pham",
+        "silver.danh_muc",
+        "silver.bien_the_san_pham",
+        "silver.chi_tiet_don_hang",
+        "silver.don_hang"
+      ],
+      "dimensions": [
+        "ten_san_pham",
+        "ten_danh_muc",
+        "gia_ban",
+        "la_hot",
+        "la_moi"
+      ],
       "metrics": {
-        "quantity_sold": {"business_name": "Số lượng bán", "expression": "SUM(so_luong)", "synonyms": ["bán chạy", "số lượng"]},
-        "product_revenue": {"business_name": "Doanh thu sản phẩm", "expression": "SUM(so_luong * gia_ban)", "synonyms": ["doanh thu món"]}
+        "quantity_sold": {
+          "business_name": "Số lượng bán",
+          "expression": "SUM(ct.so_luong)",
+          "synonyms": [
+            "bán chạy",
+            "số lượng"
+          ]
+        },
+        "product_revenue": {
+          "business_name": "Doanh thu sản phẩm",
+          "expression": "SUM(ct.thanh_tien)",
+          "synonyms": [
+            "doanh thu món"
+          ]
+        }
       },
       "relationships": [
-        {"from": "orders.chi_tiet_don_hang.ma_san_pham", "to": "menu.san_pham.ma_san_pham", "source": "semantic_inferred"},
-        {"from": "menu.san_pham.ma_danh_muc", "to": "menu.danh_muc.ma_danh_muc", "source": "physical"}
+        {
+          "from": "silver.chi_tiet_don_hang.ma_san_pham",
+          "to": "silver.san_pham.ma_san_pham",
+          "source": "physical"
+        },
+        {
+          "from": "silver.san_pham.ma_danh_muc",
+          "to": "silver.danh_muc.ma_danh_muc",
+          "source": "physical"
+        },
+        {
+          "from": "silver.bien_the_san_pham.ma_san_pham",
+          "to": "silver.san_pham.ma_san_pham",
+          "source": "physical"
+        }
       ]
     },
     {
       "id": "stores",
       "business_name": "Chi nhánh và điểm bán",
       "role": "dimension",
-      "description": "Thông tin chi nhánh và hiệu suất doanh thu theo điểm bán.",
-      "synonyms": ["chi nhánh", "cửa hàng", "điểm bán", "cơ sở", "store", "thành phố", "hiệu suất chi nhánh"],
-      "tables": ["gold.stores_overview", "identity.chi_nhanh", "orders.don_hang"],
-      "dimensions": ["store_name", "city", "co_so_ma"],
+      "description": "Mạng lưới cửa hàng, khu vực, địa chỉ, tỉnh thành và hiệu suất doanh số từng chi nhánh.",
+      "synonyms": [
+        "chi nhánh",
+        "chi nhanh",
+        "cửa hàng",
+        "cua hang",
+        "điểm bán",
+        "diem ban",
+        "cơ sở",
+        "co so",
+        "store",
+        "quán",
+        "quan",
+        "thành phố",
+        "thanh pho",
+        "khu vực",
+        "khu vuc",
+        "hiệu suất chi nhánh",
+        "doanh số quán"
+      ],
+      "tables": [
+        "silver.chi_nhanh",
+        "silver.khu_vuc",
+        "silver.don_hang"
+      ],
+      "dimensions": [
+        "ten_chi_nhanh",
+        "thanh_pho",
+        "dia_chi",
+        "trang_thai",
+        "loai_diem_ban"
+      ],
       "metrics": {
-        "store_revenue": {"business_name": "Doanh thu chi nhánh", "expression": "SUM(tong_tien)", "synonyms": ["doanh thu chi nhánh"]},
-        "store_aov": {"business_name": "AOV chi nhánh", "expression": "AVG(tong_tien)", "synonyms": ["aov"]}
+        "store_revenue": {
+          "business_name": "Doanh thu chi nhánh",
+          "expression": "SUM(d.tong_tien)",
+          "synonyms": [
+            "doanh thu chi nhánh"
+          ]
+        },
+        "store_order_count": {
+          "business_name": "Số đơn chi nhánh",
+          "expression": "COUNT(d.ma_don_hang)",
+          "synonyms": [
+            "số đơn"
+          ]
+        },
+        "store_aov": {
+          "business_name": "AOV chi nhánh",
+          "expression": "AVG(d.tong_tien)",
+          "synonyms": [
+            "aov chi nhánh"
+          ]
+        }
       },
       "relationships": [
-        {"from": "orders.don_hang.co_so_ma", "to": "identity.chi_nhanh.ma_chi_nhanh", "source": "semantic_inferred"}
+        {
+          "from": "silver.don_hang.co_so_ma",
+          "to": "silver.chi_nhanh.ma_chi_nhanh",
+          "source": "physical"
+        }
       ]
     },
     {
       "id": "customers",
       "business_name": "Khách hàng và hội viên",
       "role": "dimension",
-      "description": "Phân khúc hội viên, loyalty và hành vi mua lặp lại ở mức tổng hợp.",
-      "synonyms": ["khách hàng", "hội viên", "loyalty", "thành viên", "mua lặp lại", "tái mua", "rfm", "customer"],
-      "tables": ["gold.customer_segments", "orders.don_hang", "identity.nguoi_dung", "identity.membership_config"],
-      "dimensions": ["segment", "diem_loyalty", "vai_tro"],
+      "description": "Hồ sơ người dùng, hạng thành viên, điểm thưởng tích lũy Beans và lịch sử chi tiêu.",
+      "synonyms": [
+        "khách hàng",
+        "khach hang",
+        "hội viên",
+        "hoi vien",
+        "loyalty",
+        "thành viên",
+        "thanh vien",
+        "beans",
+        "điểm thưởng",
+        "diem thuong",
+        "chi tiêu",
+        "chi tieu",
+        "khách quen",
+        "customer",
+        "hạng thành viên"
+      ],
+      "tables": [
+        "silver.nguoi_dung",
+        "silver.don_hang"
+      ],
+      "dimensions": [
+        "ho_ten",
+        "vai_tro",
+        "diem_loyalty",
+        "tong_chi_tieu"
+      ],
       "metrics": {
-        "customer_count": {"business_name": "Số khách", "expression": "COUNT(DISTINCT ma_nguoi_dung)", "synonyms": ["số khách", "hội viên"]},
-        "repeat_rate": {"business_name": "Tỷ lệ mua lặp lại", "expression": "Khách có từ 2 đơn / tổng khách", "synonyms": ["mua lặp lại", "tái mua"]},
-        "lifetime_value": {"business_name": "Giá trị vòng đời", "expression": "SUM(tong_tien) theo khách", "synonyms": ["ltv", "chi tiêu"]}
+        "customer_count": {
+          "business_name": "Số khách",
+          "expression": "COUNT(DISTINCT ma_nguoi_dung)",
+          "synonyms": [
+            "số khách",
+            "hội viên"
+          ]
+        },
+        "total_spent": {
+          "business_name": "Tổng chi tiêu tích lũy",
+          "expression": "SUM(tong_chi_tieu)",
+          "synonyms": [
+            "tổng chi tiêu",
+            "tiền tích lũy"
+          ]
+        }
       },
       "relationships": [
-        {"from": "orders.don_hang.ma_nguoi_dung", "to": "identity.nguoi_dung.ma_nguoi_dung", "source": "semantic_inferred"}
+        {
+          "from": "silver.don_hang.ma_nguoi_dung",
+          "to": "silver.nguoi_dung.ma_nguoi_dung",
+          "source": "physical"
+        }
       ]
     },
     {
       "id": "payments",
-      "business_name": "Thanh toán",
+      "business_name": "Thanh toán và cổng tiền tệ",
       "role": "fact_detail",
-      "description": "Cơ cấu phương thức, cổng và trạng thái thanh toán.",
-      "synonyms": ["thanh toán", "momo", "vnpay", "qr", "tiền mặt", "chuyển khoản", "payment"],
-      "tables": ["gold.payment_methods_distribution", "orders.don_hang", "orders.giao_dich_thanh_toan"],
-      "dimensions": ["phuong_thuc_thanh_toan", "cong_thanh_toan", "trang_thai_thanh_toan"],
+      "description": "Lịch sử thanh toán đơn hàng qua cổng trực tuyến hoặc quầy thu ngân.",
+      "synonyms": [
+        "thanh toán",
+        "thanh toan",
+        "momo",
+        "vnpay",
+        "zalopay",
+        "qr",
+        "tiền mặt",
+        "tien mat",
+        "chuyển khoản",
+        "chuyen khoan",
+        "payment",
+        "cổng thanh toán"
+      ],
+      "tables": [
+        "silver.giao_dich_thanh_toan",
+        "silver.don_hang"
+      ],
+      "dimensions": [
+        "phuong_thuc_thanh_toan",
+        "cong_thanh_toan",
+        "trang_thai"
+      ],
       "metrics": {
-        "payment_count": {"business_name": "Số giao dịch", "expression": "COUNT(*)", "synonyms": ["số giao dịch"]},
-        "payment_revenue": {"business_name": "Doanh thu theo thanh toán", "expression": "SUM(tong_tien)", "synonyms": ["doanh thu"]}
+        "payment_count": {
+          "business_name": "Số giao dịch",
+          "expression": "COUNT(*)",
+          "synonyms": [
+            "số giao dịch"
+          ]
+        },
+        "payment_revenue": {
+          "business_name": "Doanh thu thanh toán",
+          "expression": "SUM(so_tien)",
+          "synonyms": [
+            "doanh thu"
+          ]
+        }
       },
       "relationships": [
-        {"from": "orders.giao_dich_thanh_toan.ma_don_hang", "to": "orders.don_hang.ma_don_hang", "source": "physical"}
+        {
+          "from": "silver.giao_dich_thanh_toan.ma_don_hang",
+          "to": "silver.don_hang.ma_don_hang",
+          "source": "physical"
+        }
+      ]
+    },
+    {
+      "id": "delivery",
+      "business_name": "Giao hàng và tài xế shipper",
+      "role": "fact_detail",
+      "description": "Hiệu suất tài xế, phương tiện giao hàng và điểm đánh giá.",
+      "synonyms": [
+        "giao hàng",
+        "giao hang",
+        "shipper",
+        "tài xế",
+        "tai xe",
+        "chuyến giao",
+        "chuyen giao",
+        "đánh giá tài xế",
+        "tốc độ giao"
+      ],
+      "tables": [
+        "silver.shipper",
+        "silver.don_hang"
+      ],
+      "dimensions": [
+        "ho_ten",
+        "bien_so_xe",
+        "loai_xe",
+        "trang_thai"
+      ],
+      "metrics": {
+        "total_deliveries": {
+          "business_name": "Tổng chuyến giao",
+          "expression": "SUM(tong_chuyen_giao)",
+          "synonyms": [
+            "chuyến giao"
+          ]
+        },
+        "driver_rating": {
+          "business_name": "Điểm đánh giá trung bình",
+          "expression": "AVG(diem_danh_gia)",
+          "synonyms": [
+            "đánh giá",
+            "sao"
+          ]
+        }
+      }
+    },
+    {
+      "id": "inventory",
+      "business_name": "Tồn kho nguyên vật liệu",
+      "role": "fact_detail",
+      "description": "Số lượng tồn kho thực tế và định mức dự trữ tại các chi nhánh cửa hàng.",
+      "synonyms": [
+        "tồn kho",
+        "ton kho",
+        "nguyên liệu",
+        "nguyen lieu",
+        "hết hàng",
+        "het hang",
+        "sắp hết",
+        "sap het",
+        "dự trữ",
+        "định mức",
+        "inventory"
+      ],
+      "tables": [
+        "silver.ton_kho_san_pham",
+        "silver.san_pham",
+        "silver.chi_nhanh"
+      ],
+      "dimensions": [
+        "ten_san_pham",
+        "so_luong_ton",
+        "muc_canh_bao",
+        "co_so_ma"
+      ],
+      "metrics": {
+        "stock_quantity": {
+          "business_name": "Số lượng tồn kho",
+          "expression": "SUM(so_luong_ton)",
+          "synonyms": [
+            "tồn kho",
+            "tồn"
+          ]
+        },
+        "low_stock_count": {
+          "business_name": "Số món dưới định mức",
+          "expression": "COUNT(*) FILTER (WHERE so_luong_ton <= muc_canh_bao)",
+          "synonyms": [
+            "sắp hết"
+          ]
+        }
+      },
+      "relationships": [
+        {
+          "from": "silver.ton_kho_san_pham.ma_san_pham",
+          "to": "silver.san_pham.ma_san_pham",
+          "source": "physical"
+        },
+        {
+          "from": "silver.ton_kho_san_pham.co_so_ma",
+          "to": "silver.chi_nhanh.ma_chi_nhanh",
+          "source": "physical"
+        }
+      ]
+    },
+    {
+      "id": "product_reviews",
+      "business_name": "Đánh giá chất lượng sản phẩm",
+      "role": "fact_detail",
+      "description": "Phản hồi đánh giá số sao (1-5 sao) và bình luận trải nghiệm món uống từ khách hàng.",
+      "synonyms": [
+        "đánh giá món",
+        "danh gia mon",
+        "đánh giá sản phẩm",
+        "danh gia san pham",
+        "review món",
+        "review mon",
+        "sao món",
+        "chất lượng món",
+        "hài lòng món",
+        "phản hồi món"
+      ],
+      "tables": [
+        "silver.danh_gia_san_pham",
+        "silver.san_pham"
+      ],
+      "dimensions": [
+        "ten_san_pham",
+        "so_sao",
+        "binh_luan"
+      ],
+      "metrics": {
+        "avg_product_rating": {
+          "business_name": "Điểm đánh giá trung bình",
+          "expression": "ROUND(AVG(so_sao), 2)",
+          "synonyms": [
+            "điểm sao",
+            "đánh giá tb"
+          ]
+        },
+        "review_count": {
+          "business_name": "Số lượt đánh giá",
+          "expression": "COUNT(*)",
+          "synonyms": [
+            "lượt review",
+            "số đánh giá"
+          ]
+        }
+      },
+      "relationships": [
+        {
+          "from": "silver.danh_gia_san_pham.ma_san_pham",
+          "to": "silver.san_pham.ma_san_pham",
+          "source": "logical"
+        }
+      ]
+    },
+    {
+      "id": "store_reviews",
+      "business_name": "Đánh giá dịch vụ và không gian chi nhánh",
+      "role": "fact_detail",
+      "description": "Đánh giá điểm số và nhận xét của khách hàng về dịch vụ, vệ sinh và trải nghiệm tại từng quán.",
+      "synonyms": [
+        "đánh giá quán",
+        "danh gia quan",
+        "đánh giá chi nhánh",
+        "danh gia chi nhanh",
+        "review cửa hàng",
+        "chất lượng phục vụ",
+        "không gian quán",
+        "điểm chi nhánh",
+        "đánh giá chất lượng phục vụ",
+        "chất lượng phục vụ của các chi nhánh",
+        "đánh giá phục vụ",
+        "phục vụ của các chi nhánh",
+        "chất lượng dịch vụ",
+        "đánh giá chất lượng dịch vụ",
+        "phục vụ chi nhánh"
+      ],
+      "tables": [
+        "silver.danh_gia_chi_nhanh",
+        "silver.chi_nhanh"
+      ],
+      "dimensions": [
+        "ten_chi_nhanh",
+        "so_sao",
+        "nhan_xet"
+      ],
+      "metrics": {
+        "avg_store_rating": {
+          "business_name": "Điểm phục vụ trung bình",
+          "expression": "ROUND(AVG(so_sao), 2)",
+          "synonyms": [
+            "sao chi nhánh",
+            "điểm phục vụ"
+          ]
+        },
+        "store_review_count": {
+          "business_name": "Số lượt đánh giá quán",
+          "expression": "COUNT(*)",
+          "synonyms": [
+            "số đánh giá quán"
+          ]
+        }
+      },
+      "relationships": [
+        {
+          "from": "silver.danh_gia_chi_nhanh.ma_chi_nhanh",
+          "to": "silver.chi_nhanh.ma_chi_nhanh",
+          "source": "physical"
+        }
+      ]
+    },
+    {
+      "id": "staff_shifts",
+      "business_name": "Ca làm việc và chấm công nhân viên",
+      "role": "fact",
+      "description": "Lịch phân ca, chấm công check-in, check-out và trạng thái đi làm đúng giờ/đi trễ của nhân sự.",
+      "synonyms": [
+        "ca làm",
+        "ca lam",
+        "nhân viên",
+        "nhan vien",
+        "chấm công",
+        "cham cong",
+        "check-in",
+        "đi trễ",
+        "di tre",
+        "vắng mặt",
+        "lịch làm việc",
+        "ca làm việc",
+        "staff"
+      ],
+      "tables": [
+        "silver.ca_lam_viec_nhan_vien",
+        "silver.chi_nhanh"
+      ],
+      "dimensions": [
+        "staff_name",
+        "ten_ca",
+        "trang_thai_cham_cong",
+        "ngay_lam_viec",
+        "co_so_ma"
+      ],
+      "metrics": {
+        "shift_count": {
+          "business_name": "Tổng số ca làm",
+          "expression": "COUNT(*)",
+          "synonyms": [
+            "số ca"
+          ]
+        },
+        "late_count": {
+          "business_name": "Số ca đi trễ",
+          "expression": "COUNT(*) FILTER (WHERE trang_thai_cham_cong = 'DI_TRE')",
+          "synonyms": [
+            "đi trễ"
+          ]
+        }
+      },
+      "relationships": [
+        {
+          "from": "silver.ca_lam_viec_nhan_vien.co_so_ma",
+          "to": "silver.chi_nhanh.ma_chi_nhanh",
+          "source": "physical"
+        }
+      ]
+    },
+    {
+      "id": "cashier_reconciliation",
+      "business_name": "Đối soát ca thu ngân và chênh lệch tiền mặt",
+      "role": "fact",
+      "description": "Số liệu kết ca thu ngân, tiền đầu ca, cuối ca, tiền mặt thực tế vs hệ thống và chênh lệch tiền quỹ.",
+      "synonyms": [
+        "đối soát",
+        "doi soat",
+        "kết ca",
+        "ket ca",
+        "thu ngân",
+        "thu ngan",
+        "chênh lệch tiền",
+        "chenh lech",
+        "tiền mặt",
+        "quỹ tiền",
+        "lệch quỹ",
+        "ca đối soát"
+      ],
+      "tables": [
+        "silver.ca_doi_soat",
+        "silver.chi_nhanh"
+      ],
+      "dimensions": [
+        "ten_nhan_vien",
+        "co_so_ma",
+        "trang_thai_phe_duyet",
+        "thoi_gian_bat_dau"
+      ],
+      "metrics": {
+        "total_cash_difference": {
+          "business_name": "Tổng tiền chênh lệch",
+          "expression": "SUM(chenh_lech)",
+          "synonyms": [
+            "chênh lệch",
+            "lệch tiền"
+          ]
+        },
+        "system_cash_revenue": {
+          "business_name": "Doanh thu tiền mặt hệ thống",
+          "expression": "SUM(tien_mat_he_thong)",
+          "synonyms": [
+            "tiền mặt"
+          ]
+        },
+        "reconciled_shifts": {
+          "business_name": "Số ca đã đối soát",
+          "expression": "COUNT(*)",
+          "synonyms": [
+            "số ca đối soát"
+          ]
+        }
+      },
+      "relationships": [
+        {
+          "from": "silver.ca_doi_soat.co_so_ma",
+          "to": "silver.chi_nhanh.ma_chi_nhanh",
+          "source": "physical"
+        }
+      ]
+    },
+    {
+      "id": "customer_surveys",
+      "business_name": "Khảo sát ý kiến khách hàng",
+      "role": "fact",
+      "description": "Dữ liệu câu trả lời khảo sát dịch vụ, voucher tri ân khảo sát và phản hồi của người tiêu dùng.",
+      "synonyms": [
+        "khảo sát",
+        "khao sat",
+        "ý kiến khách",
+        "feedback",
+        "phiếu khảo sát",
+        "trải nghiệm khách"
+      ],
+      "tables": [
+        "silver.khao_sat_phan_hoi",
+        "silver.chi_nhanh"
+      ],
+      "dimensions": [
+        "co_so_ma",
+        "trang_thai_voucher",
+        "ngay_tao"
+      ],
+      "metrics": {
+        "survey_response_count": {
+          "business_name": "Số lượt phản hồi khảo sát",
+          "expression": "COUNT(*)",
+          "synonyms": [
+            "lượt khảo sát",
+            "số phản hồi"
+          ]
+        }
+      },
+      "relationships": [
+        {
+          "from": "silver.khao_sat_phan_hoi.co_so_ma",
+          "to": "silver.chi_nhanh.ma_chi_nhanh",
+          "source": "physical"
+        }
+      ]
+    },
+    {
+      "id": "wishlist_favorites",
+      "business_name": "Món uống yêu thích của khách hàng",
+      "role": "fact",
+      "description": "Lưu lượng khách hàng thả tim, lưu món uống yêu thích (wishlist) trên ứng dụng di động.",
+      "synonyms": [
+        "yêu thích",
+        "yeu thich",
+        "wishlist",
+        "thả tim",
+        "tha tim",
+        "món chuộng",
+        "món yêu thích",
+        "quan tâm",
+        "khách hàng yêu thích",
+        "được khách hàng yêu thích",
+        "món được yêu thích",
+        "yêu thích nhất",
+        "món uống được yêu thích",
+        "món được yêu thích nhất"
+      ],
+      "tables": [
+        "silver.yeu_thich_san_pham",
+        "silver.san_pham"
+      ],
+      "dimensions": [
+        "ten_san_pham",
+        "danh_muc",
+        "ngay_tao"
+      ],
+      "metrics": {
+        "favorite_count": {
+          "business_name": "Số lượt thả tim yêu thích",
+          "expression": "COUNT(*)",
+          "synonyms": [
+            "lượt yêu thích",
+            "lượt thả tim"
+          ]
+        }
+      },
+      "relationships": [
+        {
+          "from": "silver.yeu_thich_san_pham.ma_san_pham",
+          "to": "silver.san_pham.ma_san_pham",
+          "source": "logical"
+        }
       ]
     },
     {
       "id": "hourly",
-      "business_name": "Khung giờ bán hàng",
+      "business_name": "Khung giờ và thời điểm",
       "role": "derived",
-      "description": "Mật độ đơn và doanh thu theo giờ phát sinh đơn.",
-      "synonyms": ["khung giờ", "giờ cao điểm", "đông nhất", "theo giờ", "cao điểm"],
-      "tables": ["orders.don_hang"],
-      "dimensions": ["EXTRACT(HOUR FROM ngay_tao)"],
+      "description": "Mật độ đơn hàng và doanh số theo các khung giờ trong ngày.",
+      "synonyms": [
+        "khung giờ",
+        "khung gio",
+        "giờ cao điểm",
+        "đông nhất",
+        "theo giờ",
+        "cao điểm",
+        "buổi sáng",
+        "buổi trưa",
+        "buổi tối"
+      ],
+      "tables": [
+        "silver.don_hang"
+      ],
+      "dimensions": [
+        "EXTRACT(HOUR FROM ngay_tao)"
+      ],
       "metrics": {
-        "hourly_orders": {"business_name": "Số đơn theo giờ", "expression": "COUNT(*)", "synonyms": ["đông nhất"]}
+        "hourly_orders": {
+          "business_name": "Số đơn theo giờ",
+          "expression": "COUNT(*)",
+          "synonyms": [
+            "đông nhất"
+          ]
+        }
       }
+    }
+  ],
+  "few_shot_examples": [
+    {
+      "question": "Top 5 sản phẩm bán chạy nhất tại Hà Nội",
+      "intent": "products",
+      "tags": [
+        "geographic",
+        "top_n",
+        "products"
+      ],
+      "sql": "SELECT sp.ten_san_pham AS \"Tên Sản Phẩm\",\n       COALESCE(dm.ten_danh_muc, 'Khác') AS \"Danh Mục\",\n       SUM(ct.so_luong) AS \"Số Lượng Bán\",\n       COALESCE(SUM(ct.thanh_tien), 0) AS \"Doanh Thu (VNĐ)\"\nFROM silver.chi_tiet_don_hang ct\nJOIN silver.don_hang d ON ct.ma_don_hang = d.ma_don_hang\nJOIN silver.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham\nLEFT JOIN silver.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc\nJOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh\nWHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\n  AND cn.thanh_pho = 'Hà Nội'\nGROUP BY sp.ten_san_pham, dm.ten_danh_muc\nORDER BY \"Số Lượng Bán\" DESC\nLIMIT 5;"
     },
     {
-      "id": "delivery",
-      "business_name": "Giao hàng và shipper",
-      "role": "fact_detail",
-      "description": "Hiệu suất tài xế, trạng thái giao và thời gian giao hàng.",
-      "synonyms": ["giao hàng", "shipper", "tài xế", "delivery", "thời gian giao", "giao thành công"],
-      "tables": ["gold.shipper_performance", "orders.shipper_delivery", "orders.delivery_tracking", "orders.shipper", "orders.don_hang"],
-      "dimensions": ["status", "delivery_mode", "delivery_method"],
-      "metrics": {
-        "delivery_count": {"business_name": "Số lượt giao", "expression": "COUNT(*)", "synonyms": ["lượt giao"]},
-        "delivery_time": {"business_name": "Thời gian giao trung bình", "expression": "AVG(delivered_at - assigned_at)", "synonyms": ["thời gian giao"]},
-        "delivery_success_rate": {"business_name": "Tỷ lệ giao thành công", "expression": "giao thành công / tổng lượt giao", "synonyms": ["tỷ lệ thành công"]}
-      },
-      "relationships": [
-        {"from": "orders.shipper_delivery.ma_don_hang", "to": "orders.don_hang.ma_don_hang", "source": "semantic_inferred"}
-      ]
+      "question": "Top 5 sản phẩm bán chạy nhất Hà Nội và top 3 sản phẩm bán chạy ở Cần Thơ",
+      "intent": "products",
+      "tags": [
+        "geographic",
+        "top_n",
+        "multi_city",
+        "comparison"
+      ],
+      "sql": "WITH ranked_city_products AS (\n    SELECT cn.thanh_pho AS \"Thành Phố\",\n           sp.ten_san_pham AS \"Tên Sản Phẩm\",\n           COALESCE(dm.ten_danh_muc, 'Khác') AS \"Danh Mục\",\n           SUM(ct.so_luong) AS \"Số Lượng Bán\",\n           COALESCE(SUM(ct.thanh_tien), 0) AS \"Doanh Thu (VNĐ)\",\n           ROW_NUMBER() OVER (PARTITION BY cn.thanh_pho ORDER BY SUM(ct.so_luong) DESC) AS hang\n    FROM silver.chi_tiet_don_hang ct\n    JOIN silver.don_hang d ON ct.ma_don_hang = d.ma_don_hang\n    JOIN silver.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham\n    LEFT JOIN silver.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc\n    JOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh\n    WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\n      AND cn.thanh_pho IN ('Hà Nội', 'Cần Thơ')\n    GROUP BY cn.thanh_pho, sp.ten_san_pham, dm.ten_danh_muc\n)\nSELECT \"Thành Phố\", hang AS \"Thứ Hạng\", \"Tên Sản Phẩm\", \"Danh Mục\", \"Số Lượng Bán\", \"Doanh Thu (VNĐ)\"\nFROM ranked_city_products\nWHERE (\"Thành Phố\" = 'Hà Nội' AND hang <= 5)\n   OR (\"Thành Phố\" = 'Cần Thơ' AND hang <= 3)\nORDER BY \"Thành Phố\", hang ASC;"
+    },
+    {
+      "question": "Top 3 sản phẩm bán chạy ở Cần Thơ",
+      "intent": "products",
+      "tags": [
+        "geographic",
+        "top_n",
+        "products"
+      ],
+      "sql": "SELECT sp.ten_san_pham AS \"Tên Sản Phẩm\",\n       COALESCE(dm.ten_danh_muc, 'Khác') AS \"Danh Mục\",\n       SUM(ct.so_luong) AS \"Số Lượng Bán\",\n       COALESCE(SUM(ct.thanh_tien), 0) AS \"Doanh Thu (VNĐ)\"\nFROM silver.chi_tiet_don_hang ct\nJOIN silver.don_hang d ON ct.ma_don_hang = d.ma_don_hang\nJOIN silver.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham\nLEFT JOIN silver.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc\nJOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh\nWHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\n  AND cn.thanh_pho = 'Cần Thơ'\nGROUP BY sp.ten_san_pham, dm.ten_danh_muc\nORDER BY \"Số Lượng Bán\" DESC\nLIMIT 3;"
+    },
+    {
+      "question": "So sánh doanh thu và số đơn hàng giữa Hà Nội và Hồ Chí Minh",
+      "intent": "stores",
+      "tags": [
+        "geographic",
+        "comparison",
+        "stores"
+      ],
+      "sql": "SELECT cn.thanh_pho AS \"Thành Phố\",\n       COUNT(DISTINCT cn.ma_chi_nhanh) AS \"Số Chi Nhánh\",\n       COUNT(d.ma_don_hang) AS \"Tổng Đơn\",\n       COALESCE(SUM(d.tong_tien), 0) AS \"Tổng Doanh Thu (VNĐ)\",\n       ROUND(COALESCE(AVG(d.tong_tien), 0), 0) AS \"AOV (VNĐ)\"\nFROM silver.chi_nhanh cn\nLEFT JOIN silver.don_hang d ON cn.ma_chi_nhanh = d.co_so_ma AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\nWHERE cn.thanh_pho IN ('Hà Nội', 'Hồ Chí Minh')\nGROUP BY cn.thanh_pho\nORDER BY \"Tổng Doanh Thu (VNĐ)\" DESC;"
+    },
+    {
+      "question": "Doanh thu theo danh mục sản phẩm tại TP Hồ Chí Minh",
+      "intent": "products",
+      "tags": [
+        "geographic",
+        "breakdown",
+        "products"
+      ],
+      "sql": "SELECT COALESCE(dm.ten_danh_muc, 'Khác') AS \"Danh Mục\",\n       COUNT(DISTINCT sp.ma_san_pham) AS \"Số Lượng Món\",\n       SUM(ct.so_luong) AS \"Số Lượng Bán\",\n       COALESCE(SUM(ct.thanh_tien), 0) AS \"Doanh Thu (VNĐ)\"\nFROM silver.chi_tiet_don_hang ct\nJOIN silver.don_hang d ON ct.ma_don_hang = d.ma_don_hang\nJOIN silver.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham\nLEFT JOIN silver.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc\nJOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh\nWHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\n  AND cn.thanh_pho = 'Hồ Chí Minh'\nGROUP BY dm.ten_danh_muc\nORDER BY \"Doanh Thu (VNĐ)\" DESC;"
+    },
+    {
+      "question": "Top 5 chi nhánh có doanh thu cao nhất tại Đà Nẵng",
+      "intent": "stores",
+      "tags": [
+        "geographic",
+        "top_n",
+        "stores"
+      ],
+      "sql": "SELECT cn.ten_chi_nhanh AS \"Tên Chi Nhánh\",\n       cn.thanh_pho AS \"Thành Phố\",\n       COUNT(d.ma_don_hang) AS \"Tổng Đơn\",\n       COALESCE(SUM(d.tong_tien), 0) AS \"Doanh Thu (VNĐ)\",\n       ROUND(COALESCE(AVG(d.tong_tien), 0), 0) AS \"AOV (VNĐ)\"\nFROM silver.chi_nhanh cn\nJOIN silver.don_hang d ON cn.ma_chi_nhanh = d.co_so_ma\nWHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\n  AND cn.thanh_pho = 'Đà Nẵng'\nGROUP BY cn.ten_chi_nhanh, cn.thanh_pho\nORDER BY \"Doanh Thu (VNĐ)\" DESC\nLIMIT 5;"
+    },
+    {
+      "question": "Top 10 món bán chạy nhất và doanh thu từng món",
+      "intent": "products",
+      "tags": [
+        "products",
+        "top_n"
+      ],
+      "sql": "SELECT sp.ten_san_pham AS \"Tên Sản Phẩm\",\n       COALESCE(dm.ten_danh_muc, 'Khác') AS \"Danh Mục\",\n       SUM(ct.so_luong) AS \"Số Lượng Bán\",\n       SUM(ct.thanh_tien) AS \"Doanh Thu (VNĐ)\"\nFROM silver.chi_tiet_don_hang ct\nJOIN silver.don_hang d ON ct.ma_don_hang = d.ma_don_hang\nJOIN silver.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham\nLEFT JOIN silver.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc\nWHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\nGROUP BY sp.ten_san_pham, dm.ten_danh_muc\nORDER BY \"Số Lượng Bán\" DESC\nLIMIT 10;"
+    },
+    {
+      "question": "Top 10 sản phẩm bán chậm nhất hoặc ít được mua nhất",
+      "intent": "products",
+      "tags": [
+        "products",
+        "bottom_n",
+        "inventory"
+      ],
+      "sql": "SELECT sp.ten_san_pham AS \"Tên Sản Phẩm\",\n       COALESCE(dm.ten_danh_muc, 'Khác') AS \"Danh Mục\",\n       COALESCE(SUM(ct.so_luong), 0) AS \"Số Lượng Bán\",\n       COALESCE(SUM(ct.thanh_tien), 0) AS \"Doanh Thu (VNĐ)\"\nFROM silver.san_pham sp\nLEFT JOIN silver.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc\nLEFT JOIN silver.chi_tiet_don_hang ct ON sp.ma_san_pham = ct.ma_san_pham\nLEFT JOIN silver.don_hang d ON ct.ma_don_hang = d.ma_don_hang AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\nGROUP BY sp.ten_san_pham, dm.ten_danh_muc\nORDER BY \"Số Lượng Bán\" ASC, \"Doanh Thu (VNĐ)\" ASC\nLIMIT 10;"
+    },
+    {
+      "question": "Khung giờ cao điểm bán được nhiều đơn hàng nhất trong ngày",
+      "intent": "hourly",
+      "tags": [
+        "temporal",
+        "hourly"
+      ],
+      "sql": "SELECT EXTRACT(HOUR FROM d.ngay_tao)::int AS \"Khung Giờ\",\n       COUNT(d.ma_don_hang) AS \"Số Đơn Hàng\",\n       COALESCE(SUM(d.tong_tien), 0) AS \"Doanh Thu (VNĐ)\",\n       ROUND(COALESCE(AVG(d.tong_tien), 0), 0) AS \"AOV (VNĐ)\"\nFROM silver.don_hang d\nWHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\nGROUP BY \"Khung Giờ\"\nORDER BY \"Số Đơn Hàng\" DESC;"
+    },
+    {
+      "question": "Doanh thu và số lượng đơn hàng theo từng khung giờ trong ngày",
+      "intent": "hourly",
+      "tags": [
+        "temporal",
+        "hourly"
+      ],
+      "sql": "SELECT EXTRACT(HOUR FROM ngay_tao)::int AS \"Khung Giờ\",\n       COUNT(*) AS \"Số Đơn Hàng\",\n       SUM(tong_tien) AS \"Doanh Thu (VNĐ)\"\nFROM silver.don_hang\nWHERE trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\nGROUP BY \"Khung Giờ\"\nORDER BY \"Khung Giờ\" ASC;"
+    },
+    {
+      "question": "Doanh thu theo các thứ trong tuần",
+      "intent": "orders",
+      "tags": [
+        "temporal",
+        "dow"
+      ],
+      "sql": "SELECT TO_CHAR(d.ngay_tao, 'Day') AS \"Thứ\",\n       EXTRACT(DOW FROM d.ngay_tao)::int AS \"Thứ Tự\",\n       COUNT(d.ma_don_hang) AS \"Số Đơn Hàng\",\n       COALESCE(SUM(d.tong_tien), 0) AS \"Doanh Thu (VNĐ)\"\nFROM silver.don_hang d\nWHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\nGROUP BY TO_CHAR(d.ngay_tao, 'Day'), EXTRACT(DOW FROM d.ngay_tao)\nORDER BY \"Thứ Tự\" ASC;"
+    },
+    {
+      "question": "Xu hướng doanh thu theo từng tháng trong năm",
+      "intent": "orders",
+      "tags": [
+        "temporal",
+        "monthly"
+      ],
+      "sql": "SELECT TO_CHAR(DATE_TRUNC('month', d.ngay_tao), 'YYYY-MM') AS \"Tháng\",\n       COUNT(d.ma_don_hang) AS \"Số Đơn\",\n       COALESCE(SUM(d.tong_tien), 0) AS \"Doanh Thu (VNĐ)\",\n       ROUND(COALESCE(AVG(d.tong_tien), 0), 0) AS \"AOV (VNĐ)\"\nFROM silver.don_hang d\nWHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\nGROUP BY DATE_TRUNC('month', d.ngay_tao)\nORDER BY \"Tháng\" ASC;"
+    },
+    {
+      "question": "Tỷ trọng các hình thức thanh toán được khách hàng sử dụng",
+      "intent": "payments",
+      "tags": [
+        "payments",
+        "breakdown"
+      ],
+      "sql": "SELECT phuong_thuc_thanh_toan AS \"Phương Thức\",\n       COUNT(*) AS \"Số Đơn\",\n       SUM(tong_tien) AS \"Tổng Doanh Thu\"\nFROM silver.don_hang\nWHERE trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\nGROUP BY phuong_thuc_thanh_toan\nORDER BY \"Tổng Doanh Thu\" DESC;"
+    },
+    {
+      "question": "Phương thức thanh toán theo hình thức nhận hàng",
+      "intent": "payments",
+      "tags": [
+        "payments",
+        "order_types"
+      ],
+      "sql": "SELECT d.loai_don_hang AS \"Hình Thức Nhận Hàng\",\n       d.phuong_thuc_thanh_toan AS \"Phương Thức\",\n       COUNT(d.ma_don_hang) AS \"Số Đơn\",\n       COALESCE(SUM(d.tong_tien), 0) AS \"Tổng Doanh Thu (VNĐ)\"\nFROM silver.don_hang d\nWHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\nGROUP BY d.loai_don_hang, d.phuong_thuc_thanh_toan\nORDER BY d.loai_don_hang, \"Tổng Doanh Thu (VNĐ)\" DESC;"
+    },
+    {
+      "question": "Tỷ lệ và số lượng đơn hàng bị hủy theo chi nhánh",
+      "intent": "stores",
+      "tags": [
+        "cancellation",
+        "stores",
+        "kpi"
+      ],
+      "sql": "SELECT COALESCE(cn.ten_chi_nhanh, d.co_so_ma) AS \"Chi Nhánh\",\n       cn.thanh_pho AS \"Thành Phố\",\n       COUNT(*) AS \"Tổng Đơn Đặt\",\n       COUNT(*) FILTER (WHERE d.trang_thai_don_hang = 'DA_HUY') AS \"Số Đơn Hủy\",\n       ROUND(COUNT(*) FILTER (WHERE d.trang_thai_don_hang = 'DA_HUY') * 100.0 / NULLIF(COUNT(*), 0), 2) AS \"Tỷ Lệ Hủy (%)\"\nFROM silver.don_hang d\nLEFT JOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh\nGROUP BY d.co_so_ma, cn.ten_chi_nhanh, cn.thanh_pho\nORDER BY \"Số Đơn Hủy\" DESC\nLIMIT 15;"
+    },
+    {
+      "question": "Doanh thu theo chương trình khuyến mãi",
+      "intent": "promotions",
+      "tags": [
+        "promotions"
+      ],
+      "sql": "SELECT COALESCE(km.ten_khuyen_mai, d.ma_voucher) AS \"Chương Trình Khuyến Mãi\",\n       COUNT(d.ma_don_hang) AS \"Số Đơn Áp Dụng\",\n       COALESCE(SUM(d.tong_tien), 0) AS \"Doanh Thu (VNĐ)\",\n       COALESCE(SUM(d.so_tien_giam), 0) AS \"Số Tiền Giảm (VNĐ)\"\nFROM silver.don_hang d\nJOIN silver.khuyen_mai km ON d.ma_voucher = km.ma_khuyen_mai\nWHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\n  AND d.ma_voucher IS NOT NULL\nGROUP BY COALESCE(km.ten_khuyen_mai, d.ma_voucher)\nORDER BY \"Doanh Thu (VNĐ)\" DESC;"
+    },
+    {
+      "question": "Top các mã voucher giảm giá được sử dụng nhiều nhất và số tiền giảm",
+      "intent": "promotions",
+      "tags": [
+        "promotions",
+        "top_n"
+      ],
+      "sql": "SELECT COALESCE(km.ten_khuyen_mai, d.ma_voucher) AS \"Tên Voucher\",\n       COUNT(d.ma_don_hang) AS \"Số Lượt Dùng\",\n       COALESCE(SUM(d.so_tien_giam), 0) AS \"Tổng Tiền Giảm (VNĐ)\",\n       ROUND(AVG(d.so_tien_giam), 0) AS \"Giảm Trung Bình/Đơn\"\nFROM silver.don_hang d\nJOIN silver.khuyen_mai km ON d.ma_voucher = km.ma_khuyen_mai\nWHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\n  AND d.ma_voucher IS NOT NULL\nGROUP BY COALESCE(km.ten_khuyen_mai, d.ma_voucher)\nORDER BY \"Số Lượt Dùng\" DESC\nLIMIT 10;"
+    },
+    {
+      "question": "Đánh giá hiệu quả voucher khuyến mãi và số tiền chiết khấu",
+      "intent": "promotions",
+      "tags": [
+        "promotions",
+        "roi"
+      ],
+      "sql": "SELECT COALESCE(km.ten_khuyen_mai, d.ma_voucher) AS \"Chương Trình Khuyến Mãi\",\n       COUNT(d.ma_don_hang) AS \"Số Đơn Dùng\",\n       COALESCE(SUM(d.so_tien_giam), 0) AS \"Tổng Tiền Giảm (VNĐ)\",\n       COALESCE(SUM(d.tong_tien), 0) AS \"Doanh Thu Thu Về (VNĐ)\",\n       ROUND(COALESCE(SUM(d.tong_tien), 0) * 1.0 / NULLIF(SUM(d.so_tien_giam), 0), 2) AS \"Hệ Số ROI\"\nFROM silver.don_hang d\nJOIN silver.khuyen_mai km ON d.ma_voucher = km.ma_khuyen_mai\nWHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\n  AND d.ma_voucher IS NOT NULL\nGROUP BY COALESCE(km.ten_khuyen_mai, d.ma_voucher)\nORDER BY \"Doanh Thu Thu Về (VNĐ)\" DESC;"
+    },
+    {
+      "question": "Hiệu suất doanh thu và giá trị đơn trung bình của các chi nhánh",
+      "intent": "stores",
+      "tags": [
+        "stores",
+        "aov"
+      ],
+      "sql": "SELECT cn.ten_chi_nhanh AS \"Chi Nhánh\",\n       cn.thanh_pho AS \"Thành Phố\",\n       COUNT(d.ma_don_hang) AS \"Tổng Đơn\",\n       COALESCE(SUM(d.tong_tien), 0) AS \"Tổng Doanh Thu\",\n       ROUND(COALESCE(AVG(d.tong_tien), 0), 0) AS \"AOV\"\nFROM silver.chi_nhanh cn\nLEFT JOIN silver.don_hang d ON cn.ma_chi_nhanh = d.co_so_ma AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\nGROUP BY cn.ten_chi_nhanh, cn.thanh_pho\nORDER BY \"Tổng Doanh Thu\" DESC;"
+    },
+    {
+      "question": "Giá trị đơn hàng trung bình (AOV) của các tỉnh thành trên cả nước",
+      "intent": "stores",
+      "tags": [
+        "geographic",
+        "stores",
+        "aov"
+      ],
+      "sql": "SELECT cn.thanh_pho AS \"Thành Phố\",\n       COUNT(d.ma_don_hang) AS \"Tổng Số Đơn\",\n       COALESCE(SUM(d.tong_tien), 0) AS \"Tổng Doanh Thu (VNĐ)\",\n       ROUND(COALESCE(AVG(d.tong_tien), 0), 0) AS \"AOV (VNĐ)\"\nFROM silver.chi_nhanh cn\nJOIN silver.don_hang d ON cn.ma_chi_nhanh = d.co_so_ma\nWHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\nGROUP BY cn.thanh_pho\nORDER BY \"Tổng Doanh Thu (VNĐ)\" DESC\nLIMIT 15;"
+    },
+    {
+      "question": "Khách hàng hội viên tích lũy điểm Beans cao nhất",
+      "intent": "customers",
+      "tags": [
+        "customers",
+        "loyalty"
+      ],
+      "sql": "SELECT 'Hội viên #' || SUBSTRING(ma_nguoi_dung::text, 1, 8) AS \"Mã Hội Viên\",\n       vai_tro AS \"Vai Trò\",\n       diem_loyalty AS \"Điểm Beans\",\n       tong_chi_tieu AS \"Tổng Chi Tiêu (VNĐ)\"\nFROM silver.nguoi_dung\nWHERE vai_tro = 'CUSTOMER'\nORDER BY diem_loyalty DESC\nLIMIT 15;"
+    },
+    {
+      "question": "Top khách hàng VIP chi tiêu nhiều nhất",
+      "intent": "customers",
+      "tags": [
+        "customers",
+        "vip",
+        "top_n"
+      ],
+      "sql": "SELECT 'Hội viên #' || SUBSTRING(u.ma_nguoi_dung::text, 1, 8) AS \"Mã Hội Viên\",\n       u.vai_tro AS \"Hạng\",\n       u.diem_loyalty AS \"Điểm Beans\",\n       u.tong_chi_tieu AS \"Tổng Chi Tiêu (VNĐ)\",\n       COUNT(d.ma_don_hang) AS \"Tổng Số Đơn\"\nFROM silver.nguoi_dung u\nLEFT JOIN silver.don_hang d ON u.ma_nguoi_dung = d.ma_nguoi_dung AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\nWHERE u.vai_tro = 'CUSTOMER'\nGROUP BY u.ma_nguoi_dung, u.vai_tro, u.diem_loyalty, u.tong_chi_tieu\nORDER BY u.tong_chi_tieu DESC\nLIMIT 10;"
+    },
+    {
+      "question": "Đánh giá chất lượng các món uống và số sao trung bình",
+      "intent": "product_reviews",
+      "tags": [
+        "product_reviews",
+        "rating"
+      ],
+      "sql": "SELECT ten_san_pham AS \"Món Uống\",\n       ROUND(AVG(so_sao), 2) AS \"Điểm Sao TB\",\n       COUNT(*) AS \"Số Lượt Đánh Giá\"\nFROM silver.danh_gia_san_pham\nGROUP BY ten_san_pham\nORDER BY \"Điểm Sao TB\" DESC, \"Số Lượt Đánh Giá\" DESC\nLIMIT 20;"
+    },
+    {
+      "question": "Đánh giá chất lượng dịch vụ của các chi nhánh cửa hàng",
+      "intent": "store_reviews",
+      "tags": [
+        "store_reviews",
+        "rating"
+      ],
+      "sql": "SELECT ten_chi_nhanh AS \"Chi Nhánh\",\n       ROUND(AVG(so_sao), 2) AS \"Điểm Phục Vụ TB\",\n       COUNT(*) AS \"Số Đánh Giá\"\nFROM silver.danh_gia_chi_nhanh\nGROUP BY ten_chi_nhanh\nORDER BY \"Điểm Phục Vụ TB\" DESC\nLIMIT 20;"
+    },
+    {
+      "question": "Sản phẩm sắp hết hàng cần bổ sung tồn kho",
+      "intent": "inventory",
+      "tags": [
+        "inventory",
+        "alerts"
+      ],
+      "sql": "SELECT sp.ten_san_pham AS \"Tên Sản Phẩm\",\n       tk.co_so_ma AS \"Mã Cơ Sở\",\n       tk.so_luong_ton AS \"Tồn Hiện Tại\",\n       tk.muc_canh_bao AS \"Định Mức Cảnh Báo\"\nFROM silver.ton_kho_san_pham tk\nJOIN silver.san_pham sp ON tk.ma_san_pham = sp.ma_san_pham\nWHERE tk.so_luong_ton <= tk.muc_canh_bao\nORDER BY tk.so_luong_ton ASC\nLIMIT 20;"
+    },
+    {
+      "question": "Cảnh báo sản phẩm sắp hết hàng theo từng chi nhánh",
+      "intent": "inventory",
+      "tags": [
+        "inventory",
+        "stores"
+      ],
+      "sql": "SELECT cn.ten_chi_nhanh AS \"Chi Nhánh\",\n       sp.ten_san_pham AS \"Tên Sản Phẩm\",\n       tk.so_luong_ton AS \"Tồn Kho Hiện Tại\",\n       tk.muc_canh_bao AS \"Ngưỡng Cảnh Báo\",\n       (tk.muc_canh_bao - tk.so_luong_ton) AS \"Số Lượng Thiếu Hụt\"\nFROM silver.ton_kho_san_pham tk\nJOIN silver.san_pham sp ON tk.ma_san_pham = sp.ma_san_pham\nLEFT JOIN silver.chi_nhanh cn ON tk.co_so_ma = cn.ma_chi_nhanh\nWHERE tk.so_luong_ton <= tk.muc_canh_bao\nORDER BY \"Số Lượng Thiếu Hụt\" DESC, tk.so_luong_ton ASC\nLIMIT 20;"
+    },
+    {
+      "question": "Hiệu suất và số chuyến giao của các tài xế shipper",
+      "intent": "delivery",
+      "tags": [
+        "delivery",
+        "shipper"
+      ],
+      "sql": "SELECT 'Tài xế #' || SUBSTRING(ma_shipper::text, 1, 8) AS \"Mã Tài Xế\",\n       bien_so_xe AS \"Biển Số\",\n       loai_xe AS \"Phương Tiện\",\n       trang_thai AS \"Trạng Thái\",\n       tong_chuyen_giao AS \"Tổng Chuyến Giao\",\n       diem_danh_gia AS \"Đánh Giá (Sao)\"\nFROM silver.shipper\nORDER BY tong_chuyen_giao DESC;"
+    },
+    {
+      "question": "Tình hình đi trễ và chấm công của nhân viên theo chi nhánh",
+      "intent": "staff_shifts",
+      "tags": [
+        "staff_shifts",
+        "attendance"
+      ],
+      "sql": "SELECT co_so_ma AS \"Chi Nhánh\",\n       staff_name AS \"Nhân Viên\",\n       COUNT(*) AS \"Tổng Ca\",\n       COUNT(*) FILTER (WHERE trang_thai_cham_cong = 'DI_TRE') AS \"Số Ca Đi Trễ\"\nFROM silver.ca_lam_viec_nhan_vien\nGROUP BY co_so_ma, staff_name\nORDER BY \"Số Ca Đi Trễ\" DESC\nLIMIT 20;"
+    },
+    {
+      "question": "Doanh thu và phụ thu theo kích cỡ món",
+      "intent": "products",
+      "tags": [
+        "products",
+        "variants"
+      ],
+      "sql": "SELECT COALESCE(ct.kich_co, 'Tiêu chuẩn') AS \"Kích Cỡ\",\n       COUNT(ct.id) AS \"Số Ly Bán Ra\",\n       COALESCE(SUM(ct.thanh_tien), 0) AS \"Tổng Doanh Thu (VNĐ)\",\n       ROUND(COALESCE(AVG(ct.don_gia), 0), 0) AS \"Đơn Giá TB (VNĐ)\"\nFROM silver.chi_tiet_don_hang ct\nJOIN silver.don_hang d ON ct.ma_don_hang = d.ma_don_hang\nWHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\nGROUP BY ct.kich_co\nORDER BY \"Tổng Doanh Thu (VNĐ)\" DESC;"
+    },
+    {
+      "question": "Báo cáo đối soát ca thu ngân và chênh lệch tiền mặt",
+      "intent": "cashier_reconciliation",
+      "tags": [
+        "reconciliation",
+        "cashier"
+      ],
+      "sql": "SELECT co_so_ma AS \"Chi Nhánh\",\n       ten_nhan_vien AS \"Thu Ngân\",\n       thoi_gian_bat_dau::date AS \"Ngày\",\n       tien_mat_he_thong AS \"Tiền Hệ Thống\",\n       tien_cuoi_ca AS \"Tiền Thực Tế\",\n       chenh_lech AS \"Chênh Lệch\"\nFROM silver.ca_doi_soat\nORDER BY thoi_gian_bat_dau DESC\nLIMIT 20;"
+    },
+    {
+      "question": "Ý kiến phản hồi khảo sát của khách hàng theo chi nhánh",
+      "intent": "customer_surveys",
+      "tags": [
+        "surveys",
+        "feedback"
+      ],
+      "sql": "SELECT co_so_ma AS \"Chi Nhánh\",\n       COUNT(*) AS \"Số Lượt Khảo Sát\",\n       trang_thai_voucher AS \"Trạng Thái Voucher\"\nFROM silver.khao_sat_phan_hoi\nGROUP BY co_so_ma, trang_thai_voucher\nORDER BY \"Số Lượt Khảo Sát\" DESC;"
     }
-  ]
+  ],
+  "data_samples": {
+    "cities": [
+      "An Giang",
+      "Bắc Giang",
+      "Bạc Liêu",
+      "Bắc Ninh",
+      "Bà Rịa - Vũng Tàu",
+      "Bến Tre",
+      "Bình Định",
+      "Bình Dương",
+      "Bình Phước",
+      "Bình Thuận",
+      "Cà Mau",
+      "Cần Thơ",
+      "Đắk Lắk",
+      "Đà Nẵng",
+      "Điện Biên",
+      "Đồng Nai",
+      "Đồng Tháp",
+      "Gia Lai",
+      "Hải Dương",
+      "Hải Phòng",
+      "Hà Nam",
+      "Hà Nội",
+      "Hà Tĩnh",
+      "Hậu Giang",
+      "Hòa Bình",
+      "Hồ Chí Minh",
+      "Hưng Yên",
+      "Khánh Hòa",
+      "Kiên Giang",
+      "Lâm Đồng",
+      "Lạng Sơn",
+      "Lào Cai",
+      "Long An",
+      "Nam Định",
+      "Nghệ An",
+      "Ninh Bình",
+      "Ninh Thuận",
+      "Phú Thọ",
+      "Phú Yên",
+      "Quảng Bình",
+      "Quảng Nam",
+      "Quảng Ngãi",
+      "Quảng Ninh",
+      "Quảng Trị",
+      "Sóc Trăng",
+      "Tây Ninh",
+      "Thái Bình",
+      "Thái Nguyên",
+      "Thanh Hóa",
+      "Thừa Thiên - Huế",
+      "Tiền Giang",
+      "Trà Vinh",
+      "Tuyên Quang",
+      "Vĩnh Long",
+      "Vĩnh Phúc"
+    ],
+    "categories": [
+      "Americano",
+      "Bánh & Đồ Ăn",
+      "Bánh Mặn",
+      "Bánh Ngọt",
+      "Bánh Trung Thu",
+      "Cà Phê",
+      "Cà Phê Phin",
+      "Cold Brew",
+      "Espresso",
+      "Frappe",
+      "Khác",
+      "Latte",
+      "Matcha",
+      "Merchandise",
+      "Pizza & Pasta",
+      "Thẻ Quà Tặng",
+      "Thức Uống Đá Xay",
+      "Topping",
+      "Trà",
+      "Trà Shan",
+      "Trà Sữa",
+      "Trà Trái Cây",
+      "Ưu đãi riêng bạn"
+    ],
+    "top_products": [
+      "Butter Croissant Mama",
+      "Croissant Kẹp Ham - Cheese",
+      "Bánh Mì Que Chà Bông Phô Mai Bơ Cay",
+      "1 Lít Matcha Latte Tây Bắc",
+      "Americano Mơ",
+      "Croissant trứng muối",
+      "Cà Phê Muối Avenger",
+      "Specialty Coffee Nóng",
+      "Americano Classic",
+      "Croissant Phô Mai Bơ Tỏi",
+      "Butter Croissant",
+      "Cheesecake Frappe"
+    ],
+    "payment_methods": [
+      "TIEN_MAT",
+      "NGAN_HANG_QR",
+      "THE_NGAN_HANG",
+      "CHUYEN_KHOAN",
+      "THANH_TOAN_KHI_NHAN_HANG",
+      "VI_DIEN_TU",
+      "VNPAY"
+    ],
+    "order_statuses": [
+      "HOAN_THANH",
+      "DANG_GIAO",
+      "CHO_THANH_TOAN",
+      "DA_XAC_NHAN",
+      "MOI_TAO",
+      "DA_HUY"
+    ],
+    "order_types": [
+      "TAI_CHO",
+      "DUNG_TAI_CHO",
+      "LAY_TAI_QUAN",
+      "MANG_DI",
+      "GIAO_TAN_NOI"
+    ]
+  }
 }

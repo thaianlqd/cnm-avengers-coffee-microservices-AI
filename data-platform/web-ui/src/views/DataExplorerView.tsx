@@ -1,18 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { usePlatformStore } from '../store/usePlatformStore';
-import { 
-  QueryIcon, 
-  PlayIcon, 
-  TrashIcon, 
-  DownloadIcon, 
-  TableIcon, 
-  ChartBarIcon, 
-  ChevronRightIcon, 
-  ChevronDownIcon, 
-  SearchIcon,
-  CheckIcon,
-  AlertIcon
-} from '../components/Icons';
+import { TableMetadata } from '../types';
 
 export const DataExplorerView: React.FC = () => {
   const { 
@@ -24,8 +12,6 @@ export const DataExplorerView: React.FC = () => {
     runQuery, 
     queryResult, 
     isQueryRunning,
-    queryViewMode,
-    setQueryViewMode,
     setSelectedTableForInspect,
     queryHistory,
     showToast
@@ -40,18 +26,31 @@ export const DataExplorerView: React.FC = () => {
   }, [fetchTables]);
 
   const filteredTables = tables.filter((t) => 
+    (t.display_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (t.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (t.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (t.schema || '').toLowerCase().includes(searchTerm.toLowerCase())
+    (t.category || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (t.columns || []).some(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  // Group tables by schema for clean UI
-  const schemaGroups = filteredTables.reduce((acc: Record<string, typeof tables>, table) => {
-    const sName = table.schema || (table.name.includes('.') ? table.name.split('.')[0] : 'public');
-    if (!acc[sName]) acc[sName] = [];
-    acc[sName].push(table);
+  const categoryOrder: Record<string, number> = {
+    'Bán hàng & Đơn hàng': 1,
+    'Thực đơn & Sản phẩm': 2,
+    'Khách hàng & Hội viên': 3,
+    'Chi nhánh & Vận hành': 4,
+    'Báo cáo tổng hợp': 5,
+  };
+
+  const categoryGroups = filteredTables.reduce((acc: Record<string, TableMetadata[]>, table) => {
+    const cat = table.category || (table.schema === 'gold' ? 'Báo cáo tổng hợp' : 'Dữ liệu vận hành');
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(table);
     return acc;
   }, {});
+
+  const sortedCategories = Object.keys(categoryGroups).sort((a, b) => 
+    (categoryOrder[a] ?? 99) - (categoryOrder[b] ?? 99)
+  );
 
   const handleExportCSV = () => {
     if (!queryResult || queryResult.data.length === 0) {
@@ -80,152 +79,153 @@ export const DataExplorerView: React.FC = () => {
     showToast('Đã xóa nội dung trình soạn thảo', 'info');
   };
 
-  // Find numerical and categorical columns for auto-rendering chart
-  const numericColumns = queryResult?.columns.filter(col => {
-    const firstVal = queryResult.data[0]?.[col];
-    return typeof firstVal === 'number' || (!isNaN(Number(firstVal)) && firstVal !== null);
-  }) || [];
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      runQuery();
+    }
+  };
 
-  const categoricalColumns = queryResult?.columns.filter(col => !numericColumns.includes(col)) || [];
+  const lineCount = activeSql ? activeSql.split('\n').length : 1;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-      {/* ──────────────────────────────────────────────────────────── */}
-      {/* LEFT COLUMN: Modern Table Catalog Tree (4 cols / 12) */}
-      {/* ──────────────────────────────────────────────────────────── */}
-      <div className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-[740px] overflow-hidden">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start pb-8">
+      {/* LEFT COLUMN: Data Catalog */}
+      <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col h-[780px] overflow-hidden">
         {/* Header */}
-        <div className="p-4 border-b border-slate-100 bg-slate-50/70 flex-shrink-0">
+        <div className="p-4 border-b border-slate-100 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
-                <TableIcon className="w-3.5 h-3.5" />
-              </div>
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                  Danh mục Kho dữ liệu
-                </span>
-                <p className="text-[10px] text-slate-400 font-mono">postgres-analytics:5432</p>
-              </div>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">
+                Danh mục bảng dữ liệu
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-0.5">Tầng dữ liệu phân tích</p>
             </div>
-            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+            <span className="text-xs font-medium text-slate-500">
               {tables.length} bảng
             </span>
           </div>
 
           {/* Search box */}
-          <div className="mt-3 relative">
-            <SearchIcon className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+          <div className="mt-3">
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Tìm kiếm bảng, cột hoặc schema..."
-              className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg outline-none focus:border-emerald-600 transition-colors shadow-xs"
+              placeholder="Tìm bảng, cột hoặc chủ đề..."
+              className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:border-slate-400 transition-colors"
             />
           </div>
         </div>
 
-        {/* Scrollable Schema & Tables Tree */}
+        {/* Scrollable Categories & Tables */}
         <div className="flex-1 overflow-y-auto p-3 space-y-3">
-          {Object.keys(schemaGroups).length === 0 ? (
-            <div className="text-center py-8 text-xs text-slate-400">
+          {sortedCategories.length === 0 ? (
+            <div className="text-center py-12 text-xs text-slate-400">
               Không tìm thấy bảng phù hợp
             </div>
           ) : (
-            Object.entries(schemaGroups).map(([schemaName, sTables]) => (
-              <div key={schemaName} className="space-y-1">
-                {/* Schema Header Badge */}
-                <div className="flex items-center justify-between px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100/60 rounded">
-                  <span className="font-mono text-emerald-800">schema: {schemaName}</span>
-                  <span className="text-[10px] font-normal text-slate-400">{sTables.length} bảng</span>
-                </div>
+            sortedCategories.map((categoryName) => {
+              const catTables = categoryGroups[categoryName] || [];
 
-                {/* Tables in this schema */}
-                <div className="space-y-1 pl-1">
-                  {sTables.map((table) => {
-                    const isExpanded = expandedTable === table.name;
-                    return (
-                      <div key={table.name} className="rounded-lg border border-slate-100 overflow-hidden bg-white">
-                        <button
-                          onClick={() => {
-                            setExpandedTable(isExpanded ? null : table.name);
-                            setSelectedTableForInspect(table);
-                          }}
-                          className={`w-full flex items-center justify-between px-2.5 py-2 text-left transition-colors text-xs ${
-                            isExpanded ? 'bg-emerald-50/50' : 'hover:bg-slate-50'
-                          }`}
-                        >
-                          <div className="flex items-center space-x-1.5 min-w-0">
-                            {isExpanded ? (
-                              <ChevronDownIcon className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-                            ) : (
-                              <ChevronRightIcon className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-                            )}
-                            <span className="font-mono font-medium text-slate-800 truncate text-[11px]">
-                              {table.name}
-                            </span>
-                          </div>
-                          <span className="text-[10px] text-slate-400 font-mono">
-                            {table.columns.length} cột
-                          </span>
-                        </button>
+              return (
+                <div key={categoryName} className="space-y-1">
+                  <div className="flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-slate-50 rounded-lg">
+                    <span>{categoryName}</span>
+                    <span className="text-[11px] font-normal text-slate-400">{catTables.length} bảng</span>
+                  </div>
 
-                        {/* Columns when expanded */}
-                        {isExpanded && (
-                          <div className="px-3 py-2 bg-slate-50/40 border-t border-slate-100 text-xs space-y-1.5">
-                            {table.description && (
-                              <p className="text-[10px] text-slate-500 italic mb-1">{table.description}</p>
-                            )}
-                            <div className="max-h-40 overflow-y-auto space-y-1 pr-1">
-                              {table.columns.map((col, cIdx) => (
-                                <div key={cIdx} className="flex items-center justify-between text-[11px] py-0.5">
-                                  <span className="font-mono text-slate-700 truncate max-w-[130px]">
-                                    {col.name}
-                                  </span>
-                                  <span className="font-mono text-[9px] text-slate-400 uppercase bg-white px-1 py-0.2 rounded border border-slate-200">
-                                    {col.type}
-                                  </span>
-                                </div>
-                              ))}
+                  <div className="space-y-1">
+                    {catTables.map((table) => {
+                      const isExpanded = expandedTable === table.name;
+
+                      return (
+                        <div key={table.name} className="rounded-xl border border-slate-200/70 overflow-hidden bg-white">
+                          <button
+                            onClick={() => {
+                              setExpandedTable(isExpanded ? null : table.name);
+                              setSelectedTableForInspect(table);
+                            }}
+                            className={`w-full flex items-center justify-between p-2.5 text-left transition-colors text-xs cursor-pointer ${
+                              isExpanded ? 'bg-slate-50 font-medium' : 'hover:bg-slate-50/50'
+                            }`}
+                          >
+                            <div className="min-w-0 flex-1 pr-2">
+                              <div className="text-slate-800 truncate font-medium">
+                                {table.display_name || table.table_name.replace(/_/g, ' ')}
+                              </div>
+                              <div className="font-mono text-[10px] text-slate-400 truncate mt-0.5">
+                                {table.name}
+                              </div>
                             </div>
-                            <button
-                              onClick={() => {
-                                const sql = `SELECT * FROM ${table.name} LIMIT 50;`;
-                                setActiveSql(sql);
-                                runQuery(sql);
-                              }}
-                              className="w-full mt-2 py-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded border border-emerald-200 transition-colors text-center"
-                            >
-                              Truy vấn bảng này (LIMIT 50)
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                            <span className="text-[10px] text-slate-400 font-mono">
+                              {table.columns.length} cột
+                            </span>
+                          </button>
+
+                          {isExpanded && (
+                            <div className="px-3 py-2.5 bg-slate-50/50 border-t border-slate-100 text-xs space-y-2">
+                              {table.description && (
+                                <p className="text-[11px] text-slate-500 leading-relaxed bg-white p-2 rounded-lg border border-slate-100">
+                                  {table.description}
+                                </p>
+                              )}
+
+                              <div>
+                                <div className="text-[10px] font-medium text-slate-400 mb-1">
+                                  Danh sách trường
+                                </div>
+                                <div className="max-h-36 overflow-y-auto space-y-1 pr-1">
+                                  {table.columns.map((col, cIdx) => (
+                                    <div key={cIdx} className="flex items-center justify-between text-[11px] py-0.5">
+                                      <span className="font-mono text-slate-700 truncate max-w-[150px]">
+                                        {col.name}
+                                      </span>
+                                      <span className="font-mono text-[10px] text-slate-400 uppercase">
+                                        {col.type}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={() => {
+                                  const sql = `SELECT * FROM ${table.name} LIMIT 50;`;
+                                  setActiveSql(sql);
+                                  runQuery(sql);
+                                }}
+                                className="w-full mt-2 py-1.5 text-xs font-medium text-slate-700 bg-white hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors text-center cursor-pointer"
+                              >
+                                Xem dữ liệu mẫu (50 dòng)
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
 
-      {/* ──────────────────────────────────────────────────────────── */}
-      {/* RIGHT COLUMN: SQL Editor & Result Container (8 cols / 12) */}
-      {/* ──────────────────────────────────────────────────────────── */}
-      <div className="lg:col-span-8 flex flex-col space-y-4">
+      {/* RIGHT COLUMN: SQL Editor & Results */}
+      <div className="lg:col-span-8 flex flex-col space-y-5">
         {/* SQL Editor Card */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col">
           {/* Editor Header Bar */}
-          <div className="px-4 py-2.5 border-b border-slate-100 bg-slate-50/70 flex flex-wrap items-center justify-between gap-2">
-            <div className="flex space-x-1.5">
+          <div className="px-4 py-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+            {/* Apple Segmented Tabs */}
+            <div className="bg-slate-200/70 p-1 rounded-2xl inline-flex space-x-1 border border-slate-200/90">
               <button
                 onClick={() => setActiveTab('sql')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                className={`px-3.5 py-1.5 text-xs font-medium rounded-xl transition-all cursor-pointer ${
                   activeTab === 'sql'
-                    ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
                 Trình soạn thảo SQL
@@ -233,10 +233,10 @@ export const DataExplorerView: React.FC = () => {
               
               <button
                 onClick={() => setActiveTab('saved')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                className={`px-3.5 py-1.5 text-xs font-medium rounded-xl transition-all cursor-pointer ${
                   activeTab === 'saved'
-                    ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
                 Mẫu truy vấn ({sampleQueries.length})
@@ -244,68 +244,63 @@ export const DataExplorerView: React.FC = () => {
 
               <button
                 onClick={() => setActiveTab('history')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                className={`px-3.5 py-1.5 text-xs font-medium rounded-xl transition-all cursor-pointer ${
                   activeTab === 'history'
-                    ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
                 Lịch sử ({queryHistory.length})
               </button>
             </div>
 
-            {/* Action Buttons: UX color compliant */}
+            {/* Separated Action Buttons */}
             <div className="flex items-center space-x-2">
               <button
                 onClick={handleClear}
-                className="px-3 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-colors flex items-center space-x-1"
-                title="Xóa câu lệnh"
+                className="px-3.5 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
               >
-                <TrashIcon className="w-3.5 h-3.5" />
-                <span>Xóa</span>
+                Xóa
               </button>
 
               <button
                 onClick={() => runQuery()}
                 disabled={isQueryRunning}
-                className="px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-colors flex items-center space-x-1.5 disabled:opacity-50"
+                className="px-4 py-1.5 text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
               >
-                {isQueryRunning ? (
-                  <>
-                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                    <span>Đang chạy...</span>
-                  </>
-                ) : (
-                  <>
-                    <PlayIcon className="w-3.5 h-3.5" />
-                    <span>Chạy truy vấn</span>
-                  </>
-                )}
+                {isQueryRunning ? 'Đang thực thi...' : 'Chạy truy vấn'}
               </button>
             </div>
           </div>
 
           {/* Editor Body */}
           {activeTab === 'sql' && (
-            <textarea
-              value={activeSql}
-              onChange={(e) => setActiveSql(e.target.value)}
-              placeholder="Nhập câu lệnh SELECT SQL..."
-              rows={6}
-              className="w-full p-3 font-mono text-xs bg-slate-900 text-emerald-300 outline-none resize-none leading-relaxed selection:bg-emerald-800"
-            />
+            <div>
+              <textarea
+                value={activeSql}
+                onChange={(e) => setActiveSql(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Nhập câu lệnh SELECT SQL..."
+                rows={10}
+                className="w-full p-4 font-mono text-xs bg-slate-900 text-slate-100 outline-none resize-y min-h-[220px] leading-relaxed selection:bg-slate-700"
+              />
+              <div className="px-4 py-2 bg-slate-950 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between font-mono">
+                <span>{lineCount} dòng • {activeSql.length} ký tự</span>
+                <span className="text-slate-400">Ctrl + Enter để chạy</span>
+              </div>
+            </div>
           )}
 
           {activeTab === 'saved' && (
-            <div className="p-3 bg-slate-900 max-h-40 overflow-y-auto space-y-1.5">
+            <div className="p-3 bg-slate-900 min-h-[220px] max-h-72 overflow-y-auto space-y-2">
               {sampleQueries.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-2.5 bg-slate-800/80 rounded-lg border border-slate-700 flex items-center justify-between hover:bg-slate-800 transition-colors"
+                  className="p-3 bg-slate-800/80 rounded-xl border border-slate-700/60 flex items-center justify-between hover:bg-slate-800 transition-colors"
                 >
-                  <div className="min-w-0 flex-1 pr-2">
-                    <div className="text-xs font-bold text-slate-200">{item.title}</div>
-                    <pre className="text-[10px] font-mono text-emerald-400 truncate mt-0.5">{item.sql}</pre>
+                  <div className="min-w-0 flex-1 pr-3">
+                    <div className="text-xs font-medium text-slate-200">{item.title}</div>
+                    <pre className="text-[11px] font-mono text-slate-300 truncate mt-1 bg-slate-900/60 p-1.5 rounded-lg">{item.sql}</pre>
                   </div>
                   <button
                     onClick={() => {
@@ -313,9 +308,9 @@ export const DataExplorerView: React.FC = () => {
                       setActiveTab('sql');
                       runQuery(item.sql);
                     }}
-                    className="px-2.5 py-1 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded whitespace-nowrap"
+                    className="px-3 py-1.5 text-xs font-medium text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors whitespace-nowrap cursor-pointer"
                   >
-                    Dùng mẫu
+                    Dùng mẫu này
                   </button>
                 </div>
               ))}
@@ -323,15 +318,15 @@ export const DataExplorerView: React.FC = () => {
           )}
 
           {activeTab === 'history' && (
-            <div className="p-3 bg-slate-900 max-h-40 overflow-y-auto space-y-1.5">
+            <div className="p-3 bg-slate-900 min-h-[220px] max-h-72 overflow-y-auto space-y-2">
               {queryHistory.length === 0 ? (
-                <div className="text-xs text-slate-400 text-center py-4">Chưa có lịch sử câu lệnh nào</div>
+                <div className="text-xs text-slate-400 text-center py-8">Chưa có lịch sử câu lệnh nào</div>
               ) : (
                 queryHistory.map((h, idx) => (
-                  <div key={idx} className="p-2 bg-slate-800/80 rounded border border-slate-700 flex items-center justify-between text-xs">
-                    <div className="min-w-0 flex-1 pr-2">
-                      <div className="font-mono text-emerald-400 truncate text-[11px]">{h.sql}</div>
-                      <div className="text-[9px] text-slate-400">
+                  <div key={idx} className="p-2.5 bg-slate-800/80 rounded-xl border border-slate-700/60 flex items-center justify-between text-xs">
+                    <div className="min-w-0 flex-1 pr-3">
+                      <div className="font-mono text-slate-300 truncate text-[11px]">{h.sql}</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">
                         {h.time} • {h.duration} ms • {h.rows} dòng
                       </div>
                     </div>
@@ -341,7 +336,7 @@ export const DataExplorerView: React.FC = () => {
                         setActiveTab('sql');
                         runQuery(h.sql);
                       }}
-                      className="px-2 py-0.5 text-[10px] font-semibold text-white bg-slate-700 hover:bg-slate-600 rounded"
+                      className="px-2.5 py-1 text-[11px] font-medium text-white bg-slate-700 hover:bg-slate-600 rounded-md cursor-pointer"
                     >
                       Chạy lại
                     </button>
@@ -352,95 +347,60 @@ export const DataExplorerView: React.FC = () => {
           )}
         </div>
 
-        {/* ──────────────────────────────────────────────────────────── */}
-        {/* Results Container Box with Inner Scrolling (Fixes long table!) */}
-        {/* ──────────────────────────────────────────────────────────── */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden h-[460px]">
-          {/* Header Bar */}
-          <div className="px-4 py-2.5 border-b border-slate-100 bg-slate-50/70 flex flex-wrap items-center justify-between gap-2 flex-shrink-0">
-            <div className="flex items-center space-x-2.5">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                Kết quả Truy vấn
+        {/* Results Container */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col overflow-hidden h-[480px]">
+          {/* Results Header Bar */}
+          <div className="px-4 py-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 flex-shrink-0">
+            <div className="flex items-center space-x-3">
+              <span className="text-xs font-semibold text-slate-900">
+                Bảng kết quả
               </span>
 
               {queryResult && !queryResult.error && (
-                <span className="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold flex items-center">
-                  <CheckIcon className="w-3.5 h-3.5 mr-1" />
+                <span className="text-xs text-slate-500 font-medium">
                   {queryResult.count} dòng ({queryResult.duration_ms} ms)
                 </span>
               )}
 
               {queryResult?.error && (
-                <span className="text-xs text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 font-semibold flex items-center">
-                  <AlertIcon className="w-3.5 h-3.5 mr-1" />
+                <span className="text-xs text-rose-600 font-medium">
                   Lỗi cú pháp SQL
                 </span>
               )}
             </div>
 
-            {/* View Mode Toggle & CSV Export */}
-            <div className="flex items-center space-x-2">
-              <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-                <button
-                  onClick={() => setQueryViewMode('table')}
-                  className={`flex items-center space-x-1 px-2.5 py-1 text-xs font-semibold rounded transition-colors ${
-                    queryViewMode === 'table'
-                      ? 'bg-white text-slate-800 shadow-xs'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  <TableIcon className="w-3.5 h-3.5" />
-                  <span>Dạng bảng</span>
-                </button>
-
-                <button
-                  onClick={() => setQueryViewMode('chart')}
-                  className={`flex items-center space-x-1 px-2.5 py-1 text-xs font-semibold rounded transition-colors ${
-                    queryViewMode === 'chart'
-                      ? 'bg-white text-slate-800 shadow-xs'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  <ChartBarIcon className="w-3.5 h-3.5" />
-                  <span>Dạng biểu đồ</span>
-                </button>
-              </div>
-
-              <button
-                onClick={handleExportCSV}
-                className="flex items-center space-x-1 px-2.5 py-1 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg shadow-xs transition-colors"
-              >
-                <DownloadIcon className="w-3.5 h-3.5 text-slate-500" />
-                <span>Xuất CSV</span>
-              </button>
-            </div>
+            <button
+              onClick={handleExportCSV}
+              className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-colors cursor-pointer"
+            >
+              Xuất CSV
+            </button>
           </div>
 
-          {/* Results Box: Strictly Scrollable inside this container! */}
+          {/* Results Table Area */}
           <div className="flex-1 overflow-auto p-3">
             {isQueryRunning ? (
               <div className="h-full flex flex-col items-center justify-center space-y-2">
-                <div className="w-7 h-7 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
-                <div className="text-xs font-medium text-slate-600">Đang quét kho dữ liệu...</div>
+                <div className="w-5 h-5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
+                <div className="text-xs text-slate-500">Đang quét kho dữ liệu...</div>
               </div>
             ) : queryResult?.error ? (
-              <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 font-mono whitespace-pre-wrap">
+              <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-mono whitespace-pre-wrap leading-relaxed">
                 {queryResult.error}
               </div>
             ) : !queryResult || queryResult.data.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-2 py-12">
-                <QueryIcon className="w-7 h-7 text-slate-300" />
-                <p className="text-xs">Chưa có kết quả. Nhập câu lệnh SQL và bấm "Chạy truy vấn".</p>
+              <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-1.5 py-12">
+                <p className="text-xs font-medium text-slate-500">Chưa có kết quả</p>
+                <p className="text-[11px] text-slate-400">Nhập câu lệnh SQL và bấm Chạy truy vấn</p>
               </div>
-            ) : queryViewMode === 'table' ? (
-              /* THE TABLE IS FULLY SCROLLABLE IN BOTH X AND Y WITHIN THIS BOX */
-              <div className="h-full overflow-auto border border-slate-200 rounded-lg">
+            ) : (
+              <div className="h-full overflow-auto border border-slate-200/80 rounded-xl">
                 <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-slate-100 text-slate-700 sticky top-0 z-10 border-b border-slate-200 font-semibold shadow-xs">
+                  <thead className="bg-slate-50 text-slate-700 sticky top-0 z-10 border-b border-slate-200/80 font-medium">
                     <tr>
-                      <th className="px-3 py-2 text-slate-400 w-10 bg-slate-100 text-center">#</th>
+                      <th className="px-3 py-2 text-slate-400 w-10 text-center font-mono text-[11px]">#</th>
                       {queryResult.columns.map((col, idx) => (
-                        <th key={idx} className="px-3.5 py-2 font-mono text-slate-800 whitespace-nowrap bg-slate-100">
+                        <th key={idx} className="px-3.5 py-2 font-mono text-slate-800 whitespace-nowrap text-xs">
                           {col}
                         </th>
                       ))}
@@ -448,12 +408,12 @@ export const DataExplorerView: React.FC = () => {
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
                     {queryResult.data.map((row, rIdx) => (
-                      <tr key={rIdx} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="px-3 py-1.5 text-slate-400 font-mono text-[10px] text-center bg-slate-50/30">
+                      <tr key={rIdx} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="px-3 py-2 text-slate-400 font-mono text-[10px] text-center">
                           {rIdx + 1}
                         </td>
                         {queryResult.columns.map((col, cIdx) => (
-                          <td key={cIdx} className="px-3.5 py-1.5 text-slate-700 font-mono whitespace-nowrap text-[11px]">
+                          <td key={cIdx} className="px-3.5 py-2 text-slate-700 font-mono whitespace-nowrap text-[11px]">
                             {row[col] !== null && row[col] !== undefined 
                               ? String(row[col]) 
                               : <span className="text-slate-300 italic">null</span>}
@@ -464,52 +424,12 @@ export const DataExplorerView: React.FC = () => {
                   </tbody>
                 </table>
               </div>
-            ) : (
-              /* Chart View */
-              <div className="p-2 h-full flex flex-col justify-between">
-                <div className="mb-2">
-                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                    Biểu đồ Trực quan hóa Kết quả
-                  </h4>
-                  <p className="text-[11px] text-slate-400">
-                    Trục X: <span className="font-semibold text-slate-700">{categoricalColumns[0] || queryResult.columns[0]}</span> • 
-                    Trục Y: <span className="font-semibold text-emerald-700">{numericColumns[0] || queryResult.columns[1]}</span>
-                  </p>
-                </div>
-
-                <div className="flex-1 flex items-end justify-between gap-2 px-2 border-b border-slate-200 pb-2 max-h-56">
-                  {queryResult.data.slice(0, 15).map((row, idx) => {
-                    const yKey = numericColumns[0] || queryResult.columns[1];
-                    const xKey = categoricalColumns[0] || queryResult.columns[0];
-                    const val = Number(row[yKey]) || 0;
-                    const maxVal = Math.max(...queryResult.data.slice(0, 15).map(r => Number(r[yKey]) || 1));
-                    const heightPct = Math.max(8, Math.round((val / maxVal) * 100));
-
-                    return (
-                      <div key={idx} className="flex-1 flex flex-col items-center group">
-                        <div className="text-[8px] font-semibold text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity mb-0.5 whitespace-nowrap">
-                          {val.toLocaleString('vi-VN')}
-                        </div>
-                        <div className="w-full bg-slate-100 rounded-t relative flex items-end justify-center h-40 overflow-hidden">
-                          <div
-                            style={{ height: `${heightPct}%` }}
-                            className="w-full bg-emerald-600 hover:bg-emerald-500 transition-all rounded-t"
-                          ></div>
-                        </div>
-                        <div className="text-[9px] font-medium text-slate-600 mt-1 truncate w-full text-center">
-                          {String(row[xKey] || `#${idx + 1}`)}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
             )}
           </div>
 
           {/* Footer status */}
           <div className="px-4 py-2 border-t border-slate-100 bg-slate-50/50 text-[11px] text-slate-400 flex justify-between items-center flex-shrink-0">
-            <span>Bảng kết quả có thể cuộn ngang và dọc độc lập</span>
+            <span>Cuộn ngang và dọc để xem chi tiết</span>
             <span>{queryResult ? `${queryResult.count} bản ghi` : '0 bản ghi'}</span>
           </div>
         </div>

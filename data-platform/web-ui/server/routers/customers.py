@@ -89,20 +89,18 @@ def get_customers_overview(
                 membership_tiers = []
                 for t in tier_definitions:
                     row = tier_rows.get(t["key"], {})
-                    cnt = int(row.get("count") or (1 if t["key"] == "Vàng" else 0))
+                    cnt = int(row.get("count") or 0)
                     avg_s = float(row.get("avg_spending") or 0)
-                    if t["key"] == "Vàng" and avg_s == 0:
-                        avg_s = 650000.0
                     membership_tiers.append({
                         "tier": t["tier"],
                         "name": t["tier"],
                         "key": t["key"],
                         "count": cnt,
                         "value": cnt,
-                        "pct": round((cnt / (total_members or 1) * 100), 1),
+                        "pct": round((cnt / (total_members or 1) * 100), 1) if total_members > 0 else 0.0,
                         "avg_spending": avg_s,
                         "total_spending": float(row.get("total_spending") or (avg_s * cnt)),
-                        "avg_points": int(row.get("avg_points") or t["min_points"]),
+                        "avg_points": int(row.get("avg_points") or 0),
                         "color": t["color"],
                         "perks": t["perks"],
                         "spending_criteria": t["spending_criteria"]
@@ -154,7 +152,7 @@ def get_customers_overview(
                 # 4. Real KPI from orders.don_hang & identity.nguoi_dung
                 cur.execute("SELECT COUNT(*) as total_registered FROM identity.nguoi_dung WHERE vai_tro = 'CUSTOMER' OR vai_tro IS NULL;")
                 registered_row = cur.fetchone() or {}
-                total_registered = int(registered_row.get("total_registered") or 18)
+                total_registered = int(registered_row.get("total_registered") or 0)
 
                 cur.execute(f"""
                     SELECT 

@@ -16,7 +16,7 @@ GEMINI_MODELS = tuple(
     model.strip()
     for model in os.getenv(
         "GEMINI_MODELS",
-        "gemini-3.8-flash,gemini-flash-latest,gemini-3.1-flash-lite",
+        "gemini-2.5-flash,gemini-2.0-flash,gemini-1.5-flash",
     ).split(",")
     if model.strip()
 )
@@ -41,34 +41,40 @@ def call_gemini(prompt: str, system_instruction: str = "") -> Optional[Dict[str,
     if not GEMINI_API_KEY or time.monotonic() < _unavailable_until["gemini"]:
         return None
     for model in GEMINI_MODELS:
-        started = time.perf_counter()
-        try:
-            response = requests.post(
-                f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
-                params={"key": GEMINI_API_KEY},
-                json={
-                    "systemInstruction": {"parts": [{"text": system_instruction}]},
-                    "contents": [{"parts": [{"text": prompt}]}],
-                    "generationConfig": {"temperature": 0.1, "responseMimeType": "application/json"},
-                },
-                timeout=20,
-            )
-            if response.ok:
-                raw = response.json()["candidates"][0]["content"]["parts"][0]["text"]
-                data = _parse_json(raw)
-                if data is not None:
-                    _unavailable_until["gemini"] = 0.0
-                    return {
-                        "data": data,
-                        "provider": "gemini",
-                        "model": model,
-                        "latency_ms": round((time.perf_counter() - started) * 1000),
-                    }
-                logger.warning("Gemini returned malformed JSON model=%s", model)
-            else:
-                logger.warning("Gemini request failed model=%s status=%s", model, response.status_code)
-        except Exception as exc:
-            logger.warning("Gemini unavailable model=%s error=%s", model, type(exc).__name__)
+        for attempt in range(2):
+            started = time.perf_counter()
+            try:
+                response = requests.post(
+                    f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+                    params={"key": GEMINI_API_KEY},
+                    json={
+                        "systemInstruction": {"parts": [{"text": system_instruction}]},
+                        "contents": [{"parts": [{"text": prompt}]}],
+                        "generationConfig": {"temperature": 0.1, "responseMimeType": "application/json"},
+                    },
+                    timeout=25,
+                )
+                if response.status_code == 503 and attempt == 0:
+                    time.sleep(0.5)
+                    continue
+                if response.ok:
+                    raw = response.json()["candidates"][0]["content"]["parts"][0]["text"]
+                    data = _parse_json(raw)
+                    if data is not None:
+                        _unavailable_until["gemini"] = 0.0
+                        return {
+                            "data": data,
+                            "provider": "gemini",
+                            "model": model,
+                            "latency_ms": round((time.perf_counter() - started) * 1000),
+                        }
+                    logger.warning("Gemini returned malformed JSON model=%s", model)
+                else:
+                    logger.warning("Gemini request failed model=%s status=%s", model, response.status_code)
+                    if response.status_code in (404, 400):
+                        break
+            except Exception as exc:
+                logger.warning("Gemini unavailable model=%s error=%s", model, type(exc).__name__)
     _unavailable_until["gemini"] = time.monotonic() + PROVIDER_FAILURE_COOLDOWN_SECONDS
     return None
 
@@ -76,7 +82,7 @@ def call_gemini(prompt: str, system_instruction: str = "") -> Optional[Dict[str,
 def call_groq(prompt: str, system_instruction: str = "") -> Optional[Dict[str, Any]]:
     if not GROQ_API_KEY or time.monotonic() < _unavailable_until["groq"]:
         return None
-    for model in ("llama-3.1-8b-instant", "llama-3.3-70b-versatile"):
+    for model in ("openai/gpt-oss-120b", "qwen/qwen3.8-27b", "openai/gpt-oss-20b"):
         started = time.perf_counter()
         try:
             response = requests.post(

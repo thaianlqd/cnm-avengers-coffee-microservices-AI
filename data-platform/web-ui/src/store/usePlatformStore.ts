@@ -78,6 +78,7 @@ interface PlatformState {
   isLoadingStores: boolean;
   isLoadingCustomers: boolean;
   isLoadingProducts: boolean;
+  isLoadingMarts: boolean;
   
   // SQL Explorer State
   activeSql: string;
@@ -159,6 +160,7 @@ export const usePlatformStore = create<PlatformState>((set, get) => ({
   isLoadingStores: false,
   isLoadingCustomers: false,
   isLoadingProducts: false,
+  isLoadingMarts: false,
   
   activeSql: `SELECT 
     schemaname AS schema_name,
@@ -263,14 +265,18 @@ LIMIT 15;`,
   
   fetchMarts: async () => {
     try {
+      set({ isLoadingMarts: true });
       const range = get().dateRange;
       const res = await fetch(`/api/marts/all?date_range=${range}&branch=all`);
       if (res.ok) {
         const data = await res.json();
-        set({ marts: data });
+        set({ marts: data, isLoadingMarts: false });
+      } else {
+        set({ isLoadingMarts: false });
       }
     } catch (e) {
       console.error('Lỗi tải Data Marts:', e);
+      set({ isLoadingMarts: false });
     }
   },
 

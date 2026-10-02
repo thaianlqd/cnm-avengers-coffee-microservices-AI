@@ -34,6 +34,8 @@ export const App: React.FC = () => {
       case 'overview':
         return <OverviewView />;
       case 'analytics':
+      case 'ai_assistant':
+      case 'saved_reports':
         return <AnalyticsView />;
       case 'explorer':
         return <DataExplorerView />;
@@ -55,8 +57,8 @@ export const App: React.FC = () => {
         <Header />
 
         {/* Scrollable Main Viewport */}
-        <main className="flex-1 overflow-y-auto p-5 bg-slate-50/80">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 overflow-y-auto px-6 py-5 bg-[#f8fafc]">
+          <div className="max-w-[1400px] mx-auto">
             {renderActiveView()}
           </div>
         </main>

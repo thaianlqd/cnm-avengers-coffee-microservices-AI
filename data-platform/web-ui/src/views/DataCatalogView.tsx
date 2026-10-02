@@ -128,16 +128,27 @@ export const DataCatalogView: React.FC = () => {
                   <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
                     <td className="px-4 py-3 text-slate-400 font-mono text-[11px]">{idx + 1}</td>
                     
-                    <td className="px-4 py-3 font-mono font-bold text-slate-800">
-                      <div className="flex items-center space-x-2">
+                    <td className="px-4 py-3 text-slate-800">
+                      <div className="flex items-center space-x-2.5">
                         <TableIcon className="w-4 h-4 text-emerald-700 flex-shrink-0" />
-                        <span>{table.name}</span>
+                        <div>
+                          <div className="font-sans font-semibold text-xs text-slate-800">
+                            {table.display_name || table.table_name.replace(/_/g, ' ')}
+                          </div>
+                          <div className="font-mono text-[10px] text-slate-400">
+                            {table.name}
+                          </div>
+                        </div>
                       </div>
                     </td>
 
                     <td className="px-4 py-3">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                        {format}
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                        isGold 
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200' 
+                          : 'bg-sky-50 text-sky-700 border border-sky-200'
+                      }`}>
+                        {table.layer || format}
                       </span>
                     </td>
 

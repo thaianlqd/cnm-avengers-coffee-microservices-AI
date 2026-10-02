@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 // ─── 1. SMOOTH AREA / LINE CHART ───
-interface AreaChartDataPoint {
+export interface AreaChartDataPoint {
   label: string;
   value: number;
   secondaryValue?: number;
@@ -15,16 +15,18 @@ interface AreaChartProps {
   color?: string;
   secondaryColor?: string;
   showSecondary?: boolean;
+  showLegend?: boolean;
 }
 
 export const SmoothAreaChart: React.FC<AreaChartProps> = ({
   data,
-  height = 240,
+  height = 230,
   valuePrefix = '',
   valueSuffix = '',
-  color = '#059669', // Emerald
-  secondaryColor = '#0284c7', // Sky
+  color = '#2563eb', // Modern Blue
+  secondaryColor = '#8b5cf6', // Modern Purple
   showSecondary = false,
+  showLegend = true,
 }) => {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
@@ -38,18 +40,22 @@ export const SmoothAreaChart: React.FC<AreaChartProps> = ({
   }
 
   const width = 600;
-  const padding = { top: 20, right: 20, bottom: 30, left: 50 };
+  const padding = { top: 15, right: 15, bottom: 25, left: 55 };
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
 
   const allValues = data.flatMap(d => [d.value, d.secondaryValue || 0]);
   const maxValue = Math.max(...allValues) * 1.15 || 100;
   const minValue = 0;
+  const maxY = padding.top + chartHeight;
+  const minY = padding.top;
+
+  const clampY = (yVal: number) => Math.min(maxY, Math.max(minY, yVal));
 
   const getX = (idx: number) => padding.left + (data.length > 1 ? (idx / (data.length - 1)) * chartWidth : chartWidth / 2);
-  const getY = (val: number) => padding.top + chartHeight - ((val - minValue) / (maxValue - minValue)) * chartHeight;
+  const getY = (val: number) => clampY(padding.top + chartHeight - ((Math.max(0, val) - minValue) / (maxValue - minValue)) * chartHeight);
 
-  // Build smooth Bezier path
+  // Build monotonic clamped Bezier path to avoid curve undershooting below 0
   const createSplinePath = (vals: number[]) => {
     const points = vals.map((v, i) => ({ x: getX(i), y: getY(v) }));
     if (points.length === 0) return '';
@@ -62,29 +68,44 @@ export const SmoothAreaChart: React.FC<AreaChartProps> = ({
       const p2 = points[i + 1];
       const p3 = points[i + 2 < points.length ? i + 2 : i + 1];
 
-      const cp1x = p1.x + (p2.x - p0.x) / 6;
-      const cp1y = p1.y + (p2.y - p0.y) / 6;
-      const cp2x = p2.x - (p3.x - p1.x) / 6;
-      const cp2y = p2.y - (p3.y - p1.y) / 6;
+      // Slopes with Fritsch-Carlson monotonicity condition
+      let m1 = (p2.y - p0.y) / 2;
+      let m2 = (p3.y - p1.y) / 2;
 
-      path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
+      // If slopes change sign or flat at extremum, clamp slope to 0
+      if ((p2.y - p1.y) * (p1.y - p0.y) <= 0) m1 = 0;
+      if ((p3.y - p2.y) * (p2.y - p1.y) <= 0) m2 = 0;
+
+      const dx = (p2.x - p1.x) / 3;
+      const cp1x = p1.x + dx;
+      const cp1y = clampY(p1.y + m1 / 3);
+      const cp2x = p2.x - dx;
+      const cp2y = clampY(p2.y - m2 / 3);
+
+      path += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
     }
     return path;
   };
 
   const linePath = createSplinePath(data.map(d => d.value));
-  const areaPath = `${linePath} L ${getX(data.length - 1)},${padding.top + chartHeight} L ${getX(0)},${padding.top + chartHeight} Z`;
-
+  const areaPath = `${linePath} L ${getX(data.length - 1)},${maxY} L ${getX(0)},${maxY} Z`;
   const secLinePath = showSecondary ? createSplinePath(data.map(d => d.secondaryValue || 0)) : '';
 
   const yTicks = [0, 0.25, 0.5, 0.75, 1].map(pct => {
     const val = minValue + (maxValue - minValue) * pct;
-    const y = padding.top + chartHeight - pct * chartHeight;
+    const y = maxY - pct * chartHeight;
     return { val, y };
   });
 
+  const formatYValue = (val: number) => {
+    if (val >= 1_000_000_000) return `${(val / 1_000_000_000).toFixed(1)} tỷ`;
+    if (val >= 1_000_000) return `${Math.round(val / 1_000_000)}M`;
+    if (val >= 1_000) return `${Math.round(val / 1_000)}k`;
+    return Math.round(val).toString();
+  };
+
   return (
-    <div className="relative w-full">
+    <div className="relative w-full flex flex-col justify-between">
       <svg
         viewBox={`0 0 ${width} ${height}`}
         className="w-full overflow-visible"
@@ -92,8 +113,8 @@ export const SmoothAreaChart: React.FC<AreaChartProps> = ({
         onMouseLeave={() => setHoverIndex(null)}
       >
         <defs>
-          <linearGradient id="area-gradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.28" />
+          <linearGradient id="area-gradient-blue" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.22" />
             <stop offset="100%" stopColor={color} stopOpacity="0.01" />
           </linearGradient>
         </defs>
@@ -106,39 +127,36 @@ export const SmoothAreaChart: React.FC<AreaChartProps> = ({
               y1={t.y}
               x2={width - padding.right}
               y2={t.y}
-              stroke="#e2e8f0"
+              stroke="#f1f5f9"
               strokeDasharray={idx === 0 ? "none" : "3 3"}
               strokeWidth="1"
             />
             <text
-              x={padding.left - 8}
-              y={t.y + 4}
+              x={padding.left - 10}
+              y={t.y + 3.5}
               textAnchor="end"
               className="text-[10px] font-sans fill-slate-400 font-medium select-none"
             >
-              {t.val >= 1000000
-                ? `${(t.val / 1000000).toFixed(1)}M`
-                : t.val >= 1000
-                ? `${(t.val / 1000).toFixed(0)}k`
-                : Math.round(t.val)}
+              {formatYValue(t.val)}
             </text>
           </g>
         ))}
 
         {/* Filled Area */}
-        <path d={areaPath} fill="url(#area-gradient)" />
+        <path d={areaPath} fill="url(#area-gradient-blue)" />
 
         {/* Main Line */}
         <path d={linePath} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
 
         {/* Secondary Line if active */}
         {showSecondary && secLinePath && (
-          <path d={secLinePath} fill="none" stroke={secondaryColor} strokeWidth="2" strokeDasharray="4 4" />
+          <path d={secLinePath} fill="none" stroke={secondaryColor} strokeWidth="2" strokeDasharray="3 3" />
         )}
 
         {/* X Axis Labels */}
         {data.map((d, idx) => {
-          if (idx % Math.ceil(data.length / 7) !== 0 && idx !== data.length - 1) return null;
+          const step = Math.max(1, Math.ceil(data.length / 6));
+          if (idx % step !== 0 && idx !== data.length - 1) return null;
           return (
             <text
               key={idx}
@@ -156,9 +174,9 @@ export const SmoothAreaChart: React.FC<AreaChartProps> = ({
         {data.map((d, idx) => (
           <rect
             key={idx}
-            x={getX(idx) - (chartWidth / data.length) / 2}
+            x={getX(idx) - (chartWidth / Math.max(1, data.length)) / 2}
             y={padding.top}
-            width={chartWidth / data.length}
+            width={chartWidth / Math.max(1, data.length)}
             height={chartHeight}
             fill="transparent"
             className="cursor-pointer"
@@ -180,24 +198,40 @@ export const SmoothAreaChart: React.FC<AreaChartProps> = ({
             <circle
               cx={getX(hoverIndex)}
               y={getY(data[hoverIndex].value)}
-              r="5"
+              r="4.5"
               fill={color}
               stroke="#ffffff"
-              strokeWidth="2.5"
+              strokeWidth="2"
             />
             {showSecondary && (
               <circle
                 cx={getX(hoverIndex)}
                 y={getY(data[hoverIndex].secondaryValue || 0)}
-                r="4"
+                r="3.5"
                 fill={secondaryColor}
                 stroke="#ffffff"
-                strokeWidth="2"
+                strokeWidth="1.5"
               />
             )}
           </g>
         )}
       </svg>
+
+      {/* Optional Bottom Legend */}
+      {showLegend && (
+        <div className="flex items-center justify-center space-x-6 pt-2 text-[11px] text-slate-500 font-medium">
+          <div className="flex items-center space-x-1.5">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }}></span>
+            <span>Doanh thu</span>
+          </div>
+          {showSecondary && (
+            <div className="flex items-center space-x-1.5">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: secondaryColor }}></span>
+              <span>Số đơn hàng</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Floating Hover Tooltip */}
       {hoverIndex !== null && (
@@ -210,12 +244,12 @@ export const SmoothAreaChart: React.FC<AreaChartProps> = ({
           }}
         >
           <div className="text-[10px] text-slate-400 font-medium">{data[hoverIndex].label}</div>
-          <div className="font-bold text-emerald-400">
+          <div className="font-bold text-blue-400">
             {valuePrefix}{data[hoverIndex].value.toLocaleString('vi-VN')}{valueSuffix}
           </div>
           {showSecondary && data[hoverIndex].secondaryValue !== undefined && (
-            <div className="text-[11px] text-sky-400">
-              Kỳ trước: {valuePrefix}{data[hoverIndex].secondaryValue?.toLocaleString('vi-VN')}{valueSuffix}
+            <div className="text-[10px] text-purple-300">
+              Đơn hàng: {data[hoverIndex].secondaryValue?.toLocaleString('vi-VN')}
             </div>
           )}
         </div>
@@ -225,11 +259,12 @@ export const SmoothAreaChart: React.FC<AreaChartProps> = ({
 };
 
 
-// ─── 2. DONUT CHART WITH CENTER METRIC ───
-interface DonutSlice {
+// ─── 2. DONUT CHART WITH ELEGANT 3-COLUMN LEGEND ───
+export interface DonutSlice {
   label: string;
   value: number;
   color: string;
+  formattedAmount?: string;
 }
 
 interface DonutChartProps {
@@ -242,10 +277,9 @@ interface DonutChartProps {
 
 export const DonutChart: React.FC<DonutChartProps> = ({
   data,
-  centerLabel = 'Tổng',
+  centerLabel = 'Tổng doanh thu',
   centerValue = '',
-  valueSuffix = '',
-  size = 180,
+  size = 135,
 }) => {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
@@ -258,18 +292,32 @@ export const DonutChart: React.FC<DonutChartProps> = ({
     );
   }
 
-  const strokeWidth = 24;
+  const strokeWidth = 18;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
 
   let currentOffset = 0;
 
+  const formatShortAmount = (val: number) => {
+    if (val >= 1_000_000_000) return `${(val / 1_000_000_000).toFixed(1)}B đ`;
+    if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(1)}M đ`;
+    if (val >= 1_000) return `${(val / 1_000).toFixed(0)}k đ`;
+    return `${val} đ`;
+  };
+
+  const displayCenterValue = centerValue || (
+    total >= 1_000_000_000 
+      ? `${(total / 1_000_000_000).toFixed(2)} tỷ` 
+      : total >= 1_000_000 
+      ? `${(total / 1_000_000).toFixed(1)}M` 
+      : total.toLocaleString('vi-VN')
+  );
+
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 w-full">
       {/* SVG Donut */}
       <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="transform -rotate-90">
-          {/* Background circle track */}
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -295,10 +343,10 @@ export const DonutChart: React.FC<DonutChartProps> = ({
                 r={radius}
                 fill="none"
                 stroke={slice.color}
-                strokeWidth={isHovered ? strokeWidth + 4 : strokeWidth}
+                strokeWidth={isHovered ? strokeWidth + 3 : strokeWidth}
                 strokeDasharray={strokeDasharray}
                 strokeDashoffset={strokeDashoffset}
-                strokeLinecap="round"
+                strokeLinecap="butt"
                 className="cursor-pointer transition-all duration-200"
                 onMouseEnter={() => setHoverIndex(idx)}
                 onMouseLeave={() => setHoverIndex(null)}
@@ -308,38 +356,44 @@ export const DonutChart: React.FC<DonutChartProps> = ({
         </svg>
 
         {/* Center Label */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none">
-          <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
-            {hoverIndex !== null ? data[hoverIndex].label : centerLabel}
-          </span>
-          <span className="text-base font-extrabold text-slate-800">
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none text-center px-1">
+          <span className="text-sm font-bold text-slate-900 leading-tight">
             {hoverIndex !== null
-              ? `${data[hoverIndex].value.toLocaleString('vi-VN')}${valueSuffix}`
-              : centerValue || `${total.toLocaleString('vi-VN')}${valueSuffix}`}
+              ? formatShortAmount(data[hoverIndex].value)
+              : displayCenterValue}
+          </span>
+          <span className="text-[10px] text-slate-400 font-medium mt-0.5">
+            {hoverIndex !== null ? data[hoverIndex].label : centerLabel}
           </span>
         </div>
       </div>
 
-      {/* Legend List */}
-      <div className="space-y-2.5 min-w-[140px]">
+      {/* Legend */}
+      <div className="flex-1 space-y-1.5 min-w-0 w-full sm:w-auto">
         {data.map((slice, idx) => {
           const pct = ((slice.value / total) * 100).toFixed(1);
           const isHovered = hoverIndex === idx;
+          const formattedAmount = slice.formattedAmount || formatShortAmount(slice.value);
 
           return (
             <div
               key={idx}
-              className={`flex items-center justify-between text-xs cursor-pointer p-1 rounded transition-colors ${
-                isHovered ? 'bg-slate-100 font-semibold' : 'text-slate-600'
+              className={`flex items-center justify-between text-xs py-1.5 px-2 rounded-xl transition-all cursor-pointer ${
+                isHovered ? 'bg-slate-100 shadow-2xs' : 'hover:bg-slate-50'
               }`}
               onMouseEnter={() => setHoverIndex(idx)}
               onMouseLeave={() => setHoverIndex(null)}
             >
-              <div className="flex items-center space-x-2">
-                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: slice.color }}></span>
-                <span className="font-medium text-slate-700">{slice.label}</span>
+              <div className="flex items-center space-x-2 min-w-0 flex-1 pr-2">
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: slice.color }}></span>
+                <span className="text-xs text-slate-700 font-medium truncate" title={slice.label}>
+                  {slice.label}
+                </span>
               </div>
-              <span className="font-bold text-slate-800 ml-4">{pct}%</span>
+              <div className="flex items-center space-x-2.5 flex-shrink-0 text-xs">
+                <span className="font-semibold text-slate-800 text-right">{pct}%</span>
+                <span className="text-slate-400 font-normal text-[11px] text-right min-w-[46px]">{formattedAmount}</span>
+              </div>
             </div>
           );
         })}
@@ -349,8 +403,8 @@ export const DonutChart: React.FC<DonutChartProps> = ({
 };
 
 
-// ─── 3. INTERACTIVE COLUMN / BAR CHART ───
-interface BarDataPoint {
+// ─── 3. INTERACTIVE COLUMN / BAR CHART WITH Y-AXIS & GRID LINES ───
+export interface BarDataPoint {
   label: string;
   value: number;
   secondaryValue?: number;
@@ -366,9 +420,9 @@ interface BarChartProps {
 
 export const BarChart: React.FC<BarChartProps> = ({
   data,
-  height = 200,
-  color = '#059669',
-  secondaryColor = '#0284c7',
+  height = 220,
+  color = '#2563eb', // Modern Electric Blue
+  secondaryColor = '#8b5cf6',
   valueSuffix = '',
 }) => {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
@@ -381,72 +435,201 @@ export const BarChart: React.FC<BarChartProps> = ({
     );
   }
 
-  const maxValue = Math.max(...data.map(d => Math.max(d.value, d.secondaryValue || 0))) * 1.15 || 100;
+  const width = 540;
+  const padding = { top: 22, right: 16, bottom: 28, left: 52 };
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
+
+  // Compute maximum value with clean ceiling
+  const rawMax = Math.max(...data.map(d => Math.max(d.value, d.secondaryValue || 0))) || 10;
+  // Nice number ceiling
+  const getCeil = (val: number) => {
+    if (val <= 10) return 10;
+    if (val <= 50) return 50;
+    if (val <= 100) return 100;
+    if (val <= 500) return 500;
+    const mag = Math.pow(10, Math.floor(Math.log10(val)));
+    return Math.ceil((val * 1.15) / mag) * mag;
+  };
+  const maxVal = getCeil(rawMax);
+
+  const yTicks = [0, 0.25, 0.5, 0.75, 1].map(pct => {
+    const val = pct * maxVal;
+    const y = padding.top + chartHeight - pct * chartHeight;
+    return { val, y };
+  });
+
+  const formatYValue = (val: number) => {
+    if (val === 0) return '0';
+    if (valueSuffix === 'Tr' || valueSuffix === 'triệu') {
+      if (val >= 1000) return `${(val / 1000).toFixed(1)} tỷ`;
+      return `${Math.round(val)} Tr`;
+    }
+    if (valueSuffix === 'ly' || valueSuffix === 'đơn') {
+      if (val >= 1000) return `${(val / 1000).toFixed(0)}k`;
+      return `${Math.round(val)}`;
+    }
+    if (val >= 1_000_000_000) return `${(val / 1_000_000_000).toFixed(1)} tỷ`;
+    if (val >= 1_000_000) return `${Math.round(val / 1_000_000)}M`;
+    if (val >= 1_000) return `${Math.round(val / 1_000)}k`;
+    return Math.round(val).toString();
+  };
+
+  const formatTooltipValue = (val: number) => {
+    if (valueSuffix === 'Tr' || valueSuffix === 'triệu') {
+      if (val >= 1000) {
+        return `${(val / 1000).toFixed(2)} tỷ VNĐ`;
+      }
+      return `${val.toLocaleString('vi-VN')} triệu VNĐ`;
+    }
+    if (valueSuffix === 'ly' || valueSuffix === 'đơn') {
+      return `${val.toLocaleString('vi-VN')} ${valueSuffix}`;
+    }
+    if (val >= 1_000_000_000) return `${(val / 1_000_000_000).toFixed(2)} tỷ đ`;
+    if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(1)}M đ`;
+    return `${val.toLocaleString('vi-VN')} ${valueSuffix}`.trim();
+  };
+
+  const slotWidth = chartWidth / data.length;
+  const hasSecondary = data.some(d => d.secondaryValue !== undefined);
+  const singleBarWidth = Math.max(10, Math.min(32, hasSecondary ? slotWidth * 0.38 : slotWidth * 0.65));
 
   return (
-    <div className="relative w-full overflow-hidden">
-      <div className="flex items-end justify-between gap-1.5 sm:gap-2 pt-4 pb-1 w-full" style={{ height: `${height}px` }}>
+    <div className="relative w-full flex flex-col justify-between">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="w-full overflow-visible"
+        style={{ height: `${height}px` }}
+        onMouseLeave={() => setHoverIndex(null)}
+      >
+        {/* Horizontal Grid lines and Y-axis tick values */}
+        {yTicks.map((t, idx) => (
+          <g key={idx}>
+            <line
+              x1={padding.left}
+              y1={t.y}
+              x2={width - padding.right}
+              y2={t.y}
+              stroke="#f1f5f9"
+              strokeDasharray={idx === 0 ? "none" : "3 3"}
+              strokeWidth="1"
+            />
+            <text
+              x={padding.left - 8}
+              y={t.y + 3.5}
+              textAnchor="end"
+              className="text-[10px] font-sans fill-slate-400 font-medium select-none"
+            >
+              {formatYValue(t.val)}
+            </text>
+          </g>
+        ))}
+
+        {/* Vertical Bars */}
         {data.map((d, idx) => {
-          const heightPct = Math.max(4, Math.round((d.value / maxValue) * 100));
-          const secHeightPct = d.secondaryValue ? Math.max(4, Math.round((d.secondaryValue / maxValue) * 100)) : 0;
+          const slotX = padding.left + idx * slotWidth;
           const isHovered = hoverIndex === idx;
 
+          const barH = Math.max(2, (d.value / maxVal) * chartHeight);
+          const barY = padding.top + chartHeight - barH;
+          const barX = hasSecondary 
+            ? slotX + (slotWidth - singleBarWidth * 2 - 4) / 2
+            : slotX + (slotWidth - singleBarWidth) / 2;
+
+          const secH = d.secondaryValue ? Math.max(2, (d.secondaryValue / maxVal) * chartHeight) : 0;
+          const secY = padding.top + chartHeight - secH;
+          const secX = barX + singleBarWidth + 4;
+
+          const labelText = d.label.length > 13 ? `${d.label.slice(0, 11)}..` : d.label;
+
           return (
-            <div
-              key={idx}
-              className="flex-1 min-w-0 flex flex-col items-center h-full justify-end cursor-pointer group"
+            <g 
+              key={idx} 
+              className="cursor-pointer"
               onMouseEnter={() => setHoverIndex(idx)}
-              onMouseLeave={() => setHoverIndex(null)}
             >
-              {/* Tooltip value */}
-              <div
-                className={`text-[10px] font-bold text-slate-700 mb-1 transition-opacity whitespace-nowrap ${
-                  isHovered ? 'opacity-100' : 'opacity-0'
+              {/* Invisible wide hit area for easy hover */}
+              <rect
+                x={slotX}
+                y={padding.top}
+                width={slotWidth}
+                height={chartHeight + padding.bottom}
+                fill="transparent"
+              />
+
+              {/* Primary Bar */}
+              <rect
+                x={barX}
+                y={barY}
+                width={singleBarWidth}
+                height={barH}
+                rx={3.5}
+                ry={3.5}
+                fill={color}
+                className="transition-all duration-150"
+                opacity={hoverIndex === null || isHovered ? 1 : 0.65}
+              />
+
+              {/* Secondary Bar if exists */}
+              {hasSecondary && d.secondaryValue !== undefined && (
+                <rect
+                  x={secX}
+                  y={secY}
+                  width={singleBarWidth}
+                  height={secH}
+                  rx={3.5}
+                  ry={3.5}
+                  fill={secondaryColor}
+                  className="transition-all duration-150"
+                  opacity={hoverIndex === null || isHovered ? 0.9 : 0.5}
+                />
+              )}
+
+              {/* X-axis Label */}
+              <text
+                x={slotX + slotWidth / 2}
+                y={padding.top + chartHeight + 17}
+                textAnchor="middle"
+                className={`text-[10px] font-sans font-medium select-none transition-colors ${
+                  isHovered ? 'fill-blue-600 font-semibold' : 'fill-slate-500'
                 }`}
               >
-                {d.value >= 1000000
-                  ? `${(d.value / 1000000).toFixed(1)}M`
-                  : d.value >= 1000
-                  ? `${(d.value / 1000).toFixed(0)}k`
-                  : d.value}
-                {valueSuffix}
-              </div>
-
-              {/* Bars container */}
-              <div className="w-full flex items-end justify-center gap-1 h-full bg-slate-50/60 rounded-t p-0.5 sm:p-1">
-                {/* Main bar */}
-                <div
-                  style={{ height: `${heightPct}%`, backgroundColor: color }}
-                  className={`w-full max-w-[22px] rounded-t transition-all ${
-                    isHovered ? 'brightness-110' : 'opacity-90'
-                  }`}
-                />
-                {/* Secondary bar if any */}
-                {d.secondaryValue !== undefined && (
-                  <div
-                    style={{ height: `${secHeightPct}%`, backgroundColor: secondaryColor }}
-                    className="w-full max-w-[22px] rounded-t opacity-70 transition-all"
-                  />
-                )}
-              </div>
-
-              {/* Label */}
-              <div 
-                className="text-[10px] font-medium text-slate-500 mt-2 truncate w-full text-center px-0.5" 
-                title={d.label}
-              >
-                {d.label}
-              </div>
-            </div>
+                {labelText}
+              </text>
+            </g>
           );
         })}
-      </div>
+      </svg>
+
+      {/* Floating Hover Tooltip */}
+      {hoverIndex !== null && data[hoverIndex] && (
+        <div
+          className="absolute z-20 pointer-events-none bg-slate-900 text-white rounded-lg px-2.5 py-1.5 shadow-lg border border-slate-700 text-xs transform -translate-x-1/2 -translate-y-full"
+          style={{
+            left: `${((padding.left + hoverIndex * slotWidth + slotWidth / 2) / width) * 100}%`,
+            top: `${(padding.top + chartHeight - Math.max(4, (data[hoverIndex].value / maxVal) * chartHeight)) / height * 100}%`,
+            marginTop: '-8px',
+          }}
+        >
+          <div className="text-[10px] text-slate-300 font-medium truncate max-w-[180px]">
+            {data[hoverIndex].label}
+          </div>
+          <div className="font-semibold text-blue-400 mt-0.5 whitespace-nowrap">
+            {formatTooltipValue(data[hoverIndex].value)}
+          </div>
+          {hasSecondary && data[hoverIndex].secondaryValue !== undefined && (
+            <div className="text-[10px] text-purple-300 mt-0.5">
+              Phụ: {formatTooltipValue(data[hoverIndex].secondaryValue!)}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
 
 
-// ─── 4. HORIZONTAL RANKING BAR CHART ───
+// ─── 4. HORIZONTAL RANKING BAR CHART (Target Style) ───
 export interface HorizontalBarItem {
   label: string;
   value: number;
@@ -458,12 +641,11 @@ export interface HorizontalBarItem {
 interface HorizontalBarChartProps {
   data: HorizontalBarItem[];
   valueSuffix?: string;
-  height?: number;
 }
 
 export const HorizontalBarChart: React.FC<HorizontalBarChartProps> = ({
   data,
-  valueSuffix = '',
+  valueSuffix = ' đ',
 }) => {
   if (!data || data.length === 0) {
     return (
@@ -475,34 +657,34 @@ export const HorizontalBarChart: React.FC<HorizontalBarChartProps> = ({
 
   const maxValue = Math.max(...data.map(d => d.value)) * 1.05 || 1;
 
+  const formatAmount = (val: number) => {
+    if (val >= 1_000_000_000) return `${(val / 1_000_000_000).toFixed(1)} tỷ`;
+    if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(1)}M`;
+    if (val >= 1_000) return `${(val / 1_000).toFixed(0)}k`;
+    return val.toLocaleString('vi-VN');
+  };
+
   return (
-    <div className="space-y-3 w-full">
+    <div className="space-y-4 w-full">
       {data.map((item, idx) => {
         const pct = Math.max(6, Math.min(100, Math.round((item.value / maxValue) * 100)));
         const rank = item.rank || idx + 1;
-        const barColor = item.color || (idx === 0 ? '#059669' : idx === 1 ? '#0284c7' : '#64748b');
+        const barColor = item.color || '#2563eb'; // Royal blue
 
         return (
-          <div key={idx} className="group cursor-pointer">
-            <div className="flex items-center justify-between text-xs mb-1">
-              <div className="flex items-center space-x-2 min-w-0 pr-2">
-                <span className={`w-4 h-4 rounded text-[10px] font-bold flex items-center justify-center flex-shrink-0 ${
-                  rank === 1 ? 'bg-amber-100 text-amber-800' :
-                  rank === 2 ? 'bg-slate-200 text-slate-700' :
-                  rank === 3 ? 'bg-orange-100 text-orange-800' : 'bg-slate-100 text-slate-500'
-                }`}>
+          <div key={idx} className="group cursor-pointer space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center space-x-2.5 min-w-0 pr-2">
+                <span className="text-xs font-semibold text-slate-400 w-3 flex-shrink-0 text-center">
                   {rank}
                 </span>
-                <span className="font-semibold text-slate-800 truncate" title={item.label}>
+                <span className="font-medium text-slate-800 truncate" title={item.label}>
                   {item.label}
                 </span>
               </div>
               <div className="flex items-baseline space-x-1.5 flex-shrink-0">
-                <span className="font-bold text-slate-800">
-                  {item.value >= 1000000 
-                    ? `${(item.value / 1000000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} Tr`
-                    : item.value.toLocaleString('vi-VN')}
-                  {valueSuffix}
+                <span className="font-semibold text-slate-800 text-xs">
+                  {formatAmount(item.value)}{valueSuffix}
                 </span>
                 {item.subValue && (
                   <span className="text-[10px] text-slate-400 font-medium">({item.subValue})</span>
@@ -524,5 +706,45 @@ export const HorizontalBarChart: React.FC<HorizontalBarChartProps> = ({
         );
       })}
     </div>
+  );
+};
+
+
+// ─── 5. MINI SPARKLINE FOR KPI CARDS ───
+export const Sparkline: React.FC<{
+  data: number[];
+  color?: string;
+  width?: number;
+  height?: number;
+}> = ({
+  data = [12, 16, 14, 20, 18, 24, 28],
+  color = '#10b981',
+  width = 64,
+  height = 28,
+}) => {
+  if (!data || data.length < 2) return null;
+
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+
+  const padding = 2;
+  const points = data.map((val, idx) => {
+    const x = padding + (idx / (data.length - 1)) * (width - 2 * padding);
+    const y = height - padding - ((val - min) / range) * (height - 2 * padding);
+    return `${x},${y}`;
+  });
+
+  return (
+    <svg width={width} height={height} className="overflow-visible flex-shrink-0">
+      <polyline
+        fill="none"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={points.join(' ')}
+      />
+    </svg>
   );
 };

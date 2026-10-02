@@ -1,110 +1,105 @@
 import React from 'react';
 import { usePlatformStore } from '../store/usePlatformStore';
 import { ViewTab } from '../types';
-import { 
-  DatabaseIcon, 
-  LayersIcon, 
-  TableIcon, 
-  QueryIcon, 
-  UsersIcon, 
-  PipelineIcon, 
-  ShieldIcon, 
-  ChartBarIcon,
-  SparklesIcon
-} from './Icons';
 
 interface NavItem {
   id: string;
   label: string;
-  icon: React.FC<{ className?: string }>;
-  badge?: string;
+  tabTarget: ViewTab;
 }
 
 export const Sidebar: React.FC = () => {
   const { activeTab, setActiveTab, analyticsSubTab, setAnalyticsSubTab } = usePlatformStore();
 
   const navItems: NavItem[] = [
-    { id: 'overview', label: 'Tổng quan', icon: DatabaseIcon },
-    { id: 'analytics', label: 'Báo cáo và Phân tích', icon: LayersIcon },
-    { id: 'ai_assistant', label: 'Trợ lý AI', icon: SparklesIcon, badge: 'AI' },
-    { id: 'explorer', label: 'Khám phá dữ liệu', icon: QueryIcon, badge: 'SQL' },
-    { id: 'system', label: 'Quản trị hệ thống', icon: ShieldIcon },
+    { id: 'overview', label: 'Tổng quan', tabTarget: 'overview' },
+    { id: 'analytics', label: 'Báo cáo & Phân tích', tabTarget: 'analytics' },
+    { id: 'ai_assistant', label: 'Trợ lý AI', tabTarget: 'ai_assistant' },
+    { id: 'saved_reports', label: 'Quản lý Báo cáo', tabTarget: 'saved_reports' },
+    { id: 'explorer', label: 'Khám phá dữ liệu', tabTarget: 'explorer' },
+    { id: 'system', label: 'Quản trị hệ thống', tabTarget: 'system' },
   ];
 
+  const handleNavClick = (item: NavItem) => {
+    setActiveTab(item.tabTarget);
+    if (item.tabTarget === 'ai_assistant') {
+      setAnalyticsSubTab('ai_assistant');
+    } else if (item.tabTarget === 'saved_reports') {
+      setAnalyticsSubTab('saved_reports');
+    } else if (item.tabTarget === 'analytics') {
+      if (analyticsSubTab === 'ai_assistant' || analyticsSubTab === 'saved_reports') {
+        setAnalyticsSubTab('revenue');
+      }
+    }
+  };
+
+  const isItemActive = (item: NavItem) => {
+    if (item.id === 'ai_assistant') {
+      return activeTab === 'ai_assistant' || (activeTab === 'analytics' && analyticsSubTab === 'ai_assistant');
+    }
+    if (item.id === 'saved_reports') {
+      return activeTab === 'saved_reports' || (activeTab === 'analytics' && analyticsSubTab === 'saved_reports');
+    }
+    if (item.id === 'analytics') {
+      return activeTab === 'analytics' && analyticsSubTab !== 'ai_assistant' && analyticsSubTab !== 'saved_reports';
+    }
+    return activeTab === item.tabTarget;
+  };
 
   return (
-    <aside className="w-56 bg-slate-900 text-slate-300 flex flex-col flex-shrink-0 border-r border-slate-800 select-none">
-      {/* Brand Header */}
-      <div className="h-14 px-4 flex items-center space-x-2.5 border-b border-slate-800">
-        <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white shadow-sm flex-shrink-0">
-          <DatabaseIcon className="w-4 h-4 text-white" />
+    <aside className="w-64 bg-[#0d1117] text-slate-300 flex flex-col flex-shrink-0 border-r border-slate-800/80 select-none">
+      {/* Brand Header - Apple minimalist typography */}
+      <div className="h-16 px-6 flex items-center space-x-3 border-b border-slate-800/60">
+        <div className="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700/80 flex items-center justify-center text-white font-semibold text-sm shadow-inner flex-shrink-0">
+          AC
         </div>
         <div className="min-w-0">
-          <div className="font-bold text-white text-sm tracking-tight truncate flex items-center">
-            BrewData
-            <span className="ml-1.5 px-1 py-0.2 text-[9px] font-bold bg-emerald-500/20 text-emerald-400 rounded">
-              BI
-            </span>
+          <div className="font-semibold text-white text-sm tracking-tight leading-none truncate">
+            Avengers Coffee
           </div>
-          <div className="text-[10px] text-slate-400 truncate">Data Analyst Studio</div>
+          <div className="text-[11px] text-slate-400 font-normal tracking-wide truncate mt-1">
+            Data Analytics Platform
+          </div>
         </div>
       </div>
 
-      {/* Navigation List: Clean Single Line */}
-      <nav className="flex-1 px-2.5 py-3 space-y-1 overflow-y-auto">
+      {/* Navigation Section */}
+      <div className="px-4 pt-5 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        Điều hướng chính
+      </div>
+
+      <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
-          const Icon = item.icon;
-          const isAiTab = item.id === 'ai_assistant';
-          const isActive = isAiTab 
-            ? activeTab === 'analytics' && analyticsSubTab === 'ai_assistant'
-            : activeTab === item.id && (!isAiTab && (item.id !== 'analytics' || analyticsSubTab !== 'ai_assistant'));
-          
+          const active = isItemActive(item);
+
           return (
             <button
               key={item.id}
-              onClick={() => {
-                if (isAiTab) {
-                  setActiveTab('analytics');
-                  setAnalyticsSubTab('ai_assistant');
-                } else {
-                  setActiveTab(item.id as ViewTab);
-                  if (item.id === 'analytics' && analyticsSubTab === 'ai_assistant') {
-                    setAnalyticsSubTab('revenue');
-                  }
-                }
-              }}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-colors cursor-pointer ${
-                isActive
-                  ? 'bg-emerald-600 text-white font-semibold shadow-sm'
-                  : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/70 font-medium'
+              onClick={() => handleNavClick(item)}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs tracking-tight transition-all cursor-pointer text-left ${
+                active
+                  ? 'bg-blue-600/90 text-white font-medium shadow-sm ring-1 ring-blue-500/30'
+                  : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 font-normal'
               }`}
             >
-              <div className="flex items-center space-x-2.5 min-w-0">
-                <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
-                <span className="truncate">{item.label}</span>
-              </div>
-
-              {item.badge && (
-                <span
-                  className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full ${
-                    isActive ? 'bg-emerald-700 text-white' : 'bg-slate-800 text-slate-400'
-                  }`}
-                >
-                  {item.badge}
-                </span>
+              <span className="truncate">{item.label}</span>
+              {active && (
+                <span className="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0" />
               )}
             </button>
           );
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="px-4 py-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
-        <span className="flex items-center">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
-          Data Marts Online
-        </span>
-        <span className="font-mono text-slate-400">v2.1</span>
+      {/* Bottom Status Card */}
+      <div className="p-4 border-t border-slate-800/60">
+        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-medium text-slate-300">Hệ thống phân tích</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">Sẵn sàng phục vụ</div>
+          </div>
+          <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+        </div>
       </div>
     </aside>
   );

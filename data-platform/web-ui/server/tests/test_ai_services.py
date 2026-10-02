@@ -29,19 +29,31 @@ class MetadataAndSemanticTests(unittest.TestCase):
         resolved = semantic_service.resolve("Phân tích các món bán chạy nhất", physical_metadata=self.metadata)
         self.assertIn("products", resolved["entity_ids"])
         if self.metadata["table_count"]:
-            self.assertIn("orders.chi_tiet_don_hang", resolved["tables"])
+            self.assertIn("silver.chi_tiet_don_hang", resolved["tables"])
 
     def test_store_prompt_selects_store_metadata(self):
         resolved = semantic_service.resolve("Đánh giá hiệu suất chi nhánh", physical_metadata=self.metadata)
         self.assertIn("stores", resolved["entity_ids"])
         if self.metadata["table_count"]:
-            self.assertIn("identity.chi_nhanh", resolved["tables"])
+            self.assertIn("silver.chi_nhanh", resolved["tables"])
+
+    def test_promotion_prompt_selects_promotion_metadata(self):
+        resolved = semantic_service.resolve("Doanh thu theo chương trình khuyến mãi", physical_metadata=self.metadata)
+        self.assertIn("promotions", resolved["entity_ids"])
+        if self.metadata["table_count"]:
+            self.assertIn("silver.khuyen_mai", resolved["tables"])
+            self.assertIn("silver.don_hang", resolved["tables"])
+
+    def test_rag_few_shot_retrieval(self):
+        shots = semantic_service.retrieve_few_shots("Top món bán chạy nhất", top_k=2)
+        self.assertTrue(len(shots) > 0)
+        self.assertTrue(any("silver.chi_tiet_don_hang" in s.get("sql", "") for s in shots))
 
     def test_pii_columns_are_removed_from_llm_context(self):
         fake_metadata = {
             "table_map": {
-                "identity.nguoi_dung": {
-                    "object_type": "table", "estimated_rows": 2, "relationships": [], "view_definition": None,
+                "silver.nguoi_dung": {
+                    "object_type": "view", "estimated_rows": 2, "relationships": [], "view_definition": None,
                     "columns": [
                         {"name": "email", "data_type": "text", "nullable": True, "primary_key": False, "foreign_key": None, "sensitive": True},
                         {"name": "diem_loyalty", "data_type": "integer", "nullable": False, "primary_key": False, "foreign_key": None, "sensitive": False},
@@ -54,8 +66,8 @@ class MetadataAndSemanticTests(unittest.TestCase):
         names = [column["name"] for table in context["physical_metadata"] for column in table["columns"]]
         self.assertNotIn("email", names)
         self.assertIn("diem_loyalty", names)
-        self.assertTrue(sql_references_sensitive_columns("SELECT email FROM identity.nguoi_dung"))
-        self.assertFalse(sql_references_sensitive_columns("SELECT diem_loyalty FROM identity.nguoi_dung"))
+        self.assertTrue(sql_references_sensitive_columns("SELECT email FROM silver.nguoi_dung"))
+        self.assertFalse(sql_references_sensitive_columns("SELECT diem_loyalty FROM silver.nguoi_dung"))
 
 
 class SqlSafetyTests(unittest.TestCase):
@@ -190,11 +202,11 @@ class RequestAndProviderTests(unittest.TestCase):
         request = AiTextToReportRequest(prompt="Phân tích doanh thu")
         resolution = semantic_service.resolve(request.prompt, physical_metadata=self.__class__._minimal_metadata())
         plan = _deterministic_plan(resolution, _time_selection(request))
-        self.assertIn("orders.don_hang", plan["main_sql"])
+        self.assertIn("silver.don_hang", plan["main_sql"])
 
     @staticmethod
     def _minimal_metadata():
-        names = ["orders.don_hang", "gold.revenue_daily", "gold.kpi_summary", "gold.order_status_distribution"]
+        names = ["silver.don_hang", "silver.chi_tiet_don_hang", "silver.san_pham"]
         return {"table_map": {name: {} for name in names}}
 
     def test_prompt_only_request_is_backward_compatible(self):
@@ -209,6 +221,143 @@ class RequestAndProviderTests(unittest.TestCase):
         enriched = SavedReportCreate(title="AI", sql_query="SELECT 1", module_config={"prompt": "test"})
         self.assertEqual(enriched.module_config["prompt"], "test")
 
+    def test_query_context_extraction_multi_city_and_typo(self):
+        prompt = "top 5 sản phẩm bán chạy nhất Hà Nội và to 3 san rphaamr bán chạy ở Cần Thơ"
+        ctx = semantic_service.extract_query_context(prompt)
+        self.assertIn("Hà Nội", ctx["cities"])
+        self.assertIn("Cần Thơ", ctx["cities"])
+        self.assertEqual(ctx["city_top_pairs"].get("Hà Nội"), 5)
+        self.assertEqual(ctx["city_top_pairs"].get("Cần Thơ"), 3)
+        self.assertTrue(ctx["has_comparison"])
+
+    def test_deterministic_plan_multi_city_cte(self):
+        prompt = "top 5 sản phẩm bán chạy nhất Hà Nội và to 3 san rphaamr bán chạy ở Cần Thơ"
+        resolution = semantic_service.resolve(prompt, physical_metadata=self.__class__._minimal_metadata())
+        request = AiTextToReportRequest(prompt=prompt)
+        plan = _deterministic_plan(resolution, _time_selection(request))
+        self.assertIn("PARTITION BY cn.thanh_pho", plan["main_sql"])
+        self.assertIn("Cần Thơ", plan["main_sql"])
+        self.assertIn("Hà Nội", plan["main_sql"])
+
+    def test_sql_safety_quoted_vietnamese_aliases(self):
+        sql = '''
+            SELECT sp.ten_san_pham AS "Tên Sản Phẩm",
+                   SUM(ct.so_luong) AS "Số Lượng Đã Bán",
+                   SUM(ct.thanh_tien) AS "Doanh Thu (VNĐ)"
+            FROM silver.chi_tiet_don_hang ct
+            JOIN silver.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham
+            GROUP BY sp.ten_san_pham
+        '''
+        fake_policy = {
+            "silver.chi_tiet_don_hang": {"so_luong", "thanh_tien", "ma_san_pham"},
+            "silver.san_pham": {"ma_san_pham", "ten_san_pham"},
+        }
+        # Should not raise SqlSafetyError
+        validate_ai_query_scope(sql, fake_policy)
+
+    def test_customer_loyalty_plan_is_pii_safe(self):
+        prompt = "Top 5 khách hàng hội viên tích lũy điểm Beans cao nhất"
+        resolution = semantic_service.resolve(prompt, physical_metadata=self.__class__._minimal_metadata())
+        request = AiTextToReportRequest(prompt=prompt)
+        plan = _deterministic_plan(resolution, _time_selection(request))
+        self.assertFalse(sql_references_sensitive_columns(plan["main_sql"]))
+        self.assertIn("diem_loyalty", plan["main_sql"])
+
+    def test_time_selection_year_2026(self):
+        request = AiTextToReportRequest(prompt="TBaos cáo các cửa hàng bán chạy nhất năm 2026")
+        time_info = _time_selection(request)
+        self.assertEqual(time_info["mode"], "year")
+        self.assertEqual(time_info["granularity"], "month")
+        self.assertEqual(time_info["label"], "năm 2026")
+        self.assertIn("EXTRACT(YEAR FROM", time_info["sql"])
+
+    def test_telex_typo_normalization(self):
+        from services.semantic_service import normalize_telex
+        normalized = normalize_telex("TBaos cáo các cuawr hangf to 3 san rphaamr")
+        self.assertIn("báo", normalized.lower())
+        self.assertIn("cửa", normalized.lower())
+        self.assertIn("hàng", normalized.lower())
+        self.assertIn("top 3", normalized.lower())
+        self.assertIn("sản phẩm", normalized.lower())
+
+    def test_relative_time_selection(self):
+        # Tháng trước
+        req_prev_month = AiTextToReportRequest(prompt="Doanh thu tháng trước")
+        info_m = _time_selection(req_prev_month)
+        self.assertEqual(info_m["mode"], "month")
+        self.assertIn("EXTRACT(MONTH FROM", info_m["sql"])
+
+        # Quý trước
+        req_prev_q = AiTextToReportRequest(prompt="Báo cáo quý trước")
+        info_q = _time_selection(req_prev_q)
+        self.assertEqual(info_q["mode"], "quarter")
+        self.assertIn("EXTRACT(QUARTER FROM", info_q["sql"])
+
+        # Tuần trước
+        req_prev_w = AiTextToReportRequest(prompt="Sản lượng tuần trước")
+        info_w = _time_selection(req_prev_w)
+        self.assertEqual(info_w["mode"], "week")
+
+        # Cuối tuần
+        req_weekend = AiTextToReportRequest(prompt="Doanh thu các ngày cuối tuần")
+        info_wk = _time_selection(req_weekend)
+        self.assertEqual(info_wk["mode"], "weekend")
+        self.assertIn("EXTRACT(DOW FROM", info_wk["sql"])
+
+    def test_is_vague_not_triggered_for_domain_queries(self):
+        domain_prompts = [
+            "doanh thu tháng này",
+            "các món bán chạy nhất",
+            "chi nhánh doanh số thấp",
+            "tồn kho sắp hết",
+            "hiệu quả voucher khuyến mãi",
+            "đánh giá chất lượng phục vụ của khách",
+            "ca làm việc nhân viên",
+        ]
+        for p in domain_prompts:
+            with self.subTest(prompt=p):
+                self.assertFalse(semantic_service.is_vague(p, "", "auto"), f"Query '{p}' should NOT be vague")
+
+    def test_full_policy_in_llm_context(self):
+        fake_metadata = {
+            "table_map": {
+                "silver.don_hang": {"columns": [{"name": "ma_don_hang"}, {"name": "tong_tien"}]},
+                "silver.khuyen_mai": {"columns": [{"name": "ma_khuyen_mai"}, {"name": "ten_khuyen_mai"}]},
+                "silver.chi_nhanh": {"columns": [{"name": "ma_chi_nhanh"}, {"name": "ten_chi_nhanh"}]},
+            }
+        }
+        res = semantic_service.resolve("doanh thu khuyến mãi", physical_metadata=fake_metadata)
+        context = semantic_service.llm_context(res, fake_metadata)
+        self.assertIn("full_policy", context)
+        # All 3 tables should be present in full_policy
+        self.assertIn("silver.don_hang", context["full_policy"])
+        self.assertIn("silver.khuyen_mai", context["full_policy"])
+        self.assertIn("silver.chi_nhanh", context["full_policy"])
+
+    def test_dynamic_kpi_cards_resolution(self):
+        from routers.ai import _sanitize_and_resolve_kpi_cards
+        cards = [
+            {"label": "Đánh giá trung bình", "value": "Chờ kết quả", "unit": "sao", "sub_text": "Toàn chuỗi"},
+            {"label": "Chi nhánh dẫn đầu", "value": "Xem kết quả", "unit": None, "sub_text": "Điểm cao nhất"},
+        ]
+        mock_normalized = {
+            "kpis": {"total_orders": 100, "total_revenue": 50000000, "aov": 500000, "completion_rate": 95.0},
+            "table_rows": [
+                {"Tên Chi Nhánh": "Avengers Quận 1", "Điểm Rating": 4.85, "Số Lượng Đánh Giá": 120},
+                {"Tên Chi Nhánh": "Avengers Hoàn Kiếm", "Điểm Rating": 4.60, "Số Lượng Đánh Giá": 95},
+            ]
+        }
+        resolved_cards = _sanitize_and_resolve_kpi_cards(cards, mock_normalized)
+        self.assertTrue(len(resolved_cards) >= 2)
+        # Value must not contain "Chờ kết quả" or "Xem kết quả"
+        self.assertNotEqual(resolved_cards[0]["value"], "Chờ kết quả")
+        self.assertNotEqual(resolved_cards[1]["value"], "Xem kết quả")
+        # Should calculate rating 4.85 or average 4.73
+        self.assertTrue(any("4." in str(c["value"]) for c in resolved_cards))
+
 
 if __name__ == "__main__":
     unittest.main()
+
+
+

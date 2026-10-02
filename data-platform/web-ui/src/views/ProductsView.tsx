@@ -14,17 +14,17 @@ export const ProductsView: React.FC = () => {
   }, [fetchProducts, fetchMarts]);
 
   const kpi = productsData?.kpi || {
-    total_products: 109,
-    best_sellers: 11,
-    total_revenue: 5238080000,
-    total_sold: 104938,
-    categories_count: 3,
+    total_products: 0,
+    best_sellers: 0,
+    total_revenue: 0,
+    total_sold: 0,
+    categories_count: 0,
   };
 
   const topProducts = productsData?.top_products || [];
   const categories = productsData?.categories || [];
   const allProducts = productsData?.all_products || [];
-  const totalRev = Number(kpi.total_revenue || 5238080000);
+  const totalRev = Number(kpi.total_revenue || 0);
 
   // Category Bars (Triệu VNĐ)
   const categoryBars = categories.map((c: any) => ({
@@ -96,53 +96,53 @@ export const ProductsView: React.FC = () => {
       {/* SUBTAB 1: HIỆU SUẤT SẢN PHẨM */}
       {activeSubTab === 'products' && (
         <>
-          {/* 4 Balanced KPI Cards (Typography adjusted, no wrapping) */}
+          {/* 4 Balanced KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">
                 Tổng danh mục thực đơn
               </div>
-              <div className="text-lg sm:text-xl font-bold text-slate-800 mt-1 whitespace-nowrap">
+              <div className="text-lg sm:text-xl font-semibold text-slate-900 mt-1 whitespace-nowrap">
                 {kpi.total_products} món
               </div>
-              <div className="text-xs text-slate-400 font-medium mt-1 truncate">
+              <div className="text-xs text-slate-400 font-normal mt-1 truncate">
                 Ghi nhận trong kho danh mục món
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">
                 Sản phẩm chủ lực (Best Sellers)
               </div>
-              <div className="text-lg sm:text-xl font-bold text-slate-800 mt-1 whitespace-nowrap">
+              <div className="text-lg sm:text-xl font-semibold text-slate-900 mt-1 whitespace-nowrap">
                 {kpi.best_sellers} món
               </div>
-              <div className="text-xs text-emerald-600 font-semibold mt-1 truncate">
+              <div className="text-xs text-emerald-600 font-medium mt-1 truncate">
                 Đóng góp chính vào doanh thu
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">
                 Tổng doanh số sản phẩm
               </div>
-              <div className="text-lg sm:text-xl font-bold text-slate-800 mt-1 flex items-baseline gap-1 whitespace-nowrap">
+              <div className="text-lg sm:text-xl font-semibold text-slate-900 mt-1 flex items-baseline gap-1 whitespace-nowrap">
                 <span>{totalRev.toLocaleString('vi-VN')}</span>
-                <span className="text-xs font-semibold text-slate-500">đ</span>
+                <span className="text-xs font-medium text-slate-500">đ</span>
               </div>
-              <div className="text-xs text-emerald-600 font-semibold mt-1 truncate">
+              <div className="text-xs text-emerald-600 font-medium mt-1 truncate">
                 Doanh thu hoàn thành từ chi tiết đơn
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+              <div className="text-xs font-medium text-slate-500">
                 Tổng sản lượng tiêu thụ
               </div>
-              <div className="text-lg sm:text-xl font-bold text-emerald-700 mt-1 whitespace-nowrap">
+              <div className="text-lg sm:text-xl font-semibold text-emerald-600 mt-1 whitespace-nowrap">
                 {Number(kpi.total_sold || 0).toLocaleString('vi-VN')} ly/phần
               </div>
-              <div className="text-xs text-emerald-600 font-semibold mt-1 truncate">
+              <div className="text-xs text-emerald-600 font-medium mt-1 truncate">
                 Đã phục vụ toàn chuỗi
               </div>
             </div>
@@ -164,7 +164,7 @@ export const ProductsView: React.FC = () => {
             {/* Left: Scrollable Balanced Table */}
             <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-[380px] overflow-hidden">
               <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
-                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                <h3 className="text-sm font-semibold text-slate-800">
                   Xếp hạng sản phẩm bán chạy nhất (Database Marts)
                 </h3>
                 <span className="text-[11px] text-slate-400 font-mono">
@@ -224,7 +224,7 @@ export const ProductsView: React.FC = () => {
             <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between h-[380px]">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                  <h3 className="text-sm font-semibold text-slate-800">
                     Doanh thu theo danh mục (Triệu VNĐ)
                   </h3>
                   <span className="text-[11px] text-slate-400 font-mono">{categories.length} nhóm</span>
@@ -274,8 +274,8 @@ export const ProductsView: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-            <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between h-[360px]">
-              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+            <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs flex flex-col justify-between h-[360px]">
+              <h3 className="text-sm font-semibold text-slate-800 mb-2">
                 So sánh doanh thu giữa các nhóm sản phẩm (Triệu VNĐ)
               </h3>
               <div className="flex-1 flex items-end">
@@ -283,12 +283,12 @@ export const ProductsView: React.FC = () => {
               </div>
             </div>
 
-            <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between h-[360px]">
-              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+            <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs flex flex-col justify-between h-[360px]">
+              <h3 className="text-sm font-semibold text-slate-800 mb-2">
                 Tỷ trọng đóng góp danh mục
               </h3>
               <div className="my-auto py-2">
-                <DonutChart data={categorySlices} centerLabel="Danh mục" centerValue={`${categories.length}`} size={160} />
+                <DonutChart data={categorySlices} centerLabel="Danh mục" centerValue={`${categories.length}`} size={135} />
               </div>
             </div>
           </div>
@@ -299,17 +299,17 @@ export const ProductsView: React.FC = () => {
       {activeSubTab === 'menu_store' && (
         <div className="space-y-5">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-            <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between h-[360px]">
-              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+            <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs flex flex-col justify-between h-[360px]">
+              <h3 className="text-sm font-semibold text-slate-800 mb-2">
                 Cơ cấu danh mục đồ uống và thức ăn
               </h3>
               <div className="my-auto py-2">
-                <DonutChart data={categorySlices} centerLabel="Cơ cấu" centerValue={`${categories.length} Nhóm`} size={160} />
+                <DonutChart data={categorySlices} centerLabel="Cơ cấu" centerValue={`${categories.length} Nhóm`} size={135} />
               </div>
             </div>
 
-            <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200 p-4 shadow-sm h-[360px] overflow-y-auto">
-              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">
+            <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs h-[360px] overflow-y-auto">
+              <h3 className="text-sm font-semibold text-slate-800 mb-3">
                 Thông tin tiêu dùng theo số liệu thực tế
               </h3>
               <div className="space-y-3 text-xs">

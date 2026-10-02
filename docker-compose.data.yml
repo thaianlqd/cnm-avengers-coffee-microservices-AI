@@ -351,6 +351,8 @@ services:
       SOURCE_DB_SSLMODE: ${PGSSLMODE:-require}
     ports:
       - "8501:8501"
+    volumes:
+      - ./data-platform/web-ui/server:/app/server
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8501/ >/dev/null || exit 1"]
       interval: 10s

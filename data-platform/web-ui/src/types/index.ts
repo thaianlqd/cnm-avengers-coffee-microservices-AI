@@ -5,14 +5,17 @@ export type ViewTab =
   | 'stores' 
   | 'customers' 
   | 'products' 
-  | 'system';
+  | 'system'
+  | 'ai_assistant'
+  | 'saved_reports';
 
 export type AnalyticsSubTab = 
   | 'revenue' 
   | 'stores' 
   | 'customers' 
   | 'products' 
-  | 'ai_assistant';
+  | 'ai_assistant'
+  | 'saved_reports';
 
 
 export interface WarehouseMetrics {
@@ -45,6 +48,9 @@ export interface TableMetadata {
   table_name: string;
   schema: string;
   description: string;
+  display_name?: string;
+  category?: string;
+  layer?: string;
   columns: TableColumn[];
 }
 
