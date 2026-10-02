@@ -149,6 +149,9 @@ def test_catalog_semantic_composition(runtime,message,args,count):
 def test_compound_extrema_uses_two_reads_and_canonical_union(runtime):
     runtime.provider.plan([('filter_catalog',dict(search_text='',sort_by='price_asc',limit=1)),
         ('filter_catalog',dict(search_text='',sort_by='price_desc',limit=1))])
+    final = json.loads(runtime.provider.steps[-1]['content'])
+    final.update(display_product_count=2, display_product_ids=['101', '103'])
+    runtime.provider.steps[-1]['content'] = json.dumps(final)
     result=runtime.turn('cho tôi món cà phê đắt nhất và rẻ nhất')
     assert {r['product_id'] for r in result['ui_payload']['products']}=={'101','103'}
     assert len(runtime.reads)==2 and not runtime.writes
@@ -237,12 +240,15 @@ def test_unknown_topping_is_rejected_not_partially_applied(runtime):
 def test_read_questions_cannot_confirm_even_when_model_requests_it(runtime,monkeypatch,message):
     fresh_action(runtime)
     monkeypatch.setattr(cart_tools,'execute_confirm_checkout',lambda *a,**k: pytest.fail('Unsafe confirmation'))
-    runtime.provider.plan([('confirm_checkout',{'action_id':'synthetic-action'})])
+    runtime.provider.plan([('confirm_checkout',{})])
     result=runtime.turn(message)
     assert result['tool_calls_log'][0]['result']['status']=='confirmation_required'
 
 
 def fresh_action(runtime):
+    cart_manager.set_checkout_prefs(runtime.sid, delivery_type='MANG_DI', payment_method='VNPAY')
+    cart_manager.set_branch(runtime.sid, 'synthetic-pickup', 'Pickup branch')
+    cart_manager.set_checkout_context(runtime.sid, voucher_decided=True, checkout_requested=True)
     cart_manager.set_checkout_context(runtime.sid,checkout_action_id='synthetic-action',
         checkout_action_expires_at=str(time.time()+900),summary_fingerprint=cart_manager.cart_fingerprint(runtime.sid))
     cart_manager.set_pending_action(runtime.sid,'confirm_checkout',{})
@@ -255,8 +261,12 @@ def test_final_confirmation_action_safety(runtime,monkeypatch,defect):
     if defect=='expired': cart_manager.set_checkout_context(runtime.sid,checkout_action_expires_at=str(time.time()-1))
     if defect=='stale_cart': cart_manager.set_checkout_context(runtime.sid,summary_fingerprint='stale')
     monkeypatch.setattr(cart_tools,'execute_confirm_checkout',lambda *a,**k: pytest.fail('Unsafe action'))
-    runtime.provider.plan([('confirm_checkout',{'action_id':'wrong' if defect=='wrong_action' else 'synthetic-action'})])
-    assert runtime.turn('xác nhận')['tool_calls_log'][0]['result']['status']=='confirmation_required'
+    runtime.provider.plan([('confirm_checkout',{'action_id':'wrong'} if defect=='wrong_action' else {})])
+    result = runtime.turn('xác nhận')
+    if defect == 'no_action':
+        assert all(row['result']['status'] not in {'ok', 'already_processed'} for row in result['tool_calls_log'])
+    else:
+        assert result['tool_calls_log'][0]['result']['status'] == ('invalid_arguments' if defect == 'wrong_action' else 'confirmation_required')
 
 
 def test_current_explicit_confirmation_once_then_transaction_memory_cleared(runtime,monkeypatch):
@@ -267,7 +277,7 @@ def test_current_explicit_confirmation_once_then_transaction_memory_cleared(runt
         cart_manager.clear_cart(s,order_id='synthetic-order')
         return dict(status='ok',order_id='synthetic-order',message='Đơn hàng đã được tạo.')
     monkeypatch.setattr(cart_tools,'execute_confirm_checkout',confirm)
-    runtime.provider.plan([('confirm_checkout',{'action_id':'synthetic-action'})],claims=['confirm_checkout'])
+    runtime.provider.plan([('confirm_checkout',{})],claims=['confirm_checkout'])
     runtime.turn('xác nhận',client_message_id='confirm-once')
     runtime.turn('xác nhận',client_message_id='confirm-once')
     assert orders==[{'action_id':'synthetic-action'}]

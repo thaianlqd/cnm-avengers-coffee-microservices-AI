@@ -3,6 +3,7 @@ import json
 import time
 from copy import deepcopy
 from src.agents.agent_memory import compact, limit, safe_text, snapshot
+from src.agents.checkout_contract import missing_checkout_fields
 from src.common import cart_manager
 from src.function_calling.tools import cart_tools
 
@@ -115,18 +116,17 @@ def model_projection(context, emergency=False):
             'payment_method', 'delivery_address', 'address_confirmed', 'voucher_code',
             'voucher_decided', 'voucher_revalidation_required', 'checkout_requested') if key in checkout},
         'summary_fresh': state.get('confirmation_fresh', False),
+        'checkout_missing': missing_checkout_fields(state),
         'pending': {'type': (state.get('pending') or {}).get('type'),
                     'params': {key: compact(value) for key, value in
                         ((state.get('pending') or {}).get('params') or {}).items()
-                        if key in {'product_id', 'cart_item_id', 'count', 'missing_fields', 'action_id'}}},
+                        if key in {'product_id', 'cart_item_id', 'count', 'missing_fields'}}},
         'pending_products': [{key: reference_value(row[key]) for key in (*LINE_FIELDS, 'option_schema', 'missing_fields')
                               if key in row} for row in state.get('pending_products') or []]},
         'visible': {kind: model_snapshot(kind, rows) for kind, rows in context.get('visible', {}).items()},
         'focus': compact(context.get('focus') or {}),
         'selected_product_id': context.get('selected_product_id'),
         'recent': deepcopy(context.get('recent') or [])}
-    if state.get('confirmation_fresh'):
-        model['business']['checkout']['checkout_action_id'] = checkout.get('checkout_action_id')
     hard = limit('AI_AGENT_CONTEXT_CHAR_LIMIT', 12000, 2000, 24000)
     budget = min(hard, limit('AI_AGENT_MODEL_CONTEXT_TARGET', 8000, 2000, 24000))
     if emergency:

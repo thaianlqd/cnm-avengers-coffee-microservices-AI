@@ -8,6 +8,7 @@ import time
 
 from src.agents.agent_context import business_state
 from src.agents.agent_memory import compact
+from src.agents.checkout_contract import missing_checkout_fields, checkout_guidance
 from src.agents.tool_capabilities import CAPABILITIES, capabilities_for_context, tool_schemas, validate_args
 from src.common import cart_manager
 from src.function_calling.tools import TOOL_EXECUTORS
@@ -39,6 +40,9 @@ class GuardedToolGateway:
         self.business_revision, self.read_cache_hits = 0, 0
         self.write_started = False
         self.entry_action = (context['business'].get('checkout') or {}).get('checkout_action_id')
+        self.entry_fingerprint = cart_manager.cart_fingerprint(session_id) if not shadow else None
+        self.confirmation_recovery = None
+        self.summary_refreshed = False
         self.options = {}
         self.updated_products = set()
         self.denied_cart_operation = None
@@ -60,7 +64,8 @@ class GuardedToolGateway:
         self.context['focus'] = self.artifacts.focus
         self.repair_tool = repair_tool
         self.allowed = capabilities_for_context(self.context, entry_action=self.entry_action,
-                                               final_only=final_only, repair_tool=repair_tool)
+                                               final_only=final_only, repair_tool=repair_tool,
+                                               confirmation_recovery=self.confirmation_recovery)
         rows = tool_schemas(self.allowed)
         self.schemas = {r['function']['name']: r['function']['parameters'] for r in rows}
         return rows, self.executors()
@@ -77,11 +82,16 @@ class GuardedToolGateway:
     def dispatch(self, name, args):
         started = time.monotonic()
         capability = CAPABILITIES.get(name)
+        if name == 'confirm_checkout' and self.confirmation_recovery is None:
+            self.confirmation_recovery = 'confirm_checkout'
         if not capability or name not in self.schemas or not validate_args(args, self.schemas[name]):
             spec = self.schemas.get(name) or {}
             result = denied('invalid_arguments',
                 required_fields=spec.get('required', []),
                 allowed_fields=list(spec.get('properties', {})))
+            if name == 'confirm_checkout':
+                self.confirmation_recovery = 'confirm_checkout' if name in self.schemas else 'stop'
+                result['recovery_tool'] = 'confirm_checkout' if name in self.schemas else None
             self.artifacts.collect(name, args, result)
             record = {'tool_name': name, 'read_or_write': capability.access if capability else 'UNKNOWN',
                 'owner': capability.owner if capability else 'unregistered',
@@ -96,7 +106,7 @@ class GuardedToolGateway:
         if not self.shadow:
             self.context['business'] = business_state(self.session_id)
         signature = self.cache_key(name, args)
-        if signature in self.cache:
+        if signature in self.cache and self.confirmation_recovery is None:
             if capability.access == 'READ':
                 self.read_cache_hits += 1
                 return {**deepcopy(self.cache[signature]), 'same_turn_read_reused': True}
@@ -106,8 +116,12 @@ class GuardedToolGateway:
         else:
             state = self.context['business']
             legal_now = capabilities_for_context({**self.context, 'visible': self.artifacts.visible,
-                'focus': self.artifacts.focus}, entry_action=self.entry_action, repair_tool=self.repair_tool)
-            if self.filtering_enabled and name not in legal_now and capability.access != 'READ':
+                'focus': self.artifacts.focus}, entry_action=self.entry_action, repair_tool=self.repair_tool,
+                confirmation_recovery=self.confirmation_recovery)
+            if self.confirmation_recovery is not None and (
+                    name != self.confirmation_recovery or self.summary_refreshed):
+                result = denied('confirmation_operation_locked')
+            elif self.filtering_enabled and name not in legal_now and capability.access != 'READ':
                 result = denied('capability_not_available')
             elif capability.access != 'READ' and (not state['authenticated'] or not self.client_message_id):
                 result = denied('authentication_or_turn_required')
@@ -135,6 +149,8 @@ class GuardedToolGateway:
                     logger.warning('[ToolGateway] tool=%s error_type=%s', name, type(exc).__name__)
                     result = denied('provider_unavailable')
         from src.agents.tool_artifacts import public_result
+        if name == 'confirm_checkout' and result.get('status') != 'invalid_arguments' and self.confirmation_recovery == 'confirm_checkout':
+            self.confirmation_recovery = 'stop'
         result = public_result(result)
         if capability.access == 'READ' or result.get('status') in {'ok', 'already_processed', 'needs_options', 'require_confirmation'}:
             self.cache[signature] = result
@@ -144,12 +160,15 @@ class GuardedToolGateway:
             if not self.shadow:
                 self.context['business'] = business_state(self.session_id)
         self.context['visible'], self.context['focus'] = self.artifacts.visible, self.artifacts.focus
+        self.artifacts.business = self.context['business']
         record = {'tool_name': name, 'read_or_write': capability.access, 'owner': capability.owner,
             'validated_args_summary': sorted(args), 'guardrail_result': result.get('status'),
             'reference_source': 'current_authoritative_cart' if 'cart_item_id' in args else
                 'canonical_provider_and_session_candidates' if any(k in args for k in ('product_id', 'branch_id', 'candidate_id', 'action_id', 'voucher_code', 'entity_id')) else 'server_scoped_tool',
             'latency_ms': round((time.monotonic()-started)*1000, 2),
-            'mutation_evidence_present': capability.access != 'READ' and result.get('status') in {'ok', 'already_processed'}}
+            'mutation_evidence_present': capability.access != 'READ' and result.get('changed') is not False and result.get('status') in {'ok', 'already_processed'}}
+        if name == 'confirm_checkout' and result.get('reason'):
+            record['confirmation_denial_reason'] = result['reason']
         self.provenance.append(record)
         logger.info('[ToolGateway] %s', json.dumps(record))
         return result
@@ -467,11 +486,26 @@ class GuardedToolGateway:
         listed = voucher_tools.execute_get_applicable_vouchers(self.session_id)
         code = args['voucher_code'].strip().upper()
         candidates = listed.get('vouchers') or []
-        if not self.context['business']['cart']['items'] or not any(str(r.get('ma_voucher') or r.get('voucher_code')).upper() == code for r in candidates):
+        if listed.get('status') != 'ok' or not self.context['business']['cart']['items'] or not any(str(r.get('ma_voucher') or r.get('voucher_code')).upper() == code for r in candidates):
             return denied('voucher_not_eligible')
+        prefs = cart_manager.get_checkout_prefs(self.session_id)
+        facts = {'cart': self.context['business']['cart'], 'choices': {
+            key: prefs.get(key) for key in ('delivery_type', 'payment_method', 'delivery_address', 'address_confirmed')}}
+        binding = hashlib.sha256(json.dumps(facts, sort_keys=True,
+            ensure_ascii=False).encode()).hexdigest()
+        fresh = (prefs.get('voucher_binding_fingerprint') == binding or (
+            prefs.get('summary_fingerprint') == cart_manager.cart_fingerprint(self.session_id)))
+        candidate = next(r for r in candidates if str(r.get('ma_voucher') or r.get('voucher_code')).upper() == code)
+        discount_matches = (candidate.get('so_tien_giam_du_kien') is None or
+                            candidate['so_tien_giam_du_kien'] == prefs.get('discount_amount'))
+        if (str(prefs.get('voucher_code') or '').strip().upper() == code and prefs.get('voucher_decided')
+                and not prefs.get('voucher_revalidation_required') and fresh and discount_matches):
+            return {'status': 'already_processed', 'changed': False, 'voucher_code': code,
+                'message': 'Mã giảm giá này đang được áp dụng cho giỏ hàng.'}
         result = self._write('apply_voucher', args, lambda: voucher_tools.execute_apply_voucher(self.session_id, code))
         if result.get('status') == 'ok':
             self._invalidate_summary()
+            cart_manager.set_checkout_context(self.session_id, voucher_binding_fingerprint=binding)
         return result
 
     def _remove_voucher(self, args):
@@ -490,9 +524,15 @@ class GuardedToolGateway:
         from src.common.inventory_validation import validate_cart_at_branch
         from src.function_calling.helpers import _get_engine
         cart = {**cart_manager.get_cart(self.session_id), 'branch_id': bid}
-        checked = validate_cart_at_branch(_get_engine(), cart)
+        engine = _get_engine()
+        checked = validate_cart_at_branch(engine, cart)
         if checked['unavailable'] or checked['unverified']:
             return denied('branch_unavailable_or_unknown')
+        if str(cart_manager.get_cart(self.session_id).get('branch_id')) == bid:
+            if not branch_tools.branch_identity_available(engine, bid):
+                return denied('branch_unavailable_or_unknown')
+            return {'status': 'already_processed', 'changed': False,
+                'message': 'Chi nhánh này đã được chọn cho đơn hàng.'}
         result = self._write('set_session_branch', args, lambda: branch_tools.execute_set_session_branch(
             self.session_id, bid, row.get('branch_name') or row.get('ten_chi_nhanh') or '', customer_selected=True))
         if result.get('status') == 'ok':
@@ -518,6 +558,9 @@ class GuardedToolGateway:
                 return denied('wallet_unavailable', message=wallet_error.get('reply'))
         prefs = cart_manager.get_checkout_prefs(self.session_id)
         changed = any(prefs.get(key) != value for key, value in args.items())
+        if not changed:
+            return {'status': 'already_processed', 'changed': False, 'choices': args,
+                'message': 'Các lựa chọn này đã được ghi nhận.'}
         cart_manager.set_checkout_prefs(self.session_id, **args)
         if args.get('delivery_type'):
             cart_manager.set_checkout_context(self.session_id, checkout_requested=True)
@@ -527,11 +570,15 @@ class GuardedToolGateway:
             self.artifacts.visible['branches'] = []
         if changed:
             self._invalidate_summary()
-        return {'status': 'ok', 'choices': args}
+        return {'status': 'ok', 'changed': True, 'choices': args}
 
     def _resolve_location(self, args):
         from src.agents.order_flow_graph import _handle_location_request, _persist_branch_candidates_from_result
         from src.agents.location_parser import Location
+        args = dict(args)
+        # Pickup locations are origins for discovery, never delivery addresses.
+        if cart_manager.get_checkout_prefs(self.session_id).get('delivery_type') in {'MANG_DI', 'TAI_CHO'}:
+            args['for_checkout'] = False
         if args.get('for_checkout'):
             if not self.context['business']['cart']['items'] or not cart_manager.get_checkout_prefs(self.session_id).get('delivery_type'):
                 return denied('checkout_location_preconditions_missing')
@@ -545,6 +592,17 @@ class GuardedToolGateway:
         if args.get('for_checkout'):
             _persist_branch_candidates_from_result(self.session_id, result)
         nearest = next((r['result'] for r in result.get('tool_calls_log', []) if r['tool'] == 'find_nearest_branch'), {})
+        # The established delivery adapter may prepare a summary after geo and
+        # compatible-branch validation. Preserve that actual authority/UI;
+        # do not hide it and prompt another redundant summary operation.
+        summary = None
+        for entry in result.get('tool_calls_log') or []:
+            if entry.get('tool') in {'set_session_branch', 'request_checkout'}:
+                evidence = entry.get('result') or {}
+                actual_args = {'branch_id': str(cart_manager.get_cart(self.session_id).get('branch_id') or '')} if entry['tool'] == 'set_session_branch' else {}
+                self.artifacts.collect(entry['tool'], actual_args, evidence)
+                if entry['tool'] == 'request_checkout' and evidence.get('status') == 'require_confirmation':
+                    summary = evidence.get('order_summary')
         # The generic business adapter owns promotion. A selected provider
         # candidate is reused with immutable coordinates, never re-geocoded.
         if (getattr(self, '_selected_location', None) and args.get('for_checkout')
@@ -554,7 +612,8 @@ class GuardedToolGateway:
             if (cart_manager.get_pending_action(self.session_id) or {}).get('type') == 'select_location_candidate':
                 cart_manager.clear_pending_action(self.session_id)
             self.artifacts.visible['location_candidates'] = []
-        return {**nearest, 'status': nearest.get('status') or 'needs_location', 'message': result['reply']}
+        return {**nearest, 'status': 'require_confirmation' if summary else nearest.get('status') or 'needs_location',
+            'message': result['reply'], **({'order_summary': summary} if summary else {})}
 
     def _select_location_candidate(self, args):
         candidate = next((r for r in self.artifacts.visible.get('location_candidates', []) if r.get('candidate_id') == args['candidate_id']), None)
@@ -585,29 +644,51 @@ class GuardedToolGateway:
             return denied('needs_options')
         if not prefs.get('voucher_decided') or prefs.get('voucher_revalidation_required'):
             return denied('need_voucher_decision')
-        missing = [key for key in ('delivery_type', 'payment_method') if not prefs.get(key)]
-        if not cart.get('branch_id'):
-            missing.append('branch')
-        if prefs.get('delivery_type') == 'GIAO_TAN_NOI' and (
-                not prefs.get('delivery_address') or not prefs.get('address_confirmed')):
-            missing.append('delivery_address')
+        missing = missing_checkout_fields(self.context['business'])
         if missing:
-            return denied('checkout_preconditions_missing', missing=missing)
+            return denied('checkout_preconditions_missing', missing=missing, message=checkout_guidance(missing))
         fresh = (prefs.get('checkout_action_id') and prefs.get('summary_fingerprint') == cart_manager.cart_fingerprint(self.session_id)
                  and float(prefs.get('checkout_action_expires_at') or 0) > time.time())
-        return cart_tools.execute_request_checkout(self.session_id, reuse_summary=bool(fresh) or args.get('reuse_summary', False))
+        result = cart_tools.execute_request_checkout(self.session_id, reuse_summary=bool(fresh) or args.get('reuse_summary', False))
+        if self.confirmation_recovery is not None:
+            self.summary_refreshed = True
+        return result
 
     def _confirm_checkout(self, args):
         from src.agents.tier1 import classify_confirmation
         prefs = cart_manager.get_checkout_prefs(self.session_id)
-        if (not self.entry_action or args['action_id'] != self.entry_action
-                or args['action_id'] != prefs.get('checkout_action_id')
-                or (cart_manager.get_pending_action(self.session_id) or {}).get('type') != 'confirm_checkout'
-                or classify_confirmation(self.user_message, 'confirm_checkout') != 'YES'
-                or prefs.get('summary_fingerprint') != cart_manager.cart_fingerprint(self.session_id)
-                or float(prefs.get('checkout_action_expires_at') or 0) <= time.time()):
-            return denied('confirmation_required')
-        return self._write('confirm_checkout', args, lambda: cart_tools.execute_confirm_checkout(self.session_id, action_id=args['action_id']))
+        current = cart_manager.cart_fingerprint(self.session_id)
+        pending = cart_manager.get_pending_action(self.session_id) or {}
+        reason = None
+        if not self.entry_action:
+            reason = 'no_prior_action'
+        elif self.entry_action != prefs.get('checkout_action_id'):
+            reason = 'action_mismatch'
+        elif current != self.entry_fingerprint:
+            reason = 'state_changed_during_turn'
+        elif classify_confirmation(self.user_message, 'confirm_checkout') != 'YES':
+            reason = 'not_explicit_confirmation'
+        elif prefs.get('summary_fingerprint') != current:
+            reason = 'summary_cart_changed'
+        elif float(prefs.get('checkout_action_expires_at') or 0) <= time.time():
+            reason = 'summary_expired'
+        elif pending.get('type') != 'confirm_checkout' or float(pending.get('expires_at') or 0) <= time.time():
+            reason = 'pending_confirmation_missing'
+        elif missing_checkout_fields(self.context['business']):
+            reason = 'checkout_preconditions_missing'
+        self.confirmation_recovery = 'stop'
+        if reason:
+            missing = missing_checkout_fields(self.context['business'])
+            if not missing and reason != 'not_explicit_confirmation':
+                self.confirmation_recovery = 'request_checkout'
+            message = (checkout_guidance(missing) if missing else
+                'Bạn xác nhận đặt đơn theo bản tóm tắt này nhé.' if reason == 'not_explicit_confirmation' else
+                'Bản tóm tắt cần được làm mới. Bạn xem lại rồi xác nhận ở lượt tiếp theo nhé.')
+            return denied('confirmation_required', reason=reason, recovery_tool=(
+                'request_checkout' if self.confirmation_recovery == 'request_checkout' else None),
+                missing=missing, message=message)
+        return self._write('confirm_checkout', {}, lambda: cart_tools.execute_confirm_checkout(
+            self.session_id, action_id=self.entry_action))
 
     def _get_product_description(self, args):
         if self.request_route.get('owner') in {'price', 'inventory', 'review'}:

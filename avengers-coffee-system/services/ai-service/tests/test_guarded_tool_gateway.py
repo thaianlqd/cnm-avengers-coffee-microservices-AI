@@ -226,9 +226,11 @@ def test_new_summary_cannot_be_confirmed_in_same_turn(runtime,monkeypatch):
         return {'status':'require_confirmation','order_summary':{'action_id':'new-action'}}
     monkeypatch.setattr(cart_tools,'execute_request_checkout',summary)
     monkeypatch.setattr(cart_tools,'execute_confirm_checkout',lambda *a,**k: pytest.fail('Same-turn creation'))
-    runtime.provider.plan([('request_checkout',{}),('confirm_checkout',{'action_id':'new-action'})])
+    runtime.provider.plan([('request_checkout',{}),('confirm_checkout',{})])
     result=runtime.turn('xác nhận')
-    assert result['tool_calls_log'][-1]['result']['status']=='confirmation_required'
+    # The inference loop locks the second proposal before gateway dispatch.
+    assert [row['tool'] for row in result['tool_calls_log']] == ['request_checkout']
+    assert result['checkout_payload']['action_id'] == 'new-action'
 
 
 def test_public_tool_results_never_contain_replay_records_or_tokens(runtime,monkeypatch):

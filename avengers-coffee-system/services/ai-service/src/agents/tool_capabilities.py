@@ -1,7 +1,6 @@
 """Customer BPM capability inventory, schemas, and explicit authority boundaries."""
 from copy import deepcopy
 from dataclasses import dataclass
-import time
 from src.function_calling.tools import ALL_TOOL_SCHEMAS, TOOL_EXECUTORS
 
 
@@ -90,7 +89,7 @@ CUSTOM_SCHEMAS = {
         'for_checkout': {'type': 'boolean'}}, ('location', 'kind')),
     'select_location_candidate': schema('select_location_candidate', {'candidate_id': STRING}, ('candidate_id',)),
     'request_checkout': schema('request_checkout', {'reuse_summary': {'type': 'boolean'}}),
-    'confirm_checkout': schema('confirm_checkout', {'action_id': STRING}, ('action_id',)),
+    'confirm_checkout': schema('confirm_checkout'),
 }
 
 PURPOSES = {
@@ -104,14 +103,14 @@ PURPOSES = {
     'get_payment_options': 'Read supported current payment options and wallet eligibility.',
     'get_cart_quote': 'Read price totals only. It cannot show/re-render an order confirmation summary or canonical confirmation UI.',
     'request_checkout': 'Prepare or re-render the final order summary and canonical confirmation UI. For a request to show/review the pending order again, call this with reuse_summary=true; get_cart plus get_cart_quote is insufficient. A summary is not an order.',
-    'confirm_checkout': 'Create the order ONLY after current explicit final agreement to the prior-turn fresh summary action. Use that exact action_id; do not request a new summary first.',
+    'confirm_checkout': 'Confirm the prior-turn summary after current explicit final agreement. Call with {}. The server binds and checks the prior action; never request a new summary first. A denial gives the only permitted recovery.',
     'finish_cart': 'Customer has finished selecting/configuring items and wants to proceed. Open the mandatory voucher decision gate using current authoritative cart. Reading quote/vouchers alone does not complete this transition.',
     'update_cart_item': 'Edit one exact current cart line with an absolute patch. For ordinal references include cart_line_ordinal matching its CURRENT cart display_index. Product-list ordinals are a separate namespace. Do not edit another row because the requested row already has that value.',
     'remove_cart_item': 'Remove one exact current cart line. For ordinal references include cart_line_ordinal matching CURRENT cart display_index, not product-list rank.',
     'get_order_history': 'Read this authenticated customer\'s completed order history. Not the current draft cart or checkout summary.',
     'get_order_details': 'Read an existing completed order owned by this authenticated customer. Not the current checkout draft.',
     'track_order_status': 'Read the current service status of an existing order owned by this customer.',
-    'get_user_profile': 'Read this authenticated customer\'s own profile; no preference inference or profile mutation.',
+    'get_user_profile': 'Read saved addresses for this authenticated customer when checkout needs a location. For a saved-address reference, read first and pass the actual full_address to resolve_location. Pickup/dine-in addresses are search origins only; customer chooses a branch later.',
     'get_applicable_vouchers': 'Read currently eligible voucher candidates for the current cart. Does not apply a voucher or mark the cart finished.',
     'ask_branch': 'List canonical branch candidates. The customer selects a branch on a later turn; discovery does not select it.',
     'find_nearest_branch': 'Read canonical provider locations and nearby branches for the literal location. Does not commit checkout address or branch.',
@@ -120,7 +119,8 @@ PURPOSES = {
 }
 
 
-def capabilities_for_context(context, *, entry_action=None, final_only=False, repair_tool=None):
+def capabilities_for_context(context, *, entry_action=None, final_only=False, repair_tool=None,
+                             confirmation_recovery=None):
     """One state-only exposure policy; never interpret customer language here.
 
     Discovery reads remain interruptible. A discovery result can unlock more
@@ -171,6 +171,11 @@ def capabilities_for_context(context, *, entry_action=None, final_only=False, re
     pickup = checkout.get('delivery_type') in {'MANG_DI', 'TAI_CHO'}
     if cart and pickup:
         allowed.add('ask_branch')
+    delivery = checkout.get('delivery_type') == 'GIAO_TAN_NOI'
+    if (mutable and cart and state.get('cart_verified') and (
+            (pickup and not cart_state.get('branch_id')) or (delivery and (
+                not checkout.get('delivery_address') or not checkout.get('address_confirmed'))))):
+        allowed.add('get_user_profile')
     if mutable:
         allowed.add('resolve_location')  # Canonical location consultation too.
         if visible.get('location_candidates'):
@@ -203,12 +208,12 @@ def capabilities_for_context(context, *, entry_action=None, final_only=False, re
                 if (voucher_decided and not unfinished and location_ready
                         and checkout.get('payment_method')):
                     allowed.add('request_checkout')
-    if (mutable and cart and state.get('cart_verified') and entry_action
-            and entry_action == checkout.get('checkout_action_id')
-            and state.get('confirmation_fresh')
-            and pending.get('type') == 'confirm_checkout'
-            and float(pending.get('expires_at') or 0) > time.time()):
+    # Exposure permits a proposal, never authorizes the final write. Stale
+    # prior actions must reach the gateway's structured denial/recovery gate.
+    if mutable and cart and state.get('cart_verified') and entry_action:
         allowed.add('confirm_checkout')
+    if confirmation_recovery is not None:
+        return frozenset({confirmation_recovery} & allowed)
     if repair_tool:
         allowed = {name for name in allowed if CAPABILITIES[name].access == 'READ' or name == repair_tool}
     return frozenset(allowed)

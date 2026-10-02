@@ -167,7 +167,7 @@ def classify_confirmation(text: str, pending_type: Optional[str]) -> Literal["YE
             has_yes = True
         elif token in no_set:
             has_no = True
-        elif token in BASE_FILLER:
+        elif token in BASE_FILLER or (pending_type == 'confirm_checkout' and token == 'ban'):
             continue
         else:
             has_foreign = True

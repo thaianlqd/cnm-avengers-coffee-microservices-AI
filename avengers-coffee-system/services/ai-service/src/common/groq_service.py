@@ -644,6 +644,7 @@ def groq_agent_chat(
             recoverable_write_denial = False
             successful_required_repair = False
             terminal_success = False
+            confirmation_denied_stop = False
             for tc in assistant_msg.tool_calls:
                 if guarded and len(tool_calls_log) >= max_tool_rounds * 4:
                     return {"reply": "", "tool_calls_log": tool_calls_log,
@@ -684,7 +685,7 @@ def groq_agent_chat(
                             "status": "confirmation_required",
                             "message": "Chỉ backend được thực thi đơn sau khi xác nhận khớp bản tóm tắt đang chờ.",
                         }
-                    elif guarded and (successful_required_repair or terminal_success) and not is_read:
+                    elif guarded and (successful_required_repair or terminal_success or confirmation_denied_stop) and not is_read:
                         result = {'status': 'mutation_tools_locked', 'message': 'The successful operation is complete; compose the response.'}
                     elif guarded and required_repair_tool and tool_name != required_repair_tool and not is_read:
                         result = {'status': 'conflicting_cart_operations', 'active_operation': required_repair_tool,
@@ -714,8 +715,16 @@ def groq_agent_chat(
                     if result.get('same_turn_read_reused'):
                         repeated_signature, repeated_tool_result = True, result
                     if result.get('status') in {'ok', 'already_processed', 'require_confirmation'} and not is_read:
-                        mutation_succeeded = True
-                        terminal_success |= tool_name in {'request_checkout', 'confirm_checkout'}
+                        mutation_succeeded |= result.get('changed') is not False
+                        terminal_success |= (tool_name in {'request_checkout', 'confirm_checkout'} or (
+                            tool_name in {'resolve_location', 'select_location_candidate'}
+                            and result.get('status') == 'require_confirmation' and bool(result.get('order_summary'))))
+                    if tool_name == 'confirm_checkout' and result.get('status') not in {'ok', 'already_processed'}:
+                        if result.get('recovery_tool') in {'request_checkout', 'confirm_checkout'}:
+                            required_repair_tool = result['recovery_tool']
+                            recoverable_write_denial = True
+                        else:
+                            confirmation_denied_stop = True
 
                 tool_calls_log.append({"tool": tool_name, "args": tool_args, "round": round_idx, "result": result})
                 if (guarded and isinstance(result, dict) and result.get("status") in {
@@ -731,6 +740,11 @@ def groq_agent_chat(
                         and isinstance(result, dict)
                         and result.get("status") in {"ok", "already_processed"}):
                     successful_required_repair = True
+                if (guarded and required_repair_tool == 'request_checkout' and tool_name == 'request_checkout'
+                        and isinstance(result, dict) and result.get('status') != 'require_confirmation'):
+                    # A confirmation recovery gets one summary attempt. Failed
+                    # stock/quote/prerequisite reads require customer guidance.
+                    confirmation_denied_stop = True
 
                 # Bắt tín hiệu checkout (Guardrail)
                 if tool_name == "request_checkout" and isinstance(result, dict):
@@ -754,13 +768,13 @@ def groq_agent_chat(
 
             if recoverable_write_denial:
                 semantic_repairs += 1
-            if successful_required_repair or terminal_success:
+            if successful_required_repair or terminal_success or confirmation_denied_stop:
                 # Subsequent inference has no executors and cannot replay a write.
                 force_tools_disabled = True
                 force_tool_required = False
                 required_repair_tool = None
                 current_messages.append({'role': 'system', 'content':
-                    'The operation succeeded. Answer now from its evidence; no more tools.'})
+                    'The operation is complete or requires customer clarification. Answer from its evidence; no more tools.'})
             elif repeated_signature:
                 force_tools_disabled = not required_repair_round
                 force_tool_required = required_repair_round

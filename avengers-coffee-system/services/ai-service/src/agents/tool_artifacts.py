@@ -44,6 +44,10 @@ def model_tool_result(name, result, artifacts=None):
                 'entity_type', 'entity_id', 'source', 'authority') if key in doc})
         return {**{key: result[key] for key in ('status', 'message', 'grounding') if key in result},
                 'results': docs}
+    if name == 'get_user_profile':
+        return {**{key: result[key] for key in ('status', 'default_address') if key in result},
+            'address_items': [{key: row[key] for key in ('label', 'full_address', 'is_default') if key in row}
+                for row in result.get('address_items') or [] if isinstance(row, dict)]}
     if result.get('status') not in SUCCESS | {'no_applicable_voucher', 'empty_cart'}:
         return compact(result)  # Preserve every denial/recovery field.
     value = {key: compact(result[key]) for key in ('status', 'message', 'changed',
@@ -108,12 +112,11 @@ def model_tool_result(name, result, artifacts=None):
                 value[key] = compact(result[key])
         if value.get('option_groups'):
             value.pop('options', None)  # Same labels/values already present in groups.
-    if name == 'request_checkout' and isinstance(result.get('order_summary'), dict):
+    if name in {'request_checkout', 'resolve_location', 'select_location_candidate'} and isinstance(result.get('order_summary'), dict):
         summary = result['order_summary']
         value['order_summary'] = {key: compact(summary[key]) for key in ('branch_id', 'branch_name',
             'subtotal', 'total_price', 'discount_amount', 'delivery_fee', 'final_total',
-            'voucher_code', 'delivery_type', 'payment_method', 'delivery_address', 'action_id',
-            'checkout_action_id') if key in summary}
+            'voucher_code', 'delivery_type', 'payment_method', 'delivery_address') if key in summary}
         value['order_summary']['items'] = model_cart({'items': summary.get('items') or []})['items']
     if name in {'get_cart', 'get_cart_quote', 'filter_catalog', 'get_recommendations',
                 'check_price_and_stock', 'get_applicable_vouchers', 'finish_cart',
@@ -150,7 +153,11 @@ class ToolArtifacts:
         self.has_pending_confirmation = pending.get('type') == 'confirm_checkout'
         self.logs = []
         self.ui = {'products': [], 'vouchers': [], 'branches': [], 'actions': []}
+        self.product_candidates = {}  # Complete turn authority; UI budget is separate.
         self.checkout = None
+        self.business = ((context or {}).get('business') or {})
+        self.response_validation_issue = None
+        self.display_unresolved = False
 
     def collect(self, name, args, result):
         self.logs.append({'tool': name, 'args': compact(args), 'result': result})
@@ -188,6 +195,7 @@ class ToolArtifacts:
                          'product_name': row.get('product_name') or row.get('ten_san_pham')}
                         for row in rows if isinstance(row, dict)]
                 rows = [row for row in rows if row['product_id'] and row['product_name']]
+                self.product_candidates.update({row['product_id']: row for row in rows})
             if kind == 'location_candidates':
                 rows = [{**row, 'candidate_id': candidate_id(row)} for row in rows]
             if kind in ('products', 'branches', 'vouchers'):
@@ -222,7 +230,32 @@ class ToolArtifacts:
 
     def factual_fallback(self):
         self.used_factual_fallback = True  # Turn-local observability, never business state.
+        if self.display_unresolved:
+            self.ui['products'] = []
+            self.visible['products'] = []
+            return 'Bạn muốn tổng cộng bao nhiêu món trong danh sách so sánh này?'
         from src.agents.tool_capabilities import WRITES
+        # Final-write evidence and denials take priority over older draft facts.
+        for row in reversed(self.logs):
+            if row['tool'] == 'confirm_checkout' and row['result'].get('message'):
+                if not any(later['tool'] == 'request_checkout'
+                           for later in self.logs[self.logs.index(row)+1:]):
+                    return safe_text(row['result']['message'], 3000)
+        checkout_tools = {'set_checkout_choices', 'get_payment_options', 'request_checkout', 'set_session_branch'}
+        if (any(row['tool'] in checkout_tools and row['result'].get('status') in SUCCESS for row in self.logs)
+                or (self.business.get('cart_verified') and (self.business.get('cart') or {}).get('items')
+                    and (self.business.get('checkout') or {}).get('checkout_requested')
+                    and (not self.logs or (all(row['result'].get('status') not in SUCCESS for row in self.logs)
+                        and any(row['tool'] in checkout_tools | {'confirm_checkout'} for row in self.logs))))):
+            from src.agents.checkout_contract import missing_checkout_fields, checkout_guidance
+            missing = missing_checkout_fields(self.business)
+            if missing:
+                prefs = self.business.get('checkout') or {}
+                fulfillment = {'TAI_CHO': 'dùng tại quán', 'MANG_DI': 'mang đi', 'GIAO_TAN_NOI': 'giao tận nơi'}
+                prefix = ('Đã ghi nhận hình thức ' + fulfillment[prefs['delivery_type']] + '. '
+                    if any(row['tool'] == 'set_checkout_choices' and row['result'].get('status') in SUCCESS
+                           for row in self.logs) and prefs.get('delivery_type') in fulfillment else '')
+                return prefix + checkout_guidance(missing)
         for row in reversed(self.logs):
             result = row['result']
             if row['tool'] in WRITES and result.get('status') in {'ok', 'already_processed', 'require_confirmation'}:
@@ -251,12 +284,41 @@ class ToolArtifacts:
                      if row['result'].get('message')), 'Mình chưa xác minh được kết quả. Bạn thử lại đúng tin nhắn này nhé.')
 
     def response_issue(self, raw):
+        issue = self._response_issue(raw)
+        if issue:
+            if self.response_validation_issue is None:
+                self.response_validation_issue = 'missing_tool_evidence' if issue.startswith('TOOL_REQUIRED:') else 'missing_envelope'
+        return issue
+
+    def _display_issue(self, envelope):
+        selection, count = envelope.get('display_product_ids'), envelope.get('display_product_count')
+        discoveries = [row for row in self.logs if row['tool'] in {'filter_catalog', 'get_recommendations'}
+                       and row['result'].get('products')]
+        if len(discoveries) > 1 and (selection is None or count is None):
+            return 'Declare display_product_count as the requested TOTAL across all discovery reads and select display_product_ids. If total versus each is ambiguous, ask one clarification and display no products (count 0, ids []).'
+        if count is not None and (type(count) is not int or not 0 <= count <= 16
+                                  or not isinstance(selection, list) or len(selection) != count):
+            return 'display_product_ids must contain exactly display_product_count canonical IDs, the requested TOTAL across all reads, not the limit per read.'
+        if selection is not None:
+            canonical = set(self.product_candidates) | {str(row['product_id']) for row in self.ui['products']}
+            if (not isinstance(selection, list) or len(selection) > 16
+                    or any(not isinstance(key, str) or key not in canonical for key in selection)
+                    or len(set(selection)) != len(selection)):
+                return 'Select unique canonical display_product_ids from this turn only.'
+        return None
+
+    def _response_issue(self, raw):
         try:
             envelope = json.loads(raw)
         except (ValueError, TypeError):
             return 'Return the required JSON envelope with response_kind, reply, mutation_claims and evidence_quotes.'
         if not isinstance(envelope, dict) or not isinstance(envelope.get('reply'), str):
             return 'Return the required JSON envelope with a string reply.'
+        display_issue = self._display_issue(envelope)
+        self.display_unresolved = bool(display_issue)
+        if display_issue:
+            self.response_validation_issue = 'display_selection_invalid'
+            return display_issue
         if not self.logs and envelope.get('response_kind') not in {'social', 'clarification'}:
             return ('TOOL_REQUIRED: There is no current tool evidence. You MUST call the appropriate capability now. '
                     'For product discovery use filter_catalog/get_recommendations; for a fact use its authority. History is not factual authority.')
@@ -271,10 +333,10 @@ class ToolArtifacts:
                     'recovery information, or ask one clarification when no safe canonical target exists.')
         from src.agents.tool_capabilities import WRITES
         successful_writes = {row['tool'] for row in self.logs
-            if row['tool'] in WRITES and row['result'].get('status') in {'ok', 'already_processed'}}
+            if row['tool'] in WRITES and row['result'].get('changed') is not False and row['result'].get('status') in {'ok', 'already_processed'}}
         successful_tools = {row['tool'] for row in self.logs
             if row['result'].get('status') in SUCCESS}
-        if (self.has_pending_confirmation
+        if (self.has_pending_confirmation and not any(row['tool'] == 'confirm_checkout' for row in self.logs)
                 and {'get_cart', 'get_cart_quote'} <= successful_tools
                 and 'request_checkout' not in successful_tools):
             return ('TOOL_REQUIRED: Cart lines and a quote do not render the canonical confirmation UI. '
@@ -305,10 +367,13 @@ class ToolArtifacts:
             envelope = json.loads(raw)
             reply = str(envelope.get('reply') or '')
         except (ValueError, TypeError, AttributeError):
-            envelope, reply = {}, str(raw or '')
+            return self._fallback('missing_envelope')
         claims = envelope.get('mutation_claims') or []
         if not isinstance(claims, list) or any(not isinstance(name, str) for name in claims):
-            return self.factual_fallback()
+            return self._fallback('mutation_claim_mismatch')
+        if self._display_issue(envelope):
+            self.display_unresolved = True
+            return self._fallback('display_selection_invalid')
         if self.safety_facet in {'ingredient', 'allergen'}:
             from src.function_calling.tools.knowledge_tools import INSUFFICIENT_MESSAGE
             evidence = [row['result'] for row in self.logs if row['tool'] in RAG_TOOLS]
@@ -321,13 +386,12 @@ class ToolArtifacts:
                 return INSUFFICIENT_MESSAGE
         selection = envelope.get('display_product_ids')
         if isinstance(selection, list):
-            canonical = {str(row['product_id']): row for row in self.ui['products']}
+            canonical = {**self.product_candidates, **{str(row['product_id']): row for row in self.ui['products']}}
             if len(selection) > 16 or len(set(map(str, selection))) != len(selection) or any(str(key) not in canonical for key in selection):
                 return self.factual_fallback()
             self.ui['products'] = [{**canonical[str(key)], 'display_index': i}
                                    for i, key in enumerate(selection, 1)]
-            if selection:
-                self.visible['products'] = snapshot('products', self.ui['products'])
+            self.visible['products'] = snapshot('products', self.ui['products'])
         rag = [r['result'] for r in self.logs if r['tool'] in RAG_TOOLS]
         if rag:
             docs = {d['id']: d for result in rag for d in result.get('results', [])}
@@ -373,9 +437,10 @@ class ToolArtifacts:
             if facts:
                 reply += '\nGiá hiện tại:\n' + '\n'.join(facts)
         successful = {r['tool'] for r in self.logs
-                      if r['result'].get('status') in {'ok', 'already_processed', 'require_confirmation'}}
-        if any(name not in successful for name in claims):
-            return self.factual_fallback()
+                      if r['result'].get('changed') is not False and r['result'].get('status') in {'ok', 'already_processed', 'require_confirmation'}}
+        changed = {r['tool'] for r in self.logs if r['tool'] in successful and r['result'].get('changed') is not False}
+        if any(name not in changed for name in claims):
+            return self._fallback('mutation_claim_mismatch')
         normalized = normalize_text(reply)
         # Output claims require evidence for that specific business operation.
         # These checks validate response claims; they never route user language.
@@ -387,16 +452,16 @@ class ToolArtifacts:
             (r'\bda\s+(?:duoc\s+)?cap nhat\b', {'update_cart_item', 'set_checkout_choices', 'set_session_branch'}),
         ):
             if re.search(pattern, normalized) and not successful.intersection(tools):
-                return self.factual_fallback()
+                return self._fallback('confirmation_contract_mismatch' if 'confirm_checkout' in tools else 'mutation_claim_mismatch')
         claims_write = bool(re.search(r'\bda\s+(?:them|xoa|cap nhat|ap|dat|tao don)\b', normalize_text(reply)))
         from src.agents.tool_capabilities import WRITES
         if claims_write and not successful.intersection(WRITES):
-            return self.factual_fallback()
+            return self._fallback('mutation_claim_mismatch')
         if any(name in reply for name in ('checkout_action_id', 'system prompt', 'tool_calls', 'Bearer ')):
-            return self.factual_fallback()
+            return self._fallback('internal_content')
         from src.agents.tool_capabilities import CAPABILITIES
         if any(name in reply for name in CAPABILITIES) or reply.lstrip().startswith(('{', '[')):
-            return self.factual_fallback()
+            return self._fallback('internal_content')
         amounts = set()
         def collect_amounts(value):
             if isinstance(value, dict):
@@ -421,7 +486,11 @@ class ToolArtifacts:
                 return self.factual_fallback()
             quoted_amounts.add(int(amount))
         if quoted_amounts - amounts:
-            return self.factual_fallback()
+            return self._fallback('unverified_amount')
         from src.agents.guardrails import check_output
         checked, _ = check_output(safe_text(reply, 3000))
         return checked or self.factual_fallback()
+
+    def _fallback(self, issue):
+        self.response_validation_issue = issue
+        return self.factual_fallback()

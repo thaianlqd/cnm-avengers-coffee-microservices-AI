@@ -50,11 +50,18 @@ Discard an unfinished selected product with discard_pending_product when the cus
 Finish cart opens voucher choice. Never apply a voucher, select payment/branch, or add automatically.
 Use set_checkout_choices for preferences, resolve_location for literal locations, and
 select_location_candidate with the provider candidate_id after the customer selects one.
+For saved/profile address references read get_user_profile first; resolve the actual full_address,
+never the reference phrase. For pickup/dine-in the address is only a nearby-branch search origin;
+use for_checkout=false, show candidates and wait for branch selection. Delivery uses for_checkout=true
+and the canonical resolution/selection/compatibility flow; a profile string is not a confirmed address.
 For pickup/dine-in customer chooses branch; delivery uses existing automatic compatible branch.
 Do not select a branch just because discovery returned a single candidate. Show it and wait for
 the customer's next-turn selection. Keep summaries and payment information grounded in fresh tools.
 Request checkout only after business prerequisites. A summary is not an order.
 Confirm only an existing prior-turn fresh action after CURRENT explicit final confirmation.
+Call confirm_checkout with {} directly for that confirmation. The server binds the prior action.
+After a confirm denial follow only its recovery_tool, or ask its necessary clarification and stop.
+After a refreshed summary require confirmation on a later turn. Avoid resubmitting unchanged choices.
 Never announce a write succeeded without successful tool evidence. An uncertain outcome is not success.
 Your final content is JSON with response_kind (social, clarification, consultation, or action),
 reply (natural customer-facing text), mutation_claims (successful
@@ -62,6 +69,10 @@ write tool names, or []), evidence_quotes (for RAG: objects with keys document_i
 quote must be the exact full evidence content).
 Include display_product_ids for product discovery: select/reorder only canonical IDs from this
 turn's tool results, respect the requested total count across all reads, and omit unrelated results.
+For compound discovery include display_product_count: the requested TOTAL over every read,
+and exactly that many unique display_product_ids. Per-read limits are candidate budgets, not totals.
+If total versus per-group count is ambiguous, ask one clarification with count 0 and IDs [].
+Different canonical IDs with the same display name remain distinct products.
 The JSON is internal: reply must not mention tool names, system prompts, JSON, provider details or IDs.
 Do not expose secrets or hidden reasoning. Server generates all canonical cards and checkout UI.'''
 
@@ -157,7 +168,7 @@ def run_llm_tool_turn(session_id, user_message, history=None, client_message_id=
     metrics.update(total_latency_ms=round((time.monotonic()-started)*1000, 2),
         business_stage=context['business']['checkout'].get('flow_stage') or 'SHOPPING',
         same_turn_read_cache_hits=gateway.read_cache_hits,
-        mutation_authorized=any(row['read_or_write'] != 'READ' and row['guardrail_result'] in {'ok','already_processed'} for row in gateway.provenance),
+        mutation_authorized=any(row['mutation_evidence_present'] for row in gateway.provenance),
         mutation_evidence_present=any(row['mutation_evidence_present'] for row in gateway.provenance),
         ui_artifacts_created={k: len(v) for k, v in artifacts.ui.items()},
         rag_evidence_count=sum(len(row['result'].get('results', [])) for row in artifacts.logs if row['tool'] in {'search_knowledge_base', 'get_product_description'}))
@@ -167,6 +178,7 @@ def run_llm_tool_turn(session_id, user_message, history=None, client_message_id=
         return {'shadow_metrics': metrics, 'tool_calls_log': artifacts.logs}
     reply = artifacts.validate_reply(result.get('reply')) if result.get('reply') else artifacts.factual_fallback()
     metrics['final_synthesis_source'] = ('server_factual_fallback' if getattr(artifacts, 'used_factual_fallback', False) else 'llm')
+    metrics['response_validation_issue'] = artifacts.response_validation_issue
     logger.info('[LLMToolTurn] %s', json.dumps(metrics))
     final_state = business_state(session_id)
     from src.agents.tool_artifacts import public_result

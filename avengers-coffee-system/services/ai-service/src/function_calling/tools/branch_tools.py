@@ -470,6 +470,28 @@ TOOL_SET_SESSION_BRANCH = {
     },
 }
 
+def branch_identity_available(engine, branch_id: str) -> bool:
+    """Fresh exact identity read for an unchanged selection; no session writes.
+
+    Main branches must remain ACTIVE. Kiosks retain the existing identity
+    contract (exact existence); sellability is checked separately for both.
+    """
+    import os
+    identity_schema = os.getenv('IDENTITY_SCHEMA', 'identity')
+    try:
+        with engine.connect() as conn:
+            row = conn.execute(text(
+                f'SELECT trang_thai FROM {identity_schema}.chi_nhanh WHERE ma_chi_nhanh = :bid LIMIT 1'),
+                {'bid': branch_id}).fetchone()
+            if row is not None:
+                return str(row[0]) == 'ACTIVE'
+            return conn.execute(text(
+                'SELECT ma_kiosk FROM franchise.kiosk WHERE ma_kiosk = :bid LIMIT 1'),
+                {'bid': branch_id}).fetchone() is not None
+    except Exception:
+        return False
+
+
 def execute_set_session_branch(
     session_id: str,
     branch_id: str,
