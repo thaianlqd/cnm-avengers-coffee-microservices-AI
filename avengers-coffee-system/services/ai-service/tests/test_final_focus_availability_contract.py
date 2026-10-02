@@ -156,15 +156,17 @@ class Engine:
     def __exit__(self, *args):
         pass
     def execute(self, statement, params):
-        pid = params['product_id']
+        pids = params['product_ids']
         if '.san_pham' in str(statement):
-            row = (self.products[pid],) if pid in self.products else None
+            rows = [(str(pid), self.products[pid]) for pid in pids if pid in self.products]
         else:
             if self.inventory is None:
                 raise OSError('inventory unavailable')
-            override = next((row for row in self.inventory if row['ma_san_pham'] == pid), None)
-            row = (override['dang_kinh_doanh'],) if override else None
-        return SimpleNamespace(fetchone=lambda:row)
+            rows = [(bid, str(row['ma_san_pham']), row['dang_kinh_doanh'])
+                    for bid in params['branch_ids'] for row in self.inventory
+                    if row['ma_san_pham'] in pids]
+        return SimpleNamespace(fetchall=lambda: rows)
+
 
 
 @pytest.mark.parametrize('case', CASES, ids=lambda case:case['name'])
@@ -199,8 +201,8 @@ def test_real_branch_discovery_matrix_chooses_only_compatible_outlets(monkeypatc
         def execute(self, statement, params=None):
             if 'branches_and_kiosks' in str(statement):
                 return SimpleNamespace(mappings=lambda:SimpleNamespace(all=lambda:rows))
-            self.inventory = ([{'ma_san_pham':902,'dang_kinh_doanh':False,'so_luong_ton':100}]
-                              if params['branch_id'] == 'A' else [])
+            if '.ton_kho_san_pham' in str(statement):
+                return SimpleNamespace(fetchall=lambda: [('A', '902', False)] if 'A' in params['branch_ids'] else [])
             return super().execute(statement,params)
     engine = BranchEngine({901:True,902:global_active},[])
     monkeypatch.setattr(branch_tools,'_get_engine',lambda:engine)

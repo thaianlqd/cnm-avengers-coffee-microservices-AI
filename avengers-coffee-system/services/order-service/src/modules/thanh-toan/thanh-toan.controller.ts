@@ -1,11 +1,14 @@
-import { Body, Controller, Get, Headers, HttpCode, Param, Post, Query, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Headers, HttpCode, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { assertAccountCheckoutOwner } from '../../auth/cart-auth.guard';
 import { ThanhToanService } from './thanh-toan.service';
 
 @Controller('customers/:customerId/thanh-toan')
 export class ThanhToanController {
   constructor(private readonly thanhToanService: ThanhToanService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post('khoi-tao')
   khoiTao(
     @Param('customerId') customerId: string,
@@ -31,6 +34,7 @@ export class ThanhToanController {
       session_id?: string;
     },
   ) {
+    assertAccountCheckoutOwner((req as any).user, customerId);
     return this.thanhToanService.khoiTaoThanhToan(customerId, payload, req.ip || '127.0.0.1');
   }
 

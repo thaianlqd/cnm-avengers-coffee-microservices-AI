@@ -105,6 +105,9 @@ PURPOSES = {
     'request_checkout': 'Prepare or re-render the final order summary and canonical confirmation UI. For a request to show/review the pending order again, call this with reuse_summary=true; get_cart plus get_cart_quote is insufficient. A summary is not an order.',
     'confirm_checkout': 'Confirm the prior-turn summary after current explicit final agreement. Call with {}. The server binds and checks the prior action; never request a new summary first. A denial gives the only permitted recovery.',
     'finish_cart': 'Customer has finished selecting/configuring items and wants to proceed. Open the mandatory voucher decision gate using current authoritative cart. Reading quote/vouchers alone does not complete this transition.',
+    'apply_voucher': 'Apply only the voucher explicitly selected in the CURRENT customer message by prior displayed number, code, name, or best savings. Generic OK/cart completion is not a voucher choice. Show applied code and refreshed totals.',
+    'skip_voucher': 'Skip only on an explicit customer request to skip/decline vouchers. Generic OK/cart completion is not permission to skip.',
+    'set_checkout_choices': 'Record only explicitly selected fulfillment/payment. A new fulfillment reads saved profile locations and offers them for customer confirmation on a later turn. Do not resolve the offer immediately; acknowledge both choices when provided together.',
     'update_cart_item': 'Edit one exact current cart line with an absolute patch. For ordinal references include cart_line_ordinal matching its CURRENT cart display_index. Product-list ordinals are a separate namespace. Do not edit another row because the requested row already has that value.',
     'remove_cart_item': 'Remove one exact current cart line. For ordinal references include cart_line_ordinal matching CURRENT cart display_index, not product-list rank.',
     'get_order_history': 'Read this authenticated customer\'s completed order history. Not the current draft cart or checkout summary.',
@@ -138,8 +141,10 @@ def capabilities_for_context(context, *, entry_action=None, final_only=False, re
     product_rows = [*(visible.get('products') or []), *staged,
                     *(cart_state.get('items') or []),
                     (context.get('focus') or {}).get('product') or {}]
-    product_context = bool(context.get('selected_product_id') or any(
+    product_context = bool(context.get('discovery_candidates_available') or context.get('selected_product_id') or any(
         row.get('product_id') or row.get('ma_san_pham') for row in product_rows))
+    from src.common.session_auth import is_guest_session_id
+    guest = is_guest_session_id(context.get('session_id') or state.get('guest_session_id') or '')
     mutable = bool(state.get('authenticated') and not checkout.get('checkout_submission'))
     voucher_gate = bool(stage == 'VOUCHER' or pending.get('type') == 'select_voucher'
         or checkout.get('voucher_offer_pending') or checkout.get('voucher_revalidation_required'))
@@ -169,7 +174,7 @@ def capabilities_for_context(context, *, entry_action=None, final_only=False, re
         if checkout_started:
             allowed.add('get_payment_options')
     pickup = checkout.get('delivery_type') in {'MANG_DI', 'TAI_CHO'}
-    if cart and pickup:
+    if cart and pickup and not checkout.get('profile_location_offer'):
         allowed.add('ask_branch')
     delivery = checkout.get('delivery_type') == 'GIAO_TAN_NOI'
     if (mutable and cart and state.get('cart_verified') and (
@@ -200,14 +205,23 @@ def capabilities_for_context(context, *, entry_action=None, final_only=False, re
                     allowed.add('apply_voucher')
                 if checkout.get('voucher_code'):
                     allowed.add('remove_voucher')
-                if visible.get('branches') and pickup:
+                if visible.get('branches') and pickup and not checkout.get('profile_location_offer'):
                     allowed.add('set_session_branch')
                 delivery = checkout.get('delivery_type') == 'GIAO_TAN_NOI'
                 location_ready = bool(cart_state.get('branch_id') and (pickup or (
                     delivery and checkout.get('delivery_address') and checkout.get('address_confirmed'))))
-                if (voucher_decided and not unfinished and location_ready
+                if (voucher_decided and not unfinished and not checkout.get('profile_location_offer') and location_ready
                         and checkout.get('payment_method')):
                     allowed.add('request_checkout')
+    if guest and state.get('cart_verified'):
+        if product_context:
+            allowed.add('add_to_cart')
+        if staged:
+            allowed.add('discard_pending_product')
+        allowed.add('finish_cart')
+        if cart:
+            allowed.update({'update_cart_item', 'remove_cart_item'})
+        allowed.difference_update({'get_payment_options', 'ask_branch'})
     # Exposure permits a proposal, never authorizes the final write. Stale
     # prior actions must reach the gateway's structured denial/recovery gate.
     if mutable and cart and state.get('cart_verified') and entry_action:
@@ -237,6 +251,9 @@ def tool_schemas(allowed=None):
         if name == 'filter_catalog':
             params['required'] = ['search_text']
             params['properties']['search_text']['description'] = 'Narrower requested product family/name; empty string for unrestricted category.'
+        if name in {'filter_catalog', 'get_recommendations'}:
+            params['properties']['planned_discovery_reads'] = {'type': 'integer', 'minimum': 1, 'maximum': 16,
+                'description': 'Optional total distinct discovery reads planned for this request. Declare on the first call for 3+ arms, multiple category scopes, or more reads after a complementary sort pair. Planning only; never sent to catalog authority.'}
         if name == 'search_knowledge_base':
             from src.rag.documents import STATIC_DOMAINS, SLOW_DOMAINS
             params['properties']['domain']['enum'] = sorted(STATIC_DOMAINS | SLOW_DOMAINS)

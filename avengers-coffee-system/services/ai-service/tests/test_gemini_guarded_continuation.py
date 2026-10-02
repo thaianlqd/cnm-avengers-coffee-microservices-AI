@@ -135,7 +135,7 @@ def test_real_serializer_preserves_signed_continuation_and_dynamic_surface(wire,
     if another_tool:
         assert calls[1]['extra_content']['google']['thought_signature'] == SIGNATURE_B
     metrics = turn_metrics(caplog)
-    assert metrics['final_synthesis_source'] == 'llm'
+    assert metrics['final_synthesis_source'] == ('llm' if another_tool else 'server_product_facts')
     assert metrics['provider_failure_count'] == 0
     assert metrics['request_count'] == 2 + another_tool
     assert SIGNATURE_A not in caplog.text and SIGNATURE_B not in caplog.text
@@ -158,7 +158,7 @@ def test_recognized_format_retry_preserves_read_result_and_one_key(wire, caplog)
     assert metrics['compatibility_retry_count'] == 1
     assert metrics['provider_attempt_count'] == 3 and metrics['request_count'] == 2
     assert metrics['provider_failure_count'] == 1 and metrics['fallback_count'] == 0
-    assert metrics['final_synthesis_source'] == 'llm'
+    assert metrics['final_synthesis_source'] == 'server_product_facts'
     assert metrics['provider_request_shapes'][1]['request_shape_fingerprint'] != metrics['provider_request_shapes'][2]['request_shape_fingerprint']
 
 
@@ -214,7 +214,7 @@ def test_repaired_write_then_tools_disabled_retry_never_replays_mutation(wire, c
     metrics = turn_metrics(caplog)
     assert metrics['compatibility_retry_count'] == 1
     assert metrics['provider_attempt_count'] == 4 and metrics['request_count'] == 3
-    assert metrics['final_synthesis_source'] == ('server_factual_fallback' if failed_final else 'llm')
+    assert metrics['final_synthesis_source'] == 'server_customer_flow'
     if failed_final:
         assert result['error'] == 'repeated_tool_call'
 

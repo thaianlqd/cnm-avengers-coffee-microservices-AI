@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
 import { apiClient } from '../lib/apiClient';
+import { accountId, getGuestSessionId, chatStorageKey, cartRequestConfig } from '../lib/guestSession';
 import { openChatProductDetail, addChatProduct, branchDistanceLabel, paymentCardRows, chatLoadingLabel, refreshWalletAfterCheckout, structuredLegacyCards, pollQrPaymentStatus, latestPendingQrPayment, qrPaymentFromCheckout } from './chatWidgetActions';
 import { PENDING_AGENT_TURN_KEY, readPendingAgentTurn, matchesAgentTurn, selectAgentTurn, clearCompletedAgentTurn, agentTurnFailure } from './agentTurn';
 import { CheckCircleIcon, CheckIcon } from '@heroicons/react/24/solid';
@@ -45,28 +46,6 @@ const fmtDateHeader = (v) => {
   return `${dayName}, ${dateStr}`;
 };
 
-function getOrCreateAnonId() {
-  const k = 'avengers_anon_chat_id';
-  let id = sessionStorage.getItem(k);
-  if (!/^anon-[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id || '')) {
-    const cryptoApi = globalThis.crypto;
-    const uuid = cryptoApi?.randomUUID?.() || (() => {
-      if (!cryptoApi?.getRandomValues) return null;
-      const bytes = cryptoApi.getRandomValues(new Uint8Array(16));
-      bytes[6] = (bytes[6] & 0x0f) | 0x40;
-      bytes[8] = (bytes[8] & 0x3f) | 0x80;
-      const hex = [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
-      return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-    })();
-    if (!uuid) throw new Error('Secure guest chat sessions require Web Crypto');
-    id = `anon-${uuid}`;
-    sessionStorage.setItem(k, id);
-    // Legacy anonymous IDs were not strong enough to authorize persisted state.
-    localStorage.removeItem(AI_SESSION_KEY);
-    sessionStorage.removeItem(AI_SESSION_KEY);
-  }
-  return id;
-}
 
 function buildMsg(overrides) {
   const raw = overrides.noi_dung || '';
@@ -297,9 +276,9 @@ function StoreCard({ b }) {
   const statusText = isAvailable
     ? 'Còn đủ tất cả món trong giỏ'
     : status === 'unavailable'
-      ? `Hết/thiếu: ${missing.join(', ') || 'một số món trong giỏ'}`
+      ? `Tạm ngưng: ${missing.join(', ') || 'một số món trong giỏ'}`
       : status === 'unknown'
-        ? 'Chưa xác minh được tồn kho'
+        ? 'Chưa đọc được tình trạng bán; chưa thể chọn'
         : null;
   return (
     <div style={{ background: '#FFFFFF', borderRadius: 14, border: `1px solid ${status === 'unavailable' ? '#FECACA' : '#FFEBEB'}`, padding: '11px 13px', opacity: status && !isAvailable ? 0.78 : 1 }}>
@@ -308,9 +287,11 @@ function StoreCard({ b }) {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F08080" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#2D3748' }}>{b.ten_chi_nhanh || b.branch_name}</p>
+          <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#2D3748' }}>{b.display_index ? `${b.display_index}. ` : ''}{b.ten_chi_nhanh || b.branch_name}</p>
           <p style={{ margin: '3px 0 0', fontSize: '0.7rem', color: '#718096', lineHeight: 1.4 }}>{b.dia_chi || b.address}</p>
           {branchDistanceLabel(b) && <p style={{ margin: '3px 0 0', fontSize: '0.68rem', color: '#718096' }}>{branchDistanceLabel(b)}</p>}
+          {!isAvailable && b.available_products?.length > 0 && <p style={{ margin: '4px 0 0', fontSize: '0.68rem', color: '#15803D' }}>Còn bán: {b.available_products.join(', ')}</p>}
+          {b.unverified_products?.length > 0 && <p style={{ margin: '4px 0 0', fontSize: '0.68rem', color: '#B45309' }}>Chưa đọc được: {b.unverified_products.join(', ')}</p>}
           {statusText && <p style={{ margin: '4px 0 0', fontSize: '0.68rem', color: isAvailable ? '#15803D' : '#DC2626', fontWeight: 800 }}>{statusText}</p>}
           {b.gio_mo_cua && <p style={{ margin: '3px 0 0', fontSize: '0.68rem', color: '#F08080', fontWeight: 700 }}>Giờ mở cửa: {b.gio_mo_cua} – {b.gio_dong_cua}</p>}
         </div>
@@ -568,23 +549,23 @@ function newConversationId() {
   });
 }
 
-function loadConversationId() {
-  const existing = localStorage.getItem(AI_CONVERSATION_KEY);
+function loadConversationId(owner) {
+  const existing = localStorage.getItem(chatStorageKey(AI_CONVERSATION_KEY, owner));
   if (existing) return existing;
   const created = newConversationId();
-  localStorage.setItem(AI_CONVERSATION_KEY, created);
+  localStorage.setItem(chatStorageKey(AI_CONVERSATION_KEY, owner), created);
   return created;
 }
 
-function loadAISession() {
+function loadAISession(owner) {
   try {
-    const raw = localStorage.getItem(AI_SESSION_KEY) || sessionStorage.getItem(AI_SESSION_KEY);
+    const raw = localStorage.getItem(chatStorageKey(AI_SESSION_KEY, owner)) || sessionStorage.getItem(chatStorageKey(AI_SESSION_KEY, owner));
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed || !parsed.timestamp || !Array.isArray(parsed.messages)) return null;
     if (Date.now() - parsed.timestamp > AI_SESSION_TTL) {
-      localStorage.removeItem(AI_SESSION_KEY);
-      sessionStorage.removeItem(AI_SESSION_KEY);
+      localStorage.removeItem(chatStorageKey(AI_SESSION_KEY, owner));
+      sessionStorage.removeItem(chatStorageKey(AI_SESSION_KEY, owner));
       return null;
     }
     return parsed.messages;
@@ -593,14 +574,14 @@ function loadAISession() {
   }
 }
 
-function saveAISession(messages) {
+function saveAISession(messages, owner) {
   try {
     if (!messages || messages.length === 0) return;
     const payload = {
       timestamp: Date.now(),
       messages,
     };
-    localStorage.setItem(AI_SESSION_KEY, JSON.stringify(payload));
+    localStorage.setItem(chatStorageKey(AI_SESSION_KEY, owner), JSON.stringify(payload));
   } catch { /* ignore */ }
 }
 
@@ -634,12 +615,14 @@ function isStaffChatMessage(msg) {
 }
 
 // ─── Main Chat Widget Component ───────────────────────────────────────────────
-export default function ChatWidget({ user, socketUrl }) {
+export default function ChatWidget({ user, socketUrl, onLogin }) {
+  const userId = accountId(user);
+  const effectiveUserId = userId || getGuestSessionId();
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [chatMode, setChatMode] = useState('AI');
   const [messages, setMessages] = useState(() => {
-    const saved = loadAISession();
+    const saved = loadAISession(effectiveUserId);
     return saved || [];
   });
   const [staffMessages, setStaffMessages] = useState([]);
@@ -655,17 +638,17 @@ export default function ChatWidget({ user, socketUrl }) {
   const [conversation, setConversation] = useState(null);
   const [pendingOrder, setPendingOrder] = useState(null);
   const [pendingQrPayment, setPendingQrPayment] = useState(() => {
-    const currentUserId = user?.ma_nguoi_dung || user?.maNguoiDung || user?.id || getOrCreateAnonId();
-    return latestPendingQrPayment(loadAISession(), currentUserId);
+    const currentUserId = user?.ma_nguoi_dung || user?.maNguoiDung || user?.id || getGuestSessionId();
+    return latestPendingQrPayment(loadAISession(effectiveUserId), currentUserId);
   });
   const [paidQrOrders, setPaidQrOrders] = useState(() => new Set());
   const confirmingOrderRef = useRef(false);
-  const [aiConversationId, setAiConversationId] = useState(loadConversationId);
+  const [aiConversationId, setAiConversationId] = useState(() => loadConversationId(effectiveUserId));
   const [orderConfirming, setOrderConfirming] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
   const [isListening, setIsListening] = useState(false);
   const [greeted, setGreeted] = useState(() => {
-    const saved = loadAISession();
+    const saved = loadAISession(effectiveUserId);
     return Boolean(saved && saved.length > 0);
   });
 
@@ -679,17 +662,14 @@ export default function ChatWidget({ user, socketUrl }) {
   const cache = useRef({ products: [], branches: [], orders: [], vouchers: [], loaded: false });
   const pendingAgentTurnRef = useRef(readPendingAgentTurn(sessionStorage));
 
-  const userId = user?.id || user?.ma_nguoi_dung || user?.maNguoiDung || null;
   const walletUserId = user?.ma_nguoi_dung || user?.maNguoiDung || user?.id || null;
   const userName = user?.ho_ten || user?.hoTen || user?.email || 'Khách';
-  const anonId = useRef(getOrCreateAnonId());
-  const effectiveUserId = userId || anonId.current;
   
   useEffect(() => {
     if (messages.length > 0) {
-      saveAISession(messages);
+      saveAISession(messages, effectiveUserId);
     }
-  }, [messages]);
+  }, [messages, effectiveUserId]);
 
   const prefetchData = useCallback(async () => {
     if (cache.current.loaded) return cache.current;
@@ -819,7 +799,7 @@ export default function ChatWidget({ user, socketUrl }) {
     setIsOpen(true);
     setUnread(0);
     if (mode === 'AI') {
-      const saved = loadAISession();
+      const saved = loadAISession(effectiveUserId);
       if (!saved || saved.length === 0) {
         setMessages([]);
         setGreeted(true);
@@ -844,7 +824,7 @@ export default function ChatWidget({ user, socketUrl }) {
           session_id: effectiveUserId,
           conversation_id: nextConversationId,
           previous_conversation_id: aiConversationId,
-        });
+        }, cartRequestConfig(effectiveUserId));
       } catch (error) {
         console.warn('[ChatWidget] Could not reset AI conversation draft state:', error);
         const code = error?.response?.data?.detail?.code;
@@ -853,9 +833,9 @@ export default function ChatWidget({ user, socketUrl }) {
           : 'Mình chưa thể tạo cuộc trò chuyện mới lúc này. Bạn thử lại nhé.');
         return;
       }
-      localStorage.removeItem(AI_SESSION_KEY);
-      sessionStorage.removeItem(AI_SESSION_KEY);
-      localStorage.setItem(AI_CONVERSATION_KEY, nextConversationId);
+      localStorage.removeItem(chatStorageKey(AI_SESSION_KEY, effectiveUserId));
+      sessionStorage.removeItem(chatStorageKey(AI_SESSION_KEY, effectiveUserId));
+      localStorage.setItem(chatStorageKey(AI_CONVERSATION_KEY, effectiveUserId), nextConversationId);
       setAiConversationId(nextConversationId);
       pendingAgentTurnRef.current = null;
       sessionStorage.removeItem(PENDING_AGENT_TURN_KEY);
@@ -903,7 +883,7 @@ export default function ChatWidget({ user, socketUrl }) {
         message: text,
         selected_product_id: selectedProductId || null,
         history,
-      });
+      }, cartRequestConfig(effectiveUserId));
     } catch (error) {
       const code = error?.response?.data?.detail?.code;
       if (previousTurn && previousTurn.id !== turn.id &&
@@ -916,7 +896,7 @@ export default function ChatWidget({ user, socketUrl }) {
 
     const d = agentRes?.data || agentRes;
     if (d?.conversation_id && d.conversation_id !== aiConversationId) {
-      localStorage.setItem(AI_CONVERSATION_KEY, d.conversation_id);
+      localStorage.setItem(chatStorageKey(AI_CONVERSATION_KEY, effectiveUserId), d.conversation_id);
       setAiConversationId(d.conversation_id);
     }
     return { data: d, turn };
@@ -929,7 +909,7 @@ export default function ChatWidget({ user, socketUrl }) {
       product_name: productName,
       quantity,
       size,
-    });
+    }, cartRequestConfig(effectiveUserId));
     return response?.data || response;
   }, [effectiveUserId, aiConversationId]);
 
@@ -948,7 +928,7 @@ export default function ChatWidget({ user, socketUrl }) {
         delivery_type: pendingOrder.deliveryType,
         delivery_address: pendingOrder.deliveryAddress,
         action_id: pendingOrder.actionId,
-      });
+      }, cartRequestConfig(effectiveUserId));
       const result = response?.data || response;
       if (result?.status !== 'success' && result?.status !== 'already_processed') {
         throw new Error(result?.message || 'Đơn hàng chưa được tạo.');
@@ -1120,6 +1100,7 @@ export default function ChatWidget({ user, socketUrl }) {
           _vouchers: !confirmed && Array.isArray(payload.vouchers) ? payload.vouchers : [],
           _paymentOptions: Array.isArray(payload.payment_options) ? payload.payment_options : [],
           _qrPayment: textQrPayment,
+          _loginAction: payload.login_action,
           _quickReplies: QUICK_ACTIONS.slice(0, 3),
         };
         addAIMsg(agentReply, extras);
@@ -1524,6 +1505,14 @@ export default function ChatWidget({ user, socketUrl }) {
                     }}>
                       <p style={{ margin: 0, whiteSpace: 'pre-wrap', fontWeight: 400 }}>{renderText(msg.noi_dung)}</p>
 
+                      {msg._loginAction && !userId && (
+                        <a href="/?tab=login" onClick={(event) => {
+                          sessionStorage.setItem('post_login_redirect', 'cart');
+                          if (onLogin) { event.preventDefault(); onLogin(); }
+                        }} style={{ display: 'block', marginTop: 12, padding: '10px 14px', borderRadius: 10, background: '#B22830', color: '#FFF', textAlign: 'center', textDecoration: 'none', fontWeight: 700 }}>
+                          Đăng nhập để tiếp tục
+                        </a>
+                      )}
                       {/* Rich Content Cards */}
                       {msg._products && msg._products.length > 0 && (
                         <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 328, overflowY: 'auto' }}>

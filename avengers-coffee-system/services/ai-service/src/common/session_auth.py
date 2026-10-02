@@ -13,6 +13,10 @@ _ANON_SESSION_RE = re.compile(
 )
 
 
+def is_guest_session_id(session_id: str) -> bool:
+    return bool(_ANON_SESSION_RE.fullmatch(str(session_id or "")))
+
+
 def authorize_session(session_id: str, authorization: Optional[str]) -> Optional[str]:
     """Return the verified actor id, or None for a random guest session."""
     session_id = str(session_id or "").strip()

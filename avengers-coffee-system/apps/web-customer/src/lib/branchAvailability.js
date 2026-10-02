@@ -38,3 +38,12 @@ export function closestCompatibleBranch(branches, selectedBranch, manuallySelect
   if (manuallySelected && compatible.some(branch => branch.code === selectedBranch)) return selectedBranch;
   return [...compatible].sort((a, b) => a.distance - b.distance)[0]?.code || '';
 }
+
+
+// Every rendered expanded card must have a planned inventory read. A selected
+// branch outside the initial window must also be checked before permitting it.
+export function inventoryBranchesToCheck(branches, expanded, selectedBranch = '') {
+  const initial = expanded ? branches : branches.slice(0, 15);
+  const selected = branches.find(b => (b.ma_chi_nhanh || b.co_so_ma || b.branch_code) === selectedBranch);
+  return selected && !initial.includes(selected) ? [...initial, selected] : initial;
+}

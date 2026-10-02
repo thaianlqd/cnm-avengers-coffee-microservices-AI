@@ -69,7 +69,8 @@ export default function CartPage({
   onBackToHome, 
   voucherItems: initialVouchers = [], 
   suggestedPastries = [], 
-  onAddToCart 
+  onAddToCart,
+  onLogin
 }) {
   const { cart, removeFromCart, updateCartQuantity, activeUserId, refreshCart } = useCart();
   const [editingItem, setEditingItem] = useState(null);
@@ -488,6 +489,7 @@ export default function CartPage({
   }, [cart, total]);
 
   const apDungVoucher = async (overrideCode) => {
+    if (!isLoggedInUser) { requestLogin(); return; }
     const codeStr = typeof overrideCode === 'string' ? overrideCode : voucherCode;
     const code = String(codeStr || '').trim();
     if (!code) {
@@ -861,8 +863,15 @@ export default function CartPage({
 
   const isQrPaid = qrPaidSuccess || qrOrderStatus?.trang_thai_thanh_toan === 'DA_THANH_TOAN';
 
+  const requestLogin = () => {
+    sessionStorage.setItem('post_login_redirect', 'cart');
+    if (onLogin) onLogin();
+    else window.location.assign('/?tab=login');
+  };
+
   const pendingCheckoutRetry = Boolean(checkoutRequestRef.current && !checkoutRequestRef.current.completed);
   const khoiTaoThanhToan = async () => {
+    if (!isLoggedInUser) { requestLogin(); return; }
     if (checkoutBusyRef.current) return;
     if (!deliveryMode || !phuongThuc) {
       setThongBao('Vui lòng chọn hình thức nhận hàng và phương thức thanh toán.');
@@ -1013,6 +1022,7 @@ export default function CartPage({
   };
 
   const handleCheckoutClick = () => {
+    if (!isLoggedInUser) { requestLogin(); return; }
     if (!cart.length) {
       setThongBao('Giỏ hàng đang trống. Hãy thêm món ăn vào giỏ hàng trước.');
       return;
@@ -1081,7 +1091,7 @@ export default function CartPage({
             {/* Step 2 */}
             <button 
               type="button"
-              onClick={() => cart.length > 0 && setStep(2)}
+              onClick={handleCheckoutClick}
               disabled={cart.length === 0}
               className="flex flex-col items-center gap-2 relative z-10 group cursor-pointer disabled:cursor-not-allowed"
             >
@@ -2006,7 +2016,7 @@ export default function CartPage({
                   disabled={cart.length === 0}
                   className="w-full mt-6 py-4 bg-[#1a1a1a] hover:bg-[#c41230] text-white rounded-full font-black uppercase text-xs sm:text-sm tracking-widest shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span>Tiến hành thanh toán</span>
+                  <span>{isLoggedInUser ? 'Tiến hành thanh toán' : 'Đăng nhập để thanh toán'}</span>
                   <ArrowLongRightIcon className="h-5 w-5 stroke-[2.5]" />
                 </button>
               ) : (

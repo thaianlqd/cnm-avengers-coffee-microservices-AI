@@ -3,7 +3,7 @@ import json
 import time
 from copy import deepcopy
 from src.agents.agent_memory import compact, limit, safe_text, snapshot
-from src.agents.checkout_contract import missing_checkout_fields
+from src.agents.checkout_contract import missing_checkout_fields, checkout_next_step
 from src.common import cart_manager
 from src.function_calling.tools import cart_tools
 
@@ -11,7 +11,7 @@ PREF_FIELDS = ('delivery_type', 'payment_method', 'delivery_address', 'address_c
     'voucher_code', 'voucher_decided', 'voucher_revalidation_required', 'checkout_requested',
     'checkout_action_id', 'checkout_action_expires_at', 'summary_fingerprint', 'flow_stage',
     'location_address', 'summary_amounts', 'completed_order_id', 'stock_conflicts', 'checkout_submission',
-    'voucher_offer_pending', 'pending_product_reference')
+    'voucher_offer_pending', 'pending_product_reference', 'profile_location_offer', 'profile_location_checked_for')
 LINE_FIELDS = ('cart_item_id', 'line_id', 'product_id', 'product_name', 'quantity', 'size',
                'toppings', 'luong_da', 'do_ngot', 'loai_sua', 'unit_price', 'line_total')
 
@@ -32,7 +32,10 @@ def business_state(session_id, shadow=False):
         prefs = cart_manager.get_checkout_prefs(session_id)
     lines = [{**{key: deepcopy(row[key]) for key in LINE_FIELDS if key in row}, 'display_index': index}
              for index, row in enumerate(cart.get('items', []), 1)]
-    return {'authenticated': authenticated, 'cart_verified': bool(cart.get('authoritative')),
+    from src.common.session_auth import is_guest_session_id
+    owner = cart_tools._customer_session_id(session_id)
+    return {'authenticated': authenticated, 'guest_session_id': owner if is_guest_session_id(owner) else None,
+        'cart_verified': bool(cart.get('authoritative')),
         'cart': {'items': lines, 'cart_version': cart.get('cart_version'),
                  'branch_id': cart.get('branch_id'), 'branch_name': cart.get('branch_name')},
         'checkout': {key: deepcopy(prefs[key]) for key in PREF_FIELDS if key in prefs},
@@ -114,9 +117,11 @@ def model_projection(context, emergency=False):
         'cart_verified': state['cart_verified'], 'cart': model_cart(state['cart']),
         'checkout': {key: compact(checkout[key]) for key in ('flow_stage', 'delivery_type',
             'payment_method', 'delivery_address', 'address_confirmed', 'voucher_code',
-            'voucher_decided', 'voucher_revalidation_required', 'checkout_requested') if key in checkout},
+            'voucher_decided', 'voucher_revalidation_required', 'checkout_requested',
+            'profile_location_offer', 'profile_location_checked_for') if key in checkout},
         'summary_fresh': state.get('confirmation_fresh', False),
         'checkout_missing': missing_checkout_fields(state),
+        'next_step': checkout_next_step(state),
         'pending': {'type': (state.get('pending') or {}).get('type'),
                     'params': {key: compact(value) for key, value in
                         ((state.get('pending') or {}).get('params') or {}).items()

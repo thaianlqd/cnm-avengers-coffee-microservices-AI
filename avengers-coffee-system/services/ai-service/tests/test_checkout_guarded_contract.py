@@ -124,22 +124,22 @@ def test_changes_and_negatives_never_confirm(message):
     assert classify_confirmation(message, 'confirm_checkout') != 'YES'
 
 
-def test_fresh_confirm_server_binding_two_requests_zero_tools_and_durable_replay(runtime, monkeypatch, caplog):
+def test_fresh_confirm_server_binding_one_request_and_durable_replay(runtime, monkeypatch, caplog):
     action = setup_checkout(runtime)
     confirmed = successful_confirm(runtime, monkeypatch)
     runtime.provider.steps = [calls(('confirm_checkout', {})), content('Đã tạo đơn. Mã đơn: order-offline-1.', ['confirm_checkout'])]
     caplog.set_level('INFO')
     first = runtime.turn('oke xác nhận nhé bạn', client_message_id='lost-response')
     assert confirmed == [action]
-    assert len(runtime.provider.requests) == 2
-    assert not runtime.provider.requests[-1].get('tools')
+    assert len(runtime.provider.requests) == 1
+    assert len(runtime.provider.steps) == 1  # No final synthesis call after a known receipt.
     assert [row['tool'] for row in first['tool_calls_log']] == ['confirm_checkout']
     metrics = json.loads(next(r.message.split('[LLMToolTurn] ', 1)[1] for r in caplog.records if '[LLMToolTurn]' in r.message))
-    assert metrics['final_synthesis_source'] == 'llm' and metrics['provider_failure_count'] == 0
+    assert metrics['final_synthesis_source'] == 'server_customer_flow' and metrics['provider_failure_count'] == 0
     # Lose the HTTP response, clear fast process cache, then retry exact identity.
     cart_manager.set_checkout_context(runtime.sid, processed_order_turns={})
     replay = runtime.turn('oke xác nhận nhé bạn', client_message_id='lost-response')
-    assert replay == first and confirmed == [action] and len(runtime.provider.requests) == 2
+    assert replay == first and confirmed == [action] and len(runtime.provider.requests) == 1
     conflict = runtime.turn('xác nhận', client_message_id='lost-response')
     assert conflict['error'] == 'client_message_id_conflict' and confirmed == [action]
 
@@ -274,7 +274,8 @@ def test_voucher_revalidation_and_branch_stock_failures_are_not_noops(runtime, m
     g.entry_branches.add('branch-A')
     g.artifacts.visible['branches'] = [{'branch_id': 'branch-A', 'availability_status': 'available'}]
     monkeypatch.setattr(helpers, '_get_engine', lambda: None)
-    monkeypatch.setattr(inventory_validation, 'validate_cart_at_branch', lambda *a: {'unavailable': ['101'], 'unverified': []})
+    monkeypatch.setattr(inventory_validation, 'validate_cart_at_branch', lambda *a: {'unavailable': ['101'], 'unverified': [], 'available': [],
+        'product_statuses': [], 'is_fully_available': False})
     assert g.dispatch('set_session_branch', {'branch_id': 'branch-A'})['status'] == 'branch_unavailable_or_unknown'
 
 
@@ -322,7 +323,7 @@ def test_profile_literal_address_to_canonical_location_bridge(runtime, monkeypat
         calls(('resolve_location', {'location': address, 'kind': 'address', 'for_checkout': True})),
         content('Bạn chọn chi nhánh phù hợp nhé.' if kind != 'GIAO_TAN_NOI' else 'Địa chỉ đã được kiểm tra.')]
     result = runtime.turn('Dùng địa chỉ đã lưu trong hồ sơ nhé')
-    assert len(seen) == 1 and len(runtime.provider.requests) == 3
+    assert len(seen) == 1 and len(runtime.provider.requests) == 2
     model_profile = json.loads(runtime.provider.requests[1]['messages'][-1]['content'])
     assert set(model_profile) == {'status', 'default_address', 'address_items'}
     assert set(model_profile['address_items'][0]) == {'label', 'full_address', 'is_default'}
@@ -341,7 +342,7 @@ def test_dinein_choices_payment_bad_json_fallback_is_actionable(runtime):
     runtime.provider.steps = [calls(('set_checkout_choices', {'delivery_type': 'TAI_CHO'}), ('get_payment_options', {})),
         {'content': 'bad JSON'}, {'content': 'bad JSON'}]
     result = runtime.turn('Dùng tại quán nhé')
-    assert 'Đã ghi nhận' in result['reply'] and 'thanh toán' in result['reply'] and 'chi nhánh' in result['reply']
+    assert 'đã ghi nhận' in result['reply'].lower() and 'thanh toán' in result['reply'] and 'chi nhánh' in result['reply']
     assert result['ui_payload']['payment_options'][0]['value'] == 'THANH_TOAN_KHI_NHAN_HANG'
     assert 'chưa xác minh' not in result['reply']
 
@@ -374,7 +375,8 @@ def test_distinct_ids_same_name_survive_and_duplicate_id_deduplicates(runtime):
             {'product_id': 'b', 'product_name': 'Same name', 'final_price': 2}]
     artifacts.collect('filter_catalog', {}, {'status': 'ok', 'products': rows})
     artifacts.collect('filter_catalog', {}, {'status': 'ok', 'products': [rows[0]]})
-    assert [row['product_id'] for row in artifacts.ui['products']] == ['a', 'b']
+    assert list(artifacts.product_candidates) == ['a', 'b']
+    assert artifacts.ui['products'] == []  # Discovery candidates await final presentation selection.
     raw = content('Hai món có mã khác nhau.', display_product_ids=['a', 'b'], display_product_count=2)['content']
     assert artifacts.response_issue(raw) is None
     artifacts.validate_reply(raw)
@@ -448,7 +450,7 @@ def test_real_pickup_location_bridge_and_later_branch_summary(runtime, monkeypat
         calls(('request_checkout', {})), content('Bạn xem và xác nhận bản tóm tắt nhé.')]
     result = runtime.turn('Chọn chi nhánh 1')
     assert changed == ['branch-near'] and len(summaries) == 1 and len(geo) == 1
-    assert result['checkout_payload']['action_id'] and len(runtime.provider.requests) == 3
+    assert result['checkout_payload']['action_id'] and len(runtime.provider.requests) == 2
 
 
 def test_real_delivery_ambiguous_candidate_bridge_preserves_summary_and_coordinates(runtime, monkeypatch):
@@ -482,8 +484,9 @@ def test_real_delivery_ambiguous_candidate_bridge_preserves_summary_and_coordina
     assert len(geo) == 2 and selected == ['compatible'] and len(summaries) == 1
     assert cart_manager.get_checkout_prefs(runtime.sid)['address_confirmed']
     assert result['checkout_payload']['action_id']
-    assert len(runtime.provider.requests) == 2 and not runtime.provider.requests[-1].get('tools')
-    projected = json.loads(runtime.provider.requests[-1]['messages'][-2]['content'])
+    assert len(runtime.provider.requests) == 1  # Coordinates and summary are already authoritative.
+    from src.agents.tool_artifacts import model_tool_result
+    projected = model_tool_result('select_location_candidate', result['tool_calls_log'][-1]['result'])
     assert 'action_id' not in projected['order_summary']
 
 
@@ -613,9 +616,9 @@ def test_failed_summary_recovery_fallback_uses_actual_blocker(runtime):
 def test_total_display_selection_can_use_either_read_beyond_initial_ui_budget(runtime):
     artifacts = ToolArtifacts(empty_memory())
     rows = [{'product_id': str(i), 'product_name': 'Canonical candidate', 'final_price': i + 1} for i in range(32)]
-    for group in (rows[:16], rows[16:]):
-        artifacts.collect('filter_catalog', {}, {'status': 'ok', 'products': group})
-    assert len(artifacts.ui['products']) == 16
+    for direction, group in zip(('price_asc', 'price_desc'), (rows[:16], rows[16:])):
+        artifacts.collect('filter_catalog', {'sort_by': direction, 'limit': 16}, {'status': 'ok', 'products': group})
+    assert len(artifacts.product_candidates) == 32 and artifacts.ui['products'] == []
     raw = content('Đây là hai món.', display_product_ids=['0', '31'], display_product_count=2)['content']
     assert artifacts.response_issue(raw) is None
     artifacts.validate_reply(raw)

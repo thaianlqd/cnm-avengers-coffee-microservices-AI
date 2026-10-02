@@ -141,7 +141,12 @@ def test_catalog_semantic_composition(runtime,message,args,count):
     runtime.provider.plan([('filter_catalog',args)],reply='Đây là các món hiện có để bạn chọn.')
     result=runtime.turn(message)
     assert len(result['ui_payload']['products'])==count and not runtime.writes
-    assert runtime.reads==[('filter_catalog',args)]
+    assert len(runtime.reads) == 1 and runtime.reads[0][0] == 'filter_catalog'
+    received = runtime.reads[0][1]
+    # Gateway normalizes accents and fills omitted defaults before dispatch;
+    # customer-requested constraints must still reach the authority unchanged.
+    for key, value in args.items():
+        assert received[key] == ('ca phe' if key == 'search_text' and value == 'cà phê' else value)
     assert [r['product_id'] for r in result['ui_payload']['products']]==[r['product_id'] for r in result['tool_calls_log'][0]['result']['products']]
     assert not any(r['tool']=='search_knowledge_base' for r in result['tool_calls_log'])
 
@@ -323,7 +328,7 @@ def test_legacy_mode_does_not_call_new_provider(runtime,monkeypatch):
 def test_currency_invention_replaced_with_tool_facts(runtime):
     runtime.provider.plan([('filter_catalog',{'search_text':'','limit':1})],reply='Cà Phê Alpha có giá 999.999đ.')
     result=runtime.turn()
-    assert '999.999' not in result['reply'] and '30,000' in result['reply']
+    assert '999.999' not in result['reply'] and '30.000' in result['reply']
 
 
 def test_context_is_bounded_and_current_cart_overrides_redis(runtime,monkeypatch):

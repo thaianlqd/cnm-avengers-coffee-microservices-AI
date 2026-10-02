@@ -411,6 +411,10 @@ def groq_agent_chat(
     context_compactor=None,
     model_tier_provider=None,
     tool_result_projector=None,
+    discovery_completion_provider=None,
+    final_response_repair_allowed=None,
+    final_response_repair_context_provider=None,
+    customer_step_response_provider=None,
 ) -> Dict[str, Any]:
     """
     Agentic chat loop với Groq Function Calling.
@@ -458,6 +462,8 @@ def groq_agent_chat(
     required_repair_tool = None
     repeated_tool_result = None
     semantic_repairs = 0
+    final_envelope_repairs = 0
+    final_envelope_repair_active = False
     mutation_succeeded = False
     provider_turn_health = {}
 
@@ -477,7 +483,10 @@ def groq_agent_chat(
             "error": "No usable Groq chat model found for this API key.",
         }
 
-    for round_idx in range(max_tool_rounds + 1):
+    for round_idx in range(max_tool_rounds + 2):
+        # The extra slot is exclusively one tools-disabled envelope repair.
+        if round_idx > max_tool_rounds and not final_envelope_repair_active:
+            break
         resp = None
         if guarded and round_idx == max_tool_rounds:
             force_tools_disabled = True
@@ -498,7 +507,7 @@ def groq_agent_chat(
                 tools, tool_executors = tool_surface_provider(force_tools_disabled, required_repair_tool)
             if force_tools_disabled:
                 tools, tool_executors = [], {}
-            if model_context_provider:
+            if model_context_provider and not final_envelope_repair_active:
                 current_messages[0] = model_context_provider()
             if context_char_limit and sum(len(str(m.get('content') or '')) for m in current_messages) > context_char_limit:
                 if context_compactor:
@@ -709,17 +718,17 @@ def groq_agent_chat(
 
                     # Lưu vào cache
                     if not guarded or (not is_read and isinstance(result, dict) and result.get('status') in {
-                            'ok', 'already_processed', 'needs_options', 'require_confirmation'}):
+                            'ok', 'success', 'already_processed', 'needs_options', 'require_confirmation'}):
                         turn_tool_cache[tool_hash] = result
                 if guarded and isinstance(result, dict):
                     if result.get('same_turn_read_reused'):
                         repeated_signature, repeated_tool_result = True, result
-                    if result.get('status') in {'ok', 'already_processed', 'require_confirmation'} and not is_read:
+                    if result.get('status') in {'ok', 'success', 'already_processed', 'require_confirmation'} and not is_read:
                         mutation_succeeded |= result.get('changed') is not False
                         terminal_success |= (tool_name in {'request_checkout', 'confirm_checkout'} or (
                             tool_name in {'resolve_location', 'select_location_candidate'}
                             and result.get('status') == 'require_confirmation' and bool(result.get('order_summary'))))
-                    if tool_name == 'confirm_checkout' and result.get('status') not in {'ok', 'already_processed'}:
+                    if tool_name == 'confirm_checkout' and result.get('status') not in {'ok', 'success', 'already_processed'}:
                         if result.get('recovery_tool') in {'request_checkout', 'confirm_checkout'}:
                             required_repair_tool = result['recovery_tool']
                             recoverable_write_denial = True
@@ -730,7 +739,7 @@ def groq_agent_chat(
                 if (guarded and isinstance(result, dict) and result.get("status") in {
                         "unknown_product_reference", "cart_reference_conflict",
                         "pending_quantity_conflict", "cart_quantity_conflict",
-                        "checkout_choice_conflict", "conflicting_cart_operations"}):
+                        "checkout_choice_conflict", "voucher_selection_conflict", "conflicting_cart_operations"}):
                     recoverable_write_denial = True
                     if result.get("status") == "conflicting_cart_operations":
                         required_repair_tool = result.get("active_operation") or required_repair_tool or tool_name
@@ -738,7 +747,7 @@ def groq_agent_chat(
                         required_repair_tool = tool_name
                 if (required_repair_tool and tool_name == required_repair_tool
                         and isinstance(result, dict)
-                        and result.get("status") in {"ok", "already_processed"}):
+                        and result.get("status") in {"ok", "success", "already_processed"}):
                     successful_required_repair = True
                 if (guarded and required_repair_tool == 'request_checkout' and tool_name == 'request_checkout'
                         and isinstance(result, dict) and result.get('status') != 'require_confirmation'):
@@ -766,6 +775,11 @@ def groq_agent_chat(
                     "content": encoded_result,
                 })
 
+            if guarded and customer_step_response_provider and not required_repair_tool and not confirmation_denied_stop:
+                rendered = customer_step_response_provider()
+                if rendered:
+                    return {'reply': rendered, 'tool_calls_log': tool_calls_log,
+                            'checkout_payload': checkout_payload, 'error': None}
             if recoverable_write_denial:
                 semantic_repairs += 1
             if successful_required_repair or terminal_success or confirmation_denied_stop:
@@ -809,6 +823,12 @@ def groq_agent_chat(
                                 "Call that operation now using the structured recovery fields; "
                                 "do not answer with prose yet."),
                 })
+            elif discovery_completion_provider and discovery_completion_provider():
+                force_tools_disabled = True
+                force_tool_required = False
+                current_messages.append({'role': 'system', 'content':
+                    'The declared discovery plan or complementary ranked reads are complete. '
+                    'Synthesize the final JSON and display selection from these batches; no more tools.'})
             # Tiếp tục vòng lặp để Groq đọc kết quả tool
             continue
 
@@ -816,6 +836,22 @@ def groq_agent_chat(
         reply_text = (assistant_msg.content or "").strip()
         issue = final_response_validator(reply_text) if final_response_validator else None
         if issue:
+            if (guarded and final_response_repair_allowed and final_response_repair_allowed(issue)):
+                if not final_envelope_repairs:
+                    final_envelope_repairs = 1
+                    final_envelope_repair_active = True
+                    force_tools_disabled, force_tool_required, required_repair_tool = True, False, None
+                    if metrics is not None:
+                        metrics['final_envelope_repair_count'] = 1
+                    if final_response_repair_context_provider:
+                        current_messages = final_response_repair_context_provider(current_messages)
+                    current_messages.append({'role': 'system', 'content': issue})
+                    continue
+                return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
+                        'error': 'response_evidence_required'}
+            if final_envelope_repair_active:
+                return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
+                        'error': 'response_evidence_required'}
             if round_idx < max_tool_rounds and not force_tools_disabled:
                 semantic_repairs += 1
                 force_tool_required = str(issue).startswith('TOOL_REQUIRED:')

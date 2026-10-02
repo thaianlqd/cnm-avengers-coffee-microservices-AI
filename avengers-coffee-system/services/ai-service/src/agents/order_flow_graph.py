@@ -1303,7 +1303,7 @@ def _is_standalone_location_statement(message: str, kind: str) -> bool:
     return kind in {"area", "poi"}
 
 
-def _offer_voucher_gate(session_id: str, lead: str = "Mình đã ghi nhận giỏ hàng đã hoàn tất.") -> Dict[str, Any]:
+def _offer_voucher_gate(session_id: str, lead: str = "Dạ, mình đã ghi nhận các món bạn chọn ạ.") -> Dict[str, Any]:
     """Voucher is a mandatory decision gate before fulfillment and payment."""
     from src.agents.agent_service import _cart_ready_reply
     from src.function_calling.tools.voucher_tools import execute_get_applicable_vouchers
@@ -1339,7 +1339,8 @@ def _offer_voucher_gate(session_id: str, lead: str = "Mình đã ghi nhận gi�
                 "tool_calls_log": [{"tool": "get_cart_quote", "result": quote}], "error": None}
 
     listed = execute_get_applicable_vouchers(session_id)
-    logs = [{"tool": "get_applicable_vouchers", "result": listed}]
+    logs = [{"tool": "get_cart_quote", "result": quote},
+            {"tool": "get_applicable_vouchers", "result": listed}]
     if listed.get("status") == "error":
         return {"reply": listed.get("message"), "checkout_payload": None, "tool_calls_log": logs, "error": None}
     vouchers = list(listed.get("vouchers") or [])
@@ -1349,7 +1350,7 @@ def _offer_voucher_gate(session_id: str, lead: str = "Mình đã ghi nhận gi�
             "ten_voucher": item.get("ten_voucher") or item.get("ten_chuong_trinh"),
             "so_tien_giam_du_kien": item.get("so_tien_giam_du_kien")
                 or item.get("discount_amount") or item.get("so_tien_giam"),
-        } for item in vouchers[:4]]
+        } for item in vouchers]
         cart_manager.set_checkout_context(
             session_id,
             voucher_offer_pending=True,
@@ -1986,6 +1987,8 @@ def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
             "status": "retained",
         })
     branch_args = {"location": location, "session_id": ""}
+    if state.get("force_read_only_location") and (state.get("cart") or {}).get("items"):
+        branch_args["cart_items"] = state["cart"]["items"]
     if state.get("resolved_location_candidate"):
         branch_args["resolved_location"] = state["resolved_location_candidate"]
     found = execute_find_nearest_branch(**branch_args)

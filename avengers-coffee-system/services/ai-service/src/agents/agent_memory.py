@@ -59,7 +59,9 @@ def compact(value, depth=0):
 
 
 def snapshot(kind, rows):
-    count = 16 if kind == 'products' else 5
+    # Voucher ordinals must describe every eligible offer shown to the customer.
+    # The overall memory/context budget still applies; never silently cap at five.
+    count = len(rows or []) if kind == 'vouchers' else (16 if kind == 'products' else 5)
     return [{key: compact(row[key]) for key in ENTITY_FIELDS[kind] if key in row}
             for row in (rows or [])[:count] if isinstance(row, dict)]
 

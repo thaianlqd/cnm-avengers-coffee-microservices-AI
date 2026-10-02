@@ -59,14 +59,21 @@ def uses_global_option_defaults(message: str) -> bool:
     ))
 
 
+def declines_toppings(message: str) -> bool:
+    text = _norm(message)
+    return bool(re.search(r'\b(?:khong|ko|k|bo)(?:\s+can)?(?:\s+them)?\s+(?:topping|toping|do kem)\b', text))
+
+
 def resolve_option_default(group: Dict[str, Any], product_data: Optional[Dict[str, Any]] = None) -> Any:
     """Mirror Web's first Menu option, never a hardcoded label or paid topping."""
     values = list(group.get("values") or [])
     if group.get("multiple"):
+        if not group.get("required") and option_field(group.get("name", "")) == "toppings":
+            return []  # Optional extras never add a paid item by omission/defaults.
         explicit = group.get("default_values")
         if isinstance(explicit, list) and all(value in values for value in explicit):
             return list(explicit)
-        return [] if not group.get("required") and option_field(group.get("name", "")) == "toppings" else None
+        return None
     for key in ("default_value", "default"):
         explicit = group.get(key)
         if explicit in values:

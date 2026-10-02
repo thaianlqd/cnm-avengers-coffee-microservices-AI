@@ -133,6 +133,8 @@ def classify_confirmation(text: str, pending_type: Optional[str]) -> Literal["YE
     if not norm_text:
         return "NONE"
         
+    if pending_type == "confirm_checkout":
+        norm_text = re.sub(r"\bdat don\b", "dathang", norm_text)
     tokens = norm_text.split()
     
     yes_set = set(BASE_YES)

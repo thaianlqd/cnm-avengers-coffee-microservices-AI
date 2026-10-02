@@ -1,4 +1,5 @@
 import os
+from functools import lru_cache
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 
@@ -9,6 +10,13 @@ def get_db_engine() -> Engine:
     user = os.getenv("DB_USER", "admin")
     password = os.getenv("DB_PASSWORD", "123")
     dbname = os.getenv("DB_NAME", "avengers_coffee")
+    return _pooled_engine(host, port, user, password, dbname)
+
+
+@lru_cache(maxsize=4)
+def _pooled_engine(host, port, user, password, dbname) -> Engine:
+    # Reuse connections, never query results. Engines/pools are thread safe;
+    # pre-ping still detects disconnected connections before each checkout.
     url = f"postgresql://{user}:{password}@{host}:{port}/{dbname}?sslmode=require"
     return create_engine(
         url,

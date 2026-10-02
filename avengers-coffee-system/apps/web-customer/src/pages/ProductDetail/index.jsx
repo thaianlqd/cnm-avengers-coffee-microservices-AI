@@ -540,18 +540,9 @@ export default function ProductDetailPage({
               {t('productDetail.description')}
             </h2>
             <div className="text-gray-700 leading-relaxed space-y-4 text-[15px]">
-              <p>
-                {product.mo_ta ||
-                  `Sự kết hợp hoàn hảo giữa hạt cà phê Robusta & Arabica đậm đà chất lượng cao của vùng đất cao nguyên Việt Nam cùng dòng sữa thơm béo sánh mịn. ${product.ten_san_pham} mang lại trải nghiệm sảng khoái tràn đầy năng lượng cho ngày mới.`}
+              <p className="whitespace-pre-line">
+                {product.mo_ta?.trim() || 'Sản phẩm hiện chưa có mô tả chi tiết.'}
               </p>
-              <p>
-                Được tuyển chọn kỹ lưỡng và rang xay theo công thức độc quyền từ Highlands Coffee, giữ trọn hương vị truyền thống đậm đà khó quên.
-              </p>
-              <ul className="list-disc pl-6 space-y-2 text-gray-600">
-                <li>Thành phần tự nhiên, đảm bảo vệ sinh an toàn thực phẩm.</li>
-                <li>Thơm ngon đậm vị cà phê Việt Nam truyền thống.</li>
-                <li>Tiện lợi thưởng thức mọi lúc mọi nơi.</li>
-              </ul>
             </div>
           </div>
 

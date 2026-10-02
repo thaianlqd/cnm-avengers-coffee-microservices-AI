@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {readFileSync} from 'node:fs';
-import {evaluateBranchAvailability, inventoryRows, closestCompatibleBranch} from './branchAvailability.js';
+import {evaluateBranchAvailability, inventoryRows, closestCompatibleBranch, inventoryBranchesToCheck} from './branchAvailability.js';
 const cases = JSON.parse(readFileSync(new URL('../../../../contracts/customer-availability-cases.json', import.meta.url)));
 const cart = [{ma_san_pham:901, ten_san_pham:'Produit Alpha'}];
 for (const fixture of cases) test(fixture.name, () => {
@@ -33,4 +33,15 @@ test('failed, absent or malformed inventory remains unverified; successful empty
     assert.equal(evaluateBranchAvailability(cart,[{ma_san_pham:901,trang_thai:true}],inventoryRows(payload)).is_fully_available,false);
   }
   assert.equal(evaluateBranchAvailability(cart,[{ma_san_pham:901,trang_thai:true}],inventoryRows({items:[]})).is_fully_available,true);
+});
+
+test('expanded branch list checks outlets beyond the old 15-row limit, including a distant selected outlet', () => {
+  const branches = Array.from({length: 22}, (_, i) => ({ma_chi_nhanh: `B${i}`}));
+  assert.equal(inventoryBranchesToCheck(branches, false).length, 15);
+  assert.deepEqual(inventoryBranchesToCheck(branches, false, 'B21').at(-1), branches[21]);
+  const expanded = inventoryBranchesToCheck(branches, true, 'B21');
+  assert.deepEqual(expanded, branches);
+  // Successful empty overrides at newly expanded outlets must inherit Menu;
+  // unrequested/failed reads remain blocked rather than claiming sold out.
+  assert.equal(evaluateBranchAvailability(cart, [{ma_san_pham:901,trang_thai:true}], []).is_fully_available, true);
 });

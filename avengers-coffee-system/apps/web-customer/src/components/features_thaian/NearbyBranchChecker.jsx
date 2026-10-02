@@ -11,7 +11,7 @@ import {
   SparklesIcon
 } from '@heroicons/react/24/solid';
 import { apiClient } from '../../lib/apiClient';
-import { evaluateBranchAvailability, inventoryRows, closestCompatibleBranch } from '../../lib/branchAvailability';
+import { evaluateBranchAvailability, inventoryRows, closestCompatibleBranch, inventoryBranchesToCheck } from '../../lib/branchAvailability';
 import { 
   calculateDistanceKm, 
   resolveBranchCoordinates, 
@@ -75,28 +75,40 @@ export default function NearbyBranchChecker({
     return calculated;
   }, [branches, userCoordinates]);
 
+  const inventoryPlan = useMemo(() => inventoryBranchesToCheck(nearbyBranches, showAll, selectedBranch),
+    [nearbyBranches, showAll, selectedBranch]);
+  const inventoryPlanKey = inventoryPlan.map(b => b.ma_chi_nhanh || b.co_so_ma || b.branch_code).join('|');
+  const hasCartItems = cart.length > 0;
+
   // 2. Fetch tồn kho cho tất cả chi nhánh nằm trong bán kính 5km
   useEffect(() => {
-    if (nearbyBranches.length === 0 || cart.length === 0) {
+    if (!inventoryPlanKey || !hasCartItems) {
       return;
     }
 
     let isMounted = true;
     setIsLoadingInventory(true);
+    setBranchInventories({});
 
     const fetchAllInventories = async () => {
       const invMap = {};
-      const fetchPromises = nearbyBranches.slice(0, 15).map(async b => {
-        const code = b.ma_chi_nhanh || b.co_so_ma || b.branch_code;
-        try {
-          const res = await apiClient.get(`/inventory/items?branch_code=${code}`);
-          invMap[code] = inventoryRows(res?.data);
-        } catch {
-          invMap[code] = null;
+      const codes = inventoryPlanKey.split('|');
+      // Limit concurrent requests, but verify every branch we display when
+      // expanded. The old 15-row cap left the remaining cards unverified forever.
+      let cursor = 0;
+      const worker = async () => {
+        while (isMounted && cursor < codes.length) {
+          const code = codes[cursor++];
+          try {
+            const res = await apiClient.get(`/inventory/items?branch_code=${encodeURIComponent(code)}`);
+            invMap[code] = inventoryRows(res?.data);
+          } catch {
+            invMap[code] = null;
+          }
+          if (isMounted) setBranchInventories(previous => ({ ...previous, [code]: invMap[code] }));
         }
-      });
-
-      await Promise.allSettled(fetchPromises);
+      };
+      await Promise.allSettled(Array.from({ length: Math.min(4, codes.length) }, worker));
       if (isMounted) {
         setBranchInventories(invMap);
         setIsLoadingInventory(false);
@@ -105,16 +117,16 @@ export default function NearbyBranchChecker({
 
     fetchAllInventories();
     return () => { isMounted = false; };
-  }, [nearbyBranches, cart]);
+  }, [inventoryPlanKey, hasCartItems]);
 
   // 3. Phân tích trạng thái còn món của từng chi nhánh
   const evaluatedBranches = useMemo(() => {
-    if (nearbyBranches.length === 0) return [];
+    if (inventoryPlan.length === 0) return [];
 
-    return nearbyBranches.map(b => {
+    return inventoryPlan.map(b => {
       const code = b.ma_chi_nhanh || b.co_so_ma || b.branch_code;
       const availability = evaluateBranchAvailability(cart, products,
-        isLoadingInventory ? null : branchInventories[code]);
+        branchInventories[code]);
       const missingItems = availability.unavailable_products.map(item => item.product_name);
 
       return {
@@ -122,10 +134,11 @@ export default function NearbyBranchChecker({
         code,
         ...availability,
         isFullyAvailable: availability.is_fully_available,
+        checkingInventory: isLoadingInventory && !Object.hasOwn(branchInventories, code),
         missingItems,
       };
     });
-  }, [nearbyBranches, branchInventories, cart, products, isLoadingInventory]);
+  }, [inventoryPlan, branchInventories, cart, products, isLoadingInventory]);
 
   // Chi nhánh khả dụng (còn đủ món)
   const availableBranches = useMemo(() => {
@@ -302,7 +315,7 @@ export default function NearbyBranchChecker({
                         </span>
                       ) : (
                         <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-md border border-red-200 shrink-0">
-                          {branch.unverified_products.length ? 'Chưa xác minh' : 'Tạm ngưng'}
+                          {branch.missingItems.length ? 'Tạm ngưng' : branch.checkingInventory ? 'Đang kiểm tra' : 'Chưa đọc được'}
                         </span>
                       )}
                     </div>
@@ -327,7 +340,7 @@ export default function NearbyBranchChecker({
                     )}
                     {branch.unverified_products.length > 0 && (
                       <p className="text-[10px] text-amber-700">
-                        Chưa xác minh: {branch.unverified_products.map(item => item.product_name).join(', ')}
+                        {branch.checkingInventory ? 'Đang kiểm tra' : 'Chưa đọc được tình trạng bán'}: {branch.unverified_products.map(item => item.product_name).join(', ')}
                       </p>
                     )}
                   </div>
@@ -345,7 +358,7 @@ export default function NearbyBranchChecker({
           </div>
 
           {/* NÚT XEM THÊM CHI NHÁNH NẰM TRONG 5KM */}
-          {sortedBranches.length > 5 && (
+          {nearbyBranches.length > 5 && (
             <button
               type="button"
               onClick={() => setShowAll(!showAll)}
@@ -359,7 +372,7 @@ export default function NearbyBranchChecker({
               ) : (
                 <>
                   <ChevronDownIcon className="w-3.5 h-3.5" />
-                  <span>Xem thêm {sortedBranches.length - 5} chi nhánh gần bạn</span>
+                  <span>Xem thêm {nearbyBranches.length - 5} chi nhánh gần bạn</span>
                 </>
               )}
             </button>
