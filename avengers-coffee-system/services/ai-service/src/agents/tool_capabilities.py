@@ -1,6 +1,7 @@
 """Customer BPM capability inventory, schemas, and explicit authority boundaries."""
 from copy import deepcopy
 from dataclasses import dataclass
+import time
 from src.function_calling.tools import ALL_TOOL_SCHEMAS, TOOL_EXECUTORS
 
 
@@ -119,7 +120,80 @@ PURPOSES = {
 }
 
 
-def tool_schemas():
+def capabilities_for_context(context, *, entry_action=None, final_only=False, repair_tool=None):
+    """One state-only exposure policy; never interpret customer language here.
+
+    Discovery reads remain interruptible. A discovery result can unlock more
+    canonical-entity capabilities on the next inference round.
+    """
+    state = context['business']
+    checkout, visible = state.get('checkout') or {}, context.get('visible') or {}
+    pending = state.get('pending') or {}
+    stage = checkout.get('flow_stage') or 'BROWSING'
+    cart = bool(state.get('cart', {}).get('items'))
+    allowed = {'filter_catalog', 'get_recommendations', 'get_product_options',
+        'check_price_and_stock', 'get_product_insights', 'search_knowledge_base',
+        'get_cart', 'find_nearest_branch', 'get_top_rated_stores'}
+    if (visible.get('products') or state.get('pending_products') or state.get('cart', {}).get('items')
+            or context.get('focus', {}).get('product') or context.get('selected_product_id')):
+        allowed.add('get_product_description')
+    if visible.get('branches') or context.get('focus', {}).get('branch'):
+        allowed.add('get_store_reviews')
+    if state.get('authenticated'):
+        allowed.update({'get_user_profile', 'get_order_history'})
+        # Existing-order consultation is legal regardless of checkout stage.
+        allowed.update({'get_order_details', 'track_order_status'})
+    if cart:
+        allowed.add('get_cart_quote')
+        allowed.add('get_applicable_vouchers')
+        allowed.add('get_payment_options')
+    if checkout.get('delivery_type') in {'MANG_DI', 'TAI_CHO'}:
+        allowed.add('ask_branch')
+    if final_only:
+        return frozenset()
+    if not state.get('authenticated'):
+        return frozenset(allowed)
+    if not checkout.get('checkout_submission'):
+        allowed.add('resolve_location')  # Canonical location consultation too.
+        if visible.get('location_candidates'):
+            allowed.add('select_location_candidate')
+        if state.get('cart_verified'):
+            allowed.add('add_to_cart')  # Changes of mind are legal at every draft stage.
+            if state.get('pending_products'):
+                allowed.add('discard_pending_product')
+            if cart:
+                allowed.update({'update_cart_item', 'remove_cart_item', 'set_checkout_choices'})
+                if not state.get('pending_products') and (
+                        stage not in {'VOUCHER', 'CART_READY', 'PAYMENT', 'SUMMARY'}
+                        or checkout.get('voucher_revalidation_required')):
+                    allowed.add('finish_cart')
+                voucher_gate = (stage == 'VOUCHER' or pending.get('type') == 'select_voucher'
+                    or checkout.get('voucher_decided') or checkout.get('voucher_revalidation_required'))
+                if voucher_gate:
+                    if (stage == 'VOUCHER' or pending.get('type') == 'select_voucher'
+                            or checkout.get('voucher_code') or not checkout.get('voucher_decided')
+                            or checkout.get('voucher_revalidation_required')):
+                        allowed.add('skip_voucher')
+                    if visible.get('vouchers'):
+                        allowed.add('apply_voucher')
+                if checkout.get('voucher_code'):
+                    allowed.add('remove_voucher')
+                if visible.get('branches') and checkout.get('delivery_type') in {'MANG_DI', 'TAI_CHO'}:
+                    allowed.add('set_session_branch')
+                if checkout.get('voucher_decided') and not state.get('pending_products'):
+                    allowed.add('request_checkout')
+    if (cart and state.get('cart_verified') and entry_action
+            and entry_action == checkout.get('checkout_action_id')
+            and state.get('confirmation_fresh')
+            and pending.get('type') == 'confirm_checkout'
+            and float(pending.get('expires_at') or 0) > time.time()):
+        allowed.add('confirm_checkout')
+    if repair_tool:
+        allowed = {name for name in allowed if CAPABILITIES[name].access == 'READ' or name == repair_tool}
+    return frozenset(allowed)
+
+
+def tool_schemas(allowed=None):
     schemas = {}
     for original in ALL_TOOL_SCHEMAS:
         name = original['function']['name']
@@ -146,7 +220,7 @@ def tool_schemas():
     for name, description in PURPOSES.items():
         if name in schemas:
             schemas[name]['function']['description'] = description
-    return list(schemas.values())
+    return [row for name, row in schemas.items() if allowed is None or name in allowed]
 
 
 def validate_args(value, spec):

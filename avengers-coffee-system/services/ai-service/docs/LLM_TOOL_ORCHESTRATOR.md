@@ -6,7 +6,7 @@ The existing public endpoint and Web payload contract stay in place. The mode is
 
 Before LAN20: `POST /ai/agent/chat` → authorize session → durable conversation ownership and turn claim → scoped conversation → `run_agent` → `run_order_flow` → deterministic routing/graph → existing tools → canonical UI → completed turn and exchange persistence.
 
-In `llm_tools`: the same HTTP ownership/claim boundary → `run_agent` → `run_llm_tool_turn` → Redis hints + refreshed authoritative state → existing `groq_agent_chat` provider loop → `GuardedToolGateway` → existing service/tool authority → validated response + `ToolArtifacts` UI → durable processed-turn persistence → bounded Redis update.
+In `llm_tools`: the same HTTP ownership/claim boundary → `run_agent` → `run_llm_tool_turn` → Redis hints + full authoritative state → compact model projection + state-selected schemas → `groq_agent_chat` with guarded inference policy → `GuardedToolGateway` → existing service/tool authority → validated response + `ToolArtifacts` UI → durable processed-turn persistence → bounded Redis update.
 
 The gateway is the only executor map supplied to the new loop. It validates strict schemas, injects the server session, checks ownership and prerequisites, and validates canonical options and provider price before cart writes. It does not route Vietnamese phrases. The existing final-confirmation classifier remains a critical business safeguard.
 
@@ -22,7 +22,7 @@ Normal local activation (AI only):
 docker compose up -d --no-deps --build ai-service
 ```
 
-Compose defaults to `AI_AGENT_PROVIDER=openai` and `AI_AGENT_MODEL=gpt-4o-mini`. Override both explicitly for another compatible configured provider/model. Rollback uses the same command with `AI_CHAT_ORCHESTRATOR_MODE=legacy`; `shadow` remains available for diagnostics. A rebuild has no source bind mount; always verify runtime source identity after edits.
+Compose keeps `AI_AGENT_PROVIDER=openai`; an empty `AI_AGENT_MODEL` uses provider policy (`gpt-4o-mini` for OpenAI). A concrete override reaches the selected provider unchanged and bypasses tier pools. The local ignored LAN22 demo configuration prefers Gemini with OpenAI fallback. Rollback uses the same command with `AI_CHAT_ORCHESTRATOR_MODE=legacy`; `shadow` remains available for diagnostics. A rebuild has no source bind mount; always verify runtime source identity after edits.
 
 ## Conversation hints and budgets
 
@@ -30,9 +30,19 @@ Compose defaults to `AI_AGENT_PROVIDER=openai` and `AI_AGENT_MODEL=gpt-4o-mini`.
 
 Redis read/write failure is graceful. Existing durable canonical hints remain useful; unknown deictic targets cannot authorize writes. Prices and displayed eligibility are hints only and are revalidated by business tools.
 
-Defaults: `AI_AGENT_RECENT_TURNS=8`, `AI_AGENT_CONTEXT_CHAR_LIMIT=12000`, `AI_AGENT_MEMORY_CHAR_LIMIT=32000`, `AI_AGENT_LOOP_CHAR_LIMIT=24000`, `AI_AGENT_MAX_TOOL_ROUNDS=6`, `AI_AGENT_MAX_OUTPUT_TOKENS=600`. Context trims history and snapshots first. If the full cart cannot fit, it is omitted with an explicit unverified marker, never truncated into a seemingly complete cart. The loop also caps executed calls at four times the round budget and forces a final completion. Response-format/evidence repairs consume the same round budget.
+Storage defaults stay eight exchanges, TTL 1800 seconds and a 32000-character memory budget. Model history has a separate `AI_AGENT_MODEL_RECENT_TURNS=6` ceiling: up to four exchanges on stable turns, six with pending/focus state. `AI_AGENT_MODEL_CONTEXT_TARGET=8000` is a soft target, with `AI_AGENT_CONTEXT_CHAR_LIMIT=12000` as the hard ceiling. Drop old history and inactive metadata before protected references. Whole-cart omission marks only the model COPY unverified; gateway authority is unchanged. Oversized protected pending/reference state fails closed. No arbitrary JSON truncation or LLM summarization is used. Loop defaults remain 24000 characters, six tool rounds, 600 output tokens and four executed calls per round budget. Repairs share that budget.
 
-Provider usage, model, context/schema/history/memory size, latency, tool rounds, guardrail result, reference source, mutation evidence and artifact counts are logged without hidden reasoning. The first version exposes the complete safe registry to preserve read interruptions and changes of mind; schema cost is measured rather than hidden.
+LAN22 retains all 33 capabilities but uses one state-owned selector for schemas, executors and gateway validation. Cart, stage, pending state, canonical candidates and repair state govern exposure; user phrases do not. Read-only consultation stays interruptible and meaningful next writes stay visible. Exposure refreshes between rounds; writes revalidate current legality. Hidden proposals are denied. Product/cart/voucher/branch/location/payment/checkout results have separate model projections; full results remain with the server/UI. RAG retains complete approved content and IDs.
+
+## LAN22 guarded inference policy
+
+The guarded path never uses automatic model discovery or the simple-chat client chain. `AI_AGENT_FALLBACK_PROVIDERS` defaults to `gemini,openai`; Groq/OpenRouter/Cerebras require explicit opt-in. Gemini Lite/Standard/Strong pools take comma-separated API IDs. Empty Lite/Strong pools use Standard; the only default Gemini ID is LAN21's candidate `gemini-3.6-flash`, with no new qualification claimed. Execution rounds, repairs, successful mutations and summary/confirmation state select tiers without a router call. Specialized image/audio/embedding/Gemma families are excluded.
+
+Actual inference attempts are capped at four per round, including context retries; request timeout defaults to eight seconds and round scheduling deadline to twelve. A configured emergency provider receives a reserved attempt when capacity permits. The first three Gemini accounts rotate after success (`AI_AGENT_GEMINI_PRIMARY_KEY_COUNT`); trailing keys stay fallback slots. Cooldowns use provider + credential SHA-256 + model, never secrets or Redis. HTTP 429 respects bounded Retry-After; 401 disables a credential for the process; 403 restricts account/model for the turn; 404 skips the model for the turn; 400 skips the model/request shape across accounts. Context-length errors retry the same key/model once after safe local compaction, retaining tool-call/result pairing, write results and complete RAG evidence. Transient/network errors receive bounded fallback. Guarded OpenRouter has no hidden sub-retries.
+
+After a successful write repair, summary render or final confirmation, synthesis has no tools/executors, including provider fallback. A prose/envelope repair after a successful write cannot reopen mutations. Read reuse refreshes authoritative state and keys cache entries by business revision/state. Successful writes retain signature/idempotency fences; denied writes may be revalidated after a prerequisite changes and are never memoized as reads.
+
+`[LLMToolTurn]` adds model tier(s), attempt/failure/fallback counts, attempts by provider, safe credential slots/models tried, retry reason, failure latency, model context size, projected tool-result size and read cache hits. `exposed_tool_count` and `tool_schema_chars` show the maximum in the turn; per-round arrays reveal tools-disabled synthesis. See [LAN22 implementation report](LAN22_IMPLEMENTATION.md) for static counts, limitations and user-run commands. No LAN22 tests, provider calls or Docker qualification were run.
 
 ## Business authority and replay
 

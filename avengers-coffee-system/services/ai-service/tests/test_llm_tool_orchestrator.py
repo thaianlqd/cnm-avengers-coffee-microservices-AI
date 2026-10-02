@@ -54,7 +54,19 @@ class ScriptedProvider:
 def runtime(monkeypatch):
     sid = 'lan20-'+uuid4().hex
     monkeypatch.setenv('AI_CHAT_ORCHESTRATOR_MODE', 'llm_tools')
+    # Guarded inference now owns its provider policy. Keep this shared fixture
+    # entirely scripted, including failures; never fall through to real keys.
+    monkeypatch.setenv('AI_AGENT_PROVIDER', 'gemini')
+    monkeypatch.setenv('AI_AGENT_MODEL', 'test-model')
+    monkeypatch.setenv('AI_AGENT_FALLBACK_PROVIDERS', '')
+    monkeypatch.setenv('GEMINI_API_KEY', 'fixture-key')
+    monkeypatch.setenv('AI_AGENT_MAX_PROVIDER_ATTEMPTS_PER_ROUND', '1')
     redis, provider, writes, reads, durable = FakeRedis(), ScriptedProvider(), [], [], {}
+    monkeypatch.setattr(groq_service, 'GeminiClient', lambda _key: provider)
+    from src.common import agent_provider_policy
+    monkeypatch.setattr(agent_provider_policy, '_cooldowns', {})
+    monkeypatch.setattr(agent_provider_policy, '_invalid_credentials', set())
+    monkeypatch.setattr(agent_provider_policy, '_next_slot', {})
     monkeypatch.setattr(agent_memory, 'redis_client', lambda: redis)
     monkeypatch.setattr(groq_service, '_get_groq_client', lambda: provider)
     monkeypatch.setattr(groq_service, '_resolve_chat_model', lambda _: 'test-model')

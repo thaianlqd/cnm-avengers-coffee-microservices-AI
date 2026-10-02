@@ -132,11 +132,12 @@ def _safe_log_inference(
 async def lifespan(app: FastAPI):
     logger.info("AI Service dang khoi dong - Dang huan luyen model...")
     from src.agents.agent_memory import redis_available
+    from src.common.agent_provider_policy import enabled
     logger.info(
         "[AIStartup] chat_orchestrator_mode=%s agent_provider=%s agent_model=%s redis_available=%s",
         os.getenv("AI_CHAT_ORCHESTRATOR_MODE", "legacy").strip().lower(),
         os.getenv("AI_AGENT_PROVIDER", "auto").strip().lower(),
-        os.getenv("AI_AGENT_MODEL", "").strip() or "provider_default",
+        os.getenv("AI_AGENT_MODEL", "").strip() or ("tier_policy" if enabled() else "provider_default"),
         str(redis_available()).lower(),
     )
     engine = get_db_engine()
@@ -1995,6 +1996,7 @@ async def voice_order(
 @app.get("/ai/health")
 def health():
     from src.agents.agent_memory import redis_available
+    from src.common.agent_provider_policy import enabled
     return {
         "status": "ok",
         "cf_trained": cf_model.is_trained,
@@ -2003,6 +2005,8 @@ def health():
         "stt_model": "whisper-large-v3-turbo",
         "chat_orchestrator_mode": os.getenv("AI_CHAT_ORCHESTRATOR_MODE", "legacy").strip().lower(),
         "agent_provider": os.getenv("AI_AGENT_PROVIDER", "auto").strip().lower(),
-        "agent_model": os.getenv("AI_AGENT_MODEL", "").strip() or "provider_default",
+        "agent_model": os.getenv("AI_AGENT_MODEL", "").strip() or ("tier_policy" if enabled() else "provider_default"),
+        "agent_model_tiering": enabled(),
+        "agent_fallback_providers": os.getenv("AI_AGENT_FALLBACK_PROVIDERS", "gemini,openai"),
         "redis_available": redis_available(),
     }

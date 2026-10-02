@@ -20,7 +20,7 @@ def limit(name, default, minimum=1, maximum=100000):
 def safe_text(value, maximum=1500):
     text = str(value or '')
     text = re.sub(r'(?i)bearer\s+\S+|\beyJ[\w-]+\.[\w-]+\.[\w-]+', '[redacted]', text)
-    text = re.sub(r'\b(?:sk-|gsk_|AIza)[A-Za-z0-9_-]{16,}', '[redacted]', text)
+    text = re.sub(r'\b(?:sk-|gsk_|AIza|AQ\.)[A-Za-z0-9_-]{16,}', '[redacted]', text)
     text = re.sub(r'(?i)(?:password|api[_ -]?key|jwt|secret|access[_ -]?token)\s*[:=]\s*\S+',
                   '[redacted]', text)
     for key, secret in os.environ.items():
@@ -35,7 +35,7 @@ ENTITY_FIELDS = {
     'products': ('product_id', 'product_name', 'category', 'menu_bucket', 'final_price',
                  'hinh_anh_url', 'display_index', 'group_display_index', 'global_display_index'),
     'vouchers': ('ma_voucher', 'voucher_code', 'ten_voucher', 'mo_ta', 'gia_tri', 'loai_giam_gia',
-                 'dieu_kien_ap_dung', 'display_index'),
+                 'dieu_kien_ap_dung', 'so_tien_giam_du_kien', 'display_index'),
     'branches': ('branch_id', 'branch_name', 'ma_chi_nhanh', 'ten_chi_nhanh', 'dia_chi',
                  'khoang_cach_km', 'availability_status', 'unavailable_products', 'unverified_products', 'display_index'),
     'location_candidates': ('candidate_id', 'normalized_label', 'display_address', 'lat', 'lng',

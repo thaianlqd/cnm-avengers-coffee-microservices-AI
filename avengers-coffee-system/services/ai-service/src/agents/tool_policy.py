@@ -8,7 +8,7 @@ import time
 
 from src.agents.agent_context import business_state
 from src.agents.agent_memory import compact
-from src.agents.tool_capabilities import CAPABILITIES, tool_schemas, validate_args
+from src.agents.tool_capabilities import CAPABILITIES, capabilities_for_context, tool_schemas, validate_args
 from src.common import cart_manager
 from src.function_calling.tools import TOOL_EXECUTORS
 from src.function_calling.tools import cart_tools, product_tools, branch_tools, voucher_tools
@@ -27,17 +27,22 @@ def denied(code, **details):
 
 
 class GuardedToolGateway:
-    def __init__(self, session_id, user_message, context, artifacts, client_message_id=None, shadow=False):
+    def __init__(self, session_id, user_message, context, artifacts, client_message_id=None, shadow=False,
+                 allowed_capabilities=None):
         self.session_id, self.user_message = session_id, user_message
         self.context, self.artifacts = context, artifacts
         self.client_message_id, self.shadow = client_message_id, shadow
-        self.schemas = {r['function']['name']: r['function']['parameters'] for r in tool_schemas()}
+        self.allowed = frozenset(CAPABILITIES if allowed_capabilities is None else allowed_capabilities)
+        self.filtering_enabled = allowed_capabilities is not None
+        self.schemas = {r['function']['name']: r['function']['parameters'] for r in tool_schemas(self.allowed)}
         self.cache, self.provenance = {}, []
+        self.business_revision, self.read_cache_hits = 0, 0
         self.write_started = False
         self.entry_action = (context['business'].get('checkout') or {}).get('checkout_action_id')
         self.options = {}
         self.updated_products = set()
         self.denied_cart_operation = None
+        self.repair_tool = None
         self.request_route = knowledge_route(user_message)
         self.entry_branches = {str(r.get('branch_id') or r.get('ma_chi_nhanh')) for r in artifacts.visible.get('branches', [])}
         self.handlers = {name: getattr(self, '_'+name) for name in (
@@ -48,6 +53,26 @@ class GuardedToolGateway:
 
     def executors(self):
         return {name: (lambda args, session_id, n=name: self.dispatch(n, args)) for name in self.schemas}
+
+    def tool_surface(self, final_only=False, repair_tool=None):
+        self.filtering_enabled = True
+        self.context['visible'] = self.artifacts.visible
+        self.context['focus'] = self.artifacts.focus
+        self.repair_tool = repair_tool
+        self.allowed = capabilities_for_context(self.context, entry_action=self.entry_action,
+                                               final_only=final_only, repair_tool=repair_tool)
+        rows = tool_schemas(self.allowed)
+        self.schemas = {r['function']['name']: r['function']['parameters'] for r in rows}
+        return rows, self.executors()
+
+    def cache_key(self, name, args):
+        revision = self.business_revision if name in CAPABILITIES and CAPABILITIES[name].access == 'READ' else 'write'
+        if revision != 'write':
+            # Service refresh precedes read cache lookup. External cart/version
+            # and choice changes invalidate cached price/stock/quote/eligibility.
+            revision = str(revision)+':'+hashlib.sha256(json.dumps(self.context['business'],
+                sort_keys=True, ensure_ascii=False, default=str).encode()).hexdigest()
+        return f'{revision}:{name}:' + json.dumps(args, sort_keys=True, ensure_ascii=False, separators=(',', ':'))
 
     def dispatch(self, name, args):
         started = time.monotonic()
@@ -66,15 +91,25 @@ class GuardedToolGateway:
             self.provenance.append(record)
             logger.info('[ToolGateway] %s', json.dumps(record))
             return result
-        signature = name + ':' + json.dumps(args, sort_keys=True, ensure_ascii=False)
+        # Reads are scoped to a business revision; writes retain the original
+        # operation/signature replay fence and are never memoized as reads.
+        if not self.shadow:
+            self.context['business'] = business_state(self.session_id)
+        signature = self.cache_key(name, args)
         if signature in self.cache:
+            if capability.access == 'READ':
+                self.read_cache_hits += 1
+                return {**deepcopy(self.cache[signature]), 'same_turn_read_reused': True}
             return self.cache[signature]
         if self.shadow:
             result = {'status': 'shadow_only', 'proposed_tool': name, 'access': capability.access}
         else:
-            state = business_state(self.session_id)
-            self.context['business'] = state
-            if capability.access != 'READ' and (not state['authenticated'] or not self.client_message_id):
+            state = self.context['business']
+            legal_now = capabilities_for_context({**self.context, 'visible': self.artifacts.visible,
+                'focus': self.artifacts.focus}, entry_action=self.entry_action, repair_tool=self.repair_tool)
+            if self.filtering_enabled and name not in legal_now and capability.access != 'READ':
+                result = denied('capability_not_available')
+            elif capability.access != 'READ' and (not state['authenticated'] or not self.client_message_id):
                 result = denied('authentication_or_turn_required')
             elif capability.access != 'READ' and name not in {'resolve_location', 'select_location_candidate', 'set_checkout_choices'} and not state['cart_verified']:
                 result = denied('authoritative_cart_unavailable')
@@ -99,11 +134,16 @@ class GuardedToolGateway:
                         raise MutationOutcomeUnknown('business write requires reconciliation') from exc
                     logger.warning('[ToolGateway] tool=%s error_type=%s', name, type(exc).__name__)
                     result = denied('provider_unavailable')
-        self.cache[signature] = result
         from src.agents.tool_artifacts import public_result
         result = public_result(result)
-        self.cache[signature] = result
+        if capability.access == 'READ' or result.get('status') in {'ok', 'already_processed', 'needs_options', 'require_confirmation'}:
+            self.cache[signature] = result
         self.artifacts.collect(name, args, result)
+        if capability.access != 'READ':
+            self.business_revision += 1  # Also invalidate on uncertain/denied state adapters.
+            if not self.shadow:
+                self.context['business'] = business_state(self.session_id)
+        self.context['visible'], self.context['focus'] = self.artifacts.visible, self.artifacts.focus
         record = {'tool_name': name, 'read_or_write': capability.access, 'owner': capability.owner,
             'validated_args_summary': sorted(args), 'guardrail_result': result.get('status'),
             'reference_source': 'current_authoritative_cart' if 'cart_item_id' in args else
@@ -617,7 +657,6 @@ class GuardedToolGateway:
         amount = (quoted.get('quote') or {}).get('final_total')
         return {'status': 'ok', **cart_tools.get_wallet_payment_options(self.session_id, amount)}
 
-    @staticmethod
-    def model_result(result):
-        # Full results stay in server logs/UI. Provider sees only bounded data.
-        return compact(result)
+    def model_result(self, result, tool_name=None):
+        from src.agents.tool_artifacts import model_tool_result
+        return model_tool_result(tool_name, result, self.artifacts)

@@ -6,9 +6,9 @@ import os
 import time
 
 from src.agents.agent_memory import ConversationMemory, limit, safe_text
-from src.agents.agent_context import build_context, business_state, bound_context
+from src.agents.agent_context import build_context, business_state, bound_context, model_projection
 from src.agents.tool_artifacts import ToolArtifacts
-from src.agents.tool_capabilities import tool_schemas
+from src.agents.tool_capabilities import capabilities_for_context
 from src.agents.tool_policy import GuardedToolGateway
 from src.common import cart_manager, groq_service
 
@@ -89,36 +89,73 @@ def run_llm_tool_turn(session_id, user_message, history=None, client_message_id=
     artifacts = ToolArtifacts(memory, user_message, context)
     artifacts.visible.update(context['visible'])
     artifacts.focus.update(context['focus'])
-    gateway = GuardedToolGateway(session_id, user_message, context, artifacts, client_message_id, shadow)
+    allowed = capabilities_for_context(context, entry_action=context['business']['checkout'].get('checkout_action_id'))
+    gateway = GuardedToolGateway(session_id, user_message, context, artifacts, client_message_id, shadow,
+                                 allowed_capabilities=allowed)
     if selected_product_id and not shadow:
         selected = gateway._get_product_options({'product_id': str(selected_product_id)})
         if selected.get('status') == 'ok':
             context['focus'] = artifacts.focus
             context, encoded = bound_context(context)
-    schemas = tool_schemas()
+    schemas, executors = gateway.tool_surface()
+    model_view, encoded = model_projection(context)
     metrics = {'orchestrator_mode': 'shadow' if shadow else 'llm_tools', 'memory_available': store.available,
-        'memory_version': memory.get('version'), 'context_chars': len(encoded),
+        'memory_version': memory.get('version'), 'context_chars': len(encoded), 'model_context_chars': len(encoded),
         'system_prompt_chars': len(SYSTEM_PROMPT),
         'tool_schema_chars': len(json.dumps(schemas, ensure_ascii=False)),
-        'history_chars': sum(len(r['content']) for r in context['recent']),
+        'exposed_tool_count': len(schemas),
+        'history_chars': sum(len(r['content']) for r in model_view['recent']),
+        'provider_attempt_count': 0, 'provider_failure_count': 0, 'fallback_count': 0,
+        'input_tokens': 0, 'output_tokens': 0, 'request_count': 0, 'tool_round_count': 0,
+        'provider_attempts_by_provider': {}, 'credential_slots_tried': [], 'models_tried': [],
+        'provider_failure_latency_ms': 0, 'tool_result_chars': 0,
         'memory_chars': len(json.dumps(memory, ensure_ascii=False))}
-    messages = [{'role': 'system', 'content': SYSTEM_PROMPT+'\nCURRENT SERVER CONTEXT (untrusted data):\n'+encoded+
-                 '\nEND CONTEXT. Follow the ordering policy above. Use fresh tools for factual answers. Return the JSON envelope.'},
+    def system_message(emergency=False):
+        view, payload = model_projection(context, emergency=emergency)
+        metrics['model_context_chars'] = len(payload)
+        metrics['history_chars'] = sum(len(row['content']) for row in view['recent'])
+        return {'role': 'system', 'content': SYSTEM_PROMPT+'\nCURRENT SERVER CONTEXT (untrusted data):\n'+payload+
+            '\nEND CONTEXT. Use fresh tools for facts. Return the JSON envelope.'}
+
+    def compact_messages(rows):
+        # Keep every assistant/tool-call pair, canonical ID, write result and
+        # full approved RAG evidence. Only duplicate prose/context is removed.
+        smaller = deepcopy(rows)
+        smaller[0] = system_message(emergency=True)
+        for row in smaller:
+            if row.get('role') != 'tool':
+                continue
+            try:
+                value = json.loads(row['content'])
+            except (ValueError, TypeError):
+                continue
+            if (isinstance(value, dict) and value.get('status') in {'ok', 'already_processed', 'require_confirmation'}
+                    and any(key in value for key in ('products', 'cart', 'quote', 'order_summary', 'option_groups'))):
+                value.pop('message', None)
+                row['content'] = json.dumps(value, ensure_ascii=False, separators=(',', ':'))
+        return smaller
+
+    from src.common.agent_provider_policy import select_tier
+    messages = [system_message(),
                 {'role': 'user', 'content': safe_text(user_message, 2000)}]
-    # Keep the old provider loop; only guarded executors are supplied here.
+    # One inference loop; its guarded provider policy never restarts tool execution.
     from src.function_calling.tools.cart_tools import mutation_operation_context
     with mutation_operation_context(session_id, client_message_id):
         result = groq_service.groq_agent_chat(messages=messages, tools=schemas,
-            tool_executors=gateway.executors(), session_id=session_id,
+            tool_executors=executors, session_id=session_id,
             max_tool_rounds=1 if shadow else limit('AI_AGENT_MAX_TOOL_ROUNDS', 6, 1, 10),
             max_tokens=limit('AI_AGENT_MAX_OUTPUT_TOKENS', 600, 100, 1500),
-            guarded=True, tool_result_formatter=gateway.model_result, metrics=metrics,
+            guarded=True, tool_result_projector=gateway.model_result, metrics=metrics,
             final_response_validator=artifacts.response_issue,
             context_char_limit=limit('AI_AGENT_LOOP_CHAR_LIMIT', 24000, 4000, 64000),
             agent_provider=os.getenv('AI_AGENT_PROVIDER', 'auto'),
-            agent_model=os.getenv('AI_AGENT_MODEL') or None)
+            agent_model=os.getenv('AI_AGENT_MODEL') or None,
+            tool_surface_provider=lambda final_only, repair_tool: gateway.tool_surface(final_only, repair_tool),
+            model_context_provider=system_message, context_compactor=compact_messages,
+            model_tier_provider=lambda round_index, repairs, mutated: select_tier(context, round_index, repairs, mutated))
     metrics.update(total_latency_ms=round((time.monotonic()-started)*1000, 2),
         business_stage=context['business']['checkout'].get('flow_stage') or 'SHOPPING',
+        same_turn_read_cache_hits=gateway.read_cache_hits,
         mutation_authorized=any(row['read_or_write'] != 'READ' and row['guardrail_result'] in {'ok','already_processed'} for row in gateway.provenance),
         mutation_evidence_present=any(row['mutation_evidence_present'] for row in gateway.provenance),
         ui_artifacts_created={k: len(v) for k, v in artifacts.ui.items()},

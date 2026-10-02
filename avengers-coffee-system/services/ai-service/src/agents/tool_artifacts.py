@@ -27,6 +27,113 @@ def candidate_id(row):
     return hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()[:24]
 
 
+def model_tool_result(name, result, artifacts=None):
+    """Per-tool inference projection. Full evidence/UI results stay server-side."""
+    from src.agents.agent_context import model_cart, model_snapshot
+    if not isinstance(result, dict):
+        return compact(result)
+    if name in RAG_TOOLS:
+        docs, seen = [], set()
+        for doc in result.get('results') or []:
+            identity = (doc.get('id'), doc.get('content'))
+            if identity in seen:
+                continue
+            seen.add(identity)
+            # Complete approved content is necessary for LAN21 exact quotations.
+            docs.append({key: doc[key] for key in ('id', 'title', 'content', 'domain',
+                'entity_type', 'entity_id', 'source', 'authority') if key in doc})
+        return {**{key: result[key] for key in ('status', 'message', 'grounding') if key in result},
+                'results': docs}
+    if result.get('status') not in SUCCESS | {'no_applicable_voucher', 'empty_cart'}:
+        return compact(result)  # Preserve every denial/recovery field.
+    value = {key: compact(result[key]) for key in ('status', 'message', 'changed',
+        'same_turn_read_reused', 'product_id', 'product_name', 'quantity', 'unit_price',
+        'voucher_code', 'voucher_decided', 'discount_amount', 'total_cart', 'choices',
+        'order_id', 'order_status', 'payment_method', 'total_price', 'normalized_location') if key in result}
+    if isinstance(result.get('cart'), dict):
+        value['cart'] = model_cart(result['cart'])
+    if isinstance(result.get('quote'), dict):
+        value['quote'] = {key: result['quote'][key] for key in ('subtotal', 'discount_amount',
+            'delivery_fee', 'final_total', 'voucher_code', 'voucher_valid') if key in result['quote']}
+    for kind in ('products', 'vouchers', 'branches', 'location_candidates', 'payment_options'):
+        if not isinstance(result.get(kind), list):
+            continue
+        rows = result[kind]
+        if kind == 'products':
+            rows = [{**row, 'product_id': str(row.get('product_id') or row.get('ma_san_pham') or ''),
+                     'product_name': row.get('product_name') or row.get('ten_san_pham')}
+                    for row in rows if isinstance(row, dict)]
+        indices = {}
+        if artifacts and kind in {'products', 'branches', 'vouchers'}:
+            def identity(row):
+                return str(next((row[key] for key in ('product_id', 'branch_id', 'ma_chi_nhanh',
+                    'voucher_code', 'ma_voucher') if row.get(key)), ''))
+            indices = {identity(row): row.get('display_index')
+                       for row in artifacts.visible.get(kind) or []}
+            if kind != 'products':
+                shown = [row for row in rows if identity(row) in indices]
+                if len(shown) != len(rows):
+                    value[kind+'_omitted_count'] = len(rows)-len(shown)
+                rows = shown
+        if artifacts and kind == 'location_candidates':
+            rows = artifacts.visible.get(kind) or []  # Canonical IDs assigned by collect().
+        projected = model_snapshot(kind, rows)
+        for index, (row, original) in enumerate(zip(projected, rows), 1):
+            if artifacts and kind in {'products', 'branches', 'vouchers'}:
+                row['display_index'] = indices.get(identity(original))
+                if row['display_index'] is None:
+                    row['not_displayed'] = True  # Fresh facts remain available; no invented ordinal.
+            else:
+                row['display_index'] = original.get('display_index', index)
+            if kind == 'products':
+                for key in ('product_id', 'product_name', 'final_price', 'price', 'category',
+                    'rating', 'avg_rating', 'total_reviews', 'sold_count', 'stock', 'stock_quantity', 'in_stock', 'is_active',
+                    'base_price', 'size_surcharge', 'parent_category', 'branch_id',
+                    'availability_status', 'size', 'toppings', 'luong_da', 'do_ngot', 'loai_sua'):
+                    if key in original:
+                        row[key] = compact(original[key])
+            elif kind == 'vouchers':
+                for key in ('so_tien_giam_du_kien', 'eligible', 'reason'):
+                    if key in original:
+                        row[key] = compact(original[key])
+            elif kind == 'branches':
+                for key in ('distance_basis', 'distance_estimated', 'avg_rating', 'total_reviews',
+                            'unavailable_products', 'unverified_products'):
+                    if key in original:
+                        row[key] = compact(original[key])
+        value[kind] = projected
+    if name == 'get_product_options':
+        for key in ('option_groups', 'available_sizes', 'options', 'defaults', 'missing_fields'):
+            if key in result:
+                value[key] = compact(result[key])
+        if value.get('option_groups'):
+            value.pop('options', None)  # Same labels/values already present in groups.
+    if name == 'request_checkout' and isinstance(result.get('order_summary'), dict):
+        summary = result['order_summary']
+        value['order_summary'] = {key: compact(summary[key]) for key in ('branch_id', 'branch_name',
+            'subtotal', 'total_price', 'discount_amount', 'delivery_fee', 'final_total',
+            'voucher_code', 'delivery_type', 'payment_method', 'delivery_address', 'action_id',
+            'checkout_action_id') if key in summary}
+        value['order_summary']['items'] = model_cart({'items': summary.get('items') or []})['items']
+    if name in {'get_cart', 'get_cart_quote', 'filter_catalog', 'get_recommendations',
+                'check_price_and_stock', 'get_applicable_vouchers', 'finish_cart',
+                'apply_voucher', 'remove_voucher', 'skip_voucher', 'add_to_cart', 'update_cart_item',
+                'remove_cart_item', 'request_checkout', 'set_checkout_choices', 'set_session_branch',
+                'resolve_location', 'select_location_candidate', 'get_payment_options', 'get_product_options',
+                'ask_branch', 'find_nearest_branch', 'get_top_rated_stores'}:
+        return value
+    # Profile, review and completed-order responses have separate fact contracts;
+    # preserve them conservatively, only removing UI/provider noise recursively.
+    def lean(data):
+        if isinstance(data, dict):
+            return {key: lean(item) for key, item in data.items() if key not in {
+                'hinh_anh_url', 'image_url', 'provider_metadata', 'product_data', 'operation_id'}}
+        if isinstance(data, list):
+            return [lean(item) for item in data]
+        return data
+    return compact(lean(result))
+
+
 class ToolArtifacts:
     def __init__(self, memory, knowledge_question=None, context=None):
         # Existing knowledge authority is an output safety boundary for
@@ -114,6 +221,14 @@ class ToolArtifacts:
                 'count': len(row['result'].get('products') or row['result'].get('results') or [])} for row in self.logs[-8:]]}
 
     def factual_fallback(self):
+        from src.agents.tool_capabilities import WRITES
+        for row in reversed(self.logs):
+            result = row['result']
+            if row['tool'] in WRITES and result.get('status') in {'ok', 'already_processed', 'require_confirmation'}:
+                if result.get('message'):
+                    return safe_text(result['message'], 3000)
+                if row['tool'] == 'skip_voucher':
+                    return 'Đã ghi nhận lựa chọn không dùng mã giảm giá.'
         lines = [f"{r['product_name']}: {float(r['final_price']):,.0f}đ" for r in self.ui['products'] if r.get('final_price') is not None]
         if lines:
             return '\n'.join(lines)
