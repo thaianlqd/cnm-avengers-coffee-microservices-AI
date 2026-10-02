@@ -7,6 +7,7 @@ import os
 import re
 import threading
 import time
+from src.common.gemini_compat import compatibility_error, inference_messages, request_diagnostics
 
 logger = logging.getLogger(__name__)
 _lock = threading.Lock()
@@ -122,7 +123,7 @@ def classify(exc):
 
 
 def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens,
-               required=False, metrics=None, compact_messages=None, turn_health=None):
+               required=False, metrics=None, compact_messages=None, turn_health=None, round_index=0):
     """Retry inference from known results, never restart/execute a tool turn."""
     from src.common import groq_service as wrappers
     from src.agents.agent_memory import safe_text
@@ -131,8 +132,9 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
     restricted = turn_health.setdefault('restricted_accounts', set())
     missing = turn_health.setdefault('missing_models', set())
     incompatible = turn_health.setdefault('incompatible_requests', set())
-    request_shape = hashlib.sha256(json.dumps({'tools': schemas or [], 'required': bool(required),
-        'response_format': 'json_object'}, sort_keys=True).encode()).hexdigest()
+    compatibility_modes = turn_health.setdefault('compatibility_modes', {})
+    compatibility_retried = False
+    metrics.setdefault('compatibility_retry_count', 0)
     reported_tier = 'override' if explicit_model else tier if enabled() else 'fixed'
     metrics['model_tier'] = reported_tier
     used = metrics.setdefault('model_tiers_used', [])
@@ -142,6 +144,7 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
     timeout = number('AI_AGENT_PROVIDER_TIMEOUT_SECONDS', 8, 1, 30)
     deadline = time.monotonic() + number('AI_AGENT_PROVIDER_ROUND_TIMEOUT_SECONDS', 12, 1, 60)
     attempts, last_reason, compacted = 0, 'provider_unavailable', False
+    previous_attempt = None
     providers = provider_order(preferred)
     for provider_index, provider in enumerate(providers):
         if provider not in {'gemini', 'openai', 'groq', 'openrouter', 'cerebras'}:
@@ -158,8 +161,10 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                           if other in {'gemini', 'openai', 'groq', 'openrouter', 'cerebras'}))
         provider_budget = max(1, budget-reserve)
         for model in models_for(provider, tier, explicit_model, preferred):
-            if (provider, model) in missing or (provider, model, request_shape) in incompatible:
+            if (provider, model) in missing:
                 continue
+            mode_key = (provider, model, bool(schemas))
+            mode = compatibility_modes.get(mode_key, 'gemini_signature_preserved' if provider == 'gemini' else 'canonical')
             for slot in slots:
                 fingerprint = hashlib.sha256(keys[slot].encode()).hexdigest()
                 health_key = (provider, fingerprint, model)
@@ -184,6 +189,20 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                 else:
                     client = wrappers.OpenAIClient(keys[slot], base_url='https://api.cerebras.ai/v1')
                 while attempts < provider_budget and time.monotonic() < deadline:
+                    kwargs = {'model': model, 'messages': inference_messages(messages, provider), 'max_tokens': max_tokens,
+                        'temperature': 0.35, 'response_format': {'type': 'json_object'},
+                        'timeout': max(0.1, min(timeout, deadline-time.monotonic()))}
+                    if schemas:
+                        kwargs.update(tools=schemas, tool_choice='required' if required else 'auto')
+                    if provider == 'gemini' and mode == 'gemini_without_response_format':
+                        kwargs.pop('response_format')
+                    if provider == 'openrouter':
+                        kwargs['allow_fallback'] = False  # No hidden unbudgeted requests.
+                    shape = request_diagnostics(kwargs, mode)
+                    request_shape = shape['request_shape_fingerprint']
+                    if (provider, model, request_shape) in incompatible:
+                        last_reason = 'incompatible_request'
+                        break
                     attempts += 1
                     metrics['provider_attempt_count'] = metrics.get('provider_attempt_count', 0) + 1
                     counts = metrics.setdefault('provider_attempts_by_provider', {})
@@ -192,14 +211,15 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                         values = metrics.setdefault(field, [])
                         if value not in values:
                             values.append(value)
-                    metrics['fallback_count'] = metrics.get('fallback_count', 0) + int(attempts > 1)
-                    kwargs = {'model': model, 'messages': messages, 'max_tokens': max_tokens,
-                        'temperature': 0.35, 'response_format': {'type': 'json_object'},
-                        'timeout': max(0.1, min(timeout, deadline-time.monotonic()))}
-                    if schemas:
-                        kwargs.update(tools=schemas, tool_choice='required' if required else 'auto')
-                    if provider == 'openrouter':
-                        kwargs['allow_fallback'] = False  # No hidden unbudgeted requests.
+                    identity = (provider, slot, model)
+                    metrics['fallback_count'] = metrics.get('fallback_count', 0) + int(previous_attempt is not None and previous_attempt != identity)
+                    previous_attempt = identity
+                    diagnostic = {**shape, 'provider': provider, 'model': safe_text(model, 128),
+                        'round_index': round_index, 'request_sequence': metrics['provider_attempt_count']}
+                    metrics.setdefault('provider_request_shapes', []).append(diagnostic)
+                    metrics['provider_request_shape_fingerprint'] = request_shape
+                    metrics['compatibility_mode'] = mode
+                    logger.info('[AgentProviderRequest] %s', json.dumps(diagnostic))
                     started = time.perf_counter()
                     try:
                         response = client.chat.completions.create(**kwargs)
@@ -216,8 +236,23 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                         metrics['provider_failure_latency_ms'] = metrics.get('provider_failure_latency_ms', 0) + elapsed
                         metrics['failed_provider_latency_ms'] = metrics['provider_failure_latency_ms']
                         metrics['retry_reason'] = kind
-                        logger.warning('[AgentProvider] provider=%s credential_slot=%d model=%s status=%s reason=%s',
-                                       provider, slot+1, safe_text(model, 128), status, kind)
+                        category, field = compatibility_error(exc) if kind == 'incompatible_request' else (kind, None)
+                        metrics['provider_error_category'] = category
+                        metrics['provider_error_field'] = field
+                        logger.warning('[AgentProvider] provider=%s credential_slot=%d model=%s status=%s reason=%s category=%s field=%s request_shape=%s',
+                                       provider, slot+1, safe_text(model, 128), status, kind, category, field, request_shape)
+                        if kind == 'incompatible_request':
+                            incompatible.add((provider, model, request_shape))
+                            # Evidence-triggered inference-only downgrade. No schema,
+                            # tool choice, history/result, key or business replay change.
+                            if (provider == 'gemini' and category == 'response_format_incompatible'
+                                    and kwargs.get('response_format') and not compatibility_retried
+                                    and attempts < provider_budget and time.monotonic() < deadline):
+                                compatibility_retried = True
+                                mode = 'gemini_without_response_format'
+                                compatibility_modes[mode_key] = mode
+                                metrics['compatibility_retry_count'] += 1
+                                continue  # Same client/key/model; shares attempt/time budget.
                         if kind == 'context_length':
                             if not compacted and compact_messages:
                                 smaller = compact_messages(messages)
@@ -229,8 +264,6 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                         if kind in {'model_not_found', 'incompatible_request', 'provider_error'}:
                             if kind == 'model_not_found':
                                 missing.add((provider, model))
-                            elif kind == 'incompatible_request':
-                                incompatible.add((provider, model, request_shape))
                             break  # Same request/model cannot improve with another key.
                         with _lock:
                             if kind == 'invalid_credential':

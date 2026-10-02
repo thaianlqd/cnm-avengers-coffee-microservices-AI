@@ -14,6 +14,7 @@ import re
 import time
 import unicodedata
 from typing import Any, Dict, List, Optional
+from src.common.gemini_compat import inference_messages, tool_extra_content
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,16 @@ class FakeToolCall:
         self.id = d.get("id")
         self.type = d.get("type", "function")
         self.function = FakeFunction(d.get("function", {}))
+        # Opaque inference metadata only; never put it in tool args/artifacts/logs.
+        self.gemini_extra_content = tool_extra_content(d.get('extra_content'))
+
+
+def _continuation_tool_call(call, provider):
+    row = {'id': call.id, 'type': 'function', 'function': {
+        'name': call.function.name, 'arguments': call.function.arguments}}
+    if provider == 'gemini' and getattr(call, 'gemini_extra_content', None):
+        row['extra_content'] = tool_extra_content(call.gemini_extra_content)
+    return row
 
 class FakeMessage:
     def __init__(self, d):
@@ -119,7 +130,7 @@ class GeminiCompletions:
         import requests
         payload = {
             "model": model,
-            "messages": messages,
+            "messages": inference_messages(messages, 'gemini'),
             "max_tokens": max_tokens,
             "temperature": temperature
         }
@@ -506,7 +517,7 @@ def groq_agent_chat(
             resp, client, model, error = completion(current_messages, tools,
                 preferred=requested_provider or 'auto', explicit_model=agent_model, tier=tier,
                 max_tokens=max_tokens, required=force_tool_required, metrics=metrics,
-                compact_messages=context_compactor, turn_health=provider_turn_health)
+                compact_messages=context_compactor, turn_health=provider_turn_health, round_index=round_idx)
             success, last_err = resp is not None, error or ''
         else:
             retry_clients = agent_clients if agent_clients is not None else [None] * max(1, len(_llm_clients))
@@ -615,7 +626,7 @@ def groq_agent_chat(
             if force_tools_disabled:
                 message = (repeated_tool_result or {}).get("message") if isinstance(repeated_tool_result, dict) else None
                 return {
-                    "reply": str(message or "Mình đã có kết quả tra cứu ở trên nhưng chưa thể diễn đạt thêm lúc này."),
+                    "reply": "" if guarded else str(message or "Mình đã có kết quả tra cứu ở trên nhưng chưa thể diễn đạt thêm lúc này."),
                     "tool_calls_log": tool_calls_log,
                     "checkout_payload": checkout_payload,
                     "error": "repeated_tool_call",
@@ -624,17 +635,8 @@ def groq_agent_chat(
             current_messages.append({
                 "role": "assistant",
                 "content": assistant_msg.content or "",
-                "tool_calls": [
-                    {
-                        "id": tc.id,
-                        "type": "function",
-                        "function": {
-                            "name": tc.function.name,
-                            "arguments": tc.function.arguments,
-                        },
-                    }
-                    for tc in assistant_msg.tool_calls
-                ],
+                "tool_calls": [_continuation_tool_call(tc, _client_provider(client))
+                               for tc in assistant_msg.tool_calls],
             })
 
             # Thực thi từng tool call

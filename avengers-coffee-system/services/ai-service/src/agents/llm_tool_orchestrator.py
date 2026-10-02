@@ -33,8 +33,9 @@ For an unrestricted request use category all. For ranking, do not invent numeric
 The newest request's scope overrides earlier topics; do not carry an older category into a broad request.
 Set inclusive=false for strict under/over boundaries and true for explicitly inclusive boundaries.
 Read-only interruptions may occur at any stage: preserve unfinished options/voucher/checkout state.
-For product description/taste use get_product_description with the known product_id. For other
-product RAG pass entity_id and the approved domain to search_knowledge_base. Missing evidence means
+For product description/taste use get_product_description with the known product_id when available;
+otherwise use search_knowledge_base with the canonical entity_id and approved product_description domain.
+For other product RAG pass entity_id and the appropriate approved domain to search_knowledge_base. Missing evidence means
 insufficient information; never infer missing ingredients, allergy safety or numeric business facts.
 Descriptions/taste are knowledge, never review ratings. If a named product is no longer in the
 canonical candidates, resolve it with catalog search first. A price follow-up uses current price tool.
@@ -160,10 +161,13 @@ def run_llm_tool_turn(session_id, user_message, history=None, client_message_id=
         mutation_evidence_present=any(row['mutation_evidence_present'] for row in gateway.provenance),
         ui_artifacts_created={k: len(v) for k, v in artifacts.ui.items()},
         rag_evidence_count=sum(len(row['result'].get('results', [])) for row in artifacts.logs if row['tool'] in {'search_knowledge_base', 'get_product_description'}))
-    logger.info('[LLMToolTurn] %s', json.dumps(metrics))
     if shadow:
+        metrics['final_synthesis_source'] = 'shadow'
+        logger.info('[LLMToolTurn] %s', json.dumps(metrics))
         return {'shadow_metrics': metrics, 'tool_calls_log': artifacts.logs}
     reply = artifacts.validate_reply(result.get('reply')) if result.get('reply') else artifacts.factual_fallback()
+    metrics['final_synthesis_source'] = ('server_factual_fallback' if getattr(artifacts, 'used_factual_fallback', False) else 'llm')
+    logger.info('[LLMToolTurn] %s', json.dumps(metrics))
     final_state = business_state(session_id)
     from src.agents.tool_artifacts import public_result
     ui_cart = public_result(cart_manager.get_cart(session_id))

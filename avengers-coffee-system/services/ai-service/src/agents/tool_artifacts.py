@@ -221,6 +221,7 @@ class ToolArtifacts:
                 'count': len(row['result'].get('products') or row['result'].get('results') or [])} for row in self.logs[-8:]]}
 
     def factual_fallback(self):
+        self.used_factual_fallback = True  # Turn-local observability, never business state.
         from src.agents.tool_capabilities import WRITES
         for row in reversed(self.logs):
             result = row['result']
