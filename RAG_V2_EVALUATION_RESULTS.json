@@ -1,0 +1,602 @@
+{
+  "calibration": [
+    {
+      "total": 37,
+      "route_correct": 37,
+      "retrieval_cases": 23,
+      "top1": 23,
+      "top3": 23,
+      "negative_cases": 14,
+      "false_positives": 0,
+      "not_found_correct": 14,
+      "threshold": 0.05,
+      "routing_accuracy": 1.0,
+      "top1_hit": 1.0,
+      "top3_hit": 1.0,
+      "false_positive_rate": 0.0,
+      "not_found_accuracy": 1.0
+    },
+    {
+      "total": 37,
+      "route_correct": 37,
+      "retrieval_cases": 23,
+      "top1": 23,
+      "top3": 23,
+      "negative_cases": 14,
+      "false_positives": 0,
+      "not_found_correct": 14,
+      "threshold": 0.12,
+      "routing_accuracy": 1.0,
+      "top1_hit": 1.0,
+      "top3_hit": 1.0,
+      "false_positive_rate": 0.0,
+      "not_found_accuracy": 1.0
+    },
+    {
+      "total": 37,
+      "route_correct": 37,
+      "retrieval_cases": 23,
+      "top1": 23,
+      "top3": 23,
+      "negative_cases": 14,
+      "false_positives": 0,
+      "not_found_correct": 14,
+      "threshold": 0.18,
+      "routing_accuracy": 1.0,
+      "top1_hit": 1.0,
+      "top3_hit": 1.0,
+      "false_positive_rate": 0.0,
+      "not_found_accuracy": 1.0
+    },
+    {
+      "total": 37,
+      "route_correct": 37,
+      "retrieval_cases": 23,
+      "top1": 23,
+      "top3": 23,
+      "negative_cases": 14,
+      "false_positives": 0,
+      "not_found_correct": 14,
+      "threshold": 0.24,
+      "routing_accuracy": 1.0,
+      "top1_hit": 1.0,
+      "top3_hit": 1.0,
+      "false_positive_rate": 0.0,
+      "not_found_accuracy": 1.0
+    },
+    {
+      "total": 37,
+      "route_correct": 37,
+      "retrieval_cases": 23,
+      "top1": 23,
+      "top3": 23,
+      "negative_cases": 14,
+      "false_positives": 0,
+      "not_found_correct": 14,
+      "threshold": 0.3,
+      "routing_accuracy": 1.0,
+      "top1_hit": 1.0,
+      "top3_hit": 1.0,
+      "false_positive_rate": 0.0,
+      "not_found_accuracy": 1.0
+    },
+    {
+      "total": 37,
+      "route_correct": 37,
+      "retrieval_cases": 23,
+      "top1": 23,
+      "top3": 23,
+      "negative_cases": 14,
+      "false_positives": 0,
+      "not_found_correct": 14,
+      "threshold": 0.36,
+      "routing_accuracy": 1.0,
+      "top1_hit": 1.0,
+      "top3_hit": 1.0,
+      "false_positive_rate": 0.0,
+      "not_found_accuracy": 1.0
+    },
+    {
+      "total": 37,
+      "route_correct": 37,
+      "retrieval_cases": 23,
+      "top1": 23,
+      "top3": 23,
+      "negative_cases": 14,
+      "false_positives": 0,
+      "not_found_correct": 14,
+      "threshold": 0.42,
+      "routing_accuracy": 1.0,
+      "top1_hit": 1.0,
+      "top3_hit": 1.0,
+      "false_positive_rate": 0.0,
+      "not_found_accuracy": 1.0
+    },
+    {
+      "total": 37,
+      "route_correct": 37,
+      "retrieval_cases": 23,
+      "top1": 22,
+      "top3": 22,
+      "negative_cases": 14,
+      "false_positives": 0,
+      "not_found_correct": 14,
+      "threshold": 0.5,
+      "routing_accuracy": 1.0,
+      "top1_hit": 0.9565217391304348,
+      "top3_hit": 0.9565217391304348,
+      "false_positive_rate": 0.0,
+      "not_found_accuracy": 1.0
+    },
+    {
+      "total": 37,
+      "route_correct": 37,
+      "retrieval_cases": 23,
+      "top1": 14,
+      "top3": 14,
+      "negative_cases": 14,
+      "false_positives": 0,
+      "not_found_correct": 14,
+      "threshold": 0.6,
+      "routing_accuracy": 1.0,
+      "top1_hit": 0.6086956521739131,
+      "top3_hit": 0.6086956521739131,
+      "false_positive_rate": 0.0,
+      "not_found_accuracy": 1.0
+    }
+  ],
+  "evaluation_partition": {
+    "total": 18,
+    "route_correct": 18,
+    "retrieval_cases": 12,
+    "top1": 12,
+    "top3": 12,
+    "negative_cases": 6,
+    "false_positives": 0,
+    "not_found_correct": 6,
+    "threshold": 0.3,
+    "routing_accuracy": 1.0,
+    "top1_hit": 1.0,
+    "top3_hit": 1.0,
+    "false_positive_rate": 0.0,
+    "not_found_accuracy": 1.0
+  },
+  "complete_fixture": {
+    "metrics": {
+      "total": 55,
+      "route_correct": 55,
+      "retrieval_cases": 35,
+      "top1": 35,
+      "top3": 35,
+      "negative_cases": 20,
+      "false_positives": 0,
+      "not_found_correct": 20,
+      "threshold": 0.3,
+      "routing_accuracy": 1.0,
+      "top1_hit": 1.0,
+      "top3_hit": 1.0,
+      "false_positive_rate": 0.0,
+      "not_found_accuracy": 1.0
+    },
+    "details": [
+      {
+        "id": "q01",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "ordering_policy_003"
+        ]
+      },
+      {
+        "id": "q02",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "ordering_policy_003"
+        ]
+      },
+      {
+        "id": "q03",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "ordering_policy_003"
+        ]
+      },
+      {
+        "id": "q04",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "ordering_policy_003"
+        ]
+      },
+      {
+        "id": "q05",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "ordering_policy_003"
+        ]
+      },
+      {
+        "id": "q06",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "policy_privacy_001"
+        ]
+      },
+      {
+        "id": "q07",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "policy_privacy_001"
+        ]
+      },
+      {
+        "id": "q08",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "policy_privacy_001"
+        ]
+      },
+      {
+        "id": "q09",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "policy_privacy_001"
+        ]
+      },
+      {
+        "id": "q10",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "membership_001"
+        ]
+      },
+      {
+        "id": "q11",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "membership_001"
+        ]
+      },
+      {
+        "id": "q12",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "membership_001"
+        ]
+      },
+      {
+        "id": "q13",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "membership_001"
+        ]
+      },
+      {
+        "id": "q14",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "brand_001"
+        ]
+      },
+      {
+        "id": "q15",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "brand_001"
+        ]
+      },
+      {
+        "id": "q16",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "brand_002",
+          "brand_001"
+        ]
+      },
+      {
+        "id": "q17",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "company_about"
+        ]
+      },
+      {
+        "id": "q18",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "company_about"
+        ]
+      },
+      {
+        "id": "q19",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "contact_001"
+        ]
+      },
+      {
+        "id": "q20",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "contact_001"
+        ]
+      },
+      {
+        "id": "q21",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "contact_001"
+        ]
+      },
+      {
+        "id": "q22",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "company_franchise"
+        ]
+      },
+      {
+        "id": "q23",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "company_franchise"
+        ]
+      },
+      {
+        "id": "q24",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "company_careers"
+        ]
+      },
+      {
+        "id": "q25",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "gift_card_001"
+        ]
+      },
+      {
+        "id": "q26",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "gift_card_001"
+        ]
+      },
+      {
+        "id": "q27",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "faq_general_001"
+        ]
+      },
+      {
+        "id": "q28",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "ordering_policy_001"
+        ]
+      },
+      {
+        "id": "q29",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "promotion_policy_001"
+        ]
+      },
+      {
+        "id": "q30",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "product_eval-101"
+        ]
+      },
+      {
+        "id": "q31",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "product_eval-101"
+        ]
+      },
+      {
+        "id": "q32",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "product_eval-101"
+        ]
+      },
+      {
+        "id": "q33",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "product_eval-102"
+        ]
+      },
+      {
+        "id": "q34",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "product_eval-102"
+        ]
+      },
+      {
+        "id": "q35",
+        "owner": "rag",
+        "status": "not_found",
+        "ids": []
+      },
+      {
+        "id": "q36",
+        "owner": "rag",
+        "status": "ok",
+        "ids": [
+          "ordering_policy_003"
+        ]
+      },
+      {
+        "id": "q37",
+        "owner": "price",
+        "status": "authority_required",
+        "ids": []
+      },
+      {
+        "id": "q38",
+        "owner": "inventory",
+        "status": "authority_required",
+        "ids": []
+      },
+      {
+        "id": "q39",
+        "owner": "inventory",
+        "status": "authority_required",
+        "ids": []
+      },
+      {
+        "id": "q40",
+        "owner": "voucher",
+        "status": "authority_required",
+        "ids": []
+      },
+      {
+        "id": "q41",
+        "owner": "voucher",
+        "status": "authority_required",
+        "ids": []
+      },
+      {
+        "id": "q42",
+        "owner": "price",
+        "status": "authority_required",
+        "ids": []
+      },
+      {
+        "id": "q43",
+        "owner": "price",
+        "status": "authority_required",
+        "ids": []
+      },
+      {
+        "id": "q44",
+        "owner": "payment",
+        "status": "authority_required",
+        "ids": []
+      },
+      {
+        "id": "q45",
+        "owner": "payment",
+        "status": "authority_required",
+        "ids": []
+      },
+      {
+        "id": "q46",
+        "owner": "order",
+        "status": "authority_required",
+        "ids": []
+      },
+      {
+        "id": "q47",
+        "owner": "cart",
+        "status": "authority_required",
+        "ids": []
+      },
+      {
+        "id": "q48",
+        "owner": "branch",
+        "status": "authority_required",
+        "ids": []
+      },
+      {
+        "id": "q49",
+        "owner": "recommendation",
+        "status": "authority_required",
+        "ids": []
+      },
+      {
+        "id": "q50",
+        "owner": "recommendation",
+        "status": "authority_required",
+        "ids": []
+      },
+      {
+        "id": "q51",
+        "owner": "conversation",
+        "status": "not_found",
+        "ids": []
+      },
+      {
+        "id": "q52",
+        "owner": "conversation",
+        "status": "not_found",
+        "ids": []
+      },
+      {
+        "id": "q53",
+        "owner": "conversation",
+        "status": "not_found",
+        "ids": []
+      },
+      {
+        "id": "q54",
+        "owner": "conversation",
+        "status": "not_found",
+        "ids": []
+      },
+      {
+        "id": "q55",
+        "owner": "conversation",
+        "status": "not_found",
+        "ids": []
+      }
+    ],
+    "index": {
+      "backend": "tfidf_word_char",
+      "document_count": 15,
+      "chunk_count": 15,
+      "built_at": 1790838915.684154
+    }
+  },
+  "static_build": {
+    "status": "ok",
+    "backend": "tfidf_word_char",
+    "document_count": 13,
+    "chunk_count": 13,
+    "built_at": 1790838915.7817369,
+    "source_degraded": true,
+    "build_ms": 9.09
+  },
+  "static_sparse_bytes": 61816,
+  "limitations": "Local deterministic development fixture, not an unbiased production benchmark. DB/provider/browser not contacted. Product records are test fixtures only."
+}

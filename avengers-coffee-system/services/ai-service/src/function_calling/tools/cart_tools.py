@@ -105,6 +105,15 @@ def _customer_session_id(session_id: str) -> str:
     return str(session_id).split(":conversation:", 1)[0]
 
 
+def _cart_owner_id(session_id: str) -> Optional[str]:
+    # Cart access is separate from account authentication. A validated random
+    # guest id is a cart capability; it never authenticates voucher/checkout.
+    from src.common.session_auth import is_guest_session_id
+    from src.function_calling.helpers import _require_valid_session
+    owner = _customer_session_id(session_id)
+    return owner if is_guest_session_id(owner) else _require_valid_session(owner)
+
+
 def is_authenticated_cart_session(session_id: str) -> bool:
     """Whether this session has an Order Service cart that must be authoritative."""
     from src.function_calling.helpers import _require_valid_session
@@ -228,7 +237,7 @@ def sync_authoritative_cart(session_id: str) -> Dict[str, Any]:
 
     # AI state can be scoped per conversation while the order cart remains
     # customer-scoped. Resolve the owner from the namespace prefix.
-    valid_uid = _require_valid_session(_customer_session_id(session_id))
+    valid_uid = _cart_owner_id(session_id)
     if not valid_uid:
         return {
             **cart_manager.get_cart(session_id),
@@ -271,9 +280,11 @@ def sync_authoritative_cart(session_id: str) -> Dict[str, Any]:
 def _quote_authoritative_cart(session_id: str, voucher_code: Optional[str] = None, *, include_delivery: bool = False) -> Optional[Dict[str, Any]]:
     from src.function_calling.helpers import _get_service_jwt, _require_valid_session
 
-    valid_uid = _require_valid_session(_customer_session_id(session_id))
+    valid_uid = _cart_owner_id(session_id)
     if not valid_uid:
         return None
+    if not is_authenticated_cart_session(session_id) and (voucher_code or include_delivery):
+        raise ValueError("Vui lòng đăng nhập để dùng voucher hoặc đặt hàng")
     token = _get_service_jwt(valid_uid)
     response = _order_service_request(
         "POST",
@@ -399,7 +410,7 @@ def execute_add_to_cart(
         raw = unicodedata.normalize("NFD", str(value or "").lower())
         return "".join(c for c in raw if unicodedata.category(c) != "Mn").replace("đ", "d")
 
-    valid_uid = _require_valid_session(_customer_session_id(session_id))
+    valid_uid = _cart_owner_id(session_id)
     # Backward compatibility: older prompts put all selections inside note.
     note_norm = norm(note)
     known_toppings = {
@@ -615,7 +626,7 @@ def execute_remove_from_cart(
     import os, requests, logging
     from src.function_calling.helpers import _get_service_jwt, _require_valid_session
     
-    valid_uid = _require_valid_session(_customer_session_id(session_id))
+    valid_uid = _cart_owner_id(session_id)
     if valid_uid:
         try:
             token = _get_service_jwt(valid_uid)
@@ -661,7 +672,7 @@ def execute_remove_cart_item(
 ) -> Dict[str, Any]:
     """Remove exactly one canonical cart line, never every matching variant."""
     from src.function_calling.helpers import _get_service_jwt, _require_valid_session
-    valid_uid = _require_valid_session(_customer_session_id(session_id))
+    valid_uid = _cart_owner_id(session_id)
     if not valid_uid:
         return {"status": "error", "message": "Cần đăng nhập để cập nhật giỏ hàng."}
     resolved_operation_id = _operation_id_for_current_turn(
@@ -693,7 +704,7 @@ def execute_update_cart_item(
 ) -> Dict[str, Any]:
     """Atomically update one cart row and return the authoritative quote."""
     from src.function_calling.helpers import _get_service_jwt, _require_valid_session
-    valid_uid = _require_valid_session(_customer_session_id(session_id))
+    valid_uid = _cart_owner_id(session_id)
     if not valid_uid:
         return {"status": "error", "message": "Cần đăng nhập để cập nhật giỏ hàng."}
     allowed = {
@@ -728,7 +739,7 @@ def execute_clear_cart(session_id: str, operation_id: Optional[str] = None) -> D
     """Clear the customer cart with a deterministic, retry-safe operation id."""
     from src.function_calling.helpers import _get_service_jwt, _require_valid_session
 
-    valid_uid = _require_valid_session(_customer_session_id(session_id))
+    valid_uid = _cart_owner_id(session_id)
     if not valid_uid:
         return {"status": "error", "message": "Cần đăng nhập để xoá giỏ hàng."}
     resolved_operation_id = _operation_id_for_current_turn(session_id, "clear_cart", operation_id)
@@ -767,7 +778,7 @@ TOOL_GET_CART = {
 
 def execute_get_cart(session_id: str) -> Dict[str, Any]:
     from src.function_calling.helpers import _require_valid_session
-    authenticated = _require_valid_session(_customer_session_id(session_id))
+    authenticated = _cart_owner_id(session_id)
     try:
         cart = sync_authoritative_cart(session_id)
         return {"status": "ok", "cart": cart, "source": "order_service"}
@@ -968,7 +979,7 @@ def execute_request_checkout(
         return {
             "status": "stock_conflict",
             "message": (
-                f"Cửa hàng {cart.get('branch_name') or cart['branch_id']} tạm ngưng phục vụ món: "
+                f"Cửa hàng {cart.get('branch_name') or cart['branch_id']}: món tạm ngưng hoặc chưa xác minh: "
                 f"{', '.join(stock_blockers)}. "
                 "Hãy chọn cửa hàng khác hoặc đổi món trước khi tóm tắt đơn."
             ),
@@ -1216,7 +1227,7 @@ def _execute_confirm_checkout(
         return {
             "status": "stock_conflict",
             "message": (
-                "Tồn kho vừa cập nhật: món bị tạm ngưng: "
+                "Tình trạng món vừa cập nhật: tạm ngưng hoặc chưa xác minh: "
                 f"{', '.join(stock_blockers)}. Đơn chưa được tạo; vui lòng chọn lại món hoặc cửa hàng."
             ),
         }

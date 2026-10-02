@@ -1,0 +1,30 @@
+[
+  {
+    "id": "product_eval-101",
+    "title": "Mô tả sản phẩm: Trà Cam",
+    "content": "Trà Cam có vị cam chua nhẹ và hương trà. Thành phần mô tả gồm trà và cam.",
+    "source": "evaluation:catalog-description",
+    "domain": "product_description",
+    "entity_type": "product",
+    "entity_id": "eval-101",
+    "tags": [
+      "Trà Cam"
+    ],
+    "volatility": "slow",
+    "authority": "knowledge"
+  },
+  {
+    "id": "product_eval-102",
+    "title": "Mô tả sản phẩm: Bánh Sữa",
+    "content": "Bánh Sữa có thành phần sữa, bột mì và trứng. Bánh có vị ngọt dịu.",
+    "source": "evaluation:catalog-description",
+    "domain": "product_description",
+    "entity_type": "product",
+    "entity_id": "eval-102",
+    "tags": [
+      "Bánh Sữa"
+    ],
+    "volatility": "slow",
+    "authority": "knowledge"
+  }
+]

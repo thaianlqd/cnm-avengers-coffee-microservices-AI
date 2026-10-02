@@ -27,6 +27,7 @@ import DeliveryMethodPicker from '../../components/features_thaian/DeliveryMetho
 import BranchSelector from '../../components/features_thaian/BranchSelector';
 import AddressAutocompleteInput from '../../components/features_thaian/AddressAutocompleteInput';
 import NearbyBranchChecker from '../../components/features_thaian/NearbyBranchChecker';
+import { evaluateBranchAvailability, inventoryRows } from '../../lib/branchAvailability';
 import { geocodeAddress } from '../../lib/geocodingService';
 
 const AVAILABLE_SIZES = ['Nhỏ', 'Vừa'];
@@ -68,7 +69,8 @@ export default function CartPage({
   onBackToHome, 
   voucherItems: initialVouchers = [], 
   suggestedPastries = [], 
-  onAddToCart 
+  onAddToCart,
+  onLogin
 }) {
   const { cart, removeFromCart, updateCartQuantity, activeUserId, refreshCart } = useCart();
   const [editingItem, setEditingItem] = useState(null);
@@ -144,14 +146,10 @@ export default function CartPage({
     staleTime: 5 * 1000,
   });
 
-  const isAnyItemOutOfStock = useMemo(() => {
-    if (!inventoryData || deliveryMode === 'GIAO_TAN_NOI') return false;
-    const arr = Array.isArray(inventoryData) ? inventoryData : (inventoryData.items || []);
-    return cart.some(item => {
-      const invItem = arr.find(i => String(i.ma_san_pham) === String(item.ma_san_pham));
-      return invItem && (invItem.dang_kinh_doanh === false || invItem.dang_kinh_doanh === 0 || invItem.dang_kinh_doanh === 'false');
-    });
-  }, [cart, inventoryData, deliveryMode]);
+  const selectedBranchAvailability = useMemo(() => evaluateBranchAvailability(
+    cart, products, inventoryRows(inventoryData)), [cart, products, inventoryData]);
+  const isAnyItemOutOfStock = ['LAY_TAI_QUAN', 'DUNG_TAI_CHO'].includes(deliveryMode) && selectedBranch
+    && !selectedBranchAvailability.is_fully_available;
 
   const { data: publicBranchPayload } = useQuery({
     queryKey: ['public-branches'],
@@ -221,7 +219,7 @@ export default function CartPage({
   const [addressForm, setAddressForm] = useState(() => ({ ...defaultAddressSelection, street: '' }));
   const [userCoordinates, setUserCoordinates] = useState(null);
   const [stockValidation, setStockValidation] = useState({
-    canOrder: true,
+    canOrder: false,
     hasCoordinates: false,
     hasNearbyBranch: true,
     reason: '',
@@ -233,6 +231,7 @@ export default function CartPage({
   const [qrData, setQrData] = useState(null);
   const [qrImageUrl, setQrImageUrl] = useState('');
   const [qrOrderId, setQrOrderId] = useState(null);
+  const [qrPaidSuccess, setQrPaidSuccess] = useState(false);
   const [voucherCode, setVoucherCode] = useState('');
   const [voucherResult, setVoucherResult] = useState(null);
   const [voucherError, setVoucherError] = useState('');
@@ -490,6 +489,7 @@ export default function CartPage({
   }, [cart, total]);
 
   const apDungVoucher = async (overrideCode) => {
+    if (!isLoggedInUser) { requestLogin(); return; }
     const codeStr = typeof overrideCode === 'string' ? overrideCode : voucherCode;
     const code = String(codeStr || '').trim();
     if (!code) {
@@ -852,6 +852,7 @@ export default function CartPage({
 
   useEffect(() => {
     if (qrOrderStatus?.trang_thai_thanh_toan === 'DA_THANH_TOAN') {
+      setQrPaidSuccess(true);
       setThongBao('Thanh toán QR thành công. Đơn hàng đã được xác nhận.');
       queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
       triggerAiRecommendationRefresh();
@@ -860,8 +861,17 @@ export default function CartPage({
     }
   }, [qrOrderStatus, queryClient, refreshCart, triggerAiRecommendationRefresh, qrOrderId]);
 
+  const isQrPaid = qrPaidSuccess || qrOrderStatus?.trang_thai_thanh_toan === 'DA_THANH_TOAN';
+
+  const requestLogin = () => {
+    sessionStorage.setItem('post_login_redirect', 'cart');
+    if (onLogin) onLogin();
+    else window.location.assign('/?tab=login');
+  };
+
   const pendingCheckoutRetry = Boolean(checkoutRequestRef.current && !checkoutRequestRef.current.completed);
   const khoiTaoThanhToan = async () => {
+    if (!isLoggedInUser) { requestLogin(); return; }
     if (checkoutBusyRef.current) return;
     if (!deliveryMode || !phuongThuc) {
       setThongBao('Vui lòng chọn hình thức nhận hàng và phương thức thanh toán.');
@@ -931,10 +941,34 @@ export default function CartPage({
     }
 
 
+    if (!pendingCheckoutRetry && deliveryMode !== 'KIOSK') {
+      checkoutBusyRef.current = true;
+      try {
+        const [inventoryResponse, menuResponse] = await Promise.all([
+          apiClient.get(`/inventory/items?branch_code=${selectedBranch}`),
+          apiClient.get('/menu/san-pham'),
+        ]);
+        const availability = evaluateBranchAvailability(cart,
+          Array.isArray(menuResponse.data) ? menuResponse.data : [], inventoryRows(inventoryResponse.data));
+        if (!availability.is_fully_available) {
+          checkoutBusyRef.current = false;
+          setThongBao(availability.unverified_products.length
+            ? 'Chưa xác minh được tình trạng món tại cửa hàng. Vui lòng thử lại.'
+            : `Cửa hàng đang tạm ngưng: ${availability.unavailable_products.map(item => item.product_name).join(', ')}.`);
+          return;
+        }
+      } catch {
+        checkoutBusyRef.current = false;
+        setThongBao('Chưa xác minh được tình trạng món tại cửa hàng. Vui lòng thử lại.');
+        return;
+      }
+    }
+
     setThongBao('');
     setQrData(null);
     setQrImageUrl('');
     setQrOrderId(null);
+    setQrPaidSuccess(false);
 
     try {
       checkoutBusyRef.current = true;
@@ -988,6 +1022,7 @@ export default function CartPage({
   };
 
   const handleCheckoutClick = () => {
+    if (!isLoggedInUser) { requestLogin(); return; }
     if (!cart.length) {
       setThongBao('Giỏ hàng đang trống. Hãy thêm món ăn vào giỏ hàng trước.');
       return;
@@ -1056,7 +1091,7 @@ export default function CartPage({
             {/* Step 2 */}
             <button 
               type="button"
-              onClick={() => cart.length > 0 && setStep(2)}
+              onClick={handleCheckoutClick}
               disabled={cart.length === 0}
               className="flex flex-col items-center gap-2 relative z-10 group cursor-pointer disabled:cursor-not-allowed"
             >
@@ -1149,8 +1184,8 @@ export default function CartPage({
                   </div>
                 ) : (
                   cart.map((item, idx) => {
-                    const inventoryItem = inventoryData?.find(i => String(i.ma_san_pham) === String(item.ma_san_pham));
-                    const isOutOfStock = deliveryMode !== 'GIAO_TAN_NOI' && inventoryData && inventoryItem && inventoryItem.dang_kinh_doanh === false;
+                    const isOutOfStock = deliveryMode !== 'GIAO_TAN_NOI' && selectedBranchAvailability.unavailable_products
+                      .some(product => product.product_id === String(item.ma_san_pham));
 
                     return (
                     <div 
@@ -1464,6 +1499,7 @@ export default function CartPage({
                           branches={publicBranchPayload?.items || []}
                           userCoordinates={userCoordinates}
                           cart={cart}
+                          products={products}
                           selectedBranch={selectedBranch}
                           onSelectBranch={setSelectedBranch}
                           onStockStatusChange={setStockValidation}
@@ -1980,11 +2016,17 @@ export default function CartPage({
                   disabled={cart.length === 0}
                   className="w-full mt-6 py-4 bg-[#1a1a1a] hover:bg-[#c41230] text-white rounded-full font-black uppercase text-xs sm:text-sm tracking-widest shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span>Tiến hành thanh toán</span>
+                  <span>{isLoggedInUser ? 'Tiến hành thanh toán' : 'Đăng nhập để thanh toán'}</span>
                   <ArrowLongRightIcon className="h-5 w-5 stroke-[2.5]" />
                 </button>
               ) : (
                 <>
+                  {['LAY_TAI_QUAN', 'DUNG_TAI_CHO'].includes(deliveryMode) && selectedBranch
+                    && selectedBranchAvailability.unverified_products.length > 0 && (
+                    <p className="mt-4 text-xs text-amber-700">
+                      Chưa xác minh được tình trạng món tại cửa hàng. Vui lòng thử lại.
+                    </p>
+                  )}
                   {deliveryMode === 'GIAO_TAN_NOI' && !stockValidation.canOrder && stockValidation.message && (
                     <div className="mt-4 p-3 rounded-2xl bg-red-50 border border-red-200 text-center">
                       <p className="text-xs font-bold text-red-700">
@@ -2033,40 +2075,92 @@ export default function CartPage({
 
             {/* Dynamic QR Code panel (Step 2 only) */}
             {step === 2 && qrData ? (
-              <div className="bg-white rounded-[24px] p-6 border border-[#e8e2da] shadow-md text-center animate-in fade-in duration-300 space-y-4">
-                <h3 className="text-sm font-black text-[#1a1a1a] uppercase tracking-wide pb-2 border-b border-gray-100 font-serif">
-                  Quét mã QR để thanh toán đơn hàng
-                </h3>
-                
-                <div className="relative inline-block p-3 border border-gray-200 rounded-2xl bg-white shadow-inner">
-                  <img
-                    src={qrImageUrl || qrData.qr_img_url}
-                    alt="QR ngân hàng"
-                    className="w-48 h-48 mx-auto rounded-xl"
-                    onError={() => {
-                      if (qrData?.qr_fallback_url && qrImageUrl !== qrData.qr_fallback_url) {
-                        setQrImageUrl(qrData.qr_fallback_url);
-                      }
-                    }}
-                  />
-                </div>
+              isQrPaid ? (
+                <div className="bg-gradient-to-b from-emerald-50 to-white rounded-[24px] p-6 border-2 border-emerald-500/50 shadow-xl text-center animate-in zoom-in-95 duration-400 space-y-4">
+                  <div className="w-16 h-16 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto shadow-lg shadow-emerald-200 ring-8 ring-emerald-100">
+                    <CheckCircleIcon className="w-10 h-10" />
+                  </div>
 
-                <div className="text-left space-y-2 text-xs text-gray-600 bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                  <p className="flex justify-between">
-                    <span>Mã tham chiếu:</span> 
-                    <span className="font-black text-gray-800">{qrData.ma_tham_chieu}</span>
-                  </p>
-                  <p className="flex justify-between">
-                    <span>Số tiền cần chuyển:</span> 
-                    <span className="font-black text-[#c41230] text-sm">{Number(qrData.so_tien).toLocaleString('vi-VN')}đ</span>
-                  </p>
+                  <div className="space-y-1">
+                    <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 text-[11px] font-black tracking-wider uppercase rounded-full">
+                      Giao dịch hoàn tất
+                    </span>
+                    <h3 className="text-lg font-black text-emerald-900 tracking-tight">
+                      THANH TOÁN THÀNH CÔNG!
+                    </h3>
+                    <p className="text-xs text-gray-500 font-medium">
+                      Hệ thống đã nhận được tiền chuyển khoản SePay và tự động xác nhận đơn.
+                    </p>
+                  </div>
+
+                  <div className="text-left space-y-2.5 text-xs bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm">
+                    <p className="flex justify-between items-center py-1 border-b border-gray-100">
+                      <span className="text-gray-500">Mã tham chiếu:</span> 
+                      <span className="font-black text-gray-800 font-mono tracking-wide">{qrData.ma_tham_chieu}</span>
+                    </p>
+                    <p className="flex justify-between items-center py-1 border-b border-gray-100">
+                      <span className="text-gray-500">Số tiền đã nhận:</span> 
+                      <span className="font-black text-emerald-600 text-base">{Number(qrData.so_tien).toLocaleString('vi-VN')}đ</span>
+                    </p>
+                    <p className="flex justify-between items-center pt-1">
+                      <span className="text-gray-500">Trạng thái đơn:</span> 
+                      <span className="inline-flex items-center gap-1.5 font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full text-[11px]">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Đã xác nhận & Chờ pha chế
+                      </span>
+                    </p>
+                  </div>
+
+                  <div className="pt-1 space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        window.location.href = '/?tab=history';
+                      }}
+                      className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <span>Xem Lịch Sử Đơn Hàng</span>
+                      <ArrowLongRightIcon className="w-4 h-4 stroke-[2.5]" />
+                    </button>
+                    <p className="text-[11px] text-gray-400">Đơn hàng đang được chuẩn bị tại chi nhánh</p>
+                  </div>
                 </div>
-                
-                <div className="flex items-center justify-center gap-2 text-xs font-bold text-emerald-700 bg-emerald-50 py-2.5 px-3 rounded-xl border border-emerald-100">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                  <span>Hệ thống đang tự động xác thực thanh toán qua Sepay...</span>
+              ) : (
+                <div className="bg-white rounded-[24px] p-6 border border-[#e8e2da] shadow-md text-center animate-in fade-in duration-300 space-y-4">
+                  <h3 className="text-sm font-black text-[#1a1a1a] uppercase tracking-wide pb-2 border-b border-gray-100 font-serif">
+                    Quét mã QR để thanh toán đơn hàng
+                  </h3>
+                  
+                  <div className="relative inline-block p-3 border border-gray-200 rounded-2xl bg-white shadow-inner">
+                    <img
+                      src={qrImageUrl || qrData.qr_img_url}
+                      alt="QR ngân hàng"
+                      className="w-48 h-48 mx-auto rounded-xl"
+                      onError={() => {
+                        if (qrData?.qr_fallback_url && qrImageUrl !== qrData.qr_fallback_url) {
+                          setQrImageUrl(qrData.qr_fallback_url);
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <div className="text-left space-y-2 text-xs text-gray-600 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                    <p className="flex justify-between">
+                      <span>Mã tham chiếu:</span> 
+                      <span className="font-black text-gray-800">{qrData.ma_tham_chieu}</span>
+                    </p>
+                    <p className="flex justify-between">
+                      <span>Số tiền cần chuyển:</span> 
+                      <span className="font-black text-[#c41230] text-sm">{Number(qrData.so_tien).toLocaleString('vi-VN')}đ</span>
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center justify-center gap-2 text-xs font-bold text-emerald-700 bg-emerald-50 py-2.5 px-3 rounded-xl border border-emerald-100">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                    <span>Hệ thống đang tự động xác thực thanh toán qua Sepay...</span>
+                  </div>
                 </div>
-              </div>
+              )
             ) : null}
           </div>
         </div>

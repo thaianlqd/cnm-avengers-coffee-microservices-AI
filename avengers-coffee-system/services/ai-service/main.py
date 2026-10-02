@@ -131,6 +131,15 @@ def _safe_log_inference(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("AI Service dang khoi dong - Dang huan luyen model...")
+    from src.agents.agent_memory import redis_available
+    from src.common.agent_provider_policy import enabled
+    logger.info(
+        "[AIStartup] chat_orchestrator_mode=%s agent_provider=%s agent_model=%s redis_available=%s",
+        os.getenv("AI_CHAT_ORCHESTRATOR_MODE", "legacy").strip().lower(),
+        os.getenv("AI_AGENT_PROVIDER", "auto").strip().lower(),
+        os.getenv("AI_AGENT_MODEL", "").strip() or ("tier_policy" if enabled() else "provider_default"),
+        str(redis_available()).lower(),
+    )
     engine = get_db_engine()
     try:
         ensure_ai_storage(engine, AI_SCHEMA)
@@ -979,6 +988,10 @@ def reset_agent_conversation(body: AgentConversationResetRequest, request: Reque
 
     scoped_session_id = f"{body.session_id}:conversation:{conversation_id}"
     prefs = cart_manager.reset_conversation_draft(scoped_session_id)
+    from src.agents.agent_memory import ConversationMemory
+    redis_memory = ConversationMemory()
+    redis_memory.reset(f"{body.session_id}:conversation:{previous_conversation_id}")
+    redis_memory.reset(scoped_session_id)
     return {
         "status": "ok",
         "conversation_id": conversation_id,
@@ -996,19 +1009,12 @@ def reset_agent_conversation(body: AgentConversationResetRequest, request: Reque
 
 @app.get("/ai/agent/cart/{session_id}")
 def get_agent_cart(session_id: str, request: Request, conversation_id: Optional[str] = None):
-    """Return the current authoritative cart; guest sessions use a local draft."""
+    """Return the authoritative cart for an account or a validated guest owner."""
     from src.common.session_auth import authorize_session
     authorize_session(session_id, request.headers.get("authorization"))
-    from src.common import cart_manager
     scoped = f"{session_id}:conversation:{conversation_id}" if conversation_id else session_id
-    from src.function_calling.tools.cart_tools import is_authenticated_cart_session, sync_authoritative_cart
+    from src.function_calling.tools.cart_tools import sync_authoritative_cart
 
-    if not is_authenticated_cart_session(scoped):
-        return {
-            **cart_manager.get_cart(scoped),
-            "authoritative": False,
-            "cart_sync_status": "guest_draft",
-        }
     try:
         return sync_authoritative_cart(scoped)
     except Exception as exc:
@@ -1025,20 +1031,14 @@ def clear_agent_cart(session_id: str, request: Request):
     """Clear the authoritative cart before changing the conversational mirror."""
     from src.common.session_auth import authorize_session
     authorize_session(session_id, request.headers.get("authorization"))
-    from src.common import cart_manager
     from src.function_calling.tools.cart_tools import (
-        _customer_session_id,
         _order_service_request,
-        is_authenticated_cart_session,
         sync_authoritative_cart,
     )
-    from src.function_calling.helpers import _get_service_jwt, _require_valid_session
+    from src.function_calling.helpers import _get_service_jwt
 
-    if not is_authenticated_cart_session(session_id):
-        cart_manager.clear_cart(session_id)
-        return {"status": "ok", "message": f"Đã xoá giỏ hàng cho session {session_id}", "authoritative": False}
-
-    valid_uid = _require_valid_session(_customer_session_id(session_id))
+    from src.function_calling.tools.cart_tools import _cart_owner_id
+    valid_uid = _cart_owner_id(session_id)
     try:
         headers = {}
         operation_id = request.headers.get("x-idempotency-key")
@@ -1075,8 +1075,10 @@ def api_cart_checkout(body: CheckoutRequest, request: Request):
     Endpoint Single Source of Truth để chốt đơn hàng từ Frontend UI.
     """
     from src.function_calling.tools.cart_tools import execute_confirm_checkout
-    from src.common.session_auth import authorize_session
+    from src.common.session_auth import authorize_session, is_guest_session_id
     authorize_session(body.session_id, request.headers.get("authorization"))
+    if is_guest_session_id(body.session_id):
+        raise HTTPException(status_code=403, detail={"code": "LOGIN_REQUIRED", "message": "Vui lòng đăng nhập để đặt hàng"})
     conversation_id = request.query_params.get("conversation_id")
     session_scope = f"{body.session_id}:conversation:{conversation_id}" if conversation_id else body.session_id
     return execute_confirm_checkout(
@@ -1098,8 +1100,7 @@ def reload_rag():
     """Reload the RAG knowledge base without restarting the container."""
     from src.rag.rag_service import get_rag_service
     rag = get_rag_service()
-    rag.load()
-    return {"status": "ok", "message": "RAG knowledge base reloaded successfully."}
+    return rag.load()
 
 
 @app.get("/debug-branches")
@@ -1983,10 +1984,18 @@ async def voice_order(
 
 @app.get("/ai/health")
 def health():
+    from src.agents.agent_memory import redis_available
+    from src.common.agent_provider_policy import enabled
     return {
         "status": "ok",
         "cf_trained": cf_model.is_trained,
         "groq_available": groq_is_available(),
         "groq_model": "dynamic_fallback",
         "stt_model": "whisper-large-v3-turbo",
+        "chat_orchestrator_mode": os.getenv("AI_CHAT_ORCHESTRATOR_MODE", "legacy").strip().lower(),
+        "agent_provider": os.getenv("AI_AGENT_PROVIDER", "auto").strip().lower(),
+        "agent_model": os.getenv("AI_AGENT_MODEL", "").strip() or ("tier_policy" if enabled() else "provider_default"),
+        "agent_model_tiering": enabled(),
+        "agent_fallback_providers": os.getenv("AI_AGENT_FALLBACK_PROVIDERS", "gemini,openai"),
+        "redis_available": redis_available(),
     }

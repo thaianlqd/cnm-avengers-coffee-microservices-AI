@@ -14,6 +14,7 @@ import re
 import time
 import unicodedata
 from typing import Any, Dict, List, Optional
+from src.common.gemini_compat import inference_messages, tool_extra_content
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,16 @@ class FakeToolCall:
         self.id = d.get("id")
         self.type = d.get("type", "function")
         self.function = FakeFunction(d.get("function", {}))
+        # Opaque inference metadata only; never put it in tool args/artifacts/logs.
+        self.gemini_extra_content = tool_extra_content(d.get('extra_content'))
+
+
+def _continuation_tool_call(call, provider):
+    row = {'id': call.id, 'type': 'function', 'function': {
+        'name': call.function.name, 'arguments': call.function.arguments}}
+    if provider == 'gemini' and getattr(call, 'gemini_extra_content', None):
+        row['extra_content'] = tool_extra_content(call.gemini_extra_content)
+    return row
 
 class FakeMessage:
     def __init__(self, d):
@@ -48,12 +59,23 @@ class FakeChoice:
 class FakeResponse:
     def __init__(self, d):
         self.choices = [FakeChoice(c) for c in d.get("choices", [])]
+        self.usage = d.get("usage") or {}
+        self.model = d.get("model")
+
+
+class ProviderRequestError(RuntimeError):
+    """Status/Retry-After survive classification; provider body is never logged."""
+    def __init__(self, provider, response):
+        super().__init__(f'{provider} request failed (HTTP {response.status_code})')
+        self.status_code = response.status_code
+        self.headers = response.headers
+        self.error_text = response.text
 
 class OpenRouterCompletions:
     def __init__(self, api_key):
         self.api_key = api_key
         
-    def create(self, model, messages, tools=None, tool_choice="auto", max_tokens=2048, temperature=0.1):
+    def create(self, model, messages, tools=None, tool_choice="auto", max_tokens=2048, temperature=0.1, response_format=None, timeout=30, allow_fallback=True):
         import requests
         payload = {
             "model": model,
@@ -61,6 +83,8 @@ class OpenRouterCompletions:
             "max_tokens": max_tokens,
             "temperature": temperature
         }
+        if response_format:
+            payload["response_format"] = response_format
         if tools:
             payload["tools"] = tools
             payload["tool_choice"] = tool_choice
@@ -77,9 +101,9 @@ class OpenRouterCompletions:
         ]
         
         last_resp = None
-        for fallback_model in fallback_models:
+        for fallback_model in fallback_models if allow_fallback else [model]:
             payload["model"] = fallback_model
-            resp = requests.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers)
+            resp = requests.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers, timeout=timeout)
             if resp.ok:
                 return FakeResponse(resp.json())
             last_resp = resp
@@ -87,7 +111,7 @@ class OpenRouterCompletions:
                 # If it's a real error (like 401 Unauthorized or 402 Payment Required), stop immediately
                 break
                 
-        raise Exception(f"OpenRouter API error {last_resp.status_code}: {last_resp.text}")
+        raise ProviderRequestError('openrouter', last_resp)
 
 class OpenRouterChat:
     def __init__(self, api_key):
@@ -102,14 +126,16 @@ class GeminiCompletions:
     def __init__(self, api_key):
         self.api_key = api_key
         
-    def create(self, model, messages, tools=None, tool_choice="auto", max_tokens=2048, temperature=0.1):
+    def create(self, model, messages, tools=None, tool_choice="auto", max_tokens=2048, temperature=0.1, response_format=None, timeout=30):
         import requests
         payload = {
-            "model": "gemini-3.6-flash",
-            "messages": messages,
+            "model": model,
+            "messages": inference_messages(messages, 'gemini'),
             "max_tokens": max_tokens,
             "temperature": temperature
         }
+        if response_format:
+            payload["response_format"] = response_format
         if tools:
             payload["tools"] = tools
             payload["tool_choice"] = tool_choice
@@ -117,10 +143,10 @@ class GeminiCompletions:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
-        resp = requests.post("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", json=payload, headers=headers)
+        resp = requests.post("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", json=payload, headers=headers, timeout=timeout)
         if resp.ok:
             return FakeResponse(resp.json())
-        raise Exception(f"Gemini API error {resp.status_code}: {resp.text}")
+        raise ProviderRequestError('gemini', resp)
 
 class GeminiChat:
     def __init__(self, api_key):
@@ -132,17 +158,20 @@ class GeminiClient:
         self.base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
 
 class OpenAICompletions:
-    def __init__(self, api_key):
+    def __init__(self, api_key, base_url='https://api.openai.com/v1'):
         self.api_key = api_key
+        self.base_url = base_url
         
-    def create(self, model, messages, tools=None, tool_choice="auto", max_tokens=1000, temperature=0.1):
+    def create(self, model, messages, tools=None, tool_choice="auto", max_tokens=1000, temperature=0.1, response_format=None, timeout=30):
         import requests
         payload = {
-            "model": "gpt-4o-mini",
+            "model": model,
             "messages": messages,
             "max_tokens": max_tokens,
             "temperature": temperature
         }
+        if response_format:
+            payload["response_format"] = response_format
         if tools:
             payload["tools"] = tools
             payload["tool_choice"] = tool_choice
@@ -150,19 +179,19 @@ class OpenAICompletions:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
-        resp = requests.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers)
+        resp = requests.post(self.base_url.rstrip('/')+'/chat/completions', json=payload, headers=headers, timeout=timeout)
         if resp.ok:
             return FakeResponse(resp.json())
-        raise Exception(f"OpenAI API error {resp.status_code}: {resp.text}")
+        raise ProviderRequestError('openai', resp)
 
 class OpenAIChat:
-    def __init__(self, api_key):
-        self.completions = OpenAICompletions(api_key)
+    def __init__(self, api_key, base_url='https://api.openai.com/v1'):
+        self.completions = OpenAICompletions(api_key, base_url)
 
 class OpenAIClient:
-    def __init__(self, api_key):
-        self.chat = OpenAIChat(api_key)
-        self.base_url = "https://api.openai.com/v1"
+    def __init__(self, api_key, base_url='https://api.openai.com/v1'):
+        self.chat = OpenAIChat(api_key, base_url)
+        self.base_url = base_url
 
 def _get_groq_client():
     global _llm_clients, _clients_initialized, _active_client_idx
@@ -228,6 +257,37 @@ def switch_groq_client():
 
 def groq_is_available() -> bool:
     return _get_groq_client() is not None
+
+
+def _client_provider(client) -> str:
+    base = str(getattr(client, "base_url", "")).lower()
+    if "generativelanguage" in base:
+        return "gemini"
+    if "api.openai.com" in base:
+        return "openai"
+    if "openrouter" in base:
+        return "openrouter"
+    if "cerebras" in base:
+        return "cerebras"
+    if "groq" in base:
+        return "groq"
+    return "unknown"
+
+
+def _agent_client_sequence(preferred: str):
+    """Return a deliberate provider-first chain without changing legacy order."""
+    _get_groq_client()  # Lazy initialization of the existing shared clients.
+    clients = list(_llm_clients)
+    if preferred == "openrouter" and not any(_client_provider(c) == preferred for c in clients):
+        key = os.getenv("OPENROUTER_API_KEY", "").strip()
+        if key and "your_openrouter" not in key:
+            clients.insert(0, OpenRouterClient(key))
+    if preferred == "auto":
+        return clients
+    selected = [client for client in clients if _client_provider(client) == preferred]
+    # Compatible providers are outage fallbacks only. An unconfigured preferred
+    # provider fails explicitly rather than making quality policy accidental.
+    return selected + [client for client in clients if client not in selected] if selected else []
 
 # Danh sách model fallback cứng (dùng khi không gọi được models.list())
 GROQ_MODELS_FALLBACK = [
@@ -339,6 +399,22 @@ def groq_agent_chat(
     session_id: str = "",
     max_tool_rounds: int = 10,
     max_tokens: int = 400,
+    guarded: bool = False,
+    tool_result_formatter=None,
+    metrics: Optional[Dict[str, Any]] = None,
+    context_char_limit: Optional[int] = None,
+    final_response_validator=None,
+    agent_provider: Optional[str] = None,
+    agent_model: Optional[str] = None,
+    tool_surface_provider=None,
+    model_context_provider=None,
+    context_compactor=None,
+    model_tier_provider=None,
+    tool_result_projector=None,
+    discovery_completion_provider=None,
+    final_response_repair_allowed=None,
+    final_response_repair_context_provider=None,
+    customer_step_response_provider=None,
 ) -> Dict[str, Any]:
     """
     Agentic chat loop với Groq Function Calling.
@@ -367,20 +443,39 @@ def groq_agent_chat(
         }
     """
     global _selected_chat_model
-    client = _get_groq_client()
-    if client is None:
-        return {"reply": "", "tool_calls_log": [], "checkout_payload": None, "error": "Groq client unavailable"}
+    requested_provider = (agent_provider or "").strip().lower()
+    if requested_provider and requested_provider not in {"auto", "gemini", "openai", "groq", "openrouter", "cerebras"}:
+        return {"reply": "", "tool_calls_log": [], "checkout_payload": None,
+                "error": "Unsupported agent provider."}
+    agent_clients = _agent_client_sequence(requested_provider) if requested_provider and not guarded else None
+    client = None if guarded else ((agent_clients[0] if agent_clients else None) if agent_clients is not None else _get_groq_client())
+    if not guarded and client is None:
+        return {"reply": "", "tool_calls_log": [], "checkout_payload": None,
+                "error": "Configured agent provider unavailable" if requested_provider else "Groq client unavailable"}
 
     tool_calls_log = []
     checkout_payload = None
     current_messages = list(messages)
     turn_tool_cache = {}
     force_tools_disabled = False
+    force_tool_required = False
+    required_repair_tool = None
     repeated_tool_result = None
+    semantic_repairs = 0
+    final_envelope_repairs = 0
+    final_envelope_repair_active = False
+    mutation_succeeded = False
+    provider_turn_health = {}
 
     # Resolve model một lần duy nhất cho cả cuộc hội thoại (cached sau lần đầu)
-    model = _resolve_chat_model(client)
-    if model is None:
+    def model_for(selected_client):
+        if agent_model and (not requested_provider or requested_provider == "auto"
+                            or _client_provider(selected_client) == requested_provider):
+            return agent_model
+        return _resolve_chat_model(selected_client)
+
+    model = None if guarded else model_for(client)
+    if not guarded and model is None:
         return {
             "reply": "",
             "tool_calls_log": [],
@@ -388,93 +483,159 @@ def groq_agent_chat(
             "error": "No usable Groq chat model found for this API key.",
         }
 
-    for round_idx in range(max_tool_rounds + 1):
+    for round_idx in range(max_tool_rounds + 2):
+        # The extra slot is exclusively one tools-disabled envelope repair.
+        if round_idx > max_tool_rounds and not final_envelope_repair_active:
+            break
         resp = None
+        if guarded and round_idx == max_tool_rounds:
+            force_tools_disabled = True
+        if not guarded and context_char_limit and sum(len(str(m.get('content') or '')) for m in current_messages) > context_char_limit:
+            if guarded and context_compactor:
+                current_messages = context_compactor(current_messages)
+            if sum(len(str(m.get('content') or '')) for m in current_messages) > context_char_limit:
+                return {"reply": "", "tool_calls_log": tool_calls_log, "checkout_payload": checkout_payload,
+                        "error": "context_budget_exceeded"}
         
         # ── Retry qua các Client nếu gặp lỗi ──
         success = False
         last_err = ""
-        for retry_idx in range(len(_llm_clients)):
-            client = _get_groq_client()
-            if client is None:
-                break
+        t0 = time.perf_counter()
+        if guarded:
+            from src.common.agent_provider_policy import completion
+            if tool_surface_provider:
+                tools, tool_executors = tool_surface_provider(force_tools_disabled, required_repair_tool)
+            if force_tools_disabled:
+                tools, tool_executors = [], {}
+            if model_context_provider and not final_envelope_repair_active:
+                current_messages[0] = model_context_provider()
+            if context_char_limit and sum(len(str(m.get('content') or '')) for m in current_messages) > context_char_limit:
+                if context_compactor:
+                    current_messages = context_compactor(current_messages)
+                if sum(len(str(m.get('content') or '')) for m in current_messages) > context_char_limit:
+                    return {'reply': '', 'tool_calls_log': tool_calls_log,
+                            'checkout_payload': checkout_payload, 'error': 'context_budget_exceeded'}
+            if metrics is not None:
+                metrics['exposed_tool_count'] = max(metrics.get('exposed_tool_count', 0), len(tools or []))
+                chars = len(json.dumps(tools or [], ensure_ascii=False))
+                metrics['tool_schema_chars'] = max(metrics.get('tool_schema_chars', 0), chars)
+                metrics.setdefault('tool_schema_chars_by_round', []).append(chars)
+                metrics.setdefault('capability_counts_by_round', []).append(len(tools or []))
+                metrics['max_exposed_tool_count'] = max(metrics.get('max_exposed_tool_count', 0), len(tools or []))
+            tier = model_tier_provider(round_idx, semantic_repairs, mutation_succeeded) if model_tier_provider else 'standard'
+            resp, client, model, error = completion(current_messages, tools,
+                preferred=requested_provider or 'auto', explicit_model=agent_model, tier=tier,
+                max_tokens=max_tokens, required=force_tool_required, metrics=metrics,
+                compact_messages=context_compactor, turn_health=provider_turn_health, round_index=round_idx)
+            success, last_err = resp is not None, error or ''
+        else:
+            retry_clients = agent_clients if agent_clients is not None else [None] * max(1, len(_llm_clients))
+            for retry_idx, configured_client in enumerate(retry_clients):
+                client = configured_client or _get_groq_client()
+                if client is None:
+                    break
                 
-            model = _resolve_chat_model(client)
-            if model is None:
-                logger.warning("[Groq Agent] Model None for current client, switching...")
-                switch_groq_client()
-                continue
+                model = model_for(client)
+                if model is None:
+                    logger.warning("[Groq Agent] Model None for current client, switching...")
+                    if agent_clients is None:
+                        switch_groq_client()
+                    continue
                 
-            try:
-                t0 = time.perf_counter()
-                kwargs: Dict[str, Any] = {
-                    "model": model,
-                    "messages": current_messages,
-                    "max_tokens": max_tokens,
-                    "temperature": 0.35,
-                }
-                if tools and not force_tools_disabled:
-                    kwargs["tools"] = tools
-                    kwargs["tool_choice"] = "auto"
+                try:
+                    t0 = time.perf_counter()
+                    kwargs: Dict[str, Any] = {
+                        "model": model,
+                        "messages": current_messages,
+                        "max_tokens": max_tokens,
+                        "temperature": 0.35,
+                    }
+                    if tools and not force_tools_disabled:
+                        kwargs["tools"] = tools
+                        kwargs["tool_choice"] = "required" if force_tool_required else "auto"
+                    if guarded and final_response_validator:
+                        kwargs["response_format"] = {"type": "json_object"}
+                    if metrics is not None:
+                        metrics['provider_attempt_count'] = metrics.get('provider_attempt_count', 0) + 1
     
-                resp = client.chat.completions.create(**kwargs)
-                success = True
-                break # Thành công thì thoát vòng lặp retry
+                    resp = client.chat.completions.create(**kwargs)
+                    success = True
+                    break # Thành công thì thoát vòng lặp retry
                 
-            except Exception as e:
-                t1 = time.perf_counter()
-                err = str(e)
-                last_err = err
-                logger.warning("[Groq Agent] API error round=%d retry=%d (took %.2fs): %s", round_idx, retry_idx, t1 - t0, err[:120])
+                except Exception as e:
+                    t1 = time.perf_counter()
+                    err = str(e)
+                    last_err = err
+                    if metrics is not None:
+                        metrics['provider_failure_count'] = metrics.get('provider_failure_count', 0) + 1
+                        metrics['failed_provider_latency_ms'] = metrics.get('failed_provider_latency_ms', 0) + round((t1-t0)*1000, 2)
+                    logger.warning("[Groq Agent] API error round=%d retry=%d (took %.2fs): %s", round_idx, retry_idx, t1 - t0, type(e).__name__ if guarded else err[:120])
                 
-                if "413" in err or "too large" in err.lower():
-                    if "tokens per minute" in err.lower() or "tpm" in err.lower():
-                        # Đôi khi Groq trả 413 cho lỗi vượt quá TPM thay vì 429
+                    if "413" in err or "too large" in err.lower():
+                        if "tokens per minute" in err.lower() or "tpm" in err.lower():
+                            # Đôi khi Groq trả 413 cho lỗi vượt quá TPM thay vì 429
+                            _banned_models_until[model] = time.time() + 60
+                            _selected_chat_model = None
+                            logger.warning("[Groq Agent] Model %s TPM limit reached (413), banning for 60s.", model)
+                            if agent_clients is None:
+                                switch_groq_client()
+                            continue
+                        
+                        logger.warning("[Groq Agent] Payload too large (413). Stripping history to prevent failure.")
+                        # Keep only system message (index 0) and the very last message (user_message)
+                        if len(current_messages) > 2:
+                            current_messages = [current_messages[0], current_messages[-1]]
+                            continue # Retry immediately with stripped messages
+                        else:
+                            return {"reply": "", "tool_calls_log": tool_calls_log, "checkout_payload": checkout_payload, "error": "Context window exceeded."}
+
+                    if "404" in err or "does not exist" in err or "decommissioned" in err:
+                        _selected_chat_model = None
+                
+                    if "429" in err or "rate_limit" in err.lower():
                         _banned_models_until[model] = time.time() + 60
                         _selected_chat_model = None
-                        logger.warning("[Groq Agent] Model %s TPM limit reached (413), banning for 60s.", model)
-                        switch_groq_client()
-                        continue
-                        
-                    logger.warning("[Groq Agent] Payload too large (413). Stripping history to prevent failure.")
-                    # Keep only system message (index 0) and the very last message (user_message)
-                    if len(current_messages) > 2:
-                        current_messages = [current_messages[0], current_messages[-1]]
-                        continue # Retry immediately with stripped messages
-                    else:
-                        return {"reply": "", "tool_calls_log": tool_calls_log, "checkout_payload": checkout_payload, "error": "Context window exceeded."}
+                        logger.warning("[Groq Agent] Model %s rate limited, banning for 60s.", model)
 
-                if "404" in err or "does not exist" in err or "decommissioned" in err:
-                    _selected_chat_model = None
-                
-                if "429" in err or "rate_limit" in err.lower():
-                    _banned_models_until[model] = time.time() + 60
-                    _selected_chat_model = None
-                    logger.warning("[Groq Agent] Model %s rate limited, banning for 60s.", model)
-
-                if "400" in err and "tool calling" in err.lower():
-                    _banned_models_until[model] = time.time() + 86400  # Ban 1 ngày vì model này không hỗ trợ tool
-                    _selected_chat_model = None
-                    logger.warning("[Groq Agent] Model %s doesn't support tools, banning for 1 day.", model)
+                    if "400" in err and "tool calling" in err.lower():
+                        _banned_models_until[model] = time.time() + 86400  # Ban 1 ngày vì model này không hỗ trợ tool
+                        _selected_chat_model = None
+                        logger.warning("[Groq Agent] Model %s doesn't support tools, banning for 1 day.", model)
                     
-                switch_groq_client()
-                continue
+                    if agent_clients is None:
+                        switch_groq_client()
+                    continue
                 
         if not success or not resp:
             # Nếu chạy hết các client mà vẫn lỗi (hoặc mất mạng)
-            logger.error("[Groq Agent] All clients failed in round=%d. Last error: %s", round_idx, last_err)
-            return {"reply": "Hệ thống đang quá tải hoặc hết token, vui lòng thử lại sau ít phút.", "tool_calls_log": tool_calls_log, "checkout_payload": checkout_payload,
-                    "error": "rate_limit" if ("rate_limit" in last_err.lower() or "429" in last_err or "402" in last_err) else "All LLM clients failed."}
+            logger.error("[Groq Agent] All clients failed in round=%d. Last error: %s", round_idx, 'provider_unavailable' if guarded else last_err)
+            return {"reply": "" if guarded else "Hệ thống đang quá tải hoặc hết token, vui lòng thử lại sau ít phút.", "tool_calls_log": tool_calls_log, "checkout_payload": checkout_payload,
+                    "error": last_err if guarded else ("rate_limit" if ("rate_limit" in last_err.lower() or "429" in last_err or "402" in last_err) else "All LLM clients failed.")}
 
         choice = resp.choices[0]
         assistant_msg = choice.message
+        if metrics is not None:
+            usage = getattr(resp, 'usage', None) or {}
+            def usage_value(key):
+                return usage.get(key, 0) if isinstance(usage, dict) else getattr(usage, key, 0)
+            metrics['input_tokens'] = metrics.get('input_tokens', 0) + (usage_value('prompt_tokens') or 0)
+            metrics['output_tokens'] = metrics.get('output_tokens', 0) + (usage_value('completion_tokens') or 0)
+            from src.agents.agent_memory import safe_text
+            metrics.update(model=safe_text(getattr(resp, 'model', None) or model, 128) if guarded else getattr(resp, 'model', None) or model,
+                provider=_client_provider(client),
+                request_count=metrics.get('request_count', 0)+1)
+            metrics['llm_latency_ms'] = metrics.get('llm_latency_ms', 0) + round((time.perf_counter()-t0)*1000, 2)
 
         # ── Case 1: Groq muốn gọi Tool ────────────────────────────────────
         if assistant_msg.tool_calls:
+            required_repair_round = bool(force_tool_required and required_repair_tool)
+            force_tool_required = False
+            if metrics is not None:
+                metrics['tool_round_count'] = metrics.get('tool_round_count', 0) + 1
             if force_tools_disabled:
                 message = (repeated_tool_result or {}).get("message") if isinstance(repeated_tool_result, dict) else None
                 return {
-                    "reply": str(message or "Mình đã có kết quả tra cứu ở trên nhưng chưa thể diễn đạt thêm lúc này."),
+                    "reply": "" if guarded else str(message or "Mình đã có kết quả tra cứu ở trên nhưng chưa thể diễn đạt thêm lúc này."),
                     "tool_calls_log": tool_calls_log,
                     "checkout_payload": checkout_payload,
                     "error": "repeated_tool_call",
@@ -483,30 +644,31 @@ def groq_agent_chat(
             current_messages.append({
                 "role": "assistant",
                 "content": assistant_msg.content or "",
-                "tool_calls": [
-                    {
-                        "id": tc.id,
-                        "type": "function",
-                        "function": {
-                            "name": tc.function.name,
-                            "arguments": tc.function.arguments,
-                        },
-                    }
-                    for tc in assistant_msg.tool_calls
-                ],
+                "tool_calls": [_continuation_tool_call(tc, _client_provider(client))
+                               for tc in assistant_msg.tool_calls],
             })
 
             # Thực thi từng tool call
             repeated_signature = False
+            recoverable_write_denial = False
+            successful_required_repair = False
+            terminal_success = False
+            confirmation_denied_stop = False
             for tc in assistant_msg.tool_calls:
+                if guarded and len(tool_calls_log) >= max_tool_rounds * 4:
+                    return {"reply": "", "tool_calls_log": tool_calls_log,
+                            "checkout_payload": checkout_payload, "error": "tool_call_budget_exceeded"}
                 tool_name = tc.function.name
                 try:
                     import json as _json
                     tool_args_str = tc.function.arguments or "{}"
                     tool_args = _json.loads(tool_args_str)
                 except Exception:
+                    if guarded:
+                        tool_args = None
+                    else:
+                        tool_args = {}
                     tool_args_str = "{}"
-                    tool_args = {}
 
                 # Canonical args make whitespace/key order irrelevant. Once a
                 # result has been supplied, an identical signature has no new
@@ -514,62 +676,191 @@ def groq_agent_chat(
                 canonical_args = _json.dumps(tool_args, ensure_ascii=False, sort_keys=True,
                                              separators=(",", ":"))
                 tool_hash = f"{tool_name}|{canonical_args}"
-                if tool_hash in turn_tool_cache:
-                    logger.info("[Groq Agent] Repeated tool signature; forcing final completion: %s", tool_hash)
+                from src.agents.tool_capabilities import CAPABILITIES
+                is_read = tool_name in CAPABILITIES and CAPABILITIES[tool_name].access == 'READ'
+                if tool_hash in turn_tool_cache and (not guarded or (not is_read and tool_name in (tool_executors or {}))):
+                    logger.info("[Groq Agent] Repeated tool signature; forcing final completion: %s", tool_name if guarded else tool_hash)
                     result = turn_tool_cache[tool_hash]
                     repeated_signature = True
                     repeated_tool_result = result
                 else:
-                    logger.info("[Groq Agent] Tool call round=%d: %s args=%s", round_idx, tool_name, tool_args)
+                    logger.info("[Groq Agent] Tool call round=%d: %s args=%s", round_idx, tool_name,
+                                sorted(tool_args) if guarded and isinstance(tool_args, dict) else "invalid" if guarded else tool_args)
                     # Dispatch đến executor. Checkout confirmation is only
                     # available through the server-side pending-action gate.
                     executor = (tool_executors or {}).get(tool_name)
-                    if tool_name == "confirm_checkout":
+                    if tool_name == "confirm_checkout" and not guarded:
                         result = {
                             "status": "confirmation_required",
                             "message": "Chỉ backend được thực thi đơn sau khi xác nhận khớp bản tóm tắt đang chờ.",
                         }
+                    elif guarded and (successful_required_repair or terminal_success or confirmation_denied_stop) and not is_read:
+                        result = {'status': 'mutation_tools_locked', 'message': 'The successful operation is complete; compose the response.'}
+                    elif guarded and required_repair_tool and tool_name != required_repair_tool and not is_read:
+                        result = {'status': 'conflicting_cart_operations', 'active_operation': required_repair_tool,
+                                  'message': 'Repair the same denied operation before another write.'}
                     elif executor:
-                        try:
+                        if guarded:
+                            # No TypeError retry: an exception may happen after
+                            # a committed write. Gateway errors must propagate.
+                            result = executor(tool_args, session_id)
+                        else:
                             try:
-                                result = executor(tool_args, session_id)
-                            except TypeError:
-                                result = executor(tool_args)
-                        except Exception as ex:
-                            result = {"status": "error", "message": str(ex)}
+                                try:
+                                    result = executor(tool_args, session_id)
+                                except TypeError:
+                                    result = executor(tool_args)
+                            except Exception as ex:
+                                result = {"status": "error", "message": str(ex)}
                     else:
-                        result = {"status": "error", "message": f"Tool '{tool_name}' không tồn tại."}
+                        result = ({'status': 'capability_not_available', 'message': 'This capability is not exposed in the current business state.'}
+                                  if guarded else {"status": "error", "message": f"Tool '{tool_name}' không tồn tại."})
 
                     # Lưu vào cache
-                    turn_tool_cache[tool_hash] = result
+                    if not guarded or (not is_read and isinstance(result, dict) and result.get('status') in {
+                            'ok', 'success', 'already_processed', 'needs_options', 'require_confirmation'}):
+                        turn_tool_cache[tool_hash] = result
+                if guarded and isinstance(result, dict):
+                    if result.get('same_turn_read_reused'):
+                        repeated_signature, repeated_tool_result = True, result
+                    if result.get('status') in {'ok', 'success', 'already_processed', 'require_confirmation'} and not is_read:
+                        mutation_succeeded |= result.get('changed') is not False
+                        terminal_success |= (tool_name in {'request_checkout', 'confirm_checkout'} or (
+                            tool_name in {'resolve_location', 'select_location_candidate'}
+                            and result.get('status') == 'require_confirmation' and bool(result.get('order_summary'))))
+                    if tool_name == 'confirm_checkout' and result.get('status') not in {'ok', 'success', 'already_processed'}:
+                        if result.get('recovery_tool') in {'request_checkout', 'confirm_checkout'}:
+                            required_repair_tool = result['recovery_tool']
+                            recoverable_write_denial = True
+                        else:
+                            confirmation_denied_stop = True
 
                 tool_calls_log.append({"tool": tool_name, "args": tool_args, "round": round_idx, "result": result})
+                if (guarded and isinstance(result, dict) and result.get("status") in {
+                        "unknown_product_reference", "cart_reference_conflict",
+                        "pending_quantity_conflict", "cart_quantity_conflict",
+                        "checkout_choice_conflict", "voucher_selection_conflict", "conflicting_cart_operations"}):
+                    recoverable_write_denial = True
+                    if result.get("status") == "conflicting_cart_operations":
+                        required_repair_tool = result.get("active_operation") or required_repair_tool or tool_name
+                    else:
+                        required_repair_tool = tool_name
+                if (required_repair_tool and tool_name == required_repair_tool
+                        and isinstance(result, dict)
+                        and result.get("status") in {"ok", "success", "already_processed"}):
+                    successful_required_repair = True
+                if (guarded and required_repair_tool == 'request_checkout' and tool_name == 'request_checkout'
+                        and isinstance(result, dict) and result.get('status') != 'require_confirmation'):
+                    # A confirmation recovery gets one summary attempt. Failed
+                    # stock/quote/prerequisite reads require customer guidance.
+                    confirmation_denied_stop = True
 
                 # Bắt tín hiệu checkout (Guardrail)
                 if tool_name == "request_checkout" and isinstance(result, dict):
                     if result.get("status") == "require_confirmation":
                         checkout_payload = result.get("order_summary")
 
+                # Complete projected evidence is separate from the retained full result.
+                projected = (tool_result_projector(result, tool_name) if guarded and tool_result_projector
+                             else tool_result_formatter(result) if tool_result_formatter else result)
+                encoded_result = json.dumps(projected, ensure_ascii=False, separators=(',', ':'))
+                if metrics is not None:
+                    metrics['tool_result_chars'] = metrics.get('tool_result_chars', 0) + len(encoded_result)
                 # Thêm tool result vào messages
                 import json as _json
                 current_messages.append({
                     "role": "tool",
                     "tool_call_id": tc.id,
                     "name": tc.function.name,
-                    "content": _json.dumps(result, ensure_ascii=False),
+                    "content": encoded_result,
                 })
 
-            if repeated_signature:
+            if guarded and customer_step_response_provider and not required_repair_tool and not confirmation_denied_stop:
+                rendered = customer_step_response_provider()
+                if rendered:
+                    return {'reply': rendered, 'tool_calls_log': tool_calls_log,
+                            'checkout_payload': checkout_payload, 'error': None}
+            if recoverable_write_denial:
+                semantic_repairs += 1
+            if successful_required_repair or terminal_success or confirmation_denied_stop:
+                # Subsequent inference has no executors and cannot replay a write.
                 force_tools_disabled = True
+                force_tool_required = False
+                required_repair_tool = None
+                current_messages.append({'role': 'system', 'content':
+                    'The operation is complete or requires customer clarification. Answer from its evidence; no more tools.'})
+            elif repeated_signature:
+                force_tools_disabled = not required_repair_round
+                force_tool_required = required_repair_round
                 current_messages.append({
                     "role": "system",
-                    "content": "Use the tool results already provided and answer the user now. Do not request another tool.",
+                    "content": ("That read has already been performed. Correct the previously denied write using its "
+                                "structured recovery fields; do not repeat the read."
+                                if required_repair_round else
+                                "Use the tool results already provided and answer the user now. Do not request another tool."),
                 })
+            elif recoverable_write_denial:
+                # A safety denial is actionable protocol feedback, not a
+                # customer-facing outcome. Require the next response to repair
+                # the same write immediately so a prose attempt does not waste
+                # a tool-loop round. Exact recovery fields are in the tool
+                # result directly above; the gateway still revalidates them.
+                force_tool_required = True
+                current_messages.append({
+                    "role": "system",
+                    "content": ("The requested write was denied by server safety evidence. "
+                                "Retry the same operation now using the exact structured recovery fields. "
+                                "Do not switch operation types and do not answer with prose yet."),
+                })
+            elif required_repair_tool:
+                # A harmless read does not satisfy a pending write repair.
+                # Keep the loop constrained until the originally denied
+                # operation succeeds or the bounded tool budget is exhausted.
+                force_tool_required = True
+                current_messages.append({
+                    "role": "system",
+                    "content": (f"The required {required_repair_tool} correction is still pending. "
+                                "Call that operation now using the structured recovery fields; "
+                                "do not answer with prose yet."),
+                })
+            elif discovery_completion_provider and discovery_completion_provider():
+                force_tools_disabled = True
+                force_tool_required = False
+                current_messages.append({'role': 'system', 'content':
+                    'The declared discovery plan or complementary ranked reads are complete. '
+                    'Synthesize the final JSON and display selection from these batches; no more tools.'})
             # Tiếp tục vòng lặp để Groq đọc kết quả tool
             continue
 
         # ── Case 2: Groq trả về text → kết thúc ──────────────────────────
         reply_text = (assistant_msg.content or "").strip()
+        issue = final_response_validator(reply_text) if final_response_validator else None
+        if issue:
+            if (guarded and final_response_repair_allowed and final_response_repair_allowed(issue)):
+                if not final_envelope_repairs:
+                    final_envelope_repairs = 1
+                    final_envelope_repair_active = True
+                    force_tools_disabled, force_tool_required, required_repair_tool = True, False, None
+                    if metrics is not None:
+                        metrics['final_envelope_repair_count'] = 1
+                    if final_response_repair_context_provider:
+                        current_messages = final_response_repair_context_provider(current_messages)
+                    current_messages.append({'role': 'system', 'content': issue})
+                    continue
+                return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
+                        'error': 'response_evidence_required'}
+            if final_envelope_repair_active:
+                return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
+                        'error': 'response_evidence_required'}
+            if round_idx < max_tool_rounds and not force_tools_disabled:
+                semantic_repairs += 1
+                force_tool_required = str(issue).startswith('TOOL_REQUIRED:')
+                if guarded and mutation_succeeded and not force_tool_required:
+                    force_tools_disabled = True  # Envelope/prose repair cannot mutate again.
+                current_messages.append({'role': 'system', 'content': issue})
+                continue
+            return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
+                    'error': 'response_evidence_required'}
         logger.info("[Groq Agent] Final reply after %d tool rounds, len=%d", round_idx, len(reply_text))
         return {
             "reply": reply_text,

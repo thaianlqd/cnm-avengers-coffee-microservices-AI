@@ -86,7 +86,7 @@ TOOL_EXECUTORS = {
     "remove_cart_item": lambda args, session_id: execute_remove_cart_item(session_id=session_id, **args),
     "request_checkout": lambda args, session_id: execute_request_checkout(session_id=session_id, **args),
     "confirm_checkout": lambda args, session_id: execute_confirm_checkout(session_id=session_id, **args),
-    "search_knowledge_base": lambda args, session_id: execute_search_knowledge_base(**args),
+    "search_knowledge_base": lambda args, session_id: execute_search_knowledge_base(session_id=session_id, **args),
     "get_recommendations": lambda args, session_id: execute_get_recommendations(**args),
     "filter_catalog": lambda args, session_id: execute_filter_catalog(**args),
     "track_order_status": lambda args, session_id: execute_track_order_status(session_id=session_id, **args),

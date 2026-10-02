@@ -54,3 +54,24 @@ test('successful HTTP followed by client processing failure is identified correc
   assert.equal(agentTurnFailure('request', 503).phase, 'server_response');
   assert.equal(agentTurnFailure('request', null).phase, 'request');
 });
+
+test('backend completion followed by transport timeout retries the durable result with one order', () => {
+  const store = storage();
+  const durable = new Map();
+  let orderCount = 0;
+  const request = { text: 'oke xác nhận nhé bạn', selectedProductId: null,
+    sessionId: 'customer', conversationId: 'conversation' };
+  const backend = (turn) => {
+    if (!durable.has(turn.id)) durable.set(turn.id, { orderId: `order-${++orderCount}` });
+    return durable.get(turn.id);
+  };
+  const first = selectAgentTurn(null, request, () => 'confirmation-turn');
+  store.setItem(PENDING_AGENT_TURN_KEY, JSON.stringify(first));
+  const completed = backend(first); // Server committed; client never receives this response.
+  assert.equal(agentTurnFailure('request', null).phase, 'request');
+  const retry = selectAgentTurn(readPendingAgentTurn(store), request, () => assert.fail('new ID'));
+  assert.deepEqual(backend(retry), completed);
+  assert.equal(orderCount, 1);
+  clearCompletedAgentTurn(store, retry);
+  assert.equal(readPendingAgentTurn(store), null);
+});

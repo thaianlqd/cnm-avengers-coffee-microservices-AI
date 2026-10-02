@@ -631,13 +631,10 @@ def test_bot_cannot_claim_cart_add_without_successful_write(monkeypatch):
 
 
 def test_non_purchase_question_does_not_expose_add_to_cart_tool(monkeypatch):
-    captured = {}
-
+    # The knowledge lane has no transactional model loop at all. With no
+    # canonical product context it must clarify instead of fabricating taste.
     def fake_agent(**kwargs):
-        captured["tool_names"] = {
-            tool["function"]["name"] for tool in kwargs["tools"]
-        }
-        return {"reply": "Món này có vị cà phê.", "checkout_payload": None, "tool_calls_log": [], "error": None}
+        raise AssertionError("Knowledge consultation exposed the transactional tool loop")
 
     monkeypatch.setattr(agent_service, "groq_agent_chat", fake_agent)
     monkeypatch.setattr(
@@ -645,9 +642,12 @@ def test_non_purchase_question_does_not_expose_add_to_cart_tool(monkeypatch):
         lambda _session_id: cart_manager.get_cart(_session_id),
     )
 
-    agent_service.run_agent("session-read-only", "món này có vị thế nào?", history=[])
-
-    assert "add_to_cart" not in captured["tool_names"]
+    before = cart_manager.get_cart("session-read-only")
+    result = agent_service.run_agent("session-read-only", "món này có vị thế nào?", history=[])
+    assert "sản phẩm nào" in result["reply"]
+    assert result["checkout_payload"] is None
+    assert all(entry["tool"] == "search_knowledge_base" for entry in result["tool_calls_log"])
+    assert cart_manager.get_cart("session-read-only") == before
 
 
 def test_exact_cart_regression_browsing_matcha_never_replays_add_to_cart(monkeypatch):
@@ -920,6 +920,8 @@ def test_inventory_requires_a_row_and_enough_quantity():
             return False
 
         def execute(self, _statement, params):
+            if "menu.san_pham" in str(_statement):
+                return FakeResult((True,))
             return FakeResult(self.rows.get(params["product_id"]))
 
     class FakeEngine:
@@ -981,7 +983,8 @@ def test_branch_selection_rejects_unknown_inventory_until_stock_is_confirmed(mon
         "session-unknown-branch", "BR-1", "Chi nhánh 1", customer_selected=True
     )
     assert result["status"] == "stock_conflict"
-    assert "Bánh" in result["unavailable_products"]
+    assert result["unavailable_products"] == []
+    assert result["unverified_products"] == ["Bánh"]
 
 
 def test_nearby_branches_with_unknown_inventory_are_explained_but_not_selectable(monkeypatch):

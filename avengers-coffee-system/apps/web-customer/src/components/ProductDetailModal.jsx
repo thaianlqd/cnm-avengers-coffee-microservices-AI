@@ -72,7 +72,7 @@ export default function ProductDetailModal({ product, isOpen, onClose, user }) {
           <p className="text-2xl font-black text-tch-orange mb-6">{finalPrice.toLocaleString('vi-VN')} đ</p>
           
           <p className="text-gray-500 text-sm leading-relaxed mb-8 font-medium italic">
-            {product.mo_ta || "Hương vị đậm đà, khó quên từ những hạt cà phê tuyển chọn của Avengers House."}
+            {product.mo_ta?.trim() || "Sản phẩm hiện chưa có mô tả chi tiết."}
           </p>
 
           <div className="mb-8">
