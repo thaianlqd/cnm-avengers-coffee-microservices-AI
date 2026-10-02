@@ -1,4 +1,6 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { assertAccountCheckoutOwner } from '../../auth/cart-auth.guard';
 import { VoucherService } from './voucher.service';
 
 @Controller('vouchers')
@@ -38,8 +40,10 @@ export class VoucherController {
     return this.voucherService.layTemplatesTheoNguCanh(nguCanh);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('kiem-tra')
-  async kiemTra(@Body() body: { ma_voucher?: string; tong_tien?: number; user_id?: string; has_toppings?: boolean; topping_price?: number }) {
+  async kiemTra(@Body() body: { ma_voucher?: string; tong_tien?: number; user_id?: string; has_toppings?: boolean; topping_price?: number }, @Req() req: any) {
+    assertAccountCheckoutOwner(req.user, body?.user_id || '');
     const maVoucher = body.ma_voucher?.trim();
     if (!maVoucher) {
       throw new BadRequestException('ma_voucher la bat buoc');
@@ -63,8 +67,10 @@ export class VoucherController {
     };
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('eligible')
-  async eligible(@Body() body: { tong_tien?: number; user_id?: string; has_toppings?: boolean; topping_price?: number }) {
+  async eligible(@Body() body: { tong_tien?: number; user_id?: string; has_toppings?: boolean; topping_price?: number }, @Req() req: any) {
+    assertAccountCheckoutOwner(req.user, body?.user_id || '');
     return this.voucherService.layVoucherKhaDung(
       Number(body.tong_tien || 0),
       body.user_id,

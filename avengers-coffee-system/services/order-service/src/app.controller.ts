@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, ForbiddenException, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import { CurrentUser, Roles } from './auth/auth.decorators';
+import { assertAccountCheckoutOwner } from './auth/cart-auth.guard';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from './auth/optional-jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
@@ -104,21 +105,28 @@ export class AppController {
     return this.appService.removeCartItem(customerId, itemId);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('customers/:customerId/orders')
   placeOrder(
     @Param('customerId') customerId: string,
     @Body() payload: { deliverySlot: string; address: string; note?: string },
+    @Req() req: any,
   ) {
+    assertAccountCheckoutOwner(req.user, customerId);
     return this.appService.placeOrder(customerId, payload);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('orders')
-  placeAiOrderDirect(@Body() payload: any) {
+  placeAiOrderDirect(@Body() payload: any, @Req() req: any) {
+    assertAccountCheckoutOwner(req.user, payload?.ma_nguoi_dung);
     return this.thanhToanService.taoDonHangTrucTiep(payload);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('customers/:customerId/orders/ai-create')
-  placeAiOrderCustomer(@Param('customerId') customerId: string, @Body() payload: any) {
+  placeAiOrderCustomer(@Param('customerId') customerId: string, @Body() payload: any, @Req() req: any) {
+    assertAccountCheckoutOwner(req.user, customerId);
     return this.thanhToanService.taoDonHangTrucTiep({ ...payload, ma_nguoi_dung: customerId });
   }
 

@@ -1,0 +1,11 @@
+[
+  {"name":"active default", "active":true, "inventory":[], "expected":"AVAILABLE"},
+  {"name":"zero quantity enabled", "active":true, "inventory":[{"ma_san_pham":901,"dang_kinh_doanh":true,"so_luong_ton":0}], "expected":"AVAILABLE"},
+  {"name":"branch disabled", "active":true, "inventory":[{"ma_san_pham":901,"dang_kinh_doanh":false,"so_luong_ton":100}], "expected":"UNAVAILABLE"},
+  {"name":"global inactive default", "active":false, "inventory":[], "expected":"UNAVAILABLE"},
+  {"name":"global inactive enabled", "active":false, "inventory":[{"ma_san_pham":901,"dang_kinh_doanh":true}], "expected":"UNAVAILABLE"},
+  {"name":"global inactive inventory unknown", "active":false, "inventory":null, "expected":"UNAVAILABLE"},
+  {"name":"inventory unknown", "active":true, "inventory":null, "expected":"UNVERIFIED"},
+  {"name":"menu unknown", "active":null, "inventory":[], "expected":"UNVERIFIED"},
+  {"name":"override unknown", "active":true, "inventory":[{"ma_san_pham":901,"dang_kinh_doanh":null}], "expected":"UNVERIFIED"}
+]

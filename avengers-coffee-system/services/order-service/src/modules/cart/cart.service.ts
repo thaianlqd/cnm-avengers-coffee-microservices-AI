@@ -11,6 +11,7 @@ import { DataSource, Repository } from 'typeorm';
 import { CartItem } from './cart.entity';
 import { quoteDeliveryFee } from './delivery-pricing';
 import { VoucherService } from '../voucher/voucher.service';
+import { isGuestCartId } from '../../auth/cart-auth.guard';
 
 @Injectable()
 export class CartService {
@@ -454,6 +455,37 @@ export class CartService {
 
   async layGiỏHàng(ma_nguoi_dung: string) {
     return this.cartEnvelope(ma_nguoi_dung);
+  }
+
+  async mergeGuestCart(guestId: string, userId: string, operationId: string) {
+    if (!isGuestCartId(guestId) || !userId || isGuestCartId(userId) || !operationId) {
+      throw new BadRequestException('Phiên chuyển giỏ không hợp lệ');
+    }
+    return this.executeCartMutation(userId, 'MERGE_GUEST_CART', operationId, { guest_id: guestId },
+      async (manager, targetMetadata) => {
+        // Account -> guest is the only two-cart lock direction. Guests cannot
+        // merge, so it cannot form a reverse lock cycle. Guest writes use the
+        // same metadata lock, including concurrent additions during login.
+        const sourceMetadata = await this.lockCartMetadata(manager, guestId);
+        const repository = manager.getRepository(CartItem);
+        const source = await repository.find({ where: { ma_nguoi_dung: guestId } });
+        let moved = 0;
+        for (const line of source) {
+          // Price/name come from Menu. Keep every configuration and quantity;
+          // combine only identical option lines with an existing account cart.
+          const { id: _sourceId, ...configuration } = line;
+          await this.themVaoGiỏNoIdempotency({ ...configuration, ma_nguoi_dung: userId }, manager);
+          moved += Number(line.so_luong);
+        }
+        if (source.length) {
+          await repository.delete({ ma_nguoi_dung: guestId });
+          await this.bumpCartVersion(manager, guestId, sourceMetadata);
+        }
+        const result = source.length
+          ? await this.finalizedMutation(manager, userId, null, source.length, targetMetadata)
+          : { ...await this.cartEnvelope(userId, manager, targetMetadata), affected: 0 };
+        return { ...result, moved_quantity: moved, guest_cart_cleared: true };
+      });
   }
 
   private async themVaoGiỏNoIdempotency(dto: any, manager?: any) {

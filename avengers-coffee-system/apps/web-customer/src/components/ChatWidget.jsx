@@ -2,8 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
 import { apiClient } from '../lib/apiClient';
+import { accountId, getGuestSessionId, chatStorageKey, cartRequestConfig } from '../lib/guestSession';
 import { openChatProductDetail, addChatProduct, branchDistanceLabel, paymentCardRows, chatLoadingLabel, refreshWalletAfterCheckout, structuredLegacyCards, pollQrPaymentStatus, latestPendingQrPayment, qrPaymentFromCheckout } from './chatWidgetActions';
 import { PENDING_AGENT_TURN_KEY, readPendingAgentTurn, matchesAgentTurn, selectAgentTurn, clearCompletedAgentTurn, agentTurnFailure } from './agentTurn';
+import { CheckCircleIcon, CheckIcon } from '@heroicons/react/24/solid';
 
 // ─── Utilities & Formatters ──────────────────────────────────────────────────
 const fmtVND = (n) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
@@ -44,28 +46,6 @@ const fmtDateHeader = (v) => {
   return `${dayName}, ${dateStr}`;
 };
 
-function getOrCreateAnonId() {
-  const k = 'avengers_anon_chat_id';
-  let id = sessionStorage.getItem(k);
-  if (!/^anon-[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id || '')) {
-    const cryptoApi = globalThis.crypto;
-    const uuid = cryptoApi?.randomUUID?.() || (() => {
-      if (!cryptoApi?.getRandomValues) return null;
-      const bytes = cryptoApi.getRandomValues(new Uint8Array(16));
-      bytes[6] = (bytes[6] & 0x0f) | 0x40;
-      bytes[8] = (bytes[8] & 0x3f) | 0x80;
-      const hex = [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
-      return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-    })();
-    if (!uuid) throw new Error('Secure guest chat sessions require Web Crypto');
-    id = `anon-${uuid}`;
-    sessionStorage.setItem(k, id);
-    // Legacy anonymous IDs were not strong enough to authorize persisted state.
-    localStorage.removeItem(AI_SESSION_KEY);
-    sessionStorage.removeItem(AI_SESSION_KEY);
-  }
-  return id;
-}
 
 function buildMsg(overrides) {
   const raw = overrides.noi_dung || '';
@@ -296,9 +276,9 @@ function StoreCard({ b }) {
   const statusText = isAvailable
     ? 'Còn đủ tất cả món trong giỏ'
     : status === 'unavailable'
-      ? `Hết/thiếu: ${missing.join(', ') || 'một số món trong giỏ'}`
+      ? `Tạm ngưng: ${missing.join(', ') || 'một số món trong giỏ'}`
       : status === 'unknown'
-        ? 'Chưa xác minh được tồn kho'
+        ? 'Chưa đọc được tình trạng bán; chưa thể chọn'
         : null;
   return (
     <div style={{ background: '#FFFFFF', borderRadius: 14, border: `1px solid ${status === 'unavailable' ? '#FECACA' : '#FFEBEB'}`, padding: '11px 13px', opacity: status && !isAvailable ? 0.78 : 1 }}>
@@ -307,9 +287,11 @@ function StoreCard({ b }) {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F08080" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#2D3748' }}>{b.ten_chi_nhanh || b.branch_name}</p>
+          <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#2D3748' }}>{b.display_index ? `${b.display_index}. ` : ''}{b.ten_chi_nhanh || b.branch_name}</p>
           <p style={{ margin: '3px 0 0', fontSize: '0.7rem', color: '#718096', lineHeight: 1.4 }}>{b.dia_chi || b.address}</p>
           {branchDistanceLabel(b) && <p style={{ margin: '3px 0 0', fontSize: '0.68rem', color: '#718096' }}>{branchDistanceLabel(b)}</p>}
+          {!isAvailable && b.available_products?.length > 0 && <p style={{ margin: '4px 0 0', fontSize: '0.68rem', color: '#15803D' }}>Còn bán: {b.available_products.join(', ')}</p>}
+          {b.unverified_products?.length > 0 && <p style={{ margin: '4px 0 0', fontSize: '0.68rem', color: '#B45309' }}>Chưa đọc được: {b.unverified_products.join(', ')}</p>}
           {statusText && <p style={{ margin: '4px 0 0', fontSize: '0.68rem', color: isAvailable ? '#15803D' : '#DC2626', fontWeight: 800 }}>{statusText}</p>}
           {b.gio_mo_cua && <p style={{ margin: '3px 0 0', fontSize: '0.68rem', color: '#F08080', fontWeight: 700 }}>Giờ mở cửa: {b.gio_mo_cua} – {b.gio_dong_cua}</p>}
         </div>
@@ -380,20 +362,155 @@ function VoucherCard({ v }) {
   );
 }
 
-function QrPaymentCard({ payment, pending }) {
+function QrPaymentCard({ payment, pending, isPaid }) {
   const [imageFailed, setImageFailed] = useState(false);
   const imageUrl = payment.qrImgUrl || payment.qrUrl;
   const fallbackUrl = payment.qrFallbackUrl || (payment.qrUrl !== imageUrl ? payment.qrUrl : null);
+
+  if (isPaid) {
+    return (
+      <div style={{
+        marginTop: 12,
+        padding: 16,
+        background: 'linear-gradient(180deg, #F0FDF4 0%, #FFFFFF 100%)',
+        border: '2px solid #10B981',
+        borderRadius: 16,
+        textAlign: 'center',
+        boxShadow: '0 4px 12px rgba(16, 185, 129, 0.15)'
+      }}>
+        <div style={{
+          width: 44,
+          height: 44,
+          background: '#10B981',
+          color: '#FFFFFF',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 8px auto',
+          boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)'
+        }}>
+          <CheckIcon style={{ width: 24, height: 24, strokeWidth: 3 }} />
+        </div>
+        <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#065F46', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+          Giao Dịch Hoàn Tất
+        </div>
+        <div style={{ fontSize: '0.92rem', fontWeight: 900, color: '#047857', marginTop: 2 }}>
+          ĐÃ THANH TOÁN QR THÀNH CÔNG!
+        </div>
+        <div style={{ fontSize: '0.74rem', color: '#4B5563', margin: '4px 0 10px 0' }}>
+          Đơn <strong>#{payment.orderId}</strong> đã được xác nhận tự động qua SePay.
+        </div>
+        <div style={{
+          background: '#FFFFFF',
+          padding: '10px 12px',
+          borderRadius: 12,
+          border: '1px solid #E5E7EB',
+          fontSize: '0.74rem',
+          textAlign: 'left',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 4
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ color: '#6B7280' }}>Mã tham chiếu:</span>
+            <span style={{ fontWeight: 700, color: '#1F2937', fontFamily: 'monospace' }}>{payment.reference || 'QR-' + payment.orderId}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ color: '#6B7280' }}>Số tiền đã nhận:</span>
+            <span style={{ fontWeight: 800, color: '#059669' }}>{fmtVND(payment.amount)}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ color: '#6B7280' }}>Trạng thái đơn:</span>
+            <span style={{ fontWeight: 700, color: '#047857' }}>🟢 Đã xác nhận & Đang pha chế</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ marginTop: 10, padding: 10, border: '1px solid #E2E8F0', borderRadius: 10, textAlign: 'center' }}>
-      <strong>Chuyển khoản QR — Đơn #{payment.orderId}</strong>
-      {imageUrl && !imageFailed && <img src={imageUrl} alt="Mã QR thanh toán ngân hàng" onError={() => setImageFailed(true)} style={{ display: 'block', width: 220, maxWidth: '100%', margin: '8px auto' }} />}
-      {imageFailed && <div>{fallbackUrl ? 'Ảnh QR chưa tải được. Bạn có thể mở mã bằng liên kết bên dưới.' : 'Ảnh QR chưa tải được. Bạn xem trạng thái trong Đơn hàng.'}</div>}
-      {!imageUrl && !fallbackUrl && <div>Đơn đã tạo nhưng chưa lấy được mã QR. Bạn có thể thử tải lại trạng thái thanh toán.</div>}
-      <div>Số tiền: {fmtVND(payment.amount)}</div>
-      <div>Mã tham chiếu: {payment.reference || 'Đang cập nhật'}</div>
-      <div>{pending ? 'Đang chờ thanh toán...' : 'Xem trạng thái thanh toán ở tin nhắn mới nhất hoặc trang đơn hàng.'}</div>
-      {(imageFailed ? fallbackUrl : imageUrl || fallbackUrl) && <a href={imageFailed ? fallbackUrl : imageUrl || fallbackUrl} target="_blank" rel="noreferrer">Mở mã QR</a>}
+    <div style={{
+      marginTop: 12,
+      padding: 14,
+      background: '#FFFFFF',
+      border: '1px solid #E5E7EB',
+      borderRadius: 16,
+      textAlign: 'center',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+    }}>
+      <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1F2937', marginBottom: 2 }}>
+        Quét mã QR để thanh toán đơn #{payment.orderId}
+      </div>
+      <div style={{ fontSize: '0.72rem', color: '#6B7280', marginBottom: 8 }}>
+        Chuyển khoản qua ngân hàng bằng mã VietQR / SePay
+      </div>
+      {imageUrl && !imageFailed && (
+        <div style={{ padding: 6, display: 'inline-block', background: '#FFFFFF', borderRadius: 12, border: '1px solid #E5E7EB' }}>
+          <img
+            src={imageUrl}
+            alt="Mã QR thanh toán ngân hàng"
+            onError={() => {
+              if (fallbackUrl && imageUrl !== fallbackUrl) {
+                setImageFailed(true);
+              }
+            }}
+            style={{ display: 'block', width: 190, height: 190, maxWidth: '100%', margin: '0 auto', borderRadius: 8 }}
+          />
+        </div>
+      )}
+      {imageFailed && fallbackUrl && (
+        <div style={{ padding: 6, display: 'inline-block', background: '#FFFFFF', borderRadius: 12, border: '1px solid #E5E7EB' }}>
+          <img
+            src={fallbackUrl}
+            alt="Mã QR thanh toán ngân hàng"
+            style={{ display: 'block', width: 190, height: 190, maxWidth: '100%', margin: '0 auto', borderRadius: 8 }}
+          />
+        </div>
+      )}
+      {!imageUrl && !fallbackUrl && (
+        <div style={{ fontSize: '0.72rem', color: '#EF4444', margin: '8px 0' }}>
+          Chưa lấy được mã QR. Bạn có thể mở chi tiết trong mục Đơn hàng.
+        </div>
+      )}
+
+      <div style={{
+        marginTop: 8,
+        background: '#F9FAFB',
+        padding: '8px 12px',
+        borderRadius: 10,
+        fontSize: '0.72rem',
+        textAlign: 'left',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 3
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span style={{ color: '#6B7280' }}>Mã tham chiếu:</span>
+          <span style={{ fontWeight: 700, color: '#111827', fontFamily: 'monospace' }}>{payment.reference || 'Đang cập nhật'}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span style={{ color: '#6B7280' }}>Số tiền cần chuyển:</span>
+          <span style={{ fontWeight: 800, color: '#DC2626' }}>{fmtVND(payment.amount)}</span>
+        </div>
+      </div>
+
+      <div style={{
+        marginTop: 8,
+        padding: '6px 10px',
+        background: '#ECFDF5',
+        borderRadius: 8,
+        fontSize: '0.72rem',
+        color: '#065F46',
+        fontWeight: 600,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6
+      }}>
+        <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981', animation: 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite' }} />
+        <span>Hệ thống đang tự động xác thực thanh toán qua SePay...</span>
+      </div>
     </div>
   );
 }
@@ -432,23 +549,23 @@ function newConversationId() {
   });
 }
 
-function loadConversationId() {
-  const existing = localStorage.getItem(AI_CONVERSATION_KEY);
+function loadConversationId(owner) {
+  const existing = localStorage.getItem(chatStorageKey(AI_CONVERSATION_KEY, owner));
   if (existing) return existing;
   const created = newConversationId();
-  localStorage.setItem(AI_CONVERSATION_KEY, created);
+  localStorage.setItem(chatStorageKey(AI_CONVERSATION_KEY, owner), created);
   return created;
 }
 
-function loadAISession() {
+function loadAISession(owner) {
   try {
-    const raw = localStorage.getItem(AI_SESSION_KEY) || sessionStorage.getItem(AI_SESSION_KEY);
+    const raw = localStorage.getItem(chatStorageKey(AI_SESSION_KEY, owner)) || sessionStorage.getItem(chatStorageKey(AI_SESSION_KEY, owner));
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed || !parsed.timestamp || !Array.isArray(parsed.messages)) return null;
     if (Date.now() - parsed.timestamp > AI_SESSION_TTL) {
-      localStorage.removeItem(AI_SESSION_KEY);
-      sessionStorage.removeItem(AI_SESSION_KEY);
+      localStorage.removeItem(chatStorageKey(AI_SESSION_KEY, owner));
+      sessionStorage.removeItem(chatStorageKey(AI_SESSION_KEY, owner));
       return null;
     }
     return parsed.messages;
@@ -457,14 +574,14 @@ function loadAISession() {
   }
 }
 
-function saveAISession(messages) {
+function saveAISession(messages, owner) {
   try {
     if (!messages || messages.length === 0) return;
     const payload = {
       timestamp: Date.now(),
       messages,
     };
-    localStorage.setItem(AI_SESSION_KEY, JSON.stringify(payload));
+    localStorage.setItem(chatStorageKey(AI_SESSION_KEY, owner), JSON.stringify(payload));
   } catch { /* ignore */ }
 }
 
@@ -498,12 +615,14 @@ function isStaffChatMessage(msg) {
 }
 
 // ─── Main Chat Widget Component ───────────────────────────────────────────────
-export default function ChatWidget({ user, socketUrl }) {
+export default function ChatWidget({ user, socketUrl, onLogin }) {
+  const userId = accountId(user);
+  const effectiveUserId = userId || getGuestSessionId();
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [chatMode, setChatMode] = useState('AI');
   const [messages, setMessages] = useState(() => {
-    const saved = loadAISession();
+    const saved = loadAISession(effectiveUserId);
     return saved || [];
   });
   const [staffMessages, setStaffMessages] = useState([]);
@@ -519,16 +638,17 @@ export default function ChatWidget({ user, socketUrl }) {
   const [conversation, setConversation] = useState(null);
   const [pendingOrder, setPendingOrder] = useState(null);
   const [pendingQrPayment, setPendingQrPayment] = useState(() => {
-    const currentUserId = user?.ma_nguoi_dung || user?.maNguoiDung || user?.id || getOrCreateAnonId();
-    return latestPendingQrPayment(loadAISession(), currentUserId);
+    const currentUserId = user?.ma_nguoi_dung || user?.maNguoiDung || user?.id || getGuestSessionId();
+    return latestPendingQrPayment(loadAISession(effectiveUserId), currentUserId);
   });
+  const [paidQrOrders, setPaidQrOrders] = useState(() => new Set());
   const confirmingOrderRef = useRef(false);
-  const [aiConversationId, setAiConversationId] = useState(loadConversationId);
+  const [aiConversationId, setAiConversationId] = useState(() => loadConversationId(effectiveUserId));
   const [orderConfirming, setOrderConfirming] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
   const [isListening, setIsListening] = useState(false);
   const [greeted, setGreeted] = useState(() => {
-    const saved = loadAISession();
+    const saved = loadAISession(effectiveUserId);
     return Boolean(saved && saved.length > 0);
   });
 
@@ -542,17 +662,14 @@ export default function ChatWidget({ user, socketUrl }) {
   const cache = useRef({ products: [], branches: [], orders: [], vouchers: [], loaded: false });
   const pendingAgentTurnRef = useRef(readPendingAgentTurn(sessionStorage));
 
-  const userId = user?.id || user?.ma_nguoi_dung || user?.maNguoiDung || null;
   const walletUserId = user?.ma_nguoi_dung || user?.maNguoiDung || user?.id || null;
   const userName = user?.ho_ten || user?.hoTen || user?.email || 'Khách';
-  const anonId = useRef(getOrCreateAnonId());
-  const effectiveUserId = userId || anonId.current;
   
   useEffect(() => {
     if (messages.length > 0) {
-      saveAISession(messages);
+      saveAISession(messages, effectiveUserId);
     }
-  }, [messages]);
+  }, [messages, effectiveUserId]);
 
   const prefetchData = useCallback(async () => {
     if (cache.current.loaded) return cache.current;
@@ -600,17 +717,19 @@ export default function ChatWidget({ user, socketUrl }) {
         const status = await pollQrPaymentStatus(apiClient, paymentUserId, pendingQrPayment.orderId);
         if (!active) return;
         if (status === 'pending') return;
+        const resolvedOrderId = pendingQrPayment.orderId;
         setPendingQrPayment(null);
         if (status === 'paid') {
-          addAIMsg(`✅ Thanh toán QR thành công. Đơn #${pendingQrPayment.orderId} đã được xác nhận.`, { _qrPaymentResolved: pendingQrPayment.orderId });
+          setPaidQrOrders((prev) => new Set([...prev, resolvedOrderId]));
+          addAIMsg(`🎉 Tuyệt vời! Hệ thống đã nhận được thanh toán QR cho đơn #${resolvedOrderId}. Đơn hàng đã được xác nhận thành công và cửa hàng đang tiến hành pha chế cho bạn nhé!`, { _qrPaymentResolved: resolvedOrderId });
           window.dispatchEvent(new CustomEvent('refresh-orders'));
           window.dispatchEvent(new CustomEvent('refresh-cart'));
           window.dispatchEvent(new CustomEvent('ai-voucher-removed'));
-          window.dispatchEvent(new CustomEvent('checkout-success', { detail: { orderId: pendingQrPayment.orderId } }));
+          window.dispatchEvent(new CustomEvent('checkout-success', { detail: { orderId: resolvedOrderId } }));
         } else if (status === 'review') {
-          addAIMsg(`Ngân hàng đã ghi nhận chuyển khoản cho đơn #${pendingQrPayment.orderId}, nhưng đơn đang chờ đối soát. Bạn xem trạng thái đơn hàng hoặc liên hệ hỗ trợ nhé.`, { _qrPaymentResolved: pendingQrPayment.orderId });
+          addAIMsg(`Ngân hàng đã ghi nhận chuyển khoản cho đơn #${resolvedOrderId}, nhưng đơn đang chờ đối soát. Bạn xem trạng thái đơn hàng hoặc liên hệ hỗ trợ nhé.`, { _qrPaymentResolved: resolvedOrderId });
         } else {
-          addAIMsg(`Thanh toán QR cho đơn #${pendingQrPayment.orderId} đã dừng hoặc không thành công. Bạn xem trạng thái đơn hàng để chọn cách thanh toán tiếp nhé.`, { _qrPaymentResolved: pendingQrPayment.orderId });
+          addAIMsg(`Thanh toán QR cho đơn #${resolvedOrderId} đã dừng hoặc không thành công. Bạn xem trạng thái đơn hàng để chọn cách thanh toán tiếp nhé.`, { _qrPaymentResolved: resolvedOrderId });
         }
       } catch { /* Retain pending state and retry the canonical endpoint. */ }
       finally { busy = false; }
@@ -680,7 +799,7 @@ export default function ChatWidget({ user, socketUrl }) {
     setIsOpen(true);
     setUnread(0);
     if (mode === 'AI') {
-      const saved = loadAISession();
+      const saved = loadAISession(effectiveUserId);
       if (!saved || saved.length === 0) {
         setMessages([]);
         setGreeted(true);
@@ -705,7 +824,7 @@ export default function ChatWidget({ user, socketUrl }) {
           session_id: effectiveUserId,
           conversation_id: nextConversationId,
           previous_conversation_id: aiConversationId,
-        });
+        }, cartRequestConfig(effectiveUserId));
       } catch (error) {
         console.warn('[ChatWidget] Could not reset AI conversation draft state:', error);
         const code = error?.response?.data?.detail?.code;
@@ -714,9 +833,9 @@ export default function ChatWidget({ user, socketUrl }) {
           : 'Mình chưa thể tạo cuộc trò chuyện mới lúc này. Bạn thử lại nhé.');
         return;
       }
-      localStorage.removeItem(AI_SESSION_KEY);
-      sessionStorage.removeItem(AI_SESSION_KEY);
-      localStorage.setItem(AI_CONVERSATION_KEY, nextConversationId);
+      localStorage.removeItem(chatStorageKey(AI_SESSION_KEY, effectiveUserId));
+      sessionStorage.removeItem(chatStorageKey(AI_SESSION_KEY, effectiveUserId));
+      localStorage.setItem(chatStorageKey(AI_CONVERSATION_KEY, effectiveUserId), nextConversationId);
       setAiConversationId(nextConversationId);
       pendingAgentTurnRef.current = null;
       sessionStorage.removeItem(PENDING_AGENT_TURN_KEY);
@@ -764,7 +883,7 @@ export default function ChatWidget({ user, socketUrl }) {
         message: text,
         selected_product_id: selectedProductId || null,
         history,
-      });
+      }, cartRequestConfig(effectiveUserId));
     } catch (error) {
       const code = error?.response?.data?.detail?.code;
       if (previousTurn && previousTurn.id !== turn.id &&
@@ -777,7 +896,7 @@ export default function ChatWidget({ user, socketUrl }) {
 
     const d = agentRes?.data || agentRes;
     if (d?.conversation_id && d.conversation_id !== aiConversationId) {
-      localStorage.setItem(AI_CONVERSATION_KEY, d.conversation_id);
+      localStorage.setItem(chatStorageKey(AI_CONVERSATION_KEY, effectiveUserId), d.conversation_id);
       setAiConversationId(d.conversation_id);
     }
     return { data: d, turn };
@@ -790,7 +909,7 @@ export default function ChatWidget({ user, socketUrl }) {
       product_name: productName,
       quantity,
       size,
-    });
+    }, cartRequestConfig(effectiveUserId));
     return response?.data || response;
   }, [effectiveUserId, aiConversationId]);
 
@@ -809,7 +928,7 @@ export default function ChatWidget({ user, socketUrl }) {
         delivery_type: pendingOrder.deliveryType,
         delivery_address: pendingOrder.deliveryAddress,
         action_id: pendingOrder.actionId,
-      });
+      }, cartRequestConfig(effectiveUserId));
       const result = response?.data || response;
       if (result?.status !== 'success' && result?.status !== 'already_processed') {
         throw new Error(result?.message || 'Đơn hàng chưa được tạo.');
@@ -824,10 +943,14 @@ export default function ChatWidget({ user, socketUrl }) {
 
       const orderId = result?.order_id ? ` Mã đơn: **${result.order_id}**.` : '';
       const awaitsOnlinePayment = Boolean(result?.redirect_url || pendingOrder.paymentMethod === 'NGAN_HANG_QR');
+      const isQr = pendingOrder.paymentMethod === 'NGAN_HANG_QR';
       const walletLine = pendingOrder.paymentMethod === 'VI_DIEN_TU'
         ? `\n**Đã thanh toán bằng Ví Avengers:** ${fmtVND(result?.total_price ?? pendingOrder.total)}${result?.wallet_balance_after != null ? `\n**Số dư còn lại:** ${fmtVND(result.wallet_balance_after)}` : ''}` : '';
       const qrPayment = qrPaymentFromCheckout(result, pendingOrder, walletUserId || effectiveUserId);
-      addAIMsg(`${awaitsOnlinePayment ? 'Đơn hàng đã được tạo và đang chờ thanh toán.' : '🎉 Đơn hàng đã được ghi nhận.'}${orderId} Tổng cộng: **${fmtVND(result?.total_price ?? pendingOrder.total)}**${walletLine}`, {
+      const checkoutLeadText = isQr
+        ? `Mã đơn: **${result.order_id}**. Bạn vui lòng quét mã QR chuyển khoản bên dưới để thanh toán nhé. Sau khi hệ thống nhận được tiền, đơn hàng sẽ tự động được xác nhận ngay!`
+        : (awaitsOnlinePayment ? 'Đơn hàng đã được tạo và đang chờ thanh toán.' : '🎉 Đơn hàng đã được ghi nhận.');
+      addAIMsg(`${checkoutLeadText}${!isQr ? orderId : ''} Tổng cộng: **${fmtVND(result?.total_price ?? pendingOrder.total)}**${walletLine}`, {
         _paymentUrl: result?.redirect_url || null,
         _paymentLabel: result?.redirect_url ? 'Tiếp tục thanh toán VNPAY' : null,
         _qrPayment: qrPayment,
@@ -955,6 +1078,19 @@ export default function ChatWidget({ user, socketUrl }) {
       if (agentReply && !agentError?.startsWith('blocked:')) {
         const payload = agentData?.ui_payload || {};
         const catalogById = new Map(cache.current.products.map((item) => [String(item.ma_san_pham || item.id), item]));
+        const confirmCheckoutEntry = (agentData?.tool_calls_log || []).find(
+          (t) => t.tool === 'confirm_checkout' && ['success', 'already_processed'].includes(t.result?.status)
+        );
+        let textQrPayment = null;
+        if (confirmCheckoutEntry?.result?.payment_method === 'NGAN_HANG_QR' || payload.qr_payment) {
+          textQrPayment = qrPaymentFromCheckout(
+            confirmCheckoutEntry?.result || { payment_details: payload.qr_payment },
+            { paymentMethod: 'NGAN_HANG_QR', total: confirmCheckoutEntry?.result?.total_price },
+            walletUserId || effectiveUserId
+          );
+          if (textQrPayment) setPendingQrPayment(textQrPayment);
+        }
+
         const extras = {
           _products: Array.isArray(payload.products) ? payload.products.map((item) => ({
             ...item,
@@ -963,6 +1099,8 @@ export default function ChatWidget({ user, socketUrl }) {
           _stores: Array.isArray(payload.branches) ? payload.branches : [],
           _vouchers: !confirmed && Array.isArray(payload.vouchers) ? payload.vouchers : [],
           _paymentOptions: Array.isArray(payload.payment_options) ? payload.payment_options : [],
+          _qrPayment: textQrPayment,
+          _loginAction: payload.login_action,
           _quickReplies: QUICK_ACTIONS.slice(0, 3),
         };
         addAIMsg(agentReply, extras);
@@ -1367,6 +1505,14 @@ export default function ChatWidget({ user, socketUrl }) {
                     }}>
                       <p style={{ margin: 0, whiteSpace: 'pre-wrap', fontWeight: 400 }}>{renderText(msg.noi_dung)}</p>
 
+                      {msg._loginAction && !userId && (
+                        <a href="/?tab=login" onClick={(event) => {
+                          sessionStorage.setItem('post_login_redirect', 'cart');
+                          if (onLogin) { event.preventDefault(); onLogin(); }
+                        }} style={{ display: 'block', marginTop: 12, padding: '10px 14px', borderRadius: 10, background: '#B22830', color: '#FFF', textAlign: 'center', textDecoration: 'none', fontWeight: 700 }}>
+                          Đăng nhập để tiếp tục
+                        </a>
+                      )}
                       {/* Rich Content Cards */}
                       {msg._products && msg._products.length > 0 && (
                         <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 328, overflowY: 'auto' }}>
@@ -1394,7 +1540,13 @@ export default function ChatWidget({ user, socketUrl }) {
                           {msg._paymentLabel || 'Tiếp tục thanh toán'}
                         </a>
                       )}
-                      {msg._qrPayment && <QrPaymentCard payment={msg._qrPayment} pending={pendingQrPayment?.orderId === msg._qrPayment.orderId} />}
+                      {msg._qrPayment && (
+                        <QrPaymentCard
+                          payment={msg._qrPayment}
+                          pending={pendingQrPayment?.orderId === msg._qrPayment.orderId}
+                          isPaid={paidQrOrders.has(msg._qrPayment.orderId) || msg._qrPaymentResolved === msg._qrPayment.orderId}
+                        />
+                      )}
                       {msg._vouchers && msg._vouchers.length > 0 && (
                         <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
                           {msg._vouchers.map((v, i) => <VoucherCard key={i} v={v} />)}

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { isGuestSessionId } from './guestSession';
 
 export const apiClient = axios.create({
   baseURL: `http://${window.location.hostname}:3000`,
@@ -6,6 +7,12 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
+  if (isGuestSessionId(config.guestSessionId)) {
+    config.headers = config.headers || {};
+    delete config.headers.Authorization;
+    config.headers['X-Guest-Session-Id'] = config.guestSessionId;
+    return config;
+  }
   const token = window.localStorage.getItem('token');
   if (token) {
     config.headers = config.headers || {};
@@ -18,7 +25,7 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error?.response?.status === 401) {
+    if (error?.response?.status === 401 && !isGuestSessionId(error?.config?.guestSessionId)) {
       // Xóa token + user đã lưu
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -28,4 +35,3 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-

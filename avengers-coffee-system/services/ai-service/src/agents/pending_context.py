@@ -10,6 +10,9 @@ ALLOWED = {
     "select_voucher": {"SELECT_VOUCHER", "SKIP_VOUCHER", "REMOVE_VOUCHER", "AMBIGUOUS"},
     "confirm_address": {"CONFIRM_ADDRESS", "CHANGE_ADDRESS", "AMBIGUOUS"},
     "confirm_checkout": {"CONFIRM", "REJECT", "CHANGE", "AMBIGUOUS"},
+    "cart_edit_clarification": {"KEEP_CURRENT", "AMBIGUOUS"},
+    "offer_branch_search": {"CONFIRM", "DECLINE", "AMBIGUOUS"},
+    "confirm_prior_location_for_checkout": {"CONFIRM", "DECLINE", "AMBIGUOUS"},
 }
 DESCRIPTIONS = {
     "ask_more_items": (
@@ -22,6 +25,19 @@ DESCRIPTIONS = {
     "select_voucher": "Customer was shown a stored voucher list. Select a voucher, skip vouchers, or clarify.",
     "confirm_address": "Customer was asked whether to use the suggested saved address. Confirm that address or request another address.",
     "confirm_checkout": "Customer was shown a real checkout summary and asked to confirm placing this order. Distinguish explicit agreement, rejection/change, and unclear replies.",
+    "cart_edit_clarification": (
+        "A requested cart option was invalid and the customer was asked to choose a valid value. "
+        "KEEP_CURRENT means cancel this edit and retain the current cart line; otherwise AMBIGUOUS."
+    ),
+    "offer_branch_search": (
+        "Customer was asked whether to search for branches near one stored read-only location. "
+        "CONFIRM means yes or a direct instruction to perform that search. DECLINE means no or later. "
+        "Do not reinterpret the reply as product recommendation or any order mutation."
+    ),
+    "confirm_prior_location_for_checkout": (
+        "Customer was asked whether to reuse a retained read-only location for pickup or dine-in checkout. "
+        "CONFIRM means use that exact location. DECLINE means collect a different location."
+    ),
 }
 
 
@@ -116,12 +132,54 @@ def classify_pending_reply(message: str, pending_type: str, evidence: Optional[d
     text = re.sub(r"\s+", " ", _remove_diacritics(str(message or ""))).strip()
     if not text or "?" in text or re.search(r"\b(neu|gia su|co the|phai khong|bao nhieu|tai sao|khi nao|the nao|ra sao|hay|hoac|chac)\b", text):
         return "AMBIGUOUS"
+    if pending_type in {"offer_branch_search", "confirm_prior_location_for_checkout"}:
+        from src.agents.tier1 import normalize_confirmation_text
+        text = normalize_confirmation_text(message)
+        if pending_type == "confirm_prior_location_for_checkout":
+            if re.search(r"\b(?:khong|ko)\b|\b(?:dia chi|vi tri|cho)\s+khac\b", text):
+                return "DECLINE"
+            if re.search(r"\b(?:dung|lay|su dung)\b.*\b(?:vi tri|dia chi|cho)?\s*(?:do|nay|vua roi)\b", text):
+                return "CONFIRM"
+            if re.fullmatch(r"(?:co|ok|oke|duoc|u|uh|vang|yes|dung roi)(?:\s+(?:nhe|nha|ban|a|di))*", text):
+                return "CONFIRM"
+            return "AMBIGUOUS"
+        # This is finite dialogue grammar, not a sentence list: a branch offer
+        # accepts confirmation tokens or a bare FIND action plus social fillers.
+        tokens = set(text.split())
+        fillers = {"ban", "toi", "minh", "giup", "di", "nhe", "nha", "oi", "a", "voi", "sau", "can"}
+        negative_tokens = {"khong", "ko", "thoi", "no"}
+        if tokens & negative_tokens or re.search(r"\bde\s+sau\b", text):
+            return "DECLINE"
+        affirmative_tokens = {"co", "ok", "oke", "duoc", "u", "uh", "vang", "yes"}
+        action_tokens = {"tim"}
+        if ((tokens & affirmative_tokens) and tokens <= affirmative_tokens | fillers
+                or (tokens & action_tokens) and tokens <= action_tokens | fillers):
+            return "CONFIRM"
+        return _semantic_fallback(message, pending_type)
     negative = bool(re.search(r"\b(khong|ko|chua|khoan|huy|dung lai|dung dat)\b", text)) or bool(
         re.search(r"\b(đừng|dừng)\b", str(message or "").lower())
     )
     change = bool(re.search(r"\b(doi|sua|chinh|thay|khac)\b", text))
     affirmative = bool(re.search(r"\b(ok(?:e|ay)?|dong y|xac nhan|duoc|on|dung|chuan|yes|u|uh|vang|da)\b", text))
+    if pending_type == "cart_edit_clarification":
+        keep = bool(re.search(r"\b(?:giu|de)\b.*\b(?:nguyen|vay|hien tai)\b", text))
+        abandon = bool(re.search(r"\b(?:khong|ko)\b.*\b(?:sua|chinh|doi)\b.*\bnua\b", text))
+        short_stop = bool(re.fullmatch(
+            r"(?:(?:a|u|uh) )?(?:vay )?(?:(?:duoc|on|ok|oke) roi|thoi)(?: (?:vay|di|nhe|nha|ban))?",
+            text,
+        ))
+        if keep or abandon or short_stop:
+            return "KEEP_CURRENT"
+        return "AMBIGUOUS"
     if pending_type == "select_voucher":
+        # Negative head + voucher object + social particles is a complete refusal.
+        # Anchor the whole reply so questions, qualifiers and other actions cannot match.
+        if re.fullmatch(
+            r"(?:(?:da|toi|minh)\s+)*(?:khong|ko|k|khoi|thoi)\s+"
+            r"(?:ma(?:\s+giam\s+gia)?|voucher)(?:\s+(?:dau|nhe|nha|a|ban|oi|di))*[.!]*",
+            text,
+        ):
+            return "SKIP_VOUCHER"
         if re.search(r"\b(bo qua|khong (?:dung|can|ap)|khong lay)\b", text):
             return "SKIP_VOUCHER"
         if re.search(r"\b(?:xoa|bo|go)\b.*\b(?:ma|voucher|giam gia)\b|\bkhong dung (?:ma|voucher) nua\b", text):

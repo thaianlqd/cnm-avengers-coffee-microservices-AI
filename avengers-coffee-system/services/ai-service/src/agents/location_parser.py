@@ -93,6 +93,51 @@ class Location:
     kind: str
     value: str = ""
     missing: tuple[str, ...] = ()
+    admin_hints: tuple[str, ...] = ()
+
+
+# Generic place categories are language structure, not a registry of names.
+# Existence and identity are always verified by the map provider.
+_POI_CATEGORIES = (
+    "truong", "dai hoc", "benh vien", "san bay", "trung tam thuong mai",
+    "nha ga", "ga tau", "toa nha", "cong vien", "ben xe",
+    "bao tang", "nha hat", "san van dong", "khach san", "khu du lich",
+)
+
+
+def _has_poi_structure(value: str) -> bool:
+    folded = normalize(value)
+    return bool(re.search(r"(?<!\w)chợ(?!\w)", str(value or ""), re.IGNORECASE)) or any(
+        re.search(r"(?<!\w)" + re.escape(category) + r"(?!\w)", folded)
+        for category in _POI_CATEGORIES
+    )
+
+
+def _explicit_admin_hints(value: str) -> tuple[str, ...]:
+    """Extract only explicitly level-marked admin evidence from a query."""
+    marker = re.compile(
+        r"(?<!\w)(?:thành\s+phố|tỉnh|quận|huyện|phường|xã|tp\.?|q\.?|h\.?|p\.?)\s+",
+        re.IGNORECASE,
+    )
+    hints = []
+    raw = str(value or "")
+    matches = list(marker.finditer(raw))
+    for index, match in enumerate(matches):
+        boundary = matches[index + 1].start() if index + 1 < len(matches) else len(raw)
+        comma = raw.find(",", match.end(), boundary)
+        if comma >= 0:
+            boundary = comma
+        hint = raw[match.start():boundary].strip(" ,")
+        if hint:
+            hints.append(_admin_component(hint))
+    unique = []
+    seen = set()
+    for hint in hints:
+        key = normalize(hint)
+        if key not in seen:
+            unique.append(hint)
+            seen.add(key)
+    return tuple(unique)
 
 
 def _canonical_city(value: str) -> str:
@@ -106,11 +151,37 @@ def merge_store_location(previous: Dict[str, Any] | None, fragment: str) -> Dict
     """Merge pickup/dine-in administrative slots without touching delivery state."""
     current = dict(previous or {})
     cleaned = re.sub(
-        r"^\s*(?:(?:không|ko)\s*[,;]?\s*|(?:đổi|thay)(?:\s+khu vực)?\s+sang\s+)",
+        r"^\s*(?:(?:không|ko)\s+(?:(?:dùng|lấy)\s+)?(?:địa\s+chỉ|chỗ)\s+(?:cũ|đó|này)\s*[,;]?\s*|"
+        r"(?:không|ko)\s*[,;]?\s*|(?:đổi|thay)(?:\s+khu vực)?\s+sang\s+)",
         "", str(fragment or ""), flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(
+        r"^\s*(?:(?:tôi|mình)(?:\s+đang)?\s+ở|ở|tại|khu\s+vực)\s+",
+        "", cleaned, flags=re.IGNORECASE,
     )
     cleaned = re.sub(r"\s+(?:cơ|ấy|á|ạ|nhé|nha)(?:\s+bạn\s+ơi)?\s*$", "", cleaned, flags=re.IGNORECASE)
     parsed = parse_location(cleaned)
+    if parsed.kind == "poi":
+        previous_city = current.get("city") if current.get("kind") in {"poi", "admin_area"} else None
+        explicit_city = next((hint for hint in parsed.admin_hints if re.match(
+            r"^(?:thành phố|tp\.?|tỉnh)\s+", hint, re.IGNORECASE)), None)
+        city = explicit_city or previous_city
+        value = parsed.value
+        if city and not explicit_city and not locality_matches(value, city):
+            value = canonical_address(f"{value}, {city}")
+        return {
+            "kind": "poi", "raw": parsed.value, "value": value,
+            "canonical_label": current.get("canonical_label"),
+            "city": city, "admin_hints": list(parsed.admin_hints),
+            "source": "explicit_user", "status": "unresolved",
+        }
+    if current.get("kind") == "poi" and parsed.kind in {"area", "branch_query"} and parsed.value:
+        hint = _admin_component(parsed.value)
+        city = hint if re.match(r"^(?:thành phố|tp\.?|tỉnh)\s+", hint, re.IGNORECASE) else current.get("city")
+        value = canonical_address(", ".join(part for part in (current.get("raw"), hint) if part))
+        return {**current, "value": value, "city": city,
+                "admin_hints": list(dict.fromkeys([*(current.get("admin_hints") or []), hint])),
+                "source": "explicit_user", "status": "unresolved"}
     value = parsed.value if parsed.kind in {"area", "address", "branch_query"} else clean_location_clause(cleaned)
     parts = [_admin_component(part.strip()) for part in value.split(",") if part.strip()]
     city = next((part for part in parts if re.match(
@@ -125,6 +196,7 @@ def merge_store_location(previous: Dict[str, Any] | None, fragment: str) -> Dict
     if locality_parts:
         current["locality"] = canonical_address(", ".join(locality_parts))
     current["source"] = "explicit_user"
+    current["kind"] = "address" if parsed.kind == "address" else "admin_area"
     current["status"] = "complete" if current.get("locality") and current.get("city") else "partial"
     current["value"] = canonical_address(", ".join(
         part for part in (current.get("locality"), current.get("city")) if part
@@ -134,6 +206,8 @@ def merge_store_location(previous: Dict[str, Any] | None, fragment: str) -> Dict
 
 _PREFIX = re.compile(
     r"^(?:(?:không|ko)[,\s]+)?(?:(?:tôi|mình)(?:\s+đang)?\s+ở|"
+    r"(?:toi|minh)(?:\s+dang)?\s+o|(?:đang\s+ở|dang\s+o)|dia\s+chi(?:\s+cua)?(?:\s+(?:toi|minh))?\s+(?:o|la)|"
+    r"địa\s+chỉ(?:\s+của)?(?:\s+(?:tôi|mình))?\s+(?:ở|là)|"
     r"(?:đổi|thay)(?:\s+địa\s+chỉ)?\s+sang|địa\s+chỉ(?:\s+mới)?(?:\s+là)?|"
     r"giao\s+(?:đến|tới|qua))\s*[:：]?\s*", re.IGNORECASE,
 )
@@ -159,7 +233,7 @@ _ADMIN = (
 )
 
 _SAVED_ADDRESS_REFERENCE = re.compile(
-    r"\b(?:dia chi (?:do|nay|tren|kia|vua (?:noi|roi)|da luu|(?:trong )?ho so)|"
+    r"\b(?:dia chi (?:do|nay|tren|kia|vua (?:noi|roi)|da luu|(?:trong )?(?:ho so|tai khoan))|"
     r"(?:o|cho) do|cho nay)\b"
 )
 
@@ -233,7 +307,8 @@ def complete_partial_delivery_address(partial: str, fragment: str) -> Location |
 
 
 def parse_location(message: str) -> Location:
-    raw = str(message or "").strip(" \t\r\n.!?")
+    from src.agents.shopping_language import without_targetless_future_clause
+    raw = without_targetless_future_clause(str(message or "")).strip(" \t\r\n.!?")
     if not raw:
         return Location("none")
     # A new numbered street address wins even if the customer first rejects
@@ -276,13 +351,19 @@ def parse_location(message: str) -> Location:
         street_tail = normalize(re.sub(r"^\d{1,5}[A-Za-z]?(?:[/.-]\d{1,5}[A-Za-z]?)?\s+", "", parts[0]))
         if not street_tail or set(street_tail.split()) <= {"di", "nhe", "nha", "giup", "toi", "minh", "chon", "lay", "so", "thu"}:
             return Location("none")
-        return Location("address", value, _missing_delivery(parts))
+        return Location("address", value, _missing_delivery(parts), _explicit_admin_hints(value))
     if store:
-        return Location("branch_query", "" if normalize(value) in {"day", "gan day", "nao", ""} else value)
-    if re.search(r"\b(?:phường|phuong|xã|quận|huyện|huyen|thành phố|thanh pho|tỉnh|tinh|khu vực|khu vuc)\b", value, re.IGNORECASE) or (
+        branch_value = "" if normalize(value) in {"day", "gan day", "nao", ""} else value
+        return Location("branch_query", branch_value,
+                        admin_hints=_explicit_admin_hints(branch_value))
+    if re.search(r"\b(?:phường|phuong|xã|quận|quan|huyện|huyen|thành phố|thanh pho|tỉnh|tinh|khu vực|khu vuc)\b", value, re.IGNORECASE) or (
         area_intro and len(value.split()) >= 2
     ) or re.search(r"^(?:đường|phố|hẻm|ngõ)\s+\S+", value, re.IGNORECASE):
-        return Location("area", value)
+        if _has_poi_structure(value):
+            return Location("poi", value, admin_hints=_explicit_admin_hints(value))
+        return Location("area", value, admin_hints=_explicit_admin_hints(value))
+    if _has_poi_structure(value):
+        return Location("poi", value, admin_hints=_explicit_admin_hints(value))
     return Location("none")
 
 
@@ -297,14 +378,14 @@ def checkout_location(message: str, delivery_type: str | None, awaiting_location
         return parsed if awaiting_location and parsed.kind == "area" else Location("none")
     # When the whole reply is already a valid administrative location, commas
     # separate its components; they are not conversational clause boundaries.
-    if awaiting_location and parsed.kind == "area" and parsed.value:
+    if awaiting_location and parsed.kind in {"area", "poi"} and parsed.value:
         return parsed
     # A fulfillment/payment sentence may include a separate explicit location
     # clause. Parse that clause with the same structural parser.
     clauses = re.split(r"[,;]\s*|\b(?=(?:tôi|mình)(?:\s+đang)?\s+ở\b)", str(message or ""), flags=re.IGNORECASE)
     for clause in reversed(clauses):
         candidate = parse_location(clause.strip())
-        if candidate.kind in {"area", "address"} and candidate.value:
+        if candidate.kind in {"area", "address", "poi"} and candidate.value:
             return candidate
     if parsed.kind == "area" and parsed.value:
         return parsed
@@ -319,6 +400,7 @@ def checkout_location(message: str, delivery_type: str | None, awaiting_location
     folded = normalize(short)
     if _PRODUCT_TOPIC.search(short) or set(folded.split()) & {
         "them", "mua", "lay", "banh", "nuoc", "cod", "size", "so", "thu", "chuyen", "khoan",
+        "da", "rieng", "it", "binh", "thuong", "ngot", "duong", "topping", "sua",
     }:
         return Location("none")
     # Bare names need Vietnamese locality evidence; otherwise a product name

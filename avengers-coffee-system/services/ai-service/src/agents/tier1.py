@@ -74,10 +74,17 @@ def has_positive_browsing_evidence(text: str) -> bool:
 def has_option_evidence(text: str) -> bool:
     raw = str(text or "").lower()
     norm = normalize_confirmation_text(text)
-    return bool(re.search(
-        r"\b(size|kich thuoc|kich co|nho|vua|lon|topping|toping|do kem|da|ngot|duong|loai sua|milk)\b",
+    named_option = bool(re.search(
+        r"\b(size|kich thuoc|kich co|nho|vua|lon|topping|toping|do kem|ngot|duong|loai sua|milk)\b",
         norm,
-    )) or "sữa" in raw
+    ))
+    # Accent folding makes past-tense “đã” collide with the ice noun “đá”.
+    # Accept unaccented ice only in an option-shaped phrase, not from a lone
+    # grammatical “đã” in sentences such as “tôi đã xong giỏ”.
+    ice_option = "đá" in raw or bool(re.search(
+        r"\b(?:luong da|it da|nhieu da|khong da|da rieng|da binh thuong)\b", norm,
+    ))
+    return named_option or ice_option or "sữa" in raw
 
 
 def has_cart_edit_action(text: str) -> bool:
@@ -126,6 +133,8 @@ def classify_confirmation(text: str, pending_type: Optional[str]) -> Literal["YE
     if not norm_text:
         return "NONE"
         
+    if pending_type == "confirm_checkout":
+        norm_text = re.sub(r"\bdat don\b", "dathang", norm_text)
     tokens = norm_text.split()
     
     yes_set = set(BASE_YES)
@@ -160,7 +169,7 @@ def classify_confirmation(text: str, pending_type: Optional[str]) -> Literal["YE
             has_yes = True
         elif token in no_set:
             has_no = True
-        elif token in BASE_FILLER:
+        elif token in BASE_FILLER or (pending_type == 'confirm_checkout' and token == 'ban'):
             continue
         else:
             has_foreign = True
@@ -191,6 +200,54 @@ def is_pending_expired(expires_at: float, now: Optional[float] = None) -> bool:
     return now >= expires_at
 
 
+def has_finish_cart_evidence(text: str) -> bool:
+    """Recognize natural closure language; callers must prove cart-stage ownership."""
+    norm = normalize_confirmation_text(str(text or ""))
+    norm = re.sub(r"\bdc\b", "duoc", norm)
+    return bool(re.fullmatch(
+        r"(?:ok|oke|okay)?\s*(?:"
+        r"(?:vay\s+)?(?:hoan\s+tat(?:\s+gio(?:\s+hang)?)?|chot\s+(?:phan\s+)?gio)|"
+        r"(?:vay\s+|the\s+la\s+)?(?:xong(?:\s+roi)?|xongroi)|"
+        r"(?:(?:vay|the(?:\s+la)?)\s+)?(?:duoc|on)\s+roi|"
+        r"(?:vay|the)\s+thoi|khong\s+(?:can\s+)?them(?:\s+gi)?\s+nua"
+        r")(?:\s+(?:a|b|ban|oi|nha|nhe|di))*",
+        norm,
+    ))
+
+
+def cart_line_quantity_intent(text: str) -> Optional[Dict[str, Any]]:
+    """Compose one stored-cart reference with one absolute quantity target."""
+    from src.agents.selection_language import parse_selection_reference
+    reference = parse_selection_reference(text, allow_multiple=True)
+    norm = _remove_diacritics(str(text or ""))
+    if not reference.requested or reference.namespace not in {"CART_LINE", "PRODUCT"}:
+        return None
+    # Generic “món thứ N để Q” is an absolute cart correction. Namespaced
+    # food/drink ordinals and selection verbs retain their product contract.
+    if reference.namespace == "PRODUCT" and (
+        reference.ordinal_labels != ("mon",)
+        or reference.operation_semantics == "SELECT_REFERENCE"
+        or not re.search(r"\b(?:de|so luong|sl|cho)\b", norm)
+    ):
+        return None
+    if reference.operation_semantics in {"INFO_REFERENCE", "NEGATE_REFERENCE"} or re.search(
+        r"\b(?:them|mua|lay|chon|dat|xoa|bo|huy)\b", norm
+    ):
+        return None
+    amounts = re.findall(r"\b(?:so luong|sl)\s*(?:la\s*)?(-?\d+(?:[.,]\d+)?)\b|"
+                         r"(?<![\w.,])(-?\d+(?:[.,]\d+)?)\s*(?:cai|ly|phan)\b", norm)
+    if not amounts:
+        return None
+    if len(reference.ordinals) != 1 or len(amounts) != 1:
+        return {"intent": "TRANSACTION_AMBIGUOUS"}
+    value = next(part for part in amounts[0] if part)
+    if not re.fullmatch(r"-?\d+", value):
+        return {"intent": "TRANSACTION_AMBIGUOUS"}
+    return {"intent": "SET_QUANTITY", "quantity": int(value),
+            "cart_line_ordinal": reference.ordinals[0], "reference_namespace": "CART_LINE",
+            "reference_source": "authoritative_cart_ordinal"}
+
+
 def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict[str, Any]:
     """Cheap Vietnamese intent router used before an LLM sees a turn.
 
@@ -200,9 +257,13 @@ def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict
     """
     raw = str(text or "")
     norm = normalize_confirmation_text(raw)
+    cart_quantity = cart_line_quantity_intent(raw)
+    if cart_quantity:
+        return cart_quantity
     payment_topic = bool(re.search(
         r"\b(?:phuong thuc|cach|kieu)\s+thanh toan\b|\bthanh toan\b.*\b(?:ho tro|nao|gi|duoc khong)\b|"
-        r"\bco\b.*\bthanh toan\b.*\bkhong\b|\bco\s+(?:ho tro\s+)?(?:vnpay|cod|tien mat|qr|vi(?: avengers)?)\s+khong\b",
+        r"\bco\b.*\bthanh toan\b.*\bkhong\b|\bco\s+(?:ho tro\s+)?(?:vnpay|cod|tien mat|qr|vi(?: avengers)?)\s+khong\b|"
+        r"\b(?:vnpay|cod|qr|vi avengers)\b.*\b(?:la gi|hoat dong the nao)\b",
         norm,
     ))
     if payment_topic:
@@ -224,7 +285,7 @@ def classify_order_intent(text: str, pending_type: Optional[str] = None) -> Dict
     cart_words = bool(re.search(r"\b(gio|giohang|mon|topping|toping|size|so luong|sl|da|ngot)\b", norm))
     order_words = bool(re.search(r"\b(don hang|madon|ma don|don da dat|lich su)\b", norm))
     quantity = re.search(r"(?:so luong|sl|ve|con|len|thanh|de)\s*(?:la|lai)?\s*(\d+)", norm)
-    absolute_change = bool(re.search(r"\b(?:len|thanh|de|con|tang len|doi|sua|chinh)\b.*\b\d+\s*(?:cai|ly|phan|mon)?\b", norm))
+    absolute_change = bool(re.search(r"\b(?:len|thanh(?!\s+toan)|de|con|tang len|doi|sua|chinh)\b.*\b\d+\s*(?:cai|ly|phan|mon)?\b", norm))
     add_quantity = (
         re.search(r"(?:so luong|sl)\s*(?:la)?\s*(\d+)", norm)
         or re.search(r"\b(\d+)\s*(?:cai|ly|phan|mon)\b", norm)

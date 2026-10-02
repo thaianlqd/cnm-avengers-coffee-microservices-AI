@@ -12,6 +12,7 @@ import CartPage from './pages/Cart';
 import FavoriteDrawer from './components/FavoriteDrawer';
 import OrderHistoryModal from './components/OrderHistoryModal';
 import ChatWidget from './components/ChatWidget';
+import { accountId, getGuestSessionId } from './lib/guestSession';
 import Home from './pages/Home';
 import About from './pages/About';
 import Support from './pages/Support';
@@ -532,8 +533,8 @@ function AppContent() {
   const topTabRefs = useRef({});
   const [activeTabUnderlineStyle, setActiveTabUnderlineStyle] = useState({ left: 0, width: 0, opacity: 0 });
   const queryClient = useQueryClient();
-  const { addToCart, cartCount, syncCartWithUser } = useCart();
-  const userId = user?.ma_nguoi_dung || user?.maNguoiDung || null;
+  const { addToCart, cartCount, syncCartWithUser, guestMergeError } = useCart();
+  const userId = accountId(user);
   const isLoggedIn = !!userId;
   const aiTargetUserId = userId || 'anon-popular';
   const socketUrl = import.meta.env.VITE_SOCKET_URL || `http://${window.location.hostname}:3005`;
@@ -966,6 +967,7 @@ function AppContent() {
 
     const handleAuthExpired = () => {
       setUser(null);
+      syncCartWithUser(null);
     };
     window.addEventListener('auth:expired', handleAuthExpired);
 
@@ -1009,8 +1011,8 @@ function AppContent() {
       avatarUrl: userData?.avatarUrl || userData?.avatar_url || null,
     };
 
-    const previousUserId = user?.ma_nguoi_dung || user?.maNguoiDung || null;
-    const nextUserId = nextUser?.ma_nguoi_dung || nextUser?.maNguoiDung || null;
+    const previousUserId = accountId(user);
+    const nextUserId = accountId(nextUser);
 
     if (previousUserId && previousUserId !== nextUserId) {
       queryClient.removeQueries({ queryKey: queryKeys.userProfile(previousUserId) });
@@ -1020,10 +1022,11 @@ function AppContent() {
       queryClient.removeQueries({ queryKey: ['customer-favorites', previousUserId] });
     }
 
+    await syncCartWithUser(nextUser);
+    if (!localStorage.getItem('token')) return false;
     setUser(nextUser);
     localStorage.setItem('user', JSON.stringify(nextUser));
     // token đã được lưu trong AuthModal — chỉ cần đảm bảo user object được lưu song song
-    await syncCartWithUser(nextUser);
 
     if (userData?.nhanVoucherSinhNhat) {
       setShowBirthdayVoucherModal(true);
@@ -1057,6 +1060,7 @@ function AppContent() {
         console.error('Lỗi khi liên kết đơn hàng guest:', err);
       });
     }
+    return true;
   };
 
   const handleLogout = async () => {
@@ -1957,8 +1961,8 @@ function AppContent() {
           >
             {activeTab === 'login' ? (
               <LoginPage
-                onLoginSuccess={(user) => {
-                  handleLoginSuccess(user);
+                onLoginSuccess={async (user) => {
+                  if (await handleLoginSuccess(user) === false) return;
                   const redirectTab = sessionStorage.getItem('post_login_redirect');
                   if (redirectTab === 'survey') {
                     const orderId = sessionStorage.getItem('post_login_order_id') || '';
@@ -1979,6 +1983,10 @@ function AppContent() {
                     params.set('tab', 'survey');
                     if (orderId) params.set('orderId', orderId);
                     window.history.pushState({ tab: 'survey', orderId }, '', `${window.location.pathname}?${params.toString()}`);
+                  } else if (redirectTab === 'cart') {
+                    sessionStorage.removeItem('post_login_redirect');
+                    setActiveTab('cart');
+                    window.history.pushState({ tab: 'cart' }, '', `${window.location.pathname}?tab=cart`);
                   } else {
                     setActiveTab('profile');
                   }
@@ -1999,7 +2007,12 @@ function AppContent() {
                 onNavigate={setActiveTab}
               />
             ) : activeTab === 'cart' ? (
-              <CartPage 
+              <CartPage
+                onLogin={() => {
+                  sessionStorage.setItem('post_login_redirect', 'cart');
+                  setActiveTab('login');
+                  window.history.pushState({ tab: 'login' }, '', `${window.location.pathname}?tab=login`);
+                }}
                 products={products} 
                 onBackToHome={() => setActiveTab('order')} 
                 voucherItems={voucherItems}
@@ -2098,7 +2111,17 @@ function AppContent() {
       />
 
       {activeTab === 'gift-card' ? null : ['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail', 'tra-cuu-don', 'tracking'].includes(activeTab) ? <OrderFooter onNavigate={setActiveTab} /> : <Footer onTabChange={setActiveTab} />}
-      <ChatWidget user={user} socketUrl={socketUrl} />
+      {guestMergeError && user && (
+        <div role="alert" className="fixed bottom-4 left-4 z-[160] max-w-sm rounded-xl border border-amber-200 bg-white p-4 shadow-lg">
+          <p className="text-sm text-amber-800">Chưa xác nhận được việc đồng bộ giỏ khách: {guestMergeError}</p>
+          <button className="mt-2 font-bold text-[#B22830]" onClick={() => syncCartWithUser(user)}>Thử đồng bộ lại</button>
+        </div>
+      )}
+      <ChatWidget key={accountId(user) || getGuestSessionId()} user={user} socketUrl={socketUrl} onLogin={() => {
+        sessionStorage.setItem('post_login_redirect', 'cart');
+        setActiveTab('login');
+        window.history.pushState({ tab: 'login' }, '', `${window.location.pathname}?tab=login`);
+      }} />
 
       {notificationToast ? (
         <div className="fixed bottom-6 right-6 z-[150] w-[92vw] max-w-sm rounded-2xl border border-green-100 bg-white/95 p-4 shadow-2xl shadow-green-100 backdrop-blur">

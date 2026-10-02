@@ -29,6 +29,79 @@ def require(condition, message):
         raise AssertionError(message)
 
 
+_CART_WRITE_TOOLS = {
+    "add_to_cart", "update_cart_item", "remove_cart_item", "clear_cart",
+    "apply_voucher", "remove_voucher", "confirm_checkout",
+}
+_ORDER_ID_FIELDS = ("order_id", "orderId", "ma_don_hang", "maDonHang")
+_ORDER_CONTAINERS = ("order", "data", "result", "checkout", "checkout_result")
+_UUID = r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}"
+
+
+def mutation_tools(result):
+    return [row.get("tool") for row in result.get("tool_calls_log") or []
+            if row.get("tool") in _CART_WRITE_TOOLS]
+
+
+def require_review_result(result, label="review"):
+    reply = str(result.get("reply") or "")
+    folded = reply.casefold()
+    insight_log = any(row.get("tool") == "get_product_insights"
+                      and (row.get("result") or {}).get("status") in {"ok", "not_found"}
+                      for row in result.get("tool_calls_log") or [])
+    semantic_reply = bool(re.search(
+        r"\b(?:đánh giá|review|rating|xếp hạng|nhận xét|sao)\b|chưa có đánh giá",
+        folded,
+    ))
+    require(insight_log or semantic_reply, f"{label} không chứa kết quả đánh giá có thẩm quyền: {reply}")
+    require(not mutation_tools(result), f"{label} đã gây mutation: {mutation_tools(result)}")
+
+
+def require_price_result(result, label="price"):
+    reply = str(result.get("reply") or "")
+    authoritative_price = bool(re.search(r"\bgiá(?: hiện tại)?\b[^\n]{0,80}\b\d[\d.]*\s*đ", reply.casefold()))
+    price_tool = any(row.get("tool") == "check_price_and_stock"
+                     and (row.get("result") or {}).get("status") == "ok"
+                     and (row.get("result") or {}).get("products")
+                     for row in result.get("tool_calls_log") or [])
+    require(authoritative_price or price_tool, f"{label} không chứa giá sản phẩm có thẩm quyền: {reply}")
+    require(not mutation_tools(result), f"{label} đã gây mutation: {mutation_tools(result)}")
+
+
+def extract_confirm_order_id(confirmed):
+    """Extract only an order-specific id from a successful confirmation."""
+    confirm_logs = [row for row in confirmed.get("tool_calls_log") or []
+                    if row.get("tool") == "confirm_checkout"]
+    if not confirm_logs:
+        return ""
+    result = confirm_logs[0].get("result") or {}
+
+    def known_order_id(value, depth=0):
+        if not isinstance(value, dict) or depth > 4:
+            return ""
+        for field in _ORDER_ID_FIELDS:
+            if str(value.get(field) or "").strip():
+                return str(value[field]).strip()
+        for field in _ORDER_CONTAINERS:
+            found = known_order_id(value.get(field), depth + 1)
+            if found:
+                return found
+        return ""
+
+    explicit = known_order_id(result)
+    if explicit:
+        return explicit
+    if result.get("status") != "success":
+        return ""
+    reply = str(confirmed.get("reply") or "")
+    match = re.search(
+        rf"(?:mã\s+đơn\s+hàng|ma\s+don\s+hang|order\s*(?:id|number))\D{{0,50}}(?P<id>{_UUID})",
+        reply,
+        re.IGNORECASE,
+    )
+    return match.group("id") if match else ""
+
+
 def main():
     require(EMAIL and PASSWORD, "Thiếu E2E_EMAIL hoặc E2E_PASSWORD.")
     http = requests.Session()
@@ -98,12 +171,23 @@ def main():
 
         # Ask two detailed review turns before the final purchase decision.
         review_drink = chat("trước khi mua, đánh giá chi tiết 1 Lít Matcha Latte Tây Bắc giúp tôi")
+        require_review_result(review_drink, "Đánh giá món nước")
         require("Matcha Latte Tây Bắc" in review_drink.get("reply", ""), "Đánh giá món nước bị mất tham chiếu.")
         review_cake = chat("còn Bánh Trung Thu Cà Phê Lava được khách đánh giá thế nào, nói chi tiết nhé")
+        require_review_result(review_cake, "Đánh giá món bánh")
         require("Bánh Trung Thu Cà Phê Lava" in review_cake.get("reply", ""), "Đánh giá món bánh bị mất tham chiếu.")
 
         selected = chat("oke vậy lấy cho tôi nước số 1 và bánh số 1 trong danh sách ban đầu nhé")
         require("Kích thước" in selected.get("reply", "") and "Topping" in selected.get("reply", ""), "Không hỏi tùy chọn cho món nước.")
+        pending_cart = json.dumps(authoritative_cart(), sort_keys=True, default=str)
+        pending_review = chat("trước khi chọn size, món 1 Lít Matcha Latte Tây Bắc được khách đánh giá thế nào?")
+        require_review_result(pending_review, "Đánh giá trong fill_options")
+        require(json.dumps(authoritative_cart(), sort_keys=True, default=str) == pending_cart,
+                "Review trong fill_options đã làm thay đổi giỏ.")
+        pending_price = chat("món 1 Lít Matcha Latte Tây Bắc giá bao nhiêu? tôi chỉ hỏi giá rồi chọn tiếp")
+        require_price_result(pending_price, "Giá trong fill_options")
+        require(json.dumps(authoritative_cart(), sort_keys=True, default=str) == pending_cart,
+                "Price info trong fill_options đã làm thay đổi giỏ.")
         added = chat("nước size vừa, ít đá, ít ngọt, topping trân châu trắng; bánh dùng mặc định nhé")
         require(sum(row.get("tool") == "add_to_cart" for row in added.get("tool_calls_log") or []) == 2, "Hai món đầu không được ghi đúng hai lần.")
         first_cart = authoritative_cart()
@@ -174,6 +258,13 @@ def main():
                 require(not blocked.get("checkout_payload") and "Bánh Trung Thu Matcha" in blocked.get("reply", ""), "Chi nhánh thiếu Matcha vẫn được chọn.")
             available_index = next((index for index, row in enumerate(branches, 1) if row.get("availability_status") == "available"), None)
             require(available_index, f"{mode} không có cửa hàng đủ giỏ trong 5 nơi gần nhất.")
+            branch_info = chat(f"cửa hàng số {available_index} ở đâu và cách tôi bao xa? tôi chưa chọn nhé")
+            info_payload = branch_info.get("checkout_payload") or {}
+            require(not info_payload.get("action_id"), f"{mode} branch INFO đã tạo action_id: {branch_info}")
+            require(not branch_info.get("checkout_payload"), f"{mode} branch INFO đã tạo final quote: {branch_info}")
+            require("Tổng thanh toán" not in str(branch_info.get("reply") or ""),
+                    f"{mode} branch INFO đã chuyển sang tóm tắt giao dịch.")
+            require(not mutation_tools(branch_info), f"{mode} branch INFO đã mutation: {mutation_tools(branch_info)}")
             checkout = chat(f"tôi chọn chi nhánh số {available_index}")
         else:
             chosen_logs = [row for row in location.get("tool_calls_log") or [] if row.get("tool") == "set_session_branch"]
@@ -187,7 +278,7 @@ def main():
         require(confirm_logs, f"{mode} không gọi confirm_checkout.")
         result = confirm_logs[0].get("result") or {}
         require(result.get("status") in {"success", "already_processed"}, f"{mode} tạo đơn thất bại: {result}")
-        order_id = str(result.get("order_id") or "")
+        order_id = extract_confirm_order_id(confirmed)
         require(order_id and re.search(re.escape(order_id), confirmed.get("reply", "")), f"{mode} không trả mã đơn.")
         require(not authoritative_cart(), f"{mode} chưa xóa giỏ sau khi tạo đơn.")
         orders = payload(http.get(f"{API_URL}/customers/{user_id}/orders?q={order_id}", timeout=20))

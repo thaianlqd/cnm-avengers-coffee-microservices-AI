@@ -81,8 +81,19 @@ TOOL_REMOVE_VOUCHER = {
 
 # ── Executors ─────────────────────────────────────────────────────────────────
 
+def _guest_login_gate(session_id):
+    from src.common.session_auth import is_guest_session_id
+    if is_guest_session_id(_customer_session_id(session_id)):
+        return {"status": "login_required", "message": "Dạ, bạn **đăng nhập để dùng voucher** nhé. Giỏ hàng của bạn vẫn được giữ nguyên ạ.",
+                "login_action": {"label": "Đăng nhập để tiếp tục", "href": "/?tab=login", "return_tab": "cart"}}
+    return None
+
+
 def execute_get_applicable_vouchers(session_id: str) -> Dict[str, Any]:
     """Lấy danh sách voucher áp dụng được theo tổng giỏ hàng."""
+    gate = _guest_login_gate(session_id)
+    if gate:
+        return gate
     # Cart state is conversation-scoped; only voucher eligibility is user-scoped.
     from src.function_calling.tools.cart_tools import is_authenticated_cart_session, sync_authoritative_cart
     authenticated = is_authenticated_cart_session(session_id)
@@ -107,6 +118,8 @@ def execute_get_applicable_vouchers(session_id: str) -> Dict[str, Any]:
     fallback_url = "http://host.docker.internal:3005"
     has_toppings = any(bool(item.get("toppings")) for item in cart.get("items") or [])
 
+    from src.function_calling.helpers import _get_service_jwt
+    auth_headers = {"Authorization": f"Bearer {_get_service_jwt(valid_uid)}"}
     try:
         url = f"{order_url}/vouchers/eligible"
         payload = {
@@ -115,9 +128,9 @@ def execute_get_applicable_vouchers(session_id: str) -> Dict[str, Any]:
             "has_toppings": has_toppings,
         }
         try:
-            resp = requests.post(url, json=payload, timeout=7)
+            resp = requests.post(url, json=payload, headers=auth_headers, timeout=7)
         except requests.exceptions.ConnectionError:
-            resp = requests.post(f"{fallback_url}/vouchers/eligible", json=payload, timeout=7)
+            resp = requests.post(f"{fallback_url}/vouchers/eligible", json=payload, headers=auth_headers, timeout=7)
 
         if not resp.ok:
             logger.warning("[VoucherTools] get vouchers HTTP %s", resp.status_code)
@@ -158,6 +171,9 @@ def execute_get_applicable_vouchers(session_id: str) -> Dict[str, Any]:
 
 def execute_apply_voucher(session_id: str, voucher_code: str) -> Dict[str, Any]:
     """Validate và lưu voucher code vào session."""
+    gate = _guest_login_gate(session_id)
+    if gate:
+        return gate
     if not voucher_code or not str(voucher_code).strip():
         return {"status": "error", "message": "Vui lòng nhập mã voucher."}
 
@@ -189,12 +205,14 @@ def execute_apply_voucher(session_id: str, voucher_code: str) -> Dict[str, Any]:
         "has_toppings": any(bool(item.get("toppings")) for item in cart.get("items") or []),
     }
 
+    from src.function_calling.helpers import _get_service_jwt
+    auth_headers = {"Authorization": f"Bearer {_get_service_jwt(valid_uid)}"}
     try:
         url = f"{order_url}/vouchers/kiem-tra"
         try:
-            resp = requests.post(url, json=payload, timeout=5)
+            resp = requests.post(url, json=payload, headers=auth_headers, timeout=5)
         except requests.exceptions.ConnectionError:
-            resp = requests.post(f"{fallback_url}/vouchers/kiem-tra", json=payload, timeout=5)
+            resp = requests.post(f"{fallback_url}/vouchers/kiem-tra", json=payload, headers=auth_headers, timeout=5)
 
         if not resp.ok:
             err_data = {}
@@ -238,6 +256,9 @@ def execute_apply_voucher(session_id: str, voucher_code: str) -> Dict[str, Any]:
 
 def execute_remove_voucher(session_id: str) -> Dict[str, Any]:
     """Remove a voucher only after an authoritative no-voucher quote succeeds."""
+    gate = _guest_login_gate(session_id)
+    if gate:
+        return gate
     prefs = cart_manager.get_checkout_prefs(session_id)
     if not prefs.get("voucher_code"):
         return {"status": "ok", "message": "Không có mã giảm giá nào đang được áp dụng."}

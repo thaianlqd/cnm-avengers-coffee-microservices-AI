@@ -23,6 +23,32 @@ def normalize_shopping(value: Any) -> str:
     return re.sub(r"\b(?:k|ko)\b", "khong", text)
 
 
+def without_targetless_future_clause(message: str) -> str:
+    """Keep the current request when a purpose/future clause has no target.
+
+    A named product, ordinal, option or deictic target leaves the clause intact.
+    This is discourse structure, independent of catalog and location identities.
+    """
+    for boundary in re.finditer(r'[,;]|\s+(?=(?:để|de|rồi|roi|lát|lat|tí|ti|chút|chut)\b)',
+                                message, re.IGNORECASE):
+        tail = normalize_shopping(message[boundary.end():])
+        if not re.search(r'\b(?:de|roi|lat|ti|chut)\b', tail):
+            continue
+        if re.fullmatch(r'(?:(?:de|roi)\s+)?(?:(?:toi|minh)\s+)?'
+                        r'(?:(?:lat(?: nua)?|ti|chut(?: nua)?)\s+)?'
+                        r'(?:(?:toi|minh)\s+)?(?:muon\s+)?(?:chon|mua|lay|them|dat)'
+                        r'(?:\s+(?:do|mon|hang))?(?:\s+(?:nha|nhe|a))?', tail):
+            return message[:boundary.start()].rstrip(' ,;')
+    return message
+
+
+def is_deictic_selection(message: str) -> bool:
+    """A deictic target plus directive particle is positive selection evidence."""
+    return '?' not in message and bool(re.fullmatch(
+        r'(?:mon|cai|banh|nuoc|san pham)\s+(?:nay|do|kia)\s+(?:di|nhe|nha)(?:\s+luon)?',
+        normalize_shopping(message)))
+
+
 _FAMILIES = (
     ("moon_cake", "food", "Bánh Trung Thu", "Bánh Trung Thu", ("banh trung thu",)),
     ("savory_cake", "food", "Bánh Mặn", "Bánh mặn", ("banh man",)),
@@ -41,7 +67,9 @@ _FAMILIES = (
     ("drink", "drink", None, "Menu nước", ("nuoc", "do uong", "thuc uong")),
 )
 _FAMILY_PHRASES = frozenset(phrase for row in _FAMILIES for phrase in row[4])
-_DISCOURSE_FRAME_WORDS = frozenset("hello hi alo e xin chao hien tai bay gio".split())
+_DISCOURSE_FRAME_WORDS = frozenset(
+    "hello hi alo e xin chao hien tai bay gio a quen nay khoan nhan tien truoc da minh".split()
+)
 
 
 @dataclass(frozen=True)
@@ -62,8 +90,8 @@ class ShoppingInterpretation:
     ambiguity: Tuple[Product, ...] = ()
 
 
-def shopping_quantity(message: str) -> int:
-    """One quantity interpretation for new shopping selections only."""
+def explicit_shopping_quantity(message: str) -> Optional[int]:
+    """Explicit unit-bearing quantity, for narrow mutation safety checks."""
     raw = unicodedata.normalize("NFD", str(message or "").casefold())
     plain = "".join(char for char in raw if unicodedata.category(char) != "Mn").replace("đ", "d")
     text = re.sub(r"\s+", " ", re.sub(r"[^\w#-]+", " ", plain)).strip()
@@ -72,10 +100,16 @@ def shopping_quantity(message: str) -> int:
              or re.search(r"(?<!\w)" + number + r"\s*(?:cai|ly|phan|mon)\b", text)
              or re.search(r"\bthem\s+" + number + r"\b", text))
     if not match:
-        return 1
+        return None
     words = dict(zip("mot hai ba bon tu nam sau bay tam chin muoi".split(),
                      (1, 2, 3, 4, 4, 5, 6, 7, 8, 9, 10)))
     return int(match[1]) if re.fullmatch(r"-?\d+", match[1]) else words[match[1]]
+
+
+def shopping_quantity(message: str) -> int:
+    """One quantity interpretation for new shopping selections only."""
+    quantity = explicit_shopping_quantity(message)
+    return 1 if quantity is None else quantity
 
 
 def _family(text: str) -> Optional[tuple[str, str, Optional[str], str]]:
@@ -94,6 +128,12 @@ def _family(text: str) -> Optional[tuple[str, str, Optional[str], str]]:
     return family, category, search, label
 
 
+def requested_product_category(message: str) -> Optional[str]:
+    """Return only a category explicitly evidenced by the current message."""
+    family = _family(normalize_shopping(message))
+    return family[1] if family and family[1] in {'drink', 'food'} else None
+
+
 def _unique_products(rows: Sequence[Product]) -> Tuple[Product, ...]:
     seen = set()
     result = []
@@ -107,12 +147,15 @@ def _unique_products(rows: Sequence[Product]) -> Tuple[Product, ...]:
 
 def _product_matches(text: str, products: Sequence[Product], *, exact: bool) -> Tuple[Product, ...]:
     matches = []
+    exact_spans = []
     for product in _unique_products(products):
         title = normalize_shopping(product.get("product_name"))
         if not title:
             continue
-        if re.search(r"\b" + re.escape(title) + r"\b", text):
+        title_spans = [match.span() for match in re.finditer(r"\b" + re.escape(title) + r"\b", text)]
+        if title_spans:
             matches.append(product)
+            exact_spans.append((product, title, title_spans))
             continue
         if exact:
             continue
@@ -125,6 +168,23 @@ def _product_matches(text: str, products: Sequence[Product], *, exact: bool) -> 
                    for start in range(len(tokens) - size + 1)):
                 matches.append(product)
                 break
+    if exact and len(exact_spans) > 1:
+        # A canonical full name can contain another canonical name (for example
+        # a capacity-prefixed product and its regular-size sibling).  Keep the
+        # shorter product only when it also appears in its own non-overlapping
+        # clause; an overlapping substring is not a second customer selection.
+        kept = []
+        for product, title, spans in exact_spans:
+            independent = any(not any(
+                other_title != title
+                and len(other_title) > len(title)
+                and other_start <= start and end <= other_end
+                for _other, other_title, other_spans in exact_spans
+                for other_start, other_end in other_spans
+            ) for start, end in spans)
+            if independent:
+                kept.append(product)
+        matches = kept
     return _unique_products(matches)
 
 
@@ -132,7 +192,7 @@ def is_family_only(message: str, family_name: Optional[str]) -> bool:
     """Recognize a family plus speech frame, with no unaccounted product words."""
     if not family_name:
         return False
-    text = re.sub(r"\bdat hang\b", "dat", normalize_shopping(message))
+    text = re.sub(r"\bdat hang\b", "dat", normalize_shopping(without_targetless_future_clause(message)))
     phrases = next((row[4] for row in _FAMILIES if row[0] == family_name), ())
     for phrase in sorted(phrases, key=len, reverse=True):
         remainder, count = re.subn(r"\b" + re.escape(phrase) + r"\b", " ", text, count=1)
@@ -142,7 +202,7 @@ def is_family_only(message: str, family_name: Optional[str]) -> bool:
         # content word (e.g. "muối", "kem dừa") makes it a product query.
         frame = set("ben ban minh toi quan o day co ban muon can mua dat lay them cho lam xem tim "
                     "menu thuc don gi nao loai mon cac nhung duoc khong di nhe nha ne nhi "
-                    "the vay a oi b hen voi".split()) | _DISCOURSE_FRAME_WORDS
+                    "the vay a oi b hen voi dang hien".split()) | _DISCOURSE_FRAME_WORDS
         if set(remainder.split()).issubset(frame):
             return True
     return False
@@ -186,6 +246,9 @@ def interpret_shopping(
     info = bool(re.search(r"\b(?:gia|bao nhieu|review|danh gia|nhan xet|ngon|vi|topping|size|thanh phan|the nao)\b", text)
                 or re.search(r"\bco\b.*\b(?:khong|nao|gi)\b", text)
                 or re.search(r"\b(?:xem|tim|goi y|menu|thuc don)\b", text))
+    selection_style = bool(re.search(
+        r"\b(?:mua|lay|them|chon|dat)\b|\b(?:cho|lam)\s+(?:toi|minh)\b", text,
+    ))
     family = _family(text)
     family_bare = is_family_only(raw_text, family[0] if family else None)
     if ordinal_requested:
@@ -200,7 +263,13 @@ def interpret_shopping(
             if exact:
                 targets, source, entity = exact, origin + "_exact", "PRODUCT"
                 break
-            if family_bare:
+            # A selection-shaped turn first resolves a unique fragment inside
+            # the visible snapshot. Explicit menu/info language still owns the
+            # broad family browse contract.
+            family_selection = bool(
+                family_bare and origin == "snapshot" and selection_style and not info
+            )
+            if family_bare and not family_selection:
                 continue
             aliases = _product_matches(text, rows, exact=False)
             if aliases:
@@ -209,6 +278,24 @@ def interpret_shopping(
                 else:
                     ambiguity = aliases
                 break
+            # Some narrow families are one token long, so the alias resolver
+            # intentionally cannot construct a two-token title fragment. Use
+            # the same visible snapshot and category, never a catalog guess.
+            if (family_selection and family
+                    and family[0] not in {"coffee", "tea", "food", "drink", "pizza", "pasta"}):
+                family_phrase = normalize_shopping(family[2] or family[3])
+                family_rows = _unique_products([
+                    row for row in rows
+                    if (family[1] == "all" or str(row.get("category") or "") == family[1])
+                    and re.search(r"\b" + re.escape(family_phrase) + r"\b",
+                                  normalize_shopping(row.get("product_name")))
+                ])
+                if len(family_rows) == 1:
+                    targets, source, entity = family_rows, "snapshot_alias", "PRODUCT"
+                elif family_rows:
+                    ambiguity = family_rows
+                if targets or ambiguity:
+                    break
     if negative:
         return ShoppingInterpretation(**base, act="NEGATE_PRODUCT", entity_type=entity,
                                       targets=targets, reference_source=source, ambiguity=ambiguity)
@@ -217,7 +304,11 @@ def interpret_shopping(
                                       targets=targets, reference_source=source)
     if ambiguity:
         return ShoppingInterpretation(**base, act="AMBIGUOUS", entity_type="PRODUCT",
-                                      ambiguity=ambiguity)
+                                      ambiguity=ambiguity,
+                                      category=family[1] if family else None,
+                                      family=family[0] if family else None,
+                                      search_text=family[2] if family else None,
+                                      label=family[3] if family else None)
     if targets and _selects_target(text, targets, source):
         return ShoppingInterpretation(**base, act="ADD_ITEM", read_only=False,
                                       entity_type=entity, targets=targets, reference_source=source)

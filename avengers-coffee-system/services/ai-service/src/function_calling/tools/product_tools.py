@@ -439,6 +439,13 @@ def execute_check_price_and_stock(
             in_stock = None
             stock_quantity = None
             if has_outlet and str(p["product_id"]).isdigit():
+                from src.common.inventory_validation import availability_at_branch
+                availability = availability_at_branch(engine, branch_id, [{
+                    "product_id": str(p["product_id"]), "product_name": p["ten_san_pham"],
+                }], inventory_schema)
+                availability_status = ("unavailable" if availability["unavailable"] else
+                                       "unknown" if availability["unverified"] else "available")
+                in_stock = (None if availability_status == "unknown" else availability_status == "available")
                 with engine.connect() as conn:
                     stock = conn.execute(text(
                         f"""
@@ -450,11 +457,6 @@ def execute_check_price_and_stock(
                     ), {"branch_id": branch_id, "product_id": int(p["product_id"])}).mappings().first()
                 if stock:
                     stock_quantity = int(stock["so_luong_ton"] or 0)
-                    in_stock = bool(stock["dang_kinh_doanh"])
-                    availability_status = "available" if in_stock else "unavailable"
-                else:
-                    in_stock = True
-                    availability_status = "available"
 
             results.append({
                 "product_id": p["product_id"],

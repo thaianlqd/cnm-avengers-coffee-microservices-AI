@@ -1,33 +1,34 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../lib/apiClient';
 import { queryKeys } from '../lib/queryKeys';
+import { accountId, getGuestSessionId, isGuestSessionId, cartRequestConfig, mergeGuestCartOnLogin, GUEST_MERGE_KEY } from '../lib/guestSession';
 
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
   const queryClient = useQueryClient();
-  const ANON_PREFIX = 'anon-';
+  const [guestMergeError, setGuestMergeError] = useState('');
+  const mergingRef = useRef(null);
+  const pendingCartWrites = useRef(new Set());
+  const ownerRevision = useRef(0);
+  const trackCartWrite = async (promise) => {
+    pendingCartWrites.current.add(promise);
+    try { return await promise; } finally { pendingCartWrites.current.delete(promise); }
+  };
 
   const layMaNguoiDungKhach = () => {
-    const key = 'avengers_anon_user_id';
-    const existed = localStorage.getItem(key);
-    if (existed) {
-      return existed;
-    }
-    const created = `${ANON_PREFIX}${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
-    localStorage.setItem(key, created);
-    return created;
+    return getGuestSessionId();
   };
 
   const layMaNguoiDungDangHoatDong = () => {
     const savedUser = localStorage.getItem('user');
-    if (savedUser) {
+    if (savedUser && localStorage.getItem('token')) {
       try {
         const parsed = JSON.parse(savedUser);
-        if (parsed?.ma_nguoi_dung) {
-          return parsed.ma_nguoi_dung;
+        if (accountId(parsed)) {
+          return accountId(parsed);
         }
       } catch {
         // Fallback to anonymous id when localStorage user payload is invalid.
@@ -38,10 +39,12 @@ export const CartProvider = ({ children }) => {
 
   const [activeUserId, setActiveUserId] = useState(() => layMaNguoiDungDangHoatDong());
 
+  const displayedCartOwner = useRef(activeUserId);
+
   const { data: serverCartData } = useQuery({
     queryKey: queryKeys.cartByUser(activeUserId),
     queryFn: async () => {
-      const response = await apiClient.get(`/cart/${activeUserId}`);
+      const response = await apiClient.get(`/cart/${activeUserId}`, cartRequestConfig(activeUserId));
       // V5 cart endpoint returns an envelope. Keep accepting arrays while an
       // older deployment is rolling out so existing sessions do not break.
       return response.data || { items: [] };
@@ -51,6 +54,11 @@ export const CartProvider = ({ children }) => {
   });
 
   useEffect(() => {
+    if (displayedCartOwner.current !== activeUserId) {
+      displayedCartOwner.current = activeUserId;
+      setCart([]);
+    }
+    if (!serverCartData) return;
     setCart((previousCart) => {
       const serverItems = Array.isArray(serverCartData)
         ? serverCartData
@@ -68,30 +76,30 @@ export const CartProvider = ({ children }) => {
       });
       return mappedFromServer;
     });
-  }, [serverCartData]);
+  }, [serverCartData, activeUserId]);
 
   const themVaoGioMutation = useMutation({
     mutationFn: async (item) => {
-      const response = await apiClient.post('/cart', item);
+      const response = await apiClient.post('/cart', item, cartRequestConfig(item.ma_nguoi_dung));
       return response.data;
     },
   });
 
   const xoaKhoiGioMutation = useMutation({
     mutationFn: async (cartItemId) => {
-      await apiClient.delete(`/cart/${cartItemId}`);
+      await apiClient.delete(`/cart/${cartItemId}`, cartRequestConfig(activeUserId));
     },
   });
 
   const xoaToanBoGioMutation = useMutation({
     mutationFn: async (userId) => {
-      await apiClient.delete(`/cart/clear/${userId}`);
+      await apiClient.delete(`/cart/clear/${userId}`, cartRequestConfig(userId));
     },
   });
 
   const clearCart = async () => {
     if (activeUserId) {
-      await xoaToanBoGioMutation.mutateAsync(activeUserId);
+      await trackCartWrite(xoaToanBoGioMutation.mutateAsync(activeUserId));
       await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(activeUserId) });
     }
     setCart([]);
@@ -123,7 +131,7 @@ export const CartProvider = ({ children }) => {
   };
 
   const addToCart = async (user, product, quantity = 1, size = '', options = {}) => {
-    const maNguoiDung = user?.ma_nguoi_dung || activeUserId || layMaNguoiDungKhach();
+    const maNguoiDung = accountId(user) || activeUserId || layMaNguoiDungKhach();
     if (maNguoiDung !== activeUserId) {
       setActiveUserId(maNguoiDung);
     }
@@ -224,14 +232,14 @@ export const CartProvider = ({ children }) => {
     });
 
     if (maNguoiDung) {
-      await themVaoGioMutation.mutateAsync(item);
+      await trackCartWrite(themVaoGioMutation.mutateAsync(item));
       await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(maNguoiDung) });
     }
   };
 
   const patchCartItem = async (item, patch) => {
     if (!item?.id) throw new Error('Không tìm thấy mã dòng giỏ hàng. Vui lòng tải lại giỏ.');
-    await apiClient.patch(`/cart/${item.id}`, patch);
+    await trackCartWrite(apiClient.patch(`/cart/${item.id}`, patch, cartRequestConfig(activeUserId)));
     await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(activeUserId) });
     window.dispatchEvent(new CustomEvent('refresh-cart'));
   };
@@ -250,7 +258,7 @@ export const CartProvider = ({ children }) => {
       : cart.find((row) => row.ma_san_pham === itemOrProductId && (!size || row.size === size));
     if (!item) return;
     if (item.id) {
-      await xoaKhoiGioMutation.mutateAsync(item.id);
+      await trackCartWrite(xoaKhoiGioMutation.mutateAsync(item.id));
       await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(activeUserId) });
       window.dispatchEvent(new CustomEvent('refresh-cart'));
       return;
@@ -294,10 +302,45 @@ export const CartProvider = ({ children }) => {
   };
 
   const syncCartWithUser = async (user) => {
-    const nextUserId = user?.ma_nguoi_dung || layMaNguoiDungKhach();
+    const revision = ++ownerRevision.current;
+    const nextUserId = accountId(user) || layMaNguoiDungKhach();
+    if (accountId(user)) {
+      let handoff;
+      try {
+        await Promise.allSettled([...pendingCartWrites.current]);
+        if (mergingRef.current && mergingRef.current.userId !== nextUserId) await mergingRef.current.promise.catch(() => undefined);
+        if (!mergingRef.current) {
+          mergingRef.current = { userId: nextUserId, promise: mergeGuestCartOnLogin({ guestId: getGuestSessionId(), userId: nextUserId,
+            storage: localStorage, post: (...args) => apiClient.post(...args) }) };
+        }
+        handoff = mergingRef.current;
+        const merged = await handoff.promise;
+        if (merged) {
+          queryClient.setQueryData(queryKeys.cartByUser(nextUserId), merged);
+          const guestKey = queryKeys.cartByUser(getGuestSessionId());
+          queryClient.setQueryData(guestKey, { items: [], user_id: getGuestSessionId() });
+          await queryClient.invalidateQueries({ queryKey: guestKey, refetchType: 'none' });
+        }
+        setGuestMergeError('');
+      } catch (error) {
+        setGuestMergeError(error?.response?.data?.message || error.message || 'Chưa chuyển được giỏ khách. Các món vẫn được giữ để thử lại.');
+      } finally {
+        if (handoff && mergingRef.current === handoff) mergingRef.current = null;
+      }
+    } else {
+      setGuestMergeError('');
+    }
+    if (revision !== ownerRevision.current) return;
     setActiveUserId(nextUserId);
     await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(nextUserId) });
   };
+
+  // Recover a pending handoff after a reload, using the same operation id.
+  useEffect(() => {
+    if (!isGuestSessionId(activeUserId) && localStorage.getItem(GUEST_MERGE_KEY)) {
+      syncCartWithUser({ ma_nguoi_dung: activeUserId });
+    }
+  }, [activeUserId]);
 
   const refreshCart = async () => {
     await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(activeUserId) });
@@ -326,6 +369,7 @@ export const CartProvider = ({ children }) => {
         refreshCart,
         clearCart,
         reorderItems,
+        guestMergeError,
       }}
     >
       {children}

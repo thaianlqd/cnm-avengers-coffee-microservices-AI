@@ -15,10 +15,10 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { CartService } from './cart.service';
-import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { CartAuthGuard, isGuestCartId } from '../../auth/cart-auth.guard';
 
 @Controller('cart')
-@UseGuards(JwtAuthGuard)
+@UseGuards(CartAuthGuard)
 export class CartController {
   constructor(private readonly cartService: CartService) {}
 
@@ -52,7 +52,27 @@ export class CartController {
     @Req() req: any,
   ) {
     this.assertOwner(req.user, userId);
+    if (isGuestCartId(userId) && (body?.voucher_code || body?.delivery_mode)) {
+      throw new ForbiddenException({ code: 'LOGIN_REQUIRED', message: 'Vui lòng đăng nhập để dùng voucher hoặc đặt hàng' });
+    }
     return this.cartService.quote(userId, body?.voucher_code, body?.delivery_mode, body?.delivery_method);
+  }
+
+  @Post('merge-guest')
+  @HttpCode(200)
+  async mergeGuestCart(
+    @Body() body: { guest_session_id?: string },
+    @Headers('x-guest-session-id') guestId: string,
+    @Headers('x-idempotency-key') operationId: string,
+    @Req() req: any,
+  ) {
+    if (req.user?.role === 'GUEST' || req.user?.username === 'internal-service') {
+      throw new ForbiddenException({ code: 'LOGIN_REQUIRED', message: 'Vui lòng đăng nhập để chuyển giỏ' });
+    }
+    if (!isGuestCartId(guestId) || body?.guest_session_id !== guestId || !operationId) {
+      throw new BadRequestException('Thiếu phiên giỏ khách hoặc mã đồng bộ');
+    }
+    return this.cartService.mergeGuestCart(guestId, String(req.user.sub), operationId);
   }
 
   @Post()

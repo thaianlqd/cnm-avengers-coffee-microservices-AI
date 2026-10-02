@@ -2,6 +2,7 @@
 import re
 
 from src.agents.tier1 import _remove_diacritics
+from src.agents.selection_language import parse_selection_reference
 
 FULFILLMENT_OPTIONS = ("GIAO_TAN_NOI", "MANG_DI", "TAI_CHO")
 PAYMENT_OPTIONS = ("VNPAY", "NGAN_HANG_QR", "VI_DIEN_TU", "THANH_TOAN_KHI_NHAN_HANG")
@@ -33,17 +34,25 @@ def pending_checkout_choice(pending_type: str, message: str):
     text = _remove_diacritics(message).strip()
     if re.search(r"\b(them|mua)\s+(?:mon\s+)?[a-z]", text) and not re.search(r"\b(?:so|thu|#)\s*\d+\b", text):
         return None
-    match = re.search(r"\b(?:so|thu|#)\s*(\d+)\b|^\s*(\d+)\s*[.!]?\s*$", text)
-    if not match:
+    active_namespace = {
+        "select_payment": "PAYMENT",
+        "select_fulfillment": "FULFILLMENT",
+    }.get(pending_type)
+    reference = parse_selection_reference(message, active_namespace=active_namespace)
+    if not reference.requested:
         return None
-    ordinal = int(match.group(1) or match.group(2))
+    ordinal = reference.ordinals[0]
     if pending_type == "select_payment":
+        if reference.namespace not in {None, "PAYMENT"}:
+            return None
         return {"payment_method": PAYMENT_OPTIONS[ordinal - 1]} if 1 <= ordinal <= len(PAYMENT_OPTIONS) else {}
     if pending_type == "select_fulfillment":
+        if reference.namespace not in {None, "FULFILLMENT"}:
+            return None
         return {"delivery_type": FULFILLMENT_OPTIONS[ordinal - 1]} if 1 <= ordinal <= len(FULFILLMENT_OPTIONS) else {}
     # Both numbered lists are visible. A bare ordinal needs its namespace.
-    if re.search(r"\b(thanh toan|vnpay|qr|vi|cod|tien mat)\b", text):
+    if reference.namespace == "PAYMENT" or re.search(r"\b(thanh toan|vnpay|qr|vi|cod|tien mat)\b", text):
         return {"payment_method": PAYMENT_OPTIONS[ordinal - 1]} if 1 <= ordinal <= len(PAYMENT_OPTIONS) else {}
-    if re.search(r"\b(nhan hang|giao|lay|mang di|tai cho)\b", text):
+    if reference.namespace == "FULFILLMENT" or re.search(r"\b(nhan hang|giao|lay|mang di|tai cho)\b", text):
         return {"delivery_type": FULFILLMENT_OPTIONS[ordinal - 1]} if 1 <= ordinal <= len(FULFILLMENT_OPTIONS) else {}
     return {}
