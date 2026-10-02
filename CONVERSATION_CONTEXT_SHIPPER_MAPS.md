@@ -46,7 +46,7 @@ Trong phiên làm việc này, toàn bộ các vấn đề liên quan đến hi�
 ---
 
 ### 2.4. Sửa lỗi sai lệch toạ độ khách hàng (Geocoding Mapbox)
-- **Vấn đề trước đây:** Backend cắt bỏ Phường/Quận trong chuỗi địa chỉ giao hàng, làm Mapbox Geocoding nhầm địa chỉ Điện Biên Phủ ở TP.HCM sang tận Bà Rịa / Hồ Tràm (lệch hơn 100km).
+- **Vấn đề trước đây:** Backend cắt bỏ Phường/Quận trong chuỗi địa chỉ giao hàng, làm Mapbox Geocoding nhầm địa chỉ Điện Biên Phủ ở TP.HCM sang tận Bà Rịa / Hồ Tràm (lệch hơn 100km). hdhdhdh
 - **Giải pháp:**
   - Sửa `services/order-service/src/modules/thanh-toan/thanh-toan.service.ts` và `delivery-tracking.service.ts`: Giữ nguyên 100% địa chỉ đầy đủ và truyền tham số `proximity=${storeLng},${storeLat}` vào Mapbox API để ưu tiên kết quả gần chi nhánh nhất.
   - Rebuild và cập nhật container `avengers_order_service`.
