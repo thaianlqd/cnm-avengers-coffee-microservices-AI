@@ -64,6 +64,15 @@ def declines_toppings(message: str) -> bool:
     return bool(re.search(r'\b(?:khong|ko|k|bo)(?:\s+can)?(?:\s+them)?\s+(?:topping|toping|do kem)\b', text))
 
 
+def requests_custom_options(message: str) -> bool:
+    """A bare customization reply asks for choices, never supplies option values."""
+    text = re.sub(r'[^\w\s]', ' ', _norm(message))
+    text = re.sub(r'\s+', ' ', text).strip()
+    return bool(re.fullmatch(
+        r'(?:(?:cho\s+)?(?:toi|minh|em)\s+)?(?:muon\s+)?tu\s+chon'
+        r'(?:\s+(?:nhe|nha|a|di|ban|oi))*', text))
+
+
 def resolve_option_default(group: Dict[str, Any], product_data: Optional[Dict[str, Any]] = None) -> Any:
     """Mirror Web's first Menu option, never a hardcoded label or paid topping."""
     values = list(group.get("values") or [])
@@ -135,6 +144,31 @@ def mentions_pending_option_value(message: str, pending: List[Dict[str, Any]]) -
     return False
 
 
+def literal_option_choices(message: str, groups: List[Dict[str, Any]]) -> Dict[str, str]:
+    """Canonical literal choices override model guesses; shared labels need a field."""
+    text = _norm(message)
+    choices = {}
+    for group in groups:
+        field = option_field(group.get('name', ''))
+        if not field or group.get('multiple'):
+            continue
+        matches = []
+        for value in group.get('values') or []:
+            key = _norm(value)
+            if not key or not re.search(r'(?<!\w)' + re.escape(key) + r'(?!\w)', text):
+                continue
+            owners = {option_field(other.get('name', '')) for other in groups
+                      if value in (other.get('values') or [])}
+            if len(owners) > 1 and not re.search(
+                    rf'\b{_FIELD_ALIASES[field]}\s+(?:la\s+)?{re.escape(key)}\b|'
+                    rf'\b{re.escape(key)}\s+{_FIELD_ALIASES[field]}\b', text):
+                continue
+            matches.append(value)
+        if len(matches) == 1:
+            choices[field] = matches[0]
+    return choices
+
+
 def validate_explicit_multi_value_group(
     message: str,
     group: Dict[str, Any],
@@ -166,7 +200,7 @@ def validate_explicit_multi_value_group(
     # A semicolon or sentence terminator always closes this option clause.
     requested = re.split(r"[;.]", requested, maxsplit=1)[0]
     requested = re.sub(
-        r"^\s*(?:(?:là|la|thành|thanh|gồm|gom|chọn|chon)\s+)", "",
+        r"^\s*(?:(?:là|la|thành|thanh|gồm|gom|chọn|chon|cho\s+(?:tôi|toi|mình|minh|em))\s+)+", "",
         requested, flags=re.IGNORECASE,
     )
     assignment = re.split(r"\b(?:thành|thanh|sang)\b", requested, flags=re.IGNORECASE)
@@ -187,11 +221,24 @@ def validate_explicit_multi_value_group(
     other_markers.extend(["size", "kich thuoc", "kich co", "luong da", "da", "ice",
                           "do ngot", "ngot", "duong", "sweet", "loai sua", "milk"])
 
+    # The next option may immediately follow the last topping, without a
+    # comma: "tiramisu thêm ngọt". Close the topping list at that boundary,
+    # preserving every requested topping before it.
+    requested = unicodedata.normalize('NFC', ' '.join(requested.split()))
+    folded_requested = _norm(requested)
+    protected = [match.span() for key in allowed_by_key
+                 for match in re.finditer(r'(?<!\w)' + re.escape(key) + r'(?!\w)', folded_requested)]
+    boundaries = [match.start() for key in (other_values - set(allowed_by_key)) | set(other_markers)
+                  if key for match in re.finditer(r'(?<!\w)' + re.escape(key) + r'(?!\w)', folded_requested)
+                  if not any(start <= match.start() < end for start, end in protected)]
+    if boundaries:
+        requested = requested[:min(boundaries)].strip(' ,')
+
     candidates = []
     for raw in re.split(r"\s*(?:,|&|\+)\s*|\s+(?:và|va|với|voi)\s+", requested,
                         flags=re.IGNORECASE):
         candidate = re.sub(
-            r"\s+(?:(?:theo\s+mặc\s+định|theo\s+mac\s+dinh)|nhé|nhe|ạ|a|đi|di|bạn|ban|b|thôi|thoi|nữa|nua)\s*$",
+            r"(?:\s+(?:(?:theo\s+mặc\s+định|theo\s+mac\s+dinh)|nhé|nhe|ạ|a|đi|di|bạn|ban|b|thôi|thoi|nữa|nua))+\s*$",
             "", raw, flags=re.IGNORECASE,
         ).strip()
         if not marker:
@@ -203,13 +250,26 @@ def validate_explicit_multi_value_group(
         belongs_to_other_group = key in other_values and key not in allowed_by_key
         starts_other_group = any(re.search(r"(?<!\w)" + re.escape(name) + r"(?!\w)", key)
                                  for name in other_markers if name)
-        if candidates and (belongs_to_other_group or starts_other_group):
+        if candidates and key not in allowed_by_key and (belongs_to_other_group or starts_other_group):
             break
         candidates.append(candidate)
     if not candidates:
         return None
-    valid = [allowed_by_key[_norm(value)] for value in candidates if _norm(value) in allowed_by_key]
-    invalid = [value for value in candidates if _norm(value) not in allowed_by_key]
+    valid, invalid = [], []
+    for value in candidates:
+        key = _norm(value)
+        canonical = allowed_by_key.get(key)
+        if canonical is None:
+            # A shortened label is evidence only when the current Menu group
+            # resolves it to one canonical choice (e.g. "tiramisu").
+            matches = [label for label_key, label in allowed_by_key.items()
+                       if re.search(r'(?<!\w)' + re.escape(key) + r'(?!\w)', label_key)]
+            if len(matches) == 1:
+                canonical = matches[0]
+        if canonical is None:
+            invalid.append(value)
+        else:
+            valid.append(canonical)
     if not marker and not valid:
         return None
     return {

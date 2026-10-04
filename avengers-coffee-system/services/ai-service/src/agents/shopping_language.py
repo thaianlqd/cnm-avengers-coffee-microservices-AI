@@ -134,6 +134,57 @@ def requested_product_category(message: str) -> Optional[str]:
     return family[1] if family and family[1] in {'drink', 'food'} else None
 
 
+def requested_discovery_family(message: str) -> Optional[dict]:
+    """Keep an explicit matcha cake scope; mixed or alternative requests stay separate."""
+    text = normalize_shopping(message)
+    if (not re.search(r'\bmatcha\b', text) or not re.search(r'\b(?:banh|do an)\b', text)
+            or re.search(r'\b(?:nuoc|do uong|thuc uong|ca phe|tra|ly)\b', text)
+            or re.search(r'\b(?:khong|chua|dung)\s+(?:(?:muon|lay|mua|vi)\s+)*matcha\b', text)
+            or re.search(r'\b(?:hoac|hay|banh khac|loai khac)\b', text)
+            or re.search(r'\bmatcha\s+(?:va|voi)\s+(?!toi\b|minh\b|ban\b|xem\b)\w+', text)):
+        return None
+    count = None
+    if re.search(r'\b(?:xem|goi y|liet ke|tim|tham khao)\b', text):
+        match = re.search(r'\b(\d+)\s+(?:mon|loai|banh)\b', text)
+        if match and 1 <= int(match[1]) <= 16:
+            count = int(match[1])
+    search, label = 'matcha', 'bánh matcha'
+    family = _family(text)
+    if family and family[0] != 'matcha' and family[1] == 'food' and family[2]:
+        search = normalize_shopping(family[2]) + ' matcha'
+        label = family[3].lower() + ' matcha'
+    return {'category': 'food', 'search_text': search, 'label': label, 'requested_count': count}
+
+
+def outage_catalog_args(message: str) -> Optional[dict]:
+    """Recover only an explicit, simple browse request from a provider outage.
+
+    This evidence authorizes a Menu read, never an order or a cart edit.
+    Requests with extra constraints remain with the normal interpreter.
+    """
+    scope = requested_discovery_family(message)
+    text = normalize_shopping(message)
+    if (not scope or not scope.get('requested_count')
+            or not re.search(r'\b(?:xem|liet ke|tham khao)\b', text)
+            or re.search(r'\b(?:gio|xoa|bo|huy|doi|sua|chinh|tang|giam|them|chon|lay|dat|'
+                         r'thanh toan|hoan tat|chot|xac nhan|mac dinh|topping|size|'
+                         r'gia|duoi|tren|re|dat nhat|ngon|tot|ngot|nguyen lieu|thanh phan|'
+                         r'di ung|mo ta|calo|kcal|danh gia|ban chay|con hang|het hang|khong lay)\b', text)
+            or re.search(r'\b(?:mon|banh)\s+so\s+\d+\b', text)):
+        return None
+    # Unknown modifiers may carry price/dietary/action constraints. Decline
+    # recovery rather than silently dropping those constraints.
+    vocabulary = set(('toi minh ban muon mua banh do an vi matcha ay ben co khong '
+                      'xem liet ke tham khao mon loai hien menu cua quan cho giup '
+                      'di oi nhe nhe a da hi hello xin chao nay nao voi '
+                      'mochi kem trung thu').split())
+    if (any(word not in vocabulary and word != str(scope['requested_count']) for word in text.split())
+            or re.search(r'\b(?:khong|chua|dung)\b', re.sub(r'\bco khong\b', '', text))):
+        return None
+    return {'category': scope['category'], 'search_text': scope['search_text'],
+            'limit': scope['requested_count']}
+
+
 def _unique_products(rows: Sequence[Product]) -> Tuple[Product, ...]:
     seen = set()
     result = []
@@ -168,6 +219,14 @@ def _product_matches(text: str, products: Sequence[Product], *, exact: bool) -> 
                    for start in range(len(tokens) - size + 1)):
                 matches.append(product)
                 break
+        else:
+            # A shortened name can omit a middle word: "caramel đá" for
+            # "Caramel Macchiato Đá". Every content word must still match;
+            # caller refuses multiple canonical matches and bare families.
+            frame = set('cho toi minh ban b oi a di nhe nha voi mon cai ly phan muon mua lay them chon dat'.split())
+            content = [word for word in text.split() if word not in frame]
+            if len(content) >= 2 and ' '.join(content) not in _FAMILY_PHRASES and set(content).issubset(tokens):
+                matches.append(product)
     if exact and len(exact_spans) > 1:
         # A canonical full name can contain another canonical name (for example
         # a capacity-prefixed product and its regular-size sibling).  Keep the
@@ -200,9 +259,12 @@ def is_family_only(message: str, family_name: Optional[str]) -> bool:
             continue
         # These words form the shopping question/request frame. A remaining
         # content word (e.g. "muối", "kem dừa") makes it a product query.
-        frame = set("ben ban minh toi quan o day co ban muon can mua dat lay them cho lam xem tim "
+        frame = set("ben ban minh toi quan o day co ban muon can mua dat lay them chon thieu cho lam xem tim "
                     "menu thuc don gi nao loai mon cac nhung duoc khong di nhe nha ne nhi "
                     "the vay a oi b hen voi dang hien".split()) | _DISCOURSE_FRAME_WORDS
+        remainder = re.sub(r'\b(?:\d+|mot|hai|ba|bon|nam)\s*(?:ly|cai|phan|mon)\b', ' ', remainder)
+        if family_name == 'matcha':
+            remainder = re.sub(r'\b(?:banh|co vi|huong vi|vi)\b', ' ', remainder)
         if set(remainder.split()).issubset(frame):
             return True
     return False

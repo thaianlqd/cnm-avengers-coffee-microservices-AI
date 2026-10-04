@@ -1,0 +1,119 @@
+id|name|kind|notes|concerns
+1|Americano Chanh Leo|cold|chanh leo chua thanh;hương chanh leo rõ;vị cà phê cân bằng với chanh leo|chanh leo hơi lấn vị cà phê;hậu vị chua hơi mạnh với mình
+2|Americano Classic|cold|vị cà phê Arabica rõ;hương cà phê nguyên bản;hậu vị cà phê nhẹ nhàng|vị cà phê hơi nhạt so với gu mình;độ đắng chưa hợp với mình
+3|Americano Mơ|cold|mứt mơ chua ngọt;hương mơ quyện với espresso;vị đắng nhẹ bên cạnh vị mơ|mơ hơi ngọt với mình;vị mơ nổi hơn espresso
+4|Americano Nóng|hot|hương espresso còn rõ;vị cà phê nhẹ nhàng khi pha nước;hương cà phê dễ cảm nhận lúc uống ấm|vị cà phê loãng hơn gu mình;hương espresso chưa rõ như mình mong đợi
+5|Americano Phúc Bồn Tử|cold|phúc bồn tử chua ngọt;hậu vị cà phê đắng nhẹ;sắc đỏ phúc bồn tử bắt mắt|vị trái cây hơi lấn cà phê;vị chua phúc bồn tử chưa hợp gu mình
+6|Americano Yuzu|cold|quất chua dịu;hương quất hòa cùng Arabica;khuấy đều lên thấy cà phê và quất cân bằng|vị quất nổi hơn cà phê;hậu vị chua hơi dài so với gu mình
+7|Specialty Coffee Nóng|hot|nốt dâu nhẹ ở đầu vị;hậu vị chocolate trầm ấm;vị chua hibiscus nhẹ trong cà phê|nốt chua nổi hơn mình mong đợi;hương chocolate chưa rõ với mình
+8|Specialty Coffee Đá|cold|nốt dâu nhẹ trong cà phê;hậu vị chocolate êm;vị chua hibiscus làm cà phê khác lạ|nốt chua hơi nổi với mình;hậu vị chocolate chưa rõ như mình thích
+9|Butter Croissant|bakery|vỏ bánh ngàn lớp;hương bơ thơm;miếng bánh giòn và béo bơ|vỏ bánh chưa giòn như mình thích;vị bơ hơi nhiều với mình
+10|Butter Croissant Mama|bakery|vỏ bánh xốp giòn;hương bơ rõ;phần ruột bánh mềm|vỏ bánh hơi mềm;ruột bánh chưa mềm như mình mong
+11|Bánh Mì Que Bò Nấm Xốt Bơ|bakery|bò mềm thấm vị;nấm đông cô dai giòn;xốt bơ quyện với vỏ bánh|nhân bò chưa đậm như mình thích;xốt bơ hơi nhiều so với gu mình
+12|Bánh Mì Que Chà Bông Phô Mai Bơ Cay|bakery|chà bông tơi;phô mai Mozzarella kéo sợi;vị bơ cay bên trong bánh giòn|vị cay hơi mạnh với mình;chà bông hơi mặn so với gu mình
+13|Bánh Mì Que Pate Cột Đèn|bakery|pate đậm vị;xốt bơ trứng thơm béo;vỏ bánh giòn hợp nhân pate|pate hơi béo với mình;vỏ bánh chưa giòn như mong đợi
+14|Chà Bông Phô Mai|bakery|vỏ bánh xốp mềm;phô mai bên trong mịn;chà bông mằn mặn cân vị béo|phô mai hơi ngậy với mình;chà bông hơi mặn so với gu mình
+15|Croissant Kẹp Ham - Cheese|bakery|ham kết hợp phô mai;vỏ croissant xốp giòn;nhân ham và cheese đậm vị|phô mai hơi lấn vị ham;vỏ croissant chưa giòn như mình thích
+16|Croissant Phô Mai Bơ Tỏi|bakery|hương bơ tỏi rõ;phô mai trong croissant;vỏ bánh xốp giòn|mùi tỏi hơi mạnh với mình;vị phô mai và bơ hơi ngậy
+17|Croissant Thịt Nguội & Phô Mai|bakery|thịt nguội đi cùng phô mai;vỏ croissant xốp;nhân đậm vị dễ ăn|thịt nguội hơi mặn với mình;vỏ bánh chưa giòn như mong đợi
+18|Croissant trứng muối|bakery|vỏ croissant giòn;nhân trứng muối rõ vị;hương bánh thơm|trứng muối hơi mặn với mình;vỏ bánh hơi mềm so với gu mình
+19|Soft Pizza Chà Bông Trứng Cút|pizza|chà bông hợp trứng cút;phần bánh mềm;vị chà bông rõ trên bánh|chà bông hơi mặn với mình;phần bánh mềm hơn mức mình thích
+20|Burnt Cheesecake|dessert|phô mai béo mịn;lớp mặt cháy xém đặc trưng;bánh mềm tan khi ăn|phô mai hơi ngậy với mình;lớp mặt cháy xém hơi đậm vị
+21|Butter Croissant Sữa Đặc|bakery|croissant thơm bơ;sữa đặc ngọt béo;vỏ bánh giòn khi chấm sữa|sữa đặc hơi ngọt với mình;vị bơ và sữa hơi ngậy
+22|Bánh Chuối Phủ Hạt|bakery|hương chuối trong bánh;lớp hạt phủ bên trên;ruột bánh mềm|vị chuối chưa rõ như mình mong;phần bánh hơi khô so với gu mình
+23|Croissant Kem Hạnh Nhân|bakery|hương hạnh nhân rõ;kem hạnh nhân quyện bánh;vỏ croissant xốp|kem hơi ngọt với mình;hương hạnh nhân chưa rõ như mình thích
+24|Mochi Kem Chocolate|mochi|vỏ mochi dẻo;kem chocolate mát lạnh;nhân chocolate rõ vị|vỏ mochi hơi dày với mình;kem chocolate hơi ngọt so với gu mình
+25|Mochi Kem Matcha|mochi|vỏ mochi dẻo thơm;kem trà xanh mát lạnh;nhân matcha rõ vị|vị matcha chưa đậm như mình muốn;vỏ mochi hơi dày so với phần kem
+26|Mochi Kem Phúc Bồn Tử|mochi|kem phúc bồn tử thơm;vỏ mochi dẻo;nhân trái cây trong kem lạnh|nhân phúc bồn tử hơi ngọt;phần vỏ mochi hơi dày với mình
+27|Mochi Kem Trà Sữa Trân Châu|mochi|kem vị trà sữa;trân châu giòn dai;vỏ mochi dẻo hợp kem lạnh|vị trà sữa chưa rõ như mình mong;phần trân châu chưa đủ dai với mình
+28|Mochi Kem Việt Quất|mochi|nhân việt quất ngọt dịu;kem mát lạnh;vỏ mochi dẻo thơm|hương việt quất hơi nhẹ;phần kem hơi ngọt với mình
+29|Mousse Gấu Chocolate|dessert|hình gấu dễ thương;mousse chocolate thơm béo;kết cấu mousse mềm|vị chocolate chưa đậm như mình thích;bánh hơi ngọt với mình
+30|Mousse Tiramisu|dessert|vị cà phê đắng nhẹ;kem trứng béo ngọt dịu;kết cấu mousse mềm|kem hơi béo với mình;vị cà phê chưa rõ như mình thích
+31|Mít Sấy|snack|miếng mít giòn;hương mít rõ;vị ngọt của mít dễ nhận ra|mít hơi ngọt với mình;độ giòn chưa như mình mong
+32|Su Kem|dessert|nhân kem dễ ăn;vỏ bánh hợp phần kem;miếng bánh nhỏ tiện ăn|nhân kem hơi ngọt với mình;vỏ bánh hơi mềm so với gu mình
+33|Cold Brew Kim Quất|cold|kim quất chua ngọt;hương cà phê Arabica nhẹ;vị cà phê và kim quất thanh mát|kim quất hơi lấn hương cà phê;hậu vị chua hơi mạnh với mình
+34|Cold Brew Truyền Thống|cold|nốt hạt dẻ nhẹ;hậu vị chocolate trong cà phê;hương gỗ thoang thoảng|hương khói chưa hợp gu mình;vị cà phê hơi nhẹ so với mình thích
+35|Bạc Xỉu|cold|sữa ngọt béo làm chủ vị;cà phê đắng nhẹ;vị sữa và cà phê dễ uống|vị sữa hơi ngọt với mình;hương cà phê hơi nhẹ so với gu mình
+36|Bạc Xỉu Caramel Muối|cold|caramel mằn mặn;kem sữa béo mịn;vị cà phê cân bằng với caramel|caramel hơi ngọt với mình;vị mặn chưa hợp gu mình
+37|Bạc Xỉu Foam Dừa|cold|foam dừa thơm béo;sữa tươi cân vị sữa đặc;vị cà phê nhẹ bên dưới foam|foam dừa hơi ngậy với mình;vị cà phê chưa rõ như mình thích
+38|Bạc Xỉu Nóng|hot|sữa ngọt béo;cà phê đắng nhẹ;hương sữa và cà phê dễ cảm nhận lúc uống ấm|sữa hơi ngọt với mình;hương cà phê nhẹ hơn gu mình
+39|Cà Phê Sữa Nóng|hot|cà phê phin đậm;sữa đặc ngọt ở đầu vị;hậu vị đắng thanh của cà phê|sữa đặc hơi nhiều với mình;vị đắng chưa hợp gu mình
+40|Cà Phê Sữa Đá|cold|cà phê phin đậm vị;sữa đặc ngọt béo;hậu vị đắng cân vị sữa|phần sữa hơi ngọt với mình;vị cà phê nhẹ hơn mình mong
+41|Cà Phê Đen Nóng|hot|hương cacao thoảng trong cà phê;vị đắng mượt;hương cà phê rõ khi uống ấm|độ đắng hơi mạnh với mình;hậu vị đắng kéo dài hơn mình thích
+42|Cà Phê Đen Đá|cold|vị cà phê đắng mượt;hương cacao nhẹ;hương cà phê nguyên bản|vị đắng hơi mạnh với mình;hương cà phê nhẹ hơn gu mình
+43|Cappuccino Nóng|hot|bọt sữa béo nhẹ;hương espresso rõ;sữa hòa cùng cà phê ấm|bọt sữa chưa mịn như mình thích;hương espresso chưa rõ như mình mong
+44|Cappuccino Đá|cold|sữa hòa cùng espresso;bọt sữa thơm béo;vị cà phê còn rõ sau phần sữa|bọt sữa hơi ngậy với mình;vị espresso hơi nhẹ so với gu mình
+45|Caramel Macchiato Nóng|hot|sốt caramel thơm ngọt;bọt sữa mềm;espresso đắng nhẹ cân với caramel|caramel hơi ngọt với mình;vị cà phê nhẹ hơn mình thích
+46|Caramel Macchiato Đá|cold|caramel thơm rõ;sữa tươi hòa espresso;khuấy đều thấy caramel cân vị cà phê|caramel hơi ngọt với mình;vị sữa hơi lấn cà phê
+47|Espresso Nóng|hot|cà phê sánh;hậu vị caramel;vị chua dịu bên cạnh cà phê đậm|vị cà phê hơi mạnh với mình;nốt chua chưa hợp gu mình
+48|Espresso Đá|cold|cà phê espresso đậm;hậu vị caramel nhẹ;vị chua dịu trong cà phê|vị chua hơi rõ với mình;độ đậm chưa hợp gu mình
+49|Cheesecake Frappe|frappe|vị cheesecake béo mịn;cà phê đắng nhẹ;kết cấu đá xay creamy|vị phô mai hơi ngậy với mình;kết cấu đá xay chưa mịn như mình thích
+50|Frappe Choco Chip|frappe|chocolate xay cùng đá;choco chip trên mặt;whipping cream béo nhẹ|chocolate hơi ngọt với mình;đá xay chưa mịn như mình mong
+51|Frappe Matcha Tây Bắc|frappe|matcha đắng nhẹ;sữa cân vị trà xanh;kết cấu matcha đá xay mát|vị matcha nhẹ hơn mình thích;kết cấu đá xay hơi thô với mình
+52|Mocha Frappe|frappe|chocolate ngọt dịu;cà phê đắng êm;vị chocolate hòa cà phê đá xay|chocolate hơi lấn cà phê;vị ngọt hơi nhiều với mình
+53|Pistachio Frappe|frappe|pistachio ngọt bùi;cà phê thơm dịu;kết cấu đá xay mát lạnh|hương pistachio chưa rõ như mình mong;vị bùi hơi ngậy với mình
+54|Latte Bạc Xỉu|cold|espresso hòa cà phê phin;sữa tươi thơm béo;vị cà phê và sữa ngọt nhẹ|sữa hơi lấn hương cà phê;vị ngọt chưa hợp gu mình
+55|Latte Caramel Cold Foam|cold|cold foam mịn mát;caramel thơm dịu;espresso đắng nhẹ cân với foam|foam hơi ngậy với mình;caramel hơi ngọt so với gu mình
+56|Latte Classic|cold|sữa tươi mượt;espresso đậm vừa;vị sữa cân cà phê dễ uống|sữa hơi nhiều với mình;espresso nhẹ hơn mình thích
+57|Latte Hazelnut|cold|hương hạt phỉ rõ;sữa hòa espresso;syrup hạt phỉ ngọt nhẹ|hương hạt phỉ hơi mạnh với mình;syrup hơi ngọt so với gu mình
+58|Latte Hạnh Nhân Oatside|cold|hương hạnh nhân thơm;sữa hòa với espresso;vị hạnh nhân ngọt nhẹ|hương hạnh nhân nhẹ hơn mình mong;vị sữa hơi lấn cà phê
+59|Latte Nóng|hot|espresso hòa cùng sữa nóng;lớp kem trên mặt mỏng nhẹ;vị sữa làm dịu cà phê|sữa hơi nhiều với mình;espresso chưa rõ như mình mong
+60|Latte Tiramisu|cold|lớp tiramisu thơm béo;vị cà phê mềm mại;vị ngọt của tiramisu hòa cùng latte|lớp tiramisu hơi ngậy với mình;vị ngọt hơi nhiều so với gu mình
+61|1 Lít Matcha Latte Tây Bắc|cold|matcha Tây Bắc đậm vị;sữa béo hòa trà xanh;phần một lít tiện chia sẻ|sữa hơi lấn matcha;vị matcha chưa rõ như mình mong
+62|1 Lít Matcha Latte Tây Bắc Sữa Yến Mạch|cold|matcha Tây Bắc hòa sữa yến mạch;vị trà xanh rõ;phần một lít tiện chia sẻ|hương yến mạch chưa hợp gu mình;matcha nhẹ hơn mình thích
+63|Coco Matcha Foam|cold|foam dừa béo nhẹ;matcha thơm dịu;vị dừa hòa với trà xanh|foam dừa hơi nhiều với mình;matcha chưa rõ như mình mong
+64|Matcha Latte Dâu|cold|dâu chua thanh;matcha thơm đậm;sữa tươi cân vị dâu và trà|vị dâu hơi lấn matcha;phần sữa hơi ngọt với mình
+65|Matcha Latte Kyoto|cold|matcha có vị umami nhẹ;sữa tươi mịn;độ béo dịu hợp trà xanh|vị matcha hơi nhẹ với mình;độ béo chưa hợp gu mình
+66|Matcha Latte Kyoto Nóng|hot|matcha umami thanh;sữa nóng mịn;trà xanh hòa sữa ngọt nhẹ|sữa hơi lấn matcha;vị trà nhẹ hơn mình mong
+67|Matcha Latte Tây Bắc|cold|vị trà xanh dễ uống;sữa hòa cùng matcha;khuấy đều thấy vị trà cân với sữa|matcha chưa đậm như gu mình;sữa hơi ngọt với mình
+68|Matcha Latte Tây Bắc (Nóng)|hot|trà xanh Tây Bắc chát nhẹ;sữa nguyên kem thơm béo;hậu vị trà ngọt dịu|vị chát hơi rõ với mình;sữa hơi lấn trà xanh
+69|Matcha Latte Xoài|cold|xoài ngọt thanh;matcha rõ vị;hương xoài hòa trà xanh|xoài hơi lấn matcha;vị xoài ngọt hơn gu mình
+70|Matcha Latte Đào Dưa Lưới|cold|mứt đào thơm;dưa lưới thanh mát;matcha hòa sữa và trái cây|vị trái cây lấn matcha;phần mứt đào hơi ngọt với mình
+71|Matcha Tây Bắc Hạnh Nhân Nướng|cold|hạnh nhân nướng thơm bùi;matcha rõ vị;sữa mịn cân với trà xanh|hạnh nhân lấn vị matcha;độ béo hơi nhiều với mình
+72|Matcha Tây Bắc Mochi|cold|mochi mềm dẻo;matcha đậm vị;sữa tươi hòa trà xanh|mochi chưa dẻo như mình thích;phần sữa hơi ngọt với mình
+73|Matcha Tây Bắc Trân Châu Hoàng Kim|cold|trân châu hoàng kim mềm dẻo;đường đen Okinawa rõ vị;matcha hòa sữa|đường đen hơi ngọt với mình;trân châu chưa dai như mình thích
+74|Sổ Đỏ|merch|kích thước sổ gọn;lịch năm 2026 tiện tra cứu;thiết kế hợp ghi kế hoạch|bố cục lịch chưa hợp cách ghi của mình;kích thước sổ nhỏ hơn nhu cầu mình
+75|Pizza Hawaiian|pizza|ham đậm vị;dứa ngọt thanh;phô mai cân với ham và dứa|dứa hơi ngọt với mình;ham hơi mặn so với gu mình
+76|Pizza New York 5 Cheese|pizza|phô mai nhiều tầng vị;vị Blue Cheese rõ;Mozzarella hòa cùng các loại phô mai|hương Blue Cheese hơi mạnh với mình;tổng thể phô mai hơi ngậy
+77|Pizza New York Bò Bằm Phô Mai|pizza|bò bằm đậm vị;Mozzarella hòa xốt cà chua;oliu đen tạo điểm nhấn|xốt cà chua hơi nhiều với mình;vị oliu chưa hợp gu mình
+78|Pizza New York Pepperoni|pizza|Pepperoni đậm vị;Mozzarella hòa xốt cà chua;hương Oregano rõ|Pepperoni hơi mặn với mình;hương Oregano hơi mạnh với mình
+79|Pizza Tomyum Hải Sản|pizza|vị Tomyum nổi bật;hải sản trong pizza;phần pizza dễ chia sẻ|vị Tomyum chưa hợp gu mình;hương hải sản chưa rõ như mình mong
+80|Trứng Onsen|food|trứng mềm;phần trứng dễ ăn;vị trứng nhẹ|độ mềm của trứng chưa như mình thích;vị trứng hơi nhạt so với gu mình
+81|Wafu Pasta Bò Bằm Xốt Bolognese|pasta|bò bằm hòa xốt cà chua;Parmesan rõ vị;xốt bolognese bám sợi pasta|xốt cà chua hơi nhiều với mình;vị phô mai hơi mặn với mình
+82|Wafu Pasta Bò Karubi Xốt Miso Butter|pasta|bò nướng nấu chậm;xốt miso đậm ngọt;nấm và hành tây cân vị bò|xốt miso hơi đậm với mình;phần bò chưa mềm như mình mong
+83|Wafu Pasta Cá Bào Trứng Onsen Xốt Mentaiko|pasta|cá ngừ bào thơm;xốt Mentaiko bám pasta;trứng Onsen hòa trứng cua|vị cá bào hơi mạnh với mình;xốt trứng cá hơi mặn so với gu mình
+84|Wafu Pasta Heo Nướng Xốt Shoyu Butter|pasta|heo nướng nấu chậm;xốt xì dầu bơ tỏi;nấm và hành tây hòa phần thịt|xốt xì dầu hơi đậm với mình;vị bơ tỏi hơi mạnh với mình
+85|Foam Dừa (Lẻ)|topping|hương dừa rõ;foam béo nhẹ;kết cấu foam mềm|hương dừa nhẹ hơn mình thích;foam hơi ngậy với mình
+86|Hạt Sen (Lẻ)|topping|hạt sen bùi;hạt sen dễ nhai;vị sen nhẹ|hạt sen chưa mềm như mình thích;phần hạt sen ít hơn nhu cầu mình
+87|Kem Phô Mai Macchiato (Lẻ)|topping|kem phô mai thơm;kem béo mịn;vị phô mai rõ|kem hơi ngậy với mình;vị phô mai chưa rõ như mình mong
+88|Sữa Tươi (Lẻ)|topping|vị sữa tươi nhẹ;sữa hòa với đồ uống;độ béo dịu|sữa làm nhạt vị đồ uống với mình;độ béo nhẹ hơn mình thích
+89|Sữa Yến Mạch (Lẻ)|topping|hương yến mạch nhẹ;vị sữa dễ uống;sữa hòa với phần nước|hương yến mạch chưa hợp gu mình;vị yến mạch nhẹ hơn mình mong
+90|Sữa Đặc (Lẻ)|topping|sữa ngọt béo;sữa đặc dễ hòa;vị sữa rõ|sữa đặc ngọt hơn mình thích;độ béo hơi nhiều với mình
+91|Thạch Sương Sáo (Lẻ)|topping|sương sáo mềm;thạch mát;hương sương sáo nhẹ|thạch mềm hơn gu mình;hương sương sáo chưa rõ như mình mong
+92|Trái Vải (Lẻ)|topping|vải ngọt thanh;miếng vải dễ ăn;hương vải rõ|vải hơi ngọt với mình;hương vải nhẹ hơn mình mong
+93|Trân Châu Hoàng Kim (Lẻ)|topping|trân châu dai mềm;viên trân châu dễ nhai;vị trân châu dễ kết hợp|trân châu chưa dai như mình thích;phần trân châu ngọt hơn gu mình
+94|Trân châu củ năng (Lẻ)|topping|củ năng giòn;miếng topping dễ nhai;độ giòn tạo điểm nhấn|độ giòn chưa như mình thích;phần topping ít hơn mình muốn
+95|Trân châu trắng (Lẻ)|topping|trân châu giòn dai;viên topping dễ nhai;vị nhẹ dễ kết hợp|trân châu hơi cứng với mình;độ dai chưa như mình mong
+96|Đài Hoa Hibiscus (Lẻ)|topping|hibiscus chua nhẹ;màu hibiscus bắt mắt;hương hoa rõ|vị chua mạnh hơn gu mình;hương hoa chưa hợp với mình
+97|Đào Miếng (Lẻ)|topping|miếng đào dễ ăn;đào ngọt nhẹ;hương đào rõ|đào hơi ngọt với mình;miếng đào mềm hơn gu mình
+98|Trà Shan Quýt Cam|cold|hương quýt và cam;vị trà Shan nhẹ;trà hòa vị trái cây|vị cam quýt nổi hơn trà;hương trà nhẹ hơn mình mong
+99|Trà Shan Sen Cheese Foam|cold|hương sen nhẹ;cheese foam hòa trà;vị trà Shan thanh|cheese foam hơi ngậy với mình;hương sen chưa rõ như mình thích
+100|Trà Shan Vải Hibiscus|cold|hương vải rõ;hibiscus hòa vị trà;vị trà Shan nhẹ|vải hơi ngọt với mình;hương hibiscus chưa hợp gu mình
+101|Chocolate Nóng|hot|chocolate đắng nhẹ;sữa tươi béo;hương chocolate rõ lúc uống ấm|vị chocolate nhẹ hơn mình thích;sữa hơi ngậy với mình
+102|Chocolate Đá|cold|chocolate hòa sữa tươi;vị đắng chocolate nhẹ;độ béo của sữa dễ uống|chocolate chưa đậm như mình mong;phần sữa hơi ngọt với mình
+103|Trà Shan Cheese Foam|cold|Shan Tuyết đậm vị;kem phô mai béo trên mặt;vị trà hòa sữa|kem phô mai hơi ngậy với mình;trà nhẹ hơn gu mình
+104|Trà Shan Latte Sương Sáo|cold|trà Shan Tuyết đậm thơm;sương sáo mềm;trà sữa mượt dễ uống|sương sáo mềm hơn mình thích;sữa hơi lấn hương trà
+105|Trà Sữa Shan|cold|hương Shan Tuyết rõ;sữa hòa trà mượt;vị trà và sữa cân bằng|sữa hơi ngọt với mình;hương trà nhẹ hơn mình thích
+106|Trà Sữa Shan Nóng|hot|trà Shan Tuyết thơm;sữa hòa trà ấm;vị trà sữa mượt|sữa hơi nhiều với mình;hương trà chưa rõ như mình mong
+107|Trà sữa Shan Khói Hoàng Kim|cold|hương trà Shan;vị trà sữa nhẹ;hậu vị trà dễ uống|hương trà chưa rõ như mình thích;vị sữa hơi ngọt với mình
+108|Trà sữa Shan Khói Đậm Vị|cold|hương Shan rõ;vị trà nổi trong sữa;hậu vị trà sữa nhẹ|vị trà nhẹ hơn tên món khiến mình mong;phần sữa hơi ngọt với mình
+109|Trà Đào Cam Sả - Nóng|hot|đào thanh ngọt;cam chua dịu;hương sả rõ trong trà ấm|hương sả hơi mạnh với mình;cam hơi chua so với gu mình
+110|Trà Đào Cam Sả - Đá|cold|đào thanh ngọt;cam chua dịu;hương sả cân với trà đen|hương sả hơi mạnh với mình;vị cam hơi chua so với gu mình
+111|Combo Pasta & Nước|combo|pasta đi cùng nước uống;combo tiện chọn cho bữa ăn;phần pasta dễ ăn|phần pasta chưa hợp gu mình;sự kết hợp pasta và nước chưa như mình mong
+112|Combo Pizza & Nước|combo|pizza đi cùng nước uống;combo tiện chọn cho bữa ăn;phần pizza dễ chia sẻ|phần pizza chưa hợp gu mình;sự kết hợp pizza và nước chưa như mình mong
+113|Cà Phê Muối Avenger|cold|cà phê hòa vị muối;vị béo cân độ mặn;hương cà phê rõ|vị muối hơi mạnh với mình;độ béo hơi nhiều so với gu mình
+116|Cà Phê Muối Avenger|cold|cà phê hòa vị muối;vị béo cân độ mặn;hương cà phê rõ|vị muối hơi mạnh với mình;độ béo hơi nhiều so với gu mình
+119|Bánh Trung Thu Cà Phê Lava|mooncake|nhân cà phê lava chảy;hương cà phê rõ trong nhân;vị nhân đậm|nhân cà phê hơi đậm với mình;nhân lava ngọt hơn gu mình
+120|Bánh Trung Thu Matcha|mooncake|nhân matcha thơm;vị trà xanh rõ trong bánh;nhân matcha dễ ăn|nhân matcha ngọt hơn mình thích;hương matcha nhẹ hơn mình mong
+121|Bánh Trung Thu Đậu Xanh|mooncake|nhân đậu xanh bùi;hương đậu xanh truyền thống;nhân mềm dễ ăn|nhân đậu xanh hơi ngọt với mình;bánh hơi khô so với mình thích
+122|Bánh Trung Thu Thập Cẩm Bát Bửu|mooncake|nhân thập cẩm nhiều vị;phần nhân đậm đà;miếng bánh dễ chia sẻ|nhân thập cẩm hơi đậm với mình;bánh ngọt hơn gu mình

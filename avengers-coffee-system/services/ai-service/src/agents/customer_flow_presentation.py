@@ -108,6 +108,8 @@ def options_prompt(result):
         lines.append(f"- **{group['name']}**{suffix}: " + ', '.join(group['values']))
     if missing and product:
         selected = [str(product[field]) for field in ('size', 'luong_da', 'do_ngot', 'loai_sua') if product.get(field)]
+        if product.get('toppings'):
+            selected.append('Topping: ' + ', '.join(product['toppings']))
         if selected:
             lines.insert(1, 'Mình đã giữ các lựa chọn: ' + ', '.join(selected) + '.\n')
     lines.append('\nBạn không cần chọn hết các mục ạ. Các mục tùy chọn chưa chọn sẽ dùng mặc định của Menu, không tự thêm topping. Bạn cũng có thể nói **theo mặc định** để dùng công thức của quán.')
@@ -153,12 +155,31 @@ def checkout_summary(summary):
     return '\n\n'.join(blocks)
 
 
+def location_choices(result):
+    lines = ['Dạ, mình đã nhận vị trí bạn muốn dùng: **' + (result.get('normalized_location') or 'vị trí vừa cung cấp') + '**.']
+    if result.get('status') == 'rejected' or any(row.get('accepted') is False for row in result['location_candidates']):
+        lines.append('Bản đồ chưa khớp chính xác **số nhà hoặc khu vực**. Bạn chọn một địa điểm dưới đây làm vị trí để **tìm quán gần bạn**, hoặc gửi lại khu vực đang ở nhé.'
+                     if result.get('location_purpose') == 'nearby_branches' else
+                     'Bản đồ chưa khớp chính xác **số nhà hoặc khu vực**. Các địa chỉ dưới đây là gợi ý khác; mình **chưa xác nhận địa chỉ giao**. Chọn một gợi ý sẽ dùng địa chỉ đó ạ.')
+    else:
+        lines.append('Bản đồ trả về nhiều địa điểm phù hợp; bạn chọn giúp mình địa điểm chính xác nhé.')
+    lines.append('\n'.join(f"{index}. **{row.get('normalized_label') or 'Địa điểm'}**" +
+        (f"\n   - {row['display_address']}" if row.get('display_address') else '')
+        for index, row in enumerate(result['location_candidates'], 1)))
+    lines.append('Bạn chọn **số địa điểm** hoặc gửi lại địa chỉ đúng nhé.')
+    return '\n\n'.join(lines)
+
+
 def branch_choices(result):
     branches = result.get('branches') or []
     if not branches:
         return result.get('message')
     blocked = result.get('status') in {'branch_unavailable_or_unknown', 'stock_conflict'}
     lines = [result.get('message') if blocked else 'Dạ, mình gửi bạn các chi nhánh để lựa chọn nhé:']
+    if result.get('location_basis') == 'street_area_estimate':
+        lines.append('Mình giữ địa chỉ bạn chọn: **' + result['normalized_location'] + '**. '
+                     'Bản đồ chưa xác minh chính xác số nhà; mình tìm quán quanh **' +
+                     result['location_estimate'] + '**. Khoảng cách dưới đây là **ước tính theo khu vực** ạ.')
     for index, branch in enumerate(branches, 1):
         label = branch.get('branch_name') or branch.get('ten_chi_nhanh') or 'Chi nhánh'
         row = [f"{branch.get('display_index') or index}. **{label}**"]
@@ -181,7 +202,7 @@ def branch_choices(result):
                  if any(b.get('availability_status') for b in branches) else 'Bạn muốn xem thêm chi tiết chi nhánh nào ạ?')
     return '\n\n'.join(line for line in lines if line)
 
-def customer_flow_reply(logs, state):
+def customer_flow_reply(logs, state, discovery_reply=None):
     """Render only a tool-owned milestone; interruptions with no milestone stay LLM-owned."""
     login_gate = next((row['result'] for row in reversed(logs) if row['result'].get('status') == 'login_required'), None)
     if login_gate:
@@ -196,12 +217,17 @@ def customer_flow_reply(logs, state):
         return None
     row = relevant[-1]
     name, result = row['tool'], row['result']
+    if result.get('status') == 'cart_change_not_requested' and any(
+            entry['tool'] in {'add_to_cart', 'update_cart_item', 'remove_cart_item'}
+            and entry['result'].get('status') in {'ok', 'already_processed'} for entry in relevant[:-1]):
+        return customer_flow_reply(logs[:logs.index(row)], state, discovery_reply)
     if result.get('status') == 'voucher_choice_required':
         earlier = [entry for entry in relevant[:-1] if entry['tool'] == 'finish_cart' and entry['result'].get('status') == 'ok']
         if earlier:
             return customer_flow_reply(logs[:logs.index(earlier[-1])+1], state)
         return result['message']
-    if result.get('status') in {'defaults_not_authorized', 'profile_location_confirmation_required', 'needs_new_location', 'login_required'}:
+    if result.get('status') in {'defaults_not_authorized', 'profile_location_confirmation_required', 'needs_new_location', 'login_required',
+                             'product_choice_required', 'cart_change_not_requested', 'invalid_option', 'wallet_unavailable', 'insufficient_wallet'}:
         return result['message']
     if result.get('status') == 'require_confirmation' and result.get('order_summary'):
         return checkout_summary(result['order_summary'])
@@ -216,11 +242,13 @@ def customer_flow_reply(logs, state):
         return '\n\n'.join(lines[:1]) + '\n\n' + '\n'.join(lines[1:])
     if name in {'resolve_location', 'select_location_candidate', 'find_nearest_branch', 'ask_branch', 'set_session_branch'} and result.get('branches'):
         return branch_choices(result)
+    if name in {'resolve_location', 'select_location_candidate', 'find_nearest_branch'} and result.get('location_candidates'):
+        return location_choices(result)
     if result.get('status') in {'branch_unavailable_or_unknown', 'customer_branch_selection_required'}:
         return result.get('message')
     if name in {'request_checkout', 'confirm_checkout'}:
         return None
-    if name == 'add_to_cart' and result.get('status') == 'needs_options':
+    if name in {'add_to_cart', 'get_product_options'} and result.get('status') == 'needs_options':
         return options_prompt(result)
     if result.get('status') not in {'ok', 'already_processed'}:
         return None
@@ -244,7 +272,10 @@ def customer_flow_reply(logs, state):
         lead = {'add_to_cart': 'Dạ, mình đã thêm món vào giỏ của bạn ạ.',
                 'update_cart_item': 'Dạ, mình đã cập nhật món theo yêu cầu của bạn ạ.',
                 'remove_cart_item': 'Dạ, mình đã xóa món bạn chọn khỏi giỏ ạ.'}[name]
-        return lead + '\n\n' + cart_review(result) + '\n\nBạn muốn **thêm món, sửa tùy chọn/số lượng, xóa món**, hay **hoàn tất giỏ hàng** ạ?'
+        if result.get('previous_cart_products'):
+            lead += '\n\nGiỏ của bạn đã có các món lưu từ trước: **' + ', '.join(result['previous_cart_products']) + '**.'
+        return lead + '\n\n' + cart_review(result) + ('\n\n' + discovery_reply if discovery_reply else
+            '\n\nBạn muốn **thêm món, sửa tùy chọn/số lượng, xóa món**, hay **hoàn tất giỏ hàng** ạ?')
     if name == 'finish_cart' and result.get('vouchers'):
         lines = ['Dạ, mình gửi lại giỏ hàng để bạn kiểm tra nhé.', cart_review(result), '**Các mã giảm giá phù hợp:**']
         for index, voucher in enumerate(result['vouchers'], 1):

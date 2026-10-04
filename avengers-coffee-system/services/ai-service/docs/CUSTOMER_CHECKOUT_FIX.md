@@ -126,6 +126,38 @@ Voucher và đặt hàng yêu cầu đăng nhập ở gateway tool, executor vou
 
 Kiểm tra cuối offline: **643 test AI của 16 suite**, **40 test Order Service của 4 suite**, **35 test Node frontend** đều pass. Có kiểm tra reset guest, đọc giỏ guest, chặn checkout HTTP, ranh giới JWT và chuyển giỏ có replay/rollback. Build Nest và Vite pass. Test không gọi LLM thật, không tạo đơn hoặc gộp giỏ tài khoản thật. Phần đánh giá sản phẩm giữ nguyên.
 
+## Hai kịch bản chọn món và sửa giỏ 23:31–23:42 (03/10/2026)
+
+Nguyên nhân đọc được từ code:
+
+- Gateway trước đây coi món trong snapshot/focus/giỏ là đủ để chấp nhận đề xuất `add_to_cart`, chưa kiểm tra khách có chọn chính món đó ở lượt hiện tại. Vì vậy yêu cầu mua một **loại bánh/nước** có thể biến thành thêm một ứng viên.
+- Bộ lọc chỉ sửa category khi model đã truyền `drink`/`food`; `all` có thể làm bánh matcha lẫn đồ uống. Từ chung `nước` còn có thể bị dùng như điều kiện tên sản phẩm, trả về rỗng.
+- Mục giữ tùy chọn không in topping đã chọn. Một đề xuất đúng Menu nhưng sai lựa chọn khách vẫn có thể vượt kiểm tra membership.
+- Kiểm tra target đọc toàn bộ câu thay vì từng thao tác. Số dòng lại được tính sau mỗi lần xóa; sửa món số 3 sau khi xóa món số 1 có thể bị chặn hoặc trỏ sai. Validator cũng chưa buộc hoàn thành các thao tác còn lại.
+- `MANG_DI` là lấy tại quán, `TAI_CHO` là dùng tại chỗ. Model nhầm hai giá trị bị chặn bằng thông báo an toàn chung. Nay parser lựa chọn rõ ràng của khách là nguồn giá trị; vẫn kiểm tra quyền, số dư ví, dữ liệu giỏ và xác nhận địa chỉ.
+
+Đã sửa:
+
+1. Yêu cầu **bánh có vị matcha / một món nước** là tham khảo trước. Không tự thêm ứng viên; nếu model đề xuất thêm nhầm một yêu cầu loại món, gateway chuyển sang đọc catalog và hiện lựa chọn, không gọi LLM thêm. Bánh matcha dùng `food + matcha`; loại nước/bánh chung dùng category và search rỗng. Prompt hướng dẫn tìm đủ cả nước lẫn bánh khi khách hỏi hai nhóm.
+2. Thêm món cần có lựa chọn cụ thể: tên đầy đủ/tên rút gọn không mơ hồ, số sản phẩm đúng snapshot, nút chọn sản phẩm hoặc tiếp tục cấu hình món đang chọn. `caramel đá` nhận đúng bản đá, không nhầm bản nóng. Mặc định không chép topping từ dòng giỏ khác. Topping đã chọn được in trong phần lựa chọn đang giữ; giá trị Menu khách nói rõ được giữ trước đề xuất khác của model.
+3. Một câu **bỏ mochi + bánh trung thu lên 2 + món số 3 đổi size** được kiểm tra theo từng thao tác. ID/số dòng được cố định ở đầu lượt cho cả gateway và context model. Cập nhật đúng từng ID, số lượng tuyệt đối theo đúng đoạn câu. Chỉ báo xong khi các thao tác xác định được đã có kết quả; nếu gián đoạn, báo phần còn chưa thực hiện. Batch hoàn tất trả giỏ ngay, không cần thêm lượt model viết lại.
+4. Câu hỏi/phàn nàn về bánh đang có trong giỏ không tự xóa bánh. Phủ định như **đừng xóa** được giữ nguyên. Khi lần đầu hiện giỏ đã có món từ trước, bot nói rõ các món đã lưu; làm mới chat vẫn giữ giỏ bền. Chỉ bản chat không đủ chứng minh Butter Croissant được tự thêm hay đã có trước, nên không tự dọn giỏ khách để che hiện tượng này.
+5. **Lấy tại quán + QR/ví** được ghi nhận cùng nhau từ câu khách nói, kể cả model gửi thiếu một slot hoặc nhầm `TAI_CHO`. Địa chỉ hồ sơ vẫn được hỏi trước; khách chọn chi nhánh sau khi tìm các quán đủ món. Giới hạn số dư ví, tồn kho và xác nhận đơn giữ nguyên.
+6. Khi khách nêu một phường khớp duy nhất với địa chỉ hồ sơ cho giao hàng, bot hỏi xác nhận đúng **số nhà + đường + phường**, lưu lại chủ sở hữu lời đề xuất. Câu **tôi đang ở đó** dùng đúng địa chỉ này, không dùng câu tham chiếu làm truy vấn bản đồ. Nếu bản đồ chỉ trả số nhà/khu vực gần giống, bot ghi rõ đó là **gợi ý khác, chưa xác nhận địa chỉ giao**; không tự đổi `42/3` thành `42`.
+7. Danh sách tư vấn dù model đọc thêm option vẫn dùng tên/giá canonical, xuống dòng và in đậm; không tự chèn mô tả hương vị/best-seller chưa có bằng chứng. Mốc giỏ, topping, địa chỉ và lựa chọn nhận/thanh toán có phần trình bày từ dữ liệu tool.
+
+**Kiểm tra cuối:** 789 test offline trong 21 suite đều pass, bao gồm guest/login/merge-cart, replay, voucher, tồn kho, địa chỉ, Gemini continuation và các trường hợp mới trong `tests/test_reported_shopping_journeys.py`. Có kiểm tra thực hiện đủ ba thay đổi trong một request model và chuyển đề xuất thêm nhầm loại món thành danh sách trong một request. Hai kỳ vọng cũ ở LAN21 đã được đối chiếu với HEAD trong bản sao tạm: capability bị lọc trước khi chạy, không còn log executor denial; test được căn theo ranh giới hiện tại và vẫn kiểm tra không ghi sai.
+
+**Chi phí:** prompt 9.171 ký tự, ngắn hơn 9.178 trước lượt sửa này; vẫn 33 capability, output mặc định 600 token, không tăng giới hạn lịch sử/context/vòng tool/retry provider. Không gọi Gemini live để đo token hay độ trễ; số ký tự không phải số token. Không sửa DB, đánh giá sản phẩm hoặc tạo đơn thật. Chưa build/restart Docker.
+
+Để tự test bản mới, chạy tại thư mục chứa compose:
+
+```bash
+docker-compose up -d --build ai-service
+```
+
+Kiểm tra lại hai kịch bản: xem nước + bánh trước khi chọn; chọn americano theo mặc định; chọn bánh matcha từ danh sách; thêm topping rồi sửa nhiều món trong một câu; lấy tại quán với QR/ví; trả lời **tôi đang ở đó** sau câu xác nhận địa chỉ. Với giỏ đang có món từ trước, kiểm tra dòng thông báo món đã lưu và chỉ xóa bằng yêu cầu rõ ràng.
+
 Tự test sau khi build cả ba service ở lệnh trên:
 
 1. Logout, mở chat và bấm **Làm mới**: không hiện lại lịch sử tài khoản, khách vẫn trò chuyện/chọn món được.
@@ -136,3 +168,100 @@ Tự test sau khi build cả ba service ở lệnh trên:
 6. Logout rồi đăng nhập lại: không cộng thêm món đã chuyển. Chat và giỏ tài khoản không hiện trong phiên khách. Nếu đồng bộ lỗi, giỏ nguồn vẫn còn, thông báo có nút thử lại.
 
 Các món đã mất trước bản sửa và chưa từng lưu thành công trên backend không thể phục hồi từ giỏ server; cần chọn lại để test luồng mới.
+
+## Sửa nhiều dòng bằng câu nói tự nhiên (03/10/2026)
+
+Log của câu `tôi k muốn lấy món 2 nữa, món 1 tôi muốn topping hạt sen và tiramisu thêm ngọt nhé, món 3 thì 2 cái nhé bạn` cho thấy model đã đề xuất đúng ba tool, nhưng server chặn xóa với `cart_change_not_requested`, rồi chặn sửa với `conflicting_cart_operations`. Bộ nhận diện chỉ tìm động từ sửa/xóa nên bỏ sót câu phủ định lấy món và các yêu cầu cấu hình/số lượng không có động từ sửa.
+
+Đã nhận diện từng yêu cầu theo dòng giỏ ban đầu, giữ dấu phẩy trong danh sách topping, tách độ ngọt ngay sau topping và ánh xạ tên rút gọn chỉ khi Menu có đúng một lựa chọn. `tiramisu` có thể khớp `Syrup Tiramisu`; nếu Menu có nhiều loại Tiramisu thì yêu cầu làm rõ. Bằng chứng hoàn tất dùng trạng thái thực sự đã áp dụng, gồm cả topping/độ ngọt canonical mà server bổ sung khi model gửi thiếu. Với câu sửa nhiều dòng, không lấy số lượng hay tùy chọn của dòng khác để sửa nhầm.
+
+Tự thử với giỏ ba món trong báo cáo: xóa Cà Phê Muối Avenger, Bạc Xỉu Nóng giữ số lượng/size và chuyển sang Hạt Sen + Syrup Tiramisu/Thêm ngọt, Bánh Trung Thu Matcha thành hai cái. Số món tham chiếu tính theo giỏ trước khi xóa; giá tiếp tục do Menu và Order Service xác định.
+
+Kiểm tra: 19 trường hợp mới cùng 317 kiểm tra liên quan qua; các lượt model đều giả, khóa kết nối mạng và không dùng key thật. 18 lỗi trong bộ `test_guarded_tool_gateway.py` cũng tái hiện với bộ nhận diện trước lượt sửa này, không sửa các luồng đó. Giữ nguyên prompt/model/giới hạn token/lịch sử/retry.
+
+## Nạp thêm ví khi số dư không đủ (03/10/2026)
+
+Chat hiện thẻ nạp ví từ số dư và tổng giỏ đã đọc ở Order Service. Khách chọn 50.000/100.000/200.000/500.000đ hoặc mức đủ bù thiếu (trong giới hạn một lần nạp), nhập số tiền khác, hoặc nhắn `nạp 200k`. Mức nạp hợp lệ là số nguyên từ 10.000 đến 5.000.000đ. Số nhỏ như `1` vẫn thuộc lựa chọn chi nhánh/voucher, không bị luồng nạp ví chiếm. Tạo yêu cầu nạp và kiểm tra trạng thái gọi API trực tiếp, không thêm capability hay lượt model cho thao tác nạp.
+
+Thẻ mở liên kết VNPAY ở tab mới để giữ hội thoại, giỏ và voucher. Chat theo dõi đúng ID giao dịch TOP_UP của tài khoản đăng nhập, khôi phục giao dịch còn chờ khi reload, chỉ báo thành công từ trạng thái SUCCESS của server rồi đọc lại số dư. Nạp một phần tính lại thiếu hụt; nạp thành công hiện nút tiếp tục bằng ví, giữ bước xem tóm tắt và xác nhận đơn. Ví được kiểm tra lại trước xác nhận; không đủ tiền thì giữ giỏ và trở lại thẻ nạp, kể cả xác nhận bằng nút UI.
+
+API ví dùng JWT và kiểm tra chủ tài khoản; số tiền không hợp lệ bị chặn trước khi ghi giao dịch. Callback VNPAY cần chữ ký hợp lệ và số tiền khớp giao dịch trước khi cộng ví; callback lặp không cộng lần nữa. Callback thất bại lưu FAILED và không hiển thị thành công ở trang quay về. Sử dụng bảng ví/giao dịch và endpoint nạp hiện có, không thêm migration.
+
+Kiểm tra offline: 329 kiểm tra AI liên quan, 88 kiểm tra Order Service, 43 kiểm tra frontend đều qua; build backend/frontend qua và ba trạng thái thẻ được render bằng dữ liệu giả. Không gọi Gemini/map/VNPAY thật, không dùng key của khách để test, giữ nguyên cấu hình prompt/model/token/context/retry. Tự thử với giỏ có tổng sau giảm giá lớn hơn số dư: chọn ví, chọn mức nạp hoặc nhắn số tiền, mở VNPAY, quay về chat, bấm tiếp tục và kiểm tra tóm tắt trước khi xác nhận.
+
+### Thông báo khi provider chưa phản hồi — 04/10/2026
+
+Log lượt `hello tôi muốn mua cà phê nóng` ghi nhận `network_timeout` và một lần HTTP 503 (`provider_transient`), hết ngân sách thời gian trước khi nhận được phản hồi đầu tiên. `tool_round_count=0`, `discovery_read_count=0`: chưa gọi công cụ tìm món. Không có bằng chứng lỗi đọc danh mục hay phân tích câu chọn món trong các lượt này. Các bộ đếm token bằng 0 chỉ có nghĩa chưa nhận được usage từ provider, không xác minh được chi phí thực tế của yêu cầu timeout.
+
+Chỉ khi provider lỗi timeout/5xx và chưa chạy công cụ nào, phản hồi hiển thị AI tạm thời không phản hồi thay cho câu chưa xác minh được kết quả. Nếu công cụ đã chạy, giữ phản hồi dựa trên bằng chứng hiện có và cơ chế chống thực hiện lại; các lỗi xác minh khác giữ thông báo cũ. Log phân biệt `server_provider_unavailable`. Không đổi model, prompt, token, timeout, retry hay khóa API. 68 kiểm tra orchestrator, Gemini wire-contract và outage qua bằng provider giả; kiểm tra outage chặn socket/HTTP thật. Thay đổi thông báo không khắc phục trạng thái Gemini/đường truyền bên ngoài.
+
+### Nới thời gian chờ provider — lượt lỗi 12:27–12:29, 04/10/2026
+
+Ba lượt mới đều timeout ở lần gọi đầu khoảng 8 giây, lần tiếp theo còn khoảng 4 giây vì ngân sách cả vòng là 12 giây. Chưa gọi công cụ tìm món. Probe HTTPS GET không có key tới host Google nhận HTTP 404 trong khoảng 0,25 giây: xác nhận kết nối host tại thời điểm kiểm tra, không xác minh tốc độ inference hay trạng thái toàn dịch vụ.
+
+Đổi riêng giới hạn chờ: 30 giây mỗi lần gọi, 45 giây cho một vòng, đồng bộ policy defaults, Compose, `.env.example` và hai biến trong `.env` đang chạy. Không đổi provider/model, prompt, giới hạn token, số lần thử tối đa, công cụ hay xử lý giỏ/đơn. Request chat ở frontend chờ tối đa 120 giây, khớp proxy hiện có; các request API khác giữ timeout cũ. Log ghi thời gian chờ thực cấp và tên lớp exception, không ghi nội dung lỗi chứa thông tin nhạy cảm.
+
+73 kiểm tra offline qua. Regression dùng đồng hồ giả chứng minh phản hồi mất 10 giây bị cấu hình 8/12 cắt, nhưng cấu hình 30/45 nhận được ở lần gọi đầu; phản hồi mất 15 giây cũng nhận được bằng default mới. Khi provider không phản hồi, vòng vẫn dừng ở 45 giây và tôn trọng cấu hình/attempt budget đặt riêng. Không gọi LLM bằng key thật. Đây là sửa giới hạn chờ quá ngắn; vẫn cần khách tự xác nhận bằng một lượt chat thật và không đảm bảo khắc phục được sự cố bên Google nếu provider tiếp tục không phản hồi.
+
+### Dự phòng đọc Menu khi provider timeout — 04/10/2026
+
+Các lượt 12:27–12:29 hết ngân sách inference trước khi gọi Menu. Log mới 12:41 ghi nhận Gemini có phản hồi và một lỗi HTTP 503, nên không thể coi provider đã ổn định. Policy nay xoay tài khoản sau lỗi transient/account, tránh mỗi lượt lỗi quay lại cùng hai tài khoản đầu. Khi có provider dự phòng được cấu hình, dành cả thời gian lẫn lượt thử cho provider đó trong ngân sách vòng hiện có; không tăng số lần thử, thời gian chờ hay giới hạn token.
+
+Khi lỗi timeout/503 xảy ra trước mọi công cụ, một yêu cầu xem danh sách bánh matcha có số lượng rõ ràng và không có điều kiện phụ được phép đọc `filter_catalog` qua gateway hiện có. Chat/card dùng kết quả Menu đã lọc; hai món phù hợp vẫn trả hai món kèm giải thích chưa đủ năm. Không gọi AI thêm; không áp dụng cho sửa giỏ, mặc định, chọn card, thanh toán, nguyên liệu/dị ứng, giá/ranking hay từ bổ nghĩa chưa hiểu. Menu lỗi vẫn báo chưa xử lý được; không biến lỗi đọc thành “không có món”. Lưu/replay kết quả như lượt bình thường, giữ nguyên giỏ.
+
+Kiểm thử dùng provider/Menu/Redis/DB giả và chặn socket/DNS trước import. Không sử dụng key thật để gửi chat. Các thay đổi thời gian chờ 30/45 trong mục trước đã có sẵn; bản sửa này giữ nguyên cấu hình đó.
+
+### Tiếp tục chọn tùy chọn sau câu “tự chọn” — 04/10/2026
+
+Log 11:09–11:10 cho thấy chọn món số 1 đã đọc được option, sau đó model đề xuất `use_defaults=true` khi khách chưa đồng ý. Gateway trả `defaults_not_authorized` nhưng chưa lưu món/số lượng thành draft chờ. Lượt “tự chọn” không được nhận là câu trả lời option; đọc option còn đổi nguồn focus sang `canonical_option_provider`, rồi đề xuất thêm món bị chặn `product_choice_required`. Các lượt này có `provider_failure_count=0`, không phải lỗi provider hay hạn mức token.
+
+Gateway nay lưu đúng món, số lượng và lựa chọn khách đã nói khi hỏi mặc định/tự chọn. Câu “tự chọn” và các biến thể ngắn chỉ mở tùy chọn Menu cho món đã được khách chọn. Không áp dụng size/topping model đoán, không ghi giỏ trước khi khách chọn giá trị. Kết quả đọc option hoặc đề xuất thêm đều có thể trả ngay lời hỏi option từ server. Draft tiếp tục hoạt động khi Redis không còn lịch sử; câu “tự chọn” không có món đã chọn hoặc đề xuất thêm món khác vẫn bị chặn.
+
+Kiểm tra: 14 trường hợp mới và 219 kiểm tra liên quan đều qua (233 tổng), gồm cấu hình nhiều lượt, số lượng, mặc định, lựa chọn cụ thể, Gemini continuation, checkout và thông báo outage. Launcher xóa credential khỏi môi trường tiến trình test và chặn socket/DNS trước khi import; provider, DB, Redis, Menu và giỏ dùng fake. Không gọi key thật, không đổi prompt/model/token/context/retry, không sửa DB thật và chưa build/restart Docker. Nạp source mới bằng `docker-compose up -d --build ai-service`, rồi thử chọn món số 1 → tự chọn → chọn size/topping từ danh sách bot đưa ra.
+
+### Lời chat cùng card bánh và sửa topping đúng lượt — 04/10/2026
+
+Log 11:30 ghi nhận cả `add_to_cart` và `filter_catalog`, hai card bánh đã được tạo, nhưng bộ trình bày ưu tiên mốc giỏ và không ghép danh sách tư vấn vào lời đáp. Nay lời chat gồm giỏ vừa thêm và đúng tên/giá/số thứ tự của các card được xác minh trong lượt đó, vẫn chỉ tư vấn bánh trước khi khách chọn.
+
+Log 11:32 không chứng minh topping đã cập nhật: thao tác đầu bị chặn `cart_reference_conflict`, thao tác tăng bánh lên hai mới thành công. Parser chưa tách “còn bánh trung thu…”, bỏ sót câu sửa theo tên rút gọn và có thể nhận chữ “sữa” như động từ “sửa”. Toàn câu bị gán cho bánh theo đoạn tên khớp dài nhất. Đến lượt bỏ Mochi, model đề xuất sửa topping từ yêu cầu cũ; gateway không chặn khi các clause hiện tại chỉ thuộc thao tác xóa, nên topping được sửa muộn. Đây là thao tác muộn được thể hiện trong log, không chỉ là lời đáp hiển thị snapshot cũ.
+
+Đã tách câu sửa Bạc Xỉu và số lượng bánh thành hai target độc lập, nhận “topping cho tôi…” và typo số lượng “muốn 2 cáo” trong namespace sửa giỏ. Giữ nguyên câu mua thêm, chặn tên trỏ tới nhiều cấu hình, topping không có trong Menu và thao tác không thuộc yêu cầu hiện tại. Nếu một phần chưa thực hiện, lời đáp nêu rõ món còn thiếu. Sau xóa thành công, một đề xuất sửa không được yêu cầu bị chặn và lời đáp vẫn xác nhận đúng việc xóa đã làm.
+
+Kiểm tra: 15 trường hợp mới và 265 kiểm tra liên quan đều qua (280 tổng), bao gồm cả hai thứ tự thao tác, lời chat/card cùng danh sách bánh, sửa topping và số lượng trong một lượt, báo thực hiện một phần, chặn sửa topping cũ khi bỏ Mochi, ambiguity và giá/tổng từ quote giả. Tất cả model, Menu, Order, DB và Redis dùng fake; launcher xóa credential khỏi tiến trình test và khóa socket/DNS trước import. Không dùng key thật, không đổi prompt/model/token/context/retry, không sửa giỏ/DB thật; chưa build/restart Docker. Nạp bằng `docker-compose up -d --build ai-service` và thử lại câu topping + số lượng rồi câu bỏ Mochi.
+
+### Yêu cầu xem 5 bánh matcha nhưng chỉ có 2 kết quả phù hợp — 04/10/2026
+
+Hội thoại báo lỗi có năm dòng lời chat, gồm hai bánh matcha và ba bánh khác. Không có log mới để xác định model đã dùng chính xác những đối số nào. Kiểm tra code cho thấy gateway chỉ sửa category về food; search_text trống hoặc lượt đọc rộng hơn vẫn được phép bỏ điều kiện matcha. Bộ trình bày cũng chưa có lời dẫn giải thích thiếu kết quả.
+
+Với yêu cầu rõ một nhóm bánh matcha, gateway nay giữ food + matcha trên cả filter_catalog và get_recommendations, kể cả đọc lại để cố đủ số món. Số món muốn xem là giới hạn kết quả phù hợp, không cho phép bù bằng loại bánh khác. Kết quả không đúng nhóm/điều kiện được loại trước khi trở thành ứng viên, card hoặc snapshot lựa chọn. Khi khách muốn xem 5 nhưng tìm được 2, lời dẫn là: “Dạ, hiện mình tìm được **2 món bánh matcha** phù hợp trong Menu, chưa đủ **5 món** bạn muốn xem. Mình gửi bạn các món này nhé:”, rồi chỉ liệt kê hai món với tên/giá/số thứ tự khớp card. Đây là số kết quả tra cứu, không phải xác nhận tồn kho ở một chi nhánh.
+
+Không tìm thấy thì trả lời rõ và hỏi khách muốn tham khảo loại bánh khác không, chưa tự tìm/thêm bánh khác. Lỗi service không bị diễn đạt thành không có món. Yêu cầu bánh trung thu matcha giữ thêm điều kiện trung thu; so sánh nước và bánh hoặc yêu cầu loại khác vẫn giữ phạm vi riêng. Không tăng prompt/model/token/context/retry hay thêm capability.
+
+Kiểm tra: 16 trường hợp mới và 314 kiểm tra liên quan đều qua (330 tổng), bao gồm đọc rộng/lặp lại, recommendation, provider rows không đúng điều kiện, thiếu/đủ/không có kết quả, limit model gửi quá nhỏ, model chọn thiếu, subtype bánh và so sánh nước/bánh. Provider, DB, Menu, Order và Redis đều fake; launcher xóa credential khỏi tiến trình test và chặn mạng trước import. Không dùng key thật và chưa build/restart Docker. Nạp bằng `docker-compose up -d --build ai-service`, rồi thử lại đúng câu yêu cầu xem 5 bánh matcha.
+
+
+### Sửa giỏ theo tên món và topping chưa rõ loại — 04/10/2026
+
+Lượt “cho tôi bánh trung thu 2 cái, còn bạc xỉu thêm topping hạt sen và hạt nổ nhé” ghi nhận hai lần đọc tùy chọn, một update bị `cart_reference_conflict`, rồi update số lượng bánh thành công. Parser trước đây không tách ranh giới “còn” theo tên Bạc Xỉu trong giỏ, nên chỉ lập được một yêu cầu; phản hồi tổng kết không nêu topping còn thiếu.
+
+Tách các mệnh đề theo tên/rút gọn tên món trong giỏ tại dấu câu hoặc liên từ, giữ nguyên dấu phẩy và “và” bên trong danh sách topping. Đối chiếu từng thay đổi với dòng giỏ và trường dữ liệu được khách yêu cầu. Tên topping rút gọn khớp nhiều lựa chọn Menu phải hỏi đúng các loại phù hợp. Lưu riêng lựa chọn Hạt Sen và dòng Bạc Xỉu đang chờ; câu trả lời đầy đủ hoặc rút gọn như “hạt nổ yến mạch nhé”/“yến mạch nhé” chỉ hoàn tất lựa chọn đó, giữ Hạt Sen, đọc lại Menu và cập nhật đúng dòng. Không tái sử dụng câu trả lời nếu cấu hình dòng đã thay đổi; câu hỏi, phủ định và yêu cầu xem thông tin không cho phép mutation.
+
+Khi số lượng bánh đã cập nhật nhưng topping còn chờ, trả giỏ đã xác minh và nêu rõ chỉ hoàn tất một phần cùng câu hỏi chọn loại topping. Nếu chưa có cập nhật thành công, không báo đã cập nhật một phần. Trả lời từ bằng chứng server khi cần chọn topping hoặc đã hoàn tất các thao tác, không tăng lượt inference để hỏi cùng một thông tin. Cơ chế dedup theo client_message_id giữ nguyên; follow-up hoạt động khi mất Redis vì trạng thái chờ được lưu trong checkout prefs của session hội thoại.
+
+230 kiểm tra offline liên quan qua, trong đó 19 trường hợp mới kiểm tra thứ tự thao tác, tên rút gọn, dấu câu/liên từ, giữ Hạt Sen, câu trả lời ngắn, mất Redis, gửi lại tin, sai dòng/sai trường, phủ định và dòng giỏ đã đổi. Không gọi provider thật, không dùng key của khách; không thay cấu hình model/token/retry/thời gian chờ.
+
+### Câu trả lời chọn topping bị chặn khi model gửi lại cấu hình hiện tại — 04/10/2026
+
+Lượt 13:08 “hạt nổ yến mạch đi bạn” đã khớp yêu cầu topping đang chờ, nhưng năm đề xuất update bị `cart_fields_not_requested`. Không phải timeout: provider phản hồi và đọc được option. Guard của bản trước chặn mọi trường ngoài topping, kể cả model chỉ nhắc lại số lượng/size/độ ngọt hiện tại, khiến lượt tiếp tục sửa đề xuất thay vì hoàn tất lựa chọn.
+
+Trong đúng follow-up đã ràng buộc với dòng giỏ và cấu hình đang chờ, loại các trường có giá trị không đổi khỏi patch. Trường khác thực sự thay đổi vẫn bị chặn. Patch chỉ còn topping; lựa chọn đã lưu và câu trả lời hiện tại được đối chiếu lại với Menu, kể cả khi model không gửi topping trong patch. Giữ Hạt Sen cùng Hạt Nổ Yến Mạch, không thay số lượng, size, độ ngọt, đá/sữa hoặc bánh. Không đổi model, token, retry hay thời gian chờ.
+
+239 kiểm tra offline liên quan qua. Bộ kiểm tra topping có 28 trường hợp, bổ sung câu trả lời chính xác khách gửi, đề xuất đầy đủ cấu hình không đổi, thiếu trường topping, replay, và đề xuất đổi trái yêu cầu các trường khác. Provider, Menu, giỏ, DB/Redis đều giả; socket và HTTP bị chặn trong các regression mới, credential provider bị xóa khỏi môi trường test. Không gửi chat thật bằng key khách.
+
+### Chọn địa chỉ với đuôi hội thoại và bỏ qua voucher sau thời gian chờ — 04/10/2026
+
+Log 13:57 ghi nhận hai lần `resolve_location` bị `profile_location_confirmation_required`, provider đều phản hồi thành công. Parser ordinal coi “ấy bạn” sau “địa chỉ 1” là phần tên đường, nên không nhận lựa chọn số. Parser tham chiếu nhận “địa chỉ đó” nhưng thiếu “địa chỉ đấy/ấy” và “ở đấy”. Bổ sung đuôi hội thoại trong riêng namespace địa chỉ và các tham chiếu này. Số địa chỉ vẫn đối chiếu với danh sách đã đưa ra; câu hỏi/phủ định không được xác nhận, model đề xuất địa chỉ khác số khách chọn vẫn bị chặn. Với lấy tại quán, địa chỉ chỉ là vị trí tìm quán, không tự xác nhận địa chỉ giao hoặc chọn chi nhánh.
+
+Lượt “bỏ qua đi bạn” bị `voucher_choice_required`: pending action có TTL 300 giây, lượt khách trả lời diễn ra sau khoảng chín phút; durable `voucher_offer_pending` vẫn giữ bước voucher. Khi không có pending khác và quyết định voucher vẫn đang chờ, dùng offer đó làm chủ ngữ cho câu từ chối ngắn. Không tăng TTL, không thay xác nhận đơn; OK chung/câu hỏi/yêu cầu bỏ món không được xem là bỏ voucher.
+
+25 regression mới dùng đúng câu khách, số địa chỉ thứ hai, mất Redis/hết hạn pending, replay và các trường hợp không được phép. 242 kiểm tra liên quan qua sau thay đổi cuối; một lượt mở rộng khác có 294 kiểm tra qua. Hai trường hợp option trong `test_cart_voucher_checkout_flow.py` vẫn fail và tái hiện khi khôi phục parser trước sửa trong tiến trình kiểm tra; chúng thuộc luồng cũ, không phải regression của bản địa chỉ/voucher này. Đã giữ nguyên các xử lý option hiện tại. Inference, giỏ, Menu/geo và persistence đều giả trong regression mới, socket/DNS/HTTP bị khóa; không dùng key thật, không đổi model/token/retry/thời gian chờ và không sửa giỏ khách để kiểm thử.

@@ -2437,11 +2437,13 @@ export class ThanhToanService {
     if (signed !== vnp_SecureHash) return { RspCode: '97', Message: 'Invalid signature' };
 
     if (query.vnp_TxnRef && query.vnp_TxnRef.startsWith('WT_')) {
+      const paidAmount = Number(query.vnp_Amount) / 100;
       if (query.vnp_ResponseCode === '00') {
-        const success = await this.customerWalletService.processTopUpSuccess(query.vnp_TxnRef);
+        const success = await this.customerWalletService.processTopUpSuccess(query.vnp_TxnRef, paidAmount);
         return { RspCode: success ? '00' : '99', Message: success ? 'Confirm Success' : 'Error processing' };
       }
-      return { RspCode: '00', Message: 'Confirm Success' };
+      const handled = await this.customerWalletService.processTopUpFailure(query.vnp_TxnRef, paidAmount);
+      return { RspCode: handled ? '00' : '99', Message: handled ? 'Confirm Success' : 'Error processing' };
     }
 
     const giaoDich = await this.giaoDichRepo.findOne({ where: { ma_tham_chieu: query.vnp_TxnRef } });
@@ -2523,7 +2525,7 @@ export class ThanhToanService {
   async ketQuaVnpayThat(maNguoiDung: string, query: Record<string, string>) {
     if (query.vnp_TxnRef && query.vnp_TxnRef.startsWith('WT_')) {
       const ipnResult = await this.xuLyVnpayIpn(query);
-      const isSuccess = ipnResult.RspCode === '00' || ipnResult.RspCode === '02';
+      const isSuccess = query.vnp_ResponseCode === '00' && ['00', '02'].includes(ipnResult.RspCode);
       return { message: isSuccess ? 'Thanh cong' : 'That bai', is_wallet_tx: true, success: isSuccess };
     }
 

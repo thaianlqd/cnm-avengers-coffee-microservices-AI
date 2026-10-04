@@ -125,10 +125,13 @@ def test_current_broad_catalog_request_cannot_inherit_old_category(runtime):
 
 
 def test_price_question_rejects_rag_as_dynamic_authority(runtime):
+    from test_checkout_guarded_contract import gateway
     runtime.provider.plan([('get_product_description', {'product_id': '101', 'query': 'giá hiện tại'})])
     result = runtime.turn('Cà Phê Alpha giá bao nhiêu?')
-    assert result['tool_calls_log'][0]['result']['status'] == 'wrong_authority'
-    assert result['tool_calls_log'][0]['result']['allowed_tools'] == ['check_price_and_stock']
+    assert not result['tool_calls_log'] and not runtime.writes  # Capability is not exposed during cart consultation.
+    denied = gateway(runtime, 'Cà Phê Alpha giá bao nhiêu?', filtered=False).dispatch(
+        'get_product_description', {'product_id': '101', 'query': 'giá hiện tại'})
+    assert denied['status'] == 'wrong_authority' and denied['allowed_tools'] == ['check_price_and_stock']
 
 
 def test_explicit_cart_ordinal_overrides_internally_consistent_wrong_proposal(runtime):
@@ -231,7 +234,8 @@ def test_cart_edit_cannot_recover_by_switching_to_add(runtime):
         final_step('Đã cập nhật dòng đầu.', 'action')]
     result = runtime.turn('tăng dòng 1 lên 2 ly')
     assert [row['result']['status'] for row in result['tool_calls_log']] == [
-        'cart_reference_conflict', 'conflicting_cart_operations', 'ok']
+        'cart_reference_conflict', 'ok']  # Invalid add proposal is rejected before execution.
+    assert 'add_to_cart' not in {row['function']['name'] for row in runtime.provider.requests[1]['tools']}
     assert len(runtime.writes) == 1 and runtime.writes[0][0] == 'update'
     assert runtime.provider.requests[1]['tool_choice'] == 'required'
 
@@ -271,13 +275,14 @@ def test_read_success_cannot_complete_required_write_repair(runtime):
     assert len(runtime.writes) == 1 and runtime.writes[0][0] == 'update'
 
 
-def test_explicit_checkout_choice_rejects_model_semantic_mismatch(runtime):
+def test_explicit_checkout_choice_corrects_model_semantic_mismatch(runtime):
     runtime.provider.plan([('set_checkout_choices', {
         'delivery_type': 'TAI_CHO', 'payment_method': 'THANH_TOAN_KHI_NHAN_HANG'})])
     result = runtime.turn('lấy tại quán và trả tiền mặt')
-    denial = result['tool_calls_log'][0]['result']
-    assert denial['status'] == 'checkout_choice_conflict'
-    assert denial['conflicts']['delivery_type']['expected'] == 'MANG_DI'
+    recorded = result['tool_calls_log'][0]['result']
+    assert recorded['status'] == 'ok'
+    assert recorded['choices']['delivery_type'] == 'MANG_DI'
+    assert cart_manager.get_checkout_prefs(runtime.sid)['delivery_type'] == 'MANG_DI'
 
 
 def test_unrelated_success_does_not_mask_denied_checkout_choice_repair():

@@ -135,7 +135,7 @@ def test_real_serializer_preserves_signed_continuation_and_dynamic_surface(wire,
     if another_tool:
         assert calls[1]['extra_content']['google']['thought_signature'] == SIGNATURE_B
     metrics = turn_metrics(caplog)
-    assert metrics['final_synthesis_source'] == ('llm' if another_tool else 'server_product_facts')
+    assert metrics['final_synthesis_source'] == 'server_product_facts'
     assert metrics['provider_failure_count'] == 0
     assert metrics['request_count'] == 2 + another_tool
     assert SIGNATURE_A not in caplog.text and SIGNATURE_B not in caplog.text

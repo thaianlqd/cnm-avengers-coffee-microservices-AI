@@ -32,7 +32,7 @@ def safe_text(value, maximum=1500):
 
 
 ENTITY_FIELDS = {
-    'products': ('product_id', 'product_name', 'category', 'menu_bucket', 'final_price',
+    'products': ('product_id', 'product_name', 'category', 'parent_category', 'menu_bucket', 'final_price',
                  'hinh_anh_url', 'display_index', 'group_display_index', 'global_display_index'),
     'vouchers': ('ma_voucher', 'voucher_code', 'ten_voucher', 'mo_ta', 'gia_tri', 'loai_giam_gia',
                  'dieu_kien_ap_dung', 'so_tien_giam_du_kien', 'display_index'),

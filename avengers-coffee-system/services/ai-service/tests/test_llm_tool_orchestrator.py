@@ -155,10 +155,10 @@ def test_compound_extrema_uses_two_reads_and_canonical_union(runtime):
     runtime.provider.plan([('filter_catalog',dict(search_text='',sort_by='price_asc',limit=1)),
         ('filter_catalog',dict(search_text='',sort_by='price_desc',limit=1))])
     final = json.loads(runtime.provider.steps[-1]['content'])
-    final.update(display_product_count=2, display_product_ids=['101', '103'])
+    final.update(display_product_count=2, display_product_ids=['101', '102'])
     runtime.provider.steps[-1]['content'] = json.dumps(final)
     result=runtime.turn('cho tôi món cà phê đắt nhất và rẻ nhất')
-    assert {r['product_id'] for r in result['ui_payload']['products']}=={'101','103'}
+    assert {r['product_id'] for r in result['ui_payload']['products']}=={'101','102'}
     assert len(runtime.reads)==2 and not runtime.writes
 
 
@@ -228,8 +228,9 @@ def test_options_stage_then_complete_uses_authoritative_price_and_replay(runtime
 def test_cart_absolute_patch_exact_line_preserves_other_rows(runtime,patch):
     before=deepcopy(cart_manager.get_cart(runtime.sid)['items'])
     runtime.provider.plan([('update_cart_item',dict(cart_item_id='801',desired_state=patch))],claims=['update_cart_item'])
-    runtime.turn('dòng 2 cho tôi 2 cái nha',client_message_id='edit-once')
-    runtime.turn('dòng 2 cho tôi 2 cái nha',client_message_id='edit-once')
+    message = f"dòng 2 cho tôi {patch.get('quantity', 2)} cái nha"
+    runtime.turn(message,client_message_id='edit-once')
+    runtime.turn(message,client_message_id='edit-once')
     after=cart_manager.get_cart(runtime.sid)['items']
     assert after[0]==before[0] and runtime.writes[0][0:3]==('update','801',patch)
     assert len(runtime.writes)==1 and all(after[1][k]==v for k,v in patch.items())

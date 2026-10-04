@@ -7,6 +7,7 @@ from src.agents.agent_memory import compact, snapshot, safe_text
 from src.agents.discovery_contract import (DISCOVERY_TOOLS, DISCOVERY_RESPONSE_CONTRACT,
     normalize_discovery_args, discovery_signature, complementary_pair_complete)
 from src.rag.documents import normalize_text
+from src.agents.product_display import numbered_products, PRODUCT_GROUP_LABELS, PRODUCT_REFERENCE_LABELS
 
 SUCCESS = {'success', 'ok', 'require_confirmation', 'already_processed', 'need_branch_selection', 'ambiguous'}
 RAG_TOOLS = {'search_knowledge_base', 'get_product_description'}
@@ -56,10 +57,12 @@ def model_tool_result(name, result, artifacts=None):
     value = {key: compact(result[key]) for key in ('status', 'message', 'changed',
         'same_turn_read_reused', 'product_id', 'product_name', 'quantity', 'unit_price',
         'voucher_code', 'voucher_decided', 'discount_amount', 'so_tien_giam', 'final_total',
-        'quote_status', 'payment_options_status', 'total_cart', 'choices', 'profile_location',
+        'quote_status', 'payment_options_status', 'total_cart', 'choices', 'profile_location', 'remaining_cart_edits',
         'order_id', 'order_status', 'payment_method', 'total_price', 'normalized_location') if key in result}
     if isinstance(result.get('cart'), dict):
         value['cart'] = model_cart(result['cart'])
+        for row in value['cart']['items']:
+            row['display_index'] = (getattr(artifacts, 'turn_cart_ordinals', {}) or {}).get(str(row.get('cart_item_id')), row['display_index'])
     if isinstance(result.get('quote'), dict):
         value['quote'] = {key: result['quote'][key] for key in ('subtotal', 'discount_amount',
             'delivery_fee', 'final_total', 'voucher_code', 'voucher_valid') if key in result['quote']}
@@ -154,6 +157,8 @@ class ToolArtifacts:
         route = knowledge_route(knowledge_question or '')
         self.safety_facet = route.get('facet') if route.get('owner') == 'rag' else None
         self.knowledge_question = knowledge_question or ''
+        from src.agents.shopping_language import requested_discovery_family
+        self.discovery_scope = requested_discovery_family(self.knowledge_question)
         self.visible = dict(memory.get('visible_snapshots') or {})
         self.focus = dict(memory.get('focus') or {})
         pending_products = ((context or {}).get('business') or {}).get('pending_products') or []
@@ -187,8 +192,7 @@ class ToolArtifacts:
     def _publish_products(self, ids, source):
         canonical = {**self.product_candidates,
             **{str(row['product_id']): row for row in self.ui['products']}}
-        self.ui['products'] = [{**canonical[key], 'display_index': index}
-                               for index, key in enumerate(ids, 1)]
+        self.ui['products'] = numbered_products([canonical[key] for key in ids])
         self.visible['products'] = snapshot('products', self.ui['products'])
         self.display_selection_source = source
         self.validated_display_product_count = len(ids)
@@ -209,6 +213,19 @@ class ToolArtifacts:
             self.validated_display_product_count = 0
             self.display_selection_source = None
             return  # A completed order must not resurrect earlier discovery cards.
+        scope = self.discovery_scope or {}
+        reads = [row for row in self.logs if row['tool'] in DISCOVERY_TOOLS]
+        if scope and reads and all(row['result'].get('status') == 'not_found' for row in reads):
+            self._publish_products([], 'no_matches')
+            return
+        if scope.get('requested_count') and self.discovery_batches and all(
+                row['result'].get('status') == 'ok' for row in reads):
+            ids = list(dict.fromkeys(key for batch in self.discovery_batches for key in batch['product_ids']))
+            ids = ids[:scope['requested_count']]
+            if not self.planned_discovery_reads or len(self.discovery_batches) >= self.planned_discovery_reads:
+                if ids != [str(row['product_id']) for row in self.ui['products']]:
+                    self._publish_products(ids, 'server_scoped_results')
+                return
         if self.display_selection_source or not self.discovery_batches:
             return
         batches = self.discovery_batches
@@ -275,6 +292,10 @@ class ToolArtifacts:
                     'signature': signature, 'product_ids': ids})
         if result.get('status') == 'login_required' and result.get('login_action'):
             self.ui['login_action'] = result['login_action']
+        if result.get('wallet_topup'):
+            self.ui['wallet_topup'] = result['wallet_topup']
+        if result.get('status') in {'wallet_unavailable', 'insufficient_wallet'} and result.get('payment_options'):
+            self.ui['payment_options'] = result['payment_options']
         if result.get('status') not in SUCCESS and not (
                 result.get('branches') and (result.get('status') == 'stock_conflict' or (
                     name == 'set_session_branch' and result.get('status') in {
@@ -327,6 +348,8 @@ class ToolArtifacts:
                 if kind != 'vouchers':
                     rows = rows[:16 if kind == 'products' else 5]
             rows = [{**row, 'display_index': i} for i, row in enumerate(rows, 1)]
+            if kind == 'products':
+                rows = numbered_products(rows)
             self.ui[kind] = rows
             self.visible[kind] = snapshot(kind, rows)
         if result.get('fulfillment_options'):
@@ -425,15 +448,43 @@ class ToolArtifacts:
                 'apply_voucher', 'skip_voucher', 'remove_voucher', 'set_checkout_choices'} for row in self.logs):
             return None  # Extra option reads during discovery do not select/configure a product.
         from src.agents.customer_flow_presentation import customer_flow_reply
-        reply = customer_flow_reply(self.logs, self.business)
+        self.finalize_display()
+        discovery_reply = self.discovery_product_reply(allow_cart_mutations=True)
+        reply = customer_flow_reply(self.logs, self.business, discovery_reply)
+        from src.agents.cart_edit_evidence import unfinished_edits
+        pending_edits = unfinished_edits(getattr(self, 'cart_edit_plan', []), self.logs)
+        if reply and len(getattr(self, 'cart_edit_plan', [])) > 1 and pending_edits:
+            completed = [row for row in self.logs if row['tool'] in {'update_cart_item', 'remove_cart_item'}
+                         and row['result'].get('status') in {'ok', 'already_processed'}]
+            if completed:
+                reply = customer_flow_reply(completed, self.business) or reply
+            details = []
+            for request in pending_edits:
+                denial = next((row['result'].get('message') for row in reversed(self.logs)
+                    if row['tool'] == request['tool'] and str(row['args'].get('cart_item_id')) == request['cart_item_id']
+                    and row['result'].get('status') == 'invalid_option' and row['result'].get('message')), None)
+                details.append(denial or ('Sửa' if request['tool'] == 'update_cart_item' else 'Xóa') +
+                               ' **' + request['product_name'] + '**')
+            prefix = ('Dạ, mình mới cập nhật được **một phần yêu cầu** của bạn ạ.' if completed else
+                      'Dạ, mình chưa cập nhật các món theo yêu cầu này ạ.')
+            reply = (prefix + '\n\n' + reply +
+                     '\n\n**Còn chưa thực hiện:**\n' + '\n'.join('- ' + detail for detail in details))
         if reply:
             self.used_customer_flow = True
         return reply
 
-    def discovery_product_reply(self):
+    def discovery_product_reply(self, allow_cart_mutations=False):
         """A catalog row is not evidence for taste, ingredients or popularity."""
-        if (not self.discovery_batches or not self.ui['products'] or self.safety_facet
-                or any(row['tool'] not in DISCOVERY_TOOLS | RAG_TOOLS for row in self.logs)):
+        allowed = DISCOVERY_TOOLS | RAG_TOOLS | {'get_product_options'}
+        if allow_cart_mutations:
+            allowed |= {'add_to_cart', 'update_cart_item', 'remove_cart_item'}
+        if self.safety_facet or any(row['tool'] not in allowed for row in self.logs):
+            return None
+        reads = [row for row in self.logs if row['tool'] in DISCOVERY_TOOLS]
+        if self.discovery_scope and reads and all(row['result'].get('status') == 'not_found' for row in reads):
+            self.used_product_facts = True
+            return reads[-1]['result']['message']
+        if not self.discovery_batches or not self.ui['products']:
             return None
         descriptions = {}
         for row in self.logs:
@@ -444,9 +495,27 @@ class ToolArtifacts:
                     descriptions.setdefault(str(doc.get('entity_id')), []).append(doc['content'])
         from src.agents.customer_flow_presentation import money
         lines = ['Dạ, mình gửi bạn các món phù hợp nhé:']
-        for index, product in enumerate(self.ui['products'], 1):
+        products = self.ui['products']
+        scope = self.discovery_scope or {}
+        requested = scope.get('requested_count')
+        if requested and len(products) < requested:
+            lines[0] = (f"Dạ, hiện mình tìm được **{len(products)} món {scope['label']}** phù hợp trong Menu, "
+                f"chưa đủ **{requested} món** bạn muốn xem. Mình gửi bạn các món này nhé:")
+        buckets = list(dict.fromkeys(row['menu_bucket'] for row in products))
+        mixed = len(buckets) > 1
+        display_rows = ([row for bucket in buckets for row in products if row['menu_bucket'] == bucket]
+                        if mixed else products)
+        previous_bucket = None
+        for product in display_rows:
+            bucket = product['menu_bucket']
+            if mixed and bucket != previous_bucket:
+                lines.append('**' + PRODUCT_GROUP_LABELS[bucket] + ':**')
+                previous_bucket = bucket
+            index = product['display_index']
             price = product.get('final_price', product.get('price'))
             line = f"{index}. **{product['product_name']}**" + (f" — **{money(price)}**" if price is not None else '')
+            if mixed and bucket in PRODUCT_REFERENCE_LABELS:
+                line += f" ({PRODUCT_REFERENCE_LABELS[bucket]} số {product['group_display_index']})"
             # Keep the exact product identity; never use another product's text
             # or infer its contents from the display name/category.
             source = list(dict.fromkeys(descriptions.get(str(product['product_id']), [])))
@@ -467,15 +536,24 @@ class ToolArtifacts:
             return None
         last = meaningful[-1]
         status, name = last['result'].get('status'), last['tool']
+        from src.agents.cart_edit_evidence import unfinished_edits
+        edit_plan = getattr(self, 'cart_edit_plan', [])
+        unfinished = unfinished_edits(edit_plan, self.logs)
+        edits_complete = bool((len(edit_plan) > 1 or getattr(self, 'cart_option_followup', None)) and not unfinished)
+        needs_option_choice = bool(edit_plan and unfinished and all(any(
+            row['tool'] == request['tool'] and str(row['args'].get('cart_item_id')) == request['cart_item_id']
+            and row['result'].get('status') == 'invalid_option' for row in self.logs) for request in unfinished))
         stop = ((name in {'resolve_location', 'select_location_candidate', 'find_nearest_branch', 'ask_branch'}
-                 and (last['result'].get('branches') or last['result'].get('order_summary')))
+                 and (last['result'].get('branches') or last['result'].get('order_summary') or last['result'].get('location_candidates')))
                 or status in {'branch_unavailable_or_unknown', 'customer_branch_selection_required'}
                 or (name == 'request_checkout' and status == 'require_confirmation')
                 or (name == 'confirm_checkout' and status in {'ok', 'success', 'already_processed'})
                 or (name == 'finish_cart' and status == 'ok')
                 or (name in {'apply_voucher', 'skip_voucher'} and status in {'ok', 'success', 'already_processed'})
                 or status in {'needs_options', 'defaults_not_authorized', 'voucher_choice_required',
-                             'profile_location_confirmation_required', 'needs_new_location', 'login_required'}
+                             'profile_location_confirmation_required', 'needs_new_location', 'login_required',
+                             'product_choice_required', 'cart_change_not_requested', 'wallet_unavailable', 'insufficient_wallet'}
+                or edits_complete or needs_option_choice
                 or (name == 'set_checkout_choices' and (
                     (self.business.get('checkout') or {}).get('profile_location_offer')
                     or (last['result'].get('profile_location') or {}).get('status') in {'empty', 'unavailable'})))
@@ -543,6 +621,15 @@ class ToolArtifacts:
                 and 'request_checkout' not in successful_tools):
             return ('TOOL_REQUIRED: Cart lines and a quote do not render the canonical confirmation UI. '
                     'Call request_checkout with reuse_summary=true to show the pending order summary again.')
+        from src.agents.cart_edit_evidence import unfinished_edits
+        unfinished = unfinished_edits(getattr(self, 'cart_edit_plan', []), self.logs)
+        needs_option_choice = bool(unfinished and all(any(
+            row['tool'] == request['tool'] and str(row['args'].get('cart_item_id')) == request['cart_item_id']
+            and row['result'].get('status') == 'invalid_option' for row in self.logs) for request in unfinished))
+        if len(getattr(self, 'cart_edit_plan', [])) > 1 and unfinished and not needs_option_choice:
+            return ('TOOL_REQUIRED: Complete every requested cart edit against the original turn cart IDs: ' +
+                    json.dumps([{key: request[key] for key in ('tool', 'cart_item_id', 'fields')}
+                                for request in unfinished], ensure_ascii=False) + '.')
         recoverable_write_denials = {'unknown_product_reference', 'cart_reference_conflict',
             'pending_quantity_conflict', 'cart_quantity_conflict', 'checkout_choice_conflict',
             'voucher_selection_conflict', 'conflicting_cart_operations'}
