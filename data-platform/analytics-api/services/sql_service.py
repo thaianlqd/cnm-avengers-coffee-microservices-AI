@@ -231,10 +231,12 @@ def _table_references(sql: str) -> Tuple[Set[str], Dict[str, str]]:
         rf'(?:\s+(?:AS\s+)?({identifier}))?',
         re.IGNORECASE,
     )
+    # Mask EXTRACT(... FROM ...) expressions so scalar FROM is never confused with table FROM
+    sql_masked = re.sub(r'(?i)\bEXTRACT\s*\([^)]+\)', lambda m: ' ' * len(m.group(0)), sql)
     ctes = _cte_names(sql)
     tables: Set[str] = set()
     aliases: Dict[str, str] = {}
-    for match in pattern.finditer(sql):
+    for match in pattern.finditer(sql_masked):
         raw_name = re.sub(r'\s+', '', match.group(1))
         parts = [_identifier(part) for part in raw_name.split('.')]
         table = '.'.join(parts)

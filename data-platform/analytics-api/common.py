@@ -56,6 +56,13 @@ class AiSummarizeRequest(BaseModel):
     columns: Optional[List[str]] = []
 
 
+class AiReportRefineRequest(BaseModel):
+    current_report: Dict[str, Any]
+    feedback: str
+    conversation_history: Optional[List[Dict[str, str]]] = []
+    domain: Optional[str] = "auto"
+
+
 def get_filter_clauses(cur, date_range: str, branch: str, order_alias: str = "d"):
     ref_date = datetime.now().date()
     range_str = (date_range or "30days").lower().strip()

@@ -40,9 +40,36 @@ app.add_middleware(
 )
 
 
+import logging
+import threading
+import time
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
+    datefmt="%H:%M:%S",
+    stream=sys.stdout,
+)
+logger = logging.getLogger("server")
+
+
+def _background_init_warehouse_views():
+    for attempt in range(1, 61):  # Retry every 5s for up to 5 minutes
+        time.sleep(5)
+        try:
+            if init_warehouse_views():
+                logger.info(f"Warehouse views initialized successfully in background (attempt {attempt}).")
+                break
+        except Exception:
+            pass
+
+
 @app.on_event("startup")
 def on_startup():
-    init_warehouse_views()
+    ready = init_warehouse_views()
+    if not ready:
+        logger.info("Warehouse views pending source data sync. Starting background initialization watcher.")
+        threading.Thread(target=_background_init_warehouse_views, daemon=True).start()
 
 
 # ─── Register Routers ───
@@ -73,6 +100,13 @@ if os.path.exists(DIST_DIR):
         return FileResponse(os.path.join(DIST_DIR, "index.html"))
 
 
+@app.get("/health")
+@app.get("/api/health")
+def health_check():
+    return {"status": "ok", "service": "avengers-analytics-api"}
+
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("server:app", host="0.0.0.0", port=8501, reload=True)
+    port = int(os.getenv("PORT", "8000"))
+    uvicorn.run("server:app", host="0.0.0.0", port=port, reload=True)

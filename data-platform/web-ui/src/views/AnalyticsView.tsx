@@ -66,6 +66,9 @@ export const AnalyticsView: React.FC = () => {
   const [chatHistory, setChatHistory] = useState<Array<{ prompt: string; report: any; time: string }>>([]);
   const [followUpPrompt, setFollowUpPrompt] = useState('');
   const [isRefining, setIsRefining] = useState(false);
+  const [reportVersions, setReportVersions] = useState<Array<{ version: number; label: string; report: any; time: string }>>([]);
+  const [activeVersionIndex, setActiveVersionIndex] = useState<number>(0);
+  const [refinementChat, setRefinementChat] = useState<Array<{ id: string; sender: 'user' | 'assistant'; text: string; time: string }>>([]);
 
   // Step 3: DOCX Export & Saved Reports Management state
   const [isExportingDocx, setIsExportingDocx] = useState(false);
@@ -87,7 +90,19 @@ export const AnalyticsView: React.FC = () => {
   // Helper to sanitize any raw SQL query or expressions leaked into KPI values
   const sanitizeKpiDisplayValue = (val: any, fallbackRow?: any, card?: any): string => {
     if (val === null || val === undefined) return '—';
+    if (typeof val === 'object') {
+      if (Array.isArray(val)) {
+        return val.map(v => typeof v === 'object' ? JSON.stringify(v) : String(v)).join(', ');
+      }
+      const parts = Object.entries(val).map(([k, v]) => {
+        const cleanK = k.replace(/_/g, ' ');
+        const cleanV = typeof v === 'number' ? v.toLocaleString('vi-VN') : String(v);
+        return `${cleanK}: ${cleanV}`;
+      });
+      return parts.length > 0 ? parts.join(' • ') : '—';
+    }
     let s = String(val).trim();
+    if (s === '[object Object]') return '—';
     if (s.startsWith('(') && s.endsWith(')')) {
       s = s.slice(1, -1).trim();
     }
@@ -170,6 +185,10 @@ export const AnalyticsView: React.FC = () => {
     setAiPrompt('');
     setAiPlan(null);
     setGeneratedReport(null);
+    setReportVersions([]);
+    setActiveVersionIndex(0);
+    setRefinementChat([]);
+    setFollowUpPrompt('');
     setAiStep(1);
   };
 
@@ -250,6 +269,18 @@ export const AnalyticsView: React.FC = () => {
       } else {
         const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
         setChatHistory(prev => [{ prompt: promptToSend, report: data, time: timeStr }, ...prev.filter(p => p.prompt !== promptToSend)].slice(0, 8));
+        setReportVersions([
+          { version: 1, label: 'Bản phác thảo ban đầu', report: data, time: timeStr }
+        ]);
+        setActiveVersionIndex(0);
+        setRefinementChat([
+          {
+            id: 'init-msg',
+            sender: 'assistant',
+            text: `Em đã khởi tạo xong báo cáo "${data.title || 'Phân tích dữ liệu'}". Nếu bạn muốn tinh chỉnh bất kỳ chi tiết nào (đổi loại biểu đồ, lọc theo chi nhánh/khu vực, thêm chỉ số KPI, viết lại khuyến nghị sắc bén hơn...), hãy nhập góp ý ngay bên dưới nhé!`,
+            time: timeStr
+          }
+        ]);
         showToast('Phân tích dữ liệu thành công! Bản xem trực quan đã sẵn sàng.', 'success');
       }
     } catch (err: any) {
@@ -261,49 +292,100 @@ export const AnalyticsView: React.FC = () => {
     }
   };
 
-  // ── Follow-up / Drill-down: Refine analysis based on current report ──
-  const handleFollowUpRefine = async (refinementText?: string) => {
+  // ── Follow-up / Refine report iteratively based on user feedback ──
+  const handleFollowUpRefine = async (refinementText?: string, targetRep?: any) => {
+    const repToRefine = targetRep || generatedReport || viewingSavedReport;
     const text = (refinementText || followUpPrompt).trim();
     if (!text) {
-      showToast('Vui lòng nhập câu hỏi hoặc yêu cầu tinh chỉnh', 'info');
+      showToast('Vui lòng nhập góp ý hoặc yêu cầu tinh chỉnh', 'info');
       return;
     }
-    const baseTitle = generatedReport?.title || aiPrompt;
-    const previousContext = `Báo cáo trước: "${baseTitle}". Dữ liệu tóm tắt: ${(generatedReport?.key_findings || []).map((f: any) => f.finding || f.comment).slice(0, 2).join('; ')}`;
+    if (!repToRefine) {
+      showToast('Chưa có báo cáo nào để tinh chỉnh', 'info');
+      return;
+    }
 
+    const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    const userMsg = { id: `user-${Date.now()}`, sender: 'user' as const, text, time: timeStr };
+    setRefinementChat(prev => [...prev, userMsg]);
     setFollowUpPrompt('');
     setIsRefining(true);
-    setIsGeneratingAi(true);
+
     try {
-      const response = await fetch('/api/ai/generate-executive-report', {
+      const historyPayload = refinementChat.map(c => ({
+        role: c.sender === 'user' ? 'user' : 'assistant',
+        content: c.text
+      }));
+
+      const response = await fetch('/api/ai/refine-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: text,
-          context: previousContext,
+          current_report: repToRefine,
+          feedback: text,
+          conversation_history: historyPayload,
           domain: aiDomain,
-          date_range: aiTimeRange,
         }),
       });
       if (!response.ok) {
-        throw new Error('Lỗi khi đào sâu phân tích từ máy chủ');
+        throw new Error('Lỗi khi tinh chỉnh báo cáo từ máy chủ AI');
       }
       const data = await response.json();
-      setGeneratedReport(data);
       if (data.status === 'needs_clarification') {
-        showToast(data.clarification_question || 'Trợ lý cần bạn làm rõ thêm câu hỏi', 'info');
+        const replyText = data.assistant_reply || 'Trợ lý cần bạn làm rõ thêm yêu cầu tinh chỉnh.';
+        setRefinementChat(prev => [...prev, {
+          id: `ai-${Date.now()}`,
+          sender: 'assistant',
+          text: replyText,
+          time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+        }]);
+        showToast(replyText, 'info');
       } else {
-        const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-        setChatHistory(prev => [{ prompt: text, report: data, time: timeStr }, ...prev.filter(p => p.prompt !== text)].slice(0, 8));
-        setAiPrompt(text);
-        showToast('Đã tinh chỉnh phân tích thành công!', 'success');
+        setGeneratedReport(data);
+        if (viewingSavedReport) {
+          setViewingSavedReport(data);
+        }
+        const replyText = data.assistant_reply || 'Đã cập nhật báo cáo theo góp ý của bạn!';
+        const newTime = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        setRefinementChat(prev => [...prev, {
+          id: `ai-${Date.now()}`,
+          sender: 'assistant',
+          text: replyText,
+          time: newTime
+        }]);
+
+        setReportVersions(prev => {
+          const nextVer = prev.length + 1;
+          const updated = [...prev, { version: nextVer, label: text.slice(0, 32), report: data, time: newTime }];
+          setActiveVersionIndex(updated.length - 1);
+          return updated;
+        });
+
+        showToast('Đã tinh chỉnh báo cáo thành công theo góp ý!', 'success');
       }
     } catch (err: any) {
       console.error('Lỗi tinh chỉnh báo cáo:', err);
-      showToast(err.message || 'Không thể tinh chỉnh phân tích', 'error');
+      showToast(err.message || 'Không thể tinh chỉnh báo cáo', 'error');
+      setRefinementChat(prev => [...prev, {
+        id: `ai-err-${Date.now()}`,
+        sender: 'assistant',
+        text: `⚠️ Gặp sự cố khi tinh chỉnh: ${err.message || 'Lỗi không xác định'}. Vui lòng thử lại với yêu cầu ngắn gọn hơn.`,
+        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+      }]);
     } finally {
       setIsRefining(false);
-      setIsGeneratingAi(false);
+    }
+  };
+
+  const handleSelectVersion = (index: number) => {
+    if (reportVersions[index]) {
+      const target = reportVersions[index].report;
+      setGeneratedReport(target);
+      if (viewingSavedReport) {
+        setViewingSavedReport(target);
+      }
+      setActiveVersionIndex(index);
+      showToast(`Đã chuyển về Phiên bản ${reportVersions[index].version}: "${reportVersions[index].label}"`, 'info');
     }
   };
 
@@ -434,6 +516,19 @@ export const AnalyticsView: React.FC = () => {
       try { reportData.sql = JSON.parse(reportData.sql); } catch (e) {}
     }
     setViewingSavedReport(reportData);
+    const viewTime = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    setReportVersions([
+      { version: 1, label: 'Bản lưu trữ', report: reportData, time: viewTime }
+    ]);
+    setActiveVersionIndex(0);
+    setRefinementChat([
+      {
+        id: 'init-saved-msg',
+        sender: 'assistant',
+        text: `Em đang hiển thị báo cáo đã lưu "${report.title}". Bạn có thể tiếp tục góp ý để em tinh chỉnh số liệu, đổi biểu đồ hoặc bổ sung khuyến nghị mới!`,
+        time: viewTime
+      }
+    ]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     showToast(`Đang hiển thị bản trực quan: ${report.title}`, 'info');
   };
@@ -1313,6 +1408,57 @@ export const AnalyticsView: React.FC = () => {
               </p>
             )}
           </div>
+        </div>
+
+        {/* Góp ý chỉnh sửa báo cáo */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+          <div className="mb-3">
+            <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
+              Góp ý chỉnh sửa báo cáo
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Nhập yêu cầu nếu bạn muốn AI điều chỉnh lại số liệu, loại biểu đồ hoặc nội dung báo cáo.
+            </p>
+          </div>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleFollowUpRefine(undefined, rep);
+            }}
+            className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5"
+          >
+            <input
+              type="text"
+              placeholder="VD: Đổi biểu đồ sang tròn donut, chỉ lọc chi nhánh TP.HCM, viết khuyến nghị chi tiết hơn..."
+              value={followUpPrompt}
+              onChange={(e) => setFollowUpPrompt(e.target.value)}
+              disabled={isRefining || isGeneratingAi}
+              className="flex-1 text-xs px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-slate-400 outline-none text-slate-800 placeholder:text-slate-400 transition-colors"
+            />
+            <button
+              type="submit"
+              disabled={isRefining || isGeneratingAi || !followUpPrompt.trim()}
+              className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+            >
+              {isRefining ? (
+                <>
+                  <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Đang sửa báo cáo...</span>
+                </>
+              ) : (
+                <>
+                  <span>Gửi góp ý</span>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </>
+              )}
+            </button>
+          </form>
         </div>
 
         {/* Footnote */}
