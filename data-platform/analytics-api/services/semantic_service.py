@@ -442,30 +442,29 @@ class SemanticService:
         if not focused_set:
             focused_set = {"silver.don_hang", "silver.chi_nhanh"}
 
-        # Only serialize physical columns for focused tables to keep prompt lean (< 3000 tokens)
+        # Only serialize physical columns for top 4 focused tables to keep prompt strictly < 2000 tokens
+        focused_tables = [t for t in resolution.get("tables", []) if t in table_map][:4]
+        if not focused_tables:
+            focused_tables = [t for t in ["silver.don_hang", "silver.chi_tiet_don_hang", "silver.san_pham", "silver.chi_nhanh"] if t in table_map]
+
         physical = []
-        for table_name in [t for t in resolution.get("tables", []) if t in table_map]:
+        for table_name in focused_tables:
             table = table_map.get(table_name)
             if not table:
                 continue
             cat_table = self.silver_tables.get(table_name, {})
-            cat_cols = cat_table.get("columns", {})
             physical.append({
                 "qualified_name": table_name,
                 "business_name": cat_table.get("business_name", table_name),
-                "description": cat_table.get("description", table.get("comment", "")),
                 "columns": [
                     {
                         "name": column["name"],
                         "data_type": column.get("data_type", "text"),
-                        "description": cat_cols.get(column["name"], {}).get("description", "")
-                        if isinstance(cat_cols.get(column["name"]), dict)
-                        else "",
                     }
                     for column in table["columns"]
                     if not column.get("sensitive")
                 ],
-                "relationships": cat_table.get("joins") or table.get("relationships", []),
+                "relationships": (cat_table.get("joins") or table.get("relationships", []))[:2],
             })
 
         # Build comprehensive policy mapping for all Silver tables
@@ -474,18 +473,15 @@ class SemanticService:
             if tname.startswith("silver."):
                 full_policy[tname] = {col["name"] for col in tdata.get("columns", []) if not col.get("sensitive")}
 
-        # Compact reference for other silver tables including key columns and joins
+        # Compact reference for other silver tables (qualified name and key column)
         other_tables = {}
         for tname, tinfo in self.silver_tables.items():
-            if tname not in focused_set:
-                cols = [cname for cname in (tinfo.get("columns") or {}).keys() if cname not in ("mat_khau", "email", "so_dien_thoai", "sdt", "token")][:8]
-                joins = [f"{j['to_table']} ON {j['on']}" for j in (tinfo.get("joins") or [])][:2]
-                cols_str = ", ".join(cols)
-                joins_str = f" [JOIN: {joins[0]}]" if joins else ""
-                other_tables[tname] = f"{tinfo.get('business_name', tname)}: ({cols_str}){joins_str}"
+            if tname not in focused_tables:
+                p_key = list((tinfo.get("columns") or {}).keys())[:3]
+                other_tables[tname] = f"{tinfo.get('business_name', tname)}: ({', '.join(p_key)})"
 
-        # Retrieve 3 most relevant few-shot SQL examples
-        few_shots = self.retrieve_few_shots(prompt, top_k=3, intent=resolution.get("intent")) if prompt else []
+        # Retrieve 2 most relevant few-shot SQL examples
+        few_shots = self.retrieve_few_shots(prompt, top_k=2, intent=resolution.get("intent")) if prompt else []
         query_context = resolution.get("query_context") or self.extract_query_context(prompt)
 
         return {

@@ -271,7 +271,17 @@ def _cached(name: str, ttl: int, loader: Callable[[], Dict[str, Any]], force: bo
 
 
 def get_local_metadata(force: bool = False) -> Dict[str, Any]:
-    return _cached("local", LOCAL_TTL_SECONDS, lambda: _introspect(get_db_conn), force)
+    meta = _cached("local", LOCAL_TTL_SECONDS, lambda: _introspect(get_db_conn), force)
+    table_map = meta.get("table_map", {})
+    # Self-healing: If silver views are missing but source tables exist, initialize views and refresh cache
+    if "silver.don_hang" not in table_map and "orders.don_hang" in table_map:
+        try:
+            from db import init_warehouse_views
+            if init_warehouse_views():
+                meta = _cached("local", LOCAL_TTL_SECONDS, lambda: _introspect(get_db_conn), force=True)
+        except Exception:
+            pass
+    return meta
 
 
 def get_source_metadata(force: bool = False) -> Dict[str, Any]:

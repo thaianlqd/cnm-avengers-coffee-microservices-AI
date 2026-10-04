@@ -2332,6 +2332,189 @@
         "feedback"
       ],
       "sql": "SELECT co_so_ma AS \"Chi Nhánh\",\n       COUNT(*) AS \"Số Lượt Khảo Sát\",\n       trang_thai_voucher AS \"Trạng Thái Voucher\"\nFROM silver.khao_sat_phan_hoi\nGROUP BY co_so_ma, trang_thai_voucher\nORDER BY \"Số Lượt Khảo Sát\" DESC;"
+    },
+    {
+      "question": "Chi nhánh nào có nhiều sản phẩm dưới mức cảnh báo tồn kho nhất?",
+      "intent": "inventory",
+      "tags": [
+        "inventory",
+        "stores",
+        "ranking",
+        "warning"
+      ],
+      "sql": "SELECT COALESCE(cn.ten_chi_nhanh, tk.co_so_ma) AS \"Chi Nhánh\",\n       COALESCE(cn.thanh_pho, 'Toàn quốc') AS \"Thành Phố\",\n       COUNT(*) FILTER (WHERE tk.so_luong_ton <= tk.muc_canh_bao) AS \"Số Món Sắp Hết\",\n       SUM(tk.so_luong_ton) AS \"Tổng Tồn Kho Hiện Tại\"\nFROM silver.ton_kho_san_pham tk\nLEFT JOIN silver.chi_nhanh cn ON tk.co_so_ma = cn.ma_chi_nhanh\nWHERE tk.dang_kinh_doanh = true\nGROUP BY COALESCE(cn.ten_chi_nhanh, tk.co_so_ma), cn.thanh_pho\nORDER BY \"Số Món Sắp Hết\" DESC;"
+    },
+    {
+      "question": "Top 10 món sắp hết hàng cần nhập bổ sung tại TP Hồ Chí Minh",
+      "intent": "inventory",
+      "tags": [
+        "inventory",
+        "geographic",
+        "top_n",
+        "warning"
+      ],
+      "sql": "SELECT sp.ten_san_pham AS \"Tên Sản Phẩm\",\n       cn.ten_chi_nhanh AS \"Chi Nhánh\",\n       tk.so_luong_ton AS \"Số Lượng Tồn\",\n       tk.muc_canh_bao AS \"Mức Cảnh Báo\",\n       (tk.muc_canh_bao - tk.so_luong_ton) AS \"Số Lượng Thiếu Hụt\"\nFROM silver.ton_kho_san_pham tk\nJOIN silver.san_pham sp ON tk.ma_san_pham = sp.ma_san_pham\nJOIN silver.chi_nhanh cn ON tk.co_so_ma = cn.ma_chi_nhanh\nWHERE cn.thanh_pho ILIKE '%Hồ Chí Minh%'\n  AND tk.so_luong_ton <= tk.muc_canh_bao\n  AND tk.dang_kinh_doanh = true\nORDER BY \"Số Lượng Thiếu Hụt\" DESC\nLIMIT 10;"
+    },
+    {
+      "question": "Tỷ lệ đi trễ của nhân viên theo từng chi nhánh",
+      "intent": "staff_shifts",
+      "tags": [
+        "staff_shifts",
+        "stores",
+        "ranking"
+      ],
+      "sql": "SELECT COALESCE(cn.ten_chi_nhanh, cl.co_so_ma) AS \"Chi Nhánh\",\n       COUNT(*) AS \"Tổng Số Ca Làm\",\n       COUNT(*) FILTER (WHERE cl.trang_thai_cham_cong = 'DI_TRE') AS \"Số Ca Đi Trễ\",\n       ROUND(100.0 * COUNT(*) FILTER (WHERE cl.trang_thai_cham_cong = 'DI_TRE') / NULLIF(COUNT(*), 0), 1) AS \"Tỷ Lệ Đi Trễ (%)\"\nFROM silver.ca_lam_viec_nhan_vien cl\nLEFT JOIN silver.chi_nhanh cn ON cl.co_so_ma = cn.ma_chi_nhanh\nGROUP BY COALESCE(cn.ten_chi_nhanh, cl.co_so_ma)\nORDER BY \"Tỷ Lệ Đi Trễ (%)\" DESC;"
+    },
+    {
+      "question": "Danh sách nhân viên có nhiều ca đi trễ nhất",
+      "intent": "staff_shifts",
+      "tags": [
+        "staff_shifts",
+        "top_n",
+        "ranking"
+      ],
+      "sql": "SELECT cl.staff_name AS \"Tên Nhân Viên\",\n       COALESCE(cn.ten_chi_nhanh, cl.co_so_ma) AS \"Chi Nhánh\",\n       COUNT(*) AS \"Tổng Ca Làm\",\n       COUNT(*) FILTER (WHERE cl.trang_thai_cham_cong = 'DI_TRE') AS \"Số Ca Đi Trễ\",\n       COUNT(*) FILTER (WHERE cl.trang_thai_cham_cong = 'DUNG_GIO') AS \"Số Ca Đúng Giờ\"\nFROM silver.ca_lam_viec_nhan_vien cl\nLEFT JOIN silver.chi_nhanh cn ON cl.co_so_ma = cn.ma_chi_nhanh\nGROUP BY cl.staff_name, COALESCE(cn.ten_chi_nhanh, cl.co_so_ma)\nHAVING COUNT(*) FILTER (WHERE cl.trang_thai_cham_cong = 'DI_TRE') > 0\nORDER BY \"Số Ca Đi Trễ\" DESC\nLIMIT 10;"
+    },
+    {
+      "question": "Các ca thu ngân bị chênh lệch thiếu tiền két",
+      "intent": "cashier_reconciliation",
+      "tags": [
+        "cashier_reconciliation",
+        "warning",
+        "finance"
+      ],
+      "sql": "SELECT COALESCE(cn.ten_chi_nhanh, ds.co_so_ma) AS \"Chi Nhánh\",\n       ds.ten_nhan_vien AS \"Thu Ngân\",\n       ds.thoi_gian_bat_dau::date::text AS \"Ngày\",\n       ds.tien_mat_he_thong AS \"Tiền Mặt Hệ Thống (VNĐ)\",\n       ds.tien_cuoi_ca AS \"Tiền Thực Tế (VNĐ)\",\n       ds.chenh_lech AS \"Chênh Lệch Thiếu (VNĐ)\",\n       ds.ghi_chu AS \"Ghi Chú Giải Trình\"\nFROM silver.ca_doi_soat ds\nLEFT JOIN silver.chi_nhanh cn ON ds.co_so_ma = cn.ma_chi_nhanh\nWHERE ds.chenh_lech < 0\nORDER BY ds.chenh_lech ASC\nLIMIT 15;"
+    },
+    {
+      "question": "Tổng chênh lệch quỹ tiền mặt đối soát theo chi nhánh",
+      "intent": "cashier_reconciliation",
+      "tags": [
+        "cashier_reconciliation",
+        "stores",
+        "aggregation"
+      ],
+      "sql": "SELECT COALESCE(cn.ten_chi_nhanh, ds.co_so_ma) AS \"Chi Nhánh\",\n       COUNT(*) AS \"Tổng Số Ca Đối Soát\",\n       SUM(ds.tien_mat_he_thong) AS \"Tổng Doanh Thu Tiền Mặt (VNĐ)\",\n       SUM(ds.chenh_lech) AS \"Tổng Chênh Lệch (VNĐ)\",\n       COUNT(*) FILTER (WHERE ds.chenh_lech < 0) AS \"Số Ca Thất Thoát\"\nFROM silver.ca_doi_soat ds\nLEFT JOIN silver.chi_nhanh cn ON ds.co_so_ma = cn.ma_chi_nhanh\nGROUP BY COALESCE(cn.ten_chi_nhanh, ds.co_so_ma)\nORDER BY \"Tổng Chênh Lệch (VNĐ)\" ASC;"
+    },
+    {
+      "question": "Top 5 shipper có nhiều chuyến giao thành công nhất và điểm đánh giá",
+      "intent": "delivery",
+      "tags": [
+        "delivery",
+        "top_n",
+        "ranking"
+      ],
+      "sql": "SELECT s.ho_ten AS \"Tên Shipper\",\n       s.so_dien_thoai AS \"Số Điện Thoại\",\n       s.bien_so_xe AS \"Biển Số Xe\",\n       s.loai_xe AS \"Phương Tiện\",\n       s.tong_chuyen_giao AS \"Tổng Chuyến Giao\",\n       s.diem_danh_gia AS \"Điểm Đánh Giá (Sao)\"\nFROM silver.shipper s\nWHERE s.trang_thai = 'ACTIVE'\nORDER BY s.tong_chuyen_giao DESC\nLIMIT 5;"
+    },
+    {
+      "question": "Số chuyến giao hàng và điểm đánh giá trung bình của tài xế theo loại xe",
+      "intent": "delivery",
+      "tags": [
+        "delivery",
+        "breakdown",
+        "aggregation"
+      ],
+      "sql": "SELECT CASE WHEN s.loai_xe = 'MOTORBIKE' THEN 'Xe máy' ELSE 'Ô tô' END AS \"Loại Phương Tiện\",\n       COUNT(*) AS \"Số Lượng Tài Xế\",\n       SUM(s.tong_chuyen_giao) AS \"Tổng Chuyến Giao\",\n       ROUND(AVG(s.diem_danh_gia)::numeric, 2) AS \"Điểm Đánh Giá Trung Bình\"\nFROM silver.shipper s\nGROUP BY s.loai_xe\nORDER BY \"Tổng Chuyến Giao\" DESC;"
+    },
+    {
+      "question": "Top 5 món đồ uống có điểm đánh giá trung bình thấp nhất",
+      "intent": "product_reviews",
+      "tags": [
+        "product_reviews",
+        "products",
+        "rating",
+        "top_n"
+      ],
+      "sql": "SELECT sp.ten_san_pham AS \"Tên Sản Phẩm\",\n       COALESCE(dm.ten_danh_muc, 'Khác') AS \"Danh Mục\",\n       ROUND(AVG(dg.so_sao)::numeric, 2) AS \"Rating Trung Bình\",\n       COUNT(*) AS \"Số Lượt Đánh Giá\"\nFROM silver.danh_gia_san_pham dg\nJOIN silver.san_pham sp ON dg.ma_san_pham = sp.ma_san_pham::text\nLEFT JOIN silver.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc\nGROUP BY sp.ten_san_pham, dm.ten_danh_muc\nHAVING COUNT(*) >= 3\nORDER BY \"Rating Trung Bình\" ASC, \"Số Lượt Đánh Giá\" DESC\nLIMIT 5;"
+    },
+    {
+      "question": "Xếp hạng chi nhánh theo điểm đánh giá phục vụ từ cao xuống thấp",
+      "intent": "store_reviews",
+      "tags": [
+        "store_reviews",
+        "stores",
+        "rating",
+        "ranking"
+      ],
+      "sql": "SELECT cn.ten_chi_nhanh AS \"Chi Nhánh\",\n       cn.thanh_pho AS \"Thành Phố\",\n       ROUND(AVG(dg.so_sao)::numeric, 2) AS \"Điểm Phục Vụ Trung Bình\",\n       COUNT(*) AS \"Số Lượt Đánh Giá\"\nFROM silver.danh_gia_chi_nhanh dg\nJOIN silver.chi_nhanh cn ON dg.ma_chi_nhanh = cn.ma_chi_nhanh\nGROUP BY cn.ten_chi_nhanh, cn.thanh_pho\nORDER BY \"Điểm Phục Vụ Trung Bình\" DESC, \"Số Lượt Đánh Giá\" DESC;"
+    },
+    {
+      "question": "Tỷ lệ hủy đơn hàng theo từng khung giờ trong ngày",
+      "intent": "hourly",
+      "tags": [
+        "hourly",
+        "orders",
+        "cancellation"
+      ],
+      "sql": "SELECT TO_CHAR(d.ngay_tao, 'HH24:00') AS \"Khung Giờ\",\n       COUNT(*) AS \"Tổng Số Đơn\",\n       COUNT(*) FILTER (WHERE d.trang_thai_don_hang = 'HUY_BO') AS \"Số Đơn Hủy\",\n       ROUND(100.0 * COUNT(*) FILTER (WHERE d.trang_thai_don_hang = 'HUY_BO') / NULLIF(COUNT(*), 0), 1) AS \"Tỷ Lệ Hủy (%)\"\nFROM silver.don_hang d\nGROUP BY TO_CHAR(d.ngay_tao, 'HH24:00')\nORDER BY \"Khung Giờ\" ASC;"
+    },
+    {
+      "question": "So sánh doanh thu và số lượng đơn hàng theo phương thức phục vụ",
+      "intent": "orders",
+      "tags": [
+        "orders",
+        "breakdown",
+        "comparison"
+      ],
+      "sql": "SELECT CASE d.loai_don_hang\n           WHEN 'DUNG_TAI_CHO' THEN 'Dùng tại quán'\n           WHEN 'MANG_DI' THEN 'Mang đi (Takeaway)'\n           WHEN 'GIAO_TAN_NOI' THEN 'Giao tận nơi (Delivery)'\n           ELSE d.loai_don_hang\n       END AS \"Hình Thức Đơn\",\n       COUNT(*) AS \"Số Đơn Hàng\",\n       COALESCE(SUM(d.tong_tien), 0) AS \"Doanh Thu (VNĐ)\",\n       ROUND(COALESCE(AVG(d.tong_tien), 0), 0) AS \"AOV (VNĐ/Đơn)\"\nFROM silver.don_hang d\nWHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\nGROUP BY d.loai_don_hang\nORDER BY \"Doanh Thu (VNĐ)\" DESC;"
+    },
+    {
+      "question": "Top các mã voucher mang lại doanh thu cao nhất và tổng số tiền đã giảm",
+      "intent": "promotions",
+      "tags": [
+        "promotions",
+        "top_n",
+        "ranking"
+      ],
+      "sql": "SELECT COALESCE(km.ten_khuyen_mai, d.ma_voucher) AS \"Chương Trình Khuyến Mãi\",\n       d.ma_voucher AS \"Mã Voucher\",\n       COUNT(*) AS \"Số Đơn Áp Dụng\",\n       COALESCE(SUM(d.so_tien_giam), 0) AS \"Tổng Tiền Giảm (VNĐ)\",\n       COALESCE(SUM(d.tong_tien), 0) AS \"Doanh Thu Mang Lại (VNĐ)\"\nFROM silver.don_hang d\nLEFT JOIN silver.khuyen_mai km ON d.ma_voucher = km.ma_khuyen_mai\nWHERE d.ma_voucher IS NOT NULL\n  AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\nGROUP BY COALESCE(km.ten_khuyen_mai, d.ma_voucher), d.ma_voucher\nORDER BY \"Doanh Thu Mang Lại (VNĐ)\" DESC\nLIMIT 10;"
+    },
+    {
+      "question": "Top 10 khách hàng thân thiết có số điểm tích lũy beans cao nhất",
+      "intent": "customers",
+      "tags": [
+        "customers",
+        "loyalty",
+        "top_n"
+      ],
+      "sql": "SELECT nd.ho_ten AS \"Họ Tên Khách Hàng\",\n       nd.so_dien_thoai AS \"Số Điện Thoại\",\n       nd.diem_tich_luy AS \"Điểm Beans\",\n       nd.hang_thanh_vien AS \"Hạng Thành Viên\",\n       COUNT(d.ma_don_hang) AS \"Tổng Số Đơn Đã Đặt\",\n       COALESCE(SUM(d.tong_tien), 0) AS \"Tổng Chi Tiêu (VNĐ)\"\nFROM silver.nguoi_dung nd\nLEFT JOIN silver.don_hang d ON nd.ma_nguoi_dung = d.ma_nguoi_dung AND d.trang_thai_don_hang = 'HOAN_THANH'\nWHERE nd.vai_tro = 'CUSTOMER'\nGROUP BY nd.ho_ten, nd.so_dien_thoai, nd.diem_tich_luy, nd.hang_thanh_vien\nORDER BY nd.diem_tich_luy DESC\nLIMIT 10;"
+    },
+    {
+      "question": "Top 10 món đồ uống được khách hàng thả tim yêu thích nhiều nhất",
+      "intent": "wishlist_favorites",
+      "tags": [
+        "wishlist_favorites",
+        "products",
+        "top_n"
+      ],
+      "sql": "SELECT sp.ten_san_pham AS \"Tên Sản Phẩm\",\n       COALESCE(dm.ten_danh_muc, 'Khác') AS \"Danh Mục\",\n       COUNT(*) AS \"Số Lượt Yêu Thích\"\nFROM silver.yeu_thich_san_pham yt\nJOIN silver.san_pham sp ON yt.ma_san_pham = sp.ma_san_pham::text\nLEFT JOIN silver.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc\nGROUP BY sp.ten_san_pham, dm.ten_danh_muc\nORDER BY \"Số Lượt Yêu Thích\" DESC\nLIMIT 10;"
+    },
+    {
+      "question": "Thống kê số lượng khảo sát ý kiến khách hàng theo từng chi nhánh",
+      "intent": "customer_surveys",
+      "tags": [
+        "customer_surveys",
+        "stores",
+        "aggregation"
+      ],
+      "sql": "SELECT COALESCE(cn.ten_chi_nhanh, ks.co_so_ma) AS \"Chi Nhánh\",\n       cn.thanh_pho AS \"Thành Phố\",\n       COUNT(*) AS \"Số Lượt Phản Hồi\",\n       COUNT(*) FILTER (WHERE ks.trang_thai_voucher = 'DA_CAP') AS \"Số Voucher Đã Cấp\"\nFROM silver.khao_sat_phan_hoi ks\nLEFT JOIN silver.chi_nhanh cn ON ks.co_so_ma = cn.ma_chi_nhanh\nGROUP BY COALESCE(cn.ten_chi_nhanh, ks.co_so_ma), cn.thanh_pho\nORDER BY \"Số Lượt Phản Hồi\" DESC;"
+    },
+    {
+      "question": "Doanh thu và số lượng đơn hàng của từng chi nhánh tại TP Hồ Chí Minh",
+      "intent": "stores",
+      "tags": [
+        "stores",
+        "geographic",
+        "ranking"
+      ],
+      "sql": "SELECT cn.ten_chi_nhanh AS \"Tên Chi Nhánh\",\n       cn.dia_chi AS \"Địa Chỉ\",\n       COUNT(d.ma_don_hang) AS \"Tổng Số Đơn\",\n       COALESCE(SUM(d.tong_tien), 0) AS \"Doanh Thu (VNĐ)\",\n       ROUND(COALESCE(AVG(d.tong_tien), 0), 0) AS \"AOV (VNĐ)\"\nFROM silver.chi_nhanh cn\nLEFT JOIN silver.don_hang d ON cn.ma_chi_nhanh = d.co_so_ma AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\nWHERE cn.thanh_pho ILIKE '%Hồ Chí Minh%'\nGROUP BY cn.ten_chi_nhanh, cn.dia_chi\nORDER BY \"Doanh Thu (VNĐ)\" DESC;"
+    },
+    {
+      "question": "Tỷ lệ thanh toán qua các cổng thanh toán và tiền mặt",
+      "intent": "payments",
+      "tags": [
+        "payments",
+        "breakdown"
+      ],
+      "sql": "SELECT CASE d.phuong_thuc_thanh_toan\n           WHEN 'TIEN_MAT' THEN 'Tiền mặt'\n           WHEN 'VNPAY' THEN 'Ví VNPay'\n           WHEN 'MOMO' THEN 'Ví MoMo'\n           WHEN 'ZALOPAY' THEN 'Ví ZaloPay'\n           WHEN 'THE_NGAN_HANG' THEN 'Thẻ ngân hàng'\n           ELSE COALESCE(d.phuong_thuc_thanh_toan, 'Khác')\n       END AS \"Phương Thức\",\n       COUNT(*) AS \"Số Giao Dịch\",\n       COALESCE(SUM(d.tong_tien), 0) AS \"Tổng Tiền (VNĐ)\",\n       ROUND(100.0 * COUNT(*) / NULLIF(SUM(COUNT(*)) OVER (), 0), 1) AS \"Tỷ Trọng (%)\"\nFROM silver.don_hang d\nWHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')\nGROUP BY d.phuong_thuc_thanh_toan\nORDER BY \"Tổng Tiền (VNĐ)\" DESC;"
     }
   ],
   "data_samples": {
