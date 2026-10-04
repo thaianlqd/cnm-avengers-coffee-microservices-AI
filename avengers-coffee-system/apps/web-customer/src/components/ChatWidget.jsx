@@ -5,6 +5,8 @@ import { apiClient } from '../lib/apiClient';
 import { accountId, getGuestSessionId, chatStorageKey, cartRequestConfig } from '../lib/guestSession';
 import { openChatProductDetail, addChatProduct, branchDistanceLabel, paymentCardRows, chatLoadingLabel, refreshWalletAfterCheckout, structuredLegacyCards, pollQrPaymentStatus, latestPendingQrPayment, qrPaymentFromCheckout } from './chatWidgetActions';
 import { PENDING_AGENT_TURN_KEY, readPendingAgentTurn, matchesAgentTurn, selectAgentTurn, clearCompletedAgentTurn, agentTurnFailure } from './agentTurn';
+import WalletTopupCard from './WalletTopupCard';
+import { walletTopupRequest, walletAmountError, createWalletTopup, pollWalletTopup, latestWalletTopup, latestWalletTopupOffer, latestWalletTopupReady, refreshWalletTopupOffer } from './walletTopup';
 import { CheckCircleIcon, CheckIcon } from '@heroicons/react/24/solid';
 
 // ─── Utilities & Formatters ──────────────────────────────────────────────────
@@ -177,7 +179,7 @@ function StaffAvatar({ name, size = 32 }) {
 }
 
 // ─── Rich Card Components ─────────────────────────────────────────────────────
-function ProductCard({ p, onAdd, resolvePrice }) {
+function ProductCard({ p, onAdd, resolvePrice, grouped = false }) {
   const [hover, setHover] = useState(false);
   const seedPrice = Number(p.gia_ban ?? p.final_price ?? p.price);
   const [canonicalPrice, setCanonicalPrice] = useState(Number.isFinite(seedPrice) && seedPrice > 0 ? seedPrice : null);
@@ -234,7 +236,11 @@ function ProductCard({ p, onAdd, resolvePrice }) {
         <p style={{ margin: '3px 0 0', fontSize: '0.82rem', fontWeight: 800, color: '#F08080' }}>
           {canonicalPrice != null ? fmtVND(canonicalPrice) : priceLoading ? 'Đang kiểm tra giá…' : priceUnavailable ? 'Chưa xác minh được giá' : 'Đang tải giá…'}
         </p>
-        {(p.danh_muc || p.category) && <p style={{ margin: '2px 0 0', fontSize: '0.68rem', color: '#A0AEC0', fontWeight: 600 }}>{p.danh_muc || p.category}</p>}
+        {(p.danh_muc || p.category) && <p style={{ margin: '2px 0 0', fontSize: '0.68rem', color: '#A0AEC0', fontWeight: 600 }}>
+          {p.danh_muc || p.category}
+          {grouped && p.group_display_index && ['food', 'drink'].includes(p.menu_bucket) &&
+            ` · ${p.menu_bucket === 'food' ? 'Bánh' : 'Nước'} số ${p.group_display_index}`}
+        </p>}
         {productId != null && <span style={{ fontSize: '0.66rem', color: '#B22830' }}>Xem chi tiết →</span>}
       </div>
       <button
@@ -247,6 +253,23 @@ function ProductCard({ p, onAdd, resolvePrice }) {
       >+</button>
     </div>
   );
+}
+
+function ProductCards({ products, onAdd, resolvePrice }) {
+  const groups = new Map();
+  products.forEach((product) => {
+    const bucket = product.menu_bucket || 'unknown';
+    if (!groups.has(bucket)) groups.set(bucket, []);
+    groups.get(bucket).push(product);
+  });
+  const labels = { food: 'Bánh & đồ ăn', drink: 'Đồ uống', topping: 'Topping', unknown: 'Các món khác' };
+  const grouped = groups.size > 1;
+  return [...groups].map(([bucket, rows]) => (
+    <div key={bucket} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {grouped && <p style={{ margin: '4px 0 2px', fontSize: '0.78rem', fontWeight: 700, color: '#2D3748' }}>{labels[bucket] || labels.unknown}</p>}
+      {rows.map((product, index) => <ProductCard key={product.product_id || index} p={product} onAdd={onAdd} resolvePrice={resolvePrice} grouped={grouped} />)}
+    </div>
+  ));
 }
 
 function OrderCard({ o }) {
@@ -663,6 +686,11 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
   const pendingAgentTurnRef = useRef(readPendingAgentTurn(sessionStorage));
 
   const walletUserId = user?.ma_nguoi_dung || user?.maNguoiDung || user?.id || null;
+  const walletTopupOffer = latestWalletTopupOffer(messages, walletUserId);
+  const pendingWalletTopup = latestWalletTopup(messages, walletUserId);
+  const walletTopupReady = latestWalletTopupReady(messages, walletUserId);
+  const [walletTopupBusy, setWalletTopupBusy] = useState(false);
+  const walletTopupBusyRef = useRef(false);
   const userName = user?.ho_ten || user?.hoTen || user?.email || 'Khách';
   
   useEffect(() => {
@@ -744,6 +772,59 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
     setMessages((prev) => [...prev, msg]);
     return msg;
   }, [userName]);
+
+  const startWalletTopup = useCallback(async (amount) => {
+    if (walletTopupBusyRef.current || pendingWalletTopup) return;
+    const error = walletAmountError(amount);
+    if (!walletUserId || error) {
+      addAIMsg(error || 'Bạn đăng nhập để nạp ví nhé.');
+      return;
+    }
+    walletTopupBusyRef.current = true;
+    setWalletTopupBusy(true);
+    try {
+      const payment = await createWalletTopup(apiClient, walletUserId, amount);
+      addAIMsg(`Mình đã tạo yêu cầu nạp **${fmtVND(amount)}**. Bạn mở VNPAY bên dưới để thanh toán; mình sẽ kiểm tra giao dịch khi bạn quay lại chat.`, { _walletTopup: payment, _walletTopupReady: false });
+    } catch (error) {
+      addAIMsg(error?.response?.data?.message || error.message || 'Chưa tạo được yêu cầu nạp ví. Bạn thử lại nhé.');
+    } finally {
+      walletTopupBusyRef.current = false;
+      setWalletTopupBusy(false);
+      scrollBottom();
+    }
+  }, [pendingWalletTopup, walletUserId, addAIMsg, scrollBottom]);
+
+  useEffect(() => {
+    if (!pendingWalletTopup || !walletUserId || !isOpen) return undefined;
+    let active = true;
+    let busy = false;
+    const check = async () => {
+      if (!active || busy || document.visibilityState === 'hidden') return;
+      busy = true;
+      try {
+        const result = await pollWalletTopup(apiClient, pendingWalletTopup, walletUserId);
+        if (!active || result.status === 'pending') return;
+        const extras = { _walletTopupResolved: pendingWalletTopup.transactionId, _walletTopupReady: false,
+          _walletTopupOffer: walletTopupOffer };
+        if (result.status === 'paid') {
+          await queryClient.invalidateQueries({ queryKey: ['userWallet', walletUserId] });
+          if (!active) return;
+          extras._walletTopupReady = { userId: walletUserId, resumeMessage: walletTopupOffer?.resume_message || 'Tôi chọn Ví Avengers' };
+          extras._walletTopupOffer = refreshWalletTopupOffer(walletTopupOffer, result.balance);
+          addAIMsg(`Đã nạp **${fmtVND(pendingWalletTopup.amount)}** vào ví. Số dư hiện tại: **${fmtVND(result.balance)}**. Bạn bấm tiếp tục để kiểm tra lại tổng đơn và thanh toán bằng ví nhé.`, extras);
+        } else {
+          addAIMsg(result.status === 'failed' ? 'Giao dịch nạp ví đã bị hủy hoặc thất bại. Số dư chưa được cộng; bạn có thể nạp lại hoặc chọn phương thức khác.'
+            : 'Liên kết nạp ví đã hết hạn. Bạn kiểm tra lịch sử ví và có thể tạo yêu cầu nạp mới.', extras);
+        }
+        scrollBottom();
+      } catch { /* Only a matching server transaction can confirm a top-up. */ }
+      finally { busy = false; }
+    };
+    check();
+    const timer = window.setInterval(check, 3000);
+    window.addEventListener('focus', check);
+    return () => { active = false; window.clearInterval(timer); window.removeEventListener('focus', check); };
+  }, [pendingWalletTopup, walletUserId, walletTopupOffer, isOpen, queryClient, addAIMsg, scrollBottom]);
 
   // Socket for staff chat
   useEffect(() => {
@@ -883,7 +964,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
         message: text,
         selected_product_id: selectedProductId || null,
         history,
-      }, cartRequestConfig(effectiveUserId));
+      }, { ...cartRequestConfig(effectiveUserId), timeout: 120000 });
     } catch (error) {
       const code = error?.response?.data?.detail?.code;
       if (previousTurn && previousTurn.id !== turn.id &&
@@ -930,6 +1011,16 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
         action_id: pendingOrder.actionId,
       }, cartRequestConfig(effectiveUserId));
       const result = response?.data || response;
+      if (result?.status === 'insufficient_wallet') {
+        setPendingOrder(null);
+        addAIMsg(result.message, {
+          _paymentOptions: result.payment_options || [],
+          _walletTopupOffer: result.wallet_topup ? { ...result.wallet_topup, userId: walletUserId } : null,
+          _walletTopupReady: false,
+        });
+        scrollBottom();
+        return;
+      }
       if (result?.status !== 'success' && result?.status !== 'already_processed') {
         throw new Error(result?.message || 'Đơn hàng chưa được tạo.');
       }
@@ -951,6 +1042,8 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
         ? `Mã đơn: **${result.order_id}**. Bạn vui lòng quét mã QR chuyển khoản bên dưới để thanh toán nhé. Sau khi hệ thống nhận được tiền, đơn hàng sẽ tự động được xác nhận ngay!`
         : (awaitsOnlinePayment ? 'Đơn hàng đã được tạo và đang chờ thanh toán.' : '🎉 Đơn hàng đã được ghi nhận.');
       addAIMsg(`${checkoutLeadText}${!isQr ? orderId : ''} Tổng cộng: **${fmtVND(result?.total_price ?? pendingOrder.total)}**${walletLine}`, {
+        _walletTopupOffer: null,
+        _walletTopupReady: false,
         _paymentUrl: result?.redirect_url || null,
         _paymentLabel: result?.redirect_url ? 'Tiếp tục thanh toán VNPAY' : null,
         _qrPayment: qrPayment,
@@ -1066,6 +1159,8 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
         if (agentReply) addAIMsg(agentReply, {
           _quickReplies: [],
           _paymentOptions: Array.isArray(agentData?.ui_payload?.payment_options) ? agentData.ui_payload.payment_options : [],
+          _walletTopupOffer: agentData?.ui_payload?.wallet_topup ? { ...agentData.ui_payload.wallet_topup, userId: walletUserId } : null,
+          _walletTopupReady: false,
         });
         finishTurn();
         return;
@@ -1099,6 +1194,8 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
           _stores: Array.isArray(payload.branches) ? payload.branches : [],
           _vouchers: !confirmed && Array.isArray(payload.vouchers) ? payload.vouchers : [],
           _paymentOptions: Array.isArray(payload.payment_options) ? payload.payment_options : [],
+          _walletTopupOffer: payload.wallet_topup ? { ...payload.wallet_topup, userId: walletUserId } : null,
+          _walletTopupReady: false,
           _qrPayment: textQrPayment,
           _loginAction: payload.login_action,
           _quickReplies: QUICK_ACTIONS.slice(0, 3),
@@ -1200,6 +1297,18 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
     setSending(true);
 
     if (chatMode === 'AI') {
+      const topup = !pendingAgentTurnRef.current && walletTopupRequest(text, walletTopupOffer);
+      if (topup) {
+        addUserMsg(text);
+        if (overrideText === undefined) setInputText('');
+        try {
+          if (pendingWalletTopup) addAIMsg('Bạn đang có yêu cầu nạp ví chờ thanh toán. Mở liên kết VNPAY bên dưới để hoàn tất nhé.');
+          else if (topup.error) addAIMsg(topup.error);
+          else if (topup.amount == null) addAIMsg('Bạn chọn mức nạp gợi ý hoặc nhập số tiền trong ô nạp ví bên dưới nhé.');
+          else await startWalletTopup(topup.amount);
+        } finally { setSending(false); scrollBottom(); }
+        return;
+      }
       const retry = matchesAgentTurn(pendingAgentTurnRef.current, {
         text, selectedProductId, sessionId: effectiveUserId, conversationId: aiConversationId,
       });
@@ -1258,7 +1367,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
         setSending(false);
       }
     }
-  }, [inputText, sending, chatMode, conversation, replyTo, effectiveUserId, aiConversationId, messages, userName, addUserMsg, scrollBottom, processAIMessage, pendingOrder]);
+  }, [inputText, sending, chatMode, conversation, replyTo, effectiveUserId, aiConversationId, messages, userName, addUserMsg, addAIMsg, scrollBottom, processAIMessage, pendingOrder, walletTopupOffer, pendingWalletTopup, startWalletTopup]);
 
   const addCardProduct = useCallback((product) => {
     if (!product.product_id || !product.product_name) return;
@@ -1516,7 +1625,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
                       {/* Rich Content Cards */}
                       {msg._products && msg._products.length > 0 && (
                         <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 328, overflowY: 'auto' }}>
-                          {msg._products.map((p, i) => <ProductCard key={i} p={p} onAdd={addCardProduct} resolvePrice={fetchCanonicalProductPrice} />)}
+                          <ProductCards products={msg._products} onAdd={addCardProduct} resolvePrice={fetchCanonicalProductPrice} />
                         </div>
                       )}
                       {msg._orders && msg._orders.length > 0 && (
@@ -1564,6 +1673,11 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
                 </div>
               );
             })}
+
+            {chatMode === 'AI' && walletUserId && (walletTopupOffer || pendingWalletTopup || walletTopupReady) && (
+              <WalletTopupCard offer={walletTopupOffer} payment={pendingWalletTopup} busy={walletTopupBusy || sending}
+                ready={walletTopupReady} onCreate={startWalletTopup} onContinue={() => sendMessage(walletTopupReady.resumeMessage)} />
+            )}
 
             {pendingOrder && (
               <div style={{ padding: '10px 14px', background: '#FFF', borderRadius: 12, border: '1px solid #F0808050' }}>

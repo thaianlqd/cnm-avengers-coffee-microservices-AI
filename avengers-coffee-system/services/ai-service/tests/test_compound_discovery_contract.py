@@ -85,9 +85,9 @@ def rows(count=20):
 
 
 def test_parallel_extrema_two_requests_one_round(runtime, caplog):
-    runtime.provider.steps = [calls(*extrema()), final(['103', '101'])]
+    runtime.provider.steps = [calls(*extrema()), final(['102', '101'])]
     result = runtime.turn('cho tôi xem món cà phê đắt nhất và rẻ nhất đi')
-    assert product_ids(result) == ['103', '101'] and not runtime.writes
+    assert product_ids(result) == ['102', '101'] and not runtime.writes
     m = metrics(caplog)
     assert (m['request_count'], m['tool_round_count'], m['discovery_read_count'], m['discovery_batch_count']) == (2, 1, 2, 2)
     assert m['compound_discovery_detected'] and m['display_selection_source'] == 'llm_validated'

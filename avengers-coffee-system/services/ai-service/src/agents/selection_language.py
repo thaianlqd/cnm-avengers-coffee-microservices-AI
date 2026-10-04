@@ -78,7 +78,11 @@ def _address_like_tail(text: str, end: int, namespace: Optional[str]) -> bool:
     if namespace != "LOCATION_CANDIDATE":
         return False
     tail = re.sub(r"^[\s,!.?]+|[\s,!.?]+$", "", text[end:])
-    return bool(tail and tail not in _TAIL_FILLERS)
+    # Spoken particles following an ordinal are not part of a street name.
+    # Keep this scoped to location references; product/cart grammars retain
+    # their own selection evidence and quantity rules.
+    courtesy = re.fullmatch(r'(?:ay|a|ah|nha|nhe|di|do|voi|ban|b|oi|giup)(?:\s+(?:ay|a|ah|nha|nhe|di|do|voi|ban|b|oi|giup))*', tail)
+    return bool(tail and tail not in _TAIL_FILLERS and not courtesy)
 
 
 def _operation_semantics(text: str, namespace: Optional[str]) -> str:

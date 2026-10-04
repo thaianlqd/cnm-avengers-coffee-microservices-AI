@@ -11,7 +11,8 @@ PREF_FIELDS = ('delivery_type', 'payment_method', 'delivery_address', 'address_c
     'voucher_code', 'voucher_decided', 'voucher_revalidation_required', 'checkout_requested',
     'checkout_action_id', 'checkout_action_expires_at', 'summary_fingerprint', 'flow_stage',
     'location_address', 'summary_amounts', 'completed_order_id', 'stock_conflicts', 'checkout_submission',
-    'voucher_offer_pending', 'pending_product_reference', 'profile_location_offer', 'profile_location_checked_for')
+    'voucher_offer_pending', 'pending_product_reference', 'profile_location_offer', 'profile_location_checked_for',
+    'pending_cart_option_edit')
 LINE_FIELDS = ('cart_item_id', 'line_id', 'product_id', 'product_name', 'quantity', 'size',
                'toppings', 'luong_da', 'do_ngot', 'loai_sua', 'unit_price', 'line_total')
 
@@ -118,7 +119,7 @@ def model_projection(context, emergency=False):
         'checkout': {key: compact(checkout[key]) for key in ('flow_stage', 'delivery_type',
             'payment_method', 'delivery_address', 'address_confirmed', 'voucher_code',
             'voucher_decided', 'voucher_revalidation_required', 'checkout_requested',
-            'profile_location_offer', 'profile_location_checked_for') if key in checkout},
+            'profile_location_offer', 'profile_location_checked_for', 'pending_cart_option_edit') if key in checkout},
         'summary_fresh': state.get('confirmation_fresh', False),
         'checkout_missing': missing_checkout_fields(state),
         'next_step': checkout_next_step(state),
@@ -132,6 +133,8 @@ def model_projection(context, emergency=False):
         'focus': compact(context.get('focus') or {}),
         'selected_product_id': context.get('selected_product_id'),
         'recent': deepcopy(context.get('recent') or [])}
+    for row in model['business']['cart']['items']:
+        row['display_index'] = (context.get('turn_cart_ordinals') or {}).get(str(row.get('cart_item_id')), row['display_index'])
     hard = limit('AI_AGENT_CONTEXT_CHAR_LIMIT', 12000, 2000, 24000)
     budget = min(hard, limit('AI_AGENT_MODEL_CONTEXT_TARGET', 8000, 2000, 24000))
     if emergency:

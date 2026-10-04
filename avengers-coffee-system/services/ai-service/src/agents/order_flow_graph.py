@@ -1987,6 +1987,8 @@ def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
             "status": "retained",
         })
     branch_args = {"location": location, "session_id": ""}
+    if state.get("location_purpose") == "nearby_branches":
+        branch_args["location_purpose"] = "nearby_branches"
     if state.get("force_read_only_location") and (state.get("cart") or {}).get("items"):
         branch_args["cart_items"] = state["cart"]["items"]
     if state.get("resolved_location_candidate"):

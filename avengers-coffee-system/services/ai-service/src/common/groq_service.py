@@ -748,7 +748,10 @@ def groq_agent_chat(
                 if (required_repair_tool and tool_name == required_repair_tool
                         and isinstance(result, dict)
                         and result.get("status") in {"ok", "success", "already_processed"}):
-                    successful_required_repair = True
+                    if result.get('remaining_cart_edits', 0):
+                        required_repair_tool = None
+                    else:
+                        successful_required_repair = True
                 if (guarded and required_repair_tool == 'request_checkout' and tool_name == 'request_checkout'
                         and isinstance(result, dict) and result.get('status') != 'require_confirmation'):
                     # A confirmation recovery gets one summary attempt. Failed

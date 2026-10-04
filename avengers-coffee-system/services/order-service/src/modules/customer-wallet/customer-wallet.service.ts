@@ -41,7 +41,7 @@ export class CustomerWalletService {
   }
 
   async topUp(customerId: string, amount: number, ipAddr = '127.0.0.1') {
-    if (amount < 10000 || amount > 5000000) {
+    if (!Number.isSafeInteger(amount) || amount < 10000 || amount > 5000000) {
       throw new BadRequestException('So tien nap phai tu 10,000 den 5,000,000 VND');
     }
 
@@ -98,12 +98,20 @@ export class CustomerWalletService {
       .join('&');
     const redirectUrl = `${this.VNP_URL}?${urlQuery}&vnp_SecureHash=${signed}`;
 
-    return { message: 'Da khoi tao VNPAY', redirect_url: redirectUrl, success: true };
+    return { message: 'Da khoi tao VNPAY', redirect_url: redirectUrl, success: true,
+      transaction_id: savedTransaction.id, amount, expires_at: new Date(now.getTime() + 20 * 60 * 1000).toISOString() };
+  }
+
+  async getTopUpStatus(customerId: string, transactionId: string) {
+    const transaction = await this.transactionRepo.findOne({
+      where: { id: transactionId, customer_id: customerId, type: 'TOP_UP' },
+    });
+    if (!transaction) throw new NotFoundException('Khong tim thay giao dich nap vi');
+    return { transaction_id: transaction.id, amount: Number(transaction.amount), status: transaction.status };
   }
 
 
-
-  async processTopUpSuccess(txnRef: string) {
+  async processTopUpSuccess(txnRef: string, paidAmount?: number) {
     const txId = txnRef.replace('WT_', '');
     return this.walletRepo.manager.transaction(async manager => {
       const txRepo = manager.getRepository(CustomerWalletTransaction);
@@ -112,6 +120,7 @@ export class CustomerWalletService {
         this.logger.error(`Khong tim thay giao dich nap tien ${txnRef}`);
         return false;
       }
+      if (paidAmount !== undefined && (!Number.isSafeInteger(paidAmount) || Number(transaction.amount) !== paidAmount)) return false;
       if (transaction.status === 'SUCCESS') return true;
 
       const schema = process.env.DB_SCHEMA || 'orders';
@@ -128,6 +137,20 @@ export class CustomerWalletService {
       await manager.save(CustomerWallet, wallet);
       transaction.status = 'SUCCESS';
       await manager.save(CustomerWalletTransaction, transaction);
+      return true;
+    });
+  }
+
+  async processTopUpFailure(txnRef: string, paidAmount: number) {
+    return this.walletRepo.manager.transaction(async manager => {
+      const repo = manager.getRepository(CustomerWalletTransaction);
+      const transaction = await repo.findOne({ where: { id: txnRef.replace('WT_', '') }, lock: { mode: 'pessimistic_write' } });
+      if (!transaction || transaction.type !== 'TOP_UP' || !Number.isSafeInteger(paidAmount)
+          || Number(transaction.amount) !== paidAmount) return false;
+      if (transaction.status !== 'SUCCESS') {
+        transaction.status = 'FAILED';
+        await repo.save(transaction);
+      }
       return true;
     });
   }

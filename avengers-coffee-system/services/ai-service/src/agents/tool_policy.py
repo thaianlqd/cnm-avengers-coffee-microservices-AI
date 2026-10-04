@@ -48,6 +48,19 @@ class GuardedToolGateway:
         self.summary_refreshed = False
         self.options = {}
         self.updated_products = set()
+        self.entry_cart_lines = deepcopy(context['business']['cart'].get('items') or [])
+        self.entry_products = deepcopy(artifacts.visible.get('products') or [])
+        self.entry_focus = deepcopy(artifacts.focus.get('product'))
+        from src.agents.cart_edit_evidence import edit_plan, pending_option_followup
+        artifacts.cart_edit_plan = edit_plan(user_message, self.entry_cart_lines)
+        self.entry_cart_option_edit = (context['business'].get('checkout') or {}).get('pending_cart_option_edit')
+        self.cart_option_followup = pending_option_followup(user_message, self.entry_cart_option_edit, self.entry_cart_lines)
+        if not artifacts.cart_edit_plan and self.cart_option_followup:
+            artifacts.cart_edit_plan = [self.cart_option_followup]
+        artifacts.cart_option_followup = self.cart_option_followup
+        if len(artifacts.cart_edit_plan) > 1:
+            context['turn_cart_ordinals'] = artifacts.turn_cart_ordinals = {
+                str(row['cart_item_id']): row['display_index'] for row in self.entry_cart_lines}
         self.denied_cart_operation = None
         self.repair_tool = None
         self.request_route = knowledge_route(user_message)
@@ -120,9 +133,23 @@ class GuardedToolGateway:
             # authority execution and normalized cache/batch signatures.
             from src.agents.shopping_language import requested_product_category
             category = requested_product_category(self.user_message)
-            if (not (type(plan) is int and plan > 1)
-                    and args.get('category') in {'drink', 'food'} and args['category'] != category):
-                args['category'] = category or 'all'
+            from src.agents.shopping_language import normalize_shopping
+            mixed = bool(re.search(r'\b(?:nuoc|do uong|ly)\b', normalize_shopping(self.user_message))
+                         and re.search(r'\b(?:banh|do an)\b', normalize_shopping(self.user_message)))
+            if not (type(plan) is int and plan > 1) and not mixed:
+                if category or args.get('category') in {'drink', 'food'}:
+                    args['category'] = category or 'all'
+            if (args.get('category') in {'drink', 'food'} and normalize_shopping(args.get('search_text'))
+                    in {'nuoc', 'mon nuoc', 'do uong', 'thuc uong', 'banh', 'do an', 'thuc an'}):
+                args['search_text'] = ''  # Category words are not literal product-name constraints.
+            scope = self.artifacts.discovery_scope
+            if scope:
+                args['category'] = scope['category']
+                # Retries cannot remove the customer's flavour constraint just
+                # to fill a desired result count with unrelated products.
+                args['search_text'] = scope['search_text']
+                if scope['requested_count']:
+                    args['limit' if name == 'filter_catalog' else 'top_k'] = scope['requested_count']
             # A declared multi-arm plan owns each arm's category. The older
             # single-scope correction must not collapse food/drink comparisons.
             args = normalize_discovery_args(name, args)
@@ -174,6 +201,8 @@ class GuardedToolGateway:
                         if (name in cart_mutations
                                 and result.get('status') not in {'ok', 'already_processed', 'needs_options'}):
                             self.denied_cart_operation = name
+                        elif name == self.denied_cart_operation and result.get('status') in {'ok', 'already_processed'}:
+                            self.denied_cart_operation = None
                 except MutationOutcomeUnknown:
                     raise
                 except Exception as exc:
@@ -181,12 +210,28 @@ class GuardedToolGateway:
                         raise MutationOutcomeUnknown('business write requires reconciliation') from exc
                     logger.warning('[ToolGateway] tool=%s error_type=%s', name, type(exc).__name__)
                     result = denied('provider_unavailable')
+        if name in DISCOVERY_TOOLS and self.artifacts.discovery_scope and result.get('status') in {'ok', 'not_found'}:
+            from src.agents.product_display import product_bucket
+            scope = self.artifacts.discovery_scope
+            rows = [row for row in result.get('products') or [] if isinstance(row, dict)
+                and product_bucket(row) == scope['category']
+                and all(re.search(r'\b' + re.escape(term) + r'\b', normalize_text(' '.join(str(row.get(key) or '')
+                    for key in ('product_name', 'category', 'parent_category'))))
+                    for term in scope['search_text'].split())]
+            result = {**result, 'status': 'ok' if rows else 'not_found', 'products': rows}
+            if not rows:
+                result['message'] = (f"Dạ, mình chưa tìm thấy món {scope['label']} phù hợp trong Menu lúc này. "
+                    'Bạn muốn tham khảo loại bánh khác không ạ?')
         if not self.shadow:
             result = self._presentation_result(name, result)
         from src.agents.tool_artifacts import public_result
         if name == 'confirm_checkout' and result.get('status') != 'invalid_arguments' and self.confirmation_recovery == 'confirm_checkout':
             self.confirmation_recovery = 'stop'
         result = public_result(result)
+        if len(self.artifacts.cart_edit_plan) > 1 and name in {'update_cart_item', 'remove_cart_item'}:
+            from src.agents.cart_edit_evidence import unfinished_edits
+            result['remaining_cart_edits'] = len(unfinished_edits(self.artifacts.cart_edit_plan,
+                self.artifacts.logs + [{'tool': name, 'args': args, 'result': result}]))
         if capability.access == 'READ' or result.get('status') in {'ok', 'already_processed', 'needs_options', 'require_confirmation'}:
             self.cache[signature] = result
         self.artifacts.collect(name, args, result)
@@ -217,6 +262,11 @@ class GuardedToolGateway:
         if name == 'set_checkout_choices' and result.get('changed') is False:
             return result  # Preferences are unchanged; no new price/wallet read is needed.
         result = dict(result)
+        if name == 'add_to_cart' and self.entry_cart_lines and not any(
+                row.get('role') == 'assistant' and 'gio hang cua ban' in normalize_text(row.get('content'))
+                for row in self.context.get('recent') or []):
+            result['previous_cart_products'] = list(dict.fromkeys(
+                row['product_name'] for row in self.entry_cart_lines if row.get('product_name')))
         # A read failure after a known write must preserve its success and replay identity.
         try:
             quoted = ({'status': 'ok', 'cart': result['cart'], 'quote': result['quote']}
@@ -311,14 +361,44 @@ class GuardedToolGateway:
             result = product_tools.execute_get_product_options(product_id=args['product_id'])
         if result.get('status') == 'ok' and str(result.get('product_id')) == args['product_id']:
             self.options[args['product_id']] = result
+            selected = self._add_selection_error(args['product_id']) is None
             self.artifacts.focus['product'] = {'product_id': args['product_id'],
-                'product_name': result['product_name'], 'source': 'canonical_option_provider'}
+                'product_name': result['product_name'], 'source': 'customer_selected_options'
+                if selected else 'canonical_option_provider'}
+            from src.agents.option_state import requests_custom_options
+            if selected and requests_custom_options(self.user_message):
+                staged = next((row for row in self.context['business'].get('pending_products', [])
+                               if str(row.get('product_id')) == args['product_id']), {})
+                choices = {**staged.get('selected_options', {}),
+                    **{k: staged[k] for k in ('size', 'toppings', 'luong_da', 'do_ngot', 'loai_sua') if k in staged}}
+                product = self._stage_option_product(args['product_id'], result,
+                    staged.get('quantity', 1), choices)
+                return denied('needs_options', product=product, option_groups=product['option_schema'])
         return result
+
+    def _stage_option_product(self, product_id, result, quantity, choices):
+        """Keep a selected draft through the default/custom choice boundary."""
+        from src.agents.option_state import option_schema_from_result
+        product = {'product_id': product_id, 'product_name': result['product_name'],
+                   'quantity': quantity, 'option_schema': option_schema_from_result(result), **choices}
+        self._save_pending_product(product)
+        return product
+
+    def _save_pending_product(self, product):
+        pending = self.context['business'].get('pending_products') or []
+        pending = [product if str(row.get('product_id')) == product['product_id'] else row for row in pending]
+        if not any(str(row.get('product_id')) == product['product_id'] for row in pending):
+            pending.append(product)
+        cart_manager.set_pending_products(self.session_id, pending)
+        cart_manager.set_pending_action(self.session_id, 'fill_options', {'count': len(pending)})
+        self.context['business'] = business_state(self.session_id)
 
     def _configured_product(self, product_id, values, defaults=False, require_all=True, quantity=None):
         from src.agents.option_state import (option_schema_from_result, option_field, resolve_option_default,
             uses_global_option_defaults, default_option_fields, declines_toppings)
         result = self._get_product_options({'product_id': product_id})
+        if result.get('status') == 'needs_options':
+            return None, result
         if result.get('status') != 'ok' or str(result.get('product_id')) != product_id:
             return None, denied('unknown_product')
         if require_all:
@@ -343,9 +423,33 @@ class GuardedToolGateway:
                     recovery='Preserve the staged quantity unless the current message explicitly changes it.')
             quantity = expected_quantity if staged else (quantity if quantity is not None else 1)
         groups, output, missing = option_schema_from_result(result), {}, []
+        from src.agents.option_state import validate_explicit_multi_value_group, literal_option_choices
+        option_message = self.user_message if require_all else getattr(self, 'active_edit_clause', self.user_message)
+        literal_choices = literal_option_choices(option_message, groups)
+        values.update(literal_choices)
+        for group in groups:
+            evidence = None if declines_toppings(option_message) else validate_explicit_multi_value_group(option_message, group, groups)
+            if evidence and evidence['invalid_values']:
+                choices = {value: [label for label in evidence['allowed_values']
+                    if re.search(r'(?<!\w)' + re.escape(normalize_text(value)) + r'(?!\w)', normalize_text(label))]
+                    for value in evidence['invalid_values']}
+                if all(len(labels) > 1 for labels in choices.values()):
+                    return None, denied('invalid_option', field='toppings', allowed_values=evidence['allowed_values'],
+                        option_choices=choices, valid_values=evidence['valid_values'],
+                        message='Dạ, mình chưa đổi topping vì **' + ', '.join(choices) + '** có nhiều loại: **' +
+                            ', '.join(dict.fromkeys(label for labels in choices.values() for label in labels)) +
+                            '**. Bạn chọn loại nào nhé?' + (' Mình đã ghi nhớ **' +
+                            ', '.join(evidence['valid_values']) + '** để thêm cùng loại bạn chọn.' if evidence['valid_values'] else ''))
+                return None, denied('invalid_option', field='toppings', allowed_values=evidence['allowed_values'],
+                    message='Dạ, mình chưa áp dụng topping vì có lựa chọn chưa được xác nhận trong Menu. Bạn chọn giúp mình: **' + ', '.join(evidence['allowed_values']) + '** nhé.')
+            if evidence and evidence['valid_values']:
+                values['toppings'] = evidence['valid_values']
+                literal_choices['toppings'] = evidence['valid_values']
         customizable = any(option_field(group['name']) == 'toppings' or len(group['values']) > 1 for group in groups)
         if defaults and customizable:
             if not uses_global_option_defaults(self.user_message):
+                if require_all:
+                    self._stage_option_product(product_id, result, quantity, {**selected, **literal_choices})
                 return None, denied('defaults_not_authorized',
                     message='Dạ, bạn muốn dùng tùy chọn mặc định của quán hay tự chọn ạ?')
         # Defaults are authorized by the customer's text, even when the model
@@ -353,7 +457,7 @@ class GuardedToolGateway:
         defaults = defaults or uses_global_option_defaults(self.user_message)
         scoped_defaults = default_option_fields(self.user_message)
         by_field = {option_field(g['name']): g for g in groups if option_field(g['name'])}
-        if require_all and 'toppings' in by_field and declines_toppings(self.user_message):
+        if 'toppings' in by_field and declines_toppings(option_message):
             values['toppings'] = []
         for field, value in values.items():
             group = by_field.get(field)
@@ -380,13 +484,8 @@ class GuardedToolGateway:
                    'quantity': quantity or 1, 'option_schema': groups, **output}
         if missing:
             product['missing_fields'] = missing
-            pending = self.context['business'].get('pending_products') or []
             # merge=True keeps the old same-name row, losing partial options.
-            pending = [product if str(row.get('product_id')) == product_id else row for row in pending]
-            if not any(str(row.get('product_id')) == product_id for row in pending):
-                pending.append(product)
-            cart_manager.set_pending_products(self.session_id, pending)
-            cart_manager.set_pending_action(self.session_id, 'fill_options', {'count': len(cart_manager.get_checkout_prefs(self.session_id).get('pending_products') or [])})
+            self._save_pending_product(product)
             return None, denied('needs_options', missing=missing, option_groups=groups, product=product)
         return product, None
 
@@ -417,6 +516,13 @@ class GuardedToolGateway:
             if not name or not re.search(r'\b' + re.escape(name) + r'\b', message):
                 return denied('unknown_product_reference',
                     recovery='Resolve a current canonical product or use an exact product name from the customer message.')
+        selection_error = self._add_selection_error(args['product_id'])
+        if selection_error:
+            if selection_error.get('browse_args'):
+                # Recover a mistaken add proposal with a read, never another write
+                # or model call. The same catalog read retains its normal cache/UI.
+                self.dispatch('filter_catalog', selection_error['browse_args'])
+            return selection_error
         values = {k: v for k, v in args.items() if k in {'size', 'toppings', 'luong_da', 'do_ngot', 'loai_sua'}}
         product, error = self._configured_product(args['product_id'], values, args.get('use_defaults', False), quantity=args.get('quantity'))
         if error:
@@ -438,12 +544,100 @@ class GuardedToolGateway:
                     completed_action_id=None, completed_result=None, flow_stage='SHOPPING')
         return result
 
+    def _add_selection_error(self, product_id):
+        from src.agents.shopping_language import interpret_shopping, normalize_shopping
+        from src.agents.selection_language import parse_selection_reference, product_reference_category, PRODUCT_REFERENCE_CATEGORIES
+        from src.agents.option_state import uses_global_option_defaults, requests_custom_options
+        from src.agents.product_display import product_bucket
+        pending = self.context['business'].get('pending_products') or []
+        text = normalize_shopping(self.user_message)
+        option_reply = (uses_global_option_defaults(self.user_message)
+                        or requests_custom_options(self.user_message)
+                        or bool(re.search(r'\b(?:size|topping|da|ngot|sua)\b', text))
+                        or text in {'oke', 'ok', 'dong y', 'duoc', 'oke ban'})
+        option_reply = option_reply and '?' not in self.user_message and not re.search(r'\b(?:bao nhieu|la gi|the nao|tham khao|xem truoc)\b', text)
+        if option_reply and not pending and self.entry_focus and self.entry_focus.get('source') in {None, 'customer_selected_options'}:
+            if str(self.entry_focus.get('product_id')) == product_id:
+                return None
+        if pending and option_reply:
+            if any(str(row.get('product_id')) == product_id for row in pending):
+                return None
+            return denied('product_choice_required', message='Dạ, mình đang hoàn thiện món bạn đã chọn; mình chưa thêm món khác ạ.')
+        if str(self.context.get('selected_product_id') or '') == product_id:
+            return None
+        reference = parse_selection_reference(self.user_message, active_namespace='PRODUCT', allow_multiple=True)
+        targets = []
+        for index, ordinal in enumerate(reference.ordinals):
+            label = reference.ordinal_labels[index] if index < len(reference.ordinal_labels) else ''
+            category = product_reference_category(label)
+            rows = [row for row in self.entry_products if not category or product_bucket(row) == category]
+            index_field = 'group_display_index' if category else 'display_index'
+            targets.extend(row for position, row in enumerate(rows, 1) if (row.get(index_field) or position) == ordinal)
+        interpreted = interpret_shopping(self.user_message, snapshot=self.entry_products,
+            active_catalog=list(self.artifacts.product_candidates.values()) + list(self.options.values()),
+            ordinal_targets=targets, ordinal_requested=reference.requested,
+            ordinal_invalid=reference.namespace not in {None, 'PRODUCT'} and not (
+                reference.namespace == 'MIXED' and all(label in PRODUCT_REFERENCE_CATEGORIES for label in reference.ordinal_labels)),
+            focus=self.entry_focus)
+        if (interpreted.act == 'PRODUCT_INFO' and option_reply
+                and not re.search(r'\b(?:gia|review|danh gia|thanh phan|ngon)\b', text)
+                and re.search(r'\b(?:mua|lay|them|dat)\b', text)):
+            if any(str(row.get('product_id')) == product_id and normalize_shopping(row.get('product_name')) in text
+                   for row in interpreted.targets):
+                return None
+        if interpreted.act == 'ADD_ITEM' and any(str(row.get('product_id')) == product_id for row in interpreted.targets):
+            return None
+        browse = {'category': interpreted.category or 'all', 'search_text': interpreted.search_text or '', 'limit': 5}
+        return denied('product_choice_required', **({'browse_args': browse} if interpreted.act == 'BROWSE_FAMILY' else {}),
+            message='Dạ, mình chưa thêm món này vào giỏ. Bạn chọn **tên món hoặc số trong danh sách** nhé; yêu cầu xem một loại bánh/nước là để mình tư vấn trước ạ.')
+
     def _cart_line(self, line_id):
         return next((r for r in self.context['business']['cart']['items']
                      if str(r.get('cart_item_id') or r.get('line_id')) == line_id), None)
 
-    def _cart_target_error(self, line):
+    def _cart_target_error(self, line, operation=None):
         """Independently validate explicit ordinal/name evidence before writes."""
+        self.active_edit_clause = self.user_message
+        if self.cart_option_followup and operation == 'update_cart_item':
+            if str(line['cart_item_id']) != self.cart_option_followup['cart_item_id']:
+                return denied('cart_reference_conflict', expected_cart_item_id=self.cart_option_followup['cart_item_id'])
+            self.active_edit_clause = self.cart_option_followup['clause']
+            return None
+        if self.entry_cart_option_edit and not self.artifacts.cart_edit_plan:
+            return denied('cart_change_not_requested',
+                message='Dạ, mình chưa đổi topping. Bạn chọn rõ loại topping cho món đang chờ, hoặc cho mình tên món và thay đổi muốn thực hiện nhé.')
+        from src.agents.cart_edit_evidence import edit_clauses, clause_targets, clause_operation
+        clauses = edit_clauses(self.user_message, self.entry_cart_lines)
+        if not clauses and re.search(r'^(?:tai sao|vi sao|sao)\b|\b(?:khong|chua|dung)\s+(?:(?:muon|can|hay)\s+)?(?:xoa|bo|chinh|sua|doi|tang|giam)\b',
+                                     normalize_text(self.user_message)):
+            return denied('cart_change_not_requested', message='Dạ, mình giữ nguyên món trong giỏ, chưa thực hiện thay đổi nào ạ.')
+        if clauses:
+            relevant = [clause for clause in clauses if clause_operation(clause) == operation]
+            if not relevant:
+                return denied('cart_change_not_requested',
+                    message='Dạ, mình giữ nguyên tùy chọn các món còn lại theo yêu cầu hiện tại của bạn ạ.')
+            for clause in relevant:
+                targets = clause_targets(clause, self.entry_cart_lines)
+                if len(targets) == 1 and str(targets[0].get('cart_item_id') or targets[0].get('line_id')) == str(line['cart_item_id']):
+                    self.active_edit_clause = clause
+                    return None
+            if relevant:
+                targets = [row for clause in relevant for row in clause_targets(clause, self.entry_cart_lines)]
+                if len(targets) > 1:
+                    return denied('ambiguous_cart_target', message='Dạ, giỏ có nhiều dòng phù hợp. Bạn chọn **số dòng trong giỏ** giúp mình nhé.')
+                from src.agents.selection_language import parse_selection_reference
+                if not targets and len(clauses) == 1 and not parse_selection_reference(
+                        relevant[0], active_namespace='CART_LINE', allow_multiple=True).requested:
+                    focus_rows = [row for row in self.entry_cart_lines if str(row.get('product_id')) == str((self.entry_focus or {}).get('product_id'))]
+                    if len(focus_rows) == 1 and str(focus_rows[0]['cart_item_id']) == str(line['cart_item_id']):
+                        self.active_edit_clause = relevant[0]
+                        return None
+                return denied('cart_reference_conflict',
+                    expected_cart_item_id=str(targets[0]['cart_item_id']) if len(targets) == 1 else None,
+                    message='Dạ, mình chưa sửa món vì chưa xác định đúng dòng bạn muốn đổi. Bạn cho mình **tên món hoặc số trong giỏ** nhé.')
+        if operation == 'remove_cart_item':
+            return denied('cart_change_not_requested',
+                message='Dạ, món này đang có trong giỏ từ trước. Mình chưa xóa món; bạn có muốn **bỏ món đó khỏi giỏ** không ạ?')
         from src.agents.selection_language import parse_selection_reference
         reference = parse_selection_reference(self.user_message)
         explicit_ordinal = None
@@ -479,46 +673,80 @@ class GuardedToolGateway:
         line = self._cart_line(args['cart_item_id'])
         if not line or not args['desired_state']:
             return denied('unknown_cart_line')
-        target_error = self._cart_target_error(line)
+        target_error = self._cart_target_error(line, 'update_cart_item')
         if target_error:
             return target_error
-        if args.get('cart_line_ordinal') and line.get('display_index') != args['cart_line_ordinal']:
-            expected = next((row for row in self.context['business']['cart']['items']
+        entry_line = next((row for row in self.entry_cart_lines if str(row['cart_item_id']) == args['cart_item_id']), line)
+        if args.get('cart_line_ordinal') and entry_line.get('display_index') != args['cart_line_ordinal']:
+            expected = next((row for row in self.entry_cart_lines
                              if int(row.get('display_index') or 0) == args['cart_line_ordinal']), None)
             return denied('cart_reference_conflict', proposed_ordinal=line.get('display_index'),
                 expected_cart_item_id=str(expected.get('cart_item_id') or expected.get('line_id')) if expected else None,
                 expected_product_name=expected.get('product_name') if expected else None)
-        patch = args['desired_state']
-        if 'quantity' in patch and args.get('cart_line_ordinal'):
-            from src.agents.shopping_language import explicit_shopping_quantity
-            expected_quantity = explicit_shopping_quantity(self.user_message)
+        patch = dict(args['desired_state'])
+        if self.cart_option_followup:
+            # Models may echo the complete existing configuration for a short
+            # answer. Repeated values are not additional customer changes.
+            # Bind to the saved line, discard unchanged fields, and validate
+            # only the customer's saved + current topping choices against Menu.
+            if any(line.get(key) != value for key, value in patch.items() if key != 'toppings'):
+                return denied('cart_fields_not_requested', requested_fields=['toppings'],
+                    message='Dạ, mình chưa cập nhật vì đề xuất còn thay đổi tùy chọn khác ngoài topping bạn vừa chọn. Bạn nhắc lại loại topping muốn chọn nhé.')
+            patch = {'toppings': patch.get('toppings', [])}
+        request = next((row for row in self.artifacts.cart_edit_plan
+            if row['tool'] == 'update_cart_item' and row['cart_item_id'] == args['cart_item_id']), None)
+        if len(self.artifacts.cart_edit_plan) > 1 and request and request['fields'] and set(patch) - set(request['fields']):
+            return denied('cart_fields_not_requested', requested_fields=request['fields'],
+                message='Dạ, mình chưa sửa món vì tùy chọn đề xuất chưa khớp yêu cầu của bạn. Bạn nhắc lại tùy chọn muốn đổi giúp mình nhé.')
+        if 'quantity' in patch:
+            from src.agents.cart_edit_evidence import edit_quantity
+            expected_quantity = edit_quantity(getattr(self, 'active_edit_clause', self.user_message))
             if expected_quantity is not None and int(patch['quantity']) != expected_quantity:
                 return denied('cart_quantity_conflict', expected_quantity=expected_quantity,
                     proposed_quantity=int(patch['quantity']),
                     recovery='Use the explicit absolute quantity from the current customer message.')
-        if all(line.get(key) == value for key, value in patch.items()):
-            return {'status': 'already_processed', 'cart': cart_manager.get_cart(self.session_id), 'changed': False}
         values = {k: v for k, v in patch.items() if k != 'quantity'}
         if values:
-            _, error = self._configured_product(str(line['product_id']), values, require_all=False)
+            configured, error = self._configured_product(str(line['product_id']), values, require_all=False)
             if error:
+                if error.get('option_choices'):
+                    cart_manager.set_checkout_context(self.session_id, pending_cart_option_edit={
+                        'cart_item_id': str(line['cart_item_id']), 'product_id': str(line['product_id']),
+                        'product_name': line['product_name'], 'choices': error['option_choices'],
+                        'valid_values': error['valid_values'],
+                        'line_state': {key: deepcopy(line.get(key)) for key in
+                                       ('quantity', 'size', 'toppings', 'luong_da', 'do_ngot', 'loai_sua')},
+                    })
+                    error['message'] = '**' + line['product_name'] + '**: ' + error['message']
                 return error
+            patch = {**patch, **{key: configured[key] for key in ('size', 'toppings', 'luong_da', 'do_ngot', 'loai_sua') if key in configured}}
+        if all(line.get(key) == value for key, value in patch.items()):
+            if self.cart_option_followup:
+                cart_manager.set_checkout_context(self.session_id, pending_cart_option_edit=None)
+            return {'status': 'already_processed', 'cart': cart_manager.get_cart(self.session_id), 'changed': False,
+                'applied_state': patch}
+        args = {**args, 'desired_state': patch}
         result = self._write('update_cart_item', args, lambda: cart_tools.execute_update_cart_item(
             self.session_id, args['cart_item_id'], patch, operation_id=self._operation_id('update_cart_item', args)))
         if result.get('status') == 'ok':
+            pending = cart_manager.get_checkout_prefs(self.session_id).get('pending_cart_option_edit') or {}
+            if pending.get('cart_item_id') == str(line['cart_item_id']):
+                cart_manager.set_checkout_context(self.session_id, pending_cart_option_edit=None)
             self._invalidate_summary()
             self.updated_products.add(str(line['product_id']))
+            result = {**result, 'applied_state': patch}
         return result
 
     def _remove_cart_item(self, args):
         line = self._cart_line(args['cart_item_id'])
         if not line:
             return denied('unknown_cart_line')
-        target_error = self._cart_target_error(line)
+        target_error = self._cart_target_error(line, 'remove_cart_item')
         if target_error:
             return target_error
-        if args.get('cart_line_ordinal') and line.get('display_index') != args['cart_line_ordinal']:
-            expected = next((row for row in self.context['business']['cart']['items']
+        entry_line = next((row for row in self.entry_cart_lines if str(row['cart_item_id']) == args['cart_item_id']), line)
+        if args.get('cart_line_ordinal') and entry_line.get('display_index') != args['cart_line_ordinal']:
+            expected = next((row for row in self.entry_cart_lines
                              if int(row.get('display_index') or 0) == args['cart_line_ordinal']), None)
             return denied('cart_reference_conflict', proposed_ordinal=line.get('display_index'),
                 expected_cart_item_id=str(expected.get('cart_item_id') or expected.get('line_id')) if expected else None,
@@ -526,6 +754,9 @@ class GuardedToolGateway:
         result = self._write('remove_cart_item', args, lambda: cart_tools.execute_remove_cart_item(
             self.session_id, args['cart_item_id'], operation_id=self._operation_id('remove_cart_item', args)))
         if result.get('status') == 'ok':
+            pending = cart_manager.get_checkout_prefs(self.session_id).get('pending_cart_option_edit') or {}
+            if pending.get('cart_item_id') == str(line['cart_item_id']):
+                cart_manager.set_checkout_context(self.session_id, pending_cart_option_edit=None)
             self._invalidate_summary()
         return result
 
@@ -564,7 +795,17 @@ class GuardedToolGateway:
 
     def _skip_voucher(self, args):
         from src.agents.customer_choice_authority import skips_voucher
-        if not skips_voucher(self.user_message, (self.context['business'].get('pending') or {}).get('type')):
+        pending_type = (self.context['business'].get('pending') or {}).get('type')
+        prefs = cart_manager.get_checkout_prefs(self.session_id)
+        # The five-minute pending action may expire while the customer is
+        # still answering the durable voucher offer. The offer owns a short
+        # refusal only while that decision remains outstanding.
+        if (not pending_type and prefs.get('voucher_offer_pending')
+                and (not prefs.get('voucher_decided') or prefs.get('voucher_revalidation_required'))
+                and not prefs.get('checkout_submission') and not prefs.get('completed_order_id')
+                and not self.context['business'].get('pending_products')):
+            pending_type = 'select_voucher'
+        if not skips_voucher(self.user_message, pending_type):
             return denied('voucher_choice_required', message='Dạ, bạn chọn mã giảm giá hoặc nói **bỏ qua mã** nhé. Hoàn tất giỏ chưa đồng nghĩa với bỏ qua ưu đãi ạ.')
         if not self.context['business']['cart']['items']:
             return denied('empty_cart')
@@ -695,17 +936,28 @@ class GuardedToolGateway:
             return denied('missing_choice')
         # Reuse the established deterministic parser only as independent safety
         # evidence for explicit choices. The model still owns intent/planning.
-        from src.agents.agent_service import _explicit_checkout_choices
+        from src.agents.agent_service import _explicit_checkout_choices, _checkout_choice_conflict
+        if _checkout_choice_conflict(self.user_message):
+            return denied('missing_choice', message='Dạ, bạn đang nhắc đến nhiều cách nhận hoặc thanh toán. Bạn chọn **một cách nhận và một phương thức thanh toán** giúp mình nhé.')
         explicit = _explicit_checkout_choices(self.user_message)
-        conflicts = {key: {'expected': value, 'proposed': args.get(key)}
-                     for key, value in explicit.items() if args.get(key) and args[key] != value}
-        if conflicts:
-            return denied('checkout_choice_conflict', conflicts=conflicts,
-                recovery='Use the explicit current-turn checkout choice.')
+        prefs = cart_manager.get_checkout_prefs(self.session_id)
+        if not explicit and all(prefs.get(key) == value for key, value in args.items()):
+            return {'status': 'already_processed', 'changed': False, 'choices': args,
+                'message': 'Các lựa chọn này đã được ghi nhận.'}
+        if any(key not in explicit for key in args):
+            return denied('checkout_choice_not_selected',
+                message='Dạ, bạn chọn giúp mình cách nhận hàng và phương thức thanh toán mong muốn nhé.')
+        # Explicit customer evidence owns the values, including pickup=MANG_DI.
+        # Preserve both choices in one sentence even if the model emits only one.
+        args = explicit
         if args.get('payment_method') == 'VI_DIEN_TU':
             wallet_error = cart_tools.validate_wallet_selection(self.session_id)
             if wallet_error:
-                return denied('wallet_unavailable', message=wallet_error.get('reply'))
+                if wallet_error.get('wallet_topup') and args.get('delivery_type'):
+                    labels = {'TAI_CHO': 'dùng tại chỗ', 'MANG_DI': 'lấy tại quán', 'GIAO_TAN_NOI': 'giao tận nơi'}
+                    wallet_error['wallet_topup']['resume_message'] = 'Tôi chọn ' + labels[args['delivery_type']] + ' và thanh toán bằng Ví Avengers'
+                return denied('wallet_unavailable', message=wallet_error.get('reply'),
+                    **{key: wallet_error[key] for key in ('payment_options', 'wallet_topup') if key in wallet_error})
         prefs = cart_manager.get_checkout_prefs(self.session_id)
         changed = any(prefs.get(key) != value for key, value in args.items())
         if not changed:
@@ -770,6 +1022,19 @@ class GuardedToolGateway:
         prefs = cart_manager.get_checkout_prefs(self.session_id)
         offer = prefs.get('profile_location_offer')
         offered_addresses = (offer or {}).get('addresses') or ([{'full_address': offer['address']}] if offer else [])
+        from src.agents.location_parser import parse_location, locality_matches
+        literal = parse_location(self.user_message)
+        if offer and prefs.get('delivery_type') == 'GIAO_TAN_NOI' and literal.kind == 'area':
+            matching = [row for row in offered_addresses if locality_matches(row['full_address'], literal.value)]
+            if len(matching) == 1:
+                # A ward identifies a saved candidate, not its house number.
+                # Retain an actual offer so a subsequent "tôi đang ở đó" has an owner.
+                narrowed = {**offer, 'address': matching[0]['full_address'], 'addresses': matching}
+                cart_manager.set_checkout_context(self.session_id, profile_location_offer=narrowed,
+                    suggested_address=narrowed['address'], location_source='profile_saved')
+                cart_manager.set_pending_action(self.session_id, 'confirm_address', {})
+                return denied('profile_location_confirmation_required',
+                    message=f"Dạ, trong hồ sơ bạn có địa chỉ tại khu vực này: **{narrowed['address']}**.\n\nBạn đang ở **đúng địa chỉ này** và muốn giao đến đây phải không ạ?")
         if offer and not any(normalize_text(args['location']) == normalize_text(row['full_address']) for row in offered_addresses):
             from src.agents.location_parser import parse_location
             literal = parse_location(self.user_message)
@@ -785,7 +1050,8 @@ class GuardedToolGateway:
                 selection = None
             if selection and selection.get('other'):
                 decision = 'NO'
-            selected_address = (selection or {}).get('address') or (offer['address'] if decision == 'YES' else None)
+            selected_address = None if decision == 'NO' else (
+                (selection or {}).get('address') or (offer['address'] if decision == 'YES' else None))
             if (not self.entry_profile_offer or self.entry_profile_offer != offer
                     or not selected_address
                     or normalize_text(selected_address) != normalize_text(args['location'])):
@@ -795,6 +1061,9 @@ class GuardedToolGateway:
                     return denied('needs_new_location', message='Dạ, bạn cho mình địa chỉ hoặc khu vực khác để tiếp tục nhé.')
                 return denied('profile_location_confirmation_required',
                     message=f"Dạ, bạn đang ở **{offer['address']}** hay muốn dùng địa chỉ khác ạ?")
+            actual = parse_location(selected_address)
+            if actual.kind in {'area', 'address', 'poi'}:
+                args['kind'] = actual.kind
         if offer:
             cart_manager.set_checkout_context(self.session_id, profile_location_offer=None, suggested_address=None)
             if (cart_manager.get_pending_action(self.session_id) or {}).get('type') == 'confirm_address':
@@ -802,6 +1071,8 @@ class GuardedToolGateway:
         # Pickup locations are origins for discovery, never delivery addresses.
         if cart_manager.get_checkout_prefs(self.session_id).get('delivery_type') in {'MANG_DI', 'TAI_CHO'}:
             args['for_checkout'] = False
+        location_purpose = ('nearby_branches' if prefs.get('delivery_type') in {'MANG_DI', 'TAI_CHO'}
+                            else 'delivery' if args.get('for_checkout') else None)
         if args.get('for_checkout'):
             if not self.context['business']['cart']['items'] or not cart_manager.get_checkout_prefs(self.session_id).get('delivery_type'):
                 return denied('checkout_location_preconditions_missing')
@@ -809,6 +1080,8 @@ class GuardedToolGateway:
         state = {'session_id': self.session_id, 'user_message': args['location'], 'history': [],
             'cart': cart_manager.get_cart(self.session_id), 'force_read_only_location': not args.get('for_checkout'),
             'location_override': Location(args['kind'], args['location'])}
+        if location_purpose == 'nearby_branches':
+            state['location_purpose'] = location_purpose
         if getattr(self, '_selected_location', None):
             state['resolved_location_candidate'] = self._selected_location
         result = _handle_location_request(state)
@@ -836,6 +1109,7 @@ class GuardedToolGateway:
                 cart_manager.clear_pending_action(self.session_id)
             self.artifacts.visible['location_candidates'] = []
         return {**nearest, 'status': 'require_confirmation' if summary else nearest.get('status') or 'needs_location',
+            'location_purpose': location_purpose,
             'message': result['reply'], **({'order_summary': summary} if summary else {})}
 
     def _select_location_candidate(self, args):

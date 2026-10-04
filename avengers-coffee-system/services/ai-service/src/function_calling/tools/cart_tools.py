@@ -2,6 +2,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 import hashlib
 import logging
+import math
 import threading
 import time
 import uuid
@@ -303,6 +304,12 @@ def _quote_authoritative_cart(session_id: str, voucher_code: Optional[str] = Non
 def get_wallet_payment_options(session_id: str, final_total: Optional[float] = None) -> Dict[str, Any]:
     """Read the canonical Order Service wallet; no conversational balance cache."""
     from src.function_calling.helpers import _get_service_jwt, _require_valid_session
+    try:
+        final_total = float(final_total)
+        if not math.isfinite(final_total) or final_total <= 0:
+            final_total = None
+    except (TypeError, ValueError):
+        final_total = None
     uid = _require_valid_session(_customer_session_id(session_id))
     options = [
         {"code": "VNPAY", "label": "VNPAY", "enabled": True},
@@ -317,7 +324,9 @@ def get_wallet_payment_options(session_id: str, final_total: Optional[float] = N
         try:
             response = _order_service_request("GET", f"/customers/{uid}/wallet", _get_service_jwt(uid))
             response.raise_for_status()
-            balance = float((response.json().get("wallet") or {}).get("balance") or 0)
+            balance = float(response.json()['wallet']['balance'])
+            if not math.isfinite(balance) or balance < 0:
+                raise ValueError('Invalid wallet balance')
             wallet["balance"] = balance
             wallet["insufficient"] = final_total is not None and balance < final_total
             wallet["enabled"] = final_total is not None and not wallet["insufficient"]
@@ -328,7 +337,13 @@ def get_wallet_payment_options(session_id: str, final_total: Optional[float] = N
         except Exception:
             wallet["reason"] = "Chưa xác minh được số dư ví, vui lòng thử lại"
     options.append(wallet)
-    return {"payment_options": options, "wallet_balance": wallet["balance"]}
+    result = {"payment_options": options, "wallet_balance": wallet["balance"]}
+    if wallet['insufficient']:
+        shortfall = math.ceil(final_total - wallet['balance'])
+        suggested = sorted({50000, 100000, 200000, 500000, min(5000000, max(10000, shortfall))})
+        result['wallet_topup'] = {'balance': wallet['balance'], 'required_total': final_total,
+            'shortfall': shortfall, 'min_amount': 10000, 'max_amount': 5000000, 'suggested_amounts': suggested}
+    return result
 
 
 def validate_wallet_selection(session_id: str) -> Optional[Dict[str, Any]]:
@@ -342,10 +357,11 @@ def validate_wallet_selection(session_id: str) -> Optional[Dict[str, Any]]:
         total = float(raw_total)
     except (TypeError, ValueError):
         total = 0
-    if total <= 0:
+    if not math.isfinite(total) or total <= 0:
         return {"reply": "Chưa xác minh được tổng thanh toán của giỏ. Bạn thử lại nhé.",
                 "checkout_payload": None, "tool_calls_log": [], "error": None}
-    wallet = get_wallet_payment_options(session_id, total)["payment_options"][-1]
+    options = get_wallet_payment_options(session_id, total)
+    wallet = options['payment_options'][-1]
     if wallet.get("enabled"):
         return None
     balance = wallet.get("balance")
@@ -356,7 +372,9 @@ def validate_wallet_selection(session_id: str) -> Optional[Dict[str, Any]]:
         message = (f"Ví Avengers hiện có {money(balance)}, trong khi đơn cần {money(total)}. "
                    f"Bạn còn thiếu {money(max(0, total - balance))}. "
                    "Bạn có thể nạp thêm tiền hoặc chọn QR/VNPAY/COD.")
-    return {"reply": message, "checkout_payload": None, "tool_calls_log": [], "error": None}
+    return {"reply": message, "checkout_payload": None, "tool_calls_log": [], "error": None,
+            "payment_options": options['payment_options'], **({'wallet_topup': options['wallet_topup']}
+                if options.get('wallet_topup') else {})}
 
 TOOL_ADD_TO_CART = {
     "type": "function",
@@ -1026,14 +1044,15 @@ def execute_request_checkout(
         return {"status": "quote_error", "message": "Chưa xác minh được phí giao hàng từ Order Service."}
 
     if payment_method == "VI_DIEN_TU":
-        payment_options = get_wallet_payment_options(session_id, final_total)["payment_options"]
+        wallet_options = get_wallet_payment_options(session_id, final_total)
+        payment_options = wallet_options['payment_options']
         wallet = payment_options[-1]
         if not wallet["enabled"]:
             cart_manager.set_checkout_context(session_id, payment_method=None)
             return {"status": "insufficient_wallet", "message": (
                 wallet.get("reason") or "Ví Avengers chưa sẵn sàng thanh toán."
-            ) + " Bạn chọn phương thức thanh toán khác nhé.",
-                "payment_options": payment_options}
+            ) + " Bạn có thể nạp thêm tiền vào ví hoặc chọn phương thức thanh toán khác nhé.",
+                **wallet_options}
 
     # Store the authoritative amounts for later confirmation.
     cart_manager.set_checkout_context(session_id, summary_amounts={"subtotal": total, "discount_amount": discount_amount, "delivery_fee": delivery_fee, "final_total": final_total})
@@ -1212,6 +1231,16 @@ def _execute_confirm_checkout(
         if not quote or any(float(quote.get(key) or 0) != float(value) for key, value in prefs["summary_amounts"].items()):
             cart_manager.set_checkout_context(session_id, summary_fingerprint=None)
             return {"status": "stale_checkout", "message": "Giá/ưu đãi/phí giao hàng vừa thay đổi. Cần xem tóm tắt mới trước khi đặt."}
+
+    if payment_method == 'VI_DIEN_TU':
+        total = (prefs.get('summary_amounts') or {}).get('final_total')
+        wallet_options = get_wallet_payment_options(session_id, total)
+        wallet = wallet_options['payment_options'][-1]
+        if not wallet.get('enabled'):
+            cart_manager.set_checkout_context(session_id, payment_method=None, summary_fingerprint=None)
+            cart_manager.clear_pending_action(session_id)
+            return {'status': 'insufficient_wallet', 'message': (wallet.get('reason') or 'Chưa xác minh được số dư ví.')
+                + ' Đơn chưa được tạo. Bạn có thể nạp thêm vào ví hoặc chọn phương thức khác.', **wallet_options}
 
     # Recheck immediately before the irreversible order write as well.
     from src.common.inventory_validation import validate_cart_at_branch

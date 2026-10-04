@@ -123,7 +123,8 @@ TOOL_FIND_NEAREST_BRANCH = {
 }
 
 def execute_find_nearest_branch(location: str = "", session_id: str = "", target_branches: list = None,
-                                resolved_location: dict = None, cart_items: list = None) -> Dict[str, Any]:
+                                resolved_location: dict = None, cart_items: list = None,
+                                location_purpose: str = None) -> Dict[str, Any]:
     """Tìm chi nhánh gần nhất dựa trên geocoding và khoảng cách Haversine."""
     try:
         from src.agents.location_parser import parse_location
@@ -149,6 +150,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
         location_kind = parsed_location.kind
         user_lat, user_lon = None, None
         distance_basis = "unavailable"
+        location_estimate = None
         selected_location = resolved_location or (
             prefs.get("selected_location_candidate") if session_id else None
         )
@@ -219,6 +221,15 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                 if location_kind == "poi" or structured_address:
                     resolution = resolve_location(
                         target_address, location_kind, getattr(parsed_location, "admin_hints", ()))
+                    if (resolution.status == "rejected" and location_kind == "address"
+                            and delivery_type != "GIAO_TAN_NOI"
+                            and (delivery_type in {"MANG_DI", "TAI_CHO"}
+                                 or location_purpose == "nearby_branches")):
+                        from utils.geo import nearby_address_origin
+                        estimate = nearby_address_origin(target_address, resolution)
+                        if estimate:
+                            resolution = estimate
+                            location_estimate = estimate.normalized_label
                     coords = ((resolution.lat, resolution.lng) if resolution.status == "ok" else None)
                     if resolution.status == "ambiguous":
                         location_candidates = list(getattr(resolution, "candidates", ()) or ())
@@ -280,7 +291,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                         }
                 else:
                     user_lat, user_lon = coords
-                    distance_basis = (
+                    distance_basis = "street_area_estimate" if location_estimate else (
                         "poi_resolved" if location_kind == "poi" else
                         "address_resolved" if location_kind == "address" else
                         "geocoded_user"
@@ -337,7 +348,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
             branch_dict = _clean_dict(dict(r))
             branch_dict["khoang_cach_km"] = round(dist, 1) if dist is not None else None
             branch_dict["distance_basis"] = distance_basis
-            branch_dict["distance_estimated"] = distance_basis == "area_centroid"
+            branch_dict["distance_estimated"] = distance_basis in {"area_centroid", "street_area_estimate"}
             branch_dict["exact_area_match"] = str(r["ma_chi_nhanh"]) in locality_ids
             branches.append(branch_dict)
 
@@ -414,13 +425,15 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
 
         msg = (f"Các cửa hàng có địa chỉ thuộc khu vực {target_address}; chưa có tọa độ khách đáng tin nên không tính khoảng cách."
                if nearest_dist is None else
+               f"Khoảng cách chỉ ước tính quanh {location_estimate}; bản đồ chưa xác minh vị trí số nhà của khách."
+               if distance_basis == "street_area_estimate" else
                f"Khoảng cách chỉ ước tính theo khu vực {target_address}, không phải khoảng cách từ vị trí của khách."
                if distance_basis == "area_centroid" else
                f"Dựa vào vị trí đã xác định của khách ({target_address}), đây là chi nhánh gần nhất. Có thể báo số km đường chim bay.")
 
         if nearest_dist is not None and nearest_dist > 15:
             msg += (f" Chi nhánh gần nhất ước tính cách tâm khu vực khoảng {nearest_dist}km."
-                    if distance_basis == "area_centroid" else
+                    if distance_basis in {"area_centroid", "street_area_estimate"} else
                     f" Chi nhánh gần nhất cách vị trí đã xác định khoảng {nearest_dist}km.")
 
         return {
@@ -432,6 +445,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                 selected_location.get("provider_ref_id") if selected_location else None
             ),
             "location_basis": "exact_locality" if locality_rows else distance_basis,
+            **({"location_estimate": location_estimate} if location_estimate else {}),
             "message": (
                 msg + " Khách dùng tại chỗ/mang đi nên hãy liệt kê tối đa 5 cửa hàng trong khu vực, ghi rõ cửa hàng còn đủ món và món nào bị thiếu; chỉ cửa hàng còn đủ món mới được chọn."
                 if delivery_type in {"MANG_DI", "TAI_CHO"} else msg

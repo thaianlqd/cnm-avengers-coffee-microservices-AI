@@ -141,8 +141,8 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
     if reported_tier not in used:
         used.append(reported_tier)
     budget = number('AI_AGENT_MAX_PROVIDER_ATTEMPTS_PER_ROUND', 4, 1, 12)
-    timeout = number('AI_AGENT_PROVIDER_TIMEOUT_SECONDS', 8, 1, 30)
-    deadline = time.monotonic() + number('AI_AGENT_PROVIDER_ROUND_TIMEOUT_SECONDS', 12, 1, 60)
+    timeout = number('AI_AGENT_PROVIDER_TIMEOUT_SECONDS', 30, 1, 30)
+    deadline = time.monotonic() + number('AI_AGENT_PROVIDER_ROUND_TIMEOUT_SECONDS', 45, 1, 60)
     attempts, last_reason, compacted = 0, 'provider_unavailable', False
     previous_attempt = None
     providers = provider_order(preferred)
@@ -160,12 +160,18 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
         reserve = int(any(credentials(other) for other in providers[provider_index+1:]
                           if other in {'gemini', 'openai', 'groq', 'openrouter', 'cerebras'}))
         provider_budget = max(1, budget-reserve)
+        # A reserved attempt also needs time; otherwise slow primary accounts
+        # consume the entire round before the emergency provider can run.
+        remaining = max(0, deadline-time.monotonic())
+        provider_deadline = deadline - (min(timeout, remaining/3) if reserve and budget > 1 else 0)
         for model in models_for(provider, tier, explicit_model, preferred):
             if (provider, model) in missing:
                 continue
             mode_key = (provider, model, bool(schemas))
             mode = compatibility_modes.get(mode_key, 'gemini_signature_preserved' if provider == 'gemini' else 'canonical')
             for slot in slots:
+                if attempts >= provider_budget or time.monotonic() >= provider_deadline:
+                    break
                 fingerprint = hashlib.sha256(keys[slot].encode()).hexdigest()
                 health_key = (provider, fingerprint, model)
                 with _lock:
@@ -188,10 +194,10 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                     client = Groq(api_key=keys[slot], max_retries=0)
                 else:
                     client = wrappers.OpenAIClient(keys[slot], base_url='https://api.cerebras.ai/v1')
-                while attempts < provider_budget and time.monotonic() < deadline:
+                while attempts < provider_budget and time.monotonic() < provider_deadline:
                     kwargs = {'model': model, 'messages': inference_messages(messages, provider), 'max_tokens': max_tokens,
                         'temperature': 0.35, 'response_format': {'type': 'json_object'},
-                        'timeout': max(0.1, min(timeout, deadline-time.monotonic()))}
+                        'timeout': max(0.1, min(timeout, provider_deadline-time.monotonic()))}
                     if schemas:
                         kwargs.update(tools=schemas, tool_choice='required' if required else 'auto')
                     if provider == 'gemini' and mode == 'gemini_without_response_format':
@@ -215,6 +221,7 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                     metrics['fallback_count'] = metrics.get('fallback_count', 0) + int(previous_attempt is not None and previous_attempt != identity)
                     previous_attempt = identity
                     diagnostic = {**shape, 'provider': provider, 'model': safe_text(model, 128),
+                        'timeout_seconds': round(kwargs['timeout'], 3),
                         'round_index': round_index, 'request_sequence': metrics['provider_attempt_count']}
                     metrics.setdefault('provider_request_shapes', []).append(diagnostic)
                     metrics['provider_request_shape_fingerprint'] = request_shape
@@ -239,15 +246,17 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                         category, field = compatibility_error(exc) if kind == 'incompatible_request' else (kind, None)
                         metrics['provider_error_category'] = category
                         metrics['provider_error_field'] = field
-                        logger.warning('[AgentProvider] provider=%s credential_slot=%d model=%s status=%s reason=%s category=%s field=%s request_shape=%s',
-                                       provider, slot+1, safe_text(model, 128), status, kind, category, field, request_shape)
+                        metrics['provider_error_type'] = type(exc).__name__
+                        logger.warning('[AgentProvider] provider=%s credential_slot=%d model=%s status=%s reason=%s category=%s field=%s timeout_seconds=%.3f error_type=%s request_shape=%s',
+                                       provider, slot+1, safe_text(model, 128), status, kind, category, field,
+                                       kwargs['timeout'], type(exc).__name__, request_shape)
                         if kind == 'incompatible_request':
                             incompatible.add((provider, model, request_shape))
                             # Evidence-triggered inference-only downgrade. No schema,
                             # tool choice, history/result, key or business replay change.
                             if (provider == 'gemini' and category == 'response_format_incompatible'
                                     and kwargs.get('response_format') and not compatibility_retried
-                                    and attempts < provider_budget and time.monotonic() < deadline):
+                                    and attempts < provider_budget and time.monotonic() < provider_deadline):
                                 compatibility_retried = True
                                 mode = 'gemini_without_response_format'
                                 compatibility_modes[mode_key] = mode
@@ -266,6 +275,9 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                                 missing.add((provider, model))
                             break  # Same request/model cannot improve with another key.
                         with _lock:
+                            # Failed transient/account attempts must advance the
+                            # next turn too, rather than repeatedly starting at key 1.
+                            _next_slot[provider] = (slot+1) % max(1, primary_count)
                             if kind == 'invalid_credential':
                                 _invalid_credentials.add((provider, fingerprint))
                             elif kind == 'rate_limit':
@@ -279,6 +291,6 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                     return None, None, model, last_reason
                 if attempts >= provider_budget:
                     break
-            if attempts >= provider_budget:
+            if attempts >= provider_budget or time.monotonic() >= provider_deadline:
                 break
     return None, None, None, last_reason

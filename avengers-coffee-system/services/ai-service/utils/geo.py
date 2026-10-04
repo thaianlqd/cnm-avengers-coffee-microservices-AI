@@ -407,6 +407,47 @@ def resolve_location(query: str, kind: str = "admin_area",
         logger.error("[LocationResolve] kind=%s status=provider_error error=%s", match_type, type(exc).__name__)
         return LocationResolution("provider_error", match_type=match_type)
 
+def nearby_address_origin(query: str, resolution: LocationResolution) -> Optional[LocationResolution]:
+    """Estimate a pickup search origin from already resolved street evidence.
+
+    This never validates a delivery address or makes another provider request.
+    Callers must explicitly own a nearby-branch lookup before using it.
+    """
+    if resolution.status != "rejected" or resolution.match_type != "address":
+        return None
+    constraints = _admin_constraints(query)
+    if not constraints.get("city") or not (constraints.get("ward") or constraints.get("district")):
+        return None
+    parts = [part.strip() for part in query.split(',') if part.strip()]
+    street = re.sub(r"^\d{1,5}[A-Za-z]?(?:[/.-]\d{1,5}[A-Za-z]?)?\s+", "", parts[0])
+    street_key = re.sub(r"^duong\s+", "", _fold_location(street))
+    if not street_key:
+        return None
+    points = set()
+    for row in resolution.candidates:
+        # Place-detail admin components must match every explicit locality.
+        # Similar house numbers or search names alone are insufficient.
+        if row.get("match_basis") != "address" or not _admin_constraints_match(
+                constraints, row.get("admin_components") or {}):
+            continue
+        address = _fold_location(row.get("display_address") or "").split(',', 1)[0].strip()
+        street_pattern = (r"(?:^|(?<!\w)\d{1,5}[a-z]?(?:[/.-]\d{1,5}[a-z]?)?\s+)"
+                          r"(?:duong\s+)?" + re.escape(street_key) + r"$")
+        if not re.search(street_pattern, address):
+            continue
+        try:
+            lat, lng = float(row['lat']), float(row['lng'])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if math.isfinite(lat) and math.isfinite(lng) and -90 <= lat <= 90 and -180 <= lng <= 180:
+            points.add((lat, lng))
+    if not points or any(haversine_distance(*a, *b) > 2 for a in points for b in points):
+        return None  # Scattered results cannot locate a useful nearby origin.
+    return LocationResolution('ok', lat=sum(p[0] for p in points) / len(points),
+        lng=sum(p[1] for p in points) / len(points), match_type='address',
+        normalized_label=', '.join([street, *parts[1:]]), resolution_basis='street_area_estimate')
+
+
 def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """
     Calculate the great circle distance between two points 

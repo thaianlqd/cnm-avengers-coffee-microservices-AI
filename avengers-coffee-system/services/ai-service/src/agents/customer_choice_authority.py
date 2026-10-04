@@ -29,12 +29,12 @@ def voucher_choice(message, offered):
 
 
 def skips_voucher(message, pending_type=None):
-    text = normalize_text(message)
+    text = normalize_text(message).strip(' .!,')
     if '?' in message:
         return False
     return bool(re.search(r'\b(?:bo qua|khong (?:can|dung|ap|ap dung))\s+(?:ma|voucher|khuyen mai)\b', text)
         or (pending_type == 'select_voucher' and re.fullmatch(
-            r'(?:thoi\s+)?(?:bo qua|khong|ko|khong can)(?:\s+(?:di|ban|nhe|a|thoi|b|oi))*', text)))
+            r'(?:thoi\s+)?(?:bo qua|khong|ko|khong can)(?:\s+(?:di|ban|nhe|nha|a|thoi|b|oi))*', text)))
 
 
 def profile_location_decision(message):
@@ -47,7 +47,7 @@ def profile_location_decision(message):
         return 'NONE'
     if parse_location(message).kind == 'change_reference' or (
             re.search(r'\b(?:khong|ko|chua)\b', text)
-            and re.search(r'\b(?:dia chi|o day|o do|o cho|toi o|minh o)\b', text)):
+            and re.search(r'\b(?:dia chi|o day|o do|o ay|o cho|toi o|minh o)\b', text)):
         return 'NO'
     if parse_location(message).kind == 'reference':
         return 'YES'
