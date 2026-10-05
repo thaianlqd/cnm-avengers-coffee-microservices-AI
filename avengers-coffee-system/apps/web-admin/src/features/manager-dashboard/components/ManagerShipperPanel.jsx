@@ -288,7 +288,7 @@ export function ManagerShipperPanel({ session }) {
                       <h3 style={{ margin: 0, fontSize: '0.875rem', fontWeight: '700', color: '#0f172a' }}>
                         {shipper.full_name || shipper.username}
                       </h3>
-                      <span style={{ fontSize: '0.72rem', color: '#64748b' }}>@{shipper.username} · {shipper.phone_number || 'N/A'}</span>
+                      <span style={{ fontSize: '0.72rem', color: '#64748b' }}>@{shipper.username} · {shipper.phone || shipper.phone_number || 'N/A'}</span>
                     </div>
 
                     <span style={{

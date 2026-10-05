@@ -165,20 +165,28 @@ def _introspect(connection_factory: Callable[[], Any], schemas: Optional[List[st
             )
             foreign_keys = [dict(row) for row in cur.fetchall()]
 
-            cur.execute(
-                f"""
-                SELECT n.nspname AS schema_name, t.relname AS object_name,
-                       i.relname AS index_name, pg_get_indexdef(ix.indexrelid) AS definition
-                FROM pg_index ix
-                JOIN pg_class t ON t.oid = ix.indrelid
-                JOIN pg_class i ON i.oid = ix.indexrelid
-                JOIN pg_namespace n ON n.oid = t.relnamespace
-                WHERE true {schema_filter}
-                ORDER BY n.nspname, t.relname, i.relname
-                """,
-                params,
-            )
-            indexes = [dict(row) for row in cur.fetchall()]
+            try:
+                cur.execute(
+                    f"""
+                    SELECT n.nspname AS schema_name, t.relname AS object_name,
+                           i.relname AS index_name,
+                           CASE WHEN am.amname IN ('btree', 'hash', 'gin', 'gist', 'spgist', 'brin')
+                                THEN pg_get_indexdef(ix.indexrelid)
+                                ELSE '' END AS definition
+                    FROM pg_index ix
+                    JOIN pg_class t ON t.oid = ix.indrelid
+                    JOIN pg_class i ON i.oid = ix.indexrelid
+                    JOIN pg_namespace n ON n.oid = t.relnamespace
+                    JOIN pg_am am ON am.oid = i.relam
+                    WHERE true {schema_filter}
+                    ORDER BY n.nspname, t.relname, i.relname
+                    """,
+                    params,
+                )
+                indexes = [dict(row) for row in cur.fetchall()]
+            except Exception as idx_err:
+                logger.warning("Could not introspect all index definitions: %s", idx_err)
+                indexes = []
 
         conn.rollback()
 

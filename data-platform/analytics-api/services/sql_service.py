@@ -430,3 +430,29 @@ def execute_read_only(sql: str, row_limit: int = 500, timeout_ms: int = 12000) -
     finally:
         conn.rollback()
         conn.close()
+
+
+def dry_run_sql(sql: str, timeout_ms: int = 4000) -> Tuple[bool, str]:
+    """
+    Executes EXPLAIN on the given SQL statement in a read-only transaction.
+    Returns (True, "OK") if the query passes syntax & catalog validation,
+    or (False, error_message) if it fails.
+    """
+    try:
+        safe_sql = validate_read_only_sql(sql)
+    except SqlSafetyError as exc:
+        return False, str(exc)
+    conn = get_db_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SET TRANSACTION READ ONLY")
+            cur.execute("SET LOCAL statement_timeout = %s", (int(timeout_ms),))
+            cur.execute("SET LOCAL search_path TO gold, orders, menu, identity, inventory, analytics, public")
+            cur.execute(f"EXPLAIN {safe_sql}")
+            return True, "OK"
+    except Exception as exc:
+        return False, str(exc).strip()
+    finally:
+        conn.rollback()
+        conn.close()
+

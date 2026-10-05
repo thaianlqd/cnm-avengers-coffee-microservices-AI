@@ -37,7 +37,11 @@ def _parse_json(raw_text: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-def call_gemini(prompt: str, system_instruction: str = "") -> Optional[Dict[str, Any]]:
+def call_gemini(
+    prompt: str,
+    system_instruction: str = "",
+    response_schema: Optional[Dict[str, Any]] = None,
+) -> Optional[Dict[str, Any]]:
     if not GEMINI_API_KEY or time.monotonic() < _unavailable_until["gemini"]:
         return None
     for model in GEMINI_MODELS:
@@ -45,19 +49,34 @@ def call_gemini(prompt: str, system_instruction: str = "") -> Optional[Dict[str,
             started = time.perf_counter()
             try:
                 logger.info("📡 [AI-LLM] Calling Gemini model=%s (prompt_chars=%d)...", model, len(prompt))
+                gen_config: Dict[str, Any] = {"temperature": 0.1, "responseMimeType": "application/json"}
+                if response_schema:
+                    gen_config["responseSchema"] = response_schema
+
+                req_body = {
+                    "systemInstruction": {"parts": [{"text": system_instruction}]},
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "generationConfig": gen_config,
+                }
                 response = requests.post(
                     f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
                     params={"key": GEMINI_API_KEY},
-                    json={
-                        "systemInstruction": {"parts": [{"text": system_instruction}]},
-                        "contents": [{"parts": [{"text": prompt}]}],
-                        "generationConfig": {"temperature": 0.1, "responseMimeType": "application/json"},
-                    },
+                    json=req_body,
                     timeout=25,
                 )
                 if response.status_code == 503 and attempt == 0:
                     time.sleep(0.5)
                     continue
+                # If schema caused a 400 error, retry once without responseSchema
+                if response.status_code == 400 and response_schema:
+                    logger.warning("Gemini 400 with responseSchema on model=%s, retrying without schema...", model)
+                    req_body["generationConfig"] = {"temperature": 0.1, "responseMimeType": "application/json"}
+                    response = requests.post(
+                        f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+                        params={"key": GEMINI_API_KEY},
+                        json=req_body,
+                        timeout=25,
+                    )
                 if response.ok:
                     raw = response.json()["candidates"][0]["content"]["parts"][0]["text"]
                     data = _parse_json(raw)
@@ -128,9 +147,13 @@ def call_groq(prompt: str, system_instruction: str = "") -> Optional[Dict[str, A
     return None
 
 
-def call_llm(prompt: str, system_instruction: str = "") -> Optional[Dict[str, Any]]:
+def call_llm(
+    prompt: str,
+    system_instruction: str = "",
+    response_schema: Optional[Dict[str, Any]] = None,
+) -> Optional[Dict[str, Any]]:
     """Gemini is primary. Groq is used only when Gemini has no valid JSON response."""
-    return call_gemini(prompt, system_instruction) or call_groq(prompt, system_instruction)
+    return call_gemini(prompt, system_instruction, response_schema=response_schema) or call_groq(prompt, system_instruction)
 
 
 def provider_configuration() -> Dict[str, Dict[str, bool]]:

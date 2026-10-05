@@ -355,9 +355,72 @@ class RequestAndProviderTests(unittest.TestCase):
         # Should calculate rating 4.85 or average 4.73
         self.assertTrue(any("4." in str(c["value"]) for c in resolved_cards))
 
+    def test_session_service_lifecycle(self):
+        from services.session_service import create_session, get_session, session_stats
+        session = create_session("Doanh thu tháng 10 theo chi nhánh", domain="stores", time_label="30 ngày qua")
+        self.assertTrue(session.session_id)
+        self.assertEqual(session.domain, "stores")
+
+        # Update state
+        session.update_state(
+            sql_used={"main": "SELECT * FROM silver.chi_nhanh"},
+            normalized_results={"kpis": {"total_revenue": 1000000}, "table_rows": [{"Chi Nhánh": "CN 1", "Doanh Thu": 1000000}]},
+            title="Báo cáo Doanh Thu",
+            description="Phân tích doanh thu",
+        )
+        self.assertEqual(session.title, "Báo cáo Doanh Thu")
+
+        # Add turn
+        session.add_turn("user", "Chỉ lọc khu vực TP.HCM")
+        session.add_turn("assistant", "Đã lọc theo TP.HCM")
+        self.assertEqual(len(session.conversation_turns), 2)
+
+        # Context for LLM
+        ctx = session.get_data_context_for_llm()
+        self.assertIn("1000000", ctx)
+
+        # History formatting
+        hist = session.formatted_history()
+        self.assertIn("TP.HCM", hist)
+
+        # Stats
+        stats = session_stats()
+        self.assertGreaterEqual(stats["active_sessions"], 1)
+
+    def test_validate_results_warnings(self):
+        from routers.ai import validate_results
+        # Empty rows should warn
+        empty_res = {"table_rows": [], "kpis": {}}
+        warnings = validate_results(empty_res)
+        self.assertTrue(any("0 kết quả" in w for w in warnings))
+
+        # Negative revenue should warn
+        neg_res = {"table_rows": [{"Tên Chi Nhánh": "CN 1", "Tổng Doanh Thu (VNĐ)": -50000}], "kpis": {}}
+        warnings = validate_results(neg_res)
+        self.assertTrue(any("âm bất thường" in w for w in warnings))
+
+    def test_dry_run_sql_safety(self):
+        from services.sql_service import dry_run_sql
+        # Forbidden command should fail
+        is_valid, err = dry_run_sql("DROP TABLE silver.don_hang")
+        self.assertFalse(is_valid)
+
+    def test_ai_feedback_model(self):
+        from common import AiFeedbackRequest
+        req = AiFeedbackRequest(
+            session_id="test-123",
+            prompt="Doanh thu hôm nay",
+            rating="positive",
+            comment="Báo cáo rất chuẩn",
+            final_sql="SELECT 1",
+        )
+        self.assertEqual(req.rating, "positive")
+        self.assertEqual(req.session_id, "test-123")
+
 
 if __name__ == "__main__":
     unittest.main()
+
 
 
 

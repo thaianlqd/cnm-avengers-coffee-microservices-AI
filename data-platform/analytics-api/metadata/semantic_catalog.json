@@ -2445,7 +2445,7 @@
         "orders",
         "cancellation"
       ],
-      "sql": "SELECT TO_CHAR(d.ngay_tao, 'HH24:00') AS \"Khung Giờ\",\n       COUNT(*) AS \"Tổng Số Đơn\",\n       COUNT(*) FILTER (WHERE d.trang_thai_don_hang = 'HUY_BO') AS \"Số Đơn Hủy\",\n       ROUND(100.0 * COUNT(*) FILTER (WHERE d.trang_thai_don_hang = 'HUY_BO') / NULLIF(COUNT(*), 0), 1) AS \"Tỷ Lệ Hủy (%)\"\nFROM silver.don_hang d\nGROUP BY TO_CHAR(d.ngay_tao, 'HH24:00')\nORDER BY \"Khung Giờ\" ASC;"
+      "sql": "SELECT TO_CHAR(d.ngay_tao, 'HH24:00') AS \"Khung Giờ\",\n       COUNT(*) AS \"Tổng Số Đơn\",\n       COUNT(*) FILTER (WHERE d.trang_thai_don_hang = 'DA_HUY') AS \"Số Đơn Hủy\",\n       ROUND(100.0 * COUNT(*) FILTER (WHERE d.trang_thai_don_hang = 'DA_HUY') / NULLIF(COUNT(*), 0), 1) AS \"Tỷ Lệ Hủy (%)\"\nFROM silver.don_hang d\nGROUP BY TO_CHAR(d.ngay_tao, 'HH24:00')\nORDER BY \"Khung Giờ\" ASC;"
     },
     {
       "question": "So sánh doanh thu và số lượng đơn hàng theo phương thức phục vụ",

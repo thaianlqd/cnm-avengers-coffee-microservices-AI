@@ -4,7 +4,9 @@ import {
   SmoothAreaChart, 
   DonutChart, 
   BarChart, 
-  HorizontalBarChart 
+  HorizontalBarChart,
+  HeatmapChart,
+  MultiLineChart 
 } from '../components/Charts';
 import { AnalyticsSubTab } from '../types';
 import { resolveAiChartPresentation } from '../utils/aiChartConfig.mjs';
@@ -69,6 +71,7 @@ export const AnalyticsView: React.FC = () => {
   const [reportVersions, setReportVersions] = useState<Array<{ version: number; label: string; report: any; time: string }>>([]);
   const [activeVersionIndex, setActiveVersionIndex] = useState<number>(0);
   const [refinementChat, setRefinementChat] = useState<Array<{ id: string; sender: 'user' | 'assistant'; text: string; time: string }>>([]);
+  const [feedbackSent, setFeedbackSent] = useState<Record<string, 'positive' | 'negative'>>({});
 
   // Step 3: DOCX Export & Saved Reports Management state
   const [isExportingDocx, setIsExportingDocx] = useState(false);
@@ -111,6 +114,8 @@ export const AnalyticsView: React.FC = () => {
       'xem kết quả', 'xem ket qua', 'kết quả', 'ket qua',
       'chờ kết quả', 'cho ket qua', 'đang tính', 'tự động tính',
       'chưa có', 'xem chi tiết', 'chờ phân tích', 'placeholder',
+      'chi tiết từng đơn', 'chi tiet tung don', 'từng đơn', 'tung don',
+      'danh sách', 'danh sach', 'chi tiết', 'chi tiet',
       'tbd', 'undefined', 'n/a', 'none', 'null'
     ];
     const sLower = s.toLowerCase();
@@ -325,6 +330,7 @@ export const AnalyticsView: React.FC = () => {
           feedback: text,
           conversation_history: historyPayload,
           domain: aiDomain,
+          session_id: repToRefine?.session_id || null,
         }),
       });
       if (!response.ok) {
@@ -346,11 +352,13 @@ export const AnalyticsView: React.FC = () => {
           setViewingSavedReport(data);
         }
         const replyText = data.assistant_reply || 'Đã cập nhật báo cáo theo góp ý của bạn!';
+        const diffText = data.diff_summary?.summary ? `\n• Chi tiết thay đổi: ${data.diff_summary.summary}` : '';
+        const fullReply = `${replyText}${diffText}`;
         const newTime = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
         setRefinementChat(prev => [...prev, {
           id: `ai-${Date.now()}`,
           sender: 'assistant',
-          text: replyText,
+          text: fullReply,
           time: newTime
         }]);
 
@@ -374,6 +382,34 @@ export const AnalyticsView: React.FC = () => {
       }]);
     } finally {
       setIsRefining(false);
+    }
+  };
+
+  const handleSendFeedback = async (rating: 'positive' | 'negative') => {
+    const currentRep = generatedReport || viewingSavedReport;
+    if (!currentRep) return;
+    const reportKey = currentRep.session_id || currentRep.id || currentRep.prompt || 'current';
+    if (feedbackSent[reportKey]) {
+      showToast('Bạn đã gửi đánh giá cho báo cáo này', 'info');
+      return;
+    }
+    try {
+      const res = await fetch('/api/ai/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: currentRep.session_id || null,
+          prompt: currentRep.prompt || '',
+          rating,
+          final_sql: currentRep.sql?.main || currentRep.sql_query || '',
+        }),
+      });
+      if (res.ok) {
+        setFeedbackSent(prev => ({ ...prev, [reportKey]: rating }));
+        showToast(rating === 'positive' ? 'Cảm ơn bạn! Đã ghi nhận phản hồi hài lòng 👍' : 'Đã ghi nhận phản hồi góp ý 👎', 'success');
+      }
+    } catch {
+      showToast('Không thể gửi phản hồi lúc này', 'error');
     }
   };
 
@@ -603,8 +639,33 @@ export const AnalyticsView: React.FC = () => {
     }
   };
 
-
-  // Sync with global store subTab if changed externally
+  const handleExportTableCsv = (tableData: any) => {
+    if (!tableData || !tableData.columns || !tableData.rows || tableData.rows.length === 0) {
+      showToast('Không có dữ liệu trong bảng để xuất CSV', 'error');
+      return;
+    }
+    const headers = tableData.columns.map((c: string) => `"${String(c).replace(/"/g, '""')}"`).join(',');
+    const csvRows = tableData.rows.map((row: any) => {
+      return tableData.columns
+        .map((col: string) => {
+          const val = row[col] ?? '';
+          const escaped = String(val).replace(/"/g, '""');
+          return `"${escaped}"`;
+        })
+        .join(',');
+    });
+    const csvContent = '\uFEFF' + [headers, ...csvRows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${(tableData.title || 'du_lieu_chi_tiet').replace(/[\s/\\:*?"<>|]/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast('Đã xuất bảng dữ liệu sang file CSV thành công!', 'success');
+  };
   useEffect(() => {
     if (analyticsSubTab) {
       setActiveTab(analyticsSubTab);
@@ -862,125 +923,210 @@ export const AnalyticsView: React.FC = () => {
     }, 700);
   };
 
+  const formatReportDateTime = (dateStr?: string) => {
+    if (!dateStr) return new Date().toLocaleDateString('vi-VN');
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${hours}:${minutes} • ${day}/${month}/${year}`;
+    } catch {
+      return dateStr;
+    }
+  };
+
   const renderVisualReportBlock = (rep: any, isFromSavedList: boolean = false) => {
     if (!rep) return null;
     return (
       <div className="space-y-6">
-        {/* Report Header Bar */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
-          <div className="min-w-0 flex-1 space-y-1.5">
-            <div className="flex items-center gap-2 flex-wrap">
+        {/* Report Header Bar - Spacious Responsive Layout */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4">
+          {/* Tier 1: Meta, Status & Quick Feedback */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2.5 flex-wrap">
               {isFromSavedList ? (
                 <>
                   <button
                     onClick={() => setViewingSavedReport(null)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium transition-colors cursor-pointer mr-1"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium transition-colors cursor-pointer"
                   >
                     <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
                     Quay lại danh sách
                   </button>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60">
                     <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
                     Báo cáo đã lưu trữ
                   </span>
                 </>
               ) : (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   Báo cáo hoàn tất
                 </span>
               )}
-              <span className="text-[11px] text-slate-400">
-                {rep.created_at || new Date().toLocaleDateString('vi-VN')}
+              <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
+                <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {formatReportDateTime(rep.created_at)}
               </span>
+              {rep.revision && rep.revision > 1 && (
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200/70">
+                  Bản sửa đổi #{rep.revision}
+                </span>
+              )}
             </div>
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-snug">
+
+            {/* Quick Feedback widget */}
+            <div className="flex items-center gap-1 border border-slate-200/90 rounded-xl bg-slate-50/70 p-1 shadow-2xs">
+              <button
+                onClick={() => handleSendFeedback('positive')}
+                title="Báo cáo chính xác và hữu ích"
+                className={`px-2.5 py-1 rounded-lg text-xs transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  feedbackSent[rep.session_id || rep.id || rep.prompt || 'current'] === 'positive'
+                    ? 'text-emerald-700 bg-white font-semibold shadow-2xs'
+                    : 'text-slate-500 hover:text-emerald-600 hover:bg-white/80'
+                }`}
+              >
+                <span>👍</span>
+                <span className="text-[11px] font-medium">Hài lòng</span>
+              </button>
+              <div className="w-px h-3.5 bg-slate-200" />
+              <button
+                onClick={() => handleSendFeedback('negative')}
+                title="Báo cáo cần cải thiện hoặc chưa chuẩn"
+                className={`px-2.5 py-1 rounded-lg text-xs transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  feedbackSent[rep.session_id || rep.id || rep.prompt || 'current'] === 'negative'
+                    ? 'text-rose-700 bg-white font-semibold shadow-2xs'
+                    : 'text-slate-500 hover:text-rose-600 hover:bg-white/80'
+                }`}
+              >
+                <span>👎</span>
+                <span className="text-[11px] font-medium">Chưa chuẩn</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Tier 2: Wide Uncramped Title & Context */}
+          <div className="space-y-1.5 max-w-5xl">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug">
               {rep.title || 'Báo Cáo Phân Tích Dữ Liệu Tự Động'}
             </h2>
-            <p className="text-xs text-slate-500 line-clamp-1">
+            <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
               {rep.description || rep.interpreted_request || 'Bản phân tích chuyên sâu tự động lưu trữ trên hệ thống.'}
             </p>
           </div>
 
-          {/* Clean Action Toolbar */}
-          <div className="flex flex-wrap items-center gap-2 shrink-0 self-start xl:self-center">
-            {isFromSavedList ? (
-              <button
-                onClick={() => setViewingSavedReport(null)}
-                title="Quay lại danh sách các báo cáo đã lưu"
-                className="px-3 py-2 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200/80 rounded-xl transition-colors cursor-pointer whitespace-nowrap inline-flex items-center gap-1.5"
-              >
-                <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                </svg>
-                Quản lý báo cáo
-              </button>
-            ) : (
-              <button
-                onClick={handleResetToNewPrompt}
-                title="Tạo phiên phân tích câu hỏi mới"
-                className="px-3 py-2 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200/80 rounded-xl transition-colors cursor-pointer whitespace-nowrap inline-flex items-center gap-1.5"
-              >
-                <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Hỏi câu mới
-              </button>
-            )}
+          {/* Tier 3: Action Toolbar - Organized by functional intent */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
+            {/* Left group: Analysis & Query */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {isFromSavedList ? (
+                <button
+                  onClick={() => setViewingSavedReport(null)}
+                  title="Quay lại danh sách các báo cáo đã lưu"
+                  className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200/80 rounded-xl transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                  Quản lý báo cáo
+                </button>
+              ) : (
+                <button
+                  onClick={handleResetToNewPrompt}
+                  title="Tạo phiên phân tích câu hỏi mới"
+                  className="px-3.5 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200/80 rounded-xl transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Hỏi câu mới
+                </button>
+              )}
 
-            {(rep.sql || rep.sql_query) && (
+              {(rep.sql || rep.sql_query) && (
+                <button
+                  onClick={() => setShowSqlCode(!showSqlCode)}
+                  title="Xem hoặc ẩn mã SQL thực thi"
+                  className={`px-3.5 py-2 text-xs font-medium rounded-xl border transition-colors cursor-pointer inline-flex items-center gap-1.5 ${
+                    showSqlCode
+                      ? 'bg-slate-800 text-white border-slate-800 shadow-2xs'
+                      : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200/90 shadow-2xs'
+                  }`}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                  {showSqlCode ? 'Ẩn mã SQL' : 'Xem mã SQL'}
+                </button>
+              )}
+            </div>
+
+            {/* Right group: Preservation & Export */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {!isFromSavedList && (
+                <button
+                  onClick={handleSaveAiReport}
+                  title="Lưu báo cáo vào kho lưu trữ cá nhân"
+                  className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200/90 rounded-xl shadow-2xs transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                  </svg>
+                  Lưu báo cáo
+                </button>
+              )}
+
               <button
-                onClick={() => setShowSqlCode(!showSqlCode)}
-                title="Xem hoặc ẩn mã SQL thực thi"
-                className="px-3 py-2 text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200/90 rounded-xl shadow-2xs transition-colors cursor-pointer whitespace-nowrap inline-flex items-center gap-1.5"
+                onClick={() => handleOpenDocxPreview(rep)}
+                title="Xem trước định dạng bố cục báo cáo"
+                className="px-3.5 py-2 text-xs font-medium text-slate-800 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
               >
-                <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                <svg className="w-3.5 h-3.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
-                {showSqlCode ? 'Ẩn SQL' : 'Xem SQL'}
+                Xem trước
               </button>
-            )}
 
-            {!isFromSavedList && (
               <button
-                onClick={handleSaveAiReport}
-                title="Lưu báo cáo vào kho lưu trữ cá nhân"
-                className="px-3 py-2 text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200/90 rounded-xl shadow-2xs transition-colors cursor-pointer whitespace-nowrap inline-flex items-center gap-1.5"
+                onClick={() => rep.id && isFromSavedList ? handleDownloadSavedDocx(rep.id, rep.title) : handleExportDocx(rep)}
+                disabled={isExportingDocx}
+                title="Xuất tải file báo cáo định dạng Word"
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
               >
-                <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                <svg className="w-3.5 h-3.5 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
-                Lưu báo cáo
+                {isExportingDocx ? 'Đang tạo Word...' : 'Tải file Word (.docx)'}
               </button>
-            )}
-
-            <button
-              onClick={() => handleOpenDocxPreview(rep)}
-              title="Xem trước định dạng bố cục báo cáo"
-              className="px-3.5 py-2 text-xs font-medium text-slate-800 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl shadow-xs transition-all cursor-pointer whitespace-nowrap inline-flex items-center gap-1.5"
-            >
-              <svg className="w-3.5 h-3.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-              Xem trước
-            </button>
-
-            <button
-              onClick={() => rep.id && isFromSavedList ? handleDownloadSavedDocx(rep.id, rep.title) : handleExportDocx(rep)}
-              disabled={isExportingDocx}
-              title="Xuất tải file báo cáo định dạng Word"
-              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer disabled:opacity-50 whitespace-nowrap inline-flex items-center gap-1.5"
-            >
-              <svg className="w-3.5 h-3.5 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              {isExportingDocx ? 'Đang tạo Word...' : 'Tải file Word (.docx)'}
-            </button>
+            </div>
           </div>
         </div>
+
+        {/* SECTION: Data Warnings / Sanity Alerts (Phase 3.3) */}
+        {rep.data_warnings && rep.data_warnings.length > 0 && (
+          <div className="bg-amber-50/90 border border-amber-200/90 rounded-2xl p-4 shadow-2xs flex items-start gap-3 text-amber-900">
+            <svg className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div className="text-xs space-y-1">
+              <div className="font-semibold text-amber-950">Lưu ý kiểm tra dữ liệu:</div>
+              <ul className="list-disc list-inside space-y-0.5 text-amber-800">
+                {rep.data_warnings.map((w: string, idx: number) => (
+                  <li key={idx}>{w}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
 
         {/* SECTION: AI Executive Summary */}
         <div className="bg-slate-50 rounded-2xl border border-slate-200/80 p-5 shadow-xs">
@@ -1120,25 +1266,66 @@ export const AnalyticsView: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
               {rep.charts.map((chart: any, cIdx: number) => {
                 const totalCharts = rep.charts.length;
-                const spanClass = (totalCharts === 1 || (totalCharts === 3 && cIdx === 0))
+                const isHeatmap = chart.chart_type === 'heatmap';
+                const isMultiLine = chart.chart_type === 'multi_line' || chart.chart_type === 'multiline';
+                const spanClass = (chart.col_span === 12 || isHeatmap || isMultiLine || totalCharts === 1 || (totalCharts === 3 && cIdx === 0) || (totalCharts === 5 && cIdx === 2))
                   ? 'col-span-1 lg:col-span-2'
                   : 'col-span-1';
+
+                const chartTypeBadge = isHeatmap
+                  ? 'Heatmap 2D'
+                  : isMultiLine
+                    ? 'Đa đường (Theo loại)'
+                    : chart.chart_type === 'donut'
+                      ? 'Cơ cấu'
+                      : chart.chart_type === 'horizontal_bar'
+                        ? 'Xếp hạng'
+                        : chart.chart_type === 'bar'
+                          ? 'Cột'
+                          : 'Xu hướng';
 
                 return (
                   <div key={chart.id || cIdx} className={`${spanClass} bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col justify-between min-h-[380px]`}>
                     <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
                       <div>
-                        <h4 className="text-sm font-semibold text-slate-900">
-                          {chart.title}
-                        </h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-semibold text-slate-900">
+                            {chart.title}
+                          </h4>
+                          <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full border ${
+                            isHeatmap
+                              ? 'bg-amber-50 text-amber-700 border-amber-200/70'
+                              : isMultiLine
+                                ? 'bg-sky-50 text-sky-700 border-sky-200/70'
+                                : 'bg-slate-100 text-slate-600 border-slate-200'
+                          }`}>
+                            {chartTypeBadge}
+                          </span>
+                        </div>
                         <p className="text-[11px] text-slate-400 mt-0.5">
                           {chart.purpose || 'Trực quan hóa dữ liệu'}
                         </p>
                       </div>
+                      {chart.unit && (
+                        <span className="text-[11px] font-mono text-slate-400">
+                          Đơn vị: {chart.unit}
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex-1 w-full pt-2 flex items-center justify-center">
-                      {chart.chart_type === 'horizontal_bar' ? (
+                      {isHeatmap ? (
+                        <HeatmapChart
+                          data={chart.data || []}
+                          valueSuffix={chart.unit ? ` ${chart.unit}` : ' đơn'}
+                        />
+                      ) : isMultiLine ? (
+                        <MultiLineChart
+                          data={chart.data || []}
+                          seriesKeys={chart.series_keys}
+                          valueSuffix={chart.unit ? ` ${chart.unit}` : ''}
+                        />
+                      ) : chart.chart_type === 'horizontal_bar' ? (
                         <HorizontalBarChart
                           data={(chart.data || []).map((d: any, idx: number) => ({
                             label: d.label || d.name || 'Mục',
@@ -1265,22 +1452,52 @@ export const AnalyticsView: React.FC = () => {
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <h3 className="text-base font-bold text-slate-800 tracking-tight">
-                  3. Phân tích Dữ liệu Chi tiết
-                </h3>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-base font-bold text-slate-800 tracking-tight">
+                    3. {rep.table_data.title || 'Phân tích Dữ liệu Chi tiết'}
+                  </h3>
+                  {rep.table_data.columns && rep.table_data.columns.length > 0 && (
+                    <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1.5 shadow-2xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      {(() => {
+                        const cols = rep.table_data.columns.join(' ').toLowerCase();
+                        if (/mã đơn|ma_don|order_id|phương thức|hình thức|trạng thái đơn/i.test(cols)) return 'Danh sách từng đơn chi tiết';
+                        if (/mã khách|khách hàng|họ tên|email|số điện thoại|ngày đăng ký/i.test(cols)) return 'Danh sách dữ liệu khách hàng';
+                        if (/mã món|tên sản phẩm|sản phẩm|đơn giá|danh mục/i.test(cols)) return 'Danh sách danh mục món';
+                        if (/chi nhánh|cửa hàng|thành phố|địa chỉ/i.test(cols)) return 'Danh sách chi nhánh cửa hàng';
+                        if (/đánh giá|số sao|nhận xét|bình luận/i.test(cols)) return 'Danh sách đánh giá phản hồi';
+                        if (/nguyên liệu|tồn kho|vật tư|đơn vị tính/i.test(cols)) return 'Danh sách tồn kho vật tư';
+                        if (/ca làm|nhân viên|chấm công|giờ bắt đầu/i.test(cols)) return 'Danh sách ca làm việc nhân sự';
+                        if (/voucher|khuyến mãi|ưu đãi|giảm giá/i.test(cols)) return 'Danh sách chương trình ưu đãi';
+                        return 'Bảng dữ liệu thực thể chi tiết';
+                      })()}
+                    </span>
+                  )}
+                </div>
                 <p className="text-[11px] text-slate-400 mt-0.5">
                   Tổng cộng {rep.table_data.rows?.length || 0} bản ghi dữ liệu hợp lệ trích xuất từ tầng Silver
                 </p>
               </div>
 
-              <div>
+              <div className="flex items-center gap-2">
                 <input
                   type="text"
                   placeholder="Tìm kiếm trong bảng..."
                   value={tableSearch}
                   onChange={(e) => setTableSearch(e.target.value)}
-                  className="text-xs px-3.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:border-slate-400 focus:bg-white text-slate-700 w-56 font-normal"
+                  className="text-xs px-3.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:border-slate-400 focus:bg-white text-slate-700 w-48 font-normal"
                 />
+                <button
+                  type="button"
+                  onClick={() => handleExportTableCsv(rep.table_data)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200/80 border border-slate-200 rounded-xl shadow-2xs transition-colors cursor-pointer"
+                  title="Tải bảng dữ liệu dạng CSV"
+                >
+                  <svg className="w-3.5 h-3.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  <span>Tải CSV</span>
+                </button>
               </div>
             </div>
 
@@ -1459,6 +1676,33 @@ export const AnalyticsView: React.FC = () => {
               )}
             </button>
           </form>
+
+          {/* Lịch sử trao đổi tinh chỉnh (Phase 4.1: Rich Conversation Panel) */}
+          {refinementChat.length > 0 && (
+            <div className="mt-4 pt-3 border-t border-slate-100 space-y-2.5 max-h-72 overflow-y-auto pr-1">
+              <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                Lịch sử trao đổi & Tinh chỉnh:
+              </div>
+              {refinementChat.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex flex-col text-xs rounded-xl p-3 ${
+                    msg.sender === 'user'
+                      ? 'bg-slate-100 text-slate-800 ml-4'
+                      : 'bg-emerald-50/80 border border-emerald-100 text-emerald-950 mr-4'
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+                    <span className="font-semibold text-slate-600">
+                      {msg.sender === 'user' ? '👤 Góp ý của bạn' : '🤖 Trợ lý AI'}
+                    </span>
+                    <span>{msg.time}</span>
+                  </div>
+                  <p className="leading-relaxed whitespace-pre-line">{msg.text}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Footnote */}
@@ -2640,22 +2884,29 @@ export const AnalyticsView: React.FC = () => {
 
                     {/* 3. Planned Charts */}
                     <div className="bg-slate-50/60 rounded-xl border border-slate-200/70 p-4">
-                      <div className="text-xs font-semibold text-slate-800 mb-2.5">
-                        Biểu đồ trực quan
+                      <div className="flex items-center justify-between text-xs font-semibold text-slate-800 mb-2.5">
+                        <span>Biểu đồ trực quan</span>
+                        <span className="text-[10px] text-sky-700 bg-sky-50 border border-sky-200/60 px-2 py-0.5 rounded-full font-medium">
+                          {(aiPlan.planned_charts || []).length} biểu đồ đa chiều
+                        </span>
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
                         {(aiPlan.planned_charts || []).map((ch: any, idx: number) => (
-                          <div key={idx} className="p-2.5 rounded-lg bg-white border border-slate-100 text-xs">
+                          <div key={idx} className="p-2.5 rounded-lg bg-white border border-slate-100 text-xs shadow-2xs">
                             <div className="flex items-center justify-between">
                               <span className="font-medium text-slate-800 text-[11px]">{ch.title}</span>
-                              <span className="text-[10px] text-slate-400">
+                              <span className="text-[10px] font-medium text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded">
                                 {ch.chart_type === 'horizontal_bar'
                                   ? 'Cột ngang'
                                   : ch.chart_type === 'donut'
-                                    ? 'Tròn'
+                                    ? 'Cơ cấu tròn'
                                     : ch.chart_type === 'bar'
                                       ? 'Cột dọc'
-                                      : 'Miền'}
+                                      : ch.chart_type === 'heatmap'
+                                        ? 'Heatmap 2D'
+                                        : ch.chart_type === 'multi_line' || ch.chart_type === 'multiline'
+                                          ? 'Đa đường'
+                                          : 'Miền / Xu hướng'}
                               </span>
                             </div>
                             <div className="text-slate-600 text-[11px] mt-0.5">
@@ -2675,7 +2926,7 @@ export const AnalyticsView: React.FC = () => {
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-slate-700">
                       {(aiPlan.report_sections || [
                         '1. Tóm tắt điều hành',
-                        '2. Dashboard tự động sinh (KPI & Biểu đồ)',
+                        '2. Dashboard tự động sinh (KPI & 5-6 Biểu đồ)',
                         '3. Bảng các phát hiện chính',
                         '4. Bảng phân tích dữ liệu chi tiết',
                         '5. Nhận định chuyên sâu từ AI',
