@@ -9,12 +9,38 @@ PREFIX = r'(?:(?:vay|the)\s+)?(?:(?:cho|giup)\s+(?:toi|minh|em)\s+)?(?:(?:toi|mi
 SUFFIX = r'(?:\s+(?:di|nhe|nha|a|ban|b|oi|giup|toi|minh|voi))*'
 
 
+def _parse_options_from_text(norm, options_dict):
+    options = {}
+    sizes = options_dict.get('Kích thước') or []
+    size_m = re.search(r'\b(?:size\s+)?(lon|vua|nho)\b', norm)
+    if size_m:
+        val = {'lon': 'Lớn', 'vua': 'Vừa', 'nho': 'Nhỏ'}[size_m.group(1)]
+        if val in sizes:
+            options['size'] = val
+    if 'size' not in options and sizes:
+        options['size'] = 'Vừa' if 'Vừa' in sizes else ('Nhỏ' if 'Nhỏ' in sizes else sizes[0])
+
+    ice_m = re.search(r'\b(da rieng|it da|khong da|them da|binh thuong)\b', norm)
+    if ice_m:
+        ice_map = {'it da': 'Ít đá', 'da rieng': 'Đá riêng', 'khong da': 'Không đá', 'them da': 'Thêm đá', 'binh thuong': 'Bình thường'}
+        options['luong_da'] = ice_map[ice_m.group(1)]
+
+    sugar_m = re.search(r'\b(it ngot|them ngot|khong ngot)\b', norm)
+    if sugar_m:
+        sugar_map = {'it ngot': 'Ít ngọt', 'them ngot': 'Thêm ngọt', 'khong ngot': 'Không ngọt'}
+        options['do_ngot'] = sugar_map[sugar_m.group(1)]
+
+    return options
+
+
 def accepts(message, focus):
     if not focus or focus.get('kind') != 'update_order' or '?' in message:
         return False
     norm = normalize_text(message)
     if re.search(r'\b(?:khong (?!da\b|ngot\b)|ko|chua|dung|neu|gio hang|don|xac nhan|va|roi|ghi chu|dia chi|khung gio|thanh toan)\b', norm):
         return False
+    if focus.get('edit_stage') == 'replacement_options':
+        return True
     if re.fullmatch(PREFIX + r'(?:doi|sua)(?:\s+(?:mon|so luong|tuy chon|topping))?' + SUFFIX, norm):
         return True
     if re.fullmatch(PREFIX + r'(?:(?:doi|sua|chon|bo|xoa)\s+)?mon\s+(?:so\s+)?\d+(?:\s+(?:thanh|sang|qua|de doi qua|de doi sang|de doi thanh)\s+.+)?' + SUFFIX, norm):
@@ -22,9 +48,9 @@ def accepts(message, focus):
     if re.search(r'\b(?:da rieng|it da|khong da|them da|it ngot|them ngot|khong ngot)\b', norm):
         return True
     # A literal title is a response to the selected line, never an add-to-cart.
-    return (focus.get('edit_stage') == 'replacement_name'
-            and not re.search(r'\b(?:huy|xoa|bo|mua|dat|xem|them|gia|topping|size)\b', norm)
-            and not re.match(r'^(?:do ngot|luong da|loai sua|ngot|da)\b', norm))
+    return (focus.get('edit_stage') in {'replacement_name', 'replacement_choice'}
+            and not re.search(r'\b(?:huy|xoa|bo|mua|dat|xem|them|gia)\b', norm)
+            and not re.match(r'^(?:do ngot|luong da|loai sua)\b', norm))
 
 
 def _focus(session_id, current, **extra):
@@ -65,6 +91,16 @@ def interpret(session_id, message, current):
     if focus.get('edit_revision') and focus['edit_revision'] != current['revision']:
         return _list(session_id, current, 'Đơn đã thay đổi từ lần xem trước. Bạn chọn lại theo danh sách mới nhé:')
     norm = normalize_text(message)
+
+    if focus.get('edit_stage') == 'replacement_options':
+        line_id = focus.get('edit_line_id')
+        product_id = focus.get('selected_product_id')
+        from src.function_calling.tools.product_tools import execute_get_product_options
+        opts_res = execute_get_product_options(product_id=str(product_id))
+        options_dict = opts_res.get('options') or {}
+        chosen_opts = _parse_options_from_text(norm, options_dict)
+        return {'changes': [{'order_line_id': line_id, 'product_id': str(product_id), **chosen_opts}]}
+
     if re.fullmatch(PREFIX + r'(?:doi|sua)(?:\s+(?:mon|so luong|tuy chon|topping))?' + SUFFIX, norm):
         return _list(session_id, current)
 
@@ -98,7 +134,27 @@ def interpret(session_id, message, current):
             if title or not 1 <= index <= len(choices):
                 return {'status': 'needs_order_changes', 'message': 'Bạn chọn một số trong danh sách món thay thế vừa xem nhé.'}
             line_id = focus['edit_line_id']
-            return {'changes': [{'order_line_id': line_id, 'product_id': str(choices[index - 1]['product_id'])}]}
+            prod = choices[index - 1]
+            from src.function_calling.tools.product_tools import execute_get_product_options
+            opts_res = execute_get_product_options(product_id=str(prod['product_id']))
+            options_dict = opts_res.get('options') or {}
+            option_groups = opts_res.get('option_groups') or []
+            has_custom_options = bool(options_dict.get('Kích thước') or options_dict.get('Lượng đá') or options_dict.get('Độ ngọt'))
+            if has_custom_options:
+                _focus(session_id, current, edit_stage='replacement_options', edit_line_id=line_id,
+                       selected_product_id=str(prod['product_id']), selected_product_name=prod['product_name'])
+                lines = [f"Dạ, bạn chọn giúp mình các tùy chọn cho **{prod['product_name']}** nhé:"]
+                for g in option_groups:
+                    g_name = g['name']
+                    vals = g['values']
+                    if g_name == 'Kích thước':
+                        lines.append(f"- **Kích thước**: " + ", ".join(vals) + " (mặc định: Vừa)")
+                    else:
+                        lines.append(f"- **{g_name}** (tùy chọn): " + ", ".join(vals))
+                lines.append("\nBạn có thể chọn kích thước, lượng đá, độ ngọt mong muốn, hoặc nói **mặc định** để dùng size Vừa theo công thức quán nhé.")
+                return {'status': 'needs_order_changes', 'message': '\n'.join(lines)}
+            chosen_opts = _parse_options_from_text(norm, options_dict)
+            return {'changes': [{'order_line_id': line_id, 'product_id': str(prod['product_id']), **chosen_opts}]}
         if not 1 <= index <= len(focus['edit_lines']):
             return {'status': 'needs_order_changes', 'message': 'Số món này không có trong đơn. Bạn chọn lại theo danh sách món của đơn nhé.'}
         line_id = focus['edit_lines'][index - 1]['id']
@@ -137,10 +193,10 @@ def interpret(session_id, message, current):
         line_id = focus.get('edit_line_id')
         if focus.get('edit_stage') != 'replacement_name' or not any(r['id'] == line_id for r in current['items']):
             return _list(session_id, current)
-        response = re.fullmatch(PREFIX + r'(?:(?:doi|thay)\s+)?(?:(?:sang|thanh)\s+)?(.+?)' + SUFFIX, norm)
+        response = re.fullmatch(PREFIX + r'(?:(?:doi|thay)\s+)?(?:(?:sang|thanh|qua|de doi qua|de doi sang)\s+)?(.+?)' + SUFFIX, norm)
         title = response[1] if response else norm
-    # Lookup current Menu only. A partial title may suggest candidates but cannot
-    # silently substitute a product, price or the old drink's toppings/options.
+
+    # Lookup current Menu only.
     from src.function_calling.tools.product_tools import execute_filter_catalog
     result = execute_filter_catalog(search_text=title, limit=50)
     if result.get('status') not in {'ok', 'not_found'}:
@@ -148,7 +204,36 @@ def interpret(session_id, message, current):
     products = result.get('products') or []
     exact = [p for p in products if normalize_text(p.get('product_name') or '') == title]
     if len(exact) == 1:
-        return {'changes': [{'order_line_id': line_id, 'product_id': str(exact[0]['product_id'])}]}
+        prod = exact[0]
+        from src.function_calling.tools.product_tools import execute_get_product_options
+        opts_res = execute_get_product_options(product_id=str(prod['product_id']))
+        options_dict = opts_res.get('options') or {}
+        option_groups = opts_res.get('option_groups') or []
+        has_custom_options = bool(options_dict.get('Kích thước') or options_dict.get('Lượng đá') or options_dict.get('Độ ngọt'))
+
+        has_specified_options = bool(
+            re.search(r'\b(?:size\s+)?(lon|vua|nho)\b', norm) or
+            re.search(r'\b(da rieng|it da|khong da|them da|it ngot|them ngot|khong ngot)\b', norm) or
+            re.search(r'\b(?:mac dinh|theo mac dinh)\b', norm)
+        )
+
+        if has_custom_options and not has_specified_options:
+            _focus(session_id, current, edit_stage='replacement_options', edit_line_id=line_id,
+                   selected_product_id=str(prod['product_id']), selected_product_name=prod['product_name'])
+            lines = [f"Dạ, bạn chọn giúp mình các tùy chọn cho **{prod['product_name']}** nhé:"]
+            for g in option_groups:
+                g_name = g['name']
+                vals = g['values']
+                if g_name == 'Kích thước':
+                    lines.append(f"- **Kích thước**: " + ", ".join(vals) + " (mặc định: Vừa)")
+                else:
+                    lines.append(f"- **{g_name}** (tùy chọn): " + ", ".join(vals))
+            lines.append("\nBạn có thể chọn kích thước, lượng đá, độ ngọt mong muốn, hoặc nói **mặc định** để dùng size Vừa theo công thức quán nhé.")
+            return {'status': 'needs_order_changes', 'message': '\n'.join(lines)}
+
+        chosen_opts = _parse_options_from_text(norm, options_dict)
+        return {'changes': [{'order_line_id': line_id, 'product_id': str(prod['product_id']), **chosen_opts}]}
+
     candidates = products[:5]
     if not candidates:
         _focus(session_id, current, edit_stage='replacement_name', edit_line_id=line_id)

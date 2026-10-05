@@ -213,21 +213,23 @@ def order_history_reply(result, requested_count):
             lines.append(f"   Tổng tiền: **{money(order['tong_tien'])}**")
         p_method = order.get('phuong_thuc_thanh_toan')
         p_status = order.get('trang_thai_thanh_toan')
+        order_type = order.get('loai_don_hang')
         is_cod = p_method in {'THANH_TOAN_KHI_NHAN_HANG', 'TIEN_MAT', 'CASH'} or p_status == 'CHO_THANH_TOAN_KHI_NHAN_HANG'
         if is_cod:
-            pay_label = 'Thanh toán khi nhận hàng (COD)'
-        elif p_method == 'VI_DIEN_TU':
-            pay_label = 'Ví điện tử' + (f" ({payments.get(p_status, p_status)})" if p_status else '')
-        elif p_method in {'VNPAY', 'NGAN_HANG_QR', 'MOMO', 'ZALOPAY'}:
-            m_label = {'VNPAY': 'VNPAY', 'NGAN_HANG_QR': 'Ngân hàng QR', 'MOMO': 'MoMo', 'ZALOPAY': 'ZaloPay'}.get(p_method, p_method)
-            pay_label = f"{m_label}" + (f" ({payments.get(p_status, p_status)})" if p_status else '')
+            pay_label = 'Tiền mặt COD' if order_type == 'GIAO_TAN_NOI' else 'Thanh toán tại quầy'
+        elif p_method in {'VI_DIEN_TU', 'VI_AVENGERS'}:
+            pay_label = 'Ví Avengers' + (f" ({payments.get(p_status, p_status)})" if p_status else '')
+        elif p_method in {'NGAN_HANG_QR', 'THE_NGAN_HANG'}:
+            pay_label = 'Ngân hàng QR' + (f" ({payments.get(p_status, p_status)})" if p_status else '')
+        elif p_method == 'VNPAY':
+            pay_label = 'VNPAY' + (f" ({payments.get(p_status, p_status)})" if p_status else '')
         else:
             pay_label = payments.get(p_status, payments.get(p_method, p_status or p_method or 'Chưa rõ'))
         lines.append(f"   Thanh toán: {pay_label}")
 
         policy = edit_policy(order)
         can_edit = policy['allowed']
-        can_cancel = (status in {'MOI_TAO', 'DA_XAC_NHAN'} and p_method == 'VI_DIEN_TU')
+        can_cancel = (status in {'MOI_TAO', 'DA_XAC_NHAN'} and p_method in {'VI_DIEN_TU', 'VI_AVENGERS'})
         if status == 'DA_HUY':
             note = 'Đơn đã huỷ'
         elif can_edit and can_cancel:
@@ -249,15 +251,27 @@ def order_details_reply(result):
         return result.get('message') or 'Mình chưa tra cứu được chi tiết đơn hàng này. Bạn kiểm tra lại mã đơn nhé.'
     statuses = {'MOI_TAO': 'Mới tạo', 'DA_XAC_NHAN': 'Đã xác nhận', 'DANG_CHUAN_BI': 'Đang chuẩn bị',
                 'DANG_GIAO': 'Đang giao', 'DA_GIAO': 'Đã giao', 'HOAN_THANH': 'Hoàn thành', 'DA_HUY': 'Đã huỷ'}
-    payments = {'THANH_TOAN_KHI_NHAN_HANG': 'Thanh toán khi nhận hàng (COD)',
-                'CHO_THANH_TOAN_KHI_NHAN_HANG': 'Thanh toán khi nhận hàng (COD)',
-                'TIEN_MAT': 'Thanh toán khi nhận hàng (COD)',
-                'CASH': 'Thanh toán khi nhận hàng (COD)',
-                'VI_DIEN_TU': 'Ví điện tử', 'VNPAY': 'VNPAY', 'NGAN_HANG_QR': 'Ngân hàng QR',
-                'MOMO': 'MoMo', 'ZALOPAY': 'ZaloPay'}
+    payments = {'THANH_TOAN_KHI_NHAN_HANG': 'Tiền mặt COD',
+                'CHO_THANH_TOAN_KHI_NHAN_HANG': 'Tiền mặt COD',
+                'TIEN_MAT': 'Tiền mặt COD',
+                'CASH': 'Tiền mặt COD',
+                'VI_DIEN_TU': 'Ví Avengers', 'VI_AVENGERS': 'Ví Avengers', 'VNPAY': 'VNPAY', 'NGAN_HANG_QR': 'Ngân hàng QR'}
     oid = result.get('order_id')
     status = statuses.get(result.get('order_status'), result.get('order_status') or 'Chưa rõ')
-    method = payments.get(result.get('payment_method'), result.get('payment_method') or 'Chưa rõ')
+    raw_method = result.get('payment_method')
+    order_obj = result.get('order') or {}
+    order_type = order_obj.get('loai_don_hang') or result.get('delivery_type')
+    is_cod = raw_method in {'THANH_TOAN_KHI_NHAN_HANG', 'TIEN_MAT', 'CASH'} or order_obj.get('trang_thai_thanh_toan') == 'CHO_THANH_TOAN_KHI_NHAN_HANG'
+    if is_cod:
+        method = 'Tiền mặt COD' if order_type == 'GIAO_TAN_NOI' else 'Thanh toán tại quầy'
+    elif raw_method in {'VI_DIEN_TU', 'VI_AVENGERS'}:
+        method = 'Ví Avengers'
+    elif raw_method in {'NGAN_HANG_QR', 'THE_NGAN_HANG'}:
+        method = 'Ngân hàng QR'
+    elif raw_method == 'VNPAY':
+        method = 'VNPAY'
+    else:
+        method = payments.get(raw_method, raw_method or 'Chưa rõ')
     lines = [f"Dạ, đây là chi tiết đơn hàng **{oid}**:\n- Trạng thái: **{status}**\n- Thanh toán: **{method}**"]
     items = result.get('items') or []
     if items:
@@ -303,12 +317,24 @@ def confirmation_allowed(message, action):
     targets = ORDER_ID.findall(message.lower())
     if targets and set(targets) != {action['order_id']}:
         return False
-    plain = normalize_text(ORDER_ID.sub('', message.lower()))
-    verbs = {'cancel_order': r'(?:huy|huy don|huy don hang)', 'update_order': r'(?:sua|sua don|sua don hang|thay doi|cap nhat)',
-             'reorder_order': r'(?:dat lai|dat lai don|dat lai don hang|mua lai)'}
-    verb = verbs[action['kind']]
-    allowed = rf'(?:(?:toi|minh|em)\s+)?(?:(?:dong y|xac nhan|oke|ok|duoc)(?:\s+{verb})?|{verb}\s+di)(?:\s+(?:di|nhe|nha|a|ban|b|oi|luon|giup|toi|minh|theo thong tin tren))*'
-    return '?' not in message and bool(re.fullmatch(allowed, plain))
+    if '?' in message:
+        return False
+    norm = normalize_text(ORDER_ID.sub('', message.lower())).strip(' .!,')
+
+    # Reject if user is asking to change/modify or declining
+    if re.search(r'\b(?:khong|ko|k|dung|chua|khoan|thoi|chinh lai|sua lai|xem lai|bo qua|nhung|doi thanh|sua thanh)\b', norm):
+        return False
+
+    # Reject action verb mismatch
+    if action.get('kind') == 'cancel_order' and re.search(r'\b(?:sua|doi|dat lai)\b', norm):
+        return False
+    if action.get('kind') == 'update_order' and re.search(r'\b(?:huy|dat lai)\b', norm):
+        return False
+    if action.get('kind') == 'reorder_order' and re.search(r'\b(?:huy|sua)\b', norm):
+        return False
+
+    affirmative = r'\b(?:xac nhan|dong y|ok|oke|okay|duoc|chuan|dung roi|chot|tien hanh|sua di|doi di|huy di|dat lai di)\b'
+    return bool(re.search(affirmative, norm))
 
 
 def customer_order_tool(message, prefs, orders=None):
@@ -399,7 +425,7 @@ def details(session_id, order_id):
     return {**result, 'order_id': order_id, 'order_status': order['trang_thai_don_hang'],
         'payment_method': order['phuong_thuc_thanh_toan'], 'total_price': order['tong_tien'],
         'items': items,
-        'can_cancel': order['trang_thai_don_hang'] in {'MOI_TAO', 'DA_XAC_NHAN'} and order.get('phuong_thuc_thanh_toan') == 'VI_DIEN_TU',
+        'can_cancel': order['trang_thai_don_hang'] in {'MOI_TAO', 'DA_XAC_NHAN'} and order.get('phuong_thuc_thanh_toan') in {'VI_DIEN_TU', 'VI_AVENGERS'},
         'can_update': policy['allowed'], 'update_policy': policy}
 
 
@@ -407,7 +433,7 @@ def edit_policy(order):
     state, method = order.get('trang_thai_don_hang'), order.get('phuong_thuc_thanh_toan')
     paid = order.get('trang_thai_thanh_toan') == 'DA_THANH_TOAN'
     is_cod = method in {'THANH_TOAN_KHI_NHAN_HANG', 'TIEN_MAT', 'CASH'} or order.get('trang_thai_thanh_toan') == 'CHO_THANH_TOAN_KHI_NHAN_HANG'
-    is_wallet = method == 'VI_DIEN_TU'
+    is_wallet = method in {'VI_DIEN_TU', 'VI_AVENGERS'}
     reason = None
     if state not in {'MOI_TAO', 'DA_XAC_NHAN'}:
         reason = 'Chỉ sửa được trước khi cửa hàng bắt đầu chuẩn bị món.'

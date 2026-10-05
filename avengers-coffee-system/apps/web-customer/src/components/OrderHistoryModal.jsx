@@ -31,9 +31,26 @@ const PAYMENT_STATUS_LABEL = {
 const PAYMENT_METHOD_LABEL = {
   VNPAY: 'VNPAY',
   NGAN_HANG_QR: 'Ngân hàng QR',
-  THANH_TOAN_KHI_NHAN_HANG: 'COD',
-  VI_DIEN_TU: 'Ví điện tử',
+  THANH_TOAN_KHI_NHAN_HANG: 'Tiền mặt COD',
+  VI_DIEN_TU: 'Ví Avengers',
+  VI_AVENGERS: 'Ví Avengers',
+  THE_NGAN_HANG: 'Ngân hàng QR',
+  TIEN_MAT: 'Tiền mặt COD',
 };
+
+function getPaymentMethodDisplay(order) {
+  if (!order) return '';
+  const method = order.phuong_thuc_thanh_toan;
+  const isCod = ['THANH_TOAN_KHI_NHAN_HANG', 'TIEN_MAT', 'CASH'].includes(method) ||
+                order.trang_thai_thanh_toan === 'CHO_THANH_TOAN_KHI_NHAN_HANG';
+  if (isCod) {
+    return order.loai_don_hang === 'GIAO_TAN_NOI' ? 'Tiền mặt COD' : 'Thanh toán tại quầy';
+  }
+  if (method === 'VI_DIEN_TU' || method === 'VI_AVENGERS' || method === 'MOMO') return 'Ví Avengers';
+  if (method === 'NGAN_HANG_QR' || method === 'THE_NGAN_HANG') return 'Ngân hàng QR';
+  if (method === 'VNPAY') return 'VNPAY';
+  return PAYMENT_METHOD_LABEL[method] || method;
+}
 
 const BRANCH_LABEL = {
   MAC_DINH_CHI: 'Chi nhánh hệ thống',
@@ -862,7 +879,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                               <p className="text-[11px] font-extrabold uppercase tracking-wider text-gray-400">Thông tin thanh toán</p>
                               <div className="flex items-center justify-between text-xs text-gray-700">
                                 <span className="font-medium text-gray-500">Phương thức:</span>
-                                <span className="font-bold">{PAYMENT_METHOD_LABEL[order.phuong_thuc_thanh_toan] || order.phuong_thuc_thanh_toan}</span>
+                                <span className="font-bold">{getPaymentMethodDisplay(order)}</span>
                               </div>
                               {order.dia_chi_giao_hang && (
                                 <div className="text-xs text-gray-700">

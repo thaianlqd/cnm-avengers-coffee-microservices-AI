@@ -27,7 +27,13 @@ export async function canonicalOrderLine(manager: { query: Function }, item: any
     let choices = labels(product[field === 'kich_co' ? 'sizes' : field]);
     // The existing cart/order contract uses Nhỏ for products with no size selector.
     if (field === 'kich_co' && !choices.length) choices = ['Nhỏ'];
-    const raw = item[field] ?? (field === 'kich_co' ? choices[0] : field === 'toppings' ? [] : null);
+    let defaultChoice = choices[0];
+    if (field === 'kich_co' && choices.length > 1) {
+      const basePrice = Number(product.gia_ban);
+      const matchBase = choices.find(c => Number(product.sizes?.[c]) === basePrice);
+      defaultChoice = matchBase || choices.find(c => ['Vừa', 'Nhỏ'].includes(c)) || choices[0];
+    }
+    const raw = item[field] ?? (field === 'kich_co' ? defaultChoice : field === 'toppings' ? [] : null);
     const selected = field === 'toppings' ? raw : raw ? [raw] : [];
     if (!Array.isArray(selected) || new Set(selected.map(key)).size !== selected.length) throw new BadRequestException('Tuy chon khong hop le');
     const values = selected.map(v => choices.find(c => key(c) === key(v)));

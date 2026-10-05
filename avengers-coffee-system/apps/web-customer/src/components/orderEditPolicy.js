@@ -4,7 +4,7 @@ export function orderEditPolicy(order) {
   const method = order?.phuong_thuc_thanh_toan;
   const isCod = ['THANH_TOAN_KHI_NHAN_HANG', 'TIEN_MAT', 'CASH'].includes(method) ||
                 order?.trang_thai_thanh_toan === 'CHO_THANH_TOAN_KHI_NHAN_HANG';
-  const isWallet = method === 'VI_DIEN_TU';
+  const isWallet = ['VI_DIEN_TU', 'VI_AVENGERS'].includes(method);
   let reason = null;
   if (!['MOI_TAO', 'DA_XAC_NHAN'].includes(order?.trang_thai_don_hang)) {
     reason = 'Chỉ sửa được trước khi cửa hàng bắt đầu chuẩn bị món.';

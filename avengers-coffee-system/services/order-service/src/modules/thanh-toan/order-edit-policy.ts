@@ -6,7 +6,7 @@ export function orderEditPolicy(order: any) {
   const paid = order.trang_thai_thanh_toan === 'DA_THANH_TOAN';
   const isCod = ['THANH_TOAN_KHI_NHAN_HANG', 'TIEN_MAT', 'CASH'].includes(method) ||
                 order.trang_thai_thanh_toan === 'CHO_THANH_TOAN_KHI_NHAN_HANG';
-  const isWallet = method === 'VI_DIEN_TU';
+  const isWallet = ['VI_DIEN_TU', 'VI_AVENGERS'].includes(method);
   let reason: string | null = null;
   if (state === 'DA_HUY') reason = 'Đơn đã huỷ nên không thể sửa. Bạn có thể yêu cầu đặt lại đơn.';
   else if (!['MOI_TAO', 'DA_XAC_NHAN'].includes(state)) reason = 'Chỉ sửa được trước khi cửa hàng bắt đầu chuẩn bị món.';
