@@ -262,11 +262,20 @@ class SemanticService:
         context: str = "",
         domain: str = "auto",
         physical_metadata: Optional[Dict[str, Any]] = None,
+        vector_tables: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         text = f"{prompt} {context}".strip()
         scores = self._scores(text, domain)
         query_context = self.extract_query_context(text)
         ranked_ids = [item[0] for item in sorted(scores.items(), key=lambda item: (-item[1], item[0]))]
+
+        # ── Boost entities from vector search tables if provided (Phase 2.1) ──
+        if vector_tables:
+            for vtable in vector_tables:
+                for entity in self.entities:
+                    if vtable in entity.get("tables", []) and entity["id"] not in ranked_ids:
+                        ranked_ids.append(entity["id"])
+
         if not ranked_ids:
             ranked_ids = ["orders"]
 

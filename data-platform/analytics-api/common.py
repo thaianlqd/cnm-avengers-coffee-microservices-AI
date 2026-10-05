@@ -45,6 +45,8 @@ class AiTextToReportRequest(BaseModel):
     context: Optional[str] = ""
     time_range: Optional[AiTimeRange] = None
     domain: Optional[Literal["auto", "orders", "stores", "products", "customers", "payments", "delivery"]] = "auto"
+    # Session ID for tracking conversation across report generation and refinement turns.
+    session_id: Optional[str] = None
     # Legacy filters remain accepted for older clients.
     date_range: Optional[str] = None
     branch: Optional[str] = "all"
@@ -61,6 +63,18 @@ class AiReportRefineRequest(BaseModel):
     feedback: str
     conversation_history: Optional[List[Dict[str, str]]] = []
     domain: Optional[str] = "auto"
+    # Session ID to retrieve server-side conversation memory.
+    session_id: Optional[str] = None
+
+
+class AiFeedbackRequest(BaseModel):
+    session_id: Optional[str] = None
+    prompt: str
+    rating: Literal["positive", "negative"]
+    comment: Optional[str] = ""
+    final_sql: Optional[str] = ""
+    intent: Optional[str] = ""
+
 
 
 def get_filter_clauses(cur, date_range: str, branch: str, order_alias: str = "d"):

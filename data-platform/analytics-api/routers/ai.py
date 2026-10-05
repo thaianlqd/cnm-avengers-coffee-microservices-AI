@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, HTTPException
 
-from common import AiReportRefineRequest, AiSummarizeRequest, AiTextToReportRequest
+from common import AiFeedbackRequest, AiReportRefineRequest, AiSummarizeRequest, AiTextToReportRequest
 from services.llm_service import call_llm, provider_configuration
 from services.metadata_service import (
     cache_status,
@@ -17,8 +17,9 @@ from services.metadata_service import (
     sql_references_sensitive_columns,
 )
 from services.semantic_service import semantic_service
-from services.sql_service import QueryExecutionError, SqlSafetyError, execute_read_only, validate_ai_query_scope
+from services.sql_service import QueryExecutionError, SqlSafetyError, dry_run_sql, execute_read_only, validate_ai_query_scope
 from services.vector_rag_service import vector_rag_service
+from services.session_service import create_session, get_session, session_stats
 
 
 router = APIRouter(prefix="/api/ai", tags=["AI Data Assistant"])
@@ -1375,23 +1376,31 @@ CỰC KỲ QUAN TRỌNG VỀ KPI_CARDS:
 2. TUYỆT ĐỐI KHÔNG VIẾT CHỮ "Xem kết quả", "Chờ kết quả", "Xem chi tiết", "TBD", "N/A", "Chưa có", "null" VÀO TRƯỜNG "value". Hãy luôn điền số ước tính hợp lý theo câu hỏi, hệ thống sẽ tự động cập nhật số liệu chính xác 100% từ kết quả SQL sau khi truy vấn.
 3. TUYỆT ĐỐI KHÔNG ĐƯỢC VIẾT CÂU LỆNH SQL HOẶC SUBQUERY NHƯ "(SELECT ...)" VÀO TRƯỜNG "value".
 
-QUY ĐỊNH VỀ BIỂU ĐỒ (MULTI-ANGLE DYNAMIC CHARTS - TỰ DO CHỌN LOẠI & SỐ LƯỢNG BIỂU ĐỒ):
-Bạn hãy đóng vai trò Senior BI Analyst tạo ra một dashboard trực quan đa chiều, khai thác tối đa các insight của câu hỏi.
-Tùy theo câu hỏi, bạn hãy chủ động tạo từ 1 đến 3 (hoặc 4) biểu đồ để mô tả toàn diện các khía cạnh khác nhau, KHÔNG bị giới hạn chỉ 1 biểu đồ:
-Mỗi biểu đồ nên khai thác một góc nhìn bổ trợ:
-- Góc nhìn 1 (So sánh / Quy mô đối đầu): Biểu đồ thanh ngang (`horizontal_bar`) hoặc cột (`bar`).
-- Góc nhìn 2 (Cơ cấu / Tỷ trọng thị phần): Biểu đồ tròn (`donut`).
-- Góc nhìn 3 (Biến động theo thời gian): Biểu đồ vùng (`area`) hoặc đường (`line`) theo ngày/giờ để thấy phong độ tăng trưởng.
-- Góc nhìn 4 (Phân rã chi tiết thành phần con): Biểu đồ xếp hạng (`horizontal_bar` hoặc `bar`) các yếu tố con (như top món, top chi nhánh trong khu vực, v.v.).
+QUY ĐỊNH BẮT BUỘC VỀ BIỂU ĐỒ (BẮT BUỘC TẠO TỪ 5 ĐẾN 6 BIỂU ĐỒ TRỰC QUAN ĐA CHIỀU):
+Bạn hãy đóng vai trò Senior BI Analyst tạo ra một dashboard trực quan đa chiều toàn diện, khai thác tối đa các insight của câu hỏi.
+BẮT BUỘC tạo ĐÚNG 5 HOẶC 6 BIỂU ĐỒ (5 - 6 DYNAMIC CHARTS) trong mảng "charts", bám sát 100% câu hỏi của người dùng từ các góc nhìn bổ trợ khác nhau:
+- Chart 1 (Quy mô trọng tâm / Đối đầu / Xếp hạng): `horizontal_bar` hoặc `bar` (col_span: 6).
+- Chart 2 (Cơ cấu / Tỷ trọng thị phần): `donut` (col_span: 6).
+- Chart 3 (Biến động theo dòng thời gian): `area`, `line`, hoặc `multi_line` theo ngày/tháng (col_span: 12) để thấy nhịp độ tăng trưởng.
+- Chart 4 (Phân rã theo chiều thứ 2 - Phân kênh bán / Khu vực / Loại đơn): `bar` hoặc `horizontal_bar` (col_span: 6).
+- Chart 5 (Chỉ số hiệu quả / Giá trị trung bình đơn AOV / Rating sao): `horizontal_bar` hoặc `bar` (col_span: 6).
+- Chart 6 (Phân bổ giờ cao điểm / Mật độ / Tương quan): `bar` hoặc `heatmap` (col_span: 6 hoặc 12).
 
 Ví dụ:
-- Khi người dùng hỏi "Doanh thu cửa hàng tại HCM vs Đà Nẵng":
-  * Chart 1 (So sánh): `horizontal_bar` so sánh doanh thu trực tiếp giữa 2 thành phố (col_span: 6).
-  * Chart 2 (Tỷ trọng): `donut` thể hiện tỷ trọng thị phần doanh thu (Đà Nẵng 55% vs HCM 45%) (col_span: 6).
-  * Chart 3 (Xu hướng): `area` hoặc `line` thể hiện diễn biến doanh thu 30 ngày qua của 2 thành phố (col_span: 12).
+- Khi người dùng hỏi "Cơ cấu và tỷ trọng phương thức thanh toán":
+  * Chart 1 (Xếp hạng doanh thu): `horizontal_bar` xếp hạng doanh thu theo từng phương thức (col_span: 6).
+  * Chart 2 (Tỷ trọng số đơn): `donut` cơ cấu số lượng đơn hàng theo phương thức thanh toán (col_span: 6).
+  * Chart 3 (Diễn biến theo ngày): `multi_line` hoặc `area` doanh thu các phương thức theo ngày (col_span: 12).
+  * Chart 4 (Kênh bán): `bar` phân bổ phương thức thanh toán theo hình thức đơn hàng (Giao hàng, Tại chỗ, Mang đi) (col_span: 6).
+  * Chart 5 (AOV): `horizontal_bar` giá trị đơn hàng trung bình của từng phương thức (col_span: 6).
+  * Chart 6 (Địa bàn): `bar` khối lượng giao dịch tại các thành phố trọng điểm (col_span: 6).
 - Khi người dùng hỏi "Top món bán chạy":
   * Chart 1: `horizontal_bar` xếp hạng theo Số lượng (col_span: 6).
-  * Chart 2: `donut` hoặc `bar` cơ cấu Doanh thu đóng góp của các món đó (col_span: 6).
+  * Chart 2: `donut` cơ cấu Doanh thu đóng góp theo Danh mục món (col_span: 6).
+  * Chart 3: `multi_line` hoặc `area` diễn biến sản lượng bán theo thời gian (col_span: 12).
+  * Chart 4: `donut` tỷ trọng kích cỡ ly Size S / M / L (col_span: 6).
+  * Chart 5: `horizontal_bar` điểm đánh giá sao trung bình của top món (col_span: 6).
+  * Chart 6: `bar` sản lượng đặt món theo các khung giờ trong ngày (col_span: 6).
 
 QUY TRÌNH SUY LUẬN BẮT BUỘC (Chain-of-Thought) — Ghi vào trường "reasoning":
 1. MỤC TIÊU: Câu hỏi muốn biết gì? (xếp hạng, so sánh, xu hướng, phân bổ, tổng hợp?)
@@ -1430,7 +1439,7 @@ Trả về đúng một JSON object (không kèm markdown ngoài JSON):
     {{
       "id": string,
       "title": string,
-      "chart_type": "horizontal_bar" | "bar" | "donut" | "area" | "line",
+      "chart_type": "horizontal_bar" | "bar" | "donut" | "area" | "line" | "heatmap",
       "col_span": 6 | 12,
       "unit": string,
       "sql": string
@@ -1493,6 +1502,14 @@ QUY TẮC SỬA LỖI POSTGRESQL BẮT BUỘC:
 4. Trả về đúng JSON {{"corrected_sql": "SELECT ..."}}
 5. SQL sau khi sửa PHẢI vẫn trả lời đúng ý định gốc của người dùng (xem YÊU CẦU GỐC). Không được thay đổi logic truy vấn sang mục đích khác.
 """
+    repair_schema = {
+        "type": "object",
+        "properties": {
+            "corrected_sql": {"type": "string"},
+            "explanation": {"type": "string"},
+        },
+        "required": ["corrected_sql"],
+    }
     repair = call_llm(
         json.dumps({
             "task": f"Sửa câu lệnh SQL {name}",
@@ -1501,11 +1518,19 @@ QUY TẮC SỬA LỖI POSTGRESQL BẮT BUỘC:
             "table_hints": table_hints
         }, ensure_ascii=False, default=json_serial),
         repair_instruction,
+        response_schema=repair_schema,
     )
     corrected = repair and repair.get("data", {}).get("corrected_sql")
     if isinstance(corrected, str) and corrected.strip():
-        logger.warning("AI SQL repair query=%s attempt=%d repaired_sql=%s", name, attempt, corrected)
-        return corrected, repair
+        norm_corrected = _normalize_sql_entities(corrected.strip())
+        is_valid, explain_err = dry_run_sql(norm_corrected)
+        if is_valid:
+            logger.warning("AI SQL repair verified query=%s attempt=%d repaired_sql=%s", name, attempt, norm_corrected)
+            return norm_corrected, repair
+        else:
+            logger.warning("AI SQL repair dry-run failed attempt=%d: %s (query: %s)", attempt, explain_err, norm_corrected)
+            # Still return norm_corrected so caller can proceed or retry
+            return norm_corrected, repair
     return None, repair
 
 
@@ -1594,8 +1619,43 @@ def _normalize_sql_entities(sql: str) -> str:
     sql = re.sub(r"\b([a-zA-Z0-9_]*\.)?ma_chi_nhanh\b(?=\s*=\s*(?:[a-zA-Z0-9_]*\.)?ma_chi_nhanh)", r"co_so_ma", sql, flags=re.IGNORECASE)
     sql = re.sub(r"\b(?:d|don_hang|dh)\.ma_chi_nhanh\b", lambda m: m.group(0).replace(".ma_chi_nhanh", ".co_so_ma"), sql, flags=re.IGNORECASE)
     sql = re.sub(r"\b(?:cn|chi_nhanh)\.khu_vuc\b", lambda m: m.group(0).replace(".khu_vuc", ".thanh_pho"), sql, flags=re.IGNORECASE)
+    # 6. Normalize order status 'HUY_BO' -> 'DA_HUY'
+    sql = re.sub(r"(['\"])HUY_BO\1", r"\1DA_HUY\1", sql, flags=re.IGNORECASE)
 
     return sql
+
+
+def validate_results(normalized: Dict[str, Any], prompt: str = "") -> List[str]:
+    """
+    Sanity checks on normalized query results (Phase 3.3).
+    Returns human-friendly warnings (if any) to help stakeholders understand edge cases.
+    """
+    warnings: List[str] = []
+    main_rows = normalized.get("table_rows", [])
+    row_count = len(main_rows)
+
+    if row_count == 0:
+        warnings.append("Truy vấn trả về 0 kết quả — có thể bộ lọc thời gian hoặc điều kiện chi nhánh quá hẹp.")
+
+    # Check for negative revenues or anomalies in numeric values
+    for row in main_rows[:30]:
+        for col_name, val in row.items():
+            if isinstance(val, (int, float)) and val < 0:
+                col_lower = str(col_name).lower()
+                if any(kw in col_lower for kw in ["doanh thu", "revenue", "tiền", "thanh_tien", "gia"]):
+                    msg = "Phát hiện chỉ số tài chính âm bất thường trong tập kết quả."
+                    if msg not in warnings:
+                        warnings.append(msg)
+                    break
+
+    # Check completion rate sanity if kpis exist
+    kpis = normalized.get("kpis", {})
+    comp_rate = kpis.get("completion_rate")
+    if comp_rate is not None and isinstance(comp_rate, (int, float)):
+        if comp_rate == 0 and kpis.get("total_orders", 0) > 0:
+            warnings.append("Tỷ lệ hoàn thành đơn là 0% trong kỳ phân tích này.")
+
+    return warnings
 
 
 def _execute_plan(plan: Dict[str, Any], fallback: Dict[str, Any], metadata_context: Dict[str, Any], user_prompt: str = "", intent: str = "") -> Tuple[Dict[str, Dict[str, Any]], Dict[str, str], List[Dict[str, Any]]]:
@@ -1784,6 +1844,158 @@ def _extract_label_and_value(rows: List[Dict[str, Any]], chart_title: str = "", 
     return data
 
 
+def _format_heatmap_data(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    if not rows:
+        return []
+    heatmap_data = []
+    day_mapping = {
+        0: "Chủ Nhật", 1: "Thứ 2", 2: "Thứ 3", 3: "Thứ 4", 4: "Thứ 5", 5: "Thứ 6", 6: "Thứ 7",
+        7: "Chủ Nhật"
+    }
+    dow_names = {
+        "sunday": "Chủ Nhật", "sun": "Chủ Nhật", "mon": "Thứ 2", "monday": "Thứ 2",
+        "tue": "Thứ 3", "tuesday": "Thứ 3", "wed": "Thứ 4", "wednesday": "Thứ 4",
+        "thu": "Thứ 5", "thursday": "Thứ 5", "fri": "Thứ 6", "friday": "Thứ 6",
+        "sat": "Thứ 7", "saturday": "Thứ 7"
+    }
+
+    for r in rows:
+        keys = list(r.keys())
+        x_val = None
+        y_val = None
+        v_num = 0.0
+
+        for k in keys:
+            kl = k.lower()
+            val = r[k]
+            if val is None:
+                continue
+            if any(term in kl for term in ["hour", "gio", "khung"]):
+                if isinstance(val, (int, float)):
+                    x_val = f"{int(val):02d}:00"
+                else:
+                    s_val = str(val).strip()
+                    x_val = f"{s_val.zfill(2)}:00" if s_val.isdigit() else s_val
+            elif any(term in kl for term in ["day", "dow", "thu", "ngay_tuan", "thu_trong_tuan"]):
+                if isinstance(val, (int, float)) and int(val) in day_mapping:
+                    y_val = day_mapping[int(val)]
+                else:
+                    s_val = str(val).strip().lower()
+                    y_val = dow_names.get(s_val, str(val).strip())
+            elif any(term in kl for term in ["val", "count", "so_luong", "so_don", "revenue", "doanh_thu", "total", "tong"]):
+                try:
+                    v_num = float(val)
+                except Exception:
+                    pass
+
+        if not x_val or not y_val:
+            str_cols = [k for k in keys if isinstance(r[k], (str, date, datetime))]
+            num_cols = [k for k in keys if isinstance(r[k], (int, float, Decimal))]
+            if len(str_cols) >= 2:
+                y_val = str(r[str_cols[0]])
+                x_val = str(r[str_cols[1]])
+            elif len(str_cols) == 1 and num_cols:
+                y_val = str(r[str_cols[0]])
+                x_val = "08:00"
+            else:
+                y_val = y_val or "Thứ 2"
+                x_val = x_val or "08:00"
+            if not v_num and num_cols:
+                try:
+                    v_num = float(r[num_cols[0]])
+                except Exception:
+                    pass
+
+        item = {
+            "x": x_val or "08:00",
+            "y": y_val or "Thứ 2",
+            "value": v_num,
+            **r
+        }
+        heatmap_data.append(item)
+    return heatmap_data
+
+
+def _format_multiline_data(rows: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], List[str]]:
+    if not rows:
+        return [], []
+    first = rows[0]
+    keys = list(first.keys())
+
+    # Check if already pivoted format: one string date key, and 2+ numeric keys
+    str_keys = [k for k in keys if not isinstance(first[k], (int, float, Decimal))]
+    num_keys = [k for k in keys if isinstance(first[k], (int, float, Decimal))]
+
+    if len(str_keys) == 1 and len(num_keys) >= 2:
+        date_key = str_keys[0]
+        points = []
+        for r in rows:
+            pt: Dict[str, Any] = {"label": str(r.get(date_key, ""))}
+            for nk in num_keys:
+                try:
+                    pt[nk] = float(r.get(nk, 0) or 0)
+                except Exception:
+                    pt[nk] = 0.0
+            points.append(pt)
+        return points, num_keys
+
+    # Flat tuple format: [date_col, category_col, value_col]
+    date_col = None
+    cat_col = None
+    val_col = None
+
+    for k in keys:
+        kl = k.lower()
+        if any(term in kl for term in ["ngay", "date", "thoi_gian", "time", "month", "thang", "label"]):
+            if not date_col:
+                date_col = k
+        elif any(term in kl for term in ["loai", "danh_muc", "category", "phuong_thuc", "series", "ten", "name", "chi_nhanh", "kenh"]):
+            if not cat_col:
+                cat_col = k
+        elif any(term in kl for term in ["val", "doanh_thu", "revenue", "so_luong", "count", "tong", "amount"]):
+            if not val_col:
+                val_col = k
+
+    if not date_col and str_keys:
+        date_col = str_keys[0]
+    if not cat_col and len(str_keys) > 1:
+        cat_col = str_keys[1]
+    if not val_col and num_keys:
+        val_col = num_keys[0]
+
+    if not date_col or not cat_col or not val_col:
+        pts = _extract_label_and_value(rows)
+        return pts, ["value"]
+
+    date_order: List[str] = []
+    pivoted_map: Dict[str, Dict[str, float]] = {}
+    series_set: List[str] = []
+
+    for r in rows:
+        d_val = str(r.get(date_col) or "").strip()
+        c_val = str(r.get(cat_col) or "Khác").strip()
+        try:
+            v_val = float(r.get(val_col) or 0)
+        except Exception:
+            v_val = 0.0
+
+        if d_val not in pivoted_map:
+            pivoted_map[d_val] = {}
+            date_order.append(d_val)
+        pivoted_map[d_val][c_val] = (pivoted_map[d_val].get(c_val, 0.0)) + v_val
+        if c_val not in series_set:
+            series_set.append(c_val)
+
+    points = []
+    for d_str in date_order:
+        row_pt: Dict[str, Any] = {"label": d_str}
+        for s in series_set:
+            row_pt[s] = pivoted_map[d_str].get(s, 0.0)
+        points.append(row_pt)
+
+    return points, series_set
+
+
 def _execute_chart_item(chart: Dict[str, Any], query_policy: Dict[str, set[str]]) -> Optional[Dict[str, Any]]:
     sql = _normalize_sql_entities(str(chart.get("sql", "")).strip())
     if not sql:
@@ -1792,16 +2004,38 @@ def _execute_chart_item(chart: Dict[str, Any], query_policy: Dict[str, set[str]]
         if sql_references_sensitive_columns(sql):
             return None
         validate_ai_query_scope(sql, query_policy)
-        res = execute_read_only(sql, row_limit=50)
+        res = execute_read_only(sql, row_limit=100)
         rows = sanitize_result_rows(res["rows"])
         title = chart.get("title") or "Biểu đồ phân tích"
         unit = chart.get("unit", "")
-        data = _extract_label_and_value(rows, chart_title=title, unit=unit)
         col_span = int(chart.get("col_span") or 6)
         chart_type = str(chart.get("chart_type", "bar")).lower()
-        if chart_type not in ("horizontal_bar", "bar", "donut", "area", "line"):
+        if chart_type not in ("horizontal_bar", "bar", "donut", "area", "line", "heatmap", "multi_line", "multiline"):
             chart_type = "bar"
-        return {
+
+        series_keys: List[str] = []
+        if chart_type == "heatmap":
+            data = _format_heatmap_data(rows)
+            col_span = 12
+        elif chart_type in ("multi_line", "multiline"):
+            data, series_keys = _format_multiline_data(rows)
+            col_span = 12
+        else:
+            # Smart auto-detection: If planner set line/area, but query has 3+ columns (date, category, number), upgrade to multi_line!
+            if chart_type in ("line", "area") and rows and len(rows[0]) >= 3:
+                cols = list(rows[0].keys())
+                str_cols = [c for c in cols if not isinstance(rows[0][c], (int, float, Decimal))]
+                num_cols = [c for c in cols if isinstance(rows[0][c], (int, float, Decimal))]
+                if len(str_cols) >= 2 and len(num_cols) >= 1:
+                    chart_type = "multi_line"
+                    data, series_keys = _format_multiline_data(rows)
+                    col_span = 12
+                else:
+                    data = _extract_label_and_value(rows, chart_title=title, unit=unit)
+            else:
+                data = _extract_label_and_value(rows, chart_title=title, unit=unit)
+
+        res_dict = {
             "id": chart.get("id") or f"chart_{chart_type}_{len(data)}",
             "title": title,
             "chart_type": chart_type,
@@ -1810,9 +2044,701 @@ def _execute_chart_item(chart: Dict[str, Any], query_policy: Dict[str, set[str]]
             "data": data,
             "sql": res["sql"],
         }
+        if series_keys:
+            res_dict["series_keys"] = series_keys
+        return res_dict
     except Exception as e:
         logger.warning("Dynamic chart execution failed: %s", e)
         return None
+
+
+def _get_domain_candidate_charts(
+    user_prompt: str,
+    domain: str = "auto",
+    time_filter_d: str = "1=1",
+    time_filter_dh: str = "1=1",
+) -> List[Dict[str, Any]]:
+    p_lower = (user_prompt or "").lower()
+    
+    is_payment = any(w in p_lower for w in ["thanh toán", "thanh toan", "momo", "vnpay", "tiền mặt", "tien mat", "ngân hàng", "ngan hang", "phương thức", "phuong thuc"]) or domain == "payments"
+    is_shipper = any(w in p_lower for w in ["shipper", "giao hàng", "giao hang", "vận chuyển", "van chuyen", "tài xế", "tai xe", "chuyến"]) or domain == "shippers"
+    is_customer = any(w in p_lower for w in ["khách hàng", "khach hang", "hội viên", "hoi vien", "thành viên", "thanh vien", "loyalty", "tích điểm", "tich diem", "bean"]) or domain == "customers"
+    is_store = any(w in p_lower for w in ["chi nhánh", "chi nhanh", "cửa hàng", "cua hang", "thành phố", "thanh pho", "khu vực", "khu vuc", "tỉnh", "tinh"]) or domain == "stores"
+    is_product = any(w in p_lower for w in ["món", "mon", "sản phẩm", "san pham", "đồ uống", "do uong", "cà phê", "ca phe", "trà", "tra", "bánh", "banh", "thực đơn", "thuc don", "matcha", "topping", "bán chạy", "ban chay"]) or domain in ("products", "menu")
+
+    if is_payment:
+        return [
+            {
+                "id": "chart_payment_rev_rank",
+                "title": "Xếp hạng Doanh thu theo Phương thức Thanh toán",
+                "chart_type": "horizontal_bar",
+                "col_span": 6,
+                "unit": "VNĐ",
+                "purpose": "So sánh quy mô dòng tiền giữa các cổng thanh toán",
+                "sql": f"""
+                    SELECT COALESCE(phuong_thuc_thanh_toan, 'Chưa xác định') AS label,
+                           SUM(tong_tien) AS value
+                    FROM silver.don_hang d
+                    WHERE {time_filter_d} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY value DESC;
+                """,
+            },
+            {
+                "id": "chart_payment_order_share",
+                "title": "Cơ cấu Tỷ trọng Số lượng Đơn hàng",
+                "chart_type": "donut",
+                "col_span": 6,
+                "unit": "đơn",
+                "purpose": "Thị phần số lượng giao dịch theo phương thức",
+                "sql": f"""
+                    SELECT COALESCE(phuong_thuc_thanh_toan, 'Chưa xác định') AS label,
+                           COUNT(*) AS value
+                    FROM silver.don_hang d
+                    WHERE {time_filter_d} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY value DESC;
+                """,
+            },
+            {
+                "id": "chart_payment_trend",
+                "title": "Diễn biến Doanh thu Thanh toán theo Ngày",
+                "chart_type": "area",
+                "col_span": 12,
+                "unit": "VNĐ",
+                "purpose": "Nhịp độ tăng trưởng dòng tiền thanh toán trong kỳ",
+                "sql": f"""
+                    SELECT TO_CHAR(d.ngay_tao, 'YYYY-MM-DD') AS label,
+                           SUM(d.tong_tien) AS value
+                    FROM silver.don_hang d
+                    WHERE {time_filter_d} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY label ASC LIMIT 14;
+                """,
+            },
+            {
+                "id": "chart_payment_by_channel",
+                "title": "Phân bổ Giao dịch theo Hình thức Đơn hàng",
+                "chart_type": "bar",
+                "col_span": 6,
+                "unit": "đơn",
+                "purpose": "Đối chiếu tỷ lệ thanh toán tại chỗ, mang về và giao tận nơi",
+                "sql": f"""
+                    SELECT CASE 
+                             WHEN d.loai_don_hang = 'DUNG_TAI_CHO' THEN 'Tại chỗ'
+                             WHEN d.loai_don_hang = 'MANG_DI' THEN 'Mang đi'
+                             WHEN d.loai_don_hang = 'GIAO_TAN_NOI' THEN 'Giao tận nơi'
+                             ELSE COALESCE(d.loai_don_hang, 'Khác')
+                           END AS label,
+                           COUNT(*) AS value
+                    FROM silver.don_hang d
+                    WHERE {time_filter_d} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY value DESC;
+                """,
+            },
+            {
+                "id": "chart_payment_aov",
+                "title": "Giá trị Đơn hàng Trung bình (AOV) theo Phương thức",
+                "chart_type": "horizontal_bar",
+                "col_span": 6,
+                "unit": "VNĐ/đơn",
+                "purpose": "Đo lường mức chi tiêu bình quân trên mỗi phương thức",
+                "sql": f"""
+                    SELECT COALESCE(d.phuong_thuc_thanh_toan, 'Chưa xác định') AS label,
+                           ROUND(AVG(d.tong_tien)) AS value
+                    FROM silver.don_hang d
+                    WHERE {time_filter_d} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY value DESC;
+                """,
+            },
+            {
+                "id": "chart_payment_city_volume",
+                "title": "Khối lượng Thanh toán tại các Thành phố Trọng điểm",
+                "chart_type": "bar",
+                "col_span": 6,
+                "unit": "đơn",
+                "purpose": "Mật độ giao dịch thanh toán phân bổ theo địa bàn",
+                "sql": f"""
+                    SELECT COALESCE(cn.thanh_pho, 'Khác') AS label,
+                           COUNT(dh.ma_don_hang) AS value
+                    FROM silver.don_hang dh
+                    LEFT JOIN silver.chi_nhanh cn ON dh.co_so_ma = cn.ma_chi_nhanh
+                    WHERE {time_filter_dh} AND dh.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY value DESC LIMIT 7;
+                """,
+            },
+        ]
+
+    elif is_product:
+        return [
+            {
+                "id": "chart_product_qty_rank",
+                "title": "Top Món Bán Chạy Nhất theo Sản lượng (Ly)",
+                "chart_type": "horizontal_bar",
+                "col_span": 6,
+                "unit": "ly",
+                "purpose": "Xếp hạng sản phẩm dẫn đầu về doanh số tiêu thụ",
+                "sql": f"""
+                    SELECT ct.ten_san_pham AS label, SUM(ct.so_luong) AS value
+                    FROM silver.chi_tiet_don_hang ct
+                    JOIN silver.don_hang dh ON ct.ma_don_hang = dh.ma_don_hang
+                    WHERE {time_filter_dh} AND dh.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY value DESC LIMIT 8;
+                """,
+            },
+            {
+                "id": "chart_product_category_share",
+                "title": "Cơ cấu Doanh thu theo Danh mục Món",
+                "chart_type": "donut",
+                "col_span": 6,
+                "unit": "VNĐ",
+                "purpose": "Tỷ trọng đóng góp doanh thu của từng nhóm đồ uống/bánh",
+                "sql": f"""
+                    SELECT COALESCE(sp.ten_danh_muc, 'Khác') AS label, SUM(ct.thanh_tien) AS value
+                    FROM silver.chi_tiet_don_hang ct
+                    JOIN silver.don_hang dh ON ct.ma_don_hang = dh.ma_don_hang
+                    JOIN silver.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham
+                    WHERE {time_filter_dh} AND dh.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY value DESC LIMIT 8;
+                """,
+            },
+            {
+                "id": "chart_product_sales_trend",
+                "title": "Diễn biến Sản lượng Tiêu thụ Toàn chuỗi theo Ngày",
+                "chart_type": "area",
+                "col_span": 12,
+                "unit": "ly",
+                "purpose": "Nhịp độ tăng trưởng sản lượng bán hàng theo thời gian",
+                "sql": f"""
+                    SELECT TO_CHAR(dh.ngay_tao, 'YYYY-MM-DD') AS label, SUM(ct.so_luong) AS value
+                    FROM silver.chi_tiet_don_hang ct
+                    JOIN silver.don_hang dh ON ct.ma_don_hang = dh.ma_don_hang
+                    WHERE {time_filter_dh} AND dh.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY label ASC LIMIT 14;
+                """,
+            },
+            {
+                "id": "chart_product_size_share",
+                "title": "Tỷ trọng Lựa chọn Kích cỡ Ly (Size S/M/L)",
+                "chart_type": "donut",
+                "col_span": 6,
+                "unit": "ly",
+                "purpose": "Thị phần tiêu thụ theo kích cỡ sản phẩm",
+                "sql": f"""
+                    SELECT COALESCE(NULLIF(ct.kich_co, ''), 'Size Tiêu chuẩn') AS label, SUM(ct.so_luong) AS value
+                    FROM silver.chi_tiet_don_hang ct
+                    JOIN silver.don_hang dh ON ct.ma_don_hang = dh.ma_don_hang
+                    WHERE {time_filter_dh} AND dh.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY value DESC;
+                """,
+            },
+            {
+                "id": "chart_product_ratings",
+                "title": "Điểm Đánh giá Chất lượng Món (Rating Sao)",
+                "chart_type": "horizontal_bar",
+                "col_span": 6,
+                "unit": "sao",
+                "purpose": "Mức độ hài lòng của khách hàng đối với các món",
+                "sql": """
+                    SELECT sp.ten_san_pham AS label, ROUND(AVG(dg.so_sao)::numeric, 1) AS value
+                    FROM silver.danh_gia_san_pham dg
+                    JOIN silver.san_pham sp ON dg.ma_san_pham::text = sp.ma_san_pham::text
+                    GROUP BY label ORDER BY value DESC LIMIT 8;
+                """,
+            },
+            {
+                "id": "chart_product_hourly_traffic",
+                "title": "Sản lượng Đặt món theo Khung giờ trong Ngày",
+                "chart_type": "bar",
+                "col_span": 6,
+                "unit": "ly",
+                "purpose": "Phân bổ đơn pha chế theo các khung giờ phục vụ",
+                "sql": f"""
+                    SELECT CONCAT(LPAD(EXTRACT(HOUR FROM dh.ngay_tao)::text, 2, '0'), ':00') AS label,
+                           SUM(ct.so_luong) AS value
+                    FROM silver.chi_tiet_don_hang ct
+                    JOIN silver.don_hang dh ON ct.ma_don_hang = dh.ma_don_hang
+                    WHERE {time_filter_dh} AND dh.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY label ASC;
+                """,
+            },
+        ]
+
+    elif is_shipper:
+        return [
+            {
+                "id": "chart_shipper_volume_rank",
+                "title": "Top Shipper Giao Thành Công Nhiều Nhất",
+                "chart_type": "horizontal_bar",
+                "col_span": 6,
+                "unit": "chuyến",
+                "purpose": "Hiệu suất và đóng góp chuyến giao của đội ngũ tài xế",
+                "sql": """
+                    SELECT ho_ten AS label, tong_chuyen_giao AS value
+                    FROM silver.shipper
+                    ORDER BY value DESC LIMIT 8;
+                """,
+            },
+            {
+                "id": "chart_shipper_vehicle_share",
+                "title": "Cơ cấu Đội ngũ theo Loại Phương tiện",
+                "chart_type": "donut",
+                "col_span": 6,
+                "unit": "tài xế",
+                "purpose": "Phân bổ phương tiện vận hành trong đội ngũ shipper",
+                "sql": """
+                    SELECT CASE 
+                             WHEN loai_xe = 'MOTORBIKE' THEN 'Xe máy'
+                             WHEN loai_xe = 'CAR' THEN 'Ô tô'
+                             ELSE COALESCE(loai_xe, 'Xe máy')
+                           END AS label,
+                           COUNT(*) AS value
+                    FROM silver.shipper
+                    GROUP BY label ORDER BY value DESC;
+                """,
+            },
+            {
+                "id": "chart_shipper_daily_trend",
+                "title": "Diễn biến Khối lượng Đơn Giao hàng theo Ngày",
+                "chart_type": "area",
+                "col_span": 12,
+                "unit": "đơn",
+                "purpose": "Xu hướng nhu cầu đặt giao tận nơi theo thời gian",
+                "sql": f"""
+                    SELECT TO_CHAR(d.ngay_tao, 'YYYY-MM-DD') AS label,
+                           COUNT(*) AS value
+                    FROM silver.don_hang d
+                    WHERE {time_filter_d} AND d.loai_don_hang = 'GIAO_TAN_NOI' AND d.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY label ASC LIMIT 14;
+                """,
+            },
+            {
+                "id": "chart_shipper_city_share",
+                "title": "Khối lượng Đơn Giao hàng theo Thành phố",
+                "chart_type": "bar",
+                "col_span": 6,
+                "unit": "đơn",
+                "purpose": "Mật độ nhu cầu giao hàng tận nơi tại các đô thị",
+                "sql": f"""
+                    SELECT cn.thanh_pho AS label, COUNT(dh.ma_don_hang) AS value
+                    FROM silver.don_hang dh
+                    JOIN silver.chi_nhanh cn ON dh.co_so_ma = cn.ma_chi_nhanh
+                    WHERE {time_filter_dh} AND dh.loai_don_hang = 'GIAO_TAN_NOI' AND dh.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY value DESC LIMIT 8;
+                """,
+            },
+            {
+                "id": "chart_shipper_ratings",
+                "title": "Điểm Đánh giá Sao Shipper Hàng đầu",
+                "chart_type": "horizontal_bar",
+                "col_span": 6,
+                "unit": "sao",
+                "purpose": "Chất lượng dịch vụ và thái độ giao hàng của tài xế",
+                "sql": """
+                    SELECT ho_ten AS label, diem_danh_gia AS value
+                    FROM silver.shipper
+                    WHERE diem_danh_gia > 0
+                    ORDER BY value DESC LIMIT 8;
+                """,
+            },
+            {
+                "id": "chart_shipper_hourly_traffic",
+                "title": "Mật độ Giao hàng theo Khung giờ Cao điểm",
+                "chart_type": "bar",
+                "col_span": 6,
+                "unit": "đơn",
+                "purpose": "Phân bổ giờ giao hàng để điều phối ca trực shipper",
+                "sql": f"""
+                    SELECT CONCAT(LPAD(EXTRACT(HOUR FROM d.ngay_tao)::text, 2, '0'), ':00') AS label,
+                           COUNT(*) AS value
+                    FROM silver.don_hang d
+                    WHERE {time_filter_d} AND d.loai_don_hang = 'GIAO_TAN_NOI' AND d.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY label ASC;
+                """,
+            },
+        ]
+
+    elif is_customer:
+        return [
+            {
+                "id": "chart_customer_spend_rank",
+                "title": "Top Khách hàng Thân thiết Chi tiêu Cao nhất",
+                "chart_type": "horizontal_bar",
+                "col_span": 6,
+                "unit": "VNĐ",
+                "purpose": "Xếp hạng khách hàng VIP có giá trị đóng góp cao nhất",
+                "sql": """
+                    SELECT ho_ten AS label, tong_chi_tieu AS value
+                    FROM silver.nguoi_dung
+                    WHERE tong_chi_tieu > 0
+                    ORDER BY value DESC LIMIT 8;
+                """,
+            },
+            {
+                "id": "chart_customer_role_share",
+                "title": "Cơ cấu Khách hàng theo Vai trò Hệ thống",
+                "chart_type": "donut",
+                "col_span": 6,
+                "unit": "người",
+                "purpose": "Phân loại người dùng và đối tượng tương tác",
+                "sql": """
+                    SELECT COALESCE(vai_tro, 'CUSTOMER') AS label, COUNT(*) AS value
+                    FROM silver.nguoi_dung
+                    GROUP BY label ORDER BY value DESC;
+                """,
+            },
+            {
+                "id": "chart_customer_daily_trend",
+                "title": "Tần suất Khách hàng Mua sắm theo Ngày",
+                "chart_type": "area",
+                "col_span": 12,
+                "unit": "khách",
+                "purpose": "Nhịp độ khách ghé mua và đặt hàng qua từng ngày",
+                "sql": f"""
+                    SELECT TO_CHAR(d.ngay_tao, 'YYYY-MM-DD') AS label,
+                           COUNT(DISTINCT d.ma_nguoi_dung) AS value
+                    FROM silver.don_hang d
+                    WHERE {time_filter_d} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO') AND d.ma_nguoi_dung IS NOT NULL
+                    GROUP BY label ORDER BY label ASC LIMIT 14;
+                """,
+            },
+            {
+                "id": "chart_customer_loyalty_points",
+                "title": "Điểm Thưởng Loyalty Beans Hàng đầu",
+                "chart_type": "bar",
+                "col_span": 6,
+                "unit": "điểm",
+                "purpose": "Mức độ gắn bó và tích lũy điểm thưởng của khách",
+                "sql": """
+                    SELECT ho_ten AS label, diem_loyalty AS value
+                    FROM silver.nguoi_dung
+                    WHERE diem_loyalty > 0
+                    ORDER BY value DESC LIMIT 8;
+                """,
+            },
+            {
+                "id": "chart_customer_aov",
+                "title": "Giá trị Đơn hàng Trung bình (AOV) theo Kênh Đặt",
+                "chart_type": "horizontal_bar",
+                "col_span": 6,
+                "unit": "VNĐ/đơn",
+                "purpose": "Mức chi tiêu bình quân của khách trên từng kênh đặt món",
+                "sql": f"""
+                    SELECT CASE 
+                             WHEN d.loai_don_hang = 'DUNG_TAI_CHO' THEN 'Tại chỗ'
+                             WHEN d.loai_don_hang = 'MANG_DI' THEN 'Mang đi'
+                             WHEN d.loai_don_hang = 'GIAO_TAN_NOI' THEN 'Giao tận nơi'
+                             ELSE COALESCE(d.loai_don_hang, 'Khác')
+                           END AS label,
+                           ROUND(AVG(d.tong_tien)) AS value
+                    FROM silver.don_hang d
+                    WHERE {time_filter_d} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY value DESC;
+                """,
+            },
+            {
+                "id": "chart_customer_hourly_visits",
+                "title": "Phân bổ Lượt Khách Đặt hàng theo Khung giờ",
+                "chart_type": "bar",
+                "col_span": 6,
+                "unit": "đơn",
+                "purpose": "Hành vi đặt hàng của khách hàng theo thời gian trong ngày",
+                "sql": f"""
+                    SELECT CONCAT(LPAD(EXTRACT(HOUR FROM d.ngay_tao)::text, 2, '0'), ':00') AS label,
+                           COUNT(*) AS value
+                    FROM silver.don_hang d
+                    WHERE {time_filter_d} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY label ASC;
+                """,
+            },
+        ]
+
+    elif is_store:
+        return [
+            {
+                "id": "chart_store_rev_rank",
+                "title": "Xếp hạng Doanh thu theo Chi nhánh",
+                "chart_type": "horizontal_bar",
+                "col_span": 6,
+                "unit": "VNĐ",
+                "purpose": "So sánh quy mô doanh số giữa các điểm bán",
+                "sql": f"""
+                    SELECT COALESCE(cn.ten_chi_nhanh, dh.co_so_ma) AS label,
+                           SUM(dh.tong_tien) AS value
+                    FROM silver.don_hang dh
+                    JOIN silver.chi_nhanh cn ON dh.co_so_ma = cn.ma_chi_nhanh
+                    WHERE {time_filter_dh} AND dh.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY value DESC LIMIT 8;
+                """,
+            },
+            {
+                "id": "chart_store_city_share",
+                "title": "Cơ cấu Doanh thu theo Thành phố / Khu vực",
+                "chart_type": "donut",
+                "col_span": 6,
+                "unit": "VNĐ",
+                "purpose": "Tỷ trọng đóng góp doanh số giữa các thị trường",
+                "sql": f"""
+                    SELECT cn.thanh_pho AS label, SUM(dh.tong_tien) AS value
+                    FROM silver.don_hang dh
+                    JOIN silver.chi_nhanh cn ON dh.co_so_ma = cn.ma_chi_nhanh
+                    WHERE {time_filter_dh} AND dh.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY value DESC LIMIT 8;
+                """,
+            },
+            {
+                "id": "chart_store_daily_trend",
+                "title": "Xu hướng Doanh thu Toàn chuỗi theo Ngày",
+                "chart_type": "area",
+                "col_span": 12,
+                "unit": "VNĐ",
+                "purpose": "Nhịp độ tăng trưởng doanh số của toàn hệ thống chi nhánh",
+                "sql": f"""
+                    SELECT TO_CHAR(d.ngay_tao, 'YYYY-MM-DD') AS label,
+                           SUM(d.tong_tien) AS value
+                    FROM silver.don_hang d
+                    WHERE {time_filter_d} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY label ASC LIMIT 14;
+                """,
+            },
+            {
+                "id": "chart_store_orders_by_city",
+                "title": "Khối lượng Đơn hàng theo Thành phố",
+                "chart_type": "bar",
+                "col_span": 6,
+                "unit": "đơn",
+                "purpose": "Số lượng đơn hàng phục vụ tại các đô thị",
+                "sql": f"""
+                    SELECT cn.thanh_pho AS label, COUNT(dh.ma_don_hang) AS value
+                    FROM silver.don_hang dh
+                    JOIN silver.chi_nhanh cn ON dh.co_so_ma = cn.ma_chi_nhanh
+                    WHERE {time_filter_dh} AND dh.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY value DESC LIMIT 8;
+                """,
+            },
+            {
+                "id": "chart_store_aov",
+                "title": "Giá trị Đơn hàng Trung bình (AOV) theo Chi nhánh",
+                "chart_type": "horizontal_bar",
+                "col_span": 6,
+                "unit": "VNĐ/đơn",
+                "purpose": "Chi tiêu bình quân trên một đơn tại các cơ sở",
+                "sql": f"""
+                    SELECT COALESCE(cn.ten_chi_nhanh, dh.co_so_ma) AS label,
+                           ROUND(AVG(dh.tong_tien)) AS value
+                    FROM silver.don_hang dh
+                    JOIN silver.chi_nhanh cn ON dh.co_so_ma = cn.ma_chi_nhanh
+                    WHERE {time_filter_dh} AND dh.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY value DESC LIMIT 8;
+                """,
+            },
+            {
+                "id": "chart_store_ratings",
+                "title": "Điểm Đánh giá Dịch vụ Chi nhánh (Rating Sao)",
+                "chart_type": "horizontal_bar",
+                "col_span": 6,
+                "unit": "sao",
+                "purpose": "Mức độ hài lòng của khách hàng đối với không gian và dịch vụ",
+                "sql": """
+                    SELECT cn.ten_chi_nhanh AS label, ROUND(AVG(dg.so_sao)::numeric, 1) AS value
+                    FROM silver.danh_gia_chi_nhanh dg
+                    JOIN silver.chi_nhanh cn ON dg.ma_chi_nhanh = cn.ma_chi_nhanh
+                    GROUP BY label ORDER BY value DESC LIMIT 8;
+                """,
+            },
+        ]
+
+    else:
+        # General Sales & Revenue
+        return [
+            {
+                "id": "chart_gen_category_rev",
+                "title": "Doanh thu theo Danh mục Sản phẩm",
+                "chart_type": "horizontal_bar",
+                "col_span": 6,
+                "unit": "VNĐ",
+                "purpose": "Xếp hạng đóng góp doanh thu của các ngành hàng",
+                "sql": f"""
+                    SELECT COALESCE(sp.ten_danh_muc, 'Khác') AS label, SUM(ct.thanh_tien) AS value
+                    FROM silver.chi_tiet_don_hang ct
+                    JOIN silver.don_hang dh ON ct.ma_don_hang = dh.ma_don_hang
+                    JOIN silver.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham
+                    WHERE {time_filter_dh} AND dh.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY value DESC LIMIT 8;
+                """,
+            },
+            {
+                "id": "chart_gen_channel_share",
+                "title": "Cơ cấu Doanh thu theo Hình thức Phục vụ",
+                "chart_type": "donut",
+                "col_span": 6,
+                "unit": "VNĐ",
+                "purpose": "Tỷ trọng doanh số giữa Tại chỗ, Mang về và Giao tận nơi",
+                "sql": f"""
+                    SELECT CASE 
+                             WHEN d.loai_don_hang = 'DUNG_TAI_CHO' THEN 'Tại chỗ'
+                             WHEN d.loai_don_hang = 'MANG_DI' THEN 'Mang đi'
+                             WHEN d.loai_don_hang = 'GIAO_TAN_NOI' THEN 'Giao tận nơi'
+                             ELSE COALESCE(d.loai_don_hang, 'Khác')
+                           END AS label,
+                           SUM(d.tong_tien) AS value
+                    FROM silver.don_hang d
+                    WHERE {time_filter_d} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY value DESC;
+                """,
+            },
+            {
+                "id": "chart_gen_rev_trend",
+                "title": "Diễn biến Doanh thu Toàn chuỗi theo Ngày",
+                "chart_type": "area",
+                "col_span": 12,
+                "unit": "VNĐ",
+                "purpose": "Nhịp độ tăng trưởng doanh thu chuỗi trong kỳ",
+                "sql": f"""
+                    SELECT TO_CHAR(d.ngay_tao, 'YYYY-MM-DD') AS label,
+                           SUM(d.tong_tien) AS value
+                    FROM silver.don_hang d
+                    WHERE {time_filter_d} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY label ASC LIMIT 14;
+                """,
+            },
+            {
+                "id": "chart_gen_city_volume",
+                "title": "Khối lượng Đơn hàng theo Thành phố Trọng điểm",
+                "chart_type": "bar",
+                "col_span": 6,
+                "unit": "đơn",
+                "purpose": "Quy mô số đơn tại các thị trường chính",
+                "sql": f"""
+                    SELECT COALESCE(cn.thanh_pho, 'Khác') AS label, COUNT(dh.ma_don_hang) AS value
+                    FROM silver.don_hang dh
+                    JOIN silver.chi_nhanh cn ON dh.co_so_ma = cn.ma_chi_nhanh
+                    WHERE {time_filter_dh} AND dh.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY value DESC LIMIT 7;
+                """,
+            },
+            {
+                "id": "chart_gen_payment_method",
+                "title": "Doanh thu theo Phương thức Thanh toán",
+                "chart_type": "horizontal_bar",
+                "col_span": 6,
+                "unit": "VNĐ",
+                "purpose": "Quy mô doanh thu qua từng phương thức thanh toán",
+                "sql": f"""
+                    SELECT COALESCE(d.phuong_thuc_thanh_toan, 'Chưa xác định') AS label,
+                           SUM(d.tong_tien) AS value
+                    FROM silver.don_hang d
+                    WHERE {time_filter_d} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY value DESC;
+                """,
+            },
+            {
+                "id": "chart_gen_hourly_traffic",
+                "title": "Phân bổ Khách hàng theo Khung giờ trong Ngày",
+                "chart_type": "bar",
+                "col_span": 6,
+                "unit": "đơn",
+                "purpose": "Mật độ giao dịch theo các khung giờ cao điểm",
+                "sql": f"""
+                    SELECT CONCAT(LPAD(EXTRACT(HOUR FROM d.ngay_tao)::text, 2, '0'), ':00') AS label,
+                           COUNT(*) AS value
+                    FROM silver.don_hang d
+                    WHERE {time_filter_d} AND d.trang_thai_don_hang IN ('HOAN_THANH', 'COMPLETED', 'DANG_GIAO')
+                    GROUP BY label ORDER BY label ASC;
+                """,
+            },
+        ]
+
+
+def _ensure_5_to_6_charts(
+    dynamic_charts: List[Dict[str, Any]],
+    user_prompt: str,
+    domain: str,
+    time_info: Dict[str, Any],
+    query_policy: Dict[str, set[str]],
+    normalized: Dict[str, Any],
+    chart_metadata: Dict[str, Any],
+    sql_used: Dict[str, str],
+) -> List[Dict[str, Any]]:
+    seen_titles: set[str] = set()
+    cleaned_charts: List[Dict[str, Any]] = []
+
+    for ch in dynamic_charts:
+        if not isinstance(ch, dict) or not ch.get("data") or len(ch["data"]) == 0:
+            continue
+        title_norm = (ch.get("title") or "").strip().lower()
+        if title_norm and title_norm not in seen_titles:
+            seen_titles.add(title_norm)
+            cleaned_charts.append(ch)
+
+    time_filter_d = time_info["sql"].format(alias="d")
+    time_filter_dh = time_info["sql"].format(alias="dh")
+
+    # If we have fewer than 5 charts, pull domain candidate charts
+    if len(cleaned_charts) < 5:
+        candidates = _get_domain_candidate_charts(
+            user_prompt=user_prompt,
+            domain=domain,
+            time_filter_d=time_filter_d,
+            time_filter_dh=time_filter_dh,
+        )
+        for cand in candidates:
+            cand_title_norm = (cand.get("title") or "").strip().lower()
+            if any(cand_title_norm in t or t in cand_title_norm for t in seen_titles):
+                continue
+            ch_res = _execute_chart_item(cand, query_policy)
+            if ch_res and ch_res.get("data") and len(ch_res["data"]) > 0:
+                cleaned_charts.append(ch_res)
+                seen_titles.add(cand_title_norm)
+                if len(cleaned_charts) >= 6:
+                    break
+
+    # If still fewer than 5 (rare), use normalized trend or breakdown if available
+    if len(cleaned_charts) < 5 and normalized.get("trend"):
+        trend_title = chart_metadata["trend"]["title"]
+        if trend_title.lower() not in seen_titles:
+            cleaned_charts.append({
+                "id": "chart_normalized_trend",
+                "title": trend_title,
+                "chart_type": chart_metadata["trend"]["chart_type"],
+                "unit": chart_metadata["trend"]["unit"],
+                "col_span": 12,
+                "data": normalized["trend"],
+                "sql": sql_used.get("trend", ""),
+            })
+            seen_titles.add(trend_title.lower())
+
+    if len(cleaned_charts) < 5 and normalized.get("breakdown"):
+        bk_title = chart_metadata["breakdown"]["title"]
+        if bk_title.lower() not in seen_titles:
+            cleaned_charts.append({
+                "id": "chart_normalized_breakdown",
+                "title": bk_title,
+                "chart_type": chart_metadata["breakdown"]["chart_type"],
+                "unit": chart_metadata["breakdown"]["unit"],
+                "col_span": 6,
+                "data": normalized["breakdown"],
+                "sql": sql_used.get("breakdown", ""),
+            })
+            seen_titles.add(bk_title.lower())
+
+    # Truncate to maximum 6 charts
+    final_charts = cleaned_charts[:6]
+
+    # Assign optimal col_span for balanced, stunning responsive layout
+    total = len(final_charts)
+    if total == 5:
+        # Chart 3 (index 2) is wide (col_span 12), charts 0, 1, 3, 4 are col_span 6
+        for i, ch in enumerate(final_charts):
+            if i == 2:
+                ch["col_span"] = 12
+            else:
+                ch["col_span"] = 6
+    elif total == 6:
+        for i, ch in enumerate(final_charts):
+            if ch.get("chart_type") in ("heatmap", "multi_line", "multiline"):
+                ch["col_span"] = 12
+            else:
+                ch["col_span"] = 6
+
+    return final_charts
 
 
 def _normalize_results(results: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
@@ -2300,7 +3226,7 @@ def ai_status():
         meta = {"local_ready": False, "source_ready": False, "last_refresh": None, "tables": 0, "semantic_entities": semantic_service.entity_count, "error": type(exc).__name__}
     configured = any(item["configured"] for item in providers.values())
     status = "ready" if meta["local_ready"] and configured else ("degraded" if meta["local_ready"] else "unavailable")
-    return {"status": status, "providers": providers, "metadata": meta}
+    return {"status": status, "providers": providers, "metadata": meta, "sessions": session_stats()}
 
 
 @router.post("/propose-plan")
@@ -2336,9 +3262,17 @@ Bảng dữ liệu gợi ý từ Vector Knowledge Graph (pgvector): {', '.join(v
 
 Trước khi thực hiện truy vấn nặng và render báo cáo, bạn hãy đề xuất KẾ HOẠCH BÁO CÁO (Analysis Plan Proposal) để người dùng xem trước và duyệt.
 
+QUY TẮC BẮT BUỘC: Đề xuất ĐÚNG 5 HOẶC 6 BIỂU ĐỒ TRỰC QUAN (5 - 6 PLANNED CHARTS) trong mảng "planned_charts" bám sát 100% câu hỏi của người dùng từ các góc nhìn bổ trợ:
+- Chart 1: Xếp hạng quy mô / Đối đầu (horizontal_bar hoặc bar)
+- Chart 2: Cơ cấu / Tỷ trọng thị phần (donut)
+- Chart 3: Dòng thời gian / Xu hướng theo ngày/tháng (area hoặc line)
+- Chart 4: Phân rã theo kênh bán / khu vực / phân loại (bar hoặc horizontal_bar)
+- Chart 5: Chỉ số hiệu quả AOV / Rating / Đơn giá (horizontal_bar hoặc bar)
+- Chart 6: Khung giờ cao điểm / Mật độ / Tương quan (bar hoặc heatmap)
+
 Trả về đúng JSON theo cấu trúc:
 {{
-  "title": "Tên báo cáo trang trọng (ví dụ: Báo Cáo Phân Tích So Sánh Doanh Thu TP.HCM và Đà Nẵng)",
+  "title": "Tên báo cáo trang trọng (ví dụ: Báo Cáo Phân Tích Cơ Cấu Phương Thức Thanh Toán)",
   "summary_intent": "1-2 câu tóm tắt mục tiêu và giá trị phân tích",
   "data_sources": [
     {{
@@ -2353,13 +3287,13 @@ Trả về đúng JSON theo cấu trúc:
   "planned_charts": [
     {{
       "title": "Tên biểu đồ",
-      "chart_type": "horizontal_bar" | "bar" | "donut" | "area" | "line",
+      "chart_type": "horizontal_bar" | "bar" | "donut" | "area" | "line" | "heatmap",
       "purpose": "Góc nhìn insight cần làm nổi bật"
     }}
   ],
   "report_sections": [
     "1. AI Executive Summary (Tóm tắt điều hành)",
-    "2. Dashboard Tự động sinh (Thẻ KPI & Biểu đồ Đa chiều)",
+    "2. Dashboard Tự động sinh (Thẻ KPI & 5-6 Biểu đồ Đa chiều)",
     "3. Bảng Các phát hiện chính (Key Findings)",
     "4. Bảng Phân tích Dữ liệu Chi tiết (Deep-dive Data Table)",
     "5. Insight được AI Agent suy luận (01, 02, 03)",
@@ -2374,7 +3308,25 @@ Chỉ trả JSON, không kèm chữ nào khác.
     call = call_llm(proposal_prompt, "Bạn là BI Lead. Chỉ trả JSON tiếng Việt chuyên nghiệp.")
     proposal = call.get("data") if call and isinstance(call.get("data"), dict) else None
 
-    if not proposal or not proposal.get("planned_charts"):
+    # Guarantee 5 to 6 planned charts in proposal as well
+    time_filter_d = time_info["sql"].format(alias="d")
+    time_filter_dh = time_info["sql"].format(alias="dh")
+    domain_candidates = _get_domain_candidate_charts(
+        user_prompt=user_prompt,
+        domain=domain,
+        time_filter_d=time_filter_d,
+        time_filter_dh=time_filter_dh,
+    )
+    fallback_planned_charts = [
+        {
+            "title": c["title"],
+            "chart_type": c["chart_type"],
+            "purpose": c.get("purpose") or "Trực quan hóa dữ liệu đa chiều",
+        }
+        for c in domain_candidates[:6]
+    ]
+
+    if not proposal:
         tables = [f"silver.{t}" for t in resolution["tables"][:3]] or ["silver.don_hang", "silver.chi_nhanh"]
         proposal = {
             "title": f"Báo Cáo Phân Tích Dữ Liệu — {time_info['label']}",
@@ -2388,13 +3340,10 @@ Chỉ trả JSON, không kèm chữ nào khác.
                 {"name": "Số lượng đơn hàng", "description": "Khối lượng đơn hoàn tất trong kỳ"},
                 {"name": "Chỉ số trọng tâm", "description": "Đo lường theo yêu cầu câu hỏi"}
             ],
-            "planned_charts": [
-                {"title": "So sánh quy mô đối đầu", "chart_type": "horizontal_bar", "purpose": "Xếp hạng và so sánh các đối tượng chính"},
-                {"title": "Cơ cấu tỷ trọng thị phần", "chart_type": "donut", "purpose": "Phân bổ đóng góp giữa các nhóm"}
-            ],
+            "planned_charts": fallback_planned_charts,
             "report_sections": [
                 "1. AI Executive Summary (Tóm tắt điều hành)",
-                "2. Dashboard Tự động sinh (Thẻ KPI & Biểu đồ Đa chiều)",
+                "2. Dashboard Tự động sinh (Thẻ KPI & 5-6 Biểu đồ Đa chiều)",
                 "3. Bảng Các phát hiện chính (Key Findings)",
                 "4. Bảng Phân tích Dữ liệu Chi tiết (Deep-dive Data Table)",
                 "5. Insight được AI Agent suy luận (01, 02, 03)",
@@ -2402,6 +3351,22 @@ Chỉ trả JSON, không kèm chữ nào khác.
             ],
             "assumptions": time_info["assumptions"]
         }
+    else:
+        existing_charts = proposal.get("planned_charts")
+        if not isinstance(existing_charts, list):
+            existing_charts = []
+        if len(existing_charts) < 5:
+            seen_titles = {(c.get("title") or "").strip().lower() for c in existing_charts if isinstance(c, dict)}
+            for cand in fallback_planned_charts:
+                cand_title = cand["title"].strip().lower()
+                if cand_title not in seen_titles:
+                    existing_charts.append(cand)
+                    seen_titles.add(cand_title)
+                    if len(existing_charts) >= 6:
+                        break
+            proposal["planned_charts"] = existing_charts[:6]
+        elif len(existing_charts) > 6:
+            proposal["planned_charts"] = existing_charts[:6]
 
     return {
         "status": "proposal_ready",
@@ -2442,21 +3407,42 @@ def generate_executive_report(payload: AiTextToReportRequest):
         metadata = get_combined_metadata(include_source=True)
     except Exception as exc:
         raise HTTPException(status_code=503, detail=f"Không thể đọc metadata kho phân tích: {type(exc).__name__}")
-    resolution = semantic_service.resolve(user_prompt, context_text, domain, metadata)
+
+    # Phase 2.1: Semantic Vector Search on pgvector (ai_agent.schema_catalog) executed first to boost intent resolution
+    vector_rag = vector_rag_service.search_semantic_knowledge(user_prompt, top_k=6)
+    resolution = semantic_service.resolve(
+        user_prompt,
+        context_text,
+        domain,
+        metadata,
+        vector_tables=vector_rag.get("top_tables", []),
+    )
     # Phase 1.1: LLM intent verification for low-confidence keyword resolutions
     resolution = _verify_intent_with_llm(user_prompt, context_text, domain, resolution, metadata)
     metadata_context = semantic_service.llm_context(resolution, metadata, prompt=user_prompt)
     time_info = _time_selection(payload)
-
-    # Phase 1.2: Semantic Vector Search on pgvector (ai_agent.schema_catalog)
-    vector_rag = vector_rag_service.search_semantic_knowledge(user_prompt, top_k=6)
     metadata_context["vector_rag"] = vector_rag
 
     fallback_plan = _deterministic_plan(resolution, time_info)
 
+    # Phase 2.2: Structured Output Schema for Planner
+    planner_schema = {
+        "type": "object",
+        "properties": {
+            "title": {"type": "string"},
+            "description": {"type": "string"},
+            "main_sql": {"type": "string"},
+            "trend_sql": {"type": "string"},
+            "breakdown_sql": {"type": "string"},
+            "kpi_sql": {"type": "string"},
+            "reasoning": {"type": "string"},
+        },
+        "required": ["title", "main_sql"],
+    }
     planner_call = call_llm(
         _planner_prompt(payload, resolution, time_info, metadata_context),
         "Bạn là bộ lập kế hoạch BI. Chỉ dùng metadata được cung cấp và trả JSON hợp lệ.",
+        response_schema=planner_schema,
     )
     plan_data = planner_call.get("data") if planner_call else None
     if isinstance(plan_data, dict) and plan_data.get("needs_clarification"):
@@ -2511,30 +3497,20 @@ def generate_executive_report(payload: AiTextToReportRequest):
         for c in plan["charts"]:
             if isinstance(c, dict):
                 ch_res = _execute_chart_item(c, query_policy)
-                if ch_res and ch_res["data"]:
+                if ch_res and ch_res.get("data") and len(ch_res["data"]) > 0:
                     dynamic_charts.append(ch_res)
 
-    if not dynamic_charts:
-        if normalized["trend"]:
-            dynamic_charts.append({
-                "id": "trend_chart",
-                "title": chart_metadata["trend"]["title"],
-                "chart_type": chart_metadata["trend"]["chart_type"],
-                "unit": chart_metadata["trend"]["unit"],
-                "col_span": 7 if normalized["breakdown"] else 12,
-                "data": normalized["trend"],
-                "sql": sql_used.get("trend", ""),
-            })
-        if normalized["breakdown"]:
-            dynamic_charts.append({
-                "id": "breakdown_chart",
-                "title": chart_metadata["breakdown"]["title"],
-                "chart_type": chart_metadata["breakdown"]["chart_type"],
-                "unit": chart_metadata["breakdown"]["unit"],
-                "col_span": 5 if normalized["trend"] else 12,
-                "data": normalized["breakdown"],
-                "sql": sql_used.get("breakdown", ""),
-            })
+    # Guarantee strictly 5 or 6 multi-dimensional charts directly answering the user prompt
+    dynamic_charts = _ensure_5_to_6_charts(
+        dynamic_charts=dynamic_charts,
+        user_prompt=user_prompt,
+        domain=domain,
+        time_info=time_info,
+        query_policy=query_policy,
+        normalized=normalized,
+        chart_metadata=chart_metadata,
+        sql_used=sql_used,
+    )
 
     # Extract data summary from table_rows & charts for grounded synthesis
     table_rows = normalized.get("table_rows", [])
@@ -2654,7 +3630,7 @@ def generate_executive_report(payload: AiTextToReportRequest):
         error=""
     )
 
-    return {
+    report_response = {
         "status": "success",
         "prompt": user_prompt,
         "context": context_text,
@@ -2698,9 +3674,607 @@ def generate_executive_report(payload: AiTextToReportRequest):
             "breakdown": chart_metadata["breakdown"]["chart_type"],
             "table": fallback_plan["visualizations"]["table"],
         },
+        "data_warnings": validate_results(normalized, user_prompt),
         "created_at": datetime.now().astimezone().isoformat(),
     }
 
+    # ── Session Memory: create session and store initial state ──
+    session = create_session(
+        original_prompt=user_prompt,
+        domain=domain,
+        time_label=time_info["label"],
+    )
+    session.update_state(
+        sql_used=sql_used,
+        normalized_results=normalized,
+        title=report_response["title"],
+        description=report_response["description"],
+    )
+    # Add initial generation turn
+    session.add_turn(
+        role="user",
+        content=user_prompt,
+    )
+    session.add_turn(
+        role="assistant",
+        content=f"Đã tạo báo cáo: {report_response['title']}",
+        sql_changes=sql_used,
+        result_snapshot=session.current_results_snapshot,
+    )
+    # Store charts summary in snapshot for future LLM context
+    if dynamic_charts:
+        session.current_results_snapshot["charts_summary"] = [
+            {"title": c.get("title", ""), "chart_type": c.get("chart_type", ""), "data_count": len(c.get("data", []))}
+            for c in dynamic_charts[:4]
+        ]
+    report_response["session_id"] = session.session_id
+    return report_response
+
+
+def _resolve_universal_entity_list(user_feedback: str, current_report: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """
+    Universal entity deep-dive extractor across all 8 Silver entities:
+    - silver.don_hang (Orders / Transactions)
+    - silver.nguoi_dung (Customers / VIPs / Users)
+    - silver.san_pham (Products / Menu Items)
+    - silver.chi_nhanh (Branches / Stores)
+    - silver.danh_gia_san_pham (Customer Reviews & Ratings)
+    - silver.khuyen_mai (Vouchers / Promotions)
+    - silver.kho_nguyen_lieu (Raw Material Inventory)
+    - silver.ca_lam_viec_nhan_vien (Staff Shifts)
+    """
+    fb = user_feedback.lower()
+    list_terms = [
+        "danh sách", "danh sach", "bảng dữ liệu", "bang du lieu", "từng", "tung", 
+        "chi tiết các", "chi tiet cac", "các đơn", "cac don", "các khách", "cac khach",
+        "các sản phẩm", "cac san pham", "các chi nhánh", "cac chi nhanh", "các món",
+        "liệt kê", "liet ke", "bảng các", "bang cac", "không phải tổng số", "ko phải tổng số",
+        "từng đơn", "từng khách", "từng sản phẩm", "từng món", "danh sách đơn", "danh sach don",
+        "danh mục các", "xem danh sách"
+    ]
+    if not any(t in fb for t in list_terms):
+        return None
+
+    # 1. CUSTOMERS / USERS (silver.nguoi_dung)
+    if any(k in fb for k in ["khách hàng", "khach hang", "người dùng", "nguoi dung", "customer", "thành viên", "thanh vien", "vip"]):
+        where_cond = "nd.vai_tro = 'KHACH_HANG'"
+        title_suffix = "Khách Hàng"
+        if any(k in fb for k in ["vip", "thân thiết", "than thiet", "tiềm năng"]):
+            title_suffix = "Khách Hàng Thân Thiết (VIP)"
+        return {
+            "entity": "khach_hang",
+            "title": f"Danh Sách {title_suffix}",
+            "description": f"Bảng dữ liệu trích xuất danh sách chi tiết {title_suffix.lower()} trên toàn hệ thống.",
+            "main_sql": f"""
+                SELECT nd.ma_nguoi_dung AS "Mã Khách Hàng",
+                       COALESCE(nd.ho_ten, 'Chưa cập nhật') AS "Họ Tên",
+                       COALESCE(nd.email, 'Không có') AS "Email",
+                       COALESCE(nd.so_dien_thoai, 'Chưa có SĐT') AS "Số Điện Thoại",
+                       COALESCE(nd.vai_tro, 'KHACH_HANG') AS "Vai Trò",
+                       TO_CHAR(nd.ngay_tao, 'YYYY-MM-DD HH24:MI') AS "Ngày Đăng Ký"
+                FROM silver.nguoi_dung nd
+                WHERE {where_cond}
+                ORDER BY nd.ngay_tao DESC
+                LIMIT 50
+            """.strip(),
+            "kpi_sql": f"""
+                SELECT COUNT(*) AS total_orders,
+                       COUNT(DISTINCT nd.email) AS total_revenue,
+                       0 AS aov,
+                       100.0 AS completion_rate
+                FROM silver.nguoi_dung nd
+                WHERE {where_cond}
+            """.strip(),
+            "assistant_reply": f"Em đã truy vấn và hiển thị danh sách chi tiết các {title_suffix.lower()} với mã, họ tên, email, vai trò và ngày đăng ký vào Bảng Dữ Liệu Chi Tiết (Mục 3) bên dưới!"
+        }
+
+    # 2. PRODUCTS / MENU (silver.san_pham)
+    if any(k in fb for k in ["sản phẩm", "san pham", "món", "mon", "đồ uống", "thức uống", "thuc uong", "menu", "bánh"]):
+        where_cond = "1=1"
+        cat_name = ""
+        if any(k in fb for k in ["cà phê", "ca phe", "coffee"]):
+            where_cond = "sp.danh_muc ILIKE '%Cà phê%'"
+            cat_name = "Cà Phê"
+        elif any(k in fb for k in ["trà", "tra", "tea"]):
+            where_cond = "sp.danh_muc ILIKE '%Trà%'"
+            cat_name = "Trà & Trà Sữa"
+        elif any(k in fb for k in ["bánh", "banh", "food", "thức ăn"]):
+            where_cond = "sp.danh_muc ILIKE '%Bánh%' OR sp.danh_muc ILIKE '%Đồ ăn%'"
+            cat_name = "Bánh & Thức Ăn"
+
+        title_suffix = f"Sản Phẩm {cat_name}".strip()
+        return {
+            "entity": "san_pham",
+            "title": f"Danh Sách {title_suffix}",
+            "description": f"Bảng dữ liệu danh sách chi tiết {title_suffix.lower()} cùng đơn giá và danh mục.",
+            "main_sql": f"""
+                SELECT sp.ma_san_pham AS "Mã Món",
+                       sp.ten_san_pham AS "Tên Sản Phẩm",
+                       COALESCE(sp.danh_muc, 'Chung') AS "Danh Mục",
+                       sp.gia_ban AS "Giá Bán (VNĐ)",
+                       COALESCE(sp.trang_thai, 'DANG_BAN') AS "Trạng Thái"
+                FROM silver.san_pham sp
+                WHERE {where_cond}
+                ORDER BY sp.gia_ban DESC
+                LIMIT 50
+            """.strip(),
+            "kpi_sql": f"""
+                SELECT COUNT(*) AS total_orders,
+                       ROUND(AVG(sp.gia_ban), 0) AS total_revenue,
+                       ROUND(AVG(sp.gia_ban), 0) AS aov,
+                       100.0 AS completion_rate
+                FROM silver.san_pham sp
+                WHERE {where_cond}
+            """.strip(),
+            "assistant_reply": f"Em đã truy vấn và hiển thị danh sách chi tiết các {title_suffix.lower()} kèm đơn giá và danh mục vào Bảng Dữ Liệu Chi Tiết (Mục 3) bên dưới!"
+        }
+
+    # 3. BRANCHES / STORES (silver.chi_nhanh)
+    if any(k in fb for k in ["chi nhánh", "chi nhanh", "cửa hàng", "cua hang", "quán", "điểm bán", "diem ban", "store"]):
+        where_cond = "1=1"
+        city_name = ""
+        if any(k in fb for k in ["hcm", "hồ chí minh", "ho chi minh", "sài gòn", "tphcm"]):
+            where_cond = "cn.thanh_pho ILIKE '%Hồ Chí Minh%'"
+            city_name = "tại TP.HCM"
+        elif any(k in fb for k in ["hà nội", "ha noi", "hn"]):
+            where_cond = "cn.thanh_pho ILIKE '%Hà Nội%'"
+            city_name = "tại Hà Nội"
+        elif any(k in fb for k in ["đà nẵng", "da nang", "đn"]):
+            where_cond = "cn.thanh_pho ILIKE '%Đà Nẵng%'"
+            city_name = "tại Đà Nẵng"
+        elif any(k in fb for k in ["cần thơ", "can tho"]):
+            where_cond = "cn.thanh_pho ILIKE '%Cần Thơ%'"
+            city_name = "tại Cần Thơ"
+
+        return {
+            "entity": "chi_nhanh",
+            "title": f"Danh Sách Chi Nhánh Cửa Hàng {city_name}".strip(),
+            "description": f"Bảng dữ liệu danh sách điểm bán Avengers Coffee {city_name}.",
+            "main_sql": f"""
+                SELECT cn.ma_chi_nhanh AS "Mã Điểm Bán",
+                       cn.ten_chi_nhanh AS "Tên Cửa Hàng",
+                       cn.dia_chi AS "Địa Chỉ",
+                       cn.thanh_pho AS "Thành Phố",
+                       COALESCE(cn.trang_thai, 'HOAT_DONG') AS "Trạng Thái"
+                FROM silver.chi_nhanh cn
+                WHERE {where_cond}
+                ORDER BY cn.thanh_pho, cn.ten_chi_nhanh
+                LIMIT 50
+            """.strip(),
+            "kpi_sql": f"""
+                SELECT COUNT(*) AS total_orders,
+                       COUNT(DISTINCT cn.thanh_pho) AS total_revenue,
+                       0 AS aov,
+                       100.0 AS completion_rate
+                FROM silver.chi_nhanh cn
+                WHERE {where_cond}
+            """.strip(),
+            "assistant_reply": f"Em đã truy vấn và hiển thị danh sách các chi nhánh điểm bán {city_name} với đầy đủ địa chỉ và thành phố vào Bảng Dữ Liệu Chi Tiết (Mục 3) bên dưới!"
+        }
+
+    # 4. REVIEWS (silver.danh_gia_san_pham)
+    if any(k in fb for k in ["đánh giá", "danh gia", "review", "sao", "phản hồi", "feedback"]):
+        where_cond = "1=1"
+        star_suffix = ""
+        if any(k in fb for k in ["1 sao", "1sao", "kém", "tiêu cực"]):
+            where_cond = "dg.so_sao = 1"
+            star_suffix = "1 Sao"
+        elif any(k in fb for k in ["2 sao", "2sao"]):
+            where_cond = "dg.so_sao <= 2"
+            star_suffix = "Dưới 3 Sao"
+        elif any(k in fb for k in ["5 sao", "5sao", "tốt"]):
+            where_cond = "dg.so_sao = 5"
+            star_suffix = "5 Sao"
+
+        return {
+            "entity": "danh_gia",
+            "title": f"Danh Sách Đánh Giá Khách Hàng {star_suffix}".strip(),
+            "description": f"Bảng dữ liệu chi tiết phản hồi đánh giá {star_suffix.lower()} của khách hàng.",
+            "main_sql": f"""
+                SELECT dg.id AS "Mã Đánh Giá",
+                       dg.ma_san_pham AS "Mã Món",
+                       dg.so_sao AS "Số Sao",
+                       COALESCE(dg.noi_dung, 'Không có bình luận') AS "Nội Dung Nhận Xét",
+                       TO_CHAR(dg.ngay_tao, 'YYYY-MM-DD HH24:MI') AS "Thời Gian Đánh Giá"
+                FROM silver.danh_gia_san_pham dg
+                WHERE {where_cond}
+                ORDER BY dg.ngay_tao DESC
+                LIMIT 50
+            """.strip(),
+            "kpi_sql": f"""
+                SELECT COUNT(*) AS total_orders,
+                       ROUND(AVG(dg.so_sao), 1) AS total_revenue,
+                       ROUND(AVG(dg.so_sao), 1) AS aov,
+                       100.0 AS completion_rate
+                FROM silver.danh_gia_san_pham dg
+                WHERE {where_cond}
+            """.strip(),
+            "assistant_reply": f"Em đã truy vấn và hiển thị danh sách chi tiết các đánh giá {star_suffix.lower()} kèm số sao và bình luận vào Bảng Dữ Liệu Chi Tiết (Mục 3) bên dưới!"
+        }
+
+    # 5. VOUCHERS / PROMOTIONS (silver.khuyen_mai)
+    if any(k in fb for k in ["khuyến mãi", "khuyen mai", "voucher", "mã giảm giá", "ưu đãi", "discount"]):
+        return {
+            "entity": "khuyen_mai",
+            "title": "Danh Sách Chương Trình Khuyến Mãi / Voucher",
+            "description": "Bảng danh sách chi tiết các mã ưu đãi và mức giảm giá.",
+            "main_sql": """
+                SELECT km.ma_khuyen_mai AS "Mã Ưu Đãi",
+                       km.ten_chuong_trinh AS "Tên Chương Trình",
+                       km.loai_khuyen_mai AS "Loại Giảm Giá",
+                       km.gia_tri_giam AS "Giá Trị Giảm",
+                       km.don_hang_toi_thieu AS "Đơn Tối Thiểu (VNĐ)",
+                       TO_CHAR(km.ngay_bat_dau, 'YYYY-MM-DD') AS "Bắt Đầu",
+                       TO_CHAR(km.ngay_ket_thuc, 'YYYY-MM-DD') AS "Kết Thúc"
+                FROM silver.khuyen_mai km
+                ORDER BY km.ngay_bat_dau DESC
+                LIMIT 50
+            """.strip(),
+            "kpi_sql": """
+                SELECT COUNT(*) AS total_orders,
+                       COALESCE(SUM(km.gia_tri_giam), 0) AS total_revenue,
+                       ROUND(AVG(km.gia_tri_giam), 0) AS aov,
+                       100.0 AS completion_rate
+                FROM silver.khuyen_mai km
+            """.strip(),
+            "assistant_reply": "Em đã truy vấn và hiển thị danh sách các chương trình khuyến mãi/voucher vào Bảng Dữ Liệu Chi Tiết (Mục 3) bên dưới!"
+        }
+
+    # 6. INVENTORY / INGREDIENTS (silver.kho_nguyen_lieu)
+    if any(k in fb for k in ["tồn kho", "ton kho", "nguyên liệu", "nguyen lieu", "vật tư", "kho"]):
+        return {
+            "entity": "ton_kho",
+            "title": "Danh Sách Tồn Kho & Nguyên Liệu",
+            "description": "Bảng dữ liệu theo dõi lượng tồn nguyên vật liệu pha chế.",
+            "main_sql": """
+                SELECT knl.ma_nguyen_lieu AS "Mã Nguyên Liệu",
+                       knl.ten_nguyen_lieu AS "Tên Vật Tư / Nguyên Liệu",
+                       knl.so_luong_ton AS "Số Lượng Tồn",
+                       knl.don_vi_tinh AS "Đơn Vị Tính",
+                       COALESCE(knl.trang_thai, 'CON_HANG') AS "Trạng Thái Kho"
+                FROM silver.kho_nguyen_lieu knl
+                ORDER BY knl.so_luong_ton ASC
+                LIMIT 50
+            """.strip(),
+            "kpi_sql": """
+                SELECT COUNT(*) AS total_orders,
+                       COALESCE(SUM(knl.so_luong_ton), 0) AS total_revenue,
+                       ROUND(AVG(knl.so_luong_ton), 0) AS aov,
+                       100.0 AS completion_rate
+                FROM silver.kho_nguyen_lieu knl
+            """.strip(),
+            "assistant_reply": "Em đã truy vấn và hiển thị danh sách tồn kho nguyên vật liệu vào Bảng Dữ Liệu Chi Tiết (Mục 3) bên dưới!"
+        }
+
+    # 7. STAFF SHIFTS & ATTENDANCE (silver.ca_lam_viec_nhan_vien)
+    if any(k in fb for k in ["ca làm", "ca lam", "nhân viên", "nhan vien", "chấm công", "cham cong", "đi trễ", "di tre", "lịch làm", "lich lam", "shift"]):
+        where_cond = "1=1"
+        status_note = ""
+        if any(k in fb for k in ["đi trễ", "di tre", "muộn", "trễ"]):
+            where_cond = "cl.trang_thai_cham_cong = 'DI_TRE'"
+            status_note = "Đi Trễ"
+        elif any(k in fb for k in ["vắng mặt", "vang mat", "nghỉ"]):
+            where_cond = "cl.trang_thai_cham_cong = 'VANG_MAT'"
+            status_note = "Vắng Mặt"
+        elif any(k in fb for k in ["đúng giờ", "dung gio"]):
+            where_cond = "cl.trang_thai_cham_cong = 'DUNG_GIO'"
+            status_note = "Đúng Giờ"
+
+        title_suffix = f"Ca Làm Việc Nhân Viên {status_note}".strip()
+        return {
+            "entity": "ca_lam_viec",
+            "title": f"Danh Sách {title_suffix}",
+            "description": f"Bảng dữ liệu theo dõi ca làm việc và chấm công nhân sự {status_note.lower()}.",
+            "main_sql": f"""
+                SELECT cl.ma_ca_lam_viec AS "Mã Ca",
+                       COALESCE(cl.staff_name, 'Nhân viên') AS "Họ Tên Nhân Viên",
+                       COALESCE(cn.ten_chi_nhanh, cl.co_so_ma) AS "Chi Nhánh",
+                       cl.ten_ca AS "Tên Ca",
+                       TO_CHAR(cl.ngay_lam_viec, 'YYYY-MM-DD') AS "Ngày Làm",
+                       cl.gio_bat_dau AS "Bắt Đầu",
+                       cl.gio_ket_thuc AS "Kết Thúc",
+                       cl.trang_thai_cham_cong AS "Chấm Công"
+                FROM silver.ca_lam_viec_nhan_vien cl
+                LEFT JOIN silver.chi_nhanh cn ON cl.co_so_ma = cn.ma_chi_nhanh
+                WHERE {where_cond}
+                ORDER BY cl.ngay_lam_viec DESC, cl.gio_bat_dau DESC
+                LIMIT 50
+            """.strip(),
+            "kpi_sql": f"""
+                SELECT COUNT(*) AS total_orders,
+                       COUNT(*) FILTER (WHERE cl.trang_thai_cham_cong = 'DI_TRE') AS total_revenue,
+                       ROUND(100.0 * COUNT(*) FILTER (WHERE cl.trang_thai_cham_cong = 'DUNG_GIO') / NULLIF(COUNT(*), 0), 1) AS aov,
+                       ROUND(100.0 * COUNT(*) FILTER (WHERE cl.trang_thai_cham_cong = 'DUNG_GIO') / NULLIF(COUNT(*), 0), 1) AS completion_rate
+                FROM silver.ca_lam_viec_nhan_vien cl
+                WHERE {where_cond}
+            """.strip(),
+            "assistant_reply": f"Em đã truy vấn và hiển thị danh sách {title_suffix.lower()} kèm trạng thái chấm công vào Bảng Dữ Liệu Chi Tiết (Mục 3) bên dưới!"
+        }
+
+    # 8. ORDERS (silver.don_hang) - Universal order handler
+    pm_filter = None
+    if any(k in fb for k in ["momo", "ví momo", "vi momo"]):
+        pm_filter = "MOMO"
+    elif any(k in fb for k in ["vnpay", "vn pay"]):
+        pm_filter = "VNPAY"
+    elif any(k in fb for k in ["tiền mặt", "tien mat", "cash"]):
+        pm_filter = "TIEN_MAT"
+    elif any(k in fb for k in ["thẻ", "the", "banking", "chuyển khoản"]):
+        pm_filter = "THE"
+    elif any(k in fb for k in ["zalo", "zalopay"]):
+        pm_filter = "ZALOPAY"
+    elif any(k in fb for k in ["chi tiết đơn", "chi tiết các đơn", "danh sách đơn", "danh sách các đơn"]):
+        # Inherit payment method filter from existing report context if user didn't mention another
+        curr_t = (current_report.get("title") or "").upper()
+        if "MOMO" in curr_t:
+            pm_filter = "MOMO"
+        elif "VNPAY" in curr_t:
+            pm_filter = "VNPAY"
+        elif "TIỀN MẶT" in curr_t or "TIEN_MAT" in curr_t:
+            pm_filter = "TIEN_MAT"
+        elif "THẺ" in curr_t or "THE" in curr_t:
+            pm_filter = "THE"
+
+    status_filter = None
+    if any(k in fb for k in ["đã hủy", "da huy", "hủy", "huy"]):
+        status_filter = "DA_HUY"
+    elif any(k in fb for k in ["hoàn thành", "hoan thanh"]):
+        status_filter = "HOAN_THANH"
+    elif any(k in fb for k in ["đang giao", "dang giao"]):
+        status_filter = "DANG_GIAO"
+    elif any(k in fb for k in ["mới tạo", "moi tao"]):
+        status_filter = "MOI_TAO"
+
+    channel_filter = None
+    if any(k in fb for k in ["mang đi", "mang di", "takeaway"]):
+        channel_filter = "MANG_DI"
+    elif any(k in fb for k in ["giao tận nơi", "giao tan noi", "delivery", "giao hàng"]):
+        channel_filter = "GIAO_TAN_NOI"
+    elif any(k in fb for k in ["tại chỗ", "tai cho", "dine-in", "tại quán"]):
+        channel_filter = "DUNG_TAI_CHO"
+
+    voucher_filter = any(k in fb for k in ["voucher", "mã giảm", "ma giam", "áp mã", "ap ma", "khuyến mãi", "khuyen mai"])
+
+    amount_filter = None
+    if any(k in fb for k in ["> 500k", "500.000", "500k", "giá trị cao", "gia tri cao"]):
+        amount_filter = "d.tong_tien >= 500000"
+    elif any(k in fb for k in ["> 100k", "100.000", "100k"]):
+        amount_filter = "d.tong_tien >= 100000"
+
+    where_clauses = []
+    title_parts = []
+    if pm_filter:
+        where_clauses.append(f"d.phuong_thuc_thanh_toan = '{pm_filter}'")
+        title_parts.append(f"Thanh Toán {pm_filter}")
+    if status_filter:
+        where_clauses.append(f"d.trang_thai_don_hang = '{status_filter}'")
+        title_parts.append(f"Trạng Thái {status_filter}")
+    elif not pm_filter and not channel_filter and not status_filter:
+        where_clauses.append("d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')")
+    if channel_filter:
+        where_clauses.append(f"d.loai_don_hang = '{channel_filter}'")
+        title_parts.append(f"Kênh {channel_filter}")
+    if voucher_filter:
+        where_clauses.append("d.ma_voucher IS NOT NULL")
+        title_parts.append("Có Voucher")
+    if amount_filter:
+        where_clauses.append(amount_filter)
+        title_parts.append("Giá Trị Cao")
+
+    where_str = " AND ".join(where_clauses) if where_clauses else "1=1"
+    
+    if not title_parts:
+        title_parts.append("Chi Tiết")
+    
+    final_title = f"Danh Sách Đơn Hàng {' '.join(title_parts)}"
+    
+    return {
+        "entity": "don_hang",
+        "title": final_title,
+        "description": f"Bảng dữ liệu chi tiết danh sách từng đơn hàng {', '.join(title_parts).lower()} phục vụ tra cứu và kiểm tra nghiệp vụ.",
+        "main_sql": f"""
+            SELECT d.ma_don_hang AS "Mã Đơn",
+                   COALESCE(d.ten_khach_hang, 'Khách vãng lai') AS "Khách Hàng",
+                   d.tong_tien AS "Tổng Tiền (VNĐ)",
+                   COALESCE(d.phuong_thuc_thanh_toan, 'Chưa xác định') AS "Phương Thức",
+                   COALESCE(d.loai_don_hang, 'Tại quán') AS "Hình Thức",
+                   d.trang_thai_don_hang AS "Trạng Thái",
+                   TO_CHAR(d.ngay_tao, 'YYYY-MM-DD HH24:MI') AS "Thời Gian Tạo"
+            FROM silver.don_hang d
+            WHERE {where_str}
+            ORDER BY d.ngay_tao DESC
+            LIMIT 50
+        """.strip(),
+        "kpi_sql": f"""
+            SELECT COUNT(*) AS total_orders,
+                   COALESCE(SUM(d.tong_tien), 0) AS total_revenue,
+                   ROUND(COALESCE(AVG(d.tong_tien), 0), 0) AS aov,
+                   ROUND(100.0 * COUNT(*) FILTER (WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')) / NULLIF(COUNT(*), 0), 1) AS completion_rate
+            FROM silver.don_hang d
+            WHERE {where_str}
+        """.strip(),
+        "assistant_reply": f"Em đã truy vấn và hiển thị danh sách chi tiết các đơn hàng {', '.join(title_parts).lower()} với đầy đủ mã đơn, khách hàng, tổng tiền, phương thức, trạng thái và thời gian vào Bảng Dữ Liệu Chi Tiết (Mục 3) bên dưới!"
+    }
+
+
+def _resolve_universal_charts(
+    user_feedback: str,
+    current_report: Dict[str, Any],
+    planned_charts: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """
+    Universal chart detector and generator covering:
+    - multi_line: multi-series line chart (1 line per category/payment/channel/city)
+    - bar: vertical column bar chart
+    - horizontal_bar: ranking chart
+    - donut: composition share chart
+    - heatmap: 2D hourly x day of week density chart
+    """
+    fb = user_feedback.lower()
+    charts = list(planned_charts)
+    existing_types = {str(c.get("chart_type", "")).lower() for c in charts if isinstance(c, dict)}
+
+    # 1. Multi-line trend chart
+    if any(k in fb for k in [
+        "1 đường là 1 loại", "1 duong la 1 loai", "mỗi loại 1 đường", "moi loai 1 duong",
+        "mỗi phương thức 1 đường", "moi phuong thuc 1 duong", "từng loại 1 đường",
+        "đa đường", "nhiều đường", "nhieu duong", "multi_line", "multiline", "tách đường", "tach duong",
+        "xu hướng theo từng", "xu huong theo tung", "1 duong 1 loai", "mỗi loại một đường"
+    ]):
+        if "multi_line" not in existing_types and "multiline" not in existing_types:
+            if any(k in fb for k in ["sản phẩm", "san pham", "danh mục", "danh muc", "nhóm"]):
+                ml_sql = """
+                    SELECT d.ngay_tao::date::text AS ngay,
+                           COALESCE(sp.danh_muc, 'Khác') AS loai,
+                           SUM(ct.thanh_tien) AS value
+                    FROM silver.chi_tiet_don_hang ct
+                    JOIN silver.don_hang d ON ct.ma_don_hang = d.ma_don_hang
+                    JOIN silver.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham
+                    WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                    GROUP BY 1, 2 ORDER BY 1, 2
+                """.strip()
+                ml_title = "Xu hướng Doanh thu theo Danh mục Sản phẩm (Đa đường)"
+            elif any(k in fb for k in ["chi nhánh", "chi nhanh", "thành phố", "thanh pho", "cửa hàng"]):
+                ml_sql = """
+                    SELECT d.ngay_tao::date::text AS ngay,
+                           COALESCE(cn.thanh_pho, 'Khác') AS loai,
+                           SUM(d.tong_tien) AS value
+                    FROM silver.don_hang d
+                    JOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
+                    WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                    GROUP BY 1, 2 ORDER BY 1, 2
+                """.strip()
+                ml_title = "Xu hướng Doanh thu theo Khu vực / Thành phố (Đa đường)"
+            elif any(k in fb for k in ["kênh", "kenh", "hình thức", "loại đơn"]):
+                ml_sql = """
+                    SELECT d.ngay_tao::date::text AS ngay,
+                           COALESCE(d.loai_don_hang, 'Khác') AS loai,
+                           SUM(d.tong_tien) AS value
+                    FROM silver.don_hang d
+                    WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                    GROUP BY 1, 2 ORDER BY 1, 2
+                """.strip()
+                ml_title = "Xu hướng Doanh thu theo Kênh phục vụ (Đa đường)"
+            else:
+                ml_sql = """
+                    SELECT d.ngay_tao::date::text AS ngay,
+                           COALESCE(d.phuong_thuc_thanh_toan, 'Khác') AS loai,
+                           SUM(d.tong_tien) AS value
+                    FROM silver.don_hang d
+                    WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                    GROUP BY 1, 2 ORDER BY 1, 2
+                """.strip()
+                ml_title = "Xu hướng Doanh thu theo Phương thức Thanh toán (1 đường / loại)"
+
+            charts.insert(0, {
+                "id": "trend_multiline_chart",
+                "title": ml_title,
+                "chart_type": "multi_line",
+                "unit": "VNĐ",
+                "col_span": 12,
+                "sql": ml_sql
+            })
+
+    # 2. Vertical Column Bar Chart
+    if any(k in fb for k in ["cột đứng", "cot dung", "biểu đồ cột", "bieu do cot", "thêm biểu đồ cột", "bar chart", "cột"]) and not any(k in fb for k in ["ngang", "horizontal"]):
+        if "bar" not in existing_types:
+            bar_sql = """
+                SELECT COALESCE(d.phuong_thuc_thanh_toan, 'Khác') AS label,
+                       COALESCE(SUM(d.tong_tien), 0) AS value
+                FROM silver.don_hang d
+                WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                GROUP BY 1 ORDER BY value DESC LIMIT 8
+            """.strip()
+            if any(k in fb for k in ["chi nhánh", "cửa hàng", "thành phố"]):
+                bar_sql = """
+                    SELECT COALESCE(cn.thanh_pho, 'Khác') AS label,
+                           COALESCE(SUM(d.tong_tien), 0) AS value
+                    FROM silver.don_hang d
+                    JOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
+                    WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                    GROUP BY 1 ORDER BY value DESC LIMIT 8
+                """.strip()
+            elif any(k in fb for k in ["sản phẩm", "món"]):
+                bar_sql = """
+                    SELECT COALESCE(sp.ten_san_pham, 'Khác') AS label,
+                           COALESCE(SUM(ct.thanh_tien), 0) AS value
+                    FROM silver.chi_tiet_don_hang ct
+                    JOIN silver.don_hang d ON ct.ma_don_hang = d.ma_don_hang
+                    JOIN silver.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham
+                    WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                    GROUP BY 1 ORDER BY value DESC LIMIT 8
+                """.strip()
+
+            charts.append({
+                "id": f"chart_bar_vertical_{len(charts)+1}",
+                "title": "So sánh Doanh thu (Biểu đồ Cột)",
+                "chart_type": "bar",
+                "unit": "VNĐ",
+                "col_span": 6,
+                "sql": bar_sql
+            })
+
+    # 3. Donut Composition Chart
+    if any(k in fb for k in ["hình tròn", "hinh tron", "donut", "tròn", "tỷ trọng", "ty trong", "cơ cấu", "co cau", "phần trăm"]):
+        if "donut" not in existing_types:
+            donut_sql = """
+                SELECT COALESCE(d.phuong_thuc_thanh_toan, 'Khác') AS name,
+                       COUNT(*) AS value
+                FROM silver.don_hang d
+                WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                GROUP BY 1 ORDER BY value DESC LIMIT 6
+            """.strip()
+            charts.append({
+                "id": f"chart_donut_{len(charts)+1}",
+                "title": "Cơ cấu Tỷ trọng (Hình tròn Donut)",
+                "chart_type": "donut",
+                "unit": "đơn",
+                "col_span": 6,
+                "sql": donut_sql
+            })
+
+    # 4. Heatmap Chart
+    if any(k in fb for k in ["heatmap", "mật độ", "mat do", "khung giờ x thứ", "khung gio"]):
+        if "heatmap" not in existing_types:
+            heatmap_sql = """
+                SELECT EXTRACT(DOW FROM d.ngay_tao)::int AS dow,
+                       EXTRACT(HOUR FROM d.ngay_tao)::int AS hour,
+                       COUNT(*) AS order_count
+                FROM silver.don_hang d
+                WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                GROUP BY 1, 2 ORDER BY 1, 2
+            """.strip()
+            charts.append({
+                "id": f"chart_heatmap_{len(charts)+1}",
+                "title": "Mật độ Giao dịch Khung giờ x Thứ trong tuần (Heatmap)",
+                "chart_type": "heatmap",
+                "unit": "đơn",
+                "col_span": 12,
+                "sql": heatmap_sql
+            })
+
+    # 5. Horizontal Ranking Chart
+    if any(k in fb for k in ["xếp hạng", "xep hang", "top", "ngang", "ranking"]):
+        if "horizontal_bar" not in existing_types:
+            rank_sql = """
+                SELECT COALESCE(sp.ten_san_pham, 'Khác') AS name,
+                       COALESCE(SUM(ct.thanh_tien), 0) AS value
+                FROM silver.chi_tiet_don_hang ct
+                JOIN silver.don_hang d ON ct.ma_don_hang = d.ma_don_hang
+                JOIN silver.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham
+                WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                GROUP BY 1 ORDER BY value DESC LIMIT 10
+            """.strip()
+            charts.append({
+                "id": f"chart_rank_{len(charts)+1}",
+                "title": "Bảng Xếp Hạng Top Đóng Góp Doanh Thu",
+                "chart_type": "horizontal_bar",
+                "unit": "VNĐ",
+                "col_span": 6,
+                "sql": rank_sql
+            })
+
+    return charts
 
 
 @router.post("/refine-report")
@@ -2729,10 +4303,10 @@ def refine_report(payload: AiReportRefineRequest):
 
     # Vector RAG search for relevant tables/columns based on feedback
     search_query = f"{current_report.get('title', '')} {user_feedback}"
-    vector_rag = vector_rag_service.search_semantic_knowledge(search_query, top_k=5)
+    vector_rag = vector_rag_service.search_semantic_knowledge(search_query, top_k=6)
 
     # Resolution
-    resolution = semantic_service.resolve(user_feedback, current_report.get("interpreted_request", ""), domain, metadata)
+    resolution = semantic_service.resolve(user_feedback, current_report.get("interpreted_request", ""), domain, metadata, vector_tables=vector_rag.get("top_tables", []))
     metadata_context = semantic_service.llm_context(resolution, metadata, prompt=user_feedback)
     metadata_context["vector_rag"] = vector_rag
 
@@ -2774,9 +4348,48 @@ def refine_report(payload: AiReportRefineRequest):
             for h in payload.conversation_history[-6:]
         )
 
-    refine_instruction = f"""Bạn là Senior BI Data Analyst của chuỗi cà phê Avengers Coffee.
+    # ── Session Memory: retrieve session for rich context ──
+    session = get_session(payload.session_id) if payload.session_id else None
+    session_data_context = ""
+    session_history_text = ""
+    if session:
+        session_data_context = session.get_data_context_for_llm()
+        session_history_text = session.formatted_history(max_turns=8)
+        if session_history_text and session_history_text != "(Đây là lượt đầu tiên, chưa có lịch sử)":
+            history_text = session_history_text
+        session.add_turn(role="user", content=user_feedback)
+
+    # Build detailed schema text for the LLM
+    schema_lines = []
+    for t in metadata_context.get("physical_metadata", []):
+        cols = ", ".join(f"{c['name']} ({c['data_type']})" for c in t.get("columns", []))
+        joins = ", ".join(f"{j['to_table']} ON {j['on']}" for j in t.get("relationships", []))
+        line = f"- Bảng `{t['qualified_name']}` ({t.get('business_name')}):\n  + Cột: {cols}"
+        if joins:
+            line += f"\n  + JOIN mẫu: {joins}"
+        schema_lines.append(line)
+    schema_text = "\n".join(schema_lines)
+
+    enums = metadata_context.get("enums", {})
+    enums_text = "\n".join([f"  - {col}: {', '.join(repr(v) for v in vals[:6])}" for col, vals in list(enums.items())[:6]]) if enums else ""
+
+    rules = metadata_context.get("business_rules", [])
+    rules_text = "\n".join([f"  - {r}" for r in rules[:4]]) if rules else ""
+
+    vector_section = ""
+    if metadata_context.get("vector_rag"):
+        vr = metadata_context["vector_rag"]
+        vector_section = f"""
+KHO TRI THỨC NGỮ NGHĨA VECTOR RAG (TRÍCH XUẤT TỪ PGVECTOR ai_agent.schema_catalog):
+{vr.get('vector_context_text', '')}
+
+ĐƯỜNG DẪN LIÊN KẾT BẢNG CHUẨN:
+{vr.get('join_context_text', '')}
+"""
+
+    refine_instruction = f"""Bạn là Senior BI Data Analyst và Data Platform Architect phụ trách hệ thống Avengers Coffee.
 Người dùng đang xem báo cáo phân tích và gửi GÓP Ý / YÊU CẦU TINH CHỈNH (feedback).
-Nhiệm vụ của bạn là xem xét báo cáo hiện tại và điều chỉnh lại báo cáo cho phù hợp nhất với góp ý của người dùng.
+Nhiệm vụ của bạn là xem xét báo cáo hiện tại và điều chỉnh lại toàn bộ cấu trúc báo cáo (SQL, Biểu đồ, KPI, Bảng dữ liệu, Nhận định) chính xác tuyệt đối.
 
 1. BÁO CÁO HIỆN TẠI:
 - Tiêu đề: {current_report.get('title', '')}
@@ -2797,22 +4410,49 @@ Nhiệm vụ của bạn là xem xét báo cáo hiện tại và điều chỉnh
 3. GÓP Ý / YÊU CẦU TINH CHỈNH CỦA NGƯỜI DÙNG:
 "{user_feedback}"
 
-4. BẢNG DỮ LIỆU & QUAN HỆ TẦNG SILVER KHẢ DỤNG:
-- Bảng liên quan: {', '.join(vector_rag.get('top_tables', []))}
-- Quan hệ chuẩn: {', '.join([f"{r['from_table']} -> {r['to_table']}" for r in metadata.get('table_relationships', [])[:8]])}
+4. DỮ LIỆU KẾT QUẢ HIỆN TẠI ĐANG HIỂN THỊ TRÊN MÀN HÌNH:
+{session_data_context if session_data_context else '(Không có snapshot — chỉ có SQL ở mục 1)'}
 
-5. QUY TẮC TINH CHỈNH QUAN TRỌNG:
-A. NẾU người dùng yêu cầu ĐỔI LOẠI BIỂU ĐỒ (ví dụ: đổi sang hình tròn donut, biểu đồ cột bar/horizontal_bar, biểu đồ đường line/area):
-   - Đặt `chart_type` mới trong `updated_charts`. Các loại hợp lệ: "donut", "bar", "horizontal_bar", "area", "line".
-B. NẾU người dùng yêu cầu LỌC THÊM ĐIỀU KIỆN (khu vực TP.HCM, Hà Nội, ngày tháng, trạng thái đơn hàng...) hoặc TÍNH TOÁN LẠI SỐ LIỆU:
+5. METADATA CHI TIẾT CÁC BẢNG TRỌNG TÂM ĐƯỢC PHÉP TRUY VẤN:
+{schema_text}
+{vector_section}
+
+QUY TẮC NGHIỆP VỤ & ENUMS CHUẨN:
+{rules_text}
+{enums_text}
+
+6. NGUYÊN TẮC TINH CHỈNH TOÀN DIỆN (BẮT BUỘC TUÂN THỦ):
+A. NẾU YÊU CẦU XEM BẢNG DỮ LIỆU CHI TIẾT / DANH SÁCH THỰC THỂ (đơn hàng, khách hàng, sản phẩm, chi nhánh, đánh giá, khuyến mãi, tồn kho...):
+   - ĐẶC BIỆT LƯU Ý: Bảng dữ liệu chi tiết của báo cáo (Mục 3) được sinh ra từ truy vấn `main` trong `updated_sql`!
+   - BẮT BUỘC đặt `needs_sql_execution: true`.
+   - BẮT BUỘC viết câu lệnh SELECT chi tiết từng bản ghi thực thể trong `updated_sql["main"]` (KHÔNG DÙNG GROUP BY). Dùng bí danh tiếng Việt có dấu cho các cột (ví dụ: `d.ma_don_hang AS "Mã Đơn", d.tong_tien AS "Tổng Tiền (VNĐ)"`), có ORDER BY và LIMIT 50.
+   - BẮT BUỘC cập nhật `updated_sql["kpi"]` để tính tổng số bản ghi và các metric tổng hợp cho tập dữ liệu vừa lọc.
+   - CẬP NHẬT `updated_title` phản ánh chính xác thực thể (ví dụ: "Danh Sách Đơn Hàng Thanh Toán MOMO", "Danh Sách Khách Hàng VIP").
+   - TUYỆT ĐỐI KHÔNG đưa các chuỗi giả dạng chữ như "Chi tiết từng đơn" hay "Hiển thị đầy đủ..." vào `updated_key_findings`! `updated_key_findings` CHỈ ĐƯỢC CHỨA các nhận định định lượng đo lường bằng con số thực tế.
+
+B. NẾU YÊU CẦU BIỂU ĐỒ XU HƯỚNG ĐA ĐƯỜNG ("1 đường là 1 loại", "mỗi loại 1 đường", "mỗi phương thức 1 đường", "multi_line"):
+   - BẮT BUỘC đặt `chart_type: "multi_line"`.
+   - BẮT BUỘC cung cấp câu lệnh `sql` trả về 3 cột: thời gian/ngày, phân loại/loại, giá trị số (ví dụ: `SELECT d.ngay_tao::date::text AS ngay, d.phuong_thuc_thanh_toan AS loai, SUM(d.tong_tien) AS value FROM silver.don_hang d WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO') GROUP BY 1, 2 ORDER BY 1, 2`).
+   - Đặt `col_span: 12`.
    - Đặt `needs_sql_execution: true`.
-   - Cung cấp câu lệnh SQL PostgreSQL cập nhật trong `updated_sql` (chỉ đọc silver.*, chuẩn tên cột).
-   - SQL "main" trả bảng chi tiết; "kpi" trả số tổng; "trend" hoặc "breakdown" cho biểu đồ.
-C. NẾU người dùng chỉ muốn ĐIỀU CHỈNH VĂN PHONG, NỘI DUNG TÓM TẮT, KHUYẾN NGHỊ:
+
+C. NẾU YÊU CẦU THÊM HOẶC ĐỔI CÁC LOẠI BIỂU ĐỒ KHÁC:
+   - Các loại hỗ trợ: "bar" (cột đứng), "horizontal_bar" (xếp hạng ngang), "donut" (hình tròn cơ cấu), "area" / "line" (đường xu hướng đơn), "heatmap" (mật độ 2D), "multi_line" (đa đường).
+   - NẾU người dùng yêu cầu THÊM BIỂU ĐỒ MỚI (ví dụ: "thêm biểu đồ cột đứng", "thêm heatmap"):
+     + BẮT BUỘC giữ nguyên các biểu đồ cũ trong `updated_charts` và chèn biểu đồ mới vào mảng (KHÔNG XÓA BIỂU ĐỒ CŨ).
+     + Cung cấp câu lệnh SQL hoàn chỉnh cho biểu đồ đó.
+     + Đặt `needs_sql_execution: true`.
+
+D. NẾU YÊU CẦU LỌC THÊM ĐIỀU KIỆN HOẶC TÍNH TOÁN LẠI:
+   - Đặt `needs_sql_execution: true`.
+   - Cung cấp câu lệnh SQL PostgreSQL cập nhật chuẩn xác trong `updated_sql` (chỉ đọc silver.*).
+
+E. NẾU CHỈ ĐIỀU CHỈNH VĂN PHONG, NỘI DUNG TÓM TẮT, KHUYẾN NGHỊ:
    - Đặt `needs_sql_execution: false`.
-   - Viết lại `updated_executive_summary`, `updated_key_findings`, `updated_ai_insights`, `updated_recommendations` sâu sắc, định lượng và bám sát thực tế chuỗi.
-D. `assistant_reply`:
-   - Phải có một tin nhắn thân thiện, chuyên nghiệp bằng tiếng Việt (2-3 câu) báo rõ cho người dùng những gì bạn vừa tinh chỉnh (Ví dụ: "Em đã cập nhật biểu đồ sang hình tròn Donut và lọc dữ liệu riêng cho khu vực TP.HCM theo yêu cầu của bạn. Toàn bộ doanh thu, thẻ KPI và khuyến nghị đã được tính toán lại chính xác!").
+   - Viết lại `updated_executive_summary`, `updated_key_findings`, `updated_ai_insights`, `updated_recommendations` sâu sắc, định lượng.
+
+F. `assistant_reply`:
+   - Trả lời thân thiện, mạch lạc bằng tiếng Việt, thông báo rõ những gì đã được tinh chỉnh (nêu rõ bảng dữ liệu chi tiết, biểu đồ hay số liệu đã được cập nhật).
 
 HÃY TRẢ VỀ ĐÚNG MỘT JSON OBJECT (không có text nào ngoài JSON):
 {{
@@ -2862,8 +4502,34 @@ HÃY TRẢ VỀ ĐÚNG MỘT JSON OBJECT (không có text nào ngoài JSON):
 
     needs_sql = bool(llm_data.get("needs_sql_execution"))
     updated_sql_dict = llm_data.get("updated_sql") if isinstance(llm_data.get("updated_sql"), dict) else {}
-    # If LLM provided updated SQL queries with actual SELECT, we execute them
     if any(isinstance(v, str) and v.lower().strip().startswith("select") for v in updated_sql_dict.values()):
+        needs_sql = True
+
+    # ── Universal Entity List Resolution ──
+    entity_override = _resolve_universal_entity_list(user_feedback, current_report)
+    if entity_override:
+        needs_sql = True
+        main_q = str(updated_sql_dict.get("main") or "")
+        # If LLM didn't provide main_sql or used GROUP BY or didn't select individual entity rows
+        if not main_q or "group by" in main_q.lower() or not any(k in main_q.lower() for k in ["mã", "id", "name", "họ tên", "tên"]):
+            updated_sql_dict["main"] = entity_override["main_sql"]
+        
+        kpi_q = str(updated_sql_dict.get("kpi") or "")
+        if not kpi_q or not any(k in kpi_q.lower() for k in ["count", "total_orders"]):
+            updated_sql_dict["kpi"] = entity_override["kpi_sql"]
+
+        updated_report_title = entity_override["title"]
+        updated_report_desc = entity_override["description"]
+        assistant_reply = entity_override["assistant_reply"]
+    else:
+        updated_report_title = llm_data.get("updated_title") or current_report.get("title")
+        updated_report_desc = llm_data.get("updated_description") or current_report.get("description")
+
+    # ── Universal Chart Resolution ──
+    planned_charts_in = llm_data.get("updated_charts") if isinstance(llm_data.get("updated_charts"), list) else list(current_report.get("charts", []))
+    planned_charts_resolved = _resolve_universal_charts(user_feedback, current_report, planned_charts_in)
+    llm_data["updated_charts"] = planned_charts_resolved
+    if any(c.get("sql") for c in planned_charts_resolved):
         needs_sql = True
 
     # Prepare default / fallback structure
@@ -2875,6 +4541,8 @@ HÃY TRẢ VỀ ĐÚNG MỘT JSON OBJECT (không có text nào ngoài JSON):
     updated_report["last_feedback"] = user_feedback
     updated_report["revision"] = int(current_report.get("revision", 1)) + 1
     updated_report["created_at"] = datetime.now().astimezone().isoformat()
+    updated_report["title"] = updated_report_title
+    updated_report["description"] = updated_report_desc
 
     if llm_data.get("updated_title"):
         updated_report["title"] = llm_data["updated_title"]
@@ -2906,11 +4574,51 @@ HÃY TRẢ VỀ ĐÚNG MỘT JSON OBJECT (không có text nào ngoài JSON):
             # Execute dynamic charts
             dynamic_charts = []
             planned_charts = exec_plan.get("charts") or []
+            existing_charts = current_report.get("charts", [])
+            existing_charts_map = {c.get("id"): c for c in existing_charts if isinstance(c, dict) and c.get("id")}
+
+            DEFAULT_HEATMAP_SQL = """
+                SELECT EXTRACT(DOW FROM d.ngay_tao)::int AS dow,
+                       EXTRACT(HOUR FROM d.ngay_tao)::int AS hour,
+                       COUNT(*) AS order_count
+                FROM silver.don_hang d
+                WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                GROUP BY 1, 2 ORDER BY 1, 2
+            """
+
             for c in planned_charts:
-                if isinstance(c, dict):
-                    ch_res = _execute_chart_item(c, query_policy)
+                if not isinstance(c, dict):
+                    continue
+                c_sql = c.get("sql")
+                c_type = str(c.get("chart_type", "")).lower()
+                if c_type == "heatmap" and not c_sql:
+                    c_sql = DEFAULT_HEATMAP_SQL
+
+                if c_sql:
+                    ch_item = dict(c)
+                    ch_item["sql"] = c_sql
+                    ch_res = _execute_chart_item(ch_item, query_policy)
                     if ch_res and ch_res.get("data"):
                         dynamic_charts.append(ch_res)
+                    elif c.get("data"):
+                        dynamic_charts.append(c)
+                elif c.get("data"):
+                    dynamic_charts.append(c)
+                elif c.get("id") and c["id"] in existing_charts_map:
+                    old_c = dict(existing_charts_map[c["id"]])
+                    old_c["title"] = c.get("title") or old_c.get("title")
+                    old_c["chart_type"] = c.get("chart_type") or old_c.get("chart_type")
+                    if c.get("unit"):
+                        old_c["unit"] = c["unit"]
+                    dynamic_charts.append(old_c)
+
+            # Preserve non-deleted existing charts if user added new charts
+            if len(planned_charts) > 0 and len(existing_charts) > 0:
+                planned_ids = {c.get("id") for c in planned_charts if isinstance(c, dict) and c.get("id")}
+                for ec in existing_charts:
+                    if isinstance(ec, dict) and ec.get("id") and ec["id"] not in planned_ids:
+                        if not any(w in user_feedback.lower() for w in ["xóa biểu đồ", "bỏ biểu đồ", "remove chart"]):
+                            dynamic_charts.insert(0, ec)
 
             if not dynamic_charts:
                 chart_meta = _chart_metadata(exec_plan, fallback_plan)
@@ -2942,8 +4650,14 @@ HÃY TRẢ VỀ ĐÚNG MỘT JSON OBJECT (không có text nào ngoài JSON):
             updated_report["kpis"] = normalized["kpis"]
             updated_report["kpi_cards"] = final_cards
             updated_report["charts"] = dynamic_charts
+            if entity_override:
+                tbl_title = entity_override["title"]
+            elif updated_report.get("title"):
+                tbl_title = f"Dữ liệu trích xuất: {updated_report['title']}"
+            else:
+                tbl_title = "Bảng Dữ Liệu Chi Tiết"
             updated_report["table_data"] = {
-                "title": f"Dữ liệu trích xuất: {updated_report['title']}",
+                "title": tbl_title,
                 "columns": normalized["table_columns"],
                 "rows": normalized["table_rows"],
                 "total_rows": normalized["row_counts"]["main"],
@@ -2956,29 +4670,101 @@ HÃY TRẢ VỀ ĐÚNG MỘT JSON OBJECT (không có text nào ngoài JSON):
             updated_report["assistant_reply"] += f" (Lưu ý: Truy vấn SQL mới gặp cảnh báo: {str(e)[:100]}, hệ thống đã bảo lưu số liệu an toàn)."
 
     else:
-        # No SQL changes requested; user only adjusted charts or narrative
+        # No SQL changes requested; check if user modified or added charts
         if llm_data.get("updated_charts") and isinstance(llm_data["updated_charts"], list):
             new_chart_configs = llm_data["updated_charts"]
-            existing_charts = updated_report.get("charts", [])
-            for i, nc in enumerate(new_chart_configs):
+            existing_charts = list(updated_report.get("charts", []))
+            query_policy = _query_policy(metadata_context)
+            final_charts = []
+            matched_existing_indices = set()
+
+            DEFAULT_HEATMAP_SQL = """
+                SELECT EXTRACT(DOW FROM d.ngay_tao)::int AS dow,
+                       EXTRACT(HOUR FROM d.ngay_tao)::int AS hour,
+                       COUNT(*) AS order_count
+                FROM silver.don_hang d
+                WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                GROUP BY 1, 2 ORDER BY 1, 2
+            """
+            DEFAULT_MULTILINE_SQL = """
+                SELECT d.ngay_tao::date::text AS ngay,
+                       COALESCE(d.phuong_thuc_thanh_toan, 'Khác') AS loai,
+                       SUM(d.tong_tien) AS value
+                FROM silver.don_hang d
+                WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                GROUP BY 1, 2 ORDER BY 1, 2
+            """
+
+            for nc in new_chart_configs:
+                if not isinstance(nc, dict):
+                    continue
                 new_type = str(nc.get("chart_type", "")).lower()
-                if new_type in ("donut", "bar", "horizontal_bar", "area", "line"):
-                    if i < len(existing_charts):
-                        existing_charts[i]["chart_type"] = new_type
-                        if nc.get("title"):
-                            existing_charts[i]["title"] = nc["title"]
-                        if nc.get("unit"):
-                            existing_charts[i]["unit"] = nc["unit"]
+                if new_type not in ("donut", "bar", "horizontal_bar", "area", "line", "heatmap", "multi_line", "multiline"):
+                    new_type = "bar"
+                nc_id = nc.get("id")
+                nc_title = nc.get("title") or "Biểu đồ"
+                nc_sql = nc.get("sql")
+
+                # Check if matching existing chart by id
+                matched_idx = None
+                if nc_id:
+                    for i, ec in enumerate(existing_charts):
+                        if i not in matched_existing_indices and ec.get("id") == nc_id:
+                            matched_idx = i
+                            break
+
+                if matched_idx is not None:
+                    matched_existing_indices.add(matched_idx)
+                    ch = dict(existing_charts[matched_idx])
+                    ch["chart_type"] = new_type
+                    ch["title"] = nc_title
+                    if nc.get("unit"):
+                        ch["unit"] = nc["unit"]
+                    if nc_sql:
+                        res = _execute_chart_item(nc, query_policy)
+                        if res and res.get("data"):
+                            ch["data"] = res["data"]
+                            ch["sql"] = res["sql"]
+                    final_charts.append(ch)
+                else:
+                    # New chart added!
+                    if new_type == "heatmap" and not nc_sql:
+                        nc_sql = DEFAULT_HEATMAP_SQL
+                    elif new_type in ("multi_line", "multiline") and not nc_sql:
+                        nc_sql = DEFAULT_MULTILINE_SQL
+                    if nc_sql:
+                        nc_item = dict(nc)
+                        nc_item["sql"] = nc_sql
+                        ch_res = _execute_chart_item(nc_item, query_policy)
+                        if ch_res and ch_res.get("data"):
+                            final_charts.append(ch_res)
+                        else:
+                            final_charts.append({
+                                "id": nc_id or f"chart_ref_{len(final_charts)+1}",
+                                "title": nc_title,
+                                "chart_type": new_type,
+                                "unit": nc.get("unit", ""),
+                                "col_span": 12 if new_type in ("heatmap", "multi_line", "multiline") else 6,
+                                "data": existing_charts[0].get("data", []) if existing_charts else [],
+                            })
                     else:
-                        existing_charts.append({
-                            "id": nc.get("id") or f"chart_ref_{i}",
-                            "title": nc.get("title") or "Biểu đồ",
+                        final_charts.append({
+                            "id": nc_id or f"chart_ref_{len(final_charts)+1}",
+                            "title": nc_title,
                             "chart_type": new_type,
                             "unit": nc.get("unit", ""),
-                            "col_span": 6,
+                            "col_span": 12 if new_type in ("heatmap", "multi_line", "multiline") else 6,
                             "data": existing_charts[0].get("data", []) if existing_charts else [],
                         })
-            updated_report["charts"] = existing_charts
+
+            # Retain non-mentioned existing charts unless explicitly asked to delete
+            for i, ec in enumerate(existing_charts):
+                if i not in matched_existing_indices and not any(ec.get("id") == c.get("id") for c in final_charts):
+                    if not any(w in user_feedback.lower() for w in ["xóa biểu đồ", "bỏ biểu đồ", "remove chart"]):
+                        final_charts.insert(i, ec)
+
+            if final_charts:
+                updated_report["charts"] = final_charts
 
     # Update narrative fields if provided by LLM
     if llm_data.get("updated_executive_summary"):
@@ -2990,7 +4776,62 @@ HÃY TRẢ VỀ ĐÚNG MỘT JSON OBJECT (không có text nào ngoài JSON):
     if llm_data.get("updated_recommendations") and isinstance(llm_data["updated_recommendations"], list):
         updated_report["recommendations"] = [str(x) for x in llm_data["updated_recommendations"]]
     if llm_data.get("updated_key_findings") and isinstance(llm_data["updated_key_findings"], list):
-        updated_report["key_findings"] = llm_data["updated_key_findings"]
+        cleaned_findings = []
+        for f in llm_data["updated_key_findings"]:
+            if not isinstance(f, dict):
+                continue
+            f_val = str(f.get("value", "")).lower().strip()
+            f_name = str(f.get("finding", "")).lower().strip()
+            # Filter out fake text placeholders
+            if any(bad in f_val for bad in ["chi tiết từng đơn", "chi tiet tung don", "chi tiết", "từng đơn", "danh sách", "danh sach", "bảng dữ liệu", "hiển thị đầy đủ", "xem bên dưới"]):
+                continue
+            if any(bad in f_name for bad in ["danh sách đơn hàng", "danh sach don", "chi tiết"]):
+                continue
+            cleaned_findings.append(f)
+        if cleaned_findings:
+            updated_report["key_findings"] = cleaned_findings
+        elif needs_sql and 'normalized' in locals() and normalized.get("kpis"):
+            # Universal Quantitative Key Findings Fallback
+            kpis = normalized["kpis"]
+            k_orders = kpis.get("orders") or kpis.get("total_orders") or len(normalized.get("table_rows", []))
+            k_rev = kpis.get("revenue") or kpis.get("total_revenue") or 0
+            k_aov = kpis.get("aov") or 0
+            k_comp = kpis.get("completion_rate")
+
+            findings = []
+            entity_label = entity_override["title"] if entity_override else updated_report.get("title", "Tập dữ liệu")
+            
+            if k_orders is not None and k_orders > 0:
+                findings.append({
+                    "finding": f"Quy mô dữ liệu ({entity_label})",
+                    "value": f"{int(k_orders):,} bản ghi".replace(",", "."),
+                    "comment": "Tổng số lượng đối tượng ghi nhận trong phạm vi phân tích."
+                })
+            if k_rev is not None and k_rev > 0:
+                findings.append({
+                    "finding": "Tổng giá trị / Doanh thu lũy kế",
+                    "value": f"{int(k_rev):,} đ".replace(",", "."),
+                    "comment": "Tổng giá trị tài chính tương ứng với tập dữ liệu được chọn."
+                })
+            if k_aov is not None and k_aov > 0:
+                findings.append({
+                    "finding": "Giá trị trung bình mỗi đối tượng (AOV)",
+                    "value": f"{int(k_aov):,} đ".replace(",", "."),
+                    "comment": "Mức chi tiêu hoặc quy mô trung bình trên mỗi bản ghi."
+                })
+            if k_comp is not None:
+                findings.append({
+                    "finding": "Tỷ lệ hoàn thành / Hiệu suất",
+                    "value": f"{k_comp}%",
+                    "comment": "Tỷ lệ giao dịch hoặc tiến độ đạt chuẩn trong kỳ phân tích."
+                })
+            if not findings:
+                findings.append({
+                    "finding": "Số lượng bản ghi trích xuất",
+                    "value": f"{len(normalized.get('table_rows', []))} dòng",
+                    "comment": "Dữ liệu thực tế được nạp từ kho Silver Lakehouse."
+                })
+            updated_report["key_findings"] = findings
 
     # Log to Vector RAG Query Logs
     vector_rag_service.log_query(
@@ -3002,7 +4843,96 @@ HÃY TRẢ VỀ ĐÚNG MỘT JSON OBJECT (không có text nào ngoài JSON):
         error=""
     )
 
+    # ── Session Memory: update session state after refinement ──
+    if session:
+        session.revision += 1
+        # Record assistant reply
+        assistant_reply_text = updated_report.get("assistant_reply", "Đã cập nhật báo cáo.")
+        session.add_turn(
+            role="assistant",
+            content=assistant_reply_text,
+            sql_changes=updated_report.get("sql") if isinstance(updated_report.get("sql"), dict) else None,
+            result_snapshot=session.current_results_snapshot,
+        )
+        # Update session state with new results if SQL was executed
+        if needs_sql and isinstance(updated_report.get("sql"), dict):
+            session.current_sql = updated_report["sql"]
+            # Build compact snapshot from updated report
+            compact = {
+                "kpis": updated_report.get("kpis", {}),
+                "table_rows": (updated_report.get("table_data", {}).get("rows", []))[:15],
+                "table_columns": updated_report.get("table_data", {}).get("columns", []),
+                "row_count": updated_report.get("table_data", {}).get("total_rows", 0),
+                "trend_count": len(updated_report.get("trend_chart", [])),
+                "breakdown_count": len(updated_report.get("breakdown_chart", [])),
+                "charts_summary": [
+                    {"title": c.get("title", ""), "chart_type": c.get("chart_type", ""), "data_count": len(c.get("data", []))}
+                    for c in updated_report.get("charts", [])[:4]
+                ],
+            }
+            session.current_results_snapshot = compact
+        session.title = updated_report.get("title", session.title)
+        updated_report["session_id"] = session.session_id
+    elif payload.session_id:
+        # Session expired but client sent an ID — include it in response for awareness
+        updated_report["session_id"] = None
+        updated_report["session_expired"] = True
+
+    # ── Phase 4: Diff summary and sanity warnings ──
+    sql_changed = bool(needs_sql and isinstance(updated_report.get("sql"), dict))
+    charts_changed = bool(llm_data.get("updated_charts"))
+    diff_parts = []
+    if entity_override:
+        diff_parts.append(f"Đã cập nhật Bảng Dữ Liệu Chi Tiết cho {entity_override['title']}")
+    elif sql_changed:
+        diff_parts.append("Đã chạy lại SQL với bộ lọc/chỉ số mới")
+    
+    if any(c.get("chart_type") in ("multi_line", "multiline") for c in updated_report.get("charts", [])):
+        diff_parts.append("Đã tích hợp biểu đồ xu hướng đa đường (1 đường / loại)")
+    elif charts_changed:
+        diff_parts.append("Đã cập nhật cấu hình biểu đồ")
+    
+    if llm_data.get("updated_executive_summary"):
+        diff_parts.append("Đã viết lại tóm tắt điều hành")
+    diff_summary = {
+        "sql_modified": sql_changed,
+        "charts_modified": charts_changed,
+        "summary": " • ".join(diff_parts) if diff_parts else "Đã cập nhật theo yêu cầu",
+    }
+    updated_report["diff_summary"] = diff_summary
+    updated_report["data_warnings"] = validate_results(
+        normalized if needs_sql else {"table_rows": updated_report.get("table_data", {}).get("rows", [])},
+        user_feedback,
+    )
+
     return updated_report
+
+
+@router.post("/feedback")
+def log_user_feedback(payload: AiFeedbackRequest):
+    """
+    Logs user feedback on AI generated/refined reports (Phase 4.2).
+    If positive feedback with valid SQL is received, logs it for few-shot reinforcement.
+    """
+    logger.info("👍👎 [AI-FEEDBACK] Session=%s Rating=%s Prompt=%s", payload.session_id, payload.rating, payload.prompt)
+    if payload.rating == "positive" and payload.final_sql:
+        try:
+            vector_rag_service.log_query(
+                user_prompt=f"[VERIFIED_FEEDBACK] {payload.prompt}",
+                retrieved_tables=[],
+                generated_sql=payload.final_sql,
+                status="VERIFIED_CORRECT",
+                latency_ms=0,
+                error="",
+            )
+        except Exception as exc:
+            logger.warning("Could not log verified feedback to RAG: %s", exc)
+    return {
+        "status": "success",
+        "message": "Cảm ơn bạn đã đóng góp phản hồi giúp cải thiện chất lượng AI!",
+        "session_id": payload.session_id,
+    }
+
 
 
 @router.post("/summarize")

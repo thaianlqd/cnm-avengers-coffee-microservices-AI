@@ -4,6 +4,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -392,6 +393,74 @@ def _generate_chart_image(chart: Dict[str, Any]) -> Optional[io.BytesIO]:
             ax.spines["bottom"].set_color("#CBD5E1")
             ax.grid(True, linestyle="--", alpha=0.35, color="#E2E8F0")
             ax.tick_params(colors="#64748B", labelsize=8)
+
+            plt.tight_layout()
+            buf = io.BytesIO()
+            plt.savefig(buf, format="png", dpi=200, bbox_inches="tight")
+            plt.close(fig)
+            buf.seek(0)
+            return buf
+
+        elif c_type == "heatmap":
+            days_order = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"]
+            hours_set = set()
+            for d in raw_data:
+                if d.get("x"):
+                    hours_set.add(str(d["x"]))
+            hours_order = sorted(list(hours_set)) if hours_set else ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00"]
+            
+            matrix = np.zeros((len(days_order), len(hours_order)))
+            val_map = {(str(d.get("y")), str(d.get("x"))): float(d.get("value") or 0) for d in raw_data}
+            for r_i, day in enumerate(days_order):
+                for c_i, hr in enumerate(hours_order):
+                    matrix[r_i, c_i] = val_map.get((day, hr), 0)
+
+            fig, ax = plt.subplots(figsize=(6.5, 3.2), dpi=200)
+            fig.patch.set_facecolor("#FFFFFF")
+            ax.set_facecolor("#FFFFFF")
+            
+            cax = ax.imshow(matrix, cmap="Blues", aspect="auto")
+            ax.set_xticks(range(len(hours_order)))
+            ax.set_xticklabels([h.split(":")[0] + "h" for h in hours_order], fontsize=7.5, color="#1E293B")
+            ax.set_yticks(range(len(days_order)))
+            ax.set_yticklabels(days_order, fontsize=8, color="#1E293B")
+            
+            plt.colorbar(cax, ax=ax, orientation="vertical", pad=0.02, shrink=0.85)
+            plt.tight_layout()
+            buf = io.BytesIO()
+            plt.savefig(buf, format="png", dpi=200, bbox_inches="tight")
+            plt.close(fig)
+            buf.seek(0)
+            return buf
+
+        elif c_type in ("multi_line", "multiline"):
+            series_keys = chart.get("series_keys") or []
+            if not series_keys and raw_data and isinstance(raw_data[0], dict):
+                series_keys = [k for k in raw_data[0].keys() if k not in ("label", "name", "date", "ngay", "time")]
+
+            fig, ax = plt.subplots(figsize=(6.5, 3.0), dpi=200)
+            fig.patch.set_facecolor("#FFFFFF")
+            ax.set_facecolor("#FFFFFF")
+
+            labels = [str(d.get("label") or d.get("name") or "") for d in raw_data[:14]]
+            x_idx = range(len(labels))
+
+            for s_idx, s_key in enumerate(series_keys[:5]):
+                s_vals = [float(d.get(s_key) or 0) for d in raw_data[:14]]
+                color = palette[s_idx % len(palette)]
+                ax.plot(x_idx, s_vals, label=s_key, color=color, linewidth=2.0, marker="o", markersize=4)
+
+            ax.set_xticks(list(x_idx))
+            step = max(1, len(labels) // 7)
+            clean_labels = [l if i % step == 0 else "" for i, l in enumerate(labels)]
+            ax.set_xticklabels(clean_labels, fontsize=8, color="#64748B", rotation=15 if len(labels) > 8 else 0)
+            ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, _: _format_axis_value(y)))
+            ax.legend(loc="upper right", fontsize=7.5, frameon=True, facecolor="#F8FAFC", edgecolor="#CBD5E1")
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
+            ax.spines["left"].set_color("#CBD5E1")
+            ax.spines["bottom"].set_color("#CBD5E1")
+            ax.grid(True, linestyle="--", alpha=0.35, color="#E2E8F0")
 
             plt.tight_layout()
             buf = io.BytesIO()
@@ -827,11 +896,14 @@ def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
             p_ch.paragraph_format.space_after = Pt(3)
 
             c_type_label = {
-                "horizontal_bar": "Bảng xếp hạng",
-                "donut": "Tỷ trọng cơ cấu",
+                "horizontal_bar": "Bảng xếp hạng cột ngang",
+                "donut": "Tỷ trọng cơ cấu tròn",
                 "bar": "Biểu đồ cột so sánh",
                 "area": "Diễn biến theo thời gian",
                 "line": "Đường biến động xu hướng",
+                "heatmap": "Ma trận nhiệt 2D",
+                "multi_line": "Biểu đồ xu hướng đa đường",
+                "multiline": "Biểu đồ xu hướng đa đường",
             }.get(chart.get("chart_type", ""), "Biểu đồ trực quan")
 
             r_ch_t = p_ch.add_run(f"Biểu đồ {c_idx}: {chart.get('title')} — {c_type_label}")

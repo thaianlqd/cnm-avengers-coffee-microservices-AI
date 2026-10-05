@@ -1,4 +1,14 @@
 import React from 'react';
+import {
+  SmoothAreaChart,
+  DonutChart,
+  BarChart,
+  HorizontalBarChart,
+  HeatmapChart,
+  MultiLineChart,
+} from './Charts';
+
+const PALETTE = ['#1e3a8a', '#0284c7', '#059669', '#d97706', '#7c3aed', '#dc2626', '#2563eb', '#10b981'];
 
 interface WordReportPreviewModalProps {
   isOpen: boolean;
@@ -248,49 +258,111 @@ export const WordReportPreviewModal: React.FC<WordReportPreviewModalProps> = ({
             {/* Section IV: Charts Section */}
             {charts.length > 0 && (
               <div className="space-y-4">
-                <h2 className="text-xs font-bold text-[#1E3A8A] uppercase tracking-wider">
-                  IV. TRỰC QUAN HÓA SỐ LIỆU
-                </h2>
-                <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xs font-bold text-[#1E3A8A] uppercase tracking-wider">
+                    IV. TRỰC QUAN HÓA SỐ LIỆU ĐA CHIỀU
+                  </h2>
+                  <span className="text-[10px] text-slate-500 font-medium">
+                    {charts.length} biểu đồ tương tác
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {charts.map((ch: any, idx: number) => {
-                    const chData = Array.isArray(ch.data) ? ch.data : [];
-                    const maxVal = Math.max(...chData.map((d: any) => Number(d.value || 0)), 1);
+                    const isHeatmap = ch.chart_type === 'heatmap';
+                    const isMultiLine = ch.chart_type === 'multi_line' || ch.chart_type === 'multiline';
+                    const isDonut = ch.chart_type === 'donut';
+                    const isHBar = ch.chart_type === 'horizontal_bar';
+                    const isBar = ch.chart_type === 'bar';
+                    const spanClass = (ch.col_span === 12 || isHeatmap || isMultiLine || charts.length === 1 || (charts.length === 5 && idx === 2))
+                      ? 'col-span-1 md:col-span-2'
+                      : 'col-span-1';
+
+                    const badge = isHeatmap
+                      ? 'Heatmap 2D'
+                      : isMultiLine
+                        ? 'Đa đường'
+                        : isDonut
+                          ? 'Cơ cấu tròn'
+                          : isHBar
+                            ? 'Xếp hạng'
+                            : isBar
+                              ? 'Cột'
+                              : 'Miền / Xu hướng';
 
                     return (
-                      <div key={idx} className="border border-slate-200 rounded p-4 bg-[#F8FAFC] space-y-3">
-                        <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                          <span className="font-semibold text-slate-900 text-xs">{ch.title}</span>
-                          <span className="text-[10px] text-slate-500 font-medium">Biểu đồ chuẩn hóa</span>
+                      <div key={idx} className={`${spanClass} border border-slate-200 rounded-xl p-4 bg-[#F8FAFC] flex flex-col justify-between min-h-[320px] shadow-2xs`}>
+                        <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
+                          <div>
+                            <span className="font-semibold text-slate-900 text-xs">{ch.title}</span>
+                            {ch.purpose && (
+                              <p className="text-[10px] text-slate-400 mt-0.5">{ch.purpose}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {ch.unit && (
+                              <span className="text-[10px] font-mono text-slate-400">
+                                {ch.unit}
+                              </span>
+                            )}
+                            <span className="text-[10px] text-sky-700 bg-sky-50 border border-sky-200/60 px-1.5 py-0.5 rounded font-medium">
+                              {badge}
+                            </span>
+                          </div>
                         </div>
 
-                        {chData.length > 0 ? (
-                          <div className="space-y-2 pt-1">
-                            {chData.slice(0, 6).map((item: any, dIdx: number) => {
-                              const valNum = Number(item.value || 0);
-                              const pct = Math.min(100, Math.round((valNum / maxVal) * 100));
-                              return (
-                                <div key={dIdx} className="space-y-1">
-                                  <div className="flex justify-between text-[11px]">
-                                    <span className="text-slate-700 font-medium">{item.label || item.name}</span>
-                                    <span className="font-mono text-slate-900 font-medium">
-                                      {valNum.toLocaleString('vi-VN')} {ch.unit || ''}
-                                    </span>
-                                  </div>
-                                  <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                                    <div
-                                      className="bg-[#1E3A8A] h-full rounded-full"
-                                      style={{ width: `${pct}%` }}
-                                    />
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <div className="py-4 text-center text-slate-400 text-xs">
-                            Biểu đồ định dạng Vector sắc nét được nhúng trực tiếp trong file Word (.docx).
-                          </div>
-                        )}
+                        <div className="flex-1 w-full flex items-center justify-center pt-1">
+                          {isHeatmap ? (
+                            <HeatmapChart
+                              data={ch.data || []}
+                              valueSuffix={ch.unit ? ` ${ch.unit}` : ' đơn'}
+                            />
+                          ) : isMultiLine ? (
+                            <MultiLineChart
+                              data={ch.data || []}
+                              seriesKeys={ch.series_keys}
+                              valueSuffix={ch.unit ? ` ${ch.unit}` : ''}
+                            />
+                          ) : isHBar ? (
+                            <HorizontalBarChart
+                              data={(ch.data || []).map((d: any, dIdx: number) => ({
+                                label: d.label || d.name || 'Mục',
+                                value: Number(d.value || 0),
+                                rank: dIdx + 1,
+                                color: PALETTE[dIdx % PALETTE.length],
+                              }))}
+                              valueSuffix={ch.unit ? ` ${ch.unit}` : ''}
+                            />
+                          ) : isDonut ? (
+                            <DonutChart
+                              data={(ch.data || []).map((d: any, dIdx: number) => ({
+                                label: d.label || d.name || 'Mục',
+                                value: Number(d.value || 0),
+                                color: PALETTE[dIdx % PALETTE.length],
+                              }))}
+                              centerLabel="Cơ cấu"
+                              valueSuffix={ch.unit ? ` ${ch.unit}` : ''}
+                              size={120}
+                            />
+                          ) : isBar ? (
+                            <BarChart
+                              data={(ch.data || []).map((d: any) => ({
+                                label: String(d.label || d.name || '').slice(-14),
+                                value: Number(d.value || 0),
+                              }))}
+                              height={220}
+                              valueSuffix={ch.unit ? ` ${ch.unit}` : ''}
+                            />
+                          ) : (
+                            <SmoothAreaChart
+                              data={(ch.data || []).map((d: any) => ({
+                                label: String(d.label || d.name || '').slice(-8).replace('/', '-'),
+                                value: Number(d.value || 0),
+                              }))}
+                              height={220}
+                              valueSuffix={ch.unit ? ` ${ch.unit}` : ''}
+                            />
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -302,7 +374,7 @@ export const WordReportPreviewModal: React.FC<WordReportPreviewModalProps> = ({
             {tableData && tableData.columns && (
               <div className="space-y-2.5">
                 <h2 className="text-xs font-bold text-[#1E3A8A] uppercase tracking-wider">
-                  V. DỮ LIỆU CHI TIẾT
+                  V. {tableData.title ? tableData.title.toUpperCase() : 'DỮ LIỆU CHI TIẾT'}
                 </h2>
                 <div className="border border-slate-200 rounded overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
