@@ -14,6 +14,7 @@ class Capability:
 
 
 READS = {
+    'compare_branch_reviews': ('reviews', 'scoped_branch_reviews'),
     'filter_catalog': ('menu', 'products'), 'get_recommendations': ('menu', 'products'),
     'get_product_options': ('menu', 'options'), 'check_price_and_stock': ('menu/inventory', 'products'),
     'get_product_insights': ('reviews', 'reviews'), 'search_knowledge_base': ('rag', 'evidence'),
@@ -69,6 +70,9 @@ STRING = {'type': 'string'}
 OPTION_PROPERTIES = {key: STRING for key in ('size', 'kich_co', 'luong_da', 'ice', 'do_ngot', 'sugar', 'loai_sua', 'milk')}
 OPTION_PROPERTIES['toppings'] = {'type': 'array', 'items': STRING, 'maxItems': 16}
 CUSTOM_SCHEMAS = {
+    'compare_branch_reviews': schema('compare_branch_reviews', {
+        'branch_ids': {'type': 'array', 'minItems': 1, 'maxItems': 5, 'items': STRING}}, ('branch_ids',),
+        'Compare approved ratings and recent comments of exact displayed branch IDs only. Never expand these branches to a global ranking.'),
     'get_product_description': schema('get_product_description', {'product_id': STRING, 'query': STRING}, ('product_id',)),
     'add_to_cart': schema('add_to_cart', {'product_id': STRING,
         'quantity': {'type': 'integer', 'minimum': 1}, **OPTION_PROPERTIES,
@@ -175,9 +179,15 @@ def capabilities_for_context(context, *, entry_action=None, final_only=False, re
     checkout_started = bool(voucher_decided or checkout.get('checkout_requested')
         or checkout.get('delivery_type') or checkout.get('payment_method'))
 
-    # Secondary profile/completed-order/branch-review capabilities remain in
+    # Secondary profile/completed-order capabilities remain in
     # CAPABILITIES and tool_schemas(), outside the default ordering surface.
     allowed = {'filter_catalog', 'get_recommendations', 'search_knowledge_base', 'get_cart'}
+    if context.get('branch_review_request'):
+        allowed.update({'get_store_reviews', 'get_top_rated_stores'})
+        if visible.get('branches'):
+            allowed.add('compare_branch_reviews')
+        if context.get('displayed_review_selection') is not None:
+            allowed.difference_update({'search_knowledge_base', 'get_top_rated_stores'})
     if context.get('recent_order_read'):
         allowed.add('get_order_history')  # Executor asks guests to log in; actor is session-owned.
     if state.get('authenticated') and context.get('order_management'):

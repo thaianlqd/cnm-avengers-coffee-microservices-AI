@@ -465,11 +465,11 @@ function AppContent() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(() => {
     const params = new URLSearchParams(window.location.search);
-    
+
     // Tìm tableId và storeId (hỗ trợ cả trường hợp khách gõ nhầm ?FstoreId)
     const storeId = params.get('storeId') || params.get('FstoreId') || params.get('?storeId');
     const tableId = params.get('tableId');
-    
+
     if (tableId) {
       sessionStorage.setItem('qr_tableId', tableId);
       if (storeId) {
@@ -812,7 +812,7 @@ function AppContent() {
       case 'menu-intro': tabName = t('header.menu', 'Thực đơn'); break;
       default: tabName = t('order.home', 'Trang chủ');
     }
-    
+
     document.title = `${tabName} | Avengers Coffee`;
   }, [activeTab, selectedCatId, categories, selectedProductForPage]);
 
@@ -1879,17 +1879,17 @@ function AppContent() {
                             </span>
                             {userId ? (
                               <span
-                                className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${isLocked 
-                                  ? 'bg-amber-50 text-amber-700 border-amber-200 border' 
-                                  : canUse 
-                                    ? 'bg-[#eef7ff] text-[#1f6fb2]' 
+                                className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${isLocked
+                                  ? 'bg-amber-50 text-amber-700 border-amber-200 border'
+                                  : canUse
+                                    ? 'bg-[#eef7ff] text-[#1f6fb2]'
                                     : 'bg-amber-50 text-amber-700'
                                   }`}
                               >
-                                {isLocked 
-                                  ? `Yêu cầu hạng ${voucher.hang_toi_thieu} trở lên` 
-                                  : canUse 
-                                    ? 'Bạn có thể dùng' 
+                                {isLocked
+                                  ? `Yêu cầu hạng ${voucher.hang_toi_thieu} trở lên`
+                                  : canUse
+                                    ? 'Bạn có thể dùng'
                                     : 'Bạn đã đạt giới hạn'}
                               </span>
                             ) : (
@@ -1968,7 +1968,7 @@ function AppContent() {
                     const orderId = sessionStorage.getItem('post_login_order_id') || '';
                     sessionStorage.removeItem('post_login_redirect');
                     sessionStorage.removeItem('post_login_order_id');
-                    
+
                     const uId = user.ma_nguoi_dung || user.maNguoiDung || user.id;
                     if (orderId && uId) {
                       apiClient.patch(`/customers/${uId}/orders/${orderId}/link`)
@@ -2013,8 +2013,8 @@ function AppContent() {
                   setActiveTab('login');
                   window.history.pushState({ tab: 'login' }, '', `${window.location.pathname}?tab=login`);
                 }}
-                products={products} 
-                onBackToHome={() => setActiveTab('order')} 
+                products={products}
+                onBackToHome={() => setActiveTab('order')}
                 voucherItems={voucherItems}
                 suggestedPastries={suggestedPastries}
                 onAddToCart={(prod, qty, size, opts) => addToCart(user, prod, qty || 1, size || 'Nhỏ', opts)}
@@ -2156,15 +2156,15 @@ function AppContent() {
             <div className="text-6xl mb-4 animate-bounce">
               🎂🎈🎉
             </div>
-            
+
             <h3 className="text-2xl font-black uppercase text-[#8c252a] tracking-tight mb-2 font-sans">
               Chúc Mừng Sinh Nhật!
             </h3>
-            
+
             <p className="text-[#c89a58] font-black text-sm uppercase tracking-widest mb-6">
               Avengers House Special Gift
             </p>
-            
+
             <div className="bg-amber-50/70 border border-amber-100/50 rounded-2xl p-5 mb-6 w-full shadow-inner">
               <p className="text-sm font-semibold text-gray-700 leading-relaxed">
                 Nhân dịp tháng sinh nhật của bạn, Avengers House xin gửi tặng bạn một món quà đặc biệt. Một **Voucher mừng sinh nhật** đã được gửi vào kho voucher cá nhân của bạn!
@@ -2173,7 +2173,7 @@ function AppContent() {
                 QUÀ TẶNG THÀNH VIÊN
               </div>
             </div>
-            
+
             <div className="flex flex-col gap-3 w-full">
               <button
                 type="button"
@@ -2207,15 +2207,15 @@ function AppContent() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
               </svg>
             </div>
-            
+
             <h3 className="text-2xl font-black text-[#1a1a1a] uppercase tracking-wide mb-3 font-serif">
               Đồng bộ đơn hàng
             </h3>
-            
+
             <p className="text-[#c89a58] font-black text-sm uppercase tracking-widest mb-6">
               Avengers Coffee Member Sync
             </p>
-            
+
             <div className="bg-[#faf7f4] border border-[#e8e2da] rounded-2xl p-5 mb-6 w-full text-left">
               <p className="text-sm font-semibold text-gray-700 leading-relaxed">
                 Chào mừng bạn gia nhập! Chúng tôi tìm thấy <strong>{linkOrderCount} đơn hàng</strong> chưa gán tài khoản khớp với Email hoặc Số điện thoại của bạn.
@@ -2224,7 +2224,7 @@ function AppContent() {
                 Bạn có muốn liên kết các đơn hàng này vào tài khoản để theo dõi lịch sử đơn và tích lũy điểm thành viên không?
               </p>
             </div>
-            
+
             <div className="flex flex-col gap-3 w-full font-sans">
               <button
                 type="button"

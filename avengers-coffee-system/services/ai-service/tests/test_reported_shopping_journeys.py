@@ -188,7 +188,7 @@ def test_short_product_name_opens_options_for_the_selected_cold_variant(runtime)
 def test_prompt_and_output_budget_do_not_grow(runtime):
     from src.agents.llm_tool_orchestrator import SYSTEM_PROMPT
     from src.agents.tool_capabilities import CAPABILITIES
-    assert len(SYSTEM_PROMPT) <= 9178 and len(CAPABILITIES) == 38
+    assert len(SYSTEM_PROMPT) <= 9178 and len(CAPABILITIES) == 39
     from src.agents.agent_context import business_state
     from src.agents.tool_capabilities import capabilities_for_context
     assert {'cancel_order', 'update_order', 'reorder_order', 'confirm_order_change'}.isdisjoint(

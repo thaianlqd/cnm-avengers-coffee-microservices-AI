@@ -136,7 +136,7 @@ def model_tool_result(name, result, artifacts=None):
                 'apply_voucher', 'remove_voucher', 'skip_voucher', 'add_to_cart', 'update_cart_item',
                 'remove_cart_item', 'request_checkout', 'set_checkout_choices', 'set_session_branch',
                 'resolve_location', 'select_location_candidate', 'get_payment_options', 'get_product_options',
-                'ask_branch', 'find_nearest_branch', 'get_top_rated_stores'}:
+                'ask_branch', 'find_nearest_branch'}:
         return value
     # Profile, review and completed-order responses have separate fact contracts;
     # preserve them conservatively, only removing UI/provider noise recursively.
@@ -166,6 +166,7 @@ class ToolArtifacts:
         self.has_canonical_product = bool(self.focus.get('product') or len(pending_products) == 1)
         pending = ((context or {}).get('business') or {}).get('pending') or {}
         self.has_pending_confirmation = pending.get('type') == 'confirm_checkout'
+        self.branch_review_selection = (context or {}).get('displayed_review_selection')
         self.logs = []
         self.ui = {'products': [], 'vouchers': [], 'branches': [], 'actions': []}
         self.product_candidates = {}  # Complete turn authority; UI budget is separate.
@@ -391,6 +392,8 @@ class ToolArtifacts:
         flow_reply = self.customer_flow_reply()
         if flow_reply:
             return flow_reply
+        if self.branch_review_selection is not None:
+            return self.branch_review_selection.get('message') or 'Mình chưa đọc được đánh giá của các chi nhánh vừa hiển thị, nên chưa thể kết luận chi nhánh nào tốt nhất. Bạn thử lại nhé.'
         from src.agents.tool_capabilities import WRITES
         # Final-write evidence and denials take priority over older draft facts.
         for row in reversed(self.logs):
@@ -447,6 +450,11 @@ class ToolArtifacts:
                      if row['result'].get('message')), 'Mình chưa xác minh được kết quả. Bạn thử lại đúng tin nhắn này nhé.')
 
     def customer_flow_reply(self):
+        comparisons = [r['result'] for r in self.logs if r['tool'] == 'compare_branch_reviews']
+        if comparisons:
+            from src.agents.branch_reviews import review_reply
+            self.used_customer_flow = True
+            return review_reply(comparisons[-1])
         from src.agents.order_management import ORDER_TOOLS
         order_results = [row['result'] for row in self.logs if row['tool'] in ORDER_TOOLS]
         if order_results and order_results[-1].get('message'):
@@ -583,7 +591,7 @@ class ToolArtifacts:
             row['tool'] == request['tool'] and str(row['args'].get('cart_item_id')) == request['cart_item_id']
             and row['result'].get('status') == 'invalid_option' for row in self.logs) for request in unfinished))
         from src.agents.order_management import ORDER_TOOLS
-        stop = ((name in ORDER_TOOLS and last['result'].get('message')) or (name in {'resolve_location', 'select_location_candidate', 'find_nearest_branch', 'ask_branch'}
+        stop = (name == 'compare_branch_reviews' or (name in ORDER_TOOLS and last['result'].get('message')) or (name in {'resolve_location', 'select_location_candidate', 'find_nearest_branch', 'ask_branch'}
                  and (last['result'].get('branches') or last['result'].get('order_summary') or last['result'].get('location_candidates')))
                 or status in {'branch_unavailable_or_unknown', 'customer_branch_selection_required'}
                 or (name == 'request_checkout' and status == 'require_confirmation')
@@ -726,6 +734,14 @@ class ToolArtifacts:
         if isinstance(selection, list):
             self.display_unresolved = False
             self._publish_products(selection, 'llm_validated' if selection else 'clarification')
+        if self.branch_review_selection is not None:
+            comparisons = [r['result'] for r in self.logs if r['tool'] == 'compare_branch_reviews']
+            if comparisons:
+                from src.agents.branch_reviews import review_reply
+                return review_reply(comparisons[-1])
+            if self.branch_review_selection.get('message'):
+                return self.branch_review_selection['message']
+            return 'Mình chưa đọc được đánh giá của các chi nhánh vừa hiển thị, nên chưa thể kết luận chi nhánh nào tốt nhất. Bạn thử lại nhé.'
         rag = [r['result'] for r in self.logs if r['tool'] in RAG_TOOLS]
         if rag:
             docs = {d['id']: d for result in rag for d in result.get('results', [])}

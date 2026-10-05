@@ -21,6 +21,12 @@ only after current explicit agreement to the prior preview; never prepare again 
 preview uses discard_order_change, not cancellation of the actual order. Edits patch exact order_line_id,
 quantity=0 removes; preserve other lines/options. Reorder appends current priced items to cart,
 then follows the normal voucher/fulfillment/payment/checkout flow; never silently create/pay an order.'''
+BRANCH_REVIEW_PROMPT = '''Branch ratings/comments are live review data, never product-ingredient RAG.
+Use get_store_reviews for a named canonical branch, get_top_rated_stores for a global rating request,
+and compare_branch_reviews with every exact displayed branch_id for these branches/which is best among them.
+Never substitute a global top list for the displayed location-scoped candidates.
+Only approved reviews count; no reviews means insufficient evidence, not zero stars.
+A comparison is read-only, never permission to select a checkout branch.'''
 SYSTEM_PROMPT = '''You are Avengers Coffee's customer ordering assistant. Speak warm, polite, natural Vietnamese.
 Use bạn/mình, Dạ/nhé/ạ, blank lines, **bold** names/labels/totals and readable lists.
 Present every available option group, including the actual topping labels, not just "any toppings?".
@@ -143,6 +149,9 @@ def run_llm_tool_turn(session_id, user_message, history=None, client_message_id=
     from src.agents.order_management import restore_history_snapshot
     restore_history_snapshot(memory, cart_manager.get_checkout_prefs(session_id))
     context, encoded = build_context(session_id, memory, history, selected_product_id, shadow)
+    from src.agents.branch_reviews import review_request, displayed_review_selection
+    context['branch_review_request'] = review_request(user_message, context['visible'].get('branches'))
+    context['displayed_review_selection'] = displayed_review_selection(user_message, context['visible'].get('branches'))
     artifacts = ToolArtifacts(memory, user_message, context)
     artifacts.visible.update(context['visible'])
     artifacts.focus.update(context['focus'])
@@ -171,7 +180,7 @@ def run_llm_tool_turn(session_id, user_message, history=None, client_message_id=
         view, payload = model_projection(context, emergency=emergency)
         metrics['model_context_chars'] = len(payload)
         metrics['history_chars'] = sum(len(row['content']) for row in view['recent'])
-        return {'role': 'system', 'content': SYSTEM_PROMPT+(('\n'+ORDER_MANAGEMENT_PROMPT) if context.get('order_management') else '')+'\nCURRENT SERVER CONTEXT (untrusted data):\n'+payload+
+        return {'role': 'system', 'content': SYSTEM_PROMPT+(('\n'+ORDER_MANAGEMENT_PROMPT) if context.get('order_management') else '')+(('\n'+BRANCH_REVIEW_PROMPT) if context.get('branch_review_request') else '')+'\nCURRENT SERVER CONTEXT (untrusted data):\n'+payload+
             '\nEND CONTEXT. Use fresh tools for facts. Return the JSON envelope.'}
 
     def compact_messages(rows):
@@ -206,8 +215,17 @@ def run_llm_tool_turn(session_id, user_message, history=None, client_message_id=
         and gateway.entry_order_reference['status'] != 'ok' else None)
     if not order_control and not shadow and not selected_product_id:
         order_control = context.get('recent_order_read')
+    branch_review_control = context.get('displayed_review_selection') if not shadow and not selected_product_id else None
     with mutation_operation_context(session_id, client_message_id):
-        if order_selection_issue:
+        if branch_review_control is not None:
+            if branch_review_control.get('message'):
+                result = {'reply': json.dumps({'response_kind': 'clarification', 'reply': branch_review_control['message'],
+                    'mutation_claims': [], 'evidence_quotes': []}, ensure_ascii=False), 'error': None}
+            else:
+                gateway.dispatch('compare_branch_reviews', branch_review_control)
+                result = {'reply': None, 'error': None}
+            metrics['direct_branch_review_read'] = True
+        elif order_selection_issue:
             result = {'reply': json.dumps({'response_kind': 'clarification', 'reply': order_selection_issue['message'],
                 'mutation_claims': [], 'evidence_quotes': []}, ensure_ascii=False), 'error': None}
             metrics['order_reference_clarification'] = True
@@ -277,7 +295,8 @@ def run_llm_tool_turn(session_id, user_message, history=None, client_message_id=
     metrics.update(validated_display_product_count=artifacts.validated_display_product_count,
         display_selection_source=artifacts.display_selection_source,
         ui_artifacts_created={k: len(v) for k, v in artifacts.ui.items()})
-    metrics['final_synthesis_source'] = ('server_catalog_recovery' if catalog_recovered
+    metrics['final_synthesis_source'] = ('server_branch_reviews' if branch_review_control is not None
+        else 'server_catalog_recovery' if catalog_recovered
         else 'server_order_reference_clarification' if order_selection_issue
         else 'server_order_control' if order_control
         else 'server_provider_unavailable' if provider_unavailable

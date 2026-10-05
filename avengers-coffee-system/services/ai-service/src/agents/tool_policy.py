@@ -90,6 +90,10 @@ class GuardedToolGateway:
                 str(row['cart_item_id']): row['display_index'] for row in self.entry_cart_lines}
         self.denied_cart_operation = None
         self.repair_tool = None
+        from src.agents.branch_reviews import review_request, displayed_review_selection
+        context['branch_review_request'] = review_request(user_message, context['visible'].get('branches'))
+        context['displayed_review_selection'] = displayed_review_selection(user_message, artifacts.visible.get('branches'))
+        artifacts.branch_review_selection = context['displayed_review_selection']
         self.request_route = knowledge_route(user_message)
         self.entry_branches = {str(r.get('branch_id') or r.get('ma_chi_nhanh')) for r in artifacts.visible.get('branches', [])}
         self.handlers = {name: getattr(self, '_'+name) for name in (
@@ -97,7 +101,8 @@ class GuardedToolGateway:
             'skip_voucher', 'apply_voucher', 'remove_voucher', 'discard_pending_product', 'set_session_branch', 'set_checkout_choices',
             'resolve_location', 'select_location_candidate', 'request_checkout', 'confirm_checkout',
             'search_knowledge_base', 'get_product_description', 'get_cart_quote', 'get_payment_options',
-            'cancel_order', 'update_order', 'reorder_order', 'confirm_order_change', 'discard_order_change')}
+            'cancel_order', 'update_order', 'reorder_order', 'confirm_order_change', 'discard_order_change',
+            'compare_branch_reviews')}
 
     def executors(self):
         return {name: (lambda args, session_id, n=name: self.dispatch(n, args)) for name in self.schemas}
@@ -244,6 +249,7 @@ class GuardedToolGateway:
             elif (not state['authenticated'] and state.get('guest_session_id') and name not in {
                     'filter_catalog', 'get_recommendations', 'search_knowledge_base', 'get_product_description',
                     'get_product_options', 'get_product_insights', 'check_price_and_stock', 'find_nearest_branch',
+                    'get_store_reviews', 'get_top_rated_stores', 'compare_branch_reviews',
                     'get_cart', 'get_cart_quote', 'add_to_cart', 'update_cart_item', 'remove_cart_item',
                     'discard_pending_product', 'finish_cart'}):
                 result = self._login_required()
@@ -362,6 +368,22 @@ class GuardedToolGateway:
                     result['payment_options_status'] = 'unavailable'
         return result
 
+    def _compare_branch_reviews(self, args):
+        ids = args['branch_ids']
+        selection = self.context.get('displayed_review_selection')
+        expected = (selection or {}).get('branch_ids')
+        candidates = (self.entry_branches if selection is not None else
+                      {str(r.get('branch_id') or r.get('ma_chi_nhanh')) for r in self.artifacts.visible.get('branches', [])})
+        if (len(set(ids)) != len(ids) or not set(ids).issubset(candidates)
+                or (selection is not None and (not expected or set(ids) != set(expected)))):
+            return denied('branch_review_scope_mismatch', message='Bạn chọn đúng các chi nhánh trong danh sách vừa xem để mình so sánh đánh giá nhé.')
+        from src.function_calling.tools.branch_review_tools import execute_compare_branch_reviews
+        # Preserve displayed numbering even when a model requests a different order.
+        ordered = expected or [str(r.get('branch_id') or r.get('ma_chi_nhanh'))
+                              for r in self.artifacts.visible.get('branches', [])
+                              if str(r.get('branch_id') or r.get('ma_chi_nhanh')) in ids]
+        return execute_compare_branch_reviews(ordered)
+
     def _cancel_order(self, args):
         from src.agents.order_management import prepare
         if self._wrong_order_target(args):
@@ -411,6 +433,10 @@ class GuardedToolGateway:
 
     def _read(self, name, args):
         args = dict(args)
+        if name == 'get_store_reviews' and self.context.get('displayed_review_selection') is not None:
+            requested = (self.context['displayed_review_selection'] or {}).get('branch_ids') or []
+            if args.get('branch_id') not in requested:
+                return denied('branch_review_scope_mismatch', message='Mình chỉ tra cứu các chi nhánh bạn vừa chọn trong danh sách này nhé.')
         if name in {'get_order_details', 'track_order_status'} and self._wrong_order_target(args):
             return denied('order_target_mismatch', message='Bạn chọn đúng số thứ tự hoặc mã đơn trong danh sách vừa xem nhé.')
         if name == 'get_order_details':
@@ -1330,6 +1356,9 @@ class GuardedToolGateway:
             'domain': 'product_description', 'entity_type': 'product', 'entity_id': args['product_id']})
 
     def _search_knowledge_base(self, args):
+        if self.context.get('branch_review_request') and not re.search(r'\b(?:thanh phan|di ung|chinh sach|nguyen lieu)\b', normalize_text(self.user_message)):
+            return denied('wrong_authority', requested_authority='branch_reviews',
+                allowed_tools=['compare_branch_reviews', 'get_store_reviews', 'get_top_rated_stores'])
         from src.function_calling.tools.knowledge_tools import execute_search_knowledge_base
         args = dict(args)
         if self.request_route.get('owner') in {'price', 'inventory', 'review'}:
@@ -1351,7 +1380,6 @@ class GuardedToolGateway:
             from src.agents.knowledge_consultation import grounded_answer
             result = {**result, 'status': 'not_found', 'results': [], 'message': grounded_answer(args['query'], result)}
         elif facet == 'ingredient':
-            from src.rag.documents import normalize_text
             from src.function_calling.tools.knowledge_tools import INSUFFICIENT_MESSAGE
             requested = [term for term in ('sua', 'caffein', 'caffeine') if term in normalize_text(args['query']).split()]
             if not all(any(term in normalize_text(d['content']).split() for d in result.get('results', [])) for term in requested):
